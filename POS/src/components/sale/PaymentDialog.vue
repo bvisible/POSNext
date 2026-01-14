@@ -1512,6 +1512,15 @@ watch(show, async (newVal) => {
 				)
 				walleePaymentMode.value = result?.message?.wallee_terminal_payment_mode || null
 				log.debug('[PaymentDialog] Wallee payment mode:', walleePaymentMode.value)
+
+				// If Wallee mode is configured, load the scripts dynamically
+				if (walleePaymentMode.value) {
+					try {
+						await loadWalleeScripts()
+					} catch (e) {
+						log.warn('[PaymentDialog] Failed to load Wallee scripts:', e)
+					}
+				}
 			} catch (e) {
 				log.warn('[PaymentDialog] Could not load Wallee payment mode:', e)
 			}
@@ -1584,6 +1593,50 @@ function selectPaymentMethod(method) {
 // ===========================================
 
 /**
+ * Load Wallee scripts dynamically if not already loaded
+ */
+async function loadWalleeScripts() {
+	// Check if already loaded
+	if (window.wallee_integration?.show_terminal_payment) {
+		log.debug('[PaymentDialog] Wallee scripts already loaded')
+		return true
+	}
+
+	const scripts = [
+		'/assets/wallee_integration/js/wallee_captured_payments.js',
+		'/assets/wallee_integration/js/wallee_terminal_payment.js'
+	]
+
+	log.debug('[PaymentDialog] Loading Wallee scripts...')
+
+	for (const src of scripts) {
+		// Check if script already exists
+		if (document.querySelector(`script[src="${src}"]`)) {
+			continue
+		}
+
+		await new Promise((resolve, reject) => {
+			const script = document.createElement('script')
+			script.src = src
+			script.onload = resolve
+			script.onerror = () => reject(new Error(`Failed to load ${src}`))
+			document.head.appendChild(script)
+		})
+	}
+
+	// Wait a bit for scripts to initialize
+	await new Promise(resolve => setTimeout(resolve, 100))
+
+	log.debug('[PaymentDialog] Wallee scripts loaded:', {
+		wallee_integration: !!window.wallee_integration,
+		show_terminal_payment: !!window.wallee_integration?.show_terminal_payment,
+		captured_payments: !!window.wallee_integration?.captured_payments
+	})
+
+	return !!window.wallee_integration?.show_terminal_payment
+}
+
+/**
  * Get a reference for the current invoice (for localStorage tracking)
  */
 function getInvoiceReference() {
@@ -1610,13 +1663,28 @@ function isLockedPayment(entry) {
  * Open the Wallee terminal payment dialog
  */
 async function openWalleeTerminalDialog(method) {
+	// Try to load scripts if not available
 	if (!window.wallee_integration?.show_terminal_payment) {
-		frappe.msgprint({
-			title: __('Error'),
-			indicator: 'red',
-			message: __('Wallee Terminal integration is not loaded. Please refresh the page.')
-		})
-		return
+		log.debug('[PaymentDialog] Wallee scripts not loaded, attempting to load...')
+		try {
+			const loaded = await loadWalleeScripts()
+			if (!loaded) {
+				frappe.msgprint({
+					title: __('Error'),
+					indicator: 'red',
+					message: __('Wallee Terminal integration could not be loaded. Please refresh the page.')
+				})
+				return
+			}
+		} catch (e) {
+			log.error('[PaymentDialog] Failed to load Wallee scripts:', e)
+			frappe.msgprint({
+				title: __('Error'),
+				indicator: 'red',
+				message: __('Wallee Terminal integration is not available. Please refresh the page.')
+			})
+			return
+		}
 	}
 
 	const invoiceRef = getInvoiceReference()
