@@ -705,6 +705,113 @@
 				<!-- End Right Column -->
 			</div>
 			<!-- End Two Column Layout -->
+
+			<!-- Wallee Terminal Payment Dialog Overlay -->
+			<div
+				v-if="showWalleeDialog"
+				class="absolute inset-0 z-50 flex items-center justify-center bg-black/50 rounded-lg"
+			>
+				<div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+					<!-- Header -->
+					<div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+						<div class="flex items-center gap-3">
+							<div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+								</svg>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold text-white">{{ __('Terminal Payment') }}</h3>
+								<p class="text-blue-100 text-sm">Wallee</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Body -->
+					<div class="p-6">
+						<!-- Amount Display -->
+						<div class="text-center mb-6">
+							<p class="text-sm text-gray-500 mb-1">{{ __('Amount to pay') }}</p>
+							<p class="text-4xl font-bold text-gray-900">{{ formatCurrency(walleeDialogAmount) }}</p>
+						</div>
+
+						<!-- Terminal Info -->
+						<div v-if="walleeSelectedTerminal" class="bg-gray-50 rounded-lg p-4 mb-6">
+							<div class="flex items-center gap-3">
+								<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+									<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+									</svg>
+								</div>
+								<div>
+									<p class="text-sm font-medium text-gray-900">{{ walleeSelectedTerminal }}</p>
+									<p class="text-xs text-gray-500">{{ __('Terminal') }}</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- Status Message -->
+						<div v-if="walleePaymentStatus" class="mb-6">
+							<div
+								:class="[
+									'flex items-center gap-3 p-4 rounded-lg',
+									walleePaymentError ? 'bg-red-50' : 'bg-blue-50'
+								]"
+							>
+								<!-- Spinner when processing -->
+								<svg v-if="!walleePaymentError && walleePaymentInProgress" class="w-5 h-5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								<!-- Error icon -->
+								<svg v-else-if="walleePaymentError" class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+								</svg>
+								<!-- Info icon -->
+								<svg v-else class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+								</svg>
+								<p :class="['text-sm font-medium', walleePaymentError ? 'text-red-700' : 'text-blue-700']">
+									{{ walleePaymentStatus }}
+								</p>
+							</div>
+						</div>
+
+						<!-- Action Buttons -->
+						<div class="flex gap-3">
+							<button
+								v-if="!walleePaymentInProgress"
+								@click="closeWalleeDialog"
+								class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+							>
+								{{ __('Cancel') }}
+							</button>
+							<button
+								v-if="walleePaymentInProgress && walleeCurrentTransaction"
+								@click="cancelWalleeTerminalPayment"
+								class="flex-1 px-4 py-3 bg-red-100 text-red-700 font-medium rounded-lg hover:bg-red-200 transition-colors"
+							>
+								{{ __('Cancel Payment') }}
+							</button>
+							<button
+								v-if="!walleePaymentInProgress && !walleePaymentError"
+								@click="startWalleePayment"
+								class="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+							>
+								{{ __('Start Payment') }}
+							</button>
+							<button
+								v-if="walleePaymentError"
+								@click="retryWalleePayment"
+								class="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+							>
+								{{ __('Retry') }}
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- End Wallee Dialog Overlay -->
 		</template>
 	</Dialog>
 </template>
@@ -809,6 +916,18 @@ const loadingCredit = ref(false)
 const walletInfo = ref({ wallet_enabled: false, wallet_exists: false, wallet_balance: 0, wallet_name: null })
 const loadingWallet = ref(false)
 const walletPaymentMethods = ref(new Set()) // Set of mode_of_payment names that are wallet payments
+
+// Wallee Terminal Payment state
+const showWalleeDialog = ref(false)
+const walleeDialogAmount = ref(0)
+const walleeSelectedTerminal = ref(null)
+const walleePaymentStatus = ref('')
+const walleePaymentError = ref(false)
+const walleePaymentInProgress = ref(false)
+const walleeCurrentTransaction = ref(null)
+const walleeLockedPayments = ref([])
+const walleePaymentMode = ref(null) // The Mode of Payment configured for Wallee in POS Profile
+const walleeCurrentMethod = ref(null) // The payment method being used
 
 // Delivery date for Sales Orders
 const deliveryDate = ref("")
@@ -1584,17 +1703,48 @@ watch(show, async (newVal) => {
 
 // Select payment method (tap action)
 function selectPaymentMethod(method) {
+	// Check if this is the Wallee terminal payment mode
+	if (isWalleeTerminalPaymentMode(method.mode_of_payment)) {
+		log.debug('[PaymentDialog] Wallee payment method clicked, opening dialog')
+		openWalleeTerminalDialog(method)
+		return
+	}
+
 	lastSelectedMethod.value = method
 	log.debug('[PaymentDialog] Selected payment method:', method.mode_of_payment)
 }
 
 // ===========================================
 // Wallee Terminal Payment Integration
-// Native POSNext implementation using call() from frappe-ui
+// Shows dialog first, then initiates payment on user confirmation
 // ===========================================
 
-const walleePaymentInProgress = ref(false)
-const walleePaymentStatus = ref('')
+/**
+ * Load Wallee payment mode from POS Profile
+ */
+async function loadWalleePaymentMode() {
+	if (!props.posProfile) return
+
+	try {
+		const result = await call('frappe.client.get_value', {
+			doctype: 'POS Profile',
+			filters: props.posProfile,
+			fieldname: 'wallee_terminal_payment_mode'
+		})
+		walleePaymentMode.value = result?.wallee_terminal_payment_mode || null
+		log.debug('[PaymentDialog] Wallee payment mode loaded:', walleePaymentMode.value)
+	} catch (e) {
+		log.error('[PaymentDialog] Failed to load Wallee payment mode:', e)
+	}
+}
+
+/**
+ * Check if a payment method is the Wallee terminal payment mode
+ */
+function isWalleeTerminalPaymentMode(methodName) {
+	if (!walleePaymentMode.value || !methodName) return false
+	return walleePaymentMode.value.toLowerCase() === methodName.toLowerCase()
+}
 
 /**
  * Get available Wallee terminals
@@ -1642,9 +1792,9 @@ async function checkWalleePaymentStatus(transactionName) {
 }
 
 /**
- * Cancel terminal payment
+ * Cancel terminal payment via API
  */
-async function cancelWalleePayment(transactionName) {
+async function cancelWalleePaymentAPI(transactionName) {
 	try {
 		const result = await call('wallee_integration.wallee_integration.api.pos.cancel_terminal_payment', {
 			transaction_name: transactionName
@@ -1657,22 +1807,6 @@ async function cancelWalleePayment(transactionName) {
 }
 
 /**
- * Get a reference for the current invoice (for localStorage tracking)
- */
-function getInvoiceReference() {
-	// Try to get from cart store or generate a draft reference
-	return `draft_${props.posProfile}_${Date.now()}`
-}
-
-/**
- * Check if a method is the Wallee terminal payment mode
- */
-function isWalleePaymentMode(modeName) {
-	if (!walleePaymentMode.value || !modeName) return false
-	return walleePaymentMode.value.toLowerCase() === modeName.toLowerCase()
-}
-
-/**
  * Check if a payment entry is locked (from Wallee)
  */
 function isLockedPayment(entry) {
@@ -1680,7 +1814,7 @@ function isLockedPayment(entry) {
 }
 
 /**
- * Open the Wallee terminal payment dialog
+ * Open the Wallee terminal payment dialog (shows dialog, doesn't start payment yet)
  */
 async function openWalleeTerminalDialog(method) {
 	if (walleePaymentInProgress.value) {
@@ -1694,121 +1828,209 @@ async function openWalleeTerminalDialog(method) {
 		method: method.mode_of_payment
 	})
 
-	// Get available terminals
-	walleePaymentInProgress.value = true
+	// Store the method for later use
+	walleeCurrentMethod.value = method
+	walleeDialogAmount.value = remainingAmount.value
 	walleePaymentStatus.value = __('Loading terminals...')
+	walleePaymentError.value = false
+	walleeCurrentTransaction.value = null
 
+	// Get available terminals
 	try {
 		const terminals = await getWalleeTerminals()
 
 		if (!terminals || terminals.length === 0) {
-			showError(__('No active Wallee terminal found. Please configure a terminal in Wallee Settings.'))
-			walleePaymentInProgress.value = false
+			walleePaymentStatus.value = __('No active Wallee terminal found. Please configure a terminal in Wallee Settings.')
+			walleePaymentError.value = true
+			showWalleeDialog.value = true
 			return
 		}
 
 		// Use first available terminal (or default)
-		const terminal = terminals[0]?.name || terminals[0]
-		log.debug('[PaymentDialog] Using terminal:', terminal)
+		walleeSelectedTerminal.value = terminals[0]?.terminal_name || terminals[0]?.name || terminals[0]
+		walleePaymentStatus.value = ''
 
-		// Initiate payment
-		walleePaymentStatus.value = __('Initiating payment...')
+		// Show dialog
+		showWalleeDialog.value = true
+
+	} catch (e) {
+		log.error('[PaymentDialog] Failed to load terminals:', e)
+		walleePaymentStatus.value = e.message || __('Failed to load terminals')
+		walleePaymentError.value = true
+		showWalleeDialog.value = true
+	}
+}
+
+/**
+ * Close the Wallee dialog
+ */
+function closeWalleeDialog() {
+	showWalleeDialog.value = false
+	walleePaymentStatus.value = ''
+	walleePaymentError.value = false
+	walleeCurrentTransaction.value = null
+	walleeCurrentMethod.value = null
+}
+
+/**
+ * Start the Wallee payment (called when user clicks "Start Payment")
+ */
+async function startWalleePayment() {
+	if (walleePaymentInProgress.value) return
+
+	walleePaymentInProgress.value = true
+	walleePaymentError.value = false
+	walleePaymentStatus.value = __('Initiating payment...')
+
+	try {
 		const initResult = await initiateWalleePayment(
-			remainingAmount.value,
+			walleeDialogAmount.value,
 			props.currency,
-			terminal
+			walleeSelectedTerminal.value
 		)
 
 		if (!initResult || !initResult.transaction_name) {
-			throw new Error('Failed to initiate payment')
+			throw new Error(__('Failed to initiate payment'))
 		}
 
-		const transactionName = initResult.transaction_name
-		log.debug('[PaymentDialog] Payment initiated:', transactionName)
+		walleeCurrentTransaction.value = initResult.transaction_name
+		log.debug('[PaymentDialog] Payment initiated:', walleeCurrentTransaction.value)
 
-		// Poll for payment status
+		// Start polling for payment status
 		walleePaymentStatus.value = __('Waiting for payment on terminal...')
-
-		let attempts = 0
-		const maxAttempts = 120 // 2 minutes
-		const pollInterval = 1000 // 1 second
-
-		const pollStatus = async () => {
-			attempts++
-
-			try {
-				const status = await checkWalleePaymentStatus(transactionName)
-				log.debug('[PaymentDialog] Payment status:', status)
-
-				if (status.status === 'Completed' || status.status === 'COMPLETED') {
-					// Payment successful
-					walleePaymentInProgress.value = false
-					walleePaymentStatus.value = ''
-
-					const walletPaymentEntry = {
-						mode_of_payment: method.mode_of_payment,
-						amount: status.amount || remainingAmount.value,
-						type: 'Card',
-						is_locked: true,
-						is_wallee_payment: true,
-						transaction_name: transactionName
-					}
-
-					paymentEntries.value.push(walletPaymentEntry)
-					walleeLockedPayments.value.push(walletPaymentEntry)
-
-					showSuccess(__('Payment successful!'))
-
-					// Select next payment method if there's remaining amount
-					if (remainingAmount.value > 0) {
-						const nextMethod = getDefaultNonWalletMethod()
-						if (nextMethod) {
-							lastSelectedMethod.value = nextMethod
-						}
-					}
-					return
-				}
-
-				if (status.status === 'Failed' || status.status === 'FAILED' ||
-				    status.status === 'Voided' || status.status === 'VOIDED') {
-					// Payment failed
-					walleePaymentInProgress.value = false
-					walleePaymentStatus.value = ''
-					showError(status.failure_reason || __('Payment failed'))
-					return
-				}
-
-				// Still processing
-				if (attempts < maxAttempts) {
-					setTimeout(pollStatus, pollInterval)
-				} else {
-					// Timeout
-					walleePaymentInProgress.value = false
-					walleePaymentStatus.value = ''
-					showError(__('Payment timeout. Please check the terminal.'))
-				}
-			} catch (e) {
-				log.error('[PaymentDialog] Error polling payment status:', e)
-				if (attempts < maxAttempts) {
-					setTimeout(pollStatus, pollInterval)
-				} else {
-					walleePaymentInProgress.value = false
-					walleePaymentStatus.value = ''
-					showError(__('Failed to check payment status'))
-				}
-			}
-		}
-
-		// Start polling
-		setTimeout(pollStatus, pollInterval)
+		pollWalleePaymentStatus()
 
 	} catch (e) {
 		log.error('[PaymentDialog] Wallee payment error:', e)
 		walleePaymentInProgress.value = false
-		walleePaymentStatus.value = ''
-		showError(e.message || __('Payment failed'))
+		walleePaymentError.value = true
+		walleePaymentStatus.value = e.message || __('Payment failed')
 	}
 }
+
+/**
+ * Poll for payment status
+ */
+function pollWalleePaymentStatus() {
+	let attempts = 0
+	const maxAttempts = 120 // 2 minutes
+	const pollInterval = 1000 // 1 second
+
+	const poll = async () => {
+		if (!walleePaymentInProgress.value || !walleeCurrentTransaction.value) {
+			return
+		}
+
+		attempts++
+
+		try {
+			const status = await checkWalleePaymentStatus(walleeCurrentTransaction.value)
+			log.debug('[PaymentDialog] Payment status:', status)
+
+			if (status.status === 'Completed' || status.status === 'COMPLETED') {
+				// Payment successful
+				walleePaymentInProgress.value = false
+				walleePaymentStatus.value = __('Payment successful!')
+
+				// Add as locked payment entry
+				const walletPaymentEntry = {
+					mode_of_payment: walleeCurrentMethod.value.mode_of_payment,
+					amount: status.amount || walleeDialogAmount.value,
+					type: 'Card',
+					is_locked: true,
+					is_wallee_payment: true,
+					transaction_name: walleeCurrentTransaction.value
+				}
+
+				paymentEntries.value.push(walletPaymentEntry)
+				walleeLockedPayments.value.push(walletPaymentEntry)
+
+				// Close dialog after a brief delay
+				setTimeout(() => {
+					closeWalleeDialog()
+				}, 1500)
+
+				return
+			}
+
+			if (status.status === 'Failed' || status.status === 'FAILED' ||
+			    status.status === 'Voided' || status.status === 'VOIDED') {
+				// Payment failed
+				walleePaymentInProgress.value = false
+				walleePaymentError.value = true
+				walleePaymentStatus.value = status.failure_reason || __('Payment failed')
+				return
+			}
+
+			// Still processing
+			if (attempts < maxAttempts) {
+				setTimeout(poll, pollInterval)
+			} else {
+				// Timeout
+				walleePaymentInProgress.value = false
+				walleePaymentError.value = true
+				walleePaymentStatus.value = __('Payment timeout. Please check the terminal.')
+			}
+		} catch (e) {
+			log.error('[PaymentDialog] Error polling payment status:', e)
+			if (attempts < maxAttempts) {
+				setTimeout(poll, pollInterval)
+			} else {
+				walleePaymentInProgress.value = false
+				walleePaymentError.value = true
+				walleePaymentStatus.value = __('Failed to check payment status')
+			}
+		}
+	}
+
+	// Start polling
+	setTimeout(poll, pollInterval)
+}
+
+/**
+ * Cancel the current terminal payment
+ */
+async function cancelWalleeTerminalPayment() {
+	if (!walleeCurrentTransaction.value) return
+
+	walleePaymentStatus.value = __('Cancelling payment...')
+
+	try {
+		await cancelWalleePaymentAPI(walleeCurrentTransaction.value)
+		walleePaymentInProgress.value = false
+		walleePaymentError.value = false
+		walleePaymentStatus.value = __('Payment cancelled')
+		walleeCurrentTransaction.value = null
+
+		// Close dialog after a brief delay
+		setTimeout(() => {
+			closeWalleeDialog()
+		}, 1000)
+	} catch (e) {
+		log.error('[PaymentDialog] Failed to cancel payment:', e)
+		walleePaymentStatus.value = __('Failed to cancel payment. Please cancel on the terminal.')
+	}
+}
+
+/**
+ * Retry a failed payment
+ */
+function retryWalleePayment() {
+	walleePaymentError.value = false
+	walleePaymentStatus.value = ''
+	walleeCurrentTransaction.value = null
+}
+
+// Load Wallee payment mode when POS profile changes
+watch(
+	() => props.posProfile,
+	(newProfile) => {
+		if (newProfile) {
+			loadWalleePaymentMode()
+		}
+	},
+	{ immediate: true }
+)
 
 // Helper to get default non-wallet payment method
 function getDefaultNonWalletMethod() {
@@ -1850,6 +2072,13 @@ function switchToNextPaymentMethod(partialAmount) {
 // Quick add payment (long press action)
 function quickAddPayment(method) {
 	if (remainingAmount.value <= 0) return
+
+	// Check if this is the Wallee terminal payment mode - open dialog instead
+	if (isWalleeTerminalPaymentMode(method.mode_of_payment)) {
+		log.debug('[PaymentDialog] Wallee payment method long press, opening dialog')
+		openWalleeTerminalDialog(method)
+		return
+	}
 
 	lastSelectedMethod.value = method
 
