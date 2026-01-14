@@ -2130,7 +2130,7 @@ const {
 // Wrapper handlers to pass method to composable
 function onPaymentMethodDown(method, event) {
 	// Check if this is the Wallee terminal payment mode
-	if (isWalleePaymentMode(method.mode_of_payment)) {
+	if (isWalleeTerminalPaymentMode(method.mode_of_payment)) {
 		event.preventDefault()
 		event.stopPropagation()
 		openWalleeTerminalDialog(method)
