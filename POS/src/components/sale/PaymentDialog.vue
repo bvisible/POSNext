@@ -1011,6 +1011,7 @@ const walleeCurrentTransaction = ref(null)
 const walleeCurrentMethod = ref(null) // The payment method being used
 const walleeInputAmount = ref('') // The amount entered via numpad (as string)
 const walleeCanceledByUser = ref(false) // Flag to track if cancel was initiated by user
+const walleeTillConnection = ref(null) // WebSocket connection to terminal for real-time control
 
 // Computed: Can start payment (amount > 0 and <= remaining)
 const walleeCanStartPayment = computed(() => {
@@ -1896,6 +1897,109 @@ async function cancelWalleePaymentAPI(transactionName) {
 }
 
 /**
+ * Load Wallee Till SDK dynamically
+ */
+async function loadWalleeTillSDK() {
+	if (window.TerminalTillConnection) {
+		return true
+	}
+
+	return new Promise((resolve, reject) => {
+		const script = document.createElement('script')
+		script.src = 'https://app-wallee.com/assets/payment/terminal-till-connection.js'
+		script.type = 'text/javascript'
+
+		script.onload = () => {
+			// Wait for the class to be actually defined
+			let attempts = 0
+			const maxAttempts = 50 // 5 seconds max
+			const checkInterval = setInterval(() => {
+				attempts++
+				if (window.TerminalTillConnection) {
+					clearInterval(checkInterval)
+					resolve(true)
+				} else if (attempts >= maxAttempts) {
+					clearInterval(checkInterval)
+					reject(new Error('TerminalTillConnection not defined after script load'))
+				}
+			}, 100)
+		}
+
+		script.onerror = () => reject(new Error('Failed to load Wallee Till SDK'))
+		document.head.appendChild(script)
+	})
+}
+
+/**
+ * Get Till connection credentials from backend
+ */
+async function getWalleeTillCredentials(transactionName) {
+	try {
+		const result = await call('wallee_integration.wallee_integration.api.pos.get_till_connection_credentials', {
+			transaction_name: transactionName
+		})
+		return result
+	} catch (e) {
+		log.error('[PaymentDialog] Failed to get Till credentials:', e)
+		return null
+	}
+}
+
+/**
+ * Create Till WebSocket connection for terminal control
+ */
+async function createWalleeTillConnection(transactionName) {
+	try {
+		const credentials = await getWalleeTillCredentials(transactionName)
+
+		if (!credentials || !credentials.success || !credentials.token) {
+			log.warn('[PaymentDialog] Could not get Till credentials:', credentials?.error)
+			return null
+		}
+
+		// Load SDK if needed
+		await loadWalleeTillSDK()
+
+		// Create connection
+		const tillConnection = new window.TerminalTillConnection({
+			url: credentials.websocket_url,
+			token: credentials.token
+		})
+
+		// Subscribe to events
+		tillConnection.subscribe('charged', () => {
+			log.debug('[PaymentDialog] Till: Transaction charged')
+		})
+
+		tillConnection.subscribe('canceled', () => {
+			log.debug('[PaymentDialog] Till: Transaction canceled by terminal')
+			walleeCanceledByUser.value = true // Treat as user cancel
+		})
+
+		tillConnection.subscribe('error', (error) => {
+			log.error('[PaymentDialog] Till error:', error)
+		})
+
+		tillConnection.subscribe('connected', () => {
+			log.debug('[PaymentDialog] Till WebSocket connected')
+		})
+
+		tillConnection.subscribe('disconnected', () => {
+			log.debug('[PaymentDialog] Till WebSocket disconnected')
+		})
+
+		// Connect
+		tillConnection.connect()
+
+		return tillConnection
+
+	} catch (error) {
+		log.warn('[PaymentDialog] Till connection setup failed:', error)
+		return null
+	}
+}
+
+/**
  * Check if a payment entry is locked (from Wallee)
  */
 function isLockedPayment(entry) {
@@ -1955,6 +2059,9 @@ async function openWalleeTerminalDialog(method) {
  * Close the Wallee dialog
  */
 function closeWalleeDialog() {
+	// Clean up Till WebSocket connection
+	cleanupWalleeTillConnection()
+
 	showWalleeDialog.value = false
 	walleePaymentStatus.value = ''
 	walleePaymentError.value = false
@@ -1997,6 +2104,17 @@ async function startWalleePayment() {
 
 		walleeCurrentTransaction.value = initResult.transaction_name
 		log.debug('[PaymentDialog] Payment initiated:', walleeCurrentTransaction.value)
+
+		// Create Till WebSocket connection for terminal control (cancel, etc.)
+		try {
+			walleeTillConnection.value = await createWalleeTillConnection(walleeCurrentTransaction.value)
+			if (walleeTillConnection.value) {
+				log.debug('[PaymentDialog] Till connection established')
+			}
+		} catch (tillError) {
+			// Till connection is optional - continue without it
+			log.warn('[PaymentDialog] Could not establish Till connection:', tillError)
+		}
 
 		// Start polling for payment status
 		walleePaymentStatus.value = __('Waiting for payment on terminal...')
@@ -2063,6 +2181,9 @@ function pollWalleePaymentStatus() {
 
 				walleePaymentInProgress.value = false
 
+				// Clean up Till connection since this transaction is done
+				cleanupWalleeTillConnection()
+
 				if (isCanceled) {
 					// User cancelled - show cancel message (not error)
 					walleePaymentError.value = false
@@ -2116,7 +2237,22 @@ async function cancelWalleeTerminalPayment() {
 	walleePaymentStatus.value = __('Cancelling payment...')
 
 	try {
+		// First, try to cancel on the physical terminal via Till WebSocket
+		if (walleeTillConnection.value) {
+			try {
+				log.debug('[PaymentDialog] Sending cancel command to terminal via Till SDK')
+				walleeTillConnection.value.cancel()
+			} catch (tillError) {
+				log.warn('[PaymentDialog] Till cancel failed, will try API cancel:', tillError)
+			}
+		}
+
+		// Also call backend API to ensure proper state cleanup
 		await cancelWalleePaymentAPI(walleeCurrentTransaction.value)
+
+		// Clean up Till connection
+		cleanupWalleeTillConnection()
+
 		walleePaymentInProgress.value = false
 		walleePaymentError.value = false
 		walleeCurrentTransaction.value = null
@@ -2131,6 +2267,20 @@ async function cancelWalleeTerminalPayment() {
 		walleePaymentInProgress.value = false
 		walleePaymentError.value = true
 		walleePaymentStatus.value = __('Failed to cancel payment. Please cancel on the terminal.')
+	}
+}
+
+/**
+ * Clean up Till WebSocket connection
+ */
+function cleanupWalleeTillConnection() {
+	if (walleeTillConnection.value) {
+		try {
+			walleeTillConnection.value.disconnect()
+		} catch (e) {
+			log.warn('[PaymentDialog] Error disconnecting Till connection:', e)
+		}
+		walleeTillConnection.value = null
 	}
 }
 
