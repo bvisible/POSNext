@@ -1010,6 +1010,7 @@ const walleePaymentInProgress = ref(false)
 const walleeCurrentTransaction = ref(null)
 const walleeCurrentMethod = ref(null) // The payment method being used
 const walleeInputAmount = ref('') // The amount entered via numpad (as string)
+const walleeCanceledByUser = ref(false) // Flag to track if cancel was initiated by user
 
 // Computed: Can start payment (amount > 0 and <= remaining)
 const walleeCanStartPayment = computed(() => {
@@ -1977,8 +1978,10 @@ async function startWalleePayment() {
 	// Update the dialog amount to reflect actual payment
 	walleeDialogAmount.value = amount
 
+	// Reset state for new payment
 	walleePaymentInProgress.value = true
 	walleePaymentError.value = false
+	walleeCanceledByUser.value = false // Reset cancel flag
 	walleePaymentStatus.value = __('Initiating payment...')
 
 	try {
@@ -2054,10 +2057,25 @@ function pollWalleePaymentStatus() {
 
 			if (status.status === 'Failed' || status.status === 'FAILED' ||
 			    status.status === 'Voided' || status.status === 'VOIDED') {
-				// Payment failed
+				// Check if this is a user-initiated cancel
+				const failureReason = status.failure_reason || ''
+				const isCanceled = walleeCanceledByUser.value || failureReason.toLowerCase().includes('cancel')
+
 				walleePaymentInProgress.value = false
-				walleePaymentError.value = true
-				walleePaymentStatus.value = status.failure_reason || __('Payment failed')
+
+				if (isCanceled) {
+					// User cancelled - show cancel message (not error)
+					walleePaymentError.value = false
+					walleePaymentStatus.value = __('Payment cancelled')
+					// Clear the message after a delay
+					setTimeout(() => {
+						walleePaymentStatus.value = ''
+					}, 2000)
+				} else {
+					// Real failure
+					walleePaymentError.value = true
+					walleePaymentStatus.value = failureReason || __('Payment failed')
+				}
 				return
 			}
 
@@ -2093,6 +2111,8 @@ function pollWalleePaymentStatus() {
 async function cancelWalleeTerminalPayment() {
 	if (!walleeCurrentTransaction.value) return
 
+	// Set flag BEFORE calling API to prevent polling from showing "Payment Failed"
+	walleeCanceledByUser.value = true
 	walleePaymentStatus.value = __('Cancelling payment...')
 
 	try {
