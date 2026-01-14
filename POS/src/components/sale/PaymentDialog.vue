@@ -711,32 +711,37 @@
 				v-if="showWalleeDialog"
 				class="absolute inset-0 z-50 flex items-center justify-center bg-black/50 rounded-lg"
 			>
-				<div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+				<div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
 					<!-- Header -->
 					<div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-						<div class="flex items-center gap-3">
-							<div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-3">
+								<div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+									<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+									</svg>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold text-white">{{ __('Terminal Payment') }}</h3>
+									<p class="text-blue-100 text-sm">Wallee</p>
+								</div>
+							</div>
+							<!-- Close button -->
+							<button
+								@click="closeWalleeDialog"
+								class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+							>
+								<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
 								</svg>
-							</div>
-							<div>
-								<h3 class="text-lg font-semibold text-white">{{ __('Terminal Payment') }}</h3>
-								<p class="text-blue-100 text-sm">Wallee</p>
-							</div>
+							</button>
 						</div>
 					</div>
 
 					<!-- Body -->
-					<div class="p-6">
-						<!-- Amount Display -->
-						<div class="text-center mb-6">
-							<p class="text-sm text-gray-500 mb-1">{{ __('Amount to pay') }}</p>
-							<p class="text-4xl font-bold text-gray-900">{{ formatCurrency(walleeDialogAmount) }}</p>
-						</div>
-
+					<div class="p-4">
 						<!-- Terminal Info -->
-						<div v-if="walleeSelectedTerminal" class="bg-gray-50 rounded-lg p-4 mb-6">
+						<div v-if="walleeSelectedTerminal" class="bg-gray-50 rounded-lg p-3 mb-4">
 							<div class="flex items-center gap-3">
 								<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
 									<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -750,8 +755,8 @@
 							</div>
 						</div>
 
-						<!-- Status Message -->
-						<div v-if="walleePaymentStatus" class="mb-6">
+						<!-- Status Message (when payment in progress or error) -->
+						<div v-if="walleePaymentStatus" class="mb-4">
 							<div
 								:class="[
 									'flex items-center gap-3 p-4 rounded-lg',
@@ -777,36 +782,114 @@
 							</div>
 						</div>
 
-						<!-- Action Buttons -->
-						<div class="flex gap-3">
-							<button
-								v-if="!walleePaymentInProgress"
-								@click="closeWalleeDialog"
-								class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
-							>
-								{{ __('Cancel') }}
-							</button>
-							<button
-								v-if="walleePaymentInProgress && walleeCurrentTransaction"
-								@click="cancelWalleeTerminalPayment"
-								class="flex-1 px-4 py-3 bg-red-100 text-red-700 font-medium rounded-lg hover:bg-red-200 transition-colors"
-							>
-								{{ __('Cancel Payment') }}
-							</button>
-							<button
-								v-if="!walleePaymentInProgress && !walleePaymentError"
-								@click="startWalleePayment"
-								class="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-							>
-								{{ __('Start Payment') }}
-							</button>
-							<button
-								v-if="walleePaymentError"
-								@click="retryWalleePayment"
-								class="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-							>
-								{{ __('Retry') }}
-							</button>
+						<!-- Numpad Section -->
+						<div class="bg-white rounded-lg border border-gray-200 p-3">
+							<!-- Amount Display -->
+							<div class="bg-gray-100 rounded-lg p-3 mb-3">
+								<div dir="ltr" class="font-bold text-gray-900 text-center flex items-center justify-center gap-2 text-2xl">
+									<span>{{ props.currency || 'CHF' }}</span>
+									<span class="font-mono tracking-wider">{{ walleeInputAmount || '0.00' }}</span>
+								</div>
+							</div>
+
+							<!-- Numpad Grid -->
+							<div class="grid grid-cols-4 gap-1.5">
+								<button
+									@click="walleeNumpadInput('7')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>7</button>
+								<button
+									@click="walleeNumpadInput('8')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>8</button>
+								<button
+									@click="walleeNumpadInput('9')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>9</button>
+								<button
+									@click="walleeNumpadBackspace"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-lg font-semibold rounded-lg bg-red-50 border-2 border-red-200 hover:border-red-400 hover:bg-red-100 text-red-600 transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/>
+									</svg>
+								</button>
+
+								<button
+									@click="walleeNumpadInput('4')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>4</button>
+								<button
+									@click="walleeNumpadInput('5')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>5</button>
+								<button
+									@click="walleeNumpadInput('6')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>6</button>
+								<button
+									@click="walleeNumpadClear"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-lg font-semibold rounded-lg bg-orange-50 border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-100 text-orange-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>C</button>
+
+								<button
+									@click="walleeNumpadInput('1')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>1</button>
+								<button
+									@click="walleeNumpadInput('2')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>2</button>
+								<button
+									@click="walleeNumpadInput('3')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>3</button>
+								<!-- Start Payment / Cancel Payment button -->
+								<button
+									v-if="!walleePaymentInProgress"
+									@click="startWalleePayment"
+									:disabled="!walleeCanStartPayment"
+									class="h-[6.5rem] row-span-2 text-base font-bold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+									:class="walleeCanStartPayment ? 'bg-blue-600 border-2 border-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 border-2 border-gray-200 text-gray-400'"
+								>{{ __('Start') }}</button>
+								<button
+									v-else
+									@click="cancelWalleeTerminalPayment"
+									class="h-[6.5rem] row-span-2 text-base font-bold rounded-xl transition-all active:scale-95 bg-red-100 border-2 border-red-200 text-red-600 hover:bg-red-200"
+								>{{ __('Cancel') }}</button>
+
+								<button
+									@click="walleeNumpadInput('00')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>00</button>
+								<button
+									@click="walleeNumpadInput('0')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>0</button>
+								<button
+									@click="walleeNumpadInput('.')"
+									:disabled="walleePaymentInProgress"
+									class="h-12 text-xl font-semibold rounded-lg bg-gray-50 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+								>.</button>
+							</div>
+						</div>
+
+						<!-- Max amount info -->
+						<div class="mt-3 text-center text-sm text-gray-500">
+							{{ __('Remaining') }}: {{ formatCurrency(remainingAmount) }}
 						</div>
 					</div>
 				</div>
@@ -926,6 +1009,13 @@ const walleePaymentError = ref(false)
 const walleePaymentInProgress = ref(false)
 const walleeCurrentTransaction = ref(null)
 const walleeCurrentMethod = ref(null) // The payment method being used
+const walleeInputAmount = ref('') // The amount entered via numpad (as string)
+
+// Computed: Can start payment (amount > 0 and <= remaining)
+const walleeCanStartPayment = computed(() => {
+	const amount = parseFloat(walleeInputAmount.value) || 0
+	return amount > 0 && amount <= remainingAmount.value && !walleePaymentError.value
+})
 
 // Delivery date for Sales Orders
 const deliveryDate = ref("")
@@ -1829,6 +1919,7 @@ async function openWalleeTerminalDialog(method) {
 	// Store the method for later use
 	walleeCurrentMethod.value = method
 	walleeDialogAmount.value = remainingAmount.value
+	walleeInputAmount.value = remainingAmount.value.toFixed(2) // Initialize numpad with remaining amount
 	walleePaymentStatus.value = __('Loading terminals...')
 	walleePaymentError.value = false
 	walleeCurrentTransaction.value = null
@@ -1876,13 +1967,23 @@ function closeWalleeDialog() {
 async function startWalleePayment() {
 	if (walleePaymentInProgress.value) return
 
+	// Get amount from numpad input
+	const amount = parseFloat(walleeInputAmount.value) || 0
+	if (amount <= 0 || amount > remainingAmount.value) {
+		showWarning(__('Invalid amount'))
+		return
+	}
+
+	// Update the dialog amount to reflect actual payment
+	walleeDialogAmount.value = amount
+
 	walleePaymentInProgress.value = true
 	walleePaymentError.value = false
 	walleePaymentStatus.value = __('Initiating payment...')
 
 	try {
 		const initResult = await initiateWalleePayment(
-			walleeDialogAmount.value,
+			amount,
 			props.currency,
 			walleeSelectedTerminal.value
 		)
@@ -1987,6 +2088,7 @@ function pollWalleePaymentStatus() {
 
 /**
  * Cancel the current terminal payment
+ * Note: Does NOT close the dialog - just resets state so user can modify amount and retry
  */
 async function cancelWalleeTerminalPayment() {
 	if (!walleeCurrentTransaction.value) return
@@ -1997,15 +2099,17 @@ async function cancelWalleeTerminalPayment() {
 		await cancelWalleePaymentAPI(walleeCurrentTransaction.value)
 		walleePaymentInProgress.value = false
 		walleePaymentError.value = false
-		walleePaymentStatus.value = __('Payment cancelled')
 		walleeCurrentTransaction.value = null
 
-		// Close dialog after a brief delay
+		// Show success message briefly, then clear it
+		walleePaymentStatus.value = __('Payment cancelled')
 		setTimeout(() => {
-			closeWalleeDialog()
-		}, 1000)
+			walleePaymentStatus.value = ''
+		}, 2000)
 	} catch (e) {
 		log.error('[PaymentDialog] Failed to cancel payment:', e)
+		walleePaymentInProgress.value = false
+		walleePaymentError.value = true
 		walleePaymentStatus.value = __('Failed to cancel payment. Please cancel on the terminal.')
 	}
 }
@@ -2017,6 +2121,58 @@ function retryWalleePayment() {
 	walleePaymentError.value = false
 	walleePaymentStatus.value = ''
 	walleeCurrentTransaction.value = null
+}
+
+/**
+ * Numpad input handler
+ */
+function walleeNumpadInput(char) {
+	if (walleePaymentInProgress.value) return
+
+	let current = walleeInputAmount.value || ''
+
+	// Handle decimal point
+	if (char === '.') {
+		if (current.includes('.')) return // Only one decimal point allowed
+		if (current === '') current = '0'
+	}
+
+	// Prevent leading zeros (except before decimal)
+	if (char === '0' && current === '0') return
+	if (char !== '.' && current === '0') current = ''
+
+	// Limit decimal places to 2
+	if (current.includes('.')) {
+		const parts = current.split('.')
+		if (parts[1] && parts[1].length >= 2) return
+	}
+
+	current += char
+
+	// Validate not exceeding remaining amount
+	const amount = parseFloat(current) || 0
+	if (amount > remainingAmount.value) {
+		current = remainingAmount.value.toFixed(2)
+	}
+
+	walleeInputAmount.value = current
+}
+
+/**
+ * Numpad backspace handler
+ */
+function walleeNumpadBackspace() {
+	if (walleePaymentInProgress.value) return
+	const current = walleeInputAmount.value || ''
+	walleeInputAmount.value = current.slice(0, -1)
+}
+
+/**
+ * Numpad clear handler - reset to remaining amount
+ */
+function walleeNumpadClear() {
+	if (walleePaymentInProgress.value) return
+	walleeInputAmount.value = remainingAmount.value.toFixed(2)
 }
 
 // Load Wallee payment mode when POS profile changes
