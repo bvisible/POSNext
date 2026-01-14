@@ -797,6 +797,10 @@ const loadingPaymentMethods = ref(false)
 const lastSelectedMethod = ref(null)
 const customAmount = ref("")
 const paymentEntries = ref([])
+
+// Wallee terminal payment integration
+const walleePaymentMode = ref(null)
+const walleeLockedPayments = ref([])
 const customerCredit = ref([])
 const customerBalance = ref({ total_outstanding: 0, total_credit: 0, net_balance: 0 })
 const loadingCredit = ref(false)
@@ -1474,7 +1478,7 @@ watch(
 	{ immediate: true } // Load immediately if posProfile is already set
 )
 
-watch(show, (newVal) => {
+watch(show, async (newVal) => {
 	if (newVal) {
 		// Reset state when dialog opens
 		paymentEntries.value = []
@@ -1486,6 +1490,7 @@ watch(show, (newVal) => {
 		customerBalance.value = { total_outstanding: 0, total_credit: 0, net_balance: 0 }
 		selectedSalesPersons.value = []
 		salesPersonSearch.value = ''
+		walleeLockedPayments.value = []
 		// Set default delivery date to today for Sales Orders
 		deliveryDate.value = isSalesOrder.value ? today : ""
 
@@ -1496,6 +1501,40 @@ watch(show, (newVal) => {
 			company: props.company,
 			posProfile: props.posProfile
 		})
+
+		// Load Wallee payment mode setting from POS Profile
+		if (props.posProfile && !walleePaymentMode.value) {
+			try {
+				const result = await frappe.db.get_value(
+					'POS Profile',
+					props.posProfile,
+					'wallee_terminal_payment_mode'
+				)
+				walleePaymentMode.value = result?.message?.wallee_terminal_payment_mode || null
+				log.debug('[PaymentDialog] Wallee payment mode:', walleePaymentMode.value)
+			} catch (e) {
+				log.warn('[PaymentDialog] Could not load Wallee payment mode:', e)
+			}
+		}
+
+		// Restore captured Wallee payments from localStorage
+		if (window.wallee_integration?.captured_payments) {
+			const invoiceRef = getInvoiceReference()
+			const captured = window.wallee_integration.captured_payments.get(invoiceRef)
+			if (captured) {
+				log.debug('[PaymentDialog] Restoring Wallee payment from localStorage:', captured)
+				const lockedEntry = {
+					mode_of_payment: captured.mode_of_payment || walleePaymentMode.value,
+					amount: captured.amount,
+					type: 'Card',
+					is_locked: true,
+					is_wallee_payment: true,
+					transaction_name: captured.transaction_name
+				}
+				paymentEntries.value.push(lockedEntry)
+				walleeLockedPayments.value.push(lockedEntry)
+			}
+		}
 
 		// Set default payment method if already loaded
 		if (paymentMethods.value.length > 0 && !lastSelectedMethod.value) {
@@ -1538,6 +1577,98 @@ watch(show, (newVal) => {
 function selectPaymentMethod(method) {
 	lastSelectedMethod.value = method
 	log.debug('[PaymentDialog] Selected payment method:', method.mode_of_payment)
+}
+
+// ===========================================
+// Wallee Terminal Payment Integration
+// ===========================================
+
+/**
+ * Get a reference for the current invoice (for localStorage tracking)
+ */
+function getInvoiceReference() {
+	// Try to get from cart store or generate a draft reference
+	return `draft_${props.posProfile}_${Date.now()}`
+}
+
+/**
+ * Check if a method is the Wallee terminal payment mode
+ */
+function isWalleePaymentMode(modeName) {
+	if (!walleePaymentMode.value || !modeName) return false
+	return walleePaymentMode.value.toLowerCase() === modeName.toLowerCase()
+}
+
+/**
+ * Check if a payment entry is locked (from Wallee)
+ */
+function isLockedPayment(entry) {
+	return entry.is_locked === true || entry.is_wallee_payment === true
+}
+
+/**
+ * Open the Wallee terminal payment dialog
+ */
+async function openWalleeTerminalDialog(method) {
+	if (!window.wallee_integration?.show_terminal_payment) {
+		frappe.msgprint({
+			title: __('Error'),
+			indicator: 'red',
+			message: __('Wallee Terminal integration is not loaded. Please refresh the page.')
+		})
+		return
+	}
+
+	const invoiceRef = getInvoiceReference()
+
+	log.debug('[PaymentDialog] Opening Wallee terminal dialog:', {
+		amount: remainingAmount.value,
+		currency: props.currency,
+		method: method.mode_of_payment
+	})
+
+	window.wallee_integration.show_terminal_payment({
+		amount: remainingAmount.value,
+		currency: props.currency,
+		pos_profile: props.posProfile,
+		max_amount: remainingAmount.value,
+		invoice_reference: invoiceRef,
+		mode_of_payment: method.mode_of_payment,
+		on_success: (result) => {
+			log.debug('[PaymentDialog] Wallee payment success:', result)
+
+			// Add as locked payment entry
+			const walletPaymentEntry = {
+				mode_of_payment: method.mode_of_payment,
+				amount: result.amount,
+				type: 'Card',
+				is_locked: true,
+				is_wallee_payment: true,
+				transaction_name: result.transaction_name
+			}
+
+			paymentEntries.value.push(walletPaymentEntry)
+			walleeLockedPayments.value.push(walletPaymentEntry)
+
+			// Select next payment method if there's remaining amount
+			if (remainingAmount.value > 0) {
+				const nextMethod = getDefaultNonWalletMethod()
+				if (nextMethod) {
+					lastSelectedMethod.value = nextMethod
+				}
+			}
+		},
+		on_failure: (error) => {
+			log.error('[PaymentDialog] Wallee payment failed:', error)
+			frappe.show_alert({
+				message: error.reason || __('Payment failed'),
+				indicator: 'red'
+			})
+		},
+		on_cancel: () => {
+			log.debug('[PaymentDialog] Wallee payment cancelled')
+		}
+	})
 }
 
 // Helper to get default non-wallet payment method
@@ -1632,6 +1763,14 @@ const {
 
 // Wrapper handlers to pass method to composable
 function onPaymentMethodDown(method, event) {
+	// Check if this is the Wallee terminal payment mode
+	if (isWalleePaymentMode(method.mode_of_payment)) {
+		event.preventDefault()
+		event.stopPropagation()
+		openWalleeTerminalDialog(method)
+		return
+	}
+
 	handlePointerDown(event, method)
 }
 
@@ -1776,6 +1915,13 @@ function completePayment() {
 	}
 
 	log.debug('[PaymentDialog] Emitting payment-completed:', paymentData)
+
+	// Clear Wallee localStorage for this invoice
+	if (walleeLockedPayments.value.length > 0 && window.wallee_integration?.captured_payments) {
+		const invoiceRef = getInvoiceReference()
+		window.wallee_integration.captured_payments.remove(invoiceRef)
+		log.debug('[PaymentDialog] Cleared Wallee localStorage for:', invoiceRef)
+	}
 
 	emit("payment-completed", paymentData)
 
