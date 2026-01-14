@@ -925,8 +925,6 @@ const walleePaymentStatus = ref('')
 const walleePaymentError = ref(false)
 const walleePaymentInProgress = ref(false)
 const walleeCurrentTransaction = ref(null)
-const walleeLockedPayments = ref([])
-const walleePaymentMode = ref(null) // The Mode of Payment configured for Wallee in POS Profile
 const walleeCurrentMethod = ref(null) // The payment method being used
 
 // Delivery date for Sales Orders
