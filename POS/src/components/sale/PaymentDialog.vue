@@ -2147,10 +2147,15 @@ function pollWalleePaymentStatus() {
 			const status = await checkWalleePaymentStatus(walleeCurrentTransaction.value)
 			log.debug('[PaymentDialog] Payment status:', status)
 
-			if (status.status === 'Completed' || status.status === 'COMPLETED') {
+			// Use the backend's completed/failed flags which handle all status variations
+			// (Completed, Fulfill, COMPLETED, etc.)
+			if (status.completed) {
 				// Payment successful
 				walleePaymentInProgress.value = false
 				walleePaymentStatus.value = __('Payment successful!')
+
+				// Clean up Till connection
+				cleanupWalleeTillConnection()
 
 				// Add as locked payment entry
 				const walletPaymentEntry = {
@@ -2173,8 +2178,7 @@ function pollWalleePaymentStatus() {
 				return
 			}
 
-			if (status.status === 'Failed' || status.status === 'FAILED' ||
-			    status.status === 'Voided' || status.status === 'VOIDED') {
+			if (status.failed) {
 				// Check if this is a user-initiated cancel
 				const failureReason = status.failure_reason || ''
 				const isCanceled = walleeCanceledByUser.value || failureReason.toLowerCase().includes('cancel')
