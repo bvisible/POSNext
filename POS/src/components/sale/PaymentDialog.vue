@@ -722,7 +722,7 @@ import { useLongPress } from "@/composables/useLongPress"
 
 const log = logger.create('PaymentDialog')
 const settingsStore = usePOSSettingsStore()
-const { showWarning } = useToast()
+const { showWarning, showError, showSuccess } = useToast()
 
 const props = defineProps({
 	modelValue: Boolean,
@@ -1505,12 +1505,12 @@ watch(show, async (newVal) => {
 		// Load Wallee payment mode setting from POS Profile
 		if (props.posProfile && !walleePaymentMode.value) {
 			try {
-				const result = await frappe.db.get_value(
-					'POS Profile',
-					props.posProfile,
-					'wallee_terminal_payment_mode'
-				)
-				walleePaymentMode.value = result?.message?.wallee_terminal_payment_mode || null
+				const result = await call('frappe.client.get_value', {
+					doctype: 'POS Profile',
+					filters: { name: props.posProfile },
+					fieldname: 'wallee_terminal_payment_mode'
+				})
+				walleePaymentMode.value = result?.wallee_terminal_payment_mode || null
 				log.debug('[PaymentDialog] Wallee payment mode:', walleePaymentMode.value)
 
 				// If Wallee mode is configured, load the scripts dynamically
@@ -1669,20 +1669,12 @@ async function openWalleeTerminalDialog(method) {
 		try {
 			const loaded = await loadWalleeScripts()
 			if (!loaded) {
-				frappe.msgprint({
-					title: __('Error'),
-					indicator: 'red',
-					message: __('Wallee Terminal integration could not be loaded. Please refresh the page.')
-				})
+				showError(__('Wallee Terminal integration could not be loaded. Please refresh the page.'))
 				return
 			}
 		} catch (e) {
 			log.error('[PaymentDialog] Failed to load Wallee scripts:', e)
-			frappe.msgprint({
-				title: __('Error'),
-				indicator: 'red',
-				message: __('Wallee Terminal integration is not available. Please refresh the page.')
-			})
+			showError(__('Wallee Terminal integration is not available. Please refresh the page.'))
 			return
 		}
 	}
@@ -1728,10 +1720,7 @@ async function openWalleeTerminalDialog(method) {
 		},
 		on_failure: (error) => {
 			log.error('[PaymentDialog] Wallee payment failed:', error)
-			frappe.show_alert({
-				message: error.reason || __('Payment failed'),
-				indicator: 'red'
-			})
+			showError(error.reason || __('Payment failed'))
 		},
 		on_cancel: () => {
 			log.debug('[PaymentDialog] Wallee payment cancelled')
