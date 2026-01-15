@@ -1854,10 +1854,15 @@ async function getWalleeTerminals() {
  */
 async function initiateWalleePayment(amount, currency, terminal) {
 	try {
+		// Get customer name if it's an object
+		const customerName = typeof props.customer === 'object' ? props.customer?.name : props.customer
+
 		const result = await call('wallee_integration.wallee_integration.api.pos.initiate_terminal_payment', {
 			amount: amount,
 			currency: currency,
-			terminal: terminal
+			terminal: terminal,
+			customer: customerName || null,
+			pos_profile: props.posProfile || null
 		})
 		return result
 	} catch (e) {
