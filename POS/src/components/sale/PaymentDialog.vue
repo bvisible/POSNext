@@ -2066,14 +2066,30 @@ async function openWalleeTerminalDialog(method) {
 
 /**
  * Close the Wallee dialog
+ * If a payment is in progress, cancel it on the terminal first
  */
-function closeWalleeDialog() {
+async function closeWalleeDialog() {
+	// If payment is in progress, cancel it on the terminal
+	if (walleePaymentInProgress.value && walleeCurrentTransaction.value) {
+		try {
+			// Cancel on terminal via Till SDK
+			if (walleeTillConnection.value) {
+				walleeTillConnection.value.cancel()
+			}
+			// Also call backend API
+			await cancelWalleePaymentAPI(walleeCurrentTransaction.value)
+		} catch (e) {
+			log.warn('[PaymentDialog] Failed to cancel payment on close:', e)
+		}
+	}
+
 	// Clean up Till WebSocket connection
 	cleanupWalleeTillConnection()
 
 	showWalleeDialog.value = false
 	walleePaymentStatus.value = ''
 	walleePaymentError.value = false
+	walleePaymentInProgress.value = false
 	walleeCurrentTransaction.value = null
 	walleeCurrentMethod.value = null
 }
