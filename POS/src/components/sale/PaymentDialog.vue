@@ -709,7 +709,10 @@
 			<!-- Wallee Terminal Payment Dialog Overlay -->
 			<div
 				v-if="showWalleeDialog"
-				class="absolute inset-0 z-50 flex items-center justify-center bg-black/50 rounded-lg"
+				ref="walleeDialogRef"
+				tabindex="0"
+				@keydown="handleWalleeKeydown"
+				class="absolute inset-0 z-50 flex items-center justify-center bg-black/50 rounded-lg outline-none"
 			>
 				<div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
 					<!-- Header -->
@@ -1012,6 +1015,7 @@ const walleeCurrentMethod = ref(null) // The payment method being used
 const walleeInputAmount = ref('') // The amount entered via numpad (as string)
 const walleeCanceledByUser = ref(false) // Flag to track if cancel was initiated by user
 const walleeTillConnection = ref(null) // WebSocket connection to terminal for real-time control
+const walleeDialogRef = ref(null) // Ref to dialog for keyboard focus
 
 // Computed: Can start payment (amount > 0 and <= remaining)
 const walleeCanStartPayment = computed(() => {
@@ -2353,6 +2357,66 @@ function walleeNumpadClear() {
 	if (walleePaymentInProgress.value) return
 	walleeInputAmount.value = remainingAmount.value.toFixed(2)
 }
+
+/**
+ * Handle keyboard input for Wallee dialog
+ */
+function handleWalleeKeydown(event) {
+	if (walleePaymentInProgress.value) return
+
+	const key = event.key
+
+	// Digits 0-9
+	if (/^[0-9]$/.test(key)) {
+		event.preventDefault()
+		walleeNumpadInput(key)
+		return
+	}
+
+	// Decimal point
+	if (key === '.' || key === ',') {
+		event.preventDefault()
+		walleeNumpadInput('.')
+		return
+	}
+
+	// Backspace - delete last character
+	if (key === 'Backspace') {
+		event.preventDefault()
+		walleeNumpadBackspace()
+		return
+	}
+
+	// Delete - clear all
+	if (key === 'Delete') {
+		event.preventDefault()
+		walleeInputAmount.value = ''
+		return
+	}
+
+	// Enter - start payment if valid
+	if (key === 'Enter' && walleeCanStartPayment.value) {
+		event.preventDefault()
+		startWalleePayment()
+		return
+	}
+
+	// Escape - close dialog (if not in progress)
+	if (key === 'Escape' && !walleePaymentInProgress.value) {
+		event.preventDefault()
+		closeWalleeDialog()
+		return
+	}
+}
+
+// Auto-focus Wallee dialog when it opens
+watch(showWalleeDialog, (isOpen) => {
+	if (isOpen) {
+		nextTick(() => {
+			walleeDialogRef.value?.focus()
+		})
+	}
+})
 
 // Load Wallee payment mode when POS profile changes
 watch(
