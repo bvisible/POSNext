@@ -14,6 +14,12 @@ const routes = [
 		path: "/account/login",
 		component: () => import("@/pages/Login.vue"),
 	},
+	{
+		name: "CustomerDisplay",
+		path: "/display",
+		component: () => import("@/pages/CustomerDisplay.vue"),
+		meta: { allowGuest: true }, // Allow access without session login
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",
@@ -35,6 +41,12 @@ router.beforeEach((to, from, next) => {
 		console.log(
 			`[Router] ${to.name} (from: ${from.name || "initial"}), auth: ${isLoggedIn}`,
 		)
+	}
+
+	// Allow guest access to routes with meta.allowGuest (e.g., CustomerDisplay)
+	if (to.meta?.allowGuest) {
+		next()
+		return
 	}
 
 	// Redirect logic

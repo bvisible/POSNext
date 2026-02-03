@@ -957,6 +957,7 @@ import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
 import { usePOSEvents } from "@/composables/usePOSEvents";
 import { useLocale } from "@/composables/useLocale";
+import { useCustomerDisplaySync } from "@/composables/useCustomerDisplaySync";
 import { session } from "@/data/session";
 import { useUserData } from "@/data/user";
 import { parseError } from "@/utils/errorHandler";
@@ -994,6 +995,13 @@ const settingsStore = posSettingsStore;
 
 // Real-time stock updates
 const { onStockUpdate } = useRealtimeStock();
+
+// Customer display sync
+const {
+	enableSync: enableDisplaySync,
+	disableSync: disableDisplaySync,
+	notifySaleComplete,
+} = useCustomerDisplaySync();
 
 // POS Events system
 const {
@@ -1306,6 +1314,14 @@ onMounted(async () => {
 				} else {
 					await offlineStore.checkOfflineCacheAvailability();
 				}
+
+				// Enable customer display sync
+				if (shiftStore.currentShift?.name) {
+					enableDisplaySync(
+						shiftStore.currentShift.name,
+						shiftStore.currentProfile?.currency || "EUR"
+					);
+				}
 			}
 		}
 
@@ -1610,6 +1626,14 @@ async function handleShiftOpened() {
 		await posSettingsStore.loadSettings(shiftStore.profileName);
 		// Load tax rules with tax_inclusive setting
 		await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
+
+		// Enable customer display sync when new shift opens
+		if (shiftStore.currentShift?.name) {
+			enableDisplaySync(
+				shiftStore.currentShift.name,
+				shiftStore.currentProfile?.currency || "EUR"
+			);
+		}
 	}
 	showSuccess(__("You can now start making sales"));
 }
@@ -1617,6 +1641,9 @@ async function handleShiftOpened() {
 function handleShiftClosed() {
 	uiStore.showCloseShiftDialog = false;
 	showSuccess(__("Shift closed successfully"));
+
+	// Disable customer display sync when shift closes
+	disableDisplaySync();
 
 	// Check if logout should happen after closing shift
 	if (logoutAfterClose.value) {
@@ -1850,6 +1877,10 @@ async function handlePaymentCompleted(paymentData) {
 				paymentData.paid_amount
 			);
 			uiStore.showPaymentDialog = false;
+
+			// Notify customer display that sale is complete (even offline)
+			notifySaleComplete(cartStore.grandTotal, `OFFLINE-${Date.now()}`);
+
 			cartStore.clearCart();
 			// Reset cart hash after successful payment
 			previousCartHash = "";
@@ -1883,6 +1914,9 @@ async function handlePaymentCompleted(paymentData) {
 
 				// Refresh stock - Direct API (50-200ms), no Socket.IO lag!
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
+
+				// Notify customer display that sale is complete
+				notifySaleComplete(invoiceTotal, invoiceName);
 
 				if (shiftStore.autoPrintEnabled) {
 					try {
