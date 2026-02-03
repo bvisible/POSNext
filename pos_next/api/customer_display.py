@@ -354,6 +354,11 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
             "name"
         )
 
+    # Get default currency from POS profile or company
+    default_currency = profile.currency if profile.currency else frappe.db.get_value(
+        "Company", entry.company, "default_currency"
+    )
+
     # Create customer
     customer = frappe.get_doc({
         "doctype": "Customer",
@@ -363,7 +368,8 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
         "territory": territory,
         "mobile_no": mobile_no or "",
         "email_id": email or "",
-        "loyalty_program": loyalty_program
+        "loyalty_program": loyalty_program,
+        "default_currency": default_currency
     })
 
     customer.insert()
