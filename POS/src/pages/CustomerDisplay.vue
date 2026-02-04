@@ -83,7 +83,7 @@
 					enter-from-class="opacity-0 translate-x-full"
 					leave-to-class="opacity-0 translate-x-full"
 				>
-					<div v-if="showCreateCustomer" class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+					<div v-if="showCreateCustomer" class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-40">
 						<CreateCustomerModal
 							:show-address="displayStore.displaySettings.showAddressFields"
 							@close="showCreateCustomer = false"
@@ -94,7 +94,7 @@
 			</div>
 
 			<!-- Floating "Create Account" button (bottom right) -->
-			<div v-if="displayStore.displaySettings.enableAccountCreation" class="fixed bottom-8 right-8 z-40">
+			<div v-if="displayStore.displaySettings.enableAccountCreation" class="fixed bottom-8 right-8 z-30">
 				<button
 					class="flex items-center gap-3 px-6 py-4 text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95"
 					@click="showCreateCustomer = true"
@@ -140,6 +140,11 @@ async function handleProfileSelect() {
 // Handle customer created
 function handleCustomerCreated(customer) {
 	showCreateCustomer.value = false
+	// Immediately update cart with new customer (don't wait for realtime event)
+	if (customer) {
+		displayStore.cartData.customer = customer.name
+		displayStore.cartData.customer_name = customer.customer_name
+	}
 }
 
 // Try to restore session on mount

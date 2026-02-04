@@ -9,6 +9,7 @@
  * - Automatic sync on cart changes
  * - Sale complete notification
  * - Cart clear on session close
+ * - Customer created notification (from display)
  */
 
 import { createResource } from "frappe-ui"
@@ -17,6 +18,9 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { logger } from "@/utils/logger"
 
 const log = logger.create("CustomerDisplaySync")
+
+// Event handler for customer created from display
+let customerCreatedHandler = null
 
 // Debounce delay for cart sync
 const SYNC_DEBOUNCE_MS = 300
@@ -130,6 +134,9 @@ async function clearDisplayCart() {
 	}
 }
 
+// Customer created callback storage
+let onCustomerCreatedCallback = null
+
 /**
  * Main composable
  */
@@ -155,6 +162,9 @@ export function useCustomerDisplaySync() {
 		// Setup watchers for cart changes
 		setupWatchers(currency)
 
+		// Setup listener for customer created from display
+		setupCustomerCreatedListener(posOpeningEntry)
+
 		// Do initial sync
 		syncCartToDisplay(cartStore, currency)
 
@@ -179,7 +189,74 @@ export function useCustomerDisplaySync() {
 			watcherCleanup = null
 		}
 
+		// Cleanup customer created listener
+		cleanupCustomerCreatedListener()
+
 		log.info("Customer display sync disabled")
+	}
+
+	/**
+	 * Setup listener for customer created from display
+	 * @param {string} posOpeningEntry - POS Opening Entry name
+	 */
+	function setupCustomerCreatedListener(posOpeningEntry) {
+		// Cleanup existing listener first
+		cleanupCustomerCreatedListener()
+
+		if (!window.frappe?.realtime) {
+			log.warn("Socket.IO not available for customer created listener")
+			return
+		}
+
+		const eventName = `customer_created_${posOpeningEntry}`
+
+		customerCreatedHandler = (data) => {
+			// Only process if created from customer display
+			if (data.created_from !== "customer_display") {
+				return
+			}
+
+			log.info("Customer created from display", {
+				name: data.name,
+				customerName: data.customer_name,
+			})
+
+			// Call the registered callback if any
+			if (onCustomerCreatedCallback) {
+				onCustomerCreatedCallback(data)
+			}
+		}
+
+		window.frappe.realtime.on(eventName, customerCreatedHandler)
+		log.debug("Customer created listener setup", { eventName })
+	}
+
+	/**
+	 * Cleanup customer created listener
+	 */
+	function cleanupCustomerCreatedListener() {
+		if (!customerCreatedHandler || !currentPosOpeningEntry.value) {
+			return
+		}
+
+		if (window.frappe?.realtime) {
+			const eventName = `customer_created_${currentPosOpeningEntry.value}`
+			window.frappe.realtime.off(eventName, customerCreatedHandler)
+			log.debug("Customer created listener cleaned up")
+		}
+
+		customerCreatedHandler = null
+	}
+
+	/**
+	 * Register callback for when customer is created from display
+	 * @param {Function} callback - Callback function: (customerData) => void
+	 */
+	function onCustomerCreated(callback) {
+		if (typeof callback !== "function") {
+			throw new TypeError("Callback must be a function")
+		}
+		onCustomerCreatedCallback = callback
 	}
 
 	/**
@@ -239,5 +316,8 @@ export function useCustomerDisplaySync() {
 		forceSync,
 		notifySaleComplete,
 		clearDisplayCart,
+
+		// Customer created from display
+		onCustomerCreated,
 	}
 }

@@ -392,6 +392,11 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		// Customer created handler (from main POS)
 		const handleCustomerCreated = (data) => {
 			log.info("Customer created notification", data)
+			// Update displayed customer if created from display
+			if (data.created_from === "customer_display") {
+				cartData.value.customer = data.name
+				cartData.value.customer_name = data.customer_name
+			}
 		}
 
 		// Subscribe to events

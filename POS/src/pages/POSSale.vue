@@ -660,6 +660,49 @@
 				</template>
 			</Dialog>
 
+			<!-- Customer Created from Display Dialog -->
+			<Dialog
+				v-model="uiStore.showCustomerCreatedDialog"
+				:options="{ title: __('New Customer'), size: 'sm' }"
+			>
+				<template #body-content>
+					<div class="py-4 text-center">
+						<div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 mb-4">
+							<svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+							</svg>
+						</div>
+						<p class="text-gray-700 text-base mb-2">
+							{{ __("Customer created from display:") }}
+						</p>
+						<p class="font-semibold text-lg text-gray-900">
+							{{ uiStore.customerCreatedData?.customer_name }}
+						</p>
+						<p class="text-sm text-gray-500 mt-1">
+							{{ __("Do you want to select this customer for the current sale?") }}
+						</p>
+					</div>
+				</template>
+				<template #actions>
+					<div class="flex gap-2 w-full">
+						<Button
+							class="flex-1"
+							variant="subtle"
+							@click="uiStore.clearCustomerCreatedNotification()"
+						>
+							{{ __("No") }}
+						</Button>
+						<Button
+							class="flex-1"
+							variant="solid"
+							@click="selectCustomerFromDisplay"
+						>
+							{{ __("Yes, select") }}
+						</Button>
+					</div>
+				</template>
+			</Dialog>
+
 			<!-- Logout Confirmation Dialog -->
 			<Dialog
 				v-model="uiStore.showLogoutDialog"
@@ -1001,6 +1044,7 @@ const {
 	enableSync: enableDisplaySync,
 	disableSync: disableDisplaySync,
 	notifySaleComplete,
+	onCustomerCreated,
 } = useCustomerDisplaySync();
 
 // POS Events system
@@ -1321,6 +1365,12 @@ onMounted(async () => {
 						shiftStore.currentShift.name,
 						shiftStore.currentProfile?.currency || "EUR"
 					);
+
+					// Register callback for customer created from display
+					onCustomerCreated((customerData) => {
+						log.info("Customer created from display notification", customerData);
+						uiStore.showCustomerCreatedNotification(customerData);
+					});
 				}
 			}
 		}
@@ -1965,6 +2015,21 @@ function confirmClearCart() {
 	previousCartHash = "";
 	uiStore.showClearCartDialog = false;
 	showSuccess(__("All items removed from cart"));
+}
+
+/**
+ * Select customer created from customer display
+ */
+function selectCustomerFromDisplay() {
+	const customerData = uiStore.customerCreatedData;
+	if (customerData) {
+		cartStore.setCustomer({
+			name: customerData.name,
+			customer_name: customerData.customer_name,
+		});
+		showSuccess(__("Customer {0} selected", [customerData.customer_name]));
+	}
+	uiStore.clearCustomerCreatedNotification();
 }
 
 async function handleOptionSelected(option) {

@@ -50,18 +50,82 @@
 				/>
 			</div>
 
-			<!-- Mobile number -->
+			<!-- Mobile Number with Country Code Selector -->
 			<div class="space-y-1">
 				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
 					{{ __("Mobile Number") }}
 				</label>
-				<input
-					v-model="form.mobile_no"
-					type="tel"
-					:placeholder="__('Phone number')"
-					class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					:disabled="isSubmitting"
-				/>
+				<div class="flex gap-2">
+					<!-- Country Code Dropdown -->
+					<div class="relative" ref="dropdownRef">
+						<button
+							type="button"
+							@click="showCountryDropdown = !showCountryDropdown"
+							class="flex items-center gap-1 w-24 ps-2 pe-1 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
+							:disabled="isSubmitting"
+						>
+							<img
+								:src="`https://flagcdn.com/h24/${currentCountryCode}.png`"
+								:alt="currentCountryCode"
+								class="w-6 h-auto rounded-sm"
+								@error="handleFlagError"
+							/>
+							<span class="flex-1 text-start">{{ selectedCountryCode || "+33" }}</span>
+							<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+						</button>
+
+						<!-- Country Search Dropdown -->
+						<div
+							v-if="showCountryDropdown"
+							class="absolute start-0 z-50 mt-1 w-72 max-h-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
+						>
+							<div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 p-2">
+								<input
+									ref="countrySearchRef"
+									v-model="countrySearchQuery"
+									type="text"
+									:placeholder="__('Search country...')"
+									class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+									@keydown.escape="showCountryDropdown = false"
+								/>
+							</div>
+							<div class="overflow-y-auto max-h-48">
+								<button
+									v-for="country in filteredCountries"
+									:key="country.code"
+									type="button"
+									@click="selectCountry(country)"
+									class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-start"
+									:class="{ 'bg-blue-50 dark:bg-blue-900/30': selectedCountryCode === country.isd }"
+								>
+									<img
+										:src="`https://flagcdn.com/h24/${country.code.toLowerCase()}.png`"
+										:alt="country.name"
+										class="w-5 h-auto rounded-sm shadow-sm"
+										@error="(e) => (e.target.style.display = 'none')"
+									/>
+									<span class="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{{ country.name }}</span>
+									<span class="text-sm text-gray-500 dark:text-gray-400">{{ country.isd }}</span>
+								</button>
+								<div v-if="filteredCountries.length === 0" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+									{{ __("No countries found") }}
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Phone Number Input -->
+					<input
+						v-model="phoneNumber"
+						type="tel"
+						:placeholder="__('Phone number')"
+						class="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-start"
+						:disabled="isSubmitting"
+						@input="updateMobileNumber"
+					/>
+				</div>
 			</div>
 
 			<!-- Address fields (conditional) -->
@@ -153,8 +217,9 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
-import { reactive, ref, computed } from "vue"
+import { reactive, ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
+import { useCountriesStore } from "@/stores/countries"
 
 const props = defineProps({
 	showAddress: {
@@ -166,6 +231,7 @@ const props = defineProps({
 const emit = defineEmits(["close", "created"])
 
 const displayStore = useCustomerDisplayStore()
+const countriesStore = useCountriesStore()
 
 // Get default country from session (company country)
 const defaultCountry = displayStore.sessionInfo?.country || ""
@@ -181,8 +247,91 @@ const form = reactive({
 	country: defaultCountry,
 })
 
+// Phone number with country code
+const selectedCountryCode = ref("")
+const phoneNumber = ref("")
+const showCountryDropdown = ref(false)
+const countrySearchQuery = ref("")
+const dropdownRef = ref(null)
+const countrySearchRef = ref(null)
+
 const isSubmitting = ref(false)
 const error = ref(null)
+
+// Computed for country code display
+const currentCountryCode = computed(() => {
+	const country = countriesStore.countries.find((c) => c.isd === selectedCountryCode.value)
+	return country?.code.toLowerCase() || "fr"
+})
+
+const filteredCountries = computed(() => {
+	if (!countrySearchQuery.value) return countriesStore.countries
+
+	const query = countrySearchQuery.value.toLowerCase()
+	return countriesStore.countries.filter(
+		(c) => c.name.toLowerCase().includes(query) || c.isd.includes(query) || c.code.toLowerCase().includes(query)
+	)
+})
+
+// Set country code from country name
+function setCountryFromName(countryName) {
+	if (!countryName) {
+		selectedCountryCode.value = "+33"
+		return
+	}
+
+	const isd = countriesStore.countryNameToISDMap[countryName]
+	if (isd) {
+		selectedCountryCode.value = isd
+	} else {
+		selectedCountryCode.value = "+33"
+	}
+}
+
+// Country dropdown handlers
+function handleFlagError(e) {
+	e.target.style.display = "none"
+}
+
+function selectCountry(country) {
+	selectedCountryCode.value = country.isd
+	showCountryDropdown.value = false
+	countrySearchQuery.value = ""
+	updateMobileNumber()
+}
+
+function updateMobileNumber() {
+	form.mobile_no = phoneNumber.value ? `${selectedCountryCode.value}-${phoneNumber.value}` : ""
+}
+
+function handleClickOutside(event) {
+	if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+		showCountryDropdown.value = false
+		countrySearchQuery.value = ""
+	}
+}
+
+// Watch for dropdown open to focus search
+watch(showCountryDropdown, async (isOpen) => {
+	if (isOpen) {
+		await nextTick()
+		countrySearchRef.value?.focus()
+	}
+})
+
+// Load countries on mount
+onMounted(async () => {
+	await countriesStore.loadCountries()
+	// Set default country code from company country
+	if (defaultCountry) {
+		setCountryFromName(defaultCountry)
+	}
+	document.addEventListener("click", handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+	document.removeEventListener("click", handleClickOutside)
+})
 
 async function handleSubmit() {
 	if (!form.customer_name) return
@@ -207,7 +356,7 @@ async function handleSubmit() {
 
 		const customer = await displayStore.createCustomer(customerData)
 
-		// Reset form (keep default country)
+		// Reset form (keep default country and country code)
 		form.customer_name = ""
 		form.email = ""
 		form.mobile_no = ""
@@ -215,6 +364,7 @@ async function handleSubmit() {
 		form.city = ""
 		form.pincode = ""
 		form.country = defaultCountry
+		phoneNumber.value = ""
 
 		// Emit created event
 		emit("created", customer)

@@ -27,9 +27,13 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	const { isOpen: showLogoutDialog } = useDialog("logout")
 	const { isOpen: showItemSelectionDialog } = useDialog("itemSelection")
 	const { isOpen: showErrorDialog } = useDialog("invoiceError")
+	const { isOpen: showCustomerCreatedDialog } = useDialog("customerCreated")
 
 	// Global dialog state
 	const { isAnyDialogOpen } = useDialogState()
+
+	// Customer created from display dialog state
+	const customerCreatedData = ref(null)
 
 	// Error dialog state
 	const errorDialogTitle = ref("")
@@ -108,6 +112,16 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		initialCustomerName.value = name
 	}
 
+	function showCustomerCreatedNotification(customerData) {
+		customerCreatedData.value = customerData
+		showCustomerCreatedDialog.value = true
+	}
+
+	function clearCustomerCreatedNotification() {
+		customerCreatedData.value = null
+		showCustomerCreatedDialog.value = false
+	}
+
 	// Layout actions
 	function clampLeftPanelWidth(width, containerWidth) {
 		const safeContainerWidth =
@@ -163,7 +177,9 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showLogoutDialog.value = false
 		showItemSelectionDialog.value = false
 		showErrorDialog.value = false
+		showCustomerCreatedDialog.value = false
 		clearError()
+		clearCustomerCreatedNotification()
 	}
 
 	return {
@@ -186,6 +202,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showLogoutDialog,
 		showItemSelectionDialog,
 		showErrorDialog,
+		showCustomerCreatedDialog,
 		isAnyDialogOpen,
 		errorDialogTitle,
 		errorDialogMessage,
@@ -197,6 +214,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		lastInvoiceTotal,
 		lastPaidAmount,
 		initialCustomerName,
+		customerCreatedData,
 		mobileActiveTab,
 		windowWidth,
 		leftPanelWidth,
@@ -213,6 +231,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		clearError,
 		showSuccess,
 		setInitialCustomerName,
+		showCustomerCreatedNotification,
+		clearCustomerCreatedNotification,
 		setLeftPanelWidth,
 		setResizing,
 		updateLayoutBounds,
