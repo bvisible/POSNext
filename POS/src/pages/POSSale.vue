@@ -1367,8 +1367,15 @@ onMounted(async () => {
 					);
 
 					// Register callback for customer created from display
-					onCustomerCreated((customerData) => {
+					onCustomerCreated(async (customerData) => {
 						log.info("Customer created from display notification", customerData);
+						// Add customer to search cache so they appear in search results
+						await customerSearchStore.addCustomerToCache({
+							name: customerData.name,
+							customer_name: customerData.customer_name,
+							mobile_no: customerData.mobile_no || "",
+							email_id: customerData.email || "",
+						});
 						uiStore.showCustomerCreatedNotification(customerData);
 					});
 				}
