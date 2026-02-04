@@ -363,7 +363,9 @@ const setCountryFromName = (countryName) => {
 	const isd = countriesStore.countryNameToISDMap[countryName]
 	if (isd) {
 		selectedCountryCode.value = isd
-		log.info(`Set country code to ${isd} for ${countryName}`)
+		// Also preselect country in address field
+		customerData.value.country = countryName
+		log.info(`Set country code to ${isd} and address country to ${countryName}`)
 	} else {
 		log.warn(`Country "${countryName}" not found`)
 		selectedCountryCode.value = "+20"

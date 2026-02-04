@@ -167,6 +167,9 @@ const emit = defineEmits(["close", "created"])
 
 const displayStore = useCustomerDisplayStore()
 
+// Get default country from session (company country)
+const defaultCountry = displayStore.sessionInfo?.country || ""
+
 const form = reactive({
 	customer_name: "",
 	email: "",
@@ -175,7 +178,7 @@ const form = reactive({
 	address_line1: "",
 	city: "",
 	pincode: "",
-	country: "",
+	country: defaultCountry,
 })
 
 const isSubmitting = ref(false)
@@ -204,14 +207,14 @@ async function handleSubmit() {
 
 		const customer = await displayStore.createCustomer(customerData)
 
-		// Reset form
+		// Reset form (keep default country)
 		form.customer_name = ""
 		form.email = ""
 		form.mobile_no = ""
 		form.address_line1 = ""
 		form.city = ""
 		form.pincode = ""
-		form.country = ""
+		form.country = defaultCountry
 
 		// Emit created event
 		emit("created", customer)

@@ -131,6 +131,11 @@ def get_pos_opening_entry(pos_profile):
     # Get POS profile details
     profile = frappe.get_cached_doc("POS Profile", pos_profile)
 
+    # Get company country for address preselection
+    company_country = None
+    if open_entry.company:
+        company_country = frappe.db.get_value("Company", open_entry.company, "country")
+
     return {
         "pos_opening_entry": open_entry.name,
         "user": open_entry.user,
@@ -138,7 +143,8 @@ def get_pos_opening_entry(pos_profile):
         "company": open_entry.company,
         "period_start_date": open_entry.period_start_date,
         "currency": profile.currency,
-        "warehouse": profile.warehouse
+        "warehouse": profile.warehouse,
+        "country": company_country
     }
 
 
