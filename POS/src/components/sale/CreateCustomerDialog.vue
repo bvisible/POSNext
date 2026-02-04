@@ -246,6 +246,7 @@ import { usePOSPermissions } from "@/composables/usePermissions"
 import { useToast } from "@/composables/useToast"
 import { useCountriesStore } from "@/stores/countries"
 import { usePOSSettingsStore } from "@/stores/posSettings"
+import { usePOSShiftStore } from "@/stores/posShift"
 import { logger } from "@/utils/logger"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
@@ -258,6 +259,7 @@ const log = logger.create("CreateCustomerDialog")
 
 const countriesStore = useCountriesStore()
 const posSettingsStore = usePOSSettingsStore()
+const posShiftStore = usePOSShiftStore()
 const { canCreateCustomer } = usePOSPermissions()
 const { showSuccess, showError } = useToast()
 
@@ -522,6 +524,7 @@ const handleCreate = async () => {
 				territory: customerData.value.territory || "All Territories",
 				mobile_no: customerData.value.mobile_no || "",
 				email_id: customerData.value.email_id || "",
+				default_currency: posShiftStore.profileCurrency || "CHF",
 			},
 		})
 
