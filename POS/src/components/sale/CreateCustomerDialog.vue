@@ -524,7 +524,7 @@ const handleCreate = async () => {
 				territory: customerData.value.territory || "All Territories",
 				mobile_no: customerData.value.mobile_no || "",
 				email_id: customerData.value.email_id || "",
-				default_currency: posShiftStore.profileCurrency || "CHF",
+				default_currency: posShiftStore.profileCurrency,
 			},
 		})
 

@@ -111,10 +111,15 @@ def get_pos_profile_data(pos_profile):
 
 	profile_doc = frappe.get_doc("POS Profile", pos_profile)
 
+	# Get currency from profile, fallback to company default currency
+	currency = profile_doc.currency
+	if not currency and profile_doc.company:
+		currency = frappe.db.get_value("Company", profile_doc.company, "default_currency")
+
 	return {
 		"name": profile_doc.name,
 		"company": profile_doc.company,
-		"currency": profile_doc.currency,
+		"currency": currency,
 		"warehouse": profile_doc.warehouse,
 		"selling_price_list": profile_doc.selling_price_list,
 		"customer": profile_doc.customer,
