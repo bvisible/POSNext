@@ -407,16 +407,19 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
             frappe.log_error("Address creation failed", str(e))
 
     # Emit realtime event to notify POS
+    event_name = f"customer_created_{pos_opening_entry}"
+    event_data = {
+        "name": customer.name,
+        "customer_name": customer.customer_name,
+        "mobile_no": customer.mobile_no,
+        "email_id": customer.email_id,
+        "address": address_name,
+        "created_from": "customer_display"
+    }
+    frappe.logger().info(f"Emitting customer_created event: {event_name} with data: {event_data}")
     frappe.publish_realtime(
-        event=f"customer_created_{pos_opening_entry}",
-        message={
-            "name": customer.name,
-            "customer_name": customer.customer_name,
-            "mobile_no": customer.mobile_no,
-            "email_id": customer.email_id,
-            "address": address_name,
-            "created_from": "customer_display"
-        },
+        event=event_name,
+        message=event_data,
         user=None,
         after_commit=True
     )

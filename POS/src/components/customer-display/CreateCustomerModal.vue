@@ -4,7 +4,7 @@
 		<div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
 			<h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
 				<FeatherIcon name="user-plus" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-				{{ __("New Customer") }}
+				{{ __("My Information") }}
 			</h2>
 			<button
 				class="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
@@ -21,19 +21,34 @@
 				<p class="text-red-700 dark:text-red-300 text-sm">{{ error }}</p>
 			</div>
 
-			<!-- Customer name -->
-			<div class="space-y-1">
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-					{{ __("Customer Name") }} <span class="text-red-500 dark:text-red-400">*</span>
-				</label>
-				<input
-					v-model="form.customer_name"
-					type="text"
-					required
-					:placeholder="__('Enter customer name')"
-					class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					:disabled="isSubmitting"
-				/>
+			<!-- First Name and Last Name -->
+			<div class="grid grid-cols-2 gap-3">
+				<div class="space-y-1">
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+						{{ __("Your First Name") }} <span class="text-red-500 dark:text-red-400">*</span>
+					</label>
+					<input
+						v-model="form.first_name"
+						type="text"
+						required
+						:placeholder="__('First name')"
+						class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						:disabled="isSubmitting"
+					/>
+				</div>
+				<div class="space-y-1">
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+						{{ __("Your Last Name") }} <span class="text-red-500 dark:text-red-400">*</span>
+					</label>
+					<input
+						v-model="form.last_name"
+						type="text"
+						required
+						:placeholder="__('Last name')"
+						class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						:disabled="isSubmitting"
+					/>
+				</div>
 			</div>
 
 			<!-- Email -->
@@ -191,7 +206,7 @@
 		<!-- Footer -->
 		<div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
 			<button
-				:disabled="isSubmitting || !form.customer_name"
+				:disabled="isSubmitting || !form.first_name || !form.last_name"
 				class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-colors flex items-center justify-center gap-2"
 				@click="handleSubmit"
 			>
@@ -200,7 +215,7 @@
 					name="loader"
 					class="w-4 h-4 animate-spin"
 				/>
-				<span>{{ isSubmitting ? __("Creating...") : __("Create Customer") }}</span>
+				<span>{{ isSubmitting ? __("Submitting...") : __("Submit") }}</span>
 			</button>
 
 			<button
@@ -217,7 +232,15 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
-import { reactive, ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue"
+import {
+	reactive,
+	ref,
+	computed,
+	onMounted,
+	onBeforeUnmount,
+	nextTick,
+	watch,
+} from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 import { useCountriesStore } from "@/stores/countries"
 
@@ -237,7 +260,8 @@ const countriesStore = useCountriesStore()
 const defaultCountry = displayStore.sessionInfo?.country || ""
 
 const form = reactive({
-	customer_name: "",
+	first_name: "",
+	last_name: "",
 	email: "",
 	mobile_no: "",
 	// Address fields
@@ -260,7 +284,9 @@ const error = ref(null)
 
 // Computed for country code display
 const currentCountryCode = computed(() => {
-	const country = countriesStore.countries.find((c) => c.isd === selectedCountryCode.value)
+	const country = countriesStore.countries.find(
+		(c) => c.isd === selectedCountryCode.value,
+	)
 	return country?.code.toLowerCase() || "fr"
 })
 
@@ -269,7 +295,10 @@ const filteredCountries = computed(() => {
 
 	const query = countrySearchQuery.value.toLowerCase()
 	return countriesStore.countries.filter(
-		(c) => c.name.toLowerCase().includes(query) || c.isd.includes(query) || c.code.toLowerCase().includes(query)
+		(c) =>
+			c.name.toLowerCase().includes(query) ||
+			c.isd.includes(query) ||
+			c.code.toLowerCase().includes(query),
 	)
 })
 
@@ -301,7 +330,9 @@ function selectCountry(country) {
 }
 
 function updateMobileNumber() {
-	form.mobile_no = phoneNumber.value ? `${selectedCountryCode.value}-${phoneNumber.value}` : ""
+	form.mobile_no = phoneNumber.value
+		? `${selectedCountryCode.value}-${phoneNumber.value}`
+		: ""
 }
 
 function handleClickOutside(event) {
@@ -334,21 +365,22 @@ onBeforeUnmount(() => {
 })
 
 async function handleSubmit() {
-	if (!form.customer_name) return
+	if (!form.first_name || !form.last_name) return
 
 	isSubmitting.value = true
 	error.value = null
 
 	try {
 		const customerData = {
-			customer_name: form.customer_name.trim(),
+			customer_name: `${form.first_name.trim()} ${form.last_name.trim()}`,
 			email: form.email.trim() || null,
 			mobile_no: form.mobile_no.trim() || null,
 		}
 
 		// Add address fields if provided
 		if (props.showAddress) {
-			if (form.address_line1.trim()) customerData.address_line1 = form.address_line1.trim()
+			if (form.address_line1.trim())
+				customerData.address_line1 = form.address_line1.trim()
 			if (form.city.trim()) customerData.city = form.city.trim()
 			if (form.pincode.trim()) customerData.pincode = form.pincode.trim()
 			if (form.country.trim()) customerData.country = form.country.trim()
@@ -357,7 +389,8 @@ async function handleSubmit() {
 		const customer = await displayStore.createCustomer(customerData)
 
 		// Reset form (keep default country and country code)
-		form.customer_name = ""
+		form.first_name = ""
+		form.last_name = ""
 		form.email = ""
 		form.mobile_no = ""
 		form.address_line1 = ""
@@ -369,7 +402,7 @@ async function handleSubmit() {
 		// Emit created event
 		emit("created", customer)
 	} catch (err) {
-		error.value = err.message || __("Failed to create customer")
+		error.value = err.message || __("An error occurred. Please try again.")
 	} finally {
 		isSubmitting.value = false
 	}

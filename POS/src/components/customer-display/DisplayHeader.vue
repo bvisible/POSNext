@@ -4,8 +4,8 @@
 			<!-- Left: Logo and session info -->
 			<div class="flex items-center gap-4">
 				<div class="flex items-center gap-2">
-					<FeatherIcon name="monitor" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-					<span class="text-lg font-semibold text-gray-900 dark:text-white">{{ __("Customer Display") }}</span>
+					<FeatherIcon name="shopping-bag" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+					<span class="text-lg font-semibold text-gray-900 dark:text-white">{{ __("Your Order") }}</span>
 				</div>
 
 				<!-- Session info -->

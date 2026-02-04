@@ -12,7 +12,7 @@
 				<div class="text-6xl mb-4">
 					<FeatherIcon name="monitor" class="w-24 h-24 mx-auto text-gray-400 dark:text-gray-500" />
 				</div>
-				<h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ __("Customer Display") }}</h1>
+				<h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ __("Welcome") }}</h1>
 
 				<!-- Profile selector -->
 				<div class="max-w-md mx-auto space-y-4">
@@ -65,7 +65,7 @@
 								<FeatherIcon name="check-circle" class="w-32 h-32 mx-auto" />
 							</div>
 							<h1 class="text-6xl font-bold">{{ __("Thank You!") }}</h1>
-							<p class="text-3xl">{{ __("Have a nice day") }}</p>
+							<p class="text-3xl">{{ __("See you soon!") }}</p>
 							<p v-if="displayStore.lastSaleAmount" class="text-4xl font-semibold mt-4">
 								{{ formatCurrency(displayStore.lastSaleAmount) }}
 							</p>

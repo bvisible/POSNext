@@ -203,16 +203,32 @@ export function useCustomerDisplaySync() {
 		// Cleanup existing listener first
 		cleanupCustomerCreatedListener()
 
+		log.info("Setting up customer created listener", {
+			posOpeningEntry,
+			hasRealtime: !!window.frappe?.realtime,
+			realtimeConnected: window.frappe?.realtime?.socket?.connected,
+		})
+
 		if (!window.frappe?.realtime) {
 			log.warn("Socket.IO not available for customer created listener")
 			return
 		}
 
 		const eventName = `customer_created_${posOpeningEntry}`
+		log.info("Registering Socket.IO listener", { eventName })
 
 		customerCreatedHandler = (data) => {
+			log.info("Socket.IO event received", {
+				eventName,
+				data,
+				hasCallback: !!onCustomerCreatedCallback,
+			})
+
 			// Only process if created from customer display
 			if (data.created_from !== "customer_display") {
+				log.debug("Ignoring event - not from customer display", {
+					created_from: data.created_from,
+				})
 				return
 			}
 
@@ -223,12 +239,15 @@ export function useCustomerDisplaySync() {
 
 			// Call the registered callback if any
 			if (onCustomerCreatedCallback) {
+				log.info("Calling onCustomerCreatedCallback")
 				onCustomerCreatedCallback(data)
+			} else {
+				log.warn("No callback registered for customer created event")
 			}
 		}
 
 		window.frappe.realtime.on(eventName, customerCreatedHandler)
-		log.debug("Customer created listener setup", { eventName })
+		log.info("Customer created listener registered successfully", { eventName })
 	}
 
 	/**
@@ -257,6 +276,7 @@ export function useCustomerDisplaySync() {
 			throw new TypeError("Callback must be a function")
 		}
 		onCustomerCreatedCallback = callback
+		log.info("Customer created callback registered")
 	}
 
 	/**
@@ -272,7 +292,10 @@ export function useCustomerDisplaySync() {
 		const unwatch = watch(
 			[
 				() => cartStore.invoiceItems.length,
-				() => cartStore.invoiceItems.map((i) => `${i.item_code}:${i.quantity}:${i.rate}`).join(","),
+				() =>
+					cartStore.invoiceItems
+						.map((i) => `${i.item_code}:${i.quantity}:${i.rate}`)
+						.join(","),
 				() => cartStore.customer?.name || cartStore.customer,
 				() => cartStore.grandTotal,
 				() => cartStore.totalDiscount,
@@ -287,7 +310,7 @@ export function useCustomerDisplaySync() {
 					syncCartToDisplay(cartStore, currency)
 				}, SYNC_DEBOUNCE_MS)
 			},
-			{ deep: false }
+			{ deep: false },
 		)
 
 		watcherCleanup = unwatch

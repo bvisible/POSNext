@@ -3,8 +3,8 @@
 		<!-- Empty cart state -->
 		<div v-if="!displayStore.hasItems" class="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
 			<FeatherIcon name="shopping-cart" class="w-32 h-32 mb-6 opacity-30" />
-			<p class="text-2xl text-gray-600 dark:text-gray-400">{{ __("Cart is empty") }}</p>
-			<p class="text-lg mt-2 text-gray-400 dark:text-gray-600">{{ __("Items will appear here") }}</p>
+			<p class="text-2xl text-gray-600 dark:text-gray-400">{{ __("Your cart is empty") }}</p>
+			<p class="text-lg mt-2 text-gray-400 dark:text-gray-600">{{ __("Your items will appear here") }}</p>
 		</div>
 
 		<!-- Cart with items -->
@@ -97,7 +97,7 @@
 
 				<!-- Item count -->
 				<div class="text-center mt-4 text-gray-500">
-					{{ displayStore.itemCount }} {{ displayStore.itemCount === 1 ? __("item") : __("items") }}
+					{{ displayStore.itemCount }} {{ displayStore.itemCount === 1 ? __("item in your cart") : __("items in your cart") }}
 				</div>
 			</div>
 		</div>
