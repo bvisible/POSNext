@@ -1,7 +1,7 @@
 <template>
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
-			<div class="flex flex-col gap-6">
+			<div class="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-1">
 				<!-- Customer Name (Required) -->
 				<div>
 					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
@@ -133,13 +133,13 @@
 
 				<!-- Address Fields (conditional) -->
 				<template v-if="showAddressFields">
-					<div class="pt-4 border-t border-gray-200">
-						<h4 class="text-sm font-medium text-gray-700 mb-4">{{ __("Address") }}</h4>
+					<div class="pt-3 border-t border-gray-200">
+						<h4 class="text-sm font-medium text-gray-700 mb-2">{{ __("Address") }}</h4>
 					</div>
 
 					<!-- Address Line 1 -->
 					<div>
-						<label class="block text-start text-sm font-medium text-gray-700 mb-2">
+						<label class="block text-start text-sm font-medium text-gray-700 mb-1">
 							{{ __("Address Line 1") }}
 						</label>
 						<Input
@@ -150,9 +150,9 @@
 					</div>
 
 					<!-- City and Pincode -->
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label class="block text-start text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-start text-sm font-medium text-gray-700 mb-1">
 								{{ __("City") }}
 							</label>
 							<Input
@@ -162,7 +162,7 @@
 							/>
 						</div>
 						<div>
-							<label class="block text-start text-sm font-medium text-gray-700 mb-2">
+							<label class="block text-start text-sm font-medium text-gray-700 mb-1">
 								{{ __("Postal Code") }}
 							</label>
 							<Input
@@ -175,12 +175,12 @@
 
 					<!-- Country -->
 					<div>
-						<label class="block text-start text-sm font-medium text-gray-700 mb-2">
+						<label class="block text-start text-sm font-medium text-gray-700 mb-1">
 							{{ __("Country") }}
 						</label>
 						<select
 							v-model="customerData.country"
-							class="w-full px-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 						>
 							<option value="">{{ __("Select Country") }}</option>
 							<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
