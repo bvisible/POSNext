@@ -47,17 +47,17 @@ export function initRealtime() {
 
 	try {
 		// Build Socket.IO URL
-		const siteName = window.site_name || window.location.hostname
+		// Frappe's Socket.IO uses the site name as namespace, not as URL path
 		const host = window.location.hostname
 		const port = window.location.port
 		const protocol = window.location.protocol === "https:" ? "https" : "http"
 
-		// For production (no port), use same origin
+		// For production, use same origin (Socket.IO connects to same server)
 		// For development with socketio_port, use that port
 		const socketioPort = getSocketIOPort()
 		const url = socketioPort
-			? `${protocol}://${host}:${socketioPort}/${siteName}`
-			: `${protocol}://${host}${port ? `:${port}` : ""}/${siteName}`
+			? `${protocol}://${host}:${socketioPort}`
+			: `${protocol}://${host}${port ? `:${port}` : ""}`
 
 		log.info("Initializing Socket.IO realtime", { url })
 
