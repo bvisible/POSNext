@@ -25,6 +25,7 @@ import {
 import { logger } from "./utils/logger"
 import { offlineWorker } from "./utils/offline/workerClient"
 import translationPlugin from "./utils/translation"
+import { initRealtime } from "./realtime"
 
 import {
 	Alert,
@@ -59,7 +60,8 @@ if ("serviceWorker" in navigator) {
 					onNeedRefresh: () => log.info("New content available, reloading..."),
 					onOfflineReady: () => log.info("App ready to work offline"),
 					onRegistered: (reg) => log.info("Service Worker registered", reg),
-					onRegisterError: (err) => log.error("Service Worker registration error", err),
+					onRegisterError: (err) =>
+						log.error("Service Worker registration error", err),
 				})
 			})
 		},
@@ -172,15 +174,26 @@ async function initializeApp() {
 	log.info(`User authenticated: ${session.user}`)
 
 	// -------------------------------------------------------------------------
+	// Initialize Realtime (Socket.IO for live updates)
+	// -------------------------------------------------------------------------
+
+	if (user) {
+		initRealtime()
+		log.info("Realtime initialized for authenticated user")
+	}
+
+	// -------------------------------------------------------------------------
 	// Bootstrap Preload (non-blocking, improves perceived performance)
 	// -------------------------------------------------------------------------
 
 	if (user) {
 		import("./stores/bootstrap")
 			.then(({ useBootstrapStore }) => {
-				useBootstrapStore().loadInitialData().catch((error) => {
-					log.debug("Bootstrap preload failed (non-critical)", error)
-				})
+				useBootstrapStore()
+					.loadInitialData()
+					.catch((error) => {
+						log.debug("Bootstrap preload failed (non-critical)", error)
+					})
 			})
 			.catch(() => {})
 	}

@@ -1,0 +1,189 @@
+/**
+ * Frappe Realtime Compatibility Layer
+ *
+ * Creates a window.frappe.realtime interface compatible with Frappe's
+ * Socket.IO implementation. This allows composables that rely on
+ * window.frappe.realtime to work in the standalone POS app.
+ *
+ * Usage:
+ *   import { initRealtime } from './realtime'
+ *   initRealtime() // Call once at app startup
+ *
+ * Then composables can use:
+ *   window.frappe.realtime.on('event_name', handler)
+ *   window.frappe.realtime.off('event_name', handler)
+ */
+
+import { io } from "socket.io-client"
+import { logger } from "./utils/logger"
+
+const log = logger.create("Realtime")
+
+let socket = null
+let isInitialized = false
+
+/**
+ * Get Socket.IO port from common_site_config.json
+ * Falls back to standard ports if not available
+ */
+function getSocketIOPort() {
+	try {
+		// Try to import from common_site_config.json
+		// This might fail in production builds
+		return null // Will use same port as HTTP
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Initialize the realtime connection and expose window.frappe.realtime
+ */
+export function initRealtime() {
+	if (isInitialized) {
+		log.debug("Realtime already initialized")
+		return
+	}
+
+	try {
+		// Build Socket.IO URL
+		const siteName = window.site_name || window.location.hostname
+		const host = window.location.hostname
+		const port = window.location.port
+		const protocol = window.location.protocol === "https:" ? "https" : "http"
+
+		// For production (no port), use same origin
+		// For development with socketio_port, use that port
+		const socketioPort = getSocketIOPort()
+		const url = socketioPort
+			? `${protocol}://${host}:${socketioPort}/${siteName}`
+			: `${protocol}://${host}${port ? `:${port}` : ""}/${siteName}`
+
+		log.info("Initializing Socket.IO realtime", { url })
+
+		socket = io(url, {
+			withCredentials: true,
+			reconnectionAttempts: 5,
+			reconnectionDelay: 1000,
+			reconnectionDelayMax: 5000,
+			timeout: 20000,
+			transports: ["websocket", "polling"],
+		})
+
+		// Connection event handlers
+		socket.on("connect", () => {
+			log.info("Socket.IO connected", { id: socket.id })
+		})
+
+		socket.on("disconnect", (reason) => {
+			log.warn("Socket.IO disconnected", { reason })
+		})
+
+		socket.on("connect_error", (error) => {
+			log.error("Socket.IO connection error", { message: error.message })
+		})
+
+		socket.on("reconnect", (attemptNumber) => {
+			log.info("Socket.IO reconnected", { attempt: attemptNumber })
+		})
+
+		socket.on("reconnect_error", (error) => {
+			log.warn("Socket.IO reconnection error", { message: error.message })
+		})
+
+		// Create Frappe-compatible realtime interface
+		const realtime = {
+			socket: socket,
+
+			/**
+			 * Subscribe to a realtime event
+			 * @param {string} event - Event name
+			 * @param {Function} callback - Event handler
+			 */
+			on(event, callback) {
+				if (!socket) {
+					log.warn("Cannot subscribe - socket not initialized", { event })
+					return
+				}
+				log.debug("Subscribing to event", { event })
+				socket.on(event, callback)
+			},
+
+			/**
+			 * Unsubscribe from a realtime event
+			 * @param {string} event - Event name
+			 * @param {Function} callback - Event handler to remove
+			 */
+			off(event, callback) {
+				if (!socket) {
+					log.warn("Cannot unsubscribe - socket not initialized", { event })
+					return
+				}
+				log.debug("Unsubscribing from event", { event })
+				socket.off(event, callback)
+			},
+
+			/**
+			 * Emit an event to the server
+			 * @param {string} event - Event name
+			 * @param {*} data - Event data
+			 */
+			emit(event, data) {
+				if (!socket) {
+					log.warn("Cannot emit - socket not initialized", { event })
+					return
+				}
+				socket.emit(event, data)
+			},
+
+			/**
+			 * Check if socket is connected
+			 * @returns {boolean}
+			 */
+			get connected() {
+				return socket?.connected || false
+			},
+		}
+
+		// Expose as window.frappe.realtime for compatibility
+		if (!window.frappe) {
+			window.frappe = {}
+		}
+		window.frappe.realtime = realtime
+
+		isInitialized = true
+		log.info("Realtime initialized successfully")
+	} catch (error) {
+		log.error("Failed to initialize realtime", error)
+
+		// Create a no-op realtime to prevent crashes
+		if (!window.frappe) {
+			window.frappe = {}
+		}
+		window.frappe.realtime = {
+			on: () => {},
+			off: () => {},
+			emit: () => {},
+			connected: false,
+		}
+	}
+}
+
+/**
+ * Disconnect and cleanup realtime
+ */
+export function disconnectRealtime() {
+	if (socket) {
+		socket.disconnect()
+		socket = null
+	}
+	isInitialized = false
+	log.info("Realtime disconnected")
+}
+
+/**
+ * Get the raw socket instance (for advanced use)
+ */
+export function getSocket() {
+	return socket
+}
