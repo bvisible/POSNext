@@ -178,7 +178,7 @@ async function initializeApp() {
 	// -------------------------------------------------------------------------
 
 	if (user) {
-		initRealtime()
+		await initRealtime()
 		log.info("Realtime initialized for authenticated user")
 	}
 

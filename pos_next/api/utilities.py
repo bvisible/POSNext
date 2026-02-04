@@ -9,6 +9,21 @@ from frappe import _
 from frappe.utils import cint
 
 
+@frappe.whitelist(allow_guest=True)
+def get_site_info():
+	"""
+	Get site information for Socket.IO namespace configuration.
+	This endpoint allows the frontend to dynamically determine the site name
+	instead of hardcoding it.
+
+	Returns:
+		dict: Site information including site_name
+	"""
+	return {
+		"site_name": frappe.local.site
+	}
+
+
 @frappe.whitelist()
 def get_csrf_token():
 	"""

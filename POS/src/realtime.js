@@ -7,7 +7,7 @@
  *
  * Usage:
  *   import { initRealtime } from './realtime'
- *   initRealtime() // Call once at app startup
+ *   await initRealtime() // Call once at app startup (async)
  *
  * Then composables can use:
  *   window.frappe.realtime.on('event_name', handler)
@@ -39,40 +39,62 @@ function getSocketIOPort() {
 /**
  * Get the Frappe site name for Socket.IO namespace
  * The site name is used as the Socket.IO namespace (e.g., /prod.local)
+ *
+ * Priority:
+ * 1. window.frappe.boot.sitename (set by Frappe)
+ * 2. localStorage cache (frappe_site_name)
+ * 3. API call to get_site_info (and cache result)
+ * 4. Fallback to window.location.hostname
  */
-function getSiteName() {
-	// Try to get from window.frappe.boot (set by Frappe)
+async function getSiteName() {
+	// 1. Try to get from window.frappe.boot (set by Frappe)
 	if (window.frappe?.boot?.sitename) {
+		log.debug("Site name from frappe.boot", { sitename: window.frappe.boot.sitename })
 		return window.frappe.boot.sitename
 	}
 
-	// Try to get from cookie (Frappe sets sid cookie with site info)
-	// The site name is typically the hostname for single-site setups
-	// or can be extracted from the URL path for multi-site
-
-	// For POS Next, we use the hostname as the site name
-	// This works for typical Frappe deployments where hostname = site name
-	// e.g., osiris.neoffice.me -> site name is "prod.local" (internal)
-
-	// Check if there's a site_name in localStorage (set during login)
-	const storedSiteName = localStorage.getItem("frappe_site_name")
-	if (storedSiteName) {
-		return storedSiteName
+	// 2. Check localStorage cache
+	const cachedSiteName = localStorage.getItem("frappe_site_name")
+	if (cachedSiteName) {
+		log.debug("Site name from localStorage cache", { sitename: cachedSiteName })
+		return cachedSiteName
 	}
 
-	// Default: try to fetch from API or use a common default
-	// For most Frappe single-site setups, the site is often named after the domain
-	// but internally it might be different (e.g., "prod.local")
+	// 3. Try to fetch from API
+	try {
+		log.debug("Fetching site name from API...")
+		const response = await fetch("/api/method/pos_next.api.utilities.get_site_info", {
+			method: "GET",
+			credentials: "include",
+			headers: {
+				Accept: "application/json",
+			},
+		})
 
-	// We'll try to get it from the Frappe API response headers or session
-	// As a fallback, use a known site name or detect from API
-	return window.__frappe_site_name || "prod.local"
+		if (response.ok) {
+			const data = await response.json()
+			if (data.message?.site_name) {
+				const siteName = data.message.site_name
+				localStorage.setItem("frappe_site_name", siteName)
+				log.info("Site name fetched and cached", { sitename: siteName })
+				return siteName
+			}
+		}
+	} catch (error) {
+		log.warn("Could not fetch site name from API", { error: error.message })
+	}
+
+	// 4. Fallback to hostname (works for single-site setups where hostname = site name)
+	const hostname = window.location.hostname
+	log.warn("Using hostname as fallback site name", { hostname })
+	return hostname
 }
 
 /**
  * Initialize the realtime connection and expose window.frappe.realtime
+ * This function is async because getSiteName() may need to fetch from API
  */
-export function initRealtime() {
+export async function initRealtime() {
 	if (isInitialized) {
 		log.debug("Realtime already initialized")
 		return
@@ -92,9 +114,8 @@ export function initRealtime() {
 			? `${protocol}://${host}:${socketioPort}`
 			: `${protocol}://${host}${port ? `:${port}` : ""}`
 
-		// Get site name from cookie or use hostname
-		// Frappe sets the site name in X-Frappe-Site-Name header and sid cookie
-		const siteName = getSiteName()
+		// Get site name dynamically (may involve API call)
+		const siteName = await getSiteName()
 		const namespace = `/${siteName}`
 
 		log.info("Initializing Socket.IO realtime", { url, namespace, siteName })
