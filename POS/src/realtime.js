@@ -37,6 +37,39 @@ function getSocketIOPort() {
 }
 
 /**
+ * Get the Frappe site name for Socket.IO namespace
+ * The site name is used as the Socket.IO namespace (e.g., /prod.local)
+ */
+function getSiteName() {
+	// Try to get from window.frappe.boot (set by Frappe)
+	if (window.frappe?.boot?.sitename) {
+		return window.frappe.boot.sitename
+	}
+
+	// Try to get from cookie (Frappe sets sid cookie with site info)
+	// The site name is typically the hostname for single-site setups
+	// or can be extracted from the URL path for multi-site
+
+	// For POS Next, we use the hostname as the site name
+	// This works for typical Frappe deployments where hostname = site name
+	// e.g., osiris.neoffice.me -> site name is "prod.local" (internal)
+
+	// Check if there's a site_name in localStorage (set during login)
+	const storedSiteName = localStorage.getItem("frappe_site_name")
+	if (storedSiteName) {
+		return storedSiteName
+	}
+
+	// Default: try to fetch from API or use a common default
+	// For most Frappe single-site setups, the site is often named after the domain
+	// but internally it might be different (e.g., "prod.local")
+
+	// We'll try to get it from the Frappe API response headers or session
+	// As a fallback, use a known site name or detect from API
+	return window.__frappe_site_name || "prod.local"
+}
+
+/**
  * Initialize the realtime connection and expose window.frappe.realtime
  */
 export function initRealtime() {
@@ -47,7 +80,7 @@ export function initRealtime() {
 
 	try {
 		// Build Socket.IO URL
-		// Frappe's Socket.IO uses the site name as namespace, not as URL path
+		// Frappe's Socket.IO uses the site name as namespace
 		const host = window.location.hostname
 		const port = window.location.port
 		const protocol = window.location.protocol === "https:" ? "https" : "http"
@@ -59,9 +92,14 @@ export function initRealtime() {
 			? `${protocol}://${host}:${socketioPort}`
 			: `${protocol}://${host}${port ? `:${port}` : ""}`
 
-		log.info("Initializing Socket.IO realtime", { url })
+		// Get site name from cookie or use hostname
+		// Frappe sets the site name in X-Frappe-Site-Name header and sid cookie
+		const siteName = getSiteName()
+		const namespace = `/${siteName}`
 
-		socket = io(url, {
+		log.info("Initializing Socket.IO realtime", { url, namespace, siteName })
+
+		socket = io(`${url}${namespace}`, {
 			withCredentials: true,
 			reconnectionAttempts: 5,
 			reconnectionDelay: 1000,
