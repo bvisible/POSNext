@@ -1359,6 +1359,11 @@ def submit_invoice(invoice=None, data=None):
             invoice_doc.loyalty_redemption_account = loyalty_data.get("loyalty_redemption_account")
             invoice_doc.loyalty_redemption_cost_center = loyalty_data.get("loyalty_redemption_cost_center")
 
+            # If loyalty covers entire amount and no payments, clear payment entries
+            # to avoid validation errors from empty/default payment modes
+            if flt(loyalty_data.get("loyalty_amount")) >= flt(invoice_doc.grand_total or 0):
+                invoice_doc.payments = []
+
         # Validate stock availability before submission
         # _validate_stock_on_invoice checks _should_block internally
         # (global Stock Settings, POS Settings, and POS Profile flags)
