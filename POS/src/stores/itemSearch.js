@@ -1,79 +1,18 @@
 import { call } from "@/utils/apiWrapper"
 import { isOffline } from "@/utils/offline"
 import { offlineWorker } from "@/utils/offline/workerClient"
-import { cacheItems, getCachedVariants, updateItemBatchSerialData } from "@/utils/offline/items"
+import { updateItemBatchSerialData } from "@/utils/offline/items"
 import { performanceConfig } from "@/utils/performanceConfig"
 import { logger } from "@/utils/logger"
 import { createResource } from "frappe-ui"
 import { defineStore } from "pinia"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useStockStore } from "./stock"
+import { usePOSSettingsStore } from "./posSettings"
 import { usePOSShiftStore } from "./posShift"
 import { useRealtimePosProfile } from "@/composables/useRealtimePosProfile"
 
 const log = logger.create('ItemSearch')
-
-/**
- * Fetch and cache variants for all template items
- * This ensures variants are available for offline use
- * @param {Array} items - Items array to check for templates
- * @param {string} posProfile - POS Profile name
- */
-async function cacheVariantsForTemplates(items, posProfile) {
-	if (!items || items.length === 0 || !posProfile) return
-
-	// Find template items (items with has_variants = 1)
-	const templateItems = items.filter(item => item.has_variants)
-
-	if (templateItems.length === 0) {
-		log.debug("No template items found - skipping variant caching")
-		return
-	}
-
-	log.info(`Caching variants for ${templateItems.length} template items`)
-
-	// Fetch variants for each template in parallel (with concurrency limit)
-	const CONCURRENCY_LIMIT = 3
-	const allVariants = []
-
-	for (let i = 0; i < templateItems.length; i += CONCURRENCY_LIMIT) {
-		const batch = templateItems.slice(i, i + CONCURRENCY_LIMIT)
-
-		const batchPromises = batch.map(async (template) => {
-			try {
-				const response = await call("pos_next.api.items.get_item_variants", {
-					template_item: template.item_code,
-					pos_profile: posProfile,
-				})
-				const variants = response?.message || response || []
-
-				if (variants.length > 0) {
-					log.debug(`Fetched ${variants.length} variants for ${template.item_code}`)
-					return variants
-				}
-				return []
-			} catch (error) {
-				log.warn(`Failed to fetch variants for ${template.item_code}:`, error.message)
-				return []
-			}
-		})
-
-		const batchResults = await Promise.all(batchPromises)
-		for (const variants of batchResults) {
-			allVariants.push(...variants)
-		}
-	}
-
-	// Cache all variants in IndexedDB
-	if (allVariants.length > 0) {
-		try {
-			await cacheItems(allVariants)
-			log.success(`Cached ${allVariants.length} variants for offline use`)
-		} catch (error) {
-			log.error("Failed to cache variants:", error)
-		}
-	}
-}
 
 /**
  * Fetch and cache batch/serial data for items with batch or serial tracking
@@ -127,6 +66,15 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	// Get stock store instance
 	const stockStore = useStockStore()
 
+	// Get POS settings store for dynamic show_variants_as_items flag
+	const posSettingsStore = usePOSSettingsStore()
+	const getShowVariantsFlag = () => posSettingsStore.showVariantsAsItems ? 1 : 0
+
+	// Sync show_variants_as_items setting to worker whenever it changes
+	watch(() => posSettingsStore.showVariantsAsItems, (newVal) => {
+		offlineWorker.setShowVariantsAsItems(newVal)
+	}, { immediate: true })
+
 	// Get shift store for warehouse info (for batch/serial caching)
 	const shiftStore = usePOSShiftStore()
 
@@ -138,7 +86,9 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	const searchResults = ref([]) // For search results (cache + server)
 	const searchTerm = ref("")
 	const selectedItemGroup = ref(null)
+	const selectedBrand = ref(null)
 	const itemGroups = ref([])
+	const brands = ref([])
 	const profileItemGroups = ref([]) // Item groups from POS Profile filter
 	const loading = ref(false)
 	const loadingMore = ref(false)
@@ -147,7 +97,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	const cartItems = ref([])
 
 	// Sorting state - for user-triggered sorting filters
-	const sortBy = ref(null) // Options: 'name', 'quantity', 'item_group', null (no sorting)
+	const sortBy = ref(null) // Options: 'name', 'quantity', 'item_group', 'brand', null (no sorting)
 	const sortOrder = ref('asc') // Options: 'asc', 'desc'
 
 	// Lazy loading state - dynamically adjusted based on device performance
@@ -389,6 +339,23 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		},
 	})
 
+	const brandsResource = createResource({
+		url: "pos_next.api.items.get_brands",
+		makeParams() {
+			return {
+				pos_profile: posProfile.value,
+			}
+		},
+		auto: false,
+		onSuccess(data) {
+			brands.value = (data?.message || data || [])
+		},
+		onError(error) {
+			log.error("Error fetching brands", error)
+			brands.value = []
+		},
+	})
+
 	const searchByBarcodeResource = createResource({
 		url: "pos_next.api.items.search_by_barcode",
 		auto: false,
@@ -537,7 +504,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// Step 2: Create cache key based on current filter state
 		// Key format: "itemGroup_version_searchTerm"
 		// This ensures cache invalidates when data or filters change
-		const filterKey = `${selectedItemGroup.value || 'all'}_${allItemsVersion.value}_${searchTerm.value || ''}`
+		const filterKey = `${selectedItemGroup.value || 'all'}_${selectedBrand.value || 'all'}_${allItemsVersion.value}_${searchTerm.value || ''}`
 
 		// Step 3: Check cache for filtered results
 		let list
@@ -559,6 +526,9 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				// Items are ALREADY server-filtered, but verify for safety
 				const groupsToFilter = getGroupsToFilter(selectedItemGroup.value)
 				list = sourceItems.filter(i => groupsToFilter.has(i.item_group))
+			} else if (selectedBrand.value) {
+				// Brand tab selected — verify for safety (server already filters)
+				list = sourceItems.filter(i => (i.brand || '') === selectedBrand.value)
 			} else if (profileItemGroups.value && profileItemGroups.value.length > 0) {
 				// "All Items" tab - items fetched without group filter
 				// Still filter by allowed groups as sanity check
@@ -615,6 +585,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						const nameA = (a.item_name || '').toLowerCase()
 						const nameB = (b.item_name || '').toLowerCase()
 						compareResult = nameA.localeCompare(nameB)
+						break
+
+					case 'brand':
+						// Sort by brand alphabetically
+						const brandA = (a.brand || '').toLowerCase()
+						const brandB = (b.brand || '').toLowerCase()
+						compareResult = brandA.localeCompare(brandB)
 						break
 
 					case 'quantity':
@@ -776,6 +753,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			// Skip when offline — count can't be fetched without network
 			const countPromise = !offline ? call("pos_next.api.items.get_items_count", {
 				pos_profile: profile,
+				show_variants_as_items: getShowVariantsFlag(),
 			}).then(r => r?.message ?? r ?? 0).catch(countErr => {
 				log.warn("Could not fetch item count:", countErr.message)
 				return 0
@@ -824,28 +802,6 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							totalServerItems.value = cacheStats.value?.totalServerItems || stats.items
 							hasMore.value = cached.length >= limit
 							log.success(`Loaded ${cached.length} items from cache (offline, total: ${stats.items})`)
-
-							// Eager variant verification: Check if template items have cached variants
-							const templateItems = cached.filter(item => item.has_variants)
-							if (templateItems.length > 0) {
-								log.info(`Verifying variants for ${templateItems.length} template items`)
-								const missingVariants = []
-
-								for (const template of templateItems) {
-									const variants = await getCachedVariants(template.item_code)
-									if (!variants || variants.length === 0) {
-										missingVariants.push(template.item_code)
-									} else {
-										log.debug(`Template ${template.item_code} has ${variants.length} cached variants`)
-									}
-								}
-
-								if (missingVariants.length > 0) {
-									log.warn(`${missingVariants.length} template items missing variants in offline cache:`, missingVariants)
-								} else {
-									log.success(`All ${templateItems.length} template items have variants cached`)
-								}
-							}
 						} else {
 							replaceAllItems([])
 							log.warn("No items in cache")
@@ -946,11 +902,6 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 					log.success(`Loaded ${fetchedItems.length} items (server-side filtering)`)
 
-					// Background caching - limit to prevent overloading IndexedDB
-					cacheVariantsForTemplates(fetchedItems.slice(0, 50), profile).catch(err => {
-						log.warn("Background variant caching failed:", err.message)
-					})
-
 					// Cache batch/serial data for offline use
 					if (shiftStore.profileWarehouse) {
 						cacheBatchSerialForItems(fetchedItems, shiftStore.profileWarehouse).catch(err => {
@@ -984,6 +935,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					item_group: null, // No filter - get items from all groups
 					start: 0,
 					limit: unfilteredLimit,
+					show_variants_as_items: getShowVariantsFlag(),
 				})
 				const list = response?.message || response || []
 
@@ -1005,12 +957,6 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					serverDataFresh.value = true
 
 					log.success(`Loaded ${list.length} items from server`)
-
-					// Cache variants for template items (for offline use)
-					// Run in background to not block UI
-					cacheVariantsForTemplates(list, profile).catch(err => {
-						log.warn("Background variant caching failed:", err.message)
-					})
 
 					// Cache batch/serial data for offline use
 					if (shiftStore.profileWarehouse) {
@@ -1072,6 +1018,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				item_group: firstGroup, // Server-side filter via DB index
 				start: 0,
 				limit: effectiveLimit,
+				show_variants_as_items: getShowVariantsFlag(),
 			})
 			const items = response?.message || response || []
 			log.info(`Fetched ${items.length} items from ${firstGroup}`)
@@ -1107,6 +1054,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					item_groups: JSON.stringify(groupsToFetch),
 					start: start,
 					limit: effectiveLimit,
+					show_variants_as_items: getShowVariantsFlag(),
 				})
 				return response?.message || response || []
 			} else {
@@ -1116,11 +1064,37 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					item_group: itemGroup,
 					start: start,
 					limit: effectiveLimit,
+					show_variants_as_items: getShowVariantsFlag(),
 				})
 				return response?.message || response || []
 			}
 		} catch (error) {
 			log.error(`Failed to fetch items for group ${itemGroup}`, error)
+			return []
+		}
+	}
+
+	/**
+	 * Fetch items for a specific brand (on-demand when user clicks brand tab)
+	 */
+	async function fetchItemsForBrand(profile, brand, start = 0, limit = null) {
+		if (!brand) return []
+
+		const effectiveLimit = limit || itemsPerPage.value
+
+		try {
+			const response = await call("pos_next.api.items.get_items", {
+				pos_profile: profile,
+				search_term: "",
+				item_group: null,
+				brand: brand,
+				start: start,
+				limit: effectiveLimit,
+				show_variants_as_items: getShowVariantsFlag(),
+			})
+			return response?.message || response || []
+		} catch (error) {
+			log.error(`Failed to fetch items for brand ${brand}`, error)
 			return []
 		}
 	}
@@ -1181,6 +1155,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					start,
 					pageSize,
 				)
+			} else if (selectedBrand.value) {
+				items = await fetchItemsForBrand(
+					posProfile.value,
+					selectedBrand.value,
+					start,
+					pageSize,
+				)
 			} else {
 				const response = await call("pos_next.api.items.get_items", {
 					pos_profile: posProfile.value,
@@ -1188,6 +1169,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					item_group: null,
 					start: start,
 					limit: pageSize,
+					show_variants_as_items: getShowVariantsFlag(),
 				})
 				items = response?.message || response || []
 			}
@@ -1269,6 +1251,14 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					currentOffset.value,
 					itemsPerPage.value,
 				)
+			} else if (selectedBrand.value) {
+				// User has a specific brand tab selected — fetch more from that brand
+				list = await fetchItemsForBrand(
+					posProfile.value,
+					selectedBrand.value,
+					currentOffset.value,
+					itemsPerPage.value,
+				)
 			} else {
 				// "All Items" tab — fetch next batch without group filter
 				const response = await call("pos_next.api.items.get_items", {
@@ -1277,6 +1267,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					item_group: null,
 					start: currentOffset.value,
 					limit: itemsPerPage.value,
+					show_variants_as_items: getShowVariantsFlag(),
 				})
 				list = response?.message || response || []
 			}
@@ -1418,7 +1409,8 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							item_groups: JSON.stringify([currentGroup]),
 							start: groupOffset,
 							limit: batchSize,
-							include_variants: 1,
+							show_variants_as_items: getShowVariantsFlag(),
+							include_variants: 1, // Always cache variants for offline barcode scanning
 						})
 						if (myGeneration !== syncGeneration) return
 						const list = response?.message || response || []
@@ -1467,7 +1459,8 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 									pos_profile: profile,
 									start: offset,
 									limit: batchSize,
-									include_variants: 1,
+									show_variants_as_items: getShowVariantsFlag(),
+									include_variants: 1, // Always cache variants for offline barcode scanning
 								}).then(r => r?.message || r || [])
 								.catch(err => {
 									log.warn(`Parallel batch at offset ${offset} failed:`, err.message)
@@ -1625,8 +1618,10 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						pos_profile: posProfile.value,
 						search_term: term,
 						item_group: selectedItemGroup.value,
+						brand: selectedBrand.value,
 						start: 0,
 						limit: searchLimit, // Dynamically adjusted based on device performance
+						show_variants_as_items: getShowVariantsFlag(),
 					})
 					const serverResults = response?.message || response || []
 
@@ -1673,6 +1668,12 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	async function loadItemGroups() {
 		if (posProfile.value) {
 			await itemGroupsResource.reload()
+		}
+	}
+
+	async function loadBrands() {
+		if (posProfile.value) {
+			await brandsResource.reload()
 		}
 	}
 
@@ -1741,7 +1742,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 	/**
 	 * Set sorting filter - triggers sorting only when explicitly called
-	 * @param {string} field - Field to sort by: 'name', 'quantity', 'item_group', 'price', 'item_code'
+	 * @param {string} field - Field to sort by: 'name', 'quantity', 'item_group', 'brand', 'price', 'item_code'
 	 * @param {string} order - Sort order: 'asc' or 'desc' (default: 'asc')
 	 */
 	function setSortFilter(field, order = 'asc') {
@@ -1786,6 +1787,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 	async function setSelectedItemGroup(group) {
 		selectedItemGroup.value = group
+		selectedBrand.value = null
 		clearBaseCache()
 
 		// LARGE CATALOG OPTIMIZATION: Fetch items from server when group changes
@@ -1856,6 +1858,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				const countPromise = call("pos_next.api.items.get_items_count", {
 					pos_profile: posProfile.value,
 					item_group: group || undefined,
+					show_variants_as_items: getShowVariantsFlag(),
 				}).catch(err => {
 					log.warn("Could not fetch item count:", err.message)
 					return 0
@@ -1874,6 +1877,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						item_group: null,
 						start: 0,
 						limit: pageSize,
+						show_variants_as_items: getShowVariantsFlag(),
 					})
 					items = response?.message || response || []
 					log.info(`Loaded ${items.length} items for "All Items" tab`)
@@ -1950,6 +1954,86 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		}
 	}
 
+	async function setSelectedBrand(brand) {
+		selectedBrand.value = brand
+		selectedItemGroup.value = null
+		clearBaseCache()
+
+		if (!posProfile.value) return
+
+		loading.value = true
+		try {
+			const pageSize = itemsPerPage.value
+			const offline = isOffline()
+
+			if (offline) {
+				let filtered = []
+				if (brand) {
+					// Use IndexedDB brand index via worker for efficient offline filtering
+					filtered = await offlineWorker.searchCachedItemsByBrand(brand, 5000, 0)
+				} else {
+					filtered = await offlineWorker.searchCachedItems("", 5000, 0)
+				}
+
+				const pageItems = filtered.slice(0, pageSize)
+
+				replaceAllItems(pageItems)
+				totalItemsLoaded.value = pageItems.length
+				currentOffset.value = pageItems.length
+				totalServerItems.value = filtered.length
+				hasMore.value = filtered.length > pageItems.length
+				return
+			}
+
+			const countPromise = call("pos_next.api.items.get_items_count", {
+				pos_profile: posProfile.value,
+				item_group: undefined,
+				brand: brand || undefined,
+				show_variants_as_items: getShowVariantsFlag(),
+			}).catch(err => {
+				log.warn("Could not fetch item count:", err.message)
+				return 0
+			})
+
+			let items = []
+			if (brand) {
+				items = await fetchItemsForBrand(posProfile.value, brand, 0, pageSize)
+				log.info(`Loaded ${items.length} items for brand: ${brand}`)
+			} else {
+				const response = await call("pos_next.api.items.get_items", {
+					pos_profile: posProfile.value,
+					search_term: "",
+					item_group: null,
+					start: 0,
+					limit: pageSize,
+					show_variants_as_items: getShowVariantsFlag(),
+				})
+				items = response?.message || response || []
+				log.info(`Loaded ${items.length} items for "All Items" tab`)
+			}
+
+			const countResult = await countPromise
+			totalServerItems.value = countResult?.message ?? countResult ?? items.length
+
+			replaceAllItems(items)
+			totalItemsLoaded.value = items.length
+			currentOffset.value = items.length
+			hasMore.value = items.length >= pageSize
+		} catch (error) {
+			log.error(`Failed to load items for brand ${brand || 'All Items'}`, error)
+		} finally {
+			loading.value = false
+		}
+
+		if (searchTerm.value?.trim()) {
+			if (searchDebounceTimer) {
+				clearTimeout(searchDebounceTimer)
+				searchDebounceTimer = null
+			}
+			searchItems(searchTerm.value)
+		}
+	}
+
 	/**
 	 * Update cart items - delegates to stock store
 	 */
@@ -1984,6 +2068,8 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		if (!profile) {
 			profileItemGroups.value = []
 			itemGroups.value = []
+			brands.value = []
+			selectedBrand.value = null
 			return
 		}
 
@@ -2047,6 +2133,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			profileItemGroups.value = []
 			itemGroups.value = []
+			brands.value = []
 		}
 	}
 
@@ -2067,7 +2154,9 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		searchResults,
 		searchTerm,
 		selectedItemGroup,
+		selectedBrand,
 		itemGroups,
+		brands,
 		profileItemGroups,
 		loading,
 		loadingMore,
@@ -2097,11 +2186,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		fetchPage,
 		searchItems,
 		loadItemGroups,
+		loadBrands,
 		searchByBarcode,
 		getItem,
 		setSearchTerm,
 		clearSearch,
 		setSelectedItemGroup,
+		setSelectedBrand,
 		setCartItems, // Delegates to stock store for reservations
 		setPosProfile,
 		startBackgroundCacheSync,
@@ -2126,6 +2217,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// RESOURCES
 		// ========================================================================
 		itemGroupsResource,
+		brandsResource,
 		searchByBarcodeResource,
 	}
 })

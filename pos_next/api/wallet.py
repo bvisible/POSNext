@@ -43,58 +43,75 @@ def process_loyalty_to_wallet(doc, method=None):
 	Convert earned loyalty points to wallet balance after invoice submission.
 	Called during on_submit hook.
 	"""
+	if not doc.is_pos or doc.is_return:
+		return
+
+	# Check if loyalty to wallet is enabled
+	pos_settings = get_pos_settings(doc.pos_profile)
+	if not pos_settings:
+		return
+
+	if not cint(pos_settings.get("enable_loyalty_program")) or not cint(pos_settings.get("loyalty_to_wallet")):
+		return
+
+	# Check if customer has loyalty program
+	loyalty_program = frappe.db.get_value("Customer", doc.customer, "loyalty_program")
+	if not loyalty_program:
+		return
+
+	# Check if the invoice amount meets the applicable tier's min_spent threshold.
+	# Single Tier Program: the one rule's min_spent must be met.
+	# Multiple Tier Program: the invoice must reach at least the lowest tier's min_spent.
+	lp_doc = frappe.get_doc("Loyalty Program", loyalty_program)
+	tiers = sorted(
+		[d.as_dict() for d in lp_doc.collection_rules],
+		key=lambda r: flt(r.get("min_spent")),
+	)
+	invoice_amount = abs(flt(doc.grand_total))
+	matched_tier = None
+	for t in tiers:
+		if flt(invoice_amount) >= flt(t.get("min_spent")):
+			matched_tier = t
+	if not matched_tier:
+		# Invoice amount below the minimum spend threshold of all tiers — no loyalty credit
+		return
+
+	# Get the loyalty points earned from this invoice
+	loyalty_entry = frappe.db.get_value(
+		"Loyalty Point Entry",
+		{
+			"invoice_type": "Sales Invoice",
+			"invoice": doc.name,
+			"loyalty_points": [">", 0]
+		},
+		["loyalty_points", "name"],
+		as_dict=True
+	)
+
+	if not loyalty_entry or loyalty_entry.loyalty_points <= 0:
+		return
+
+	# Get conversion rate from Loyalty Program (standard ERPNext field)
+	conversion_rate = flt(frappe.db.get_value("Loyalty Program", loyalty_program, "conversion_factor")) or 1.0
+
+	# Calculate wallet credit amount
+	credit_amount = flt(loyalty_entry.loyalty_points) * conversion_rate
+
+	if credit_amount <= 0:
+		return
+
+	# Check if wallet account is properly configured before proceeding
+	wallet_account = pos_settings.get("wallet_account")
+	if wallet_account:
+		account_type = frappe.db.get_value("Account", wallet_account, "account_type")
+		if account_type != "Receivable":
+			frappe.log_error(
+				"Wallet Account Configuration Error",
+				f"Wallet account {wallet_account} is not a Receivable type. Skipping loyalty to wallet conversion."
+			)
+			return
+
 	try:
-		if not doc.is_pos or doc.is_return:
-			return
-
-		# Check if loyalty to wallet is enabled
-		pos_settings = get_pos_settings(doc.pos_profile)
-		if not pos_settings:
-			return
-
-		if not cint(pos_settings.get("enable_loyalty_program")) or not cint(pos_settings.get("loyalty_to_wallet")):
-			return
-
-		# Check if wallet account is properly configured before proceeding
-		wallet_account = pos_settings.get("wallet_account")
-		if wallet_account:
-			account_type = frappe.db.get_value("Account", wallet_account, "account_type")
-			if account_type != "Receivable":
-				frappe.log_error(
-					"Wallet Account Configuration Error",
-					f"Wallet account {wallet_account} is not a Receivable type. Skipping loyalty to wallet conversion."
-				)
-				return
-
-		# Check if customer has loyalty program
-		loyalty_program = frappe.db.get_value("Customer", doc.customer, "loyalty_program")
-		if not loyalty_program:
-			return
-
-		# Get the loyalty points earned from this invoice
-		loyalty_entry = frappe.db.get_value(
-			"Loyalty Point Entry",
-			{
-				"invoice_type": "Sales Invoice",
-				"invoice": doc.name,
-				"loyalty_points": [">", 0]
-			},
-			["loyalty_points", "name"],
-			as_dict=True
-		)
-
-		if not loyalty_entry or loyalty_entry.loyalty_points <= 0:
-			return
-
-		# Get conversion rate from Loyalty Program (standard ERPNext field)
-		conversion_rate = flt(frappe.db.get_value("Loyalty Program", loyalty_program, "conversion_factor")) or 1.0
-
-		# Calculate wallet credit amount
-		credit_amount = flt(loyalty_entry.loyalty_points) * conversion_rate
-
-		if credit_amount <= 0:
-			return
-
 		# Get or create customer wallet
 		wallet = get_or_create_wallet(doc.customer, doc.company, pos_settings)
 
@@ -267,8 +284,34 @@ def get_customer_wallet(customer, company=None):
 	return wallet
 
 
+def create_wallet_on_customer_insert(doc, method=None):
+	"""Hook: after_insert on Customer. Creates a wallet for the default company
+	only when auto_create_wallet is enabled in POS Settings."""
+	company = frappe.get_cached_value("Global Defaults", "Global Defaults", "default_company")
+	if not company:
+		return
+
+	# Only auto-create wallets when a POS profile with auto_create_wallet exists
+	pos_profile = frappe.db.get_value(
+		"POS Profile",
+		{"company": company, "disabled": 0},
+		"name"
+	)
+	if not pos_profile:
+		return
+
+	pos_settings = get_pos_settings(pos_profile)
+	if not pos_settings or not cint(pos_settings.get("auto_create_wallet")):
+		return
+
+	try:
+		get_or_create_wallet(doc.name, company, pos_settings=pos_settings)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"Wallet auto-create failed for {doc.name}")
+
+
 @frappe.whitelist()
-def get_or_create_wallet(customer, company, pos_settings=None):
+def get_or_create_wallet(customer, company, pos_settings=None, force_create=False):
 	"""Get existing wallet or create a new one."""
 
 	# Check if wallet exists
@@ -292,7 +335,7 @@ def get_or_create_wallet(customer, company, pos_settings=None):
 		if pos_profile:
 			pos_settings = get_pos_settings(pos_profile)
 
-	if pos_settings and not cint(pos_settings.get("auto_create_wallet")):
+	if not force_create and (not pos_settings or not cint(pos_settings.get("auto_create_wallet"))):
 		return None
 
 	# Get wallet account
@@ -468,8 +511,8 @@ def create_manual_wallet_credit(customer, company, amount, remarks=None):
 	if flt(amount) <= 0:
 		frappe.throw(_("Amount must be greater than zero"))
 
-	# Get or create wallet
-	wallet = get_or_create_wallet(customer, company)
+	# Manual credits should be able to create wallets even when POS auto-create is disabled.
+	wallet = get_or_create_wallet(customer, company, force_create=True)
 
 	if not wallet:
 		frappe.throw(_("Could not create wallet for customer {0}").format(customer))

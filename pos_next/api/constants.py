@@ -40,6 +40,9 @@ POS_SETTINGS_FIELDS = [
 	"enable_customer_display",
 	"enable_customer_display_account_creation",
 	"customer_display_show_address_fields",
+	"enable_session_lock",
+	"session_lock_timeout",
+	"show_variants_as_items",
 ]
 
 # Default POS Settings values
@@ -70,4 +73,7 @@ DEFAULT_POS_SETTINGS = {
 	"enable_customer_display": 0,
 	"enable_customer_display_account_creation": 0,
 	"customer_display_show_address_fields": 0,
+	"enable_session_lock": 0,
+	"session_lock_timeout": 5,
+	"show_variants_as_items": 0,
 }

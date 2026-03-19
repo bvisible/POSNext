@@ -131,16 +131,6 @@ if not _has_native_coupon_code_field():
 
 fixtures = [
 	{
-		"dt": "Custom Field",
-		"filters": [
-			[
-				"name",
-				"in",
-				_custom_field_names,
-			]
-		]
-	},
-	{
 		"dt": "Print Format",
 		"filters": [
 			[
@@ -152,18 +142,18 @@ fixtures = [
 			]
 		]
 	},
-    {
-        "dt": "Role",
-        "filters": [
-            ["role_name", "in", ["POSNext Cashier"]]
-        ]
-    },
-    {
-        "dt": "Custom DocPerm",
-        "filters": [
-            ["role", "in", ["POSNext Cashier"]]
-        ]
-    }
+	{
+		"dt": "Role",
+		"filters": [
+			["role_name", "in", ["POSNext Cashier"]]
+		]
+	},
+	{
+		"dt": "Custom DocPerm",
+		"filters": [
+			["role", "in", ["POSNext Cashier"]]
+		]
+	}
 ]
 
 # Installation
@@ -239,7 +229,8 @@ doc_events = {
 	"Customer": {
 		"after_insert": [
 			"pos_next.api.customers.auto_assign_loyalty_program",
-			"pos_next.realtime_events.emit_customer_event"
+			"pos_next.realtime_events.emit_customer_event",
+			"pos_next.api.wallet.create_wallet_on_customer_insert"
 		],
 		"on_update": "pos_next.realtime_events.emit_customer_event",
 		"on_trash": "pos_next.realtime_events.emit_customer_event"
@@ -274,6 +265,9 @@ doc_events = {
 	},
 	"POS Profile": {
 		"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"
+	},
+	"Promotional Scheme": {
+		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"
 	}
 }
 

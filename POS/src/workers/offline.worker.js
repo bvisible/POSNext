@@ -168,6 +168,11 @@ let serverOnline = true
 let manualOffline = false
 let csrfToken = null // CSRF token passed from main thread
 
+// Display mode: controlled by POS Settings "Show Variants as Items" (default: off)
+// true = variants shown directly, templates hidden
+// false = templates shown, variants hidden from browse (but still cached for barcode scan)
+let showVariantsAsItems = false
+
 // Periodic stock sync state
 let stockSyncInterval = null
 let stockSyncEnabled = false
@@ -467,6 +472,17 @@ async function updateLocalStock(items) {
 }
 
 /**
+ * Check if an item should be displayed in the grid based on display mode.
+ * @param {Object} item - Item to check
+ * @returns {boolean} True if item should be shown
+ */
+function shouldShowItem(item) {
+	if (item.disabled) return false
+	if (showVariantsAsItems) return !item.has_variants
+	return !item.variant_of
+}
+
+/**
  * Search cached items with intelligent query optimization
  * - Query result caching (5x faster for repeated searches)
  * - Index-based search (O(log n) for single-word queries)
@@ -491,11 +507,11 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 		const db = await initDB()
 
 		// Empty search - return top N items sorted alphabetically
-		// Exclude disabled and variant items (variants are shown via template selector, not in grid)
+		// Exclude disabled and template items (templates are not shown in grid, variants are)
 		if (!searchTerm || searchTerm.trim().length === 0) {
 			const results = await db.table("items")
 				.orderBy("item_name")
-				.filter(item => !item.disabled && !item.variant_of)
+				.filter(item => shouldShowItem(item))
 				.offset(offset)
 				.limit(limit)
 				.toArray()
@@ -621,13 +637,13 @@ async function searchCachedItemsByGroup(itemGroups = [], limit = 50, offset = 0)
 		const db = await initDB()
 
 		// Use item_group index for efficient lookup
-		// Exclude variant items (variant_of is set) — only show templates + regular items
+		// Exclude template items (has_variants is set) — only show variants + regular items
 		let allResults = []
 		for (const group of itemGroups) {
 			const items = await db.table("items")
 				.where("item_group")
 				.equals(group)
-				.filter(item => !item.disabled && !item.variant_of)
+				.filter(item => shouldShowItem(item))
 				.toArray()
 			allResults.push(...items)
 		}
@@ -653,6 +669,58 @@ async function searchCachedItemsByGroup(itemGroups = [], limit = 50, offset = 0)
 }
 
 /**
+ * Search cached items filtered by brand.
+ * Uses the brand index for efficient lookup.
+ *
+ * @param {string} brand - Brand name to filter by
+ * @param {number} limit - Max results
+ * @param {number} offset - Offset for pagination
+ * @returns {Promise<Array>} Matching items
+ */
+async function searchCachedItemsByBrand(brand, limit = 50, offset = 0) {
+	const startTime = performance.now()
+
+	if (!brand) {
+		// No brand filter → fall back to generic search
+		return searchCachedItems("", limit, offset)
+	}
+
+	const cacheKey = `brand:${brand}:${limit}:${offset}`
+	const cached = getCachedQuery(cacheKey)
+	if (cached) {
+		log.debug("Cache hit for brand search", { brand })
+		return cached
+	}
+
+	try {
+		const db = await initDB()
+
+		// Use brand index for lookup, then sort and paginate in memory
+		let results = await db.table("items")
+			.where("brand")
+			.equals(brand)
+			.filter(item => shouldShowItem(item))
+			.toArray()
+
+		// Stable ordering by item_name for consistent UI
+		results.sort((a, b) => (a.item_name || "").localeCompare(b.item_name || ""))
+
+		const paginated = results.slice(offset, offset + limit)
+
+		const duration = Math.round(performance.now() - startTime)
+		recordMetric('searchCachedItemsByBrand', duration, false)
+		log.debug(`Brand search: ${paginated.length} items for "${brand}" in ${duration}ms`)
+
+		cacheQueryResult(cacheKey, paginated)
+		return paginated
+	} catch (error) {
+		recordMetric('searchCachedItemsByBrand', performance.now() - startTime, true)
+		log.error("Error searching cached items by brand", error)
+		return []
+	}
+}
+
+/**
  * Count cached items filtered by item groups.
  * Uses the item_group index for efficient counting.
  *
@@ -664,7 +732,7 @@ async function countCachedItemsByGroup(itemGroups = []) {
 		const db = await initDB()
 
 		if (!itemGroups || itemGroups.length === 0) {
-			return await db.table("items").filter(item => !item.disabled && !item.variant_of).count()
+			return await db.table("items").filter(item => shouldShowItem(item)).count()
 		}
 
 		let total = 0
@@ -672,7 +740,7 @@ async function countCachedItemsByGroup(itemGroups = []) {
 			total += await db.table("items")
 				.where("item_group")
 				.equals(group)
-				.filter(item => !item.disabled && !item.variant_of)
+				.filter(item => shouldShowItem(item))
 				.count()
 		}
 		return total
@@ -1087,6 +1155,48 @@ async function getCachedPaymentMethods(posProfile) {
 }
 
 // ============================================================================
+// SALES PERSONS CACHE FUNCTIONS
+// ============================================================================
+
+// Cache sales persons for offline use
+async function cacheSalesPersons(salesPersons) {
+	try {
+		const db = await initDB()
+		await db.table("sales_persons").bulkPut(salesPersons)
+
+		await db.table("settings").put({
+			key: "sales_persons_last_sync",
+			value: Date.now(),
+		})
+
+		return { success: true, count: salesPersons.length }
+	} catch (error) {
+		log.error("Error caching sales persons", error)
+		throw error
+	}
+}
+
+// Get cached sales persons for a POS profile
+async function getCachedSalesPersons(posProfile) {
+	try {
+		const db = await initDB()
+
+		if (!posProfile) {
+			return await db.table("sales_persons").toArray()
+		}
+
+		return await db
+			.table("sales_persons")
+			.where("pos_profile")
+			.equals(posProfile)
+			.toArray()
+	} catch (error) {
+		log.error("Error getting cached sales persons", error)
+		return []
+	}
+}
+
+// ============================================================================
 // OFFERS CACHE FUNCTIONS
 // ============================================================================
 
@@ -1209,17 +1319,21 @@ async function getCacheStats() {
 	try {
 		const db = await initDB()
 
-		const [totalCount, variantCount, customerCount, queuedInvoices, lastSyncSetting] =
+		const [totalCount, hiddenCount, customerCount, queuedInvoices, lastSyncSetting] =
 			await Promise.all([
 				db.table("items").count(),
-				// Count variant items (have non-empty variant_of field)
-				db.table("items").where("variant_of").notEqual("").count(),
+				// Count items hidden from display based on current mode:
+				// showVariantsAsItems=true: hide templates (has_variants)
+				// showVariantsAsItems=false: hide variants (variant_of)
+				showVariantsAsItems
+					? db.table("items").filter(item => !!item.has_variants).count()
+					: db.table("items").filter(item => !!item.variant_of).count(),
 				db.table("customers").count(),
 				getOfflineInvoiceCount(),
 				db.table("settings").get("items_last_sync"),
 			])
-		// Exclude variants from display count (they're cached for template item lookups)
-		const itemCount = totalCount - variantCount
+		// Exclude hidden items from display count
+		const itemCount = totalCount - hiddenCount
 
 		return {
 			items: itemCount,
@@ -1571,6 +1685,9 @@ self.onmessage = async (event) => {
 			case "CACHE_CUSTOMERS":
 				result = await cacheCustomersFromServer(payload.customers)
 				break
+			case "SEARCH_ITEMS_BY_BRAND":
+				result = await searchCachedItemsByBrand(payload.brand, payload.limit, payload.offset || 0)
+				break
 
 			case "DELETE_CUSTOMERS":
 				result = await deleteCustomers(payload.customerNames)
@@ -1600,6 +1717,14 @@ self.onmessage = async (event) => {
 				result = await getCachedPaymentMethods(payload.posProfile)
 				break
 
+			case "CACHE_SALES_PERSONS":
+				result = await cacheSalesPersons(payload.salesPersons)
+				break
+
+			case "GET_SALES_PERSONS":
+				result = await getCachedSalesPersons(payload.posProfile)
+				break
+
 			case "IS_CACHE_READY":
 				result = await isCacheReady()
 				break
@@ -1610,6 +1735,15 @@ self.onmessage = async (event) => {
 
 			case "DELETE_INVOICE":
 				result = await deleteOfflineInvoice(payload.id)
+				break
+
+			case "SET_SHOW_VARIANTS_AS_ITEMS":
+				showVariantsAsItems = Boolean(payload.value)
+				// Invalidate query cache since display filters changed
+				invalidateCache('search:')
+				invalidateCache('group:')
+				log.info(`Display mode updated: showVariantsAsItems=${showVariantsAsItems}`)
+				result = { success: true, showVariantsAsItems }
 				break
 
 			case "SET_MANUAL_OFFLINE":
