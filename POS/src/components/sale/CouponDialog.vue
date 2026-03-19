@@ -45,7 +45,7 @@
 									d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
 									clip-rule="evenodd" />
 							</svg>
-							<span>{{ __('My Gift Cards ({0})', [giftCards.length]) }}</span>
+							<span>{{ __('Available Gift Cards ({0})', [giftCards.length]) }}</span>
 						</div>
 					</label>
 					<div class="flex flex-col gap-2 max-h-60 overflow-y-auto pe-1">
@@ -68,15 +68,26 @@
 											<h4 class="text-sm font-bold text-gray-900">
 												{{ card.coupon_code }}
 											</h4>
-											<p class="text-xs text-gray-600">{{ card.coupon_name }}</p>
+											<p class="text-xs text-gray-600">
+												{{ card.coupon_name }}
+												<span v-if="!card.customer" class="text-purple-500">({{ __('Anonymous') }})</span>
+											</p>
 										</div>
 									</div>
 								</div>
-								<svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-									<path fill-rule="evenodd"
-										d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-										clip-rule="evenodd" />
-								</svg>
+								<div class="flex items-center gap-2">
+									<div class="text-end">
+										<p class="text-sm font-bold text-purple-700">
+											{{ formatCurrency(card.balance || card.gift_card_amount || card.discount_amount) }}
+										</p>
+										<p class="text-xs text-gray-500">{{ __('Balance') }}</p>
+									</div>
+									<svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+										<path fill-rule="evenodd"
+											d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+											clip-rule="evenodd" />
+									</svg>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -93,12 +104,12 @@
 							</svg>
 						</div>
 						<h4 class="text-sm font-bold text-green-900">
-							{{ __('Coupon Applied Successfully!') }}
+							{{ appliedDiscount.isGiftCard ? __('Gift Card Applied!') : __('Coupon Applied Successfully!') }}
 						</h4>
 					</div>
 					<div class="bg-white rounded-lg p-3">
 						<div class="flex justify-between items-center mb-2">
-							<span class="text-xs text-gray-600">{{ __('Coupon Code') }}</span>
+							<span class="text-xs text-gray-600">{{ appliedDiscount.isGiftCard ? __('Gift Card Code') : __('Coupon Code') }}</span>
 							<span class="text-sm font-bold text-gray-900">{{ appliedDiscount.code }}</span>
 						</div>
 						<div class="flex justify-between items-center">
@@ -106,6 +117,17 @@
 							<span class="text-lg font-bold text-green-600">
 								-{{ formatCurrency(appliedDiscount.amount) }}
 							</span>
+						</div>
+						<!-- Gift Card Balance Info -->
+						<div v-if="appliedDiscount.isGiftCard && appliedDiscount.availableBalance" class="mt-2 pt-2 border-t border-gray-200">
+							<div class="flex justify-between items-center text-xs">
+								<span class="text-gray-500">{{ __('Card Balance') }}</span>
+								<span class="text-gray-700">{{ formatCurrency(appliedDiscount.availableBalance) }}</span>
+							</div>
+							<div v-if="appliedDiscount.remainingBalance > 0" class="flex justify-between items-center text-xs mt-1">
+								<span class="text-purple-600">{{ __('Remaining after purchase') }}</span>
+								<span class="text-purple-700 font-medium">{{ formatCurrency(appliedDiscount.remainingBalance) }}</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -145,7 +167,7 @@
 </template>
 
 <script setup>
-import { formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { ref, watch } from "vue"
 import { useInvoice } from "@/composables/useInvoice"
@@ -160,7 +182,12 @@ const props = defineProps({
 	subtotal: {
 		type: Number,
 		required: true,
-		note: __("Cart subtotal BEFORE tax - used for discount calculations"),
+		note: __("Cart subtotal BEFORE tax - used for regular coupon discount calculations"),
+	},
+	netTotal: {
+		type: Number,
+		required: true,
+		note: __("Net total AFTER pricing rules but BEFORE additional discount - used for gift card calculations"),
 	},
 	items: Array,
 	posProfile: String,
@@ -168,7 +195,7 @@ const props = defineProps({
 	company: String,
 	currency: {
 		type: String,
-		default: "USD",
+		default: DEFAULT_CURRENCY,
 	},
 	appliedCoupon: {
 		type: Object,
@@ -282,6 +309,7 @@ async function applyCoupon() {
 		}
 
 		const coupon = validationData.coupon
+		const isGiftCard = coupon.coupon_type === "Gift Card" || coupon.is_gift_card
 
 		// Check minimum amount (on subtotal before tax)
 		if (coupon.min_amount && props.subtotal < coupon.min_amount) {
@@ -290,22 +318,36 @@ async function applyCoupon() {
 			return
 		}
 
-		// Calculate discount on subtotal (before tax) using centralized helper
-		// Transform server coupon format to discount object format
-		const discountObj = {
-			percentage: coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
-			amount: coupon.discount_type === "Amount" ? coupon.discount_amount : 0,
+		let discountAmount = 0
+		let availableBalance = 0
+		let remainingBalance = 0
+
+		if (isGiftCard) {
+			// Gift card: use balance as discount, cap at netTotal (after pricing rules)
+			// This is critical: gift card discount must be based on the ACTUAL amount to pay
+			// after pricing rules have been applied, not the original subtotal
+			availableBalance = coupon.balance || coupon.gift_card_amount || coupon.discount_amount || 0
+			discountAmount = Math.min(availableBalance, props.netTotal)
+			remainingBalance = availableBalance - discountAmount
+		} else {
+			// Regular coupon: calculate based on discount type (uses original subtotal)
+			const discountObj = {
+				percentage: coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
+				amount: coupon.discount_type === "Amount" ? coupon.discount_amount : 0,
+			}
+			discountAmount = calculateDiscountAmount(discountObj, props.subtotal)
+
+			// Apply maximum discount limit if specified
+			if (coupon.max_amount && discountAmount > coupon.max_amount) {
+				discountAmount = coupon.max_amount
+			}
 		}
 
-		let discountAmount = calculateDiscountAmount(discountObj, props.subtotal)
-
-		// Apply maximum discount limit if specified
-		if (coupon.max_amount && discountAmount > coupon.max_amount) {
-			discountAmount = coupon.max_amount
-		}
-
-		// Clamp discount to subtotal to prevent negative totals
-		discountAmount = Math.min(discountAmount, props.subtotal)
+		// Clamp discount to the appropriate total based on coupon type
+		// Gift cards: clamp to netTotal (after pricing rules)
+		// Regular coupons: clamp to subtotal (original prices)
+		const maxDiscount = isGiftCard ? props.netTotal : props.subtotal
+		discountAmount = Math.min(discountAmount, maxDiscount)
 
 		appliedDiscount.value = {
 			name: coupon.coupon_name || coupon.coupon_code,
@@ -315,6 +357,9 @@ async function applyCoupon() {
 			type: coupon.discount_type,
 			coupon: coupon,
 			apply_on: coupon.apply_on,
+			isGiftCard: isGiftCard,
+			availableBalance: isGiftCard ? availableBalance : null,
+			remainingBalance: isGiftCard ? remainingBalance : null,
 		}
 
 		emit("discount-applied", appliedDiscount.value)

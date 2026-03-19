@@ -1,5 +1,26 @@
 from pos_next.utils import get_build_version
 
+
+def _has_native_coupon_code_field():
+	"""Check if ERPNext has a native coupon_code field on Sales Invoice (v16+)."""
+	try:
+		import json
+		import os
+		import importlib
+		erpnext_mod = importlib.import_module("erpnext")
+		erpnext_dir = os.path.dirname(erpnext_mod.__file__)
+		si_json_path = os.path.join(
+			erpnext_dir, "accounts", "doctype", "sales_invoice", "sales_invoice.json"
+		)
+		if os.path.exists(si_json_path):
+			with open(si_json_path) as f:
+				meta = json.load(f)
+			return any(f.get("fieldname") == "coupon_code" for f in meta.get("fields", []))
+	except Exception:
+		pass
+	return False
+
+
 app_name = "pos_next"
 app_title = "POS Next"
 app_publisher = "BrainWise"
@@ -49,7 +70,7 @@ _asset_version = get_build_version()
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -86,6 +107,28 @@ _asset_version = get_build_version()
 
 # Fixtures
 # --------
+# Build custom field list dynamically: skip coupon_code on Sales Invoice
+# if ERPNext already has it natively (v16+)
+_custom_field_names = [
+	"Sales Invoice-posa_pos_opening_shift",
+	"Sales Invoice-posa_is_printed",
+	"Sales Invoice-posa_coupon_code",
+	"Item-custom_company",
+	"POS Profile-posa_cash_mode_of_payment",
+	"POS Profile-posa_allow_delete",
+	"POS Profile-posa_block_sale_beyond_available_qty",
+	"Mode of Payment-is_wallet_payment",
+	"Coupon Code-pos_next_section",
+	"Coupon Code-pos_next_gift_card",
+	"Coupon Code-gift_card_amount",
+	"Coupon Code-original_gift_card_amount",
+	"Coupon Code-coupon_code_residual",
+	"Coupon Code-source_invoice",
+	"Coupon Code-referral_code",
+]
+if not _has_native_coupon_code_field():
+	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
+
 fixtures = [
 	{
 		"dt": "Custom Field",
@@ -93,15 +136,7 @@ fixtures = [
 			[
 				"name",
 				"in",
-				[
-					"Sales Invoice-posa_pos_opening_shift",
-					"Sales Invoice-posa_is_printed",
-					"Item-custom_company",
-					"POS Profile-posa_cash_mode_of_payment",
-					"POS Profile-posa_allow_delete",
-					"POS Profile-posa_block_sale_beyond_available_qty",
-					"Mode of Payment-is_wallet_payment"
-				]
+				_custom_field_names,
 			]
 		]
 	},
@@ -202,20 +237,40 @@ doc_events = {
 		"validate": "pos_next.validations.validate_item"
 	},
 	"Customer": {
-		"after_insert": "pos_next.api.customers.auto_assign_loyalty_program"
+		"after_insert": [
+			"pos_next.api.customers.auto_assign_loyalty_program",
+			"pos_next.realtime_events.emit_customer_event"
+		],
+		"on_update": "pos_next.realtime_events.emit_customer_event",
+		"on_trash": "pos_next.realtime_events.emit_customer_event"
 	},
 	"Sales Invoice": {
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",
+			"pos_next.api.sales_invoice_hooks.validate_coupon_on_invoice",
 			"pos_next.api.wallet.validate_wallet_payment"
 		],
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",
 		"on_submit": [
+			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
 			"pos_next.realtime_events.emit_stock_update_event",
-			"pos_next.api.wallet.process_loyalty_to_wallet"
+			"pos_next.api.wallet.process_loyalty_to_wallet",
+			"pos_next.api.gift_cards.create_gift_card_from_invoice",
+			"pos_next.api.gift_cards.process_gift_card_on_submit"
 		],
-		"on_cancel": "pos_next.realtime_events.emit_stock_update_event",
+		"on_cancel": [
+			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_cancel",
+			"pos_next.realtime_events.emit_stock_update_event",
+			"pos_next.api.gift_cards.process_gift_card_on_cancel"
+		],
 		"after_insert": "pos_next.realtime_events.emit_invoice_created_event"
+	},
+	"POS Invoice": {
+		"on_submit": [
+			"pos_next.api.gift_cards.create_gift_card_from_invoice",
+			"pos_next.api.gift_cards.process_gift_card_on_submit"
+		],
+		"on_cancel": "pos_next.api.gift_cards.process_gift_card_on_cancel"
 	},
 	"POS Profile": {
 		"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"

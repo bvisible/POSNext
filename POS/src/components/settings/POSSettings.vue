@@ -317,6 +317,11 @@
 												:description="__('Enable item-level discount in edit dialog')"
 											/>
 											<CheckboxField
+												v-model="settings.allow_user_to_edit_rate"
+												:label="__('Allow User To Edit Rate')"
+												:description="__('Allow editing item rate in cart. Disabled when offers are applied.')"
+											/>
+											<CheckboxField
 												v-model="settings.disable_rounded_total"
 												:label="__('Disable Rounded Total')"
 												:description="__('Show exact totals without rounding')"
@@ -356,8 +361,72 @@
 											<CheckboxField
 												v-model="settings.silent_print"
 												:label="__('Silent Print')"
-												:description="__('Print without confirmation')"
+												:description="__('Send receipts directly to a thermal printer via QZ Tray (no browser dialog)')"
 											/>
+
+											<!-- QZ Tray Printer Settings (shown when silent print is enabled) -->
+											<div v-if="settings.silent_print" class="ps-6 flex flex-col gap-3 border-s-2 border-teal-200">
+												<!-- Connection Status -->
+												<div class="flex items-center gap-2">
+													<div
+														class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+														:class="qzConnecting ? 'bg-yellow-500 animate-pulse' : qzConnected ? 'bg-green-500' : 'bg-red-500'"
+													></div>
+													<span
+														class="text-xs font-medium"
+														:class="qzConnecting ? 'text-yellow-700' : qzConnected ? 'text-green-700' : 'text-red-700'"
+													>
+														{{ qzConnecting ? __('Connecting to QZ Tray...') : qzConnected ? __('QZ Tray Connected') : __('QZ Tray Not Connected') }}
+													</span>
+													<button
+														v-if="!qzConnected && !qzConnecting"
+														@click="handleQzConnect"
+														class="ms-auto text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
+													>
+														{{ __('Retry') }}
+													</button>
+												</div>
+
+												<!-- Printer Selection -->
+												<div class="flex items-end gap-2">
+													<div class="flex-1">
+														<SelectField
+															v-model="selectedPrinter"
+															:label="__('Printer')"
+															:options="printerOptions"
+															:description="qzPrinters.length === 0 && !loadingPrinters ? __('No printers found. Is QZ Tray running?') : ''"
+														/>
+													</div>
+													<button
+														@click="handleRefreshPrinters"
+														:disabled="loadingPrinters"
+														class="px-2 py-2 mb-0.5 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+														:title="__('Refresh printer list')"
+													>
+														<svg
+															class="w-4 h-4 text-gray-600"
+															:class="loadingPrinters ? 'animate-spin' : ''"
+															fill="none" stroke="currentColor" viewBox="0 0 24 24"
+														>
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+														</svg>
+													</button>
+												</div>
+
+												<!-- Help text -->
+												<div class="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+													<div class="flex items-start gap-2">
+														<svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+														</svg>
+														<p class="text-xs text-teal-800 leading-relaxed">
+															{{ __('QZ Tray must be installed and running on this computer. Download from') }}
+															<a href="https://qz.io/download/" target="_blank" class="font-semibold underline">qz.io</a>.
+															{{ __('If QZ Tray is unavailable, printing will fall back to the browser dialog.') }}
+														</p>
+													</div>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -397,6 +466,14 @@ import { offlineWorker } from "@/utils/offline/workerClient"
 import { logger } from "@/utils/logger"
 import { usePOSEvents } from "@/composables/usePOSEvents"
 import TranslatedHTML from "../common/TranslatedHTML.vue"
+import {
+	qzConnected,
+	qzConnecting,
+	connect as qzConnect,
+	findPrinters,
+	getSavedPrinterName,
+	savePrinterName,
+} from "@/utils/qzTray"
 
 const log = logger.create('POSSettings')
 const { detectSettingsChanges, updateSettingsSnapshot, emitStockSyncConfigured } = usePOSEvents()
@@ -408,7 +485,7 @@ const props = defineProps({
 	currentWarehouse: String,
 })
 
-const emit = defineEmits(["update:modelValue", "warehouse-changed"])
+const emit = defineEmits(["update:modelValue"])
 
 const show = ref(props.modelValue)
 
@@ -426,6 +503,7 @@ const settings = ref({
 	use_percentage_discount: 0,
 	allow_user_to_edit_additional_discount: 0,
 	allow_user_to_edit_item_discount: 1,
+	allow_user_to_edit_rate: 0,
 	disable_rounded_total: 1,
 	allow_credit_sale: 0,
 	allow_return: 0,
@@ -447,6 +525,15 @@ const stockSyncStatus = ref({
 	lastSync: null,
 	running: false
 })
+
+// QZ Tray printer state
+const qzPrinters = ref([])
+const selectedPrinter = ref(getSavedPrinterName())
+const loadingPrinters = ref(false)
+
+const printerOptions = computed(() =>
+	qzPrinters.value.map((p) => ({ label: p, value: p }))
+)
 
 // Warehouse options
 const warehouseOptions = computed(() => {
@@ -640,10 +727,8 @@ async function saveSettings() {
 
 			if (warehouseResult && warehouseResult.success) {
 				// Add warehouse to new settings for change detection
+				// (detectSettingsChanges below will emit settings:warehouse-changed via event bus)
 				settings.value.warehouse = selectedWarehouse.value
-
-				// Emit event to parent to reload stock with new warehouse
-				emit("warehouse-changed", selectedWarehouse.value)
 			}
 		}
 
@@ -686,6 +771,49 @@ async function saveSettings() {
 		saving.value = false
 	}
 }
+
+// ============================================================================
+// QZ TRAY FUNCTIONS
+// ============================================================================
+
+async function handleQzConnect() {
+	const ok = await qzConnect()
+	if (ok) {
+		await handleRefreshPrinters()
+	}
+}
+
+async function handleRefreshPrinters() {
+	loadingPrinters.value = true
+	try {
+		qzPrinters.value = await findPrinters()
+		// Auto-select if only one printer or restore saved selection
+		const saved = getSavedPrinterName()
+		if (qzPrinters.value.length === 1) {
+			selectedPrinter.value = qzPrinters.value[0]
+			savePrinterName(selectedPrinter.value)
+		} else if (saved && qzPrinters.value.includes(saved)) {
+			selectedPrinter.value = saved
+		}
+	} finally {
+		loadingPrinters.value = false
+	}
+}
+
+// Save printer selection when changed
+watch(selectedPrinter, (name) => {
+	if (name) savePrinterName(name)
+})
+
+// Auto-connect and discover printers when silent_print is toggled on
+watch(
+	() => settings.value.silent_print,
+	async (enabled) => {
+		if (enabled) {
+			await handleQzConnect()
+		}
+	}
+)
 
 // ============================================================================
 // STOCK SYNC FUNCTIONS

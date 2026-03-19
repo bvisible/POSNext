@@ -24,6 +24,8 @@
 				:cache-stats="itemStore.cacheStats"
 				:stock-sync-active="isStockSyncActive"
 				:is-refreshing="stockStore.refreshing"
+				:silent-print-enabled="posSettingsStore.silentPrint"
+				:qz-connected="qzConnected"
 				@sync-click="handleSyncClick"
 				@printer-click="uiStore.showHistoryDialog = true"
 				@refresh-click="handleRefresh"
@@ -312,6 +314,7 @@
 							style="min-width: 300px; contain: layout style paint"
 						>
 							<InvoiceCart
+								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
 								:customer="cartStore.customer"
 								:subtotal="cartStore.subtotal"
@@ -442,6 +445,9 @@
 			:is-offline="offlineStore.isOffline"
 			:allow-partial-payment="posSettingsStore.allowPartialPayment"
 			:allow-credit-sale="posSettingsStore.allowCreditSale"
+			:allow-customer-credit-payment="posSettingsStore.allowCustomerCreditPayment"
+			:allow-write-off="posSettingsStore.allowWriteOffChange"
+			:write-off-limit="shiftStore.writeOffLimit"
 			:customer="cartStore.customer"
 			:company="shiftStore.profileCompany"
 			:additional-discount="cartStore.additionalDiscount"
@@ -495,6 +501,7 @@
 			<CouponDialog
 				v-model="uiStore.showCouponDialog"
 				:subtotal="cartStore.subtotal"
+				:net-total="cartStore.netTotalBeforeAdditionalDiscount"
 				:items="cartStore.invoiceItems"
 				:pos-profile="shiftStore.profileName"
 				:customer="cartStore.customer?.name || cartStore.customer"
@@ -503,6 +510,14 @@
 				:applied-coupon="cartStore.appliedCoupon"
 				@discount-applied="handleDiscountApplied"
 				@discount-removed="handleDiscountRemoved"
+			/>
+
+			<!-- Gift Card Created Dialog -->
+			<GiftCardCreatedDialog
+				:open="showGiftCardCreatedDialog"
+				:gift-cards="createdGiftCards"
+				:currency="shiftStore.profileCurrency"
+				@close="showGiftCardCreatedDialog = false"
 			/>
 
 			<!-- Offers Dialog -->
@@ -533,6 +548,7 @@
 				:item="cartStore.pendingItem"
 				:quantity="cartStore.pendingItemQty"
 				:warehouse="shiftStore.profileWarehouse"
+				:pos-profile="cartStore.posProfile"
 				@batch-serial-selected="handleBatchSerialSelected"
 			/>
 
@@ -550,10 +566,11 @@
 			<InvoiceHistoryDialog
 				v-model="uiStore.showHistoryDialog"
 				:pos-profile="shiftStore.profileName"
+				:pos-opening-shift="shiftStore.currentShift?.name"
 				:currency="shiftStore.profileCurrency"
-				@create-return="handleCreateReturnFromHistory"
 				@view-invoice="handleViewInvoice"
 				@print-invoice="handlePrintInvoice"
+				@return-created="handleReturnCreated"
 			/>
 
 			<!-- Offline Invoices Dialog -->
@@ -593,7 +610,6 @@
 				v-model="showPOSSettings"
 				:pos-profile="shiftStore.profileName"
 				:current-warehouse="shiftStore.profileWarehouse"
-				@warehouse-changed="handleWarehouseChanged"
 			/>
 
 			<!-- Stock Lookup Dialog (Products Menu) -->
@@ -971,6 +987,14 @@
 	</div>
 </template>
 
+<script>
+// Module-scoped init guard — prevents redundant heavy initialization
+// when component remounts due to translationVersion changes.
+// Tracks the profile name so a shift change correctly re-initializes.
+let _initializedProfile = null
+let _posInitPromise = null
+</script>
+
 <script setup>
 import ShiftClosingDialog from "@/components/ShiftClosingDialog.vue";
 import ShiftOpeningDialog from "@/components/ShiftOpeningDialog.vue";
@@ -982,6 +1006,7 @@ import POSHeader from "@/components/pos/POSHeader.vue";
 import BatchSerialDialog from "@/components/sale/BatchSerialDialog.vue";
 import CouponDialog from "@/components/sale/CouponDialog.vue";
 import CreateCustomerDialog from "@/components/sale/CreateCustomerDialog.vue";
+import GiftCardCreatedDialog from "@/components/sale/GiftCardCreatedDialog.vue";
 import CustomerDialog from "@/components/sale/CustomerDialog.vue";
 import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
 import InvoiceCart from "@/components/sale/InvoiceCart.vue";
@@ -999,16 +1024,20 @@ import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
 import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
 import { usePOSEvents } from "@/composables/usePOSEvents";
+import { useGiftCard } from "@/composables/useGiftCard";
 import { useLocale } from "@/composables/useLocale";
 import { useCustomerDisplaySync } from "@/composables/useCustomerDisplaySync";
 import { session } from "@/data/session";
 import { useUserData } from "@/data/user";
 import { parseError } from "@/utils/errorHandler";
 import { offlineWorker } from "@/utils/offline/workerClient";
-import { printInvoice, printInvoiceByName } from "@/utils/printInvoice";
+import { cacheInvoiceHistory, getCachedInvoiceHistory } from "@/utils/offline/sync";
+import { printInvoice, printInvoiceByName, printWithSilentFallback } from "@/utils/printInvoice";
+import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
+
 import { Button, Dialog, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@/composables/useToast";
 
 import { useCustomerSearchStore } from "@/stores/customerSearch";
@@ -1071,6 +1100,7 @@ const { isRTL } = useLocale();
 // Component refs
 const itemsSelectorRef = ref(null);
 const offersDialogRef = ref(null);
+const invoiceCartRef = ref(null);
 const containerRef = ref(null);
 const dividerRef = ref(null);
 const pendingPaymentAfterCustomer = ref(false);
@@ -1112,6 +1142,13 @@ const showInvoiceManagement = ref(false);
 // Invoice Detail dialog
 const showInvoiceDetail = ref(false);
 const selectedInvoiceForView = ref(null);
+
+// Gift Card Created dialog
+const showGiftCardCreatedDialog = ref(false);
+const createdGiftCards = ref([]);
+
+// Gift Card composable
+const { getGiftCardsFromInvoice } = useGiftCard();
 
 // Invoice history data (used by InvoiceManagement component)
 const invoiceHistoryData = ref([]);
@@ -1310,84 +1347,130 @@ onMounted(async () => {
 		await posSettingsStore.reloadSettings();
 	});
 
+	// QZ Tray lifecycle — lazy connect when silent print is enabled
+	watch(
+		() => posSettingsStore.silentPrint,
+		async (enabled) => {
+			if (enabled) {
+				await qzConnect();
+			} else {
+				await qzDisconnect();
+			}
+		},
+		{ immediate: true }
+	);
+
 	// Store cleanup function for unmount
-	onUnmounted(cleanup);
+	onUnmounted(() => {
+		cleanup();
+		qzDisconnect();
+	});
 
 	try {
 		// Start timers for current time and shift duration
 		shiftStore.startTimers();
 
-		// Check for existing open shift
+		// Skip heavy initialization if already completed for this profile
+		// (e.g., remount from translationVersion change). Pinia stores are
+		// singletons — their state survives component remounts.
+		const currentProfileName = shiftStore.profileName;
+		if (_initializedProfile && _initializedProfile === currentProfileName) {
+			log.debug("Skipping init — already initialized (remount)");
+			updateLayoutBounds();
+			return;
+		}
+
+		// If another mount is already running init, wait for it instead of duplicating
+		if (_posInitPromise) {
+			log.debug("Init already in progress, waiting...");
+			try {
+				await _posInitPromise;
+			} catch {
+				// Original caller handles errors; this mount just waits
+			}
+			updateLayoutBounds();
+			return;
+		}
+
+		_posInitPromise = initPOS();
+		await _posInitPromise;
+		_posInitPromise = null;
+
+		updateLayoutBounds();
+	} catch (error) {
+		_posInitPromise = null;
+		log.error("Error checking shift:", error);
+	} finally {
+		uiStore.setLoading(false);
+	}
+
+	async function initPOS() {
 		const hasShift = await shiftStore.checkShift();
 
 		if (!hasShift) {
 			uiStore.showOpenShiftDialog = true;
-		} else {
-			// Set POS profile and load tax rules
-			if (shiftStore.currentProfile) {
-				cartStore.posProfile = shiftStore.profileName;
-				cartStore.posOpeningShift = shiftStore.currentShift?.name;
-
-				// Load POS Settings
-				await posSettingsStore.loadSettings(shiftStore.profileName);
-				log.info("POS Settings loaded:", {
-					allowPartialPayment: posSettingsStore.allowPartialPayment,
-					settings: posSettingsStore.settings,
-				});
-
-				// Load tax rules with tax_inclusive setting from POS Settings
-				await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
-
-				// Set default customer from POS Profile if configured
-				await cartStore.setDefaultCustomer();
-
-				// Note: POS Settings already loaded above via posSettingsStore.loadSettings()
-				// No need to call again since settingsStore is an alias to posSettingsStore
-
-				// Set warehouse context in stock store for stock operations
-				if (shiftStore.profileWarehouse) {
-					stockStore.setWarehouse(shiftStore.profileWarehouse);
-
-					// Note: Periodic stock sync will be configured after items load
-					// See watch() on itemStore.allItems below
-				}
-
-				// Pre-load data for offline use
-				if (!offlineStore.isOffline) {
-					await offlineStore.preloadDataForOffline(shiftStore.currentProfile);
-				} else {
-					await offlineStore.checkOfflineCacheAvailability();
-				}
-
-				// Enable customer display sync
-				if (shiftStore.currentShift?.name) {
-					enableDisplaySync(
-						shiftStore.currentShift.name,
-						shiftStore.currentProfile?.currency || "EUR"
-					);
-
-					// Register callback for customer created from display
-					onCustomerCreated(async (customerData) => {
-						log.info("Customer created from display notification", customerData);
-						// Add customer to search cache so they appear in search results
-						await customerSearchStore.addCustomerToCache({
-							name: customerData.name,
-							customer_name: customerData.customer_name,
-							mobile_no: customerData.mobile_no || "",
-							email_id: customerData.email || "",
-						});
-						uiStore.showCustomerCreatedNotification(customerData);
-					});
-				}
-			}
+			return;
 		}
 
-		updateLayoutBounds();
-		await draftsStore.updateDraftsCount();
-	} catch (error) {
-		log.error("Error checking shift:", error);
-	} finally {
-		uiStore.setLoading(false);
+		if (!shiftStore.currentProfile) return;
+
+		cartStore.posProfile = shiftStore.profileName;
+		cartStore.posOpeningShift = shiftStore.currentShift?.name;
+
+		// Set warehouse context early (synchronous, no API call)
+		if (shiftStore.profileWarehouse) {
+			stockStore.setWarehouse(shiftStore.profileWarehouse);
+		}
+
+		// Fire independent operations in parallel while settings load.
+		// Settings must complete before tax rules, but the rest are independent.
+		const settingsPromise = posSettingsStore.loadSettings(shiftStore.profileName);
+
+		const backgroundOps = Promise.allSettled([
+			cartStore.setDefaultCustomer(),
+			offlineStore.isOffline
+				? offlineStore.checkOfflineCacheAvailability()
+				: offlineStore.preloadDataForOffline(shiftStore.currentProfile),
+			draftsStore.updateDraftsCount(),
+		]);
+
+		// Wait for settings (required for tax rules) + all background ops
+		const [settingsResult] = await Promise.allSettled([settingsPromise, backgroundOps]);
+
+		if (settingsResult.status === "rejected") {
+			log.error("Failed to load POS settings:", settingsResult.reason);
+			return;
+		}
+
+		log.info("POS Settings loaded:", {
+			allowPartialPayment: posSettingsStore.allowPartialPayment,
+		});
+
+		// Load tax rules (depends on settings being loaded)
+		await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
+
+		// Enable customer display sync
+		if (shiftStore.currentShift?.name) {
+			enableDisplaySync(
+				shiftStore.currentShift.name,
+				shiftStore.currentProfile?.currency || "EUR"
+			);
+
+			// Register callback for customer created from display
+			onCustomerCreated(async (customerData) => {
+				log.info("Customer created from display notification", customerData);
+				// Add customer to search cache so they appear in search results
+				await customerSearchStore.addCustomerToCache({
+					name: customerData.name,
+					customer_name: customerData.customer_name,
+					mobile_no: customerData.mobile_no || "",
+					email_id: customerData.email || "",
+				});
+				uiStore.showCustomerCreatedNotification(customerData);
+			});
+		}
+
+		_initializedProfile = shiftStore.profileName;
 	}
 });
 
@@ -1719,7 +1802,23 @@ function handleItemSelected(item, autoAdd = false) {
 	// Auto-add mode
 	if (autoAdd) {
 		try {
-			cartStore.addItem(item, 1, true, shiftStore.currentProfile);
+			// Check if item has resolved barcode data (weighted/priced)
+			if (item.resolved_qty && item.resolved_barcode_type) {
+				// Get the unit price for the resolved UOM from uom_prices, or fall back to item rate
+				const resolvedUom = item.resolved_uom || item.uom;
+				const unitRate = item.uom_prices?.[resolvedUom] || item.rate;
+
+				const resolvedItem = {
+					...item,
+					uom: resolvedUom,
+					rate: unitRate,
+					price_list_rate: unitRate,
+					is_resolved_barcode: true, // Mark as readonly
+				};
+				cartStore.addItem(resolvedItem, item.resolved_qty, true, shiftStore.currentProfile);
+			} else {
+				cartStore.addItem(item, 1, true, shiftStore.currentProfile);
+			}
 		} catch (error) {
 			uiStore.showError(
 				__("Insufficient Stock"),
@@ -1778,6 +1877,32 @@ function handleItemSelected(item, autoAdd = false) {
 	if (item.has_batch_no || item.has_serial_no) {
 		cartStore.setPendingItem(item, 1);
 		uiStore.showBatchSerialDialog = true;
+		return;
+	}
+
+	// Check for zero-price items (e.g., gift cards that need custom value)
+	const itemRate = item.price_list_rate || item.rate || 0;
+	if (itemRate === 0) {
+		// Add item to cart first
+		try {
+			cartStore.addItem(item, 1, false, shiftStore.currentProfile);
+		} catch (error) {
+			uiStore.showError(
+				__("Insufficient Stock"),
+				error.message,
+				__("Item: {0}", [item.item_code])
+			);
+			return;
+		}
+		// Open edit dialog to set the price
+		nextTick(() => {
+			const addedItem = cartStore.invoiceItems.find(
+				(i) => i.item_code === item.item_code
+			);
+			if (addedItem && invoiceCartRef.value) {
+				invoiceCartRef.value.openEditDialog(addedItem);
+			}
+		});
 		return;
 	}
 
@@ -1909,6 +2034,11 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.setDeliveryDate(paymentData.delivery_date);
 		}
 
+		// Set write-off amount if provided
+		if (paymentData.write_off_amount && paymentData.write_off_amount > 0) {
+			cartStore.setWriteOffAmount(paymentData.write_off_amount);
+		}
+
 		// Delete draft if it exists (since we're submitting/saving invoice)
 		const draftIdToDelete = cartStore.currentDraftId;
 
@@ -1928,6 +2058,15 @@ async function handlePaymentCompleted(paymentData) {
 				grand_total: cartStore.grandTotal,
 				total_tax: cartStore.totalTax,
 				total_discount: cartStore.totalDiscount,
+				write_off_amount: paymentData.write_off_amount || 0,
+				// Document-level discount for coupons and gift cards
+				discount_amount: cartStore.additionalDiscount || 0,
+				apply_discount_on: cartStore.additionalDiscount > 0 ? "Grand Total" : null,
+				coupon_code: cartStore.couponCode || null,
+				posa_coupon_code: cartStore.couponCode ? cartStore.couponCode.toUpperCase() : null,
+				posa_gift_card_amount_used: cartStore.additionalDiscount || 0,
+				is_pos: 1,
+				update_stock: 1,
 			};
 
 			await offlineStore.saveInvoiceOffline(invoiceData);
@@ -1978,7 +2117,23 @@ async function handlePaymentCompleted(paymentData) {
 				// Notify customer display that sale is complete
 				notifySaleComplete(invoiceTotal, invoiceName);
 
-				if (shiftStore.autoPrintEnabled) {
+				// Refresh invoice history cache in background (non-blocking)
+				loadInvoiceHistoryData().catch((err) =>
+					log.debug("Background invoice cache refresh failed:", err)
+				);
+
+				// Check if gift cards were created from this invoice
+				try {
+					const giftCards = await getGiftCardsFromInvoice(invoiceName);
+					if (giftCards && giftCards.length > 0) {
+						createdGiftCards.value = giftCards;
+						showGiftCardCreatedDialog.value = true;
+					}
+				} catch (err) {
+					log.warn("Failed to check for created gift cards:", err);
+				}
+
+				if (shiftStore.autoPrintEnabled || posSettingsStore.silentPrint) {
 					try {
 						await handlePrintInvoice({ name: invoiceName });
 						showSuccess(__("Invoice {0} created and sent to printer", [invoiceName]));
@@ -2091,20 +2246,16 @@ async function handleOptionSelected(option) {
 			}
 		} else if (option.type === "uom") {
 			const qty = option.quantity || cartStore.pendingItemQty;
-			const itemDetails = await cartStore.getItemDetailsResource.submit({
-				item_code: cartStore.pendingItem.item_code,
-				pos_profile: cartStore.posProfile,
-				customer: cartStore.customer?.name || cartStore.customer,
-				qty: qty,
-				uom: option.uom,
-			});
+			const pricing = await cartStore.resolveUomPricing(
+				cartStore.pendingItem, option.uom, option.conversion_factor, qty
+			);
 
 			const itemToAdd = {
 				...cartStore.pendingItem,
 				uom: option.uom,
 				conversion_factor: option.conversion_factor,
-				rate: itemDetails.price_list_rate || itemDetails.rate,
-				price_list_rate: itemDetails.price_list_rate,
+				rate: pricing.rate,
+				price_list_rate: pricing.price_list_rate,
 			};
 
 			if (itemToAdd.has_batch_no || itemToAdd.has_serial_no) {
@@ -2215,7 +2366,8 @@ async function handleLoadDraft(draft) {
 }
 
 function handleReturnCreated(returnInvoice) {
-	showSuccess(__("Return invoice {0} created successfully", [returnInvoice.name]));
+	// Success message is already shown by ReturnInvoiceDialog
+	log.debug("Return invoice created:", returnInvoice.name)
 }
 
 function handleDiscountApplied(discount) {
@@ -2256,11 +2408,6 @@ function handleBatchSerialSelected(batchSerial) {
 	}
 }
 
-function handleCreateReturnFromHistory(invoice) {
-	uiStore.showReturnDialog = true;
-	showWarning(__("Creating return for invoice {0}", [invoice.name]));
-}
-
 async function handleCustomerCreated(newCustomer) {
 	cartStore.setCustomer(newCustomer);
 	uiStore.showCreateCustomerDialog = false;
@@ -2285,19 +2432,25 @@ async function handleCustomerUpdated(updatedCustomer) {
 
 async function handleRefresh() {
 	try {
-		log.info("Manual stock refresh initiated");
+		log.info("Manual refresh initiated (items, customers, stock)");
 
-		// Refresh stock from server
-		// Note: refresh() now preserves reservations internally
-		await stockStore.refresh(null, shiftStore.profileWarehouse);
+		// Refresh items, customers, and stock in parallel
+		await Promise.all([
+			// Refresh items from server (force server fetch)
+			itemStore.loadAllItems(shiftStore.profileName, true),
+			// Refresh customers from server (force reload)
+			customerSearchStore.loadAllCustomers(shiftStore.profileName, true),
+			// Refresh stock from server (preserves reservations internally)
+			stockStore.refresh(null, shiftStore.profileWarehouse),
+		]);
 
 		// Refresh cache stats to update "Last Updated" timestamp
 		const stats = await offlineWorker.getCacheStats();
 		itemStore.cacheStats = stats;
 
-		log.success("Manual stock refresh completed");
+		log.success("Manual refresh completed (items, customers, stock)");
 	} catch (error) {
-		log.error("Manual stock refresh failed:", error);
+		log.error("Manual refresh failed:", error);
 	}
 }
 
@@ -2592,6 +2745,22 @@ async function loadInvoiceHistoryData() {
 	// Also reload drafts
 	await draftsStore.loadDrafts();
 
+	// Check if offline - use cached data
+	if (offlineStore.isOffline) {
+		log.info("Offline mode - loading invoice history from cache");
+		try {
+			const cachedInvoices = await getCachedInvoiceHistory(shiftStore.profileName, {
+				limit: 100,
+			});
+			invoiceHistoryData.value = cachedInvoices || [];
+			log.info("Loaded", invoiceHistoryData.value.length, "invoices from offline cache");
+		} catch (error) {
+			log.error("Error loading cached invoice history:", error);
+			invoiceHistoryData.value = [];
+		}
+		return;
+	}
+
 	try {
 		// Use custom API from pos_next.api.invoices
 		const result = await call("pos_next.api.invoices.get_invoices", {
@@ -2601,8 +2770,28 @@ async function loadInvoiceHistoryData() {
 
 		invoiceHistoryData.value = result || [];
 		log.info("Loaded invoice history:", invoiceHistoryData.value.length, "invoices");
+
+		// Cache invoices for offline use
+		if (result && result.length > 0) {
+			cacheInvoiceHistory(result, shiftStore.profileName);
+		}
 	} catch (error) {
 		log.error("Error loading invoice history:", error);
+
+		// Fallback to cached data on error
+		try {
+			const cachedInvoices = await getCachedInvoiceHistory(shiftStore.profileName, {
+				limit: 100,
+			});
+			if (cachedInvoices && cachedInvoices.length > 0) {
+				invoiceHistoryData.value = cachedInvoices;
+				log.info("Loaded", cachedInvoices.length, "invoices from cache (fallback)");
+				return;
+			}
+		} catch (cacheError) {
+			log.error("Error loading fallback cache:", cacheError);
+		}
+
 		invoiceHistoryData.value = [];
 	}
 }
@@ -2616,7 +2805,16 @@ function handleViewInvoice(invoice) {
 // Centralized print handler - uses printInvoice.js utilities
 async function handlePrintInvoice(invoiceData) {
 	try {
-		// If invoiceData is a full document with items, use printInvoice directly
+		// Silent print path — send directly to thermal printer via QZ Tray
+		if (posSettingsStore.silentPrint) {
+			const result = await printWithSilentFallback(invoiceData);
+			if (result.method === "browser") {
+				log.info("Used browser print fallback");
+			}
+			return;
+		}
+
+		// Standard browser print path
 		if (invoiceData.items && Array.isArray(invoiceData.items)) {
 			await printInvoice(invoiceData);
 		} else {

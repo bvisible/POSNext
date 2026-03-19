@@ -107,7 +107,7 @@
 										{{ coupon.coupon_code }}
 									</p>
 									<Badge
-										v-if="coupon.coupon_type === 'Gift Card'"
+										v-if="coupon.coupon_type === 'Gift Card' || coupon.pos_next_gift_card"
 										variant="subtle"
 										theme="purple"
 										size="sm"
@@ -560,6 +560,7 @@ import AutocompleteSelect from "@/components/common/AutocompleteSelect.vue"
 import { useToast } from "@/composables/useToast"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { usePOSSettingsStore } from "@/stores/posSettings"
+import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@/utils/currency"
 import { Badge, Button, Card, FormControl, LoadingIndicator, createResource } from "frappe-ui"
 import { FeatherIcon } from "frappe-ui"
 import { storeToRefs } from "pinia"
@@ -575,7 +576,7 @@ const props = defineProps({
 	company: String,
 	currency: {
 		type: String,
-		default: "USD",
+		default: DEFAULT_CURRENCY,
 	},
 	permissions: {
 		type: Object,
@@ -647,8 +648,19 @@ const filteredCoupons = computed(() => {
 	}
 
 	// Filter by type
+	// Note: POS Next gift cards have coupon_type='Promotional' but pos_next_gift_card=1
 	if (filterType.value !== "all") {
-		filtered = filtered.filter((c) => c.coupon_type === filterType.value)
+		filtered = filtered.filter((c) => {
+			if (filterType.value === "Gift Card") {
+				// Include both ERPNext gift cards (coupon_type) and POS Next gift cards (pos_next_gift_card)
+				return c.coupon_type === "Gift Card" || c.pos_next_gift_card === 1
+			}
+			if (filterType.value === "Promotional") {
+				// Only show promotional coupons that are NOT gift cards
+				return c.coupon_type === "Promotional" && !c.pos_next_gift_card
+			}
+			return c.coupon_type === filterType.value
+		})
 	}
 
 	return filtered
@@ -973,7 +985,7 @@ function populateFormFromCoupon(coupon) {
 function formatDate(dateStr) {
 	if (!dateStr) return ""
 	const date = new Date(dateStr)
-	return date.toLocaleDateString("en-US", {
+	return date.toLocaleDateString(DEFAULT_LOCALE, {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
@@ -981,7 +993,7 @@ function formatDate(dateStr) {
 }
 
 function formatCurrency(amount) {
-	return new Intl.NumberFormat("en-US", {
+	return new Intl.NumberFormat(DEFAULT_LOCALE, {
 		style: "currency",
 		currency: props.currency,
 	}).format(amount || 0)

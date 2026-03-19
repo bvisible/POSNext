@@ -19,11 +19,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		use_percentage_discount: 0,
 		allow_user_to_edit_additional_discount: 0,
 		allow_user_to_edit_item_discount: 1, // Allow item-level discounts
+		allow_user_to_edit_rate: 0, // Allow rate editing in edit dialog
 		disable_rounded_total: 1, // Disable rounding for accurate totals
 		allow_credit_sale: 0,
+		allow_customer_credit_payment: 0,
 		allow_return: 0,
 		allow_write_off_change: 0,
 		allow_partial_payment: 0,
+		use_exact_amount: 0,
 		// Display Settings
 		default_card_view: 0,
 		display_item_code: 0,
@@ -101,11 +104,17 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const allowItemDiscount = computed(() =>
 		Boolean(settings.value.allow_user_to_edit_item_discount),
 	)
+	const allowUserToEditRate = computed(() =>
+		Boolean(settings.value.allow_user_to_edit_rate),
+	)
 	const disableRoundedTotal = computed(() =>
 		Boolean(settings.value.disable_rounded_total),
 	)
 	const allowCreditSale = computed(() =>
 		Boolean(settings.value.allow_credit_sale),
+	)
+	const allowCustomerCreditPayment = computed(() =>
+		Boolean(settings.value.allow_customer_credit_payment),
 	)
 	const allowReturn = computed(() => Boolean(settings.value.allow_return))
 	const allowWriteOffChange = computed(() =>
@@ -113,6 +122,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	)
 	const allowPartialPayment = computed(() =>
 		Boolean(settings.value.allow_partial_payment),
+	)
+	const useExactAmount = computed(() =>
+		Boolean(settings.value.use_exact_amount),
 	)
 
 	// Computed - Display Settings
@@ -235,17 +247,13 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const settingsResource = createResource({
 		url: "pos_next.pos_next.doctype.pos_settings.pos_settings.get_pos_settings",
 		onSuccess(data) {
-			console.log('[POSSettings Store] Loaded settings:', data)
 			if (data) {
 				Object.assign(settings.value, data)
-				console.log('[POSSettings Store] Updated settings.value:', settings.value)
-				console.log('[POSSettings Store] allowPartialPayment computed:', Boolean(settings.value.allow_partial_payment))
 				isLoaded.value = true
 			}
 			isLoading.value = false
 		},
 		onError(error) {
-			console.error("Failed to load POS Settings:", error)
 			isLoading.value = false
 		},
 	})
@@ -253,7 +261,6 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	// Actions
 	async function loadSettings(posProfile) {
 		if (!posProfile) {
-			console.warn("Cannot load POS Settings: POS Profile not provided")
 			return false
 		}
 
@@ -265,23 +272,20 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			const bootstrapStore = useBootstrapStore()
 			const preloadedSettings = bootstrapStore.getPreloadedPOSSettings()
 			if (preloadedSettings && Object.keys(preloadedSettings).length > 0) {
-				console.log('[POSSettings Store] Using preloaded settings from bootstrap:', preloadedSettings)
 				Object.assign(settings.value, preloadedSettings)
 				isLoaded.value = true
 				isLoading.value = false
 				return true
 			}
-		} catch (error) {
+		} catch {
 			// Bootstrap store may not be available, fall through to API call
-			console.log('[POSSettings Store] Bootstrap not available, fetching from API')
 		}
 
 		// Fallback to API call
 		try {
 			await settingsResource.submit({ pos_profile: posProfile })
 			return true
-		} catch (error) {
-			console.error("Error loading POS Settings:", error)
+		} catch {
 			return false
 		}
 	}
@@ -301,11 +305,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			use_percentage_discount: 0,
 			allow_user_to_edit_additional_discount: 0,
 			allow_user_to_edit_item_discount: 1,
+			allow_user_to_edit_rate: 0,
 			disable_rounded_total: 1,
 			allow_credit_sale: 0,
+			allow_customer_credit_payment: 0,
 			allow_return: 0,
 			allow_write_off_change: 0,
 			allow_partial_payment: 0,
+			use_exact_amount: 0,
 			default_card_view: 0,
 			display_item_code: 0,
 			show_customer_balance: 0,
@@ -378,17 +385,16 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	 */
 	async function reloadSettings() {
 		if (!settings.value.pos_profile) {
-			console.warn("Cannot reload POS Settings: POS Profile not set")
 			return false
 		}
 
 		isLoading.value = true
 
 		try {
-			await settingsResource.reload()
+			// Use submit with pos_profile to ensure proper reload
+			await settingsResource.submit({ pos_profile: settings.value.pos_profile })
 			return true
-		} catch (error) {
-			console.error("Error reloading POS Settings:", error)
+		} catch {
 			return false
 		}
 	}
@@ -412,11 +418,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		usePercentageDiscount,
 		allowAdditionalDiscount,
 		allowItemDiscount,
+		allowUserToEditRate,
 		disableRoundedTotal,
 		allowCreditSale,
+		allowCustomerCreditPayment,
 		allowReturn,
 		allowWriteOffChange,
 		allowPartialPayment,
+		useExactAmount,
 
 		// Computed - Display Settings
 		defaultCardView,

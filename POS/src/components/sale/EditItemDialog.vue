@@ -77,11 +77,18 @@
 												<div class="flex flex-col gap-4">
 													<!-- Quantity Control -->
 													<div>
-														<label class="block text-sm font-medium text-gray-700 mb-2 text-start">{{ __('Quantity') }}</label>
+														<label class="block text-sm font-medium text-gray-700 mb-2 text-start">
+                              {{ __('Quantity') }}
+                              <span v-if="localItem?.is_resolved_barcode" class="ms-1 text-xs text-amber-600">({{ __('Locked') }})</span>
+                            </label>
 														<!-- For serial items, quantity is read-only (controlled by serial list) -->
 														<div v-if="localItem?.has_serial_no && localSerials.length > 0" class="w-full h-7 border border-gray-300 rounded-lg bg-gray-50 flex items-center justify-center">
 															<span class="text-sm font-semibold text-gray-600">{{ localSerials.length }}</span>
 														</div>
+                            <!-- For resolved barcode items, quantity is read-only -->
+                            <div v-else-if="localItem?.is_resolved_barcode" class="w-full h-10 border border-amber-300 rounded-lg bg-amber-50 flex items-center justify-center">
+                              <span class="text-sm font-semibold text-amber-700">{{ localQuantity }}</span>
+                            </div>
 														<!-- For non-serial items, show quantity controls -->
 														<div v-else class="w-full h-7 border border-gray-300 rounded-lg bg-white flex items-center overflow-hidden">
 															<button
@@ -126,10 +133,18 @@
 																type="number"
 																min="0"
 																step="0.01"
-																readonly
-																class="w-full h-7 border border-gray-300 rounded-lg ps-12 pe-3 text-sm font-semibold bg-gray-50 cursor-not-allowed"
+																:readonly="!canEditRate"
+																:class="canEditRate ? 'bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' : 'bg-gray-50 cursor-not-allowed'"
+																class="w-full h-7 border border-gray-300 rounded-lg ps-12 pe-3 text-sm font-semibold"
+																:title="rateEditDisabledReason"
+																@input="calculateTotals"
 															/>
 														</div>
+														<!-- Compact warning when rate editing disabled due to pricing rules -->
+														<p v-if="hasPricingRules && settingsStore.allowUserToEditRate" class="mt-1 text-xs text-amber-600 flex items-center gap-1">
+															<FeatherIcon name="lock" class="w-3 h-3" />
+															{{ __('Locked (offer applied)') }}
+														</p>
 													</div>
 												</div>
 
@@ -137,8 +152,15 @@
 												<div class="flex flex-col gap-4">
 													<!-- UOM Selector -->
 													<div>
-														<label class="block text-sm font-medium text-gray-700 mb-2 text-start">{{ __('UOM') }}</label>
-														<SelectInput v-model="localUom" :options="uomOptions" @change="handleUomChange" />
+														<label class="block text-sm font-medium text-gray-700 mb-2 text-start">
+                              {{ __('UOM') }}
+                              <span v-if="localItem?.is_resolved_barcode" class="ms-1 text-xs text-amber-600">({{ __('Locked') }})</span>
+                            </label>
+                            <!-- For resolved barcode items, UOM is read-only -->
+                            <div v-if="localItem?.is_resolved_barcode" class="w-full h-10 border border-amber-300 rounded-lg bg-amber-50 flex items-center justify-center">
+                              <span class="text-sm font-semibold text-amber-700">{{ localUom }}</span>
+                            </div>
+                            <SelectInput v-else v-model="localUom" :options="uomOptions" @change="handleUomChange" />
 													</div>
 
 													<!-- Warehouse Selector -->
@@ -264,7 +286,7 @@ import { useToast } from "@/composables/useToast"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useSerialNumberStore } from "@/stores/serialNumber"
 import { getItemStock } from "@/utils/stockValidator"
-import { formatCurrency as formatCurrencyUtil, getCurrencySymbol, round2 } from "@/utils/currency"
+import { formatCurrency as formatCurrencyUtil, getCurrencySymbol, roundCurrency } from "@/utils/currency"
 import { Button, FeatherIcon } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import SelectInput from "@/components/common/SelectInput.vue"
@@ -304,6 +326,7 @@ const isCheckingStock = ref(false)
 const localSerials = ref([]) // List of serial numbers for this item
 const removedSerials = ref([]) // Track serials removed during this edit session
 const originalSerials = ref([]) // Original serials when dialog opened
+const originalPriceListRate = ref(0) // Original price_list_rate when dialog opened (for rate edit validation)
 
 const show = computed({
 	get: () => props.modelValue,
@@ -318,6 +341,38 @@ const availableUoms = computed(() => {
 })
 
 const currencySymbol = computed(() => getCurrencySymbol(props.currency))
+
+// Check if item has pricing rules applied (promotional offers)
+const hasPricingRules = computed(() => {
+	if (!localItem.value) return false
+	return Boolean(localItem.value.pricing_rules) && localItem.value.pricing_rules.length > 0
+})
+
+// Zero-price items (e.g., gift cards) always allow rate editing
+const isZeroPriceItem = computed(() => {
+	if (!localItem.value) return false
+	const originalRate = localItem.value.price_list_rate || localItem.value.rate || 0
+	return originalRate === 0
+})
+
+// Rate editing is allowed if:
+// 1. Item has zero price (gift cards with custom value), OR
+// 2. POS Settings allows rate editing AND item has no pricing rules applied
+const canEditRate = computed(() => {
+	if (isZeroPriceItem.value) return true
+	return settingsStore.allowUserToEditRate && !hasPricingRules.value
+})
+
+// Tooltip message for why rate editing is disabled
+const rateEditDisabledReason = computed(() => {
+	if (!settingsStore.allowUserToEditRate) {
+		return __('Rate editing is disabled')
+	}
+	if (hasPricingRules.value) {
+		return __('Locked (offer applied)')
+	}
+	return ''
+})
 
 // Options for SelectInput components
 const uomOptions = computed(() => {
@@ -355,6 +410,8 @@ watch(
 			localQuantity.value = newItem.quantity || 1
 			localUom.value = newItem.uom || newItem.stock_uom || __("Nos")
 			localRate.value = newItem.rate || 0
+			// Store original price_list_rate for rate edit validation
+			originalPriceListRate.value = newItem.price_list_rate || newItem.rate || 0
 			localWarehouse.value =
 				newItem.warehouse || props.warehouses[0]?.name || ""
 
@@ -520,9 +577,9 @@ function handleDiscountTypeChange() {
 }
 
 function calculateDiscount() {
-	// Round to 2 decimal places to prevent floating point precision issues (e.g., 10.000000000000002)
+	// Round to currency precision to prevent floating point precision issues (e.g., 10.000000000000002)
 	if (discountValue.value !== null && discountValue.value !== undefined && !isNaN(discountValue.value)) {
-		discountValue.value = round2(discountValue.value)
+		discountValue.value = roundCurrency(discountValue.value)
 	}
 
 	if (discountType.value === "percentage") {
@@ -530,15 +587,15 @@ function calculateDiscount() {
 		if (discountValue.value > 100) {
 			discountValue.value = 100
 		}
-		calculatedDiscount.value = round2((calculatedSubtotal.value * discountValue.value) / 100)
+		calculatedDiscount.value = roundCurrency((calculatedSubtotal.value * discountValue.value) / 100)
 	} else {
 		// Ensure amount doesn't exceed subtotal
 		if (discountValue.value > calculatedSubtotal.value) {
-			discountValue.value = round2(calculatedSubtotal.value)
+			discountValue.value = roundCurrency(calculatedSubtotal.value)
 		}
-		calculatedDiscount.value = round2(discountValue.value)
+		calculatedDiscount.value = roundCurrency(discountValue.value)
 	}
-	calculatedTotal.value = round2(calculatedSubtotal.value - calculatedDiscount.value)
+	calculatedTotal.value = roundCurrency(calculatedSubtotal.value - calculatedDiscount.value)
 }
 
 function calculateTotals() {
@@ -564,16 +621,52 @@ function formatCurrency(amount) {
 }
 
 function updateItem() {
+	// Check if rate was manually edited
+	const isRateManuallyEdited = localRate.value !== originalPriceListRate.value
+
+	// ========================================================================
+	// RATE EDIT VALIDATION
+	// ========================================================================
+	if (settingsStore.allowUserToEditRate && isRateManuallyEdited) {
+		// Validate rate is positive
+		if (localRate.value <= 0) {
+			showError(__('Rate must be greater than zero'))
+			return
+		}
+
+		// Validate against max discount if rate was reduced
+		const maxDiscount = settingsStore.maxDiscountAllowed
+		if (maxDiscount > 0 && localRate.value < originalPriceListRate.value) {
+			const discountPercent = ((originalPriceListRate.value - localRate.value) / originalPriceListRate.value) * 100
+			const roundedDiscount = Math.round(discountPercent * 100) / 100
+
+			if (roundedDiscount > maxDiscount) {
+				showError(
+					__('Rate reduction of {0}% exceeds maximum allowed discount of {1}%', [
+						roundedDiscount.toFixed(2),
+						maxDiscount
+					])
+				)
+				return
+			}
+		}
+	}
+
 	const updatedItem = {
 		...localItem.value,
 		quantity: localQuantity.value,
 		uom: localUom.value,
 		rate: localRate.value,
+		// Preserve price_list_rate for reference (original price before any manual edits)
+		price_list_rate: originalPriceListRate.value,
 		warehouse: localWarehouse.value,
 		discount_percentage:
 			discountType.value === "percentage" ? discountValue.value : 0,
 		discount_amount:
 			discountType.value === "amount" ? discountValue.value : 0,
+		// Track manual rate edits for audit logging
+		is_rate_manually_edited: isRateManuallyEdited ? 1 : 0,
+		original_rate: isRateManuallyEdited ? originalPriceListRate.value : null,
 	}
 
 	// Update serial numbers if item has serials
