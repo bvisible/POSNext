@@ -45,13 +45,11 @@ def _key_path():
 
 @frappe.whitelist()
 def get_certificate():
-	"""Return the public certificate PEM text for QZ Tray signing."""
+	"""Return the public certificate PEM text for QZ Tray signing.
+	Returns None if no certificate exists (silent print not configured)."""
 	path = _cert_path()
 	if not os.path.exists(path):
-		frappe.throw(
-			_("QZ Tray certificate not found. Ask an administrator to run Setup QZ Certificate."),
-			title=_("QZ Certificate Missing"),
-		)
+		return None
 
 	with open(path, "r") as f:
 		return f.read()

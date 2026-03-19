@@ -789,7 +789,7 @@ const {
 
 // Local state
 const viewMode = ref("grid")
-const itemThreshold = ref(50) // Threshold for auto-switching to list view
+const itemThreshold = ref(500) // Threshold for auto-switching to list view
 const userManuallySetView = ref(false) // Track if user manually changed view mode
 const lastAutoSwitchCount = ref(0)
 const showSortDropdown = ref(false) // Sort dropdown visibility
