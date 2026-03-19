@@ -638,29 +638,41 @@
 							</div>
 							<span class="text-[10px] text-amber-600">{{ __('max') }} {{ formatCurrency(loyaltyDetails.max_redeemable_amount) }}</span>
 						</div>
-						<div v-if="loyaltyRedeemAmount > 0" class="flex items-center gap-2">
-							<div class="flex-1 bg-white rounded border border-amber-300 px-2 py-1 text-sm font-semibold text-amber-800 text-center">
-								-{{ formatCurrency(loyaltyRedeemAmount) }}
-								<span class="text-[10px] text-amber-500 font-normal ml-1">
-									({{ Math.ceil(loyaltyRedeemAmount / loyaltyDetails.conversion_factor).toLocaleString() }} pts)
+						<div class="flex items-center gap-2">
+							<div class="flex-1 relative">
+								<input
+									type="number"
+									:value="loyaltyRedeemInput"
+									@input="onLoyaltyInputChange($event.target.value)"
+									:max="Math.min(loyaltyDetails.max_redeemable_amount, effectiveGrandTotal)"
+									min="0"
+									step="0.05"
+									:placeholder="formatCurrency(0)"
+									class="w-full bg-white rounded border border-amber-300 px-2 py-1.5 text-sm font-semibold text-amber-800 text-center focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+								/>
+								<span v-if="loyaltyRedeemAmount > 0" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-amber-500">
+									{{ Math.ceil(loyaltyRedeemAmount / loyaltyDetails.conversion_factor).toLocaleString() }} pts
 								</span>
 							</div>
-							<button @click="clearLoyaltyRedeem" class="text-xs px-2 py-1 rounded bg-amber-200 hover:bg-amber-300 text-amber-800 transition-colors">
+							<button
+								v-if="loyaltyRedeemAmount > 0"
+								@click="clearLoyaltyRedeem(); loyaltyRedeemInput = ''"
+								class="text-xs px-2 py-1.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-800 transition-colors"
+							>
 								{{ __('Clear') }}
 							</button>
-						</div>
-						<div v-else class="flex items-center gap-2">
 							<button
-								@click="applyLoyaltyRedeem(Math.min(loyaltyDetails.max_redeemable_amount, remainingAmount + loyaltyRedeemAmount))"
-								:disabled="remainingAmount === 0"
+								v-else
+								@click="applyMaxLoyalty"
+								:disabled="remainingAmount === 0 && loyaltyRedeemAmount === 0"
 								:class="[
-									'flex-1 text-xs font-semibold py-1.5 rounded transition-colors',
-									remainingAmount === 0
+									'text-xs font-semibold px-3 py-1.5 rounded transition-colors whitespace-nowrap',
+									remainingAmount === 0 && loyaltyRedeemAmount === 0
 										? 'bg-gray-200 text-gray-400 cursor-not-allowed'
 										: 'bg-amber-500 hover:bg-amber-600 text-white'
 								]"
 							>
-								{{ __('Redeem') }} {{ formatCurrency(Math.min(loyaltyDetails.max_redeemable_amount, remainingAmount)) }}
+								{{ __('Max') }}
 							</button>
 						</div>
 					</div>
@@ -1376,6 +1388,7 @@ const loyaltyDetails = ref({
 	loyalty_redemption_cost_center: null,
 })
 const loyaltyRedeemAmount = ref(0) // Amount in currency to redeem
+const loyaltyRedeemInput = ref("") // Input field value (string for controlled input)
 
 // Wallee Terminal Payment state
 const showWalleeDialog = ref(false)
@@ -1679,9 +1692,31 @@ function applyLoyaltyRedeem(amount) {
 	})
 }
 
+// Handle loyalty input change with validation
+function onLoyaltyInputChange(value) {
+	loyaltyRedeemInput.value = value
+	const amount = parseFloat(value) || 0
+	if (amount <= 0) {
+		loyaltyRedeemAmount.value = 0
+		return
+	}
+	applyLoyaltyRedeem(amount)
+}
+
+// Apply max loyalty (fill remaining or max available)
+function applyMaxLoyalty() {
+	const maxAmount = Math.min(
+		loyaltyDetails.value.max_redeemable_amount,
+		roundCurrency(props.grandTotal),
+	)
+	loyaltyRedeemInput.value = maxAmount.toString()
+	applyLoyaltyRedeem(maxAmount)
+}
+
 // Clear loyalty redemption
 function clearLoyaltyRedeem() {
 	loyaltyRedeemAmount.value = 0
+	loyaltyRedeemInput.value = ""
 }
 
 function isWalletPaymentMethod(methodName) {
@@ -2288,6 +2323,7 @@ watch(show, async (newVal) => {
 		walleeLockedPayments.value = []
 		applyWriteOff.value = false // Reset write-off state
 		loyaltyRedeemAmount.value = 0
+		loyaltyRedeemInput.value = ""
 		// Set default delivery date to today for Sales Orders
 		deliveryDate.value = isSalesOrder.value ? today : ""
 
