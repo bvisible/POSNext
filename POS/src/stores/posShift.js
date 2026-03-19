@@ -14,7 +14,7 @@ export const usePOSShiftStore = defineStore("posShift", () => {
 	// Computed
 	const profileName = computed(() => currentProfile.value?.name)
 	const profileCurrency = computed(
-		() => currentProfile.value?.currency || "USD",
+		() => currentProfile.value?.currency,
 	)
 	const profileWarehouse = computed(() => currentProfile.value?.warehouse)
 	const profileCompany = computed(() => currentProfile.value?.company)

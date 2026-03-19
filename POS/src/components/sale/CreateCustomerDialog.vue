@@ -1,7 +1,7 @@
 <template>
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
-			<div class="flex flex-col gap-6">
+			<div class="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-1">
 				<!-- Customer Name (Required) -->
 				<div>
 					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
@@ -130,6 +130,65 @@
 						</option>
 					</select>
 				</div>
+
+				<!-- Address Fields (conditional) -->
+				<template v-if="showAddressFields">
+					<div class="pt-3 border-t border-gray-200">
+						<h4 class="text-sm font-medium text-gray-700 mb-2">{{ __("Address") }}</h4>
+					</div>
+
+					<!-- Address Line 1 -->
+					<div>
+						<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+							{{ __("Address Line 1") }}
+						</label>
+						<Input
+							v-model="customerData.address_line1"
+							type="text"
+							:placeholder="__('Street address')"
+						/>
+					</div>
+
+					<!-- City and Pincode -->
+					<div class="grid grid-cols-2 gap-3">
+						<div>
+							<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+								{{ __("City") }}
+							</label>
+							<Input
+								v-model="customerData.city"
+								type="text"
+								:placeholder="__('City')"
+							/>
+						</div>
+						<div>
+							<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+								{{ __("Postal Code") }}
+							</label>
+							<Input
+								v-model="customerData.pincode"
+								type="text"
+								:placeholder="__('Postal code')"
+							/>
+						</div>
+					</div>
+
+					<!-- Country -->
+					<div>
+						<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+							{{ __("Country") }}
+						</label>
+						<select
+							v-model="customerData.country"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						>
+							<option value="">{{ __("Select Country") }}</option>
+							<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
+								{{ country.name }}
+							</option>
+						</select>
+					</div>
+				</template>
 			</div>
 		</template>
 
@@ -186,6 +245,8 @@
 import { usePOSPermissions } from "@/composables/usePermissions"
 import { useToast } from "@/composables/useToast"
 import { useCountriesStore } from "@/stores/countries"
+import { usePOSSettingsStore } from "@/stores/posSettings"
+import { usePOSShiftStore } from "@/stores/posShift"
 import { logger } from "@/utils/logger"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
@@ -197,6 +258,8 @@ const log = logger.create("CreateCustomerDialog")
 // =============================================================================
 
 const countriesStore = useCountriesStore()
+const posSettingsStore = usePOSSettingsStore()
+const posShiftStore = usePOSShiftStore()
 const { canCreateCustomer } = usePOSPermissions()
 const { showSuccess, showError } = useToast()
 
@@ -235,6 +298,11 @@ const customerData = ref({
 	email_id: "",
 	customer_group: "Individual",
 	territory: "All Territories",
+	// Address fields
+	address_line1: "",
+	city: "",
+	pincode: "",
+	country: "",
 })
 
 // =============================================================================
@@ -247,6 +315,8 @@ const show = computed({
 })
 
 const isEditMode = computed(() => !!props.customer?.name)
+
+const showAddressFields = computed(() => posSettingsStore.showAddressFieldsInCustomerForm)
 
 const currentCountryCode = computed(() => {
 	const country = countriesStore.countries.find((c) => c.isd === selectedCountryCode.value)
@@ -295,7 +365,9 @@ const setCountryFromName = (countryName) => {
 	const isd = countriesStore.countryNameToISDMap[countryName]
 	if (isd) {
 		selectedCountryCode.value = isd
-		log.info(`Set country code to ${isd} for ${countryName}`)
+		// Also preselect country in address field
+		customerData.value.country = countryName
+		log.info(`Set country code to ${isd} and address country to ${countryName}`)
 	} else {
 		log.warn(`Country "${countryName}" not found`)
 		selectedCountryCode.value = "+20"
@@ -333,26 +405,12 @@ const updateTerritoryFromCountry = () => {
 
 const createCustomerResource = createResource({
 	url: "frappe.client.insert",
-	makeParams: () => ({
-		doc: {
-			doctype: "Customer",
-			customer_name: customerData.value.customer_name,
-			customer_type: "Individual",
-			customer_group: customerData.value.customer_group || __("Individual"),
-			territory: customerData.value.territory || __("All Territories"),
-			mobile_no: customerData.value.mobile_no || "",
-			email_id: customerData.value.email_id || "",
-		},
-	}),
-	onSuccess: (data) => {
-		showSuccess(__("Customer {0} created successfully", [data.customer_name]))
-		emit("customer-created", data)
-		show.value = false
-	},
-	onError: (error) => {
-		log.error("Error creating customer", error)
-		showError(error.message || __("Failed to create customer"))
-	},
+	auto: false,
+})
+
+const createAddressResource = createResource({
+	url: "frappe.client.insert",
+	auto: false,
 })
 
 const updateCustomerResource = createResource({
@@ -449,10 +507,73 @@ const handleCreate = async () => {
 	if (!customerData.value.customer_name) {
 		return showError(__("Customer Name is required"))
 	}
+
 	if (isEditMode.value) {
 		await updateCustomerResource.submit()
-	} else {
-		await createCustomerResource.submit()
+		return
+	}
+
+	try {
+		// Create customer
+		const customer = await createCustomerResource.fetch({
+			doc: {
+				doctype: "Customer",
+				customer_name: customerData.value.customer_name,
+				customer_type: "Individual",
+				customer_group: customerData.value.customer_group || "Individual",
+				territory: customerData.value.territory || "All Territories",
+				mobile_no: customerData.value.mobile_no || "",
+				email_id: customerData.value.email_id || "",
+				default_currency: posShiftStore.profileCurrency,
+			},
+		})
+
+		// Create address if address fields are filled
+		const hasAddressData = customerData.value.address_line1 || customerData.value.city ||
+			customerData.value.pincode || customerData.value.country
+
+		if (hasAddressData && showAddressFields.value) {
+			try {
+				const address = await createAddressResource.fetch({
+					doc: {
+						doctype: "Address",
+						address_title: customerData.value.customer_name,
+						address_type: "Billing",
+						address_line1: customerData.value.address_line1 || "",
+						city: customerData.value.city || "",
+						pincode: customerData.value.pincode || "",
+						country: customerData.value.country || "",
+						links: [{
+							link_doctype: "Customer",
+							link_name: customer.name,
+						}],
+					},
+				})
+
+				// Set as primary address
+				if (address?.name) {
+					await createResource({
+						url: "frappe.client.set_value",
+						auto: false,
+					}).fetch({
+						doctype: "Customer",
+						name: customer.name,
+						fieldname: "customer_primary_address",
+						value: address.name,
+					})
+				}
+			} catch (addressError) {
+				log.error("Error creating address", addressError)
+				// Don't fail customer creation if address fails
+			}
+		}
+
+		showSuccess(__("Customer {0} created successfully", [customer.customer_name]))
+		emit("customer-created", customer)
+		show.value = false
+	} catch (error) {
+		log.error("Error creating customer", error)
+		showError(error.message || __("Failed to create customer"))
 	}
 }
 
@@ -463,6 +584,10 @@ const resetForm = () => {
 		email_id: "",
 		customer_group: "Individual",
 		territory: "All Territories",
+		address_line1: "",
+		city: "",
+		pincode: "",
+		country: "",
 	})
 	selectedCountryCode.value = ""
 	phoneNumber.value = ""

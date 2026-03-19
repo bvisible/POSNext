@@ -61,6 +61,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		allow_negative_stock: 0,
 		// Sales Persons
 		enable_sales_persons: "Disabled",
+		// Customer Display Settings
+		enable_customer_display: 0,
+		enable_customer_display_account_creation: 0,
+		customer_display_show_address_fields: 0,
 	})
 
 	const isLoading = ref(false)
@@ -216,6 +220,17 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		settings.value.enable_sales_persons === "Multiple"
 	)
 
+	// Computed - Customer Display Settings
+	const enableCustomerDisplay = computed(() =>
+		Boolean(settings.value.enable_customer_display)
+	)
+	const enableCustomerDisplayAccountCreation = computed(() =>
+		Boolean(settings.value.enable_customer_display_account_creation)
+	)
+	const showAddressFieldsInCustomerForm = computed(() =>
+		Boolean(settings.value.customer_display_show_address_fields)
+	)
+
 	// Resource
 	const settingsResource = createResource({
 		url: "pos_next.pos_next.doctype.pos_settings.pos_settings.get_pos_settings",
@@ -319,6 +334,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			input_qty: 0,
 			allow_negative_stock: 0,
 			enable_sales_persons: "Disabled",
+			// Customer Display Settings
+			enable_customer_display: 0,
+			enable_customer_display_account_creation: 0,
+			customer_display_show_address_fields: 0,
 		}
 		isLoaded.value = false
 	}
@@ -447,6 +466,11 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		salesPersonsMode,
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
+
+		// Computed - Customer Display Settings
+		enableCustomerDisplay,
+		enableCustomerDisplayAccountCreation,
+		showAddressFieldsInCustomerForm,
 
 		// Actions
 		loadSettings,

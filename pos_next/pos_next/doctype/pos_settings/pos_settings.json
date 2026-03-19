@@ -8,6 +8,11 @@
   "enabled",
   "section_break_localization",
   "allowed_locales",
+  "section_break_customer_display",
+  "enable_customer_display",
+  "enable_customer_display_account_creation",
+  "column_break_customer_display",
+  "customer_display_show_address_fields",
   "section_break_wallet",
   "enable_loyalty_program",
   "default_loyalty_program",
@@ -97,6 +102,39 @@
    "label": "Allowed Languages",
    "options": "POS Allowed Locale",
    "description": "Select languages available in the POS language switcher. If empty, all supported languages are available."
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_customer_display",
+   "fieldtype": "Section Break",
+   "label": "Customer Display"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_customer_display",
+   "fieldtype": "Check",
+   "label": "Enable Customer Display",
+   "description": "Enable the customer-facing display screen feature"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_customer_display_account_creation",
+   "fieldtype": "Check",
+   "label": "Allow Account Creation",
+   "depends_on": "enable_customer_display",
+   "description": "Allow customers to create an account from the display screen"
+  },
+  {
+   "fieldname": "column_break_customer_display",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "customer_display_show_address_fields",
+   "fieldtype": "Check",
+   "label": "Show Address Fields",
+   "depends_on": "enable_customer_display_account_creation",
+   "description": "Show address fields in the customer creation form (both on display and in POS)"
   },
   {
    "collapsible": 0,

@@ -111,10 +111,15 @@ def get_pos_profile_data(pos_profile):
 
 	profile_doc = frappe.get_doc("POS Profile", pos_profile)
 
+	# Get currency from profile, fallback to company default currency
+	currency = profile_doc.currency
+	if not currency and profile_doc.company:
+		currency = frappe.db.get_value("Company", profile_doc.company, "default_currency")
+
 	return {
 		"name": profile_doc.name,
 		"company": profile_doc.company,
-		"currency": profile_doc.currency,
+		"currency": currency,
 		"warehouse": profile_doc.warehouse,
 		"selling_price_list": profile_doc.selling_price_list,
 		"customer": profile_doc.customer,
@@ -154,7 +159,11 @@ def get_pos_settings(pos_profile):
 				"silent_print",
 				"allow_sales_order",
 				"allow_select_sales_order",
-				"create_only_sales_order"
+				"create_only_sales_order",
+				# Customer Display Settings
+				"enable_customer_display",
+				"enable_customer_display_account_creation",
+				"customer_display_show_address_fields"
 			],
 			as_dict=True
 		)
@@ -188,7 +197,11 @@ def get_default_pos_settings():
 		"silent_print": 0,
 		"allow_sales_order": 0,
 		"allow_select_sales_order": 0,
-		"create_only_sales_order": 0
+		"create_only_sales_order": 0,
+		# Customer Display Settings
+		"enable_customer_display": 0,
+		"enable_customer_display_account_creation": 0,
+		"customer_display_show_address_fields": 0
 	}
 
 

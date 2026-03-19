@@ -12,6 +12,7 @@ from . import customers
 from . import offers
 from . import promotions
 from . import utilities
+from . import customer_display
 
 @frappe.whitelist(allow_guest=True)
 def ping():
