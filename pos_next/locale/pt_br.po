@@ -1,0 +1,4026 @@
+# Translations template for POS Next.
+# Copyright (C) 2026 BrainWise
+# This file is distributed under the same license as the POS Next project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: POS Next VERSION\n"
+"Report-Msgid-Bugs-To: support@brainwise.me\n"
+"POT-Creation-Date: 2026-01-12 12:13+0000\n"
+"PO-Revision-Date: 2026-01-12 11:54+0034\n"
+"Last-Translator: support@brainwise.me\n"
+"Language-Team: support@brainwise.me\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.1\n"
+
+#: pos_next/api/bootstrap.py:36 pos_next/api/utilities.py:24
+msgid "Authentication required"
+msgstr ""
+
+#: pos_next/api/branding.py:204
+msgid "Insufficient permissions"
+msgstr ""
+
+#: pos_next/api/sales_invoice_hooks.py:140
+msgid ""
+"Warning: Some credit journal entries may not have been cancelled. Please "
+"check manually."
+msgstr ""
+
+#: pos_next/api/shifts.py:108
+#, python-brace-format
+msgid "You already have an open shift: {0}"
+msgstr ""
+
+#: pos_next/api/shifts.py:163
+#, python-brace-format
+msgid "Error getting closing shift data: {0}"
+msgstr ""
+
+#: pos_next/api/shifts.py:181
+#, python-brace-format
+msgid "Error submitting closing shift: {0}"
+msgstr ""
+
+#: pos_next/api/utilities.py:27
+msgid "User is disabled"
+msgstr ""
+
+#: pos_next/api/utilities.py:30
+msgid "Invalid session"
+msgstr ""
+
+#: pos_next/api/utilities.py:35
+msgid "Failed to generate CSRF token"
+msgstr ""
+
+#: pos_next/api/utilities.py:59
+#, python-brace-format
+msgid "Could not parse '{0}' as JSON: {1}"
+msgstr ""
+
+#: pos_next/api/items.py:324 pos_next/api/items.py:1290
+#: pos_next/api/credit_sales.py:470 pos_next/api/credit_sales.py:510
+#: pos_next/api/partial_payments.py:563 pos_next/api/partial_payments.py:640
+#: pos_next/api/partial_payments.py:924 pos_next/api/partial_payments.py:987
+#: pos_next/api/invoices.py:1104 pos_next/api/pos_profile.py:35
+#: pos_next/api/pos_profile.py:129 pos_next/api/pos_profile.py:253
+msgid "POS Profile is required"
+msgstr ""
+
+#: pos_next/api/items.py:340
+#, python-brace-format
+msgid "Item with barcode {0} not found"
+msgstr ""
+
+#: pos_next/api/items.py:347
+#, python-brace-format
+msgid "Warehouse not set in POS Profile {0}"
+msgstr ""
+
+#: pos_next/api/items.py:349
+#, python-brace-format
+msgid "Selling Price List not set in POS Profile {0}"
+msgstr ""
+
+#: pos_next/api/items.py:351
+#, python-brace-format
+msgid "Company not set in POS Profile {0}"
+msgstr ""
+
+#: pos_next/api/items.py:358 pos_next/api/items.py:1297
+#, python-brace-format
+msgid "Item {0} is not allowed for sales"
+msgstr ""
+
+#: pos_next/api/items.py:384
+#, python-brace-format
+msgid "Error searching by barcode: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:414
+#, python-brace-format
+msgid "Error fetching item stock: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:465
+#, python-brace-format
+msgid "Error fetching batch/serial details: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:502
+#, python-brace-format
+msgid ""
+"No variants created for template item '{template_item}'. Please create "
+"variants first."
+msgstr ""
+
+#: pos_next/api/items.py:601
+#, python-brace-format
+msgid "Error fetching item variants: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:1271
+#, python-brace-format
+msgid "Error fetching items: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:1321
+#, python-brace-format
+msgid "Error fetching item details: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:1353
+#, python-brace-format
+msgid "Error fetching item groups: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:1460
+#, python-brace-format
+msgid "Error fetching stock quantities: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:1574
+msgid "Either item_code or item_codes must be provided"
+msgstr ""
+
+#: pos_next/api/items.py:1655
+#, python-brace-format
+msgid "Error fetching warehouse availability: {0}"
+msgstr ""
+
+#: pos_next/api/items.py:1746
+#, python-brace-format
+msgid "Error fetching bundle availability for {0}: {1}"
+msgstr ""
+
+#: pos_next/api/offers.py:504
+msgid "Coupons are not enabled"
+msgstr ""
+
+#: pos_next/api/offers.py:518
+msgid "Invalid coupon code"
+msgstr ""
+
+#: pos_next/api/offers.py:521
+msgid "This coupon is disabled"
+msgstr ""
+
+#: pos_next/api/offers.py:526
+msgid "This gift card has already been used"
+msgstr ""
+
+#: pos_next/api/offers.py:530
+msgid "This coupon has reached its usage limit"
+msgstr ""
+
+#: pos_next/api/offers.py:534
+msgid "This coupon is not yet valid"
+msgstr ""
+
+#: pos_next/api/offers.py:537
+msgid "This coupon has expired"
+msgstr ""
+
+#: pos_next/api/offers.py:541
+msgid "This coupon is not valid for this customer"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:34 pos_next/api/credit_sales.py:149
+#: pos_next/api/customers.py:196
+msgid "Customer is required"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:152 pos_next/api/promotions.py:235
+#: pos_next/api/promotions.py:673
+msgid "Company is required"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:156
+msgid "Credit sale is not enabled for this POS Profile"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:238 pos_next/api/partial_payments.py:710
+#: pos_next/api/partial_payments.py:796 pos_next/api/invoices.py:1076
+msgid "Invoice name is required"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:247
+msgid "Invoice must be submitted to redeem credit"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:346
+#, python-brace-format
+msgid "Journal Entry {0} created for credit redemption"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:372
+#, python-brace-format
+msgid "Payment Entry {0} has insufficient unallocated amount"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:394
+#, python-brace-format
+msgid "Payment Entry {0} allocated to invoice"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:451
+#, python-brace-format
+msgid "Cancelled {0} credit redemption journal entries"
+msgstr ""
+
+#: pos_next/api/credit_sales.py:519 pos_next/api/partial_payments.py:571
+#: pos_next/api/partial_payments.py:647 pos_next/api/partial_payments.py:931
+#: pos_next/api/partial_payments.py:994 pos_next/api/invoices.py:1113
+#: pos_next/api/pos_profile.py:44
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:93
+msgid "You don't have access to this POS Profile"
+msgstr ""
+
+#: pos_next/api/promotions.py:24
+msgid "You don't have permission to view promotions"
+msgstr ""
+
+#: pos_next/api/promotions.py:27
+msgid "You don't have permission to create or modify promotions"
+msgstr ""
+
+#: pos_next/api/promotions.py:30
+msgid "You don't have permission to delete promotions"
+msgstr ""
+
+#: pos_next/api/promotions.py:199
+#, python-brace-format
+msgid "Promotion or Pricing Rule {0} not found"
+msgstr ""
+
+#: pos_next/api/promotions.py:233
+msgid "Promotion name is required"
+msgstr ""
+
+#: pos_next/api/promotions.py:237
+msgid "Apply On is required"
+msgstr ""
+
+#: pos_next/api/promotions.py:293
+msgid "Discount Rule"
+msgstr ""
+
+#: pos_next/api/promotions.py:312
+msgid "Free Item Rule"
+msgstr ""
+
+#: pos_next/api/promotions.py:330
+#, python-brace-format
+msgid "Promotion {0} created successfully"
+msgstr ""
+
+#: pos_next/api/promotions.py:337
+msgid "Promotion Creation Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:340
+#, python-brace-format
+msgid "Failed to create promotion: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:356 pos_next/api/promotions.py:428
+#: pos_next/api/promotions.py:462
+#, python-brace-format
+msgid "Promotional Scheme {0} not found"
+msgstr ""
+
+#: pos_next/api/promotions.py:410
+#, python-brace-format
+msgid "Promotion {0} updated successfully"
+msgstr ""
+
+#: pos_next/api/promotions.py:416
+msgid "Promotion Update Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:419
+#, python-brace-format
+msgid "Failed to update promotion: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:443
+#, python-brace-format
+msgid "Promotion {0} {1}"
+msgstr ""
+
+#: pos_next/api/promotions.py:450
+msgid "Promotion Toggle Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:453
+#, python-brace-format
+msgid "Failed to toggle promotion: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:470
+#, python-brace-format
+msgid "Promotion {0} deleted successfully"
+msgstr ""
+
+#: pos_next/api/promotions.py:476
+msgid "Promotion Deletion Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:479
+#, python-brace-format
+msgid "Failed to delete promotion: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:513
+msgid "Too many search requests. Please wait a moment."
+msgstr ""
+
+#: pos_next/api/promotions.py:626 pos_next/api/promotions.py:744
+#: pos_next/api/promotions.py:799 pos_next/api/promotions.py:834
+#, python-brace-format
+msgid "Coupon {0} not found"
+msgstr ""
+
+#: pos_next/api/promotions.py:667
+msgid "Coupon name is required"
+msgstr ""
+
+#: pos_next/api/promotions.py:669
+msgid "Coupon type is required"
+msgstr ""
+
+#: pos_next/api/promotions.py:671
+msgid "Discount type is required"
+msgstr ""
+
+#: pos_next/api/promotions.py:678
+msgid "Discount percentage is required when discount type is Percentage"
+msgstr ""
+
+#: pos_next/api/promotions.py:680
+msgid "Discount percentage must be between 0 and 100"
+msgstr ""
+
+#: pos_next/api/promotions.py:683
+msgid "Discount amount is required when discount type is Amount"
+msgstr ""
+
+#: pos_next/api/promotions.py:685
+msgid "Discount amount must be greater than 0"
+msgstr ""
+
+#: pos_next/api/promotions.py:689
+msgid "Customer is required for Gift Card coupons"
+msgstr ""
+
+#: pos_next/api/promotions.py:717
+#, python-brace-format
+msgid "Coupon {0} created successfully"
+msgstr ""
+
+#: pos_next/api/promotions.py:725
+msgid "Coupon Creation Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:728
+#, python-brace-format
+msgid "Failed to create coupon: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:781
+#, python-brace-format
+msgid "Coupon {0} updated successfully"
+msgstr ""
+
+#: pos_next/api/promotions.py:787
+msgid "Coupon Update Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:790
+#, python-brace-format
+msgid "Failed to update coupon: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:815
+#, python-brace-format
+msgid "Coupon {0} {1}"
+msgstr ""
+
+#: pos_next/api/promotions.py:822
+msgid "Coupon Toggle Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:825
+#, python-brace-format
+msgid "Failed to toggle coupon: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:840
+#, python-brace-format
+msgid "Cannot delete coupon {0} as it has been used {1} times"
+msgstr ""
+
+#: pos_next/api/promotions.py:848
+msgid "Coupon deleted successfully"
+msgstr "Cupom excluído com sucesso"
+
+#: pos_next/api/promotions.py:854
+msgid "Coupon Deletion Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:857
+#, python-brace-format
+msgid "Failed to delete coupon: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:882
+msgid "Referral code applied successfully! You've received a welcome coupon."
+msgstr ""
+
+#: pos_next/api/promotions.py:889
+msgid "Apply Referral Code Failed"
+msgstr ""
+
+#: pos_next/api/promotions.py:892
+#, python-brace-format
+msgid "Failed to apply referral code: {0}"
+msgstr ""
+
+#: pos_next/api/promotions.py:927
+#, python-brace-format
+msgid "Referral Code {0} not found"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:87 pos_next/api/partial_payments.py:389
+msgid "Invalid invoice name provided"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:393
+msgid "Payment amount must be greater than zero"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:399 pos_next/api/partial_payments.py:720
+#: pos_next/api/partial_payments.py:820 pos_next/api/invoices.py:1079
+#: pos_next/api/invoices.py:1208 pos_next/api/invoices.py:1311
+#, python-brace-format
+msgid "Invoice {0} does not exist"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:403
+msgid "Invoice must be submitted before adding payments"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:406
+msgid "Cannot add payment to cancelled invoice"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:411
+#, python-brace-format
+msgid "Payment amount {0} exceeds outstanding amount {1}"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:421
+#, python-brace-format
+msgid "Payment date {0} cannot be before invoice date {1}"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:428
+#, python-brace-format
+msgid "Mode of Payment {0} does not exist"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:445
+#, python-brace-format
+msgid "Payment account {0} does not exist"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:457
+#, python-brace-format
+msgid ""
+"Could not determine payment account for {0}. Please specify payment_account "
+"parameter."
+msgstr ""
+
+#: pos_next/api/partial_payments.py:468
+msgid ""
+"Could not determine payment account. Please specify payment_account "
+"parameter."
+msgstr ""
+
+#: pos_next/api/partial_payments.py:532
+#, python-brace-format
+msgid "Failed to create payment entry: {0}"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:567 pos_next/api/partial_payments.py:644
+#: pos_next/api/partial_payments.py:928 pos_next/api/partial_payments.py:991
+#, python-brace-format
+msgid "POS Profile {0} does not exist"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:714 pos_next/api/invoices.py:1083
+msgid "You don't have permission to view this invoice"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:803
+msgid "Invalid payments payload: malformed JSON"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:807
+msgid "Payments must be a list"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:810
+msgid "At least one payment is required"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:814
+msgid "You don't have permission to add payments to this invoice"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:825
+#, python-brace-format
+msgid "Total payment amount {0} exceeds outstanding amount {1}"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:870
+#, python-brace-format
+msgid "Rolled back Payment Entry {0}"
+msgstr ""
+
+#: pos_next/api/partial_payments.py:888
+#, python-brace-format
+msgid "Failed to create payment entry: {0}. All changes have been rolled back."
+msgstr ""
+
+#: pos_next/api/customers.py:55
+#, python-brace-format
+msgid "Error fetching customers: {0}"
+msgstr ""
+
+#: pos_next/api/customers.py:76
+msgid "You don't have permission to create customers"
+msgstr ""
+
+#: pos_next/api/customers.py:79
+msgid "Customer name is required"
+msgstr ""
+
+#: pos_next/api/invoices.py:141
+#, python-brace-format
+msgid ""
+"Please set default Cash or Bank account in Mode of Payment {0} or set "
+"default accounts in Company {1}"
+msgstr ""
+
+#: pos_next/api/invoices.py:143
+msgid "Missing Account"
+msgstr ""
+
+#: pos_next/api/invoices.py:280
+#, python-brace-format
+msgid "No batches available in {0} for {1}."
+msgstr ""
+
+#: pos_next/api/invoices.py:350
+#, python-brace-format
+msgid "You are trying to return more quantity for item {0} than was sold."
+msgstr ""
+
+#: pos_next/api/invoices.py:389
+#, python-brace-format
+msgid "Unable to load POS Profile {0}"
+msgstr ""
+
+#: pos_next/api/invoices.py:678
+msgid "This invoice is currently being processed. Please wait."
+msgstr ""
+
+#: pos_next/api/invoices.py:849
+#, python-brace-format
+msgid "Missing invoice parameter. Received data: {0}"
+msgstr ""
+
+#: pos_next/api/invoices.py:854
+msgid "Missing invoice parameter"
+msgstr ""
+
+#: pos_next/api/invoices.py:856
+msgid "Both invoice and data parameters are missing"
+msgstr ""
+
+#: pos_next/api/invoices.py:866
+msgid "Invalid invoice format"
+msgstr ""
+
+#: pos_next/api/invoices.py:912
+msgid "Failed to create invoice draft"
+msgstr ""
+
+#: pos_next/api/invoices.py:915
+msgid "Failed to get invoice name from draft"
+msgstr ""
+
+#: pos_next/api/invoices.py:1026
+msgid ""
+"Invoice submitted successfully but credit redemption failed. Please contact "
+"administrator."
+msgstr ""
+
+#: pos_next/api/invoices.py:1212
+#, python-brace-format
+msgid "Cannot delete submitted invoice {0}"
+msgstr ""
+
+#: pos_next/api/invoices.py:1215
+#, python-brace-format
+msgid "Invoice {0} Deleted"
+msgstr ""
+
+#: pos_next/api/invoices.py:1910
+#, python-brace-format
+msgid "Error applying offers: {0}"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:151
+#, python-brace-format
+msgid "Error fetching payment methods: {0}"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:256
+msgid "Warehouse is required"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:265
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:141
+msgid "You don't have permission to update this POS Profile"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:273
+#, python-brace-format
+msgid "Warehouse {0} is disabled"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:278
+#, python-brace-format
+msgid "Warehouse {0} belongs to {1}, but POS Profile belongs to {2}"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:287
+msgid "Warehouse updated successfully"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:292
+#, python-brace-format
+msgid "Error updating warehouse: {0}"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:345 pos_next/api/pos_profile.py:467
+msgid "User must have a company assigned"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:424
+#, python-brace-format
+msgid "Error getting create POS profile: {0}"
+msgstr ""
+
+#: pos_next/api/pos_profile.py:476
+msgid "At least one payment method is required"
+msgstr ""
+
+#: pos_next/api/wallet.py:33
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:37
+#, python-brace-format
+msgid "Insufficient wallet balance. Available: {0}, Requested: {1}"
+msgstr ""
+
+#: pos_next/api/wallet.py:37
+msgid "Wallet Balance Error"
+msgstr ""
+
+#: pos_next/api/wallet.py:100
+#, python-brace-format
+msgid "Loyalty points conversion from {0}: {1} points = {2}"
+msgstr ""
+
+#: pos_next/api/wallet.py:111
+#, python-brace-format
+msgid "Loyalty points converted to wallet: {0} points = {1}"
+msgstr ""
+
+#: pos_next/api/wallet.py:458
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:29
+msgid "Amount must be greater than zero"
+msgstr ""
+
+#: pos_next/api/wallet.py:464
+#, python-brace-format
+msgid "Could not create wallet for customer {0}"
+msgstr ""
+
+#: pos_next/api/wallet.py:472
+msgid "Manual wallet credit"
+msgstr ""
+
+#: pos_next/realtime_events.py:98
+msgid "Real-time Stock Update Event Error"
+msgstr ""
+
+#: pos_next/realtime_events.py:135
+msgid "Real-time Invoice Created Event Error"
+msgstr ""
+
+#: pos_next/realtime_events.py:183
+msgid "Real-time POS Profile Update Event Error"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:56
+#, python-brace-format
+msgid ""
+"POS Closing Shift <strong>already exists</strong> against {0} between "
+"selected period"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:60
+msgid "Invalid Period"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:65
+msgid "Selected POS Opening Shift should be open."
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:66
+msgid "Invalid Opening Entry"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet/wallet.py:21
+msgid "Wallet Account must be a Receivable type account"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet/wallet.py:32
+#, python-brace-format
+msgid "A wallet already exists for customer {0} in company {1}"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet/wallet.py:200
+#, python-brace-format
+msgid "Please configure a default wallet account for company {0}"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:25
+msgid "Referrer Discount Type is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:29
+msgid "Referrer Discount Percentage is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:31
+msgid "Referrer Discount Percentage must be between 0 and 100"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:34
+msgid "Referrer Discount Amount is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:36
+msgid "Referrer Discount Amount must be greater than 0"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:40
+msgid "Referee Discount Type is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:44
+msgid "Referee Discount Percentage is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:46
+msgid "Referee Discount Percentage must be between 0 and 100"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:49
+msgid "Referee Discount Amount is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:51
+msgid "Referee Discount Amount must be greater than 0"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:104
+msgid "Invalid referral code"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:110
+msgid "This referral code has been disabled"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:120
+msgid "You have already used this referral code"
+msgstr ""
+
+#: pos_next/pos_next/doctype/referral_code/referral_code.py:154
+msgid "Failed to generate your welcome coupon"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_opening_shift/pos_opening_shift.py:20
+msgid "POS Profile {} does not belongs to company {}"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_opening_shift/pos_opening_shift.py:24
+msgid "User {} has been disabled. Please select valid user/cashier"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:20
+msgid "Wallet is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:24
+#, python-brace-format
+msgid "Wallet {0} is not active"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:83
+#, python-brace-format
+msgid "Wallet {0} does not have an account configured"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:89
+msgid "Source account is required for wallet transaction"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:106
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:117
+#, python-brace-format
+msgid "Wallet Credit: {0}"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:132
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:141
+#, python-brace-format
+msgid "Wallet Debit: {0}"
+msgstr ""
+
+#: pos_next/pos_next/doctype/wallet_transaction/wallet_transaction.py:282
+#, python-brace-format
+msgid "Loyalty points conversion: {0} points = {1}"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:28
+msgid "Please select the customer for Gift Card."
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:32
+msgid "Discount Type is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:36
+msgid "Discount Percentage is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:38
+msgid "Discount Percentage must be between 0 and 100"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:41
+msgid "Discount Amount is required"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:43
+msgid "Discount Amount must be greater than 0"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:47
+msgid "Minimum Amount cannot be negative"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:51
+msgid "Maximum Discount Amount must be greater than 0"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:56
+msgid "Valid From date cannot be after Valid Until date"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:65
+msgid "Sorry, this coupon code does not exist"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:72
+msgid "Sorry, this coupon has been disabled"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:78
+msgid "Sorry, this coupon code's validity has not started"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:83
+msgid "Sorry, this coupon code has expired"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:88
+msgid "Sorry, this coupon code has been fully redeemed"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:93
+msgid "Sorry, this coupon is not valid for this company"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:99
+msgid "Sorry, this gift card is assigned to a specific customer"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:111
+msgid "Sorry, you have already used this coupon code"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.py:132
+#, python-brace-format
+msgid "Minimum cart amount of {0} is required"
+msgstr ""
+
+msgid "&lt;strong&gt;Company:&lt;strong&gt;"
+msgstr ""
+
+msgid "&lt;strong&gt;Items Tracked:&lt;strong&gt; {0}"
+msgstr ""
+
+msgid "&lt;strong&gt;Last Sync:&lt;strong&gt; Never"
+msgstr ""
+
+msgid "&lt;strong&gt;Last Sync:&lt;strong&gt; {0}"
+msgstr ""
+
+msgid ""
+"&lt;strong&gt;Note:&lt;strong&gt; When enabled, the system will allow sales "
+"even when stock quantity is zero or negative. This is useful for handling "
+"stock sync delays or backorders. All transactions are tracked in the stock "
+"ledger."
+msgstr ""
+
+msgid "&lt;strong&gt;Opened:&lt;/strong&gt; {0}"
+msgstr ""
+
+msgid "&lt;strong&gt;Opened:&lt;strong&gt;"
+msgstr ""
+
+msgid "&lt;strong&gt;POS Profile:&lt;/strong&gt; {0}"
+msgstr ""
+
+msgid "&lt;strong&gt;POS Profile:&lt;strong&gt; {0}"
+msgstr ""
+
+msgid "&lt;strong&gt;Status:&lt;strong&gt; Running"
+msgstr ""
+
+msgid "&lt;strong&gt;Status:&lt;strong&gt; Stopped"
+msgstr ""
+
+msgid "&lt;strong&gt;Warehouse:&lt;strong&gt; {0}"
+msgstr ""
+
+msgid ""
+"&lt;strong&gt;{0}&lt;/strong&gt; of &lt;strong&gt;{1}&lt;/strong&gt; "
+"invoice(s)"
+msgstr ""
+
+msgid "(FREE)"
+msgstr "(GRÁTIS)"
+
+msgid "(Max Discount: {0})"
+msgstr "(Desconto Máx: {0})"
+
+msgid "(Min: {0})"
+msgstr "(Mín: {0})"
+
+msgid "+ Add Payment"
+msgstr "+ Adicionar Pagamento"
+
+msgid "+ Create New Customer"
+msgstr "+ Criar Novo Cliente"
+
+msgid "+ Free Item"
+msgstr "+ Item Grátis"
+
+msgid "+{0} FREE"
+msgstr "+{0} GRÁTIS"
+
+msgid "+{0} more"
+msgstr "+{0} mais"
+
+msgid "-- No Campaign --"
+msgstr "-- Nenhuma Campanha --"
+
+msgid "-- Select --"
+msgstr "-- Selecionar --"
+
+msgid "1 item"
+msgstr ""
+
+msgid "1 {0} = {1} {2}"
+msgstr ""
+
+msgid ""
+"1. Go to &lt;strong&gt;Item Master&lt;strong&gt; → &lt;strong&gt;{0}&lt;"
+"strong&gt;"
+msgstr ""
+
+msgid "2. Click &lt;strong&gt;&quot;Make Variants&quot;&lt;strong&gt; button"
+msgstr ""
+
+msgid "3. Select attribute combinations"
+msgstr "3. Selecione as combinações de atributos"
+
+msgid "4. Click &lt;strong&gt;&quot;Create&quot;&lt;strong&gt;"
+msgstr ""
+
+msgid "APPLIED"
+msgstr "APLICADO"
+
+msgid "Access your point of sale system"
+msgstr "Acesse seu sistema de ponto de venda"
+
+msgid "Active"
+msgstr "Ativo"
+
+msgid "Active Only"
+msgstr "Somente Ativas"
+
+msgid "Active Shift Detected"
+msgstr "Turno Ativo Detectado"
+
+msgid "Active Warehouse"
+msgstr "Depósito Ativo"
+
+msgid "Actual Amount *"
+msgstr "Valor Real *"
+
+msgid "Actual Stock"
+msgstr "Estoque Atual"
+
+msgid "Add"
+msgstr "Adicionar"
+
+msgid "Add Payment"
+msgstr "Adicionar Pagamento"
+
+msgid "Add items to the cart before applying an offer."
+msgstr "Adicione itens ao carrinho antes de aplicar uma oferta."
+
+msgid "Add items to your cart to see eligible offers"
+msgstr "Adicione itens ao seu carrinho para ver as ofertas elegíveis"
+
+msgid "Add to Cart"
+msgstr "Adicionar ao Carrinho"
+
+msgid "Add {0} more to unlock"
+msgstr "Adicione mais {0} para desbloquear"
+
+msgid "Additional Discount"
+msgstr "Desconto Adicional"
+
+msgid "Adjust return quantities before submitting.\\n\\n{0}"
+msgstr "Ajuste as quantidades de devolução antes de enviar.\\n\\n{0}"
+
+msgid "After returns"
+msgstr "Após devoluções"
+
+msgid "Against: {0}"
+msgstr "Contra: {0}"
+
+msgid "All ({0})"
+msgstr "Todos ({0})"
+
+msgid "All Items"
+msgstr "Todos os Itens"
+
+msgid "All Status"
+msgstr "Todos os Status"
+
+msgid "All Territories"
+msgstr "Todos os Territórios"
+
+msgid "All Types"
+msgstr "Todos os Tipos"
+
+msgid "All cached data has been cleared successfully"
+msgstr "Todos os dados em cache foram limpos com sucesso"
+
+msgid "All draft invoices deleted"
+msgstr ""
+
+msgid "All invoices are either fully paid or unpaid"
+msgstr "Todas as faturas estão totalmente pagas ou não pagas"
+
+msgid "All invoices are fully paid"
+msgstr "Todas as faturas estão totalmente pagas"
+
+msgid "All items from this invoice have already been returned"
+msgstr "Todos os itens desta fatura já foram devolvidos"
+
+msgid "All items loaded"
+msgstr "Todos os itens carregados"
+
+msgid "All items removed from cart"
+msgstr "Todos os itens removidos do carrinho"
+
+msgid ""
+"All stock operations will use this warehouse. Stock quantities will refresh "
+"after saving."
+msgstr ""
+"Todas as operações de estoque usarão este depósito. As quantidades de "
+"estoque serão atualizadas após salvar."
+
+msgid "Allow Additional Discount"
+msgstr "Permitir Desconto Adicional"
+
+msgid "Allow Credit Sale"
+msgstr "Permitir Venda a Crédito"
+
+msgid "Allow Item Discount"
+msgstr "Permitir Desconto por Item"
+
+msgid "Allow Negative Stock"
+msgstr "Permitir Estoque Negativo"
+
+msgid "Allow Partial Payment"
+msgstr "Permitir Pagamento Parcial"
+
+msgid "Allow Return"
+msgstr "Permitir Devolução de Compras"
+
+msgid "Allow Write Off Change"
+msgstr "Permitir Baixa de Troco"
+
+msgid "Amount"
+msgstr "Valor"
+
+msgid "Amount in {0}"
+msgstr "Valor em {0}"
+
+msgid "Amount:"
+msgstr ""
+
+msgid "An error occurred"
+msgstr "Ocorreu um erro"
+
+msgid "An unexpected error occurred"
+msgstr "Ocorreu um erro inesperado"
+
+msgid "An unexpected error occurred."
+msgstr "Ocorreu um erro inesperado."
+
+msgid "Applied"
+msgstr "Aplicado"
+
+msgid "Apply"
+msgstr "Aplicar"
+
+msgid "Apply Discount On"
+msgstr "Aplicar Desconto Em"
+
+msgid "Apply On"
+msgstr "Aplicar Em"
+
+msgid "Apply coupon code"
+msgstr "Aplicar código de cupom"
+
+msgid ""
+"Are you sure you want to delete &lt;strong&gt;&quot;{0}&quot;&lt;strong&gt;?"
+msgstr ""
+
+msgid "Are you sure you want to delete this offline invoice?"
+msgstr "Tem certeza de que deseja excluir esta fatura offline?"
+
+msgid "Are you sure you want to sign out of POS Next?"
+msgstr "Tem certeza de que deseja sair do POS Next?"
+
+msgid "At least {0} eligible items required"
+msgstr ""
+
+msgid "Auto"
+msgstr "Auto"
+
+msgid "Auto-Add ON - Type or scan barcode"
+msgstr "Adição Automática LIGADA - Digite ou escaneie o código de barras"
+
+msgid "Auto-Add: OFF - Click to enable automatic cart addition on Enter"
+msgstr ""
+"Adição Automática: DESLIGADA - Clique para habilitar adição automática ao "
+"carrinho no Enter"
+
+msgid "Auto-Add: ON - Press Enter to add items to cart"
+msgstr ""
+"Adição Automática: LIGADA - Pressione Enter para adicionar itens ao carrinho"
+
+msgid "Auto-Sync:"
+msgstr "Sincronização Automática:"
+
+msgid "Auto-generated if empty"
+msgstr "Gerado automaticamente se vazio"
+
+msgid "Available"
+msgstr "Disponível"
+
+msgid "Available Offers"
+msgstr "Ofertas Disponíveis"
+
+msgid "BALANCE DUE:"
+msgstr "SALDO DEVEDOR:"
+
+msgid "Back"
+msgstr "Voltar"
+
+msgid "Background Stock Sync"
+msgstr "Sincronização de Estoque em Segundo Plano"
+
+msgid "Barcode Scanner: OFF (Click to enable)"
+msgstr "Leitor de Código de Barras: DESLIGADO (Clique para habilitar)"
+
+msgid "Barcode Scanner: ON (Click to disable)"
+msgstr "Leitor de Código de Barras: LIGADO (Clique para desabilitar)"
+
+msgid "Basic Information"
+msgstr "Informações Básicas"
+
+msgid "Brands"
+msgstr "Marcas"
+
+msgid "Cache"
+msgstr "Cache"
+
+msgid "Cache empty"
+msgstr "Cache vazio"
+
+msgid "Cache ready"
+msgstr "Cache pronto"
+
+msgid "Cache syncing"
+msgstr "Cache sincronizando"
+
+msgid "Calculating totals and reconciliation..."
+msgstr "Calculando totais e conciliação..."
+
+msgid "Campaign"
+msgstr "Campanha"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Cannot create return against a return invoice"
+msgstr "Não é possível criar devolução contra uma fatura de devolução"
+
+msgid "Cannot delete coupon as it has been used {0} times"
+msgstr "Não é possível excluir o cupom, pois ele foi usado {0} vezes"
+
+msgid "Cannot remove last serial"
+msgstr "Não é possível remover o último serial"
+
+msgid "Cannot save an empty cart as draft"
+msgstr "Não é possível salvar um carrinho vazio como rascunho"
+
+msgid "Cannot sync while offline"
+msgstr "Não é possível sincronizar estando offline"
+
+msgid "Cart"
+msgstr "Carrinho"
+
+msgid "Cart Items"
+msgstr "Itens do Carrinho"
+
+msgid "Cart does not contain eligible items for this offer"
+msgstr "O carrinho não contém itens elegíveis para esta oferta"
+
+msgid "Cart does not contain items from eligible brands"
+msgstr ""
+
+msgid "Cart does not contain items from eligible groups"
+msgstr "O carrinho não contém itens de grupos elegíveis"
+
+msgid "Cart is empty"
+msgstr ""
+
+msgid "Cart subtotal BEFORE tax - used for discount calculations"
+msgstr ""
+"Subtotal do carrinho ANTES do imposto - usado para cálculos de desconto"
+
+msgid "Cash"
+msgstr "Dinheiro"
+
+msgid "Cash Over"
+msgstr "Sobra de Caixa"
+
+msgid "Cash Refund:"
+msgstr "Reembolso em Dinheiro:"
+
+msgid "Cash Short"
+msgstr "Falta de Caixa"
+
+msgid "Change Due"
+msgstr ""
+
+msgid "Change Profile"
+msgstr "Alterar Perfil"
+
+msgid "Change:"
+msgstr "Troco:"
+
+msgid "Check Availability in All Wherehouses"
+msgstr "Verificar Disponibilidade em Todos os Depósitos"
+
+msgid "Check availability in other warehouses"
+msgstr "Verificar disponibilidade em outros depósitos"
+
+msgid "Checking Stock..."
+msgstr "Verificando Estoque..."
+
+msgid "Checking warehouse availability..."
+msgstr "Verificando disponibilidade no depósito..."
+
+msgid "Checkout"
+msgstr "Finalizar Venda"
+
+msgid ""
+"Choose a coupon from the list to view and edit, or create a new one to get "
+"started"
+msgstr ""
+"Escolha um cupom da lista para visualizar e editar, ou crie um novo para "
+"começar"
+
+msgid ""
+"Choose a promotion from the list to view and edit, or create a new one to "
+"get started"
+msgstr ""
+"Escolha uma promoção da lista para visualizar e editar, ou crie uma nova "
+"para começar"
+
+msgid "Choose a variant of this item:"
+msgstr "Escolha uma variante deste item:"
+
+msgid "Clear"
+msgstr "Limpar"
+
+msgid "Clear All"
+msgstr "Limpar Tudo"
+
+msgid "Clear All Drafts?"
+msgstr ""
+
+msgid "Clear Cache"
+msgstr "Limpar Cache"
+
+msgid "Clear Cache?"
+msgstr "Limpar Cache?"
+
+msgid "Clear Cart?"
+msgstr "Limpar Carrinho?"
+
+msgid "Clear all"
+msgstr "Limpar tudo"
+
+msgid "Clear all items"
+msgstr "Limpar todos os itens"
+
+msgid "Clear all payments"
+msgstr ""
+
+msgid "Clear search"
+msgstr "Limpar busca"
+
+msgid "Clear selection"
+msgstr "Limpar seleção"
+
+msgid "Clearing Cache..."
+msgstr "Limpando Cache..."
+
+msgid "Click to change unit"
+msgstr "Clique para alterar a unidade"
+
+msgid "Close"
+msgstr "Fechar"
+
+msgid "Close & Open New"
+msgstr "Fechar e Abrir Novo"
+
+msgid "Close (shows again next session)"
+msgstr "Fechar (mostra novamente na próxima sessão)"
+
+msgid "Close POS Shift"
+msgstr "Fechar Turno PDV"
+
+msgid "Close Shift"
+msgstr "Fechar Turno"
+
+msgid "Close Shift & Sign Out"
+msgstr "Fechar Turno e Sair"
+
+msgid "Close current shift"
+msgstr "Fechar turno atual"
+
+msgid "Close your shift first to save all transactions properly"
+msgstr "Feche seu turno primeiro para salvar todas as transações corretamente"
+
+msgid "Closing Shift..."
+msgstr "Fechando Turno..."
+
+msgid "Code"
+msgstr "Código"
+
+msgid "Code is case-insensitive"
+msgstr "O código não diferencia maiúsculas/minúsculas"
+
+msgid "Company"
+msgstr "Empresa"
+
+msgid "Complete Payment"
+msgstr "Concluir Pagamento"
+
+msgid "Complete Sales Order"
+msgstr ""
+
+msgid "Configure pricing, discounts, and sales operations"
+msgstr "Configurar preços, descontos e operações de venda"
+
+msgid "Configure warehouse and inventory settings"
+msgstr "Configurar depósito e configurações de inventário"
+
+msgid "Confirm"
+msgstr "Confirmar"
+
+msgid "Confirm Sign Out"
+msgstr "Confirmar Saída"
+
+msgid "Connection Error"
+msgstr "Erro de Conexão"
+
+msgid "Count & enter"
+msgstr "Contar e inserir"
+
+msgid "Coupon"
+msgstr "Cupom"
+
+msgid "Coupon Applied Successfully!"
+msgstr "Cupom Aplicado com Sucesso!"
+
+msgid "Coupon Code"
+msgstr "Código do Cupom"
+
+msgid "Coupon Details"
+msgstr "Detalhes do Cupom"
+
+msgid "Coupon Name"
+msgstr "Nome do Cupom"
+
+msgid "Coupon Status & Info"
+msgstr "Status e Informações do Cupom"
+
+msgid "Coupon Type"
+msgstr "Tipo de Cupom"
+
+msgid "Coupon created successfully"
+msgstr "Cupom criado com sucesso"
+
+msgid "Coupon status updated successfully"
+msgstr "Status do cupom atualizado com sucesso"
+
+msgid "Coupon updated successfully"
+msgstr "Cupom atualizado com sucesso"
+
+msgid "Coupons"
+msgstr "Cupons"
+
+msgid "Create"
+msgstr "Criar"
+
+msgid "Create Customer"
+msgstr "Cadastrar Cliente"
+
+msgid "Create New Coupon"
+msgstr "Criar Novo Cupom"
+
+msgid "Create New Customer"
+msgstr "Criar Novo Cliente"
+
+msgid "Create New Promotion"
+msgstr "Criar Nova Promoção"
+
+msgid "Create Return"
+msgstr "Criar Devolução"
+
+msgid "Create Return Invoice"
+msgstr "Criar Fatura de Devolução"
+
+msgid "Create new customer"
+msgstr "Criar novo cliente"
+
+msgid "Create new customer: {0}"
+msgstr "Criar novo cliente: {0}"
+
+msgid "Create permission required"
+msgstr "Permissão de criação necessária"
+
+msgid "Create your first customer to get started"
+msgstr "Crie seu primeiro cliente para começar"
+
+msgid "Created On"
+msgstr "Criado Em"
+
+msgid "Creating return for invoice {0}"
+msgstr "Criando devolução para a fatura {0}"
+
+msgid "Credit Adjustment:"
+msgstr "Ajuste de Crédito:"
+
+msgid "Credit Balance"
+msgstr ""
+
+msgid "Credit Sale"
+msgstr "Venda a Crédito"
+
+msgid "Credit Sale Return"
+msgstr "Devolução de Venda a Crédito"
+
+msgid "Current Discount:"
+msgstr "Desconto Atual:"
+
+msgid "Current Status"
+msgstr "Status Atual"
+
+msgid "Custom"
+msgstr ""
+
+msgid "Customer"
+msgstr "Cliente"
+
+msgid "Customer Credit:"
+msgstr "Crédito do Cliente:"
+
+msgid "Customer Error"
+msgstr "Erro do Cliente"
+
+msgid "Customer Group"
+msgstr "Grupo de Clientes"
+
+msgid "Customer Name"
+msgstr "Nome do Cliente"
+
+msgid "Customer Name is required"
+msgstr "O Nome do Cliente é obrigatório"
+
+msgid "Customer {0} created successfully"
+msgstr "Cliente {0} criado com sucesso"
+
+msgid "Customer {0} updated successfully"
+msgstr ""
+
+msgid "Customer:"
+msgstr "Cliente:"
+
+msgid "Customer: {0}"
+msgstr "Cliente: {0}"
+
+msgid "Dashboard"
+msgstr "Painel"
+
+msgid "Data is ready for offline use"
+msgstr "Dados prontos para uso offline"
+
+msgid "Date"
+msgstr "Data"
+
+msgid "Date & Time"
+msgstr "Data e Hora"
+
+msgid "Date:"
+msgstr "Data:"
+
+msgid "Decrease quantity"
+msgstr "Diminuir quantidade"
+
+msgid "Default"
+msgstr "Padrão"
+
+msgid "Delete"
+msgstr "Excluir"
+
+msgid "Delete Coupon"
+msgstr "Excluir Cupom"
+
+msgid "Delete Draft?"
+msgstr ""
+
+msgid "Delete Invoice"
+msgstr "Excluir Fatura"
+
+msgid "Delete Offline Invoice"
+msgstr ""
+
+msgid "Delete Promotion"
+msgstr "Excluir Promoção"
+
+msgid "Delete draft"
+msgstr "Excluir rascunho"
+
+msgid "Delivery Date"
+msgstr ""
+
+msgid "Deselect All"
+msgstr "Desselecionar Todos"
+
+msgid "Disable"
+msgstr ""
+
+msgid "Disable Rounded Total"
+msgstr "Desabilitar Total Arredondado"
+
+msgid "Disable auto-add"
+msgstr "Desabilitar adição automática"
+
+msgid "Disable barcode scanner"
+msgstr "Desabilitar leitor de código de barras"
+
+msgid "Disabled"
+msgstr "Desabilitado"
+
+msgid "Disabled Only"
+msgstr "Somente Desabilitadas"
+
+msgid "Discount"
+msgstr "Desconto"
+
+msgid "Discount (%)"
+msgstr ""
+
+msgid "Discount Amount"
+msgstr "Valor do Desconto"
+
+msgid "Discount Configuration"
+msgstr "Configuração de Desconto"
+
+msgid "Discount Details"
+msgstr "Detalhes do Desconto"
+
+msgid "Discount Percentage (%)"
+msgstr ""
+
+msgid "Discount Type"
+msgstr "Tipo de Desconto"
+
+msgid "Discount has been removed"
+msgstr "Desconto foi removido"
+
+msgid "Discount has been removed from cart"
+msgstr "Desconto foi removido do carrinho"
+
+msgid "Discount settings changed. Cart recalculated."
+msgstr "Configurações de desconto alteradas. Carrinho recalculado."
+
+msgid "Discount:"
+msgstr "Desconto:"
+
+msgid "Dismiss"
+msgstr "Dispensar"
+
+msgid "Draft Invoices"
+msgstr "Faturas Rascunho"
+
+msgid "Draft deleted successfully"
+msgstr ""
+
+msgid "Draft invoice deleted"
+msgstr "Fatura rascunho excluída"
+
+msgid "Draft invoice loaded successfully"
+msgstr "Fatura rascunho carregada com sucesso"
+
+msgid "Drafts"
+msgstr "Rascunhos"
+
+msgid "Duplicate Entry"
+msgstr "Entrada Duplicada"
+
+msgid "Duration"
+msgstr "Duração"
+
+msgid "ENTER-CODE-HERE"
+msgstr "INSIRA-O-CÓDIGO-AQUI"
+
+msgid "Edit Customer"
+msgstr ""
+
+msgid "Edit Invoice"
+msgstr "Editar Fatura"
+
+msgid "Edit Item Details"
+msgstr "Editar Detalhes do Item"
+
+msgid "Edit Promotion"
+msgstr "Editar Promoção"
+
+msgid "Edit customer details"
+msgstr ""
+
+msgid "Edit serials"
+msgstr "Editar seriais"
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Empty"
+msgstr "Vazio"
+
+msgid "Enable"
+msgstr "Habilitar"
+
+msgid "Enable Automatic Stock Sync"
+msgstr "Habilitar Sincronização Automática de Estoque"
+
+msgid "Enable auto-add"
+msgstr "Habilitar adição automática"
+
+msgid "Enable barcode scanner"
+msgstr "Habilitar leitor de código de barras"
+
+msgid "Enable invoice-level discount"
+msgstr "Habilitar desconto a nível de fatura"
+
+msgid "Enable item-level discount in edit dialog"
+msgstr "Habilitar desconto a nível de item no diálogo de edição"
+
+msgid "Enable partial payment for invoices"
+msgstr "Habilitar pagamento parcial para faturas"
+
+msgid "Enable product returns"
+msgstr "Ativar Devolução de Compras"
+
+msgid "Enable sales on credit"
+msgstr "Ativar Venda a Crédito"
+
+msgid ""
+"Enable selling items even when stock reaches zero or below. Integrates with "
+"ERPNext stock settings."
+msgstr ""
+"Habilita a venda de itens mesmo quando o estoque chega a zero ou abaixo. "
+"Integra-se com as configurações de estoque do ERPNext."
+
+msgid "Enter"
+msgstr "Enter"
+
+msgid "Enter actual amount for {0}"
+msgstr "Insira o valor real para {0}"
+
+msgid "Enter customer name"
+msgstr "Insira o nome do cliente"
+
+msgid "Enter email address"
+msgstr "Insira o endereço de e-mail"
+
+msgid "Enter phone number"
+msgstr "Insira o número de telefone"
+
+msgid ""
+"Enter reason for return (e.g., defective product, wrong item, customer "
+"request)..."
+msgstr ""
+"Insira o motivo da devolução (ex: produto com defeito, item errado, "
+"solicitação do cliente)..."
+
+msgid "Enter your password"
+msgstr "Insira sua senha"
+
+msgid "Enter your promotional or gift card code below"
+msgstr "Insira seu código promocional ou de cartão-presente abaixo"
+
+msgid "Enter your username or email"
+msgstr "Insira seu nome de usuário ou e-mail"
+
+msgid "Entire Transaction"
+msgstr "Transação Completa"
+
+msgid "Error"
+msgstr "Erro"
+
+msgid "Error Closing Shift"
+msgstr "Erro ao Fechar o Turno"
+
+msgid "Error Report - POS Next"
+msgstr "Relatório de Erro - POS Next"
+
+msgid "Esc"
+msgstr "Esc"
+
+msgid "Exception: {0}"
+msgstr ""
+
+msgid "Exhausted"
+msgstr "Esgotado"
+
+msgid "Existing Shift Found"
+msgstr "Turno Existente Encontrado"
+
+msgid "Exp: {0}"
+msgstr "Venc: {0}"
+
+msgid "Expected"
+msgstr "Esperado"
+
+msgid "Expected: &lt;span class=&quot;font-medium&quot;&gt;{0}&lt;/span&gt;"
+msgstr ""
+
+msgid "Expired"
+msgstr "Expirado"
+
+msgid "Expired Only"
+msgstr "Somente Expiradas"
+
+msgid "Failed to Load Shift Data"
+msgstr "Falha ao Carregar Dados do Turno"
+
+msgid "Failed to add payment"
+msgstr "Falha ao adicionar pagamento"
+
+msgid "Failed to apply coupon. Please try again."
+msgstr "Falha ao aplicar cupom. Por favor, tente novamente."
+
+msgid "Failed to apply offer. Please try again."
+msgstr "Falha ao aplicar oferta. Por favor, tente novamente."
+
+msgid "Failed to clear cache. Please try again."
+msgstr "Falha ao limpar o cache. Por favor, tente novamente."
+
+msgid "Failed to clear drafts"
+msgstr ""
+
+msgid "Failed to create coupon"
+msgstr "Falha ao criar cupom"
+
+msgid "Failed to create customer"
+msgstr "Falha ao criar cliente"
+
+msgid "Failed to create promotion"
+msgstr "Falha ao criar promoção"
+
+msgid "Failed to create return invoice"
+msgstr "Falha ao criar fatura de devolução"
+
+msgid "Failed to delete coupon"
+msgstr "Falha ao excluir cupom"
+
+msgid "Failed to delete draft"
+msgstr ""
+
+msgid "Failed to delete offline invoice"
+msgstr "Falha ao excluir fatura offline"
+
+msgid "Failed to delete promotion"
+msgstr "Falha ao excluir promoção"
+
+msgid "Failed to load brands"
+msgstr "Falha ao carregar marcas"
+
+msgid "Failed to load coupon details"
+msgstr "Falha ao carregar detalhes do cupom"
+
+msgid "Failed to load coupons"
+msgstr "Falha ao carregar cupons"
+
+msgid "Failed to load draft"
+msgstr "Falha ao carregar rascunho"
+
+msgid "Failed to load draft invoices"
+msgstr ""
+
+msgid "Failed to load invoice details"
+msgstr "Falha ao carregar detalhes da fatura"
+
+msgid "Failed to load invoices"
+msgstr "Falha ao carregar faturas"
+
+msgid "Failed to load item groups"
+msgstr "Falha ao carregar grupos de itens"
+
+msgid "Failed to load partial payments"
+msgstr "Falha ao carregar pagamentos parciais"
+
+msgid "Failed to load promotion details"
+msgstr "Falha ao carregar detalhes da promoção"
+
+msgid "Failed to load recent invoices"
+msgstr "Falha ao carregar faturas recentes"
+
+msgid "Failed to load settings"
+msgstr "Falha ao carregar configurações"
+
+msgid "Failed to load unpaid invoices"
+msgstr "Falha ao carregar faturas não pagas"
+
+msgid "Failed to load variants"
+msgstr ""
+
+msgid "Failed to load warehouse availability"
+msgstr "Falha ao carregar disponibilidade do depósito"
+
+msgid "Failed to print draft"
+msgstr ""
+
+msgid "Failed to process selection. Please try again."
+msgstr "Falha ao processar a seleção. Por favor, tente novamente."
+
+msgid "Failed to save draft"
+msgstr "Falha ao salvar rascunho"
+
+msgid "Failed to save settings"
+msgstr "Falha ao salvar configurações"
+
+msgid "Failed to toggle coupon status"
+msgstr "Falha ao alternar status do cupom"
+
+msgid "Failed to update UOM. Please try again."
+msgstr "Falha ao atualizar a UDM. Por favor, tente novamente."
+
+msgid "Failed to update cart after removing offer."
+msgstr "Falha ao atualizar o carrinho após remover a oferta."
+
+msgid "Failed to update coupon"
+msgstr "Falha ao atualizar cupom"
+
+msgid "Failed to update customer"
+msgstr ""
+
+msgid "Failed to update item."
+msgstr ""
+
+msgid "Failed to update promotion"
+msgstr "Falha ao atualizar promoção"
+
+msgid "Failed to update promotion status"
+msgstr "Falha ao atualizar status da promoção"
+
+msgid "Faster access and offline support"
+msgstr "Acesso mais rápido e suporte offline"
+
+msgid "Fill in the details to create a new coupon"
+msgstr "Preencha os detalhes para criar um novo cupom"
+
+msgid "Fill in the details to create a new promotional scheme"
+msgstr "Preencha os detalhes para criar um novo esquema promocional"
+
+msgid "Final Amount"
+msgstr "Valor Final"
+
+msgid "First"
+msgstr "Primeira"
+
+msgid "Fixed Amount"
+msgstr "Valor Fixo"
+
+msgid "Free Item"
+msgstr "Item Grátis"
+
+msgid "Free Quantity"
+msgstr "Quantidade Grátis"
+
+msgid "Frequent Customers"
+msgstr "Clientes Frequentes"
+
+msgid "From Date"
+msgstr "Data Inicial"
+
+msgid "From {0}"
+msgstr "De {0}"
+
+msgid "Fully Paid"
+msgstr ""
+
+msgid "Generate"
+msgstr "Gerar"
+
+msgid "Gift"
+msgstr "Presente"
+
+msgid "Gift Card"
+msgstr "Cartão-Presente"
+
+msgid "Go to first page"
+msgstr "Ir para primeira página"
+
+msgid "Go to last page"
+msgstr "Ir para última página"
+
+msgid "Go to next page"
+msgstr "Ir para próxima página"
+
+msgid "Go to page {0}"
+msgstr "Ir para página {0}"
+
+msgid "Go to previous page"
+msgstr "Ir para página anterior"
+
+msgid "Grand Total"
+msgstr "Total Geral"
+
+msgid "Grand Total:"
+msgstr "Total Geral:"
+
+msgid "Grid View"
+msgstr "Visualização em Grade"
+
+msgid "Gross Sales"
+msgstr "Vendas Brutas"
+
+msgid "Have a coupon code?"
+msgstr "Tem um código de cupom?"
+
+msgid "Hello"
+msgstr ""
+
+msgid "Hello {0}"
+msgstr ""
+
+msgid "Hide password"
+msgstr "Ocultar senha"
+
+msgid "Hold"
+msgstr ""
+
+msgid "Hold order as draft"
+msgstr "Suspender pedido como rascunho"
+
+msgid "How often to check server for stock updates (minimum 10 seconds)"
+msgstr ""
+"Com que frequência verificar o servidor para atualizações de estoque (mínimo "
+"10 segundos)"
+
+msgid "Hr"
+msgstr "H"
+
+msgid "Image"
+msgstr "Imagem"
+
+msgid "In Stock"
+msgstr "Em Estoque"
+
+msgid "Inactive"
+msgstr "Inativo"
+
+msgid "Increase quantity"
+msgstr "Aumentar quantidade"
+
+msgid "Individual"
+msgstr "Individual"
+
+msgid "Install"
+msgstr "Instalar"
+
+msgid "Install POSNext"
+msgstr "Instalar POSNext"
+
+msgid "Insufficient Stock"
+msgstr "Estoque Insuficiente"
+
+msgid "Invoice"
+msgstr "Fatura"
+
+msgid "Invoice #:"
+msgstr "Fatura #:"
+
+msgid "Invoice - {0}"
+msgstr "Fatura - {0}"
+
+msgid "Invoice Created Successfully"
+msgstr "Fatura Criada com Sucesso"
+
+msgid "Invoice Details"
+msgstr "Detalhes da Fatura"
+
+msgid "Invoice History"
+msgstr "Histórico de Faturas"
+
+msgid "Invoice ID: {0}"
+msgstr "ID da Fatura: {0}"
+
+msgid "Invoice Management"
+msgstr "Gerenciamento de Faturas"
+
+msgid "Invoice Summary"
+msgstr ""
+
+msgid "Invoice loaded to cart for editing"
+msgstr "Fatura carregada no carrinho para edição"
+
+msgid "Invoice must be submitted to create a return"
+msgstr "A fatura deve ser enviada para criar uma devolução"
+
+msgid "Invoice saved as draft successfully"
+msgstr "Fatura salva como rascunho com sucesso"
+
+msgid "Invoice saved offline. Will sync when online"
+msgstr "Fatura salva offline. Será sincronizada quando estiver online"
+
+msgid "Invoice {0} created and sent to printer"
+msgstr "Fatura {0} criada e enviada para a impressora"
+
+msgid "Invoice {0} created but print failed"
+msgstr "Fatura {0} criada, mas a impressão falhou"
+
+msgid "Invoice {0} created successfully"
+msgstr "Fatura {0} criada com sucesso"
+
+msgid "Invoice {0} created successfully!"
+msgstr "Fatura {0} criada com sucesso!"
+
+msgid "Item"
+msgstr "Item"
+
+msgid "Item Code"
+msgstr "Código do Item"
+
+msgid "Item Discount"
+msgstr "Desconto do Item"
+
+msgid "Item Group"
+msgstr "Grupo de Itens"
+
+msgid "Item Groups"
+msgstr "Grupos de Itens"
+
+msgid "Item Not Found: No item found with barcode: {0}"
+msgstr "Item Não Encontrado: Nenhum item encontrado com código de barras: {0}"
+
+msgid "Item: {0}"
+msgstr "Item: {0}"
+
+msgid "Items"
+msgstr "Itens"
+
+msgid "Items to Return:"
+msgstr "Itens a Devolver:"
+
+msgid "Items:"
+msgstr "Itens:"
+
+msgid "Just now"
+msgstr "Agora mesmo"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Last"
+msgstr "Última"
+
+msgid "Last 30 Days"
+msgstr "Últimos 30 Dias"
+
+msgid "Last 7 Days"
+msgstr "Últimos 7 Dias"
+
+msgid "Last Modified"
+msgstr "Última Modificação"
+
+msgid "Last Sync:"
+msgstr "Última Sincronização:"
+
+msgid "List View"
+msgstr "Visualização em Lista"
+
+msgid "Load More"
+msgstr "Carregar Mais"
+
+msgid "Load more ({0} remaining)"
+msgstr "Carregar mais ({0} restante)"
+
+msgid "Loading customers for offline use..."
+msgstr "Carregando clientes para uso offline..."
+
+msgid "Loading customers..."
+msgstr "Carregando clientes..."
+
+msgid "Loading invoice details..."
+msgstr "Carregando detalhes da fatura..."
+
+msgid "Loading invoices..."
+msgstr "Carregando faturas..."
+
+msgid "Loading items..."
+msgstr "Carregando itens..."
+
+msgid "Loading more items..."
+msgstr "Carregando mais itens..."
+
+msgid "Loading offers..."
+msgstr "Carregando ofertas..."
+
+msgid "Loading options..."
+msgstr "Carregando opções..."
+
+msgid "Loading serial numbers..."
+msgstr "Carregando números de série..."
+
+msgid "Loading settings..."
+msgstr "Carregando configurações..."
+
+msgid "Loading shift data..."
+msgstr "Carregando dados do turno..."
+
+msgid "Loading stock information..."
+msgstr ""
+
+msgid "Loading variants..."
+msgstr ""
+
+msgid "Loading warehouses..."
+msgstr "Carregando depósitos..."
+
+msgid "Loading {0}..."
+msgstr ""
+
+msgid "Loading..."
+msgstr "Carregando..."
+
+msgid "Login Failed"
+msgstr "Falha no Login"
+
+msgid "Logout"
+msgstr "Sair"
+
+msgid "Low Stock"
+msgstr "Baixo Estoque"
+
+msgid "Manage all your invoices in one place"
+msgstr "Gerencie todas as suas faturas em um só lugar"
+
+msgid "Manage invoices with pending payments"
+msgstr "Gerenciar faturas com pagamentos pendentes"
+
+msgid "Manage promotional schemes and coupons"
+msgstr "Gerenciar esquemas promocionais e cupons"
+
+msgid "Max Discount (%)"
+msgstr ""
+
+msgid "Maximum Amount ({0})"
+msgstr "Valor Máximo ({0})"
+
+msgid "Maximum Discount Amount"
+msgstr "Valor Máximo de Desconto"
+
+msgid "Maximum Quantity"
+msgstr "Quantidade Máxima"
+
+msgid "Maximum Use"
+msgstr "Uso Máximo"
+
+msgid "Maximum allowed discount is {0}%"
+msgstr ""
+
+msgid "Maximum allowed discount is {0}% ({1} {2})"
+msgstr ""
+
+msgid "Maximum cart value exceeded ({0})"
+msgstr "Valor máximo do carrinho excedido ({0})"
+
+msgid "Maximum discount per item"
+msgstr "Desconto máximo por item"
+
+msgid "Maximum {0} eligible items allowed for this offer"
+msgstr ""
+
+msgid "Merged into {0} (Total: {1})"
+msgstr ""
+
+msgid "Message: {0}"
+msgstr "Mensagem: {0}"
+
+msgid "Min"
+msgstr "Min"
+
+msgid "Min Purchase"
+msgstr "Compra Mínima"
+
+msgid "Min Quantity"
+msgstr "Quantidade Mínima"
+
+msgid "Minimum Amount ({0})"
+msgstr "Valor Mínimo ({0})"
+
+msgid "Minimum Cart Amount"
+msgstr "Valor Mínimo do Carrinho"
+
+msgid "Minimum Quantity"
+msgstr "Quantidade Mínima"
+
+msgid "Minimum cart value of {0} required"
+msgstr "Valor mínimo do carrinho de {0} necessário"
+
+msgid "Mobile"
+msgstr "Celular"
+
+msgid "Mobile Number"
+msgstr "Número de Celular"
+
+msgid "More"
+msgstr "Mais"
+
+msgid "Multiple Items Found: {0} items match barcode. Please refine search."
+msgstr ""
+"Múltiplos Itens Encontrados: {0} itens correspondem ao código. Por favor, "
+"refine a busca."
+
+msgid "Multiple Items Found: {0} items match. Please select one."
+msgstr ""
+"Múltiplos Itens Encontrados: {0} itens correspondem. Por favor, selecione um."
+
+msgid "My Gift Cards ({0})"
+msgstr "Meus Cartões-Presente ({0})"
+
+msgid "N/A"
+msgstr "N/D"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Naming Series Error"
+msgstr "Erro na Série de Nomenclatura"
+
+msgid "Navigate"
+msgstr "Navegar"
+
+msgid "Negative Stock"
+msgstr "Estoque Negativo"
+
+msgid "Negative stock sales are now allowed"
+msgstr "Vendas com estoque negativo agora são permitidas"
+
+msgid "Negative stock sales are now restricted"
+msgstr "Vendas com estoque negativo agora são restritas"
+
+msgid "Net Sales"
+msgstr "Vendas Líquidas"
+
+msgid "Net Total"
+msgstr "Total Líquido"
+
+msgid "Net Total:"
+msgstr "Total Líquido:"
+
+msgid "Net Variance"
+msgstr "Variação Líquida"
+
+msgid "Net tax"
+msgstr "Imposto líquido"
+
+msgid "Network Usage:"
+msgstr "Uso da Rede:"
+
+msgid "Never"
+msgstr "Nunca"
+
+msgid "Next"
+msgstr "Próximo"
+
+msgid "No Active Shift"
+msgstr "Nenhum Turno Ativo"
+
+msgid "No Options Available"
+msgstr "Nenhuma Opção Disponível"
+
+msgid "No POS Profile Selected"
+msgstr "Nenhum Perfil PDV Selecionado"
+
+msgid "No POS Profiles available. Please contact your administrator."
+msgstr "Nenhum Perfil PDV disponível. Por favor, contate seu administrador."
+
+msgid "No Partial Payments"
+msgstr "Nenhum Pagamento Parcial"
+
+msgid "No Sales During This Shift"
+msgstr "Nenhuma Venda Durante Este Turno"
+
+msgid "No Sorting"
+msgstr "Sem Ordenação"
+
+msgid "No Stock Available"
+msgstr "Sem Estoque Disponível"
+
+msgid "No Unpaid Invoices"
+msgstr "Nenhuma Fatura Não Paga"
+
+msgid "No Variants Available"
+msgstr "Nenhuma Variante Disponível"
+
+msgid "No additional units of measurement configured for this item."
+msgstr "Nenhuma unidade de medida adicional configurada para este item."
+
+msgid "No countries found"
+msgstr "Nenhum país encontrado"
+
+msgid "No coupons found"
+msgstr "Nenhum cupom encontrado"
+
+msgid "No customers available"
+msgstr "Nenhum cliente disponível"
+
+msgid "No draft invoices"
+msgstr "Nenhuma fatura rascunho"
+
+msgid "No expiry"
+msgstr "Sem validade"
+
+msgid "No invoices found"
+msgstr "Nenhuma fatura encontrada"
+
+msgid "No invoices were created. Closing amounts should match opening amounts."
+msgstr ""
+"Nenhuma fatura foi criada. Os valores de fechamento devem corresponder aos "
+"valores de abertura."
+
+msgid "No items"
+msgstr ""
+
+msgid "No items available"
+msgstr "Nenhum item disponível"
+
+msgid "No items available for return"
+msgstr "Nenhum item disponível para devolução"
+
+msgid "No items found"
+msgstr "Nenhum item encontrado"
+
+msgid "No offers available"
+msgstr "Nenhuma oferta disponível"
+
+msgid "No options available"
+msgstr "Nenhuma opção disponível"
+
+msgid "No payment methods available"
+msgstr ""
+
+msgid "No payment methods configured for this POS Profile"
+msgstr "Nenhum método de pagamento configurado para este Perfil PDV"
+
+msgid "No pending invoices to sync"
+msgstr "Nenhuma fatura pendente para sincronizar"
+
+msgid "No pending offline invoices"
+msgstr "Nenhuma fatura offline pendente"
+
+msgid "No promotions found"
+msgstr "Nenhuma promoção encontrada"
+
+msgid "No redeemable points available"
+msgstr ""
+
+msgid "No results for {0}"
+msgstr "Nenhum resultado para {0}"
+
+msgid "No results for {0} in {1}"
+msgstr "Nenhum resultado para {0} em {1}"
+
+msgid "No results found"
+msgstr "Nenhum resultado encontrado"
+
+msgid "No results in {0}"
+msgstr "Nenhum resultado em {0}"
+
+msgid "No return invoices"
+msgstr "Nenhuma fatura de devolução"
+
+msgid "No sales"
+msgstr "Sem vendas"
+
+msgid "No sales persons found"
+msgstr "Nenhum vendedor encontrado"
+
+msgid "No serial numbers available"
+msgstr "Nenhum número de série disponível"
+
+msgid "No serial numbers match your search"
+msgstr "Nenhum número de série corresponde à sua busca"
+
+msgid "No stock available"
+msgstr "Sem estoque disponível"
+
+msgid "No variants found"
+msgstr ""
+
+msgid "Nos"
+msgstr "N°s"
+
+msgid "Not Found"
+msgstr "Não Encontrado"
+
+msgid "Not Started"
+msgstr "Não Iniciadas"
+
+msgid ""
+"Not enough stock available in the warehouse.\\n\\nPlease reduce the quantity "
+"or check stock availability."
+msgstr ""
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Offer applied: {0}"
+msgstr "Oferta aplicada: {0}"
+
+msgid "Offer has been removed from cart"
+msgstr "Oferta foi removida do carrinho"
+
+msgid "Offer removed: {0}. Cart no longer meets requirements."
+msgstr "Oferta removida: {0}. O carrinho não atende mais aos requisitos."
+
+msgid "Offers"
+msgstr "Ofertas"
+
+msgid "Offers applied: {0}"
+msgstr ""
+
+msgid "Offline ({0} pending)"
+msgstr "Offline ({0} pendente)"
+
+msgid "Offline Invoices"
+msgstr "Faturas Offline"
+
+msgid "Offline invoice deleted successfully"
+msgstr "Fatura offline excluída com sucesso"
+
+msgid "Offline mode active"
+msgstr "Modo offline ativo"
+
+msgid "Offline: {0} applied"
+msgstr ""
+
+msgid "On Account"
+msgstr ""
+
+msgid "Online - Click to sync"
+msgstr "Online - Clique para sincronizar"
+
+msgid "Online mode active"
+msgstr "Modo online ativo"
+
+msgid "Only One Use Per Customer"
+msgstr "Apenas Um Uso Por Cliente"
+
+msgid "Only one unit available"
+msgstr "Apenas uma unidade disponível"
+
+msgid "Open POS Shift"
+msgstr "Abrir Turno PDV"
+
+msgid "Open Shift"
+msgstr "Abrir Turno"
+
+msgid "Open a shift before creating a return invoice."
+msgstr ""
+
+msgid "Opening"
+msgstr "Abertura"
+
+msgid "Opening Balance (Optional)"
+msgstr "Saldo de Abertura (Opcional)"
+
+msgid "Optional cap in {0}"
+msgstr "Limite opcional em {0}"
+
+msgid "Optional minimum in {0}"
+msgstr "Mínimo opcional em {0}"
+
+msgid "Order"
+msgstr "Pedido"
+
+msgid "Out of Stock"
+msgstr "Esgotado"
+
+msgid "Outstanding"
+msgstr "Pendente"
+
+msgid "Outstanding Balance"
+msgstr ""
+
+msgid "Outstanding Payments"
+msgstr "Pagamentos Pendentes"
+
+msgid "Outstanding:"
+msgstr "Pendente:"
+
+msgid "Over {0}"
+msgstr "Sobra de {0}"
+
+msgid "Overdue"
+msgstr "Vencido"
+
+msgid "Overdue ({0})"
+msgstr "Vencido ({0})"
+
+msgid "PARTIAL PAYMENT"
+msgstr "PAGAMENTO PARCIAL"
+
+msgid "POS Next"
+msgstr "POS Next"
+
+msgid "POS Profile not found"
+msgstr "Perfil PDV não encontrado"
+
+msgid "POS Profile: {0}"
+msgstr "Perfil PDV: {0}"
+
+msgid "POS Settings"
+msgstr "Configurações do PDV"
+
+msgid "POS is offline without cached data. Please connect to sync."
+msgstr ""
+"O PDV está offline sem dados em cache. Por favor, conecte-se para "
+"sincronizar."
+
+msgid "PRICING RULE"
+msgstr "REGRA DE PREÇO"
+
+msgid "PROMO SCHEME"
+msgstr "ESQUEMA PROMOCIONAL"
+
+msgid "Paid"
+msgstr "Pago"
+
+msgid "Paid Amount"
+msgstr "Valor Pago"
+
+msgid "Paid Amount:"
+msgstr "Valor Pago:"
+
+msgid "Paid: {0}"
+msgstr "Pago: {0}"
+
+msgid "Partial"
+msgstr "Parcial"
+
+msgid "Partial Payment"
+msgstr "Pagamento Parcial"
+
+msgid "Partial Payments"
+msgstr "Pagamentos Parciais"
+
+msgid "Partially Paid ({0})"
+msgstr "Parcialmente Pago ({0})"
+
+msgid "Partially Paid Invoice"
+msgstr "Fatura Parcialmente Paga"
+
+msgid "Partly Paid"
+msgstr "Parcialmente Pago"
+
+msgid "Password"
+msgstr "Senha"
+
+msgid "Pay"
+msgstr ""
+
+msgid "Pay on Account"
+msgstr "Pagar na Conta (a Prazo)"
+
+msgid "Payment Error"
+msgstr "Erro de Pagamento"
+
+msgid "Payment History"
+msgstr "Histórico de Pagamentos"
+
+msgid "Payment Method"
+msgstr "Método de Pagamento"
+
+msgid "Payment Reconciliation"
+msgstr "Conciliação de Pagamento"
+
+msgid "Payment Total:"
+msgstr "Total do Pagamento:"
+
+msgid "Payment added successfully"
+msgstr "Pagamento adicionado com sucesso"
+
+msgid "Payments"
+msgstr "Pagamentos"
+
+msgid "Payments:"
+msgstr "Pagamentos:"
+
+msgid "Percentage"
+msgstr "Porcentagem"
+
+msgid "Percentage (%)"
+msgstr ""
+
+msgid ""
+"Periodically sync stock quantities from server in the background (runs in "
+"Web Worker)"
+msgstr ""
+"Sincroniza periodicamente quantidades de estoque do servidor em segundo "
+"plano (executa em Web Worker)"
+
+msgid "Permanently delete all {0} draft invoices?"
+msgstr ""
+
+msgid "Permanently delete this draft invoice?"
+msgstr ""
+
+msgid "Permission Denied"
+msgstr "Permissão Negada"
+
+msgid "Permission Required"
+msgstr "Permissão Necessária"
+
+msgid "Please add items to cart before proceeding to payment"
+msgstr ""
+"Por favor, adicione itens ao carrinho antes de prosseguir para o pagamento"
+
+msgid "Please enter a coupon code"
+msgstr "Por favor, insira um código de cupom"
+
+msgid "Please enter a coupon name"
+msgstr "Por favor, insira um nome para o cupom"
+
+msgid "Please enter a promotion name"
+msgstr "Por favor, insira um nome para a promoção"
+
+msgid "Please enter a valid discount amount"
+msgstr "Por favor, insira um valor de desconto válido"
+
+msgid "Please enter a valid discount percentage (1-100)"
+msgstr "Por favor, insira uma porcentagem de desconto válida (1-100)"
+
+msgid "Please enter all closing amounts"
+msgstr "Por favor, insira todos os valores de fechamento"
+
+msgid "Please open a shift to start making sales"
+msgstr "Por favor, abra um turno para começar a fazer vendas"
+
+msgid "Please select a POS Profile to configure settings"
+msgstr "Por favor, selecione um Perfil PDV para configurar as definições"
+
+msgid "Please select a customer"
+msgstr "Por favor, selecione um cliente"
+
+msgid "Please select a customer before proceeding"
+msgstr "Por favor, selecione um cliente antes de prosseguir"
+
+msgid "Please select a customer for gift card"
+msgstr "Por favor, selecione um cliente para o cartão-presente"
+
+msgid "Please select a discount type"
+msgstr "Por favor, selecione um tipo de desconto"
+
+msgid "Please select at least one variant"
+msgstr ""
+
+msgid "Please select at least one {0}"
+msgstr "Por favor, selecione pelo menos um {0}"
+
+msgid "Please wait while we clear your cached data"
+msgstr "Por favor, aguarde enquanto limpamos seus dados em cache"
+
+msgid "Points applied: {0}. Please pay remaining {1} with {2}"
+msgstr ""
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Price"
+msgstr "Preço"
+
+msgid "Pricing & Discounts"
+msgstr "Preços e Descontos"
+
+msgid "Pricing Error"
+msgstr "Erro de Preço"
+
+msgid "Pricing Rule"
+msgstr "Regra de Preço"
+
+msgid "Print"
+msgstr "Imprimir"
+
+msgid "Print Invoice"
+msgstr "Imprimir Fatura"
+
+msgid "Print Receipt"
+msgstr "Imprimir Comprovante"
+
+msgid "Print draft"
+msgstr ""
+
+msgid "Print without confirmation"
+msgstr "Imprimir sem confirmação"
+
+msgid "Proceed to payment"
+msgstr "Prosseguir para pagamento"
+
+msgid "Process Return"
+msgstr "Processar Devolução"
+
+msgid "Process return invoice"
+msgstr "Processar fatura de devolução"
+
+msgid "Processing..."
+msgstr "Processando..."
+
+msgid "Product"
+msgstr "Produto"
+
+msgid "Products"
+msgstr "Produtos"
+
+msgid "Promotion & Coupon Management"
+msgstr "Gerenciamento de Promoções e Cupons"
+
+msgid "Promotion Name"
+msgstr "Nome da Promoção"
+
+msgid "Promotion created successfully"
+msgstr "Promoção criada com sucesso"
+
+msgid "Promotion deleted successfully"
+msgstr "Promoção excluída com sucesso"
+
+msgid "Promotion saved successfully"
+msgstr "Promoção salva com sucesso"
+
+msgid "Promotion status updated successfully"
+msgstr "Status da promoção atualizado com sucesso"
+
+msgid "Promotion updated successfully"
+msgstr "Promoção atualizada com sucesso"
+
+msgid "Promotional"
+msgstr "Promocional"
+
+msgid "Promotional Scheme"
+msgstr "Esquema Promocional"
+
+msgid "Promotional Schemes"
+msgstr "Esquemas Promocionais"
+
+msgid "Promotions"
+msgstr "Promoções"
+
+msgid "Qty"
+msgstr "Quantidade"
+
+msgid "Qty: {0}"
+msgstr "Qtd: {0}"
+
+msgid "Quantity"
+msgstr "Quantidade"
+
+msgid "Quick amounts for {0}"
+msgstr "Valores rápidos para {0}"
+
+msgid "Rate"
+msgstr "Preço Unitário"
+
+msgid "Read-only: Edit in ERPNext"
+msgstr "Somente leitura: Edite no ERPNext"
+
+msgid "Ready"
+msgstr "Pronto"
+
+msgid "Recent & Frequent"
+msgstr "Recentes e Frequentes"
+
+msgid "Referral Code"
+msgstr "Código de Referência"
+
+msgid "Refresh"
+msgstr "Atualizar"
+
+msgid "Refresh Items"
+msgstr "Atualizar Itens"
+
+msgid "Refresh items list"
+msgstr "Atualizar lista de itens"
+
+msgid "Refreshing items..."
+msgstr "Atualizando itens..."
+
+msgid "Refreshing..."
+msgstr "Atualizando..."
+
+msgid "Refund Payment Methods"
+msgstr "Métodos de Pagamento de Reembolso"
+
+msgid "Refundable Amount:"
+msgstr "Valor a Ser Reembolsado:"
+
+msgid "Remaining"
+msgstr "Pendente"
+
+msgid "Remarks"
+msgstr "Observações"
+
+msgid "Remove"
+msgstr "Remover"
+
+msgid "Remove all {0} items from cart?"
+msgstr "Remover todos os {0} itens do carrinho?"
+
+msgid "Remove customer"
+msgstr "Remover cliente"
+
+msgid "Remove item"
+msgstr "Remover item"
+
+msgid "Remove serial"
+msgstr "Remover serial"
+
+msgid "Remove {0}"
+msgstr "Remover {0}"
+
+msgid "Reports"
+msgstr "Relatórios"
+
+msgid "Requested quantity ({0}) exceeds available stock ({1})"
+msgstr "Quantidade solicitada ({0}) excede o estoque disponível ({1})"
+
+msgid "Required"
+msgstr "Obrigatório"
+
+msgid "Resume Shift"
+msgstr "Retomar Turno"
+
+msgid "Return"
+msgstr "Devolução"
+
+msgid "Return Against:"
+msgstr "Devolução Contra:"
+
+msgid "Return Invoice"
+msgstr "Fatura de Devolução"
+
+msgid "Return Qty:"
+msgstr "Qtd. Devolução:"
+
+msgid "Return Reason"
+msgstr "Motivo da Devolução"
+
+msgid "Return Summary"
+msgstr "Resumo da Devolução"
+
+msgid "Return Value:"
+msgstr "Valor de Devolução:"
+
+msgid "Return against {0}"
+msgstr "Devolução contra {0}"
+
+msgid "Return invoice {0} created successfully"
+msgstr "Fatura de devolução {0} criada com sucesso"
+
+msgid "Return invoices will appear here"
+msgstr "Faturas de devolução aparecerão aqui"
+
+msgid "Returns"
+msgstr "Devoluções"
+
+msgid "Rule"
+msgstr "Regra"
+
+msgid "Sale"
+msgstr "Venda"
+
+msgid "Sales Controls"
+msgstr "Controles de Vendas"
+
+msgid "Sales Invoice"
+msgstr ""
+
+msgid "Sales Management"
+msgstr "Gestão de Vendas"
+
+msgid "Sales Operations"
+msgstr "Operações de Venda"
+
+msgid "Sales Order"
+msgstr ""
+
+msgid "Save"
+msgstr "Salvar"
+
+msgid "Save Changes"
+msgstr "Salvar Alterações"
+
+msgid "Save invoices as drafts to continue later"
+msgstr "Salve faturas como rascunho para continuar depois"
+
+msgid "Save these filters as..."
+msgstr "Salvar estes filtros como..."
+
+msgid "Saved Filters"
+msgstr "Filtros Salvos"
+
+msgid "Scanner ON - Enable Auto for automatic addition"
+msgstr "Leitor LIGADO - Habilite o Auto para adição automática"
+
+msgid "Scheme"
+msgstr "Esquema"
+
+msgid "Search Again"
+msgstr "Buscar Novamente"
+
+msgid "Search and select a customer for the transaction"
+msgstr "Busque e selecione um cliente para a transação"
+
+msgid "Search by email: {0}"
+msgstr "Buscar por e-mail: {0}"
+
+msgid "Search by invoice number or customer name..."
+msgstr "Buscar por número da fatura ou nome do cliente..."
+
+msgid "Search by invoice number or customer..."
+msgstr "Buscar por número da fatura ou cliente..."
+
+msgid "Search by item code, name or scan barcode"
+msgstr "Buscar por código, nome do item ou escanear código de barras"
+
+msgid "Search by item name, code, or scan barcode"
+msgstr "Buscar por nome, código do item ou escanear código de barras"
+
+msgid "Search by name or code..."
+msgstr "Buscar por nome ou código..."
+
+msgid "Search by phone: {0}"
+msgstr "Buscar por telefone: {0}"
+
+msgid "Search countries..."
+msgstr "Buscar países..."
+
+msgid "Search country or code..."
+msgstr "Buscar país ou código..."
+
+msgid "Search coupons..."
+msgstr "Buscar cupons..."
+
+msgid "Search customer by name or mobile..."
+msgstr ""
+
+msgid "Search customer in cart"
+msgstr "Buscar cliente no carrinho"
+
+msgid "Search customers"
+msgstr "Buscar clientes"
+
+msgid "Search customers by name, mobile, or email..."
+msgstr "Buscar clientes por nome, celular ou e-mail..."
+
+msgid "Search customers..."
+msgstr ""
+
+msgid "Search for an item"
+msgstr "Buscar por um item"
+
+msgid "Search for items across warehouses"
+msgstr "Buscar itens em todos os depósitos"
+
+msgid "Search invoices..."
+msgstr "Buscar faturas..."
+
+msgid "Search item... (min 2 characters)"
+msgstr "Buscar item... (mín. 2 caracteres)"
+
+msgid "Search items"
+msgstr "Buscar itens"
+
+msgid "Search items by name or code..."
+msgstr "Pesquisar itens por nome ou código..."
+
+msgid "Search or add customer..."
+msgstr "Buscar ou adicionar cliente..."
+
+msgid "Search products..."
+msgstr "Buscar produtos..."
+
+msgid "Search promotions..."
+msgstr "Buscar promoções..."
+
+msgid "Search sales person..."
+msgstr "Buscar vendedor..."
+
+msgid "Search serial numbers..."
+msgstr "Buscar números de série..."
+
+msgid "Search..."
+msgstr "Buscar..."
+
+msgid "Searching..."
+msgstr "Buscando..."
+
+msgid "Sec"
+msgstr "Seg"
+
+msgid "Select"
+msgstr ""
+
+msgid "Select All"
+msgstr "Selecionar Todos"
+
+msgid "Select Batch Number"
+msgstr "Selecionar Número de Lote"
+
+msgid "Select Batch Numbers"
+msgstr "Selecionar Números de Lote"
+
+msgid "Select Brand"
+msgstr "Selecione Marca"
+
+msgid "Select Customer"
+msgstr "Selecionar Cliente"
+
+msgid "Select Customer Group"
+msgstr "Selecionar Grupo de Clientes"
+
+msgid "Select Invoice to Return"
+msgstr "Selecionar Fatura para Devolução"
+
+msgid "Select Item"
+msgstr "Selecionar Item"
+
+msgid "Select Item Group"
+msgstr "Selecione Grupo de Itens"
+
+msgid "Select Item Variant"
+msgstr "Selecionar Variante do Item"
+
+msgid "Select Items to Return"
+msgstr "Selecionar Itens para Devolução"
+
+msgid "Select POS Profile"
+msgstr "Selecionar Perfil PDV"
+
+msgid "Select Serial Numbers"
+msgstr "Selecionar Números de Série"
+
+msgid "Select Territory"
+msgstr "Selecionar Território"
+
+msgid "Select Unit of Measure"
+msgstr "Selecionar Unidade de Medida"
+
+msgid "Select Variants"
+msgstr ""
+
+msgid "Select a Coupon"
+msgstr "Selecionar um Cupom"
+
+msgid "Select a Promotion"
+msgstr "Selecionar uma Promoção"
+
+msgid "Select a payment method"
+msgstr ""
+
+msgid "Select a payment method to start"
+msgstr ""
+
+msgid "Select items to start or choose a quick action"
+msgstr "Selecione itens para começar ou escolha uma ação rápida"
+
+msgid "Select method..."
+msgstr "Selecionar método..."
+
+msgid "Select option"
+msgstr "Selecione uma opção"
+
+msgid "Select the unit of measure for this item:"
+msgstr "Selecione a unidade de medida para este item:"
+
+msgid "Select {0}"
+msgstr "Selecionar {0}"
+
+msgid "Selected"
+msgstr "Selecionado"
+
+msgid "Serial No:"
+msgstr "N° de Série:"
+
+msgid "Serial Numbers"
+msgstr "Números de Série"
+
+msgid "Server Error"
+msgstr "Erro do Servidor"
+
+msgid "Settings"
+msgstr "Configurações"
+
+msgid "Settings saved and warehouse updated. Reloading stock..."
+msgstr "Configurações salvas e depósito atualizado. Recarregando estoque..."
+
+msgid "Settings saved successfully"
+msgstr "Configurações salvas com sucesso"
+
+msgid ""
+"Settings saved, warehouse updated, and tax mode changed. Cart will be "
+"recalculated."
+msgstr ""
+"Configurações salvas, depósito atualizado e modo de imposto alterado. O "
+"carrinho será recalculado."
+
+msgid "Shift Open"
+msgstr "Turno Aberto"
+
+msgid "Shift Open:"
+msgstr "Turno Aberto:"
+
+msgid "Shift Status"
+msgstr "Status do Turno"
+
+msgid "Shift closed successfully"
+msgstr "Turno fechado com sucesso"
+
+msgid "Shift is Open"
+msgstr "O Turno Está Aberto"
+
+msgid "Shift start"
+msgstr "Início do turno"
+
+msgid "Short {0}"
+msgstr "Falta de {0}"
+
+msgid "Show discounts as percentages"
+msgstr "Mostrar descontos como porcentagens"
+
+msgid "Show exact totals without rounding"
+msgstr "Mostrar totais exatos sem arredondamento"
+
+msgid "Show password"
+msgstr "Mostrar senha"
+
+msgid "Sign Out"
+msgstr "Sair"
+
+msgid "Sign Out Confirmation"
+msgstr "Confirmação de Saída"
+
+msgid "Sign Out Only"
+msgstr "Apenas Sair"
+
+msgid "Sign Out?"
+msgstr "Sair?"
+
+msgid "Sign in"
+msgstr "Entrar"
+
+msgid "Sign in to POS Next"
+msgstr "Acesse o POS Next"
+
+msgid "Sign out"
+msgstr "Sair"
+
+msgid "Signing Out..."
+msgstr "Saindo..."
+
+msgid "Signing in..."
+msgstr "Acessando..."
+
+msgid "Signing out..."
+msgstr "Saindo..."
+
+msgid "Silent Print"
+msgstr "Impressão Silenciosa"
+
+msgid "Skip & Sign Out"
+msgstr "Ignorar e Sair"
+
+msgid "Snooze for 7 days"
+msgstr "Adiar por 7 dias"
+
+msgid "Some data may not be available offline"
+msgstr "Alguns dados podem não estar disponíveis offline"
+
+msgid "Sort Items"
+msgstr "Ordenar Itens"
+
+msgid "Sort items"
+msgstr "Ordenar itens"
+
+msgid "Sorted by {0} A-Z"
+msgstr "Ordenado por {0} A-Z"
+
+msgid "Sorted by {0} Z-A"
+msgstr "Ordenado por {0} Z-A"
+
+msgid "Special Offer"
+msgstr "Oferta Especial"
+
+msgid "Specific Items"
+msgstr "Itens Específicos"
+
+msgid "Start Sale"
+msgstr "Iniciar Venda"
+
+msgid "Start typing to see suggestions"
+msgstr "Comece a digitar para ver sugestões"
+
+msgid "Status:"
+msgstr "Status:"
+
+msgid "Status: {0}"
+msgstr "Status: {0}"
+
+msgid "Stock Controls"
+msgstr "Controles de Estoque"
+
+msgid "Stock Lookup"
+msgstr "Consulta de Estoque"
+
+msgid "Stock Management"
+msgstr "Gestão de Estoque"
+
+msgid "Stock Validation Policy"
+msgstr "Política de Validação de Estoque"
+
+msgid "Stock unit"
+msgstr "Unidade de estoque"
+
+msgid "Stock: {0}"
+msgstr "Estoque: {0}"
+
+msgid "Subtotal"
+msgstr "Subtotal"
+
+msgid "Subtotal (before tax)"
+msgstr "Subtotal (antes do imposto)"
+
+msgid "Subtotal:"
+msgstr "Subtotal:"
+
+msgid "Summary"
+msgstr ""
+
+msgid "Switch to grid view"
+msgstr "Mudar para visualização em grade"
+
+msgid "Switch to list view"
+msgstr "Mudar para visualização em lista"
+
+msgid "Switched to {0}. Stock quantities refreshed."
+msgstr "Mudado para {0}. Quantidades de estoque atualizadas."
+
+msgid "Sync All"
+msgstr "Sincronizar Tudo"
+
+msgid "Sync Interval (seconds)"
+msgstr "Intervalo de Sincronização (segundos)"
+
+msgid "Syncing"
+msgstr "Sincronizando"
+
+msgid "Syncing catalog in background... {0} items cached"
+msgstr "Sincronizando catálogo em segundo plano... {0} itens em cache"
+
+msgid "Syncing..."
+msgstr "Sincronizando..."
+
+msgid "System Test"
+msgstr "Teste do Sistema"
+
+msgid "TAX INVOICE"
+msgstr "FATURA DE IMPOSTOS"
+
+msgid "TOTAL:"
+msgstr "TOTAL:"
+
+msgid "Tabs"
+msgstr ""
+
+msgid "Tax"
+msgstr "Imposto"
+
+msgid "Tax Collected"
+msgstr "Imposto Arrecadado"
+
+msgid "Tax Configuration Error"
+msgstr "Erro de Configuração de Imposto"
+
+msgid "Tax Inclusive"
+msgstr "Imposto Incluso"
+
+msgid "Tax Summary"
+msgstr "Resumo de Impostos"
+
+msgid "Tax mode updated. Cart recalculated with new tax settings."
+msgstr ""
+"Modo de imposto atualizado. Carrinho recalculado com as novas configurações "
+"de imposto."
+
+msgid "Tax:"
+msgstr "Imposto:"
+
+msgid "Taxes:"
+msgstr "Impostos:"
+
+msgid "Technical: {0}"
+msgstr "Técnico: {0}"
+
+msgid "Territory"
+msgstr "Território"
+
+msgid "Test Connection"
+msgstr "Testar Conexão"
+
+msgid "Thank you for your business!"
+msgstr "Obrigado(a) pela preferência!"
+
+msgid "The coupon code you entered is not valid"
+msgstr "O código de cupom inserido não é válido"
+
+msgid "This Month"
+msgstr "Este Mês"
+
+msgid "This Week"
+msgstr "Esta Semana"
+
+msgid "This action cannot be undone."
+msgstr "Esta ação não pode ser desfeita."
+
+msgid "This combination is not available"
+msgstr "Esta combinação não está disponível"
+
+msgid "This coupon requires a minimum purchase of "
+msgstr ""
+
+msgid ""
+"This invoice was paid on account (credit sale). The return will reverse the "
+"accounts receivable balance. No cash refund will be processed."
+msgstr ""
+"Esta fatura foi paga a crédito (venda a prazo). A devolução reverterá o "
+"saldo de contas a receber. Nenhum reembolso em dinheiro será processado."
+
+msgid ""
+"This invoice was partially paid. The refund will be split proportionally."
+msgstr ""
+"Esta fatura foi paga parcialmente. O reembolso será dividido "
+"proporcionalmente."
+
+msgid "This invoice was sold on credit. The customer owes the full amount."
+msgstr "Esta fatura foi vendida a crédito. O cliente deve o valor total."
+
+msgid "This item is out of stock in all warehouses"
+msgstr "Este item está esgotado em todos os depósitos"
+
+msgid ""
+"This item template &lt;strong&gt;{0}&lt;strong&gt; has no variants created "
+"yet."
+msgstr ""
+
+msgid ""
+"This return was against a Pay on Account invoice. The accounts receivable "
+"balance has been reversed. No cash refund was processed."
+msgstr ""
+"Esta devolução foi contra uma fatura Paga a Prazo. O saldo de contas a "
+"receber foi revertido. Nenhum reembolso em dinheiro foi processado."
+
+msgid ""
+"This will also delete all associated pricing rules. This action cannot be "
+"undone."
+msgstr ""
+"Isso também excluirá todas as regras de preço associadas. Esta ação não pode "
+"ser desfeita."
+
+msgid ""
+"This will clear all cached items, customers, and stock data. Invoices and "
+"drafts will be preserved."
+msgstr ""
+"Isso limpará todos os itens, clientes e dados de estoque em cache. Faturas e "
+"rascunhos serão preservados."
+
+msgid "Time"
+msgstr "Hora"
+
+msgid "Times Used"
+msgstr "Vezes Usado"
+
+msgid "Timestamp: {0}"
+msgstr "Data e Hora: {0}"
+
+msgid "Title: {0}"
+msgstr "Título: {0}"
+
+msgid "To Date"
+msgstr "Data Final"
+
+msgid "To create variants:"
+msgstr "Para criar variantes:"
+
+msgid "Today"
+msgstr "Hoje"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Total Actual"
+msgstr "Total Real"
+
+msgid "Total Amount"
+msgstr "Valor Total"
+
+msgid "Total Available"
+msgstr "Total Disponível"
+
+msgid "Total Expected"
+msgstr "Total Esperado"
+
+msgid "Total Paid:"
+msgstr "Total Pago:"
+
+msgid "Total Quantity"
+msgstr "Quantidade Total"
+
+msgid "Total Refund:"
+msgstr "Total do Reembolso:"
+
+msgid "Total Tax Collected"
+msgstr "Total de Imposto Arrecadado"
+
+msgid "Total Variance"
+msgstr "Variação Total"
+
+msgid "Total:"
+msgstr "Total:"
+
+msgid "Try Again"
+msgstr "Tentar Novamente"
+
+msgid "Try a different search term"
+msgstr "Tente um termo de busca diferente"
+
+msgid "Try a different search term or create a new customer"
+msgstr "Tente um termo de busca diferente ou crie um novo cliente"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Type to search items..."
+msgstr "Digite para buscar itens..."
+
+msgid "Type: {0}"
+msgstr "Tipo: {0}"
+
+msgid "UOM"
+msgstr "UDM"
+
+msgid "Unable to connect to server. Check your internet connection."
+msgstr ""
+"Não foi possível conectar ao servidor. Verifique sua conexão com a internet."
+
+msgid "Unit changed to {0}"
+msgstr "Unidade alterada para {0}"
+
+msgid "Unit of Measure"
+msgstr "Unidade de Medida"
+
+msgid "Unknown"
+msgstr "Desconhecido"
+
+msgid "Unlimited"
+msgstr "Ilimitado"
+
+msgid "Unpaid"
+msgstr "Não Pago"
+
+msgid "Unpaid ({0})"
+msgstr "Não Pago ({0})"
+
+msgid "Until {0}"
+msgstr "Até {0}"
+
+msgid "Update"
+msgstr "Atualizar"
+
+msgid "Update Item"
+msgstr "Atualizar Item"
+
+msgid "Update the promotion details below"
+msgstr "Atualize os detalhes da promoção abaixo"
+
+msgid "Use Percentage Discount"
+msgstr "Usar Desconto em Porcentagem"
+
+msgid "Used: {0}"
+msgstr "Usado: {0}"
+
+msgid "Used: {0}/{1}"
+msgstr "Usado: {0}/{1}"
+
+msgid "User ID / Email"
+msgstr "ID de Usuário / E-mail"
+
+msgid "User: {0}"
+msgstr "Usuário: {0}"
+
+msgid "Valid From"
+msgstr "Válido A Partir De"
+
+msgid "Valid Until"
+msgstr "Válido Até"
+
+msgid "Validation Error"
+msgstr "Erro de Validação"
+
+msgid "Validity & Usage"
+msgstr "Validade e Uso"
+
+msgid "View"
+msgstr "Visualizar"
+
+msgid "View Details"
+msgstr "Ver Detalhes"
+
+msgid "View Shift"
+msgstr "Visualizar Turno"
+
+msgid "View all available offers"
+msgstr "Visualizar todas as ofertas disponíveis"
+
+msgid "View and update coupon information"
+msgstr "Visualizar e atualizar informações do cupom"
+
+msgid "View cart"
+msgstr "Visualizar carrinho"
+
+msgid "View cart with {0} items"
+msgstr "Visualizar carrinho com {0} itens"
+
+msgid "View current shift details"
+msgstr "Visualizar detalhes do turno atual"
+
+msgid "View draft invoices"
+msgstr "Visualizar faturas rascunho"
+
+msgid "View invoice history"
+msgstr "Visualizar histórico de faturas"
+
+msgid "View items"
+msgstr "Visualizar itens"
+
+msgid "View pricing rule details (read-only)"
+msgstr "Visualizar detalhes da regra de preço (somente leitura)"
+
+msgid "Walk-in Customer"
+msgstr "Cliente de Balcão"
+
+msgid "Warehouse"
+msgstr "Depósito"
+
+msgid "Warehouse Selection"
+msgstr "Seleção de Depósito"
+
+msgid "Warehouse not set"
+msgstr "Depósito não definido"
+
+msgid "Warehouse updated but failed to reload stock. Please refresh manually."
+msgstr ""
+"Depósito atualizado, mas falha ao recarregar estoque. Por favor, atualize "
+"manualmente."
+
+msgid "Welcome to POS Next"
+msgstr "Bem-vindo(a) ao POS Next"
+
+msgid "Welcome to POS Next!"
+msgstr "Bem-vindo(a) ao POS Next!"
+
+msgid ""
+"When enabled, displayed prices include tax. When disabled, tax is calculated "
+"separately. Changes apply immediately to your cart when you save."
+msgstr ""
+"Quando habilitado, os preços exibidos incluem imposto. Quando desabilitado, "
+"o imposto é calculado separadamente. As alterações se aplicam imediatamente "
+"ao seu carrinho ao salvar."
+
+msgid "Will apply when eligible"
+msgstr ""
+
+msgid "Write Off Change"
+msgstr "Baixa de Troco"
+
+msgid "Write off small change amounts"
+msgstr "Dar baixa em pequenos valores de troco"
+
+msgid "Yesterday"
+msgstr "Ontem"
+
+msgid "You can now start making sales"
+msgstr "Você já pode começar a fazer vendas"
+
+msgid "You have an active shift open. Would you like to:"
+msgstr "Você tem um turno ativo aberto. Gostaria de:"
+
+msgid ""
+"You have an open shift. Would you like to resume it or close it and open a "
+"new one?"
+msgstr ""
+"Você tem um turno aberto. Gostaria de retomá-lo ou fechá-lo e abrir um novo?"
+
+msgid "You have less than expected."
+msgstr "Você tem menos do que o esperado."
+
+msgid "You have more than expected."
+msgstr "Você tem mais do que o esperado."
+
+msgid "You need to open a shift before you can start making sales."
+msgstr "Você precisa abrir um turno antes de poder começar a fazer vendas."
+
+msgid "You will be logged out of POS Next"
+msgstr "Você será desconectado(a) do POS Next"
+
+msgid "Your Shift is Still Open!"
+msgstr "Seu Turno Ainda Está Aberto!"
+
+msgid "Your cart is empty"
+msgstr "Seu carrinho está vazio"
+
+msgid "Your point of sale system is ready to use."
+msgstr "Seu sistema de ponto de venda está pronto para uso."
+
+msgid "discount ({0})"
+msgstr "desconto ({0})"
+
+msgid "e.g., 20"
+msgstr "Ex: 20"
+
+msgid "e.g., Summer Sale 2025"
+msgstr "Ex: Venda de Verão 2025"
+
+msgid "e.g., Summer Sale Coupon 2025"
+msgstr "Ex: Cupom Venda de Verão 2025"
+
+msgid "in 1 warehouse"
+msgstr "em 1 depósito"
+
+msgid "in {0} warehouses"
+msgstr "em {0} depósitos"
+
+msgid "of {0}"
+msgstr ""
+
+msgid "optional"
+msgstr "opcional"
+
+msgid "per {0}"
+msgstr "por {0}"
+
+msgid "variant"
+msgstr ""
+
+msgid "variants"
+msgstr ""
+
+msgid "{0} ({1}) added to cart"
+msgstr "{0} ({1}) adicionado(s) ao carrinho"
+
+msgid "{0} - {1} of {2}"
+msgstr ""
+
+msgid "{0} OFF"
+msgstr "{0} DESCONTO"
+
+msgid "{0} Pending Invoice(s)"
+msgstr "{0} Fatura(s) Pendente(s)"
+
+msgid "{0} added to cart"
+msgstr "{0} adicionado(s) ao carrinho"
+
+msgid "{0} applied successfully"
+msgstr "{0} aplicado com sucesso"
+
+msgid "{0} created and selected"
+msgstr "{0} criado e selecionado"
+
+msgid "{0} failed"
+msgstr "{0} falhou"
+
+msgid "{0} free item(s) included"
+msgstr "{0} item(s) grátis incluído(s)"
+
+msgid "{0} hours ago"
+msgstr "Há {0} horas"
+
+msgid "{0} invoice - {1} outstanding"
+msgstr "{0} fatura - {1} pendente"
+
+msgid "{0} invoice(s) failed to sync"
+msgstr "{0} fatura(s) falhou(ram) ao sincronizar"
+
+msgid "{0} invoice(s) synced successfully"
+msgstr "{0} fatura(s) sincronizada(s) com sucesso"
+
+msgid "{0} invoices"
+msgstr "{0} faturas"
+
+msgid "{0} invoices - {1} outstanding"
+msgstr "{0} faturas - {1} pendente"
+
+msgid "{0} item(s)"
+msgstr "{0} item(s)"
+
+msgid "{0} item(s) selected"
+msgstr "{0} item(s) selecionado(s)"
+
+msgid "{0} items"
+msgstr "{0} itens"
+
+msgid "{0} items found"
+msgstr "{0} itens encontrados"
+
+msgid "{0} minutes ago"
+msgstr "Há {0} minutos"
+
+msgid "{0} of {1} customers"
+msgstr "{0} de {1} clientes"
+
+msgid "{0} off {1}"
+msgstr "{0} de desconto em {1}"
+
+msgid "{0} paid"
+msgstr "{0} pago(s)"
+
+msgid "{0} returns"
+msgstr "{0} devoluções"
+
+msgid "{0} selected"
+msgstr "{0} selecionado(s)"
+
+msgid "{0} settings applied immediately"
+msgstr "Configurações de {0} aplicadas imediatamente"
+
+msgid "{0} transactions • {1}"
+msgstr ""
+
+msgid "{0} updated"
+msgstr ""
+
+msgid "{0}%"
+msgstr ""
+
+msgid "{0}% OFF"
+msgstr ""
+
+msgid "{0}% off {1}"
+msgstr ""
+
+msgid "{0}: maximum {1}"
+msgstr "{0}: máximo {1}"
+
+msgid "{0}h {1}m"
+msgstr "{0}h {1}m"
+
+msgid "{0}m"
+msgstr "{0}m"
+
+msgid "{0}m ago"
+msgstr "Há {0}m"
+
+msgid "{0}s ago"
+msgstr "Há {0}s"
+
+msgid "~15 KB per sync cycle"
+msgstr "~15 KB por ciclo de sincronização"
+
+msgid "~{0} MB per hour"
+msgstr "~{0} MB por hora"
+
+msgid "• Use ↑↓ to navigate, Enter to select"
+msgstr "• Use ↑↓ para navegar, Enter para selecionar"
+
+msgid "⚠️ Payment total must equal refund amount"
+msgstr "⚠️ O total do pagamento deve ser igual ao valor do reembolso"
+
+msgid "⚠️ Payment total must equal refundable amount"
+msgstr "⚠️ O total do pagamento deve ser igual ao valor a ser reembolsado"
+
+msgid "⚠️ {0} already returned"
+msgstr "⚠️ {0} já devolvido(s)"
+
+msgid "✓ Balanced"
+msgstr "✓ Balanceado"
+
+msgid "✓ Connection successful: {0}"
+msgstr "✓ Conexão bem-sucedida: {0}"
+
+msgid "✓ Shift Closed"
+msgstr "✓ Turno Fechado"
+
+msgid "✓ Shift closed successfully"
+msgstr "✓ Turno fechado com sucesso"
+
+msgid "✗ Connection failed: {0}"
+msgstr "✗ Conexão falhou: {0}"
+
+#~ msgid "Account"
+#~ msgstr "Conta"
+
+#~ msgid "Brand"
+#~ msgstr "Marca"
+
+#~ msgid "Cancelled"
+#~ msgstr "Cancelado"
+
+#~ msgid "Cashier"
+#~ msgstr "Caixa"
+
+#~ msgid "Closing Amount"
+#~ msgstr "Valor de Fechamento"
+
+#~ msgid "Description"
+#~ msgstr "Descrição"
+
+#~ msgid "Difference"
+#~ msgstr "Diferença"
+
+#~ msgid "Draft"
+#~ msgstr "Rascunho"
+
+#~ msgid "Enabled"
+#~ msgstr "Habilitado"
+
+#~ msgctxt "Error"
+#~ msgid "Exception: {0}"
+#~ msgstr "Exceção: {0}"
+
+#~ msgid "Expected Amount"
+#~ msgstr "Valor Esperado"
+
+#~ msgid "Help"
+#~ msgstr "Ajuda"
+
+#~ msgctxt "order"
+#~ msgid "Hold"
+#~ msgstr "Suspender"
+
+#~ msgid "Loyalty Points"
+#~ msgstr "Pontos de Fidelidade"
+
+#~ msgctxt "UOM"
+#~ msgid "Nos"
+#~ msgstr "N°s"
+
+#~ msgid "Offer Applied"
+#~ msgstr "Oferta Aplicada"
+
+#~ msgid "Opening Amount"
+#~ msgstr "Valor de Abertura"
+
+#~ msgid "POS Profile"
+#~ msgstr "Perfil do PDV"
+
+#~ msgid "Pending"
+#~ msgstr "Pendente"
+
+#~ msgid ""
+#~ "Prices are now tax-exclusive. This will apply to new items added to cart."
+#~ msgstr ""
+#~ "Os preços agora não incluem impostos (tax-exclusive). Isso será aplicado "
+#~ "a novos itens adicionados ao carrinho."
+
+#~ msgid ""
+#~ "Prices are now tax-inclusive. This will apply to new items added to cart."
+#~ msgstr ""
+#~ "Os preços agora incluem impostos. Isso será aplicado a novos itens "
+#~ "adicionados ao carrinho."
+
+#~ msgid "Refund"
+#~ msgstr "Reembolso"
+
+#~ msgid "Status"
+#~ msgstr "Status"
+
+#~ msgid "Synced"
+#~ msgstr "Sincronizado"
+
+#~ msgid "These invoices will be submitted when you're back online"
+#~ msgstr "Estas faturas serão enviadas quando você voltar a ficar online"
+
+#~ msgid "Transaction"
+#~ msgstr "Transação"
+
+#~ msgid "Wallet"
+#~ msgstr "Carteira Digital"
+
+#~ msgid "You don't have permission to create coupons"
+#~ msgstr "Você não tem permissão para criar cupons"
+
+#~ msgid ""
+#~ "You don't have permission to create customers. Contact your administrator."
+#~ msgstr ""
+#~ "Você não tem permissão para criar clientes. Contate seu administrador."
+
+#~ msgid "You don't have permission to create promotions"
+#~ msgstr "Você não tem permissão para criar promoções"
+
+#~ msgid "Your cart doesn't meet the requirements for this offer."
+#~ msgstr "Seu carrinho não atende aos requisitos desta oferta."
+
+#~ msgctxt "item qty"
+#~ msgid "of {0}"
+#~ msgstr "de {0}"
+
+#~ msgid "{0} reserved"
+#~ msgstr "{0} reservado(s)"
