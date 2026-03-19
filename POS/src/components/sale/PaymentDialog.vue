@@ -290,8 +290,11 @@
 								<h3 :class="['text-gray-900 font-semibold text-start', dynamicTextSize.header]">{{ __('Invoice Summary') }}</h3>
 								<span class="text-gray-500 text-xs text-end">{{ items.length === 1 ? __('1 item') : __('{0} items', [items.length]) }}</span>
 							</div>
-							<div v-if="customer" class="text-gray-600 text-xs mt-0.5 text-start">
-								{{ customer?.customer_name || customer?.name || customer }}
+							<div v-if="customer" class="text-gray-600 text-xs mt-0.5 text-start flex items-center gap-2">
+								<span>{{ customer?.customer_name || customer?.name || customer }}</span>
+								<span v-if="walletInfo.loyalty_points > 0" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold text-[10px]">
+									⭐ {{ walletInfo.loyalty_points.toLocaleString() }} {{ __('pts') }}
+								</span>
 							</div>
 						</div>
 

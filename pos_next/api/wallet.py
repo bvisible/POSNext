@@ -447,7 +447,8 @@ def get_wallet_info(customer, company, pos_profile=None):
 		"wallet_name": None,
 		"auto_create": False,
 		"loyalty_program": None,
-		"loyalty_to_wallet": False
+		"loyalty_to_wallet": False,
+		"loyalty_points": 0,
 	}
 
 	# Check if loyalty program is enabled in POS Settings
@@ -462,6 +463,16 @@ def get_wallet_info(customer, company, pos_profile=None):
 
 	if not result["wallet_enabled"]:
 		return result
+
+	# Get customer's active loyalty points
+	if customer and result.get("loyalty_program"):
+		loyalty_points = frappe.db.sql("""
+			SELECT COALESCE(SUM(loyalty_points), 0) as total_points
+			FROM `tabLoyalty Point Entry`
+			WHERE customer = %s
+			AND expiry_date >= CURDATE()
+		""", (customer,), as_dict=True)
+		result["loyalty_points"] = int(loyalty_points[0].total_points) if loyalty_points else 0
 
 	# Get wallet details (support both pos_next and wallete status values)
 	wallet = frappe.db.get_value(
