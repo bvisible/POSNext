@@ -36,6 +36,12 @@ POS_SETTINGS_FIELDS = [
 	"allow_sales_order",
 	"allow_select_sales_order",
 	"create_only_sales_order",
+	# Wallet & Loyalty
+	"enable_loyalty_program",
+	"default_loyalty_program",
+	"wallet_account",
+	"auto_create_wallet",
+	"loyalty_to_wallet",
 	# Customer Display Settings
 	"enable_customer_display",
 	"enable_customer_display_account_creation",
@@ -69,6 +75,12 @@ DEFAULT_POS_SETTINGS = {
 	"allow_sales_order": 0,
 	"allow_select_sales_order": 0,
 	"create_only_sales_order": 0,
+	# Wallet & Loyalty
+	"enable_loyalty_program": 0,
+	"default_loyalty_program": "",
+	"wallet_account": "",
+	"auto_create_wallet": 0,
+	"loyalty_to_wallet": 0,
 	# Customer Display Settings
 	"enable_customer_display": 0,
 	"enable_customer_display_account_creation": 0,
