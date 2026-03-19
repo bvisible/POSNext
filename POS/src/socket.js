@@ -1,5 +1,4 @@
 import { io } from "socket.io-client"
-import { socketio_port } from "../../../../sites/common_site_config.json"
 
 let socket = null
 
@@ -19,9 +18,10 @@ export function initSocket(siteNameOverride) {
 			window.location.hostname
 
 		const host = window.location.hostname
-		const port = window.location.port ? `:${socketio_port}` : ""
-		const protocol = port ? "http" : "https"
-		const url = `${protocol}://${host}${port}/${siteName}`
+		// Use same port/protocol as the current page (Frappe proxies Socket.IO)
+		const protocol = window.location.protocol === "https:" ? "https" : "http"
+		const portPart = window.location.port ? `:${window.location.port}` : ""
+		const url = `${protocol}://${host}${portPart}/${siteName}`
 
 		console.log("Initializing socket (lazy connection):", url)
 
