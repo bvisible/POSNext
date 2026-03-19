@@ -868,6 +868,7 @@ export function useInvoice() {
 		targetDoctype = "Sales Invoice",
 		deliveryDate = null,
 		writeOffAmount = 0,
+		loyaltyData = null,
 	) {
 		/**
 		 * Two-step submission process with mutex protection:
@@ -956,6 +957,7 @@ export function useInvoice() {
 					change_amount:
 						remainingAmount.value < 0 ? Math.abs(remainingAmount.value) : 0,
 					write_off_amount: writeOffAmount || 0,
+					loyalty: loyaltyData || null,
 				}
 
 				try {

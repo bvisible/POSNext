@@ -2110,6 +2110,11 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.setWriteOffAmount(paymentData.write_off_amount);
 		}
 
+		// Set loyalty redemption data if provided
+		if (paymentData.loyalty) {
+			cartStore.setLoyaltyData(paymentData.loyalty);
+		}
+
 		// Delete draft if it exists (since we're submitting/saving invoice)
 		const draftIdToDelete = cartStore.currentDraftId;
 

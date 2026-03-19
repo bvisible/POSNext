@@ -626,6 +626,45 @@
 						</div>
 					</div>
 
+					<!-- Loyalty Points Redemption -->
+					<div v-if="loyaltyDetails.has_loyalty && loyaltyDetails.loyalty_points > 0" :class="['border border-amber-200 bg-amber-50 rounded-lg', isCompactMode ? 'p-2 mb-2' : 'p-3 mb-3']">
+						<div class="flex items-center justify-between mb-2">
+							<div class="flex items-center gap-1.5">
+								<span class="text-sm">⭐</span>
+								<span class="text-xs font-semibold text-amber-800">{{ __('Loyalty Points') }}</span>
+								<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-700 font-bold">
+									{{ loyaltyDetails.loyalty_points.toLocaleString() }} {{ __('pts') }}
+								</span>
+							</div>
+							<span class="text-[10px] text-amber-600">{{ __('max') }} {{ formatCurrency(loyaltyDetails.max_redeemable_amount) }}</span>
+						</div>
+						<div v-if="loyaltyRedeemAmount > 0" class="flex items-center gap-2">
+							<div class="flex-1 bg-white rounded border border-amber-300 px-2 py-1 text-sm font-semibold text-amber-800 text-center">
+								-{{ formatCurrency(loyaltyRedeemAmount) }}
+								<span class="text-[10px] text-amber-500 font-normal ml-1">
+									({{ Math.ceil(loyaltyRedeemAmount / loyaltyDetails.conversion_factor).toLocaleString() }} pts)
+								</span>
+							</div>
+							<button @click="clearLoyaltyRedeem" class="text-xs px-2 py-1 rounded bg-amber-200 hover:bg-amber-300 text-amber-800 transition-colors">
+								{{ __('Clear') }}
+							</button>
+						</div>
+						<div v-else class="flex items-center gap-2">
+							<button
+								@click="applyLoyaltyRedeem(Math.min(loyaltyDetails.max_redeemable_amount, remainingAmount + loyaltyRedeemAmount))"
+								:disabled="remainingAmount === 0"
+								:class="[
+									'flex-1 text-xs font-semibold py-1.5 rounded transition-colors',
+									remainingAmount === 0
+										? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+										: 'bg-amber-500 hover:bg-amber-600 text-white'
+								]"
+							>
+								{{ __('Redeem') }} {{ formatCurrency(Math.min(loyaltyDetails.max_redeemable_amount, remainingAmount)) }}
+							</button>
+						</div>
+					</div>
+
 					<!-- Quick Amounts Area (Desktop) - Consistent layout for all payment methods -->
 					<div v-if="lastSelectedMethod && remainingAmount > 0" class="hidden lg:block" :class="isCompactMode ? 'mb-2' : 'mb-3'">
 						<div class="text-start text-xs font-medium text-gray-600 mb-1.5">
@@ -1326,6 +1365,18 @@ const walletInfo = ref({
 const loadingWallet = ref(false)
 const walletPaymentMethods = ref(new Set()) // Set of mode_of_payment names that are wallet payments
 
+// Loyalty points redemption state
+const loyaltyDetails = ref({
+	has_loyalty: false,
+	loyalty_program: null,
+	loyalty_points: 0,
+	conversion_factor: 0,
+	max_redeemable_amount: 0,
+	loyalty_redemption_account: null,
+	loyalty_redemption_cost_center: null,
+})
+const loyaltyRedeemAmount = ref(0) // Amount in currency to redeem
+
 // Wallee Terminal Payment state
 const showWalleeDialog = ref(false)
 const walleeDialogAmount = ref(0)
@@ -1597,6 +1648,42 @@ async function identifyWalletPaymentMethods() {
 }
 
 // Check if a payment method is a wallet payment
+// Fetch loyalty details for the selected customer
+async function fetchLoyaltyDetails() {
+	try {
+		const customerName = props.customer?.name || props.customer
+		const result = await call("pos_next.api.wallet.get_loyalty_details", {
+			customer: customerName,
+			company: props.company,
+		})
+		if (result) {
+			loyaltyDetails.value = result
+			log.debug("[PaymentDialog] Loyalty details loaded:", result)
+		}
+	} catch (error) {
+		log.warn("[PaymentDialog] Failed to load loyalty details:", error)
+		loyaltyDetails.value = { has_loyalty: false, loyalty_points: 0, conversion_factor: 0, max_redeemable_amount: 0 }
+	}
+}
+
+// Apply loyalty points as redemption (reduces remaining amount)
+function applyLoyaltyRedeem(amount) {
+	const maxAmount = Math.min(
+		loyaltyDetails.value.max_redeemable_amount,
+		roundCurrency(props.grandTotal) - totalPaid.value,
+	)
+	loyaltyRedeemAmount.value = roundCurrency(Math.min(amount, maxAmount))
+	log.debug("[PaymentDialog] Loyalty redeem applied:", {
+		amount: loyaltyRedeemAmount.value,
+		points: Math.ceil(loyaltyRedeemAmount.value / loyaltyDetails.value.conversion_factor),
+	})
+}
+
+// Clear loyalty redemption
+function clearLoyaltyRedeem() {
+	loyaltyRedeemAmount.value = 0
+}
+
 function isWalletPaymentMethod(methodName) {
 	return walletPaymentMethods.value.has(methodName)
 }
@@ -1893,13 +1980,18 @@ const calculatedAdditionalDiscount = computed(() => {
 	return roundCurrency(localAdditionalDiscount.value)
 })
 
+// Effective grand total after loyalty points redemption
+const effectiveGrandTotal = computed(() => {
+	return roundCurrency(props.grandTotal) - roundCurrency(loyaltyRedeemAmount.value || 0)
+})
+
 const remainingAmount = computed(() => {
-	const remaining = roundCurrency(props.grandTotal) - totalPaid.value
+	const remaining = effectiveGrandTotal.value - totalPaid.value
 	return remaining > 0 ? roundCurrency(remaining) : 0
 })
 
 const changeAmount = computed(() => {
-	const change = totalPaid.value - roundCurrency(props.grandTotal)
+	const change = totalPaid.value - effectiveGrandTotal.value
 	return change > 0 ? roundCurrency(change) : 0
 })
 
@@ -2195,6 +2287,7 @@ watch(show, async (newVal) => {
 		salesPersonSearch.value = ""
 		walleeLockedPayments.value = []
 		applyWriteOff.value = false // Reset write-off state
+		loyaltyRedeemAmount.value = 0
 		// Set default delivery date to today for Sales Orders
 		deliveryDate.value = isSalesOrder.value ? today : ""
 
@@ -2278,6 +2371,14 @@ watch(show, async (newVal) => {
 				wallet_balance: 0,
 				wallet_name: null,
 			}
+		}
+
+		// Load loyalty details for the customer
+		loyaltyRedeemAmount.value = 0
+		if (props.customer && props.company) {
+			fetchLoyaltyDetails()
+		} else {
+			loyaltyDetails.value = { has_loyalty: false, loyalty_points: 0, conversion_factor: 0, max_redeemable_amount: 0 }
 		}
 	}
 })
@@ -3329,8 +3430,8 @@ function completePayment() {
 		return
 	}
 
-	// Calculate if this is a partial payment (considering write-off)
-	const effectivePaid = totalPaid.value + writeOffAmount.value
+	// Calculate if this is a partial payment (considering write-off and loyalty)
+	const effectivePaid = totalPaid.value + writeOffAmount.value + (loyaltyRedeemAmount.value || 0)
 	const isPartial = effectivePaid < props.grandTotal
 
 	const paymentData = {
@@ -3347,6 +3448,14 @@ function completePayment() {
 		// Write-off data
 		write_off_amount: writeOffAmount.value,
 		is_write_off: writeOffAmount.value > 0,
+		// Loyalty points redemption
+		loyalty: loyaltyRedeemAmount.value > 0 ? {
+			loyalty_amount: loyaltyRedeemAmount.value,
+			loyalty_points: Math.ceil(loyaltyRedeemAmount.value / loyaltyDetails.value.conversion_factor),
+			loyalty_program: loyaltyDetails.value.loyalty_program,
+			loyalty_redemption_account: loyaltyDetails.value.loyalty_redemption_account,
+			loyalty_redemption_cost_center: loyaltyDetails.value.loyalty_redemption_cost_center,
+		} : null,
 	}
 
 	log.debug("[PaymentDialog] Emitting payment-completed:", paymentData)

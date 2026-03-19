@@ -1349,6 +1349,16 @@ def submit_invoice(invoice=None, data=None):
                         "POS Write-Off Error"
                     )
 
+        # Handle loyalty points redemption
+        loyalty_data = data.get("loyalty") or invoice.get("loyalty") or {}
+        if loyalty_data and flt(loyalty_data.get("loyalty_amount")):
+            invoice_doc.redeem_loyalty_points = 1
+            invoice_doc.loyalty_points = cint(loyalty_data.get("loyalty_points"))
+            invoice_doc.loyalty_amount = flt(loyalty_data.get("loyalty_amount"))
+            invoice_doc.loyalty_program = loyalty_data.get("loyalty_program")
+            invoice_doc.loyalty_redemption_account = loyalty_data.get("loyalty_redemption_account")
+            invoice_doc.loyalty_redemption_cost_center = loyalty_data.get("loyalty_redemption_cost_center")
+
         # Validate stock availability before submission
         # _validate_stock_on_invoice checks _should_block internally
         # (global Stock Settings, POS Settings, and POS Profile flags)

@@ -504,6 +504,65 @@ def get_wallet_info(customer, company, pos_profile=None):
 
 
 @frappe.whitelist()
+def get_loyalty_details(customer, company):
+	"""
+	Get loyalty points details for a customer using ERPNext native loyalty system.
+	Returns points available, conversion factor, and max redeemable amount.
+	"""
+	result = {
+		"has_loyalty": False,
+		"loyalty_program": None,
+		"loyalty_points": 0,
+		"conversion_factor": 0,
+		"max_redeemable_amount": 0,
+		"loyalty_redemption_account": None,
+		"loyalty_redemption_cost_center": None,
+	}
+
+	if not customer or not company:
+		return result
+
+	# Get customer's loyalty program
+	loyalty_program = frappe.db.get_value("Customer", customer, "loyalty_program")
+	if not loyalty_program:
+		return result
+
+	try:
+		from erpnext.accounts.doctype.loyalty_program.loyalty_program import (
+			get_loyalty_program_details_with_points,
+		)
+
+		lp_details = get_loyalty_program_details_with_points(
+			customer=customer,
+			loyalty_program=loyalty_program,
+			company=company,
+			silent=True,
+		)
+
+		if not lp_details or not lp_details.get("loyalty_points"):
+			return result
+
+		points = lp_details.get("loyalty_points", 0)
+		conversion_factor = flt(lp_details.get("conversion_factor", 0))
+
+		result["has_loyalty"] = True
+		result["loyalty_program"] = loyalty_program
+		result["loyalty_points"] = int(points)
+		result["conversion_factor"] = conversion_factor
+		result["max_redeemable_amount"] = flt(points * conversion_factor, 2)
+
+		# Get redemption account and cost center from Loyalty Program
+		lp_doc = frappe.get_cached_doc("Loyalty Program", loyalty_program)
+		result["loyalty_redemption_account"] = lp_doc.get("expense_account")
+		result["loyalty_redemption_cost_center"] = lp_doc.get("cost_center")
+
+	except Exception as e:
+		frappe.log_error("Loyalty Details Error", f"Customer: {customer}, Error: {str(e)}")
+
+	return result
+
+
+@frappe.whitelist()
 def create_manual_wallet_credit(customer, company, amount, remarks=None):
 	"""
 	Create a manual wallet credit (for admin use).

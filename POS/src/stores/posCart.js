@@ -246,6 +246,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	const deliveryDate = ref("")
 	const writeOffAmount = ref(0)
+	const loyaltyData = ref(null)
 
 	function setDeliveryDate(date) {
 		deliveryDate.value = date
@@ -253,6 +254,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	function setWriteOffAmount(amount) {
 		writeOffAmount.value = amount || 0
+	}
+
+	function setLoyaltyData(data) {
+		loyaltyData.value = data || null
 	}
 
 	async function submitInvoice() {
@@ -265,10 +270,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			return
 		}
 
-		const result = await baseSubmitInvoice(targetDoctype.value, deliveryDate.value, writeOffAmount.value)
-		// Reset write-off amount after successful submission
+		const result = await baseSubmitInvoice(targetDoctype.value, deliveryDate.value, writeOffAmount.value, loyaltyData.value)
+		// Reset write-off amount and loyalty after successful submission
 		if (result) {
 			writeOffAmount.value = 0
+			loyaltyData.value = null
 		}
 		return result
 	}
@@ -1783,6 +1789,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		// Write-off feature
 		writeOffAmount,
 		setWriteOffAmount,
+		setLoyaltyData,
 
 		// Utilities
 		cancelPendingOfferProcessing: () => {
