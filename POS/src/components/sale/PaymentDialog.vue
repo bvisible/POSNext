@@ -2221,6 +2221,11 @@ const canComplete = computed(() => {
 	if (props.grandTotal === 0) {
 		return true
 	}
+
+	// If loyalty points cover the entire amount, can complete without payment entries
+	if (loyaltyRedeemAmount.value > 0 && remainingAmount.value === 0) {
+		return true
+	}
 	// If partial payment is allowed, can complete with any amount > 0
 	if (props.allowPartialPayment) {
 		return totalPaid.value > 0 && paymentEntries.value.length > 0
