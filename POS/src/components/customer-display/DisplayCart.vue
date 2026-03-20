@@ -1,28 +1,32 @@
 <template>
-	<div class="flex flex-col h-full bg-white dark:bg-gray-900">
+	<div class="flex flex-col h-full bg-[var(--neo-bg)]">
 		<!-- Empty cart state -->
-		<div v-if="!displayStore.hasItems" class="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
-			<FeatherIcon name="shopping-cart" class="w-32 h-32 mb-6 opacity-30" />
-			<p class="text-2xl text-gray-600 dark:text-gray-400">{{ __("Your cart is empty") }}</p>
-			<p class="text-lg mt-2 text-gray-400 dark:text-gray-600">{{ __("Your items will appear here") }}</p>
+		<div v-if="!displayStore.hasItems" class="flex-1 flex flex-col items-center justify-center">
+			<div class="bg-white rounded-neo-lg shadow-neo p-12 text-center max-w-md">
+				<div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+					<FeatherIcon name="shopping-bag" class="w-10 h-10 text-blue-400" />
+				</div>
+				<p class="text-xl font-semibold text-gray-800 mb-2">{{ __("Waiting for items") }}</p>
+				<p class="text-sm text-gray-400">{{ __("Your items will appear here as they are scanned") }}</p>
+			</div>
 		</div>
 
 		<!-- Cart with items -->
 		<div v-else class="flex-1 flex flex-col overflow-hidden">
 			<!-- Items list -->
-			<div class="flex-1 overflow-y-auto p-6">
+			<div class="flex-1 overflow-y-auto p-5">
 				<transition-group
 					name="cart-item"
 					tag="div"
-					class="space-y-4"
+					class="space-y-3"
 				>
 					<div
-						v-for="(item, index) in displayStore.cartData.items"
+						v-for="(item, index) in reversedItems"
 						:key="item.item_code + '-' + index"
-						class="cart-item bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex items-center gap-4 shadow-lg"
+						class="cart-item bg-white rounded-neo-md p-4 flex items-center gap-4 shadow-neo border border-gray-100 hover:shadow-neo-md transition-shadow"
 					>
 						<!-- Item image -->
-						<div class="w-20 h-20 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+						<div class="w-16 h-16 flex-shrink-0 bg-gray-50 rounded-neo-sm overflow-hidden border border-gray-100">
 							<img
 								v-if="item.image"
 								:src="item.image"
@@ -30,37 +34,35 @@
 								class="w-full h-full object-cover"
 							/>
 							<div v-else class="w-full h-full flex items-center justify-center">
-								<FeatherIcon name="package" class="w-8 h-8 text-gray-400 dark:text-gray-500" />
+								<FeatherIcon name="package" class="w-7 h-7 text-gray-300" />
 							</div>
 						</div>
 
 						<!-- Item details -->
 						<div class="flex-1 min-w-0">
-							<h3 class="text-lg font-medium text-gray-900 dark:text-white truncate">
+							<h3 class="text-base font-semibold text-gray-900 truncate">
 								{{ item.item_name }}
 							</h3>
-							<p class="text-sm text-gray-500 dark:text-gray-400">
-								{{ item.item_code }}
+							<p class="text-xs text-gray-400 mt-0.5">
+								{{ formatCurrency(item.rate) }} / {{ item.uom || __("Unit") }}
 							</p>
 							<!-- Show discount if applied -->
-							<p v-if="item.discount_percentage" class="text-sm text-green-600 dark:text-green-400">
+							<span v-if="item.discount_percentage" class="inline-flex items-center mt-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full border border-green-200">
 								-{{ item.discount_percentage }}%
-							</p>
+							</span>
 						</div>
 
 						<!-- Quantity -->
-						<div class="text-center px-4">
-							<span class="text-3xl font-bold text-gray-900 dark:text-white">{{ item.qty }}</span>
-							<p class="text-xs text-gray-500 dark:text-gray-400 uppercase">{{ item.uom || __("Unit") }}</p>
+						<div class="flex items-center justify-center w-14 h-14 bg-blue-50 rounded-neo-sm border border-blue-100">
+							<div class="text-center">
+								<span class="text-2xl font-bold text-blue-700 leading-none">{{ item.qty }}</span>
+							</div>
 						</div>
 
 						<!-- Price -->
-						<div class="text-right min-w-[120px]">
-							<p class="text-xl font-semibold text-gray-900 dark:text-white">
+						<div class="text-right min-w-[110px]">
+							<p class="text-lg font-bold text-gray-900">
 								{{ formatCurrency(item.amount) }}
-							</p>
-							<p class="text-sm text-gray-500 dark:text-gray-400">
-								{{ formatCurrency(item.rate) }} / {{ item.uom || __("Unit") }}
 							</p>
 						</div>
 					</div>
@@ -68,36 +70,38 @@
 			</div>
 
 			<!-- Totals section -->
-			<div class="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-6">
-				<div class="max-w-2xl mx-auto space-y-3">
+			<div class="bg-white border-t border-gray-200 shadow-neo">
+				<div class="max-w-3xl mx-auto px-6 py-4 space-y-2">
 					<!-- Subtotal -->
-					<div class="flex justify-between text-lg text-gray-600 dark:text-gray-400">
+					<div class="flex justify-between text-sm text-gray-500">
 						<span>{{ __("Subtotal") }}</span>
 						<span>{{ formatCurrency(displayStore.cartData.subtotal) }}</span>
 					</div>
 
 					<!-- Tax -->
-					<div v-if="displayStore.cartData.total_tax" class="flex justify-between text-lg text-gray-600 dark:text-gray-400">
+					<div v-if="displayStore.cartData.total_tax" class="flex justify-between text-sm text-gray-500">
 						<span>{{ __("Tax") }}</span>
 						<span>{{ formatCurrency(displayStore.cartData.total_tax) }}</span>
 					</div>
 
 					<!-- Discount -->
-					<div v-if="displayStore.cartData.discount_amount" class="flex justify-between text-lg text-green-600 dark:text-green-400">
+					<div v-if="displayStore.cartData.discount_amount" class="flex justify-between text-sm text-green-600 font-medium">
 						<span>{{ __("Discount") }}</span>
 						<span>-{{ formatCurrency(displayStore.cartData.discount_amount) }}</span>
 					</div>
 
 					<!-- Grand Total -->
-					<div class="flex justify-between text-4xl font-bold text-gray-900 dark:text-white pt-4 border-t border-gray-200 dark:border-gray-700">
-						<span>{{ __("Total") }}</span>
-						<span class="text-blue-600 dark:text-blue-400">{{ formatCurrency(displayStore.cartData.grand_total) }}</span>
+					<div class="flex justify-between items-baseline pt-3 border-t border-gray-200">
+						<span class="text-lg font-bold text-gray-900">{{ __("Total") }}</span>
+						<span class="text-3xl font-bold text-blue-600">{{ formatCurrency(displayStore.cartData.grand_total) }}</span>
 					</div>
-				</div>
 
-				<!-- Item count -->
-				<div class="text-center mt-4 text-gray-500">
-					{{ displayStore.itemCount }} {{ displayStore.itemCount === 1 ? __("item in your cart") : __("items in your cart") }}
+					<!-- Item count -->
+					<div class="text-center pt-1">
+						<span class="text-xs text-gray-400">
+							{{ displayStore.itemCount }} {{ displayStore.itemCount === 1 ? __("item") : __("items") }}
+						</span>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -106,9 +110,12 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
+import { computed } from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 
 const displayStore = useCustomerDisplayStore()
+
+const reversedItems = computed(() => [...(displayStore.cartData.items || [])].reverse())
 
 // Format currency
 function formatCurrency(amount) {
@@ -122,40 +129,43 @@ function formatCurrency(amount) {
 
 <style scoped>
 /* Cart item transitions */
-.cart-item-enter-active,
+.cart-item-enter-active {
+	transition: all 0.35s ease-out;
+}
+
 .cart-item-leave-active {
-	transition: all 0.3s ease;
+	transition: all 0.25s ease-in;
 }
 
 .cart-item-enter-from {
 	opacity: 0;
-	transform: translateX(-30px);
+	transform: translateY(-15px) scale(0.97);
 }
 
 .cart-item-leave-to {
 	opacity: 0;
-	transform: translateX(30px);
+	transform: scale(0.95);
 }
 
 .cart-item-move {
 	transition: transform 0.3s ease;
 }
 
-/* Smooth scrollbar for webkit browsers */
+/* Smooth scrollbar */
 ::-webkit-scrollbar {
-	width: 8px;
+	width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-	background: #1f2937;
+	background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #4b5563;
-	border-radius: 4px;
+	background: #d1d5db;
+	border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: #6b7280;
+	background: #9ca3af;
 }
 </style>

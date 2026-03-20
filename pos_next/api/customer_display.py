@@ -179,13 +179,25 @@ def get_display_settings(pos_profile):
         return {
             "enable_customer_display": False,
             "enable_account_creation": False,
-            "show_address_fields": False
+            "show_address_fields": False,
+            "has_loyalty_program": False
         }
+
+    # Check if a loyalty program exists for the profile's company
+    company = frappe.db.get_value("POS Profile", pos_profile, "company")
+    has_loyalty = False
+    if company:
+        has_loyalty = bool(frappe.db.get_value(
+            "Loyalty Program",
+            {"company": company, "auto_opt_in": 1},
+            "name"
+        ))
 
     return {
         "enable_customer_display": bool(settings.enable_customer_display),
         "enable_account_creation": bool(settings.enable_customer_display_account_creation),
-        "show_address_fields": bool(settings.customer_display_show_address_fields)
+        "show_address_fields": bool(settings.customer_display_show_address_fields),
+        "has_loyalty_program": has_loyalty
     }
 
 

@@ -1,20 +1,43 @@
 <template>
 	<div
-		class="bg-white shadow-sm sticky top-0 z-[200]"
+		class="neo-glass shadow-neo sticky top-0 z-[200] border-b border-white/30"
 	>
-		<div class="flex py-2 sm:py-3">
+		<div class="flex py-0">
 			<!-- POS Icon - Aligned with Management Sidebar (64px) -->
-			<div class="w-16 flex-shrink-0 flex items-center justify-center">
-				<button
-					class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0 hover:from-blue-600 hover:to-blue-700 active:scale-95 transition-all"
-					:aria-label="'POS Next'"
-					:title="__('POS Next')"
-				>
-					<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-						<path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4zm10 16H4V9h16v11z"/>
-					</svg>
-				</button>
+			<div class="w-16 flex-shrink-0 flex items-center justify-center px-2">
+				<img
+					:src="neofficeLogo"
+					alt="Neoffice"
+					class="h-8 w-auto cursor-pointer hover:opacity-80 active:scale-95 transition-all"
+					:title="__('Back to Neoffice')"
+					@click="showExitDialog = true"
+				/>
 			</div>
+
+			<!-- Exit POS Confirmation Dialog -->
+			<Teleport to="body">
+				<div v-if="showExitDialog" class="fixed inset-0 z-[9999] flex items-center justify-center">
+					<div class="absolute inset-0 bg-black/40" @click="showExitDialog = false"></div>
+					<div class="relative bg-white rounded-neo-lg shadow-neo-lg p-6 max-w-sm w-full mx-4">
+						<h3 class="text-lg font-bold text-gray-900 mb-2">{{ __('Leave POS?') }}</h3>
+						<p class="text-sm text-gray-600 mb-5">{{ __('You will be redirected to the Neoffice back-office.') }}</p>
+						<div class="flex gap-3">
+							<button
+								@click="showExitDialog = false"
+								class="flex-1 py-2.5 px-4 rounded-neo-md text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+							>
+								{{ __('Cancel') }}
+							</button>
+							<button
+								@click="navigateToBackOffice"
+								class="flex-1 py-2.5 px-4 rounded-neo-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+							>
+								{{ __('Leave') }}
+							</button>
+						</div>
+					</div>
+				</div>
+			</Teleport>
 
 			<!-- Main Header Content -->
 			<div class="flex-1 flex justify-between items-center gap-1 sm:gap-2 px-2 sm:px-4 md:px-6">
@@ -22,8 +45,7 @@
 				<div class="flex items-center gap-1 sm:gap-4 min-w-0 flex-1 overflow-hidden">
 					<div class="min-w-0 flex-shrink overflow-hidden">
 						<div class="flex items-center gap-1 sm:gap-2">
-							<h1 class="text-xs sm:text-base font-bold text-gray-900 truncate flex-shrink">{{ 'POS Next' }}</h1>
-							<span class="hidden sm:inline-flex relative items-center px-1 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-md shadow-sm hover:shadow-md transition-shadow flex-shrink-0">
+							<span class="hidden sm:inline-flex relative items-center px-1 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-neo-sm shadow-sm hover:shadow-neo transition-shadow flex-shrink-0">
 								<span class="absolute inset-0 bg-white/20 rounded-md animate-pulse"></span>
 								<span class="relative">v{{ appVersion }}</span>
 							</span>
@@ -64,7 +86,7 @@
 					<button
 						@click="$emit('sync-click')"
 						:class="[
-							'p-1.5 sm:p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors relative group touch-manipulation',
+							'p-1.5 sm:p-2 hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors relative group touch-manipulation',
 							isSyncing ? 'animate-pulse' : ''
 						]"
 						:title="isOffline ? __('Offline ({0} pending)', [pendingInvoicesCount]) : __('Online - Click to sync')"
@@ -100,7 +122,7 @@
 						<button
 							@click="showCacheTooltip = !showCacheTooltip"
 							@blur="handleBlur"
-							class="p-1.5 sm:p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors relative touch-manipulation"
+							class="p-1.5 sm:p-2 hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors relative touch-manipulation"
 							:aria-label="getCacheAriaLabel()"
 						>
 							<svg
@@ -139,7 +161,7 @@
 							class="absolute top-full mt-2 z-[999] w-[90vw] max-w-[240px] sm:max-w-[260px]"
 							:style="{ left: '50%', transform: 'translateX(-50%)' }"
 						>
-							<div class="bg-gray-900 text-white text-xs rounded-lg shadow-xl py-2 px-2.5 sm:px-3">
+							<div class="bg-gray-900 text-white text-xs rounded-neo-md shadow-neo-lg py-2 px-2.5 sm:px-3">
 								<!-- Arrow -->
 								<div class="absolute bottom-full mb-px left-1/2 -translate-x-1/2"
 								>
@@ -240,6 +262,18 @@
 						:aria-label="isRefreshing ? __('Refreshing...') : __('Refresh items and customers')"
 					/>
 
+					<!-- Customer Display (Second Screen) -->
+					<button
+						@click="openCustomerDisplay"
+						class="hidden md:flex p-1.5 sm:p-2 hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors touch-manipulation items-center justify-center"
+						:title="__('Open Customer Display')"
+						:aria-label="__('Open customer display on second screen')"
+					>
+						<svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" />
+						</svg>
+					</button>
+
 					<div class="w-px h-4 sm:h-6 bg-gray-200 hidden md:block"></div>
 
 					<!-- Language Switcher - Hidden on mobile, shown in UserMenu instead -->
@@ -281,7 +315,17 @@ import { ref } from "vue"
 import { version } from "../../../package.json"
 
 const showCacheTooltip = ref(false)
+const showExitDialog = ref(false)
 const appVersion = version
+const neofficeLogo = "/assets/neoffice_theme/images/neoffice_logo.svg"
+
+function navigateToBackOffice() {
+	window.location.href = "/app/retail"
+}
+
+function openCustomerDisplay() {
+	window.open("/pos/display", "pos_customer_display", "popup,width=1024,height=768")
+}
 
 const emit = defineEmits([
 	"sync-click",
@@ -296,12 +340,15 @@ const emit = defineEmits([
 
 function handleClearCacheClick() {
 	showCacheTooltip.value = false
-	emit('clear-cache')
+	emit("clear-cache")
 }
 
 function handleBlur(event) {
 	// Don't close if clicking inside the tooltip
-	if (!event.relatedTarget || !event.currentTarget.parentElement.contains(event.relatedTarget)) {
+	if (
+		!event.relatedTarget ||
+		!event.currentTarget.parentElement.contains(event.relatedTarget)
+	) {
 		setTimeout(() => {
 			showCacheTooltip.value = false
 		}, 200)
@@ -429,14 +476,14 @@ function getCacheAriaLabel() {
 }
 
 function formatNumber(num) {
-	if (!num) return '0'
+	if (!num) return "0"
 	return num.toLocaleString()
 }
 
 function formatCompactNumber(num) {
-	if (!num) return '0'
+	if (!num) return "0"
 	if (num >= 1000) {
-		return (num / 1000).toFixed(num >= 10000 ? 0 : 1) + 'K'
+		return (num / 1000).toFixed(num >= 10000 ? 0 : 1) + "K"
 	}
 	return num.toString()
 }

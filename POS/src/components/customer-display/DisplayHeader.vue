@@ -1,59 +1,60 @@
 <template>
-	<header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+	<header class="neo-glass border-b border-white/30 px-6 py-3">
 		<div class="flex items-center justify-between">
 			<!-- Left: Logo and session info -->
 			<div class="flex items-center gap-4">
-				<div class="flex items-center gap-2">
-					<FeatherIcon name="shopping-bag" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-					<span class="text-lg font-semibold text-gray-900 dark:text-white">{{ __("Your Order") }}</span>
-				</div>
-
+				<img
+					:src="instanceLogo"
+					alt="Neoffice"
+					class="h-7 w-auto"
+				/>
+				<div class="h-5 w-px bg-gray-300"></div>
 				<!-- Session info -->
-				<div v-if="displayStore.sessionInfo" class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-					<span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+				<div v-if="displayStore.sessionInfo" class="flex items-center gap-3 text-sm text-gray-600">
+					<span class="px-3 py-1 bg-white/60 border border-gray-200 rounded-neo-sm font-medium">
 						{{ displayStore.sessionInfo.pos_profile }}
 					</span>
-					<span v-if="displayStore.cartData.customer_name" class="flex items-center gap-1">
-						<FeatherIcon name="user" class="w-4 h-4" />
+					<span v-if="displayStore.cartData.customer_name" class="flex items-center gap-1.5 font-medium text-gray-700">
+						<FeatherIcon name="user" class="w-4 h-4 text-blue-500" />
 						{{ displayStore.cartData.customer_name }}
 					</span>
 				</div>
 			</div>
 
 			<!-- Right: Connection status and actions -->
-			<div class="flex items-center gap-4">
+			<div class="flex items-center gap-3">
 				<!-- Connection status -->
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 px-3 py-1.5 rounded-neo-sm" :class="connectionBgClass">
 					<span
 						:class="[
 							'w-2 h-2 rounded-full',
 							connectionStatusClass
 						]"
 					/>
-					<span class="text-sm text-gray-600 dark:text-gray-400">{{ connectionStatusText }}</span>
+					<span class="text-xs font-medium" :class="connectionTextClass">{{ connectionStatusText }}</span>
 				</div>
 
 				<!-- Last update time -->
-				<div v-if="displayStore.lastUpdateTime" class="text-xs text-gray-500">
-					{{ __("Updated") }}: {{ formatTime(displayStore.lastUpdateTime) }}
+				<div v-if="displayStore.lastUpdateTime" class="text-xs text-gray-400">
+					{{ formatTime(displayStore.lastUpdateTime) }}
 				</div>
 
 				<!-- Refresh button -->
 				<button
-					class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+					class="p-2 text-gray-500 hover:text-gray-900 hover:bg-white/60 rounded-neo-sm transition-colors"
 					:title="__('Refresh')"
 					@click="displayStore.refreshCart()"
 				>
-					<FeatherIcon name="refresh-cw" class="w-5 h-5" />
+					<FeatherIcon name="refresh-cw" class="w-4 h-4" />
 				</button>
 
 				<!-- Settings/Logout -->
 				<div class="relative">
 					<button
-						class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+						class="p-2 text-gray-500 hover:text-gray-900 hover:bg-white/60 rounded-neo-sm transition-colors"
 						@click="showMenu = !showMenu"
 					>
-						<FeatherIcon name="more-vertical" class="w-5 h-5" />
+						<FeatherIcon name="more-vertical" class="w-4 h-4" />
 					</button>
 
 					<!-- Dropdown menu -->
@@ -65,15 +66,15 @@
 					>
 						<div
 							v-if="showMenu"
-							class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50"
+							class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-neo-md shadow-neo-lg z-50"
 						>
-							<!-- Actions section -->
 							<div class="py-1">
 								<button
-									class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+									class="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-neo-sm mx-1"
+									style="width: calc(100% - 8px)"
 									@click="handleLogout"
 								>
-									<FeatherIcon name="log-out" class="w-4 h-4" />
+									<FeatherIcon name="log-out" class="w-4 h-4 text-red-500" />
 									{{ __("Disconnect") }}
 								</button>
 							</div>
@@ -91,6 +92,7 @@ import { computed, ref, onMounted, onUnmounted } from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 
 const displayStore = useCustomerDisplayStore()
+const instanceLogo = "/files/logo-default.png"
 
 const showMenu = ref(false)
 
@@ -107,6 +109,28 @@ const connectionStatusClass = computed(() => {
 			return "bg-blue-500 animate-pulse"
 		default:
 			return "bg-gray-500"
+	}
+})
+
+const connectionBgClass = computed(() => {
+	switch (displayStore.connectionStatus) {
+		case "connected":
+			return "bg-green-50 border border-green-200"
+		case "error":
+			return "bg-red-50 border border-red-200"
+		default:
+			return "bg-gray-50 border border-gray-200"
+	}
+})
+
+const connectionTextClass = computed(() => {
+	switch (displayStore.connectionStatus) {
+		case "connected":
+			return "text-green-700"
+		case "error":
+			return "text-red-700"
+		default:
+			return "text-gray-600"
 	}
 })
 
