@@ -2,6 +2,7 @@ import { createResource } from "frappe-ui"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { useBootstrapStore } from "./bootstrap"
+import { call } from "@/utils/apiWrapper"
 
 export const usePOSSettingsStore = defineStore("posSettings", () => {
 	// State
@@ -430,6 +431,26 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		}
 	}
 
+	/**
+	 * Toggle restaurant mode on and off
+	 * Persists the change to the API
+	 */
+	async function toggleRestaurantMode() {
+		try {
+			const newValue = settings.value.enable_restaurant_mode ? 0 : 1
+			await call("pos_next.pos_next.doctype.pos_settings.pos_settings.update_pos_settings", {
+				pos_profile: settings.value.pos_profile,
+				settings: { enable_restaurant_mode: newValue }
+			})
+			settings.value.enable_restaurant_mode = newValue
+			return true
+		} catch (error) {
+			// Rollback on error
+			settings.value.enable_restaurant_mode = settings.value.enable_restaurant_mode ? 0 : 1
+			return false
+		}
+	}
+
 	return {
 		// State
 		settings,
@@ -528,5 +549,6 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		validateDiscount,
 		isNegativeStockAllowed,
 		shouldEnforceStockValidation,
+		toggleRestaurantMode,
 	}
 })

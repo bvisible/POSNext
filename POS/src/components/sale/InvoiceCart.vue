@@ -233,7 +233,7 @@
 
 						<!-- Document Type Toggle (Sales Invoice / Sales Order) -->
 						<div
-							v-if="settingsStore.allowSalesOrder"
+							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
 						>
 							<button
@@ -1199,7 +1199,93 @@
 			</div>
 
 			<!-- Action Buttons -->
-			<div class="flex gap-1.5">
+			<!-- Restaurant Mode Buttons -->
+			<div v-if="restaurantStore.isEnabled && cartStore.restaurantTable" class="flex gap-1.5">
+				<!-- Send to Kitchen Button (Primary - green) -->
+				<button
+					type="button"
+					@click="$emit('send-to-kitchen')"
+					:disabled="!cartStore.hasUnsentChanges || items.length === 0"
+					:class="[
+						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
+						!cartStore.hasUnsentChanges || items.length === 0
+							? 'bg-gray-300 cursor-not-allowed'
+							: 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
+					]"
+					:aria-label="__('Send order to kitchen')"
+				>
+					<svg
+						class="w-4 h-4 me-1.5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+						/>
+					</svg>
+					<span>{{ __("Envoyer en cuisine") }}</span>
+				</button>
+
+				<!-- Pay Button (blue) -->
+				<button
+					type="button"
+					@click="handleProceedToPayment"
+					:disabled="items.length === 0"
+					:class="[
+						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
+						items.length === 0
+							? 'bg-gray-300 cursor-not-allowed'
+							: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
+					]"
+					:aria-label="__('Proceed to payment')"
+				>
+					<svg
+						class="w-4 h-4 me-1.5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+						/>
+					</svg>
+					<span>{{ __("Payer") }}</span>
+				</button>
+
+				<!-- Hold Order Button (Secondary - orange) -->
+				<button
+					type="button"
+					v-if="items.length > 0"
+					@click="$emit('save-draft')"
+					class="flex-1 py-2.5 px-2 rounded-neo-md font-semibold text-xs text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 transition-all touch-manipulation active:scale-[0.98] flex items-center justify-center"
+					:aria-label="__('Hold order as draft')"
+				>
+					<svg
+						class="w-4 h-4 me-1.5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+						/>
+					</svg>
+					<span>{{ __("Hold", null, "order") }}</span>
+				</button>
+			</div>
+
+			<!-- Normal Mode Buttons -->
+			<div v-else class="flex gap-1.5">
 				<!-- Checkout Button (Primary - 50% width) -->
 				<button
 					type="button"
@@ -1277,6 +1363,7 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSOffersStore } from "@/stores/posOffers"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
+import { useRestaurantStore } from "@/stores/restaurant"
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -1302,6 +1389,7 @@ const cartStore = usePOSCartStore() // Pinia store for cart state management
 const settingsStore = usePOSSettingsStore() // Pinia store for POS settings
 const offersStore = usePOSOffersStore() // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore() // Pinia store for customer search
+const restaurantStore = useRestaurantStore() // Pinia store for restaurant features
 const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
@@ -1376,6 +1464,7 @@ const emit = defineEmits([
 	"clear-cart", // () - Clear all items from cart
 	"save-draft", // () - Save current cart as draft/hold order
 	"apply-coupon", // () - Open coupon application dialog
+	"send-to-kitchen", // () - Send order to kitchen (restaurant mode)
 	"show-coupons", // () - Show available coupons
 	"show-offers", // () - Show available offers dialog
 	"remove-offer", // (offerId) - Remove applied offer

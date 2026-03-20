@@ -16,6 +16,21 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
 
+	// Computed - Occupied counts by area
+	const occupiedCountByArea = computed(() => {
+		const counts = {}
+		areas.value.forEach(area => {
+			counts[area.area_name] = tables.value.filter(
+				t => t.area === area.name && t.status === 'Occupied'
+			).length
+		})
+		return counts
+	})
+
+	const totalOccupiedCount = computed(() => {
+		return tables.value.filter(t => t.status === 'Occupied').length
+	})
+
 	// Actions
 	async function loadTablesAndAreas() {
 		if (!isEnabled.value) return
@@ -79,6 +94,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		areas,
 		isEnabled,
 		defaultArea,
+		occupiedCountByArea,
+		totalOccupiedCount,
 		loadTablesAndAreas,
 		fetchFromNetwork,
 		updateTableStatus

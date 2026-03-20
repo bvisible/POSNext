@@ -82,6 +82,26 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+					<!-- Restaurant Mode Toggle -->
+					<button
+						v-if="canToggleRestaurant"
+						@click="emit('toggle-restaurant')"
+						:disabled="!canToggleRestaurant"
+						:class="[
+							'p-1.5 sm:p-2 rounded-neo-sm transition-all touch-manipulation flex items-center justify-center',
+							isRestaurantMode
+								? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+								: 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/70',
+							!canToggleRestaurant && 'opacity-50 cursor-not-allowed'
+						]"
+						:title="isRestaurantMode ? __('Restaurant mode active') : __('Restaurant mode inactive')"
+						:aria-label="isRestaurantMode ? __('Disable restaurant mode') : __('Enable restaurant mode')"
+					>
+						<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M5 2c-.55 0-1 .45-1 1v3H2c-.55 0-1 .45-1 1v2h22V7c0-.55-.45-1-1-1h-2V3c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v3H8V3c0-.55-.45-1-1-1H5zM1 9v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9H1zm14 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+						</svg>
+					</button>
+
 					<!-- WiFi/Offline Status -->
 					<button
 						@click="$emit('sync-click')"
@@ -336,6 +356,7 @@ const emit = defineEmits([
 	"menu-opened",
 	"menu-closed",
 	"clear-cache",
+	"toggle-restaurant",
 ])
 
 function handleClearCacheClick() {
@@ -419,6 +440,14 @@ const props = defineProps({
 	qzConnected: {
 		type: Boolean,
 		default: false,
+	},
+	isRestaurantMode: {
+		type: Boolean,
+		default: false,
+	},
+	canToggleRestaurant: {
+		type: Boolean,
+		default: true,
 	},
 })
 

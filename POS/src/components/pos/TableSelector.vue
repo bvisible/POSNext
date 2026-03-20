@@ -11,24 +11,29 @@
 				</p>
 			</div>
 
-			<!-- Area Selector -->
-			<div v-if="areas.length > 1" class="flex items-center space-x-2">
-				<Button
-					:variant="selectedArea === 'All' ? 'solid' : 'subtle'"
-					size="sm"
-					@click="selectedArea = 'All'"
-				>
-					{{ __("All") }}
-				</Button>
-				<Button
-					v-for="area in areas"
-					:key="area.name"
-					:variant="selectedArea === area.name ? 'solid' : 'subtle'"
-					size="sm"
-					@click="selectedArea = area.name"
-				>
-					{{ area.area_name }}
-				</Button>
+			<!-- Area Tabs -->
+			<div v-if="areas.length > 1" class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+				<div class="flex">
+					<button
+						v-for="area in areas"
+						:key="area.name"
+						@click="selectedArea = area.name"
+						:class="[
+							'px-4 py-2 font-medium text-sm transition-colors border-b-2 relative whitespace-nowrap',
+							selectedArea === area.name
+								? 'border-b-blue-600 text-blue-600 font-semibold'
+								: 'border-b-transparent text-gray-500 hover:text-gray-700'
+						]"
+					>
+						{{ area.area_name }}
+						<span
+							v-if="restaurantStore.occupiedCountByArea[area.area_name] > 0"
+							class="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full ms-2"
+						>
+							{{ restaurantStore.occupiedCountByArea[area.area_name] }}
+						</span>
+					</button>
+				</div>
 			</div>
 		</div>
 
@@ -98,7 +103,7 @@ const areas = computed(() => restaurantStore.areas)
 const tables = computed(() => restaurantStore.tables)
 
 const filteredTables = computed(() => {
-	if (!selectedArea.value || selectedArea.value === 'All') return tables.value
+	if (!selectedArea.value) return tables.value
 	return tables.value.filter(t => t.area === selectedArea.value)
 })
 
@@ -110,7 +115,12 @@ onMounted(async () => {
 	}
 
 	if (areas.value.length > 0) {
-		selectedArea.value = 'All'
+		// Use default area if available, otherwise select first area
+		if (restaurantStore.defaultArea) {
+			selectedArea.value = restaurantStore.defaultArea
+		} else {
+			selectedArea.value = areas.value[0]?.name
+		}
 	}
 })
 

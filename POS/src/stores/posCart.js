@@ -307,6 +307,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		kdsStatus.value = status
 	}
 
+	function markChangesSent() {
+		hasUnsentChanges.value = false
+	}
+
 	async function submitInvoice() {
 		if (invoiceItems.value.length === 0) {
 			showWarning(__("Cart is empty"))
@@ -1944,6 +1948,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		updateItemInstructions,
 		setRestaurantTable,
 		setKdsStatus,
+		markChangesSent,
 
 		// Utilities
 		cancelPendingOfferProcessing: () => {

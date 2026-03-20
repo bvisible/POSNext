@@ -26,6 +26,8 @@
 				:is-refreshing="stockStore.refreshing"
 				:silent-print-enabled="posSettingsStore.silentPrint"
 				:qz-connected="qzConnected"
+			:is-restaurant-mode="restaurantStore.isEnabled"
+			:can-toggle-restaurant="canToggleRestaurant"
 				@sync-click="handleSyncClick"
 				@printer-click="uiStore.showHistoryDialog = true"
 				@refresh-click="handleRefresh"
@@ -33,6 +35,7 @@
 				@logout="uiStore.showLogoutDialog = true"
 			>
 				<template #menu-items>
+			@toggle-restaurant="handleToggleRestaurant"
 					<button
 						v-if="shiftStore.hasOpenShift"
 						@click="uiStore.showOpenShiftDialog = true"
@@ -298,13 +301,31 @@
 								<!-- Restaurant table banner -->
 								<div
 									v-if="restaurantStore.isEnabled && cartStore.restaurantTable"
-									class="flex items-center justify-between px-4 py-2 bg-blue-50 border-b border-blue-100"
+									class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200"
 								>
-									<div class="flex items-center gap-2">
-										<FeatherIcon name="coffee" class="w-4 h-4 text-blue-600" />
-										<span class="text-sm font-semibold text-blue-800">
-											{{ cartStore.restaurantTable?.table_name }}
-										</span>
+									<div class="flex items-center gap-3">
+										<FeatherIcon name="coffee" class="w-5 h-5 text-blue-600" />
+										<div>
+											<span class="text-lg font-bold text-blue-900">
+												{{ cartStore.restaurantTable?.table_name }}
+											</span>
+											<span class="text-xs text-blue-700 ms-2">
+												{{ cartStore.invoiceItems.length }} {{ __("articles") }}
+											</span>
+										</div>
+										<!-- KDS Status Badge -->
+										<div
+											:class="[
+												'ms-3 px-2.5 py-1 rounded-full text-xs font-semibold text-white',
+												cartStore.kdsStatus === 'Pending'
+													? 'bg-yellow-500'
+													: cartStore.kdsStatus === 'Preparing'
+													? 'bg-blue-500'
+													: 'bg-green-500'
+											]"
+										>
+											{{ cartStore.kdsStatus }}
+										</div>
 									</div>
 									<Button
 										variant="subtle"
@@ -402,6 +423,7 @@
 								@show-history="uiStore.showHistoryDialog = true"
 								@show-return="uiStore.showReturnDialog = true"
 								@close-shift="handleCloseShift()"
+								@send-to-kitchen="handleSendToKitchen"
 							/>
 						</div>
 					</keep-alive>
@@ -1269,9 +1291,47 @@ const profileWarehouses = computed(() => {
 	return [];
 });
 
+// Restaurant mode toggle computed
+const canToggleRestaurant = computed(() => {
+	const noItems = cartStore.invoiceItems.length === 0
+	const noOccupiedTables = restaurantStore.totalOccupiedCount === 0
+	const isDisabling = restaurantStore.isEnabled
+	if (isDisabling) {
+		return noItems && noOccupiedTables
+	}
+	return noItems
+})
+
 // Resize state
 let resizeState = null;
 let bodyStyleSnapshot = null;
+
+// Handle restaurant mode toggle
+async function handleToggleRestaurant() {
+	if (!canToggleRestaurant.value) {
+		const isDisabling = restaurantStore.isEnabled
+		if (isDisabling && restaurantStore.totalOccupiedCount > 0) {
+			showWarning(__("Cannot disable restaurant mode while tables are occupied"))
+		} else if (cartStore.invoiceItems.length > 0) {
+			showWarning(__("Please clear the cart before toggling restaurant mode"))
+		}
+		return
+	}
+
+	try {
+		const newValue = !restaurantStore.isEnabled
+		await posSettingsStore.toggleRestaurantMode()
+		if (newValue) {
+			await restaurantStore.fetchFromNetwork()
+			showSuccess(__("Restaurant mode enabled"))
+		} else {
+			await cartStore.clearCart()
+			showSuccess(__("Restaurant mode disabled"))
+		}
+	} catch (error) {
+		showError(__("Failed to toggle restaurant mode"), String(error))
+	}
+}
 
 onMounted(async () => {
 	// Window resize listeners (passive for better performance)
@@ -1928,6 +1988,26 @@ function closeTable() {
 		draftsStore.saveDraft();
 	}
 	cartStore.clearCart();
+}
+
+async function handleSendToKitchen() {
+	// Save current cart as draft
+	await draftsStore.saveDraftInvoice(
+		cartStore.invoiceItems,
+		cartStore.customer,
+		shiftStore.profileName,
+		cartStore.appliedOffers,
+		cartStore.currentDraftId,
+		cartStore.restaurantTable?.name,
+		cartStore.kdsStatus
+	)
+
+	// Mark changes as sent
+	cartStore.markChangesSent()
+	cartStore.setKdsStatus("Pending")
+
+	// Show confirmation
+	showSuccess(__("Order sent to kitchen"))
 }
 
 function handleItemSelected(item, autoAdd = false) {
