@@ -445,7 +445,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		try {
 			await call("pos_next.pos_next.doctype.pos_settings.pos_settings.update_pos_settings", {
 				pos_profile: settings.value.pos_profile,
-				settings: JSON.stringify({ enable_restaurant_mode: newValue })
+				settings: { enable_restaurant_mode: newValue }
 			})
 			return true
 		} catch (error) {
