@@ -69,6 +69,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		enable_customer_display: 0,
 		enable_customer_display_account_creation: 0,
 		customer_display_show_address_fields: 0,
+		// Restaurant Settings
+		enable_restaurant_mode: 0,
+		default_restaurant_area: "",
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
@@ -81,12 +84,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const enableLoyaltyProgram = computed(() =>
 		Boolean(settings.value.enable_loyalty_program),
 	)
-	const defaultLoyaltyProgram = computed(() =>
-		settings.value.default_loyalty_program || "",
+	const defaultLoyaltyProgram = computed(
+		() => settings.value.default_loyalty_program || "",
 	)
-	const walletAccount = computed(() =>
-		settings.value.wallet_account || "",
-	)
+	const walletAccount = computed(() => settings.value.wallet_account || "")
 	const autoCreateWallet = computed(() =>
 		Boolean(settings.value.auto_create_wallet),
 	)
@@ -226,28 +227,36 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	)
 
 	// Computed - Sales Persons
-	const enableSalesPersons = computed(() =>
-		settings.value.enable_sales_persons !== "Disabled"
+	const enableSalesPersons = computed(
+		() => settings.value.enable_sales_persons !== "Disabled",
 	)
-	const salesPersonsMode = computed(() =>
-		settings.value.enable_sales_persons || "Disabled"
+	const salesPersonsMode = computed(
+		() => settings.value.enable_sales_persons || "Disabled",
 	)
-	const isSingleSalesPerson = computed(() =>
-		settings.value.enable_sales_persons === "Single"
+	const isSingleSalesPerson = computed(
+		() => settings.value.enable_sales_persons === "Single",
 	)
-	const isMultipleSalesPersons = computed(() =>
-		settings.value.enable_sales_persons === "Multiple"
+	const isMultipleSalesPersons = computed(
+		() => settings.value.enable_sales_persons === "Multiple",
+	)
+
+	// Computed - Restaurant Settings
+	const enableRestaurantMode = computed(() =>
+		Boolean(settings.value.enable_restaurant_mode),
+	)
+	const defaultRestaurantArea = computed(
+		() => settings.value.default_restaurant_area || "",
 	)
 
 	// Computed - Customer Display Settings
 	const enableCustomerDisplay = computed(() =>
-		Boolean(settings.value.enable_customer_display)
+		Boolean(settings.value.enable_customer_display),
 	)
 	const enableCustomerDisplayAccountCreation = computed(() =>
-		Boolean(settings.value.enable_customer_display_account_creation)
+		Boolean(settings.value.enable_customer_display_account_creation),
 	)
 	const showAddressFieldsInCustomerForm = computed(() =>
-		Boolean(settings.value.customer_display_show_address_fields)
+		Boolean(settings.value.customer_display_show_address_fields),
 	)
 
 	// Computed - Security
@@ -361,6 +370,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			enable_customer_display: 0,
 			enable_customer_display_account_creation: 0,
 			customer_display_show_address_fields: 0,
+			// Restaurant Settings
+			enable_restaurant_mode: 0,
+			default_restaurant_area: "",
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
@@ -495,6 +507,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		salesPersonsMode,
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
+
+		// Computed - Restaurant Settings
+		enableRestaurantMode,
+		defaultRestaurantArea,
 
 		// Computed - Customer Display Settings
 		enableCustomerDisplay,

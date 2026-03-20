@@ -560,7 +560,10 @@ import InvoiceFilters from "@/components/invoices/InvoiceFilters.vue"
 import PaymentDialog from "@/components/sale/PaymentDialog.vue"
 import { useInvoiceFilters } from "@/composables/useInvoiceFilters"
 import { useInvoiceFiltersStore } from "@/stores/invoiceFilters"
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import {
+	DEFAULT_CURRENCY,
+	formatCurrency as formatCurrencyUtil,
+} from "@/utils/currency"
 import { getInvoiceStatusColor } from "@/utils/invoice"
 import { useFormatters } from "@/composables/useFormatters"
 import { useToast } from "@/composables/useToast"
@@ -632,15 +635,15 @@ const showPaymentDialog = ref(false)
 const filteredUnpaidInvoices = computed(() => {
 	if (unpaidFilter.value === "partial") {
 		// Partially paid: status is 'Partly Paid' only
-		return unpaidInvoices.value.filter((inv) => inv.status === 'Partly Paid')
+		return unpaidInvoices.value.filter((inv) => inv.status === "Partly Paid")
 	}
 	if (unpaidFilter.value === "unpaid") {
 		// Totally unpaid: status is 'Unpaid'
-		return unpaidInvoices.value.filter((inv) => inv.status === 'Unpaid')
+		return unpaidInvoices.value.filter((inv) => inv.status === "Unpaid")
 	}
 	if (unpaidFilter.value === "overdue") {
 		// Overdue: invoice status is Overdue
-		return unpaidInvoices.value.filter((inv) => inv.status === 'Overdue')
+		return unpaidInvoices.value.filter((inv) => inv.status === "Overdue")
 	}
 	return unpaidInvoices.value // "all"
 })
@@ -836,7 +839,11 @@ async function loadUnpaidInvoices() {
 		if (cachedInvoices && cachedInvoices.length > 0) {
 			unpaidInvoices.value = cachedInvoices
 			loading.value = false // Hide skeleton once we have cached data
-			log.debug("Loaded", cachedInvoices.length, "unpaid invoices from cache (instant)")
+			log.debug(
+				"Loaded",
+				cachedInvoices.length,
+				"unpaid invoices from cache (instant)",
+			)
 		}
 	} catch (cacheError) {
 		log.debug("No cached unpaid invoices available")
@@ -883,7 +890,10 @@ async function loadUnpaidSummary() {
 	// Load cached summary immediately for instant display
 	try {
 		const cachedSummary = await getCachedUnpaidSummary(props.posProfile)
-		if (cachedSummary && (cachedSummary.count > 0 || cachedSummary.total_outstanding > 0)) {
+		if (
+			cachedSummary &&
+			(cachedSummary.count > 0 || cachedSummary.total_outstanding > 0)
+		) {
 			unpaidSummary.value = cachedSummary
 			log.debug("Loaded unpaid summary from cache (instant)")
 		}
@@ -928,9 +938,12 @@ async function selectInvoiceForPayment(invoice) {
 	loadingInvoiceDetails.value = true
 	try {
 		// Fetch full invoice details including items for the payment dialog
-		const details = await call("pos_next.api.partial_payments.get_partial_payment_details", {
-			invoice_name: invoice.name,
-		})
+		const details = await call(
+			"pos_next.api.partial_payments.get_partial_payment_details",
+			{
+				invoice_name: invoice.name,
+			},
+		)
 		selectedInvoice.value = details
 		showPaymentDialog.value = true
 	} catch (error) {
@@ -975,17 +988,16 @@ function formatCurrency(amount) {
 function getPaymentSourceLabel(source) {
 	// Convert source to user-friendly label
 	switch (source) {
-		case 'POS':
-			return 'POS'
-		case 'POS Payment Entry':
-			return 'POS'
-		case 'Payment Entry':
-			return 'Back Office'
+		case "POS":
+			return "POS"
+		case "POS Payment Entry":
+			return "POS"
+		case "Payment Entry":
+			return "Back Office"
 		default:
 			return source
 	}
 }
-
 
 function calculateDraftTotal(items) {
 	if (!items || items.length === 0) return 0

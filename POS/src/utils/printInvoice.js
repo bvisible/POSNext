@@ -50,7 +50,11 @@ async function resolvePrintSettings(posProfile, printFormat, letterhead) {
  * The page includes trigger_print=1 so the OS print dialog appears automatically.
  * Falls back to the hardcoded receipt template if the popup is blocked.
  */
-export async function printInvoice(invoiceData, printFormat = null, letterhead = null) {
+export async function printInvoice(
+	invoiceData,
+	printFormat = null,
+	letterhead = null,
+) {
 	try {
 		if (!invoiceData?.name) throw new Error("Invalid invoice data")
 
@@ -68,7 +72,11 @@ export async function printInvoice(invoiceData, printFormat = null, letterhead =
 		})
 		if (letterhead) params.append("letterhead", letterhead)
 
-		const printWindow = window.open(`/printview?${params}`, "_blank", "width=800,height=600")
+		const printWindow = window.open(
+			`/printview?${params}`,
+			"_blank",
+			"width=800,height=600",
+		)
 		if (!printWindow) {
 			throw new Error("Popup blocked — check your browser settings.")
 		}
@@ -83,13 +91,21 @@ export async function printInvoice(invoiceData, printFormat = null, letterhead =
  * Fetch an invoice by name, resolve its POS Profile print settings,
  * then open the browser print window.
  */
-export async function printInvoiceByName(invoiceName, printFormat = null, letterhead = null) {
+export async function printInvoiceByName(
+	invoiceName,
+	printFormat = null,
+	letterhead = null,
+) {
 	const invoiceDoc = await call("pos_next.api.invoices.get_invoice", {
 		invoice_name: invoiceName,
 	})
 	if (!invoiceDoc) throw new Error("Invoice not found")
 
-	const settings = await resolvePrintSettings(invoiceDoc.pos_profile, printFormat, letterhead)
+	const settings = await resolvePrintSettings(
+		invoiceDoc.pos_profile,
+		printFormat,
+		letterhead,
+	)
 	return printInvoice(invoiceDoc, settings.printFormat, settings.letterhead)
 }
 
@@ -143,7 +159,10 @@ export async function printWithSilentFallback(invoiceData, printFormat = null) {
 		await silentPrintInvoice(invoiceName, printFormat)
 		return { method: "silent", success: true }
 	} catch (err) {
-		log.warn("Silent print failed, falling back to browser:", err?.message || err)
+		log.warn(
+			"Silent print failed, falling back to browser:",
+			err?.message || err,
+		)
 	}
 
 	try {
@@ -223,15 +242,17 @@ export function printInvoiceCustom(invoiceData) {
 					<div><span>${__("Invoice #:")}</span><span><strong>${invoiceData.name}</strong></span></div>
 					<div><span>${__("Date:")}</span><span>${new Date(invoiceData.posting_date || Date.now()).toLocaleString()}</span></div>
 					${invoiceData.customer_name ? `<div><span>${__("Customer:")}</span><span>${invoiceData.customer_name}</span></div>` : ""}
-					${(invoiceData.status === "Partly Paid" || (invoiceData.outstanding_amount && invoiceData.outstanding_amount > 0 && invoiceData.outstanding_amount < invoiceData.grand_total)) ? `<div class="partial-status"><span>${__("Status:")}</span><span>${__("PARTIAL PAYMENT")}</span></div>` : ""}
+					${invoiceData.status === "Partly Paid" || (invoiceData.outstanding_amount && invoiceData.outstanding_amount > 0 && invoiceData.outstanding_amount < invoiceData.grand_total) ? `<div class="partial-status"><span>${__("Status:")}</span><span>${__("PARTIAL PAYMENT")}</span></div>` : ""}
 				</div>
 
 				<div class="items-table">
 					${invoiceData.items
 						.map((item) => {
 							const hasDiscount =
-								(item.discount_percentage && Number.parseFloat(item.discount_percentage) > 0) ||
-								(item.discount_amount && Number.parseFloat(item.discount_amount) > 0)
+								(item.discount_percentage &&
+									Number.parseFloat(item.discount_percentage) > 0) ||
+								(item.discount_amount &&
+									Number.parseFloat(item.discount_amount) > 0)
 							const isFree = item.is_free_item
 							const qty = item.quantity || item.qty
 							const displayRate = item.price_list_rate || item.rate
@@ -256,11 +277,11 @@ export function printInvoiceCustom(invoiceData) {
 						invoiceData.total_taxes_and_charges > 0
 							? `
 					<div class="total-row">
-						<span>${__('Subtotal:')}</span>
+						<span>${__("Subtotal:")}</span>
 						<span>${formatCurrency((invoiceData.grand_total || 0) - (invoiceData.total_taxes_and_charges || 0))}</span>
 					</div>
 					<div class="total-row">
-						<span>${__('Tax:')}</span>
+						<span>${__("Tax:")}</span>
 						<span>${formatCurrency(invoiceData.total_taxes_and_charges)}</span>
 					</div>
 					`
@@ -278,19 +299,23 @@ export function printInvoiceCustom(invoiceData) {
 							: ""
 					}
 					<div class="total-row grand-total">
-						<span>${__('TOTAL:')}</span>
+						<span>${__("TOTAL:")}</span>
 						<span>${formatCurrency(invoiceData.grand_total)}</span>
 					</div>
 				</div>
 
-				${invoiceData.payments && invoiceData.payments.length > 0 ? `
+				${
+					invoiceData.payments && invoiceData.payments.length > 0
+						? `
 				<div class="payments">
 					<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px;">${__("Payments:")}</div>
 					${invoiceData.payments.map((p) => `<div class="payment-row"><span>${p.mode_of_payment}:</span><span>${formatCurrency(p.amount)}</span></div>`).join("")}
 					<div class="payment-row total-paid"><span>${__("Total Paid:")}</span><span>${formatCurrency(invoiceData.paid_amount || 0)}</span></div>
 					${invoiceData.change_amount && invoiceData.change_amount > 0 ? `<div class="payment-row" style="font-weight: bold; margin-top: 5px;"><span>${__("Change:")}</span><span>${formatCurrency(invoiceData.change_amount)}</span></div>` : ""}
 					${invoiceData.outstanding_amount && invoiceData.outstanding_amount > 0 ? `<div class="outstanding-row"><span>${__("BALANCE DUE:")}</span><span>${formatCurrency(invoiceData.outstanding_amount)}</span></div>` : ""}
-				</div>` : ""}
+				</div>`
+						: ""
+				}
 
 				<div class="footer">
 					<div style="margin-bottom: 5px;">${__("Thank you for your business!")}</div>

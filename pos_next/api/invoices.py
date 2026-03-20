@@ -952,6 +952,21 @@ def update_invoice(data):
         invoice_doc.docstatus = 0
         invoice_doc.save()
 
+        # Force KDS and Restaurant Table fields via direct DB write if present
+        if data.get("restaurant_table") or data.get("kds_status"):
+            update_data = {}
+            if data.get("restaurant_table"):
+                update_data["restaurant_table"] = data.get("restaurant_table")
+            if data.get("kds_status"):
+                update_data["kds_status"] = data.get("kds_status")
+
+            try:
+                frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data)
+                invoice_doc.reload()
+                frappe.publish_realtime("kds_update")
+            except Exception as inner_e:
+                frappe.log_error("POS KDS Error", f"Failed to set KDS fields: {inner_e}")
+
         return invoice_doc.as_dict()
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Update Invoice Error")

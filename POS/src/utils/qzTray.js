@@ -241,7 +241,9 @@ export async function printHTML(html, printerName, options = {}) {
 
 	const printer = printerName || getSavedPrinterName()
 	if (!printer) {
-		throw new Error("No printer selected. Please select a printer in POS Settings.")
+		throw new Error(
+			"No printer selected. Please select a printer in POS Settings.",
+		)
 	}
 
 	const config = qz.configs.create(printer, {

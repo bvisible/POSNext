@@ -13,6 +13,9 @@
   "enable_customer_display_account_creation",
   "column_break_customer_display",
   "customer_display_show_address_fields",
+  "section_break_restaurant",
+  "enable_restaurant_mode",
+  "default_restaurant_area",
   "section_break_wallet",
   "enable_loyalty_program",
   "default_loyalty_program",
@@ -148,6 +151,25 @@
    "label": "Show Address Fields",
    "depends_on": "enable_customer_display_account_creation",
    "description": "Show address fields in the customer creation form (both on display and in POS)"
+  },
+  {
+   "fieldname": "section_break_restaurant",
+   "fieldtype": "Section Break",
+   "label": "Restaurant"
+  },
+  {
+   "default": "0",
+   "description": "Enable restaurant mode with table management, KDS, and CFD",
+   "fieldname": "enable_restaurant_mode",
+   "fieldtype": "Check",
+   "label": "Enable Restaurant Mode"
+  },
+  {
+   "fieldname": "default_restaurant_area",
+   "fieldtype": "Link",
+   "label": "Default Restaurant Area",
+   "options": "Restaurant Area",
+   "depends_on": "enable_restaurant_mode"
   },
   {
    "fieldname": "section_break_wallet",

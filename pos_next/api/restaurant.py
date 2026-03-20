@@ -1,0 +1,87 @@
+import frappe
+from frappe import _
+
+def on_invoice_update(doc, method):
+	"""Update table status based on invoice status."""
+	if doc.get("restaurant_table"):
+		if doc.docstatus == 0:
+			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Occupied")
+		elif doc.docstatus == 1:
+			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Cleaning")
+		elif doc.docstatus == 2:
+			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Empty")
+
+
+@frappe.whitelist()
+def get_tables():
+	"""Fetch all restaurant areas and tables."""
+	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description"])
+	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status"])
+	return {
+		"areas": areas,
+		"tables": tables
+	}
+
+@frappe.whitelist()
+def update_table_status(table_name, status):
+	"""Update the status of a specific table."""
+	if not frappe.has_permission("Restaurant Table", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if not frappe.db.exists("Restaurant Table", table_name):
+		frappe.throw(_("Table {0} not found").format(table_name))
+
+	frappe.db.set_value("Restaurant Table", table_name, "status", status)
+	return {"status": "success"}
+
+@frappe.whitelist()
+def update_kds_status(invoice_name, status):
+	"""Update the KDS status of a sales invoice."""
+	if not frappe.has_permission("Sales Invoice", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if not frappe.db.exists("Sales Invoice", invoice_name):
+		frappe.throw(_("Invoice {0} not found").format(invoice_name))
+
+	frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status)
+	frappe.publish_realtime("kds_update")
+	return {"status": "success"}
+
+@frappe.whitelist()
+def broadcast_cfd_update(payload):
+	"""Broadcasts CFD payload to all clients using Frappe Realtime."""
+	if isinstance(payload, str):
+		import json
+		payload = json.loads(payload)
+	frappe.publish_realtime("cfd_update", payload)
+	return {"status": "success"}
+
+@frappe.whitelist()
+def get_kds_orders():
+	"""Fetch all pending and preparing orders for the KDS."""
+	raw_orders = frappe.get_all(
+		"Sales Invoice",
+		filters={
+			"docstatus": 0,
+		},
+		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified"]
+	)
+
+	# Filter in Python to avoid missing column issues before bench migrate
+	valid_statuses = ["Pending", "Preparing", "Ready"]
+	orders = [o for o in raw_orders if o.get("restaurant_table") and o.get("kds_status") in valid_statuses]
+
+	has_instructions_field = frappe.db.has_column("Sales Invoice Item", "posa_special_instructions")
+	item_fields = ["item_code", "item_name", "qty", "description"]
+
+	if has_instructions_field:
+		item_fields.append("posa_special_instructions")
+
+	for order in orders:
+		order["items"] = frappe.get_all(
+			"Sales Invoice Item",
+			filters={"parent": order.name},
+			fields=item_fields
+		)
+
+	return orders

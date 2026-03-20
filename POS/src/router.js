@@ -20,6 +20,17 @@ const routes = [
 		component: () => import("@/pages/CustomerDisplay.vue"),
 		meta: { allowGuest: true }, // Allow access without session login
 	},
+	{
+		name: "KDS",
+		path: "/kds",
+		component: () => import("@/pages/KDS.vue"),
+	},
+	{
+		name: "CFD",
+		path: "/cfd",
+		component: () => import("@/pages/CFD.vue"),
+		meta: { allowGuest: true },
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

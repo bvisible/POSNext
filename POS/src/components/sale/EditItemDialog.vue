@@ -286,7 +286,11 @@ import { useToast } from "@/composables/useToast"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useSerialNumberStore } from "@/stores/serialNumber"
 import { getItemStock } from "@/utils/stockValidator"
-import { formatCurrency as formatCurrencyUtil, getCurrencySymbol, roundCurrency } from "@/utils/currency"
+import {
+	formatCurrency as formatCurrencyUtil,
+	getCurrencySymbol,
+	roundCurrency,
+} from "@/utils/currency"
 import { Button, FeatherIcon } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import SelectInput from "@/components/common/SelectInput.vue"
@@ -345,13 +349,17 @@ const currencySymbol = computed(() => getCurrencySymbol(props.currency))
 // Check if item has pricing rules applied (promotional offers)
 const hasPricingRules = computed(() => {
 	if (!localItem.value) return false
-	return Boolean(localItem.value.pricing_rules) && localItem.value.pricing_rules.length > 0
+	return (
+		Boolean(localItem.value.pricing_rules) &&
+		localItem.value.pricing_rules.length > 0
+	)
 })
 
 // Zero-price items (e.g., gift cards) always allow rate editing
 const isZeroPriceItem = computed(() => {
 	if (!localItem.value) return false
-	const originalRate = localItem.value.price_list_rate || localItem.value.rate || 0
+	const originalRate =
+		localItem.value.price_list_rate || localItem.value.rate || 0
 	return originalRate === 0
 })
 
@@ -366,20 +374,22 @@ const canEditRate = computed(() => {
 // Tooltip message for why rate editing is disabled
 const rateEditDisabledReason = computed(() => {
 	if (!settingsStore.allowUserToEditRate) {
-		return __('Rate editing is disabled')
+		return __("Rate editing is disabled")
 	}
 	if (hasPricingRules.value) {
-		return __('Locked (offer applied)')
+		return __("Locked (offer applied)")
 	}
-	return ''
+	return ""
 })
 
 // Options for SelectInput components
 const uomOptions = computed(() => {
 	if (!localItem.value) return []
-	const options = [{ value: localItem.value.stock_uom, label: localItem.value.stock_uom }]
+	const options = [
+		{ value: localItem.value.stock_uom, label: localItem.value.stock_uom },
+	]
 	if (availableUoms.value.length > 0) {
-		availableUoms.value.forEach(uomData => {
+		availableUoms.value.forEach((uomData) => {
 			options.push({ value: uomData.uom, label: uomData.uom })
 		})
 	}
@@ -388,17 +398,22 @@ const uomOptions = computed(() => {
 
 const warehouseOptions = computed(() => {
 	if (props.warehouses.length > 0) {
-		return props.warehouses.map(w => ({
+		return props.warehouses.map((w) => ({
 			value: w.name,
-			label: w.warehouse || w.name
+			label: w.warehouse || w.name,
 		}))
 	}
-	return [{ value: localWarehouse.value, label: localWarehouse.value || __('Default') }]
+	return [
+		{
+			value: localWarehouse.value,
+			label: localWarehouse.value || __("Default"),
+		},
+	]
 })
 
 const discountTypeOptions = computed(() => [
-	{ value: 'percentage', label: __('Percentage (%)') },
-	{ value: 'amount', label: __('Amount') }
+	{ value: "percentage", label: __("Percentage (%)") },
+	{ value: "amount", label: __("Amount") },
 ])
 
 // Initialize local state when item changes
@@ -417,7 +432,7 @@ watch(
 
 			// Initialize serial numbers
 			if (newItem.has_serial_no && newItem.serial_no) {
-				const serials = newItem.serial_no.split('\n').filter(s => s.trim())
+				const serials = newItem.serial_no.split("\n").filter((s) => s.trim())
 				localSerials.value = [...serials]
 				originalSerials.value = [...serials] // Keep original for cancel
 				removedSerials.value = [] // Reset removed serials tracker
@@ -469,17 +484,17 @@ function getSmartStep(quantity) {
 	const rounded = Math.round(quantity * 10000) / 10000
 
 	// Check if it's a multiple of 0.5
-	if (Math.abs((rounded % 0.5)) < 0.0001) {
+	if (Math.abs(rounded % 0.5) < 0.0001) {
 		return 0.5
 	}
 
 	// Check if it's a multiple of 0.25
-	if (Math.abs((rounded % 0.25)) < 0.0001) {
+	if (Math.abs(rounded % 0.25) < 0.0001) {
 		return 0.25
 	}
 
 	// Check if it's a multiple of 0.1
-	if (Math.abs((rounded % 0.1)) < 0.0001) {
+	if (Math.abs(rounded % 0.1) < 0.0001) {
 		return 0.1
 	}
 
@@ -513,7 +528,11 @@ function handleQuantityInput() {
 
 function handleQuantityBlur() {
 	// Validate and fix the quantity when user is done editing (leaves the field)
-	if (!localQuantity.value || localQuantity.value <= 0 || isNaN(localQuantity.value)) {
+	if (
+		!localQuantity.value ||
+		localQuantity.value <= 0 ||
+		isNaN(localQuantity.value)
+	) {
 		// If invalid, reset to 1
 		localQuantity.value = 1
 	} else {
@@ -543,23 +562,31 @@ async function handleWarehouseChange() {
 		if (availableStock === 0) {
 			hasStock.value = false
 			showError(
-				__('"{0}" is not available in warehouse "{1}". Please select another warehouse.',
-				[localItem.value.item_name, localWarehouse.value])
+				__(
+					'"{0}" is not available in warehouse "{1}". Please select another warehouse.',
+					[localItem.value.item_name, localWarehouse.value],
+				),
 			)
 		} else if (availableStock < localQuantity.value) {
 			hasStock.value = false
 			showWarning(
-				__('Only {0} units of "{1}" available in "{2}". Current quantity: {3}', [
-					availableStock,
-					localItem.value.item_name,
-					localWarehouse.value,
-					localQuantity.value
-				])
+				__(
+					'Only {0} units of "{1}" available in "{2}". Current quantity: {3}',
+					[
+						availableStock,
+						localItem.value.item_name,
+						localWarehouse.value,
+						localQuantity.value,
+					],
+				),
 			)
 		} else {
 			hasStock.value = true
 			showSuccess(
-				__('{0} units available in "{1}"', [availableStock, localWarehouse.value])
+				__('{0} units available in "{1}"', [
+					availableStock,
+					localWarehouse.value,
+				]),
 			)
 		}
 	} catch (error) {
@@ -578,7 +605,11 @@ function handleDiscountTypeChange() {
 
 function calculateDiscount() {
 	// Round to currency precision to prevent floating point precision issues (e.g., 10.000000000000002)
-	if (discountValue.value !== null && discountValue.value !== undefined && !isNaN(discountValue.value)) {
+	if (
+		discountValue.value !== null &&
+		discountValue.value !== undefined &&
+		!isNaN(discountValue.value)
+	) {
 		discountValue.value = roundCurrency(discountValue.value)
 	}
 
@@ -587,7 +618,9 @@ function calculateDiscount() {
 		if (discountValue.value > 100) {
 			discountValue.value = 100
 		}
-		calculatedDiscount.value = roundCurrency((calculatedSubtotal.value * discountValue.value) / 100)
+		calculatedDiscount.value = roundCurrency(
+			(calculatedSubtotal.value * discountValue.value) / 100,
+		)
 	} else {
 		// Ensure amount doesn't exceed subtotal
 		if (discountValue.value > calculatedSubtotal.value) {
@@ -595,7 +628,9 @@ function calculateDiscount() {
 		}
 		calculatedDiscount.value = roundCurrency(discountValue.value)
 	}
-	calculatedTotal.value = roundCurrency(calculatedSubtotal.value - calculatedDiscount.value)
+	calculatedTotal.value = roundCurrency(
+		calculatedSubtotal.value - calculatedDiscount.value,
+	)
 }
 
 function calculateTotals() {
@@ -630,22 +665,25 @@ function updateItem() {
 	if (settingsStore.allowUserToEditRate && isRateManuallyEdited) {
 		// Validate rate is positive
 		if (localRate.value <= 0) {
-			showError(__('Rate must be greater than zero'))
+			showError(__("Rate must be greater than zero"))
 			return
 		}
 
 		// Validate against max discount if rate was reduced
 		const maxDiscount = settingsStore.maxDiscountAllowed
 		if (maxDiscount > 0 && localRate.value < originalPriceListRate.value) {
-			const discountPercent = ((originalPriceListRate.value - localRate.value) / originalPriceListRate.value) * 100
+			const discountPercent =
+				((originalPriceListRate.value - localRate.value) /
+					originalPriceListRate.value) *
+				100
 			const roundedDiscount = Math.round(discountPercent * 100) / 100
 
 			if (roundedDiscount > maxDiscount) {
 				showError(
-					__('Rate reduction of {0}% exceeds maximum allowed discount of {1}%', [
-						roundedDiscount.toFixed(2),
-						maxDiscount
-					])
+					__(
+						"Rate reduction of {0}% exceeds maximum allowed discount of {1}%",
+						[roundedDiscount.toFixed(2), maxDiscount],
+					),
 				)
 				return
 			}
@@ -662,8 +700,7 @@ function updateItem() {
 		warehouse: localWarehouse.value,
 		discount_percentage:
 			discountType.value === "percentage" ? discountValue.value : 0,
-		discount_amount:
-			discountType.value === "amount" ? discountValue.value : 0,
+		discount_amount: discountType.value === "amount" ? discountValue.value : 0,
 		// Track manual rate edits for audit logging
 		is_rate_manually_edited: isRateManuallyEdited ? 1 : 0,
 		original_rate: isRateManuallyEdited ? originalPriceListRate.value : null,
@@ -671,7 +708,7 @@ function updateItem() {
 
 	// Update serial numbers if item has serials
 	if (localItem.value.has_serial_no) {
-		updatedItem.serial_no = localSerials.value.join('\n')
+		updatedItem.serial_no = localSerials.value.join("\n")
 		updatedItem.quantity = localSerials.value.length
 
 		// Return removed serials to cache now that update is confirmed

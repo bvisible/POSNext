@@ -49,7 +49,9 @@ function getSocketIOPort() {
 async function getSiteName() {
 	// 1. Try to get from window.frappe.boot (set by Frappe)
 	if (window.frappe?.boot?.sitename) {
-		log.debug("Site name from frappe.boot", { sitename: window.frappe.boot.sitename })
+		log.debug("Site name from frappe.boot", {
+			sitename: window.frappe.boot.sitename,
+		})
 		return window.frappe.boot.sitename
 	}
 
@@ -63,13 +65,16 @@ async function getSiteName() {
 	// 3. Try to fetch from API
 	try {
 		log.debug("Fetching site name from API...")
-		const response = await fetch("/api/method/pos_next.api.utilities.get_site_info", {
-			method: "GET",
-			credentials: "include",
-			headers: {
-				Accept: "application/json",
+		const response = await fetch(
+			"/api/method/pos_next.api.utilities.get_site_info",
+			{
+				method: "GET",
+				credentials: "include",
+				headers: {
+					Accept: "application/json",
+				},
 			},
-		})
+		)
 
 		if (response.ok) {
 			const data = await response.json()

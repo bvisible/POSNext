@@ -125,6 +125,9 @@ _custom_field_names = [
 	"Coupon Code-coupon_code_residual",
 	"Coupon Code-source_invoice",
 	"Coupon Code-referral_code",
+	"Sales Invoice-restaurant_table",
+	"Sales Invoice-kds_status",
+	"Sales Invoice Item-posa_special_instructions",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
@@ -242,17 +245,20 @@ doc_events = {
 			"pos_next.api.wallet.validate_wallet_payment"
 		],
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",
+		"on_update": "pos_next.api.restaurant.on_invoice_update",
 		"on_submit": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
 			"pos_next.realtime_events.emit_stock_update_event",
 			"pos_next.api.wallet.process_loyalty_to_wallet",
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
-			"pos_next.api.gift_cards.process_gift_card_on_submit"
+			"pos_next.api.gift_cards.process_gift_card_on_submit",
+			"pos_next.api.restaurant.on_invoice_update"
 		],
 		"on_cancel": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_cancel",
 			"pos_next.realtime_events.emit_stock_update_event",
-			"pos_next.api.gift_cards.process_gift_card_on_cancel"
+			"pos_next.api.gift_cards.process_gift_card_on_cancel",
+			"pos_next.api.restaurant.on_invoice_update"
 		],
 		"after_insert": "pos_next.realtime_events.emit_invoice_created_event"
 	},
@@ -275,15 +281,8 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-	"hourly": [
-		"pos_next.tasks.branding_monitor.monitor_branding_integrity",
-	],
 	"daily": [
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
-		"pos_next.tasks.branding_monitor.validate_all_active_sessions",
-	],
-	"monthly": [
-		"pos_next.tasks.branding_monitor.reset_tampering_counter",
 	],
 }
 

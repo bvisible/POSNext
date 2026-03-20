@@ -274,7 +274,11 @@ const props = defineProps({
 	customer: Object, // Customer object for edit mode
 })
 
-const emit = defineEmits(["update:modelValue", "customer-created", "customer-updated"])
+const emit = defineEmits([
+	"update:modelValue",
+	"customer-created",
+	"customer-updated",
+])
 
 // =============================================================================
 // State
@@ -289,7 +293,12 @@ const countrySearchQuery = ref("")
 const dropdownRef = ref(null)
 const countrySearchRef = ref(null)
 
-const customerGroups = ref(["Commercial", "Individual", "Non Profit", "Government"])
+const customerGroups = ref([
+	"Commercial",
+	"Individual",
+	"Non Profit",
+	"Government",
+])
 const territories = ref(["All Territories"])
 
 const customerData = ref({
@@ -316,10 +325,14 @@ const show = computed({
 
 const isEditMode = computed(() => !!props.customer?.name)
 
-const showAddressFields = computed(() => posSettingsStore.showAddressFieldsInCustomerForm)
+const showAddressFields = computed(
+	() => posSettingsStore.showAddressFieldsInCustomerForm,
+)
 
 const currentCountryCode = computed(() => {
-	const country = countriesStore.countries.find((c) => c.isd === selectedCountryCode.value)
+	const country = countriesStore.countries.find(
+		(c) => c.isd === selectedCountryCode.value,
+	)
 	return country?.code.toLowerCase() || "eg"
 })
 
@@ -328,7 +341,10 @@ const filteredCountries = computed(() => {
 
 	const query = countrySearchQuery.value.toLowerCase()
 	return countriesStore.countries.filter(
-		(c) => c.name.toLowerCase().includes(query) || c.isd.includes(query) || c.code.toLowerCase().includes(query)
+		(c) =>
+			c.name.toLowerCase().includes(query) ||
+			c.isd.includes(query) ||
+			c.code.toLowerCase().includes(query),
 	)
 })
 
@@ -346,7 +362,9 @@ const selectCountry = (country) => {
 }
 
 const updateMobileNumber = () => {
-	customerData.value.mobile_no = phoneNumber.value ? `${selectedCountryCode.value}-${phoneNumber.value}` : ""
+	customerData.value.mobile_no = phoneNumber.value
+		? `${selectedCountryCode.value}-${phoneNumber.value}`
+		: ""
 }
 
 const handleClickOutside = (event) => {
@@ -378,7 +396,9 @@ const setCountryFromName = (countryName) => {
 const updateTerritoryFromCountry = () => {
 	if (!territories.value.length) return
 
-	const country = countriesStore.countries.find((c) => c.isd === selectedCountryCode.value)
+	const country = countriesStore.countries.find(
+		(c) => c.isd === selectedCountryCode.value,
+	)
 	if (!country) return
 
 	// Try exact match first
@@ -390,7 +410,9 @@ const updateTerritoryFromCountry = () => {
 
 	// Try fuzzy match
 	const fuzzyMatch = territories.value.find(
-		(t) => t.toLowerCase().includes(country.name.toLowerCase()) || country.name.toLowerCase().includes(t.toLowerCase())
+		(t) =>
+			t.toLowerCase().includes(country.name.toLowerCase()) ||
+			country.name.toLowerCase().includes(t.toLowerCase()),
 	)
 
 	if (fuzzyMatch) {
@@ -452,8 +474,14 @@ const createListResource = (doctype, onSuccess) =>
 		onError: (err) => log.error(`Error loading ${doctype}`, err),
 	})
 
-const customerGroupsResource = createListResource("Customer Group", (names) => (customerGroups.value = names))
-const territoriesResource = createListResource("Territory", (names) => (territories.value = names))
+const customerGroupsResource = createListResource(
+	"Customer Group",
+	(names) => (customerGroups.value = names),
+)
+const territoriesResource = createListResource(
+	"Territory",
+	(names) => (territories.value = names),
+)
 
 const posProfileResource = createResource({
 	url: "frappe.client.get_value",
@@ -529,8 +557,11 @@ const handleCreate = async () => {
 		})
 
 		// Create address if address fields are filled
-		const hasAddressData = customerData.value.address_line1 || customerData.value.city ||
-			customerData.value.pincode || customerData.value.country
+		const hasAddressData =
+			customerData.value.address_line1 ||
+			customerData.value.city ||
+			customerData.value.pincode ||
+			customerData.value.country
 
 		if (hasAddressData && showAddressFields.value) {
 			try {
@@ -543,10 +574,12 @@ const handleCreate = async () => {
 						city: customerData.value.city || "",
 						pincode: customerData.value.pincode || "",
 						country: customerData.value.country || "",
-						links: [{
-							link_doctype: "Customer",
-							link_name: customer.name,
-						}],
+						links: [
+							{
+								link_doctype: "Customer",
+								link_name: customer.name,
+							},
+						],
 					},
 				})
 
@@ -568,7 +601,9 @@ const handleCreate = async () => {
 			}
 		}
 
-		showSuccess(__("Customer {0} created successfully", [customer.customer_name]))
+		showSuccess(
+			__("Customer {0} created successfully", [customer.customer_name]),
+		)
 		emit("customer-created", customer)
 		show.value = false
 	} catch (error) {
@@ -599,7 +634,7 @@ const resetForm = () => {
 
 watch(
 	() => props.initialName,
-	(name) => name && (customerData.value.customer_name = name)
+	(name) => name && (customerData.value.customer_name = name),
 )
 
 // Pre-fill form when customer prop changes (edit mode)
@@ -609,7 +644,8 @@ watch(
 		if (customer?.name) {
 			customerData.value.customer_name = customer.customer_name || ""
 			customerData.value.email_id = customer.email_id || ""
-			customerData.value.customer_group = customer.customer_group || "Individual"
+			customerData.value.customer_group =
+				customer.customer_group || "Individual"
 			customerData.value.territory = customer.territory || "All Territories"
 			// Handle mobile_no with country code
 			if (customer.mobile_no) {
@@ -624,7 +660,7 @@ watch(
 			}
 		}
 	},
-	{ immediate: true }
+	{ immediate: true },
 )
 
 watch(
@@ -635,7 +671,7 @@ watch(
 			selectedCountryCode.value = code
 			phoneNumber.value = rest.join("-")
 		}
-	}
+	},
 )
 
 watch(selectedCountryCode, async () => {
@@ -655,7 +691,7 @@ watch(
 	async (isOpen) => {
 		show.value = isOpen
 		isOpen ? await loadDialogData() : resetForm()
-	}
+	},
 )
 
 watch(show, (val) => emit("update:modelValue", val))

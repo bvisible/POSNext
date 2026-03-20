@@ -90,7 +90,12 @@ export function useGiftCard() {
 	 * @param {string} params.company - Company name
 	 * @returns {Promise<Object>} - Application result with discount amount
 	 */
-	async function applyGiftCard({ couponCode, invoiceTotal, customer, company }) {
+	async function applyGiftCard({
+		couponCode,
+		invoiceTotal,
+		customer,
+		company,
+	}) {
 		try {
 			const result = await applyGiftCardResource.fetch({
 				coupon_code: couponCode,
@@ -147,7 +152,11 @@ export function useGiftCard() {
 			return { discount: 0, willSplit: false, remainingBalance: 0 }
 		}
 
-		const balance = giftCard.balance || giftCard.gift_card_amount || giftCard.discount_amount || 0
+		const balance =
+			giftCard.balance ||
+			giftCard.gift_card_amount ||
+			giftCard.discount_amount ||
+			0
 		const discount = Math.min(balance, invoiceTotal)
 		const willSplit = balance > invoiceTotal
 		const remainingBalance = willSplit ? balance - invoiceTotal : 0
@@ -170,7 +179,11 @@ export function useGiftCard() {
 		return {
 			code: giftCard.coupon_code,
 			name: giftCard.coupon_name || giftCard.name,
-			balance: giftCard.balance || giftCard.gift_card_amount || giftCard.discount_amount || 0,
+			balance:
+				giftCard.balance ||
+				giftCard.gift_card_amount ||
+				giftCard.discount_amount ||
+				0,
 			originalAmount: giftCard.original_amount || giftCard.balance,
 			customer: giftCard.customer,
 			customerName: giftCard.customer_name,
@@ -199,7 +212,8 @@ export function useGiftCard() {
 	 */
 	const totalAvailableBalance = computed(() => {
 		return giftCards.value.reduce((sum, gc) => {
-			const balance = gc.balance || gc.gift_card_amount || gc.discount_amount || 0
+			const balance =
+				gc.balance || gc.gift_card_amount || gc.discount_amount || 0
 			return sum + balance
 		}, 0)
 	})
