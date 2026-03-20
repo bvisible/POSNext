@@ -346,6 +346,8 @@ import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue"
 import { DEFAULT_LOCALE } from "@/utils/currency"
 import { ref } from "vue"
 import { version } from "../../../package.json"
+import { usePOSSettingsStore } from "@/stores/posSettings"
+import { useRestaurantStore } from "@/stores/restaurant"
 
 const showCacheTooltip = ref(false)
 const showExitDialog = ref(false)
@@ -372,10 +374,20 @@ const emit = defineEmits([
 	"toggle-restaurant",
 ])
 
-function onToggleRestaurant() {
-	if (props.canToggleRestaurant) {
-		emit("toggle-restaurant")
+async function onToggleRestaurant() {
+	if (!props.canToggleRestaurant) return
+
+	const posSettingsStore = usePOSSettingsStore()
+	const restaurantStore = useRestaurantStore()
+
+	await posSettingsStore.toggleRestaurantMode()
+
+	// Load tables when enabling
+	if (posSettingsStore.settings.enable_restaurant_mode) {
+		await restaurantStore.fetchFromNetwork()
 	}
+
+	emit("toggle-restaurant")
 }
 
 function handleClearCacheClick() {
