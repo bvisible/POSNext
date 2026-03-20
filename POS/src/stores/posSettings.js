@@ -436,17 +436,22 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	 * Persists the change to the API
 	 */
 	async function toggleRestaurantMode() {
+		const oldValue = settings.value.enable_restaurant_mode
+		const newValue = oldValue ? 0 : 1
+
+		// Update locally first for instant UI feedback
+		settings.value.enable_restaurant_mode = newValue
+
 		try {
-			const newValue = settings.value.enable_restaurant_mode ? 0 : 1
 			await call("pos_next.pos_next.doctype.pos_settings.pos_settings.update_pos_settings", {
 				pos_profile: settings.value.pos_profile,
-				settings: { enable_restaurant_mode: newValue }
+				settings: JSON.stringify({ enable_restaurant_mode: newValue })
 			})
-			settings.value.enable_restaurant_mode = newValue
 			return true
 		} catch (error) {
+			console.error("Failed to toggle restaurant mode:", error)
 			// Rollback on error
-			settings.value.enable_restaurant_mode = settings.value.enable_restaurant_mode ? 0 : 1
+			settings.value.enable_restaurant_mode = oldValue
 			return false
 		}
 	}
