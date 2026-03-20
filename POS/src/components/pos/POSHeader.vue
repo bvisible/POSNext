@@ -88,8 +88,8 @@
 						:class="canToggleRestaurant ? '' : 'opacity-50'"
 						:title="!canToggleRestaurant ? __('Clear cart and close all tables first') : (isRestaurantMode ? __('Click to disable restaurant mode') : __('Click to enable restaurant mode'))"
 					>
-						<svg class="w-3.5 h-3.5 flex-shrink-0" :class="isRestaurantMode ? 'text-amber-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-1-6v2m0 16v2m-7-9H2m20 0h-2m-2.05-6.36l-1.41 1.41M7.46 16.54l-1.41 1.41m0-11.31l1.41 1.41m9.08 9.08l1.41 1.41" />
+						<svg class="w-3.5 h-3.5 flex-shrink-0" :class="isRestaurantMode ? 'text-amber-600' : 'text-gray-400'" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
 						</svg>
 						<span class="text-[10px] font-bold uppercase tracking-wide hidden sm:inline" :class="isRestaurantMode ? 'text-amber-700' : 'text-gray-400'">
 							{{ __("Resto") }}
