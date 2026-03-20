@@ -89,6 +89,54 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	async function updateTablePosition(tableName, pos_x, pos_y, width, height) {
+		try {
+			const table = tables.value.find(t => t.name === tableName)
+			if (table) {
+				table.pos_x = pos_x
+				table.pos_y = pos_y
+				table.width = width
+				table.height = height
+				await db.restaurant_tables.put(table)
+			}
+		} catch (error) {
+			log.error(`Failed to update position for table ${tableName}:`, error)
+		}
+	}
+
+	async function saveAllPositions() {
+		try {
+			const positions = tables.value.map(t => ({
+				name: t.name,
+				pos_x: t.pos_x,
+				pos_y: t.pos_y,
+				width: t.width,
+				height: t.height
+			}))
+
+			await call("pos_next.api.restaurant.save_table_positions", {
+				positions
+			})
+		} catch (error) {
+			log.error("Failed to save table positions:", error)
+			throw error
+		}
+	}
+
+	async function addTable(tableData) {
+		try {
+			const newTable = await call("pos_next.api.restaurant.create_table", tableData)
+			if (newTable) {
+				tables.value.push(newTable)
+				await db.restaurant_tables.put(newTable)
+				await fetchFromNetwork()
+			}
+		} catch (error) {
+			log.error("Failed to add table:", error)
+			throw error
+		}
+	}
+
 	return {
 		tables,
 		areas,
@@ -98,6 +146,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		totalOccupiedCount,
 		loadTablesAndAreas,
 		fetchFromNetwork,
-		updateTableStatus
+		updateTableStatus,
+		updateTablePosition,
+		saveAllPositions,
+		addTable
 	}
 })

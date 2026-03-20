@@ -8,7 +8,12 @@
   "table_name",
   "area",
   "capacity",
-  "status"
+  "status",
+  "pos_x",
+  "pos_y",
+  "width",
+  "height",
+  "shape"
  ],
  "fields": [
   {
@@ -40,6 +45,37 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Empty\nOccupied\nReserved\nCleaning"
+  },
+  {
+   "default": "0",
+   "fieldname": "pos_x",
+   "fieldtype": "Int",
+   "label": "Position X"
+  },
+  {
+   "default": "0",
+   "fieldname": "pos_y",
+   "fieldtype": "Int",
+   "label": "Position Y"
+  },
+  {
+   "default": "100",
+   "fieldname": "width",
+   "fieldtype": "Int",
+   "label": "Width"
+  },
+  {
+   "default": "100",
+   "fieldname": "height",
+   "fieldtype": "Int",
+   "label": "Height"
+  },
+  {
+   "default": "Square",
+   "fieldname": "shape",
+   "fieldtype": "Select",
+   "label": "Shape",
+   "options": "Square\nRound"
   }
  ],
  "index_web_pages_for_search": 1,

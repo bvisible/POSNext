@@ -290,7 +290,7 @@
 						>
 							<!-- Restaurant Mode: Table Selector -->
 							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable">
-								<TableSelector
+								<FloorPlanEditor
 									@table-selected="handleTableSelected"
 									@load-table-draft="handleLoadTableDraft"
 								/>
@@ -1088,6 +1088,7 @@ import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
 import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 import TableSelector from "@/components/pos/TableSelector.vue";
+import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";

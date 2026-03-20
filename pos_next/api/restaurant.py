@@ -16,7 +16,7 @@ def on_invoice_update(doc, method):
 def get_tables():
 	"""Fetch all restaurant areas and tables."""
 	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description"])
-	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status"])
+	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
 	return {
 		"areas": areas,
 		"tables": tables
@@ -55,6 +55,50 @@ def broadcast_cfd_update(payload):
 		payload = json.loads(payload)
 	frappe.publish_realtime("cfd_update", payload)
 	return {"status": "success"}
+
+@frappe.whitelist()
+def save_table_positions(positions):
+	"""Save table positions from the floor plan editor."""
+	import json
+	if isinstance(positions, str):
+		positions = json.loads(positions)
+
+	if not frappe.has_permission("Restaurant Table", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	for pos in positions:
+		if not frappe.db.exists("Restaurant Table", pos.get("name")):
+			continue
+		frappe.db.set_value("Restaurant Table", pos["name"], {
+			"pos_x": int(pos.get("pos_x", 0)),
+			"pos_y": int(pos.get("pos_y", 0)),
+			"width": int(pos.get("width", 100)),
+			"height": int(pos.get("height", 100)),
+		})
+
+	frappe.db.commit()
+	return {"status": "success"}
+
+@frappe.whitelist()
+def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
+	"""Create a new restaurant table."""
+	if not frappe.has_permission("Restaurant Table", "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	doc = frappe.get_doc({
+		"doctype": "Restaurant Table",
+		"table_name": table_name,
+		"area": area,
+		"capacity": int(capacity),
+		"shape": shape,
+		"pos_x": int(pos_x),
+		"pos_y": int(pos_y),
+		"width": 100,
+		"height": 100,
+		"status": "Empty"
+	})
+	doc.insert()
+	return doc.as_dict()
 
 @frappe.whitelist()
 def get_kds_orders():
