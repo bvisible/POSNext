@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex flex-col bg-gray-50 overflow-x-hidden"
+		class="flex flex-col bg-[var(--neo-bg)] overflow-x-hidden"
 		style="height: 100vh; max-height: 100vh"
 	>
 		<!-- Loading State -->
@@ -285,13 +285,43 @@
 							]"
 							style="contain: layout style paint"
 						>
-							<ItemsSelector
-								ref="itemsSelectorRef"
-								:pos-profile="shiftStore.profileName"
-								:cart-items="cartStore.invoiceItems"
-								:currency="shiftStore.profileCurrency"
-								@item-selected="handleItemSelected"
-							/>
+							<!-- Restaurant Mode: Table Selector -->
+							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable">
+								<TableSelector
+									@table-selected="handleTableSelected"
+									@load-table-draft="handleLoadTableDraft"
+								/>
+							</template>
+
+							<!-- Normal Mode or Table Selected: Items Selector -->
+							<template v-else>
+								<!-- Restaurant table banner -->
+								<div
+									v-if="restaurantStore.isEnabled && cartStore.restaurantTable"
+									class="flex items-center justify-between px-4 py-2 bg-blue-50 border-b border-blue-100"
+								>
+									<div class="flex items-center gap-2">
+										<FeatherIcon name="coffee" class="w-4 h-4 text-blue-600" />
+										<span class="text-sm font-semibold text-blue-800">
+											{{ cartStore.restaurantTable?.table_name }}
+										</span>
+									</div>
+									<Button
+										variant="subtle"
+										size="sm"
+										@click="closeTable"
+									>
+										{{ __("Close Table") }}
+									</Button>
+								</div>
+								<ItemsSelector
+									ref="itemsSelectorRef"
+									:pos-profile="shiftStore.profileName"
+									:cart-items="cartStore.invoiceItems"
+									:currency="shiftStore.profileCurrency"
+									@item-selected="handleItemSelected"
+								/>
+							</template>
 						</div>
 					</keep-alive>
 
@@ -1012,8 +1042,8 @@
 // Module-scoped init guard — prevents redundant heavy initialization
 // when component remounts due to translationVersion changes.
 // Tracks the profile+shift key so a user/shift change correctly re-initializes.
-let _initializedKey = null
-let _posInitPromise = null
+const _initializedKey = null
+const _posInitPromise = null
 </script>
 
 <script setup>
@@ -1033,7 +1063,9 @@ import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
 import InvoiceCart from "@/components/sale/InvoiceCart.vue";
 import InvoiceHistoryDialog from "@/components/sale/InvoiceHistoryDialog.vue";
 import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
+import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
+import TableSelector from "@/components/pos/TableSelector.vue";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
@@ -1058,7 +1090,7 @@ import { cacheInvoiceHistory, getCachedInvoiceHistory } from "@/utils/offline/sy
 import { printInvoice, printInvoiceByName, printWithSilentFallback } from "@/utils/printInvoice";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
 
-import { Button, Dialog, createResource } from "frappe-ui";
+import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@/composables/useToast";
@@ -1072,6 +1104,7 @@ import { usePOSDraftsStore } from "@/stores/posDrafts";
 import { usePOSSettingsStore } from "@/stores/posSettings";
 import { usePOSShiftStore } from "@/stores/posShift";
 import { usePOSSyncStore } from "@/stores/posSync";
+import { useRestaurantStore } from "@/stores/restaurant";
 import { usePOSUIStore } from "@/stores/posUI";
 import { logger } from "@/utils/logger";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
@@ -1086,6 +1119,7 @@ const posSettingsStore = usePOSSettingsStore();
 const itemStore = useItemSearchStore();
 const stockStore = useStockStore();
 const customerSearchStore = useCustomerSearchStore();
+const restaurantStore = useRestaurantStore();
 // Note: settingsStore is an alias to posSettingsStore (same Pinia store singleton)
 const settingsStore = posSettingsStore;
 
@@ -1877,6 +1911,23 @@ async function handleShiftClosed() {
 			uiStore.showOpenShiftDialog = true;
 		}, 500);
 	}
+}
+
+// Restaurant mode handlers
+function handleTableSelected(table) {
+	// Table selected, cart already configured by TableSelector
+}
+
+function handleLoadTableDraft(draft) {
+	draftsStore.loadDraft(draft.draft_id);
+}
+
+function closeTable() {
+	// Save current cart as draft before closing table
+	if (cartStore.invoiceItems.length > 0) {
+		draftsStore.saveDraft();
+	}
+	cartStore.clearCart();
 }
 
 function handleItemSelected(item, autoAdd = false) {

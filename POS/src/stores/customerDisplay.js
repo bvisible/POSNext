@@ -40,7 +40,9 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	// POS session state
 	const posProfile = ref(localStorage.getItem(STORAGE_KEY_POS_PROFILE) || "")
 	const posProfiles = ref([])
-	const posOpeningEntry = ref(localStorage.getItem(STORAGE_KEY_POS_OPENING) || "")
+	const posOpeningEntry = ref(
+		localStorage.getItem(STORAGE_KEY_POS_OPENING) || "",
+	)
 	const sessionInfo = ref(null)
 
 	// Cart state
@@ -72,6 +74,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		enableCustomerDisplay: false,
 		enableAccountCreation: false,
 		showAddressFields: false,
+		hasLoyaltyProgram: false,
 	})
 
 	// Polling timer
@@ -151,22 +154,29 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 
 		try {
 			// Use direct fetch for guest endpoint to avoid CSRF issues
-			const response = await fetch("/api/method/pos_next.api.customer_display.validate_api_key", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/x-www-form-urlencoded",
-					Accept: "application/json",
+			const response = await fetch(
+				"/api/method/pos_next.api.customer_display.validate_api_key",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						Accept: "application/json",
+					},
+					body: new URLSearchParams({
+						api_key_string: key,
+					}),
 				},
-				body: new URLSearchParams({
-					api_key_string: key,
-				}),
-			})
+			)
 
 			const data = await response.json()
 
 			if (data.exc_type) {
 				// Frappe error response
-				throw new Error(data._server_messages ? JSON.parse(data._server_messages)[0] : data.exc_type)
+				throw new Error(
+					data._server_messages
+						? JSON.parse(data._server_messages)[0]
+						: data.exc_type,
+				)
 			}
 
 			const result = data.message
@@ -219,7 +229,10 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 			posProfiles.value = profiles || []
 
 			// If saved profile exists and is valid, use it
-			if (posProfile.value && profiles.some((p) => p.name === posProfile.value)) {
+			if (
+				posProfile.value &&
+				profiles.some((p) => p.name === posProfile.value)
+			) {
 				await selectPosProfile(posProfile.value)
 			}
 		} catch (error) {
@@ -242,6 +255,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 					enableCustomerDisplay: settings.enable_customer_display || false,
 					enableAccountCreation: settings.enable_account_creation || false,
 					showAddressFields: settings.show_address_fields || false,
+					hasLoyaltyProgram: settings.has_loyalty_program || false,
 				}
 				log.info("Display settings loaded", displaySettings.value)
 			}

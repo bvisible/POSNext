@@ -2,16 +2,47 @@
 @import "frappe-ui/style.css";
 @import "@abdulrysr/saudi-riyal-new-symbol-font/style.css";
 
+/* Neoffice heading font */
+@import url("https://fonts.googleapis.com/css2?family=Forum&display=swap");
+
 /* CSS Custom Properties for consistent z-index layering */
 :root {
 	--z-dialog-overlay: 400;
 	--z-dialog-content: 500;
 	--z-dropdown: 10000;
+
+	/* Neoffice design tokens */
+	--neo-radius-sm: 8px;
+	--neo-radius-md: 14px;
+	--neo-radius-lg: 18px;
+	--neo-radius-tiny: 6px;
+	--neo-bg: #f8f8f8;
+	--neo-primary: #2563eb;
+	--neo-accent: #1d4ed8;
 }
 
 /* Apply fonts - Inter first for text, Saudi Riyal for currency symbol */
 body {
 	font-family: "Inter", "SaudiRiyalSymbol", sans-serif;
+	background-color: var(--neo-bg);
+}
+
+/* Neoffice glassmorphism utility */
+.neo-glass {
+	background: rgba(255, 255, 255, 0.82);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+}
+
+/* Override frappe-ui Dialog border-radius for Neoffice theme */
+.dialog-content > div,
+.dialog-overlay .dialog-content > div {
+	border-radius: var(--neo-radius-lg) !important;
+}
+
+/* Neoffice heading font class */
+.font-display {
+	font-family: "Forum", serif;
 }
 
 /* Ensure all text elements inherit the font stack with Saudi Riyal support */

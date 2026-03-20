@@ -62,7 +62,7 @@
   ============================================================================
 -->
 <template>
-	<div class="flex flex-col h-full bg-white">
+	<div class="flex flex-col h-full bg-white rounded-neo-lg overflow-hidden">
 		<!-- Header with Customer -->
 		<div class="px-2.5 py-2 border-b border-gray-200 bg-gray-50">
 			<!-- Inline Customer Search/Selection -->
@@ -71,7 +71,7 @@
 					<!-- Two Cards Layout: Customer Card + Document Type Card -->
 					<div class="flex items-stretch gap-2">
 						<!-- Customer Card -->
-						<div class="flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm min-w-0">
+						<div class="flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
 							<!-- Customer Avatar & Info -->
 							<div class="flex items-center gap-2 min-w-0 flex-1 px-1.5 py-1">
 								<div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -127,7 +127,7 @@
 						<!-- Document Type Card -->
 						<div
 							v-if="settingsStore.allowSalesOrder"
-							class="flex items-center bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm flex-shrink-0"
+							class="flex items-center bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo flex-shrink-0"
 						>
 							<div class="flex items-center bg-gray-100 rounded-lg p-0.5">
 								<button
@@ -200,7 +200,7 @@
 								@blur="handleSearchBlur"
 								type="text"
 								:placeholder="__('Search or add customer...')"
-								class="w-full h-10 ps-9 pe-3 text-xs border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-shadow"
+								class="w-full h-10 ps-9 pe-3 text-xs border border-gray-200 rounded-neo-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-neo transition-shadow"
 								:disabled="!customersLoaded"
 								@keydown="handleKeydown"
 								autocomplete="off"
@@ -212,7 +212,7 @@
 						<button
 							type="button"
 							@click="createNewCustomer"
-							class="flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 active:bg-green-700 rounded-xl text-white transition-colors shadow-sm hover:shadow touch-manipulation flex-shrink-0"
+							class="flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 active:bg-green-700 rounded-neo-md text-white transition-colors shadow-neo hover:shadow-neo-md touch-manipulation flex-shrink-0"
 							:title="__('Create new customer')"
 							:aria-label="__('Create new customer')"
 						>
@@ -469,7 +469,7 @@
 				<button
 					type="button"
 					@click="$emit('show-offers')"
-					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:border-green-400 hover:from-green-100 hover:to-emerald-100 hover:shadow-sm transition-all min-w-0 touch-manipulation active:scale-[0.98]"
+					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-neo-md bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:border-green-400 hover:from-green-100 hover:to-emerald-100 hover:shadow-neo transition-all min-w-0 touch-manipulation active:scale-[0.98]"
 					:aria-label="__('View all available offers')"
 				>
 					<svg
@@ -500,7 +500,7 @@
 				<button
 					type="button"
 					@click="$emit('apply-coupon')"
-					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 hover:border-purple-400 hover:from-purple-100 hover:to-violet-100 hover:shadow-sm transition-all min-w-0 touch-manipulation active:scale-[0.98]"
+					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-neo-md bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 hover:border-purple-400 hover:from-purple-100 hover:to-violet-100 hover:shadow-neo transition-all min-w-0 touch-manipulation active:scale-[0.98]"
 					:aria-label="__('Apply coupon code')"
 				>
 					<svg
@@ -562,7 +562,7 @@
 					<button
 						type="button"
 						@click="$emit('view-shift')"
-						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 active:bg-blue-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-blue-300 hover:bg-blue-50 active:bg-blue-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
 						:title="__('View current shift details')"
 					>
 						<div
@@ -597,7 +597,7 @@
 					<button
 						type="button"
 						@click="$emit('show-drafts')"
-						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 active:bg-purple-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-purple-300 hover:bg-purple-50 active:bg-purple-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
 						:title="__('View draft invoices')"
 					>
 						<div
@@ -626,7 +626,7 @@
 					<button
 						type="button"
 						@click="$emit('show-history')"
-						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
 						:title="__('View invoice history')"
 					>
 						<div
@@ -655,7 +655,7 @@
 					<button
 						type="button"
 						@click="$emit('show-return')"
-						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 active:bg-red-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-red-300 hover:bg-red-50 active:bg-red-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
 						:title="__('Process return invoice')"
 					>
 						<div
@@ -684,7 +684,7 @@
 					<button
 						type="button"
 						@click="$emit('close-shift')"
-						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 active:bg-orange-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-orange-300 hover:bg-orange-50 active:bg-orange-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
 						:title="__('Close current shift')"
 					>
 						<div
@@ -713,7 +713,7 @@
 					<button
 						type="button"
 						@click="$emit('create-customer', '')"
-						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 active:bg-green-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-green-300 hover:bg-green-50 active:bg-green-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
 						:title="__('Create new customer')"
 					>
 						<div
@@ -746,10 +746,10 @@
 					:key="item.item_code + '-' + (item.uom || '') + (item.is_free_item ? '-free' : '')"
 					@click="item.is_free_item ? null : openEditDialog(item)"
 					:class="[
-						'border rounded-md p-1.5 sm:p-2 transition-all duration-200',
+						'border rounded-neo-sm p-1.5 sm:p-2 transition-all duration-200',
 						item.is_free_item
 							? 'bg-green-50 border-green-300 cursor-default'
-							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-md active:scale-[0.99] cursor-pointer group'
+							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group'
 					]"
 				>
 					<div class="flex gap-1.5 sm:gap-2">
@@ -793,7 +793,16 @@
 									>
 										{{ item.item_name }}
 									</h4>
-									<!-- Free Item Badge -->
+									<!-- Special Instructions Badge (Restaurant mode) -->
+								<span
+									v-if="item.posa_special_instructions"
+									class="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[9px] font-bold flex-shrink-0"
+									:title="item.posa_special_instructions"
+								>
+									<svg class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+									{{ __("Note") }}
+								</span>
+								<!-- Free Item Badge -->
 									<span
 										v-if="item.free_qty && item.free_qty > 0"
 										class="inline-flex items-center px-1.5 py-0.5 bg-green-600 text-white rounded-full text-[9px] font-bold flex-shrink-0"
@@ -835,6 +844,17 @@
 										}}
 									</div>
 								</div>
+								<!-- Add Modifiers Button (Restaurant mode) -->
+								<button
+									v-if="!item.is_free_item && cartStore.restaurantTable"
+									type="button"
+									@click.stop="$emit('open-modifiers', item)"
+									class="text-gray-400 hover:text-blue-600 active:text-blue-700 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
+									:title="__('Add Note / Modifier')"
+								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+								</button>
+
 								<button
 									v-if="!item.is_free_item"
 									type="button"
@@ -1165,7 +1185,7 @@
 			</div>
 
 			<!-- Grand Total -->
-			<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2.5 mb-1.5">
+			<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-neo-md p-2.5 mb-1.5">
 				<div class="flex items-center justify-between">
 					<span class="text-sm font-extrabold text-gray-900">{{
 						__("Grand Total")
@@ -1186,10 +1206,10 @@
 					@click="handleProceedToPayment"
 					:disabled="items.length === 0"
 					:class="[
-						'flex-1 py-2.5 px-3 rounded-lg font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
+						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
 						items.length === 0
 							? 'bg-gray-300 cursor-not-allowed'
-							: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-lg hover:shadow-xl active:scale-[0.98]',
+							: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
 					]"
 					:aria-label="__('Proceed to payment')"
 				>
@@ -1214,7 +1234,7 @@
 					type="button"
 					v-if="items.length > 0"
 					@click="$emit('save-draft')"
-					class="flex-1 py-2.5 px-2 rounded-lg font-semibold text-xs text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 transition-all touch-manipulation active:scale-[0.98] flex items-center justify-center"
+					class="flex-1 py-2.5 px-2 rounded-neo-md font-semibold text-xs text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 transition-all touch-manipulation active:scale-[0.98] flex items-center justify-center"
 					:aria-label="__('Hold order as draft')"
 				>
 					<svg
@@ -1253,36 +1273,39 @@
  * IMPORTS
  * ============================================================================
  */
-import { usePOSCartStore } from "@/stores/posCart";
-import { usePOSSettingsStore } from "@/stores/posSettings";
-import { usePOSOffersStore } from "@/stores/posOffers";
-import { useCustomerSearchStore } from "@/stores/customerSearch";
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
-import { useFormatters } from "@/composables/useFormatters";
-import { useCartSort } from "@/composables/useCartSort";
-import { isOffline } from "@/utils/offline";
-import { offlineWorker } from "@/utils/offline/workerClient";
-import { logger } from "@/utils/logger";
-import { FeatherIcon } from "frappe-ui";
+import { usePOSCartStore } from "@/stores/posCart"
+import { usePOSSettingsStore } from "@/stores/posSettings"
+import { usePOSOffersStore } from "@/stores/posOffers"
+import { useCustomerSearchStore } from "@/stores/customerSearch"
+import {
+	DEFAULT_CURRENCY,
+	formatCurrency as formatCurrencyUtil,
+} from "@/utils/currency"
+import { useFormatters } from "@/composables/useFormatters"
+import { useCartSort } from "@/composables/useCartSort"
+import { isOffline } from "@/utils/offline"
+import { offlineWorker } from "@/utils/offline/workerClient"
+import { logger } from "@/utils/logger"
+import { FeatherIcon } from "frappe-ui"
 
-const log = logger.create("InvoiceCart");
-import { createResource } from "frappe-ui";
-import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
-import EditItemDialog from "./EditItemDialog.vue";
+const log = logger.create("InvoiceCart")
+import { createResource } from "frappe-ui"
+import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue"
+import EditItemDialog from "./EditItemDialog.vue"
 
 /**
  * ============================================================================
  * STORES & COMPOSABLES
  * ============================================================================
  */
-const cartStore = usePOSCartStore(); // Pinia store for cart state management
-const settingsStore = usePOSSettingsStore(); // Pinia store for POS settings
-const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
-const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
-const { formatQuantity } = useFormatters(); // Quantity formatting utilities
+const cartStore = usePOSCartStore() // Pinia store for cart state management
+const settingsStore = usePOSSettingsStore() // Pinia store for POS settings
+const offersStore = usePOSOffersStore() // Pinia store for offers/promotions
+const customerSearchStore = useCustomerSearchStore() // Pinia store for customer search
+const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
-	emit("proceed-to-payment");
+	emit("proceed-to-payment")
 }
 
 /**
@@ -1335,7 +1358,7 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
-});
+})
 
 /**
  * ============================================================================
@@ -1358,21 +1381,28 @@ const emit = defineEmits([
 	"remove-offer", // (offerId) - Remove applied offer
 	"update-uom", // (itemCode, newUom) - Change item's unit of measure
 	"edit-item", // (item) - Open item edit dialog
+	"open-modifiers", // (item) - Open special instructions dialog (restaurant mode)
 	"view-shift", // () - View current shift details
 	"show-drafts", // () - Show draft/held orders
 	"show-history", // () - Show invoice history
 	"show-return", // () - Open return invoice dialog
 	"close-shift", // () - Close current shift
 	// "create-sales-order", // () - Create Sales Order // Removed as per instruction
-]);
+])
 
 // Cart sort composable (must be after defineProps)
 const {
-	cartSortBy, cartSortOrder, showCartSortDropdown,
+	cartSortBy,
+	cartSortOrder,
+	showCartSortDropdown,
 	sortedItems,
-	CART_SORT_OPTIONS, CART_SORT_ICONS,
-	toggleCartSortDropdown, handleCartSortToggle, getCartSortLabel, getCartSortIconState,
-} = useCartSort(() => props.items);
+	CART_SORT_OPTIONS,
+	CART_SORT_ICONS,
+	toggleCartSortDropdown,
+	handleCartSortToggle,
+	getCartSortLabel,
+	getCartSortIconState,
+} = useCartSort(() => props.items)
 
 /**
  * ============================================================================
@@ -1380,25 +1410,27 @@ const {
  * ============================================================================
  */
 // Customer search state
-const customerSearch = ref(""); // Current search query
-const customerSearchContainer = ref(null); // Ref to search container for click-outside detection
-const customerSearchFocused = ref(false); // Track if search input is focused
+const customerSearch = ref("") // Current search query
+const customerSearchContainer = ref(null) // Ref to search container for click-outside detection
+const customerSearchFocused = ref(false) // Track if search input is focused
 // Use Pinia store for allCustomers (shared with CustomerDialog, synced on customer creation)
-const allCustomers = computed(() => customerSearchStore.allCustomers);
-const customersLoaded = computed(() => customerSearchStore.allCustomers.length > 0);
-const selectedIndex = ref(-1); // Keyboard navigation index for search results
-const availableGiftCards = ref([]); // Available gift cards for current customer
-const previousCustomer = ref(null); // Store previous customer for restore on blur
+const allCustomers = computed(() => customerSearchStore.allCustomers)
+const customersLoaded = computed(
+	() => customerSearchStore.allCustomers.length > 0,
+)
+const selectedIndex = ref(-1) // Keyboard navigation index for search results
+const availableGiftCards = ref([]) // Available gift cards for current customer
+const previousCustomer = ref(null) // Store previous customer for restore on blur
 
 // Edit item dialog state
-const showEditDialog = ref(false); // Controls edit dialog visibility
-const selectedItem = ref(null); // Item being edited
+const showEditDialog = ref(false) // Controls edit dialog visibility
+const selectedItem = ref(null) // Item being edited
 
 // UOM dropdown state - tracks which item's UOM dropdown is open (by item_code)
-const openUomDropdown = ref(null);
+const openUomDropdown = ref(null)
 
 // Cart sort dropdown container (template ref for outside-click detection)
-const cartSortContainer = ref(null);
+const cartSortContainer = ref(null)
 
 /**
  * ============================================================================
@@ -1417,13 +1449,13 @@ const cartSortContainer = ref(null);
  */
 // Load customers via the shared Pinia store (if not already loaded)
 if (props.posProfile) {
-	customerSearchStore.loadAllCustomers(props.posProfile);
+	customerSearchStore.loadAllCustomers(props.posProfile)
 }
 
 // Load offers on component init (uses shared store method to prevent duplicate fetches)
 // ensureOffersFetched handles both online/offline cases and caching
 if (props.posProfile) {
-	offersStore.ensureOffersFetched(props.posProfile);
+	offersStore.ensureOffersFetched(props.posProfile)
 }
 
 /**
@@ -1442,13 +1474,13 @@ const giftCardsResource = createResource({
 		return {
 			customer: props.customer?.name || props.customer,
 			company: props.posProfile, // Will get company from profile
-		};
+		}
 	},
 	auto: false,
 	onSuccess(data) {
-		availableGiftCards.value = data?.message || data || [];
+		availableGiftCards.value = data?.message || data || []
 	},
-});
+})
 
 /**
  * Watch for customer changes to load their gift cards.
@@ -1459,12 +1491,12 @@ watch(
 	() => props.customer,
 	(newCustomer) => {
 		if (newCustomer && props.posProfile && !isOffline()) {
-			giftCardsResource.reload();
+			giftCardsResource.reload()
 		} else {
-			availableGiftCards.value = [];
+			availableGiftCards.value = []
 		}
-	}
-);
+	},
+)
 
 /**
  * ============================================================================
@@ -1477,19 +1509,19 @@ watch(
  * Used for the badge on the "Offers" button.
  * @returns {Number} Count of applied offers
  */
-const appliedOfferCount = computed(() => (props.appliedOffers || []).length);
+const appliedOfferCount = computed(() => (props.appliedOffers || []).length)
 
 /**
  * Pre-computed customer lookup map for O(1) access by ID.
  * Rebuilt when allCustomers changes.
  */
 const customerMap = computed(() => {
-	const map = new Map();
+	const map = new Map()
 	for (const cust of allCustomers.value) {
-		map.set(cust.name, cust);
+		map.set(cust.name, cust)
 	}
-	return map;
-});
+	return map
+})
 
 /**
  * Instant customer search results with in-memory filtering.
@@ -1501,7 +1533,7 @@ const customerMap = computed(() => {
  * @returns {Array} Filtered customer objects matching search query
  */
 const customerResults = computed(() => {
-	const searchValue = customerSearch.value.trim().toLowerCase();
+	const searchValue = customerSearch.value.trim().toLowerCase()
 
 	// When focused with no/short search term, show frequent customers (top 5)
 	if (searchValue.length < 2) {
@@ -1517,34 +1549,34 @@ const customerResults = computed(() => {
 			// 	return frequentCustomers;
 			// }
 			// If no frequent customers, show first 5 from the list
-			return allCustomers.value.slice(0, 10);
+			return allCustomers.value.slice(0, 10)
 		}
-		return [];
+		return []
 	}
 
 	// Instant in-memory filter
 	return allCustomers.value
 		.filter((cust) => {
-			const name = (cust.customer_name || "").toLowerCase();
-			const mobile = (cust.mobile_no || "").toLowerCase();
-			const id = (cust.name || "").toLowerCase();
+			const name = (cust.customer_name || "").toLowerCase()
+			const mobile = (cust.mobile_no || "").toLowerCase()
+			const id = (cust.name || "").toLowerCase()
 
 			return (
 				name.includes(searchValue) ||
 				mobile.includes(searchValue) ||
 				id.includes(searchValue)
-			);
+			)
 		})
-		.slice(0, 20);
-});
+		.slice(0, 20)
+})
 
 /**
  * Reset keyboard selection index when search results change.
  * Ensures the selection doesn't point to a non-existent result.
  */
 watch(customerResults, () => {
-	selectedIndex.value = -1;
-});
+	selectedIndex.value = -1
+})
 
 /**
  * Total quantity of all items in cart (including free items).
@@ -1553,12 +1585,12 @@ watch(customerResults, () => {
  */
 const totalQuantity = computed(() => {
 	return props.items.reduce((sum, item) => {
-		const qty = item.quantity || 0;
+		const qty = item.quantity || 0
 		// For dedicated free item rows, quantity IS the free qty — don't double-count
-		const freeQty = item.is_free_item ? 0 : (item.free_qty || 0);
-		return sum + qty + freeQty;
-	}, 0);
-});
+		const freeQty = item.is_free_item ? 0 : item.free_qty || 0
+		return sum + qty + freeQty
+	}, 0)
+})
 
 /**
  * Display subtotal adjusted for tax-inclusive mode.
@@ -1577,11 +1609,11 @@ const displaySubtotal = computed(() => {
 	if (cartStore.taxInclusive) {
 		// Tax inclusive: subtotal from store is gross (includes tax)
 		// Display the net amount (before tax) for clarity
-		return props.subtotal - props.taxAmount;
+		return props.subtotal - props.taxAmount
 	}
 	// Tax exclusive: subtotal is already net (before tax)
-	return props.subtotal;
-});
+	return props.subtotal
+})
 
 /**
  * Display grand total that visually equals Subtotal + Tax - Discount.
@@ -1594,8 +1626,8 @@ const displaySubtotal = computed(() => {
 const displayGrandTotal = computed(() => {
 	// Always: displaySubtotal + tax - discount
 	// This makes the display consistent and intuitive
-	return displaySubtotal.value + props.taxAmount - props.discountAmount;
-});
+	return displaySubtotal.value + props.taxAmount - props.discountAmount
+})
 
 /**
  * ============================================================================
@@ -1613,21 +1645,21 @@ const displayGrandTotal = computed(() => {
  * @param {Event} event - Input event from search field
  */
 function handleSearchInput(event) {
-	customerSearch.value = event.target.value;
+	customerSearch.value = event.target.value
 }
 
 // Track if customer history has been loaded this session
-const customerHistoryLoaded = ref(false);
+const customerHistoryLoaded = ref(false)
 
 /**
  * Handle search input focus - shows frequent customers dropdown.
  */
 function handleSearchFocus() {
-	customerSearchFocused.value = true;
+	customerSearchFocused.value = true
 	// Load customer history only once per session for faster subsequent focuses
 	if (!customerHistoryLoaded.value) {
-		customerSearchStore.loadCustomerHistory();
-		customerHistoryLoaded.value = true;
+		customerSearchStore.loadCustomerHistory()
+		customerHistoryLoaded.value = true
 	}
 }
 
@@ -1638,8 +1670,8 @@ function handleSearchFocus() {
 function handleSearchBlur() {
 	// Reduced delay - mousedown.prevent handles most cases, this is just for keyboard nav
 	setTimeout(() => {
-		customerSearchFocused.value = false;
-	}, 100);
+		customerSearchFocused.value = false
+	}, 100)
 }
 
 /**
@@ -1652,24 +1684,30 @@ function handleSearchBlur() {
  * @param {KeyboardEvent} event - Keyboard event from search input
  */
 function handleKeydown(event) {
-	if (customerResults.value.length === 0) return;
+	if (customerResults.value.length === 0) return
 
 	if (event.key === "ArrowDown") {
-		event.preventDefault();
-		selectedIndex.value = Math.min(selectedIndex.value + 1, customerResults.value.length - 1);
+		event.preventDefault()
+		selectedIndex.value = Math.min(
+			selectedIndex.value + 1,
+			customerResults.value.length - 1,
+		)
 	} else if (event.key === "ArrowUp") {
-		event.preventDefault();
-		selectedIndex.value = Math.max(selectedIndex.value - 1, -1);
+		event.preventDefault()
+		selectedIndex.value = Math.max(selectedIndex.value - 1, -1)
 	} else if (event.key === "Enter") {
-		event.preventDefault();
-		if (selectedIndex.value >= 0 && selectedIndex.value < customerResults.value.length) {
-			selectCustomer(customerResults.value[selectedIndex.value]);
+		event.preventDefault()
+		if (
+			selectedIndex.value >= 0 &&
+			selectedIndex.value < customerResults.value.length
+		) {
+			selectCustomer(customerResults.value[selectedIndex.value])
 		} else if (customerResults.value.length === 1) {
 			// Auto-select if only one result
-			selectCustomer(customerResults.value[0]);
+			selectCustomer(customerResults.value[0])
 		}
 	} else if (event.key === "Escape") {
-		customerSearch.value = "";
+		customerSearch.value = ""
 	}
 }
 
@@ -1681,12 +1719,12 @@ function handleKeydown(event) {
  */
 function selectCustomer(cust) {
 	// Track selection for frequent customers feature
-	customerSearchStore.trackCustomerSelection(cust.name);
-	emit("select-customer", cust);
-	customerSearch.value = "";
-	selectedIndex.value = -1;
-	customerSearchFocused.value = false;
-	previousCustomer.value = null;
+	customerSearchStore.trackCustomerSelection(cust.name)
+	emit("select-customer", cust)
+	customerSearch.value = ""
+	selectedIndex.value = -1
+	customerSearchFocused.value = false
+	previousCustomer.value = null
 }
 
 /**
@@ -1694,8 +1732,8 @@ function selectCustomer(cust) {
  * Clears the customer and focuses the search input.
  */
 async function removeCustomer() {
-	previousCustomer.value = null;
-	await clearCustomer();
+	previousCustomer.value = null
+	await clearCustomer()
 }
 
 /**
@@ -1703,11 +1741,11 @@ async function removeCustomer() {
  * Emits select-customer with null to deselect.
  */
 async function clearCustomer() {
-	emit("select-customer", null);
-	await nextTick();
-	const searchInput = document.getElementById("cart-customer-search");
+	emit("select-customer", null)
+	await nextTick()
+	const searchInput = document.getElementById("cart-customer-search")
 	if (searchInput) {
-		searchInput.focus();
+		searchInput.focus()
 	}
 }
 
@@ -1716,12 +1754,12 @@ async function clearCustomer() {
  * Pre-fills the new customer name with the search query.
  */
 function createNewCustomer() {
-	const searchValue = customerSearch.value;
+	const searchValue = customerSearch.value
 	// Close dropdown immediately
-	customerSearch.value = "";
-	customerSearchFocused.value = false;
+	customerSearch.value = ""
+	customerSearchFocused.value = false
 	// Emit event to open customer creation dialog
-	emit("create-customer", searchValue);
+	emit("create-customer", searchValue)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1736,15 +1774,15 @@ function createNewCustomer() {
  * @returns {String} 2-letter initials (uppercase)
  */
 function getInitials(name) {
-	if (!name || !name.trim()) return "?";
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	if (parts.length === 0) return "?";
-	const first = Array.from(parts[0])[0] || "?";
+	if (!name || !name.trim()) return "?"
+	const parts = name.trim().split(/\s+/).filter(Boolean)
+	if (parts.length === 0) return "?"
+	const first = Array.from(parts[0])[0] || "?"
 	if (parts.length >= 2) {
-		const second = Array.from(parts[1])[0] || "?";
-		return (first + second).toUpperCase();
+		const second = Array.from(parts[1])[0] || "?"
+		return (first + second).toUpperCase()
 	}
-	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase();
+	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase()
 }
 
 /**
@@ -1755,7 +1793,7 @@ function getInitials(name) {
  * @returns {String} Formatted currency string (e.g., "$1,234.56")
  */
 function formatCurrency(amount) {
-	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency);
+	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1773,29 +1811,29 @@ function formatCurrency(amount) {
 function getSmartStep(quantity) {
 	// Check if it's a whole number
 	if (quantity === Math.floor(quantity)) {
-		return 1;
+		return 1
 	}
 
 	// Round to 4 decimal places to avoid floating point errors
-	const rounded = Math.round(quantity * 10000) / 10000;
+	const rounded = Math.round(quantity * 10000) / 10000
 
 	// Check if it's a multiple of 0.5
 	if (Math.abs(rounded % 0.5) < 0.0001) {
-		return 0.5;
+		return 0.5
 	}
 
 	// Check if it's a multiple of 0.25
 	if (Math.abs(rounded % 0.25) < 0.0001) {
-		return 0.25;
+		return 0.25
 	}
 
 	// Check if it's a multiple of 0.1
 	if (Math.abs(rounded % 0.1) < 0.0001) {
-		return 0.1;
+		return 0.1
 	}
 
 	// For other decimals, use 0.01 for fine control
-	return 0.01;
+	return 0.01
 }
 
 /**
@@ -1806,11 +1844,11 @@ function getSmartStep(quantity) {
  */
 function incrementQuantity(item) {
 	// Prevent editing resolved barcode items
-	if (item.is_resolved_barcode) return;
+	if (item.is_resolved_barcode) return
 
-	const step = getSmartStep(item.quantity);
-	const newQty = Math.round((item.quantity + step) * 10000) / 10000;
-	emit("update-quantity", item.item_code, newQty, item.uom);
+	const step = getSmartStep(item.quantity)
+	const newQty = Math.round((item.quantity + step) * 10000) / 10000
+	emit("update-quantity", item.item_code, newQty, item.uom)
 }
 
 /**
@@ -1821,16 +1859,16 @@ function incrementQuantity(item) {
  */
 function decrementQuantity(item) {
 	// Prevent editing resolved barcode items
-	if (item.is_resolved_barcode) return;
+	if (item.is_resolved_barcode) return
 
-	const step = getSmartStep(item.quantity);
-	const newQty = Math.round((item.quantity - step) * 10000) / 10000;
+	const step = getSmartStep(item.quantity)
+	const newQty = Math.round((item.quantity - step) * 10000) / 10000
 
 	if (newQty <= 0) {
 		// If quantity would be 0 or negative, remove the item
-		emit("remove-item", item.item_code, item.uom);
+		emit("remove-item", item.item_code, item.uom)
 	} else {
-		emit("update-quantity", item.item_code, newQty, item.uom);
+		emit("update-quantity", item.item_code, newQty, item.uom)
 	}
 }
 
@@ -1841,21 +1879,21 @@ function decrementQuantity(item) {
  * @param {Object} item - Cart item to update
  * @param {String} value - New quantity value from input
  */
-  
+
 function updateQuantity(item, value) {
 	// Prevent editing resolved barcode items
-	if (item.is_resolved_barcode) return;
+	if (item.is_resolved_barcode) return
 
-	const qty = Number.parseFloat(value);
+	const qty = Number.parseFloat(value)
 
 	// If the input isn't a valid number (e.g., user cleared the field), do nothing
-	if (isNaN(qty)) return;
+	if (isNaN(qty)) return
 
 	// If quantity is zero or negative, remove the item from the cart
-	if (qty <= 0) return emit("remove-item", item.item_code, item.uom);
+	if (qty <= 0) return emit("remove-item", item.item_code, item.uom)
 
 	// For positive numbers, update quantity immediately (no rounding here while typing)
-	emit("update-quantity", item.item_code, qty, item.uom);
+	emit("update-quantity", item.item_code, qty, item.uom)
 }
 
 /**
@@ -1870,12 +1908,12 @@ function handleQuantityBlur(item) {
 	// When user leaves the input field, round and validate
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item
-		emit("remove-item", item.item_code, item.uom);
+		emit("remove-item", item.item_code, item.uom)
 	} else {
 		// Round to 4 decimal places for consistency
-		const roundedQty = Math.round(item.quantity * 10000) / 10000;
+		const roundedQty = Math.round(item.quantity * 10000) / 10000
 		if (roundedQty !== item.quantity) {
-			emit("update-quantity", item.item_code, roundedQty, item.uom);
+			emit("update-quantity", item.item_code, roundedQty, item.uom)
 		}
 	}
 }
@@ -1889,8 +1927,8 @@ function handleQuantityBlur(item) {
  * Uses unique key combining item_code + uom to handle same item with different UOMs.
  */
 function toggleUomDropdown(itemCode, uom) {
-	const key = `${itemCode}-${uom}`;
-	openUomDropdown.value = openUomDropdown.value === key ? null : key;
+	const key = `${itemCode}-${uom}`
+	openUomDropdown.value = openUomDropdown.value === key ? null : key
 }
 
 /**
@@ -1899,14 +1937,14 @@ function toggleUomDropdown(itemCode, uom) {
  */
 async function selectUom(item, newUom) {
 	if (item.uom === newUom) {
-		openUomDropdown.value = null;
-		return;
+		openUomDropdown.value = null
+		return
 	}
 
-	const currentUom = item.uom || item.stock_uom;
-	await cartStore.changeItemUOM(item.item_code, newUom, currentUom);
-	openUomDropdown.value = null;
-	emit("update-uom", item.item_code, newUom);
+	const currentUom = item.uom || item.stock_uom
+	await cartStore.changeItemUOM(item.item_code, newUom, currentUom)
+	openUomDropdown.value = null
+	emit("update-uom", item.item_code, newUom)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1921,8 +1959,8 @@ async function selectUom(item, newUom) {
  * @param {Object} item - Cart item to edit
  */
 function openEditDialog(item) {
-	selectedItem.value = { ...item };
-	showEditDialog.value = true;
+	selectedItem.value = { ...item }
+	showEditDialog.value = true
 }
 
 /**
@@ -1933,11 +1971,15 @@ function openEditDialog(item) {
  */
 async function handleUpdateItem(updatedItem) {
 	// Get the original UOM from selectedItem (before any changes)
-	const originalUom = selectedItem.value?.uom || selectedItem.value?.stock_uom;
+	const originalUom = selectedItem.value?.uom || selectedItem.value?.stock_uom
 	// Use store method to update item, passing original UOM to identify correct item
-	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem, originalUom);
+	await cartStore.updateItemDetails(
+		updatedItem.item_code,
+		updatedItem,
+		originalUom,
+	)
 	// Also emit for parent component compatibility
-	emit("edit-item", updatedItem);
+	emit("edit-item", updatedItem)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1945,7 +1987,7 @@ async function handleUpdateItem(updatedItem) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function selectDocType(type) {
-	cartStore.setTargetDoctype(type);
+	cartStore.setTargetDoctype(type)
 }
 
 /**
@@ -1957,7 +1999,7 @@ function selectDocType(type) {
  * @param {MouseEvent} event - Click event
  */
 function handleOutsideClick(event) {
-	const target = event.target;
+	const target = event.target
 
 	// Close customer search if clicking outside
 	if (
@@ -1965,12 +2007,12 @@ function handleOutsideClick(event) {
 		target instanceof Node &&
 		!customerSearchContainer.value.contains(target)
 	) {
-		customerSearch.value = "";
+		customerSearch.value = ""
 
 		// Restore previous customer if set and no customer selected
 		if (previousCustomer.value && !props.customer) {
-			emit("select-customer", previousCustomer.value);
-			previousCustomer.value = null;
+			emit("select-customer", previousCustomer.value)
+			previousCustomer.value = null
 		}
 	}
 
@@ -1978,9 +2020,9 @@ function handleOutsideClick(event) {
 	if (openUomDropdown.value !== null) {
 		// Check if click is outside all UOM dropdowns
 		const clickedInsideUomDropdown =
-			target instanceof Element && target.closest(".group\\/uom");
+			target instanceof Element && target.closest(".group\\/uom")
 		if (!clickedInsideUomDropdown) {
-			openUomDropdown.value = null;
+			openUomDropdown.value = null
 		}
 	}
 
@@ -1991,7 +2033,7 @@ function handleOutsideClick(event) {
 		target instanceof Node &&
 		!cartSortContainer.value.contains(target)
 	) {
-		showCartSortDropdown.value = false;
+		showCartSortDropdown.value = false
 	}
 }
 
@@ -2000,19 +2042,19 @@ function handleOutsideClick(event) {
  * Used for click-outside detection on dropdowns.
  */
 onMounted(() => {
-	if (typeof document === "undefined") return;
+	if (typeof document === "undefined") return
 	// Use mousedown instead of click to catch events before they are swallowed by other handlers
-	document.addEventListener("mousedown", handleOutsideClick);
-});
+	document.addEventListener("mousedown", handleOutsideClick)
+})
 
 /**
  * Component unmounting - cleanup global click listener.
  * Prevents memory leaks by removing event listener.
  */
 onBeforeUnmount(() => {
-	if (typeof document === "undefined") return;
-	document.removeEventListener("mousedown", handleOutsideClick);
-});
+	if (typeof document === "undefined") return
+	document.removeEventListener("mousedown", handleOutsideClick)
+})
 
 /**
  * Expose methods to parent component.
@@ -2020,6 +2062,6 @@ onBeforeUnmount(() => {
  */
 defineExpose({
 	openEditDialog,
-});
+})
 </script>
 ```

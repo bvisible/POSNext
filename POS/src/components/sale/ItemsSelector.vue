@@ -1,14 +1,14 @@
 <template>
-	<div class="flex flex-col h-full bg-gray-50">
+	<div class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
 		<!-- Item Groups Filter Tabs -->
 		<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
 			<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
 				<button
 					@click="handleAllFilterClick"
 					:class="[
-						'flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0',
+						'flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0',
 						!activeFilterValue
-							? 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-sm'
+							? 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
 							: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100',
 					]"
 				>
@@ -22,9 +22,9 @@
 					:key="option.value"
 					@click="handleFilterClick(option.value)"
 					:class="[
-						'flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0',
+						'flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0',
 						activeFilterValue === option.value
-							? 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-sm'
+							? 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
 							: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100',
 					]"
 				>
@@ -73,7 +73,7 @@
 						type="text"
 						:placeholder="searchPlaceholder"
 						:class="[
-							'w-full text-[11px] sm:text-sm border rounded-lg px-2 sm:px-3 py-2 ps-7 sm:ps-10 pe-16 sm:pe-24 focus:outline-none transition-all',
+							'w-full text-[11px] sm:text-sm border rounded-neo-sm px-2 sm:px-3 py-2 ps-7 sm:ps-10 pe-16 sm:pe-24 focus:outline-none transition-all',
 							autoAddEnabled
 								? 'border-blue-400 bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 								: scannerEnabled
@@ -117,7 +117,7 @@
 						</button>
 					</div>
 				</div>
-				<div class="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
+				<div class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0">
 					<button
 						@click="setViewMode('grid')"
 						:class="[
@@ -152,9 +152,9 @@
 						@click="toggleSortDropdown"
 						data-sort-button
 						:class="[
-							'p-1.5 sm:p-2 rounded-lg transition-[background-color,box-shadow] duration-75 touch-manipulation border',
+							'p-1.5 sm:p-2 rounded-neo-sm transition-[background-color,box-shadow] duration-75 touch-manipulation border',
 							sortBy
-								? 'bg-blue-50 border-blue-400 text-blue-700 shadow-sm'
+								? 'bg-blue-50 border-blue-400 text-blue-700 shadow-neo'
 								: 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100'
 						]"
 						:title="sortBy
@@ -173,7 +173,7 @@
 					<div
 						v-if="showSortDropdown"
 						@click.stop
-						class="absolute end-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]"
+						class="absolute end-0 mt-1 w-56 bg-white rounded-neo-md shadow-neo-lg border border-gray-200 z-[9999]"
 						style="box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);"
 					>
 						<div class="py-2">
@@ -285,7 +285,7 @@
 						@touchend.passive="getOptimizedClickHandler(item).touchend"
 						@click="getOptimizedClickHandler(item).click"
 						:class="[
-							'group relative bg-white border border-gray-200 rounded-lg p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100 cursor-pointer hover:border-blue-400 hover:shadow-md',
+							'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100 cursor-pointer hover:border-blue-400 hover:shadow-neo-md',
 						]"
 					>
 						<!-- Stock Badge - Tap to select, long press to view warehouse availability -->
@@ -309,7 +309,7 @@
 						</div>
 
 						<!-- Item Image -->
-						<div class="relative aspect-square bg-gray-100 rounded-md mb-1.5 sm:mb-2 overflow-hidden">
+						<div class="relative aspect-square bg-gray-100 rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden">
 							<!-- Image with conditional blur on hover -->
 							<div :class="[
 								'w-full h-full transition-all duration-300',
@@ -723,7 +723,10 @@ import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useStock } from "@/composables/useStock"
 import { useDialogState } from "@/composables/useDialogState"
 import { useSearchInput } from "@/composables/useSearchInput"
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import {
+	DEFAULT_CURRENCY,
+	formatCurrency as formatCurrencyUtil,
+} from "@/utils/currency"
 import { useToast } from "@/composables/useToast"
 import { storeToRefs } from "pinia"
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
@@ -731,7 +734,7 @@ import {
 	createOptimizedClickHandler,
 	throttleRAF,
 	addPassiveListener,
-	runWhenIdle
+	runWhenIdle,
 } from "@/utils/lowEndOptimizations"
 import { performanceConfig } from "@/utils/performanceConfig"
 import { shouldValidateItemStock } from "@/utils/stockValidator"
@@ -777,14 +780,22 @@ const {
 
 // Search input composable — owns search/scanner state, timers, concurrency
 const {
-	searchInputRef, scannerEnabled, autoAddEnabled,
-	handleSearchInput, handleKeyDown, handleSearchClick,
-	toggleBarcodeScanner, toggleAutoAdd, focusSearchInput,
+	searchInputRef,
+	scannerEnabled,
+	autoAddEnabled,
+	handleSearchInput,
+	handleKeyDown,
+	handleSearchClick,
+	toggleBarcodeScanner,
+	toggleAutoAdd,
+	focusSearchInput,
 	clearSearchAndResetInput,
 	cleanup: cleanupSearchInput,
 } = useSearchInput({
-	itemStore, onItemFound: selectItem,
-	showWarning, isAnyDialogOpen,
+	itemStore,
+	onItemFound: selectItem,
+	showWarning,
+	isAnyDialogOpen,
 })
 
 // Local state
@@ -808,7 +819,7 @@ const scrollCleanupFns = ref([])
 
 // Pagination state (for client-side display)
 const currentPage = ref(1)
-const itemsPerPage = ref(performanceConfig.get('itemsPerPage') || 100)
+const itemsPerPage = ref(performanceConfig.get("itemsPerPage") || 100)
 const lastFilterSignature = ref("")
 
 // Computed paginated items — server fetches one page at a time,
@@ -847,44 +858,44 @@ const SEARCH_PLACEHOLDERS = Object.freeze({
 // Sort configuration
 const BASE_SORT_OPTIONS = Object.freeze([
 	{
-		field: 'name',
-		label: __('Name'),
-		icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
+		field: "name",
+		label: __("Name"),
+		icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
 	},
 	{
-		field: 'quantity',
-		label: __('Quantity'),
-		icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
+		field: "quantity",
+		label: __("Quantity"),
+		icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
 	},
 	{
-		field: 'price',
-		label: __('Price'),
-		icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+		field: "price",
+		label: __("Price"),
+		icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
 	},
 	{
-		field: 'item_code',
-		label: __('Item Code'),
-		icon: 'M7 20l4-16m2 16l4-16M6 9h14M4 15h14'
-	}
+		field: "item_code",
+		label: __("Item Code"),
+		icon: "M7 20l4-16m2 16l4-16M6 9h14M4 15h14",
+	},
 ])
 
 const CONTEXT_SORT_OPTIONS = Object.freeze({
 	brand: {
-		field: 'brand',
-		label: __('Brand'),
-		icon: 'M20 13V7a2 2 0 00-2-2h-4V3H10v2H6a2 2 0 00-2 2v6M8 21h8a2 2 0 002-2v-5H6v5a2 2 0 002 2z'
+		field: "brand",
+		label: __("Brand"),
+		icon: "M20 13V7a2 2 0 00-2-2h-4V3H10v2H6a2 2 0 00-2 2v6M8 21h8a2 2 0 002-2v-5H6v5a2 2 0 002 2z",
 	},
 	item_group: {
-		field: 'item_group',
-		label: __('Item Group'),
-		icon: 'M9 12l2 2 4-4m5.586 1.414l-6.172 6.172a2 2 0 01-2.828 0L3.414 9.414a2 2 0 010-2.828l6.172-6.172a2 2 0 012.828 0l8.172 8.172a2 2 0 010 2.828z'
+		field: "item_group",
+		label: __("Item Group"),
+		icon: "M9 12l2 2 4-4m5.586 1.414l-6.172 6.172a2 2 0 01-2.828 0L3.414 9.414a2 2 0 010-2.828l6.172-6.172a2 2 0 012.828 0l8.172 8.172a2 2 0 010 2.828z",
 	},
 })
 
 const SORT_ICONS = Object.freeze({
-	ascending: 'M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12',
-	descending: 'M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4',
-	inactive: 'M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4'
+	ascending: "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12",
+	descending: "M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4",
+	inactive: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4",
 })
 
 const searchMode = computed(() => {
@@ -900,7 +911,7 @@ const searchMode = computed(() => {
 })
 
 const searchPlaceholder = computed(() => SEARCH_PLACEHOLDERS[searchMode.value])
-const isBrandSortActive = computed(() => sortBy.value === 'brand')
+const isBrandSortActive = computed(() => sortBy.value === "brand")
 const sortOptions = computed(() => {
 	// Context switcher:
 	// - In Item Group mode, offer Brand.
@@ -917,15 +928,20 @@ const sortOptions = computed(() => {
 		BASE_SORT_OPTIONS[3],
 	]
 })
-const activeFilterValue = computed(() => (
-	isBrandSortActive.value ? selectedBrand.value : selectedItemGroup.value
-))
-const activeFilterOptions = computed(() => (
+const activeFilterValue = computed(() =>
+	isBrandSortActive.value ? selectedBrand.value : selectedItemGroup.value,
+)
+const activeFilterOptions = computed(() =>
 	isBrandSortActive.value
 		? (brands.value || []).map((b) => ({ value: b.brand, label: b.brand }))
-		: (itemGroups.value || []).map((g) => ({ value: g.item_group, label: g.item_group }))
-))
-const selectedFilterLabel = computed(() => selectedBrand.value || selectedItemGroup.value || null)
+		: (itemGroups.value || []).map((g) => ({
+				value: g.item_group,
+				label: g.item_group,
+			})),
+)
+const selectedFilterLabel = computed(
+	() => selectedBrand.value || selectedItemGroup.value || null,
+)
 
 // Watch for cart items and pos profile changes (optimized - uses length + hash instead of deep watch)
 // Tracks: length, item_code, quantity, and amount to detect all cart changes including array replacements
@@ -935,7 +951,7 @@ watch(
 	() => {
 		itemStore.setCartItems(props.cartItems)
 	},
-	{ immediate: true, flush: 'sync' }, // Synchronous to ensure immediate stock updates
+	{ immediate: true, flush: "sync" }, // Synchronous to ensure immediate stock updates
 )
 
 watch(
@@ -1012,26 +1028,26 @@ onMounted(() => {
 
 	// Add passive scroll listeners for better performance
 	// Only bind to the currently active view
-	if (viewMode.value === 'grid' && gridScrollContainer.value) {
+	if (viewMode.value === "grid" && gridScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			gridScrollContainer.value,
-			'scroll',
+			"scroll",
 			handleScroll,
-			{ passive: true }
+			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
-	} else if (viewMode.value === 'list' && listScrollContainer.value) {
+	} else if (viewMode.value === "list" && listScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			listScrollContainer.value,
-			'scroll',
+			"scroll",
 			handleScroll,
-			{ passive: true }
+			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
 	}
 
 	// Add click outside listener for sort dropdown
-	document.addEventListener('click', handleClickOutside)
+	document.addEventListener("click", handleClickOutside)
 })
 
 onUnmounted(() => {
@@ -1045,7 +1061,7 @@ onUnmounted(() => {
 	}
 
 	// Cleanup passive listeners
-	scrollCleanupFns.value.forEach(cleanup => cleanup())
+	scrollCleanupFns.value.forEach((cleanup) => cleanup())
 	scrollCleanupFns.value = []
 
 	// Clear handlers and timers
@@ -1054,7 +1070,7 @@ onUnmounted(() => {
 	cleanupSearchInput()
 
 	// Remove click outside listener for sort dropdown
-	document.removeEventListener('click', handleClickOutside)
+	document.removeEventListener("click", handleClickOutside)
 })
 
 // Create optimized click handlers for better touch response
@@ -1063,11 +1079,14 @@ const optimizedClickHandlers = new Map()
 function getOptimizedClickHandler(item) {
 	const key = item.item_code
 	if (!optimizedClickHandlers.has(key)) {
-		const handler = createOptimizedClickHandler(() => {
-			handleItemClick(item.item_code)
-		}, {
-			feedback: true
-		})
+		const handler = createOptimizedClickHandler(
+			() => {
+				handleItemClick(item.item_code)
+			},
+			{
+				feedback: true,
+			},
+		)
 		optimizedClickHandlers.set(key, handler)
 	}
 	return optimizedClickHandlers.get(key)
@@ -1120,10 +1139,19 @@ function selectItem(item, autoAdd = false) {
 	if (!item) return false
 
 	// Early out-of-stock guard — full qty validation happens in cartStore.addItem()
-	if (!item.has_variants && settingsStore.shouldEnforceStockValidation() && shouldValidateItemStock(item)) {
+	if (
+		!item.has_variants &&
+		settingsStore.shouldEnforceStockValidation() &&
+		shouldValidateItemStock(item)
+	) {
 		const qty = item.actual_qty ?? item.stock_qty ?? 0
 		if (qty <= 0) {
-			showError(__('"{0}" is out of stock in warehouse "{1}".', [item.item_name, item.warehouse || '']))
+			showError(
+				__('"{0}" is out of stock in warehouse "{1}".', [
+					item.item_name,
+					item.warehouse || "",
+				]),
+			)
 			return false
 		}
 	}
@@ -1138,7 +1166,7 @@ function handleItemClick(itemCode) {
 		itemHandledByLongPress = false
 		return
 	}
-	const item = filteredItems.value.find(i => i.item_code === itemCode)
+	const item = filteredItems.value.find((i) => i.item_code === itemCode)
 	selectItem(item)
 }
 
@@ -1151,8 +1179,8 @@ function showWarehouseAvailability(item) {
 	warehouseDialogItem.value = {
 		itemCode: item.item_code,
 		itemName: item.item_name,
-		uom: item.uom || item.stock_uom || 'Nos',
-		company: settingsStore.company
+		uom: item.uom || item.stock_uom || "Nos",
+		company: settingsStore.company,
 	}
 	showWarehouseDialog.value = true
 }
@@ -1171,24 +1199,24 @@ watch(viewMode, async () => {
 	await nextTick()
 
 	// Clean up existing listeners
-	scrollCleanupFns.value.forEach(cleanup => cleanup())
+	scrollCleanupFns.value.forEach((cleanup) => cleanup())
 	scrollCleanupFns.value = []
 
 	// Rebind listeners to the new active container
-	if (viewMode.value === 'grid' && gridScrollContainer.value) {
+	if (viewMode.value === "grid" && gridScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			gridScrollContainer.value,
-			'scroll',
+			"scroll",
 			handleScroll,
-			{ passive: true }
+			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
-	} else if (viewMode.value === 'list' && listScrollContainer.value) {
+	} else if (viewMode.value === "list" && listScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			listScrollContainer.value,
-			'scroll',
+			"scroll",
 			handleScroll,
-			{ passive: true }
+			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
 	}
@@ -1287,16 +1315,16 @@ function handleSortToggle(field) {
 
 	// If clicking the same field, toggle between asc/desc
 	if (sortBy.value === field) {
-		const newOrder = sortOrder.value === 'asc' ? 'desc' : 'asc'
+		const newOrder = sortOrder.value === "asc" ? "desc" : "asc"
 		itemStore.setSortFilter(field, newOrder)
 	} else {
 		// New field - start with ascending
-		itemStore.setSortFilter(field, 'asc')
+		itemStore.setSortFilter(field, "asc")
 	}
 }
 
 watch(sortBy, async (newSortBy, oldSortBy) => {
-	if (newSortBy === 'brand') {
+	if (newSortBy === "brand") {
 		await itemStore.loadBrands()
 		if (selectedItemGroup.value) {
 			await itemStore.setSelectedItemGroup(null)
@@ -1304,27 +1332,34 @@ watch(sortBy, async (newSortBy, oldSortBy) => {
 		return
 	}
 
-	if (oldSortBy === 'brand' && selectedBrand.value) {
+	if (oldSortBy === "brand" && selectedBrand.value) {
 		await itemStore.setSelectedBrand(null)
 	}
 })
 
 function getSortLabel(sortByValue) {
-	return CONTEXT_SORT_OPTIONS[sortByValue]?.label
-		|| BASE_SORT_OPTIONS.find(opt => opt.field === sortByValue)?.label
-		|| sortByValue
+	return (
+		CONTEXT_SORT_OPTIONS[sortByValue]?.label ||
+		BASE_SORT_OPTIONS.find((opt) => opt.field === sortByValue)?.label ||
+		sortByValue
+	)
 }
 
 function getSortIconState(field) {
-	if (sortBy.value !== field) return 'inactive'
-	return sortOrder.value === 'asc' ? 'ascending' : 'descending'
+	if (sortBy.value !== field) return "inactive"
+	return sortOrder.value === "asc" ? "ascending" : "descending"
 }
 
 // Close dropdown when clicking outside
 function handleClickOutside(event) {
 	if (showSortDropdown.value) {
-		const dropdown = event.target.closest('.relative')
-		if (!dropdown || !dropdown.querySelector('button[data-sort-button]')?.contains(event.target)) {
+		const dropdown = event.target.closest(".relative")
+		if (
+			!dropdown ||
+			!dropdown
+				.querySelector("button[data-sort-button]")
+				?.contains(event.target)
+		) {
 			showSortDropdown.value = false
 		}
 	}

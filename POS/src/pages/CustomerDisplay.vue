@@ -76,31 +76,37 @@
 				<!-- Cart display -->
 				<DisplayCart class="flex-1" />
 
-				<!-- Customer creation sidebar -->
-				<transition
-					enter-active-class="transition-all duration-300"
-					leave-active-class="transition-all duration-300"
-					enter-from-class="opacity-0 translate-x-full"
-					leave-to-class="opacity-0 translate-x-full"
-				>
-					<div v-if="showCreateCustomer" class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-40">
-						<CreateCustomerModal
-							:show-address="displayStore.displaySettings.showAddressFields"
-							@close="showCreateCustomer = false"
-							@created="handleCustomerCreated"
-						/>
-					</div>
-				</transition>
+				<!-- Customer creation dialog -->
+				<Teleport to="body">
+					<transition
+						enter-active-class="transition-all duration-200 ease-out"
+						leave-active-class="transition-all duration-150 ease-in"
+						enter-from-class="opacity-0"
+						leave-to-class="opacity-0"
+					>
+						<div v-if="showCreateCustomer" class="fixed inset-0 z-50 flex items-center justify-center">
+							<div class="absolute inset-0 bg-black/40" @click="showCreateCustomer = false"></div>
+							<div class="relative w-full max-w-md mx-4 bg-white rounded-neo-lg shadow-neo-lg max-h-[90vh] overflow-y-auto">
+								<CreateCustomerModal
+									:show-address="displayStore.displaySettings.showAddressFields"
+									@close="showCreateCustomer = false"
+									@created="handleCustomerCreated"
+								/>
+							</div>
+						</div>
+					</transition>
+				</Teleport>
 			</div>
 
-			<!-- Floating "Create Account" button (bottom right) -->
-			<div v-if="displayStore.displaySettings.enableAccountCreation" class="fixed bottom-8 right-8 z-30">
+			<!-- Create Account bar (bottom) -->
+			<div v-if="displayStore.displaySettings.enableAccountCreation" class="flex-shrink-0 border-t border-gray-200 bg-white">
 				<button
-					class="flex items-center gap-3 px-6 py-4 text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95"
+					class="w-full flex items-center justify-center gap-3 py-4 text-base font-semibold text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
 					@click="showCreateCustomer = true"
 				>
-					<FeatherIcon name="user-plus" class="w-6 h-6" />
-					<span>{{ __("Create Account") }}</span>
+					<FeatherIcon name="user-plus" class="w-5 h-5" />
+					<span v-if="displayStore.displaySettings.hasLoyaltyProgram">{{ __("Create an account to earn loyalty points") }}</span>
+					<span v-else>{{ __("Create an account") }}</span>
 				</button>
 			</div>
 		</div>
