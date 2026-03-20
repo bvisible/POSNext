@@ -124,9 +124,9 @@
 							</div>
 						</div>
 
-						<!-- Document Type Card -->
+						<!-- Document Type Card (hidden in restaurant mode) -->
 						<div
-							v-if="settingsStore.allowSalesOrder"
+							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo flex-shrink-0"
 						>
 							<div class="flex items-center bg-gray-100 rounded-lg p-0.5">
