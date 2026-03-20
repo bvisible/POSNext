@@ -304,30 +304,32 @@ async function handleAddTable() {
  */
 function autoLayoutTables() {
 	const tbls = filteredTables.value
-	if (tbls.length === 0) return
+	if (tbls.length < 2) return
 
 	// Check if all tables are stacked at origin (no layout done yet)
-	const allAtOrigin = tbls.every(t => (!t.pos_x || t.pos_x === 0) && (!t.pos_y || t.pos_y === 0))
+	const allAtOrigin = tbls.every(t => !t.pos_x && !t.pos_y)
 	if (!allAtOrigin) return
 
+	const tableW = 110
+	const tableH = 110
 	const margin = 20
-	const cols = Math.max(1, Math.floor((canvasRef.value?.offsetWidth || 800) / (120 + margin)))
+	const canvasW = canvasRef.value?.offsetWidth || 800
+	const cols = Math.max(1, Math.floor(canvasW / (tableW + margin)))
 
-	tbls.forEach((table, index) => {
-		const col = index % cols
-		const row = Math.floor(index / cols)
-		table.pos_x = margin + col * (120 + margin)
-		table.pos_y = margin + row * (120 + margin)
-		table.width = table.width || 100
-		table.height = table.height || 100
-	})
+	for (let i = 0; i < tbls.length; i++) {
+		const col = i % cols
+		const row = Math.floor(i / cols)
+		tbls[i].pos_x = margin + col * (tableW + margin)
+		tbls[i].pos_y = margin + row * (tableH + margin)
+		if (!tbls[i].width) tbls[i].width = 100
+		if (!tbls[i].height) tbls[i].height = 100
+	}
 }
 
 onMounted(async () => {
-	await restaurantStore.loadTablesAndAreas()
-	if (areas.value.length === 0 || tables.value.length === 0) {
-		await restaurantStore.fetchFromNetwork()
-	}
+	// Always fetch from network to get latest position fields
+	await restaurantStore.fetchFromNetwork()
+
 	// Select default area
 	if (restaurantStore.defaultArea && areas.value.find(a => a.name === restaurantStore.defaultArea)) {
 		selectedArea.value = restaurantStore.defaultArea
