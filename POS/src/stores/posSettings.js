@@ -298,6 +298,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			const preloadedSettings = bootstrapStore.getPreloadedPOSSettings()
 			if (preloadedSettings && Object.keys(preloadedSettings).length > 0) {
 				Object.assign(settings.value, preloadedSettings)
+				initRestaurantMode()
 				isLoaded.value = true
 				isLoading.value = false
 				return true
@@ -309,6 +310,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Fallback to API call
 		try {
 			await settingsResource.submit({ pos_profile: posProfile })
+			initRestaurantMode()
 			return true
 		} catch {
 			return false
@@ -438,18 +440,26 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	async function toggleRestaurantMode() {
 		const newValue = settings.value.enable_restaurant_mode ? 0 : 1
 
-		// Update locally first for instant UI feedback
+		// Update locally for instant UI feedback
 		settings.value = { ...settings.value, enable_restaurant_mode: newValue }
 
-		// Persist to backend (fire and forget, don't block UI)
-		call("pos_next.pos_next.doctype.pos_settings.pos_settings.update_pos_settings", {
-			pos_profile: settings.value.pos_profile,
-			settings: { enable_restaurant_mode: newValue }
-		}).catch((error) => {
-			console.error("Failed to persist restaurant mode toggle:", error)
-		})
+		// Save to localStorage for instant restore on page reload
+		localStorage.setItem("pos_next_restaurant_mode", newValue.toString())
 
 		return true
+	}
+
+	/**
+	 * Initialize restaurant mode from localStorage, falling back to POS Settings default
+	 */
+	function initRestaurantMode() {
+		const stored = localStorage.getItem("pos_next_restaurant_mode")
+		if (stored !== null) {
+			const val = Number.parseInt(stored)
+			if (val !== settings.value.enable_restaurant_mode) {
+				settings.value = { ...settings.value, enable_restaurant_mode: val }
+			}
+		}
 	}
 
 	return {
@@ -551,5 +561,6 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		isNegativeStockAllowed,
 		shouldEnforceStockValidation,
 		toggleRestaurantMode,
+		initRestaurantMode,
 	}
 })

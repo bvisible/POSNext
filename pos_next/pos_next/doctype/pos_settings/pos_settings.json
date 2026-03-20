@@ -159,10 +159,10 @@
   },
   {
    "default": "0",
-   "description": "Enable restaurant mode with table management, KDS, and CFD",
+   "description": "When enabled, POS will start in restaurant mode by default",
    "fieldname": "enable_restaurant_mode",
    "fieldtype": "Check",
-   "label": "Enable Restaurant Mode"
+   "label": "Default Restaurant Mode"
   },
   {
    "fieldname": "default_restaurant_area",
