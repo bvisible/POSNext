@@ -115,7 +115,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			}))
 
 			await call("pos_next.api.restaurant.save_table_positions", {
-				positions
+				positions: JSON.stringify(positions)
 			})
 		} catch (error) {
 			log.error("Failed to save table positions:", error)

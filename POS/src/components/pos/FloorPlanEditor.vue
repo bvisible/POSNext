@@ -161,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
@@ -298,6 +298,31 @@ async function handleAddTable() {
 	}
 }
 
+/**
+ * Auto-layout tables in a grid when they have no positions set (all at 0,0).
+ * Adds margin between each element until the user manually arranges them.
+ */
+function autoLayoutTables() {
+	const tbls = filteredTables.value
+	if (tbls.length === 0) return
+
+	// Check if all tables are stacked at origin (no layout done yet)
+	const allAtOrigin = tbls.every(t => (!t.pos_x || t.pos_x === 0) && (!t.pos_y || t.pos_y === 0))
+	if (!allAtOrigin) return
+
+	const margin = 20
+	const cols = Math.max(1, Math.floor((canvasRef.value?.offsetWidth || 800) / (120 + margin)))
+
+	tbls.forEach((table, index) => {
+		const col = index % cols
+		const row = Math.floor(index / cols)
+		table.pos_x = margin + col * (120 + margin)
+		table.pos_y = margin + row * (120 + margin)
+		table.width = table.width || 100
+		table.height = table.height || 100
+	})
+}
+
 onMounted(async () => {
 	await restaurantStore.loadTablesAndAreas()
 	if (areas.value.length === 0 || tables.value.length === 0) {
@@ -309,6 +334,16 @@ onMounted(async () => {
 	} else if (areas.value.length > 0) {
 		selectedArea.value = areas.value[0].name
 	}
+
+	// Auto-layout tables that have no positions yet
+	await nextTick()
+	autoLayoutTables()
+})
+
+// Re-layout when switching areas
+watch(selectedArea, async () => {
+	await nextTick()
+	autoLayoutTables()
 })
 
 onUnmounted(() => {

@@ -63,17 +63,21 @@ def save_table_positions(positions):
 	if isinstance(positions, str):
 		positions = json.loads(positions)
 
+	if not isinstance(positions, list):
+		frappe.throw(_("Invalid positions data"))
+
 	if not frappe.has_permission("Restaurant Table", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	for pos in positions:
-		if not frappe.db.exists("Restaurant Table", pos.get("name")):
+		table_name = pos.get("name")
+		if not table_name or not frappe.db.exists("Restaurant Table", table_name):
 			continue
-		frappe.db.set_value("Restaurant Table", pos["name"], {
-			"pos_x": int(pos.get("pos_x", 0)),
-			"pos_y": int(pos.get("pos_y", 0)),
-			"width": int(pos.get("width", 100)),
-			"height": int(pos.get("height", 100)),
+		frappe.db.set_value("Restaurant Table", table_name, {
+			"pos_x": int(pos.get("pos_x") or 0),
+			"pos_y": int(pos.get("pos_y") or 0),
+			"width": int(pos.get("width") or 100),
+			"height": int(pos.get("height") or 100),
 		})
 
 	frappe.db.commit()
