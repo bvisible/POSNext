@@ -82,25 +82,38 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
-					<!-- Restaurant Mode Toggle -->
-					<button
-						v-if="canToggleRestaurant"
-						@click="emit('toggle-restaurant')"
-						:disabled="!canToggleRestaurant"
-						:class="[
-							'p-1.5 sm:p-2 rounded-neo-sm transition-all touch-manipulation flex items-center justify-center',
-							isRestaurantMode
-								? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-								: 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/70',
-							!canToggleRestaurant && 'opacity-50 cursor-not-allowed'
-						]"
-						:title="isRestaurantMode ? __('Restaurant mode active') : __('Restaurant mode inactive')"
-						:aria-label="isRestaurantMode ? __('Disable restaurant mode') : __('Enable restaurant mode')"
+					<!-- Restaurant Mode Toggle Switch -->
+					<div
+						class="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
+						:class="canToggleRestaurant ? '' : 'opacity-50'"
+						:title="!canToggleRestaurant ? __('Clear cart and close all tables first') : (isRestaurantMode ? __('Click to disable restaurant mode') : __('Click to enable restaurant mode'))"
 					>
-						<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
-							<path d="M5 2c-.55 0-1 .45-1 1v3H2c-.55 0-1 .45-1 1v2h22V7c0-.55-.45-1-1-1h-2V3c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v3H8V3c0-.55-.45-1-1-1H5zM1 9v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9H1zm14 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+						<svg class="w-3.5 h-3.5 flex-shrink-0" :class="isRestaurantMode ? 'text-amber-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-1-6v2m0 16v2m-7-9H2m20 0h-2m-2.05-6.36l-1.41 1.41M7.46 16.54l-1.41 1.41m0-11.31l1.41 1.41m9.08 9.08l1.41 1.41" />
 						</svg>
-					</button>
+						<span class="text-[10px] font-bold uppercase tracking-wide hidden sm:inline" :class="isRestaurantMode ? 'text-amber-700' : 'text-gray-400'">
+							{{ __("Resto") }}
+						</span>
+						<button
+							type="button"
+							role="switch"
+							:aria-checked="isRestaurantMode"
+							:aria-label="isRestaurantMode ? __('Disable restaurant mode') : __('Enable restaurant mode')"
+							@click="canToggleRestaurant ? emit('toggle-restaurant') : null"
+							:class="[
+								'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1',
+								isRestaurantMode ? 'bg-amber-500' : 'bg-gray-300',
+								canToggleRestaurant ? 'cursor-pointer' : 'cursor-not-allowed'
+							]"
+						>
+							<span
+								:class="[
+									'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+									isRestaurantMode ? 'translate-x-4' : 'translate-x-0'
+								]"
+							/>
+						</button>
+					</div>
 
 					<!-- WiFi/Offline Status -->
 					<button
