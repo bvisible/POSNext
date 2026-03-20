@@ -99,7 +99,7 @@
 							role="switch"
 							:aria-checked="isRestaurantMode"
 							:aria-label="isRestaurantMode ? __('Disable restaurant mode') : __('Enable restaurant mode')"
-							@click="canToggleRestaurant ? emit('toggle-restaurant') : null"
+							@click="onToggleRestaurant"
 							:class="[
 								'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1',
 								isRestaurantMode ? 'bg-amber-500' : 'bg-gray-300',
@@ -371,6 +371,12 @@ const emit = defineEmits([
 	"clear-cache",
 	"toggle-restaurant",
 ])
+
+function onToggleRestaurant() {
+	if (props.canToggleRestaurant) {
+		emit("toggle-restaurant")
+	}
+}
 
 function handleClearCacheClick() {
 	showCacheTooltip.value = false
