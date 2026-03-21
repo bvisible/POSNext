@@ -311,6 +311,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const kdsStatus = ref("Pending")
 	const hasUnsentChanges = ref(false)
 
+	function setPosProfile(profile) {
+		posProfile.value = profile
+	}
+
+	function setPosOpeningShift(shift) {
+		posOpeningShift.value = shift
+	}
+
 	function setDeliveryDate(date) {
 		deliveryDate.value = date
 	}
@@ -1939,6 +1947,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		loadTaxRules,
 		setTaxInclusive,
 		submitInvoice,
+		setPosProfile,
+		setPosOpeningShift,
 		applyDiscountToCart,
 		removeDiscountFromCart,
 		applyOffer,

@@ -1613,8 +1613,8 @@ onMounted(async () => {
 
 		if (!shiftStore.currentProfile) return;
 
-		cartStore.posProfile = shiftStore.profileName;
-		cartStore.posOpeningShift = shiftStore.currentShift?.name;
+		cartStore.setPosProfile(shiftStore.profileName);
+		cartStore.setPosOpeningShift(shiftStore.currentShift?.name);
 
 		// Set warehouse context early (synchronous, no API call)
 		if (shiftStore.profileWarehouse) {
@@ -1966,8 +1966,8 @@ async function handleShiftOpened() {
 	uiStore.showOpenShiftDialog = false;
 	if (!shiftStore.currentProfile) return;
 
-	cartStore.posProfile = shiftStore.profileName;
-	cartStore.posOpeningShift = shiftStore.currentShift?.name;
+	cartStore.setPosProfile(shiftStore.profileName);
+	cartStore.setPosOpeningShift(shiftStore.currentShift?.name);
 
 	// Set warehouse context early (synchronous, no API call)
 	if (shiftStore.profileWarehouse) {
