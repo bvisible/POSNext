@@ -2770,7 +2770,12 @@ async function handleLoadDraft(draft) {
 		}
 
 		const draftData = await draftsStore.loadDraft(draft);
-		cartStore.invoiceItems = draftData.items;
+		// Restore items via addItem to ensure proper reactivity
+		if (draftData.items && draftData.items.length > 0) {
+			for (const item of draftData.items) {
+				cartStore.addItem(item, item.quantity || item.qty || 1)
+			}
+		}
 		cartStore.setCustomer(draftData.customer);
 		cartStore.currentDraftId = draft.draft_id; // Set current draft ID
 
