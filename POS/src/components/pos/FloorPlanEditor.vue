@@ -635,8 +635,8 @@ function openStationKDS(station) {
 }
 
 async function selectTable(table) {
-	// Clear cart before loading table
-	cartStore.clearCart()
+	// Clear cart before loading table (await to ensure cleanup completes)
+	await cartStore.clearCart()
 	cartStore.setRestaurantTable(table)
 
 	// Check for existing server-side draft invoice for this table
@@ -662,13 +662,13 @@ async function selectTable(table) {
 			cartStore.$patch({
 				currentDraftId: res.name,
 				kdsStatus: res.kds_status || "Pending",
+				hasUnsentChanges: false,
 			})
-			cartStore.markChangesSent()
 			if (res.customer) cartStore.setCustomer(res.customer)
 			return
 		}
 	} catch (e) {
-		// No server draft found, continue normally
+		console.error("[FloorPlan] Failed to load table order:", e)
 	}
 
 	// No server draft — open table normally

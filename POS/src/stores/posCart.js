@@ -276,12 +276,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		hasUnsentChanges.value = true
 	}
 
-	function clearCart() {
+	async function clearCart() {
 		// Cancel any pending offer processing
 		debouncedProcessOffers.cancel()
 		offerQueue.cancel()
 
-		clearInvoiceCart()
+		await clearInvoiceCart()
 		customer.value = null
 		appliedOffers.value = []
 		appliedCoupon.value = null

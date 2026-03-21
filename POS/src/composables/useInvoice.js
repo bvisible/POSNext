@@ -301,6 +301,10 @@ export function useInvoice() {
 				is_stock_item: item.is_stock_item ?? 1,
 				is_bundle: item.is_bundle || false,
 				allow_negative_stock: item.allow_negative_stock || 0,
+				// Restaurant fields
+				posa_special_instructions: item.posa_special_instructions || "",
+				posa_item_modifiers: item.posa_item_modifiers || "",
+				preparation_station: item.preparation_station || "",
 			}
 			invoiceItems.value.push(newItem)
 			// Recalculate the newly added item to apply taxes
