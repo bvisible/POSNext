@@ -207,6 +207,15 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	async function reorderAreas(orderedNames) {
+		try {
+			await call("pos_next.api.restaurant.reorder_areas", { order: JSON.stringify(orderedNames) })
+			await fetchFromNetwork()
+		} catch (error) {
+			log.error("Failed to reorder areas:", error)
+		}
+	}
+
 	async function createArea(areaName) {
 		const res = await call("pos_next.api.restaurant.create_area", { area_name: areaName })
 		if (res) await fetchFromNetwork()
@@ -252,6 +261,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		addTable,
 		updateStationPosition,
 		saveStationPositions,
+		reorderAreas,
 		createArea,
 		renameArea,
 		deleteArea,

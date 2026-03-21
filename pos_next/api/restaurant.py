@@ -26,7 +26,7 @@ def on_invoice_update(doc, method):
 @frappe.whitelist()
 def get_tables():
 	"""Fetch all restaurant areas, tables, floor plan stations, and active order summaries."""
-	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description"])
+	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description", "sort_order"], order_by="sort_order asc, area_name asc")
 	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
 
 	# Fetch stations that should appear on floor plan
@@ -399,6 +399,23 @@ def get_all_modifier_groups():
 
 	return groups
 
+
+@frappe.whitelist()
+def reorder_areas(order):
+	"""Update area sort order."""
+	import json
+	if isinstance(order, str):
+		order = json.loads(order)
+
+	if not frappe.has_permission("Restaurant Area", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	for idx, area_name in enumerate(order):
+		if frappe.db.exists("Restaurant Area", area_name):
+			frappe.db.set_value("Restaurant Area", area_name, "sort_order", idx)
+
+	frappe.db.commit()
+	return {"status": "success"}
 
 @frappe.whitelist()
 def create_area(area_name):

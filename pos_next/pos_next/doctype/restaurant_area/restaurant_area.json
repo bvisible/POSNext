@@ -6,7 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "area_name",
-  "description"
+  "description",
+  "sort_order"
  ],
  "fields": [
   {
@@ -21,6 +22,12 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -62,8 +69,8 @@
   }
  ],
  "autoname": "field:area_name",
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "sort_order",
+ "sort_order": "ASC",
  "states": [],
  "track_changes": 1
 }

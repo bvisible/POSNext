@@ -8,10 +8,17 @@
 					v-for="area in areas"
 					:key="area.name"
 					@click="selectedArea = area.name"
+					:draggable="isEditMode"
+					@dragstart="onAreaDragStart($event, area)"
+					@dragover.prevent="onAreaDragOver($event, area)"
+					@drop="onAreaDrop($event, area)"
 					class="relative px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors"
-					:class="selectedArea === area.name
-						? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-						: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+					:class="[
+						selectedArea === area.name
+							? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+							: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800',
+						isEditMode ? 'cursor-grab' : ''
+					]"
 				>
 					{{ area.area_name }}
 					<span
@@ -449,6 +456,7 @@ const newAreaName = ref("")
 const editAreaName = ref("")
 const areaToRename = ref(null)
 const areaToDelete = ref(null)
+const draggedArea = ref(null)
 
 const areas = computed(() => restaurantStore.areas)
 
@@ -694,6 +702,80 @@ async function toggleEditMode() {
 		isEditMode.value = false
 	} else {
 		isEditMode.value = true
+	}
+}
+
+function onAreaDragStart(event, area) {
+	if (!isEditMode.value) return
+	draggedArea.value = area.name
+	event.dataTransfer.effectAllowed = 'move'
+}
+
+function onAreaDragOver(event, area) {
+	if (!isEditMode.value || !draggedArea.value) return
+	event.dataTransfer.dropEffect = 'move'
+}
+
+async function onAreaDrop(event, targetArea) {
+	if (!isEditMode.value || !draggedArea.value || draggedArea.value === targetArea.name) {
+		draggedArea.value = null
+		return
+	}
+
+	const names = areas.value.map(a => a.name)
+	const fromIdx = names.indexOf(draggedArea.value)
+	const toIdx = names.indexOf(targetArea.name)
+	if (fromIdx === -1 || toIdx === -1) return
+
+	names.splice(fromIdx, 1)
+	names.splice(toIdx, 0, draggedArea.value)
+
+	await restaurantStore.reorderAreas(names)
+	draggedArea.value = null
+}
+
+async function handleAddTable() {
+	if (!newTable.value.table_name) return
+	try {
+		await restaurantStore.addTable({
+			table_name: newTable.value.table_name,
+			area: selectedArea.value,
+			capacity: newTable.value.capacity || 4,
+			shape: newTable.value.shape || "Square",
+		})
+		showAddTableDialog.value = false
+		newTable.value = { table_name: "", capacity: 4, shape: "Square" }
+		showSuccess(__("Table added"))
+	} catch (error) {
+		showError(__("Failed to add table"))
+	}
+}
+
+function openEditTableDialog(table) {
+	editTable.value = {
+		name: table.name,
+		table_name: table.table_name,
+		capacity: table.capacity || 4,
+		shape: table.shape || "Square",
+	}
+	showEditTableDialog.value = true
+}
+
+async function handleEditTable() {
+	if (!editTable.value.name) return
+	try {
+		await call("pos_next.api.restaurant.create_table", {
+			table_name: editTable.value.table_name,
+			area: selectedArea.value,
+			capacity: editTable.value.capacity,
+			shape: editTable.value.shape,
+		})
+		showEditTableDialog.value = false
+		await restaurantStore.fetchFromNetwork()
+		syncLocalTables()
+		showSuccess(__("Table updated"))
+	} catch (error) {
+		showError(__("Failed to update table"))
 	}
 }
 
