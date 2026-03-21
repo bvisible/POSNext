@@ -2111,10 +2111,6 @@ function handleLoadServerDraft(order) {
 }
 
 function closeTable() {
-	// Save current cart as draft before closing table
-	if (cartStore.invoiceItems.length > 0) {
-		draftsStore.saveDraft();
-	}
 	cartStore.clearCart();
 }
 
@@ -2128,10 +2124,10 @@ async function handleSendToKitchen() {
 		invoiceData.kds_status = "Pending"
 		invoiceData.is_pos = 1
 		invoiceData.docstatus = 0
-		invoiceData.posa_pos_opening_shift = shiftStore.openingShift
+		invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift
 
 		// If we already have a server draft, include its name for update
-		if (cartStore.currentDraftId && cartStore.currentDraftId.startsWith("ACC-SINV")) {
+		if (cartStore.currentDraftId) {
 			invoiceData.name = cartStore.currentDraftId
 		}
 
@@ -2149,7 +2145,7 @@ async function handleSendToKitchen() {
 		cartStore.markChangesSent()
 		cartStore.setKdsStatus("Pending")
 
-		showSuccess(__("Order sent to kitchen"))
+		showSuccess(__("Order validated"))
 
 		// Return to floor plan
 		cartStore.clearCart()
