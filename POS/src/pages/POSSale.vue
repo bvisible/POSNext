@@ -1992,23 +1992,52 @@ function closeTable() {
 }
 
 async function handleSendToKitchen() {
-	// Save current cart as draft
-	await draftsStore.saveDraftInvoice(
-		cartStore.invoiceItems,
-		cartStore.customer,
-		shiftStore.profileName,
-		cartStore.appliedOffers,
-		cartStore.currentDraftId,
-		cartStore.restaurantTable?.name,
-		cartStore.kdsStatus
-	)
+	if (cartStore.invoiceItems.length === 0) return
 
-	// Mark changes as sent
-	cartStore.markChangesSent()
-	cartStore.setKdsStatus("Pending")
+	try {
+		// Build invoice data for server-side draft creation
+		const currentProfile = shiftStore.currentProfile
+		const invoiceData = cartStore.buildOfferEvaluationPayload(currentProfile)
+		invoiceData.kds_status = "Pending"
+		invoiceData.is_pos = 1
+		invoiceData.docstatus = 0
+		invoiceData.posa_pos_opening_shift = shiftStore.openingShift
 
-	// Show confirmation
-	showSuccess(__("Order sent to kitchen"))
+		// If we already have a server draft, include its name for update
+		if (cartStore.currentDraftId && cartStore.currentDraftId.startsWith("ACC-SINV")) {
+			invoiceData.name = cartStore.currentDraftId
+		}
+
+		// Create/update server-side draft invoice via API
+		const result = await call("pos_next.api.invoices.update_invoice", {
+			data: JSON.stringify(invoiceData)
+		})
+
+		if (result?.name) {
+			// Store the server draft ID for future updates
+			cartStore.currentDraftId = result.name
+		}
+
+		// Also save locally for offline access
+		await draftsStore.saveDraftInvoice(
+			cartStore.invoiceItems,
+			cartStore.customer,
+			shiftStore.profileName,
+			cartStore.appliedOffers,
+			cartStore.currentDraftId,
+			cartStore.restaurantTable?.name,
+			"Pending"
+		)
+
+		// Mark changes as sent
+		cartStore.markChangesSent()
+		cartStore.setKdsStatus("Pending")
+
+		showSuccess(__("Order sent to kitchen"))
+	} catch (error) {
+		console.error("Failed to send to kitchen:", error)
+		showError(__("Failed to send order to kitchen"))
+	}
 }
 
 function handleItemSelected(item, autoAdd = false) {
