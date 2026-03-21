@@ -168,7 +168,7 @@
 				v-for="station in filteredStations"
 				:key="'station-' + station.name"
 				class="absolute flex flex-col items-center justify-center select-none transition-shadow duration-150 rounded-lg"
-				:class="isEditMode ? 'cursor-grab active:cursor-grabbing border-2 border-dashed' : ''"
+				:class="isEditMode ? 'cursor-grab active:cursor-grabbing border-2 border-dashed' : 'cursor-pointer hover:shadow-lg border-2'"
 				:style="{
 					left: (station.pos_x || 0) + 'px',
 					top: (station.pos_y || 0) + 'px',
@@ -178,6 +178,7 @@
 					borderColor: station.color || '#6B7280',
 				}"
 				@pointerdown="isEditMode ? handleDragStart($event, station) : null"
+				@click="!isEditMode ? openStationKDS(station) : null"
 			>
 				<!-- Station icon -->
 				<svg v-if="station.station_type === 'Kitchen'" class="w-5 h-5 mb-0.5" :style="{color: station.color}" fill="currentColor" viewBox="0 0 24 24">
@@ -545,6 +546,12 @@ function onTablePointerDown(event, table) {
 
 function onResizePointerDown(event, table, handle) {
 	handleResizeStart(event, table, handle)
+}
+
+function openStationKDS(station) {
+	// Open KDS page filtered by this station in a new tab
+	const url = `/pos/kds?station=${encodeURIComponent(station.name)}`
+	window.open(url, '_blank')
 }
 
 async function selectTable(table) {
