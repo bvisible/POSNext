@@ -288,12 +288,15 @@ function getSeatPositions(table) {
 	const w = table.width || 100
 	const h = table.height || 100
 	const seatSize = 14 // 3.5 tailwind = 14px
-	const offset = -seatSize / 2 // center the seat on the edge
+	// Border width of the table element (border-2 = 2px)
+	// Absolute children are positioned relative to the padding box,
+	// so we need to offset by -border to reach the visual outer edge
+	const b = 2
 
 	if (table.shape === "Round") {
 		const seats = []
-		const cx = w / 2
-		const cy = h / 2
+		const cx = (w - 2 * b) / 2
+		const cy = (h - 2 * b) / 2
 		const rx = w / 2
 		const ry = h / 2
 		for (let i = 0; i < count; i++) {
@@ -315,28 +318,31 @@ function getSeatPositions(table) {
 		sides[i % 4].push(i)
 	}
 
-	// All seats use transform to center perfectly on the edge point
+	// All seats use transform to center on the visual outer edge
+	// Absolute children are positioned from the padding box, so we offset by -b to reach the border edge
 	const t = 'translate(-50%, -50%)'
+	const innerW = w - 2 * b // padding box width
+	const innerH = h - 2 * b // padding box height
 
-	// Top side
+	// Top side — visual outer edge is at top: -b
 	sides[0].forEach((_, idx) => {
-		const x = w / (sides[0].length + 1) * (idx + 1)
-		seats.push({ left: `${x}px`, top: '0px', transform: t })
+		const x = innerW / (sides[0].length + 1) * (idx + 1)
+		seats.push({ left: `${x}px`, top: `${-b}px`, transform: t })
 	})
-	// Bottom side
+	// Bottom side — visual outer edge is at top: innerH + b
 	sides[2].forEach((_, idx) => {
-		const x = w / (sides[2].length + 1) * (idx + 1)
-		seats.push({ left: `${x}px`, top: `${h}px`, transform: t })
+		const x = innerW / (sides[2].length + 1) * (idx + 1)
+		seats.push({ left: `${x}px`, top: `${innerH + b}px`, transform: t })
 	})
-	// Left side
+	// Left side — visual outer edge is at left: -b
 	sides[3].forEach((_, idx) => {
-		const y = h / (sides[3].length + 1) * (idx + 1)
-		seats.push({ left: '0px', top: `${y}px`, transform: t })
+		const y = innerH / (sides[3].length + 1) * (idx + 1)
+		seats.push({ left: `${-b}px`, top: `${y}px`, transform: t })
 	})
-	// Right side
+	// Right side — visual outer edge is at left: innerW + b
 	sides[1].forEach((_, idx) => {
-		const y = h / (sides[1].length + 1) * (idx + 1)
-		seats.push({ left: `${w}px`, top: `${y}px`, transform: t })
+		const y = innerH / (sides[1].length + 1) * (idx + 1)
+		seats.push({ left: `${innerW + b}px`, top: `${y}px`, transform: t })
 	})
 
 	return seats
