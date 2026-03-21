@@ -220,6 +220,30 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	}
 
 	/**
+	 * Update item modifiers with structured JSON and adjust price.
+	 */
+	function updateItemModifiers(itemCode, uom, modifiersJson, instructions, priceAdjustment) {
+		const item = uom
+			? invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom)
+			: invoiceItems.value.find((i) => i.item_code === itemCode)
+
+		if (item) {
+			item.posa_item_modifiers = modifiersJson
+			item.posa_special_instructions = instructions
+			// Adjust rate with modifier price
+			if (priceAdjustment > 0 && !item._modifiers_applied) {
+				item.rate = (item.rate || 0) + priceAdjustment
+				item._modifiers_applied = priceAdjustment
+			} else if (item._modifiers_applied) {
+				// Remove old adjustment and apply new one
+				item.rate = (item.rate || 0) - item._modifiers_applied + priceAdjustment
+				item._modifiers_applied = priceAdjustment
+			}
+			hasUnsentChanges.value = true
+		}
+	}
+
+	/**
 	 * Update item quantity with stock validation.
 	 * Wraps useInvoice.updateItemQuantity to enforce stock limits
 	 * when the user clicks +/- or types a new quantity.
@@ -1947,6 +1971,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		kdsStatus,
 		hasUnsentChanges,
 		updateItemInstructions,
+		updateItemModifiers,
 		setRestaurantTable,
 		setKdsStatus,
 		markChangesSent,

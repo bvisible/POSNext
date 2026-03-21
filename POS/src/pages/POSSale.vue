@@ -424,6 +424,7 @@
 								@show-return="uiStore.showReturnDialog = true"
 								@close-shift="handleCloseShift()"
 								@send-to-kitchen="handleSendToKitchen"
+								@open-modifiers="handleOpenModifiers"
 							/>
 						</div>
 					</keep-alive>
@@ -633,6 +634,9 @@
 				:currency="shiftStore.profileCurrency"
 				@option-selected="handleOptionSelected"
 			/>
+
+			<!-- Item Modifiers Dialog -->
+			<ItemModifiersDialog ref="itemModifiersRef" />
 
 			<!-- Invoice History Dialog -->
 			<InvoiceHistoryDialog
@@ -1185,6 +1189,7 @@ const { isRTL } = useLocale();
 const itemsSelectorRef = ref(null);
 const offersDialogRef = ref(null);
 const invoiceCartRef = ref(null);
+const itemModifiersRef = ref(null);
 const containerRef = ref(null);
 const dividerRef = ref(null);
 const pendingPaymentAfterCustomer = ref(false);
@@ -2161,6 +2166,20 @@ function handleItemSelected(item, autoAdd = false) {
 			__("Item: {0}", [item.item_code])
 		);
 	}
+
+	// Auto-open modifiers dialog if item has required modifier groups
+	if (restaurantStore.isEnabled) {
+		const modGroups = restaurantStore.getModifiersForItem(item.item_code)
+		if (modGroups.some(g => g.required)) {
+			nextTick(() => {
+				// Find the item in cart and open modifiers
+				const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code)
+				if (cartItem && itemModifiersRef.value) {
+					itemModifiersRef.value.open(cartItem)
+				}
+			})
+		}
+	}
 }
 
 async function handleEditItem(updatedItem) {
@@ -2173,6 +2192,12 @@ function handleAdditionalDiscountUpdate(discountAmount) {
 
 	// Rebuild the cache to recalculate totals
 	cartStore.rebuildIncrementalCache();
+}
+
+function handleOpenModifiers(item) {
+	if (itemModifiersRef.value) {
+		itemModifiersRef.value.open(item)
+	}
 }
 
 function handleCustomerSelected(selectedCustomer) {
@@ -2491,6 +2516,19 @@ async function handleOptionSelected(option) {
 					uiStore.showItemSelectionDialog = false;
 					cartStore.clearPendingItem();
 					showSuccess(__("{0} added to cart", [variant.item_name]));
+
+					// Auto-open modifiers dialog if item has required modifier groups
+					if (restaurantStore.isEnabled) {
+						const modGroups = restaurantStore.getModifiersForItem(variant.item_code)
+						if (modGroups.some(g => g.required)) {
+							nextTick(() => {
+								const cartItem = cartStore.invoiceItems.find(i => i.item_code === variant.item_code)
+								if (cartItem && itemModifiersRef.value) {
+									itemModifiersRef.value.open(cartItem)
+								}
+							})
+						}
+					}
 				} catch (error) {
 					showError(error.message);
 				}
@@ -2519,6 +2557,19 @@ async function handleOptionSelected(option) {
 					uiStore.showItemSelectionDialog = false;
 					cartStore.clearPendingItem();
 					showSuccess(__("{0} ({1}) added to cart", [itemToAdd.item_name, option.uom]));
+
+					// Auto-open modifiers dialog if item has required modifier groups
+					if (restaurantStore.isEnabled) {
+						const modGroups = restaurantStore.getModifiersForItem(itemToAdd.item_code)
+						if (modGroups.some(g => g.required)) {
+							nextTick(() => {
+								const cartItem = cartStore.invoiceItems.find(i => i.item_code === itemToAdd.item_code)
+								if (cartItem && itemModifiersRef.value) {
+									itemModifiersRef.value.open(cartItem)
+								}
+							})
+						}
+					}
 				} catch (error) {
 					showError(error.message);
 				}

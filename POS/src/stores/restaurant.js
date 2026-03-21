@@ -14,6 +14,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const tables = ref([])
 	const areas = ref([])
 	const stationItemsMap = ref({})
+	const modifierGroups = ref([])
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
 
@@ -71,6 +72,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 
 		await fetchStationItemsMap()
+		await fetchModifierGroups()
 	}
 
 	async function updateTableStatus(tableName, status) {
@@ -151,14 +153,30 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	async function fetchModifierGroups() {
+		try {
+			const res = await call("pos_next.api.restaurant.get_all_modifier_groups")
+			if (res) modifierGroups.value = res
+		} catch (error) {
+			log.error("Failed to fetch modifier groups:", error)
+		}
+	}
+
 	function getStationForItem(itemCode) {
 		return stationItemsMap.value[itemCode] || null
+	}
+
+	function getModifiersForItem(itemCode) {
+		return modifierGroups.value.filter(g =>
+			g.apply_to_all_items || g.applicable_items.includes(itemCode)
+		)
 	}
 
 	return {
 		tables,
 		areas,
 		stationItemsMap,
+		modifierGroups,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
@@ -170,6 +188,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		saveAllPositions,
 		addTable,
 		fetchStationItemsMap,
-		getStationForItem
+		getStationForItem,
+		fetchModifierGroups,
+		getModifiersForItem
 	}
 })

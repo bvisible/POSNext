@@ -232,3 +232,63 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 	})
 	doc.insert()
 	return doc.as_dict()
+
+@frappe.whitelist()
+def get_item_modifiers(item_code):
+	"""Get all modifier groups applicable to an item."""
+	# Find groups where item is in applicable_items OR apply_to_all_items is checked
+	all_groups = frappe.get_all(
+		"Item Modifier Group",
+		fields=["name", "group_name", "selection_type", "required", "max_selections", "apply_to_all_items"]
+	)
+
+	result = []
+	for group in all_groups:
+		applicable = group.get("apply_to_all_items")
+		if not applicable:
+			# Check if item is in the applicable_items child table
+			applicable = frappe.db.exists(
+				"Item Modifier Group Item",
+				{"parent": group.name, "item": item_code}
+			)
+
+		if applicable:
+			# Fetch options for this group
+			options = frappe.get_all(
+				"Item Modifier Option",
+				filters={"parent": group.name},
+				fields=["option_name", "price_adjustment", "is_default"],
+				order_by="idx"
+			)
+			group["options"] = options
+			result.append(group)
+
+	return result
+
+@frappe.whitelist()
+def get_all_modifier_groups():
+	"""Get all modifier groups with their options and applicable items for frontend caching."""
+	groups = frappe.get_all(
+		"Item Modifier Group",
+		fields=["name", "group_name", "selection_type", "required", "max_selections", "apply_to_all_items"]
+	)
+
+	for group in groups:
+		group["options"] = frappe.get_all(
+			"Item Modifier Option",
+			filters={"parent": group.name},
+			fields=["option_name", "price_adjustment", "is_default"],
+			order_by="idx"
+		)
+		if not group.get("apply_to_all_items"):
+			group["applicable_items"] = [
+				r.item for r in frappe.get_all(
+					"Item Modifier Group Item",
+					filters={"parent": group.name},
+					fields=["item"]
+				)
+			]
+		else:
+			group["applicable_items"] = []
+
+	return groups

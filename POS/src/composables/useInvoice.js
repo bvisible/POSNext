@@ -782,6 +782,7 @@ export function useInvoice() {
 			original_rate: item.original_rate || null,
 			is_free_item: item.is_free_item || 0,
 			posa_special_instructions: item.posa_special_instructions || "",
+			posa_item_modifiers: item.posa_item_modifiers || "",
 			preparation_station: item.preparation_station || "",
 		}))
 	}

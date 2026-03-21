@@ -810,6 +810,10 @@
 								>
 									{{ getStationDisplayName(item.preparation_station) }}
 								</span>
+								<!-- Item Modifiers Summary -->
+								<div v-if="item.posa_item_modifiers && restaurantStore.isEnabled" class="text-[10px] text-gray-500 mt-0.5 truncate">
+									{{ formatModifiers(item.posa_item_modifiers) }}
+								</div>
 								<!-- Free Item Badge -->
 									<span
 										v-if="item.free_qty && item.free_qty > 0"
@@ -1402,6 +1406,13 @@ const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
 	emit("proceed-to-payment")
+}
+
+function formatModifiers(modifiersJson) {
+	try {
+		const mods = JSON.parse(modifiersJson)
+		return mods.map(m => m.options.map(o => o.name).join(', ')).join(' · ')
+	} catch { return '' }
 }
 
 function getStationColor(stationName) {

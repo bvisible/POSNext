@@ -130,6 +130,7 @@ _custom_field_names = [
 	"Sales Invoice Item-posa_special_instructions",
 	"Sales Invoice Item-preparation_station",
 	"Sales Invoice Item-kds_status",
+	"Sales Invoice Item-posa_item_modifiers",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")

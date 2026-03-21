@@ -54,6 +54,16 @@
 						<div v-if="item.posa_special_instructions" class="mt-2 text-xs font-bold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 p-2 rounded border border-blue-100 dark:border-blue-800 inline-block">
 							{{ item.posa_special_instructions }}
 						</div>
+						<!-- Item Modifiers -->
+						<div v-if="item.posa_item_modifiers" class="mt-1 flex flex-wrap gap-1">
+							<span
+								v-for="mod in parseModifiers(item.posa_item_modifiers)"
+								:key="mod"
+								class="text-[9px] font-bold px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded"
+							>
+								{{ mod }}
+							</span>
+						</div>
 						<div v-if="item.kds_status" class="mt-1">
 							<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
 								:class="{
@@ -166,6 +176,13 @@ const timeColorClass = computed(() => {
 function getStationColor(station) {
 	// Simple color mapping — colors come from the station data on the order items
 	return '#6B7280'
+}
+
+function parseModifiers(json) {
+	try {
+		const mods = JSON.parse(json)
+		return mods.flatMap(m => m.options.map(o => o.name))
+	} catch { return [] }
 }
 
 async function updateStatus(newStatus) {
