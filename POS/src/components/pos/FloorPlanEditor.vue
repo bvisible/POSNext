@@ -291,17 +291,17 @@ function getSeatPositions(table) {
 	const offset = -seatSize / 2 // center the seat on the edge
 
 	if (table.shape === "Round") {
-		// Distribute seats in a circle around the table
 		const seats = []
 		const cx = w / 2
 		const cy = h / 2
-		const rx = w / 2 + 4 // slightly outside the border
-		const ry = h / 2 + 4
+		const rx = w / 2
+		const ry = h / 2
 		for (let i = 0; i < count; i++) {
 			const angle = (2 * Math.PI * i) / count - Math.PI / 2
 			seats.push({
-				left: `${cx + rx * Math.cos(angle) + offset}px`,
-				top: `${cy + ry * Math.sin(angle) + offset}px`,
+				left: `${cx + rx * Math.cos(angle)}px`,
+				top: `${cy + ry * Math.sin(angle)}px`,
+				transform: 'translate(-50%, -50%)',
 			})
 		}
 		return seats
@@ -315,28 +315,28 @@ function getSeatPositions(table) {
 		sides[i % 4].push(i)
 	}
 
-	const half = seatSize / 2
-	const edge = 2 // push seats slightly outside the border
+	// All seats use transform to center perfectly on the edge point
+	const t = 'translate(-50%, -50%)'
 
 	// Top side
 	sides[0].forEach((_, idx) => {
-		const spacing = w / (sides[0].length + 1)
-		seats.push({ left: `${spacing * (idx + 1) - half}px`, top: `${-half - edge}px` })
+		const x = w / (sides[0].length + 1) * (idx + 1)
+		seats.push({ left: `${x}px`, top: '0px', transform: t })
 	})
 	// Bottom side
 	sides[2].forEach((_, idx) => {
-		const spacing = w / (sides[2].length + 1)
-		seats.push({ left: `${spacing * (idx + 1) - half}px`, top: `${h - half + edge}px` })
+		const x = w / (sides[2].length + 1) * (idx + 1)
+		seats.push({ left: `${x}px`, top: `${h}px`, transform: t })
 	})
 	// Left side
 	sides[3].forEach((_, idx) => {
-		const spacing = h / (sides[3].length + 1)
-		seats.push({ left: `${-half - edge}px`, top: `${spacing * (idx + 1) - half}px` })
+		const y = h / (sides[3].length + 1) * (idx + 1)
+		seats.push({ left: '0px', top: `${y}px`, transform: t })
 	})
 	// Right side
 	sides[1].forEach((_, idx) => {
-		const spacing = h / (sides[1].length + 1)
-		seats.push({ left: `${w - half + edge}px`, top: `${spacing * (idx + 1) - half}px` })
+		const y = h / (sides[1].length + 1) * (idx + 1)
+		seats.push({ left: `${w}px`, top: `${y}px`, transform: t })
 	})
 
 	return seats
