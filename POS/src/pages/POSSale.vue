@@ -2111,17 +2111,6 @@ async function handleSendToKitchen() {
 			cartStore.currentDraftId = result.name
 		}
 
-		// Also save locally for offline access
-		await draftsStore.saveDraftInvoice(
-			cartStore.invoiceItems,
-			cartStore.customer,
-			shiftStore.profileName,
-			cartStore.appliedOffers,
-			cartStore.currentDraftId,
-			cartStore.restaurantTable?.name,
-			"Pending"
-		)
-
 		// Mark changes as sent
 		cartStore.markChangesSent()
 		cartStore.setKdsStatus("Pending")
