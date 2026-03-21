@@ -564,13 +564,15 @@ async function selectTable(table) {
 		const res = await call("pos_next.api.restaurant.get_table_order", {
 			table_name: table.name
 		})
+		console.log("[FloorPlan] get_table_order result:", res)
 		if (res && res.name) {
 			// Load items from server draft into cart
+			console.log("[FloorPlan] Emitting load-server-draft with", res.name, res.items?.length, "items")
 			emit("load-server-draft", res)
 			return
 		}
 	} catch (e) {
-		// No server draft, continue normally
+		console.log("[FloorPlan] get_table_order error:", e)
 	}
 
 	// Check for local draft
