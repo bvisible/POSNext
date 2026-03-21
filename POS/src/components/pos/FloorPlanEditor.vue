@@ -21,7 +21,7 @@
 						{{ occupiedCount(area.name) }}
 					</span>
 					<!-- Area management buttons (edit mode) -->
-					<div v-if="isEditMode && selectedArea === area.name" class="absolute -top-8 right-0 flex gap-1 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-md">
+					<div v-if="isEditMode && selectedArea === area.name" class="absolute top-full left-0 mt-1 flex gap-1 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-lg border border-gray-200 z-50">
 						<button
 							@click.stop="openRenameAreaDialog(area)"
 							class="p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded transition-colors"
