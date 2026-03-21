@@ -70,9 +70,18 @@
 				:style="getTableStyle(table)"
 				@pointerdown="onTablePointerDown($event, table)"
 			>
+				<!-- Seats around table -->
+				<div
+					v-for="(seat, si) in getSeatPositions(table)"
+					:key="'seat-' + si"
+					class="absolute w-4 h-4 rounded-full border-2 pointer-events-none"
+					:class="table.status === 'Occupied' ? 'bg-gray-400 border-gray-500' : 'bg-white border-gray-300'"
+					:style="seat"
+				/>
+
 				<!-- Status dot -->
 				<div
-					class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full"
+					class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full z-[5]"
 					:class="{
 						'bg-green-500': table.status === 'Empty',
 						'bg-red-500': table.status === 'Occupied',
@@ -83,7 +92,6 @@
 
 				<!-- Table info -->
 				<span class="font-bold text-sm text-gray-900 dark:text-white leading-tight text-center">{{ table.table_name }}</span>
-				<span class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{{ table.capacity }} {{ __("seats") }}</span>
 				<span class="text-[10px] font-medium mt-0.5" :class="{
 					'text-green-600': table.status === 'Empty',
 					'text-red-600': table.status === 'Occupied',
@@ -215,6 +223,67 @@ const { handleDragStart, handleResizeStart, destroy } = useDraggable({
 		restaurantStore.updateTablePosition(table.name, table.pos_x, table.pos_y, table.width, table.height)
 	},
 })
+
+/**
+ * Calculate seat positions around a table.
+ * For round tables: seats are distributed in a circle.
+ * For square tables: seats are distributed along the 4 sides.
+ */
+function getSeatPositions(table) {
+	const count = table.capacity || 4
+	const w = table.width || 100
+	const h = table.height || 100
+	const seatSize = 16 // 4 tailwind = 16px
+	const offset = -seatSize / 2 // center the seat on the edge
+
+	if (table.shape === "Round") {
+		// Distribute seats in a circle around the table
+		const seats = []
+		const cx = w / 2
+		const cy = h / 2
+		const rx = w / 2 + 4 // slightly outside the border
+		const ry = h / 2 + 4
+		for (let i = 0; i < count; i++) {
+			const angle = (2 * Math.PI * i) / count - Math.PI / 2
+			seats.push({
+				left: `${cx + rx * Math.cos(angle) + offset}px`,
+				top: `${cy + ry * Math.sin(angle) + offset}px`,
+			})
+		}
+		return seats
+	}
+
+	// Square table: distribute seats along sides
+	const seats = []
+	// Split seats across 4 sides: top, right, bottom, left
+	const sides = [[], [], [], []] // top, right, bottom, left
+	for (let i = 0; i < count; i++) {
+		sides[i % 4].push(i)
+	}
+
+	// Top side
+	sides[0].forEach((_, idx) => {
+		const spacing = w / (sides[0].length + 1)
+		seats.push({ left: `${spacing * (idx + 1) + offset}px`, top: `${offset - 4}px` })
+	})
+	// Bottom side
+	sides[2].forEach((_, idx) => {
+		const spacing = w / (sides[2].length + 1)
+		seats.push({ left: `${spacing * (idx + 1) + offset}px`, top: `${h + offset + 4}px` })
+	})
+	// Left side
+	sides[3].forEach((_, idx) => {
+		const spacing = h / (sides[3].length + 1)
+		seats.push({ left: `${offset - 4}px`, top: `${spacing * (idx + 1) + offset}px` })
+	})
+	// Right side
+	sides[1].forEach((_, idx) => {
+		const spacing = h / (sides[1].length + 1)
+		seats.push({ left: `${w + offset + 4}px`, top: `${spacing * (idx + 1) + offset}px` })
+	})
+
+	return seats
+}
 
 function getTableStyle(table) {
 	const style = {
