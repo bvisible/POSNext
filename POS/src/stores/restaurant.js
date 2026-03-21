@@ -15,6 +15,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const areas = ref([])
 	const stationItemsMap = ref({})
 	const modifierGroups = ref([])
+	const activeMenus = ref([])
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
 
@@ -73,6 +74,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 		await fetchStationItemsMap()
 		await fetchModifierGroups()
+		await fetchActiveMenus()
 	}
 
 	async function updateTableStatus(tableName, status) {
@@ -162,6 +164,15 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	async function fetchActiveMenus() {
+		try {
+			const res = await call("pos_next.api.restaurant.get_active_menus")
+			if (res) activeMenus.value = res
+		} catch (error) {
+			log.error("Failed to fetch active menus:", error)
+		}
+	}
+
 	function getStationForItem(itemCode) {
 		return stationItemsMap.value[itemCode] || null
 	}
@@ -177,6 +188,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		areas,
 		stationItemsMap,
 		modifierGroups,
+		activeMenus,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
@@ -190,6 +202,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		fetchStationItemsMap,
 		getStationForItem,
 		fetchModifierGroups,
-		getModifiersForItem
+		getModifiersForItem,
+		fetchActiveMenus
 	}
 })

@@ -335,7 +335,55 @@
 										{{ __("Close Table") }}
 									</Button>
 								</div>
+
+								<!-- Menu cards (when Menus tab is active) -->
+								<div v-if="showMenus && restaurantStore.isEnabled" class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
+									<!-- Menus Tab Navigation -->
+									<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
+										<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+											<button
+												@click="showMenus = false"
+												class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100"
+											>
+												<span>{{ __("All Items") }}</span>
+											</button>
+											<button
+												v-if="restaurantStore.activeMenus.length > 0"
+												:class="[
+													'flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0',
+													'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
+												]"
+											>
+												<span>{{ __("Menus") }}</span>
+											</button>
+										</div>
+									</div>
+
+									<!-- Menu cards grid -->
+									<div class="flex-1 overflow-y-auto p-3 sm:p-4">
+										<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+											<div
+												v-for="menu in restaurantStore.activeMenus"
+												:key="menu.name"
+												@click="menuSelectionRef?.open(menu)"
+												class="cursor-pointer rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-md transition-all p-4 bg-white"
+											>
+												<img v-if="menu.image" :src="menu.image" class="w-full h-32 object-cover rounded-lg mb-3" />
+												<h3 class="font-bold text-gray-900">{{ menu.menu_name }}</h3>
+												<p v-if="menu.description" class="text-xs text-gray-500 mt-1 line-clamp-2">{{ menu.description }}</p>
+												<div class="mt-2 text-lg font-bold text-blue-600">{{ formatCurrency(menu.price) }}</div>
+												<div class="mt-1 text-[10px] text-gray-400">{{ menu.courses?.length || 0 }} {{ __("courses") }}</div>
+											</div>
+										</div>
+										<div v-if="restaurantStore.activeMenus.length === 0" class="flex items-center justify-center h-40">
+											<p class="text-gray-500 text-sm">{{ __("No menus available") }}</p>
+										</div>
+									</div>
+								</div>
+
+								<!-- Items Selector (default view) -->
 								<ItemsSelector
+									v-if="!showMenus"
 									ref="itemsSelectorRef"
 									:pos-profile="shiftStore.profileName"
 									:cart-items="cartStore.invoiceItems"
@@ -637,6 +685,12 @@
 
 			<!-- Item Modifiers Dialog -->
 			<ItemModifiersDialog ref="itemModifiersRef" />
+
+			<!-- Menu Selection Dialog -->
+			<MenuSelectionDialog
+				ref="menuSelectionRef"
+				@menu-confirmed="handleMenuConfirmed"
+			/>
 
 			<!-- Invoice History Dialog -->
 			<InvoiceHistoryDialog
@@ -1090,6 +1144,7 @@ import InvoiceCart from "@/components/sale/InvoiceCart.vue";
 import InvoiceHistoryDialog from "@/components/sale/InvoiceHistoryDialog.vue";
 import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
 import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
+import MenuSelectionDialog from "@/components/sale/MenuSelectionDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 import TableSelector from "@/components/pos/TableSelector.vue";
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
@@ -1190,6 +1245,7 @@ const itemsSelectorRef = ref(null);
 const offersDialogRef = ref(null);
 const invoiceCartRef = ref(null);
 const itemModifiersRef = ref(null);
+const menuSelectionRef = ref(null);
 const containerRef = ref(null);
 const dividerRef = ref(null);
 const pendingPaymentAfterCustomer = ref(false);
@@ -1197,6 +1253,7 @@ const logoutAfterClose = ref(false);
 const editCustomer = ref(null); // Customer being edited (null for create mode)
 const showClearCacheDialog = ref(false);
 const clearCacheOverlayRef = ref(null);
+const showMenus = ref(false);
 
 // Debounce timer for offer reapplication
 const offerReapplyTimer = ref(null);
@@ -2197,6 +2254,20 @@ function handleAdditionalDiscountUpdate(discountAmount) {
 function handleOpenModifiers(item) {
 	if (itemModifiersRef.value) {
 		itemModifiersRef.value.open(item)
+	}
+}
+
+function handleMenuConfirmed(menuItems) {
+	for (const menuItem of menuItems) {
+		const fullItem = {
+			item_code: menuItem.item_code,
+			item_name: menuItem.item_name,
+			rate: menuItem.price_override,
+			is_menu_item: true,
+			menu_name: menuItem.menu_name,
+			posa_special_instructions: `[${menuItem.menu_name}] ${menuItem.course_name}`
+		}
+		cartStore.addItem(fullItem, 1)
 	}
 }
 

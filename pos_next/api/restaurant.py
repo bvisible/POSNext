@@ -292,3 +292,50 @@ def get_all_modifier_groups():
 			group["applicable_items"] = []
 
 	return groups
+
+
+@frappe.whitelist()
+def get_active_menus():
+	"""Fetch all active restaurant menus with their courses."""
+	import json
+	from frappe.utils import today
+
+	filters = {"is_active": 1}
+	menus = frappe.get_all(
+		"Restaurant Menu",
+		filters=filters,
+		fields=["name", "menu_name", "price", "description", "image", "available_from", "available_to"]
+	)
+
+	current_date = today()
+	result = []
+	for menu in menus:
+		# Check date range if set
+		if menu.get("available_from") and str(menu.available_from) > current_date:
+			continue
+		if menu.get("available_to") and str(menu.available_to) < current_date:
+			continue
+
+		# Fetch courses
+		courses = frappe.get_all(
+			"Restaurant Menu Course",
+			filters={"parent": menu.name},
+			fields=["course_name", "item", "item_name", "sort_order"],
+			order_by="sort_order, idx"
+		)
+
+		# Group by course_name
+		grouped = {}
+		for course in courses:
+			cn = course.get("course_name")
+			if cn not in grouped:
+				grouped[cn] = {"course_name": cn, "sort_order": course.get("sort_order", 0), "items": []}
+			grouped[cn]["items"].append({
+				"item": course.get("item"),
+				"item_name": course.get("item_name")
+			})
+
+		menu["courses"] = sorted(grouped.values(), key=lambda x: x["sort_order"])
+		result.append(menu)
+
+	return result
