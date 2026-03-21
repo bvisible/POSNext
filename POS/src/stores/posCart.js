@@ -416,6 +416,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				warehouse: item.warehouse,
 				conversion_factor: item.conversion_factor || 1,
 				posa_special_instructions: item.posa_special_instructions || "",
+				preparation_station: item.preparation_station || "",
 				price_list_rate: item.price_list_rate || item.rate,
 				discount_percentage: item.discount_percentage || 0,
 				discount_amount: item.discount_amount || 0,

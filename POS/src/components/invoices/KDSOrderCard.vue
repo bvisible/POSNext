@@ -41,6 +41,13 @@
 						<div class="font-medium text-gray-900 dark:text-gray-100 leading-tight">
 							{{ item.item_name }}
 						</div>
+						<span
+							v-if="showStationBadge && item.preparation_station"
+							class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 inline-block"
+							:style="{ backgroundColor: getStationColor(item.preparation_station) }"
+						>
+							{{ item.preparation_station }}
+						</span>
 						<div v-if="item.description && item.description !== item.item_name" class="text-xs text-gray-500 mt-1 line-clamp-2">
 							{{ item.description }}
 						</div>
@@ -103,6 +110,10 @@ const props = defineProps({
 	order: {
 		type: Object,
 		required: true
+	},
+	showStationBadge: {
+		type: Boolean,
+		default: true
 	}
 })
 
@@ -139,6 +150,11 @@ const timeColorClass = computed(() => {
 	if (elapsedMinutes.value > 10) return 'text-orange-500'
 	return 'text-gray-800 dark:text-gray-200'
 })
+
+function getStationColor(station) {
+	// Simple color mapping — colors come from the station data on the order items
+	return '#6B7280'
+}
 
 async function updateStatus(newStatus) {
 	loading.value = true

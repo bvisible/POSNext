@@ -802,6 +802,13 @@
 									<svg class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
 									{{ __("Note") }}
 								</span>
+								<!-- Preparation Station Badge (Restaurant mode) -->
+								<span
+									v-if="item.preparation_station && restaurantStore.isEnabled"
+									class="inline-flex items-center px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-[9px] font-bold flex-shrink-0"
+								>
+									{{ item.preparation_station }}
+								</span>
 								<!-- Free Item Badge -->
 									<span
 										v-if="item.free_qty && item.free_qty > 0"

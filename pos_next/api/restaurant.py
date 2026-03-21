@@ -105,7 +105,7 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 	return doc.as_dict()
 
 @frappe.whitelist()
-def get_kds_orders():
+def get_kds_orders(station=None):
 	"""Fetch all pending and preparing orders for the KDS."""
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
@@ -120,10 +120,14 @@ def get_kds_orders():
 	orders = [o for o in raw_orders if o.get("restaurant_table") and o.get("kds_status") in valid_statuses]
 
 	has_instructions_field = frappe.db.has_column("Sales Invoice Item", "posa_special_instructions")
+	has_prep_station_field = frappe.db.has_column("Sales Invoice Item", "preparation_station")
 	item_fields = ["item_code", "item_name", "qty", "description"]
 
 	if has_instructions_field:
 		item_fields.append("posa_special_instructions")
+
+	if has_prep_station_field:
+		item_fields.append("preparation_station")
 
 	for order in orders:
 		order["items"] = frappe.get_all(
@@ -132,4 +136,22 @@ def get_kds_orders():
 			fields=item_fields
 		)
 
+		# Filter items by station if specified
+		if station:
+			order["items"] = [item for item in order["items"] if item.get("preparation_station") == station]
+
+	# Remove orders with no items after filtering
+	if station:
+		orders = [o for o in orders if o.get("items")]
+
 	return orders
+
+@frappe.whitelist()
+def get_preparation_stations():
+	"""Fetch all active preparation stations."""
+	return frappe.get_all(
+		"Preparation Station",
+		filters={"is_active": 1},
+		fields=["name", "station_name", "station_type", "color"],
+		order_by="station_name"
+	)

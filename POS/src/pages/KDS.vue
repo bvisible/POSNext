@@ -16,6 +16,28 @@
 			</div>
 		</header>
 
+		<!-- Station Filter Bar -->
+		<div v-if="stations.length > 0" class="bg-white dark:bg-gray-800 border-b px-4 py-2 flex items-center gap-2 overflow-x-auto">
+			<button
+				@click="selectedStation = null; loadOrders()"
+				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+				:class="!selectedStation ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
+			>
+				{{ __("All Stations") }}
+			</button>
+			<button
+				v-for="station in stations"
+				:key="station.name"
+				@click="selectedStation = station.name; loadOrders()"
+				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+				:class="selectedStation === station.name ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
+				:style="selectedStation === station.name ? { backgroundColor: station.color || '#3B82F6' } : {}"
+			>
+				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#3B82F6' }"></span>
+				{{ station.station_name }}
+			</button>
+		</div>
+
 		<!-- Orders Grid -->
 		<main class="flex-1 overflow-x-auto overflow-y-hidden p-6">
 			<div v-if="loading" class="flex justify-center items-center h-full">
@@ -33,6 +55,7 @@
 					v-for="order in sortedOrders"
 					:key="order.name"
 					:order="order"
+					:show-station-badge="!selectedStation"
 					@status-updated="loadOrders"
 					class="snap-start"
 				/>
@@ -42,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue"
+import { ref, onMounted, onUnmounted, computed, watch } from "vue"
 import { Button } from "frappe-ui"
 import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import { call } from "@/utils/apiWrapper"
@@ -52,6 +75,8 @@ import { initSocket } from "@/socket"
 const { showError } = useToast()
 const orders = ref([])
 const loading = ref(true)
+const stations = ref([])
+const selectedStation = ref(null)
 let socket = null
 
 const sortedOrders = computed(() => {
@@ -60,7 +85,9 @@ const sortedOrders = computed(() => {
 
 async function loadOrders() {
 	try {
-		const res = await call("pos_next.api.restaurant.get_kds_orders", { _: Date.now() })
+		const params = { _: Date.now() }
+		if (selectedStation.value) params.station = selectedStation.value
+		const res = await call("pos_next.api.restaurant.get_kds_orders", params)
 
 		if (res) {
 			orders.value = res
@@ -73,7 +100,20 @@ async function loadOrders() {
 	}
 }
 
-onMounted(() => {
+onMounted(async () => {
+	try {
+		// Load preparation stations
+		const stationsRes = await call("pos_next.api.restaurant.get_preparation_stations")
+		if (stationsRes) stations.value = stationsRes
+
+		// Check URL query param for pre-selection
+		const urlParams = new URLSearchParams(window.location.search)
+		const stationParam = urlParams.get('station')
+		if (stationParam) selectedStation.value = stationParam
+	} catch (error) {
+		console.error("Failed to load stations:", error)
+	}
+
 	loadOrders()
 
 	socket = initSocket()
@@ -86,6 +126,10 @@ onMounted(() => {
 			loadOrders()
 		})
 	}
+})
+
+watch(selectedStation, () => {
+	loadOrders()
 })
 
 onUnmounted(() => {
