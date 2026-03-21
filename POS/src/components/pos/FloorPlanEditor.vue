@@ -324,6 +324,9 @@ function autoLayoutTables() {
 		if (!tbls[i].width) tbls[i].width = 100
 		if (!tbls[i].height) tbls[i].height = 100
 	}
+
+	// Force Vue reactivity by reassigning the tables array
+	restaurantStore.tables = [...restaurantStore.tables]
 }
 
 onMounted(async () => {
