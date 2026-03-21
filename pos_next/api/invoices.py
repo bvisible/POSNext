@@ -946,20 +946,22 @@ def update_invoice(data):
                     if errors:
                         frappe.throw(frappe.as_json({"errors": errors}), frappe.ValidationError)
 
-        # Set restaurant fields BEFORE save so they persist on the document
-        if data.get("restaurant_table"):
-            invoice_doc.restaurant_table = data.get("restaurant_table")
-        if data.get("kds_status"):
-            invoice_doc.kds_status = data.get("kds_status")
-
         # Save as draft
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
         invoice_doc.docstatus = 0
         invoice_doc.save()
 
-        # Publish KDS update for realtime
+        # Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
         if data.get("restaurant_table") or data.get("kds_status"):
+            update_data = {}
+            if data.get("restaurant_table"):
+                update_data["restaurant_table"] = data.get("restaurant_table")
+            if data.get("kds_status"):
+                update_data["kds_status"] = data.get("kds_status")
+
+            frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
+            frappe.db.commit()
             frappe.publish_realtime("kds_update")
 
         return invoice_doc.as_dict()
