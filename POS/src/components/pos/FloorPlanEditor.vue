@@ -737,11 +737,18 @@ async function onAreaDrop(event, targetArea) {
 async function handleAddTable() {
 	if (!newTable.value.table_name) return
 	try {
+		// Calculate position: center of visible canvas area
+		const canvas = canvasRef.value
+		const pos_x = canvas ? Math.round((canvas.clientWidth / 2) - 50) : 200
+		const pos_y = canvas ? Math.round((canvas.clientHeight / 2) - 50) : 200
+
 		await restaurantStore.addTable({
 			table_name: newTable.value.table_name,
 			area: selectedArea.value,
 			capacity: newTable.value.capacity || 4,
 			shape: newTable.value.shape || "Square",
+			pos_x,
+			pos_y,
 		})
 		showAddTableDialog.value = false
 		newTable.value = { table_name: "", capacity: 4, shape: "Square" }
