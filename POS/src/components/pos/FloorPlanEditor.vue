@@ -315,25 +315,27 @@ function getSeatPositions(table) {
 		sides[i % 4].push(i)
 	}
 
-	// Top side
+	const half = seatSize / 2
+
+	// Top side — centered on top edge
 	sides[0].forEach((_, idx) => {
 		const spacing = w / (sides[0].length + 1)
-		seats.push({ left: `${spacing * (idx + 1) + offset}px`, top: `${offset - 4}px` })
+		seats.push({ left: `${spacing * (idx + 1) - half}px`, top: `${-half}px` })
 	})
-	// Bottom side
+	// Bottom side — centered on bottom edge
 	sides[2].forEach((_, idx) => {
 		const spacing = w / (sides[2].length + 1)
-		seats.push({ left: `${spacing * (idx + 1) + offset}px`, top: `${h + offset + 4}px` })
+		seats.push({ left: `${spacing * (idx + 1) - half}px`, top: `${h - half}px` })
 	})
-	// Left side
+	// Left side — centered on left edge
 	sides[3].forEach((_, idx) => {
 		const spacing = h / (sides[3].length + 1)
-		seats.push({ left: `${offset - 4}px`, top: `${spacing * (idx + 1) + offset}px` })
+		seats.push({ left: `${-half}px`, top: `${spacing * (idx + 1) - half}px` })
 	})
-	// Right side
+	// Right side — centered on right edge
 	sides[1].forEach((_, idx) => {
 		const spacing = h / (sides[1].length + 1)
-		seats.push({ left: `${w + offset + 4}px`, top: `${spacing * (idx + 1) + offset}px` })
+		seats.push({ left: `${w - half}px`, top: `${spacing * (idx + 1) - half}px` })
 	})
 
 	return seats
