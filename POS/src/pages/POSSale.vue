@@ -2042,7 +2042,38 @@ function handleTableSelected(table) {
 }
 
 function handleLoadTableDraft(draft) {
-	draftsStore.loadDraft(draft.draft_id);
+	// Set the restaurant table so the UI switches from floor plan to items view
+	const table = restaurantStore.tables.find(t => t.name === draft.restaurant_table)
+	if (table) {
+		cartStore.setRestaurantTable(table)
+	}
+
+	// Restore cart items from the draft
+	if (draft.items && draft.items.length > 0) {
+		for (const item of draft.items) {
+			cartStore.addItem(item, item.quantity || item.qty || 1)
+		}
+	}
+
+	// Restore customer
+	if (draft.customer) {
+		cartStore.setCustomer(draft.customer)
+	}
+
+	// Restore draft ID for future updates
+	if (draft.draft_id) {
+		cartStore.currentDraftId = draft.draft_id
+	}
+
+	// Restore KDS status
+	if (draft.kds_status) {
+		cartStore.setKdsStatus(draft.kds_status)
+	}
+
+	// Mark as no unsent changes since we just loaded
+	cartStore.markChangesSent()
+
+	showSuccess(__("Draft invoice loaded successfully"))
 }
 
 function closeTable() {
