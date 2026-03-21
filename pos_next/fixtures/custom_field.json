@@ -1292,7 +1292,7 @@
   "name": "Sales Invoice Item-kds_status",
   "no_copy": 0,
   "non_negative": 0,
-  "options": "Pending\\nPreparing\\nReady\\nDelivered",
+  "options": "Pending\nPreparing\nReady\nDelivered",
   "owner": "Administrator",
   "permlevel": 0,
   "precision": "",

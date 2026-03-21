@@ -1224,7 +1224,7 @@
 							? 'bg-gray-300 cursor-not-allowed'
 							: 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
 					]"
-					:aria-label="__('Send order to kitchen')"
+					:aria-label="__('Send order')"
 				>
 					<svg
 						class="w-4 h-4 me-1.5"
@@ -1236,10 +1236,10 @@
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+							d="M5 13l4 4L19 7"
 						/>
 					</svg>
-					<span>{{ __("Envoyer en cuisine") }}</span>
+					<span>{{ __("Valider") }}</span>
 				</button>
 
 				<!-- Pay Button (blue) -->
