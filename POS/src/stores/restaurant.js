@@ -13,6 +13,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	// State
 	const tables = ref([])
 	const areas = ref([])
+	const stationItemsMap = ref({})
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
 
@@ -68,6 +69,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		} catch (error) {
 			log.error("Failed to fetch tables from network:", error)
 		}
+
+		await fetchStationItemsMap()
 	}
 
 	async function updateTableStatus(tableName, status) {
@@ -137,9 +140,25 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	async function fetchStationItemsMap() {
+		try {
+			const res = await call("pos_next.api.restaurant.get_station_items_map")
+			if (res) {
+				stationItemsMap.value = res
+			}
+		} catch (error) {
+			log.error("Failed to fetch station items map:", error)
+		}
+	}
+
+	function getStationForItem(itemCode) {
+		return stationItemsMap.value[itemCode] || null
+	}
+
 	return {
 		tables,
 		areas,
+		stationItemsMap,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
@@ -149,6 +168,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		updateTableStatus,
 		updateTablePosition,
 		saveAllPositions,
-		addTable
+		addTable,
+		fetchStationItemsMap,
+		getStationForItem
 	}
 })

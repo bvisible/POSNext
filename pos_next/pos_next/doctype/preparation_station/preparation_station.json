@@ -1,53 +1,54 @@
 {
  "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
  "autoname": "field:station_name",
- "creation": "2024-05-20 10:00:00.000000",
+ "allow_on_submit": 0,
+ "creation": "2026-03-21 00:00:00.000000",
  "docstatus": 0,
  "doctype": "DocType",
- "document_type": "Setup",
+ "document_type": "",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "station_name",
-  "station_type",
   "color",
-  "is_active"
+  "is_active",
+  "items"
  ],
  "fields": [
   {
    "fieldname": "station_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Station Name",
    "reqd": 1,
    "unique": 1
   },
   {
-   "default": "Kitchen",
-   "fieldname": "station_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Station Type",
-   "options": "Kitchen\nBar\nOther"
-  },
-  {
-   "default": "#3B82F6",
    "fieldname": "color",
    "fieldtype": "Color",
    "label": "Color"
   },
   {
-   "default": 1,
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "in_list_view": 1,
+   "default": "1",
    "label": "Is Active"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Preparation Station Item"
   }
  ],
- "modified": "2024-05-20 10:00:00.000000",
+ "index_web_link_preview": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-03-21 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Preparation Station",
- "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -55,34 +56,23 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 0,
+   "import": 1,
+   "permlevel": 0,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "submit": 0,
    "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Sales Manager",
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "POSNext Cashier"
   }
  ],
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 0,
+ "track_views": 0
 }

@@ -2015,6 +2015,14 @@ function handleItemSelected(item, autoAdd = false) {
 	// Auto-add mode
 	if (autoAdd) {
 		try {
+			// Assign preparation station from restaurant store map
+			if (restaurantStore.isEnabled && !item.preparation_station) {
+				const stationInfo = restaurantStore.getStationForItem(item.item_code)
+				if (stationInfo) {
+					item.preparation_station = stationInfo.station
+				}
+			}
+
 			// Check if item has resolved barcode data (weighted/priced)
 			if (item.resolved_qty && item.resolved_barcode_type) {
 				// Get the unit price for the resolved UOM from uom_prices, or fall back to item rate
@@ -2056,6 +2064,14 @@ function handleItemSelected(item, autoAdd = false) {
 				__("Item: {0}", [item.item_code])
 			);
 			return;
+		}
+	}
+
+	// Assign preparation station from restaurant store map
+	if (restaurantStore.isEnabled && !item.preparation_station) {
+		const stationInfo = restaurantStore.getStationForItem(item.item_code)
+		if (stationInfo) {
+			item.preparation_station = stationInfo.station
 		}
 	}
 

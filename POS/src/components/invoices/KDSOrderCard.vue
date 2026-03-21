@@ -54,6 +54,18 @@
 						<div v-if="item.posa_special_instructions" class="mt-2 text-xs font-bold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 p-2 rounded border border-blue-100 dark:border-blue-800 inline-block">
 							{{ item.posa_special_instructions }}
 						</div>
+						<div v-if="item.kds_status" class="mt-1">
+							<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+								:class="{
+									'bg-yellow-100 text-yellow-800': item.kds_status === 'Pending',
+									'bg-blue-100 text-blue-800': item.kds_status === 'Preparing',
+									'bg-green-100 text-green-800': item.kds_status === 'Ready',
+									'bg-gray-100 text-gray-800': item.kds_status === 'Delivered',
+								}"
+							>
+								{{ __(item.kds_status) }}
+							</span>
+						</div>
 					</div>
 					<div class="font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
 						{{ item.qty }}

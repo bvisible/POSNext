@@ -805,9 +805,10 @@
 								<!-- Preparation Station Badge (Restaurant mode) -->
 								<span
 									v-if="item.preparation_station && restaurantStore.isEnabled"
-									class="inline-flex items-center px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-[9px] font-bold flex-shrink-0"
+									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0 text-white"
+									:style="{ backgroundColor: getStationColor(item.preparation_station) }"
 								>
-									{{ item.preparation_station }}
+									{{ getStationDisplayName(item.preparation_station) }}
 								</span>
 								<!-- Free Item Badge -->
 									<span
@@ -1401,6 +1402,24 @@ const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
 	emit("proceed-to-payment")
+}
+
+function getStationColor(stationName) {
+	// Look through station items map to find color
+	const map = restaurantStore.stationItemsMap
+	for (const [, info] of Object.entries(map)) {
+		if (info.station === stationName) return info.color
+	}
+	return '#6B7280'
+}
+
+function getStationDisplayName(stationName) {
+	// Look through station items map to find display name
+	const map = restaurantStore.stationItemsMap
+	for (const [, info] of Object.entries(map)) {
+		if (info.station === stationName) return info.station_name
+	}
+	return stationName
 }
 
 /**
