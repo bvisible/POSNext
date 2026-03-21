@@ -108,6 +108,42 @@ def get_station_items_map():
 
 
 @frappe.whitelist()
+def get_table_order(table_name):
+	"""Get the active draft invoice for a specific table."""
+	orders = frappe.get_all(
+		"Sales Invoice",
+		filters={
+			"docstatus": 0,
+			"restaurant_table": table_name,
+		},
+		fields=["name", "customer", "restaurant_table", "kds_status", "grand_total"],
+		order_by="modified desc",
+		limit=1
+	)
+
+	if not orders:
+		return None
+
+	order = orders[0]
+
+	# Fetch items
+	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom"]
+	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
+		item_fields.append("posa_special_instructions")
+	if frappe.db.has_column("Sales Invoice Item", "preparation_station"):
+		item_fields.append("preparation_station")
+	if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
+		item_fields.append("posa_item_modifiers")
+
+	order["items"] = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"parent": order.name},
+		fields=item_fields
+	)
+
+	return order
+
+@frappe.whitelist()
 def get_kds_orders(station=None):
 	"""Fetch all pending and preparing orders for the KDS."""
 	# Only fetch submitted invoices or drafts depending on how POS Next saves KDS orders.

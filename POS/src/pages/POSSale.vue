@@ -293,6 +293,7 @@
 								<FloorPlanEditor
 									@table-selected="handleTableSelected"
 									@load-table-draft="handleLoadTableDraft"
+										@load-server-draft="handleLoadServerDraft"
 								/>
 							</template>
 
@@ -2074,6 +2075,39 @@ function handleLoadTableDraft(draft) {
 	cartStore.markChangesSent()
 
 	showSuccess(__("Draft invoice loaded successfully"))
+}
+
+function handleLoadServerDraft(order) {
+	// Restore cart items from server draft
+	if (order.items && order.items.length > 0) {
+		for (const item of order.items) {
+			cartStore.addItem({
+				item_code: item.item_code,
+				item_name: item.item_name,
+				rate: item.rate,
+				uom: item.uom,
+				preparation_station: item.preparation_station,
+				posa_special_instructions: item.posa_special_instructions,
+				posa_item_modifiers: item.posa_item_modifiers,
+			}, item.qty || 1)
+		}
+	}
+
+	// Restore customer
+	if (order.customer) {
+		cartStore.setCustomer(order.customer)
+	}
+
+	// Store the server draft ID for future updates
+	cartStore.currentDraftId = order.name
+
+	// Restore KDS status
+	if (order.kds_status) {
+		cartStore.setKdsStatus(order.kds_status)
+	}
+
+	// Mark as no unsent changes since we just loaded from server
+	cartStore.markChangesSent()
 }
 
 function closeTable() {

@@ -555,16 +555,31 @@ function openStationKDS(station) {
 }
 
 async function selectTable(table) {
-	// Clear cart and handle table draft/selection
+	// Clear cart before loading table
 	cartStore.clearCart()
+	cartStore.setRestaurantTable(table)
 
+	// Check for existing server-side draft invoice for this table
+	try {
+		const res = await call("pos_next.api.restaurant.get_table_order", {
+			table_name: table.name
+		})
+		if (res && res.name) {
+			// Load items from server draft into cart
+			emit("load-server-draft", res)
+			return
+		}
+	} catch (e) {
+		// No server draft, continue normally
+	}
+
+	// Check for local draft
 	await draftsStore.loadDrafts()
 	const tableDraft = draftsStore.drafts.find(d => d.restaurant_table === table.name)
 
 	if (tableDraft) {
 		emit("load-table-draft", tableDraft)
 	} else {
-		cartStore.setRestaurantTable(table)
 		if (table.status === "Empty") {
 			await restaurantStore.updateTableStatus(table.name, "Occupied")
 		}
