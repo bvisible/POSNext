@@ -33,9 +33,9 @@
 				@refresh-click="handleRefresh"
 				@clear-cache="handleClearCache"
 				@logout="uiStore.showLogoutDialog = true"
+				@toggle-restaurant="handleToggleRestaurant"
 			>
 				<template #menu-items>
-			@toggle-restaurant="handleToggleRestaurant"
 					<button
 						v-if="shiftStore.hasOpenShift"
 						@click="uiStore.showOpenShiftDialog = true"

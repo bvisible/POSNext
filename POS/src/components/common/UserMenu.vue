@@ -39,8 +39,8 @@
 			<!-- Additional Actions -->
 			<slot name="additional-actions"></slot>
 
-			<!-- Language Switcher - Mobile Only -->
-			<div class="md:hidden">
+			<!-- Language Switcher -->
+			<div>
 				<hr class="my-2 border-gray-100">
 				<button
 					@click.stop="showLanguageDropdown = !showLanguageDropdown"
