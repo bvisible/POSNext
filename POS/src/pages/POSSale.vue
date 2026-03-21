@@ -332,7 +332,7 @@
 										size="sm"
 										@click="closeTable"
 									>
-										{{ __("Close Table") }}
+										{{ __("Back") }}
 									</Button>
 								</div>
 
@@ -2116,6 +2116,9 @@ async function handleSendToKitchen() {
 		cartStore.setKdsStatus("Pending")
 
 		showSuccess(__("Order sent to kitchen"))
+
+		// Return to floor plan
+		cartStore.clearCart()
 	} catch (error) {
 		console.error("Failed to send to kitchen:", error)
 		showError(__("Failed to send order to kitchen"))
