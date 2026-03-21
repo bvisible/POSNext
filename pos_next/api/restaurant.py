@@ -68,6 +68,16 @@ def broadcast_cfd_update(payload):
 	return {"status": "success"}
 
 @frappe.whitelist()
+def get_preparation_stations():
+	"""Fetch all active preparation stations."""
+	return frappe.get_all(
+		"Preparation Station",
+		filters={"is_active": 1},
+		fields=["name", "station_name", "station_type", "color"],
+		order_by="station_name"
+	)
+
+@frappe.whitelist()
 def get_station_items_map():
 	"""Return a mapping of item_code -> station_name for all active stations."""
 	stations = frappe.get_all(
@@ -174,3 +184,51 @@ def update_item_kds_status(invoice_name, item_code, status):
 
 	frappe.publish_realtime("kds_update")
 	return {"status": "success"}
+
+@frappe.whitelist()
+def save_table_positions(positions):
+	"""Save table positions from the floor plan editor."""
+	import json
+	if isinstance(positions, str):
+		positions = json.loads(positions)
+
+	if not isinstance(positions, list):
+		frappe.throw(_("Invalid positions data"))
+
+	if not frappe.has_permission("Restaurant Table", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	for pos in positions:
+		table_name = pos.get("name")
+		if not table_name or not frappe.db.exists("Restaurant Table", table_name):
+			continue
+		frappe.db.set_value("Restaurant Table", table_name, {
+			"pos_x": int(pos.get("pos_x") or 0),
+			"pos_y": int(pos.get("pos_y") or 0),
+			"width": int(pos.get("width") or 100),
+			"height": int(pos.get("height") or 100),
+		})
+
+	frappe.db.commit()
+	return {"status": "success"}
+
+@frappe.whitelist()
+def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
+	"""Create a new restaurant table."""
+	if not frappe.has_permission("Restaurant Table", "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	doc = frappe.get_doc({
+		"doctype": "Restaurant Table",
+		"table_name": table_name,
+		"area": area,
+		"capacity": int(capacity),
+		"shape": shape,
+		"pos_x": int(pos_x),
+		"pos_y": int(pos_y),
+		"width": 100,
+		"height": 100,
+		"status": "Empty"
+	})
+	doc.insert()
+	return doc.as_dict()
