@@ -396,20 +396,28 @@ const { showSuccess, showError } = useToast()
 
 const canvasRef = ref(null)
 const isEditMode = ref(false)
-const zoomLevel = ref(1)
+const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
+const savedZoom = parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
+const zoomLevel = ref(Math.max(0.4, Math.min(2, savedZoom)))
 
 const ZOOM_STEP = 0.15
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 2
 
+function saveZoom() {
+	localStorage.setItem(ZOOM_STORAGE_KEY, zoomLevel.value.toString())
+}
 function zoomIn() {
 	zoomLevel.value = Math.min(ZOOM_MAX, +(zoomLevel.value + ZOOM_STEP).toFixed(2))
+	saveZoom()
 }
 function zoomOut() {
 	zoomLevel.value = Math.max(ZOOM_MIN, +(zoomLevel.value - ZOOM_STEP).toFixed(2))
+	saveZoom()
 }
 function zoomReset() {
 	zoomLevel.value = 1
+	saveZoom()
 }
 
 const zoomContainerStyle = computed(() => ({
@@ -418,10 +426,10 @@ const zoomContainerStyle = computed(() => ({
 }))
 
 const canvasBackgroundStyle = computed(() => {
-	const gridSize = isEditMode.value ? 20 : 30
-	const dotColor = isEditMode.value ? "#d1d5db" : "#e5e7eb"
-	const dotSize = isEditMode.value ? "1px" : "0.5px"
-	const bg = isEditMode.value ? "#f9fafb" : "#f3f4f6"
+	const gridSize = isEditMode.value ? 20 : 25
+	const dotColor = isEditMode.value ? "#d1d5db" : "#cbd5e1"
+	const dotSize = isEditMode.value ? "1px" : "1px"
+	const bg = isEditMode.value ? "#f9fafb" : "#f8fafc"
 	return {
 		backgroundColor: bg,
 		backgroundImage: `radial-gradient(circle, ${dotColor} ${dotSize}, transparent ${dotSize})`,
