@@ -564,29 +564,37 @@ async function selectTable(table) {
 		const res = await call("pos_next.api.restaurant.get_table_order", {
 			table_name: table.name
 		})
-		console.log("[FloorPlan] get_table_order result:", res)
-		if (res && res.name) {
-			// Load items from server draft into cart
-			console.log("[FloorPlan] Emitting load-server-draft with", res.name, res.items?.length, "items")
-			emit("load-server-draft", res)
+		if (res && res.name && res.items && res.items.length > 0) {
+			// Load items from server draft directly into cart
+			for (const item of res.items) {
+				cartStore.addItem({
+					item_code: item.item_code,
+					item_name: item.item_name,
+					rate: item.rate,
+					uom: item.uom,
+					preparation_station: item.preparation_station,
+					posa_special_instructions: item.posa_special_instructions,
+					posa_item_modifiers: item.posa_item_modifiers,
+				}, item.qty || 1)
+			}
+			// Set draft ID and KDS status
+			cartStore.$patch({
+				currentDraftId: res.name,
+				kdsStatus: res.kds_status || "Pending",
+			})
+			cartStore.markChangesSent()
+			if (res.customer) cartStore.setCustomer(res.customer)
 			return
 		}
 	} catch (e) {
-		console.log("[FloorPlan] get_table_order error:", e)
+		// No server draft found, continue normally
 	}
 
-	// Check for local draft
-	await draftsStore.loadDrafts()
-	const tableDraft = draftsStore.drafts.find(d => d.restaurant_table === table.name)
-
-	if (tableDraft) {
-		emit("load-table-draft", tableDraft)
-	} else {
-		if (table.status === "Empty") {
-			await restaurantStore.updateTableStatus(table.name, "Occupied")
-		}
-		emit("table-selected", table)
+	// No server draft — open table normally
+	if (table.status === "Empty") {
+		await restaurantStore.updateTableStatus(table.name, "Occupied")
 	}
+	emit("table-selected", table)
 }
 
 async function toggleEditMode() {
