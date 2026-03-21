@@ -13,6 +13,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	// State
 	const tables = ref([])
 	const areas = ref([])
+	const floorStations = ref([])
 	const stationItemsMap = ref({})
 	const modifierGroups = ref([])
 	const activeMenus = ref([])
@@ -55,10 +56,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			const res = await call("pos_next.api.restaurant.get_tables")
 
 			if (res) {
-				const { areas: fetchedAreas, tables: fetchedTables } = res
+				const { areas: fetchedAreas, tables: fetchedTables, stations: fetchedStations } = res
 
 				areas.value = fetchedAreas || []
 				tables.value = fetchedTables || []
+				floorStations.value = fetchedStations || []
 
 				await db.transaction("rw", db.restaurant_areas, db.restaurant_tables, async () => {
 					await db.restaurant_areas.clear()
@@ -173,6 +175,54 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	async function updateStationPosition(stationName, pos_x, pos_y, width, height) {
+		try {
+			const station = floorStations.value.find(s => s.name === stationName)
+			if (station) {
+				station.pos_x = pos_x
+				station.pos_y = pos_y
+				station.width = width
+				station.height = height
+			}
+		} catch (error) {
+			log.error(`Failed to update position for station ${stationName}:`, error)
+		}
+	}
+
+	async function saveStationPositions() {
+		try {
+			const positions = floorStations.value.map(s => ({
+				name: s.name,
+				pos_x: s.pos_x,
+				pos_y: s.pos_y,
+				width: s.width,
+				height: s.height
+			}))
+			await call("pos_next.api.restaurant.save_station_positions", {
+				positions: JSON.stringify(positions)
+			})
+		} catch (error) {
+			log.error("Failed to save station positions:", error)
+			throw error
+		}
+	}
+
+	async function createArea(areaName) {
+		const res = await call("pos_next.api.restaurant.create_area", { area_name: areaName })
+		if (res) await fetchFromNetwork()
+		return res
+	}
+
+	async function renameArea(name, newName) {
+		await call("pos_next.api.restaurant.rename_area", { name, new_name: newName })
+		await fetchFromNetwork()
+	}
+
+	async function deleteArea(name) {
+		await call("pos_next.api.restaurant.delete_area", { name })
+		await fetchFromNetwork()
+	}
+
 	function getStationForItem(itemCode) {
 		return stationItemsMap.value[itemCode] || null
 	}
@@ -186,6 +236,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	return {
 		tables,
 		areas,
+		floorStations,
 		stationItemsMap,
 		modifierGroups,
 		activeMenus,
@@ -199,6 +250,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		updateTablePosition,
 		saveAllPositions,
 		addTable,
+		updateStationPosition,
+		saveStationPositions,
+		createArea,
+		renameArea,
+		deleteArea,
 		fetchStationItemsMap,
 		getStationForItem,
 		fetchModifierGroups,

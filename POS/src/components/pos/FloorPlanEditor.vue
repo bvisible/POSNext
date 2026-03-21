@@ -8,7 +8,7 @@
 					v-for="area in areas"
 					:key="area.name"
 					@click="selectedArea = area.name"
-					class="px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors"
+					class="relative px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors"
 					:class="selectedArea === area.name
 						? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
 						: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
@@ -20,6 +20,39 @@
 					>
 						{{ occupiedCount(area.name) }}
 					</span>
+					<!-- Area management buttons (edit mode) -->
+					<div v-if="isEditMode && selectedArea === area.name" class="absolute -top-8 right-0 flex gap-1 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-md">
+						<button
+							@click.stop="openRenameAreaDialog(area)"
+							class="p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded transition-colors"
+							:title="__('Rename area')"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+							</svg>
+						</button>
+						<button
+							@click.stop="openDeleteAreaDialog(area)"
+							class="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors"
+							:title="__('Delete area')"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+						</button>
+					</div>
+				</button>
+
+				<!-- Add Area Button (edit mode) -->
+				<button
+					v-if="isEditMode"
+					@click="showAddAreaDialog = true"
+					class="w-7 h-7 flex items-center justify-center rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
+					:title="__('Add Area')"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					</svg>
 				</button>
 			</div>
 			<div v-else class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -130,6 +163,49 @@
 				</template>
 			</div>
 
+			<!-- Stations on floor plan -->
+			<div
+				v-for="station in filteredStations"
+				:key="'station-' + station.name"
+				class="absolute flex flex-col items-center justify-center select-none transition-shadow duration-150 rounded-lg"
+				:class="isEditMode ? 'cursor-grab active:cursor-grabbing border-2 border-dashed' : ''"
+				:style="{
+					left: (station.pos_x || 0) + 'px',
+					top: (station.pos_y || 0) + 'px',
+					width: (station.width || 120) + 'px',
+					height: (station.height || 60) + 'px',
+					backgroundColor: (station.color || '#6B7280') + '20',
+					borderColor: station.color || '#6B7280',
+				}"
+				@pointerdown="isEditMode ? handleDragStart($event, station) : null"
+			>
+				<!-- Station icon -->
+				<svg v-if="station.station_type === 'Kitchen'" class="w-5 h-5 mb-0.5" :style="{color: station.color}" fill="currentColor" viewBox="0 0 24 24">
+					<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
+				</svg>
+				<svg v-else class="w-5 h-5 mb-0.5" :style="{color: station.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+				</svg>
+				<span class="text-xs font-bold" :style="{color: station.color}">{{ station.station_name }}</span>
+
+				<!-- Resize handles (edit mode) -->
+				<template v-if="isEditMode">
+					<div
+						v-for="handle in ['nw', 'ne', 'sw', 'se']"
+						:key="handle"
+						class="absolute w-3 h-3 border border-white rounded-sm z-10"
+						:style="{backgroundColor: station.color || '#6B7280'}"
+						:class="{
+							'top-0 left-0 cursor-nw-resize -translate-x-1/2 -translate-y-1/2': handle === 'nw',
+							'top-0 right-0 cursor-ne-resize translate-x-1/2 -translate-y-1/2': handle === 'ne',
+							'bottom-0 left-0 cursor-sw-resize -translate-x-1/2 translate-y-1/2': handle === 'sw',
+							'bottom-0 right-0 cursor-se-resize translate-x-1/2 translate-y-1/2': handle === 'se',
+						}"
+						@pointerdown.stop="onResizePointerDown($event, station, handle)"
+					/>
+				</template>
+			</div>
+
 			<!-- Add Table Button (edit mode) -->
 			<button
 				v-if="isEditMode"
@@ -216,6 +292,57 @@
 				</div>
 			</template>
 		</Dialog>
+
+		<!-- Add Area Dialog -->
+		<Dialog v-model="showAddAreaDialog" :options="{ title: __('Add Area'), size: 'sm' }">
+			<template #body-content>
+				<div class="space-y-4 p-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Area Name") }}</label>
+						<input v-model="newAreaName" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" :placeholder="__('e.g. Main Hall')" />
+					</div>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" variant="subtle" @click="showAddAreaDialog = false">{{ __("Cancel") }}</Button>
+					<Button class="flex-1" variant="solid" @click="handleAddArea" :disabled="!newAreaName.trim()">{{ __("Add") }}</Button>
+				</div>
+			</template>
+		</Dialog>
+
+		<!-- Rename Area Dialog -->
+		<Dialog v-model="showRenameAreaDialog" :options="{ title: __('Rename Area'), size: 'sm' }">
+			<template #body-content>
+				<div class="space-y-4 p-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Area Name") }}</label>
+						<input v-model="editAreaName" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
+					</div>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" variant="subtle" @click="showRenameAreaDialog = false">{{ __("Cancel") }}</Button>
+					<Button class="flex-1" variant="solid" @click="handleRenameArea" :disabled="!editAreaName.trim()">{{ __("Save") }}</Button>
+				</div>
+			</template>
+		</Dialog>
+
+		<!-- Delete Area Dialog -->
+		<Dialog v-model="showDeleteAreaDialog" :options="{ title: __('Delete Area'), size: 'sm' }">
+			<template #body-content>
+				<div class="space-y-4 p-4">
+					<p class="text-gray-700">{{ __("Are you sure you want to delete this area?") }}</p>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" variant="subtle" @click="showDeleteAreaDialog = false">{{ __("Cancel") }}</Button>
+					<Button class="flex-1" variant="solid" theme="red" @click="handleDeleteArea">{{ __("Delete") }}</Button>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 
@@ -243,6 +370,13 @@ const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
 const showEditTableDialog = ref(false)
 const editTable = ref({ name: "", table_name: "", capacity: 4, shape: "Square" })
+const showAddAreaDialog = ref(false)
+const showRenameAreaDialog = ref(false)
+const showDeleteAreaDialog = ref(false)
+const newAreaName = ref("")
+const editAreaName = ref("")
+const areaToRename = ref(null)
+const areaToDelete = ref(null)
 
 const areas = computed(() => restaurantStore.areas)
 
@@ -253,9 +387,21 @@ function syncLocalTables() {
 	localTables.value = restaurantStore.tables.map(t => ({ ...t }))
 }
 
+// Local reactive copy of stations for rendering
+const localStations = ref([])
+
+function syncLocalStations() {
+	localStations.value = (restaurantStore.floorStations || []).map(s => ({ ...s }))
+}
+
 const filteredTables = computed(() => {
 	if (!selectedArea.value) return localTables.value
 	return localTables.value.filter(t => t.area === selectedArea.value)
+})
+
+const filteredStations = computed(() => {
+	if (!selectedArea.value) return localStations.value
+	return localStations.value.filter(s => s.area === selectedArea.value)
 })
 
 function occupiedCount(areaName) {
@@ -265,16 +411,29 @@ function occupiedCount(areaName) {
 // Draggable composable
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
 	canvasRef,
-	onDragEnd: (table) => {
-		// Sync local mutation back to store
-		const storeTable = restaurantStore.tables.find(t => t.name === table.name)
-		if (storeTable) Object.assign(storeTable, { pos_x: table.pos_x, pos_y: table.pos_y })
-		restaurantStore.updateTablePosition(table.name, table.pos_x, table.pos_y, table.width, table.height)
+	onDragEnd: (obj) => {
+		// Check if this is a station or table
+		if (obj.station_name) {
+			const storeStation = restaurantStore.floorStations.find(s => s.name === obj.name)
+			if (storeStation) Object.assign(storeStation, { pos_x: obj.pos_x, pos_y: obj.pos_y })
+			restaurantStore.updateStationPosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+		} else {
+			const storeTable = restaurantStore.tables.find(t => t.name === obj.name)
+			if (storeTable) Object.assign(storeTable, { pos_x: obj.pos_x, pos_y: obj.pos_y })
+			restaurantStore.updateTablePosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+		}
 	},
-	onResizeEnd: (table) => {
-		const storeTable = restaurantStore.tables.find(t => t.name === table.name)
-		if (storeTable) Object.assign(storeTable, { pos_x: table.pos_x, pos_y: table.pos_y, width: table.width, height: table.height })
-		restaurantStore.updateTablePosition(table.name, table.pos_x, table.pos_y, table.width, table.height)
+	onResizeEnd: (obj) => {
+		// Check if this is a station or table
+		if (obj.station_name) {
+			const storeStation = restaurantStore.floorStations.find(s => s.name === obj.name)
+			if (storeStation) Object.assign(storeStation, { pos_x: obj.pos_x, pos_y: obj.pos_y, width: obj.width, height: obj.height })
+			restaurantStore.updateStationPosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+		} else {
+			const storeTable = restaurantStore.tables.find(t => t.name === obj.name)
+			if (storeTable) Object.assign(storeTable, { pos_x: obj.pos_x, pos_y: obj.pos_y, width: obj.width, height: obj.height })
+			restaurantStore.updateTablePosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+		}
 	},
 })
 
@@ -411,6 +570,9 @@ async function toggleEditMode() {
 		// Save positions and exit edit mode
 		try {
 			await restaurantStore.saveAllPositions()
+			if (restaurantStore.floorStations.length > 0) {
+				await restaurantStore.saveStationPositions()
+			}
 			showSuccess(__("Floor plan saved"))
 		} catch (e) {
 			showError(__("Failed to save floor plan"))
@@ -421,68 +583,63 @@ async function toggleEditMode() {
 	}
 }
 
-async function handleAddTable() {
-	if (!newTable.value.table_name) return
+async function handleAddArea() {
+	if (!newAreaName.value.trim()) return
 
 	try {
-		await restaurantStore.addTable({
-			table_name: newTable.value.table_name,
-			area: selectedArea.value || areas.value[0]?.name,
-			capacity: newTable.value.capacity,
-			shape: newTable.value.shape,
-			pos_x: 50,
-			pos_y: 50,
-		})
+		await restaurantStore.createArea(newAreaName.value.trim())
 		syncLocalTables()
-		showSuccess(__("Table added"))
-		showAddTableDialog.value = false
-		newTable.value = { table_name: "", capacity: 4, shape: "Square" }
+		syncLocalStations()
+		showSuccess(__("Area created"))
+		showAddAreaDialog.value = false
+		newAreaName.value = ""
 	} catch (e) {
-		showError(__("Failed to add table"))
+		showError(__("Failed to create area"))
 	}
 }
 
-function openEditTableDialog(table) {
-	editTable.value = {
-		name: table.name,
-		table_name: table.table_name,
-		capacity: table.capacity,
-		shape: table.shape || "Square",
-	}
-	showEditTableDialog.value = true
+function openRenameAreaDialog(area) {
+	areaToRename.value = area
+	editAreaName.value = area.area_name
+	showRenameAreaDialog.value = true
 }
 
-async function handleEditTable() {
+async function handleRenameArea() {
+	if (!editAreaName.value.trim() || !areaToRename.value) return
+
 	try {
-		await call("frappe.client.set_value", {
-			doctype: "Restaurant Table",
-			name: editTable.value.name,
-			fieldname: {
-				table_name: editTable.value.table_name,
-				capacity: editTable.value.capacity,
-				shape: editTable.value.shape,
-			}
-		})
-
-		// Update local + store
-		const localT = localTables.value.find(t => t.name === editTable.value.name)
-		if (localT) {
-			localT.table_name = editTable.value.table_name
-			localT.capacity = editTable.value.capacity
-			localT.shape = editTable.value.shape
-		}
-		const storeT = restaurantStore.tables.find(t => t.name === editTable.value.name)
-		if (storeT) {
-			storeT.table_name = editTable.value.table_name
-			storeT.capacity = editTable.value.capacity
-			storeT.shape = editTable.value.shape
-		}
-
-		localTables.value = [...localTables.value]
-		showEditTableDialog.value = false
-		showSuccess(__("Table updated"))
+		await restaurantStore.renameArea(areaToRename.value.name, editAreaName.value.trim())
+		syncLocalTables()
+		syncLocalStations()
+		showSuccess(__("Area renamed"))
+		showRenameAreaDialog.value = false
+		areaToRename.value = null
+		editAreaName.value = ""
 	} catch (e) {
-		showError(__("Failed to update table"))
+		showError(__("Failed to rename area"))
+	}
+}
+
+function openDeleteAreaDialog(area) {
+	areaToDelete.value = area
+	showDeleteAreaDialog.value = true
+}
+
+async function handleDeleteArea() {
+	if (!areaToDelete.value) return
+
+	try {
+		await restaurantStore.deleteArea(areaToDelete.value.name)
+		syncLocalTables()
+		syncLocalStations()
+		if (selectedArea.value === areaToDelete.value.name && areas.value.length > 0) {
+			selectedArea.value = areas.value[0].name
+		}
+		showSuccess(__("Area deleted"))
+		showDeleteAreaDialog.value = false
+		areaToDelete.value = null
+	} catch (e) {
+		showError(__("Failed to delete area"))
 	}
 }
 
@@ -523,6 +680,7 @@ onMounted(async () => {
 
 	// Create local reactive copies
 	syncLocalTables()
+	syncLocalStations()
 
 	// Select default area
 	if (restaurantStore.defaultArea && areas.value.find(a => a.name === restaurantStore.defaultArea)) {

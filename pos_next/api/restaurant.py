@@ -25,13 +25,19 @@ def on_invoice_update(doc, method):
 
 @frappe.whitelist()
 def get_tables():
-	"""Fetch all restaurant areas and tables."""
+	"""Fetch all restaurant areas, tables, and floor plan stations."""
 	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description"])
-	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status"])
-	return {
-		"areas": areas,
-		"tables": tables
-	}
+	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
+
+	# Fetch stations that should appear on floor plan
+	stations = []
+	if frappe.db.has_column("Preparation Station", "show_on_floor_plan"):
+		stations = frappe.get_all("Preparation Station",
+			filters={"is_active": 1, "show_on_floor_plan": 1},
+			fields=["name", "station_name", "station_type", "color", "area", "pos_x", "pos_y", "width", "height"]
+		)
+
+	return {"areas": areas, "tables": tables, "stations": stations}
 
 @frappe.whitelist()
 def update_table_status(table_name, status):
@@ -213,6 +219,33 @@ def save_table_positions(positions):
 	return {"status": "success"}
 
 @frappe.whitelist()
+def save_station_positions(positions):
+	"""Save station positions from the floor plan editor."""
+	import json
+	if isinstance(positions, str):
+		positions = json.loads(positions)
+
+	if not isinstance(positions, list):
+		frappe.throw(_("Invalid positions data"))
+
+	if not frappe.has_permission("Preparation Station", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	for pos in positions:
+		station_name = pos.get("name")
+		if not station_name or not frappe.db.exists("Preparation Station", station_name):
+			continue
+		frappe.db.set_value("Preparation Station", station_name, {
+			"pos_x": int(pos.get("pos_x") or 0),
+			"pos_y": int(pos.get("pos_y") or 0),
+			"width": int(pos.get("width") or 120),
+			"height": int(pos.get("height") or 60),
+		})
+
+	frappe.db.commit()
+	return {"status": "success"}
+
+@frappe.whitelist()
 def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
 	"""Create a new restaurant table."""
 	if not frappe.has_permission("Restaurant Table", "create"):
@@ -292,6 +325,37 @@ def get_all_modifier_groups():
 			group["applicable_items"] = []
 
 	return groups
+
+
+@frappe.whitelist()
+def create_area(area_name):
+	"""Create a new restaurant area."""
+	if not frappe.has_permission("Restaurant Area", "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	doc = frappe.get_doc({"doctype": "Restaurant Area", "area_name": area_name})
+	doc.insert()
+	return doc.as_dict()
+
+@frappe.whitelist()
+def rename_area(name, new_name):
+	"""Rename a restaurant area."""
+	if not frappe.has_permission("Restaurant Area", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	frappe.rename_doc("Restaurant Area", name, new_name)
+	return {"status": "success"}
+
+@frappe.whitelist()
+def delete_area(name):
+	"""Delete a restaurant area (only if no tables/stations assigned)."""
+	if not frappe.has_permission("Restaurant Area", "delete"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	tables_count = frappe.db.count("Restaurant Table", {"area": name})
+	if tables_count > 0:
+		frappe.throw(_("Cannot delete area with {0} tables assigned").format(tables_count))
+
+	frappe.delete_doc("Restaurant Area", name)
+	return {"status": "success"}
 
 
 @frappe.whitelist()

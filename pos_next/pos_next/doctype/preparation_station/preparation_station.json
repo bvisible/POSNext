@@ -14,6 +14,13 @@
   "station_name",
   "color",
   "is_active",
+  "section_break_floor_plan",
+  "show_on_floor_plan",
+  "area",
+  "pos_x",
+  "pos_y",
+  "width",
+  "height",
   "items"
  ],
  "fields": [
@@ -34,6 +41,48 @@
    "fieldtype": "Check",
    "default": "1",
    "label": "Is Active"
+  },
+  {
+   "fieldname": "section_break_floor_plan",
+   "fieldtype": "Section Break",
+   "label": "Floor Plan"
+  },
+  {
+   "fieldname": "show_on_floor_plan",
+   "fieldtype": "Check",
+   "default": 1,
+   "label": "Show on Floor Plan"
+  },
+  {
+   "fieldname": "area",
+   "fieldtype": "Link",
+   "label": "Area",
+   "options": "Restaurant Area",
+   "depends_on": "show_on_floor_plan"
+  },
+  {
+   "fieldname": "pos_x",
+   "fieldtype": "Int",
+   "default": 0,
+   "label": "Position X"
+  },
+  {
+   "fieldname": "pos_y",
+   "fieldtype": "Int",
+   "default": 0,
+   "label": "Position Y"
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Int",
+   "default": 120,
+   "label": "Width"
+  },
+  {
+   "fieldname": "height",
+   "fieldtype": "Int",
+   "default": 60,
+   "label": "Height"
   },
   {
    "fieldname": "items",
