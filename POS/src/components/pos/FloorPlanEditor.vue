@@ -183,14 +183,17 @@ const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
 
 const areas = computed(() => restaurantStore.areas)
-const layoutVersion = ref(0)
+
+// Local reactive copy of tables for rendering — mutations here trigger re-render
+const localTables = ref([])
+
+function syncLocalTables() {
+	localTables.value = restaurantStore.tables.map(t => ({ ...t }))
+}
 
 const filteredTables = computed(() => {
-	// layoutVersion dependency forces recompute after auto-layout
-	void layoutVersion.value
-	const allTables = restaurantStore.tables
-	if (!selectedArea.value) return allTables
-	return allTables.filter(t => t.area === selectedArea.value)
+	if (!selectedArea.value) return localTables.value
+	return localTables.value.filter(t => t.area === selectedArea.value)
 })
 
 function occupiedCount(areaName) {
@@ -201,9 +204,14 @@ function occupiedCount(areaName) {
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
 	canvasRef,
 	onDragEnd: (table) => {
+		// Sync local mutation back to store
+		const storeTable = restaurantStore.tables.find(t => t.name === table.name)
+		if (storeTable) Object.assign(storeTable, { pos_x: table.pos_x, pos_y: table.pos_y })
 		restaurantStore.updateTablePosition(table.name, table.pos_x, table.pos_y, table.width, table.height)
 	},
 	onResizeEnd: (table) => {
+		const storeTable = restaurantStore.tables.find(t => t.name === table.name)
+		if (storeTable) Object.assign(storeTable, { pos_x: table.pos_x, pos_y: table.pos_y, width: table.width, height: table.height })
 		restaurantStore.updateTablePosition(table.name, table.pos_x, table.pos_y, table.width, table.height)
 	},
 })
@@ -293,6 +301,7 @@ async function handleAddTable() {
 			pos_x: 50,
 			pos_y: 50,
 		})
+		syncLocalTables()
 		showSuccess(__("Table added"))
 		showAddTableDialog.value = false
 		newTable.value = { table_name: "", capacity: 4, shape: "Square" }
@@ -328,13 +337,16 @@ function autoLayoutTables() {
 		if (!tbls[i].height) tbls[i].height = 100
 	}
 
-	// Force Vue to re-render by incrementing layout version
-	layoutVersion.value++
+	// Force Vue to re-render by reassigning localTables
+	localTables.value = [...localTables.value]
 }
 
 onMounted(async () => {
 	// Always fetch from network to get latest position fields
 	await restaurantStore.fetchFromNetwork()
+
+	// Create local reactive copies
+	syncLocalTables()
 
 	// Select default area
 	if (restaurantStore.defaultArea && areas.value.find(a => a.name === restaurantStore.defaultArea)) {
