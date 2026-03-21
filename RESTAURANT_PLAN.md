@@ -10,332 +10,286 @@ Transformer POS Next en un POS restaurant complet avec : plan de salle visuel, g
 
 ---
 
-## Priorités
+## Statut des phases
 
-### P0 — Fondations (à faire en premier)
-### P1 — Expérience restaurant complète
-### P2 — Fonctionnalités avancées
-### P3 — Nice-to-have
-
----
-
-## P0 — Fondations
-
-### 0.1 Switch Restaurant Mode dans le Header
-
-**Problème :** Actuellement, il faut aller dans POS Settings pour activer le mode restaurant. Trop contraignant.
-
-**Solution :** Un toggle dans le POSHeader qui passe la caisse en mode restaurant.
-
-- Bouton switch visible dans le header (icône restaurant/fourchette)
-- **Conditions pour activer :**
-  - Panier vide (aucun article en cours)
-  - Pas de facture draft en cours sur cette session
-- **Conditions pour désactiver :**
-  - Toutes les tables fermées (aucune commande active)
-  - Panier vide
-- Le toggle persiste via `posSettings` (appel API pour sauvegarder)
-- Pas besoin de recharger la page — le switch est réactif (Vue computed)
-
-**Fichiers impactés :**
-- `POS/src/components/pos/POSHeader.vue` — ajout du toggle
-- `POS/src/stores/posSettings.js` — action toggle
-- `POS/src/pages/POSSale.vue` — réactivité conditionnelle
+| Phase | Description | Statut |
+|-------|-------------|--------|
+| P0/P1 | Fondations + Toggle + UI | **TERMINÉ** |
+| P2 | Plan de salle visuel | **TERMINÉ** |
+| P3 | Stations de préparation | **TERMINÉ** |
+| P4A | Modificateurs structurés | **TERMINÉ** |
+| P4B | Menus composés | **TERMINÉ** |
+| Stations sur plan | Stations visuelles + gestion areas | **TERMINÉ** |
+| Workflow complet | Valider → KDS → Retour table → Payer | **TERMINÉ** |
+| P5 | Transfert table, Split/Fusion, Réservations | À FAIRE |
 
 ---
 
-### 0.2 Nettoyage UI en mode restaurant
+## Ce qui a été implémenté
 
-**Problème :** Quand on est sur une table, l'interface est identique au mode vente classique. Boutons inutiles visibles (Sales Order, etc.).
+### P0/P1 — Fondations (branche `version-15-resto`)
 
-**Solution :**
+**Toggle restaurant mode dans le header :**
+- Switch on/off fourchette+couteau dans `POSHeader.vue`
+- Sauvegarde en localStorage (instantané au refresh)
+- Champ `enable_restaurant_mode` dans POS Settings (valeur par défaut)
+- `posSettings.js` : `toggleRestaurantMode()`, `initRestaurantMode()`
 
-- **Masquer en mode restaurant :**
-  - Toggle "Sales Order / Invoice" dans le panier
-  - Bouton "Sales Order" dans le menu
-  - Tout ce qui concerne les commandes fournisseur
-- **Rendre plus visible :**
-  - Bandeau table actuel → plus grand, plus clair, avec numéro de table bien lisible
-  - Bouton "Fermer la table" plus accessible
-  - Indicateur KDS status visible dans le panier (Pending/Preparing/Ready)
-- **Ajouter :**
-  - Bouton "Envoyer en cuisine" distinct du bouton "Payer" (envoie = save draft + set KDS Pending)
-  - Bouton "Ajouter des articles" pour revenir sur la commande d'une table déjà envoyée
+**Nettoyage UI en mode restaurant :**
+- Toggle "Facture/Commander" masqué en mode restaurant (`InvoiceCart.vue`)
+- Bouton "Hold/Attente" masqué en mode restaurant
+- 2 boutons seulement : **Valider** (vert) + **Payer** (bleu)
+- Bandeau table amélioré (gradient, badge KDS, compteur articles, bouton "Retour")
 
-**Fichiers impactés :**
-- `POS/src/components/sale/InvoiceCart.vue`
-- `POS/src/pages/POSSale.vue`
+**Multi-salles avec onglets :**
+- Onglets par area avec badge compteur (tables occupées)
+- Sélection auto de la salle par défaut
+- `restaurant.js` : `occupiedCountByArea`, `totalOccupiedCount`
+
+**Fichiers clés modifiés :**
+- `POS/src/components/pos/POSHeader.vue` — toggle switch
+- `POS/src/components/sale/InvoiceCart.vue` — boutons restaurant, badges station/modifiers
+- `POS/src/pages/POSSale.vue` — handleSendToKitchen, handleLoadServerDraft, closeTable
+- `POS/src/stores/posSettings.js` — toggleRestaurantMode, initRestaurantMode
+- `POS/src/stores/posCart.js` — restaurantTable, kdsStatus, hasUnsentChanges, markChangesSent, updateItemModifiers, setPosProfile, setPosOpeningShift
 
 ---
 
-## P1 — Expérience restaurant complète
+### P2 — Plan de salle visuel
 
-### 1.1 Plan de salle visuel (Floor Plan Editor)
+**FloorPlanEditor :**
+- Composant `FloorPlanEditor.vue` remplace `TableSelector.vue`
+- Tables positionnées en absolute (pos_x, pos_y, width, height)
+- Drag-and-drop via `useDraggable.js` composable (Pointer Events natifs)
+- Resize handles aux 4 coins
+- Mode édition vs mode service
+- Sièges carrés autour des tables (calculés selon capacity, centrés via CSS transform)
+- Auto-layout en grille quand tables à position (0,0)
+- Bouton crayon pour éditer une table (nom, capacité, forme)
+- Bouton "+" pour ajouter une table
+- Sauvegarde positions via API `save_table_positions`
 
-**Inspiration :** alphabit-restaurant — canvas avec drag-and-drop + resize
+**DocType Restaurant Table enrichi :**
+- Champs ajoutés : `pos_x`, `pos_y`, `width`, `height`, `shape` (Square/Round)
 
-**Solution :**
-
-#### Backend — Nouveau DocType `Restaurant Table` (enrichi)
-Champs supplémentaires à ajouter :
-- `pos_x` (Float) — position X sur le plan (pixels ou %)
-- `pos_y` (Float) — position Y sur le plan
-- `width` (Int) — largeur visuelle (défaut 80)
-- `height` (Int) — hauteur visuelle (défaut 80)
-- `shape` (Select: Square / Round) — forme de la table
-- `rotation` (Int) — rotation en degrés (0-360)
-
-#### Frontend — Nouveau composant `FloorPlanEditor.vue`
-- Canvas zoomable (CSS transform scale)
-- Tables en drag-and-drop (pointer events + CSS translate)
-- Resize handles aux coins
-- Toggle "Mode édition" / "Mode service"
-  - **Mode édition :** déplacer, redimensionner, ajouter, supprimer tables
-  - **Mode service :** cliquer = ouvrir la table pour commander
-- Couleurs dynamiques selon le statut (Empty=vert, Occupied=rouge, Reserved=jaune, Cleaning=bleu)
-- Affichage du nombre de couverts sur chaque table
-- Sauvegarde automatique des positions (debounce 500ms)
-
-**Fichiers à créer :**
+**Fichiers créés :**
 - `POS/src/components/pos/FloorPlanEditor.vue`
-- `POS/src/components/pos/FloorPlanTable.vue` (composant table individuel)
+- `POS/src/composables/useDraggable.js`
 
-**Fichiers à modifier :**
-- `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json` — nouveaux champs
-- `POS/src/stores/restaurant.js` — gestion positions
-- `POS/src/pages/POSSale.vue` — remplacer `TableSelector` par `FloorPlanEditor`
-
----
-
-### 1.2 Multi-salles avec navigation
-
-**Inspiration :** alphabit-restaurant — onglets par salle avec badge compteur
-
-**Solution :**
-
-- Barre d'onglets horizontale au-dessus du plan de salle
-- Chaque onglet = une `Restaurant Area` (salle)
-- Badge avec le nombre de tables occupées par salle
-- Clic sur un onglet → affiche le plan de cette salle
-- La salle par défaut est configurable (setting existant `default_restaurant_area`)
-
-**Déjà existant :** Le `TableSelector.vue` a déjà un filtre par area. À transformer en onglets visuels intégrés au FloorPlanEditor.
+**Fichiers modifiés :**
+- `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json`
+- `pos_next/api/restaurant.py` — save_table_positions, create_table
+- `POS/src/stores/restaurant.js` — updateTablePosition, saveAllPositions, addTable, localTables
 
 ---
 
-### 1.3 Stations de préparation (Bar / Cuisine)
+### P3 — Stations de préparation
 
-**Inspiration :** ury-erp — multi-station KDS, alphabit — Production Centers
+**DocTypes créés :**
+- `Preparation Station` — station_name, station_type (Kitchen/Bar/Other), color, is_active, show_on_floor_plan, area, pos_x, pos_y, width, height
+- `Preparation Station Item` (child table) — item link, item_name
 
-**Solution :**
+**Custom fields ajoutés :**
+- `Sales Invoice Item-preparation_station` (Link → Preparation Station)
+- `Sales Invoice Item-kds_status` (Select: Pending/Preparing/Ready/Delivered)
 
-#### Backend — Nouveau DocType `Preparation Station`
-- `station_name` (Data) — ex: "Cuisine", "Bar", "Pâtisserie"
-- `station_type` (Select: Kitchen / Bar / Other)
-- `display_color` (Color) — pour identification visuelle
-- `printer` (Data) — imprimante associée (futur)
+**KDS filtré par station :**
+- `KDS.vue` : sélecteur de stations coloré (All / Bar / Cuisine)
+- API `get_kds_orders(station=None)` : filtre par station
+- API `get_preparation_stations()` : retourne les stations actives
+- API `get_station_items_map()` : mapping item_code → station
+- API `update_item_kds_status()` : status KDS par item
 
-#### Backend — Lien Item ↔ Station
-- Nouveau Custom Field sur **Item** : `preparation_station` (Link → Preparation Station)
-- Quand un item est ajouté à une commande, il hérite de sa station
-- Un item sans station = va partout (ou station par défaut)
+**Stations sur le plan de salle :**
+- Stations visibles sur le FloorPlan avec couleur et icône (fourchette=cuisine, écran=bar)
+- Draggable/resizable en mode édition
+- Clic en mode service → ouvre `/pos/kds?station=XXX` dans un nouvel onglet
+- API `save_station_positions()`
 
-#### Frontend — KDS filtré par station
-- `/pos/kds` accepte un query param : `/pos/kds?station=Cuisine`
-- Le KDS n'affiche que les items de cette station
-- Chaque station a son propre écran KDS
-- Les items sont regroupés par commande mais filtrés par station
+**Gestion des areas depuis le POS :**
+- Bouton "+" pour créer une area
+- Bouton crayon pour renommer
+- Bouton poubelle pour supprimer (si pas de tables)
+- APIs : `create_area`, `rename_area`, `delete_area`
 
-**Fichiers à créer :**
-- `pos_next/pos_next/doctype/preparation_station/` — nouveau DocType
-- Custom Field `Item-preparation_station`
+**Auto-assignation station :**
+- Au `addItem`, le `preparation_station` est copié depuis le `stationItemsMap`
+- Badge station dans le panier (couleur dynamique)
+- Badge station dans le KDS order card
 
-**Fichiers à modifier :**
-- `pos_next/api/restaurant.py` — `get_kds_orders()` filtré par station
-- `POS/src/pages/KDS.vue` — lecture du param `station`, sélecteur de station
-- `POS/src/components/invoices/KDSOrderCard.vue` — filtrage items
+**Fichiers clés :**
+- `pos_next/pos_next/doctype/preparation_station/` (enrichi avec champs position)
+- `pos_next/pos_next/doctype/preparation_station_item/`
+- `pos_next/api/restaurant.py` — get_tables (retourne stations), save_station_positions, CRUD areas
+- `POS/src/stores/restaurant.js` — floorStations, stationItemsMap, fetchStationItemsMap, getStationForItem, area CRUD
+- `POS/src/pages/KDS.vue` — sélecteur stations
+- `POS/src/components/invoices/KDSOrderCard.vue` — badges station + kds_status par item
 
 ---
 
-### 1.4 Modificateurs d'articles structurés
+### P4A — Modificateurs structurés
 
-**Problème :** Actuellement les instructions spéciales sont du texte libre. Pas de structure, pas de prix.
+**DocTypes créés :**
+- `Item Modifier Group` — group_name, selection_type (Single/Multiple), required, max_selections, apply_to_all_items, options (child), applicable_items (child)
+- `Item Modifier Option` (child) — option_name, price_adjustment, is_default
+- `Item Modifier Group Item` (child) — item link
 
-**Inspiration :** ury — item modifiers avec prix, alphabit — ProductItem customization
+**Custom field ajouté :**
+- `Sales Invoice Item-posa_item_modifiers` (Small Text, hidden — JSON structuré)
 
-**Solution :**
+**Dialog modificateurs restructuré :**
+- `ItemModifiersDialog.vue` réécrit : groupes avec boutons radio/checkbox, prix affichés, validation required
+- Auto-ouverture quand item a des groupes required
+- Options par défaut pré-sélectionnées
+- Textarea instructions libres conservé en bas
+- Calcul supplément prix
+- Stockage JSON : `[{"group": "Cuisson", "options": [{"name": "À point", "price": 0}]}]`
 
-#### Backend — Nouveaux DocTypes
+**Affichage :**
+- Résumé modifiers dans le panier (texte gris)
+- Tags modifiers dans le KDS (badges amber)
 
-**`Item Modifier Group`**
-- `group_name` (Data) — ex: "Cuisson", "Accompagnement", "Sauce"
-- `selection_type` (Select: Single / Multiple) — choix unique ou multiple
-- `required` (Check) — obligatoire ou non
-- `max_selections` (Int) — nombre max de choix (pour Multiple)
+**APIs :**
+- `get_item_modifiers(item_code)` — groupes applicables à un item
+- `get_all_modifier_groups()` — tous les groupes avec options (cache frontend)
 
-**`Item Modifier Option`** (child table de Item Modifier Group)
-- `option_name` (Data) — ex: "Saignant", "À point", "Bien cuit"
-- `price_adjustment` (Currency) — supplément de prix (0 = gratuit)
-- `is_default` (Check) — option par défaut
-
-**Lien Item ↔ Modifier Groups :**
-- Nouveau DocType **`Item Modifier Assignment`** (child table de Item)
-- Ou Custom Field `modifier_groups` (Table MultiSelect → Item Modifier Group)
-
-#### Frontend — Dialog amélioré
-
-Remplacer `ItemModifiersDialog.vue` par un dialog structuré :
-- Affiche chaque groupe de modificateurs
-- Choix par boutons (single) ou checkboxes (multiple)
-- Affiche le supplément de prix
-- Les quick modifiers texte restent disponibles en bas
-- Le résultat est stocké comme JSON structuré + texte lisible
-
-**Fichiers à créer :**
+**Fichiers clés :**
 - `pos_next/pos_next/doctype/item_modifier_group/`
-- `pos_next/pos_next/doctype/item_modifier_option/` (child)
-- Réécriture de `POS/src/components/sale/ItemModifiersDialog.vue`
+- `pos_next/pos_next/doctype/item_modifier_option/`
+- `pos_next/pos_next/doctype/item_modifier_group_item/`
+- `POS/src/components/sale/ItemModifiersDialog.vue` (réécrit)
+- `POS/src/stores/restaurant.js` — modifierGroups, fetchModifierGroups, getModifiersForItem
+- `POS/src/stores/posCart.js` — updateItemModifiers
+- `POS/src/composables/useInvoice.js` — posa_item_modifiers dans formatItemsForSubmission
 
 ---
 
-### 1.5 Gestion des Menus
+### P4B — Menus composés
 
-**Problème :** Pas de notion de menu composé (entrée + plat + dessert à prix fixe).
+**DocTypes créés :**
+- `Restaurant Menu` — menu_name, price, description, image, is_active, available_from, available_to, courses (child)
+- `Restaurant Menu Course` (child) — course_name, item (Link), item_name, sort_order
 
-**Solution :**
+**MenuSelectionDialog :**
+- Dialog multi-étapes : choisir un article par course
+- Affiche les courses groupées (Entrée, Plat, Dessert)
+- Bouton "Add Menu" quand tous les cours sélectionnés
 
-#### Backend — Nouveau DocType `Restaurant Menu`
-- `menu_name` (Data) — ex: "Menu Chasse", "Menu du Jour"
-- `price` (Currency) — prix du menu complet
-- `available_from` (Date) — optionnel
-- `available_to` (Date) — optionnel
-- `is_active` (Check)
-- `courses` (Table → Restaurant Menu Course)
+**Onglet Menus dans le POS :**
+- Bouton "Menus" dans les filtres articles (mode restaurant)
+- Grille de cartes menus (image, nom, prix, nb courses)
+- Clic → ouvre MenuSelectionDialog
 
-**`Restaurant Menu Course`** (child table)
-- `course_name` (Data) — ex: "Entrée", "Plat", "Dessert"
-- `sort_order` (Int)
-- `items` (Table MultiSelect → Item) — articles disponibles pour ce cours
+**API :**
+- `get_active_menus()` — menus actifs avec filtrage date + courses groupées
 
-#### Frontend
-- Nouveau tab/section dans le panneau articles en mode restaurant
-- Vue "Menus" qui affiche les menus actifs
-- Clic sur un menu → dialog de sélection par course (choisir entrée, puis plat, puis dessert)
-- Ajoute les articles sélectionnés au panier avec le prix menu (pas les prix individuels)
-
-**Fichiers à créer :**
+**Fichiers clés :**
 - `pos_next/pos_next/doctype/restaurant_menu/`
-- `pos_next/pos_next/doctype/restaurant_menu_course/` (child)
+- `pos_next/pos_next/doctype/restaurant_menu_course/`
 - `POS/src/components/sale/MenuSelectionDialog.vue`
+- `POS/src/stores/restaurant.js` — activeMenus, fetchActiveMenus
 
 ---
 
-## P2 — Fonctionnalités avancées
+### Workflow complet (Valider → KDS → Retour → Payer)
 
-### 2.1 Workflow "Envoyer en cuisine" vs "Payer"
+**Flux implémenté :**
+1. Sélectionner une table (vide ou occupée)
+2. Si occupée → charge le draft serveur dans le panier (via `get_table_order` API)
+3. Ajouter des articles → bouton **"Valider"** crée un draft Sales Invoice serveur via `update_invoice` API
+4. Retour automatique au plan de salle après validation
+5. La table passe en "Occupied" (rouge)
+6. Le KDS reçoit la commande en realtime (websocket `kds_update`)
+7. Recliquer sur la table → panier rechargé avec les articles existants
+8. **"Payer"** → ouvre le dialog de paiement classique
 
-- Bouton **"Envoyer"** = sauvegarde le draft + set KDS status Pending + notification KDS
-- Bouton **"Ajouter"** = revenir sur une commande envoyée pour ajouter des articles (nouveau round)
-- Bouton **"Payer"** = ouvre le dialog de paiement, soumet la facture
-- Chaque "envoi" crée un horodatage (pour mesurer le temps de service)
+**APIs utilisées :**
+- `update_invoice` — crée/met à jour le draft serveur
+- `get_table_order(table_name)` — récupère le draft actif d'une table
+- `on_invoice_update` — hook qui met à jour le statut de la table
 
-### 2.2 Transfert de table
+**Fixes appliqués :**
+- `$patch` au lieu d'assignations directes sur le store (bug production build)
+- `setPosProfile` / `setPosOpeningShift` setters ajoutés au store
+- Chargement direct du draft dans FloorPlanEditor (bypass emit propagation issue)
 
+---
+
+## DocTypes créés (résumé)
+
+| DocType | Type | Module |
+|---------|------|--------|
+| Restaurant Area | Standard | POS Next |
+| Restaurant Table | Standard | POS Next |
+| Preparation Station | Standard | POS Next |
+| Preparation Station Item | Child Table | POS Next |
+| Item Modifier Group | Standard | POS Next |
+| Item Modifier Option | Child Table | POS Next |
+| Item Modifier Group Item | Child Table | POS Next |
+| Restaurant Menu | Standard | POS Next |
+| Restaurant Menu Course | Child Table | POS Next |
+
+## Custom Fields ajoutés
+
+| Field | DocType | Type |
+|-------|---------|------|
+| restaurant_table | Sales Invoice | Link → Restaurant Table |
+| kds_status | Sales Invoice | Select (Pending/Preparing/Ready/Delivered) |
+| posa_special_instructions | Sales Invoice Item | Small Text |
+| preparation_station | Sales Invoice Item | Link → Preparation Station |
+| kds_status | Sales Invoice Item | Select (Pending/Preparing/Ready/Delivered) |
+| posa_item_modifiers | Sales Invoice Item | Small Text (JSON) |
+
+## Routes ajoutées
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/pos/kds` | KDS.vue | Kitchen Display System |
+| `/pos/kds?station=X` | KDS.vue | KDS filtré par station |
+| `/pos/cfd` | CFD.vue | Customer Facing Display (restaurant) |
+
+## Fichiers Vue créés
+
+| Fichier | Description |
+|---------|-------------|
+| `POS/src/components/pos/FloorPlanEditor.vue` | Éditeur plan de salle drag-and-drop |
+| `POS/src/components/pos/TableSelector.vue` | Sélecteur grille (conservé comme fallback) |
+| `POS/src/components/sale/ItemModifiersDialog.vue` | Dialog modificateurs structurés (réécrit) |
+| `POS/src/components/sale/MenuSelectionDialog.vue` | Dialog sélection menu par courses |
+| `POS/src/components/invoices/KDSOrderCard.vue` | Carte commande KDS |
+| `POS/src/pages/KDS.vue` | Page Kitchen Display System |
+| `POS/src/pages/CFD.vue` | Page Customer Facing Display |
+| `POS/src/stores/restaurant.js` | Store Pinia restaurant |
+| `POS/src/composables/useDraggable.js` | Composable drag-and-drop |
+
+---
+
+## Ce qui reste à faire (P5+)
+
+### Transfert de table
 - Déplacer une commande d'une table à une autre
-- Utile quand les clients changent de place
 - Met à jour `restaurant_table` sur la Sales Invoice
 
-### 2.3 Fusion / Split de commandes
+### Split / Fusion de commandes
+- Fusionner 2 tables en une addition
+- Diviser une addition (par personne, par article)
 
-- **Fusion :** combiner 2 tables en une seule addition
-- **Split :** diviser une addition en plusieurs (par personne, par article)
+### Nombre de couverts
+- Demander le nombre de couverts à la sélection de table
+- Affiché sur le plan et envoyé en cuisine
 
-### 2.4 Nombre de couverts
-
-- À la sélection de table, demander le nombre de couverts
-- Affiché sur le plan de salle et dans le panier
-- Envoyé en cuisine (utile pour portions)
-
-### 2.5 Impression tickets cuisine
-
-- Impression automatique du ticket quand "Envoyer en cuisine"
-- Format ticket cuisine : table, serveur, heure, articles par station
+### Impression tickets cuisine
+- Impression auto quand "Valider"
+- Format ticket : table, serveur, heure, articles par station
 - Support QZ Tray (déjà intégré au fork)
 
----
-
-## P3 — Nice-to-have
-
-### 3.1 Disponibilité produits en temps réel
-- Marquer un produit comme "épuisé" depuis le KDS
-- Se reflète instantanément sur le POS (item grisé)
-
-### 3.2 Gestion des réservations
-- Réserver une table à une heure donnée
+### Réservations
+- Réserver une table à une heure
 - Statut "Reserved" visible sur le plan
 
-### 3.3 Historique par table
-- Voir l'historique des commandes d'une table
-- Statistiques : CA par table, temps moyen de service
+### Disponibilité produits temps réel
+- Marquer un produit "épuisé" depuis le KDS
+- Se reflète instantanément sur le POS
 
-### 3.4 Mode "terrasse" / plan extérieur
-- Plans de salle multiples avec arrière-plans personnalisés (image uploadée)
-
----
-
-## Architecture technique résumée
-
-### Nouveaux DocTypes à créer
-
-| DocType | Type | Description |
-|---|---|---|
-| `Preparation Station` | Standard | Station de préparation (Cuisine, Bar...) |
-| `Item Modifier Group` | Standard | Groupe de modificateurs (Cuisson, Sauce...) |
-| `Item Modifier Option` | Child Table | Option dans un groupe (Saignant, À point...) |
-| `Restaurant Menu` | Standard | Menu composé (Menu du Jour...) |
-| `Restaurant Menu Course` | Child Table | Cours dans un menu (Entrée, Plat, Dessert) |
-
-### DocTypes existants à enrichir
-
-| DocType | Champs à ajouter |
-|---|---|
-| `Restaurant Table` | `pos_x`, `pos_y`, `width`, `height`, `shape`, `rotation` |
-| `Item` | `preparation_station` (Link → Preparation Station) |
-
-### Nouveaux composants Vue
-
-| Composant | Description |
-|---|---|
-| `FloorPlanEditor.vue` | Éditeur visuel du plan de salle |
-| `FloorPlanTable.vue` | Table individuelle draggable |
-| `MenuSelectionDialog.vue` | Sélection de menu par courses |
-| `ItemModifiersDialog.vue` | Réécriture avec modificateurs structurés |
-
----
-
-## Ordre d'implémentation recommandé
-
-```
-Phase 1 (Utilisable rapidement)
-├── 0.1 Switch header restaurant mode
-├── 0.2 Nettoyage UI restaurant
-└── 1.2 Multi-salles (onglets)
-
-Phase 2 (Plan de salle)
-├── 1.1 Floor Plan Editor (drag-and-drop)
-└── 2.4 Nombre de couverts
-
-Phase 3 (Préparation)
-├── 1.3 Stations de préparation
-├── 2.1 Workflow Envoyer/Ajouter/Payer
-└── 2.5 Impression tickets cuisine
-
-Phase 4 (Menu & Modificateurs)
-├── 1.4 Modificateurs structurés
-└── 1.5 Menus composés
-
-Phase 5 (Avancé)
-├── 2.2 Transfert de table
-├── 2.3 Split/Fusion
-└── P3 items
-```
+### Bug connu pré-existant
+- `PaymentDialog.vue` : erreur "Assignment to constant variable" au montage (bug pré-existant, pas lié au module restaurant, n'empêche pas le fonctionnement)
