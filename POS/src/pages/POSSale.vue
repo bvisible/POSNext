@@ -1416,12 +1416,9 @@ async function doToggleRestaurant() {
 		const newValue = !restaurantStore.isEnabled
 		await cartStore.clearCart()
 
-		// When disabling, reset all occupied tables to Empty
+		// When disabling, reset all occupied tables to Empty via server API
 		if (!newValue) {
-			const occupiedTables = restaurantStore.tables.filter(t => t.status === "Occupied")
-			for (const table of occupiedTables) {
-				await restaurantStore.updateTableStatus(table.name, "Empty")
-			}
+			await call("pos_next.api.restaurant.reset_all_tables")
 		}
 
 		await posSettingsStore.toggleRestaurantMode()

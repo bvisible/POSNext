@@ -80,6 +80,16 @@ def update_table_status(table_name, status):
 	return {"status": "success"}
 
 @frappe.whitelist()
+def reset_all_tables():
+	"""Reset all occupied tables to Empty status."""
+	if not frappe.has_permission("Restaurant Table", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	frappe.db.sql("UPDATE `tabRestaurant Table` SET status='Empty' WHERE status='Occupied'")
+	frappe.db.commit()
+	return {"status": "success"}
+
+@frappe.whitelist()
 def update_kds_status(invoice_name, status):
 	"""Update the KDS status of a sales invoice."""
 	if not frappe.has_permission("Sales Invoice", "write"):
