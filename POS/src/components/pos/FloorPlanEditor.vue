@@ -474,6 +474,10 @@ function syncLocalStations() {
 	localStations.value = (restaurantStore.floorStations || []).map(s => ({ ...s }))
 }
 
+// Keep local copies in sync when store data changes
+watch(() => restaurantStore.tables, syncLocalTables, { deep: true })
+watch(() => restaurantStore.floorStations, syncLocalStations, { deep: true })
+
 const filteredTables = computed(() => {
 	if (!selectedArea.value) return localTables.value
 	return localTables.value.filter(t => t.area === selectedArea.value)
@@ -752,6 +756,7 @@ async function handleAddTable() {
 		})
 		showAddTableDialog.value = false
 		newTable.value = { table_name: "", capacity: 4, shape: "Square" }
+		syncLocalTables()
 		showSuccess(__("Table added"))
 	} catch (error) {
 		showError(__("Failed to add table"))
