@@ -357,7 +357,7 @@ import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
 import { Button, Dialog } from "frappe-ui"
 
-const emit = defineEmits(["table-selected", "load-table-draft"])
+const emit = defineEmits(["table-selected", "load-table-draft", "load-server-draft"])
 
 const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
