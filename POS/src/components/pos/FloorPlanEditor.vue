@@ -183,11 +183,14 @@ const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
 
 const areas = computed(() => restaurantStore.areas)
-const tables = computed(() => restaurantStore.tables)
+const layoutVersion = ref(0)
 
 const filteredTables = computed(() => {
-	if (!selectedArea.value) return tables.value
-	return tables.value.filter(t => t.area === selectedArea.value)
+	// layoutVersion dependency forces recompute after auto-layout
+	void layoutVersion.value
+	const allTables = restaurantStore.tables
+	if (!selectedArea.value) return allTables
+	return allTables.filter(t => t.area === selectedArea.value)
 })
 
 function occupiedCount(areaName) {
@@ -325,8 +328,8 @@ function autoLayoutTables() {
 		if (!tbls[i].height) tbls[i].height = 100
 	}
 
-	// Force Vue reactivity by reassigning the tables array
-	restaurantStore.tables = [...restaurantStore.tables]
+	// Force Vue to re-render by incrementing layout version
+	layoutVersion.value++
 }
 
 onMounted(async () => {
