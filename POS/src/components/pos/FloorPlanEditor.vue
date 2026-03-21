@@ -79,9 +79,27 @@
 		<div
 			ref="canvasRef"
 			class="flex-1 relative overflow-hidden"
-			:class="isEditMode ? 'bg-gray-50 dark:bg-gray-950' : 'bg-gray-100 dark:bg-gray-900'"
-			:style="isEditMode ? 'background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px); background-size: 20px 20px;' : ''"
+			:style="canvasBackgroundStyle"
 		>
+			<!-- Zoom controls -->
+			<div class="absolute bottom-3 right-3 flex flex-col gap-1 z-20">
+				<button
+					@click="zoomIn"
+					class="w-8 h-8 flex items-center justify-center bg-white/90 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-gray-700 text-lg font-bold transition-colors"
+					:title="__('Zoom in')"
+				>+</button>
+				<button
+					v-if="zoomLevel !== 1"
+					@click="zoomReset"
+					class="w-8 h-8 flex items-center justify-center bg-white/90 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-gray-500 text-[10px] font-medium transition-colors"
+					:title="__('Reset zoom')"
+				>{{ Math.round(zoomLevel * 100) }}%</button>
+				<button
+					@click="zoomOut"
+					class="w-8 h-8 flex items-center justify-center bg-white/90 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-gray-700 text-lg font-bold transition-colors"
+					:title="__('Zoom out')"
+				>&minus;</button>
+			</div>
 			<!-- Empty state -->
 			<div v-if="filteredTables.length === 0 && !isEditMode" class="flex flex-col items-center justify-center h-full text-gray-400">
 				<svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,6 +108,9 @@
 				<p class="text-lg font-medium">{{ __("No tables in this area") }}</p>
 				<p class="text-sm">{{ __("Switch to Edit mode to add tables") }}</p>
 			</div>
+
+			<!-- Zoomable container -->
+			<div :style="zoomContainerStyle" class="origin-top-left w-full h-full relative">
 
 			<!-- Tables -->
 			<div
@@ -213,6 +234,8 @@
 					/>
 				</template>
 			</div>
+
+			</div><!-- /Zoomable container -->
 
 			<!-- Add Table Button (edit mode) -->
 			<button
@@ -373,6 +396,38 @@ const { showSuccess, showError } = useToast()
 
 const canvasRef = ref(null)
 const isEditMode = ref(false)
+const zoomLevel = ref(1)
+
+const ZOOM_STEP = 0.15
+const ZOOM_MIN = 0.4
+const ZOOM_MAX = 2
+
+function zoomIn() {
+	zoomLevel.value = Math.min(ZOOM_MAX, +(zoomLevel.value + ZOOM_STEP).toFixed(2))
+}
+function zoomOut() {
+	zoomLevel.value = Math.max(ZOOM_MIN, +(zoomLevel.value - ZOOM_STEP).toFixed(2))
+}
+function zoomReset() {
+	zoomLevel.value = 1
+}
+
+const zoomContainerStyle = computed(() => ({
+	transform: `scale(${zoomLevel.value})`,
+	transformOrigin: "top left",
+}))
+
+const canvasBackgroundStyle = computed(() => {
+	const gridSize = isEditMode.value ? 20 : 30
+	const dotColor = isEditMode.value ? "#d1d5db" : "#e5e7eb"
+	const dotSize = isEditMode.value ? "1px" : "0.5px"
+	const bg = isEditMode.value ? "#f9fafb" : "#f3f4f6"
+	return {
+		backgroundColor: bg,
+		backgroundImage: `radial-gradient(circle, ${dotColor} ${dotSize}, transparent ${dotSize})`,
+		backgroundSize: `${gridSize}px ${gridSize}px`,
+	}
+})
 const selectedArea = ref(null)
 const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
