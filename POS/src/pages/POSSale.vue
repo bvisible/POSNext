@@ -2063,7 +2063,7 @@ function handleLoadTableDraft(draft) {
 
 	// Restore draft ID for future updates
 	if (draft.draft_id) {
-		cartStore.currentDraftId = draft.draft_id
+		cartStore.$patch({ currentDraftId: draft.draft_id })
 	}
 
 	// Restore KDS status
@@ -2099,7 +2099,7 @@ function handleLoadServerDraft(order) {
 	}
 
 	// Store the server draft ID for future updates
-	cartStore.currentDraftId = order.name
+	cartStore.$patch({ currentDraftId: order.name })
 
 	// Restore KDS status
 	if (order.kds_status) {
@@ -2142,7 +2142,7 @@ async function handleSendToKitchen() {
 
 		if (result?.name) {
 			// Store the server draft ID for future updates
-			cartStore.currentDraftId = result.name
+			cartStore.$patch({ currentDraftId: result.name })
 		}
 
 		// Mark changes as sent
@@ -2302,7 +2302,7 @@ async function handleEditItem(updatedItem) {
 
 function handleAdditionalDiscountUpdate(discountAmount) {
 	// Update the additional discount value in the cart store
-	cartStore.additionalDiscount = discountAmount;
+	cartStore.$patch({ additionalDiscount: discountAmount });
 
 	// Rebuild the cache to recalculate totals
 	cartStore.rebuildIncrementalCache();
@@ -2409,7 +2409,7 @@ async function handlePaymentCompleted(paymentData) {
 			return;
 		}
 
-		cartStore.payments = [];
+		cartStore.$patch({ payments: [] });
 		if (paymentData.payments && Array.isArray(paymentData.payments)) {
 			paymentData.payments.forEach((p) => {
 				cartStore.payments.push({
@@ -2422,9 +2422,9 @@ async function handlePaymentCompleted(paymentData) {
 
 		// Store sales team data if provided
 		if (paymentData.sales_team && Array.isArray(paymentData.sales_team)) {
-			cartStore.salesTeam = paymentData.sales_team;
+			cartStore.$patch({ salesTeam: paymentData.sales_team });
 		} else {
-			cartStore.salesTeam = [];
+			cartStore.$patch({ salesTeam: [] });
 		}
 
 		// Set delivery date for Sales Orders
@@ -2777,14 +2777,14 @@ async function handleLoadDraft(draft) {
 			}
 		}
 		cartStore.setCustomer(draftData.customer);
-		cartStore.currentDraftId = draft.draft_id; // Set current draft ID
+		cartStore.$patch({ currentDraftId: draft.draft_id }); // Set current draft ID
 
 		// Rebuild incremental cache to recalculate totals
 		cartStore.rebuildIncrementalCache();
 
 		// Restore applied offers if they were saved
 		if (draftData.applied_offers && draftData.applied_offers.length > 0) {
-			cartStore.appliedOffers = draftData.applied_offers;
+			cartStore.$patch({ appliedOffers: draftData.applied_offers });
 			// Trigger offer reapplication to ensure they apply to all items
 			await cartStore.reapplyOffer(shiftStore.currentProfile);
 		}
