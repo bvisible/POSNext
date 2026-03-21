@@ -85,8 +85,7 @@
 					<!-- Restaurant Mode Toggle Switch -->
 					<div
 						class="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
-						:class="canToggleRestaurant ? '' : 'opacity-50'"
-						:title="!canToggleRestaurant ? __('Clear cart and close all tables first') : (isRestaurantMode ? __('Click to disable restaurant mode') : __('Click to enable restaurant mode'))"
+						:title="isRestaurantMode ? __('Click to disable restaurant mode') : __('Click to enable restaurant mode')"
 					>
 						<svg class="w-3.5 h-3.5 flex-shrink-0" :class="isRestaurantMode ? 'text-amber-600' : 'text-gray-400'" fill="currentColor" viewBox="0 0 24 24">
 							<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
@@ -103,7 +102,7 @@
 							:class="[
 								'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1',
 								isRestaurantMode ? 'bg-amber-500' : 'bg-gray-300',
-								canToggleRestaurant ? 'cursor-pointer' : 'cursor-not-allowed'
+								'cursor-pointer'
 							]"
 						>
 							<span
@@ -367,19 +366,8 @@ const emit = defineEmits([
 	"toggle-restaurant",
 ])
 
-async function onToggleRestaurant() {
-	if (!props.canToggleRestaurant) return
-
-	const posSettingsStore = usePOSSettingsStore()
-	const restaurantStore = useRestaurantStore()
-
-	await posSettingsStore.toggleRestaurantMode()
-
-	// Load tables when enabling
-	if (posSettingsStore.settings.enable_restaurant_mode) {
-		await restaurantStore.fetchFromNetwork()
-	}
-
+function onToggleRestaurant() {
+	// Always emit — POSSale handles the logic (including purge dialog if needed)
 	emit("toggle-restaurant")
 }
 

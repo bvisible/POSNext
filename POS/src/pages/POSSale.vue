@@ -807,6 +807,28 @@
 				</template>
 			</Dialog>
 
+			<!-- Purge & Toggle Restaurant Mode Dialog -->
+			<Dialog
+				v-model="showPurgeDialog"
+				:options="{ title: __('Switch Restaurant Mode?'), size: 'xs' }"
+			>
+				<template #body-content>
+					<div class="py-3">
+						<p class="text-sm text-gray-600">{{ purgeDialogMessage }}</p>
+					</div>
+				</template>
+				<template #actions>
+					<div class="flex gap-2 w-full">
+						<Button class="flex-1" variant="subtle" @click="showPurgeDialog = false">
+							{{ __("Cancel") }}
+						</Button>
+						<Button class="flex-1" variant="solid" theme="red" @click="handlePurgeAndToggle">
+							{{ __("Clear & Switch") }}
+						</Button>
+					</div>
+				</template>
+			</Dialog>
+
 			<!-- Customer Created from Display Dialog -->
 			<Dialog
 				v-model="uiStore.showCustomerCreatedDialog"
@@ -1371,30 +1393,43 @@ let resizeState = null;
 let bodyStyleSnapshot = null;
 
 // Handle restaurant mode toggle
+const showPurgeDialog = ref(false);
+const purgeDialogMessage = ref("");
+
 async function handleToggleRestaurant() {
 	if (!canToggleRestaurant.value) {
 		const isDisabling = restaurantStore.isEnabled
 		if (isDisabling && restaurantStore.totalOccupiedCount > 0) {
-			showWarning(__("Cannot disable restaurant mode while tables are occupied"))
+			purgeDialogMessage.value = __("There are {0} occupied tables. Clear all orders and disable restaurant mode?", [restaurantStore.totalOccupiedCount])
 		} else if (cartStore.invoiceItems.length > 0) {
-			showWarning(__("Please clear the cart before toggling restaurant mode"))
+			purgeDialogMessage.value = __("There are items in the cart. Clear the cart and toggle restaurant mode?")
 		}
+		showPurgeDialog.value = true
 		return
 	}
 
+	await doToggleRestaurant()
+}
+
+async function doToggleRestaurant() {
 	try {
 		const newValue = !restaurantStore.isEnabled
+		await cartStore.clearCart()
 		await posSettingsStore.toggleRestaurantMode()
 		if (newValue) {
 			await restaurantStore.fetchFromNetwork()
 			showSuccess(__("Restaurant mode enabled"))
 		} else {
-			await cartStore.clearCart()
 			showSuccess(__("Restaurant mode disabled"))
 		}
 	} catch (error) {
 		showError(__("Failed to toggle restaurant mode"), String(error))
 	}
+}
+
+async function handlePurgeAndToggle() {
+	showPurgeDialog.value = false
+	await doToggleRestaurant()
 }
 
 onMounted(async () => {
