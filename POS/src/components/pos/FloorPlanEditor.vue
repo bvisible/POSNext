@@ -74,7 +74,7 @@
 				<div
 					v-for="(seat, si) in getSeatPositions(table)"
 					:key="'seat-' + si"
-					class="absolute w-4 h-4 rounded-full border-2 pointer-events-none"
+					class="absolute w-3.5 h-3.5 rounded-sm border-2 pointer-events-none"
 					:class="table.status === 'Occupied' ? 'bg-gray-400 border-gray-500' : 'bg-white border-gray-300'"
 					:style="seat"
 				/>
@@ -89,6 +89,20 @@
 						'bg-blue-500': table.status === 'Cleaning',
 					}"
 				/>
+
+				<!-- Edit button (edit mode only) -->
+				<button
+					v-if="isEditMode"
+					type="button"
+					@pointerdown.stop
+					@click.stop="openEditTableDialog(table)"
+					class="absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded bg-white/80 hover:bg-blue-100 border border-gray-300 z-[5] cursor-pointer"
+					:title="__('Edit table')"
+				>
+					<svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+					</svg>
+				</button>
 
 				<!-- Table info -->
 				<span class="font-bold text-sm text-gray-900 dark:text-white leading-tight text-center">{{ table.table_name }}</span>
@@ -165,6 +179,43 @@
 				</div>
 			</template>
 		</Dialog>
+
+		<!-- Edit Table Dialog -->
+		<Dialog v-model="showEditTableDialog" :options="{ title: __('Edit Table'), size: 'sm' }">
+			<template #body-content>
+				<div class="space-y-4 p-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Table Name") }}</label>
+						<input v-model="editTable.table_name" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Capacity") }}</label>
+						<input v-model.number="editTable.capacity" type="number" min="1" class="w-full px-3 py-2 border rounded-lg text-sm" />
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Shape") }}</label>
+						<div class="flex gap-2">
+							<button
+								@click="editTable.shape = 'Square'"
+								class="flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
+								:class="editTable.shape === 'Square' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600'"
+							>{{ __("Square") }}</button>
+							<button
+								@click="editTable.shape = 'Round'"
+								class="flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
+								:class="editTable.shape === 'Round' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600'"
+							>{{ __("Round") }}</button>
+						</div>
+					</div>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" variant="subtle" @click="showEditTableDialog = false">{{ __("Cancel") }}</Button>
+					<Button class="flex-1" variant="solid" @click="handleEditTable">{{ __("Save") }}</Button>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 
@@ -175,6 +226,7 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
 import { useDraggable } from "@/composables/useDraggable"
 import { useToast } from "@/composables/useToast"
+import { call } from "@/utils/apiWrapper"
 import { Button, Dialog } from "frappe-ui"
 
 const emit = defineEmits(["table-selected", "load-table-draft"])
@@ -189,6 +241,8 @@ const isEditMode = ref(false)
 const selectedArea = ref(null)
 const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
+const showEditTableDialog = ref(false)
+const editTable = ref({ name: "", table_name: "", capacity: 4, shape: "Square" })
 
 const areas = computed(() => restaurantStore.areas)
 
@@ -233,7 +287,7 @@ function getSeatPositions(table) {
 	const count = table.capacity || 4
 	const w = table.width || 100
 	const h = table.height || 100
-	const seatSize = 16 // 4 tailwind = 16px
+	const seatSize = 14 // 3.5 tailwind = 14px
 	const offset = -seatSize / 2 // center the seat on the edge
 
 	if (table.shape === "Round") {
@@ -376,6 +430,50 @@ async function handleAddTable() {
 		newTable.value = { table_name: "", capacity: 4, shape: "Square" }
 	} catch (e) {
 		showError(__("Failed to add table"))
+	}
+}
+
+function openEditTableDialog(table) {
+	editTable.value = {
+		name: table.name,
+		table_name: table.table_name,
+		capacity: table.capacity,
+		shape: table.shape || "Square",
+	}
+	showEditTableDialog.value = true
+}
+
+async function handleEditTable() {
+	try {
+		await call("frappe.client.set_value", {
+			doctype: "Restaurant Table",
+			name: editTable.value.name,
+			fieldname: {
+				table_name: editTable.value.table_name,
+				capacity: editTable.value.capacity,
+				shape: editTable.value.shape,
+			}
+		})
+
+		// Update local + store
+		const localT = localTables.value.find(t => t.name === editTable.value.name)
+		if (localT) {
+			localT.table_name = editTable.value.table_name
+			localT.capacity = editTable.value.capacity
+			localT.shape = editTable.value.shape
+		}
+		const storeT = restaurantStore.tables.find(t => t.name === editTable.value.name)
+		if (storeT) {
+			storeT.table_name = editTable.value.table_name
+			storeT.capacity = editTable.value.capacity
+			storeT.shape = editTable.value.shape
+		}
+
+		localTables.value = [...localTables.value]
+		showEditTableDialog.value = false
+		showSuccess(__("Table updated"))
+	} catch (e) {
+		showError(__("Failed to update table"))
 	}
 }
 
