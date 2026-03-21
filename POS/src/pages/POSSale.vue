@@ -2147,8 +2147,9 @@ async function handleSendToKitchen() {
 
 		showSuccess(__("Order validated"))
 
-		// Return to floor plan
+		// Return to floor plan and refresh table data for badges
 		cartStore.clearCart()
+		restaurantStore.fetchFromNetwork()
 	} catch (error) {
 		console.error("Failed to send to kitchen:", error)
 		showError(__("Failed to send order to kitchen"))

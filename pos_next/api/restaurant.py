@@ -25,7 +25,7 @@ def on_invoice_update(doc, method):
 
 @frappe.whitelist()
 def get_tables():
-	"""Fetch all restaurant areas, tables, and floor plan stations."""
+	"""Fetch all restaurant areas, tables, floor plan stations, and active order summaries."""
 	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description"])
 	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
 
@@ -36,6 +36,34 @@ def get_tables():
 			filters={"is_active": 1, "show_on_floor_plan": 1},
 			fields=["name", "station_name", "station_type", "color", "area", "pos_x", "pos_y", "width", "height"]
 		)
+
+	# Fetch active order summaries for occupied tables
+	occupied_names = [t.name for t in tables if t.status == "Occupied"]
+	order_map = {}
+	if occupied_names:
+		orders = frappe.get_all(
+			"Sales Invoice",
+			filters={"docstatus": 0, "restaurant_table": ["in", occupied_names]},
+			fields=["name", "restaurant_table", "owner", "creation", "kds_status"],
+			order_by="modified desc"
+		)
+		for order in orders:
+			tbl = order.restaurant_table
+			if tbl in order_map:
+				continue
+			item_count = frappe.db.count("Sales Invoice Item", {"parent": order.name})
+			# Get user initials from full name
+			full_name = frappe.db.get_value("User", order.owner, "full_name") or order.owner
+			initials = "".join([p[0].upper() for p in full_name.split() if p][:2])
+			order_map[tbl] = {
+				"item_count": item_count,
+				"opened_at": str(order.creation),
+				"opened_by": initials,
+				"kds_status": order.kds_status or "Pending",
+			}
+
+	for table in tables:
+		table["order_summary"] = order_map.get(table.name)
 
 	return {"areas": areas, "tables": tables, "stations": stations}
 
@@ -140,6 +168,15 @@ def get_table_order(table_name):
 		filters={"parent": order.name},
 		fields=item_fields
 	)
+
+	# Enrich items with image from Item master
+	item_codes = list({i.item_code for i in order["items"] if i.get("item_code")})
+	if item_codes:
+		images = {r.name: r.image for r in frappe.get_all(
+			"Item", filters={"name": ["in", item_codes]}, fields=["name", "image"]
+		)}
+		for item in order["items"]:
+			item["image"] = images.get(item.item_code) or ""
 
 	return order
 

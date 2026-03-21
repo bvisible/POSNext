@@ -139,7 +139,14 @@
 
 				<!-- Table info -->
 				<span class="font-bold text-sm text-gray-900 dark:text-white leading-tight text-center">{{ table.table_name }}</span>
-				<span class="text-[10px] font-medium mt-0.5" :class="{
+				<template v-if="table.order_summary && !isEditMode">
+					<div class="flex items-center gap-1 mt-0.5">
+						<span class="text-[9px] font-semibold bg-red-100 text-red-700 px-1 rounded">{{ table.order_summary.item_count }}</span>
+						<span class="text-[9px] text-gray-500">{{ formatTime(table.order_summary.opened_at) }}</span>
+						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
+					</div>
+				</template>
+				<span v-else class="text-[10px] font-medium mt-0.5" :class="{
 					'text-green-600': table.status === 'Empty',
 					'text-red-600': table.status === 'Occupied',
 					'text-yellow-600': table.status === 'Reserved',
@@ -523,6 +530,16 @@ function getTableStyle(table) {
 	return style
 }
 
+function formatTime(dateStr) {
+	if (!dateStr) return ""
+	try {
+		const d = new Date(dateStr)
+		return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+	} catch {
+		return ""
+	}
+}
+
 function getTableClasses(table) {
 	if (isEditMode.value) {
 		return "border-2 border-dashed border-blue-400 bg-white/90 dark:bg-gray-800/90 shadow-md"
@@ -572,6 +589,7 @@ async function selectTable(table) {
 					item_name: item.item_name,
 					rate: item.rate,
 					uom: item.uom,
+					image: item.image,
 					preparation_station: item.preparation_station,
 					posa_special_instructions: item.posa_special_instructions,
 					posa_item_modifiers: item.posa_item_modifiers,
