@@ -125,19 +125,33 @@ onMounted(async () => {
 	loadOrders()
 
 	socket = initSocket()
+	console.log("[KDS] Socket initialized:", socket ? "OK" : "FAILED")
 	if (socket) {
 		if (socket.disconnected) {
+			console.log("[KDS] Socket disconnected, connecting...")
 			socket.connect()
 		}
+		console.log("[KDS] Socket state:", socket.connected ? "connected" : "connecting")
 		socket.on("kds_update", () => {
+			console.log("[KDS] Realtime kds_update received")
 			loadOrders()
+		})
+		socket.on("table_update", () => {
+			console.log("[KDS] Realtime table_update received")
+			loadOrders()
+		})
+		socket.on("connect", () => {
+			console.log("[KDS] Socket connected")
+		})
+		socket.on("disconnect", () => {
+			console.log("[KDS] Socket disconnected")
 		})
 	}
 
-	// Fallback auto-refresh every 30s in case socket is not connected
+	// Fallback auto-refresh every 15s in case socket is not connected
 	autoRefreshInterval = setInterval(() => {
 		loadOrders()
-	}, 30000)
+	}, 15000)
 })
 
 watch(selectedStation, () => {

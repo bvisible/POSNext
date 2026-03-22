@@ -201,7 +201,7 @@ onUnmounted(() => {
 	document.removeEventListener("click", handleDocClick)
 })
 
-const orderTime = computed(() => new Date(props.order.creation))
+const orderTime = computed(() => new Date(props.order.modified || props.order.creation))
 const elapsedMinutes = computed(() => Math.floor((now.value - orderTime.value) / 60000))
 const elapsedSeconds = computed(() => Math.floor(((now.value - orderTime.value) % 60000) / 1000))
 

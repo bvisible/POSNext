@@ -680,6 +680,15 @@ def update_invoice(data):
         # Normalize pricing_rules before document creation
         standardize_pricing_rules(data.get("items"))
 
+        # Preserve existing item kds_status before update (restaurant mode)
+        existing_item_kds = {}
+        if data.get("name") and frappe.db.has_column("Sales Invoice Item", "kds_status"):
+            for row in frappe.get_all("Sales Invoice Item",
+                filters={"parent": data["name"]},
+                fields=["item_code", "name", "kds_status"]):
+                if row.kds_status and row.kds_status != "Pending":
+                    existing_item_kds[row.item_code] = row.kds_status
+
         # Create or update invoice
         if data.get("name"):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
@@ -961,6 +970,15 @@ def update_invoice(data):
                 update_data["kds_status"] = data.get("kds_status")
 
             frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
+
+        # Restore preserved item kds_status for existing items
+        if existing_item_kds and frappe.db.has_column("Sales Invoice Item", "kds_status"):
+            for item in invoice_doc.items:
+                saved_status = existing_item_kds.get(item.item_code)
+                if saved_status:
+                    frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", saved_status, update_modified=False)
+
+        if data.get("restaurant_table") or data.get("kds_status") or existing_item_kds:
             frappe.db.commit()
             frappe.publish_realtime("kds_update")
             frappe.publish_realtime("table_update")
