@@ -2362,8 +2362,11 @@ function closeTable() {
 	cartStore.clearCart();
 }
 
+let isSendingToKitchen = false
 async function handleSendToKitchen() {
 	if (cartStore.invoiceItems.length === 0) return
+	if (isSendingToKitchen) return
+	isSendingToKitchen = true
 
 	try {
 		// Build invoice data for server-side draft creation
@@ -2401,6 +2404,8 @@ async function handleSendToKitchen() {
 	} catch (error) {
 		console.error("Failed to send to kitchen:", error)
 		showError(__("Failed to send order to kitchen"))
+	} finally {
+		isSendingToKitchen = false
 	}
 }
 
