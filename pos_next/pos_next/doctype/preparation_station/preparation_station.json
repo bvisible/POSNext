@@ -3,28 +3,33 @@
  "allow_import": 1,
  "allow_rename": 0,
  "autoname": "field:station_name",
- "allow_on_submit": 0,
  "creation": "2026-03-21 00:00:00.000000",
- "docstatus": 0,
  "doctype": "DocType",
- "document_type": "",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_break_main",
   "station_name",
   "station_type",
+  "column_break_1",
   "color",
   "is_active",
   "section_break_floor_plan",
   "show_on_floor_plan",
   "area",
+  "column_break_fp",
   "pos_x",
   "pos_y",
   "width",
   "height",
+  "section_break_items",
   "items"
  ],
  "fields": [
+  {
+   "fieldname": "section_break_main",
+   "fieldtype": "Section Break"
+  },
   {
    "fieldname": "station_name",
    "fieldtype": "Data",
@@ -41,6 +46,10 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "color",
    "fieldtype": "Color",
    "label": "Color"
@@ -49,12 +58,14 @@
    "fieldname": "is_active",
    "fieldtype": "Check",
    "default": "1",
-   "label": "Is Active"
+   "label": "Active",
+   "in_list_view": 1
   },
   {
    "fieldname": "section_break_floor_plan",
    "fieldtype": "Section Break",
-   "label": "Floor Plan"
+   "label": "Floor Plan",
+   "collapsible": 1
   },
   {
    "fieldname": "show_on_floor_plan",
@@ -70,28 +81,41 @@
    "depends_on": "show_on_floor_plan"
   },
   {
+   "fieldname": "column_break_fp",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "pos_x",
    "fieldtype": "Int",
    "default": 0,
-   "label": "Position X"
+   "label": "Position X",
+   "hidden": 1
   },
   {
    "fieldname": "pos_y",
    "fieldtype": "Int",
    "default": 0,
-   "label": "Position Y"
+   "label": "Position Y",
+   "hidden": 1
   },
   {
    "fieldname": "width",
    "fieldtype": "Int",
    "default": 120,
-   "label": "Width"
+   "label": "Width",
+   "hidden": 1
   },
   {
    "fieldname": "height",
    "fieldtype": "Int",
    "default": 60,
-   "label": "Height"
+   "label": "Height",
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_items",
+   "fieldtype": "Section Break",
+   "label": "Items"
   },
   {
    "fieldname": "items",
@@ -101,9 +125,8 @@
   }
  ],
  "index_web_link_preview": 0,
- "istable": 0,
  "links": [],
- "modified": "2026-03-21 00:00:00.000000",
+ "modified": "2026-03-22 00:00:01.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Preparation Station",
@@ -114,23 +137,30 @@
    "delete": 1,
    "email": 1,
    "export": 1,
-   "if_owner": 0,
    "import": 1,
-   "permlevel": 0,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "submit": 0,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "POSNext Cashier"
   }
  ],
  "quick_entry": 1,
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "station_name",
+ "sort_order": "ASC",
  "states": [],
- "track_changes": 1,
- "track_seen": 0,
- "track_views": 0
+ "track_changes": 1
 }
