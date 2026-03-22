@@ -13,6 +13,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	// State
 	const tables = ref([])
 	const areas = ref([])
+	const activeCards = ref([])
 	const floorStations = ref([])
 	const stationItemsMap = ref({})
 	const modifierGroups = ref([])
@@ -77,6 +78,17 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		await fetchStationItemsMap()
 		await fetchModifierGroups()
 		await fetchActiveMenus()
+		await fetchActiveCards()
+	}
+
+	async function fetchActiveCards() {
+		if (!isEnabled.value) return
+		try {
+			const res = await call("pos_next.api.restaurant.get_active_cards")
+			if (res) activeCards.value = res
+		} catch (error) {
+			log.error("Failed to fetch active cards:", error)
+		}
 	}
 
 	async function updateTableStatus(tableName, status) {
@@ -249,6 +261,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		stationItemsMap,
 		modifierGroups,
 		activeMenus,
+		activeCards,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
@@ -269,6 +282,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		getStationForItem,
 		fetchModifierGroups,
 		getModifiersForItem,
-		fetchActiveMenus
+		fetchActiveMenus,
+		fetchActiveCards
 	}
 })

@@ -1,0 +1,65 @@
+{
+ "creation": "2026-03-22T00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_type",
+  "label",
+  "item",
+  "menu",
+  "price",
+  "sort_order"
+ ],
+ "fields": [
+  {
+   "default": "Item",
+   "fieldname": "item_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Item Type",
+   "options": "Category\nItem\nMenu",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label / Category Name"
+  },
+  {
+   "depends_on": "eval:doc.item_type=='Item'",
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "depends_on": "eval:doc.item_type=='Menu'",
+   "fieldname": "menu",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Menu",
+   "options": "Restaurant Menu"
+  },
+  {
+   "description": "Leave blank to use default price",
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Price Override"
+  },
+  {
+   "default": "0",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Sort Order"
+  }
+ ],
+ "istable": 1,
+ "modified": "2026-03-22T00:00:00.000000",
+ "module": "POS Next",
+ "name": "Restaurant Card Item",
+ "owner": "Administrator",
+ "permissions": []
+}

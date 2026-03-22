@@ -337,8 +337,60 @@
 									</Button>
 								</div>
 
-								<!-- Menu cards (when Menus tab is active) -->
-								<div v-if="showMenus && restaurantStore.isEnabled" class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
+								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
+								<div v-if="restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && cartStore.restaurantTable"
+									class="flex flex-col flex-1 min-h-0 overflow-hidden">
+									<!-- Card tabs -->
+									<div class="flex items-center gap-1 px-3 py-2 border-b bg-white overflow-x-auto flex-shrink-0">
+										<button
+											v-for="card in restaurantStore.activeCards"
+											:key="card.name"
+											@click="selectedCard = card.name"
+											class="px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors"
+											:class="selectedCard === card.name
+												? 'bg-amber-100 text-amber-800'
+												: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+										>
+											{{ card.card_name }}
+										</button>
+									</div>
+									<!-- Card items list -->
+									<div class="flex-1 overflow-y-auto p-3">
+										<template v-for="(cardItem, ci) in selectedCardItems" :key="ci">
+											<div v-if="cardItem.item_type === 'Category'"
+												class="sticky top-0 bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg z-10">
+												<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ cardItem.label }}</h3>
+											</div>
+											<button v-else-if="cardItem.item_type === 'Item'"
+												@click="handleCardItemClick(cardItem)"
+												class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-lg transition-colors text-left border-b border-gray-100">
+												<img v-if="cardItem.image" :src="cardItem.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+												<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+													<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+												</div>
+												<div class="flex-1 min-w-0">
+													<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.item_name || cardItem.label }}</p>
+												</div>
+												<span class="text-sm font-bold text-blue-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
+											</button>
+											<button v-else-if="cardItem.item_type === 'Menu'"
+												@click="handleCardMenuClick(cardItem)"
+												class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 rounded-lg transition-colors text-left border-b border-gray-100">
+												<div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+													<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+												</div>
+												<div class="flex-1 min-w-0">
+													<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.menu_name || cardItem.label }}</p>
+													<span class="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Menu</span>
+												</div>
+												<span class="text-sm font-bold text-amber-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
+											</button>
+										</template>
+									</div>
+								</div>
+
+								<!-- Menu cards (when Menus tab is active, no cards) -->
+								<div v-else-if="showMenus && restaurantStore.isEnabled" class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
 									<!-- Menus Tab Navigation -->
 									<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
 										<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
@@ -382,9 +434,9 @@
 									</div>
 								</div>
 
-								<!-- Items Selector (default view) -->
+								<!-- Items Selector (default view, hidden when card is active) -->
 								<ItemsSelector
-									v-if="!showMenus"
+									v-if="!showMenus && !(restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && cartStore.restaurantTable)"
 									ref="itemsSelectorRef"
 									:pos-profile="shiftStore.profileName"
 									:cart-items="cartStore.invoiceItems"
@@ -1277,6 +1329,40 @@ const editCustomer = ref(null); // Customer being edited (null for create mode)
 const showClearCacheDialog = ref(false);
 const clearCacheOverlayRef = ref(null);
 const showMenus = ref(false);
+
+// Restaurant card selection
+const selectedCard = ref(null)
+const selectedCardItems = computed(() => {
+	if (!selectedCard.value) return []
+	const card = restaurantStore.activeCards.find(c => c.name === selectedCard.value)
+	return card?.items || []
+})
+
+watch(() => restaurantStore.activeCards, (cards) => {
+	if (cards.length > 0 && !selectedCard.value) {
+		selectedCard.value = cards[0].name
+	}
+}, { immediate: true })
+
+function handleCardItemClick(cardItem) {
+	const item = {
+		item_code: cardItem.item,
+		item_name: cardItem.item_name || cardItem.label,
+		rate: cardItem.price || cardItem.default_price || 0,
+	}
+	const stationInfo = restaurantStore.getStationForItem(item.item_code)
+	if (stationInfo) {
+		item.preparation_station = stationInfo.station
+	}
+	cartStore.addItem(item, 1)
+}
+
+function handleCardMenuClick(cardItem) {
+	const menu = restaurantStore.activeMenus.find(m => m.name === cardItem.menu)
+	if (menu) {
+		menuSelectionRef.value?.open(menu)
+	}
+}
 
 // Debounce timer for offer reapplication
 const offerReapplyTimer = ref(null);

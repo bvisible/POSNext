@@ -468,6 +468,54 @@ def delete_area(name):
 
 
 @frappe.whitelist()
+def get_active_cards():
+	"""Fetch active restaurant cards with enriched item data."""
+	from frappe.utils import today
+
+	cards = frappe.get_all(
+		"Restaurant Card",
+		filters={"is_active": 1},
+		fields=["name", "card_name", "description", "image", "available_from", "available_to"]
+	)
+
+	current_date = today()
+	result = []
+	for card in cards:
+		if card.get("available_from") and str(card.available_from) > current_date:
+			continue
+		if card.get("available_to") and str(card.available_to) < current_date:
+			continue
+
+		items = frappe.get_all(
+			"Restaurant Card Item",
+			filters={"parent": card.name},
+			fields=["item_type", "label", "item", "menu", "price", "sort_order"],
+			order_by="sort_order asc, idx asc"
+		)
+
+		for ci in items:
+			if ci.item_type == "Item" and ci.item:
+				item_data = frappe.db.get_value("Item", ci.item,
+					["item_name", "image", "standard_rate"], as_dict=True)
+				if item_data:
+					ci["item_name"] = item_data.item_name
+					ci["image"] = item_data.image
+					ci["default_price"] = item_data.standard_rate or 0
+			elif ci.item_type == "Menu" and ci.menu:
+				menu_data = frappe.db.get_value("Restaurant Menu", ci.menu,
+					["menu_name", "price", "image"], as_dict=True)
+				if menu_data:
+					ci["menu_name"] = menu_data.menu_name
+					ci["image"] = menu_data.image
+					ci["default_price"] = menu_data.price or 0
+
+		card["items"] = items
+		result.append(card)
+
+	return result
+
+
+@frappe.whitelist()
 def get_active_menus():
 	"""Fetch all active restaurant menus with their courses."""
 	import json
