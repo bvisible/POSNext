@@ -1,23 +1,37 @@
 frappe.ui.form.on("Restaurant Card", {
 	refresh: function(frm) {
-		hide_category_prices(frm);
+		// Add CSS to hide price cells for Category rows
+		if (!document.getElementById("card-category-style")) {
+			var style = document.createElement("style");
+			style.id = "card-category-style";
+			style.textContent = `
+				.frappe-control[data-fieldname="items"] .rows .row[data-category-row="1"] .cell-value[data-field="price"],
+				.frappe-control[data-fieldname="items"] .rows .row[data-category-row="1"] [data-field="price"] .like-disabled-input,
+				.frappe-control[data-fieldname="items"] .rows .row[data-category-row="1"] [data-field="price"] .static-area {
+					color: transparent !important;
+				}
+			`;
+			document.head.appendChild(style);
+		}
+		mark_category_rows(frm);
 	},
 	onload: function(frm) {
-		hide_category_prices(frm);
+		mark_category_rows(frm);
 	}
 });
 
-function hide_category_prices(frm) {
-	// Wait for grid to render, then hide price cells on Category rows
+function mark_category_rows(frm) {
+	// Mark Category rows with a data attribute for CSS targeting
 	setTimeout(function() {
+		if (!frm.fields_dict.items || !frm.fields_dict.items.grid) return;
 		frm.fields_dict.items.grid.grid_rows.forEach(function(row) {
 			if (row.doc.item_type === "Category") {
-				$(row.row).find('.cell-value[data-field="price"]').text("");
-				$(row.row).find('[data-field="price"] .static-area').text("");
-				$(row.row).find('[data-field="price"] .like-disabled-input').text("");
+				$(row.row).attr("data-category-row", "1");
+			} else {
+				$(row.row).removeAttr("data-category-row");
 			}
 		});
-	}, 300);
+	}, 200);
 }
 
 frappe.ui.form.on("Restaurant Card Item", {
@@ -28,12 +42,9 @@ frappe.ui.form.on("Restaurant Card Item", {
 			frappe.model.set_value(cdt, cdn, "item", null);
 			frappe.model.set_value(cdt, cdn, "menu", null);
 		}
-		setTimeout(function() { hide_category_prices(frm); }, 500);
+		setTimeout(function() { mark_category_rows(frm); }, 500);
 	},
 	items_add: function(frm) {
-		setTimeout(function() { hide_category_prices(frm); }, 500);
-	},
-	items_move: function(frm) {
-		setTimeout(function() { hide_category_prices(frm); }, 500);
+		setTimeout(function() { mark_category_rows(frm); }, 300);
 	}
 });
