@@ -12,6 +12,7 @@
  "engine": "InnoDB",
  "field_order": [
   "station_name",
+  "station_type",
   "color",
   "is_active",
   "section_break_floor_plan",
@@ -30,6 +31,14 @@
    "label": "Station Name",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "station_type",
+   "fieldtype": "Select",
+   "label": "Station Type",
+   "options": "Kitchen\nBar\nOther",
+   "default": "Kitchen",
+   "in_list_view": 1
   },
   {
    "fieldname": "color",
