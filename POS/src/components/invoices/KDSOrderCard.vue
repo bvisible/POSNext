@@ -24,18 +24,41 @@
 		<!-- Items -->
 		<div class="p-3 flex-1">
 			<div v-for="(item, idx) in order.items" :key="idx"
-				class="py-1.5"
+				class="py-1.5 relative"
 				:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
-				<!-- Item line: qty x name + item status badge -->
-				<div class="flex justify-between items-start gap-1">
+				<!-- Item line: qty x name + item status badge (clickable) -->
+				<div class="flex justify-between items-start gap-1 cursor-pointer rounded px-1 -mx-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+					@click.stop="toggleItemMenu(idx)">
 					<span class="text-sm text-gray-900 dark:text-gray-100 leading-tight">
 						<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
 					</span>
 					<span v-if="item.kds_status"
-						class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+						class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
 						:class="itemStatusClass(item.kds_status)">
 						{{ __(item.kds_status) }}
 					</span>
+				</div>
+				<!-- Item context menu -->
+				<div v-if="activeItemMenu === idx"
+					class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 py-1 min-w-[140px]">
+					<button v-if="item.kds_status !== 'Preparing'"
+						@click.stop="updateItemStatus(item, 'Preparing')"
+						class="w-full text-left px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2">
+						<span class="w-2 h-2 rounded-full bg-blue-400"></span>
+						{{ __("Preparing") }}
+					</button>
+					<button v-if="item.kds_status !== 'Ready'"
+						@click.stop="updateItemStatus(item, 'Ready')"
+						class="w-full text-left px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 flex items-center gap-2">
+						<span class="w-2 h-2 rounded-full bg-green-500"></span>
+						{{ __("Ready") }}
+					</button>
+					<button v-if="item.kds_status !== 'Delivered'"
+						@click.stop="updateItemStatus(item, 'Delivered')"
+						class="w-full text-left px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+						<span class="w-2 h-2 rounded-full bg-gray-400"></span>
+						{{ __("Delivered") }}
+					</button>
 				</div>
 				<!-- Modifiers -->
 				<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
@@ -121,6 +144,31 @@ const props = defineProps({
 const emit = defineEmits(["status-updated"])
 const { showError } = useToast()
 const loading = ref(false)
+const activeItemMenu = ref(null)
+
+function toggleItemMenu(idx) {
+	activeItemMenu.value = activeItemMenu.value === idx ? null : idx
+}
+
+// Update individual item KDS status
+async function updateItemStatus(item, newStatus) {
+	activeItemMenu.value = null
+	try {
+		await call("pos_next.api.restaurant.update_item_kds_status", {
+			invoice_name: props.order.name,
+			item_code: item.item_code,
+			status: newStatus
+		})
+		emit("status-updated")
+	} catch (error) {
+		showError(__("Failed to update item status"))
+	}
+}
+
+// Close menu when clicking outside
+function handleDocClick() {
+	activeItemMenu.value = null
+}
 
 // Timer: update every second
 const now = ref(new Date())
@@ -130,10 +178,12 @@ onMounted(() => {
 	timerInterval = setInterval(() => {
 		now.value = new Date()
 	}, 1000)
+	document.addEventListener("click", handleDocClick)
 })
 
 onUnmounted(() => {
 	if (timerInterval) clearInterval(timerInterval)
+	document.removeEventListener("click", handleDocClick)
 })
 
 const orderTime = computed(() => new Date(props.order.creation))
