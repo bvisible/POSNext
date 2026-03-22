@@ -904,8 +904,8 @@ onMounted(async () => {
 	await nextTick()
 	autoLayoutTables()
 
-	// Listen for realtime table updates
-	floorSocket = initSocket()
+	// Listen for realtime table updates via frappe.realtime socket
+	floorSocket = window.frappe?.realtime || initSocket()
 	if (floorSocket) {
 		if (floorSocket.disconnected) floorSocket.connect()
 		floorSocket.on("table_update", () => {

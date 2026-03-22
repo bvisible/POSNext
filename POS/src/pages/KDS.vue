@@ -124,27 +124,15 @@ onMounted(async () => {
 
 	loadOrders()
 
-	socket = initSocket()
-	console.log("[KDS] Socket initialized:", socket ? "OK" : "FAILED")
+	// Use the existing frappe.realtime socket (already initialized by main app)
+	socket = window.frappe?.realtime || initSocket()
 	if (socket) {
-		if (socket.disconnected) {
-			console.log("[KDS] Socket disconnected, connecting...")
-			socket.connect()
-		}
-		console.log("[KDS] Socket state:", socket.connected ? "connected" : "connecting")
+		if (socket.disconnected) socket.connect()
 		socket.on("kds_update", () => {
-			console.log("[KDS] Realtime kds_update received")
 			loadOrders()
 		})
 		socket.on("table_update", () => {
-			console.log("[KDS] Realtime table_update received")
 			loadOrders()
-		})
-		socket.on("connect", () => {
-			console.log("[KDS] Socket connected")
-		})
-		socket.on("disconnect", () => {
-			console.log("[KDS] Socket disconnected")
 		})
 	}
 
