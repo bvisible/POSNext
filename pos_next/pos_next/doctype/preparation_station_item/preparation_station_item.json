@@ -12,7 +12,9 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
-  "item_name"
+  "item_name",
+  "prep_time",
+  "priority"
  ],
  "fields": [
   {
@@ -21,7 +23,8 @@
    "in_list_view": 1,
    "label": "Item",
    "options": "Item",
-   "reqd": 1
+   "reqd": 1,
+   "columns": 4
   },
   {
    "fieldname": "item_name",
@@ -31,6 +34,23 @@
    "label": "Item Name",
    "read_only": 1,
    "hidden": 1
+  },
+  {
+   "fieldname": "prep_time",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Prep Time (min)",
+   "description": "Estimated preparation time in minutes",
+   "columns": 2
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "Normal\nUrgent",
+   "default": "Normal",
+   "columns": 2
   }
  ],
  "index_web_link_preview": 0,
