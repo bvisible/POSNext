@@ -377,8 +377,32 @@
 											>{{ cat }}</button>
 										</div>
 									</div>
-									<!-- Items grid (same style as ItemsSelector) -->
+									<!-- Search + view toggle -->
+									<div class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200">
+										<div class="flex items-center gap-1 sm:gap-2">
+											<div class="flex-1 relative min-w-0">
+												<svg class="absolute start-2 sm:start-3 top-1/2 -translate-y-1/2 w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+												<input
+													v-model="cardSearchQuery"
+													type="text"
+													:placeholder="__('Search in card...')"
+													class="w-full text-[11px] sm:text-sm border border-gray-300 rounded-neo-sm px-2 sm:px-3 py-2 ps-7 sm:ps-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+												/>
+											</div>
+											<div class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0">
+												<button @click="cardViewMode = 'grid'" class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation" :class="cardViewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'">
+													<svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+												</button>
+												<button @click="cardViewMode = 'list'" class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation" :class="cardViewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'">
+													<svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+												</button>
+											</div>
+										</div>
+									</div>
+									<!-- Items display -->
 									<div class="flex-1 overflow-y-auto p-1.5 sm:p-3">
+										<!-- Grid view -->
+										<template v-if="cardViewMode === 'grid'">
 										<template v-for="(group, gi) in filteredCardGroups" :key="'g'+gi">
 											<div v-if="group.category && !selectedCardCategory" class="bg-gray-50 border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
 												<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
@@ -406,6 +430,33 @@
 													</div>
 												</div>
 											</div>
+										</template>
+										</template>
+
+										<!-- List view -->
+										<template v-else>
+											<template v-for="(group, gi) in filteredCardGroups" :key="'l'+gi">
+												<div v-if="group.category && !selectedCardCategory" class="bg-gray-50 border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
+													<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
+												</div>
+												<div
+													v-for="(li_item, li) in group.items"
+													:key="li"
+													@click="li_item.item_type === 'Menu' ? handleCardMenuClick(li_item) : handleCardItemClick(li_item)"
+													class="flex items-center gap-3 px-2 py-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+												>
+													<img v-if="li_item.image" :src="li_item.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+													<div v-else class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="li_item.item_type === 'Menu' ? 'bg-amber-50' : 'bg-gray-100'">
+														<svg v-if="li_item.item_type === 'Menu'" class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+														<svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+													</div>
+													<div class="flex-1 min-w-0">
+														<p class="text-xs font-semibold text-gray-900 truncate">{{ li_item.item_name || li_item.menu_name || li_item.label }}</p>
+														<span v-if="li_item.item_type === 'Menu'" class="text-[9px] font-semibold text-amber-600 bg-amber-100 px-1 py-0.5 rounded">Menu</span>
+													</div>
+													<span class="text-xs font-bold flex-shrink-0" :class="li_item.item_type === 'Menu' ? 'text-amber-600' : 'text-blue-600'">{{ formatCurrency(li_item.price || li_item.default_price || 0) }}</span>
+												</div>
+											</template>
 										</template>
 									</div>
 								</div>
@@ -1354,17 +1405,28 @@ const showMenus = ref(false);
 // Restaurant card selection
 const selectedCard = ref(null)
 const selectedCardCategory = ref(null)
+const cardSearchQuery = ref("")
+const cardViewMode = ref("grid")
 const cardCategories = computed(() => {
 	return selectedCardItems.value
 		.filter(i => i.item_type === "Category")
 		.map(i => i.label)
 })
 const filteredCardGroups = computed(() => {
+	let groups = cardItemGroups.value
 	if (selectedCardCategory.value) {
-		const group = cardItemGroups.value.find(g => g.category === selectedCardCategory.value)
-		return group ? [{ category: null, items: group.items }] : []
+		const group = groups.find(g => g.category === selectedCardCategory.value)
+		groups = group ? [{ category: null, items: group.items }] : []
 	}
-	return cardItemGroups.value
+	// Apply search filter
+	const q = cardSearchQuery.value?.toLowerCase().trim()
+	if (!q) return groups
+	return groups.map(g => ({
+		category: g.category,
+		items: g.items.filter(i =>
+			(i.item_name || i.menu_name || i.label || "").toLowerCase().includes(q)
+		)
+	})).filter(g => g.items.length > 0)
 })
 const cardItemGroups = computed(() => {
 	const groups = []
