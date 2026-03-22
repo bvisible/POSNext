@@ -305,6 +305,7 @@ export function useInvoice() {
 				posa_special_instructions: item.posa_special_instructions || "",
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				preparation_station: item.preparation_station || "",
+				kds_status: item.kds_status || "",
 			}
 			invoiceItems.value.push(newItem)
 			// Recalculate the newly added item to apply taxes
@@ -788,6 +789,7 @@ export function useInvoice() {
 			posa_special_instructions: item.posa_special_instructions || "",
 			posa_item_modifiers: item.posa_item_modifiers || "",
 			preparation_station: item.preparation_station || "",
+			kds_status: item.kds_status || "",
 		}))
 	}
 

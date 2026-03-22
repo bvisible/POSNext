@@ -671,6 +671,7 @@ async function selectTable(table) {
 					preparation_station: item.preparation_station,
 					posa_special_instructions: item.posa_special_instructions,
 					posa_item_modifiers: item.posa_item_modifiers,
+					kds_status: item.kds_status || "Pending",
 				}, item.qty || 1)
 			}
 			// Set draft ID and KDS status

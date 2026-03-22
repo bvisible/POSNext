@@ -450,6 +450,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				posa_special_instructions: item.posa_special_instructions || "",
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				preparation_station: item.preparation_station || "",
+				kds_status: item.kds_status || "Pending",
 				price_list_rate: item.price_list_rate || item.rate,
 				discount_percentage: item.discount_percentage || 0,
 				discount_amount: item.discount_amount || 0,

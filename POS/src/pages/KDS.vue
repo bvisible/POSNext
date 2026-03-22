@@ -78,6 +78,7 @@ const loading = ref(true)
 const stations = ref([])
 const selectedStation = ref(null)
 let socket = null
+let autoRefreshInterval = null
 
 const sortedOrders = computed(() => {
 	return [...orders.value].sort((a, b) => new Date(a.creation) - new Date(b.creation))
@@ -129,10 +130,14 @@ onMounted(async () => {
 			socket.connect()
 		}
 		socket.on("kds_update", () => {
-			console.log("Realtime KDS Update Received")
 			loadOrders()
 		})
 	}
+
+	// Fallback auto-refresh every 30s in case socket is not connected
+	autoRefreshInterval = setInterval(() => {
+		loadOrders()
+	}, 30000)
 })
 
 watch(selectedStation, () => {
@@ -142,6 +147,9 @@ watch(selectedStation, () => {
 onUnmounted(() => {
 	if (socket) {
 		socket.off("kds_update")
+	}
+	if (autoRefreshInterval) {
+		clearInterval(autoRefreshInterval)
 	}
 })
 </script>
