@@ -1,122 +1,91 @@
 <template>
-	<div class="flex-shrink-0 w-80 lg:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-md border overflow-hidden flex flex-col h-full"
-		:class="{
-			'border-yellow-300': order.kds_status === 'Pending',
-			'border-blue-400': order.kds_status === 'Preparing',
-			'border-green-500': order.kds_status === 'Ready'
-		}">
+	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 flex flex-col"
+		:class="borderColorClass">
 
-		<!-- Card Header -->
-		<div class="px-4 py-3 border-b flex justify-between items-center"
-			:class="{
-				'bg-yellow-50 dark:bg-yellow-900/30': order.kds_status === 'Pending',
-				'bg-blue-50 dark:bg-blue-900/30': order.kds_status === 'Preparing',
-				'bg-green-50 dark:bg-green-900/30': order.kds_status === 'Ready'
-			}">
-			<div>
-				<h3 class="font-bold text-lg leading-tight">{{ order.restaurant_table }}</h3>
-				<span class="text-xs text-gray-500 font-medium">#{{ order.name.substring(0,8) }}</span>
-			</div>
-
-			<div class="text-right">
-				<div class="font-mono text-xl font-bold" :class="timeColorClass">
+		<!-- Header -->
+		<div class="p-3 border-b border-gray-100 dark:border-gray-700">
+			<div class="flex justify-between items-start">
+				<h3 class="font-bold text-lg leading-tight text-gray-900 dark:text-white">
+					{{ order.restaurant_table }}
+				</h3>
+				<span class="font-mono text-base font-bold tabular-nums" :class="timeColorClass">
 					{{ elapsedTime }}
-				</div>
+				</span>
+			</div>
+			<div class="flex justify-between items-center mt-1">
+				<span class="text-xs text-gray-400 font-mono">#{{ order.name.substring(0, 8) }}</span>
 				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
-					:class="{
-						'bg-yellow-200 text-yellow-800': order.kds_status === 'Pending',
-						'bg-blue-200 text-blue-800': order.kds_status === 'Preparing',
-						'bg-green-200 text-green-800': order.kds_status === 'Ready'
-					}">
+					:class="statusBadgeClass">
 					{{ __(order.kds_status) }}
 				</span>
 			</div>
 		</div>
 
-		<!-- Order Items -->
-		<div class="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-800">
-			<ul class="divide-y divide-gray-100 dark:divide-gray-700">
-				<li v-for="item in order.items" :key="item.item_code" class="py-3 flex justify-between items-start">
-					<div class="flex-1 pr-4">
-						<div class="font-medium text-gray-900 dark:text-gray-100 leading-tight">
-							{{ item.item_name }}
-						</div>
-						<span
-							v-if="showStationBadge && item.preparation_station"
-							class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 inline-block"
-							:style="{ backgroundColor: getStationColor(item.preparation_station) }"
-						>
-							{{ item.preparation_station }}
-						</span>
-						<div v-if="item.description && stripHtml(item.description) !== item.item_name" class="text-xs text-gray-500 mt-1 line-clamp-2">
-							{{ stripHtml(item.description) }}
-						</div>
-						<div v-if="item.posa_special_instructions" class="mt-2 text-xs font-bold text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30 p-2 rounded border border-blue-100 dark:border-blue-800 inline-block">
-							{{ item.posa_special_instructions }}
-						</div>
-						<!-- Item Modifiers -->
-						<div v-if="item.posa_item_modifiers" class="mt-1 flex flex-wrap gap-1">
-							<span
-								v-for="mod in parseModifiers(item.posa_item_modifiers)"
-								:key="mod"
-								class="text-[9px] font-bold px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded"
-							>
-								{{ mod }}
-							</span>
-						</div>
-						<div v-if="item.kds_status" class="mt-1">
-							<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-								:class="{
-									'bg-yellow-100 text-yellow-800': item.kds_status === 'Pending',
-									'bg-blue-100 text-blue-800': item.kds_status === 'Preparing',
-									'bg-green-100 text-green-800': item.kds_status === 'Ready',
-									'bg-gray-100 text-gray-800': item.kds_status === 'Delivered',
-								}"
-							>
-								{{ __(item.kds_status) }}
-							</span>
-						</div>
-					</div>
-					<div class="font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
-						{{ item.qty }}
-					</div>
-				</li>
-			</ul>
+		<!-- Items -->
+		<div class="p-3 flex-1">
+			<div v-for="(item, idx) in order.items" :key="idx"
+				class="py-1.5"
+				:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+				<!-- Item line: qty x name + item status badge -->
+				<div class="flex justify-between items-start gap-1">
+					<span class="text-sm text-gray-900 dark:text-gray-100 leading-tight">
+						<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+					</span>
+					<span v-if="item.kds_status"
+						class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+						:class="itemStatusClass(item.kds_status)">
+						{{ __(item.kds_status) }}
+					</span>
+				</div>
+				<!-- Modifiers -->
+				<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
+					class="text-xs text-gray-400 mt-0.5 pl-4">
+					→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
+				</div>
+				<!-- Special instructions -->
+				<div v-if="item.posa_special_instructions"
+					class="text-xs text-blue-500 mt-0.5 pl-4">
+					ℹ {{ item.posa_special_instructions }}
+				</div>
+				<!-- Station badge -->
+				<span v-if="showStationBadge && item.preparation_station"
+					class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block"
+					:style="{ backgroundColor: getStationColor(item.preparation_station) }">
+					{{ item.preparation_station }}
+				</span>
+			</div>
 		</div>
 
-		<!-- Action Buttons -->
-		<div class="p-3 border-t bg-gray-50 dark:bg-gray-800/80">
+		<!-- Action Button -->
+		<div class="p-3 border-t border-gray-100 dark:border-gray-700">
 			<Button
 				v-if="order.kds_status === 'Pending'"
 				variant="solid"
-				class="w-full h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+				class="w-full h-10 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white"
 				@click="updateStatus('Preparing')"
 				:loading="loading"
 			>
-				<template #prefix><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></template>
-				{{ __("Start Preparing") }}
+				{{ __("Start") }}
 			</Button>
 
 			<Button
 				v-if="order.kds_status === 'Preparing'"
 				variant="solid"
-				class="w-full h-12 text-base font-bold bg-green-500 hover:bg-green-600 text-white shadow-md"
+				class="w-full h-10 text-sm font-bold bg-green-500 hover:bg-green-600 text-white"
 				@click="updateStatus('Ready')"
 				:loading="loading"
 			>
-				<template #prefix><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></template>
-				{{ __("Mark Ready") }}
+				{{ __("Ready") }}
 			</Button>
 
 			<Button
 				v-if="order.kds_status === 'Ready'"
 				variant="outline"
-				class="w-full h-12 text-base font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+				class="w-full h-10 text-sm font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
 				@click="updateStatus('Delivered')"
 				:loading="loading"
 			>
-				<template #prefix><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></template>
-				{{ __("Delivered / Dismiss") }}
+				{{ __("Delivered") }}
 			</Button>
 		</div>
 	</div>
@@ -128,6 +97,7 @@ import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 
+// Strip HTML tags from a string
 function stripHtml(html) {
 	if (!html) return ""
 	return html.replace(/<[^>]*>/g, "").trim()
@@ -137,6 +107,10 @@ const props = defineProps({
 	order: {
 		type: Object,
 		required: true
+	},
+	stations: {
+		type: Array,
+		default: () => []
 	},
 	showStationBadge: {
 		type: Boolean,
@@ -148,6 +122,7 @@ const emit = defineEmits(["status-updated"])
 const { showError } = useToast()
 const loading = ref(false)
 
+// Timer: update every second
 const now = ref(new Date())
 let timerInterval = null
 
@@ -171,6 +146,7 @@ const elapsedTime = computed(() => {
 	return `${min}:${sec}`
 })
 
+// Timer color: red+pulse >15min, orange >10min, green if ready
 const timeColorClass = computed(() => {
 	if (props.order.kds_status === 'Ready') return 'text-green-600'
 	if (elapsedMinutes.value > 15) return 'text-red-600 animate-pulse'
@@ -178,11 +154,44 @@ const timeColorClass = computed(() => {
 	return 'text-gray-800 dark:text-gray-200'
 })
 
-function getStationColor(station) {
-	// Simple color mapping — colors come from the station data on the order items
-	return '#6B7280'
+// Left border color based on order status
+const borderColorClass = computed(() => {
+	switch (props.order.kds_status) {
+		case 'Pending': return 'border-yellow-400'
+		case 'Preparing': return 'border-blue-400'
+		case 'Ready': return 'border-green-500'
+		default: return 'border-gray-300'
+	}
+})
+
+// Status badge styling for the order header
+const statusBadgeClass = computed(() => {
+	switch (props.order.kds_status) {
+		case 'Pending': return 'bg-yellow-200 text-yellow-800'
+		case 'Preparing': return 'bg-blue-200 text-blue-800'
+		case 'Ready': return 'bg-green-200 text-green-800'
+		default: return 'bg-gray-200 text-gray-800'
+	}
+})
+
+// Status badge styling for individual items
+function itemStatusClass(status) {
+	switch (status) {
+		case 'Pending': return 'bg-yellow-100 text-yellow-800'
+		case 'Preparing': return 'bg-blue-100 text-blue-800'
+		case 'Ready': return 'bg-green-100 text-green-800'
+		case 'Delivered': return 'bg-gray-100 text-gray-800'
+		default: return 'bg-gray-100 text-gray-600'
+	}
 }
 
+// Look up station color from stations array prop
+function getStationColor(stationName) {
+	const station = props.stations.find(s => s.name === stationName)
+	return station?.color || '#6B7280'
+}
+
+// Parse modifier JSON into a flat list of modifier option names
 function parseModifiers(json) {
 	try {
 		const mods = JSON.parse(json)
@@ -190,6 +199,7 @@ function parseModifiers(json) {
 	} catch { return [] }
 }
 
+// Update order KDS status via API
 async function updateStatus(newStatus) {
 	loading.value = true
 	try {

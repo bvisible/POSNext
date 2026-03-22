@@ -3,7 +3,7 @@
 		<!-- Header -->
 		<header class="bg-white dark:bg-gray-800 shadow-sm z-10 p-4 flex justify-between items-center">
 			<div>
-				<h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __("Kitchen Display System") }}</h1>
+				<h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __("Preparation Display") }}</h1>
 				<p class="text-sm text-gray-500 dark:text-gray-400">{{ __("Active Orders") }}: {{ orders.length }}</p>
 			</div>
 			<div class="flex gap-2">
@@ -20,10 +20,10 @@
 		<div v-if="stations.length > 0" class="bg-white dark:bg-gray-800 border-b px-4 py-2 flex items-center gap-2 overflow-x-auto">
 			<button
 				@click="selectedStation = null; loadOrders()"
-				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
 				:class="!selectedStation ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
 			>
-				{{ __("All Stations") }}
+				{{ __("All") }} ({{ orders.length }})
 			</button>
 			<button
 				v-for="station in stations"
@@ -34,12 +34,12 @@
 				:style="selectedStation === station.name ? { backgroundColor: station.color || '#3B82F6' } : {}"
 			>
 				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#3B82F6' }"></span>
-				{{ station.station_name }}
+				{{ station.station_name }} ({{ getStationOrderCount(station.name) }})
 			</button>
 		</div>
 
 		<!-- Orders Grid -->
-		<main class="flex-1 overflow-x-auto overflow-y-hidden p-6">
+		<main class="flex-1 overflow-y-auto">
 			<div v-if="loading" class="flex justify-center items-center h-full">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
@@ -50,14 +50,14 @@
 				<p>{{ __("Kitchen is clear.") }}</p>
 			</div>
 
-			<div v-else class="flex gap-4 h-full overflow-x-auto snap-x">
+			<div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-3">
 				<KDSOrderCard
 					v-for="order in sortedOrders"
 					:key="order.name"
 					:order="order"
+					:stations="stations"
 					:show-station-badge="!selectedStation"
 					@status-updated="loadOrders"
-					class="snap-start"
 				/>
 			</div>
 		</main>
@@ -82,6 +82,13 @@ let socket = null
 const sortedOrders = computed(() => {
 	return [...orders.value].sort((a, b) => new Date(a.creation) - new Date(b.creation))
 })
+
+// Count orders that have at least one item assigned to a given station
+function getStationOrderCount(stationName) {
+	return orders.value.filter(o =>
+		o.items && o.items.some(i => i.preparation_station === stationName)
+	).length
+}
 
 async function loadOrders() {
 	try {
@@ -138,29 +145,3 @@ onUnmounted(() => {
 	}
 })
 </script>
-
-<style scoped>
-::-webkit-scrollbar {
-	height: 12px;
-}
-::-webkit-scrollbar-track {
-	background: rgba(0,0,0,0.05);
-	border-radius: 6px;
-}
-::-webkit-scrollbar-thumb {
-	background: rgba(0,0,0,0.2);
-	border-radius: 6px;
-}
-::-webkit-scrollbar-thumb:hover {
-	background: rgba(0,0,0,0.3);
-}
-.dark ::-webkit-scrollbar-track {
-	background: rgba(255,255,255,0.05);
-}
-.dark ::-webkit-scrollbar-thumb {
-	background: rgba(255,255,255,0.2);
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-	background: rgba(255,255,255,0.3);
-}
-</style>

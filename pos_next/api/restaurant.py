@@ -234,6 +234,9 @@ def get_kds_orders(station=None):
 	if has_kds_status_field:
 		item_fields.append("kds_status")
 
+	if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
+		item_fields.append("posa_item_modifiers")
+
 	for order in orders:
 		items = frappe.get_all(
 			"Sales Invoice Item",
