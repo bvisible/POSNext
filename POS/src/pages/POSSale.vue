@@ -400,11 +400,11 @@
 										</div>
 									</div>
 									<!-- Items display -->
-									<div class="flex-1 overflow-y-auto p-1.5 sm:p-3">
+									<div class="flex-1 overflow-y-auto p-1.5 sm:p-3" style="background-color: var(--neo-bg)">
 										<!-- Grid view -->
 										<template v-if="cardViewMode === 'grid'">
 										<template v-for="(group, gi) in filteredCardGroups" :key="'g'+gi">
-											<div v-if="group.category && !selectedCardCategory" class="bg-gray-50 border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
+											<div v-if="group.category && !selectedCardCategory" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
 												<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
 											</div>
 											<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5" :class="!selectedCardCategory && group.category ? 'mt-1' : 'mt-0'">
@@ -436,7 +436,7 @@
 										<!-- List view -->
 										<template v-else>
 											<template v-for="(group, gi) in filteredCardGroups" :key="'l'+gi">
-												<div v-if="group.category && !selectedCardCategory" class="bg-gray-50 border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
+												<div v-if="group.category && !selectedCardCategory" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
 													<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
 												</div>
 												<div
