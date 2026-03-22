@@ -1465,6 +1465,17 @@ function handleCardItemClick(cardItem) {
 		item.preparation_station = stationInfo.station
 	}
 	cartStore.addItem(item, 1)
+
+	// Auto-open modifiers dialog if item has required modifier groups
+	const modGroups = restaurantStore.getModifiersForItem(item.item_code)
+	if (modGroups.some(g => g.required)) {
+		nextTick(() => {
+			const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code)
+			if (cartItem && itemModifiersRef.value) {
+				itemModifiersRef.value.open(cartItem)
+			}
+		})
+	}
 }
 
 function handleCardMenuClick(cardItem) {
