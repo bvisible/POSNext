@@ -16,15 +16,17 @@
    "fieldname": "item_type",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Item Type",
+   "label": "Type",
    "options": "Category\nItem\nMenu",
-   "reqd": 1
+   "reqd": 1,
+   "columns": 1
   },
   {
    "fieldname": "label",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Label / Category Name"
+   "label": "Label",
+   "columns": 2
   },
   {
    "depends_on": "eval:doc.item_type=='Item'",
@@ -32,32 +34,35 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Item",
-   "options": "Item"
+   "options": "Item",
+   "columns": 3
   },
   {
    "depends_on": "eval:doc.item_type=='Menu'",
    "fieldname": "menu",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Menu",
    "options": "Restaurant Menu"
   },
   {
+   "depends_on": "eval:doc.item_type!='Category'",
    "description": "Leave blank to use default price",
    "fieldname": "price",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Price Override"
+   "label": "Price",
+   "columns": 2
   },
   {
    "default": "0",
    "fieldname": "sort_order",
    "fieldtype": "Int",
-   "label": "Sort Order"
+   "label": "Sort Order",
+   "hidden": 1
   }
  ],
  "istable": 1,
- "modified": "2026-03-22T00:00:00.000000",
+ "modified": "2026-03-22T00:00:01.000000",
  "module": "POS Next",
  "name": "Restaurant Card Item",
  "owner": "Administrator",
