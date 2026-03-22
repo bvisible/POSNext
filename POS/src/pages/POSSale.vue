@@ -366,52 +366,10 @@
 									</div>
 									<!-- Card items -->
 									<div class="flex-1 overflow-y-auto p-3">
-										<template v-for="(cardItem, ci) in selectedCardItems" :key="ci">
-											<!-- Category separator -->
-											<div v-if="cardItem.item_type === 'Category'"
-												class="sticky top-0 bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg z-10"
-												:class="cardViewMode === 'grid' ? 'col-span-full' : ''">
-												<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ cardItem.label }}</h3>
-											</div>
-
-											<!-- Grid view items -->
-											<template v-else-if="cardViewMode === 'grid'">
-												<!-- Collect items until next category for grid layout -->
-											</template>
-
-											<!-- List view: Item -->
-											<button v-else-if="cardItem.item_type === 'Item'"
-												@click="handleCardItemClick(cardItem)"
-												class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-lg transition-colors text-left border-b border-gray-100">
-												<img v-if="cardItem.image" :src="cardItem.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-												<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-													<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-												</div>
-												<div class="flex-1 min-w-0">
-													<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.item_name || cardItem.label }}</p>
-												</div>
-												<span class="text-sm font-bold text-blue-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
-											</button>
-
-											<!-- List view: Menu -->
-											<button v-else-if="cardItem.item_type === 'Menu'"
-												@click="handleCardMenuClick(cardItem)"
-												class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 rounded-lg transition-colors text-left border-b border-gray-100">
-												<div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-													<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-												</div>
-												<div class="flex-1 min-w-0">
-													<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.menu_name || cardItem.label }}</p>
-													<span class="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Menu</span>
-												</div>
-												<span class="text-sm font-bold text-amber-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
-											</button>
-										</template>
-
-										<!-- Grid view rendering (grouped by category) -->
+										<!-- Grid view -->
 										<template v-if="cardViewMode === 'grid'">
 											<template v-for="(group, gi) in cardItemGroups" :key="'g'+gi">
-												<div v-if="group.category" class="sticky top-0 bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg z-10">
+												<div v-if="group.category" class="bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg">
 													<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ group.category }}</h3>
 												</div>
 												<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
@@ -432,6 +390,40 @@
 														<span class="text-xs font-bold mt-1" :class="gi_item.item_type === 'Menu' ? 'text-amber-600' : 'text-blue-600'">{{ formatCurrency(gi_item.price || gi_item.default_price || 0) }}</span>
 													</button>
 												</div>
+											</template>
+										</template>
+
+										<!-- List view -->
+										<template v-else>
+											<template v-for="(cardItem, ci) in selectedCardItems" :key="ci">
+												<div v-if="cardItem.item_type === 'Category'"
+													class="bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg">
+													<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ cardItem.label }}</h3>
+												</div>
+												<button v-else-if="cardItem.item_type === 'Item'"
+													@click="handleCardItemClick(cardItem)"
+													class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-lg transition-colors text-left border-b border-gray-100">
+													<img v-if="cardItem.image" :src="cardItem.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+													<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+														<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+													</div>
+													<div class="flex-1 min-w-0">
+														<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.item_name || cardItem.label }}</p>
+													</div>
+													<span class="text-sm font-bold text-blue-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
+												</button>
+												<button v-else-if="cardItem.item_type === 'Menu'"
+													@click="handleCardMenuClick(cardItem)"
+													class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 rounded-lg transition-colors text-left border-b border-gray-100">
+													<div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+														<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+													</div>
+													<div class="flex-1 min-w-0">
+														<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.menu_name || cardItem.label }}</p>
+														<span class="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Menu</span>
+													</div>
+													<span class="text-sm font-bold text-amber-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
+												</button>
 											</template>
 										</template>
 									</div>
