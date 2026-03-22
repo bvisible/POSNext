@@ -5,13 +5,12 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "card_name",
-  "column_break_1",
-  "is_active",
   "section_break_details",
+  "card_name",
   "description",
   "column_break_2",
   "image",
+  "is_active",
   "section_break_dates",
   "available_from",
   "column_break_3",
@@ -21,28 +20,16 @@
  ],
  "fields": [
   {
+   "fieldname": "section_break_details",
+   "fieldtype": "Section Break"
+  },
+  {
    "fieldname": "card_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Card Name",
    "reqd": 1,
    "unique": 1
-  },
-  {
-   "fieldname": "column_break_1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Active"
-  },
-  {
-   "fieldname": "section_break_details",
-   "fieldtype": "Section Break",
-   "label": "Details"
   },
   {
    "fieldname": "description",
@@ -57,6 +44,13 @@
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Image"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
   },
   {
    "fieldname": "section_break_dates",
@@ -91,7 +85,7 @@
   }
  ],
  "links": [],
- "modified": "2026-03-22T00:00:01.000000",
+ "modified": "2026-03-22T00:00:02.000000",
  "module": "POS Next",
  "name": "Restaurant Card",
  "naming_rule": "By fieldname",
