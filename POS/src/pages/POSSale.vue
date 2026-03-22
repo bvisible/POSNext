@@ -340,91 +340,72 @@
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
 								<div v-if="restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && cartStore.restaurantTable"
 									class="flex flex-col flex-1 min-h-0 overflow-hidden">
-									<!-- Card tabs + view toggle -->
-									<div class="flex items-center justify-between px-3 py-2 border-b bg-white flex-shrink-0">
-										<div class="flex items-center gap-1 overflow-x-auto">
+									<!-- Card tabs (like category tabs) -->
+									<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
+										<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
 											<button
 												v-for="card in restaurantStore.activeCards"
 												:key="card.name"
-												@click="selectedCard = card.name"
-												class="px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors"
+												@click="selectedCard = card.name; selectedCardCategory = null"
+												class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0"
 												:class="selectedCard === card.name
-													? 'bg-amber-100 text-amber-800'
-													: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'"
+													? 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
+													: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100'"
 											>
 												{{ card.card_name }}
 											</button>
 										</div>
-										<div class="flex items-center gap-0.5 flex-shrink-0 ml-2">
-											<button @click="cardViewMode = 'grid'" class="p-1.5 rounded" :class="cardViewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'">
-												<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-											</button>
-											<button @click="cardViewMode = 'list'" class="p-1.5 rounded" :class="cardViewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'">
-												<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-											</button>
+									</div>
+									<!-- Category sub-filters -->
+									<div v-if="cardCategories.length > 0" class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100">
+										<div class="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+											<button
+												@click="selectedCardCategory = null"
+												class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
+												:class="!selectedCardCategory
+													? 'bg-amber-100 text-amber-800'
+													: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+											>{{ __("All") }}</button>
+											<button
+												v-for="cat in cardCategories"
+												:key="cat"
+												@click="selectedCardCategory = cat"
+												class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
+												:class="selectedCardCategory === cat
+													? 'bg-amber-100 text-amber-800'
+													: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+											>{{ cat }}</button>
 										</div>
 									</div>
-									<!-- Card items -->
-									<div class="flex-1 overflow-y-auto p-3">
-										<!-- Grid view -->
-										<template v-if="cardViewMode === 'grid'">
-											<template v-for="(group, gi) in cardItemGroups" :key="'g'+gi">
-												<div v-if="group.category" class="bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg">
-													<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ group.category }}</h3>
-												</div>
-												<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
-													<button
-														v-for="(gi_item, ii) in group.items"
-														:key="ii"
-														@click="gi_item.item_type === 'Menu' ? handleCardMenuClick(gi_item) : handleCardItemClick(gi_item)"
-														class="flex flex-col items-center p-3 rounded-xl border transition-colors text-center"
-														:class="gi_item.item_type === 'Menu' ? 'border-amber-200 hover:bg-amber-50' : 'border-gray-200 hover:bg-blue-50'"
-													>
-														<img v-if="gi_item.image" :src="gi_item.image" class="w-16 h-16 rounded-lg object-cover mb-2" />
-														<div v-else class="w-16 h-16 rounded-lg mb-2 flex items-center justify-center" :class="gi_item.item_type === 'Menu' ? 'bg-amber-50' : 'bg-gray-100'">
-															<svg v-if="gi_item.item_type === 'Menu'" class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-															<svg v-else class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+									<!-- Items grid (same style as ItemsSelector) -->
+									<div class="flex-1 overflow-y-auto p-1.5 sm:p-3">
+										<template v-for="(group, gi) in filteredCardGroups" :key="'g'+gi">
+											<div v-if="group.category && !selectedCardCategory" class="bg-gray-50 border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
+												<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
+											</div>
+											<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5" :class="!selectedCardCategory && group.category ? 'mt-1' : 'mt-0'">
+												<div
+													v-for="(ci_item, ii) in group.items"
+													:key="ii"
+													@click="ci_item.item_type === 'Menu' ? handleCardMenuClick(ci_item) : handleCardItemClick(ci_item)"
+													class="group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100 cursor-pointer hover:border-blue-400 hover:shadow-neo-md"
+												>
+													<div class="relative aspect-square bg-gray-100 rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden">
+														<img v-if="ci_item.image" :src="ci_item.image" class="w-full h-full object-cover" />
+														<div v-else class="w-full h-full flex items-center justify-center">
+															<svg v-if="ci_item.item_type === 'Menu'" class="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+															<svg v-else class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
 														</div>
-														<p class="text-xs font-medium text-gray-900 truncate w-full">{{ gi_item.item_name || gi_item.menu_name || gi_item.label }}</p>
-														<span v-if="gi_item.item_type === 'Menu'" class="text-[9px] font-semibold text-amber-600 bg-amber-100 px-1 py-0.5 rounded mt-0.5">Menu</span>
-														<span class="text-xs font-bold mt-1" :class="gi_item.item_type === 'Menu' ? 'text-amber-600' : 'text-blue-600'">{{ formatCurrency(gi_item.price || gi_item.default_price || 0) }}</span>
-													</button>
+														<span v-if="ci_item.item_type === 'Menu'" class="absolute top-1 right-1 text-[8px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full">Menu</span>
+													</div>
+													<div class="min-w-0">
+														<p class="text-[10px] sm:text-xs font-semibold text-gray-900 truncate mb-0.5 leading-tight">{{ ci_item.item_name || ci_item.menu_name || ci_item.label }}</p>
+														<div class="text-[9px] sm:text-[10px] leading-tight">
+															<span class="font-semibold" :class="ci_item.item_type === 'Menu' ? 'text-amber-600' : 'text-blue-600'">{{ formatCurrency(ci_item.price || ci_item.default_price || 0) }}</span>
+														</div>
+													</div>
 												</div>
-											</template>
-										</template>
-
-										<!-- List view -->
-										<template v-else>
-											<template v-for="(cardItem, ci) in selectedCardItems" :key="ci">
-												<div v-if="cardItem.item_type === 'Category'"
-													class="bg-gray-50 border-b border-gray-200 px-3 py-2 mt-3 first:mt-0 rounded-t-lg">
-													<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ cardItem.label }}</h3>
-												</div>
-												<button v-else-if="cardItem.item_type === 'Item'"
-													@click="handleCardItemClick(cardItem)"
-													class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-lg transition-colors text-left border-b border-gray-100">
-													<img v-if="cardItem.image" :src="cardItem.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-													<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-														<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-													</div>
-													<div class="flex-1 min-w-0">
-														<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.item_name || cardItem.label }}</p>
-													</div>
-													<span class="text-sm font-bold text-blue-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
-												</button>
-												<button v-else-if="cardItem.item_type === 'Menu'"
-													@click="handleCardMenuClick(cardItem)"
-													class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 rounded-lg transition-colors text-left border-b border-gray-100">
-													<div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-														<svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-													</div>
-													<div class="flex-1 min-w-0">
-														<p class="text-sm font-medium text-gray-900 truncate">{{ cardItem.menu_name || cardItem.label }}</p>
-														<span class="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">Menu</span>
-													</div>
-													<span class="text-sm font-bold text-amber-600 flex-shrink-0">{{ formatCurrency(cardItem.price || cardItem.default_price || 0) }}</span>
-												</button>
-											</template>
+											</div>
 										</template>
 									</div>
 								</div>
@@ -1372,7 +1353,19 @@ const showMenus = ref(false);
 
 // Restaurant card selection
 const selectedCard = ref(null)
-const cardViewMode = ref("grid")
+const selectedCardCategory = ref(null)
+const cardCategories = computed(() => {
+	return selectedCardItems.value
+		.filter(i => i.item_type === "Category")
+		.map(i => i.label)
+})
+const filteredCardGroups = computed(() => {
+	if (selectedCardCategory.value) {
+		const group = cardItemGroups.value.find(g => g.category === selectedCardCategory.value)
+		return group ? [{ category: null, items: group.items }] : []
+	}
+	return cardItemGroups.value
+})
 const cardItemGroups = computed(() => {
 	const groups = []
 	let current = { category: null, items: [] }
