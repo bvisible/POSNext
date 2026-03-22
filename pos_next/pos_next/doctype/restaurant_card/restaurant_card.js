@@ -1,21 +1,20 @@
 frappe.ui.form.on("Restaurant Card", {
 	refresh: function(frm) {
-		// Override price formatter in the grid to hide price for Category rows
-		var grid = frm.fields_dict.items.grid;
-		grid.grid_rows.forEach(function(row) {
-			if (row.doc.item_type === "Category") {
-				// Set rendered price cell to empty via DOM
-				var $row = $(row.row);
-				$row.find('.static-area').each(function() {
-					var $cell = $(this).closest('.row-index, .frappe-control');
-					if ($cell.attr('data-fieldname') === 'price') {
-						$(this).html('');
-					}
-				});
-			}
-		});
+		setTimeout(function() { hide_category_prices(frm); }, 200);
+	},
+	onload: function(frm) {
+		setTimeout(function() { hide_category_prices(frm); }, 500);
 	}
 });
+
+function hide_category_prices(frm) {
+	if (!frm.fields_dict.items || !frm.fields_dict.items.grid) return;
+	frm.fields_dict.items.grid.grid_rows.forEach(function(row) {
+		if (row.doc.item_type === "Category") {
+			$(row.row).find('[data-fieldname="price"] .static-area').html("");
+		}
+	});
+}
 
 frappe.ui.form.on("Restaurant Card Item", {
 	item_type: function(frm, cdt, cdn) {
@@ -25,6 +24,9 @@ frappe.ui.form.on("Restaurant Card Item", {
 			frappe.model.set_value(cdt, cdn, "item", null);
 			frappe.model.set_value(cdt, cdn, "menu", null);
 		}
-		frm.refresh_fields();
+		setTimeout(function() { hide_category_prices(frm); }, 300);
+	},
+	items_add: function(frm) {
+		setTimeout(function() { hide_category_prices(frm); }, 300);
 	}
 });
