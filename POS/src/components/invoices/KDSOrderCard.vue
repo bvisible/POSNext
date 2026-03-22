@@ -150,9 +150,17 @@ function toggleItemMenu(idx) {
 	activeItemMenu.value = activeItemMenu.value === idx ? null : idx
 }
 
-// Update individual item KDS status
+// Update individual item KDS status (optimistic UI)
 async function updateItemStatus(item, newStatus) {
 	activeItemMenu.value = null
+	// Optimistic: update all items with same item_code instantly
+	const oldStatuses = []
+	props.order.items.forEach(i => {
+		if (i.item_code === item.item_code) {
+			oldStatuses.push(i.kds_status)
+			i.kds_status = newStatus
+		}
+	})
 	try {
 		await call("pos_next.api.restaurant.update_item_kds_status", {
 			invoice_name: props.order.name,
@@ -161,6 +169,13 @@ async function updateItemStatus(item, newStatus) {
 		})
 		emit("status-updated")
 	} catch (error) {
+		// Rollback on error
+		let idx = 0
+		props.order.items.forEach(i => {
+			if (i.item_code === item.item_code) {
+				i.kds_status = oldStatuses[idx++]
+			}
+		})
 		showError(__("Failed to update item status"))
 	}
 }
@@ -250,19 +265,21 @@ function parseModifiers(json) {
 }
 
 // Update order KDS status via API
+// Update order-level KDS status (optimistic UI)
 async function updateStatus(newStatus) {
 	loading.value = true
+	const oldStatus = props.order.kds_status
+	// Optimistic: update instantly
+	props.order.kds_status = newStatus
 	try {
-		const res = await call("pos_next.api.restaurant.update_kds_status", {
+		await call("pos_next.api.restaurant.update_kds_status", {
 			invoice_name: props.order.name,
 			status: newStatus
 		})
-
-		if (res && res.status === 'success') {
-			emit("status-updated")
-		}
+		emit("status-updated")
 	} catch (error) {
-		console.error("Failed to update status:", error)
+		// Rollback on error
+		props.order.kds_status = oldStatus
 		showError(__("Failed to update KDS order status."))
 	} finally {
 		loading.value = false
