@@ -77,6 +77,7 @@ def update_table_status(table_name, status):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	frappe.db.set_value("Restaurant Table", table_name, "status", status)
+	frappe.publish_realtime("table_update")
 	return {"status": "success"}
 
 @frappe.whitelist()
@@ -96,6 +97,7 @@ def reset_all_tables():
 	frappe.db.sql("UPDATE `tabRestaurant Table` SET status='Empty' WHERE status='Occupied'")
 	frappe.db.commit()
 	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("table_update")
 	return {"status": "success"}
 
 @frappe.whitelist()

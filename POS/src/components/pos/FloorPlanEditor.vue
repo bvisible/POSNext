@@ -393,6 +393,7 @@ import { usePOSDraftsStore } from "@/stores/posDrafts"
 import { useDraggable } from "@/composables/useDraggable"
 import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
+import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 
 const emit = defineEmits(["table-selected", "load-table-draft", "load-server-draft"])
@@ -400,6 +401,7 @@ const emit = defineEmits(["table-selected", "load-table-draft", "load-server-dra
 const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
 const draftsStore = usePOSDraftsStore()
+let floorSocket = null
 const { showSuccess, showError } = useToast()
 
 const canvasRef = ref(null)
@@ -900,6 +902,15 @@ onMounted(async () => {
 	// Auto-layout tables that have no positions yet
 	await nextTick()
 	autoLayoutTables()
+
+	// Listen for realtime table updates
+	floorSocket = initSocket()
+	if (floorSocket) {
+		if (floorSocket.disconnected) floorSocket.connect()
+		floorSocket.on("table_update", () => {
+			restaurantStore.fetchFromNetwork()
+		})
+	}
 })
 
 // Re-layout when switching areas
@@ -909,6 +920,9 @@ watch(selectedArea, async () => {
 })
 
 onUnmounted(() => {
+	if (floorSocket) {
+		floorSocket.off("table_update")
+	}
 	destroy()
 })
 </script>

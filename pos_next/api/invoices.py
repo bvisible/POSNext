@@ -963,6 +963,7 @@ def update_invoice(data):
             frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
             frappe.db.commit()
             frappe.publish_realtime("kds_update")
+            frappe.publish_realtime("table_update")
 
         return invoice_doc.as_dict()
     except Exception as e:
