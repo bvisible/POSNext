@@ -274,6 +274,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		onSuccess(data) {
 			if (data) {
 				Object.assign(settings.value, data)
+				// Restore restaurant mode from localStorage (overrides DB value)
+				initRestaurantMode()
 				isLoaded.value = true
 			}
 			isLoading.value = false
