@@ -68,18 +68,6 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-				<!-- Runner shortcut (visible when items ready) -->
-				<button
-					v-if="!isEditMode && totalReadyCount > 0"
-					@click="$router.push('/runner')"
-					class="flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-					</svg>
-					{{ totalReadyCount }} {{ __("ready") }}
-				</button>
-
 				<!-- Edit Mode Toggle -->
 				<button
 					@click="toggleEditMode"
@@ -137,6 +125,19 @@
 					:style="{ backgroundColor: '#22C55E30', color: '#16A34A' }">
 					{{ getStationReadyCount(station.name) }}✓
 				</span>
+			</div>
+
+			<!-- Spacer + Runner pill -->
+			<div class="flex-grow"></div>
+			<div v-if="totalReadyCount > 0"
+				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer
+					bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-sm flex-shrink-0"
+				@click="$router.push('/runner')">
+				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+				</svg>
+				{{ __("Runner") }}
+				<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px]">{{ totalReadyCount }}✓</span>
 			</div>
 		</div>
 
