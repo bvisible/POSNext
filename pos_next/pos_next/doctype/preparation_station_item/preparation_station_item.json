@@ -14,7 +14,8 @@
   "item",
   "item_name",
   "prep_time",
-  "priority"
+  "priority",
+  "workflow"
  ],
  "fields": [
   {
@@ -51,6 +52,14 @@
    "options": "Normal\nUrgent",
    "default": "Normal",
    "columns": 2
+  },
+  {
+   "description": "Override: this item follows a different workflow than its station. Leave empty to use the station's workflow.",
+   "fieldname": "workflow",
+   "fieldtype": "Link",
+   "in_list_view": 0,
+   "label": "Workflow Override",
+   "options": "Preparation Workflow"
   }
  ],
  "index_web_link_preview": 0,

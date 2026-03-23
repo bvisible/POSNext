@@ -31,6 +31,11 @@ const routes = [
 		component: () => import("@/pages/CFD.vue"),
 		meta: { allowGuest: true },
 	},
+	{
+		name: "Runner",
+		path: "/runner",
+		component: () => import("@/pages/Runner.vue"),
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

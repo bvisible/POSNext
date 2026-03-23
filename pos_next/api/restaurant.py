@@ -829,3 +829,239 @@ def _check_restaurant_open(hours):
 				return True, slot.get("label")
 
 	return False, None
+
+
+# ─── Preparation Workflow System ─────────────────────────────────────────────
+
+# Default workflow steps used when no Preparation Workflow is configured
+DEFAULT_WORKFLOW_STEPS = [
+	{"step_name": "Pending", "color": "#EAB308", "allow_edit": 1},
+	{"step_name": "Preparing", "color": "#3B82F6", "allow_edit": 0},
+	{"step_name": "Ready", "color": "#22C55E", "allow_edit": 0},
+]
+
+
+def _resolve_workflow(station_name=None, item_code=None):
+	"""Resolve the applicable workflow steps for a station/item combination.
+
+	Priority:
+	1. Per-item workflow override on Preparation Station Item
+	2. Station-level workflow on Preparation Station
+	3. Default Preparation Workflow (is_default=1)
+	4. Hardcoded DEFAULT_WORKFLOW_STEPS constant
+	"""
+	if station_name:
+		try:
+			station = frappe.get_cached_doc("Preparation Station", station_name)
+		except Exception:
+			return DEFAULT_WORKFLOW_STEPS
+
+		# Check per-item override
+		if item_code and station.items:
+			for item_row in station.items:
+				if item_row.item == item_code and getattr(item_row, "workflow", None):
+					return _get_workflow_steps(item_row.workflow)
+
+		# Station-level workflow
+		if getattr(station, "workflow", None):
+			return _get_workflow_steps(station.workflow)
+
+	# Default workflow
+	default_wf = frappe.db.get_value("Preparation Workflow", {"is_default": 1}, "name")
+	if default_wf:
+		return _get_workflow_steps(default_wf)
+
+	return DEFAULT_WORKFLOW_STEPS
+
+
+def _get_workflow_steps(workflow_name):
+	"""Fetch ordered steps from a Preparation Workflow document."""
+	steps = frappe.get_all(
+		"Preparation Workflow Step",
+		filters={"parent": workflow_name, "parenttype": "Preparation Workflow"},
+		fields=["step_name", "color", "allow_edit"],
+		order_by="idx asc"
+	)
+	return steps or DEFAULT_WORKFLOW_STEPS
+
+
+@frappe.whitelist()
+def get_station_workflows():
+	"""Fetch all active stations with their resolved workflow steps."""
+	stations = frappe.get_all(
+		"Preparation Station",
+		filters={"is_active": 1},
+		fields=["name", "station_name", "color"]
+	)
+
+	# Safely check for workflow field
+	has_workflow = frappe.db.has_column("Preparation Station", "workflow")
+
+	for station in stations:
+		if has_workflow:
+			station["workflow"] = frappe.db.get_value("Preparation Station", station.name, "workflow")
+		station["steps"] = _resolve_workflow(station_name=station.name)
+
+		# Fetch per-item workflow overrides
+		item_fields = ["item", "item_name"]
+		if frappe.db.has_column("Preparation Station Item", "workflow"):
+			item_fields.append("workflow")
+		station["items"] = frappe.get_all(
+			"Preparation Station Item",
+			filters={"parent": station.name},
+			fields=item_fields
+		)
+
+	return {
+		"stations": stations,
+		"default_steps": DEFAULT_WORKFLOW_STEPS
+	}
+
+
+@frappe.whitelist()
+def get_next_step(station_name, current_step, item_code=None):
+	"""Get the next workflow step for a given station/item and current step."""
+	steps = _resolve_workflow(station_name, item_code)
+	step_names = [s["step_name"] for s in steps]
+
+	if current_step not in step_names:
+		return steps[0] if steps else None
+
+	current_idx = step_names.index(current_step)
+	if current_idx + 1 < len(step_names):
+		return steps[current_idx + 1]
+
+	# At last step -> next is Delivered
+	return {"step_name": "Delivered", "color": "#6B7280", "allow_edit": 0}
+
+
+@frappe.whitelist()
+def get_runner_orders():
+	"""Fetch orders with items ready for pickup (at last workflow step, not yet Delivered)."""
+	raw_orders = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 0},
+		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified"]
+	)
+
+	orders = [o for o in raw_orders if o.get("restaurant_table")]
+
+	item_fields = ["name", "item_code", "item_name", "qty", "description"]
+	has_instructions = frappe.db.has_column("Sales Invoice Item", "posa_special_instructions")
+	has_item_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	has_prep_station = frappe.db.has_column("Sales Invoice Item", "preparation_station")
+	has_modifiers = frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers")
+
+	if has_instructions:
+		item_fields.append("posa_special_instructions")
+	if has_item_kds:
+		item_fields.append("kds_status")
+	if has_prep_station:
+		item_fields.append("preparation_station")
+	if has_modifiers:
+		item_fields.append("posa_item_modifiers")
+
+	# Build station map for enrichment
+	station_map = {}
+	all_stations = frappe.get_all("Preparation Station", filters={"is_active": 1}, fields=["name", "station_name", "color"])
+	for st in all_stations:
+		st_items = frappe.get_all("Preparation Station Item", filters={"parent": st.name}, fields=["item"])
+		for si in st_items:
+			station_map[si.item] = {"station_name": st.station_name, "station_color": st.color, "station_id": st.name}
+
+	workflow_cache = {}
+
+	result = []
+	for order in orders:
+		items = frappe.get_all(
+			"Sales Invoice Item",
+			filters={"parent": order.name},
+			fields=item_fields
+		)
+
+		ready_items = []
+		for item in items:
+			item_status = item.get("kds_status", "")
+			if not item_status or item_status == "Delivered":
+				continue
+
+			# Resolve station
+			station_id = item.get("preparation_station") or ""
+			if not station_id and item.item_code in station_map:
+				station_id = station_map[item.item_code]["station_id"]
+
+			# Check if item is at last workflow step
+			cache_key = f"{station_id}:{item.item_code}"
+			if cache_key not in workflow_cache:
+				workflow_cache[cache_key] = _resolve_workflow(station_id or None, item.item_code)
+			steps = workflow_cache[cache_key]
+			last_step = steps[-1]["step_name"] if steps else "Ready"
+
+			if item_status == last_step:
+				# Enrich with station info
+				if item.item_code in station_map:
+					item["station_color"] = station_map[item.item_code]["station_color"]
+					if not item.get("preparation_station"):
+						item["preparation_station"] = station_map[item.item_code]["station_id"]
+				elif station_id:
+					try:
+						station_doc = frappe.get_cached_doc("Preparation Station", station_id)
+						item["station_color"] = station_doc.color
+					except Exception:
+						item["station_color"] = "#6B7280"
+				else:
+					item["station_color"] = "#6B7280"
+
+				ready_items.append(item)
+
+		if ready_items:
+			table_display = order.restaurant_table
+			try:
+				table_display = frappe.db.get_value("Restaurant Table", order.restaurant_table, "table_name") or order.restaurant_table
+			except Exception:
+				pass
+
+			order["items"] = ready_items
+			order["table_display_name"] = table_display
+			result.append(order)
+
+	return result
+
+
+@frappe.whitelist()
+def mark_items_delivered(invoice_name, item_names=None):
+	"""Mark specific items (or all ready items) as Delivered."""
+	import json
+
+	if not frappe.has_permission("Sales Invoice", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if not frappe.db.exists("Sales Invoice", invoice_name):
+		frappe.throw(_("Invoice {0} not found").format(invoice_name))
+
+	has_item_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	if not has_item_kds:
+		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", "Delivered")
+		frappe.publish_realtime("kds_update")
+		return {"status": "success"}
+
+	if item_names:
+		if isinstance(item_names, str):
+			item_names = json.loads(item_names)
+		for row_name in item_names:
+			frappe.db.set_value("Sales Invoice Item", row_name, "kds_status", "Delivered")
+	else:
+		frappe.db.sql("""
+			UPDATE `tabSales Invoice Item`
+			SET kds_status = 'Delivered'
+			WHERE parent = %s AND IFNULL(kds_status, '') != 'Delivered'
+		""", invoice_name)
+
+	# Sync order-level status
+	all_items = frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, fields=["kds_status"])
+	statuses = [i.kds_status for i in all_items if i.kds_status]
+	if statuses and all(s == "Delivered" for s in statuses):
+		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", "Delivered")
+
+	frappe.publish_realtime("kds_update")
+	return {"status": "success"}

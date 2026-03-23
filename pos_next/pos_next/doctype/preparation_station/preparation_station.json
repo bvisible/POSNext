@@ -14,6 +14,7 @@
   "column_break_1",
   "color",
   "is_active",
+  "workflow",
   "section_break_floor_plan",
   "show_on_floor_plan",
   "area",
@@ -60,6 +61,13 @@
    "default": "1",
    "label": "Active",
    "in_list_view": 1
+  },
+  {
+   "description": "Preparation workflow for this station. If empty, the default workflow is used.",
+   "fieldname": "workflow",
+   "fieldtype": "Link",
+   "label": "Workflow",
+   "options": "Preparation Workflow"
   },
   {
    "fieldname": "section_break_floor_plan",
