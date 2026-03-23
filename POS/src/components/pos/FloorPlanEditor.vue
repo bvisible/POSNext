@@ -255,40 +255,49 @@
 				</template>
 			</div>
 
-			<!-- SVG Delivery Arrows Overlay -->
+			<!-- SVG Delivery Arrows Overlay (z-index 1 = under tables/stations) -->
 			<svg v-if="showDeliveryArrows && deliveryArrows.length > 0"
 				class="absolute inset-0 pointer-events-none"
 				width="100%" height="100%"
-				style="z-index: 5;">
+				style="z-index: 1;">
 				<defs>
-					<marker id="delivery-arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-						<polygon points="0 0, 8 3, 0 6" fill="currentColor" />
+					<!-- Small chevron marker for mid-path -->
+					<marker id="delivery-chevron" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+						<path d="M1 1 L4 3 L1 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
 					</marker>
 				</defs>
 
 				<!-- Ghost station labels for cross-area arrows -->
 				<g v-for="arrow in deliveryArrows.filter(a => a.isGhost)" :key="'ghost-' + arrow.key">
 					<rect :x="arrow.x1 - 2" :y="arrow.y1 - 10" :width="arrow.labelWidth || 70" height="20" rx="4"
-						:fill="arrow.color" fill-opacity="0.15" :stroke="arrow.color" stroke-width="1" />
-					<text :x="arrow.x1 + 4" :y="arrow.y1 + 4" :fill="arrow.color" font-size="10" font-weight="bold">
-						{{ arrow.stationName }} →
+						:fill="arrow.color" fill-opacity="0.12" :stroke="arrow.color" stroke-width="0.5" stroke-opacity="0.4" />
+					<text :x="arrow.x1 + 4" :y="arrow.y1 + 4" :fill="arrow.color" fill-opacity="0.7" font-size="9" font-weight="bold">
+						{{ arrow.stationName }}
 					</text>
 				</g>
 
-				<!-- Arrow lines -->
-				<line v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key"
-					:x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
-					:stroke="arrow.color" stroke-width="2" stroke-dasharray="6,3"
-					marker-end="url(#delivery-arrowhead)"
-					:color="arrow.color"
-					class="delivery-arrow-line" />
+				<!-- Flowing chevron paths -->
+				<g v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key">
+					<!-- Subtle guide line -->
+					<line
+						:x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
+						:stroke="arrow.color" stroke-width="1" stroke-opacity="0.15" />
+					<!-- Animated chevron polyline -->
+					<polyline
+						:points="getChevronPoints(arrow)"
+						fill="none" :stroke="arrow.color" stroke-width="1.5" stroke-opacity="0.5"
+						stroke-dasharray="2,10"
+						marker-mid="url(#delivery-chevron)"
+						:color="arrow.color"
+						class="delivery-arrow-line" />
+				</g>
 
 				<!-- Item count badge at midpoint -->
 				<g v-for="arrow in deliveryArrows.filter(a => a.itemCount > 1)" :key="'count-' + arrow.key">
-					<circle :cx="(arrow.x1 + arrow.x2) / 2" :cy="(arrow.y1 + arrow.y2) / 2" r="8"
-						:fill="arrow.color" />
-					<text :x="(arrow.x1 + arrow.x2) / 2" :y="(arrow.y1 + arrow.y2) / 2 + 3.5"
-						fill="white" font-size="9" font-weight="bold" text-anchor="middle">
+					<circle :cx="(arrow.x1 + arrow.x2) / 2" :cy="(arrow.y1 + arrow.y2) / 2" r="7"
+						:fill="arrow.color" fill-opacity="0.8" />
+					<text :x="(arrow.x1 + arrow.x2) / 2" :y="(arrow.y1 + arrow.y2) / 2 + 3"
+						fill="white" font-size="8" font-weight="bold" text-anchor="middle">
 						{{ arrow.itemCount }}
 					</text>
 				</g>
@@ -660,6 +669,21 @@ const deliveryArrows = computed(() => {
 	}
 	return arrows
 })
+
+// Compute intermediate points along a line for chevron markers (every ~25px)
+function getChevronPoints(arrow) {
+	const dx = arrow.x2 - arrow.x1
+	const dy = arrow.y2 - arrow.y1
+	const dist = Math.sqrt(dx * dx + dy * dy)
+	const step = 25
+	const count = Math.max(2, Math.floor(dist / step))
+	const points = []
+	for (let i = 0; i <= count; i++) {
+		const t = i / count
+		points.push(`${arrow.x1 + dx * t},${arrow.y1 + dy * t}`)
+	}
+	return points.join(' ')
+}
 
 // Draggable composable
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
@@ -1108,11 +1132,11 @@ onUnmounted(() => {
 
 <style scoped>
 .delivery-arrow-line {
-	animation: dash-flow 1s linear infinite;
+	animation: dash-flow 2s linear infinite;
 }
 @keyframes dash-flow {
 	to {
-		stroke-dashoffset: -18;
+		stroke-dashoffset: -24;
 	}
 }
 </style>
