@@ -9,17 +9,6 @@
 				</p>
 			</div>
 			<div class="flex gap-2 items-center">
-				<!-- Area filter -->
-				<select
-					v-if="areas.length > 1"
-					v-model="selectedArea"
-					@change="onAreaChange"
-					class="h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-				>
-					<option value="">{{ __("All Areas") }}</option>
-					<option v-for="a in areas" :key="a.name" :value="a.name">{{ a.area_name }}</option>
-				</select>
-
 				<!-- View mode toggle -->
 				<div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
 					<button
@@ -50,6 +39,59 @@
 			</div>
 		</header>
 
+		<!-- Area Tabs -->
+		<div v-if="areas.length > 0"
+			class="bg-white dark:bg-gray-800 border-b px-4 py-2 flex items-center gap-2 overflow-x-auto flex-shrink-0">
+			<button
+				@click="selectArea('')"
+				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+				:class="!selectedArea ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
+			>
+				{{ __("All Areas") }}
+			</button>
+			<button
+				v-for="a in areas" :key="a.name"
+				@click="selectArea(a.name)"
+				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+				:class="selectedArea === a.name ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
+			>
+				{{ a.area_name }}
+				<span v-if="getAreaReadyCount(a.name) > 0"
+					class="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-bold text-white bg-green-500 rounded-full px-1">
+					{{ getAreaReadyCount(a.name) }}
+				</span>
+			</button>
+		</div>
+
+		<!-- Station Bar -->
+		<div v-if="orderStations.length > 0"
+			class="bg-gray-50/80 dark:bg-gray-850 border-b dark:border-gray-800 px-4 py-1.5 flex items-center gap-2 overflow-x-auto flex-shrink-0">
+			<button
+				@click="selectedStation = null"
+				class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+				:class="!selectedStation ? 'bg-gray-700 text-white dark:bg-gray-200 dark:text-gray-800' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400'"
+			>
+				{{ __("All") }} ({{ filteredByAreaOrders.length }})
+			</button>
+			<button
+				v-for="station in orderStations" :key="station.name"
+				@click="selectedStation = selectedStation === station.name ? null : station.name"
+				class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+				:class="selectedStation === station.name ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
+				:style="selectedStation === station.name ? { backgroundColor: station.color } : {}"
+			>
+				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color }"></span>
+				{{ station.name }}
+				<span v-if="station.count > 0"
+					class="text-[10px] font-bold px-1 py-0.5 rounded"
+					:style="selectedStation === station.name
+						? { backgroundColor: 'rgba(255,255,255,0.3)' }
+						: { backgroundColor: station.color + '20', color: station.color }">
+					{{ station.count }}✓
+				</span>
+			</button>
+		</div>
+
 		<!-- Main content -->
 		<main class="flex-1 overflow-y-auto p-6">
 			<div v-if="loading" class="flex justify-center items-center h-full">
@@ -78,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue"
+import { ref, computed, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import { call } from "@/utils/apiWrapper"
@@ -91,19 +133,62 @@ const areas = ref([])
 const loading = ref(true)
 const viewMode = ref("table")
 const selectedArea = ref(localStorage.getItem("pos_runner_area") || "")
+const selectedStation = ref(null)
 let socket = null
 let previousCount = 0
 
 const totalReadyItems = computed(() => {
-	return orders.value.reduce((sum, order) => sum + (order.items?.length || 0), 0)
+	return filteredOrders.value.reduce((sum, order) => sum + (order.items?.length || 0), 0)
 })
 
-function onAreaChange() {
-	localStorage.setItem("pos_runner_area", selectedArea.value)
+function selectArea(area) {
+	selectedArea.value = area
+	localStorage.setItem("pos_runner_area", area)
 	loadOrders()
 }
 
-// Group orders by table or by station
+function getAreaReadyCount(areaName) {
+	return orders.value.filter(o => o.area === areaName)
+		.reduce((sum, o) => sum + (o.items?.length || 0), 0)
+}
+
+// Stations extracted from loaded orders with ready counts
+const orderStations = computed(() => {
+	const map = {}
+	for (const order of filteredByAreaOrders.value) {
+		for (const item of (order.items || [])) {
+			const sid = item.preparation_station
+			if (!sid) continue
+			if (!map[sid]) {
+				map[sid] = { name: sid, color: item.station_color || "#6B7280", count: 0 }
+			}
+			map[sid].count++
+		}
+	}
+	return Object.values(map).sort((a, b) => a.name.localeCompare(b.name))
+})
+
+// Step 1: filter by area
+const filteredByAreaOrders = computed(() => {
+	if (!selectedArea.value) return orders.value
+	return orders.value.filter(o => o.area === selectedArea.value)
+})
+
+// Step 2: filter by station on top of area filter
+const filteredOrders = computed(() => {
+	let result = filteredByAreaOrders.value
+	if (selectedStation.value) {
+		result = result
+			.map(o => ({
+				...o,
+				items: (o.items || []).filter(i => i.preparation_station === selectedStation.value)
+			}))
+			.filter(o => o.items.length > 0)
+	}
+	return result
+})
+
+// Group filtered orders by table or by station
 const groupedCards = computed(() => {
 	if (viewMode.value === "table") {
 		return groupByTable()
@@ -113,7 +198,7 @@ const groupedCards = computed(() => {
 })
 
 function groupByTable() {
-	return orders.value
+	return filteredOrders.value
 		.map(order => ({
 			key: order.name,
 			title: order.table_display_name || order.restaurant_table,
@@ -129,38 +214,28 @@ function groupByTable() {
 
 function groupByStation() {
 	const stationMap = {}
-	for (const order of orders.value) {
+	for (const order of filteredOrders.value) {
 		for (const item of (order.items || [])) {
 			const stationId = item.preparation_station || "__general__"
-			const stationName = stationId === "__general__" ? __("General") : (getStationDisplayName(stationId) || stationId)
+			const stationName = stationId === "__general__" ? __("General") : stationId
 			const stationColor = item.station_color || "#6B7280"
 
 			if (!stationMap[stationId]) {
 				stationMap[stationId] = {
-					key: stationId,
-					title: stationName,
-					subtitle: "",
-					stationColor: stationColor,
-					creation: order.creation,
-					modified: order.modified,
-					items: [],
-					tableGroups: {}
+					key: stationId, title: stationName, subtitle: "",
+					stationColor, creation: order.creation, modified: order.modified,
+					items: [], tableGroups: {}
 				}
 			}
 
-			const enrichedItem = {
-				...item,
-				_invoiceName: order.name,
-				_tableName: order.table_display_name || order.restaurant_table
-			}
+			const enrichedItem = { ...item, _invoiceName: order.name, _tableName: order.table_display_name || order.restaurant_table }
 			stationMap[stationId].items.push(enrichedItem)
 
 			const tableKey = order.restaurant_table
 			if (!stationMap[stationId].tableGroups[tableKey]) {
 				stationMap[stationId].tableGroups[tableKey] = {
 					tableName: order.table_display_name || order.restaurant_table,
-					invoiceName: order.name,
-					items: []
+					invoiceName: order.name, items: []
 				}
 			}
 			stationMap[stationId].tableGroups[tableKey].items.push(enrichedItem)
@@ -168,11 +243,7 @@ function groupByStation() {
 	}
 
 	return Object.values(stationMap)
-		.map(s => ({
-			...s,
-			subtitle: `${s.items.length} ${s.items.length === 1 ? __("item") : __("items")}`,
-			tableGroups: Object.values(s.tableGroups)
-		}))
+		.map(s => ({ ...s, subtitle: `${s.items.length} ${s.items.length === 1 ? __("item") : __("items")}`, tableGroups: Object.values(s.tableGroups) }))
 		.sort((a, b) => a.title.localeCompare(b.title))
 }
 
@@ -182,9 +253,8 @@ function groupItemsByStation(items) {
 		const stationId = item.preparation_station || "__general__"
 		if (!groups[stationId]) {
 			groups[stationId] = {
-				stationName: stationId === "__general__" ? __("General") : (getStationDisplayName(stationId) || stationId),
-				stationColor: item.station_color || "#6B7280",
-				items: []
+				stationName: stationId === "__general__" ? __("General") : stationId,
+				stationColor: item.station_color || "#6B7280", items: []
 			}
 		}
 		groups[stationId].items.push(item)
@@ -192,17 +262,10 @@ function groupItemsByStation(items) {
 	return Object.values(groups)
 }
 
-const stationNames = ref({})
-function getStationDisplayName(stationId) {
-	return stationNames.value[stationId] || stationId
-}
-
 async function loadAreas() {
 	try {
 		const res = await call("pos_next.api.restaurant.get_tables", { _: Date.now() })
-		if (res?.areas) {
-			areas.value = res.areas
-		}
+		if (res?.areas) areas.value = res.areas
 	} catch (error) {
 		console.error("Failed to load areas:", error)
 	}
@@ -211,26 +274,13 @@ async function loadAreas() {
 async function loadOrders() {
 	try {
 		const params = { _: Date.now() }
-		if (selectedArea.value) {
-			params.area = selectedArea.value
-		}
+		if (selectedArea.value) params.area = selectedArea.value
 		const res = await call("pos_next.api.restaurant.get_runner_orders", params)
 		if (res) {
 			orders.value = res
 
-			for (const order of res) {
-				for (const item of (order.items || [])) {
-					if (item.preparation_station) {
-						stationNames.value[item.preparation_station] = item.preparation_station
-					}
-				}
-			}
-
-			// Audio notification on new items
 			const newCount = totalReadyItems.value
-			if (newCount > previousCount && previousCount > 0) {
-				playNotificationSound()
-			}
+			if (newCount > previousCount && previousCount > 0) playNotificationSound()
 			previousCount = newCount
 		}
 	} catch (error) {
@@ -265,9 +315,7 @@ onMounted(() => {
 
 	socket = initSocket()
 	if (socket) {
-		if (socket.disconnected) {
-			socket.connect()
-		}
+		if (socket.disconnected) socket.connect()
 		socket.on("kds_update", () => {
 			console.log("Realtime Runner Update Received")
 			loadOrders()
@@ -276,8 +324,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-	if (socket) {
-		socket.off("kds_update")
-	}
+	if (socket) socket.off("kds_update")
 })
 </script>
