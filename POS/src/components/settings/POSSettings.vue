@@ -91,7 +91,7 @@
 									{{ __('Sales Management') }}
 								</button>
 								<button
-									v-if="settings.enable_restaurant_mode"
+									v-if="restaurantStore.isEnabled"
 									@click="activeTab = 'restaurant'"
 									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'restaurant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
 								>
