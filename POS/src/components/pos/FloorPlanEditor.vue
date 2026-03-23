@@ -67,20 +67,34 @@
 				{{ __("Floor Plan") }}
 			</div>
 
-			<!-- Edit Mode Toggle -->
-			<button
-				@click="toggleEditMode"
-				class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-				:class="isEditMode
-					? 'bg-green-100 text-green-700 hover:bg-green-200'
-					: 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-			>
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path v-if="isEditMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-					<path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-				</svg>
-				{{ isEditMode ? __("Save") : __("Edit") }}
-			</button>
+			<div class="flex items-center gap-2">
+				<!-- Runner shortcut (visible when items ready) -->
+				<button
+					v-if="!isEditMode && totalReadyCount > 0"
+					@click="$router.push('/runner')"
+					class="flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+					</svg>
+					{{ totalReadyCount }} {{ __("ready") }}
+				</button>
+
+				<!-- Edit Mode Toggle -->
+				<button
+					@click="toggleEditMode"
+					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+					:class="isEditMode
+						? 'bg-green-100 text-green-700 hover:bg-green-200'
+						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path v-if="isEditMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+						<path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+					</svg>
+					{{ isEditMode ? __("Save") : __("Edit") }}
+				</button>
+			</div>
 		</div>
 
 		<!-- No active card warning -->
@@ -92,6 +106,38 @@
 			<span class="text-xs text-amber-800 font-medium">
 				{{ restaurantStore.restaurantStatus.warning || __('No active card for the current time slot') }}
 			</span>
+		</div>
+
+		<!-- Station Activity Bar -->
+		<div v-if="!isEditMode && allStations.length > 0"
+			class="flex items-center gap-2 px-4 py-1.5 border-b dark:border-gray-800 bg-gray-50/80 dark:bg-gray-850 overflow-x-auto flex-shrink-0">
+			<div v-for="station in allStations" :key="'sbar-' + station.name"
+				class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer transition-all hover:shadow-sm"
+				:class="station.area === selectedArea
+					? 'border-2'
+					: 'border border-dashed opacity-60 hover:opacity-90'"
+				:style="{
+					borderColor: station.color || '#6B7280',
+					backgroundColor: station.area === selectedArea ? (station.color || '#6B7280') + '15' : 'transparent',
+					color: station.color || '#6B7280'
+				}"
+				@click="openStationKDS(station)">
+				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#6B7280' }"></span>
+				<span class="font-semibold">{{ station.station_name }}</span>
+				<span v-if="station.area !== selectedArea" class="text-[9px] opacity-50">
+					({{ getAreaName(station.area) }})
+				</span>
+				<span v-if="getStationPreparingCount(station.name) > 0"
+					class="text-[9px] font-bold px-1 py-0.5 rounded"
+					:style="{ backgroundColor: '#3B82F620', color: '#3B82F6' }">
+					{{ getStationPreparingCount(station.name) }}p
+				</span>
+				<span v-if="getStationReadyCount(station.name) > 0"
+					class="text-[9px] font-bold px-1 py-0.5 rounded animate-pulse"
+					:style="{ backgroundColor: '#22C55E30', color: '#16A34A' }">
+					{{ getStationReadyCount(station.name) }}✓
+				</span>
+			</div>
 		</div>
 
 		<!-- Canvas -->
@@ -285,6 +331,19 @@
 				</svg>
 				<span class="text-xs font-bold" :style="{color: station.color}">{{ station.station_name }}</span>
 
+				<!-- Live activity badges (view mode) -->
+				<div v-if="!isEditMode && (getStationPreparingCount(station.name) > 0 || getStationReadyCount(station.name) > 0)"
+					class="flex gap-0.5 mt-0.5">
+					<span v-if="getStationPreparingCount(station.name) > 0"
+						class="text-[8px] font-bold px-1 py-0.5 rounded bg-blue-500/20 text-blue-700 dark:text-blue-300">
+						{{ getStationPreparingCount(station.name) }}p
+					</span>
+					<span v-if="getStationReadyCount(station.name) > 0"
+						class="text-[8px] font-bold px-1 py-0.5 rounded bg-green-500/25 text-green-700 dark:text-green-300 animate-pulse">
+						{{ getStationReadyCount(station.name) }}✓
+					</span>
+				</div>
+
 				<!-- Resize handles (edit mode) -->
 				<template v-if="isEditMode">
 					<div
@@ -319,15 +378,6 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
 				</svg>
 			</button>
-
-			<!-- Ready items counter badge -->
-			<div v-if="showDeliveryArrows && readyItemsCount > 0"
-				class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-sm z-20 animate-pulse">
-				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-				</svg>
-				{{ readyItemsCount }} {{ __("ready") }}
-			</div>
 
 			<!-- Add Table Button (edit mode) -->
 			<button
@@ -601,14 +651,58 @@ async function loadRunnerOrders() {
 	}
 }
 
-const readyItemsCount = computed(() => {
-	// Count ready items for the current area
+// ─── KDS Orders for station activity counters ────────────────────────────────
+const kdsOrders = ref([])
+
+async function loadKdsOrders() {
+	if (isEditMode.value) return
+	try {
+		const res = await call("pos_next.api.restaurant.get_kds_orders", { _: Date.now() })
+		if (res) kdsOrders.value = res
+	} catch { /* silent */ }
+}
+
+// All stations sorted: current area first, then others
+const allStations = computed(() => {
+	const current = localStations.value.filter(s => s.area === selectedArea.value)
+	const others = localStations.value.filter(s => s.area !== selectedArea.value)
+	return [...current, ...others]
+})
+
+function getAreaName(areaId) {
+	const area = areas.value.find(a => a.name === areaId)
+	return area?.area_name || areaId || ""
+}
+
+function getStationPreparingCount(stationName) {
+	let count = 0
+	for (const order of kdsOrders.value) {
+		for (const item of (order.items || [])) {
+			if (item.preparation_station === stationName &&
+				item.kds_status &&
+				!["Delivered", "Waiting"].includes(item.kds_status)) {
+				count++
+			}
+		}
+	}
+	// Items that are "ready" are already counted in kdsOrders but should show as ready not preparing
+	return Math.max(0, count - getStationReadyCount(stationName))
+}
+
+function getStationReadyCount(stationName) {
 	let count = 0
 	for (const order of runnerOrders.value) {
-		const table = localTables.value.find(t => t.name === order.restaurant_table)
-		if (!selectedArea.value || (table && table.area === selectedArea.value)) {
-			count += (order.items || []).length
+		for (const item of (order.items || [])) {
+			if (item.preparation_station === stationName) count++
 		}
+	}
+	return count
+}
+
+const totalReadyCount = computed(() => {
+	let count = 0
+	for (const order of runnerOrders.value) {
+		count += (order.items || []).length
 	}
 	return count
 })
@@ -1121,8 +1215,9 @@ onMounted(async () => {
 	// Start restaurant status polling for card warnings
 	restaurantStore.startStatusPolling()
 
-	// Load runner orders for delivery arrows
+	// Load runner + KDS orders for delivery arrows and station activity
 	loadRunnerOrders()
+	loadKdsOrders()
 
 	// Listen for realtime table updates via frappe.realtime socket
 	floorSocket = window.frappe?.realtime || initSocket()
@@ -1133,6 +1228,7 @@ onMounted(async () => {
 		})
 		floorSocket.on("kds_update", () => {
 			loadRunnerOrders()
+			loadKdsOrders()
 		})
 	}
 })
