@@ -148,20 +148,20 @@
 				<g v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key">
 					<!-- Subtle guide line -->
 					<line :x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
-						:stroke="arrow.color" stroke-width="1" stroke-opacity="0.1" />
+						:stroke="arrow.color" stroke-width="1" stroke-opacity="0.08" />
 
 					<!-- Invisible path for animateMotion -->
 					<path :id="'dpath-' + arrow.key"
 						:d="`M${arrow.x1},${arrow.y1} L${arrow.x2},${arrow.y2}`"
 						fill="none" stroke="none" />
 
-					<!-- Flowing chevrons along the path -->
-					<polygon v-for="i in 4" :key="'chev-' + arrow.key + '-' + i"
-						points="0,-3 5,0 0,3" :fill="arrow.color" :fill-opacity="0.45">
+					<!-- Flowing chevrons along the path (8 evenly spaced, slow) -->
+					<polygon v-for="i in 8" :key="'chev-' + arrow.key + '-' + i"
+						points="0,-2.5 4,0 0,2.5" :fill="arrow.color" :fill-opacity="0.4">
 						<animateMotion
-							:dur="arrow.duration || '3s'"
+							:dur="arrow.duration || '5s'"
 							repeatCount="indefinite"
-							:begin="((i - 1) * 0.75) + 's'"
+							:begin="((i - 1) * parseFloat(arrow.duration || '5') / 8) + 's'"
 							rotate="auto">
 							<mpath :href="'#dpath-' + arrow.key" />
 						</animateMotion>
@@ -636,43 +636,62 @@ const deliveryArrows = computed(() => {
 			const itemCount = (order.items || []).filter(i => i.preparation_station === stationId).length
 
 			if (station && station.area === selectedArea.value) {
-				// Same area: direct arrow from station to table
-				const sx = (station.pos_x || 0) + (station.width || 120) / 2
-				const sy = (station.pos_y || 0) + (station.height || 60) / 2
-				const tx = (table.pos_x || 0) + (table.width || 100) / 2
-				const ty = (table.pos_y || 0) + (table.height || 100) / 2
-				const dist = Math.sqrt((tx - sx) ** 2 + (ty - sy) ** 2)
+				// Same area: arrow from station EDGE to table EDGE
+				const sc = { x: (station.pos_x || 0) + (station.width || 120) / 2, y: (station.pos_y || 0) + (station.height || 60) / 2 }
+				const tc = { x: (table.pos_x || 0) + (table.width || 100) / 2, y: (table.pos_y || 0) + (table.height || 100) / 2 }
+				const edge1 = edgePoint(sc, station.width || 120, station.height || 60, tc)
+				const edge2 = edgePoint(tc, table.width || 100, table.height || 100, sc)
+				const dist = Math.sqrt((edge2.x - edge1.x) ** 2 + (edge2.y - edge1.y) ** 2)
 				arrows.push({
 					key: pairKey,
-					x1: sx, y1: sy, x2: tx, y2: ty,
+					x1: edge1.x, y1: edge1.y, x2: edge2.x, y2: edge2.y,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
 					isGhost: false,
 					itemCount,
-					duration: Math.max(1.5, dist / 120) + 's'
+					duration: Math.max(3, dist / 60) + 's'
 				})
 			} else if (station) {
 				// Cross-area: ghost station indicator on the left edge
 				const ghostY = 30 + ghostIndex * 40
 				ghostIndex++
-				const tx = (table.pos_x || 0) + (table.width || 100) / 2
-				const ty = (table.pos_y || 0) + (table.height || 100) / 2
-				const dist = Math.sqrt((tx - 40) ** 2 + (ty - ghostY) ** 2)
+				const te = edgePoint(
+					{ x: (table.pos_x || 0) + (table.width || 100) / 2, y: (table.pos_y || 0) + (table.height || 100) / 2 },
+					table.width || 100, table.height || 100,
+					{ x: 40, y: ghostY }
+				)
+				const dist = Math.sqrt((te.x - 40) ** 2 + (te.y - ghostY) ** 2)
 				arrows.push({
 					key: pairKey,
-					x1: 40, y1: ghostY, x2: tx, y2: ty,
+					x1: 40, y1: ghostY, x2: te.x, y2: te.y,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
 					labelWidth: station.station_name.length * 7 + 20,
 					isGhost: true,
 					itemCount,
-					duration: Math.max(1.5, dist / 120) + 's'
+					duration: Math.max(3, dist / 60) + 's'
 				})
 			}
 		}
 	}
 	return arrows
 })
+
+// Compute the point on the edge of a rectangle (center, w, h) facing toward target
+function edgePoint(center, w, h, target) {
+	const dx = target.x - center.x
+	const dy = target.y - center.y
+	if (dx === 0 && dy === 0) return { x: center.x, y: center.y }
+	const hw = w / 2 + 4 // 4px margin outside the element
+	const hh = h / 2 + 4
+	const absDx = Math.abs(dx)
+	const absDy = Math.abs(dy)
+	// Find which edge the line intersects
+	const scaleX = absDx > 0 ? hw / absDx : Infinity
+	const scaleY = absDy > 0 ? hh / absDy : Infinity
+	const scale = Math.min(scaleX, scaleY)
+	return { x: center.x + dx * scale, y: center.y + dy * scale }
+}
 
 // Draggable composable
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
