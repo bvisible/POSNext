@@ -2739,6 +2739,13 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.setWriteOffAmount(paymentData.write_off_amount);
 		}
 
+		// Set tip amount if provided
+		if (paymentData.tip_amount && paymentData.tip_amount > 0) {
+			cartStore.$patch({ tipAmount: paymentData.tip_amount });
+		} else {
+			cartStore.$patch({ tipAmount: 0 });
+		}
+
 		// Set loyalty redemption data if provided
 		if (paymentData.loyalty) {
 			cartStore.setLoyaltyData(paymentData.loyalty);

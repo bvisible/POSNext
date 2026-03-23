@@ -309,6 +309,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	const deliveryDate = ref("")
 	const writeOffAmount = ref(0)
+	const tipAmount = ref(0)
 	const loyaltyData = ref(null)
 	const restaurantTable = ref(null)
 	const kdsStatus = ref("Pending")
@@ -361,11 +362,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			deliveryDate.value,
 			writeOffAmount.value,
 			loyaltyData.value,
+			tipAmount.value,
 		)
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {
 			writeOffAmount.value = 0
 			loyaltyData.value = null
+			tipAmount.value = 0
 		}
 		return result
 	}
@@ -1978,6 +1981,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Write-off feature
 		writeOffAmount,
+		tipAmount,
 		setWriteOffAmount,
 		setLoyaltyData,
 
