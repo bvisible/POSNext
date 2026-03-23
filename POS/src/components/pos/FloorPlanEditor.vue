@@ -966,7 +966,7 @@ async function selectTable(table) {
 							const mods = JSON.parse(item.posa_item_modifiers)
 							for (const mod of mods) {
 								for (const opt of (mod.options || [])) {
-									modifierPriceAdjustment += (opt.price_adjustment || 0)
+									modifierPriceAdjustment += (opt.price_adjustment || opt.price || 0)
 								}
 							}
 						} catch { /* ignore parse errors */ }

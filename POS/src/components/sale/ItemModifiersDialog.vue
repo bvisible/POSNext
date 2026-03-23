@@ -151,19 +151,42 @@ function formatPrice(amount) {
 
 function open(cartItem) {
 	item.value = cartItem
-	instructions.value = cartItem.posa_special_instructions || ""
 
 	// Parse existing modifiers if any
+	let existingModNames = []
 	try {
 		const existing = cartItem.posa_item_modifiers ? JSON.parse(cartItem.posa_item_modifiers) : []
 		const sel = {}
 		for (const mod of existing) {
-			sel[mod.group] = mod.options.map(o => o.name)
+			const optNames = mod.options.map(o => o.name)
+			sel[mod.group] = optNames
+			existingModNames.push(...optNames)
 		}
 		selections.value = sel
 	} catch {
 		selections.value = {}
 	}
+
+	// Strip old modifier names from instructions (legacy cleanup)
+	// Previously, modifier choices were stored in special_instructions as "Béarnaise · À point | Sans sel"
+	let rawInstructions = cartItem.posa_special_instructions || ""
+	if (existingModNames.length > 0 && rawInstructions) {
+		// Remove the modifier summary prefix (everything before the last " | ")
+		const parts = rawInstructions.split(" | ")
+		if (parts.length > 1) {
+			// Check if the first part is just modifier names
+			const firstPart = parts[0]
+			const allModNames = existingModNames.join(", ")
+			const modSummary = firstPart.replace(/ · /g, ", ")
+			if (modSummary === allModNames || existingModNames.some(n => firstPart.includes(n))) {
+				rawInstructions = parts.slice(1).join(" | ")
+			}
+		} else if (existingModNames.every(n => rawInstructions.includes(n)) && !rawInstructions.replace(/[·,\s]/g, "").replace(new RegExp(existingModNames.join("|"), "g"), "")) {
+			// Instructions is ONLY modifier names — clear it
+			rawInstructions = ""
+		}
+	}
+	instructions.value = rawInstructions
 
 	// Pre-select defaults
 	for (const group of applicableGroups.value) {
@@ -194,26 +217,22 @@ function saveModifiers() {
 				const opt = group.options.find(o => o.option_name === optName)
 				return {
 					name: optName,
-					price: Number(opt?.price_adjustment) || 0
+					price_adjustment: Number(opt?.price_adjustment) || 0
 				}
 			})
 		})
 	}
 
-	// Build text summary for special instructions
-	const modifierText = modifiers.map(m =>
-		m.options.map(o => o.name).join(", ")
-	).join(" · ")
-
-	// Combine with free text
-	const fullInstructions = [modifierText, instructions.value].filter(Boolean).join(" | ")
+	// Special Instructions = only the free text typed by the user (not modifier choices)
+	// Modifier choices are stored separately in posa_item_modifiers JSON
+	const freeTextOnly = instructions.value.trim()
 
 	// Update cart item
 	cartStore.updateItemModifiers(
 		item.value.item_code,
 		item.value.uom,
 		JSON.stringify(modifiers),
-		fullInstructions,
+		freeTextOnly,
 		totalPriceAdjustment.value
 	)
 
