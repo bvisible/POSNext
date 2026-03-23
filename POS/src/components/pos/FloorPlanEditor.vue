@@ -401,6 +401,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
+import { usePOSShiftStore } from "@/stores/posShift"
 import { useDraggable } from "@/composables/useDraggable"
 import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
@@ -412,6 +413,7 @@ const emit = defineEmits(["table-selected", "load-table-draft", "load-server-dra
 const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
 const draftsStore = usePOSDraftsStore()
+const shiftStore = usePOSShiftStore()
 let floorSocket = null
 const { showSuccess, showError } = useToast()
 
@@ -661,47 +663,51 @@ function openStationKDS(station) {
 }
 
 async function selectTable(table) {
-	// Clear cart before loading table (await to ensure cleanup completes)
+	// Clear cart before loading table
 	await cartStore.clearCart()
 	cartStore.setRestaurantTable(table)
 
-	// Check for existing server-side draft invoice for this table
 	try {
-		const res = await call("pos_next.api.restaurant.get_table_order", {
-			table_name: table.name
+		// Open table: creates draft if none exists, or returns existing draft
+		const res = await call("pos_next.api.restaurant.open_table", {
+			table_name: table.name,
+			pos_profile: shiftStore.profileName,
 		})
-		if (res && res.name && res.items && res.items.length > 0) {
-			// Load items from server draft directly into cart
-			for (const item of res.items) {
-				cartStore.addItem({
-					item_code: item.item_code,
-					item_name: item.item_name,
-					rate: item.rate,
-					uom: item.uom,
-					image: item.image,
-					preparation_station: item.preparation_station,
-					posa_special_instructions: item.posa_special_instructions,
-					posa_item_modifiers: item.posa_item_modifiers,
-					kds_status: item.kds_status || "Pending",
-				}, item.qty || 1)
+
+		if (res && res.name) {
+			// Load items from draft into cart (if any)
+			if (res.items && res.items.length > 0) {
+				for (const item of res.items) {
+					cartStore.addItem({
+						item_code: item.item_code,
+						item_name: item.item_name,
+						rate: item.rate,
+						uom: item.uom,
+						image: item.image,
+						preparation_station: item.preparation_station,
+						posa_special_instructions: item.posa_special_instructions,
+						posa_item_modifiers: item.posa_item_modifiers,
+						kds_status: item.kds_status || "Pending",
+					}, item.qty || 1)
+				}
 			}
-			// Set draft ID and KDS status
+
+			// Set draft ID — always linked to server draft
 			cartStore.$patch({
 				currentDraftId: res.name,
 				kdsStatus: res.kds_status || "Pending",
 				hasUnsentChanges: false,
 			})
 			if (res.customer) cartStore.setCustomer(res.customer)
-			return
+
+			// Update local table status
+			const localTable = localTables.value.find(t => t.name === table.name)
+			if (localTable) localTable.status = "Occupied"
 		}
 	} catch (e) {
-		console.error("[FloorPlan] Failed to load table order:", e)
+		console.error("[FloorPlan] Failed to open table:", e)
 	}
 
-	// No server draft — open table normally
-	if (table.status === "Empty") {
-		await restaurantStore.updateTableStatus(table.name, "Occupied")
-	}
 	emit("table-selected", table)
 }
 

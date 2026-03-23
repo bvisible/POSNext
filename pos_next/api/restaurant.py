@@ -413,6 +413,86 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 	doc.insert()
 	return doc.as_dict()
 
+
+@frappe.whitelist()
+def open_table(table_name, pos_profile, customer=None):
+	"""Open a table by creating a draft Sales Invoice linked to it.
+	Returns the existing draft if one already exists for this table.
+	"""
+	if not frappe.has_permission("Sales Invoice", "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if not frappe.db.exists("Restaurant Table", table_name):
+		frappe.throw(_("Table {0} not found").format(table_name))
+
+	# Check for existing draft first
+	existing = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 0, "restaurant_table": table_name},
+		fields=["name"],
+		order_by="modified desc",
+		limit=1
+	)
+	if existing:
+		# Draft already exists — return it
+		order = existing[0]
+		items = frappe.get_all(
+			"Sales Invoice Item",
+			filters={"parent": order.name},
+			fields=["item_code", "item_name", "qty", "rate", "uom",
+				"posa_special_instructions", "preparation_station",
+				"posa_item_modifiers", "kds_status"]
+		)
+		# Enrich with images
+		for item in items:
+			item["image"] = frappe.db.get_value("Item", item.item_code, "image") or ""
+
+		return {
+			"name": order.name,
+			"items": items,
+			"customer": frappe.db.get_value("Sales Invoice", order.name, "customer"),
+			"kds_status": frappe.db.get_value("Sales Invoice", order.name, "kds_status"),
+			"is_new": False,
+		}
+
+	# No existing draft — create one
+	profile = frappe.get_doc("POS Profile", pos_profile)
+	default_customer = customer or profile.customer or frappe.db.get_single_value("Selling Settings", "customer_group")
+
+	invoice = frappe.get_doc({
+		"doctype": "Sales Invoice",
+		"is_pos": 1,
+		"pos_profile": pos_profile,
+		"customer": default_customer,
+		"company": profile.company,
+		"selling_price_list": profile.selling_price_list,
+		"currency": profile.currency,
+		"set_warehouse": profile.warehouse,
+		"update_stock": 1,
+	})
+	invoice.insert(ignore_permissions=True)
+
+	# Set restaurant_table via direct DB write (avoids validation conflicts)
+	frappe.db.set_value("Sales Invoice", invoice.name, {
+		"restaurant_table": table_name,
+		"kds_status": "Pending",
+	}, update_modified=False)
+
+	# Update table status
+	frappe.db.set_value("Restaurant Table", table_name, "status", "Occupied")
+	frappe.db.commit()
+
+	frappe.publish_realtime("table_update")
+
+	return {
+		"name": invoice.name,
+		"items": [],
+		"customer": default_customer,
+		"kds_status": "Pending",
+		"is_new": True,
+	}
+
+
 @frappe.whitelist()
 def get_item_modifiers(item_code):
 	"""Get all modifier groups applicable to an item."""
