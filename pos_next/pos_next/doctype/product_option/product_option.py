@@ -1,5 +1,4 @@
 from frappe.model.document import Document
 
-
-class ItemModifierOption(Document):
+class ProductOption(Document):
 	pass

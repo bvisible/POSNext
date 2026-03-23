@@ -1,5 +1,4 @@
 from frappe.model.document import Document
 
-
-class ItemModifierGroupItem(Document):
+class ProductOptionGroupItemGroup(Document):
 	pass

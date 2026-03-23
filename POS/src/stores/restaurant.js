@@ -176,7 +176,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function fetchModifierGroups() {
 		try {
-			const res = await call("pos_next.api.restaurant.get_all_modifier_groups")
+			const res = await call("pos_next.api.restaurant.get_all_product_option_groups")
 			if (res) modifierGroups.value = res
 		} catch (error) {
 			log.error("Failed to fetch modifier groups:", error)

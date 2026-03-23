@@ -483,28 +483,35 @@ def open_table(table_name, pos_profile, customer=None):
 
 
 @frappe.whitelist()
-def get_item_modifiers(item_code):
-	"""Get all modifier groups applicable to an item."""
-	# Find groups where item is in applicable_items OR apply_to_all_items is checked
-	all_groups = frappe.get_all(
-		"Item Modifier Group",
-		fields=["name", "group_name", "selection_type", "required", "max_selections", "apply_to_all_items"]
-	)
+def get_product_options(item_code):
+	"""Get all product option groups applicable to an item."""
+	doctype = "Product Option Group" if frappe.db.exists("DocType", "Product Option Group") else "Item Modifier Group"
+	option_dt = "Product Option" if frappe.db.exists("DocType", "Product Option") else "Item Modifier Option"
+	item_dt = "Product Option Group Item" if frappe.db.exists("DocType", "Product Option Group Item") else "Item Modifier Group Item"
+	item_group_dt = "Product Option Group Item Group"
+
+	fields = ["name", "group_name", "selection_type", "required", "max_selections"]
+	if frappe.db.has_column(doctype, "apply_to_all_items"):
+		fields.append("apply_to_all_items")
+
+	all_groups = frappe.get_all(doctype, fields=fields)
 
 	result = []
 	for group in all_groups:
 		applicable = group.get("apply_to_all_items")
 		if not applicable:
-			# Check if item is in the applicable_items child table
-			applicable = frappe.db.exists(
-				"Item Modifier Group Item",
-				{"parent": group.name, "item": item_code}
-			)
+			# Check by item group
+			if frappe.db.exists("DocType", item_group_dt):
+				item_group = frappe.db.get_value("Item", item_code, "item_group")
+				if item_group:
+					applicable = frappe.db.exists(item_group_dt, {"parent": group.name, "item_group": item_group})
+			# Check by individual item
+			if not applicable:
+				applicable = frappe.db.exists(item_dt, {"parent": group.name, "item": item_code})
 
 		if applicable:
-			# Fetch options for this group
 			options = frappe.get_all(
-				"Item Modifier Option",
+				option_dt,
 				filters={"parent": group.name},
 				fields=["option_name", "price_adjustment", "is_default"],
 				order_by="idx"
@@ -514,17 +521,25 @@ def get_item_modifiers(item_code):
 
 	return result
 
+# Backward compatibility
+get_item_modifiers = get_product_options
+
 @frappe.whitelist()
-def get_all_modifier_groups():
-	"""Get all modifier groups with their options and applicable items for frontend caching."""
-	groups = frappe.get_all(
-		"Item Modifier Group",
-		fields=["name", "group_name", "selection_type", "required", "max_selections", "apply_to_all_items"]
-	)
+def get_all_product_option_groups():
+	"""Get all product option groups with their options and applicable items for frontend caching."""
+	doctype = "Product Option Group" if frappe.db.exists("DocType", "Product Option Group") else "Item Modifier Group"
+	option_dt = "Product Option" if frappe.db.exists("DocType", "Product Option") else "Item Modifier Option"
+	item_dt = "Product Option Group Item" if frappe.db.exists("DocType", "Product Option Group Item") else "Item Modifier Group Item"
+
+	fields = ["name", "group_name", "selection_type", "required", "max_selections"]
+	if frappe.db.has_column(doctype, "apply_to_all_items"):
+		fields.append("apply_to_all_items")
+
+	groups = frappe.get_all(doctype, fields=fields)
 
 	for group in groups:
 		group["options"] = frappe.get_all(
-			"Item Modifier Option",
+			option_dt,
 			filters={"parent": group.name},
 			fields=["option_name", "price_adjustment", "is_default"],
 			order_by="idx"
@@ -532,15 +547,16 @@ def get_all_modifier_groups():
 		if not group.get("apply_to_all_items"):
 			group["applicable_items"] = [
 				r.item for r in frappe.get_all(
-					"Item Modifier Group Item",
-					filters={"parent": group.name},
-					fields=["item"]
+					item_dt, filters={"parent": group.name}, fields=["item"]
 				)
 			]
 		else:
 			group["applicable_items"] = []
 
 	return groups
+
+# Backward compatibility
+get_all_modifier_groups = get_all_product_option_groups
 
 
 @frappe.whitelist()
