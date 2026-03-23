@@ -131,6 +131,54 @@
 			<!-- Zoomable container -->
 			<div :style="zoomContainerStyle" class="origin-top-left w-full h-full relative">
 
+			<!-- SVG Delivery Arrows (rendered FIRST = behind tables/stations) -->
+			<svg v-if="showDeliveryArrows && deliveryArrows.length > 0"
+				class="absolute inset-0 pointer-events-none overflow-visible"
+				width="100%" height="100%">
+
+				<!-- Ghost station labels for cross-area arrows -->
+				<g v-for="arrow in deliveryArrows.filter(a => a.isGhost)" :key="'ghost-' + arrow.key">
+					<rect :x="arrow.x1 - 2" :y="arrow.y1 - 10" :width="arrow.labelWidth || 70" height="20" rx="4"
+						:fill="arrow.color" fill-opacity="0.1" :stroke="arrow.color" stroke-width="0.5" stroke-opacity="0.3" />
+					<text :x="arrow.x1 + 4" :y="arrow.y1 + 4" :fill="arrow.color" fill-opacity="0.6" font-size="9" font-weight="bold">
+						{{ arrow.stationName }}
+					</text>
+				</g>
+
+				<g v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key">
+					<!-- Subtle guide line -->
+					<line :x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
+						:stroke="arrow.color" stroke-width="1" stroke-opacity="0.1" />
+
+					<!-- Invisible path for animateMotion -->
+					<path :id="'dpath-' + arrow.key"
+						:d="`M${arrow.x1},${arrow.y1} L${arrow.x2},${arrow.y2}`"
+						fill="none" stroke="none" />
+
+					<!-- Flowing chevrons along the path -->
+					<polygon v-for="i in 4" :key="'chev-' + arrow.key + '-' + i"
+						points="0,-3 5,0 0,3" :fill="arrow.color" :fill-opacity="0.45">
+						<animateMotion
+							:dur="arrow.duration || '3s'"
+							repeatCount="indefinite"
+							:begin="((i - 1) * 0.75) + 's'"
+							rotate="auto">
+							<mpath :href="'#dpath-' + arrow.key" />
+						</animateMotion>
+					</polygon>
+				</g>
+
+				<!-- Item count badge at midpoint -->
+				<g v-for="arrow in deliveryArrows.filter(a => a.itemCount > 1)" :key="'count-' + arrow.key">
+					<circle :cx="(arrow.x1 + arrow.x2) / 2" :cy="(arrow.y1 + arrow.y2) / 2" r="7"
+						:fill="arrow.color" fill-opacity="0.7" />
+					<text :x="(arrow.x1 + arrow.x2) / 2" :y="(arrow.y1 + arrow.y2) / 2 + 3"
+						fill="white" font-size="8" font-weight="bold" text-anchor="middle">
+						{{ arrow.itemCount }}
+					</text>
+				</g>
+			</svg>
+
 			<!-- Tables -->
 			<div
 				v-for="table in filteredTables"
@@ -254,54 +302,6 @@
 					/>
 				</template>
 			</div>
-
-			<!-- SVG Delivery Arrows Overlay (z-index 1 = under tables/stations) -->
-			<svg v-if="showDeliveryArrows && deliveryArrows.length > 0"
-				class="absolute inset-0 pointer-events-none"
-				width="100%" height="100%"
-				style="z-index: 1;">
-				<defs>
-					<!-- Small chevron marker for mid-path -->
-					<marker id="delivery-chevron" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-						<path d="M1 1 L4 3 L1 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-					</marker>
-				</defs>
-
-				<!-- Ghost station labels for cross-area arrows -->
-				<g v-for="arrow in deliveryArrows.filter(a => a.isGhost)" :key="'ghost-' + arrow.key">
-					<rect :x="arrow.x1 - 2" :y="arrow.y1 - 10" :width="arrow.labelWidth || 70" height="20" rx="4"
-						:fill="arrow.color" fill-opacity="0.12" :stroke="arrow.color" stroke-width="0.5" stroke-opacity="0.4" />
-					<text :x="arrow.x1 + 4" :y="arrow.y1 + 4" :fill="arrow.color" fill-opacity="0.7" font-size="9" font-weight="bold">
-						{{ arrow.stationName }}
-					</text>
-				</g>
-
-				<!-- Flowing chevron paths -->
-				<g v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key">
-					<!-- Subtle guide line -->
-					<line
-						:x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
-						:stroke="arrow.color" stroke-width="1" stroke-opacity="0.15" />
-					<!-- Animated chevron polyline -->
-					<polyline
-						:points="getChevronPoints(arrow)"
-						fill="none" :stroke="arrow.color" stroke-width="1.5" stroke-opacity="0.5"
-						stroke-dasharray="2,10"
-						marker-mid="url(#delivery-chevron)"
-						:color="arrow.color"
-						class="delivery-arrow-line" />
-				</g>
-
-				<!-- Item count badge at midpoint -->
-				<g v-for="arrow in deliveryArrows.filter(a => a.itemCount > 1)" :key="'count-' + arrow.key">
-					<circle :cx="(arrow.x1 + arrow.x2) / 2" :cy="(arrow.y1 + arrow.y2) / 2" r="7"
-						:fill="arrow.color" fill-opacity="0.8" />
-					<text :x="(arrow.x1 + arrow.x2) / 2" :y="(arrow.y1 + arrow.y2) / 2 + 3"
-						fill="white" font-size="8" font-weight="bold" text-anchor="middle">
-						{{ arrow.itemCount }}
-					</text>
-				</g>
-			</svg>
 
 			</div><!-- /Zoomable container -->
 
@@ -637,53 +637,42 @@ const deliveryArrows = computed(() => {
 
 			if (station && station.area === selectedArea.value) {
 				// Same area: direct arrow from station to table
+				const sx = (station.pos_x || 0) + (station.width || 120) / 2
+				const sy = (station.pos_y || 0) + (station.height || 60) / 2
+				const tx = (table.pos_x || 0) + (table.width || 100) / 2
+				const ty = (table.pos_y || 0) + (table.height || 100) / 2
+				const dist = Math.sqrt((tx - sx) ** 2 + (ty - sy) ** 2)
 				arrows.push({
 					key: pairKey,
-					x1: (station.pos_x || 0) + (station.width || 120) / 2,
-					y1: (station.pos_y || 0) + (station.height || 60) / 2,
-					x2: (table.pos_x || 0) + (table.width || 100) / 2,
-					y2: (table.pos_y || 0) + (table.height || 100) / 2,
+					x1: sx, y1: sy, x2: tx, y2: ty,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
 					isGhost: false,
-					itemCount
+					itemCount,
+					duration: Math.max(1.5, dist / 120) + 's'
 				})
 			} else if (station) {
 				// Cross-area: ghost station indicator on the left edge
 				const ghostY = 30 + ghostIndex * 40
 				ghostIndex++
+				const tx = (table.pos_x || 0) + (table.width || 100) / 2
+				const ty = (table.pos_y || 0) + (table.height || 100) / 2
+				const dist = Math.sqrt((tx - 40) ** 2 + (ty - ghostY) ** 2)
 				arrows.push({
 					key: pairKey,
-					x1: 40,
-					y1: ghostY,
-					x2: (table.pos_x || 0) + (table.width || 100) / 2,
-					y2: (table.pos_y || 0) + (table.height || 100) / 2,
+					x1: 40, y1: ghostY, x2: tx, y2: ty,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
 					labelWidth: station.station_name.length * 7 + 20,
 					isGhost: true,
-					itemCount
+					itemCount,
+					duration: Math.max(1.5, dist / 120) + 's'
 				})
 			}
 		}
 	}
 	return arrows
 })
-
-// Compute intermediate points along a line for chevron markers (every ~25px)
-function getChevronPoints(arrow) {
-	const dx = arrow.x2 - arrow.x1
-	const dy = arrow.y2 - arrow.y1
-	const dist = Math.sqrt(dx * dx + dy * dy)
-	const step = 25
-	const count = Math.max(2, Math.floor(dist / step))
-	const points = []
-	for (let i = 0; i <= count; i++) {
-		const t = i / count
-		points.push(`${arrow.x1 + dx * t},${arrow.y1 + dy * t}`)
-	}
-	return points.join(' ')
-}
 
 // Draggable composable
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
@@ -1145,13 +1134,3 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.delivery-arrow-line {
-	animation: dash-flow 2s linear infinite;
-}
-@keyframes dash-flow {
-	to {
-		stroke-dashoffset: -24;
-	}
-}
-</style>
