@@ -163,12 +163,18 @@ def get_station_items_map():
 			filters={"parent": station.name},
 			fields=["item"]
 		)
+		station_info = {
+			"station": station.name,
+			"station_name": station.station_name,
+			"color": station.color
+		}
 		for item in items:
-			result[item.item] = {
-				"station": station.name,
-				"station_name": station.station_name,
-				"color": station.color
-			}
+			# Map by item name (Link field value)
+			result[item.item] = station_info
+			# Also map by item_code if different from name
+			item_code = frappe.db.get_value("Item", item.item, "item_code")
+			if item_code and item_code != item.item:
+				result[item_code] = station_info
 	return result
 
 
