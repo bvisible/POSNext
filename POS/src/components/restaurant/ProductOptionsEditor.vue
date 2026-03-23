@@ -1,7 +1,18 @@
 <template>
-	<Dialog :options="{ title: __('Product Options'), size: 'xl' }" :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)">
-		<template #body-content>
-			<div class="p-4 max-h-[70vh] overflow-y-auto space-y-4">
+	<Transition name="fade">
+		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="handleClose">
+			<div class="fixed inset-0 flex items-center justify-center p-4">
+				<div class="w-full h-full max-w-[95vw] max-h-[95vh] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
+					<div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-teal-50 to-cyan-50">
+						<h2 class="text-xl font-bold text-gray-800">{{ __('Product Options') }}</h2>
+						<button @click="handleClose" class="text-gray-400 hover:text-gray-600">
+							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<div class="flex-1 overflow-y-auto p-6">
+						<div class="space-y-4">
 				<!-- Loading -->
 				<div v-if="loading" class="flex justify-center py-8">
 					<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -147,19 +158,31 @@
 						</div>
 					</div>
 				</div>
+						</div>
+					</div>
+				</div>
 			</div>
-		</template>
-	</Dialog>
+		</div>
+	</Transition>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
-import { Dialog, Button } from "frappe-ui"
+import { ref, computed, onMounted } from "vue"
+import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 
-defineProps({ modelValue: Boolean })
-defineEmits(["update:modelValue"])
+const props = defineProps({ modelValue: Boolean })
+const emit = defineEmits(["update:modelValue"])
+
+const show = computed({
+	get: () => props.modelValue,
+	set: (v) => emit("update:modelValue", v),
+})
+
+function handleClose() {
+	show.value = false
+}
 
 const { showSuccess, showError } = useToast()
 const groups = ref([])
@@ -169,26 +192,14 @@ const editingGroup = ref(null)
 const showNewForm = ref(false)
 const newGroupName = ref("")
 
-// Detect which DocType name to use (old or new)
 const doctype = ref("Product Option Group")
-const optionDt = ref("Product Option")
-const itemDt = ref("Product Option Group Item")
-
-async function detectDocType() {
-	try {
-		await call("frappe.client.get_count", { doctype: "Product Option Group" })
-	} catch {
-		doctype.value = "Item Modifier Group"
-		optionDt.value = "Item Modifier Option"
-		itemDt.value = "Item Modifier Group Item"
-	}
-}
 
 async function loadGroups() {
 	try {
 		const res = await call("pos_next.api.restaurant.get_all_product_option_groups")
 		if (res) groups.value = res
 	} catch (error) {
+		console.error("Failed to load:", error)
 		showError(__("Failed to load product options"))
 	} finally {
 		loading.value = false
@@ -249,8 +260,17 @@ async function deleteGroup(group) {
 	}
 }
 
-onMounted(async () => {
-	await detectDocType()
-	loadGroups()
-})
+onMounted(loadGroups)
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+</style>

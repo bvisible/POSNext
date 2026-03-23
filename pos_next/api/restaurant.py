@@ -504,12 +504,19 @@ def open_table(table_name, pos_profile, customer=None):
 	}
 
 
+def _resolve_option_doctypes():
+	"""Detect whether to use new (Product Option) or old (Item Modifier) DocType names."""
+	try:
+		frappe.get_all("Product Option Group", limit=0)
+		return "Product Option Group", "Product Option", "Product Option Group Item"
+	except Exception:
+		return "Item Modifier Group", "Item Modifier Option", "Item Modifier Group Item"
+
+
 @frappe.whitelist()
 def get_product_options(item_code):
 	"""Get all product option groups applicable to an item."""
-	doctype = "Product Option Group" if frappe.db.exists("DocType", "Product Option Group") else "Item Modifier Group"
-	option_dt = "Product Option" if frappe.db.exists("DocType", "Product Option") else "Item Modifier Option"
-	item_dt = "Product Option Group Item" if frappe.db.exists("DocType", "Product Option Group Item") else "Item Modifier Group Item"
+	doctype, option_dt, item_dt = _resolve_option_doctypes()
 	item_group_dt = "Product Option Group Item Group"
 
 	fields = ["name", "group_name", "selection_type", "required", "max_selections"]
@@ -549,9 +556,7 @@ get_item_modifiers = get_product_options
 @frappe.whitelist()
 def get_all_product_option_groups():
 	"""Get all product option groups with their options and applicable items for frontend caching."""
-	doctype = "Product Option Group" if frappe.db.exists("DocType", "Product Option Group") else "Item Modifier Group"
-	option_dt = "Product Option" if frappe.db.exists("DocType", "Product Option") else "Item Modifier Option"
-	item_dt = "Product Option Group Item" if frappe.db.exists("DocType", "Product Option Group Item") else "Item Modifier Group Item"
+	doctype, option_dt, item_dt = _resolve_option_doctypes()
 
 	fields = ["name", "group_name", "selection_type", "required", "max_selections"]
 	if frappe.db.has_column(doctype, "apply_to_all_items"):

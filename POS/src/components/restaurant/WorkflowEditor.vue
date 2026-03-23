@@ -1,7 +1,18 @@
 <template>
-	<Dialog :options="{ title: __('Preparation Workflows'), size: 'xl' }" :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)">
-		<template #body-content>
-			<div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+	<Transition name="fade">
+		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="handleClose">
+			<div class="fixed inset-0 flex items-center justify-center p-4">
+				<div class="w-full h-full max-w-[95vw] max-h-[95vh] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
+					<div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-cyan-50 to-blue-50">
+						<h2 class="text-xl font-bold text-gray-800">{{ __('Preparation Workflows') }}</h2>
+						<button @click="handleClose" class="text-gray-400 hover:text-gray-600">
+							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<div class="flex-1 overflow-y-auto p-6">
+						<div class="space-y-4">
 				<!-- Loading -->
 				<div v-if="loading" class="flex justify-center py-8">
 					<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -98,19 +109,31 @@
 						</div>
 					</div>
 				</div>
+						</div>
+					</div>
+				</div>
 			</div>
-		</template>
-	</Dialog>
+		</div>
+	</Transition>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
-import { Dialog, Button } from "frappe-ui"
+import { ref, computed, onMounted } from "vue"
+import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 
-defineProps({ modelValue: Boolean })
-defineEmits(["update:modelValue"])
+const props = defineProps({ modelValue: Boolean })
+const emit = defineEmits(["update:modelValue"])
+
+const show = computed({
+	get: () => props.modelValue,
+	set: (v) => emit("update:modelValue", v),
+})
+
+function handleClose() {
+	show.value = false
+}
 
 const { showSuccess, showError } = useToast()
 const workflows = ref([])
@@ -224,3 +247,15 @@ async function setDefault(wf) {
 
 onMounted(loadWorkflows)
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+</style>
