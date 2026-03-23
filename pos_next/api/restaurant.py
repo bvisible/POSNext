@@ -630,8 +630,8 @@ def get_restaurant_settings():
 	for row in settings.opening_hours:
 		hours.append({
 			"day_of_week": row.day_of_week,
-			"from_time": str(row.from_time) if row.from_time else None,
-			"to_time": str(row.to_time) if row.to_time else None,
+			"from_time": _format_time(row.from_time),
+			"to_time": _format_time(row.to_time),
 			"label": row.label,
 			"restaurant_card": row.restaurant_card if hasattr(row, "restaurant_card") else None,
 		})
@@ -718,6 +718,24 @@ def get_restaurant_status():
 		"has_active_cards": has_active_cards,
 		"warning": warning,
 	}
+
+
+def _format_time(val):
+	"""Format a Frappe time value (timedelta or string) to HH:MM for HTML input compatibility."""
+	if not val:
+		return None
+	import datetime
+	if isinstance(val, datetime.timedelta):
+		total_seconds = int(val.total_seconds())
+		hours = total_seconds // 3600
+		minutes = (total_seconds % 3600) // 60
+		return f"{hours:02d}:{minutes:02d}"
+	# String: ensure HH:MM format
+	s = str(val)
+	parts = s.split(":")
+	if len(parts) >= 2:
+		return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+	return s
 
 
 def _get_current_slot_cards():
