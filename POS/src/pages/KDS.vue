@@ -77,6 +77,7 @@ const orders = ref([])
 const loading = ref(true)
 const stations = ref([])
 const selectedStation = ref(null)
+const allOrders = ref([]) // Unfiltered orders for counting
 let socket = null
 let autoRefreshInterval = null
 
@@ -84,21 +85,27 @@ const sortedOrders = computed(() => {
 	return [...orders.value].sort((a, b) => new Date(a.creation) - new Date(b.creation))
 })
 
-// Count orders that have at least one item assigned to a given station
+// Count orders from ALL orders (not filtered) that have items for a station
 function getStationOrderCount(stationName) {
-	return orders.value.filter(o =>
+	return allOrders.value.filter(o =>
 		o.items && o.items.some(i => i.preparation_station === stationName)
 	).length
 }
 
 async function loadOrders() {
 	try {
-		const params = { _: Date.now() }
-		if (selectedStation.value) params.station = selectedStation.value
-		const res = await call("pos_next.api.restaurant.get_kds_orders", params)
+		// Always load all orders for counting
+		const allRes = await call("pos_next.api.restaurant.get_kds_orders", { _: Date.now() })
+		if (allRes) allOrders.value = allRes
 
-		if (res) {
-			orders.value = res
+		// Load filtered orders for display
+		if (selectedStation.value) {
+			const filteredRes = await call("pos_next.api.restaurant.get_kds_orders", {
+				station: selectedStation.value, _: Date.now()
+			})
+			if (filteredRes) orders.value = filteredRes
+		} else {
+			orders.value = allOrders.value
 		}
 	} catch (error) {
 		console.error("Failed to load KDS orders:", error)
