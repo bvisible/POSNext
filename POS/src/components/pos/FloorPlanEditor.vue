@@ -255,7 +255,70 @@
 				</template>
 			</div>
 
+			<!-- SVG Delivery Arrows Overlay -->
+			<svg v-if="showDeliveryArrows && deliveryArrows.length > 0"
+				class="absolute inset-0 pointer-events-none"
+				width="100%" height="100%"
+				style="z-index: 5;">
+				<defs>
+					<marker id="delivery-arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+						<polygon points="0 0, 8 3, 0 6" fill="currentColor" />
+					</marker>
+				</defs>
+
+				<!-- Ghost station labels for cross-area arrows -->
+				<g v-for="arrow in deliveryArrows.filter(a => a.isGhost)" :key="'ghost-' + arrow.key">
+					<rect :x="arrow.x1 - 2" :y="arrow.y1 - 10" :width="arrow.labelWidth || 70" height="20" rx="4"
+						:fill="arrow.color" fill-opacity="0.15" :stroke="arrow.color" stroke-width="1" />
+					<text :x="arrow.x1 + 4" :y="arrow.y1 + 4" :fill="arrow.color" font-size="10" font-weight="bold">
+						{{ arrow.stationName }} →
+					</text>
+				</g>
+
+				<!-- Arrow lines -->
+				<line v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key"
+					:x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
+					:stroke="arrow.color" stroke-width="2" stroke-dasharray="6,3"
+					marker-end="url(#delivery-arrowhead)"
+					:color="arrow.color"
+					class="delivery-arrow-line" />
+
+				<!-- Item count badge at midpoint -->
+				<g v-for="arrow in deliveryArrows.filter(a => a.itemCount > 1)" :key="'count-' + arrow.key">
+					<circle :cx="(arrow.x1 + arrow.x2) / 2" :cy="(arrow.y1 + arrow.y2) / 2" r="8"
+						:fill="arrow.color" />
+					<text :x="(arrow.x1 + arrow.x2) / 2" :y="(arrow.y1 + arrow.y2) / 2 + 3.5"
+						fill="white" font-size="9" font-weight="bold" text-anchor="middle">
+						{{ arrow.itemCount }}
+					</text>
+				</g>
+			</svg>
+
 			</div><!-- /Zoomable container -->
+
+			<!-- Delivery arrows toggle -->
+			<button
+				v-if="!isEditMode"
+				@click="toggleDeliveryArrows"
+				class="absolute bottom-3 left-3 w-8 h-8 flex items-center justify-center rounded-lg shadow-sm transition-colors z-20"
+				:class="showDeliveryArrows
+					? 'bg-green-500 text-white hover:bg-green-600'
+					: 'bg-white/90 border border-gray-200 text-gray-500 hover:bg-gray-50'"
+				:title="showDeliveryArrows ? __('Hide delivery arrows') : __('Show delivery arrows')"
+			>
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+				</svg>
+			</button>
+
+			<!-- Ready items counter badge -->
+			<div v-if="showDeliveryArrows && readyItemsCount > 0"
+				class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-sm z-20 animate-pulse">
+				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+				</svg>
+				{{ readyItemsCount }} {{ __("ready") }}
+			</div>
 
 			<!-- Add Table Button (edit mode) -->
 			<button
@@ -507,6 +570,96 @@ const filteredStations = computed(() => {
 function occupiedCount(areaName) {
 	return restaurantStore.occupiedCountByArea[areaName] || 0
 }
+
+// ─── Delivery Arrows ─────────────────────────────────────────────────────────
+const ARROWS_STORAGE_KEY = "pos_show_delivery_arrows"
+const showDeliveryArrows = ref(localStorage.getItem(ARROWS_STORAGE_KEY) !== "false")
+const runnerOrders = ref([])
+
+function toggleDeliveryArrows() {
+	showDeliveryArrows.value = !showDeliveryArrows.value
+	localStorage.setItem(ARROWS_STORAGE_KEY, showDeliveryArrows.value.toString())
+	if (showDeliveryArrows.value) loadRunnerOrders()
+}
+
+async function loadRunnerOrders() {
+	if (!showDeliveryArrows.value) return
+	try {
+		const res = await call("pos_next.api.restaurant.get_runner_orders", { _: Date.now() })
+		if (res) runnerOrders.value = res
+	} catch {
+		// Silent fail — arrows are optional
+	}
+}
+
+const readyItemsCount = computed(() => {
+	// Count ready items for the current area
+	let count = 0
+	for (const order of runnerOrders.value) {
+		const table = localTables.value.find(t => t.name === order.restaurant_table)
+		if (!selectedArea.value || (table && table.area === selectedArea.value)) {
+			count += (order.items || []).length
+		}
+	}
+	return count
+})
+
+const deliveryArrows = computed(() => {
+	if (!showDeliveryArrows.value || !runnerOrders.value.length) return []
+
+	const arrows = []
+	const seen = new Set()
+	let ghostIndex = 0
+
+	for (const order of runnerOrders.value) {
+		const table = filteredTables.value.find(t => t.name === order.restaurant_table)
+		if (!table) continue // Table not in current area view
+
+		for (const item of (order.items || [])) {
+			const stationId = item.preparation_station
+			if (!stationId) continue
+
+			const pairKey = `${stationId}-${order.restaurant_table}`
+			if (seen.has(pairKey)) continue
+			seen.add(pairKey)
+
+			const station = localStations.value.find(s => s.name === stationId)
+			const itemCount = (order.items || []).filter(i => i.preparation_station === stationId).length
+
+			if (station && station.area === selectedArea.value) {
+				// Same area: direct arrow from station to table
+				arrows.push({
+					key: pairKey,
+					x1: (station.pos_x || 0) + (station.width || 120) / 2,
+					y1: (station.pos_y || 0) + (station.height || 60) / 2,
+					x2: (table.pos_x || 0) + (table.width || 100) / 2,
+					y2: (table.pos_y || 0) + (table.height || 100) / 2,
+					color: station.color || "#22C55E",
+					stationName: station.station_name,
+					isGhost: false,
+					itemCount
+				})
+			} else if (station) {
+				// Cross-area: ghost station indicator on the left edge
+				const ghostY = 30 + ghostIndex * 40
+				ghostIndex++
+				arrows.push({
+					key: pairKey,
+					x1: 40,
+					y1: ghostY,
+					x2: (table.pos_x || 0) + (table.width || 100) / 2,
+					y2: (table.pos_y || 0) + (table.height || 100) / 2,
+					color: station.color || "#22C55E",
+					stationName: station.station_name,
+					labelWidth: station.station_name.length * 7 + 20,
+					isGhost: true,
+					itemCount
+				})
+			}
+		}
+	}
+	return arrows
+})
 
 // Draggable composable
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
@@ -921,12 +1074,18 @@ onMounted(async () => {
 	// Start restaurant status polling for card warnings
 	restaurantStore.startStatusPolling()
 
+	// Load runner orders for delivery arrows
+	loadRunnerOrders()
+
 	// Listen for realtime table updates via frappe.realtime socket
 	floorSocket = window.frappe?.realtime || initSocket()
 	if (floorSocket) {
 		if (floorSocket.disconnected) floorSocket.connect()
 		floorSocket.on("table_update", () => {
 			restaurantStore.fetchFromNetwork()
+		})
+		floorSocket.on("kds_update", () => {
+			loadRunnerOrders()
 		})
 	}
 })
@@ -940,8 +1099,20 @@ watch(selectedArea, async () => {
 onUnmounted(() => {
 	if (floorSocket) {
 		floorSocket.off("table_update")
+		floorSocket.off("kds_update")
 	}
 	destroy()
 	restaurantStore.stopStatusPolling()
 })
 </script>
+
+<style scoped>
+.delivery-arrow-line {
+	animation: dash-flow 1s linear infinite;
+}
+@keyframes dash-flow {
+	to {
+		stroke-dashoffset: -18;
+	}
+}
+</style>

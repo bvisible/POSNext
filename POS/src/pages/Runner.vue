@@ -9,6 +9,17 @@
 				</p>
 			</div>
 			<div class="flex gap-2 items-center">
+				<!-- Area filter -->
+				<select
+					v-if="areas.length > 1"
+					v-model="selectedArea"
+					@change="onAreaChange"
+					class="h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+				>
+					<option value="">{{ __("All Areas") }}</option>
+					<option v-for="a in areas" :key="a.name" :value="a.name">{{ a.area_name }}</option>
+				</select>
+
 				<!-- View mode toggle -->
 				<div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
 					<button
@@ -67,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, onMounted, onUnmounted, watch } from "vue"
 import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import { call } from "@/utils/apiWrapper"
@@ -76,14 +87,21 @@ import { initSocket } from "@/socket"
 
 const { showError } = useToast()
 const orders = ref([])
+const areas = ref([])
 const loading = ref(true)
 const viewMode = ref("table")
+const selectedArea = ref(localStorage.getItem("pos_runner_area") || "")
 let socket = null
 let previousCount = 0
 
 const totalReadyItems = computed(() => {
 	return orders.value.reduce((sum, order) => sum + (order.items?.length || 0), 0)
 })
+
+function onAreaChange() {
+	localStorage.setItem("pos_runner_area", selectedArea.value)
+	loadOrders()
+}
 
 // Group orders by table or by station
 const groupedCards = computed(() => {
@@ -95,7 +113,6 @@ const groupedCards = computed(() => {
 })
 
 function groupByTable() {
-	// Each order is already grouped by table from the API
 	return orders.value
 		.map(order => ({
 			key: order.name,
@@ -105,14 +122,12 @@ function groupByTable() {
 			creation: order.creation,
 			modified: order.modified,
 			items: order.items || [],
-			// For table mode, group items by station for visual clarity
 			stationGroups: groupItemsByStation(order.items || [])
 		}))
 		.sort((a, b) => new Date(a.modified) - new Date(b.modified))
 }
 
 function groupByStation() {
-	// Collect all items across all orders, group by station
 	const stationMap = {}
 	for (const order of orders.value) {
 		for (const item of (order.items || [])) {
@@ -140,7 +155,6 @@ function groupByStation() {
 			}
 			stationMap[stationId].items.push(enrichedItem)
 
-			// Group by table within station
 			const tableKey = order.restaurant_table
 			if (!stationMap[stationId].tableGroups[tableKey]) {
 				stationMap[stationId].tableGroups[tableKey] = {
@@ -178,19 +192,32 @@ function groupItemsByStation(items) {
 	return Object.values(groups)
 }
 
-// Simple station name cache
 const stationNames = ref({})
 function getStationDisplayName(stationId) {
 	return stationNames.value[stationId] || stationId
 }
 
+async function loadAreas() {
+	try {
+		const res = await call("pos_next.api.restaurant.get_tables", { _: Date.now() })
+		if (res?.areas) {
+			areas.value = res.areas
+		}
+	} catch (error) {
+		console.error("Failed to load areas:", error)
+	}
+}
+
 async function loadOrders() {
 	try {
-		const res = await call("pos_next.api.restaurant.get_runner_orders", { _: Date.now() })
+		const params = { _: Date.now() }
+		if (selectedArea.value) {
+			params.area = selectedArea.value
+		}
+		const res = await call("pos_next.api.restaurant.get_runner_orders", params)
 		if (res) {
 			orders.value = res
 
-			// Extract station display names from items
 			for (const order of res) {
 				for (const item of (order.items || [])) {
 					if (item.preparation_station) {
@@ -233,6 +260,7 @@ function playNotificationSound() {
 }
 
 onMounted(() => {
+	loadAreas()
 	loadOrders()
 
 	socket = initSocket()

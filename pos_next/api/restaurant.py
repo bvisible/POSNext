@@ -1005,8 +1005,12 @@ def get_next_step(station_name, current_step, item_code=None):
 
 
 @frappe.whitelist()
-def get_runner_orders():
-	"""Fetch orders with items ready for pickup (at last workflow step, not yet Delivered)."""
+def get_runner_orders(area=None):
+	"""Fetch orders with items ready for pickup (at last workflow step, not yet Delivered).
+
+	Args:
+		area: Optional area name to filter tables by area.
+	"""
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0},
@@ -1014,6 +1018,12 @@ def get_runner_orders():
 	)
 
 	orders = [o for o in raw_orders if o.get("restaurant_table")]
+
+	# Filter by area if specified
+	if area:
+		area_tables = set(frappe.get_all("Restaurant Table",
+			filters={"area": area}, pluck="name"))
+		orders = [o for o in orders if o.restaurant_table in area_tables]
 
 	item_fields = ["name", "item_code", "item_name", "qty", "description"]
 	has_instructions = frappe.db.has_column("Sales Invoice Item", "posa_special_instructions")
@@ -1084,14 +1094,18 @@ def get_runner_orders():
 				ready_items.append(item)
 
 		if ready_items:
-			table_display = order.restaurant_table
+			table_info = {}
 			try:
-				table_display = frappe.db.get_value("Restaurant Table", order.restaurant_table, "table_name") or order.restaurant_table
+				table_info = frappe.db.get_value(
+					"Restaurant Table", order.restaurant_table,
+					["table_name", "area"], as_dict=True
+				) or {}
 			except Exception:
 				pass
 
 			order["items"] = ready_items
-			order["table_display_name"] = table_display
+			order["table_display_name"] = table_info.get("table_name") or order.restaurant_table
+			order["area"] = table_info.get("area") or ""
 			result.append(order)
 
 	return result
