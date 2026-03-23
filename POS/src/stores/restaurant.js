@@ -83,6 +83,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		await fetchModifierGroups()
 		await fetchActiveMenus()
 		await fetchActiveCards()
+		await fetchRestaurantSettings()
 	}
 
 	async function fetchActiveCards() {
