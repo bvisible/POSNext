@@ -228,7 +228,9 @@ export function useInvoice() {
 	// Actions
 	function addItem(item, quantity = 1) {
 		const itemUom = item.uom || item.stock_uom
-		const existingItem = invoiceItems.value.find(
+		// In restaurant mode, items with different modifiers/instructions are separate lines
+		const hasModifiers = item.posa_item_modifiers || item.posa_special_instructions
+		const existingItem = hasModifiers ? null : invoiceItems.value.find(
 			(i) => i.item_code === item.item_code && i.uom === itemUom,
 		)
 

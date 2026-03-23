@@ -102,7 +102,7 @@ def reset_all_tables():
 
 @frappe.whitelist()
 def update_kds_status(invoice_name, status):
-	"""Update the KDS status of a sales invoice."""
+	"""Update the KDS status of a sales invoice and all its items."""
 	if not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -110,7 +110,23 @@ def update_kds_status(invoice_name, status):
 		frappe.throw(_("Invoice {0} not found").format(invoice_name))
 
 	frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status)
+
+	# Also update all items that are not already in a later status
+	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
+		status_order = {"Pending": 0, "Preparing": 1, "Ready": 2, "Delivered": 3}
+		new_rank = status_order.get(status, 0)
+		items = frappe.get_all("Sales Invoice Item",
+			filters={"parent": invoice_name},
+			fields=["name", "kds_status"])
+		for item in items:
+			current_rank = status_order.get(item.kds_status, 0)
+			# Only advance items forward, never backward
+			if current_rank < new_rank:
+				frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
+
+	frappe.db.commit()
 	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("table_update")
 	return {"status": "success"}
 
 @frappe.whitelist()
