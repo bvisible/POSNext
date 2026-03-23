@@ -62,6 +62,16 @@ def get_tables():
 				"kds_status": order.kds_status or "Pending",
 			}
 
+	# Auto-fix orphaned "Occupied" tables with no active draft
+	orphaned = [t.name for t in tables if t.status == "Occupied" and t.name not in order_map]
+	if orphaned:
+		for tname in orphaned:
+			frappe.db.set_value("Restaurant Table", tname, "status", "Empty")
+		# Refresh table statuses after fix
+		for table in tables:
+			if table.name in orphaned:
+				table["status"] = "Empty"
+
 	for table in tables:
 		table["order_summary"] = order_map.get(table.name)
 
