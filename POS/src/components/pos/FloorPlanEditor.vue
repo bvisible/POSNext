@@ -372,17 +372,27 @@
 				</svg>
 			</button>
 
-			<!-- Add Table Button (edit mode) -->
-			<button
-				v-if="isEditMode"
-				@click="showAddTableDialog = true"
-				class="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors z-20"
-			>
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-				</svg>
-				{{ __("Add Table") }}
-			</button>
+			<!-- Add buttons (edit mode) -->
+			<div v-if="isEditMode" class="absolute bottom-4 right-4 flex gap-2 z-20">
+				<button
+					@click="showAddStationDialog = true"
+					class="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-lg hover:bg-orange-600 transition-colors"
+				>
+					<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
+					</svg>
+					{{ __("Add Station") }}
+				</button>
+				<button
+					@click="showAddTableDialog = true"
+					class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
+				>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					</svg>
+					{{ __("Add Table") }}
+				</button>
+			</div>
 		</div>
 
 		<!-- Add Table Dialog -->
@@ -509,6 +519,38 @@
 				</div>
 			</template>
 		</Dialog>
+
+		<!-- Add Station Dialog -->
+		<Dialog v-model="showAddStationDialog" :options="{ title: __('Add Station'), size: 'sm' }">
+			<template #body-content>
+				<div class="space-y-4 p-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Station Name") }}</label>
+						<input v-model="newStation.station_name" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" :placeholder="__('e.g. Kitchen, Bar')" />
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Type") }}</label>
+						<div class="flex gap-2">
+							<button v-for="t in ['Kitchen', 'Bar', 'Other']" :key="t"
+								@click="newStation.station_type = t"
+								class="flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
+								:class="newStation.station_type === t ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-600'"
+							>{{ __(t) }}</button>
+						</div>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Color") }}</label>
+						<input v-model="newStation.color" type="color" class="w-full h-10 rounded-lg border cursor-pointer" />
+					</div>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" variant="subtle" @click="showAddStationDialog = false">{{ __("Cancel") }}</Button>
+					<Button class="flex-1" variant="solid" @click="handleAddStation" :disabled="!newStation.station_name">{{ __("Add") }}</Button>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 
@@ -578,6 +620,8 @@ const canvasBackgroundStyle = computed(() => {
 const selectedArea = ref(null)
 const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
+const showAddStationDialog = ref(false)
+const newStation = ref({ station_name: "", station_type: "Kitchen", color: "#F97316" })
 const showEditTableDialog = ref(false)
 const editTable = ref({ name: "", table_name: "", capacity: 4, shape: "Square" })
 const showAddAreaDialog = ref(false)
@@ -1066,6 +1110,31 @@ async function handleAddTable() {
 		showSuccess(__("Table added"))
 	} catch (error) {
 		showError(__("Failed to add table"))
+	}
+}
+
+async function handleAddStation() {
+	if (!newStation.value.station_name) return
+	try {
+		const canvas = canvasRef.value
+		const pos_x = canvas ? Math.round((canvas.clientWidth / 2) - 60) : 200
+		const pos_y = canvas ? Math.round((canvas.clientHeight / 2) - 30) : 200
+
+		await call("pos_next.api.restaurant.create_station", {
+			station_name: newStation.value.station_name,
+			station_type: newStation.value.station_type || "Kitchen",
+			color: newStation.value.color || "#F97316",
+			area: selectedArea.value,
+			pos_x,
+			pos_y,
+		})
+		showAddStationDialog.value = false
+		newStation.value = { station_name: "", station_type: "Kitchen", color: "#F97316" }
+		await restaurantStore.fetchFromNetwork()
+		syncLocalStations()
+		showSuccess(__("Station added"))
+	} catch (error) {
+		showError(__("Failed to add station"))
 	}
 }
 

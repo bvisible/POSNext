@@ -431,6 +431,28 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 
 
 @frappe.whitelist()
+def create_station(station_name, station_type="Kitchen", color="#F97316", area=None, pos_x=0, pos_y=0):
+	"""Create a new preparation station."""
+	if not frappe.has_permission("Preparation Station", "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	doc = frappe.get_doc({
+		"doctype": "Preparation Station",
+		"station_name": station_name,
+		"station_type": station_type,
+		"color": color,
+		"is_active": 1,
+		"show_on_floor_plan": 1,
+		"area": area,
+		"pos_x": int(pos_x),
+		"pos_y": int(pos_y),
+		"width": 120,
+		"height": 60,
+	})
+	doc.insert()
+	return doc.as_dict()
+
+@frappe.whitelist()
 def open_table(table_name, pos_profile, customer=None):
 	"""Open a table by creating a draft Sales Invoice linked to it.
 	Returns the existing draft if one already exists for this table.
