@@ -279,12 +279,23 @@ def get_kds_orders(station=None):
 
 		order["items"] = items
 
-	# Check if all items in an order are ready or delivered
-	for order in orders:
-		if has_kds_status_field:
-			all_ready = all(i.get("kds_status") in ["Ready", "Delivered"] for i in order.get("items", []))
-			if all_ready and order.get("items"):
+	# Remove orders with no items after station filtering
+	if station:
+		orders = [o for o in orders if o.get("items")]
+
+	# Remove orders where ALL items are Delivered (nothing left to prepare)
+	if has_kds_status_field:
+		filtered = []
+		for order in orders:
+			items = order.get("items", [])
+			has_active = any(i.get("kds_status") not in ["Delivered"] for i in items)
+			if has_active or not items:
+				filtered.append(order)
+			# Mark complete if all items are Ready or Delivered
+			all_ready = all(i.get("kds_status") in ["Ready", "Delivered"] for i in items)
+			if all_ready and items:
 				order["order_complete"] = True
+		orders = filtered
 
 	return orders
 
