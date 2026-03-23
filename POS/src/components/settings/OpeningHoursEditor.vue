@@ -19,27 +19,38 @@
 			</div>
 
 			<div v-for="(slot, idx) in getSlotsForDay(day)" :key="idx"
-				class="flex items-center gap-2 mb-1.5 last:mb-0">
+				class="flex items-center gap-2 mb-1.5 last:mb-0 flex-wrap sm:flex-nowrap">
 				<input
 					type="time"
 					:value="slot.from_time"
 					@input="updateSlot(day, idx, 'from_time', $event.target.value)"
-					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-28 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-[106px] focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
 				/>
 				<span class="text-gray-400 text-xs">→</span>
 				<input
 					type="time"
 					:value="slot.to_time"
 					@input="updateSlot(day, idx, 'to_time', $event.target.value)"
-					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-28 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-[106px] focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
 				/>
 				<input
 					type="text"
 					:value="slot.label"
 					@input="updateSlot(day, idx, 'label', $event.target.value)"
-					:placeholder="__('Label (e.g. Lunch)')"
-					class="text-sm border border-gray-300 rounded-md px-2 py-1 flex-1 min-w-0 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+					:placeholder="__('Label')"
+					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-20 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
 				/>
+				<select
+					:value="slot.restaurant_card || ''"
+					@change="updateSlot(day, idx, 'restaurant_card', $event.target.value || null)"
+					class="text-sm border border-gray-300 rounded-md px-2 py-1 flex-1 min-w-0 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+					:class="slot.restaurant_card ? 'text-gray-900' : 'text-gray-400'"
+				>
+					<option value="">{{ __("No card") }}</option>
+					<option v-for="card in cards" :key="card.name" :value="card.name">
+						{{ card.card_name }}
+					</option>
+				</select>
 				<button
 					@click="removeSlot(day, idx)"
 					class="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
@@ -67,6 +78,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	cards: {
+		type: Array,
+		default: () => [],
+	},
 })
 
 const emit = defineEmits(["update:modelValue"])
@@ -80,11 +95,9 @@ function addSlot(day) {
 	let newSlot
 
 	if (existing.length < SLOT_PRESETS.length) {
-		// Use preset for this slot index
 		const preset = SLOT_PRESETS[existing.length]
-		newSlot = { day_of_week: day, ...preset }
+		newSlot = { day_of_week: day, ...preset, restaurant_card: null }
 	} else {
-		// Beyond presets: start 1h after last slot's to_time
 		const lastSlot = existing[existing.length - 1]
 		const lastEnd = lastSlot.to_time || "23:00"
 		const [h, m] = lastEnd.split(":").map(Number)
@@ -95,6 +108,7 @@ function addSlot(day) {
 			from_time: `${String(nextH).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
 			to_time: `${String(nextEndH).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
 			label: "",
+			restaurant_card: null,
 		}
 	}
 

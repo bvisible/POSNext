@@ -15,9 +15,6 @@
   "available_from",
   "column_break_3",
   "available_to",
-  "available_from_time",
-  "column_break_4",
-  "available_to_time",
   "section_break_items",
   "items"
  ],
@@ -74,20 +71,6 @@
    "fieldname": "available_to",
    "fieldtype": "Date",
    "label": "Available To"
-  },
-  {
-   "fieldname": "available_from_time",
-   "fieldtype": "Time",
-   "label": "Available From Time"
-  },
-  {
-   "fieldname": "column_break_4",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "available_to_time",
-   "fieldtype": "Time",
-   "label": "Available To Time"
   },
   {
    "fieldname": "section_break_items",

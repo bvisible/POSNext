@@ -10,7 +10,8 @@
   "day_of_week",
   "from_time",
   "to_time",
-  "label"
+  "label",
+  "restaurant_card"
  ],
  "fields": [
   {
@@ -43,7 +44,15 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Label",
-   "columns": 3
+   "columns": 2
+  },
+  {
+   "fieldname": "restaurant_card",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Card",
+   "options": "Restaurant Card",
+   "columns": 2
   }
  ],
  "index_web_link_preview": 0,
