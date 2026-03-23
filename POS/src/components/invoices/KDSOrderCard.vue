@@ -18,7 +18,7 @@
 				</div>
 			</div>
 			<div class="flex justify-between items-center mt-1">
-				<span class="text-xs text-gray-400 font-mono">#{{ order.name.substring(0, 8) }}</span>
+				<span class="text-xs text-gray-400 font-mono">#{{ order.name }}</span>
 				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
 					:class="statusBadgeClass">
 					{{ __(order.kds_status) }}
