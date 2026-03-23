@@ -1006,6 +1006,7 @@ async function saveSettings() {
 		// Save restaurant opening hours if changed
 		if (restaurantStore.isEnabled && openingHours.value.length >= 0) {
 			try {
+				console.log("[POSSettings] Saving opening hours:", JSON.stringify(openingHours.value))
 				await restaurantStore.saveRestaurantSettings(openingHours.value)
 			} catch (err) {
 				log.error("Error saving restaurant settings:", err)
