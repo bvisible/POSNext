@@ -25,7 +25,10 @@
 		<div class="p-3 flex-1">
 			<div v-for="(item, idx) in order.items" :key="idx"
 				class="py-1.5 relative"
-				:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+				:class="[
+					{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
+					item.kds_status === 'Delivered' ? 'opacity-40 line-through' : ''
+				]">
 				<!-- Item line: qty x name + item status badge (clickable) -->
 				<div class="flex justify-between items-start gap-1 cursor-pointer rounded px-1 -mx-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
 					@click.stop="toggleItemMenu(idx)">

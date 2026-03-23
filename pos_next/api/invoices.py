@@ -681,13 +681,22 @@ def update_invoice(data):
         standardize_pricing_rules(data.get("items"))
 
         # Preserve existing item kds_status before update (restaurant mode)
+        # Build a map of item_code -> kds_status from BOTH DB and frontend data
         existing_item_kds = {}
-        if data.get("name") and frappe.db.has_column("Sales Invoice Item", "kds_status"):
-            for row in frappe.get_all("Sales Invoice Item",
-                filters={"parent": data["name"]},
-                fields=["item_code", "name", "kds_status"]):
-                if row.kds_status and row.kds_status != "Pending":
-                    existing_item_kds[row.item_code] = row.kds_status
+        has_kds_field = frappe.db.has_column("Sales Invoice Item", "kds_status")
+        if has_kds_field:
+            # From DB (most reliable source)
+            if data.get("name"):
+                for row in frappe.get_all("Sales Invoice Item",
+                    filters={"parent": data["name"]},
+                    fields=["item_code", "kds_status"]):
+                    if row.kds_status and row.kds_status != "Pending":
+                        existing_item_kds[row.item_code] = row.kds_status
+            # From frontend data (in case cart items have kds_status set)
+            for item_data in data.get("items", []):
+                status = item_data.get("kds_status")
+                if status and status != "Pending":
+                    existing_item_kds[item_data.get("item_code")] = status
 
         # Create or update invoice
         if data.get("name"):
@@ -971,14 +980,14 @@ def update_invoice(data):
 
             frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
 
-        # Restore preserved item kds_status for existing items
-        if existing_item_kds and frappe.db.has_column("Sales Invoice Item", "kds_status"):
+        # Restore item kds_status via direct DB write (Frappe save may strip custom fields)
+        if has_kds_field:
+            invoice_doc.reload()
             for item in invoice_doc.items:
-                saved_status = existing_item_kds.get(item.item_code)
-                if saved_status:
-                    frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", saved_status, update_modified=False)
+                status = existing_item_kds.get(item.item_code, "Pending")
+                frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
 
-        if data.get("restaurant_table") or data.get("kds_status") or existing_item_kds:
+        if data.get("restaurant_table") or data.get("kds_status") or has_kds_field:
             frappe.db.commit()
             frappe.publish_realtime("kds_update")
             frappe.publish_realtime("table_update")
