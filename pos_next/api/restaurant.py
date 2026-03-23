@@ -505,13 +505,15 @@ def open_table(table_name, pos_profile, customer=None):
 
 
 @frappe.whitelist()
-def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None, applicable_items=None):
+def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None, applicable_items=None, applicable_item_groups=None):
 	"""Save a product option group."""
 	import json
 	if isinstance(options, str):
 		options = json.loads(options)
 	if isinstance(applicable_items, str):
 		applicable_items = json.loads(applicable_items)
+	if isinstance(applicable_item_groups, str):
+		applicable_item_groups = json.loads(applicable_item_groups)
 
 	doctype, option_dt, item_dt = _resolve_option_doctypes()
 	doc = frappe.get_doc(doctype, name)
@@ -534,6 +536,10 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 		doc.applicable_items = []
 		for item_code in applicable_items:
 			doc.append("applicable_items", {"item": item_code})
+	if applicable_item_groups is not None and hasattr(doc, "applicable_item_groups"):
+		doc.applicable_item_groups = []
+		for ig in applicable_item_groups:
+			doc.append("applicable_item_groups", {"item_group": ig})
 	doc.save(ignore_permissions=True)
 	return {"status": "success"}
 
@@ -635,6 +641,17 @@ def get_all_product_option_groups():
 			]
 		else:
 			group["applicable_items"] = []
+
+		# Fetch applicable item groups
+		group["applicable_item_groups"] = []
+		if frappe.db.exists("DocType", "Product Option Group Item Group"):
+			group["applicable_item_groups"] = [
+				r.item_group for r in frappe.get_all(
+					"Product Option Group Item Group",
+					filters={"parent": group.name},
+					fields=["item_group"]
+				)
+			]
 
 	return groups
 

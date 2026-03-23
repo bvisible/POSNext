@@ -117,11 +117,34 @@
 								</button>
 							</div>
 
-							<!-- Applicable Items -->
+							<!-- Applicable Item Groups -->
 							<div>
-								<label class="text-[10px] font-medium text-gray-500 uppercase mb-1 block">{{ __("Applies to these items") }}</label>
+								<label class="text-[10px] font-medium text-gray-500 uppercase mb-1 block">{{ __("Applies to item groups") }}</label>
 								<div class="flex flex-wrap gap-1 mb-1">
-									<span v-for="(item, idx) in (group.applicable_items || [])" :key="idx"
+									<span v-for="(ig, idx) in (group.applicable_item_groups || [])" :key="'ig-'+idx"
+										class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+										{{ ig }}
+										<button @click="group.applicable_item_groups.splice(idx, 1)" class="text-purple-400 hover:text-red-500">&times;</button>
+									</span>
+								</div>
+								<div class="flex gap-1">
+									<input v-model="groupSearchInput" class="flex-1 px-2 py-1 border rounded text-xs"
+										:placeholder="__('Search item group...')" @input="searchItemGroups" />
+								</div>
+								<div v-if="groupSearchResults.length" class="mt-1 border rounded max-h-24 overflow-y-auto">
+									<div v-for="ig in groupSearchResults" :key="ig.name"
+										@click="addItemGroupToGroup(group, ig)"
+										class="px-2 py-1 text-xs hover:bg-purple-50 cursor-pointer">
+										{{ ig.name }}
+									</div>
+								</div>
+							</div>
+
+							<!-- Applicable Individual Items -->
+							<div>
+								<label class="text-[10px] font-medium text-gray-500 uppercase mb-1 block">{{ __("Or specific items") }}</label>
+								<div class="flex flex-wrap gap-1 mb-1">
+									<span v-for="(item, idx) in (group.applicable_items || [])" :key="'it-'+idx"
 										class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
 										{{ item }}
 										<button @click="group.applicable_items.splice(idx, 1)" class="text-blue-400 hover:text-red-500">&times;</button>
@@ -213,6 +236,8 @@ const newGroupName = ref("")
 const doctype = ref("Product Option Group")
 const itemSearchInput = ref("")
 const itemSearchResults = ref([])
+const groupSearchInput = ref("")
+const groupSearchResults = ref([])
 
 let searchTimeout = null
 function searchItemsForGroup() {
@@ -234,6 +259,37 @@ function searchItemsForGroup() {
 			itemSearchResults.value = []
 		}
 	}, 300)
+}
+
+let groupSearchTimeout = null
+function searchItemGroups() {
+	clearTimeout(groupSearchTimeout)
+	groupSearchTimeout = setTimeout(async () => {
+		if (!groupSearchInput.value || groupSearchInput.value.length < 1) {
+			groupSearchResults.value = []
+			return
+		}
+		try {
+			const res = await call("frappe.client.get_list", {
+				doctype: "Item Group",
+				filters: [["name", "like", `%${groupSearchInput.value}%`]],
+				fields: ["name"],
+				limit_page_length: 10
+			})
+			groupSearchResults.value = res || []
+		} catch {
+			groupSearchResults.value = []
+		}
+	}, 300)
+}
+
+function addItemGroupToGroup(group, ig) {
+	if (!group.applicable_item_groups) group.applicable_item_groups = []
+	if (!group.applicable_item_groups.includes(ig.name)) {
+		group.applicable_item_groups.push(ig.name)
+	}
+	groupSearchInput.value = ""
+	groupSearchResults.value = []
 }
 
 function addItemToGroup(group, item) {
@@ -266,7 +322,8 @@ async function saveGroup(group) {
 			selection_type: group.selection_type,
 			required: group.required ? 1 : 0,
 			options: JSON.stringify(group.options.filter(o => o.option_name)),
-			applicable_items: JSON.stringify(group.applicable_items || [])
+			applicable_items: JSON.stringify(group.applicable_items || []),
+			applicable_item_groups: JSON.stringify(group.applicable_item_groups || [])
 		})
 		showSuccess(__("Options saved"))
 		editingGroup.value = null
