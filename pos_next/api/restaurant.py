@@ -75,6 +75,22 @@ def get_tables():
 	for table in tables:
 		table["order_summary"] = order_map.get(table.name)
 
+	# Count items waiting to be sent to kitchen per table
+	has_item_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	if has_item_kds:
+		waiting_counts = frappe.db.sql("""
+			SELECT si.restaurant_table, COUNT(*) as waiting_count
+			FROM `tabSales Invoice Item` sii
+			JOIN `tabSales Invoice` si ON sii.parent = si.name
+			WHERE si.docstatus = 0
+				AND si.restaurant_table IS NOT NULL
+				AND sii.kds_status = 'Waiting'
+			GROUP BY si.restaurant_table
+		""", as_dict=True)
+		waiting_map = {r.restaurant_table: r.waiting_count for r in waiting_counts}
+		for table in tables:
+			table["waiting_items_count"] = waiting_map.get(table["name"], 0)
+
 	return {"areas": areas, "tables": tables, "stations": stations}
 
 @frappe.whitelist()
@@ -130,8 +146,8 @@ def update_kds_status(invoice_name, status):
 			fields=["name", "kds_status"])
 		for item in items:
 			current_rank = status_order.get(item.kds_status, 0)
-			# Only advance items forward, never backward
-			if current_rank < new_rank:
+			# Skip Waiting items, only advance items forward, never backward
+			if item.kds_status not in ["", "Waiting"] and current_rank < new_rank:
 				frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
 
 	frappe.db.commit()
@@ -257,9 +273,8 @@ def get_kds_orders(station=None):
 		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified"]
 	)
 
-	# Filter purely in Python
-	valid_statuses = ["Pending", "Preparing", "Ready"]
-	orders = [o for o in raw_orders if o.get("restaurant_table") and o.get("kds_status") in valid_statuses]
+	# Filter purely in Python - include orders with table and any kds_status
+	orders = [o for o in raw_orders if o.get("restaurant_table")]
 
 	# Fallback safety: Check if the custom field actually exists in the DB to prevent 500 errors
 	# if the user hasn't run `bench migrate` yet.
@@ -294,11 +309,12 @@ def get_kds_orders(station=None):
 		orders = [o for o in orders if o.get("items")]
 
 	# Remove orders where ALL items are Delivered (nothing left to prepare)
+	# Also remove orders where ALL items are Waiting (no active items yet)
 	if has_kds_status_field:
 		filtered = []
 		for order in orders:
 			items = order.get("items", [])
-			has_active = any(i.get("kds_status") not in ["Delivered"] for i in items)
+			has_active = any(i.get("kds_status") not in ["Delivered", "Waiting", ""] for i in items)
 			if has_active or not items:
 				filtered.append(order)
 			# Mark complete if all items are Ready or Delivered
@@ -455,11 +471,14 @@ def open_table(table_name, pos_profile, customer=None):
 			"is_new": False,
 		}
 
-	# No existing draft — create one
-	profile = frappe.get_doc("POS Profile", pos_profile)
-	default_customer = customer or profile.customer or frappe.db.get_single_value("Selling Settings", "customer_group")
+	# No existing draft — create one using update_invoice (handles ERPNext validation)
+	from pos_next.api.invoices import update_invoice
+	import json
 
-	invoice = frappe.get_doc({
+	profile = frappe.get_doc("POS Profile", pos_profile)
+	default_customer = customer or profile.customer
+
+	invoice_data = {
 		"doctype": "Sales Invoice",
 		"is_pos": 1,
 		"pos_profile": pos_profile,
@@ -469,23 +488,24 @@ def open_table(table_name, pos_profile, customer=None):
 		"currency": profile.currency,
 		"set_warehouse": profile.warehouse,
 		"update_stock": 1,
-	})
-	invoice.insert(ignore_permissions=True)
-
-	# Set restaurant_table via direct DB write (avoids validation conflicts)
-	frappe.db.set_value("Sales Invoice", invoice.name, {
 		"restaurant_table": table_name,
 		"kds_status": "Pending",
-	}, update_modified=False)
+		"items": [],
+	}
 
-	# Update table status
+	result = update_invoice(json.dumps(invoice_data))
+	invoice_name = result.get("name") if isinstance(result, dict) else None
+
+	if not invoice_name:
+		frappe.throw(_("Failed to create draft invoice for table {0}").format(table_name))
+
+	# Ensure table is marked occupied
 	frappe.db.set_value("Restaurant Table", table_name, "status", "Occupied")
 	frappe.db.commit()
-
 	frappe.publish_realtime("table_update")
 
 	return {
-		"name": invoice.name,
+		"name": invoice_name,
 		"items": [],
 		"customer": default_customer,
 		"kds_status": "Pending",
