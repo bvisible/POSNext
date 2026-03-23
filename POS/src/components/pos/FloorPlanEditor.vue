@@ -642,7 +642,7 @@ function toggleDeliveryArrows() {
 }
 
 async function loadRunnerOrders() {
-	if (!showDeliveryArrows.value) return
+	// Always load — needed for station bar counters and runner button, not just arrows
 	try {
 		const res = await call("pos_next.api.restaurant.get_runner_orders", { _: Date.now() })
 		if (res) runnerOrders.value = res
