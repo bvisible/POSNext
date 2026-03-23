@@ -8,9 +8,14 @@
 				<h3 class="font-bold text-lg leading-tight text-gray-900 dark:text-white">
 					{{ order.restaurant_table }}
 				</h3>
-				<span class="font-mono text-base font-bold tabular-nums" :class="timeColorClass">
-					{{ elapsedTime }}
-				</span>
+				<div class="text-right">
+					<span class="font-mono text-base font-bold tabular-nums block" :class="timeColorClass">
+						{{ elapsedTime }}
+					</span>
+					<span class="font-mono text-[10px] text-gray-400 tabular-nums block leading-tight" :title="__('Total time')">
+						{{ totalTime }}
+					</span>
+				</div>
 			</div>
 			<div class="flex justify-between items-center mt-1">
 				<span class="text-xs text-gray-400 font-mono">#{{ order.name.substring(0, 8) }}</span>
@@ -204,15 +209,24 @@ onUnmounted(() => {
 	document.removeEventListener("click", handleDocClick)
 })
 
-const orderTime = computed(() => new Date(props.order.modified || props.order.creation))
-const elapsedMinutes = computed(() => Math.floor((now.value - orderTime.value) / 60000))
-const elapsedSeconds = computed(() => Math.floor(((now.value - orderTime.value) % 60000) / 1000))
-
+// Time since last action (modified)
+const lastActionTime = computed(() => new Date(props.order.modified || props.order.creation))
+const lastActionMinutes = computed(() => Math.floor((now.value - lastActionTime.value) / 60000))
+const lastActionSeconds = computed(() => Math.floor(((now.value - lastActionTime.value) % 60000) / 1000))
 const elapsedTime = computed(() => {
-	const min = elapsedMinutes.value.toString().padStart(2, '0')
-	const sec = elapsedSeconds.value.toString().padStart(2, '0')
+	const min = lastActionMinutes.value.toString().padStart(2, '0')
+	const sec = lastActionSeconds.value.toString().padStart(2, '0')
 	return `${min}:${sec}`
 })
+
+// Total time since table was opened (creation)
+const totalTime = computed(() => {
+	const total = now.value - new Date(props.order.creation)
+	const min = Math.floor(total / 60000).toString().padStart(2, '0')
+	const sec = Math.floor((total % 60000) / 1000).toString().padStart(2, '0')
+	return `${min}:${sec}`
+})
+const elapsedMinutes = lastActionMinutes
 
 // Timer color: red+pulse >15min, orange >10min, green if ready
 const timeColorClass = computed(() => {
