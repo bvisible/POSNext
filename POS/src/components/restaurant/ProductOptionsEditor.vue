@@ -117,9 +117,27 @@
 								</button>
 							</div>
 
-							<!-- Applicable items info -->
-							<div class="text-[10px] text-gray-400">
-								{{ __("Applicable items can be managed in the back-office.") }}
+							<!-- Applicable Items -->
+							<div>
+								<label class="text-[10px] font-medium text-gray-500 uppercase mb-1 block">{{ __("Applies to these items") }}</label>
+								<div class="flex flex-wrap gap-1 mb-1">
+									<span v-for="(item, idx) in (group.applicable_items || [])" :key="idx"
+										class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+										{{ item }}
+										<button @click="group.applicable_items.splice(idx, 1)" class="text-blue-400 hover:text-red-500">&times;</button>
+									</span>
+								</div>
+								<div class="flex gap-1">
+									<input v-model="itemSearchInput" class="flex-1 px-2 py-1 border rounded text-xs"
+										:placeholder="__('Search item to add...')" @input="searchItemsForGroup" />
+								</div>
+								<div v-if="itemSearchResults.length" class="mt-1 border rounded max-h-24 overflow-y-auto">
+									<div v-for="item in itemSearchResults" :key="item.name"
+										@click="addItemToGroup(group, item)"
+										class="px-2 py-1 text-xs hover:bg-blue-50 cursor-pointer">
+										{{ item.item_name }}
+									</div>
+								</div>
 							</div>
 
 							<div class="flex justify-end">
@@ -193,6 +211,39 @@ const showNewForm = ref(false)
 const newGroupName = ref("")
 
 const doctype = ref("Product Option Group")
+const itemSearchInput = ref("")
+const itemSearchResults = ref([])
+
+let searchTimeout = null
+function searchItemsForGroup() {
+	clearTimeout(searchTimeout)
+	searchTimeout = setTimeout(async () => {
+		if (!itemSearchInput.value || itemSearchInput.value.length < 2) {
+			itemSearchResults.value = []
+			return
+		}
+		try {
+			const res = await call("frappe.client.get_list", {
+				doctype: "Item",
+				filters: [["item_name", "like", `%${itemSearchInput.value}%`]],
+				fields: ["name", "item_name"],
+				limit_page_length: 8
+			})
+			itemSearchResults.value = res || []
+		} catch {
+			itemSearchResults.value = []
+		}
+	}, 300)
+}
+
+function addItemToGroup(group, item) {
+	if (!group.applicable_items) group.applicable_items = []
+	if (!group.applicable_items.includes(item.name)) {
+		group.applicable_items.push(item.name)
+	}
+	itemSearchInput.value = ""
+	itemSearchResults.value = []
+}
 
 async function loadGroups() {
 	try {
@@ -214,7 +265,8 @@ async function saveGroup(group) {
 			group_name: group.group_name,
 			selection_type: group.selection_type,
 			required: group.required ? 1 : 0,
-			options: JSON.stringify(group.options.filter(o => o.option_name))
+			options: JSON.stringify(group.options.filter(o => o.option_name)),
+			applicable_items: JSON.stringify(group.applicable_items || [])
 		})
 		showSuccess(__("Options saved"))
 		editingGroup.value = null

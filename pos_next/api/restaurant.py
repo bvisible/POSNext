@@ -505,13 +505,15 @@ def open_table(table_name, pos_profile, customer=None):
 
 
 @frappe.whitelist()
-def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None):
+def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None, applicable_items=None):
 	"""Save a product option group."""
 	import json
 	if isinstance(options, str):
 		options = json.loads(options)
+	if isinstance(applicable_items, str):
+		applicable_items = json.loads(applicable_items)
 
-	doctype, option_dt, _ = _resolve_option_doctypes()
+	doctype, option_dt, item_dt = _resolve_option_doctypes()
 	doc = frappe.get_doc(doctype, name)
 	if group_name is not None:
 		doc.group_name = group_name
@@ -528,6 +530,10 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 					"price_adjustment": o.get("price_adjustment") or 0,
 					"is_default": o.get("is_default") or 0,
 				})
+	if applicable_items is not None and hasattr(doc, "applicable_items"):
+		doc.applicable_items = []
+		for item_code in applicable_items:
+			doc.append("applicable_items", {"item": item_code})
 	doc.save(ignore_permissions=True)
 	return {"status": "success"}
 
