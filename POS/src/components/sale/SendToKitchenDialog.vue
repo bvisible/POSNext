@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('Send to Kitchen'),
+			title: dialogTitle,
 			size: 'lg',
 		}"
 	>
@@ -101,7 +101,7 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
 						</svg>
 					</template>
-					{{ __("Send to Kitchen") }} ({{ selectedCount }})
+					{{ sendButtonLabel }} ({{ selectedCount }})
 				</Button>
 			</div>
 		</template>
@@ -112,14 +112,48 @@
 import { ref, computed } from "vue"
 import { Dialog, Button } from "frappe-ui"
 import { usePOSCartStore } from "@/stores/posCart"
+import { useRestaurantStore } from "@/stores/restaurant"
 
 const emit = defineEmits(["items-sent"])
 
 const show = ref(false)
 const dialogItems = ref([])
 const cartStore = usePOSCartStore()
+const restaurantStore = useRestaurantStore()
 
 const selectedCount = computed(() => dialogItems.value.filter(i => i.selected).length)
+
+// Resolve station name for an item
+function getStationName(item) {
+	if (item.preparation_station) return item.preparation_station
+	const stationInfo = restaurantStore.stationItemsMap[item.item_code]
+	return stationInfo?.station_name || ""
+}
+
+// Dynamic title and button label based on selected items' stations
+const selectedStationNames = computed(() => {
+	const selected = dialogItems.value.filter(i => i.selected)
+	const names = new Set()
+	for (const item of selected) {
+		const name = getStationName(item)
+		if (name) names.add(name)
+	}
+	return [...names]
+})
+
+const dialogTitle = computed(() => {
+	const stations = selectedStationNames.value
+	if (stations.length === 1) return __("Send to {0}", [stations[0]])
+	if (stations.length > 1) return __("Send to Preparation Stations")
+	return __("Send to Preparation")
+})
+
+const sendButtonLabel = computed(() => {
+	const stations = selectedStationNames.value
+	if (stations.length === 1) return __("Send to {0}", [stations[0]])
+	if (stations.length > 1) return __("Send to Preparation")
+	return __("Send to Preparation")
+})
 
 function isSendable(item) {
 	// Can send items that are new (no kds_status) or Waiting
