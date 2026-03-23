@@ -38,11 +38,11 @@ class RestaurantSettings(Document):
 
 		account = frappe.get_doc({
 			"doctype": "Account",
-			"account_name": _("Tips Transit Account"),
+			"account_name": _("Tip Transit Account"),
 			"account_number": "2211",
 			"parent_account": parent,
 			"company": company,
-			"account_type": "",
+			"account_type": "Income Account",
 			"is_group": 0,
 		})
 		account.insert(ignore_permissions=True)
