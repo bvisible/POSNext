@@ -52,6 +52,63 @@
 			</div>
 		</button>
 
+		<!-- Restaurant section (only in restaurant mode) -->
+		<template v-if="isRestaurantMode">
+			<!-- Divider -->
+			<div class="w-8 border-t border-gray-200 my-1"></div>
+
+			<!-- Cards / Menu -->
+			<button
+				@click="handleMenuClick('cards')"
+				:class="[
+					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
+					activeMenu === 'cards'
+						? 'bg-amber-100 text-amber-600'
+						: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+				]"
+				:title="__('Cards')"
+			>
+				<FeatherIcon name="list" class="w-5 h-5" />
+				<div class="absolute start-full ms-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+					{{ __('Cards') }}
+				</div>
+			</button>
+
+			<!-- Product Options -->
+			<button
+				@click="handleMenuClick('options')"
+				:class="[
+					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
+					activeMenu === 'options'
+						? 'bg-teal-100 text-teal-600'
+						: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+				]"
+				:title="__('Product Options')"
+			>
+				<FeatherIcon name="sliders" class="w-5 h-5" />
+				<div class="absolute start-full ms-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+					{{ __('Product Options') }}
+				</div>
+			</button>
+
+			<!-- Workflows -->
+			<button
+				@click="handleMenuClick('workflows')"
+				:class="[
+					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
+					activeMenu === 'workflows'
+						? 'bg-cyan-100 text-cyan-600'
+						: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+				]"
+				:title="__('Workflows')"
+			>
+				<FeatherIcon name="git-branch" class="w-5 h-5" />
+				<div class="absolute start-full ms-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+					{{ __('Workflows') }}
+				</div>
+			</button>
+		</template>
+
 		<!-- Spacer to push settings to bottom -->
 		<div class="flex-1"></div>
 
@@ -79,11 +136,14 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
-import { ref } from "vue"
+import { ref, computed } from "vue"
+import { useRestaurantStore } from "@/stores/restaurant"
 
+const restaurantStore = useRestaurantStore()
 const emit = defineEmits(["menu-clicked"])
 
 const activeMenu = ref("")
+const isRestaurantMode = computed(() => restaurantStore.isEnabled)
 
 function handleMenuClick(menuItem) {
 	activeMenu.value = menuItem
