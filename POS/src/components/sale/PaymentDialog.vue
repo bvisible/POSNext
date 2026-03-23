@@ -458,9 +458,21 @@
 									<div class="text-xs font-medium text-purple-600 uppercase tracking-wide mb-1">{{ __('Write Off') }}</div>
 									<div :class="['font-bold text-purple-600', dynamicTextSize.amount]">{{ formatCurrency(writeOffAmount) }}</div>
 								</div>
+								<!-- Tip detection: show tip instead of change when restaurant tips enabled -->
+								<div v-else-if="changeAmount > 0 && allowsOverpayment && showTipDetection" :class="['bg-amber-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
+									<div class="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">{{ __('Tip') }}</div>
+									<div :class="['font-bold text-amber-600', dynamicTextSize.amount]">{{ formatCurrency(tipAmount) }}</div>
+									<div class="flex justify-center gap-2 mt-1">
+										<button @click="tipAmount = 0" class="text-[10px] text-gray-500 hover:text-gray-700 underline">{{ __('No tip') }}</button>
+									</div>
+								</div>
+								<!-- Regular change (no tip or tip declined) -->
 								<div v-else-if="changeAmount > 0 && allowsOverpayment" :class="['bg-green-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
 									<div class="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">{{ __('Change Due') }}</div>
-									<div :class="['font-bold text-green-600', dynamicTextSize.amount]">{{ formatCurrency(changeAmount) }}</div>
+									<div :class="['font-bold text-green-600', dynamicTextSize.amount]">{{ formatCurrency(changeAmount - tipAmount) }}</div>
+									<div v-if="restaurantStore?.tipsEnabled" class="mt-1">
+										<button @click="tipAmount = changeAmount" class="text-[10px] text-amber-600 hover:text-amber-800 underline">{{ __('Convert to tip') }}</button>
+									</div>
 								</div>
 								<!-- Exact Amount Warning (when overpayment not allowed) -->
 								<div v-else-if="changeAmount > 0 && !allowsOverpayment" :class="['bg-red-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
@@ -1245,6 +1257,7 @@
 
 <script setup>
 import { usePOSSettingsStore } from "@/stores/posSettings"
+import { useRestaurantStore } from "@/stores/restaurant"
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -1264,6 +1277,22 @@ import { useQuickAmounts } from "@/composables/useQuickAmounts"
 
 const log = logger.create("PaymentDialog")
 const settingsStore = usePOSSettingsStore()
+const restaurantStore = useRestaurantStore()
+
+// Tip state
+const tipAmount = ref(0)
+const showTipDetection = computed(() => {
+	return restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && tipAmount.value > 0
+})
+
+// Auto-set tip when change amount changes (if tips enabled)
+watch(() => changeAmount.value, (newChange) => {
+	if (restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && newChange > 0) {
+		tipAmount.value = newChange
+	} else {
+		tipAmount.value = 0
+	}
+})
 const { showWarning, showError, showSuccess, showInfo } = useToast()
 
 const props = defineProps({
@@ -2343,6 +2372,7 @@ watch(show, async (newVal) => {
 		// Reset state when dialog opens (but NOT customerBalance - it's pre-fetched)
 		paymentEntries.value = []
 		customAmount.value = ""
+		tipAmount.value = 0
 		numpadClear()
 		mobileCustomAmount.value = ""
 		lastSelectedMethod.value = null
@@ -3569,7 +3599,7 @@ function completePayment() {
 
 	const paymentData = {
 		payments: paymentEntries.value,
-		change_amount: changeAmount.value,
+		change_amount: Math.max(0, changeAmount.value - (tipAmount.value || 0)),
 		is_partial_payment: isPartial,
 		paid_amount: totalPaid.value,
 		outstanding_amount: isPartial
@@ -3578,6 +3608,8 @@ function completePayment() {
 		sales_team:
 			selectedSalesPersons.value.length > 0 ? selectedSalesPersons.value : null,
 		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
+		// Tip data
+		tip_amount: tipAmount.value > 0 ? tipAmount.value : 0,
 		// Write-off data
 		write_off_amount: writeOffAmount.value,
 		is_write_off: writeOffAmount.value > 0,

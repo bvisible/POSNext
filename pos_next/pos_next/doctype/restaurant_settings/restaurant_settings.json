@@ -6,7 +6,13 @@
  "engine": "InnoDB",
  "field_order": [
   "section_hours",
-  "opening_hours"
+  "opening_hours",
+  "section_tips",
+  "enable_tips",
+  "auto_detect_tip",
+  "column_break_tips",
+  "tip_item",
+  "tip_account"
  ],
  "fields": [
   {
@@ -19,12 +25,51 @@
    "fieldtype": "Table",
    "label": "Opening Hours",
    "options": "Restaurant Opening Hours"
+  },
+  {
+   "fieldname": "section_tips",
+   "fieldtype": "Section Break",
+   "label": "Tips / Pourboires"
+  },
+  {
+   "fieldname": "enable_tips",
+   "fieldtype": "Check",
+   "label": "Enable Tips",
+   "default": "0"
+  },
+  {
+   "fieldname": "auto_detect_tip",
+   "fieldtype": "Check",
+   "label": "Auto-detect tip from overpayment",
+   "default": "1",
+   "depends_on": "eval:doc.enable_tips"
+  },
+  {
+   "fieldname": "column_break_tips",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tip_item",
+   "fieldtype": "Link",
+   "label": "Tip Item",
+   "options": "Item",
+   "depends_on": "eval:doc.enable_tips",
+   "read_only_depends_on": "eval:doc.tip_item",
+   "description": "Auto-created when tips are enabled"
+  },
+  {
+   "fieldname": "tip_account",
+   "fieldtype": "Link",
+   "label": "Tip Account",
+   "options": "Account",
+   "depends_on": "eval:doc.enable_tips",
+   "description": "Transit account for tips (e.g. 2211)"
   }
  ],
  "index_web_link_preview": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-23 00:00:00.000000",
+ "modified": "2026-03-23 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Settings",

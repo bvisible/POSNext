@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "autoname": "TIP-.YYYY.-.#####",
+ "creation": "2026-03-23 13:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tip_date",
+  "sales_invoice",
+  "restaurant_table",
+  "column_break_1",
+  "server",
+  "amount",
+  "payment_method",
+  "section_distribution",
+  "status",
+  "column_break_2",
+  "distributed_to",
+  "distribution_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "tip_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "restaurant_table",
+   "fieldtype": "Link",
+   "label": "Table",
+   "options": "Restaurant Table"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "server",
+   "fieldtype": "Link",
+   "label": "Server",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payment_method",
+   "fieldtype": "Data",
+   "label": "Payment Method",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_distribution",
+   "fieldtype": "Section Break",
+   "label": "Distribution",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Collected\nDistributed\nCancelled",
+   "default": "Collected",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "distributed_to",
+   "fieldtype": "Link",
+   "label": "Distributed To",
+   "options": "Employee",
+   "depends_on": "eval:doc.status=='Distributed'"
+  },
+  {
+   "fieldname": "distribution_date",
+   "fieldtype": "Date",
+   "label": "Distribution Date",
+   "depends_on": "eval:doc.status=='Distributed'"
+  }
+ ],
+ "index_web_link_preview": 0,
+ "links": [],
+ "modified": "2026-03-23 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Tip",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "POSNext Cashier"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

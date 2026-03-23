@@ -721,6 +721,10 @@ def get_restaurant_settings():
 		"opening_hours": hours,
 		"is_open": is_open,
 		"current_slot": current_slot,
+		"enable_tips": bool(settings.enable_tips) if hasattr(settings, "enable_tips") else False,
+		"auto_detect_tip": bool(settings.auto_detect_tip) if hasattr(settings, "auto_detect_tip") else True,
+		"tip_item": settings.tip_item if hasattr(settings, "tip_item") else None,
+		"tip_account": settings.tip_account if hasattr(settings, "tip_account") else None,
 	}
 
 
