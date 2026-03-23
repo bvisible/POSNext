@@ -75,7 +75,8 @@ import { ref, computed } from "vue"
 import { Dialog, Button } from "frappe-ui"
 import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import { usePOSShiftStore } from "@/stores/posShift"
+import { formatCurrency as formatCurrencyUtil } from "@/utils/currency"
 
 const show = ref(false)
 const item = ref(null)
@@ -84,6 +85,7 @@ const selections = ref({}) // { groupName: [optionName, ...] }
 
 const cartStore = usePOSCartStore()
 const restaurantStore = useRestaurantStore()
+const shiftStore = usePOSShiftStore()
 
 const applicableGroups = computed(() => {
 	if (!item.value) return []
@@ -144,7 +146,7 @@ function toggleOption(group, option) {
 }
 
 function formatPrice(amount) {
-	return formatCurrencyUtil(amount, DEFAULT_CURRENCY)
+	return formatCurrencyUtil(amount, shiftStore.profileCurrency)
 }
 
 function open(cartItem) {
