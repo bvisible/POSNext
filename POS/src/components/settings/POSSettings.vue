@@ -79,6 +79,13 @@
 							<!-- Tabs Navigation -->
 							<div class="flex p-1 bg-gray-200 rounded-lg self-start">
 								<button
+									v-if="restaurantStore.isEnabled"
+									@click="activeTab = 'restaurant'"
+									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'restaurant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
+								>
+									{{ __('Restaurant') }}
+								</button>
+								<button
 									@click="activeTab = 'stock'"
 									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'stock' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
 								>
@@ -89,13 +96,6 @@
 									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'sales' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
 								>
 									{{ __('Sales Management') }}
-								</button>
-								<button
-									v-if="restaurantStore.isEnabled"
-									@click="activeTab = 'restaurant'"
-									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'restaurant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
-								>
-									{{ __('Restaurant') }}
 								</button>
 							</div>
 
@@ -685,7 +685,7 @@ const emit = defineEmits(["update:modelValue"])
 const show = ref(props.modelValue)
 
 // State
-const activeTab = ref("stock")
+const activeTab = ref("stock") // Updated in watch on show
 const loading = ref(true)
 const saving = ref(false)
 const warehousesList = ref([])
@@ -819,6 +819,7 @@ watch(
 	(val) => {
 		show.value = val
 		if (val) {
+			activeTab.value = restaurantStore.isEnabled ? "restaurant" : "stock"
 			loadSettings()
 		}
 	},

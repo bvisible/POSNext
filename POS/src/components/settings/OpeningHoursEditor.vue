@@ -54,6 +54,12 @@
 </template>
 
 <script setup>
+// Default slot presets: first slot = Lunch, subsequent = Dinner, then custom
+const SLOT_PRESETS = [
+	{ from_time: "09:00", to_time: "14:00", label: "Lunch" },
+	{ from_time: "18:00", to_time: "23:00", label: "Dinner" },
+]
+
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 const props = defineProps({
@@ -70,17 +76,32 @@ function getSlotsForDay(day) {
 }
 
 function addSlot(day) {
-	const updated = [...props.modelValue, {
-		day_of_week: day,
-		from_time: "09:00",
-		to_time: "14:00",
-		label: "",
-	}]
-	emit("update:modelValue", updated)
+	const existing = getSlotsForDay(day)
+	let newSlot
+
+	if (existing.length < SLOT_PRESETS.length) {
+		// Use preset for this slot index
+		const preset = SLOT_PRESETS[existing.length]
+		newSlot = { day_of_week: day, ...preset }
+	} else {
+		// Beyond presets: start 1h after last slot's to_time
+		const lastSlot = existing[existing.length - 1]
+		const lastEnd = lastSlot.to_time || "23:00"
+		const [h, m] = lastEnd.split(":").map(Number)
+		const nextH = Math.min(h + 1, 23)
+		const nextEndH = Math.min(nextH + 4, 23)
+		newSlot = {
+			day_of_week: day,
+			from_time: `${String(nextH).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+			to_time: `${String(nextEndH).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+			label: "",
+		}
+	}
+
+	emit("update:modelValue", [...props.modelValue, newSlot])
 }
 
 function removeSlot(day, idx) {
-	// Find the actual index in the full array
 	let count = 0
 	const updated = props.modelValue.filter(s => {
 		if (s.day_of_week === day) {
