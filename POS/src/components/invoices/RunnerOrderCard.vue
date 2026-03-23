@@ -160,8 +160,12 @@ function parsedModifiers(item) {
 	if (!item.posa_item_modifiers) return null
 	try {
 		const mods = JSON.parse(item.posa_item_modifiers)
-		if (Array.isArray(mods) && mods.length) return mods
-		return null
+		if (!Array.isArray(mods) || !mods.length) return null
+		// Flatten modifier groups into readable names
+		const names = mods.flatMap(m =>
+			(m.options || []).map(o => o.name || o.option_name || String(o))
+		)
+		return names.length ? names : null
 	} catch {
 		return null
 	}
