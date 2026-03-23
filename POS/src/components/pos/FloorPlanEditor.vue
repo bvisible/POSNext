@@ -182,15 +182,6 @@
 				class="absolute inset-0 pointer-events-none overflow-visible"
 				width="100%" height="100%">
 
-				<!-- Ghost station labels for cross-area arrows -->
-				<g v-for="arrow in deliveryArrows.filter(a => a.isGhost)" :key="'ghost-' + arrow.key">
-					<rect :x="arrow.x1 - 2" :y="arrow.y1 - 10" :width="arrow.labelWidth || 70" height="20" rx="4"
-						:fill="arrow.color" fill-opacity="0.1" :stroke="arrow.color" stroke-width="0.5" stroke-opacity="0.3" />
-					<text :x="arrow.x1 + 4" :y="arrow.y1 + 4" :fill="arrow.color" fill-opacity="0.6" font-size="9" font-weight="bold">
-						{{ arrow.stationName }}
-					</text>
-				</g>
-
 				<g v-for="arrow in deliveryArrows" :key="'arrow-' + arrow.key">
 					<!-- Subtle guide line -->
 					<line :x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"
@@ -746,21 +737,23 @@ const deliveryArrows = computed(() => {
 					duration: Math.max(3, dist / 60) + 's'
 				})
 			} else if (station) {
-				// Cross-area: ghost station indicator on the left edge
-				const ghostY = 30 + ghostIndex * 40
+				// Cross-area: arrow starts from top of canvas (below station bar tab)
+				// Calculate x position based on station's index in allStations
+				const stationIdx = allStations.value.findIndex(s => s.name === stationId)
+				const tabX = 16 + (stationIdx >= 0 ? stationIdx : ghostIndex) * 130 + 65
 				ghostIndex++
 				const te = edgePoint(
 					{ x: (table.pos_x || 0) + (table.width || 100) / 2, y: (table.pos_y || 0) + (table.height || 100) / 2 },
 					table.width || 100, table.height || 100,
-					{ x: 40, y: ghostY }
+					{ x: tabX / zoomLevel.value, y: 0 }
 				)
-				const dist = Math.sqrt((te.x - 40) ** 2 + (te.y - ghostY) ** 2)
+				const startX = tabX / zoomLevel.value
+				const dist = Math.sqrt((te.x - startX) ** 2 + te.y ** 2)
 				arrows.push({
 					key: pairKey,
-					x1: 40, y1: ghostY, x2: te.x, y2: te.y,
+					x1: startX, y1: 0, x2: te.x, y2: te.y,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
-					labelWidth: station.station_name.length * 7 + 20,
 					isGhost: true,
 					itemCount,
 					duration: Math.max(3, dist / 60) + 's'
