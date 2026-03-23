@@ -2339,6 +2339,18 @@ function handleLoadServerDraft(order) {
 	// Restore cart items from server draft
 	if (order.items && order.items.length > 0) {
 		for (const item of order.items) {
+			// Calculate modifier price adjustment from saved JSON
+			let modifierPriceAdjustment = 0
+			if (item.posa_item_modifiers) {
+				try {
+					const mods = JSON.parse(item.posa_item_modifiers)
+					for (const mod of mods) {
+						for (const opt of (mod.options || [])) {
+							modifierPriceAdjustment += (opt.price_adjustment || 0)
+						}
+					}
+				} catch { /* ignore parse errors */ }
+			}
 			cartStore.addItem({
 				item_code: item.item_code,
 				item_name: item.item_name,
@@ -2347,6 +2359,7 @@ function handleLoadServerDraft(order) {
 				preparation_station: item.preparation_station,
 				posa_special_instructions: item.posa_special_instructions,
 				posa_item_modifiers: item.posa_item_modifiers,
+				_modifiers_applied: modifierPriceAdjustment || 0,
 			}, item.qty || 1)
 		}
 	}

@@ -239,6 +239,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				item.rate = (item.rate || 0) - item._modifiers_applied + priceAdjustment
 				item._modifiers_applied = priceAdjustment
 			}
+			// Recalculate item totals and rebuild cache so Grand Total updates immediately
+			recalculateItem(item)
+			rebuildIncrementalCache()
 			hasUnsentChanges.value = true
 		}
 	}

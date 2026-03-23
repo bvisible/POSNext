@@ -308,6 +308,7 @@ export function useInvoice() {
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				preparation_station: item.preparation_station || "",
 				kds_status: item.kds_status || "",
+				_modifiers_applied: item._modifiers_applied || 0,
 			}
 			invoiceItems.value.push(newItem)
 			// Recalculate the newly added item to apply taxes
