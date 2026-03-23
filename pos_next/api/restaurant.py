@@ -169,12 +169,16 @@ def get_station_items_map():
 			"color": station.color
 		}
 		for item in items:
-			# Map by item name (Link field value)
-			result[item.item] = station_info
-			# Also map by item_code if different from name
-			item_code = frappe.db.get_value("Item", item.item, "item_code")
-			if item_code and item_code != item.item:
-				result[item_code] = station_info
+			item_ref = item.item
+			# Map by the stored reference (could be name or item_name)
+			result[item_ref] = station_info
+			# Also map by item_code and item_name from Item master
+			item_data = frappe.db.get_value("Item", item_ref, ["item_code", "item_name"], as_dict=True)
+			if item_data:
+				if item_data.item_code:
+					result[item_data.item_code] = station_info
+				if item_data.item_name:
+					result[item_data.item_name] = station_info
 	return result
 
 
