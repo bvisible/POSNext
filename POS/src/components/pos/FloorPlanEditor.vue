@@ -182,6 +182,7 @@
 				<template v-if="table.order_summary && !isEditMode">
 					<div class="flex items-center gap-1 mt-0.5">
 						<span class="text-[9px] font-semibold bg-red-100 text-red-700 px-1 rounded">{{ table.order_summary.item_count }}</span>
+						<span v-if="table.waiting_items_count > 0" class="bg-orange-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 animate-pulse" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
 						<span class="text-[9px] text-gray-500">{{ formatTime(table.order_summary.opened_at) }}</span>
 						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
 					</div>

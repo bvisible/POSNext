@@ -28,7 +28,7 @@
 
 		<!-- Items -->
 		<div class="p-3 flex-1">
-			<div v-for="(item, idx) in order.items" :key="idx"
+			<div v-for="(item, idx) in activeItems" :key="idx"
 				class="py-1.5 relative"
 				:class="[
 					{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
@@ -84,6 +84,26 @@
 					:style="{ backgroundColor: getStationColor(item.preparation_station) }">
 					{{ item.preparation_station }}
 				</span>
+			</div>
+			<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
+			<div v-if="waitingItems.length > 0" class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
+				<h4 class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2 tracking-wider flex items-center gap-1">
+					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+					{{ __("Coming Next") }}
+				</h4>
+				<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
+					class="py-1.5 opacity-50"
+					:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+					<div class="flex justify-between items-start gap-1 px-1 -mx-1">
+						<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
+							<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+						</span>
+					</div>
+					<div v-if="item.posa_special_instructions"
+						class="text-xs text-blue-400 mt-0.5 pl-4">
+						{{ item.posa_special_instructions }}
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -153,6 +173,14 @@ const emit = defineEmits(["status-updated"])
 const { showError } = useToast()
 const loading = ref(false)
 const activeItemMenu = ref(null)
+
+// Separate items into active (sent to kitchen) vs waiting (not yet sent)
+const activeItems = computed(() =>
+	(props.order.items || []).filter(i => i.kds_status && i.kds_status !== "Waiting")
+)
+const waitingItems = computed(() =>
+	(props.order.items || []).filter(i => i.kds_status === "Waiting")
+)
 
 function toggleItemMenu(idx) {
 	activeItemMenu.value = activeItemMenu.value === idx ? null : idx
