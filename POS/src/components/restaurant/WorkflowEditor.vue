@@ -145,26 +145,10 @@ const newWorkflowName = ref("")
 
 async function loadWorkflows() {
 	try {
-		const res = await call("frappe.client.get_list", {
-			doctype: "Preparation Workflow",
-			fields: ["name", "workflow_name", "is_default"],
-			order_by: "is_default desc, workflow_name asc",
-			limit_page_length: 0
-		})
-		if (res) {
-			for (const wf of res) {
-				const steps = await call("frappe.client.get_list", {
-					doctype: "Preparation Workflow Step",
-					filters: { parent: wf.name, parenttype: "Preparation Workflow" },
-					fields: ["step_name", "color", "allow_edit"],
-					order_by: "idx asc",
-					limit_page_length: 0
-				})
-				wf.steps = steps || []
-			}
-			workflows.value = res
-		}
+		const res = await call("pos_next.api.restaurant.get_preparation_workflows")
+		if (res) workflows.value = res
 	} catch (error) {
+		console.error("Failed to load workflows:", error)
 		showError(__("Failed to load workflows"))
 	} finally {
 		loading.value = false
@@ -174,14 +158,11 @@ async function loadWorkflows() {
 async function saveWorkflow(wf) {
 	saving.value = true
 	try {
-		const doc = await call("frappe.client.get", { doctype: "Preparation Workflow", name: wf.name })
-		doc.steps = wf.steps.filter(s => s.step_name).map((s, i) => ({
-			step_name: s.step_name,
-			color: s.color || "#6B7280",
-			allow_edit: i === 0 ? 1 : 0,
-			idx: i + 1
-		}))
-		await call("frappe.client.save", { doc })
+		await call("pos_next.api.restaurant.save_preparation_workflow", {
+			name: wf.name,
+			workflow_name: wf.workflow_name,
+			steps: JSON.stringify(wf.steps.filter(s => s.step_name))
+		})
 		showSuccess(__("Workflow saved"))
 		editingWorkflow.value = null
 		loadWorkflows()
@@ -194,16 +175,8 @@ async function saveWorkflow(wf) {
 
 async function createWorkflow() {
 	try {
-		await call("frappe.client.insert", {
-			doc: {
-				doctype: "Preparation Workflow",
-				workflow_name: newWorkflowName.value,
-				steps: [
-					{ step_name: "Pending", color: "#EAB308", allow_edit: 1 },
-					{ step_name: "Preparing", color: "#3B82F6", allow_edit: 0 },
-					{ step_name: "Ready", color: "#22C55E", allow_edit: 0 },
-				]
-			}
+		await call("pos_next.api.restaurant.create_preparation_workflow", {
+			workflow_name: newWorkflowName.value
 		})
 		showSuccess(__("Workflow created"))
 		showNewForm.value = false
@@ -216,7 +189,7 @@ async function createWorkflow() {
 
 async function deleteWorkflow(wf) {
 	try {
-		await call("frappe.client.delete", { doctype: "Preparation Workflow", name: wf.name })
+		await call("pos_next.api.restaurant.delete_preparation_workflow", { name: wf.name })
 		showSuccess(__("Workflow deleted"))
 		loadWorkflows()
 	} catch (error) {
@@ -229,14 +202,13 @@ async function setDefault(wf) {
 		// Unset current default
 		for (const w of workflows.value) {
 			if (w.is_default) {
-				await call("frappe.client.set_value", {
-					doctype: "Preparation Workflow", name: w.name, fieldname: "is_default", value: 0
-				})
+				await call("pos_next.api.restaurant.save_preparation_workflow", {
+						name: w.name, is_default: 0
+					})
 			}
 		}
-		// Set new default
-		await call("frappe.client.set_value", {
-			doctype: "Preparation Workflow", name: wf.name, fieldname: "is_default", value: 1
+		await call("pos_next.api.restaurant.save_preparation_workflow", {
+			name: wf.name, is_default: 1
 		})
 		showSuccess(__("Default workflow updated"))
 		loadWorkflows()

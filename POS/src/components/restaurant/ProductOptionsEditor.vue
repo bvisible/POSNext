@@ -209,17 +209,13 @@ async function loadGroups() {
 async function saveGroup(group) {
 	saving.value = true
 	try {
-		const doc = await call("frappe.client.get", { doctype: doctype.value, name: group.name })
-		doc.group_name = group.group_name
-		doc.selection_type = group.selection_type
-		doc.required = group.required ? 1 : 0
-		doc.options = group.options.filter(o => o.option_name).map((o, i) => ({
-			option_name: o.option_name,
-			price_adjustment: o.price_adjustment || 0,
-			is_default: o.is_default || 0,
-			idx: i + 1
-		}))
-		await call("frappe.client.save", { doc })
+		await call("pos_next.api.restaurant.save_product_option_group", {
+			name: group.name,
+			group_name: group.group_name,
+			selection_type: group.selection_type,
+			required: group.required ? 1 : 0,
+			options: JSON.stringify(group.options.filter(o => o.option_name))
+		})
 		showSuccess(__("Options saved"))
 		editingGroup.value = null
 		loadGroups()
@@ -232,14 +228,8 @@ async function saveGroup(group) {
 
 async function createGroup() {
 	try {
-		await call("frappe.client.insert", {
-			doc: {
-				doctype: doctype.value,
-				group_name: newGroupName.value,
-				selection_type: "Single",
-				required: 0,
-				options: []
-			}
+		await call("pos_next.api.restaurant.create_product_option_group", {
+			group_name: newGroupName.value
 		})
 		showSuccess(__("Option group created"))
 		showNewForm.value = false
@@ -252,7 +242,7 @@ async function createGroup() {
 
 async function deleteGroup(group) {
 	try {
-		await call("frappe.client.delete", { doctype: doctype.value, name: group.name })
+		await call("pos_next.api.restaurant.delete_product_option_group", { name: group.name })
 		showSuccess(__("Option group deleted"))
 		loadGroups()
 	} catch (error) {

@@ -504,6 +504,56 @@ def open_table(table_name, pos_profile, customer=None):
 	}
 
 
+@frappe.whitelist()
+def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None):
+	"""Save a product option group."""
+	import json
+	if isinstance(options, str):
+		options = json.loads(options)
+
+	doctype, option_dt, _ = _resolve_option_doctypes()
+	doc = frappe.get_doc(doctype, name)
+	if group_name is not None:
+		doc.group_name = group_name
+	if selection_type is not None:
+		doc.selection_type = selection_type
+	if required is not None:
+		doc.required = int(required)
+	if options is not None:
+		doc.options = []
+		for o in options:
+			if o.get("option_name"):
+				doc.append("options", {
+					"option_name": o["option_name"],
+					"price_adjustment": o.get("price_adjustment") or 0,
+					"is_default": o.get("is_default") or 0,
+				})
+	doc.save(ignore_permissions=True)
+	return {"status": "success"}
+
+
+@frappe.whitelist()
+def create_product_option_group(group_name):
+	"""Create a new product option group."""
+	doctype = _resolve_option_doctypes()[0]
+	doc = frappe.get_doc({
+		"doctype": doctype,
+		"group_name": group_name,
+		"selection_type": "Single",
+		"required": 0,
+	})
+	doc.insert(ignore_permissions=True)
+	return doc.as_dict()
+
+
+@frappe.whitelist()
+def delete_product_option_group(name):
+	"""Delete a product option group."""
+	doctype = _resolve_option_doctypes()[0]
+	frappe.delete_doc(doctype, name, ignore_permissions=True)
+	return {"status": "success"}
+
+
 def _resolve_option_doctypes():
 	"""Detect whether to use new (Product Option) or old (Item Modifier) DocType names."""
 	try:
@@ -1017,6 +1067,80 @@ def _get_workflow_steps(workflow_name):
 		order_by="idx asc"
 	)
 	return steps or DEFAULT_WORKFLOW_STEPS
+
+
+@frappe.whitelist()
+def get_preparation_workflows():
+	"""Fetch all preparation workflows with their steps for the editor."""
+	workflows = frappe.get_all(
+		"Preparation Workflow",
+		fields=["name", "workflow_name", "is_default"],
+		order_by="is_default desc, workflow_name asc"
+	)
+	for wf in workflows:
+		wf["steps"] = frappe.get_all(
+			"Preparation Workflow Step",
+			filters={"parent": wf.name, "parenttype": "Preparation Workflow"},
+			fields=["step_name", "color", "allow_edit"],
+			order_by="idx asc"
+		)
+	return workflows
+
+
+@frappe.whitelist()
+def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=None):
+	"""Save a preparation workflow and its steps."""
+	import json
+	if isinstance(steps, str):
+		steps = json.loads(steps)
+
+	doc = frappe.get_doc("Preparation Workflow", name)
+	if workflow_name:
+		doc.workflow_name = workflow_name
+	if is_default is not None:
+		if int(is_default):
+			# Unset other defaults
+			frappe.db.sql("UPDATE `tabPreparation Workflow` SET is_default=0 WHERE name != %s", name)
+		doc.is_default = int(is_default)
+	if steps is not None:
+		doc.steps = []
+		for i, s in enumerate(steps):
+			if s.get("step_name"):
+				doc.append("steps", {
+					"step_name": s["step_name"],
+					"color": s.get("color") or "#6B7280",
+					"allow_edit": 1 if i == 0 else 0,
+				})
+	doc.save(ignore_permissions=True)
+	return {"status": "success"}
+
+
+@frappe.whitelist()
+def create_preparation_workflow(workflow_name, steps=None):
+	"""Create a new preparation workflow."""
+	import json
+	if isinstance(steps, str):
+		steps = json.loads(steps)
+	if not steps:
+		steps = [
+			{"step_name": "Pending", "color": "#EAB308", "allow_edit": 1},
+			{"step_name": "Preparing", "color": "#3B82F6", "allow_edit": 0},
+			{"step_name": "Ready", "color": "#22C55E", "allow_edit": 0},
+		]
+	doc = frappe.get_doc({
+		"doctype": "Preparation Workflow",
+		"workflow_name": workflow_name,
+		"steps": [{"step_name": s["step_name"], "color": s.get("color", "#6B7280"), "allow_edit": s.get("allow_edit", 0)} for s in steps]
+	})
+	doc.insert(ignore_permissions=True)
+	return doc.as_dict()
+
+
+@frappe.whitelist()
+def delete_preparation_workflow(name):
+	"""Delete a preparation workflow."""
+	frappe.delete_doc("Preparation Workflow", name, ignore_permissions=True)
+	return {"status": "success"}
 
 
 @frappe.whitelist()
