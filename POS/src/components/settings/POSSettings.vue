@@ -633,6 +633,48 @@
 										</svg>
 										<span class="text-sm text-amber-800">{{ restaurantStatus.warning }}</span>
 									</div>
+
+									<!-- Tips / Pourboires -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Tips / Pourboires') }}</h4>
+										</div>
+										<div class="flex flex-col gap-3">
+											<CheckboxField
+												:modelValue="tipSettings.enable_tips ? 1 : 0"
+												@update:modelValue="tipSettings.enable_tips = !!$event"
+												:label="__('Enable tip management')"
+												:description="__('Automatically detect tips when customers pay more than the invoice total')"
+											/>
+											<div v-if="tipSettings.enable_tips" class="pl-6 flex flex-col gap-2">
+												<CheckboxField
+													:modelValue="tipSettings.auto_detect_tip ? 1 : 0"
+													@update:modelValue="tipSettings.auto_detect_tip = !!$event"
+													:label="__('Auto-detect tip from overpayment')"
+													:description="__('Overpayment is pre-filled as tip, server can adjust or cancel')"
+												/>
+												<div v-if="tipSettings.tip_item" class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+													<svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+													</svg>
+													<span class="text-xs text-green-800">
+														{{ __('TIP item and transit account will be created automatically when saved') }}
+													</span>
+												</div>
+												<div v-else class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+													<svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+													</svg>
+													<span class="text-xs text-blue-800">
+														{{ __('Save to auto-create the TIP item and transit account (2211)') }}
+													</span>
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
 
@@ -775,6 +817,7 @@ const restaurantStore = useRestaurantStore()
 const openingHours = ref([])
 const allCards = ref([])
 const restaurantStatus = computed(() => restaurantStore.restaurantStatus)
+const tipSettings = ref({ enable_tips: false, auto_detect_tip: true, tip_item: null, tip_account: null })
 
 function getCardSlots(cardName) {
 	return openingHours.value.filter(s => s.restaurant_card === cardName)
@@ -1003,14 +1046,22 @@ async function saveSettings() {
 					)
 		}
 
-		// Save restaurant opening hours if changed
-		if (restaurantStore.isEnabled && openingHours.value.length >= 0) {
+		// Save restaurant settings (opening hours + tips)
+		if (restaurantStore.isEnabled) {
 			try {
-				console.log("[POSSettings] Saving opening hours:", JSON.stringify(openingHours.value))
 				await restaurantStore.saveRestaurantSettings(openingHours.value)
+				// Save tip settings
+				await call("pos_next.api.restaurant.save_tip_settings", {
+					enable_tips: tipSettings.value.enable_tips ? 1 : 0,
+					auto_detect_tip: tipSettings.value.auto_detect_tip ? 1 : 0,
+				})
+				await restaurantStore.fetchRestaurantSettings()
+				// Update local tip display after save (item may have been auto-created)
+				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item
+				tipSettings.value.tip_account = restaurantStore.restaurantSettings.tip_account
 			} catch (err) {
 				log.error("Error saving restaurant settings:", err)
-				showError(__("Failed to save restaurant opening hours"))
+				showError(__("Failed to save restaurant settings"))
 			}
 		}
 
@@ -1039,6 +1090,13 @@ watch(activeTab, async (tab) => {
 		try {
 			await restaurantStore.fetchRestaurantSettings()
 			openingHours.value = restaurantStore.restaurantSettings.opening_hours || []
+			// Load tip settings
+			tipSettings.value = {
+				enable_tips: !!restaurantStore.restaurantSettings.enable_tips,
+				auto_detect_tip: restaurantStore.restaurantSettings.auto_detect_tip !== false,
+				tip_item: restaurantStore.restaurantSettings.tip_item || null,
+				tip_account: restaurantStore.restaurantSettings.tip_account || null,
+			}
 			// Load all active cards (not time-filtered) for the card selector
 			const cardsRes = await call("frappe.client.get_list", {
 				doctype: "Restaurant Card",

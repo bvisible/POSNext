@@ -756,6 +756,24 @@ def save_restaurant_settings(opening_hours):
 
 
 @frappe.whitelist()
+def save_tip_settings(enable_tips=0, auto_detect_tip=1):
+	"""Save tip-related settings and auto-create TIP item/account if needed."""
+	if not frappe.has_permission("Restaurant Settings", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	settings = frappe.get_single("Restaurant Settings")
+	settings.enable_tips = int(enable_tips)
+	settings.auto_detect_tip = int(auto_detect_tip)
+	settings.save()
+
+	return {
+		"status": "success",
+		"tip_item": settings.tip_item,
+		"tip_account": settings.tip_account,
+	}
+
+
+@frappe.whitelist()
 def get_restaurant_status():
 	"""Lightweight endpoint returning restaurant open/closed status and card availability."""
 
