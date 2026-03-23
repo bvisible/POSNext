@@ -514,22 +514,50 @@ def delete_area(name):
 
 @frappe.whitelist()
 def get_active_cards():
-	"""Fetch active restaurant cards with enriched item data."""
-	from frappe.utils import today
+	"""Fetch active restaurant cards filtered by date and time, with enriched item data."""
+	from frappe.utils import today, nowtime, get_time
+
+	card_fields = ["name", "card_name", "description", "image", "available_from", "available_to"]
+	# Add time fields if they exist (after migration)
+	if frappe.db.has_column("Restaurant Card", "available_from_time"):
+		card_fields.extend(["available_from_time", "available_to_time"])
 
 	cards = frappe.get_all(
 		"Restaurant Card",
 		filters={"is_active": 1},
-		fields=["name", "card_name", "description", "image", "available_from", "available_to"]
+		fields=card_fields
 	)
 
 	current_date = today()
+	now = get_time(nowtime())
 	result = []
 	for card in cards:
+		# Date filtering
 		if card.get("available_from") and str(card.available_from) > current_date:
 			continue
 		if card.get("available_to") and str(card.available_to) < current_date:
 			continue
+
+		# Time filtering (only if time fields are set on this card)
+		from_time = card.get("available_from_time")
+		to_time = card.get("available_to_time")
+		if from_time and to_time:
+			ft = get_time(from_time)
+			tt = get_time(to_time)
+			if ft <= tt:
+				# Normal range (e.g. 11:30 - 14:30)
+				if not (ft <= now <= tt):
+					continue
+			else:
+				# Midnight-spanning range (e.g. 22:00 - 02:00)
+				if not (now >= ft or now <= tt):
+					continue
+		elif from_time:
+			if now < get_time(from_time):
+				continue
+		elif to_time:
+			if now > get_time(to_time):
+				continue
 
 		items = frappe.get_all(
 			"Restaurant Card Item",
@@ -605,3 +633,145 @@ def get_active_menus():
 		result.append(menu)
 
 	return result
+
+
+@frappe.whitelist()
+def get_restaurant_settings():
+	"""Return restaurant opening hours and current status."""
+	from frappe.utils import nowtime, get_time, nowdate, getdate
+
+	try:
+		settings = frappe.get_single("Restaurant Settings")
+	except Exception:
+		return {"opening_hours": [], "is_open": True, "current_slot": None}
+
+	hours = []
+	for row in settings.opening_hours:
+		hours.append({
+			"day_of_week": row.day_of_week,
+			"from_time": str(row.from_time) if row.from_time else None,
+			"to_time": str(row.to_time) if row.to_time else None,
+			"label": row.label,
+		})
+
+	is_open, current_slot = _check_restaurant_open(hours)
+
+	return {
+		"opening_hours": hours,
+		"is_open": is_open,
+		"current_slot": current_slot,
+	}
+
+
+@frappe.whitelist()
+def save_restaurant_settings(opening_hours):
+	"""Save restaurant opening hours from the POS frontend."""
+	import json
+
+	if not frappe.has_permission("Restaurant Settings", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if isinstance(opening_hours, str):
+		opening_hours = json.loads(opening_hours)
+
+	settings = frappe.get_single("Restaurant Settings")
+	settings.opening_hours = []
+
+	for row in opening_hours:
+		settings.append("opening_hours", {
+			"day_of_week": row.get("day_of_week"),
+			"from_time": row.get("from_time"),
+			"to_time": row.get("to_time"),
+			"label": row.get("label"),
+		})
+
+	settings.save()
+	return {"status": "success"}
+
+
+@frappe.whitelist()
+def get_restaurant_status():
+	"""Lightweight endpoint returning restaurant open/closed status and card availability."""
+
+	# Get opening hours
+	try:
+		settings = frappe.get_single("Restaurant Settings")
+		hours = [
+			{
+				"day_of_week": r.day_of_week,
+				"from_time": str(r.from_time) if r.from_time else None,
+				"to_time": str(r.to_time) if r.to_time else None,
+				"label": r.label,
+			}
+			for r in settings.opening_hours
+		]
+	except Exception:
+		# No settings configured = always open, no warnings
+		return {"is_open": True, "current_slot": None, "has_active_cards": True, "warning": None}
+
+	# If no hours defined, restaurant is considered always open
+	if not hours:
+		return {"is_open": True, "current_slot": None, "has_active_cards": True, "warning": None}
+
+	is_open, current_slot = _check_restaurant_open(hours)
+
+	if not is_open:
+		return {"is_open": False, "current_slot": None, "has_active_cards": False, "warning": None}
+
+	# Check if there are active cards for the current time
+	active_cards = get_active_cards()
+	has_active_cards = len(active_cards) > 0
+
+	warning = None
+	if not has_active_cards:
+		slot_label = current_slot or ""
+		warning = _("No active card for the current time slot{0}").format(
+			" ({0})".format(slot_label) if slot_label else ""
+		)
+
+	return {
+		"is_open": is_open,
+		"current_slot": current_slot,
+		"has_active_cards": has_active_cards,
+		"warning": warning,
+	}
+
+
+def _check_restaurant_open(hours):
+	"""Check if the restaurant is currently open based on opening hours.
+	Returns (is_open: bool, current_slot_label: str or None).
+	"""
+	import calendar
+	from frappe.utils import nowtime, get_time, nowdate, getdate
+
+	if not hours:
+		return True, None
+
+	today_name = calendar.day_name[getdate(nowdate()).weekday()]
+	now = get_time(nowtime())
+
+	day_slots = [h for h in hours if h.get("day_of_week") == today_name]
+
+	if not day_slots:
+		# No hours defined for today = closed
+		return False, None
+
+	for slot in day_slots:
+		ft_str = slot.get("from_time")
+		tt_str = slot.get("to_time")
+		if not ft_str or not tt_str:
+			continue
+
+		ft = get_time(ft_str)
+		tt = get_time(tt_str)
+
+		if ft <= tt:
+			# Normal range
+			if ft <= now <= tt:
+				return True, slot.get("label")
+		else:
+			# Midnight-spanning range
+			if now >= ft or now <= tt:
+				return True, slot.get("label")
+
+	return False, None

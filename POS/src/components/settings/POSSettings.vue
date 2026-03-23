@@ -90,6 +90,13 @@
 								>
 									{{ __('Sales Management') }}
 								</button>
+								<button
+									v-if="settings.enable_restaurant_mode"
+									@click="activeTab = 'restaurant'"
+									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'restaurant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
+								>
+									{{ __('Restaurant') }}
+								</button>
 							</div>
 
 							<!-- Stock Settings Section - Prominent -->
@@ -544,6 +551,83 @@
 								</div>
 							</div>
 
+							<!-- Restaurant Settings Section -->
+							<div v-if="activeTab === 'restaurant'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+								<div :class="restaurantSectionClasses.header">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center gap-3">
+											<div :class="restaurantSectionClasses.iconContainer">
+												<svg :class="restaurantSectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+												</svg>
+											</div>
+											<div>
+												<h3 class="text-lg font-bold text-gray-900">{{ __('Restaurant Settings') }}</h3>
+												<p class="text-xs text-gray-600 mt-0.5">{{ __('Configure opening hours and card availability') }}</p>
+											</div>
+										</div>
+										<div :class="restaurantSectionClasses.badge">
+											<svg :class="restaurantSectionClasses.badgeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											<span :class="restaurantSectionClasses.badgeText">
+												{{ restaurantStatus.isOpen ? __('Open') : __('Closed') }}
+											</span>
+										</div>
+									</div>
+								</div>
+								<div class="p-6 flex flex-col gap-6">
+									<!-- Opening Hours -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Opening Hours') }}</h4>
+										</div>
+										<p class="text-xs text-gray-500 mb-3">{{ __('Define when the restaurant is open. Each day can have multiple time slots (e.g. lunch and dinner).') }}</p>
+										<OpeningHoursEditor v-model="openingHours" />
+									</div>
+
+									<!-- Card Availability Summary -->
+									<div v-if="restaurantCards.length > 0" :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Active Cards') }}</h4>
+										</div>
+										<div class="flex flex-col gap-2">
+											<div v-for="card in restaurantCards" :key="card.name"
+												class="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-200">
+												<div class="flex items-center gap-2">
+													<span class="w-2 h-2 rounded-full flex-shrink-0"
+														:class="card.available_from_time || card.available_to_time ? 'bg-amber-400' : 'bg-green-400'"></span>
+													<span class="text-sm font-medium text-gray-900">{{ card.card_name }}</span>
+												</div>
+												<span class="text-xs text-gray-500">
+													<template v-if="card.available_from_time && card.available_to_time">
+														{{ card.available_from_time.substring(0, 5) }} → {{ card.available_to_time.substring(0, 5) }}
+													</template>
+													<template v-else>
+														{{ __('All day') }}
+													</template>
+												</span>
+											</div>
+										</div>
+									</div>
+
+									<!-- Warning if no card for current slot -->
+									<div v-if="restaurantStatus.warning"
+										class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+										<svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+										</svg>
+										<span class="text-sm text-amber-800">{{ restaurantStatus.warning }}</span>
+									</div>
+								</div>
+							</div>
+
 						</div>
 
 						<!-- Empty State -->
@@ -566,6 +650,8 @@
 import CheckboxField from "@/components/settings/CheckboxField.vue"
 import NumberField from "@/components/settings/NumberField.vue"
 import SelectField from "@/components/settings/SelectField.vue"
+import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
+import { useRestaurantStore } from "@/stores/restaurant"
 import { useToast } from "@/composables/useToast"
 import { Button, call, createResource } from "frappe-ui"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
@@ -673,6 +759,14 @@ const stockSyncSubsectionClasses = computed(() =>
 )
 const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
 const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"))
+const restaurantSectionClasses = computed(() => getSectionHeaderClasses("amber"))
+const restaurantSubsectionClasses = computed(() => getSubsectionClasses("amber"))
+
+// Restaurant settings
+const restaurantStore = useRestaurantStore()
+const openingHours = ref([])
+const restaurantCards = ref([])
+const restaurantStatus = computed(() => restaurantStore.restaurantStatus)
 
 // Resources
 const warehousesResource = createResource({
@@ -896,6 +990,16 @@ async function saveSettings() {
 					)
 		}
 
+		// Save restaurant opening hours if changed
+		if (settings.value.enable_restaurant_mode && openingHours.value.length >= 0) {
+			try {
+				await restaurantStore.saveRestaurantSettings(openingHours.value)
+			} catch (err) {
+				log.error("Error saving restaurant settings:", err)
+				showError(__("Failed to save restaurant opening hours"))
+			}
+		}
+
 		showSuccess(successMessage)
 	} catch (error) {
 		log.error("Error saving settings:", error)
@@ -914,6 +1018,21 @@ watch(
 		}
 	},
 )
+
+// Load restaurant settings when the restaurant tab is activated
+watch(activeTab, async (tab) => {
+	if (tab === "restaurant") {
+		try {
+			const res = await restaurantStore.fetchRestaurantSettings()
+			openingHours.value = restaurantStore.restaurantSettings.opening_hours || []
+			// Load active cards for summary display
+			const cardsRes = await call("pos_next.api.restaurant.get_active_cards")
+			restaurantCards.value = cardsRes?.message || cardsRes || []
+		} catch (error) {
+			log.error("Error loading restaurant settings:", error)
+		}
+	}
+})
 
 // ============================================================================
 // STOCK SYNC FUNCTIONS

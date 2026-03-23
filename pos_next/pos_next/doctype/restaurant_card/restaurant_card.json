@@ -15,6 +15,9 @@
   "available_from",
   "column_break_3",
   "available_to",
+  "available_from_time",
+  "column_break_4",
+  "available_to_time",
   "section_break_items",
   "items"
  ],
@@ -73,6 +76,20 @@
    "label": "Available To"
   },
   {
+   "fieldname": "available_from_time",
+   "fieldtype": "Time",
+   "label": "Available From Time"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "available_to_time",
+   "fieldtype": "Time",
+   "label": "Available To Time"
+  },
+  {
    "fieldname": "section_break_items",
    "fieldtype": "Section Break",
    "label": "Card Items"
@@ -85,7 +102,7 @@
   }
  ],
  "links": [],
- "modified": "2026-03-22T00:00:02.000000",
+ "modified": "2026-03-23T00:00:00.000000",
  "module": "POS Next",
  "name": "Restaurant Card",
  "naming_rule": "By fieldname",

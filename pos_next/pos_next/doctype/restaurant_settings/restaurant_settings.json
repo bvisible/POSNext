@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-03-23 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_hours",
+  "opening_hours"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_hours",
+   "fieldtype": "Section Break",
+   "label": "Opening Hours"
+  },
+  {
+   "fieldname": "opening_hours",
+   "fieldtype": "Table",
+   "label": "Opening Hours",
+   "options": "Restaurant Opening Hours"
+  }
+ ],
+ "index_web_link_preview": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-03-23 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Settings",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Sales Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "POSNext Cashier"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -18,8 +18,12 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const stationItemsMap = ref({})
 	const modifierGroups = ref([])
 	const activeMenus = ref([])
+	const restaurantSettings = ref({ opening_hours: [] })
+	const restaurantStatus = ref({ isOpen: true, currentSlot: null, hasActiveCards: true, warning: null })
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
+	const hasCardWarning = computed(() => restaurantStatus.value.isOpen && !restaurantStatus.value.hasActiveCards)
+	let statusInterval = null
 
 	// Computed - Occupied counts by area
 	const occupiedCountByArea = computed(() => {
@@ -244,6 +248,65 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		await fetchFromNetwork()
 	}
 
+	async function fetchRestaurantSettings() {
+		try {
+			const res = await call("pos_next.api.restaurant.get_restaurant_settings")
+			if (res) {
+				restaurantSettings.value = res
+				restaurantStatus.value = {
+					isOpen: res.is_open !== false,
+					currentSlot: res.current_slot || null,
+					hasActiveCards: true,
+					warning: null,
+				}
+			}
+		} catch (error) {
+			log.error("Failed to fetch restaurant settings:", error)
+		}
+	}
+
+	async function saveRestaurantSettings(openingHours) {
+		try {
+			await call("pos_next.api.restaurant.save_restaurant_settings", {
+				opening_hours: JSON.stringify(openingHours)
+			})
+			await fetchRestaurantSettings()
+		} catch (error) {
+			log.error("Failed to save restaurant settings:", error)
+			throw error
+		}
+	}
+
+	async function fetchRestaurantStatus() {
+		if (!isEnabled.value) return
+		try {
+			const res = await call("pos_next.api.restaurant.get_restaurant_status")
+			if (res) {
+				restaurantStatus.value = {
+					isOpen: res.is_open !== false,
+					currentSlot: res.current_slot || null,
+					hasActiveCards: res.has_active_cards !== false,
+					warning: res.warning || null,
+				}
+			}
+		} catch (error) {
+			log.error("Failed to fetch restaurant status:", error)
+		}
+	}
+
+	function startStatusPolling() {
+		if (statusInterval) return
+		fetchRestaurantStatus()
+		statusInterval = setInterval(fetchRestaurantStatus, 60000)
+	}
+
+	function stopStatusPolling() {
+		if (statusInterval) {
+			clearInterval(statusInterval)
+			statusInterval = null
+		}
+	}
+
 	function getStationForItem(itemCode) {
 		return stationItemsMap.value[itemCode] || null
 	}
@@ -262,6 +325,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		modifierGroups,
 		activeMenus,
 		activeCards,
+		restaurantSettings,
+		restaurantStatus,
+		hasCardWarning,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
@@ -283,6 +349,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		fetchModifierGroups,
 		getModifiersForItem,
 		fetchActiveMenus,
-		fetchActiveCards
+		fetchActiveCards,
+		fetchRestaurantSettings,
+		saveRestaurantSettings,
+		fetchRestaurantStatus,
+		startStatusPolling,
+		stopStatusPolling
 	}
 })
