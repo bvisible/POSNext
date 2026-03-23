@@ -170,11 +170,14 @@ def get_station_items_map():
 		}
 		for item in items:
 			item_ref = item.item
-			# Map by the stored reference (could be name or item_name)
 			result[item_ref] = station_info
-			# Also map by item_code and item_name from Item master
-			item_data = frappe.db.get_value("Item", item_ref, ["item_code", "item_name"], as_dict=True)
+			# Look up Item by name first, then by item_name as fallback
+			item_data = frappe.db.get_value("Item", item_ref, ["name", "item_code", "item_name"], as_dict=True)
+			if not item_data:
+				# Fallback: search by item_name in case Link stored item_name
+				item_data = frappe.db.get_value("Item", {"item_name": item_ref}, ["name", "item_code", "item_name"], as_dict=True)
 			if item_data:
+				result[item_data.name] = station_info
 				if item_data.item_code:
 					result[item_data.item_code] = station_info
 				if item_data.item_name:
