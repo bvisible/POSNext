@@ -668,14 +668,14 @@ async function selectTable(table) {
 	cartStore.setRestaurantTable(table)
 
 	try {
-		// Open table: creates draft if none exists, or returns existing draft
+		// Open table: returns existing draft or empty result for new table
 		const res = await call("pos_next.api.restaurant.open_table", {
 			table_name: table.name,
 			pos_profile: shiftStore.profileName,
 		})
 
 		if (res && res.name) {
-			// Load items from draft into cart (if any)
+			// Existing draft found — load items into cart
 			if (res.items && res.items.length > 0) {
 				for (const item of res.items) {
 					cartStore.addItem({
@@ -692,18 +692,14 @@ async function selectTable(table) {
 				}
 			}
 
-			// Set draft ID — always linked to server draft
 			cartStore.$patch({
 				currentDraftId: res.name,
 				kdsStatus: res.kds_status || "Pending",
 				hasUnsentChanges: false,
 			})
 			if (res.customer) cartStore.setCustomer(res.customer)
-
-			// Update local table status
-			const localTable = localTables.value.find(t => t.name === table.name)
-			if (localTable) localTable.status = "Occupied"
 		}
+		// If res.name is null = new table, no draft yet (created at first Valider)
 	} catch (e) {
 		console.error("[FloorPlan] Failed to open table:", e)
 	}

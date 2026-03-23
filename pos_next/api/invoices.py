@@ -987,6 +987,27 @@ def update_invoice(data):
                 status = existing_item_kds.get(item.item_code, "Pending")
                 frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
 
+        # Persist NEW item-level kds_status from frontend (e.g. Waiting/Pending from SendToKitchenDialog)
+        if has_kds_field and data.get("items"):
+            try:
+                for item_data in data.get("items", []):
+                    item_kds = item_data.get("kds_status")
+                    if item_kds:
+                        for doc_item in invoice_doc.items:
+                            if (doc_item.item_code == item_data.get("item_code")
+                                    and (doc_item.uom or "") == (item_data.get("uom") or "")):
+                                frappe.db.set_value(
+                                    "Sales Invoice Item", doc_item.name,
+                                    "kds_status", item_kds, update_modified=False
+                                )
+                                break
+            except Exception as inner_e:
+                frappe.log_error("Failed to set item KDS status", str(inner_e))
+
+        # Mark table as Occupied when a restaurant invoice is created/updated
+        if data.get("restaurant_table"):
+            frappe.db.set_value("Restaurant Table", data["restaurant_table"], "status", "Occupied")
+
         if data.get("restaurant_table") or data.get("kds_status") or has_kds_field:
             frappe.db.commit()
             frappe.publish_realtime("kds_update")

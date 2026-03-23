@@ -471,44 +471,13 @@ def open_table(table_name, pos_profile, customer=None):
 			"is_new": False,
 		}
 
-	# No existing draft — create one using update_invoice (handles ERPNext validation)
-	from pos_next.api.invoices import update_invoice
-	import json
-
-	profile = frappe.get_doc("POS Profile", pos_profile)
-	default_customer = customer or profile.customer
-
-	invoice_data = {
-		"doctype": "Sales Invoice",
-		"is_pos": 1,
-		"pos_profile": pos_profile,
-		"customer": default_customer,
-		"company": profile.company,
-		"selling_price_list": profile.selling_price_list,
-		"currency": profile.currency,
-		"set_warehouse": profile.warehouse,
-		"update_stock": 1,
-		"restaurant_table": table_name,
-		"kds_status": "Pending",
-		"items": [],
-	}
-
-	result = update_invoice(json.dumps(invoice_data))
-	invoice_name = result.get("name") if isinstance(result, dict) else None
-
-	if not invoice_name:
-		frappe.throw(_("Failed to create draft invoice for table {0}").format(table_name))
-
-	# Ensure table is marked occupied
-	frappe.db.set_value("Restaurant Table", table_name, "status", "Occupied")
-	frappe.db.commit()
-	frappe.publish_realtime("table_update")
-
+	# No existing draft — return empty result, draft will be created at first "Valider"
+	# Table is NOT marked Occupied until an invoice exists (prevents orphaned tables)
 	return {
-		"name": invoice_name,
+		"name": None,
 		"items": [],
-		"customer": default_customer,
-		"kds_status": "Pending",
+		"customer": None,
+		"kds_status": None,
 		"is_new": True,
 	}
 

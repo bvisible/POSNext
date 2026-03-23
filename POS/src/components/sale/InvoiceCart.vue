@@ -749,7 +749,8 @@
 						'border rounded-neo-sm p-1.5 sm:p-2 transition-all duration-200',
 						item.is_free_item
 							? 'bg-green-50 border-green-300 cursor-default'
-							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group'
+							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group',
+						item.kds_status === 'Delivered' ? 'opacity-50' : ''
 					]"
 				>
 					<div class="flex gap-1.5 sm:gap-2">
@@ -856,6 +857,25 @@
 										}}
 									</div>
 								</div>
+								<!-- KDS Item Status Badge -->
+								<span
+									v-if="cartStore.restaurantTable && item.kds_status"
+									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
+									:class="kdsStatusBadgeClass(item.kds_status)"
+								>
+									<svg v-if="item.kds_status === 'Waiting'" class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+									{{ __(item.kds_status) }}
+								</span>
+								<!-- Quick Send Button (for Waiting items in restaurant mode) -->
+								<button
+									v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
+									type="button"
+									@click.stop="$emit('send-item-to-kitchen', item)"
+									class="text-purple-500 hover:text-purple-700 active:text-purple-800 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
+									:title="__('Send to kitchen')"
+								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+								</button>
 								<!-- Add Modifiers Button (Restaurant mode) -->
 								<button
 									v-if="!item.is_free_item && cartStore.restaurantTable"
@@ -1216,11 +1236,11 @@
 				<!-- Send to Kitchen Button (Primary - green) -->
 				<button
 					type="button"
-					@click="$emit('send-to-kitchen')"
-					:disabled="!cartStore.hasUnsentChanges || items.length === 0"
+					@click="$emit('open-kitchen-dialog')"
+					:disabled="!hasSendableItems"
 					:class="[
 						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
-						!cartStore.hasUnsentChanges || items.length === 0
+						!hasSendableItems
 							? 'bg-gray-300 cursor-not-allowed'
 							: 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
 					]"
@@ -1502,6 +1522,8 @@ const emit = defineEmits([
 	"save-draft", // () - Save current cart as draft/hold order
 	"apply-coupon", // () - Open coupon application dialog
 	"send-to-kitchen", // () - Send order to kitchen (restaurant mode)
+	"open-kitchen-dialog", // () - Open kitchen dialog (restaurant mode)
+	"send-item-to-kitchen", // (item) - Send individual item to kitchen (restaurant mode)
 	"show-coupons", // () - Show available coupons
 	"show-offers", // () - Show available offers dialog
 	"remove-offer", // (offerId) - Remove applied offer
@@ -1760,6 +1782,32 @@ const displayGrandTotal = computed(() => {
  * FUNCTIONS
  * ============================================================================
  */
+
+/**
+ * Check if there are items that can be sent to kitchen.
+ * Excludes free items and items that have already been sent/prepared.
+ * @returns {Boolean} True if at least one item can be sent
+ */
+const hasSendableItems = computed(() => {
+	if (!cartStore.restaurantTable) return false
+	return cartStore.invoiceItems.some(
+		item => !item.is_free_item && (!item.kds_status || item.kds_status === "Waiting")
+	)
+})
+
+/**
+ * Get CSS classes for KDS status badge based on status value.
+ * @param {String} status - KDS status (Waiting, Pending, Preparing, Ready, Delivered)
+ * @returns {String} CSS classes for the badge
+ */
+function kdsStatusBadgeClass(status) {
+	if (status === "Waiting") return "bg-gray-100 text-gray-600"
+	if (status === "Pending") return "bg-yellow-100 text-yellow-700"
+	if (status === "Preparing") return "bg-blue-100 text-blue-700"
+	if (status === "Ready") return "bg-green-100 text-green-700"
+	if (status === "Delivered") return "bg-gray-200 text-gray-500"
+	return "bg-indigo-100 text-indigo-700"
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Customer Search Functions

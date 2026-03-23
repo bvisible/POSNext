@@ -597,6 +597,8 @@
 								@show-return="uiStore.showReturnDialog = true"
 								@close-shift="handleCloseShift()"
 								@send-to-kitchen="handleSendToKitchen"
+								@open-kitchen-dialog="kitchenDialogRef?.open()"
+								@send-item-to-kitchen="handleSendSingleItem"
 								@open-modifiers="handleOpenModifiers"
 							/>
 						</div>
@@ -741,6 +743,12 @@
 				:pos-opening-shift="shiftStore.currentShift?.name"
 				:currency="shiftStore.profileCurrency"
 				@return-created="handleReturnCreated"
+			/>
+
+			<!-- Send to Kitchen Dialog -->
+			<SendToKitchenDialog
+				ref="kitchenDialogRef"
+				@items-sent="handleItemsSentToKitchen"
 			/>
 
 			<!-- Coupon Dialog -->
@@ -1287,6 +1295,7 @@ import CreateCustomerDialog from "@/components/sale/CreateCustomerDialog.vue";
 import GiftCardCreatedDialog from "@/components/sale/GiftCardCreatedDialog.vue";
 import CustomerDialog from "@/components/sale/CustomerDialog.vue";
 import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
+import SendToKitchenDialog from "@/components/sale/SendToKitchenDialog.vue";
 import InvoiceCart from "@/components/sale/InvoiceCart.vue";
 import InvoiceHistoryDialog from "@/components/sale/InvoiceHistoryDialog.vue";
 import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
@@ -1390,6 +1399,7 @@ const { isRTL } = useLocale();
 // Component refs
 const itemsSelectorRef = ref(null);
 const offersDialogRef = ref(null);
+const kitchenDialogRef = ref(null);
 const invoiceCartRef = ref(null);
 const itemModifiersRef = ref(null);
 const menuSelectionRef = ref(null);
@@ -2360,6 +2370,35 @@ function handleLoadServerDraft(order) {
 
 function closeTable() {
 	cartStore.clearCart();
+}
+
+async function handleItemsSentToKitchen() {
+	// Items already have their kds_status updated by the SendToKitchenDialog
+	// Derive order-level status from item statuses
+	const activeStatuses = cartStore.invoiceItems
+		.map(i => i.kds_status)
+		.filter(s => s && s !== "Waiting")
+	if (activeStatuses.length > 0) {
+		cartStore.setKdsStatus(activeStatuses[0])
+	}
+	await handleSendToKitchen()
+}
+
+async function handleSendSingleItem(item) {
+	// Quick-send a single Waiting item to the kitchen
+	const cartItem = cartStore.invoiceItems.find(
+		ci => ci.item_code === item.item_code && (ci.uom || "") === (item.uom || "")
+	)
+	if (cartItem) {
+		cartItem.kds_status = "Pending"
+		const activeStatuses = cartStore.invoiceItems
+			.map(i => i.kds_status)
+			.filter(s => s && s !== "Waiting")
+		if (activeStatuses.length > 0) {
+			cartStore.setKdsStatus(activeStatuses[0])
+		}
+		await handleSendToKitchen()
+	}
 }
 
 let isSendingToKitchen = false
