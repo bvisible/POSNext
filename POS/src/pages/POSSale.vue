@@ -2845,8 +2845,8 @@ async function handlePaymentCompleted(paymentData) {
 				// Reset cart hash after successful payment
 				previousCartHash = "";
 
-				// Delete draft after successful submission
-				if (draftIdToDelete) {
+				// Delete local draft after successful submission (not for restaurant — those are server-side)
+				if (draftIdToDelete && !restaurantStore.isEnabled) {
 					draftsStore.deleteDraft(draftIdToDelete);
 				}
 
