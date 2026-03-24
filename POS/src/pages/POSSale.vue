@@ -7,7 +7,7 @@
 		<LoadingSpinner v-if="uiStore.isLoading" />
 
 		<!-- Payment Processing Overlay -->
-		<div v-if="isProcessingPayment" class="fixed inset-0 bg-white/80 dark:bg-gray-900/80 z-[400] flex flex-col items-center justify-center">
+		<div v-if="isProcessingPayment" class="fixed inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-[400] flex flex-col items-center justify-center">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"></div>
 			<p class="text-lg font-medium text-gray-700 dark:text-gray-200">{{ __('Processing payment...') }}</p>
 			<p class="text-sm text-gray-400 mt-1">{{ __('Please wait') }}</p>
@@ -1174,27 +1174,13 @@
 			>
 				<template #body-content>
 					<div class="text-center py-6">
-						<div
-							class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100"
-						>
-							<svg
-								class="h-6 w-6 text-green-600"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M5 13l4 4L19 7"
-								/>
+						<div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100">
+							<svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
 							</svg>
 						</div>
 						<h3 class="mt-4 text-lg font-medium text-gray-900">
-							{{
-								__("Invoice {0} created successfully!", [uiStore.lastInvoiceName])
-							}}
+							{{ __("Invoice {0} created successfully!", [uiStore.lastInvoiceName]) }}
 						</h3>
 						<p class="mt-2 text-sm text-gray-500">
 							{{ __("Paid: {0}", [formatCurrency(uiStore.lastPaidAmount)]) }}
@@ -1202,21 +1188,34 @@
 					</div>
 				</template>
 				<template #actions>
-					<div class="flex gap-2">
-						<Button variant="subtle" @click="uiStore.showSuccessDialog = false">
-							{{ __("Close") }}
-						</Button>
+					<div class="flex justify-center gap-3 w-full">
 						<Button
 							variant="solid"
 							theme="blue"
-							@click="
-								() => {
-									handlePrintInvoice({ name: uiStore.lastInvoiceName });
-									uiStore.showSuccessDialog = false;
-								}
-							"
+							class="flex-1"
+							@click="() => { handlePrintInvoice({ name: uiStore.lastInvoiceName }); uiStore.showSuccessDialog = false; }"
 						>
-							{{ __("Print Invoice") }}
+							<template #prefix>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+								</svg>
+							</template>
+							{{ __("Print") }}
+						</Button>
+						<Button
+							variant="outline"
+							class="flex-1"
+							@click="() => { handleEmailInvoice(uiStore.lastInvoiceName); uiStore.showSuccessDialog = false; }"
+						>
+							<template #prefix>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+								</svg>
+							</template>
+							{{ __("Email") }}
+						</Button>
+						<Button variant="subtle" @click="uiStore.showSuccessDialog = false">
+							{{ __("Close") }}
 						</Button>
 					</div>
 				</template>
@@ -2774,6 +2773,7 @@ async function handlePaymentCompleted(paymentData) {
 
 		// Capture restaurant table before clearCart resets it
 		const restaurantTableName = cartStore.restaurantTable?.name || null
+		console.log("[Payment] restaurantTableName:", restaurantTableName, "restaurantTable:", JSON.stringify(cartStore.restaurantTable))
 		// Delete draft if it exists (since we're submitting/saving invoice)
 		const draftIdToDelete = cartStore.currentDraftId;
 
@@ -3592,6 +3592,12 @@ function handleViewInvoice(invoice) {
 }
 
 // Centralized print handler - uses printInvoice.js utilities
+function handleEmailInvoice(invoiceName) {
+	// Open ERPNext email dialog for the invoice
+	const url = `/app/sales-invoice/${invoiceName}?action=email`
+	window.open(url, '_blank')
+}
+
 async function handlePrintInvoice(invoiceData) {
 	try {
 		// Silent print path — send directly to thermal printer via QZ Tray
