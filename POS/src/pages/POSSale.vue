@@ -1483,6 +1483,7 @@ function handleCardItemClick(cardItem) {
 		item_code: cardItem.item,
 		item_name: cardItem.item_name || cardItem.label,
 		rate: cardItem.price || cardItem.default_price || 0,
+		image: cardItem.image || "",
 	}
 	const stationInfo = restaurantStore.getStationForItem(item.item_code)
 	if (stationInfo) {
