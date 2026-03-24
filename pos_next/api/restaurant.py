@@ -452,6 +452,30 @@ def create_station(station_name, station_type="Kitchen", color="#F97316", area=N
 	doc.insert()
 	return doc.as_dict()
 
+
+@frappe.whitelist()
+def update_station(name, station_name=None, station_type=None, color=None, workflow=None):
+	"""Update an existing preparation station."""
+	doc = frappe.get_doc("Preparation Station", name)
+	if station_name is not None:
+		doc.station_name = station_name
+	if station_type is not None:
+		doc.station_type = station_type
+	if color is not None:
+		doc.color = color
+	if workflow is not None and hasattr(doc, "workflow"):
+		doc.workflow = workflow or None
+	doc.save(ignore_permissions=True)
+	return doc.as_dict()
+
+
+@frappe.whitelist()
+def delete_station(name):
+	"""Delete a preparation station."""
+	frappe.delete_doc("Preparation Station", name, ignore_permissions=True)
+	return {"status": "success"}
+
+
 @frappe.whitelist()
 def open_table(table_name, pos_profile, customer=None):
 	"""Open a table by creating a draft Sales Invoice linked to it.

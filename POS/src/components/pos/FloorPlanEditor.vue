@@ -324,6 +324,20 @@
 				</svg>
 				<span class="text-xs font-bold" :style="{color: station.color}">{{ station.station_name }}</span>
 
+				<!-- Edit button (edit mode only) -->
+				<button
+					v-if="isEditMode"
+					type="button"
+					@pointerdown.stop
+					@click.stop="openEditStationDialog(station)"
+					class="absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded bg-white/80 hover:bg-orange-100 border border-gray-300 z-[5] cursor-pointer"
+					:title="__('Edit station')"
+				>
+					<svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+					</svg>
+				</button>
+
 				<!-- Live activity badges (view mode) -->
 				<div v-if="!isEditMode && (getStationPreparingCount(station.name) > 0 || getStationReadyCount(station.name) > 0)"
 					class="flex gap-0.5 mt-0.5">
@@ -551,6 +565,50 @@
 				</div>
 			</template>
 		</Dialog>
+
+		<!-- Edit Station Dialog -->
+		<Dialog v-model="showEditStationDialog" :options="{ title: __('Edit Station'), size: 'sm' }">
+			<template #body-content>
+				<div class="space-y-4 p-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Station Name") }}</label>
+						<input v-model="editStation.station_name" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Type") }}</label>
+						<div class="flex gap-2">
+							<button v-for="t in ['Kitchen', 'Bar', 'Other']" :key="t"
+								@click="editStation.station_type = t"
+								class="flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
+								:class="editStation.station_type === t ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-600'"
+							>{{ __(t) }}</button>
+						</div>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Color") }}</label>
+						<input v-model="editStation.color" type="color" class="w-full h-10 rounded-lg border cursor-pointer" />
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Workflow") }}</label>
+						<select v-model="editStation.workflow" class="w-full px-3 py-2 border rounded-lg text-sm">
+							<option value="">{{ __("Default") }}</option>
+							<option v-for="wf in availableWorkflows" :key="wf.name" :value="wf.name">{{ wf.workflow_name }}</option>
+						</select>
+					</div>
+					<div class="pt-2 border-t">
+						<button @click="handleDeleteStation" class="text-sm text-red-600 hover:text-red-800 font-medium">
+							{{ __("Delete this station") }}
+						</button>
+					</div>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" variant="subtle" @click="showEditStationDialog = false">{{ __("Cancel") }}</Button>
+					<Button class="flex-1" variant="solid" @click="handleSaveStation" :disabled="!editStation.station_name">{{ __("Save") }}</Button>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 
@@ -622,6 +680,9 @@ const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
 const showAddStationDialog = ref(false)
 const newStation = ref({ station_name: "", station_type: "Kitchen", color: "#F97316" })
+const showEditStationDialog = ref(false)
+const editStation = ref({ name: "", station_name: "", station_type: "Kitchen", color: "#F97316", workflow: "" })
+const availableWorkflows = ref([])
 const showEditTableDialog = ref(false)
 const editTable = ref({ name: "", table_name: "", capacity: 4, shape: "Square" })
 const showAddAreaDialog = ref(false)
@@ -1110,6 +1171,52 @@ async function handleAddTable() {
 		showSuccess(__("Table added"))
 	} catch (error) {
 		showError(__("Failed to add table"))
+	}
+}
+
+async function openEditStationDialog(station) {
+	editStation.value = {
+		name: station.name,
+		station_name: station.station_name,
+		station_type: station.station_type || "Kitchen",
+		color: station.color || "#F97316",
+		workflow: station.workflow || ""
+	}
+	// Load available workflows
+	try {
+		const res = await call("pos_next.api.restaurant.get_preparation_workflows")
+		availableWorkflows.value = res || []
+	} catch { availableWorkflows.value = [] }
+	showEditStationDialog.value = true
+}
+
+async function handleSaveStation() {
+	try {
+		await call("pos_next.api.restaurant.update_station", {
+			name: editStation.value.name,
+			station_name: editStation.value.station_name,
+			station_type: editStation.value.station_type,
+			color: editStation.value.color,
+			workflow: editStation.value.workflow
+		})
+		showEditStationDialog.value = false
+		await restaurantStore.fetchFromNetwork()
+		syncLocalStations()
+		showSuccess(__("Station updated"))
+	} catch (error) {
+		showError(__("Failed to update station"))
+	}
+}
+
+async function handleDeleteStation() {
+	try {
+		await call("pos_next.api.restaurant.delete_station", { name: editStation.value.name })
+		showEditStationDialog.value = false
+		await restaurantStore.fetchFromNetwork()
+		syncLocalStations()
+		showSuccess(__("Station deleted"))
+	} catch (error) {
+		showError(__("Failed to delete station"))
 	}
 }
 
