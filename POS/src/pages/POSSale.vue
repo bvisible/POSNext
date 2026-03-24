@@ -1190,37 +1190,37 @@
 				</template>
 				<template #actions>
 					<div class="flex justify-center gap-3 w-full">
-						<Button
-							variant="solid"
-							theme="blue"
-							class="flex-1"
-							@click="() => { handlePrintInvoice({ name: uiStore.lastInvoiceName }); uiStore.showSuccessDialog = false; }"
-						>
-							<template #prefix>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-								</svg>
-							</template>
-							{{ __("Print") }}
+						<Button variant="subtle" @click="uiStore.showSuccessDialog = false">
+							{{ __("Close") }}
 						</Button>
 						<Button
 							variant="outline"
-							class="flex-1"
-							@click="() => { handleEmailInvoice(uiStore.lastInvoiceName); uiStore.showSuccessDialog = false; }"
+							@click="showEmailInvoiceDialog = true"
 						>
 							<template #prefix>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-								</svg>
+								<FeatherIcon name="mail" class="w-4 h-4" />
 							</template>
 							{{ __("Email") }}
 						</Button>
-						<Button variant="subtle" @click="uiStore.showSuccessDialog = false">
-							{{ __("Close") }}
+						<Button
+							variant="solid"
+							theme="blue"
+							@click="() => { handlePrintInvoice({ name: uiStore.lastInvoiceName }); uiStore.showSuccessDialog = false; }"
+						>
+							<template #prefix>
+								<FeatherIcon name="printer" class="w-4 h-4" />
+							</template>
+							{{ __("Print") }}
 						</Button>
 					</div>
 				</template>
 			</Dialog>
+
+			<!-- Email Invoice Dialog -->
+			<EmailInvoiceDialog
+				v-model="showEmailInvoiceDialog"
+				:invoice-name="uiStore.lastInvoiceName"
+			/>
 
 			<!-- Error Dialog -->
 			<Dialog
@@ -1323,6 +1323,7 @@ import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
 import PromotionManagement from "@/components/sale/PromotionManagement.vue";
+import EmailInvoiceDialog from "@/components/sale/EmailInvoiceDialog.vue";
 import ReturnInvoiceDialog from "@/components/sale/ReturnInvoiceDialog.vue";
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue";
 import POSSettings from "@/components/settings/POSSettings.vue";
@@ -1549,6 +1550,9 @@ const showWorkflowEditor = ref(false);
 // Invoice Detail dialog
 const showInvoiceDetail = ref(false);
 const selectedInvoiceForView = ref(null);
+
+// Email Invoice dialog
+const showEmailInvoiceDialog = ref(false);
 
 // Gift Card Created dialog
 const showGiftCardCreatedDialog = ref(false);
@@ -3594,11 +3598,6 @@ function handleViewInvoice(invoice) {
 }
 
 // Centralized print handler - uses printInvoice.js utilities
-function handleEmailInvoice(invoiceName) {
-	// Open ERPNext email dialog for the invoice
-	const url = `/app/sales-invoice/${invoiceName}?action=email`
-	window.open(url, '_blank')
-}
 
 async function handlePrintInvoice(invoiceData) {
 	try {
