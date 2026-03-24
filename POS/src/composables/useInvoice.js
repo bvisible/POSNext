@@ -23,6 +23,7 @@ export function useInvoice() {
 	const invoiceItems = ref([])
 	const customer = ref(null)
 	const payments = ref([])
+	const restaurantTable = ref(null)
 	const salesTeam = ref([]) // Sales team for Sales Invoice
 	const posProfile = ref(null)
 	const posOpeningShift = ref(null) // POS Opening Shift name
@@ -942,6 +943,7 @@ export function useInvoice() {
 					pos_profile: posProfile.value,
 					posa_pos_opening_shift: posOpeningShift.value,
 					customer: customer.value?.name || customer.value,
+					restaurant_table: restaurantTable.value?.name || null,
 					items: formatItemsForSubmission(rawItems),
 					payments: rawPayments.map((p) => ({
 						mode_of_payment: p.mode_of_payment,
@@ -1186,6 +1188,7 @@ export function useInvoice() {
 		invoiceItems,
 		customer,
 		payments,
+		restaurantTable,
 		salesTeam,
 		posProfile,
 		posOpeningShift,

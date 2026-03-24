@@ -100,6 +100,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		updateItemQuantity: baseUpdateItemQuantity,
 		submitInvoice: baseSubmitInvoice,
 		clearCart: clearInvoiceCart,
+		restaurantTable: baseRestaurantTable,
 		loadTaxRules,
 		setTaxInclusive,
 		setDefaultCustomer,
@@ -339,6 +340,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	function setRestaurantTable(table) {
 		restaurantTable.value = table
+		baseRestaurantTable.value = table
 	}
 
 	function setKdsStatus(status) {
