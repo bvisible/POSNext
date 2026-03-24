@@ -13,7 +13,9 @@
   "workflow_name",
   "is_default",
   "section_steps",
-  "steps"
+  "steps",
+  "section_items",
+  "applicable_items"
  ],
  "fields": [
   {
@@ -42,6 +44,19 @@
    "label": "Steps",
    "options": "Preparation Workflow Step",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "Applicable Products",
+   "collapsible": 1
+  },
+  {
+   "description": "If products are listed here, they will always follow this workflow regardless of their station assignment.",
+   "fieldname": "applicable_items",
+   "fieldtype": "Table",
+   "label": "Products",
+   "options": "Preparation Workflow Item"
   }
  ],
  "index_web_link_preview": 0,

@@ -1076,11 +1076,21 @@ def _resolve_workflow(station_name=None, item_code=None):
 	"""Resolve the applicable workflow steps for a station/item combination.
 
 	Priority:
-	1. Per-item workflow override on Preparation Station Item
-	2. Station-level workflow on Preparation Station
-	3. Default Preparation Workflow (is_default=1)
-	4. Hardcoded DEFAULT_WORKFLOW_STEPS constant
+	1. Product-level workflow (via Preparation Workflow applicable_items)
+	2. Per-item workflow override on Preparation Station Item
+	3. Station-level workflow on Preparation Station
+	4. Default Preparation Workflow (is_default=1)
+	5. Hardcoded DEFAULT_WORKFLOW_STEPS constant
 	"""
+	# 1. Check if item has a workflow assigned via Preparation Workflow applicable_items
+	if item_code and frappe.db.exists("DocType", "Preparation Workflow Item"):
+		wf_with_item = frappe.db.sql("""
+			SELECT parent FROM `tabPreparation Workflow Item`
+			WHERE item = %s LIMIT 1
+		""", item_code, as_dict=True)
+		if wf_with_item:
+			return _get_workflow_steps(wf_with_item[0].parent)
+
 	if station_name:
 		try:
 			station = frappe.get_cached_doc("Preparation Station", station_name)
@@ -1131,15 +1141,26 @@ def get_preparation_workflows():
 			fields=["step_name", "color", "allow_edit"],
 			order_by="idx asc"
 		)
+		wf["applicable_items"] = []
+		if frappe.db.exists("DocType", "Preparation Workflow Item"):
+			wf["applicable_items"] = [
+				r.item for r in frappe.get_all(
+					"Preparation Workflow Item",
+					filters={"parent": wf.name},
+					fields=["item"]
+				)
+			]
 	return workflows
 
 
 @frappe.whitelist()
-def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=None):
+def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=None, applicable_items=None):
 	"""Save a preparation workflow and its steps."""
 	import json
 	if isinstance(steps, str):
 		steps = json.loads(steps)
+	if isinstance(applicable_items, str):
+		applicable_items = json.loads(applicable_items)
 
 	doc = frappe.get_doc("Preparation Workflow", name)
 	if workflow_name:
@@ -1158,6 +1179,10 @@ def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=N
 					"color": s.get("color") or "#6B7280",
 					"allow_edit": 1 if i == 0 else 0,
 				})
+	if applicable_items is not None and hasattr(doc, "applicable_items"):
+		doc.applicable_items = []
+		for item_code in applicable_items:
+			doc.append("applicable_items", {"item": item_code})
 	doc.save(ignore_permissions=True)
 	return {"status": "success"}
 

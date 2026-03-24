@@ -82,7 +82,28 @@
 								</svg>
 								{{ __("Add Step") }}
 							</button>
-							<div class="flex justify-end">
+							<!-- Applicable Products -->
+							<div class="mt-3 pt-3 border-t">
+								<label class="text-[10px] font-medium text-gray-500 uppercase mb-1 block">{{ __("Always use this workflow for") }}</label>
+								<div class="flex flex-wrap gap-1 mb-1">
+									<span v-for="(item, idx) in (wf.applicable_items || [])" :key="idx"
+										class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
+										{{ item }}
+										<button @click="wf.applicable_items.splice(idx, 1)" class="text-cyan-400 hover:text-red-500">&times;</button>
+									</span>
+								</div>
+								<input v-model="wfItemSearch" class="w-full px-2 py-1 border rounded text-xs"
+									:placeholder="__('Search product to add...')" @input="searchWfItems" />
+								<div v-if="wfItemResults.length" class="mt-1 border rounded max-h-24 overflow-y-auto">
+									<div v-for="item in wfItemResults" :key="item.name"
+										@click="addWfItem(wf, item)"
+										class="px-2 py-1 text-xs hover:bg-cyan-50 cursor-pointer">
+										{{ item.item_name }}
+									</div>
+								</div>
+							</div>
+
+							<div class="flex justify-end mt-3">
 								<Button variant="solid" size="sm" @click="saveWorkflow(wf)" :loading="saving">
 									{{ __("Save") }}
 								</Button>
@@ -142,6 +163,30 @@ const saving = ref(false)
 const editingWorkflow = ref(null)
 const showNewForm = ref(false)
 const newWorkflowName = ref("")
+const wfItemSearch = ref("")
+const wfItemResults = ref([])
+
+let wfSearchTimeout = null
+function searchWfItems() {
+	clearTimeout(wfSearchTimeout)
+	wfSearchTimeout = setTimeout(async () => {
+		if (!wfItemSearch.value || wfItemSearch.value.length < 2) { wfItemResults.value = []; return }
+		try {
+			const res = await call("frappe.client.get_list", {
+				doctype: "Item", filters: [["item_name", "like", `%${wfItemSearch.value}%`]],
+				fields: ["name", "item_name"], limit_page_length: 8
+			})
+			wfItemResults.value = res || []
+		} catch { wfItemResults.value = [] }
+	}, 300)
+}
+
+function addWfItem(wf, item) {
+	if (!wf.applicable_items) wf.applicable_items = []
+	if (!wf.applicable_items.includes(item.name)) wf.applicable_items.push(item.name)
+	wfItemSearch.value = ""
+	wfItemResults.value = []
+}
 
 async function loadWorkflows() {
 	try {
@@ -161,7 +206,8 @@ async function saveWorkflow(wf) {
 		await call("pos_next.api.restaurant.save_preparation_workflow", {
 			name: wf.name,
 			workflow_name: wf.workflow_name,
-			steps: JSON.stringify(wf.steps.filter(s => s.step_name))
+			steps: JSON.stringify(wf.steps.filter(s => s.step_name)),
+			applicable_items: JSON.stringify(wf.applicable_items || [])
 		})
 		showSuccess(__("Workflow saved"))
 		editingWorkflow.value = null

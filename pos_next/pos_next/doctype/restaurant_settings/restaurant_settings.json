@@ -5,6 +5,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_runner",
+  "enable_runner",
   "section_hours",
   "opening_hours",
   "section_tips",
@@ -15,6 +17,18 @@
   "tip_account"
  ],
  "fields": [
+  {
+   "fieldname": "section_runner",
+   "fieldtype": "Section Break",
+   "label": "Runner"
+  },
+  {
+   "default": "1",
+   "description": "Enable the Runner display for delivering ready items from stations to tables.",
+   "fieldname": "enable_runner",
+   "fieldtype": "Check",
+   "label": "Enable Runner"
+  },
   {
    "fieldname": "section_hours",
    "fieldtype": "Section Break",

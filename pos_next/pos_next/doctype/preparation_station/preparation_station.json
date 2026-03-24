@@ -15,6 +15,7 @@
   "color",
   "is_active",
   "workflow",
+  "use_runner",
   "section_break_floor_plan",
   "show_on_floor_plan",
   "area",
@@ -68,6 +69,13 @@
    "fieldtype": "Link",
    "label": "Workflow",
    "options": "Preparation Workflow"
+  },
+  {
+   "default": "1",
+   "description": "If unchecked, items from this station will skip the runner and can be marked as Delivered directly from the KDS.",
+   "fieldname": "use_runner",
+   "fieldtype": "Check",
+   "label": "Use Runner"
   },
   {
    "fieldname": "section_break_floor_plan",
