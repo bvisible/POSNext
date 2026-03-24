@@ -233,10 +233,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Adjust rate with modifier price
 			if (priceAdjustment > 0 && !item._modifiers_applied) {
 				item.rate = (item.rate || 0) + priceAdjustment
+				item.price_list_rate = item.rate
 				item._modifiers_applied = priceAdjustment
 			} else if (item._modifiers_applied) {
 				// Remove old adjustment and apply new one
 				item.rate = (item.rate || 0) - item._modifiers_applied + priceAdjustment
+				item.price_list_rate = item.rate
 				item._modifiers_applied = priceAdjustment
 			}
 			// Recalculate item totals and rebuild cache so Grand Total updates immediately

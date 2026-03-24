@@ -94,6 +94,32 @@
 						<div class="p-6">
 							<!-- Unpaid Tab -->
 							<div v-if="activeTab === 'partial'" class="flex flex-col gap-4">
+								<!-- Invoice Source Toggle -->
+								<div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+									<button
+										@click="invoiceSource = 'pos'"
+										:class="[
+											'px-4 py-2 rounded-md text-sm font-medium transition-all',
+											invoiceSource === 'pos'
+												? 'bg-white text-orange-600 shadow-sm'
+												: 'text-gray-600 hover:text-gray-800'
+										]"
+									>
+										{{ __('POS') }}
+									</button>
+									<button
+										@click="invoiceSource = 'external'"
+										:class="[
+											'px-4 py-2 rounded-md text-sm font-medium transition-all',
+											invoiceSource === 'external'
+												? 'bg-white text-blue-600 shadow-sm'
+												: 'text-gray-600 hover:text-gray-800'
+										]"
+									>
+										{{ __('External Invoices') }}
+									</button>
+								</div>
+
 								<!-- Filter Buttons -->
 								<div class="flex items-center gap-2 mb-4 flex-wrap gap-2">
 									<button
@@ -101,33 +127,33 @@
 										:class="[
 											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
 											unpaidFilter === 'all'
-												? 'bg-orange-500 text-white shadow-md'
+												? (invoiceSource === 'pos' ? 'bg-orange-500 text-white shadow-md' : 'bg-blue-500 text-white shadow-md')
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
-										{{ __('All ({0})', [unpaidInvoices.length]) }}
+										{{ __('All ({0})', [activeUnpaidInvoices.length]) }}
 									</button>
 									<button
 										@click="unpaidFilter = 'partial'"
 										:class="[
 											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
 											unpaidFilter === 'partial'
-												? 'bg-orange-500 text-white shadow-md'
+												? (invoiceSource === 'pos' ? 'bg-orange-500 text-white shadow-md' : 'bg-blue-500 text-white shadow-md')
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
-										{{ __('Partially Paid ({0})', [unpaidInvoices.filter(inv => inv.status === 'Partly Paid').length]) }}
+										{{ __('Partially Paid ({0})', [activeUnpaidInvoices.filter(inv => inv.status === 'Partly Paid').length]) }}
 									</button>
 									<button
 										@click="unpaidFilter = 'unpaid'"
 										:class="[
 											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
 											unpaidFilter === 'unpaid'
-												? 'bg-orange-500 text-white shadow-md'
+												? (invoiceSource === 'pos' ? 'bg-orange-500 text-white shadow-md' : 'bg-blue-500 text-white shadow-md')
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
-										{{ __('Unpaid ({0})', [unpaidInvoices.filter(inv => inv.status === 'Unpaid').length]) }}
+										{{ __('Unpaid ({0})', [activeUnpaidInvoices.filter(inv => inv.status === 'Unpaid').length]) }}
 									</button>
 									<button
 										@click="unpaidFilter = 'overdue'"
@@ -138,15 +164,23 @@
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
-										{{ __('Overdue ({0})', [unpaidInvoices.filter(inv => inv.status === 'Overdue').length]) }}
+										{{ __('Overdue ({0})', [activeUnpaidInvoices.filter(inv => inv.status === 'Overdue').length]) }}
 									</button>
 								</div>
 
 								<!-- Summary -->
-								<div v-if="filteredUnpaidSummary.count > 0" class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
+								<div
+									v-if="filteredUnpaidSummary.count > 0"
+									:class="[
+										'border rounded-lg p-4',
+										invoiceSource === 'pos'
+											? 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200'
+											: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+									]"
+								>
 									<div class="flex items-center justify-between">
 										<div>
-											<div class="text-sm text-orange-600 font-medium">{{ __('Outstanding Payments') }}</div>
+											<div :class="['text-sm font-medium', invoiceSource === 'pos' ? 'text-orange-600' : 'text-blue-600']">{{ __('Outstanding Payments') }}</div>
 											<div class="text-2xl font-bold text-gray-900 mt-1">{{ formatCurrency(filteredUnpaidSummary.total_outstanding) }}</div>
 										</div>
 										<div class="text-end">
@@ -197,6 +231,12 @@
 														>
 															{{ __(invoice.status) }}
 														</span>
+														<span
+															v-if="invoiceSource === 'external'"
+															class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700"
+														>
+															{{ __('External') }}
+														</span>
 													</div>
 													<div class="flex items-center gap-4 mt-1 text-sm text-gray-600">
 														<div class="flex items-center">
@@ -217,7 +257,12 @@
 													@click="selectInvoiceForPayment(invoice)"
 													:disabled="loadingInvoiceDetails || isOffline()"
 													:title="isOffline() ? __('Payments cannot be added while offline') : ''"
-													class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+													:class="[
+														'px-4 py-2 text-white rounded-lg transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2',
+														invoiceSource === 'pos'
+															? 'bg-orange-500 hover:bg-orange-600'
+															: 'bg-blue-500 hover:bg-blue-600'
+													]"
 												>
 													<LoadingIndicator v-if="loadingInvoiceDetails" class="w-4 h-4" />
 													{{ __('Add Payment') }}
@@ -631,21 +676,29 @@ const unpaidSummary = ref({
 const selectedInvoice = ref(null)
 const showPaymentDialog = ref(false)
 
+// External invoices (non-POS) data
+const invoiceSource = ref("pos") // "pos" | "external"
+const externalUnpaidInvoices = ref([])
+const externalLoadedOnce = ref(false)
+
+// Active invoices based on source toggle
+const activeUnpaidInvoices = computed(() =>
+	invoiceSource.value === "pos" ? unpaidInvoices.value : externalUnpaidInvoices.value,
+)
+
 // Filtered unpaid invoices based on payment amounts
 const filteredUnpaidInvoices = computed(() => {
+	const source = activeUnpaidInvoices.value
 	if (unpaidFilter.value === "partial") {
-		// Partially paid: status is 'Partly Paid' only
-		return unpaidInvoices.value.filter((inv) => inv.status === "Partly Paid")
+		return source.filter((inv) => inv.status === "Partly Paid")
 	}
 	if (unpaidFilter.value === "unpaid") {
-		// Totally unpaid: status is 'Unpaid'
-		return unpaidInvoices.value.filter((inv) => inv.status === "Unpaid")
+		return source.filter((inv) => inv.status === "Unpaid")
 	}
 	if (unpaidFilter.value === "overdue") {
-		// Overdue: invoice status is Overdue
-		return unpaidInvoices.value.filter((inv) => inv.status === "Overdue")
+		return source.filter((inv) => inv.status === "Overdue")
 	}
-	return unpaidInvoices.value // "all"
+	return source // "all"
 })
 
 // Filtered summary based on selected filter
@@ -693,7 +746,7 @@ const tabs = computed(() => [
 		icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z",
 		color: "orange",
 		activeClass: "text-orange-600",
-		badge: () => unpaidInvoices.value.length,
+		badge: () => activeUnpaidInvoices.value.length,
 	},
 	{
 		id: "history",
@@ -799,9 +852,20 @@ watch(activeTab, (newTab) => {
 	if (newTab === "history" || newTab === "returns") {
 		emit("refresh-history")
 	} else if (newTab === "partial") {
-		// Refresh unpaid invoices when switching to partial tab
-		loadUnpaidInvoices()
-		loadUnpaidSummary()
+		if (invoiceSource.value === "pos") {
+			loadUnpaidInvoices()
+			loadUnpaidSummary()
+		} else {
+			loadExternalUnpaidInvoices()
+		}
+	}
+})
+
+// Watch invoice source toggle to load external data on first switch
+watch(invoiceSource, (newSource) => {
+	unpaidFilter.value = "all"
+	if (newSource === "external" && !externalLoadedOnce.value) {
+		loadExternalUnpaidInvoices()
 	}
 })
 
@@ -812,7 +876,11 @@ function handleClose() {
 
 async function refreshCurrentTab() {
 	if (activeTab.value === "partial") {
-		await Promise.all([loadUnpaidInvoices(), loadUnpaidSummary()])
+		if (invoiceSource.value === "pos") {
+			await Promise.all([loadUnpaidInvoices(), loadUnpaidSummary()])
+		} else {
+			await loadExternalUnpaidInvoices()
+		}
 	} else if (activeTab.value === "history") {
 		// Request parent to refresh history data
 		emit("refresh-history")
@@ -932,6 +1000,28 @@ async function loadUnpaidSummary() {
 	}
 }
 
+async function loadExternalUnpaidInvoices() {
+	if (!props.posProfile) return
+
+	loading.value = true
+	try {
+		const result = await call(
+			"pos_next.api.partial_payments.get_external_unpaid_invoices",
+			{
+				pos_profile: props.posProfile,
+				limit: 100,
+			},
+		)
+		externalUnpaidInvoices.value = result || []
+		externalLoadedOnce.value = true
+	} catch (error) {
+		log.error("Error loading external unpaid invoices:", error)
+		showError(error.message || __("Failed to load external invoices"))
+	} finally {
+		loading.value = false
+	}
+}
+
 const loadingInvoiceDetails = ref(false)
 
 async function selectInvoiceForPayment(invoice) {
@@ -967,9 +1057,13 @@ async function handlePaymentCompleted(paymentData) {
 
 		showSuccess(__("Payment added successfully"))
 
-		// Reload invoices and summary for partial tab
-		await loadUnpaidInvoices()
-		await loadUnpaidSummary()
+		// Reload the active invoice source
+		if (invoiceSource.value === "pos") {
+			await loadUnpaidInvoices()
+			await loadUnpaidSummary()
+		} else {
+			await loadExternalUnpaidInvoices()
+		}
 
 		// Also refresh history data to show updated outstanding amounts
 		emit("refresh-history")
