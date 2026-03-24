@@ -654,12 +654,20 @@
 									class="w-12 px-2 py-1.5 text-sm text-center border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
 							</div>
 						</div>
-						<!-- Split active: show current person info -->
+						<!-- Split active: show current person info with adjustable amount -->
 						<div v-else class="bg-blue-50 rounded-lg border border-blue-200 p-2.5">
 							<div class="flex justify-between items-center mb-1.5">
-								<div class="flex items-center gap-2">
+								<div class="flex items-center gap-3">
 									<span class="text-lg font-bold text-blue-700">{{ splitPaymentIndex + 1 }}/{{ splitCount }}</span>
-									<span class="text-sm text-blue-600 font-medium">{{ formatCurrency(splitAmount) }} / {{ __('person') }}</span>
+									<!-- Adjustable split amount: - amount + -->
+									<div class="flex items-center gap-1">
+										<button @click="adjustSplitAmount(-1)"
+											class="w-7 h-7 flex items-center justify-center rounded-md border border-blue-300 text-blue-600 hover:bg-blue-100 text-sm font-bold">−</button>
+										<span class="text-sm font-bold text-blue-700 min-w-[70px] text-center">{{ formatCurrency(splitAmount) }}</span>
+										<button @click="adjustSplitAmount(1)"
+											class="w-7 h-7 flex items-center justify-center rounded-md border border-blue-300 text-blue-600 hover:bg-blue-100 text-sm font-bold">+</button>
+									</div>
+									<span class="text-[10px] text-blue-400">/ {{ __('person') }}</span>
 								</div>
 								<button @click="deactivateSplit" class="text-xs text-gray-400 hover:text-red-500 transition-colors">
 									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1308,6 +1316,7 @@ const splitPaymentIndex = ref(0)
 
 const splitAmount = computed(() => {
 	if (!splitCount.value || splitCount.value < 2) return 0
+	if (splitAmountOverride.value > 0) return splitAmountOverride.value
 	const remaining = remainingAmount.value
 	const peopleLeft = splitCount.value - splitPaymentIndex.value
 	if (peopleLeft <= 1) return remaining
@@ -1328,6 +1337,19 @@ function deactivateSplit() {
 	splitMode.value = false
 	splitCount.value = 0
 	splitPaymentIndex.value = 0
+	splitAmountOverride.value = 0
+}
+
+const splitAmountOverride = ref(0)
+
+function adjustSplitAmount(direction) {
+	// Adjust by 1 CHF
+	const current = splitAmount.value
+	const newAmount = roundCurrency(current + direction)
+	if (newAmount > 0 && newAmount <= remainingAmount.value) {
+		splitAmountOverride.value = newAmount
+		nextTick(() => setNumpadValue(newAmount))
+	}
 }
 
 // Tip state
@@ -3556,6 +3578,7 @@ async function addCustomPayment(method, amount) {
 	// Advance split mode and pre-fill next amount
 	if (splitMode.value) {
 		splitPaymentIndex.value++
+		splitAmountOverride.value = 0 // Reset override for next person
 		if (splitPaymentIndex.value < splitCount.value && remainingAmount.value > 0) {
 			nextTick(() => {
 				setNumpadValue(splitAmount.value)
