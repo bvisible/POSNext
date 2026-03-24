@@ -2772,6 +2772,8 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.setLoyaltyData(paymentData.loyalty);
 		}
 
+		// Capture restaurant table before clearCart resets it
+		const restaurantTableName = cartStore.restaurantTable?.name || null
 		// Delete draft if it exists (since we're submitting/saving invoice)
 		const draftIdToDelete = cartStore.currentDraftId;
 
@@ -2854,6 +2856,12 @@ async function handlePaymentCompleted(paymentData) {
 				console.time("[Payment] stockRefresh")
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
 				console.timeEnd("[Payment] stockRefresh")
+
+				// Release restaurant table after successful payment
+				if (restaurantTableName) {
+					restaurantStore.updateTableStatus(restaurantTableName, "Empty")
+					restaurantStore.fetchFromNetwork()
+				}
 
 				// Notify customer display that sale is complete
 				notifySaleComplete(invoiceTotal, invoiceName);
