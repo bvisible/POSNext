@@ -541,41 +541,7 @@
 					]"
 					:style="isMobileView ? {} : { minHeight: rightColumnMinHeight }"
 				>
-					<!-- Split Payment (restaurant mode) — TOP of right column -->
-					<div v-if="restaurantStore?.isEnabled" class="mb-2">
-						<!-- Split inactive: show split buttons -->
-						<div v-if="!splitMode" class="flex items-center gap-1.5">
-							<span class="text-xs text-gray-400 font-medium mr-0.5">÷</span>
-							<button v-for="n in [2, 3, 4]" :key="n" @click="activateSplit(n)"
-								class="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-colors">
-								{{ n }}
-							</button>
-							<input type="number" min="2" max="20" :placeholder="__('N')"
-								@change="$event.target.value >= 2 && activateSplit(+$event.target.value); $event.target.value = ''"
-								class="w-12 px-2 py-1.5 text-sm text-center border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
-							<span class="text-xs text-gray-400 ml-1">{{ __('Split') }}</span>
-						</div>
-						<!-- Split active: show current person info -->
-						<div v-else class="bg-blue-50 rounded-lg border border-blue-200 p-2.5">
-							<div class="flex justify-between items-center mb-1.5">
-								<div class="flex items-center gap-2">
-									<span class="text-lg font-bold text-blue-700">{{ splitPaymentIndex + 1 }}/{{ splitCount }}</span>
-									<span class="text-sm text-blue-600 font-medium">{{ formatCurrency(splitAmount) }}</span>
-								</div>
-								<button @click="deactivateSplit" class="text-xs text-gray-400 hover:text-red-500 transition-colors">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-									</svg>
-								</button>
-							</div>
-							<div class="h-1.5 bg-blue-200 rounded-full">
-								<div class="h-1.5 bg-blue-600 rounded-full transition-all duration-300"
-									:style="{ width: (splitPaymentIndex / splitCount * 100) + '%' }"></div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Payment Methods -->
+						<!-- Payment Methods -->
 					<div :class="isSmallMobile ? 'mb-1' : 'mb-1.5 lg:mb-3'">
 						<div :class="['flex items-center justify-between', isSmallMobile ? 'mb-0.5' : 'mb-1 lg:mb-2']">
 							<div :class="['text-start font-semibold text-gray-500 uppercase tracking-wide', isSmallMobile ? 'text-[10px]' : 'text-xs']">{{ __('Payment Method') }}</div>
@@ -668,6 +634,42 @@
 								<span :class="['text-xs font-medium', !isExactAmountValid ? 'text-red-700' : 'text-green-700']">
 									{{ !isExactAmountValid ? __('Total must equal invoice amount') : __('Payment amount is correct') }}
 								</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Split Payment (restaurant mode) -->
+					<div v-if="restaurantStore?.isEnabled" :class="isCompactMode ? 'mb-2' : 'mb-3'">
+						<div :class="['text-start font-semibold text-gray-500 uppercase tracking-wide', isSmallMobile ? 'text-[10px] mb-0.5' : 'text-xs mb-1']">{{ __('Split Payment') }}</div>
+						<!-- Split inactive: show split buttons -->
+						<div v-if="!splitMode">
+							<p class="text-[10px] text-gray-400 mb-1.5">{{ __('Split the bill between multiple people') }}</p>
+							<div class="flex items-center gap-1.5">
+								<button v-for="n in [2, 3, 4]" :key="n" @click="activateSplit(n)"
+									class="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-colors">
+									÷{{ n }}
+								</button>
+								<input type="number" min="2" max="20" :placeholder="__('N')"
+									@change="$event.target.value >= 2 && activateSplit(+$event.target.value); $event.target.value = ''"
+									class="w-12 px-2 py-1.5 text-sm text-center border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
+							</div>
+						</div>
+						<!-- Split active: show current person info -->
+						<div v-else class="bg-blue-50 rounded-lg border border-blue-200 p-2.5">
+							<div class="flex justify-between items-center mb-1.5">
+								<div class="flex items-center gap-2">
+									<span class="text-lg font-bold text-blue-700">{{ splitPaymentIndex + 1 }}/{{ splitCount }}</span>
+									<span class="text-sm text-blue-600 font-medium">{{ formatCurrency(splitAmount) }} / {{ __('person') }}</span>
+								</div>
+								<button @click="deactivateSplit" class="text-xs text-gray-400 hover:text-red-500 transition-colors">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+									</svg>
+								</button>
+							</div>
+							<div class="h-1.5 bg-blue-200 rounded-full">
+								<div class="h-1.5 bg-blue-600 rounded-full transition-all duration-300"
+									:style="{ width: (splitPaymentIndex / splitCount * 100) + '%' }"></div>
 							</div>
 						</div>
 					</div>
