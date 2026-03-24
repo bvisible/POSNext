@@ -1455,6 +1455,13 @@ def submit_invoice(invoice=None, data=None):
         frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
 
         invoice_submitted = True
+
+        # Release restaurant table after successful submission
+        restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
+        if restaurant_table and frappe.db.exists("Restaurant Table", restaurant_table):
+            frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Empty")
+            frappe.publish_realtime("table_update")
+
         # Handle wallet transaction reversal for returns
         wallet_reversal_ok = False
         if invoice_doc.get("is_return") and invoice_doc.get("return_against"):
