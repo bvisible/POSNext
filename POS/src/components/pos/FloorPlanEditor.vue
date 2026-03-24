@@ -312,7 +312,7 @@
 					backgroundColor: (station.color || '#6B7280') + '20',
 					borderColor: station.color || '#6B7280',
 				}"
-				@pointerdown="isEditMode ? handleDragStart($event, station) : null"
+				@pointerdown="isEditMode && !$event.target.closest('.edit-btn') ? handleDragStart($event, station) : null"
 				@click="!isEditMode ? openStationKDS(station) : null"
 			>
 				<!-- Station icon -->
@@ -330,7 +330,7 @@
 					type="button"
 					@pointerdown.stop
 					@click.stop="openEditStationDialog(station)"
-					class="absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded bg-white/80 hover:bg-orange-100 border border-gray-300 z-[5] cursor-pointer"
+					class="edit-btn absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded bg-white/80 hover:bg-orange-100 border border-gray-300 z-[5] cursor-pointer"
 					:title="__('Edit station')"
 				>
 					<svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
