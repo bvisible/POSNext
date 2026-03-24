@@ -577,6 +577,18 @@
 									</div>
 								</div>
 								<div class="p-6 flex flex-col gap-6">
+									<!-- Runner Toggle -->
+									<div class="flex items-center justify-between px-4 py-3 bg-emerald-50 rounded-lg border border-emerald-200">
+										<div>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Runner') }}</h4>
+											<p class="text-xs text-gray-500 mt-0.5">{{ __('Enable a runner display for delivering ready items from stations to tables') }}</p>
+										</div>
+										<Switch
+											:modelValue="restaurantStore.restaurantSettings.enable_runner ? 1 : 0"
+											@update:modelValue="toggleRunner($event)"
+										/>
+									</div>
+
 									<!-- Opening Hours -->
 									<div :class="restaurantSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
@@ -818,6 +830,20 @@ const openingHours = ref([])
 const allCards = ref([])
 const restaurantStatus = computed(() => restaurantStore.restaurantStatus)
 const tipSettings = ref({ enable_tips: false, auto_detect_tip: true, tip_item: null, tip_account: null })
+
+async function toggleRunner(val) {
+	try {
+		await call("frappe.client.set_value", {
+			doctype: "Restaurant Settings",
+			name: "Restaurant Settings",
+			fieldname: "enable_runner",
+			value: val ? 1 : 0
+		})
+		restaurantStore.restaurantSettings.enable_runner = !!val
+	} catch (error) {
+		console.error("Failed to toggle runner:", error)
+	}
+}
 
 function getCardSlots(cardName) {
 	return openingHours.value.filter(s => s.restaurant_card === cardName)

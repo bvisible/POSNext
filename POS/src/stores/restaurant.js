@@ -18,7 +18,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const stationItemsMap = ref({})
 	const modifierGroups = ref([])
 	const activeMenus = ref([])
-	const restaurantSettings = ref({ opening_hours: [], enable_tips: false, auto_detect_tip: true, tip_item: null })
+	const restaurantSettings = ref({ opening_hours: [], enable_tips: false, auto_detect_tip: true, tip_item: null, enable_runner: true })
 	const restaurantStatus = ref({ isOpen: true, currentSlot: null, hasActiveCards: true, warning: null })
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
@@ -329,6 +329,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		restaurantSettings,
 		restaurantStatus,
 		hasCardWarning,
+		runnerEnabled: computed(() => restaurantSettings.value.enable_runner !== false && restaurantSettings.value.enable_runner !== 0),
 		tipsEnabled: computed(() => !!restaurantSettings.value.enable_tips),
 		autoDetectTip: computed(() => restaurantSettings.value.auto_detect_tip !== false),
 		tipItem: computed(() => restaurantSettings.value.tip_item),

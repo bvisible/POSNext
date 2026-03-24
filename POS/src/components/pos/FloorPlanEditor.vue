@@ -127,9 +127,10 @@
 				</span>
 			</div>
 
-			<!-- Spacer + Runner pill (always visible) -->
+			<!-- Spacer + Runner pill (only when runner is enabled) -->
 			<div class="flex-grow"></div>
-			<div class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
+			<div v-if="restaurantStore.runnerEnabled"
+				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
 				:class="totalReadyCount > 0
 					? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse'
 					: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
