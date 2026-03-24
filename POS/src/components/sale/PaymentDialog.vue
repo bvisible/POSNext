@@ -1348,14 +1348,6 @@ const showTipDetection = computed(() => {
 	return restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && tipAmount.value > 0
 })
 
-// Auto-set tip when change amount changes (if tips enabled)
-watch(() => changeAmount.value, (newChange) => {
-	if (restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && newChange > 0) {
-		tipAmount.value = newChange
-	} else {
-		tipAmount.value = 0
-	}
-})
 const { showWarning, showError, showSuccess, showInfo } = useToast()
 
 const props = defineProps({
@@ -2136,6 +2128,15 @@ const remainingAmount = computed(() => {
 const changeAmount = computed(() => {
 	const change = totalPaid.value - effectiveGrandTotal.value
 	return change > 0 ? roundCurrency(change) : 0
+})
+
+// Auto-set tip when change amount changes (if tips enabled)
+watch(() => changeAmount.value, (newChange) => {
+	if (restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && newChange > 0) {
+		tipAmount.value = newChange
+	} else {
+		tipAmount.value = 0
+	}
 })
 
 // ===========================================
