@@ -11,6 +11,7 @@ declare module 'vue' {
     ActionButton: typeof import('./src/components/common/ActionButton.vue')['default']
     AutocompleteSelect: typeof import('./src/components/common/AutocompleteSelect.vue')['default']
     BatchSerialDialog: typeof import('./src/components/sale/BatchSerialDialog.vue')['default']
+    CardEditor: typeof import('./src/components/restaurant/CardEditor.vue')['default']
     CheckboxField: typeof import('./src/components/settings/CheckboxField.vue')['default']
     ClearCacheOverlay: typeof import('./src/components/common/ClearCacheOverlay.vue')['default']
     CountryCodeSelector: typeof import('./src/components/common/CountryCodeSelector.vue')['default']
@@ -50,6 +51,7 @@ declare module 'vue' {
     PhoneInput: typeof import('./src/components/common/PhoneInput.vue')['default']
     POSHeader: typeof import('./src/components/pos/POSHeader.vue')['default']
     POSSettings: typeof import('./src/components/settings/POSSettings.vue')['default']
+    ProductOptionsEditor: typeof import('./src/components/restaurant/ProductOptionsEditor.vue')['default']
     PromotionManagement: typeof import('./src/components/sale/PromotionManagement.vue')['default']
     ReturnInvoiceDialog: typeof import('./src/components/sale/ReturnInvoiceDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
@@ -68,5 +70,6 @@ declare module 'vue' {
     TranslatedHTML: typeof import('./src/components/common/TranslatedHTML.vue')['default']
     UserMenu: typeof import('./src/components/common/UserMenu.vue')['default']
     WarehouseAvailabilityDialog: typeof import('./src/components/sale/WarehouseAvailabilityDialog.vue')['default']
+    WorkflowEditor: typeof import('./src/components/restaurant/WorkflowEditor.vue')['default']
   }
 }

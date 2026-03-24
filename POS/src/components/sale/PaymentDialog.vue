@@ -689,6 +689,39 @@
 						</div>
 					</div>
 
+					<!-- Split Bar (restaurant mode) -->
+					<div v-if="restaurantStore?.isEnabled && !splitMode && remainingAmount > 0" class="hidden lg:flex items-center gap-2 px-1 mb-2">
+						<span class="text-xs text-gray-400 font-medium">÷</span>
+						<button v-for="n in [2, 3, 4]" :key="n" @click="activateSplit(n)"
+							class="px-2.5 py-1 text-xs font-medium rounded-md border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-colors">
+							{{ n }}
+						</button>
+						<input type="number" min="2" max="20" :placeholder="__('N')"
+							@change="$event.target.value >= 2 && activateSplit(+$event.target.value); $event.target.value = ''"
+							class="w-10 px-1.5 py-1 text-xs text-center border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
+					</div>
+
+					<!-- Active Split Info -->
+					<div v-if="splitMode" class="px-2 py-2 mb-2 bg-blue-50 rounded-lg border border-blue-200">
+						<div class="flex justify-between items-center">
+							<div>
+								<span class="text-sm font-bold text-blue-700">
+									{{ __('Payment') }} {{ splitPaymentIndex + 1 }}/{{ splitCount }}
+								</span>
+								<span class="text-xs text-blue-500 ml-2">
+									{{ formatCurrency(splitAmount) }} / {{ __('person') }}
+								</span>
+							</div>
+							<button @click="deactivateSplit" class="text-[10px] text-gray-400 hover:text-gray-600 underline">
+								{{ __('Cancel split') }}
+							</button>
+						</div>
+						<div class="h-1 bg-blue-200 rounded-full mt-1.5">
+							<div class="h-1 bg-blue-600 rounded-full transition-all duration-300"
+								:style="{ width: (splitPaymentIndex / splitCount * 100) + '%' }"></div>
+						</div>
+					</div>
+
 					<!-- Quick Amounts Area (Desktop) - Consistent layout for all payment methods -->
 					<div v-if="lastSelectedMethod && remainingAmount > 0" class="hidden lg:block" :class="isCompactMode ? 'mb-2' : 'mb-3'">
 						<div class="text-start text-xs font-medium text-gray-600 mb-1.5">
@@ -1278,6 +1311,35 @@ import { useQuickAmounts } from "@/composables/useQuickAmounts"
 const log = logger.create("PaymentDialog")
 const settingsStore = usePOSSettingsStore()
 const restaurantStore = useRestaurantStore()
+
+// Split payment state
+const splitMode = ref(false)
+const splitCount = ref(0)
+const splitPaymentIndex = ref(0)
+
+const splitAmount = computed(() => {
+	if (!splitCount.value || splitCount.value < 2) return 0
+	const remaining = remainingAmount.value
+	const peopleLeft = splitCount.value - splitPaymentIndex.value
+	if (peopleLeft <= 1) return remaining
+	return roundCurrency(Math.ceil(remaining / peopleLeft * 100) / 100)
+})
+
+function activateSplit(count) {
+	if (count < 2) return
+	splitMode.value = true
+	splitCount.value = count
+	splitPaymentIndex.value = 0
+	nextTick(() => {
+		customAmount.value = String(splitAmount.value)
+	})
+}
+
+function deactivateSplit() {
+	splitMode.value = false
+	splitCount.value = 0
+	splitPaymentIndex.value = 0
+}
 
 // Tip state
 const tipAmount = ref(0)
@@ -2373,6 +2435,7 @@ watch(show, async (newVal) => {
 		paymentEntries.value = []
 		customAmount.value = ""
 		tipAmount.value = 0
+		deactivateSplit()
 		numpadClear()
 		mobileCustomAmount.value = ""
 		lastSelectedMethod.value = null
@@ -3497,6 +3560,16 @@ async function addCustomPayment(method, amount) {
 
 	log.debug("[PaymentDialog] Payment added, new entries:", paymentEntries.value)
 	customAmount.value = ""
+
+	// Advance split mode and pre-fill next amount
+	if (splitMode.value) {
+		splitPaymentIndex.value++
+		if (splitPaymentIndex.value < splitCount.value && remainingAmount.value > 0) {
+			nextTick(() => {
+				customAmount.value = String(splitAmount.value)
+			})
+		}
+	}
 
 	// If this was a partial wallet payment, switch to another payment method
 	if (isPartialWalletPayment) {
