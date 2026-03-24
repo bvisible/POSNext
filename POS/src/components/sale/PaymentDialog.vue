@@ -2370,7 +2370,9 @@ const isLastMethodCash = computed(() => {
 		!lastSelectedMethod.value || isCashPaymentMethod(lastSelectedMethod.value)
 	)
 })
-const { quickAmounts } = useQuickAmounts(remainingAmount, isLastMethodCash)
+// In split mode, base quick amounts on the per-person split amount
+const quickAmountBase = computed(() => splitMode.value && splitAmount.value > 0 ? splitAmount.value : remainingAmount.value)
+const { quickAmounts } = useQuickAmounts(quickAmountBase, isLastMethodCash)
 
 // Whether a quick amount button should be disabled in exact-amount mode
 // Non-cash methods can only pay the exact remaining — no rounding allowed
