@@ -1205,7 +1205,7 @@
 						<Button
 							variant="solid"
 							theme="blue"
-							@click="() => { handlePrintInvoice({ name: uiStore.lastInvoiceName }); uiStore.showSuccessDialog = false; }"
+							@click="handlePrintInvoice({ name: uiStore.lastInvoiceName })"
 						>
 							<template #prefix>
 								<FeatherIcon name="printer" class="w-4 h-4" />
