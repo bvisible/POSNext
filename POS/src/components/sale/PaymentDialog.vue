@@ -2837,8 +2837,10 @@ async function openWalleeTerminalDialog(method) {
 
 	// Store the method for later use
 	walleeCurrentMethod.value = method
-	walleeDialogAmount.value = remainingAmount.value
-	walleeInputAmount.value = remainingAmount.value.toFixed(2) // Initialize numpad with remaining amount
+	// Use split amount if in split mode, otherwise remaining amount
+	const initialAmount = splitMode.value && splitAmount.value > 0 ? splitAmount.value : remainingAmount.value
+	walleeDialogAmount.value = initialAmount
+	walleeInputAmount.value = initialAmount.toFixed(2)
 	walleePaymentStatus.value = __("Loading terminals...")
 	walleePaymentError.value = false
 	walleeCurrentTransaction.value = null
