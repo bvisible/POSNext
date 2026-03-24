@@ -1332,7 +1332,7 @@ function activateSplit(count) {
 	splitCount.value = count
 	splitPaymentIndex.value = 0
 	nextTick(() => {
-		customAmount.value = String(splitAmount.value)
+		setNumpadValue(splitAmount.value)
 	})
 }
 
@@ -3567,7 +3567,7 @@ async function addCustomPayment(method, amount) {
 		splitPaymentIndex.value++
 		if (splitPaymentIndex.value < splitCount.value && remainingAmount.value > 0) {
 			nextTick(() => {
-				customAmount.value = String(splitAmount.value)
+				setNumpadValue(splitAmount.value)
 			})
 		}
 	}
