@@ -6,6 +6,13 @@
 		<!-- Loading State -->
 		<LoadingSpinner v-if="uiStore.isLoading" />
 
+		<!-- Payment Processing Overlay -->
+		<div v-if="isProcessingPayment" class="fixed inset-0 bg-white/80 dark:bg-gray-900/80 z-[400] flex flex-col items-center justify-center">
+			<div class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"></div>
+			<p class="text-lg font-medium text-gray-700 dark:text-gray-200">{{ __('Processing payment...') }}</p>
+			<p class="text-sm text-gray-400 mt-1">{{ __('Please wait') }}</p>
+		</div>
+
 		<!-- Main App -->
 		<template v-else>
 			<!-- Header -->
@@ -2428,6 +2435,7 @@ async function handleSendSingleItem(item) {
 }
 
 let isSendingToKitchen = false
+const isProcessingPayment = ref(false)
 async function handleSendToKitchen() {
 	if (cartStore.invoiceItems.length === 0) return
 	if (isSendingToKitchen) return
@@ -2819,14 +2827,20 @@ async function handlePaymentCompleted(paymentData) {
 			// Get item codes from cart before clearing
 			const soldItemCodes = cartStore.invoiceItems.map((item) => item.item_code);
 
+			// Show processing overlay
+			isProcessingPayment.value = true
+			uiStore.showPaymentDialog = false
+
+			console.time("[Payment] Total")
+			console.time("[Payment] submitInvoice")
 			const result = await cartStore.submitInvoice();
+			console.timeEnd("[Payment] submitInvoice")
 
 			if (result) {
 				const invoiceName = result.name || result.message?.name || __("Unknown");
 				const invoiceTotal = result.grand_total || result.total || 0;
 				const paidAmount = paymentData.paid_amount || invoiceTotal;
 
-				uiStore.showPaymentDialog = false;
 				cartStore.clearCart();
 				// Reset cart hash after successful payment
 				previousCartHash = "";
@@ -2837,7 +2851,9 @@ async function handlePaymentCompleted(paymentData) {
 				}
 
 				// Refresh stock - Direct API (50-200ms), no Socket.IO lag!
+				console.time("[Payment] stockRefresh")
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
+				console.timeEnd("[Payment] stockRefresh")
 
 				// Notify customer display that sale is complete
 				notifySaleComplete(invoiceTotal, invoiceName);
@@ -2870,9 +2886,13 @@ async function handlePaymentCompleted(paymentData) {
 					uiStore.showSuccess(invoiceName, invoiceTotal, paidAmount);
 					showSuccess(__("Invoice {0} created successfully", [invoiceName]));
 				}
+
+				console.timeEnd("[Payment] Total")
 			}
+			isProcessingPayment.value = false
 		}
 	} catch (error) {
+		isProcessingPayment.value = false
 		log.error("Error submitting invoice:", error);
 		uiStore.showPaymentDialog = false;
 

@@ -1443,10 +1443,17 @@ def submit_invoice(invoice=None, data=None):
         invoice_doc.flags.ignore_pricing_rule = True
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
+
+        import time as _time
+        _t0 = _time.time()
         invoice_doc.save()
+        _t1 = _time.time()
 
         # Submit invoice
         invoice_doc.submit()
+        _t2 = _time.time()
+        frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
+
         invoice_submitted = True
         # Handle wallet transaction reversal for returns
         wallet_reversal_ok = False

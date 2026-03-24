@@ -215,8 +215,16 @@
 									<div
 										v-for="invoice in filteredUnpaidInvoices"
 										:key="invoice.name"
-										class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+										class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative"
 									>
+										<!-- Processing overlay -->
+										<div
+											v-if="processingInvoiceName === invoice.name"
+											class="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center gap-3 rounded-xl"
+										>
+											<LoadingIndicator class="w-8 h-8 text-green-500" />
+											<p class="text-sm font-semibold text-gray-700">{{ __('Processing payment...') }}</p>
+										</div>
 										<!-- Invoice Header -->
 										<div class="p-4 border-b bg-gray-50">
 											<div class="flex items-start justify-between">
@@ -255,7 +263,7 @@
 												</div>
 												<button
 													@click="selectInvoiceForPayment(invoice)"
-													:disabled="loadingInvoiceDetails || isOffline()"
+													:disabled="loadingInvoiceName !== null || isOffline()"
 													:title="isOffline() ? __('Payments cannot be added while offline') : ''"
 													:class="[
 														'px-4 py-2 text-white rounded-lg transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2',
@@ -264,7 +272,7 @@
 															: 'bg-blue-500 hover:bg-blue-600'
 													]"
 												>
-													<LoadingIndicator v-if="loadingInvoiceDetails" class="w-4 h-4" />
+													<LoadingIndicator v-if="loadingInvoiceName === invoice.name" class="w-4 h-4" />
 													{{ __('Add Payment') }}
 												</button>
 											</div>
@@ -1022,10 +1030,11 @@ async function loadExternalUnpaidInvoices() {
 	}
 }
 
-const loadingInvoiceDetails = ref(false)
+const loadingInvoiceName = ref(null) // Track which invoice is loading
+const processingInvoiceName = ref(null) // Track which invoice is being paid
 
 async function selectInvoiceForPayment(invoice) {
-	loadingInvoiceDetails.value = true
+	loadingInvoiceName.value = invoice.name
 	try {
 		// Fetch full invoice details including items for the payment dialog
 		const details = await call(
@@ -1042,16 +1051,19 @@ async function selectInvoiceForPayment(invoice) {
 		selectedInvoice.value = invoice
 		showPaymentDialog.value = true
 	} finally {
-		loadingInvoiceDetails.value = false
+		loadingInvoiceName.value = null
 	}
 }
 
 async function handlePaymentCompleted(paymentData) {
 	if (!selectedInvoice.value) return
 
+	const invoiceName = selectedInvoice.value.name
+	processingInvoiceName.value = invoiceName
+
 	try {
 		await call("pos_next.api.partial_payments.add_payment_to_partial_invoice", {
-			invoice_name: selectedInvoice.value.name,
+			invoice_name: invoiceName,
 			payments: paymentData.payments,
 		})
 
@@ -1072,6 +1084,8 @@ async function handlePaymentCompleted(paymentData) {
 	} catch (error) {
 		console.error("Error adding payment:", error)
 		showError(error.message || __("Failed to add payment"))
+	} finally {
+		processingInvoiceName.value = null
 	}
 }
 
