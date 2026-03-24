@@ -659,11 +659,22 @@
 							<div class="flex justify-between items-center mb-1.5">
 								<div class="flex items-center gap-3">
 									<span class="text-lg font-bold text-blue-700">{{ splitPaymentIndex + 1 }}/{{ splitCount }}</span>
-									<!-- Adjustable split amount: - amount + -->
+									<!-- Adjustable split amount: - amount + (click amount to edit) -->
 									<div class="flex items-center gap-1">
 										<button @click="adjustSplitAmount(-1)"
 											class="w-7 h-7 flex items-center justify-center rounded-md border border-blue-300 text-blue-600 hover:bg-blue-100 text-sm font-bold">−</button>
-										<span class="text-sm font-bold text-blue-700 min-w-[70px] text-center">{{ formatCurrency(splitAmount) }}</span>
+										<input v-if="editingSplitAmount"
+											type="number" step="0.05" min="0.05"
+											:value="splitAmount"
+											@blur="onSplitAmountEdit($event)"
+											@keyup.enter="onSplitAmountEdit($event)"
+											class="w-20 text-sm font-bold text-blue-700 text-center border border-blue-400 rounded-md px-1 py-0.5 focus:ring-1 focus:ring-blue-500"
+											autofocus
+										/>
+										<button v-else @click="editingSplitAmount = true"
+											class="text-sm font-bold text-blue-700 min-w-[70px] text-center hover:bg-blue-100 rounded-md px-1 py-0.5 cursor-text transition-colors">
+											{{ formatCurrency(splitAmount) }}
+										</button>
 										<button @click="adjustSplitAmount(1)"
 											class="w-7 h-7 flex items-center justify-center rounded-md border border-blue-300 text-blue-600 hover:bg-blue-100 text-sm font-bold">+</button>
 									</div>
@@ -1314,13 +1325,21 @@ const splitMode = ref(false)
 const splitCount = ref(0)
 const splitPaymentIndex = ref(0)
 
+// Round to nearest 5 centimes (Swiss rounding)
+function roundTo5Centimes(amount) {
+	return Math.round(amount * 20) / 20
+}
+
+const splitAmountOverride = ref(0)
+const editingSplitAmount = ref(false)
+
 const splitAmount = computed(() => {
 	if (!splitCount.value || splitCount.value < 2) return 0
 	if (splitAmountOverride.value > 0) return splitAmountOverride.value
 	const remaining = remainingAmount.value
 	const peopleLeft = splitCount.value - splitPaymentIndex.value
-	if (peopleLeft <= 1) return remaining
-	return roundCurrency(Math.ceil(remaining / peopleLeft * 100) / 100)
+	if (peopleLeft <= 1) return roundTo5Centimes(remaining)
+	return roundTo5Centimes(Math.ceil(remaining / peopleLeft * 20) / 20)
 })
 
 function activateSplit(count) {
@@ -1328,6 +1347,8 @@ function activateSplit(count) {
 	splitMode.value = true
 	splitCount.value = count
 	splitPaymentIndex.value = 0
+	splitAmountOverride.value = 0
+	editingSplitAmount.value = false
 	nextTick(() => {
 		setNumpadValue(splitAmount.value)
 	})
@@ -1338,18 +1359,25 @@ function deactivateSplit() {
 	splitCount.value = 0
 	splitPaymentIndex.value = 0
 	splitAmountOverride.value = 0
+	editingSplitAmount.value = false
 }
 
-const splitAmountOverride = ref(0)
-
 function adjustSplitAmount(direction) {
-	// Adjust by 1 CHF
 	const current = splitAmount.value
-	const newAmount = roundCurrency(current + direction)
+	const newAmount = roundTo5Centimes(current + direction)
 	if (newAmount > 0 && newAmount <= remainingAmount.value) {
 		splitAmountOverride.value = newAmount
 		nextTick(() => setNumpadValue(newAmount))
 	}
+}
+
+function onSplitAmountEdit(event) {
+	const val = parseFloat(event.target.value)
+	if (val > 0 && val <= remainingAmount.value) {
+		splitAmountOverride.value = roundTo5Centimes(val)
+		nextTick(() => setNumpadValue(splitAmountOverride.value))
+	}
+	editingSplitAmount.value = false
 }
 
 // Tip state
@@ -3581,6 +3609,7 @@ async function addCustomPayment(method, amount) {
 	if (splitMode.value) {
 		splitPaymentIndex.value++
 		splitAmountOverride.value = 0 // Reset override for next person
+		editingSplitAmount.value = false
 		if (splitPaymentIndex.value < splitCount.value && remainingAmount.value > 0) {
 			nextTick(() => {
 				setNumpadValue(splitAmount.value)
