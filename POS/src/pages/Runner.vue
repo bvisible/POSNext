@@ -421,7 +421,10 @@ function playNotificationSound() {
 	} catch { /* Audio not available */ }
 }
 
-onMounted(() => {
+onMounted(async () => {
+	// Load restaurant settings to check if runner is enabled
+	await restaurantStore.fetchRestaurantSettings()
+	if (!runnerEnabled.value) return // Don't load data if runner is disabled
 	loadAreas()
 	loadOrders()
 	socket = initSocket()
