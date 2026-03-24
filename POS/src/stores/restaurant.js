@@ -318,6 +318,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		)
 	}
 
+	const runnerEnabled = computed(() => restaurantSettings.value.enable_runner !== false && restaurantSettings.value.enable_runner !== 0)
+	const tipsEnabled = computed(() => !!restaurantSettings.value.enable_tips)
+	const autoDetectTip = computed(() => restaurantSettings.value.auto_detect_tip !== false)
+	const tipItem = computed(() => restaurantSettings.value.tip_item)
+
 	return {
 		tables,
 		areas,
@@ -329,10 +334,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		restaurantSettings,
 		restaurantStatus,
 		hasCardWarning,
-		runnerEnabled: computed(() => restaurantSettings.value.enable_runner !== false && restaurantSettings.value.enable_runner !== 0),
-		tipsEnabled: computed(() => !!restaurantSettings.value.enable_tips),
-		autoDetectTip: computed(() => restaurantSettings.value.auto_detect_tip !== false),
-		tipItem: computed(() => restaurantSettings.value.tip_item),
+		runnerEnabled,
+		tipsEnabled,
+		autoDetectTip,
+		tipItem,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
