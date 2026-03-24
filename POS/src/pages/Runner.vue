@@ -1,5 +1,17 @@
 <template>
-	<div class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
+	<!-- Runner disabled message -->
+	<div v-if="!runnerEnabled" class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 items-center justify-center">
+		<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+		</svg>
+		<h2 class="text-xl font-medium text-gray-500">{{ __("Runner is disabled") }}</h2>
+		<p class="text-sm text-gray-400 mt-1">{{ __("Enable it in Restaurant Settings to use the Runner display.") }}</p>
+		<button @click="$router.push('/')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-300">
+			{{ __("Back to POS") }}
+		</button>
+	</div>
+
+	<div v-else class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
 		<!-- Header -->
 		<header class="bg-white dark:bg-gray-800 shadow-sm z-10 p-4 flex justify-between items-center">
 			<div>
@@ -198,8 +210,11 @@ import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
+import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
 
+const restaurantStore = useRestaurantStore()
+const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
 const { showError } = useToast()
 const orders = ref([])
 const areas = ref([])
