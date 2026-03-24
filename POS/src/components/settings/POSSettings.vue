@@ -578,14 +578,12 @@
 								</div>
 								<div class="p-6 flex flex-col gap-6">
 									<!-- Runner Toggle -->
-									<div class="flex items-center justify-between px-4 py-3 bg-emerald-50 rounded-lg border border-emerald-200">
-										<div>
-											<h4 class="text-sm font-bold text-gray-900">{{ __('Runner') }}</h4>
-											<p class="text-xs text-gray-500 mt-0.5">{{ __('Enable a runner display for delivering ready items from stations to tables') }}</p>
-										</div>
-										<Switch
+									<div :class="restaurantSubsectionClasses.container">
+										<CheckboxField
 											:modelValue="restaurantStore.restaurantSettings.enable_runner ? 1 : 0"
 											@update:modelValue="toggleRunner($event)"
+											:label="__('Enable Runner')"
+											:description="__('Enable a runner display for delivering ready items from stations to tables')"
 										/>
 									</div>
 
