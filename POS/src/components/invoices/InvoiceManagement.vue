@@ -651,6 +651,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	posOpeningShift: {
+		type: String,
+		default: "",
+	},
 })
 
 const emit = defineEmits([
@@ -1065,6 +1069,7 @@ async function handlePaymentCompleted(paymentData) {
 		await call("pos_next.api.partial_payments.add_payment_to_partial_invoice", {
 			invoice_name: invoiceName,
 			payments: paymentData.payments,
+			pos_opening_shift: props.posOpeningShift || undefined,
 		})
 
 		showSuccess(__("Payment added successfully"))

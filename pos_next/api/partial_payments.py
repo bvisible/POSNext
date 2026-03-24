@@ -874,7 +874,7 @@ def get_partial_payment_details(invoice_name: str) -> Dict:
 
 
 @frappe.whitelist()
-def add_payment_to_partial_invoice(invoice_name: str, payments) -> Dict:
+def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shift: str = None) -> Dict:
     """
     Add payments to a partially paid invoice via Payment Entry.
 
@@ -892,6 +892,7 @@ def add_payment_to_partial_invoice(invoice_name: str, payments) -> Dict:
             - account: (optional) Specific payment account
             - reference_no: (optional) Reference number
         Can also accept JSON string which will be parsed.
+        pos_opening_shift: (optional) POS Opening Shift name to link payment to shift closing
 
     Returns:
         dict: Updated invoice details with created Payment Entry names
@@ -966,6 +967,11 @@ def add_payment_to_partial_invoice(invoice_name: str, payments) -> Dict:
             mode_of_payment = payment.get("mode_of_payment") or DEFAULT_PAYMENT_MODE
             payment_account = payment.get("account")
             reference_no = payment.get("reference_no")
+
+            # If POS Opening Shift is provided, use it as reference_no
+            # so the payment appears in the shift closing summary
+            if pos_opening_shift and not reference_no:
+                reference_no = pos_opening_shift
 
             pe_name = create_payment_entry(
                 invoice_name=invoice_name,

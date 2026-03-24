@@ -900,6 +900,7 @@
 				v-model="showInvoiceManagement"
 				:pos-profile="shiftStore.profileName"
 				:currency="shiftStore.profileCurrency"
+				:pos-opening-shift="cartStore.posOpeningShift"
 				:history-invoices="invoiceHistoryData"
 				:draft-invoices="draftsStore.drafts"
 				@view-invoice="handleViewInvoice"

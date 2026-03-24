@@ -1338,7 +1338,7 @@ def get_runner_orders(area=None):
 			steps = workflow_cache[cache_key]
 			last_step = steps[-1]["step_name"] if steps else "Ready"
 
-			if item_status == last_step:
+			if item_status == last_step or item_status == "Ready":
 				# Enrich with station info
 				if item.item_code in station_map:
 					item["station_color"] = station_map[item.item_code]["station_color"]
