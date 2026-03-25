@@ -130,7 +130,77 @@
 					</div>
 				</div>
 
-				<!-- Permission warning -->
+				<!-- Display Color -->
+			<div>
+				<label class="block text-start text-sm font-medium text-gray-700 mb-1.5">
+					{{ __("Display Color") }}
+				</label>
+				<div class="flex flex-wrap gap-2">
+					<button
+						v-for="c in colorPalette"
+						:key="c.hex"
+						@click="itemData.color = (itemData.color === c.hex ? '' : c.hex)"
+						:class="[
+							'w-8 h-8 rounded-full border-2 transition-all duration-100',
+							itemData.color === c.hex
+								? 'border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400'
+								: 'border-transparent hover:scale-105'
+						]"
+						:style="{ backgroundColor: c.hex }"
+						:title="__(c.name)"
+						type="button"
+					/>
+					<button
+						v-if="itemData.color"
+						@click="itemData.color = ''"
+						class="w-8 h-8 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:text-gray-600"
+						:title="__('Clear color')"
+						type="button"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<!-- Image -->
+			<div>
+				<label class="block text-start text-sm font-medium text-gray-700 mb-1.5">
+					{{ __("Image") }}
+				</label>
+				<div v-if="itemData.image" class="relative inline-block">
+					<img :src="itemData.image" class="w-20 h-20 rounded-lg object-cover border border-gray-200" />
+					<button @click="itemData.image = ''"
+						class="absolute -top-1.5 -right-1.5 p-0.5 bg-white rounded-full shadow border border-gray-200 hover:bg-red-50"
+						type="button">
+						<svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+				</div>
+				<button
+					v-else-if="defaults.has_image_search"
+					@click="showImageSearch = true"
+					class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+					type="button"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+					</svg>
+					{{ __("Search Food Images") }}
+				</button>
+				<p v-else class="text-xs text-gray-400">{{ __("Set via Item form in ERPNext") }}</p>
+			</div>
+
+			<!-- Image Search Dialog -->
+			<ImageSearchDialog
+				v-model="showImageSearch"
+				:initial-query="itemData.item_name"
+				@image-selected="onImageSelected"
+			/>
+
+			<!-- Permission warning -->
 				<div v-if="!hasPermission" class="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
 					<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -170,6 +240,10 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { usePermissions } from "@/composables/usePermissions"
 import { usePOSShiftStore } from "@/stores/posShift"
+import { ITEM_COLOR_PALETTE } from "@/utils/itemColors"
+import ImageSearchDialog from "./ImageSearchDialog.vue"
+
+const colorPalette = ITEM_COLOR_PALETTE
 
 const props = defineProps({
 	initialName: { type: String, default: "" },
@@ -182,6 +256,7 @@ const { showSuccess, showError } = useToast()
 const { checkPermission } = usePermissions()
 const shiftStore = usePOSShiftStore()
 
+const showImageSearch = ref(false)
 const loadingDefaults = ref(false)
 const creating = ref(false)
 const errorMessage = ref("")
@@ -207,6 +282,8 @@ const itemData = ref({
 	is_stock_item: false,
 	opening_stock: 0,
 	warehouse: "",
+	color: "",
+	image: "",
 })
 
 const canCreate = computed(() => {
@@ -241,6 +318,8 @@ watch(show, async (val) => {
 		itemData.value.standard_buying_rate = 0
 		itemData.value.is_stock_item = false
 		itemData.value.opening_stock = 0
+		itemData.value.color = ""
+		itemData.value.image = ""
 
 		// Check permission
 		hasPermission.value = await checkPermission("Item", "create")
@@ -269,6 +348,10 @@ async function loadDefaults() {
 	}
 }
 
+function onImageSelected(imageUrl) {
+	itemData.value.image = imageUrl
+}
+
 async function handleCreate() {
 	if (!canCreate.value) return
 
@@ -287,6 +370,8 @@ async function handleCreate() {
 			opening_stock: itemData.value.opening_stock || 0,
 			warehouse: itemData.value.warehouse || "",
 			pos_profile: shiftStore.profileName,
+			image: itemData.value.image || "",
+			color: itemData.value.color || "",
 		})
 
 		showSuccess(__("Item '{0}' created successfully", [result.item_name]))

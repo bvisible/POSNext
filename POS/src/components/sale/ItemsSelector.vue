@@ -308,13 +308,14 @@
 							{{ Math.floor((item.actual_qty ?? item.stock_qty ?? 0)) }}
 						</div>
 
-						<!-- Item Image -->
-						<div class="relative aspect-square bg-gray-100 rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden">
-							<!-- Image with conditional blur on hover -->
+						<!-- Item Image / Color / Name -->
+						<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
+							:style="getCardBackgroundStyle(item)">
 							<div :class="[
 								'w-full h-full transition-all duration-300',
 								(item.is_stock_item || item.is_bundle) && (item.actual_qty ?? item.stock_qty ?? 0) <= 0 ? 'group-hover:blur-sm group-hover:brightness-75' : ''
 							]">
+								<!-- State 1: Has image -->
 								<LazyImage
 									v-if="item.image"
 									:src="item.image"
@@ -324,35 +325,19 @@
 									root-margin="100px"
 								>
 									<template #error>
-										<svg
-											class="h-8 w-8 sm:h-10 sm:w-10 text-gray-300"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-											/>
-										</svg>
+										<div class="w-full h-full flex items-center justify-center p-2"
+											:style="getCardBackgroundStyle(item, true)">
+											<span :class="getCardTextClasses(item)" class="text-center leading-tight">
+												{{ item.item_name }}
+											</span>
+										</div>
 									</template>
 								</LazyImage>
-								<div v-else class="w-full h-full flex items-center justify-center">
-									<svg
-										class="h-8 w-8 sm:h-10 sm:w-10 text-gray-300"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-										/>
-									</svg>
+								<!-- State 2 & 3: Color bg or gray bg with name -->
+								<div v-else class="w-full h-full flex items-center justify-center p-2">
+									<span :class="getCardTextClasses(item)" class="text-center leading-tight">
+										{{ item.item_name }}
+									</span>
 								</div>
 							</div>
 
@@ -524,7 +509,8 @@
 							class="group cursor-pointer hover:bg-blue-50 hover:shadow-md transition-[background-color,box-shadow] duration-100 touch-manipulation active:bg-blue-100"
 						>
 							<td class="px-2 sm:px-3 py-2 whitespace-nowrap w-[50px] sm:w-[60px]">
-								<div class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+								<div class="w-8 h-8 sm:w-10 sm:h-10 rounded flex items-center justify-center overflow-hidden"
+									:style="getCardBackgroundStyle(item)">
 									<LazyImage
 										v-if="item.image"
 										:src="item.image"
@@ -534,14 +520,16 @@
 										root-margin="100px"
 									>
 										<template #error>
-											<svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-											</svg>
+											<span class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5"
+												:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-500'">
+												{{ item.item_name.substring(0, 6) }}
+											</span>
 										</template>
 									</LazyImage>
-									<svg v-else class="h-4 w-4 sm:h-5 sm:w-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-									</svg>
+									<span v-else class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5"
+										:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-500'">
+										{{ item.item_name.substring(0, 6) }}
+									</span>
 								</div>
 							</td>
 							<td class="px-2 sm:px-3 py-2 max-w-[120px] sm:max-w-[180px] md:max-w-[200px]">
@@ -717,6 +705,7 @@
 
 <script setup>
 import LazyImage from "@/components/common/LazyImage.vue"
+import { isLightColor } from "@/utils/itemColors"
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue"
 import { useItemSearchStore } from "@/stores/itemSearch"
 import { usePOSSettingsStore } from "@/stores/posSettings"
@@ -758,6 +747,22 @@ const { getStockStatus } = useStock()
 const settingsStore = usePOSSettingsStore()
 const { showError, showWarning } = useToast()
 const { isAnyDialogOpen } = useDialogState()
+
+// Item card display helpers for grid view (image / color / name fallback)
+function getCardBackgroundStyle(item, skipImage = false) {
+	if (!skipImage && item.image) return {}
+	if (item.custom_color) return { backgroundColor: item.custom_color }
+	return { backgroundColor: '#F3F4F6' }
+}
+
+function getCardTextClasses(item) {
+	const base = 'font-bold line-clamp-3'
+	if (item.custom_color) {
+		const textColor = isLightColor(item.custom_color) ? 'text-gray-800' : 'text-white'
+		return `${base} ${textColor} text-sm sm:text-base`
+	}
+	return `${base} text-gray-500 text-xs sm:text-sm`
+}
 
 // Use Pinia store
 const itemStore = useItemSearchStore()

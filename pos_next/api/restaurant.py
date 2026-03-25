@@ -1567,6 +1567,8 @@ def create_item(
 	opening_stock=0,
 	warehouse=None,
 	pos_profile=None,
+	image=None,
+	color=None,
 ):
 	"""Create a new Item from the POS Card Editor with prices and optional stock."""
 	from frappe.utils import cint, flt
@@ -1593,6 +1595,8 @@ def create_item(
 		"item_group": item_group,
 		"stock_uom": stock_uom,
 		"is_stock_item": cint(is_stock_item),
+		"image": image or None,
+		"custom_color": color or None,
 	})
 
 	# Add item defaults from POS Profile
@@ -1665,6 +1669,8 @@ def create_item(
 		"standard_rate": flt(standard_selling_rate),
 		"item_group": item_doc.item_group,
 		"stock_uom": item_doc.stock_uom,
+		"image": item_doc.image,
+		"custom_color": item_doc.custom_color,
 	}
 
 
@@ -1713,7 +1719,68 @@ def get_item_creation_defaults(pos_profile=None):
 		"default_item_group": default_item_group,
 		"default_warehouse": default_warehouse,
 		"warehouses": [w.name for w in warehouses],
+		"has_image_search": bool(frappe.conf.get("pexels_api_key")),
 	}
+
+
+@frappe.whitelist()
+def search_food_images(query, per_page=9):
+	"""Search for food images via Pexels API. API key stored in site_config."""
+	import requests
+
+	api_key = frappe.conf.get("pexels_api_key")
+	if not api_key:
+		frappe.throw(_("Pexels API key not configured"))
+
+	try:
+		response = requests.get(
+			"https://api.pexels.com/v1/search",
+			params={
+				"query": f"food {query}",
+				"per_page": min(int(per_page), 15),
+				"orientation": "square",
+			},
+			headers={"Authorization": api_key},
+			timeout=10,
+		)
+		response.raise_for_status()
+	except Exception as e:
+		frappe.log_error("Pexels API error", str(e))
+		frappe.throw(_("Failed to search images"))
+
+	data = response.json()
+	return [
+		{
+			"id": photo["id"],
+			"url": photo["src"]["medium"],
+			"thumb": photo["src"]["tiny"],
+			"photographer": photo["photographer"],
+		}
+		for photo in data.get("photos", [])
+	]
+
+
+@frappe.whitelist()
+def download_food_image(image_url, item_name):
+	"""Download an external image and save it as a Frappe File."""
+	import requests
+
+	try:
+		response = requests.get(image_url, timeout=15)
+		response.raise_for_status()
+	except Exception as e:
+		frappe.log_error("Image download failed", str(e))
+		frappe.throw(_("Failed to download image"))
+
+	filename = f"{frappe.scrub(item_name)}.jpg"
+	file_doc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": filename,
+		"content": response.content,
+		"is_private": 0,
+	})
+	file_doc.save(ignore_permissions=True)
+	return file_doc.file_url
 
 
 @frappe.whitelist()
