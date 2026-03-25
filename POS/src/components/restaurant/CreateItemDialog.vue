@@ -180,9 +180,15 @@
 					</button>
 				</div>
 				<button
-					v-else-if="defaults.has_image_search"
-					@click="showImageSearch = true"
-					class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+					v-else
+					@click="defaults.has_image_search ? (showImageSearch = true) : null"
+					:class="[
+						'flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors',
+						defaults.has_image_search
+							? 'text-gray-600 border-gray-300 hover:bg-gray-50 cursor-pointer'
+							: 'text-gray-300 border-gray-200 cursor-not-allowed'
+					]"
+					:disabled="!defaults.has_image_search"
 					type="button"
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +196,6 @@
 					</svg>
 					{{ __("Search Food Images") }}
 				</button>
-				<p v-else class="text-xs text-gray-400">{{ __("Set via Item form in ERPNext") }}</p>
 			</div>
 
 			<!-- Image Search Dialog -->

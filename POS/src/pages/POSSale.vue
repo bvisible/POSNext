@@ -421,11 +421,14 @@
 													@click="ci_item.item_type === 'Menu' ? handleCardMenuClick(ci_item) : handleCardItemClick(ci_item)"
 													class="group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100 cursor-pointer hover:border-blue-400 hover:shadow-neo-md"
 												>
-													<div class="relative aspect-square bg-gray-100 rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden">
+													<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
+													:style="getCardItemBgStyle(ci_item)">
 														<img v-if="ci_item.image" :src="ci_item.image" class="w-full h-full object-cover" />
-														<div v-else class="w-full h-full flex items-center justify-center">
+														<div v-else class="w-full h-full flex items-center justify-center p-2">
 															<svg v-if="ci_item.item_type === 'Menu'" class="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-															<svg v-else class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+															<span v-else :class="getCardItemTextClasses(ci_item)" class="text-center leading-tight">
+																{{ ci_item.item_name || ci_item.label }}
+															</span>
 														</div>
 														<span v-if="ci_item.item_type === 'Menu'" class="absolute top-1 right-1 text-[8px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full">Menu</span>
 													</div>
@@ -453,9 +456,13 @@
 													class="flex items-center gap-3 px-2 py-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
 												>
 													<img v-if="li_item.image" :src="li_item.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-													<div v-else class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" :class="li_item.item_type === 'Menu' ? 'bg-amber-50' : 'bg-gray-100'">
+													<div v-else class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+														:style="getCardItemBgStyle(li_item)">
 														<svg v-if="li_item.item_type === 'Menu'" class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-														<svg v-else class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+														<span v-else class="text-[7px] font-bold leading-tight text-center px-0.5"
+															:class="li_item.custom_color && !isLightColor(li_item.custom_color) ? 'text-white' : 'text-gray-500'">
+															{{ (li_item.item_name || li_item.label || '').substring(0, 6) }}
+														</span>
 													</div>
 													<div class="flex-1 min-w-0">
 														<p class="text-xs font-semibold text-gray-900 truncate">{{ li_item.item_name || li_item.menu_name || li_item.label }}</p>
@@ -1349,6 +1356,7 @@ import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@/composables/useToast";
+import { isLightColor } from "@/utils/itemColors";
 
 import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useItemSearchStore } from "@/stores/itemSearch";
@@ -1480,6 +1488,20 @@ watch(() => restaurantStore.activeCards, (cards) => {
 		selectedCard.value = cards[0].name
 	}
 }, { immediate: true })
+
+// Card item display helpers (image / color / name fallback)
+function getCardItemBgStyle(item) {
+	if (item.image) return {}
+	if (item.custom_color) return { backgroundColor: item.custom_color }
+	return { backgroundColor: '#F3F4F6' }
+}
+function getCardItemTextClasses(item) {
+	const base = 'font-bold line-clamp-3'
+	if (item.custom_color) {
+		return `${base} ${isLightColor(item.custom_color) ? 'text-gray-800' : 'text-white'} text-sm sm:text-base`
+	}
+	return `${base} text-gray-500 text-xs sm:text-sm`
+}
 
 function handleCardItemClick(cardItem) {
 	const item = {

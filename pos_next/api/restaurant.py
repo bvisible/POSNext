@@ -866,10 +866,11 @@ def get_active_cards():
 		for ci in items:
 			if ci.item_type == "Item" and ci.item:
 				item_data = frappe.db.get_value("Item", ci.item,
-					["item_name", "image", "standard_rate"], as_dict=True)
+					["item_name", "image", "custom_color", "standard_rate"], as_dict=True)
 				if item_data:
 					ci["item_name"] = item_data.item_name
 					ci["image"] = item_data.image
+					ci["custom_color"] = item_data.custom_color
 					ci["default_price"] = item_data.standard_rate or 0
 			elif ci.item_type == "Menu" and ci.menu:
 				menu_data = frappe.db.get_value("Restaurant Menu", ci.menu,
