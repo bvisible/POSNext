@@ -1740,7 +1740,6 @@ def search_food_images(query, per_page=15, page=1):
 				"query": query,
 				"per_page": min(int(per_page), 30),
 				"page": int(page),
-				"orientation": "square",
 			},
 			headers={"Authorization": api_key},
 			timeout=10,
