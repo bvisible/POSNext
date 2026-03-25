@@ -164,7 +164,6 @@
 					v-model="itemSearchQuery"
 					type="text"
 					:placeholder="__('Search items by name...')"
-					@input="searchItems"
 				/>
 				<div class="max-h-48 overflow-y-auto space-y-1">
 					<div v-for="item in searchResults" :key="item.name"
@@ -211,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { Button, Dialog, Input } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
@@ -406,6 +405,9 @@ function searchItems() {
 		}
 	}, 300)
 }
+
+// Trigger search when query changes (works with both typing and programmatic updates)
+watch(itemSearchQuery, () => searchItems())
 
 onMounted(loadCards)
 </script>
