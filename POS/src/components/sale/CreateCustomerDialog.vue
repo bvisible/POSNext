@@ -2,11 +2,36 @@
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-				<!-- Company Name (optional - if filled, creates a Company customer) -->
+				<!-- Customer Type Toggle -->
+				<div class="flex bg-gray-100 rounded-neo-sm p-0.5">
+					<button
+						type="button"
+						@click="customerType = 'Individual'"
+						class="flex-1 py-1.5 px-3 text-sm font-medium rounded-neo-sm transition-colors"
+						:class="customerType === 'Individual'
+							? 'bg-white text-gray-900 shadow-sm'
+							: 'text-gray-500 hover:text-gray-700'"
+					>
+						{{ __("Individual") }}
+					</button>
+					<button
+						type="button"
+						@click="customerType = 'Company'"
+						class="flex-1 py-1.5 px-3 text-sm font-medium rounded-neo-sm transition-colors"
+						:class="customerType === 'Company'
+							? 'bg-white text-gray-900 shadow-sm'
+							: 'text-gray-500 hover:text-gray-700'"
+					>
+						{{ __("Company") }}
+					</button>
+				</div>
+
+				<!-- Company Name (only when Company type) -->
 				<input
+					v-if="customerType === 'Company'"
 					v-model="customerData.company_name"
 					type="text"
-					:placeholder="__('Company name')"
+					:placeholder="__('Company name') + ' *'"
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 				/>
 
@@ -15,14 +40,13 @@
 					<input
 						v-model="customerData.first_name"
 						type="text"
-						:required="!customerData.company_name"
-						:placeholder="customerData.company_name ? __('First name') : __('First name') + ' *'"
+						:placeholder="__('First name') + ' *'"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					/>
 					<input
 						v-model="customerData.last_name"
 						type="text"
-						:placeholder="__('Last name')"
+						:placeholder="__('Last name') + ' *'"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					/>
 				</div>
@@ -92,7 +116,7 @@
 					<input
 						v-model="phoneNumber"
 						type="tel"
-						:placeholder="__('Phone number')"
+						:placeholder="__('Phone number') + ' *'"
 						class="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-start"
 						@input="updateMobileNumber"
 					/>
@@ -102,7 +126,7 @@
 				<input
 					v-model="customerData.email_id"
 					type="email"
-					:placeholder="__('Email')"
+					:placeholder="__('Email') + ' *'"
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 				/>
 
@@ -111,7 +135,7 @@
 					v-model="customerGroup"
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
 				>
-					<option value="">{{ __("Customer Group") }}</option>
+					<option value="" disabled>{{ __("Customer Group") }}</option>
 					<option v-for="group in customerGroups" :key="group" :value="group">
 						{{ group }}
 					</option>
@@ -184,7 +208,7 @@
 						variant="solid"
 						@click="handleCreate"
 						:loading="createCustomerResource.loading || updateCustomerResource.loading || checkingPermission"
-						:disabled="(!customerData.first_name && !customerData.company_name) || !hasPermission"
+						:disabled="!isFormValid || !hasPermission"
 					>
 						{{ isEditMode ? __("Save Changes") : __("Create Customer") }}
 					</Button>
@@ -202,12 +226,12 @@
  * CreateCustomerDialog - Quick customer creation from POS
  *
  * Features:
+ * - Toggle between Individual and Company customer types
  * - Compact placeholder-only form (no labels)
  * - First/Last name split for structured input
  * - Country code selector with flag icons and search
  * - Auto-sets territory based on selected country
  * - Permission checking before allowing creation
- * - Lazy loads countries data when dialog opens
  */
 
 import { usePOSPermissions } from "@/composables/usePermissions"
@@ -254,18 +278,22 @@ const emit = defineEmits([
 
 const hasPermission = ref(true)
 const checkingPermission = ref(false)
-const selectedCountryCode = ref("")
+const selectedCountryCode = ref("+41")
 const phoneNumber = ref("")
 const showCountryDropdown = ref(false)
 const countrySearchQuery = ref("")
 const dropdownRef = ref(null)
 const countrySearchRef = ref(null)
 
-// Internal state for auto-filled fields
-const customerGroup = ref("Individual")
+// Customer type toggle
+const customerType = ref("Individual")
+
+// Internal state
+const customerGroup = ref("")
+const defaultCustomerGroup = ref("Individual")
 const territory = ref("All Territories")
 const territories = ref(["All Territories"])
-const customerGroups = ref(["Commercial", "Individual", "Non Profit", "Government"])
+const customerGroups = ref([])
 
 const customerData = ref({
 	company_name: "",
@@ -291,15 +319,27 @@ const show = computed({
 
 const isEditMode = computed(() => !!props.customer?.name)
 
-const isCompany = computed(() => !!customerData.value.company_name.trim())
+const isCompany = computed(() => customerType.value === "Company")
 
 const fullName = computed(() => {
-	if (isCompany.value) {
+	if (isCompany.value && customerData.value.company_name.trim()) {
 		return customerData.value.company_name.trim()
 	}
 	const first = customerData.value.first_name.trim()
 	const last = customerData.value.last_name.trim()
 	return last ? `${first} ${last}` : first
+})
+
+const isFormValid = computed(() => {
+	if (isCompany.value) {
+		return !!customerData.value.company_name.trim()
+	}
+	return !!(
+		customerData.value.first_name.trim() &&
+		customerData.value.last_name.trim() &&
+		phoneNumber.value.trim() &&
+		customerData.value.email_id.trim()
+	)
 })
 
 const showAddressFields = computed(
@@ -419,8 +459,8 @@ const updateCustomerResource = createResource({
 		name: props.customer?.name,
 		fieldname: {
 			customer_name: fullName.value,
-			customer_type: isCompany.value ? "Company" : "Individual",
-			customer_group: customerGroup.value || "Individual",
+			customer_type: customerType.value,
+			customer_group: customerGroup.value || defaultCustomerGroup.value,
 			territory: territory.value || "All Territories",
 			mobile_no: customerData.value.mobile_no || "",
 			email_id: customerData.value.email_id || "",
@@ -454,31 +494,56 @@ const createListResource = (doctype, onSuccess) =>
 
 const customerGroupsResource = createListResource(
 	"Customer Group",
-	(names) => (customerGroups.value = names),
+	(names) => {
+		customerGroups.value = names
+		// Auto-select default if not already set
+		if (!customerGroup.value && defaultCustomerGroup.value) {
+			customerGroup.value = names.includes(defaultCustomerGroup.value)
+				? defaultCustomerGroup.value
+				: names[0] || ""
+		}
+	},
 )
 const territoriesResource = createListResource(
 	"Territory",
 	(names) => (territories.value = names),
 )
 
+// Fetch only 'country' from POS Profile (customer_group may not exist on all versions)
 const posProfileResource = createResource({
 	url: "frappe.client.get_value",
 	makeParams: () => ({
 		doctype: "POS Profile",
 		filters: { name: props.posProfile },
-		fieldname: ["country", "customer_group"],
+		fieldname: ["country"],
 	}),
 	auto: false,
-	onSuccess: (data) => {
-		setCountryFromName(data?.country || "Switzerland")
-		if (data?.customer_group) {
-			customerGroup.value = data.customer_group
-		}
-	},
+	onSuccess: (data) => setCountryFromName(data?.country || "Switzerland"),
 	onError: (err) => {
 		log.error("Error loading POS Profile", err)
 		selectedCountryCode.value = "+41"
 	},
+})
+
+// Fetch default customer group from Selling Settings
+const sellingSettingsResource = createResource({
+	url: "frappe.client.get_value",
+	makeParams: () => ({
+		doctype: "Selling Settings",
+		filters: { name: "Selling Settings" },
+		fieldname: ["cust_master_group"],
+	}),
+	auto: false,
+	onSuccess: (data) => {
+		if (data?.cust_master_group) {
+			defaultCustomerGroup.value = data.cust_master_group
+			// Set as current if not already changed by user
+			if (!customerGroup.value || customerGroup.value === "Individual") {
+				customerGroup.value = data.cust_master_group
+			}
+		}
+	},
+	onError: (err) => log.error("Error loading Selling Settings", err),
 })
 
 // =============================================================================
@@ -489,16 +554,17 @@ const loadDialogData = async () => {
 	// Lazy load countries (non-blocking)
 	countriesStore.loadCountries()
 
-	// Load form options
-	await territoriesResource.reload()
+	// Load form options in parallel
+	territoriesResource.reload()
 	customerGroupsResource.reload()
+	sellingSettingsResource.reload()
 	checkPermissions()
 
 	// Set country from POS Profile
 	if (props.posProfile) {
 		await posProfileResource.reload()
 	} else {
-		selectedCountryCode.value = "+41"
+		setCountryFromName("Switzerland")
 	}
 }
 
@@ -530,8 +596,8 @@ const handleCreate = async () => {
 			doc: {
 				doctype: "Customer",
 				customer_name: fullName.value,
-				customer_type: isCompany.value ? "Company" : "Individual",
-				customer_group: customerGroup.value || "Individual",
+				customer_type: customerType.value,
+				customer_group: customerGroup.value || defaultCustomerGroup.value,
 				territory: territory.value || "All Territories",
 				mobile_no: customerData.value.mobile_no || "",
 				email_id: customerData.value.email_id || "",
@@ -580,7 +646,6 @@ const handleCreate = async () => {
 				}
 			} catch (addressError) {
 				log.error("Error creating address", addressError)
-				// Don't fail customer creation if address fails
 			}
 		}
 
@@ -596,6 +661,7 @@ const handleCreate = async () => {
 }
 
 const resetForm = () => {
+	customerType.value = "Individual"
 	Object.assign(customerData.value, {
 		company_name: "",
 		first_name: "",
@@ -607,9 +673,9 @@ const resetForm = () => {
 		pincode: "",
 		country: "",
 	})
-	customerGroup.value = "Individual"
+	customerGroup.value = defaultCustomerGroup.value
 	territory.value = "All Territories"
-	selectedCountryCode.value = ""
+	selectedCountryCode.value = "+41"
 	phoneNumber.value = ""
 }
 
@@ -634,7 +700,9 @@ watch(
 	() => props.customer,
 	(customer) => {
 		if (customer?.name) {
-			// Handle company vs individual
+			// Set customer type toggle
+			customerType.value = customer.customer_type === "Company" ? "Company" : "Individual"
+
 			if (customer.customer_type === "Company") {
 				customerData.value.company_name = customer.customer_name || ""
 				customerData.value.first_name = ""
@@ -647,7 +715,7 @@ watch(
 			}
 
 			customerData.value.email_id = customer.email_id || ""
-			customerGroup.value = customer.customer_group || "Individual"
+			customerGroup.value = customer.customer_group || defaultCustomerGroup.value
 			territory.value = customer.territory || "All Territories"
 
 			// Handle mobile_no with country code
