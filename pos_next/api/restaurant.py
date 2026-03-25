@@ -1725,7 +1725,7 @@ def get_item_creation_defaults(pos_profile=None):
 
 
 @frappe.whitelist()
-def search_food_images(query, per_page=9):
+def search_food_images(query, per_page=15, page=1):
 	"""Search for food images via Pexels API. API key stored in site_config."""
 	import requests
 
@@ -1737,8 +1737,9 @@ def search_food_images(query, per_page=9):
 		response = requests.get(
 			"https://api.pexels.com/v1/search",
 			params={
-				"query": f"food {query}",
-				"per_page": min(int(per_page), 15),
+				"query": query,
+				"per_page": min(int(per_page), 30),
+				"page": int(page),
 				"orientation": "square",
 			},
 			headers={"Authorization": api_key},
@@ -1750,7 +1751,7 @@ def search_food_images(query, per_page=9):
 		frappe.throw(_("Failed to search images"))
 
 	data = response.json()
-	return [
+	photos = [
 		{
 			"id": photo["id"],
 			"url": photo["src"]["medium"],
@@ -1759,6 +1760,13 @@ def search_food_images(query, per_page=9):
 		}
 		for photo in data.get("photos", [])
 	]
+	total = data.get("total_results", 0)
+	current_page = int(page)
+	return {
+		"photos": photos,
+		"has_more": current_page * int(per_page) < total,
+		"page": current_page,
+	}
 
 
 @frappe.whitelist()
