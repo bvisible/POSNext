@@ -421,3 +421,10 @@ onMounted(loadCards)
 	opacity: 0;
 }
 </style>
+
+<style>
+/* Ensure frappe-ui Dialogs render above CardEditor overlay (z-300) */
+.dialog-overlay {
+	z-index: 400 !important;
+}
+</style>
