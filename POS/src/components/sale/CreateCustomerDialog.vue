@@ -1,193 +1,152 @@
 <template>
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
-			<div class="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-1">
-				<!-- Customer Name (Required) -->
-				<div>
-					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
-						{{ __("Customer Name") }} <span class="text-red-500">*</span>
-					</label>
-					<Input
-						v-model="customerData.customer_name"
+			<div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
+				<!-- First Name + Last Name -->
+				<div class="grid grid-cols-2 gap-2">
+					<input
+						v-model="customerData.first_name"
 						type="text"
-						:placeholder="__('Enter customer name')"
 						required
+						:placeholder="__('First name') + ' *'"
+						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+					/>
+					<input
+						v-model="customerData.last_name"
+						type="text"
+						:required="!isEditMode"
+						:placeholder="isEditMode ? __('Last name') : __('Last name') + ' *'"
+						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					/>
 				</div>
 
 				<!-- Mobile Number with Country Code Selector -->
-				<div>
-					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
-						{{ __("Mobile Number") }}
-					</label>
-					<div class="flex gap-2">
-						<!-- Country Code Dropdown -->
-						<div class="relative" ref="dropdownRef">
-							<button
-								type="button"
-								@click="showCountryDropdown = !showCountryDropdown"
-								class="flex items-center gap-1 w-24 ps-2 pe-1 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white hover:bg-gray-50"
-							>
-								<img
-									:src="`https://flagcdn.com/h24/${currentCountryCode}.png`"
-									:alt="currentCountryCode"
-									class="w-6 h-auto rounded-sm"
-									@error="handleFlagError"
-								/>
-								<span class="flex-1 text-start">{{ selectedCountryCode || "+20" }}</span>
-								<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-								</svg>
-							</button>
+				<div class="flex gap-2">
+					<!-- Country Code Dropdown -->
+					<div class="relative" ref="dropdownRef">
+						<button
+							type="button"
+							@click="showCountryDropdown = !showCountryDropdown"
+							class="flex items-center gap-1 w-24 ps-2 pe-1 py-2.5 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-gray-100"
+						>
+							<img
+								:src="`https://flagcdn.com/h24/${currentCountryCode}.png`"
+								:alt="currentCountryCode"
+								class="w-6 h-auto rounded-sm"
+								@error="handleFlagError"
+							/>
+							<span class="flex-1 text-start">{{ selectedCountryCode || "+20" }}</span>
+							<svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+						</button>
 
-							<!-- Country Search Dropdown -->
-							<div
-								v-if="showCountryDropdown"
-								class="absolute start-0 z-50 mt-1 w-80 max-h-80 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
-							>
-								<div class="sticky top-0 bg-white border-b border-gray-200 p-2">
-									<input
-										ref="countrySearchRef"
-										v-model="countrySearchQuery"
-										type="text"
-										:placeholder="__('Search country or code...')"
-										class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-										@keydown.escape="showCountryDropdown = false"
+						<!-- Country Search Dropdown -->
+						<div
+							v-if="showCountryDropdown"
+							class="absolute start-0 z-50 mt-1 w-72 max-h-64 bg-white rounded-neo-md shadow-neo-lg border border-gray-200 overflow-hidden"
+						>
+							<div class="sticky top-0 bg-white border-b border-gray-200 p-2">
+								<input
+									ref="countrySearchRef"
+									v-model="countrySearchQuery"
+									type="text"
+									:placeholder="__('Search country...')"
+									class="w-full px-3 py-2 text-sm border border-gray-200 rounded-neo-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+									@keydown.escape="showCountryDropdown = false"
+								/>
+							</div>
+							<div class="overflow-y-auto max-h-48">
+								<button
+									v-for="country in filteredCountries"
+									:key="country.code"
+									type="button"
+									@click="selectCountry(country)"
+									class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-start"
+									:class="{ 'bg-blue-50': selectedCountryCode === country.isd }"
+								>
+									<img
+										:src="`https://flagcdn.com/h24/${country.code.toLowerCase()}.png`"
+										:alt="country.name"
+										class="w-5 h-auto rounded-sm shadow-sm"
+										@error="(e) => (e.target.style.display = 'none')"
 									/>
-								</div>
-								<div class="overflow-y-auto max-h-64">
-									<button
-										v-for="country in filteredCountries"
-										:key="country.code"
-										type="button"
-										@click="selectCountry(country)"
-										class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-start"
-										:class="{ 'bg-blue-50': selectedCountryCode === country.isd }"
-									>
-										<img
-											:src="`https://flagcdn.com/h24/${country.code.toLowerCase()}.png`"
-											:alt="country.name"
-											class="w-6 h-auto rounded-sm shadow-sm"
-											@error="(e) => (e.target.style.display = 'none')"
-										/>
-										<span class="flex-1 text-sm font-medium text-gray-700">{{ country.name }}</span>
-										<span class="text-sm text-gray-500">{{ country.isd }}</span>
-									</button>
-									<div v-if="filteredCountries.length === 0" class="px-4 py-8 text-center text-sm text-gray-500">
-										{{ __("No countries found") }}
-									</div>
+									<span class="flex-1 text-sm text-gray-700 truncate">{{ country.name }}</span>
+									<span class="text-sm text-gray-400">{{ country.isd }}</span>
+								</button>
+								<div v-if="filteredCountries.length === 0" class="px-4 py-6 text-center text-sm text-gray-400">
+									{{ __("No countries found") }}
 								</div>
 							</div>
 						</div>
-
-						<!-- Phone Number Input -->
-						<input
-							v-model="phoneNumber"
-							type="tel"
-							:placeholder="__('Enter phone number')"
-							class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-start"
-							@input="updateMobileNumber"
-						/>
 					</div>
+
+					<!-- Phone Number Input -->
+					<input
+						v-model="phoneNumber"
+						type="tel"
+						:placeholder="__('Phone number')"
+						class="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-start"
+						@input="updateMobileNumber"
+					/>
 				</div>
 
 				<!-- Email -->
-				<div>
-					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
-						{{ __("Email") }}
-					</label>
-					<Input v-model="customerData.email_id" type="email" :placeholder="__('Enter email address')" />
-				</div>
+				<input
+					v-model="customerData.email_id"
+					type="email"
+					:placeholder="__('Email')"
+					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+				/>
 
 				<!-- Customer Group -->
-				<div>
-					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
-						{{ __("Customer Group") }}
-					</label>
-					<select
-						v-model="customerData.customer_group"
-						class="w-full px-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="">{{ __("Select Customer Group") }}</option>
-						<option v-for="group in customerGroups" :key="group" :value="group">
-							{{ group }}
-						</option>
-					</select>
-				</div>
-
-				<!-- Territory -->
-				<div>
-					<label class="block text-start text-sm font-medium text-gray-700 mb-2">
-						{{ __("Territory") }}
-					</label>
-					<select
-						v-model="customerData.territory"
-						class="w-full px-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="">{{ __("Select Territory") }}</option>
-						<option v-for="territory in territories" :key="territory" :value="territory">
-							{{ territory }}
-						</option>
-					</select>
-				</div>
+				<select
+					v-model="customerGroup"
+					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+				>
+					<option value="">{{ __("Customer Group") }}</option>
+					<option v-for="group in customerGroups" :key="group" :value="group">
+						{{ group }}
+					</option>
+				</select>
 
 				<!-- Address Fields (conditional) -->
 				<template v-if="showAddressFields">
-					<div class="pt-3 border-t border-gray-200">
-						<h4 class="text-sm font-medium text-gray-700 mb-2">{{ __("Address") }}</h4>
+					<div class="pt-2 border-t border-gray-200">
+						<p class="text-xs font-medium text-gray-500 mb-1">{{ __("Address") }}</p>
 					</div>
 
-					<!-- Address Line 1 -->
-					<div>
-						<label class="block text-start text-sm font-medium text-gray-700 mb-1">
-							{{ __("Address Line 1") }}
-						</label>
-						<Input
-							v-model="customerData.address_line1"
+					<input
+						v-model="customerData.address_line1"
+						type="text"
+						:placeholder="__('Street address')"
+						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+					/>
+
+					<div class="grid grid-cols-2 gap-2">
+						<input
+							v-model="customerData.city"
 							type="text"
-							:placeholder="__('Street address')"
+							:placeholder="__('City')"
+							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+						/>
+						<input
+							v-model="customerData.pincode"
+							type="text"
+							:placeholder="__('Postal code')"
+							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 						/>
 					</div>
 
-					<!-- City and Pincode -->
-					<div class="grid grid-cols-2 gap-3">
-						<div>
-							<label class="block text-start text-sm font-medium text-gray-700 mb-1">
-								{{ __("City") }}
-							</label>
-							<Input
-								v-model="customerData.city"
-								type="text"
-								:placeholder="__('City')"
-							/>
-						</div>
-						<div>
-							<label class="block text-start text-sm font-medium text-gray-700 mb-1">
-								{{ __("Postal Code") }}
-							</label>
-							<Input
-								v-model="customerData.pincode"
-								type="text"
-								:placeholder="__('Postal code')"
-							/>
-						</div>
-					</div>
-
-					<!-- Country -->
-					<div>
-						<label class="block text-start text-sm font-medium text-gray-700 mb-1">
-							{{ __("Country") }}
-						</label>
-						<select
-							v-model="customerData.country"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-						>
-							<option value="">{{ __("Select Country") }}</option>
-							<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
-								{{ country.name }}
-							</option>
-						</select>
-					</div>
+					<select
+						v-model="customerData.country"
+						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+					>
+						<option value="">{{ __("Country") }}</option>
+						<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
+							{{ country.name }}
+						</option>
+					</select>
 				</template>
 			</div>
 		</template>
@@ -195,7 +154,7 @@
 		<template #actions>
 			<div class="flex flex-col gap-2">
 				<!-- Permission Warning -->
-				<div v-if="!hasPermission" class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+				<div v-if="!hasPermission" class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-neo-sm">
 					<div class="flex items-start gap-2">
 						<svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
 							<path
@@ -218,7 +177,7 @@
 						variant="solid"
 						@click="handleCreate"
 						:loading="createCustomerResource.loading || updateCustomerResource.loading || checkingPermission"
-						:disabled="!customerData.customer_name || !hasPermission"
+						:disabled="!customerData.first_name || (!customerData.last_name && !isEditMode) || !hasPermission"
 					>
 						{{ isEditMode ? __("Save Changes") : __("Create Customer") }}
 					</Button>
@@ -236,10 +195,12 @@
  * CreateCustomerDialog - Quick customer creation from POS
  *
  * Features:
+ * - Compact placeholder-only form (no labels)
+ * - First/Last name split for structured input
  * - Country code selector with flag icons and search
  * - Auto-sets territory based on selected country
  * - Permission checking before allowing creation
- * - Lazy loads countries data when dialog opens (not on app startup)
+ * - Lazy loads countries data when dialog opens
  */
 
 import { usePOSPermissions } from "@/composables/usePermissions"
@@ -248,7 +209,7 @@ import { useCountriesStore } from "@/stores/countries"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { logger } from "@/utils/logger"
-import { Button, Dialog, Input, createResource } from "frappe-ui"
+import { Button, Dialog, createResource } from "frappe-ui"
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
 const log = logger.create("CreateCustomerDialog")
@@ -293,20 +254,17 @@ const countrySearchQuery = ref("")
 const dropdownRef = ref(null)
 const countrySearchRef = ref(null)
 
-const customerGroups = ref([
-	"Commercial",
-	"Individual",
-	"Non Profit",
-	"Government",
-])
+// Internal state for auto-filled fields
+const customerGroup = ref("Individual")
+const territory = ref("All Territories")
 const territories = ref(["All Territories"])
+const customerGroups = ref(["Commercial", "Individual", "Non Profit", "Government"])
 
 const customerData = ref({
-	customer_name: "",
+	first_name: "",
+	last_name: "",
 	mobile_no: "",
 	email_id: "",
-	customer_group: "Individual",
-	territory: "All Territories",
 	// Address fields
 	address_line1: "",
 	city: "",
@@ -324,6 +282,12 @@ const show = computed({
 })
 
 const isEditMode = computed(() => !!props.customer?.name)
+
+const fullName = computed(() => {
+	const first = customerData.value.first_name.trim()
+	const last = customerData.value.last_name.trim()
+	return last ? `${first} ${last}` : first
+})
 
 const showAddressFields = computed(
 	() => posSettingsStore.showAddressFieldsInCustomerForm,
@@ -403,7 +367,7 @@ const updateTerritoryFromCountry = () => {
 
 	// Try exact match first
 	if (territories.value.includes(country.name)) {
-		customerData.value.territory = country.name
+		territory.value = country.name
 		log.info(`Territory set to: ${country.name}`)
 		return
 	}
@@ -416,7 +380,7 @@ const updateTerritoryFromCountry = () => {
 	)
 
 	if (fuzzyMatch) {
-		customerData.value.territory = fuzzyMatch
+		territory.value = fuzzyMatch
 		log.info(`Territory set to fuzzy match: ${fuzzyMatch}`)
 	}
 }
@@ -441,9 +405,9 @@ const updateCustomerResource = createResource({
 		doctype: "Customer",
 		name: props.customer?.name,
 		fieldname: {
-			customer_name: customerData.value.customer_name,
-			customer_group: customerData.value.customer_group || __("Individual"),
-			territory: customerData.value.territory || __("All Territories"),
+			customer_name: fullName.value,
+			customer_group: customerGroup.value || "Individual",
+			territory: territory.value || "All Territories",
 			mobile_no: customerData.value.mobile_no || "",
 			email_id: customerData.value.email_id || "",
 		},
@@ -532,7 +496,7 @@ const checkPermissions = async () => {
 }
 
 const handleCreate = async () => {
-	if (!customerData.value.customer_name) {
+	if (!fullName.value) {
 		return showError(__("Customer Name is required"))
 	}
 
@@ -546,10 +510,10 @@ const handleCreate = async () => {
 		const customer = await createCustomerResource.fetch({
 			doc: {
 				doctype: "Customer",
-				customer_name: customerData.value.customer_name,
+				customer_name: fullName.value,
 				customer_type: "Individual",
-				customer_group: customerData.value.customer_group || "Individual",
-				territory: customerData.value.territory || "All Territories",
+				customer_group: customerGroup.value || "Individual",
+				territory: territory.value || "All Territories",
 				mobile_no: customerData.value.mobile_no || "",
 				email_id: customerData.value.email_id || "",
 				default_currency: posShiftStore.profileCurrency,
@@ -568,7 +532,7 @@ const handleCreate = async () => {
 				const address = await createAddressResource.fetch({
 					doc: {
 						doctype: "Address",
-						address_title: customerData.value.customer_name,
+						address_title: fullName.value,
 						address_type: "Billing",
 						address_line1: customerData.value.address_line1 || "",
 						city: customerData.value.city || "",
@@ -614,16 +578,17 @@ const handleCreate = async () => {
 
 const resetForm = () => {
 	Object.assign(customerData.value, {
-		customer_name: "",
+		first_name: "",
+		last_name: "",
 		mobile_no: "",
 		email_id: "",
-		customer_group: "Individual",
-		territory: "All Territories",
 		address_line1: "",
 		city: "",
 		pincode: "",
 		country: "",
 	})
+	customerGroup.value = "Individual"
+	territory.value = "All Territories"
 	selectedCountryCode.value = ""
 	phoneNumber.value = ""
 }
@@ -632,9 +597,16 @@ const resetForm = () => {
 // Watchers
 // =============================================================================
 
+// Pre-fill from search query (split on first space)
 watch(
 	() => props.initialName,
-	(name) => name && (customerData.value.customer_name = name),
+	(name) => {
+		if (name) {
+			const parts = name.split(" ")
+			customerData.value.first_name = parts[0] || ""
+			customerData.value.last_name = parts.slice(1).join(" ") || ""
+		}
+	},
 )
 
 // Pre-fill form when customer prop changes (edit mode)
@@ -642,11 +614,15 @@ watch(
 	() => props.customer,
 	(customer) => {
 		if (customer?.name) {
-			customerData.value.customer_name = customer.customer_name || ""
+			// Split customer_name into first/last
+			const nameParts = (customer.customer_name || "").split(" ")
+			customerData.value.first_name = nameParts[0] || ""
+			customerData.value.last_name = nameParts.slice(1).join(" ") || ""
+
 			customerData.value.email_id = customer.email_id || ""
-			customerData.value.customer_group =
-				customer.customer_group || "Individual"
-			customerData.value.territory = customer.territory || "All Territories"
+			customerGroup.value = customer.customer_group || "Individual"
+			territory.value = customer.territory || "All Territories"
+
 			// Handle mobile_no with country code
 			if (customer.mobile_no) {
 				customerData.value.mobile_no = customer.mobile_no
@@ -709,17 +685,3 @@ onBeforeUnmount(() => {
 	document.removeEventListener("click", handleClickOutside)
 })
 </script>
-
-<style scoped>
-.sr-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border-width: 0;
-}
-</style>
