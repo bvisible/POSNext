@@ -756,7 +756,8 @@
 					<div class="flex gap-1.5 sm:gap-2">
 						<!-- Item Image Thumbnail -->
 						<div
-							class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
 						>
 							<img
 								v-if="item.image"
@@ -768,20 +769,13 @@
 								decoding="async"
 								class="w-full h-full object-cover"
 							/>
-							<svg
+							<span
 								v-else
-								class="h-5 w-5 sm:h-6 sm:w-6 text-gray-400"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
+								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
+								:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-400'"
 							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-								/>
-							</svg>
+								{{ (item.item_name || '').substring(0, 8) }}
+							</span>
 						</div>
 
 						<!-- Item Content -->
@@ -1396,6 +1390,7 @@ import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSOffersStore } from "@/stores/posOffers"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { useRestaurantStore } from "@/stores/restaurant"
+import { isLightColor } from "@/utils/itemColors"
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,

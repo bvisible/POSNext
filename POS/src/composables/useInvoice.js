@@ -285,6 +285,7 @@ export function useInvoice() {
 				amount: quantity * (item.rate || item.price_list_rate || 0),
 				stock_qty: item.stock_qty || 0,
 				image: item.image,
+				custom_color: item.custom_color,
 				uom: item.uom || item.stock_uom,
 				stock_uom: item.stock_uom,
 				conversion_factor: item.conversion_factor || 1,

@@ -1510,6 +1510,7 @@ function handleCardItemClick(cardItem) {
 		item_group: cardItem.item_group || "",
 		rate: cardItem.price || cardItem.default_price || 0,
 		image: cardItem.image || "",
+		custom_color: cardItem.custom_color || "",
 	}
 	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
 	if (stationInfo) {
