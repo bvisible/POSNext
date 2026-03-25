@@ -2,20 +2,27 @@
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
 			<div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
+				<!-- Company Name (optional - if filled, creates a Company customer) -->
+				<input
+					v-model="customerData.company_name"
+					type="text"
+					:placeholder="__('Company name')"
+					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+				/>
+
 				<!-- First Name + Last Name -->
 				<div class="grid grid-cols-2 gap-2">
 					<input
 						v-model="customerData.first_name"
 						type="text"
-						required
-						:placeholder="__('First name') + ' *'"
+						:required="!customerData.company_name"
+						:placeholder="customerData.company_name ? __('First name') : __('First name') + ' *'"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					/>
 					<input
 						v-model="customerData.last_name"
 						type="text"
-						:required="!isEditMode"
-						:placeholder="isEditMode ? __('Last name') : __('Last name') + ' *'"
+						:placeholder="__('Last name')"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					/>
 				</div>
@@ -35,7 +42,7 @@
 								class="w-6 h-auto rounded-sm"
 								@error="handleFlagError"
 							/>
-							<span class="flex-1 text-start">{{ selectedCountryCode || "+20" }}</span>
+							<span class="flex-1 text-start">{{ selectedCountryCode || "+41" }}</span>
 							<svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 							</svg>
@@ -177,7 +184,7 @@
 						variant="solid"
 						@click="handleCreate"
 						:loading="createCustomerResource.loading || updateCustomerResource.loading || checkingPermission"
-						:disabled="!customerData.first_name || (!customerData.last_name && !isEditMode) || !hasPermission"
+						:disabled="(!customerData.first_name && !customerData.company_name) || !hasPermission"
 					>
 						{{ isEditMode ? __("Save Changes") : __("Create Customer") }}
 					</Button>
@@ -261,6 +268,7 @@ const territories = ref(["All Territories"])
 const customerGroups = ref(["Commercial", "Individual", "Non Profit", "Government"])
 
 const customerData = ref({
+	company_name: "",
 	first_name: "",
 	last_name: "",
 	mobile_no: "",
@@ -283,7 +291,12 @@ const show = computed({
 
 const isEditMode = computed(() => !!props.customer?.name)
 
+const isCompany = computed(() => !!customerData.value.company_name.trim())
+
 const fullName = computed(() => {
+	if (isCompany.value) {
+		return customerData.value.company_name.trim()
+	}
 	const first = customerData.value.first_name.trim()
 	const last = customerData.value.last_name.trim()
 	return last ? `${first} ${last}` : first
@@ -297,7 +310,7 @@ const currentCountryCode = computed(() => {
 	const country = countriesStore.countries.find(
 		(c) => c.isd === selectedCountryCode.value,
 	)
-	return country?.code.toLowerCase() || "eg"
+	return country?.code.toLowerCase() || "ch"
 })
 
 const filteredCountries = computed(() => {
@@ -340,7 +353,7 @@ const handleClickOutside = (event) => {
 
 const setCountryFromName = (countryName) => {
 	if (!countryName) {
-		selectedCountryCode.value = "+20"
+		selectedCountryCode.value = "+41"
 		return
 	}
 
@@ -352,7 +365,7 @@ const setCountryFromName = (countryName) => {
 		log.info(`Set country code to ${isd} and address country to ${countryName}`)
 	} else {
 		log.warn(`Country "${countryName}" not found`)
-		selectedCountryCode.value = "+20"
+		selectedCountryCode.value = "+41"
 	}
 }
 
@@ -406,6 +419,7 @@ const updateCustomerResource = createResource({
 		name: props.customer?.name,
 		fieldname: {
 			customer_name: fullName.value,
+			customer_type: isCompany.value ? "Company" : "Individual",
 			customer_group: customerGroup.value || "Individual",
 			territory: territory.value || "All Territories",
 			mobile_no: customerData.value.mobile_no || "",
@@ -456,14 +470,14 @@ const posProfileResource = createResource({
 	}),
 	auto: false,
 	onSuccess: (data) => {
-		setCountryFromName(data?.country || "Egypt")
+		setCountryFromName(data?.country || "Switzerland")
 		if (data?.customer_group) {
 			customerGroup.value = data.customer_group
 		}
 	},
 	onError: (err) => {
 		log.error("Error loading POS Profile", err)
-		selectedCountryCode.value = "+20"
+		selectedCountryCode.value = "+41"
 	},
 })
 
@@ -484,7 +498,7 @@ const loadDialogData = async () => {
 	if (props.posProfile) {
 		await posProfileResource.reload()
 	} else {
-		selectedCountryCode.value = "+20"
+		selectedCountryCode.value = "+41"
 	}
 }
 
@@ -516,7 +530,7 @@ const handleCreate = async () => {
 			doc: {
 				doctype: "Customer",
 				customer_name: fullName.value,
-				customer_type: "Individual",
+				customer_type: isCompany.value ? "Company" : "Individual",
 				customer_group: customerGroup.value || "Individual",
 				territory: territory.value || "All Territories",
 				mobile_no: customerData.value.mobile_no || "",
@@ -583,6 +597,7 @@ const handleCreate = async () => {
 
 const resetForm = () => {
 	Object.assign(customerData.value, {
+		company_name: "",
 		first_name: "",
 		last_name: "",
 		mobile_no: "",
@@ -619,10 +634,17 @@ watch(
 	() => props.customer,
 	(customer) => {
 		if (customer?.name) {
-			// Split customer_name into first/last
-			const nameParts = (customer.customer_name || "").split(" ")
-			customerData.value.first_name = nameParts[0] || ""
-			customerData.value.last_name = nameParts.slice(1).join(" ") || ""
+			// Handle company vs individual
+			if (customer.customer_type === "Company") {
+				customerData.value.company_name = customer.customer_name || ""
+				customerData.value.first_name = ""
+				customerData.value.last_name = ""
+			} else {
+				customerData.value.company_name = ""
+				const nameParts = (customer.customer_name || "").split(" ")
+				customerData.value.first_name = nameParts[0] || ""
+				customerData.value.last_name = nameParts.slice(1).join(" ") || ""
+			}
 
 			customerData.value.email_id = customer.email_id || ""
 			customerGroup.value = customer.customer_group || "Individual"
