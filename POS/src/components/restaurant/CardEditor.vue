@@ -109,55 +109,20 @@
 
 							<!-- Add buttons -->
 							<div class="flex gap-2 mt-4">
-								<button @click="addCategory"
+								<button @click="showCategoryDialog = true"
 									class="flex-1 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 									</svg>
 									{{ __("Category") }}
 								</button>
-								<button @click="showItemSearch = true"
+								<button @click="showItemSearchDialog = true"
 									class="flex-1 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg border border-dashed border-blue-300 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 									</svg>
 									{{ __("Item") }}
 								</button>
-							</div>
-
-							<!-- Item search dialog -->
-							<div v-if="showItemSearch" class="mt-3 border rounded-lg p-3 bg-white">
-								<input v-model="itemSearchQuery" class="w-full px-3 py-2 border rounded-lg text-sm mb-2"
-									:placeholder="__('Search items...')" @input="searchItems" />
-								<div class="max-h-32 overflow-y-auto space-y-1">
-									<div v-for="item in searchResults" :key="item.name"
-										@click="addItem(item)"
-										class="px-2 py-1.5 rounded hover:bg-blue-50 cursor-pointer text-sm flex justify-between items-center">
-										<span>{{ item.item_name }}</span>
-										<span class="text-xs text-gray-400">{{ item.standard_rate || 0 }}</span>
-									</div>
-									<div v-if="searchResults.length === 0 && itemSearchQuery && itemSearchQuery.length >= 2" class="text-center py-3">
-										<p class="text-xs text-gray-400 mb-2">{{ __("No items found") }}</p>
-										<button @click="showCreateItemDialog = true"
-											class="text-xs font-medium text-green-700 bg-green-50 rounded-lg border border-green-300 hover:bg-green-100 transition-colors px-3 py-1.5 inline-flex items-center gap-1">
-											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-											</svg>
-											{{ __("Create Item") }}
-										</button>
-									</div>
-								</div>
-								<div class="flex items-center justify-between mt-2">
-									<button @click="showCreateItemDialog = true"
-										class="text-xs text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1">
-										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-										</svg>
-										{{ __("Create new item") }}
-									</button>
-									<button @click="showItemSearch = false; itemSearchQuery = ''; searchResults = []"
-										class="text-xs text-gray-500">{{ __("Close") }}</button>
-								</div>
 							</div>
 						</div>
 					</div>
@@ -169,6 +134,74 @@
 		</div>
 	</Transition>
 
+	<!-- Add Category Dialog -->
+	<Dialog v-model="showCategoryDialog" :options="{ title: __('Add Category'), size: 'sm' }">
+		<template #body-content>
+			<div>
+				<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+					{{ __("Category Name") }} <span class="text-red-500">*</span>
+				</label>
+				<Input
+					v-model="newCategoryName"
+					type="text"
+					:placeholder="__('e.g. Desserts, Boissons...')"
+				/>
+			</div>
+		</template>
+		<template #actions>
+			<div class="flex gap-2">
+				<Button variant="subtle" @click="showCategoryDialog = false">{{ __("Cancel") }}</Button>
+				<Button variant="solid" :disabled="!newCategoryName" @click="addCategory">{{ __("Add") }}</Button>
+			</div>
+		</template>
+	</Dialog>
+
+	<!-- Add Item Search Dialog -->
+	<Dialog v-model="showItemSearchDialog" :options="{ title: __('Add Item'), size: 'md' }">
+		<template #body-content>
+			<div class="flex flex-col gap-3">
+				<Input
+					v-model="itemSearchQuery"
+					type="text"
+					:placeholder="__('Search items by name...')"
+					@input="searchItems"
+				/>
+				<div class="max-h-48 overflow-y-auto space-y-1">
+					<div v-for="item in searchResults" :key="item.name"
+						@click="addItem(item)"
+						class="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer text-sm flex justify-between items-center border border-gray-100">
+						<span class="font-medium">{{ item.item_name }}</span>
+						<span class="text-xs text-gray-400">{{ item.standard_rate || 0 }}</span>
+					</div>
+					<div v-if="searchResults.length === 0 && itemSearchQuery && itemSearchQuery.length >= 2" class="text-center py-4">
+						<p class="text-sm text-gray-400 mb-3">{{ __("No items found for '{0}'", [itemSearchQuery]) }}</p>
+						<Button variant="solid" theme="green" size="sm" @click="openCreateItemFromSearch">
+							<template #prefix>
+								<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+								</svg>
+							</template>
+							{{ __("Create '{0}'", [itemSearchQuery]) }}
+						</Button>
+					</div>
+				</div>
+			</div>
+		</template>
+		<template #actions>
+			<div class="flex justify-between w-full">
+				<Button variant="subtle" size="sm" @click="openCreateItemFromSearch">
+					<template #prefix>
+						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+						</svg>
+					</template>
+					{{ __("Create new item") }}
+				</Button>
+				<Button variant="subtle" @click="closeItemSearch">{{ __("Close") }}</Button>
+			</div>
+		</template>
+	</Dialog>
+
 	<!-- Create Item Dialog -->
 	<CreateItemDialog
 		v-model="showCreateItemDialog"
@@ -179,7 +212,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue"
-import { Button } from "frappe-ui"
+import { Button, Dialog, Input } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
@@ -204,9 +237,17 @@ const loading = ref(true)
 const saving = ref(false)
 const showNewCard = ref(false)
 const newCardName = ref("")
-const showItemSearch = ref(false)
+
+// Category dialog
+const showCategoryDialog = ref(false)
+const newCategoryName = ref("")
+
+// Item search dialog
+const showItemSearchDialog = ref(false)
 const itemSearchQuery = ref("")
 const searchResults = ref([])
+
+// Create item dialog
 const showCreateItemDialog = ref(false)
 
 async function loadCards() {
@@ -311,9 +352,10 @@ async function toggleCardActive() {
 }
 
 function addCategory() {
-	const name = prompt(__("Category name"))
-	if (name) {
-		cardDetail.value.items.push({ item_type: "Category", label: name, item: null, menu: null, price: 0 })
+	if (newCategoryName.value) {
+		cardDetail.value.items.push({ item_type: "Category", label: newCategoryName.value, item: null, menu: null, price: 0 })
+		newCategoryName.value = ""
+		showCategoryDialog.value = false
 	}
 }
 
@@ -325,13 +367,22 @@ function addItem(item) {
 		menu: null,
 		price: item.standard_rate || 0
 	})
-	showItemSearch.value = false
+	closeItemSearch()
+}
+
+function closeItemSearch() {
+	showItemSearchDialog.value = false
 	itemSearchQuery.value = ""
 	searchResults.value = []
 }
 
+function openCreateItemFromSearch() {
+	showCreateItemDialog.value = true
+}
+
 function handleItemCreated(item) {
 	addItem(item)
+	showCreateItemDialog.value = false
 }
 
 let searchTimeout = null

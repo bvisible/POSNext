@@ -1528,10 +1528,9 @@ def create_item(
 @frappe.whitelist()
 def get_item_creation_defaults(pos_profile=None):
 	"""Get default values for the Create Item dialog."""
-	# Item Groups (non-group nodes only)
+	# Item Groups (all, including parent groups)
 	item_groups = frappe.get_all(
 		"Item Group",
-		filters={"is_group": 0},
 		fields=["name"],
 		order_by="name asc",
 		limit_page_length=0,
