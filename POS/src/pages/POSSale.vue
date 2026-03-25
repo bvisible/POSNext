@@ -1520,7 +1520,7 @@ function handleCardItemClick(cardItem) {
 	cartStore.addItem(item, 1)
 
 	// Auto-open modifiers dialog if item has required modifier groups
-	const modGroups = restaurantStore.getModifiersForItem(item.item_code)
+	const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group)
 	if (modGroups.some(g => g.required)) {
 		nextTick(() => {
 			const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code)
@@ -2637,7 +2637,7 @@ function handleItemSelected(item, autoAdd = false) {
 
 	// Auto-open modifiers dialog if item has required modifier groups
 	if (restaurantStore.isEnabled) {
-		const modGroups = restaurantStore.getModifiersForItem(item.item_code)
+		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group)
 		if (modGroups.some(g => g.required)) {
 			nextTick(() => {
 				// Find the item in cart and open modifiers
@@ -3029,7 +3029,7 @@ async function handleOptionSelected(option) {
 
 					// Auto-open modifiers dialog if item has required modifier groups
 					if (restaurantStore.isEnabled) {
-						const modGroups = restaurantStore.getModifiersForItem(variant.item_code)
+						const modGroups = restaurantStore.getModifiersForItem(variant.item_code, variant.item_group)
 						if (modGroups.some(g => g.required)) {
 							nextTick(() => {
 								const cartItem = cartStore.invoiceItems.find(i => i.item_code === variant.item_code)
@@ -3070,7 +3070,7 @@ async function handleOptionSelected(option) {
 
 					// Auto-open modifiers dialog if item has required modifier groups
 					if (restaurantStore.isEnabled) {
-						const modGroups = restaurantStore.getModifiersForItem(itemToAdd.item_code)
+						const modGroups = restaurantStore.getModifiersForItem(itemToAdd.item_code, itemToAdd.item_group)
 						if (modGroups.some(g => g.required)) {
 							nextTick(() => {
 								const cartItem = cartStore.invoiceItems.find(i => i.item_code === itemToAdd.item_code)

@@ -89,7 +89,7 @@ const shiftStore = usePOSShiftStore()
 
 const applicableGroups = computed(() => {
 	if (!item.value) return []
-	return restaurantStore.getModifiersForItem(item.value.item_code)
+	return restaurantStore.getModifiersForItem(item.value.item_code, item.value.item_group)
 })
 
 const totalPriceAdjustment = computed(() => {

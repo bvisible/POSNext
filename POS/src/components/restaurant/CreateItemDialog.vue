@@ -210,6 +210,30 @@
 				@image-selected="onImageSelected"
 			/>
 
+			<!-- Product Options -->
+			<div v-if="restaurantStore.isEnabled && modifierGroups.length">
+				<label class="block text-start text-sm font-medium text-gray-700 mb-1.5">
+					{{ __("Product Options") }}
+				</label>
+				<div class="flex flex-wrap gap-2">
+					<button
+						v-for="g in modifierGroups"
+						:key="g.name"
+						@click="toggleOptionGroup(g.name)"
+						:class="[
+							'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+							itemData.option_groups.includes(g.name)
+								? 'bg-blue-50 border-blue-400 text-blue-700'
+								: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+						]"
+						type="button"
+					>
+						{{ g.group_name }}
+						<span v-if="g.required" class="text-red-400 ml-0.5">*</span>
+					</button>
+				</div>
+			</div>
+
 			<!-- Permission warning -->
 				<div v-if="!hasPermission" class="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
 					<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,9 +275,12 @@ import { useToast } from "@/composables/useToast"
 import { usePermissions } from "@/composables/usePermissions"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { ITEM_COLOR_PALETTE } from "@/utils/itemColors"
+import { useRestaurantStore } from "@/stores/restaurant"
 import ImageSearchDialog from "./ImageSearchDialog.vue"
 
 const colorPalette = ITEM_COLOR_PALETTE
+const restaurantStore = useRestaurantStore()
+const modifierGroups = computed(() => restaurantStore.modifierGroups || [])
 
 const props = defineProps({
 	initialName: { type: String, default: "" },
@@ -294,6 +321,7 @@ const itemData = ref({
 	warehouse: "",
 	color: "",
 	image: "",
+	option_groups: [],
 })
 
 const canCreate = computed(() => {
@@ -330,6 +358,7 @@ watch(show, async (val) => {
 		itemData.value.opening_stock = 0
 		itemData.value.color = ""
 		itemData.value.image = ""
+		itemData.value.option_groups = []
 
 		// Check permission
 		hasPermission.value = await checkPermission("Item", "create")
@@ -356,6 +385,12 @@ async function loadDefaults() {
 	} finally {
 		loadingDefaults.value = false
 	}
+}
+
+function toggleOptionGroup(name) {
+	const idx = itemData.value.option_groups.indexOf(name)
+	if (idx >= 0) itemData.value.option_groups.splice(idx, 1)
+	else itemData.value.option_groups.push(name)
 }
 
 function onImageSelected(imageUrl) {
@@ -407,6 +442,7 @@ async function handleCreate() {
 			pos_profile: shiftStore.profileName,
 			image: itemData.value.image || "",
 			color: itemData.value.color || "",
+			option_groups: JSON.stringify(itemData.value.option_groups),
 		})
 
 		showSuccess(__("Item '{0}' created successfully", [result.item_name]))

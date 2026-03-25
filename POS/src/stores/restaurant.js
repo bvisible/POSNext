@@ -366,9 +366,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		return null
 	}
 
-	function getModifiersForItem(itemCode) {
+	function getModifiersForItem(itemCode, itemGroup) {
 		return modifierGroups.value.filter(g =>
-			g.apply_to_all_items || g.applicable_items.includes(itemCode)
+			g.apply_to_all_items
+			|| g.applicable_items.includes(itemCode)
+			|| (itemGroup && g.applicable_item_groups?.includes(itemGroup))
 		)
 	}
 

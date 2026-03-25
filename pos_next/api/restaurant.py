@@ -1570,9 +1570,11 @@ def create_item(
 	pos_profile=None,
 	image=None,
 	color=None,
+	option_groups=None,
 ):
 	"""Create a new Item from the POS Card Editor with prices and optional stock."""
 	from frappe.utils import cint, flt
+	import json
 
 	if not frappe.has_permission("Item", "create"):
 		frappe.throw(_("You don't have permission to create items"), frappe.PermissionError)
@@ -1662,6 +1664,18 @@ def create_item(
 				stock_entry.submit()
 			except Exception:
 				frappe.log_error("Opening stock entry failed", frappe.get_traceback())
+
+	# Link item to selected Product Option Groups
+	if option_groups:
+		groups = json.loads(option_groups) if isinstance(option_groups, str) else option_groups
+		for group_name in groups:
+			if frappe.db.exists("Product Option Group", group_name):
+				group_doc = frappe.get_doc("Product Option Group", group_name)
+				group_doc.append("applicable_items", {
+					"item": item_doc.name,
+					"item_name": item_doc.item_name,
+				})
+				group_doc.save(ignore_permissions=True)
 
 	return {
 		"name": item_doc.name,
