@@ -292,7 +292,8 @@ def get_current_cart(pos_opening_entry):
 
 @frappe.whitelist()
 def create_customer_from_display(customer_name, pos_opening_entry, email=None, mobile_no=None,
-                                  address_line1=None, city=None, pincode=None, country=None):
+                                  address_line1=None, city=None, pincode=None, country=None,
+                                  customer_type=None):
     """
     Create a new customer from the customer display.
     Optionally creates an address if address fields are provided.
@@ -381,7 +382,7 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
     customer = frappe.get_doc({
         "doctype": "Customer",
         "customer_name": customer_name,
-        "customer_type": "Individual",
+        "customer_type": customer_type if customer_type in ("Individual", "Company") else "Individual",
         "customer_group": customer_group,
         "territory": territory,
         "mobile_no": mobile_no or "",

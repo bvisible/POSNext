@@ -21,12 +21,47 @@
 				<p class="text-red-700 text-sm">{{ error }}</p>
 			</div>
 
+			<!-- Customer Type Toggle -->
+			<div class="flex bg-gray-100 rounded-neo-sm p-0.5">
+				<button
+					type="button"
+					@click="customerType = 'Individual'"
+					:disabled="isSubmitting"
+					class="flex-1 py-1.5 px-3 text-sm font-medium rounded-neo-sm transition-colors"
+					:class="customerType === 'Individual'
+						? 'bg-white text-gray-900 shadow-sm'
+						: 'text-gray-500 hover:text-gray-700'"
+				>
+					{{ __("Individual") }}
+				</button>
+				<button
+					type="button"
+					@click="customerType = 'Company'"
+					:disabled="isSubmitting"
+					class="flex-1 py-1.5 px-3 text-sm font-medium rounded-neo-sm transition-colors"
+					:class="customerType === 'Company'
+						? 'bg-white text-gray-900 shadow-sm'
+						: 'text-gray-500 hover:text-gray-700'"
+				>
+					{{ __("Company") }}
+				</button>
+			</div>
+
+			<!-- Company Name (only when Company type) -->
+			<input
+				v-if="customerType === 'Company'"
+				v-model="form.company_name"
+				type="text"
+				:placeholder="__('Company name') + ' *'"
+				class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+				:disabled="isSubmitting"
+			/>
+
 			<!-- First Name and Last Name -->
 			<div class="grid grid-cols-2 gap-2">
 				<input
 					v-model="form.first_name"
 					type="text"
-					required
 					:placeholder="__('First name') + ' *'"
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					:disabled="isSubmitting"
@@ -34,7 +69,6 @@
 				<input
 					v-model="form.last_name"
 					type="text"
-					required
 					:placeholder="__('Last name') + ' *'"
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					:disabled="isSubmitting"
@@ -171,7 +205,7 @@
 				{{ __("Cancel") }}
 			</button>
 			<button
-				:disabled="isSubmitting || !form.first_name || !form.last_name || !form.email || !phoneNumber"
+				:disabled="isSubmitting || !isFormValid"
 				class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-neo-md text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
 				@click="handleSubmit"
 			>
@@ -215,7 +249,11 @@ const countriesStore = useCountriesStore()
 // Get default country from session (company country)
 const defaultCountry = displayStore.sessionInfo?.country || ""
 
+// Customer type toggle
+const customerType = ref("Individual")
+
 const form = reactive({
+	company_name: "",
 	first_name: "",
 	last_name: "",
 	email: "",
@@ -237,6 +275,20 @@ const countrySearchRef = ref(null)
 
 const isSubmitting = ref(false)
 const error = ref(null)
+
+const isCompany = computed(() => customerType.value === "Company")
+
+const isFormValid = computed(() => {
+	if (isCompany.value) {
+		return !!(form.company_name.trim() && form.email.trim() && phoneNumber.value.trim())
+	}
+	return !!(
+		form.first_name.trim() &&
+		form.last_name.trim() &&
+		form.email.trim() &&
+		phoneNumber.value.trim()
+	)
+})
 
 // Computed for country code display
 const currentCountryCode = computed(() => {
@@ -321,14 +373,23 @@ onBeforeUnmount(() => {
 })
 
 async function handleSubmit() {
-	if (!form.first_name || !form.last_name || !form.email || !phoneNumber.value) return
+	if (!isFormValid.value) return
 
 	isSubmitting.value = true
 	error.value = null
 
 	try {
+		// Build customer name based on type
+		let customerName
+		if (isCompany.value) {
+			customerName = form.company_name.trim()
+		} else {
+			customerName = `${form.first_name.trim()} ${form.last_name.trim()}`
+		}
+
 		const customerData = {
-			customer_name: `${form.first_name.trim()} ${form.last_name.trim()}`,
+			customer_name: customerName,
+			customer_type: customerType.value,
 			email: form.email.trim() || null,
 			mobile_no: form.mobile_no.trim() || null,
 		}
@@ -345,6 +406,8 @@ async function handleSubmit() {
 		const customer = await displayStore.createCustomer(customerData)
 
 		// Reset form (keep default country and country code)
+		customerType.value = "Individual"
+		form.company_name = ""
 		form.first_name = ""
 		form.last_name = ""
 		form.email = ""
