@@ -452,10 +452,15 @@ const posProfileResource = createResource({
 	makeParams: () => ({
 		doctype: "POS Profile",
 		filters: { name: props.posProfile },
-		fieldname: ["country"],
+		fieldname: ["country", "customer_group"],
 	}),
 	auto: false,
-	onSuccess: (data) => setCountryFromName(data?.country || "Egypt"),
+	onSuccess: (data) => {
+		setCountryFromName(data?.country || "Egypt")
+		if (data?.customer_group) {
+			customerGroup.value = data.customer_group
+		}
+	},
 	onError: (err) => {
 		log.error("Error loading POS Profile", err)
 		selectedCountryCode.value = "+20"

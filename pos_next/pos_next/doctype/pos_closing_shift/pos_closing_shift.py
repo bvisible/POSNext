@@ -208,12 +208,7 @@ class POSClosingShift(Document):
             if currency:
                 row["currencies"][currency] += flt(amount)
 
-        cash_mode_of_payment = (
-            frappe.db.get_value(
-                "POS Profile", self.pos_profile, "posa_cash_mode_of_payment"
-            )
-            or "Cash"
-        )
+        cash_mode_of_payment = _get_cash_mode_of_payment(self.pos_profile)
 
         for row in self.get("pos_transactions", []):
             invoice = row.get("sales_invoice") or row.get("pos_invoice")
@@ -409,9 +404,25 @@ def get_payments_entries(pos_opening_shift):
 
 
 def _get_cash_mode_of_payment(pos_profile):
-    """Get the cash mode of payment for a POS profile."""
+    """Get the cash mode of payment for a POS profile.
+
+    Returns the configured posa_cash_mode_of_payment, or auto-detects the
+    first cash-type mode from the profile's payment methods.
+    """
     cash_mode = frappe.get_value("POS Profile", pos_profile, "posa_cash_mode_of_payment")
-    return cash_mode or "Cash"
+    if cash_mode:
+        return cash_mode
+    # Fallback: find cash-type mode from POS Profile payment methods
+    profile_payments = frappe.get_all(
+        "POS Payment Method",
+        filters={"parent": pos_profile},
+        fields=["mode_of_payment"],
+    )
+    for pm in profile_payments:
+        mode_type = frappe.db.get_value("Mode of Payment", pm.mode_of_payment, "type")
+        if mode_type == "Cash":
+            return pm.mode_of_payment
+    return "Cash"
 
 
 def _aggregate_payment(payments, mode_of_payment, amount, opening_amount=0):
@@ -440,7 +451,7 @@ def _aggregate_tax(taxes, account_head, rate, amount):
     }))
 
 
-def _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary):
+def _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode=None):
     """Process a single invoice and update aggregates."""
     conversion_rate = invoice.get("conversion_rate")
     is_return = invoice.get("is_return", 0)
@@ -508,6 +519,8 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
             mode = cash_mode
 
         _aggregate_payment(payments, mode, amount)
+        if sales_by_mode is not None:
+            sales_by_mode[mode] = sales_by_mode.get(mode, 0) + amount
 
     # Subtract change_amount once from the cash mode.  change_amount is an
     # invoice-level field — the customer overpaid and received change back,
@@ -517,6 +530,8 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
     base_change = get_base_value(invoice, "change_amount", "base_change_amount", conversion_rate)
     if base_change:
         _aggregate_payment(payments, cash_mode, -base_change)
+        if sales_by_mode is not None:
+            sales_by_mode[cash_mode] = sales_by_mode.get(cash_mode, 0) - base_change
 
     return transaction
 
@@ -547,6 +562,7 @@ def make_closing_shift_from_opening(opening_shift):
     payments = []
     taxes = []
     pos_transactions = []
+    sales_by_mode = {}
 
     # Summary for tracking totals
     summary = {
@@ -567,7 +583,7 @@ def make_closing_shift_from_opening(opening_shift):
     # Process invoices
     invoices = get_pos_invoices(opening_shift.get("name"), doctype)
     for invoice in invoices:
-        txn = _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary)
+        txn = _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode)
         pos_transactions.append(txn)
 
     # Process payment entries
@@ -617,6 +633,13 @@ def make_closing_shift_from_opening(opening_shift):
             "posting_date": py.get("posting_date"),
         })
 
+    # Build sales breakdown by payment method (invoice payments only, no external)
+    sales_by_payment = [
+        {"mode_of_payment": mode, "amount": flt(amount, 2)}
+        for mode, amount in sorted(sales_by_mode.items(), key=lambda x: -x[1])
+        if flt(amount, 2) != 0
+    ]
+
     result.update({
         "returns_total": summary["returns_total"],
         "returns_count": summary["returns_count"],
@@ -624,6 +647,7 @@ def make_closing_shift_from_opening(opening_shift):
         "sales_count": summary["sales_count"],
         "pos_transactions": pos_transactions,  # Include return info for display
         "external_payments": external_payments,
+        "sales_by_payment": sales_by_payment,
     })
 
     return result

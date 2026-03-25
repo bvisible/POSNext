@@ -193,6 +193,36 @@
             </div>
           </div>
 
+          <!-- Sales by Payment Method -->
+          <div v-if="shouldShowSummary && closingData.sales_by_payment && closingData.sales_by_payment.length > 0"
+            class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 bg-gray-50 border-b border-gray-200">
+              <h3 class="text-sm md:text-lg font-medium text-gray-900">{{ __('Sales by Payment Method') }}</h3>
+            </div>
+            <div class="p-3 md:p-6">
+              <div class="flex flex-col gap-2 md:gap-3">
+                <div v-for="(sp, idx) in closingData.sales_by_payment" :key="idx"
+                  class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div class="flex items-center gap-2 md:gap-3">
+                    <div :class="['rounded-lg p-1.5 md:p-2', getPaymentIcon(sp.mode_of_payment).color]">
+                      <span class="text-base md:text-lg">{{ getPaymentIcon(sp.mode_of_payment).icon }}</span>
+                    </div>
+                    <p class="text-sm md:text-base font-medium text-gray-900">{{ sp.mode_of_payment }}</p>
+                  </div>
+                  <p class="text-sm md:text-base font-semibold text-gray-900">{{ formatCurrency(sp.amount) }}</p>
+                </div>
+              </div>
+              <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs md:text-sm font-medium text-gray-700">{{ __('Total Sales') }}</span>
+                  <span class="text-base md:text-lg font-bold text-gray-900">
+                    {{ formatCurrency(closingData.sales_by_payment.reduce((s, p) => s + p.amount, 0)) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- External Payments (invoices paid via POS but created outside) -->
           <div v-if="closingData.external_payments && closingData.external_payments.length > 0"
             class="bg-white border border-blue-200 rounded-lg overflow-hidden shadow-sm">
