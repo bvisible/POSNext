@@ -16,6 +16,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const activeCards = ref([])
 	const floorStations = ref([])
 	const stationItemsMap = ref({})
+	const stationGroupsMap = ref({})
 	const modifierGroups = ref([])
 	const activeMenus = ref([])
 	const restaurantSettings = ref({ opening_hours: [], enable_tips: false, auto_detect_tip: true, tip_item: null, enable_runner: true })
@@ -167,7 +168,14 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		try {
 			const res = await call("pos_next.api.restaurant.get_station_items_map")
 			if (res) {
-				stationItemsMap.value = res
+				if (res.items && res.groups) {
+					stationItemsMap.value = res.items
+					stationGroupsMap.value = res.groups
+				} else {
+					// Backward compat: old flat format
+					stationItemsMap.value = res
+					stationGroupsMap.value = {}
+				}
 			}
 		} catch (error) {
 			log.error("Failed to fetch station items map:", error)
@@ -281,6 +289,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	async function fetchRestaurantStatus() {
 		if (!isEnabled.value) return
 		try {
+			const previousSlot = restaurantStatus.value.currentSlot
 			const res = await call("pos_next.api.restaurant.get_restaurant_status")
 			if (res) {
 				restaurantStatus.value = {
@@ -288,6 +297,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 					currentSlot: res.current_slot || null,
 					hasActiveCards: res.has_active_cards !== false,
 					warning: res.warning || null,
+				}
+				// If time slot changed (e.g. Lunch → Dinner), refresh active cards
+				if (previousSlot && res.current_slot !== previousSlot) {
+					log.info("Time slot changed:", previousSlot, "→", res.current_slot)
+					await fetchActiveCards()
 				}
 			}
 		} catch (error) {
@@ -299,6 +313,38 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		if (statusInterval) return
 		fetchRestaurantStatus()
 		statusInterval = setInterval(fetchRestaurantStatus, 60000)
+		// Start listening for realtime card/settings updates
+		startRealtimeCardListeners()
+	}
+
+	let _cardRealtimeStarted = false
+	function startRealtimeCardListeners() {
+		if (_cardRealtimeStarted) return
+		const rt = window.frappe?.realtime
+		if (!rt) {
+			// Retry after 2s if realtime not ready yet
+			setTimeout(startRealtimeCardListeners, 2000)
+			return
+		}
+		let debounce = null
+		const refresh = () => {
+			clearTimeout(debounce)
+			debounce = setTimeout(() => {
+				log.info("Realtime card update → refreshing active cards")
+				fetchActiveCards()
+			}, 500)
+		}
+		rt.on("pos_card_updated", refresh)
+		rt.on("pos_restaurant_settings_updated", () => {
+			clearTimeout(debounce)
+			debounce = setTimeout(() => {
+				log.info("Realtime settings update → refreshing cards + settings")
+				fetchActiveCards()
+				fetchRestaurantSettings()
+			}, 500)
+		})
+		_cardRealtimeStarted = true
+		log.info("Realtime card listeners started")
 	}
 
 	function stopStatusPolling() {
@@ -308,8 +354,16 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
-	function getStationForItem(itemCode) {
-		return stationItemsMap.value[itemCode] || null
+	function getStationForItem(itemCode, itemGroup) {
+		// Priority 1: individual item match
+		const itemMatch = stationItemsMap.value[itemCode]
+		if (itemMatch) return itemMatch
+		// Priority 2: item group match
+		if (itemGroup) {
+			const groupMatch = stationGroupsMap.value[itemGroup]
+			if (groupMatch) return groupMatch
+		}
+		return null
 	}
 
 	function getModifiersForItem(itemCode) {
@@ -328,6 +382,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		areas,
 		floorStations,
 		stationItemsMap,
+		stationGroupsMap,
 		modifierGroups,
 		activeMenus,
 		activeCards,

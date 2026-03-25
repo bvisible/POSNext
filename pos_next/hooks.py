@@ -277,7 +277,14 @@ doc_events = {
 	},
 	"Promotional Scheme": {
 		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"
-	}
+	},
+	"Restaurant Card": {
+		"on_update": "pos_next.realtime_events.emit_card_updated_event",
+		"after_rename": "pos_next.realtime_events.emit_card_updated_event",
+	},
+	"Restaurant Settings": {
+		"on_update": "pos_next.realtime_events.emit_restaurant_settings_updated_event",
+	},
 }
 
 # Scheduled Tasks

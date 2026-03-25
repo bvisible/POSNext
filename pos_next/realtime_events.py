@@ -225,3 +225,27 @@ def emit_customer_event(doc, method=None):
 			title=_("Real-time Customer Update Event Error"),
 			message=f"Failed to emit customer update event for {doc.name}: {str(e)}"
 		)
+
+
+def emit_card_updated_event(doc, method=None):
+	"""Emit realtime event when a Restaurant Card is saved/updated."""
+	try:
+		frappe.publish_realtime(
+			"pos_card_updated",
+			{"card": doc.name, "is_active": getattr(doc, "is_active", 0)},
+			after_commit=True,
+		)
+	except Exception:
+		pass
+
+
+def emit_restaurant_settings_updated_event(doc, method=None):
+	"""Emit realtime event when Restaurant Settings change (opening hours)."""
+	try:
+		frappe.publish_realtime(
+			"pos_restaurant_settings_updated",
+			{},
+			after_commit=True,
+		)
+	except Exception:
+		pass

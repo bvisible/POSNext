@@ -893,7 +893,7 @@
 			<!-- Restaurant Editors -->
 			<WorkflowEditor v-if="showWorkflowEditor" v-model="showWorkflowEditor" />
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
-			<CardEditor v-if="showCardEditor" v-model="showCardEditor" />
+			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" />
 
 			<!-- Invoice Management -->
 			<InvoiceManagement
@@ -1330,6 +1330,7 @@ import POSSettings from "@/components/settings/POSSettings.vue";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
 import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
+// Card realtime updates are handled in restaurant.js store via startRealtimeCardListeners()
 import { useSessionLock } from "@/composables/useSessionLock";
 import { usePOSEvents } from "@/composables/usePOSEvents";
 import { useGiftCard } from "@/composables/useGiftCard";
@@ -1484,10 +1485,11 @@ function handleCardItemClick(cardItem) {
 	const item = {
 		item_code: cardItem.item,
 		item_name: cardItem.item_name || cardItem.label,
+		item_group: cardItem.item_group || "",
 		rate: cardItem.price || cardItem.default_price || 0,
 		image: cardItem.image || "",
 	}
-	const stationInfo = restaurantStore.getStationForItem(item.item_code)
+	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
 	if (stationInfo) {
 		item.preparation_station = stationInfo.station
 	}
@@ -2493,7 +2495,7 @@ function handleItemSelected(item, autoAdd = false) {
 		try {
 			// Assign preparation station from restaurant store map
 			if (restaurantStore.isEnabled && !item.preparation_station) {
-				const stationInfo = restaurantStore.getStationForItem(item.item_code)
+				const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
 				if (stationInfo) {
 					item.preparation_station = stationInfo.station
 				}
@@ -2545,7 +2547,7 @@ function handleItemSelected(item, autoAdd = false) {
 
 	// Assign preparation station from restaurant store map
 	if (restaurantStore.isEnabled && !item.preparation_station) {
-		const stationInfo = restaurantStore.getStationForItem(item.item_code)
+		const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
 		if (stationInfo) {
 			item.preparation_station = stationInfo.station
 		}

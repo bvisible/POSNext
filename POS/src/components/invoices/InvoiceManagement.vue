@@ -120,6 +120,19 @@
 									</button>
 								</div>
 
+								<!-- Search -->
+								<div class="relative">
+									<input
+										v-model="unpaidSearchQuery"
+										type="text"
+										class="w-full px-3 py-2 pl-9 border rounded-lg text-sm"
+										:placeholder="__('Search by invoice number or customer...')"
+									/>
+									<svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+									</svg>
+								</div>
+
 								<!-- Filter Buttons -->
 								<div class="flex items-center gap-2 mb-4 flex-wrap gap-2">
 									<button
@@ -202,7 +215,7 @@
 								</div>
 
 								<!-- Empty State -->
-								<div v-if="filteredUnpaidInvoices.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+								<div v-if="searchedUnpaidInvoices.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
 									<svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
 									</svg>
@@ -213,7 +226,7 @@
 								<!-- Invoices List -->
 								<div v-else class="flex flex-col gap-4">
 									<div
-										v-for="invoice in filteredUnpaidInvoices"
+										v-for="invoice in searchedUnpaidInvoices"
 										:key="invoice.name"
 										class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative"
 									>
@@ -688,6 +701,9 @@ const unpaidSummary = ref({
 const selectedInvoice = ref(null)
 const showPaymentDialog = ref(false)
 
+// Search
+const unpaidSearchQuery = ref("")
+
 // External invoices (non-POS) data
 const invoiceSource = ref("pos") // "pos" | "external"
 const externalUnpaidInvoices = ref([])
@@ -711,6 +727,17 @@ const filteredUnpaidInvoices = computed(() => {
 		return source.filter((inv) => inv.status === "Overdue")
 	}
 	return source // "all"
+})
+
+// Search filter on top of status filter
+const searchedUnpaidInvoices = computed(() => {
+	const q = unpaidSearchQuery.value.trim().toLowerCase()
+	if (!q) return filteredUnpaidInvoices.value
+	return filteredUnpaidInvoices.value.filter(inv =>
+		inv.name.toLowerCase().includes(q) ||
+		(inv.customer_name || "").toLowerCase().includes(q) ||
+		(inv.customer || "").toLowerCase().includes(q)
+	)
 })
 
 // Filtered summary based on selected filter

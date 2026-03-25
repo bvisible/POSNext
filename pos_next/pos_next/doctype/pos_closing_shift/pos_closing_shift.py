@@ -599,12 +599,31 @@ def make_closing_shift_from_opening(opening_shift):
 
     # Build response with display-only fields
     result = closing_shift.as_dict()
+    # Enrich payment entries with invoice reference for display
+    external_payments = []
+    for py in pos_payments_table:
+        pe_refs = frappe.get_all(
+            "Payment Entry Reference",
+            filters={"parent": py.get("payment_entry")},
+            fields=["reference_name"],
+            limit=1,
+        )
+        external_payments.append({
+            "payment_entry": py.get("payment_entry"),
+            "invoice": pe_refs[0].reference_name if pe_refs else "",
+            "customer": py.get("customer") or "",
+            "mode_of_payment": py.get("mode_of_payment") or "",
+            "amount": flt(py.get("paid_amount")),
+            "posting_date": py.get("posting_date"),
+        })
+
     result.update({
         "returns_total": summary["returns_total"],
         "returns_count": summary["returns_count"],
         "sales_total": summary["sales_total"],
         "sales_count": summary["sales_count"],
         "pos_transactions": pos_transactions,  # Include return info for display
+        "external_payments": external_payments,
     })
 
     return result

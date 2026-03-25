@@ -568,34 +568,177 @@
 		</Dialog>
 
 		<!-- Edit Station Dialog -->
-		<Dialog v-model="showEditStationDialog" :options="{ title: __('Edit Station'), size: 'sm' }">
+		<Dialog v-model="showEditStationDialog" :options="{ title: __('Edit Station'), size: 'xl' }">
 			<template #body-content>
-				<div class="space-y-4 p-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Station Name") }}</label>
-						<input v-model="editStation.station_name" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Type") }}</label>
-						<div class="flex gap-2">
-							<button v-for="t in ['Kitchen', 'Bar', 'Other']" :key="t"
-								@click="editStation.station_type = t"
-								class="flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
-								:class="editStation.station_type === t ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-600'"
-							>{{ __(t) }}</button>
+				<div class="space-y-5 p-4 max-h-[70vh] overflow-y-auto">
+					<!-- Basic Settings -->
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Station Name") }}</label>
+							<input v-model="editStation.station_name" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Type") }}</label>
+							<div class="flex gap-2">
+								<button v-for="t in ['Kitchen', 'Bar', 'Other']" :key="t"
+									@click="editStation.station_type = t"
+									class="flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors"
+									:class="editStation.station_type === t ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-600'"
+								>{{ __(t) }}</button>
+							</div>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Color") }}</label>
+							<input v-model="editStation.color" type="color" class="w-full h-10 rounded-lg border cursor-pointer" />
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Workflow") }}</label>
+							<select v-model="editStation.workflow" class="w-full px-3 py-2 border rounded-lg text-sm">
+								<option value="">{{ __("Default") }}</option>
+								<option v-for="wf in availableWorkflows" :key="wf.name" :value="wf.name">{{ wf.workflow_name }}</option>
+							</select>
 						</div>
 					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Color") }}</label>
-						<input v-model="editStation.color" type="color" class="w-full h-10 rounded-lg border cursor-pointer" />
+
+					<!-- Toggles -->
+					<div class="flex items-center gap-6 py-2">
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input type="checkbox" v-model="editStation.is_active" :true-value="1" :false-value="0"
+								class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500" />
+							<span class="text-sm font-medium text-gray-700">{{ __("Active") }}</span>
+						</label>
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input type="checkbox" v-model="editStation.use_runner" :true-value="1" :false-value="0"
+								class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500" />
+							<span class="text-sm font-medium text-gray-700">{{ __("Use Runner") }}</span>
+						</label>
 					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Workflow") }}</label>
-						<select v-model="editStation.workflow" class="w-full px-3 py-2 border rounded-lg text-sm">
-							<option value="">{{ __("Default") }}</option>
-							<option v-for="wf in availableWorkflows" :key="wf.name" :value="wf.name">{{ wf.workflow_name }}</option>
-						</select>
+
+					<!-- Items Section -->
+					<div class="border-t pt-4">
+						<label class="block text-sm font-semibold text-gray-800 mb-2">{{ __("Items") }}</label>
+						<div class="relative mb-2">
+							<input
+								v-model="itemSearchInput"
+								@input="searchItems"
+								type="text"
+								class="w-full px-3 py-2 border rounded-lg text-sm"
+								:placeholder="__('Search items...')"
+							/>
+							<!-- Search results dropdown -->
+							<div v-if="itemSearchResults.length > 0" class="absolute z-20 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+								<button
+									v-for="result in itemSearchResults"
+									:key="result.name"
+									@click="addItem(result)"
+									class="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex justify-between"
+								>
+									<span>{{ result.item_name || result.name }}</span>
+									<span class="text-xs text-gray-400">{{ result.item_group }}</span>
+								</button>
+							</div>
+						</div>
+						<!-- Items table -->
+						<div v-if="editStation.items.length > 0" class="border rounded-lg overflow-hidden">
+							<table class="w-full text-sm">
+								<thead class="bg-gray-50">
+									<tr>
+										<th class="px-3 py-2 text-left font-medium text-gray-600">{{ __("Item") }}</th>
+										<th class="px-3 py-2 text-center font-medium text-gray-600 w-24">{{ __("Prep (min)") }}</th>
+										<th class="px-3 py-2 text-center font-medium text-gray-600 w-28">{{ __("Priority") }}</th>
+										<th class="w-10"></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="(item, idx) in editStation.items" :key="idx" class="border-t">
+										<td class="px-3 py-2 text-gray-800">{{ item.item_name || item.item }}</td>
+										<td class="px-3 py-1 text-center">
+											<input v-model.number="item.prep_time" type="number" min="0"
+												class="w-16 px-2 py-1 border rounded text-sm text-center" />
+										</td>
+										<td class="px-3 py-1 text-center">
+											<select v-model="item.priority" class="px-2 py-1 border rounded text-sm">
+												<option value="Normal">Normal</option>
+												<option value="Urgent">Urgent</option>
+											</select>
+										</td>
+										<td class="px-1 py-1 text-center">
+											<button @click="removeItem(idx)" class="text-red-400 hover:text-red-600 p-1">
+												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+												</svg>
+											</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<p v-else class="text-xs text-gray-400 italic">{{ __("No items assigned") }}</p>
 					</div>
+
+					<!-- Item Groups Section -->
+					<div class="border-t pt-4">
+						<label class="block text-sm font-semibold text-gray-800 mb-2">{{ __("Item Groups") }}</label>
+						<p class="text-xs text-gray-500 mb-2">{{ __("All items in these groups will be routed to this station (unless individually assigned to another).") }}</p>
+						<div class="relative mb-2">
+							<input
+								v-model="groupSearchInput"
+								@input="searchItemGroups"
+								type="text"
+								class="w-full px-3 py-2 border rounded-lg text-sm"
+								:placeholder="__('Search item groups...')"
+							/>
+							<!-- Search results dropdown -->
+							<div v-if="groupSearchResults.length > 0" class="absolute z-20 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+								<button
+									v-for="result in groupSearchResults"
+									:key="result.name"
+									@click="addItemGroup(result)"
+									class="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+								>
+									{{ result.name }}
+								</button>
+							</div>
+						</div>
+						<!-- Item groups table -->
+						<div v-if="editStation.item_groups.length > 0" class="border rounded-lg overflow-hidden">
+							<table class="w-full text-sm">
+								<thead class="bg-gray-50">
+									<tr>
+										<th class="px-3 py-2 text-left font-medium text-gray-600">{{ __("Item Group") }}</th>
+										<th class="px-3 py-2 text-center font-medium text-gray-600 w-24">{{ __("Prep (min)") }}</th>
+										<th class="px-3 py-2 text-center font-medium text-gray-600 w-28">{{ __("Priority") }}</th>
+										<th class="w-10"></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="(group, idx) in editStation.item_groups" :key="idx" class="border-t">
+										<td class="px-3 py-2 text-gray-800">{{ group.item_group }}</td>
+										<td class="px-3 py-1 text-center">
+											<input v-model.number="group.prep_time" type="number" min="0"
+												class="w-16 px-2 py-1 border rounded text-sm text-center" />
+										</td>
+										<td class="px-3 py-1 text-center">
+											<select v-model="group.priority" class="px-2 py-1 border rounded text-sm">
+												<option value="Normal">Normal</option>
+												<option value="Urgent">Urgent</option>
+											</select>
+										</td>
+										<td class="px-1 py-1 text-center">
+											<button @click="removeItemGroup(idx)" class="text-red-400 hover:text-red-600 p-1">
+												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+												</svg>
+											</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<p v-else class="text-xs text-gray-400 italic">{{ __("No item groups assigned") }}</p>
+					</div>
+
+					<!-- Delete -->
 					<div class="pt-2 border-t">
 						<button @click="handleDeleteStation" class="text-sm text-red-600 hover:text-red-800 font-medium">
 							{{ __("Delete this station") }}
@@ -682,8 +825,17 @@ const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
 const showAddStationDialog = ref(false)
 const newStation = ref({ station_name: "", station_type: "Kitchen", color: "#F97316" })
 const showEditStationDialog = ref(false)
-const editStation = ref({ name: "", station_name: "", station_type: "Kitchen", color: "#F97316", workflow: "" })
+const editStation = ref({
+	name: "", station_name: "", station_type: "Kitchen", color: "#F97316", workflow: "",
+	is_active: 1, use_runner: 1, items: [], item_groups: []
+})
 const availableWorkflows = ref([])
+const itemSearchInput = ref("")
+const itemSearchResults = ref([])
+const groupSearchInput = ref("")
+const groupSearchResults = ref([])
+let itemSearchTimeout = null
+let groupSearchTimeout = null
 const showEditTableDialog = ref(false)
 const editTable = ref({ name: "", table_name: "", capacity: 4, shape: "Square" })
 const showAddAreaDialog = ref(false)
@@ -1180,13 +1332,36 @@ async function handleAddTable() {
 }
 
 async function openEditStationDialog(station) {
-	editStation.value = {
-		name: station.name,
-		station_name: station.station_name,
-		station_type: station.station_type || "Kitchen",
-		color: station.color || "#F97316",
-		workflow: station.workflow || ""
+	// Load full station details from server
+	try {
+		const details = await call("pos_next.api.restaurant.get_station_details", { name: station.name })
+		editStation.value = {
+			name: details.name,
+			station_name: details.station_name,
+			station_type: details.station_type || "Kitchen",
+			color: details.color || "#F97316",
+			workflow: details.workflow || "",
+			is_active: details.is_active ?? 1,
+			use_runner: details.use_runner ?? 1,
+			items: details.items || [],
+			item_groups: details.item_groups || [],
+		}
+	} catch {
+		// Fallback to basic floor plan data
+		editStation.value = {
+			name: station.name,
+			station_name: station.station_name,
+			station_type: station.station_type || "Kitchen",
+			color: station.color || "#F97316",
+			workflow: station.workflow || "",
+			is_active: 1, use_runner: 1, items: [], item_groups: [],
+		}
 	}
+	// Reset search state
+	itemSearchInput.value = ""
+	itemSearchResults.value = []
+	groupSearchInput.value = ""
+	groupSearchResults.value = []
 	// Load available workflows
 	try {
 		const res = await call("pos_next.api.restaurant.get_preparation_workflows")
@@ -1202,15 +1377,93 @@ async function handleSaveStation() {
 			station_name: editStation.value.station_name,
 			station_type: editStation.value.station_type,
 			color: editStation.value.color,
-			workflow: editStation.value.workflow
+			workflow: editStation.value.workflow,
+			is_active: editStation.value.is_active,
+			use_runner: editStation.value.use_runner,
+			items: JSON.stringify(editStation.value.items),
+			item_groups: JSON.stringify(editStation.value.item_groups),
 		})
 		showEditStationDialog.value = false
 		await restaurantStore.fetchFromNetwork()
+		await restaurantStore.fetchStationItemsMap()
 		syncLocalStations()
 		showSuccess(__("Station updated"))
 	} catch (error) {
 		showError(__("Failed to update station"))
 	}
+}
+
+function searchItems() {
+	clearTimeout(itemSearchTimeout)
+	const query = itemSearchInput.value.trim()
+	if (!query || query.length < 2) {
+		itemSearchResults.value = []
+		return
+	}
+	itemSearchTimeout = setTimeout(async () => {
+		try {
+			const res = await call("frappe.client.get_list", {
+				doctype: "Item",
+				filters: [["item_name", "like", `%${query}%`]],
+				fields: ["name", "item_name", "item_group"],
+				limit_page_length: 10,
+			})
+			// Exclude already added items
+			const existingItems = editStation.value.items.map(i => i.item)
+			itemSearchResults.value = (res || []).filter(i => !existingItems.includes(i.name))
+		} catch { itemSearchResults.value = [] }
+	}, 300)
+}
+
+function addItem(item) {
+	editStation.value.items.push({
+		item: item.name,
+		item_name: item.item_name,
+		prep_time: 0,
+		priority: "Normal",
+	})
+	itemSearchInput.value = ""
+	itemSearchResults.value = []
+}
+
+function removeItem(idx) {
+	editStation.value.items.splice(idx, 1)
+}
+
+function searchItemGroups() {
+	clearTimeout(groupSearchTimeout)
+	const query = groupSearchInput.value.trim()
+	if (!query || query.length < 2) {
+		groupSearchResults.value = []
+		return
+	}
+	groupSearchTimeout = setTimeout(async () => {
+		try {
+			const res = await call("frappe.client.get_list", {
+				doctype: "Item Group",
+				filters: [["name", "like", `%${query}%`]],
+				fields: ["name"],
+				limit_page_length: 10,
+			})
+			// Exclude already added groups
+			const existingGroups = editStation.value.item_groups.map(g => g.item_group)
+			groupSearchResults.value = (res || []).filter(g => !existingGroups.includes(g.name))
+		} catch { groupSearchResults.value = [] }
+	}, 300)
+}
+
+function addItemGroup(group) {
+	editStation.value.item_groups.push({
+		item_group: group.name,
+		prep_time: 0,
+		priority: "Normal",
+	})
+	groupSearchInput.value = ""
+	groupSearchResults.value = []
+}
+
+function removeItemGroup(idx) {
+	editStation.value.item_groups.splice(idx, 1)
 }
 
 async function handleDeleteStation() {

@@ -25,7 +25,9 @@
   "width",
   "height",
   "section_break_items",
-  "items"
+  "items",
+  "section_break_item_groups",
+  "item_groups"
  ],
  "fields": [
   {
@@ -138,6 +140,17 @@
    "fieldtype": "Table",
    "label": "Items",
    "options": "Preparation Station Item"
+  },
+  {
+   "fieldname": "section_break_item_groups",
+   "fieldtype": "Section Break",
+   "label": "Item Groups"
+  },
+  {
+   "fieldname": "item_groups",
+   "fieldtype": "Table",
+   "label": "Item Groups",
+   "options": "Preparation Station Item Group"
   }
  ],
  "index_web_link_preview": 0,

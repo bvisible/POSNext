@@ -193,6 +193,42 @@
             </div>
           </div>
 
+          <!-- External Payments (invoices paid via POS but created outside) -->
+          <div v-if="closingData.external_payments && closingData.external_payments.length > 0"
+            class="bg-white border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm md:text-base font-semibold text-blue-800">{{ __('External Payments') }}</h3>
+                  <p class="text-xs text-blue-600 mt-0.5">{{ __('{0} payments', [closingData.external_payments.length]) }}</p>
+                </div>
+                <div class="text-lg font-bold text-blue-800">
+                  {{ formatCurrency(closingData.external_payments.reduce((s, p) => s + p.amount, 0)) }}
+                </div>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Invoice') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Customer') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Payment') }}</th>
+                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="(ep, idx) in closingData.external_payments" :key="idx">
+                    <td class="px-4 py-2 text-sm text-gray-800">{{ ep.invoice }}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600">{{ ep.customer }}</td>
+                    <td class="px-4 py-2 text-sm text-gray-500">{{ ep.mode_of_payment }}</td>
+                    <td class="px-4 py-2 text-sm font-semibold text-right text-blue-700">{{ formatCurrency(ep.amount) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Payment Reconciliation -->
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div :class="[

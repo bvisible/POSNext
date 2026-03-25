@@ -421,20 +421,26 @@ function playNotificationSound() {
 	} catch { /* Audio not available */ }
 }
 
+let pollInterval = null
+
 onMounted(async () => {
 	// Load restaurant settings to check if runner is enabled
 	await restaurantStore.fetchRestaurantSettings()
 	if (!runnerEnabled.value) return // Don't load data if runner is disabled
 	loadAreas()
 	loadOrders()
-	socket = initSocket()
+	// Use frappe.realtime (receives frappe.publish_realtime events) with fallback to custom socket
+	socket = window.frappe?.realtime || initSocket()
 	if (socket) {
 		if (socket.disconnected) socket.connect()
 		socket.on("kds_update", () => loadOrders())
 	}
+	// Fallback polling every 30s in case socket is unreliable
+	pollInterval = setInterval(loadOrders, 30000)
 })
 
 onUnmounted(() => {
 	if (socket) socket.off("kds_update")
+	if (pollInterval) clearInterval(pollInterval)
 })
 </script>

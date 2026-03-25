@@ -176,39 +176,52 @@ def get_preparation_stations():
 
 @frappe.whitelist()
 def get_station_items_map():
-	"""Return a mapping of item_code -> station_name for all active stations."""
+	"""Return a mapping of item_code -> station and item_group -> station for all active stations."""
 	stations = frappe.get_all(
 		"Preparation Station",
 		filters={"is_active": 1},
 		fields=["name", "station_name", "color"]
 	)
-	result = {}
+	items_map = {}
+	groups_map = {}
+
 	for station in stations:
-		items = frappe.get_all(
-			"Preparation Station Item",
-			filters={"parent": station.name},
-			fields=["item"]
-		)
 		station_info = {
 			"station": station.name,
 			"station_name": station.station_name,
 			"color": station.color
 		}
+
+		# Individual items mapping
+		items = frappe.get_all(
+			"Preparation Station Item",
+			filters={"parent": station.name},
+			fields=["item"]
+		)
 		for item in items:
 			item_ref = item.item
-			result[item_ref] = station_info
-			# Look up Item by name first, then by item_name as fallback
+			items_map[item_ref] = station_info
 			item_data = frappe.db.get_value("Item", item_ref, ["name", "item_code", "item_name"], as_dict=True)
 			if not item_data:
-				# Fallback: search by item_name in case Link stored item_name
 				item_data = frappe.db.get_value("Item", {"item_name": item_ref}, ["name", "item_code", "item_name"], as_dict=True)
 			if item_data:
-				result[item_data.name] = station_info
+				items_map[item_data.name] = station_info
 				if item_data.item_code:
-					result[item_data.item_code] = station_info
+					items_map[item_data.item_code] = station_info
 				if item_data.item_name:
-					result[item_data.item_name] = station_info
-	return result
+					items_map[item_data.item_name] = station_info
+
+		# Item groups mapping (first station wins if duplicate group)
+		groups = frappe.get_all(
+			"Preparation Station Item Group",
+			filters={"parent": station.name},
+			fields=["item_group"]
+		)
+		for group in groups:
+			if group.item_group not in groups_map:
+				groups_map[group.item_group] = station_info
+
+	return {"items": items_map, "groups": groups_map}
 
 
 @frappe.whitelist()
@@ -291,12 +304,40 @@ def get_kds_orders(station=None):
 	if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
 		item_fields.append("posa_item_modifiers")
 
+	# Build station maps for resolving items without explicit preparation_station
+	_station_map = {}
+	_group_station_map = {}
+	_all_stations = frappe.get_all("Preparation Station", filters={"is_active": 1}, fields=["name", "station_name", "color"])
+	for _st in _all_stations:
+		_st_items = frappe.get_all("Preparation Station Item", filters={"parent": _st.name}, fields=["item"])
+		for _si in _st_items:
+			_station_map[_si.item] = _st.name
+		_st_groups = frappe.get_all("Preparation Station Item Group", filters={"parent": _st.name}, fields=["item_group"])
+		for _sg in _st_groups:
+			if _sg.item_group not in _group_station_map:
+				_group_station_map[_sg.item_group] = _st.name
+
 	for order in orders:
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
 			fields=item_fields
 		)
+
+		# Resolve and persist preparation_station for items that don't have one
+		for item in items:
+			if not item.get("preparation_station"):
+				resolved_station = None
+				if item.item_code in _station_map:
+					resolved_station = _station_map[item.item_code]
+				else:
+					item_group = frappe.db.get_value("Item", item.item_code, "item_group")
+					if item_group and item_group in _group_station_map:
+						resolved_station = _group_station_map[item_group]
+				if resolved_station:
+					item["preparation_station"] = resolved_station
+					# Persist to DB so counts and filters work everywhere
+					frappe.db.set_value("Sales Invoice Item", item.name, "preparation_station", resolved_station, update_modified=False)
 
 		# Filter by station if specified
 		if station:
@@ -454,8 +495,35 @@ def create_station(station_name, station_type="Kitchen", color="#F97316", area=N
 
 
 @frappe.whitelist()
-def update_station(name, station_name=None, station_type=None, color=None, workflow=None):
+def get_station_details(name):
+	"""Get full preparation station details including items and item groups."""
+	doc = frappe.get_doc("Preparation Station", name)
+	return {
+		"name": doc.name,
+		"station_name": doc.station_name,
+		"station_type": doc.station_type,
+		"color": doc.color,
+		"is_active": doc.is_active,
+		"workflow": doc.workflow or "",
+		"use_runner": doc.use_runner,
+		"items": [
+			{"item": r.item, "item_name": r.item_name, "prep_time": r.prep_time or 0, "priority": r.priority or "Normal"}
+			for r in doc.get("items", [])
+		],
+		"item_groups": [
+			{"item_group": r.item_group, "prep_time": r.prep_time or 0, "priority": r.priority or "Normal"}
+			for r in doc.get("item_groups", [])
+		],
+	}
+
+
+@frappe.whitelist()
+def update_station(name, station_name=None, station_type=None, color=None, workflow=None,
+                   is_active=None, use_runner=None, items=None, item_groups=None):
 	"""Update an existing preparation station."""
+	import json
+	from frappe.utils import cint
+
 	doc = frappe.get_doc("Preparation Station", name)
 	if station_name is not None:
 		doc.station_name = station_name
@@ -465,6 +533,35 @@ def update_station(name, station_name=None, station_type=None, color=None, workf
 		doc.color = color
 	if workflow is not None and hasattr(doc, "workflow"):
 		doc.workflow = workflow or None
+	if is_active is not None:
+		doc.is_active = cint(is_active)
+	if use_runner is not None and hasattr(doc, "use_runner"):
+		doc.use_runner = cint(use_runner)
+
+	# Update items child table
+	if items is not None:
+		if isinstance(items, str):
+			items = json.loads(items)
+		doc.items = []
+		for row in items:
+			doc.append("items", {
+				"item": row.get("item"),
+				"prep_time": cint(row.get("prep_time", 0)),
+				"priority": row.get("priority", "Normal"),
+			})
+
+	# Update item_groups child table
+	if item_groups is not None:
+		if isinstance(item_groups, str):
+			item_groups = json.loads(item_groups)
+		doc.item_groups = []
+		for row in item_groups:
+			doc.append("item_groups", {
+				"item_group": row.get("item_group"),
+				"prep_time": cint(row.get("prep_time", 0)),
+				"priority": row.get("priority", "Normal"),
+			})
+
 	doc.save(ignore_permissions=True)
 	return doc.as_dict()
 
@@ -762,7 +859,7 @@ def get_active_cards():
 		items = frappe.get_all(
 			"Restaurant Card Item",
 			filters={"parent": card.name},
-			fields=["item_type", "label", "item", "menu", "price", "sort_order"],
+			fields=["item_type", "label", "item", "menu", "price", "sort_order", "disabled"],
 			order_by="sort_order asc, idx asc"
 		)
 
@@ -782,9 +879,42 @@ def get_active_cards():
 					ci["image"] = menu_data.image
 					ci["default_price"] = menu_data.price or 0
 
+		# Filter out disabled items
+		items = [ci for ci in items if not ci.get("disabled")]
 		card["items"] = items
 		result.append(card)
 
+	return result
+
+
+@frappe.whitelist()
+def duplicate_card(card_name):
+	"""Duplicate a restaurant card with all its items."""
+	original = frappe.get_doc("Restaurant Card", card_name)
+	new_doc = frappe.copy_doc(original)
+	new_doc.card_name = f"{original.card_name} (Copy)"
+	new_doc.is_active = 0
+	new_doc.insert(ignore_permissions=True)
+	return new_doc.as_dict()
+
+
+@frappe.whitelist()
+def get_card_items_stock(card_name):
+	"""Get stock quantities for stock-managed items in a card, grouped by warehouse."""
+	card = frappe.get_doc("Restaurant Card", card_name)
+	result = {}
+	for item in card.items:
+		if item.item_type != "Item" or not item.item:
+			continue
+		is_stock_item = frappe.db.get_value("Item", item.item, "is_stock_item")
+		if not is_stock_item:
+			continue
+		bins = frappe.get_all(
+			"Bin",
+			filters={"item_code": item.item},
+			fields=["warehouse", "actual_qty"]
+		)
+		result[item.item] = [{"warehouse": b.warehouse, "qty": b.actual_qty} for b in bins]
 	return result
 
 
@@ -1302,13 +1432,19 @@ def get_runner_orders(area=None):
 	if has_modifiers:
 		item_fields.append("posa_item_modifiers")
 
-	# Build station map for enrichment
+	# Build station map for enrichment (individual items + item groups)
 	station_map = {}
+	group_station_map = {}
 	all_stations = frappe.get_all("Preparation Station", filters={"is_active": 1}, fields=["name", "station_name", "color"])
 	for st in all_stations:
+		station_info = {"station_name": st.station_name, "station_color": st.color, "station_id": st.name}
 		st_items = frappe.get_all("Preparation Station Item", filters={"parent": st.name}, fields=["item"])
 		for si in st_items:
-			station_map[si.item] = {"station_name": st.station_name, "station_color": st.color, "station_id": st.name}
+			station_map[si.item] = station_info
+		st_groups = frappe.get_all("Preparation Station Item Group", filters={"parent": st.name}, fields=["item_group"])
+		for sg in st_groups:
+			if sg.item_group not in group_station_map:
+				group_station_map[sg.item_group] = station_info
 
 	workflow_cache = {}
 
@@ -1326,10 +1462,17 @@ def get_runner_orders(area=None):
 			if not item_status or item_status == "Delivered":
 				continue
 
-			# Resolve station
+			# Resolve station (individual item > item group fallback)
 			station_id = item.get("preparation_station") or ""
 			if not station_id and item.item_code in station_map:
 				station_id = station_map[item.item_code]["station_id"]
+			if not station_id:
+				item_group = frappe.db.get_value("Item", item.item_code, "item_group")
+				if item_group and item_group in group_station_map:
+					station_id = group_station_map[item_group]["station_id"]
+			# Persist resolved station to DB
+			if station_id and not item.get("preparation_station"):
+				frappe.db.set_value("Sales Invoice Item", item.name, "preparation_station", station_id, update_modified=False)
 
 			# Check if item is at last workflow step
 			cache_key = f"{station_id}:{item.item_code}"

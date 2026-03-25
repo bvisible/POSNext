@@ -123,10 +123,10 @@ const restaurantStore = useRestaurantStore()
 
 const selectedCount = computed(() => dialogItems.value.filter(i => i.selected).length)
 
-// Resolve station name for an item
+// Resolve station name for an item (individual item > item group fallback)
 function getStationName(item) {
 	if (item.preparation_station) return item.preparation_station
-	const stationInfo = restaurantStore.stationItemsMap[item.item_code]
+	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
 	return stationInfo?.station_name || ""
 }
 
@@ -192,13 +192,20 @@ function sendSelected() {
 	const selectedItems = dialogItems.value.filter(i => i.selected)
 	const waitingItems = dialogItems.value.filter(i => isSendable(i) && !i.selected)
 
-	// Update statuses in cart store
+	// Update statuses and resolve stations in cart store
 	for (const di of selectedItems) {
 		const cartItem = cartStore.invoiceItems.find(
 			ci => ci.item_code === di.item_code && (ci.uom || "") === (di.uom || "")
 		)
 		if (cartItem) {
 			cartItem.kds_status = "Pending"
+			// Ensure preparation_station is set (individual item > item group fallback)
+			if (!cartItem.preparation_station) {
+				const stationInfo = restaurantStore.getStationForItem(cartItem.item_code, cartItem.item_group)
+				if (stationInfo) {
+					cartItem.preparation_station = stationInfo.station
+				}
+			}
 		}
 	}
 

@@ -130,7 +130,7 @@
 			</Button>
 
 			<Button
-				v-if="order.kds_status === 'Ready'"
+				v-if="order.kds_status === 'Ready' && !showDeliveredConfirm"
 				variant="outline"
 				class="w-full h-10 text-sm font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
 				@click="updateStatus('Delivered')"
@@ -138,6 +138,15 @@
 			>
 				{{ __("Delivered") }}
 			</Button>
+
+			<!-- Confirmation when Runner is active -->
+			<div v-if="showDeliveredConfirm" class="w-full p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+				<p class="text-xs text-amber-800 font-medium mb-2">{{ __("Runner is active. This will skip the Runner.") }}</p>
+				<div class="flex gap-2">
+					<Button size="sm" variant="subtle" @click="showDeliveredConfirm = false" class="flex-1">{{ __("Cancel") }}</Button>
+					<Button size="sm" variant="solid" @click="confirmDelivered" class="flex-1">{{ __("Confirm") }}</Button>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -147,6 +156,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
+import { useRestaurantStore } from "@/stores/restaurant"
 
 // Strip HTML tags from a string
 function stripHtml(html) {
@@ -171,7 +181,9 @@ const props = defineProps({
 
 const emit = defineEmits(["status-updated"])
 const { showError } = useToast()
+const restaurantStore = useRestaurantStore()
 const loading = ref(false)
+const showDeliveredConfirm = ref(false)
 const activeItemMenu = ref(null)
 
 // Separate items into active (sent to kitchen) vs waiting (not yet sent)
@@ -312,6 +324,20 @@ function parseModifiers(json) {
 // Update order KDS status via API
 // Update order-level KDS status (optimistic UI)
 async function updateStatus(newStatus) {
+	// Confirmation when marking as Delivered with Runner active
+	if (newStatus === "Delivered" && restaurantStore.runnerEnabled) {
+		showDeliveredConfirm.value = true
+		return
+	}
+	await doUpdateStatus(newStatus)
+}
+
+async function confirmDelivered() {
+	showDeliveredConfirm.value = false
+	await doUpdateStatus("Delivered")
+}
+
+async function doUpdateStatus(newStatus) {
 	loading.value = true
 	const oldStatus = props.order.kds_status
 	// Optimistic: update instantly
