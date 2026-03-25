@@ -387,7 +387,8 @@ export function printProvisionalTicket(ticketData) {
 			<div class="receipt">
 				<div class="header">
 					<div class="company-name">${ticketData.company || "POS Next"}</div>
-					<div style="font-size: 12px;">${__("PROVISIONAL TICKET")}</div>
+					<div style="font-size: 14px; font-weight: bold; margin-top: 5px; padding: 4px 8px; border: 2px solid #000; display: inline-block;">${__("PROVISIONAL TICKET")}</div>
+					<div style="font-size: 11px; margin-top: 5px;">${__("Not yet collected")}</div>
 				</div>
 
 				<div class="invoice-info">
@@ -443,7 +444,7 @@ export function printProvisionalTicket(ticketData) {
 					</div>
 				</div>
 
-				<div class="not-receipt">${__("THIS IS NOT A RECEIPT")}</div>
+				<div class="not-receipt">${__("NOT COLLECTED - PROVISIONAL TICKET")}</div>
 
 				<div class="footer">
 					<div style="font-size: 10px;">Powered by <a href="https://nexus.brainwise.me" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600;">BrainWise</a></div>

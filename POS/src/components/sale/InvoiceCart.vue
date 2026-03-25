@@ -1256,34 +1256,6 @@
 					<span>{{ __("Valider") }}</span>
 				</button>
 
-				<!-- Print Provisional Ticket Button (compact - gray) -->
-				<button
-					type="button"
-					@click="$emit('print-provisional-ticket')"
-					:disabled="items.length === 0"
-					:class="[
-						'w-10 py-2.5 rounded-neo-md text-white transition-all flex items-center justify-center touch-manipulation',
-						items.length === 0
-							? 'bg-gray-300 cursor-not-allowed'
-							: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
-					]"
-					:aria-label="__('Print provisional ticket')"
-				>
-					<svg
-						class="w-4 h-4"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"
-						/>
-					</svg>
-				</button>
-
 				<!-- Pay Button (blue) -->
 				<button
 					type="button"
@@ -1311,6 +1283,34 @@
 						/>
 					</svg>
 					<span>{{ __("Payer") }}</span>
+				</button>
+
+				<!-- Print Provisional Ticket Button (compact - gray) -->
+				<button
+					type="button"
+					@click="$emit('print-provisional-ticket')"
+					:disabled="items.length === 0"
+					:class="[
+						'w-10 py-2.5 rounded-neo-md text-white transition-all flex items-center justify-center touch-manipulation',
+						items.length === 0
+							? 'bg-gray-300 cursor-not-allowed'
+							: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
+					]"
+					:aria-label="__('Print provisional ticket')"
+				>
+					<svg
+						class="w-4 h-4"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"
+						/>
+					</svg>
 				</button>
 
 				<!-- Hold Order Button (Secondary - orange) - hidden in restaurant mode -->
