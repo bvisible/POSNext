@@ -22,7 +22,7 @@
 					<!-- Left: Card list -->
 					<div class="w-48 flex-shrink-0 space-y-2 overflow-y-auto">
 						<div v-for="card in cards" :key="card.name"
-							@click="selectedCard = card.name; loadCardDetail(card.name)"
+							@click="selectCard(card.name)"
 							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-sm"
 							:class="selectedCard === card.name
 								? 'bg-amber-100 text-amber-800 font-bold border border-amber-300'
@@ -62,16 +62,35 @@
 
 						<div v-else-if="cardDetail">
 							<!-- Card header -->
-							<div class="flex justify-between items-center mb-4">
-								<div class="flex items-center gap-3">
-									<h3 class="font-bold text-lg">{{ cardDetail.card_name }}</h3>
-									<label class="flex items-center gap-1.5 text-xs cursor-pointer">
-										<input type="checkbox" v-model="cardDetail.is_active" class="rounded" @change="toggleCardActive" />
-										{{ __("Active") }}
-									</label>
+							<div class="flex justify-between items-start mb-4">
+								<div>
+									<div class="flex items-center gap-3">
+										<input v-if="editingName" v-model="cardDetail.card_name" ref="nameInput"
+											@blur="finishRename" @keyup.enter="finishRename"
+											class="font-bold text-lg border-b-2 border-amber-400 outline-none bg-transparent w-48" />
+										<h3 v-else class="font-bold text-lg cursor-pointer hover:text-amber-700" @click="startRename">
+											{{ cardDetail.card_name }}
+										</h3>
+										<label class="flex items-center gap-1.5 text-xs cursor-pointer">
+											<input type="checkbox" v-model="cardDetail.is_active"
+												:true-value="true" :false-value="false"
+												class="rounded" @change="toggleCardActive" />
+											{{ __("Active") }}
+										</label>
+									</div>
+									<!-- Visibility summary -->
+									<div v-if="cardSlots.length > 0" class="mt-1 text-xs text-gray-500">
+										<span v-for="(slot, i) in cardSlots" :key="i">
+											{{ slot }}<span v-if="i < cardSlots.length - 1">, </span>
+										</span>
+									</div>
+									<div v-else class="mt-1 text-xs text-amber-600">
+										{{ __("Not assigned to any time slot") }}
+									</div>
 								</div>
 								<div class="flex gap-1">
 									<Button variant="solid" size="sm" @click="saveCard" :loading="saving">{{ __("Save") }}</Button>
+									<button @click="duplicateCard" class="text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600">{{ __("Duplicate") }}</button>
 									<button @click="deleteCard" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">{{ __("Delete") }}</button>
 								</div>
 							</div>
@@ -79,27 +98,52 @@
 							<!-- Card items -->
 							<div class="space-y-1">
 								<div v-for="(item, idx) in cardDetail.items" :key="idx"
-									class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
-									:class="item.item_type === 'Category'
-										? 'bg-amber-50 border border-amber-200 font-bold text-amber-800 mt-3 first:mt-0'
-										: 'bg-white border border-gray-100 hover:border-gray-200 ml-4'">
+									draggable="true"
+									@dragstart="onDragStart(idx, $event)"
+									@dragover.prevent="onDragOver(idx, $event)"
+									@drop="onDrop(idx)"
+									@dragend="dragIdx = null"
+									class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
+									:class="[
+										item.item_type === 'Category'
+											? 'bg-amber-50 border border-amber-200 font-bold text-amber-800 mt-3 first:mt-0'
+											: 'bg-white border border-gray-100 hover:border-gray-200 ml-4',
+										dragOverIdx === idx ? 'border-blue-400 border-2' : '',
+										item.disabled ? 'opacity-40' : ''
+									]">
 
 									<!-- Drag handle -->
-									<span class="text-gray-300 cursor-grab">⠿</span>
+									<span class="text-gray-300 cursor-grab active:cursor-grabbing select-none">&#x2807;</span>
 
-									<!-- Category or Item icon -->
+									<!-- Category or Item content -->
 									<span v-if="item.item_type === 'Category'" class="text-amber-500 text-xs font-bold uppercase tracking-wider flex-1">
 										{{ item.label || __("Category") }}
 									</span>
 									<template v-else>
-										<span class="flex-1 text-sm">{{ item.label || item.item_name || item.item }}</span>
+										<div class="flex-1 min-w-0">
+											<span class="text-sm">{{ item.label || item.item_name || item.item }}</span>
+											<!-- Stock display -->
+											<div v-if="stockData[item.item]" class="text-[10px] text-gray-400 mt-0.5">
+												<span v-for="(bin, bi) in stockData[item.item]" :key="bi"
+													:class="bin.qty <= 0 ? 'text-red-500' : ''">
+													{{ bin.warehouse.split(' - ')[0] }}: {{ bin.qty }}<span v-if="bi < stockData[item.item].length - 1"> | </span>
+												</span>
+												<span v-if="stockData[item.item].length === 0" class="text-red-500">{{ __("Out of stock") }}</span>
+											</div>
+										</div>
+										<!-- Disable toggle -->
+										<label class="flex items-center cursor-pointer flex-shrink-0" :title="item.disabled ? __('Enable') : __('Disable')">
+											<input type="checkbox" :checked="!item.disabled"
+												@change="item.disabled = !item.disabled"
+												class="w-3.5 h-3.5 rounded border-gray-300 text-green-500 focus:ring-green-500" />
+										</label>
 										<input v-model.number="item.price" type="number" step="0.01"
-											class="w-20 px-2 py-0.5 border rounded text-sm text-right"
+											class="w-20 px-2 py-0.5 border rounded text-sm text-right flex-shrink-0"
 											:placeholder="__('Price')" />
 									</template>
 
 									<!-- Delete -->
-									<button @click="cardDetail.items.splice(idx, 1)" class="text-gray-300 hover:text-red-500 transition-colors">
+									<button @click="cardDetail.items.splice(idx, 1)" class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 										</svg>
@@ -217,7 +261,7 @@ import { useToast } from "@/composables/useToast"
 import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
 
 const props = defineProps({ modelValue: Boolean })
-const emit = defineEmits(["update:modelValue"])
+const emit = defineEmits(["update:modelValue", "cards-updated"])
 
 const show = computed({
 	get: () => props.modelValue,
@@ -226,6 +270,7 @@ const show = computed({
 
 function handleClose() {
 	show.value = false
+	emit("cards-updated")
 }
 
 const { showSuccess, showError } = useToast()
@@ -236,6 +281,10 @@ const loading = ref(true)
 const saving = ref(false)
 const showNewCard = ref(false)
 const newCardName = ref("")
+const stockData = ref({})
+const openingHours = ref([])
+const editingName = ref(false)
+const nameInput = ref(null)
 
 // Category dialog
 const showCategoryDialog = ref(false)
@@ -249,7 +298,38 @@ const searchResults = ref([])
 // Create item dialog
 const showCreateItemDialog = ref(false)
 
+// Drag state
+const dragIdx = ref(null)
+const dragOverIdx = ref(null)
+
+// Auto-select first card when dialog opens
+watch(show, (val) => {
+	if (val) {
+		loadCards()
+		loadOpeningHours()
+	}
+})
+
+// Visibility summary: which time slots use this card
+function fmtTime(t) {
+	if (!t) return ""
+	const parts = t.split(":")
+	return `${parts[0].padStart(2, "0")}:${parts[1] || "00"}`
+}
+const cardSlots = computed(() => {
+	if (!selectedCard.value) return []
+	return openingHours.value
+		.filter(slot => slot.restaurant_card === selectedCard.value)
+		.map(slot => `${slot.day_of_week} ${fmtTime(slot.from_time)}-${fmtTime(slot.to_time)}${slot.label ? " (" + slot.label + ")" : ""}`)
+})
+
+function selectCard(name) {
+	selectedCard.value = name
+	loadCardDetail(name)
+}
+
 async function loadCards() {
+	loading.value = true
 	try {
 		const res = await call("frappe.client.get_list", {
 			doctype: "Restaurant Card",
@@ -258,11 +338,24 @@ async function loadCards() {
 			limit_page_length: 0
 		})
 		if (res) cards.value = res
+		// Auto-select first card if none selected
+		if (cards.value.length > 0 && !selectedCard.value) {
+			selectCard(cards.value[0].name)
+		}
 	} catch (error) {
 		showError(__("Failed to load cards"))
 	} finally {
 		loading.value = false
 	}
+}
+
+async function loadOpeningHours() {
+	try {
+		const res = await call("frappe.client.get", {
+			doctype: "Restaurant Settings", name: "Restaurant Settings"
+		})
+		openingHours.value = res?.opening_hours || []
+	} catch { openingHours.value = [] }
 }
 
 async function loadCardDetail(name) {
@@ -272,7 +365,7 @@ async function loadCardDetail(name) {
 			cardDetail.value = {
 				name: doc.name,
 				card_name: doc.card_name,
-				is_active: doc.is_active,
+				is_active: !!doc.is_active,
 				items: (doc.items || []).map(i => ({
 					item_type: i.item_type,
 					label: i.label,
@@ -281,12 +374,22 @@ async function loadCardDetail(name) {
 					menu: i.menu,
 					price: i.price,
 					sort_order: i.sort_order,
+					disabled: !!i.disabled,
 				}))
 			}
+			// Load stock data
+			loadStockData(name)
 		}
 	} catch (error) {
 		showError(__("Failed to load card"))
 	}
+}
+
+async function loadStockData(cardName) {
+	try {
+		const res = await call("pos_next.api.restaurant.get_card_items_stock", { card_name: cardName })
+		stockData.value = res || {}
+	} catch { stockData.value = {} }
 }
 
 async function saveCard() {
@@ -300,10 +403,12 @@ async function saveCard() {
 			menu: item.menu,
 			price: item.price || 0,
 			sort_order: idx,
+			disabled: item.disabled ? 1 : 0,
 		}))
 		await call("frappe.client.save", { doc })
 		showSuccess(__("Card saved"))
 		loadCards()
+		emit("cards-updated")
 	} catch (error) {
 		showError(__("Failed to save card"))
 	} finally {
@@ -321,8 +426,7 @@ async function createCard() {
 		newCardName.value = ""
 		loadCards()
 		if (doc) {
-			selectedCard.value = doc.name
-			loadCardDetail(doc.name)
+			selectCard(doc.name)
 		}
 	} catch (error) {
 		showError(__("Failed to create card"))
@@ -341,18 +445,62 @@ async function deleteCard() {
 	}
 }
 
+async function duplicateCard() {
+	try {
+		const res = await call("pos_next.api.restaurant.duplicate_card", { card_name: cardDetail.value.name })
+		showSuccess(__("Card duplicated"))
+		await loadCards()
+		if (res) {
+			selectCard(res.name)
+		}
+	} catch (error) {
+		showError(__("Failed to duplicate card"))
+	}
+}
+
 async function toggleCardActive() {
 	try {
 		await call("frappe.client.set_value", {
 			doctype: "Restaurant Card", name: cardDetail.value.name,
 			fieldname: "is_active", value: cardDetail.value.is_active ? 1 : 0
 		})
+		loadCards()
 	} catch { /* silent */ }
+}
+
+function startRename() {
+	editingName.value = true
+	nextTick(() => {
+		nameInput.value?.focus()
+		nameInput.value?.select()
+	})
+}
+
+async function finishRename() {
+	editingName.value = false
+	if (!cardDetail.value.card_name) return
+	const oldName = cardDetail.value.name
+	const newName = cardDetail.value.card_name.trim()
+	if (oldName === newName) return
+	try {
+		await call("frappe.client.rename_doc", {
+			doctype: "Restaurant Card",
+			old_name: oldName,
+			new_name: newName,
+		})
+		cardDetail.value.name = newName
+		selectedCard.value = newName
+		await loadCards()
+		showSuccess(__("Card renamed"))
+	} catch (error) {
+		showError(__("Failed to rename card"))
+		cardDetail.value.card_name = oldName
+	}
 }
 
 function addCategory() {
 	if (newCategoryName.value) {
-		cardDetail.value.items.push({ item_type: "Category", label: newCategoryName.value, item: null, menu: null, price: 0 })
+		cardDetail.value.items.push({ item_type: "Category", label: newCategoryName.value, item: null, menu: null, price: 0, disabled: false })
 		newCategoryName.value = ""
 		showCategoryDialog.value = false
 	}
@@ -364,7 +512,8 @@ function addItem(item) {
 		label: item.item_name,
 		item: item.name,
 		menu: null,
-		price: item.standard_rate || 0
+		price: item.standard_rate || 0,
+		disabled: false,
 	})
 	closeItemSearch()
 }
@@ -376,7 +525,6 @@ function closeItemSearch() {
 }
 
 async function openCreateItemFromSearch() {
-	// Close search dialog first, then open create dialog after DOM update
 	showItemSearchDialog.value = false
 	await nextTick()
 	showCreateItemDialog.value = true
@@ -409,10 +557,37 @@ function searchItems() {
 	}, 300)
 }
 
-// Trigger search when query changes (works with both typing and programmatic updates)
+// Trigger search when query changes
 watch(itemSearchQuery, () => searchItems())
 
-onMounted(loadCards)
+// --- Drag and Drop ---
+function onDragStart(idx, event) {
+	dragIdx.value = idx
+	event.dataTransfer.effectAllowed = "move"
+}
+
+function onDragOver(idx, event) {
+	event.dataTransfer.dropEffect = "move"
+	dragOverIdx.value = idx
+}
+
+function onDrop(targetIdx) {
+	const fromIdx = dragIdx.value
+	if (fromIdx === null || fromIdx === targetIdx) {
+		dragOverIdx.value = null
+		return
+	}
+	const items = cardDetail.value.items
+	const [moved] = items.splice(fromIdx, 1)
+	items.splice(targetIdx, 0, moved)
+	dragIdx.value = null
+	dragOverIdx.value = null
+}
+
+onMounted(() => {
+	loadCards()
+	loadOpeningHours()
+})
 </script>
 
 <style scoped>

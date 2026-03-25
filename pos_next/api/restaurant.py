@@ -1571,3 +1571,34 @@ def get_item_creation_defaults(pos_profile=None):
 		"default_warehouse": default_warehouse,
 		"warehouses": [w.name for w in warehouses],
 	}
+
+
+@frappe.whitelist()
+def duplicate_card(card_name):
+	"""Duplicate a restaurant card with all its items."""
+	original = frappe.get_doc("Restaurant Card", card_name)
+	new_doc = frappe.copy_doc(original)
+	new_doc.card_name = f"{original.card_name} (Copy)"
+	new_doc.is_active = 0
+	new_doc.insert(ignore_permissions=True)
+	return new_doc.as_dict()
+
+
+@frappe.whitelist()
+def get_card_items_stock(card_name):
+	"""Get stock quantities for stock-managed items in a card, grouped by warehouse."""
+	card = frappe.get_doc("Restaurant Card", card_name)
+	result = {}
+	for item in card.items:
+		if item.item_type != "Item" or not item.item:
+			continue
+		is_stock_item = frappe.db.get_value("Item", item.item, "is_stock_item")
+		if not is_stock_item:
+			continue
+		bins = frappe.get_all(
+			"Bin",
+			filters={"item_code": item.item},
+			fields=["warehouse", "actual_qty"]
+		)
+		result[item.item] = [{"warehouse": b.warehouse, "qty": b.actual_qty} for b in bins]
+	return result
