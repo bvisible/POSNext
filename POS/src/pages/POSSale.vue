@@ -612,6 +612,7 @@
 								@close-shift="handleCloseShift()"
 								@send-to-kitchen="handleSendToKitchen"
 								@open-kitchen-dialog="kitchenDialogRef?.open()"
+								@print-provisional-ticket="handlePrintProvisionalTicket"
 								@send-item-to-kitchen="handleSendSingleItem"
 								@open-modifiers="handleOpenModifiers"
 							/>
@@ -1349,7 +1350,7 @@ import { parseError } from "@/utils/errorHandler";
 import { cleanupUserSession } from "@/utils/sessionCleanup";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { cacheInvoiceHistory, getCachedInvoiceHistory } from "@/utils/offline/sync";
-import { printInvoice, printInvoiceByName, printWithSilentFallback } from "@/utils/printInvoice";
+import { printInvoice, printInvoiceByName, printWithSilentFallback, printProvisionalTicket } from "@/utils/printInvoice";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
 
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
@@ -3650,6 +3651,22 @@ async function handlePrintInvoice(invoiceData) {
 			message: "Failed to print invoice",
 			indicator: "red",
 		});
+	}
+}
+
+function handlePrintProvisionalTicket() {
+	try {
+		printProvisionalTicket({
+			tableName: cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name,
+			company: shiftStore.profileCompany,
+			items: cartStore.invoiceItems,
+			grand_total: cartStore.grandTotal,
+			customer_name: cartStore.customer?.customer_name || cartStore.customer?.name || null,
+			total_taxes_and_charges: cartStore.totalTax || 0,
+		})
+	} catch (error) {
+		log.error("Error printing provisional ticket:", error)
+		showError(__("Failed to print provisional ticket"))
 	}
 }
 
