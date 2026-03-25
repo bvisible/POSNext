@@ -1545,8 +1545,9 @@ def get_item_creation_defaults(pos_profile=None):
 		limit_page_length=0,
 	)
 
-	# Default UOM from Stock Settings
+	# Defaults from Stock Settings
 	default_uom = frappe.db.get_single_value("Stock Settings", "stock_uom") or "Nos"
+	default_item_group = frappe.db.get_single_value("Stock Settings", "item_group") or ""
 
 	# Default warehouse from POS Profile
 	default_warehouse = ""
@@ -1567,6 +1568,7 @@ def get_item_creation_defaults(pos_profile=None):
 		"item_groups": [g.name for g in item_groups],
 		"uoms": [u.name for u in uoms],
 		"default_uom": default_uom,
+		"default_item_group": default_item_group,
 		"default_warehouse": default_warehouse,
 		"warehouses": [w.name for w in warehouses],
 	}

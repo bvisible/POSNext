@@ -192,6 +192,7 @@ const defaults = ref({
 	item_groups: [],
 	uoms: [],
 	default_uom: "Nos",
+	default_item_group: "",
 	default_warehouse: "",
 	warehouses: [],
 })
@@ -258,6 +259,7 @@ async function loadDefaults() {
 		defaults.value = res
 
 		// Apply defaults
+		itemData.value.item_group = res.default_item_group || ""
 		itemData.value.stock_uom = res.default_uom || (res.uoms.length ? res.uoms[0] : "")
 		itemData.value.warehouse = res.default_warehouse || ""
 	} catch (err) {
