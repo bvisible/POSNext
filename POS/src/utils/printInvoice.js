@@ -446,9 +446,6 @@ export function printProvisionalTicket(ticketData) {
 
 				<div class="not-receipt">${__("NOT COLLECTED - PROVISIONAL TICKET")}</div>
 
-				<div class="footer">
-					<div style="font-size: 10px;">Powered by <a href="https://nexus.brainwise.me" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600;">BrainWise</a></div>
-				</div>
 			</div>
 
 			<div class="no-print" style="text-align: center; margin-top: 20px;">
