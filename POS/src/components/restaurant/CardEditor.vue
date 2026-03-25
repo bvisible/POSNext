@@ -210,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, watch, nextTick } from "vue"
 import { Button, Dialog, Input } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
@@ -375,7 +375,10 @@ function closeItemSearch() {
 	searchResults.value = []
 }
 
-function openCreateItemFromSearch() {
+async function openCreateItemFromSearch() {
+	// Close search dialog first, then open create dialog after DOM update
+	showItemSearchDialog.value = false
+	await nextTick()
 	showCreateItemDialog.value = true
 }
 
