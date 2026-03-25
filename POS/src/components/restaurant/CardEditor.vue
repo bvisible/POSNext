@@ -136,12 +136,28 @@
 										<span>{{ item.item_name }}</span>
 										<span class="text-xs text-gray-400">{{ item.standard_rate || 0 }}</span>
 									</div>
-									<div v-if="searchResults.length === 0 && itemSearchQuery" class="text-xs text-gray-400 text-center py-2">
-										{{ __("No items found") }}
+									<div v-if="searchResults.length === 0 && itemSearchQuery && itemSearchQuery.length >= 2" class="text-center py-3">
+										<p class="text-xs text-gray-400 mb-2">{{ __("No items found") }}</p>
+										<button @click="showCreateItemDialog = true"
+											class="text-xs font-medium text-green-700 bg-green-50 rounded-lg border border-green-300 hover:bg-green-100 transition-colors px-3 py-1.5 inline-flex items-center gap-1">
+											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+											</svg>
+											{{ __("Create Item") }}
+										</button>
 									</div>
 								</div>
-								<button @click="showItemSearch = false; itemSearchQuery = ''; searchResults = []"
-									class="text-xs text-gray-500 mt-2">{{ __("Close") }}</button>
+								<div class="flex items-center justify-between mt-2">
+									<button @click="showCreateItemDialog = true"
+										class="text-xs text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1">
+										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+										</svg>
+										{{ __("Create new item") }}
+									</button>
+									<button @click="showItemSearch = false; itemSearchQuery = ''; searchResults = []"
+										class="text-xs text-gray-500">{{ __("Close") }}</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -152,6 +168,13 @@
 			</div>
 		</div>
 	</Transition>
+
+	<!-- Create Item Dialog -->
+	<CreateItemDialog
+		v-model="showCreateItemDialog"
+		:initial-name="itemSearchQuery"
+		@item-created="handleItemCreated"
+	/>
 </template>
 
 <script setup>
@@ -159,6 +182,7 @@ import { ref, computed, onMounted } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
+import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
 
 const props = defineProps({ modelValue: Boolean })
 const emit = defineEmits(["update:modelValue"])
@@ -183,6 +207,7 @@ const newCardName = ref("")
 const showItemSearch = ref(false)
 const itemSearchQuery = ref("")
 const searchResults = ref([])
+const showCreateItemDialog = ref(false)
 
 async function loadCards() {
 	try {
@@ -303,6 +328,10 @@ function addItem(item) {
 	showItemSearch.value = false
 	itemSearchQuery.value = ""
 	searchResults.value = []
+}
+
+function handleItemCreated(item) {
+	addItem(item)
 }
 
 let searchTimeout = null

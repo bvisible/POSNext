@@ -1410,3 +1410,163 @@ def mark_items_delivered(invoice_name, item_names=None):
 
 	frappe.publish_realtime("kds_update")
 	return {"status": "success"}
+
+
+@frappe.whitelist()
+def create_item(
+	item_name,
+	item_group,
+	stock_uom,
+	item_code=None,
+	is_stock_item=0,
+	standard_selling_rate=0,
+	standard_buying_rate=0,
+	opening_stock=0,
+	warehouse=None,
+	pos_profile=None,
+):
+	"""Create a new Item from the POS Card Editor with prices and optional stock."""
+	from frappe.utils import cint, flt
+
+	if not frappe.has_permission("Item", "create"):
+		frappe.throw(_("You don't have permission to create items"), frappe.PermissionError)
+
+	if not item_name or not item_group or not stock_uom:
+		frappe.throw(_("Item Name, Item Group, and Unit of Measure are required"))
+
+	if not item_code:
+		item_code = item_name
+
+	# Get POS Profile data for defaults
+	profile = None
+	if pos_profile:
+		profile = frappe.get_cached_doc("POS Profile", pos_profile)
+
+	# Create Item doc
+	item_doc = frappe.get_doc({
+		"doctype": "Item",
+		"item_code": item_code,
+		"item_name": item_name,
+		"item_group": item_group,
+		"stock_uom": stock_uom,
+		"is_stock_item": cint(is_stock_item),
+	})
+
+	# Add item defaults from POS Profile
+	if profile:
+		item_doc.append("item_defaults", {
+			"company": profile.company,
+			"default_warehouse": warehouse or profile.warehouse,
+		})
+
+	try:
+		item_doc.insert()
+	except frappe.DuplicateEntryError:
+		frappe.throw(_("An item with code '{0}' already exists").format(item_code))
+
+	# Create selling Item Price
+	if flt(standard_selling_rate) and profile and profile.selling_price_list:
+		try:
+			frappe.get_doc({
+				"doctype": "Item Price",
+				"item_code": item_doc.name,
+				"price_list": profile.selling_price_list,
+				"price_list_rate": flt(standard_selling_rate),
+			}).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error("Item Price creation failed", frappe.get_traceback())
+
+	# Create buying Item Price
+	if flt(standard_buying_rate):
+		buying_price_list = frappe.db.get_single_value("Buying Settings", "buying_price_list")
+		if buying_price_list and frappe.db.exists("Price List", buying_price_list):
+			try:
+				frappe.get_doc({
+					"doctype": "Item Price",
+					"item_code": item_doc.name,
+					"price_list": buying_price_list,
+					"price_list_rate": flt(standard_buying_rate),
+					"buying": 1,
+				}).insert(ignore_permissions=True, ignore_if_duplicate=True)
+			except Exception:
+				frappe.log_error("Buying Price creation failed", frappe.get_traceback())
+
+	# Create opening stock entry
+	if cint(is_stock_item) and flt(opening_stock) > 0:
+		target_warehouse = warehouse
+		if not target_warehouse and profile:
+			target_warehouse = profile.warehouse
+		if target_warehouse:
+			company = profile.company if profile else frappe.defaults.get_global_default("company")
+			try:
+				stock_entry = frappe.get_doc({
+					"doctype": "Stock Entry",
+					"stock_entry_type": "Material Receipt",
+					"company": company,
+					"items": [{
+						"item_code": item_doc.name,
+						"qty": flt(opening_stock),
+						"t_warehouse": target_warehouse,
+						"basic_rate": flt(standard_buying_rate) or flt(standard_selling_rate),
+					}],
+				})
+				stock_entry.insert()
+				stock_entry.submit()
+			except Exception:
+				frappe.log_error("Opening stock entry failed", frappe.get_traceback())
+
+	return {
+		"name": item_doc.name,
+		"item_name": item_doc.item_name,
+		"item_code": item_doc.item_code,
+		"standard_rate": flt(standard_selling_rate),
+		"item_group": item_doc.item_group,
+		"stock_uom": item_doc.stock_uom,
+	}
+
+
+@frappe.whitelist()
+def get_item_creation_defaults(pos_profile=None):
+	"""Get default values for the Create Item dialog."""
+	# Item Groups (non-group nodes only)
+	item_groups = frappe.get_all(
+		"Item Group",
+		filters={"is_group": 0},
+		fields=["name"],
+		order_by="name asc",
+		limit_page_length=0,
+	)
+
+	# UOMs
+	uoms = frappe.get_all(
+		"UOM",
+		fields=["name"],
+		order_by="name asc",
+		limit_page_length=0,
+	)
+
+	# Default UOM from Stock Settings
+	default_uom = frappe.db.get_single_value("Stock Settings", "stock_uom") or "Nos"
+
+	# Default warehouse from POS Profile
+	default_warehouse = ""
+	warehouses = []
+	if pos_profile:
+		profile = frappe.get_cached_doc("POS Profile", pos_profile)
+		default_warehouse = profile.warehouse or ""
+		company = profile.company
+		warehouses = frappe.get_all(
+			"Warehouse",
+			filters={"company": company, "is_group": 0},
+			fields=["name"],
+			order_by="name asc",
+			limit_page_length=0,
+		)
+
+	return {
+		"item_groups": [g.name for g in item_groups],
+		"uoms": [u.name for u in uoms],
+		"default_uom": default_uom,
+		"default_warehouse": default_warehouse,
+		"warehouses": [w.name for w in warehouses],
+	}
