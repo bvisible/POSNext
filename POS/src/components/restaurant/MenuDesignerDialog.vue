@@ -211,17 +211,25 @@ async function onGeneratePdf({
 			? "pos_next.api.menu_pdf.generate_multi_card_pdf"
 			: "pos_next.api.menu_pdf.generate_menu_pdf"
 
+		// Serialize overrides safely (avoid double-encoding reactive Vue objects)
+		const safeOverrides = JSON.stringify(
+			Object.fromEntries(
+				Object.entries(overrides || {}).filter(
+					([k]) => !k.startsWith("selected_"),
+				),
+			),
+		)
 		const args = isMulti
 			? {
 					card_names: JSON.stringify(card_names),
 					template_name,
-					overrides: JSON.stringify(overrides),
+					overrides: safeOverrides,
 					paper_format,
 				}
 			: {
 					card_name: card_names[0],
 					template_name,
-					overrides: JSON.stringify(overrides),
+					overrides: safeOverrides,
 					paper_format,
 				}
 
