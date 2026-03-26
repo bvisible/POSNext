@@ -39,6 +39,10 @@
 						:class="viewMode === 'plan' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
 					>{{ __("Plan") }}</button>
 				</div>
+				<label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+					{{ __("Show completed") }}
+				</label>
 				<Button @click="loadOrders" icon="refresh-cw">
 					{{ __("Refresh") }}
 				</Button>
@@ -205,7 +209,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import { call } from "@/utils/apiWrapper"
@@ -217,6 +221,7 @@ const restaurantStore = useRestaurantStore()
 const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
 const { showError } = useToast()
 const orders = ref([])
+const showDelivered = ref(localStorage.getItem("pos_runner_show_delivered") === "true")
 const areas = ref([])
 const allTables = ref([])
 const allFloorStations = ref([])
@@ -260,9 +265,22 @@ const orderStations = computed(() => {
 	return Object.values(map).sort((a, b) => a.name.localeCompare(b.name))
 })
 
+watch(showDelivered, (val) => {
+	localStorage.setItem("pos_runner_show_delivered", val ? "true" : "false")
+})
+
 const filteredByAreaOrders = computed(() => {
-	if (!selectedArea.value) return orders.value
-	return orders.value.filter(o => o.area === selectedArea.value)
+	let result = orders.value
+	if (!showDelivered.value) {
+		result = result.filter(o => {
+			const allDelivered = o.items?.every(i => i.kds_status === "Delivered")
+			return !allDelivered
+		})
+	}
+	if (selectedArea.value) {
+		result = result.filter(o => o.area === selectedArea.value)
+	}
+	return result
 })
 
 const filteredOrders = computed(() => {

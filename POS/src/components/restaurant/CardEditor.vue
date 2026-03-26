@@ -175,7 +175,7 @@
 					</div>
 
 					<!-- Right: Badge Panel -->
-					<div v-if="selectedBadgeItem" class="w-64 flex-shrink-0 border rounded-xl overflow-hidden">
+					<div v-if="selectedBadgeItem" class="w-64 h-full flex-shrink-0 border rounded-xl overflow-hidden">
 						<ItemBadgePanel
 							:item-code="selectedBadgeItem.item"
 							:item-name="selectedBadgeItem.label || selectedBadgeItem.item_name || selectedBadgeItem.item"

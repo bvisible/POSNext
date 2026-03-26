@@ -6,7 +6,11 @@
 				<h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __("Preparation Display") }}</h1>
 				<p class="text-sm text-gray-500 dark:text-gray-400">{{ __("Active Orders") }}: {{ orders.length }}</p>
 			</div>
-			<div class="flex gap-2">
+			<div class="flex items-center gap-3">
+				<label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+					{{ __("Show completed") }}
+				</label>
 				<Button @click="loadOrders" icon="refresh-cw">
 					{{ __("Refresh") }}
 				</Button>
@@ -78,11 +82,20 @@ const loading = ref(true)
 const stations = ref([])
 const selectedStation = ref(null)
 const allOrders = ref([]) // Unfiltered orders for counting
+const showDelivered = ref(localStorage.getItem("pos_kds_show_delivered") === "true")
 let socket = null
 let autoRefreshInterval = null
 
+watch(showDelivered, (val) => {
+	localStorage.setItem("pos_kds_show_delivered", val ? "true" : "false")
+})
+
 const sortedOrders = computed(() => {
-	return [...orders.value].sort((a, b) => new Date(a.creation) - new Date(b.creation))
+	let filtered = orders.value
+	if (!showDelivered.value) {
+		filtered = filtered.filter(o => o.kds_status !== "Delivered")
+	}
+	return [...filtered].sort((a, b) => new Date(a.creation) - new Date(b.creation))
 })
 
 // Count orders from ALL orders (not filtered) that have items for a station
