@@ -28,9 +28,11 @@
 							<div class="flex-1 overflow-hidden">
 								<MenuPreview
 									:card="previewData.card"
-									:categories="previewData.categories"
+									:categories="allCategories"
 									:design="activeTemplate"
 									:currency="previewData.currency"
+									:company-logo="previewData.company_logo"
+									:show-cover-page="showCoverPage"
 								/>
 							</div>
 
@@ -41,8 +43,11 @@
 									:current-template="activeTemplate"
 									:card-name="cardName"
 									:cards="cards"
+									:show-cover-page="showCoverPage"
 									@update:config="onConfigUpdate"
+									@update:cover-page="showCoverPage = $event"
 									@generate-pdf="onGeneratePdf"
+									@save-design="onSaveDesign"
 								/>
 							</div>
 						</template>
@@ -71,17 +76,30 @@ defineEmits(["close"])
 const { showSuccess, showError } = useToast()
 const loading = ref(true)
 const templates = ref([])
+const showCoverPage = ref(true)
+const selectedCardNames = ref([])
+const extraCardData = ref({})
 const previewData = ref({
 	card: {},
 	categories: [],
 	design: {},
 	currency: "CHF",
+	company_logo: "",
 })
 const configOverrides = ref({})
 
 const activeTemplate = computed(() => {
 	const base = previewData.value.design || {}
 	return { ...base, ...configOverrides.value }
+})
+
+// Combine categories from main card + extra selected cards
+const allCategories = computed(() => {
+	const main = previewData.value.categories || []
+	const extras = Object.values(extraCardData.value).flatMap(
+		(d) => d.categories || [],
+	)
+	return [...main, ...extras]
 })
 
 async function loadData() {
@@ -96,6 +114,7 @@ async function loadData() {
 
 		previewData.value = previewRes || previewData.value
 		templates.value = templatesRes || []
+		selectedCardNames.value = [props.cardName]
 	} catch (e) {
 		console.error("Failed to load menu designer data:", e)
 		showError(__("Failed to load menu data"))
@@ -115,9 +134,48 @@ function onConfigUpdate(newConfig) {
 			previewData.value = { ...previewData.value, design: { ...tpl } }
 		}
 	}
-	// Store overrides (display toggles, columns, etc.) separately
-	const { template_name, ...overrides } = newConfig
+
+	// Load extra cards if multi-card selection changed
+	if (newConfig.selected_cards) {
+		loadExtraCards(newConfig.selected_cards)
+	}
+
+	const { template_name, selected_cards, ...overrides } = newConfig
 	configOverrides.value = overrides
+}
+
+async function loadExtraCards(cardNames) {
+	const newExtras = {}
+	for (const name of cardNames) {
+		if (name === props.cardName) continue
+		if (extraCardData.value[name]) {
+			newExtras[name] = extraCardData.value[name]
+			continue
+		}
+		try {
+			const data = await call("pos_next.api.menu_pdf.get_menu_preview_data", {
+				card_name: name,
+			})
+			newExtras[name] = data
+		} catch (e) {
+			console.error("Failed to load extra card:", name, e)
+		}
+	}
+	extraCardData.value = newExtras
+}
+
+async function onSaveDesign() {
+	try {
+		await call("pos_next.api.menu_pdf.save_card_design", {
+			card_name: props.cardName,
+			template_name: activeTemplate.value?.name || "",
+			overrides: JSON.stringify(configOverrides.value),
+		})
+		showSuccess(__("Design saved"))
+	} catch (e) {
+		console.error("Failed to save design:", e)
+		showError(__("Failed to save design"))
+	}
 }
 
 async function onGeneratePdf({
@@ -146,7 +204,6 @@ async function onGeneratePdf({
 					paper_format,
 				}
 
-		// Trigger download via hidden link (avoids popup blockers)
 		const url = `/api/method/${method}?${new URLSearchParams(args).toString()}`
 		const link = document.createElement("a")
 		link.href = url

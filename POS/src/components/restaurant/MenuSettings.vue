@@ -102,8 +102,24 @@
 			</div>
 		</div>
 
-		<!-- Generate button -->
+		<!-- Cover page toggle -->
+		<div>
+			<label class="flex items-center gap-2 text-sm cursor-pointer">
+				<input type="checkbox" :checked="showCoverPage" @change="$emit('update:cover-page', $event.target.checked)" class="rounded" />
+				{{ __('Cover page with logo') }}
+			</label>
+		</div>
+
+		</div>
+
+		<!-- Action buttons -->
 		<div class="px-4 py-3 border-t flex-shrink-0 space-y-2">
+			<button
+				@click="$emit('save-design')"
+				class="w-full px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+			>
+				{{ __('Save Settings') }}
+			</button>
 			<button
 				@click="generatePdf"
 				:disabled="generating"
@@ -127,9 +143,15 @@ const props = defineProps({
 	currentTemplate: { type: Object, default: () => ({}) },
 	cardName: { type: String, default: "" },
 	cards: { type: Array, default: () => [] },
+	showCoverPage: { type: Boolean, default: true },
 })
 
-const emit = defineEmits(["update:config", "generate-pdf"])
+const emit = defineEmits([
+	"update:config",
+	"generate-pdf",
+	"save-design",
+	"update:cover-page",
+])
 
 const selectedTemplate = ref("")
 const generating = ref(false)
@@ -172,6 +194,7 @@ function onTemplateChange() {
 function emitUpdate() {
 	emit("update:config", {
 		template_name: selectedTemplate.value,
+		selected_cards: selectedCards.value,
 		...config,
 	})
 }
@@ -212,6 +235,10 @@ watch(
 	},
 	{ immediate: true },
 )
+
+watch(selectedCards, () => {
+	emitUpdate()
+})
 
 onMounted(() => {
 	if (props.cardName) {

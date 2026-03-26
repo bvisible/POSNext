@@ -39,9 +39,11 @@ def get_menu_preview_data(card_name, template_name=None):
 			if key in template and value is not None:
 				template[key] = value
 
-	# Get currency from default company
+	# Get currency and company logo
 	company = frappe.defaults.get_defaults().get("company")
 	currency = frappe.db.get_value("Company", company, "default_currency") or "CHF"
+	company_logo = frappe.db.get_value("Company", company, "company_logo") or ""
+	company_name = frappe.db.get_value("Company", company, "company_name") or ""
 
 	return {
 		"card": card_data["card"],
@@ -49,6 +51,8 @@ def get_menu_preview_data(card_name, template_name=None):
 		"design": template,
 		"currency": currency,
 		"site_url": frappe.utils.get_url(),
+		"company_logo": company_logo,
+		"company_name": company_name,
 	}
 
 
@@ -60,6 +64,25 @@ def get_design_templates():
 		fields=["*"],
 		order_by="template_name asc",
 	)
+
+
+@frappe.whitelist()
+def save_card_design(card_name, template_name=None, overrides=None):
+	"""Save design settings to a Restaurant Card (not to the template)."""
+	if isinstance(overrides, str):
+		try:
+			overrides = json.loads(overrides)
+		except (json.JSONDecodeError, TypeError):
+			overrides = {}
+
+	card = frappe.get_doc("Restaurant Card", card_name)
+	if template_name:
+		card.custom_design_template = template_name
+	if overrides:
+		card.custom_design_overrides = json.dumps(overrides)
+	card.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"status": "ok"}
 
 
 @frappe.whitelist()

@@ -5,16 +5,18 @@
 			:style="pageStyle"
 		>
 			<div class="p-8" :style="contentStyle">
-				<!-- Header -->
-				<div v-if="design.header_text" class="text-center mb-6">
-					<h1 :style="{ fontFamily: design.font_header, color: design.color_primary, fontSize: '28px', fontWeight: '700' }">
-						{{ design.header_text || card.card_name }}
+				<!-- Cover page / Header -->
+				<div class="text-center mb-8">
+					<!-- Company logo -->
+					<div v-if="showCoverPage && companyLogo" class="mb-4">
+						<img :src="companyLogo" alt="" class="mx-auto max-h-20 object-contain" />
+					</div>
+					<!-- Title -->
+					<h1 :style="{ fontFamily: design.font_header, color: design.color_primary, fontSize: '28px', fontWeight: '700', letterSpacing: '1px' }">
+						{{ design.header_text || card.card_name || '' }}
 					</h1>
-				</div>
-				<div v-else-if="card.card_name" class="text-center mb-6">
-					<h1 :style="{ fontFamily: design.font_header, color: design.color_primary, fontSize: '28px', fontWeight: '700' }">
-						{{ card.card_name }}
-					</h1>
+					<!-- Decorative line -->
+					<div class="mx-auto mt-3 mb-2" :style="{ width: '60px', height: '2px', backgroundColor: design.color_accent || design.color_primary }"></div>
 				</div>
 
 				<!-- Categories & Items -->
@@ -22,61 +24,77 @@
 					<div v-for="(category, ci) in categories" :key="ci" class="mb-6 break-inside-avoid">
 						<!-- Category header -->
 						<div v-if="category.label" class="mb-3" :class="categoryClass">
-							<h2 :style="{ fontFamily: design.font_header, color: design.color_accent || design.color_primary, fontSize: '18px', fontWeight: '600' }">
+							<h2 :style="{ fontFamily: design.font_header, color: design.color_accent || design.color_primary, fontSize: '16px', fontWeight: '600' }">
 								{{ category.label }}
 							</h2>
 						</div>
 
 						<!-- Items -->
-						<div v-for="(item, ii) in category.menu_items" :key="ii" class="mb-3 break-inside-avoid">
-							<div class="flex justify-between items-baseline gap-2">
+						<div v-for="(item, ii) in category.menu_items" :key="ii" class="mb-2.5 break-inside-avoid">
+							<!-- Dotted leader layout -->
+							<div v-if="design.price_alignment === 'dotted'" class="flex items-baseline">
+								<span :style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '13px', fontWeight: '600' }">
+									{{ item.item_name }}
+								</span>
+								<span v-if="item.spice_level > 0" class="ml-1 text-xs">
+									<span v-for="s in item.spice_level" :key="s">🌶</span>
+								</span>
+								<span v-if="design.show_allergens && item.badges?.length" class="inline-flex gap-0.5 ml-1">
+									<img v-for="badge in item.badges" :key="badge.badge_name"
+										:src="`/assets/pos_next/icons/badges/${badge.icon}`"
+										:title="badge.badge_name" class="w-3 h-3 inline-block" />
+								</span>
+								<span class="flex-1 mx-1 border-b border-dotted" :style="{ borderColor: design.color_secondary || '#ccc', marginBottom: '3px' }"></span>
+								<span v-if="priceDisplay(item)" :style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap' }">
+									{{ priceDisplay(item) }}
+								</span>
+							</div>
+							<!-- Standard layout (right or inline) -->
+							<div v-else class="flex justify-between items-baseline gap-2">
 								<div class="flex-1 min-w-0">
-									<!-- Item name -->
-									<span :style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '14px', fontWeight: '600' }">
+									<span :style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '13px', fontWeight: '600' }">
 										{{ item.item_name }}
 									</span>
-									<!-- Spice level -->
-									<span v-if="item.spice_level > 0" class="ml-1">
-										<span v-for="s in item.spice_level" :key="s" class="text-xs">🌶</span>
+									<span v-if="item.spice_level > 0" class="ml-1 text-xs">
+										<span v-for="s in item.spice_level" :key="s">🌶</span>
 									</span>
-									<!-- Badges -->
-									<span v-if="design.show_allergens && item.badges && item.badges.length" class="inline-flex gap-0.5 ml-1 align-middle">
-										<img
-											v-for="badge in item.badges"
-											:key="badge.badge_name"
+									<span v-if="design.show_allergens && item.badges?.length" class="inline-flex gap-0.5 ml-1 align-middle">
+										<img v-for="badge in item.badges" :key="badge.badge_name"
 											:src="`/assets/pos_next/icons/badges/${badge.icon}`"
-											:title="badge.badge_name"
-											class="w-3.5 h-3.5 inline-block"
-											:style="{ color: badge.color }"
-										/>
+											:title="badge.badge_name" class="w-3 h-3 inline-block" />
+									</span>
+									<!-- Inline price -->
+									<span v-if="design.price_alignment === 'inline' && priceDisplay(item)" class="ml-2"
+										:style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '13px' }">
+										{{ priceDisplay(item) }}
 									</span>
 								</div>
-								<!-- Price -->
-								<div v-if="priceDisplay(item)" :style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '14px', fontWeight: '500', whiteSpace: 'nowrap' }"
-									:class="design.price_alignment === 'dotted' ? 'border-b border-dotted border-gray-400 flex-shrink-0 pl-2' : 'flex-shrink-0'">
+								<!-- Right-aligned price -->
+								<span v-if="design.price_alignment !== 'inline' && priceDisplay(item)"
+									:style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap' }">
 									{{ priceDisplay(item) }}
-								</div>
+								</span>
 							</div>
 							<!-- Description -->
 							<p v-if="design.show_descriptions && item.description"
-								:style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '12px', fontStyle: 'italic' }"
-								class="mt-0.5 line-clamp-2">
+								:style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '11px', fontStyle: 'italic' }"
+								class="mt-0.5 line-clamp-2 pl-0">
 								{{ item.description }}
 							</p>
 							<!-- Product options -->
-							<div v-if="design.show_options && item.product_options && item.product_options.length" class="mt-1">
-								<div v-for="opt in item.product_options" :key="opt.group_name"
-									:style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '11px' }">
+							<div v-if="design.show_options && item.product_options?.length" class="mt-0.5">
+								<span v-for="opt in item.product_options" :key="opt.group_name"
+									:style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '10px' }">
 									{{ opt.group_name }}: {{ opt.options.join(', ') }}
-								</div>
+								</span>
 							</div>
 						</div>
 					</div>
 				</div>
 
 				<!-- Footer -->
-				<div v-if="design.footer_text" class="text-center mt-8 pt-4 border-t" :style="{ borderColor: design.color_accent }">
-					<p :style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '11px', fontStyle: 'italic' }">
+				<div v-if="design.footer_text" class="text-center mt-8 pt-4 border-t" :style="{ borderColor: design.color_accent || '#ddd' }">
+					<p :style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '10px', fontStyle: 'italic' }">
 						{{ design.footer_text }}
 					</p>
 				</div>
@@ -93,6 +111,8 @@ const props = defineProps({
 	categories: { type: Array, default: () => [] },
 	design: { type: Object, default: () => ({}) },
 	currency: { type: String, default: "CHF" },
+	companyLogo: { type: String, default: "" },
+	showCoverPage: { type: Boolean, default: true },
 })
 
 const pageStyle = computed(() => {

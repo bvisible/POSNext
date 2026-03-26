@@ -1984,10 +1984,14 @@ def get_card_items_with_badges(card_name):
 		price = card_item.price or item_doc.get("standard_rate") or 0
 		price_text = card_item.get("custom_price_text") or ""
 
+		# Strip HTML tags from description
+		raw_desc = item_doc.get("description") or ""
+		clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+
 		item_data = {
 			"item_code": card_item.item,
 			"item_name": card_item.label or item_doc.item_name,
-			"description": item_doc.get("description") or "",
+			"description": clean_desc,
 			"price": float(price),
 			"price_text": price_text,
 			"image": item_doc.get("image") or "",
