@@ -129,6 +129,7 @@
 
 			<!-- Spacer + Runner pill (only when runner is enabled) -->
 			<div class="flex-grow"></div>
+			<!-- Runner pill -->
 			<div v-if="restaurantStore.runnerEnabled"
 				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
 				:class="totalReadyCount > 0
@@ -139,7 +140,10 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
 				</svg>
 				{{ __("Runner") }}
-				<span v-if="totalReadyCount > 0" class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] animate-pulse">{{ totalReadyCount }}✓</span>
+				<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px]"
+					:class="totalReadyCount > 0 ? 'animate-pulse' : ''">
+					{{ totalReadyCount }}
+				</span>
 			</div>
 			<!-- Takeaway pill -->
 			<div v-if="restaurantStore.takeawayEnabled"
@@ -152,8 +156,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
 				</svg>
 				{{ __("Takeaway") }}
-				<span v-if="takeawayTotalCount > 0"
-					class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] cursor-pointer"
+				<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] cursor-pointer"
 					:class="takeawayReadyCount > 0 ? 'animate-pulse' : ''"
 					@click.stop="openTakeawayTab">
 					{{ takeawayReadyCount }}/{{ takeawayTotalCount }}

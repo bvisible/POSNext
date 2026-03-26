@@ -1813,7 +1813,7 @@ const displayGrandTotal = computed(() => {
  * @returns {Boolean} True if at least one item can be sent
  */
 const hasSendableItems = computed(() => {
-	if (!cartStore.restaurantTable) return false
+	if (!cartStore.restaurantTable && !cartStore.isTakeaway) return false
 	return cartStore.invoiceItems.some(
 		item => !item.is_free_item && (!item.kds_status || item.kds_status === "Waiting")
 	)
