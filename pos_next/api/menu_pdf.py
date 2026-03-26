@@ -69,15 +69,46 @@ def get_design_templates():
 
 
 @frappe.whitelist()
-def get_menu_preview_html(card_name, template_name=None, overrides=None):
-	"""Return the rendered HTML for the menu preview (same HTML used for PDF)."""
+def get_menu_preview_html(card_name=None, card_names=None, template_name=None, overrides=None):
+	"""Return the rendered HTML for the menu preview (same HTML used for PDF).
+
+	Supports single card (card_name) or multiple cards (card_names JSON array).
+	"""
 	if isinstance(overrides, str):
 		try:
 			overrides = json.loads(overrides)
 		except (json.JSONDecodeError, TypeError):
 			overrides = {}
 
-	preview_data = get_menu_preview_data(card_name, template_name)
+	# Multi-card support
+	if isinstance(card_names, str):
+		try:
+			card_names = json.loads(card_names)
+		except (json.JSONDecodeError, TypeError):
+			card_names = None
+
+	if card_names and len(card_names) > 1:
+		# Aggregate categories from all cards
+		all_categories = []
+		for cn in card_names:
+			data = get_menu_preview_data(cn, template_name)
+			all_categories.extend(data["categories"])
+
+		first_data = get_menu_preview_data(card_names[0], template_name)
+		preview_data = {
+			"card": {"card_name": " + ".join(card_names), "description": "", "image": ""},
+			"categories": all_categories,
+			"design": first_data.get("design"),
+			"currency": first_data.get("currency", "CHF"),
+			"site_url": first_data.get("site_url", ""),
+			"company_logo": first_data.get("company_logo", ""),
+			"company_name": first_data.get("company_name", ""),
+		}
+	else:
+		name = card_name or (card_names[0] if card_names else None)
+		if not name:
+			return ""
+		preview_data = get_menu_preview_data(name, template_name)
 
 	if overrides and preview_data.get("design"):
 		for key, value in overrides.items():
@@ -189,6 +220,8 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 		"design": design,
 		"currency": first_data.get("currency", "CHF"),
 		"site_url": first_data.get("site_url", ""),
+		"company_logo": first_data.get("company_logo", ""),
+		"company_name": first_data.get("company_name", ""),
 	}
 
 	template_path = f"pos_next/templates/menu/{style_theme}.html"
@@ -202,11 +235,17 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 
 
 def _html_to_pdf(html_content, template):
-	"""Convert HTML to PDF using wkhtmltopdf."""
-	from frappe.utils.pdf import get_pdf
+	"""Convert HTML to PDF using wkhtmltopdf directly.
+
+	Bypasses frappe.utils.pdf.get_pdf() because it forces margin-top/bottom
+	to 0mm when no header-html/footer-html divs are found (frappe/utils/pdf.py:339-344).
+	"""
+	import pdfkit
 
 	options = _get_wkhtmltopdf_options(template)
-	return get_pdf(html_content, options=options)
+
+	# pdfkit expects string values and '--' prefix is handled internally
+	return pdfkit.from_string(html_content, False, options=options)
 
 
 def _build_page_css(template):

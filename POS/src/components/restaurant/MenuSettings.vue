@@ -312,11 +312,35 @@ watch(
 		if (initialized || !len) return
 		initialized = true
 
-		// Always default to "Moderne Minimaliste"
-		const modern = props.templates.find((t) => t.style_theme === "modern")
-		selectedTemplate.value = modern?.name || props.templates[0]?.name || ""
+		// Use saved template if available, otherwise default to "Moderne Minimaliste"
+		const saved = props.currentTemplate
+		const savedName = saved?.name
+		const hasSaved = savedName && props.templates.find((t) => t.name === savedName)
+
+		if (hasSaved) {
+			selectedTemplate.value = savedName
+		} else {
+			const modern = props.templates.find((t) => t.style_theme === "modern")
+			selectedTemplate.value = modern?.name || props.templates[0]?.name || ""
+		}
+
 		if (selectedTemplate.value) {
 			onTemplateChange()
+		}
+
+		// Apply saved overrides on top of template defaults
+		if (saved) {
+			const overrideKeys = [
+				"font_header", "font_body", "show_header", "show_descriptions",
+				"show_allergens", "show_options", "show_images",
+				"price_alignment", "columns", "paper_format",
+				"header_text", "footer_text",
+			]
+			for (const key of overrideKeys) {
+				if (saved[key] !== undefined && saved[key] !== null) {
+					config[key] = saved[key]
+				}
+			}
 		}
 	},
 	{ immediate: true },

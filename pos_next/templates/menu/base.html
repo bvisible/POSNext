@@ -96,15 +96,18 @@
 	</div>
 {%- endmacro -%}
 
-{%- macro render_header(card, design, site_url) -%}
+{%- macro render_header(card, design, site_url, company_logo, company_name) -%}
+	{%- set logo_url = card.image or company_logo -%}
 	<header class="menu-header">
-		{%- if card.image -%}
+		{%- if logo_url -%}
 			<div class="header-logo">
-				<img src="{{ site_url }}{{ card.image }}" alt="{{ card.card_name }}" class="logo-image" />
+				<img src="{{ site_url }}{{ logo_url }}" alt="{{ card.card_name }}" class="logo-image" />
 			</div>
 		{%- endif -%}
 		{%- if design.header_text -%}
 			<h1 class="header-title">{{ design.header_text }}</h1>
+		{%- elif company_name -%}
+			<h1 class="header-title">{{ company_name }}</h1>
 		{%- endif -%}
 		<div class="header-card-name">{{ card.card_name }}</div>
 		{%- if card.description -%}
@@ -135,6 +138,10 @@
 <head>
 	<meta charset="UTF-8" />
 	<title>{{ card.card_name }}</title>
+	{# Load Google Fonts for preview (iframe can fetch web fonts) #}
+	{%- set _fonts = [design.font_header, design.font_body] | unique | list -%}
+	{%- set _font_families = _fonts | map('replace', ' ', '+') | join('&family=') -%}
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ _font_families }}:wght@300;400;500;600;700&display=swap" />
 	<style>
 		/* Print CSS reset for wkhtmltopdf compatibility */
 		*, *::before, *::after {
@@ -420,7 +427,7 @@
 </head>
 <body>
 	{% block header %}
-		{{ render_header(card, design, site_url) }}
+		{{ render_header(card, design, site_url, company_logo, company_name) }}
 	{% endblock %}
 
 	<div class="menu-body columns-{{ design.columns | default(1) }}">

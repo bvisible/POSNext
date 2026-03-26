@@ -28,6 +28,7 @@
 							<div class="flex-1 overflow-hidden">
 								<MenuPreview
 									:card-name="cardName"
+									:card-names="selectedCardNames"
 									:template-name="selectedTemplateName"
 									:overrides="configOverrides"
 									:refresh-key="previewRefreshKey"
@@ -118,6 +119,11 @@ async function loadData() {
 		previewData.value = previewRes || previewData.value
 		templates.value = templatesRes || []
 		selectedCardNames.value = [props.cardName]
+
+		// Restore saved template selection
+		if (previewData.value.design?.name) {
+			selectedTemplateName.value = previewData.value.design.name
+		}
 	} catch (e) {
 		console.error("Failed to load menu designer data:", e)
 		showError(__("Failed to load menu data"))
@@ -138,8 +144,9 @@ function onConfigUpdate(newConfig) {
 		}
 	}
 
-	// Load extra cards if multi-card selection changed
+	// Update selected cards for multi-card preview
 	if (newConfig.selected_cards) {
+		selectedCardNames.value = newConfig.selected_cards
 		loadExtraCards(newConfig.selected_cards)
 	}
 

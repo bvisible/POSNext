@@ -22,6 +22,7 @@ import { ref, watch } from "vue"
 
 const props = defineProps({
 	cardName: { type: String, default: "" },
+	cardNames: { type: Array, default: () => [] },
 	templateName: { type: String, default: "" },
 	overrides: { type: Object, default: () => ({}) },
 	refreshKey: { type: Number, default: 0 },
@@ -33,10 +34,24 @@ const previewFrame = ref(null)
 const frameHeight = ref("297mm")
 
 async function loadPreview() {
-	if (!props.cardName) return
+	if (!props.cardName && (!props.cardNames || !props.cardNames.length)) return
 	loading.value = true
 	try {
 		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const isMulti = props.cardNames && props.cardNames.length > 1
+
+		const body = isMulti
+			? {
+					card_names: JSON.stringify(props.cardNames),
+					template_name: props.templateName || "",
+					overrides: JSON.stringify(props.overrides || {}),
+				}
+			: {
+					card_name: props.cardName,
+					template_name: props.templateName || "",
+					overrides: JSON.stringify(props.overrides || {}),
+				}
+
 		const response = await fetch(
 			"/api/method/pos_next.api.menu_pdf.get_menu_preview_html",
 			{
@@ -45,11 +60,7 @@ async function loadPreview() {
 					"Content-Type": "application/json",
 					"X-Frappe-CSRF-Token": csrfToken,
 				},
-				body: JSON.stringify({
-					card_name: props.cardName,
-					template_name: props.templateName || "",
-					overrides: JSON.stringify(props.overrides || {}),
-				}),
+				body: JSON.stringify(body),
 			},
 		)
 		const data = await response.json()
@@ -78,9 +89,9 @@ function onFrameLoad() {
 }
 
 watch(
-	[() => props.cardName, () => props.templateName, () => props.refreshKey],
+	[() => props.cardName, () => props.cardNames, () => props.templateName, () => props.refreshKey],
 	() => loadPreview(),
-	{ deep: false },
+	{ deep: true },
 )
 
 // Don't load on mount — wait for the watch to fire when template is set
