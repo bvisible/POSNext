@@ -142,20 +142,31 @@
 				<span v-if="totalReadyCount > 0" class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] animate-pulse">{{ totalReadyCount }}✓</span>
 			</div>
 			<!-- Takeaway pill -->
-			<div v-if="restaurantStore.takeawayEnabled"
-				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
-				:class="takeawayReadyCount > 0
-					? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
-					: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
-				@click="openTakeawayTab">
-				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-				</svg>
-				{{ __("Takeaway") }}
-				<span v-if="takeawayTotalCount > 0" class="bg-white/30 px-1.5 py-0.5 rounded text-[10px]"
-					:class="takeawayReadyCount > 0 ? 'animate-pulse' : ''">
+			<div v-if="restaurantStore.takeawayEnabled" class="flex items-center gap-0.5 flex-shrink-0">
+				<div
+					class="flex items-center gap-1.5 px-3 py-1 rounded-l-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all"
+					:class="takeawayReadyCount > 0
+						? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
+						: 'border border-r-0 border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400'"
+					@click="startNewTakeaway">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+					</svg>
+					{{ __("Takeaway") }}
+				</div>
+				<div v-if="takeawayTotalCount > 0"
+					class="px-2 py-1 rounded-r-lg text-[10px] font-bold cursor-pointer transition-all"
+					:class="takeawayReadyCount > 0
+						? 'bg-blue-600 text-white hover:bg-blue-700'
+						: 'border border-l-0 border-gray-300 text-gray-500 hover:bg-gray-100'"
+					@click="openTakeawayTab"
+					:title="__('View takeaway orders')">
 					{{ takeawayReadyCount }}/{{ takeawayTotalCount }}
-				</span>
+				</div>
+				<div v-else
+					class="px-1.5 py-1 rounded-r-lg text-[10px] font-bold border border-l-0 border-gray-300 text-gray-300">
+					0
+				</div>
 			</div>
 		</div>
 
@@ -784,7 +795,7 @@ import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 
-const emit = defineEmits(["table-selected", "load-table-draft", "load-server-draft"])
+const emit = defineEmits(["table-selected", "load-table-draft", "load-server-draft", "start-takeaway"])
 
 const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
@@ -1221,7 +1232,16 @@ const takeawayReadyCount = computed(() =>
 	restaurantStore.takeawayOrders.filter(o => o.kds_status === "Ready").length
 )
 function openTakeawayTab() {
-	window.open('/pos/takeaway', '_blank')
+	if (takeawayTotalCount.value > 0) {
+		// If there are active takeaways, open the management page
+		window.open('/pos/takeaway', '_blank')
+	} else {
+		// No active takeaways, create a new one directly
+		emit('start-takeaway')
+	}
+}
+function startNewTakeaway() {
+	emit('start-takeaway')
 }
 
 async function selectTable(table) {

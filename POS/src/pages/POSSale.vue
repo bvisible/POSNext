@@ -296,26 +296,30 @@
 							style="contain: layout style paint"
 						>
 							<!-- Restaurant Mode: Table Selector -->
-							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable">
+							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable && !cartStore.isTakeaway">
 								<FloorPlanEditor
 									@table-selected="handleTableSelected"
 									@load-table-draft="handleLoadTableDraft"
-										@load-server-draft="handleLoadServerDraft"
+									@load-server-draft="handleLoadServerDraft"
+									@start-takeaway="handleStartTakeaway"
 								/>
 							</template>
 
 							<!-- Normal Mode or Table Selected: Items Selector -->
 							<template v-else>
-								<!-- Restaurant table banner -->
+								<!-- Restaurant table / takeaway banner -->
 								<div
-									v-if="restaurantStore.isEnabled && cartStore.restaurantTable"
-									class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200"
+									v-if="restaurantStore.isEnabled && (cartStore.restaurantTable || cartStore.isTakeaway)"
+									class="flex items-center justify-between px-4 py-3 border-b-2"
+									:class="cartStore.isTakeaway
+										? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300'
+										: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'"
 								>
 									<div class="flex items-center gap-3">
-										<FeatherIcon name="coffee" class="w-5 h-5 text-blue-600" />
+										<FeatherIcon :name="cartStore.isTakeaway ? 'shopping-bag' : 'coffee'" class="w-5 h-5 text-blue-600" />
 										<div>
 											<span class="text-lg font-bold text-blue-900">
-												{{ cartStore.restaurantTable?.table_name }}
+												{{ cartStore.isTakeaway ? cartStore.takeawayNumber : cartStore.restaurantTable?.table_name }}
 											</span>
 											<span class="text-xs text-blue-700 ms-2">
 												{{ cartStore.invoiceItems.length }} {{ __("articles") }}
@@ -345,7 +349,7 @@
 								</div>
 
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
-								<div v-if="restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && cartStore.restaurantTable"
+								<div v-if="restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && (cartStore.restaurantTable || cartStore.isTakeaway)"
 									class="flex flex-col flex-1 min-h-0 overflow-hidden">
 									<!-- Card tabs (like category tabs) -->
 									<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
@@ -522,7 +526,7 @@
 
 								<!-- Items Selector (default view, hidden when card is active) -->
 								<ItemsSelector
-									v-if="!showMenus && !(restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && cartStore.restaurantTable)"
+									v-if="!showMenus && !(restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && (cartStore.restaurantTable || cartStore.isTakeaway))"
 									ref="itemsSelectorRef"
 									:pos-profile="shiftStore.profileName"
 									:cart-items="cartStore.invoiceItems"
@@ -2349,6 +2353,22 @@ async function handleShiftClosed() {
 // Restaurant mode handlers
 function handleTableSelected(table) {
 	// Table selected, cart already configured by TableSelector
+}
+
+async function handleStartTakeaway() {
+	await cartStore.clearCart()
+	try {
+		const number = await call("pos_next.api.restaurant.get_next_takeaway_number")
+		cartStore.$patch({
+			isTakeaway: true,
+			takeawayNumber: number,
+		})
+	} catch (err) {
+		cartStore.$patch({
+			isTakeaway: true,
+			takeawayNumber: "T-???",
+		})
+	}
 }
 
 function handleLoadTableDraft(draft) {
