@@ -194,11 +194,19 @@ async function generatePdf() {
 	}
 }
 
+// Initialize once when templates are available — no continuous watch to avoid infinite loops
+let initialized = false
+
 watch(
-	() => props.currentTemplate,
-	(tpl) => {
-		if (tpl?.name) {
-			selectedTemplate.value = tpl.name
+	() => props.templates,
+	(templates) => {
+		if (initialized || !templates?.length) return
+		initialized = true
+
+		// Use current template from card if available, otherwise first template
+		const initial = props.currentTemplate?.name || templates[0]?.name
+		if (initial) {
+			selectedTemplate.value = initial
 			onTemplateChange()
 		}
 	},
@@ -208,10 +216,6 @@ watch(
 onMounted(() => {
 	if (props.cardName) {
 		selectedCards.value = [props.cardName]
-	}
-	if (!selectedTemplate.value && props.templates.length > 0) {
-		selectedTemplate.value = props.templates[0].name
-		onTemplateChange()
 	}
 })
 </script>

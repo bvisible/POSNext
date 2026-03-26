@@ -104,16 +104,20 @@ async function loadData() {
 	}
 }
 
-function onConfigUpdate(config) {
-	configOverrides.value = config
-
-	// If template changed, reload preview with new template
-	if (config.template_name) {
-		const tpl = templates.value.find((t) => t.name === config.template_name)
+function onConfigUpdate(newConfig) {
+	// If template changed, update the base design
+	if (
+		newConfig.template_name &&
+		newConfig.template_name !== previewData.value.design?.name
+	) {
+		const tpl = templates.value.find((t) => t.name === newConfig.template_name)
 		if (tpl) {
-			previewData.value.design = { ...tpl }
+			previewData.value = { ...previewData.value, design: { ...tpl } }
 		}
 	}
+	// Store overrides (display toggles, columns, etc.) separately
+	const { template_name, ...overrides } = newConfig
+	configOverrides.value = overrides
 }
 
 async function onGeneratePdf({
