@@ -179,24 +179,7 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 
 
 def _html_to_pdf(html_content, template):
-	"""Convert HTML to PDF using wkhtmltopdf (stable) or WeasyPrint if configured."""
-	use_weasyprint = frappe.db.get_single_value("Restaurant Settings", "use_weasyprint") if frappe.db.exists("DocType", "Restaurant Settings") else False
-
-	if use_weasyprint:
-		try:
-			from weasyprint import CSS, HTML
-
-			css_overrides = _build_page_css(template)
-			stylesheets = [CSS(string=css_overrides)] if css_overrides else []
-
-			pdf_bytes = HTML(string=html_content, base_url=frappe.utils.get_url()).write_pdf(
-				stylesheets=stylesheets,
-			)
-			return pdf_bytes
-		except Exception as e:
-			frappe.log_error("WeasyPrint PDF error", str(e))
-
-	# Default: use wkhtmltopdf (stable, low memory)
+	"""Convert HTML to PDF using wkhtmltopdf."""
 	from frappe.utils.pdf import get_pdf
 
 	options = _get_wkhtmltopdf_options(template)
