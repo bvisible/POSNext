@@ -58,6 +58,7 @@ import { ref, computed, onMounted } from "vue"
 import MenuPreview from "./MenuPreview.vue"
 import MenuSettings from "./MenuSettings.vue"
 import { useToast } from "@/composables/useToast"
+import { call } from "@/utils/apiWrapper"
 
 const props = defineProps({
 	show: { type: Boolean, default: false },
@@ -87,17 +88,14 @@ async function loadData() {
 	loading.value = true
 	try {
 		const [previewRes, templatesRes] = await Promise.all([
-			window.frappe.call({
-				method: "pos_next.api.menu_pdf.get_menu_preview_data",
-				args: { card_name: props.cardName },
+			call("pos_next.api.menu_pdf.get_menu_preview_data", {
+				card_name: props.cardName,
 			}),
-			window.frappe.call({
-				method: "pos_next.api.menu_pdf.get_design_templates",
-			}),
+			call("pos_next.api.menu_pdf.get_design_templates"),
 		])
 
-		previewData.value = previewRes.message || previewData.value
-		templates.value = templatesRes.message || []
+		previewData.value = previewRes || previewData.value
+		templates.value = templatesRes || []
 	} catch (e) {
 		console.error("Failed to load menu designer data:", e)
 		showError(__("Failed to load menu data"))

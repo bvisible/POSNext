@@ -1,4 +1,5 @@
 import { ref } from "vue"
+import { call } from "@/utils/apiWrapper"
 
 const menuBadges = ref([])
 const menuBadgesLoaded = ref(false)
@@ -9,10 +10,8 @@ export function useBadges() {
 		if (menuBadgesLoaded.value) return menuBadges.value
 		loading.value = true
 		try {
-			const response = await window.frappe.call({
-				method: "pos_next.api.restaurant.get_menu_badges",
-			})
-			menuBadges.value = response.message || []
+			const response = await call("pos_next.api.restaurant.get_menu_badges")
+			menuBadges.value = response || []
 			menuBadgesLoaded.value = true
 		} catch (e) {
 			console.error("Failed to load menu badges:", e)
@@ -24,11 +23,10 @@ export function useBadges() {
 
 	async function loadItemBadges(itemCode) {
 		try {
-			const response = await window.frappe.call({
-				method: "pos_next.api.restaurant.get_item_badges",
-				args: { item_code: itemCode },
+			const response = await call("pos_next.api.restaurant.get_item_badges", {
+				item_code: itemCode,
 			})
-			return response.message || { badges: [], spice_level: 0 }
+			return response || { badges: [], spice_level: 0 }
 		} catch (e) {
 			console.error("Failed to load item badges:", e)
 			return { badges: [], spice_level: 0 }
@@ -37,13 +35,10 @@ export function useBadges() {
 
 	async function saveItemBadges(itemCode, badgeNames, spiceLevel) {
 		try {
-			await window.frappe.call({
-				method: "pos_next.api.restaurant.update_item_badges",
-				args: {
-					item_code: itemCode,
-					badges: JSON.stringify(badgeNames),
-					spice_level: spiceLevel,
-				},
+			await call("pos_next.api.restaurant.update_item_badges", {
+				item_code: itemCode,
+				badges: JSON.stringify(badgeNames),
+				spice_level: spiceLevel,
 			})
 			return true
 		} catch (e) {
