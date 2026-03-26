@@ -2050,12 +2050,12 @@ def _get_applicable_option_groups(item_code):
 	item_group = frappe.db.get_value("Item", item_code, "item_group")
 
 	direct = frappe.get_all(
-		"Product Option Group Applicable Item",
+		"Product Option Group Item",
 		filters={"item": item_code, "parenttype": "Product Option Group"},
 		pluck="parent",
 	)
 	group_based = frappe.get_all(
-		"Product Option Group Applicable Item Group",
+		"Product Option Group Item Group",
 		filters={"item_group": item_group, "parenttype": "Product Option Group"},
 		pluck="parent",
 	)
