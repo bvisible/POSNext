@@ -1,18 +1,31 @@
 <template>
-	<div class="h-full flex flex-col bg-white">
-		<!-- Header -->
-		<div class="px-3 py-2 border-b bg-gradient-to-r from-emerald-50 to-teal-50 flex-shrink-0">
-			<h3 class="font-bold text-sm text-gray-800">{{ __('Badges & Allergens') }}</h3>
-			<p class="text-xs text-gray-500 mt-0.5 truncate">{{ itemName }}</p>
+	<div class="bg-white" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; overflow: hidden;">
+		<!-- Header + Save -->
+		<div class="px-3 py-2 border-b bg-gradient-to-r from-emerald-50 to-teal-50" style="flex-shrink: 0;">
+			<div class="flex items-center justify-between">
+				<div>
+					<h3 class="font-bold text-xs text-gray-800">{{ __('Badges & Allergens') }}</h3>
+					<p class="text-[10px] text-gray-500 truncate">{{ itemName }}</p>
+				</div>
+				<button
+					@click="save"
+					:disabled="saving"
+					class="px-3 py-1 text-white text-xs font-bold rounded-md transition-colors"
+					:style="{ backgroundColor: saving ? '#9ca3af' : '#10b981' }"
+				>
+					{{ saving ? '...' : __('Save') }}
+				</button>
+			</div>
+			<div v-if="saveError" class="text-[9px] text-red-500 mt-1">{{ saveError }}</div>
 		</div>
 
 		<!-- Loading -->
-		<div v-if="loading" class="flex-1 flex items-center justify-center">
-			<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+		<div v-if="loading" class="flex items-center justify-center py-8">
+			<div class="animate-spin rounded-full h-6 w-6 border-b-2" style="border-color: #10b981;"></div>
 		</div>
 
-		<!-- Content -->
-		<div v-else class="flex-1 overflow-y-auto p-2 space-y-3" style="min-height: 0;">
+		<!-- Content - scrollable -->
+		<div v-else class="p-2 space-y-3" style="flex: 1; overflow-y: auto; min-height: 0;">
 			<!-- Spice Level -->
 			<div>
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Spice Level') }}</label>
@@ -57,17 +70,6 @@
 			</div>
 		</div>
 
-		<!-- Footer - always visible -->
-		<div class="px-2 py-2 border-t bg-gray-50 flex-shrink-0">
-			<div v-if="saveError" class="text-[10px] text-red-500 mb-1">{{ saveError }}</div>
-			<button
-				@click="save"
-				:disabled="saving"
-				class="w-full px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-			>
-				{{ saving ? __('Saving...') : __('Save Badges') }}
-			</button>
-		</div>
 	</div>
 </template>
 
