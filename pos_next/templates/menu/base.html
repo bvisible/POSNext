@@ -139,9 +139,9 @@
 	<meta charset="UTF-8" />
 	<title>{{ card.card_name }}</title>
 	{# Load Google Fonts for preview (iframe can fetch web fonts) #}
-	{%- set _fonts = [design.font_header, design.font_body] | unique | list -%}
-	{%- set _font_families = _fonts | map('replace', ' ', '+') | join('&family=') -%}
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ _font_families }}:wght@300;400;500;600;700&display=swap" />
+	{%- set _fh = (design.font_header or 'Montserrat') | replace(' ', '+') -%}
+	{%- set _fb = (design.font_body or 'Inter') | replace(' ', '+') -%}
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ _fh }}:wght@300;400;500;600;700&family={{ _fb }}:wght@300;400;500;600;700&display=swap" />
 	<style>
 		/* Print CSS reset for wkhtmltopdf compatibility */
 		*, *::before, *::after {
@@ -150,10 +150,9 @@
 			padding: 0;
 		}
 
-		/* Page setup */
+		/* Page setup — margins handled by wkhtmltopdf options, not CSS */
 		@page {
 			size: {{ page_size }};
-			margin: 20mm;
 		}
 
 		/* Base typography */

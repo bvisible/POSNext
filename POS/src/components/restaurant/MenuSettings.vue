@@ -325,7 +325,26 @@ watch(
 		}
 
 		if (selectedTemplate.value) {
-			onTemplateChange()
+			// Load template defaults (without emitting yet)
+			const tpl = props.templates.find((t) => t.name === selectedTemplate.value)
+			if (tpl) {
+				Object.assign(config, {
+					font_header: tpl.font_header || "Montserrat",
+					font_body: tpl.font_body || "Inter",
+					show_header: true,
+					show_descriptions: !!tpl.show_descriptions,
+					show_allergens: !!tpl.show_allergens,
+					show_options: !!tpl.show_options,
+					show_images: !!tpl.show_images,
+					price_alignment: tpl.price_alignment || "right",
+					columns: tpl.columns || 1,
+					paper_format: tpl.paper_format || "A4 Portrait",
+					custom_width_mm: tpl.custom_width_mm || 210,
+					custom_height_mm: tpl.custom_height_mm || 297,
+					header_text: tpl.header_text || "",
+					footer_text: tpl.footer_text || "",
+				})
+			}
 		}
 
 		// Apply saved overrides on top of template defaults
@@ -342,6 +361,9 @@ watch(
 				}
 			}
 		}
+
+		// Emit AFTER all overrides are applied
+		emitUpdate()
 	},
 	{ immediate: true },
 )
