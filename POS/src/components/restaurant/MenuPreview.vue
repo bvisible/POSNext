@@ -98,7 +98,7 @@
 
 				<!-- Allergen Legend -->
 				<div v-if="design.show_allergens && usedBadges.length" class="mt-6 pt-3 border-t" :style="{ borderColor: '#ddd' }">
-					<p class="text-[9px] font-bold mb-1" :style="{ color: design.color_secondary }}>{{ __('Allergens') }}</p>
+					<p class="text-[9px] font-bold mb-1" :style="{ color: design.color_secondary }">{{ __('Allergens') }}</p>
 					<div class="flex flex-wrap gap-2">
 						<span v-for="badge in usedBadges" :key="badge.badge_name" class="flex items-center gap-1">
 							<img :src="`/assets/pos_next/icons/badges/${badge.icon}`" class="w-3 h-3" />

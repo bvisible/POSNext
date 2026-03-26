@@ -971,12 +971,16 @@ def update_invoice(data):
         invoice_doc.save()
 
         # Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
-        if data.get("restaurant_table") or data.get("kds_status"):
+        if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway"):
             update_data = {}
             if data.get("restaurant_table"):
                 update_data["restaurant_table"] = data.get("restaurant_table")
             if data.get("kds_status"):
                 update_data["kds_status"] = data.get("kds_status")
+            if data.get("is_takeaway"):
+                update_data["is_takeaway"] = 1
+            if data.get("takeaway_number"):
+                update_data["takeaway_number"] = data.get("takeaway_number")
 
             frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
 
