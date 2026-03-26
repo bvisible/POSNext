@@ -147,17 +147,17 @@
 			</button>
 			<button
 				@click="generatePdf"
-				:disabled="generating || pdfStatus === 'generating'"
+				:disabled="pdfStatus === 'generating'"
 				class="w-full px-4 py-2.5 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
 				:class="pdfButtonClass"
 			>
-				<svg v-if="!generating && pdfStatus !== 'done'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-				</svg>
+				<div v-if="pdfStatus === 'generating'" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
 				<svg v-else-if="pdfStatus === 'done'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 				</svg>
-				<div v-else class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+				<svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+				</svg>
 				{{ pdfLabel }}
 			</button>
 		</div>
@@ -203,7 +203,6 @@ const emit = defineEmits([
 ])
 
 const selectedTemplate = ref("")
-const generating = ref(false)
 const selectedCards = ref([])
 
 const saveLabel = computed(() => {
@@ -221,13 +220,14 @@ const saveStatusClass = computed(() => {
 })
 
 const pdfLabel = computed(() => {
-	if (generating.value) return __("Generating...")
+	if (props.pdfStatus === "generating") return __("Generating...")
 	if (props.pdfStatus === "done") return __("PDF Downloaded!")
 	if (props.pdfStatus === "error") return __("Error!")
 	return __("Generate PDF")
 })
 
 const pdfButtonClass = computed(() => {
+	if (props.pdfStatus === "generating") return "bg-purple-600 opacity-70"
 	if (props.pdfStatus === "done") return "bg-green-600 hover:bg-green-700"
 	if (props.pdfStatus === "error") return "bg-red-600 hover:bg-red-700"
 	return "bg-purple-600 hover:bg-purple-700"
@@ -290,29 +290,17 @@ function emitUpdate() {
 	})
 }
 
-async function generatePdf() {
-	generating.value = true
-	try {
-		const cardsToGenerate =
-			selectedCards.value.length > 1
-				? selectedCards.value
-				: [props.cardName]
-		console.log("[MenuSettings] generatePdf:", {
-			cards: cardsToGenerate,
-			template: selectedTemplate.value,
-			paper: config.paper_format,
-		})
-		emit("generate-pdf", {
-			card_names: cardsToGenerate,
-			template_name: selectedTemplate.value,
-			overrides: { ...config },
-			paper_format: config.paper_format,
-		})
-	} finally {
-		setTimeout(() => {
-			generating.value = false
-		}, 2000)
-	}
+function generatePdf() {
+	const cardsToGenerate =
+		selectedCards.value.length > 1
+			? selectedCards.value
+			: [props.cardName]
+	emit("generate-pdf", {
+		card_names: cardsToGenerate,
+		template_name: selectedTemplate.value,
+		overrides: { ...config },
+		paper_format: config.paper_format,
+	})
 }
 
 // Initialize when templates arrive

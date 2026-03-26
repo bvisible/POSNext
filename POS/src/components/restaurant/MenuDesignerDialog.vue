@@ -212,11 +212,7 @@ async function onGeneratePdf({
 	overrides,
 	paper_format,
 }) {
-	console.log("[MenuDesigner] onGeneratePdf called:", {
-		card_names,
-		template_name,
-		paper_format,
-	})
+	pdfStatus.value = "generating"
 	try {
 		const isMulti = card_names.length > 1
 		const method = isMulti
