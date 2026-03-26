@@ -2866,6 +2866,39 @@ async function handlePaymentCompleted(paymentData) {
 			uiStore.showPaymentDialog = false
 
 			console.time("[Payment] Total")
+
+			// Auto-send unsent items to kitchen before payment (Payer = Valider)
+			if (restaurantStore.isEnabled) {
+				const unsentItems = cartStore.invoiceItems.filter(
+					i => !i.kds_status || i.kds_status === "Waiting"
+				)
+				if (unsentItems.length > 0) {
+					try {
+						// Mark unsent items as Pending
+						for (const item of unsentItems) {
+							item.kds_status = "Pending"
+						}
+						cartStore.setKdsStatus("Pending")
+
+						const invoiceData = cartStore.buildOfferEvaluationPayload(shiftStore.currentProfile)
+						invoiceData.kds_status = "Pending"
+						invoiceData.is_pos = 1
+						invoiceData.docstatus = 0
+						invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift
+						if (cartStore.currentDraftId) {
+							invoiceData.name = cartStore.currentDraftId
+						}
+						await call("pos_next.api.invoices.update_invoice", {
+							data: JSON.stringify(invoiceData)
+						})
+						console.log("[Payment] Auto-sent unsent items to kitchen")
+					} catch (err) {
+						// Non-blocking: payment continues even if kitchen send fails
+						console.error("[Payment] Failed to auto-send to kitchen:", err)
+					}
+				}
+			}
+
 			console.time("[Payment] submitInvoice")
 			const result = await cartStore.submitInvoice();
 			console.timeEnd("[Payment] submitInvoice")

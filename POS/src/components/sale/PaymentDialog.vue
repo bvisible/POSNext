@@ -1294,6 +1294,42 @@
 			</div>
 		</template>
 	</Dialog>
+
+	<!-- Partial Payment Confirmation Dialog -->
+	<Dialog v-model="showPartialPaymentConfirm" :options="{ title: __('Partial Payment'), size: 'sm' }">
+		<template #body-content>
+			<div class="flex flex-col gap-4 text-center">
+				<div class="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+					<svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+					</svg>
+				</div>
+				<div>
+					<div class="grid grid-cols-2 gap-2 text-sm mb-3">
+						<div class="text-left text-gray-500">{{ __("Total") }}</div>
+						<div class="text-right font-semibold">{{ formatCurrency(grandTotal) }}</div>
+						<div class="text-left text-gray-500">{{ __("Paid") }}</div>
+						<div class="text-right font-semibold text-green-600">{{ formatCurrency(totalPaid) }}</div>
+						<div class="text-left text-gray-500">{{ __("Remaining") }}</div>
+						<div class="text-right font-bold text-amber-600">{{ formatCurrency(remainingAmount) }}</div>
+					</div>
+					<p class="text-sm text-gray-600">
+						{{ __("The invoice will be partially paid. The remaining amount will need to be collected later.") }}
+					</p>
+				</div>
+			</div>
+		</template>
+		<template #actions>
+			<div class="flex gap-2 w-full">
+				<Button class="flex-1" variant="subtle" @click="cancelPartialPayment">
+					{{ __("Cancel") }}
+				</Button>
+				<Button class="flex-1" variant="solid" theme="blue" @click="confirmPartialPayment">
+					{{ __("Confirm Partial Payment") }}
+				</Button>
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup>
@@ -1308,7 +1344,7 @@ import {
 import { getPaymentIcon } from "@/utils/payment"
 import { offlineWorker } from "@/utils/offline/workerClient"
 import { logger } from "@/utils/logger"
-import { Dialog, createResource, call } from "frappe-ui"
+import { Dialog, Button, createResource, call } from "frappe-ui"
 import { computed, ref, watch, nextTick } from "vue"
 import { useToast } from "@/composables/useToast"
 import { useLongPress } from "@/composables/useLongPress"
@@ -3716,6 +3752,30 @@ function completePayment() {
 		totalPaid.value + writeOffAmount.value + (loyaltyRedeemAmount.value || 0)
 	const isPartial = effectivePaid < props.grandTotal
 
+	// If partial payment, show confirmation dialog first
+	if (isPartial) {
+		pendingPartialPaymentData.value = { effectivePaid, isPartial }
+		showPartialPaymentConfirm.value = true
+		return
+	}
+
+	finalizePayment(false)
+}
+
+const showPartialPaymentConfirm = ref(false)
+const pendingPartialPaymentData = ref(null)
+
+function confirmPartialPayment() {
+	showPartialPaymentConfirm.value = false
+	finalizePayment(true)
+}
+
+function cancelPartialPayment() {
+	showPartialPaymentConfirm.value = false
+	pendingPartialPaymentData.value = null
+}
+
+function finalizePayment(isPartial) {
 	const paymentData = {
 		payments: paymentEntries.value,
 		change_amount: Math.max(0, changeAmount.value - (tipAmount.value || 0)),
@@ -3763,6 +3823,7 @@ function completePayment() {
 	}
 
 	emit("payment-completed", paymentData)
+	pendingPartialPaymentData.value = null
 
 	show.value = false
 }
