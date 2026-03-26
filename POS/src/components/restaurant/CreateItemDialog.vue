@@ -30,6 +30,20 @@
 					/>
 				</div>
 
+				<!-- Description -->
+				<div>
+					<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+						{{ __("Description") }}
+					</label>
+					<textarea
+						v-model="itemData.description"
+						rows="2"
+						maxlength="500"
+						class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+						:placeholder="__('Short description of the item...')"
+					></textarea>
+				</div>
+
 				<!-- Item Group + UOM row -->
 				<div class="grid grid-cols-2 gap-3">
 					<div>
@@ -312,6 +326,7 @@ const defaults = ref({
 const itemData = ref({
 	item_name: "",
 	item_code: "",
+	description: "",
 	item_group: "",
 	stock_uom: "",
 	standard_selling_rate: 0,
@@ -351,6 +366,7 @@ watch(show, async (val) => {
 		// Pre-fill from search query
 		itemData.value.item_name = props.initialName || ""
 		itemData.value.item_code = props.initialName || ""
+		itemData.value.description = ""
 		itemData.value.item_group = ""
 		itemData.value.standard_selling_rate = 0
 		itemData.value.standard_buying_rate = 0
@@ -442,6 +458,7 @@ async function handleCreate() {
 			pos_profile: shiftStore.profileName,
 			image: itemData.value.image || "",
 			color: itemData.value.color || "",
+			description: itemData.value.description || "",
 			option_groups: JSON.stringify(itemData.value.option_groups),
 		})
 

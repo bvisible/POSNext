@@ -1627,6 +1627,7 @@ def create_item(
 	image=None,
 	color=None,
 	option_groups=None,
+	description=None,
 ):
 	"""Create a new Item from the POS Card Editor with prices and optional stock."""
 	from frappe.utils import cint, flt
@@ -1656,6 +1657,7 @@ def create_item(
 		"is_stock_item": cint(is_stock_item),
 		"image": image or None,
 		"custom_color": color or None,
+		"description": description or None,
 	})
 
 	# Add item defaults from POS Profile
@@ -1889,6 +1891,258 @@ def get_card_items_stock(card_name):
 			fields=["warehouse", "actual_qty"]
 		)
 		result[item.item] = [{"warehouse": b.warehouse, "qty": b.actual_qty} for b in bins]
+	return result
+
+
+# ─── Item Edit Panel APIs ────────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def get_item_edit_data(item_code, pos_profile=None):
+	"""Fetch all data needed for the item edit panel in CardEditor."""
+	from frappe.utils import flt
+
+	item = frappe.get_doc("Item", item_code)
+
+	# Get price from price list
+	price_list_rate = 0
+	if pos_profile:
+		profile = frappe.get_cached_doc("POS Profile", pos_profile)
+		if profile.selling_price_list:
+			price_list_rate = frappe.db.get_value(
+				"Item Price",
+				{"item_code": item_code, "price_list": profile.selling_price_list, "selling": 1},
+				"price_list_rate"
+			) or 0
+
+	# Get stock bins
+	stock = []
+	if item.is_stock_item:
+		bins = frappe.get_all(
+			"Bin",
+			filters={"item_code": item_code},
+			fields=["warehouse", "actual_qty"]
+		)
+		stock = [{"warehouse": b.warehouse, "qty": b.actual_qty} for b in bins]
+
+	# Get badges
+	badges = []
+	spice_level = 0
+	if hasattr(item, "custom_item_badges"):
+		for row in item.custom_item_badges:
+			try:
+				badge_doc = frappe.get_cached_doc("Menu Badge", row.menu_badge)
+				badges.append({
+					"menu_badge": row.menu_badge,
+					"badge_name": badge_doc.badge_name,
+					"badge_type": badge_doc.badge_type,
+					"icon": badge_doc.icon,
+					"color": badge_doc.color,
+				})
+			except Exception:
+				pass
+	spice_level = int(item.get("custom_spice_level") or 0)
+
+	# Get option groups linked to this item
+	linked_groups = []
+	all_groups = frappe.get_all(
+		"Product Option Group",
+		fields=["name", "group_name", "selection_type", "required"]
+	)
+	for g in all_groups:
+		applicable_items = frappe.get_all(
+			"Product Option Group Item",
+			filters={"parent": g.name, "item": item_code},
+			fields=["name"]
+		)
+		if applicable_items:
+			linked_groups.append(g.name)
+
+	# Strip HTML from description
+	raw_desc = item.get("description") or ""
+	clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+
+	# Check if has image search
+	has_image_search = bool(frappe.db.get_single_value("Restaurant Settings", "pexels_api_key"))
+
+	return {
+		"item_code": item.name,
+		"item_name": item.item_name,
+		"description": clean_desc,
+		"image": item.image or "",
+		"custom_color": item.custom_color or "",
+		"is_stock_item": item.is_stock_item,
+		"standard_rate": flt(item.standard_rate),
+		"price_list_rate": flt(price_list_rate),
+		"stock": stock,
+		"badges": badges,
+		"spice_level": spice_level,
+		"linked_option_groups": linked_groups,
+		"all_option_groups": [{"name": g.name, "group_name": g.group_name, "selection_type": g.selection_type, "required": g.required} for g in all_groups],
+		"has_image_search": has_image_search,
+	}
+
+
+@frappe.whitelist()
+def update_item_details(item_code, description=None, image=None, color=None, option_groups=None, badges=None, spice_level=0):
+	"""Update global Item fields (description, image, color, option groups, badges)."""
+	import json
+	from frappe.utils import cint
+
+	item = frappe.get_doc("Item", item_code)
+
+	if description is not None:
+		item.description = description
+	if image is not None:
+		item.image = image
+	if color is not None:
+		item.custom_color = color
+
+	# Update badges
+	if badges is not None:
+		if isinstance(badges, str):
+			badges = json.loads(badges)
+		if hasattr(item, "custom_item_badges"):
+			item.custom_item_badges = []
+		for badge_name in (badges or []):
+			item.append("custom_item_badges", {"menu_badge": badge_name})
+
+	if spice_level is not None:
+		item.custom_spice_level = max(0, min(3, cint(spice_level)))
+
+	item.save(ignore_permissions=True)
+
+	# Update option groups
+	if option_groups is not None:
+		if isinstance(option_groups, str):
+			option_groups = json.loads(option_groups)
+		# Remove item from all groups first
+		all_groups = frappe.get_all("Product Option Group", fields=["name"])
+		for g in all_groups:
+			group_doc = frappe.get_doc("Product Option Group", g.name)
+			updated = False
+			new_items = []
+			for ai in group_doc.applicable_items:
+				if ai.item != item_code:
+					new_items.append(ai)
+				else:
+					updated = True
+			if updated:
+				group_doc.applicable_items = new_items
+				group_doc.save(ignore_permissions=True)
+
+		# Add item to selected groups
+		for group_name in (option_groups or []):
+			if frappe.db.exists("Product Option Group", group_name):
+				group_doc = frappe.get_doc("Product Option Group", group_name)
+				group_doc.append("applicable_items", {
+					"item": item_code,
+					"item_name": item.item_name,
+				})
+				group_doc.save(ignore_permissions=True)
+
+	frappe.db.commit()
+	return {"status": "ok"}
+
+
+@frappe.whitelist()
+def update_item_price(item_code, price, scope="local", card_name=None, pos_profile=None):
+	"""Update item price locally (card only) or globally (price list + all cards).
+
+	scope = "local": Only update Restaurant Card Item.price for the given card
+	scope = "global": Update Item Price in selling price list + Item.standard_rate
+	                   + sync price in all cards that have a local override for this item
+	"""
+	from frappe.utils import flt
+
+	price = flt(price)
+
+	if scope == "local" and card_name:
+		# Update only the card item price
+		card = frappe.get_doc("Restaurant Card", card_name)
+		for ci in card.items:
+			if ci.item == item_code and ci.item_type == "Item":
+				ci.price = price
+		card.save(ignore_permissions=True)
+		frappe.db.commit()
+		return {"status": "ok", "scope": "local"}
+
+	elif scope == "global":
+		# Update Item.standard_rate
+		frappe.db.set_value("Item", item_code, "standard_rate", price)
+
+		# Update Item Price in selling price list
+		if pos_profile:
+			profile = frappe.get_cached_doc("POS Profile", pos_profile)
+			if profile.selling_price_list:
+				existing = frappe.db.get_value(
+					"Item Price",
+					{"item_code": item_code, "price_list": profile.selling_price_list, "selling": 1},
+					"name"
+				)
+				if existing:
+					frappe.db.set_value("Item Price", existing, "price_list_rate", price)
+				else:
+					frappe.get_doc({
+						"doctype": "Item Price",
+						"item_code": item_code,
+						"price_list": profile.selling_price_list,
+						"price_list_rate": price,
+					}).insert(ignore_permissions=True)
+
+		# Sync price in all cards that have this item with a local override
+		cards_with_item = frappe.get_all(
+			"Restaurant Card Item",
+			filters={"item": item_code, "item_type": "Item", "price": [">", 0]},
+			fields=["parent", "name"]
+		)
+		for ci in cards_with_item:
+			frappe.db.set_value("Restaurant Card Item", ci.name, "price", price)
+
+		frappe.db.commit()
+		return {"status": "ok", "scope": "global", "cards_updated": len(cards_with_item)}
+
+	return {"status": "error", "message": "Invalid scope or missing card_name"}
+
+
+@frappe.whitelist()
+def get_card_items_extra(card_name):
+	"""Return description + badges for all items in a card (for list display)."""
+	card = frappe.get_doc("Restaurant Card", card_name)
+	result = {}
+
+	for ci in card.items:
+		if ci.item_type != "Item" or not ci.item:
+			continue
+
+		try:
+			item_doc = frappe.get_cached_doc("Item", ci.item)
+		except Exception:
+			continue
+
+		# Clean description
+		raw_desc = item_doc.get("description") or ""
+		clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+
+		# Get badges
+		badges = []
+		if hasattr(item_doc, "custom_item_badges"):
+			for row in item_doc.custom_item_badges:
+				try:
+					badge_doc = frappe.get_cached_doc("Menu Badge", row.menu_badge)
+					badges.append({
+						"badge_name": badge_doc.badge_name,
+						"color": badge_doc.color,
+						"icon": badge_doc.icon,
+					})
+				except Exception:
+					pass
+
+		result[ci.item] = {
+			"description": clean_desc,
+			"badges": badges,
+		}
+
 	return result
 
 

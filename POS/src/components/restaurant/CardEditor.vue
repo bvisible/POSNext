@@ -124,7 +124,34 @@
 									</span>
 									<template v-else>
 										<div class="flex-1 min-w-0">
-											<span class="text-sm">{{ item.label || item.item_name || item.item }}</span>
+											<div class="flex items-center gap-1.5">
+												<span class="text-sm">{{ item.label || item.item_name || item.item }}</span>
+												<!-- Badges inline -->
+												<div v-if="itemExtraData[item.item]?.badges?.length" class="flex gap-0.5 flex-shrink-0">
+													<span
+														v-for="badge in itemExtraData[item.item].badges.slice(0, 4)"
+														:key="badge.badge_name"
+														class="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+														:style="{ backgroundColor: badge.color || '#9ca3af' }"
+														:title="badge.badge_name"
+													>
+														<img
+															v-if="badge.icon"
+															:src="`/assets/pos_next/icons/badges/${badge.icon}`"
+															class="w-2.5 h-2.5"
+															style="filter: brightness(0) invert(1);"
+														/>
+													</span>
+													<span v-if="itemExtraData[item.item].badges.length > 4"
+														class="text-[8px] text-gray-400 flex items-center">
+														+{{ itemExtraData[item.item].badges.length - 4 }}
+													</span>
+												</div>
+											</div>
+											<!-- Description (1 line, truncated) -->
+											<div v-if="itemExtraData[item.item]?.description" class="text-[10px] text-gray-400 mt-0.5 truncate max-w-[300px]">
+												{{ itemExtraData[item.item].description }}
+											</div>
 											<!-- Stock display -->
 											<div v-if="stockData[item.item]" class="text-[10px] text-gray-400 mt-0.5">
 												<span v-for="(bin, bi) in stockData[item.item]" :key="bi"
@@ -174,12 +201,15 @@
 						</div>
 					</div>
 
-					<!-- Right: Badge Panel -->
-					<div v-if="selectedBadgeItem" class="w-64 h-full flex-shrink-0 border rounded-xl overflow-hidden">
-						<ItemBadgePanel
+					<!-- Right: Item Edit Panel -->
+					<div v-if="selectedBadgeItem" class="w-80 h-full flex-shrink-0 border rounded-xl overflow-hidden">
+						<ItemEditPanel
 							:item-code="selectedBadgeItem.item"
 							:item-name="selectedBadgeItem.label || selectedBadgeItem.item_name || selectedBadgeItem.item"
-							@saved="selectedBadgeItemIdx = null; selectedBadgeItem = null"
+							:local-price="selectedBadgeItem.price || 0"
+							:card-name="cardDetail.name"
+							:card-display-name="cardDetail.card_name"
+							@saved="onItemEditSaved"
 							@close="selectedBadgeItemIdx = null; selectedBadgeItem = null"
 						/>
 					</div>
@@ -282,7 +312,7 @@ import { Button, Dialog, Input } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
-import ItemBadgePanel from "@/components/restaurant/ItemBadgePanel.vue"
+import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 
 const props = defineProps({ modelValue: Boolean })
@@ -307,6 +337,7 @@ const saving = ref(false)
 const showNewCard = ref(false)
 const newCardName = ref("")
 const stockData = ref({})
+const itemExtraData = ref({})
 const openingHours = ref([])
 const editingName = ref(false)
 const nameInput = ref(null)
@@ -411,8 +442,9 @@ async function loadCardDetail(name) {
 					disabled: !!i.disabled,
 				}))
 			}
-			// Load stock data
+			// Load stock data and extra data (description, badges)
 			loadStockData(name)
+			loadItemExtraData(name)
 		}
 	} catch (error) {
 		showError(__("Failed to load card"))
@@ -424,6 +456,29 @@ async function loadStockData(cardName) {
 		const res = await call("pos_next.api.restaurant.get_card_items_stock", { card_name: cardName })
 		stockData.value = res || {}
 	} catch { stockData.value = {} }
+}
+
+async function loadItemExtraData(cardName) {
+	try {
+		const res = await call("pos_next.api.restaurant.get_card_items_extra", { card_name: cardName })
+		itemExtraData.value = res || {}
+	} catch { itemExtraData.value = {} }
+}
+
+function onItemEditSaved(changes) {
+	// Refresh extra data and stock after item edit
+	if (cardDetail.value?.name) {
+		loadItemExtraData(cardDetail.value.name)
+		loadStockData(cardDetail.value.name)
+		// Update local price in the card items if price changed locally
+		if (changes?.priceScope === "local" && selectedBadgeItem.value) {
+			selectedBadgeItem.value.price = changes.price
+		} else if (changes?.priceScope === "global" && selectedBadgeItem.value) {
+			selectedBadgeItem.value.price = changes.price
+		}
+	}
+	selectedBadgeItemIdx.value = null
+	selectedBadgeItem.value = null
 }
 
 async function saveCard() {

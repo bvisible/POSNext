@@ -277,6 +277,8 @@ def _get_wkhtmltopdf_options(template):
 		"margin-bottom": "20mm",
 		"margin-left": "20mm",
 		"margin-right": "20mm",
+		"print-media-type": "",
+		"encoding": "UTF-8",
 	}
 
 	if paper == "A4 Portrait":
