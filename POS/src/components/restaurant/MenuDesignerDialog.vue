@@ -115,7 +115,6 @@ async function loadData() {
 		previewData.value = previewRes || previewData.value
 		templates.value = templatesRes || []
 		selectedCardNames.value = [props.cardName]
-
 	} catch (e) {
 		console.error("Failed to load menu designer data:", e)
 		showError(__("Failed to load menu data"))
@@ -206,12 +205,12 @@ async function onGeneratePdf({
 				}
 
 		const url = `/api/method/${method}?${new URLSearchParams(args).toString()}`
-		const link = document.createElement("a")
-		link.href = url
-		link.download = ""
-		document.body.appendChild(link)
-		link.click()
-		document.body.removeChild(link)
+		// Use iframe to trigger download without popup blocker
+		const iframe = document.createElement("iframe")
+		iframe.style.display = "none"
+		iframe.src = url
+		document.body.appendChild(iframe)
+		setTimeout(() => document.body.removeChild(iframe), 30000)
 
 		showSuccess(__("PDF generated"))
 	} catch (e) {

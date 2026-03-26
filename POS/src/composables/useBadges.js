@@ -36,16 +36,28 @@ export function useBadges() {
 	async function saveItemBadges(itemCode, badgeNames, spiceLevel) {
 		try {
 			console.log("[useBadges] Saving:", itemCode, badgeNames, spiceLevel)
-			const result = await call(
-				"pos_next.api.restaurant.update_item_badges",
+			const csrfToken =
+				document.cookie.match(/csrf_token=([^;]+)/)?.[1] ||
+				window.csrf_token ||
+				""
+			const response = await fetch(
+				"/api/method/pos_next.api.restaurant.update_item_badges",
 				{
-					item_code: itemCode,
-					badges: JSON.stringify(badgeNames),
-					spice_level: spiceLevel,
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-Frappe-CSRF-Token": csrfToken,
+					},
+					body: JSON.stringify({
+						item_code: itemCode,
+						badges: JSON.stringify(badgeNames),
+						spice_level: spiceLevel,
+					}),
 				},
 			)
-			console.log("[useBadges] Save result:", result)
-			return true
+			const data = await response.json()
+			console.log("[useBadges] Save result:", data)
+			return data?.message?.status === "ok"
 		} catch (e) {
 			console.error("[useBadges] Failed to save:", e)
 			return false

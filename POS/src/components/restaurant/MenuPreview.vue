@@ -39,10 +39,12 @@
 								<span v-if="item.spice_level > 0" class="ml-1 text-xs">
 									<span v-for="s in item.spice_level" :key="s">🌶</span>
 								</span>
-								<span v-if="design.show_allergens && item.badges?.length" class="inline-flex gap-0.5 ml-1">
-									<img v-for="badge in item.badges" :key="badge.badge_name"
-										:src="`/assets/pos_next/icons/badges/${badge.icon}`"
-										:title="badge.badge_name" class="w-3 h-3 inline-block" />
+								<span v-if="design.show_allergens && item.badges?.length" class="inline-flex gap-1 ml-1 items-center">
+									<span v-for="badge in item.badges" :key="badge.badge_name" class="flex items-center gap-0.5">
+										<img :src="`/assets/pos_next/icons/badges/${badge.icon}`"
+											:title="badge.badge_name" class="w-4 h-4 inline-block" />
+										<span class="text-[8px]" :style="{ color: design.color_secondary }">{{ badge.badge_name }}</span>
+									</span>
 								</span>
 								<span class="flex-1 mx-1 border-b border-dotted" :style="{ borderColor: design.color_secondary || '#ccc', marginBottom: '3px' }"></span>
 								<span v-if="priceDisplay(item)" :style="{ fontFamily: design.font_body, color: design.color_primary, fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap' }">
@@ -58,10 +60,12 @@
 									<span v-if="item.spice_level > 0" class="ml-1 text-xs">
 										<span v-for="s in item.spice_level" :key="s">🌶</span>
 									</span>
-									<span v-if="design.show_allergens && item.badges?.length" class="inline-flex gap-0.5 ml-1 align-middle">
-										<img v-for="badge in item.badges" :key="badge.badge_name"
-											:src="`/assets/pos_next/icons/badges/${badge.icon}`"
-											:title="badge.badge_name" class="w-3 h-3 inline-block" />
+									<span v-if="design.show_allergens && item.badges?.length" class="inline-flex gap-1 ml-1 items-center">
+										<span v-for="badge in item.badges" :key="badge.badge_name" class="flex items-center gap-0.5">
+											<img :src="`/assets/pos_next/icons/badges/${badge.icon}`"
+												:title="badge.badge_name" class="w-4 h-4 inline-block" />
+											<span class="text-[8px]" :style="{ color: design.color_secondary }">{{ badge.badge_name }}</span>
+										</span>
 									</span>
 									<!-- Inline price -->
 									<span v-if="design.price_alignment === 'inline' && priceDisplay(item)" class="ml-2"
@@ -92,6 +96,17 @@
 					</div>
 				</div>
 
+				<!-- Allergen Legend -->
+				<div v-if="design.show_allergens && usedBadges.length" class="mt-6 pt-3 border-t" :style="{ borderColor: '#ddd' }">
+					<p class="text-[9px] font-bold mb-1" :style="{ color: design.color_secondary }}>{{ __('Allergens') }}</p>
+					<div class="flex flex-wrap gap-2">
+						<span v-for="badge in usedBadges" :key="badge.badge_name" class="flex items-center gap-1">
+							<img :src="`/assets/pos_next/icons/badges/${badge.icon}`" class="w-3 h-3" />
+							<span class="text-[8px]" :style="{ color: design.color_secondary }">{{ badge.badge_name }}</span>
+						</span>
+					</div>
+				</div>
+
 				<!-- Footer -->
 				<div v-if="design.footer_text" class="text-center mt-8 pt-4 border-t" :style="{ borderColor: design.color_accent || '#ddd' }">
 					<p :style="{ fontFamily: design.font_body, color: design.color_secondary, fontSize: '10px', fontStyle: 'italic' }">
@@ -113,6 +128,23 @@ const props = defineProps({
 	currency: { type: String, default: "CHF" },
 	companyLogo: { type: String, default: "" },
 	showCoverPage: { type: Boolean, default: true },
+})
+
+// Compute all unique badges used across all items
+const usedBadges = computed(() => {
+	const seen = new Set()
+	const badges = []
+	for (const cat of props.categories) {
+		for (const item of cat.menu_items || []) {
+			for (const badge of item.badges || []) {
+				if (!seen.has(badge.badge_name)) {
+					seen.add(badge.badge_name)
+					badges.push(badge)
+				}
+			}
+		}
+	}
+	return badges
 })
 
 const pageStyle = computed(() => {
