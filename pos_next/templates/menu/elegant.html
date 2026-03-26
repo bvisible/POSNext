@@ -4,13 +4,13 @@
 {% block styles %}
 
 	body {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		background-color: #FFF8F0;
 		color: #2C1810;
 	}
 
 	h1, h2, h3 {
-		font-family: 'Playfair Display', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 	}
 
 	/* Header styling */
@@ -21,7 +21,7 @@
 	}
 
 	.header-title {
-		font-family: 'Playfair Display', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 24pt;
 		font-weight: 700;
 		color: #2C1810;
@@ -31,7 +31,7 @@
 	}
 
 	.header-card-name {
-		font-family: 'Playfair Display', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 16pt;
 		font-weight: 400;
 		font-style: italic;
@@ -40,7 +40,7 @@
 	}
 
 	.header-description {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		font-size: 9pt;
 		font-style: italic;
 		color: #6B5040;
@@ -62,7 +62,7 @@
 	}
 
 	.category-title {
-		font-family: 'Playfair Display', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 15pt;
 		font-weight: 600;
 		color: #8B6914;
@@ -96,7 +96,7 @@
 	}
 
 	.item-name {
-		font-family: 'Playfair Display', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 11pt;
 		font-weight: 600;
 		color: #2C1810;
@@ -113,14 +113,14 @@
 	}
 
 	.item-price {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		font-size: 10.5pt;
 		font-weight: 500;
 		color: #2C1810;
 	}
 
 	.item-description {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		font-size: 8.5pt;
 		font-style: italic;
 		color: #6B5040;
@@ -130,7 +130,7 @@
 
 	/* Badge styling */
 	.badge {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		font-size: 6.5pt;
 	}
 
@@ -141,7 +141,7 @@
 
 	/* Options styling */
 	.item-options {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		font-size: 7.5pt;
 		font-style: italic;
 		color: #6B5040;
@@ -165,7 +165,7 @@
 	}
 
 	.footer-text {
-		font-family: 'Lora', 'Georgia', serif;
+		font-family: '{{ design.font_body }}', 'Georgia', serif;
 		font-size: 8pt;
 		font-style: italic;
 		color: #6B5040;

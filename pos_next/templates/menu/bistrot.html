@@ -4,13 +4,13 @@
 {% block styles %}
 
 	body {
-		font-family: 'Source Sans 3', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', 'Helvetica Neue', Arial, sans-serif;
 		background-color: #F5F0EB;
 		color: #333333;
 	}
 
 	h1, h2, h3 {
-		font-family: 'Merriweather', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 	}
 
 	/* Header styling */
@@ -21,7 +21,7 @@
 	}
 
 	.header-title {
-		font-family: 'Merriweather', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 22pt;
 		font-weight: 700;
 		color: #722F37;
@@ -29,7 +29,7 @@
 	}
 
 	.header-card-name {
-		font-family: 'Merriweather', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 14pt;
 		font-weight: 400;
 		color: #333333;
@@ -37,7 +37,7 @@
 	}
 
 	.header-description {
-		font-family: 'Source Sans 3', 'Inter', sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
 		font-size: 9pt;
 		color: #666666;
 	}
@@ -58,7 +58,7 @@
 	}
 
 	.category-title {
-		font-family: 'Merriweather', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 14pt;
 		font-weight: 700;
 		color: #722F37;
@@ -97,14 +97,14 @@
 	}
 
 	.item-name {
-		font-family: 'Merriweather', 'Georgia', serif;
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
 		font-size: 10.5pt;
 		font-weight: 700;
 		color: #333333;
 	}
 
 	.item-price {
-		font-family: 'Source Sans 3', 'Inter', sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
 		font-size: 10pt;
 		font-weight: 600;
 		color: #722F37;
@@ -115,7 +115,7 @@
 	}
 
 	.item-description {
-		font-family: 'Source Sans 3', 'Inter', sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
 		font-size: 8.5pt;
 		font-weight: 300;
 		color: #666666;
@@ -134,14 +134,14 @@
 	}
 
 	.badge-label {
-		font-family: 'Source Sans 3', 'Inter', sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
 		font-size: 6.5pt;
 		color: #666666;
 	}
 
 	/* Options styling */
 	.item-options {
-		font-family: 'Source Sans 3', 'Inter', sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
 		font-size: 7.5pt;
 		color: #888888;
 	}
@@ -167,7 +167,7 @@
 	}
 
 	.footer-text {
-		font-family: 'Source Sans 3', 'Inter', sans-serif;
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
 		font-size: 8pt;
 		color: #888888;
 		font-style: italic;
