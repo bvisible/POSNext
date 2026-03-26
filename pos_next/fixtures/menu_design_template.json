@@ -17,7 +17,8 @@
   "color_accent": "#8B6914",
   "header_text": "",
   "footer_text": "",
-  "custom_css": ""
+  "custom_css": "",
+  "name": "Élégant Classique"
  },
  {
   "doctype": "Menu Design Template",
@@ -37,7 +38,8 @@
   "color_accent": "#4A5568",
   "header_text": "",
   "footer_text": "",
-  "custom_css": ""
+  "custom_css": "",
+  "name": "Moderne Minimaliste"
  },
  {
   "doctype": "Menu Design Template",
@@ -57,7 +59,8 @@
   "color_accent": "#722F37",
   "header_text": "",
   "footer_text": "",
-  "custom_css": ""
+  "custom_css": "",
+  "name": "Bistrot Rustique"
  },
  {
   "doctype": "Menu Design Template",
@@ -77,6 +80,7 @@
   "color_accent": "#FFD700",
   "header_text": "",
   "footer_text": "",
-  "custom_css": ""
+  "custom_css": "",
+  "name": "Ardoise Tableau Noir"
  }
 ]
