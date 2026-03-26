@@ -112,13 +112,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
 
 const orders = ref([])
 const loading = ref(true)
 const selectedStatus = ref("")
+const showDelivered = ref(localStorage.getItem("pos_takeaway_show_delivered") === "true")
+
+watch(showDelivered, (val) => {
+	localStorage.setItem("pos_takeaway_show_delivered", val ? "true" : "false")
+})
 
 const readyCount = computed(() => orders.value.filter(o => o.kds_status === "Ready").length)
 
@@ -130,8 +135,14 @@ const statusTabs = computed(() => [
 ])
 
 const filteredOrders = computed(() => {
-	if (!selectedStatus.value) return orders.value
-	return orders.value.filter(o => (o.kds_status || "Pending") === selectedStatus.value)
+	let result = orders.value
+	if (!showDelivered.value) {
+		result = result.filter(o => o.kds_status !== "Delivered")
+	}
+	if (selectedStatus.value) {
+		result = result.filter(o => (o.kds_status || "Pending") === selectedStatus.value)
+	}
+	return result
 })
 
 async function loadOrders() {
