@@ -141,6 +141,22 @@
 				{{ __("Runner") }}
 				<span v-if="totalReadyCount > 0" class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] animate-pulse">{{ totalReadyCount }}✓</span>
 			</div>
+			<!-- Takeaway pill -->
+			<div v-if="restaurantStore.takeawayEnabled"
+				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
+				:class="takeawayReadyCount > 0
+					? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
+					: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
+				@click="openTakeawayTab">
+				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+				</svg>
+				{{ __("Takeaway") }}
+				<span v-if="takeawayTotalCount > 0" class="bg-white/30 px-1.5 py-0.5 rounded text-[10px]"
+					:class="takeawayReadyCount > 0 ? 'animate-pulse' : ''">
+					{{ takeawayReadyCount }}/{{ takeawayTotalCount }}
+				</span>
+			</div>
 		</div>
 
 		<!-- Canvas -->
@@ -1199,6 +1215,15 @@ function openRunnerTab() {
 	window.open('/pos/runner', '_blank')
 }
 
+// Takeaway
+const takeawayTotalCount = computed(() => restaurantStore.takeawayOrders.length)
+const takeawayReadyCount = computed(() =>
+	restaurantStore.takeawayOrders.filter(o => o.kds_status === "Ready").length
+)
+function openTakeawayTab() {
+	window.open('/pos/takeaway', '_blank')
+}
+
 async function selectTable(table) {
 	// Clear cart before loading table
 	await cartStore.clearCart()
@@ -1644,9 +1669,10 @@ onMounted(async () => {
 	// Start restaurant status polling for card warnings
 	restaurantStore.startStatusPolling()
 
-	// Load runner + KDS orders for delivery arrows and station activity
+	// Load runner + KDS + takeaway orders
 	loadRunnerOrders()
 	loadKdsOrders()
+	if (restaurantStore.takeawayEnabled) restaurantStore.fetchTakeawayOrders()
 
 	// Listen for realtime table updates via frappe.realtime socket
 	floorSocket = window.frappe?.realtime || initSocket()
@@ -1658,6 +1684,10 @@ onMounted(async () => {
 		floorSocket.on("kds_update", () => {
 			loadRunnerOrders()
 			loadKdsOrders()
+			if (restaurantStore.takeawayEnabled) restaurantStore.fetchTakeawayOrders()
+		})
+		floorSocket.on("takeaway_update", () => {
+			if (restaurantStore.takeawayEnabled) restaurantStore.fetchTakeawayOrders()
 		})
 	}
 })

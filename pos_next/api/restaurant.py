@@ -283,11 +283,12 @@ def get_kds_orders(station=None):
 		filters={
 			"docstatus": 0, # Drafts
 		},
-		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified"]
+		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
+				"is_takeaway", "takeaway_number"]
 	)
 
-	# Filter purely in Python - include orders with table and any kds_status
-	orders = [o for o in raw_orders if o.get("restaurant_table")]
+	# Filter purely in Python - include orders with table OR takeaway orders
+	orders = [o for o in raw_orders if o.get("restaurant_table") or o.get("is_takeaway")]
 
 	# Fallback safety: Check if the custom field actually exists in the DB to prevent 500 errors
 	# if the user hasn't run `bench migrate` yet.
@@ -994,6 +995,8 @@ def get_restaurant_settings():
 		"is_open": is_open,
 		"current_slot": current_slot,
 		"enable_runner": bool(settings.enable_runner) if hasattr(settings, "enable_runner") else True,
+		"enable_takeaway": bool(frappe.db.get_single_value("POS Settings", "enable_takeaway") or 0),
+		"takeaway_card": frappe.db.get_single_value("POS Settings", "takeaway_card") or None,
 		"enable_tips": bool(settings.enable_tips) if hasattr(settings, "enable_tips") else False,
 		"auto_detect_tip": bool(settings.auto_detect_tip) if hasattr(settings, "auto_detect_tip") else True,
 		"tip_item": settings.tip_item if hasattr(settings, "tip_item") else None,
@@ -1554,6 +1557,58 @@ def mark_items_delivered(invoice_name, item_names=None):
 		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", "Delivered")
 
 	frappe.publish_realtime("kds_update")
+	return {"status": "success"}
+
+
+@frappe.whitelist()
+def get_takeaway_orders():
+	"""Fetch active takeaway orders (draft invoices with is_takeaway=1)."""
+	raw_orders = frappe.get_all(
+		"Sales Invoice",
+		filters={
+			"docstatus": 0,
+			"is_pos": 1,
+			"is_takeaway": 1,
+		},
+		fields=["name", "customer_name", "grand_total", "kds_status",
+				"takeaway_number", "creation", "modified"],
+		order_by="creation asc",
+	)
+
+	result = []
+	for order in raw_orders:
+		items = frappe.get_all(
+			"Sales Invoice Item",
+			filters={"parent": order.name},
+			fields=["item_code", "item_name", "qty", "rate", "amount",
+					"kds_status", "preparation_station"],
+		)
+		order["items"] = items
+		result.append(order)
+
+	return result
+
+
+@frappe.whitelist()
+def get_next_takeaway_number():
+	"""Generate the next takeaway number for today (T-001, T-002...)."""
+	from frappe.utils import today
+
+	current_date = today()
+	count = frappe.db.count("Sales Invoice", filters={
+		"is_takeaway": 1,
+		"creation": [">=", f"{current_date} 00:00:00"],
+	})
+	return f"T-{(count + 1):03d}"
+
+
+@frappe.whitelist()
+def update_takeaway_status(invoice_name, status):
+	"""Update the KDS status of a takeaway order."""
+	frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status)
+	frappe.db.commit()
+	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("takeaway_update")
 	return {"status": "success"}
 
 

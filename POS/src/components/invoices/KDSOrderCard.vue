@@ -5,8 +5,13 @@
 		<!-- Header -->
 		<div class="p-3 border-b border-gray-100 dark:border-gray-700">
 			<div class="flex justify-between items-start">
-				<h3 class="font-bold text-lg leading-tight text-gray-900 dark:text-white">
-					{{ order.restaurant_table }}
+				<h3 class="font-bold text-lg leading-tight" :class="order.is_takeaway ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'">
+					<template v-if="order.is_takeaway">
+						<svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+						</svg>{{ order.takeaway_number || __("Takeaway") }}
+					</template>
+					<template v-else>{{ order.restaurant_table }}</template>
 				</h3>
 				<div class="text-right">
 					<span class="font-mono text-base font-bold tabular-nums block" :class="timeColorClass">

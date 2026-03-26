@@ -294,6 +294,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		currentDraftId.value = null
 		targetDoctype.value = "Sales Invoice"
 		restaurantTable.value = null
+		isTakeaway.value = false
+		takeawayNumber.value = ""
 		kdsStatus.value = "Pending"
 		hasUnsentChanges.value = false
 
@@ -315,6 +317,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const tipAmount = ref(0)
 	const loyaltyData = ref(null)
 	const restaurantTable = ref(null)
+	const isTakeaway = ref(false)
+	const takeawayNumber = ref("")
 	const kdsStatus = ref("Pending")
 	const hasUnsentChanges = ref(false)
 
@@ -444,6 +448,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				customer.value?.name || customer.value || currentProfile?.customer,
 			company: currentProfile?.company,
 			restaurant_table: restaurantTable.value?.name,
+			is_takeaway: isTakeaway.value ? 1 : 0,
+			takeaway_number: takeawayNumber.value || "",
 			kds_status: kdsStatus.value,
 			selling_price_list: currentProfile?.selling_price_list,
 			currency: currentProfile?.currency,
@@ -1991,6 +1997,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Restaurant features
 		restaurantTable,
+		isTakeaway,
+		takeawayNumber,
 		kdsStatus,
 		hasUnsentChanges,
 		updateItemInstructions,

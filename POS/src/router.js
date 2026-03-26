@@ -36,6 +36,11 @@ const routes = [
 		path: "/runner",
 		component: () => import("@/pages/Runner.vue"),
 	},
+	{
+		name: "Takeaway",
+		path: "/takeaway",
+		component: () => import("@/pages/Takeaway.vue"),
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

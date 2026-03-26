@@ -16,6 +16,9 @@
   "section_break_restaurant",
   "enable_restaurant_mode",
   "default_restaurant_area",
+  "column_break_takeaway",
+  "enable_takeaway",
+  "takeaway_card",
   "section_break_wallet",
   "enable_loyalty_program",
   "default_loyalty_program",
@@ -170,6 +173,26 @@
    "label": "Default Restaurant Area",
    "options": "Restaurant Area",
    "depends_on": "enable_restaurant_mode"
+  },
+  {
+   "fieldname": "column_break_takeaway",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Enable takeaway orders in restaurant mode",
+   "fieldname": "enable_takeaway",
+   "fieldtype": "Check",
+   "label": "Enable Takeaway",
+   "depends_on": "enable_restaurant_mode"
+  },
+  {
+   "fieldname": "takeaway_card",
+   "fieldtype": "Link",
+   "label": "Takeaway Card",
+   "options": "Restaurant Card",
+   "depends_on": "enable_takeaway",
+   "description": "Optional: use a specific card with takeaway prices"
   },
   {
    "fieldname": "section_break_wallet",

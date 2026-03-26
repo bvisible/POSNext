@@ -19,7 +19,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const stationGroupsMap = ref({})
 	const modifierGroups = ref([])
 	const activeMenus = ref([])
-	const restaurantSettings = ref({ opening_hours: [], enable_tips: false, auto_detect_tip: true, tip_item: null, enable_runner: true })
+	const takeawayOrders = ref([])
+	const restaurantSettings = ref({ opening_hours: [], enable_tips: false, auto_detect_tip: true, tip_item: null, enable_runner: true, enable_takeaway: false, takeaway_card: null })
 	const restaurantStatus = ref({ isOpen: true, currentSlot: null, hasActiveCards: true, warning: null })
 	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
 	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
@@ -374,7 +375,18 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		)
 	}
 
+	async function fetchTakeawayOrders() {
+		try {
+			const res = await call("pos_next.api.restaurant.get_takeaway_orders", { _: Date.now() })
+			if (res) takeawayOrders.value = res
+		} catch (error) {
+			console.error("Failed to fetch takeaway orders:", error)
+		}
+	}
+
 	const runnerEnabled = computed(() => restaurantSettings.value.enable_runner !== false && restaurantSettings.value.enable_runner !== 0)
+	const takeawayEnabled = computed(() => !!restaurantSettings.value.enable_takeaway)
+	const takeawayCard = computed(() => restaurantSettings.value.takeaway_card)
 	const tipsEnabled = computed(() => !!restaurantSettings.value.enable_tips)
 	const autoDetectTip = computed(() => restaurantSettings.value.auto_detect_tip !== false)
 	const tipItem = computed(() => restaurantSettings.value.tip_item)
@@ -392,6 +404,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		restaurantStatus,
 		hasCardWarning,
 		runnerEnabled,
+		takeawayEnabled,
+		takeawayCard,
+		takeawayOrders,
+		fetchTakeawayOrders,
 		tipsEnabled,
 		autoDetectTip,
 		tipItem,
