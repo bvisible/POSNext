@@ -1,7 +1,7 @@
 <template>
 	<div class="menu-preview-container h-full overflow-auto bg-gray-200 p-6 flex justify-center">
 		<div
-			class="menu-preview-page bg-white shadow-xl overflow-hidden"
+			class="menu-preview-page bg-white shadow-xl"
 			:style="pageStyle"
 		>
 			<div class="p-8" :style="contentStyle">
@@ -160,9 +160,8 @@ const pageStyle = computed(() => {
 	return {
 		backgroundColor: bg,
 		width: "210mm",
-		minHeight: "297mm",
+		minHeight: "280mm",
 		maxWidth: "100%",
-		transformOrigin: "top center",
 	}
 })
 

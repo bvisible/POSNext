@@ -136,7 +136,7 @@
 	<meta charset="UTF-8" />
 	<title>{{ card.card_name }}</title>
 	<style>
-		/* Print CSS reset */
+		/* Print CSS reset for wkhtmltopdf compatibility */
 		*, *::before, *::after {
 			box-sizing: border-box;
 			margin: 0;
@@ -163,21 +163,18 @@
 			font-family: '{{ design.font_header }}', 'Playfair Display', Georgia, serif;
 		}
 
-		/* Tabular numbers for prices */
+		/* Price formatting */
 		.item-price {
-			font-variant-numeric: tabular-nums;
 			white-space: nowrap;
 		}
 
 		/* Prevent page breaks inside items and categories */
 		.menu-item {
 			page-break-inside: avoid;
-			break-inside: avoid;
 		}
 
 		.menu-category {
 			page-break-inside: avoid;
-			break-inside: avoid;
 		}
 
 		/* Orphans and widows */
@@ -186,7 +183,7 @@
 			widows: 3;
 		}
 
-		/* Column layout */
+		/* Column layout with table-based fallback for wkhtmltopdf */
 		.menu-body.columns-1 {
 			columns: 1;
 		}
@@ -214,7 +211,6 @@
 		.logo-image {
 			max-height: 20mm;
 			max-width: 40mm;
-			object-fit: contain;
 		}
 
 		.header-title {
@@ -248,10 +244,10 @@
 			margin-bottom: 3mm;
 		}
 
+		/* Item header using table layout for wkhtmltopdf compatibility */
 		.item-header {
-			display: flex;
-			align-items: baseline;
-			gap: 2mm;
+			display: table;
+			width: 100%;
 		}
 
 		.item-name {
@@ -259,64 +255,91 @@
 			font-size: 10.5pt;
 		}
 
+		.item-price {
+			display: table-cell;
+			text-align: right;
+			padding-left: 2mm;
+		}
+
 		.item-price.price-right {
-			margin-left: auto;
+			text-align: right;
 		}
 
 		.item-price.price-inline {
-			margin-left: 2mm;
+			text-align: left;
+			padding-left: 2mm;
 		}
 
-		/* Dotted leader row */
+		/* Dotted leader row using table layout */
 		.item-dotted-row {
-			display: flex;
-			align-items: baseline;
+			display: table;
+			width: 100%;
+			table-layout: fixed;
+		}
+
+		.item-dotted-row .item-name {
+			display: table-cell;
+			padding-right: 2mm;
+		}
+
+		.item-dotted-row .spice-level {
+			display: table-cell;
+			padding-right: 2mm;
+			white-space: nowrap;
 		}
 
 		.dotted-leader {
-			flex: 1;
+			display: table-cell;
 			border-bottom: 1px dotted {{ design.color_secondary | default('#666666') }};
-			margin: 0 2mm;
-			min-width: 5mm;
+			padding: 0 1mm;
+			vertical-align: baseline;
+		}
+
+		.item-dotted-row .item-price {
+			display: table-cell;
+			text-align: right;
+			padding-left: 2mm;
+			white-space: nowrap;
 		}
 
 		.item-description {
 			font-size: 8.5pt;
 			color: {{ design.color_secondary | default('#666666') }};
 			margin-top: 0.5mm;
+			clear: both;
 		}
 
-		/* Badges */
+		/* Badges using inline-block instead of flex */
 		.item-badges {
-			display: inline-flex;
-			gap: 1.5mm;
+			display: block;
 			margin-top: 1mm;
-			flex-wrap: wrap;
 		}
 
 		.badge {
-			display: inline-flex;
-			align-items: center;
-			gap: 0.5mm;
+			display: inline-block;
 			font-size: 7pt;
+			margin-right: 1.5mm;
+			margin-bottom: 1mm;
 		}
 
 		.badge-icon {
 			width: 16px;
 			height: 16px;
 			vertical-align: middle;
-			/* Fallback for missing images */
-			object-fit: contain;
+			margin-right: 0.5mm;
 		}
 
 		.badge-label {
 			font-size: 7pt;
+			vertical-align: middle;
 		}
 
 		/* Spice level */
 		.spice-level {
 			font-size: 8pt;
 			letter-spacing: -0.5mm;
+			display: inline-block;
+			margin-right: 2mm;
 		}
 
 		/* Item image */
@@ -329,7 +352,6 @@
 		.item-image {
 			width: 18mm;
 			height: 18mm;
-			object-fit: cover;
 			border-radius: 1mm;
 			background: #f0f0f0;
 		}
@@ -345,17 +367,30 @@
 			font-size: 7.5pt;
 			color: {{ design.color_secondary | default('#666666') }};
 			margin-top: 0.5mm;
+			display: block;
+			clear: both;
+		}
+
+		.option-group {
+			display: inline-block;
+			margin-right: 3mm;
+			margin-bottom: 1mm;
 		}
 
 		.option-label {
 			font-weight: 600;
 		}
 
+		/* Item meta using inline-block instead of flex */
 		.item-meta {
-			display: flex;
-			align-items: center;
-			gap: 3mm;
-			flex-wrap: wrap;
+			display: block;
+			clear: both;
+		}
+
+		.item-meta > * {
+			display: inline-block;
+			margin-right: 3mm;
+			margin-bottom: 1mm;
 		}
 
 		/* Footer */

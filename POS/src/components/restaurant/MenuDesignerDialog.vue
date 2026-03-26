@@ -166,12 +166,28 @@ async function loadExtraCards(cardNames) {
 
 async function onSaveDesign() {
 	try {
-		await call("pos_next.api.menu_pdf.save_card_design", {
-			card_name: props.cardName,
-			template_name: activeTemplate.value?.name || "",
-			overrides: JSON.stringify(configOverrides.value),
-		})
-		showSuccess(__("Design saved"))
+		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const response = await fetch(
+			"/api/method/pos_next.api.menu_pdf.save_card_design",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-Frappe-CSRF-Token": csrfToken,
+				},
+				body: JSON.stringify({
+					card_name: props.cardName,
+					template_name: activeTemplate.value?.name || "",
+					overrides: JSON.stringify(configOverrides.value),
+				}),
+			},
+		)
+		const data = await response.json()
+		if (data?.message?.status === "ok") {
+			showSuccess(__("Design saved"))
+		} else {
+			showError(__("Failed to save design"))
+		}
 	} catch (e) {
 		console.error("Failed to save design:", e)
 		showError(__("Failed to save design"))
@@ -184,7 +200,11 @@ async function onGeneratePdf({
 	overrides,
 	paper_format,
 }) {
-	console.log("[MenuDesigner] onGeneratePdf called:", { card_names, template_name, paper_format })
+	console.log("[MenuDesigner] onGeneratePdf called:", {
+		card_names,
+		template_name,
+		paper_format,
+	})
 	try {
 		const isMulti = card_names.length > 1
 		const method = isMulti
@@ -206,8 +226,7 @@ async function onGeneratePdf({
 				}
 
 		// Use POST + blob download (GET returns 404 on Frappe whitelisted methods)
-		const csrfToken =
-			document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
 		const response = await fetch(`/api/method/${method}`, {
 			method: "POST",
 			headers: {
