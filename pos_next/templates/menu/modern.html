@@ -1,0 +1,169 @@
+{# Modern / Minimalist menu theme - Contemporary, clean feel #}
+{% extends "pos_next/templates/menu/base.html" %}
+
+{% block styles %}
+	@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+	body {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		background-color: #FFFFFF;
+		color: #1a1a1a;
+	}
+
+	h1, h2, h3 {
+		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+	}
+
+	/* Header styling */
+	.menu-header {
+		text-align: left;
+		margin-bottom: 12mm;
+		padding-bottom: 4mm;
+		border-bottom: 0.5mm solid #E2E8F0;
+	}
+
+	.header-title {
+		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 22pt;
+		font-weight: 700;
+		color: #1a1a1a;
+		letter-spacing: -0.5pt;
+		margin-bottom: 2mm;
+	}
+
+	.header-card-name {
+		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 12pt;
+		font-weight: 500;
+		color: #4A5568;
+		text-transform: uppercase;
+		letter-spacing: 1pt;
+		margin-bottom: 2mm;
+	}
+
+	.header-description {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 9pt;
+		font-weight: 300;
+		color: #718096;
+	}
+
+	.header-logo {
+		margin-bottom: 3mm;
+	}
+
+	/* Category styling */
+	.menu-category {
+		margin-bottom: 8mm;
+	}
+
+	.category-title {
+		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 11pt;
+		font-weight: 600;
+		color: #4A5568;
+		text-transform: uppercase;
+		letter-spacing: 2pt;
+		padding-bottom: 2mm;
+		margin-bottom: 4mm;
+		border-bottom: 0.3mm solid #CBD5E0;
+		text-align: left;
+	}
+
+	/* Item styling */
+	.menu-item {
+		margin-bottom: 4mm;
+		padding-bottom: 3mm;
+	}
+
+	.item-header {
+		display: flex;
+		align-items: baseline;
+		gap: 3mm;
+	}
+
+	.item-name {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 10.5pt;
+		font-weight: 500;
+		color: #1a1a1a;
+	}
+
+	.item-price {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 10pt;
+		font-weight: 500;
+		color: #2D3748;
+	}
+
+	.item-price.price-right {
+		margin-left: auto;
+	}
+
+	.item-description {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 8.5pt;
+		font-weight: 300;
+		color: #A0AEC0;
+		margin-top: 1mm;
+	}
+
+	/* Dotted leader - clean style for modern */
+	.dotted-leader {
+		border-bottom: 1px dotted #CBD5E0;
+		margin: 0 2mm;
+	}
+
+	/* Badge styling */
+	.item-badges {
+		margin-top: 1.5mm;
+	}
+
+	.badge {
+		font-size: 6.5pt;
+		background-color: #F7FAFC;
+		padding: 0.5mm 1.5mm;
+		border-radius: 0.5mm;
+		border: 0.1mm solid #E2E8F0;
+	}
+
+	.badge-label {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 6.5pt;
+		font-weight: 400;
+		color: #4A5568;
+	}
+
+	/* Options styling */
+	.item-options {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 7.5pt;
+		font-weight: 300;
+		color: #A0AEC0;
+	}
+
+	.option-label {
+		font-weight: 500;
+		color: #718096;
+	}
+
+	/* Item image - rounded for modern */
+	.item-image {
+		border-radius: 2mm;
+	}
+
+	/* Footer styling */
+	.menu-footer {
+		margin-top: 10mm;
+		padding-top: 4mm;
+		border-top: 0.3mm solid #E2E8F0;
+		text-align: left;
+	}
+
+	.footer-text {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 7.5pt;
+		font-weight: 300;
+		color: #A0AEC0;
+	}
+{% endblock %}

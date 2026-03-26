@@ -159,7 +159,9 @@ fixtures = [
 		"filters": [
 			["role", "in", ["POSNext Cashier"]]
 		]
-	}
+	},
+	{"dt": "Menu Badge"},
+	{"dt": "Menu Design Template"},
 ]
 
 # Installation

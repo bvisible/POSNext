@@ -9,7 +9,9 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
-    "erpnext"
+    "erpnext",
+    "weasyprint>=63.0",
+    "pydyf<0.11.0",
 ]
 
 [build-system]

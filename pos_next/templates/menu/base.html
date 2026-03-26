@@ -1,0 +1,394 @@
+{# Base template for PDF menu generation via WeasyPrint #}
+{# All theme templates extend this base and override blocks #}
+
+{%- macro render_price(item, currency, alignment) -%}
+	{%- if item.price and item.price > 0 -%}
+		<span class="item-price price-{{ alignment }}">
+			{%- if currency == "CHF" -%}
+				{{ "%.2f"|format(item.price) }}
+			{%- else -%}
+				{{ "%.2f"|format(item.price) }}&nbsp;{{ currency }}
+			{%- endif -%}
+		</span>
+	{%- elif item.price_text -%}
+		<span class="item-price item-price-text price-{{ alignment }}">{{ item.price_text }}</span>
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_badges(badges, site_url) -%}
+	{%- if badges and badges|length > 0 -%}
+		<span class="item-badges">
+			{%- for badge in badges -%}
+				<span class="badge" title="{{ badge.badge_name }}"
+					{%- if badge.color %} style="color: {{ badge.color }}"{% endif -%}>
+					{%- if badge.icon -%}
+						<img src="{{ site_url }}/assets/pos_next/icons/badges/{{ badge.icon }}"
+							width="16" height="16" alt="{{ badge.badge_name }}"
+							class="badge-icon" />
+					{%- endif -%}
+					<span class="badge-label">{{ badge.badge_name }}</span>
+				</span>
+			{%- endfor -%}
+		</span>
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_spice(level) -%}
+	{%- if level and level > 0 -%}
+		<span class="spice-level" title="{{ _('Spice level') }}: {{ level }}">
+			{%- for i in range(level) -%}&#x1F336;{%- endfor -%}
+		</span>
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_item(item, template, currency, site_url) -%}
+	<div class="menu-item">
+		{%- if template.show_images and item.image -%}
+			<div class="item-image-wrap">
+				<img src="{{ site_url }}{{ item.image }}" alt="{{ item.item_name }}" class="item-image" />
+			</div>
+		{%- endif -%}
+		<div class="item-content">
+			{%- if template.price_alignment == "dotted" -%}
+				<div class="item-dotted-row">
+					<span class="item-name">{{ item.item_name }}</span>
+					{{ render_spice(item.spice_level) }}
+					<span class="dotted-leader"></span>
+					{{ render_price(item, currency, "dotted") }}
+				</div>
+			{%- else -%}
+				<div class="item-header">
+					<span class="item-name">{{ item.item_name }}</span>
+					{{ render_spice(item.spice_level) }}
+					{{ render_price(item, currency, template.price_alignment) }}
+				</div>
+			{%- endif -%}
+			{%- if template.show_descriptions and item.description -%}
+				<div class="item-description">{{ item.description }}</div>
+			{%- endif -%}
+			<div class="item-meta">
+				{%- if template.show_allergens -%}
+					{{ render_badges(item.badges, site_url) }}
+				{%- endif -%}
+				{%- if template.show_options and item.product_options -%}
+					<div class="item-options">
+						{%- for opt_group in item.product_options -%}
+							<span class="option-group">
+								<span class="option-label">{{ opt_group.group_name }}:</span>
+								{{ opt_group.options|join(", ") }}
+							</span>
+						{%- endfor -%}
+					</div>
+				{%- endif -%}
+			</div>
+		</div>
+	</div>
+{%- endmacro -%}
+
+{%- macro render_category(category, template, currency, site_url) -%}
+	<div class="menu-category">
+		<h2 class="category-title">{{ category.label }}</h2>
+		<div class="category-items">
+			{%- for item in category.items -%}
+				{{ render_item(item, template, currency, site_url) }}
+			{%- endfor -%}
+		</div>
+	</div>
+{%- endmacro -%}
+
+{%- macro render_header(card, template, site_url) -%}
+	<header class="menu-header">
+		{%- if card.image -%}
+			<div class="header-logo">
+				<img src="{{ site_url }}{{ card.image }}" alt="{{ card.card_name }}" class="logo-image" />
+			</div>
+		{%- endif -%}
+		{%- if template.header_text -%}
+			<h1 class="header-title">{{ template.header_text }}</h1>
+		{%- endif -%}
+		<div class="header-card-name">{{ card.card_name }}</div>
+		{%- if card.description -%}
+			<div class="header-description">{{ card.description }}</div>
+		{%- endif -%}
+	</header>
+{%- endmacro -%}
+
+{%- macro render_footer(template) -%}
+	{%- if template.footer_text -%}
+		<footer class="menu-footer">
+			<p class="footer-text">{{ template.footer_text }}</p>
+		</footer>
+	{%- endif -%}
+{%- endmacro -%}
+
+{# Determine page size from paper_format #}
+{%- set page_sizes = {
+	"A4 Portrait": "210mm 297mm",
+	"A4 Landscape": "297mm 210mm",
+	"A3 Portrait": "297mm 420mm",
+	"A3 Landscape": "420mm 297mm"
+} -%}
+{%- set page_size = page_sizes.get(template.paper_format, "210mm 297mm") -%}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<title>{{ card.card_name }}</title>
+	<style>
+		/* Print CSS reset */
+		*, *::before, *::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		/* Page setup */
+		@page {
+			size: {{ page_size }};
+			margin: 20mm;
+		}
+
+		/* Base typography */
+		body {
+			font-family: '{{ template.font_body }}', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+			color: {{ template.color_primary | default('#1a1a1a') }};
+			font-size: 10pt;
+			line-height: 1.5;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+
+		h1, h2, h3 {
+			font-family: '{{ template.font_header }}', 'Playfair Display', Georgia, serif;
+		}
+
+		/* Tabular numbers for prices */
+		.item-price {
+			font-variant-numeric: tabular-nums;
+			white-space: nowrap;
+		}
+
+		/* Prevent page breaks inside items and categories */
+		.menu-item {
+			page-break-inside: avoid;
+			break-inside: avoid;
+		}
+
+		.menu-category {
+			page-break-inside: avoid;
+			break-inside: avoid;
+		}
+
+		/* Orphans and widows */
+		p, .item-description {
+			orphans: 3;
+			widows: 3;
+		}
+
+		/* Column layout */
+		.menu-body.columns-1 {
+			columns: 1;
+		}
+
+		.menu-body.columns-2 {
+			columns: 2;
+			column-gap: 8mm;
+		}
+
+		.menu-body.columns-3 {
+			columns: 3;
+			column-gap: 6mm;
+		}
+
+		/* Header */
+		.menu-header {
+			text-align: center;
+			margin-bottom: 8mm;
+		}
+
+		.header-logo {
+			margin-bottom: 4mm;
+		}
+
+		.logo-image {
+			max-height: 20mm;
+			max-width: 40mm;
+			object-fit: contain;
+		}
+
+		.header-title {
+			font-size: 20pt;
+			margin-bottom: 2mm;
+		}
+
+		.header-card-name {
+			font-size: 14pt;
+			margin-bottom: 1mm;
+		}
+
+		.header-description {
+			font-size: 9pt;
+			color: {{ template.color_secondary | default('#666666') }};
+		}
+
+		/* Category */
+		.menu-category {
+			margin-bottom: 6mm;
+		}
+
+		.category-title {
+			font-size: 14pt;
+			margin-bottom: 3mm;
+			color: {{ template.color_accent | default('#8B4513') }};
+		}
+
+		/* Item */
+		.menu-item {
+			margin-bottom: 3mm;
+		}
+
+		.item-header {
+			display: flex;
+			align-items: baseline;
+			gap: 2mm;
+		}
+
+		.item-name {
+			font-weight: 600;
+			font-size: 10.5pt;
+		}
+
+		.item-price.price-right {
+			margin-left: auto;
+		}
+
+		.item-price.price-inline {
+			margin-left: 2mm;
+		}
+
+		/* Dotted leader row */
+		.item-dotted-row {
+			display: flex;
+			align-items: baseline;
+		}
+
+		.dotted-leader {
+			flex: 1;
+			border-bottom: 1px dotted {{ template.color_secondary | default('#666666') }};
+			margin: 0 2mm;
+			min-width: 5mm;
+		}
+
+		.item-description {
+			font-size: 8.5pt;
+			color: {{ template.color_secondary | default('#666666') }};
+			margin-top: 0.5mm;
+		}
+
+		/* Badges */
+		.item-badges {
+			display: inline-flex;
+			gap: 1.5mm;
+			margin-top: 1mm;
+			flex-wrap: wrap;
+		}
+
+		.badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5mm;
+			font-size: 7pt;
+		}
+
+		.badge-icon {
+			width: 16px;
+			height: 16px;
+			vertical-align: middle;
+			/* Fallback for missing images */
+			object-fit: contain;
+		}
+
+		.badge-label {
+			font-size: 7pt;
+		}
+
+		/* Spice level */
+		.spice-level {
+			font-size: 8pt;
+			letter-spacing: -0.5mm;
+		}
+
+		/* Item image */
+		.item-image-wrap {
+			float: left;
+			margin-right: 3mm;
+			margin-bottom: 1mm;
+		}
+
+		.item-image {
+			width: 18mm;
+			height: 18mm;
+			object-fit: cover;
+			border-radius: 1mm;
+			background: #f0f0f0;
+		}
+
+		/* Fallback for broken images */
+		.logo-image,
+		.item-image {
+			min-height: 10mm;
+		}
+
+		/* Options */
+		.item-options {
+			font-size: 7.5pt;
+			color: {{ template.color_secondary | default('#666666') }};
+			margin-top: 0.5mm;
+		}
+
+		.option-label {
+			font-weight: 600;
+		}
+
+		.item-meta {
+			display: flex;
+			align-items: center;
+			gap: 3mm;
+			flex-wrap: wrap;
+		}
+
+		/* Footer */
+		.menu-footer {
+			margin-top: 8mm;
+			text-align: center;
+			font-size: 8pt;
+			color: {{ template.color_secondary | default('#666666') }};
+		}
+
+		{% block styles %}{% endblock %}
+
+		/* Custom CSS override */
+		{% if template.custom_css %}
+			{{ template.custom_css }}
+		{% endif %}
+	</style>
+</head>
+<body>
+	{% block header %}
+		{{ render_header(card, template, site_url) }}
+	{% endblock %}
+
+	<div class="menu-body columns-{{ template.columns | default(1) }}">
+		{% block content %}
+			{%- for category in categories -%}
+				{{ render_category(category, template, currency, site_url) }}
+			{%- endfor -%}
+		{% endblock %}
+	</div>
+
+	{% block footer %}
+		{{ render_footer(template) }}
+	{% endblock %}
+</body>
+</html>

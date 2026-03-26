@@ -1,0 +1,200 @@
+[
+ {
+  "badge_name": "Gluten",
+  "badge_type": "Allergen",
+  "icon": "gluten.svg",
+  "color": "#D97706",
+  "is_active": 1,
+  "description": "Cereals containing gluten (wheat, rye, barley, oats)",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Crustaceans",
+  "badge_type": "Allergen",
+  "icon": "crustaceans.svg",
+  "color": "#DC2626",
+  "is_active": 1,
+  "description": "Crustaceans and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Eggs",
+  "badge_type": "Allergen",
+  "icon": "eggs.svg",
+  "color": "#F59E0B",
+  "is_active": 1,
+  "description": "Eggs and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Fish",
+  "badge_type": "Allergen",
+  "icon": "fish.svg",
+  "color": "#3B82F6",
+  "is_active": 1,
+  "description": "Fish and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Peanuts",
+  "badge_type": "Allergen",
+  "icon": "peanuts.svg",
+  "color": "#92400E",
+  "is_active": 1,
+  "description": "Peanuts and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Soy",
+  "badge_type": "Allergen",
+  "icon": "soy.svg",
+  "color": "#65A30D",
+  "is_active": 1,
+  "description": "Soybeans and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Milk",
+  "badge_type": "Allergen",
+  "icon": "milk.svg",
+  "color": "#0EA5E9",
+  "is_active": 1,
+  "description": "Milk and products thereof (including lactose)",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Tree Nuts",
+  "badge_type": "Allergen",
+  "icon": "tree_nuts.svg",
+  "color": "#78350F",
+  "is_active": 1,
+  "description": "Nuts (almonds, hazelnuts, walnuts, cashews, etc.)",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Celery",
+  "badge_type": "Allergen",
+  "icon": "celery.svg",
+  "color": "#16A34A",
+  "is_active": 1,
+  "description": "Celery and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Mustard",
+  "badge_type": "Allergen",
+  "icon": "mustard.svg",
+  "color": "#CA8A04",
+  "is_active": 1,
+  "description": "Mustard and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Sesame",
+  "badge_type": "Allergen",
+  "icon": "sesame.svg",
+  "color": "#A16207",
+  "is_active": 1,
+  "description": "Sesame seeds and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Sulfites",
+  "badge_type": "Allergen",
+  "icon": "sulfites.svg",
+  "color": "#7C3AED",
+  "is_active": 1,
+  "description": "Sulphur dioxide and sulphites (> 10mg/kg)",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Lupin",
+  "badge_type": "Allergen",
+  "icon": "lupin.svg",
+  "color": "#4F46E5",
+  "is_active": 1,
+  "description": "Lupin and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Mollusks",
+  "badge_type": "Allergen",
+  "icon": "mollusks.svg",
+  "color": "#0891B2",
+  "is_active": 1,
+  "description": "Molluscs and products thereof",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Vegetarian",
+  "badge_type": "Dietary",
+  "icon": "vegetarian.svg",
+  "color": "#22C55E",
+  "is_active": 1,
+  "description": "Suitable for vegetarians",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Vegan",
+  "badge_type": "Dietary",
+  "icon": "vegan.svg",
+  "color": "#15803D",
+  "is_active": 1,
+  "description": "Suitable for vegans",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Lactose Free",
+  "badge_type": "Dietary",
+  "icon": "lactose_free.svg",
+  "color": "#06B6D4",
+  "is_active": 1,
+  "description": "Lactose-free",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Halal",
+  "badge_type": "Dietary",
+  "icon": "halal.svg",
+  "color": "#059669",
+  "is_active": 1,
+  "description": "Halal certified",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Kosher",
+  "badge_type": "Dietary",
+  "icon": "kosher.svg",
+  "color": "#2563EB",
+  "is_active": 1,
+  "description": "Kosher certified",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Homemade",
+  "badge_type": "Quality",
+  "icon": "homemade.svg",
+  "color": "#EA580C",
+  "is_active": 1,
+  "description": "Made in-house",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Local",
+  "badge_type": "Quality",
+  "icon": "local.svg",
+  "color": "#0D9488",
+  "is_active": 1,
+  "description": "Locally sourced ingredients",
+  "doctype": "Menu Badge"
+ },
+ {
+  "badge_name": "Organic",
+  "badge_type": "Quality",
+  "icon": "organic.svg",
+  "color": "#16A34A",
+  "is_active": 1,
+  "description": "Certified organic",
+  "doctype": "Menu Badge"
+ }
+]

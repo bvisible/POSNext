@@ -90,6 +90,7 @@
 								</div>
 								<div class="flex gap-1">
 									<Button variant="solid" size="sm" @click="saveCard" :loading="saving">{{ __("Save") }}</Button>
+									<button @click="openDesigner" class="text-xs px-2 py-1 rounded hover:bg-purple-50 text-purple-600 font-medium">{{ __("Designer & PDF") }}</button>
 									<button @click="duplicateCard" class="text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600">{{ __("Duplicate") }}</button>
 									<button @click="deleteCard" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">{{ __("Delete") }}</button>
 								</div>
@@ -103,13 +104,15 @@
 									@dragover.prevent="onDragOver(idx, $event)"
 									@drop="onDrop(idx)"
 									@dragend="dragIdx = null"
-									class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
+									@click="item.item_type === 'Item' && selectItemForBadges(item, idx)"
+									class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all cursor-pointer"
 									:class="[
 										item.item_type === 'Category'
 											? 'bg-amber-50 border border-amber-200 font-bold text-amber-800 mt-3 first:mt-0'
 											: 'bg-white border border-gray-100 hover:border-gray-200 ml-4',
 										dragOverIdx === idx ? 'border-blue-400 border-2' : '',
-										item.disabled ? 'opacity-40' : ''
+										item.disabled ? 'opacity-40' : '',
+										selectedBadgeItemIdx === idx ? 'ring-2 ring-emerald-400' : ''
 									]">
 
 									<!-- Drag handle -->
@@ -170,6 +173,16 @@
 							</div>
 						</div>
 					</div>
+
+					<!-- Right: Badge Panel -->
+					<div v-if="selectedBadgeItem" class="w-64 flex-shrink-0 border rounded-xl overflow-hidden">
+						<ItemBadgePanel
+							:item-code="selectedBadgeItem.item"
+							:item-name="selectedBadgeItem.label || selectedBadgeItem.item_name || selectedBadgeItem.item"
+							@saved="selectedBadgeItemIdx = null; selectedBadgeItem = null"
+							@close="selectedBadgeItemIdx = null; selectedBadgeItem = null"
+						/>
+					</div>
 				</template>
 						</div>
 					</div>
@@ -177,6 +190,15 @@
 			</div>
 		</div>
 	</Transition>
+
+	<!-- Menu Designer Dialog -->
+	<MenuDesignerDialog
+		v-if="showDesigner"
+		:show="showDesigner"
+		:card-name="selectedCard"
+		:cards="cards"
+		@close="showDesigner = false"
+	/>
 
 	<!-- Add Category Dialog -->
 	<Dialog v-model="showCategoryDialog" :options="{ title: __('Add Category'), size: 'sm' }">
@@ -260,6 +282,8 @@ import { Button, Dialog, Input } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
+import ItemBadgePanel from "@/components/restaurant/ItemBadgePanel.vue"
+import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 
 const props = defineProps({ modelValue: Boolean })
 const emit = defineEmits(["update:modelValue", "cards-updated"])
@@ -303,6 +327,13 @@ const showCreateItemDialog = ref(false)
 const dragIdx = ref(null)
 const dragOverIdx = ref(null)
 
+// Badge panel state
+const selectedBadgeItem = ref(null)
+const selectedBadgeItemIdx = ref(null)
+
+// Designer dialog state
+const showDesigner = ref(false)
+
 // Auto-select first card when dialog opens
 watch(show, (val) => {
 	if (val) {
@@ -326,6 +357,8 @@ const cardSlots = computed(() => {
 
 function selectCard(name) {
 	selectedCard.value = name
+	selectedBadgeItem.value = null
+	selectedBadgeItemIdx.value = null
 	loadCardDetail(name)
 }
 
@@ -444,6 +477,20 @@ async function deleteCard() {
 	} catch (error) {
 		showError(__("Failed to delete card"))
 	}
+}
+
+function selectItemForBadges(item, idx) {
+	if (selectedBadgeItemIdx.value === idx) {
+		selectedBadgeItem.value = null
+		selectedBadgeItemIdx.value = null
+	} else {
+		selectedBadgeItem.value = item
+		selectedBadgeItemIdx.value = idx
+	}
+}
+
+function openDesigner() {
+	showDesigner.value = true
 }
 
 async function duplicateCard() {

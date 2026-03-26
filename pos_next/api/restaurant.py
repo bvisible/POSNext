@@ -1890,3 +1890,173 @@ def get_card_items_stock(card_name):
 		)
 		result[item.item] = [{"warehouse": b.warehouse, "qty": b.actual_qty} for b in bins]
 	return result
+
+
+# ─── Menu Badges & Allergens ─────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def get_menu_badges():
+	"""Return all active Menu Badges."""
+	return frappe.get_all(
+		"Menu Badge",
+		filters={"is_active": 1},
+		fields=["name", "badge_name", "badge_type", "icon", "color", "description"],
+		order_by="badge_type asc, badge_name asc",
+	)
+
+
+@frappe.whitelist()
+def get_item_badges(item_code):
+	"""Return badges and spice level for a specific item."""
+	item = frappe.get_doc("Item", item_code)
+	badges = []
+	if hasattr(item, "custom_item_badges"):
+		for row in item.custom_item_badges:
+			badge_doc = frappe.get_cached_doc("Menu Badge", row.menu_badge)
+			badges.append({
+				"menu_badge": row.menu_badge,
+				"badge_name": badge_doc.badge_name,
+				"badge_type": badge_doc.badge_type,
+				"icon": badge_doc.icon,
+				"color": badge_doc.color,
+			})
+	return {"badges": badges, "spice_level": int(item.get("custom_spice_level") or 0)}
+
+
+@frappe.whitelist()
+def update_item_badges(item_code, badges=None, spice_level=0):
+	"""Update badges and spice level for an item. Called from POS CardEditor."""
+	import json
+
+	if isinstance(badges, str):
+		badges = json.loads(badges)
+	spice_level = int(spice_level or 0)
+
+	item = frappe.get_doc("Item", item_code)
+	if hasattr(item, "custom_item_badges"):
+		item.custom_item_badges = []
+
+	for badge_name in (badges or []):
+		item.append("custom_item_badges", {"menu_badge": badge_name})
+
+	item.custom_spice_level = max(0, min(3, spice_level))
+	item.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"status": "ok"}
+
+
+@frappe.whitelist()
+def get_card_items_with_badges(card_name):
+	"""Return card items enriched with badge info for menu preview/PDF."""
+	card = frappe.get_doc("Restaurant Card", card_name)
+	categories = []
+	current_category = {"label": "", "items": []}
+
+	for card_item in card.items:
+		if card_item.get("disabled"):
+			continue
+
+		if card_item.item_type == "Category":
+			if current_category["items"] or current_category["label"]:
+				categories.append(current_category)
+			current_category = {"label": card_item.label or "", "items": []}
+			continue
+
+		if card_item.item_type != "Item" or not card_item.item:
+			continue
+
+		item_doc = frappe.get_cached_doc("Item", card_item.item)
+		badges = []
+		if hasattr(item_doc, "custom_item_badges"):
+			for row in item_doc.custom_item_badges:
+				try:
+					badge_doc = frappe.get_cached_doc("Menu Badge", row.menu_badge)
+					badges.append({
+						"badge_name": badge_doc.badge_name,
+						"badge_type": badge_doc.badge_type,
+						"icon": badge_doc.icon,
+						"color": badge_doc.color,
+					})
+				except Exception:
+					pass
+
+		price = card_item.price or item_doc.get("standard_rate") or 0
+		price_text = card_item.get("custom_price_text") or ""
+
+		item_data = {
+			"item_code": card_item.item,
+			"item_name": card_item.label or item_doc.item_name,
+			"description": item_doc.get("description") or "",
+			"price": float(price),
+			"price_text": price_text,
+			"image": item_doc.get("image") or "",
+			"badges": badges,
+			"spice_level": int(item_doc.get("custom_spice_level") or 0),
+			"product_options": [],
+		}
+
+		options = _get_item_product_options(card_item.item)
+		if options:
+			item_data["product_options"] = options
+
+		current_category["items"].append(item_data)
+
+	if current_category["items"]:
+		categories.append(current_category)
+
+	# Filter out empty categories (all items disabled)
+	categories = [c for c in categories if c["items"]]
+
+	return {
+		"card": {
+			"card_name": card.card_name,
+			"description": card.description or "",
+			"image": card.image or "",
+		},
+		"categories": categories,
+	}
+
+
+def _get_item_product_options(item_code):
+	"""Get product option groups applicable to an item."""
+	group_names = _get_applicable_option_groups(item_code)
+	if not group_names:
+		return []
+
+	groups = frappe.get_all(
+		"Product Option Group",
+		filters={"name": ("in", group_names)},
+		fields=["name", "group_name", "selection_type"],
+	)
+	result = []
+	for g in groups:
+		options = frappe.get_all(
+			"Product Option",
+			filters={"parent": g.name},
+			fields=["option_name", "price_adjustment"],
+			order_by="idx asc",
+		)
+		opt_texts = [
+			o.option_name + (f" (+{o.price_adjustment})" if o.price_adjustment else "")
+			for o in options
+		]
+		result.append({"group_name": g.group_name, "options": opt_texts})
+	return result
+
+
+def _get_applicable_option_groups(item_code):
+	"""Return list of Product Option Group names applicable to an item."""
+	item_group = frappe.db.get_value("Item", item_code, "item_group")
+
+	direct = frappe.get_all(
+		"Product Option Group Applicable Item",
+		filters={"item": item_code, "parenttype": "Product Option Group"},
+		pluck="parent",
+	)
+	group_based = frappe.get_all(
+		"Product Option Group Applicable Item Group",
+		filters={"item_group": item_group, "parenttype": "Product Option Group"},
+		pluck="parent",
+	)
+	return list(set(direct + group_based))

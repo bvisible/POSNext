@@ -1,0 +1,208 @@
+{# Ardoise / Chalkboard menu theme - Dark slate, brasserie feel #}
+{% extends "pos_next/templates/menu/base.html" %}
+
+{% block styles %}
+	@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&family=Inter:wght@300;400;500&display=swap');
+
+	body {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		background-color: #2D2D2D;
+		color: #F0F0F0;
+	}
+
+	h1, h2, h3 {
+		font-family: 'Caveat', 'Patrick Hand', cursive;
+	}
+
+	/* Header styling */
+	.menu-header {
+		text-align: center;
+		margin-bottom: 10mm;
+		padding-bottom: 4mm;
+	}
+
+	.header-title {
+		font-family: 'Caveat', 'Patrick Hand', cursive;
+		font-size: 28pt;
+		font-weight: 700;
+		color: #FFD700;
+		letter-spacing: 1pt;
+		margin-bottom: 2mm;
+	}
+
+	.header-card-name {
+		font-family: 'Caveat', 'Patrick Hand', cursive;
+		font-size: 18pt;
+		font-weight: 500;
+		color: #F0F0F0;
+		margin-bottom: 2mm;
+	}
+
+	.header-description {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 9pt;
+		font-weight: 300;
+		color: #B0B0B0;
+	}
+
+	/* Chalk-like decorative line */
+	.menu-header::after {
+		content: '';
+		display: block;
+		width: 50mm;
+		height: 0.5mm;
+		background: linear-gradient(to right, transparent, #F0F0F0 20%, #F0F0F0 80%, transparent);
+		margin: 4mm auto 0;
+		opacity: 0.5;
+	}
+
+	/* Category styling */
+	.menu-category {
+		margin-bottom: 7mm;
+	}
+
+	.category-title {
+		font-family: 'Caveat', 'Patrick Hand', cursive;
+		font-size: 18pt;
+		font-weight: 600;
+		color: #FFD700;
+		text-align: center;
+		margin-bottom: 4mm;
+		padding-bottom: 2mm;
+		position: relative;
+	}
+
+	/* Chalk-like underline */
+	.category-title::after {
+		content: '';
+		display: block;
+		width: 30mm;
+		height: 0.4mm;
+		background: linear-gradient(
+			to right,
+			transparent,
+			rgba(240, 240, 240, 0.3) 10%,
+			rgba(240, 240, 240, 0.6) 30%,
+			rgba(240, 240, 240, 0.4) 50%,
+			rgba(240, 240, 240, 0.7) 70%,
+			rgba(240, 240, 240, 0.3) 90%,
+			transparent
+		);
+		margin: 2mm auto 0;
+	}
+
+	/* Item styling */
+	.menu-item {
+		margin-bottom: 3.5mm;
+		padding-bottom: 2mm;
+	}
+
+	.item-header {
+		display: flex;
+		align-items: baseline;
+		gap: 2mm;
+	}
+
+	.item-name {
+		font-family: 'Caveat', 'Patrick Hand', cursive;
+		font-size: 13pt;
+		font-weight: 500;
+		color: #F0F0F0;
+	}
+
+	.item-price {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 10pt;
+		font-weight: 500;
+		color: #FFD700;
+	}
+
+	.item-price.price-right {
+		margin-left: auto;
+	}
+
+	.item-description {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 8pt;
+		font-weight: 300;
+		color: #B0B0B0;
+		margin-top: 0.5mm;
+	}
+
+	/* Dotted leader for ardoise */
+	.dotted-leader {
+		border-bottom: 1px dotted rgba(240, 240, 240, 0.3);
+		margin: 0 2mm;
+	}
+
+	/* Badge styling */
+	.item-badges {
+		margin-top: 1mm;
+	}
+
+	.badge {
+		font-size: 6.5pt;
+		background-color: rgba(255, 255, 255, 0.08);
+		padding: 0.5mm 1.5mm;
+		border-radius: 0.5mm;
+	}
+
+	.badge-icon {
+		/* Invert badge icons for dark background */
+		filter: brightness(0) invert(1);
+		opacity: 0.8;
+	}
+
+	.badge-label {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 6.5pt;
+		color: #D0D0D0;
+	}
+
+	/* Spice level - brighter on dark background */
+	.spice-level {
+		filter: brightness(1.2);
+	}
+
+	/* Options styling */
+	.item-options {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 7.5pt;
+		color: #909090;
+	}
+
+	.option-label {
+		font-weight: 500;
+		color: #B0B0B0;
+	}
+
+	/* Item image */
+	.item-image {
+		border-radius: 1.5mm;
+		border: 0.3mm solid rgba(255, 255, 255, 0.15);
+	}
+
+	/* Footer styling */
+	.menu-footer {
+		margin-top: 10mm;
+		text-align: center;
+		padding-top: 4mm;
+	}
+
+	.menu-footer::before {
+		content: '';
+		display: block;
+		width: 40mm;
+		height: 0.4mm;
+		background: linear-gradient(to right, transparent, rgba(240, 240, 240, 0.3), transparent);
+		margin: 0 auto 4mm;
+	}
+
+	.footer-text {
+		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		font-size: 7.5pt;
+		font-weight: 300;
+		color: #909090;
+		font-style: italic;
+	}
+{% endblock %}

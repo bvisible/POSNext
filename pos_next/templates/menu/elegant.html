@@ -1,0 +1,175 @@
+{# Elegant / Classic menu theme - Fine dining, classic feel #}
+{% extends "pos_next/templates/menu/base.html" %}
+
+{% block styles %}
+	@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap');
+
+	body {
+		font-family: 'Lora', 'Georgia', serif;
+		background-color: #FFF8F0;
+		color: #2C1810;
+	}
+
+	h1, h2, h3 {
+		font-family: 'Playfair Display', 'Georgia', serif;
+	}
+
+	/* Header styling */
+	.menu-header {
+		text-align: center;
+		margin-bottom: 10mm;
+		padding-bottom: 5mm;
+	}
+
+	.header-title {
+		font-family: 'Playfair Display', 'Georgia', serif;
+		font-size: 24pt;
+		font-weight: 700;
+		color: #2C1810;
+		letter-spacing: 2pt;
+		text-transform: uppercase;
+		margin-bottom: 3mm;
+	}
+
+	.header-card-name {
+		font-family: 'Playfair Display', 'Georgia', serif;
+		font-size: 16pt;
+		font-weight: 400;
+		font-style: italic;
+		color: #8B6914;
+		margin-bottom: 2mm;
+	}
+
+	.header-description {
+		font-family: 'Lora', 'Georgia', serif;
+		font-size: 9pt;
+		font-style: italic;
+		color: #6B5040;
+	}
+
+	/* Decorative separator after header */
+	.menu-header::after {
+		content: '';
+		display: block;
+		width: 40mm;
+		height: 0.3mm;
+		background: linear-gradient(to right, transparent, #8B6914, transparent);
+		margin: 5mm auto 0;
+	}
+
+	/* Category styling */
+	.menu-category {
+		margin-bottom: 8mm;
+	}
+
+	.category-title {
+		font-family: 'Playfair Display', 'Georgia', serif;
+		font-size: 15pt;
+		font-weight: 600;
+		color: #8B6914;
+		text-align: center;
+		text-transform: uppercase;
+		letter-spacing: 1.5pt;
+		padding: 3mm 0;
+		margin-bottom: 4mm;
+		position: relative;
+	}
+
+	/* Decorative lines above and below category title */
+	.category-title::before,
+	.category-title::after {
+		content: '';
+		display: block;
+		width: 25mm;
+		height: 0.2mm;
+		background-color: #8B6914;
+		margin: 2mm auto;
+	}
+
+	/* Item styling */
+	.menu-item {
+		margin-bottom: 4mm;
+		padding-bottom: 2mm;
+	}
+
+	.item-header {
+		display: flex;
+		align-items: baseline;
+	}
+
+	.item-name {
+		font-family: 'Playfair Display', 'Georgia', serif;
+		font-size: 11pt;
+		font-weight: 600;
+		color: #2C1810;
+	}
+
+	/* Dotted leader styling for elegant theme */
+	.dotted-leader {
+		flex: 1;
+		border-bottom: 1px dotted #C4A87C;
+		margin: 0 3mm;
+		min-width: 8mm;
+		position: relative;
+		bottom: 1mm;
+	}
+
+	.item-price {
+		font-family: 'Lora', 'Georgia', serif;
+		font-size: 10.5pt;
+		font-weight: 500;
+		color: #2C1810;
+	}
+
+	.item-description {
+		font-family: 'Lora', 'Georgia', serif;
+		font-size: 8.5pt;
+		font-style: italic;
+		color: #6B5040;
+		margin-top: 1mm;
+		padding-left: 2mm;
+	}
+
+	/* Badge styling */
+	.badge {
+		font-family: 'Lora', 'Georgia', serif;
+		font-size: 6.5pt;
+	}
+
+	.badge-label {
+		font-style: italic;
+		font-size: 6.5pt;
+	}
+
+	/* Options styling */
+	.item-options {
+		font-family: 'Lora', 'Georgia', serif;
+		font-size: 7.5pt;
+		font-style: italic;
+		color: #6B5040;
+	}
+
+	/* Footer styling */
+	.menu-footer {
+		margin-top: 10mm;
+		text-align: center;
+		padding-top: 4mm;
+		position: relative;
+	}
+
+	.menu-footer::before {
+		content: '';
+		display: block;
+		width: 30mm;
+		height: 0.2mm;
+		background: linear-gradient(to right, transparent, #8B6914, transparent);
+		margin: 0 auto 4mm;
+	}
+
+	.footer-text {
+		font-family: 'Lora', 'Georgia', serif;
+		font-size: 8pt;
+		font-style: italic;
+		color: #6B5040;
+	}
+{% endblock %}
