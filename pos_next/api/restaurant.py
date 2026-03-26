@@ -326,6 +326,8 @@ def get_kds_orders(station=None):
 		)
 
 		# Resolve and persist preparation_station for items that don't have one
+		# Fallback: first active station if no match found
+		_default_station = _all_stations[0].name if _all_stations else None
 		for item in items:
 			if not item.get("preparation_station"):
 				resolved_station = None
@@ -335,6 +337,9 @@ def get_kds_orders(station=None):
 					item_group = frappe.db.get_value("Item", item.item_code, "item_group")
 					if item_group and item_group in _group_station_map:
 						resolved_station = _group_station_map[item_group]
+				# Fallback to first station if no match
+				if not resolved_station:
+					resolved_station = _default_station
 				if resolved_station:
 					item["preparation_station"] = resolved_station
 					# Persist to DB so counts and filters work everywhere
