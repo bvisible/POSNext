@@ -1226,7 +1226,7 @@
 
 			<!-- Action Buttons -->
 			<!-- Restaurant Mode Buttons -->
-			<div v-if="restaurantStore.isEnabled && cartStore.restaurantTable" class="flex gap-1.5">
+			<div v-if="restaurantStore.isEnabled && (cartStore.restaurantTable || cartStore.isTakeaway)" class="flex gap-1.5">
 				<!-- Send to Kitchen Button (Primary - green) -->
 				<button
 					type="button"
