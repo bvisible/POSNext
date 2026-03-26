@@ -6,13 +6,13 @@
 		>
 			<div class="p-8" :style="contentStyle">
 				<!-- Cover page / Header -->
-				<div class="text-center mb-8">
+				<div v-if="design.show_header !== false" class="text-center mb-8">
 					<!-- Company logo -->
 					<div v-if="showCoverPage && companyLogo" class="mb-4">
 						<img :src="companyLogo" alt="" class="mx-auto max-h-20 object-contain" />
 					</div>
 					<!-- Title -->
-					<h1 :style="{ fontFamily: design.font_header, color: design.color_primary, fontSize: '28px', fontWeight: '700', letterSpacing: '1px' }">
+					<h1 :style="{ fontFamily: design.font_header + ', serif', color: design.color_primary, fontSize: '28px', fontWeight: '700', letterSpacing: '1px' }">
 						{{ design.header_text || card.card_name || '' }}
 					</h1>
 					<!-- Decorative line -->
@@ -24,7 +24,7 @@
 					<div v-for="(category, ci) in categories" :key="ci" class="mb-6 break-inside-avoid">
 						<!-- Category header -->
 						<div v-if="category.label" class="mb-3" :class="categoryClass">
-							<h2 :style="{ fontFamily: design.font_header, color: design.color_accent || design.color_primary, fontSize: '16px', fontWeight: '600' }">
+							<h2 :style="{ fontFamily: design.font_header + ', serif', color: design.color_accent || design.color_primary, fontSize: '16px', fontWeight: '600' }">
 								{{ category.label }}
 							</h2>
 						</div>

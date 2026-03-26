@@ -5,7 +5,7 @@
 			<h3 class="font-bold text-sm text-gray-800">{{ __('Menu Settings') }}</h3>
 		</div>
 
-		<div class="flex-1 overflow-y-auto p-4 space-y-5">
+		<div class="flex-1 overflow-y-auto p-4 space-y-4">
 			<!-- Template selector -->
 			<div>
 				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ __('Template') }}</label>
@@ -15,10 +15,37 @@
 				</select>
 			</div>
 
+			<!-- Fonts -->
+			<div>
+				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 block">{{ __('Fonts') }}</label>
+				<div class="space-y-2">
+					<div>
+						<span class="text-[10px] text-gray-500">{{ __('Title') }}</span>
+						<select v-model="config.font_header" @change="emitUpdate"
+							class="w-full px-2 py-1.5 border rounded-lg text-sm bg-white"
+							:style="{ fontFamily: config.font_header }">
+							<option v-for="f in fontOptions" :key="f" :value="f" :style="{ fontFamily: f }">{{ f }}</option>
+						</select>
+					</div>
+					<div>
+						<span class="text-[10px] text-gray-500">{{ __('Body') }}</span>
+						<select v-model="config.font_body" @change="emitUpdate"
+							class="w-full px-2 py-1.5 border rounded-lg text-sm bg-white"
+							:style="{ fontFamily: config.font_body }">
+							<option v-for="f in fontOptions" :key="f" :value="f" :style="{ fontFamily: f }">{{ f }}</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
 			<!-- Display toggles -->
 			<div>
 				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">{{ __('Display') }}</label>
 				<div class="space-y-2">
+					<label class="flex items-center gap-2 text-sm cursor-pointer">
+						<input type="checkbox" v-model="config.show_header" class="rounded" @change="emitUpdate" />
+						{{ __('Header / Title') }}
+					</label>
 					<label class="flex items-center gap-2 text-sm cursor-pointer">
 						<input type="checkbox" v-model="config.show_descriptions" class="rounded" @change="emitUpdate" />
 						{{ __('Descriptions') }}
@@ -74,20 +101,18 @@
 					<option value="A3">A3</option>
 					<option value="Custom">{{ __('Custom') }}</option>
 				</select>
-				<div v-if="config.paper_format === 'Custom'" class="flex gap-2 mt-2">
-					<input v-model.number="config.custom_width_mm" type="number" class="w-full px-2 py-1 border rounded text-sm" :placeholder="__('Width mm')" @change="emitUpdate" />
-					<input v-model.number="config.custom_height_mm" type="number" class="w-full px-2 py-1 border rounded text-sm" :placeholder="__('Height mm')" @change="emitUpdate" />
-				</div>
 			</div>
 
-			<!-- Header & Footer -->
+			<!-- Header & Footer text -->
 			<div>
 				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 block">{{ __('Header Text') }}</label>
-				<input v-model="config.header_text" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" @change="emitUpdate" />
+				<input v-model="config.header_text" type="text" class="w-full px-3 py-1.5 border rounded-lg text-sm"
+					:placeholder="__('Leave empty to use card name')" @input="emitUpdate" />
 			</div>
 			<div>
 				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 block">{{ __('Footer Text') }}</label>
-				<input v-model="config.footer_text" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" @change="emitUpdate" />
+				<input v-model="config.footer_text" type="text" class="w-full px-3 py-1.5 border rounded-lg text-sm"
+					:placeholder="__('e.g. All our products are fresh')" @input="emitUpdate" />
 			</div>
 
 			<!-- Multi-card selector -->
@@ -134,7 +159,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from "vue"
+import { ref, reactive, watch, onMounted, onBeforeMount } from "vue"
+
+const fontOptions = [
+	"Inter",
+	"Montserrat",
+	"Playfair Display",
+	"Forum",
+	"Lora",
+	"Merriweather",
+	"Cormorant Garamond",
+	"Libre Baskerville",
+	"Raleway",
+	"Oswald",
+	"Cinzel",
+	"Source Sans 3",
+	"Nunito",
+	"Caveat",
+	"Dancing Script",
+]
 
 const props = defineProps({
 	templates: { type: Array, default: () => [] },
@@ -156,6 +199,9 @@ const generating = ref(false)
 const selectedCards = ref([])
 
 const config = reactive({
+	font_header: "Montserrat",
+	font_body: "Inter",
+	show_header: true,
 	show_descriptions: true,
 	show_allergens: true,
 	show_options: false,
@@ -169,10 +215,22 @@ const config = reactive({
 	footer_text: "",
 })
 
+// Load Google Fonts for preview in the font selector
+onBeforeMount(() => {
+	const families = fontOptions.map((f) => f.replace(/ /g, "+")).join("&family=")
+	const link = document.createElement("link")
+	link.rel = "stylesheet"
+	link.href = `https://fonts.googleapis.com/css2?family=${families}&display=swap`
+	document.head.appendChild(link)
+})
+
 function onTemplateChange() {
 	const tpl = props.templates.find((t) => t.name === selectedTemplate.value)
 	if (tpl) {
 		Object.assign(config, {
+			font_header: tpl.font_header || "Montserrat",
+			font_body: tpl.font_body || "Inter",
+			show_header: true,
 			show_descriptions: !!tpl.show_descriptions,
 			show_allergens: !!tpl.show_allergens,
 			show_options: !!tpl.show_options,
@@ -215,7 +273,7 @@ async function generatePdf() {
 	}
 }
 
-// Initialize once when templates are available — no continuous watch to avoid infinite loops
+// Initialize once when templates are available
 let initialized = false
 
 watch(
@@ -224,8 +282,10 @@ watch(
 		if (initialized || !templates?.length) return
 		initialized = true
 
-		// Use current template from card if available, otherwise first template
-		const initial = props.currentTemplate?.name || templates[0]?.name
+		// Prefer "Moderne Minimaliste" as default, fallback to first
+		const defaultTpl =
+			templates.find((t) => t.style_theme === "modern") || templates[0]
+		const initial = props.currentTemplate?.name || defaultTpl?.name
 		if (initial) {
 			selectedTemplate.value = initial
 			onTemplateChange()
