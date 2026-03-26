@@ -18,8 +18,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue"
-import { call } from "@/utils/apiWrapper"
+import { ref, watch } from "vue"
 
 const props = defineProps({
 	cardName: { type: String, default: "" },
@@ -37,12 +36,24 @@ async function loadPreview() {
 	if (!props.cardName) return
 	loading.value = true
 	try {
-		const result = await call("pos_next.api.menu_pdf.get_menu_preview_html", {
-			card_name: props.cardName,
-			template_name: props.templateName || "",
-			overrides: JSON.stringify(props.overrides || {}),
-		})
-		htmlContent.value = result || ""
+		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const response = await fetch(
+			"/api/method/pos_next.api.menu_pdf.get_menu_preview_html",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-Frappe-CSRF-Token": csrfToken,
+				},
+				body: JSON.stringify({
+					card_name: props.cardName,
+					template_name: props.templateName || "",
+					overrides: JSON.stringify(props.overrides || {}),
+				}),
+			},
+		)
+		const data = await response.json()
+		htmlContent.value = data?.message || ""
 	} catch (e) {
 		console.error("[MenuPreview] Failed to load:", e)
 		htmlContent.value =
@@ -72,5 +83,5 @@ watch(
 	{ deep: false },
 )
 
-onMounted(() => loadPreview())
+// Don't load on mount — wait for the watch to fire when template is set
 </script>

@@ -139,27 +139,33 @@
 		<div class="px-4 py-3 border-t flex-shrink-0 space-y-2">
 			<button
 				@click="$emit('save-design')"
-				class="w-full px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+				:disabled="saveStatus === 'saving'"
+				class="w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+				:class="saveStatusClass"
 			>
-				{{ __('Save Settings') }}
+				{{ saveLabel }}
 			</button>
 			<button
 				@click="generatePdf"
-				:disabled="generating"
-				class="w-full px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+				:disabled="generating || pdfStatus === 'generating'"
+				class="w-full px-4 py-2.5 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+				:class="pdfButtonClass"
 			>
-				<svg v-if="!generating" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg v-if="!generating && pdfStatus !== 'done'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 				</svg>
+				<svg v-else-if="pdfStatus === 'done'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+				</svg>
 				<div v-else class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-				{{ generating ? __('Generating...') : __('Generate PDF') }}
+				{{ pdfLabel }}
 			</button>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted, onBeforeMount } from "vue"
+import { ref, reactive, computed, watch, onMounted, onBeforeMount } from "vue"
 
 const fontOptions = [
 	"Inter",
@@ -185,6 +191,8 @@ const props = defineProps({
 	cardName: { type: String, default: "" },
 	cards: { type: Array, default: () => [] },
 	showCoverPage: { type: Boolean, default: true },
+	saveStatus: { type: String, default: null },
+	pdfStatus: { type: String, default: null },
 })
 
 const emit = defineEmits([
@@ -197,6 +205,33 @@ const emit = defineEmits([
 const selectedTemplate = ref("")
 const generating = ref(false)
 const selectedCards = ref([])
+
+const saveLabel = computed(() => {
+	if (props.saveStatus === "saving") return __("Saving...")
+	if (props.saveStatus === "saved") return __("Saved!")
+	if (props.saveStatus === "error") return __("Error!")
+	return __("Save Settings")
+})
+
+const saveStatusClass = computed(() => {
+	if (props.saveStatus === "saved") return "bg-green-100 text-green-700 border border-green-300"
+	if (props.saveStatus === "error") return "bg-red-100 text-red-700 border border-red-300"
+	if (props.saveStatus === "saving") return "bg-gray-200 text-gray-500"
+	return "bg-gray-100 text-gray-700 hover:bg-gray-200"
+})
+
+const pdfLabel = computed(() => {
+	if (generating.value) return __("Generating...")
+	if (props.pdfStatus === "done") return __("PDF Downloaded!")
+	if (props.pdfStatus === "error") return __("Error!")
+	return __("Generate PDF")
+})
+
+const pdfButtonClass = computed(() => {
+	if (props.pdfStatus === "done") return "bg-green-600 hover:bg-green-700"
+	if (props.pdfStatus === "error") return "bg-red-600 hover:bg-red-700"
+	return "bg-purple-600 hover:bg-purple-700"
+})
 
 const config = reactive({
 	font_header: "Montserrat",

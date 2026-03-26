@@ -42,6 +42,8 @@
 									:card-name="cardName"
 									:cards="cards"
 									:show-cover-page="showCoverPage"
+									:save-status="saveStatus"
+									:pdf-status="pdfStatus"
 									@update:config="onConfigUpdate"
 									@update:cover-page="showCoverPage = $event"
 									@generate-pdf="onGeneratePdf"
@@ -60,7 +62,6 @@
 import { ref, computed, onMounted } from "vue"
 import MenuPreview from "./MenuPreview.vue"
 import MenuSettings from "./MenuSettings.vue"
-import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
 
 const props = defineProps({
@@ -71,7 +72,6 @@ const props = defineProps({
 
 defineEmits(["close"])
 
-const { showSuccess, showError } = useToast()
 const loading = ref(true)
 const templates = ref([])
 const showCoverPage = ref(true)
@@ -87,6 +87,9 @@ const previewData = ref({
 const configOverrides = ref({})
 const selectedTemplateName = ref("")
 const previewRefreshKey = ref(0)
+// Button feedback status: null | 'saving' | 'saved' | 'error'
+const saveStatus = ref(null)
+const pdfStatus = ref(null)
 
 const activeTemplate = computed(() => {
 	const base = previewData.value.design || {}
@@ -170,6 +173,7 @@ async function loadExtraCards(cardNames) {
 }
 
 async function onSaveDesign() {
+	saveStatus.value = "saving"
 	try {
 		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
 		const response = await fetch(
@@ -189,14 +193,17 @@ async function onSaveDesign() {
 		)
 		const data = await response.json()
 		if (data?.message?.status === "ok") {
-			showSuccess(__("Design saved"))
+			saveStatus.value = "saved"
 		} else {
-			showError(__("Failed to save design"))
+			saveStatus.value = "error"
 		}
 	} catch (e) {
 		console.error("Failed to save design:", e)
-		showError(__("Failed to save design"))
+		saveStatus.value = "error"
 	}
+	setTimeout(() => {
+		saveStatus.value = null
+	}, 2500)
 }
 
 async function onGeneratePdf({
@@ -261,11 +268,14 @@ async function onGeneratePdf({
 		a.click()
 		URL.revokeObjectURL(blobUrl)
 
-		showSuccess(__("PDF downloaded"))
+		pdfStatus.value = "done"
 	} catch (e) {
 		console.error("PDF generation failed:", e)
-		showError(__("Failed to generate PDF"))
+		pdfStatus.value = "error"
 	}
+	setTimeout(() => {
+		pdfStatus.value = null
+	}, 3000)
 }
 
 onMounted(() => {
