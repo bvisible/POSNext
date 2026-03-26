@@ -259,7 +259,14 @@ async function generatePdf() {
 	generating.value = true
 	try {
 		const cardsToGenerate =
-			selectedCards.value.length > 1 ? selectedCards.value : [props.cardName]
+			selectedCards.value.length > 1
+				? selectedCards.value
+				: [props.cardName]
+		console.log("[MenuSettings] generatePdf:", {
+			cards: cardsToGenerate,
+			template: selectedTemplate.value,
+			paper: config.paper_format,
+		})
 		emit("generate-pdf", {
 			card_names: cardsToGenerate,
 			template_name: selectedTemplate.value,
