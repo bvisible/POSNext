@@ -2006,7 +2006,7 @@ def get_card_items_with_badges(card_name):
 		categories.append(current_category)
 
 	# Filter out empty categories (all items disabled)
-	categories = [c for c in categories if c["items"]]
+	categories = [c for c in categories if c["menu_items"]]
 
 	return {
 		"card": {
