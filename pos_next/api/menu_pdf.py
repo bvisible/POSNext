@@ -69,6 +69,29 @@ def get_design_templates():
 
 
 @frappe.whitelist()
+def get_menu_preview_html(card_name, template_name=None, overrides=None):
+	"""Return the rendered HTML for the menu preview (same HTML used for PDF)."""
+	if isinstance(overrides, str):
+		try:
+			overrides = json.loads(overrides)
+		except (json.JSONDecodeError, TypeError):
+			overrides = {}
+
+	preview_data = get_menu_preview_data(card_name, template_name)
+
+	if overrides and preview_data.get("design"):
+		for key, value in overrides.items():
+			if value is not None:
+				preview_data["design"][key] = value
+
+	design = preview_data.get("design") or {}
+	style_theme = design.get("style_theme", "modern")
+
+	template_path = f"pos_next/templates/menu/{style_theme}.html"
+	return frappe.render_template(template_path, preview_data)
+
+
+@frappe.whitelist()
 def save_card_design(card_name, template_name=None, overrides=None):
 	"""Save design settings to a Restaurant Card (not to the template)."""
 	if isinstance(overrides, str):

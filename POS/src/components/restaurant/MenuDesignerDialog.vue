@@ -24,15 +24,13 @@
 						</div>
 
 						<template v-else>
-							<!-- Preview (70%) -->
+							<!-- Preview (70%) - renders same HTML as PDF -->
 							<div class="flex-1 overflow-hidden">
 								<MenuPreview
-									:card="previewData.card"
-									:categories="allCategories"
-									:design="activeTemplate"
-									:currency="previewData.currency"
-									:company-logo="previewData.company_logo"
-									:show-cover-page="showCoverPage"
+									:card-name="cardName"
+									:template-name="selectedTemplateName"
+									:overrides="configOverrides"
+									:refresh-key="previewRefreshKey"
 								/>
 							</div>
 
@@ -87,6 +85,8 @@ const previewData = ref({
 	company_logo: "",
 })
 const configOverrides = ref({})
+const selectedTemplateName = ref("")
+const previewRefreshKey = ref(0)
 
 const activeTemplate = computed(() => {
 	const base = previewData.value.design || {}
@@ -141,7 +141,12 @@ function onConfigUpdate(newConfig) {
 	}
 
 	const { template_name, selected_cards, ...overrides } = newConfig
+	if (template_name) {
+		selectedTemplateName.value = template_name
+	}
 	configOverrides.value = overrides
+	// Refresh preview with new settings
+	previewRefreshKey.value++
 }
 
 async function loadExtraCards(cardNames) {
