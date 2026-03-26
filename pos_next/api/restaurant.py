@@ -1960,7 +1960,7 @@ def get_card_items_with_badges(card_name):
 		if card_item.item_type == "Category":
 			if current_category["menu_items"] or current_category["label"]:
 				categories.append(current_category)
-			current_category = {"label": card_item.label or "", "items": []}
+			current_category = {"label": card_item.label or "", "menu_items": []}
 			continue
 
 		if card_item.item_type != "Item" or not card_item.item:
