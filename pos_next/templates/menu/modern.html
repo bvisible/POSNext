@@ -2,7 +2,6 @@
 {% extends "pos_next/templates/menu/base.html" %}
 
 {% block styles %}
-	@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 	body {
 		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
@@ -77,9 +76,8 @@
 	}
 
 	.item-header {
-		display: flex;
-		align-items: baseline;
-		gap: 3mm;
+		display: table;
+		width: 100%;
 	}
 
 	.item-name {
