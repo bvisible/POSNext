@@ -1951,14 +1951,14 @@ def get_card_items_with_badges(card_name):
 	"""Return card items enriched with badge info for menu preview/PDF."""
 	card = frappe.get_doc("Restaurant Card", card_name)
 	categories = []
-	current_category = {"label": "", "items": []}
+	current_category = {"label": "", "menu_items": []}
 
 	for card_item in card.items:
 		if card_item.get("disabled"):
 			continue
 
 		if card_item.item_type == "Category":
-			if current_category["items"] or current_category["label"]:
+			if current_category["menu_items"] or current_category["label"]:
 				categories.append(current_category)
 			current_category = {"label": card_item.label or "", "items": []}
 			continue
@@ -2000,9 +2000,9 @@ def get_card_items_with_badges(card_name):
 		if options:
 			item_data["product_options"] = options
 
-		current_category["items"].append(item_data)
+		current_category["menu_items"].append(item_data)
 
-	if current_category["items"]:
+	if current_category["menu_items"]:
 		categories.append(current_category)
 
 	# Filter out empty categories (all items disabled)

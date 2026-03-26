@@ -28,7 +28,7 @@
 						</div>
 
 						<!-- Items -->
-						<div v-for="(item, ii) in category.items" :key="ii" class="mb-3 break-inside-avoid">
+						<div v-for="(item, ii) in category.menu_items" :key="ii" class="mb-3 break-inside-avoid">
 							<div class="flex justify-between items-baseline gap-2">
 								<div class="flex-1 min-w-0">
 									<!-- Item name -->
