@@ -29,7 +29,7 @@
 								<MenuPreview
 									:card="previewData.card"
 									:categories="previewData.categories"
-									:template="activeTemplate"
+									:design="activeTemplate"
 									:currency="previewData.currency"
 								/>
 							</div>
@@ -73,13 +73,13 @@ const templates = ref([])
 const previewData = ref({
 	card: {},
 	categories: [],
-	template: {},
+	design: {},
 	currency: "CHF",
 })
 const configOverrides = ref({})
 
 const activeTemplate = computed(() => {
-	const base = previewData.value.template || {}
+	const base = previewData.value.design || {}
 	return { ...base, ...configOverrides.value }
 })
 
@@ -113,7 +113,7 @@ function onConfigUpdate(config) {
 	if (config.template_name) {
 		const tpl = templates.value.find((t) => t.name === config.template_name)
 		if (tpl) {
-			previewData.value.template = { ...tpl }
+			previewData.value.design = { ...tpl }
 		}
 	}
 }

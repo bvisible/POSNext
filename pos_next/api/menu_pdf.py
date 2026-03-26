@@ -46,7 +46,7 @@ def get_menu_preview_data(card_name, template_name=None):
 	return {
 		"card": card_data["card"],
 		"categories": card_data["categories"],
-		"template": template,
+		"design": template,
 		"currency": currency,
 		"site_url": frappe.utils.get_url(),
 	}
@@ -73,23 +73,23 @@ def generate_menu_pdf(card_name, template_name=None, overrides=None, paper_forma
 
 	preview_data = get_menu_preview_data(card_name, template_name)
 
-	if overrides and preview_data.get("template"):
+	if overrides and preview_data.get("design"):
 		for key, value in overrides.items():
 			if value is not None:
-				preview_data["template"][key] = value
+				preview_data["design"][key] = value
 
-	if paper_format and preview_data.get("template"):
-		preview_data["template"]["paper_format"] = paper_format
+	if paper_format and preview_data.get("design"):
+		preview_data["design"]["paper_format"] = paper_format
 
-	template = preview_data.get("template") or {}
-	style_theme = template.get("style_theme", "elegant")
+	design = preview_data.get("design") or {}
+	style_theme = design.get("style_theme", "elegant")
 
 	# Render Jinja template
 	template_path = f"pos_next/templates/menu/{style_theme}.html"
 	html_content = frappe.render_template(template_path, preview_data)
 
 	# Generate PDF
-	pdf_bytes = _html_to_pdf(html_content, template)
+	pdf_bytes = _html_to_pdf(html_content, design)
 
 	# Return as file response
 	card_display = preview_data["card"]["card_name"].replace(" ", "_")
@@ -121,24 +121,24 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 			card_display_name += "_"
 		card_display_name += data["card"]["card_name"].replace(" ", "_")
 
-	# Use first card's template if not specified
+	# Use first card's design if not specified
 	first_data = get_menu_preview_data(card_names[0], template_name)
-	template = first_data.get("template") or {}
+	design = first_data.get("design") or {}
 
 	if overrides:
 		for key, value in overrides.items():
 			if value is not None:
-				template[key] = value
+				design[key] = value
 
 	if paper_format:
-		template["paper_format"] = paper_format
+		design["paper_format"] = paper_format
 
-	style_theme = template.get("style_theme", "elegant")
+	style_theme = design.get("style_theme", "elegant")
 
 	combined_data = {
 		"card": {"card_name": " + ".join(card_names), "description": "", "image": ""},
 		"categories": all_categories,
-		"template": template,
+		"design": design,
 		"currency": first_data.get("currency", "CHF"),
 		"site_url": first_data.get("site_url", ""),
 	}
@@ -146,7 +146,7 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 	template_path = f"pos_next/templates/menu/{style_theme}.html"
 	html_content = frappe.render_template(template_path, combined_data)
 
-	pdf_bytes = _html_to_pdf(html_content, template)
+	pdf_bytes = _html_to_pdf(html_content, design)
 
 	frappe.local.response.filename = f"menu_{card_display_name}.pdf"
 	frappe.local.response.filecontent = pdf_bytes

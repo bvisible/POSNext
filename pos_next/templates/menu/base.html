@@ -41,15 +41,15 @@
 	{%- endif -%}
 {%- endmacro -%}
 
-{%- macro render_item(item, template, currency, site_url) -%}
+{%- macro render_item(item, design, currency, site_url) -%}
 	<div class="menu-item">
-		{%- if template.show_images and item.image -%}
+		{%- if design.show_images and item.image -%}
 			<div class="item-image-wrap">
 				<img src="{{ site_url }}{{ item.image }}" alt="{{ item.item_name }}" class="item-image" />
 			</div>
 		{%- endif -%}
 		<div class="item-content">
-			{%- if template.price_alignment == "dotted" -%}
+			{%- if design.price_alignment == "dotted" -%}
 				<div class="item-dotted-row">
 					<span class="item-name">{{ item.item_name }}</span>
 					{{ render_spice(item.spice_level) }}
@@ -60,17 +60,17 @@
 				<div class="item-header">
 					<span class="item-name">{{ item.item_name }}</span>
 					{{ render_spice(item.spice_level) }}
-					{{ render_price(item, currency, template.price_alignment) }}
+					{{ render_price(item, currency, design.price_alignment) }}
 				</div>
 			{%- endif -%}
-			{%- if template.show_descriptions and item.description -%}
+			{%- if design.show_descriptions and item.description -%}
 				<div class="item-description">{{ item.description }}</div>
 			{%- endif -%}
 			<div class="item-meta">
-				{%- if template.show_allergens -%}
+				{%- if design.show_allergens -%}
 					{{ render_badges(item.badges, site_url) }}
 				{%- endif -%}
-				{%- if template.show_options and item.product_options -%}
+				{%- if design.show_options and item.product_options -%}
 					<div class="item-options">
 						{%- for opt_group in item.product_options -%}
 							<span class="option-group">
@@ -85,26 +85,26 @@
 	</div>
 {%- endmacro -%}
 
-{%- macro render_category(category, template, currency, site_url) -%}
+{%- macro render_category(category, design, currency, site_url) -%}
 	<div class="menu-category">
 		<h2 class="category-title">{{ category.label }}</h2>
 		<div class="category-items">
 			{%- for item in category.items -%}
-				{{ render_item(item, template, currency, site_url) }}
+				{{ render_item(item, design, currency, site_url) }}
 			{%- endfor -%}
 		</div>
 	</div>
 {%- endmacro -%}
 
-{%- macro render_header(card, template, site_url) -%}
+{%- macro render_header(card, design, site_url) -%}
 	<header class="menu-header">
 		{%- if card.image -%}
 			<div class="header-logo">
 				<img src="{{ site_url }}{{ card.image }}" alt="{{ card.card_name }}" class="logo-image" />
 			</div>
 		{%- endif -%}
-		{%- if template.header_text -%}
-			<h1 class="header-title">{{ template.header_text }}</h1>
+		{%- if design.header_text -%}
+			<h1 class="header-title">{{ design.header_text }}</h1>
 		{%- endif -%}
 		<div class="header-card-name">{{ card.card_name }}</div>
 		{%- if card.description -%}
@@ -113,10 +113,10 @@
 	</header>
 {%- endmacro -%}
 
-{%- macro render_footer(template) -%}
-	{%- if template.footer_text -%}
+{%- macro render_footer(design) -%}
+	{%- if design.footer_text -%}
 		<footer class="menu-footer">
-			<p class="footer-text">{{ template.footer_text }}</p>
+			<p class="footer-text">{{ design.footer_text }}</p>
 		</footer>
 	{%- endif -%}
 {%- endmacro -%}
@@ -128,7 +128,7 @@
 	"A3 Portrait": "297mm 420mm",
 	"A3 Landscape": "420mm 297mm"
 } -%}
-{%- set page_size = page_sizes.get(template.paper_format, "210mm 297mm") -%}
+{%- set page_size = page_sizes.get(design.paper_format, "210mm 297mm") -%}
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -151,8 +151,8 @@
 
 		/* Base typography */
 		body {
-			font-family: '{{ template.font_body }}', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-			color: {{ template.color_primary | default('#1a1a1a') }};
+			font-family: '{{ design.font_body }}', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+			color: {{ design.color_primary | default('#1a1a1a') }};
 			font-size: 10pt;
 			line-height: 1.5;
 			-webkit-print-color-adjust: exact;
@@ -160,7 +160,7 @@
 		}
 
 		h1, h2, h3 {
-			font-family: '{{ template.font_header }}', 'Playfair Display', Georgia, serif;
+			font-family: '{{ design.font_header }}', 'Playfair Display', Georgia, serif;
 		}
 
 		/* Tabular numbers for prices */
@@ -229,7 +229,7 @@
 
 		.header-description {
 			font-size: 9pt;
-			color: {{ template.color_secondary | default('#666666') }};
+			color: {{ design.color_secondary | default('#666666') }};
 		}
 
 		/* Category */
@@ -240,7 +240,7 @@
 		.category-title {
 			font-size: 14pt;
 			margin-bottom: 3mm;
-			color: {{ template.color_accent | default('#8B4513') }};
+			color: {{ design.color_accent | default('#8B4513') }};
 		}
 
 		/* Item */
@@ -275,14 +275,14 @@
 
 		.dotted-leader {
 			flex: 1;
-			border-bottom: 1px dotted {{ template.color_secondary | default('#666666') }};
+			border-bottom: 1px dotted {{ design.color_secondary | default('#666666') }};
 			margin: 0 2mm;
 			min-width: 5mm;
 		}
 
 		.item-description {
 			font-size: 8.5pt;
-			color: {{ template.color_secondary | default('#666666') }};
+			color: {{ design.color_secondary | default('#666666') }};
 			margin-top: 0.5mm;
 		}
 
@@ -343,7 +343,7 @@
 		/* Options */
 		.item-options {
 			font-size: 7.5pt;
-			color: {{ template.color_secondary | default('#666666') }};
+			color: {{ design.color_secondary | default('#666666') }};
 			margin-top: 0.5mm;
 		}
 
@@ -363,32 +363,32 @@
 			margin-top: 8mm;
 			text-align: center;
 			font-size: 8pt;
-			color: {{ template.color_secondary | default('#666666') }};
+			color: {{ design.color_secondary | default('#666666') }};
 		}
 
 		{% block styles %}{% endblock %}
 
 		/* Custom CSS override */
-		{% if template.custom_css %}
-			{{ template.custom_css }}
+		{% if design.custom_css %}
+			{{ design.custom_css }}
 		{% endif %}
 	</style>
 </head>
 <body>
 	{% block header %}
-		{{ render_header(card, template, site_url) }}
+		{{ render_header(card, design, site_url) }}
 	{% endblock %}
 
-	<div class="menu-body columns-{{ template.columns | default(1) }}">
+	<div class="menu-body columns-{{ design.columns | default(1) }}">
 		{% block content %}
 			{%- for category in categories -%}
-				{{ render_category(category, template, currency, site_url) }}
+				{{ render_category(category, design, currency, site_url) }}
 			{%- endfor -%}
 		{% endblock %}
 	</div>
 
 	{% block footer %}
-		{{ render_footer(template) }}
+		{{ render_footer(design) }}
 	{% endblock %}
 </body>
 </html>
