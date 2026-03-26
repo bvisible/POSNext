@@ -1911,7 +1911,7 @@ def get_item_edit_data(item_code, pos_profile=None):
 		if profile.selling_price_list:
 			price_list_rate = frappe.db.get_value(
 				"Item Price",
-				{"item_code": item_code, "price_list": profile.selling_price_list, "selling": 1},
+				{"item_code": item_code, "price_list": profile.selling_price_list},
 				"price_list_rate"
 			) or 0
 
@@ -1962,8 +1962,8 @@ def get_item_edit_data(item_code, pos_profile=None):
 	raw_desc = item.get("description") or ""
 	clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
 
-	# Check if has image search
-	has_image_search = bool(frappe.db.get_single_value("Restaurant Settings", "pexels_api_key"))
+	# Check if has image search (stored in site_config.json)
+	has_image_search = bool(frappe.conf.get("pexels_api_key"))
 
 	return {
 		"item_code": item.name,
