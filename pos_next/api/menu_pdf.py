@@ -179,36 +179,28 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 
 
 def _html_to_pdf(html_content, template):
-	"""Convert HTML to PDF using WeasyPrint or fallback to wkhtmltopdf."""
-	try:
-		from weasyprint import CSS, HTML
+	"""Convert HTML to PDF using wkhtmltopdf (stable) or WeasyPrint if configured."""
+	use_weasyprint = frappe.db.get_single_value("Restaurant Settings", "use_weasyprint") if frappe.db.exists("DocType", "Restaurant Settings") else False
 
-		css_overrides = _build_page_css(template)
-		stylesheets = [CSS(string=css_overrides)] if css_overrides else []
+	if use_weasyprint:
+		try:
+			from weasyprint import CSS, HTML
 
-		pdf_bytes = HTML(string=html_content, base_url=frappe.utils.get_url()).write_pdf(
-			stylesheets=stylesheets,
-		)
-		return pdf_bytes
+			css_overrides = _build_page_css(template)
+			stylesheets = [CSS(string=css_overrides)] if css_overrides else []
 
-	except ImportError:
-		# Fallback to Frappe's built-in PDF (wkhtmltopdf)
-		frappe.log_error(
-			"WeasyPrint not installed",
-			"Falling back to wkhtmltopdf. Install weasyprint for better quality.",
-		)
-		from frappe.utils.pdf import get_pdf
+			pdf_bytes = HTML(string=html_content, base_url=frappe.utils.get_url()).write_pdf(
+				stylesheets=stylesheets,
+			)
+			return pdf_bytes
+		except Exception as e:
+			frappe.log_error("WeasyPrint PDF error", str(e))
 
-		options = _get_wkhtmltopdf_options(template)
-		return get_pdf(html_content, options=options)
+	# Default: use wkhtmltopdf (stable, low memory)
+	from frappe.utils.pdf import get_pdf
 
-	except Exception as e:
-		frappe.log_error("PDF Generation Error", str(e))
-		# Final fallback
-		from frappe.utils.pdf import get_pdf
-
-		options = _get_wkhtmltopdf_options(template)
-		return get_pdf(html_content, options=options)
+	options = _get_wkhtmltopdf_options(template)
+	return get_pdf(html_content, options=options)
 
 
 def _build_page_css(template):
