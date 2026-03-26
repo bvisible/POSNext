@@ -100,15 +100,14 @@
 					</label>
 				</div>
 			</div>
-		</div>
 
-		<!-- Cover page toggle -->
-		<div>
-			<label class="flex items-center gap-2 text-sm cursor-pointer">
-				<input type="checkbox" :checked="showCoverPage" @change="$emit('update:cover-page', $event.target.checked)" class="rounded" />
-				{{ __('Cover page with logo') }}
-			</label>
-		</div>
+			<!-- Cover page toggle -->
+			<div>
+				<label class="flex items-center gap-2 text-sm cursor-pointer">
+					<input type="checkbox" :checked="showCoverPage" @change="$emit('update:cover-page', $event.target.checked)" class="rounded" />
+					{{ __('Cover page with logo') }}
+				</label>
+			</div>
 		</div>
 
 		<!-- Action buttons -->
