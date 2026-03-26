@@ -35,14 +35,19 @@ export function useBadges() {
 
 	async function saveItemBadges(itemCode, badgeNames, spiceLevel) {
 		try {
-			await call("pos_next.api.restaurant.update_item_badges", {
-				item_code: itemCode,
-				badges: JSON.stringify(badgeNames),
-				spice_level: spiceLevel,
-			})
+			console.log("[useBadges] Saving:", itemCode, badgeNames, spiceLevel)
+			const result = await call(
+				"pos_next.api.restaurant.update_item_badges",
+				{
+					item_code: itemCode,
+					badges: JSON.stringify(badgeNames),
+					spice_level: spiceLevel,
+				},
+			)
+			console.log("[useBadges] Save result:", result)
 			return true
 		} catch (e) {
-			console.error("Failed to save item badges:", e)
+			console.error("[useBadges] Failed to save:", e)
 			return false
 		}
 	}

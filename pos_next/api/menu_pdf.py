@@ -19,10 +19,12 @@ def get_menu_preview_data(card_name, template_name=None):
 	if tpl_name:
 		template = frappe.get_doc("Menu Design Template", tpl_name).as_dict()
 	else:
-		# Fallback to first available template
-		first = frappe.db.get_value("Menu Design Template", {}, "name")
-		if first:
-			template = frappe.get_doc("Menu Design Template", first).as_dict()
+		# Fallback to "Moderne Minimaliste" or first available
+		default = frappe.db.get_value(
+			"Menu Design Template", {"style_theme": "modern"}, "name"
+		) or frappe.db.get_value("Menu Design Template", {}, "name")
+		if default:
+			template = frappe.get_doc("Menu Design Template", default).as_dict()
 
 	# Get overrides from card
 	overrides = {}
