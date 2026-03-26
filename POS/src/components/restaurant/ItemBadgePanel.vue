@@ -22,9 +22,9 @@
 						:key="level - 1"
 						@click="spiceLevel = level - 1"
 						class="w-7 h-7 rounded-md flex items-center justify-center text-sm transition-all"
-						:class="level - 1 === spiceLevel
-							? (level === 1 ? 'bg-gray-200 ring-2 ring-gray-400' : 'bg-red-500 text-white ring-2 ring-red-600 scale-105')
-							: 'bg-gray-100 hover:bg-gray-200'"
+						:style="level - 1 === spiceLevel
+							? (level === 1 ? { backgroundColor: '#e5e7eb', outline: '2px solid #9ca3af' } : { backgroundColor: '#ef4444', color: '#fff', outline: '2px solid #dc2626', transform: 'scale(1.05)' })
+							: { backgroundColor: '#f3f4f6' }"
 					>
 						{{ level === 1 ? '○' : '🌶' }}
 					</button>
@@ -39,17 +39,17 @@
 						v-for="badge in group.badges"
 						:key="badge.name"
 						@click="toggleBadge(badge.name)"
-						class="flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] transition-all border-2"
-						:class="selectedBadges.has(badge.name)
-							? 'border-emerald-500 bg-emerald-500 text-white font-bold shadow-sm'
-							: 'border-transparent bg-gray-50 text-gray-600 hover:bg-gray-100'"
+						class="flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] transition-all"
+						:style="selectedBadges.has(badge.name)
+							? { backgroundColor: badge.color || '#10b981', color: '#fff', fontWeight: '700', border: '2px solid ' + (badge.color || '#10b981') }
+							: { backgroundColor: '#f9fafb', color: '#4b5563', border: '2px solid transparent' }"
 					>
 						<img
 							v-if="badge.icon"
 							:src="getBadgeIconUrl(badge.icon)"
 							:alt="badge.badge_name"
 							class="w-3.5 h-3.5 flex-shrink-0"
-							:class="selectedBadges.has(badge.name) ? 'brightness-0 invert' : ''"
+							:style="selectedBadges.has(badge.name) ? { filter: 'brightness(0) invert(1)' } : {}"
 						/>
 						<span class="truncate">{{ badge.badge_name }}</span>
 					</button>
