@@ -159,6 +159,15 @@
 			print-color-adjust: exact;
 		}
 
+		/* Preview margins (screen only — PDF uses @page margins) */
+		@media screen {
+			body {
+				padding: 20mm 20mm;
+				max-width: 210mm;
+				margin: 0 auto;
+			}
+		}
+
 		h1, h2, h3 {
 			font-family: '{{ design.font_header }}', 'Playfair Display', Georgia, serif;
 		}

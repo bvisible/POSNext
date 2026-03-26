@@ -15,28 +15,28 @@
 
 	/* Header styling */
 	.menu-header {
-		text-align: left;
-		margin-bottom: 12mm;
-		padding-bottom: 4mm;
-		border-bottom: 0.5mm solid #E2E8F0;
+		text-align: center;
+		margin-bottom: 14mm;
+		padding-bottom: 6mm;
+		border-bottom: 0.3mm solid #E2E8F0;
 	}
 
 	.header-title {
 		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
-		font-size: 22pt;
+		font-size: 24pt;
 		font-weight: 700;
 		color: #1a1a1a;
 		letter-spacing: -0.5pt;
-		margin-bottom: 2mm;
+		margin-bottom: 3mm;
 	}
 
 	.header-card-name {
 		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
-		font-size: 12pt;
+		font-size: 11pt;
 		font-weight: 500;
-		color: #4A5568;
+		color: #718096;
 		text-transform: uppercase;
-		letter-spacing: 1pt;
+		letter-spacing: 3pt;
 		margin-bottom: 2mm;
 	}
 
@@ -44,35 +44,41 @@
 		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
 		font-size: 9pt;
 		font-weight: 300;
-		color: #718096;
+		color: #A0AEC0;
+		font-style: italic;
 	}
 
 	.header-logo {
-		margin-bottom: 3mm;
+		margin-bottom: 4mm;
 	}
 
 	/* Category styling */
 	.menu-category {
-		margin-bottom: 8mm;
+		margin-bottom: 10mm;
 	}
 
 	.category-title {
 		font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
 		font-size: 11pt;
 		font-weight: 600;
-		color: #4A5568;
+		color: #2D3748;
 		text-transform: uppercase;
-		letter-spacing: 2pt;
-		padding-bottom: 2mm;
-		margin-bottom: 4mm;
-		border-bottom: 0.3mm solid #CBD5E0;
+		letter-spacing: 2.5pt;
+		padding-bottom: 2.5mm;
+		margin-bottom: 5mm;
+		border-bottom: 0.3mm solid #E2E8F0;
 		text-align: left;
 	}
 
 	/* Item styling */
 	.menu-item {
-		margin-bottom: 4mm;
-		padding-bottom: 3mm;
+		margin-bottom: 5mm;
+		padding-bottom: 4mm;
+		border-bottom: 0.1mm solid #F7FAFC;
+	}
+
+	.menu-item:last-child {
+		border-bottom: none;
 	}
 
 	.item-header {
@@ -94,19 +100,16 @@
 		color: #2D3748;
 	}
 
-	.item-price.price-right {
-		margin-left: auto;
-	}
-
 	.item-description {
 		font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
 		font-size: 8.5pt;
 		font-weight: 300;
 		color: #A0AEC0;
 		margin-top: 1mm;
+		line-height: 1.4;
 	}
 
-	/* Dotted leader - clean style for modern */
+	/* Dotted leader */
 	.dotted-leader {
 		border-bottom: 1px dotted #CBD5E0;
 		margin: 0 2mm;
@@ -114,15 +117,16 @@
 
 	/* Badge styling */
 	.item-badges {
-		margin-top: 1.5mm;
+		margin-top: 2mm;
 	}
 
 	.badge {
 		font-size: 6.5pt;
 		background-color: #F7FAFC;
-		padding: 0.5mm 1.5mm;
-		border-radius: 0.5mm;
+		padding: 0.8mm 2mm;
+		border-radius: 1mm;
 		border: 0.1mm solid #E2E8F0;
+		margin-right: 2mm;
 	}
 
 	.badge-label {
@@ -130,6 +134,11 @@
 		font-size: 6.5pt;
 		font-weight: 400;
 		color: #4A5568;
+	}
+
+	.badge-icon {
+		width: 12px;
+		height: 12px;
 	}
 
 	/* Options styling */
@@ -145,17 +154,17 @@
 		color: #718096;
 	}
 
-	/* Item image - rounded for modern */
+	/* Item image */
 	.item-image {
 		border-radius: 2mm;
 	}
 
 	/* Footer styling */
 	.menu-footer {
-		margin-top: 10mm;
-		padding-top: 4mm;
+		margin-top: 12mm;
+		padding-top: 6mm;
 		border-top: 0.3mm solid #E2E8F0;
-		text-align: left;
+		text-align: center;
 	}
 
 	.footer-text {
@@ -163,5 +172,6 @@
 		font-size: 7.5pt;
 		font-weight: 300;
 		color: #A0AEC0;
+		font-style: italic;
 	}
 {% endblock %}
