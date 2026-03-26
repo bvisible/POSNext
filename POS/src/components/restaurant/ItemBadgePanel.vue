@@ -1,7 +1,7 @@
 <template>
 	<div class="h-full flex flex-col bg-white">
 		<!-- Header -->
-		<div class="px-4 py-3 border-b bg-gradient-to-r from-emerald-50 to-teal-50 flex-shrink-0">
+		<div class="px-3 py-2 border-b bg-gradient-to-r from-emerald-50 to-teal-50 flex-shrink-0">
 			<h3 class="font-bold text-sm text-gray-800">{{ __('Badges & Allergens') }}</h3>
 			<p class="text-xs text-gray-500 mt-0.5 truncate">{{ itemName }}</p>
 		</div>
@@ -12,47 +12,44 @@
 		</div>
 
 		<!-- Content -->
-		<div v-else class="flex-1 overflow-y-auto p-3 space-y-4">
+		<div v-else class="flex-1 overflow-y-auto p-2 space-y-3" style="min-height: 0;">
 			<!-- Spice Level -->
 			<div>
-				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ __('Spice Level') }}</label>
-				<div class="flex gap-1 mt-1.5">
+				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Spice Level') }}</label>
+				<div class="flex gap-1 mt-1">
 					<button
 						v-for="level in 4"
 						:key="level - 1"
 						@click="spiceLevel = level - 1"
-						class="w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all"
-						:class="(level - 1) <= spiceLevel && spiceLevel > 0
-							? 'bg-red-100 scale-110'
-							: 'bg-gray-100 hover:bg-gray-200 opacity-40'"
+						class="w-7 h-7 rounded-md flex items-center justify-center text-sm transition-all"
+						:class="level - 1 === spiceLevel
+							? (level === 1 ? 'bg-gray-200 ring-2 ring-gray-400' : 'bg-red-500 text-white ring-2 ring-red-600 scale-105')
+							: 'bg-gray-100 hover:bg-gray-200'"
 					>
 						{{ level === 1 ? '○' : '🌶' }}
 					</button>
 				</div>
-				<p class="text-[10px] text-gray-400 mt-1">
-					{{ spiceLevel === 0 ? __('Not spicy') : spiceLevel === 1 ? __('Mild') : spiceLevel === 2 ? __('Medium') : __('Hot') }}
-				</p>
 			</div>
 
 			<!-- Badge sections by type -->
 			<div v-for="group in badgeGroups" :key="group.type">
-				<label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{ __(group.label) }}</label>
-				<div class="grid grid-cols-2 gap-1.5 mt-1.5">
+				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __(group.label) }}</label>
+				<div class="grid grid-cols-2 gap-1 mt-1">
 					<button
 						v-for="badge in group.badges"
 						:key="badge.name"
 						@click="toggleBadge(badge.name)"
-						class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs transition-all border"
+						class="flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] transition-all border-2"
 						:class="selectedBadges.has(badge.name)
-							? 'border-emerald-400 bg-emerald-50 text-emerald-800'
-							: 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
+							? 'border-emerald-500 bg-emerald-500 text-white font-bold shadow-sm'
+							: 'border-transparent bg-gray-50 text-gray-600 hover:bg-gray-100'"
 					>
 						<img
 							v-if="badge.icon"
 							:src="getBadgeIconUrl(badge.icon)"
 							:alt="badge.badge_name"
-							class="w-4 h-4 flex-shrink-0"
-							:style="{ color: badge.color }"
+							class="w-3.5 h-3.5 flex-shrink-0"
+							:class="selectedBadges.has(badge.name) ? 'brightness-0 invert' : ''"
 						/>
 						<span class="truncate">{{ badge.badge_name }}</span>
 					</button>
@@ -60,14 +57,15 @@
 			</div>
 		</div>
 
-		<!-- Footer -->
-		<div class="px-3 py-2 border-t flex-shrink-0">
+		<!-- Footer - always visible -->
+		<div class="px-2 py-2 border-t bg-gray-50 flex-shrink-0">
+			<div v-if="saveError" class="text-[10px] text-red-500 mb-1">{{ saveError }}</div>
 			<button
 				@click="save"
 				:disabled="saving"
-				class="w-full px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+				class="w-full px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
 			>
-				{{ saving ? __('Saving...') : __('Save') }}
+				{{ saving ? __('Saving...') : __('Save Badges') }}
 			</button>
 		</div>
 	</div>
@@ -86,7 +84,6 @@ const props = defineProps({
 const emit = defineEmits(["saved", "close"])
 
 const {
-	menuBadges,
 	loadMenuBadges,
 	loadItemBadges,
 	saveItemBadges,
@@ -97,6 +94,7 @@ const { showSuccess, showError } = useToast()
 
 const loading = ref(true)
 const saving = ref(false)
+const saveError = ref("")
 const spiceLevel = ref(0)
 const selectedBadges = ref(new Set())
 
@@ -124,27 +122,48 @@ function toggleBadge(badgeName) {
 
 async function loadData() {
 	loading.value = true
-	await loadMenuBadges()
-	const data = await loadItemBadges(props.itemCode)
-	spiceLevel.value = data.spice_level || 0
-	selectedBadges.value = new Set(data.badges.map((b) => b.menu_badge))
+	saveError.value = ""
+	try {
+		await loadMenuBadges()
+		const data = await loadItemBadges(props.itemCode)
+		spiceLevel.value = data.spice_level || 0
+		selectedBadges.value = new Set(data.badges.map((b) => b.menu_badge))
+	} catch (e) {
+		console.error("[ItemBadgePanel] Load failed:", e)
+		saveError.value = String(e)
+	}
 	loading.value = false
 }
 
 async function save() {
 	saving.value = true
-	const ok = await saveItemBadges(
-		props.itemCode,
-		Array.from(selectedBadges.value),
-		spiceLevel.value,
-	)
-	saving.value = false
-	if (ok) {
-		showSuccess(__("Badges saved"))
-		emit("saved")
-	} else {
+	saveError.value = ""
+	try {
+		const badgeArray = Array.from(selectedBadges.value)
+		console.log(
+			"[ItemBadgePanel] Saving:",
+			props.itemCode,
+			badgeArray,
+			spiceLevel.value,
+		)
+		const ok = await saveItemBadges(
+			props.itemCode,
+			badgeArray,
+			spiceLevel.value,
+		)
+		if (ok) {
+			showSuccess(__("Badges saved"))
+			emit("saved")
+		} else {
+			saveError.value = "Save returned false"
+			showError(__("Failed to save badges"))
+		}
+	} catch (e) {
+		console.error("[ItemBadgePanel] Save error:", e)
+		saveError.value = String(e)
 		showError(__("Failed to save badges"))
 	}
+	saving.value = false
 }
 
 watch(
