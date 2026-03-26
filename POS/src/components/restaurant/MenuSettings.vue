@@ -273,25 +273,26 @@ async function generatePdf() {
 	}
 }
 
-// Initialize once when templates are available
+// Initialize once when templates become available
 let initialized = false
 
 watch(
-	() => props.templates,
-	(templates) => {
-		if (initialized || !templates?.length) return
+	[() => props.templates, () => props.currentTemplate],
+	() => {
+		if (initialized) return
+		const tpls = props.templates
+		if (!tpls?.length) return
 		initialized = true
 
-		// Prefer "Moderne Minimaliste" as default, fallback to first
-		const defaultTpl =
-			templates.find((t) => t.style_theme === "modern") || templates[0]
-		const initial = props.currentTemplate?.name || defaultTpl?.name
+		// Use currentTemplate from parent, or find Moderne, or first
+		const modern = tpls.find((t) => t.style_theme === "modern")
+		const initial = props.currentTemplate?.name || modern?.name || tpls[0]?.name
 		if (initial) {
 			selectedTemplate.value = initial
 			onTemplateChange()
 		}
 	},
-	{ immediate: true },
+	{ immediate: true, deep: false },
 )
 
 watch(selectedCards, () => {
