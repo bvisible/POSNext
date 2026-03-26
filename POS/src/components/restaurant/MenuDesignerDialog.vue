@@ -115,6 +115,14 @@ async function loadData() {
 		previewData.value = previewRes || previewData.value
 		templates.value = templatesRes || []
 		selectedCardNames.value = [props.cardName]
+
+		// Default to "Moderne Minimaliste" if no template assigned to card
+		if (!previewData.value.design?.name || !previewData.value.design?.style_theme) {
+			const modern = templates.value.find((t) => t.style_theme === "modern")
+			if (modern) {
+				previewData.value = { ...previewData.value, design: { ...modern } }
+			}
+		}
 	} catch (e) {
 		console.error("Failed to load menu designer data:", e)
 		showError(__("Failed to load menu data"))
