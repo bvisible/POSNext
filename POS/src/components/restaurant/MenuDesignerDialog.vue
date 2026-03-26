@@ -204,15 +204,31 @@ async function onGeneratePdf({
 					paper_format,
 				}
 
-		const url = `/api/method/${method}?${new URLSearchParams(args).toString()}`
-		// Use iframe to trigger download without popup blocker
-		const iframe = document.createElement("iframe")
-		iframe.style.display = "none"
-		iframe.src = url
-		document.body.appendChild(iframe)
-		setTimeout(() => document.body.removeChild(iframe), 30000)
+		// Use POST + blob download (GET returns 404 on Frappe whitelisted methods)
+		const csrfToken =
+			document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const response = await fetch(`/api/method/${method}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-Frappe-CSRF-Token": csrfToken,
+			},
+			body: JSON.stringify(args),
+		})
 
-		showSuccess(__("PDF generated"))
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}`)
+		}
+
+		const blob = await response.blob()
+		const blobUrl = URL.createObjectURL(blob)
+		const a = document.createElement("a")
+		a.href = blobUrl
+		a.download = `menu_${card_names[0].replace(/ /g, "_")}.pdf`
+		a.click()
+		URL.revokeObjectURL(blobUrl)
+
+		showSuccess(__("PDF downloaded"))
 	} catch (e) {
 		console.error("PDF generation failed:", e)
 		showError(__("Failed to generate PDF"))
