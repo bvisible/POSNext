@@ -109,7 +109,6 @@
 				{{ __('Cover page with logo') }}
 			</label>
 		</div>
-
 		</div>
 
 		<!-- Action buttons -->
