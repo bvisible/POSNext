@@ -2178,6 +2178,7 @@ def get_card_items_extra(card_name):
 		result[ci.item] = {
 			"description": clean_desc,
 			"badges": badges,
+			"spice_level": int(item_doc.get("custom_spice_level") or 0),
 		}
 
 	return result

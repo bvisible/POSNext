@@ -152,6 +152,10 @@
 										<div class="flex-1 min-w-0">
 											<div class="flex items-center gap-1.5">
 												<span class="text-sm" :class="item.disabled ? 'text-gray-400 line-through' : ''">{{ item.label || item.item_name || item.item }}</span>
+												<!-- Spice level -->
+												<span v-if="itemExtraData[item.item]?.spice_level" class="flex gap-0 flex-shrink-0" :title="__('Spice level {0}', [itemExtraData[item.item].spice_level])">
+													<span v-for="s in itemExtraData[item.item].spice_level" :key="s" class="text-[10px] leading-none">🌶</span>
+												</span>
 												<!-- Badges inline -->
 												<div v-if="itemExtraData[item.item]?.badges?.length" class="flex gap-0.5 flex-shrink-0">
 													<span
