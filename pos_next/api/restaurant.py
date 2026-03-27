@@ -2047,18 +2047,17 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 
 @frappe.whitelist()
 def update_item_price(item_code, price, scope="local", card_name=None, pos_profile=None):
-	"""Update item price locally (card only) or globally (price list + all cards).
+	"""Update item price locally (card only) or globally (price list + optionally all cards).
 
 	scope = "local": Only update Restaurant Card Item.price for the given card
-	scope = "global": Update Item Price in selling price list + Item.standard_rate
-	                   + sync price in all cards that have a local override for this item
+	scope = "global": Update Item Price + Item.standard_rate + sync ALL cards
+	scope = "global_only": Update Item Price + Item.standard_rate only (no card sync)
 	"""
 	from frappe.utils import flt
 
 	price = flt(price)
 
 	if scope == "local" and card_name:
-		# Update only the card item price
 		card = frappe.get_doc("Restaurant Card", card_name)
 		for ci in card.items:
 			if ci.item == item_code and ci.item_type == "Item":
@@ -2067,7 +2066,7 @@ def update_item_price(item_code, price, scope="local", card_name=None, pos_profi
 		frappe.db.commit()
 		return {"status": "ok", "scope": "local"}
 
-	elif scope == "global":
+	elif scope in ("global", "global_only"):
 		# Update Item.standard_rate
 		frappe.db.set_value("Item", item_code, "standard_rate", price)
 
@@ -2077,7 +2076,7 @@ def update_item_price(item_code, price, scope="local", card_name=None, pos_profi
 			if profile.selling_price_list:
 				existing = frappe.db.get_value(
 					"Item Price",
-					{"item_code": item_code, "price_list": profile.selling_price_list, "selling": 1},
+					{"item_code": item_code, "price_list": profile.selling_price_list},
 					"name"
 				)
 				if existing:
@@ -2090,17 +2089,55 @@ def update_item_price(item_code, price, scope="local", card_name=None, pos_profi
 						"price_list_rate": price,
 					}).insert(ignore_permissions=True)
 
-		# Sync price in all cards that have this item with a local override
-		cards_with_item = frappe.get_all(
-			"Restaurant Card Item",
-			filters={"item": item_code, "item_type": "Item", "price": [">", 0]},
-			fields=["parent", "name"]
-		)
-		for ci in cards_with_item:
-			frappe.db.set_value("Restaurant Card Item", ci.name, "price", price)
+		cards_updated = 0
+		if scope == "global":
+			# Sync price in all cards that have this item with a local override
+			cards_with_item = frappe.get_all(
+				"Restaurant Card Item",
+				filters={"item": item_code, "item_type": "Item", "price": [">", 0]},
+				fields=["parent", "name"]
+			)
+			for ci in cards_with_item:
+				frappe.db.set_value("Restaurant Card Item", ci.name, "price", price)
+			cards_updated = len(cards_with_item)
 
 		frappe.db.commit()
-		return {"status": "ok", "scope": "global", "cards_updated": len(cards_with_item)}
+		return {"status": "ok", "scope": scope, "cards_updated": cards_updated}
+
+	return {"status": "error", "message": "Invalid scope or missing card_name"}
+
+
+@frappe.whitelist()
+def update_item_active(item_code, disabled=0, scope="local", card_name=None):
+	"""Enable or disable an item on one card or all cards.
+
+	scope = "local": Only toggle disabled on the given card
+	scope = "all": Toggle disabled on ALL cards that have this item
+	"""
+	from frappe.utils import cint
+
+	disabled = cint(disabled)
+
+	if scope == "local" and card_name:
+		card = frappe.get_doc("Restaurant Card", card_name)
+		for ci in card.items:
+			if ci.item == item_code and ci.item_type == "Item":
+				ci.disabled = disabled
+		card.save(ignore_permissions=True)
+		frappe.db.commit()
+		return {"status": "ok", "scope": "local"}
+
+	elif scope == "all":
+		# Toggle on all cards
+		all_card_items = frappe.get_all(
+			"Restaurant Card Item",
+			filters={"item": item_code, "item_type": "Item"},
+			fields=["parent", "name"]
+		)
+		for ci in all_card_items:
+			frappe.db.set_value("Restaurant Card Item", ci.name, "disabled", disabled)
+		frappe.db.commit()
+		return {"status": "ok", "scope": "all", "cards_updated": len(all_card_items)}
 
 	return {"status": "error", "message": "Invalid scope or missing card_name"}
 

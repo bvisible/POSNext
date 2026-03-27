@@ -62,37 +62,59 @@
 
 						<div v-else-if="cardDetail">
 							<!-- Card header -->
-							<div class="flex justify-between items-start mb-4">
-								<div>
-									<div class="flex items-center gap-3">
+							<div class="mb-4 border-b pb-3">
+								<div class="flex items-center justify-between">
+									<div class="flex items-center gap-2">
 										<input v-if="editingName" v-model="cardDetail.card_name" ref="nameInput"
 											@blur="finishRename" @keyup.enter="finishRename"
 											class="font-bold text-lg border-b-2 border-amber-400 outline-none bg-transparent w-48" />
 										<h3 v-else class="font-bold text-lg cursor-pointer hover:text-amber-700" @click="startRename">
 											{{ cardDetail.card_name }}
 										</h3>
-										<label class="flex items-center gap-1.5 text-xs cursor-pointer">
-											<input type="checkbox" v-model="cardDetail.is_active"
-												:true-value="true" :false-value="false"
-												class="rounded" @change="toggleCardActive" />
+										<span v-if="cardDetail.is_active"
+											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+											<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
 											{{ __("Active") }}
-										</label>
-									</div>
-									<!-- Visibility summary -->
-									<div v-if="cardSlots.length > 0" class="mt-1 text-xs text-gray-500">
-										<span v-for="(slot, i) in cardSlots" :key="i">
-											{{ slot }}<span v-if="i < cardSlots.length - 1">, </span>
+										</span>
+										<span v-else
+											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
+											{{ __("Inactive") }}
 										</span>
 									</div>
-									<div v-else class="mt-1 text-xs text-amber-600">
-										{{ __("Not assigned to any time slot") }}
+									<div class="flex items-center gap-2">
+										<Button variant="solid" size="sm" @click="saveCard" :loading="saving">{{ __("Save") }}</Button>
+										<button @click="openDesigner"
+											class="text-xs px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium transition-colors">
+											{{ __("Designer & PDF") }}
+										</button>
+										<button @click="duplicateCard"
+											class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
+											{{ __("Duplicate") }}
+										</button>
+										<button @click="deleteCard"
+											class="text-xs px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors">
+											{{ __("Delete") }}
+										</button>
 									</div>
 								</div>
-								<div class="flex gap-1">
-									<Button variant="solid" size="sm" @click="saveCard" :loading="saving">{{ __("Save") }}</Button>
-									<button @click="openDesigner" class="text-xs px-2 py-1 rounded hover:bg-purple-50 text-purple-600 font-medium">{{ __("Designer & PDF") }}</button>
-									<button @click="duplicateCard" class="text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600">{{ __("Duplicate") }}</button>
-									<button @click="deleteCard" class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-600">{{ __("Delete") }}</button>
+								<!-- Visibility summary - compact pills -->
+								<div class="flex flex-wrap gap-1 mt-2">
+									<template v-if="cardSlots.length > 0">
+										<span v-for="(slot, i) in cardSlots" :key="i"
+											class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-600">
+											{{ slot }}
+										</span>
+									</template>
+									<span v-else class="text-[10px] text-amber-600 italic">
+										{{ __("Not assigned to any time slot") }}
+									</span>
+									<label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] cursor-pointer ml-auto"
+										:class="cardDetail.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'">
+										<input type="checkbox" v-model="cardDetail.is_active"
+											:true-value="true" :false-value="false"
+											class="w-3 h-3 rounded" @change="toggleCardActive" />
+										{{ cardDetail.is_active ? __("Card active") : __("Card inactive") }}
+									</label>
 								</div>
 							</div>
 
@@ -123,9 +145,13 @@
 										{{ item.label || __("Category") }}
 									</span>
 									<template v-else>
+										<!-- Active indicator -->
+										<span class="w-2 h-2 rounded-full flex-shrink-0"
+											:class="item.disabled ? 'bg-gray-300' : 'bg-green-500'"
+											:title="item.disabled ? __('Disabled') : __('Active')"></span>
 										<div class="flex-1 min-w-0">
 											<div class="flex items-center gap-1.5">
-												<span class="text-sm">{{ item.label || item.item_name || item.item }}</span>
+												<span class="text-sm" :class="item.disabled ? 'text-gray-400 line-through' : ''">{{ item.label || item.item_name || item.item }}</span>
 												<!-- Badges inline -->
 												<div v-if="itemExtraData[item.item]?.badges?.length" class="flex gap-0.5 flex-shrink-0">
 													<span
@@ -161,15 +187,10 @@
 												<span v-if="stockData[item.item].length === 0" class="text-red-500">{{ __("Out of stock") }}</span>
 											</div>
 										</div>
-										<!-- Disable toggle -->
-										<label class="flex items-center cursor-pointer flex-shrink-0" :title="item.disabled ? __('Enable') : __('Disable')">
-											<input type="checkbox" :checked="!item.disabled"
-												@change="item.disabled = !item.disabled"
-												class="w-3.5 h-3.5 rounded border-gray-300 text-green-500 focus:ring-green-500" />
-										</label>
-										<input v-model.number="item.price" type="number" step="0.01"
-											class="w-20 px-2 py-0.5 border rounded text-sm text-right flex-shrink-0"
-											:placeholder="__('Price')" />
+										<!-- Price as text -->
+										<span class="text-sm font-medium text-gray-700 flex-shrink-0 tabular-nums">
+											{{ item.price || 0 }}
+										</span>
 									</template>
 
 									<!-- Delete -->
@@ -209,6 +230,7 @@
 							:local-price="selectedBadgeItem.price || 0"
 							:card-name="cardDetail.name"
 							:card-display-name="cardDetail.card_name"
+							:is-disabled="!!selectedBadgeItem.disabled"
 							@saved="onItemEditSaved"
 							@close="selectedBadgeItemIdx = null; selectedBadgeItem = null"
 						/>
@@ -470,12 +492,17 @@ function onItemEditSaved(changes) {
 	if (cardDetail.value?.name) {
 		loadItemExtraData(cardDetail.value.name)
 		loadStockData(cardDetail.value.name)
-		// Update local price in the card items if price changed locally
-		if (changes?.priceScope === "local" && selectedBadgeItem.value) {
-			selectedBadgeItem.value.price = changes.price
-		} else if (changes?.priceScope === "global" && selectedBadgeItem.value) {
-			selectedBadgeItem.value.price = changes.price
+		// Update the item in the card detail with new values
+		if (selectedBadgeItem.value) {
+			if (changes?.cardPrice !== undefined) {
+				selectedBadgeItem.value.price = changes.cardPrice
+			}
+			if (changes?.disabled !== undefined) {
+				selectedBadgeItem.value.disabled = changes.disabled
+			}
 		}
+		// Reload card detail to get fresh data
+		loadCardDetail(cardDetail.value.name)
 	}
 	selectedBadgeItemIdx.value = null
 	selectedBadgeItem.value = null

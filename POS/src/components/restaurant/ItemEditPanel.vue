@@ -33,20 +33,70 @@
 		<!-- Content -->
 		<div v-else class="p-2.5 space-y-3" style="flex: 1; overflow-y: auto; min-height: 0;">
 
-			<!-- Price -->
+			<!-- Active switch -->
+			<div class="flex items-center justify-between p-2 rounded-lg" :class="editData.disabled ? 'bg-red-50' : 'bg-green-50'">
+				<div class="flex items-center gap-2">
+					<span class="w-2.5 h-2.5 rounded-full" :class="editData.disabled ? 'bg-red-400' : 'bg-green-500'"></span>
+					<span class="text-xs font-medium" :class="editData.disabled ? 'text-red-700' : 'text-green-700'">
+						{{ editData.disabled ? __('Disabled on this card') : __('Active on this card') }}
+					</span>
+				</div>
+				<button
+					@click="editData.disabled = !editData.disabled"
+					class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+					:class="editData.disabled ? 'bg-red-300' : 'bg-green-500'"
+				>
+					<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm"
+						:class="editData.disabled ? 'translate-x-1' : 'translate-x-4.5'"
+						:style="{ transform: editData.disabled ? 'translateX(3px)' : 'translateX(17px)' }"
+					></span>
+				</button>
+			</div>
+
+			<!-- Global Price -->
 			<div>
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Global Price') }}</label>
-				<div class="flex items-center gap-2 mt-1">
+				<input
+					v-model.number="editData.globalPrice"
+					type="number"
+					step="0.01"
+					class="w-full px-2.5 py-1.5 border rounded-lg text-sm text-right mt-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+				/>
+				<p class="text-[9px] text-gray-400 mt-0.5">{{ __("Changes the price list in ERPNext") }}</p>
+			</div>
+
+			<!-- Card Price -->
+			<div>
+				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Card Price') }}</label>
+				<div class="flex items-center gap-1.5 mt-1">
 					<input
-						v-model.number="editData.price"
+						v-model.number="editData.cardPrice"
 						type="number"
 						step="0.01"
-						class="w-full px-2.5 py-1.5 border rounded-lg text-sm text-right focus:ring-2 focus:ring-blue-400 focus:outline-none"
+						class="flex-1 px-2.5 py-1.5 border rounded-lg text-sm text-right focus:ring-2 focus:ring-amber-400 focus:outline-none"
+						:class="editData.cardPrice !== editData.globalPrice ? 'border-amber-300 bg-amber-50' : ''"
 					/>
 				</div>
-				<div v-if="localPrice && localPrice !== editData.price" class="text-[9px] text-amber-600 mt-0.5">
-					{{ __("Card price: {0} (local override)", [localPrice]) }}
+				<!-- Quick actions -->
+				<div class="flex gap-1 mt-1.5">
+					<button v-for="adj in priceAdjustments" :key="adj.label"
+						@click="applyPriceAdjustment(adj.factor)"
+						class="px-1.5 py-0.5 text-[9px] font-medium rounded border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+						type="button"
+					>
+						{{ adj.label }}
+					</button>
+					<button
+						@click="editData.cardPrice = editData.globalPrice"
+						class="px-1.5 py-0.5 text-[9px] font-medium rounded border border-blue-200 hover:bg-blue-50 text-blue-600 transition-colors ml-auto"
+						type="button"
+					>
+						{{ __("= Global") }}
+					</button>
 				</div>
+				<p v-if="editData.cardPrice !== editData.globalPrice" class="text-[9px] text-amber-600 mt-0.5">
+					{{ __("Local override (differs from global)") }}
+				</p>
 			</div>
 
 			<!-- Description -->
@@ -224,6 +274,8 @@
 		<ItemSaveConfirmDialog
 			v-model="showSaveConfirm"
 			:card-name="cardDisplayName"
+			:mode="confirmMode"
+			:is-disabling="editData.disabled"
 			@confirm="onSaveConfirm"
 		/>
 	</div>
@@ -241,12 +293,22 @@ import ItemSaveConfirmDialog from "./ItemSaveConfirmDialog.vue"
 
 const colorPalette = ITEM_COLOR_PALETTE
 
+const priceAdjustments = [
+	{ label: "-20%", factor: 0.80 },
+	{ label: "-10%", factor: 0.90 },
+	{ label: "-5%", factor: 0.95 },
+	{ label: "+5%", factor: 1.05 },
+	{ label: "+10%", factor: 1.10 },
+	{ label: "+20%", factor: 1.20 },
+]
+
 const props = defineProps({
 	itemCode: { type: String, required: true },
 	itemName: { type: String, default: "" },
 	localPrice: { type: Number, default: 0 },
 	cardName: { type: String, default: "" },
 	cardDisplayName: { type: String, default: "" },
+	isDisabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(["saved", "close"])
@@ -259,19 +321,22 @@ const loading = ref(true)
 const saving = ref(false)
 const showImageSearch = ref(false)
 const showSaveConfirm = ref(false)
+const confirmMode = ref("price") // "price" or "active"
+const pendingConfirmQueue = ref([]) // queue of confirmations needed
 
 const originalData = ref({})
 const editData = ref({
-	price: 0,
+	globalPrice: 0,
+	cardPrice: 0,
 	description: "",
 	image: "",
 	color: "",
 	spice_level: 0,
 	badges: new Set(),
 	option_groups: [],
+	disabled: false,
 })
 
-// Track original values for change detection
 const originalEditSnapshot = ref(null)
 
 const badgeGroups = computed(() =>
@@ -286,19 +351,26 @@ const hasChanges = computed(() => {
 	if (!originalEditSnapshot.value) return false
 	const snap = originalEditSnapshot.value
 	return (
-		editData.value.price !== snap.price ||
+		editData.value.globalPrice !== snap.globalPrice ||
+		editData.value.cardPrice !== snap.cardPrice ||
 		editData.value.description !== snap.description ||
 		editData.value.image !== snap.image ||
 		editData.value.color !== snap.color ||
 		editData.value.spice_level !== snap.spice_level ||
+		editData.value.disabled !== snap.disabled ||
 		!setsEqual(editData.value.badges, snap.badges) ||
-		JSON.stringify(editData.value.option_groups.sort()) !== JSON.stringify(snap.option_groups.sort())
+		JSON.stringify([...editData.value.option_groups].sort()) !== JSON.stringify([...snap.option_groups].sort())
 	)
 })
 
-const priceChanged = computed(() => {
+const globalPriceChanged = computed(() => {
 	if (!originalEditSnapshot.value) return false
-	return editData.value.price !== originalEditSnapshot.value.price
+	return editData.value.globalPrice !== originalEditSnapshot.value.globalPrice
+})
+
+const activeChanged = computed(() => {
+	if (!originalEditSnapshot.value) return false
+	return editData.value.disabled !== originalEditSnapshot.value.disabled
 })
 
 function setsEqual(a, b) {
@@ -320,6 +392,11 @@ function toggleOptionGroup(name) {
 	else editData.value.option_groups.push(name)
 }
 
+function applyPriceAdjustment(factor) {
+	const base = editData.value.globalPrice || 0
+	editData.value.cardPrice = Math.round(base * factor * 100) / 100
+}
+
 async function loadData() {
 	loading.value = true
 	try {
@@ -330,25 +407,29 @@ async function loadData() {
 		})
 		originalData.value = data
 
+		const globalPrice = data.price_list_rate || data.standard_rate || 0
 		editData.value = {
-			price: data.price_list_rate || data.standard_rate || 0,
+			globalPrice,
+			cardPrice: props.localPrice || globalPrice,
 			description: data.description || "",
 			image: data.image || "",
 			color: data.custom_color || "",
 			spice_level: data.spice_level || 0,
 			badges: new Set(data.badges.map(b => b.menu_badge)),
 			option_groups: [...(data.linked_option_groups || [])],
+			disabled: props.isDisabled,
 		}
 
-		// Snapshot for change detection
 		originalEditSnapshot.value = {
-			price: editData.value.price,
+			globalPrice: editData.value.globalPrice,
+			cardPrice: editData.value.cardPrice,
 			description: editData.value.description,
 			image: editData.value.image,
 			color: editData.value.color,
 			spice_level: editData.value.spice_level,
 			badges: new Set(editData.value.badges),
 			option_groups: [...editData.value.option_groups],
+			disabled: editData.value.disabled,
 		}
 	} catch (e) {
 		console.error("[ItemEditPanel] Load failed:", e)
@@ -357,23 +438,52 @@ async function loadData() {
 	loading.value = false
 }
 
+// Save flow: check what needs confirmation
 function handleSave() {
-	if (priceChanged.value) {
+	pendingConfirmQueue.value = []
+
+	// Check if global price changed → needs confirmation
+	if (globalPriceChanged.value) {
+		pendingConfirmQueue.value.push("price")
+	}
+	// Check if active state changed → needs confirmation
+	if (activeChanged.value) {
+		pendingConfirmQueue.value.push("active")
+	}
+
+	if (pendingConfirmQueue.value.length > 0) {
+		// Show first confirmation
+		confirmMode.value = pendingConfirmQueue.value[0]
 		showSaveConfirm.value = true
 	} else {
-		doSave("none")
+		// No confirmations needed, save directly
+		doSave({})
 	}
 }
 
-async function onSaveConfirm(scope) {
+const confirmResults = ref({})
+
+function onSaveConfirm(result) {
 	showSaveConfirm.value = false
-	await doSave(scope)
+	confirmResults.value[result.action] = result.scope
+
+	// Remove processed item from queue
+	pendingConfirmQueue.value.shift()
+
+	if (pendingConfirmQueue.value.length > 0) {
+		// Show next confirmation
+		confirmMode.value = pendingConfirmQueue.value[0]
+		setTimeout(() => { showSaveConfirm.value = true }, 200)
+	} else {
+		// All confirmations done, proceed with save
+		doSave(confirmResults.value)
+	}
 }
 
-async function doSave(priceScope) {
+async function doSave(confirmations) {
 	saving.value = true
 	try {
-		// Save item details (description, image, color, badges, option groups)
+		// 1. Save item details (description, image, color, badges, option groups) — always global
 		await call("pos_next.api.restaurant.update_item_details", {
 			item_code: props.itemCode,
 			description: editData.value.description,
@@ -384,21 +494,46 @@ async function doSave(priceScope) {
 			option_groups: JSON.stringify(editData.value.option_groups),
 		})
 
-		// Save price if changed
-		if (priceChanged.value && priceScope !== "none") {
+		// 2. Handle global price change
+		if (globalPriceChanged.value) {
+			const priceScope = confirmations.price || "only_global"
 			await call("pos_next.api.restaurant.update_item_price", {
 				item_code: props.itemCode,
-				price: editData.value.price,
-				scope: priceScope,
+				price: editData.value.globalPrice,
+				scope: priceScope === "global" ? "global" : "global_only",
 				card_name: props.cardName,
 				pos_profile: shiftStore.profileName,
 			})
 		}
 
+		// 3. Handle card price (local override) — always local, no confirmation needed
+		if (editData.value.cardPrice !== originalEditSnapshot.value.cardPrice) {
+			await call("pos_next.api.restaurant.update_item_price", {
+				item_code: props.itemCode,
+				price: editData.value.cardPrice,
+				scope: "local",
+				card_name: props.cardName,
+				pos_profile: shiftStore.profileName,
+			})
+		}
+
+		// 4. Handle active/inactive change
+		if (activeChanged.value) {
+			const activeScope = confirmations.active || "local"
+			await call("pos_next.api.restaurant.update_item_active", {
+				item_code: props.itemCode,
+				disabled: editData.value.disabled ? 1 : 0,
+				scope: activeScope,
+				card_name: props.cardName,
+			})
+		}
+
 		showSuccess(__("Item updated"))
+		confirmResults.value = {}
 		emit("saved", {
-			price: editData.value.price,
-			priceScope,
+			cardPrice: editData.value.cardPrice,
+			globalPrice: editData.value.globalPrice,
+			disabled: editData.value.disabled,
 			description: editData.value.description,
 			image: editData.value.image,
 			color: editData.value.color,
