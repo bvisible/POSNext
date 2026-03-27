@@ -738,6 +738,7 @@ const props = defineProps({
 	modelValue: Boolean,
 	posProfile: String,
 	currentWarehouse: String,
+	initialTab: { type: String, default: "" },
 })
 
 const emit = defineEmits(["update:modelValue"])
@@ -906,6 +907,9 @@ watch(
 
 watch(show, (val) => {
 	emit("update:modelValue", val)
+	if (val && props.initialTab) {
+		activeTab.value = props.initialTab
+	}
 })
 
 // Watch for currentWarehouse prop changes and always sync
@@ -1124,7 +1128,7 @@ watch(activeTab, async (tab) => {
 			// Load all active cards (not time-filtered) for the card selector
 			const cardsRes = await call("frappe.client.get_list", {
 				doctype: "Restaurant Card",
-				filters: { is_active: 1 },
+				filters: { is_active: 1, is_permanent: 0 },
 				fields: ["name", "card_name"],
 				order_by: "card_name asc",
 				limit_page_length: 0,

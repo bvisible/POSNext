@@ -129,16 +129,32 @@
 									</div>
 								</div>
 								<!-- Visibility summary - compact pills (hidden for permanent cards) -->
-								<div v-if="!isPermanentCard" class="flex flex-wrap gap-1 mt-2">
+								<div v-if="!isPermanentCard" class="flex flex-wrap items-center gap-1 mt-2">
 									<template v-if="cardSlots.length > 0">
 										<span v-for="(slot, i) in cardSlots" :key="i"
 											class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-600">
 											{{ slot }}
 										</span>
+										<button @click="openScheduleSettings"
+											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 transition-colors">
+											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+											</svg>
+											{{ __("Edit schedule") }}
+										</button>
 									</template>
-									<span v-else class="text-[10px] text-amber-600 italic">
-										{{ __("Not assigned to any time slot") }}
-									</span>
+									<template v-else>
+										<span class="text-[10px] text-amber-600">
+											{{ __("This card is not assigned to any time slot.") }}
+										</span>
+										<button @click="openScheduleSettings"
+											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 font-medium transition-colors">
+											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											{{ __("Configure schedule in Settings") }}
+										</button>
+									</template>
 									<label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] cursor-pointer ml-auto"
 										:class="cardDetail.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'">
 										<input type="checkbox" v-model="cardDetail.is_active"
@@ -382,7 +398,7 @@ import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 
 const props = defineProps({ modelValue: Boolean })
-const emit = defineEmits(["update:modelValue", "cards-updated"])
+const emit = defineEmits(["update:modelValue", "cards-updated", "open-settings"])
 
 const show = computed({
 	get: () => props.modelValue,
@@ -647,6 +663,11 @@ function selectItemForBadges(item, idx) {
 
 function openDesigner() {
 	showDesigner.value = true
+}
+
+function openScheduleSettings() {
+	show.value = false
+	emit("open-settings", "restaurant")
 }
 
 async function duplicateCard() {

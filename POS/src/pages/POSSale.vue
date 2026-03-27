@@ -897,6 +897,7 @@
 				v-model="showPOSSettings"
 				:pos-profile="shiftStore.profileName"
 				:current-warehouse="shiftStore.profileWarehouse"
+				:initial-tab="settingsInitialTab"
 			/>
 
 			<!-- Stock Lookup Dialog (Products Menu) -->
@@ -910,7 +911,7 @@
 			<!-- Restaurant Editors -->
 			<WorkflowEditor v-if="showWorkflowEditor" v-model="showWorkflowEditor" />
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
-			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" />
+			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" @open-settings="openSettingsTab" />
 
 			<!-- Invoice Management -->
 			<InvoiceManagement
@@ -1570,6 +1571,12 @@ const showPromotionManagement = ref(false);
 
 // Settings dialog
 const showPOSSettings = ref(false);
+const settingsInitialTab = ref("");
+
+function openSettingsTab(tab) {
+	settingsInitialTab.value = tab || ""
+	showPOSSettings.value = true
+}
 
 // Stock Lookup dialog (Products menu)
 const showStockLookup = ref(false);
