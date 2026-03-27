@@ -223,7 +223,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	/**
 	 * Update item modifiers with structured JSON and adjust price.
 	 */
-	function updateItemModifiers(itemCode, uom, modifiersJson, instructions, priceAdjustment) {
+	function updateItemModifiers(itemCode, uom, modifiersJson, instructions, priceAdjustment, quantityValue = 0) {
 		const item = uom
 			? invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom)
 			: invoiceItems.value.find((i) => i.item_code === itemCode)
@@ -241,6 +241,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				item.rate = (item.rate || 0) - item._modifiers_applied + priceAdjustment
 				item.price_list_rate = item.rate
 				item._modifiers_applied = priceAdjustment
+			}
+			// Apply quantity from option if set
+			if (quantityValue > 0) {
+				item.quantity = quantityValue
 			}
 			// Recalculate item totals and rebuild cache so Grand Total updates immediately
 			recalculateItem(item)

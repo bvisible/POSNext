@@ -59,10 +59,15 @@
 									<span>{{ opt.option_name }}</span>
 									<span v-if="opt.is_default" class="text-[9px] text-blue-500 font-bold">{{ __("default") }}</span>
 								</div>
-								<span v-if="opt.price_adjustment" class="text-xs font-medium"
-									:class="opt.price_adjustment > 0 ? 'text-green-600' : 'text-red-600'">
-									{{ opt.price_adjustment > 0 ? '+' : '' }}{{ opt.price_adjustment.toFixed(2) }}
-								</span>
+								<div class="flex items-center gap-2">
+									<span v-if="opt.quantity_value" class="text-xs font-medium text-indigo-600">
+										&times;{{ opt.quantity_value }}
+									</span>
+									<span v-if="opt.price_adjustment" class="text-xs font-medium"
+										:class="opt.price_adjustment > 0 ? 'text-green-600' : 'text-red-600'">
+										{{ opt.price_adjustment > 0 ? '+' : '' }}{{ opt.price_adjustment.toFixed(2) }}
+									</span>
+								</div>
 							</div>
 						</div>
 
@@ -99,16 +104,24 @@
 							<!-- Options editing -->
 							<div>
 								<label class="text-[10px] font-medium text-gray-500 uppercase mb-1 block">{{ __("Options") }}</label>
+								<!-- Column headers -->
+								<div class="flex items-center gap-2 mb-1 text-[9px] font-medium text-gray-400 uppercase">
+									<span class="flex-1">{{ __("Name") }}</span>
+									<span class="w-20 text-right">{{ __("Price \u00B1") }}</span>
+									<span class="w-16 text-right">{{ __("Qty") }}</span>
+									<span class="w-4"></span>
+								</div>
 								<div v-for="(opt, idx) in group.options" :key="idx" class="flex items-center gap-2 mb-1">
 									<input v-model="opt.option_name" class="flex-1 px-2 py-1 border rounded text-sm" :placeholder="__('Option name')" />
-									<input v-model.number="opt.price_adjustment" type="number" step="0.01" class="w-20 px-2 py-1 border rounded text-sm text-right" placeholder="0.00" />
+									<input v-model.number="opt.price_adjustment" type="number" step="0.01" class="w-20 px-2 py-1 border rounded text-sm text-right" placeholder="0.00" :title="__('Price adjustment')" />
+									<input v-model.number="opt.quantity_value" type="number" step="0.1" min="0" class="w-16 px-2 py-1 border rounded text-sm text-right" placeholder="0" :title="__('Quantity')" />
 									<button @click="group.options.splice(idx, 1)" class="text-red-400 hover:text-red-600">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 										</svg>
 									</button>
 								</div>
-								<button @click="group.options.push({ option_name: '', price_adjustment: 0, is_default: 0 })"
+								<button @click="group.options.push({ option_name: '', price_adjustment: 0, quantity_value: 0, is_default: 0 })"
 									class="text-xs text-teal-600 hover:text-teal-800 font-medium flex items-center gap-1 mt-1">
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

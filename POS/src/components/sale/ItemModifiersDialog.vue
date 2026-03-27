@@ -26,9 +26,17 @@
 								: 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'"
 						>
 							<span>{{ option.option_name }}</span>
-							<span v-if="option.price_adjustment > 0" class="block text-[10px] font-bold text-green-600 mt-0.5">
-								+{{ formatPrice(option.price_adjustment) }}
-							</span>
+							<div class="flex items-center gap-2 mt-0.5">
+								<span v-if="option.quantity_value > 0" class="text-[10px] font-bold text-indigo-600">
+									&times;{{ option.quantity_value }}
+								</span>
+								<span v-if="option.price_adjustment > 0" class="text-[10px] font-bold text-green-600">
+									+{{ formatPrice(option.price_adjustment) }}
+								</span>
+								<span v-if="option.price_adjustment < 0" class="text-[10px] font-bold text-red-600">
+									{{ formatPrice(option.price_adjustment) }}
+								</span>
+							</div>
 							<!-- Checkmark for selected -->
 							<svg v-if="isSelected(group, option)" class="absolute top-1 right-1 w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
 								<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -103,6 +111,20 @@ const totalPriceAdjustment = computed(() => {
 		}
 	}
 	return total
+})
+
+// Get quantity value from selected options (use the last non-zero quantity found)
+const selectedQuantityValue = computed(() => {
+	let qty = 0
+	for (const [groupName, selectedOptions] of Object.entries(selections.value)) {
+		const group = applicableGroups.value.find(g => g.group_name === groupName)
+		if (!group) continue
+		for (const optName of selectedOptions) {
+			const opt = group.options.find(o => o.option_name === optName)
+			if (opt && Number(opt.quantity_value) > 0) qty = Number(opt.quantity_value)
+		}
+	}
+	return qty
 })
 
 const isValid = computed(() => {
@@ -215,10 +237,14 @@ function saveModifiers() {
 			group: groupName,
 			options: selectedOptions.map(optName => {
 				const opt = group.options.find(o => o.option_name === optName)
-				return {
+				const entry = {
 					name: optName,
 					price_adjustment: Number(opt?.price_adjustment) || 0
 				}
+				if (Number(opt?.quantity_value) > 0) {
+					entry.quantity_value = Number(opt.quantity_value)
+				}
+				return entry
 			})
 		})
 	}
@@ -233,7 +259,8 @@ function saveModifiers() {
 		item.value.uom,
 		JSON.stringify(modifiers),
 		freeTextOnly,
-		totalPriceAdjustment.value
+		totalPriceAdjustment.value,
+		selectedQuantityValue.value
 	)
 
 	show.value = false

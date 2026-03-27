@@ -652,6 +652,7 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 				doc.append("options", {
 					"option_name": o["option_name"],
 					"price_adjustment": o.get("price_adjustment") or 0,
+					"quantity_value": o.get("quantity_value") or 0,
 					"is_default": o.get("is_default") or 0,
 				})
 	if applicable_items is not None and hasattr(doc, "applicable_items"):
@@ -749,10 +750,13 @@ def get_all_product_option_groups():
 	groups = frappe.get_all(doctype, fields=fields)
 
 	for group in groups:
+		option_fields = ["option_name", "price_adjustment", "is_default"]
+		if frappe.db.has_column(option_dt, "quantity_value"):
+			option_fields.append("quantity_value")
 		group["options"] = frappe.get_all(
 			option_dt,
 			filters={"parent": group.name},
-			fields=["option_name", "price_adjustment", "is_default"],
+			fields=option_fields,
 			order_by="idx"
 		)
 		if not group.get("apply_to_all_items"):

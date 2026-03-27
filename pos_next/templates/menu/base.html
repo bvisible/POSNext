@@ -259,7 +259,7 @@
 			margin-bottom: 3mm;
 		}
 
-		/* Item header using table layout for wkhtmltopdf compatibility */
+		/* Item header — right-aligned price (default) */
 		.item-header {
 			display: table;
 			width: 100%;
@@ -274,40 +274,47 @@
 			display: table-cell;
 			text-align: right;
 			padding-left: 2mm;
+			white-space: nowrap;
 		}
 
 		.item-price.price-right {
+			display: table-cell;
 			text-align: right;
 		}
 
+		/* Inline price — flows with item name, no table-cell */
 		.item-price.price-inline {
+			display: inline;
 			text-align: left;
 			padding-left: 2mm;
+			font-weight: 400;
+			color: {{ design.color_secondary | default('#666666') }};
 		}
 
-		/* Dotted leader row using table layout */
+		/* Dotted leader row */
 		.item-dotted-row {
 			display: table;
 			width: 100%;
-			table-layout: fixed;
 		}
 
 		.item-dotted-row .item-name {
 			display: table-cell;
+			width: 1%;
+			white-space: nowrap;
 			padding-right: 2mm;
 		}
 
 		.item-dotted-row .spice-level {
 			display: table-cell;
-			padding-right: 2mm;
+			width: 1%;
 			white-space: nowrap;
+			padding-right: 2mm;
 		}
 
 		.dotted-leader {
 			display: table-cell;
-			border-bottom: 1px dotted {{ design.color_secondary | default('#666666') }};
-			padding: 0 1mm;
-			vertical-align: baseline;
+			border-bottom: 1px dotted {{ design.color_secondary | default('#aaaaaa') }};
+			vertical-align: bottom;
 		}
 
 		.item-dotted-row .item-price {
@@ -315,6 +322,7 @@
 			text-align: right;
 			padding-left: 2mm;
 			white-space: nowrap;
+			width: 1%;
 		}
 
 		.item-description {
@@ -324,28 +332,30 @@
 			clear: both;
 		}
 
-		/* Badges using inline-block instead of flex */
+		/* Badges — subtle, elegant, no borders */
 		.item-badges {
 			display: block;
-			margin-top: 1mm;
+			margin-top: 0.5mm;
+			opacity: 0.5;
 		}
 
 		.badge {
-			display: inline-block;
-			font-size: 7pt;
-			margin-right: 1.5mm;
-			margin-bottom: 1mm;
+			display: inline;
+			font-size: 6pt;
+			margin-right: 1mm;
+			color: {{ design.color_secondary | default('#999999') }};
 		}
 
 		.badge-icon {
-			width: 16px;
-			height: 16px;
+			width: 10px;
+			height: 10px;
 			vertical-align: middle;
-			margin-right: 0.5mm;
+			margin-right: 0.3mm;
+			opacity: 0.7;
 		}
 
 		.badge-label {
-			font-size: 7pt;
+			font-size: 6pt;
 			vertical-align: middle;
 		}
 
