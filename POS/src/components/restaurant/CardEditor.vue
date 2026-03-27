@@ -21,7 +21,8 @@
 				<template v-else>
 					<!-- Left: Card list -->
 					<div class="w-48 flex-shrink-0 space-y-2 overflow-y-auto">
-						<div v-for="card in cards" :key="card.name"
+						<!-- Normal cards -->
+						<div v-for="card in normalCards" :key="card.name"
 							@click="selectCard(card.name)"
 							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-sm"
 							:class="selectedCard === card.name
@@ -49,6 +50,26 @@
 								<Button variant="solid" size="sm" class="flex-1" @click="createCard" :disabled="!newCardName">{{ __("Create") }}</Button>
 							</div>
 						</div>
+
+						<!-- Separator -->
+						<div class="border-t border-gray-200 pt-2 mt-2">
+							<span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">{{ __("Always available") }}</span>
+						</div>
+
+						<!-- Permanent card -->
+						<div
+							@click="selectOrCreatePermanentCard"
+							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-sm"
+							:class="selectedCard === permanentCardName
+								? 'bg-indigo-100 text-indigo-800 font-bold border border-indigo-300'
+								: 'hover:bg-indigo-50 text-indigo-600 border border-dashed border-indigo-200'">
+							<div class="flex items-center gap-1.5">
+								<svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+								</svg>
+								<span class="truncate">{{ __("Permanent items") }}</span>
+							</div>
+						</div>
 					</div>
 
 					<!-- Right: Card detail editor -->
@@ -71,6 +92,15 @@
 										<h3 v-else class="font-bold text-lg cursor-pointer hover:text-amber-700" @click="startRename">
 											{{ cardDetail.card_name }}
 										</h3>
+										<template v-if="isPermanentCard">
+										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">
+											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+											</svg>
+											{{ __("Permanent") }}
+										</span>
+									</template>
+									<template v-else>
 										<span v-if="cardDetail.is_active"
 											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
 											<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -80,25 +110,26 @@
 											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
 											{{ __("Inactive") }}
 										</span>
+									</template>
 									</div>
 									<div class="flex items-center gap-2">
 										<Button variant="solid" size="sm" @click="saveCard" :loading="saving">{{ __("Save") }}</Button>
-										<button @click="openDesigner"
+										<button v-if="!isPermanentCard" @click="openDesigner"
 											class="text-xs px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium transition-colors">
 											{{ __("Designer & PDF") }}
 										</button>
-										<button @click="duplicateCard"
+										<button v-if="!isPermanentCard" @click="duplicateCard"
 											class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
 											{{ __("Duplicate") }}
 										</button>
-										<button @click="deleteCard"
+										<button v-if="!isPermanentCard" @click="deleteCard"
 											class="text-xs px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors">
 											{{ __("Delete") }}
 										</button>
 									</div>
 								</div>
-								<!-- Visibility summary - compact pills -->
-								<div class="flex flex-wrap gap-1 mt-2">
+								<!-- Visibility summary - compact pills (hidden for permanent cards) -->
+								<div v-if="!isPermanentCard" class="flex flex-wrap gap-1 mt-2">
 									<template v-if="cardSlots.length > 0">
 										<span v-for="(slot, i) in cardSlots" :key="i"
 											class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-600">
@@ -115,6 +146,15 @@
 											class="w-3 h-3 rounded" @change="toggleCardActive" />
 										{{ cardDetail.is_active ? __("Card active") : __("Card inactive") }}
 									</label>
+								</div>
+								<!-- Permanent card notice -->
+								<div v-else class="mt-2">
+									<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-indigo-100 text-indigo-700 font-medium">
+										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+										</svg>
+										{{ __("Always visible in POS, regardless of time slots") }}
+									</span>
 								</div>
 							</div>
 
@@ -368,6 +408,12 @@ const openingHours = ref([])
 const editingName = ref(false)
 const nameInput = ref(null)
 
+// Computed: normal vs permanent cards
+const normalCards = computed(() => cards.value.filter(c => !c.is_permanent))
+const permanentCard = computed(() => cards.value.find(c => c.is_permanent))
+const permanentCardName = computed(() => permanentCard.value?.name || null)
+const isPermanentCard = computed(() => cardDetail.value && permanentCardName.value === cardDetail.value.name)
+
 // Category dialog
 const showCategoryDialog = ref(false)
 const newCategoryName = ref("")
@@ -419,12 +465,36 @@ function selectCard(name) {
 	loadCardDetail(name)
 }
 
+async function selectOrCreatePermanentCard() {
+	if (permanentCard.value) {
+		selectCard(permanentCard.value.name)
+		return
+	}
+	// Auto-create permanent card
+	try {
+		const doc = await call("frappe.client.insert", {
+			doc: {
+				doctype: "Restaurant Card",
+				card_name: __("Permanent items"),
+				is_active: 1,
+				is_permanent: 1,
+				items: [],
+			}
+		})
+		showSuccess(__("Permanent card created"))
+		await loadCards()
+		if (doc) selectCard(doc.name)
+	} catch (error) {
+		showError(__("Failed to create permanent card"))
+	}
+}
+
 async function loadCards() {
 	loading.value = true
 	try {
 		const res = await call("frappe.client.get_list", {
 			doctype: "Restaurant Card",
-			fields: ["name", "card_name", "is_active"],
+			fields: ["name", "card_name", "is_active", "is_permanent"],
 			order_by: "is_active desc, card_name asc",
 			limit_page_length: 0
 		})

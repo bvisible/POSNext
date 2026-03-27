@@ -11,6 +11,7 @@
   "column_break_2",
   "image",
   "is_active",
+  "is_permanent",
   "section_break_dates",
   "available_from",
   "column_break_3",
@@ -53,10 +54,18 @@
    "label": "Active"
   },
   {
+   "default": "0",
+   "fieldname": "is_permanent",
+   "fieldtype": "Check",
+   "label": "Permanent (always available)",
+   "description": "If checked, this card is always visible in POS regardless of time slots or dates"
+  },
+  {
    "fieldname": "section_break_dates",
    "fieldtype": "Section Break",
    "label": "Availability",
-   "collapsible": 1
+   "collapsible": 1,
+   "depends_on": "eval:!doc.is_permanent"
   },
   {
    "fieldname": "available_from",
@@ -85,7 +94,7 @@
   }
  ],
  "links": [],
- "modified": "2026-03-23T00:00:00.000000",
+ "modified": "2026-03-27T00:00:00.000000",
  "module": "POS Next",
  "name": "Restaurant Card",
  "naming_rule": "By fieldname",

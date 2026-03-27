@@ -831,13 +831,14 @@ def delete_area(name):
 
 @frappe.whitelist()
 def get_active_cards():
-	"""Fetch active restaurant cards filtered by date and current time slot assignment."""
+	"""Fetch active restaurant cards filtered by date and current time slot assignment.
+	Permanent cards bypass all date/time filters and appear at the end."""
 	from frappe.utils import today
 
 	cards = frappe.get_all(
 		"Restaurant Card",
 		filters={"is_active": 1},
-		fields=["name", "card_name", "description", "image", "available_from", "available_to"]
+		fields=["name", "card_name", "description", "image", "available_from", "available_to", "is_permanent"]
 	)
 
 	current_date = today()
@@ -845,17 +846,22 @@ def get_active_cards():
 	# Get cards assigned to current time slot via opening hours
 	slot_cards = _get_current_slot_cards()
 
-	result = []
-	for card in cards:
-		# Date filtering
-		if card.get("available_from") and str(card.available_from) > current_date:
-			continue
-		if card.get("available_to") and str(card.available_to) < current_date:
-			continue
+	result_normal = []
+	result_permanent = []
 
-		# Time slot filtering: if slots have cards assigned, only show those cards
-		if slot_cards is not None and card.name not in slot_cards:
-			continue
+	for card in cards:
+		is_permanent = card.get("is_permanent")
+
+		# Permanent cards bypass all date/time filters
+		if not is_permanent:
+			# Date filtering
+			if card.get("available_from") and str(card.available_from) > current_date:
+				continue
+			if card.get("available_to") and str(card.available_to) < current_date:
+				continue
+			# Time slot filtering
+			if slot_cards is not None and card.name not in slot_cards:
+				continue
 
 		items = frappe.get_all(
 			"Restaurant Card Item",
@@ -885,9 +891,14 @@ def get_active_cards():
 		# Filter out disabled items
 		items = [ci for ci in items if not ci.get("disabled")]
 		card["items"] = items
-		result.append(card)
 
-	return result
+		if is_permanent:
+			result_permanent.append(card)
+		else:
+			result_normal.append(card)
+
+	# Permanent cards at the end
+	return result_normal + result_permanent
 
 
 @frappe.whitelist()

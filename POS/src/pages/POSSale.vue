@@ -358,11 +358,16 @@
 												v-for="card in restaurantStore.activeCards"
 												:key="card.name"
 												@click="selectedCard = card.name; selectedCardCategory = null"
-												class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0"
-												:class="selectedCard === card.name
-													? 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
-													: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100'"
+												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0"
+												:class="[
+													selectedCard === card.name
+														? (card.is_permanent ? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-500 shadow-neo' : 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo')
+														: (card.is_permanent ? 'bg-indigo-50/50 text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:bg-indigo-100' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100')
+												]"
 											>
+												<svg v-if="card.is_permanent" class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+												</svg>
 												{{ card.card_name }}
 											</button>
 										</div>
