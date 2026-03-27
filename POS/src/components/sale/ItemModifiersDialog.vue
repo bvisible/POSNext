@@ -86,6 +86,8 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/currency"
 
+const emit = defineEmits(["saved"])
+
 const show = ref(false)
 const item = ref(null)
 const instructions = ref("")
@@ -262,6 +264,14 @@ function saveModifiers() {
 		totalPriceAdjustment.value,
 		selectedQuantityValue.value
 	)
+
+	// Emit saved event with cart item reference for post-save logic
+	const cartItem = cartStore.invoiceItems.find(
+		i => i.item_code === item.value.item_code && i.uom === item.value.uom
+	)
+	if (cartItem) {
+		emit("saved", cartItem)
+	}
 
 	show.value = false
 }

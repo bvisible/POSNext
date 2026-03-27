@@ -841,7 +841,7 @@
 			/>
 
 			<!-- Item Modifiers Dialog -->
-			<ItemModifiersDialog ref="itemModifiersRef" />
+			<ItemModifiersDialog ref="itemModifiersRef" @saved="handleModifiersSaved" />
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
 
 			<!-- Menu Selection Dialog -->
@@ -2636,6 +2636,31 @@ function handleItemSelected(item, autoAdd = false) {
 	// Check for zero-price items (e.g., gift cards that need custom value)
 	const itemRate = item.price_list_rate || item.rate || 0;
 	if (itemRate === 0) {
+		// Restaurant mode with modifiers: show options first, price entry after if still 0
+		if (restaurantStore.isEnabled) {
+			const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group);
+			if (modGroups.length > 0) {
+				// Add item at price 0, then open modifiers dialog
+				try {
+					cartStore.addItem(item, 1, false, shiftStore.currentProfile);
+				} catch (error) {
+					uiStore.showError(
+						__("Insufficient Stock"),
+						error.message,
+						__("Item: {0}", [item.item_code])
+					);
+					return;
+				}
+				nextTick(() => {
+					const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+					if (cartItem && itemModifiersRef.value) {
+						itemModifiersRef.value.open(cartItem);
+					}
+				});
+				return;
+			}
+		}
+		// No modifiers or not restaurant: show price entry dialog directly
 		if (priceEntryRef.value) {
 			priceEntryRef.value.open(item);
 		}
@@ -2673,6 +2698,19 @@ async function handleEditItem(updatedItem) {
 }
 
 function handlePriceConfirmed({ item, price }) {
+	// Check if item is already in cart (restaurant flow: modifiers were shown first)
+	const existingCartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+	if (existingCartItem) {
+		// Update existing cart item's rate
+		existingCartItem.rate = price;
+		existingCartItem.price_list_rate = price;
+		existingCartItem.is_rate_manually_edited = 1;
+		cartStore.recalculateItem(existingCartItem);
+		cartStore.rebuildIncrementalCache();
+		return;
+	}
+
+	// New item: add to cart with entered price
 	const pricedItem = {
 		...item,
 		rate: price,
@@ -2688,19 +2726,15 @@ function handlePriceConfirmed({ item, price }) {
 			error.message,
 			__("Item: {0}", [item.item_code])
 		);
-		return;
 	}
-	// Chain: open modifiers dialog if applicable (restaurant mode)
-	if (restaurantStore.isEnabled) {
-		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group);
-		if (modGroups.length > 0) {
-			nextTick(() => {
-				const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
-				if (cartItem && itemModifiersRef.value) {
-					itemModifiersRef.value.open(cartItem);
-				}
-			});
-		}
+}
+
+function handleModifiersSaved(cartItem) {
+	// After modifiers are saved, if the item's rate is still 0, open price entry
+	if (cartItem && (cartItem.rate || 0) === 0 && priceEntryRef.value) {
+		nextTick(() => {
+			priceEntryRef.value.open(cartItem);
+		});
 	}
 }
 
