@@ -20,6 +20,10 @@
 		<span class="item-badges">
 			{%- for badge in badges -%}
 				<span class="badge" title="{{ badge.badge_name }}">
+					{%- if badge.icon -%}
+						<img src="{{ site_url }}/assets/pos_next/icons/badges/{{ badge.icon }}"
+							class="badge-icon" alt="" />
+					{%- endif -%}
 					<span class="badge-label">{{ badge.badge_name }}</span>
 					{%- if not loop.last %}<span class="badge-sep">&middot;</span>{% endif -%}
 				</span>
@@ -327,7 +331,7 @@
 			clear: both;
 		}
 
-		/* Badges — text only, subtle, no icons */
+		/* Badges — subtle icons + text, no color */
 		.item-badges {
 			display: block;
 			margin-top: 0.3mm;
@@ -339,9 +343,18 @@
 			color: #aaaaaa;
 		}
 
+		.badge-icon {
+			width: 8px;
+			height: 8px;
+			vertical-align: middle;
+			margin-right: 0.2mm;
+			opacity: 0.35;
+		}
+
 		.badge-label {
 			font-size: 6pt;
 			font-style: italic;
+			vertical-align: middle;
 		}
 
 		.badge-sep {
