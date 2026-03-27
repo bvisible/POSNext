@@ -2294,11 +2294,21 @@ def get_card_items_with_badges(card_name):
 			for row in item_doc.custom_item_badges:
 				try:
 					badge_doc = frappe.get_cached_doc("Menu Badge", row.menu_badge)
+					# Read SVG content for inline rendering in PDF
+					svg_content = ""
+					if badge_doc.icon:
+						svg_path = frappe.get_app_path("pos_next", "public", "icons", "badges", badge_doc.icon)
+						try:
+							with open(svg_path, "r") as f:
+								svg_content = f.read().strip()
+						except FileNotFoundError:
+							pass
 					badges.append({
 						"badge_name": badge_doc.badge_name,
 						"badge_type": badge_doc.badge_type,
 						"icon": badge_doc.icon,
 						"color": badge_doc.color,
+						"svg": svg_content,
 					})
 				except Exception:
 					pass
