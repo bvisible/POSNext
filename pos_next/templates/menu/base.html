@@ -19,14 +19,9 @@
 	{%- if badges and badges|length > 0 -%}
 		<span class="item-badges">
 			{%- for badge in badges -%}
-				<span class="badge" title="{{ badge.badge_name }}"
-					{%- if badge.color %} style="color: {{ badge.color }}"{% endif -%}>
-					{%- if badge.icon -%}
-						<img src="{{ site_url }}/assets/pos_next/icons/badges/{{ badge.icon }}"
-							width="16" height="16" alt="{{ badge.badge_name }}"
-							class="badge-icon" />
-					{%- endif -%}
+				<span class="badge" title="{{ badge.badge_name }}">
 					<span class="badge-label">{{ badge.badge_name }}</span>
+					{%- if not loop.last %}<span class="badge-sep">&middot;</span>{% endif -%}
 				</span>
 			{%- endfor -%}
 		</span>
@@ -332,31 +327,26 @@
 			clear: both;
 		}
 
-		/* Badges — subtle, elegant, no borders */
+		/* Badges — text only, subtle, no icons */
 		.item-badges {
 			display: block;
-			margin-top: 0.5mm;
-			opacity: 0.5;
+			margin-top: 0.3mm;
 		}
 
 		.badge {
 			display: inline;
 			font-size: 6pt;
-			margin-right: 1mm;
-			color: {{ design.color_secondary | default('#999999') }};
-		}
-
-		.badge-icon {
-			width: 10px;
-			height: 10px;
-			vertical-align: middle;
-			margin-right: 0.3mm;
-			opacity: 0.7;
+			color: #aaaaaa;
 		}
 
 		.badge-label {
 			font-size: 6pt;
-			vertical-align: middle;
+			font-style: italic;
+		}
+
+		.badge-sep {
+			margin: 0 0.5mm;
+			color: #cccccc;
 		}
 
 		/* Spice level */
