@@ -1530,6 +1530,29 @@ function handleCardItemClick(cardItem) {
 	if (stationInfo) {
 		item.preparation_station = stationInfo.station
 	}
+
+	// Check for zero-price items
+	const itemRate = item.rate || 0;
+	if (itemRate === 0) {
+		// Restaurant mode with modifiers: show options first, price entry after if still 0
+		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group);
+		if (modGroups.length > 0) {
+			cartStore.addItem(item, 1);
+			nextTick(() => {
+				const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+				if (cartItem && itemModifiersRef.value) {
+					itemModifiersRef.value.open(cartItem);
+				}
+			});
+			return;
+		}
+		// No modifiers: show price entry dialog
+		if (priceEntryRef.value) {
+			priceEntryRef.value.open(item);
+		}
+		return;
+	}
+
 	cartStore.addItem(item, 1)
 
 	// Auto-open modifiers dialog if item has required modifier groups
