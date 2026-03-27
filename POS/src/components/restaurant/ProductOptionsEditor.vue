@@ -261,12 +261,8 @@ function searchItemsForGroup() {
 			return
 		}
 		try {
-			const res = await call("frappe.client.get_list", {
-				doctype: "Item",
-				filters: [["item_name", "like", `%${itemSearchInput.value}%`]],
-				fields: ["name", "item_name"],
-				limit_page_length: 8
-			})
+			const q = itemSearchInput.value
+			const res = await call("pos_next.api.restaurant.search_items_for_options", { query: q })
 			itemSearchResults.value = res || []
 		} catch {
 			itemSearchResults.value = []

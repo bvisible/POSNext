@@ -842,6 +842,7 @@
 
 			<!-- Item Modifiers Dialog -->
 			<ItemModifiersDialog ref="itemModifiersRef" />
+			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
 
 			<!-- Menu Selection Dialog -->
 			<MenuSelectionDialog
@@ -1333,6 +1334,7 @@ import InvoiceCart from "@/components/sale/InvoiceCart.vue";
 import InvoiceHistoryDialog from "@/components/sale/InvoiceHistoryDialog.vue";
 import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
 import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
+import PriceEntryDialog from "@/components/sale/PriceEntryDialog.vue";
 import MenuSelectionDialog from "@/components/sale/MenuSelectionDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 import TableSelector from "@/components/pos/TableSelector.vue";
@@ -1438,6 +1440,7 @@ const offersDialogRef = ref(null);
 const kitchenDialogRef = ref(null);
 const invoiceCartRef = ref(null);
 const itemModifiersRef = ref(null);
+const priceEntryRef = ref(null);
 const menuSelectionRef = ref(null);
 const containerRef = ref(null);
 const dividerRef = ref(null);
@@ -2633,26 +2636,9 @@ function handleItemSelected(item, autoAdd = false) {
 	// Check for zero-price items (e.g., gift cards that need custom value)
 	const itemRate = item.price_list_rate || item.rate || 0;
 	if (itemRate === 0) {
-		// Add item to cart first
-		try {
-			cartStore.addItem(item, 1, false, shiftStore.currentProfile);
-		} catch (error) {
-			uiStore.showError(
-				__("Insufficient Stock"),
-				error.message,
-				__("Item: {0}", [item.item_code])
-			);
-			return;
+		if (priceEntryRef.value) {
+			priceEntryRef.value.open(item);
 		}
-		// Open edit dialog to set the price
-		nextTick(() => {
-			const addedItem = cartStore.invoiceItems.find(
-				(i) => i.item_code === item.item_code
-			);
-			if (addedItem && invoiceCartRef.value) {
-				invoiceCartRef.value.openEditDialog(addedItem);
-			}
-		});
 		return;
 	}
 
@@ -2684,6 +2670,38 @@ function handleItemSelected(item, autoAdd = false) {
 
 async function handleEditItem(updatedItem) {
 	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem);
+}
+
+function handlePriceConfirmed({ item, price }) {
+	const pricedItem = {
+		...item,
+		rate: price,
+		price_list_rate: price,
+		is_rate_manually_edited: 1,
+		original_rate: 0,
+	};
+	try {
+		cartStore.addItem(pricedItem, 1, false, shiftStore.currentProfile);
+	} catch (error) {
+		uiStore.showError(
+			__("Insufficient Stock"),
+			error.message,
+			__("Item: {0}", [item.item_code])
+		);
+		return;
+	}
+	// Chain: open modifiers dialog if applicable (restaurant mode)
+	if (restaurantStore.isEnabled) {
+		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group);
+		if (modGroups.length > 0) {
+			nextTick(() => {
+				const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+				if (cartItem && itemModifiersRef.value) {
+					itemModifiersRef.value.open(cartItem);
+				}
+			});
+		}
+	}
 }
 
 function handleAdditionalDiscountUpdate(discountAmount) {

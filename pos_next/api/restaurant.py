@@ -689,6 +689,21 @@ def delete_product_option_group(name):
 	return {"status": "success"}
 
 
+@frappe.whitelist()
+def search_items_for_options(query=""):
+	"""Search items by name or code for product option group assignment."""
+	if not query or len(query) < 2:
+		return []
+	q = f"%{query}%"
+	return frappe.db.sql("""
+		SELECT name, item_name
+		FROM `tabItem`
+		WHERE (item_name LIKE %(q)s OR name LIKE %(q)s)
+		ORDER BY item_name ASC
+		LIMIT 10
+	""", {"q": q}, as_dict=True)
+
+
 def _resolve_option_doctypes():
 	"""Detect whether to use new (Product Option) or old (Item Modifier) DocType names."""
 	try:
