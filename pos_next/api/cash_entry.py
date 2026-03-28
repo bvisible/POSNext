@@ -12,7 +12,7 @@ def get_cash_entry_templates(company):
 	templates = frappe.get_all(
 		"Journal Entry Template",
 		filters={"company": company},
-		fields=["name", "title", "voucher_type"],
+		fields=["name", "template_title", "voucher_type"],
 	)
 
 	for t in templates:
@@ -61,7 +61,7 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None):
 		remark = remark.replace("|", " ")
 
 	# Build structured user_remark for shift tracking
-	template_label = template.title or template.name
+	template_label = template.template_title or template.name
 	user_remark = f"POS Cash Entry|{pos_opening_shift}|{direction}|{template_label}"
 	if remark:
 		user_remark += f"|{remark}"

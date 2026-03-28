@@ -45,7 +45,7 @@
 							</div>
 							<div class="flex-1 min-w-0">
 								<div class="font-medium text-sm text-gray-900 truncate">
-									{{ t.title || t.name }}
+									{{ t.template_title || t.name }}
 								</div>
 								<div class="text-xs text-gray-500 truncate">
 									{{ t.accounts?.[0]?.account || '' }}
