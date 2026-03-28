@@ -12,6 +12,7 @@
   "image",
   "is_active",
   "is_permanent",
+  "is_guest_menu",
   "section_break_dates",
   "available_from",
   "column_break_3",
@@ -59,6 +60,13 @@
    "fieldtype": "Check",
    "label": "Permanent (always available)",
    "description": "If checked, this card is always visible in POS regardless of time slots or dates"
+  },
+  {
+   "default": "0",
+   "description": "Mark this card as the guest-facing menu for QR ordering",
+   "fieldname": "is_guest_menu",
+   "fieldtype": "Check",
+   "label": "Guest Menu"
   },
   {
    "fieldname": "section_break_dates",

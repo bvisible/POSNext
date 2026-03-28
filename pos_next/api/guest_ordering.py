@@ -1,0 +1,630 @@
+# Copyright (c) 2026, BrainWise and contributors
+# For license information, please see license.txt
+
+import json
+import frappe
+from frappe import _
+from frappe.utils import now_datetime, flt
+
+
+# ==========================================
+# Internal helpers
+# ==========================================
+
+
+def _get_token_doc(token):
+	"""Fetch Guest Order Token by token value. Throws if not found."""
+	name = frappe.db.get_value("Guest Order Token", {"token": token}, "name")
+	if not name:
+		frappe.throw(_("Invalid or unknown token."), frappe.AuthenticationError)
+	return frappe.get_doc("Guest Order Token", name)
+
+
+def _require_valid_token(token):
+	"""Return the token doc if valid, throw AuthenticationError otherwise."""
+	token_doc = _get_token_doc(token)
+	if not token_doc.is_valid():
+		frappe.throw(_("This session has expired or is no longer active."), frappe.AuthenticationError)
+	return token_doc
+
+
+def _get_restaurant_settings():
+	"""Return Restaurant Settings as a dict."""
+	return frappe.get_single("Restaurant Settings")
+
+
+def _get_active_pos_opening(pos_profile):
+	"""Return the name of the current open POS Opening Entry for a profile."""
+	result = frappe.db.get_value(
+		"POS Opening Entry",
+		{"pos_profile": pos_profile, "status": "Open", "docstatus": 1},
+		"name",
+		order_by="creation desc",
+	)
+	return result
+
+
+def _get_or_create_invoice(token_doc):
+	"""Return the existing draft invoice for this token's table, or None if missing."""
+	if token_doc.invoice:
+		if frappe.db.exists("Sales Invoice", {"name": token_doc.invoice, "docstatus": 0}):
+			return frappe.get_doc("Sales Invoice", token_doc.invoice)
+		# Invoice was submitted or cancelled — clear the link
+		token_doc.invoice = None
+		token_doc.save(ignore_permissions=True)
+
+	if token_doc.mode == "restaurant" and token_doc.table:
+		# Look for an existing draft on the table
+		existing = frappe.db.get_value(
+			"Sales Invoice",
+			{"docstatus": 0, "restaurant_table": token_doc.table},
+			"name",
+			order_by="creation desc",
+		)
+		if existing:
+			token_doc.invoice = existing
+			token_doc.save(ignore_permissions=True)
+			return frappe.get_doc("Sales Invoice", existing)
+
+	return None
+
+
+def _get_guest_menu_card(settings):
+	"""Return the Restaurant Card to use as guest menu."""
+	if settings.guest_menu:
+		return settings.guest_menu
+	# Fall back to a card flagged as is_guest_menu
+	name = frappe.db.get_value("Restaurant Card", {"is_guest_menu": 1, "is_active": 1}, "name")
+	return name
+
+
+def _build_menu_from_card(card_name):
+	"""Build menu structure (categories + items) from a Restaurant Card."""
+	card = frappe.get_doc("Restaurant Card", card_name)
+	card_items = frappe.get_all(
+		"Restaurant Card Item",
+		filters={"parent": card_name},
+		fields=["item_type", "label", "item", "price", "sort_order", "disabled"],
+		order_by="sort_order asc, idx asc",
+	)
+
+	categories = []
+	current_category = {"label": "", "menu_items": []}
+
+	for ci in card_items:
+		if ci.get("disabled"):
+			continue
+
+		if ci.item_type == "Category":
+			if current_category["menu_items"] or current_category["label"]:
+				categories.append(current_category)
+			current_category = {"label": ci.label or "", "menu_items": []}
+			continue
+
+		if ci.item_type != "Item" or not ci.item:
+			continue
+
+		item_doc = frappe.get_cached_doc("Item", ci.item)
+		price = ci.price or item_doc.get("standard_rate") or 0
+
+		raw_desc = item_doc.get("description") or ""
+		clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+
+		item_data = {
+			"item_code": ci.item,
+			"item_name": ci.label or item_doc.item_name,
+			"description": clean_desc,
+			"price": float(price),
+			"image": item_doc.get("image") or "",
+			"product_options": _get_item_product_options(ci.item),
+		}
+		current_category["menu_items"].append(item_data)
+
+	if current_category["menu_items"]:
+		categories.append(current_category)
+
+	# Drop empty categories
+	categories = [c for c in categories if c["menu_items"]]
+
+	return {
+		"card": {
+			"card_name": card.card_name,
+			"description": card.description or "",
+			"image": card.image or "",
+		},
+		"categories": categories,
+	}
+
+
+def _get_item_product_options(item_code):
+	"""Return product option groups applicable to an item."""
+	item_group = frappe.db.get_value("Item", item_code, "item_group")
+	direct = frappe.get_all(
+		"Product Option Group Item",
+		filters={"item": item_code, "parenttype": "Product Option Group"},
+		pluck="parent",
+	)
+	group_based = frappe.get_all(
+		"Product Option Group Item Group",
+		filters={"item_group": item_group, "parenttype": "Product Option Group"},
+		pluck="parent",
+	)
+	group_names = list(set(direct + group_based))
+	if not group_names:
+		return []
+
+	groups = frappe.get_all(
+		"Product Option Group",
+		filters={"name": ("in", group_names)},
+		fields=["name", "group_name", "selection_type"],
+	)
+	result = []
+	for g in groups:
+		options = frappe.get_all(
+			"Product Option",
+			filters={"parent": g.name},
+			fields=["option_name", "price_adjustment"],
+			order_by="idx asc",
+		)
+		result.append({
+			"group_name": g.group_name,
+			"selection_type": g.selection_type,
+			"options": [
+				{
+					"option_name": o.option_name,
+					"price_adjustment": float(o.price_adjustment or 0),
+				}
+				for o in options
+			],
+		})
+	return result
+
+
+def _broadcast_order_update(table_name, event_type, data):
+	"""Publish a realtime event to all clients watching a table."""
+	payload = {"event": event_type, "table": table_name}
+	payload.update(data)
+	frappe.publish_realtime(
+		"guest_order_update",
+		payload,
+		room=f"guest_table_{table_name}",
+	)
+
+
+# ==========================================
+# Public guest API endpoints
+# ==========================================
+
+
+@frappe.whitelist(allow_guest=True)
+def validate_token(token):
+	"""
+	Validate a guest token and return table + settings info.
+	Used on guest app mount to check session validity.
+	"""
+	token_doc = _require_valid_token(token)
+	settings = _get_restaurant_settings()
+
+	table_info = None
+	if token_doc.table:
+		table_info = frappe.db.get_value(
+			"Restaurant Table",
+			token_doc.table,
+			["name", "table_name", "area", "capacity", "status"],
+			as_dict=True,
+		)
+
+	return {
+		"valid": True,
+		"mode": token_doc.mode,
+		"table": table_info,
+		"pos_profile": token_doc.pos_profile,
+		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
+		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_guest_menu(token):
+	"""
+	Return the guest menu (categories + items) for a valid token.
+	Menu is taken from Restaurant Settings.guest_menu or the card flagged as_guest_menu.
+	"""
+	_require_valid_token(token)
+	settings = _get_restaurant_settings()
+	card_name = _get_guest_menu_card(settings)
+	if not card_name:
+		frappe.throw(_("No guest menu is configured. Please contact staff."))
+	return _build_menu_from_card(card_name)
+
+
+@frappe.whitelist(allow_guest=True)
+def submit_guest_order(token, items):
+	"""
+	Add items to the invoice linked to this guest token.
+	Creates a new draft invoice if none exists yet.
+	Respects the qr_order_validation setting (direct or server-approval).
+	"""
+	token_doc = _require_valid_token(token)
+
+	if isinstance(items, str):
+		items = json.loads(items)
+
+	if not items:
+		frappe.throw(_("No items provided."))
+
+	settings = _get_restaurant_settings()
+	validation_mode = settings.qr_order_validation or "Direct to Kitchen"
+
+	invoice_doc = _get_or_create_invoice(token_doc)
+
+	if not invoice_doc:
+		# Create a new draft invoice
+		if not token_doc.pos_profile:
+			frappe.throw(_("No POS Profile linked to this session."))
+
+		pos_profile_doc = frappe.get_cached_doc("POS Profile", token_doc.pos_profile)
+		invoice_data = {
+			"doctype": "Sales Invoice",
+			"is_pos": 1,
+			"pos_profile": token_doc.pos_profile,
+			"company": pos_profile_doc.company,
+			"currency": pos_profile_doc.currency or frappe.defaults.get_global_default("currency"),
+			"customer": pos_profile_doc.customer or frappe.db.get_single_value("Selling Settings", "customer") or "Guest",
+			"items": [],
+		}
+		if token_doc.table:
+			invoice_data["restaurant_table"] = token_doc.table
+
+		invoice_doc = frappe.get_doc(invoice_data)
+		invoice_doc.flags.ignore_permissions = True
+		invoice_doc.insert()
+
+		# Link invoice to token
+		token_doc.invoice = invoice_doc.name
+		token_doc.save(ignore_permissions=True)
+
+	# Append incoming items
+	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	for item in items:
+		item_code = item.get("item_code")
+		if not item_code:
+			continue
+		qty = flt(item.get("qty", 1))
+		rate = flt(item.get("rate") or item.get("price") or 0)
+		if not rate:
+			rate = flt(frappe.db.get_value("Item", item_code, "standard_rate") or 0)
+
+		row = invoice_doc.append("items", {
+			"item_code": item_code,
+			"qty": qty,
+			"rate": rate,
+		})
+
+		if has_kds:
+			if validation_mode == "Direct to Kitchen":
+				row.kds_status = "Pending"
+			else:
+				# Server-approval mode: mark as Waiting so server sees it
+				row.kds_status = "Waiting"
+
+		if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
+			row.posa_special_instructions = item.get("special_instructions") or ""
+
+	invoice_doc.flags.ignore_permissions = True
+	invoice_doc.save()
+
+	if token_doc.table:
+		event_type = "order_submitted" if validation_mode == "Direct to Kitchen" else "order_pending_approval"
+		_broadcast_order_update(token_doc.table, event_type, {
+			"invoice": invoice_doc.name,
+			"items_count": len(items),
+			"validation_mode": validation_mode,
+		})
+
+		# Also notify the server POS
+		frappe.publish_realtime("table_update")
+
+		if validation_mode == "Server Approval":
+			frappe.publish_realtime("guest_order_pending", {
+				"table": token_doc.table,
+				"invoice": invoice_doc.name,
+				"items": items,
+			})
+
+	return {
+		"invoice": invoice_doc.name,
+		"grand_total": flt(invoice_doc.grand_total),
+		"status": "pending_approval" if validation_mode == "Server Approval" else "sent_to_kitchen",
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_order_status(token):
+	"""
+	Return current items and totals for the guest session.
+	"""
+	token_doc = _require_valid_token(token)
+	invoice_doc = _get_or_create_invoice(token_doc)
+
+	if not invoice_doc:
+		return {"invoice": None, "items": [], "grand_total": 0, "net_total": 0}
+
+	item_fields = ["item_code", "item_name", "qty", "rate", "amount"]
+	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
+		item_fields.append("kds_status")
+	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
+		item_fields.append("posa_special_instructions")
+
+	items = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"parent": invoice_doc.name},
+		fields=item_fields,
+	)
+
+	return {
+		"invoice": invoice_doc.name,
+		"items": items,
+		"grand_total": flt(invoice_doc.grand_total),
+		"net_total": flt(invoice_doc.net_total),
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def create_guest_payment(token, amount, payment_items=None):
+	"""
+	Create a Wallee transaction for a guest payment.
+	Supports partial payments: pass amount for free-amount mode,
+	or payment_items (list of invoice item names) for item-selection mode.
+	Returns the Wallee payment URL.
+	"""
+	token_doc = _require_valid_token(token)
+	invoice_doc = _get_or_create_invoice(token_doc)
+
+	if not invoice_doc:
+		frappe.throw(_("No active order found for this session."))
+
+	amount = flt(amount)
+	if amount <= 0:
+		frappe.throw(_("Payment amount must be greater than zero."))
+
+	currency = invoice_doc.currency or frappe.defaults.get_global_default("currency")
+
+	try:
+		from wallee_integration.wallee_integration.api.transaction import create_transaction
+
+		line_items = None
+		if payment_items:
+			if isinstance(payment_items, str):
+				payment_items = json.loads(payment_items)
+			# Build line items from selected invoice rows
+			line_items = []
+			for item_name in payment_items:
+				row = frappe.db.get_value(
+					"Sales Invoice Item",
+					item_name,
+					["item_name", "qty", "amount"],
+					as_dict=True,
+				)
+				if row:
+					line_items.append({
+						"name": row.item_name,
+						"quantity": float(row.qty or 1),
+						"amount_including_tax": float(row.amount or 0),
+						"type": "PRODUCT",
+						"sku": item_name,
+					})
+
+		result = create_transaction(
+			amount=amount if not line_items else None,
+			line_items=line_items,
+			currency=currency,
+			merchant_reference=invoice_doc.name,
+		)
+	except ImportError:
+		frappe.throw(_("Wallee integration is not available on this instance."))
+	except Exception as e:
+		frappe.log_error("Guest payment creation failed", str(e))
+		frappe.throw(_("Failed to initiate payment. Please try again or contact staff."))
+
+	if token_doc.table:
+		_broadcast_order_update(token_doc.table, "payment_initiated", {
+			"invoice": invoice_doc.name,
+			"amount": amount,
+		})
+
+	return result
+
+
+# ==========================================
+# Authenticated endpoints (server-side)
+# ==========================================
+
+
+@frappe.whitelist()
+def create_table_token(table, pos_profile):
+	"""
+	Create a Guest Order Token for a restaurant table.
+	Called by the server POS when opening a table with QR ordering enabled.
+	Returns the token value and the guest URL.
+	"""
+	if not frappe.has_permission("Guest Order Token", "create"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if not frappe.db.exists("Restaurant Table", table):
+		frappe.throw(_("Table {0} not found.").format(table))
+
+	# Find the current open POS opening
+	pos_opening = _get_active_pos_opening(pos_profile)
+
+	# Expire any existing active token for this table
+	existing_tokens = frappe.get_all(
+		"Guest Order Token",
+		filters={"table": table, "status": "Active"},
+		pluck="name",
+	)
+	for t_name in existing_tokens:
+		t_doc = frappe.get_doc("Guest Order Token", t_name)
+		t_doc.expire()
+
+	# Compute expires_at from settings
+	settings = _get_restaurant_settings()
+	expires_at = None
+	if settings.token_expiry_mode == "Timed":
+		days = settings.token_expiry_days or 7
+		expires_at = frappe.utils.add_days(now_datetime(), days)
+
+	token_doc = frappe.get_doc({
+		"doctype": "Guest Order Token",
+		"mode": "restaurant",
+		"table": table,
+		"pos_profile": pos_profile,
+		"pos_opening": pos_opening,
+		"expires_at": expires_at,
+	})
+	token_doc.flags.ignore_permissions = True
+	token_doc.insert()
+
+	site_url = frappe.utils.get_url()
+	guest_url = f"{site_url}/pos/guest/{token_doc.token}"
+
+	return {
+		"token": token_doc.token,
+		"url": guest_url,
+		"name": token_doc.name,
+	}
+
+
+# ==========================================
+# Takeaway-specific endpoints
+# ==========================================
+
+
+@frappe.whitelist(allow_guest=True)
+def create_takeaway_token():
+	"""
+	Create a Guest Order Token for a takeaway web order (no table binding).
+	Called when a visitor starts a takeaway order.
+	"""
+	settings = _get_restaurant_settings()
+	if not settings.enable_web_takeaway:
+		frappe.throw(_("Takeaway web ordering is not enabled."))
+
+	# Compute expires_at from settings
+	expires_at = None
+	if settings.token_expiry_mode == "Timed":
+		days = settings.token_expiry_days or 7
+		expires_at = frappe.utils.add_days(now_datetime(), days)
+
+	token_doc = frappe.get_doc({
+		"doctype": "Guest Order Token",
+		"mode": "takeaway",
+		"expires_at": expires_at,
+	})
+	token_doc.flags.ignore_permissions = True
+	token_doc.insert()
+
+	return {"token": token_doc.token, "name": token_doc.name}
+
+
+@frappe.whitelist(allow_guest=True)
+def submit_takeaway_order(token, items, customer=None):
+	"""
+	Finalize a takeaway order after payment.
+	Creates a POS Invoice flagged as takeaway.
+	Payment must be completed before this endpoint will finalize the order.
+	"""
+	token_doc = _require_valid_token(token)
+
+	if token_doc.mode != "takeaway":
+		frappe.throw(_("This endpoint is only valid for takeaway sessions."))
+
+	if isinstance(items, str):
+		items = json.loads(items)
+
+	if not items:
+		frappe.throw(_("No items provided."))
+
+	# Takeaway orders require a customer
+	customer_name = customer or frappe.session.user
+	if not customer_name or customer_name == "Guest":
+		frappe.throw(_("A customer account is required for takeaway orders."))
+
+	# Enforce payment before order finalization
+	# Check if a Wallee transaction was created and completed for this token
+	has_payment = frappe.db.exists(
+		"Wallee Transaction",
+		{"merchant_reference": token_doc.invoice, "status": ("in", ["Fulfill", "Completed", "Authorized"])}
+	) if token_doc.invoice else False
+	if not has_payment:
+		frappe.throw(_("Payment must be completed before placing a takeaway order."))
+
+	settings = _get_restaurant_settings()
+	card_name = settings.takeaway_menu or _get_guest_menu_card(settings)
+	if not card_name:
+		frappe.throw(_("No takeaway menu is configured."))
+
+	# Determine POS profile — use first available if not linked to token
+	pos_profile = token_doc.pos_profile
+	if not pos_profile:
+		available = frappe.get_all("POS Profile", filters={"disabled": 0}, limit=1, pluck="name")
+		if available:
+			pos_profile = available[0]
+
+	if not pos_profile:
+		frappe.throw(_("No POS Profile is available for takeaway orders."))
+
+	pos_profile_doc = frappe.get_cached_doc("POS Profile", pos_profile)
+
+	invoice_data = {
+		"doctype": "Sales Invoice",
+		"is_pos": 1,
+		"pos_profile": pos_profile,
+		"company": pos_profile_doc.company,
+		"currency": pos_profile_doc.currency or frappe.defaults.get_global_default("currency"),
+		"customer": customer_name,
+		"items": [],
+	}
+
+	# Set takeaway flag if it exists
+	if frappe.db.has_column("Sales Invoice", "is_takeaway"):
+		invoice_data["is_takeaway"] = 1
+
+	invoice_doc = frappe.get_doc(invoice_data)
+
+	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	for item in items:
+		item_code = item.get("item_code")
+		if not item_code:
+			continue
+		qty = flt(item.get("qty", 1))
+		rate = flt(item.get("rate") or item.get("price") or 0)
+		if not rate:
+			rate = flt(frappe.db.get_value("Item", item_code, "standard_rate") or 0)
+
+		row = invoice_doc.append("items", {
+			"item_code": item_code,
+			"qty": qty,
+			"rate": rate,
+		})
+		if has_kds:
+			row.kds_status = "Pending"
+
+	invoice_doc.flags.ignore_permissions = True
+	invoice_doc.insert()
+
+	token_doc.invoice = invoice_doc.name
+	token_doc.save(ignore_permissions=True)
+
+	# Notify POS of new takeaway web order
+	frappe.publish_realtime("takeaway_web_order", {
+		"invoice": invoice_doc.name,
+		"customer": customer_name,
+		"grand_total": flt(invoice_doc.grand_total),
+	})
+
+	return {
+		"invoice": invoice_doc.name,
+		"grand_total": flt(invoice_doc.grand_total),
+		"status": "created",
+	}

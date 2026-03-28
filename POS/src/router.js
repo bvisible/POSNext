@@ -41,6 +41,18 @@ const routes = [
 		path: "/takeaway",
 		component: () => import("@/pages/Takeaway.vue"),
 	},
+	{
+		name: "GuestOrder",
+		path: "/guest/:token",
+		component: () => import("@/pages/GuestOrder.vue"),
+		meta: { allowGuest: true },
+	},
+	{
+		name: "TakeawayOrder",
+		path: "/order",
+		component: () => import("@/pages/TakeawayOrder.vue"),
+		meta: { allowGuest: true },
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

@@ -20,26 +20,54 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const modifierGroups = ref([])
 	const activeMenus = ref([])
 	const takeawayOrders = ref([])
-	const restaurantSettings = ref({ opening_hours: [], enable_tips: false, auto_detect_tip: true, tip_item: null, enable_runner: true, enable_takeaway: false, takeaway_card: null })
-	const restaurantStatus = ref({ isOpen: true, currentSlot: null, hasActiveCards: true, warning: null })
-	const isEnabled = computed(() => posSettingsStore.settings.enable_restaurant_mode)
-	const defaultArea = computed(() => posSettingsStore.settings.default_restaurant_area)
-	const hasCardWarning = computed(() => restaurantStatus.value.isOpen && !restaurantStatus.value.hasActiveCards)
+	const restaurantSettings = ref({
+		opening_hours: [],
+		enable_tips: false,
+		auto_detect_tip: true,
+		tip_item: null,
+		enable_runner: true,
+		enable_takeaway: false,
+		takeaway_card: null,
+		enable_qr_ordering: false,
+		guest_menu: null,
+		qr_order_validation: "Direct to Kitchen",
+		guest_account_mode: "Not Proposed",
+		token_expiry_mode: "On Table Close",
+		token_expiry_days: null,
+		enable_web_takeaway: false,
+		takeaway_menu: null,
+	})
+	const restaurantStatus = ref({
+		isOpen: true,
+		currentSlot: null,
+		hasActiveCards: true,
+		warning: null,
+	})
+	const isEnabled = computed(
+		() => posSettingsStore.settings.enable_restaurant_mode,
+	)
+	const defaultArea = computed(
+		() => posSettingsStore.settings.default_restaurant_area,
+	)
+	const hasCardWarning = computed(
+		() =>
+			restaurantStatus.value.isOpen && !restaurantStatus.value.hasActiveCards,
+	)
 	let statusInterval = null
 
 	// Computed - Occupied counts by area
 	const occupiedCountByArea = computed(() => {
 		const counts = {}
-		areas.value.forEach(area => {
+		areas.value.forEach((area) => {
 			counts[area.area_name] = tables.value.filter(
-				t => t.area === area.name && t.status === 'Occupied'
+				(t) => t.area === area.name && t.status === "Occupied",
 			).length
 		})
 		return counts
 	})
 
 	const totalOccupiedCount = computed(() => {
-		return tables.value.filter(t => t.status === 'Occupied').length
+		return tables.value.filter((t) => t.status === "Occupied").length
 	})
 
 	// Actions
@@ -63,19 +91,30 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			const res = await call("pos_next.api.restaurant.get_tables")
 
 			if (res) {
-				const { areas: fetchedAreas, tables: fetchedTables, stations: fetchedStations } = res
+				const {
+					areas: fetchedAreas,
+					tables: fetchedTables,
+					stations: fetchedStations,
+				} = res
 
 				areas.value = fetchedAreas || []
 				tables.value = fetchedTables || []
 				floorStations.value = fetchedStations || []
 
-				await db.transaction("rw", db.restaurant_areas, db.restaurant_tables, async () => {
-					await db.restaurant_areas.clear()
-					if (areas.value.length) await db.restaurant_areas.bulkPut(areas.value)
+				await db.transaction(
+					"rw",
+					db.restaurant_areas,
+					db.restaurant_tables,
+					async () => {
+						await db.restaurant_areas.clear()
+						if (areas.value.length)
+							await db.restaurant_areas.bulkPut(areas.value)
 
-					await db.restaurant_tables.clear()
-					if (tables.value.length) await db.restaurant_tables.bulkPut(tables.value)
-				})
+						await db.restaurant_tables.clear()
+						if (tables.value.length)
+							await db.restaurant_tables.bulkPut(tables.value)
+					},
+				)
 			}
 		} catch (error) {
 			log.error("Failed to fetch tables from network:", error)
@@ -100,7 +139,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function updateTableStatus(tableName, status) {
 		try {
-			const table = tables.value.find(t => t.name === tableName)
+			const table = tables.value.find((t) => t.name === tableName)
 			if (table) {
 				table.status = status
 				await db.restaurant_tables.put(table)
@@ -109,7 +148,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			if (navigator.onLine) {
 				await call("pos_next.api.restaurant.update_table_status", {
 					table_name: tableName,
-					status
+					status,
 				})
 			}
 		} catch (error) {
@@ -119,7 +158,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function updateTablePosition(tableName, pos_x, pos_y, width, height) {
 		try {
-			const table = tables.value.find(t => t.name === tableName)
+			const table = tables.value.find((t) => t.name === tableName)
 			if (table) {
 				table.pos_x = pos_x
 				table.pos_y = pos_y
@@ -134,16 +173,16 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function saveAllPositions() {
 		try {
-			const positions = tables.value.map(t => ({
+			const positions = tables.value.map((t) => ({
 				name: t.name,
 				pos_x: t.pos_x,
 				pos_y: t.pos_y,
 				width: t.width,
-				height: t.height
+				height: t.height,
 			}))
 
 			await call("pos_next.api.restaurant.save_table_positions", {
-				positions: JSON.stringify(positions)
+				positions: JSON.stringify(positions),
 			})
 		} catch (error) {
 			log.error("Failed to save table positions:", error)
@@ -153,7 +192,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function addTable(tableData) {
 		try {
-			const newTable = await call("pos_next.api.restaurant.create_table", tableData)
+			const newTable = await call(
+				"pos_next.api.restaurant.create_table",
+				tableData,
+			)
 			if (newTable) {
 				tables.value.push(newTable)
 				await db.restaurant_tables.put(newTable)
@@ -185,7 +227,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function fetchModifierGroups() {
 		try {
-			const res = await call("pos_next.api.restaurant.get_all_product_option_groups")
+			const res = await call(
+				"pos_next.api.restaurant.get_all_product_option_groups",
+			)
 			if (res) modifierGroups.value = res
 		} catch (error) {
 			log.error("Failed to fetch modifier groups:", error)
@@ -201,9 +245,15 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
-	async function updateStationPosition(stationName, pos_x, pos_y, width, height) {
+	async function updateStationPosition(
+		stationName,
+		pos_x,
+		pos_y,
+		width,
+		height,
+	) {
 		try {
-			const station = floorStations.value.find(s => s.name === stationName)
+			const station = floorStations.value.find((s) => s.name === stationName)
 			if (station) {
 				station.pos_x = pos_x
 				station.pos_y = pos_y
@@ -217,15 +267,15 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function saveStationPositions() {
 		try {
-			const positions = floorStations.value.map(s => ({
+			const positions = floorStations.value.map((s) => ({
 				name: s.name,
 				pos_x: s.pos_x,
 				pos_y: s.pos_y,
 				width: s.width,
-				height: s.height
+				height: s.height,
 			}))
 			await call("pos_next.api.restaurant.save_station_positions", {
-				positions: JSON.stringify(positions)
+				positions: JSON.stringify(positions),
 			})
 		} catch (error) {
 			log.error("Failed to save station positions:", error)
@@ -235,7 +285,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function reorderAreas(orderedNames) {
 		try {
-			await call("pos_next.api.restaurant.reorder_areas", { order: JSON.stringify(orderedNames) })
+			await call("pos_next.api.restaurant.reorder_areas", {
+				order: JSON.stringify(orderedNames),
+			})
 			await fetchFromNetwork()
 		} catch (error) {
 			log.error("Failed to reorder areas:", error)
@@ -243,13 +295,18 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	}
 
 	async function createArea(areaName) {
-		const res = await call("pos_next.api.restaurant.create_area", { area_name: areaName })
+		const res = await call("pos_next.api.restaurant.create_area", {
+			area_name: areaName,
+		})
 		if (res) await fetchFromNetwork()
 		return res
 	}
 
 	async function renameArea(name, newName) {
-		await call("pos_next.api.restaurant.rename_area", { name, new_name: newName })
+		await call("pos_next.api.restaurant.rename_area", {
+			name,
+			new_name: newName,
+		})
 		await fetchFromNetwork()
 	}
 
@@ -278,7 +335,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	async function saveRestaurantSettings(openingHours) {
 		try {
 			await call("pos_next.api.restaurant.save_restaurant_settings", {
-				opening_hours: JSON.stringify(openingHours)
+				opening_hours: JSON.stringify(openingHours),
 			})
 			await fetchRestaurantSettings()
 		} catch (error) {
@@ -344,6 +401,25 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 				fetchRestaurantSettings()
 			}, 500)
 		})
+		// Guest order realtime events
+		rt.on("guest_order_submitted", (data) => {
+			log.info("Guest order submitted for table:", data?.table)
+			// Notify server via toast (frappe-ui toast or browser notification)
+			if (window.frappe?.show_alert) {
+				window.frappe.show_alert(
+					{
+						message: data?.table
+							? `${__("New guest order for table")} ${data.table}`
+							: __("New guest order received"),
+						indicator: "orange",
+					},
+					5,
+				)
+			}
+		})
+		rt.on("guest_payment_received", (data) => {
+			log.info("Guest payment received for table:", data?.table)
+		})
 		_cardRealtimeStarted = true
 		log.info("Realtime card listeners started")
 	}
@@ -368,28 +444,45 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	}
 
 	function getModifiersForItem(itemCode, itemGroup) {
-		return modifierGroups.value.filter(g =>
-			g.apply_to_all_items
-			|| g.applicable_items.includes(itemCode)
-			|| (itemGroup && g.applicable_item_groups?.includes(itemGroup))
+		return modifierGroups.value.filter(
+			(g) =>
+				g.apply_to_all_items ||
+				g.applicable_items.includes(itemCode) ||
+				(itemGroup && g.applicable_item_groups?.includes(itemGroup)),
 		)
 	}
 
 	async function fetchTakeawayOrders() {
 		try {
-			const res = await call("pos_next.api.restaurant.get_takeaway_orders", { _: Date.now() })
+			const res = await call("pos_next.api.restaurant.get_takeaway_orders", {
+				_: Date.now(),
+			})
 			if (res) takeawayOrders.value = res
 		} catch (error) {
 			console.error("Failed to fetch takeaway orders:", error)
 		}
 	}
 
-	const runnerEnabled = computed(() => restaurantSettings.value.enable_runner !== false && restaurantSettings.value.enable_runner !== 0)
-	const takeawayEnabled = computed(() => !!restaurantSettings.value.enable_takeaway)
+	const runnerEnabled = computed(
+		() =>
+			restaurantSettings.value.enable_runner !== false &&
+			restaurantSettings.value.enable_runner !== 0,
+	)
+	const takeawayEnabled = computed(
+		() => !!restaurantSettings.value.enable_takeaway,
+	)
 	const takeawayCard = computed(() => restaurantSettings.value.takeaway_card)
 	const tipsEnabled = computed(() => !!restaurantSettings.value.enable_tips)
-	const autoDetectTip = computed(() => restaurantSettings.value.auto_detect_tip !== false)
+	const autoDetectTip = computed(
+		() => restaurantSettings.value.auto_detect_tip !== false,
+	)
 	const tipItem = computed(() => restaurantSettings.value.tip_item)
+	const qrOrderingEnabled = computed(
+		() => !!restaurantSettings.value.enable_qr_ordering,
+	)
+	const webTakeawayEnabled = computed(
+		() => !!restaurantSettings.value.enable_web_takeaway,
+	)
 
 	return {
 		tables,
@@ -411,6 +504,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		tipsEnabled,
 		autoDetectTip,
 		tipItem,
+		qrOrderingEnabled,
+		webTakeawayEnabled,
 		isEnabled,
 		defaultArea,
 		occupiedCountByArea,
@@ -437,6 +532,6 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		saveRestaurantSettings,
 		fetchRestaurantStatus,
 		startStatusPolling,
-		stopStatusPolling
+		stopStatusPolling,
 	}
 })

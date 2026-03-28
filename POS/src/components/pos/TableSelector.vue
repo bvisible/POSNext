@@ -63,6 +63,18 @@
 						]"
 					></div>
 
+					<!-- QR button (only for occupied tables when QR ordering is enabled) -->
+					<button
+						v-if="qrOrderingEnabled && table.status === 'Occupied'"
+						@click.stop="showQRForTable(table)"
+						class="absolute top-2 left-2 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+						:title="__('Show QR Code')"
+					>
+						<svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+						</svg>
+					</button>
+
 					<FeatherIcon name="coffee" class="w-8 h-8 mb-3 text-gray-700 dark:text-gray-300" />
 					<span class="font-bold text-lg text-gray-900 dark:text-white text-center">{{ table.table_name }}</span>
 
@@ -82,6 +94,15 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- QR Code Modal -->
+	<TableQRCode
+		v-if="activeQR"
+		:token="activeQR.token"
+		:table-name="activeQR.tableName"
+		:url="activeQR.url"
+		@close="activeQR = null"
+	/>
 </template>
 
 <script setup>
@@ -90,6 +111,7 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
 import { Button, FeatherIcon } from "frappe-ui"
+import TableQRCode from "@/components/restaurant/TableQRCode.vue"
 
 const emit = defineEmits(["table-selected", "load-table-draft"])
 
@@ -98,13 +120,17 @@ const cartStore = usePOSCartStore()
 const draftsStore = usePOSDraftsStore()
 
 const selectedArea = ref(null)
+const activeQR = ref(null) // { token, tableName, url }
 
 const areas = computed(() => restaurantStore.areas)
 const tables = computed(() => restaurantStore.tables)
+const qrOrderingEnabled = computed(
+	() => !!restaurantStore.restaurantSettings?.enable_qr_ordering,
+)
 
 const filteredTables = computed(() => {
 	if (!selectedArea.value) return tables.value
-	return tables.value.filter(t => t.area === selectedArea.value)
+	return tables.value.filter((t) => t.area === selectedArea.value)
 })
 
 onMounted(async () => {
@@ -128,7 +154,9 @@ const selectTable = async (table) => {
 	cartStore.clearCart()
 
 	await draftsStore.loadDrafts()
-	const tableDraft = draftsStore.drafts.find(d => d.restaurant_table === table.name)
+	const tableDraft = draftsStore.drafts.find(
+		(d) => d.restaurant_table === table.name,
+	)
 
 	if (tableDraft) {
 		emit("load-table-draft", tableDraft)
@@ -140,6 +168,39 @@ const selectTable = async (table) => {
 		}
 
 		emit("table-selected", table)
+	}
+}
+
+async function showQRForTable(table) {
+	try {
+		const response = await fetch(
+			"/api/method/pos_next.api.guest_ordering.create_table_token",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-Frappe-CSRF-Token":
+						window.csrf_token || window.frappe?.csrf_token || "",
+				},
+				body: JSON.stringify({
+					table: table.name,
+					pos_profile: restaurantStore.restaurantSettings?.pos_profile || null,
+				}),
+			},
+		)
+		if (!response.ok) throw new Error(`HTTP ${response.status}`)
+		const data = await response.json()
+		const result = data.message
+		if (!result?.token) throw new Error("No token returned")
+
+		const siteUrl = window.location.origin
+		activeQR.value = {
+			token: result.token,
+			tableName: table.table_name,
+			url: `${siteUrl}/pos/guest/${result.token}`,
+		}
+	} catch (err) {
+		console.error("Failed to create table token:", err)
 	}
 }
 </script>

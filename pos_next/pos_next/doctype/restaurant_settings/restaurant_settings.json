@@ -14,7 +14,18 @@
   "auto_detect_tip",
   "column_break_tips",
   "tip_item",
-  "tip_account"
+  "tip_account",
+  "section_qr_ordering",
+  "enable_qr_ordering",
+  "guest_menu",
+  "qr_order_validation",
+  "guest_account_mode",
+  "column_break_qr2",
+  "token_expiry_mode",
+  "token_expiry_days",
+  "section_web_takeaway",
+  "enable_web_takeaway",
+  "takeaway_menu"
  ],
  "fields": [
   {
@@ -78,6 +89,77 @@
    "options": "Account",
    "depends_on": "eval:doc.enable_tips",
    "description": "Transit account for tips (e.g. 2211)"
+  },
+  {
+   "fieldname": "section_qr_ordering",
+   "fieldtype": "Section Break",
+   "label": "QR Self-Ordering"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_qr_ordering",
+   "fieldtype": "Check",
+   "label": "Enable QR Self-Ordering"
+  },
+  {
+   "fieldname": "guest_menu",
+   "fieldtype": "Link",
+   "label": "Guest Menu",
+   "options": "Restaurant Card",
+   "depends_on": "eval:doc.enable_qr_ordering"
+  },
+  {
+   "default": "Direct to Kitchen",
+   "fieldname": "qr_order_validation",
+   "fieldtype": "Select",
+   "label": "Order Validation",
+   "options": "Direct to Kitchen\nServer Approval",
+   "depends_on": "eval:doc.enable_qr_ordering"
+  },
+  {
+   "default": "Not Proposed",
+   "fieldname": "guest_account_mode",
+   "fieldtype": "Select",
+   "label": "Guest Account Mode",
+   "options": "Not Proposed\nOptional\nMandatory",
+   "depends_on": "eval:doc.enable_qr_ordering"
+  },
+  {
+   "fieldname": "column_break_qr2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "On Table Close",
+   "fieldname": "token_expiry_mode",
+   "fieldtype": "Select",
+   "label": "Token Expiry Mode",
+   "options": "On Table Close\nOn Payment\nTimed",
+   "depends_on": "eval:doc.enable_qr_ordering"
+  },
+  {
+   "default": "7",
+   "fieldname": "token_expiry_days",
+   "fieldtype": "Int",
+   "label": "Token Expiry (Days)",
+   "depends_on": "eval:doc.token_expiry_mode=='Timed'"
+  },
+  {
+   "fieldname": "section_web_takeaway",
+   "fieldtype": "Section Break",
+   "label": "Takeaway Web Ordering"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_web_takeaway",
+   "fieldtype": "Check",
+   "label": "Enable Takeaway Web Ordering"
+  },
+  {
+   "fieldname": "takeaway_menu",
+   "fieldtype": "Link",
+   "label": "Takeaway Menu",
+   "options": "Restaurant Card",
+   "depends_on": "eval:doc.enable_web_takeaway"
   }
  ],
  "index_web_link_preview": 0,
