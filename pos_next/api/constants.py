@@ -52,6 +52,8 @@ POS_SETTINGS_FIELDS = [
 	# Restaurant Settings
 	"enable_restaurant_mode",
 	"default_restaurant_area",
+	# Cash Management
+	"closing_withdrawal_template",
 ]
 
 # Default POS Settings values
@@ -94,4 +96,6 @@ DEFAULT_POS_SETTINGS = {
 	# Restaurant Settings
 	"enable_restaurant_mode": 0,
 	"default_restaurant_area": "",
+	# Cash Management
+	"closing_withdrawal_template": "",
 }

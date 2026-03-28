@@ -551,6 +551,28 @@
 								</div>
 							</div>
 
+							<!-- Cash Management -->
+							<div :class="operationsSubsectionClasses.container">
+								<div class="flex items-center gap-2 mb-4">
+									<svg :class="operationsSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+									</svg>
+									<h4 class="text-sm font-semibold text-gray-900">{{ __('Cash Management') }}</h4>
+								</div>
+								<div class="flex flex-col gap-3">
+									<div class="flex flex-col gap-1.5">
+										<label class="text-sm font-medium text-gray-700">{{ __('Closing Withdrawal Template') }}</label>
+										<input
+											v-model="settings.closing_withdrawal_template"
+											type="text"
+											:placeholder="__('Journal Entry Template name')"
+											class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+										/>
+										<p class="text-xs text-gray-500">{{ __('When set, cashiers can withdraw cash at closing. The remaining balance is suggested as the next opening amount.') }}</p>
+									</div>
+								</div>
+							</div>
+
 							<!-- Restaurant Settings Section -->
 							<div v-if="activeTab === 'restaurant'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
 								<div :class="restaurantSectionClasses.header">
@@ -869,6 +891,7 @@ const settings = ref({
 	silent_print: 0,
 	allow_negative_stock: 0,
 	tax_inclusive: 0,
+	closing_withdrawal_template: "",
 })
 
 // Stock Sync Settings (localStorage persisted)

@@ -544,6 +544,64 @@
             </div>
           </div>
 
+          <!-- Cash Withdrawal Section -->
+          <div v-if="closingData.closing_withdrawal_template && !showSuccessReport" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 bg-amber-50 border-b border-amber-200">
+              <h3 class="text-sm md:text-lg font-medium text-amber-900">{{ __('Cash Withdrawal') }}</h3>
+              <p class="text-xs text-amber-700 mt-1">{{ __('Withdraw cash from the register. The remaining amount will be suggested as opening balance for the next shift.') }}</p>
+            </div>
+            <div class="p-3 md:p-6">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                <!-- Cash Counted -->
+                <div class="text-start bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <label class="block text-xs font-medium text-gray-500 uppercase mb-1">{{ __('Cash Counted') }}</label>
+                  <div class="text-lg md:text-xl font-bold text-gray-900">{{ formatCurrency(cashClosingAmount) }}</div>
+                  <div class="text-xs text-gray-500 mt-1">{{ __('From reconciliation') }}</div>
+                </div>
+
+                <!-- Withdrawal Amount -->
+                <div class="text-start bg-white rounded-lg p-3 border border-amber-300">
+                  <label class="block text-xs font-medium text-amber-700 uppercase mb-1">{{ __('Withdraw') }}</label>
+                  <Input
+                    :modelValue="cashWithdrawalAmount"
+                    @update:modelValue="updateWithdrawalAmount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    :max="cashClosingAmount"
+                    placeholder="0.00"
+                    :disabled="submitResource.loading"
+                    class="text-lg"
+                  />
+                  <div class="text-xs text-amber-600 mt-1">{{ __('Amount to take out') }}</div>
+                </div>
+
+                <!-- Remaining -->
+                <div class="text-start rounded-lg p-3 border" :class="cashRemainingBalance > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'">
+                  <label class="block text-xs font-medium uppercase mb-1" :class="cashRemainingBalance > 0 ? 'text-green-600' : 'text-gray-500'">{{ __('Remaining') }}</label>
+                  <div class="text-lg md:text-xl font-bold" :class="cashRemainingBalance > 0 ? 'text-green-700' : 'text-gray-900'">{{ formatCurrency(cashRemainingBalance) }}</div>
+                  <div class="text-xs mt-1" :class="cashRemainingBalance > 0 ? 'text-green-600' : 'text-gray-500'">{{ __('Next opening balance') }}</div>
+                </div>
+              </div>
+
+              <!-- Warning if withdrawal exceeds cash -->
+              <div v-if="withdrawalExceedsCash" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-xs md:text-sm text-red-700 font-medium">{{ __('Withdrawal amount cannot exceed the counted cash amount.') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cash Withdrawal Summary (in success report) -->
+          <div v-if="closingData.closing_withdrawal_template && showSuccessReport && cashWithdrawalAmount > 0" class="bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-amber-900">{{ __('Cash Withdrawn') }}</p>
+                <p class="text-xs text-amber-700 mt-1">{{ __('Remaining balance for next shift: {0}', [formatCurrency(cashRemainingBalance)]) }}</p>
+              </div>
+              <div class="text-lg md:text-xl font-bold text-amber-900">{{ formatCurrency(cashWithdrawalAmount) }}</div>
+            </div>
+          </div>
+
           <!-- Error Display -->
           <div v-if="submitResource.error || (errorMessage && !closingDataResource.error)" class="rounded-lg bg-red-50 border border-red-200 p-3 md:p-4">
             <div class="flex gap-2 md:gap-3">
@@ -664,6 +722,7 @@ const showInvoiceDetails = ref(false)
 const showSuccessReport = ref(false) // Track if shift is closed and showing report
 const errorMessage = ref("") // User-friendly error message
 const showIdleWarning = ref(false)
+const cashWithdrawalAmount = ref(0)
 let _idleWarningTimer = null
 
 // Watch dialog open state
@@ -756,13 +815,18 @@ const canSubmit = computed(() => {
 		return false
 
 	// Check if all closing amounts have been manually entered
-	return closingData.value.payment_reconciliation.every(
+	const allFilled = closingData.value.payment_reconciliation.every(
 		(payment) =>
 			payment._touched &&
 			payment.closing_amount !== null &&
 			payment.closing_amount !== undefined &&
 			payment.closing_amount !== "",
 	)
+
+	// Block if withdrawal exceeds cash
+	if (withdrawalExceedsCash.value) return false
+
+	return allFilled
 })
 
 async function submitClosing() {
@@ -777,6 +841,11 @@ async function submitClosing() {
 				calculateDifference(payment)
 			})
 		}
+
+		// Inject cash withdrawal data
+		const withdrawal = Number.parseFloat(cashWithdrawalAmount.value || 0)
+		closingData.value.cash_withdrawal_amount = withdrawal
+		closingData.value.cash_remaining_balance = cashRemainingBalance.value
 
 		// Submit to server
 		await submitResource.submit({ closing_shift: closingData.value })
@@ -811,6 +880,7 @@ function closeDialog() {
 	showInvoiceDetails.value = false
 	showSuccessReport.value = false // Reset report view
 	errorMessage.value = "" // Clear error messages
+	cashWithdrawalAmount.value = 0
 }
 
 // UI State Computed Properties
@@ -883,6 +953,34 @@ const getTotalActual = computed(() => {
 const getTotalDifference = computed(() => {
 	return getTotalActual.value - getTotalExpected.value
 })
+
+// Cash withdrawal computed properties
+const cashClosingAmount = computed(() => {
+	if (!closingData.value || !closingData.value.payment_reconciliation) return 0
+	const cashMode = closingData.value.cash_mode_of_payment
+	if (!cashMode) return 0
+	const cashPayment = closingData.value.payment_reconciliation.find(
+		(p) => p.mode_of_payment === cashMode,
+	)
+	return Number.parseFloat(cashPayment?.closing_amount || 0)
+})
+
+const cashRemainingBalance = computed(() => {
+	const remaining =
+		cashClosingAmount.value - Number.parseFloat(cashWithdrawalAmount.value || 0)
+	return Math.max(0, remaining)
+})
+
+const withdrawalExceedsCash = computed(() => {
+	return (
+		Number.parseFloat(cashWithdrawalAmount.value || 0) >
+			cashClosingAmount.value && cashClosingAmount.value > 0
+	)
+})
+
+function updateWithdrawalAmount(value) {
+	cashWithdrawalAmount.value = value
+}
 
 function getSalesForPayment(payment) {
 	return (

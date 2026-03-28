@@ -61,7 +61,7 @@
               {{ __('Opening Balance (Optional)') }}
             </label>
 
-            <div v-if="dialogDataResource.loading" class="text-center py-4">
+            <div v-if="dialogDataResource.loading || suggestedBalanceResource.loading" class="text-center py-4">
               <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
 
@@ -75,6 +75,9 @@
                   <label class="text-sm font-medium text-gray-700">
                     {{ method.mode_of_payment }}
                   </label>
+                  <p v-if="suggestedCashMode === method.mode_of_payment && suggestedAmount > 0" class="text-xs text-blue-600 mt-0.5">
+                    {{ __('Suggested from last shift: {0}', [suggestedAmount]) }}
+                  </p>
                 </div>
                 <div class="w-32">
                   <Input
@@ -220,6 +223,8 @@ const existingShift = ref(null)
 const showClosingDialog = ref(false)
 const closingExistingShift = ref(false)
 const restartProfileName = ref(null)
+const suggestedAmount = ref(0)
+const suggestedCashMode = ref("")
 
 // Get POS Profiles
 const profilesResource = createResource({
@@ -230,6 +235,12 @@ const profilesResource = createResource({
 // Get dialog data (payment methods)
 const dialogDataResource = createResource({
 	url: "pos_next.api.shifts.get_opening_dialog_data",
+	auto: false,
+})
+
+// Get suggested opening balance from last closing shift
+const suggestedBalanceResource = createResource({
+	url: "pos_next.api.shifts.get_suggested_opening_balance",
 	auto: false,
 })
 
@@ -307,6 +318,26 @@ function selectPosProfile(profile) {
 async function nextStep() {
 	if (step.value === 1 && selectedProfile.value) {
 		await dialogDataResource.fetch()
+
+		// Fetch suggested opening balance from last closing shift
+		suggestedAmount.value = 0
+		suggestedCashMode.value = ""
+		try {
+			const result = await suggestedBalanceResource.submit({
+				pos_profile: selectedProfile.value.name,
+			})
+			if (result) {
+				suggestedAmount.value = result.suggested_amount || 0
+				suggestedCashMode.value = result.cash_mode_of_payment || ""
+				// Pre-fill the cash opening balance
+				if (suggestedAmount.value > 0 && suggestedCashMode.value) {
+					openingBalances.value[suggestedCashMode.value] = suggestedAmount.value
+				}
+			}
+		} catch {
+			// Suggestion is optional, don't block opening
+		}
+
 		step.value = 2
 	}
 }

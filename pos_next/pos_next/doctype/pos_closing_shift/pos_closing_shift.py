@@ -82,6 +82,8 @@ class POSClosingShift(Document):
         opening_entry.save()
         # link invoices with this closing shift so ERPNext can block edits
         self._set_closing_entry_invoices()
+        # Create withdrawal journal entry if amount > 0
+        self._create_withdrawal_journal_entry()
 
     def on_cancel(self):
         if frappe.db.exists("POS Opening Shift", self.pos_opening_shift):
@@ -92,6 +94,8 @@ class POSClosingShift(Document):
                 opening_entry.save()
         # remove links from invoices so they can be cancelled
         self._clear_closing_entry_invoices()
+        # Cancel withdrawal journal entry if one was created
+        self._cancel_withdrawal_journal_entry()
 
     def _set_closing_entry_invoices(self):
         """Set `pos_closing_entry` on linked invoices."""
@@ -166,6 +170,85 @@ class POSClosingShift(Document):
                 "POS Invoice Merge Log", {"consolidated_credit_note": sales_invoice}
             )
         )
+
+    def _create_withdrawal_journal_entry(self):
+        """Create a Journal Entry for cash withdrawal at shift closing."""
+        withdrawal = flt(self.cash_withdrawal_amount)
+        if withdrawal <= 0:
+            return
+
+        # Get withdrawal template from POS Settings
+        template_name = frappe.db.get_value(
+            "POS Settings",
+            {"pos_profile": self.pos_profile, "enabled": 1},
+            "closing_withdrawal_template",
+        )
+        if not template_name:
+            return
+
+        from pos_next.api.cash_entry import _get_cash_mode, _get_cash_account
+
+        template = frappe.get_doc("Journal Entry Template", template_name)
+        cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
+        cash_mode = _get_cash_mode(self.pos_profile)
+        cash_account = _get_cash_account(cash_mode, self.company)
+
+        # Resolve accounts from template (same pattern as cash_entry.py)
+        totalization_accounts = template.get("accounting_entry_totalization", [])
+        counterparty_accounts = template.get("accounting_entry_counterparty", [])
+
+        if totalization_accounts and counterparty_accounts:
+            source_account = totalization_accounts[0].account
+            dest_account = counterparty_accounts[0].account
+        elif template.accounts:
+            source_account = cash_account
+            dest_account = template.accounts[0].account
+        else:
+            frappe.throw(_("Withdrawal template has no accounts configured"))
+
+        template_label = template.template_title or template.name
+        user_remark = f"POS Cash Withdrawal|{self.name}|{withdrawal}|{template_label}"
+
+        jv = frappe.get_doc({
+            "doctype": "Journal Entry",
+            "voucher_type": template.voucher_type or "Journal Entry",
+            "posting_date": self.posting_date,
+            "company": self.company,
+            "user_remark": user_remark,
+        })
+
+        # Debit transit (dest), credit cash (source)
+        jv.append("accounts", {
+            "account": dest_account,
+            "debit_in_account_currency": withdrawal,
+            "credit_in_account_currency": 0,
+            "cost_center": cost_center,
+        })
+        jv.append("accounts", {
+            "account": source_account,
+            "debit_in_account_currency": 0,
+            "credit_in_account_currency": withdrawal,
+            "cost_center": cost_center,
+        })
+
+        jv.flags.ignore_permissions = True
+        jv.save()
+        jv.submit()
+
+    def _cancel_withdrawal_journal_entry(self):
+        """Cancel the withdrawal Journal Entry created at shift closing."""
+        entries = frappe.get_all(
+            "Journal Entry",
+            filters={
+                "docstatus": 1,
+                "user_remark": ["like", f"POS Cash Withdrawal|{self.name}|%"],
+            },
+            pluck="name",
+        )
+        for entry_name in entries:
+            jv = frappe.get_doc("Journal Entry", entry_name)
+            jv.flags.ignore_permissions = True
+            jv.cancel()
 
     def delete_draft_invoices(self):
         if frappe.get_value("POS Profile", self.pos_profile, "posa_allow_delete"):
@@ -653,6 +736,13 @@ def make_closing_shift_from_opening(opening_shift):
         if flt(amount, 2) != 0
     ]
 
+    # Get closing withdrawal template from POS Settings
+    closing_withdrawal_template = frappe.db.get_value(
+        "POS Settings",
+        {"pos_profile": opening_shift.get("pos_profile"), "enabled": 1},
+        "closing_withdrawal_template",
+    ) or ""
+
     result.update({
         "returns_total": summary["returns_total"],
         "returns_count": summary["returns_count"],
@@ -664,6 +754,8 @@ def make_closing_shift_from_opening(opening_shift):
         "cash_entries": cash_entries,
         "cash_in_total": cash_in_total,
         "cash_out_total": cash_out_total,
+        "cash_mode_of_payment": cash_mode,
+        "closing_withdrawal_template": closing_withdrawal_template,
     })
 
     return result

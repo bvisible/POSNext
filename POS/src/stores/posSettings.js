@@ -76,6 +76,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
+		// Cash Management
+		closing_withdrawal_template: "",
 	})
 
 	const isLoading = ref(false)
@@ -268,6 +270,11 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		() => Number.parseInt(settings.value.session_lock_timeout) || 5,
 	)
 
+	// Computed - Cash Management
+	const closingWithdrawalTemplate = computed(
+		() => settings.value.closing_withdrawal_template || "",
+	)
+
 	// Resource
 	const settingsResource = createResource({
 		url: "pos_next.pos_next.doctype.pos_settings.pos_settings.get_pos_settings",
@@ -381,6 +388,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
+			// Cash Management
+			closing_withdrawal_template: "",
 		}
 		isLoaded.value = false
 	}
@@ -554,6 +563,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Computed - Security
 		enableSessionLock,
 		sessionLockTimeout,
+
+		// Computed - Cash Management
+		closingWithdrawalTemplate,
 
 		// Actions
 		loadSettings,
