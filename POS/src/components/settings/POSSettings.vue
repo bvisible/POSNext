@@ -685,6 +685,107 @@
 											</div>
 										</div>
 									</div>
+
+									<!-- QR Self-Ordering -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('QR Self-Ordering') }}</h4>
+										</div>
+										<div class="flex flex-col gap-3">
+											<CheckboxField
+												:modelValue="qrSettings.enable_qr_ordering ? 1 : 0"
+												@update:modelValue="qrSettings.enable_qr_ordering = !!$event"
+												:label="__('Enable QR Self-Ordering')"
+												:description="__('Allow customers to scan a QR code on the table to order and pay from their phone')"
+											/>
+											<div v-if="qrSettings.enable_qr_ordering" class="pl-6 flex flex-col gap-3">
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Guest Menu') }}</label>
+													<select
+														v-model="qrSettings.guest_menu"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="">{{ __('Select a card...') }}</option>
+														<option v-for="card in allCards" :key="card.name" :value="card.name">{{ card.card_name }}</option>
+													</select>
+													<p class="text-[10px] text-gray-400 mt-0.5">{{ __('The menu card shown to guests who scan the QR code') }}</p>
+												</div>
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Order Validation') }}</label>
+													<select
+														v-model="qrSettings.qr_order_validation"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="Direct to Kitchen">{{ __('Direct to Kitchen') }}</option>
+														<option value="Server Approval">{{ __('Server Approval') }}</option>
+													</select>
+													<p class="text-[10px] text-gray-400 mt-0.5">{{ __('Whether guest orders go straight to kitchen or need server confirmation') }}</p>
+												</div>
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Guest Account Mode') }}</label>
+													<select
+														v-model="qrSettings.guest_account_mode"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="Not Proposed">{{ __('Not Proposed') }}</option>
+														<option value="Optional">{{ __('Optional') }}</option>
+														<option value="Mandatory">{{ __('Mandatory') }}</option>
+													</select>
+												</div>
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Token Expiry') }}</label>
+													<select
+														v-model="qrSettings.token_expiry_mode"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="On Table Close">{{ __('On Table Close') }}</option>
+														<option value="On Payment">{{ __('On Payment') }}</option>
+														<option value="Timed">{{ __('Timed') }}</option>
+													</select>
+												</div>
+												<div v-if="qrSettings.token_expiry_mode === 'Timed'">
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Expiry Days') }}</label>
+													<input
+														v-model.number="qrSettings.token_expiry_days"
+														type="number"
+														min="1"
+														class="w-24 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													/>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<!-- Takeaway Web Ordering -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Takeaway Web Ordering') }}</h4>
+										</div>
+										<div class="flex flex-col gap-3">
+											<CheckboxField
+												:modelValue="qrSettings.enable_web_takeaway ? 1 : 0"
+												@update:modelValue="qrSettings.enable_web_takeaway = !!$event"
+												:label="__('Enable Takeaway Web Ordering')"
+												:description="__('Allow customers to order online for pickup via /pos/order')"
+											/>
+											<div v-if="qrSettings.enable_web_takeaway" class="pl-6">
+												<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Takeaway Menu') }}</label>
+												<select
+													v-model="qrSettings.takeaway_menu"
+													class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												>
+													<option value="">{{ __('Select a card...') }}</option>
+													<option v-for="card in allCards" :key="card.name" :value="card.name">{{ card.card_name }}</option>
+												</select>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
 
@@ -837,6 +938,16 @@ const tipSettings = ref({
 	auto_detect_tip: true,
 	tip_item: null,
 	tip_account: null,
+})
+const qrSettings = ref({
+	enable_qr_ordering: false,
+	guest_menu: "",
+	qr_order_validation: "Direct to Kitchen",
+	guest_account_mode: "Not Proposed",
+	token_expiry_mode: "On Table Close",
+	token_expiry_days: 7,
+	enable_web_takeaway: false,
+	takeaway_menu: "",
 })
 
 async function toggleRunner(val) {
@@ -1092,6 +1203,28 @@ async function saveSettings() {
 					enable_tips: tipSettings.value.enable_tips ? 1 : 0,
 					auto_detect_tip: tipSettings.value.auto_detect_tip ? 1 : 0,
 				})
+				// Save QR settings
+				const qrFields = {
+					enable_qr_ordering: qrSettings.value.enable_qr_ordering ? 1 : 0,
+					guest_menu: qrSettings.value.guest_menu || "",
+					qr_order_validation:
+						qrSettings.value.qr_order_validation || "Direct to Kitchen",
+					guest_account_mode:
+						qrSettings.value.guest_account_mode || "Not Proposed",
+					token_expiry_mode:
+						qrSettings.value.token_expiry_mode || "On Table Close",
+					token_expiry_days: qrSettings.value.token_expiry_days || 7,
+					enable_web_takeaway: qrSettings.value.enable_web_takeaway ? 1 : 0,
+					takeaway_menu: qrSettings.value.takeaway_menu || "",
+				}
+				for (const [field, value] of Object.entries(qrFields)) {
+					await call("frappe.client.set_value", {
+						doctype: "Restaurant Settings",
+						name: "Restaurant Settings",
+						fieldname: field,
+						value: value,
+					})
+				}
 				await restaurantStore.fetchRestaurantSettings()
 				// Update local tip display after save (item may have been auto-created)
 				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item
@@ -1136,6 +1269,18 @@ watch(activeTab, async (tab) => {
 					restaurantStore.restaurantSettings.auto_detect_tip !== false,
 				tip_item: restaurantStore.restaurantSettings.tip_item || null,
 				tip_account: restaurantStore.restaurantSettings.tip_account || null,
+			}
+			// Load QR settings
+			const rs = restaurantStore.restaurantSettings
+			qrSettings.value = {
+				enable_qr_ordering: !!rs.enable_qr_ordering,
+				guest_menu: rs.guest_menu || "",
+				qr_order_validation: rs.qr_order_validation || "Direct to Kitchen",
+				guest_account_mode: rs.guest_account_mode || "Not Proposed",
+				token_expiry_mode: rs.token_expiry_mode || "On Table Close",
+				token_expiry_days: rs.token_expiry_days || 7,
+				enable_web_takeaway: !!rs.enable_web_takeaway,
+				takeaway_menu: rs.takeaway_menu || "",
 			}
 			// Load all active cards (not time-filtered) for the card selector
 			const cardsRes = await call("frappe.client.get_list", {
