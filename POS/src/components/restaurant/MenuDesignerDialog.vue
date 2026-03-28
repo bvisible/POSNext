@@ -94,10 +94,15 @@ const pdfStatus = ref(null)
 
 const activeTemplate = computed(() => {
 	const base = previewData.value.design || {}
+	// Collect option groups from all selected cards
+	const extraGroups = Object.values(extraCardData.value).flatMap(
+		(d) => d.option_groups || [],
+	)
 	return {
 		...base,
 		...configOverrides.value,
 		option_groups: previewData.value.option_groups || [],
+		extra_option_groups: extraGroups,
 	}
 })
 

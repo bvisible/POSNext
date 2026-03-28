@@ -215,21 +215,22 @@ const selectedTemplate = ref("")
 const selectedCards = ref([])
 const selectedOptionGroups = ref([])
 
-// Extract available option groups from preview data
+// Extract available option groups from preview data (all selected cards)
 const availableOptionGroups = computed(() => {
 	const groups = new Set()
 	const tpl = props.currentTemplate
 	if (tpl?.option_groups) {
 		tpl.option_groups.forEach((g) => groups.add(g))
 	}
+	// Also include groups from extra_option_groups (from additional cards)
+	if (tpl?.extra_option_groups) {
+		tpl.extra_option_groups.forEach((g) => groups.add(g))
+	}
 	return [...groups].sort()
 })
 
 function onToggleOptions() {
-	if (config.show_options && selectedOptionGroups.value.length === 0) {
-		// Select all groups by default when enabling
-		selectedOptionGroups.value = [...availableOptionGroups.value]
-	}
+	// When toggling ON, keep existing selection (don't auto-select all)
 	emitUpdate()
 }
 
@@ -389,11 +390,9 @@ watch(
 					config[key] = saved[key]
 				}
 			}
-			// Restore selected option groups
+			// Restore selected option groups (default: none selected)
 			if (saved.selected_option_groups && Array.isArray(saved.selected_option_groups)) {
 				selectedOptionGroups.value = saved.selected_option_groups
-			} else if (config.show_options) {
-				selectedOptionGroups.value = [...availableOptionGroups.value]
 			}
 		}
 
