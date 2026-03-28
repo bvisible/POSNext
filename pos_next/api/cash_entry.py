@@ -16,10 +16,18 @@ def get_cash_entry_templates(company):
 	)
 
 	for t in templates:
-		t["accounts"] = frappe.get_all(
-			"Journal Entry Template Account",
+		# Get totalization accounts (source side, typically cash)
+		t["totalization"] = frappe.get_all(
+			"Accounting Entry Totalization",
 			filters={"parent": t["name"]},
-			fields=["account", "debit", "credit"],
+			fields=["account"],
+			order_by="idx asc",
+		)
+		# Get counterparty accounts (destination side)
+		t["counterparty"] = frappe.get_all(
+			"Accounting Entry Counterparty",
+			filters={"parent": t["name"]},
+			fields=["account"],
 			order_by="idx asc",
 		)
 
@@ -40,20 +48,32 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None):
 
 	# Get template
 	template = frappe.get_doc("Journal Entry Template", template_name)
-	template_accounts = template.accounts
-	if not template_accounts:
-		frappe.throw(_("Template has no accounts"))
+	company = shift.company
+	cost_center = frappe.get_cached_value("Company", company, "cost_center")
 
 	# Get POS cash account
-	company = shift.company
 	cash_mode = _get_cash_mode(shift.pos_profile)
 	cash_account = _get_cash_account(cash_mode, company)
 
-	cost_center = frappe.get_cached_value("Company", company, "cost_center")
+	# Determine accounts from template structure
+	# totalization = source account (typically cash), counterparty = destination
+	totalization_accounts = template.get("accounting_entry_totalization", [])
+	counterparty_accounts = template.get("accounting_entry_counterparty", [])
 
-	# Determine direction from template first account row
-	template_row = template_accounts[0]
-	is_cash_out = flt(template_row.debit) > 0
+	if totalization_accounts and counterparty_accounts:
+		# Custom template structure (ERPNext Swiss)
+		source_account = totalization_accounts[0].account
+		dest_account = counterparty_accounts[0].account
+	elif template.accounts:
+		# Standard template structure (fallback)
+		source_account = cash_account
+		dest_account = template.accounts[0].account
+	else:
+		frappe.throw(_("Template has no accounts configured"))
+
+	# Determine direction: if source is the cash account, money leaves → Cash Out
+	# If destination is the cash account, money enters → Cash In
+	is_cash_out = _is_cash_account(source_account, cash_account)
 	direction = "out" if is_cash_out else "in"
 
 	# Sanitize remark (remove pipe chars)
@@ -75,17 +95,17 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None):
 		"user_remark": user_remark,
 	})
 
-	# Template account row (counterpart)
+	# Debit the destination, credit the source (for Cash Out)
+	# For Cash In, reverse: debit source, credit destination
 	jv.append("accounts", {
-		"account": template_row.account,
+		"account": dest_account,
 		"debit_in_account_currency": amount if is_cash_out else 0,
 		"credit_in_account_currency": 0 if is_cash_out else amount,
 		"cost_center": cost_center,
 	})
 
-	# Cash account row
 	jv.append("accounts", {
-		"account": cash_account,
+		"account": source_account,
 		"debit_in_account_currency": 0 if is_cash_out else amount,
 		"credit_in_account_currency": amount if is_cash_out else 0,
 		"cost_center": cost_center,
@@ -100,8 +120,16 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None):
 		"direction": direction,
 		"amount": amount,
 		"template": template_label,
-		"account": template_row.account,
+		"account": dest_account if is_cash_out else source_account,
 	}
+
+
+def _is_cash_account(account, pos_cash_account):
+	"""Check if an account is a cash-type account or matches the POS cash account."""
+	if account == pos_cash_account:
+		return True
+	account_type = frappe.get_cached_value("Account", account, "account_type")
+	return account_type == "Cash"
 
 
 @frappe.whitelist()

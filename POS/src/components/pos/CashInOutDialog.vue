@@ -48,7 +48,7 @@
 									{{ t.template_title || t.name }}
 								</div>
 								<div class="text-xs text-gray-500 truncate">
-									{{ t.accounts?.[0]?.account || '' }}
+									{{ t.counterparty?.[0]?.account || t.totalization?.[0]?.account || '' }}
 								</div>
 							</div>
 							<span
@@ -220,9 +220,16 @@ const totalOut = computed(() =>
 
 // Methods
 function getDirection(template) {
-	const firstAccount = template.accounts?.[0]
-	if (!firstAccount) return "out"
-	return (firstAccount.debit || 0) > 0 ? "out" : "in"
+	// If totalization has a cash-type account (source), it's Cash Out
+	// Templates with totalization = cash account → money leaves the register
+	// For Cash In templates, totalization would be the external account
+	// Default to "out" since most POS cash operations are withdrawals
+	const totAccount = template.totalization?.[0]?.account || ""
+	const cashKeywords = ["caisse", "cash", "kasse"]
+	const isCashSource = cashKeywords.some((kw) =>
+		totAccount.toLowerCase().includes(kw),
+	)
+	return isCashSource || !totAccount ? "out" : "in"
 }
 
 function selectTemplate(template) {
