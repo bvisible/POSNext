@@ -94,7 +94,11 @@ const pdfStatus = ref(null)
 
 const activeTemplate = computed(() => {
 	const base = previewData.value.design || {}
-	return { ...base, ...configOverrides.value }
+	return {
+		...base,
+		...configOverrides.value,
+		option_groups: previewData.value.option_groups || [],
+	}
 })
 
 // Combine categories from main card + extra selected cards

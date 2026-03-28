@@ -58,6 +58,13 @@ def get_menu_preview_data(card_name, template_name=None):
 	except FileNotFoundError:
 		pass
 
+	# Collect unique option group names
+	option_groups = set()
+	for cat in card_data["categories"]:
+		for item in cat["menu_items"]:
+			for opt in item.get("product_options", []):
+				option_groups.add(opt["group_name"])
+
 	return {
 		"card": card_data["card"],
 		"categories": card_data["categories"],
@@ -67,6 +74,7 @@ def get_menu_preview_data(card_name, template_name=None):
 		"company_logo": company_logo,
 		"company_name": company_name,
 		"chili_uri": chili_uri,
+		"option_groups": sorted(option_groups),
 	}
 
 

@@ -55,9 +55,18 @@
 						{{ __('Allergens & Badges') }}
 					</label>
 					<label class="flex items-center gap-2 text-sm cursor-pointer">
-						<input type="checkbox" v-model="config.show_options" class="rounded" @change="emitUpdate" />
+						<input type="checkbox" v-model="config.show_options" class="rounded" @change="onToggleOptions" />
 						{{ __('Product Options') }}
 					</label>
+					<!-- Option group selector -->
+					<div v-if="config.show_options && availableOptionGroups.length > 0" class="ml-6 mt-1 space-y-1">
+						<label v-for="group in availableOptionGroups" :key="group"
+							class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+							<input type="checkbox" :value="group" v-model="selectedOptionGroups" class="rounded"
+								@change="emitUpdate" />
+							{{ group }}
+						</label>
+					</div>
 					<label class="flex items-center gap-2 text-sm cursor-pointer">
 						<input type="checkbox" v-model="config.show_images" class="rounded" @change="emitUpdate" />
 						{{ __('Item Images') }}
@@ -204,6 +213,25 @@ const emit = defineEmits([
 
 const selectedTemplate = ref("")
 const selectedCards = ref([])
+const selectedOptionGroups = ref([])
+
+// Extract available option groups from preview data
+const availableOptionGroups = computed(() => {
+	const groups = new Set()
+	const tpl = props.currentTemplate
+	if (tpl?.option_groups) {
+		tpl.option_groups.forEach((g) => groups.add(g))
+	}
+	return [...groups].sort()
+})
+
+function onToggleOptions() {
+	if (config.show_options && selectedOptionGroups.value.length === 0) {
+		// Select all groups by default when enabling
+		selectedOptionGroups.value = [...availableOptionGroups.value]
+	}
+	emitUpdate()
+}
 
 const saveLabel = computed(() => {
 	if (props.saveStatus === "saving") return __("Saving...")
@@ -286,6 +314,7 @@ function emitUpdate() {
 	emit("update:config", {
 		template_name: selectedTemplate.value,
 		selected_cards: selectedCards.value,
+		selected_option_groups: selectedOptionGroups.value,
 		...config,
 	})
 }

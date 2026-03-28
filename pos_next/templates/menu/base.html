@@ -75,12 +75,15 @@
 					{{ render_badges(item.badges, site_url) }}
 				{%- endif -%}
 				{%- if design.show_options and item.product_options -%}
+					{%- set _selected_groups = design.selected_option_groups -%}
 					<div class="item-options">
 						{%- for opt_group in item.product_options -%}
+							{%- if not _selected_groups or opt_group.group_name in _selected_groups -%}
 							<span class="option-group">
 								<span class="option-label">{{ opt_group.group_name }}:</span>
 								{{ opt_group.options|join(", ") }}
 							</span>
+							{%- endif -%}
 						{%- endfor -%}
 					</div>
 				{%- endif -%}
