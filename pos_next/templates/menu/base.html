@@ -20,8 +20,9 @@
 		<span class="item-badges">
 			{%- for badge in badges -%}
 				<span class="badge" title="{{ badge.badge_name }}">
-					{%- if badge.svg -%}
-						<span class="badge-icon">{{ badge.svg | safe }}</span>
+					{%- if badge.icon -%}
+						<img src="{{ site_url }}/assets/pos_next/icons/badges/png/{{ badge.icon | replace('.svg', '.png') }}"
+							class="badge-icon" alt="" />
 					{%- endif -%}
 					<span class="badge-label">{{ badge.badge_name }}</span>
 					{%- if not loop.last %}<span class="badge-sep">&middot;</span>{% endif -%}
@@ -176,10 +177,6 @@
 			font-family: '{{ design.font_header }}', 'Playfair Display', Georgia, serif;
 		}
 
-		/* Hide badge icons in print/PDF — wkhtmltopdf rasterizes SVG poorly */
-		@media print {
-			.badge-icon { display: none; }
-		}
 
 		/* Price formatting */
 		.item-price {
@@ -348,19 +345,11 @@
 		}
 
 		.badge-icon {
-			display: inline-block;
 			width: 8px;
 			height: 8px;
 			vertical-align: middle;
-			margin-right: 0.2mm;
-			opacity: 0.35;
-		}
-
-		.badge-icon svg {
-			width: 8px;
-			height: 8px;
-			stroke: #999999;
-			fill: none;
+			margin-right: 0.3mm;
+			opacity: 0.4;
 		}
 
 		.badge-label {
