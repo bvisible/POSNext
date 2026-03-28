@@ -279,9 +279,6 @@ def _get_wkhtmltopdf_options(template):
 		"margin-right": "20mm",
 		"print-media-type": "",
 		"encoding": "UTF-8",
-		"dpi": "300",
-		"image-dpi": "300",
-		"image-quality": "100",
 	}
 
 	if paper == "A4 Portrait":

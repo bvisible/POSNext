@@ -176,6 +176,11 @@
 			font-family: '{{ design.font_header }}', 'Playfair Display', Georgia, serif;
 		}
 
+		/* Hide badge icons in print/PDF — wkhtmltopdf rasterizes SVG poorly */
+		@media print {
+			.badge-icon { display: none; }
+		}
+
 		/* Price formatting */
 		.item-price {
 			white-space: nowrap;
