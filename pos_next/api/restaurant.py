@@ -2294,13 +2294,16 @@ def get_card_items_with_badges(card_name):
 			for row in item_doc.custom_item_badges:
 				try:
 					badge_doc = frappe.get_cached_doc("Menu Badge", row.menu_badge)
-					# Read SVG content for inline rendering in PDF
-					svg_content = ""
+					# Encode PNG as base64 data URI for reliable rendering in PDF
+					icon_data_uri = ""
 					if badge_doc.icon:
-						svg_path = frappe.get_app_path("pos_next", "public", "icons", "badges", badge_doc.icon)
+						png_name = badge_doc.icon.replace(".svg", ".png")
+						png_path = frappe.get_app_path("pos_next", "public", "icons", "badges", "png", png_name)
 						try:
-							with open(svg_path, "r") as f:
-								svg_content = f.read().strip()
+							import base64
+							with open(png_path, "rb") as f:
+								b64 = base64.b64encode(f.read()).decode("ascii")
+								icon_data_uri = f"data:image/png;base64,{b64}"
 						except FileNotFoundError:
 							pass
 					badges.append({
@@ -2308,7 +2311,7 @@ def get_card_items_with_badges(card_name):
 						"badge_type": badge_doc.badge_type,
 						"icon": badge_doc.icon,
 						"color": badge_doc.color,
-						"svg": svg_content,
+						"icon_uri": icon_data_uri,
 					})
 				except Exception:
 					pass

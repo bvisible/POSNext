@@ -20,9 +20,8 @@
 		<span class="item-badges">
 			{%- for badge in badges -%}
 				<span class="badge" title="{{ badge.badge_name }}">
-					{%- if badge.icon -%}
-						<img src="{{ site_url }}/assets/pos_next/icons/badges/png/{{ badge.icon | replace('.svg', '.png') }}"
-							class="badge-icon" alt="" />
+					{%- if badge.icon_uri -%}
+						<img src="{{ badge.icon_uri }}" class="badge-icon" alt="" />
 					{%- endif -%}
 					<span class="badge-label">{{ badge.badge_name }}</span>
 					{%- if not loop.last %}<span class="badge-sep">&middot;</span>{% endif -%}
@@ -32,10 +31,16 @@
 	{%- endif -%}
 {%- endmacro -%}
 
-{%- macro render_spice(level) -%}
+{%- macro render_spice(level, chili_uri) -%}
 	{%- if level and level > 0 -%}
 		<span class="spice-level" title="{{ _('Spice level') }}: {{ level }}">
-			{%- for i in range(level) -%}&#x1F336;{%- endfor -%}
+			{%- for i in range(level) -%}
+				{%- if chili_uri -%}
+					<img src="{{ chili_uri }}" class="spice-icon" alt="🌶" />
+				{%- else -%}
+					&#x1F336;
+				{%- endif -%}
+			{%- endfor -%}
 		</span>
 	{%- endif -%}
 {%- endmacro -%}
@@ -51,14 +56,14 @@
 			{%- if design.price_alignment == "dotted" -%}
 				<div class="item-dotted-row">
 					<span class="item-name">{{ item.item_name }}</span>
-					{{ render_spice(item.spice_level) }}
+					{{ render_spice(item.spice_level, chili_uri) }}
 					<span class="dotted-leader"></span>
 					{{ render_price(item, currency, "dotted") }}
 				</div>
 			{%- else -%}
 				<div class="item-header">
 					<span class="item-name">{{ item.item_name }}</span>
-					{{ render_spice(item.spice_level) }}
+					{{ render_spice(item.spice_level, chili_uri) }}
 					{{ render_price(item, currency, design.price_alignment) }}
 				</div>
 			{%- endif -%}
@@ -365,10 +370,16 @@
 
 		/* Spice level */
 		.spice-level {
-			font-size: 8pt;
-			letter-spacing: -0.5mm;
 			display: inline-block;
 			margin-right: 2mm;
+			vertical-align: middle;
+		}
+
+		.spice-icon {
+			width: 10px;
+			height: 10px;
+			vertical-align: middle;
+			margin-right: -1px;
 		}
 
 		/* Item image */

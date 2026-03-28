@@ -47,6 +47,17 @@ def get_menu_preview_data(card_name, template_name=None):
 	company_logo = frappe.db.get_value("Company", company, "company_logo") or ""
 	company_name = frappe.db.get_value("Company", company, "company_name") or ""
 
+	# Encode chili icon for spice level (replaces emoji which pixelates in PDF)
+	chili_uri = ""
+	try:
+		import base64
+		chili_path = frappe.get_app_path("pos_next", "public", "icons", "badges", "png", "chili.png")
+		with open(chili_path, "rb") as f:
+			b64 = base64.b64encode(f.read()).decode("ascii")
+			chili_uri = f"data:image/png;base64,{b64}"
+	except FileNotFoundError:
+		pass
+
 	return {
 		"card": card_data["card"],
 		"categories": card_data["categories"],
@@ -55,6 +66,7 @@ def get_menu_preview_data(card_name, template_name=None):
 		"site_url": frappe.utils.get_url(),
 		"company_logo": company_logo,
 		"company_name": company_name,
+		"chili_uri": chili_uri,
 	}
 
 
@@ -222,6 +234,7 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 		"site_url": first_data.get("site_url", ""),
 		"company_logo": first_data.get("company_logo", ""),
 		"company_name": first_data.get("company_name", ""),
+		"chili_uri": first_data.get("chili_uri", ""),
 	}
 
 	template_path = f"pos_next/templates/menu/{style_theme}.html"
