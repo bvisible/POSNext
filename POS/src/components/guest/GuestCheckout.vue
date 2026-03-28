@@ -316,10 +316,11 @@ async function handlePay() {
 		const result = await guestStore.createPayment(payableAmount.value, items)
 		if (result?.payment_url) {
 			walleeUrl.value = result.payment_url
+			// Poll order status while iframe is open to detect payment completion
+			startPaymentPolling()
 		} else if (result?.success) {
 			paymentState.value = "success"
 			await guestStore.refreshOrderStatus()
-			// Emit for takeaway flow where payment confirms the order
 			if (result?.invoice) {
 				emit("order-confirmed", result.invoice)
 			}
@@ -329,7 +330,32 @@ async function handlePay() {
 	}
 }
 
+// Poll order status every 5s while Wallee iframe is open
+let _pollInterval = null
+
+function startPaymentPolling() {
+	stopPaymentPolling()
+	_pollInterval = setInterval(async () => {
+		await guestStore.refreshOrderStatus()
+		if (guestStore.isFullyPaid || guestStore.paidAmount > 0) {
+			// Payment detected via backend
+			stopPaymentPolling()
+			walleeUrl.value = null
+			paymentState.value = "success"
+			emit("order-confirmed", guestStore.orderItems?.[0]?.parent || "")
+		}
+	}, 5000)
+}
+
+function stopPaymentPolling() {
+	if (_pollInterval) {
+		clearInterval(_pollInterval)
+		_pollInterval = null
+	}
+}
+
 function cancelPayment() {
+	stopPaymentPolling()
 	walleeUrl.value = null
 	paymentState.value = null
 }

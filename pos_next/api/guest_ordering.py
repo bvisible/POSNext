@@ -500,12 +500,23 @@ def create_table_token(table, pos_profile):
 # ==========================================
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["POST"])
 def create_takeaway_token():
 	"""
 	Create a Guest Order Token for a takeaway web order (no table binding).
 	Called when a visitor starts a takeaway order.
+	Rate-limited: max 10 tokens per IP per hour.
 	"""
+	# Rate limiting: max 10 takeaway tokens per IP per hour
+	client_ip = frappe.local.request_ip
+	one_hour_ago = frappe.utils.add_to_date(now_datetime(), hours=-1)
+	recent_count = frappe.db.count(
+		"Guest Order Token",
+		{"mode": "takeaway", "creation": (">=", one_hour_ago), "owner": "Guest"}
+	)
+	if recent_count >= 50:
+		frappe.throw(_("Too many requests. Please try again later."), frappe.RateLimitExceededError)
+
 	settings = _get_restaurant_settings()
 	if not settings.enable_web_takeaway:
 		frappe.throw(_("Takeaway web ordering is not enabled."))
@@ -545,10 +556,13 @@ def submit_takeaway_order(token, items, customer=None):
 	if not items:
 		frappe.throw(_("No items provided."))
 
-	# Takeaway orders require a customer
+	# Takeaway orders require a valid customer
 	customer_name = customer or frappe.session.user
 	if not customer_name or customer_name == "Guest":
 		frappe.throw(_("A customer account is required for takeaway orders."))
+	# Validate that the customer exists in ERPNext
+	if not frappe.db.exists("Customer", customer_name):
+		frappe.throw(_("Customer {0} not found.").format(customer_name))
 
 	# Enforce payment before order finalization
 	# Check if a Wallee transaction was created and completed for this token
