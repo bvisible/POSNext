@@ -1323,6 +1323,34 @@
 		<!-- Session Lock Screen (outside v-if/v-else so it renders even during loading) -->
 		<SessionLockScreen />
 
+		<!-- QR Self-Ordering Confirmation Dialog -->
+		<Dialog v-model="showQRConfirmDialog" :options="{ title: __('QR Self-Ordering'), size: 'sm' }">
+			<template #body-content>
+				<div class="flex flex-col items-center text-center p-4">
+					<div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+						<svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+						</svg>
+					</div>
+					<p class="text-base font-semibold text-gray-900 mb-2">{{ currentQR.tableName }}</p>
+					<p class="text-sm text-gray-600">{{ __('Open this table for QR self-ordering? Customers will be able to scan a QR code and order directly from their phone.') }}</p>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" @click="showQRConfirmDialog = false">{{ __('Cancel') }}</Button>
+					<Button class="flex-1" variant="solid" theme="green" @click="confirmQRGeneration">
+						<template #prefix>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+							</svg>
+						</template>
+						{{ __('Generate QR') }}
+					</Button>
+				</div>
+			</template>
+		</Dialog>
+
 		<!-- QR Code Dialog for Guest Ordering -->
 		<TableQRCode
 			v-if="showQRDialog"
@@ -1490,6 +1518,7 @@ const selectedCardCategory = ref(null)
 // QR Self-Ordering state
 const activeQRTokens = ref(new Map()) // table name → { token, url }
 const showQRDialog = ref(false)
+const showQRConfirmDialog = ref(false)
 const currentQR = ref({ token: "", url: "", tableName: "" })
 const cardSearchQuery = ref("")
 const cardViewMode = ref("grid")
@@ -2446,10 +2475,16 @@ async function handleQRButtonClick() {
 		return
 	}
 
-	// Confirmation dialog
-	if (!confirm(__("Open this table for QR self-ordering? Customers will be able to scan and order from their phone."))) {
-		return
-	}
+	// Show confirmation dialog
+	currentQR.value = { token: "", url: "", tableName: table.table_name || tableName }
+	showQRConfirmDialog.value = true
+}
+
+async function confirmQRGeneration() {
+	showQRConfirmDialog.value = false
+	const table = cartStore.restaurantTable
+	if (!table) return
+	const tableName = table.name || table.table_name
 
 	try {
 		const result = await call("pos_next.api.guest_ordering.create_table_token", {
