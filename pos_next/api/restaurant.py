@@ -1031,6 +1031,14 @@ def get_restaurant_settings():
 		"auto_detect_tip": bool(settings.auto_detect_tip) if hasattr(settings, "auto_detect_tip") else True,
 		"tip_item": settings.tip_item if hasattr(settings, "tip_item") else None,
 		"tip_account": settings.tip_account if hasattr(settings, "tip_account") else None,
+		"enable_qr_ordering": bool(settings.enable_qr_ordering) if hasattr(settings, "enable_qr_ordering") else False,
+		"guest_menu": settings.guest_menu if hasattr(settings, "guest_menu") else None,
+		"qr_order_validation": settings.qr_order_validation if hasattr(settings, "qr_order_validation") else "Direct to Kitchen",
+		"guest_account_mode": settings.guest_account_mode if hasattr(settings, "guest_account_mode") else "Not Proposed",
+		"token_expiry_mode": settings.token_expiry_mode if hasattr(settings, "token_expiry_mode") else "On Table Close",
+		"token_expiry_days": settings.token_expiry_days if hasattr(settings, "token_expiry_days") else None,
+		"enable_web_takeaway": bool(settings.enable_web_takeaway) if hasattr(settings, "enable_web_takeaway") else False,
+		"takeaway_menu": settings.takeaway_menu if hasattr(settings, "takeaway_menu") else None,
 	}
 
 
