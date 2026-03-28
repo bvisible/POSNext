@@ -69,6 +69,42 @@ def _get_or_create_invoice(token_doc):
 	return None
 
 
+def _get_timeslot_cards(settings):
+	"""Find restaurant cards active for the current time slot (Opening Hours logic)."""
+	import calendar
+	from frappe.utils import nowtime, get_time, nowdate, getdate
+
+	if not settings.opening_hours:
+		return []
+
+	today_name = calendar.day_name[getdate(nowdate()).weekday()]
+	now = get_time(nowtime())
+
+	matching_cards = []
+	for row in settings.opening_hours:
+		if row.day_of_week != today_name:
+			continue
+		ft_str = row.from_time
+		tt_str = row.to_time
+		if not ft_str or not tt_str:
+			continue
+
+		ft = get_time(str(ft_str))
+		tt = get_time(str(tt_str))
+
+		in_slot = False
+		if ft <= tt:
+			in_slot = ft <= now <= tt
+		else:
+			in_slot = now >= ft or now <= tt
+
+		if in_slot and row.restaurant_card:
+			if row.restaurant_card not in matching_cards:
+				matching_cards.append(row.restaurant_card)
+
+	return matching_cards
+
+
 def _get_guest_menu_card(settings):
 	"""Return the Restaurant Card to use as guest menu."""
 	if settings.guest_menu:
@@ -228,14 +264,33 @@ def validate_token(token):
 def get_guest_menu(token):
 	"""
 	Return the guest menu (categories + items) for a valid token.
-	Menu is taken from Restaurant Settings.guest_menu or the card flagged as_guest_menu.
+	Uses time-slot based card selection (same as Opening Hours), falling back to
+	settings.guest_menu or the card flagged as_guest_menu.
 	"""
 	_require_valid_token(token)
 	settings = _get_restaurant_settings()
-	card_name = _get_guest_menu_card(settings)
-	if not card_name:
+
+	# Try time-slot based card selection first
+	card_names = _get_timeslot_cards(settings)
+	if not card_names:
+		# Fall back to configured guest menu or flagged card
+		fallback = _get_guest_menu_card(settings)
+		if fallback:
+			card_names = [fallback]
+
+	if not card_names:
 		frappe.throw(_("No guest menu is configured. Please contact staff."))
-	return _build_menu_from_card(card_name)
+
+	# Build menu from all matching cards (merge if multiple)
+	all_categories = []
+	for card_name in card_names:
+		result = _build_menu_from_card(card_name)
+		all_categories.extend(result.get("categories", []))
+
+	return {
+		"card": {"card_name": ", ".join(card_names), "description": "", "image": ""},
+		"categories": all_categories,
+	}
 
 
 @frappe.whitelist(allow_guest=True)

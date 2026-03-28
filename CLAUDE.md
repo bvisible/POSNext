@@ -43,15 +43,15 @@ pre-commit run --all-files  # Run all checks manually
 
 ### Frontend (Vue 3 + Vite)
 
-- **Components**: `POS/src/components/` - Organized by feature (sale/, shift/, common/)
+- **Components**: `POS/src/components/` - Organized by feature (sale/, shift/, common/, guest/, restaurant/)
 - **Composables**: `POS/src/composables/` - Reusable Vue logic (useOffline, useItems, useToast)
-- **Pages**: `POS/src/pages/` - Main views (POSSale, Login, Home)
+- **Pages**: `POS/src/pages/` - Main views (POSSale, Login, GuestOrder, TakeawayOrder, KDS, Takeaway)
 - **Workers**: `POS/src/workers/` - Web Workers for offline operations
-- **State**: Pinia stores in `POS/src/stores/`
+- **State**: Pinia stores in `POS/src/stores/` (including `guestOrder.js` for guest ordering)
 
 ### Backend (Frappe/Python)
 
-- **API**: `pos_next/api/` - REST endpoints (invoices.py, items.py, offers.py, shifts.py, etc.)
+- **API**: `pos_next/api/` - REST endpoints (invoices.py, items.py, offers.py, shifts.py, guest_ordering.py, etc.)
 - **Doctypes**: `pos_next/pos_next/doctype/` - Custom document types
 - **Fixtures**: `pos_next/fixtures/` - Default data and permissions
 - **Patches**: `pos_next/patches/` - Database migrations
@@ -83,6 +83,15 @@ const resource = createResource({ url: 'api.method', auto: false })
 **JavaScript Utilities (.js)** - Use `window.frappe.call`:
 ```javascript
 const response = await window.frappe.call({ method: 'api.method', args: {} })
+```
+
+**Guest components** - Use `fetch()` directly (no Frappe session):
+```javascript
+const response = await fetch('/api/method/pos_next.api.guest_ordering.validate_token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': window.csrf_token || '' },
+  body: JSON.stringify({ token })
+})
 ```
 
 ### Translations
@@ -151,3 +160,7 @@ May not exist on standard ERPNext. Always check with `hasattr()` before accessin
 ### Service Worker
 
 Requires HTTPS in production for offline functionality to work.
+
+### Guest Ordering (QR / Takeaway)
+
+Guest components (`POS/src/components/guest/`, `POS/src/stores/guestOrder.js`) must NEVER import offline workers, IndexedDB, or heavy POS stores. They use `fetch()` for API calls, not `createResource` or `window.frappe.call`. Guest routes use `meta: { allowGuest: true }` in the router. Realtime sync uses room `guest_table_{table_name}` matching the server-side `_broadcast_order_update` in `guest_ordering.py`.

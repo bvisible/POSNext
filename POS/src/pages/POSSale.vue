@@ -370,6 +370,18 @@
 												</svg>
 												{{ card.card_name }}
 											</button>
+											<!-- QR Self-Ordering button -->
+											<button
+												v-if="restaurantStore.restaurantSettings.enable_qr_ordering && cartStore.restaurantTable"
+												@click="handleQRButtonClick"
+												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0 ml-auto bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 active:bg-emerald-200"
+												:title="__('Generate QR code for guest ordering')"
+											>
+												<svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+												</svg>
+												QR
+											</button>
 										</div>
 									</div>
 									<!-- Category sub-filters -->
@@ -1310,6 +1322,15 @@
 
 		<!-- Session Lock Screen (outside v-if/v-else so it renders even during loading) -->
 		<SessionLockScreen />
+
+		<!-- QR Code Dialog for Guest Ordering -->
+		<TableQRCode
+			v-if="showQRDialog"
+			:token="currentQR.token"
+			:url="currentQR.url"
+			:tableName="currentQR.tableName"
+			@close="showQRDialog = false"
+		/>
 	</div>
 </template>
 
@@ -1349,6 +1370,7 @@ import MenuSelectionDialog from "@/components/sale/MenuSelectionDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 import TableSelector from "@/components/pos/TableSelector.vue";
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
+import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
@@ -1464,6 +1486,11 @@ const showMenus = ref(false);
 // Restaurant card selection
 const selectedCard = ref(null)
 const selectedCardCategory = ref(null)
+
+// QR Self-Ordering state
+const activeQRTokens = ref(new Map()) // table name → { token, url }
+const showQRDialog = ref(false)
+const currentQR = ref({ token: "", url: "", tableName: "" })
 const cardSearchQuery = ref("")
 const cardViewMode = ref("grid")
 const cardCategories = computed(() => {
@@ -2404,6 +2431,41 @@ async function handleShiftClosed() {
 // Restaurant mode handlers
 function handleTableSelected(table) {
 	// Table selected, cart already configured by TableSelector
+}
+
+async function handleQRButtonClick() {
+	const table = cartStore.restaurantTable
+	if (!table) return
+
+	const tableName = table.name || table.table_name
+	// If we already have a token for this table, show QR directly
+	if (activeQRTokens.value.has(tableName)) {
+		const qr = activeQRTokens.value.get(tableName)
+		currentQR.value = { token: qr.token, url: qr.url, tableName: table.table_name || tableName }
+		showQRDialog.value = true
+		return
+	}
+
+	// Confirmation dialog
+	if (!confirm(__("Open this table for QR self-ordering? Customers will be able to scan and order from their phone."))) {
+		return
+	}
+
+	try {
+		const result = await call("pos_next.api.guest_ordering.create_table_token", {
+			table: tableName,
+			pos_profile: settingsStore.settings.pos_profile || settingsStore.posProfile,
+		})
+		if (result?.token) {
+			const siteUrl = window.location.origin
+			const url = result.url || `${siteUrl}/pos/guest/${result.token}`
+			activeQRTokens.value.set(tableName, { token: result.token, url })
+			currentQR.value = { token: result.token, url, tableName: table.table_name || tableName }
+			showQRDialog.value = true
+		}
+	} catch (err) {
+		showError(__("Failed to generate QR code: {0}", [err.message || err]))
+	}
 }
 
 async function handleStartTakeaway() {
