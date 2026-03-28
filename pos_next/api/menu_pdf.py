@@ -35,10 +35,10 @@ def get_menu_preview_data(card_name, template_name=None):
 		except (json.JSONDecodeError, TypeError):
 			pass
 
-	# Merge template + overrides
+	# Merge template + overrides (all keys, not just template fields)
 	if template and overrides:
 		for key, value in overrides.items():
-			if key in template and value is not None:
+			if value is not None:
 				template[key] = value
 
 	# Get currency and company logo
