@@ -128,7 +128,7 @@
 
 						<!-- Modifier Groups -->
 						<div
-							v-for="group in selectedItem.option_groups || []"
+							v-for="group in selectedItem.product_options || []"
 							:key="group.name"
 							class="mt-4"
 						>
@@ -234,7 +234,7 @@ const itemTotal = computed(() => {
 		return (
 			sum +
 			[...opts].reduce((s, optName) => {
-				const group = (selectedItem.value.option_groups || []).find((g) =>
+				const group = (selectedItem.value.product_options || []).find((g) =>
 					(g.options || []).some((o) => o.name === optName),
 				)
 				const opt = group?.options?.find((o) => o.name === optName)
@@ -293,7 +293,7 @@ function addToCartAndClose() {
 	// Build flat modifiers array from selected options
 	const modifiers = []
 	for (const [groupName, optSet] of Object.entries(selectedOptions.value)) {
-		const group = (selectedItem.value.option_groups || []).find(
+		const group = (selectedItem.value.product_options || []).find(
 			(g) => g.name === groupName,
 		)
 		for (const optName of optSet) {

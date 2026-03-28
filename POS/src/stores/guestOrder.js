@@ -83,8 +83,15 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				"pos_next.api.guest_ordering.get_guest_menu",
 				{ token: token.value },
 			)
-			menuCategories.value = result.categories || []
-			menuItems.value = result.items || []
+			const categories = result.categories || []
+			menuCategories.value = categories
+			// Flatten items from categories, tagging each with its category label
+			menuItems.value = categories.flatMap((cat) =>
+				(cat.menu_items || []).map((item) => ({
+					...item,
+					category: cat.label,
+				})),
+			)
 		} catch (err) {
 			error.value = err.message
 			throw err
