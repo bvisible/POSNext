@@ -89,9 +89,14 @@
 	</div>
 {%- endmacro -%}
 
-{%- macro render_category(category, design, currency, site_url) -%}
+{%- macro render_category(category, design, currency, site_url, show_currency=false) -%}
 	<div class="menu-category">
-		<h2 class="category-title">{{ category.label }}</h2>
+		<h2 class="category-title">
+			{{ category.label }}
+			{%- if show_currency and design.price_alignment != "inline" %}
+				<span class="category-currency">{{ currency }}</span>
+			{%- endif %}
+		</h2>
 		<div class="category-items">
 			{%- for item in category.menu_items -%}
 				{{ render_item(item, design, currency, site_url) }}
@@ -257,6 +262,16 @@
 			font-size: 14pt;
 			margin-bottom: 3mm;
 			color: {{ design.color_accent | default('#8B4513') }};
+		}
+
+		.category-currency {
+			float: right;
+			font-size: 7pt;
+			font-weight: 400;
+			color: #bbbbbb;
+			letter-spacing: 1pt;
+			text-transform: uppercase;
+			padding-top: 2mm;
 		}
 
 		/* Item */
@@ -456,7 +471,7 @@
 	<div class="menu-body columns-{{ design.columns | default(1) }}">
 		{% block content %}
 			{%- for category in categories -%}
-				{{ render_category(category, design, currency, site_url) }}
+				{{ render_category(category, design, currency, site_url, loop.first) }}
 			{%- endfor -%}
 		{% endblock %}
 	</div>
