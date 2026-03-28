@@ -116,6 +116,7 @@ _custom_field_names = [
 	"Item-custom_company",
 	"POS Profile-posa_cash_mode_of_payment",
 	"POS Profile-posa_allow_delete",
+	"POS Profile-posa_cash_entry_templates",
 	"POS Profile-posa_block_sale_beyond_available_qty",
 	"Mode of Payment-is_wallet_payment",
 	"Coupon Code-pos_next_section",

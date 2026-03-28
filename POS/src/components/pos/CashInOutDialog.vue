@@ -7,8 +7,6 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<!-- Left: Template selection + form -->
 				<div class="space-y-4">
-					<h3 class="text-sm font-semibold text-gray-700">{{ __('Select Operation') }}</h3>
-
 					<!-- Loading state -->
 					<div v-if="loadingTemplates" class="flex items-center justify-center py-8">
 						<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
@@ -19,109 +17,146 @@
 						{{ __('No Journal Entry Templates found for this company.') }}
 					</div>
 
-					<!-- Search -->
-					<div v-else class="space-y-2">
-						<div class="relative">
-							<FeatherIcon name="search" class="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
-							<input
-								v-model="searchQuery"
-								type="text"
-								class="w-full ps-9 pe-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-								:placeholder="__('Search templates...')"
-							/>
-						</div>
-
-						<!-- No results -->
-						<div v-if="!filteredTemplates.length" class="text-center py-4 text-gray-400 text-sm">
-							{{ __('No templates match your search.') }}
-						</div>
-
-						<!-- Template cards -->
-						<button
-							v-for="t in filteredTemplates"
-							:key="t.name"
-							class="w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-start"
-							:class="selectedTemplate?.name === t.name
-								? (getDirection(t) === 'out'
-									? 'border-red-300 bg-red-50'
-									: 'border-green-300 bg-green-50')
-								: 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
-							@click="selectTemplate(t)"
+					<template v-else>
+						<!-- Form at top when template selected -->
+						<div v-if="selectedTemplate" class="space-y-3 p-4 rounded-lg border-2"
+							:class="getDirection(selectedTemplate) === 'out'
+								? 'border-red-200 bg-red-50'
+								: 'border-green-200 bg-green-50'"
 						>
-							<div
-								class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-								:class="getDirection(t) === 'out'
-									? 'bg-red-100 text-red-600'
-									: 'bg-green-100 text-green-600'"
-							>
-								<FeatherIcon
-									:name="getDirection(t) === 'out' ? 'arrow-up-circle' : 'arrow-down-circle'"
-									class="w-5 h-5"
+							<!-- Selected template header -->
+							<div class="flex items-center gap-3">
+								<div
+									class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+									:class="getDirection(selectedTemplate) === 'out'
+										? 'bg-red-200 text-red-700'
+										: 'bg-green-200 text-green-700'"
+								>
+									<FeatherIcon
+										:name="getDirection(selectedTemplate) === 'out' ? 'arrow-up-circle' : 'arrow-down-circle'"
+										class="w-4 h-4"
+									/>
+								</div>
+								<div class="flex-1 min-w-0">
+									<div class="font-semibold text-sm text-gray-900 truncate">
+										{{ selectedTemplate.template_title || selectedTemplate.name }}
+									</div>
+								</div>
+								<button class="text-gray-400 hover:text-gray-600" @click="selectedTemplate = null">
+									<FeatherIcon name="x" class="w-4 h-4" />
+								</button>
+							</div>
+
+							<!-- Amount -->
+							<div>
+								<label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Amount') }}</label>
+								<input
+									ref="amountInput"
+									v-model.number="amount"
+									type="number"
+									min="0"
+									step="0.01"
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+									:placeholder="__('Enter amount')"
+									@keyup.enter="submitEntry"
 								/>
 							</div>
-							<div class="flex-1 min-w-0">
-								<div class="font-medium text-sm text-gray-900 truncate">
-									{{ t.template_title || t.name }}
-								</div>
-								<div class="text-xs text-gray-500 truncate">
-									{{ t.counterparty?.[0]?.account || t.totalization?.[0]?.account || '' }}
-								</div>
-							</div>
-							<span
-								class="text-xs font-medium px-2 py-0.5 rounded-full"
-								:class="getDirection(t) === 'out'
-									? 'bg-red-100 text-red-700'
-									: 'bg-green-100 text-green-700'"
-							>
-								{{ getDirection(t) === 'out' ? __('Out') : __('In') }}
-							</span>
-						</button>
-					</div>
 
-					<!-- Amount & Note form (visible when template selected) -->
-					<div v-if="selectedTemplate" class="space-y-3 pt-2 border-t border-gray-200">
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Amount') }}</label>
-							<input
-								ref="amountInput"
-								v-model.number="amount"
-								type="number"
-								min="0"
-								step="0.01"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-								:placeholder="__('Enter amount')"
-								@keyup.enter="submitEntry"
-							/>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Note') }} <span class="text-gray-400">({{ __('optional') }})</span></label>
-							<input
-								v-model="note"
-								type="text"
-								class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-								:placeholder="__('e.g. Bank deposit ref #123')"
-								@keyup.enter="submitEntry"
-							/>
-						</div>
-						<Button
-							class="w-full"
-							variant="solid"
-							:theme="getDirection(selectedTemplate) === 'out' ? 'red' : 'green'"
-							:loading="submitting"
-							:disabled="!amount || amount <= 0"
-							@click="submitEntry"
-						>
-							<template #prefix>
-								<FeatherIcon
-									:name="getDirection(selectedTemplate) === 'out' ? 'arrow-up-circle' : 'arrow-down-circle'"
-									class="w-4 h-4"
+							<!-- Note -->
+							<div>
+								<label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Note') }} <span class="text-gray-400">({{ __('optional') }})</span></label>
+								<input
+									v-model="note"
+									type="text"
+									class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+									:placeholder="__('e.g. Bank deposit ref #123')"
+									@keyup.enter="submitEntry"
 								/>
-							</template>
-							{{ getDirection(selectedTemplate) === 'out'
-								? __('Record Cash Out')
-								: __('Record Cash In') }}
-						</Button>
-					</div>
+							</div>
+
+							<!-- Submit button -->
+							<Button
+								class="w-full"
+								variant="solid"
+								:theme="getDirection(selectedTemplate) === 'out' ? 'red' : 'green'"
+								:loading="submitting"
+								:disabled="!amount || amount <= 0"
+								@click="submitEntry"
+							>
+								<template #prefix>
+									<FeatherIcon
+										:name="getDirection(selectedTemplate) === 'out' ? 'arrow-up-circle' : 'arrow-down-circle'"
+										class="w-4 h-4"
+									/>
+								</template>
+								{{ getDirection(selectedTemplate) === 'out'
+									? __('Record Cash Out')
+									: __('Record Cash In') }}
+							</Button>
+						</div>
+
+						<!-- Search + template list -->
+						<div class="space-y-2">
+							<h3 v-if="!selectedTemplate" class="text-sm font-semibold text-gray-700">{{ __('Select Operation') }}</h3>
+
+							<!-- Search -->
+							<div class="relative">
+								<FeatherIcon name="search" class="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
+								<input
+									v-model="searchQuery"
+									type="text"
+									class="w-full ps-9 pe-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+									:placeholder="__('Search templates...')"
+								/>
+							</div>
+
+							<!-- No results -->
+							<div v-if="!filteredTemplates.length" class="text-center py-4 text-gray-400 text-sm">
+								{{ __('No templates match your search.') }}
+							</div>
+
+							<!-- Template cards -->
+							<button
+								v-for="t in filteredTemplates"
+								:key="t.name"
+								class="w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-start"
+								:class="selectedTemplate?.name === t.name
+									? (getDirection(t) === 'out'
+										? 'border-red-300 bg-red-50'
+										: 'border-green-300 bg-green-50')
+									: 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+								@click="selectTemplate(t)"
+							>
+								<div
+									class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+									:class="getDirection(t) === 'out'
+										? 'bg-red-100 text-red-600'
+										: 'bg-green-100 text-green-600'"
+								>
+									<FeatherIcon
+										:name="getDirection(t) === 'out' ? 'arrow-up-circle' : 'arrow-down-circle'"
+										class="w-5 h-5"
+									/>
+								</div>
+								<div class="flex-1 min-w-0">
+									<div class="font-medium text-sm text-gray-900 truncate">
+										{{ t.template_title || t.name }}
+									</div>
+									<div class="text-xs text-gray-500 truncate">
+										{{ t.counterparty?.[0]?.account || t.totalization?.[0]?.account || '' }}
+									</div>
+								</div>
+								<span
+									class="text-xs font-medium px-2 py-0.5 rounded-full"
+									:class="getDirection(t) === 'out'
+										? 'bg-red-100 text-red-700'
+										: 'bg-green-100 text-green-700'"
+								>
+									{{ getDirection(t) === 'out' ? __('Out') : __('In') }}
+								</span>
+							</button>
+						</div>
+					</template>
 				</div>
 
 				<!-- Right: Shift history -->
@@ -251,10 +286,6 @@ const filteredTemplates = computed(() => {
 
 // Methods
 function getDirection(template) {
-	// If totalization has a cash-type account (source), it's Cash Out
-	// Templates with totalization = cash account → money leaves the register
-	// For Cash In templates, totalization would be the external account
-	// Default to "out" since most POS cash operations are withdrawals
 	const totAccount = template.totalization?.[0]?.account || ""
 	const cashKeywords = ["caisse", "cash", "kasse"]
 	const isCashSource = cashKeywords.some((kw) =>
@@ -282,7 +313,7 @@ async function loadTemplates() {
 	try {
 		templates.value = await call(
 			"pos_next.api.cash_entry.get_cash_entry_templates",
-			{ company: props.company },
+			{ company: props.company, pos_profile: props.posProfile || undefined },
 		)
 	} catch (e) {
 		showError(__("Failed to load templates"))

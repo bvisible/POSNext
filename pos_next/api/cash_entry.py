@@ -7,11 +7,24 @@ from frappe.utils import flt, today
 
 
 @frappe.whitelist()
-def get_cash_entry_templates(company):
+def get_cash_entry_templates(company, pos_profile=None):
 	"""Fetch Journal Entry Templates available for cash in/out operations."""
+	# Check if POS Profile has specific templates configured
+	allowed_templates = []
+	if pos_profile:
+		allowed_templates = frappe.get_all(
+			"POS Cash Entry Template",
+			filters={"parent": pos_profile, "parenttype": "POS Profile"},
+			pluck="journal_entry_template",
+		)
+
+	filters = {"company": company}
+	if allowed_templates:
+		filters["name"] = ["in", allowed_templates]
+
 	templates = frappe.get_all(
 		"Journal Entry Template",
-		filters={"company": company},
+		filters=filters,
 		fields=["name", "template_title", "voucher_type"],
 	)
 
