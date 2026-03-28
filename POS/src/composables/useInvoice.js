@@ -230,11 +230,17 @@ export function useInvoice() {
 	function addItem(item, quantity = 1) {
 		const itemUom = item.uom || item.stock_uom
 		// In restaurant mode, items with modifiers/instructions are always separate lines
-		const hasModifiers = item.posa_item_modifiers || item.posa_special_instructions
-		const existingItem = hasModifiers ? null : invoiceItems.value.find(
-			(i) => i.item_code === item.item_code && i.uom === itemUom
-				&& !i.posa_item_modifiers && !i.posa_special_instructions,
-		)
+		const hasModifiers =
+			item.posa_item_modifiers || item.posa_special_instructions
+		const existingItem = hasModifiers
+			? null
+			: invoiceItems.value.find(
+					(i) =>
+						i.item_code === item.item_code &&
+						i.uom === itemUom &&
+						!i.posa_item_modifiers &&
+						!i.posa_special_instructions,
+				)
 
 		if (existingItem) {
 			// Store old values before update for incremental cache adjustment

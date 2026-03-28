@@ -81,17 +81,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { initSocket } from "@/socket"
 
 const items = ref([])
 const grandTotal = ref(0)
 const totalTax = ref(0)
 const totalDiscount = ref(0)
-const currency = ref('EUR')
+const currency = ref("EUR")
 
 const itemCount = computed(() => {
-	return items.value.reduce((acc, item) => acc + Number(item.qty || item.quantity || 1), 0)
+	return items.value.reduce(
+		(acc, item) => acc + Number(item.qty || item.quantity || 1),
+		0,
+	)
 })
 
 const subtotal = computed(() => {
@@ -99,10 +102,10 @@ const subtotal = computed(() => {
 })
 
 function formatCFDCurrency(amount) {
-	return new Intl.NumberFormat('fr-FR', {
-		style: 'currency',
-		currency: currency.value || 'EUR',
-		minimumFractionDigits: 2
+	return new Intl.NumberFormat("fr-FR", {
+		style: "currency",
+		currency: currency.value || "EUR",
+		minimumFractionDigits: 2,
 	}).format(amount)
 }
 
@@ -110,18 +113,18 @@ let channel = null
 let socket = null
 
 onMounted(() => {
-	channel = new BroadcastChannel('pos_cfd_sync')
+	channel = new BroadcastChannel("pos_cfd_sync")
 
 	const updateFromPayload = (payload) => {
 		items.value = payload.items || []
 		grandTotal.value = payload.grandTotal || 0
 		totalTax.value = payload.totalTax || 0
 		totalDiscount.value = payload.totalDiscount || 0
-		currency.value = payload.currency || 'EUR'
+		currency.value = payload.currency || "EUR"
 	}
 
 	channel.onmessage = (event) => {
-		if (event.data && event.data.type === 'CART_UPDATE') {
+		if (event.data && event.data.type === "CART_UPDATE") {
 			updateFromPayload(event.data.payload)
 		}
 	}
@@ -132,10 +135,10 @@ onMounted(() => {
 			socket.connect()
 		}
 		socket.on("cfd_update", (payload) => {
-			if (typeof payload === 'string') {
+			if (typeof payload === "string") {
 				try {
 					payload = JSON.parse(payload)
-				} catch(e){}
+				} catch (e) {}
 			}
 			updateFromPayload(payload)
 		})

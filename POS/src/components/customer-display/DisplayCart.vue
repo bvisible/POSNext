@@ -115,7 +115,9 @@ import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 
 const displayStore = useCustomerDisplayStore()
 
-const reversedItems = computed(() => [...(displayStore.cartData.items || [])].reverse())
+const reversedItems = computed(() =>
+	[...(displayStore.cartData.items || [])].reverse(),
+)
 
 // Format currency
 function formatCurrency(amount) {

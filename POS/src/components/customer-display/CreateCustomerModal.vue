@@ -280,7 +280,11 @@ const isCompany = computed(() => customerType.value === "Company")
 
 const isFormValid = computed(() => {
 	if (isCompany.value) {
-		return !!(form.company_name.trim() && form.email.trim() && phoneNumber.value.trim())
+		return !!(
+			form.company_name.trim() &&
+			form.email.trim() &&
+			phoneNumber.value.trim()
+		)
 	}
 	return !!(
 		form.first_name.trim() &&

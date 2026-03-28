@@ -124,18 +124,23 @@ const dialogItems = ref([])
 const cartStore = usePOSCartStore()
 const restaurantStore = useRestaurantStore()
 
-const selectedCount = computed(() => dialogItems.value.filter(i => i.selected).length)
+const selectedCount = computed(
+	() => dialogItems.value.filter((i) => i.selected).length,
+)
 
 // Resolve station name for an item (individual item > item group fallback)
 function getStationName(item) {
 	if (item.preparation_station) return item.preparation_station
-	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
+	const stationInfo = restaurantStore.getStationForItem(
+		item.item_code,
+		item.item_group,
+	)
 	return stationInfo?.station_name || ""
 }
 
 // Dynamic title and button label based on selected items' stations
 const selectedStationNames = computed(() => {
-	const selected = dialogItems.value.filter(i => i.selected)
+	const selected = dialogItems.value.filter((i) => i.selected)
 	const names = new Set()
 	for (const item of selected) {
 		const name = getStationName(item)
@@ -171,8 +176,8 @@ function shouldDefaultCheck(item) {
 
 function open() {
 	dialogItems.value = cartStore.invoiceItems
-		.filter(item => !item.is_free_item)
-		.map(item => ({
+		.filter((item) => !item.is_free_item)
+		.map((item) => ({
 			...item,
 			selected: isSendable(item) ? shouldDefaultCheck(item) : false,
 		}))
@@ -180,31 +185,37 @@ function open() {
 }
 
 function selectAll() {
-	dialogItems.value.forEach(i => {
+	dialogItems.value.forEach((i) => {
 		if (isSendable(i)) i.selected = true
 	})
 }
 
 function deselectAll() {
-	dialogItems.value.forEach(i => {
+	dialogItems.value.forEach((i) => {
 		i.selected = false
 	})
 }
 
 function sendSelected() {
-	const selectedItems = dialogItems.value.filter(i => i.selected)
-	const waitingItems = dialogItems.value.filter(i => isSendable(i) && !i.selected)
+	const selectedItems = dialogItems.value.filter((i) => i.selected)
+	const waitingItems = dialogItems.value.filter(
+		(i) => isSendable(i) && !i.selected,
+	)
 
 	// Update statuses and resolve stations in cart store
 	for (const di of selectedItems) {
 		const cartItem = cartStore.invoiceItems.find(
-			ci => ci.item_code === di.item_code && (ci.uom || "") === (di.uom || "")
+			(ci) =>
+				ci.item_code === di.item_code && (ci.uom || "") === (di.uom || ""),
 		)
 		if (cartItem) {
 			cartItem.kds_status = "Pending"
 			// Ensure preparation_station is set (individual item > item group fallback)
 			if (!cartItem.preparation_station) {
-				const stationInfo = restaurantStore.getStationForItem(cartItem.item_code, cartItem.item_group)
+				const stationInfo = restaurantStore.getStationForItem(
+					cartItem.item_code,
+					cartItem.item_group,
+				)
 				if (stationInfo) {
 					cartItem.preparation_station = stationInfo.station
 				}
@@ -214,7 +225,8 @@ function sendSelected() {
 
 	for (const di of waitingItems) {
 		const cartItem = cartStore.invoiceItems.find(
-			ci => ci.item_code === di.item_code && (ci.uom || "") === (di.uom || "")
+			(ci) =>
+				ci.item_code === di.item_code && (ci.uom || "") === (di.uom || ""),
 		)
 		if (cartItem && !cartItem.kds_status) {
 			cartItem.kds_status = "Waiting"

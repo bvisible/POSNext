@@ -82,7 +82,9 @@ const loading = ref(true)
 const stations = ref([])
 const selectedStation = ref(null)
 const allOrders = ref([]) // Unfiltered orders for counting
-const showDelivered = ref(localStorage.getItem("pos_kds_show_delivered") === "true")
+const showDelivered = ref(
+	localStorage.getItem("pos_kds_show_delivered") === "true",
+)
 let socket = null
 let autoRefreshInterval = null
 
@@ -93,28 +95,34 @@ watch(showDelivered, (val) => {
 const sortedOrders = computed(() => {
 	let filtered = orders.value
 	if (!showDelivered.value) {
-		filtered = filtered.filter(o => o.kds_status !== "Delivered")
+		filtered = filtered.filter((o) => o.kds_status !== "Delivered")
 	}
-	return [...filtered].sort((a, b) => new Date(a.creation) - new Date(b.creation))
+	return [...filtered].sort(
+		(a, b) => new Date(a.creation) - new Date(b.creation),
+	)
 })
 
 // Count orders from ALL orders (not filtered) that have items for a station
 function getStationOrderCount(stationName) {
-	return allOrders.value.filter(o =>
-		o.items && o.items.some(i => i.preparation_station === stationName)
+	return allOrders.value.filter(
+		(o) =>
+			o.items && o.items.some((i) => i.preparation_station === stationName),
 	).length
 }
 
 async function loadOrders() {
 	try {
 		// Always load all orders for counting
-		const allRes = await call("pos_next.api.restaurant.get_kds_orders", { _: Date.now() })
+		const allRes = await call("pos_next.api.restaurant.get_kds_orders", {
+			_: Date.now(),
+		})
 		if (allRes) allOrders.value = allRes
 
 		// Load filtered orders for display
 		if (selectedStation.value) {
 			const filteredRes = await call("pos_next.api.restaurant.get_kds_orders", {
-				station: selectedStation.value, _: Date.now()
+				station: selectedStation.value,
+				_: Date.now(),
 			})
 			if (filteredRes) orders.value = filteredRes
 		} else {
@@ -131,12 +139,14 @@ async function loadOrders() {
 onMounted(async () => {
 	try {
 		// Load preparation stations
-		const stationsRes = await call("pos_next.api.restaurant.get_preparation_stations")
+		const stationsRes = await call(
+			"pos_next.api.restaurant.get_preparation_stations",
+		)
 		if (stationsRes) stations.value = stationsRes
 
 		// Check URL query param for pre-selection
 		const urlParams = new URLSearchParams(window.location.search)
-		const stationParam = urlParams.get('station')
+		const stationParam = urlParams.get("station")
 		if (stationParam) selectedStation.value = stationParam
 	} catch (error) {
 		console.error("Failed to load stations:", error)

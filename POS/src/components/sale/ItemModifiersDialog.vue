@@ -99,16 +99,19 @@ const shiftStore = usePOSShiftStore()
 
 const applicableGroups = computed(() => {
 	if (!item.value) return []
-	return restaurantStore.getModifiersForItem(item.value.item_code, item.value.item_group)
+	return restaurantStore.getModifiersForItem(
+		item.value.item_code,
+		item.value.item_group,
+	)
 })
 
 const totalPriceAdjustment = computed(() => {
 	let total = 0
 	for (const [groupName, selectedOptions] of Object.entries(selections.value)) {
-		const group = applicableGroups.value.find(g => g.group_name === groupName)
+		const group = applicableGroups.value.find((g) => g.group_name === groupName)
 		if (!group) continue
 		for (const optName of selectedOptions) {
-			const opt = group.options.find(o => o.option_name === optName)
+			const opt = group.options.find((o) => o.option_name === optName)
 			if (opt) total += Number(opt.price_adjustment) || 0
 		}
 	}
@@ -119,11 +122,12 @@ const totalPriceAdjustment = computed(() => {
 const selectedQuantityValue = computed(() => {
 	let qty = 0
 	for (const [groupName, selectedOptions] of Object.entries(selections.value)) {
-		const group = applicableGroups.value.find(g => g.group_name === groupName)
+		const group = applicableGroups.value.find((g) => g.group_name === groupName)
 		if (!group) continue
 		for (const optName of selectedOptions) {
-			const opt = group.options.find(o => o.option_name === optName)
-			if (opt && Number(opt.quantity_value) > 0) qty = Number(opt.quantity_value)
+			const opt = group.options.find((o) => o.option_name === optName)
+			if (opt && Number(opt.quantity_value) > 0)
+				qty = Number(opt.quantity_value)
 		}
 	}
 	return qty
@@ -177,12 +181,14 @@ function open(cartItem) {
 	item.value = cartItem
 
 	// Parse existing modifiers if any
-	let existingModNames = []
+	const existingModNames = []
 	try {
-		const existing = cartItem.posa_item_modifiers ? JSON.parse(cartItem.posa_item_modifiers) : []
+		const existing = cartItem.posa_item_modifiers
+			? JSON.parse(cartItem.posa_item_modifiers)
+			: []
 		const sel = {}
 		for (const mod of existing) {
-			const optNames = mod.options.map(o => o.name)
+			const optNames = mod.options.map((o) => o.name)
 			sel[mod.group] = optNames
 			existingModNames.push(...optNames)
 		}
@@ -202,10 +208,18 @@ function open(cartItem) {
 			const firstPart = parts[0]
 			const allModNames = existingModNames.join(", ")
 			const modSummary = firstPart.replace(/ · /g, ", ")
-			if (modSummary === allModNames || existingModNames.some(n => firstPart.includes(n))) {
+			if (
+				modSummary === allModNames ||
+				existingModNames.some((n) => firstPart.includes(n))
+			) {
 				rawInstructions = parts.slice(1).join(" | ")
 			}
-		} else if (existingModNames.every(n => rawInstructions.includes(n)) && !rawInstructions.replace(/[·,\s]/g, "").replace(new RegExp(existingModNames.join("|"), "g"), "")) {
+		} else if (
+			existingModNames.every((n) => rawInstructions.includes(n)) &&
+			!rawInstructions
+				.replace(/[·,\s]/g, "")
+				.replace(new RegExp(existingModNames.join("|"), "g"), "")
+		) {
 			// Instructions is ONLY modifier names — clear it
 			rawInstructions = ""
 		}
@@ -215,7 +229,9 @@ function open(cartItem) {
 	// Pre-select defaults
 	for (const group of applicableGroups.value) {
 		if (!selections.value[group.group_name]) {
-			const defaults = group.options.filter(o => o.is_default).map(o => o.option_name)
+			const defaults = group.options
+				.filter((o) => o.is_default)
+				.map((o) => o.option_name)
 			if (defaults.length > 0) {
 				selections.value[group.group_name] = defaults
 			}
@@ -232,22 +248,22 @@ function saveModifiers() {
 	const modifiers = []
 	for (const [groupName, selectedOptions] of Object.entries(selections.value)) {
 		if (selectedOptions.length === 0) continue
-		const group = applicableGroups.value.find(g => g.group_name === groupName)
+		const group = applicableGroups.value.find((g) => g.group_name === groupName)
 		if (!group) continue
 
 		modifiers.push({
 			group: groupName,
-			options: selectedOptions.map(optName => {
-				const opt = group.options.find(o => o.option_name === optName)
+			options: selectedOptions.map((optName) => {
+				const opt = group.options.find((o) => o.option_name === optName)
 				const entry = {
 					name: optName,
-					price_adjustment: Number(opt?.price_adjustment) || 0
+					price_adjustment: Number(opt?.price_adjustment) || 0,
 				}
 				if (Number(opt?.quantity_value) > 0) {
 					entry.quantity_value = Number(opt.quantity_value)
 				}
 				return entry
-			})
+			}),
 		})
 	}
 
@@ -262,12 +278,12 @@ function saveModifiers() {
 		JSON.stringify(modifiers),
 		freeTextOnly,
 		totalPriceAdjustment.value,
-		selectedQuantityValue.value
+		selectedQuantityValue.value,
 	)
 
 	// Emit saved event with cart item reference for post-save logic
 	const cartItem = cartStore.invoiceItems.find(
-		i => i.item_code === item.value.item_code && i.uom === item.value.uom
+		(i) => i.item_code === item.value.item_code && i.uom === item.value.uom,
 	)
 	if (cartItem) {
 		emit("saved", cartItem)

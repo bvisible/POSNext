@@ -158,7 +158,10 @@ async function sendEmail() {
 		show.value = false
 	} catch (err) {
 		console.error("Failed to send email:", err)
-		errorMessage.value = err?.message || err?.exc || __("Failed to send email. Please check your email configuration.")
+		errorMessage.value =
+			err?.message ||
+			err?.exc ||
+			__("Failed to send email. Please check your email configuration.")
 		showError(__("Failed to send email"))
 	} finally {
 		sending.value = false

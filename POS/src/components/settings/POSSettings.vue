@@ -820,15 +820,24 @@ const stockSyncSubsectionClasses = computed(() =>
 )
 const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
 const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"))
-const restaurantSectionClasses = computed(() => getSectionHeaderClasses("amber"))
-const restaurantSubsectionClasses = computed(() => getSubsectionClasses("amber"))
+const restaurantSectionClasses = computed(() =>
+	getSectionHeaderClasses("amber"),
+)
+const restaurantSubsectionClasses = computed(() =>
+	getSubsectionClasses("amber"),
+)
 
 // Restaurant settings
 const restaurantStore = useRestaurantStore()
 const openingHours = ref([])
 const allCards = ref([])
 const restaurantStatus = computed(() => restaurantStore.restaurantStatus)
-const tipSettings = ref({ enable_tips: false, auto_detect_tip: true, tip_item: null, tip_account: null })
+const tipSettings = ref({
+	enable_tips: false,
+	auto_detect_tip: true,
+	tip_item: null,
+	tip_account: null,
+})
 
 async function toggleRunner(val) {
 	try {
@@ -836,7 +845,7 @@ async function toggleRunner(val) {
 			doctype: "Restaurant Settings",
 			name: "Restaurant Settings",
 			fieldname: "enable_runner",
-			value: val ? 1 : 0
+			value: val ? 1 : 0,
 		})
 		restaurantStore.restaurantSettings.enable_runner = !!val
 	} catch (error) {
@@ -845,7 +854,7 @@ async function toggleRunner(val) {
 }
 
 function getCardSlots(cardName) {
-	return openingHours.value.filter(s => s.restaurant_card === cardName)
+	return openingHours.value.filter((s) => s.restaurant_card === cardName)
 }
 
 // Resources
@@ -1086,7 +1095,8 @@ async function saveSettings() {
 				await restaurantStore.fetchRestaurantSettings()
 				// Update local tip display after save (item may have been auto-created)
 				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item
-				tipSettings.value.tip_account = restaurantStore.restaurantSettings.tip_account
+				tipSettings.value.tip_account =
+					restaurantStore.restaurantSettings.tip_account
 			} catch (err) {
 				log.error("Error saving restaurant settings:", err)
 				showError(__("Failed to save restaurant settings"))
@@ -1117,11 +1127,13 @@ watch(activeTab, async (tab) => {
 	if (tab === "restaurant") {
 		try {
 			await restaurantStore.fetchRestaurantSettings()
-			openingHours.value = restaurantStore.restaurantSettings.opening_hours || []
+			openingHours.value =
+				restaurantStore.restaurantSettings.opening_hours || []
 			// Load tip settings
 			tipSettings.value = {
 				enable_tips: !!restaurantStore.restaurantSettings.enable_tips,
-				auto_detect_tip: restaurantStore.restaurantSettings.auto_detect_tip !== false,
+				auto_detect_tip:
+					restaurantStore.restaurantSettings.auto_detect_tip !== false,
 				tip_item: restaurantStore.restaurantSettings.tip_item || null,
 				tip_account: restaurantStore.restaurantSettings.tip_account || null,
 			}

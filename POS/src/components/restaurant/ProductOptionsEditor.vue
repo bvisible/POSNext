@@ -262,7 +262,10 @@ function searchItemsForGroup() {
 		}
 		try {
 			const q = itemSearchInput.value
-			const res = await call("pos_next.api.restaurant.search_items_for_options", { query: q })
+			const res = await call(
+				"pos_next.api.restaurant.search_items_for_options",
+				{ query: q },
+			)
 			itemSearchResults.value = res || []
 		} catch {
 			itemSearchResults.value = []
@@ -283,7 +286,7 @@ function searchItemGroups() {
 				doctype: "Item Group",
 				filters: [["name", "like", `%${groupSearchInput.value}%`]],
 				fields: ["name"],
-				limit_page_length: 10
+				limit_page_length: 10,
 			})
 			groupSearchResults.value = res || []
 		} catch {
@@ -312,7 +315,9 @@ function addItemToGroup(group, item) {
 
 async function loadGroups() {
 	try {
-		const res = await call("pos_next.api.restaurant.get_all_product_option_groups")
+		const res = await call(
+			"pos_next.api.restaurant.get_all_product_option_groups",
+		)
 		if (res) groups.value = res
 	} catch (error) {
 		console.error("Failed to load:", error)
@@ -330,9 +335,11 @@ async function saveGroup(group) {
 			group_name: group.group_name,
 			selection_type: group.selection_type,
 			required: group.required ? 1 : 0,
-			options: JSON.stringify(group.options.filter(o => o.option_name)),
+			options: JSON.stringify(group.options.filter((o) => o.option_name)),
 			applicable_items: JSON.stringify(group.applicable_items || []),
-			applicable_item_groups: JSON.stringify(group.applicable_item_groups || [])
+			applicable_item_groups: JSON.stringify(
+				group.applicable_item_groups || [],
+			),
 		})
 		showSuccess(__("Options saved"))
 		editingGroup.value = null
@@ -347,7 +354,7 @@ async function saveGroup(group) {
 async function createGroup() {
 	try {
 		await call("pos_next.api.restaurant.create_product_option_group", {
-			group_name: newGroupName.value
+			group_name: newGroupName.value,
 		})
 		showSuccess(__("Option group created"))
 		showNewForm.value = false
@@ -360,7 +367,9 @@ async function createGroup() {
 
 async function deleteGroup(group) {
 	try {
-		await call("pos_next.api.restaurant.delete_product_option_group", { name: group.name })
+		await call("pos_next.api.restaurant.delete_product_option_group", {
+			name: group.name,
+		})
 		showSuccess(__("Option group deleted"))
 		loadGroups()
 	} catch (error) {

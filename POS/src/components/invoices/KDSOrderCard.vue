@@ -172,16 +172,16 @@ function stripHtml(html) {
 const props = defineProps({
 	order: {
 		type: Object,
-		required: true
+		required: true,
 	},
 	stations: {
 		type: Array,
-		default: () => []
+		default: () => [],
 	},
 	showStationBadge: {
 		type: Boolean,
-		default: true
-	}
+		default: true,
+	},
 })
 
 const emit = defineEmits(["status-updated"])
@@ -193,10 +193,12 @@ const activeItemMenu = ref(null)
 
 // Separate items into active (sent to kitchen) vs waiting (not yet sent)
 const activeItems = computed(() =>
-	(props.order.items || []).filter(i => i.kds_status && i.kds_status !== "Waiting")
+	(props.order.items || []).filter(
+		(i) => i.kds_status && i.kds_status !== "Waiting",
+	),
 )
 const waitingItems = computed(() =>
-	(props.order.items || []).filter(i => i.kds_status === "Waiting")
+	(props.order.items || []).filter((i) => i.kds_status === "Waiting"),
 )
 
 function toggleItemMenu(idx) {
@@ -208,7 +210,7 @@ async function updateItemStatus(item, newStatus) {
 	activeItemMenu.value = null
 	// Optimistic: update all items with same item_code instantly
 	const oldStatuses = []
-	props.order.items.forEach(i => {
+	props.order.items.forEach((i) => {
 		if (i.item_code === item.item_code) {
 			oldStatuses.push(i.kds_status)
 			i.kds_status = newStatus
@@ -218,13 +220,13 @@ async function updateItemStatus(item, newStatus) {
 		await call("pos_next.api.restaurant.update_item_kds_status", {
 			invoice_name: props.order.name,
 			item_code: item.item_code,
-			status: newStatus
+			status: newStatus,
 		})
 		emit("status-updated")
 	} catch (error) {
 		// Rollback on error
 		let idx = 0
-		props.order.items.forEach(i => {
+		props.order.items.forEach((i) => {
 			if (i.item_code === item.item_code) {
 				i.kds_status = oldStatuses[idx++]
 			}
@@ -255,75 +257,100 @@ onUnmounted(() => {
 })
 
 // Time since last action (modified)
-const lastActionTime = computed(() => new Date(props.order.modified || props.order.creation))
-const lastActionMinutes = computed(() => Math.floor((now.value - lastActionTime.value) / 60000))
-const lastActionSeconds = computed(() => Math.floor(((now.value - lastActionTime.value) % 60000) / 1000))
+const lastActionTime = computed(
+	() => new Date(props.order.modified || props.order.creation),
+)
+const lastActionMinutes = computed(() =>
+	Math.floor((now.value - lastActionTime.value) / 60000),
+)
+const lastActionSeconds = computed(() =>
+	Math.floor(((now.value - lastActionTime.value) % 60000) / 1000),
+)
 const elapsedTime = computed(() => {
-	const min = lastActionMinutes.value.toString().padStart(2, '0')
-	const sec = lastActionSeconds.value.toString().padStart(2, '0')
+	const min = lastActionMinutes.value.toString().padStart(2, "0")
+	const sec = lastActionSeconds.value.toString().padStart(2, "0")
 	return `${min}:${sec}`
 })
 
 // Total time since table was opened (creation)
 const totalTime = computed(() => {
 	const total = now.value - new Date(props.order.creation)
-	const min = Math.floor(total / 60000).toString().padStart(2, '0')
-	const sec = Math.floor((total % 60000) / 1000).toString().padStart(2, '0')
+	const min = Math.floor(total / 60000)
+		.toString()
+		.padStart(2, "0")
+	const sec = Math.floor((total % 60000) / 1000)
+		.toString()
+		.padStart(2, "0")
 	return `${min}:${sec}`
 })
 const elapsedMinutes = lastActionMinutes
 
 // Timer color: red+pulse >15min, orange >10min, green if ready
 const timeColorClass = computed(() => {
-	if (props.order.kds_status === 'Ready') return 'text-green-600'
-	if (elapsedMinutes.value > 15) return 'text-red-600 animate-pulse'
-	if (elapsedMinutes.value > 10) return 'text-orange-500'
-	return 'text-gray-800 dark:text-gray-200'
+	if (props.order.kds_status === "Ready") return "text-green-600"
+	if (elapsedMinutes.value > 15) return "text-red-600 animate-pulse"
+	if (elapsedMinutes.value > 10) return "text-orange-500"
+	return "text-gray-800 dark:text-gray-200"
 })
 
 // Left border color based on order status
 const borderColorClass = computed(() => {
 	switch (props.order.kds_status) {
-		case 'Pending': return 'border-yellow-400'
-		case 'Preparing': return 'border-blue-400'
-		case 'Ready': return 'border-green-500'
-		default: return 'border-gray-300'
+		case "Pending":
+			return "border-yellow-400"
+		case "Preparing":
+			return "border-blue-400"
+		case "Ready":
+			return "border-green-500"
+		default:
+			return "border-gray-300"
 	}
 })
 
 // Status badge styling for the order header
 const statusBadgeClass = computed(() => {
 	switch (props.order.kds_status) {
-		case 'Pending': return 'bg-yellow-200 text-yellow-800'
-		case 'Preparing': return 'bg-blue-200 text-blue-800'
-		case 'Ready': return 'bg-green-200 text-green-800'
-		default: return 'bg-gray-200 text-gray-800'
+		case "Pending":
+			return "bg-yellow-200 text-yellow-800"
+		case "Preparing":
+			return "bg-blue-200 text-blue-800"
+		case "Ready":
+			return "bg-green-200 text-green-800"
+		default:
+			return "bg-gray-200 text-gray-800"
 	}
 })
 
 // Status badge styling for individual items
 function itemStatusClass(status) {
 	switch (status) {
-		case 'Pending': return 'bg-yellow-100 text-yellow-800'
-		case 'Preparing': return 'bg-blue-100 text-blue-800'
-		case 'Ready': return 'bg-green-100 text-green-800'
-		case 'Delivered': return 'bg-gray-100 text-gray-800'
-		default: return 'bg-gray-100 text-gray-600'
+		case "Pending":
+			return "bg-yellow-100 text-yellow-800"
+		case "Preparing":
+			return "bg-blue-100 text-blue-800"
+		case "Ready":
+			return "bg-green-100 text-green-800"
+		case "Delivered":
+			return "bg-gray-100 text-gray-800"
+		default:
+			return "bg-gray-100 text-gray-600"
 	}
 }
 
 // Look up station color from stations array prop
 function getStationColor(stationName) {
-	const station = props.stations.find(s => s.name === stationName)
-	return station?.color || '#6B7280'
+	const station = props.stations.find((s) => s.name === stationName)
+	return station?.color || "#6B7280"
 }
 
 // Parse modifier JSON into a flat list of modifier option names
 function parseModifiers(json) {
 	try {
 		const mods = JSON.parse(json)
-		return mods.flatMap(m => m.options.map(o => o.name))
-	} catch { return [] }
+		return mods.flatMap((m) => m.options.map((o) => o.name))
+	} catch {
+		return []
+	}
 }
 
 // Update order KDS status via API
@@ -350,7 +377,7 @@ async function doUpdateStatus(newStatus) {
 	try {
 		await call("pos_next.api.restaurant.update_kds_status", {
 			invoice_name: props.order.name,
-			status: newStatus
+			status: newStatus,
 		})
 		emit("status-updated")
 	} catch (error) {

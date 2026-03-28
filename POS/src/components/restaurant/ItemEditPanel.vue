@@ -294,12 +294,12 @@ import ItemSaveConfirmDialog from "./ItemSaveConfirmDialog.vue"
 const colorPalette = ITEM_COLOR_PALETTE
 
 const priceAdjustments = [
-	{ label: "-20%", factor: 0.80 },
-	{ label: "-10%", factor: 0.90 },
+	{ label: "-20%", factor: 0.8 },
+	{ label: "-10%", factor: 0.9 },
 	{ label: "-5%", factor: 0.95 },
 	{ label: "+5%", factor: 1.05 },
-	{ label: "+10%", factor: 1.10 },
-	{ label: "+20%", factor: 1.20 },
+	{ label: "+10%", factor: 1.1 },
+	{ label: "+20%", factor: 1.2 },
 ]
 
 const props = defineProps({
@@ -341,7 +341,11 @@ const originalEditSnapshot = ref(null)
 
 const badgeGroups = computed(() =>
 	[
-		{ type: "Allergen", label: "Allergens", badges: getBadgesByType("Allergen") },
+		{
+			type: "Allergen",
+			label: "Allergens",
+			badges: getBadgesByType("Allergen"),
+		},
 		{ type: "Dietary", label: "Dietary", badges: getBadgesByType("Dietary") },
 		{ type: "Quality", label: "Quality", badges: getBadgesByType("Quality") },
 	].filter((g) => g.badges.length > 0),
@@ -359,7 +363,8 @@ const hasChanges = computed(() => {
 		editData.value.spice_level !== snap.spice_level ||
 		editData.value.disabled !== snap.disabled ||
 		!setsEqual(editData.value.badges, snap.badges) ||
-		JSON.stringify([...editData.value.option_groups].sort()) !== JSON.stringify([...snap.option_groups].sort())
+		JSON.stringify([...editData.value.option_groups].sort()) !==
+			JSON.stringify([...snap.option_groups].sort())
 	)
 })
 
@@ -415,7 +420,7 @@ async function loadData() {
 			image: data.image || "",
 			color: data.custom_color || "",
 			spice_level: data.spice_level || 0,
-			badges: new Set(data.badges.map(b => b.menu_badge)),
+			badges: new Set(data.badges.map((b) => b.menu_badge)),
 			option_groups: [...(data.linked_option_groups || [])],
 			disabled: props.isDisabled,
 		}
@@ -473,7 +478,9 @@ function onSaveConfirm(result) {
 	if (pendingConfirmQueue.value.length > 0) {
 		// Show next confirmation
 		confirmMode.value = pendingConfirmQueue.value[0]
-		setTimeout(() => { showSaveConfirm.value = true }, 200)
+		setTimeout(() => {
+			showSaveConfirm.value = true
+		}, 200)
 	} else {
 		// All confirmations done, proceed with save
 		doSave(confirmResults.value)
@@ -575,7 +582,9 @@ async function handleImageUpload(event) {
 
 watch(
 	() => props.itemCode,
-	() => { if (props.itemCode) loadData() },
+	() => {
+		if (props.itemCode) loadData()
+	},
 )
 
 onMounted(() => {

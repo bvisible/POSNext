@@ -1454,8 +1454,10 @@ function handleProceedToPayment() {
 function formatModifiers(modifiersJson) {
 	try {
 		const mods = JSON.parse(modifiersJson)
-		return mods.map(m => m.options.map(o => o.name).join(', ')).join(' · ')
-	} catch { return '' }
+		return mods.map((m) => m.options.map((o) => o.name).join(", ")).join(" · ")
+	} catch {
+		return ""
+	}
 }
 
 function getStationColor(stationName) {
@@ -1464,7 +1466,7 @@ function getStationColor(stationName) {
 	for (const [, info] of Object.entries(map)) {
 		if (info.station === stationName) return info.color
 	}
-	return '#6B7280'
+	return "#6B7280"
 }
 
 function getStationDisplayName(stationName) {
@@ -1815,7 +1817,8 @@ const displayGrandTotal = computed(() => {
 const hasSendableItems = computed(() => {
 	if (!cartStore.restaurantTable && !cartStore.isTakeaway) return false
 	return cartStore.invoiceItems.some(
-		item => !item.is_free_item && (!item.kds_status || item.kds_status === "Waiting")
+		(item) =>
+			!item.is_free_item && (!item.kds_status || item.kds_status === "Waiting"),
 	)
 })
 

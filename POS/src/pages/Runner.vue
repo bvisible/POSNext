@@ -221,7 +221,9 @@ const restaurantStore = useRestaurantStore()
 const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
 const { showError } = useToast()
 const orders = ref([])
-const showDelivered = ref(localStorage.getItem("pos_runner_show_delivered") === "true")
+const showDelivered = ref(
+	localStorage.getItem("pos_runner_show_delivered") === "true",
+)
 const areas = ref([])
 const allTables = ref([])
 const allFloorStations = ref([])
@@ -236,7 +238,10 @@ let socket = null
 let previousCount = 0
 
 const totalReadyItems = computed(() => {
-	return filteredOrders.value.reduce((sum, order) => sum + (order.items?.length || 0), 0)
+	return filteredOrders.value.reduce(
+		(sum, order) => sum + (order.items?.length || 0),
+		0,
+	)
 })
 
 function selectArea(area) {
@@ -247,7 +252,8 @@ function selectArea(area) {
 }
 
 function getAreaReadyCount(areaName) {
-	return orders.value.filter(o => o.area === areaName)
+	return orders.value
+		.filter((o) => o.area === areaName)
 		.reduce((sum, o) => sum + (o.items?.length || 0), 0)
 }
 
@@ -255,10 +261,15 @@ function getAreaReadyCount(areaName) {
 const orderStations = computed(() => {
 	const map = {}
 	for (const order of filteredByAreaOrders.value) {
-		for (const item of (order.items || [])) {
+		for (const item of order.items || []) {
 			const sid = item.preparation_station
 			if (!sid) continue
-			if (!map[sid]) map[sid] = { name: sid, color: item.station_color || "#6B7280", count: 0 }
+			if (!map[sid])
+				map[sid] = {
+					name: sid,
+					color: item.station_color || "#6B7280",
+					count: 0,
+				}
 			map[sid].count++
 		}
 	}
@@ -272,13 +283,13 @@ watch(showDelivered, (val) => {
 const filteredByAreaOrders = computed(() => {
 	let result = orders.value
 	if (!showDelivered.value) {
-		result = result.filter(o => {
-			const allDelivered = o.items?.every(i => i.kds_status === "Delivered")
+		result = result.filter((o) => {
+			const allDelivered = o.items?.every((i) => i.kds_status === "Delivered")
 			return !allDelivered
 		})
 	}
 	if (selectedArea.value) {
-		result = result.filter(o => o.area === selectedArea.value)
+		result = result.filter((o) => o.area === selectedArea.value)
 	}
 	return result
 })
@@ -287,8 +298,13 @@ const filteredOrders = computed(() => {
 	let result = filteredByAreaOrders.value
 	if (selectedStation.value) {
 		result = result
-			.map(o => ({ ...o, items: (o.items || []).filter(i => i.preparation_station === selectedStation.value) }))
-			.filter(o => o.items.length > 0)
+			.map((o) => ({
+				...o,
+				items: (o.items || []).filter(
+					(i) => i.preparation_station === selectedStation.value,
+				),
+			}))
+			.filter((o) => o.items.length > 0)
 	}
 	return result
 })
@@ -301,14 +317,15 @@ const groupedCards = computed(() => {
 
 function groupByTable() {
 	return filteredOrders.value
-		.map(order => ({
+		.map((order) => ({
 			key: order.name,
 			title: order.table_display_name || order.restaurant_table,
 			subtitle: `#${order.name}`,
 			invoiceName: order.name,
-			creation: order.creation, modified: order.modified,
+			creation: order.creation,
+			modified: order.modified,
 			items: order.items || [],
-			stationGroups: groupItemsByStation(order.items || [])
+			stationGroups: groupItemsByStation(order.items || []),
 		}))
 		.sort((a, b) => new Date(a.modified) - new Date(b.modified))
 }
@@ -316,28 +333,45 @@ function groupByTable() {
 function groupByStation() {
 	const stationMap = {}
 	for (const order of filteredOrders.value) {
-		for (const item of (order.items || [])) {
+		for (const item of order.items || []) {
 			const stationId = item.preparation_station || "__general__"
-			const stationName = stationId === "__general__" ? __("General") : stationId
+			const stationName =
+				stationId === "__general__" ? __("General") : stationId
 			if (!stationMap[stationId]) {
 				stationMap[stationId] = {
-					key: stationId, title: stationName, subtitle: "",
+					key: stationId,
+					title: stationName,
+					subtitle: "",
 					stationColor: item.station_color || "#6B7280",
-					creation: order.creation, modified: order.modified,
-					items: [], tableGroups: {}
+					creation: order.creation,
+					modified: order.modified,
+					items: [],
+					tableGroups: {},
 				}
 			}
-			const enrichedItem = { ...item, _invoiceName: order.name, _tableName: order.table_display_name || order.restaurant_table }
+			const enrichedItem = {
+				...item,
+				_invoiceName: order.name,
+				_tableName: order.table_display_name || order.restaurant_table,
+			}
 			stationMap[stationId].items.push(enrichedItem)
 			const tableKey = order.restaurant_table
 			if (!stationMap[stationId].tableGroups[tableKey]) {
-				stationMap[stationId].tableGroups[tableKey] = { tableName: order.table_display_name || order.restaurant_table, invoiceName: order.name, items: [] }
+				stationMap[stationId].tableGroups[tableKey] = {
+					tableName: order.table_display_name || order.restaurant_table,
+					invoiceName: order.name,
+					items: [],
+				}
 			}
 			stationMap[stationId].tableGroups[tableKey].items.push(enrichedItem)
 		}
 	}
 	return Object.values(stationMap)
-		.map(s => ({ ...s, subtitle: `${s.items.length} ${s.items.length === 1 ? __("item") : __("items")}`, tableGroups: Object.values(s.tableGroups) }))
+		.map((s) => ({
+			...s,
+			subtitle: `${s.items.length} ${s.items.length === 1 ? __("item") : __("items")}`,
+			tableGroups: Object.values(s.tableGroups),
+		}))
 		.sort((a, b) => a.title.localeCompare(b.title))
 }
 
@@ -345,42 +379,55 @@ function groupItemsByStation(items) {
 	const groups = {}
 	for (const item of items) {
 		const sid = item.preparation_station || "__general__"
-		if (!groups[sid]) groups[sid] = { stationName: sid === "__general__" ? __("General") : sid, stationColor: item.station_color || "#6B7280", items: [] }
+		if (!groups[sid])
+			groups[sid] = {
+				stationName: sid === "__general__" ? __("General") : sid,
+				stationColor: item.station_color || "#6B7280",
+				items: [],
+			}
 		groups[sid].items.push(item)
 	}
 	return Object.values(groups)
 }
 
 // ─── Plan view ───────────────────────────────────────────────────────────────
-const activePlanArea = computed(() => selectedArea.value || planArea.value || (areas.value.length ? areas.value[0].name : ""))
+const activePlanArea = computed(
+	() =>
+		selectedArea.value ||
+		planArea.value ||
+		(areas.value.length ? areas.value[0].name : ""),
+)
 
 const planViewTables = computed(() => {
 	if (!activePlanArea.value) return allTables.value
-	return allTables.value.filter(t => t.area === activePlanArea.value)
+	return allTables.value.filter((t) => t.area === activePlanArea.value)
 })
 
 const planViewStations = computed(() => {
 	if (!activePlanArea.value) return allFloorStations.value
-	return allFloorStations.value.filter(s => s.area === activePlanArea.value)
+	return allFloorStations.value.filter((s) => s.area === activePlanArea.value)
 })
 
 function getTableReadyCount(table) {
-	const order = orders.value.find(o => o.restaurant_table === table.name)
+	const order = orders.value.find((o) => o.restaurant_table === table.name)
 	return order ? (order.items || []).length : 0
 }
 
 const selectedPlanTableOrder = computed(() => {
 	if (!selectedPlanTable.value) return null
-	return orders.value.find(o => o.restaurant_table === selectedPlanTable.value) || null
+	return (
+		orders.value.find((o) => o.restaurant_table === selectedPlanTable.value) ||
+		null
+	)
 })
 
 async function markTableDelivered(order) {
 	deliverLoading.value = true
 	try {
-		const itemNames = (order.items || []).map(i => i.name)
+		const itemNames = (order.items || []).map((i) => i.name)
 		await call("pos_next.api.restaurant.mark_items_delivered", {
 			invoice_name: order.name,
-			item_names: JSON.stringify(itemNames)
+			item_names: JSON.stringify(itemNames),
 		})
 		selectedPlanTable.value = null
 		loadOrders()
@@ -394,11 +441,14 @@ async function markTableDelivered(order) {
 // ─── Data loading ────────────────────────────────────────────────────────────
 async function loadAreas() {
 	try {
-		const res = await call("pos_next.api.restaurant.get_tables", { _: Date.now() })
+		const res = await call("pos_next.api.restaurant.get_tables", {
+			_: Date.now(),
+		})
 		if (res?.areas) areas.value = res.areas
 		if (res?.tables) allTables.value = res.tables
 		if (res?.stations) allFloorStations.value = res.stations
-		if (!planArea.value && areas.value.length) planArea.value = areas.value[0].name
+		if (!planArea.value && areas.value.length)
+			planArea.value = areas.value[0].name
 	} catch (error) {
 		console.error("Failed to load areas:", error)
 	}
@@ -434,9 +484,14 @@ function playNotificationSound() {
 		oscillator.type = "sine"
 		gainNode.gain.value = 0.3
 		oscillator.start()
-		gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3)
+		gainNode.gain.exponentialRampToValueAtTime(
+			0.001,
+			audioCtx.currentTime + 0.3,
+		)
 		oscillator.stop(audioCtx.currentTime + 0.3)
-	} catch { /* Audio not available */ }
+	} catch {
+		/* Audio not available */
+	}
 }
 
 let pollInterval = null

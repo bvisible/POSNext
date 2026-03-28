@@ -64,7 +64,10 @@
 <script setup>
 import { ref, computed } from "vue"
 import { Dialog, Button } from "frappe-ui"
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import {
+	DEFAULT_CURRENCY,
+	formatCurrency as formatCurrencyUtil,
+} from "@/utils/currency"
 
 const emit = defineEmits(["menu-confirmed"])
 
@@ -74,8 +77,15 @@ const selectedItems = ref({}) // { courseName: { item, item_name } }
 
 const courses = computed(() => menu.value?.courses || [])
 
-const selectedCount = computed(() => Object.keys(selectedItems.value).filter(k => selectedItems.value[k]).length)
-const allSelected = computed(() => courses.value.length > 0 && selectedCount.value === courses.value.length)
+const selectedCount = computed(
+	() =>
+		Object.keys(selectedItems.value).filter((k) => selectedItems.value[k])
+			.length,
+)
+const allSelected = computed(
+	() =>
+		courses.value.length > 0 && selectedCount.value === courses.value.length,
+)
 
 function selectCourseItem(courseName, item) {
 	selectedItems.value = { ...selectedItems.value, [courseName]: item }
@@ -94,16 +104,18 @@ function open(menuData) {
 function confirmMenu() {
 	if (!allSelected.value || !menu.value) return
 
-	const items = Object.entries(selectedItems.value).map(([courseName, item], idx) => ({
-		item_code: item.item,
-		item_name: item.item_name,
-		course_name: courseName,
-		menu_name: menu.value.menu_name,
-		menu_price: menu.value.price,
-		is_menu_item: true,
-		// First item gets the full menu price, others get 0
-		price_override: idx === 0 ? menu.value.price : 0,
-	}))
+	const items = Object.entries(selectedItems.value).map(
+		([courseName, item], idx) => ({
+			item_code: item.item,
+			item_name: item.item_name,
+			course_name: courseName,
+			menu_name: menu.value.menu_name,
+			menu_price: menu.value.price,
+			is_menu_item: true,
+			// First item gets the full menu price, others get 0
+			price_override: idx === 0 ? menu.value.price : 0,
+		}),
+	)
 
 	emit("menu-confirmed", items)
 	show.value = false

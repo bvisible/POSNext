@@ -89,7 +89,12 @@ function onFrameLoad() {
 }
 
 watch(
-	[() => props.cardName, () => props.cardNames, () => props.templateName, () => props.refreshKey],
+	[
+		() => props.cardName,
+		() => props.cardNames,
+		() => props.templateName,
+		() => props.refreshKey,
+	],
 	() => loadPreview(),
 	{ deep: true },
 )

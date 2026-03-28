@@ -27,7 +27,12 @@ export function useDraggable(options = {}) {
 
 	function handleDragStart(event, table) {
 		if (event.isPrimary === false) return
-		if (event.button !== undefined && event.button !== 0 && event.pointerType !== "touch") return
+		if (
+			event.button !== undefined &&
+			event.button !== 0 &&
+			event.pointerType !== "touch"
+		)
+			return
 
 		dragState = {
 			pointerId: event.pointerId,
@@ -59,7 +64,12 @@ export function useDraggable(options = {}) {
 		const w = dragState.table.width || 100
 		const h = dragState.table.height || 100
 
-		const { x, y } = constrain(dragState.startPosX + deltaX, dragState.startPosY + deltaY, w, h)
+		const { x, y } = constrain(
+			dragState.startPosX + deltaX,
+			dragState.startPosY + deltaY,
+			w,
+			h,
+		)
 
 		dragState.table.pos_x = Math.round(x)
 		dragState.table.pos_y = Math.round(y)
@@ -85,7 +95,12 @@ export function useDraggable(options = {}) {
 
 	function handleResizeStart(event, table, handle) {
 		if (event.isPrimary === false) return
-		if (event.button !== undefined && event.button !== 0 && event.pointerType !== "touch") return
+		if (
+			event.button !== undefined &&
+			event.button !== 0 &&
+			event.pointerType !== "touch"
+		)
+			return
 
 		resizeState = {
 			pointerId: event.pointerId,
@@ -103,7 +118,8 @@ export function useDraggable(options = {}) {
 		document.addEventListener("pointerup", handleResizeEnd)
 		document.addEventListener("pointercancel", handleResizeEnd)
 
-		document.body.style.cursor = handle === "se" || handle === "nw" ? "nwse-resize" : "nesw-resize"
+		document.body.style.cursor =
+			handle === "se" || handle === "nw" ? "nwse-resize" : "nesw-resize"
 		document.body.style.userSelect = "none"
 
 		event.preventDefault()

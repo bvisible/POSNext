@@ -211,7 +211,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 */
 	function updateItemInstructions(itemCode, uom, instructions) {
 		const item = uom
-			? invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom)
+			? invoiceItems.value.find(
+					(i) => i.item_code === itemCode && i.uom === uom,
+				)
 			: invoiceItems.value.find((i) => i.item_code === itemCode)
 
 		if (item) {
@@ -223,9 +225,18 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	/**
 	 * Update item modifiers with structured JSON and adjust price.
 	 */
-	function updateItemModifiers(itemCode, uom, modifiersJson, instructions, priceAdjustment, quantityValue = 0) {
+	function updateItemModifiers(
+		itemCode,
+		uom,
+		modifiersJson,
+		instructions,
+		priceAdjustment,
+		quantityValue = 0,
+	) {
 		const item = uom
-			? invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom)
+			? invoiceItems.value.find(
+					(i) => i.item_code === itemCode && i.uom === uom,
+				)
 			: invoiceItems.value.find((i) => i.item_code === itemCode)
 
 		if (item) {

@@ -398,7 +398,11 @@ import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 
 const props = defineProps({ modelValue: Boolean })
-const emit = defineEmits(["update:modelValue", "cards-updated", "open-settings"])
+const emit = defineEmits([
+	"update:modelValue",
+	"cards-updated",
+	"open-settings",
+])
 
 const show = computed({
 	get: () => props.modelValue,
@@ -425,10 +429,12 @@ const editingName = ref(false)
 const nameInput = ref(null)
 
 // Computed: normal vs permanent cards
-const normalCards = computed(() => cards.value.filter(c => !c.is_permanent))
-const permanentCard = computed(() => cards.value.find(c => c.is_permanent))
+const normalCards = computed(() => cards.value.filter((c) => !c.is_permanent))
+const permanentCard = computed(() => cards.value.find((c) => c.is_permanent))
 const permanentCardName = computed(() => permanentCard.value?.name || null)
-const isPermanentCard = computed(() => cardDetail.value && permanentCardName.value === cardDetail.value.name)
+const isPermanentCard = computed(
+	() => cardDetail.value && permanentCardName.value === cardDetail.value.name,
+)
 
 // Category dialog
 const showCategoryDialog = ref(false)
@@ -470,8 +476,11 @@ function fmtTime(t) {
 const cardSlots = computed(() => {
 	if (!selectedCard.value) return []
 	return openingHours.value
-		.filter(slot => slot.restaurant_card === selectedCard.value)
-		.map(slot => `${slot.day_of_week} ${fmtTime(slot.from_time)}-${fmtTime(slot.to_time)}${slot.label ? " (" + slot.label + ")" : ""}`)
+		.filter((slot) => slot.restaurant_card === selectedCard.value)
+		.map(
+			(slot) =>
+				`${slot.day_of_week} ${fmtTime(slot.from_time)}-${fmtTime(slot.to_time)}${slot.label ? " (" + slot.label + ")" : ""}`,
+		)
 })
 
 function selectCard(name) {
@@ -495,7 +504,7 @@ async function selectOrCreatePermanentCard() {
 				is_active: 1,
 				is_permanent: 1,
 				items: [],
-			}
+			},
 		})
 		showSuccess(__("Permanent card created"))
 		await loadCards()
@@ -512,7 +521,7 @@ async function loadCards() {
 			doctype: "Restaurant Card",
 			fields: ["name", "card_name", "is_active", "is_permanent"],
 			order_by: "is_active desc, card_name asc",
-			limit_page_length: 0
+			limit_page_length: 0,
 		})
 		if (res) cards.value = res
 		// Auto-select first card if none selected
@@ -529,21 +538,27 @@ async function loadCards() {
 async function loadOpeningHours() {
 	try {
 		const res = await call("frappe.client.get", {
-			doctype: "Restaurant Settings", name: "Restaurant Settings"
+			doctype: "Restaurant Settings",
+			name: "Restaurant Settings",
 		})
 		openingHours.value = res?.opening_hours || []
-	} catch { openingHours.value = [] }
+	} catch {
+		openingHours.value = []
+	}
 }
 
 async function loadCardDetail(name) {
 	try {
-		const doc = await call("frappe.client.get", { doctype: "Restaurant Card", name })
+		const doc = await call("frappe.client.get", {
+			doctype: "Restaurant Card",
+			name,
+		})
 		if (doc) {
 			cardDetail.value = {
 				name: doc.name,
 				card_name: doc.card_name,
 				is_active: !!doc.is_active,
-				items: (doc.items || []).map(i => ({
+				items: (doc.items || []).map((i) => ({
 					item_type: i.item_type,
 					label: i.label,
 					item: i.item,
@@ -552,7 +567,7 @@ async function loadCardDetail(name) {
 					price: i.price,
 					sort_order: i.sort_order,
 					disabled: !!i.disabled,
-				}))
+				})),
 			}
 			// Load stock data and extra data (description, badges)
 			loadStockData(name)
@@ -565,16 +580,24 @@ async function loadCardDetail(name) {
 
 async function loadStockData(cardName) {
 	try {
-		const res = await call("pos_next.api.restaurant.get_card_items_stock", { card_name: cardName })
+		const res = await call("pos_next.api.restaurant.get_card_items_stock", {
+			card_name: cardName,
+		})
 		stockData.value = res || {}
-	} catch { stockData.value = {} }
+	} catch {
+		stockData.value = {}
+	}
 }
 
 async function loadItemExtraData(cardName) {
 	try {
-		const res = await call("pos_next.api.restaurant.get_card_items_extra", { card_name: cardName })
+		const res = await call("pos_next.api.restaurant.get_card_items_extra", {
+			card_name: cardName,
+		})
 		itemExtraData.value = res || {}
-	} catch { itemExtraData.value = {} }
+	} catch {
+		itemExtraData.value = {}
+	}
 }
 
 function onItemEditSaved(changes) {
@@ -601,7 +624,10 @@ function onItemEditSaved(changes) {
 async function saveCard() {
 	saving.value = true
 	try {
-		const doc = await call("frappe.client.get", { doctype: "Restaurant Card", name: cardDetail.value.name })
+		const doc = await call("frappe.client.get", {
+			doctype: "Restaurant Card",
+			name: cardDetail.value.name,
+		})
 		doc.items = cardDetail.value.items.map((item, idx) => ({
 			item_type: item.item_type,
 			label: item.label,
@@ -625,7 +651,12 @@ async function saveCard() {
 async function createCard() {
 	try {
 		const doc = await call("frappe.client.insert", {
-			doc: { doctype: "Restaurant Card", card_name: newCardName.value, is_active: 1, items: [] }
+			doc: {
+				doctype: "Restaurant Card",
+				card_name: newCardName.value,
+				is_active: 1,
+				items: [],
+			},
 		})
 		showSuccess(__("Card created"))
 		showNewCard.value = false
@@ -641,7 +672,10 @@ async function createCard() {
 
 async function deleteCard() {
 	try {
-		await call("frappe.client.delete", { doctype: "Restaurant Card", name: cardDetail.value.name })
+		await call("frappe.client.delete", {
+			doctype: "Restaurant Card",
+			name: cardDetail.value.name,
+		})
 		showSuccess(__("Card deleted"))
 		cardDetail.value = null
 		selectedCard.value = null
@@ -672,7 +706,9 @@ function openScheduleSettings() {
 
 async function duplicateCard() {
 	try {
-		const res = await call("pos_next.api.restaurant.duplicate_card", { card_name: cardDetail.value.name })
+		const res = await call("pos_next.api.restaurant.duplicate_card", {
+			card_name: cardDetail.value.name,
+		})
 		showSuccess(__("Card duplicated"))
 		await loadCards()
 		if (res) {
@@ -686,11 +722,15 @@ async function duplicateCard() {
 async function toggleCardActive() {
 	try {
 		await call("frappe.client.set_value", {
-			doctype: "Restaurant Card", name: cardDetail.value.name,
-			fieldname: "is_active", value: cardDetail.value.is_active ? 1 : 0
+			doctype: "Restaurant Card",
+			name: cardDetail.value.name,
+			fieldname: "is_active",
+			value: cardDetail.value.is_active ? 1 : 0,
 		})
 		loadCards()
-	} catch { /* silent */ }
+	} catch {
+		/* silent */
+	}
 }
 
 function startRename() {
@@ -725,7 +765,14 @@ async function finishRename() {
 
 function addCategory() {
 	if (newCategoryName.value) {
-		cardDetail.value.items.push({ item_type: "Category", label: newCategoryName.value, item: null, menu: null, price: 0, disabled: false })
+		cardDetail.value.items.push({
+			item_type: "Category",
+			label: newCategoryName.value,
+			item: null,
+			menu: null,
+			price: 0,
+			disabled: false,
+		})
 		newCategoryName.value = ""
 		showCategoryDialog.value = false
 	}
@@ -773,7 +820,7 @@ function searchItems() {
 				doctype: "Item",
 				filters: [["item_name", "like", `%${itemSearchQuery.value}%`]],
 				fields: ["name", "item_name", "standard_rate"],
-				limit_page_length: 10
+				limit_page_length: 10,
 			})
 			searchResults.value = res || []
 		} catch {

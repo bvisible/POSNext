@@ -34,7 +34,10 @@ export function useRealtimeCards() {
 	// Register immediately (not in onMounted — component may already be mounted)
 	if (window.frappe?.realtime) {
 		window.frappe.realtime.on("pos_card_updated", handleCardUpdate)
-		window.frappe.realtime.on("pos_restaurant_settings_updated", handleSettingsUpdate)
+		window.frappe.realtime.on(
+			"pos_restaurant_settings_updated",
+			handleSettingsUpdate,
+		)
 		log.info("Listening for card and settings updates")
 	} else {
 		log.warn("Socket.IO not available, card realtime updates disabled")
@@ -43,7 +46,10 @@ export function useRealtimeCards() {
 	onUnmounted(() => {
 		if (window.frappe?.realtime) {
 			window.frappe.realtime.off("pos_card_updated", handleCardUpdate)
-			window.frappe.realtime.off("pos_restaurant_settings_updated", handleSettingsUpdate)
+			window.frappe.realtime.off(
+				"pos_restaurant_settings_updated",
+				handleSettingsUpdate,
+			)
 		}
 		clearTimeout(debounceTimer)
 	})

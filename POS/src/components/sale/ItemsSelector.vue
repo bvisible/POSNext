@@ -752,13 +752,15 @@ const { isAnyDialogOpen } = useDialogState()
 function getCardBackgroundStyle(item, skipImage = false) {
 	if (!skipImage && item.image) return {}
 	if (item.custom_color) return { backgroundColor: item.custom_color }
-	return { backgroundColor: '#F3F4F6' }
+	return { backgroundColor: "#F3F4F6" }
 }
 
 function getCardTextClasses(item) {
-	const base = 'font-bold line-clamp-3'
+	const base = "font-bold line-clamp-3"
 	if (item.custom_color) {
-		const textColor = isLightColor(item.custom_color) ? 'text-gray-800' : 'text-white'
+		const textColor = isLightColor(item.custom_color)
+			? "text-gray-800"
+			: "text-white"
 		return `${base} ${textColor} text-sm sm:text-base`
 	}
 	return `${base} text-gray-500 text-xs sm:text-sm`

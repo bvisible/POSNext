@@ -120,7 +120,9 @@ const show = ref(false)
 const currentItem = ref(null)
 
 const shiftStore = usePOSShiftStore()
-const currencySymbol = computed(() => getCurrencySymbol(shiftStore.profileCurrency))
+const currencySymbol = computed(() =>
+	getCurrencySymbol(shiftStore.profileCurrency),
+)
 
 const itemName = computed(() => currentItem.value?.item_name || __("Set Price"))
 

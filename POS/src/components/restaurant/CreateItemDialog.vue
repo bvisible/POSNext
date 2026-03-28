@@ -351,11 +351,14 @@ const canCreate = computed(() => {
 })
 
 // Auto-generate item_code from item_name
-watch(() => itemData.value.item_name, (name) => {
-	if (!manualCodeEdit.value) {
-		itemData.value.item_code = name
-	}
-})
+watch(
+	() => itemData.value.item_name,
+	(name) => {
+		if (!manualCodeEdit.value) {
+			itemData.value.item_code = name
+		}
+	},
+)
 
 // Load defaults when dialog opens
 watch(show, async (val) => {
@@ -387,14 +390,18 @@ watch(show, async (val) => {
 async function loadDefaults() {
 	loadingDefaults.value = true
 	try {
-		const res = await call("pos_next.api.restaurant.get_item_creation_defaults", {
-			pos_profile: shiftStore.profileName,
-		})
+		const res = await call(
+			"pos_next.api.restaurant.get_item_creation_defaults",
+			{
+				pos_profile: shiftStore.profileName,
+			},
+		)
 		defaults.value = res
 
 		// Apply defaults
 		itemData.value.item_group = res.default_item_group || ""
-		itemData.value.stock_uom = res.default_uom || (res.uoms.length ? res.uoms[0] : "")
+		itemData.value.stock_uom =
+			res.default_uom || (res.uoms.length ? res.uoms[0] : "")
 		itemData.value.warehouse = res.default_warehouse || ""
 	} catch (err) {
 		console.error("Failed to load item creation defaults:", err)

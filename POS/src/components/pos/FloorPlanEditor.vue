@@ -789,7 +789,12 @@ import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 
-const emit = defineEmits(["table-selected", "load-table-draft", "load-server-draft", "start-takeaway"])
+const emit = defineEmits([
+	"table-selected",
+	"load-table-draft",
+	"load-server-draft",
+	"start-takeaway",
+])
 
 const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
@@ -801,7 +806,7 @@ const { showSuccess, showError } = useToast()
 const canvasRef = ref(null)
 const isEditMode = ref(false)
 const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
-const savedZoom = parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
+const savedZoom = Number.parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
 const zoomLevel = ref(Math.max(0.4, Math.min(2, savedZoom)))
 
 const ZOOM_STEP = 0.15
@@ -812,11 +817,17 @@ function saveZoom() {
 	localStorage.setItem(ZOOM_STORAGE_KEY, zoomLevel.value.toString())
 }
 function zoomIn() {
-	zoomLevel.value = Math.min(ZOOM_MAX, +(zoomLevel.value + ZOOM_STEP).toFixed(2))
+	zoomLevel.value = Math.min(
+		ZOOM_MAX,
+		+(zoomLevel.value + ZOOM_STEP).toFixed(2),
+	)
 	saveZoom()
 }
 function zoomOut() {
-	zoomLevel.value = Math.max(ZOOM_MIN, +(zoomLevel.value - ZOOM_STEP).toFixed(2))
+	zoomLevel.value = Math.max(
+		ZOOM_MIN,
+		+(zoomLevel.value - ZOOM_STEP).toFixed(2),
+	)
 	saveZoom()
 }
 function zoomReset() {
@@ -844,11 +855,22 @@ const selectedArea = ref(null)
 const showAddTableDialog = ref(false)
 const newTable = ref({ table_name: "", capacity: 4, shape: "Square" })
 const showAddStationDialog = ref(false)
-const newStation = ref({ station_name: "", station_type: "Kitchen", color: "#F97316" })
+const newStation = ref({
+	station_name: "",
+	station_type: "Kitchen",
+	color: "#F97316",
+})
 const showEditStationDialog = ref(false)
 const editStation = ref({
-	name: "", station_name: "", station_type: "Kitchen", color: "#F97316", workflow: "",
-	is_active: 1, use_runner: 1, items: [], item_groups: []
+	name: "",
+	station_name: "",
+	station_type: "Kitchen",
+	color: "#F97316",
+	workflow: "",
+	is_active: 1,
+	use_runner: 1,
+	items: [],
+	item_groups: [],
 })
 const availableWorkflows = ref([])
 const itemSearchInput = ref("")
@@ -858,7 +880,12 @@ const groupSearchResults = ref([])
 let itemSearchTimeout = null
 let groupSearchTimeout = null
 const showEditTableDialog = ref(false)
-const editTable = ref({ name: "", table_name: "", capacity: 4, shape: "Square" })
+const editTable = ref({
+	name: "",
+	table_name: "",
+	capacity: 4,
+	shape: "Square",
+})
 const showAddAreaDialog = ref(false)
 const showRenameAreaDialog = ref(false)
 const showDeleteAreaDialog = ref(false)
@@ -874,14 +901,16 @@ const areas = computed(() => restaurantStore.areas)
 const localTables = ref([])
 
 function syncLocalTables() {
-	localTables.value = restaurantStore.tables.map(t => ({ ...t }))
+	localTables.value = restaurantStore.tables.map((t) => ({ ...t }))
 }
 
 // Local reactive copy of stations for rendering
 const localStations = ref([])
 
 function syncLocalStations() {
-	localStations.value = (restaurantStore.floorStations || []).map(s => ({ ...s }))
+	localStations.value = (restaurantStore.floorStations || []).map((s) => ({
+		...s,
+	}))
 }
 
 // Keep local copies in sync when store data changes
@@ -890,12 +919,12 @@ watch(() => restaurantStore.floorStations, syncLocalStations, { deep: true })
 
 const filteredTables = computed(() => {
 	if (!selectedArea.value) return localTables.value
-	return localTables.value.filter(t => t.area === selectedArea.value)
+	return localTables.value.filter((t) => t.area === selectedArea.value)
 })
 
 const filteredStations = computed(() => {
 	if (!selectedArea.value) return localStations.value
-	return localStations.value.filter(s => s.area === selectedArea.value)
+	return localStations.value.filter((s) => s.area === selectedArea.value)
 })
 
 function occupiedCount(areaName) {
@@ -904,7 +933,9 @@ function occupiedCount(areaName) {
 
 // ─── Delivery Arrows ─────────────────────────────────────────────────────────
 const ARROWS_STORAGE_KEY = "pos_show_delivery_arrows"
-const showDeliveryArrows = ref(localStorage.getItem(ARROWS_STORAGE_KEY) !== "false")
+const showDeliveryArrows = ref(
+	localStorage.getItem(ARROWS_STORAGE_KEY) !== "false",
+)
 const runnerOrders = ref([])
 
 function toggleDeliveryArrows() {
@@ -916,7 +947,9 @@ function toggleDeliveryArrows() {
 async function loadRunnerOrders() {
 	// Always load — needed for station bar counters and runner button, not just arrows
 	try {
-		const res = await call("pos_next.api.restaurant.get_runner_orders", { _: Date.now() })
+		const res = await call("pos_next.api.restaurant.get_runner_orders", {
+			_: Date.now(),
+		})
 		if (res) runnerOrders.value = res
 	} catch {
 		// Silent fail — arrows are optional
@@ -929,30 +962,40 @@ const kdsOrders = ref([])
 async function loadKdsOrders() {
 	if (isEditMode.value) return
 	try {
-		const res = await call("pos_next.api.restaurant.get_kds_orders", { _: Date.now() })
+		const res = await call("pos_next.api.restaurant.get_kds_orders", {
+			_: Date.now(),
+		})
 		if (res) kdsOrders.value = res
-	} catch { /* silent */ }
+	} catch {
+		/* silent */
+	}
 }
 
 // All stations sorted: current area first, then others
 const allStations = computed(() => {
-	const current = localStations.value.filter(s => s.area === selectedArea.value)
-	const others = localStations.value.filter(s => s.area !== selectedArea.value)
+	const current = localStations.value.filter(
+		(s) => s.area === selectedArea.value,
+	)
+	const others = localStations.value.filter(
+		(s) => s.area !== selectedArea.value,
+	)
 	return [...current, ...others]
 })
 
 function getAreaName(areaId) {
-	const area = areas.value.find(a => a.name === areaId)
+	const area = areas.value.find((a) => a.name === areaId)
 	return area?.area_name || areaId || ""
 }
 
 function getStationPreparingCount(stationName) {
 	let count = 0
 	for (const order of kdsOrders.value) {
-		for (const item of (order.items || [])) {
-			if (item.preparation_station === stationName &&
+		for (const item of order.items || []) {
+			if (
+				item.preparation_station === stationName &&
 				item.kds_status &&
-				!["Delivered", "Waiting"].includes(item.kds_status)) {
+				!["Delivered", "Waiting"].includes(item.kds_status)
+			) {
 				count++
 			}
 		}
@@ -964,7 +1007,7 @@ function getStationPreparingCount(stationName) {
 function getStationReadyCount(stationName) {
 	let count = 0
 	for (const order of runnerOrders.value) {
-		for (const item of (order.items || [])) {
+		for (const item of order.items || []) {
 			if (item.preparation_station === stationName) count++
 		}
 	}
@@ -987,10 +1030,12 @@ const deliveryArrows = computed(() => {
 	let ghostIndex = 0
 
 	for (const order of runnerOrders.value) {
-		const table = filteredTables.value.find(t => t.name === order.restaurant_table)
+		const table = filteredTables.value.find(
+			(t) => t.name === order.restaurant_table,
+		)
 		if (!table) continue // Table not in current area view
 
-		for (const item of (order.items || [])) {
+		for (const item of order.items || []) {
 			const stationId = item.preparation_station
 			if (!stationId) continue
 
@@ -998,46 +1043,73 @@ const deliveryArrows = computed(() => {
 			if (seen.has(pairKey)) continue
 			seen.add(pairKey)
 
-			const station = localStations.value.find(s => s.name === stationId)
-			const itemCount = (order.items || []).filter(i => i.preparation_station === stationId).length
+			const station = localStations.value.find((s) => s.name === stationId)
+			const itemCount = (order.items || []).filter(
+				(i) => i.preparation_station === stationId,
+			).length
 
 			if (station && station.area === selectedArea.value) {
 				// Same area: arrow from station EDGE to table EDGE
-				const sc = { x: (station.pos_x || 0) + (station.width || 120) / 2, y: (station.pos_y || 0) + (station.height || 60) / 2 }
-				const tc = { x: (table.pos_x || 0) + (table.width || 100) / 2, y: (table.pos_y || 0) + (table.height || 100) / 2 }
-				const edge1 = edgePoint(sc, station.width || 120, station.height || 60, tc)
+				const sc = {
+					x: (station.pos_x || 0) + (station.width || 120) / 2,
+					y: (station.pos_y || 0) + (station.height || 60) / 2,
+				}
+				const tc = {
+					x: (table.pos_x || 0) + (table.width || 100) / 2,
+					y: (table.pos_y || 0) + (table.height || 100) / 2,
+				}
+				const edge1 = edgePoint(
+					sc,
+					station.width || 120,
+					station.height || 60,
+					tc,
+				)
 				const edge2 = edgePoint(tc, table.width || 100, table.height || 100, sc)
-				const dist = Math.sqrt((edge2.x - edge1.x) ** 2 + (edge2.y - edge1.y) ** 2)
+				const dist = Math.sqrt(
+					(edge2.x - edge1.x) ** 2 + (edge2.y - edge1.y) ** 2,
+				)
 				arrows.push({
 					key: pairKey,
-					x1: edge1.x, y1: edge1.y, x2: edge2.x, y2: edge2.y,
+					x1: edge1.x,
+					y1: edge1.y,
+					x2: edge2.x,
+					y2: edge2.y,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
 					isGhost: false,
 					itemCount,
-					duration: Math.max(3, dist / 60) + 's'
+					duration: Math.max(3, dist / 60) + "s",
 				})
 			} else if (station) {
 				// Cross-area: arrow starts from top of canvas (below station bar tab)
 				// Calculate x position based on station's index in allStations
-				const stationIdx = allStations.value.findIndex(s => s.name === stationId)
+				const stationIdx = allStations.value.findIndex(
+					(s) => s.name === stationId,
+				)
 				const tabX = 16 + (stationIdx >= 0 ? stationIdx : ghostIndex) * 130 + 65
 				ghostIndex++
 				const te = edgePoint(
-					{ x: (table.pos_x || 0) + (table.width || 100) / 2, y: (table.pos_y || 0) + (table.height || 100) / 2 },
-					table.width || 100, table.height || 100,
-					{ x: tabX / zoomLevel.value, y: 0 }
+					{
+						x: (table.pos_x || 0) + (table.width || 100) / 2,
+						y: (table.pos_y || 0) + (table.height || 100) / 2,
+					},
+					table.width || 100,
+					table.height || 100,
+					{ x: tabX / zoomLevel.value, y: 0 },
 				)
 				const startX = tabX / zoomLevel.value
 				const dist = Math.sqrt((te.x - startX) ** 2 + te.y ** 2)
 				arrows.push({
 					key: pairKey,
-					x1: startX, y1: 0, x2: te.x, y2: te.y,
+					x1: startX,
+					y1: 0,
+					x2: te.x,
+					y2: te.y,
 					color: station.color || "#22C55E",
 					stationName: station.station_name,
 					isGhost: true,
 					itemCount,
-					duration: Math.max(3, dist / 60) + 's'
+					duration: Math.max(3, dist / 60) + "s",
 				})
 			}
 		}
@@ -1055,8 +1127,8 @@ function edgePoint(center, w, h, target) {
 	const absDx = Math.abs(dx)
 	const absDy = Math.abs(dy)
 	// Find which edge the line intersects
-	const scaleX = absDx > 0 ? hw / absDx : Infinity
-	const scaleY = absDy > 0 ? hh / absDy : Infinity
+	const scaleX = absDx > 0 ? hw / absDx : Number.POSITIVE_INFINITY
+	const scaleY = absDy > 0 ? hh / absDy : Number.POSITIVE_INFINITY
 	const scale = Math.min(scaleX, scaleY)
 	return { x: center.x + dx * scale, y: center.y + dy * scale }
 }
@@ -1067,25 +1139,67 @@ const { handleDragStart, handleResizeStart, destroy } = useDraggable({
 	onDragEnd: (obj) => {
 		// Check if this is a station or table
 		if (obj.station_name) {
-			const storeStation = restaurantStore.floorStations.find(s => s.name === obj.name)
-			if (storeStation) Object.assign(storeStation, { pos_x: obj.pos_x, pos_y: obj.pos_y })
-			restaurantStore.updateStationPosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+			const storeStation = restaurantStore.floorStations.find(
+				(s) => s.name === obj.name,
+			)
+			if (storeStation)
+				Object.assign(storeStation, { pos_x: obj.pos_x, pos_y: obj.pos_y })
+			restaurantStore.updateStationPosition(
+				obj.name,
+				obj.pos_x,
+				obj.pos_y,
+				obj.width,
+				obj.height,
+			)
 		} else {
-			const storeTable = restaurantStore.tables.find(t => t.name === obj.name)
-			if (storeTable) Object.assign(storeTable, { pos_x: obj.pos_x, pos_y: obj.pos_y })
-			restaurantStore.updateTablePosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+			const storeTable = restaurantStore.tables.find((t) => t.name === obj.name)
+			if (storeTable)
+				Object.assign(storeTable, { pos_x: obj.pos_x, pos_y: obj.pos_y })
+			restaurantStore.updateTablePosition(
+				obj.name,
+				obj.pos_x,
+				obj.pos_y,
+				obj.width,
+				obj.height,
+			)
 		}
 	},
 	onResizeEnd: (obj) => {
 		// Check if this is a station or table
 		if (obj.station_name) {
-			const storeStation = restaurantStore.floorStations.find(s => s.name === obj.name)
-			if (storeStation) Object.assign(storeStation, { pos_x: obj.pos_x, pos_y: obj.pos_y, width: obj.width, height: obj.height })
-			restaurantStore.updateStationPosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+			const storeStation = restaurantStore.floorStations.find(
+				(s) => s.name === obj.name,
+			)
+			if (storeStation)
+				Object.assign(storeStation, {
+					pos_x: obj.pos_x,
+					pos_y: obj.pos_y,
+					width: obj.width,
+					height: obj.height,
+				})
+			restaurantStore.updateStationPosition(
+				obj.name,
+				obj.pos_x,
+				obj.pos_y,
+				obj.width,
+				obj.height,
+			)
 		} else {
-			const storeTable = restaurantStore.tables.find(t => t.name === obj.name)
-			if (storeTable) Object.assign(storeTable, { pos_x: obj.pos_x, pos_y: obj.pos_y, width: obj.width, height: obj.height })
-			restaurantStore.updateTablePosition(obj.name, obj.pos_x, obj.pos_y, obj.width, obj.height)
+			const storeTable = restaurantStore.tables.find((t) => t.name === obj.name)
+			if (storeTable)
+				Object.assign(storeTable, {
+					pos_x: obj.pos_x,
+					pos_y: obj.pos_y,
+					width: obj.width,
+					height: obj.height,
+				})
+			restaurantStore.updateTablePosition(
+				obj.name,
+				obj.pos_x,
+				obj.pos_y,
+				obj.width,
+				obj.height,
+			)
 		}
 	},
 })
@@ -1116,7 +1230,7 @@ function getSeatPositions(table) {
 			seats.push({
 				left: `${cx + rx * Math.cos(angle)}px`,
 				top: `${cy + ry * Math.sin(angle)}px`,
-				transform: 'translate(-50%, -50%)',
+				transform: "translate(-50%, -50%)",
 			})
 		}
 		return seats
@@ -1132,28 +1246,28 @@ function getSeatPositions(table) {
 
 	// All seats use transform to center on the visual outer edge
 	// Absolute children are positioned from the padding box, so we offset by -b to reach the border edge
-	const t = 'translate(-50%, -50%)'
+	const t = "translate(-50%, -50%)"
 	const innerW = w - 2 * b // padding box width
 	const innerH = h - 2 * b // padding box height
 
 	// Top side — visual outer edge is at top: -b
 	sides[0].forEach((_, idx) => {
-		const x = innerW / (sides[0].length + 1) * (idx + 1)
+		const x = (innerW / (sides[0].length + 1)) * (idx + 1)
 		seats.push({ left: `${x}px`, top: `${-b}px`, transform: t })
 	})
 	// Bottom side — visual outer edge is at top: innerH + b
 	sides[2].forEach((_, idx) => {
-		const x = innerW / (sides[2].length + 1) * (idx + 1)
+		const x = (innerW / (sides[2].length + 1)) * (idx + 1)
 		seats.push({ left: `${x}px`, top: `${innerH + b}px`, transform: t })
 	})
 	// Left side — visual outer edge is at left: -b
 	sides[3].forEach((_, idx) => {
-		const y = innerH / (sides[3].length + 1) * (idx + 1)
+		const y = (innerH / (sides[3].length + 1)) * (idx + 1)
 		seats.push({ left: `${-b}px`, top: `${y}px`, transform: t })
 	})
 	// Right side — visual outer edge is at left: innerW + b
 	sides[1].forEach((_, idx) => {
-		const y = innerH / (sides[1].length + 1) * (idx + 1)
+		const y = (innerH / (sides[1].length + 1)) * (idx + 1)
 		seats.push({ left: `${innerW + b}px`, top: `${y}px`, transform: t })
 	})
 
@@ -1190,10 +1304,14 @@ function getTableClasses(table) {
 		return "border-2 border-dashed border-blue-400 bg-white/90 dark:bg-gray-800/90 shadow-md"
 	}
 	const statusClasses = {
-		Empty: "border-2 border-green-200 bg-green-50 hover:border-green-400 dark:bg-green-900/20 dark:border-green-800",
-		Occupied: "border-2 border-red-200 bg-red-50 hover:border-red-400 dark:bg-red-900/20 dark:border-red-800",
-		Reserved: "border-2 border-yellow-200 bg-yellow-50 hover:border-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-800",
-		Cleaning: "border-2 border-blue-200 bg-blue-50 hover:border-blue-400 dark:bg-blue-900/20 dark:border-blue-800",
+		Empty:
+			"border-2 border-green-200 bg-green-50 hover:border-green-400 dark:bg-green-900/20 dark:border-green-800",
+		Occupied:
+			"border-2 border-red-200 bg-red-50 hover:border-red-400 dark:bg-red-900/20 dark:border-red-800",
+		Reserved:
+			"border-2 border-yellow-200 bg-yellow-50 hover:border-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-800",
+		Cleaning:
+			"border-2 border-blue-200 bg-blue-50 hover:border-blue-400 dark:bg-blue-900/20 dark:border-blue-800",
 	}
 	return statusClasses[table.status] || statusClasses.Empty
 }
@@ -1213,23 +1331,25 @@ function onResizePointerDown(event, table, handle) {
 function openStationKDS(station) {
 	// Open KDS page filtered by this station in a new tab
 	const url = `/pos/kds?station=${encodeURIComponent(station.name)}`
-	window.open(url, '_blank')
+	window.open(url, "_blank")
 }
 
 function openRunnerTab() {
-	window.open('/pos/runner', '_blank')
+	window.open("/pos/runner", "_blank")
 }
 
 // Takeaway
 const takeawayTotalCount = computed(() => restaurantStore.takeawayOrders.length)
-const takeawayReadyCount = computed(() =>
-	restaurantStore.takeawayOrders.filter(o => o.kds_status === "Ready").length
+const takeawayReadyCount = computed(
+	() =>
+		restaurantStore.takeawayOrders.filter((o) => o.kds_status === "Ready")
+			.length,
 )
 function openTakeawayTab() {
-	window.open('/pos/takeaway', '_blank')
+	window.open("/pos/takeaway", "_blank")
 }
 function startNewTakeaway() {
-	emit('start-takeaway')
+	emit("start-takeaway")
 }
 
 async function selectTable(table) {
@@ -1255,25 +1375,31 @@ async function selectTable(table) {
 						try {
 							const mods = JSON.parse(item.posa_item_modifiers)
 							for (const mod of mods) {
-								for (const opt of (mod.options || [])) {
-									modifierPriceAdjustment += (opt.price_adjustment || opt.price || 0)
+								for (const opt of mod.options || []) {
+									modifierPriceAdjustment +=
+										opt.price_adjustment || opt.price || 0
 								}
 							}
-						} catch { /* ignore parse errors */ }
+						} catch {
+							/* ignore parse errors */
+						}
 					}
 
-					cartStore.addItem({
-						item_code: item.item_code,
-						item_name: item.item_name,
-						rate: item.rate,
-						uom: item.uom,
-						image: item.image,
-						preparation_station: item.preparation_station,
-						posa_special_instructions: item.posa_special_instructions,
-						posa_item_modifiers: item.posa_item_modifiers,
-						kds_status: item.kds_status || "Pending",
-						_modifiers_applied: modifierPriceAdjustment || 0,
-					}, item.qty || 1)
+					cartStore.addItem(
+						{
+							item_code: item.item_code,
+							item_name: item.item_name,
+							rate: item.rate,
+							uom: item.uom,
+							image: item.image,
+							preparation_station: item.preparation_station,
+							posa_special_instructions: item.posa_special_instructions,
+							posa_item_modifiers: item.posa_item_modifiers,
+							kds_status: item.kds_status || "Pending",
+							_modifiers_applied: modifierPriceAdjustment || 0,
+						},
+						item.qty || 1,
+					)
 				}
 			}
 
@@ -1313,21 +1439,25 @@ async function toggleEditMode() {
 function onAreaDragStart(event, area) {
 	if (!isEditMode.value) return
 	draggedArea.value = area.name
-	event.dataTransfer.effectAllowed = 'move'
+	event.dataTransfer.effectAllowed = "move"
 }
 
 function onAreaDragOver(event, area) {
 	if (!isEditMode.value || !draggedArea.value) return
-	event.dataTransfer.dropEffect = 'move'
+	event.dataTransfer.dropEffect = "move"
 }
 
 async function onAreaDrop(event, targetArea) {
-	if (!isEditMode.value || !draggedArea.value || draggedArea.value === targetArea.name) {
+	if (
+		!isEditMode.value ||
+		!draggedArea.value ||
+		draggedArea.value === targetArea.name
+	) {
 		draggedArea.value = null
 		return
 	}
 
-	const names = areas.value.map(a => a.name)
+	const names = areas.value.map((a) => a.name)
 	const fromIdx = names.indexOf(draggedArea.value)
 	const toIdx = names.indexOf(targetArea.name)
 	if (fromIdx === -1 || toIdx === -1) return
@@ -1344,8 +1474,8 @@ async function handleAddTable() {
 	try {
 		// Calculate position: center of visible canvas area
 		const canvas = canvasRef.value
-		const pos_x = canvas ? Math.round((canvas.clientWidth / 2) - 50) : 200
-		const pos_y = canvas ? Math.round((canvas.clientHeight / 2) - 50) : 200
+		const pos_x = canvas ? Math.round(canvas.clientWidth / 2 - 50) : 200
+		const pos_y = canvas ? Math.round(canvas.clientHeight / 2 - 50) : 200
 
 		await restaurantStore.addTable({
 			table_name: newTable.value.table_name,
@@ -1367,7 +1497,9 @@ async function handleAddTable() {
 async function openEditStationDialog(station) {
 	// Load full station details from server
 	try {
-		const details = await call("pos_next.api.restaurant.get_station_details", { name: station.name })
+		const details = await call("pos_next.api.restaurant.get_station_details", {
+			name: station.name,
+		})
 		editStation.value = {
 			name: details.name,
 			station_name: details.station_name,
@@ -1387,7 +1519,10 @@ async function openEditStationDialog(station) {
 			station_type: station.station_type || "Kitchen",
 			color: station.color || "#F97316",
 			workflow: station.workflow || "",
-			is_active: 1, use_runner: 1, items: [], item_groups: [],
+			is_active: 1,
+			use_runner: 1,
+			items: [],
+			item_groups: [],
 		}
 	}
 	// Reset search state
@@ -1399,7 +1534,9 @@ async function openEditStationDialog(station) {
 	try {
 		const res = await call("pos_next.api.restaurant.get_preparation_workflows")
 		availableWorkflows.value = res || []
-	} catch { availableWorkflows.value = [] }
+	} catch {
+		availableWorkflows.value = []
+	}
 	showEditStationDialog.value = true
 }
 
@@ -1442,9 +1579,13 @@ function searchItems() {
 				limit_page_length: 10,
 			})
 			// Exclude already added items
-			const existingItems = editStation.value.items.map(i => i.item)
-			itemSearchResults.value = (res || []).filter(i => !existingItems.includes(i.name))
-		} catch { itemSearchResults.value = [] }
+			const existingItems = editStation.value.items.map((i) => i.item)
+			itemSearchResults.value = (res || []).filter(
+				(i) => !existingItems.includes(i.name),
+			)
+		} catch {
+			itemSearchResults.value = []
+		}
 	}, 300)
 }
 
@@ -1479,9 +1620,15 @@ function searchItemGroups() {
 				limit_page_length: 10,
 			})
 			// Exclude already added groups
-			const existingGroups = editStation.value.item_groups.map(g => g.item_group)
-			groupSearchResults.value = (res || []).filter(g => !existingGroups.includes(g.name))
-		} catch { groupSearchResults.value = [] }
+			const existingGroups = editStation.value.item_groups.map(
+				(g) => g.item_group,
+			)
+			groupSearchResults.value = (res || []).filter(
+				(g) => !existingGroups.includes(g.name),
+			)
+		} catch {
+			groupSearchResults.value = []
+		}
 	}, 300)
 }
 
@@ -1501,7 +1648,9 @@ function removeItemGroup(idx) {
 
 async function handleDeleteStation() {
 	try {
-		await call("pos_next.api.restaurant.delete_station", { name: editStation.value.name })
+		await call("pos_next.api.restaurant.delete_station", {
+			name: editStation.value.name,
+		})
 		showEditStationDialog.value = false
 		await restaurantStore.fetchFromNetwork()
 		syncLocalStations()
@@ -1515,8 +1664,8 @@ async function handleAddStation() {
 	if (!newStation.value.station_name) return
 	try {
 		const canvas = canvasRef.value
-		const pos_x = canvas ? Math.round((canvas.clientWidth / 2) - 60) : 200
-		const pos_y = canvas ? Math.round((canvas.clientHeight / 2) - 30) : 200
+		const pos_x = canvas ? Math.round(canvas.clientWidth / 2 - 60) : 200
+		const pos_y = canvas ? Math.round(canvas.clientHeight / 2 - 30) : 200
 
 		await call("pos_next.api.restaurant.create_station", {
 			station_name: newStation.value.station_name,
@@ -1527,7 +1676,11 @@ async function handleAddStation() {
 			pos_y,
 		})
 		showAddStationDialog.value = false
-		newStation.value = { station_name: "", station_type: "Kitchen", color: "#F97316" }
+		newStation.value = {
+			station_name: "",
+			station_type: "Kitchen",
+			color: "#F97316",
+		}
 		await restaurantStore.fetchFromNetwork()
 		syncLocalStations()
 		showSuccess(__("Station added"))
@@ -1589,7 +1742,10 @@ async function handleRenameArea() {
 	if (!editAreaName.value.trim() || !areaToRename.value) return
 
 	try {
-		await restaurantStore.renameArea(areaToRename.value.name, editAreaName.value.trim())
+		await restaurantStore.renameArea(
+			areaToRename.value.name,
+			editAreaName.value.trim(),
+		)
 		syncLocalTables()
 		syncLocalStations()
 		showSuccess(__("Area renamed"))
@@ -1613,7 +1769,10 @@ async function handleDeleteArea() {
 		await restaurantStore.deleteArea(areaToDelete.value.name)
 		syncLocalTables()
 		syncLocalStations()
-		if (selectedArea.value === areaToDelete.value.name && areas.value.length > 0) {
+		if (
+			selectedArea.value === areaToDelete.value.name &&
+			areas.value.length > 0
+		) {
 			selectedArea.value = areas.value[0].name
 		}
 		showSuccess(__("Area deleted"))
@@ -1633,7 +1792,7 @@ function autoLayoutTables() {
 	if (tbls.length < 2) return
 
 	// Check if all tables are stacked at origin (no layout done yet)
-	const allAtOrigin = tbls.every(t => !t.pos_x && !t.pos_y)
+	const allAtOrigin = tbls.every((t) => !t.pos_x && !t.pos_y)
 	if (!allAtOrigin) return
 
 	const tableW = 110
@@ -1664,7 +1823,10 @@ onMounted(async () => {
 	syncLocalStations()
 
 	// Select default area
-	if (restaurantStore.defaultArea && areas.value.find(a => a.name === restaurantStore.defaultArea)) {
+	if (
+		restaurantStore.defaultArea &&
+		areas.value.find((a) => a.name === restaurantStore.defaultArea)
+	) {
 		selectedArea.value = restaurantStore.defaultArea
 	} else if (areas.value.length > 0) {
 		selectedArea.value = areas.value[0].name

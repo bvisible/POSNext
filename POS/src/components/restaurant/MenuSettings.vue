@@ -242,8 +242,10 @@ const saveLabel = computed(() => {
 })
 
 const saveStatusClass = computed(() => {
-	if (props.saveStatus === "saved") return "bg-green-100 text-green-700 border border-green-300"
-	if (props.saveStatus === "error") return "bg-red-100 text-red-700 border border-red-300"
+	if (props.saveStatus === "saved")
+		return "bg-green-100 text-green-700 border border-green-300"
+	if (props.saveStatus === "error")
+		return "bg-red-100 text-red-700 border border-red-300"
 	if (props.saveStatus === "saving") return "bg-gray-200 text-gray-500"
 	return "bg-gray-100 text-gray-700 hover:bg-gray-200"
 })
@@ -322,9 +324,7 @@ function emitUpdate() {
 
 function generatePdf() {
 	const cardsToGenerate =
-		selectedCards.value.length > 1
-			? selectedCards.value
-			: [props.cardName]
+		selectedCards.value.length > 1 ? selectedCards.value : [props.cardName]
 	emit("generate-pdf", {
 		card_names: cardsToGenerate,
 		template_name: selectedTemplate.value,
@@ -345,7 +345,8 @@ watch(
 		// Use saved template if available, otherwise default to "Moderne Minimaliste"
 		const saved = props.currentTemplate
 		const savedName = saved?.name
-		const hasSaved = savedName && props.templates.find((t) => t.name === savedName)
+		const hasSaved =
+			savedName && props.templates.find((t) => t.name === savedName)
 
 		if (hasSaved) {
 			selectedTemplate.value = savedName
@@ -380,10 +381,18 @@ watch(
 		// Apply saved overrides on top of template defaults
 		if (saved) {
 			const overrideKeys = [
-				"font_header", "font_body", "show_header", "show_descriptions",
-				"show_allergens", "show_options", "show_images",
-				"price_alignment", "columns", "paper_format",
-				"header_text", "footer_text",
+				"font_header",
+				"font_body",
+				"show_header",
+				"show_descriptions",
+				"show_allergens",
+				"show_options",
+				"show_images",
+				"price_alignment",
+				"columns",
+				"paper_format",
+				"header_text",
+				"footer_text",
 			]
 			for (const key of overrideKeys) {
 				if (saved[key] !== undefined && saved[key] !== null) {
@@ -391,7 +400,10 @@ watch(
 				}
 			}
 			// Restore selected option groups (default: none selected)
-			if (saved.selected_option_groups && Array.isArray(saved.selected_option_groups)) {
+			if (
+				saved.selected_option_groups &&
+				Array.isArray(saved.selected_option_groups)
+			) {
 				selectedOptionGroups.value = saved.selected_option_groups
 			}
 		}

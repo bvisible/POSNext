@@ -119,35 +119,53 @@ import { initSocket } from "@/socket"
 const orders = ref([])
 const loading = ref(true)
 const selectedStatus = ref("")
-const showDelivered = ref(localStorage.getItem("pos_takeaway_show_delivered") === "true")
+const showDelivered = ref(
+	localStorage.getItem("pos_takeaway_show_delivered") === "true",
+)
 
 watch(showDelivered, (val) => {
 	localStorage.setItem("pos_takeaway_show_delivered", val ? "true" : "false")
 })
 
-const readyCount = computed(() => orders.value.filter(o => o.kds_status === "Ready").length)
+const readyCount = computed(
+	() => orders.value.filter((o) => o.kds_status === "Ready").length,
+)
 
 const statusTabs = computed(() => [
 	{ value: "", label: "All", count: orders.value.length },
-	{ value: "Pending", label: "Pending", count: orders.value.filter(o => !o.kds_status || o.kds_status === "Pending").length },
-	{ value: "Preparing", label: "Preparing", count: orders.value.filter(o => o.kds_status === "Preparing").length },
+	{
+		value: "Pending",
+		label: "Pending",
+		count: orders.value.filter(
+			(o) => !o.kds_status || o.kds_status === "Pending",
+		).length,
+	},
+	{
+		value: "Preparing",
+		label: "Preparing",
+		count: orders.value.filter((o) => o.kds_status === "Preparing").length,
+	},
 	{ value: "Ready", label: "Ready", count: readyCount.value },
 ])
 
 const filteredOrders = computed(() => {
 	let result = orders.value
 	if (!showDelivered.value) {
-		result = result.filter(o => o.kds_status !== "Delivered")
+		result = result.filter((o) => o.kds_status !== "Delivered")
 	}
 	if (selectedStatus.value) {
-		result = result.filter(o => (o.kds_status || "Pending") === selectedStatus.value)
+		result = result.filter(
+			(o) => (o.kds_status || "Pending") === selectedStatus.value,
+		)
 	}
 	return result
 })
 
 async function loadOrders() {
 	try {
-		const res = await call("pos_next.api.restaurant.get_takeaway_orders", { _: Date.now() })
+		const res = await call("pos_next.api.restaurant.get_takeaway_orders", {
+			_: Date.now(),
+		})
 		orders.value = res || []
 	} catch (err) {
 		console.error("Failed to load takeaway orders:", err)
@@ -174,24 +192,35 @@ async function markDelivered(order) {
 
 function getStatusHeaderClass(status) {
 	switch (status) {
-		case "Ready": return "bg-green-50"
-		case "Preparing": return "bg-amber-50"
-		case "Delivered": return "bg-gray-50"
-		default: return "bg-blue-50"
+		case "Ready":
+			return "bg-green-50"
+		case "Preparing":
+			return "bg-amber-50"
+		case "Delivered":
+			return "bg-gray-50"
+		default:
+			return "bg-blue-50"
 	}
 }
 
 function getStatusBadgeClass(status) {
 	switch (status) {
-		case "Ready": return "bg-green-100 text-green-700"
-		case "Preparing": return "bg-amber-100 text-amber-700"
-		case "Delivered": return "bg-gray-100 text-gray-500"
-		default: return "bg-blue-100 text-blue-700"
+		case "Ready":
+			return "bg-green-100 text-green-700"
+		case "Preparing":
+			return "bg-amber-100 text-amber-700"
+		case "Delivered":
+			return "bg-gray-100 text-gray-500"
+		default:
+			return "bg-blue-100 text-blue-700"
 	}
 }
 
 function formatCurrency(amount) {
-	return new Intl.NumberFormat("fr-CH", { style: "decimal", minimumFractionDigits: 2 }).format(amount || 0)
+	return new Intl.NumberFormat("fr-CH", {
+		style: "decimal",
+		minimumFractionDigits: 2,
+	}).format(amount || 0)
 }
 
 function formatTime(creation) {

@@ -116,12 +116,12 @@ import { useToast } from "@/composables/useToast"
 const props = defineProps({
 	card: {
 		type: Object,
-		required: true
+		required: true,
 	},
 	viewMode: {
 		type: String,
-		default: "table"
-	}
+		default: "table",
+	},
 })
 
 const emit = defineEmits(["delivered"])
@@ -141,19 +141,25 @@ onUnmounted(() => {
 	if (timerInterval) clearInterval(timerInterval)
 })
 
-const cardTime = computed(() => new Date(props.card.modified || props.card.creation))
-const elapsedMinutes = computed(() => Math.floor((now.value - cardTime.value) / 60000))
+const cardTime = computed(
+	() => new Date(props.card.modified || props.card.creation),
+)
+const elapsedMinutes = computed(() =>
+	Math.floor((now.value - cardTime.value) / 60000),
+)
 
 const elapsedTime = computed(() => {
-	const min = elapsedMinutes.value.toString().padStart(2, '0')
-	const sec = Math.floor(((now.value - cardTime.value) % 60000) / 1000).toString().padStart(2, '0')
+	const min = elapsedMinutes.value.toString().padStart(2, "0")
+	const sec = Math.floor(((now.value - cardTime.value) % 60000) / 1000)
+		.toString()
+		.padStart(2, "0")
 	return `${min}:${sec}`
 })
 
 const waitTimeClass = computed(() => {
-	if (elapsedMinutes.value > 10) return 'text-red-600 animate-pulse'
-	if (elapsedMinutes.value > 5) return 'text-orange-500'
-	return 'text-green-600'
+	if (elapsedMinutes.value > 10) return "text-red-600 animate-pulse"
+	if (elapsedMinutes.value > 5) return "text-orange-500"
+	return "text-green-600"
 })
 
 function parsedModifiers(item) {
@@ -162,8 +168,8 @@ function parsedModifiers(item) {
 		const mods = JSON.parse(item.posa_item_modifiers)
 		if (!Array.isArray(mods) || !mods.length) return null
 		// Flatten modifier groups into readable names
-		const names = mods.flatMap(m =>
-			(m.options || []).map(o => o.name || o.option_name || String(o))
+		const names = mods.flatMap((m) =>
+			(m.options || []).map((o) => o.name || o.option_name || String(o)),
 		)
 		return names.length ? names : null
 	} catch {
@@ -176,10 +182,10 @@ async function markDelivered() {
 	try {
 		if (props.viewMode === "table") {
 			// Table mode: mark all items in this order as delivered
-			const itemNames = props.card.items.map(i => i.name)
+			const itemNames = props.card.items.map((i) => i.name)
 			await call("pos_next.api.restaurant.mark_items_delivered", {
 				invoice_name: props.card.invoiceName,
-				item_names: JSON.stringify(itemNames)
+				item_names: JSON.stringify(itemNames),
 			})
 		} else {
 			// Station mode: mark all items across all table groups
@@ -194,8 +200,8 @@ async function markDelivered() {
 			const promises = Object.entries(byInvoice).map(([inv, names]) =>
 				call("pos_next.api.restaurant.mark_items_delivered", {
 					invoice_name: inv,
-					item_names: JSON.stringify(names)
-				})
+					item_names: JSON.stringify(names),
+				}),
 			)
 			await Promise.all(promises)
 		}
@@ -211,10 +217,10 @@ async function markDelivered() {
 async function deliverTableGroup(group) {
 	loading.value = true
 	try {
-		const itemNames = group.items.map(i => i.name)
+		const itemNames = group.items.map((i) => i.name)
 		await call("pos_next.api.restaurant.mark_items_delivered", {
 			invoice_name: group.invoiceName,
-			item_names: JSON.stringify(itemNames)
+			item_names: JSON.stringify(itemNames),
 		})
 		emit("delivered")
 	} catch (error) {

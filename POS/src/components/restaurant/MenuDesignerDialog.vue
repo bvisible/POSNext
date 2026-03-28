@@ -238,9 +238,7 @@ async function onGeneratePdf({
 		// Serialize overrides safely (avoid double-encoding reactive Vue objects)
 		const safeOverrides = JSON.stringify(
 			Object.fromEntries(
-				Object.entries(overrides || {}).filter(
-					([k]) => k !== "selected_cards",
-				),
+				Object.entries(overrides || {}).filter(([k]) => k !== "selected_cards"),
 			),
 		)
 		const args = isMulti

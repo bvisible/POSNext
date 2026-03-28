@@ -711,7 +711,9 @@ const externalLoadedOnce = ref(false)
 
 // Active invoices based on source toggle
 const activeUnpaidInvoices = computed(() =>
-	invoiceSource.value === "pos" ? unpaidInvoices.value : externalUnpaidInvoices.value,
+	invoiceSource.value === "pos"
+		? unpaidInvoices.value
+		: externalUnpaidInvoices.value,
 )
 
 // Filtered unpaid invoices based on payment amounts
@@ -733,10 +735,11 @@ const filteredUnpaidInvoices = computed(() => {
 const searchedUnpaidInvoices = computed(() => {
 	const q = unpaidSearchQuery.value.trim().toLowerCase()
 	if (!q) return filteredUnpaidInvoices.value
-	return filteredUnpaidInvoices.value.filter(inv =>
-		inv.name.toLowerCase().includes(q) ||
-		(inv.customer_name || "").toLowerCase().includes(q) ||
-		(inv.customer || "").toLowerCase().includes(q)
+	return filteredUnpaidInvoices.value.filter(
+		(inv) =>
+			inv.name.toLowerCase().includes(q) ||
+			(inv.customer_name || "").toLowerCase().includes(q) ||
+			(inv.customer || "").toLowerCase().includes(q),
 	)
 })
 

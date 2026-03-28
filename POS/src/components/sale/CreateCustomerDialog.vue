@@ -492,18 +492,15 @@ const createListResource = (doctype, onSuccess) =>
 		onError: (err) => log.error(`Error loading ${doctype}`, err),
 	})
 
-const customerGroupsResource = createListResource(
-	"Customer Group",
-	(names) => {
-		customerGroups.value = names
-		// Auto-select default if not already set
-		if (!customerGroup.value && defaultCustomerGroup.value) {
-			customerGroup.value = names.includes(defaultCustomerGroup.value)
-				? defaultCustomerGroup.value
-				: names[0] || ""
-		}
-	},
-)
+const customerGroupsResource = createListResource("Customer Group", (names) => {
+	customerGroups.value = names
+	// Auto-select default if not already set
+	if (!customerGroup.value && defaultCustomerGroup.value) {
+		customerGroup.value = names.includes(defaultCustomerGroup.value)
+			? defaultCustomerGroup.value
+			: names[0] || ""
+	}
+})
 const territoriesResource = createListResource(
 	"Territory",
 	(names) => (territories.value = names),
@@ -701,7 +698,8 @@ watch(
 	(customer) => {
 		if (customer?.name) {
 			// Set customer type toggle
-			customerType.value = customer.customer_type === "Company" ? "Company" : "Individual"
+			customerType.value =
+				customer.customer_type === "Company" ? "Company" : "Individual"
 
 			if (customer.customer_type === "Company") {
 				customerData.value.company_name = customer.customer_name || ""
@@ -715,7 +713,8 @@ watch(
 			}
 
 			customerData.value.email_id = customer.email_id || ""
-			customerGroup.value = customer.customer_group || defaultCustomerGroup.value
+			customerGroup.value =
+				customer.customer_group || defaultCustomerGroup.value
 			territory.value = customer.territory || "All Territories"
 
 			// Handle mobile_no with country code

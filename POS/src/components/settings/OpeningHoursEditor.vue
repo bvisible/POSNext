@@ -90,7 +90,15 @@ const SLOT_PRESETS = [
 	{ from_time: "18:00", to_time: "23:00", label: "Dinner" },
 ]
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+const DAYS = [
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday",
+	"Sunday",
+]
 
 const props = defineProps({
 	modelValue: {
@@ -107,7 +115,7 @@ const emit = defineEmits(["update:modelValue"])
 
 // Group rows with same day + from_time + to_time + label into visual slots
 function getGroupedSlotsForDay(day) {
-	const rows = props.modelValue.filter(s => s.day_of_week === day)
+	const rows = props.modelValue.filter((s) => s.day_of_week === day)
 	const groups = []
 	const seen = new Map()
 
@@ -133,12 +141,12 @@ function getGroupedSlotsForDay(day) {
 }
 
 function getCardLabel(name) {
-	const card = props.cards.find(c => c.name === name)
+	const card = props.cards.find((c) => c.name === name)
 	return card?.card_name || name
 }
 
 function availableCardsForGroup(group) {
-	return props.cards.filter(c => !group.cards.includes(c.name))
+	return props.cards.filter((c) => !group.cards.includes(c.name))
 }
 
 // Rebuild flat rows from groups
@@ -197,12 +205,15 @@ function removeCardFromGroup(day, gIdx, cardName) {
 
 	// Remove the row matching this day + time + label + card
 	let found = false
-	const updated = props.modelValue.filter(s => {
-		if (!found && s.day_of_week === day &&
+	const updated = props.modelValue.filter((s) => {
+		if (
+			!found &&
+			s.day_of_week === day &&
 			s.from_time === group.from_time &&
 			s.to_time === group.to_time &&
 			(s.label || "") === group.label &&
-			s.restaurant_card === cardName) {
+			s.restaurant_card === cardName
+		) {
 			found = true
 			return false
 		}
@@ -217,11 +228,13 @@ function updateGroupField(day, gIdx, field, value) {
 	if (!group) return
 
 	// Update all rows matching this group
-	const updated = props.modelValue.map(s => {
-		if (s.day_of_week === day &&
+	const updated = props.modelValue.map((s) => {
+		if (
+			s.day_of_week === day &&
 			s.from_time === group.from_time &&
 			s.to_time === group.to_time &&
-			(s.label || "") === group.label) {
+			(s.label || "") === group.label
+		) {
 			return { ...s, [field]: value }
 		}
 		return s
@@ -260,11 +273,13 @@ function removeGroup(day, gIdx) {
 	if (!group) return
 
 	// Remove ALL rows matching this group (all cards for this time slot)
-	const updated = props.modelValue.filter(s => {
-		return !(s.day_of_week === day &&
+	const updated = props.modelValue.filter((s) => {
+		return !(
+			s.day_of_week === day &&
 			s.from_time === group.from_time &&
 			s.to_time === group.to_time &&
-			(s.label || "") === group.label)
+			(s.label || "") === group.label
+		)
 	})
 	emit("update:modelValue", updated)
 }

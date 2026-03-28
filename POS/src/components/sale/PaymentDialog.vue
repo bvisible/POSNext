@@ -1375,7 +1375,7 @@ const splitAmount = computed(() => {
 	const remaining = remainingAmount.value
 	const peopleLeft = splitCount.value - splitPaymentIndex.value
 	if (peopleLeft <= 1) return roundTo5Centimes(remaining)
-	return roundTo5Centimes(Math.ceil(remaining / peopleLeft * 20) / 20)
+	return roundTo5Centimes(Math.ceil((remaining / peopleLeft) * 20) / 20)
 })
 
 function activateSplit(count) {
@@ -1408,7 +1408,7 @@ function adjustSplitAmount(direction) {
 }
 
 function onSplitAmountEdit(event) {
-	const val = parseFloat(event.target.value)
+	const val = Number.parseFloat(event.target.value)
 	if (val > 0 && val <= remainingAmount.value) {
 		splitAmountOverride.value = roundTo5Centimes(val)
 		nextTick(() => setNumpadValue(splitAmountOverride.value))
@@ -1419,7 +1419,11 @@ function onSplitAmountEdit(event) {
 // Tip state
 const tipAmount = ref(0)
 const showTipDetection = computed(() => {
-	return restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && tipAmount.value > 0
+	return (
+		restaurantStore.tipsEnabled &&
+		restaurantStore.autoDetectTip &&
+		tipAmount.value > 0
+	)
 })
 
 const { showWarning, showError, showSuccess, showInfo } = useToast()
@@ -2205,13 +2209,20 @@ const changeAmount = computed(() => {
 })
 
 // Auto-set tip when change amount changes (if tips enabled)
-watch(() => changeAmount.value, (newChange) => {
-	if (restaurantStore.tipsEnabled && restaurantStore.autoDetectTip && newChange > 0) {
-		tipAmount.value = newChange
-	} else {
-		tipAmount.value = 0
-	}
-})
+watch(
+	() => changeAmount.value,
+	(newChange) => {
+		if (
+			restaurantStore.tipsEnabled &&
+			restaurantStore.autoDetectTip &&
+			newChange > 0
+		) {
+			tipAmount.value = newChange
+		} else {
+			tipAmount.value = 0
+		}
+	},
+)
 
 // ===========================================
 // Write-Off Logic
@@ -2446,7 +2457,11 @@ const isLastMethodCash = computed(() => {
 	)
 })
 // In split mode, base quick amounts on the per-person split amount
-const quickAmountBase = computed(() => splitMode.value && splitAmount.value > 0 ? splitAmount.value : remainingAmount.value)
+const quickAmountBase = computed(() =>
+	splitMode.value && splitAmount.value > 0
+		? splitAmount.value
+		: remainingAmount.value,
+)
 const { quickAmounts } = useQuickAmounts(quickAmountBase, isLastMethodCash)
 
 // Whether a quick amount button should be disabled in exact-amount mode
@@ -2902,7 +2917,10 @@ async function openWalleeTerminalDialog(method) {
 	// Store the method for later use
 	walleeCurrentMethod.value = method
 	// Use split amount if in split mode, otherwise remaining amount
-	const initialAmount = splitMode.value && splitAmount.value > 0 ? splitAmount.value : remainingAmount.value
+	const initialAmount =
+		splitMode.value && splitAmount.value > 0
+			? splitAmount.value
+			: remainingAmount.value
 	walleeDialogAmount.value = initialAmount
 	walleeInputAmount.value = initialAmount.toFixed(2)
 	walleePaymentStatus.value = __("Loading terminals...")
@@ -3646,7 +3664,10 @@ async function addCustomPayment(method, amount) {
 		splitPaymentIndex.value++
 		splitAmountOverride.value = 0 // Reset override for next person
 		editingSplitAmount.value = false
-		if (splitPaymentIndex.value < splitCount.value && remainingAmount.value > 0) {
+		if (
+			splitPaymentIndex.value < splitCount.value &&
+			remainingAmount.value > 0
+		) {
 			nextTick(() => {
 				setNumpadValue(splitAmount.value)
 			})

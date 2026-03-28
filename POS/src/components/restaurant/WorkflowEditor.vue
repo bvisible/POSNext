@@ -170,20 +170,28 @@ let wfSearchTimeout = null
 function searchWfItems() {
 	clearTimeout(wfSearchTimeout)
 	wfSearchTimeout = setTimeout(async () => {
-		if (!wfItemSearch.value || wfItemSearch.value.length < 2) { wfItemResults.value = []; return }
+		if (!wfItemSearch.value || wfItemSearch.value.length < 2) {
+			wfItemResults.value = []
+			return
+		}
 		try {
 			const res = await call("frappe.client.get_list", {
-				doctype: "Item", filters: [["item_name", "like", `%${wfItemSearch.value}%`]],
-				fields: ["name", "item_name"], limit_page_length: 8
+				doctype: "Item",
+				filters: [["item_name", "like", `%${wfItemSearch.value}%`]],
+				fields: ["name", "item_name"],
+				limit_page_length: 8,
 			})
 			wfItemResults.value = res || []
-		} catch { wfItemResults.value = [] }
+		} catch {
+			wfItemResults.value = []
+		}
 	}, 300)
 }
 
 function addWfItem(wf, item) {
 	if (!wf.applicable_items) wf.applicable_items = []
-	if (!wf.applicable_items.includes(item.name)) wf.applicable_items.push(item.name)
+	if (!wf.applicable_items.includes(item.name))
+		wf.applicable_items.push(item.name)
 	wfItemSearch.value = ""
 	wfItemResults.value = []
 }
@@ -206,8 +214,8 @@ async function saveWorkflow(wf) {
 		await call("pos_next.api.restaurant.save_preparation_workflow", {
 			name: wf.name,
 			workflow_name: wf.workflow_name,
-			steps: JSON.stringify(wf.steps.filter(s => s.step_name)),
-			applicable_items: JSON.stringify(wf.applicable_items || [])
+			steps: JSON.stringify(wf.steps.filter((s) => s.step_name)),
+			applicable_items: JSON.stringify(wf.applicable_items || []),
 		})
 		showSuccess(__("Workflow saved"))
 		editingWorkflow.value = null
@@ -222,7 +230,7 @@ async function saveWorkflow(wf) {
 async function createWorkflow() {
 	try {
 		await call("pos_next.api.restaurant.create_preparation_workflow", {
-			workflow_name: newWorkflowName.value
+			workflow_name: newWorkflowName.value,
 		})
 		showSuccess(__("Workflow created"))
 		showNewForm.value = false
@@ -235,7 +243,9 @@ async function createWorkflow() {
 
 async function deleteWorkflow(wf) {
 	try {
-		await call("pos_next.api.restaurant.delete_preparation_workflow", { name: wf.name })
+		await call("pos_next.api.restaurant.delete_preparation_workflow", {
+			name: wf.name,
+		})
 		showSuccess(__("Workflow deleted"))
 		loadWorkflows()
 	} catch (error) {
@@ -249,12 +259,14 @@ async function setDefault(wf) {
 		for (const w of workflows.value) {
 			if (w.is_default) {
 				await call("pos_next.api.restaurant.save_preparation_workflow", {
-						name: w.name, is_default: 0
-					})
+					name: w.name,
+					is_default: 0,
+				})
 			}
 		}
 		await call("pos_next.api.restaurant.save_preparation_workflow", {
-			name: wf.name, is_default: 1
+			name: wf.name,
+			is_default: 1,
 		})
 		showSuccess(__("Default workflow updated"))
 		loadWorkflows()

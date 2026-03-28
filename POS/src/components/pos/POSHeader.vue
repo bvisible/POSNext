@@ -351,7 +351,11 @@ function navigateToBackOffice() {
 }
 
 function openCustomerDisplay() {
-	window.open("/pos/display", "pos_customer_display", "popup,width=1024,height=768")
+	window.open(
+		"/pos/display",
+		"pos_customer_display",
+		"popup,width=1024,height=768",
+	)
 }
 
 const emit = defineEmits([
