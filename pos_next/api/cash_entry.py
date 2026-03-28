@@ -17,7 +17,7 @@ def get_cash_entry_templates(company):
 
 	for t in templates:
 		t["accounts"] = frappe.get_all(
-			"Journal Entry Template Detail",
+			"Journal Entry Template Account",
 			filters={"parent": t["name"]},
 			fields=["account", "debit", "credit"],
 			order_by="idx asc",
