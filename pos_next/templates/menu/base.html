@@ -471,7 +471,7 @@
 	<div class="menu-body columns-{{ design.columns | default(1) }}">
 		{% block content %}
 			{%- for category in categories -%}
-				{{ render_category(category, design, currency, site_url, loop.first) }}
+				{{ render_category(category, design, currency, site_url, true) }}
 			{%- endfor -%}
 		{% endblock %}
 	</div>
