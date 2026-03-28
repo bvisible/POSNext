@@ -234,7 +234,7 @@ async function onGeneratePdf({
 		const safeOverrides = JSON.stringify(
 			Object.fromEntries(
 				Object.entries(overrides || {}).filter(
-					([k]) => !k.startsWith("selected_"),
+					([k]) => k !== "selected_cards",
 				),
 			),
 		)

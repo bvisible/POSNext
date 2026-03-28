@@ -389,6 +389,12 @@ watch(
 					config[key] = saved[key]
 				}
 			}
+			// Restore selected option groups
+			if (saved.selected_option_groups && Array.isArray(saved.selected_option_groups)) {
+				selectedOptionGroups.value = saved.selected_option_groups
+			} else if (config.show_options) {
+				selectedOptionGroups.value = [...availableOptionGroups.value]
+			}
 		}
 
 		// Emit AFTER all overrides are applied
