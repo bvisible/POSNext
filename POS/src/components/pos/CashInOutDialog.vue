@@ -19,10 +19,26 @@
 						{{ __('No Journal Entry Templates found for this company.') }}
 					</div>
 
-					<!-- Template cards -->
+					<!-- Search -->
 					<div v-else class="space-y-2">
+						<div class="relative">
+							<FeatherIcon name="search" class="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
+							<input
+								v-model="searchQuery"
+								type="text"
+								class="w-full ps-9 pe-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+								:placeholder="__('Search templates...')"
+							/>
+						</div>
+
+						<!-- No results -->
+						<div v-if="!filteredTemplates.length" class="text-center py-4 text-gray-400 text-sm">
+							{{ __('No templates match your search.') }}
+						</div>
+
+						<!-- Template cards -->
 						<button
-							v-for="t in templates"
+							v-for="t in filteredTemplates"
 							:key="t.name"
 							class="w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-start"
 							:class="selectedTemplate?.name === t.name
@@ -200,6 +216,7 @@ const entries = ref([])
 const selectedTemplate = ref(null)
 const amount = ref(null)
 const note = ref("")
+const searchQuery = ref("")
 const loadingTemplates = ref(false)
 const loadingEntries = ref(false)
 const submitting = ref(false)
@@ -217,6 +234,20 @@ const totalOut = computed(() =>
 		.filter((e) => e.direction === "out")
 		.reduce((sum, e) => sum + (e.amount || 0), 0),
 )
+
+const filteredTemplates = computed(() => {
+	const q = searchQuery.value.trim().toLowerCase()
+	if (!q) return templates.value
+	return templates.value.filter((t) => {
+		const title = (t.template_title || t.name || "").toLowerCase()
+		const account = (
+			t.counterparty?.[0]?.account ||
+			t.totalization?.[0]?.account ||
+			""
+		).toLowerCase()
+		return title.includes(q) || account.includes(q)
+	})
+})
 
 // Methods
 function getDirection(template) {
@@ -316,6 +347,7 @@ watch(open, (val) => {
 		selectedTemplate.value = null
 		amount.value = null
 		note.value = ""
+		searchQuery.value = ""
 	}
 })
 </script>
