@@ -599,6 +599,19 @@ def make_closing_shift_from_opening(opening_shift):
         amount = get_base_value(py, "paid_amount", "base_paid_amount")
         _aggregate_payment(payments, py.mode_of_payment, amount)
 
+    # Process cash in/out entries
+    from pos_next.api.cash_entry import get_cash_entries
+    cash_entries = get_cash_entries(opening_shift.get("name"))
+    cash_in_total = 0
+    cash_out_total = 0
+    for entry in cash_entries:
+        if entry["direction"] == "in":
+            _aggregate_payment(payments, cash_mode, flt(entry["amount"]))
+            cash_in_total += flt(entry["amount"])
+        elif entry["direction"] == "out":
+            _aggregate_payment(payments, cash_mode, -flt(entry["amount"]))
+            cash_out_total += flt(entry["amount"])
+
     # Update closing shift with totals
     closing_shift.grand_total = summary["grand_total"]
     closing_shift.net_total = summary["net_total"]
@@ -648,6 +661,9 @@ def make_closing_shift_from_opening(opening_shift):
         "pos_transactions": pos_transactions,  # Include return info for display
         "external_payments": external_payments,
         "sales_by_payment": sales_by_payment,
+        "cash_entries": cash_entries,
+        "cash_in_total": cash_in_total,
+        "cash_out_total": cash_out_total,
     })
 
     return result

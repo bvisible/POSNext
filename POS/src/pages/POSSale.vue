@@ -914,6 +914,15 @@
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
 			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" @open-settings="openSettingsTab" />
 
+			<!-- Cash In/Out -->
+			<CashInOutDialog
+				v-model="showCashInOut"
+				:pos-profile="shiftStore.profileName"
+				:company="shiftStore.profileCompany"
+				:pos-opening-shift="cartStore.posOpeningShift"
+				:currency="shiftStore.profileCurrency"
+			/>
+
 			<!-- Invoice Management -->
 			<InvoiceManagement
 				v-model="showInvoiceManagement"
@@ -1319,6 +1328,7 @@ import ClearCacheOverlay from "@/components/common/ClearCacheOverlay.vue";
 import SessionLockScreen from "@/components/common/SessionLockScreen.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
 import ManagementSlider from "@/components/pos/ManagementSlider.vue";
+import CashInOutDialog from "@/components/pos/CashInOutDialog.vue";
 import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";
 import CardEditor from "@/components/restaurant/CardEditor.vue";
@@ -1609,6 +1619,9 @@ const showStockLookup = ref(false);
 
 // Invoice Management dialog
 const showInvoiceManagement = ref(false);
+
+// Cash In/Out dialog
+const showCashInOut = ref(false);
 
 // Restaurant editors
 const showCardEditor = ref(false);
@@ -3696,6 +3709,8 @@ function handleManagementMenuClick(menuItem) {
 		showProductOptionsEditor.value = true;
 	} else if (menuItem === "workflows") {
 		showWorkflowEditor.value = true;
+	} else if (menuItem === "cash-entry") {
+		showCashInOut.value = true;
 	}
 }
 

@@ -259,6 +259,57 @@
             </div>
           </div>
 
+          <!-- Cash In/Out Entries -->
+          <div v-if="closingData.cash_entries && closingData.cash_entries.length > 0"
+            class="bg-white border border-orange-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm md:text-base font-semibold text-orange-800">{{ __('Cash In/Out') }}</h3>
+                  <p class="text-xs text-orange-600 mt-0.5">{{ __('{0} entries', [closingData.cash_entries.length]) }}</p>
+                </div>
+                <div class="flex gap-4 items-center">
+                  <div v-if="closingData.cash_in_total" class="text-sm font-semibold text-green-700">
+                    +{{ formatCurrency(closingData.cash_in_total) }}
+                  </div>
+                  <div v-if="closingData.cash_out_total" class="text-sm font-semibold text-red-700">
+                    -{{ formatCurrency(closingData.cash_out_total) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Template') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Direction') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Note') }}</th>
+                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="(ce, idx) in closingData.cash_entries" :key="idx">
+                    <td class="px-4 py-2 text-sm text-gray-800">{{ ce.template }}</td>
+                    <td class="px-4 py-2 text-sm">
+                      <span v-if="ce.direction === 'in'" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {{ __('Cash In') }}
+                      </span>
+                      <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        {{ __('Cash Out') }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2 text-sm text-gray-500">{{ ce.note || '—' }}</td>
+                    <td class="px-4 py-2 text-sm font-semibold text-right"
+                      :class="ce.direction === 'out' ? 'text-red-700' : 'text-green-700'">
+                      {{ ce.direction === 'out' ? '-' : '+' }}{{ formatCurrency(ce.amount) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Payment Reconciliation -->
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div :class="[
