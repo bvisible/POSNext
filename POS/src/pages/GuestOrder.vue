@@ -140,7 +140,9 @@ import GuestCheckout from "@/components/guest/GuestCheckout.vue"
 const route = useRoute()
 const guestStore = useGuestOrderStore()
 
-const activeTab = ref("menu")
+// Auto-switch to Pay tab if returning from Wallee payment
+const urlParams = new URLSearchParams(window.location.search)
+const activeTab = ref(urlParams.get("payment") ? "pay" : "menu")
 const isValidating = ref(true)
 const tokenError = ref(false)
 

@@ -431,6 +431,7 @@ def get_order_status(token):
 		"items": items,
 		"grand_total": flt(invoice_doc.grand_total),
 		"net_total": flt(invoice_doc.net_total),
+		"paid_amount": flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0,
 	}
 
 
@@ -488,6 +489,30 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	except Exception as e:
 		frappe.log_error("Guest payment creation failed", str(e))
 		frappe.throw(_("Failed to initiate payment. Please try again or contact staff."))
+
+	# Record payment in the Sales Invoice (optimistic — Wallee will charge the card)
+	try:
+		# Find the Wallee mode of payment
+		wallee_mop = None
+		if token_doc.pos_profile:
+			wallee_mop = frappe.db.get_value(
+				"POS Profile",
+				token_doc.pos_profile,
+				"wallee_terminal_payment_mode",
+			)
+		if not wallee_mop:
+			# Fall back to any "Card" mode of payment
+			wallee_mop = frappe.db.get_value("Mode of Payment", {"type": "General"}, "name") or "Card"
+
+		invoice_doc.append("payments", {
+			"mode_of_payment": wallee_mop,
+			"amount": flt(amount),
+		})
+		invoice_doc.paid_amount = flt(sum(p.amount for p in invoice_doc.payments))
+		invoice_doc.flags.ignore_permissions = True
+		invoice_doc.save()
+	except Exception as e:
+		frappe.log_error("Guest payment record failed", str(e))
 
 	if token_doc.table:
 		_broadcast_order_update(token_doc.table, "payment_initiated", {
