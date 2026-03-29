@@ -1476,10 +1476,10 @@ def submit_invoice(invoice=None, data=None):
 
         invoice_submitted = True
 
-        # Release restaurant table after successful submission
+        # Set restaurant table to Cleaning after successful submission
         restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
         if restaurant_table and frappe.db.exists("Restaurant Table", restaurant_table):
-            frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Empty")
+            frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Cleaning")
             frappe.publish_realtime("table_update")
 
         # Handle wallet transaction reversal for returns
