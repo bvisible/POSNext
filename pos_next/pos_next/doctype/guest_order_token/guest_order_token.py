@@ -41,6 +41,9 @@ class GuestOrderToken(Document):
 
 	def expire(self):
 		"""Mark this token as Expired."""
+		# Clear invoice link if it no longer exists (prevents LinkValidationError)
+		if self.invoice and not frappe.db.exists("Sales Invoice", self.invoice):
+			self.invoice = None
 		self.status = "Expired"
 		self.save(ignore_permissions=True)
 
