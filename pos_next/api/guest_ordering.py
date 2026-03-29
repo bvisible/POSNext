@@ -516,9 +516,9 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		frappe.log_error("Guest payment creation failed", str(e))
 		frappe.throw(_("Failed to initiate payment. Please try again or contact staff."))
 
-	# Record payment in the Sales Invoice (optimistic — Wallee will charge the card)
+	# Record payment in the Sales Invoice via direct DB writes
+	# (bypasses wallet/validation hooks from other apps that block guest payments)
 	try:
-		# Find the appropriate mode of payment for card/online payments
 		wallee_mop = None
 		if token_doc.pos_profile:
 			wallee_mop = frappe.db.get_value(
@@ -527,32 +527,47 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"wallee_terminal_payment_mode",
 			)
 		if not wallee_mop:
-			# Fall back to a Bank-type mode of payment (card, not wallet)
 			wallee_mop = frappe.db.get_value("Mode of Payment", {"type": "Bank"}, "name") or "Carte de crédit"
 
-		invoice_doc.append("payments", {
-			"mode_of_payment": wallee_mop,
-			"amount": flt(amount),
-		})
-		invoice_doc.paid_amount = flt(sum(p.amount for p in invoice_doc.payments))
-		invoice_doc.flags.ignore_permissions = True
-		invoice_doc.flags.ignore_validate = True
-		invoice_doc.save()
+		# Get next idx for payment child table
+		max_idx = frappe.db.sql(
+			"SELECT IFNULL(MAX(idx), 0) FROM `tabSales Invoice Payment` WHERE parent=%s",
+			invoice_doc.name,
+		)[0][0]
+		next_idx = int(max_idx) + 1
+
+		# Insert payment row directly (bypasses all ORM hooks)
+		payment_name = frappe.generate_hash(length=10)
+		frappe.db.sql("""
+			INSERT INTO `tabSales Invoice Payment`
+				(name, parent, parenttype, parentfield, idx, mode_of_payment, amount,
+				 owner, modified_by, creation, modified, docstatus)
+			VALUES (%s, %s, 'Sales Invoice', 'payments', %s, %s, %s,
+				'Administrator', 'Administrator', NOW(), NOW(), 0)
+		""", (payment_name, invoice_doc.name, next_idx, wallee_mop, flt(amount)))
+
+		# Recalculate paid_amount from all payment rows
+		new_paid = flt(frappe.db.sql(
+			"SELECT IFNULL(SUM(amount), 0) FROM `tabSales Invoice Payment` WHERE parent=%s",
+			invoice_doc.name,
+		)[0][0])
+		frappe.db.set_value("Sales Invoice", invoice_doc.name, "paid_amount", new_paid, update_modified=False)
 		frappe.db.commit()
 
 		# If fully paid, update table status (keep token active for redirect back)
-		if flt(invoice_doc.paid_amount) >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
+		if new_paid >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
 			if token_doc.table:
 				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Cleaning")
-			# Don't close token immediately — Wallee still needs to redirect back
-			# Token will be closed when table is manually set to Empty by server
 			frappe.publish_realtime("table_update")
+
+		# Update local object for broadcast below
+		invoice_doc.paid_amount = new_paid
 	except Exception as e:
 		import traceback
 		frappe.log_error(
 			"Guest payment record failed",
 			f"Invoice: {invoice_doc.name}, Amount: {amount}, MoP: {wallee_mop}, "
-			f"Grand Total: {invoice_doc.grand_total}, Paid: {invoice_doc.paid_amount}\n"
+			f"Grand Total: {invoice_doc.grand_total}\n"
 			f"Error: {str(e)}\n{traceback.format_exc()}"
 		)
 
