@@ -401,6 +401,43 @@ def get_kds_orders(station=None):
 
 
 @frappe.whitelist()
+def get_tips(from_date=None, to_date=None, server=None, table=None):
+	"""Fetch Restaurant Tip records with optional filters."""
+	filters = {}
+	if from_date:
+		filters["tip_date"] = (">=", from_date)
+	if to_date:
+		if "tip_date" in filters:
+			filters["tip_date"] = ("between", [from_date, to_date])
+		else:
+			filters["tip_date"] = ("<=", to_date)
+	if server:
+		filters["server"] = server
+	if table:
+		filters["restaurant_table"] = table
+
+	tips = frappe.get_all(
+		"Restaurant Tip",
+		filters=filters,
+		fields=["name", "tip_date", "sales_invoice", "restaurant_table",
+				"server", "amount", "payment_method", "status", "creation"],
+		order_by="creation desc",
+		limit=200,
+	)
+
+	# Enrich with server full names and table display names
+	for tip in tips:
+		if tip.server:
+			tip["server_name"] = frappe.db.get_value("User", tip.server, "full_name") or tip.server
+		if tip.restaurant_table:
+			tip["table_name"] = frappe.db.get_value("Restaurant Table", tip.restaurant_table, "table_name") or tip.restaurant_table
+
+	total = sum(flt(t.amount) for t in tips)
+
+	return {"tips": tips, "total": total, "count": len(tips)}
+
+
+@frappe.whitelist()
 def update_item_kds_status(invoice_name, item_code, status):
 	"""Update the KDS status of a specific item in a sales invoice."""
 	if not frappe.has_permission("Sales Invoice", "write"):

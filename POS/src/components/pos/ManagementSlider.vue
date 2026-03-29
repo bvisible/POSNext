@@ -124,6 +124,24 @@
 					{{ __('Workflows') }}
 				</div>
 			</button>
+
+			<!-- Tips -->
+			<button
+				v-if="isTipsEnabled"
+				@click="handleMenuClick('tips')"
+				:class="[
+					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
+					activeMenu === 'tips'
+						? 'bg-pink-100 text-pink-600'
+						: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+				]"
+				:title="__('Tips')"
+			>
+				<FeatherIcon name="heart" class="w-5 h-5" />
+				<div class="absolute start-full ms-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+					{{ __('Tips') }}
+				</div>
+			</button>
 		</template>
 
 		<!-- Spacer to push settings to bottom -->
@@ -161,6 +179,7 @@ const emit = defineEmits(["menu-clicked"])
 
 const activeMenu = ref("")
 const isRestaurantMode = computed(() => restaurantStore.isEnabled)
+const isTipsEnabled = computed(() => restaurantStore.tipsEnabled)
 
 function handleMenuClick(menuItem) {
 	activeMenu.value = menuItem

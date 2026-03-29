@@ -926,6 +926,7 @@
 			<WorkflowEditor v-if="showWorkflowEditor" v-model="showWorkflowEditor" />
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
 			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" @open-settings="openSettingsTab" />
+		<TipsPanel :show="showTipsPanel" @close="showTipsPanel = false" />
 
 			<!-- Cash In/Out -->
 			<CashInOutDialog
@@ -1405,6 +1406,7 @@ import CashInOutDialog from "@/components/pos/CashInOutDialog.vue";
 import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";
 import CardEditor from "@/components/restaurant/CardEditor.vue";
+import TipsPanel from "@/components/restaurant/TipsPanel.vue";
 import POSHeader from "@/components/pos/POSHeader.vue";
 import BatchSerialDialog from "@/components/sale/BatchSerialDialog.vue";
 import CouponDialog from "@/components/sale/CouponDialog.vue";
@@ -1707,6 +1709,7 @@ const showCashInOut = ref(false);
 const showCardEditor = ref(false);
 const showProductOptionsEditor = ref(false);
 const showWorkflowEditor = ref(false);
+const showTipsPanel = ref(false);
 
 // Invoice Detail dialog
 const showInvoiceDetail = ref(false);
@@ -3853,6 +3856,8 @@ function handleManagementMenuClick(menuItem) {
 		showWorkflowEditor.value = true;
 	} else if (menuItem === "cash-entry") {
 		showCashInOut.value = true;
+	} else if (menuItem === "tips") {
+		showTipsPanel.value = true;
 	}
 }
 

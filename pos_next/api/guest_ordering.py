@@ -565,6 +565,26 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 
 		# Update local object for broadcast below
 		invoice_doc.paid_amount = new_paid
+
+		# Create Restaurant Tip tracking record
+		if flt(tip) > 0:
+			settings = _get_restaurant_settings()
+			if getattr(settings, "enable_tips", False):
+				try:
+					tip_record = frappe.get_doc({
+						"doctype": "Restaurant Tip",
+						"tip_date": frappe.utils.today(),
+						"sales_invoice": invoice_doc.name,
+						"restaurant_table": token_doc.table,
+						"server": invoice_doc.owner or "Administrator",
+						"amount": flt(tip),
+						"payment_method": wallee_mop,
+						"status": "Collected",
+					})
+					tip_record.insert(ignore_permissions=True)
+					frappe.db.commit()
+				except Exception as tip_err:
+					frappe.log_error("Guest tip record failed", str(tip_err))
 	except Exception as e:
 		import traceback
 		frappe.log_error(
