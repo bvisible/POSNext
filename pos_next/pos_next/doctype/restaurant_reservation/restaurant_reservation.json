@@ -74,7 +74,6 @@
    "reqd": 1
   },
   {
-   "default": "01:30:00",
    "fieldname": "duration",
    "fieldtype": "Duration",
    "label": "Duration"

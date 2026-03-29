@@ -82,7 +82,7 @@ def create_reservation(
 
 	settings = frappe.get_single("Restaurant Settings")
 	if not duration:
-		duration = settings.default_reservation_duration or "01:30:00"
+		duration = settings.default_reservation_duration or 5400
 
 	# Check overlap (warn but allow force from POS)
 	if tables and not force:
@@ -241,7 +241,7 @@ def get_available_tables(date, time, duration=None, no_of_guests=None):
 		frappe.throw(_("Online reservations are not enabled"))
 
 	if not duration:
-		duration = settings.default_reservation_duration or "01:30:00"
+		duration = settings.default_reservation_duration or 5400
 
 	# Get all tables grouped by area
 	tables = frappe.get_all(
@@ -301,7 +301,7 @@ def submit_guest_reservation(
 		frappe.throw(_("Maximum number of active reservations reached for this email"))
 
 	if not duration:
-		duration = settings.default_reservation_duration or "01:30:00"
+		duration = settings.default_reservation_duration or 5400
 
 	# Strict overlap check for web (no force override)
 	if tables:

@@ -137,8 +137,11 @@ async function loadSettings() {
 		})
 		const settings = response.message
 		if (settings) {
-			defaultDuration.value =
-				settings.default_reservation_duration || "01:30:00"
+			const dur = settings.default_reservation_duration || 5400
+			// Convert seconds to HH:MM:SS
+			const h = String(Math.floor(dur / 3600)).padStart(2, "0")
+			const m = String(Math.floor((dur % 3600) / 60)).padStart(2, "0")
+			defaultDuration.value = `${h}:${m}:00`
 			if (settings.reservation_channels) {
 				channels.value = settings.reservation_channels
 					.split("\n")
