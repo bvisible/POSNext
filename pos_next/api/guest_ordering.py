@@ -492,7 +492,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 
 	# Record payment in the Sales Invoice (optimistic — Wallee will charge the card)
 	try:
-		# Find the Wallee mode of payment
+		# Find the appropriate mode of payment for card/online payments
 		wallee_mop = None
 		if token_doc.pos_profile:
 			wallee_mop = frappe.db.get_value(
@@ -501,8 +501,8 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"wallee_terminal_payment_mode",
 			)
 		if not wallee_mop:
-			# Fall back to any "Card" mode of payment
-			wallee_mop = frappe.db.get_value("Mode of Payment", {"type": "General"}, "name") or "Card"
+			# Fall back to a Bank-type mode of payment (card, not wallet)
+			wallee_mop = frappe.db.get_value("Mode of Payment", {"type": "Bank"}, "name") or "Carte de crédit"
 
 		invoice_doc.append("payments", {
 			"mode_of_payment": wallee_mop,
