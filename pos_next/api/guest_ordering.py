@@ -527,13 +527,12 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		invoice_doc.save()
 		frappe.db.commit()
 
-		# If fully paid, update table status and close the token
+		# If fully paid, update table status (keep token active for redirect back)
 		if flt(invoice_doc.paid_amount) >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
 			if token_doc.table:
 				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Cleaning")
-			token_doc.status = "Closed"
-			token_doc.save(ignore_permissions=True)
-			# Notify POS of table status change
+			# Don't close token immediately — Wallee still needs to redirect back
+			# Token will be closed when table is manually set to Empty by server
 			frappe.publish_realtime("table_update")
 	except Exception as e:
 		import traceback
