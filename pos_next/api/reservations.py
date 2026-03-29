@@ -1,6 +1,7 @@
 import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date
+from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import _parse_duration
 import json
 import secrets
 from datetime import datetime, timedelta
@@ -83,6 +84,9 @@ def create_reservation(
 	settings = frappe.get_single("Restaurant Settings")
 	if not duration:
 		duration = settings.default_reservation_duration or 5400
+
+	# Ensure duration is in seconds (float) for the Duration field
+	duration = _parse_duration(duration)
 
 	# Check overlap (warn but allow force from POS)
 	if tables and not force:
@@ -302,6 +306,7 @@ def submit_guest_reservation(
 
 	if not duration:
 		duration = settings.default_reservation_duration or 5400
+	duration = _parse_duration(duration)
 
 	# Strict overlap check for web (no force override)
 	if tables:
