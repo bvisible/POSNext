@@ -1371,15 +1371,17 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
-					<p class="text-base font-semibold text-gray-900">{{ __('Table paid and ready for cleanup') }}</p>
-					<p class="text-sm text-gray-500 mt-1">{{ __('Mark this table as available for new guests.') }}</p>
+					<p class="text-base font-semibold text-gray-900">{{ __('Table paid') }}</p>
+					<p class="text-sm text-gray-500 mt-1">{{ __('What would you like to do with this table?') }}</p>
 				</div>
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
-					<Button class="flex-1" @click="showCleaningDialog = false">{{ __('Close') }}</Button>
-					<Button class="flex-1" variant="solid" theme="green" @click="markTableAvailable">
-						{{ __('Mark as Available') }}
+					<Button class="flex-1" variant="subtle" @click="markTableAvailable">
+						{{ __('Available') }}
+					</Button>
+					<Button class="flex-1" variant="solid" theme="green" @click="confirmTableCleaning">
+						{{ __('Cleaning') }}
 					</Button>
 				</div>
 			</template>
@@ -2495,6 +2497,12 @@ const showCleaningDialog = ref(false)
 function handleCleaningTableClicked(table) {
 	cleaningTable.value = table
 	showCleaningDialog.value = true
+}
+
+function confirmTableCleaning() {
+	// Keep table in Cleaning — just close dialog
+	showCleaningDialog.value = false
+	cleaningTable.value = null
 }
 
 async function markTableAvailable() {

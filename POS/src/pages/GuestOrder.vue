@@ -244,9 +244,8 @@ onUnmounted(() => {
 const showOrderSentDialog = ref(false)
 
 function handleOrderSent() {
-	// Show confirmation popup and stay on menu
+	// Show confirmation popup and stay on cart
 	showOrderSentDialog.value = true
-	activeTab.value = "menu"
 }
 
 </script>

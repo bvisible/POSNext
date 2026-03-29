@@ -40,15 +40,31 @@
 			</div>
 
 			<div class="flex-1 overflow-y-auto">
-				<!-- Fully Paid — show thank you, no order summary -->
-				<div v-if="guestStore.isFullyPaid" class="flex-1 flex flex-col items-center justify-center p-8">
-					<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-						<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<!-- Fully Paid — thank you + order recap -->
+				<div v-if="guestStore.isFullyPaid" class="flex flex-col items-center p-6">
+					<div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-3">
+						<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
-					<p class="text-xl font-bold text-green-700">{{ __('Payment complete') }}</p>
-					<p class="text-sm text-gray-500 mt-1">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
+					<p class="text-lg font-bold text-green-700">{{ __('Payment complete') }}</p>
+					<p class="text-sm text-gray-500 mt-1 mb-6">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
+
+					<!-- Order recap -->
+					<div class="w-full max-w-sm bg-white rounded-xl border border-gray-200 p-4">
+						<h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ __('Your order') }}</h4>
+						<div class="space-y-1.5">
+							<div v-for="(oItem, idx) in orderItems" :key="idx"
+								class="flex items-center justify-between text-sm">
+								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
+								<span class="text-gray-500 font-medium">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+							</div>
+						</div>
+						<div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+							<span class="text-sm font-semibold text-gray-900">{{ __('Total') }}</span>
+							<span class="text-base font-bold text-green-700">{{ formatPrice(guestStore.orderTotal) }}</span>
+						</div>
+					</div>
 				</div>
 
 				<!-- Not fully paid — show order summary + payment section -->
