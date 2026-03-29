@@ -224,6 +224,11 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				refreshOrderStatus()
 			}
 		})
+		// Listen for KDS status changes to update badges in real-time
+		// kds_update is a global event (no table filter), just refresh
+		rt.on("kds_update", () => {
+			refreshOrderStatus()
+		})
 		_realtimeSubscribed = true
 	}
 

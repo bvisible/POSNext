@@ -357,6 +357,14 @@ def submit_guest_order(token, items):
 
 	# Append incoming items (before insert for new invoices to avoid validation errors)
 	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	has_kds_batch = frappe.db.has_column("Sales Invoice Item", "kds_batch")
+
+	# Determine next batch number
+	next_batch = 1
+	if has_kds_batch and not is_new_invoice:
+		existing_batches = [flt(row.get("kds_batch") or 0) for row in invoice_doc.items]
+		next_batch = int(max(existing_batches, default=0)) + 1
+
 	for item in items:
 		item_code = item.get("item_code")
 		if not item_code:
@@ -378,6 +386,9 @@ def submit_guest_order(token, items):
 			else:
 				# Server-approval mode: mark as Waiting so server sees it
 				row.kds_status = "Waiting"
+
+		if has_kds_batch:
+			row.kds_batch = next_batch
 
 		if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 			row.posa_special_instructions = item.get("special_instructions") or ""
@@ -430,6 +441,8 @@ def get_order_status(token):
 	item_fields = ["item_code", "item_name", "qty", "rate", "amount"]
 	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
 		item_fields.append("kds_status")
+	if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
+		item_fields.append("kds_batch")
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
 

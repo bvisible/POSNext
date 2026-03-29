@@ -103,8 +103,37 @@ def update_table_status(table_name, status):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	frappe.db.set_value("Restaurant Table", table_name, "status", status)
+
+	# Expire guest order tokens when table is set to Empty
+	if status == "Empty":
+		from pos_next.pos_next.doctype.guest_order_token.guest_order_token import GuestOrderToken
+		GuestOrderToken.expire_tokens_for_table(table_name)
+
 	frappe.publish_realtime("table_update")
 	return {"status": "success"}
+
+@frappe.whitelist()
+def mark_table_available(table_name):
+	"""Mark a Cleaning table as Empty and expire its guest tokens."""
+	if not frappe.has_permission("Restaurant Table", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if not frappe.db.exists("Restaurant Table", table_name):
+		frappe.throw(_("Table {0} not found").format(table_name))
+
+	current_status = frappe.db.get_value("Restaurant Table", table_name, "status")
+	if current_status != "Cleaning":
+		frappe.throw(_("Table {0} is not in Cleaning status").format(table_name))
+
+	frappe.db.set_value("Restaurant Table", table_name, "status", "Empty")
+
+	# Expire guest order tokens
+	from pos_next.pos_next.doctype.guest_order_token.guest_order_token import GuestOrderToken
+	GuestOrderToken.expire_tokens_for_table(table_name)
+
+	frappe.publish_realtime("table_update")
+	return {"status": "success"}
+
 
 @frappe.whitelist()
 def reset_all_tables():
@@ -304,6 +333,9 @@ def get_kds_orders(station=None):
 
 	if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
 		item_fields.append("posa_item_modifiers")
+
+	if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
+		item_fields.append("kds_batch")
 
 	# Build station maps for resolving items without explicit preparation_station
 	_station_map = {}

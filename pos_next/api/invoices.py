@@ -992,8 +992,18 @@ def update_invoice(data):
                 frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
 
         # Persist NEW item-level kds_status from frontend (e.g. Waiting/Pending from SendToKitchenDialog)
+        has_kds_batch = frappe.db.has_column("Sales Invoice Item", "kds_batch")
         if has_kds_field and data.get("items"):
             try:
+                # Determine next batch number for items transitioning to Pending
+                next_batch = 1
+                if has_kds_batch:
+                    existing_batches = [
+                        frappe.utils.cint(row.get("kds_batch") or 0)
+                        for row in invoice_doc.items
+                    ]
+                    next_batch = max(existing_batches, default=0) + 1
+
                 for item_data in data.get("items", []):
                     item_kds = item_data.get("kds_status")
                     if item_kds:
@@ -1004,6 +1014,12 @@ def update_invoice(data):
                                     "Sales Invoice Item", doc_item.name,
                                     "kds_status", item_kds, update_modified=False
                                 )
+                                # Assign batch when item is sent to kitchen (Waiting→Pending)
+                                if has_kds_batch and item_kds == "Pending" and (doc_item.kds_status in ("Waiting", "", None)):
+                                    frappe.db.set_value(
+                                        "Sales Invoice Item", doc_item.name,
+                                        "kds_batch", next_batch, update_modified=False
+                                    )
                                 break
             except Exception as inner_e:
                 frappe.log_error("Failed to set item KDS status", str(inner_e))

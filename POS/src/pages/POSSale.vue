@@ -302,6 +302,7 @@
 									@load-table-draft="handleLoadTableDraft"
 									@load-server-draft="handleLoadServerDraft"
 									@start-takeaway="handleStartTakeaway"
+									@cleaning-table-clicked="handleCleaningTableClicked"
 								/>
 							</template>
 
@@ -1359,6 +1360,29 @@
 			:tableName="currentQR.tableName"
 			@close="showQRDialog = false"
 		/>
+
+		<!-- Cleaning Table Dialog -->
+		<Dialog v-model="showCleaningDialog" :options="{ title: cleaningTable?.table_name || __('Table'), size: 'sm' }">
+			<template #body-content>
+				<div class="flex flex-col items-center text-center p-6">
+					<div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+						<svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+						</svg>
+					</div>
+					<p class="text-base font-semibold text-gray-900">{{ __('Table paid and ready for cleanup') }}</p>
+					<p class="text-sm text-gray-500 mt-1">{{ __('Mark this table as available for new guests.') }}</p>
+				</div>
+			</template>
+			<template #actions>
+				<div class="flex gap-2 w-full">
+					<Button class="flex-1" @click="showCleaningDialog = false">{{ __('Close') }}</Button>
+					<Button class="flex-1" variant="solid" theme="green" @click="markTableAvailable">
+						{{ __('Mark as Available') }}
+					</Button>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 
@@ -2460,6 +2484,27 @@ async function handleShiftClosed() {
 // Restaurant mode handlers
 function handleTableSelected(table) {
 	// Table selected, cart already configured by TableSelector
+}
+
+const cleaningTable = ref(null)
+const showCleaningDialog = ref(false)
+
+function handleCleaningTableClicked(table) {
+	cleaningTable.value = table
+	showCleaningDialog.value = true
+}
+
+async function markTableAvailable() {
+	if (!cleaningTable.value) return
+	try {
+		await call("pos_next.api.restaurant.mark_table_available", {
+			table_name: cleaningTable.value.name,
+		})
+		showCleaningDialog.value = false
+		cleaningTable.value = null
+	} catch (e) {
+		showError(e.message || __("Failed to update table status"))
+	}
 }
 
 async function handleQRButtonClick() {

@@ -43,3 +43,15 @@ class GuestOrderToken(Document):
 		"""Mark this token as Expired."""
 		self.status = "Expired"
 		self.save(ignore_permissions=True)
+
+	@staticmethod
+	def expire_tokens_for_table(table_name):
+		"""Expire all active tokens linked to a specific table."""
+		active_tokens = frappe.get_all(
+			"Guest Order Token",
+			filters={"table": table_name, "status": "Active"},
+			pluck="name",
+		)
+		for token_name in active_tokens:
+			token_doc = frappe.get_doc("Guest Order Token", token_name)
+			token_doc.expire()
