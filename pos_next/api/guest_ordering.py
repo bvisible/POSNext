@@ -250,11 +250,19 @@ def validate_token(token):
 			as_dict=True,
 		)
 
+	# Get currency from POS Profile
+	currency = None
+	if token_doc.pos_profile:
+		currency = frappe.db.get_value("POS Profile", token_doc.pos_profile, "currency")
+	if not currency:
+		currency = frappe.defaults.get_global_default("currency") or "CHF"
+
 	return {
 		"valid": True,
 		"mode": token_doc.mode,
 		"table": table_info,
 		"pos_profile": token_doc.pos_profile,
+		"currency": currency,
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
 		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
 	}

@@ -216,7 +216,7 @@ const guestStore = useGuestOrderStore()
 
 const selectedCategory = ref(null)
 const searchQuery = ref("")
-const viewMode = ref("grid")
+const viewMode = ref("list")
 const selectedItem = ref(null)
 const itemQty = ref(1)
 const selectedOptions = ref({})
@@ -281,7 +281,7 @@ const itemTotal = computed(() => {
 function formatPrice(amount) {
 	return new Intl.NumberFormat(undefined, {
 		style: "currency",
-		currency: window.frappe?.boot?.sysdefaults?.currency || "EUR",
+		currency: guestStore.currency || "CHF",
 		minimumFractionDigits: 2,
 	}).format(amount)
 }

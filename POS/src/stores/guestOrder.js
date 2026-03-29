@@ -35,6 +35,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const isLoading = ref(false)
 	const error = ref(null)
 	const settings = ref({}) // Populated from token validation
+	const currency = ref("CHF") // Currency from POS Profile
 
 	// Getters
 	const cartTotal = computed(() => {
@@ -63,8 +64,12 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				{ token: tokenValue },
 			)
 			token.value = tokenValue
-			tableInfo.value = result.table_info || null
-			settings.value = result.settings || {}
+			tableInfo.value = result.table || null
+			settings.value = {
+				qr_order_validation: result.qr_order_validation,
+				guest_account_mode: result.guest_account_mode,
+			}
+			currency.value = result.currency || "CHF"
 			return result
 		} catch (err) {
 			error.value = err.message
@@ -139,12 +144,12 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			const items = cart.value.map((entry) => ({
 				item_code: entry.item.item_code,
 				qty: entry.qty,
-				price: entry.price,
+				rate: entry.price,
 				modifiers: entry.modifiers,
 			}))
 			const result = await guestFetch(
 				"pos_next.api.guest_ordering.submit_guest_order",
-				{ token: token.value, items },
+				{ token: token.value, items: JSON.stringify(items) },
 			)
 			clearCart()
 			await refreshOrderStatus()
@@ -228,6 +233,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		isLoading.value = false
 		error.value = null
 		settings.value = {}
+		currency.value = "CHF"
 		_realtimeSubscribed = false
 	}
 
@@ -245,6 +251,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		isLoading,
 		error,
 		settings,
+		currency,
 		// Getters
 		cartTotal,
 		cartItemCount,

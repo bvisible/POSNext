@@ -290,7 +290,7 @@ const selectedItemsForPayment = computed(() => {
 function formatPrice(amount) {
 	return new Intl.NumberFormat(undefined, {
 		style: "currency",
-		currency: window.frappe?.boot?.sysdefaults?.currency || "EUR",
+		currency: guestStore.currency || "CHF",
 		minimumFractionDigits: 2,
 	}).format(amount)
 }
