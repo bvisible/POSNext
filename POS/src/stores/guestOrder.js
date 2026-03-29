@@ -37,6 +37,10 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const settings = ref({}) // Populated from token validation
 	const currency = ref("CHF") // Currency from POS Profile
 	const companyLogo = ref("") // Company logo URL
+	const taxAmount = ref(0)
+	const companyName = ref("")
+	const invoiceName = ref("")
+	const postingDate = ref("")
 
 	// Getters
 	const cartTotal = computed(() => {
@@ -175,6 +179,10 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			orderTotal.value = result.grand_total || 0
 			paidAmount.value = result.paid_amount || 0
 			paymentStatus.value = result.payment_status || null
+			taxAmount.value = result.total_taxes_and_charges || 0
+			companyName.value = result.company || ""
+			invoiceName.value = result.invoice || ""
+			postingDate.value = result.posting_date || ""
 		} catch (err) {
 			error.value = err.message
 		}
@@ -247,6 +255,10 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		settings.value = {}
 		currency.value = "CHF"
 		companyLogo.value = ""
+		taxAmount.value = 0
+		companyName.value = ""
+		invoiceName.value = ""
+		postingDate.value = ""
 		_realtimeSubscribed = false
 	}
 
@@ -266,6 +278,10 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		settings,
 		currency,
 		companyLogo,
+		taxAmount,
+		companyName,
+		invoiceName,
+		postingDate,
 		// Getters
 		cartTotal,
 		cartItemCount,

@@ -458,7 +458,35 @@ def get_order_status(token):
 		"grand_total": flt(invoice_doc.grand_total),
 		"net_total": flt(invoice_doc.net_total),
 		"paid_amount": flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0,
+		"total_taxes_and_charges": flt(invoice_doc.total_taxes_and_charges) if hasattr(invoice_doc, "total_taxes_and_charges") else 0,
+		"company": invoice_doc.company or "",
+		"posting_date": str(invoice_doc.posting_date or invoice_doc.creation),
 	}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_guest_receipt_pdf(token):
+	"""Generate and return a receipt PDF for a guest token's invoice."""
+	# Accept both Active and Expired tokens (guest may re-download receipt)
+	token_doc = _get_token_doc(token)
+	if not token_doc.invoice:
+		frappe.throw(_("No invoice found for this session."))
+
+	invoice_name = token_doc.invoice
+	if not frappe.db.exists("Sales Invoice", invoice_name):
+		frappe.throw(_("Invoice not found."))
+
+	from frappe.utils.pdf import get_pdf
+	# Try POS Next Receipt format, fall back to standard
+	try:
+		html = frappe.get_print("Sales Invoice", invoice_name, "POS Next Receipt")
+	except Exception:
+		html = frappe.get_print("Sales Invoice", invoice_name)
+	pdf = get_pdf(html)
+
+	frappe.local.response.filename = f"receipt-{invoice_name}.pdf"
+	frappe.local.response.filecontent = pdf
+	frappe.local.response.type = "pdf"
 
 
 @frappe.whitelist(allow_guest=True)

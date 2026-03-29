@@ -40,7 +40,7 @@
 			</div>
 
 			<div class="flex-1 overflow-y-auto">
-				<!-- Fully Paid — thank you + order recap -->
+				<!-- Fully Paid — receipt with TVA -->
 				<div v-if="guestStore.isFullyPaid" class="flex flex-col items-center p-6">
 					<div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-3">
 						<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,23 +48,52 @@
 						</svg>
 					</div>
 					<p class="text-lg font-bold text-green-700">{{ __('Payment complete') }}</p>
-					<p class="text-sm text-gray-500 mt-1 mb-6">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
+					<p class="text-sm text-gray-500 mt-1 mb-5">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
 
-					<!-- Order recap -->
-					<div class="w-full max-w-sm bg-white rounded-xl border border-gray-200 p-4">
-						<h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ __('Your order') }}</h4>
+					<!-- Receipt card -->
+					<div class="w-full max-w-sm bg-white rounded-xl border border-gray-200 p-5">
+						<!-- Company + date -->
+						<div class="text-center mb-3 pb-3 border-b border-dashed border-gray-200">
+							<p v-if="guestStore.companyName" class="text-sm font-bold text-gray-900">{{ guestStore.companyName }}</p>
+							<p class="text-[10px] text-gray-400 mt-0.5">{{ guestStore.invoiceName }} — {{ formatDate(guestStore.postingDate) }}</p>
+						</div>
+
+						<!-- Items -->
 						<div class="space-y-1.5">
 							<div v-for="(oItem, idx) in orderItems" :key="idx"
 								class="flex items-center justify-between text-sm">
 								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
-								<span class="text-gray-500 font-medium">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+								<span class="text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
 							</div>
 						</div>
-						<div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-							<span class="text-sm font-semibold text-gray-900">{{ __('Total') }}</span>
-							<span class="text-base font-bold text-green-700">{{ formatPrice(guestStore.orderTotal) }}</span>
+
+						<!-- Subtotal + TVA + Total -->
+						<div class="mt-3 pt-3 border-t border-dashed border-gray-200 space-y-1">
+							<div v-if="guestStore.taxAmount > 0" class="flex items-center justify-between text-sm text-gray-500">
+								<span>{{ __('Subtotal') }}</span>
+								<span>{{ formatPrice(guestStore.orderTotal - guestStore.taxAmount) }}</span>
+							</div>
+							<div v-if="guestStore.taxAmount > 0" class="flex items-center justify-between text-sm text-gray-500">
+								<span>{{ __('TVA') }}</span>
+								<span>{{ formatPrice(guestStore.taxAmount) }}</span>
+							</div>
+							<div class="flex items-center justify-between pt-1">
+								<span class="text-sm font-bold text-gray-900">{{ __('Total') }}</span>
+								<span class="text-lg font-bold text-green-700">{{ formatPrice(guestStore.orderTotal) }}</span>
+							</div>
 						</div>
 					</div>
+
+					<!-- Download receipt -->
+					<button
+						@click="downloadReceipt"
+						class="mt-4 flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+						</svg>
+						{{ __('Download receipt') }}
+					</button>
 				</div>
 
 				<!-- Not fully paid — show order summary + payment section -->
@@ -323,6 +352,20 @@ function formatPrice(amount) {
 		currency: guestStore.currency || "CHF",
 		minimumFractionDigits: 2,
 	}).format(amount)
+}
+
+function formatDate(dateStr) {
+	if (!dateStr) return ""
+	try {
+		const d = new Date(dateStr)
+		return d.toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })
+	} catch { return dateStr }
+}
+
+function downloadReceipt() {
+	if (!guestStore.token) return
+	const url = `/api/method/pos_next.api.guest_ordering.get_guest_receipt_pdf?token=${guestStore.token}`
+	window.open(url, "_blank")
 }
 
 async function handlePay() {

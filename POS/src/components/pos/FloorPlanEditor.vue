@@ -296,9 +296,8 @@
 						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
 					</div>
 				</template>
-				<span v-else-if="table.status === 'Cleaning' && !isEditMode" class="text-[10px] font-semibold text-emerald-600 mt-0.5 flex items-center gap-0.5">
-					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-					{{ __('Paid') }}
+				<span v-else-if="table.status === 'Cleaning' && !isEditMode" class="text-[10px] font-semibold text-emerald-600 mt-0.5">
+					{{ __('Cleaning') }}
 				</span>
 				<span v-else class="text-[10px] font-medium mt-0.5" :class="{
 					'text-green-600': table.status === 'Empty',

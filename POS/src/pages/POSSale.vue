@@ -2500,8 +2500,8 @@ function handleCleaningTableClicked(table) {
 }
 
 function confirmTableCleaning() {
-	// Keep table in Cleaning — just close dialog
 	showCleaningDialog.value = false
+	showSuccess(__("Table marked for cleaning"))
 	cleaningTable.value = null
 }
 
