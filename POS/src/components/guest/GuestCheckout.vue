@@ -15,8 +15,8 @@
 			<div v-if="showPaymentDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 				<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
 					<div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-						:class="isFullySettled ? 'bg-green-100' : 'bg-blue-100'">
-						<svg class="w-9 h-9" :class="isFullySettled ? 'text-green-600' : 'text-blue-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						:class="guestStore.isFullyPaid ? 'bg-green-100' : 'bg-blue-100'">
+						<svg class="w-9 h-9" :class="guestStore.isFullyPaid ? 'text-green-600' : 'text-blue-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
@@ -26,11 +26,11 @@
 					<p class="text-sm text-gray-600 mb-1">
 						{{ __('Your payment of {0} has been recorded.', [formatPrice(lastPaymentAmount)]) }}
 					</p>
-					<p v-if="isFullySettled" class="text-sm text-green-600 font-medium mt-2">
+					<p v-if="guestStore.isFullyPaid" class="text-sm text-green-600 font-medium mt-2">
 						{{ __('Thank you for your visit, we hope to see you again soon!') }}
 					</p>
 					<p v-else class="text-sm text-orange-600 font-medium mt-2">
-						{{ __('Remaining to pay on this table: {0}', [formatPrice(remainingWithTip)]) }}
+						{{ __('Remaining to pay on this table: {0}', [formatPrice(guestStore.remainingAmount)]) }}
 					</p>
 					<button
 						@click="showPaymentDialog = false"
@@ -345,6 +345,7 @@ function startPaymentPolling() {
 		if (guestStore.paidAmount > 0) {
 			stopPaymentPolling()
 			paymentState.value = "success"
+			clearTip()
 			showPaymentDialog.value = true
 			emit("order-confirmed", "")
 		}
@@ -360,6 +361,7 @@ onMounted(() => {
 	if (params.get("payment") === "success") {
 		paymentState.value = "success"
 		lastPaymentAmount.value = Number.parseFloat(params.get("amount")) || 0
+		clearTip()
 		guestStore.refreshOrderStatus().then(() => {
 			showPaymentDialog.value = true
 		})
