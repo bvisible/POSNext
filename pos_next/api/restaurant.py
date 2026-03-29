@@ -132,6 +132,15 @@ def mark_table_available(table_name):
 	from pos_next.pos_next.doctype.guest_order_token.guest_order_token import GuestOrderToken
 	GuestOrderToken.expire_tokens_for_table(table_name)
 
+	# Unlink draft invoices from this table so next order starts fresh
+	draft_invoices = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 0, "restaurant_table": table_name},
+		pluck="name",
+	)
+	for inv_name in draft_invoices:
+		frappe.db.set_value("Sales Invoice", inv_name, "restaurant_table", None, update_modified=False)
+
 	frappe.publish_realtime("table_update")
 	return {"status": "success"}
 

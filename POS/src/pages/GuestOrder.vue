@@ -216,6 +216,10 @@ onMounted(async () => {
 		await guestStore.validateToken(token)
 		await guestStore.fetchMenu()
 		await guestStore.refreshOrderStatus()
+		// Auto-switch to Pay tab if already fully paid
+		if (guestStore.isFullyPaid) {
+			activeTab.value = "pay"
+		}
 		// Subscribe to realtime updates after validation
 		guestStore.subscribeToRealtime()
 	} catch {

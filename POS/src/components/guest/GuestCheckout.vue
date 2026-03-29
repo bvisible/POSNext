@@ -40,6 +40,19 @@
 			</div>
 
 			<div class="flex-1 overflow-y-auto">
+				<!-- Fully Paid — show thank you, no order summary -->
+				<div v-if="guestStore.isFullyPaid" class="flex-1 flex flex-col items-center justify-center p-8">
+					<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+						<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+						</svg>
+					</div>
+					<p class="text-xl font-bold text-green-700">{{ __('Payment complete') }}</p>
+					<p class="text-sm text-gray-500 mt-1">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
+				</div>
+
+				<!-- Not fully paid — show order summary + payment section -->
+				<template v-else>
 				<!-- Order Summary -->
 				<div class="bg-white border-b border-gray-200 p-4">
 					<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Order Summary') }}</h3>
@@ -55,20 +68,6 @@
 						<span class="text-base font-bold text-gray-900">{{ formatPrice(guestStore.orderTotal) }}</span>
 					</div>
 				</div>
-
-				<!-- Fully Paid -->
-				<div v-if="guestStore.isFullyPaid" class="flex-1 flex flex-col items-center justify-center p-8">
-					<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-						<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-						</svg>
-					</div>
-					<p class="text-xl font-bold text-green-700">{{ __('Payment complete') }}</p>
-					<p class="text-sm text-gray-500 mt-1">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
-				</div>
-
-				<!-- Payment Section -->
-				<template v-else>
 					<!-- Tips -->
 					<div class="bg-white border-b border-gray-200 p-4">
 						<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Tip') }}</h3>

@@ -1,7 +1,18 @@
 <template>
 	<div class="flex flex-col h-full bg-gray-50 overflow-hidden">
+		<!-- Fully Paid State -->
+		<div v-if="guestStore.isFullyPaid" class="flex-1 flex flex-col items-center justify-center p-8 text-gray-400">
+			<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+				<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+				</svg>
+			</div>
+			<p class="text-base font-medium text-green-700">{{ __('Order paid') }}</p>
+			<p class="text-sm text-gray-400 mt-1">{{ __('Thank you for your visit!') }}</p>
+		</div>
+
 		<!-- Empty State (no cart items AND no ordered items) -->
-		<div v-if="cart.length === 0 && orderItems.length === 0" class="flex-1 flex flex-col items-center justify-center p-8 text-gray-400">
+		<div v-else-if="cart.length === 0 && orderItems.length === 0" class="flex-1 flex flex-col items-center justify-center p-8 text-gray-400">
 			<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
 			</svg>
