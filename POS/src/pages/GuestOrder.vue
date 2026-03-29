@@ -25,17 +25,26 @@
 			<!-- Header -->
 			<div class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
 				<div class="flex items-center justify-between">
-					<div>
-						<h1 class="text-base font-bold text-gray-900">
-							{{ tableInfo?.table_name || __('Order') }}
-						</h1>
-						<p v-if="tableInfo" class="text-xs text-gray-500">
-							{{ tableInfo.area_name || '' }}
-						</p>
+					<div class="flex items-center gap-3">
+						<!-- Restaurant logo -->
+						<img
+							v-if="siteLogo"
+							:src="siteLogo"
+							class="w-8 h-8 object-contain rounded"
+							alt="Logo"
+						/>
+						<div>
+							<h1 class="text-base font-bold text-gray-900">
+								{{ tableInfo?.table_name || __('Order') }}
+							</h1>
+							<p v-if="tableInfo" class="text-xs text-gray-500">
+								{{ tableInfo.area_name || '' }}
+							</p>
+						</div>
 					</div>
 					<!-- Cart badge shortcut -->
 					<button
-						v-if="activeTab !== 'cart'"
+						v-if="activeTab !== 'cart' && !isOrderLocked"
 						@click="activeTab = 'cart'"
 						class="relative p-2"
 					>
@@ -67,10 +76,10 @@
 				<div class="flex">
 					<!-- Menu tab -->
 					<button
-						@click="activeTab = 'menu'"
+						@click="isOrderLocked ? null : (activeTab = 'menu')"
 						:class="[
 							'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
-							activeTab === 'menu' ? 'text-blue-600' : 'text-gray-500',
+							isOrderLocked ? 'text-gray-300 cursor-not-allowed' : activeTab === 'menu' ? 'text-blue-600' : 'text-gray-500',
 						]"
 					>
 						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,10 +90,10 @@
 
 					<!-- Cart tab -->
 					<button
-						@click="activeTab = 'cart'"
+						@click="isOrderLocked ? null : (activeTab = 'cart')"
 						:class="[
 							'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors relative',
-							activeTab === 'cart' ? 'text-blue-600' : 'text-gray-500',
+							isOrderLocked ? 'text-gray-300 cursor-not-allowed' : activeTab === 'cart' ? 'text-blue-600' : 'text-gray-500',
 						]"
 					>
 						<div class="relative">
@@ -92,7 +101,7 @@
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
 							</svg>
 							<span
-								v-if="guestStore.cartItemCount > 0"
+								v-if="guestStore.cartItemCount > 0 && !isOrderLocked"
 								class="absolute -top-1.5 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
 							>
 								{{ guestStore.cartItemCount > 9 ? '9+' : guestStore.cartItemCount }}
@@ -109,19 +118,19 @@
 							activeTab === 'pay' ? 'text-blue-600' : 'text-gray-500',
 						]"
 					>
-						<div class="relative">
-							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-							</svg>
-							<!-- Remaining amount badge -->
-							<span
-								v-if="guestStore.orderTotal > 0 && !guestStore.isFullyPaid"
-								class="absolute -top-1.5 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
-							>
-								!
-							</span>
-						</div>
-						{{ __('Pay') }}
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+						</svg>
+						<!-- Remaining amount or checkmark -->
+						<template v-if="guestStore.isFullyPaid">
+							<span class="text-green-600">{{ __('Paid') }} ✓</span>
+						</template>
+						<template v-else-if="guestStore.orderTotal > 0">
+							<span class="text-orange-600 font-semibold">{{ formatPrice(guestStore.remainingAmount) }}</span>
+						</template>
+						<template v-else>
+							{{ __('Pay') }}
+						</template>
 					</button>
 				</div>
 			</div>
@@ -147,6 +156,24 @@ const isValidating = ref(true)
 const tokenError = ref(false)
 
 const tableInfo = computed(() => guestStore.tableInfo)
+
+// Lock ordering when fully paid (table settled)
+const isOrderLocked = computed(() => guestStore.isFullyPaid)
+
+// Get site logo
+const siteLogo = computed(() => {
+	return window.frappe?.boot?.website_settings?.banner_image
+		|| window.frappe?.boot?.app_logo_url
+		|| ""
+})
+
+function formatPrice(amount) {
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: guestStore.currency || "CHF",
+		minimumFractionDigits: 2,
+	}).format(amount)
+}
 
 onMounted(async () => {
 	const token = route.params.token
