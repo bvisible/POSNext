@@ -10,14 +10,18 @@
 		</div>
 
 		<!-- Payment success on expired token (returned from Wallee after table was cleared) -->
-		<div v-else-if="tokenError && paymentReturnStatus === 'success'" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-			<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-				<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-				</svg>
+		<div v-else-if="tokenError && paymentReturnStatus === 'success'" class="flex-1 flex items-center justify-center p-4 bg-gray-50">
+			<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+				<div class="w-16 h-16 rounded-full bg-green-100 mx-auto mb-4 flex items-center justify-center">
+					<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+					</svg>
+				</div>
+				<h3 class="text-lg font-bold text-gray-900 mb-2">{{ __('Thank you!') }}</h3>
+				<p class="text-sm text-gray-600">{{ __('Your payment has been recorded.') }}</p>
+				<p class="text-sm text-green-600 font-medium mt-2">{{ __('Thank you for your visit, we hope to see you again soon!') }}</p>
+				<p class="text-xs text-gray-400 mt-4">{{ __('This page will close automatically.') }}</p>
 			</div>
-			<h2 class="text-xl font-bold text-gray-900 mb-2">{{ __('Thank you!') }}</h2>
-			<p class="text-sm text-gray-500">{{ __('Your payment has been recorded. Thank you for your visit!') }}</p>
 		</div>
 
 		<!-- Error / Invalid Token State -->
@@ -224,6 +228,10 @@ onMounted(async () => {
 		guestStore.subscribeToRealtime()
 	} catch {
 		tokenError.value = true
+		// Auto-close tab after 5s if returning from successful payment on expired token
+		if (paymentReturnStatus === "success") {
+			setTimeout(() => { window.close() }, 5000)
+		}
 	} finally {
 		isValidating.value = false
 	}
