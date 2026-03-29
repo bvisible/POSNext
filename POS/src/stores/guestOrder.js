@@ -178,14 +178,19 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		}
 	}
 
-	async function createPayment(amount, items = []) {
+	async function createPayment(amount, items = [], tip = 0, successUrl = "", failedUrl = "") {
 		if (!token.value) return
 		isLoading.value = true
 		error.value = null
 		try {
+			const args = { token: token.value, amount }
+			if (items.length) args.payment_items = JSON.stringify(items)
+			if (tip > 0) args.tip = tip
+			if (successUrl) args.success_url = successUrl
+			if (failedUrl) args.failed_url = failedUrl
 			const result = await guestFetch(
 				"pos_next.api.guest_ordering.create_guest_payment",
-				{ token: token.value, amount, items },
+				args,
 			)
 			return result
 		} catch (err) {

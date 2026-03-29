@@ -435,12 +435,11 @@ def get_order_status(token):
 
 
 @frappe.whitelist(allow_guest=True)
-def create_guest_payment(token, amount, payment_items=None):
+def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=None, failed_url=None):
 	"""
 	Create a Wallee transaction for a guest payment.
-	Supports partial payments: pass amount for free-amount mode,
-	or payment_items (list of invoice item names) for item-selection mode.
-	Returns the Wallee payment URL.
+	Supports tip amount and redirect URLs for Wallee payment page.
+	Returns the Wallee payment URL for redirect.
 	"""
 	token_doc = _require_valid_token(token)
 	invoice_doc = _get_or_create_invoice(token_doc)
@@ -449,6 +448,7 @@ def create_guest_payment(token, amount, payment_items=None):
 		frappe.throw(_("No active order found for this session."))
 
 	amount = flt(amount)
+	tip = flt(tip)
 	if amount <= 0:
 		frappe.throw(_("Payment amount must be greater than zero."))
 
@@ -457,33 +457,31 @@ def create_guest_payment(token, amount, payment_items=None):
 	try:
 		from wallee_integration.wallee_integration.api.transaction import create_transaction
 
-		line_items = None
-		if payment_items:
-			if isinstance(payment_items, str):
-				payment_items = json.loads(payment_items)
-			# Build line items from selected invoice rows
-			line_items = []
-			for item_name in payment_items:
-				row = frappe.db.get_value(
-					"Sales Invoice Item",
-					item_name,
-					["item_name", "qty", "amount"],
-					as_dict=True,
-				)
-				if row:
-					line_items.append({
-						"name": row.item_name,
-						"quantity": float(row.qty or 1),
-						"amount_including_tax": float(row.amount or 0),
-						"type": "PRODUCT",
-						"sku": item_name,
-					})
+		# Build line items: order amount + optional tip
+		line_items = [
+			{
+				"name": _("Order {0}").format(invoice_doc.name),
+				"quantity": 1,
+				"amount_including_tax": float(amount - tip),
+				"type": "PRODUCT",
+				"unique_id": invoice_doc.name,
+			}
+		]
+		if tip > 0:
+			line_items.append({
+				"name": _("Tip"),
+				"quantity": 1,
+				"amount_including_tax": float(tip),
+				"type": "FEE",
+				"unique_id": f"{invoice_doc.name}-tip",
+			})
 
 		result = create_transaction(
-			amount=amount if not line_items else None,
 			line_items=line_items,
 			currency=currency,
 			merchant_reference=invoice_doc.name,
+			success_url=success_url or None,
+			failed_url=failed_url or None,
 		)
 	except ImportError:
 		frappe.throw(_("Wallee integration is not available on this instance."))
