@@ -252,10 +252,22 @@ def validate_token(token):
 
 	# Get currency from POS Profile
 	currency = None
+	company = None
 	if token_doc.pos_profile:
-		currency = frappe.db.get_value("POS Profile", token_doc.pos_profile, "currency")
+		profile_data = frappe.db.get_value(
+			"POS Profile", token_doc.pos_profile, ["currency", "company"], as_dict=True
+		)
+		currency = profile_data.currency if profile_data else None
+		company = profile_data.company if profile_data else None
 	if not currency:
 		currency = frappe.defaults.get_global_default("currency") or "CHF"
+	if not company:
+		company = frappe.defaults.get_defaults().get("company")
+
+	# Get company logo
+	company_logo = ""
+	if company:
+		company_logo = frappe.db.get_value("Company", company, "company_logo") or ""
 
 	return {
 		"valid": True,
@@ -263,6 +275,7 @@ def validate_token(token):
 		"table": table_info,
 		"pos_profile": token_doc.pos_profile,
 		"currency": currency,
+		"company_logo": company_logo,
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
 		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
 	}

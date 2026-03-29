@@ -135,6 +135,23 @@
 				</div>
 			</div>
 		</template>
+
+		<!-- Order Sent Confirmation Dialog -->
+		<div v-if="showOrderSentDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+			<div class="bg-white rounded-2xl shadow-xl w-full max-w-xs p-6 text-center">
+				<div class="w-14 h-14 rounded-full bg-green-100 mx-auto mb-4 flex items-center justify-center">
+					<svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+					</svg>
+				</div>
+				<h3 class="text-lg font-bold text-gray-900 mb-1">{{ __('Order sent!') }}</h3>
+				<p class="text-sm text-gray-600">{{ __('Your order has been sent to the kitchen. You can continue browsing the menu.') }}</p>
+				<button
+					@click="showOrderSentDialog = false"
+					class="mt-5 w-full py-3 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors"
+				>{{ __('OK') }}</button>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -160,12 +177,8 @@ const tableInfo = computed(() => guestStore.tableInfo)
 // Lock ordering when fully paid (table settled)
 const isOrderLocked = computed(() => guestStore.isFullyPaid)
 
-// Get site logo
-const siteLogo = computed(() => {
-	return window.frappe?.boot?.website_settings?.banner_image
-		|| window.frappe?.boot?.app_logo_url
-		|| ""
-})
+// Get company logo from API
+const siteLogo = computed(() => guestStore.companyLogo)
 
 function formatPrice(amount) {
 	return new Intl.NumberFormat(undefined, {
@@ -200,9 +213,12 @@ onUnmounted(() => {
 	guestStore.reset()
 })
 
+const showOrderSentDialog = ref(false)
+
 function handleOrderSent() {
-	// After sending order, switch to Pay tab
-	activeTab.value = "pay"
+	// Show confirmation popup and stay on menu
+	showOrderSentDialog.value = true
+	activeTab.value = "menu"
 }
 </script>
 

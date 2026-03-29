@@ -36,6 +36,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const error = ref(null)
 	const settings = ref({}) // Populated from token validation
 	const currency = ref("CHF") // Currency from POS Profile
+	const companyLogo = ref("") // Company logo URL
 
 	// Getters
 	const cartTotal = computed(() => {
@@ -70,6 +71,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 				guest_account_mode: result.guest_account_mode,
 			}
 			currency.value = result.currency || "CHF"
+			companyLogo.value = result.company_logo || ""
 			return result
 		} catch (err) {
 			error.value = err.message
@@ -239,6 +241,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		error.value = null
 		settings.value = {}
 		currency.value = "CHF"
+		companyLogo.value = ""
 		_realtimeSubscribed = false
 	}
 
@@ -257,6 +260,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		error,
 		settings,
 		currency,
+		companyLogo,
 		// Getters
 		cartTotal,
 		cartItemCount,
