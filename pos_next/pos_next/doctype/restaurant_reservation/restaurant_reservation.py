@@ -53,14 +53,8 @@ class RestaurantReservation(Document):
 		if self.reservation_time and self.duration:
 			from datetime import datetime, timedelta
 			base = datetime.strptime(str(self.reservation_time), "%H:%M:%S")
-			duration_seconds = self.duration
-			if isinstance(duration_seconds, str):
-				# Parse HH:MM:SS duration string
-				parts = duration_seconds.split(":")
-				duration_seconds = int(parts[0]) * 3600 + int(parts[1]) * 60
-				if len(parts) > 2:
-					duration_seconds += int(parts[2])
-			end = base + timedelta(seconds=int(duration_seconds))
+			dur_seconds = _parse_duration(self.duration)
+			end = base + timedelta(seconds=dur_seconds)
 			self.end_time = end.strftime("%H:%M:%S")
 
 	def _lock_and_check_overlap(self):
@@ -105,6 +99,35 @@ class RestaurantReservation(Document):
 		frappe.publish_realtime("table_update")
 
 
+def _parse_duration(duration):
+	"""Parse duration from various formats to seconds (int).
+
+	Handles: int/float (seconds), "HH:MM:SS", "HH:MM", or plain numeric string.
+	"""
+	if not duration:
+		return 5400  # default 1h30
+
+	if isinstance(duration, (int, float)):
+		return int(duration)
+
+	duration_str = str(duration).strip()
+
+	if ":" in duration_str:
+		parts = duration_str.split(":")
+		seconds = int(parts[0]) * 3600
+		if len(parts) > 1:
+			seconds += int(parts[1]) * 60
+		if len(parts) > 2:
+			seconds += int(float(parts[2]))
+		return seconds
+
+	# Plain numeric string (seconds)
+	try:
+		return int(float(duration_str))
+	except ValueError:
+		return 5400
+
+
 def check_overlap(tables, date, time, duration, exclude=None):
 	"""Check if any of the given tables have overlapping reservations.
 
@@ -116,13 +139,7 @@ def check_overlap(tables, date, time, duration, exclude=None):
 	from datetime import datetime, timedelta
 
 	base = datetime.strptime(str(time), "%H:%M:%S")
-	if isinstance(duration, str):
-		parts = duration.split(":")
-		dur_seconds = int(parts[0]) * 3600 + int(parts[1]) * 60
-		if len(parts) > 2:
-			dur_seconds += int(parts[2])
-	else:
-		dur_seconds = int(duration)
+	dur_seconds = _parse_duration(duration)
 
 	new_start = base
 	new_end = base + timedelta(seconds=dur_seconds)
