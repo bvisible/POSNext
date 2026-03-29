@@ -18,10 +18,6 @@
 			</div>
 			<h2 class="text-xl font-bold text-gray-900 mb-2">{{ __('Thank you!') }}</h2>
 			<p class="text-sm text-gray-500">{{ __('Your payment has been recorded. Thank you for your visit!') }}</p>
-			<button
-				@click="closeOrGoBack"
-				class="mt-6 px-6 py-3 bg-green-600 text-white font-medium rounded-xl active:bg-green-700 transition-colors"
-			>{{ __('Close') }}</button>
 		</div>
 
 		<!-- Error / Invalid Token State -->
@@ -34,9 +30,9 @@
 			<h2 class="text-xl font-bold text-gray-900 mb-2">{{ __('Invalid or expired link') }}</h2>
 			<p class="text-sm text-gray-500">{{ __('Please ask your server to generate a new QR code.') }}</p>
 			<button
-				@click="closeOrGoBack"
+				@click="$router.back()"
 				class="mt-6 px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-xl active:bg-gray-300 transition-colors"
-			>{{ __('Close') }}</button>
+			>{{ __('Back') }}</button>
 		</div>
 
 		<!-- Main Content (loaded) -->
@@ -241,11 +237,6 @@ function handleOrderSent() {
 	activeTab.value = "menu"
 }
 
-function closeOrGoBack() {
-	// Try to close tab (works if opened by JS), otherwise go back
-	window.close()
-	setTimeout(() => window.history.back(), 300)
-}
 </script>
 
 <style scoped>
