@@ -255,13 +255,13 @@ const currencySymbol = computed(() => {
 		return (
 			new Intl.NumberFormat(undefined, {
 				style: "currency",
-				currency: window.frappe?.boot?.sysdefaults?.currency || "EUR",
+				currency: guestStore.currency || "CHF",
 			})
 				.formatToParts(0)
-				.find((p) => p.type === "currency")?.value ?? "€"
+				.find((p) => p.type === "currency")?.value ?? "CHF"
 		)
 	} catch {
-		return "€"
+		return "CHF"
 	}
 })
 
