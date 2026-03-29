@@ -536,6 +536,9 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		)[0][0]
 		next_idx = int(max_idx) + 1
 
+		# Record only the order portion (exclude tip) — tip goes to Wallee only
+		order_payment = flt(amount) - flt(tip)
+
 		# Insert payment row directly (bypasses all ORM hooks)
 		payment_name = frappe.generate_hash(length=10)
 		frappe.db.sql("""
@@ -544,7 +547,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				 owner, modified_by, creation, modified, docstatus)
 			VALUES (%s, %s, 'Sales Invoice', 'payments', %s, %s, %s,
 				'Administrator', 'Administrator', NOW(), NOW(), 0)
-		""", (payment_name, invoice_doc.name, next_idx, wallee_mop, flt(amount)))
+		""", (payment_name, invoice_doc.name, next_idx, wallee_mop, order_payment))
 
 		# Recalculate paid_amount from all payment rows
 		new_paid = flt(frappe.db.sql(
