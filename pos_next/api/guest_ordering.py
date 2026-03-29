@@ -320,8 +320,9 @@ def submit_guest_order(token, items):
 	validation_mode = settings.qr_order_validation or "Direct to Kitchen"
 
 	invoice_doc = _get_or_create_invoice(token_doc)
+	is_new_invoice = not invoice_doc
 
-	if not invoice_doc:
+	if is_new_invoice:
 		# Create a new draft invoice
 		if not token_doc.pos_profile:
 			frappe.throw(_("No POS Profile linked to this session."))
@@ -340,14 +341,8 @@ def submit_guest_order(token, items):
 			invoice_data["restaurant_table"] = token_doc.table
 
 		invoice_doc = frappe.get_doc(invoice_data)
-		invoice_doc.flags.ignore_permissions = True
-		invoice_doc.insert()
 
-		# Link invoice to token
-		token_doc.invoice = invoice_doc.name
-		token_doc.save(ignore_permissions=True)
-
-	# Append incoming items
+	# Append incoming items (before insert for new invoices to avoid validation errors)
 	has_kds = frappe.db.has_column("Sales Invoice Item", "kds_status")
 	for item in items:
 		item_code = item.get("item_code")
@@ -375,7 +370,13 @@ def submit_guest_order(token, items):
 			row.posa_special_instructions = item.get("special_instructions") or ""
 
 	invoice_doc.flags.ignore_permissions = True
-	invoice_doc.save()
+	if is_new_invoice:
+		invoice_doc.insert()
+		# Link invoice to token
+		token_doc.invoice = invoice_doc.name
+		token_doc.save(ignore_permissions=True)
+	else:
+		invoice_doc.save()
 
 	if token_doc.table:
 		event_type = "order_submitted" if validation_mode == "Direct to Kitchen" else "order_pending_approval"
