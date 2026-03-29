@@ -25,7 +25,17 @@
   "token_expiry_days",
   "section_web_takeaway",
   "enable_web_takeaway",
-  "takeaway_menu"
+  "takeaway_menu",
+  "section_reservations",
+  "enable_reservations",
+  "default_reservation_duration",
+  "no_show_delay",
+  "reservation_reminder_hours",
+  "column_break_reservations",
+  "enable_online_reservations",
+  "require_reservation_validation",
+  "restaurant_email",
+  "reservation_channels"
  ],
  "fields": [
   {
@@ -160,6 +170,72 @@
    "label": "Takeaway Menu",
    "options": "Restaurant Card",
    "depends_on": "eval:doc.enable_web_takeaway"
+  },
+  {
+   "fieldname": "section_reservations",
+   "fieldtype": "Section Break",
+   "label": "Reservations"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_reservations",
+   "fieldtype": "Check",
+   "label": "Enable Reservations"
+  },
+  {
+   "default": "01:30:00",
+   "fieldname": "default_reservation_duration",
+   "fieldtype": "Duration",
+   "label": "Default Reservation Duration",
+   "depends_on": "eval:doc.enable_reservations"
+  },
+  {
+   "default": "60",
+   "fieldname": "no_show_delay",
+   "fieldtype": "Int",
+   "label": "No-Show Delay (minutes)",
+   "description": "Minutes after reservation time before marking as No Show",
+   "depends_on": "eval:doc.enable_reservations"
+  },
+  {
+   "default": "3",
+   "fieldname": "reservation_reminder_hours",
+   "fieldtype": "Int",
+   "label": "Reminder Hours Before",
+   "description": "Send reminder email this many hours before the reservation",
+   "depends_on": "eval:doc.enable_reservations"
+  },
+  {
+   "fieldname": "column_break_reservations",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_online_reservations",
+   "fieldtype": "Check",
+   "label": "Enable Online Reservations",
+   "depends_on": "eval:doc.enable_reservations"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_reservation_validation",
+   "fieldtype": "Check",
+   "label": "Require Manager Validation for Online",
+   "depends_on": "eval:doc.enable_online_reservations"
+  },
+  {
+   "fieldname": "restaurant_email",
+   "fieldtype": "Data",
+   "label": "Restaurant Notification Email",
+   "options": "Email",
+   "depends_on": "eval:doc.enable_reservations"
+  },
+  {
+   "default": "Phone\nWalk-in\nInternet",
+   "fieldname": "reservation_channels",
+   "fieldtype": "Small Text",
+   "label": "Reservation Channels (one per line)",
+   "depends_on": "eval:doc.enable_reservations"
   }
  ],
  "index_web_link_preview": 0,

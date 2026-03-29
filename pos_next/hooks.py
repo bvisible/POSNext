@@ -294,6 +294,10 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
+	"hourly": [
+		"pos_next.api.reservations.send_reminders",
+		"pos_next.api.reservations.auto_no_show",
+	],
 	"daily": [
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 	],

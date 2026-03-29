@@ -927,6 +927,7 @@
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
 			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" @open-settings="openSettingsTab" />
 		<TipsPanel :show="showTipsPanel" @close="showTipsPanel = false" />
+		<ReservationDialog :show="showReservationDialog" @close="showReservationDialog = false" />
 
 			<!-- Cash In/Out -->
 			<CashInOutDialog
@@ -1409,6 +1410,7 @@ import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";
 import CardEditor from "@/components/restaurant/CardEditor.vue";
 import TipsPanel from "@/components/restaurant/TipsPanel.vue";
+import ReservationDialog from "@/components/restaurant/ReservationDialog.vue";
 import POSHeader from "@/components/pos/POSHeader.vue";
 import BatchSerialDialog from "@/components/sale/BatchSerialDialog.vue";
 import CouponDialog from "@/components/sale/CouponDialog.vue";
@@ -1712,6 +1714,7 @@ const showCardEditor = ref(false);
 const showProductOptionsEditor = ref(false);
 const showWorkflowEditor = ref(false);
 const showTipsPanel = ref(false);
+const showReservationDialog = ref(false);
 
 // Invoice Detail dialog
 const showInvoiceDetail = ref(false);
@@ -3866,6 +3869,8 @@ function handleManagementMenuClick(menuItem) {
 		showCashInOut.value = true;
 	} else if (menuItem === "tips") {
 		showTipsPanel.value = true;
+	} else if (menuItem === "reservations") {
+		showReservationDialog.value = true;
 	}
 }
 

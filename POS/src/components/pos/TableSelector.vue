@@ -85,6 +85,13 @@
 					<span class="mt-1 text-xs text-gray-500 dark:text-gray-400 font-medium">
 						{{ __(table.status) }}
 					</span>
+
+					<!-- Reservation badge overlay -->
+					<ReservationBadge
+						v-if="upcomingByTable[table.name]"
+						:reservation="upcomingByTable[table.name]"
+						class="absolute bottom-1 left-1 right-1"
+					/>
 				</div>
 			</div>
 
@@ -112,11 +119,14 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
 import { Button, FeatherIcon } from "frappe-ui"
 import TableQRCode from "@/components/restaurant/TableQRCode.vue"
+import ReservationBadge from "@/components/restaurant/ReservationBadge.vue"
+import { useReservations } from "@/composables/useReservations"
 
 const emit = defineEmits(["table-selected", "load-table-draft"])
 
 const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
+const { upcomingByTable, fetchReservations, currentDate } = useReservations()
 const draftsStore = usePOSDraftsStore()
 
 const selectedArea = ref(null)
@@ -135,6 +145,8 @@ const filteredTables = computed(() => {
 
 onMounted(async () => {
 	await restaurantStore.loadTablesAndAreas()
+	// Load today's reservations for badge overlay
+	fetchReservations(currentDate.value)
 
 	if (areas.value.length === 0 || tables.value.length === 0) {
 		await restaurantStore.fetchFromNetwork()

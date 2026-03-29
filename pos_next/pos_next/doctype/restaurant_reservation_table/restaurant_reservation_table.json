@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_import": 0,
+ "allow_rename": 0,
+ "creation": "2026-03-29 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "restaurant_table",
+  "table_name",
+  "area",
+  "capacity"
+ ],
+ "fields": [
+  {
+   "fieldname": "restaurant_table",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Table",
+   "options": "Restaurant Table",
+   "reqd": 1,
+   "columns": 3
+  },
+  {
+   "fetch_from": "restaurant_table.table_name",
+   "fieldname": "table_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "read_only": 1,
+   "columns": 3
+  },
+  {
+   "fetch_from": "restaurant_table.area",
+   "fieldname": "area",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Area",
+   "read_only": 1,
+   "columns": 3
+  },
+  {
+   "fetch_from": "restaurant_table.capacity",
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Seats",
+   "read_only": 1,
+   "columns": 2
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-29 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Reservation Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
