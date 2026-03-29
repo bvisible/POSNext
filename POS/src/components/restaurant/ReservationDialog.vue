@@ -80,6 +80,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue"
+import { call } from "@/utils/apiWrapper"
 import { useReservations } from "@/composables/useReservations"
 import { useToast } from "@/composables/useToast"
 import ReservationList from "./ReservationList.vue"
@@ -128,14 +129,10 @@ const areas = computed(() => {
 
 async function loadSettings() {
 	try {
-		const response = await window.frappe.call({
-			method: "frappe.client.get",
-			args: {
-				doctype: "Restaurant Settings",
-				name: "Restaurant Settings",
-			},
+		const settings = await call("frappe.client.get", {
+			doctype: "Restaurant Settings",
+			name: "Restaurant Settings",
 		})
-		const settings = response.message
 		if (settings) {
 			const dur = settings.default_reservation_duration || 5400
 			// Convert seconds to HH:MM:SS
@@ -156,16 +153,13 @@ async function loadSettings() {
 
 async function loadTables() {
 	try {
-		const response = await window.frappe.call({
-			method: "frappe.client.get_list",
-			args: {
-				doctype: "Restaurant Table",
-				fields: ["name", "table_name", "area", "capacity", "status"],
-				order_by: "area asc, table_name asc",
-				limit_page_length: 0,
-			},
+		const response = await call("frappe.client.get_list", {
+			doctype: "Restaurant Table",
+			fields: ["name", "table_name", "area", "capacity", "status"],
+			order_by: "area asc, table_name asc",
+			limit_page_length: 0,
 		})
-		allTables.value = response.message || []
+		allTables.value = response || []
 	} catch {
 		allTables.value = []
 	}

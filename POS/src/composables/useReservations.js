@@ -6,6 +6,7 @@
  */
 
 import { ref, computed, onMounted, onUnmounted } from "vue"
+import { call } from "@/utils/apiWrapper"
 
 const reservations = ref([])
 const loading = ref(false)
@@ -49,11 +50,11 @@ async function fetchReservations(date, filters = {}) {
 		if (filters.status) args.status = JSON.stringify(filters.status)
 		if (filters.area) args.area = filters.area
 
-		const response = await window.frappe.call({
-			method: "pos_next.api.reservations.get_reservations",
+		const response = await call(
+			"pos_next.api.reservations.get_reservations",
 			args,
-		})
-		reservations.value = response.message || []
+		)
+		reservations.value = response || []
 	} catch (error) {
 		console.error("[Reservations] Fetch failed:", error)
 	} finally {
@@ -63,11 +64,10 @@ async function fetchReservations(date, filters = {}) {
 
 async function createReservation(data) {
 	try {
-		const response = await window.frappe.call({
-			method: "pos_next.api.reservations.create_reservation",
-			args: data,
-		})
-		const result = response.message
+		const result = await call(
+			"pos_next.api.reservations.create_reservation",
+			data,
+		)
 		if (result?.status === "conflict") {
 			return result
 		}
@@ -82,13 +82,13 @@ async function createReservation(data) {
 
 async function updateStatus(name, status, force = false) {
 	try {
-		const response = await window.frappe.call({
-			method: "pos_next.api.reservations.update_reservation_status",
-			args: { name, status, force },
-		})
+		const result = await call(
+			"pos_next.api.reservations.update_reservation_status",
+			{ name, status, force },
+		)
 		// Refresh list after status change
 		await fetchReservations(currentDate.value)
-		return response.message
+		return result
 	} catch (error) {
 		console.error("[Reservations] Status update failed:", error)
 		throw error
@@ -97,11 +97,11 @@ async function updateStatus(name, status, force = false) {
 
 async function checkAvailability(tables, date, time, duration, exclude = null) {
 	try {
-		const response = await window.frappe.call({
-			method: "pos_next.api.reservations.check_table_availability",
-			args: { tables: JSON.stringify(tables), date, time, duration, exclude },
-		})
-		return response.message
+		const result = await call(
+			"pos_next.api.reservations.check_table_availability",
+			{ tables: JSON.stringify(tables), date, time, duration, exclude },
+		)
+		return result
 	} catch (error) {
 		console.error("[Reservations] Availability check failed:", error)
 		throw error
@@ -110,11 +110,11 @@ async function checkAvailability(tables, date, time, duration, exclude = null) {
 
 async function getStats(fromDate, toDate) {
 	try {
-		const response = await window.frappe.call({
-			method: "pos_next.api.reservations.get_reservation_stats",
-			args: { from_date: fromDate, to_date: toDate },
-		})
-		return response.message
+		const result = await call(
+			"pos_next.api.reservations.get_reservation_stats",
+			{ from_date: fromDate, to_date: toDate },
+		)
+		return result
 	} catch (error) {
 		console.error("[Reservations] Stats fetch failed:", error)
 		throw error
