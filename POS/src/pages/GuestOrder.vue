@@ -9,6 +9,17 @@
 			<p class="text-gray-600">{{ __('Loading menu...') }}</p>
 		</div>
 
+		<!-- Payment success on expired token (returned from Wallee after table was cleared) -->
+		<div v-else-if="tokenError && paymentReturnStatus === 'success'" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+			<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+				<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+				</svg>
+			</div>
+			<h2 class="text-xl font-bold text-gray-900 mb-2">{{ __('Thank you!') }}</h2>
+			<p class="text-sm text-gray-500">{{ __('Your payment has been recorded. Thank you for your visit!') }}</p>
+		</div>
+
 		<!-- Error / Invalid Token State -->
 		<div v-else-if="tokenError" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
 			<div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
@@ -168,7 +179,8 @@ const guestStore = useGuestOrderStore()
 
 // Auto-switch to Pay tab if returning from Wallee payment
 const urlParams = new URLSearchParams(window.location.search)
-const activeTab = ref(urlParams.get("payment") ? "pay" : "menu")
+const paymentReturnStatus = urlParams.get("payment") // 'success' | 'failed' | null
+const activeTab = ref(paymentReturnStatus ? "pay" : "menu")
 const isValidating = ref(true)
 const tokenError = ref(false)
 
