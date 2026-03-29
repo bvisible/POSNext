@@ -523,7 +523,9 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		})
 		invoice_doc.paid_amount = flt(sum(p.amount for p in invoice_doc.payments))
 		invoice_doc.flags.ignore_permissions = True
+		invoice_doc.flags.ignore_validate = True
 		invoice_doc.save()
+		frappe.db.commit()
 
 		# If fully paid, update table status and close the token
 		if flt(invoice_doc.paid_amount) >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
@@ -534,7 +536,13 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 			# Notify POS of table status change
 			frappe.publish_realtime("table_update")
 	except Exception as e:
-		frappe.log_error("Guest payment record failed", str(e))
+		import traceback
+		frappe.log_error(
+			"Guest payment record failed",
+			f"Invoice: {invoice_doc.name}, Amount: {amount}, MoP: {wallee_mop}, "
+			f"Grand Total: {invoice_doc.grand_total}, Paid: {invoice_doc.paid_amount}\n"
+			f"Error: {str(e)}\n{traceback.format_exc()}"
+		)
 
 	if token_doc.table:
 		event = "payment_completed" if flt(invoice_doc.paid_amount) >= flt(invoice_doc.grand_total) else "payment_initiated"
