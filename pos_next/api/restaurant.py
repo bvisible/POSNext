@@ -116,10 +116,10 @@ def update_table_status(table_name, status):
 @frappe.whitelist()
 def get_table_payment_summary(table_name):
 	"""Get payment summary for a Paid/Cleaning table (for the server dialog)."""
-	# Priority 1: invoice linked directly to the table
+	# Priority 1: draft invoice linked directly to the table
 	invoice = frappe.get_all(
 		"Sales Invoice",
-		filters={"docstatus": 0, "restaurant_table": table_name},
+		filters={"docstatus": ("in", (0, 1)), "restaurant_table": table_name},
 		fields=["name", "grand_total", "paid_amount", "creation"],
 		order_by="creation desc",
 		limit=1,
@@ -132,7 +132,7 @@ def get_table_payment_summary(table_name):
 			"invoice",
 			order_by="creation desc",
 		)
-		if token_invoice and frappe.db.exists("Sales Invoice", {"name": token_invoice, "docstatus": 0}):
+		if token_invoice and frappe.db.exists("Sales Invoice", token_invoice):
 			invoice = [frappe.db.get_value("Sales Invoice", token_invoice,
 				["name", "grand_total", "paid_amount", "creation"], as_dict=True)]
 	if not invoice:
