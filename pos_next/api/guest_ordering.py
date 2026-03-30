@@ -553,26 +553,8 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	# Record payment in the Sales Invoice via direct DB writes
 	# (bypasses wallet/validation hooks from other apps that block guest payments)
 	try:
-		wallee_mop = None
-		if token_doc.pos_profile:
-			# Priority 1: explicit Wallee terminal payment mode from POS Profile
-			wallee_mop = frappe.db.get_value(
-				"POS Profile",
-				token_doc.pos_profile,
-				"wallee_terminal_payment_mode",
-			)
-		if not wallee_mop and token_doc.pos_profile:
-			# Priority 2: find a Bank-type mode from the POS Profile's configured payment methods
-			profile_payments = frappe.get_all(
-				"POS Payment Method",
-				filters={"parent": token_doc.pos_profile},
-				pluck="mode_of_payment",
-			)
-			for pm_name in profile_payments:
-				pm_type = frappe.db.get_value("Mode of Payment", pm_name, "type")
-				if pm_type == "Bank":
-					wallee_mop = pm_name
-					break
+		# Get mode of payment from Wallee Settings (single source of truth)
+		wallee_mop = frappe.db.get_single_value("Wallee Settings", "pos_mode_of_payment")
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
 
