@@ -2,15 +2,41 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 
 // Helper to make API calls to guest endpoints (no Frappe session required)
+function getCsrfToken() {
+	// Try window global first, then cookie, then meta tag
+	if (window.csrf_token) return window.csrf_token
+	const cookie = document.cookie.split(";").find((c) => c.trim().startsWith("X-Frappe-CSRF-Token="))
+	if (cookie) return cookie.split("=")[1]?.trim()
+	const meta = document.querySelector('meta[name="csrf_token"]')
+	if (meta) return meta.content
+	return ""
+}
+
 async function guestFetch(method, args = {}) {
-	const response = await fetch(`/api/method/${method}`, {
+	let response = await fetch(`/api/method/${method}`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			"X-Frappe-CSRF-Token": window.csrf_token || "",
+			"X-Frappe-CSRF-Token": getCsrfToken(),
 		},
 		body: JSON.stringify(args),
 	})
+
+	// 417 = CSRF token expired/invalid — refresh and retry once
+	if (response.status === 417) {
+		const pageResp = await fetch(window.location.pathname)
+		const html = await pageResp.text()
+		const match = html.match(/csrf_token\s*=\s*["']([^"']+)["']/)
+		if (match) window.csrf_token = match[1]
+		response = await fetch(`/api/method/${method}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-Frappe-CSRF-Token": getCsrfToken(),
+			},
+			body: JSON.stringify(args),
+		})
+	}
 
 	if (!response.ok) {
 		const err = await response.json().catch(() => ({}))
