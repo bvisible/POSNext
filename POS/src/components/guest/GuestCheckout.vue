@@ -383,7 +383,7 @@ async function handlePay() {
 		)
 		if (result?.payment_url) {
 			window.open(result.payment_url, "_blank")
-			startPaymentPolling()
+			// Don't poll — success is handled via Wallee redirect (?payment=success)
 		} else if (result?.success) {
 			paymentState.value = "success"
 			await guestStore.refreshOrderStatus()

@@ -476,10 +476,16 @@ def get_guest_receipt_pdf(token):
 	if not frappe.db.exists("Sales Invoice", invoice_name):
 		frappe.throw(_("Invoice not found."))
 
+	# Get print format from POS Profile (same as POS receipt printing)
+	print_format = None
+	if token_doc.pos_profile:
+		print_format = frappe.db.get_value("POS Profile", token_doc.pos_profile, "print_format")
+	if not print_format:
+		print_format = "POS Next Receipt"
+
 	from frappe.utils.pdf import get_pdf
-	# Try POS Next Receipt format, fall back to standard
 	try:
-		html = frappe.get_print("Sales Invoice", invoice_name, "POS Next Receipt")
+		html = frappe.get_print("Sales Invoice", invoice_name, print_format)
 	except Exception:
 		html = frappe.get_print("Sales Invoice", invoice_name)
 	pdf = get_pdf(html)
