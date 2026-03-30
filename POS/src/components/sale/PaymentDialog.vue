@@ -1443,6 +1443,10 @@ const props = defineProps({
 		type: String,
 		default: DEFAULT_CURRENCY,
 	},
+	guestPaidAmount: {
+		type: Number,
+		default: 0,
+	},
 	isOffline: {
 		type: Boolean,
 		default: false,
@@ -2159,7 +2163,8 @@ const totalPaid = computed(() => {
 		(sum, entry) => sum + (entry.amount || 0),
 		0,
 	)
-	return roundCurrency(sum)
+	// Include guest payments already collected via QR/Wallee
+	return roundCurrency(sum + (props.guestPaidAmount || 0))
 })
 
 // Customer credit payment is enabled if either:

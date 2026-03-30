@@ -725,6 +725,7 @@
 			v-model="uiStore.showPaymentDialog"
 			:grand-total="cartStore.grandTotal"
 			:subtotal="cartStore.subtotal"
+			:guest-paid-amount="cartStore.guestPaidAmount"
 			:pos-profile="shiftStore.profileName"
 			:currency="shiftStore.profileCurrency"
 			:is-offline="offlineStore.isOffline"
