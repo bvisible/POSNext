@@ -1425,6 +1425,7 @@ async function selectTable(table) {
 				currentDraftId: res.name,
 				kdsStatus: res.kds_status || "Pending",
 				hasUnsentChanges: false,
+				guestPaidAmount: res.paid_amount || 0,
 			})
 			if (res.customer) cartStore.setCustomer(res.customer)
 		}

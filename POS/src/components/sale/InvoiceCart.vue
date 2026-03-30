@@ -1222,6 +1222,15 @@
 						{{ formatCurrency(displayGrandTotal) }}
 					</span>
 				</div>
+				<!-- Guest payments already received on this table -->
+				<div v-if="cartStore.guestPaidAmount > 0" class="flex items-center justify-between mt-1.5 pt-1.5 border-t border-blue-200">
+					<span class="text-xs font-semibold text-green-700">
+						{{ __("Already paid (guest)") }}
+					</span>
+					<span class="text-sm font-bold text-green-600">
+						{{ formatCurrency(cartStore.guestPaidAmount) }}
+					</span>
+				</div>
 			</div>
 
 			<!-- Action Buttons -->

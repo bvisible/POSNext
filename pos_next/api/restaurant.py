@@ -315,7 +315,7 @@ def get_table_order(table_name):
 			"docstatus": 0,
 			"restaurant_table": table_name,
 		},
-		fields=["name", "customer", "restaurant_table", "kds_status", "grand_total"],
+		fields=["name", "customer", "restaurant_table", "kds_status", "grand_total", "paid_amount"],
 		order_by="modified desc",
 		limit=1
 	)
