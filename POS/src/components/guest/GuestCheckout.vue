@@ -33,7 +33,7 @@
 						{{ __('Remaining to pay on this table: {0}', [formatPrice(guestStore.remainingAmount)]) }}
 					</p>
 					<button
-						@click="showPaymentDialog = false"
+						@click="dismissPaymentDialog"
 						class="mt-5 w-full py-3 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors"
 					>{{ __('OK') }}</button>
 				</div>
@@ -98,6 +98,21 @@
 
 				<!-- Not fully paid — show order summary + payment section -->
 				<template v-else>
+				<!-- Payment progress (when partially paid) -->
+				<div v-if="guestStore.paidAmount > 0" class="bg-green-50 border-b border-green-200 p-4">
+					<div class="flex justify-between items-center mb-2">
+						<span class="text-sm font-semibold text-green-800">{{ __('Already paid') }}</span>
+						<span class="text-sm font-bold text-green-700">{{ formatPrice(guestStore.paidAmount) }}</span>
+					</div>
+					<div class="w-full bg-green-200 rounded-full h-2 mb-2">
+						<div class="bg-green-600 h-2 rounded-full transition-all" :style="{ width: Math.min(100, (guestStore.paidAmount / guestStore.orderTotal) * 100) + '%' }"></div>
+					</div>
+					<div class="flex justify-between text-xs text-gray-600">
+						<span>{{ __('Remaining: {0}', [formatPrice(guestStore.remainingAmount)]) }}</span>
+						<span>{{ __('Total: {0}', [formatPrice(guestStore.orderTotal)]) }}</span>
+					</div>
+				</div>
+
 				<!-- Order Summary -->
 				<div class="bg-white border-b border-gray-200 p-4">
 					<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Order Summary') }}</h3>
@@ -205,11 +220,6 @@
 							<span v-if="payableAmount < totalWithTip" class="text-xs text-orange-600 font-medium">
 								{{ __('Remaining: {0}', [formatPrice(totalWithTip - payableAmount)]) }}
 							</span>
-						</div>
-						<!-- Already paid info -->
-						<div v-if="guestStore.paidAmount > 0" class="mt-2 flex items-center justify-between text-xs">
-							<span class="text-green-700">{{ __('Already paid') }}: {{ formatPrice(guestStore.paidAmount) }}</span>
-							<span class="text-orange-600 font-semibold">{{ __('Remaining') }}: {{ formatPrice(remainingWithTip) }}</span>
 						</div>
 					</div>
 				</template>
@@ -344,6 +354,15 @@ function clearTip() {
 	tipPercent.value = null
 	customTipAmount.value = ""
 	showCustomTip.value = false
+}
+
+function dismissPaymentDialog() {
+	showPaymentDialog.value = false
+	paymentState.value = null
+	clearTip()
+	splitBy.value = null
+	customPayAmount.value = ""
+	guestStore.error = null
 }
 
 function formatPrice(amount) {

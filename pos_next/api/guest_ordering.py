@@ -410,7 +410,12 @@ def submit_guest_order(token, items):
 			"validation_mode": validation_mode,
 		})
 
-		# Also notify the server POS
+		# Notify all POS clients (global, not room-scoped)
+		frappe.publish_realtime("guest_order_submitted", {
+			"table": token_doc.table,
+			"invoice": invoice_doc.name,
+			"items_count": len(items),
+		})
 		frappe.publish_realtime("table_update")
 
 		if validation_mode == "Server Approval":
@@ -518,6 +523,10 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	try:
 		from wallee_integration.wallee_integration.api.transaction import create_transaction
 
+		# Unique payment counter for split payments (prevents Wallee duplicate rejection)
+		existing_payment_count = frappe.db.count("Sales Invoice Payment", {"parent": invoice_doc.name})
+		payment_num = existing_payment_count + 1
+
 		# Build line items: order amount + optional tip
 		line_items = [
 			{
@@ -525,7 +534,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"quantity": 1,
 				"amount_including_tax": float(amount - tip),
 				"type": "PRODUCT",
-				"unique_id": invoice_doc.name,
+				"unique_id": f"{invoice_doc.name}-p{payment_num}",
 			}
 		]
 		if tip > 0:
@@ -534,7 +543,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"quantity": 1,
 				"amount_including_tax": float(tip),
 				"type": "FEE",
-				"unique_id": f"{invoice_doc.name}-tip",
+				"unique_id": f"{invoice_doc.name}-tip-p{payment_num}",
 			})
 
 		result = create_transaction(

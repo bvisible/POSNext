@@ -2591,6 +2591,7 @@ async function confirmTableCleaning() {
 			table_name: cleaningTable.value.name,
 			status: "Cleaning",
 		})
+		activeQRTokens.value.delete(cleaningTable.value.name)
 		showCleaningDialog.value = false
 		showSuccess(__("Table marked for cleaning"))
 		cleaningTable.value = null
@@ -2605,6 +2606,7 @@ async function markTableAvailable() {
 		await call("pos_next.api.restaurant.mark_table_available", {
 			table_name: cleaningTable.value.name,
 		})
+		activeQRTokens.value.delete(cleaningTable.value.name)
 		showCleaningDialog.value = false
 		cleaningTable.value = null
 	} catch (e) {
