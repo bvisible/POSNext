@@ -63,6 +63,7 @@
 							:default-duration="defaultDuration"
 							:channels="channels"
 							:reservation="editingReservation"
+							:opening-hours="openingHours"
 							@saved="onSaved"
 							@cancel="activeTab = 'list'"
 						/>
@@ -104,6 +105,7 @@ const editingReservation = ref(null)
 const allTables = ref([])
 const defaultDuration = ref("01:30:00")
 const channels = ref(["Phone", "Walk-in", "Internet"])
+const openingHours = ref([])
 
 const tabs = [
 	{ key: "list", label: "List" },
@@ -145,6 +147,8 @@ async function loadSettings() {
 					.map((c) => c.trim())
 					.filter(Boolean)
 			}
+			// Extract opening hours for service selector
+			openingHours.value = settings.opening_hours || []
 		}
 	} catch {
 		// Use defaults
@@ -155,7 +159,18 @@ async function loadTables() {
 	try {
 		const response = await call("frappe.client.get_list", {
 			doctype: "Restaurant Table",
-			fields: ["name", "table_name", "area", "capacity", "status"],
+			fields: [
+				"name",
+				"table_name",
+				"area",
+				"capacity",
+				"status",
+				"pos_x",
+				"pos_y",
+				"width",
+				"height",
+				"shape",
+			],
 			order_by: "area asc, table_name asc",
 			limit_page_length: 0,
 		})

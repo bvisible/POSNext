@@ -4,15 +4,45 @@
 			{{ editing ? __("Edit Reservation") : __("New Reservation") }}
 		</h3>
 
-		<!-- Date & Time row -->
+		<!-- Date row -->
 		<div class="form-row">
 			<div class="form-group">
 				<label>{{ __("Date") }} *</label>
 				<input v-model="form.reservation_date" type="date" class="form-control" required />
 			</div>
+		</div>
+
+		<!-- Service period selector -->
+		<div v-if="servicesForDate.length > 0" class="form-group">
+			<label>{{ __("Service") }}</label>
+			<div class="service-tabs">
+				<button
+					v-for="(svc, idx) in servicesForDate"
+					:key="idx"
+					class="service-tab"
+					:class="{ active: selectedService === svc }"
+					@click="selectService(svc)"
+				>
+					<span class="service-tab-label">{{ svc.label || __("Service") }}</span>
+					<span class="service-tab-time">
+						{{ svc.from_time?.slice(0, 5) }}&ndash;{{ svc.to_time?.slice(0, 5) }}
+					</span>
+				</button>
+			</div>
+		</div>
+
+		<!-- Time & Duration row -->
+		<div class="form-row">
 			<div class="form-group">
 				<label>{{ __("Time") }} *</label>
-				<input v-model="form.reservation_time" type="time" class="form-control" required />
+				<input
+					v-model="form.reservation_time"
+					type="time"
+					class="form-control"
+					:min="selectedService ? selectedService.from_time?.slice(0, 5) : undefined"
+					:max="selectedService ? selectedService.to_time?.slice(0, 5) : undefined"
+					required
+				/>
 			</div>
 			<div class="form-group">
 				<label>{{ __("Duration") }}</label>
@@ -24,10 +54,6 @@
 					<option value="03:00:00">3h</option>
 				</select>
 			</div>
-		</div>
-
-		<!-- Guest info row -->
-		<div class="form-row">
 			<div class="form-group">
 				<label>{{ __("Guests") }} *</label>
 				<input
@@ -39,21 +65,17 @@
 					required
 				/>
 			</div>
+		</div>
+
+		<!-- Guest info row -->
+		<div class="form-row">
 			<div class="form-group flex-2">
 				<label>{{ __("Guest Name") }} *</label>
 				<input v-model="form.guest_name" type="text" class="form-control" required />
 			</div>
-		</div>
-
-		<!-- Contact row -->
-		<div class="form-row">
 			<div class="form-group">
 				<label>{{ __("Phone") }}</label>
 				<input v-model="form.phone" type="tel" class="form-control" />
-			</div>
-			<div class="form-group">
-				<label>{{ __("Email") }}</label>
-				<input v-model="form.email" type="email" class="form-control" />
 			</div>
 			<div class="form-group">
 				<label>{{ __("Channel") }}</label>
@@ -63,12 +85,57 @@
 			</div>
 		</div>
 
-		<!-- Tables selection -->
+		<!-- Tables section -->
 		<div class="form-group">
-			<label>{{ __("Tables") }}</label>
-			<div class="tables-grid">
+			<div class="tables-header">
+				<label>{{ __("Tables") }}</label>
+				<button
+					v-if="hasFloorPlan"
+					class="btn-plan-toggle"
+					:class="{ active: showFloorPlan }"
+					@click="showFloorPlan = !showFloorPlan"
+				>
+					{{ showFloorPlan ? __("List") : __("Plan") }}
+				</button>
+			</div>
+
+			<!-- Area filter tabs -->
+			<div v-if="tableAreas.length > 1" class="area-tabs">
+				<button
+					class="area-tab"
+					:class="{ active: selectedArea === '' }"
+					@click="selectedArea = ''"
+				>
+					{{ __("All") }}
+					<span class="area-count">{{ availableCount }}</span>
+				</button>
+				<button
+					v-for="area in tableAreas"
+					:key="area.name"
+					class="area-tab"
+					:class="{ active: selectedArea === area.name }"
+					@click="selectedArea = area.name"
+				>
+					{{ area.name }}
+					<span class="area-count" :class="{ 'area-count-zero': area.available === 0 }">
+						{{ area.available }}
+					</span>
+				</button>
+			</div>
+
+			<!-- Floor plan view -->
+			<ReservationFloorPlan
+				v-if="showFloorPlan"
+				:tables="availableTables"
+				:selected-tables="selectedTables"
+				:selected-area="selectedArea"
+				@toggle-table="toggleTable($event)"
+			/>
+
+			<!-- Chip list view -->
+			<div v-else class="tables-grid">
 				<div
-					v-for="table in availableTables"
+					v-for="table in filteredByArea"
 					:key="table.name"
 					class="table-chip"
 					:class="{
@@ -82,6 +149,7 @@
 					<span class="table-chip-capacity">{{ table.capacity }}p</span>
 				</div>
 			</div>
+
 			<div v-if="totalSeats > 0" class="seats-summary">
 				{{ __("Selected: {0} tables, {1} seats", [selectedTables.length, totalSeats]) }}
 				<span v-if="totalSeats < form.no_of_guests" class="seats-warning">
@@ -90,10 +158,16 @@
 			</div>
 		</div>
 
-		<!-- Notes -->
-		<div class="form-group">
-			<label>{{ __("Notes") }}</label>
-			<textarea v-model="form.notes" class="form-control" rows="2" />
+		<!-- Email + Notes row -->
+		<div class="form-row">
+			<div class="form-group">
+				<label>{{ __("Email") }}</label>
+				<input v-model="form.email" type="email" class="form-control" />
+			</div>
+			<div class="form-group flex-2">
+				<label>{{ __("Notes") }}</label>
+				<input v-model="form.notes" type="text" class="form-control" :placeholder="__('Special requests...')" />
+			</div>
 		</div>
 
 		<!-- Conflict warning -->
@@ -132,12 +206,14 @@
 import { ref, reactive, computed, watch, onMounted } from "vue"
 import { useReservations } from "@/composables/useReservations"
 import { useToast } from "@/composables/useToast"
+import ReservationFloorPlan from "./ReservationFloorPlan.vue"
 
 const props = defineProps({
 	reservation: { type: Object, default: null },
 	tables: { type: Array, default: () => [] },
 	defaultDuration: { type: String, default: "01:30:00" },
 	channels: { type: Array, default: () => ["Phone", "Walk-in", "Internet"] },
+	openingHours: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(["cancel", "saved"])
@@ -149,6 +225,9 @@ const editing = computed(() => !!props.reservation?.name)
 const saving = ref(false)
 const conflicts = ref([])
 const availableTables = ref([])
+const selectedArea = ref("")
+const showFloorPlan = ref(false)
+const selectedService = ref(null)
 
 const form = reactive({
 	reservation_date:
@@ -168,6 +247,77 @@ const selectedTables = ref(
 	props.reservation?.tables?.map((t) => t.restaurant_table) || [],
 )
 
+// ─── Service period logic ────────────────────────────────
+
+const servicesForDate = computed(() => {
+	if (!form.reservation_date || !props.openingHours?.length) return []
+	const dayName = new Date(
+		`${form.reservation_date}T12:00:00`,
+	).toLocaleDateString("en-US", { weekday: "long" })
+	// Deduplicate by label+from_time
+	const seen = new Set()
+	return props.openingHours.filter((h) => {
+		if (h.day_of_week !== dayName) return false
+		const key = `${h.label}-${h.from_time}`
+		if (seen.has(key)) return false
+		seen.add(key)
+		return true
+	})
+})
+
+function selectService(svc) {
+	selectedService.value = svc
+	// If current time is outside the service window, clear it
+	if (form.reservation_time) {
+		const t = form.reservation_time
+		const from = svc.from_time?.slice(0, 5)
+		const to = svc.to_time?.slice(0, 5)
+		if (t < from || t > to) {
+			form.reservation_time = ""
+		}
+	}
+}
+
+// Auto-select service when only one exists
+watch(servicesForDate, (svcs) => {
+	if (svcs.length === 1) {
+		selectedService.value = svcs[0]
+	} else {
+		selectedService.value = null
+	}
+})
+
+// ─── Area filter logic ───────────────────────────────────
+
+const tableAreas = computed(() => {
+	const areaMap = {}
+	for (const t of availableTables.value) {
+		if (!t.area) continue
+		if (!areaMap[t.area])
+			areaMap[t.area] = { name: t.area, available: 0, total: 0 }
+		areaMap[t.area].total++
+		if (t.available) areaMap[t.area].available++
+	}
+	return Object.values(areaMap).sort((a, b) => a.name.localeCompare(b.name))
+})
+
+const availableCount = computed(() => {
+	return availableTables.value.filter((t) => t.available).length
+})
+
+const filteredByArea = computed(() => {
+	if (!selectedArea.value) return availableTables.value
+	return availableTables.value.filter((t) => t.area === selectedArea.value)
+})
+
+// ─── Floor plan logic ────────────────────────────────────
+
+const hasFloorPlan = computed(() => {
+	return props.tables.some((t) => t.pos_x || t.pos_y)
+})
+
+// ─── Table selection & availability ──────────────────────
+
 const totalSeats = computed(() => {
 	return availableTables.value
 		.filter((t) => selectedTables.value.includes(t.name))
@@ -185,7 +335,7 @@ const isValid = computed(() => {
 
 function toggleTable(table) {
 	if (!table.available && !selectedTables.value.includes(table.name)) {
-		return // Cannot select unavailable tables
+		return
 	}
 	const idx = selectedTables.value.indexOf(table.name)
 	if (idx >= 0) {
@@ -210,7 +360,6 @@ async function loadAvailableTables() {
 			form.duration,
 			props.reservation?.name,
 		)
-		// Merge availability into table list
 		const conflictMap = {}
 		for (const c of result?.conflicts || []) {
 			conflictMap[c.table] = true
@@ -254,13 +403,21 @@ async function save(force = false) {
 	}
 }
 
-// Reload availability when date/time changes
+// Reload availability when date/time/duration changes
 watch(
 	() => [form.reservation_date, form.reservation_time, form.duration],
 	() => {
 		if (form.reservation_date && form.reservation_time) {
 			loadAvailableTables()
 		}
+	},
+)
+
+// Reset area filter when date changes
+watch(
+	() => form.reservation_date,
+	() => {
+		selectedArea.value = ""
 	},
 )
 
@@ -275,6 +432,8 @@ onMounted(() => {
 	flex-direction: column;
 	gap: 12px;
 	padding: 4px 0;
+	overflow-y: auto;
+	max-height: 100%;
 }
 
 .form-title {
@@ -324,6 +483,127 @@ textarea.form-control {
 	resize: vertical;
 }
 
+/* Service period selector */
+.service-tabs {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.service-tab {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1px;
+	padding: 6px 14px;
+	border-radius: 8px;
+	border: 1px solid var(--border-color, #d1d5db);
+	background: var(--control-bg, #fff);
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.service-tab.active {
+	background: var(--blue-100, #dbeafe);
+	border-color: var(--blue-500, #3b82f6);
+}
+
+.service-tab-label {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--heading-color, #111827);
+}
+
+.service-tab.active .service-tab-label {
+	color: var(--blue-800, #1e40af);
+}
+
+.service-tab-time {
+	font-size: 11px;
+	color: var(--text-muted, #6b7280);
+}
+
+.service-tab.active .service-tab-time {
+	color: var(--blue-600, #2563eb);
+}
+
+/* Tables header with plan toggle */
+.tables-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.btn-plan-toggle {
+	padding: 3px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--border-color, #d1d5db);
+	background: var(--control-bg, #fff);
+	font-size: 11px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.btn-plan-toggle.active {
+	background: var(--blue-600, #2563eb);
+	border-color: var(--blue-600, #2563eb);
+	color: #fff;
+}
+
+/* Area filter tabs */
+.area-tabs {
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+	margin: 6px 0;
+}
+
+.area-tab {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--border-color, #d1d5db);
+	background: var(--control-bg, #fff);
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	transition: all 0.15s;
+}
+
+.area-tab.active {
+	background: var(--gray-800, #1f2937);
+	border-color: var(--gray-800, #1f2937);
+	color: #fff;
+}
+
+.area-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 4px;
+	border-radius: 9px;
+	background: var(--green-100, #dcfce7);
+	color: var(--green-700, #15803d);
+	font-size: 10px;
+	font-weight: 700;
+}
+
+.area-count-zero {
+	background: var(--gray-100, #f3f4f6);
+	color: var(--gray-500, #6b7280);
+}
+
+.area-tab.active .area-count {
+	background: rgba(255, 255, 255, 0.2);
+	color: #fff;
+}
+
+/* Tables chip grid */
 .tables-grid {
 	display: flex;
 	flex-wrap: wrap;

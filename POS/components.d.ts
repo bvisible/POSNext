@@ -69,6 +69,7 @@ declare module 'vue' {
     PromotionManagement: typeof import('./src/components/sale/PromotionManagement.vue')['default']
     ReservationBadge: typeof import('./src/components/restaurant/ReservationBadge.vue')['default']
     ReservationDialog: typeof import('./src/components/restaurant/ReservationDialog.vue')['default']
+    ReservationFloorPlan: typeof import('./src/components/restaurant/ReservationFloorPlan.vue')['default']
     ReservationForm: typeof import('./src/components/restaurant/ReservationForm.vue')['default']
     ReservationList: typeof import('./src/components/restaurant/ReservationList.vue')['default']
     ReservationStats: typeof import('./src/components/restaurant/ReservationStats.vue')['default']
