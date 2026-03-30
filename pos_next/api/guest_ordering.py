@@ -704,6 +704,12 @@ def create_table_token(table, pos_profile):
 	token_doc.flags.ignore_permissions = True
 	token_doc.insert()
 
+	# Mark table as Occupied when QR is generated (guests are seated)
+	current_status = frappe.db.get_value("Restaurant Table", table, "status")
+	if current_status == "Empty":
+		frappe.db.set_value("Restaurant Table", table, "status", "Occupied")
+		frappe.publish_realtime("table_update")
+
 	site_url = frappe.utils.get_url()
 	guest_url = f"{site_url}/pos/guest/{token_doc.token}"
 
