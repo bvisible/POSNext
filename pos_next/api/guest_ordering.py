@@ -533,7 +533,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 			{
 				"name": _("Order {0}").format(invoice_doc.name),
 				"quantity": 1,
-				"amount_including_tax": float(amount - tip),
+				"amount_including_tax": round(float(amount - tip), 2),
 				"type": "PRODUCT",
 				"unique_id": f"{invoice_doc.name}-p{payment_num}",
 			}
@@ -542,7 +542,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 			line_items.append({
 				"name": _("Tip"),
 				"quantity": 1,
-				"amount_including_tax": float(tip),
+				"amount_including_tax": round(float(tip), 2),
 				"type": "FEE",
 				"unique_id": f"{invoice_doc.name}-tip-p{payment_num}",
 			})
