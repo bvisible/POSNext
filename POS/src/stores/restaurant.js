@@ -404,7 +404,6 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		// Guest order realtime events
 		rt.on("guest_order_submitted", (data) => {
 			log.info("Guest order submitted for table:", data?.table)
-			// Notify server via toast (frappe-ui toast or browser notification)
 			if (window.frappe?.show_alert) {
 				window.frappe.show_alert(
 					{
@@ -416,9 +415,12 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 					5,
 				)
 			}
+			// Emit custom event for POSSale to reload cart if this table is open
+			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
 		rt.on("guest_payment_received", (data) => {
 			log.info("Guest payment received for table:", data?.table)
+			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
 		_cardRealtimeStarted = true
 		log.info("Realtime card listeners started")

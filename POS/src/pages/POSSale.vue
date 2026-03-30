@@ -1366,17 +1366,52 @@
 		<!-- Paid/Cleaning Table Dialog -->
 		<Dialog v-model="showCleaningDialog" :options="{ title: cleaningTable?.table_name || __('Table'), size: 'sm' }">
 			<template #body-content>
-				<div class="flex flex-col items-center text-center p-6">
-					<div class="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+				<div class="flex flex-col items-center text-center p-4">
+					<div class="w-12 h-12 rounded-full flex items-center justify-center mb-3"
 						:class="cleaningTable?.status === 'Paid' ? 'bg-blue-100' : 'bg-emerald-100'">
-						<svg class="w-8 h-8" :class="cleaningTable?.status === 'Paid' ? 'text-blue-600' : 'text-emerald-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="w-7 h-7" :class="cleaningTable?.status === 'Paid' ? 'text-blue-600' : 'text-emerald-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
 					<p class="text-base font-semibold text-gray-900">
 						{{ cleaningTable?.status === 'Paid' ? __('Table paid') : __('Table ready for cleanup') }}
 					</p>
-					<p class="text-sm text-gray-500 mt-1">{{ __('What would you like to do with this table?') }}</p>
+				</div>
+
+				<!-- Payment summary -->
+				<div v-if="tablePaymentSummary" class="mx-4 mb-4 bg-gray-50 rounded-xl p-4 text-left">
+					<!-- Items -->
+					<div class="space-y-1 mb-3">
+						<div v-for="(item, idx) in tablePaymentSummary.items" :key="idx"
+							class="flex justify-between text-sm">
+							<span class="text-gray-700">{{ item.qty }}× {{ item.item_name }}</span>
+							<span class="text-gray-500">{{ formatCleaningPrice(item.amount) }}</span>
+						</div>
+					</div>
+					<div class="border-t border-dashed border-gray-300 pt-2 space-y-1">
+						<div class="flex justify-between text-sm font-semibold">
+							<span class="text-gray-900">{{ __('Total') }}</span>
+							<span>{{ formatCleaningPrice(tablePaymentSummary.grand_total) }}</span>
+						</div>
+						<div v-if="tablePaymentSummary.tip_total > 0" class="flex justify-between text-sm text-green-600">
+							<span>{{ __('Tips') }}</span>
+							<span>+{{ formatCleaningPrice(tablePaymentSummary.tip_total) }}</span>
+						</div>
+					</div>
+					<!-- Payment rows -->
+					<div v-if="tablePaymentSummary.payments.length" class="mt-3 pt-2 border-t border-gray-200">
+						<p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{{ __('Payments received') }}</p>
+						<div v-for="(p, idx) in tablePaymentSummary.payments" :key="idx"
+							class="flex justify-between text-sm">
+							<span class="text-gray-600">{{ p.mode_of_payment }}</span>
+							<span class="text-green-700 font-medium">{{ formatCleaningPrice(p.amount) }}</span>
+						</div>
+					</div>
+					<!-- Invoice ref -->
+					<p class="text-[10px] text-gray-400 mt-2">{{ tablePaymentSummary.invoice }}</p>
+				</div>
+				<div v-else-if="loadingPaymentSummary" class="flex justify-center py-4">
+					<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
 				</div>
 			</template>
 			<template #actions>
@@ -1859,6 +1894,30 @@ onMounted(async () => {
 		updateLayoutBounds();
 	};
 	window.addEventListener("resize", handleResize, { passive: true });
+
+	// Listen for guest order updates to refresh POS cart when a guest orders on the active table
+	const handleGuestUpdate = async (e) => {
+		const table = cartStore.restaurantTable
+		if (table && e.detail?.table === table.name) {
+			try {
+				const orderData = await call("pos_next.api.restaurant.get_table_order", { table_name: table.name })
+				if (orderData?.items) {
+					await cartStore.clearCart()
+					for (const item of orderData.items) {
+						cartStore.addItem({
+							item_code: item.item_code,
+							item_name: item.item_name,
+							rate: item.rate,
+							uom: item.uom,
+							kds_status: item.kds_status || "Pending",
+						}, item.qty || 1)
+					}
+					cartStore.$patch({ currentDraftId: orderData.name, hasUnsentChanges: false })
+				}
+			} catch { /* ignore */ }
+		}
+	}
+	window.addEventListener("pos:guest-order-update", handleGuestUpdate)
 
 	// Set up real-time stock update listener
 	const cleanup = onStockUpdate(async (stockUpdates) => {
@@ -2499,10 +2558,30 @@ function handleTableSelected(table) {
 
 const cleaningTable = ref(null)
 const showCleaningDialog = ref(false)
+const tablePaymentSummary = ref(null)
+const loadingPaymentSummary = ref(false)
 
-function handleCleaningTableClicked(table) {
+function formatCleaningPrice(amount) {
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: shiftStore.currency || "CHF",
+		minimumFractionDigits: 2,
+	}).format(amount || 0)
+}
+
+async function handleCleaningTableClicked(table) {
 	cleaningTable.value = table
+	tablePaymentSummary.value = null
 	showCleaningDialog.value = true
+	// Load payment details
+	loadingPaymentSummary.value = true
+	try {
+		const result = await call("pos_next.api.restaurant.get_table_payment_summary", {
+			table_name: table.name,
+		})
+		tablePaymentSummary.value = result
+	} catch { /* ignore */ }
+	loadingPaymentSummary.value = false
 }
 
 async function confirmTableCleaning() {

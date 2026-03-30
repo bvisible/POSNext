@@ -114,6 +114,49 @@ def update_table_status(table_name, status):
 	return {"status": "success"}
 
 @frappe.whitelist()
+@frappe.whitelist()
+def get_table_payment_summary(table_name):
+	"""Get payment summary for a Paid/Cleaning table (for the server dialog)."""
+	invoice = frappe.get_all(
+		"Sales Invoice",
+		filters={"docstatus": 0, "restaurant_table": table_name},
+		fields=["name", "grand_total", "paid_amount", "creation"],
+		order_by="creation desc",
+		limit=1,
+	)
+	if not invoice:
+		return {"invoice": None, "payments": [], "items": [], "grand_total": 0, "paid_amount": 0}
+
+	inv = invoice[0]
+	payments = frappe.get_all(
+		"Sales Invoice Payment",
+		filters={"parent": inv.name},
+		fields=["mode_of_payment", "amount", "creation"],
+		order_by="idx asc",
+	)
+	items = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"parent": inv.name},
+		fields=["item_name", "qty", "amount"],
+	)
+	tips = frappe.get_all(
+		"Restaurant Tip",
+		filters={"sales_invoice": inv.name},
+		fields=["amount", "payment_method"],
+	)
+	tip_total = sum(flt(t.amount) for t in tips)
+
+	return {
+		"invoice": inv.name,
+		"grand_total": flt(inv.grand_total),
+		"paid_amount": flt(inv.paid_amount),
+		"payments": payments,
+		"items": items,
+		"tip_total": tip_total,
+		"payment_count": len(payments),
+	}
+
+
 def mark_table_available(table_name):
 	"""Mark a Cleaning table as Empty and expire its guest tokens."""
 	if not frappe.has_permission("Restaurant Table", "write"):
