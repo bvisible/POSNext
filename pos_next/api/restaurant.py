@@ -116,6 +116,7 @@ def update_table_status(table_name, status):
 @frappe.whitelist()
 def get_table_payment_summary(table_name):
 	"""Get payment summary for a Paid/Cleaning table (for the server dialog)."""
+	# Priority 1: invoice linked directly to the table
 	invoice = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0, "restaurant_table": table_name},
@@ -123,6 +124,17 @@ def get_table_payment_summary(table_name):
 		order_by="creation desc",
 		limit=1,
 	)
+	# Priority 2: invoice from guest token (table link on invoice may be NULL)
+	if not invoice:
+		token_invoice = frappe.db.get_value(
+			"Guest Order Token",
+			{"table": table_name, "status": ("in", ("Active", "Expired"))},
+			"invoice",
+			order_by="creation desc",
+		)
+		if token_invoice and frappe.db.exists("Sales Invoice", {"name": token_invoice, "docstatus": 0}):
+			invoice = [frappe.db.get_value("Sales Invoice", token_invoice,
+				["name", "grand_total", "paid_amount", "creation"], as_dict=True)]
 	if not invoice:
 		return {"invoice": None, "payments": [], "items": [], "grand_total": 0, "paid_amount": 0}
 
