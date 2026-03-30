@@ -1389,22 +1389,17 @@
 						</div>
 					</div>
 					<div class="border-t border-dashed border-gray-300 pt-2 space-y-1">
-						<div class="flex justify-between text-sm font-semibold">
-							<span class="text-gray-900">{{ __('Total') }}</span>
-							<span>{{ formatCleaningPrice(tablePaymentSummary.grand_total) }}</span>
+						<div class="flex justify-between text-sm">
+							<span class="text-gray-700">{{ __('Order') }}</span>
+							<span class="font-semibold">{{ formatCleaningPrice(tablePaymentSummary.grand_total) }}</span>
 						</div>
-						<div v-if="tablePaymentSummary.tip_total > 0" class="flex justify-between text-sm text-green-600">
-							<span>{{ __('Tips') }}</span>
-							<span>+{{ formatCleaningPrice(tablePaymentSummary.tip_total) }}</span>
+						<div v-if="tablePaymentSummary.tip_total > 0" class="flex justify-between text-sm">
+							<span class="text-gray-700">{{ __('Tips') }}</span>
+							<span class="text-green-600 font-semibold">+{{ formatCleaningPrice(tablePaymentSummary.tip_total) }}</span>
 						</div>
-					</div>
-					<!-- Payment rows -->
-					<div v-if="tablePaymentSummary.payments.length" class="mt-3 pt-2 border-t border-gray-200">
-						<p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{{ __('Payments received') }}</p>
-						<div v-for="(p, idx) in tablePaymentSummary.payments" :key="idx"
-							class="flex justify-between text-sm">
-							<span class="text-gray-600">{{ p.mode_of_payment }}</span>
-							<span class="text-green-700 font-medium">{{ formatCleaningPrice(p.amount) }}</span>
+						<div class="flex justify-between text-sm font-bold pt-1 border-t border-gray-200">
+							<span class="text-gray-900">{{ __('Total collected') }}</span>
+							<span class="text-green-700">{{ formatCleaningPrice(tablePaymentSummary.paid_amount + tablePaymentSummary.tip_total) }}</span>
 						</div>
 					</div>
 					<!-- Invoice ref -->
