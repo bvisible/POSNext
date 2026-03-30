@@ -2,41 +2,36 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 
 // Helper to make API calls to guest endpoints (no Frappe session required)
-function getCsrfToken() {
-	// Try window global first, then cookie, then meta tag
-	if (window.csrf_token) return window.csrf_token
-	const cookie = document.cookie.split(";").find((c) => c.trim().startsWith("X-Frappe-CSRF-Token="))
-	if (cookie) return cookie.split("=")[1]?.trim()
-	const meta = document.querySelector('meta[name="csrf_token"]')
-	if (meta) return meta.content
-	return ""
+// Fetch a fresh CSRF token from the server (GET request, no CSRF needed)
+let _csrfToken = window.csrf_token || ""
+let _csrfRefreshed = false
+
+async function ensureFreshCsrf() {
+	if (_csrfRefreshed) return
+	try {
+		const resp = await fetch("/api/method/frappe.auth.get_csrf_token", { method: "GET" })
+		if (resp.ok) {
+			const data = await resp.json()
+			if (data.message) {
+				_csrfToken = data.message
+				window.csrf_token = data.message
+			}
+		}
+	} catch { /* use existing token */ }
+	_csrfRefreshed = true
 }
 
 async function guestFetch(method, args = {}) {
-	let response = await fetch(`/api/method/${method}`, {
+	await ensureFreshCsrf()
+
+	const response = await fetch(`/api/method/${method}`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			"X-Frappe-CSRF-Token": getCsrfToken(),
+			"X-Frappe-CSRF-Token": _csrfToken,
 		},
 		body: JSON.stringify(args),
 	})
-
-	// 417 = CSRF token expired/invalid — refresh and retry once
-	if (response.status === 417) {
-		const pageResp = await fetch(window.location.pathname)
-		const html = await pageResp.text()
-		const match = html.match(/csrf_token\s*=\s*["']([^"']+)["']/)
-		if (match) window.csrf_token = match[1]
-		response = await fetch(`/api/method/${method}`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-Frappe-CSRF-Token": getCsrfToken(),
-			},
-			body: JSON.stringify(args),
-		})
-	}
 
 	if (!response.ok) {
 		const err = await response.json().catch(() => ({}))
