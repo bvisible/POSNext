@@ -268,6 +268,7 @@
 						'bg-green-500': table.status === 'Empty',
 						'bg-red-500': table.status === 'Occupied',
 						'bg-yellow-500': table.status === 'Reserved',
+						'bg-blue-500': table.status === 'Paid',
 						'bg-emerald-500': table.status === 'Cleaning',
 					}"
 				/>
@@ -296,6 +297,10 @@
 						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
 					</div>
 				</template>
+				<span v-else-if="table.status === 'Paid' && !isEditMode" class="text-[10px] font-semibold text-blue-600 mt-0.5 flex items-center gap-0.5">
+					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+					{{ __('Paid') }}
+				</span>
 				<span v-else-if="table.status === 'Cleaning' && !isEditMode" class="text-[10px] font-semibold text-emerald-600 mt-0.5">
 					{{ __('Cleaning') }}
 				</span>
@@ -303,6 +308,7 @@
 					'text-green-600': table.status === 'Empty',
 					'text-red-600': table.status === 'Occupied',
 					'text-yellow-600': table.status === 'Reserved',
+					'text-blue-600': table.status === 'Paid',
 					'text-emerald-600': table.status === 'Cleaning',
 				}">{{ __(table.status) }}</span>
 
@@ -1314,6 +1320,8 @@ function getTableClasses(table) {
 			"border-2 border-red-200 bg-red-50 hover:border-red-400 dark:bg-red-900/20 dark:border-red-800",
 		Reserved:
 			"border-2 border-yellow-200 bg-yellow-50 hover:border-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-800",
+		Paid:
+			"border-2 border-blue-300 bg-blue-50 hover:border-blue-400 dark:bg-blue-900/20 dark:border-blue-800",
 		Cleaning:
 			"border-2 border-emerald-300 bg-emerald-50 hover:border-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-800",
 	}
@@ -1357,8 +1365,8 @@ function startNewTakeaway() {
 }
 
 async function selectTable(table) {
-	// Cleaning tables get special handling — no draft loading
-	if (table.status === "Cleaning") {
+	// Paid/Cleaning tables get special handling — no draft loading
+	if (table.status === "Paid" || table.status === "Cleaning") {
 		emit("cleaning-table-clicked", table)
 		return
 	}

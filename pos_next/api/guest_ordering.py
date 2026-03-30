@@ -594,7 +594,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		# If fully paid, update table status (keep token active for redirect back)
 		if new_paid >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
 			if token_doc.table:
-				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Cleaning")
+				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
 			frappe.publish_realtime("table_update")
 
 		# Update local object for broadcast below

@@ -44,7 +44,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Empty\nOccupied\nReserved\nCleaning"
+   "options": "Empty\nOccupied\nReserved\nPaid\nCleaning"
   },
   {
    "default": "0",

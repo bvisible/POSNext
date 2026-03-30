@@ -123,8 +123,8 @@ def mark_table_available(table_name):
 		frappe.throw(_("Table {0} not found").format(table_name))
 
 	current_status = frappe.db.get_value("Restaurant Table", table_name, "status")
-	if current_status != "Cleaning":
-		frappe.throw(_("Table {0} is not in Cleaning status").format(table_name))
+	if current_status not in ("Cleaning", "Paid"):
+		frappe.throw(_("Table {0} is not in Paid or Cleaning status").format(table_name))
 
 	frappe.db.set_value("Restaurant Table", table_name, "status", "Empty")
 

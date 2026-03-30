@@ -1363,16 +1363,19 @@
 			@close="showQRDialog = false"
 		/>
 
-		<!-- Cleaning Table Dialog -->
+		<!-- Paid/Cleaning Table Dialog -->
 		<Dialog v-model="showCleaningDialog" :options="{ title: cleaningTable?.table_name || __('Table'), size: 'sm' }">
 			<template #body-content>
 				<div class="flex flex-col items-center text-center p-6">
-					<div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-						<svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<div class="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+						:class="cleaningTable?.status === 'Paid' ? 'bg-blue-100' : 'bg-emerald-100'">
+						<svg class="w-8 h-8" :class="cleaningTable?.status === 'Paid' ? 'text-blue-600' : 'text-emerald-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
 						</svg>
 					</div>
-					<p class="text-base font-semibold text-gray-900">{{ __('Table paid') }}</p>
+					<p class="text-base font-semibold text-gray-900">
+						{{ cleaningTable?.status === 'Paid' ? __('Table paid') : __('Table ready for cleanup') }}
+					</p>
 					<p class="text-sm text-gray-500 mt-1">{{ __('What would you like to do with this table?') }}</p>
 				</div>
 			</template>
@@ -1381,7 +1384,7 @@
 					<Button class="flex-1" variant="subtle" @click="markTableAvailable">
 						{{ __('Available') }}
 					</Button>
-					<Button class="flex-1" variant="solid" theme="green" @click="confirmTableCleaning">
+					<Button v-if="cleaningTable?.status === 'Paid'" class="flex-1" variant="solid" theme="green" @click="confirmTableCleaning">
 						{{ __('Cleaning') }}
 					</Button>
 				</div>
@@ -2502,10 +2505,19 @@ function handleCleaningTableClicked(table) {
 	showCleaningDialog.value = true
 }
 
-function confirmTableCleaning() {
-	showCleaningDialog.value = false
-	showSuccess(__("Table marked for cleaning"))
-	cleaningTable.value = null
+async function confirmTableCleaning() {
+	if (!cleaningTable.value) return
+	try {
+		await call("pos_next.api.restaurant.update_table_status", {
+			table_name: cleaningTable.value.name,
+			status: "Cleaning",
+		})
+		showCleaningDialog.value = false
+		showSuccess(__("Table marked for cleaning"))
+		cleaningTable.value = null
+	} catch (e) {
+		showError(e.message || __("Failed to update table status"))
+	}
 }
 
 async function markTableAvailable() {
