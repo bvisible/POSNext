@@ -2,34 +2,12 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 
 // Helper to make API calls to guest endpoints (no Frappe session required)
-// Fetch a fresh CSRF token from the server (GET request, no CSRF needed)
-let _csrfToken = window.csrf_token || ""
-let _csrfRefreshed = false
-
-async function ensureFreshCsrf() {
-	if (_csrfRefreshed) return
-	try {
-		const resp = await fetch("/api/method/frappe.auth.get_csrf_token", { method: "GET" })
-		if (resp.ok) {
-			const data = await resp.json()
-			if (data.message) {
-				_csrfToken = data.message
-				window.csrf_token = data.message
-			}
-		}
-	} catch { /* use existing token */ }
-	_csrfRefreshed = true
-}
-
+// Guest API calls: no CSRF header needed for allow_guest=True endpoints
+// Sending an invalid/stale CSRF causes 417 errors, so we don't send one at all
 async function guestFetch(method, args = {}) {
-	await ensureFreshCsrf()
-
 	const response = await fetch(`/api/method/${method}`, {
 		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			"X-Frappe-CSRF-Token": _csrfToken,
-		},
+		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(args),
 	})
 
