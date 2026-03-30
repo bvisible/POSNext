@@ -555,13 +555,26 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	try:
 		wallee_mop = None
 		if token_doc.pos_profile:
+			# Priority 1: explicit Wallee terminal payment mode from POS Profile
 			wallee_mop = frappe.db.get_value(
 				"POS Profile",
 				token_doc.pos_profile,
 				"wallee_terminal_payment_mode",
 			)
+		if not wallee_mop and token_doc.pos_profile:
+			# Priority 2: find a Bank-type mode from the POS Profile's configured payment methods
+			profile_payments = frappe.get_all(
+				"POS Payment Method",
+				filters={"parent": token_doc.pos_profile},
+				pluck="mode_of_payment",
+			)
+			for pm_name in profile_payments:
+				pm_type = frappe.db.get_value("Mode of Payment", pm_name, "type")
+				if pm_type == "Bank":
+					wallee_mop = pm_name
+					break
 		if not wallee_mop:
-			wallee_mop = frappe.db.get_value("Mode of Payment", {"type": "Bank"}, "name") or "Carte de crédit"
+			wallee_mop = "Carte de crédit"
 
 		# Get next idx for payment child table
 		max_idx = frappe.db.sql(
