@@ -114,7 +114,6 @@ def update_table_status(table_name, status):
 	return {"status": "success"}
 
 @frappe.whitelist()
-@frappe.whitelist()
 def get_table_payment_summary(table_name):
 	"""Get payment summary for a Paid/Cleaning table (for the server dialog)."""
 	invoice = frappe.get_all(
@@ -157,6 +156,7 @@ def get_table_payment_summary(table_name):
 	}
 
 
+@frappe.whitelist()
 def mark_table_available(table_name):
 	"""Mark a Cleaning table as Empty and expire its guest tokens."""
 	if not frappe.has_permission("Restaurant Table", "write"):
