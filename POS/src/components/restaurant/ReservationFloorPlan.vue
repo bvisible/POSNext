@@ -1,9 +1,22 @@
 <template>
 	<div class="fp-wrap">
-		<!-- Zoom controls -->
-		<div class="fp-controls">
-			<button class="fp-zoom-btn" @click="zoom = Math.min(1.5, zoom + 0.15)">+</button>
-			<button class="fp-zoom-btn" @click="zoom = Math.max(0.3, zoom - 0.15)">&minus;</button>
+		<!-- Area tabs + Zoom controls -->
+		<div class="fp-header">
+			<div v-if="floorAreas.length > 1" class="fp-area-tabs">
+				<button
+					v-for="area in floorAreas"
+					:key="area"
+					class="fp-area-tab"
+					:class="{ active: localArea === area }"
+					@click="localArea = area"
+				>
+					{{ area }}
+				</button>
+			</div>
+			<div class="fp-controls">
+				<button class="fp-zoom-btn" @click="zoom = Math.min(1.5, zoom + 0.15)">+</button>
+				<button class="fp-zoom-btn" @click="zoom = Math.max(0.3, zoom - 0.15)">&minus;</button>
+			</div>
 		</div>
 
 		<!-- Canvas -->
@@ -50,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 
 const props = defineProps({
 	tables: { type: Array, default: () => [] },
@@ -62,10 +75,40 @@ defineEmits(["toggle-table"])
 
 const zoom = ref(0.7)
 
+// Areas available in the floor plan
+const floorAreas = computed(() => {
+	return [
+		...new Set(
+			props.tables.filter((t) => t.pos_x || t.pos_y).map((t) => t.area),
+		),
+	].sort()
+})
+
+// Local area state — syncs with parent selectedArea or defaults to first
+const localArea = ref("")
+
+watch(
+	() => props.selectedArea,
+	(val) => {
+		if (val) localArea.value = val
+	},
+	{ immediate: true },
+)
+
+watch(
+	floorAreas,
+	(areas) => {
+		if (!localArea.value && areas.length > 0) {
+			localArea.value = areas[0]
+		}
+	},
+	{ immediate: true },
+)
+
 const visibleTables = computed(() => {
 	const list = props.tables.filter((t) => t.pos_x || t.pos_y)
-	if (!props.selectedArea) return list
-	return list.filter((t) => t.area === props.selectedArea)
+	if (!localArea.value) return list
+	return list.filter((t) => t.area === localArea.value)
 })
 
 const canvasWidth = computed(() => {
@@ -105,13 +148,40 @@ function tableStyle(table) {
 	gap: 8px;
 }
 
-.fp-controls {
-	position: absolute;
-	top: 4px;
-	right: 4px;
+.fp-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.fp-area-tabs {
 	display: flex;
 	gap: 4px;
-	z-index: 10;
+	flex-wrap: wrap;
+}
+
+.fp-area-tab {
+	padding: 4px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--border-color, #d1d5db);
+	background: var(--control-bg, #fff);
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	transition: all 0.15s;
+}
+
+.fp-area-tab.active {
+	background: var(--gray-800, #1f2937);
+	border-color: var(--gray-800, #1f2937);
+	color: #fff;
+}
+
+.fp-controls {
+	display: flex;
+	gap: 4px;
+	flex-shrink: 0;
 }
 
 .fp-zoom-btn {
