@@ -192,7 +192,7 @@ def _get_item_product_options(item_code):
 	groups = frappe.get_all(
 		"Product Option Group",
 		filters={"name": ("in", group_names)},
-		fields=["name", "group_name", "selection_type"],
+		fields=["name", "group_name", "selection_type", "required"],
 	)
 	result = []
 	for g in groups:
@@ -205,6 +205,7 @@ def _get_item_product_options(item_code):
 		result.append({
 			"group_name": g.group_name,
 			"selection_type": g.selection_type,
+			"required": bool(g.required),
 			"options": [
 				{
 					"option_name": o.option_name,

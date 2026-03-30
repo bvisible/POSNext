@@ -21,7 +21,7 @@
 						</svg>
 					</div>
 					<h3 class="text-lg font-bold text-gray-900 mb-2">
-						{{ isFullySettled ? __('Thank you!') : __('Payment received') }}
+						{{ guestStore.isFullyPaid ? __('Thank you!') : __('Payment received') }}
 					</h3>
 					<p class="text-sm text-gray-600 mb-1">
 						{{ __('Your payment of {0} has been recorded.', [formatPrice(lastPaymentAmount)]) }}
@@ -202,23 +202,23 @@
 							<div class="relative">
 								<span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm font-medium">{{ currencySymbol }}</span>
 								<input v-model="customPayAmount" type="number" step="0.01" min="0"
-									:max="remainingWithTip"
-									:placeholder="remainingWithTip.toFixed(2)"
+									:max="orderRemaining"
+									:placeholder="orderRemaining.toFixed(2)"
 									class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
 							</div>
 						</div>
 						<!-- Amount display -->
-						<div class="flex items-center justify-between p-3 rounded-xl" :class="payableAmount < totalWithTip ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'">
+						<div class="flex items-center justify-between p-3 rounded-xl" :class="basePayment < orderRemaining ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'">
 							<div>
-								<span class="text-sm font-bold" :class="payableAmount < totalWithTip ? 'text-blue-700' : 'text-green-700'">
+								<span class="text-sm font-bold" :class="basePayment < orderRemaining ? 'text-blue-700' : 'text-green-700'">
 									{{ formatPrice(payableAmount) }}
 								</span>
-								<span v-if="payableAmount < totalWithTip" class="text-xs text-gray-500 ml-2">
-									{{ __('of {0}', [formatPrice(totalWithTip)]) }}
+								<span v-if="basePayment < orderRemaining" class="text-xs text-gray-500 ml-2">
+									{{ __('of {0}', [formatPrice(orderRemaining)]) }}
 								</span>
 							</div>
-							<span v-if="payableAmount < totalWithTip" class="text-xs text-orange-600 font-medium">
-								{{ __('Remaining: {0}', [formatPrice(totalWithTip - payableAmount)]) }}
+							<span v-if="basePayment < orderRemaining" class="text-xs text-orange-600 font-medium">
+								{{ __('Remaining: {0}', [formatPrice(orderRemaining - basePayment)]) }}
 							</span>
 						</div>
 					</div>
@@ -347,23 +347,23 @@ const tipAmount = computed(() => {
 	return Number.isNaN(custom) || custom < 0 ? 0 : custom
 })
 
-const totalWithTip = computed(() => guestStore.orderTotal + tipAmount.value)
+// Remaining on the ORDER (tips are extras, they don't reduce the order remaining)
+const orderRemaining = computed(() => guestStore.remainingAmount)
 
-const remainingWithTip = computed(() => Math.max(0, totalWithTip.value - guestStore.paidAmount))
-
-const isFullySettled = computed(() => guestStore.paidAmount >= totalWithTip.value && totalWithTip.value > 0)
-
-// Payable amount based on split
-const payableAmount = computed(() => {
+// Base payment amount (split of remaining, WITHOUT tip)
+const basePayment = computed(() => {
 	if (splitBy.value === -1) {
 		const v = Number.parseFloat(customPayAmount.value)
-		return Number.isNaN(v) ? remainingWithTip.value : Math.min(Math.max(0, v), remainingWithTip.value)
+		return Number.isNaN(v) ? orderRemaining.value : Math.min(Math.max(0, v), orderRemaining.value)
 	}
 	if (splitBy.value && splitBy.value > 1) {
-		return Math.ceil((remainingWithTip.value / splitBy.value) * 100) / 100
+		return Math.ceil((orderRemaining.value / splitBy.value) * 100) / 100
 	}
-	return remainingWithTip.value
+	return orderRemaining.value
 })
+
+// Total to charge = base payment + tip
+const payableAmount = computed(() => basePayment.value + tipAmount.value)
 
 function selectTipPercent(pct) {
 	tipPercent.value = tipPercent.value === pct ? null : pct
@@ -411,6 +411,7 @@ function downloadReceipt() {
 async function handlePay() {
 	if (payableAmount.value <= 0) return
 	paymentState.value = "pending"
+	guestStore.error = null
 	lastPaymentAmount.value = payableAmount.value
 
 	try {

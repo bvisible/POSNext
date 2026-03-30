@@ -140,7 +140,10 @@
 					<!-- Modifier Groups -->
 					<div v-if="(selectedItem.product_options || []).length > 0" class="flex-1 overflow-y-auto p-4">
 						<div v-for="group in selectedItem.product_options" :key="group.group_name" class="mb-4 last:mb-0">
-							<h3 class="text-sm font-semibold text-gray-800 mb-2">{{ group.group_name }}</h3>
+							<h3 class="text-sm font-semibold text-gray-800 mb-2">
+								{{ group.group_name }}
+								<span v-if="group.required" class="text-red-500 text-xs ml-1">*</span>
+							</h3>
 							<div class="space-y-1.5">
 								<label
 									v-for="option in group.options || []"
@@ -197,7 +200,8 @@
 						</div>
 						<button
 							@click="addToCartAndClose"
-							class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors"
+							:disabled="!isOptionsValid"
+							class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{{ __('Add to cart') }} — {{ formatPrice(itemTotal) }}
 						</button>
@@ -319,6 +323,17 @@ function selectOption(group, option) {
 		[group.group_name]: new Set([option.option_name]),
 	}
 }
+
+const isOptionsValid = computed(() => {
+	if (!selectedItem.value?.product_options) return true
+	for (const group of selectedItem.value.product_options) {
+		if (group.required) {
+			const sel = selectedOptions.value[group.group_name]
+			if (!sel || sel.size === 0) return false
+		}
+	}
+	return true
+})
 
 function addToCartAndClose() {
 	if (!selectedItem.value) return
