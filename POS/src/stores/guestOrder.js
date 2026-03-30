@@ -73,6 +73,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			settings.value = {
 				qr_order_validation: result.qr_order_validation,
 				guest_account_mode: result.guest_account_mode,
+				has_loyalty_program: result.has_loyalty_program || false,
 			}
 			currency.value = result.currency || "CHF"
 			companyLogo.value = result.company_logo || ""

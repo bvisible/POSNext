@@ -278,6 +278,7 @@ def validate_token(token):
 		"company_logo": company_logo,
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
 		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
+		"has_loyalty_program": bool(frappe.db.get_single_value("POS Settings", "enable_loyalty_program") or 0),
 	}
 
 

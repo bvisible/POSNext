@@ -227,17 +227,46 @@
 
 			<!-- Footer (outside scroll) -->
 			<div v-if="!guestStore.isFullyPaid" class="bg-white border-t border-gray-200 p-4 flex-shrink-0">
-				<!-- Account creation -->
-				<div v-if="showAccountStep" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
-					<p class="text-sm font-semibold text-gray-700">
-						{{ isAccountMandatory ? __('Create an account (required)') : __('Create an account (optional)') }}
-					</p>
-					<input v-model="accountName" type="text" :placeholder="__('Your name')"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<input v-model="accountEmail" type="email" :placeholder="__('Email')"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<input v-model="accountPhone" type="tel" :placeholder="__('Phone (optional)')"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				<!-- Account creation CTA (collapsible) -->
+				<div v-if="showAccountStep" class="mb-3">
+					<!-- Collapsed: CTA button -->
+					<button v-if="!showAccountForm && !isAccountMandatory"
+						@click="showAccountForm = true"
+						class="w-full flex items-center justify-between px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl text-sm transition-colors active:bg-blue-100">
+						<div class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+							</svg>
+							<span class="text-blue-700 font-medium">
+								{{ guestStore.settings?.has_loyalty_program
+									? __('Create an account to earn loyalty points')
+									: __('Create an account for next time') }}
+							</span>
+						</div>
+						<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+						</svg>
+					</button>
+					<!-- Expanded: form fields -->
+					<div v-if="showAccountForm || isAccountMandatory" class="p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
+						<div class="flex items-center justify-between">
+							<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+								{{ isAccountMandatory ? __('Account (required)') : __('Account (optional)') }}
+							</p>
+							<button v-if="!isAccountMandatory" @click="showAccountForm = false; accountName = ''; accountEmail = ''; accountPhone = ''"
+								class="text-gray-400 hover:text-gray-600">
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+								</svg>
+							</button>
+						</div>
+						<input v-model="accountName" type="text" :placeholder="__('Your name')"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+						<input v-model="accountEmail" type="email" :placeholder="__('Email')"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+						<input v-model="accountPhone" type="tel" :placeholder="__('Phone (optional)')"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					</div>
 				</div>
 
 				<!-- Error -->
@@ -283,6 +312,7 @@ const showPaymentDialog = ref(false)
 const lastPaymentAmount = ref(0)
 
 // Account fields
+const showAccountForm = ref(false)
 const accountName = ref("")
 const accountEmail = ref("")
 const accountPhone = ref("")
