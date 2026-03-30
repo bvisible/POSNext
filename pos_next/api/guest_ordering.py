@@ -645,6 +645,12 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 			"paid_amount": flt(invoice_doc.paid_amount),
 			"grand_total": flt(invoice_doc.grand_total),
 		})
+		# Notify POS clients globally (not room-scoped)
+		frappe.publish_realtime("guest_payment_received", {
+			"table": token_doc.table,
+			"invoice": invoice_doc.name,
+			"paid_amount": flt(invoice_doc.paid_amount),
+		})
 
 	return result
 

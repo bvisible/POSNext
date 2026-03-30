@@ -723,7 +723,7 @@ def open_table(table_name, pos_profile, customer=None):
 	existing = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0, "restaurant_table": table_name},
-		fields=["name"],
+		fields=["name", "customer", "kds_status", "paid_amount"],
 		order_by="modified desc",
 		limit=1
 	)
@@ -744,8 +744,9 @@ def open_table(table_name, pos_profile, customer=None):
 		return {
 			"name": order.name,
 			"items": items,
-			"customer": frappe.db.get_value("Sales Invoice", order.name, "customer"),
-			"kds_status": frappe.db.get_value("Sales Invoice", order.name, "kds_status"),
+			"customer": order.customer,
+			"kds_status": order.kds_status,
+			"paid_amount": flt(order.paid_amount),
 			"is_new": False,
 		}
 

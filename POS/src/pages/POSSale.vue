@@ -1907,7 +1907,7 @@ onMounted(async () => {
 							kds_status: item.kds_status || "Pending",
 						}, item.qty || 1)
 					}
-					cartStore.$patch({ currentDraftId: orderData.name, hasUnsentChanges: false })
+					cartStore.$patch({ currentDraftId: orderData.name, hasUnsentChanges: false, guestPaidAmount: orderData.paid_amount || 0 })
 				}
 			} catch { /* ignore */ }
 		}
