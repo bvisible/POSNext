@@ -557,7 +557,10 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	except ImportError:
 		frappe.throw(_("Wallee integration is not available on this instance."))
 	except Exception as e:
-		frappe.log_error("Guest payment creation failed", str(e))
+		import traceback
+		frappe.log_error("Guest payment creation failed",
+			f"Amount: {amount}, Tip: {tip}, Invoice: {invoice_doc.name}\n"
+			f"Error: {str(e)}\n{traceback.format_exc()}")
 		frappe.throw(_("Failed to initiate payment. Please try again or contact staff."))
 
 	# Record payment in the Sales Invoice via direct DB writes
