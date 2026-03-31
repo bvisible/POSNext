@@ -124,9 +124,9 @@
 							</div>
 						</div>
 
-						<!-- Document Type Card -->
+						<!-- Document Type Card (hidden in restaurant mode) -->
 						<div
-							v-if="settingsStore.allowSalesOrder"
+							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo flex-shrink-0"
 						>
 							<div class="flex items-center bg-gray-100 rounded-lg p-0.5">
@@ -233,7 +233,7 @@
 
 						<!-- Document Type Toggle (Sales Invoice / Sales Order) -->
 						<div
-							v-if="settingsStore.allowSalesOrder"
+							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
 						>
 							<button
@@ -749,13 +749,15 @@
 						'border rounded-neo-sm p-1.5 sm:p-2 transition-all duration-200',
 						item.is_free_item
 							? 'bg-green-50 border-green-300 cursor-default'
-							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group'
+							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group',
+						item.kds_status === 'Delivered' ? 'opacity-50' : ''
 					]"
 				>
 					<div class="flex gap-1.5 sm:gap-2">
 						<!-- Item Image Thumbnail -->
 						<div
-							class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
 						>
 							<img
 								v-if="item.image"
@@ -767,20 +769,13 @@
 								decoding="async"
 								class="w-full h-full object-cover"
 							/>
-							<svg
+							<span
 								v-else
-								class="h-5 w-5 sm:h-6 sm:w-6 text-gray-400"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
+								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
+								:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-400'"
 							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-								/>
-							</svg>
+								{{ (item.item_name || '').substring(0, 8) }}
+							</span>
 						</div>
 
 						<!-- Item Content -->
@@ -802,6 +797,18 @@
 									<svg class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
 									{{ __("Note") }}
 								</span>
+								<!-- Preparation Station Badge (Restaurant mode) -->
+								<span
+									v-if="item.preparation_station && restaurantStore.isEnabled"
+									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0 text-white"
+									:style="{ backgroundColor: getStationColor(item.preparation_station) }"
+								>
+									{{ getStationDisplayName(item.preparation_station) }}
+								</span>
+								<!-- Item Modifiers Summary -->
+								<div v-if="item.posa_item_modifiers && restaurantStore.isEnabled" class="text-[10px] text-gray-500 mt-0.5 truncate">
+									{{ formatModifiers(item.posa_item_modifiers) }}
+								</div>
 								<!-- Free Item Badge -->
 									<span
 										v-if="item.free_qty && item.free_qty > 0"
@@ -844,6 +851,25 @@
 										}}
 									</div>
 								</div>
+								<!-- KDS Item Status Badge -->
+								<span
+									v-if="cartStore.restaurantTable && item.kds_status"
+									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
+									:class="kdsStatusBadgeClass(item.kds_status)"
+								>
+									<svg v-if="item.kds_status === 'Waiting'" class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+									{{ __(item.kds_status) }}
+								</span>
+								<!-- Quick Send Button (for Waiting items in restaurant mode) -->
+								<button
+									v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
+									type="button"
+									@click.stop="$emit('send-item-to-kitchen', item)"
+									class="text-purple-500 hover:text-purple-700 active:text-purple-800 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
+									:title="__('Send to kitchen')"
+								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+								</button>
 								<!-- Add Modifiers Button (Restaurant mode) -->
 								<button
 									v-if="!item.is_free_item && cartStore.restaurantTable"
@@ -1196,10 +1222,143 @@
 						{{ formatCurrency(displayGrandTotal) }}
 					</span>
 				</div>
+				<!-- Guest payments already received on this table -->
+				<div v-if="cartStore.guestPaidAmount > 0" class="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1">
+					<div class="flex items-center justify-between">
+						<span class="text-xs font-semibold text-green-700">
+							{{ __("Already paid (guest)") }}
+						</span>
+						<span class="text-sm font-bold text-green-600">
+							{{ formatCurrency(cartStore.guestPaidAmount) }}
+						</span>
+					</div>
+					<div class="flex items-center justify-between">
+						<span class="text-xs font-semibold text-orange-600">
+							{{ __("Remaining to collect") }}
+						</span>
+						<span class="text-sm font-bold text-orange-600">
+							{{ formatCurrency(Math.max(0, displayGrandTotal - cartStore.guestPaidAmount)) }}
+						</span>
+					</div>
+				</div>
 			</div>
 
 			<!-- Action Buttons -->
-			<div class="flex gap-1.5">
+			<!-- Restaurant Mode Buttons -->
+			<div v-if="restaurantStore.isEnabled && (cartStore.restaurantTable || cartStore.isTakeaway)" class="flex gap-1.5">
+				<!-- Send to Kitchen Button (Primary - green) -->
+				<button
+					type="button"
+					@click="$emit('open-kitchen-dialog')"
+					:disabled="!hasSendableItems"
+					:class="[
+						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
+						!hasSendableItems
+							? 'bg-gray-300 cursor-not-allowed'
+							: 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
+					]"
+					:aria-label="__('Send order')"
+				>
+					<svg
+						class="w-4 h-4 me-1.5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M5 13l4 4L19 7"
+						/>
+					</svg>
+					<span>{{ __("Valider") }}</span>
+				</button>
+
+				<!-- Pay Button (blue) -->
+				<button
+					type="button"
+					@click="handleProceedToPayment"
+					:disabled="items.length === 0"
+					:class="[
+						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
+						items.length === 0
+							? 'bg-gray-300 cursor-not-allowed'
+							: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
+					]"
+					:aria-label="__('Proceed to payment')"
+				>
+					<svg
+						class="w-4 h-4 me-1.5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+						/>
+					</svg>
+					<span>{{ __("Payer") }}</span>
+				</button>
+
+				<!-- Print Provisional Ticket Button (compact - gray) -->
+				<button
+					type="button"
+					@click="$emit('print-provisional-ticket')"
+					:disabled="items.length === 0"
+					:class="[
+						'w-10 py-2.5 rounded-neo-md text-white transition-all flex items-center justify-center touch-manipulation',
+						items.length === 0
+							? 'bg-gray-300 cursor-not-allowed'
+							: 'bg-gray-600 hover:bg-gray-700 active:bg-gray-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
+					]"
+					:aria-label="__('Print provisional ticket')"
+				>
+					<svg
+						class="w-4 h-4"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"
+						/>
+					</svg>
+				</button>
+
+				<!-- Hold Order Button (Secondary - orange) - hidden in restaurant mode -->
+				<button
+					type="button"
+					v-if="items.length > 0 && !restaurantStore.isEnabled"
+					@click="$emit('save-draft')"
+					class="flex-1 py-2.5 px-2 rounded-neo-md font-semibold text-xs text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 transition-all touch-manipulation active:scale-[0.98] flex items-center justify-center"
+					:aria-label="__('Hold order as draft')"
+				>
+					<svg
+						class="w-4 h-4 me-1.5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+						/>
+					</svg>
+					<span>{{ __("Hold", null, "order") }}</span>
+				</button>
+			</div>
+
+			<!-- Normal Mode Buttons -->
+			<div v-else class="flex gap-1.5">
 				<!-- Checkout Button (Primary - 50% width) -->
 				<button
 					type="button"
@@ -1277,6 +1436,8 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSOffersStore } from "@/stores/posOffers"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
+import { useRestaurantStore } from "@/stores/restaurant"
+import { isLightColor } from "@/utils/itemColors"
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -1302,10 +1463,38 @@ const cartStore = usePOSCartStore() // Pinia store for cart state management
 const settingsStore = usePOSSettingsStore() // Pinia store for POS settings
 const offersStore = usePOSOffersStore() // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore() // Pinia store for customer search
+const restaurantStore = useRestaurantStore() // Pinia store for restaurant features
 const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
 	emit("proceed-to-payment")
+}
+
+function formatModifiers(modifiersJson) {
+	try {
+		const mods = JSON.parse(modifiersJson)
+		return mods.map((m) => m.options.map((o) => o.name).join(", ")).join(" · ")
+	} catch {
+		return ""
+	}
+}
+
+function getStationColor(stationName) {
+	// Look through station items map to find color
+	const map = restaurantStore.stationItemsMap
+	for (const [, info] of Object.entries(map)) {
+		if (info.station === stationName) return info.color
+	}
+	return "#6B7280"
+}
+
+function getStationDisplayName(stationName) {
+	// Look through station items map to find display name
+	const map = restaurantStore.stationItemsMap
+	for (const [, info] of Object.entries(map)) {
+		if (info.station === stationName) return info.station_name
+	}
+	return stationName
 }
 
 /**
@@ -1376,12 +1565,16 @@ const emit = defineEmits([
 	"clear-cart", // () - Clear all items from cart
 	"save-draft", // () - Save current cart as draft/hold order
 	"apply-coupon", // () - Open coupon application dialog
+	"send-to-kitchen", // () - Send order to kitchen (restaurant mode)
+	"open-kitchen-dialog", // () - Open kitchen dialog (restaurant mode)
+	"send-item-to-kitchen", // (item) - Send individual item to kitchen (restaurant mode)
 	"show-coupons", // () - Show available coupons
 	"show-offers", // () - Show available offers dialog
 	"remove-offer", // (offerId) - Remove applied offer
 	"update-uom", // (itemCode, newUom) - Change item's unit of measure
 	"edit-item", // (item) - Open item edit dialog
 	"open-modifiers", // (item) - Open special instructions dialog (restaurant mode)
+	"print-provisional-ticket", // () - Print provisional ticket (restaurant mode)
 	"view-shift", // () - View current shift details
 	"show-drafts", // () - Show draft/held orders
 	"show-history", // () - Show invoice history
@@ -1634,6 +1827,33 @@ const displayGrandTotal = computed(() => {
  * FUNCTIONS
  * ============================================================================
  */
+
+/**
+ * Check if there are items that can be sent to kitchen.
+ * Excludes free items and items that have already been sent/prepared.
+ * @returns {Boolean} True if at least one item can be sent
+ */
+const hasSendableItems = computed(() => {
+	if (!cartStore.restaurantTable && !cartStore.isTakeaway) return false
+	return cartStore.invoiceItems.some(
+		(item) =>
+			!item.is_free_item && (!item.kds_status || item.kds_status === "Waiting"),
+	)
+})
+
+/**
+ * Get CSS classes for KDS status badge based on status value.
+ * @param {String} status - KDS status (Waiting, Pending, Preparing, Ready, Delivered)
+ * @returns {String} CSS classes for the badge
+ */
+function kdsStatusBadgeClass(status) {
+	if (status === "Waiting") return "bg-gray-100 text-gray-600"
+	if (status === "Pending") return "bg-yellow-100 text-yellow-700"
+	if (status === "Preparing") return "bg-blue-100 text-blue-700"
+	if (status === "Ready") return "bg-green-100 text-green-700"
+	if (status === "Delivered") return "bg-gray-200 text-gray-500"
+	return "bg-indigo-100 text-indigo-700"
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Customer Search Functions

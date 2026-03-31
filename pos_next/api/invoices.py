@@ -680,6 +680,24 @@ def update_invoice(data):
         # Normalize pricing_rules before document creation
         standardize_pricing_rules(data.get("items"))
 
+        # Preserve existing item kds_status before update (restaurant mode)
+        # Build a map of item_code -> kds_status from BOTH DB and frontend data
+        existing_item_kds = {}
+        has_kds_field = frappe.db.has_column("Sales Invoice Item", "kds_status")
+        if has_kds_field:
+            # From DB (most reliable source)
+            if data.get("name"):
+                for row in frappe.get_all("Sales Invoice Item",
+                    filters={"parent": data["name"]},
+                    fields=["item_code", "kds_status"]):
+                    if row.kds_status and row.kds_status != "Pending":
+                        existing_item_kds[row.item_code] = row.kds_status
+            # From frontend data (in case cart items have kds_status set)
+            for item_data in data.get("items", []):
+                status = item_data.get("kds_status")
+                if status and status != "Pending":
+                    existing_item_kds[item_data.get("item_code")] = status
+
         # Create or update invoice
         if data.get("name"):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
@@ -951,6 +969,69 @@ def update_invoice(data):
         frappe.flags.ignore_account_permission = True
         invoice_doc.docstatus = 0
         invoice_doc.save()
+
+        # Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
+        if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway"):
+            update_data = {}
+            if data.get("restaurant_table"):
+                update_data["restaurant_table"] = data.get("restaurant_table")
+            if data.get("kds_status"):
+                update_data["kds_status"] = data.get("kds_status")
+            if data.get("is_takeaway"):
+                update_data["is_takeaway"] = 1
+            if data.get("takeaway_number"):
+                update_data["takeaway_number"] = data.get("takeaway_number")
+
+            frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
+
+        # Restore item kds_status via direct DB write (Frappe save may strip custom fields)
+        if has_kds_field:
+            invoice_doc.reload()
+            for item in invoice_doc.items:
+                status = existing_item_kds.get(item.item_code, "Pending")
+                frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
+
+        # Persist NEW item-level kds_status from frontend (e.g. Waiting/Pending from SendToKitchenDialog)
+        has_kds_batch = frappe.db.has_column("Sales Invoice Item", "kds_batch")
+        if has_kds_field and data.get("items"):
+            try:
+                # Determine next batch number for items transitioning to Pending
+                next_batch = 1
+                if has_kds_batch:
+                    existing_batches = [
+                        frappe.utils.cint(row.get("kds_batch") or 0)
+                        for row in invoice_doc.items
+                    ]
+                    next_batch = max(existing_batches, default=0) + 1
+
+                for item_data in data.get("items", []):
+                    item_kds = item_data.get("kds_status")
+                    if item_kds:
+                        for doc_item in invoice_doc.items:
+                            if (doc_item.item_code == item_data.get("item_code")
+                                    and (doc_item.uom or "") == (item_data.get("uom") or "")):
+                                frappe.db.set_value(
+                                    "Sales Invoice Item", doc_item.name,
+                                    "kds_status", item_kds, update_modified=False
+                                )
+                                # Assign batch when item is sent to kitchen (Waiting→Pending)
+                                if has_kds_batch and item_kds == "Pending" and (doc_item.kds_status in ("Waiting", "", None)):
+                                    frappe.db.set_value(
+                                        "Sales Invoice Item", doc_item.name,
+                                        "kds_batch", next_batch, update_modified=False
+                                    )
+                                break
+            except Exception as inner_e:
+                frappe.log_error("Failed to set item KDS status", str(inner_e))
+
+        # Mark table as Occupied when a restaurant invoice is created/updated
+        if data.get("restaurant_table"):
+            frappe.db.set_value("Restaurant Table", data["restaurant_table"], "status", "Occupied")
+
+        if data.get("restaurant_table") or data.get("kds_status") or has_kds_field:
+            frappe.db.commit()
+            frappe.publish_realtime("kds_update")
+            frappe.publish_realtime("table_update")
 
         return invoice_doc.as_dict()
     except Exception as e:
@@ -1364,6 +1445,11 @@ def submit_invoice(invoice=None, data=None):
             if flt(loyalty_data.get("loyalty_amount")) >= flt(invoice_doc.grand_total or 0):
                 invoice_doc.payments = []
 
+        # Handle tip amount — add TIP line item if tip > 0
+        tip_amount = flt(data.get("tip_amount") or 0)
+        if tip_amount > 0:
+            _add_tip_to_invoice(invoice_doc, tip_amount, data)
+
         # Validate stock availability before submission
         # _validate_stock_on_invoice checks _should_block internally
         # (global Stock Settings, POS Settings, and POS Profile flags)
@@ -1377,11 +1463,25 @@ def submit_invoice(invoice=None, data=None):
         invoice_doc.flags.ignore_pricing_rule = True
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
+
+        import time as _time
+        _t0 = _time.time()
         invoice_doc.save()
+        _t1 = _time.time()
 
         # Submit invoice
         invoice_doc.submit()
+        _t2 = _time.time()
+        frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
+
         invoice_submitted = True
+
+        # Set restaurant table to Cleaning after successful submission
+        restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
+        if restaurant_table and frappe.db.exists("Restaurant Table", restaurant_table):
+            frappe.db.set_value("Restaurant Table", restaurant_table, "status", "Cleaning")
+            frappe.publish_realtime("table_update")
+
         # Handle wallet transaction reversal for returns
         wallet_reversal_ok = False
         if invoice_doc.get("is_return") and invoice_doc.get("return_against"):
@@ -1496,6 +1596,57 @@ def submit_invoice(invoice=None, data=None):
         # Cleanup sync record if invoice was not successfully submitted
         if sync_record_name and not invoice_submitted:
             _cleanup_failed_sync(sync_record_name)
+
+
+def _add_tip_to_invoice(invoice_doc, tip_amount, data):
+    """Add a TIP line item to the invoice and create a Restaurant Tip tracking record."""
+    try:
+        settings = frappe.get_single("Restaurant Settings")
+    except Exception:
+        return
+
+    if not settings.enable_tips or not settings.tip_item:
+        return
+
+    tip_item_code = settings.tip_item
+    tip_account = settings.tip_account
+
+    # Add TIP item line to invoice
+    invoice_doc.append("items", {
+        "item_code": tip_item_code,
+        "item_name": _("Tip"),
+        "qty": 1,
+        "rate": tip_amount,
+        "income_account": tip_account,
+        "cost_center": invoice_doc.cost_center,
+        "description": _("Gratuity / Pourboire"),
+    })
+
+    # Recalculate totals
+    invoice_doc.run_method("calculate_taxes_and_totals")
+
+    # Create Restaurant Tip tracking record
+    try:
+        # Determine primary payment method
+        payment_method = "Cash"
+        if invoice_doc.payments:
+            # Find the payment method with the highest amount
+            max_payment = max(invoice_doc.payments, key=lambda p: flt(p.amount))
+            payment_method = max_payment.mode_of_payment or "Cash"
+
+        tip_record = frappe.get_doc({
+            "doctype": "Restaurant Tip",
+            "tip_date": frappe.utils.today(),
+            "sales_invoice": invoice_doc.name,
+            "restaurant_table": data.get("restaurant_table") or getattr(invoice_doc, "restaurant_table", None),
+            "server": frappe.session.user,
+            "amount": tip_amount,
+            "payment_method": payment_method,
+            "status": "Collected",
+        })
+        tip_record.insert(ignore_permissions=True)
+    except Exception as e:
+        frappe.log_error("Tip tracking record creation failed", str(e))
 
 
 # ==========================================

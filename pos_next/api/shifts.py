@@ -101,6 +101,37 @@ def check_opening_shift(user=None):
 
 
 @frappe.whitelist()
+def get_suggested_opening_balance(pos_profile):
+	"""Get suggested cash opening balance from the user's last closing shift."""
+	from frappe.utils import flt
+
+	last_closing = frappe.db.get_value(
+		"POS Closing Shift",
+		{
+			"user": frappe.session.user,
+			"pos_profile": pos_profile,
+			"docstatus": 1,
+		},
+		["cash_remaining_balance", "cash_withdrawal_amount"],
+		order_by="period_end_date desc",
+		as_dict=True,
+	)
+
+	if not last_closing or flt(last_closing.cash_remaining_balance) <= 0:
+		return None
+
+	# Get cash mode for this profile so frontend knows which payment method to prefill
+	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import (
+		_get_cash_mode_of_payment,
+	)
+
+	return {
+		"suggested_amount": flt(last_closing.cash_remaining_balance),
+		"cash_mode_of_payment": _get_cash_mode_of_payment(pos_profile),
+	}
+
+
+@frappe.whitelist()
 def create_opening_shift(pos_profile, company, balance_details):
 	"""Create a new POS Opening Shift"""
 	balance_details = json.loads(balance_details) if isinstance(balance_details, str) else balance_details

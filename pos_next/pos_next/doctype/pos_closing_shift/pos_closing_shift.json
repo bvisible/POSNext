@@ -25,6 +25,10 @@
   "payment_reconciliation_details",
   "section_break_11",
   "payment_reconciliation",
+  "section_break_withdrawal",
+  "cash_withdrawal_amount",
+  "column_break_withdrawal",
+  "cash_remaining_balance",
   "section_break_13",
   "grand_total",
   "net_total",
@@ -128,6 +132,31 @@
    "fieldtype": "Table",
    "label": "Payment Reconciliation",
    "options": "POS Closing Shift Detail"
+  },
+  {
+   "fieldname": "section_break_withdrawal",
+   "fieldtype": "Section Break",
+   "label": "Cash Withdrawal",
+   "collapsible": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "cash_withdrawal_amount",
+   "fieldtype": "Currency",
+   "label": "Cash Withdrawal Amount",
+   "description": "Amount withdrawn from the cash register at closing"
+  },
+  {
+   "fieldname": "column_break_withdrawal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "cash_remaining_balance",
+   "fieldtype": "Currency",
+   "label": "Remaining Cash Balance",
+   "read_only": 1,
+   "description": "Suggested opening balance for next shift"
   },
   {
    "collapsible": 1,

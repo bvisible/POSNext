@@ -1,0 +1,233 @@
+{
+	"actions": [],
+	"autoname": "field:template_name",
+	"creation": "2026-03-26 10:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"template_name",
+		"style_theme",
+		"column_break_fonts",
+		"font_header",
+		"font_body",
+		"section_break_layout",
+		"columns",
+		"paper_format",
+		"column_break_layout2",
+		"custom_width_mm",
+		"custom_height_mm",
+		"price_alignment",
+		"section_break_display",
+		"show_descriptions",
+		"show_allergens",
+		"column_break_display2",
+		"show_options",
+		"show_images",
+		"section_break_colors",
+		"color_primary",
+		"color_secondary",
+		"column_break_colors2",
+		"color_accent",
+		"section_break_content",
+		"header_text",
+		"footer_text",
+		"section_break_advanced",
+		"custom_css"
+	],
+	"fields": [
+		{
+			"fieldname": "template_name",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Template Name",
+			"reqd": 1,
+			"unique": 1
+		},
+		{
+			"default": "elegant",
+			"fieldname": "style_theme",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Style Theme",
+			"options": "elegant\nmodern\nbistrot\nardoise",
+			"reqd": 1
+		},
+		{
+			"fieldname": "column_break_fonts",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "Playfair Display",
+			"fieldname": "font_header",
+			"fieldtype": "Data",
+			"label": "Header Font"
+		},
+		{
+			"default": "Inter",
+			"fieldname": "font_body",
+			"fieldtype": "Data",
+			"label": "Body Font"
+		},
+		{
+			"fieldname": "section_break_layout",
+			"fieldtype": "Section Break",
+			"label": "Layout"
+		},
+		{
+			"default": "1",
+			"fieldname": "columns",
+			"fieldtype": "Int",
+			"label": "Columns",
+			"non_negative": 1
+		},
+		{
+			"default": "A4 Portrait",
+			"fieldname": "paper_format",
+			"fieldtype": "Select",
+			"label": "Paper Format",
+			"options": "A4 Portrait\nA4 Landscape\nA3\nCustom"
+		},
+		{
+			"fieldname": "column_break_layout2",
+			"fieldtype": "Column Break"
+		},
+		{
+			"depends_on": "eval:doc.paper_format=='Custom'",
+			"fieldname": "custom_width_mm",
+			"fieldtype": "Int",
+			"label": "Width (mm)"
+		},
+		{
+			"depends_on": "eval:doc.paper_format=='Custom'",
+			"fieldname": "custom_height_mm",
+			"fieldtype": "Int",
+			"label": "Height (mm)"
+		},
+		{
+			"default": "right",
+			"fieldname": "price_alignment",
+			"fieldtype": "Select",
+			"label": "Price Alignment",
+			"options": "right\ninline\ndotted"
+		},
+		{
+			"fieldname": "section_break_display",
+			"fieldtype": "Section Break",
+			"label": "Display Options"
+		},
+		{
+			"default": "1",
+			"fieldname": "show_descriptions",
+			"fieldtype": "Check",
+			"label": "Show Descriptions"
+		},
+		{
+			"default": "1",
+			"fieldname": "show_allergens",
+			"fieldtype": "Check",
+			"label": "Show Allergens/Badges"
+		},
+		{
+			"fieldname": "column_break_display2",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "show_options",
+			"fieldtype": "Check",
+			"label": "Show Product Options"
+		},
+		{
+			"default": "0",
+			"fieldname": "show_images",
+			"fieldtype": "Check",
+			"label": "Show Item Images"
+		},
+		{
+			"fieldname": "section_break_colors",
+			"fieldtype": "Section Break",
+			"label": "Colors"
+		},
+		{
+			"fieldname": "color_primary",
+			"fieldtype": "Color",
+			"label": "Primary Color"
+		},
+		{
+			"fieldname": "color_secondary",
+			"fieldtype": "Color",
+			"label": "Secondary Color"
+		},
+		{
+			"fieldname": "column_break_colors2",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "color_accent",
+			"fieldtype": "Color",
+			"label": "Accent Color"
+		},
+		{
+			"fieldname": "section_break_content",
+			"fieldtype": "Section Break",
+			"label": "Header & Footer"
+		},
+		{
+			"fieldname": "header_text",
+			"fieldtype": "Small Text",
+			"label": "Header Text"
+		},
+		{
+			"fieldname": "footer_text",
+			"fieldtype": "Small Text",
+			"label": "Footer Text"
+		},
+		{
+			"fieldname": "section_break_advanced",
+			"fieldtype": "Section Break",
+			"label": "Advanced",
+			"collapsible": 1
+		},
+		{
+			"fieldname": "custom_css",
+			"fieldtype": "Code",
+			"label": "Custom CSS",
+			"options": "CSS"
+		}
+	],
+	"links": [],
+	"modified": "2026-03-26 10:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "Pos Next",
+	"name": "Menu Design Template",
+	"naming_rule": "By fieldname",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"read": 1,
+			"role": "Sales Manager",
+			"write": 1
+		},
+		{
+			"read": 1,
+			"role": "POSNext Cashier"
+		}
+	],
+	"sort_field": "template_name",
+	"sort_order": "ASC",
+	"states": [],
+	"track_changes": 0
+}

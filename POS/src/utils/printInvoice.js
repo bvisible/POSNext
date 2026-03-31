@@ -50,7 +50,11 @@ async function resolvePrintSettings(posProfile, printFormat, letterhead) {
  * The page includes trigger_print=1 so the OS print dialog appears automatically.
  * Falls back to the hardcoded receipt template if the popup is blocked.
  */
-export async function printInvoice(invoiceData, printFormat = null, letterhead = null) {
+export async function printInvoice(
+	invoiceData,
+	printFormat = null,
+	letterhead = null,
+) {
 	try {
 		if (!invoiceData?.name) throw new Error("Invalid invoice data")
 
@@ -68,7 +72,11 @@ export async function printInvoice(invoiceData, printFormat = null, letterhead =
 		})
 		if (letterhead) params.append("letterhead", letterhead)
 
-		const printWindow = window.open(`/printview?${params}`, "_blank", "width=800,height=600")
+		const printWindow = window.open(
+			`/printview?${params}`,
+			"_blank",
+			"width=800,height=600",
+		)
 		if (!printWindow) {
 			throw new Error("Popup blocked — check your browser settings.")
 		}
@@ -83,13 +91,21 @@ export async function printInvoice(invoiceData, printFormat = null, letterhead =
  * Fetch an invoice by name, resolve its POS Profile print settings,
  * then open the browser print window.
  */
-export async function printInvoiceByName(invoiceName, printFormat = null, letterhead = null) {
+export async function printInvoiceByName(
+	invoiceName,
+	printFormat = null,
+	letterhead = null,
+) {
 	const invoiceDoc = await call("pos_next.api.invoices.get_invoice", {
 		invoice_name: invoiceName,
 	})
 	if (!invoiceDoc) throw new Error("Invoice not found")
 
-	const settings = await resolvePrintSettings(invoiceDoc.pos_profile, printFormat, letterhead)
+	const settings = await resolvePrintSettings(
+		invoiceDoc.pos_profile,
+		printFormat,
+		letterhead,
+	)
 	return printInvoice(invoiceDoc, settings.printFormat, settings.letterhead)
 }
 
@@ -143,7 +159,10 @@ export async function printWithSilentFallback(invoiceData, printFormat = null) {
 		await silentPrintInvoice(invoiceName, printFormat)
 		return { method: "silent", success: true }
 	} catch (err) {
-		log.warn("Silent print failed, falling back to browser:", err?.message || err)
+		log.warn(
+			"Silent print failed, falling back to browser:",
+			err?.message || err,
+		)
 	}
 
 	try {
@@ -223,15 +242,17 @@ export function printInvoiceCustom(invoiceData) {
 					<div><span>${__("Invoice #:")}</span><span><strong>${invoiceData.name}</strong></span></div>
 					<div><span>${__("Date:")}</span><span>${new Date(invoiceData.posting_date || Date.now()).toLocaleString()}</span></div>
 					${invoiceData.customer_name ? `<div><span>${__("Customer:")}</span><span>${invoiceData.customer_name}</span></div>` : ""}
-					${(invoiceData.status === "Partly Paid" || (invoiceData.outstanding_amount && invoiceData.outstanding_amount > 0 && invoiceData.outstanding_amount < invoiceData.grand_total)) ? `<div class="partial-status"><span>${__("Status:")}</span><span>${__("PARTIAL PAYMENT")}</span></div>` : ""}
+					${invoiceData.status === "Partly Paid" || (invoiceData.outstanding_amount && invoiceData.outstanding_amount > 0 && invoiceData.outstanding_amount < invoiceData.grand_total) ? `<div class="partial-status"><span>${__("Status:")}</span><span>${__("PARTIAL PAYMENT")}</span></div>` : ""}
 				</div>
 
 				<div class="items-table">
 					${invoiceData.items
 						.map((item) => {
 							const hasDiscount =
-								(item.discount_percentage && Number.parseFloat(item.discount_percentage) > 0) ||
-								(item.discount_amount && Number.parseFloat(item.discount_amount) > 0)
+								(item.discount_percentage &&
+									Number.parseFloat(item.discount_percentage) > 0) ||
+								(item.discount_amount &&
+									Number.parseFloat(item.discount_amount) > 0)
 							const isFree = item.is_free_item
 							const qty = item.quantity || item.qty
 							const displayRate = item.price_list_rate || item.rate
@@ -256,11 +277,11 @@ export function printInvoiceCustom(invoiceData) {
 						invoiceData.total_taxes_and_charges > 0
 							? `
 					<div class="total-row">
-						<span>${__('Subtotal:')}</span>
+						<span>${__("Subtotal:")}</span>
 						<span>${formatCurrency((invoiceData.grand_total || 0) - (invoiceData.total_taxes_and_charges || 0))}</span>
 					</div>
 					<div class="total-row">
-						<span>${__('Tax:')}</span>
+						<span>${__("Tax:")}</span>
 						<span>${formatCurrency(invoiceData.total_taxes_and_charges)}</span>
 					</div>
 					`
@@ -278,19 +299,23 @@ export function printInvoiceCustom(invoiceData) {
 							: ""
 					}
 					<div class="total-row grand-total">
-						<span>${__('TOTAL:')}</span>
+						<span>${__("TOTAL:")}</span>
 						<span>${formatCurrency(invoiceData.grand_total)}</span>
 					</div>
 				</div>
 
-				${invoiceData.payments && invoiceData.payments.length > 0 ? `
+				${
+					invoiceData.payments && invoiceData.payments.length > 0
+						? `
 				<div class="payments">
 					<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px;">${__("Payments:")}</div>
 					${invoiceData.payments.map((p) => `<div class="payment-row"><span>${p.mode_of_payment}:</span><span>${formatCurrency(p.amount)}</span></div>`).join("")}
 					<div class="payment-row total-paid"><span>${__("Total Paid:")}</span><span>${formatCurrency(invoiceData.paid_amount || 0)}</span></div>
 					${invoiceData.change_amount && invoiceData.change_amount > 0 ? `<div class="payment-row" style="font-weight: bold; margin-top: 5px;"><span>${__("Change:")}</span><span>${formatCurrency(invoiceData.change_amount)}</span></div>` : ""}
 					${invoiceData.outstanding_amount && invoiceData.outstanding_amount > 0 ? `<div class="outstanding-row"><span>${__("BALANCE DUE:")}</span><span>${formatCurrency(invoiceData.outstanding_amount)}</span></div>` : ""}
-				</div>` : ""}
+				</div>`
+						: ""
+				}
 
 				<div class="footer">
 					<div style="margin-bottom: 5px;">${__("Thank you for your business!")}</div>
@@ -300,6 +325,131 @@ export function printInvoiceCustom(invoiceData) {
 
 			<div class="no-print" style="text-align: center; margin-top: 20px;">
 				<button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">${__("Print Receipt")}</button>
+				<button onclick="window.close()" style="padding: 10px 20px; font-size: 14px; cursor: pointer; margin-left: 10px;">${__("Close")}</button>
+			</div>
+		</body>
+		</html>`
+
+	printWindow.document.write(printContent)
+	printWindow.document.close()
+	printWindow.onload = () => {
+		setTimeout(() => printWindow.print(), 250)
+	}
+}
+
+// ============================================================================
+// Provisional ticket (restaurant mode — pre-payment table summary)
+// ============================================================================
+
+/**
+ * Print a provisional ticket for a restaurant table before payment.
+ * Uses the same 80mm thermal receipt layout as printInvoiceCustom.
+ */
+export function printProvisionalTicket(ticketData) {
+	const printWindow = window.open("", "_blank", "width=350,height=600")
+
+	const printContent = `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="UTF-8">
+			<title>${__("Provisional Ticket")} - ${ticketData.tableName}</title>
+			<style>
+				* { margin: 0; padding: 0; box-sizing: border-box; }
+				body {
+					font-family: 'Courier New', monospace;
+					padding: 10px; width: 80mm; margin: 0; max-width: 80mm;
+					font-weight: bold; color: black;
+				}
+				.receipt { width: 100%; }
+				.header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #000; padding-bottom: 10px; }
+				.company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+				.invoice-info { margin-bottom: 15px; font-size: 12px; }
+				.invoice-info div { display: flex; justify-content: space-between; margin-bottom: 3px; }
+				.items-table { width: 100%; margin-bottom: 15px; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 10px 0; }
+				.item-row { margin-bottom: 10px; font-size: 12px; }
+				.item-name { font-weight: bold; margin-bottom: 3px; }
+				.item-details { display: flex; justify-content: space-between; font-size: 11px; }
+				.item-discount { display: flex; justify-content: space-between; font-size: 10px; margin-top: 2px; }
+				.totals { margin-top: 15px; border-top: 1px dashed #000; padding-top: 10px; }
+				.total-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+				.grand-total { font-size: 16px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; }
+				.footer { text-align: center; margin-top: 20px; padding-top: 10px; border-top: 2px dashed #000; font-size: 11px; }
+				.not-receipt { text-align: center; font-size: 13px; font-weight: bold; margin-top: 15px; padding: 8px; border: 2px solid #000; }
+				@media print {
+					@page { size: 80mm auto; margin: 0; }
+					body { width: 80mm; padding: 5mm; margin: 0; }
+					.no-print { display: none; }
+				}
+			</style>
+		</head>
+		<body>
+			<div class="receipt">
+				<div class="header">
+					<div class="company-name">${ticketData.company || "POS Next"}</div>
+					<div style="font-size: 14px; font-weight: bold; margin-top: 5px; padding: 4px 8px; border: 2px solid #000; display: inline-block;">${__("PROVISIONAL TICKET")}</div>
+					<div style="font-size: 11px; margin-top: 5px;">${__("Not yet collected")}</div>
+				</div>
+
+				<div class="invoice-info">
+					<div><span>${__("Table:")}</span><span><strong>${ticketData.tableName}</strong></span></div>
+					<div><span>${__("Date:")}</span><span>${new Date().toLocaleString()}</span></div>
+					${ticketData.customer_name ? `<div><span>${__("Customer:")}</span><span>${ticketData.customer_name}</span></div>` : ""}
+				</div>
+
+				<div class="items-table">
+					${ticketData.items
+						.map((item) => {
+							const hasDiscount =
+								(item.discount_percentage &&
+									Number.parseFloat(item.discount_percentage) > 0) ||
+								(item.discount_amount &&
+									Number.parseFloat(item.discount_amount) > 0)
+							const isFree = item.is_free_item
+							const qty = item.quantity || item.qty
+							const displayRate = item.price_list_rate || item.rate
+							const subtotal = qty * displayRate
+							return `
+						<div class="item-row">
+							<div class="item-name">${item.item_name || item.item_code} ${isFree ? __("(FREE)") : ""}</div>
+							<div class="item-details">
+								<span>${qty} × ${formatCurrency(displayRate)}</span>
+								<span><strong>${formatCurrency(subtotal)}</strong></span>
+							</div>
+							${hasDiscount ? `<div class="item-discount"><span>Discount ${item.discount_percentage ? `(${Number(item.discount_percentage).toFixed(2)}%)` : ""}</span><span>-${formatCurrency(item.discount_amount || 0)}</span></div>` : ""}
+						</div>`
+						})
+						.join("")}
+				</div>
+
+				<div class="totals">
+					${
+						ticketData.total_taxes_and_charges &&
+						ticketData.total_taxes_and_charges > 0
+							? `
+					<div class="total-row">
+						<span>${__("Subtotal:")}</span>
+						<span>${formatCurrency((ticketData.grand_total || 0) - (ticketData.total_taxes_and_charges || 0))}</span>
+					</div>
+					<div class="total-row">
+						<span>${__("Tax:")}</span>
+						<span>${formatCurrency(ticketData.total_taxes_and_charges)}</span>
+					</div>
+					`
+							: ""
+					}
+					<div class="total-row grand-total">
+						<span>${__("TOTAL:")}</span>
+						<span>${formatCurrency(ticketData.grand_total)}</span>
+					</div>
+				</div>
+
+				<div class="not-receipt">${__("NOT COLLECTED - PROVISIONAL TICKET")}</div>
+
+			</div>
+
+			<div class="no-print" style="text-align: center; margin-top: 20px;">
+				<button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">${__("Print")}</button>
 				<button onclick="window.close()" style="padding: 10px 20px; font-size: 14px; cursor: pointer; margin-left: 10px;">${__("Close")}</button>
 			</div>
 		</body>

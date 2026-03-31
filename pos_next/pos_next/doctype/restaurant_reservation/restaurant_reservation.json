@@ -1,0 +1,223 @@
+{
+ "actions": [],
+ "autoname": "RES-.YYYY.-.#####",
+ "creation": "2026-03-29 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_reservation",
+  "status",
+  "channel",
+  "column_break_1",
+  "reservation_date",
+  "reservation_time",
+  "duration",
+  "end_time",
+  "section_guest",
+  "no_of_guests",
+  "guest_name",
+  "column_break_2",
+  "phone",
+  "email",
+  "customer",
+  "section_tables",
+  "tables",
+  "section_notes",
+  "notes",
+  "section_internal",
+  "verification_token",
+  "verified",
+  "reminder_sent"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_reservation",
+   "fieldtype": "Section Break",
+   "label": "Reservation"
+  },
+  {
+   "default": "Confirmed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending\nConfirmed\nSeated\nCompleted\nCancelled\nNo Show",
+   "reqd": 1
+  },
+  {
+   "default": "Phone",
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "Phone\nWalk-in\nInternet"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reservation_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reservation_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Duration",
+   "label": "Duration"
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "End Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_guest",
+   "fieldtype": "Section Break",
+   "label": "Guest Information"
+  },
+  {
+   "fieldname": "no_of_guests",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Guests",
+   "reqd": 1
+  },
+  {
+   "fieldname": "guest_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_global_search": 1,
+   "label": "Guest Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "section_tables",
+   "fieldtype": "Section Break",
+   "label": "Tables"
+  },
+  {
+   "fieldname": "tables",
+   "fieldtype": "Table",
+   "label": "Tables",
+   "options": "Restaurant Reservation Table"
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "section_internal",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Internal"
+  },
+  {
+   "fieldname": "verification_token",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Verification Token"
+  },
+  {
+   "default": "0",
+   "fieldname": "verified",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Verified"
+  },
+  {
+   "default": "0",
+   "fieldname": "reminder_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Reminder Sent"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-29 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Reservation",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "POSNext Cashier",
+   "write": 1
+  }
+ ],
+ "search_fields": "guest_name,phone,email,status",
+ "sort_field": "reservation_date",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

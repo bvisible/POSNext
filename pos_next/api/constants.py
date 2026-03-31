@@ -49,6 +49,11 @@ POS_SETTINGS_FIELDS = [
 	"enable_session_lock",
 	"session_lock_timeout",
 	"show_variants_as_items",
+	# Restaurant Settings
+	"enable_restaurant_mode",
+	"default_restaurant_area",
+	# Cash Management
+	"closing_withdrawal_template",
 ]
 
 # Default POS Settings values
@@ -88,4 +93,9 @@ DEFAULT_POS_SETTINGS = {
 	"enable_session_lock": 0,
 	"session_lock_timeout": 5,
 	"show_variants_as_items": 0,
+	# Restaurant Settings
+	"enable_restaurant_mode": 0,
+	"default_restaurant_area": "",
+	# Cash Management
+	"closing_withdrawal_template": "",
 }

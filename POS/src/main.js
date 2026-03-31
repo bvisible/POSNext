@@ -205,7 +205,10 @@ async function initializeApp() {
 						window.frappe.realtime = initSocket(siteName)
 
 						// Ensure connection is established
-						if (window.frappe.realtime && typeof window.frappe.realtime.connect === "function") {
+						if (
+							window.frappe.realtime &&
+							typeof window.frappe.realtime.connect === "function"
+						) {
 							window.frappe.realtime.connect()
 							log.info("Socket initialized and connecting...", { siteName })
 						}
@@ -214,7 +217,7 @@ async function initializeApp() {
 					log.debug("Bootstrap preload failed (non-critical)", error)
 				}
 			})
-			.catch(() => { })
+			.catch(() => {})
 	}
 
 	// -------------------------------------------------------------------------

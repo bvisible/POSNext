@@ -262,28 +262,44 @@
 				<Button variant="subtle" @click="show = false">
 					{{ __('Close') }}
 				</Button>
-				<Button @click="handlePrint">
-					<template #prefix>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-						</svg>
-					</template>
-					{{ __('Print') }}
-				</Button>
+				<div class="flex gap-2">
+					<Button variant="outline" @click="showEmailDialog = true">
+						<template #prefix>
+							<FeatherIcon name="mail" class="w-4 h-4" />
+						</template>
+						{{ __('Email') }}
+					</Button>
+					<Button @click="handlePrint">
+						<template #prefix>
+							<FeatherIcon name="printer" class="w-4 h-4" />
+						</template>
+						{{ __('Print') }}
+					</Button>
+				</div>
 			</div>
 		</template>
 	</Dialog>
+
+	<!-- Email Invoice Dialog -->
+	<EmailInvoiceDialog
+		v-model="showEmailDialog"
+		:invoice-name="invoiceName"
+	/>
 </template>
 
 <script setup>
 import { useFormatters } from "@/composables/useFormatters"
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import {
+	DEFAULT_CURRENCY,
+	formatCurrency as formatCurrencyUtil,
+} from "@/utils/currency"
 import { getInvoiceStatusColor } from "@/utils/invoice"
 import { logger } from "@/utils/logger"
-import { Button, Dialog, call } from "frappe-ui"
+import { Button, Dialog, FeatherIcon, call } from "frappe-ui"
+import EmailInvoiceDialog from "@/components/sale/EmailInvoiceDialog.vue"
 import { ref, watch, nextTick, computed } from "vue"
 
-const log = logger.create('InvoiceDetailDialog')
+const log = logger.create("InvoiceDetailDialog")
 const { formatDate, formatTime } = useFormatters()
 
 const props = defineProps({
@@ -305,23 +321,37 @@ const emit = defineEmits(["update:modelValue", "print-invoice"])
 const show = ref(props.modelValue)
 const loading = ref(false)
 const invoiceData = ref(null)
+const showEmailDialog = ref(false)
 
 // Computed: Check if this is a credit sale (Pay on Account - no payments, full outstanding)
 const isCreditSale = computed(() => {
 	if (!invoiceData.value) return false
-	const hasNoPayments = !invoiceData.value.payments || invoiceData.value.payments.length === 0
-	const totalPaid = invoiceData.value.payments?.reduce((sum, p) => sum + Math.abs(p.amount || 0), 0) || 0
+	const hasNoPayments =
+		!invoiceData.value.payments || invoiceData.value.payments.length === 0
+	const totalPaid =
+		invoiceData.value.payments?.reduce(
+			(sum, p) => sum + Math.abs(p.amount || 0),
+			0,
+		) || 0
 	const grandTotal = Math.abs(invoiceData.value.grand_total || 0)
 	const outstanding = Math.abs(invoiceData.value.outstanding_amount || 0)
 	// Credit sale if no payments and outstanding equals grand total
-	return hasNoPayments || (totalPaid < 0.01 && Math.abs(outstanding - grandTotal) < 0.01)
+	return (
+		hasNoPayments ||
+		(totalPaid < 0.01 && Math.abs(outstanding - grandTotal) < 0.01)
+	)
 })
 
 // Computed: Check if this return was added to customer credit (no payments, negative outstanding)
 const isAddedToCustomerCredit = computed(() => {
 	if (!invoiceData.value || !invoiceData.value.is_return) return false
-	const hasNoPayments = !invoiceData.value.payments || invoiceData.value.payments.length === 0
-	const totalPaid = invoiceData.value.payments?.reduce((sum, p) => sum + Math.abs(p.amount || 0), 0) || 0
+	const hasNoPayments =
+		!invoiceData.value.payments || invoiceData.value.payments.length === 0
+	const totalPaid =
+		invoiceData.value.payments?.reduce(
+			(sum, p) => sum + Math.abs(p.amount || 0),
+			0,
+		) || 0
 	const hasNegativeOutstanding = (invoiceData.value.outstanding_amount || 0) < 0
 	// Added to customer credit if no payments AND outstanding is negative
 	return (hasNoPayments || totalPaid < 0.01) && hasNegativeOutstanding
@@ -330,7 +360,11 @@ const isAddedToCustomerCredit = computed(() => {
 // Computed: Check if this return was a cash refund (has payments)
 const isCashRefund = computed(() => {
 	if (!invoiceData.value || !invoiceData.value.is_return) return false
-	const totalPaid = invoiceData.value.payments?.reduce((sum, p) => sum + Math.abs(p.amount || 0), 0) || 0
+	const totalPaid =
+		invoiceData.value.payments?.reduce(
+			(sum, p) => sum + Math.abs(p.amount || 0),
+			0,
+		) || 0
 	// Cash refund if payments were made (refund given)
 	return totalPaid >= 0.01
 })
@@ -353,11 +387,13 @@ watch(show, async (val) => {
 	} else {
 		// Ensure dialog appears above other dialogs
 		await nextTick()
-		const dialogs = document.querySelectorAll('.modal-container, .modal-backdrop')
-		dialogs.forEach(dialog => {
+		const dialogs = document.querySelectorAll(
+			".modal-container, .modal-backdrop",
+		)
+		dialogs.forEach((dialog) => {
 			const title = dialog.querySelector('[class*="title"]')
-			if (title && title.textContent?.includes('Invoice Details')) {
-				dialog.style.zIndex = '400'
+			if (title && title.textContent?.includes("Invoice Details")) {
+				dialog.style.zIndex = "400"
 			}
 		})
 	}

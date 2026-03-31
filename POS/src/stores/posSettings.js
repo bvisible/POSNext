@@ -2,6 +2,7 @@ import { createResource } from "frappe-ui"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { useBootstrapStore } from "./bootstrap"
+import { call } from "@/utils/apiWrapper"
 
 export const usePOSSettingsStore = defineStore("posSettings", () => {
 	// State
@@ -69,9 +70,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		enable_customer_display: 0,
 		enable_customer_display_account_creation: 0,
 		customer_display_show_address_fields: 0,
+		// Restaurant Settings
+		enable_restaurant_mode: 0,
+		default_restaurant_area: "",
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
+		// Cash Management
+		closing_withdrawal_template: "",
 	})
 
 	const isLoading = ref(false)
@@ -81,12 +87,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const enableLoyaltyProgram = computed(() =>
 		Boolean(settings.value.enable_loyalty_program),
 	)
-	const defaultLoyaltyProgram = computed(() =>
-		settings.value.default_loyalty_program || "",
+	const defaultLoyaltyProgram = computed(
+		() => settings.value.default_loyalty_program || "",
 	)
-	const walletAccount = computed(() =>
-		settings.value.wallet_account || "",
-	)
+	const walletAccount = computed(() => settings.value.wallet_account || "")
 	const autoCreateWallet = computed(() =>
 		Boolean(settings.value.auto_create_wallet),
 	)
@@ -226,28 +230,36 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	)
 
 	// Computed - Sales Persons
-	const enableSalesPersons = computed(() =>
-		settings.value.enable_sales_persons !== "Disabled"
+	const enableSalesPersons = computed(
+		() => settings.value.enable_sales_persons !== "Disabled",
 	)
-	const salesPersonsMode = computed(() =>
-		settings.value.enable_sales_persons || "Disabled"
+	const salesPersonsMode = computed(
+		() => settings.value.enable_sales_persons || "Disabled",
 	)
-	const isSingleSalesPerson = computed(() =>
-		settings.value.enable_sales_persons === "Single"
+	const isSingleSalesPerson = computed(
+		() => settings.value.enable_sales_persons === "Single",
 	)
-	const isMultipleSalesPersons = computed(() =>
-		settings.value.enable_sales_persons === "Multiple"
+	const isMultipleSalesPersons = computed(
+		() => settings.value.enable_sales_persons === "Multiple",
+	)
+
+	// Computed - Restaurant Settings
+	const enableRestaurantMode = computed(() =>
+		Boolean(settings.value.enable_restaurant_mode),
+	)
+	const defaultRestaurantArea = computed(
+		() => settings.value.default_restaurant_area || "",
 	)
 
 	// Computed - Customer Display Settings
 	const enableCustomerDisplay = computed(() =>
-		Boolean(settings.value.enable_customer_display)
+		Boolean(settings.value.enable_customer_display),
 	)
 	const enableCustomerDisplayAccountCreation = computed(() =>
-		Boolean(settings.value.enable_customer_display_account_creation)
+		Boolean(settings.value.enable_customer_display_account_creation),
 	)
 	const showAddressFieldsInCustomerForm = computed(() =>
-		Boolean(settings.value.customer_display_show_address_fields)
+		Boolean(settings.value.customer_display_show_address_fields),
 	)
 
 	// Computed - Security
@@ -258,12 +270,19 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		() => Number.parseInt(settings.value.session_lock_timeout) || 5,
 	)
 
+	// Computed - Cash Management
+	const closingWithdrawalTemplate = computed(
+		() => settings.value.closing_withdrawal_template || "",
+	)
+
 	// Resource
 	const settingsResource = createResource({
 		url: "pos_next.pos_next.doctype.pos_settings.pos_settings.get_pos_settings",
 		onSuccess(data) {
 			if (data) {
 				Object.assign(settings.value, data)
+				// Restore restaurant mode from localStorage (overrides DB value)
+				initRestaurantMode()
 				isLoaded.value = true
 			}
 			isLoading.value = false
@@ -288,6 +307,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			const preloadedSettings = bootstrapStore.getPreloadedPOSSettings()
 			if (preloadedSettings && Object.keys(preloadedSettings).length > 0) {
 				Object.assign(settings.value, preloadedSettings)
+				initRestaurantMode()
 				isLoaded.value = true
 				isLoading.value = false
 				return true
@@ -299,6 +319,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Fallback to API call
 		try {
 			await settingsResource.submit({ pos_profile: posProfile })
+			initRestaurantMode()
 			return true
 		} catch {
 			return false
@@ -361,9 +382,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			enable_customer_display: 0,
 			enable_customer_display_account_creation: 0,
 			customer_display_show_address_fields: 0,
+			// Restaurant Settings
+			enable_restaurant_mode: 0,
+			default_restaurant_area: "",
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
+			// Cash Management
+			closing_withdrawal_template: "",
 		}
 		isLoaded.value = false
 	}
@@ -415,6 +441,35 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			return true
 		} catch {
 			return false
+		}
+	}
+
+	/**
+	 * Toggle restaurant mode on and off
+	 * Persists the change to the API
+	 */
+	async function toggleRestaurantMode() {
+		const newValue = settings.value.enable_restaurant_mode ? 0 : 1
+
+		// Update locally for instant UI feedback
+		settings.value = { ...settings.value, enable_restaurant_mode: newValue }
+
+		// Save to localStorage for instant restore on page reload
+		localStorage.setItem("pos_next_restaurant_mode", newValue.toString())
+
+		return true
+	}
+
+	/**
+	 * Initialize restaurant mode from localStorage, falling back to POS Settings default
+	 */
+	function initRestaurantMode() {
+		const stored = localStorage.getItem("pos_next_restaurant_mode")
+		if (stored !== null) {
+			const val = Number.parseInt(stored)
+			if (val !== settings.value.enable_restaurant_mode) {
+				settings.value = { ...settings.value, enable_restaurant_mode: val }
+			}
 		}
 	}
 
@@ -496,6 +551,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
 
+		// Computed - Restaurant Settings
+		enableRestaurantMode,
+		defaultRestaurantArea,
+
 		// Computed - Customer Display Settings
 		enableCustomerDisplay,
 		enableCustomerDisplayAccountCreation,
@@ -505,6 +564,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		enableSessionLock,
 		sessionLockTimeout,
 
+		// Computed - Cash Management
+		closingWithdrawalTemplate,
+
 		// Actions
 		loadSettings,
 		reloadSettings,
@@ -512,5 +574,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		validateDiscount,
 		isNegativeStockAllowed,
 		shouldEnforceStockValidation,
+		toggleRestaurantMode,
+		initRestaurantMode,
 	}
 })

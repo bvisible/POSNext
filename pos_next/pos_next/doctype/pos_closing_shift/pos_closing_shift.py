@@ -82,6 +82,8 @@ class POSClosingShift(Document):
         opening_entry.save()
         # link invoices with this closing shift so ERPNext can block edits
         self._set_closing_entry_invoices()
+        # Create withdrawal journal entry if amount > 0
+        self._create_withdrawal_journal_entry()
 
     def on_cancel(self):
         if frappe.db.exists("POS Opening Shift", self.pos_opening_shift):
@@ -92,6 +94,8 @@ class POSClosingShift(Document):
                 opening_entry.save()
         # remove links from invoices so they can be cancelled
         self._clear_closing_entry_invoices()
+        # Cancel withdrawal journal entry if one was created
+        self._cancel_withdrawal_journal_entry()
 
     def _set_closing_entry_invoices(self):
         """Set `pos_closing_entry` on linked invoices."""
@@ -167,6 +171,85 @@ class POSClosingShift(Document):
             )
         )
 
+    def _create_withdrawal_journal_entry(self):
+        """Create a Journal Entry for cash withdrawal at shift closing."""
+        withdrawal = flt(self.cash_withdrawal_amount)
+        if withdrawal <= 0:
+            return
+
+        # Get withdrawal template from POS Settings
+        template_name = frappe.db.get_value(
+            "POS Settings",
+            {"pos_profile": self.pos_profile, "enabled": 1},
+            "closing_withdrawal_template",
+        )
+        if not template_name:
+            return
+
+        from pos_next.api.cash_entry import _get_cash_mode, _get_cash_account
+
+        template = frappe.get_doc("Journal Entry Template", template_name)
+        cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
+        cash_mode = _get_cash_mode(self.pos_profile)
+        cash_account = _get_cash_account(cash_mode, self.company)
+
+        # Resolve accounts from template (same pattern as cash_entry.py)
+        totalization_accounts = template.get("accounting_entry_totalization", [])
+        counterparty_accounts = template.get("accounting_entry_counterparty", [])
+
+        if totalization_accounts and counterparty_accounts:
+            source_account = totalization_accounts[0].account
+            dest_account = counterparty_accounts[0].account
+        elif template.accounts:
+            source_account = cash_account
+            dest_account = template.accounts[0].account
+        else:
+            frappe.throw(_("Withdrawal template has no accounts configured"))
+
+        template_label = template.template_title or template.name
+        user_remark = f"POS Cash Withdrawal|{self.name}|{withdrawal}|{template_label}"
+
+        jv = frappe.get_doc({
+            "doctype": "Journal Entry",
+            "voucher_type": template.voucher_type or "Journal Entry",
+            "posting_date": self.posting_date,
+            "company": self.company,
+            "user_remark": user_remark,
+        })
+
+        # Debit transit (dest), credit cash (source)
+        jv.append("accounts", {
+            "account": dest_account,
+            "debit_in_account_currency": withdrawal,
+            "credit_in_account_currency": 0,
+            "cost_center": cost_center,
+        })
+        jv.append("accounts", {
+            "account": source_account,
+            "debit_in_account_currency": 0,
+            "credit_in_account_currency": withdrawal,
+            "cost_center": cost_center,
+        })
+
+        jv.flags.ignore_permissions = True
+        jv.save()
+        jv.submit()
+
+    def _cancel_withdrawal_journal_entry(self):
+        """Cancel the withdrawal Journal Entry created at shift closing."""
+        entries = frappe.get_all(
+            "Journal Entry",
+            filters={
+                "docstatus": 1,
+                "user_remark": ["like", f"POS Cash Withdrawal|{self.name}|%"],
+            },
+            pluck="name",
+        )
+        for entry_name in entries:
+            jv = frappe.get_doc("Journal Entry", entry_name)
+            jv.flags.ignore_permissions = True
+            jv.cancel()
+
     def delete_draft_invoices(self):
         if frappe.get_value("POS Profile", self.pos_profile, "posa_allow_delete"):
             doctype = "Sales Invoice"
@@ -208,12 +291,7 @@ class POSClosingShift(Document):
             if currency:
                 row["currencies"][currency] += flt(amount)
 
-        cash_mode_of_payment = (
-            frappe.db.get_value(
-                "POS Profile", self.pos_profile, "posa_cash_mode_of_payment"
-            )
-            or "Cash"
-        )
+        cash_mode_of_payment = _get_cash_mode_of_payment(self.pos_profile)
 
         for row in self.get("pos_transactions", []):
             invoice = row.get("sales_invoice") or row.get("pos_invoice")
@@ -409,9 +487,25 @@ def get_payments_entries(pos_opening_shift):
 
 
 def _get_cash_mode_of_payment(pos_profile):
-    """Get the cash mode of payment for a POS profile."""
+    """Get the cash mode of payment for a POS profile.
+
+    Returns the configured posa_cash_mode_of_payment, or auto-detects the
+    first cash-type mode from the profile's payment methods.
+    """
     cash_mode = frappe.get_value("POS Profile", pos_profile, "posa_cash_mode_of_payment")
-    return cash_mode or "Cash"
+    if cash_mode:
+        return cash_mode
+    # Fallback: find cash-type mode from POS Profile payment methods
+    profile_payments = frappe.get_all(
+        "POS Payment Method",
+        filters={"parent": pos_profile},
+        fields=["mode_of_payment"],
+    )
+    for pm in profile_payments:
+        mode_type = frappe.db.get_value("Mode of Payment", pm.mode_of_payment, "type")
+        if mode_type == "Cash":
+            return pm.mode_of_payment
+    return "Cash"
 
 
 def _aggregate_payment(payments, mode_of_payment, amount, opening_amount=0):
@@ -440,7 +534,7 @@ def _aggregate_tax(taxes, account_head, rate, amount):
     }))
 
 
-def _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary):
+def _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode=None):
     """Process a single invoice and update aggregates."""
     conversion_rate = invoice.get("conversion_rate")
     is_return = invoice.get("is_return", 0)
@@ -508,6 +602,8 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
             mode = cash_mode
 
         _aggregate_payment(payments, mode, amount)
+        if sales_by_mode is not None:
+            sales_by_mode[mode] = sales_by_mode.get(mode, 0) + amount
 
     # Subtract change_amount once from the cash mode.  change_amount is an
     # invoice-level field — the customer overpaid and received change back,
@@ -517,6 +613,8 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
     base_change = get_base_value(invoice, "change_amount", "base_change_amount", conversion_rate)
     if base_change:
         _aggregate_payment(payments, cash_mode, -base_change)
+        if sales_by_mode is not None:
+            sales_by_mode[cash_mode] = sales_by_mode.get(cash_mode, 0) - base_change
 
     return transaction
 
@@ -547,6 +645,7 @@ def make_closing_shift_from_opening(opening_shift):
     payments = []
     taxes = []
     pos_transactions = []
+    sales_by_mode = {}
 
     # Summary for tracking totals
     summary = {
@@ -567,7 +666,7 @@ def make_closing_shift_from_opening(opening_shift):
     # Process invoices
     invoices = get_pos_invoices(opening_shift.get("name"), doctype)
     for invoice in invoices:
-        txn = _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary)
+        txn = _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode)
         pos_transactions.append(txn)
 
     # Process payment entries
@@ -582,6 +681,19 @@ def make_closing_shift_from_opening(opening_shift):
         }))
         amount = get_base_value(py, "paid_amount", "base_paid_amount")
         _aggregate_payment(payments, py.mode_of_payment, amount)
+
+    # Process cash in/out entries
+    from pos_next.api.cash_entry import get_cash_entries
+    cash_entries = get_cash_entries(opening_shift.get("name"))
+    cash_in_total = 0
+    cash_out_total = 0
+    for entry in cash_entries:
+        if entry["direction"] == "in":
+            _aggregate_payment(payments, cash_mode, flt(entry["amount"]))
+            cash_in_total += flt(entry["amount"])
+        elif entry["direction"] == "out":
+            _aggregate_payment(payments, cash_mode, -flt(entry["amount"]))
+            cash_out_total += flt(entry["amount"])
 
     # Update closing shift with totals
     closing_shift.grand_total = summary["grand_total"]
@@ -599,12 +711,51 @@ def make_closing_shift_from_opening(opening_shift):
 
     # Build response with display-only fields
     result = closing_shift.as_dict()
+    # Enrich payment entries with invoice reference for display
+    external_payments = []
+    for py in pos_payments_table:
+        pe_refs = frappe.get_all(
+            "Payment Entry Reference",
+            filters={"parent": py.get("payment_entry")},
+            fields=["reference_name"],
+            limit=1,
+        )
+        external_payments.append({
+            "payment_entry": py.get("payment_entry"),
+            "invoice": pe_refs[0].reference_name if pe_refs else "",
+            "customer": py.get("customer") or "",
+            "mode_of_payment": py.get("mode_of_payment") or "",
+            "amount": flt(py.get("paid_amount")),
+            "posting_date": py.get("posting_date"),
+        })
+
+    # Build sales breakdown by payment method (invoice payments only, no external)
+    sales_by_payment = [
+        {"mode_of_payment": mode, "amount": flt(amount, 2)}
+        for mode, amount in sorted(sales_by_mode.items(), key=lambda x: -x[1])
+        if flt(amount, 2) != 0
+    ]
+
+    # Get closing withdrawal template from POS Settings
+    closing_withdrawal_template = frappe.db.get_value(
+        "POS Settings",
+        {"pos_profile": opening_shift.get("pos_profile"), "enabled": 1},
+        "closing_withdrawal_template",
+    ) or ""
+
     result.update({
         "returns_total": summary["returns_total"],
         "returns_count": summary["returns_count"],
         "sales_total": summary["sales_total"],
         "sales_count": summary["sales_count"],
         "pos_transactions": pos_transactions,  # Include return info for display
+        "external_payments": external_payments,
+        "sales_by_payment": sales_by_payment,
+        "cash_entries": cash_entries,
+        "cash_in_total": cash_in_total,
+        "cash_out_total": cash_out_total,
+        "cash_mode_of_payment": cash_mode,
+        "closing_withdrawal_template": closing_withdrawal_template,
     })
 
     return result

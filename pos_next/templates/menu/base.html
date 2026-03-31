@@ -1,0 +1,486 @@
+{# Base template for PDF menu generation via WeasyPrint #}
+{# All theme templates extend this base and override blocks #}
+
+{%- macro render_price(item, currency, alignment) -%}
+	{%- if item.price and item.price > 0 -%}
+		<span class="item-price price-{{ alignment }}">
+			{%- if currency == "CHF" -%}
+				{{ "%.2f"|format(item.price) }}
+			{%- else -%}
+				{{ "%.2f"|format(item.price) }}&nbsp;{{ currency }}
+			{%- endif -%}
+		</span>
+	{%- elif item.price_text -%}
+		<span class="item-price item-price-text price-{{ alignment }}">{{ item.price_text }}</span>
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_badges(badges, site_url) -%}
+	{%- if badges and badges|length > 0 -%}
+		<span class="item-badges">
+			{%- for badge in badges -%}
+				<span class="badge" title="{{ badge.badge_name }}">
+					{%- if badge.icon_uri -%}
+						<img src="{{ badge.icon_uri }}" class="badge-icon" alt="" />
+					{%- endif -%}
+					<span class="badge-label">{{ badge.badge_name }}</span>
+					{%- if not loop.last %}<span class="badge-sep">&middot;</span>{% endif -%}
+				</span>
+			{%- endfor -%}
+		</span>
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_spice(level, chili_uri) -%}
+	{%- if level and level > 0 -%}
+		<span class="spice-level" title="{{ _('Spice level') }}: {{ level }}">
+			{%- for i in range(level) -%}
+				{%- if chili_uri -%}
+					<img src="{{ chili_uri }}" class="spice-icon" alt="🌶" />
+				{%- else -%}
+					&#x1F336;
+				{%- endif -%}
+			{%- endfor -%}
+		</span>
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro render_item(item, design, currency, site_url) -%}
+	<div class="menu-item">
+		{%- if design.show_images and item.image -%}
+			<div class="item-image-wrap">
+				<img src="{{ site_url }}{{ item.image }}" alt="{{ item.item_name }}" class="item-image" />
+			</div>
+		{%- endif -%}
+		<div class="item-content">
+			{%- if design.price_alignment == "dotted" -%}
+				<div class="item-dotted-row">
+					<span class="item-name">{{ item.item_name }}</span>
+					{{ render_spice(item.spice_level, chili_uri) }}
+					<span class="dotted-leader"></span>
+					{{ render_price(item, currency, "dotted") }}
+				</div>
+			{%- else -%}
+				<div class="item-header">
+					<span class="item-name">{{ item.item_name }}</span>
+					{{ render_spice(item.spice_level, chili_uri) }}
+					{{ render_price(item, currency, design.price_alignment) }}
+				</div>
+			{%- endif -%}
+			{%- if design.show_descriptions and item.description -%}
+				<div class="item-description">{{ item.description }}</div>
+			{%- endif -%}
+			<div class="item-meta">
+				{%- if design.show_allergens -%}
+					{{ render_badges(item.badges, site_url) }}
+				{%- endif -%}
+				{%- if design.show_options and item.product_options -%}
+					{%- set _selected_groups = design.selected_option_groups -%}
+					<div class="item-options">
+						{%- for opt_group in item.product_options -%}
+							{%- if not _selected_groups or opt_group.group_name in _selected_groups -%}
+							<span class="option-group">
+								<span class="option-label">{{ opt_group.group_name }}:</span>
+								{{ opt_group.options|join(", ") }}
+							</span>
+							{%- endif -%}
+						{%- endfor -%}
+					</div>
+				{%- endif -%}
+			</div>
+		</div>
+	</div>
+{%- endmacro -%}
+
+{%- macro render_category(category, design, currency, site_url, show_currency=false) -%}
+	<div class="menu-category">
+		<h2 class="category-title">
+			{{ category.label }}
+			{%- if show_currency and design.price_alignment != "inline" %}
+				<span class="category-currency">{{ currency }}</span>
+			{%- endif %}
+		</h2>
+		<div class="category-items">
+			{%- for item in category.menu_items -%}
+				{{ render_item(item, design, currency, site_url) }}
+			{%- endfor -%}
+		</div>
+	</div>
+{%- endmacro -%}
+
+{%- macro render_header(card, design, site_url, company_logo, company_name) -%}
+	{%- set logo_url = card.image or company_logo -%}
+	<header class="menu-header">
+		{%- if logo_url -%}
+			<div class="header-logo">
+				<img src="{{ site_url }}{{ logo_url }}" alt="{{ card.card_name }}" class="logo-image" />
+			</div>
+		{%- endif -%}
+		{%- if design.header_text -%}
+			<h1 class="header-title">{{ design.header_text }}</h1>
+		{%- elif company_name -%}
+			<h1 class="header-title">{{ company_name }}</h1>
+		{%- endif -%}
+		<div class="header-card-name">{{ card.card_name }}</div>
+		{%- if card.description -%}
+			<div class="header-description">{{ card.description }}</div>
+		{%- endif -%}
+	</header>
+{%- endmacro -%}
+
+{%- macro render_footer(design) -%}
+	{%- if design.footer_text -%}
+		<footer class="menu-footer">
+			<p class="footer-text">{{ design.footer_text }}</p>
+		</footer>
+	{%- endif -%}
+{%- endmacro -%}
+
+{# Determine page size from paper_format #}
+{%- set page_sizes = {
+	"A4 Portrait": "210mm 297mm",
+	"A4 Landscape": "297mm 210mm",
+	"A3 Portrait": "297mm 420mm",
+	"A3 Landscape": "420mm 297mm"
+} -%}
+{%- set page_size = page_sizes.get(design.paper_format, "210mm 297mm") -%}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<title>{{ card.card_name }}</title>
+	{# Load Google Fonts for preview (iframe can fetch web fonts) #}
+	{%- set _fh = (design.font_header or 'Montserrat') | replace(' ', '+') -%}
+	{%- set _fb = (design.font_body or 'Inter') | replace(' ', '+') -%}
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ _fh }}:wght@300;400;500;600;700&family={{ _fb }}:wght@300;400;500;600;700&display=swap" />
+	<style>
+		/* Print CSS reset for wkhtmltopdf compatibility */
+		*, *::before, *::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		/* Page setup — margins handled by wkhtmltopdf options, not CSS */
+		@page {
+			size: {{ page_size }};
+		}
+
+		/* Base typography */
+		body {
+			font-family: '{{ design.font_body }}', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+			color: {{ design.color_primary | default('#1a1a1a') }};
+			font-size: 10pt;
+			line-height: 1.5;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+
+		/* Preview margins (screen only — PDF uses @page margins) */
+		@media screen {
+			body {
+				padding: 20mm 20mm;
+				max-width: 210mm;
+				margin: 0 auto;
+			}
+		}
+
+		h1, h2, h3 {
+			font-family: '{{ design.font_header }}', 'Playfair Display', Georgia, serif;
+		}
+
+
+		/* Price formatting */
+		.item-price {
+			white-space: nowrap;
+		}
+
+		/* Prevent page breaks inside items and categories */
+		.menu-item {
+			page-break-inside: avoid;
+		}
+
+		.menu-category {
+			page-break-inside: avoid;
+		}
+
+		/* Orphans and widows */
+		p, .item-description {
+			orphans: 3;
+			widows: 3;
+		}
+
+		/* Column layout with table-based fallback for wkhtmltopdf */
+		.menu-body.columns-1 {
+			columns: 1;
+		}
+
+		.menu-body.columns-2 {
+			columns: 2;
+			column-gap: 8mm;
+		}
+
+		.menu-body.columns-3 {
+			columns: 3;
+			column-gap: 6mm;
+		}
+
+		/* Header */
+		.menu-header {
+			text-align: center;
+			margin-bottom: 8mm;
+		}
+
+		.header-logo {
+			margin-bottom: 4mm;
+		}
+
+		.logo-image {
+			max-height: 20mm;
+			max-width: 40mm;
+		}
+
+		.header-title {
+			font-size: 20pt;
+			margin-bottom: 2mm;
+		}
+
+		.header-card-name {
+			font-size: 14pt;
+			margin-bottom: 1mm;
+		}
+
+		.header-description {
+			font-size: 9pt;
+			color: {{ design.color_secondary | default('#666666') }};
+		}
+
+		/* Category */
+		.menu-category {
+			margin-bottom: 6mm;
+		}
+
+		.category-title {
+			font-size: 14pt;
+			margin-bottom: 3mm;
+			color: {{ design.color_accent | default('#8B4513') }};
+		}
+
+		.category-currency {
+			float: right;
+			font-size: 7pt;
+			font-weight: 400;
+			color: #bbbbbb;
+			letter-spacing: 1pt;
+			text-transform: uppercase;
+			padding-top: 2mm;
+		}
+
+		/* Item */
+		.menu-item {
+			margin-bottom: 3mm;
+		}
+
+		/* Item header — right-aligned price (default) */
+		.item-header {
+			display: table;
+			width: 100%;
+		}
+
+		.item-name {
+			font-weight: 600;
+			font-size: 10.5pt;
+		}
+
+		.item-price {
+			display: table-cell;
+			text-align: right;
+			padding-left: 2mm;
+			white-space: nowrap;
+		}
+
+		.item-price.price-right {
+			display: table-cell;
+			text-align: right;
+		}
+
+		/* Inline price — flows with item name, no table-cell */
+		.item-price.price-inline {
+			display: inline;
+			text-align: left;
+			padding-left: 2mm;
+			font-weight: 400;
+			color: {{ design.color_secondary | default('#666666') }};
+		}
+
+		/* Dotted leader row */
+		.item-dotted-row {
+			display: table;
+			width: 100%;
+		}
+
+		.item-dotted-row .item-name {
+			display: table-cell;
+			width: 1%;
+			white-space: nowrap;
+			padding-right: 2mm;
+		}
+
+		.item-dotted-row .spice-level {
+			display: table-cell;
+			width: 1%;
+			white-space: nowrap;
+			padding-right: 2mm;
+		}
+
+		.dotted-leader {
+			display: table-cell;
+			border-bottom: 1px dotted {{ design.color_secondary | default('#aaaaaa') }};
+			vertical-align: bottom;
+		}
+
+		.item-dotted-row .item-price {
+			display: table-cell;
+			text-align: right;
+			padding-left: 2mm;
+			white-space: nowrap;
+			width: 1%;
+		}
+
+		.item-description {
+			font-size: 8.5pt;
+			color: {{ design.color_secondary | default('#666666') }};
+			margin-top: 0.5mm;
+			clear: both;
+		}
+
+		/* Badges — subtle icons + text, no color */
+		.item-badges {
+			display: block;
+			margin-top: 0.3mm;
+		}
+
+		.badge {
+			display: inline;
+			font-size: 6pt;
+			color: #aaaaaa;
+		}
+
+		.badge-icon {
+			width: 5mm;
+			height: 5mm;
+			vertical-align: middle;
+			margin-right: 0.5mm;
+		}
+
+		.badge-label {
+			font-size: 6pt;
+			font-style: italic;
+			vertical-align: middle;
+		}
+
+		.badge-sep {
+			margin: 0 0.5mm;
+			color: #cccccc;
+		}
+
+		/* Spice level */
+		.spice-level {
+			display: inline-block;
+			margin-right: 2mm;
+			vertical-align: middle;
+		}
+
+		.spice-icon {
+			width: 4mm;
+			height: 4mm;
+			vertical-align: middle;
+			margin-right: -0.3mm;
+		}
+
+		/* Item image */
+		.item-image-wrap {
+			float: left;
+			margin-right: 3mm;
+			margin-bottom: 1mm;
+		}
+
+		.item-image {
+			width: 18mm;
+			height: 18mm;
+			border-radius: 1mm;
+			background: #f0f0f0;
+		}
+
+		/* Fallback for broken images */
+		.logo-image,
+		.item-image {
+			min-height: 10mm;
+		}
+
+		/* Options */
+		.item-options {
+			font-size: 7.5pt;
+			color: {{ design.color_secondary | default('#666666') }};
+			margin-top: 0.5mm;
+			display: block;
+			clear: both;
+		}
+
+		.option-group {
+			display: inline-block;
+			margin-right: 3mm;
+			margin-bottom: 1mm;
+		}
+
+		.option-label {
+			font-weight: 600;
+		}
+
+		/* Item meta using inline-block instead of flex */
+		.item-meta {
+			display: block;
+			clear: both;
+		}
+
+		.item-meta > * {
+			display: inline-block;
+			margin-right: 3mm;
+			margin-bottom: 1mm;
+		}
+
+		/* Footer */
+		.menu-footer {
+			margin-top: 8mm;
+			text-align: center;
+			font-size: 8pt;
+			color: {{ design.color_secondary | default('#666666') }};
+		}
+
+		{% block styles %}{% endblock %}
+
+		/* Custom CSS override */
+		{% if design.custom_css %}
+			{{ design.custom_css }}
+		{% endif %}
+	</style>
+</head>
+<body>
+	{% block header %}
+		{{ render_header(card, design, site_url, company_logo, company_name) }}
+	{% endblock %}
+
+	<div class="menu-body columns-{{ design.columns | default(1) }}">
+		{% block content %}
+			{%- for category in categories -%}
+				{{ render_category(category, design, currency, site_url, true) }}
+			{%- endfor -%}
+		{% endblock %}
+	</div>
+
+	{% block footer %}
+		{{ render_footer(design) }}
+	{% endblock %}
+</body>
+</html>

@@ -20,6 +20,45 @@ const routes = [
 		component: () => import("@/pages/CustomerDisplay.vue"),
 		meta: { allowGuest: true }, // Allow access without session login
 	},
+	{
+		name: "KDS",
+		path: "/kds",
+		component: () => import("@/pages/KDS.vue"),
+	},
+	{
+		name: "CFD",
+		path: "/cfd",
+		component: () => import("@/pages/CFD.vue"),
+		meta: { allowGuest: true },
+	},
+	{
+		name: "Runner",
+		path: "/runner",
+		component: () => import("@/pages/Runner.vue"),
+	},
+	{
+		name: "Takeaway",
+		path: "/takeaway",
+		component: () => import("@/pages/Takeaway.vue"),
+	},
+	{
+		name: "GuestOrder",
+		path: "/guest/:token",
+		component: () => import("@/pages/GuestOrder.vue"),
+		meta: { allowGuest: true },
+	},
+	{
+		name: "TakeawayOrder",
+		path: "/order",
+		component: () => import("@/pages/TakeawayOrder.vue"),
+		meta: { allowGuest: true },
+	},
+	{
+		name: "GuestReservation",
+		path: "/reservation",
+		component: () => import("@/pages/GuestReservation.vue"),
+		meta: { allowGuest: true },
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

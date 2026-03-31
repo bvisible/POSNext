@@ -79,6 +79,13 @@
 							<!-- Tabs Navigation -->
 							<div class="flex p-1 bg-gray-200 rounded-lg self-start">
 								<button
+									v-if="restaurantStore.isEnabled"
+									@click="activeTab = 'restaurant'"
+									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'restaurant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
+								>
+									{{ __('Restaurant') }}
+								</button>
+								<button
 									@click="activeTab = 'stock'"
 									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'stock' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
 								>
@@ -544,6 +551,266 @@
 								</div>
 							</div>
 
+							<!-- Cash Management -->
+							<div :class="operationsSubsectionClasses.container">
+								<div class="flex items-center gap-2 mb-4">
+									<svg :class="operationsSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+									</svg>
+									<h4 class="text-sm font-semibold text-gray-900">{{ __('Cash Management') }}</h4>
+								</div>
+								<div class="flex flex-col gap-3">
+									<div class="flex flex-col gap-1.5">
+										<label class="text-sm font-medium text-gray-700">{{ __('Closing Withdrawal Template') }}</label>
+										<input
+											v-model="settings.closing_withdrawal_template"
+											type="text"
+											:placeholder="__('Journal Entry Template name')"
+											class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+										/>
+										<p class="text-xs text-gray-500">{{ __('When set, cashiers can withdraw cash at closing. The remaining balance is suggested as the next opening amount.') }}</p>
+									</div>
+								</div>
+							</div>
+
+							<!-- Restaurant Settings Section -->
+							<div v-if="activeTab === 'restaurant'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+								<div :class="restaurantSectionClasses.header">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center gap-3">
+											<div :class="restaurantSectionClasses.iconContainer">
+												<svg :class="restaurantSectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+												</svg>
+											</div>
+											<div>
+												<h3 class="text-lg font-bold text-gray-900">{{ __('Restaurant Settings') }}</h3>
+												<p class="text-xs text-gray-600 mt-0.5">{{ __('Configure opening hours and card availability') }}</p>
+											</div>
+										</div>
+										<div :class="restaurantSectionClasses.badge">
+											<svg :class="restaurantSectionClasses.badgeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											<span :class="restaurantSectionClasses.badgeText">
+												{{ restaurantStatus.isOpen ? __('Open') : __('Closed') }}
+											</span>
+										</div>
+									</div>
+								</div>
+								<div class="p-6 flex flex-col gap-6">
+									<!-- Runner Toggle -->
+									<div :class="restaurantSubsectionClasses.container">
+										<CheckboxField
+											:modelValue="restaurantStore.restaurantSettings.enable_runner ? 1 : 0"
+											@update:modelValue="toggleRunner($event)"
+											:label="__('Enable Runner')"
+											:description="__('Enable a runner display for delivering ready items from stations to tables')"
+										/>
+									</div>
+
+									<!-- Opening Hours -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Opening Hours') }}</h4>
+										</div>
+										<p class="text-xs text-gray-500 mb-3">{{ __('Define when the restaurant is open. Each day can have multiple time slots (e.g. lunch and dinner).') }}</p>
+										<OpeningHoursEditor v-model="openingHours" :cards="allCards" />
+									</div>
+
+									<!-- Cards Summary -->
+									<div v-if="allCards.length > 0" :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center justify-between mb-4">
+											<div class="flex items-center gap-2">
+												<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+												</svg>
+												<h4 class="text-sm font-bold text-gray-900">{{ __('Restaurant Cards') }}</h4>
+											</div>
+										</div>
+										<div class="flex flex-col gap-2">
+											<div v-for="card in allCards" :key="card.name"
+												class="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-200">
+												<div class="flex items-center gap-2">
+													<span class="w-2 h-2 rounded-full flex-shrink-0"
+														:class="getCardSlots(card.name).length > 0 ? 'bg-green-400' : 'bg-gray-300'"></span>
+													<div>
+														<span class="text-sm font-medium text-gray-900">{{ card.card_name }}</span>
+														<span v-if="getCardSlots(card.name).length > 0" class="text-[10px] text-gray-500 ml-2">
+															{{ getCardSlots(card.name).map(s => s.label || (s.from_time?.substring(0,5) + '→' + s.to_time?.substring(0,5))).join(', ') }}
+														</span>
+														<span v-else class="text-[10px] text-gray-400 ml-2">{{ __('Not assigned to any slot') }}</span>
+													</div>
+												</div>
+												<a :href="'/app/restaurant-card/' + encodeURIComponent(card.name)"
+													target="_blank"
+													class="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">
+													<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+													</svg>
+													{{ __('Edit') }}
+												</a>
+											</div>
+										</div>
+									</div>
+
+									<!-- Warning if no card for current slot -->
+									<div v-if="restaurantStatus.warning"
+										class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+										<svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+										</svg>
+										<span class="text-sm text-amber-800">{{ restaurantStatus.warning }}</span>
+									</div>
+
+									<!-- Tips / Pourboires -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Tips / Pourboires') }}</h4>
+										</div>
+										<div class="flex flex-col gap-3">
+											<CheckboxField
+												:modelValue="tipSettings.enable_tips ? 1 : 0"
+												@update:modelValue="tipSettings.enable_tips = !!$event"
+												:label="__('Enable tip management')"
+												:description="__('Automatically detect tips when customers pay more than the invoice total')"
+											/>
+											<div v-if="tipSettings.enable_tips" class="pl-6 flex flex-col gap-2">
+												<CheckboxField
+													:modelValue="tipSettings.auto_detect_tip ? 1 : 0"
+													@update:modelValue="tipSettings.auto_detect_tip = !!$event"
+													:label="__('Auto-detect tip from overpayment')"
+													:description="__('Overpayment is pre-filled as tip, server can adjust or cancel')"
+												/>
+												<div v-if="tipSettings.tip_item" class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+													<svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+													</svg>
+													<span class="text-xs text-green-800">
+														{{ __('TIP item and transit account will be created automatically when saved') }}
+													</span>
+												</div>
+												<div v-else class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+													<svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+													</svg>
+													<span class="text-xs text-blue-800">
+														{{ __('Save to auto-create the TIP item and transit account (2211)') }}
+													</span>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<!-- QR Self-Ordering -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('QR Self-Ordering') }}</h4>
+										</div>
+										<div class="flex flex-col gap-3">
+											<CheckboxField
+												:modelValue="qrSettings.enable_qr_ordering ? 1 : 0"
+												@update:modelValue="qrSettings.enable_qr_ordering = !!$event"
+												:label="__('Enable QR Self-Ordering')"
+												:description="__('Allow customers to scan a QR code on the table to order and pay from their phone')"
+											/>
+											<div v-if="qrSettings.enable_qr_ordering" class="pl-6 flex flex-col gap-3">
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Guest Menu') }}</label>
+													<select
+														v-model="qrSettings.guest_menu"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="">{{ __('Select a card...') }}</option>
+														<option v-for="card in allCards" :key="card.name" :value="card.name">{{ card.card_name }}</option>
+													</select>
+													<p class="text-[10px] text-gray-400 mt-0.5">{{ __('The menu card shown to guests who scan the QR code') }}</p>
+												</div>
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Order Validation') }}</label>
+													<select
+														v-model="qrSettings.qr_order_validation"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="Direct to Kitchen">{{ __('Direct to Kitchen') }}</option>
+														<option value="Server Approval">{{ __('Server Approval') }}</option>
+													</select>
+													<p class="text-[10px] text-gray-400 mt-0.5">{{ __('Whether guest orders go straight to kitchen or need server confirmation') }}</p>
+												</div>
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Guest Account Mode') }}</label>
+													<select
+														v-model="qrSettings.guest_account_mode"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="Not Proposed">{{ __('Not Proposed') }}</option>
+														<option value="Optional">{{ __('Optional') }}</option>
+														<option value="Mandatory">{{ __('Mandatory') }}</option>
+													</select>
+												</div>
+												<div>
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Token Expiry') }}</label>
+													<select
+														v-model="qrSettings.token_expiry_mode"
+														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													>
+														<option value="On Table Close">{{ __('On Table Close') }}</option>
+														<option value="On Payment">{{ __('On Payment') }}</option>
+														<option value="Timed">{{ __('Timed') }}</option>
+													</select>
+												</div>
+												<div v-if="qrSettings.token_expiry_mode === 'Timed'">
+													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Expiry Days') }}</label>
+													<input
+														v-model.number="qrSettings.token_expiry_days"
+														type="number"
+														min="1"
+														class="w-24 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													/>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<!-- Takeaway Web Ordering -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">{{ __('Takeaway Web Ordering') }}</h4>
+										</div>
+										<div class="flex flex-col gap-3">
+											<CheckboxField
+												:modelValue="qrSettings.enable_web_takeaway ? 1 : 0"
+												@update:modelValue="qrSettings.enable_web_takeaway = !!$event"
+												:label="__('Enable Takeaway Web Ordering')"
+												:description="__('Allow customers to order online for pickup via /pos/order')"
+											/>
+											<div v-if="qrSettings.enable_web_takeaway" class="pl-6">
+												<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Takeaway Menu') }}</label>
+												<select
+													v-model="qrSettings.takeaway_menu"
+													class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												>
+													<option value="">{{ __('Select a card...') }}</option>
+													<option v-for="card in allCards" :key="card.name" :value="card.name">{{ card.card_name }}</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
 						</div>
 
 						<!-- Empty State -->
@@ -566,6 +833,8 @@
 import CheckboxField from "@/components/settings/CheckboxField.vue"
 import NumberField from "@/components/settings/NumberField.vue"
 import SelectField from "@/components/settings/SelectField.vue"
+import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
+import { useRestaurantStore } from "@/stores/restaurant"
 import { useToast } from "@/composables/useToast"
 import { Button, call, createResource } from "frappe-ui"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
@@ -580,14 +849,19 @@ import { usePOSEvents } from "@/composables/usePOSEvents"
 import TranslatedHTML from "../common/TranslatedHTML.vue"
 import { useQzTray } from "@/composables/useQzTray"
 
-const log = logger.create('POSSettings')
-const { detectSettingsChanges, updateSettingsSnapshot, emitStockSyncConfigured } = usePOSEvents()
+const log = logger.create("POSSettings")
+const {
+	detectSettingsChanges,
+	updateSettingsSnapshot,
+	emitStockSyncConfigured,
+} = usePOSEvents()
 const { showSuccess, showError } = useToast()
 
 const props = defineProps({
 	modelValue: Boolean,
 	posProfile: String,
 	currentWarehouse: String,
+	initialTab: { type: String, default: "" },
 })
 
 const emit = defineEmits(["update:modelValue"])
@@ -595,7 +869,7 @@ const emit = defineEmits(["update:modelValue"])
 const show = ref(props.modelValue)
 
 // State
-const activeTab = ref('stock')
+const activeTab = ref("stock") // Updated in watch on show
 const loading = ref(true)
 const saving = ref(false)
 const warehousesList = ref([])
@@ -617,6 +891,7 @@ const settings = ref({
 	silent_print: 0,
 	allow_negative_stock: 0,
 	tax_inclusive: 0,
+	closing_withdrawal_template: "",
 })
 
 // Stock Sync Settings (localStorage persisted)
@@ -628,7 +903,7 @@ const stockSyncStatus = ref({
 	itemCount: 0,
 	intervalMs: 60000,
 	lastSync: null,
-	running: false
+	running: false,
 })
 
 // QZ Tray composable
@@ -664,9 +939,57 @@ const warehouseSubsectionClasses = computed(() => getSubsectionClasses("gray"))
 const stockPolicySubsectionClasses = computed(() =>
 	getSubsectionClasses("blue"),
 )
-const stockSyncSubsectionClasses = computed(() => getSubsectionClasses("indigo"))
+const stockSyncSubsectionClasses = computed(() =>
+	getSubsectionClasses("indigo"),
+)
 const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
 const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"))
+const restaurantSectionClasses = computed(() =>
+	getSectionHeaderClasses("amber"),
+)
+const restaurantSubsectionClasses = computed(() =>
+	getSubsectionClasses("amber"),
+)
+
+// Restaurant settings
+const restaurantStore = useRestaurantStore()
+const openingHours = ref([])
+const allCards = ref([])
+const restaurantStatus = computed(() => restaurantStore.restaurantStatus)
+const tipSettings = ref({
+	enable_tips: false,
+	auto_detect_tip: true,
+	tip_item: null,
+	tip_account: null,
+})
+const qrSettings = ref({
+	enable_qr_ordering: false,
+	guest_menu: "",
+	qr_order_validation: "Direct to Kitchen",
+	guest_account_mode: "Not Proposed",
+	token_expiry_mode: "On Table Close",
+	token_expiry_days: 7,
+	enable_web_takeaway: false,
+	takeaway_menu: "",
+})
+
+async function toggleRunner(val) {
+	try {
+		await call("frappe.client.set_value", {
+			doctype: "Restaurant Settings",
+			name: "Restaurant Settings",
+			fieldname: "enable_runner",
+			value: val ? 1 : 0,
+		})
+		restaurantStore.restaurantSettings.enable_runner = !!val
+	} catch (error) {
+		console.error("Failed to toggle runner:", error)
+	}
+}
+
+function getCardSlots(cardName) {
+	return openingHours.value.filter((s) => s.restaurant_card === cardName)
+}
 
 // Resources
 const warehousesResource = createResource({
@@ -719,6 +1042,7 @@ watch(
 	(val) => {
 		show.value = val
 		if (val) {
+			activeTab.value = restaurantStore.isEnabled ? "restaurant" : "stock"
 			loadSettings()
 		}
 	},
@@ -726,6 +1050,9 @@ watch(
 
 watch(show, (val) => {
 	emit("update:modelValue", val)
+	if (val && props.initialTab) {
+		activeTab.value = props.initialTab
+	}
 })
 
 // Watch for currentWarehouse prop changes and always sync
@@ -750,11 +1077,14 @@ watch(
 		}
 
 		// Only show feedback if value actually changed from original
-		if (originalTaxInclusive.value !== null && newValue !== originalTaxInclusive.value) {
-			const mode = newValue ? 'inclusive' : 'exclusive'
+		if (
+			originalTaxInclusive.value !== null &&
+			newValue !== originalTaxInclusive.value
+		) {
+			const mode = newValue ? "inclusive" : "exclusive"
 			log.info(`Tax mode toggled to: ${mode}`)
 		}
-	}
+	},
 )
 
 // Methods
@@ -801,13 +1131,16 @@ async function saveSettings() {
 	saving.value = true
 	const oldWarehouse = props.currentWarehouse
 	const warehouseChanged = selectedWarehouse.value !== oldWarehouse
-	const negativeStockChanged = originalAllowNegativeStock.value !== settings.value.allow_negative_stock
-	const taxInclusiveChanged = originalTaxInclusive.value !== null && originalTaxInclusive.value !== settings.value.tax_inclusive
+	const negativeStockChanged =
+		originalAllowNegativeStock.value !== settings.value.allow_negative_stock
+	const taxInclusiveChanged =
+		originalTaxInclusive.value !== null &&
+		originalTaxInclusive.value !== settings.value.tax_inclusive
 
 	// Capture old settings for change detection
 	const oldSettings = {
 		...settings.value,
-		warehouse: oldWarehouse // Include warehouse in change detection
+		warehouse: oldWarehouse, // Include warehouse in change detection
 	}
 
 	try {
@@ -867,13 +1200,63 @@ async function saveSettings() {
 		// Show success toast for other changes
 		let successMessage = __("Settings saved successfully")
 		if (warehouseChanged && taxInclusiveChanged) {
-			successMessage = __("Settings saved, warehouse updated, and tax mode changed. Cart will be recalculated.")
+			successMessage = __(
+				"Settings saved, warehouse updated, and tax mode changed. Cart will be recalculated.",
+			)
 		} else if (warehouseChanged) {
-			successMessage = __("Settings saved and warehouse updated. Reloading stock...")
+			successMessage = __(
+				"Settings saved and warehouse updated. Reloading stock...",
+			)
 		} else if (taxInclusiveChanged) {
 			successMessage = settings.value.tax_inclusive
-				? __('Settings saved. Tax mode is now "inclusive". Cart will be recalculated.')
-				: __('Settings saved. Tax mode is now "exclusive". Cart will be recalculated.')
+				? __(
+						'Settings saved. Tax mode is now "inclusive". Cart will be recalculated.',
+					)
+				: __(
+						'Settings saved. Tax mode is now "exclusive". Cart will be recalculated.',
+					)
+		}
+
+		// Save restaurant settings (opening hours + tips)
+		if (restaurantStore.isEnabled) {
+			try {
+				await restaurantStore.saveRestaurantSettings(openingHours.value)
+				// Save tip settings
+				await call("pos_next.api.restaurant.save_tip_settings", {
+					enable_tips: tipSettings.value.enable_tips ? 1 : 0,
+					auto_detect_tip: tipSettings.value.auto_detect_tip ? 1 : 0,
+				})
+				// Save QR settings
+				const qrFields = {
+					enable_qr_ordering: qrSettings.value.enable_qr_ordering ? 1 : 0,
+					guest_menu: qrSettings.value.guest_menu || "",
+					qr_order_validation:
+						qrSettings.value.qr_order_validation || "Direct to Kitchen",
+					guest_account_mode:
+						qrSettings.value.guest_account_mode || "Not Proposed",
+					token_expiry_mode:
+						qrSettings.value.token_expiry_mode || "On Table Close",
+					token_expiry_days: qrSettings.value.token_expiry_days || 7,
+					enable_web_takeaway: qrSettings.value.enable_web_takeaway ? 1 : 0,
+					takeaway_menu: qrSettings.value.takeaway_menu || "",
+				}
+				for (const [field, value] of Object.entries(qrFields)) {
+					await call("frappe.client.set_value", {
+						doctype: "Restaurant Settings",
+						name: "Restaurant Settings",
+						fieldname: field,
+						value: value,
+					})
+				}
+				await restaurantStore.fetchRestaurantSettings()
+				// Update local tip display after save (item may have been auto-created)
+				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item
+				tipSettings.value.tip_account =
+					restaurantStore.restaurantSettings.tip_account
+			} catch (err) {
+				log.error("Error saving restaurant settings:", err)
+				showError(__("Failed to save restaurant settings"))
+			}
 		}
 
 		showSuccess(successMessage)
@@ -892,8 +1275,50 @@ watch(
 		if (enabled) {
 			await handleQzConnect()
 		}
-	}
+	},
 )
+
+// Load restaurant settings when the restaurant tab is activated
+watch(activeTab, async (tab) => {
+	if (tab === "restaurant") {
+		try {
+			await restaurantStore.fetchRestaurantSettings()
+			openingHours.value =
+				restaurantStore.restaurantSettings.opening_hours || []
+			// Load tip settings
+			tipSettings.value = {
+				enable_tips: !!restaurantStore.restaurantSettings.enable_tips,
+				auto_detect_tip:
+					restaurantStore.restaurantSettings.auto_detect_tip !== false,
+				tip_item: restaurantStore.restaurantSettings.tip_item || null,
+				tip_account: restaurantStore.restaurantSettings.tip_account || null,
+			}
+			// Load QR settings
+			const rs = restaurantStore.restaurantSettings
+			qrSettings.value = {
+				enable_qr_ordering: !!rs.enable_qr_ordering,
+				guest_menu: rs.guest_menu || "",
+				qr_order_validation: rs.qr_order_validation || "Direct to Kitchen",
+				guest_account_mode: rs.guest_account_mode || "Not Proposed",
+				token_expiry_mode: rs.token_expiry_mode || "On Table Close",
+				token_expiry_days: rs.token_expiry_days || 7,
+				enable_web_takeaway: !!rs.enable_web_takeaway,
+				takeaway_menu: rs.takeaway_menu || "",
+			}
+			// Load all active cards (not time-filtered) for the card selector
+			const cardsRes = await call("frappe.client.get_list", {
+				doctype: "Restaurant Card",
+				filters: { is_active: 1, is_permanent: 0 },
+				fields: ["name", "card_name"],
+				order_by: "card_name asc",
+				limit_page_length: 0,
+			})
+			allCards.value = cardsRes?.message || cardsRes || []
+		} catch (error) {
+			log.error("Error loading restaurant settings:", error)
+		}
+	}
+})
 
 // ============================================================================
 // STOCK SYNC FUNCTIONS
@@ -902,26 +1327,29 @@ watch(
 // Load stock sync settings from localStorage
 function loadStockSyncSettings() {
 	try {
-		const saved = localStorage.getItem('pos_stock_sync_settings')
+		const saved = localStorage.getItem("pos_stock_sync_settings")
 		if (saved) {
 			const parsed = JSON.parse(saved)
 			stockSyncEnabled.value = parsed.enabled ?? false
 			stockSyncIntervalSeconds.value = parsed.intervalSeconds ?? 60
 		}
 	} catch (error) {
-		log.error('Failed to load stock sync settings:', error)
+		log.error("Failed to load stock sync settings:", error)
 	}
 }
 
 // Save stock sync settings to localStorage
 function saveStockSyncSettings() {
 	try {
-		localStorage.setItem('pos_stock_sync_settings', JSON.stringify({
-			enabled: stockSyncEnabled.value,
-			intervalSeconds: stockSyncIntervalSeconds.value
-		}))
+		localStorage.setItem(
+			"pos_stock_sync_settings",
+			JSON.stringify({
+				enabled: stockSyncEnabled.value,
+				intervalSeconds: stockSyncIntervalSeconds.value,
+			}),
+		)
 	} catch (error) {
-		log.error('Failed to save stock sync settings:', error)
+		log.error("Failed to save stock sync settings:", error)
 	}
 }
 
@@ -931,7 +1359,7 @@ async function updateStockSyncStatus() {
 		const status = await offlineWorker.getStockSyncStatus()
 		stockSyncStatus.value = status
 	} catch (error) {
-		log.error('Failed to get stock sync status:', error)
+		log.error("Failed to get stock sync status:", error)
 	}
 }
 
@@ -943,7 +1371,7 @@ async function applyStockSyncConfig() {
 		if (stockSyncEnabled.value) {
 			// Configure and start sync
 			await offlineWorker.configureStockSync({
-				intervalMs
+				intervalMs,
 			})
 			await offlineWorker.startStockSync()
 		} else {
@@ -960,24 +1388,24 @@ async function applyStockSyncConfig() {
 		// Emit sync configuration change event
 		emitStockSyncConfigured({
 			enabled: stockSyncEnabled.value,
-			intervalMs: intervalMs
+			intervalMs: intervalMs,
 		})
 	} catch (error) {
-		log.error('Failed to apply stock sync config:', error)
+		log.error("Failed to apply stock sync config:", error)
 	}
 }
 
 // Format sync time for display
 function formatSyncTime(timestamp) {
-	if (!timestamp) return __('Never')
+	if (!timestamp) return __("Never")
 
 	const now = Date.now()
 	const diff = now - timestamp
 
 	if (diff < 60000) {
-		return __('{0}s ago', [Math.floor(diff / 1000)])
+		return __("{0}s ago", [Math.floor(diff / 1000)])
 	} else if (diff < 3600000) {
-		return __('{0}m ago', [Math.floor(diff / 60000)])
+		return __("{0}m ago", [Math.floor(diff / 60000)])
 	} else {
 		const date = new Date(timestamp)
 		return date.toLocaleTimeString()

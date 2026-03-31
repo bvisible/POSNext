@@ -1,0 +1,195 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "field:station_name",
+ "creation": "2026-03-21 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_main",
+  "station_name",
+  "station_type",
+  "column_break_1",
+  "color",
+  "is_active",
+  "workflow",
+  "use_runner",
+  "section_break_floor_plan",
+  "show_on_floor_plan",
+  "area",
+  "column_break_fp",
+  "pos_x",
+  "pos_y",
+  "width",
+  "height",
+  "section_break_items",
+  "items",
+  "section_break_item_groups",
+  "item_groups"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_main",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "station_name",
+   "fieldtype": "Data",
+   "label": "Station Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "station_type",
+   "fieldtype": "Select",
+   "label": "Station Type",
+   "options": "Kitchen\nBar\nOther",
+   "default": "Kitchen",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "default": "1",
+   "label": "Active",
+   "in_list_view": 1
+  },
+  {
+   "description": "Preparation workflow for this station. If empty, the default workflow is used.",
+   "fieldname": "workflow",
+   "fieldtype": "Link",
+   "label": "Workflow",
+   "options": "Preparation Workflow"
+  },
+  {
+   "default": "1",
+   "description": "If unchecked, items from this station will skip the runner and can be marked as Delivered directly from the KDS.",
+   "fieldname": "use_runner",
+   "fieldtype": "Check",
+   "label": "Use Runner"
+  },
+  {
+   "fieldname": "section_break_floor_plan",
+   "fieldtype": "Section Break",
+   "label": "Floor Plan",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "show_on_floor_plan",
+   "fieldtype": "Check",
+   "default": 1,
+   "label": "Show on Floor Plan"
+  },
+  {
+   "fieldname": "area",
+   "fieldtype": "Link",
+   "label": "Area",
+   "options": "Restaurant Area",
+   "depends_on": "show_on_floor_plan"
+  },
+  {
+   "fieldname": "column_break_fp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pos_x",
+   "fieldtype": "Int",
+   "default": 0,
+   "label": "Position X",
+   "hidden": 1
+  },
+  {
+   "fieldname": "pos_y",
+   "fieldtype": "Int",
+   "default": 0,
+   "label": "Position Y",
+   "hidden": 1
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Int",
+   "default": 120,
+   "label": "Width",
+   "hidden": 1
+  },
+  {
+   "fieldname": "height",
+   "fieldtype": "Int",
+   "default": 60,
+   "label": "Height",
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_items",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Preparation Station Item"
+  },
+  {
+   "fieldname": "section_break_item_groups",
+   "fieldtype": "Section Break",
+   "label": "Item Groups"
+  },
+  {
+   "fieldname": "item_groups",
+   "fieldtype": "Table",
+   "label": "Item Groups",
+   "options": "Preparation Station Item Group"
+  }
+ ],
+ "index_web_link_preview": 0,
+ "links": [],
+ "modified": "2026-03-22 00:00:01.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Preparation Station",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "POSNext Cashier"
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "station_name",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

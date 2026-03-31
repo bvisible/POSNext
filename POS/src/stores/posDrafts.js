@@ -1,4 +1,10 @@
-import { deleteDraft, getDraftsCount, saveDraft, getAllDrafts, updateDraft } from "@/utils/draftManager"
+import {
+	deleteDraft,
+	getDraftsCount,
+	saveDraft,
+	getAllDrafts,
+	updateDraft,
+} from "@/utils/draftManager"
 import { useToast } from "@/composables/useToast"
 import { defineStore } from "pinia"
 import { ref } from "vue"
@@ -35,6 +41,8 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 		posProfile,
 		appliedOffers = [],
 		draftId = null,
+		restaurantTable = null,
+		kdsStatus = null,
 	) {
 		if (invoiceItems.length === 0) {
 			showWarning(__("Cannot save an empty cart as draft"))
@@ -47,6 +55,8 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 				customer: customer,
 				items: invoiceItems,
 				applied_offers: appliedOffers, // Save applied offers
+				restaurant_table: restaurantTable,
+				kds_status: kdsStatus,
 			}
 
 			let savedDraft

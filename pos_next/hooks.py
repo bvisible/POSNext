@@ -116,6 +116,7 @@ _custom_field_names = [
 	"Item-custom_company",
 	"POS Profile-posa_cash_mode_of_payment",
 	"POS Profile-posa_allow_delete",
+	"POS Profile-posa_cash_entry_templates",
 	"POS Profile-posa_block_sale_beyond_available_qty",
 	"Mode of Payment-is_wallet_payment",
 	"Coupon Code-pos_next_section",
@@ -125,6 +126,12 @@ _custom_field_names = [
 	"Coupon Code-coupon_code_residual",
 	"Coupon Code-source_invoice",
 	"Coupon Code-referral_code",
+	"Sales Invoice-restaurant_table",
+	"Sales Invoice-kds_status",
+	"Sales Invoice Item-posa_special_instructions",
+	"Sales Invoice Item-preparation_station",
+	"Sales Invoice Item-kds_status",
+	"Sales Invoice Item-posa_item_modifiers",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
@@ -153,7 +160,9 @@ fixtures = [
 		"filters": [
 			["role", "in", ["POSNext Cashier"]]
 		]
-	}
+	},
+	{"dt": "Menu Badge"},
+	{"dt": "Menu Design Template"},
 ]
 
 # Installation
@@ -242,17 +251,20 @@ doc_events = {
 			"pos_next.api.wallet.validate_wallet_payment"
 		],
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",
+		"on_update": "pos_next.api.restaurant.on_invoice_update",
 		"on_submit": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
 			"pos_next.realtime_events.emit_stock_update_event",
 			"pos_next.api.wallet.process_loyalty_to_wallet",
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
-			"pos_next.api.gift_cards.process_gift_card_on_submit"
+			"pos_next.api.gift_cards.process_gift_card_on_submit",
+			"pos_next.api.restaurant.on_invoice_update"
 		],
 		"on_cancel": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_cancel",
 			"pos_next.realtime_events.emit_stock_update_event",
-			"pos_next.api.gift_cards.process_gift_card_on_cancel"
+			"pos_next.api.gift_cards.process_gift_card_on_cancel",
+			"pos_next.api.restaurant.on_invoice_update"
 		],
 		"after_insert": "pos_next.realtime_events.emit_invoice_created_event"
 	},
@@ -268,13 +280,24 @@ doc_events = {
 	},
 	"Promotional Scheme": {
 		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"
-	}
+	},
+	"Restaurant Card": {
+		"on_update": "pos_next.realtime_events.emit_card_updated_event",
+		"after_rename": "pos_next.realtime_events.emit_card_updated_event",
+	},
+	"Restaurant Settings": {
+		"on_update": "pos_next.realtime_events.emit_restaurant_settings_updated_event",
+	},
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
+	"hourly": [
+		"pos_next.api.reservations.send_reminders",
+		"pos_next.api.reservations.auto_no_show",
+	],
 	"daily": [
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 	],

@@ -48,6 +48,38 @@
 				</div>
 				<!-- Section end -->
 
+				<!-- Transactions section -->
+				{% set transactions = data.pos_transactions or [] %}
+				{% if transactions %}
+				<div>
+						<h6 class="text-center uppercase" style="color: #8D99A6">{{ _("Transactions") }}</h6>
+						<div class="tax-break-up" style="overflow-x: auto;">
+							<table class="table table-bordered table-hover">
+								<thead>
+									<tr>
+										<th class="text-left">{{ _("Invoice") }}</th>
+										<th class="text-left">{{ _("Date") }}</th>
+										<th class="text-left">{{ _("Customer") }}</th>
+										<th class="text-right">{{ _("Amount") }}</th>
+									</tr>
+								</thead>
+								<tbody>
+								{% for d in transactions %}
+									{% set inv = d.sales_invoice or d.pos_invoice %}
+									<tr>
+										<td class="text-left"><a href="/app/sales-invoice/{{ inv }}">{{ inv }}</a></td>
+										<td class="text-left">{{ frappe.format_date(d.posting_date) if d.posting_date else '' }}</td>
+										<td class="text-left">{{ d.customer or '' }}</td>
+										<td class="text-right">{{ frappe.utils.fmt_money(d.grand_total or 0, currency=company_currency or currency) }}</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+				{% endif %}
+				<!-- Section end -->
+
 				<!-- Mode of payment section -->
 				<div>
 						<h6 class="text-center uppercase" style="color: #8D99A6">{{ _("Mode of Payments") }}</h6>

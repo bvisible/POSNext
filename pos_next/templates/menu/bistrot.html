@@ -1,0 +1,175 @@
+{# Bistrot / Rustic menu theme - Cozy French bistrot feel #}
+{% extends "pos_next/templates/menu/base.html" %}
+
+{% block styles %}
+
+	body {
+		font-family: '{{ design.font_body }}', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+		background-color: #F5F0EB;
+		color: #333333;
+	}
+
+	h1, h2, h3 {
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
+	}
+
+	/* Header styling */
+	.menu-header {
+		text-align: center;
+		margin-bottom: 8mm;
+		padding-bottom: 4mm;
+	}
+
+	.header-title {
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
+		font-size: 22pt;
+		font-weight: 700;
+		color: #722F37;
+		margin-bottom: 2mm;
+	}
+
+	.header-card-name {
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
+		font-size: 14pt;
+		font-weight: 400;
+		color: #333333;
+		margin-bottom: 2mm;
+	}
+
+	.header-description {
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
+		font-size: 9pt;
+		color: #666666;
+	}
+
+	/* Decorative ornament after header */
+	.menu-header::after {
+		content: '~ ~ ~';
+		display: block;
+		font-size: 10pt;
+		color: #722F37;
+		letter-spacing: 3mm;
+		margin-top: 4mm;
+	}
+
+	/* Category styling */
+	.menu-category {
+		margin-bottom: 6mm;
+	}
+
+	.category-title {
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
+		font-size: 14pt;
+		font-weight: 700;
+		color: #722F37;
+		text-align: center;
+		margin-bottom: 3mm;
+		padding: 2mm 0;
+		position: relative;
+	}
+
+	/* Decorative tildes around category title */
+	.category-title::before {
+		content: '~  ';
+		color: #722F37;
+		font-weight: 300;
+	}
+
+	.category-title::after {
+		content: '  ~';
+		color: #722F37;
+		font-weight: 300;
+	}
+
+	/* Item styling - tighter spacing for bistrot */
+	.menu-item {
+		margin-bottom: 3mm;
+		padding-bottom: 2mm;
+		border-bottom: 0.1mm solid #E0D8D0;
+	}
+
+	.menu-item:last-child {
+		border-bottom: none;
+	}
+
+	.item-header {
+		display: table; width: 100%;
+	}
+
+	.item-name {
+		font-family: '{{ design.font_header }}', 'Georgia', serif;
+		font-size: 10.5pt;
+		font-weight: 700;
+		color: #333333;
+	}
+
+	.item-price {
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
+		font-size: 10pt;
+		font-weight: 600;
+		color: #722F37;
+	}
+
+	.item-price.price-right {
+		margin-left: auto;
+	}
+
+	.item-description {
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
+		font-size: 8.5pt;
+		font-weight: 300;
+		color: #666666;
+		margin-top: 0.5mm;
+	}
+
+	/* Dotted leader for bistrot */
+	.dotted-leader {
+		border-bottom: 1px dotted #B8A898;
+		margin: 0 2mm;
+	}
+
+	/* Badge styling */
+	.badge {
+		font-size: 6.5pt;
+	}
+
+	.badge-label {
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
+		font-size: 6.5pt;
+		color: #666666;
+	}
+
+	/* Options styling */
+	.item-options {
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
+		font-size: 7.5pt;
+		color: #888888;
+	}
+
+	.option-label {
+		font-weight: 600;
+		color: #666666;
+	}
+
+	/* Footer styling */
+	.menu-footer {
+		margin-top: 8mm;
+		text-align: center;
+	}
+
+	.menu-footer::before {
+		content: '~ ~ ~';
+		display: block;
+		font-size: 10pt;
+		color: #722F37;
+		letter-spacing: 3mm;
+		margin-bottom: 3mm;
+	}
+
+	.footer-text {
+		font-family: '{{ design.font_body }}', 'Inter', sans-serif;
+		font-size: 8pt;
+		color: #888888;
+		font-style: italic;
+	}
+{% endblock %}

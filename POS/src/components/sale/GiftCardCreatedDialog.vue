@@ -6,8 +6,8 @@
  * Shows code, value, and validity of newly created gift cards.
  */
 
-import { computed } from 'vue'
-import { useLocale } from '@/composables/useLocale'
+import { computed } from "vue"
+import { useLocale } from "@/composables/useLocale"
 
 const { locale } = useLocale()
 
@@ -22,38 +22,38 @@ const props = defineProps({
 	},
 	currency: {
 		type: String,
-		default: 'CHF',
+		default: "CHF",
 	},
 })
 
-const emit = defineEmits(['close', 'print'])
+const emit = defineEmits(["close", "print"])
 
 const hasGiftCards = computed(() => props.giftCards.length > 0)
 
 function formatDate(dateStr) {
-	if (!dateStr) return __('No expiry')
+	if (!dateStr) return __("No expiry")
 	const date = new Date(dateStr)
 	return date.toLocaleDateString(locale.value)
 }
 
 function formatAmount(amount) {
 	return new Intl.NumberFormat(locale.value, {
-		style: 'currency',
+		style: "currency",
 		currency: props.currency,
 	}).format(amount || 0)
 }
 
 function handleClose() {
-	emit('close')
+	emit("close")
 }
 
 function handlePrint(giftCard) {
-	emit('print', giftCard)
+	emit("print", giftCard)
 }
 
 function copyToClipboard(code) {
 	navigator.clipboard.writeText(code).catch((err) => {
-		console.error('Failed to copy:', err)
+		console.error("Failed to copy:", err)
 	})
 }
 </script>

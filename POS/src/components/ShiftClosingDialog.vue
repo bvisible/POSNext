@@ -193,6 +193,123 @@
             </div>
           </div>
 
+          <!-- Sales by Payment Method -->
+          <div v-if="shouldShowSummary && closingData.sales_by_payment && closingData.sales_by_payment.length > 0"
+            class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 bg-gray-50 border-b border-gray-200">
+              <h3 class="text-sm md:text-lg font-medium text-gray-900">{{ __('Sales by Payment Method') }}</h3>
+            </div>
+            <div class="p-3 md:p-6">
+              <div class="flex flex-col gap-2 md:gap-3">
+                <div v-for="(sp, idx) in closingData.sales_by_payment" :key="idx"
+                  class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div class="flex items-center gap-2 md:gap-3">
+                    <div :class="['rounded-lg p-1.5 md:p-2', getPaymentIcon(sp.mode_of_payment).color]">
+                      <span class="text-base md:text-lg">{{ getPaymentIcon(sp.mode_of_payment).icon }}</span>
+                    </div>
+                    <p class="text-sm md:text-base font-medium text-gray-900">{{ sp.mode_of_payment }}</p>
+                  </div>
+                  <p class="text-sm md:text-base font-semibold text-gray-900">{{ formatCurrency(sp.amount) }}</p>
+                </div>
+              </div>
+              <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs md:text-sm font-medium text-gray-700">{{ __('Total Sales') }}</span>
+                  <span class="text-base md:text-lg font-bold text-gray-900">
+                    {{ formatCurrency(closingData.sales_by_payment.reduce((s, p) => s + p.amount, 0)) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- External Payments (invoices paid via POS but created outside) -->
+          <div v-if="closingData.external_payments && closingData.external_payments.length > 0"
+            class="bg-white border border-blue-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm md:text-base font-semibold text-blue-800">{{ __('External Payments') }}</h3>
+                  <p class="text-xs text-blue-600 mt-0.5">{{ __('{0} payments', [closingData.external_payments.length]) }}</p>
+                </div>
+                <div class="text-lg font-bold text-blue-800">
+                  {{ formatCurrency(closingData.external_payments.reduce((s, p) => s + p.amount, 0)) }}
+                </div>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Invoice') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Customer') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Payment') }}</th>
+                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="(ep, idx) in closingData.external_payments" :key="idx">
+                    <td class="px-4 py-2 text-sm text-gray-800">{{ ep.invoice }}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600">{{ ep.customer }}</td>
+                    <td class="px-4 py-2 text-sm text-gray-500">{{ ep.mode_of_payment }}</td>
+                    <td class="px-4 py-2 text-sm font-semibold text-right text-blue-700">{{ formatCurrency(ep.amount) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Cash In/Out Entries -->
+          <div v-if="closingData.cash_entries && closingData.cash_entries.length > 0"
+            class="bg-white border border-orange-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm md:text-base font-semibold text-orange-800">{{ __('Cash In/Out') }}</h3>
+                  <p class="text-xs text-orange-600 mt-0.5">{{ __('{0} entries', [closingData.cash_entries.length]) }}</p>
+                </div>
+                <div class="flex gap-4 items-center">
+                  <div v-if="closingData.cash_in_total" class="text-sm font-semibold text-green-700">
+                    +{{ formatCurrency(closingData.cash_in_total) }}
+                  </div>
+                  <div v-if="closingData.cash_out_total" class="text-sm font-semibold text-red-700">
+                    -{{ formatCurrency(closingData.cash_out_total) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Template') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Direction') }}</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{{ __('Note') }}</th>
+                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{{ __('Amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="(ce, idx) in closingData.cash_entries" :key="idx">
+                    <td class="px-4 py-2 text-sm text-gray-800">{{ ce.template }}</td>
+                    <td class="px-4 py-2 text-sm">
+                      <span v-if="ce.direction === 'in'" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {{ __('Cash In') }}
+                      </span>
+                      <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        {{ __('Cash Out') }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2 text-sm text-gray-500">{{ ce.note || '—' }}</td>
+                    <td class="px-4 py-2 text-sm font-semibold text-right"
+                      :class="ce.direction === 'out' ? 'text-red-700' : 'text-green-700'">
+                      {{ ce.direction === 'out' ? '-' : '+' }}{{ formatCurrency(ce.amount) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Payment Reconciliation -->
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div :class="[
@@ -427,6 +544,64 @@
             </div>
           </div>
 
+          <!-- Cash Withdrawal Section -->
+          <div v-if="closingData.closing_withdrawal_template && !showSuccessReport" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="px-3 py-3 md:px-6 md:py-4 bg-amber-50 border-b border-amber-200">
+              <h3 class="text-sm md:text-lg font-medium text-amber-900">{{ __('Cash Withdrawal') }}</h3>
+              <p class="text-xs text-amber-700 mt-1">{{ __('Withdraw cash from the register. The remaining amount will be suggested as opening balance for the next shift.') }}</p>
+            </div>
+            <div class="p-3 md:p-6">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                <!-- Cash Counted -->
+                <div class="text-start bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <label class="block text-xs font-medium text-gray-500 uppercase mb-1">{{ __('Cash Counted') }}</label>
+                  <div class="text-lg md:text-xl font-bold text-gray-900">{{ formatCurrency(cashClosingAmount) }}</div>
+                  <div class="text-xs text-gray-500 mt-1">{{ __('From reconciliation') }}</div>
+                </div>
+
+                <!-- Withdrawal Amount -->
+                <div class="text-start bg-white rounded-lg p-3 border border-amber-300">
+                  <label class="block text-xs font-medium text-amber-700 uppercase mb-1">{{ __('Withdraw') }}</label>
+                  <Input
+                    :modelValue="cashWithdrawalAmount"
+                    @update:modelValue="updateWithdrawalAmount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    :max="cashClosingAmount"
+                    placeholder="0.00"
+                    :disabled="submitResource.loading"
+                    class="text-lg"
+                  />
+                  <div class="text-xs text-amber-600 mt-1">{{ __('Amount to take out') }}</div>
+                </div>
+
+                <!-- Remaining -->
+                <div class="text-start rounded-lg p-3 border" :class="cashRemainingBalance > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'">
+                  <label class="block text-xs font-medium uppercase mb-1" :class="cashRemainingBalance > 0 ? 'text-green-600' : 'text-gray-500'">{{ __('Remaining') }}</label>
+                  <div class="text-lg md:text-xl font-bold" :class="cashRemainingBalance > 0 ? 'text-green-700' : 'text-gray-900'">{{ formatCurrency(cashRemainingBalance) }}</div>
+                  <div class="text-xs mt-1" :class="cashRemainingBalance > 0 ? 'text-green-600' : 'text-gray-500'">{{ __('Next opening balance') }}</div>
+                </div>
+              </div>
+
+              <!-- Warning if withdrawal exceeds cash -->
+              <div v-if="withdrawalExceedsCash" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-xs md:text-sm text-red-700 font-medium">{{ __('Withdrawal amount cannot exceed the counted cash amount.') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cash Withdrawal Summary (in success report) -->
+          <div v-if="closingData.closing_withdrawal_template && showSuccessReport && cashWithdrawalAmount > 0" class="bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-amber-900">{{ __('Cash Withdrawn') }}</p>
+                <p class="text-xs text-amber-700 mt-1">{{ __('Remaining balance for next shift: {0}', [formatCurrency(cashRemainingBalance)]) }}</p>
+              </div>
+              <div class="text-lg md:text-xl font-bold text-amber-900">{{ formatCurrency(cashWithdrawalAmount) }}</div>
+            </div>
+          </div>
+
           <!-- Error Display -->
           <div v-if="submitResource.error || (errorMessage && !closingDataResource.error)" class="rounded-lg bg-red-50 border border-red-200 p-3 md:p-4">
             <div class="flex gap-2 md:gap-3">
@@ -533,7 +708,8 @@ const open = computed({
 })
 
 const { getClosingShiftData, submitClosingShift } = useShift()
-const { formatCurrency, formatQuantity, formatDateTime, formatTime } = useFormatters()
+const { formatCurrency, formatQuantity, formatDateTime, formatTime } =
+	useFormatters()
 const posSettingsStore = usePOSSettingsStore()
 const { hideExpectedAmount } = storeToRefs(posSettingsStore)
 
@@ -544,8 +720,9 @@ const closingDataResource = getClosingShiftData
 const submitResource = submitClosingShift
 const showInvoiceDetails = ref(false)
 const showSuccessReport = ref(false) // Track if shift is closed and showing report
-const errorMessage = ref('') // User-friendly error message
+const errorMessage = ref("") // User-friendly error message
 const showIdleWarning = ref(false)
+const cashWithdrawalAmount = ref(0)
 let _idleWarningTimer = null
 
 // Watch dialog open state
@@ -584,7 +761,7 @@ onBeforeUnmount(() => {
 
 async function loadClosingData() {
 	try {
-		errorMessage.value = '' // Clear any previous errors
+		errorMessage.value = "" // Clear any previous errors
 
 		const data = await closingDataResource.submit({
 			opening_shift: props.openingShift,
@@ -615,7 +792,8 @@ async function loadClosingData() {
 		}
 	} catch (error) {
 		console.error("Error loading closing data:", error)
-		errorMessage.value = 'Unable to load shift data. Please check your connection and try again.'
+		errorMessage.value =
+			"Unable to load shift data. Please check your connection and try again."
 	}
 }
 
@@ -637,20 +815,25 @@ const canSubmit = computed(() => {
 		return false
 
 	// Check if all closing amounts have been manually entered
-	return closingData.value.payment_reconciliation.every(
+	const allFilled = closingData.value.payment_reconciliation.every(
 		(payment) =>
 			payment._touched &&
 			payment.closing_amount !== null &&
 			payment.closing_amount !== undefined &&
 			payment.closing_amount !== "",
 	)
+
+	// Block if withdrawal exceeds cash
+	if (withdrawalExceedsCash.value) return false
+
+	return allFilled
 })
 
 async function submitClosing() {
 	if (!closingData.value) return
 
 	try {
-		errorMessage.value = '' // Clear any previous errors
+		errorMessage.value = "" // Clear any previous errors
 
 		// Ensure all differences are calculated
 		if (closingData.value.payment_reconciliation) {
@@ -658,6 +841,11 @@ async function submitClosing() {
 				calculateDifference(payment)
 			})
 		}
+
+		// Inject cash withdrawal data
+		const withdrawal = Number.parseFloat(cashWithdrawalAmount.value || 0)
+		closingData.value.cash_withdrawal_amount = withdrawal
+		closingData.value.cash_remaining_balance = cashRemainingBalance.value
 
 		// Submit to server
 		await submitResource.submit({ closing_shift: closingData.value })
@@ -676,7 +864,8 @@ async function submitClosing() {
 		}
 	} catch (error) {
 		console.error("Error submitting closing shift:", error)
-		errorMessage.value = 'Failed to close shift. Please verify all amounts and try again.'
+		errorMessage.value =
+			"Failed to close shift. Please verify all amounts and try again."
 	}
 }
 
@@ -690,26 +879,27 @@ function closeDialog() {
 	closingData.value = null
 	showInvoiceDetails.value = false
 	showSuccessReport.value = false // Reset report view
-	errorMessage.value = '' // Clear error messages
+	errorMessage.value = "" // Clear error messages
+	cashWithdrawalAmount.value = 0
 }
 
 // UI State Computed Properties
-const shouldShowSummary = computed(() =>
-	!hideExpectedAmount.value || showSuccessReport.value
+const shouldShowSummary = computed(
+	() => !hideExpectedAmount.value || showSuccessReport.value,
 )
 
-const isInEntryMode = computed(() =>
-	hideExpectedAmount.value && !showSuccessReport.value
+const isInEntryMode = computed(
+	() => hideExpectedAmount.value && !showSuccessReport.value,
 )
 
 const reconciliationMessage = computed(() => {
 	if (isInEntryMode.value) {
-		return 'Enter the actual counted amounts for each payment method'
+		return "Enter the actual counted amounts for each payment method"
 	}
 	if (showSuccessReport.value && hideExpectedAmount.value) {
-		return 'Shift closed successfully - Review the final reconciliation below'
+		return "Shift closed successfully - Review the final reconciliation below"
 	}
-	return 'Count your cash and enter actual amounts below'
+	return "Count your cash and enter actual amounts below"
 })
 
 // Computed properties for real-time recalculation
@@ -729,7 +919,7 @@ const hasReturns = computed(() => {
 const salesInvoiceCount = computed(() => {
 	if (!closingData.value) return 0
 	const transactions = closingData.value.pos_transactions || []
-	return transactions.filter(t => !t.is_return).length
+	return transactions.filter((t) => !t.is_return).length
 })
 
 const totalTax = computed(() => {
@@ -764,6 +954,34 @@ const getTotalDifference = computed(() => {
 	return getTotalActual.value - getTotalExpected.value
 })
 
+// Cash withdrawal computed properties
+const cashClosingAmount = computed(() => {
+	if (!closingData.value || !closingData.value.payment_reconciliation) return 0
+	const cashMode = closingData.value.cash_mode_of_payment
+	if (!cashMode) return 0
+	const cashPayment = closingData.value.payment_reconciliation.find(
+		(p) => p.mode_of_payment === cashMode,
+	)
+	return Number.parseFloat(cashPayment?.closing_amount || 0)
+})
+
+const cashRemainingBalance = computed(() => {
+	const remaining =
+		cashClosingAmount.value - Number.parseFloat(cashWithdrawalAmount.value || 0)
+	return Math.max(0, remaining)
+})
+
+const withdrawalExceedsCash = computed(() => {
+	return (
+		Number.parseFloat(cashWithdrawalAmount.value || 0) >
+			cashClosingAmount.value && cashClosingAmount.value > 0
+	)
+})
+
+function updateWithdrawalAmount(value) {
+	cashWithdrawalAmount.value = value
+}
+
 function getSalesForPayment(payment) {
 	return (
 		Number.parseFloat(payment.expected_amount || 0) -
@@ -772,7 +990,8 @@ function getSalesForPayment(payment) {
 }
 
 function getShiftDuration() {
-	if (!closingData.value || !closingData.value.period_start_date) return __("N/A")
+	if (!closingData.value || !closingData.value.period_start_date)
+		return __("N/A")
 
 	// Use the same timezone-safe approach as the header timer
 	const { _initialElapsedMs, _receivedAt } = shiftState.value
@@ -784,13 +1003,13 @@ function getShiftDuration() {
 	const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
 
 	if (days > 0) {
-		const dayLabel = days === 1 ? __('Day') : __('Days')
-		return __('{0} {1} {2}h {3}m', [days, dayLabel, hours, minutes])
+		const dayLabel = days === 1 ? __("Day") : __("Days")
+		return __("{0} {1} {2}h {3}m", [days, dayLabel, hours, minutes])
 	}
 	if (hours > 0) {
-		return __('{0}h {1}m', [hours, minutes])
+		return __("{0}h {1}m", [hours, minutes])
 	}
-	return __('{0}m', [minutes])
+	return __("{0}m", [minutes])
 }
 
 function getPaymentIcon(method) {

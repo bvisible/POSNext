@@ -458,9 +458,21 @@
 									<div class="text-xs font-medium text-purple-600 uppercase tracking-wide mb-1">{{ __('Write Off') }}</div>
 									<div :class="['font-bold text-purple-600', dynamicTextSize.amount]">{{ formatCurrency(writeOffAmount) }}</div>
 								</div>
+								<!-- Tip detection: show tip instead of change when restaurant tips enabled -->
+								<div v-else-if="changeAmount > 0 && allowsOverpayment && showTipDetection" :class="['bg-amber-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
+									<div class="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">{{ __('Tip') }}</div>
+									<div :class="['font-bold text-amber-600', dynamicTextSize.amount]">{{ formatCurrency(tipAmount) }}</div>
+									<div class="flex justify-center gap-2 mt-1">
+										<button @click="tipAmount = 0" class="text-[10px] text-gray-500 hover:text-gray-700 underline">{{ __('No tip') }}</button>
+									</div>
+								</div>
+								<!-- Regular change (no tip or tip declined) -->
 								<div v-else-if="changeAmount > 0 && allowsOverpayment" :class="['bg-green-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
 									<div class="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">{{ __('Change Due') }}</div>
-									<div :class="['font-bold text-green-600', dynamicTextSize.amount]">{{ formatCurrency(changeAmount) }}</div>
+									<div :class="['font-bold text-green-600', dynamicTextSize.amount]">{{ formatCurrency(changeAmount - tipAmount) }}</div>
+									<div v-if="restaurantStore?.tipsEnabled" class="mt-1">
+										<button @click="tipAmount = changeAmount" class="text-[10px] text-amber-600 hover:text-amber-800 underline">{{ __('Convert to tip') }}</button>
+									</div>
 								</div>
 								<!-- Exact Amount Warning (when overpayment not allowed) -->
 								<div v-else-if="changeAmount > 0 && !allowsOverpayment" :class="['bg-red-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
@@ -529,7 +541,7 @@
 					]"
 					:style="isMobileView ? {} : { minHeight: rightColumnMinHeight }"
 				>
-					<!-- Payment Methods -->
+						<!-- Payment Methods -->
 					<div :class="isSmallMobile ? 'mb-1' : 'mb-1.5 lg:mb-3'">
 						<div :class="['flex items-center justify-between', isSmallMobile ? 'mb-0.5' : 'mb-1 lg:mb-2']">
 							<div :class="['text-start font-semibold text-gray-500 uppercase tracking-wide', isSmallMobile ? 'text-[10px]' : 'text-xs']">{{ __('Payment Method') }}</div>
@@ -622,6 +634,61 @@
 								<span :class="['text-xs font-medium', !isExactAmountValid ? 'text-red-700' : 'text-green-700']">
 									{{ !isExactAmountValid ? __('Total must equal invoice amount') : __('Payment amount is correct') }}
 								</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Split Payment (restaurant mode) -->
+					<div v-if="restaurantStore?.isEnabled" :class="isCompactMode ? 'mb-2' : 'mb-3'">
+						<div :class="['text-start font-semibold text-gray-500 uppercase tracking-wide', isSmallMobile ? 'text-[10px] mb-0.5' : 'text-xs mb-1']">{{ __('Split Payment') }}</div>
+						<!-- Split inactive: show split buttons -->
+						<div v-if="!splitMode">
+							<p class="text-[10px] text-gray-400 mb-1.5">{{ __('Split the bill between multiple people') }}</p>
+							<div class="flex items-center gap-1.5">
+								<button v-for="n in [2, 3, 4]" :key="n" @click="activateSplit(n)"
+									class="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-colors">
+									÷{{ n }}
+								</button>
+								<input type="number" min="2" max="20" :placeholder="__('N')"
+									@change="$event.target.value >= 2 && activateSplit(+$event.target.value); $event.target.value = ''"
+									class="w-12 px-2 py-1.5 text-sm text-center border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
+							</div>
+						</div>
+						<!-- Split active: show current person info with adjustable amount -->
+						<div v-else class="bg-blue-50 rounded-lg border border-blue-200 p-2.5">
+							<div class="flex justify-between items-center mb-1.5">
+								<div class="flex items-center gap-3">
+									<span class="text-lg font-bold text-blue-700">{{ splitPaymentIndex + 1 }}/{{ splitCount }}</span>
+									<!-- Adjustable split amount: - amount + (click amount to edit) -->
+									<div class="flex items-center gap-1">
+										<button @click="adjustSplitAmount(-1)"
+											class="w-7 h-7 flex items-center justify-center rounded-md border border-blue-300 text-blue-600 hover:bg-blue-100 text-sm font-bold">−</button>
+										<input v-if="editingSplitAmount"
+											type="number" step="0.05" min="0.05"
+											:value="splitAmount"
+											@blur="onSplitAmountEdit($event)"
+											@keyup.enter="onSplitAmountEdit($event)"
+											class="w-20 text-sm font-bold text-blue-700 text-center border border-blue-400 rounded-md px-1 py-0.5 focus:ring-1 focus:ring-blue-500"
+											autofocus
+										/>
+										<button v-else @click="editingSplitAmount = true"
+											class="text-sm font-bold text-blue-700 min-w-[70px] text-center hover:bg-blue-100 rounded-md px-1 py-0.5 cursor-text transition-colors">
+											{{ formatCurrency(splitAmount) }}
+										</button>
+										<button @click="adjustSplitAmount(1)"
+											class="w-7 h-7 flex items-center justify-center rounded-md border border-blue-300 text-blue-600 hover:bg-blue-100 text-sm font-bold">+</button>
+									</div>
+									<span class="text-[10px] text-blue-400">/ {{ __('person') }}</span>
+								</div>
+								<button @click="deactivateSplit" class="text-xs text-gray-400 hover:text-red-500 transition-colors">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+									</svg>
+								</button>
+							</div>
+							<div class="h-1.5 bg-blue-200 rounded-full">
+								<div class="h-1.5 bg-blue-600 rounded-full transition-all duration-300"
+									:style="{ width: (splitPaymentIndex / splitCount * 100) + '%' }"></div>
 							</div>
 						</div>
 					</div>
@@ -960,36 +1027,13 @@
 						</div>
 
 					<!-- Action Buttons - Below Keypad (Desktop only) -->
-					<div :class="['hidden lg:flex items-center gap-2', isCompactMode ? 'mt-2' : 'mt-4']">
-						<!-- Pay on Account Button (if credit sales enabled) -->
-						<button
-							v-if="allowCreditSale"
-							@click="addCreditAccountPayment"
-							:disabled="paymentEntries.length > 0 || isSubmitting"
-							:class="[
-								'flex-1 inline-flex items-center justify-center gap-2 transition-colors focus:outline-none',
-								dynamicButtonHeight, 'text-sm font-semibold px-4 rounded-neo-md',
-								paymentEntries.length > 0 || isSubmitting
-									? 'bg-orange-300 text-white cursor-not-allowed'
-									: 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700 focus-visible:ring-2 focus-visible:ring-orange-400'
-							]"
-						>
-							<svg v-if="isSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-							</svg>
-							<svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-							</svg>
-							<span>{{ isSubmitting ? __('Processing...') : __('Pay on Account') }}</span>
-						</button>
-
-						<!-- Complete/Partial Payment Button -->
+					<div :class="['hidden lg:flex flex-col gap-1', isCompactMode ? 'mt-2' : 'mt-4']">
+						<!-- Complete/Partial Payment Button — Full Width -->
 						<button
 							@click="completePayment"
 							:disabled="!canComplete || isSubmitting"
 							:class="[
-								'flex-1 inline-flex items-center justify-center gap-2 transition-colors focus:outline-none',
+								'w-full inline-flex items-center justify-center gap-2 transition-colors focus:outline-none',
 								dynamicButtonHeight, 'text-sm font-semibold px-5 rounded-neo-md',
 								!canComplete || isSubmitting
 									? 'bg-blue-300 text-white cursor-not-allowed'
@@ -1004,6 +1048,15 @@
 								<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
 							</svg>
 							<span>{{ isSubmitting ? __('Processing...') : paymentButtonText }}</span>
+						</button>
+						<!-- Pay on Account — Discrete link (if credit sales enabled) -->
+						<button
+							v-if="allowCreditSale && paymentEntries.length === 0"
+							@click="addCreditAccountPayment"
+							:disabled="isSubmitting"
+							class="text-xs text-gray-400 hover:text-gray-600 transition-colors py-1 text-center"
+						>
+							{{ __('Pay on Account') }}
 						</button>
 					</div>
 				</div>
@@ -1241,10 +1294,47 @@
 			</div>
 		</template>
 	</Dialog>
+
+	<!-- Partial Payment Confirmation Dialog -->
+	<Dialog v-model="showPartialPaymentConfirm" :options="{ title: __('Partial Payment'), size: 'sm' }">
+		<template #body-content>
+			<div class="flex flex-col gap-4 text-center">
+				<div class="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+					<svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+					</svg>
+				</div>
+				<div>
+					<div class="grid grid-cols-2 gap-2 text-sm mb-3">
+						<div class="text-left text-gray-500">{{ __("Total") }}</div>
+						<div class="text-right font-semibold">{{ formatCurrency(grandTotal) }}</div>
+						<div class="text-left text-gray-500">{{ __("Paid") }}</div>
+						<div class="text-right font-semibold text-green-600">{{ formatCurrency(totalPaid) }}</div>
+						<div class="text-left text-gray-500">{{ __("Remaining") }}</div>
+						<div class="text-right font-bold text-amber-600">{{ formatCurrency(remainingAmount) }}</div>
+					</div>
+					<p class="text-sm text-gray-600">
+						{{ __("The invoice will be partially paid. The remaining amount will need to be collected later.") }}
+					</p>
+				</div>
+			</div>
+		</template>
+		<template #actions>
+			<div class="flex gap-2 w-full">
+				<Button class="flex-1" variant="subtle" @click="cancelPartialPayment">
+					{{ __("Cancel") }}
+				</Button>
+				<Button class="flex-1" variant="solid" theme="blue" @click="confirmPartialPayment">
+					{{ __("Confirm Partial Payment") }}
+				</Button>
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup>
 import { usePOSSettingsStore } from "@/stores/posSettings"
+import { useRestaurantStore } from "@/stores/restaurant"
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -1254,7 +1344,7 @@ import {
 import { getPaymentIcon } from "@/utils/payment"
 import { offlineWorker } from "@/utils/offline/workerClient"
 import { logger } from "@/utils/logger"
-import { Dialog, createResource, call } from "frappe-ui"
+import { Dialog, Button, createResource, call } from "frappe-ui"
 import { computed, ref, watch, nextTick } from "vue"
 import { useToast } from "@/composables/useToast"
 import { useLongPress } from "@/composables/useLongPress"
@@ -1264,6 +1354,78 @@ import { useQuickAmounts } from "@/composables/useQuickAmounts"
 
 const log = logger.create("PaymentDialog")
 const settingsStore = usePOSSettingsStore()
+const restaurantStore = useRestaurantStore()
+
+// Split payment state
+const splitMode = ref(false)
+const splitCount = ref(0)
+const splitPaymentIndex = ref(0)
+
+// Round to nearest 5 centimes (Swiss rounding)
+function roundTo5Centimes(amount) {
+	return Math.round(amount * 20) / 20
+}
+
+const splitAmountOverride = ref(0)
+const editingSplitAmount = ref(false)
+
+const splitAmount = computed(() => {
+	if (!splitCount.value || splitCount.value < 2) return 0
+	if (splitAmountOverride.value > 0) return splitAmountOverride.value
+	const remaining = remainingAmount.value
+	const peopleLeft = splitCount.value - splitPaymentIndex.value
+	if (peopleLeft <= 1) return roundTo5Centimes(remaining)
+	return roundTo5Centimes(Math.ceil((remaining / peopleLeft) * 20) / 20)
+})
+
+function activateSplit(count) {
+	if (count < 2) return
+	splitMode.value = true
+	splitCount.value = count
+	splitPaymentIndex.value = 0
+	splitAmountOverride.value = 0
+	editingSplitAmount.value = false
+	nextTick(() => {
+		setNumpadValue(splitAmount.value)
+	})
+}
+
+function deactivateSplit() {
+	splitMode.value = false
+	splitCount.value = 0
+	splitPaymentIndex.value = 0
+	splitAmountOverride.value = 0
+	editingSplitAmount.value = false
+}
+
+function adjustSplitAmount(direction) {
+	const current = splitAmount.value
+	const newAmount = roundTo5Centimes(current + direction)
+	if (newAmount > 0 && newAmount <= remainingAmount.value) {
+		splitAmountOverride.value = newAmount
+		nextTick(() => setNumpadValue(newAmount))
+	}
+}
+
+function onSplitAmountEdit(event) {
+	const val = Number.parseFloat(event.target.value)
+	if (val > 0 && val <= remainingAmount.value) {
+		splitAmountOverride.value = roundTo5Centimes(val)
+		nextTick(() => setNumpadValue(splitAmountOverride.value))
+	}
+	editingSplitAmount.value = false
+}
+
+// Tip state
+const tipAmount = ref(0)
+const showTipDetection = computed(() => {
+	return (
+		restaurantStore.tipsEnabled &&
+		restaurantStore.autoDetectTip &&
+		tipAmount.value > 0
+	)
+})
+
 const { showWarning, showError, showSuccess, showInfo } = useToast()
 
 const props = defineProps({
@@ -1280,6 +1442,10 @@ const props = defineProps({
 	currency: {
 		type: String,
 		default: DEFAULT_CURRENCY,
+	},
+	guestPaidAmount: {
+		type: Number,
+		default: 0,
 	},
 	isOffline: {
 		type: Boolean,
@@ -1997,7 +2163,8 @@ const totalPaid = computed(() => {
 		(sum, entry) => sum + (entry.amount || 0),
 		0,
 	)
-	return roundCurrency(sum)
+	// Include guest payments already collected via QR/Wallee
+	return roundCurrency(sum + (props.guestPaidAmount || 0))
 })
 
 // Customer credit payment is enabled if either:
@@ -2045,6 +2212,22 @@ const changeAmount = computed(() => {
 	const change = totalPaid.value - effectiveGrandTotal.value
 	return change > 0 ? roundCurrency(change) : 0
 })
+
+// Auto-set tip when change amount changes (if tips enabled)
+watch(
+	() => changeAmount.value,
+	(newChange) => {
+		if (
+			restaurantStore.tipsEnabled &&
+			restaurantStore.autoDetectTip &&
+			newChange > 0
+		) {
+			tipAmount.value = newChange
+		} else {
+			tipAmount.value = 0
+		}
+	},
+)
 
 // ===========================================
 // Write-Off Logic
@@ -2278,7 +2461,13 @@ const isLastMethodCash = computed(() => {
 		!lastSelectedMethod.value || isCashPaymentMethod(lastSelectedMethod.value)
 	)
 })
-const { quickAmounts } = useQuickAmounts(remainingAmount, isLastMethodCash)
+// In split mode, base quick amounts on the per-person split amount
+const quickAmountBase = computed(() =>
+	splitMode.value && splitAmount.value > 0
+		? splitAmount.value
+		: remainingAmount.value,
+)
+const { quickAmounts } = useQuickAmounts(quickAmountBase, isLastMethodCash)
 
 // Whether a quick amount button should be disabled in exact-amount mode
 // Non-cash methods can only pay the exact remaining — no rounding allowed
@@ -2343,6 +2532,8 @@ watch(show, async (newVal) => {
 		// Reset state when dialog opens (but NOT customerBalance - it's pre-fetched)
 		paymentEntries.value = []
 		customAmount.value = ""
+		tipAmount.value = 0
+		deactivateSplit()
 		numpadClear()
 		mobileCustomAmount.value = ""
 		lastSelectedMethod.value = null
@@ -2730,8 +2921,13 @@ async function openWalleeTerminalDialog(method) {
 
 	// Store the method for later use
 	walleeCurrentMethod.value = method
-	walleeDialogAmount.value = remainingAmount.value
-	walleeInputAmount.value = remainingAmount.value.toFixed(2) // Initialize numpad with remaining amount
+	// Use split amount if in split mode, otherwise remaining amount
+	const initialAmount =
+		splitMode.value && splitAmount.value > 0
+			? splitAmount.value
+			: remainingAmount.value
+	walleeDialogAmount.value = initialAmount
+	walleeInputAmount.value = initialAmount.toFixed(2)
 	walleePaymentStatus.value = __("Loading terminals...")
 	walleePaymentError.value = false
 	walleeCurrentTransaction.value = null
@@ -3468,6 +3664,21 @@ async function addCustomPayment(method, amount) {
 	log.debug("[PaymentDialog] Payment added, new entries:", paymentEntries.value)
 	customAmount.value = ""
 
+	// Advance split mode and pre-fill next amount
+	if (splitMode.value) {
+		splitPaymentIndex.value++
+		splitAmountOverride.value = 0 // Reset override for next person
+		editingSplitAmount.value = false
+		if (
+			splitPaymentIndex.value < splitCount.value &&
+			remainingAmount.value > 0
+		) {
+			nextTick(() => {
+				setNumpadValue(splitAmount.value)
+			})
+		}
+	}
+
 	// If this was a partial wallet payment, switch to another payment method
 	if (isPartialWalletPayment) {
 		nextTick(() => {
@@ -3567,9 +3778,33 @@ function completePayment() {
 		totalPaid.value + writeOffAmount.value + (loyaltyRedeemAmount.value || 0)
 	const isPartial = effectivePaid < props.grandTotal
 
+	// If partial payment, show confirmation dialog first
+	if (isPartial) {
+		pendingPartialPaymentData.value = { effectivePaid, isPartial }
+		showPartialPaymentConfirm.value = true
+		return
+	}
+
+	finalizePayment(false)
+}
+
+const showPartialPaymentConfirm = ref(false)
+const pendingPartialPaymentData = ref(null)
+
+function confirmPartialPayment() {
+	showPartialPaymentConfirm.value = false
+	finalizePayment(true)
+}
+
+function cancelPartialPayment() {
+	showPartialPaymentConfirm.value = false
+	pendingPartialPaymentData.value = null
+}
+
+function finalizePayment(isPartial) {
 	const paymentData = {
 		payments: paymentEntries.value,
-		change_amount: changeAmount.value,
+		change_amount: Math.max(0, changeAmount.value - (tipAmount.value || 0)),
 		is_partial_payment: isPartial,
 		paid_amount: totalPaid.value,
 		outstanding_amount: isPartial
@@ -3578,6 +3813,8 @@ function completePayment() {
 		sales_team:
 			selectedSalesPersons.value.length > 0 ? selectedSalesPersons.value : null,
 		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
+		// Tip data
+		tip_amount: tipAmount.value > 0 ? tipAmount.value : 0,
 		// Write-off data
 		write_off_amount: writeOffAmount.value,
 		is_write_off: writeOffAmount.value > 0,
@@ -3612,6 +3849,7 @@ function completePayment() {
 	}
 
 	emit("payment-completed", paymentData)
+	pendingPartialPaymentData.value = null
 
 	show.value = false
 }

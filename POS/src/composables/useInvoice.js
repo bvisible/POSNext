@@ -23,6 +23,7 @@ export function useInvoice() {
 	const invoiceItems = ref([])
 	const customer = ref(null)
 	const payments = ref([])
+	const restaurantTable = ref(null)
 	const salesTeam = ref([]) // Sales team for Sales Invoice
 	const posProfile = ref(null)
 	const posOpeningShift = ref(null) // POS Opening Shift name
@@ -128,7 +129,10 @@ export function useInvoice() {
 					price_list_rate: itemDetails.price_list_rate,
 				}
 			} catch (err) {
-				log.warn("Server UOM pricing unavailable, resolving from IndexedDB", err)
+				log.warn(
+					"Server UOM pricing unavailable, resolving from IndexedDB",
+					err,
+				)
 			}
 		}
 
@@ -225,9 +229,18 @@ export function useInvoice() {
 	// Actions
 	function addItem(item, quantity = 1) {
 		const itemUom = item.uom || item.stock_uom
-		const existingItem = invoiceItems.value.find(
-			(i) => i.item_code === item.item_code && i.uom === itemUom,
-		)
+		// In restaurant mode, items with modifiers/instructions are always separate lines
+		const hasModifiers =
+			item.posa_item_modifiers || item.posa_special_instructions
+		const existingItem = hasModifiers
+			? null
+			: invoiceItems.value.find(
+					(i) =>
+						i.item_code === item.item_code &&
+						i.uom === itemUom &&
+						!i.posa_item_modifiers &&
+						!i.posa_special_instructions,
+				)
 
 		if (existingItem) {
 			// Store old values before update for incremental cache adjustment
@@ -278,6 +291,7 @@ export function useInvoice() {
 				amount: quantity * (item.rate || item.price_list_rate || 0),
 				stock_qty: item.stock_qty || 0,
 				image: item.image,
+				custom_color: item.custom_color,
 				uom: item.uom || item.stock_uom,
 				stock_uom: item.stock_uom,
 				conversion_factor: item.conversion_factor || 1,
@@ -298,6 +312,12 @@ export function useInvoice() {
 				is_stock_item: item.is_stock_item ?? 1,
 				is_bundle: item.is_bundle || false,
 				allow_negative_stock: item.allow_negative_stock || 0,
+				// Restaurant fields
+				posa_special_instructions: item.posa_special_instructions || "",
+				posa_item_modifiers: item.posa_item_modifiers || "",
+				preparation_station: item.preparation_station || "",
+				kds_status: item.kds_status || "",
+				_modifiers_applied: item._modifiers_applied || 0,
 			}
 			invoiceItems.value.push(newItem)
 			// Recalculate the newly added item to apply taxes
@@ -335,7 +355,9 @@ export function useInvoice() {
 			// Update cache incrementally (subtract removed item values)
 			// Use effective rate (manually edited rate or price_list_rate)
 			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1
-			const effectiveRate = isManuallyEdited ? itemToRemove.rate : (itemToRemove.price_list_rate || itemToRemove.rate)
+			const effectiveRate = isManuallyEdited
+				? itemToRemove.rate
+				: itemToRemove.price_list_rate || itemToRemove.rate
 			_cachedSubtotal.value -= roundCurrency(
 				itemToRemove.quantity * roundCurrency(effectiveRate),
 			)
@@ -381,7 +403,9 @@ export function useInvoice() {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
 			const isManuallyEdited = item.is_rate_manually_edited === 1
-			const effectiveRate = isManuallyEdited ? item.rate : (item.price_list_rate || item.rate)
+			const effectiveRate = isManuallyEdited
+				? item.rate
+				: item.price_list_rate || item.rate
 			const oldAmount = roundCurrency(
 				item.quantity * roundCurrency(effectiveRate),
 			)
@@ -427,7 +451,9 @@ export function useInvoice() {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
 			const wasManuallyEdited = item.is_rate_manually_edited === 1
-			const oldEffectiveRate = wasManuallyEdited ? item.rate : (item.price_list_rate || item.rate)
+			const oldEffectiveRate = wasManuallyEdited
+				? item.rate
+				: item.price_list_rate || item.rate
 			const oldAmount = roundCurrency(
 				item.quantity * roundCurrency(oldEffectiveRate),
 			)
@@ -453,9 +479,12 @@ export function useInvoice() {
 			// Update cache incrementally (new values - old values)
 			// Use the new rate for manually edited items
 			const isNowManuallyEdited = item.is_rate_manually_edited === 1
-			const newEffectiveRate = isNowManuallyEdited ? item.rate : (item.price_list_rate || item.rate)
+			const newEffectiveRate = isNowManuallyEdited
+				? item.rate
+				: item.price_list_rate || item.rate
 			_cachedSubtotal.value +=
-				roundCurrency(item.quantity * roundCurrency(newEffectiveRate)) - oldAmount
+				roundCurrency(item.quantity * roundCurrency(newEffectiveRate)) -
+				oldAmount
 			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax
 			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount
 		}
@@ -472,7 +501,9 @@ export function useInvoice() {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
 			const isManuallyEdited = item.is_rate_manually_edited === 1
-			const effectiveRate = isManuallyEdited ? item.rate : (item.price_list_rate || item.rate)
+			const effectiveRate = isManuallyEdited
+				? item.rate
+				: item.price_list_rate || item.rate
 			const oldAmount = roundCurrency(
 				item.quantity * roundCurrency(effectiveRate),
 			)
@@ -619,7 +650,9 @@ export function useInvoice() {
 		for (const item of invoiceItems.value) {
 			// Use manually edited rate if set, otherwise use price_list_rate
 			const isManuallyEdited = item.is_rate_manually_edited === 1
-			const effectiveRate = isManuallyEdited ? item.rate : (item.price_list_rate || item.rate)
+			const effectiveRate = isManuallyEdited
+				? item.rate
+				: item.price_list_rate || item.rate
 			_cachedSubtotal.value += roundCurrency(
 				item.quantity * roundCurrency(effectiveRate),
 			)
@@ -662,7 +695,9 @@ export function useInvoice() {
 		// Determine the base unit price
 		// If rate was manually edited, use the edited rate; otherwise use price_list_rate
 		const isManuallyEdited = item.is_rate_manually_edited === 1
-		const effectiveRate = isManuallyEdited ? item.rate : (item.price_list_rate || item.rate)
+		const effectiveRate = isManuallyEdited
+			? item.rate
+			: item.price_list_rate || item.rate
 		const roundedRate = roundCurrency(effectiveRate)
 		const baseAmount = roundCurrency(item.quantity * roundedRate)
 
@@ -748,7 +783,9 @@ export function useInvoice() {
 			item_name: item.item_name,
 			qty: item.quantity || item.qty || 1,
 			rate: item.is_free_item ? 0 : computeBackendRate(item),
-			price_list_rate: item.is_free_item ? 0 : roundCurrency(item.price_list_rate || item.rate),
+			price_list_rate: item.is_free_item
+				? 0
+				: roundCurrency(item.price_list_rate || item.rate),
 			uom: item.uom,
 			warehouse: item.warehouse,
 			batch_no: item.batch_no,
@@ -761,6 +798,10 @@ export function useInvoice() {
 			is_rate_manually_edited: item.is_rate_manually_edited || 0,
 			original_rate: item.original_rate || null,
 			is_free_item: item.is_free_item || 0,
+			posa_special_instructions: item.posa_special_instructions || "",
+			posa_item_modifiers: item.posa_item_modifiers || "",
+			preparation_station: item.preparation_station || "",
+			kds_status: item.kds_status || "",
 		}))
 	}
 
@@ -848,7 +889,9 @@ export function useInvoice() {
 			// Document-level discount for coupons and gift cards
 			discount_amount: additionalDiscount.value || 0,
 			coupon_code: couponCode.value,
-			posa_coupon_code: couponCode.value ? couponCode.value.toUpperCase() : null,
+			posa_coupon_code: couponCode.value
+				? couponCode.value.toUpperCase()
+				: null,
 			posa_gift_card_amount_used: additionalDiscount.value || 0,
 			is_pos: 1,
 			update_stock: 1,
@@ -869,6 +912,7 @@ export function useInvoice() {
 		deliveryDate = null,
 		writeOffAmount = 0,
 		loyaltyData = null,
+		tipAmount = 0,
 	) {
 		/**
 		 * Two-step submission process with mutex protection:
@@ -907,6 +951,7 @@ export function useInvoice() {
 					pos_profile: posProfile.value,
 					posa_pos_opening_shift: posOpeningShift.value,
 					customer: customer.value?.name || customer.value,
+					restaurant_table: restaurantTable.value?.name || null,
 					items: formatItemsForSubmission(rawItems),
 					payments: rawPayments.map((p) => ({
 						mode_of_payment: p.mode_of_payment,
@@ -916,7 +961,9 @@ export function useInvoice() {
 					// Document-level discount for coupons and gift cards
 					discount_amount: additionalDiscount.value || 0,
 					coupon_code: couponCode.value,
-					posa_coupon_code: couponCode.value ? couponCode.value.toUpperCase() : null,
+					posa_coupon_code: couponCode.value
+						? couponCode.value.toUpperCase()
+						: null,
 					posa_gift_card_amount_used: additionalDiscount.value || 0,
 					is_pos: 1,
 					update_stock: 1, // Critical: Ensures stock is updated
@@ -958,6 +1005,7 @@ export function useInvoice() {
 						remainingAmount.value < 0 ? Math.abs(remainingAmount.value) : 0,
 					write_off_amount: writeOffAmount || 0,
 					loyalty: loyaltyData || null,
+					tip_amount: tipAmount || 0,
 				}
 
 				try {
@@ -1148,6 +1196,7 @@ export function useInvoice() {
 		invoiceItems,
 		customer,
 		payments,
+		restaurantTable,
 		salesTeam,
 		posProfile,
 		posOpeningShift,

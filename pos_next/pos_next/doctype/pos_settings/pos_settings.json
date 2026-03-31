@@ -13,6 +13,12 @@
   "enable_customer_display_account_creation",
   "column_break_customer_display",
   "customer_display_show_address_fields",
+  "section_break_restaurant",
+  "enable_restaurant_mode",
+  "default_restaurant_area",
+  "column_break_takeaway",
+  "enable_takeaway",
+  "takeaway_card",
   "section_break_wallet",
   "enable_loyalty_program",
   "default_loyalty_program",
@@ -27,6 +33,8 @@
   "enable_gift_card_splitting",
   "gift_card_validity_months",
   "gift_card_notification",
+  "section_break_cash_management",
+  "closing_withdrawal_template",
   "section_break_general",
   "allow_user_to_edit_additional_discount",
   "allow_user_to_edit_item_discount",
@@ -150,6 +158,45 @@
    "description": "Show address fields in the customer creation form (both on display and in POS)"
   },
   {
+   "fieldname": "section_break_restaurant",
+   "fieldtype": "Section Break",
+   "label": "Restaurant"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, POS will start in restaurant mode by default",
+   "fieldname": "enable_restaurant_mode",
+   "fieldtype": "Check",
+   "label": "Default Restaurant Mode"
+  },
+  {
+   "fieldname": "default_restaurant_area",
+   "fieldtype": "Link",
+   "label": "Default Restaurant Area",
+   "options": "Restaurant Area",
+   "depends_on": "enable_restaurant_mode"
+  },
+  {
+   "fieldname": "column_break_takeaway",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Enable takeaway orders in restaurant mode",
+   "fieldname": "enable_takeaway",
+   "fieldtype": "Check",
+   "label": "Enable Takeaway",
+   "depends_on": "enable_restaurant_mode"
+  },
+  {
+   "fieldname": "takeaway_card",
+   "fieldtype": "Link",
+   "label": "Takeaway Card",
+   "options": "Restaurant Card",
+   "depends_on": "enable_takeaway",
+   "description": "Optional: use a specific card with takeaway prices"
+  },
+  {
    "fieldname": "section_break_wallet",
    "fieldtype": "Section Break",
    "label": "Wallet & Loyalty"
@@ -249,6 +296,19 @@
    "options": "Notification",
    "depends_on": "enable_gift_cards",
    "description": "Notification template to send when a gift card is created (e.g., email with gift card code)."
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_cash_management",
+   "fieldtype": "Section Break",
+   "label": "Cash Management"
+  },
+  {
+   "fieldname": "closing_withdrawal_template",
+   "fieldtype": "Link",
+   "label": "Closing Withdrawal Template",
+   "options": "Journal Entry Template",
+   "description": "Journal Entry Template used for cash withdrawal at shift closing. When set, cashiers can withdraw cash at closing and the remaining balance is suggested as next opening amount."
   },
   {
    "collapsible": 0,

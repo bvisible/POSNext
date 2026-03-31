@@ -150,7 +150,11 @@
 
 <script setup>
 import { useToast } from "@/composables/useToast"
-import { DEFAULT_CURRENCY, DEFAULT_LOCALE, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import {
+	DEFAULT_CURRENCY,
+	DEFAULT_LOCALE,
+	formatCurrency as formatCurrencyUtil,
+} from "@/utils/currency"
 import { getInvoiceStatusColor } from "@/utils/invoice"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { computed, ref, watch } from "vue"
@@ -172,7 +176,13 @@ function formatCurrency(amount) {
 	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency)
 }
 
-const emit = defineEmits(["update:modelValue", "create-return", "view-invoice", "print-invoice", "return-created"])
+const emit = defineEmits([
+	"update:modelValue",
+	"create-return",
+	"view-invoice",
+	"print-invoice",
+	"return-created",
+])
 
 const show = ref(props.modelValue)
 const invoices = ref([])
@@ -306,7 +316,11 @@ function canCreateReturn(invoice) {
 	// 1. Invoice is submitted (docstatus === 1)
 	// 2. Not already a return invoice
 	// 3. Status is not "Credit Note Issued" (already has a return)
-	return invoice.docstatus === 1 && !invoice.is_return && invoice.status !== 'Credit Note Issued'
+	return (
+		invoice.docstatus === 1 &&
+		!invoice.is_return &&
+		invoice.status !== "Credit Note Issued"
+	)
 }
 
 function openReturnModal(invoice) {

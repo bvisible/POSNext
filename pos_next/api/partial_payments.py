@@ -688,6 +688,126 @@ def get_unpaid_invoices(pos_profile: str, limit: int = DEFAULT_INVOICE_LIMIT) ->
 
 
 @frappe.whitelist()
+def get_external_unpaid_invoices(pos_profile: str, limit: int = DEFAULT_INVOICE_LIMIT) -> List[Dict]:
+    """
+    Get unpaid invoices created outside this POS Profile.
+
+    Includes invoices that are either non-POS (is_pos=0) or from a different POS Profile.
+    Filtered by the same company and currency as the current POS Profile.
+
+    Args:
+        pos_profile: POS Profile name (used to derive company/currency)
+        limit: Maximum invoices to return (default 50, max 500)
+
+    Returns:
+        List[dict]: External unpaid invoices with payment history
+    """
+    if not pos_profile:
+        frappe.throw(_("POS Profile is required"))
+
+    if not frappe.db.exists("POS Profile", pos_profile):
+        frappe.throw(_("POS Profile {0} does not exist").format(pos_profile))
+
+    if not _has_pos_profile_access(pos_profile):
+        frappe.throw(_("You don't have access to this POS Profile"))
+
+    limit = cint(limit)
+    if limit <= 0:
+        limit = DEFAULT_INVOICE_LIMIT
+    elif limit > MAX_INVOICE_LIMIT:
+        limit = MAX_INVOICE_LIMIT
+
+    # Derive company and currency from POS Profile
+    company, currency = frappe.db.get_value(
+        "POS Profile", pos_profile, ["company", "currency"]
+    )
+
+    if not company or not currency:
+        frappe.throw(_("POS Profile {0} is missing company or currency").format(pos_profile))
+
+    # Use raw SQL for the OR condition (non-POS or different POS Profile)
+    invoices = frappe.db.sql(
+        """
+        SELECT name, customer, customer_name, posting_date, posting_time,
+               grand_total, paid_amount, outstanding_amount, status, creation,
+               currency, is_pos
+        FROM `tabSales Invoice`
+        WHERE company = %(company)s
+            AND currency = %(currency)s
+            AND docstatus = 1
+            AND outstanding_amount > 0
+            AND is_return = 0
+            AND (is_pos = 0 OR (is_pos = 1 AND IFNULL(pos_profile, '') != %(pos_profile)s))
+        ORDER BY posting_date DESC, posting_time DESC
+        LIMIT %(limit)s
+        """,
+        {"company": company, "currency": currency, "pos_profile": pos_profile, "limit": limit},
+        as_dict=True,
+    )
+
+    for invoice in invoices:
+        enrich_invoice_with_payment_history(invoice, include_metadata=True)
+
+    return invoices
+
+
+@frappe.whitelist()
+def get_external_unpaid_summary(pos_profile: str) -> Dict:
+    """
+    Get summary statistics for external unpaid invoices.
+
+    Uses direct SQL aggregation for performance.
+
+    Args:
+        pos_profile: POS Profile name (used to derive company/currency)
+
+    Returns:
+        dict: {count, total_outstanding, total_paid, total_grand_total}
+    """
+    if not pos_profile:
+        frappe.throw(_("POS Profile is required"))
+
+    if not frappe.db.exists("POS Profile", pos_profile):
+        frappe.throw(_("POS Profile {0} does not exist").format(pos_profile))
+
+    if not _has_pos_profile_access(pos_profile):
+        frappe.throw(_("You don't have access to this POS Profile"))
+
+    company, currency = frappe.db.get_value(
+        "POS Profile", pos_profile, ["company", "currency"]
+    )
+
+    if not company or not currency:
+        frappe.throw(_("POS Profile {0} is missing company or currency").format(pos_profile))
+
+    summary = frappe.db.sql(
+        """
+        SELECT
+            COUNT(*) as count,
+            COALESCE(SUM(outstanding_amount), 0) as total_outstanding,
+            COALESCE(SUM(paid_amount), 0) as total_paid,
+            COALESCE(SUM(grand_total), 0) as total_grand_total
+        FROM `tabSales Invoice`
+        WHERE company = %(company)s
+            AND currency = %(currency)s
+            AND docstatus = 1
+            AND outstanding_amount > 0
+            AND is_return = 0
+            AND (is_pos = 0 OR (is_pos = 1 AND IFNULL(pos_profile, '') != %(pos_profile)s))
+        """,
+        {"company": company, "currency": currency, "pos_profile": pos_profile},
+        as_dict=True,
+    )[0]
+
+    return {
+        "count": cint(summary.get("count")),
+        "total_outstanding": flt(summary.get("total_outstanding")),
+        "total_paid": flt(summary.get("total_paid")),
+        "total_grand_total": flt(summary.get("total_grand_total")),
+    }
+
+
+@frappe.whitelist()
 def get_partial_payment_details(invoice_name: str) -> Dict:
     """
     Get detailed payment information for an invoice.
@@ -754,7 +874,7 @@ def get_partial_payment_details(invoice_name: str) -> Dict:
 
 
 @frappe.whitelist()
-def add_payment_to_partial_invoice(invoice_name: str, payments) -> Dict:
+def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shift: str = None) -> Dict:
     """
     Add payments to a partially paid invoice via Payment Entry.
 
@@ -772,6 +892,7 @@ def add_payment_to_partial_invoice(invoice_name: str, payments) -> Dict:
             - account: (optional) Specific payment account
             - reference_no: (optional) Reference number
         Can also accept JSON string which will be parsed.
+        pos_opening_shift: (optional) POS Opening Shift name to link payment to shift closing
 
     Returns:
         dict: Updated invoice details with created Payment Entry names
@@ -846,6 +967,11 @@ def add_payment_to_partial_invoice(invoice_name: str, payments) -> Dict:
             mode_of_payment = payment.get("mode_of_payment") or DEFAULT_PAYMENT_MODE
             payment_account = payment.get("account")
             reference_no = payment.get("reference_no")
+
+            # If POS Opening Shift is provided, use it as reference_no
+            # so the payment appears in the shift closing summary
+            if pos_opening_shift and not reference_no:
+                reference_no = pos_opening_shift
 
             pe_name = create_payment_entry(
                 invoice_name=invoice_name,

@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:workflow_name",
+ "creation": "2026-03-23 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "DocType",
+ "document_type": "",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "workflow_name",
+  "is_default",
+  "section_steps",
+  "steps",
+  "section_items",
+  "applicable_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "workflow_name",
+   "fieldtype": "Data",
+   "label": "Workflow Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "description": "If checked, this workflow will be used when no specific workflow is assigned to a station or item.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is Default"
+  },
+  {
+   "fieldname": "section_steps",
+   "fieldtype": "Section Break",
+   "label": "Workflow Steps"
+  },
+  {
+   "description": "Define the preparation steps in order. The last step represents 'ready for pickup'. After that, items are marked as 'Delivered' by the runner or KDS operator.",
+   "fieldname": "steps",
+   "fieldtype": "Table",
+   "label": "Steps",
+   "options": "Preparation Workflow Step",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "Applicable Products",
+   "collapsible": 1
+  },
+  {
+   "description": "If products are listed here, they will always follow this workflow regardless of their station assignment.",
+   "fieldname": "applicable_items",
+   "fieldtype": "Table",
+   "label": "Products",
+   "options": "Preparation Workflow Item"
+  }
+ ],
+ "index_web_link_preview": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-03-23 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Preparation Workflow",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "POSNext Cashier"
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 0,
+ "track_views": 0
+}

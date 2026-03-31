@@ -535,6 +535,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		try {
 			const result = await createCustomerResource.fetch({
 				customer_name: customerData.customer_name,
+				customer_type: customerData.customer_type || "Individual",
 				email: customerData.email || null,
 				mobile_no: customerData.mobile_no || null,
 				// Address fields

@@ -82,6 +82,38 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+					<!-- Restaurant Mode Toggle Switch -->
+					<div
+						class="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
+						:title="isRestaurantMode ? __('Click to disable restaurant mode') : __('Click to enable restaurant mode')"
+					>
+						<svg class="w-3.5 h-3.5 flex-shrink-0" :class="isRestaurantMode ? 'text-amber-600' : 'text-gray-400'" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
+						</svg>
+						<span class="text-[10px] font-bold uppercase tracking-wide hidden sm:inline" :class="isRestaurantMode ? 'text-amber-700' : 'text-gray-400'">
+							{{ __("Resto") }}
+						</span>
+						<button
+							type="button"
+							role="switch"
+							:aria-checked="isRestaurantMode"
+							:aria-label="isRestaurantMode ? __('Disable restaurant mode') : __('Enable restaurant mode')"
+							@click="onToggleRestaurant"
+							:class="[
+								'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1',
+								isRestaurantMode ? 'bg-amber-500' : 'bg-gray-300',
+								'cursor-pointer'
+							]"
+						>
+							<span
+								:class="[
+									'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+									isRestaurantMode ? 'translate-x-4' : 'translate-x-0'
+								]"
+							/>
+						</button>
+					</div>
+
 					<!-- WiFi/Offline Status -->
 					<button
 						@click="$emit('sync-click')"
@@ -276,13 +308,6 @@
 
 					<div class="w-px h-4 sm:h-6 bg-gray-200 hidden md:block"></div>
 
-					<!-- Language Switcher - Hidden on mobile, shown in UserMenu instead -->
-					<div class="hidden md:block">
-						<LanguageSwitcher />
-					</div>
-
-					<div class="w-px h-4 sm:h-6 bg-gray-200"></div>
-
 					<!-- User Menu -->
 					<UserMenu
 						:user-name="userName"
@@ -313,6 +338,8 @@ import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue"
 import { DEFAULT_LOCALE } from "@/utils/currency"
 import { ref } from "vue"
 import { version } from "../../../package.json"
+import { usePOSSettingsStore } from "@/stores/posSettings"
+import { useRestaurantStore } from "@/stores/restaurant"
 
 const showCacheTooltip = ref(false)
 const showExitDialog = ref(false)
@@ -324,7 +351,11 @@ function navigateToBackOffice() {
 }
 
 function openCustomerDisplay() {
-	window.open("/pos/display", "pos_customer_display", "popup,width=1024,height=768")
+	window.open(
+		"/pos/display",
+		"pos_customer_display",
+		"popup,width=1024,height=768",
+	)
 }
 
 const emit = defineEmits([
@@ -336,7 +367,13 @@ const emit = defineEmits([
 	"menu-opened",
 	"menu-closed",
 	"clear-cache",
+	"toggle-restaurant",
 ])
+
+function onToggleRestaurant() {
+	// Always emit — POSSale handles the logic (including purge dialog if needed)
+	emit("toggle-restaurant")
+}
 
 function handleClearCacheClick() {
 	showCacheTooltip.value = false
@@ -419,6 +456,14 @@ const props = defineProps({
 	qzConnected: {
 		type: Boolean,
 		default: false,
+	},
+	isRestaurantMode: {
+		type: Boolean,
+		default: false,
+	},
+	canToggleRestaurant: {
+		type: Boolean,
+		default: true,
 	},
 })
 

@@ -37,6 +37,13 @@ export const sectionThemes = {
 		badgeBg: "bg-green-100",
 		badgeColor: "text-green-700",
 	},
+	amber: {
+		headerGradient: "from-amber-50 via-orange-50 to-yellow-50",
+		iconBg: "bg-amber-100",
+		iconColor: "text-amber-600",
+		badgeBg: "bg-amber-100",
+		badgeColor: "text-amber-700",
+	},
 }
 
 // Theme Configurations for Subsections
@@ -60,6 +67,11 @@ export const subsectionThemes = {
 		gradient: "from-teal-50 to-cyan-50",
 		border: "border-teal-200",
 		iconColor: "text-teal-600",
+	},
+	amber: {
+		gradient: "from-amber-50 to-orange-50",
+		border: "border-amber-200",
+		iconColor: "text-amber-600",
 	},
 }
 
