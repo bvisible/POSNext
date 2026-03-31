@@ -290,10 +290,26 @@ function onCanvasPointerDown(event) {
 
 	if (props.activeTool === "wall") {
 		event.preventDefault()
-		// Start drawing a wall
-		const snapped = findNearEndpoint(x, y) || { x, y }
-		drawStart = { x: snapped.x, y: snapped.y }
-		drawPreview.value = { x1: snapped.x, y1: snapped.y, x2: snapped.x, y2: snapped.y }
+		event.stopPropagation()
+		if (!drawStart) {
+			// First click: set start point
+			const snapped = findNearEndpoint(x, y) || { x, y }
+			drawStart = { x: snapped.x, y: snapped.y }
+			drawPreview.value = { x1: snapped.x, y1: snapped.y, x2: snapped.x, y2: snapped.y }
+		} else {
+			// Second click: complete the wall
+			const snapped = findNearEndpoint(x, y) || { x, y }
+			const len = Math.hypot(snapped.x - drawStart.x, snapped.y - drawStart.y)
+			if (len > 15) {
+				emit("add-wall", {
+					id: generateId(),
+					x1: drawStart.x, y1: drawStart.y,
+					x2: snapped.x, y2: snapped.y,
+				})
+			}
+			drawStart = null
+			drawPreview.value = null
+		}
 	} else if (props.activeTool === "door") {
 		event.preventDefault()
 		const wall = findWallAt(x, y)
@@ -336,21 +352,7 @@ function onCanvasPointerMove(event) {
 	}
 }
 
-function onCanvasPointerUp(event) {
-	if (props.activeTool === "wall" && drawStart) {
-		const { x, y } = getSVGCoords(event)
-		const snapped = findNearEndpoint(x, y) || { x, y }
-		const len = Math.hypot(snapped.x - drawStart.x, snapped.y - drawStart.y)
-		if (len > 15) {
-			emit("add-wall", {
-				id: generateId(),
-				x1: drawStart.x, y1: drawStart.y,
-				x2: snapped.x, y2: snapped.y,
-			})
-		}
-		drawStart = null
-		drawPreview.value = null
-	}
+function onCanvasPointerUp() {
 	if (dragState) {
 		dragState = null
 	}
