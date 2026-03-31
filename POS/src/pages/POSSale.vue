@@ -1948,15 +1948,31 @@ onMounted(async () => {
 				if (orderData?.items) {
 					await cartStore.clearCart()
 					for (const item of orderData.items) {
+						// Calculate modifier price adjustment from saved JSON
+						let modifierPriceAdjustment = 0
+						if (item.posa_item_modifiers) {
+							try {
+								const mods = JSON.parse(item.posa_item_modifiers)
+								for (const mod of mods) {
+									for (const opt of mod.options || []) {
+										modifierPriceAdjustment += opt.price_adjustment || opt.price || 0
+									}
+								}
+							} catch { /* ignore */ }
+						}
 						cartStore.addItem({
 							item_code: item.item_code,
 							item_name: item.item_name,
 							rate: item.rate,
 							uom: item.uom,
 							kds_status: item.kds_status || "Pending",
+							posa_item_modifiers: item.posa_item_modifiers,
+							posa_special_instructions: item.posa_special_instructions,
+							_modifiers_applied: modifierPriceAdjustment || 0,
 						}, item.qty || 1)
 					}
 					cartStore.$patch({ currentDraftId: orderData.name, hasUnsentChanges: false, guestPaidAmount: orderData.paid_amount || 0 })
+					if (orderData.customer) cartStore.setCustomer(orderData.customer)
 				}
 			} catch { /* ignore */ }
 		}
