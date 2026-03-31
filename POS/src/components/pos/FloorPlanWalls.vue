@@ -472,9 +472,14 @@ function clearSelection() {
 	selectedId.value = null
 }
 
+function cancelDraw() {
+	drawStart = null
+	drawPreview.value = null
+}
+
 onUnmounted(() => {
 	onDocumentDragEnd()
 })
 
-defineExpose({ deleteSelected, clearSelection, selectedId })
+defineExpose({ deleteSelected, clearSelection, cancelDraw, selectedId })
 </script>

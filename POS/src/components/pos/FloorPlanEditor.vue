@@ -82,6 +82,16 @@
 					</svg>
 					{{ isEditMode ? __("Save") : __("Edit") }}
 				</button>
+				<button
+					v-if="isEditMode"
+					@click="cancelEditMode"
+					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-red-50 text-red-600 hover:bg-red-100"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+					{{ __("Cancel") }}
+				</button>
 			</div>
 		</div>
 
@@ -190,7 +200,7 @@
 			<label class="flex items-center gap-1 text-[10px] text-gray-500">
 				{{ __("Opacity") }}
 				<input type="range" min="0.1" max="1" step="0.1" v-model.number="wallOpacity"
-					@change="localStorage.setItem('pos_wall_opacity', wallOpacity)"
+					@change="selectedArea && localStorage.setItem(`pos_wall_opacity_${selectedArea}`, wallOpacity)"
 					class="w-16 h-3 accent-gray-500" />
 			</label>
 			<!-- Background image toggle -->
@@ -936,7 +946,7 @@ const newStation = ref({
 })
 // Floor plan walls/doors/windows
 const wallTool = ref("select") // 'select' | 'wall' | 'door' | 'window'
-const wallOpacity = ref(parseFloat(localStorage.getItem("pos_wall_opacity")) || 1)
+const wallOpacity = ref(1)
 const localWalls = ref([])
 const localDoors = ref([])
 const localWindows = ref([])
@@ -995,6 +1005,7 @@ function syncLocalWalls() {
 	localDoors.value = (data.doors || []).map((d) => ({ ...d }))
 	localWindows.value = (data.windows || []).map((w) => ({ ...w }))
 	floorPlanBgUrl.value = restaurantStore.getFloorPlanBg(selectedArea.value)
+	wallOpacity.value = parseFloat(localStorage.getItem(`pos_wall_opacity_${selectedArea.value}`)) || 1
 }
 
 // Local reactive copy of stations for rendering
@@ -1468,8 +1479,9 @@ function onWallKeyDown(event) {
 		wallsRef.value?.deleteSelected()
 	}
 	if (event.key === "Escape") {
-		wallTool.value = "select"
+		wallsRef.value?.cancelDraw()
 		wallsRef.value?.clearSelection()
+		wallTool.value = "select"
 	}
 }
 
@@ -1570,6 +1582,16 @@ async function selectTable(table) {
 	emit("table-selected", table)
 }
 
+async function cancelEditMode() {
+	// Reload from server without saving
+	await restaurantStore.fetchFromNetwork()
+	syncLocalTables()
+	syncLocalStations()
+	syncLocalWalls()
+	isEditMode.value = false
+	wallTool.value = "select"
+}
+
 async function toggleEditMode() {
 	if (isEditMode.value) {
 		// Save positions and exit edit mode
@@ -1586,9 +1608,10 @@ async function toggleEditMode() {
 					windows: localWindows.value,
 				})
 			}
-			// Save current zoom as default for this area
+			// Save current zoom and pan as default for this area
 			if (selectedArea.value) {
 				localStorage.setItem(`pos_floor_zoom_${selectedArea.value}`, zoomLevel.value.toString())
+				localStorage.setItem(`pos_floor_pan_${selectedArea.value}`, JSON.stringify({ x: panX.value, y: panY.value }))
 			}
 			showSuccess(__("Floor plan saved"))
 		} catch (e) {
@@ -1988,8 +2011,11 @@ onMounted(async () => {
 	syncLocalTables()
 	syncLocalStations()
 
-	// Select default area
-	if (
+	// Restore last selected area, or default
+	const savedArea = localStorage.getItem("pos_selected_area")
+	if (savedArea && areas.value.find((a) => a.name === savedArea)) {
+		selectedArea.value = savedArea
+	} else if (
 		restaurantStore.defaultArea &&
 		areas.value.find((a) => a.name === restaurantStore.defaultArea)
 	) {
@@ -2000,6 +2026,14 @@ onMounted(async () => {
 
 	// Load walls for initial area
 	syncLocalWalls()
+
+	// Restore per-area pan
+	if (selectedArea.value) {
+		try {
+			const savedPan = JSON.parse(localStorage.getItem(`pos_floor_pan_${selectedArea.value}`))
+			if (savedPan) { panX.value = savedPan.x || 0; panY.value = savedPan.y || 0 }
+		} catch { /* ignore */ }
+	}
 
 	// Auto-layout tables that have no positions yet
 	await nextTick()
@@ -2035,13 +2069,28 @@ onMounted(async () => {
 })
 
 // Re-layout when switching areas
-watch(selectedArea, async (newArea) => {
-	resetPan()
-	// Restore per-area zoom if saved
+watch(selectedArea, async (newArea, oldArea) => {
+	// Save pan/zoom of previous area
+	if (oldArea) {
+		localStorage.setItem(`pos_floor_pan_${oldArea}`, JSON.stringify({ x: panX.value, y: panY.value }))
+	}
+	// Save selected area for "back" navigation
+	localStorage.setItem("pos_selected_area", newArea)
+	// Restore per-area zoom
 	const areaZoom = parseFloat(localStorage.getItem(`pos_floor_zoom_${newArea}`))
 	if (areaZoom && areaZoom >= 0.4 && areaZoom <= 2) {
 		zoomLevel.value = areaZoom
 	}
+	// Restore per-area pan
+	try {
+		const savedPan = JSON.parse(localStorage.getItem(`pos_floor_pan_${newArea}`))
+		if (savedPan) {
+			panX.value = savedPan.x || 0
+			panY.value = savedPan.y || 0
+		} else {
+			resetPan()
+		}
+	} catch { resetPan() }
 	syncLocalWalls()
 	await nextTick()
 	autoLayoutTables()
