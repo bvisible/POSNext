@@ -17,18 +17,19 @@
 					stroke-width="4" stroke-linecap="round"
 				/>
 			</template>
-			<!-- Hit area for selection (wider invisible line) -->
+			<!-- Hit area for selection + drag (wider invisible line) -->
 			<line v-if="isEditMode && activeTool === 'select'"
 				:x1="wall.x1" :y1="wall.y1" :x2="wall.x2" :y2="wall.y2"
-				stroke="transparent" stroke-width="16" class="cursor-pointer pointer-events-auto"
-				@pointerdown.stop="selectElement(wall.id)"
+				stroke="transparent" stroke-width="16"
+				:class="selectedId === wall.id ? 'cursor-grab pointer-events-auto' : 'cursor-pointer pointer-events-auto'"
+				@pointerdown.stop="startDragWall($event, wall)"
 			/>
 			<!-- Endpoint handles in edit mode -->
 			<template v-if="isEditMode && selectedId === wall.id && activeTool === 'select'">
-				<circle :cx="wall.x1" :cy="wall.y1" r="5" fill="#3B82F6" stroke="white" stroke-width="2"
-					class="cursor-move pointer-events-auto" @pointerdown.stop="startDragEndpoint($event, wall, 'start')" />
-				<circle :cx="wall.x2" :cy="wall.y2" r="5" fill="#3B82F6" stroke="white" stroke-width="2"
-					class="cursor-move pointer-events-auto" @pointerdown.stop="startDragEndpoint($event, wall, 'end')" />
+				<circle :cx="wall.x1" :cy="wall.y1" r="6" fill="#3B82F6" stroke="white" stroke-width="2"
+					class="cursor-crosshair pointer-events-auto" @pointerdown.stop="startDragEndpoint($event, wall, 'start')" />
+				<circle :cx="wall.x2" :cy="wall.y2" r="6" fill="#3B82F6" stroke="white" stroke-width="2"
+					class="cursor-crosshair pointer-events-auto" @pointerdown.stop="startDragEndpoint($event, wall, 'end')" />
 			</template>
 		</template>
 
@@ -75,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, computed, toRefs } from "vue"
+import { ref, computed, toRefs, onUnmounted } from "vue"
 
 const props = defineProps({
 	walls: { type: Array, default: () => [] },
@@ -108,9 +109,12 @@ function snap(v) {
 	return Math.round(v / GRID) * GRID
 }
 
+let svgEl = null
+
 function getSVGCoords(event) {
-	const svg = event.currentTarget.closest("svg")
+	const svg = svgEl || event.currentTarget?.closest("svg")
 	if (!svg) return { x: 0, y: 0 }
+	if (!svgEl) svgEl = svg
 	const rect = svg.getBoundingClientRect()
 	const zoom = props.zoomLevel || 1
 	return {
@@ -338,9 +342,21 @@ function onCanvasPointerMove(event) {
 		const { x, y } = getSVGCoords(event)
 		const wall = findWallAt(x, y)
 		placementPreview.value = wall ? positionOnWall(wall, projectOnWall(wall, x, y)) : null
-	} else if (dragState) {
-		const { x, y } = getSVGCoords(event)
-		const snapped = findNearEndpoint(x, y, dragState.wallId) || { x, y }
+	}
+}
+
+function onCanvasPointerUp() {
+	placementPreview.value = null
+}
+
+// Document-level drag handlers (work outside SVG bounds)
+function onDocumentDragMove(event) {
+	if (!dragState) return
+	event.preventDefault()
+	const { x, y } = getSVGCoords(event)
+
+	if (dragState.mode === "endpoint") {
+		const snapped = findNearEndpoint(x, y, dragState.wall.id) || { x, y }
 		if (dragState.endpoint === "start") {
 			dragState.wall.x1 = snapped.x
 			dragState.wall.y1 = snapped.y
@@ -348,15 +364,38 @@ function onCanvasPointerMove(event) {
 			dragState.wall.x2 = snapped.x
 			dragState.wall.y2 = snapped.y
 		}
-		emit("update:walls", [...walls.value])
+	} else if (dragState.mode === "wall") {
+		const dx = x - dragState.lastX
+		const dy = y - dragState.lastY
+		dragState.wall.x1 += dx
+		dragState.wall.y1 += dy
+		dragState.wall.x2 += dx
+		dragState.wall.y2 += dy
+		dragState.lastX = x
+		dragState.lastY = y
+		// Also move attached doors/windows (they stay relative to the wall)
+	}
+	emit("update:walls", [...walls.value])
+}
+
+function onDocumentDragEnd() {
+	if (dragState) {
+		document.removeEventListener("pointermove", onDocumentDragMove)
+		document.removeEventListener("pointerup", onDocumentDragEnd)
+		document.removeEventListener("pointercancel", onDocumentDragEnd)
+		document.body.style.cursor = ""
+		document.body.style.userSelect = ""
+		dragState = null
 	}
 }
 
-function onCanvasPointerUp() {
-	if (dragState) {
-		dragState = null
-	}
-	placementPreview.value = null
+function startDocumentDrag(event) {
+	event.preventDefault()
+	event.stopPropagation()
+	document.addEventListener("pointermove", onDocumentDragMove)
+	document.addEventListener("pointerup", onDocumentDragEnd)
+	document.addEventListener("pointercancel", onDocumentDragEnd)
+	document.body.style.userSelect = "none"
 }
 
 function projectOnWall(wall, px, py) {
@@ -373,10 +412,24 @@ function selectElement(id) {
 	emit("select", id)
 }
 
+function startDragWall(event, wall) {
+	if (props.activeTool !== "select") return
+	// First click selects, subsequent clicks on selected wall start drag
+	if (selectedId.value !== wall.id) {
+		selectElement(wall.id)
+		return
+	}
+	const { x, y } = getSVGCoords(event)
+	dragState = { mode: "wall", wall, lastX: x, lastY: y }
+	document.body.style.cursor = "grabbing"
+	startDocumentDrag(event)
+}
+
 function startDragEndpoint(event, wall, endpoint) {
 	if (props.activeTool !== "select") return
-	event.preventDefault()
-	dragState = { wall, endpoint, wallId: wall.id }
+	dragState = { mode: "endpoint", wall, endpoint }
+	document.body.style.cursor = "crosshair"
+	startDocumentDrag(event)
 }
 
 // Public: delete selected element
@@ -412,6 +465,10 @@ function deleteSelected() {
 function clearSelection() {
 	selectedId.value = null
 }
+
+onUnmounted(() => {
+	onDocumentDragEnd()
+})
 
 defineExpose({ deleteSelected, clearSelection, selectedId })
 </script>
