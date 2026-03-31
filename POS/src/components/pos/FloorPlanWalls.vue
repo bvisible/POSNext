@@ -1,8 +1,13 @@
 <template>
 	<svg
-		class="absolute inset-0 pointer-events-none overflow-visible"
-		:class="{ 'pointer-events-auto': isEditMode && activeTool !== 'select' }"
-		width="100%" height="100%"
+		class="absolute top-0 left-0 pointer-events-none overflow-visible"
+		:class="[
+			isEditMode && activeTool !== 'select' ? 'pointer-events-auto' : '',
+			isEditMode && activeTool === 'wall' ? 'cursor-crosshair' : '',
+			isEditMode && activeTool === 'door' || isEditMode && activeTool === 'window' ? 'cursor-cell' : '',
+		]"
+		:style="{ opacity: wallOpacity }"
+		width="5000" height="5000"
 		@pointerdown="onCanvasPointerDown"
 		@pointermove="onCanvasPointerMove"
 		@pointerup="onCanvasPointerUp"
@@ -85,6 +90,7 @@ const props = defineProps({
 	isEditMode: { type: Boolean, default: false },
 	activeTool: { type: String, default: "select" },
 	zoomLevel: { type: Number, default: 1 },
+	wallOpacity: { type: Number, default: 1 },
 })
 
 const emit = defineEmits([

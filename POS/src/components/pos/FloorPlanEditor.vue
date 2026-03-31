@@ -186,6 +186,13 @@
 				{{ tool.label }}
 			</button>
 			<div class="flex-grow" />
+			<!-- Wall opacity -->
+			<label class="flex items-center gap-1 text-[10px] text-gray-500">
+				{{ __("Opacity") }}
+				<input type="range" min="0.1" max="1" step="0.1" v-model.number="wallOpacity"
+					@change="localStorage.setItem('pos_wall_opacity', wallOpacity)"
+					class="w-16 h-3 accent-gray-500" />
+			</label>
 			<!-- Background image toggle -->
 			<label v-if="floorPlanBgUrl" class="flex items-center gap-1 text-[10px] text-gray-500 cursor-pointer">
 				<input type="checkbox" v-model="showFloorBg" class="w-3 h-3" />
@@ -255,6 +262,7 @@
 				:is-edit-mode="isEditMode"
 				:active-tool="wallTool"
 				:zoom-level="zoomLevel"
+				:wall-opacity="wallOpacity"
 				@update:walls="localWalls = $event"
 				@update:doors="localDoors = $event"
 				@update:windows="localWindows = $event"
@@ -480,7 +488,7 @@
 			</button>
 
 			<!-- Add buttons (edit mode) -->
-			<div v-if="isEditMode" class="absolute bottom-4 right-4 flex gap-2 z-20">
+			<div v-if="isEditMode" class="absolute bottom-4 left-4 flex gap-2 z-20" data-gesture-ignore>
 				<button
 					@click="showAddStationDialog = true"
 					class="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-lg hover:bg-orange-600 transition-colors"
@@ -882,6 +890,9 @@ const isEditMode = ref(false)
 const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
 const savedZoom = Number.parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
 
+// Pan is blocked only when a drawing tool is active (wall/door/window)
+const blockPan = computed(() => isEditMode.value && wallTool.value !== "select")
+
 const {
 	zoomLevel,
 	panX,
@@ -897,7 +908,7 @@ const {
 	initialZoom: savedZoom,
 	zoomMin: 0.4,
 	zoomMax: 2,
-	isEditMode,
+	isEditMode: blockPan,
 	onZoomChange(newZoom) {
 		localStorage.setItem(ZOOM_STORAGE_KEY, newZoom.toString())
 	},
@@ -925,6 +936,7 @@ const newStation = ref({
 })
 // Floor plan walls/doors/windows
 const wallTool = ref("select") // 'select' | 'wall' | 'door' | 'window'
+const wallOpacity = ref(parseFloat(localStorage.getItem("pos_wall_opacity")) || 1)
 const localWalls = ref([])
 const localDoors = ref([])
 const localWindows = ref([])
@@ -1574,6 +1586,10 @@ async function toggleEditMode() {
 					windows: localWindows.value,
 				})
 			}
+			// Save current zoom as default for this area
+			if (selectedArea.value) {
+				localStorage.setItem(`pos_floor_zoom_${selectedArea.value}`, zoomLevel.value.toString())
+			}
 			showSuccess(__("Floor plan saved"))
 		} catch (e) {
 			showError(__("Failed to save floor plan"))
@@ -2019,8 +2035,13 @@ onMounted(async () => {
 })
 
 // Re-layout when switching areas
-watch(selectedArea, async () => {
+watch(selectedArea, async (newArea) => {
 	resetPan()
+	// Restore per-area zoom if saved
+	const areaZoom = parseFloat(localStorage.getItem(`pos_floor_zoom_${newArea}`))
+	if (areaZoom && areaZoom >= 0.4 && areaZoom <= 2) {
+		zoomLevel.value = areaZoom
+	}
 	syncLocalWalls()
 	await nextTick()
 	autoLayoutTables()
