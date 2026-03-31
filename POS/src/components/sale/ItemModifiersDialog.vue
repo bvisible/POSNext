@@ -271,6 +271,9 @@ function saveModifiers() {
 	// Modifier choices are stored separately in posa_item_modifiers JSON
 	const freeTextOnly = instructions.value.trim()
 
+	// Find the exact index of this item in the cart (avoids matching wrong duplicate)
+	const itemIdx = cartStore.invoiceItems.indexOf(item.value)
+
 	// Update cart item
 	cartStore.updateItemModifiers(
 		item.value.item_code,
@@ -279,12 +282,11 @@ function saveModifiers() {
 		freeTextOnly,
 		totalPriceAdjustment.value,
 		selectedQuantityValue.value,
+		itemIdx,
 	)
 
-	// Emit saved event with cart item reference for post-save logic
-	const cartItem = cartStore.invoiceItems.find(
-		(i) => i.item_code === item.value.item_code && i.uom === item.value.uom,
-	)
+	// Use direct reference (already the cart item)
+	const cartItem = itemIdx >= 0 ? cartStore.invoiceItems[itemIdx] : item.value
 	if (cartItem) {
 		emit("saved", cartItem)
 	}

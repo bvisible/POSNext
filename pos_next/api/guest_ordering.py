@@ -416,6 +416,13 @@ def submit_guest_order(token, items):
 		if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 			row.posa_special_instructions = item.get("special_instructions") or ""
 
+		# Store modifiers JSON if present (for items with variants/options)
+		if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
+			modifiers = item.get("modifiers")
+			if modifiers:
+				import json
+				row.posa_item_modifiers = json.dumps(modifiers) if not isinstance(modifiers, str) else modifiers
+
 	invoice_doc.flags.ignore_permissions = True
 	if is_new_invoice:
 		invoice_doc.insert()

@@ -232,12 +232,16 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		instructions,
 		priceAdjustment,
 		quantityValue = 0,
+		itemIndex = -1,
 	) {
-		const item = uom
-			? invoiceItems.value.find(
-					(i) => i.item_code === itemCode && i.uom === uom,
-				)
-			: invoiceItems.value.find((i) => i.item_code === itemCode)
+		// Use index if provided (avoids matching wrong item when duplicates exist)
+		const item = itemIndex >= 0 && itemIndex < invoiceItems.value.length
+			? invoiceItems.value[itemIndex]
+			: uom
+				? invoiceItems.value.find(
+						(i) => i.item_code === itemCode && i.uom === uom,
+					)
+				: invoiceItems.value.find((i) => i.item_code === itemCode)
 
 		if (item) {
 			item.posa_item_modifiers = modifiersJson
