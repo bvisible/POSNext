@@ -341,19 +341,22 @@ export function useInvoice() {
 	 *                            If provided, only removes the item with matching item_code AND uom.
 	 *                            If null, removes the first item matching item_code.
 	 */
-	function removeItem(itemCode, uom = null) {
+	function removeItem(itemOrCode, uom = null) {
+		// Accept either an item object reference or item_code string
 		let itemToRemove
-		if (uom) {
+		if (typeof itemOrCode === "object" && itemOrCode !== null) {
+			// Direct object reference — find exact match by identity
+			itemToRemove = itemOrCode
+		} else if (uom) {
 			itemToRemove = invoiceItems.value.find(
-				(i) => i.item_code === itemCode && i.uom === uom,
+				(i) => i.item_code === itemOrCode && i.uom === uom,
 			)
 		} else {
-			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemCode)
+			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode)
 		}
 
 		if (itemToRemove) {
 			// Update cache incrementally (subtract removed item values)
-			// Use effective rate (manually edited rate or price_list_rate)
 			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1
 			const effectiveRate = isManuallyEdited
 				? itemToRemove.rate
@@ -366,18 +369,14 @@ export function useInvoice() {
 
 			// Return serial numbers back to cache if item has serials
 			if (itemToRemove.serial_no && itemToRemove.has_serial_no) {
-				serialStore.returnSerials(itemCode, itemToRemove.serial_no)
+				serialStore.returnSerials(itemToRemove.item_code, itemToRemove.serial_no)
 			}
-		}
 
-		if (uom) {
-			invoiceItems.value = invoiceItems.value.filter(
-				(i) => !(i.item_code === itemCode && i.uom === uom),
-			)
-		} else {
-			invoiceItems.value = invoiceItems.value.filter(
-				(i) => i.item_code !== itemCode,
-			)
+			// Remove only this exact item (by reference, not by item_code)
+			const idx = invoiceItems.value.indexOf(itemToRemove)
+			if (idx >= 0) {
+				invoiceItems.value.splice(idx, 1)
+			}
 		}
 	}
 

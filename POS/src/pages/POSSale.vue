@@ -639,9 +639,7 @@
 								:applied-offers="cartStore.appliedOffers"
 								:warehouses="profileWarehouses"
 								@update-quantity="cartStore.updateItemQuantity"
-								@remove-item="
-									(itemCode, uom) => cartStore.removeItem(itemCode, uom)
-								"
+								@remove-item="(item) => cartStore.removeItem(item)"
 								@select-customer="handleCustomerSelected"
 								@create-customer="handleCreateCustomer"
 								@edit-customer="handleEditCustomer"
@@ -1717,7 +1715,8 @@ function handleCardItemClick(cardItem) {
 		if (modGroups.length > 0) {
 			cartStore.addItem(item, 1);
 			nextTick(() => {
-				const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+				// Use findLast to get the NEWEST item (just added), not the first match
+				const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code);
 				if (cartItem && itemModifiersRef.value) {
 					itemModifiersRef.value.open(cartItem);
 				}
@@ -1737,7 +1736,8 @@ function handleCardItemClick(cardItem) {
 	const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group)
 	if (modGroups.length > 0) {
 		nextTick(() => {
-			const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code)
+			// Use findLast to get the NEWEST item (just added), not the first match
+			const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code)
 			if (cartItem && itemModifiersRef.value) {
 				itemModifiersRef.value.open(cartItem)
 			}

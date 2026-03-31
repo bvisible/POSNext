@@ -884,7 +884,7 @@
 								<button
 									v-if="!item.is_free_item"
 									type="button"
-									@click.stop="$emit('remove-item', item.item_code, item.uom)"
+									@click.stop="$emit('remove-item', item)"
 									class="text-gray-400 hover:text-red-600 active:text-red-700 transition-colors flex-shrink-0 p-0.5 -m-0.5 touch-manipulation active:scale-90"
 									:aria-label="__('Remove {0}', [item.item_name])"
 									:title="__('Remove item')"
