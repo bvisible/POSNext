@@ -200,7 +200,6 @@
 			<label class="flex items-center gap-1 text-[10px] text-gray-500">
 				{{ __("Opacity") }}
 				<input type="range" min="0.1" max="1" step="0.1" v-model.number="wallOpacity"
-					@change="selectedArea && localStorage.setItem(`pos_wall_opacity_${selectedArea}`, wallOpacity)"
 					class="w-16 h-3 accent-gray-500" />
 			</label>
 			<!-- Background image toggle -->
@@ -2071,6 +2070,12 @@ onMounted(async () => {
 })
 
 // Re-layout when switching areas
+watch(wallOpacity, (val) => {
+	if (selectedArea.value) {
+		localStorage.setItem("pos_wall_opacity_" + selectedArea.value, val.toString())
+	}
+})
+
 watch(selectedArea, async (newArea, oldArea) => {
 	// Save pan/zoom of previous area
 	if (oldArea) {
