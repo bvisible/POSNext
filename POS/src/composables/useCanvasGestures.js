@@ -15,6 +15,7 @@ export function useCanvasGestures(options = {}) {
 		zoomStep = 0.15,
 		isEditMode = ref(false),
 		onZoomChange = null,
+		onViewChange = null,
 	} = options
 
 	const zoomLevel = ref(Math.max(zoomMin, Math.min(zoomMax, initialZoom)))
@@ -166,8 +167,9 @@ export function useCanvasGestures(options = {}) {
 		pointers.delete(event.pointerId)
 
 		if (pointers.size < 2 && gesture === "pinching") {
-			// End pinch, persist zoom
+			// End pinch, persist zoom + pan
 			onZoomChange?.(zoomLevel.value)
+			onViewChange?.(panX.value, panY.value, zoomLevel.value)
 			pinchStart = null
 
 			if (pointers.size === 1 && !toValue(isEditMode)) {
@@ -187,6 +189,7 @@ export function useCanvasGestures(options = {}) {
 		} else if (pointers.size === 0) {
 			if (gesture === "panning") {
 				onZoomChange?.(zoomLevel.value)
+				onViewChange?.(panX.value, panY.value, zoomLevel.value)
 			}
 			gesture = "idle"
 			panStart = null
@@ -201,6 +204,7 @@ export function useCanvasGestures(options = {}) {
 		const focal = getContainerOffset(event.clientX, event.clientY)
 		const factor = event.deltaY < 0 ? 1.08 : 1 / 1.08
 		applyZoomAtFocal(zoomLevel.value * factor, focal.x, focal.y)
+		onViewChange?.(panX.value, panY.value, zoomLevel.value)
 	}
 
 	// ── Programmatic zoom (buttons) ───────────────────────────

@@ -923,6 +923,12 @@ const {
 	onZoomChange(newZoom) {
 		localStorage.setItem(ZOOM_STORAGE_KEY, newZoom.toString())
 	},
+	onViewChange(px, py, zoom) {
+		if (selectedArea.value) {
+			localStorage.setItem("pos_floor_pan_" + selectedArea.value, JSON.stringify({ x: px, y: py }))
+			localStorage.setItem("pos_floor_zoom_" + selectedArea.value, zoom.toString())
+		}
+	},
 })
 
 const canvasBackgroundStyle = computed(() => {
