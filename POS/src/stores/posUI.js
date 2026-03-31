@@ -57,8 +57,12 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		typeof window !== "undefined" ? window.innerWidth : 1024,
 	)
 
-	// Layout state
-	const leftPanelWidth = ref(800)
+	// Layout state — restore from localStorage or default to 80% of viewport
+	const savedPanelWidth = parseFloat(localStorage.getItem("pos_left_panel_width"))
+	const defaultPanelWidth = savedPanelWidth && savedPanelWidth > LEFT_PANEL_MIN
+		? savedPanelWidth
+		: Math.round(window.innerWidth * 0.8)
+	const leftPanelWidth = ref(defaultPanelWidth)
 	const isResizing = ref(false)
 
 	// Computed
@@ -140,6 +144,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		if (containerWidth !== null) {
 			const clamped = clampLeftPanelWidth(width, containerWidth)
 			leftPanelWidth.value = clamped
+			localStorage.setItem("pos_left_panel_width", clamped.toString())
 		} else {
 			leftPanelWidth.value = width
 		}
