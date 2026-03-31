@@ -388,10 +388,29 @@ def submit_guest_order(token, items):
 		existing_batches = [flt(row.get("kds_batch") or 0) for row in invoice_doc.items]
 		next_batch = int(max(existing_batches, default=0)) + 1
 
+	# Build map of existing items to prevent re-adding items already on the invoice
+	import json as _json
+	existing_item_keys = set()
+	for row in invoice_doc.items:
+		key = row.item_code
+		if hasattr(row, "posa_item_modifiers") and row.posa_item_modifiers:
+			key += "|" + str(row.posa_item_modifiers)
+		existing_item_keys.add(key)
+
 	for item in items:
 		item_code = item.get("item_code")
 		if not item_code:
 			continue
+
+		# Build dedup key: item_code + modifiers
+		modifiers = item.get("modifiers")
+		mod_str = _json.dumps(modifiers) if modifiers and not isinstance(modifiers, str) else (modifiers or "")
+		item_key = item_code + ("|" + mod_str if mod_str else "")
+
+		# Skip if this exact item (same code + modifiers) already exists in the invoice
+		if item_key in existing_item_keys:
+			continue
+
 		qty = flt(item.get("qty", 1))
 		rate = flt(item.get("rate") or item.get("price") or 0)
 		if not rate:
@@ -407,7 +426,6 @@ def submit_guest_order(token, items):
 			if validation_mode == "Direct to Kitchen":
 				row.kds_status = "Pending"
 			else:
-				# Server-approval mode: mark as Waiting so server sees it
 				row.kds_status = "Waiting"
 
 		if has_kds_batch:
@@ -416,12 +434,12 @@ def submit_guest_order(token, items):
 		if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 			row.posa_special_instructions = item.get("special_instructions") or ""
 
-		# Store modifiers JSON if present (for items with variants/options)
 		if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
-			modifiers = item.get("modifiers")
-			if modifiers:
-				import json
-				row.posa_item_modifiers = json.dumps(modifiers) if not isinstance(modifiers, str) else modifiers
+			if mod_str:
+				row.posa_item_modifiers = mod_str
+
+		# Track so subsequent duplicates in same submission are also caught
+		existing_item_keys.add(item_key)
 
 	invoice_doc.flags.ignore_permissions = True
 	if is_new_invoice:
