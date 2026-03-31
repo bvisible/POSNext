@@ -492,8 +492,9 @@ def get_guest_receipt_pdf(token):
 
 	from frappe.utils.pdf import get_pdf
 
-	# Bypass document permissions — guest is authenticated via token
+	# Bypass print permissions — guest is authenticated via token, not via Frappe session
 	frappe.flags.ignore_permissions = True
+	frappe.flags.ignore_print_permissions = True
 	try:
 		try:
 			html = frappe.get_print("Sales Invoice", invoice_name, print_format)
@@ -501,6 +502,7 @@ def get_guest_receipt_pdf(token):
 			html = frappe.get_print("Sales Invoice", invoice_name)
 		pdf = get_pdf(html)
 	finally:
+		frappe.flags.ignore_print_permissions = False
 		frappe.flags.ignore_permissions = False
 
 	frappe.local.response.filename = f"receipt-{invoice_name}.pdf"
