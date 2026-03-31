@@ -7,7 +7,10 @@
  "field_order": [
   "area_name",
   "description",
-  "sort_order"
+  "sort_order",
+  "floor_plan_section",
+  "floor_plan_walls",
+  "floor_plan_bg"
  ],
  "fields": [
   {
@@ -28,11 +31,28 @@
    "fieldname": "sort_order",
    "fieldtype": "Int",
    "label": "Sort Order"
+  },
+  {
+   "fieldname": "floor_plan_section",
+   "fieldtype": "Section Break",
+   "label": "Floor Plan",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "floor_plan_walls",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Floor Plan Walls"
+  },
+  {
+   "fieldname": "floor_plan_bg",
+   "fieldtype": "Attach Image",
+   "label": "Floor Plan Background"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-20 10:00:00.000000",
+ "modified": "2025-03-31 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Area",

@@ -29,6 +29,7 @@ declare module 'vue' {
     EditItemDialog: typeof import('./src/components/sale/EditItemDialog.vue')['default']
     EmailInvoiceDialog: typeof import('./src/components/sale/EmailInvoiceDialog.vue')['default']
     FloorPlanEditor: typeof import('./src/components/pos/FloorPlanEditor.vue')['default']
+    FloorPlanWalls: typeof import('./src/components/pos/FloorPlanWalls.vue')['default']
     GiftCardCreatedDialog: typeof import('./src/components/sale/GiftCardCreatedDialog.vue')['default']
     GuestCart: typeof import('./src/components/guest/GuestCart.vue')['default']
     GuestCheckout: typeof import('./src/components/guest/GuestCheckout.vue')['default']

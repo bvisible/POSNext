@@ -24,6 +24,13 @@
 			<div
 				:style="[gestureTransformStyle, { position: 'relative', width: canvasWidth + 'px', height: canvasHeight + 'px' }]"
 			>
+				<!-- Read-only walls -->
+				<FloorPlanWalls
+					:walls="areaWalls.walls"
+					:doors="areaWalls.doors"
+					:windows="areaWalls.windows"
+					:is-edit-mode="false"
+				/>
 				<div
 					v-for="table in visibleTables"
 					:key="table.name"
@@ -59,11 +66,13 @@
 <script setup>
 import { ref, computed, watch } from "vue"
 import { useCanvasGestures } from "@/composables/useCanvasGestures"
+import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 
 const props = defineProps({
 	tables: { type: Array, default: () => [] },
 	selectedTables: { type: Array, default: () => [] },
 	selectedArea: { type: String, default: "" },
+	areas: { type: Array, default: () => [] },
 })
 
 defineEmits(["toggle-table"])
@@ -140,6 +149,18 @@ const canvasHeight = computed(() => {
 			...visibleTables.value.map((t) => (t.pos_y || 0) + (t.height || 100)),
 		) + 40
 	)
+})
+
+// Walls data from area (read-only)
+const areaWalls = computed(() => {
+	const area = props.areas.find((a) => a.name === localArea.value)
+	if (!area?.floor_plan_walls) return { walls: [], doors: [], windows: [] }
+	try {
+		const data = typeof area.floor_plan_walls === "string"
+			? JSON.parse(area.floor_plan_walls)
+			: area.floor_plan_walls
+		return { walls: data.walls || [], doors: data.doors || [], windows: data.windows || [] }
+	} catch { return { walls: [], doors: [], windows: [] } }
 })
 
 function tableStyle(table) {

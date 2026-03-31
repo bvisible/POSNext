@@ -283,6 +283,53 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	function getFloorPlanWalls(areaName) {
+		const area = areas.value.find((a) => a.name === areaName)
+		if (!area || !area.floor_plan_walls) return { walls: [], doors: [], windows: [] }
+		try {
+			const data = typeof area.floor_plan_walls === "string"
+				? JSON.parse(area.floor_plan_walls)
+				: area.floor_plan_walls
+			return { walls: data.walls || [], doors: data.doors || [], windows: data.windows || [] }
+		} catch {
+			return { walls: [], doors: [], windows: [] }
+		}
+	}
+
+	function getFloorPlanBg(areaName) {
+		const area = areas.value.find((a) => a.name === areaName)
+		return area?.floor_plan_bg || ""
+	}
+
+	async function saveFloorPlanWalls(areaName, wallsData) {
+		try {
+			await call("pos_next.api.restaurant.save_floor_plan_walls", {
+				area: areaName,
+				walls_data: JSON.stringify(wallsData),
+			})
+			// Update local state
+			const area = areas.value.find((a) => a.name === areaName)
+			if (area) area.floor_plan_walls = JSON.stringify(wallsData)
+		} catch (error) {
+			log.error("Failed to save floor plan walls:", error)
+			throw error
+		}
+	}
+
+	async function saveFloorPlanBg(areaName, fileUrl) {
+		try {
+			await call("pos_next.api.restaurant.save_floor_plan_bg", {
+				area: areaName,
+				file_url: fileUrl || "",
+			})
+			const area = areas.value.find((a) => a.name === areaName)
+			if (area) area.floor_plan_bg = fileUrl || ""
+		} catch (error) {
+			log.error("Failed to save floor plan background:", error)
+			throw error
+		}
+	}
+
 	async function reorderAreas(orderedNames) {
 		try {
 			await call("pos_next.api.restaurant.reorder_areas", {
@@ -520,6 +567,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		addTable,
 		updateStationPosition,
 		saveStationPositions,
+		getFloorPlanWalls,
+		getFloorPlanBg,
+		saveFloorPlanWalls,
+		saveFloorPlanBg,
 		reorderAreas,
 		createArea,
 		renameArea,

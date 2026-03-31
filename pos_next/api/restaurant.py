@@ -27,7 +27,7 @@ def on_invoice_update(doc, method):
 @frappe.whitelist()
 def get_tables():
 	"""Fetch all restaurant areas, tables, floor plan stations, and active order summaries."""
-	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description", "sort_order"], order_by="sort_order asc, area_name asc")
+	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description", "sort_order", "floor_plan_walls", "floor_plan_bg"], order_by="sort_order asc, area_name asc")
 	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
 
 	# Fetch stations that should appear on floor plan
@@ -581,6 +581,31 @@ def save_station_positions(positions):
 			"height": int(pos.get("height") or 60),
 		})
 
+	frappe.db.commit()
+	return {"status": "success"}
+
+@frappe.whitelist()
+def save_floor_plan_walls(area, walls_data):
+	"""Save floor plan wall/door/window data for a restaurant area."""
+	import json
+	if not frappe.has_permission("Restaurant Area", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not frappe.db.exists("Restaurant Area", area):
+		frappe.throw(_("Area not found"))
+	if isinstance(walls_data, str):
+		walls_data = json.loads(walls_data)
+	frappe.db.set_value("Restaurant Area", area, "floor_plan_walls", json.dumps(walls_data))
+	frappe.db.commit()
+	return {"status": "success"}
+
+@frappe.whitelist()
+def save_floor_plan_bg(area, file_url=None):
+	"""Save or clear the floor plan background image for a restaurant area."""
+	if not frappe.has_permission("Restaurant Area", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not frappe.db.exists("Restaurant Area", area):
+		frappe.throw(_("Area not found"))
+	frappe.db.set_value("Restaurant Area", area, "floor_plan_bg", file_url or "")
 	frappe.db.commit()
 	return {"status": "success"}
 
