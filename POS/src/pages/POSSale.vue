@@ -1671,10 +1671,8 @@ watch(() => restaurantStore.activeCards, (cards) => {
 // Card item stock helpers
 function getCardItemStock(cardItem) {
 	if (!cardItem.item || cardItem.item_type !== 'Item') return null
-	const qty = stockStore.getDisplayStock(cardItem.item)
-	// If the item has no entry in the stock store, it's not a stock item
-	if (!stockStore.server.has(cardItem.item)) return null
-	return qty
+	if (!cardItem.is_stock_item) return null
+	return stockStore.getDisplayStock(cardItem.item)
 }
 function isCardItemOutOfStock(cardItem) {
 	const stock = getCardItemStock(cardItem)
