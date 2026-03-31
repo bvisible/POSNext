@@ -1940,15 +1940,19 @@ onMounted(async () => {
 	window.addEventListener("resize", handleResize, { passive: true });
 
 	// Listen for guest order updates to refresh POS cart when a guest orders on the active table
-	const handleGuestUpdate = async (e) => {
+	// Debounced guest update handler — prevents duplicate events from causing item duplication
+	let _guestUpdateTimer = null
+	const handleGuestUpdate = (e) => {
 		const table = cartStore.restaurantTable
-		if (table && e.detail?.table === table.name) {
+		if (!table || e.detail?.table !== table.name) return
+		// Debounce: if multiple events arrive within 500ms, only process the last one
+		clearTimeout(_guestUpdateTimer)
+		_guestUpdateTimer = setTimeout(async () => {
 			try {
 				const orderData = await call("pos_next.api.restaurant.get_table_order", { table_name: table.name })
 				if (orderData?.items) {
 					await cartStore.clearCart()
 					for (const item of orderData.items) {
-						// Calculate modifier price adjustment from saved JSON
 						let modifierPriceAdjustment = 0
 						if (item.posa_item_modifiers) {
 							try {
@@ -1975,7 +1979,7 @@ onMounted(async () => {
 					if (orderData.customer) cartStore.setCustomer(orderData.customer)
 				}
 			} catch { /* ignore */ }
-		}
+		}, 500)
 	}
 	window.addEventListener("pos:guest-order-update", handleGuestUpdate)
 

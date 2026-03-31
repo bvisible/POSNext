@@ -730,17 +730,12 @@ def confirm_guest_payment(token, amount, tip=0):
 					frappe.log_error("Guest tip record failed", str(tip_err))
 
 		if token_doc.table:
-			event = "payment_completed" if new_paid >= flt(invoice_doc.grand_total) else "payment_partial"
-			_broadcast_order_update(token_doc.table, event, {
-				"invoice": invoice_doc.name,
-				"amount": amount,
-				"paid_amount": new_paid,
-				"grand_total": flt(invoice_doc.grand_total),
-			})
+			# Only send one event to avoid triggering the POS handler twice (race condition)
 			frappe.publish_realtime("guest_payment_received", {
 				"table": token_doc.table,
 				"invoice": invoice_doc.name,
 				"paid_amount": new_paid,
+				"grand_total": flt(invoice_doc.grand_total),
 			})
 
 		return {"status": "success", "paid_amount": new_paid, "grand_total": flt(invoice_doc.grand_total)}
