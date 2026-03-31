@@ -1,17 +1,19 @@
 <template>
 	<svg
-		class="absolute top-0 left-0 pointer-events-none overflow-visible"
+		class="absolute inset-0 pointer-events-none"
 		:class="[
 			isEditMode && activeTool !== 'select' ? 'pointer-events-auto' : '',
 			isEditMode && activeTool === 'wall' ? 'cursor-crosshair' : '',
-			isEditMode && activeTool === 'door' || isEditMode && activeTool === 'window' ? 'cursor-cell' : '',
+			isEditMode && (activeTool === 'door' || activeTool === 'window') ? 'cursor-cell' : '',
 		]"
-		:style="{ opacity: wallOpacity }"
-		width="5000" height="5000"
+		:style="{ opacity: wallOpacity, zIndex: isEditMode && activeTool !== 'select' ? 15 : 1 }"
+		width="100%" height="100%"
 		@pointerdown="onCanvasPointerDown"
 		@pointermove="onCanvasPointerMove"
 		@pointerup="onCanvasPointerUp"
 	>
+		<!-- Transform group: maps content coords to screen coords -->
+		<g :transform="`translate(${panX}, ${panY}) scale(${zoomLevel})`">
 		<!-- Walls -->
 		<template v-for="wall in walls" :key="wall.id">
 			<!-- Wall segments (split around doors/windows) -->
@@ -77,6 +79,7 @@
 			:cx="placementPreview.x" :cy="placementPreview.y"
 			r="4" fill="#3B82F6" opacity="0.6"
 		/>
+		</g>
 	</svg>
 </template>
 
@@ -90,6 +93,8 @@ const props = defineProps({
 	isEditMode: { type: Boolean, default: false },
 	activeTool: { type: String, default: "select" },
 	zoomLevel: { type: Number, default: 1 },
+	panX: { type: Number, default: 0 },
+	panY: { type: Number, default: 0 },
 	wallOpacity: { type: Number, default: 1 },
 })
 
@@ -118,14 +123,18 @@ function snap(v) {
 let svgEl = null
 
 function getSVGCoords(event) {
+	// Convert screen coords to content coords (reverse of translate + scale)
 	const svg = svgEl || event.currentTarget?.closest("svg")
 	if (!svg) return { x: 0, y: 0 }
 	if (!svgEl) svgEl = svg
 	const rect = svg.getBoundingClientRect()
 	const zoom = props.zoomLevel || 1
+	// Screen position relative to SVG → subtract pan → divide by zoom
+	const screenX = event.clientX - rect.left
+	const screenY = event.clientY - rect.top
 	return {
-		x: snap((event.clientX - rect.left) / zoom),
-		y: snap((event.clientY - rect.top) / zoom),
+		x: snap((screenX - props.panX) / zoom),
+		y: snap((screenY - props.panY) / zoom),
 	}
 }
 

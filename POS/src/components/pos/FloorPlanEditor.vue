@@ -253,17 +253,7 @@
 				<p class="text-sm">{{ __("Switch to Edit mode to add tables") }}</p>
 			</div>
 
-			<!-- Zoomable container -->
-			<div :style="gestureTransformStyle" class="w-full h-full relative">
-
-			<!-- Background image -->
-			<img v-if="floorPlanBgUrl && showFloorBg"
-				:src="floorPlanBgUrl"
-				class="absolute top-0 left-0 pointer-events-none select-none"
-				style="opacity: 0.2; max-width: none;"
-			/>
-
-			<!-- Floor plan walls/doors/windows -->
+			<!-- Floor plan walls/doors/windows (OUTSIDE zoom container for full canvas coverage) -->
 			<FloorPlanWalls
 				ref="wallsRef"
 				:walls="localWalls"
@@ -272,6 +262,8 @@
 				:is-edit-mode="isEditMode"
 				:active-tool="wallTool"
 				:zoom-level="zoomLevel"
+				:pan-x="panX"
+				:pan-y="panY"
 				:wall-opacity="wallOpacity"
 				@update:walls="localWalls = $event"
 				@update:doors="localDoors = $event"
@@ -279,6 +271,16 @@
 				@add-wall="onAddWall"
 				@add-door="onAddDoor"
 				@add-window="onAddWindow"
+			/>
+
+			<!-- Zoomable container -->
+			<div :style="gestureTransformStyle" class="w-full h-full relative">
+
+			<!-- Background image -->
+			<img v-if="floorPlanBgUrl && showFloorBg"
+				:src="floorPlanBgUrl"
+				class="absolute top-0 left-0 pointer-events-none select-none"
+				style="opacity: 0.2; max-width: none;"
 			/>
 
 			<!-- SVG Delivery Arrows (rendered FIRST = behind tables/stations) -->
