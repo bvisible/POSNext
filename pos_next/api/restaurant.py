@@ -632,6 +632,16 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 
 
 @frappe.whitelist()
+def delete_table(name):
+	"""Delete a restaurant table if it has no active orders."""
+	table = frappe.get_doc("Restaurant Table", name)
+	if table.status == "Occupied":
+		frappe.throw(_("Cannot delete an occupied table. Clear the order first."))
+	frappe.delete_doc("Restaurant Table", name, ignore_permissions=True)
+	return {"status": "success"}
+
+
+@frappe.whitelist()
 def create_station(station_name, station_type="Kitchen", color="#F97316", area=None, pos_x=0, pos_y=0):
 	"""Create a new preparation station."""
 	if not frappe.has_permission("Preparation Station", "create"):

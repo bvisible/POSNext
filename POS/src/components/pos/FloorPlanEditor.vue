@@ -586,6 +586,12 @@
 						</div>
 					</div>
 				</div>
+				<!-- Delete -->
+				<div class="pt-3 border-t">
+					<button @click="handleDeleteTable" class="text-sm text-red-600 hover:text-red-800 font-medium">
+						{{ __("Delete this table") }}
+					</button>
+				</div>
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
@@ -898,6 +904,7 @@ const { showSuccess, showError } = useToast()
 
 const canvasRef = ref(null)
 const isEditMode = ref(false)
+const isDirty = ref(false)
 const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
 const savedZoom = Number.parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
 
@@ -1249,6 +1256,7 @@ const { handleDragStart, handleResizeStart, destroy } = useDraggable({
 	canvasRef,
 	zoomLevel,
 	onDragEnd: (obj) => {
+		isDirty.value = true
 		// Check if this is a station or table
 		if (obj.station_name) {
 			const storeStation = restaurantStore.floorStations.find(
@@ -1590,12 +1598,20 @@ async function selectTable(table) {
 }
 
 async function cancelEditMode() {
+	if (isDirty.value) {
+		const save = confirm(__("You have unsaved changes. Do you want to save before leaving?"))
+		if (save) {
+			await toggleEditMode()
+			return
+		}
+	}
 	// Reload from server without saving
 	await restaurantStore.fetchFromNetwork()
 	syncLocalTables()
 	syncLocalStations()
 	syncLocalWalls()
 	isEditMode.value = false
+	isDirty.value = false
 	wallTool.value = "select"
 }
 
@@ -1625,9 +1641,11 @@ async function toggleEditMode() {
 			showError(__("Failed to save floor plan"))
 		}
 		isEditMode.value = false
+		isDirty.value = false
 		wallTool.value = "select"
 	} else {
 		syncLocalWalls()
+		isDirty.value = false
 		isEditMode.value = true
 	}
 }
@@ -1907,9 +1925,26 @@ async function handleEditTable() {
 		showEditTableDialog.value = false
 		await restaurantStore.fetchFromNetwork()
 		syncLocalTables()
+		isDirty.value = true
 		showSuccess(__("Table updated"))
 	} catch (error) {
 		showError(__("Failed to update table"))
+	}
+}
+
+async function handleDeleteTable() {
+	if (!editTable.value.name) return
+	if (!confirm(__("Are you sure you want to delete this table?"))) return
+	try {
+		await call("pos_next.api.restaurant.delete_table", {
+			name: editTable.value.name,
+		})
+		showEditTableDialog.value = false
+		await restaurantStore.fetchFromNetwork()
+		syncLocalTables()
+		showSuccess(__("Table deleted"))
+	} catch (error) {
+		showError(__("Failed to delete table"))
 	}
 }
 
@@ -2109,7 +2144,17 @@ watch(selectedArea, async (newArea, oldArea) => {
 	autoLayoutTables()
 })
 
+// Warn user about unsaved changes
+function onBeforeUnload(e) {
+	if (isEditMode.value && isDirty.value) {
+		e.preventDefault()
+		e.returnValue = ""
+	}
+}
+window.addEventListener("beforeunload", onBeforeUnload)
+
 onUnmounted(() => {
+	window.removeEventListener("beforeunload", onBeforeUnload)
 	if (floorSocket) {
 		floorSocket.off("table_update")
 		floorSocket.off("kds_update")

@@ -67,23 +67,11 @@
 							@click="!isOutOfStock(item) && openItemModal(item)"
 							:class="[
 								'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
-								isOutOfStock(item) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md'
+								isOutOfStock(item) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md'
 							]"
 						>
-							<!-- Stock badge -->
-							<div
-								v-if="item.is_stock_item && item.actual_qty != null"
-								:class="[
-									'absolute -top-1.5 -end-1.5 rounded-md shadow-lg z-10',
-									'px-2 py-0.5 text-[10px] font-bold border-2 border-white',
-									item.actual_qty <= 0 ? 'bg-red-500 text-white' : item.actual_qty <= 10 ? 'bg-amber-500 text-white' : 'bg-green-500 text-white'
-								]"
-							>
-								{{ item.actual_qty <= 0 ? '0' : Math.floor(item.actual_qty) }}
-							</div>
-							<!-- Out of stock overlay -->
-							<div v-if="isOutOfStock(item)" class="absolute inset-0 z-5 flex items-center justify-center rounded-neo-md">
-								<span class="text-[10px] font-bold text-red-600 bg-white/80 px-2 py-1 rounded">{{ __('Out of stock') }}</span>
+							<div v-if="isOutOfStock(item)" class="absolute inset-0 z-5 flex items-end justify-center rounded-neo-md pb-8">
+								<span class="text-[10px] font-bold text-red-600 bg-white/90 px-2 py-1 rounded shadow-sm">{{ __('Unavailable') }}</span>
 							</div>
 							<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden bg-gray-100">
 								<img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
@@ -126,21 +114,11 @@
 									{{ (item.item_name || '').substring(0, 6) }}
 								</span>
 							</div>
-							<span
-								v-if="item.is_stock_item && item.actual_qty != null"
-								:class="[
-									'absolute -top-1 -end-1 rounded-md shadow-sm z-10',
-									'px-1.5 py-0.5 text-[9px] font-bold border border-white',
-									item.actual_qty <= 0 ? 'bg-red-500 text-white' : item.actual_qty <= 10 ? 'bg-amber-500 text-white' : 'bg-green-500 text-white'
-								]"
-							>
-								{{ item.actual_qty <= 0 ? '0' : Math.floor(item.actual_qty) }}
-							</span>
 						</div>
 						<div class="flex-1 min-w-0">
 							<p class="text-xs font-semibold text-gray-900 truncate">{{ item.item_name }}</p>
-							<p v-if="item.description" class="text-[10px] text-gray-500 truncate">{{ item.description }}</p>
-							<span v-if="isOutOfStock(item)" class="text-[9px] font-bold text-red-500">{{ __('Out of stock') }}</span>
+							<p v-if="item.description && !isOutOfStock(item)" class="text-[10px] text-gray-500 truncate">{{ item.description }}</p>
+							<span v-if="isOutOfStock(item)" class="text-[9px] font-bold text-red-500">{{ __('Unavailable') }}</span>
 						</div>
 						<span class="text-xs font-bold text-blue-600 flex-shrink-0">{{ formatPrice(item.price || 0) }}</span>
 					</div>
