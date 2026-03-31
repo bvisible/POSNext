@@ -213,8 +213,11 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		}
 	}
 
+	let _paymentConfirmed = false
+
 	async function confirmPayment(amount, tip = 0) {
-		if (!token.value) return
+		if (!token.value || _paymentConfirmed) return { status: "already_confirmed" }
+		_paymentConfirmed = true
 		try {
 			const result = await guestFetch(
 				"pos_next.api.guest_ordering.confirm_guest_payment",
@@ -223,6 +226,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			await refreshOrderStatus()
 			return result
 		} catch (err) {
+			_paymentConfirmed = false
 			error.value = err.message
 		}
 	}

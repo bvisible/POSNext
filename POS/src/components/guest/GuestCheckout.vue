@@ -277,7 +277,7 @@
 				<!-- Pay button -->
 				<button
 					@click="handlePay"
-					:disabled="guestStore.isLoading || payableAmount === 0 || !isAccountValid"
+					:disabled="guestStore.isLoading || payableAmount === 0 || !isAccountValid || paymentState === 'pending'"
 					class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl active:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 				>
 					<svg v-if="guestStore.isLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

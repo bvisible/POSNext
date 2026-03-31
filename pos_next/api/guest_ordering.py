@@ -635,25 +635,40 @@ def confirm_guest_payment(token, amount, tip=0):
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
 
-		# Get next idx for payment child table
-		max_idx = frappe.db.sql(
-			"SELECT IFNULL(MAX(idx), 0) FROM `tabSales Invoice Payment` WHERE parent=%s",
-			invoice_doc.name,
-		)[0][0]
-		next_idx = int(max_idx) + 1
-
 		# Record only the order portion (exclude tip)
 		order_payment = flt(amount) - flt(tip)
 
-		# Insert payment row directly (bypasses all ORM hooks)
-		payment_name = frappe.generate_hash(length=10)
-		frappe.db.sql("""
-			INSERT INTO `tabSales Invoice Payment`
-				(name, parent, parenttype, parentfield, idx, mode_of_payment, amount,
-				 owner, modified_by, creation, modified, docstatus)
-			VALUES (%s, %s, 'Sales Invoice', 'payments', %s, %s, %s,
-				'Administrator', 'Administrator', NOW(), NOW(), 0)
-		""", (payment_name, invoice_doc.name, next_idx, wallee_mop, order_payment))
+		# Prevent duplicate confirmation: if already fully paid, skip
+		current_paid = flt(frappe.db.get_value("Sales Invoice", invoice_doc.name, "paid_amount"))
+		grand_total = flt(invoice_doc.grand_total)
+		if grand_total > 0 and current_paid + order_payment > grand_total * 1.01:
+			return {"status": "already_paid", "paid_amount": current_paid, "grand_total": grand_total}
+
+		# Update existing payment row with same mode_of_payment instead of inserting a duplicate
+		existing = frappe.db.sql("""
+			SELECT name, amount FROM `tabSales Invoice Payment`
+			WHERE parent=%s AND mode_of_payment=%s
+			ORDER BY idx ASC LIMIT 1
+		""", (invoice_doc.name, wallee_mop), as_dict=True)
+
+		if existing:
+			new_row_amount = flt(existing[0].amount) + order_payment
+			frappe.db.set_value("Sales Invoice Payment", existing[0].name, "amount", new_row_amount)
+		else:
+			# No existing row with this mode — insert new one
+			max_idx = frappe.db.sql(
+				"SELECT IFNULL(MAX(idx), 0) FROM `tabSales Invoice Payment` WHERE parent=%s",
+				invoice_doc.name,
+			)[0][0]
+			next_idx = int(max_idx) + 1
+			payment_name = frappe.generate_hash(length=10)
+			frappe.db.sql("""
+				INSERT INTO `tabSales Invoice Payment`
+					(name, parent, parenttype, parentfield, idx, mode_of_payment, amount,
+					 owner, modified_by, creation, modified, docstatus)
+				VALUES (%s, %s, 'Sales Invoice', 'payments', %s, %s, %s,
+					'Administrator', 'Administrator', NOW(), NOW(), 0)
+			""", (payment_name, invoice_doc.name, next_idx, wallee_mop, order_payment))
 
 		# Recalculate paid_amount from all payment rows
 		new_paid = flt(frappe.db.sql(
