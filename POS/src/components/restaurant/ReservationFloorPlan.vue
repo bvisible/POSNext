@@ -13,22 +13,16 @@
 					{{ area }}
 				</button>
 			</div>
-			<div class="fp-controls">
-				<button class="fp-zoom-btn" @click="zoom = Math.min(1.5, zoom + 0.15)">+</button>
-				<button class="fp-zoom-btn" @click="zoom = Math.max(0.3, zoom - 0.15)">&minus;</button>
+			<div class="fp-controls" data-gesture-ignore>
+				<button class="fp-zoom-btn" @click="zoomIn">+</button>
+				<button class="fp-zoom-btn" @click="zoomOut">&minus;</button>
 			</div>
 		</div>
 
 		<!-- Canvas -->
-		<div class="fp-canvas">
+		<div class="fp-canvas" ref="canvasRef" style="touch-action: none;">
 			<div
-				:style="{
-					transform: `scale(${zoom})`,
-					transformOrigin: 'top left',
-					position: 'relative',
-					width: canvasWidth + 'px',
-					height: canvasHeight + 'px',
-				}"
+				:style="[gestureTransformStyle, { position: 'relative', width: canvasWidth + 'px', height: canvasHeight + 'px' }]"
 			>
 				<div
 					v-for="table in visibleTables"
@@ -64,6 +58,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue"
+import { useCanvasGestures } from "@/composables/useCanvasGestures"
 
 const props = defineProps({
 	tables: { type: Array, default: () => [] },
@@ -73,7 +68,21 @@ const props = defineProps({
 
 defineEmits(["toggle-table"])
 
-const zoom = ref(0.7)
+const canvasRef = ref(null)
+
+const {
+	zoomLevel: zoom,
+	transformStyle: gestureTransformStyle,
+	zoomIn,
+	zoomOut,
+	resetPan,
+} = useCanvasGestures({
+	containerRef: canvasRef,
+	initialZoom: 0.7,
+	zoomMin: 0.3,
+	zoomMax: 1.5,
+	isEditMode: ref(false),
+})
 
 // Areas available in the floor plan
 const floorAreas = computed(() => {
@@ -104,6 +113,10 @@ watch(
 	},
 	{ immediate: true },
 )
+
+watch(localArea, () => {
+	resetPan()
+})
 
 const visibleTables = computed(() => {
 	const list = props.tables.filter((t) => t.pos_x || t.pos_y)
@@ -199,7 +212,7 @@ function tableStyle(table) {
 }
 
 .fp-canvas {
-	overflow: auto;
+	overflow: hidden;
 	border: 1px solid var(--border-color, #e5e7eb);
 	border-radius: 8px;
 	background: var(--gray-50, #f9fafb);

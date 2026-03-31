@@ -168,10 +168,11 @@
 		<div
 			ref="canvasRef"
 			class="flex-1 relative overflow-hidden"
+			style="touch-action: none;"
 			:style="canvasBackgroundStyle"
 		>
 			<!-- Zoom controls -->
-			<div class="absolute bottom-3 right-3 flex flex-col gap-1 z-20">
+			<div class="absolute bottom-3 right-3 flex flex-col gap-1 z-20" data-gesture-ignore>
 				<button
 					@click="zoomIn"
 					class="w-8 h-8 flex items-center justify-center bg-white/90 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-gray-700 text-lg font-bold transition-colors"
@@ -199,7 +200,7 @@
 			</div>
 
 			<!-- Zoomable container -->
-			<div :style="zoomContainerStyle" class="origin-top-left w-full h-full relative">
+			<div :style="gestureTransformStyle" class="w-full h-full relative">
 
 			<!-- SVG Delivery Arrows (rendered FIRST = behind tables/stations) -->
 			<svg v-if="showDeliveryArrows && deliveryArrows.length > 0"
@@ -793,6 +794,7 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { useDraggable } from "@/composables/useDraggable"
+import { useCanvasGestures } from "@/composables/useCanvasGestures"
 import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
@@ -817,38 +819,27 @@ const canvasRef = ref(null)
 const isEditMode = ref(false)
 const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
 const savedZoom = Number.parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
-const zoomLevel = ref(Math.max(0.4, Math.min(2, savedZoom)))
 
-const ZOOM_STEP = 0.15
-const ZOOM_MIN = 0.4
-const ZOOM_MAX = 2
-
-function saveZoom() {
-	localStorage.setItem(ZOOM_STORAGE_KEY, zoomLevel.value.toString())
-}
-function zoomIn() {
-	zoomLevel.value = Math.min(
-		ZOOM_MAX,
-		+(zoomLevel.value + ZOOM_STEP).toFixed(2),
-	)
-	saveZoom()
-}
-function zoomOut() {
-	zoomLevel.value = Math.max(
-		ZOOM_MIN,
-		+(zoomLevel.value - ZOOM_STEP).toFixed(2),
-	)
-	saveZoom()
-}
-function zoomReset() {
-	zoomLevel.value = 1
-	saveZoom()
-}
-
-const zoomContainerStyle = computed(() => ({
-	transform: `scale(${zoomLevel.value})`,
-	transformOrigin: "top left",
-}))
+const {
+	zoomLevel,
+	panX,
+	panY,
+	transformStyle: gestureTransformStyle,
+	zoomIn,
+	zoomOut,
+	zoomReset,
+	resetPan,
+	cleanup: cleanupGestures,
+} = useCanvasGestures({
+	containerRef: canvasRef,
+	initialZoom: savedZoom,
+	zoomMin: 0.4,
+	zoomMax: 2,
+	isEditMode,
+	onZoomChange(newZoom) {
+		localStorage.setItem(ZOOM_STORAGE_KEY, newZoom.toString())
+	},
+})
 
 const canvasBackgroundStyle = computed(() => {
 	const gridSize = isEditMode.value ? 20 : 25
@@ -1146,6 +1137,7 @@ function edgePoint(center, w, h, target) {
 // Draggable composable
 const { handleDragStart, handleResizeStart, destroy } = useDraggable({
 	canvasRef,
+	zoomLevel,
 	onDragEnd: (obj) => {
 		// Check if this is a station or table
 		if (obj.station_name) {
@@ -1491,10 +1483,10 @@ async function onAreaDrop(event, targetArea) {
 async function handleAddTable() {
 	if (!newTable.value.table_name) return
 	try {
-		// Calculate position: center of visible canvas area
+		// Calculate position: center of visible canvas area (accounting for pan/zoom)
 		const canvas = canvasRef.value
-		const pos_x = canvas ? Math.round(canvas.clientWidth / 2 - 50) : 200
-		const pos_y = canvas ? Math.round(canvas.clientHeight / 2 - 50) : 200
+		const pos_x = canvas ? Math.round((canvas.clientWidth / 2 - panX.value) / zoomLevel.value - 50) : 200
+		const pos_y = canvas ? Math.round((canvas.clientHeight / 2 - panY.value) / zoomLevel.value - 50) : 200
 
 		await restaurantStore.addTable({
 			table_name: newTable.value.table_name,
@@ -1883,6 +1875,7 @@ onMounted(async () => {
 
 // Re-layout when switching areas
 watch(selectedArea, async () => {
+	resetPan()
 	await nextTick()
 	autoLayoutTables()
 })
@@ -1893,6 +1886,7 @@ onUnmounted(() => {
 		floorSocket.off("kds_update")
 	}
 	destroy()
+	cleanupGestures()
 	restaurantStore.stopStatusPolling()
 })
 </script>

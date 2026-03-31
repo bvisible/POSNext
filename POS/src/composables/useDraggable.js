@@ -3,7 +3,7 @@
  * Uses native Pointer Events API for unified mouse/touch support.
  */
 export function useDraggable(options = {}) {
-	const { onDragEnd, onResizeEnd, canvasRef } = options
+	const { onDragEnd, onResizeEnd, canvasRef, zoomLevel } = options
 
 	let dragState = null
 	let resizeState = null
@@ -58,8 +58,9 @@ export function useDraggable(options = {}) {
 	function handleDragMove(event) {
 		if (!dragState || event.pointerId !== dragState.pointerId) return
 
-		const deltaX = event.clientX - dragState.startX
-		const deltaY = event.clientY - dragState.startY
+		const scale = zoomLevel?.value || 1
+		const deltaX = (event.clientX - dragState.startX) / scale
+		const deltaY = (event.clientY - dragState.startY) / scale
 
 		const w = dragState.table.width || 100
 		const h = dragState.table.height || 100
@@ -129,8 +130,9 @@ export function useDraggable(options = {}) {
 	function handleResizeMove(event) {
 		if (!resizeState || event.pointerId !== resizeState.pointerId) return
 
-		const deltaX = event.clientX - resizeState.startX
-		const deltaY = event.clientY - resizeState.startY
+		const scale = zoomLevel?.value || 1
+		const deltaX = (event.clientX - resizeState.startX) / scale
+		const deltaY = (event.clientY - resizeState.startY) / scale
 		const MIN_SIZE = 60
 
 		let newW = resizeState.startW
