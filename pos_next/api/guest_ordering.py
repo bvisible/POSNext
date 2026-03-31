@@ -491,11 +491,17 @@ def get_guest_receipt_pdf(token):
 		print_format = "POS Next Receipt"
 
 	from frappe.utils.pdf import get_pdf
+
+	# Bypass document permissions — guest is authenticated via token
+	frappe.flags.ignore_permissions = True
 	try:
-		html = frappe.get_print("Sales Invoice", invoice_name, print_format)
-	except Exception:
-		html = frappe.get_print("Sales Invoice", invoice_name)
-	pdf = get_pdf(html)
+		try:
+			html = frappe.get_print("Sales Invoice", invoice_name, print_format)
+		except Exception:
+			html = frappe.get_print("Sales Invoice", invoice_name)
+		pdf = get_pdf(html)
+	finally:
+		frappe.flags.ignore_permissions = False
 
 	frappe.local.response.filename = f"receipt-{invoice_name}.pdf"
 	frappe.local.response.filecontent = pdf
