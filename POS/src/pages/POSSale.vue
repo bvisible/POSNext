@@ -441,8 +441,24 @@
 													v-for="(ci_item, ii) in group.items"
 													:key="ii"
 													@click="ci_item.item_type === 'Menu' ? handleCardMenuClick(ci_item) : handleCardItemClick(ci_item)"
-													class="group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100 cursor-pointer hover:border-blue-400 hover:shadow-neo-md"
+													:class="[
+														'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
+														isCardItemOutOfStock(ci_item) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md'
+													]"
 												>
+													<!-- Stock Badge -->
+													<div
+														v-if="getCardItemStock(ci_item) !== null"
+														:class="[
+															'absolute -top-1.5 -end-1.5 sm:-top-2 sm:-end-2 rounded-md shadow-lg z-10',
+															'px-2 sm:px-2.5 py-1 sm:py-1 text-[10px] sm:text-xs font-bold',
+															'border-2 border-white select-none',
+															getStockStatus(getCardItemStock(ci_item)).color,
+															getStockStatus(getCardItemStock(ci_item)).textColor
+														]"
+													>
+														{{ Math.floor(getCardItemStock(ci_item)) }}
+													</div>
 													<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
 													:style="getCardItemBgStyle(ci_item)">
 														<img v-if="ci_item.image" :src="ci_item.image" class="w-full h-full object-cover" />
@@ -475,15 +491,32 @@
 													v-for="(li_item, li) in group.items"
 													:key="li"
 													@click="li_item.item_type === 'Menu' ? handleCardMenuClick(li_item) : handleCardItemClick(li_item)"
-													class="flex items-center gap-3 px-2 py-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+													:class="[
+														'flex items-center gap-3 px-2 py-2 border-b border-gray-100 transition-colors',
+														isCardItemOutOfStock(li_item) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'
+													]"
 												>
-													<img v-if="li_item.image" :src="li_item.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-													<div v-else class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-														:style="getCardItemBgStyle(li_item)">
-														<svg v-if="li_item.item_type === 'Menu'" class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-														<span v-else class="text-[7px] font-bold leading-tight text-center px-0.5"
-															:class="li_item.custom_color && !isLightColor(li_item.custom_color) ? 'text-white' : 'text-gray-500'">
-															{{ (li_item.item_name || li_item.label || '').substring(0, 6) }}
+													<div class="relative flex-shrink-0">
+														<img v-if="li_item.image" :src="li_item.image" class="w-10 h-10 rounded-lg object-cover" />
+														<div v-else class="w-10 h-10 rounded-lg flex items-center justify-center"
+															:style="getCardItemBgStyle(li_item)">
+															<svg v-if="li_item.item_type === 'Menu'" class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+															<span v-else class="text-[7px] font-bold leading-tight text-center px-0.5"
+																:class="li_item.custom_color && !isLightColor(li_item.custom_color) ? 'text-white' : 'text-gray-500'">
+																{{ (li_item.item_name || li_item.label || '').substring(0, 6) }}
+															</span>
+														</div>
+														<span
+															v-if="getCardItemStock(li_item) !== null"
+															:class="[
+																'absolute -top-1.5 -end-1.5 rounded-md shadow-sm z-10',
+																'px-1.5 py-0.5 text-[9px] font-bold',
+																'border border-white',
+																getStockStatus(getCardItemStock(li_item)).color,
+																getStockStatus(getCardItemStock(li_item)).textColor
+															]"
+														>
+															{{ Math.floor(getCardItemStock(li_item)) }}
 														</span>
 													</div>
 													<div class="flex-1 min-w-0">
@@ -1498,6 +1531,7 @@ import { isLightColor } from "@/utils/itemColors";
 import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { useStockStore } from "@/stores/stock";
+import { useStock } from "@/composables/useStock";
 // Pinia Stores
 import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSDraftsStore } from "@/stores/posDrafts";
@@ -1518,6 +1552,7 @@ const draftsStore = usePOSDraftsStore();
 const posSettingsStore = usePOSSettingsStore();
 const itemStore = useItemSearchStore();
 const stockStore = useStockStore();
+const { getStockStatus } = useStock();
 const customerSearchStore = useCustomerSearchStore();
 const restaurantStore = useRestaurantStore();
 // Note: settingsStore is an alias to posSettingsStore (same Pinia store singleton)
@@ -1633,6 +1668,20 @@ watch(() => restaurantStore.activeCards, (cards) => {
 	}
 }, { immediate: true })
 
+// Card item stock helpers
+function getCardItemStock(cardItem) {
+	if (!cardItem.item || cardItem.item_type !== 'Item') return null
+	const qty = stockStore.getDisplayStock(cardItem.item)
+	// If the item has no entry in the stock store, it's not a stock item
+	if (!stockStore.server.has(cardItem.item)) return null
+	return qty
+}
+function isCardItemOutOfStock(cardItem) {
+	const stock = getCardItemStock(cardItem)
+	if (stock === null) return false // non-stock items are always available
+	return stock <= 0
+}
+
 // Card item display helpers (image / color / name fallback)
 function getCardItemBgStyle(item) {
 	if (item.image) return {}
@@ -1648,6 +1697,7 @@ function getCardItemTextClasses(item) {
 }
 
 function handleCardItemClick(cardItem) {
+	if (isCardItemOutOfStock(cardItem)) return
 	const item = {
 		item_code: cardItem.item,
 		item_name: cardItem.item_name || cardItem.label,

@@ -213,6 +213,20 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		}
 	}
 
+	async function confirmPayment(amount, tip = 0) {
+		if (!token.value) return
+		try {
+			const result = await guestFetch(
+				"pos_next.api.guest_ordering.confirm_guest_payment",
+				{ token: token.value, amount, tip },
+			)
+			await refreshOrderStatus()
+			return result
+		} catch (err) {
+			error.value = err.message
+		}
+	}
+
 	// Realtime subscription for multi-device sync
 	let _realtimeSubscribed = false
 
@@ -299,6 +313,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		submitOrder,
 		refreshOrderStatus,
 		createPayment,
+		confirmPayment,
 		subscribeToRealtime,
 		reset,
 	}

@@ -416,7 +416,7 @@ async function handlePay() {
 
 	try {
 		const baseUrl = window.location.href.split("?")[0]
-		const successUrl = `${baseUrl}?payment=success&amount=${payableAmount.value}`
+		const successUrl = `${baseUrl}?payment=success&amount=${payableAmount.value}&tip=${tipAmount.value || 0}`
 		const failedUrl = `${baseUrl}?payment=failed`
 
 		const result = await guestStore.createPayment(
@@ -455,15 +455,15 @@ function stopPaymentPolling() {
 }
 
 // Check URL params on mount for payment callback
-onMounted(() => {
+onMounted(async () => {
 	const params = new URLSearchParams(window.location.search)
 	if (params.get("payment") === "success") {
-		paymentState.value = "success"
 		lastPaymentAmount.value = Number.parseFloat(params.get("amount")) || 0
 		clearTip()
-		guestStore.refreshOrderStatus().then(() => {
-			showPaymentDialog.value = true
-		})
+		// Confirm payment with backend (records the payment now that Wallee confirmed)
+		await guestStore.confirmPayment(lastPaymentAmount.value, Number.parseFloat(params.get("tip")) || 0)
+		paymentState.value = "success"
+		showPaymentDialog.value = true
 		window.history.replaceState({}, "", window.location.pathname)
 	} else if (params.get("payment") === "failed") {
 		paymentState.value = "failed"

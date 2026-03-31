@@ -114,7 +114,7 @@ def _get_guest_menu_card(settings):
 	return name
 
 
-def _build_menu_from_card(card_name):
+def _build_menu_from_card(card_name, warehouse=None):
 	"""Build menu structure (categories + items) from a Restaurant Card."""
 	card = frappe.get_doc("Restaurant Card", card_name)
 	card_items = frappe.get_all(
@@ -154,6 +154,22 @@ def _build_menu_from_card(card_name):
 			"image": item_doc.get("image") or "",
 			"product_options": _get_item_product_options(ci.item),
 		}
+
+		# Add stock info for stock items
+		if item_doc.get("is_stock_item"):
+			item_data["is_stock_item"] = True
+			stock_qty = 0
+			if warehouse:
+				stock_qty = frappe.db.get_value(
+					"Bin", {"item_code": ci.item, "warehouse": warehouse}, "actual_qty"
+				) or 0
+			else:
+				stock_qty = frappe.db.sql(
+					"SELECT SUM(actual_qty) FROM `tabBin` WHERE item_code=%s",
+					ci.item,
+				)[0][0] or 0
+			item_data["actual_qty"] = float(stock_qty)
+
 		current_category["menu_items"].append(item_data)
 
 	if current_category["menu_items"]:
@@ -290,8 +306,13 @@ def get_guest_menu(token):
 	Uses time-slot based card selection (same as Opening Hours), falling back to
 	settings.guest_menu or the card flagged as_guest_menu.
 	"""
-	_require_valid_token(token)
+	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings()
+
+	# Resolve warehouse from POS Profile for stock display
+	warehouse = None
+	if token_doc.pos_profile:
+		warehouse = frappe.db.get_value("POS Profile", token_doc.pos_profile, "warehouse")
 
 	# Try time-slot based card selection first
 	card_names = _get_timeslot_cards(settings)
@@ -307,7 +328,7 @@ def get_guest_menu(token):
 	# Build menu from all matching cards (merge if multiple)
 	all_categories = []
 	for card_name in card_names:
-		result = _build_menu_from_card(card_name)
+		result = _build_menu_from_card(card_name, warehouse=warehouse)
 		all_categories.extend(result.get("categories", []))
 
 	return {
@@ -572,10 +593,44 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 			f"Error: {str(e)}\n{traceback.format_exc()}")
 		frappe.throw(_("Failed to initiate payment. Please try again or contact staff."))
 
-	# Record payment in the Sales Invoice via direct DB writes
-	# (bypasses wallet/validation hooks from other apps that block guest payments)
+	# Store pending payment info in the transaction result for later confirmation
+	# Do NOT record payment or change table status yet — Wallee hasn't confirmed
+	result["_pending"] = {
+		"invoice": invoice_doc.name,
+		"amount": amount,
+		"tip": tip,
+		"table": token_doc.table,
+	}
+
+	if token_doc.table:
+		_broadcast_order_update(token_doc.table, "payment_initiated", {
+			"invoice": invoice_doc.name,
+			"amount": amount,
+			"paid_amount": flt(invoice_doc.paid_amount),
+			"grand_total": flt(invoice_doc.grand_total),
+		})
+
+	return result
+
+
+@frappe.whitelist(allow_guest=True)
+def confirm_guest_payment(token, amount, tip=0):
+	"""
+	Confirm a guest payment after Wallee redirect success.
+	This is called when the guest returns from Wallee with payment=success.
+	Records the payment in the Sales Invoice and updates table status.
+	"""
+	token_doc = _require_valid_token(token)
+	invoice_doc = _get_or_create_invoice(token_doc)
+
+	if not invoice_doc:
+		frappe.throw(_("No active order found for this session."))
+
+	amount = flt(amount)
+	tip = flt(tip)
+
 	try:
-		# Get mode of payment from Wallee Settings (single source of truth)
+		# Get mode of payment from Wallee Settings
 		wallee_mop = frappe.db.get_single_value("Wallee Settings", "pos_mode_of_payment")
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
@@ -587,7 +642,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		)[0][0]
 		next_idx = int(max_idx) + 1
 
-		# Record only the order portion (exclude tip) — tip goes to Wallee only
+		# Record only the order portion (exclude tip)
 		order_payment = flt(amount) - flt(tip)
 
 		# Insert payment row directly (bypasses all ORM hooks)
@@ -608,14 +663,11 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		frappe.db.set_value("Sales Invoice", invoice_doc.name, "paid_amount", new_paid, update_modified=False)
 		frappe.db.commit()
 
-		# If fully paid, update table status (keep token active for redirect back)
+		# If fully paid, update table status
 		if new_paid >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
 			if token_doc.table:
 				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
 			frappe.publish_realtime("table_update")
-
-		# Update local object for broadcast below
-		invoice_doc.paid_amount = new_paid
 
 		# Create Restaurant Tip tracking record
 		if flt(tip) > 0:
@@ -636,31 +688,31 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 					frappe.db.commit()
 				except Exception as tip_err:
 					frappe.log_error("Guest tip record failed", str(tip_err))
+
+		if token_doc.table:
+			event = "payment_completed" if new_paid >= flt(invoice_doc.grand_total) else "payment_partial"
+			_broadcast_order_update(token_doc.table, event, {
+				"invoice": invoice_doc.name,
+				"amount": amount,
+				"paid_amount": new_paid,
+				"grand_total": flt(invoice_doc.grand_total),
+			})
+			frappe.publish_realtime("guest_payment_received", {
+				"table": token_doc.table,
+				"invoice": invoice_doc.name,
+				"paid_amount": new_paid,
+			})
+
+		return {"status": "success", "paid_amount": new_paid, "grand_total": flt(invoice_doc.grand_total)}
+
 	except Exception as e:
 		import traceback
 		frappe.log_error(
-			"Guest payment record failed",
-			f"Invoice: {invoice_doc.name}, Amount: {amount}, MoP: {wallee_mop}, "
-			f"Grand Total: {invoice_doc.grand_total}\n"
+			"Guest payment confirmation failed",
+			f"Invoice: {invoice_doc.name}, Amount: {amount}\n"
 			f"Error: {str(e)}\n{traceback.format_exc()}"
 		)
-
-	if token_doc.table:
-		event = "payment_completed" if flt(invoice_doc.paid_amount) >= flt(invoice_doc.grand_total) else "payment_initiated"
-		_broadcast_order_update(token_doc.table, event, {
-			"invoice": invoice_doc.name,
-			"amount": amount,
-			"paid_amount": flt(invoice_doc.paid_amount),
-			"grand_total": flt(invoice_doc.grand_total),
-		})
-		# Notify POS clients globally (not room-scoped)
-		frappe.publish_realtime("guest_payment_received", {
-			"table": token_doc.table,
-			"invoice": invoice_doc.name,
-			"paid_amount": flt(invoice_doc.paid_amount),
-		})
-
-	return result
+		return {"status": "error"}
 
 
 # ==========================================

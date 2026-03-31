@@ -64,9 +64,27 @@
 						<div
 							v-for="(item, ii) in group.items"
 							:key="ii"
-							@click="openItemModal(item)"
-							class="group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100 cursor-pointer hover:border-blue-400 hover:shadow-neo-md"
+							@click="!isOutOfStock(item) && openItemModal(item)"
+							:class="[
+								'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
+								isOutOfStock(item) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md'
+							]"
 						>
+							<!-- Stock badge -->
+							<div
+								v-if="item.is_stock_item && item.actual_qty != null"
+								:class="[
+									'absolute -top-1.5 -end-1.5 rounded-md shadow-lg z-10',
+									'px-2 py-0.5 text-[10px] font-bold border-2 border-white',
+									item.actual_qty <= 0 ? 'bg-red-500 text-white' : item.actual_qty <= 10 ? 'bg-amber-500 text-white' : 'bg-green-500 text-white'
+								]"
+							>
+								{{ item.actual_qty <= 0 ? '0' : Math.floor(item.actual_qty) }}
+							</div>
+							<!-- Out of stock overlay -->
+							<div v-if="isOutOfStock(item)" class="absolute inset-0 z-5 flex items-center justify-center rounded-neo-md">
+								<span class="text-[10px] font-bold text-red-600 bg-white/80 px-2 py-1 rounded">{{ __('Out of stock') }}</span>
+							</div>
 							<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden bg-gray-100">
 								<img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
 								<div v-else class="w-full h-full flex items-center justify-center p-2">
@@ -95,18 +113,34 @@
 					<div
 						v-for="(item, li) in group.items"
 						:key="li"
-						@click="openItemModal(item)"
-						class="flex items-center gap-3 px-2 py-2 border-b border-gray-100 bg-white hover:bg-blue-50 cursor-pointer transition-colors"
+						@click="!isOutOfStock(item) && openItemModal(item)"
+						:class="[
+							'flex items-center gap-3 px-2 py-2 border-b border-gray-100 bg-white transition-colors',
+							isOutOfStock(item) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'
+						]"
 					>
-						<img v-if="item.image" :src="item.image" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-						<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-							<span class="text-[7px] font-bold text-gray-500 leading-tight text-center px-0.5">
-								{{ (item.item_name || '').substring(0, 6) }}
+						<div class="relative flex-shrink-0">
+							<img v-if="item.image" :src="item.image" class="w-10 h-10 rounded-lg object-cover" />
+							<div v-else class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+								<span class="text-[7px] font-bold text-gray-500 leading-tight text-center px-0.5">
+									{{ (item.item_name || '').substring(0, 6) }}
+								</span>
+							</div>
+							<span
+								v-if="item.is_stock_item && item.actual_qty != null"
+								:class="[
+									'absolute -top-1 -end-1 rounded-md shadow-sm z-10',
+									'px-1.5 py-0.5 text-[9px] font-bold border border-white',
+									item.actual_qty <= 0 ? 'bg-red-500 text-white' : item.actual_qty <= 10 ? 'bg-amber-500 text-white' : 'bg-green-500 text-white'
+								]"
+							>
+								{{ item.actual_qty <= 0 ? '0' : Math.floor(item.actual_qty) }}
 							</span>
 						</div>
 						<div class="flex-1 min-w-0">
 							<p class="text-xs font-semibold text-gray-900 truncate">{{ item.item_name }}</p>
 							<p v-if="item.description" class="text-[10px] text-gray-500 truncate">{{ item.description }}</p>
+							<span v-if="isOutOfStock(item)" class="text-[9px] font-bold text-red-500">{{ __('Out of stock') }}</span>
 						</div>
 						<span class="text-xs font-bold text-blue-600 flex-shrink-0">{{ formatPrice(item.price || 0) }}</span>
 					</div>
@@ -288,6 +322,10 @@ function formatPrice(amount) {
 		currency: guestStore.currency || "CHF",
 		minimumFractionDigits: 2,
 	}).format(amount)
+}
+
+function isOutOfStock(item) {
+	return item.is_stock_item && item.actual_qty != null && item.actual_qty <= 0
 }
 
 function openItemModal(item) {
