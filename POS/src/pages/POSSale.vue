@@ -591,7 +591,7 @@
 								'flex flex-col bg-gray-50 overflow-hidden',
 								uiStore.isDesktop ? 'flex-1' : 'flex-1',
 							]"
-							style="min-width: 300px; contain: layout style paint"
+							style="min-width: 450px; contain: layout style paint"
 						>
 							<InvoiceCart
 								ref="invoiceCartRef"

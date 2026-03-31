@@ -3,7 +3,7 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 
 const LEFT_PANEL_MIN = 320
-const RIGHT_PANEL_MIN = 360
+const RIGHT_PANEL_MIN = 450
 
 export const usePOSUIStore = defineStore("posUI", () => {
 	// Loading state
