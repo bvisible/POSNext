@@ -1431,6 +1431,8 @@ function getTableClasses(table) {
 }
 
 function onTablePointerDown(event, table) {
+	// Always stop propagation to prevent useCanvasGestures from starting a pan
+	event.stopPropagation()
 	if (isEditMode.value) {
 		handleDragStart(event, table)
 	} else {

@@ -1412,7 +1412,7 @@
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
-					<Button class="flex-1" variant="subtle" @click="markTableAvailable">
+					<Button class="flex-1" variant="solid" @click="markTableAvailable">
 						{{ __('Available') }}
 					</Button>
 					<Button v-if="cleaningTable?.status === 'Paid'" class="flex-1" variant="solid" theme="green" @click="confirmTableCleaning">
