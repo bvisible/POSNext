@@ -1525,23 +1525,22 @@ async function selectTable(table) {
 		return
 	}
 
-	// Clear cart before loading table
-	await cartStore.clearCart()
-	cartStore.setRestaurantTable(table)
-
 	try {
-		// Open table: returns existing draft or empty result for new table
+		// Fetch table data FIRST (while keeping old cart visible to avoid jolt)
 		const res = await call("pos_next.api.restaurant.open_table", {
 			table_name: table.name,
 			pos_profile: shiftStore.profileName,
 		})
+
+		// Now clear and rebuild in one batch — no visual gap
+		await cartStore.clearCart()
+		cartStore.setRestaurantTable(table)
 
 		if (res && res.name) {
 			// Existing draft found — load items into cart
 			if (res.items && res.items.length > 0) {
 				for (const item of res.items) {
 					// Calculate modifier price adjustment from saved JSON
-					// so _modifiers_applied is correctly initialized
 					let modifierPriceAdjustment = 0
 					if (item.posa_item_modifiers) {
 						try {
@@ -1583,7 +1582,6 @@ async function selectTable(table) {
 			})
 			if (res.customer) cartStore.setCustomer(res.customer)
 		}
-		// If res.name is null = new table, no draft yet (created at first Valider)
 	} catch (e) {
 		console.error("[FloorPlan] Failed to open table:", e)
 	}
