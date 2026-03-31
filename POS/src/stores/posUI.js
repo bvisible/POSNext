@@ -154,12 +154,23 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		isResizing.value = resizing
 	}
 
+	let lastContainerWidth = 0
+
 	function updateLayoutBounds(containerWidth) {
 		if (containerWidth) {
-			leftPanelWidth.value = clampLeftPanelWidth(
-				leftPanelWidth.value,
-				containerWidth,
-			)
+			if (lastContainerWidth > 0 && lastContainerWidth !== containerWidth) {
+				// Scale proportionally when window resizes to maintain ratio
+				const ratio = leftPanelWidth.value / lastContainerWidth
+				const scaled = clampLeftPanelWidth(Math.round(ratio * containerWidth), containerWidth)
+				leftPanelWidth.value = scaled
+				localStorage.setItem("pos_left_panel_width", scaled.toString())
+			} else {
+				leftPanelWidth.value = clampLeftPanelWidth(
+					leftPanelWidth.value,
+					containerWidth,
+				)
+			}
+			lastContainerWidth = containerWidth
 		}
 	}
 
