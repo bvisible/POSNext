@@ -113,7 +113,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	}
 
 	function addToCart(item, qty = 1, modifiers = []) {
-		const basePrice = item.price_with_tax ?? item.price ?? 0
+		const basePrice = item.discounted_price ?? item.price_with_tax ?? item.price ?? 0
 		const modifierTotal = modifiers.reduce((sum, m) => sum + (m.additional_price || m.price_adjustment || 0), 0)
 		const price = basePrice + modifierTotal
 		// Check if same item + same modifiers already in cart

@@ -326,6 +326,72 @@ def _apply_pricing_rules_to_items(invoice_doc, items):
 	return items
 
 
+def _apply_pricing_rules_to_menu(pos_profile, categories):
+	"""Annotate menu items with discount info from pricing rules.
+
+	Calls apply_offers with the POS profile's default customer so the guest
+	menu shows discounted prices and discount badges before ordering.
+	"""
+	# Collect all menu items across categories
+	all_items = []
+	item_refs = []  # (cat_index, item_index) for mapping back
+	for ci, cat in enumerate(categories):
+		for ii, item in enumerate(cat.get("menu_items") or []):
+			all_items.append(item)
+			item_refs.append((ci, ii))
+
+	if not all_items:
+		return
+
+	original_ignore = frappe.flags.ignore_permissions
+	frappe.flags.ignore_permissions = True
+	try:
+		from pos_next.api.invoices import apply_offers
+
+		profile = frappe.get_cached_doc("POS Profile", pos_profile)
+		customer = profile.customer or frappe.db.get_single_value("Selling Settings", "customer") or "Guest"
+
+		invoice_data = {
+			"doctype": "Sales Invoice",
+			"pos_profile": pos_profile,
+			"customer": customer,
+			"currency": profile.currency or frappe.defaults.get_global_default("currency"),
+			"is_pos": 1,
+			"items": [
+				{
+					"item_code": item.get("item_code"),
+					"item_name": item.get("item_name"),
+					"qty": 1,
+					"price_list_rate": float(item.get("price") or 0),
+					"rate": float(item.get("price") or 0),
+					"discount_percentage": 0,
+					"discount_amount": 0,
+				}
+				for item in all_items
+			],
+		}
+
+		result = apply_offers(invoice_data)
+		if not result or not result.get("items"):
+			return
+
+		result_items = result["items"]
+		for i, (ci, ii) in enumerate(item_refs):
+			if i >= len(result_items):
+				break
+			ri = result_items[i]
+			discount_pct = flt(ri.get("discount_percentage") or 0)
+			if discount_pct > 0:
+				original_price = float(categories[ci]["menu_items"][ii].get("price") or 0)
+				discounted_price = round(original_price * (1 - discount_pct / 100), 2)
+				categories[ci]["menu_items"][ii]["discount_percentage"] = discount_pct
+				categories[ci]["menu_items"][ii]["discounted_price"] = discounted_price
+	except Exception as e:
+		frappe.log_error("Guest menu pricing rules failed", str(e))
+	finally:
+		frappe.flags.ignore_permissions = original_ignore
+
+
 def _broadcast_order_update(table_name, event_type, data):
 	"""Publish a realtime event to all clients watching a table."""
 	payload = {"event": event_type, "table": table_name}
@@ -423,6 +489,10 @@ def get_guest_menu(token):
 	for card_name in card_names:
 		result = _build_menu_from_card(card_name, warehouse=warehouse)
 		all_categories.extend(result.get("categories", []))
+
+	# Apply pricing rules to menu items so guest sees discounts before ordering
+	if token_doc.pos_profile:
+		_apply_pricing_rules_to_menu(token_doc.pos_profile, all_categories)
 
 	return {
 		"card": {"card_name": ", ".join(card_names), "description": "", "image": ""},

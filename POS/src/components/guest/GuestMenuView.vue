@@ -83,8 +83,10 @@
 							</div>
 							<div class="min-w-0">
 								<p class="text-[10px] sm:text-xs font-semibold text-gray-900 truncate mb-0.5 leading-tight">{{ item.item_name }}</p>
-								<div class="text-[9px] sm:text-[10px] leading-tight">
-									<span class="font-semibold text-blue-600">{{ formatPrice(item.price || 0) }}</span>
+								<div class="text-[9px] sm:text-[10px] leading-tight flex items-center gap-1">
+									<span v-if="item.discount_percentage > 0" class="text-gray-400 line-through">{{ formatPrice(item.price || 0) }}</span>
+									<span class="font-semibold text-blue-600">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
+									<span v-if="item.discount_percentage > 0" class="text-[8px] font-bold text-green-700 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
 								</div>
 							</div>
 						</div>
@@ -120,7 +122,13 @@
 							<p v-if="item.description && !isOutOfStock(item)" class="text-[10px] text-gray-500 truncate">{{ item.description }}</p>
 							<span v-if="isOutOfStock(item)" class="text-[9px] font-bold text-red-500">{{ __('Unavailable') }}</span>
 						</div>
-						<span class="text-xs font-bold text-blue-600 flex-shrink-0">{{ formatPrice(item.price || 0) }}</span>
+						<div class="flex flex-col items-end flex-shrink-0">
+							<span v-if="item.discount_percentage > 0" class="text-[10px] text-gray-400 line-through">{{ formatPrice(item.price || 0) }}</span>
+							<div class="flex items-center gap-1">
+								<span v-if="item.discount_percentage > 0" class="text-[9px] font-bold text-green-700 bg-green-100 px-1 py-0.5 rounded">-{{ item.discount_percentage }}%</span>
+								<span class="text-xs font-bold text-blue-600">{{ formatPrice(item.discounted_price || item.price || 0) }}</span>
+							</div>
+						</div>
 					</div>
 				</template>
 			</template>
@@ -139,7 +147,11 @@
 						<img v-if="selectedItem.image" :src="selectedItem.image" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
 						<div class="flex-1 min-w-0">
 							<h2 class="text-lg font-bold text-gray-900">{{ selectedItem.item_name }}</h2>
-							<p class="text-base font-semibold text-blue-600">{{ formatPrice(selectedItem.price || 0) }}</p>
+							<div class="flex items-center gap-2">
+								<span v-if="selectedItem.discount_percentage > 0" class="text-sm text-gray-400 line-through">{{ formatPrice(selectedItem.price || 0) }}</span>
+								<span class="text-base font-semibold text-blue-600">{{ formatPrice(selectedItem.discounted_price || selectedItem.price || 0) }}</span>
+								<span v-if="selectedItem.discount_percentage > 0" class="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ selectedItem.discount_percentage }}%</span>
+							</div>
 							<p v-if="selectedItem.description" class="text-sm text-gray-500 mt-0.5">{{ selectedItem.description }}</p>
 						</div>
 						<button @click="closeItemModal" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -240,9 +252,31 @@ const selectedOptions = ref({})
 const menuItems = computed(() => guestStore.menuItems)
 const menuCategories = computed(() => guestStore.menuCategories)
 
+// Merge categories with the same label (multiple cards may have duplicates)
+const mergedCategories = computed(() => {
+	const map = new Map()
+	for (const cat of menuCategories.value) {
+		const label = cat.label || ""
+		if (map.has(label)) {
+			// Merge items, dedup by item_code
+			const existing = map.get(label)
+			const existingCodes = new Set(existing.menu_items.map((i) => i.item_code))
+			for (const item of cat.menu_items || []) {
+				if (!existingCodes.has(item.item_code)) {
+					existing.menu_items.push(item)
+					existingCodes.add(item.item_code)
+				}
+			}
+		} else {
+			map.set(label, { ...cat, menu_items: [...(cat.menu_items || [])] })
+		}
+	}
+	return [...map.values()]
+})
+
 // Extract unique category names
 const categories = computed(() => {
-	return menuCategories.value
+	return mergedCategories.value
 		.map((c) => c.label)
 		.filter((c) => c)
 })
@@ -252,7 +286,7 @@ const filteredGroups = computed(() => {
 	const query = searchQuery.value.toLowerCase().trim()
 	const groups = []
 
-	for (const cat of menuCategories.value) {
+	for (const cat of mergedCategories.value) {
 		let items = cat.menu_items || []
 
 		// Filter by search
@@ -278,7 +312,7 @@ const filteredGroups = computed(() => {
 
 const itemTotal = computed(() => {
 	if (!selectedItem.value) return 0
-	const base = selectedItem.value.price || 0
+	const base = selectedItem.value.discounted_price || selectedItem.value.price || 0
 	const extras = Object.values(selectedOptions.value).reduce((sum, opts) => {
 		return (
 			sum +
