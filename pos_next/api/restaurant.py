@@ -371,7 +371,11 @@ def get_table_order(table_name):
 	# Exclude TIP items from order display
 	tip_item_code = None
 	try:
-		tip_item_code = frappe.db.get_value("Singles", {"doctype": "Restaurant Settings", "field": "tip_item"}, "value")
+		result = frappe.db.sql(
+			"SELECT value FROM `tabSingles` WHERE doctype='Restaurant Settings' AND field='tip_item'",
+		)
+		if result:
+			tip_item_code = result[0][0]
 	except Exception:
 		pass
 	tip_total = 0
