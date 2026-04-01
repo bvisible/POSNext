@@ -484,9 +484,21 @@ def submit_guest_order(token, items):
 def get_order_status(token):
 	"""
 	Return current items and totals for the guest session.
+	Also finds submitted invoices (after guest payment).
 	"""
 	token_doc = _require_valid_token(token)
 	invoice_doc = _get_or_create_invoice(token_doc)
+
+	# If no draft found, check for a recently submitted invoice for this table
+	if not invoice_doc and token_doc.table:
+		submitted = frappe.db.get_value(
+			"Sales Invoice",
+			{"docstatus": 1, "restaurant_table": token_doc.table},
+			"name",
+			order_by="modified desc",
+		)
+		if submitted:
+			invoice_doc = frappe.get_doc("Sales Invoice", submitted)
 
 	if not invoice_doc:
 		return {"invoice": None, "items": [], "grand_total": 0, "net_total": 0}
@@ -703,6 +715,7 @@ def confirm_guest_payment(token, amount, tip=0):
 			invoice_doc.ignore_pricing_rule = 1
 			invoice_doc.flags.ignore_pricing_rule = True
 			invoice_doc.flags.ignore_permissions = True
+			invoice_doc.flags.ignore_version = True
 			frappe.flags.ignore_account_permission = True
 			invoice_doc.save()
 			invoice_doc.submit()
@@ -714,6 +727,7 @@ def confirm_guest_payment(token, amount, tip=0):
 		else:
 			# Partial payment — just save the draft
 			invoice_doc.flags.ignore_permissions = True
+			invoice_doc.flags.ignore_version = True
 			invoice_doc.save()
 
 		frappe.db.commit()
