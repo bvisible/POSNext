@@ -684,6 +684,12 @@ def confirm_guest_payment(token, amount, tip=0):
 
 		# Reload full invoice via ORM (not stale cached version)
 		invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
+		frappe.log_error("Guest payment debug",
+			f"Invoice: {invoice_doc.name}, table: {invoice_doc.restaurant_table}, "
+			f"docstatus: {invoice_doc.docstatus}, grand_total: {invoice_doc.grand_total}, "
+			f"paid: {invoice_doc.paid_amount}, payment: {order_payment}, tip: {tip}, "
+			f"token_table: {token_doc.table}, existing_payments: {[(p.mode_of_payment, p.amount) for p in invoice_doc.payments]}"
+		)
 
 		# Find existing payment row with same mode_of_payment, or create one
 		existing_row = None

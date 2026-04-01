@@ -701,6 +701,8 @@ def update_invoice(data):
         # For restaurant tables: find existing draft if name is missing
         if not data.get("name"):
             restaurant_table = data.get("restaurant_table")
+            frappe.log_error("update_invoice debug",
+                f"No name provided. restaurant_table={restaurant_table}")
             if restaurant_table:
                 existing_draft = frappe.db.get_value(
                     doctype,
@@ -710,6 +712,11 @@ def update_invoice(data):
                 )
                 if existing_draft:
                     data["name"] = existing_draft
+                    frappe.log_error("update_invoice debug",
+                        f"Found existing draft: {existing_draft}")
+        else:
+            frappe.log_error("update_invoice debug",
+                f"Name provided: {data.get('name')}, table={data.get('restaurant_table')}")
 
         # Create or update invoice
         if data.get("name"):
