@@ -956,19 +956,16 @@ def update_invoice(data):
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
 
-        # Restore frontend discount values if ERPNext erased them during recalculation
+        # Force-restore frontend discount values — calculate_taxes_and_totals resets them
         if saved_discounts:
             for _di in invoice_doc.items:
-                if _di.idx in saved_discounts and flt(_di.discount_percentage) == 0:
+                if _di.idx in saved_discounts:
                     sd = saved_discounts[_di.idx]
-                    _di.discount_percentage = sd["discount_percentage"]
-                    _di.discount_amount = sd["discount_amount"]
-                    _di.price_list_rate = sd["price_list_rate"]
-                    # Recalculate rate from price_list_rate and discount
+                    _di.discount_percentage = flt(sd["discount_percentage"])
+                    _di.discount_amount = flt(sd["discount_amount"])
+                    _di.price_list_rate = flt(sd["price_list_rate"])
                     _di.rate = flt(sd["price_list_rate"]) * (1 - flt(sd["discount_percentage"]) / 100)
                     _di.amount = flt(_di.rate) * flt(_di.qty)
-            # Recalculate totals with restored discounts
-            invoice_doc.calculate_taxes_and_totals()
 
         if invoice_doc.grand_total is None:
             invoice_doc.grand_total = 0.0
