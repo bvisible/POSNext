@@ -248,6 +248,78 @@ def _get_item_product_options(item_code):
 	return result
 
 
+def _apply_pricing_rules_to_items(invoice_doc, items):
+	"""Apply pricing rules server-side so the guest sees discounted prices.
+
+	The POS frontend calculates discounts dynamically via apply_offers() on every
+	load, but those discounts are NOT persisted in the draft invoice. The guest
+	reads from the draft and therefore sees undiscounted prices. This helper
+	calls the same pricing engine to enrich items with discount info.
+	"""
+	if not items or not invoice_doc.pos_profile:
+		return items
+
+	# Only apply to draft invoices (submitted invoices have final prices)
+	if invoice_doc.docstatus == 1:
+		return items
+
+	try:
+		from pos_next.api.invoices import apply_offers
+
+		# Build a minimal invoice payload matching what the POS frontend sends
+		invoice_data = {
+			"doctype": "Sales Invoice",
+			"name": invoice_doc.name,
+			"pos_profile": invoice_doc.pos_profile,
+			"customer": invoice_doc.customer,
+			"currency": invoice_doc.currency,
+			"posting_date": str(invoice_doc.posting_date or invoice_doc.creation),
+			"is_pos": 1,
+			"items": [
+				{
+					"item_code": item.item_code,
+					"item_name": item.item_name,
+					"qty": flt(item.qty),
+					# rate in the draft = catalogue price (discounts not persisted)
+					"price_list_rate": flt(item.rate),
+					"rate": flt(item.rate),
+					"discount_percentage": 0,
+					"discount_amount": 0,
+				}
+				for item in items
+			],
+		}
+
+		result = apply_offers(invoice_data)
+		if not result or not result.get("items"):
+			return items
+
+		result_items = result["items"]
+
+		# Enrich original items with discount info from pricing engine
+		for i, item in enumerate(items):
+			if i >= len(result_items):
+				break
+			ri = result_items[i]
+			discount_pct = flt(ri.get("discount_percentage") or 0)
+			if discount_pct > 0:
+				original_rate = flt(item.rate)
+				discounted_rate = round(original_rate * (1 - discount_pct / 100), 2)
+				item["price_list_rate"] = original_rate
+				item["discount_percentage"] = discount_pct
+				item["rate"] = discounted_rate
+				item["amount"] = round(discounted_rate * flt(item.qty), 2)
+			else:
+				item["price_list_rate"] = flt(item.rate)
+				item["discount_percentage"] = 0
+
+	except Exception as e:
+		# Non-blocking: if pricing rules fail, guest still sees undiscounted prices
+		frappe.log_error("Guest pricing rules failed", str(e))
+
+	return items
+
+
 def _broadcast_order_update(table_name, event_type, data):
 	"""Publish a realtime event to all clients watching a table."""
 	payload = {"event": event_type, "table": table_name}
@@ -547,17 +619,26 @@ def get_order_status(token):
 		else:
 			order_items.append(item)
 
-	# Grand total for the guest = without tips (tips are voluntary extras, not shared debt)
-	order_grand_total = flt(invoice_doc.grand_total) - tip_total
+	# Apply pricing rules so guest sees discounted prices
+	order_items = _apply_pricing_rules_to_items(invoice_doc, order_items)
+
+	# Recalculate grand total from (possibly discounted) items
+	items_total = sum(flt(item.get("amount") or flt(item.get("rate")) * flt(item.get("qty"))) for item in order_items)
+	tax_amount = flt(invoice_doc.total_taxes_and_charges) if hasattr(invoice_doc, "total_taxes_and_charges") else 0
+	order_grand_total = items_total + tax_amount
+
+	# paid_amount for the guest excludes tips (tips are voluntary extras, not shared debt)
+	paid_amount = flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0
+	paid_order_amount = paid_amount - tip_total
 
 	return {
 		"invoice": invoice_doc.name,
 		"items": order_items,
 		"grand_total": order_grand_total,
 		"net_total": flt(invoice_doc.net_total),
-		"paid_amount": flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0,
+		"paid_amount": paid_order_amount,
 		"tip_total": tip_total,
-		"total_taxes_and_charges": flt(invoice_doc.total_taxes_and_charges) if hasattr(invoice_doc, "total_taxes_and_charges") else 0,
+		"total_taxes_and_charges": tax_amount,
 		"company": invoice_doc.company or "",
 		"posting_date": str(invoice_doc.posting_date or invoice_doc.creation),
 	}

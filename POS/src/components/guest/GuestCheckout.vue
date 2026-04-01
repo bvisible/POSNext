@@ -63,7 +63,10 @@
 							<div v-for="(oItem, idx) in orderItems" :key="idx"
 								class="flex items-center justify-between text-sm">
 								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
-								<span class="text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+								<span class="flex items-center gap-1.5">
+									<span v-if="oItem.discount_percentage > 0" class="text-gray-400 line-through text-xs">{{ formatPrice(oItem.qty * oItem.price_list_rate) }}</span>
+									<span class="text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+								</span>
 							</div>
 						</div>
 
@@ -119,8 +122,14 @@
 					<div class="space-y-1">
 						<div v-for="(oItem, idx) in orderItems" :key="idx"
 							class="flex items-center justify-between text-sm">
-							<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
-							<span class="text-gray-900 font-medium">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+							<div class="flex items-center gap-1.5">
+								<span class="text-gray-700">{{ oItem.qty }}× {{ oItem.item_name }}</span>
+								<span v-if="oItem.discount_percentage > 0" class="text-[10px] font-semibold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">-{{ oItem.discount_percentage }}%</span>
+							</div>
+							<span class="flex items-center gap-1.5">
+								<span v-if="oItem.discount_percentage > 0" class="text-gray-400 line-through text-xs">{{ formatPrice(oItem.qty * oItem.price_list_rate) }}</span>
+								<span class="text-gray-900 font-medium">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+							</span>
 						</div>
 					</div>
 					<div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
