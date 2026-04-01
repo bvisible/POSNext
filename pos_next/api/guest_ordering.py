@@ -886,15 +886,24 @@ def confirm_guest_payment(token, amount, tip=0):
 			tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item")
 			tip_account = getattr(settings, "tip_account", None) or settings.get("tip_account")
 			if tip_item_code:
-				invoice_doc.append("items", {
-					"item_code": tip_item_code,
-					"item_name": _("Tip"),
-					"qty": 1,
-					"rate": flt(tip),
-					"income_account": tip_account or None,
-					"cost_center": invoice_doc.cost_center,
-					"description": _("Gratuity / Pourboire"),
-				})
+				# Cumulate with existing TIP item if present (e.g. previous partial payment had a tip)
+				existing_tip = None
+				for item in invoice_doc.items:
+					if item.item_code == tip_item_code:
+						existing_tip = item
+						break
+				if existing_tip:
+					existing_tip.rate = flt(existing_tip.rate) + flt(tip)
+				else:
+					invoice_doc.append("items", {
+						"item_code": tip_item_code,
+						"item_name": _("Tip"),
+						"qty": 1,
+						"rate": flt(tip),
+						"income_account": tip_account or None,
+						"cost_center": invoice_doc.cost_center,
+						"description": _("Gratuity / Pourboire"),
+					})
 				# Recalculate totals with tip item
 				invoice_doc.run_method("calculate_taxes_and_totals")
 

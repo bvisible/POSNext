@@ -726,11 +726,18 @@ def update_invoice(data):
                         "account": existing_payment.account,
                     })
 
+            # Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
+            saved_tip_items = _extract_tip_items(invoice_doc)
+
             invoice_doc.update(data)
 
             # Re-add preserved guest payments
             for gp in guest_payments:
                 invoice_doc.append("payments", gp)
+
+            # Re-add preserved TIP items (cumulates with any new TIP the POS may add later)
+            for tip_item in saved_tip_items:
+                invoice_doc.append("items", tip_item)
         else:
             invoice_doc = frappe.get_doc(data)
 
@@ -1403,11 +1410,18 @@ def submit_invoice(invoice=None, data=None):
                         "account": existing_payment.account,
                     })
 
+            # Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
+            saved_tip_items = _extract_tip_items(invoice_doc)
+
             invoice_doc.update(invoice)
 
             # Re-add preserved guest payments
             for gp in guest_payments:
                 invoice_doc.append("payments", gp)
+
+            # Re-add preserved TIP items
+            for tip_item in saved_tip_items:
+                invoice_doc.append("items", tip_item)
 
         # Ensure update_stock is set for Sales Invoice
         if doctype == "Sales Invoice":
@@ -1659,6 +1673,40 @@ def submit_invoice(invoice=None, data=None):
             _cleanup_failed_sync(sync_record_name)
 
 
+def _extract_tip_items(invoice_doc):
+    """Extract and return TIP items from an invoice before it gets overwritten.
+
+    Used to preserve guest-paid tips when the POS rebuilds the items array.
+    Returns a list of dicts suitable for invoice_doc.append("items", ...).
+    """
+    tip_item_code = None
+    try:
+        result = frappe.db.sql(
+            "SELECT value FROM `tabSingles` WHERE doctype='Restaurant Settings' AND field='tip_item'",
+        )
+        if result:
+            tip_item_code = result[0][0]
+    except Exception:
+        pass
+
+    if not tip_item_code:
+        return []
+
+    tip_items = []
+    for item in invoice_doc.items:
+        if item.item_code == tip_item_code and flt(item.rate) > 0:
+            tip_items.append({
+                "item_code": item.item_code,
+                "item_name": item.item_name,
+                "qty": item.qty,
+                "rate": item.rate,
+                "income_account": item.income_account,
+                "cost_center": item.cost_center,
+                "description": item.description,
+            })
+    return tip_items
+
+
 def _add_tip_to_invoice(invoice_doc, tip_amount, data):
     """Add a TIP line item to the invoice and create a Restaurant Tip tracking record."""
     try:
@@ -1672,16 +1720,25 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data):
     tip_item_code = settings.tip_item
     tip_account = settings.tip_account
 
-    # Add TIP item line to invoice
-    invoice_doc.append("items", {
-        "item_code": tip_item_code,
-        "item_name": _("Tip"),
-        "qty": 1,
-        "rate": tip_amount,
-        "income_account": tip_account,
-        "cost_center": invoice_doc.cost_center,
-        "description": _("Gratuity / Pourboire"),
-    })
+    # Cumulate with existing TIP item if present (e.g. guest already tipped via Wallee)
+    existing_tip = None
+    for item in invoice_doc.items:
+        if item.item_code == tip_item_code:
+            existing_tip = item
+            break
+
+    if existing_tip:
+        existing_tip.rate = flt(existing_tip.rate) + flt(tip_amount)
+    else:
+        invoice_doc.append("items", {
+            "item_code": tip_item_code,
+            "item_name": _("Tip"),
+            "qty": 1,
+            "rate": tip_amount,
+            "income_account": tip_account,
+            "cost_center": invoice_doc.cost_center,
+            "description": _("Gratuity / Pourboire"),
+        })
 
     # Recalculate totals
     invoice_doc.run_method("calculate_taxes_and_totals")
