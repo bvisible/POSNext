@@ -718,6 +718,14 @@ def update_invoice(data):
             frappe.log_error("update_invoice debug",
                 f"Name provided: {data.get('name')}, table={data.get('restaurant_table')}")
 
+        # Log received item discounts for debugging
+        for dbg_item in data.get("items", []):
+            if dbg_item.get("discount_percentage") or dbg_item.get("discount_amount"):
+                frappe.log_error("update_invoice item discount",
+                    f"{dbg_item.get('item_code')}: rate={dbg_item.get('rate')}, "
+                    f"discount_pct={dbg_item.get('discount_percentage')}, "
+                    f"discount_amt={dbg_item.get('discount_amount')}")
+
         # Create or update invoice
         if data.get("name"):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
