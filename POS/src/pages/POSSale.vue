@@ -1955,32 +1955,16 @@ onMounted(async () => {
 			try {
 				const orderData = await call("pos_next.api.restaurant.get_table_order", { table_name: table.name })
 				if (orderData?.items) {
+					// Direct replacement — bypasses addItem dedup logic entirely
 					await cartStore.clearCart()
 					cartStore.setRestaurantTable(table)
-					for (const item of orderData.items) {
-						let modifierPriceAdjustment = 0
-						if (item.posa_item_modifiers) {
-							try {
-								const mods = JSON.parse(item.posa_item_modifiers)
-								for (const mod of mods) {
-									for (const opt of mod.options || []) {
-										modifierPriceAdjustment += opt.price_adjustment || opt.price || 0
-									}
-								}
-							} catch { /* ignore */ }
-						}
-						cartStore.addItem({
-							item_code: item.item_code,
-							item_name: item.item_name,
-							rate: item.rate,
-							uom: item.uom,
-							kds_status: item.kds_status || "Pending",
-							posa_item_modifiers: item.posa_item_modifiers,
-							posa_special_instructions: item.posa_special_instructions,
-							_modifiers_applied: modifierPriceAdjustment || 0,
-						}, item.qty || 1)
-					}
-					cartStore.$patch({ currentDraftId: orderData.name, hasUnsentChanges: false, guestPaidAmount: orderData.paid_amount || 0 })
+					cartStore.replaceAllItems(orderData.items)
+					cartStore.$patch({
+						currentDraftId: orderData.name,
+						hasUnsentChanges: false,
+						guestPaidAmount: orderData.paid_amount || 0,
+						kdsStatus: orderData.kds_status || "Pending",
+					})
 					if (orderData.customer) cartStore.setCustomer(orderData.customer)
 				}
 			} catch { /* ignore */ }

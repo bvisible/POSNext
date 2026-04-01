@@ -338,13 +338,15 @@ def get_table_order(table_name):
 	order = orders[0]
 
 	# Fetch items
-	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom"]
+	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom", "image"]
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
 	if frappe.db.has_column("Sales Invoice Item", "preparation_station"):
 		item_fields.append("preparation_station")
 	if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
 		item_fields.append("posa_item_modifiers")
+	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
+		item_fields.append("kds_status")
 
 	order["items"] = frappe.get_all(
 		"Sales Invoice Item",

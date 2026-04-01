@@ -1976,6 +1976,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Actions
 		addItem,
+		replaceAllItems,
 		removeItem,
 		updateItemQuantity,
 		clearCart,

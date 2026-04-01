@@ -1190,6 +1190,36 @@ export function useInvoice() {
 		rebuildIncrementalCache()
 	}
 
+	/**
+	 * Replace all cart items at once from server data.
+	 * Bypasses addItem dedup logic — used for guest update reloads.
+	 */
+	function replaceAllItems(serverItems) {
+		invoiceItems.value = serverItems.map((item) => {
+			const newItem = {
+				item_code: item.item_code,
+				item_name: item.item_name,
+				rate: item.rate || 0,
+				price_list_rate: item.rate || 0,
+				quantity: item.qty || 1,
+				uom: item.uom || "Nos",
+				image: item.image || "",
+				kds_status: item.kds_status || "Pending",
+				posa_item_modifiers: item.posa_item_modifiers || "",
+				posa_special_instructions: item.posa_special_instructions || "",
+				preparation_station: item.preparation_station || "",
+				_modifiers_applied: 0,
+				tax_rate: 0,
+				tax_amount: 0,
+				discount_percentage: 0,
+				discount_amount: 0,
+			}
+			recalculateItem(newItem)
+			return newItem
+		})
+		rebuildIncrementalCache()
+	}
+
 	return {
 		// State
 		invoiceItems,
@@ -1217,6 +1247,7 @@ export function useInvoice() {
 
 		// Actions
 		addItem,
+		replaceAllItems,
 		removeItem,
 		updateItemQuantity,
 		updateItemRate,
