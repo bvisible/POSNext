@@ -1587,6 +1587,7 @@ async function selectTable(table) {
 				kdsStatus: res.kds_status || "Pending",
 				hasUnsentChanges: false,
 				guestPaidAmount: res.paid_amount || 0,
+				guestTipAmount: res.tip_total || 0,
 			})
 			if (res.customer) cartStore.setCustomer(res.customer)
 		}

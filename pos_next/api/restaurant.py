@@ -387,6 +387,8 @@ def get_table_order(table_name):
 			order_items.append(item)
 	order["items"] = order_items
 	order["tip_total"] = tip_total
+	# Tip is a voluntary extra — never counted as payment toward the order
+	order["paid_amount"] = flt(order.get("paid_amount", 0)) - tip_total
 
 	# Enrich items with image from Item master
 	item_codes = list({i.item_code for i in order["items"] if i.get("item_code")})
@@ -808,16 +810,36 @@ def open_table(table_name, pos_profile, customer=None):
 				"posa_special_instructions", "preparation_station",
 				"posa_item_modifiers", "kds_status"]
 		)
-		# Enrich with images
+
+		# Exclude TIP items (same filter as get_table_order)
+		tip_item_code = None
+		try:
+			result = frappe.db.sql(
+				"SELECT value FROM `tabSingles` WHERE doctype='Restaurant Settings' AND field='tip_item'",
+			)
+			if result:
+				tip_item_code = result[0][0]
+		except Exception:
+			pass
+		tip_total = 0
+		order_items = []
 		for item in items:
+			if tip_item_code and item.item_code == tip_item_code:
+				tip_total += flt(item.rate) * flt(item.qty)
+			else:
+				order_items.append(item)
+
+		# Enrich with images
+		for item in order_items:
 			item["image"] = frappe.db.get_value("Item", item.item_code, "image") or ""
 
 		return {
 			"name": order.name,
-			"items": items,
+			"items": order_items,
 			"customer": order.customer,
 			"kds_status": order.kds_status,
-			"paid_amount": flt(order.paid_amount),
+			"paid_amount": flt(order.paid_amount) - tip_total,
+			"tip_total": tip_total,
 			"is_new": False,
 		}
 

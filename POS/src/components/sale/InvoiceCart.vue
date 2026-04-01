@@ -1233,10 +1233,10 @@
 						</span>
 					</div>
 					<div v-if="cartStore.guestTipAmount > 0" class="flex items-center justify-between">
-						<span class="text-xs text-gray-500 italic">
-							{{ __("incl. tip") }}
+						<span class="text-xs text-green-600 italic">
+							{{ __("Tip (guest)") }}
 						</span>
-						<span class="text-xs text-gray-500 italic">
+						<span class="text-xs text-green-600 italic">
 							{{ formatCurrency(cartStore.guestTipAmount) }}
 						</span>
 					</div>
