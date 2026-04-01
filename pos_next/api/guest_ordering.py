@@ -528,18 +528,35 @@ def get_order_status(token):
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
 
-	items = frappe.get_all(
+	all_items = frappe.get_all(
 		"Sales Invoice Item",
 		filters={"parent": invoice_doc.name},
 		fields=item_fields,
 	)
 
+	# Get tip item code to exclude from order items display
+	settings = _get_restaurant_settings()
+	tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item") if settings else None
+
+	# Separate order items from tip items
+	order_items = []
+	tip_total = 0
+	for item in all_items:
+		if tip_item_code and item.item_code == tip_item_code:
+			tip_total += flt(item.amount)
+		else:
+			order_items.append(item)
+
+	# Grand total for the guest = without tips (tips are voluntary extras, not shared debt)
+	order_grand_total = flt(invoice_doc.grand_total) - tip_total
+
 	return {
 		"invoice": invoice_doc.name,
-		"items": items,
-		"grand_total": flt(invoice_doc.grand_total),
+		"items": order_items,
+		"grand_total": order_grand_total,
 		"net_total": flt(invoice_doc.net_total),
 		"paid_amount": flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0,
+		"tip_total": tip_total,
 		"total_taxes_and_charges": flt(invoice_doc.total_taxes_and_charges) if hasattr(invoice_doc, "total_taxes_and_charges") else 0,
 		"company": invoice_doc.company or "",
 		"posting_date": str(invoice_doc.posting_date or invoice_doc.creation),
