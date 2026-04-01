@@ -131,6 +131,10 @@
 					<!-- Tips -->
 					<div class="bg-white border-b border-gray-200 p-4">
 						<h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('Tip') }}</h3>
+						<div v-if="guestStore.paidTipAmount > 0" class="mb-3 flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
+							<span class="text-xs font-medium text-green-700">{{ __('Tip already paid') }}</span>
+							<span class="text-sm font-bold text-green-700">{{ formatPrice(guestStore.paidTipAmount) }}</span>
+						</div>
 						<div class="flex items-center gap-1.5 flex-wrap">
 							<button
 								v-for="pct in [5, 10, 15, 20]"

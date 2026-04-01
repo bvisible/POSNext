@@ -37,6 +37,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const currency = ref("CHF") // Currency from POS Profile
 	const companyLogo = ref("") // Company logo URL
 	const taxAmount = ref(0)
+	const paidTipAmount = ref(0)
 	const companyName = ref("")
 	const invoiceName = ref("")
 	const postingDate = ref("")
@@ -182,6 +183,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			paidAmount.value = result.paid_amount || 0
 			paymentStatus.value = result.payment_status || null
 			taxAmount.value = result.total_taxes_and_charges || 0
+			paidTipAmount.value = result.tip_total || 0
 			companyName.value = result.company || ""
 			invoiceName.value = result.invoice || ""
 			postingDate.value = result.posting_date || ""
@@ -292,6 +294,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		orderItems,
 		orderTotal,
 		paidAmount,
+		paidTipAmount,
 		paymentStatus,
 		isLoading,
 		error,
