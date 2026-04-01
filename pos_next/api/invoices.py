@@ -1388,6 +1388,7 @@ def submit_invoice(invoice=None, data=None):
                     invoice["name"] = existing_draft
 
         # Get or create invoice
+        saved_tip_amount = 0
         if not invoice_name or not frappe.db.exists(doctype, invoice_name):
             created = update_invoice(json.dumps(invoice))
             if not created or not isinstance(created, dict):
@@ -1411,17 +1412,13 @@ def submit_invoice(invoice=None, data=None):
                     })
 
             # Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
-            saved_tip_items = _extract_tip_items(invoice_doc)
+            saved_tip_amount = sum(flt(t.get("rate", 0)) * flt(t.get("qty", 1)) for t in _extract_tip_items(invoice_doc))
 
             invoice_doc.update(invoice)
 
             # Re-add preserved guest payments
             for gp in guest_payments:
                 invoice_doc.append("payments", gp)
-
-            # Re-add preserved TIP items
-            for tip_item in saved_tip_items:
-                invoice_doc.append("items", tip_item)
 
         # Ensure update_stock is set for Sales Invoice
         if doctype == "Sales Invoice":
@@ -1521,7 +1518,8 @@ def submit_invoice(invoice=None, data=None):
                 invoice_doc.payments = []
 
         # Handle tip amount — add TIP line item if tip > 0
-        tip_amount = flt(data.get("tip_amount") or 0)
+        # Include any previously saved guest tips that were lost during update()
+        tip_amount = flt(data.get("tip_amount") or 0) + saved_tip_amount
         if tip_amount > 0:
             _add_tip_to_invoice(invoice_doc, tip_amount, data)
 
