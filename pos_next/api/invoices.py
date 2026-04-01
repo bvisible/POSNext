@@ -931,20 +931,18 @@ def update_invoice(data):
 
         invoice_doc.disable_rounded_total = disable_rounded
 
-        # DEBUG: log discounts before set_missing_values
+        # Save frontend discount values before ERPNext recalculations can erase them
+        saved_discounts = {}
         for _di in invoice_doc.items:
-            if _di.discount_percentage:
-                frappe.log_error("DISCOUNT BEFORE set_missing_values",
-                    f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate}")
+            if flt(_di.discount_percentage) > 0:
+                saved_discounts[_di.idx] = {
+                    "discount_percentage": _di.discount_percentage,
+                    "discount_amount": _di.discount_amount,
+                    "price_list_rate": _di.price_list_rate,
+                }
 
         # Populate missing fields (company, currency, accounts, etc.)
         invoice_doc.set_missing_values()
-
-        # DEBUG: log discounts after set_missing_values
-        for _di in invoice_doc.items:
-            if _di.item_code == 'article-test':
-                frappe.log_error("DISCOUNT AFTER set_missing_values",
-                    f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate}")
 
         # Re-enforce ignore_pricing_rule after set_missing_values().
         # ERPNext's set_pos_fields() (called inside set_missing_values when
@@ -958,11 +956,19 @@ def update_invoice(data):
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
 
-        # DEBUG: log discounts after calculate_taxes_and_totals
-        for _di in invoice_doc.items:
-            if _di.item_code == 'article-test':
-                frappe.log_error("DISCOUNT AFTER calculate_taxes",
-                    f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate} price_list_rate={_di.price_list_rate}")
+        # Restore frontend discount values if ERPNext erased them during recalculation
+        if saved_discounts:
+            for _di in invoice_doc.items:
+                if _di.idx in saved_discounts and flt(_di.discount_percentage) == 0:
+                    sd = saved_discounts[_di.idx]
+                    _di.discount_percentage = sd["discount_percentage"]
+                    _di.discount_amount = sd["discount_amount"]
+                    _di.price_list_rate = sd["price_list_rate"]
+                    # Recalculate rate from price_list_rate and discount
+                    _di.rate = flt(sd["price_list_rate"]) * (1 - flt(sd["discount_percentage"]) / 100)
+                    _di.amount = flt(_di.rate) * flt(_di.qty)
+            # Recalculate totals with restored discounts
+            invoice_doc.calculate_taxes_and_totals()
 
         if invoice_doc.grand_total is None:
             invoice_doc.grand_total = 0.0
