@@ -628,10 +628,17 @@ def get_order_status(token):
 	# Apply pricing rules so guest sees discounted prices
 	order_items = _apply_pricing_rules_to_items(invoice_doc, order_items)
 
-	# Recalculate grand total from (possibly discounted) items
-	items_total = sum(flt(item.get("amount") or flt(item.get("rate")) * flt(item.get("qty"))) for item in order_items)
+	# Calculate total discount from pricing rules and subtract from invoice grand_total
+	# (taxes may be included in item rates, so we can't just sum items + taxes)
+	invoice_grand_total = flt(invoice_doc.grand_total) - tip_total
+	discount_total = 0
+	for item in order_items:
+		plr = flt(item.get("price_list_rate") or 0)
+		rate = flt(item.get("rate") or 0)
+		if plr > rate:
+			discount_total += (plr - rate) * flt(item.get("qty") or 1)
+	order_grand_total = invoice_grand_total - round(discount_total, 2)
 	tax_amount = flt(invoice_doc.total_taxes_and_charges) if hasattr(invoice_doc, "total_taxes_and_charges") else 0
-	order_grand_total = items_total + tax_amount
 
 	# paid_amount for the guest excludes tips (tips are voluntary extras, not shared debt)
 	paid_amount = flt(invoice_doc.paid_amount) if hasattr(invoice_doc, "paid_amount") else 0
