@@ -320,7 +320,8 @@ def get_station_items_map():
 
 @frappe.whitelist()
 def get_table_order(table_name):
-	"""Get the active draft invoice for a specific table."""
+	"""Get the active invoice for a specific table (draft or recently submitted)."""
+	# First try draft
 	orders = frappe.get_all(
 		"Sales Invoice",
 		filters={
@@ -331,6 +332,19 @@ def get_table_order(table_name):
 		order_by="modified desc",
 		limit=1
 	)
+
+	# If no draft, check for recently submitted (e.g. after guest payment)
+	if not orders:
+		orders = frappe.get_all(
+			"Sales Invoice",
+			filters={
+				"docstatus": 1,
+				"restaurant_table": table_name,
+			},
+			fields=["name", "customer", "restaurant_table", "kds_status", "grand_total", "paid_amount"],
+			order_by="modified desc",
+			limit=1
+		)
 
 	if not orders:
 		return None
