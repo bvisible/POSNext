@@ -1718,25 +1718,20 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data):
     tip_item_code = settings.tip_item
     tip_account = settings.tip_account
 
-    # Cumulate with existing TIP item if present (e.g. guest already tipped via Wallee)
-    existing_tip = None
-    for item in invoice_doc.items:
-        if item.item_code == tip_item_code:
-            existing_tip = item
-            break
+    # Remove any existing TIP items first — caller passes the full cumulated amount
+    invoice_doc.items = [i for i in invoice_doc.items if i.item_code != tip_item_code]
 
-    if existing_tip:
-        existing_tip.rate = flt(existing_tip.rate) + flt(tip_amount)
-    else:
-        invoice_doc.append("items", {
-            "item_code": tip_item_code,
-            "item_name": _("Tip"),
-            "qty": 1,
-            "rate": tip_amount,
-            "income_account": tip_account,
-            "cost_center": invoice_doc.cost_center,
-            "description": _("Gratuity / Pourboire"),
-        })
+    # Add fresh TIP item with the total tip amount
+    invoice_doc.append("items", {
+        "item_code": tip_item_code,
+        "item_name": _("Tip"),
+        "qty": 1,
+        "rate": tip_amount,
+        "price_list_rate": tip_amount,
+        "income_account": tip_account,
+        "cost_center": invoice_doc.cost_center,
+        "description": _("Gratuity / Pourboire"),
+    })
 
     # Recalculate totals
     invoice_doc.run_method("calculate_taxes_and_totals")
