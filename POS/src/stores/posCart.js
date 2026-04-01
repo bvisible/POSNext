@@ -319,6 +319,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		kdsStatus.value = "Pending"
 		hasUnsentChanges.value = false
 		guestPaidAmount.value = 0
+		guestTipAmount.value = 0
 
 		// Reset offer processing state
 		offerProcessingState.value.lastCartHash = ""
@@ -343,6 +344,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const kdsStatus = ref("Pending")
 	const hasUnsentChanges = ref(false)
 	const guestPaidAmount = ref(0)
+	const guestTipAmount = ref(0)
 
 	function setPosProfile(profile) {
 		posProfile.value = profile
@@ -2025,6 +2027,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		kdsStatus,
 		hasUnsentChanges,
 		guestPaidAmount,
+		guestTipAmount,
 		updateItemInstructions,
 		updateItemModifiers,
 		setRestaurantTable,

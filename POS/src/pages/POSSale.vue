@@ -1963,6 +1963,7 @@ onMounted(async () => {
 						currentDraftId: orderData.name,
 						hasUnsentChanges: false,
 						guestPaidAmount: orderData.paid_amount || 0,
+						guestTipAmount: orderData.tip_total || 0,
 						kdsStatus: orderData.kds_status || "Pending",
 					})
 					if (orderData.customer) cartStore.setCustomer(orderData.customer)

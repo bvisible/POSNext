@@ -1232,6 +1232,14 @@
 							{{ formatCurrency(cartStore.guestPaidAmount) }}
 						</span>
 					</div>
+					<div v-if="cartStore.guestTipAmount > 0" class="flex items-center justify-between">
+						<span class="text-xs text-gray-500 italic">
+							{{ __("incl. tip") }}
+						</span>
+						<span class="text-xs text-gray-500 italic">
+							{{ formatCurrency(cartStore.guestTipAmount) }}
+						</span>
+					</div>
 					<div class="flex items-center justify-between">
 						<span class="text-xs font-semibold text-orange-600">
 							{{ __("Remaining to collect") }}

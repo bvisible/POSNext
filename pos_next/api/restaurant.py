@@ -362,11 +362,27 @@ def get_table_order(table_name):
 	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
 		item_fields.append("kds_status")
 
-	order["items"] = frappe.get_all(
+	all_items = frappe.get_all(
 		"Sales Invoice Item",
 		filters={"parent": order.name},
 		fields=item_fields
 	)
+
+	# Exclude TIP items from order display
+	tip_item_code = None
+	try:
+		tip_item_code = frappe.db.get_value("Singles", {"doctype": "Restaurant Settings", "field": "tip_item"}, "value")
+	except Exception:
+		pass
+	tip_total = 0
+	order_items = []
+	for item in all_items:
+		if tip_item_code and item.item_code == tip_item_code:
+			tip_total += flt(item.amount)
+		else:
+			order_items.append(item)
+	order["items"] = order_items
+	order["tip_total"] = tip_total
 
 	# Enrich items with image from Item master
 	item_codes = list({i.item_code for i in order["items"] if i.get("item_code")})
