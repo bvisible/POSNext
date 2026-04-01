@@ -721,7 +721,23 @@ def update_invoice(data):
         # Create or update invoice
         if data.get("name"):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
+
+            # Preserve guest payments (e.g. Wallee) before POS overwrites
+            guest_payments = []
+            pos_payment_modes = {p.get("mode_of_payment") for p in data.get("payments", []) if p.get("mode_of_payment")}
+            for existing_payment in invoice_doc.payments:
+                if flt(existing_payment.amount) > 0 and existing_payment.mode_of_payment not in pos_payment_modes:
+                    guest_payments.append({
+                        "mode_of_payment": existing_payment.mode_of_payment,
+                        "amount": existing_payment.amount,
+                        "account": existing_payment.account,
+                    })
+
             invoice_doc.update(data)
+
+            # Re-add preserved guest payments
+            for gp in guest_payments:
+                invoice_doc.append("payments", gp)
         else:
             invoice_doc = frappe.get_doc(data)
 
@@ -1382,7 +1398,23 @@ def submit_invoice(invoice=None, data=None):
             invoice_doc = frappe.get_doc(doctype, invoice_name)
         else:
             invoice_doc = frappe.get_doc(doctype, invoice_name)
+
+            # Preserve guest payments (e.g. Wallee) before POS overwrites the payments array
+            guest_payments = []
+            pos_payment_modes = {p.get("mode_of_payment") for p in invoice.get("payments", []) if p.get("mode_of_payment")}
+            for existing_payment in invoice_doc.payments:
+                if flt(existing_payment.amount) > 0 and existing_payment.mode_of_payment not in pos_payment_modes:
+                    guest_payments.append({
+                        "mode_of_payment": existing_payment.mode_of_payment,
+                        "amount": existing_payment.amount,
+                        "account": existing_payment.account,
+                    })
+
             invoice_doc.update(invoice)
+
+            # Re-add preserved guest payments
+            for gp in guest_payments:
+                invoice_doc.append("payments", gp)
 
         # Ensure update_stock is set for Sales Invoice
         if doctype == "Sales Invoice":
