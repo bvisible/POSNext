@@ -65,7 +65,7 @@ def _get_or_create_invoice(token_doc):
 		if existing:
 			token_doc.invoice = existing
 			token_doc.flags.ignore_version = True
-	token_doc.save(ignore_permissions=True)
+			token_doc.save(ignore_permissions=True)
 			return frappe.get_doc("Sales Invoice", existing)
 
 	return None
@@ -449,7 +449,7 @@ def submit_guest_order(token, items):
 		# Link invoice to token
 		token_doc.invoice = invoice_doc.name
 		token_doc.flags.ignore_version = True
-	token_doc.save(ignore_permissions=True)
+		token_doc.save(ignore_permissions=True)
 	else:
 		invoice_doc.flags.ignore_version = True
 		invoice_doc.save()
