@@ -29,8 +29,22 @@ def _require_valid_token(token):
 
 
 def _get_restaurant_settings():
-	"""Return Restaurant Settings as a dict."""
-	return frappe.get_single("Restaurant Settings")
+	"""Return Restaurant Settings as a dict (reads from Singles table as fallback)."""
+	try:
+		return frappe.get_single("Restaurant Settings")
+	except Exception:
+		# Fallback: read from Singles table directly
+		settings = frappe._dict()
+		rows = frappe.db.sql(
+			"SELECT field, value FROM `tabSingles` WHERE doctype='Restaurant Settings'",
+			as_dict=True,
+		)
+		for row in rows:
+			settings[row.field] = row.value
+		# Convert check fields to boolean
+		settings.enable_tips = settings.get("enable_tips") == "1"
+		settings.auto_detect_tip = settings.get("auto_detect_tip") == "1"
+		return settings
 
 
 def _get_active_pos_opening(pos_profile):
@@ -684,12 +698,27 @@ def confirm_guest_payment(token, amount, tip=0):
 
 		# Reload full invoice via ORM (not stale cached version)
 		invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
-		frappe.log_error("Guest payment debug",
-			f"Invoice: {invoice_doc.name}, table: {invoice_doc.restaurant_table}, "
-			f"docstatus: {invoice_doc.docstatus}, grand_total: {invoice_doc.grand_total}, "
-			f"paid: {invoice_doc.paid_amount}, payment: {order_payment}, tip: {tip}, "
-			f"token_table: {token_doc.table}, existing_payments: {[(p.mode_of_payment, p.amount) for p in invoice_doc.payments]}"
-		)
+
+		# Add TIP item to invoice if tip > 0
+		if flt(tip) > 0:
+			settings = _get_restaurant_settings()
+			tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item")
+			tip_account = getattr(settings, "tip_account", None) or settings.get("tip_account")
+			if tip_item_code:
+				invoice_doc.append("items", {
+					"item_code": tip_item_code,
+					"item_name": _("Tip"),
+					"qty": 1,
+					"rate": flt(tip),
+					"income_account": tip_account or None,
+					"cost_center": invoice_doc.cost_center,
+					"description": _("Gratuity / Pourboire"),
+				})
+				# Recalculate totals with tip item
+				invoice_doc.run_method("calculate_taxes_and_totals")
+
+		# Payment amount = order + tip (full Wallee charge)
+		total_payment = flt(amount)
 
 		# Find existing payment row with same mode_of_payment, or create one
 		existing_row = None
@@ -699,11 +728,11 @@ def confirm_guest_payment(token, amount, tip=0):
 				break
 
 		if existing_row:
-			existing_row.amount = flt(existing_row.amount) + order_payment
+			existing_row.amount = flt(existing_row.amount) + total_payment
 		else:
 			invoice_doc.append("payments", {
 				"mode_of_payment": wallee_mop,
-				"amount": order_payment,
+				"amount": total_payment,
 			})
 
 		# Remove zero-amount payment rows (e.g. default "Espèce" at 0.00)
