@@ -263,6 +263,10 @@ def _apply_pricing_rules_to_items(invoice_doc, items):
 	if invoice_doc.docstatus == 1:
 		return items
 
+	# Guest user has no permission to read Pricing Rules — elevate temporarily
+	original_ignore = frappe.flags.ignore_permissions
+	frappe.flags.ignore_permissions = True
+
 	try:
 		from pos_next.api.invoices import apply_offers
 
@@ -316,6 +320,8 @@ def _apply_pricing_rules_to_items(invoice_doc, items):
 	except Exception as e:
 		# Non-blocking: if pricing rules fail, guest still sees undiscounted prices
 		frappe.log_error("Guest pricing rules failed", str(e))
+	finally:
+		frappe.flags.ignore_permissions = original_ignore
 
 	return items
 
