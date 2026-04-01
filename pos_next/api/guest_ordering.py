@@ -642,8 +642,8 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 def confirm_guest_payment(token, amount, tip=0):
 	"""
 	Confirm a guest payment after Wallee redirect success.
-	This is called when the guest returns from Wallee with payment=success.
-	Records the payment in the Sales Invoice and updates table status.
+	Records the payment via Frappe ORM (same as POS).
+	If fully paid, submits the invoice (creates GL entries).
 	"""
 	token_doc = _require_valid_token(token)
 	invoice_doc = _get_or_create_invoice(token_doc)
@@ -653,6 +653,7 @@ def confirm_guest_payment(token, amount, tip=0):
 
 	amount = flt(amount)
 	tip = flt(tip)
+	order_payment = flt(amount) - flt(tip)
 
 	try:
 		# Get mode of payment from Wallee Settings
@@ -660,62 +661,69 @@ def confirm_guest_payment(token, amount, tip=0):
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
 
-		# Record only the order portion (exclude tip)
-		order_payment = flt(amount) - flt(tip)
-
-		# Prevent duplicate confirmation: if already fully paid, skip
-		current_paid = flt(frappe.db.get_value("Sales Invoice", invoice_doc.name, "paid_amount"))
+		# Prevent duplicate confirmation
+		current_paid = flt(invoice_doc.paid_amount)
 		grand_total = flt(invoice_doc.grand_total)
 		if grand_total > 0 and current_paid + order_payment > grand_total * 1.01:
 			return {"status": "already_paid", "paid_amount": current_paid, "grand_total": grand_total}
 
-		# Update existing payment row with same mode_of_payment instead of inserting a duplicate
-		existing = frappe.db.sql("""
-			SELECT name, amount FROM `tabSales Invoice Payment`
-			WHERE parent=%s AND mode_of_payment=%s
-			ORDER BY idx ASC LIMIT 1
-		""", (invoice_doc.name, wallee_mop), as_dict=True)
+		# Reload full invoice via ORM (not stale cached version)
+		invoice_doc = frappe.get_doc("Sales Invoice", invoice_doc.name)
 
-		if existing:
-			new_row_amount = flt(existing[0].amount) + order_payment
-			frappe.db.set_value("Sales Invoice Payment", existing[0].name, "amount", new_row_amount)
+		# Find existing payment row with same mode_of_payment, or create one
+		existing_row = None
+		for row in invoice_doc.payments:
+			if row.mode_of_payment == wallee_mop:
+				existing_row = row
+				break
+
+		if existing_row:
+			existing_row.amount = flt(existing_row.amount) + order_payment
 		else:
-			# No existing row with this mode — insert new one
-			max_idx = frappe.db.sql(
-				"SELECT IFNULL(MAX(idx), 0) FROM `tabSales Invoice Payment` WHERE parent=%s",
-				invoice_doc.name,
-			)[0][0]
-			next_idx = int(max_idx) + 1
-			payment_name = frappe.generate_hash(length=10)
-			frappe.db.sql("""
-				INSERT INTO `tabSales Invoice Payment`
-					(name, parent, parenttype, parentfield, idx, mode_of_payment, amount,
-					 owner, modified_by, creation, modified, docstatus)
-				VALUES (%s, %s, 'Sales Invoice', 'payments', %s, %s, %s,
-					'Administrator', 'Administrator', NOW(), NOW(), 0)
-			""", (payment_name, invoice_doc.name, next_idx, wallee_mop, order_payment))
+			invoice_doc.append("payments", {
+				"mode_of_payment": wallee_mop,
+				"amount": order_payment,
+			})
 
-		# Recalculate paid_amount from all payment rows
-		new_paid = flt(frappe.db.sql(
-			"SELECT IFNULL(SUM(amount), 0) FROM `tabSales Invoice Payment` WHERE parent=%s",
-			invoice_doc.name,
-		)[0][0])
-		frappe.db.set_value("Sales Invoice", invoice_doc.name, "paid_amount", new_paid, update_modified=False)
+		# Remove zero-amount payment rows (e.g. default "Espèce" at 0.00)
+		invoice_doc.payments = [p for p in invoice_doc.payments if flt(p.amount) > 0]
+
+		# Recalculate paid_amount
+		new_paid = sum(flt(p.amount) for p in invoice_doc.payments)
+		invoice_doc.paid_amount = new_paid
+
+		# Set payment accounts (same as POS submit flow)
+		from pos_next.api.invoices import _set_payment_accounts
+		_set_payment_accounts(invoice_doc.payments, invoice_doc.company)
+
+		fully_paid = new_paid >= grand_total and grand_total > 0
+
+		if fully_paid:
+			# Submit the invoice (creates GL entries, Payment Entry, etc.)
+			invoice_doc.ignore_pricing_rule = 1
+			invoice_doc.flags.ignore_pricing_rule = True
+			invoice_doc.flags.ignore_permissions = True
+			frappe.flags.ignore_account_permission = True
+			invoice_doc.save()
+			invoice_doc.submit()
+
+			# Table → Paid (guest payment — cashier sees it and decides next step)
+			if token_doc.table and frappe.db.exists("Restaurant Table", token_doc.table):
+				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
+			frappe.publish_realtime("table_update")
+		else:
+			# Partial payment — just save the draft
+			invoice_doc.flags.ignore_permissions = True
+			invoice_doc.save()
+
 		frappe.db.commit()
 
-		# If fully paid, update table status
-		if new_paid >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
-			if token_doc.table:
-				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
-			# Notify floor plan to refresh table statuses
-			frappe.publish_realtime("table_update")
-
-		# Create Restaurant Tip tracking record
+		# Create Restaurant Tip record
 		if flt(tip) > 0:
 			settings = _get_restaurant_settings()
 			if getattr(settings, "enable_tips", False):
 				try:
-					tip_record = frappe.get_doc({
+					frappe.get_doc({
 						"doctype": "Restaurant Tip",
 						"tip_date": frappe.utils.today(),
 						"sales_invoice": invoice_doc.name,
@@ -724,22 +732,21 @@ def confirm_guest_payment(token, amount, tip=0):
 						"amount": flt(tip),
 						"payment_method": wallee_mop,
 						"status": "Collected",
-					})
-					tip_record.insert(ignore_permissions=True)
+					}).insert(ignore_permissions=True)
 					frappe.db.commit()
 				except Exception as tip_err:
 					frappe.log_error("Guest tip record failed", str(tip_err))
 
 		if token_doc.table:
-			# Only send one event to avoid triggering the POS handler twice (race condition)
 			frappe.publish_realtime("guest_payment_received", {
 				"table": token_doc.table,
 				"invoice": invoice_doc.name,
 				"paid_amount": new_paid,
-				"grand_total": flt(invoice_doc.grand_total),
+				"grand_total": grand_total,
+				"submitted": fully_paid,
 			})
 
-		return {"status": "success", "paid_amount": new_paid, "grand_total": flt(invoice_doc.grand_total)}
+		return {"status": "success", "paid_amount": new_paid, "grand_total": grand_total, "submitted": fully_paid}
 
 	except Exception as e:
 		import traceback
