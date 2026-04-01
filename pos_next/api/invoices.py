@@ -698,6 +698,19 @@ def update_invoice(data):
                 if status and status != "Pending":
                     existing_item_kds[item_data.get("item_code")] = status
 
+        # For restaurant tables: find existing draft if name is missing
+        if not data.get("name"):
+            restaurant_table = data.get("restaurant_table")
+            if restaurant_table:
+                existing_draft = frappe.db.get_value(
+                    doctype,
+                    {"docstatus": 0, "restaurant_table": restaurant_table},
+                    "name",
+                    order_by="modified desc",
+                )
+                if existing_draft:
+                    data["name"] = existing_draft
+
         # Create or update invoice
         if data.get("name"):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
@@ -1334,6 +1347,8 @@ def submit_invoice(invoice=None, data=None):
 
     try:
         invoice_name = invoice.get("name")
+        restaurant_table = invoice.get("restaurant_table")
+        frappe.logger().info(f"submit_invoice: name={invoice_name}, table={restaurant_table}, exists={frappe.db.exists(doctype, invoice_name) if invoice_name else False}")
 
         # For restaurant tables: find existing draft if currentDraftId was lost
         if (not invoice_name or not frappe.db.exists(doctype, invoice_name)):
