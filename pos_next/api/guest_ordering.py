@@ -871,16 +871,23 @@ def confirm_guest_payment(token, amount, tip=0):
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
 
-		# Prevent duplicate confirmation: check if a payment was already recorded
-		# in the last 30 seconds for this invoice (catches double-fire from frontend)
-		recent_payment = frappe.db.sql("""
-			SELECT SUM(amount) as total
-			FROM `tabSales Invoice Payment`
-			WHERE parent=%s AND mode_of_payment=%s
-		""", (invoice_doc.name, wallee_mop), as_dict=True)
-		already_paid_wallee = flt(recent_payment[0].total) if recent_payment else 0
-		if already_paid_wallee >= flt(amount):
-			return {"status": "already_confirmed", "paid_amount": flt(invoice_doc.paid_amount), "grand_total": flt(invoice_doc.grand_total)}
+		# Prevent duplicate confirmation: check if a Restaurant Tip or payment
+		# with the same exact amount was recorded in the last 60 seconds
+		# (catches double-fire from frontend redirect)
+		recent_dup = frappe.db.sql("""
+			SELECT name FROM `tabRestaurant Tip`
+			WHERE sales_invoice=%s AND amount=%s
+			AND TIMESTAMPDIFF(SECOND, creation, NOW()) < 60
+		""", (invoice_doc.name, flt(amount)))
+		if not recent_dup:
+			# Also check payment rows for the exact order_payment amount
+			recent_dup = frappe.db.sql("""
+				SELECT name FROM `tabSales Invoice Payment`
+				WHERE parent=%s AND mode_of_payment=%s AND ABS(amount - %s) < 0.01
+			""", (invoice_doc.name, wallee_mop, flt(amount)))
+		if recent_dup:
+			current_paid = flt(invoice_doc.paid_amount)
+			return {"status": "already_confirmed", "paid_amount": current_paid, "grand_total": flt(invoice_doc.grand_total)}
 
 		# Fallback: also check if payment would exceed total
 		current_paid = flt(invoice_doc.paid_amount)
