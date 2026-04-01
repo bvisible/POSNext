@@ -743,6 +743,12 @@ def update_invoice(data):
 
             invoice_doc.update(data)
 
+            # DEBUG: log discounts after update
+            for _di in invoice_doc.items:
+                if _di.discount_percentage:
+                    frappe.log_error("DISCOUNT AFTER update(data)",
+                        f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate}")
+
             # Re-add preserved guest payments
             for gp in guest_payments:
                 invoice_doc.append("payments", gp)
@@ -925,8 +931,20 @@ def update_invoice(data):
 
         invoice_doc.disable_rounded_total = disable_rounded
 
+        # DEBUG: log discounts before set_missing_values
+        for _di in invoice_doc.items:
+            if _di.discount_percentage:
+                frappe.log_error("DISCOUNT BEFORE set_missing_values",
+                    f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate}")
+
         # Populate missing fields (company, currency, accounts, etc.)
         invoice_doc.set_missing_values()
+
+        # DEBUG: log discounts after set_missing_values
+        for _di in invoice_doc.items:
+            if _di.item_code == 'article-test':
+                frappe.log_error("DISCOUNT AFTER set_missing_values",
+                    f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate}")
 
         # Re-enforce ignore_pricing_rule after set_missing_values().
         # ERPNext's set_pos_fields() (called inside set_missing_values when
