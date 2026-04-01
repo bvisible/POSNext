@@ -1519,9 +1519,11 @@ def submit_invoice(invoice=None, data=None):
 
         # Handle tip amount — add TIP line item if tip > 0
         # Include any previously saved guest tips that were lost during update()
-        tip_amount = flt(data.get("tip_amount") or 0) + saved_tip_amount
-        if tip_amount > 0:
-            _add_tip_to_invoice(invoice_doc, tip_amount, data)
+        pos_tip = flt(data.get("tip_amount") or 0)
+        total_tip = pos_tip + saved_tip_amount
+        if total_tip > 0:
+            # Total tip for invoice item, POS-only tip for Restaurant Tip record
+            _add_tip_to_invoice(invoice_doc, total_tip, data, record_amount=pos_tip)
 
         # Validate stock availability before submission
         # _validate_stock_on_invoice checks _should_block internally
@@ -1705,8 +1707,14 @@ def _extract_tip_items(invoice_doc):
     return tip_items
 
 
-def _add_tip_to_invoice(invoice_doc, tip_amount, data):
-    """Add a TIP line item to the invoice and create a Restaurant Tip tracking record."""
+def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
+    """Add a TIP line item to the invoice and create a Restaurant Tip tracking record.
+
+    Args:
+        tip_amount: Total tip for the invoice item (may include prior guest tips)
+        record_amount: Amount for the Restaurant Tip record (POS tip only, excludes prior guest tips).
+                       If None, uses tip_amount. Pass 0 to skip creating a record.
+    """
     try:
         settings = frappe.get_single("Restaurant Settings")
     except Exception:
@@ -1736,28 +1744,28 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data):
     # Recalculate totals
     invoice_doc.run_method("calculate_taxes_and_totals")
 
-    # Create Restaurant Tip tracking record
-    try:
-        # Determine primary payment method
-        payment_method = "Cash"
-        if invoice_doc.payments:
-            # Find the payment method with the highest amount
-            max_payment = max(invoice_doc.payments, key=lambda p: flt(p.amount))
-            payment_method = max_payment.mode_of_payment or "Cash"
+    # Create Restaurant Tip tracking record (only for the new POS tip, not prior guest tips)
+    tip_for_record = flt(record_amount) if record_amount is not None else flt(tip_amount)
+    if tip_for_record > 0:
+        try:
+            payment_method = "Cash"
+            if invoice_doc.payments:
+                max_payment = max(invoice_doc.payments, key=lambda p: flt(p.amount))
+                payment_method = max_payment.mode_of_payment or "Cash"
 
-        tip_record = frappe.get_doc({
-            "doctype": "Restaurant Tip",
-            "tip_date": frappe.utils.today(),
-            "sales_invoice": invoice_doc.name,
-            "restaurant_table": data.get("restaurant_table") or getattr(invoice_doc, "restaurant_table", None),
-            "server": frappe.session.user,
-            "amount": tip_amount,
-            "payment_method": payment_method,
-            "status": "Collected",
-        })
-        tip_record.insert(ignore_permissions=True)
-    except Exception as e:
-        frappe.log_error("Tip tracking record creation failed", str(e))
+            tip_record = frappe.get_doc({
+                "doctype": "Restaurant Tip",
+                "tip_date": frappe.utils.today(),
+                "sales_invoice": invoice_doc.name,
+                "restaurant_table": data.get("restaurant_table") or getattr(invoice_doc, "restaurant_table", None),
+                "server": frappe.session.user,
+                "amount": tip_for_record,
+                "payment_method": payment_method,
+                "status": "Collected",
+            })
+            tip_record.insert(ignore_permissions=True)
+        except Exception as e:
+            frappe.log_error("Tip tracking record creation failed", str(e))
 
 
 # ==========================================
