@@ -49,10 +49,9 @@ def _get_or_create_invoice(token_doc):
 	if token_doc.invoice:
 		if frappe.db.exists("Sales Invoice", {"name": token_doc.invoice, "docstatus": 0}):
 			return frappe.get_doc("Sales Invoice", token_doc.invoice)
-		# Invoice was submitted or cancelled — clear the link
+		# Invoice was submitted or cancelled — clear the link via DB (avoids TimestampMismatchError)
+		frappe.db.set_value("Guest Order Token", token_doc.name, "invoice", None)
 		token_doc.invoice = None
-		token_doc.flags.ignore_version = True
-		token_doc.save(ignore_permissions=True)
 
 	if token_doc.mode == "restaurant" and token_doc.table:
 		# Look for an existing draft on the table
@@ -63,9 +62,9 @@ def _get_or_create_invoice(token_doc):
 			order_by="creation desc",
 		)
 		if existing:
+			# Link token to invoice via DB (avoids TimestampMismatchError)
+			frappe.db.set_value("Guest Order Token", token_doc.name, "invoice", existing)
 			token_doc.invoice = existing
-			token_doc.flags.ignore_version = True
-			token_doc.save(ignore_permissions=True)
 			return frappe.get_doc("Sales Invoice", existing)
 
 	return None
