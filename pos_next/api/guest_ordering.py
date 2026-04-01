@@ -51,7 +51,8 @@ def _get_or_create_invoice(token_doc):
 			return frappe.get_doc("Sales Invoice", token_doc.invoice)
 		# Invoice was submitted or cancelled — clear the link
 		token_doc.invoice = None
-		token_doc.save(ignore_permissions=True)
+		token_doc.flags.ignore_version = True
+	token_doc.save(ignore_permissions=True)
 
 	if token_doc.mode == "restaurant" and token_doc.table:
 		# Look for an existing draft on the table
@@ -63,7 +64,8 @@ def _get_or_create_invoice(token_doc):
 		)
 		if existing:
 			token_doc.invoice = existing
-			token_doc.save(ignore_permissions=True)
+			token_doc.flags.ignore_version = True
+	token_doc.save(ignore_permissions=True)
 			return frappe.get_doc("Sales Invoice", existing)
 
 	return None
@@ -446,8 +448,10 @@ def submit_guest_order(token, items):
 		invoice_doc.insert()
 		# Link invoice to token
 		token_doc.invoice = invoice_doc.name
-		token_doc.save(ignore_permissions=True)
+		token_doc.flags.ignore_version = True
+	token_doc.save(ignore_permissions=True)
 	else:
+		invoice_doc.flags.ignore_version = True
 		invoice_doc.save()
 
 	if token_doc.table:
@@ -970,6 +974,7 @@ def submit_takeaway_order(token, items, customer=None):
 	invoice_doc.insert()
 
 	token_doc.invoice = invoice_doc.name
+	token_doc.flags.ignore_version = True
 	token_doc.save(ignore_permissions=True)
 
 	# Notify POS of new takeaway web order
