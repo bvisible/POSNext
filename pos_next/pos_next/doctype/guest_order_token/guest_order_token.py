@@ -45,6 +45,8 @@ class GuestOrderToken(Document):
 		if self.invoice and not frappe.db.exists("Sales Invoice", self.invoice):
 			self.invoice = None
 		self.status = "Expired"
+		self.flags.ignore_validate = True
+		self.flags.ignore_version = True
 		self.save(ignore_permissions=True)
 
 	@staticmethod
