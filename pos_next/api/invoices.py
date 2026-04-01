@@ -1335,6 +1335,20 @@ def submit_invoice(invoice=None, data=None):
     try:
         invoice_name = invoice.get("name")
 
+        # For restaurant tables: find existing draft if currentDraftId was lost
+        if (not invoice_name or not frappe.db.exists(doctype, invoice_name)):
+            restaurant_table = invoice.get("restaurant_table")
+            if restaurant_table:
+                existing_draft = frappe.db.get_value(
+                    doctype,
+                    {"docstatus": 0, "restaurant_table": restaurant_table},
+                    "name",
+                    order_by="modified desc",
+                )
+                if existing_draft:
+                    invoice_name = existing_draft
+                    invoice["name"] = existing_draft
+
         # Get or create invoice
         if not invoice_name or not frappe.db.exists(doctype, invoice_name):
             created = update_invoice(json.dumps(invoice))
