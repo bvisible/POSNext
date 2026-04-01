@@ -707,8 +707,8 @@ def confirm_guest_payment(token, amount, tip=0):
 		if new_paid >= flt(invoice_doc.grand_total) and invoice_doc.grand_total > 0:
 			if token_doc.table:
 				frappe.db.set_value("Restaurant Table", token_doc.table, "status", "Paid")
-			# Do NOT publish table_update here — guest_payment_received below is enough
-			# Publishing both causes duplicate cart reloads on the POS
+			# Notify floor plan to refresh table statuses
+			frappe.publish_realtime("table_update")
 
 		# Create Restaurant Tip tracking record
 		if flt(tip) > 0:
