@@ -871,7 +871,14 @@ def confirm_guest_payment(token, amount, tip=0):
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
 
-		# Prevent duplicate confirmation
+		# Prevent duplicate confirmation using a per-invoice lock (30s cooldown)
+		lock_key = f"guest_payment_lock_{invoice_doc.name}"
+		if frappe.cache.get_value(lock_key):
+			current_paid = flt(invoice_doc.paid_amount)
+			return {"status": "already_confirmed", "paid_amount": current_paid, "grand_total": flt(invoice_doc.grand_total)}
+		frappe.cache.set_value(lock_key, True, expires_in_sec=30)
+
+		# Fallback: also check if payment would exceed total
 		current_paid = flt(invoice_doc.paid_amount)
 		grand_total = flt(invoice_doc.grand_total)
 		if grand_total > 0 and current_paid + order_payment > grand_total * 1.01:
