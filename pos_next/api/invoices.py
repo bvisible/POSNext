@@ -958,6 +958,12 @@ def update_invoice(data):
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
 
+        # DEBUG: log discounts after calculate_taxes_and_totals
+        for _di in invoice_doc.items:
+            if _di.item_code == 'article-test':
+                frappe.log_error("DISCOUNT AFTER calculate_taxes",
+                    f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate} price_list_rate={_di.price_list_rate}")
+
         if invoice_doc.grand_total is None:
             invoice_doc.grand_total = 0.0
         if invoice_doc.base_grand_total is None:
