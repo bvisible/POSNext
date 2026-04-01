@@ -89,4 +89,32 @@ class RestaurantSettings(Document):
 
 		item.insert(ignore_permissions=True)
 		self.tip_item = "TIP"
+
+		# Auto-assign 0% tax template (e.g. "Sans TVA") if one exists
+		self._assign_zero_tax_template(item)
+
 		frappe.msgprint(_("Created tip item: TIP"))
+
+	def _assign_zero_tax_template(self, item):
+		"""Assign a 0% tax template to the TIP item if available."""
+		# Find an Item Tax Template where all tax rates are 0
+		zero_tax_templates = frappe.db.sql("""
+			SELECT DISTINCT parent
+			FROM `tabItem Tax Template Detail`
+			WHERE tax_rate = 0
+			AND parent IN (
+				SELECT name FROM `tabItem Tax Template`
+				WHERE name NOT IN (
+					SELECT DISTINCT parent
+					FROM `tabItem Tax Template Detail`
+					WHERE tax_rate != 0
+				)
+			)
+		""", pluck=True)
+
+		if not zero_tax_templates:
+			return
+
+		template_name = zero_tax_templates[0]
+		item.append("taxes", {"item_tax_template": template_name})
+		item.save(ignore_permissions=True)
