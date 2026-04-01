@@ -701,8 +701,6 @@ def update_invoice(data):
         # For restaurant tables: find existing draft if name is missing
         if not data.get("name"):
             restaurant_table = data.get("restaurant_table")
-            frappe.log_error("update_invoice debug",
-                f"No name provided. restaurant_table={restaurant_table}")
             if restaurant_table:
                 existing_draft = frappe.db.get_value(
                     doctype,
@@ -712,19 +710,6 @@ def update_invoice(data):
                 )
                 if existing_draft:
                     data["name"] = existing_draft
-                    frappe.log_error("update_invoice debug",
-                        f"Found existing draft: {existing_draft}")
-        else:
-            frappe.log_error("update_invoice debug",
-                f"Name provided: {data.get('name')}, table={data.get('restaurant_table')}")
-
-        # Log received item discounts for debugging
-        for dbg_item in data.get("items", []):
-            if dbg_item.get("discount_percentage") or dbg_item.get("discount_amount"):
-                frappe.log_error("update_invoice item discount",
-                    f"{dbg_item.get('item_code')}: rate={dbg_item.get('rate')}, "
-                    f"discount_pct={dbg_item.get('discount_percentage')}, "
-                    f"discount_amt={dbg_item.get('discount_amount')}")
 
         # Create or update invoice
         if data.get("name"):
@@ -742,12 +727,6 @@ def update_invoice(data):
                     })
 
             invoice_doc.update(data)
-
-            # DEBUG: log discounts after update
-            for _di in invoice_doc.items:
-                if _di.discount_percentage:
-                    frappe.log_error("DISCOUNT AFTER update(data)",
-                        f"{_di.item_code}: disc%={_di.discount_percentage} disc_amt={_di.discount_amount} rate={_di.rate}")
 
             # Re-add preserved guest payments
             for gp in guest_payments:
@@ -931,16 +910,6 @@ def update_invoice(data):
 
         invoice_doc.disable_rounded_total = disable_rounded
 
-        # Save frontend discount values before ERPNext recalculations can erase them
-        saved_discounts = {}
-        for _di in invoice_doc.items:
-            if flt(_di.discount_percentage) > 0:
-                saved_discounts[_di.idx] = {
-                    "discount_percentage": _di.discount_percentage,
-                    "discount_amount": _di.discount_amount,
-                    "price_list_rate": _di.price_list_rate,
-                }
-
         # Populate missing fields (company, currency, accounts, etc.)
         invoice_doc.set_missing_values()
 
@@ -955,17 +924,6 @@ def update_invoice(data):
 
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
-
-        # Force-restore frontend discount values — calculate_taxes_and_totals resets them
-        if saved_discounts:
-            for _di in invoice_doc.items:
-                if _di.idx in saved_discounts:
-                    sd = saved_discounts[_di.idx]
-                    _di.discount_percentage = flt(sd["discount_percentage"])
-                    _di.discount_amount = flt(sd["discount_amount"])
-                    _di.price_list_rate = flt(sd["price_list_rate"])
-                    _di.rate = flt(sd["price_list_rate"]) * (1 - flt(sd["discount_percentage"]) / 100)
-                    _di.amount = flt(_di.rate) * flt(_di.qty)
 
         if invoice_doc.grand_total is None:
             invoice_doc.grand_total = 0.0
@@ -1406,7 +1364,7 @@ def submit_invoice(invoice=None, data=None):
     try:
         invoice_name = invoice.get("name")
         restaurant_table = invoice.get("restaurant_table")
-        frappe.logger().info(f"submit_invoice: name={invoice_name}, table={restaurant_table}, exists={frappe.db.exists(doctype, invoice_name) if invoice_name else False}")
+        # Find existing draft for restaurant table if name was lost
 
         # For restaurant tables: find existing draft if currentDraftId was lost
         if (not invoice_name or not frappe.db.exists(doctype, invoice_name)):
