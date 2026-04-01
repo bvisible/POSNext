@@ -1275,14 +1275,14 @@
 					<span>{{ __("Valider") }}</span>
 				</button>
 
-				<!-- Pay Button (blue) -->
+				<!-- Pay Button (blue) — disabled if fully paid by guest -->
 				<button
 					type="button"
 					@click="handleProceedToPayment"
-					:disabled="items.length === 0"
+					:disabled="items.length === 0 || (cartStore.guestPaidAmount > 0 && cartStore.guestPaidAmount >= displayGrandTotal)"
 					:class="[
 						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
-						items.length === 0
+						items.length === 0 || (cartStore.guestPaidAmount > 0 && cartStore.guestPaidAmount >= displayGrandTotal)
 							? 'bg-gray-300 cursor-not-allowed'
 							: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
 					]"
