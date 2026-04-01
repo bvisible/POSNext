@@ -804,8 +804,13 @@ def create_table_token(table, pos_profile):
 		pluck="name",
 	)
 	for t_name in existing_tokens:
-		t_doc = frappe.get_doc("Guest Order Token", t_name)
-		t_doc.expire()
+		try:
+			t_doc = frappe.get_doc("Guest Order Token", t_name)
+			t_doc.expire()
+		except Exception as e:
+			# Force expire via DB if ORM fails (e.g. validation errors on old tokens)
+			frappe.db.set_value("Guest Order Token", t_name, "status", "Expired")
+			frappe.log_error("Token expire fallback", f"Token {t_name}: {str(e)}")
 
 	# Compute expires_at from settings
 	settings = _get_restaurant_settings()
@@ -823,6 +828,7 @@ def create_table_token(table, pos_profile):
 		"expires_at": expires_at,
 	})
 	token_doc.flags.ignore_permissions = True
+	token_doc.flags.ignore_validate = True
 	token_doc.insert()
 
 	# Mark table as Occupied when QR is generated (guests are seated)
