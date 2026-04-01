@@ -57,6 +57,10 @@ class RestaurantSettings(Document):
 		# Check if TIP item already exists
 		if frappe.db.exists("Item", "TIP"):
 			self.tip_item = "TIP"
+			# Ensure 0% tax template is assigned even on existing item
+			item = frappe.get_doc("Item", "TIP")
+			if not item.taxes:
+				self._assign_zero_tax_template(item)
 			return
 
 		company = frappe.db.get_single_value("Global Defaults", "default_company")
