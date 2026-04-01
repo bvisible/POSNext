@@ -52,7 +52,7 @@ def _get_or_create_invoice(token_doc):
 		# Invoice was submitted or cancelled — clear the link
 		token_doc.invoice = None
 		token_doc.flags.ignore_version = True
-	token_doc.save(ignore_permissions=True)
+		token_doc.save(ignore_permissions=True)
 
 	if token_doc.mode == "restaurant" and token_doc.table:
 		# Look for an existing draft on the table
