@@ -147,11 +147,11 @@
 						<p class="text-xs font-medium text-gray-500 mb-1">{{ __("Address") }}</p>
 					</div>
 
-					<input
+					<AddressAutocomplete
 						v-model="customerData.address_line1"
-						type="text"
 						:placeholder="__('Street address')"
-						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+						input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+						@address-selected="onAddressSelected"
 					/>
 
 					<div class="grid grid-cols-2 gap-2">
@@ -234,6 +234,7 @@
  * - Permission checking before allowing creation
  */
 
+import AddressAutocomplete from "@/components/common/AddressAutocomplete.vue"
 import { usePOSPermissions } from "@/composables/usePermissions"
 import { useToast } from "@/composables/useToast"
 import { useCountriesStore } from "@/stores/countries"
@@ -345,6 +346,15 @@ const isFormValid = computed(() => {
 const showAddressFields = computed(
 	() => posSettingsStore.showAddressFieldsInCustomerForm,
 )
+
+function onAddressSelected(address) {
+	customerData.value.address_line1 = address.address_line1
+	customerData.value.city = address.city
+	customerData.value.pincode = address.pincode
+	if (address.country) {
+		customerData.value.country = address.country
+	}
+}
 
 const currentCountryCode = computed(() => {
 	const country = countriesStore.countries.find(

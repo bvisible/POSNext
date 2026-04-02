@@ -161,12 +161,12 @@
 
 			<!-- Address fields (conditional) -->
 			<template v-if="showAddress">
-				<input
+				<AddressAutocomplete
 					v-model="form.address_line1"
-					type="text"
 					:placeholder="__('Street address')"
-					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+					input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					:disabled="isSubmitting"
+					@address-selected="onAddressSelected"
 				/>
 				<div class="grid grid-cols-2 gap-2">
 					<input
@@ -221,6 +221,7 @@
 </template>
 
 <script setup>
+import AddressAutocomplete from "@/components/common/AddressAutocomplete.vue"
 import { FeatherIcon } from "frappe-ui"
 import {
 	reactive,
@@ -345,6 +346,13 @@ function updateMobileNumber() {
 	form.mobile_no = phoneNumber.value
 		? `${selectedCountryCode.value}-${phoneNumber.value}`
 		: ""
+}
+
+function onAddressSelected(address) {
+	form.address_line1 = address.address_line1
+	form.city = address.city
+	form.pincode = address.pincode
+	if (address.country) form.country = address.country
 }
 
 function handleClickOutside(event) {
