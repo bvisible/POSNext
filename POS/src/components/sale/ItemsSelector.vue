@@ -805,10 +805,11 @@ const {
 	isAnyDialogOpen,
 })
 
-// Local state
-const viewMode = ref("grid")
+// Local state — restore user's view preference from localStorage
+const savedViewMode = localStorage.getItem("pos_items_view_mode")
+const viewMode = ref(savedViewMode || "grid")
 const itemThreshold = ref(50) // Threshold for auto-switching to list view
-const userManuallySetView = ref(false) // Track if user manually changed view mode
+const userManuallySetView = ref(!!savedViewMode) // If saved, user had a preference
 const lastAutoSwitchCount = ref(0)
 const showSortDropdown = ref(false) // Sort dropdown visibility
 const skipPageReset = ref(false) // Skip page reset when navigating via pagination
@@ -1233,6 +1234,7 @@ watch(viewMode, async () => {
 function setViewMode(mode) {
 	viewMode.value = mode
 	userManuallySetView.value = true
+	localStorage.setItem("pos_items_view_mode", mode)
 }
 
 function handleAllFilterClick() {
