@@ -2,7 +2,7 @@
 # Copyright (C) 2026 BrainWise
 # This file is distributed under the same license as the POS Next project.
 # Automatically generated, 2026.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: POS Next VERSION\n"
@@ -15,8 +15,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.13.1\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.13.1\n"
 
 #: pos_next/api/bootstrap.py:36 pos_next/api/utilities.py:24
 msgid "Authentication required"
@@ -42,7 +42,8 @@ msgstr "Vous avez déjà une session ouverte : {0}"
 #: pos_next/api/shifts.py:163
 #, python-brace-format
 msgid "Error getting closing shift data: {0}"
-msgstr "Erreur lors de la récupération des données de clôture de session : {0}"
+msgstr ""
+"Erreur lors de la récupération des données de clôture de session : {0}"
 
 #: pos_next/api/shifts.py:181
 #, python-brace-format
@@ -161,7 +162,8 @@ msgstr "Erreur lors de la récupération de la disponibilité en entrepôt : {0}
 #: pos_next/api/items.py:1746
 #, python-brace-format
 msgid "Error fetching bundle availability for {0}: {1}"
-msgstr "Erreur lors de la récupération de la disponibilité du lot pour {0} : {1}"
+msgstr ""
+"Erreur lors de la récupération de la disponibilité du lot pour {0} : {1}"
 
 #: pos_next/api/offers.py:504
 msgid "Coupons are not enabled"
@@ -375,7 +377,8 @@ msgstr "Le pourcentage de remise doit être entre 0 et 100"
 
 #: pos_next/api/promotions.py:683
 msgid "Discount amount is required when discount type is Amount"
-msgstr "Le montant de la remise est requis lorsque le type de remise est Montant"
+msgstr ""
+"Le montant de la remise est requis lorsque le type de remise est Montant"
 
 #: pos_next/api/promotions.py:685
 msgid "Discount amount must be greater than 0"
@@ -496,7 +499,8 @@ msgstr "Le montant du paiement {0} dépasse le solde dû {1}"
 #: pos_next/api/partial_payments.py:421
 #, python-brace-format
 msgid "Payment date {0} cannot be before invoice date {1}"
-msgstr "La date de paiement {0} ne peut pas être antérieure à la date de facture {1}"
+msgstr ""
+"La date de paiement {0} ne peut pas être antérieure à la date de facture {1}"
 
 #: pos_next/api/partial_payments.py:428
 #, python-brace-format
@@ -568,7 +572,8 @@ msgstr "Entrée de paiement {0} annulée"
 
 #: pos_next/api/partial_payments.py:888
 #, python-brace-format
-msgid "Failed to create payment entry: {0}. All changes have been rolled back."
+msgid ""
+"Failed to create payment entry: {0}. All changes have been rolled back."
 msgstr ""
 "Échec de la création de l'écriture de paiement : {0}. Toutes les "
 "modifications ont été annulées."
@@ -793,7 +798,8 @@ msgstr "Un portefeuille existe déjà pour le client {0} dans la société {1}"
 #: pos_next/pos_next/doctype/wallet/wallet.py:200
 #, python-brace-format
 msgid "Please configure a default wallet account for company {0}"
-msgstr "Veuillez configurer un compte portefeuille par défaut pour la société {0}"
+msgstr ""
+"Veuillez configurer un compte portefeuille par défaut pour la société {0}"
 
 #: pos_next/pos_next/doctype/referral_code/referral_code.py:25
 msgid "Referrer Discount Type is required"
@@ -1122,14 +1128,8 @@ msgstr "Ajoutez {0} de plus pour débloquer"
 msgid "Additional Discount"
 msgstr "Remise supplémentaire"
 
-msgid ""
-"Adjust return quantities before submitting.\\n"
-"\\n"
-"{0}"
-msgstr ""
-"Ajustez les quantités de retour avant de soumettre.\\n"
-"\\n"
-"{0}"
+msgid "Adjust return quantities before submitting.\\n\\n{0}"
+msgstr "Ajustez les quantités de retour avant de soumettre.\\n\\n{0}"
 
 msgid "After returns"
 msgstr "Après retours"
@@ -1234,7 +1234,8 @@ msgstr "Appliquer sur"
 msgid "Apply coupon code"
 msgstr "Appliquer le code coupon"
 
-msgid "Are you sure you want to delete &lt;strong&gt;&quot;{0}&quot;&lt;strong&gt;?"
+msgid ""
+"Are you sure you want to delete &lt;strong&gt;&quot;{0}&quot;&lt;strong&gt;?"
 msgstr ""
 "Êtes-vous sûr de vouloir supprimer "
 "&lt;strong&gt;&quot;{0}&quot;&lt;strong&gt; ?"
@@ -1260,7 +1261,8 @@ msgstr ""
 "avec Entrée"
 
 msgid "Auto-Add: ON - Press Enter to add items to cart"
-msgstr "Ajout auto : ACTIVÉ - Appuyez sur Entrée pour ajouter des articles au panier"
+msgstr ""
+"Ajout auto : ACTIVÉ - Appuyez sur Entrée pour ajouter des articles au panier"
 
 msgid "Auto-Sync:"
 msgstr "Synchro auto :"
@@ -1795,7 +1797,8 @@ msgid "Enable invoice-level discount"
 msgstr "Activer la remise au niveau de la facture"
 
 msgid "Enable item-level discount in edit dialog"
-msgstr "Activer la remise au niveau de l'article dans la boîte de modification"
+msgstr ""
+"Activer la remise au niveau de l'article dans la boîte de modification"
 
 msgid "Enable partial payment for invoices"
 msgstr "Activer le paiement partiel pour les factures"
@@ -2098,8 +2101,8 @@ msgstr "Mettre la commande en attente comme brouillon"
 
 msgid "How often to check server for stock updates (minimum 10 seconds)"
 msgstr ""
-"Fréquence de vérification du serveur pour les mises à jour de stock "
-"(minimum 10 secondes)"
+"Fréquence de vérification du serveur pour les mises à jour de stock (minimum"
+" 10 secondes)"
 
 msgid "Hr"
 msgstr "h"
@@ -2480,7 +2483,8 @@ msgstr "Sans expiration"
 msgid "No invoices found"
 msgstr "Aucune facture trouvée"
 
-msgid "No invoices were created. Closing amounts should match opening amounts."
+msgid ""
+"No invoices were created. Closing amounts should match opening amounts."
 msgstr ""
 "Aucune facture n'a été créée. Les montants de clôture doivent correspondre "
 "aux montants d'ouverture."
@@ -2564,13 +2568,11 @@ msgid "Not Started"
 msgstr "Non commencé"
 
 msgid ""
-"Not enough stock available in the warehouse.\\n"
-"\\n"
-"Please reduce the quantity or check stock availability."
+"Not enough stock available in the warehouse.\\n\\nPlease reduce the quantity"
+" or check stock availability."
 msgstr ""
-"Pas assez de stock disponible dans l'entrepôt.\\n"
-"\\n"
-"Veuillez réduire la quantité ou vérifier la disponibilité du stock."
+"Pas assez de stock disponible dans l'entrepôt.\\n\\nVeuillez réduire la "
+"quantité ou vérifier la disponibilité du stock."
 
 msgid "OK"
 msgstr "OK"
@@ -3260,7 +3262,8 @@ msgid "Settings"
 msgstr "Paramètres"
 
 msgid "Settings saved and warehouse updated. Reloading stock..."
-msgstr "Paramètres enregistrés et entrepôt mis à jour. Rechargement du stock..."
+msgstr ""
+"Paramètres enregistrés et entrepôt mis à jour. Rechargement du stock..."
 
 msgid "Settings saved successfully"
 msgstr "Paramètres enregistrés avec succès"
@@ -3500,11 +3503,11 @@ msgid ""
 "This invoice was paid on account (credit sale). The return will reverse the "
 "accounts receivable balance. No cash refund will be processed."
 msgstr ""
-"Cette facture a été payée sur compte (vente à crédit). Le retour annulera "
-"le solde des comptes clients. Aucun remboursement en espèces ne sera "
-"effectué."
+"Cette facture a été payée sur compte (vente à crédit). Le retour annulera le"
+" solde des comptes clients. Aucun remboursement en espèces ne sera effectué."
 
-msgid "This invoice was partially paid. The refund will be split proportionally."
+msgid ""
+"This invoice was partially paid. The refund will be split proportionally."
 msgstr ""
 "Cette facture a été partiellement payée. Le remboursement sera réparti "
 "proportionnellement."
@@ -3533,15 +3536,15 @@ msgid ""
 "This will also delete all associated pricing rules. This action cannot be "
 "undone."
 msgstr ""
-"Cela supprimera également toutes les règles de tarification associées. "
-"Cette action ne peut pas être annulée."
+"Cela supprimera également toutes les règles de tarification associées. Cette"
+" action ne peut pas être annulée."
 
 msgid ""
 "This will clear all cached items, customers, and stock data. Invoices and "
 "drafts will be preserved."
 msgstr ""
-"Cela supprimera tous les articles, clients et données de stock en cache. "
-"Les factures et brouillons seront préservés."
+"Cela supprimera tous les articles, clients et données de stock en cache. Les"
+" factures et brouillons seront préservés."
 
 msgid "Time"
 msgstr "Heure"
@@ -3619,7 +3622,8 @@ msgid "UOM"
 msgstr "Unité"
 
 msgid "Unable to connect to server. Check your internet connection."
-msgstr "Impossible de se connecter au serveur. Vérifiez votre connexion internet."
+msgstr ""
+"Impossible de se connecter au serveur. Vérifiez votre connexion internet."
 
 msgid "Unit changed to {0}"
 msgstr "Unité changée en {0}"
@@ -3728,8 +3732,8 @@ msgstr "Entrepôt non défini"
 
 msgid "Warehouse updated but failed to reload stock. Please refresh manually."
 msgstr ""
-"Entrepôt mis à jour mais échec du rechargement du stock. Veuillez "
-"actualiser manuellement."
+"Entrepôt mis à jour mais échec du rechargement du stock. Veuillez actualiser"
+" manuellement."
 
 msgid "Welcome to POS Next"
 msgstr "Bienvenue sur POS Next"
@@ -3738,8 +3742,8 @@ msgid "Welcome to POS Next!"
 msgstr "Bienvenue sur POS Next !"
 
 msgid ""
-"When enabled, displayed prices include tax. When disabled, tax is "
-"calculated separately. Changes apply immediately to your cart when you save."
+"When enabled, displayed prices include tax. When disabled, tax is calculated"
+" separately. Changes apply immediately to your cart when you save."
 msgstr ""
 "Lorsqu'activé, les prix affichés incluent les taxes. Lorsque désactivé, les "
 "taxes sont calculées séparément. Les modifications s'appliquent "
@@ -3965,6 +3969,3086 @@ msgstr "✓ Session fermée avec succès"
 msgid "✗ Connection failed: {0}"
 msgstr "✗ Échec de la connexion : {0}"
 
+msgid "3-Day Avg"
+msgstr "Moy. 3 jours"
+
+msgid "= Global"
+msgstr "= Global"
+
+msgid "FREE"
+msgstr "GRATUIT"
+
+msgid "POS"
+msgstr "POS"
+
+msgid "TVA"
+msgstr "TVA"
+
+msgid "Net"
+msgstr "Net"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Or specific items"
+msgstr "Ou des articles spécifiques"
+
+msgid "Sort"
+msgstr "Trier"
+
+msgid "List"
+msgstr "Liste"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Done"
+msgstr "Terminé"
+
+msgid "Free"
+msgstr "Gratuit"
+
+msgid "Full"
+msgstr "Complet"
+
+msgid "Body"
+msgstr "Corps"
+
+msgid "Draw"
+msgstr "Dessiner"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Tips"
+msgstr "Pourboires"
+
+msgid "Send"
+msgstr "Envoyer"
+
+msgid "Sent"
+msgstr "Envoyé"
+
+msgid "Tip"
+msgstr "Pourboire"
+
+msgid "Unit"
+msgstr "Unité"
+
+msgid "User"
+msgstr "Utilisateur"
+
+msgid "Door"
+msgstr "Porte"
+
+msgid "Wall"
+msgstr "Mur"
+
+msgid "Hour"
+msgstr "Heure"
+
+msgid "Hours"
+msgstr "Heures"
+
+msgid "Days"
+msgstr "Jours"
+
+msgid "Day"
+msgstr "Jour"
+
+msgid "Minute"
+msgstr "Minute"
+
+msgid "Minutes"
+msgstr "Minutes"
+
+msgid "Second"
+msgstr "Seconde"
+
+msgid "Seconds"
+msgstr "Secondes"
+
+msgid "In"
+msgstr "Entrée"
+
+msgid "Out"
+msgstr "Sortie"
+
+msgid "Stock"
+msgstr "Stock"
+
+msgid "Label"
+msgstr "Libellé"
+
+msgid "Max"
+msgstr "Max"
+
+msgid "Color"
+msgstr "Couleur"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "Start"
+msgstr "Début"
+
+msgid "End"
+msgstr "Fin"
+
+msgid "Table"
+msgstr "Table"
+
+msgid "Tables"
+msgstr "Tables"
+
+msgid "Menus"
+msgstr "Menus"
+
+msgid "Cards"
+msgstr "Cartes"
+
+msgid "Sales"
+msgstr "Ventes"
+
+msgid "Shift"
+msgstr "Service"
+
+msgid "Shifts"
+msgstr "Services"
+
+msgid "Runner"
+msgstr "Runner"
+
+msgid "Display"
+msgstr "Affichage"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Submit"
+msgstr "Soumettre"
+
+msgid "Upload"
+msgstr "Télécharger"
+
+msgid "Rating"
+msgstr "Note"
+
+msgid "Shape"
+msgstr "Forme"
+
+msgid "Round"
+msgstr "Rond"
+
+msgid "Square"
+msgstr "Carré"
+
+msgid "Other"
+msgstr "Autre"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Value"
+msgstr "Valeur"
+
+msgid "Balance"
+msgstr "Solde"
+
+msgid "Channel"
+msgstr "Canal"
+
+msgid "Payment"
+msgstr "Paiement"
+
+msgid "Offline"
+msgstr "Hors ligne"
+
+msgid "Options"
+msgstr "Options"
+
+msgid "General"
+msgstr "Général"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Closing"
+msgstr "Clôture"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Country"
+msgstr "Pays"
+
+msgid "Connect"
+msgstr "Connecter"
+
+msgid "Continue"
+msgstr "Continuer"
+
+msgid "Discount %"
+msgstr "Remise %"
+
+msgid "Disc %"
+msgstr "Rem. %"
+
+msgid "Duplicate"
+msgstr "Dupliquer"
+
+msgid "Priority"
+msgstr "Priorité"
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Template"
+msgstr "Modèle"
+
+msgid "Terminal"
+msgstr "Terminal"
+
+msgid "Workflow"
+msgstr "Workflow"
+
+msgid "Workflows"
+msgstr "Workflows"
+
+msgid "Customers"
+msgstr "Clients"
+
+msgid "Invoices"
+msgstr "Factures"
+
+msgid "Columns"
+msgstr "Colonnes"
+
+msgid "Modifiers"
+msgstr "Modificateurs"
+
+msgid "Payer"
+msgstr "Payeur"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "Subject"
+msgstr "Sujet"
+
+msgid "Printer"
+msgstr "Imprimante"
+
+msgid "Opacity"
+msgstr "Opacité"
+
+msgid "Fonts"
+msgstr "Polices"
+
+msgid "Background"
+msgstr "Arrière-plan"
+
+msgid "Direction"
+msgstr "Direction"
+
+msgid "Permanent"
+msgstr "Permanent"
+
+msgid "Restaurant"
+msgstr "Restaurant"
+
+msgid "Reservations"
+msgstr "Réservations"
+
+msgid "Takeaway"
+msgstr "À emporter"
+
+msgid "External"
+msgstr "Externe"
+
+msgid "Optional"
+msgstr "Facultatif"
+
+msgid "Mandatory"
+msgstr "Obligatoire"
+
+msgid "Unlock"
+msgstr "Déverrouiller"
+
+msgid "Locked"
+msgstr "Verrouillé"
+
+msgid "Welcome"
+msgstr "Bienvenue"
+
+msgid "Success"
+msgstr "Succès"
+
+msgid "Retry"
+msgstr "Réessayer"
+
+msgid "Withdraw"
+msgstr "Retirer"
+
+msgid "Disconnect"
+msgstr "Déconnecter"
+
+msgid "Disconnected"
+msgstr "Déconnecté"
+
+msgid "Connected"
+msgstr "Connecté"
+
+msgid "Timed"
+msgstr "Programmé"
+
+msgid "Polling"
+msgstr "Interrogation"
+
+msgid "Confirmed"
+msgstr "Confirmé"
+
+msgid "Completed"
+msgstr "Terminé"
+
+msgid "Preparing"
+msgstr "En préparation"
+
+msgid "Delivered"
+msgstr "Livré"
+
+msgid "Ordered"
+msgstr "Commandé"
+
+msgid "Waiting"
+msgstr "En attente"
+
+msgid "Seated"
+msgstr "Installé"
+
+msgid "Cleaning"
+msgstr "Nettoyage"
+
+msgid "Taken"
+msgstr "Occupé"
+
+msgid "Unavailable"
+msgstr "Indisponible"
+
+msgid "Descriptions"
+msgstr "Descriptions"
+
+msgid "Transactions"
+msgstr "Transactions"
+
+msgid "Efficiency"
+msgstr "Efficacité"
+
+msgid "Discounts"
+msgstr "Remises"
+
+msgid "From"
+msgstr "De"
+
+msgid "To"
+msgstr "À"
+
+msgid "account_type"
+msgstr "account_type"
+
+msgid "actual_qty"
+msgstr "actual_qty"
+
+msgid "available_qty"
+msgstr "available_qty"
+
+msgid "batch_no"
+msgstr "batch_no"
+
+msgid "brand"
+msgstr "brand"
+
+msgid "bundle_code"
+msgstr "bundle_code"
+
+msgid "component_code"
+msgstr "component_code"
+
+msgid "invoice_name"
+msgstr "invoice_name"
+
+msgid "item"
+msgstr "article"
+
+msgid "item_code"
+msgstr "item_code"
+
+msgid "item_group"
+msgstr "item_group"
+
+msgid "key_field"
+msgstr "key_field"
+
+msgid "min_price"
+msgstr "min_price"
+
+msgid "qty"
+msgstr "qté"
+
+msgid "required_qty"
+msgstr "required_qty"
+
+msgid "reserved_qty"
+msgstr "reserved_qty"
+
+msgid "return_credit"
+msgstr "return_credit"
+
+msgid "returned_qty"
+msgstr "returned_qty"
+
+msgid "serial_no"
+msgstr "serial_no"
+
+msgid "total"
+msgstr "total"
+
+msgid "total_original_qty"
+msgstr "total_original_qty"
+
+msgid "total_outstanding"
+msgstr "total_outstanding"
+
+msgid "total_qty"
+msgstr "total_qty"
+
+msgid "total_returned_qty"
+msgstr "total_returned_qty"
+
+msgid "type"
+msgstr "type"
+
+msgid "articles"
+msgstr "articles"
+
+msgid "at"
+msgstr "à"
+
+msgid "comm."
+msgstr "comm."
+
+msgid "courses"
+msgstr "formules"
+
+msgid "courses selected"
+msgstr "formules sélectionnées"
+
+msgid "days"
+msgstr "jours"
+
+msgid "default"
+msgstr "par défaut"
+
+msgid "guests"
+msgstr "convives"
+
+msgid "items"
+msgstr "articles"
+
+msgid "items cached"
+msgstr "articles en cache"
+
+msgid "max"
+msgstr "max"
+
+msgid "or"
+msgstr "ou"
+
+msgid "person"
+msgstr "personne"
+
+msgid "pts"
+msgstr "pts"
+
+msgid "tips"
+msgstr "pourboires"
+
+msgid "today"
+msgstr "aujourd'hui"
+
+msgid "your@email.com"
+msgstr "votre@email.com"
+
+msgid "A customer account is required for takeaway orders."
+msgstr "Un compte client est requis pour les commandes à emporter."
+
+msgid "A gift card has been created"
+msgstr "Une carte cadeau a été créée"
+
+msgid "A payment is already in progress"
+msgstr "Un paiement est déjà en cours"
+
+msgid "API key is required"
+msgstr "La clé API est requise"
+
+msgid "API secret not configured for this user"
+msgstr "Le secret API n'est pas configuré pour cet utilisateur"
+
+msgid "Account (optional)"
+msgstr "Compte (facultatif)"
+
+msgid "Account (required)"
+msgstr "Compte (obligatoire)"
+
+msgid "Active Orders"
+msgstr "Commandes actives"
+
+msgid "Active on this card"
+msgstr "Actif sur cette carte"
+
+msgid "Add Area"
+msgstr "Ajouter une zone"
+
+msgid "Add Category"
+msgstr "Ajouter une catégorie"
+
+msgid "Add Item"
+msgstr "Ajouter un article"
+
+msgid "Add Menu"
+msgstr "Ajouter un menu"
+
+msgid "Add Note / Modifier"
+msgstr "Ajouter une note / modificateur"
+
+msgid "Add Option"
+msgstr "Ajouter une option"
+
+msgid "Add Station"
+msgstr "Ajouter un poste"
+
+msgid "Add Step"
+msgstr "Ajouter une étape"
+
+msgid "Add Table"
+msgstr "Ajouter une table"
+
+msgid "Add another..."
+msgstr "Ajouter un autre..."
+
+msgid "Add items from the menu"
+msgstr "Ajouter des articles depuis le menu"
+
+msgid "Add slot"
+msgstr "Ajouter un créneau"
+
+msgid "Add to Customer Credit Balance"
+msgstr "Ajouter au solde crédit client"
+
+msgid "Add to cart"
+msgstr "Ajouter au panier"
+
+msgid "Added to Customer Credit"
+msgstr "Ajouté au crédit client"
+
+msgid "Addition Order"
+msgstr "Commande supplémentaire"
+
+msgid "All"
+msgstr "Tout"
+
+msgid "All Areas"
+msgstr "Toutes les zones"
+
+msgid "All Brands"
+msgstr "Toutes les marques"
+
+msgid "All Statuses"
+msgstr "Tous les statuts"
+
+msgid "All cards"
+msgstr "Toutes les cartes"
+
+msgid "All items are either being prepared or have been delivered."
+msgstr "Tous les articles sont en préparation ou ont été livrés."
+
+msgid ""
+"All items in these groups will be routed to this station (unless "
+"individually assigned to another)."
+msgstr ""
+"Tous les articles de ces groupes seront dirigés vers ce poste (sauf ceux "
+"assignés individuellement à un autre)."
+
+msgid "All sales persons selected"
+msgstr "Tous les vendeurs sélectionnés"
+
+msgid "All servers"
+msgstr "Tous les serveurs"
+
+msgid "All tables"
+msgstr "Toutes les tables"
+
+msgid "Allergens & Badges"
+msgstr "Allergènes & badges"
+
+msgid "Allergies, birthday, high chair..."
+msgstr "Allergies, anniversaire, chaise haute..."
+
+msgid "Allow User To Edit Rate"
+msgstr "Autoriser la modification du prix"
+
+msgid "Allow customers to order online for pickup via /pos/order"
+msgstr ""
+"Permettre aux clients de commander en ligne pour retrait via /pos/order"
+
+msgid ""
+"Allow customers to scan a QR code on the table to order and pay from their "
+"phone"
+msgstr ""
+"Permettre aux clients de scanner un QR code sur la table pour commander et "
+"payer depuis leur téléphone"
+
+msgid "Allow editing item rate in cart. Disabled when offers are applied."
+msgstr ""
+"Autoriser la modification du prix dans le panier. Désactivé lorsque des "
+"offres sont appliquées."
+
+msgid "Already paid"
+msgstr "Déjà payé"
+
+msgid "Already paid (guest)"
+msgstr "Déjà payé (invité)"
+
+msgid "Always available"
+msgstr "Toujours disponible"
+
+msgid "Always use this workflow for"
+msgstr "Toujours utiliser ce workflow pour"
+
+msgid "Always visible in POS, regardless of time slots"
+msgstr "Toujours visible dans le POS, indépendamment des créneaux horaires"
+
+msgid "Amount to Credit:"
+msgstr "Montant à créditer :"
+
+msgid "Amount to pay"
+msgstr "Montant à payer"
+
+msgid "Amount to take out"
+msgstr "Montant à retirer"
+
+msgid "An error occurred. Please try again."
+msgstr "Une erreur est survenue. Veuillez réessayer."
+
+msgid "An item with code '{0}' already exists"
+msgstr "Un article avec le code « {0} » existe déjà"
+
+msgid "Anonymous"
+msgstr "Anonyme"
+
+msgid "Applies to"
+msgstr "S'applique à"
+
+msgid "Applies to item groups"
+msgstr "S'applique aux groupes d'articles"
+
+msgid "Are you sure you want to delete this area?"
+msgstr "Êtes-vous sûr de vouloir supprimer cette zone ?"
+
+msgid "Are you sure you want to delete this table?"
+msgstr "Êtes-vous sûr de vouloir supprimer cette table ?"
+
+msgid "Area Name"
+msgstr "Nom de la zone"
+
+msgid "Area created"
+msgstr "Zone créée"
+
+msgid "Area deleted"
+msgstr "Zone supprimée"
+
+msgid "Area not found"
+msgstr "Zone introuvable"
+
+msgid "Area renamed"
+msgstr "Zone renommée"
+
+msgid "At least one step is required in a workflow."
+msgstr "Au moins une étape est requise dans un workflow."
+
+msgid "Auto-detect tip from overpayment"
+msgstr "Détection automatique du pourboire sur trop-perçu"
+
+msgid "Auto-generated from name"
+msgstr "Généré automatiquement à partir du nom"
+
+msgid ""
+"Automatically detect tips when customers pay more than the invoice total"
+msgstr ""
+"Détecter automatiquement les pourboires lorsque les clients paient plus que "
+"le montant de la facture"
+
+msgid "Avg Efficiency"
+msgstr "Efficacité moy."
+
+msgid "Avg Efficiency %"
+msgstr "Efficacité moy. %"
+
+msgid "Avg Invoice Value"
+msgstr "Valeur moy. facture"
+
+msgid "Avg Rate"
+msgstr "Taux moyen"
+
+msgid "Avg Sales/Shift"
+msgstr "Ventes moy./service"
+
+msgid "Avg Ticket"
+msgstr "Ticket moyen"
+
+msgid "Back to Neoffice"
+msgstr "Retour à Neoffice"
+
+msgid "Back to POS"
+msgstr "Retour au POS"
+
+msgid "Background image uploaded"
+msgstr "Image de fond téléchargée"
+
+msgid "Badges & Allergens"
+msgstr "Badges & allergènes"
+
+msgid "Badges saved"
+msgstr "Badges enregistrés"
+
+msgid "Barcode scanning works for cached items"
+msgstr "La lecture de code-barres fonctionne pour les articles en cache"
+
+msgid "Book Now"
+msgstr "Réserver maintenant"
+
+msgid "Book a Table"
+msgstr "Réserver une table"
+
+msgid "Buying Rate"
+msgstr "Prix d'achat"
+
+msgid "By Channel"
+msgstr "Par canal"
+
+msgid "By Station"
+msgstr "Par poste"
+
+msgid "By Status"
+msgstr "Par statut"
+
+msgid "By Table"
+msgstr "Par table"
+
+msgid "Cancelled Wallet Transaction {0} due to return"
+msgstr "Transaction portefeuille {0} annulée suite au retour"
+
+msgid "Cancelling payment..."
+msgstr "Annulation du paiement..."
+
+msgid "Cannot add more non-cash payments. Use cash for overpayment."
+msgstr ""
+"Impossible d'ajouter d'autres paiements non-espèces. Utilisez les espèces "
+"pour le surplus."
+
+msgid "Cannot change status from {0} to {1}"
+msgstr "Impossible de changer le statut de {0} à {1}"
+
+msgid "Cannot clear cache while offline"
+msgstr "Impossible de vider le cache hors ligne"
+
+msgid "Cannot create a reservation in the past"
+msgstr "Impossible de créer une réservation dans le passé"
+
+msgid "Cannot delete an occupied table. Clear the order first."
+msgstr "Impossible de supprimer une table occupée. Videz d'abord la commande."
+
+msgid "Cannot delete area with {0} tables assigned"
+msgstr "Impossible de supprimer une zone avec {0} tables assignées"
+
+msgid "Cannot process return for this invoice"
+msgstr "Impossible de traiter le retour pour cette facture"
+
+msgid "Capacity"
+msgstr "Capacité"
+
+msgid "Card Balance"
+msgstr "Solde de la carte"
+
+msgid "Card Price"
+msgstr "Prix carte"
+
+msgid "Card active"
+msgstr "Carte activée"
+
+msgid "Card created"
+msgstr "Carte créée"
+
+msgid "Card deleted"
+msgstr "Carte supprimée"
+
+msgid "Card duplicated"
+msgstr "Carte dupliquée"
+
+msgid "Card inactive"
+msgstr "Carte désactivée"
+
+msgid "Card name"
+msgstr "Nom de la carte"
+
+msgid "Card renamed"
+msgstr "Carte renommée"
+
+msgid "Card saved"
+msgstr "Carte enregistrée"
+
+msgid "Cash Counted"
+msgstr "Espèces comptées"
+
+msgid "Cash In"
+msgstr "Entrée de caisse"
+
+msgid "Cash In/Out"
+msgstr "Entrées/Sorties de caisse"
+
+msgid "Cash Management"
+msgstr "Gestion des espèces"
+
+msgid "Cash Out"
+msgstr "Sortie de caisse"
+
+msgid "Cash Refund"
+msgstr "Remboursement en espèces"
+
+msgid "Cash Withdrawal"
+msgstr "Retrait d'espèces"
+
+msgid "Cash Withdrawn"
+msgstr "Espèces retirées"
+
+msgid "Cashier Name"
+msgstr "Nom du caissier"
+
+msgid "Category Name"
+msgstr "Nom de la catégorie"
+
+msgid "Certificate already exists. You can download it below."
+msgstr "Le certificat existe déjà. Vous pouvez le télécharger ci-dessous."
+
+msgid "Certificate generated successfully."
+msgstr "Certificat généré avec succès."
+
+msgid ""
+"Certificate is installed and signing is active. Print jobs will be sent "
+"silently without confirmation dialogs."
+msgstr ""
+"Le certificat est installé et la signature est active. Les impressions "
+"seront envoyées silencieusement sans boîte de dialogue."
+
+msgid ""
+"Certificate is not installed on this machine. Generate a certificate, "
+"download it, and import it into QZ Tray."
+msgstr ""
+"Le certificat n'est pas installé sur cette machine. Générez un certificat, "
+"téléchargez-le et importez-le dans QZ Tray."
+
+msgid "Certificate not found. Generate it first."
+msgstr "Certificat introuvable. Générez-le d'abord."
+
+msgid "Change API Key"
+msgstr "Changer la clé API"
+
+msgid "Change sales person"
+msgstr "Changer de vendeur"
+
+msgid "Changes the price list in ERPNext"
+msgstr "Modifie la liste de prix dans ERPNext"
+
+msgid "Chart View"
+msgstr "Vue graphique"
+
+msgid "Check your spam folder if you don't see the email."
+msgstr "Vérifiez votre dossier spam si vous ne voyez pas l'e-mail."
+
+msgid "Check-in"
+msgstr "Enregistrement"
+
+msgid "Checking..."
+msgstr "Vérification..."
+
+msgid "Choose a POS profile..."
+msgstr "Choisir un profil POS..."
+
+msgid "Choose a table to begin the order"
+msgstr "Choisissez une table pour commencer la commande"
+
+msgid "City"
+msgstr "Ville"
+
+msgid "Clear & Switch"
+msgstr "Vider et changer"
+
+msgid "Clear all cached data"
+msgstr "Effacer toutes les données en cache"
+
+msgid "Clear color"
+msgstr "Effacer la couleur"
+
+msgid "Click here to confirm"
+msgstr "Cliquez ici pour confirmer"
+
+msgid "Click to disable restaurant mode"
+msgstr "Cliquez pour désactiver le mode restaurant"
+
+msgid "Click to enable restaurant mode"
+msgstr "Cliquez pour activer le mode restaurant"
+
+msgid "Closing Withdrawal Template"
+msgstr "Modèle de retrait à la clôture"
+
+msgid "Coming Next"
+msgstr "À suivre"
+
+msgid "Company name"
+msgstr "Nom de l'entreprise"
+
+msgid "Configure opening hours and card availability"
+msgstr "Configurer les horaires d'ouverture et la disponibilité des cartes"
+
+msgid "Configure schedule in Settings"
+msgstr "Configurer les horaires dans les Paramètres"
+
+msgid "Confirm Partial Payment"
+msgstr "Confirmer le paiement partiel"
+
+msgid "Confirm your reservation - {0}"
+msgstr "Confirmez votre réservation - {0}"
+
+msgid "Connecting to QZ Tray..."
+msgstr "Connexion à QZ Tray..."
+
+msgid "Connecting..."
+msgstr "Connexion..."
+
+msgid "Convert to tip"
+msgstr "Convertir en pourboire"
+
+msgid "Copy to clipboard"
+msgstr "Copier dans le presse-papiers"
+
+msgid "Could not determine cash account for {0}"
+msgstr "Impossible de déterminer le compte d'espèces pour {0}"
+
+msgid ""
+"Could not find parent account 2210 or 220. Please set the tip account "
+"manually."
+msgstr ""
+"Impossible de trouver le compte parent 2210 ou 220. Veuillez définir le "
+"compte de pourboire manuellement."
+
+msgid "Could not verify password. Please try again."
+msgstr "Impossible de vérifier le mot de passe. Veuillez réessayer."
+
+msgid "Coupon {0} has no linked Pricing Rule"
+msgstr "Le coupon {0} n'a pas de règle de prix associée"
+
+msgid "Cover page with logo"
+msgstr "Page de couverture avec logo"
+
+msgid "Create Account"
+msgstr "Créer un compte"
+
+msgid "Create Item"
+msgstr "Créer un article"
+
+msgid "Create New Item"
+msgstr "Créer un nouvel article"
+
+msgid "Create an account"
+msgstr "Créer un compte"
+
+msgid "Create an account for next time"
+msgstr "Créer un compte pour la prochaine fois"
+
+msgid "Create an account to earn loyalty points"
+msgstr "Créer un compte pour gagner des points de fidélité"
+
+msgid "Create new item"
+msgstr "Créer un nouvel article"
+
+msgid "Created tip item: TIP"
+msgstr "Article pourboire créé : TIP"
+
+msgid "Created tip transit account: {0}"
+msgstr "Compte de transit pourboire créé : {0}"
+
+msgid "Created wallet debit of {0} for partial return {1}"
+msgstr "Débit portefeuille de {0} créé pour le retour partiel {1}"
+
+msgid "Credit source invoice {0} not found or not submitted"
+msgstr "Facture source de crédit {0} introuvable ou non soumise"
+
+msgid "Credit source {0} does not belong to company {1}"
+msgstr "La source de crédit {0} n'appartient pas à l'entreprise {1}"
+
+msgid "Credit source {0} does not belong to customer {1}"
+msgstr "La source de crédit {0} n'appartient pas au client {1}"
+
+msgid "Credited {0} to customer wallet for return {1}"
+msgstr "{0} crédité au portefeuille client pour le retour {1}"
+
+msgid "Current Stock"
+msgstr "Stock actuel"
+
+msgid "Customer Display"
+msgstr "Affichage client"
+
+msgid "Customer created from display:"
+msgstr "Client créé depuis l'affichage :"
+
+msgid "Customer {0} not found."
+msgstr "Client {0} introuvable."
+
+msgid "Daily Sales"
+msgstr "Ventes quotidiennes"
+
+msgid "Days Since Purchase"
+msgstr "Jours depuis l'achat"
+
+msgid "Days to Stockout"
+msgstr "Jours avant rupture"
+
+msgid ""
+"Dear {0},\n"
+"\n"
+"Please find attached your invoice {1} for {2} {3}.\n"
+"\n"
+"Thank you for your business."
+msgstr ""
+"Cher/Chère {0},\n"
+"\n"
+"Veuillez trouver ci-joint votre facture {1} d'un montant de {2} {3}.\n"
+"\n"
+"Merci pour votre confiance."
+
+msgid "Default workflow updated"
+msgstr "Workflow par défaut mis à jour"
+
+msgid ""
+"Define when the restaurant is open. Each day can have multiple time slots "
+"(e.g. lunch and dinner)."
+msgstr ""
+"Définissez les horaires d'ouverture du restaurant. Chaque jour peut avoir "
+"plusieurs créneaux (ex. déjeuner et dîner)."
+
+msgid "Delete Area"
+msgstr "Supprimer la zone"
+
+msgid "Delete area"
+msgstr "Supprimer la zone"
+
+msgid "Delete this station"
+msgstr "Supprimer ce poste"
+
+msgid "Delete this table"
+msgstr "Supprimer cette table"
+
+msgid "Deliver"
+msgstr "Livrer"
+
+msgid "Depletion Rate/Day"
+msgstr "Taux d'épuisement/jour"
+
+msgid "Designer & PDF"
+msgstr "Designer & PDF"
+
+msgid "Direct to Kitchen"
+msgstr "Directement en cuisine"
+
+msgid "Disable Item"
+msgstr "Désactiver l'article"
+
+msgid "Disable restaurant mode"
+msgstr "Désactiver le mode restaurant"
+
+msgid "Disable this item on every card."
+msgstr "Désactiver cet article sur toutes les cartes."
+
+msgid "Disabled on this card"
+msgstr "Désactivé sur cette carte"
+
+msgid "Discount Applied"
+msgstr "Remise appliquée"
+
+msgid "Discounts Given"
+msgstr "Remises accordées"
+
+msgid "Display Color"
+msgstr "Couleur d'affichage"
+
+msgid "Do you want to select this customer for the current sale?"
+msgstr "Voulez-vous sélectionner ce client pour la vente en cours ?"
+
+msgid "Download Certificate"
+msgstr "Télécharger le certificat"
+
+msgid "Download receipt"
+msgstr "Télécharger le reçu"
+
+msgid ""
+"Download the certificate and import it into QZ Tray, then restart QZ Tray."
+msgstr ""
+"Téléchargez le certificat et importez-le dans QZ Tray, puis redémarrez QZ "
+"Tray."
+
+msgid "Edit Item"
+msgstr "Modifier l'article"
+
+msgid "Edit Reservation"
+msgstr "Modifier la réservation"
+
+msgid "Edit Station"
+msgstr "Modifier le poste"
+
+msgid "Edit Table"
+msgstr "Modifier la table"
+
+msgid "Edit schedule"
+msgstr "Modifier les horaires"
+
+msgid "Edit station"
+msgstr "Modifier le poste"
+
+msgid "Edit table"
+msgstr "Modifier la table"
+
+msgid "Efficiency %"
+msgstr "Efficacité %"
+
+msgid "Email Invoice"
+msgstr "Envoyer la facture par e-mail"
+
+msgid "Email message"
+msgstr "Message e-mail"
+
+msgid "Email sent successfully to {0}"
+msgstr "E-mail envoyé avec succès à {0}"
+
+msgid "Enable Item"
+msgstr "Activer l'article"
+
+msgid "Enable QR Self-Ordering"
+msgstr "Activer la commande QR"
+
+msgid "Enable Runner"
+msgstr "Activer le Runner"
+
+msgid "Enable Takeaway Web Ordering"
+msgstr "Activer la commande en ligne à emporter"
+
+msgid ""
+"Enable a runner display for delivering ready items from stations to tables"
+msgstr ""
+"Activer un affichage runner pour livrer les articles prêts des postes aux "
+"tables"
+
+msgid "Enable it in Restaurant Settings to use the Runner display."
+msgstr ""
+"Activez-le dans les Paramètres restaurant pour utiliser l'affichage Runner."
+
+msgid "Enable restaurant mode"
+msgstr "Activer le mode restaurant"
+
+msgid ""
+"Enable selling items even when stock reaches zero or below. Integrates with "
+"Back Office stock settings."
+msgstr ""
+"Permettre la vente d'articles même lorsque le stock atteint zéro ou moins. "
+"S'intègre avec les paramètres de stock du Back Office."
+
+msgid "Enable this item on every card."
+msgstr "Activer cet article sur toutes les cartes."
+
+msgid "Enable tip management"
+msgstr "Activer la gestion des pourboires"
+
+msgid "Enter amount"
+msgstr "Saisissez le montant"
+
+msgid "Enter any special requests..."
+msgstr "Saisissez vos demandes spéciales..."
+
+msgid "Enter the connection password"
+msgstr "Saisissez le mot de passe de connexion"
+
+msgid "Error Message"
+msgstr "Message d'erreur"
+
+msgid "Error fetching brands: {0}"
+msgstr "Erreur lors de la récupération des marques : {0}"
+
+msgid "Error fetching items count: {0}"
+msgstr "Erreur lors du comptage des articles : {0}"
+
+msgid "Error!"
+msgstr "Erreur !"
+
+msgid "Exact amount only"
+msgstr "Montant exact uniquement"
+
+msgid "Expiry Days"
+msgstr "Jours d'expiration"
+
+msgid "External Invoices"
+msgstr "Factures externes"
+
+msgid "External Payments"
+msgstr "Paiements externes"
+
+msgid "Failed to add station"
+msgstr "Échec de l'ajout du poste"
+
+msgid "Failed to add table"
+msgstr "Échec de l'ajout de la table"
+
+msgid "Failed to apply gift card"
+msgstr "Échec de l'application de la carte cadeau"
+
+msgid "Failed to cancel"
+msgstr "Échec de l'annulation"
+
+msgid "Failed to check invoice"
+msgstr "Échec de la vérification de la facture"
+
+msgid "Failed to check payment status"
+msgstr "Échec de la vérification du statut de paiement"
+
+msgid "Failed to confirm"
+msgstr "Échec de la confirmation"
+
+msgid "Failed to create area"
+msgstr "Échec de la création de la zone"
+
+msgid "Failed to create card"
+msgstr "Échec de la création de la carte"
+
+msgid "Failed to create cash entry"
+msgstr "Échec de la création de l'entrée de caisse"
+
+msgid "Failed to create item"
+msgstr "Échec de la création de l'article"
+
+msgid "Failed to create option group"
+msgstr "Échec de la création du groupe d'options"
+
+msgid "Failed to create permanent card"
+msgstr "Échec de la création de la carte permanente"
+
+msgid "Failed to create pricing rule"
+msgstr "Échec de la création de la règle de prix"
+
+msgid "Failed to create reservation"
+msgstr "Échec de la création de la réservation"
+
+msgid "Failed to create workflow"
+msgstr "Échec de la création du workflow"
+
+msgid "Failed to delete area"
+msgstr "Échec de la suppression de la zone"
+
+msgid "Failed to delete card"
+msgstr "Échec de la suppression de la carte"
+
+msgid "Failed to delete option group"
+msgstr "Échec de la suppression du groupe d'options"
+
+msgid "Failed to delete station"
+msgstr "Échec de la suppression du poste"
+
+msgid "Failed to delete table"
+msgstr "Échec de la suppression de la table"
+
+msgid "Failed to delete workflow"
+msgstr "Échec de la suppression du workflow"
+
+msgid "Failed to download certificate."
+msgstr "Échec du téléchargement du certificat."
+
+msgid "Failed to download image"
+msgstr "Échec du téléchargement de l'image"
+
+msgid "Failed to duplicate card"
+msgstr "Échec de la duplication de la carte"
+
+msgid "Failed to generate certificate. Are you a System Manager?"
+msgstr ""
+"Échec de la génération du certificat. Êtes-vous un administrateur système ?"
+
+msgid "Failed to initiate payment"
+msgstr "Échec de l'initiation du paiement"
+
+msgid "Failed to initiate payment. Please try again or contact staff."
+msgstr ""
+"Échec de l'initiation du paiement. Veuillez réessayer ou contacter le "
+"personnel."
+
+msgid "Failed to load card"
+msgstr "Échec du chargement de la carte"
+
+msgid "Failed to load cards"
+msgstr "Échec du chargement des cartes"
+
+msgid "Failed to load cash entries"
+msgstr "Échec du chargement des entrées de caisse"
+
+msgid "Failed to load external invoices"
+msgstr "Échec du chargement des factures externes"
+
+msgid "Failed to load item data"
+msgstr "Échec du chargement des données de l'article"
+
+msgid "Failed to load menu data"
+msgstr "Échec du chargement des données du menu"
+
+msgid "Failed to load more images"
+msgstr "Échec du chargement des images supplémentaires"
+
+msgid "Failed to load orders from server."
+msgstr "Échec du chargement des commandes depuis le serveur."
+
+msgid "Failed to load orders."
+msgstr "Échec du chargement des commandes."
+
+msgid "Failed to load product options"
+msgstr "Échec du chargement des options produit"
+
+msgid "Failed to load takeaway menu"
+msgstr "Échec du chargement du menu à emporter"
+
+msgid "Failed to load templates"
+msgstr "Échec du chargement des modèles"
+
+msgid "Failed to load terminals"
+msgstr "Échec du chargement des terminaux"
+
+msgid "Failed to load workflows"
+msgstr "Échec du chargement des workflows"
+
+msgid "Failed to mark items as delivered."
+msgstr "Échec du marquage des articles comme livrés."
+
+msgid "Failed to print provisional ticket"
+msgstr "Échec de l'impression du ticket provisoire"
+
+msgid "Failed to rename area"
+msgstr "Échec du renommage de la zone"
+
+msgid "Failed to rename card"
+msgstr "Échec du renommage de la carte"
+
+msgid "Failed to save badges"
+msgstr "Échec de l'enregistrement des badges"
+
+msgid "Failed to save card"
+msgstr "Échec de l'enregistrement de la carte"
+
+msgid "Failed to save floor plan"
+msgstr "Échec de l'enregistrement du plan de salle"
+
+msgid "Failed to save item"
+msgstr "Échec de l'enregistrement de l'article"
+
+msgid "Failed to save options"
+msgstr "Échec de l'enregistrement des options"
+
+msgid "Failed to save restaurant settings"
+msgstr "Échec de l'enregistrement des paramètres restaurant"
+
+msgid "Failed to save workflow"
+msgstr "Échec de l'enregistrement du workflow"
+
+msgid "Failed to search images"
+msgstr "Échec de la recherche d'images"
+
+msgid "Failed to send email"
+msgstr "Échec de l'envoi de l'e-mail"
+
+msgid "Failed to send email. Please check your email configuration."
+msgstr "Échec de l'envoi de l'e-mail. Vérifiez votre configuration e-mail."
+
+msgid "Failed to send order to kitchen"
+msgstr "Échec de l'envoi de la commande en cuisine"
+
+msgid "Failed to toggle restaurant mode"
+msgstr "Échec du changement de mode restaurant"
+
+msgid "Failed to update"
+msgstr "Échec de la mise à jour"
+
+msgid "Failed to update KDS order status."
+msgstr "Échec de la mise à jour du statut de commande KDS."
+
+msgid "Failed to update default"
+msgstr "Échec de la mise à jour du défaut"
+
+msgid "Failed to update item status"
+msgstr "Échec de la mise à jour du statut de l'article"
+
+msgid "Failed to update station"
+msgstr "Échec de la mise à jour du poste"
+
+msgid "Failed to update status"
+msgstr "Échec de la mise à jour du statut"
+
+msgid "Failed to update table"
+msgstr "Échec de la mise à jour de la table"
+
+msgid "Failed to update table status"
+msgstr "Échec de la mise à jour du statut de la table"
+
+msgid "Failed to upload image"
+msgstr "Échec du téléchargement de l'image"
+
+msgid "First name"
+msgstr "Prénom"
+
+msgid "Floor Plan"
+msgstr "Plan de salle"
+
+msgid "Floor plan saved"
+msgstr "Plan de salle enregistré"
+
+msgid "Footer Text"
+msgstr "Texte de pied de page"
+
+msgid "Force Save"
+msgstr "Forcer l'enregistrement"
+
+msgid "Free item"
+msgstr "Article gratuit"
+
+msgid "From reconciliation"
+msgstr "Issu du rapprochement"
+
+msgid "Generate Certificate"
+msgstr "Générer le certificat"
+
+msgid "Generate PDF"
+msgstr "Générer le PDF"
+
+msgid "Generate QR"
+msgstr "Générer le QR"
+
+msgid "Generate QR code for guest ordering"
+msgstr "Générer un QR code pour la commande invité"
+
+msgid "Generating..."
+msgstr "Génération..."
+
+msgid "Gift Card Applied!"
+msgstr "Carte cadeau appliquée !"
+
+msgid "Gift Card Code"
+msgstr "Code carte cadeau"
+
+msgid "Gift Card Created"
+msgstr "Carte cadeau créée"
+
+msgid "Gift card has expired"
+msgstr "La carte cadeau a expiré"
+
+msgid "Gift card has no remaining balance"
+msgstr "La carte cadeau n'a plus de solde"
+
+msgid "Gift card is not yet valid"
+msgstr "La carte cadeau n'est pas encore valide"
+
+msgid "Gift card not found"
+msgstr "Carte cadeau introuvable"
+
+msgid "Global Price"
+msgstr "Prix global"
+
+msgid "Gratuity / Pourboire"
+msgstr "Pourboire"
+
+msgid "Group name (e.g. Sauce, Cooking)"
+msgstr "Nom du groupe (ex. Sauce, Cuisson)"
+
+msgid "Guest Account Mode"
+msgstr "Mode compte invité"
+
+msgid "Guest Menu"
+msgstr "Menu invité"
+
+msgid "Guest Name"
+msgstr "Nom de l'invité"
+
+msgid "Guest seated"
+msgstr "Invité installé"
+
+msgid "Guests"
+msgstr "Convives"
+
+msgid "Header / Title"
+msgstr "En-tête / Titre"
+
+msgid "Header Text"
+msgstr "Texte d'en-tête"
+
+msgid "Health Status"
+msgstr "État de santé"
+
+msgid "Hide delivery arrows"
+msgstr "Masquer les flèches de livraison"
+
+msgid "High Performers"
+msgstr "Meilleurs performeurs"
+
+msgid ""
+"If QZ Tray is unavailable, printing will fall back to the browser dialog."
+msgstr ""
+"Si QZ Tray n'est pas disponible, l'impression utilisera la boîte de dialogue"
+" du navigateur."
+
+msgid "In queue"
+msgstr "En file d'attente"
+
+msgid "Include Zero Stock Items"
+msgstr "Inclure les articles à stock zéro"
+
+msgid "Incorrect password"
+msgstr "Mot de passe incorrect"
+
+msgid "Initiating payment..."
+msgstr "Initialisation du paiement..."
+
+msgid "Installed"
+msgstr "Installé"
+
+msgid ""
+"Instead of cash refund, add the return amount to customer credit balance for"
+" future purchases."
+msgstr ""
+"Au lieu d'un remboursement en espèces, ajouter le montant du retour au solde"
+" crédit client pour de futurs achats."
+
+msgid "Insufficient credit available from {0}. Available: {1}, Requested: {2}"
+msgstr "Crédit insuffisant sur {0}. Disponible : {1}, Demandé : {2}"
+
+msgid "Insufficient unallocated amount in {0}. Available: {1}, Requested: {2}"
+msgstr ""
+"Montant non alloué insuffisant sur {0}. Disponible : {1}, Demandé : {2}"
+
+msgid "Inv/Hr"
+msgstr "Fact./h"
+
+msgid "Invalid API key"
+msgstr "Clé API invalide"
+
+msgid "Invalid API key format. Expected format: api_key:api_secret"
+msgstr "Format de clé API invalide. Format attendu : api_key:api_secret"
+
+msgid "Invalid API secret"
+msgstr "Secret API invalide"
+
+msgid "Invalid amount"
+msgstr "Montant invalide"
+
+msgid "Invalid or expired link"
+msgstr "Lien invalide ou expiré"
+
+msgid "Invalid or expired verification token"
+msgstr "Jeton de vérification invalide ou expiré"
+
+msgid "Invalid or unknown token."
+msgstr "Jeton invalide ou inconnu."
+
+msgid "Invalid positions data"
+msgstr "Données de positions invalides"
+
+msgid "Invalid verification token"
+msgstr "Jeton de vérification invalide"
+
+msgid "Invoice Created"
+msgstr "Facture créée"
+
+msgid "Invoice Date"
+msgstr "Date de facture"
+
+msgid "Invoice fully paid. No additional payment needed."
+msgstr "Facture entièrement payée. Aucun paiement supplémentaire nécessaire."
+
+msgid "Invoice name and recipients are required"
+msgstr "Le nom de la facture et les destinataires sont requis"
+
+msgid "Invoice not found"
+msgstr "Facture introuvable"
+
+msgid "Invoice not found."
+msgstr "Facture introuvable."
+
+msgid "Invoice subject"
+msgstr "Objet de la facture"
+
+msgid "Invoice {0} from {1}"
+msgstr "Facture {0} de {1}"
+
+msgid "Invoice {0} not found"
+msgstr "Facture {0} introuvable"
+
+msgid "Item Images"
+msgstr "Images de l'article"
+
+msgid "Item Name"
+msgstr "Nom de l'article"
+
+msgid "Item Name, Item Group, and Unit of Measure are required"
+msgstr ""
+"Le nom de l'article, le groupe d'articles et l'unité de mesure sont requis"
+
+msgid "Item updated"
+msgstr "Article mis à jour"
+
+msgid "Items Sold"
+msgstr "Articles vendus"
+
+msgid "Journal Entry Template name"
+msgstr "Nom du modèle d'écriture comptable"
+
+msgid "Kitchen is clear."
+msgstr "La cuisine est libre."
+
+msgid "Large Overpayment"
+msgstr "Trop-perçu important"
+
+msgid "Last name"
+msgstr "Nom de famille"
+
+msgid "Leave"
+msgstr "Quitter"
+
+msgid "Leave POS?"
+msgstr "Quitter le POS ?"
+
+msgid "Leave empty to use card name"
+msgstr "Laisser vide pour utiliser le nom de la carte"
+
+msgid "Load more"
+msgstr "Charger plus"
+
+msgid "Loading menu..."
+msgstr "Chargement du menu..."
+
+msgid "Loading terminals..."
+msgstr "Chargement des terminaux..."
+
+msgid "Local override (differs from global)"
+msgstr "Valeur locale (différente du global)"
+
+msgid "Lock Screen"
+msgstr "Écran de verrouillage"
+
+msgid "Locked (offer applied)"
+msgstr "Verrouillé (offre appliquée)"
+
+msgid "Looking for invoice in database"
+msgstr "Recherche de la facture en base de données"
+
+msgid "Maintain Stock"
+msgstr "Gérer le stock"
+
+msgid "Mark Delivered"
+msgstr "Marquer comme livré"
+
+msgid "Marked as No Show"
+msgstr "Marqué comme absent"
+
+msgid "Maximum number of active reservations reached for this email"
+msgstr "Nombre maximum de réservations actives atteint pour cet e-mail"
+
+msgid "Menu Designer"
+msgstr "Designer de menu"
+
+msgid "Menu Settings"
+msgstr "Paramètres du menu"
+
+msgid "Multiple choices"
+msgstr "Choix multiples"
+
+msgid "NOT COLLECTED - PROVISIONAL TICKET"
+msgstr "NON ENCAISSÉ - TICKET PROVISOIRE"
+
+msgid "Name and email are required"
+msgstr "Le nom et l'e-mail sont requis"
+
+msgid "Network error. Please try again."
+msgstr "Erreur réseau. Veuillez réessayer."
+
+msgid "New Card"
+msgstr "Nouvelle carte"
+
+msgid "New Customer"
+msgstr "Nouveau client"
+
+msgid "New Option Group"
+msgstr "Nouveau groupe d'options"
+
+msgid "New Reservation"
+msgstr "Nouvelle réservation"
+
+msgid "New Reservation - {0} ({1} guests)"
+msgstr "Nouvelle réservation - {0} ({1} convives)"
+
+msgid "New Workflow"
+msgstr "Nouveau workflow"
+
+msgid "New guest order for table"
+msgstr "Nouvelle commande invité pour la table"
+
+msgid "New guest order received"
+msgstr "Nouvelle commande invité reçue"
+
+msgid "New items"
+msgstr "Nouveaux articles"
+
+msgid "Next opening balance"
+msgstr "Solde d'ouverture suivant"
+
+msgid "No Active Orders"
+msgstr "Aucune commande active"
+
+msgid "No Items Ready"
+msgstr "Aucun article prêt"
+
+msgid "No Journal Entry Templates found for this company."
+msgstr "Aucun modèle d'écriture comptable trouvé pour cette entreprise."
+
+msgid "No POS Profile is available for takeaway orders."
+msgstr "Aucun profil POS n'est disponible pour les commandes à emporter."
+
+msgid "No POS Profile linked to this session."
+msgstr "Aucun profil POS lié à cette session."
+
+msgid "No Show"
+msgstr "Absent"
+
+msgid "No Show Rate"
+msgstr "Taux d'absence"
+
+msgid "No active card for the current time slot"
+msgstr "Aucune carte active pour le créneau horaire actuel"
+
+msgid "No active card for the current time slot{0}"
+msgstr "Aucune carte active pour le créneau horaire actuel{0}"
+
+msgid "No active order found for this session."
+msgstr "Aucune commande active trouvée pour cette session."
+
+msgid "No available slots for this date"
+msgstr "Aucun créneau disponible pour cette date"
+
+msgid "No cash entries for this shift yet."
+msgstr "Aucune entrée de caisse pour ce service."
+
+msgid "No connection"
+msgstr "Pas de connexion"
+
+msgid "No customer group found. Please configure a customer group."
+msgstr ""
+"Aucun groupe de clients trouvé. Veuillez configurer un groupe de clients."
+
+msgid "No guest menu is configured. Please contact staff."
+msgstr "Aucun menu invité n'est configuré. Veuillez contacter le personnel."
+
+msgid "No images found. Try a different search term."
+msgstr "Aucune image trouvée. Essayez un autre terme de recherche."
+
+msgid "No invoice found for this session."
+msgstr "Aucune facture trouvée pour cette session."
+
+msgid "No item groups assigned"
+msgstr "Aucun groupe d'articles assigné"
+
+msgid "No items assigned"
+msgstr "Aucun article assigné"
+
+msgid "No items in cart"
+msgstr "Aucun article dans le panier"
+
+msgid "No items provided."
+msgstr "Aucun article fourni."
+
+msgid "No menus available"
+msgstr "Aucun menu disponible"
+
+msgid "No modifiers available for this item"
+msgstr "Aucun modificateur disponible pour cet article"
+
+msgid "No order yet"
+msgstr "Aucune commande"
+
+msgid "No printers found. Is QZ Tray running?"
+msgstr "Aucune imprimante trouvée. QZ Tray est-il en marche ?"
+
+msgid "No reservations for this date"
+msgstr "Aucune réservation pour cette date"
+
+msgid "No sales persons available"
+msgstr "Aucun vendeur disponible"
+
+msgid "No tables found in this area"
+msgstr "Aucune table trouvée dans cette zone"
+
+msgid "No tables in this area"
+msgstr "Aucune table dans cette zone"
+
+msgid "No takeaway menu is configured."
+msgstr "Aucun menu à emporter n'est configuré."
+
+msgid "No takeaway orders"
+msgstr "Aucune commande à emporter"
+
+msgid "No templates match your search."
+msgstr "Aucun modèle ne correspond à votre recherche."
+
+msgid "No territory found. Please configure a territory."
+msgstr "Aucun territoire trouvé. Veuillez configurer un territoire."
+
+msgid "No tip"
+msgstr "Pas de pourboire"
+
+msgid "No tips found"
+msgstr "Aucun pourboire trouvé"
+
+msgid "No, only update the price list"
+msgstr "Non, mettre à jour uniquement la liste de prix"
+
+msgid "Non-Cash"
+msgstr "Non-espèces"
+
+msgid "Not Installed"
+msgstr "Non installé"
+
+msgid "Not Proposed"
+msgstr "Non proposé"
+
+msgid "Not assigned to any slot"
+msgstr "Non assigné à un créneau"
+
+msgid "Not permitted"
+msgstr "Non autorisé"
+
+msgid "Not yet collected"
+msgstr "Pas encore encaissé"
+
+msgid "Number of Guests"
+msgstr "Nombre de convives"
+
+msgid "Offline Mode"
+msgstr "Mode hors ligne"
+
+msgid "On Payment"
+msgstr "Au paiement"
+
+msgid "On Table Close"
+msgstr "À la fermeture de table"
+
+msgid "Online reservations are not available"
+msgstr "Les réservations en ligne ne sont pas disponibles"
+
+msgid "Online reservations are not enabled"
+msgstr "Les réservations en ligne ne sont pas activées"
+
+msgid "Only System Managers can set up QZ certificates."
+msgstr ""
+"Seuls les administrateurs système peuvent configurer les certificats QZ."
+
+msgid "Open Customer Display"
+msgstr "Ouvrir l'affichage client"
+
+msgid "Open customer display on second screen"
+msgstr "Ouvrir l'affichage client sur le second écran"
+
+msgid ""
+"Open this table for QR self-ordering? Customers will be able to scan a QR "
+"code and order directly from their phone."
+msgstr ""
+"Ouvrir cette table pour la commande QR ? Les clients pourront scanner un QR "
+"code et commander directement depuis leur téléphone."
+
+msgid "Opening Hours"
+msgstr "Horaires d'ouverture"
+
+msgid "Opening Stock"
+msgstr "Stock d'ouverture"
+
+msgid "Option group created"
+msgstr "Groupe d'options créé"
+
+msgid "Option group deleted"
+msgstr "Groupe d'options supprimé"
+
+msgid "Option name"
+msgstr "Nom de l'option"
+
+msgid "Options saved"
+msgstr "Options enregistrées"
+
+msgid "Order Summary"
+msgstr "Récapitulatif de commande"
+
+msgid "Order Total"
+msgstr "Total de la commande"
+
+msgid "Order Validation"
+msgstr "Validation de commande"
+
+msgid "Order confirmed!"
+msgstr "Commande confirmée !"
+
+msgid "Order paid"
+msgstr "Commande payée"
+
+msgid "Order sent!"
+msgstr "Commande envoyée !"
+
+msgid "Order validated"
+msgstr "Commande validée"
+
+msgid "Order {0}"
+msgstr "Commande {0}"
+
+msgid "Out of stock"
+msgstr "Rupture de stock"
+
+msgid "Overlap Warning"
+msgstr "Avertissement de chevauchement"
+
+msgid "Overlapping reservations found. Force to override."
+msgstr "Réservations chevauchantes trouvées. Forcer pour passer outre."
+
+msgid "Overpayment"
+msgstr "Trop-perçu"
+
+msgid "Overpayment is pre-filled as tip, server can adjust or cancel"
+msgstr ""
+"Le trop-perçu est pré-rempli comme pourboire, le serveur peut ajuster ou "
+"annuler"
+
+msgid "PDF Downloaded!"
+msgstr "PDF téléchargé !"
+
+msgid "PDF attached:"
+msgstr "PDF joint :"
+
+msgid "POS Next Customer Display"
+msgstr "Affichage client POS Next"
+
+msgid "POS Opening Entry is required"
+msgstr "L'entrée d'ouverture POS est requise"
+
+msgid "POS Opening Entry not found"
+msgstr "Entrée d'ouverture POS introuvable"
+
+msgid "POS Profile is required to validate rate edit for item {0}"
+msgstr ""
+"Le profil POS est requis pour valider la modification de prix de l'article "
+"{0}"
+
+msgid "POS Profile {0} is missing company or currency"
+msgstr "Le profil POS {0} n'a pas d'entreprise ou de devise configurée"
+
+msgid "POS Settings not found for profile {0}. Cannot validate rate edit."
+msgstr ""
+"Paramètres POS introuvables pour le profil {0}. Impossible de valider la "
+"modification de prix."
+
+msgid "POS session is not open"
+msgstr "La session POS n'est pas ouverte"
+
+msgid "PROVISIONAL TICKET"
+msgstr "TICKET PROVISOIRE"
+
+msgid "Paper Format"
+msgstr "Format papier"
+
+msgid "Password is required"
+msgstr "Le mot de passe est requis"
+
+msgid "Pay & Order"
+msgstr "Payer et commander"
+
+msgid "Payment amount is correct"
+msgstr "Le montant du paiement est correct"
+
+msgid "Payment amount must be greater than zero."
+msgstr "Le montant du paiement doit être supérieur à zéro."
+
+msgid "Payment cancelled"
+msgstr "Paiement annulé"
+
+msgid "Payment complete"
+msgstr "Paiement terminé"
+
+msgid "Payment failed"
+msgstr "Échec du paiement"
+
+msgid "Payment must be completed before placing a takeaway order."
+msgstr ""
+"Le paiement doit être effectué avant de passer une commande à emporter."
+
+msgid "Payment received"
+msgstr "Paiement reçu"
+
+msgid "Payment successful!"
+msgstr "Paiement réussi !"
+
+msgid "Payment was cancelled or failed. Please try again."
+msgstr "Le paiement a été annulé ou a échoué. Veuillez réessayer."
+
+msgid "Payments cannot be added while offline"
+msgstr "Les paiements ne peuvent pas être ajoutés hors ligne"
+
+msgid ""
+"Payments cannot be added while offline. Connect to the internet to add "
+"payments."
+msgstr ""
+"Les paiements ne peuvent pas être ajoutés hors ligne. Connectez-vous à "
+"Internet pour ajouter des paiements."
+
+msgid "Peak Hour"
+msgstr "Heure de pointe"
+
+msgid "Performance Rating"
+msgstr "Évaluation des performances"
+
+msgid "Permanent card created"
+msgstr "Carte permanente créée"
+
+msgid "Permanent items"
+msgstr "Articles permanents"
+
+msgid "Pexels API key not configured"
+msgstr "Clé API Pexels non configurée"
+
+msgid "Phone (optional)"
+msgstr "Téléphone (facultatif)"
+
+msgid "Phone number"
+msgstr "Numéro de téléphone"
+
+msgid "Phone number (optional)"
+msgstr "Numéro de téléphone (facultatif)"
+
+msgid "Photos provided by Pexels"
+msgstr "Photos fournies par Pexels"
+
+msgid "Picked Up"
+msgstr "Récupéré"
+
+msgid "Please ask your server to generate a new QR code."
+msgstr "Veuillez demander à votre serveur de générer un nouveau QR code."
+
+msgid "Please call us to make a reservation"
+msgstr "Veuillez nous appeler pour réserver"
+
+msgid "Please check your email to confirm the reservation"
+msgstr "Veuillez vérifier votre e-mail pour confirmer la réservation"
+
+msgid "Please check your email to confirm the reservation."
+msgstr "Veuillez vérifier votre e-mail pour confirmer la réservation."
+
+msgid "Please confirm your reservation for {0} on {1} at {2} for {3} guests."
+msgstr ""
+"Veuillez confirmer votre réservation pour {0} le {1} à {2} pour {3} "
+"convives."
+
+msgid "Please contact your manager if you need to process this return."
+msgstr "Veuillez contacter votre responsable si vous devez traiter ce retour."
+
+msgid "Please enter a gift card code"
+msgstr "Veuillez saisir un code de carte cadeau"
+
+msgid "Please enter a valid email address"
+msgstr "Veuillez saisir une adresse e-mail valide"
+
+msgid "Please find your invoice attached."
+msgstr "Veuillez trouver votre facture en pièce jointe."
+
+msgid "Please wait"
+msgstr "Veuillez patienter"
+
+msgid "Postal code"
+msgstr "Code postal"
+
+msgid "Preferred Table"
+msgstr "Table préférée"
+
+msgid "Prep (min)"
+msgstr "Prép. (min)"
+
+msgid "Preparation Display"
+msgstr "Affichage préparation"
+
+msgid "Preparation Workflows"
+msgstr "Workflows de préparation"
+
+msgid "Price Alignment"
+msgstr "Alignement des prix"
+
+msgid "Price adjustment"
+msgstr "Ajustement de prix"
+
+msgid "Print provisional ticket"
+msgstr "Imprimer le ticket provisoire"
+
+msgid "Processing payment..."
+msgstr "Traitement du paiement..."
+
+msgid "Product Options"
+msgstr "Options produit"
+
+msgid "Provisional Ticket"
+msgstr "Ticket provisoire"
+
+msgid "QR Code"
+msgstr "QR Code"
+
+msgid "QR Self-Ordering"
+msgstr "Commande QR"
+
+msgid "QZ Certificate Missing"
+msgstr "Certificat QZ manquant"
+
+msgid "QZ Certificate Ready"
+msgstr "Certificat QZ prêt"
+
+msgid "QZ Key Missing"
+msgstr "Clé QZ manquante"
+
+msgid "QZ Tray Connected"
+msgstr "QZ Tray connecté"
+
+msgid "QZ Tray Not Connected"
+msgstr "QZ Tray non connecté"
+
+msgid ""
+"QZ Tray certificate not found. Ask an administrator to run Setup QZ "
+"Certificate."
+msgstr ""
+"Certificat QZ Tray introuvable. Demandez à un administrateur de lancer la "
+"configuration du certificat QZ."
+
+msgid "QZ Tray must be installed and running on this computer. Download from"
+msgstr ""
+"QZ Tray doit être installé et en marche sur cet ordinateur. Téléchargez-le "
+"depuis"
+
+msgid ""
+"QZ Tray private key not found. Ask an administrator to run Setup QZ "
+"Certificate."
+msgstr ""
+"Clé privée QZ Tray introuvable. Demandez à un administrateur de lancer la "
+"configuration du certificat QZ."
+
+msgid "QZ certificate already exists."
+msgstr "Le certificat QZ existe déjà."
+
+msgid "QZ certificate generated successfully."
+msgstr "Certificat QZ généré avec succès."
+
+msgid "Qty Sold"
+msgstr "Qté vendue"
+
+msgid "Quantity locked (barcode item)"
+msgstr "Quantité verrouillée (article code-barres)"
+
+msgid "Rate editing is disabled"
+msgstr "La modification de prix est désactivée"
+
+msgid "Rate editing is not allowed for this POS Profile"
+msgstr "La modification de prix n'est pas autorisée pour ce profil POS"
+
+msgid "Rate for item {0} must be greater than zero"
+msgstr "Le prix de l'article {0} doit être supérieur à zéro"
+
+msgid "Rate must be greater than zero"
+msgstr "Le prix doit être supérieur à zéro"
+
+msgid ""
+"Rate reduction for item {0} is {1}% which exceeds the maximum allowed "
+"discount of {2}%"
+msgstr ""
+"La réduction de prix de l'article {0} est de {1}% ce qui dépasse la remise "
+"maximale autorisée de {2}%"
+
+msgid "Read-only: Edit in Back Office"
+msgstr "Lecture seule : Modifier dans le Back Office"
+
+msgid "Ready Items"
+msgstr "Articles prêts"
+
+msgid "Real-time Customer Update Event Error"
+msgstr "Erreur de mise à jour client en temps réel"
+
+msgid "Record Cash In"
+msgstr "Enregistrer une entrée de caisse"
+
+msgid "Record Cash Out"
+msgstr "Enregistrer une sortie de caisse"
+
+msgid "Refresh items and customers"
+msgstr "Actualiser les articles et clients"
+
+msgid "Refresh printer list"
+msgstr "Actualiser la liste des imprimantes"
+
+msgid "Refresh sales persons"
+msgstr "Actualiser les vendeurs"
+
+msgid "Refresh unavailable offline"
+msgstr "Actualisation indisponible hors ligne"
+
+msgid "Remaining after purchase"
+msgstr "Solde restant après achat"
+
+msgid "Remaining to collect"
+msgstr "Reste à encaisser"
+
+msgid "Reminder: Reservation today at {0}"
+msgstr "Rappel : Réservation aujourd'hui à {0}"
+
+msgid "Rename Area"
+msgstr "Renommer la zone"
+
+msgid "Rename area"
+msgstr "Renommer la zone"
+
+msgid "Reorder Level"
+msgstr "Niveau de réapprovisionnement"
+
+msgid "Report Guide"
+msgstr "Guide du rapport"
+
+msgid "Required (must choose)"
+msgstr "Obligatoire (choix requis)"
+
+msgid "Required to receive your order"
+msgstr "Requis pour recevoir votre commande"
+
+msgid "Reservation Cancelled - {0}"
+msgstr "Réservation annulée - {0}"
+
+msgid "Reservation Confirmed - {0}"
+msgstr "Réservation confirmée - {0}"
+
+msgid "Reservation Submitted!"
+msgstr "Réservation soumise !"
+
+msgid "Reservation cancelled"
+msgstr "Réservation annulée"
+
+msgid "Reservation confirmed"
+msgstr "Réservation confirmée"
+
+msgid "Reservation confirmed successfully"
+msgstr "Réservation confirmée avec succès"
+
+msgid "Reservation created"
+msgstr "Réservation créée"
+
+msgid "Reservation time {0} is outside opening hours for {1}"
+msgstr ""
+"L'heure de réservation {0} est en dehors des horaires d'ouverture pour {1}"
+
+msgid "Reserve your table online"
+msgstr "Réservez votre table en ligne"
+
+msgid "Reset zoom"
+msgstr "Réinitialiser le zoom"
+
+msgid "Restaurant Cards"
+msgstr "Cartes restaurant"
+
+msgid "Restaurant Settings"
+msgstr "Paramètres restaurant"
+
+msgid "Restaurant mode disabled"
+msgstr "Mode restaurant désactivé"
+
+msgid "Restaurant mode enabled"
+msgstr "Mode restaurant activé"
+
+msgid "Resto"
+msgstr "Resto"
+
+msgid "Return %"
+msgstr "Retour %"
+
+msgid "Return Allowed Within"
+msgstr "Retour autorisé dans"
+
+msgid "Return Amount"
+msgstr "Montant du retour"
+
+msgid "Return Period Expired"
+msgstr "Période de retour expirée"
+
+msgid "Return credit to wallet for {0} against {1}: {2}"
+msgstr "Crédit retourné au portefeuille pour {0} sur {1} : {2}"
+
+msgid ""
+"Return invoice submitted successfully, but wallet reversal failed. Please "
+"contact administrator."
+msgstr ""
+"Facture de retour soumise avec succès, mais l'annulation du portefeuille a "
+"échoué. Veuillez contacter l'administrateur."
+
+msgid ""
+"Return invoices cannot be processed while offline. Please connect to the "
+"internet to search for invoices and create returns."
+msgstr ""
+"Les retours ne peuvent pas être traités hors ligne. Connectez-vous à "
+"Internet pour rechercher des factures et créer des retours."
+
+msgid "Return period has expired"
+msgstr "La période de retour a expiré"
+
+msgid ""
+"Return submitted but wallet credit failed. Please contact administrator."
+msgstr ""
+"Retour soumis mais le crédit portefeuille a échoué. Veuillez contacter "
+"l'administrateur."
+
+msgid "Runner Display"
+msgstr "Affichage Runner"
+
+msgid "Runner is active. This will skip the Runner."
+msgstr "Le Runner est actif. Cela va court-circuiter le Runner."
+
+msgid "Runner is disabled"
+msgstr "Le Runner est désactivé"
+
+msgid "Sales Person"
+msgstr "Vendeur"
+
+msgid "Sales Persons"
+msgstr "Vendeurs"
+
+msgid "Sales Value"
+msgstr "Valeur des ventes"
+
+msgid "Sales by Payment Method"
+msgstr "Ventes par mode de paiement"
+
+msgid "Sales person is required"
+msgstr "Le vendeur est requis"
+
+msgid "Sales vs Shifts Report Guide"
+msgstr "Guide du rapport Ventes vs Services"
+
+msgid "Sales/Hr"
+msgstr "Ventes/h"
+
+msgid "Save Settings"
+msgstr "Enregistrer les paramètres"
+
+msgid "Save to auto-create the TIP item and transit account (2211)"
+msgstr ""
+"Enregistrez pour créer automatiquement l'article TIP et le compte de transit"
+" (2211)"
+
+msgid "Saved!"
+msgstr "Enregistré !"
+
+msgid "Saving..."
+msgstr "Enregistrement..."
+
+msgid "Search Food Images"
+msgstr "Rechercher des images de plats"
+
+msgid "Search by invoice, customer, or mobile..."
+msgstr "Rechercher par facture, client ou mobile..."
+
+msgid "Search by item code, name, item group or scan barcode"
+msgstr ""
+"Rechercher par code article, nom, groupe d'articles ou scanner un code-"
+"barres"
+
+msgid "Search country..."
+msgstr "Rechercher un pays..."
+
+msgid "Search for a dish..."
+msgstr "Rechercher un plat..."
+
+msgid "Search in card..."
+msgstr "Rechercher dans la carte..."
+
+msgid "Search in menu..."
+msgstr "Rechercher dans le menu..."
+
+msgid "Search item group..."
+msgstr "Rechercher un groupe d'articles..."
+
+msgid "Search item groups..."
+msgstr "Rechercher des groupes d'articles..."
+
+msgid "Search item to add..."
+msgstr "Rechercher un article à ajouter..."
+
+msgid "Search items by name..."
+msgstr "Rechercher des articles par nom..."
+
+msgid "Search items..."
+msgstr "Rechercher des articles..."
+
+msgid "Search product to add..."
+msgstr "Rechercher un produit à ajouter..."
+
+msgid "Search templates..."
+msgstr "Rechercher des modèles..."
+
+msgid "Search unavailable offline"
+msgstr "Recherche indisponible hors ligne"
+
+msgid "Searching database..."
+msgstr "Recherche en base de données..."
+
+msgid "Seats"
+msgstr "Places"
+
+msgid "See you soon!"
+msgstr "À bientôt !"
+
+msgid "Select Menu"
+msgstr "Sélectionner un menu"
+
+msgid "Select Operation"
+msgstr "Sélectionner une opération"
+
+msgid "Select Table"
+msgstr "Sélectionner une table"
+
+msgid "Select a card to edit"
+msgstr "Sélectionnez une carte à modifier"
+
+msgid "Select a card..."
+msgstr "Sélectionnez une carte..."
+
+msgid "Select cards..."
+msgstr "Sélectionnez des cartes..."
+
+msgid "Select items to send to kitchen"
+msgstr "Sélectionnez les articles à envoyer en cuisine"
+
+msgid "Select sales person..."
+msgstr "Sélectionnez un vendeur..."
+
+msgid "Select..."
+msgstr "Sélectionner..."
+
+msgid "Selected tables are not available at the requested time"
+msgstr "Les tables sélectionnées ne sont pas disponibles à l'heure demandée"
+
+msgid "Selling Rate"
+msgstr "Prix de vente"
+
+msgid "Send Email"
+msgstr "Envoyer l'e-mail"
+
+msgid "Send Order"
+msgstr "Envoyer la commande"
+
+msgid "Send order"
+msgstr "Envoyer la commande"
+
+msgid ""
+"Send receipts directly to a thermal printer via QZ Tray (no browser dialog)"
+msgstr ""
+"Envoyer les reçus directement à une imprimante thermique via QZ Tray (sans "
+"boîte de dialogue)"
+
+msgid "Send to Preparation"
+msgstr "Envoyer en préparation"
+
+msgid "Send to Preparation Stations"
+msgstr "Envoyer aux postes de préparation"
+
+msgid "Send to kitchen"
+msgstr "Envoyer en cuisine"
+
+msgid "Send your order first, then pay here"
+msgstr "Envoyez d'abord votre commande, puis payez ici"
+
+msgid "Server Approval"
+msgstr "Validation serveur"
+
+msgid "Session Locked"
+msgstr "Session verrouillée"
+
+msgid "Set Price"
+msgstr "Définir le prix"
+
+msgid "Set as default"
+msgstr "Définir par défaut"
+
+msgid "Set or retrieve the password on:"
+msgstr "Définir ou récupérer le mot de passe sur :"
+
+msgid "Set the new price on all cards that use this item."
+msgstr ""
+"Définir le nouveau prix sur toutes les cartes qui utilisent cet article."
+
+msgid "Shift End"
+msgstr "Fin de service"
+
+msgid "Shift History"
+msgstr "Historique des services"
+
+msgid "Shift Hours"
+msgstr "Heures de service"
+
+msgid "Shift ID"
+msgstr "ID du service"
+
+msgid "Shift Start"
+msgstr "Début de service"
+
+msgid "Shift is not open"
+msgstr "Le service n'est pas ouvert"
+
+msgid "Shifts Worked"
+msgstr "Services effectués"
+
+msgid "Short description of the item..."
+msgstr "Description courte de l'article..."
+
+msgid "Short description..."
+msgstr "Description courte..."
+
+msgid "Show QR Code"
+msgstr "Afficher le QR Code"
+
+msgid "Show completed"
+msgstr "Afficher les terminés"
+
+msgid "Show delivery arrows"
+msgstr "Afficher les flèches de livraison"
+
+msgid "Show this number when you pick up your order."
+msgstr "Présentez ce numéro lorsque vous récupérez votre commande."
+
+msgid "Silent Print Certificate"
+msgstr "Certificat d'impression silencieuse"
+
+msgid "Silent Print: Connected"
+msgstr "Impression silencieuse : Connecté"
+
+msgid "Silent Print: Disconnected"
+msgstr "Impression silencieuse : Déconnecté"
+
+msgid "Single choice"
+msgstr "Choix unique"
+
+msgid "Sorry, this gift card has no remaining balance"
+msgstr "Désolé, cette carte cadeau n'a plus de solde"
+
+msgid "Sort Cart"
+msgstr "Trier le panier"
+
+msgid "Sort cart items"
+msgstr "Trier les articles du panier"
+
+msgid "Special Instructions"
+msgstr "Instructions spéciales"
+
+msgid "Special Requests"
+msgstr "Demandes spéciales"
+
+msgid "Special requests..."
+msgstr "Demandes spéciales..."
+
+msgid "Spice Level"
+msgstr "Niveau d'épices"
+
+msgid "Spice level"
+msgstr "Niveau d'épices"
+
+msgid "Split Payment"
+msgstr "Paiement fractionné"
+
+msgid "Split the bill between multiple people"
+msgstr "Partager l'addition entre plusieurs personnes"
+
+msgid "Station Name"
+msgstr "Nom du poste"
+
+msgid "Station added"
+msgstr "Poste ajouté"
+
+msgid "Station deleted"
+msgstr "Poste supprimé"
+
+msgid "Station updated"
+msgstr "Poste mis à jour"
+
+msgid "Step name"
+msgstr "Nom de l'étape"
+
+msgid "Stock Status"
+msgstr "État du stock"
+
+msgid "Street address"
+msgstr "Adresse"
+
+msgid "Submitting..."
+msgstr "Soumission..."
+
+msgid "Switch Restaurant Mode?"
+msgstr "Changer de mode restaurant ?"
+
+msgid "Switch To Desk"
+msgstr "Basculer vers le Bureau"
+
+msgid "Switch to Edit mode to add tables"
+msgstr "Passez en mode Édition pour ajouter des tables"
+
+msgid "Sync Delay (Hours)"
+msgstr "Délai de synchronisation (heures)"
+
+msgid "Sync Status"
+msgstr "État de synchronisation"
+
+msgid "Syncing for offline..."
+msgstr "Synchronisation hors ligne..."
+
+msgid "TIP item and transit account will be created automatically when saved"
+msgstr ""
+"L'article TIP et le compte de transit seront créés automatiquement à "
+"l'enregistrement"
+
+msgid "Table Name"
+msgstr "Nom de la table"
+
+msgid "Table added"
+msgstr "Table ajoutée"
+
+msgid "Table deleted"
+msgstr "Table supprimée"
+
+msgid "Table marked for cleaning"
+msgstr "Table marquée pour nettoyage"
+
+msgid "Table paid"
+msgstr "Table payée"
+
+msgid "Table ready for cleanup"
+msgstr "Table prête pour le nettoyage"
+
+msgid "Table updated"
+msgstr "Table mise à jour"
+
+msgid "Table {0} is not in Paid or Cleaning status"
+msgstr "La table {0} n'est pas en statut Payé ou Nettoyage"
+
+msgid "Table {0} not found"
+msgstr "Table {0} introuvable"
+
+msgid "Table {0} not found."
+msgstr "Table {0} introuvable."
+
+msgid "Table:"
+msgstr "Table :"
+
+msgid "Tables {0} have overlapping reservations at the requested time"
+msgstr "Les tables {0} ont des réservations chevauchantes à l'heure demandée"
+
+msgid "Takeaway Menu"
+msgstr "Menu à emporter"
+
+msgid "Takeaway Order"
+msgstr "Commande à emporter"
+
+msgid "Takeaway Orders"
+msgstr "Commandes à emporter"
+
+msgid "Takeaway Web Ordering"
+msgstr "Commande en ligne à emporter"
+
+msgid "Takeaway web ordering is not enabled."
+msgstr "La commande en ligne à emporter n'est pas activée."
+
+msgid "Template has no accounts configured"
+msgstr "Le modèle n'a aucun compte configuré"
+
+msgid "Terminal Payment"
+msgstr "Paiement terminal"
+
+msgid "Thank You!"
+msgstr "Merci !"
+
+msgid "Thank you for your visit!"
+msgstr "Merci pour votre visite !"
+
+msgid "Thank you for your visit, we hope to see you again soon!"
+msgstr "Merci pour votre visite, nous espérons vous revoir bientôt !"
+
+msgid "Thank you!"
+msgstr "Merci !"
+
+msgid "The POS Opening Entry {0} is no longer open."
+msgstr "L'entrée d'ouverture POS {0} n'est plus ouverte."
+
+msgid "The customer received a cash refund for this return."
+msgstr "Le client a reçu un remboursement en espèces pour ce retour."
+
+msgid ""
+"The invoice will be partially paid. The remaining amount will need to be "
+"collected later."
+msgstr ""
+"La facture sera partiellement payée. Le montant restant devra être encaissé "
+"ultérieurement."
+
+msgid "The menu card shown to guests who scan the QR code"
+msgstr "La carte du menu affichée aux invités qui scannent le QR code"
+
+msgid ""
+"The return amount was added to the customer credit balance. No cash refund "
+"was given."
+msgstr ""
+"Le montant du retour a été ajouté au solde crédit client. Aucun "
+"remboursement en espèces n'a été effectué."
+
+msgid ""
+"The return amount will be added to the customer credit balance. No cash "
+"refund will be given."
+msgstr ""
+"Le montant du retour sera ajouté au solde crédit client. Aucun remboursement"
+" en espèces ne sera effectué."
+
+msgid ""
+"There are items in the cart. Clear the cart and toggle restaurant mode?"
+msgstr ""
+"Il y a des articles dans le panier. Vider le panier et changer de mode "
+"restaurant ?"
+
+msgid "This card is not assigned to any time slot."
+msgstr "Cette carte n'est assignée à aucun créneau horaire."
+
+msgid "This card only"
+msgstr "Cette carte uniquement"
+
+msgid ""
+"This dialog has been open for over a minute. Please close the shift or close"
+" this dialog to resume the shift timer."
+msgstr ""
+"Cette boîte de dialogue est ouverte depuis plus d'une minute. Veuillez "
+"fermer le service ou fermer cette boîte de dialogue pour reprendre le "
+"chronomètre."
+
+msgid "This endpoint is only valid for takeaway sessions."
+msgstr "Ce point d'accès est valide uniquement pour les sessions à emporter."
+
+msgid "This gift card has no remaining balance"
+msgstr "Cette carte cadeau n'a plus de solde"
+
+msgid "This invoice cannot be returned because the return period has expired."
+msgstr ""
+"Cette facture ne peut pas être retournée car la période de retour a expiré."
+
+msgid "This is not a POS Next gift card"
+msgstr "Ceci n'est pas une carte cadeau POS Next"
+
+msgid "This item has no price. Please enter the selling price."
+msgstr "Cet article n'a pas de prix. Veuillez saisir le prix de vente."
+
+msgid "This page will close automatically."
+msgstr "Cette page se fermera automatiquement."
+
+msgid "This session has expired or is no longer active."
+msgstr "Cette session a expiré ou n'est plus active."
+
+msgid "Tip (guest)"
+msgstr "Pourboire (invité)"
+
+msgid "Tip Transit Account"
+msgstr "Compte de transit pourboire"
+
+msgid "Tip already paid"
+msgstr "Pourboire déjà payé"
+
+msgid "Tip amount"
+msgstr "Montant du pourboire"
+
+msgid "Tips / Pourboires"
+msgstr "Pourboires"
+
+msgid ""
+"To print without confirmation dialogs, generate a signing certificate and "
+"install it on each POS machine."
+msgstr ""
+"Pour imprimer sans boîte de dialogue, générez un certificat de signature et "
+"installez-le sur chaque machine POS."
+
+msgid "Token Expiry"
+msgstr "Expiration du jeton"
+
+msgid "Too many requests. Please try again later."
+msgstr "Trop de requêtes. Veuillez réessayer plus tard."
+
+msgid "Total Closing"
+msgstr "Total clôture"
+
+msgid "Total Difference"
+msgstr "Différence totale"
+
+msgid "Total Guests"
+msgstr "Total convives"
+
+msgid "Total Opening"
+msgstr "Total ouverture"
+
+msgid "Total Reservations"
+msgstr "Total réservations"
+
+msgid "Total Sales"
+msgstr "Ventes totales"
+
+msgid "Total collected"
+msgstr "Total encaissé"
+
+msgid "Total must equal invoice amount"
+msgstr "Le total doit être égal au montant de la facture"
+
+msgid "Total time"
+msgstr "Temps total"
+
+msgid "Total to Pay"
+msgstr "Total à payer"
+
+msgid "Try a different search term or check the invoice number"
+msgstr "Essayez un autre terme de recherche ou vérifiez le numéro de facture"
+
+msgid "Try again"
+msgstr "Réessayer"
+
+msgid "UOM locked (barcode item)"
+msgstr "UDM verrouillée (article code-barres)"
+
+msgid "Update Global Price"
+msgstr "Mettre à jour le prix global"
+
+msgid "Use Image"
+msgstr "Utiliser l'image"
+
+msgid "Use Runner"
+msgstr "Utiliser le Runner"
+
+msgid "Valider"
+msgstr "Valider"
+
+msgid "Velocity Rank"
+msgstr "Rang de vélocité"
+
+msgid "Verifying..."
+msgstr "Vérification..."
+
+msgid "Waiting for items"
+msgstr "En attente d'articles"
+
+msgid "Waiting for payment on terminal..."
+msgstr "En attente du paiement sur le terminal..."
+
+msgid "Wallee integration is not available on this instance."
+msgstr "L'intégration Wallee n'est pas disponible sur cette instance."
+
+msgid "Wallet reversal for return {0} against {1}: returned {2}, reversed {3}"
+msgstr ""
+"Annulation portefeuille pour le retour {0} sur {1} : retourné {2}, annulé "
+"{3}"
+
+msgid "Welcome! Please place your order at the counter."
+msgstr "Bienvenue ! Veuillez passer votre commande au comptoir."
+
+msgid ""
+"When set, cashiers can withdraw cash at closing. The remaining balance is "
+"suggested as the next opening amount."
+msgstr ""
+"Lorsque défini, les caissiers peuvent retirer des espèces à la clôture. Le "
+"solde restant est suggéré comme montant d'ouverture suivant."
+
+msgid "Where to find the password?"
+msgstr "Où trouver le mot de passe ?"
+
+msgid ""
+"Whether guest orders go straight to kitchen or need server confirmation"
+msgstr ""
+"Si les commandes invités vont directement en cuisine ou nécessitent la "
+"validation du serveur"
+
+msgid "Window"
+msgstr "Fenêtre"
+
+msgid ""
+"Withdraw cash from the register. The remaining amount will be suggested as "
+"opening balance for the next shift."
+msgstr ""
+"Retirer des espèces de la caisse. Le montant restant sera suggéré comme "
+"solde d'ouverture pour le prochain service."
+
+msgid "Withdrawal amount cannot exceed the counted cash amount."
+msgstr ""
+"Le montant du retrait ne peut pas dépasser le montant d'espèces compté."
+
+msgid "Withdrawal template has no accounts configured"
+msgstr "Le modèle de retrait n'a aucun compte configuré"
+
+msgid "Workflow created"
+msgstr "Workflow créé"
+
+msgid "Workflow deleted"
+msgstr "Workflow supprimé"
+
+msgid "Workflow name (e.g. Fast Bar)"
+msgstr "Nom du workflow (ex. Bar rapide)"
+
+msgid "Workflow saved"
+msgstr "Workflow enregistré"
+
+msgid ""
+"Workflow {0} is already set as default. Only one default workflow is "
+"allowed."
+msgstr ""
+"Le workflow {0} est déjà défini par défaut. Un seul workflow par défaut est "
+"autorisé."
+
+msgid "Write Off"
+msgstr "Perte/Écart"
+
+msgid "Write-off amount {0} exceeds limit {1}"
+msgstr "Le montant de perte {0} dépasse la limite {1}"
+
+msgid "Yes, select"
+msgstr "Oui, sélectionner"
+
+msgid "Yes, update all cards"
+msgstr "Oui, mettre à jour toutes les cartes"
+
+msgid "You are disabling this item. Apply to all cards or just this one?"
+msgstr ""
+"Vous désactivez cet article. Appliquer à toutes les cartes ou celle-ci "
+"uniquement ?"
+
+msgid "You are enabling this item. Apply to all cards or just this one?"
+msgstr ""
+"Vous activez cet article. Appliquer à toutes les cartes ou celle-ci "
+"uniquement ?"
+
+msgid "You are offline"
+msgstr "Vous êtes hors ligne"
+
+msgid ""
+"You can filter by either Item Group or Brand, not both at the same time."
+msgstr ""
+"Vous pouvez filtrer par groupe d'articles ou par marque, mais pas les deux "
+"en même temps."
+
+msgid ""
+"You changed the global price. Do you also want to update the price on all "
+"other cards that use this item?"
+msgstr ""
+"Vous avez changé le prix global. Souhaitez-vous aussi mettre à jour le prix "
+"sur toutes les autres cartes utilisant cet article ?"
+
+msgid "You don't have permission to create items"
+msgstr "Vous n'avez pas la permission de créer des articles"
+
+msgid "You don't have permission to email this invoice"
+msgstr "Vous n'avez pas la permission d'envoyer cette facture par e-mail"
+
+msgid "You have unsaved changes. Do you want to save before leaving?"
+msgstr ""
+"Vous avez des modifications non enregistrées. Voulez-vous enregistrer avant "
+"de quitter ?"
+
+msgid "You will be redirected to the Neoffice back-office."
+msgstr "Vous allez être redirigé vers le back-office Neoffice."
+
+msgid "Your Name"
+msgstr "Votre nom"
+
+msgid "Your Order"
+msgstr "Votre commande"
+
+msgid "Your details"
+msgstr "Vos coordonnées"
+
+msgid "Your items will appear here as they are scanned"
+msgstr "Vos articles apparaîtront ici au fur et à mesure du scan"
+
+msgid "Your name"
+msgstr "Votre nom"
+
+msgid ""
+"Your order has been sent to the kitchen. You can continue browsing the menu."
+msgstr ""
+"Votre commande a été envoyée en cuisine. Vous pouvez continuer à parcourir "
+"le menu."
+
+msgid "Your order number"
+msgstr "Votre numéro de commande"
+
+msgid "Your payment has been recorded."
+msgstr "Votre paiement a été enregistré."
+
+msgid "Zoom in"
+msgstr "Zoomer"
+
+msgid "Zoom out"
+msgstr "Dézoomer"
+
+msgid "e.g. All our products are fresh"
+msgstr "ex. Tous nos produits sont frais"
+
+msgid "e.g. Bank deposit ref #123"
+msgstr "ex. Réf. dépôt bancaire #123"
+
+msgid "e.g. Desserts, Boissons..."
+msgstr "ex. Desserts, Boissons..."
+
+msgid "e.g. Kitchen, Bar"
+msgstr "ex. Cuisine, Bar"
+
+msgid "e.g. Main Hall"
+msgstr "ex. Salle principale"
+
+msgid "e.g. Pizza 4 fromages"
+msgstr "ex. Pizza 4 fromages"
+
+msgid "e.g. Table 5"
+msgstr "ex. Table 5"
+
+msgid "fewer seats than guests"
+msgstr "moins de places que de convives"
+
+msgid "Price ±"
+msgstr "Prix ±"
+
 #~ msgid ""
 #~ "\"{0}\" cannot be added to cart. Bundle is out of stock. Allow Negative "
 #~ "Stock is disabled."
@@ -3991,16 +7075,16 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ "These fields are protected and read-only.</strong><br>To modify them, "
 #~ "provide the Master Key above.</div>"
 #~ msgstr ""
-#~ "<div class=\"alert alert-info\" style=\"margin-bottom: 15px;\"><strong>🔒 "
-#~ "Ces champs sont protégés et en lecture seule.</strong><br>Pour les "
-#~ "modifier, fournissez la clé maître ci-dessus.</div>"
+#~ "<div class=\"alert alert-info\" style=\"margin-bottom: 15px;\"><strong>🔒 Ces"
+#~ " champs sont protégés et en lecture seule.</strong><br>Pour les modifier, "
+#~ "fournissez la clé maître ci-dessus.</div>"
 
 #~ msgid ""
 #~ "<div class=\"alert alert-warning\"><strong>🔒 Protected "
 #~ "Configuration:</strong><br><br>• To <strong>disable branding</strong>, "
-#~ "uncheck 'Enabled' and provide the Master Key<br>• To <strong>modify "
-#~ "branding fields</strong> (text, name, URL, interval), provide the Master "
-#~ "Key<br>• Master Key format: <code>{\"key\": \"...\", \"phrase\": "
+#~ "uncheck 'Enabled' and provide the Master Key<br>• To <strong>modify branding"
+#~ " fields</strong> (text, name, URL, interval), provide the Master Key<br>• "
+#~ "Master Key format: <code>{\"key\": \"...\", \"phrase\": "
 #~ "\"...\"}</code><br><br>⚠️ The Master Key is not stored in the system and "
 #~ "must be kept secure.<br>📧 Contact BrainWise support if you've lost the "
 #~ "key.</div>"
@@ -4010,8 +7094,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ "'Activé' et fournissez la clé maître<br>• Pour <strong>modifier les champs "
 #~ "de marque</strong> (texte, nom, URL, intervalle), fournissez la clé "
 #~ "maître<br>• Format de la clé maître : <code>{\"key\": \"...\", \"phrase\": "
-#~ "\"...\"}</code><br><br>⚠️ La clé maître n'est pas stockée dans le système "
-#~ "et doit être conservée en sécurité.<br>📧 Contactez le support BrainWise si "
+#~ "\"...\"}</code><br><br>⚠️ La clé maître n'est pas stockée dans le système et"
+#~ " doit être conservée en sécurité.<br>📧 Contactez le support BrainWise si "
 #~ "vous avez perdu la clé.</div>"
 
 #~ msgid "Accept customer purchase orders"
@@ -4145,9 +7229,9 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ "Automatically set taxes as included in item prices. When enabled, displayed "
 #~ "prices include tax amounts."
 #~ msgstr ""
-#~ "Définir automatiquement les taxes comme incluses dans les prix des "
-#~ "articles. Lorsque cette option est activée, les prix affichés incluent les "
-#~ "montants de taxe."
+#~ "Définir automatiquement les taxes comme incluses dans les prix des articles."
+#~ " Lorsque cette option est activée, les prix affichés incluent les montants "
+#~ "de taxe."
 
 #~ msgid "Available Balance"
 #~ msgstr "Solde disponible"
@@ -4179,10 +7263,11 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgid "Branding Disabled"
 #~ msgstr "Image de marque désactivée"
 
-#~ msgid "Branding is always enabled unless you provide the Master Key to disable it"
+#~ msgid ""
+#~ "Branding is always enabled unless you provide the Master Key to disable it"
 #~ msgstr ""
-#~ "L'image de marque est toujours activée sauf si vous fournissez la clé "
-#~ "maître pour la désactiver"
+#~ "L'image de marque est toujours activée sauf si vous fournissez la clé maître"
+#~ " pour la désactiver"
 
 #~ msgid "Cancelled"
 #~ msgstr "Annulé"
@@ -4260,8 +7345,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgstr "Différence"
 
 #~ msgid ""
-#~ "Disabled: No sales person selection. Single: Select one sales person "
-#~ "(100%). Multiple: Select multiple with allocation percentages."
+#~ "Disabled: No sales person selection. Single: Select one sales person (100%)."
+#~ " Multiple: Select multiple with allocation percentages."
 #~ msgstr ""
 #~ "Désactivé : Pas de sélection de vendeur. Simple : Sélectionner un vendeur "
 #~ "(100%). Multiple : Sélectionner plusieurs avec pourcentages d'allocation."
@@ -4318,7 +7403,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgstr "Activer le calcul des frais de livraison"
 
 #~ msgid "Enable loyalty program features for this POS profile"
-#~ msgstr "Activer les fonctionnalités du programme de fidélité pour ce profil POS"
+#~ msgstr ""
+#~ "Activer les fonctionnalités du programme de fidélité pour ce profil POS"
 
 #~ msgid "Enable sales order creation"
 #~ msgstr "Activer la création de bons de commande"
@@ -4345,24 +7431,19 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgid "Failed"
 #~ msgstr "Échoué"
 
-#~ msgid "Failed to save current cart. Draft loading cancelled to prevent data loss."
+#~ msgid ""
+#~ "Failed to save current cart. Draft loading cancelled to prevent data loss."
 #~ msgstr ""
 #~ "Échec de l'enregistrement du panier actuel. Chargement du brouillon annulé "
 #~ "pour éviter la perte de données."
 
 #~ msgid ""
-#~ "Failed to sync invoice for {0}\\n"
-#~ "\\n"
-#~ "${1}\\n"
-#~ "\\n"
-#~ "You can delete this invoice from the offline queue if you don't need it."
+#~ "Failed to sync invoice for {0}\\n\\n${1}\\n\\nYou can delete this invoice "
+#~ "from the offline queue if you don't need it."
 #~ msgstr ""
-#~ "Échec de la synchronisation de la facture pour {0}\\n"
-#~ "\\n"
-#~ "${1}\\n"
-#~ "\\n"
-#~ "Vous pouvez supprimer cette facture de la file d'attente hors ligne si vous "
-#~ "n'en avez pas besoin."
+#~ "Échec de la synchronisation de la facture pour {0}\\n\\n${1}\\n\\nVous "
+#~ "pouvez supprimer cette facture de la file d'attente hors ligne si vous n'en "
+#~ "avez pas besoin."
 
 #~ msgid "General Settings"
 #~ msgstr "Paramètres généraux"
@@ -4520,7 +7601,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgid "Number of days the referee's coupon will be valid"
 #~ msgstr "Nombre de jours de validité du coupon du parrainé"
 
-#~ msgid "Number of days the referrer's coupon will be valid after being generated"
+#~ msgid ""
+#~ "Number of days the referrer's coupon will be valid after being generated"
 #~ msgstr "Nombre de jours de validité du coupon du parrain après sa génération"
 
 #~ msgid "Number of decimal places for amounts"
@@ -4625,12 +7707,14 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgid "Price Discount Scheme "
 #~ msgstr "Règle de remise sur prix "
 
-#~ msgid "Prices are now tax-exclusive. This will apply to new items added to cart."
+#~ msgid ""
+#~ "Prices are now tax-exclusive. This will apply to new items added to cart."
 #~ msgstr ""
-#~ "Les prix sont maintenant hors taxes. Cela s'appliquera aux nouveaux "
-#~ "articles ajoutés au panier."
+#~ "Les prix sont maintenant hors taxes. Cela s'appliquera aux nouveaux articles"
+#~ " ajoutés au panier."
 
-#~ msgid "Prices are now tax-inclusive. This will apply to new items added to cart."
+#~ msgid ""
+#~ "Prices are now tax-inclusive. This will apply to new items added to cart."
 #~ msgstr ""
 #~ "Les prix sont maintenant TTC. Cela s'appliquera aux nouveaux articles "
 #~ "ajoutés au panier."
@@ -4674,7 +7758,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgstr "Compte créances pour les portefeuilles clients"
 
 #~ msgid "Referee Rewards (Discount for New Customer Using Code)"
-#~ msgstr "Récompenses parrainé (Remise pour le nouveau client utilisant le code)"
+#~ msgstr ""
+#~ "Récompenses parrainé (Remise pour le nouveau client utilisant le code)"
 
 #~ msgid "Reference DocType"
 #~ msgstr "Type de document de référence"
@@ -4838,8 +7923,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ "To disable branding, you must provide the Master Key in JSON format: "
 #~ "<code>{\"key\": \"...\", \"phrase\": \"...\"}</code>"
 #~ msgstr ""
-#~ "Pour désactiver la marque, vous devez fournir la clé maître au format JSON "
-#~ ": <code>{\"key\": \"...\", \"phrase\": \"...\"}</code>"
+#~ "Pour désactiver la marque, vous devez fournir la clé maître au format JSON :"
+#~ " <code>{\"key\": \"...\", \"phrase\": \"...\"}</code>"
 
 #~ msgid "Total Referrals"
 #~ msgstr "Total des parrainages"
@@ -4895,7 +7980,8 @@ msgstr "✗ Échec de la connexion : {0}"
 #~ msgid "You don't have permission to create coupons"
 #~ msgstr "Vous n'avez pas la permission de créer des coupons"
 
-#~ msgid "You don't have permission to create customers. Contact your administrator."
+#~ msgid ""
+#~ "You don't have permission to create customers. Contact your administrator."
 #~ msgstr ""
 #~ "Vous n'avez pas la permission de créer des clients. Contactez votre "
 #~ "administrateur."
