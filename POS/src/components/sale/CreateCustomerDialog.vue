@@ -443,8 +443,24 @@ const updateTerritoryFromCountry = () => {
 // =============================================================================
 
 const createCustomerResource = createResource({
-	url: "frappe.client.insert",
-	auto: false,
+	url: "pos_next.api.customers.create_customer",
+	makeParams: () => ({
+		customer_name: customerData.value.customer_name,
+		mobile_no: customerData.value.mobile_no || "",
+		email_id: customerData.value.email_id || "",
+		customer_group: customerData.value.customer_group || __("Individual"),
+		territory: customerData.value.territory || __("All Territories"),
+		pos_profile: props.posProfile,
+	}),
+	onSuccess: (data) => {
+		showSuccess(__("Customer {0} created successfully", [data.customer_name]))
+		emit("customer-created", data)
+		show.value = false
+	},
+	onError: (error) => {
+		log.error("Error creating customer", error)
+		showError(error.message || __("Failed to create customer"))
+	},
 })
 
 const createAddressResource = createResource({

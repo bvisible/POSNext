@@ -53,6 +53,7 @@
 							</div>
 							<div class="flex items-center gap-1">
 								<button
+									v-if="props.allowPrintDraftInvoices"
 									@click.stop="handlePrintDraft(draft)"
 									class="text-gray-400 hover:text-blue-600 transition-colors p-1"
 									:title="__('Print draft')"
@@ -194,6 +195,10 @@ const props = defineProps({
 		type: String,
 		default: DEFAULT_CURRENCY,
 	},
+	allowPrintDraftInvoices: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 const emit = defineEmits(["update:modelValue", "load-draft", "drafts-updated"])
@@ -232,6 +237,10 @@ async function loadDrafts() {
 }
 
 function handlePrintDraft(draft) {
+	if (!props.allowPrintDraftInvoices) {
+		return
+	}
+
 	try {
 		const invoiceData = {
 			name: draft.draft_id,
@@ -243,6 +252,9 @@ function handlePrintDraft(draft) {
 			customer_name:
 				draft.customer?.customer_name || draft.customer?.name || draft.customer,
 			status: "Draft",
+			header: "Draft",
+			footer:
+				"الفاتورة لم يتم تسجيلها في حسابات الجهة، وبالتالي لا يُعتد بها، ولا تتحمل الجهة أي مسؤولية عن أي أضرار قد تنتج عنها.",
 		}
 		printInvoiceCustom(invoiceData)
 	} catch (error) {

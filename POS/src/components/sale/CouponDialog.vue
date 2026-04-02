@@ -196,6 +196,14 @@ const props = defineProps({
 			"Net total AFTER pricing rules but BEFORE additional discount - used for gift card calculations",
 		),
 	},
+	taxAmount: {
+		type: Number,
+		default: 0,
+	},
+	grandTotal: {
+		type: Number,
+		default: 0,
+	},
 	items: Array,
 	posProfile: String,
 	customer: String,
@@ -291,6 +299,14 @@ function applyGiftCard(card) {
 	applyCoupon()
 }
 
+function getCouponBaseAmount(coupon) {
+	const grandTotal = Number.parseFloat(props.grandTotal || 0)
+	const taxAmount = Number.parseFloat(props.taxAmount || 0)
+	const netTotal = Math.max(grandTotal - taxAmount, 0)
+
+	return coupon.apply_on === "Grand Total" ? grandTotal : netTotal
+}
+
 async function applyCoupon() {
 	if (!couponCode.value.trim()) {
 		errorMessage.value = __("Please enter a coupon code")
@@ -321,9 +337,10 @@ async function applyCoupon() {
 
 		const coupon = validationData.coupon
 		const isGiftCard = coupon.coupon_type === "Gift Card" || coupon.is_gift_card
+		const baseAmount = getCouponBaseAmount(coupon)
 
-		// Check minimum amount (on subtotal before tax)
-		if (coupon.min_amount && props.subtotal < coupon.min_amount) {
+		// Check minimum amount on the configured coupon base
+		if (coupon.min_amount && baseAmount < coupon.min_amount) {
 			errorMessage.value = __("This coupon requires a minimum purchase of ", [
 				formatCurrency(coupon.min_amount),
 			])
@@ -362,8 +379,8 @@ async function applyCoupon() {
 
 		// Clamp discount to the appropriate total based on coupon type
 		// Gift cards: clamp to netTotal (after pricing rules)
-		// Regular coupons: clamp to subtotal (original prices)
-		const maxDiscount = isGiftCard ? props.netTotal : props.subtotal
+		// Regular coupons: clamp to baseAmount (respects apply_on setting)
+		const maxDiscount = isGiftCard ? props.netTotal : baseAmount
 		discountAmount = Math.min(discountAmount, maxDiscount)
 
 		appliedDiscount.value = {
@@ -378,6 +395,7 @@ async function applyCoupon() {
 			isGiftCard: isGiftCard,
 			availableBalance: isGiftCard ? availableBalance : null,
 			remainingBalance: isGiftCard ? remainingBalance : null,
+			base_amount: baseAmount,
 		}
 
 		emit("discount-applied", appliedDiscount.value)

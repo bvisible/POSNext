@@ -118,6 +118,7 @@
 							</button>
 							<div class="flex-1 h-full flex items-center justify-center px-3">
 								<input
+									ref="quantityInput"
 									v-model.number="quantity"
 									type="number"
 									min="1"
@@ -239,7 +240,7 @@ import {
 } from "@/utils/currency"
 import { Button, Dialog } from "frappe-ui"
 import { createResource } from "frappe-ui"
-import { computed, ref, watch } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import TranslatedHTML from "../common/TranslatedHTML.vue"
 import { offlineState } from "@/utils/offline/offlineState"
 import { getCachedVariants, cacheItems } from "@/utils/offline/items"
@@ -270,6 +271,7 @@ const options = ref([])
 const selectedOption = ref(null)
 const quantity = ref(1)
 const selectedAttributes = ref({}) // For variant attribute selection
+const quantityInput = ref(null)
 
 // Computed properties for dialog customization
 const dialogTitle = computed(() => {
@@ -440,6 +442,11 @@ watch(
 	(isOpen) => {
 		if (isOpen && props.item) {
 			loadOptions()
+		}
+		if (isOpen && props.mode === "uom") {
+			nextTick(() => {
+				setTimeout(() => { quantityInput.value?.focus(); quantityInput.value?.select() }, 100)
+			})
 		}
 	},
 )

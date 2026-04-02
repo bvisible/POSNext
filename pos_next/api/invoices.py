@@ -917,8 +917,31 @@ def update_invoice(data):
 
         invoice_doc.disable_rounded_total = disable_rounded
 
-        # Populate missing fields (company, currency, accounts, etc.)
-        invoice_doc.set_missing_values()
+        # ========================================================================
+        # POPULATE MISSING FIELDS — using for_validate=True intentionally
+        # ========================================================================
+        # ERPNext's set_missing_values() calls set_pos_fields() internally.
+        #
+        # With for_validate=False (the default):
+        #   set_pos_fields() -> update_multi_mode_option() which does:
+        #     1. doc.set("payments", [])          — wipes ALL payment rows
+        #     2. Rebuilds payments from POS Profile template with amount=0
+        #   Result: frontend payment amounts are destroyed before the invoice
+        #   is saved, causing invoices to appear unpaid (outstanding = grand_total).
+        #
+        # With for_validate=True:
+        #   set_pos_fields() skips update_multi_mode_option() entirely,
+        #   and only fills in missing fields (debit_to, currency, write_off_account,
+        #   cost_center, etc.) without overwriting values already set.
+        #   Payment accounts are set separately via _set_payment_accounts() below.
+        #
+        # This is safe on all ERPNext versions because POS Next already sets
+        # the fields that for_validate=True skips:
+        #   - ignore_pricing_rule  → set above (line ~752)
+        #   - customer             → sent from frontend
+        #   - tax_category         → sent from frontend or not needed
+        # ========================================================================
+        invoice_doc.set_missing_values(for_validate=True)
 
         # Re-enforce ignore_pricing_rule after set_missing_values().
         # ERPNext's set_pos_fields() (called inside set_missing_values when
@@ -1530,6 +1553,12 @@ def submit_invoice(invoice=None, data=None):
         # (global Stock Settings, POS Settings, and POS Profile flags)
         _validate_stock_on_invoice(invoice_doc)
 
+        # Allow pure customer-credit POS sales to submit without a payment row.
+        customer_credit_dict = data.get("customer_credit_dict") or invoice.get("customer_credit_dict")
+        redeemed_customer_credit = data.get("redeemed_customer_credit") or invoice.get("redeemed_customer_credit")
+        if redeemed_customer_credit and not invoice_doc.payments:
+            invoice_doc.flags.pos_next_redeemed_customer_credit = flt(redeemed_customer_credit)
+
         # Save before submit
         # Re-enforce ignore_pricing_rule so that save() -> validate() does not
         # call apply_pricing_rule_on_transaction() and overwrite the discount
@@ -1613,9 +1642,6 @@ def submit_invoice(invoice=None, data=None):
             _complete_offline_sync(sync_record_name, invoice_doc.name)
 
         # Handle credit redemption after successful submission
-        customer_credit_dict = data.get("customer_credit_dict") or invoice.get("customer_credit_dict")
-        redeemed_customer_credit = data.get("redeemed_customer_credit") or invoice.get("redeemed_customer_credit")
-
         if redeemed_customer_credit and customer_credit_dict:
             try:
                 from pos_next.api.credit_sales import redeem_customer_credit
