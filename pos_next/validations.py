@@ -38,6 +38,10 @@ def item_query(doctype, txt, searchfield, start, page_len, filters):
 	conditions = ["disabled = 0"]
 	values = []
 
+	# Hide internal items from non-Administrator users
+	if frappe.session.user != "Administrator":
+		conditions.append("IFNULL(is_internal_item, 0) != 1")
+
 	if txt:
 		conditions.append(f"({searchfield} LIKE %s OR item_name LIKE %s)")
 		values.extend([f"%{txt}%", f"%{txt}%"])
