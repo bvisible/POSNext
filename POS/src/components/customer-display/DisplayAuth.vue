@@ -77,7 +77,7 @@
 
 			<!-- Footer -->
 			<p class="text-center text-gray-500 text-sm">
-				{{ __("POS Next Customer Display") }}
+				{{ __("Neopos Customer Display") }}
 			</p>
 		</div>
 	</div>

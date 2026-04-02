@@ -4,7 +4,7 @@ import { printHTML as qzPrintHTML } from "@/utils/qzTray"
 
 const log = logger.create("PrintInvoice")
 
-const DEFAULT_PRINT_FORMAT = "POS Next Receipt"
+const DEFAULT_PRINT_FORMAT = "Neopos Receipt"
 
 // ============================================================================
 // Shared helpers
@@ -234,7 +234,7 @@ export function printInvoiceCustom(invoiceData) {
 		<body>
 			<div class="receipt">
 				<div class="header">
-					<div class="company-name">${invoiceData.company || "POS Next"}</div>
+					<div class="company-name">${invoiceData.company || "Neopos"}</div>
 					<div style="font-size: 12px;">${invoiceData.header || __("TAX INVOICE")}</div>
 				</div>
 
@@ -386,7 +386,7 @@ export function printProvisionalTicket(ticketData) {
 		<body>
 			<div class="receipt">
 				<div class="header">
-					<div class="company-name">${ticketData.company || "POS Next"}</div>
+					<div class="company-name">${ticketData.company || "Neopos"}</div>
 					<div style="font-size: 14px; font-weight: bold; margin-top: 5px; padding: 4px 8px; border: 2px solid #000; display: inline-block;">${__("PROVISIONAL TICKET")}</div>
 					<div style="font-size: 11px; margin-top: 5px;">${__("Not yet collected")}</div>
 				</div>

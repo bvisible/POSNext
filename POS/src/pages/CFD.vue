@@ -74,7 +74,7 @@
 			<!-- Footer -->
 			<div class="p-6 text-center relative z-10 bg-black/30 backdrop-blur-sm">
 				<p class="text-xl font-medium text-gray-300 mb-2">{{ __("Thank you for your visit!") }}</p>
-				<p class="text-sm text-gray-500">Powered by POS Next</p>
+				<p class="text-sm text-gray-500">Powered by Neopos</p>
 			</div>
 		</div>
 	</div>

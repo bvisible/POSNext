@@ -74,8 +74,8 @@ export default defineConfig({
 			registerType: "autoUpdate",
 			includeAssets: ["favicon.png", "icon.svg", "icon-maskable.svg"],
 			manifest: {
-				name: "POSNext",
-				short_name: "POSNext",
+				name: "Neopos",
+				short_name: "Neopos",
 				description:
 					"Point of Sale system with real-time billing, stock management, and offline support",
 				theme_color: "#4F46E5",

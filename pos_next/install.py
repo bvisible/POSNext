@@ -102,16 +102,16 @@ def ensure_coupon_code_field(quiet=False):
 
 def setup_default_print_format(quiet=False):
 	"""
-	Set POS Next Receipt as default print format for POS Profiles if not already set.
+	Set Neopos Receipt as default print format for POS Profiles if not already set.
 
 	Args:
 		quiet (bool): If True, suppress detailed logs
 	"""
 	try:
 		# Check if the print format exists
-		if not frappe.db.exists("Print Format", "POS Next Receipt"):
+		if not frappe.db.exists("Print Format", "Neopos Receipt"):
 			if not quiet:
-				log_message("POS Next Receipt print format not found, skipping default setup", level="warning")
+				log_message("Neopos Receipt print format not found, skipping default setup", level="warning")
 			return
 
 		# Get all POS Profiles without a print format
@@ -129,7 +129,7 @@ def setup_default_print_format(quiet=False):
 						"POS Profile",
 						profile.name,
 						"print_format",
-						"POS Next Receipt",
+						"Neopos Receipt",
 						update_modified=False
 					)
 					if not quiet:

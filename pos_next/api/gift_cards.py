@@ -445,7 +445,7 @@ def apply_gift_card(coupon_code, invoice_total, customer=None, company=None):
 
 	# Check if it's a POS Next gift card
 	if not coupon.get("pos_next_gift_card"):
-		return {"success": False, "message": _("This is not a POS Next gift card")}
+		return {"success": False, "message": _("This is not a Neopos gift card")}
 
 	# Check validity dates
 	today = getdate(nowdate())

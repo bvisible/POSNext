@@ -759,7 +759,7 @@
 						</svg>
 					</div>
 					<h3 class="mt-4 text-lg font-medium text-gray-900">
-						{{ __("Welcome to POS Next") }}
+						{{ __("Welcome to Neopos") }}
 					</h3>
 					<p class="mt-2 text-sm text-gray-500">
 						{{ __("Please open a shift to start making sales") }}
@@ -1224,7 +1224,7 @@
 								{{ __("Sign Out?") }}
 							</h3>
 							<p class="text-sm text-gray-600">
-								{{ __("You will be logged out of POS Next") }}
+								{{ __("You will be logged out of Neopos") }}
 							</p>
 						</div>
 

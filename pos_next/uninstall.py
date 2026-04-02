@@ -102,7 +102,7 @@ def remove_print_formats():
 
 		# List of print formats to remove
 		print_formats = [
-			"POS Next Receipt",
+			"Neopos Receipt",
 		]
 
 		removed_count = 0
@@ -163,7 +163,7 @@ def reset_pos_profiles():
 		# Find POS Profiles using POS Next print format
 		pos_profiles = frappe.get_all(
 			"POS Profile",
-			filters={"print_format": "POS Next Receipt"},
+			filters={"print_format": "Neopos Receipt"},
 			fields=["name"]
 		)
 

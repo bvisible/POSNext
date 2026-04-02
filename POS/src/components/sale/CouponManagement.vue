@@ -657,11 +657,11 @@ const filteredCoupons = computed(() => {
 	}
 
 	// Filter by type
-	// Note: POS Next gift cards have coupon_type='Promotional' but pos_next_gift_card=1
+	// Note: Neopos gift cards have coupon_type='Promotional' but pos_next_gift_card=1
 	if (filterType.value !== "all") {
 		filtered = filtered.filter((c) => {
 			if (filterType.value === "Gift Card") {
-				// Include both ERPNext gift cards (coupon_type) and POS Next gift cards (pos_next_gift_card)
+				// Include both ERPNext gift cards (coupon_type) and Neopos gift cards (pos_next_gift_card)
 				return c.coupon_type === "Gift Card" || c.pos_next_gift_card === 1
 			}
 			if (filterType.value === "Promotional") {

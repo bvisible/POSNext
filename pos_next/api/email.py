@@ -23,7 +23,7 @@ def send_invoice_email(invoice_name, recipients, subject=None, message=None, pri
 		if pos_profile:
 			print_format = frappe.db.get_value("POS Profile", pos_profile, "print_format")
 		if not print_format:
-			print_format = "POS Next Receipt"
+			print_format = "Neopos Receipt"
 
 	# Build default subject/message if not provided
 	if not subject:
@@ -81,7 +81,7 @@ def get_invoice_email_context(invoice_name):
 	if inv.pos_profile:
 		print_format = frappe.db.get_value("POS Profile", inv.pos_profile, "print_format") or ""
 	if not print_format:
-		print_format = "POS Next Receipt"
+		print_format = "Neopos Receipt"
 
 	# Build default subject and message
 	subject = _("Invoice {0} from {1}").format(invoice_name, inv.company or "")

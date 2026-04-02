@@ -744,7 +744,7 @@ def get_guest_receipt_pdf(token):
 	if token_doc.pos_profile:
 		print_format = frappe.db.get_value("POS Profile", token_doc.pos_profile, "print_format")
 	if not print_format:
-		print_format = "POS Next Receipt"
+		print_format = "Neopos Receipt"
 
 	from frappe.utils.pdf import get_pdf
 

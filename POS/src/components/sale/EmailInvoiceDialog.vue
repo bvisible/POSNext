@@ -45,7 +45,7 @@
 				<!-- PDF Attachment info -->
 				<div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600">
 					<FeatherIcon name="paperclip" class="w-4 h-4" />
-					<span>{{ __("PDF attached:") }} <strong>{{ emailData.print_format || "POS Next Receipt" }}</strong></span>
+					<span>{{ __("PDF attached:") }} <strong>{{ emailData.print_format || "Neopos Receipt" }}</strong></span>
 				</div>
 
 				<!-- Error message -->
@@ -125,7 +125,7 @@ async function fetchEmailContext() {
 			recipient: ctx.recipient || "",
 			subject: ctx.subject || "",
 			message: ctx.message || "",
-			print_format: ctx.print_format || "POS Next Receipt",
+			print_format: ctx.print_format || "Neopos Receipt",
 		}
 	} catch (err) {
 		console.error("Failed to load email context:", err)
@@ -134,7 +134,7 @@ async function fetchEmailContext() {
 			recipient: "",
 			subject: `Invoice ${props.invoiceName}`,
 			message: "",
-			print_format: "POS Next Receipt",
+			print_format: "Neopos Receipt",
 		}
 	} finally {
 		loading.value = false
