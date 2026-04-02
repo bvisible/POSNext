@@ -73,7 +73,7 @@ class RestaurantSettings(Document):
 				"parent_item_group": "All Item Groups",
 			}).insert(ignore_permissions=True)
 
-		# Create TIP item
+		# Create TIP item (marked as internal — hidden from user lists/searches)
 		item = frappe.get_doc({
 			"doctype": "Item",
 			"item_code": "TIP",
@@ -81,6 +81,7 @@ class RestaurantSettings(Document):
 			"item_group": "Services",
 			"is_stock_item": 0,
 			"standard_rate": 0,
+			"is_internal_item": 1,
 			"description": _("Gratuity / Pourboire"),
 		})
 

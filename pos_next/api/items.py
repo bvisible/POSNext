@@ -758,6 +758,7 @@ def _build_item_base_conditions(
 	conditions = [
 		"i.disabled = 0",
 		"i.is_sales_item = 1",
+		"IFNULL(i.is_internal_item, 0) != 1",
 	]
 	if exclude_variants:
 		conditions.append("IFNULL(i.variant_of, '') = ''")
