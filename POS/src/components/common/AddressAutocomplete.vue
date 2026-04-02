@@ -1,5 +1,5 @@
 <template>
-	<div class="relative" ref="wrapperRef">
+	<div ref="wrapperRef">
 		<input
 			ref="inputRef"
 			:value="modelValue"
@@ -15,29 +15,33 @@
 			@focus="onFocus"
 		/>
 
-		<!-- Suggestions dropdown -->
-		<div
-			v-if="open && suggestions.length > 0"
-			class="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-neo-sm shadow-lg max-h-60 overflow-y-auto z-50"
-		>
-			<button
-				v-for="(item, idx) in suggestions"
-				:key="idx"
-				type="button"
-				class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-0 cursor-pointer transition-colors"
-				:class="idx === highlightedIndex ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'"
-				@mousedown.prevent="selectSuggestion(item)"
-				@mouseenter="highlightedIndex = idx"
+		<!-- Teleported dropdown to avoid overflow clipping from parent containers -->
+		<Teleport to="body">
+			<div
+				v-if="open && suggestions.length > 0"
+				ref="dropdownRef"
+				class="fixed bg-white border border-gray-200 rounded-neo-sm shadow-lg max-h-60 overflow-y-auto"
+				:style="dropdownStyle"
 			>
-				<span v-html="item.label" />
-			</button>
-		</div>
+				<button
+					v-for="(item, idx) in suggestions"
+					:key="idx"
+					type="button"
+					class="w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-0 cursor-pointer transition-colors"
+					:class="idx === highlightedIndex ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'"
+					@mousedown.prevent="selectSuggestion(item)"
+					@mouseenter="highlightedIndex = idx"
+				>
+					<span v-html="item.label" />
+				</button>
+			</div>
+		</Teleport>
 	</div>
 </template>
 
 <script setup>
 import { useAddressAutocomplete } from "@/composables/useAddressAutocomplete"
-import { onBeforeUnmount, ref, watch } from "vue"
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue"
 
 const props = defineProps({
 	modelValue: { type: String, default: "" },
@@ -53,6 +57,25 @@ const open = ref(false)
 const highlightedIndex = ref(-1)
 const wrapperRef = ref(null)
 const inputRef = ref(null)
+const dropdownRef = ref(null)
+const dropdownPos = ref({ top: 0, left: 0, width: 0 })
+
+const dropdownStyle = computed(() => ({
+	top: `${dropdownPos.value.top}px`,
+	left: `${dropdownPos.value.left}px`,
+	width: `${dropdownPos.value.width}px`,
+	zIndex: 99999,
+}))
+
+function updateDropdownPosition() {
+	if (!inputRef.value) return
+	const rect = inputRef.value.getBoundingClientRect()
+	dropdownPos.value = {
+		top: rect.bottom + 4,
+		left: rect.left,
+		width: rect.width,
+	}
+}
 
 function onInput(e) {
 	const val = e.target.value
@@ -68,6 +91,7 @@ function onInput(e) {
 
 function onFocus() {
 	if (suggestions.value.length > 0) {
+		updateDropdownPosition()
 		open.value = true
 	}
 }
@@ -99,14 +123,21 @@ function close() {
 }
 
 function onClickOutside(e) {
-	if (wrapperRef.value && !wrapperRef.value.contains(e.target)) {
+	if (
+		wrapperRef.value && !wrapperRef.value.contains(e.target) &&
+		dropdownRef.value && !dropdownRef.value.contains(e.target)
+	) {
 		close()
 	}
 }
 
-// Reset dropdown when suggestions change
-watch(suggestions, (val) => {
-	if (val.length > 0) open.value = true
+// Reposition dropdown when suggestions appear
+watch(suggestions, async (val) => {
+	if (val.length > 0) {
+		updateDropdownPosition()
+		await nextTick()
+		open.value = true
+	}
 })
 
 document.addEventListener("click", onClickOutside)
