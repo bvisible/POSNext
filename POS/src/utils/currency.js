@@ -16,6 +16,7 @@ let settings = {
 	float: 3,
 	rounding_method: "Banker's Rounding",
 	number_format: "#,###.##",
+	smallest_currency_fraction: 0,
 }
 
 /** Initialize settings from bootstrap data */
@@ -26,6 +27,7 @@ export function initPrecision(data) {
 		float: data.float ?? 3,
 		rounding_method: data.rounding_method || "Banker's Rounding",
 		number_format: data.number_format || "#,###.##",
+		smallest_currency_fraction: data.smallest_currency_fraction || 0,
 	}
 	_formatterCache.clear()
 }
@@ -210,4 +212,18 @@ export function roundCurrency(value) {
 /** Round using system float precision */
 export function roundFloat(value) {
 	return round(value, settings.float)
+}
+
+/** Round to nearest currency fraction step (e.g. 0.05 for CHF) */
+export function roundToFraction(value, fraction) {
+	if (!fraction || fraction <= 0) return roundCurrency(value)
+	return Math.round(value / fraction) * fraction
+}
+
+/** Round grand total using smallest currency fraction if configured */
+export function roundTotal(value) {
+	if (settings.smallest_currency_fraction > 0) {
+		return roundToFraction(value, settings.smallest_currency_fraction)
+	}
+	return roundCurrency(value)
 }

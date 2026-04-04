@@ -195,7 +195,13 @@ async function initializeApp() {
 					await bootstrapStore.loadInitialData()
 					// Initialize precision settings from bootstrap data
 					const { initPrecision } = await import("./utils/currency")
-					initPrecision(bootstrapStore.getPreloadedPrecision())
+					const precision = bootstrapStore.getPreloadedPrecision()
+					const posProfile = bootstrapStore.getPreloadedPOSProfile()
+					initPrecision({
+						...precision,
+						smallest_currency_fraction:
+							posProfile?.smallest_currency_fraction_value || 0,
+					})
 					log.debug("Precision settings initialized from bootstrap")
 
 					// Initialize Socket.IO with correct site name from bootstrap

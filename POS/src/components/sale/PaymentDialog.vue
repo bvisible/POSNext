@@ -1340,6 +1340,8 @@ import {
 	formatCurrency as formatCurrencyUtil,
 	getCurrencySymbol,
 	roundCurrency,
+	roundToFraction,
+	getPrecision,
 } from "@/utils/currency"
 import { getPaymentIcon } from "@/utils/payment"
 import { offlineWorker } from "@/utils/offline/workerClient"
@@ -1361,9 +1363,10 @@ const splitMode = ref(false)
 const splitCount = ref(0)
 const splitPaymentIndex = ref(0)
 
-// Round to nearest 5 centimes (Swiss rounding)
+// Round to nearest currency fraction (e.g. 0.05 for CHF)
 function roundTo5Centimes(amount) {
-	return Math.round(amount * 20) / 20
+	const fraction = getPrecision().smallest_currency_fraction
+	return roundToFraction(amount, fraction || 0.05)
 }
 
 const splitAmountOverride = ref(0)

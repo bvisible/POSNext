@@ -101,6 +101,7 @@ def get_initial_data():
 		"auto_print": pos_profile.get("print_receipt_on_order_complete", 0),
 		"country": pos_profile.get("country"),
 		"ignore_pricing_rule": pos_profile.ignore_pricing_rule or 0,
+		"smallest_currency_fraction_value": _get_smallest_currency_fraction(pos_profile.currency),
 	}
 
 	result["pos_settings"] = _get_pos_settings(pos_profile)
@@ -152,6 +153,14 @@ def _get_precision_settings():
 		"rounding_method": settings.rounding_method,
 		"number_format": settings.number_format,
 	}
+
+
+def _get_smallest_currency_fraction(currency):
+	"""Get the smallest currency fraction value (e.g. 0.05 for CHF)."""
+	if not currency:
+		return 0
+	val = frappe.db.get_value("Currency", currency, "smallest_currency_fraction_value")
+	return float(val) if val else 0
 
 
 def _get_open_shift():

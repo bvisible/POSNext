@@ -657,7 +657,8 @@
 								:subtotal="cartStore.subtotal"
 								:tax-amount="cartStore.totalTax"
 								:discount-amount="cartStore.totalDiscount"
-								:grand-total="cartStore.grandTotal"
+								:grand-total="cartStore.roundedGrandTotal"
+								:rounding-adjustment="cartStore.roundingAdjustment"
 								:pos-profile="shiftStore.profileName"
 								:currency="shiftStore.profileCurrency"
 								:applied-offers="cartStore.appliedOffers"
@@ -778,7 +779,7 @@
 			<!-- Payment Dialog -->
 		<PaymentDialog
 			v-model="uiStore.showPaymentDialog"
-			:grand-total="cartStore.grandTotal"
+			:grand-total="cartStore.roundedGrandTotal"
 			:subtotal="cartStore.subtotal"
 			:guest-paid-amount="cartStore.guestPaidAmount"
 			:pos-profile="shiftStore.profileName"
@@ -851,7 +852,7 @@
 				:subtotal="cartStore.subtotal"
 				:net-total="cartStore.netTotalBeforeAdditionalDiscount"
 				:tax-amount="cartStore.totalTax"
-				:grand-total="cartStore.grandTotal"
+				:grand-total="cartStore.roundedGrandTotal"
 				:items="cartStore.invoiceItems"
 				:pos-profile="shiftStore.profileName"
 				:customer="cartStore.customer?.name || cartStore.customer"
@@ -3286,7 +3287,8 @@ async function handlePaymentCompleted(paymentData) {
 				items: preparedItems,
 				payments: JSON.parse(JSON.stringify(cartStore.payments)),
 				sales_team: JSON.parse(JSON.stringify(cartStore.salesTeam || [])),
-				grand_total: cartStore.grandTotal,
+				grand_total: cartStore.roundedGrandTotal,
+				rounding_adjustment: cartStore.roundingAdjustment,
 				total_tax: cartStore.totalTax,
 				total_discount: cartStore.totalDiscount,
 				write_off_amount: paymentData.write_off_amount || 0,
@@ -3303,13 +3305,13 @@ async function handlePaymentCompleted(paymentData) {
 			await offlineStore.saveInvoiceOffline(invoiceData);
 			uiStore.showSuccess(
 				`OFFLINE-${Date.now()}`,
-				cartStore.grandTotal,
+				cartStore.roundedGrandTotal,
 				paymentData.paid_amount
 			);
 			uiStore.showPaymentDialog = false;
 
 			// Notify customer display that sale is complete (even offline)
-			notifySaleComplete(cartStore.grandTotal, `OFFLINE-${Date.now()}`);
+			notifySaleComplete(cartStore.roundedGrandTotal, `OFFLINE-${Date.now()}`);
 
 			cartStore.clearCart();
 			// Reset cart hash after successful payment
@@ -4199,7 +4201,7 @@ function handlePrintProvisionalTicket() {
 			tableName: cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name,
 			company: shiftStore.profileCompany,
 			items: cartStore.invoiceItems,
-			grand_total: cartStore.grandTotal,
+			grand_total: cartStore.roundedGrandTotal,
 			customer_name: cartStore.customer?.customer_name || cartStore.customer?.name || null,
 			total_taxes_and_charges: cartStore.totalTax || 0,
 		})

@@ -8,6 +8,7 @@ import {
 	checkStockAvailability,
 } from "@/utils/stockValidator"
 import { offlineState } from "@/utils/offline/offlineState"
+import { roundTotal, roundCurrency } from "@/utils/currency"
 import { useToast } from "@/composables/useToast"
 import { defineStore } from "pinia"
 import { computed, nextTick, ref, toRaw, watch } from "vue"
@@ -117,6 +118,16 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	const offersStore = usePOSOffersStore()
 	const settingsStore = usePOSSettingsStore()
+
+	// Rounded grand total (applies currency fraction rounding when enabled)
+	const roundedGrandTotal = computed(() => {
+		if (settingsStore.disableRoundedTotal) return grandTotal.value
+		return roundTotal(grandTotal.value)
+	})
+
+	const roundingAdjustment = computed(() => {
+		return roundCurrency(roundedGrandTotal.value - grandTotal.value)
+	})
 
 	// Additional cart state
 	const pendingItem = ref(null)
@@ -1955,6 +1966,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		totalTax,
 		totalDiscount,
 		grandTotal,
+		roundedGrandTotal,
+		roundingAdjustment,
 		netTotalBeforeAdditionalDiscount,
 		posProfile,
 		posOpeningShift,

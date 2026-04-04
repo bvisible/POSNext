@@ -1210,6 +1210,12 @@
 				</div>
 			</div>
 
+			<!-- Rounding Adjustment -->
+			<div v-if="roundingAdjustment !== 0" class="flex items-center justify-between text-xs text-gray-600 px-1 mb-1">
+				<span class="font-medium">{{ __("Rounding") }}</span>
+				<span class="font-bold text-center min-w-[60px]">{{ formatCurrency(roundingAdjustment) }}</span>
+			</div>
+
 			<!-- Grand Total -->
 			<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-neo-md p-2.5 mb-1.5">
 				<div class="flex items-center justify-between">
@@ -1542,6 +1548,10 @@ const props = defineProps({
 		type: Number,
 		default: 0,
 	},
+	roundingAdjustment: {
+		type: Number,
+		default: 0,
+	},
 	posProfile: String,
 	currency: {
 		type: String,
@@ -1825,9 +1835,9 @@ const displaySubtotal = computed(() => {
  * @returns {Number} Grand total amount to display
  */
 const displayGrandTotal = computed(() => {
-	// Always: displaySubtotal + tax - discount
+	// Always: displaySubtotal + tax - discount + rounding
 	// This makes the display consistent and intuitive
-	return displaySubtotal.value + props.taxAmount - props.discountAmount
+	return displaySubtotal.value + props.taxAmount - props.discountAmount + (props.roundingAdjustment || 0)
 })
 
 /**

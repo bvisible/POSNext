@@ -521,7 +521,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		() => !!restaurantSettings.value.enable_takeaway,
 	)
 	const takeawayCard = computed(() => restaurantSettings.value.takeaway_card)
-	const tipsEnabled = computed(() => !!restaurantSettings.value.enable_tips)
+	const tipsEnabled = computed(
+		() => isEnabled.value && !!restaurantSettings.value.enable_tips,
+	)
 	const autoDetectTip = computed(
 		() => restaurantSettings.value.auto_detect_tip !== false,
 	)

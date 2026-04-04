@@ -29,7 +29,7 @@ export function useQuickAmounts(remainingAmount, isCash) {
 		const cash = isCash ? isCash.value : true
 		const amounts = new Set()
 		// Cash payments use ceil (physical denominations), non-cash use exact amount
-		const exactAmount = cash ? Math.ceil(remaining) : roundCurrency(remaining)
+		const exactAmount = roundCurrency(remaining)
 
 		// Always include the primary amount first
 		amounts.add(exactAmount)
