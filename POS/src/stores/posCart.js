@@ -319,7 +319,6 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		offerQueue.cancel()
 
 		await clearInvoiceCart()
-		customer.value = null
 		appliedOffers.value = []
 		appliedCoupon.value = null
 		currentDraftId.value = null
