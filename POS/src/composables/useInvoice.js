@@ -1087,7 +1087,7 @@ export function useInvoice() {
 
 				try {
 					const result = await submitInvoiceResource.submit({
-						invoice: invoiceDoc,
+						invoice: { ...invoiceData, name: invoiceDoc.name },
 						data: submitData,
 					})
 

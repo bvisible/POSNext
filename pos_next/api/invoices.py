@@ -337,6 +337,76 @@ def get_payment_account(mode_of_payment, company):
     )
 
 
+def _restore_item_discounts(invoice_doc, frontend_items):
+    """Restore POS item discounts that ERPNext's validate() stripped.
+
+    ERPNext's set_missing_item_details() lists 'pricing_rules' in
+    force_item_fields, so it always overwrites the field with the value
+    returned by get_item_details(). When ignore_pricing_rule=1, that
+    value is empty, which causes calculate_item_values() to skip the
+    discount calculation entirely.
+
+    This function patches the submitted invoice items directly in the DB.
+    """
+    if not frontend_items:
+        return
+
+    # Build a lookup of discount data from the frontend items
+    discount_map = {}
+    for fi in frontend_items:
+        disc_pct = flt(fi.get("discount_percentage") or 0)
+        disc_amt = flt(fi.get("discount_amount") or 0)
+        if disc_pct > 0 or disc_amt > 0:
+            discount_map[fi.get("item_code")] = {
+                "discount_percentage": disc_pct,
+                "discount_amount": disc_amt,
+                "pricing_rules": fi.get("pricing_rules") or "",
+                "price_list_rate": flt(fi.get("price_list_rate") or 0),
+                "rate": flt(fi.get("rate") or 0),
+            }
+
+    if not discount_map:
+        return
+
+    invoice_doc.reload()
+    needs_total_update = False
+    for item in invoice_doc.items:
+        saved = discount_map.get(item.item_code)
+        if saved and flt(item.discount_percentage) != saved["discount_percentage"]:
+            needs_total_update = True
+            qty = flt(item.qty or 1)
+            amount = flt(saved["rate"] * qty)
+            frappe.db.set_value("Sales Invoice Item", item.name, {
+                "discount_percentage": saved["discount_percentage"],
+                "discount_amount": saved["discount_amount"],
+                "pricing_rules": saved["pricing_rules"],
+                "price_list_rate": saved["price_list_rate"] if saved["price_list_rate"] > 0 else item.price_list_rate,
+                "rate": saved["rate"],
+                "base_rate": saved["rate"],
+                "amount": amount,
+                "base_amount": amount,
+                "net_rate": saved["rate"],
+                "base_net_rate": saved["rate"],
+                "net_amount": amount,
+                "base_net_amount": amount,
+            }, update_modified=False)
+
+    if needs_total_update:
+        # Recompute totals from corrected items
+        invoice_doc.reload()
+        total = sum(flt(item.amount) for item in invoice_doc.items)
+        paid = flt(invoice_doc.paid_amount or 0)
+        frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, {
+            "total": total,
+            "net_total": total,
+            "base_total": total,
+            "base_net_total": total,
+            "grand_total": total,
+            "base_grand_total": total,
+            "outstanding_amount": total - paid,
+        }, update_modified=False)
+
+
 def _set_payment_accounts(payments, company):
     """Set the account for each payment entry that is missing one.
 
@@ -941,19 +1011,6 @@ def update_invoice(data):
         #   - customer             → sent from frontend
         #   - tax_category         → sent from frontend or not needed
         # ========================================================================
-        # Save discount data before set_missing_values resets it
-        # ERPNext re-fetches item prices from Item master / Price List,
-        # which clears discount_percentage, discount_amount, and pricing_rules
-        saved_item_discounts = []
-        for item in invoice_doc.get("items", []):
-            saved_item_discounts.append({
-                "discount_percentage": flt(item.discount_percentage or 0),
-                "discount_amount": flt(item.discount_amount or 0),
-                "pricing_rules": item.get("pricing_rules") or "",
-                "price_list_rate": flt(item.price_list_rate or 0),
-                "rate": flt(item.rate or 0),
-            })
-
         invoice_doc.set_missing_values(for_validate=True)
 
         # Re-enforce ignore_pricing_rule after set_missing_values().
@@ -964,18 +1021,6 @@ def update_invoice(data):
         # correct discounts.
         invoice_doc.ignore_pricing_rule = 1
         invoice_doc.flags.ignore_pricing_rule = True
-
-        # Restore discount data that set_missing_values may have cleared
-        for i, item in enumerate(invoice_doc.get("items", [])):
-            if i < len(saved_item_discounts):
-                saved = saved_item_discounts[i]
-                if saved["discount_percentage"] > 0 or saved["discount_amount"] > 0:
-                    item.discount_percentage = saved["discount_percentage"]
-                    item.discount_amount = saved["discount_amount"]
-                    item.pricing_rules = saved["pricing_rules"]
-                    if saved["price_list_rate"] > 0:
-                        item.price_list_rate = saved["price_list_rate"]
-                    item.rate = saved["rate"]
 
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
@@ -1602,6 +1647,12 @@ def submit_invoice(invoice=None, data=None):
         invoice_doc.submit()
         _t2 = _time.time()
         frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
+
+        # Restore item discounts via direct DB write after submit
+        # ERPNext's validate() (called during save+submit) forces `pricing_rules`
+        # via force_item_fields, which clears it. Without pricing_rules,
+        # calculate_item_values() skips the discount calculation.
+        _restore_item_discounts(invoice_doc, invoice.get("items", []))
 
         invoice_submitted = True
 
