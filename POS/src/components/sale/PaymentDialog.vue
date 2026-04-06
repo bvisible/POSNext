@@ -3777,9 +3777,10 @@ function completePayment() {
 	}
 
 	// Calculate if this is a partial payment (considering write-off and loyalty)
+	// Use a small tolerance to account for rounding differences (e.g. 0.01 CHF)
 	const effectivePaid =
 		totalPaid.value + writeOffAmount.value + (loyaltyRedeemAmount.value || 0)
-	const isPartial = effectivePaid < props.grandTotal
+	const isPartial = (props.grandTotal - effectivePaid) > 0.02
 
 	// If partial payment, show confirmation dialog first
 	if (isPartial) {
