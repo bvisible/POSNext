@@ -392,19 +392,28 @@ def _restore_item_discounts(invoice_doc, frontend_items):
             }, update_modified=False)
 
     if needs_total_update:
-        # Recompute totals from corrected items
+        # Recalculate all totals (taxes, rounding, outstanding) from corrected items
+        # using db_update() to persist without re-triggering validate()
         invoice_doc.reload()
-        total = sum(flt(item.amount) for item in invoice_doc.items)
+        invoice_doc.ignore_pricing_rule = 1
+        invoice_doc.flags.ignore_pricing_rule = True
+        invoice_doc.calculate_taxes_and_totals()
+
+        # Recalculate outstanding based on corrected grand_total
         paid = flt(invoice_doc.paid_amount or 0)
-        frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, {
-            "total": total,
-            "net_total": total,
-            "base_total": total,
-            "base_net_total": total,
-            "grand_total": total,
-            "base_grand_total": total,
-            "outstanding_amount": total - paid,
-        }, update_modified=False)
+        rounded = flt(invoice_doc.rounded_total or invoice_doc.grand_total)
+        invoice_doc.outstanding_amount = flt(rounded - paid) if rounded else flt(invoice_doc.grand_total - paid)
+
+        # db_update persists without calling validate() (which would strip discounts again)
+        invoice_doc.db_update()
+        for item in invoice_doc.items:
+            item.db_update()
+        if invoice_doc.get("taxes"):
+            for tax in invoice_doc.taxes:
+                tax.db_update()
+        if invoice_doc.get("payments"):
+            for payment in invoice_doc.payments:
+                payment.db_update()
 
 
 def _set_payment_accounts(payments, company):
