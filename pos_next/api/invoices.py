@@ -941,6 +941,19 @@ def update_invoice(data):
         #   - customer             → sent from frontend
         #   - tax_category         → sent from frontend or not needed
         # ========================================================================
+        # Save discount data before set_missing_values resets it
+        # ERPNext re-fetches item prices from Item master / Price List,
+        # which clears discount_percentage, discount_amount, and pricing_rules
+        saved_item_discounts = []
+        for item in invoice_doc.get("items", []):
+            saved_item_discounts.append({
+                "discount_percentage": flt(item.discount_percentage or 0),
+                "discount_amount": flt(item.discount_amount or 0),
+                "pricing_rules": item.get("pricing_rules") or "",
+                "price_list_rate": flt(item.price_list_rate or 0),
+                "rate": flt(item.rate or 0),
+            })
+
         invoice_doc.set_missing_values(for_validate=True)
 
         # Re-enforce ignore_pricing_rule after set_missing_values().
@@ -951,6 +964,18 @@ def update_invoice(data):
         # correct discounts.
         invoice_doc.ignore_pricing_rule = 1
         invoice_doc.flags.ignore_pricing_rule = True
+
+        # Restore discount data that set_missing_values may have cleared
+        for i, item in enumerate(invoice_doc.get("items", [])):
+            if i < len(saved_item_discounts):
+                saved = saved_item_discounts[i]
+                if saved["discount_percentage"] > 0 or saved["discount_amount"] > 0:
+                    item.discount_percentage = saved["discount_percentage"]
+                    item.discount_amount = saved["discount_amount"]
+                    item.pricing_rules = saved["pricing_rules"]
+                    if saved["price_list_rate"] > 0:
+                        item.price_list_rate = saved["price_list_rate"]
+                    item.rate = saved["rate"]
 
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
