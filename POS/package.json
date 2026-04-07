@@ -29,6 +29,9 @@
 		"qrcode": "^1.5.4",
 		"qz-tray": "^2.2.5",
 		"socket.io-client": "^4.7.2",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"@neoffice/nora-learn-react": "git+https://github.com/bvisible/nora-learn-react.git",
 		"vue": "3.5.13",
 		"vue-router": "^4.5.0"
 	},

@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ActionButton: typeof import('./src/components/common/ActionButton.vue')['default']
+    AddressAutocomplete: typeof import('./src/components/common/AddressAutocomplete.vue')['default']
     AutocompleteSelect: typeof import('./src/components/common/AutocompleteSelect.vue')['default']
     BatchSerialDialog: typeof import('./src/components/sale/BatchSerialDialog.vue')['default']
     CardEditor: typeof import('./src/components/restaurant/CardEditor.vue')['default']
@@ -56,6 +57,7 @@ declare module 'vue' {
     MenuPreview: typeof import('./src/components/restaurant/MenuPreview.vue')['default']
     MenuSelectionDialog: typeof import('./src/components/sale/MenuSelectionDialog.vue')['default']
     MenuSettings: typeof import('./src/components/restaurant/MenuSettings.vue')['default']
+    NoraLearnBridge: typeof import('./src/components/common/NoraLearnBridge.vue')['default']
     NumberField: typeof import('./src/components/settings/NumberField.vue')['default']
     OffersDialog: typeof import('./src/components/sale/OffersDialog.vue')['default']
     OfflineInvoicesDialog: typeof import('./src/components/sale/OfflineInvoicesDialog.vue')['default']
