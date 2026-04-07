@@ -1103,10 +1103,17 @@ def update_invoice(data):
                         frappe.throw(frappe.as_json({"errors": errors}), frappe.ValidationError)
 
         # Save as draft
+        # Prevent ERPNext from overwriting POS discount fields during save
+        _original_set_missing = invoice_doc.set_missing_item_details
+        invoice_doc.set_missing_item_details = lambda *args, **kwargs: None
+
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
         invoice_doc.docstatus = 0
         invoice_doc.save()
+
+        # Restore original method
+        invoice_doc.set_missing_item_details = _original_set_missing
 
         # Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
         if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway"):
@@ -1647,6 +1654,17 @@ def submit_invoice(invoice=None, data=None):
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
 
+        # Prevent ERPNext from overwriting discount fields during save/submit.
+        # ERPNext's set_missing_item_details() lists 'pricing_rules' in
+        # force_item_fields, so it always overwrites the field with the value
+        # from get_item_details(). When ignore_pricing_rule=1, that value is
+        # empty, which causes calculate_item_values() to skip discounts.
+        # By replacing set_missing_item_details with a no-op during save/submit,
+        # the POS-computed discount fields survive the entire validation cycle
+        # and GL entries are created with correct discounted amounts.
+        _original_set_missing = invoice_doc.set_missing_item_details
+        invoice_doc.set_missing_item_details = lambda *args, **kwargs: None
+
         import time as _time
         _t0 = _time.time()
         invoice_doc.save()
@@ -1657,11 +1675,8 @@ def submit_invoice(invoice=None, data=None):
         _t2 = _time.time()
         frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
 
-        # Restore item discounts via direct DB write after submit
-        # ERPNext's validate() (called during save+submit) forces `pricing_rules`
-        # via force_item_fields, which clears it. Without pricing_rules,
-        # calculate_item_values() skips the discount calculation.
-        _restore_item_discounts(invoice_doc, invoice.get("items", []))
+        # Restore original method
+        invoice_doc.set_missing_item_details = _original_set_missing
 
         invoice_submitted = True
 
