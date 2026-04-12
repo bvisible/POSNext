@@ -52,10 +52,17 @@ frappe.query_reports["Neopos Register"] = {
 			options: "Mode of Payment",
 		},
 		{
+			fieldname: "transaction_type",
+			label: __("Transaction Type"),
+			fieldtype: "Select",
+			options: ["", "POS Sales", "Invoice Collection", "Cash In/Out"],
+			default: "",
+		},
+		{
 			fieldname: "group_by",
 			label: __("Group by"),
 			fieldtype: "Select",
-			options: ["", "POS Profile", "Cashier", "Payment Method", "Customer"],
+			options: ["", "POS Profile", "Cashier", "Payment Method", "Customer", "Transaction Type"],
 			default: "",
 		},
 		{

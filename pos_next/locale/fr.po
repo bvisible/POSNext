@@ -13108,3 +13108,15 @@ msgstr "✗ Échec de la connexion : {0}"
 
 msgid "POS Legacy"
 msgstr "POS Ancien"
+
+msgid "POS Sale"
+msgstr "Vente POS"
+
+msgid "Invoice Collection"
+msgstr "Encaissement facture"
+
+msgid "Reference"
+msgstr "Référence"
+
+msgid "POS Sales"
+msgstr "Ventes POS"

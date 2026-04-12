@@ -13,24 +13,38 @@ def execute(filters=None):
 	validate_filters(filters)
 
 	group_by_field = get_group_by_field(filters.get("group_by"))
+	txn_type = filters.get("transaction_type", "")
 
-	pos_entries = get_pos_entries(filters, group_by_field)
+	all_entries = []
 
-	# When not grouped by payment method, concatenate payment methods for display
+	# 1. POS Sales (Sales Invoices with is_pos=1)
+	if not txn_type or txn_type == "POS Sales":
+		all_entries.extend(get_pos_entries(filters, group_by_field))
+
+	# 2. Invoice Collections (Payment Entries from POS)
+	if not txn_type or txn_type == "Invoice Collection":
+		all_entries.extend(get_invoice_collections(filters, group_by_field))
+
+	# 3. Cash In/Out (Journal Entries from POS)
+	if not txn_type or txn_type == "Cash In/Out":
+		all_entries.extend(get_cash_in_out(filters, group_by_field))
+
+	# Concat mode of payments for entries that don't have it yet
 	if group_by_field != "mode_of_payment":
-		concat_mode_of_payments(pos_entries)
+		concat_mode_of_payments(all_entries)
 
 	columns = get_columns(filters)
 
 	# Return flat list if no grouping
 	if not group_by_field:
-		return columns, pos_entries
+		return columns, all_entries
 
 	# Handle grouping
 	invoice_map = {}
 	grouped_data = []
-	for d in pos_entries:
-		invoice_map.setdefault(d[group_by_field], []).append(d)
+	for d in all_entries:
+		key = d.get(group_by_field, _("Unknown"))
+		invoice_map.setdefault(key, []).append(d)
 
 	for key in invoice_map:
 		invoices = invoice_map[key]
@@ -46,6 +60,10 @@ def execute(filters=None):
 
 	return columns, grouped_data
 
+
+# ============================================================
+# Data fetchers
+# ============================================================
 
 def get_pos_entries(filters, group_by_field):
 	"""Fetch POS Sales Invoices with optional payment method breakdown."""
@@ -66,13 +84,15 @@ def get_pos_entries(filters, group_by_field):
 			"IFNULL(sip.base_amount - IF(sip.type = 'Cash', si.change_amount, 0), 0) != 0 AND"
 		)
 		order_by += ", sip.mode_of_payment"
-	elif group_by_field:
+	elif group_by_field and group_by_field in ("pos_profile", "customer", "owner"):
 		order_by += ", si.{0}".format(
 			"owner" if group_by_field == "owner" else group_by_field
 		)
 		select_mop_field = ", si.base_paid_amount - si.change_amount as paid_amount"
+	elif group_by_field:
+		select_mop_field = ", si.base_paid_amount - si.change_amount as paid_amount"
 
-	return frappe.db.sql(
+	entries = frappe.db.sql(
 		"""
 		SELECT
 			si.posting_date,
@@ -105,17 +125,189 @@ def get_pos_entries(filters, group_by_field):
 		as_dict=1,
 	)
 
+	for e in entries:
+		e["transaction_type"] = _("POS Sale")
+
+	return entries
+
+
+def get_invoice_collections(filters, group_by_field):
+	"""Fetch Payment Entries made from POS for existing invoices."""
+	conditions = ["pe.docstatus = 1"]
+	conditions.append("pe.posting_date >= %(from_date)s")
+	conditions.append("pe.posting_date <= %(to_date)s")
+	conditions.append("pe.company = %(company)s")
+	conditions.append("(pe.reference_no LIKE 'POS-%%' OR pe.reference_no LIKE 'POSA-%%')")
+
+	if filters.get("cashier"):
+		conditions.append("pe.owner = %(cashier)s")
+
+	if filters.get("customer"):
+		conditions.append("pe.party = %(customer)s")
+
+	if filters.get("mode_of_payment"):
+		conditions.append("pe.mode_of_payment = %(mode_of_payment)s")
+
+	if filters.get("pos_profile"):
+		conditions.append("""
+			EXISTS(
+				SELECT 1 FROM `tabPOS Payment Entry Reference` pper
+				JOIN `tabPOS Closing Shift` pcs ON pcs.name = pper.parent
+				WHERE pper.payment_entry = pe.name
+				AND pcs.pos_profile = %(pos_profile)s
+			)
+		""")
+
+	where = " AND ".join(conditions)
+
+	entries = frappe.db.sql(
+		"""
+		SELECT
+			pe.posting_date,
+			pe.name as reference,
+			pe.party as customer,
+			pe.paid_amount as grand_total,
+			pe.paid_amount as paid_amount,
+			pe.mode_of_payment,
+			pe.company,
+			pe.owner
+		FROM
+			`tabPayment Entry` pe
+		WHERE
+			{where}
+		ORDER BY
+			pe.posting_date
+		""".format(where=where),
+		filters,
+		as_dict=1,
+	)
+
+	for e in entries:
+		e["transaction_type"] = _("Invoice Collection")
+		e["sales_invoice"] = e.pop("reference", "")
+		e["is_return"] = 0
+		# Try to get pos_profile from POS Payment Entry Reference
+		shift = frappe.db.get_value(
+			"POS Payment Entry Reference",
+			{"payment_entry": e["sales_invoice"]},
+			"parent"
+		)
+		if shift:
+			e["pos_profile"] = frappe.db.get_value("POS Closing Shift", shift, "pos_profile") or ""
+		else:
+			e["pos_profile"] = ""
+
+	return entries
+
+
+def get_cash_in_out(filters, group_by_field):
+	"""Fetch Cash In/Out Journal Entries from POS.
+
+	Format: user_remark = 'POS Cash Entry|{opening_shift}|{in/out}|{template}|{label}'
+	"""
+	conditions = ["je.docstatus = 1"]
+	conditions.append("je.posting_date >= %(from_date)s")
+	conditions.append("je.posting_date <= %(to_date)s")
+	conditions.append("je.company = %(company)s")
+	conditions.append("je.user_remark LIKE 'POS Cash Entry|%%'")
+
+	if filters.get("cashier"):
+		conditions.append("je.owner = %(cashier)s")
+
+	where = " AND ".join(conditions)
+
+	entries = frappe.db.sql(
+		"""
+		SELECT
+			je.posting_date,
+			je.name as reference,
+			je.total_debit as amount,
+			je.user_remark,
+			je.company,
+			je.owner
+		FROM
+			`tabJournal Entry` je
+		WHERE
+			{where}
+		ORDER BY
+			je.posting_date
+		""".format(where=where),
+		filters,
+		as_dict=1,
+	)
+
+	# Cache for cash mode of payment per POS profile
+	cash_mode_cache = {}
+
+	result = []
+	for e in entries:
+		parts = (e.get("user_remark") or "").split("|")
+		if len(parts) < 4:
+			continue
+
+		shift_name = parts[1]
+		direction = parts[2]
+		template = parts[3] if len(parts) > 3 else ""
+		label = parts[4] if len(parts) > 4 else template
+
+		amount = flt(e["amount"])
+		if direction == "out":
+			amount = -amount
+
+		pos_profile = ""
+		if shift_name:
+			pos_profile = frappe.db.get_value("POS Opening Shift", shift_name, "pos_profile") or ""
+
+		if filters.get("pos_profile") and pos_profile != filters["pos_profile"]:
+			continue
+
+		if direction == "in":
+			txn_type = _("Cash In")
+		else:
+			txn_type = _("Cash Out")
+
+		description = label if label and label != template else template
+
+		# Get the actual cash mode of payment name for this POS profile
+		if pos_profile not in cash_mode_cache:
+			from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import _get_cash_mode_of_payment
+			cash_mode_cache[pos_profile] = _get_cash_mode_of_payment(pos_profile)
+		cash_mode = cash_mode_cache.get(pos_profile, _("Cash"))
+
+		result.append({
+			"posting_date": e["posting_date"],
+			"sales_invoice": e["reference"],
+			"customer": description,
+			"pos_profile": pos_profile,
+			"company": e["company"],
+			"owner": e["owner"],
+			"is_return": 0,
+			"grand_total": amount,
+			"paid_amount": amount,
+			"mode_of_payment": cash_mode,
+			"transaction_type": txn_type,
+		})
+
+	return result
+
+
+# ============================================================
+# Helpers
+# ============================================================
 
 def concat_mode_of_payments(pos_entries):
-	"""Add a comma-separated list of payment methods to each entry."""
+	"""Add a comma-separated list of payment methods to entries that need it."""
 	if not pos_entries:
 		return
 
-	invoice_names = list({d.sales_invoice for d in pos_entries})
+	invoice_names = []
+	for d in pos_entries:
+		if d.get("transaction_type") == _("POS Sale") and d.get("sales_invoice") and not d.get("mode_of_payment"):
+			invoice_names.append(d["sales_invoice"])
+
 	if not invoice_names:
 		return
 
-	# Fetch payment methods for all invoices in one query
 	payments = frappe.db.sql(
 		"""
 		SELECT parent, mode_of_payment
@@ -132,8 +324,9 @@ def concat_mode_of_payments(pos_entries):
 		mop_map.setdefault(p.parent, []).append(p.mode_of_payment)
 
 	for entry in pos_entries:
-		methods = mop_map.get(entry.sales_invoice, [])
-		entry.mode_of_payment = ", ".join(methods) if methods else ""
+		if entry.get("transaction_type") == _("POS Sale") and not entry.get("mode_of_payment"):
+			methods = mop_map.get(entry.get("sales_invoice"), [])
+			entry["mode_of_payment"] = ", ".join(methods) if methods else ""
 
 
 def add_subtotal_row(data, group_invoices, group_by_field, group_by_value):
@@ -165,18 +358,6 @@ def validate_filters(filters):
 	if filters.get("from_date") and filters.get("to_date"):
 		if filters.from_date > filters.to_date:
 			frappe.throw(_("From Date must be before To Date"))
-
-	if filters.get("pos_profile") and filters.get("group_by") == "POS Profile":
-		frappe.throw(_("Can not filter based on POS Profile, if grouped by POS Profile"))
-
-	if filters.get("customer") and filters.get("group_by") == "Customer":
-		frappe.throw(_("Can not filter based on Customer, if grouped by Customer"))
-
-	if filters.get("cashier") and filters.get("group_by") == "Cashier":
-		frappe.throw(_("Can not filter based on Cashier, if grouped by Cashier"))
-
-	if filters.get("mode_of_payment") and filters.get("group_by") == "Payment Method":
-		frappe.throw(_("Can not filter based on Payment Method, if grouped by Payment Method"))
 
 
 def get_conditions(filters):
@@ -215,6 +396,7 @@ def get_group_by_field(group_by):
 		"Cashier": "owner",
 		"Customer": "customer",
 		"Payment Method": "mode_of_payment",
+		"Transaction Type": "transaction_type",
 	}
 	return mapping.get(group_by, "")
 
@@ -228,25 +410,29 @@ def get_columns(filters):
 			"width": 90,
 		},
 		{
-			"label": _("Sales Invoice"),
+			"label": _("Type"),
+			"fieldname": "transaction_type",
+			"fieldtype": "Data",
+			"width": 120,
+		},
+		{
+			"label": _("Reference"),
 			"fieldname": "sales_invoice",
-			"fieldtype": "Link",
-			"options": "Sales Invoice",
-			"width": 140,
+			"fieldtype": "Data",
+			"width": 150,
 		},
 		{
 			"label": _("Customer"),
 			"fieldname": "customer",
-			"fieldtype": "Link",
-			"options": "Customer",
-			"width": 120,
+			"fieldtype": "Data",
+			"width": 140,
 		},
 		{
 			"label": _("POS Profile"),
 			"fieldname": "pos_profile",
 			"fieldtype": "Link",
 			"options": "POS Profile",
-			"width": 160,
+			"width": 140,
 		},
 		{
 			"label": _("Cashier"),
@@ -273,13 +459,7 @@ def get_columns(filters):
 			"label": _("Payment Method"),
 			"fieldname": "mode_of_payment",
 			"fieldtype": "Data",
-			"width": 150,
-		},
-		{
-			"label": _("Is Return"),
-			"fieldname": "is_return",
-			"fieldtype": "Data",
-			"width": 80,
+			"width": 140,
 		},
 		{
 			"label": _("Company"),
