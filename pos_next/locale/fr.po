@@ -13105,3 +13105,6 @@ msgstr "✓ Session fermée avec succès"
 #: POS/src/pages/Home.vue:156
 msgid "✗ Connection failed: {0}"
 msgstr "✗ Échec de la connexion : {0}"
+
+msgid "POS Legacy"
+msgstr "POS historique"
