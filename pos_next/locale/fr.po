@@ -13120,3 +13120,18 @@ msgstr "Référence"
 
 msgid "POS Sales"
 msgstr "Ventes POS"
+
+msgid "Invoice Collections"
+msgstr "Encaissements factures"
+
+msgid "Balanced"
+msgstr "Équilibré"
+
+msgid "Minor Variance"
+msgstr "Écart mineur"
+
+msgid "Over"
+msgstr "Excédent"
+
+msgid "Short"
+msgstr "Déficit"

@@ -70,6 +70,24 @@ def get_columns(payment_methods):
 			"fieldtype": "Int",
 			"width": 100
 		},
+		{
+			"fieldname": "invoice_collections",
+			"label": _("Invoice Collections"),
+			"fieldtype": "Currency",
+			"width": 130
+		},
+		{
+			"fieldname": "cash_in",
+			"label": _("Cash In"),
+			"fieldtype": "Currency",
+			"width": 100
+		},
+		{
+			"fieldname": "cash_out",
+			"label": _("Cash Out"),
+			"fieldtype": "Currency",
+			"width": 100
+		},
 	]
 
 	# Dynamic columns per payment method
@@ -147,6 +165,7 @@ def get_data(filters):
 		SELECT
 			pcs.name as shift,
 			pcs.pos_profile,
+			pcs.pos_opening_shift,
 			pcs.user as cashier,
 			DATE(pcs.period_end_date) as posting_date,
 			TIME(pcs.period_start_date) as shift_start,
@@ -180,6 +199,12 @@ def get_data(filters):
 	# Batch-fetch transaction counts per shift (total, not per method)
 	transaction_map = _get_transaction_counts(raw)
 
+	# Batch-fetch invoice collections per shift
+	collections_map = _get_invoice_collections(raw)
+
+	# Batch-fetch cash in/out per shift
+	cash_in_out_map = _get_cash_in_out(raw)
+
 	# Pivot: group rows by shift into one row each
 	shifts = {}
 	shift_order = []
@@ -195,6 +220,8 @@ def get_data(filters):
 			else:
 				shift_hours = 0
 
+			cash_data = cash_in_out_map.get(r.pos_opening_shift, {})
+
 			shifts[r.shift] = {
 				"shift": r.shift,
 				"pos_profile": r.pos_profile,
@@ -204,6 +231,9 @@ def get_data(filters):
 				"shift_end": r.shift_end,
 				"shift_hours": shift_hours,
 				"total_transactions": transaction_map.get(r.shift, 0),
+				"invoice_collections": flt(collections_map.get(r.shift, 0), 2),
+				"cash_in": flt(cash_data.get("in", 0), 2),
+				"cash_out": flt(cash_data.get("out", 0), 2),
 				"total_opening": 0,
 				"total_expected": 0,
 				"total_closing": 0,
@@ -238,13 +268,13 @@ def get_data(filters):
 		# Determine status based on total difference
 		abs_diff = abs(row["total_difference"])
 		if abs_diff == 0:
-			row["status"] = "✓ Balanced"
+			row["status"] = _("Balanced")
 		elif abs_diff <= 10:
-			row["status"] = "~ Minor Variance"
+			row["status"] = _("Minor Variance")
 		elif row["total_difference"] > 0:
-			row["status"] = "↑ Over"
+			row["status"] = _("Over")
 		else:
-			row["status"] = "↓ Short"
+			row["status"] = _("Short")
 
 		data.append(row)
 
@@ -273,6 +303,65 @@ def _get_transaction_counts(data):
 	""".format(placeholders=placeholders), shift_names, as_dict=1)
 
 	return {r.shift: r.cnt for r in rows}
+
+
+def _get_invoice_collections(data):
+	"""Batch-fetch total invoice collection amounts per closing shift."""
+	shift_names = list({row.shift for row in data})
+	if not shift_names:
+		return {}
+
+	placeholders = ", ".join(["%s"] * len(shift_names))
+
+	rows = frappe.db.sql("""
+		SELECT
+			pper.parent as shift,
+			SUM(pper.paid_amount) as total
+		FROM `tabPOS Payment Entry Reference` pper
+		WHERE pper.parent IN ({placeholders})
+		GROUP BY pper.parent
+	""".format(placeholders=placeholders), shift_names, as_dict=1)
+
+	return {r.shift: flt(r.total) for r in rows}
+
+
+def _get_cash_in_out(data):
+	"""Batch-fetch cash in/out totals per opening shift.
+
+	Cash entries are linked to Opening Shift via user_remark:
+	POS Cash Entry|{opening_shift}|{in/out}|{template}|{label}
+	"""
+	opening_shifts = list({row.get("pos_opening_shift") for row in data if row.get("pos_opening_shift")})
+	if not opening_shifts:
+		return {}
+
+	placeholders = ", ".join(["%s"] * len(opening_shifts))
+
+	rows = frappe.db.sql("""
+		SELECT
+			je.user_remark,
+			je.total_debit as amount
+		FROM `tabJournal Entry` je
+		WHERE je.docstatus = 1
+		AND je.user_remark LIKE 'POS Cash Entry|%%'
+		AND SUBSTRING_INDEX(SUBSTRING_INDEX(je.user_remark, '|', 2), '|', -1) IN ({placeholders})
+	""".format(placeholders=placeholders), opening_shifts, as_dict=1)
+
+	result = {}
+	for r in rows:
+		parts = (r.user_remark or "").split("|")
+		if len(parts) < 3:
+			continue
+		opening_shift = parts[1]
+		direction = parts[2]
+		if opening_shift not in result:
+			result[opening_shift] = {"in": 0, "out": 0}
+		if direction == "in":
+			result[opening_shift]["in"] += flt(r.amount)
+		elif direction == "out":
+			result[opening_shift]["out"] += flt(r.amount)
+
+	return result
 
 
 def get_conditions(filters):
