@@ -13107,4 +13107,4 @@ msgid "✗ Connection failed: {0}"
 msgstr "✗ Échec de la connexion : {0}"
 
 msgid "POS Legacy"
-msgstr "POS historique"
+msgstr "POS Ancien"
