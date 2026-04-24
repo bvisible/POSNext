@@ -1906,6 +1906,11 @@ def create_item(
 	if not item_name or not item_group or not stock_uom:
 		frappe.throw(_("Item Name, Item Group, and Unit of Measure are required"))
 
+	# Prevent item creation in root group (no company defaults possible)
+	parent = frappe.db.get_value("Item Group", item_group, "parent_item_group")
+	if not parent or parent == "":
+		frappe.throw(_("Cannot create items in the root group '{0}'. Please select a child group.").format(item_group))
+
 	if not item_code:
 		item_code = item_name
 
