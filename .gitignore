@@ -6,9 +6,12 @@ tags
 node_modules
 __pycache__
 
+# 2026-05-07 (NORA #28) — frontend build outputs are committed on this branch.
+# See docs/COMMIT-BUILD-PATTERN.md in neoffice-devops.
+# (pos_next writes vite output to public/pos/, not public/frontend/.)
 # Build artifacts
-pos_next/public/pos/
-pos_next/www/
+# pos_next/public/pos/
+# pos_next/www/
 yarn.lock
 package-lock.json
 
