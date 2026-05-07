@@ -164,3 +164,38 @@ Requires HTTPS in production for offline functionality to work.
 ### Guest Ordering (QR / Takeaway)
 
 Guest components (`POS/src/components/guest/`, `POS/src/stores/guestOrder.js`) must NEVER import offline workers, IndexedDB, or heavy POS stores. They use `fetch()` for API calls, not `createResource` or `window.frappe.call`. Guest routes use `meta: { allowGuest: true }` in the router. Realtime sync uses room `guest_table_{table_name}` matching the server-side `_broadcast_order_update` in `guest_ordering.py`.
+
+## Build pipeline (commit-the-build)
+
+⚠️ **Ne jamais lancer `yarn build` ou `bench build --app pos_next` localement sur un serveur Neoffice** (4 GB RAM → OOM-kill garanti). Le build se fait UNIQUEMENT sur GitHub Actions (ubuntu-latest, 16 GB RAM).
+
+### Comment ça marche
+
+1. Modif d'un fichier source (`POS/...`) en local → `git commit` → `git push origin version-15`. **Ne pas builder localement.**
+2. Le workflow `.github/workflows/build-frontend.yml` détecte le push, lance `yarn build` sur ubuntu-latest (~1-2 min) et commit les artefacts back avec un commit `[skip-build] frontend artifacts for <SHA>` (par `github-actions[bot]`).
+3. Sur les instances clients, le pipeline d'update fait `git pull` (ramène ton commit + le commit du bot). Quand `bench build --app pos_next` tourne, il appelle `yarn build` à la racine — **le `package.json` voit les artefacts déjà présents et skip vite** (gate). Plus d'OOM-kill.
+
+### Paths spécifiques
+
+- **Source frontend** : `POS/`
+- **Artefacts vite (commités)** : `pos_next/public/pos/`
+- **SPA HTML(s) (commités)** : `pos_next/www/pos.html`
+- **Build script root** : `yarn (`cd POS && yarn build`, frontend dans `POS/`)`
+
+### Forcer un rebuild local (si vraiment nécessaire)
+
+```bash
+FORCE_REBUILD=1 yarn build
+```
+
+### Documentation complète
+
+- Doc canonique : `bvisible/neoffice-devops:main` → `docs/COMMIT-BUILD-PATTERN.md`
+- Doc batch migration (12 apps) : même fichier, sections "Apps that have adopted the pattern" + "Edge cases discovered"
+- Vault Obsidian : `[[NORA/04-savoir-faire/drive-frontend-build-pattern]]`
+
+### Edge cases spécifiques à pos_next
+
+- ⚠️ Frontend dans `POS/` (majuscules), artefacts dans `pos_next/public/pos/`.
+- ⚠️ Repo GitHub : `bvisible/POSNext` (différent du nom du package `pos_next`).
+- `POS/yarn.lock` reste dans `.gitignore` (re-généré à chaque install).

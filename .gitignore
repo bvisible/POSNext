@@ -70,5 +70,5 @@ TODO.md
 .claude/settings.json
 *.jpeg
 missing.txt
-CLAUDE.md
+# CLAUDE.md  # 2026-05-07 unshipped to document commit-the-build pipeline
 \!pos_next/public/icons/badges/png/*.png
