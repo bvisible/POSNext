@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "cd POS && yarn install",
     "dev": "cd POS && yarn dev",
-    "build": "cd POS && yarn build"
+    "build": "if [ -z \"$FORCE_REBUILD\" ]; then echo '[skip-build] pos_next frontend rebuild disabled on production servers (vite OOM-kills 4 GB tenants). Set FORCE_REBUILD=1 to override, or build via GitHub Actions.'; else yarn build:force; fi",
+    "build:force": "cd POS && yarn build"
   },
   "keywords": [],
   "author": "",
