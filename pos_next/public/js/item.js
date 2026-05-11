@@ -14,11 +14,17 @@
 //
 // `no_default` on the docfield would short-circuit that logic but it
 // is a runtime-only meta flag, not a stored Custom Field column, so we
-// can't set it via fixture. Clearing the field on `setup` for new
-// docs runs after the core default logic and matches the same intent.
+// can't set it via fixture. We clear the value on the form lifecycle
+// events that run after the core default logic (onload + refresh)
+// for new docs.
 frappe.ui.form.on("Item", {
-	setup(frm) {
-		if (frm.doc.__islocal && frm.doc.custom_company) {
+	onload(frm) {
+		if (frm.is_new() && frm.doc.custom_company) {
+			frm.set_value("custom_company", "");
+		}
+	},
+	refresh(frm) {
+		if (frm.is_new() && frm.doc.custom_company) {
 			frm.set_value("custom_company", "");
 		}
 	},
