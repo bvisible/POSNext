@@ -13135,3 +13135,27 @@ msgstr "Excédent"
 
 msgid "Short"
 msgstr "Déficit"
+
+#. Description of 'Company' field in DocType 'Item'
+msgid "Leave empty for global items available to all companies"
+msgstr "Laisser vide pour les articles globaux disponibles pour toutes les sociétés"
+
+#. Label of a Section Break field in DocType 'Item'
+msgid "POS Badges"
+msgstr "Badges POS"
+
+#. Label of a Table field in DocType 'Item'
+msgid "Badges"
+msgstr "Badges"
+
+#. Description of 'Color' field in DocType 'Item'
+msgid "Background color for POS display when no image is set"
+msgstr "Couleur de fond pour l'affichage POS quand aucune image n'est définie"
+
+#. Description of 'Spice Level' field in DocType 'Item'
+msgid "0 = not spicy, 1-3 = spicy levels"
+msgstr "0 = non épicé, 1-3 = niveaux d'épices"
+
+#. Label of a Tab Break field in DocType 'Item'
+msgid "POS Variants"
+msgstr "Variantes POS"
