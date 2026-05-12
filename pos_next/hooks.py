@@ -69,7 +69,7 @@ _asset_version = get_build_version()
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Item": "public/js/item.js"}
+# doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
