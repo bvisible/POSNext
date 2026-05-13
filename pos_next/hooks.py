@@ -31,7 +31,10 @@ app_license = "agpl-3.0"
 # Apps
 # ------------------
 
-# required_apps = []
+# The unified payments app provides the Provider × Channel × Driver layer that
+# POSNext uses via `pos_next.api.payments.*` (see ADR-001 in
+# `/Users/jeremy/GitHub/payments/docs/adr/ADR-001-unification-paiements.md`).
+required_apps = ["payments"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
