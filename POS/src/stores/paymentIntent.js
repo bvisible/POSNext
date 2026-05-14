@@ -8,6 +8,7 @@
 
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
+import { call } from "frappe-ui"
 
 const FINAL_STATUSES = new Set(["succeeded", "failed", "canceled", "refunded"])
 
@@ -37,8 +38,11 @@ export const usePaymentIntentStore = defineStore("paymentIntent", () => {
 	}
 
 	async function _call(method, args) {
-		const resp = await window.frappe.call({ method, args })
-		return resp?.message ?? resp
+		// POSNext is a standalone Vue SPA — the classic desk helper
+		// `window.frappe.call` is not available here. Use frappe-ui's `call`,
+		// which posts to /api/method/<method> and returns the unwrapped
+		// `message` payload directly.
+		return await call(method, args)
 	}
 
 	function track(intentPayload) {

@@ -2482,10 +2482,7 @@ function selectPaymentMethod(method) {
  * Caches them in `driverMappings`, keyed by mode_of_payment (lowercased).
  */
 async function loadDriverMappings() {
-	// TEMP DEBUG (remove once driverMappings wiring is confirmed)
-	console.warn("[PaymentDialog] loadDriverMappings() called, posProfile =", props.posProfile)
 	if (!props.posProfile) {
-		console.warn("[PaymentDialog] loadDriverMappings: no posProfile, skipping")
 		return
 	}
 
@@ -2502,11 +2499,6 @@ async function loadDriverMappings() {
 			],
 			limit_page_length: 0,
 		})
-		// TEMP DEBUG
-		console.warn(
-			"[PaymentDialog] loadDriverMappings raw result:",
-			JSON.stringify(rows),
-		)
 		const list = Array.isArray(rows) ? rows : rows?.message || []
 		const map = {}
 		for (const row of list) {
@@ -2515,15 +2507,8 @@ async function loadDriverMappings() {
 			}
 		}
 		driverMappings.value = map
-		// TEMP DEBUG
-		console.warn(
-			"[PaymentDialog] driverMappings keys:",
-			JSON.stringify(Object.keys(map)),
-		)
 		log.debug("[PaymentDialog] Driver mappings loaded:", Object.keys(map))
 	} catch (e) {
-		// TEMP DEBUG
-		console.error("[PaymentDialog] loadDriverMappings FAILED:", e)
 		log.error("[PaymentDialog] Failed to load driver mappings:", e)
 	}
 }
