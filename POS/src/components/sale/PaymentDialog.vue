@@ -1064,11 +1064,11 @@
 			</div>
 			<!-- End Two Column Layout -->
 
-			<!-- Unified Terminal Payment Dialog Overlay (Stripe Terminal / TWINT QR) -->
+			<!-- Unified Terminal Payment Dialog Overlay -->
 			<!-- Replaces the legacy Wallee overlay. The driver-agnostic composable -->
 			<!-- usePaymentDriver drives the Payment Intent; the dialog rendered -->
-			<!-- depends on the intent's next_action_type. -->
-			<StripeTerminalDialog
+			<!-- depends on the intent's next_action_type — NOT on the PSP. -->
+			<CardPresentDialog
 				v-if="showTerminalDialog && terminalNextActionType === 'display_card_present_modal'"
 				:intent="terminalIntent"
 				@close="closeTerminalDialog"
@@ -1076,7 +1076,7 @@
 				@succeeded="onTerminalSucceeded"
 				@failed="onTerminalFailed"
 			/>
-			<TwintQRDialog
+			<QRPaymentDialog
 				v-else-if="showTerminalDialog && terminalNextActionType === 'display_qr_payload'"
 				:intent="terminalIntent"
 				@close="closeTerminalDialog"
@@ -1185,9 +1185,13 @@ import { useQuickAmounts } from "@/composables/useQuickAmounts"
 // Unified payments — replaces the legacy Wallee terminal integration.
 // Routes a Mode of Payment to a Payment Provider × Channel via the
 // `POS Payment Driver Mapping` DocType (see payments app, ADR-001).
+// The dialog components are named by interaction TYPE (Channel), not by PSP:
+// CardPresentDialog works for any card terminal (Stripe, Payrexx, Worldline…),
+// QRPaymentDialog for any QR-based provider (TWINT…). The PSP is chosen via the
+// mapping's `provider` — the dialogs never know which PSP is behind them.
 import { usePaymentDriver } from "@/composables/usePaymentDriver"
-import StripeTerminalDialog from "@/components/payments/StripeTerminalDialog.vue"
-import TwintQRDialog from "@/components/payments/TwintQRDialog.vue"
+import CardPresentDialog from "@/components/payments/CardPresentDialog.vue"
+import QRPaymentDialog from "@/components/payments/QRPaymentDialog.vue"
 
 const log = logger.create("PaymentDialog")
 const settingsStore = usePOSSettingsStore()
@@ -2478,7 +2482,12 @@ function selectPaymentMethod(method) {
  * Caches them in `driverMappings`, keyed by mode_of_payment (lowercased).
  */
 async function loadDriverMappings() {
-	if (!props.posProfile) return
+	// TEMP DEBUG (remove once driverMappings wiring is confirmed)
+	console.warn("[PaymentDialog] loadDriverMappings() called, posProfile =", props.posProfile)
+	if (!props.posProfile) {
+		console.warn("[PaymentDialog] loadDriverMappings: no posProfile, skipping")
+		return
+	}
 
 	try {
 		const rows = await call("frappe.client.get_list", {
@@ -2493,15 +2502,28 @@ async function loadDriverMappings() {
 			],
 			limit_page_length: 0,
 		})
+		// TEMP DEBUG
+		console.warn(
+			"[PaymentDialog] loadDriverMappings raw result:",
+			JSON.stringify(rows),
+		)
+		const list = Array.isArray(rows) ? rows : rows?.message || []
 		const map = {}
-		for (const row of rows || []) {
+		for (const row of list) {
 			if (row.mode_of_payment) {
 				map[row.mode_of_payment.toLowerCase()] = row
 			}
 		}
 		driverMappings.value = map
+		// TEMP DEBUG
+		console.warn(
+			"[PaymentDialog] driverMappings keys:",
+			JSON.stringify(Object.keys(map)),
+		)
 		log.debug("[PaymentDialog] Driver mappings loaded:", Object.keys(map))
 	} catch (e) {
+		// TEMP DEBUG
+		console.error("[PaymentDialog] loadDriverMappings FAILED:", e)
 		log.error("[PaymentDialog] Failed to load driver mappings:", e)
 	}
 }
