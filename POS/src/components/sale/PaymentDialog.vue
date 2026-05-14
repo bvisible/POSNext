@@ -298,6 +298,58 @@
 							</div>
 						</div>
 
+						<!-- Promotional offers & coupons (same entry points as cart — usable while paying) -->
+						<div class="px-3 py-2 border-b border-gray-100 bg-gray-50/80 shrink-0">
+							<div class="flex gap-2">
+								<button
+									type="button"
+									@click="emit('show-offers')"
+									class="relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:border-green-400 hover:from-green-100 hover:to-emerald-100 hover:shadow-sm transition-all min-w-0 touch-manipulation active:scale-[0.98]"
+									:aria-label="__('View all available offers')"
+								>
+									<svg
+										class="w-3.5 h-3.5 text-green-600 flex-shrink-0"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+										/>
+									</svg>
+									<span class="text-[11px] font-bold text-green-700">{{ __('Offers') }}</span>
+									<span
+										v-if="appliedOfferCount > 0"
+										class="bg-green-600 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 flex-shrink-0 min-w-[16px] text-center"
+									>
+										{{ appliedOfferCount }}
+									</span>
+								</button>
+								<button
+									type="button"
+									@click="emit('show-coupon')"
+									class="relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 hover:border-purple-400 hover:from-purple-100 hover:to-violet-100 hover:shadow-sm transition-all min-w-0 touch-manipulation active:scale-[0.98]"
+									:aria-label="__('Apply coupon or gift card')"
+								>
+									<svg
+										class="w-3.5 h-3.5 text-purple-600 flex-shrink-0"
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fill-rule="evenodd"
+											d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
+											clip-rule="evenodd"
+										/>
+									</svg>
+									<span class="text-[11px] font-bold text-purple-700">{{ __('Coupon') }}</span>
+								</button>
+							</div>
+						</div>
+
 						<!-- Items List (scrollable, takes available space) -->
 						<div v-if="items.length > 0" class="flex-1 overflow-y-auto divide-y divide-gray-100 min-h-0">
 							<div
@@ -1345,12 +1397,19 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	/** Count of pricing rules / offers currently applied (for badge). */
+	appliedOfferCount: {
+		type: Number,
+		default: 0,
+	},
 })
 
 const emit = defineEmits([
 	"update:modelValue",
 	"payment-completed",
 	"update-additional-discount",
+	"show-offers",
+	"show-coupon",
 ])
 
 const show = computed({
@@ -2376,7 +2435,17 @@ watch(show, async (newVal) => {
 		mobileCustomAmount.value = ""
 		lastSelectedMethod.value = null
 		customerCredit.value = []
-		// Note: Don't reset customerBalance here - it's pre-fetched when customer changes
+		// Refetch credit sources every time the dialog opens. The pre-fetch
+		// watcher only fires when customer/company changes, so reopening the
+		// dialog for the same customer would otherwise leave credit_details
+		// empty and break "Apply Customer Credit" with an allocation error.
+		// customerBalance is also refetched so the displayed balance reflects
+		// any redemptions made by other cashiers since the last open.
+		const creditEnabled = props.allowCreditSale || props.allowCustomerCreditPayment
+		if (creditEnabled && props.customer && props.company) {
+			customerBalanceResource.fetch()
+			customerCreditResource.fetch()
+		}
 		selectedSalesPersons.value = []
 		salesPersonSearch.value = ""
 		lockedTerminalPayments.value = []
@@ -2409,13 +2478,9 @@ watch(show, async (newVal) => {
 			lastSelectedMethod.value = defaultMethod || paymentMethods.value[0]
 		}
 
-		// Customer credit and balance is pre-fetched when customer changes (see watcher above)
-		// Just log for debugging
-		const creditEnabled =
-			props.allowCreditSale || props.allowCustomerCreditPayment
 		if (creditEnabled) {
 			log.debug(
-				"[PaymentDialog] Customer credit/balance should be pre-loaded, current balance:",
+				"[PaymentDialog] Customer credit/balance refetch triggered, current balance:",
 				customerBalance.value,
 			)
 		}

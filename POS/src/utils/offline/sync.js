@@ -3,6 +3,7 @@ import { logger } from "@/utils/logger"
 import { CoalescingMutex } from "@/utils/mutex"
 import { db } from "./db"
 import { offlineState } from "./offlineState"
+import { removeOfflineReceiptPayload } from "./offlineReceiptCache"
 import { generateOfflineId } from "./uuid"
 
 // Re-export for backwards compatibility
@@ -119,10 +120,28 @@ export const saveOfflineInvoice = async (invoiceData) => {
  */
 export const getOfflineInvoices = async () => {
 	try {
-		return await db.invoice_queue.filter((inv) => !inv.synced).toArray()
+		return await db.invoice_queue.filter((inv) => !inv.synced && !inv.superseded).toArray()
 	} catch (error) {
 		log.error("Failed to get offline invoices", error)
 		return []
+	}
+}
+
+/**
+ * Look up a single queued offline invoice by its offline_id. Used to rebuild
+ * a receipt payload after sessionStorage is wiped (e.g. a page refresh
+ * between checkout and the auto-print).
+ * @param {string} offlineId - pos_offline_<uuid>
+ * @returns {Promise<Object|null>} The invoice data or null if not queued.
+ */
+export const getOfflineInvoiceByOfflineId = async (offlineId) => {
+	if (!offlineId) return null
+	try {
+		const row = await db.invoice_queue.where("offline_id").equals(offlineId).first()
+		return row?.data || null
+	} catch (error) {
+		log.error("Failed to look up offline invoice", { offlineId, error })
+		return null
 	}
 }
 
@@ -132,7 +151,7 @@ export const getOfflineInvoices = async () => {
  */
 export const getOfflineInvoiceCount = async () => {
 	try {
-		return await db.invoice_queue.filter((inv) => !inv.synced).count()
+		return await db.invoice_queue.filter((inv) => !inv.synced && !inv.superseded).count()
 	} catch (error) {
 		log.error("Failed to get offline invoice count", error)
 		return 0
@@ -222,15 +241,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // ============================================================================
 
 /**
- * Mark an invoice as synced in the local database
+ * Mark an invoice as synced in the local database and drop its cached
+ * receipt payload — once the invoice exists on the server, print/detail
+ * lookups should go through the normal server path.
  * @param {number} id - Invoice queue ID
  * @param {string} serverInvoice - Server invoice name
+ * @param {string} [offlineId] - pos_offline_<uuid> cache key to evict
  */
-const markInvoiceSynced = async (id, serverInvoice) => {
+const markInvoiceSynced = async (id, serverInvoice, offlineId) => {
 	await db.invoice_queue.update(id, {
 		synced: true,
 		server_invoice: serverInvoice,
 	})
+	if (offlineId) removeOfflineReceiptPayload(offlineId)
 }
 
 /**
@@ -305,7 +328,7 @@ const syncInvoiceToServer = async (invoice, retryCount = 0) => {
 	if (offlineId) {
 		const syncStatus = await checkOfflineIdSynced(offlineId)
 		if (syncStatus.synced) {
-			await markInvoiceSynced(invoice.id, syncStatus.sales_invoice)
+			await markInvoiceSynced(invoice.id, syncStatus.sales_invoice, offlineId)
 			log.debug("Invoice already synced, skipping", {
 				id: invoice.id,
 				offline_id: offlineId,
@@ -325,7 +348,7 @@ const syncInvoiceToServer = async (invoice, retryCount = 0) => {
 
 		if (response.message || response.name) {
 			const serverName = response.name || response.message
-			await markInvoiceSynced(invoice.id, serverName)
+			await markInvoiceSynced(invoice.id, serverName, offlineId)
 			log.success("Invoice synced", {
 				id: invoice.id,
 				offline_id: offlineId,
@@ -390,10 +413,12 @@ export const syncOfflineInvoices = async () => {
 				// Check for duplicate error from server
 				const { isDuplicate, invoiceName } = checkDuplicateError(error)
 				if (isDuplicate) {
-					await markInvoiceSynced(invoice.id, invoiceName)
-					log.debug("Invoice is duplicate, marked as synced", {
-						id: invoice.id,
-					})
+					await markInvoiceSynced(
+						invoice.id,
+						invoiceName,
+						invoice.offline_id || invoice.data?.offline_id,
+					)
+					log.debug("Invoice is duplicate, marked as synced", { id: invoice.id })
 					result.skipped++
 					continue
 				}

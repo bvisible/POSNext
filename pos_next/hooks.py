@@ -204,17 +204,6 @@ before_uninstall = "pos_next.uninstall.before_uninstall"
 # notification_config = "pos_next.notifications.get_notification_config"
 
 # Permissions
-# -----------
-# Permissions evaluated in scripted ways
-
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
-
 # Standard Queries
 # ----------------
 # Custom query for company-aware item filtering
@@ -280,6 +269,9 @@ doc_events = {
 	},
 	"POS Profile": {
 		"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"
+	},
+	"POS Settings": {
+		"on_update": "pos_next.api.items.invalidate_pos_settings_cache"
 	},
 	"Promotional Scheme": {
 		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"

@@ -295,6 +295,7 @@ import {
 } from "@/utils/currency"
 import { getInvoiceStatusColor } from "@/utils/invoice"
 import { logger } from "@/utils/logger"
+import { hydrateLocalOnlyInvoice, isLocalOnlyInvoiceName } from "@/utils/printInvoice"
 import { Button, Dialog, FeatherIcon, call } from "frappe-ui"
 import EmailInvoiceDialog from "@/components/sale/EmailInvoiceDialog.vue"
 import { ref, watch, nextTick, computed } from "vue"
@@ -404,6 +405,23 @@ async function loadInvoiceDetails() {
 
 	loading.value = true
 	try {
+		if (isLocalOnlyInvoiceName(props.invoiceName)) {
+			// Hydrate from sessionStorage first, fall back to IndexedDB so a
+			// post-reload detail view still resolves offline receipts.
+			const cached = await hydrateLocalOnlyInvoice({ name: props.invoiceName })
+			if (cached?.items?.length > 0) {
+				const result = JSON.parse(JSON.stringify(cached))
+				result.items = result.items.map((item) => ({
+					...item,
+					quantity: item.quantity ?? item.qty,
+				}))
+				invoiceData.value = result
+				return
+			}
+			invoiceData.value = null
+			return
+		}
+
 		const result = await call("pos_next.api.invoices.get_invoice", {
 			invoice_name: props.invoiceName,
 		})
