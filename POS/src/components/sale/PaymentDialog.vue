@@ -2583,7 +2583,6 @@ async function openTerminalDialog(method) {
 
 	// The driver expects the amount in the smallest currency unit (rappen/cents).
 	const amountMinor = Math.round(amountMajor * 100)
-	const invoiceRef = getInvoiceReference()
 
 	log.debug("[PaymentDialog] Opening terminal dialog:", {
 		method: method.mode_of_payment,
@@ -2593,15 +2592,24 @@ async function openTerminalDialog(method) {
 	})
 
 	try {
+		// The POS invoice does not exist yet at payment-collection time — the
+		// parent creates it on finalize. The Payment Intent is therefore created
+		// WITHOUT a reference document; onTerminalSucceeded stamps `intent_name`
+		// on the payment entry so the parent can link them when the invoice is
+		// created (and Phase 6 reconciliation finalizes the link).
 		await startTerminalIntent({
-			referenceDoctype: props.targetDoctype || "Sales Invoice",
-			referenceName: invoiceRef,
+			referenceDoctype: null,
+			referenceName: null,
 			posProfile: props.posProfile,
 			modeOfPayment: method.mode_of_payment,
 			amount: amountMinor,
 			currency: props.currency || "CHF",
 			device: mapping.default_device || null,
-			metadata: { pos_invoice: invoiceRef },
+			metadata: {
+				pos_profile: props.posProfile,
+				mode_of_payment: method.mode_of_payment,
+				target_doctype: props.targetDoctype || "Sales Invoice",
+			},
 		})
 	} catch (e) {
 		log.error("[PaymentDialog] Failed to start terminal payment:", e)
