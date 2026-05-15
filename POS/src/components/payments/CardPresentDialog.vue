@@ -1,20 +1,40 @@
 <!--
-  StripeTerminalDialog
-  --------------------
-  Modal dialog shown while a Stripe Terminal payment is in progress.
-  The cashier sees a card-tap illustration + spinner + cancel button while
-  the customer presents their card on the reader. State transitions arrive
-  via SocketIO (`payment.intent.<name>.updated`) and are reflected by
-  re-fetching `pos_get_intent_status` (`usePaymentDriver`).
+  CardPresentDialog
+  -----------------
+  PSP-agnostic dialog for card-present terminal payments (Stripe Terminal,
+  future Worldline/Saferpay/Adyen…). Replaces the legacy Wallee overlay.
+
+  Lifecycle (driven by props.intent + props.inFlight):
+    1. idle        → intent is null, inFlight is false. Cashier enters an
+                     amount via numpad, optionally picks a terminal, then
+                     clicks "Démarrer". Component emits `start({amount,
+                     device})` for the parent to call pos_start_payment.
+    2. creating    → inFlight is true. Brief spinner overlay while the parent
+                     awaits the API response.
+    3. processing  → intent.status is requires_action or processing. Cashier
+                     prompts the customer to tap/insert the card on the
+                     terminal. Status updates arrive via SocketIO and the
+                     parent re-fetches the intent (usePaymentDriver).
+    4. succeeded / failed / canceled → terminal state visuals.
 
   Props:
-    - intent (required): the Payment Intent payload returned by pos_start_payment
-    - readerLabel (optional): human-readable reader label to display
+    - posProfile       (string)  POS Profile name — used to fetch active devices
+    - modeOfPayment    (string)  Mode of Payment label (e.g. "Carte de crédit")
+    - defaultAmount    (number)  Amount pre-filled in the numpad, in MAJOR units (e.g. 12.00 CHF)
+    - currency         (string)  ISO code (e.g. "CHF"). Defaults to "CHF".
+    - provider         (string)  Provider name from the mapping (e.g. "stripe_test")
+    - channel          (string)  Channel code from the mapping (e.g. "terminal")
+    - defaultDevice    (string)  Default Payment Device from the mapping (pre-selected)
+    - intent           (object)  Live Payment Intent payload — null while idle
+    - inFlight         (boolean) True while the parent's pos_start_payment is in flight
+    - readerLabel      (string)  Optional label override for the terminal
+
   Emits:
-    - close → user closed without action
-    - cancel → user clicked the cancel button (parent calls usePaymentDriver.cancel)
-    - succeeded → status reached succeeded
-    - failed → status reached failed
+    - start({amount, device})  user clicked "Démarrer" — amount in MAJOR units, device is the picked Payment Device name (or null)
+    - cancel                   user clicked Cancel (idle: just close; processing: parent should call pos_cancel_payment then close)
+    - close                    user dismissed the dialog (terminal state)
+    - succeeded                bubbled when intent.status flips to "succeeded"
+    - failed                   bubbled when intent.status flips to "failed"
 -->
 <template>
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -22,7 +42,9 @@
 			<header class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
 				<div>
 					<h2 class="text-lg font-bold text-gray-900">{{ __('Card Payment') }}</h2>
-					<p v-if="readerLabel" class="text-sm text-gray-500">{{ readerLabel }}</p>
+					<p class="text-sm text-gray-500">
+						{{ headerSubtitle }}
+					</p>
 				</div>
 				<button
 					@click="$emit('close')"
@@ -35,11 +57,106 @@
 				</button>
 			</header>
 
-			<section class="px-6 py-8 text-center">
+			<!-- ============ IDLE STATE: amount entry + terminal selection ============ -->
+			<section v-if="isIdle" class="px-5 py-5">
+				<!-- Amount display -->
+				<div class="bg-gray-100 rounded-xl py-4 px-4 mb-4 text-center">
+					<div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
+						{{ __('Amount to charge') }}
+					</div>
+					<div class="text-3xl font-bold text-gray-900">
+						{{ formatMajor(parsedAmount, currency) }}
+					</div>
+				</div>
+
+				<!-- Terminal selector (only when > 1 device available) -->
+				<div v-if="loadingDevices" class="mb-4 text-center text-sm text-gray-500">
+					{{ __('Loading terminals…') }}
+				</div>
+				<div v-else-if="devicesError" class="mb-4 text-center text-sm text-red-600">
+					{{ devicesError }}
+				</div>
+				<div v-else-if="availableDevices.length > 1" class="mb-4">
+					<div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+						{{ __('Terminal') }}
+					</div>
+					<div class="grid grid-cols-1 gap-2">
+						<button
+							v-for="dev in availableDevices"
+							:key="dev.name"
+							type="button"
+							@click="selectedDevice = dev.name"
+							:class="[
+								'flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all',
+								selectedDevice === dev.name
+									? 'border-blue-500 bg-blue-50 text-blue-700'
+									: 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-gray-700',
+							]"
+						>
+							<div class="flex items-center gap-2">
+								<span class="text-sm font-semibold">{{ dev.device_label || dev.name }}</span>
+								<span
+									v-if="dev.status === 'offline'"
+									class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-100 text-red-700"
+								>{{ __('offline') }}</span>
+							</div>
+							<svg
+								v-if="selectedDevice === dev.name"
+								class="w-4 h-4 text-blue-600"
+								fill="none" stroke="currentColor" viewBox="0 0 24 24"
+							>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+							</svg>
+						</button>
+					</div>
+				</div>
+
+				<!-- Quick-amount buttons -->
+				<div class="grid grid-cols-4 gap-2 mb-3">
+					<button
+						v-for="qa in quickAmounts"
+						:key="qa"
+						type="button"
+						@click="setAmount(qa)"
+						class="py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:border-blue-300"
+					>
+						{{ formatMajor(qa, currency) }}
+					</button>
+				</div>
+
+				<!-- Numpad -->
+				<div class="grid grid-cols-3 gap-2 mb-4">
+					<button v-for="n in ['7','8','9','4','5','6','1','2','3']" :key="n"
+						type="button"
+						@click="numpadInput(n)"
+						class="py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-lg font-semibold text-gray-900"
+					>{{ n }}</button>
+					<button type="button" @click="numpadInput('00')"
+						class="py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-lg font-semibold text-gray-900"
+					>00</button>
+					<button type="button" @click="numpadInput('0')"
+						class="py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-lg font-semibold text-gray-900"
+					>0</button>
+					<button type="button" @click="numpadInput('.')"
+						class="py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-lg font-semibold text-gray-900"
+					>.</button>
+				</div>
+
+				<div class="grid grid-cols-2 gap-2">
+					<button type="button" @click="numpadBackspace"
+						class="py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700"
+					>{{ __('⌫ Backspace') }}</button>
+					<button type="button" @click="numpadClear"
+						class="py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700"
+					>{{ __('Clear') }}</button>
+				</div>
+			</section>
+
+			<!-- ============ CREATING / PROCESSING / TERMINAL state ============ -->
+			<section v-else class="px-6 py-8 text-center">
 				<div class="mx-auto mb-6 w-32 h-32 rounded-full flex items-center justify-center"
 					:class="iconBgClass">
-					<!-- Animated card icon while processing -->
-					<svg v-if="isProcessing" class="w-16 h-16 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg v-if="isCreating || isProcessing" class="w-16 h-16 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<rect x="2" y="6" width="20" height="13" rx="2" stroke-width="1.5"/>
 						<line x1="2" y1="10" x2="22" y2="10" stroke-width="1.5"/>
 					</svg>
@@ -54,45 +171,222 @@
 				<p class="text-lg font-semibold text-gray-900 mb-2">{{ headline }}</p>
 				<p v-if="subline" class="text-sm text-gray-500">{{ subline }}</p>
 
-				<div v-if="intent?.amount && intent?.currency" class="mt-4 text-3xl font-bold text-gray-900">
-					{{ formatAmount(intent.amount, intent.currency) }}
+				<div v-if="amountForDisplay" class="mt-4 text-3xl font-bold text-gray-900">
+					{{ formatMinor(amountForDisplay, displayCurrency) }}
 				</div>
 			</section>
 
+			<!-- ============ FOOTER (state-driven actions) ============ -->
 			<footer class="flex gap-2 px-5 py-4 border-t border-gray-200">
-				<button
-					v-if="isProcessing"
-					@click="$emit('cancel')"
-					class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200"
-				>
-					{{ __('Cancel') }}
-				</button>
-				<button
-					v-else
-					@click="$emit('close')"
-					class="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700"
-				>
-					{{ __('Close') }}
-				</button>
+				<template v-if="isIdle">
+					<button
+						type="button"
+						@click="$emit('cancel')"
+						class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200"
+					>
+						{{ __('Cancel') }}
+					</button>
+					<button
+						type="button"
+						@click="onStart"
+						:disabled="!canStart"
+						:class="[
+							'flex-1 py-3 rounded-xl font-semibold transition-colors',
+							canStart
+								? 'bg-blue-600 text-white hover:bg-blue-700'
+								: 'bg-gray-200 text-gray-400 cursor-not-allowed',
+						]"
+					>
+						{{ __('Start payment') }}
+					</button>
+				</template>
+				<template v-else>
+					<button
+						v-if="isCreating || isProcessing"
+						type="button"
+						@click="$emit('cancel')"
+						class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200"
+					>
+						{{ __('Cancel') }}
+					</button>
+					<button
+						v-else
+						type="button"
+						@click="$emit('close')"
+						class="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700"
+					>
+						{{ __('Close') }}
+					</button>
+				</template>
 			</footer>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { computed, watch } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
+import { call } from "frappe-ui"
 
 const props = defineProps({
-	intent: { type: Object, required: true },
+	// Idle-state config
+	posProfile: { type: String, default: "" },
+	modeOfPayment: { type: String, default: "" },
+	defaultAmount: { type: Number, default: 0 },
+	currency: { type: String, default: "CHF" },
+	provider: { type: String, default: "" },
+	channel: { type: String, default: "" },
+	defaultDevice: { type: String, default: null },
 	readerLabel: { type: String, default: "" },
+	// In-flight / terminal-state inputs
+	intent: { type: Object, default: null },
+	inFlight: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(["close", "cancel", "succeeded", "failed"])
+const emit = defineEmits(["start", "cancel", "close", "succeeded", "failed"])
 
-const status = computed(() => props.intent?.status ?? "requires_action")
-const isProcessing = computed(() => status.value === "requires_action" || status.value === "processing")
+// -------- State computed from props --------
+const isIdle = computed(() => !props.intent && !props.inFlight)
+const isCreating = computed(() => props.inFlight && !props.intent)
+const status = computed(() => props.intent?.status ?? null)
+const isProcessing = computed(
+	() => status.value === "requires_action" || status.value === "processing",
+)
+
+// -------- Amount entry (idle) --------
+const amountInput = ref(formatForInput(props.defaultAmount || 0))
+const parsedAmount = computed(() => {
+	const n = Number.parseFloat(amountInput.value)
+	return Number.isFinite(n) && n > 0 ? n : 0
+})
+
+function formatForInput(n) {
+	// Two-decimal string for the input field
+	const v = Number(n)
+	if (!Number.isFinite(v) || v <= 0) return "0"
+	return v.toFixed(2)
+}
+
+function numpadInput(token) {
+	const cur = amountInput.value || ""
+	if (token === ".") {
+		if (cur.includes(".")) return
+		amountInput.value = cur === "" ? "0." : cur + "."
+		return
+	}
+	if (cur === "0") {
+		amountInput.value = token === "00" ? "0" : token
+		return
+	}
+	amountInput.value = (cur === "" ? "" : cur) + token
+}
+
+function numpadBackspace() {
+	const cur = amountInput.value || ""
+	amountInput.value = cur.length > 1 ? cur.slice(0, -1) : "0"
+}
+
+function numpadClear() {
+	amountInput.value = "0"
+}
+
+function setAmount(major) {
+	amountInput.value = formatForInput(major)
+}
+
+// Quick-amount suggestions: default amount, then round-up steps.
+const quickAmounts = computed(() => {
+	const base = Math.max(0, Number(props.defaultAmount) || 0)
+	if (base <= 0) return [10, 20, 50, 100]
+	const ceil10 = Math.ceil(base / 10) * 10
+	return [
+		Number(base.toFixed(2)),
+		ceil10 > base ? ceil10 : ceil10 + 10,
+		ceil10 > base ? ceil10 + 10 : ceil10 + 20,
+		ceil10 > base ? ceil10 + 20 : ceil10 + 50,
+	]
+})
+
+// -------- Device list (idle) --------
+const availableDevices = ref([])
+const selectedDevice = ref(props.defaultDevice || null)
+const loadingDevices = ref(false)
+const devicesError = ref("")
+
+async function loadDevices() {
+	if (!props.posProfile) return
+	loadingDevices.value = true
+	devicesError.value = ""
+	try {
+		const rows = await call("pos_next.api.payments.pos_get_active_devices", {
+			pos_profile: props.posProfile,
+			provider: props.provider || null,
+			channel: props.channel || null,
+		})
+		availableDevices.value = Array.isArray(rows) ? rows : rows?.message || []
+		// Pre-select: explicit defaultDevice, otherwise the row flagged is_default,
+		// otherwise the first device.
+		if (props.defaultDevice && availableDevices.value.some((d) => d.name === props.defaultDevice)) {
+			selectedDevice.value = props.defaultDevice
+		} else {
+			const def = availableDevices.value.find((d) => d.is_default)
+			selectedDevice.value = def?.name || availableDevices.value[0]?.name || null
+		}
+		if (!availableDevices.value.length) {
+			devicesError.value = __(
+				"No active terminal configured on this POS Profile. Add one in POS Profile → Active Payment Terminals.",
+			)
+		}
+	} catch (e) {
+		devicesError.value = e?.message || __("Failed to load terminals")
+		availableDevices.value = []
+	} finally {
+		loadingDevices.value = false
+	}
+}
+
+const canStart = computed(
+	() =>
+		parsedAmount.value > 0 &&
+		!loadingDevices.value &&
+		!devicesError.value &&
+		availableDevices.value.length > 0 &&
+		!!selectedDevice.value,
+)
+
+onMounted(loadDevices)
+watch(
+	() => [props.posProfile, props.provider, props.channel],
+	() => loadDevices(),
+)
+
+// Refresh the input default amount if it changes (e.g. parent splits the bill)
+watch(
+	() => props.defaultAmount,
+	(v) => {
+		if (isIdle.value && parsedAmount.value === 0) {
+			amountInput.value = formatForInput(v || 0)
+		}
+	},
+)
+
+function onStart() {
+	if (!canStart.value) return
+	emit("start", {
+		amount: parsedAmount.value,
+		device: selectedDevice.value,
+	})
+}
+
+// -------- Terminal-state visuals --------
+const headerSubtitle = computed(() => {
+	if (isIdle.value) return props.modeOfPayment || __("Enter amount and start the payment")
+	if (isCreating.value) return __("Creating payment…")
+	const dev = availableDevices.value.find((d) => d.name === selectedDevice.value)
+	return props.readerLabel || dev?.device_label || props.modeOfPayment || ""
+})
 
 const headline = computed(() => {
+	if (isCreating.value) return __("Preparing the terminal…")
 	switch (status.value) {
 		case "requires_action":
 			return __("Present card on reader")
@@ -105,11 +399,12 @@ const headline = computed(() => {
 		case "canceled":
 			return __("Payment canceled")
 		default:
-			return status.value
+			return status.value || ""
 	}
 })
 
 const subline = computed(() => {
+	if (isCreating.value) return __("Please wait a moment.")
 	if (status.value === "failed" && props.intent?.error_message) {
 		return props.intent.error_message
 	}
@@ -131,14 +426,30 @@ const iconBgClass = computed(() => {
 	}
 })
 
-function formatAmount(amount, currency) {
-	// Amount is in smallest unit. Most CHF/EUR/USD use 2 decimals.
-	const major = Number(amount) / 100
+// Amount shown in the lower text (processing onwards).
+// Prefer the intent's amount (server-confirmed). Fallback to parsedAmount in minor.
+const amountForDisplay = computed(() => {
+	if (props.intent?.amount) return props.intent.amount
+	if (isCreating.value && parsedAmount.value > 0) {
+		return Math.round(parsedAmount.value * 100)
+	}
+	return null
+})
+
+const displayCurrency = computed(
+	() => props.intent?.currency || props.currency || "CHF",
+)
+
+function formatMajor(amount, currency) {
 	const formatter = new Intl.NumberFormat(undefined, {
 		style: "currency",
 		currency: currency || "CHF",
 	})
-	return formatter.format(major)
+	return formatter.format(Number(amount) || 0)
+}
+
+function formatMinor(amount, currency) {
+	return formatMajor(Number(amount) / 100, currency)
 }
 
 // Bubble terminal-state events for the parent to react.

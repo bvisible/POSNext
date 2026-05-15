@@ -1117,20 +1117,39 @@
 			<!-- End Two Column Layout -->
 
 			<!-- Unified Terminal Payment Dialog Overlay -->
-			<!-- Replaces the legacy Wallee overlay. The driver-agnostic composable -->
-			<!-- usePaymentDriver drives the Payment Intent; the dialog rendered -->
-			<!-- depends on the intent's next_action_type — NOT on the PSP. -->
+			<!-- Replaces the legacy Wallee overlay. The dialog opens INSTANTLY -->
+			<!-- in idle state (numpad + optional terminal selector); the actual -->
+			<!-- pos_start_payment call is deferred to the cashier's "Démarrer". -->
+			<!-- The dialog kind is decided by the mapping's channel — not the -->
+			<!-- intent — so the dialog can render before the intent exists. -->
 			<CardPresentDialog
-				v-if="showTerminalDialog && terminalNextActionType === 'display_card_present_modal'"
+				v-if="showTerminalDialog && currentDialogKind === 'card_present'"
+				:posProfile="props.posProfile"
+				:modeOfPayment="terminalCurrentMethod?.mode_of_payment || ''"
+				:defaultAmount="terminalDialogAmount"
+				:currency="props.currency || 'CHF'"
+				:provider="terminalCurrentMapping?.provider || ''"
+				:channel="terminalCurrentMapping?.channel || ''"
+				:defaultDevice="terminalCurrentMapping?.default_device || null"
 				:intent="terminalIntent"
+				:inFlight="terminalInFlight"
+				@start="onTerminalStart"
 				@close="closeTerminalDialog"
 				@cancel="onTerminalCancel"
 				@succeeded="onTerminalSucceeded"
 				@failed="onTerminalFailed"
 			/>
 			<QRPaymentDialog
-				v-else-if="showTerminalDialog && terminalNextActionType === 'display_qr_payload'"
+				v-else-if="showTerminalDialog && currentDialogKind === 'qr'"
+				:posProfile="props.posProfile"
+				:modeOfPayment="terminalCurrentMethod?.mode_of_payment || ''"
+				:defaultAmount="terminalDialogAmount"
+				:currency="props.currency || 'CHF'"
+				:provider="terminalCurrentMapping?.provider || ''"
+				:channel="terminalCurrentMapping?.channel || ''"
 				:intent="terminalIntent"
+				:inFlight="terminalInFlight"
+				@start="onTerminalStart"
 				@close="closeTerminalDialog"
 				@cancel="onTerminalCancel"
 				@succeeded="onTerminalSucceeded"
@@ -1465,7 +1484,8 @@ const loyaltyRedeemInput = ref("") // Input field value (string for controlled i
 // updates; this component only owns the dialog visibility + the method context.
 const showTerminalDialog = ref(false)
 const terminalCurrentMethod = ref(null) // the Mode of Payment record being collected
-const terminalDialogAmount = ref(0) // amount (major units) sent to the driver
+const terminalCurrentMapping = ref(null) // resolved POS Payment Driver Mapping (provider/channel/default_device)
+const terminalDialogAmount = ref(0) // amount (major units) — pre-filled in the idle dialog, updated on start
 const {
 	intent: terminalIntent,
 	isInFlight: terminalInFlight,
@@ -1474,6 +1494,19 @@ const {
 	cancel: cancelTerminalIntent,
 	reset: resetTerminalDriver,
 } = usePaymentDriver()
+
+// The dialog is chosen by the mapping's channel:
+//   terminal  → CardPresentDialog (Stripe Terminal, Worldline, Saferpay…)
+//   qr_bridge → QRPaymentDialog (TWINT via PHP bridge)
+// Knowing the kind upfront lets us render the dialog in idle state BEFORE
+// any intent exists — and react instantly to the cashier's click.
+const currentDialogKind = computed(() => {
+	const ch = terminalCurrentMapping.value?.channel
+	if (!ch) return null
+	if (ch === "terminal") return "card_present"
+	if (ch === "qr_bridge") return "qr"
+	return null
+})
 
 // Delivery date for Sales Orders
 const deliveryDate = ref("")
@@ -2606,7 +2639,7 @@ function isLockedPayment(entry) {
  * Resolves the driver mapping, creates a Payment Intent via usePaymentDriver,
  * and shows the StripeTerminalDialog / TwintQRDialog overlay.
  */
-async function openTerminalDialog(method) {
+function openTerminalDialog(method) {
 	if (terminalInFlight.value) {
 		showWarning(__("A payment is already in progress"))
 		return
@@ -2617,7 +2650,9 @@ async function openTerminalDialog(method) {
 		return
 	}
 
-	// Amount: split amount when in split mode, otherwise the remaining amount.
+	// Pre-fill with the split amount (split mode) or the remaining amount.
+	// The cashier can override via the numpad in the dialog — needed for
+	// partial-amount terminal payments (e.g. 100 CHF bill, 50 CHF on card).
 	const amountMajor =
 		splitMode.value && splitAmount.value > 0
 			? splitAmount.value
@@ -2627,17 +2662,45 @@ async function openTerminalDialog(method) {
 		return
 	}
 
+	// Open the dialog INSTANTLY in idle state. No API call here — the
+	// pos_start_payment request is deferred to onTerminalStart (when the
+	// cashier clicks "Démarrer"). This eliminates the perceived lag at click
+	// and matches the legacy Wallee UX (numpad + Start button).
 	terminalCurrentMethod.value = method
+	terminalCurrentMapping.value = mapping
 	terminalDialogAmount.value = amountMajor
 	showTerminalDialog.value = true
 
-	// The driver expects the amount in the smallest currency unit (rappen/cents).
-	const amountMinor = Math.round(amountMajor * 100)
-
-	log.debug("[PaymentDialog] Opening terminal dialog:", {
+	log.debug("[PaymentDialog] Opening terminal dialog (idle):", {
 		method: method.mode_of_payment,
 		provider: mapping.provider,
 		channel: mapping.channel,
+		defaultDevice: mapping.default_device,
+		amountMajor,
+	})
+}
+
+/**
+ * Cashier clicked "Démarrer" / "Generate QR" in the terminal dialog.
+ * Now we know the chosen amount + device — create the Payment Intent.
+ */
+async function onTerminalStart({ amount, device }) {
+	const method = terminalCurrentMethod.value
+	if (!method) return
+	if (!(amount > 0)) {
+		showWarning(__("Invalid amount"))
+		return
+	}
+
+	// Reflect the picked amount in the local state so the dialog header /
+	// processing screen show it (instead of the original pre-filled value).
+	terminalDialogAmount.value = amount
+	const amountMinor = Math.round(amount * 100)
+
+	log.debug("[PaymentDialog] Starting terminal payment:", {
+		method: method.mode_of_payment,
+		amount,
+		device,
 		amountMinor,
 	})
 
@@ -2654,7 +2717,7 @@ async function openTerminalDialog(method) {
 			modeOfPayment: method.mode_of_payment,
 			amount: amountMinor,
 			currency: props.currency || "CHF",
-			device: mapping.default_device || null,
+			device: device || null,
 			metadata: {
 				pos_profile: props.posProfile,
 				mode_of_payment: method.mode_of_payment,
@@ -2664,8 +2727,8 @@ async function openTerminalDialog(method) {
 	} catch (e) {
 		log.error("[PaymentDialog] Failed to start terminal payment:", e)
 		showWarning(e?.message || __("Failed to start terminal payment"))
-		showTerminalDialog.value = false
-		terminalCurrentMethod.value = null
+		// Keep the dialog open in idle state so the cashier can retry — only
+		// reset the driver state, not the dialog visibility / mapping context.
 		resetTerminalDriver()
 	}
 }
@@ -2683,6 +2746,7 @@ async function closeTerminalDialog() {
 	}
 	showTerminalDialog.value = false
 	terminalCurrentMethod.value = null
+	terminalCurrentMapping.value = null
 	resetTerminalDriver()
 }
 
@@ -2712,6 +2776,7 @@ function onTerminalSucceeded() {
 	setTimeout(() => {
 		showTerminalDialog.value = false
 		terminalCurrentMethod.value = null
+		terminalCurrentMapping.value = null
 		resetTerminalDriver()
 	}, 1200)
 }
@@ -2721,12 +2786,15 @@ function onTerminalSucceeded() {
  */
 async function onTerminalCancel() {
 	try {
+		// cancelTerminalIntent is a no-op when there's no active intent
+		// (idle state) — safe to call unconditionally.
 		await cancelTerminalIntent()
 	} catch (e) {
 		log.warn("[PaymentDialog] Failed to cancel terminal payment:", e)
 	}
 	showTerminalDialog.value = false
 	terminalCurrentMethod.value = null
+	terminalCurrentMapping.value = null
 	resetTerminalDriver()
 }
 

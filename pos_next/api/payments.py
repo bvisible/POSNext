@@ -168,3 +168,83 @@ def pos_refund_payment(intent_name: str, amount: int | None = None) -> dict[str,
 	from payments.api import intent as intent_api
 
 	return intent_api.refund_intent(intent_name, amount=amount)
+
+
+@frappe.whitelist()
+def pos_get_active_devices(
+	pos_profile: str,
+	provider: str | None = None,
+	channel: str | None = None,
+) -> list[dict[str, Any]]:
+	"""Return the Payment Devices a cashier may pick from on this POS Profile.
+
+	The intersection rule:
+	  1. Device is listed in ``POS Profile.custom_active_payment_devices`` (the
+	     admin explicitly enabled it on this profile).
+	  2. ``Payment Device.enabled == 1``.
+	  3. If ``provider``/``channel`` are given, the device's
+	     ``provider_channel_settings`` matches both.
+
+	The mapping's ``default_device`` is flagged with ``is_default=True`` so the
+	frontend can pre-select it. When only a single candidate device matches,
+	the UI is expected to hide the selector entirely.
+	"""
+	# 1. Read the active devices declared on the POS Profile.
+	try:
+		profile_doc = frappe.get_doc("POS Profile", pos_profile)
+	except frappe.DoesNotExistError:
+		frappe.throw(_("POS Profile {0} not found").format(pos_profile))
+
+	declared = [
+		row.payment_device
+		for row in (profile_doc.get("custom_active_payment_devices") or [])
+		if row.payment_device
+	]
+	if not declared:
+		return []
+
+	# 2. Optional default_device from the mapping (for the same profile + channel).
+	default_device = None
+	if provider and channel:
+		default_device = frappe.db.get_value(
+			"POS Payment Driver Mapping",
+			{
+				"pos_profile": pos_profile,
+				"provider": provider,
+				"channel": channel,
+				"enabled": 1,
+			},
+			"default_device",
+		)
+
+	# 3. Fetch device rows, filtered by enabled + provider/channel binding.
+	filters: dict[str, Any] = {"name": ["in", declared], "enabled": 1}
+	if provider and channel:
+		# Resolve the Provider Channel Settings name (one per (provider, channel) pair).
+		pcs_name = frappe.db.get_value(
+			"Provider Channel Settings",
+			{"provider": provider, "channel": channel},
+			"name",
+		)
+		if not pcs_name:
+			return []
+		filters["provider_channel_settings"] = pcs_name
+
+	rows = frappe.get_all(
+		"Payment Device",
+		filters=filters,
+		fields=[
+			"name",
+			"device_label",
+			"provider_device_id",
+			"device_type",
+			"status",
+			"location_ref",
+		],
+		order_by="device_label asc",
+	)
+
+	for row in rows:
+		row["is_default"] = row["name"] == default_device
+
+	return rows
