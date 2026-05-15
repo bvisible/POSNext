@@ -44,9 +44,14 @@ def _resolve_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 			frappe.DoesNotExistError,
 		)
 	doc = frappe.get_doc("POS Payment Driver Mapping", mapping_name)
+	# Pull provider.mode so the frontend can decide whether to render
+	# debug/test-only UI (e.g. the QRPaymentDialog simulator panel for TWINT,
+	# which has no physical device to key off).
+	provider_mode = frappe.db.get_value("Payment Provider", doc.provider, "mode")
 	return {
 		"mapping_name": doc.name,
 		"provider": doc.provider,
+		"provider_mode": provider_mode,
 		"channel": doc.channel,
 		"default_device": doc.default_device,
 		"auto_attach_device": bool(doc.auto_attach_device),
@@ -268,26 +273,32 @@ def pos_simulate_terminal_outcome(
 	intent_name: str,
 	outcome: str = "succeeded",
 ) -> dict[str, Any]:
-	"""Test-mode helper: drive a Stripe simulated reader from the POS UI.
+	"""Test-mode helper: drive a Payment Intent's FSM from the POS UI itself.
 
-	Replicates what the webhook worker would do on `terminal.reader.action_*`
-	events because most dev/test instances (including Osiris) don't have a
-	`webhook_secret` configured nor a Stripe Dashboard endpoint pointing at
-	them. The Simulator panel in CardPresentDialog calls this so a cashier
-	can validate the full flow end-to-end during development.
+	Used by the Simulator panel in CardPresentDialog (Stripe Terminal channel)
+	and QRPaymentDialog (TWINT qr_bridge channel) so a cashier can validate
+	the full success/fail UI flow without needing webhooks reachable nor a
+	real customer scan.
 
-	Outcome:
-	  - ``succeeded``: present_payment_method → capture_payment → FSM to
-	    ``succeeded`` → publish SocketIO. Customer-facing result: the dialog
-	    flips to "Payment successful" and a locked Payment Entry is pushed.
-	  - ``declined``:  cancel the Stripe PaymentIntent → FSM to ``failed``
-	    with synthetic ``card_declined`` → publish SocketIO. The dialog
-	    flips to "Payment failed: Card declined by issuer (simulated)".
+	Per channel:
+	  - ``terminal``  → must have a simulator device. On "succeeded" the
+	    helper additionally drives Stripe's test helpers
+	    (``Reader.TestHelpers.present_payment_method`` + capture) so the
+	    Stripe-side state stays consistent. On "declined" the Stripe PI is
+	    cancelled.
+	  - ``qr_bridge`` → no device; we skip provider-specific calls entirely
+	    and just drive the Frappe FSM. The TWINT bridge transaction (if any)
+	    is left in whatever state it was; the cashier should reconcile it
+	    manually or let the polling scheduler resolve it. This is fine for
+	    UI validation but NOT for cleaning up real money flows — only ever
+	    use the simulator panel in test mode.
 
 	Guards (refuse on a production-shaped setup so this can never leak):
 	  - Intent must be in ``processing`` or ``requires_action``
 	  - Intent's provider.mode must be ``test``
-	  - Intent's device.device_type must start with ``simulated``
+	  - Intent's channel must be one of ``terminal`` or ``qr_bridge``
+	  - For ``terminal``: intent.device must exist and be a simulator
+	    (device_type starts with ``simulated``).
 	"""
 	intent_doc = frappe.get_doc("Payment Intent", intent_name)
 
@@ -303,51 +314,70 @@ def pos_simulate_terminal_outcome(
 	if provider_mode != "test":
 		frappe.throw(_("Simulator controls are only available in test mode"))
 
-	# Device must be a simulator.
-	if not intent_doc.device:
-		frappe.throw(_("Intent has no device attached"))
-	device_doc = frappe.get_doc("Payment Device", intent_doc.device)
-	device_type = (device_doc.device_type or "").lower()
-	if not device_type.startswith("simulated"):
+	channel = (intent_doc.channel or "").lower()
+	if channel not in ("terminal", "qr_bridge"):
 		frappe.throw(
-			_(
-				"Device {0} is not a simulator (device_type={1})"
-			).format(device_doc.name, device_doc.device_type or "<none>")
+			_("Simulator does not support channel {0}").format(channel or "<none>")
 		)
 
-	# Resolve the driver so we get the right Stripe API key + capture helper.
+	# For terminal payments only: device must be a simulator. QR has no device.
+	if channel == "terminal":
+		if not intent_doc.device:
+			frappe.throw(_("Intent has no device attached"))
+		device_doc = frappe.get_doc("Payment Device", intent_doc.device)
+		device_type = (device_doc.device_type or "").lower()
+		if not device_type.startswith("simulated"):
+			frappe.throw(
+				_(
+					"Device {0} is not a simulator (device_type={1})"
+				).format(device_doc.name, device_doc.device_type or "<none>")
+			)
+	else:
+		device_doc = None  # noqa: F841 — referenced only in the terminal branch below
+
+	# Resolve the driver. For terminal we need it for the Stripe helpers; for
+	# qr_bridge we still resolve so the driver is bootstrapped (cheap, and may
+	# be used by future TWINT-specific test hooks).
 	from payments.drivers.registry import resolve_driver
 
 	driver = resolve_driver(intent_doc.provider, intent_doc.channel)
 
 	if outcome == "succeeded":
-		# 1. Trigger the simulated card presentation on the Stripe reader.
-		#    This is what `present_payment_method` does in real life — the
-		#    customer taps their card. The simulator runs through it instantly.
-		import stripe
+		# For Stripe Terminal only: round-trip the Stripe-side state via the
+		# official test helpers so the PaymentIntent on Stripe ends up captured.
+		# For qr_bridge we just transition the local FSM.
+		if channel == "terminal":
+			# 1. Trigger the simulated card presentation on the Stripe reader.
+			#    This is what `present_payment_method` does in real life — the
+			#    customer taps their card. The simulator runs through it instantly.
+			import stripe
 
-		try:
-			stripe.terminal.Reader.TestHelpers.present_payment_method(
-				device_doc.provider_device_id,
-				api_key=driver._api_key,
-			)
-		except Exception as exc:  # noqa: BLE001
-			# Already-presented or already-captured states throw; don't tank
-			# the simulation — try to push through to capture/transition anyway.
-			frappe.log_error(
-				"Simulator present_payment_method failed",
-				f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
-			)
+			try:
+				stripe.terminal.Reader.TestHelpers.present_payment_method(
+					device_doc.provider_device_id,
+					api_key=driver._api_key,
+				)
+			except Exception as exc:  # noqa: BLE001
+				# Already-presented or already-captured states throw; don't tank
+				# the simulation — try to push through to capture/transition anyway.
+				frappe.log_error(
+					"Simulator present_payment_method failed",
+					f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
+				)
 
 		# 2. Capture the PaymentIntent — what the webhook worker would do on
 		#    `terminal.reader.action_succeeded`.
-		try:
-			driver.capture_payment(intent_doc.provider_intent_id)
-		except Exception as exc:  # noqa: BLE001
-			frappe.log_error(
-				"Simulator capture_payment failed",
-				f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
-			)
+		# 2. Capture the PaymentIntent — what the webhook worker would do on
+		#    `terminal.reader.action_succeeded`. Stripe-only; TWINT/qr_bridge
+		#    has no "capture" step.
+		if channel == "terminal":
+			try:
+				driver.capture_payment(intent_doc.provider_intent_id)
+			except Exception as exc:  # noqa: BLE001
+				frappe.log_error(
+					"Simulator capture_payment failed",
+					f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
+				)
 
 		# 3. Replicate process_event's FSM transition + SocketIO publish.
 		intent_doc.transition_to(
@@ -372,15 +402,19 @@ def pos_simulate_terminal_outcome(
 		)
 
 	elif outcome == "declined":
-		# 1. Cancel the PaymentIntent on Stripe so we don't leave a dangling
-		#    auth on the customer's card.
-		try:
-			driver.cancel_intent(intent_doc.provider_intent_id)
-		except Exception as exc:  # noqa: BLE001
-			frappe.log_error(
-				"Simulator cancel_intent failed",
-				f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
-			)
+		# 1. (Stripe only) Cancel the PaymentIntent on Stripe so we don't leave
+		#    a dangling auth on the customer's card. For TWINT, no bridge call —
+		#    the user can cancel the TWINT transaction manually if a real
+		#    transaction had been registered (which should NOT happen in test
+		#    mode, by construction of the guards above).
+		if channel == "terminal":
+			try:
+				driver.cancel_intent(intent_doc.provider_intent_id)
+			except Exception as exc:  # noqa: BLE001
+				frappe.log_error(
+					"Simulator cancel_intent failed",
+					f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
+				)
 
 		# 2. Transition Frappe FSM to failed with a synthetic decline message.
 		intent_doc.transition_to(

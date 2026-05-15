@@ -134,6 +134,43 @@
 				<div v-if="amountForDisplay" class="mt-4 text-3xl font-bold text-gray-900">
 					{{ formatMinor(amountForDisplay, displayCurrency) }}
 				</div>
+
+				<!-- Simulator controls — test mode only (TWINT has no physical device
+				     to "simulate"; this just drives the Frappe FSM + SocketIO so the
+				     UI flow can be validated without round-tripping the bridge). -->
+				<div
+					v-if="showSimulatorControls"
+					class="mt-6 mx-auto max-w-sm border-2 border-amber-300 bg-amber-50 rounded-xl p-4 text-left"
+				>
+					<div class="flex items-center gap-2 mb-3">
+						<span class="text-base">🧪</span>
+						<span class="text-xs uppercase tracking-wide font-bold text-amber-700">
+							{{ __('Simulator (test mode)') }}
+						</span>
+					</div>
+					<p class="text-xs text-amber-800 mb-3">
+						{{ __('No customer scan will happen. Pick an outcome to advance the Payment Intent FSM.') }}
+					</p>
+					<div class="grid grid-cols-2 gap-2">
+						<button
+							type="button"
+							@click="simulate('succeeded')"
+							:disabled="simulatorBusy"
+							class="py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed"
+						>
+							{{ simulatorBusy === 'succeeded' ? __('…') : __('✓ Accept') }}
+						</button>
+						<button
+							type="button"
+							@click="simulate('declined')"
+							:disabled="simulatorBusy"
+							class="py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
+						>
+							{{ simulatorBusy === 'declined' ? __('…') : __('✗ Decline') }}
+						</button>
+					</div>
+					<p v-if="simulatorError" class="mt-2 text-xs text-red-700">{{ simulatorError }}</p>
+				</div>
 			</section>
 
 			<!-- ============ FOOTER ============ -->
@@ -186,6 +223,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import QRCode from "qrcode"
+import { call } from "frappe-ui"
 
 const props = defineProps({
 	// Idle-state config (subset of CardPresentDialog props for parent symmetry)
@@ -196,6 +234,8 @@ const props = defineProps({
 	provider: { type: String, default: "" },
 	channel: { type: String, default: "" },
 	defaultDevice: { type: String, default: null }, // unused for QR — kept for symmetry
+	// True when the provider's mode == "test" — gates the simulator panel.
+	isTestMode: { type: Boolean, default: false },
 	// In-flight / terminal-state inputs
 	intent: { type: Object, default: null },
 	inFlight: { type: Boolean, default: false },
@@ -281,6 +321,35 @@ function onStart() {
 		amount: parsedAmount.value,
 		device: null, // QR has no physical device
 	})
+}
+
+// -------- Simulator controls (test mode) --------
+// QR providers (TWINT) have no "simulator device" concept like Stripe Terminal,
+// but the same Accept/Decline panel is useful while waiting for a real sandbox
+// merchant. Backend (pos_simulate_terminal_outcome) skips Stripe-specific
+// calls for channel=qr_bridge and just transitions the Frappe FSM + publishes
+// the SocketIO event, which is what the UI flow actually needs.
+const showSimulatorControls = computed(
+	() => !!props.intent && isProcessing.value && props.isTestMode,
+)
+const simulatorBusy = ref(null) // null | "succeeded" | "declined"
+const simulatorError = ref("")
+
+async function simulate(outcome) {
+	if (!props.intent?.intent_name) return
+	if (simulatorBusy.value) return
+	simulatorBusy.value = outcome
+	simulatorError.value = ""
+	try {
+		await call("pos_next.api.payments.pos_simulate_terminal_outcome", {
+			intent_name: props.intent.intent_name,
+			outcome,
+		})
+	} catch (e) {
+		simulatorError.value = e?.message || __("Simulator call failed")
+	} finally {
+		simulatorBusy.value = null
+	}
 }
 
 // -------- QR rendering (processing state) --------

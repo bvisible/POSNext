@@ -1147,6 +1147,7 @@
 				:currency="props.currency || 'CHF'"
 				:provider="terminalCurrentMapping?.provider || ''"
 				:channel="terminalCurrentMapping?.channel || ''"
+				:isTestMode="terminalCurrentMapping?.provider_mode === 'test'"
 				:intent="terminalIntent"
 				:inFlight="terminalInFlight"
 				@start="onTerminalStart"
@@ -2598,9 +2599,39 @@ async function loadDriverMappings() {
 			limit_page_length: 0,
 		})
 		const list = Array.isArray(rows) ? rows : rows?.message || []
+
+		// Enrich each mapping with the provider's mode so the dialogs can
+		// render test-only UI (e.g. the QRPaymentDialog simulator panel for
+		// TWINT, which has no device to key off). One extra query for all
+		// unique providers found across the mappings — keeps it cheap.
+		const uniqueProviders = [
+			...new Set(list.map((r) => r.provider).filter(Boolean)),
+		]
+		const providerModes = {}
+		if (uniqueProviders.length) {
+			try {
+				const provRows = await call("frappe.client.get_list", {
+					doctype: "Payment Provider",
+					filters: { name: ["in", uniqueProviders] },
+					fields: ["name", "mode"],
+					limit_page_length: 0,
+				})
+				const provList = Array.isArray(provRows)
+					? provRows
+					: provRows?.message || []
+				for (const p of provList) providerModes[p.name] = p.mode
+			} catch (e) {
+				log.warn(
+					"[PaymentDialog] Could not fetch provider modes; simulator panel will stay hidden:",
+					e,
+				)
+			}
+		}
+
 		const map = {}
 		for (const row of list) {
 			if (row.mode_of_payment) {
+				row.provider_mode = providerModes[row.provider] || null
 				map[row.mode_of_payment.toLowerCase()] = row
 			}
 		}
