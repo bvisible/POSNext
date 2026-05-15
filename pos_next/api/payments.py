@@ -244,7 +244,175 @@ def pos_get_active_devices(
 		order_by="device_label asc",
 	)
 
+	# 4. Look up provider mode once (used to expose is_test_mode).
+	#    Drives the "Simulator controls" UI in CardPresentDialog — those
+	#    Accept/Decline buttons should only render in test mode against a
+	#    simulated device.
+	provider_mode = None
+	if provider:
+		provider_mode = frappe.db.get_value("Payment Provider", provider, "mode")
+
 	for row in rows:
 		row["is_default"] = row["name"] == default_device
+		# Stripe's simulated reader has device_type == "simulated_wisepos_e".
+		# Other future simulators are expected to follow the same prefix.
+		dev_type = (row.get("device_type") or "").lower()
+		row["is_simulator"] = dev_type.startswith("simulated")
+		row["is_test_mode"] = provider_mode == "test"
 
 	return rows
+
+
+@frappe.whitelist()
+def pos_simulate_terminal_outcome(
+	intent_name: str,
+	outcome: str = "succeeded",
+) -> dict[str, Any]:
+	"""Test-mode helper: drive a Stripe simulated reader from the POS UI.
+
+	Replicates what the webhook worker would do on `terminal.reader.action_*`
+	events because most dev/test instances (including Osiris) don't have a
+	`webhook_secret` configured nor a Stripe Dashboard endpoint pointing at
+	them. The Simulator panel in CardPresentDialog calls this so a cashier
+	can validate the full flow end-to-end during development.
+
+	Outcome:
+	  - ``succeeded``: present_payment_method → capture_payment → FSM to
+	    ``succeeded`` → publish SocketIO. Customer-facing result: the dialog
+	    flips to "Payment successful" and a locked Payment Entry is pushed.
+	  - ``declined``:  cancel the Stripe PaymentIntent → FSM to ``failed``
+	    with synthetic ``card_declined`` → publish SocketIO. The dialog
+	    flips to "Payment failed: Card declined by issuer (simulated)".
+
+	Guards (refuse on a production-shaped setup so this can never leak):
+	  - Intent must be in ``processing`` or ``requires_action``
+	  - Intent's provider.mode must be ``test``
+	  - Intent's device.device_type must start with ``simulated``
+	"""
+	intent_doc = frappe.get_doc("Payment Intent", intent_name)
+
+	if intent_doc.status not in ("processing", "requires_action"):
+		frappe.throw(
+			_(
+				"Intent {0} is in status {1}, not eligible for simulation"
+			).format(intent_name, intent_doc.status)
+		)
+
+	# Provider must be in test mode.
+	provider_mode = frappe.db.get_value("Payment Provider", intent_doc.provider, "mode")
+	if provider_mode != "test":
+		frappe.throw(_("Simulator controls are only available in test mode"))
+
+	# Device must be a simulator.
+	if not intent_doc.device:
+		frappe.throw(_("Intent has no device attached"))
+	device_doc = frappe.get_doc("Payment Device", intent_doc.device)
+	device_type = (device_doc.device_type or "").lower()
+	if not device_type.startswith("simulated"):
+		frappe.throw(
+			_(
+				"Device {0} is not a simulator (device_type={1})"
+			).format(device_doc.name, device_doc.device_type or "<none>")
+		)
+
+	# Resolve the driver so we get the right Stripe API key + capture helper.
+	from payments.drivers.registry import resolve_driver
+
+	driver = resolve_driver(intent_doc.provider, intent_doc.channel)
+
+	if outcome == "succeeded":
+		# 1. Trigger the simulated card presentation on the Stripe reader.
+		#    This is what `present_payment_method` does in real life — the
+		#    customer taps their card. The simulator runs through it instantly.
+		import stripe
+
+		try:
+			stripe.terminal.Reader.TestHelpers.present_payment_method(
+				device_doc.provider_device_id,
+				api_key=driver._api_key,
+			)
+		except Exception as exc:  # noqa: BLE001
+			# Already-presented or already-captured states throw; don't tank
+			# the simulation — try to push through to capture/transition anyway.
+			frappe.log_error(
+				"Simulator present_payment_method failed",
+				f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
+			)
+
+		# 2. Capture the PaymentIntent — what the webhook worker would do on
+		#    `terminal.reader.action_succeeded`.
+		try:
+			driver.capture_payment(intent_doc.provider_intent_id)
+		except Exception as exc:  # noqa: BLE001
+			frappe.log_error(
+				"Simulator capture_payment failed",
+				f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
+			)
+
+		# 3. Replicate process_event's FSM transition + SocketIO publish.
+		intent_doc.transition_to(
+			"succeeded",
+			event_source="webhook",
+			payload_excerpt=(
+				f"payment_intent.succeeded pi={intent_doc.provider_intent_id} "
+				f"status=succeeded (simulated)"
+			),
+			ignore_invalid=True,
+		)
+		intent_doc.reload()
+		frappe.db.commit()
+		frappe.publish_realtime(
+			event=f"payment.intent.{intent_doc.name}.updated",
+			message={
+				"intent_name": intent_doc.name,
+				"status": intent_doc.status,
+				"event_type": "payment_intent.succeeded",
+			},
+			after_commit=False,
+		)
+
+	elif outcome == "declined":
+		# 1. Cancel the PaymentIntent on Stripe so we don't leave a dangling
+		#    auth on the customer's card.
+		try:
+			driver.cancel_intent(intent_doc.provider_intent_id)
+		except Exception as exc:  # noqa: BLE001
+			frappe.log_error(
+				"Simulator cancel_intent failed",
+				f"intent={intent_name} pi={intent_doc.provider_intent_id}: {exc!r}",
+			)
+
+		# 2. Transition Frappe FSM to failed with a synthetic decline message.
+		intent_doc.transition_to(
+			"failed",
+			event_source="webhook",
+			error_code="card_declined",
+			error_message="Card declined by issuer (simulated)",
+			payload_excerpt=(
+				f"payment_intent.payment_failed pi={intent_doc.provider_intent_id} "
+				f"(simulated decline)"
+			),
+			ignore_invalid=True,
+		)
+		intent_doc.reload()
+		frappe.db.commit()
+		frappe.publish_realtime(
+			event=f"payment.intent.{intent_doc.name}.updated",
+			message={
+				"intent_name": intent_doc.name,
+				"status": intent_doc.status,
+				"event_type": "payment_intent.payment_failed",
+			},
+			after_commit=False,
+		)
+
+	else:
+		frappe.throw(
+			_("Unknown simulator outcome: {0} (expected 'succeeded' or 'declined')").format(outcome)
+		)
+
+	return {
+		"intent_name": intent_doc.name,
+		"status": intent_doc.status,
+		"outcome": outcome,
+	}
