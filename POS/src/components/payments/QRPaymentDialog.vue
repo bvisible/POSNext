@@ -42,7 +42,7 @@
 				</button>
 			</header>
 
-			<!-- ============ IDLE STATE: amount entry ============ -->
+			<!-- ============ IDLE STATE: amount entry + (optional) endpoint picker ============ -->
 			<section v-if="isIdle" class="px-5 py-5">
 				<!-- Amount display -->
 				<div class="bg-gray-100 rounded-xl py-4 px-4 mb-4 text-center">
@@ -51,6 +51,45 @@
 					</div>
 					<div class="text-3xl font-bold text-gray-900">
 						{{ formatMajor(parsedAmount, currency) }}
+					</div>
+				</div>
+
+				<!-- Endpoint selector (only when > 1 active row matches this Mode of
+				     Payment). For TWINT today this is rarely > 1, but kept symmetric
+				     with CardPresentDialog so a future multi-merchant TWINT config
+				     can surface here without UI changes. -->
+				<div v-if="loadingDevices" class="mb-4 text-center text-sm text-gray-500">
+					{{ __('Loading…') }}
+				</div>
+				<div v-else-if="devicesError" class="mb-4 text-center text-sm text-red-600">
+					{{ devicesError }}
+				</div>
+				<div v-else-if="availableDevices.length > 1" class="mb-4">
+					<div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+						{{ __('Endpoint') }}
+					</div>
+					<div class="grid grid-cols-1 gap-2">
+						<button
+							v-for="dev in availableDevices"
+							:key="dev.name"
+							type="button"
+							@click="selectedDevice = dev.name"
+							:class="[
+								'flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all',
+								selectedDevice === dev.name
+									? 'border-blue-500 bg-blue-50 text-blue-700'
+									: 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-gray-700',
+							]"
+						>
+							<span class="text-sm font-semibold">{{ dev.device_label || dev.name }}</span>
+							<svg
+								v-if="selectedDevice === dev.name"
+								class="w-4 h-4 text-blue-600"
+								fill="none" stroke="currentColor" viewBox="0 0 24 24"
+							>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+							</svg>
+						</button>
 					</div>
 				</div>
 
@@ -258,7 +297,57 @@ const parsedAmount = computed(() => {
 	return Number.isFinite(n) && n > 0 ? n : 0
 })
 
-const canStart = computed(() => parsedAmount.value > 0)
+// -------- Endpoint list (idle) --------
+// QR channels (TWINT) typically have ONE virtual row from the backend (a row
+// in POS Profile → Active Payment Methods & Terminals with no Payment Device).
+// We still go through pos_get_active_devices so that:
+//   - missing/misconfigured profiles surface a clear error,
+//   - future multi-merchant TWINT configs can show a picker without UI churn.
+const availableDevices = ref([])
+const selectedDevice = ref(null)
+const loadingDevices = ref(false)
+const devicesError = ref("")
+
+async function loadDevices() {
+	if (!props.posProfile) return
+	loadingDevices.value = true
+	devicesError.value = ""
+	try {
+		const rows = await call("pos_next.api.payments.pos_get_active_devices", {
+			pos_profile: props.posProfile,
+			mode_of_payment: props.modeOfPayment || null,
+			provider: props.provider || null,
+			channel: props.channel || null,
+		})
+		availableDevices.value = Array.isArray(rows) ? rows : rows?.message || []
+		const def = availableDevices.value.find((d) => d.is_default)
+		selectedDevice.value = def?.name || availableDevices.value[0]?.name || null
+		if (!availableDevices.value.length) {
+			devicesError.value = __(
+				"This Mode of Payment is not enabled on the POS Profile. Add a row in POS Profile → Active Payment Methods & Terminals.",
+			)
+		}
+	} catch (e) {
+		devicesError.value = e?.message || __("Failed to load payment endpoints")
+		availableDevices.value = []
+	} finally {
+		loadingDevices.value = false
+	}
+}
+
+onMounted(loadDevices)
+watch(
+	() => [props.posProfile, props.modeOfPayment, props.provider, props.channel],
+	() => loadDevices(),
+)
+
+const canStart = computed(
+	() =>
+		parsedAmount.value > 0 &&
+		!loadingDevices.value &&
+		!devicesError.value &&
+		availableDevices.value.length > 0,
+)
 
 function formatForInput(n) {
 	const v = Number(n)
@@ -317,9 +406,13 @@ watch(
 
 function onStart() {
 	if (!canStart.value) return
+	// Virtual rows (TWINT QR + future bank QRs) carry a `virtual:` prefix in
+	// their `name`. The backend (pos_start_payment) normalizes those to None
+	// so the Payment Intent is created without a device attached. Real
+	// devices (theoretical for QR channels today) flow through unchanged.
 	emit("start", {
 		amount: parsedAmount.value,
-		device: null, // QR has no physical device
+		device: selectedDevice.value,
 	})
 }
 

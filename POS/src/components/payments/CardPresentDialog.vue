@@ -354,6 +354,7 @@ async function loadDevices() {
 	try {
 		const rows = await call("pos_next.api.payments.pos_get_active_devices", {
 			pos_profile: props.posProfile,
+			mode_of_payment: props.modeOfPayment || null,
 			provider: props.provider || null,
 			channel: props.channel || null,
 		})
@@ -368,7 +369,7 @@ async function loadDevices() {
 		}
 		if (!availableDevices.value.length) {
 			devicesError.value = __(
-				"No active terminal configured on this POS Profile. Add one in POS Profile → Active Payment Terminals.",
+				"No active terminal configured for this Mode of Payment on this POS Profile. Add one in POS Profile → Active Payment Methods & Terminals.",
 			)
 		}
 	} catch (e) {
@@ -390,7 +391,7 @@ const canStart = computed(
 
 onMounted(loadDevices)
 watch(
-	() => [props.posProfile, props.provider, props.channel],
+	() => [props.posProfile, props.modeOfPayment, props.provider, props.channel],
 	() => loadDevices(),
 )
 

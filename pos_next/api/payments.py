@@ -104,8 +104,13 @@ def pos_start_payment(
 	composed.setdefault("mode_of_payment", mode_of_payment)
 	composed.setdefault("channel_via", mapping["channel"])
 
-	# Pick the device. Mapping default first, override last.
+	# Pick the device. Mapping default first, override last. Virtual device
+	# names (emitted by pos_get_active_devices for QR-only channels with no
+	# physical terminal — e.g. TWINT QR) are normalized to None so we don't
+	# try to attach an intent to a Payment Device that doesn't exist.
 	picked_device = device or mapping["default_device"]
+	if picked_device and str(picked_device).startswith("virtual:"):
+		picked_device = None
 
 	result = intent_api.create_intent(
 		provider=mapping["provider"],
@@ -178,94 +183,133 @@ def pos_refund_payment(intent_name: str, amount: int | None = None) -> dict[str,
 @frappe.whitelist()
 def pos_get_active_devices(
 	pos_profile: str,
+	mode_of_payment: str | None = None,
 	provider: str | None = None,
 	channel: str | None = None,
 ) -> list[dict[str, Any]]:
-	"""Return the Payment Devices a cashier may pick from on this POS Profile.
+	"""Return the (Mode of Payment, Payment Device) rows a cashier may pick from
+	on this POS Profile for the given Mode of Payment.
 
-	The intersection rule:
-	  1. Device is listed in ``POS Profile.custom_active_payment_devices`` (the
-	     admin explicitly enabled it on this profile).
-	  2. ``Payment Device.enabled == 1``.
-	  3. If ``provider``/``channel`` are given, the device's
-	     ``provider_channel_settings`` matches both.
+	Filtering pipeline:
+	  1. Rows declared in ``POS Profile.custom_active_payment_devices`` (the
+	     admin explicitly enabled them on this profile).
+	  2. Rows whose ``mode_of_payment`` matches the requested one (when given).
+	  3. For rows with a ``payment_device`` (physical terminal): the device must
+	     be ``Payment Device.enabled == 1`` and bound to the requested
+	     provider/channel.
+	  4. For rows WITHOUT a ``payment_device`` (TWINT QR / future bank QRs): we
+	     return a virtual row so the cashier UI has something to select. This is
+	     only emitted when ``channel`` is a non-terminal channel.
 
-	The mapping's ``default_device`` is flagged with ``is_default=True`` so the
-	frontend can pre-select it. When only a single candidate device matches,
-	the UI is expected to hide the selector entirely.
+	Each returned row carries:
+	  - ``name``           : device name OR ``virtual:<idx>`` for non-physical
+	  - ``device_label``   : human label
+	  - ``device_type``    : raw device_type (or ``virtual_qr`` for non-physical)
+	  - ``status``         : Payment Device.status (or ``online`` for virtual)
+	  - ``is_default``     : from the child row's ``is_default`` flag
+	  - ``is_simulator``   : True for simulated readers (device_type startswith
+	    "simulated") or for virtual rows when provider.mode == "test"
+	  - ``is_test_mode``   : True when provider.mode == "test"
+
+	When the result has zero rows, the cashier UI shows an explanatory error.
+	When the result has one row, the picker is hidden and the row is auto-used.
+	When the result has more than one, the picker is shown.
 	"""
-	# 1. Read the active devices declared on the POS Profile.
+	# 1. Read the active rows declared on the POS Profile.
 	try:
 		profile_doc = frappe.get_doc("POS Profile", pos_profile)
 	except frappe.DoesNotExistError:
 		frappe.throw(_("POS Profile {0} not found").format(pos_profile))
 
-	declared = [
-		row.payment_device
-		for row in (profile_doc.get("custom_active_payment_devices") or [])
-		if row.payment_device
+	all_rows = profile_doc.get("custom_active_payment_devices") or []
+
+	# 2. Filter by mode_of_payment when supplied. Legacy rows that pre-date the
+	#    `mode_of_payment` column may have it empty — those are NOT matched,
+	#    forcing the admin to backfill them. (Cleaner than guessing.)
+	mop_rows = [
+		row for row in all_rows
+		if (not mode_of_payment) or (row.get("mode_of_payment") == mode_of_payment)
 	]
-	if not declared:
+	if not mop_rows:
 		return []
 
-	# 2. Optional default_device from the mapping (for the same profile + channel).
-	default_device = None
-	if provider and channel:
-		default_device = frappe.db.get_value(
-			"POS Payment Driver Mapping",
-			{
-				"pos_profile": pos_profile,
-				"provider": provider,
-				"channel": channel,
-				"enabled": 1,
-			},
-			"default_device",
-		)
+	# 3. Provider mode (used to flag is_test_mode + drive simulator visibility).
+	provider_mode = None
+	if provider:
+		provider_mode = frappe.db.get_value("Payment Provider", provider, "mode")
 
-	# 3. Fetch device rows, filtered by enabled + provider/channel binding.
-	filters: dict[str, Any] = {"name": ["in", declared], "enabled": 1}
+	# 4. Resolve Provider Channel Settings (only relevant for physical rows).
+	pcs_name = None
 	if provider and channel:
-		# Resolve the Provider Channel Settings name (one per (provider, channel) pair).
 		pcs_name = frappe.db.get_value(
 			"Provider Channel Settings",
 			{"provider": provider, "channel": channel},
 			"name",
 		)
-		if not pcs_name:
-			return []
-		filters["provider_channel_settings"] = pcs_name
 
-	rows = frappe.get_all(
-		"Payment Device",
-		filters=filters,
-		fields=[
-			"name",
-			"device_label",
-			"provider_device_id",
-			"device_type",
-			"status",
-			"location_ref",
-		],
-		order_by="device_label asc",
-	)
+	# 5. Split into "has physical device" and "no device" buckets and resolve.
+	physical_device_names = [row.payment_device for row in mop_rows if row.payment_device]
+	virtual_rows = [row for row in mop_rows if not row.payment_device]
 
-	# 4. Look up provider mode once (used to expose is_test_mode).
-	#    Drives the "Simulator controls" UI in CardPresentDialog — those
-	#    Accept/Decline buttons should only render in test mode against a
-	#    simulated device.
-	provider_mode = None
-	if provider:
-		provider_mode = frappe.db.get_value("Payment Provider", provider, "mode")
+	# 5a. Physical: intersect with enabled + provider/channel binding.
+	resolved: list[dict[str, Any]] = []
+	if physical_device_names:
+		device_filters: dict[str, Any] | None = {
+			"name": ["in", physical_device_names],
+			"enabled": 1,
+		}
+		if pcs_name:
+			device_filters["provider_channel_settings"] = pcs_name
+		elif provider and channel:
+			# Provider/channel given but no PCS row => nothing valid.
+			device_filters = None
 
-	for row in rows:
-		row["is_default"] = row["name"] == default_device
-		# Stripe's simulated reader has device_type == "simulated_wisepos_e".
-		# Other future simulators are expected to follow the same prefix.
-		dev_type = (row.get("device_type") or "").lower()
-		row["is_simulator"] = dev_type.startswith("simulated")
-		row["is_test_mode"] = provider_mode == "test"
+		if device_filters is not None:
+			devices = frappe.get_all(
+				"Payment Device",
+				filters=device_filters,
+				fields=[
+					"name",
+					"device_label",
+					"provider_device_id",
+					"device_type",
+					"status",
+					"location_ref",
+				],
+				order_by="device_label asc",
+			)
+			# Re-attach is_default from the matching child row.
+			default_by_name = {
+				row.payment_device: bool(row.get("is_default"))
+				for row in mop_rows if row.payment_device
+			}
+			for dev in devices:
+				dev["is_default"] = default_by_name.get(dev["name"], False)
+				dev_type = (dev.get("device_type") or "").lower()
+				dev["is_simulator"] = dev_type.startswith("simulated")
+				dev["is_test_mode"] = provider_mode == "test"
+				resolved.append(dev)
 
-	return rows
+	# 5b. Virtual: only emit when the channel has no physical device concept
+	#     (qr_bridge today; later: pay_link, etc.). Skip entirely for terminal
+	#     channels — a row with no device on a terminal channel is misconfigured.
+	if virtual_rows and channel and channel != "terminal":
+		for idx, row in enumerate(virtual_rows):
+			resolved.append({
+				"name": f"virtual:{row.mode_of_payment}:{idx}",
+				"device_label": _("{0} (no device)").format(row.mode_of_payment),
+				"provider_device_id": None,
+				"device_type": "virtual_qr",
+				"status": "online",
+				"location_ref": None,
+				"is_default": bool(row.get("is_default")) or (idx == 0 and len(virtual_rows) == 1),
+				# Virtual rows can't be "simulated readers"; the test-mode
+				# simulator panel is gated by is_test_mode alone for QR channels.
+				"is_simulator": False,
+				"is_test_mode": provider_mode == "test",
+			})
+
+	return resolved
 
 
 @frappe.whitelist()
