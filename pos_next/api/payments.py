@@ -112,9 +112,34 @@ def pos_start_payment(
 	if picked_device and str(picked_device).startswith("virtual:"):
 		picked_device = None
 
+	# Resolve (provider, channel). When the cashier explicitly picked a device
+	# at runtime (multiple-endpoints picker), DERIVE (provider, channel) from
+	# the device's Provider Channel Settings rather than from the mapping —
+	# otherwise a Wallee terminal pick on a Stripe-default mapping would create
+	# a Stripe intent attached to a Wallee device.
+	# The mapping then only contributes its `default_device` (if device was
+	# omitted) and `options_json` defaults.
+	picked_provider = mapping["provider"]
+	picked_channel = mapping["channel"]
+	if picked_device:
+		pcs = frappe.db.get_value(
+			"Payment Device",
+			picked_device,
+			"provider_channel_settings",
+		)
+		if pcs:
+			pcs_provider, pcs_channel = frappe.db.get_value(
+				"Provider Channel Settings", pcs, ["provider", "channel"]
+			) or (None, None)
+			if pcs_provider and pcs_channel:
+				picked_provider = pcs_provider
+				picked_channel = pcs_channel
+				# Keep `composed.channel_via` accurate for downstream logs.
+				composed["channel_via"] = pcs_channel
+
 	result = intent_api.create_intent(
-		provider=mapping["provider"],
-		channel=mapping["channel"],
+		provider=picked_provider,
+		channel=picked_channel,
 		amount=int(amount),
 		currency=currency,
 		reference_doctype=reference_doctype,
@@ -126,7 +151,7 @@ def pos_start_payment(
 	# Auto-attach to reader when configured (only meaningful for terminal channel).
 	if (
 		mapping["auto_attach_device"]
-		and mapping["channel"] == "terminal"
+		and picked_channel == "terminal"
 		and picked_device
 		and result.get("status") == "requires_action"
 	):
