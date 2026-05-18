@@ -258,36 +258,44 @@ def pos_get_active_devices(
 	if not mop_rows:
 		return []
 
-	# 3. Provider mode (used to flag is_test_mode + drive simulator visibility).
-	provider_mode = None
+	# 3. Provider mode lookup. When mode_of_payment is given we look up per-device
+	#    provider mode (since multiple providers can serve the same MoP via the
+	#    picker). When only `provider` is given (legacy compat), we look it up
+	#    once for all returned rows.
+	caller_provider_mode = None
 	if provider:
-		provider_mode = frappe.db.get_value("Payment Provider", provider, "mode")
+		caller_provider_mode = frappe.db.get_value("Payment Provider", provider, "mode")
 
-	# 4. Resolve Provider Channel Settings (only relevant for physical rows).
-	pcs_name = None
-	if provider and channel:
-		pcs_name = frappe.db.get_value(
-			"Provider Channel Settings",
-			{"provider": provider, "channel": channel},
-			"name",
-		)
-
-	# 5. Split into "has physical device" and "no device" buckets and resolve.
+	# 4. Split into "has physical device" and "no device" buckets and resolve.
 	physical_device_names = [row.payment_device for row in mop_rows if row.payment_device]
 	virtual_rows = [row for row in mop_rows if not row.payment_device]
 
-	# 5a. Physical: intersect with enabled + provider/channel binding.
+	# 5. Physical devices.
+	# When `mode_of_payment` is supplied we DO NOT restrict by the caller's
+	# (provider, channel) — the whole point of the multi-endpoint picker is to
+	# let the cashier choose across providers (Stripe simulator + Wallee terminal
+	# on the same Mode of Payment). The chosen device's own
+	# `provider_channel_settings` is then used downstream (`pos_start_payment`)
+	# to derive the actual (provider, channel) for the intent.
+	#
+	# Legacy compat: if mode_of_payment is NOT supplied AND provider+channel are,
+	# we restrict to the matching Provider Channel Settings (old behavior).
 	resolved: list[dict[str, Any]] = []
 	if physical_device_names:
 		device_filters: dict[str, Any] | None = {
 			"name": ["in", physical_device_names],
 			"enabled": 1,
 		}
-		if pcs_name:
-			device_filters["provider_channel_settings"] = pcs_name
-		elif provider and channel:
-			# Provider/channel given but no PCS row => nothing valid.
-			device_filters = None
+		if not mode_of_payment and provider and channel:
+			pcs_name = frappe.db.get_value(
+				"Provider Channel Settings",
+				{"provider": provider, "channel": channel},
+				"name",
+			)
+			if pcs_name:
+				device_filters["provider_channel_settings"] = pcs_name
+			else:
+				device_filters = None  # nothing valid
 
 		if device_filters is not None:
 			devices = frappe.get_all(
@@ -300,6 +308,7 @@ def pos_get_active_devices(
 					"device_type",
 					"status",
 					"location_ref",
+					"provider_channel_settings",
 				],
 				order_by="device_label asc",
 			)
@@ -308,11 +317,29 @@ def pos_get_active_devices(
 				row.payment_device: bool(row.get("is_default"))
 				for row in mop_rows if row.payment_device
 			}
+			# Provider mode is per-device when caller didn't fix it: read the PCS
+			# → provider for each row. Cached to avoid repeated lookups.
+			pcs_to_mode: dict[str, str | None] = {}
 			for dev in devices:
 				dev["is_default"] = default_by_name.get(dev["name"], False)
 				dev_type = (dev.get("device_type") or "").lower()
 				dev["is_simulator"] = dev_type.startswith("simulated")
-				dev["is_test_mode"] = provider_mode == "test"
+
+				device_pcs = dev.pop("provider_channel_settings", None)
+				if caller_provider_mode is not None:
+					dev["is_test_mode"] = caller_provider_mode == "test"
+				elif device_pcs:
+					if device_pcs not in pcs_to_mode:
+						dev_provider = frappe.db.get_value(
+							"Provider Channel Settings", device_pcs, "provider"
+						)
+						pcs_to_mode[device_pcs] = (
+							frappe.db.get_value("Payment Provider", dev_provider, "mode")
+							if dev_provider else None
+						)
+					dev["is_test_mode"] = pcs_to_mode[device_pcs] == "test"
+				else:
+					dev["is_test_mode"] = False
 				resolved.append(dev)
 
 	# 5b. Virtual: only emit when the channel has no physical device concept
