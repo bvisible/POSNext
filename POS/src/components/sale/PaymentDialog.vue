@@ -2804,11 +2804,30 @@ function onTerminalSucceeded() {
 	paymentEntries.value.push(lockedEntry)
 	lockedTerminalPayments.value.push(lockedEntry)
 
+	// Auto-finalize when this payment fully settles the bill — no need to make
+	// the cashier click "Finaliser le paiement" after the terminal already
+	// confirmed. We do this on the next tick so `remainingAmount` (computed)
+	// has had a chance to recalculate from the just-pushed entry.
+	const shouldAutoFinalize = () => {
+		const remaining = remainingAmount.value
+		// Tolerate sub-cent floating-point noise.
+		return Math.abs(remaining) < 0.005 && paymentEntries.value.length > 0
+	}
+
 	setTimeout(() => {
 		showTerminalDialog.value = false
 		terminalCurrentMethod.value = null
 		terminalCurrentMapping.value = null
 		resetTerminalDriver()
+		if (shouldAutoFinalize()) {
+			log.debug("[PaymentDialog] Bill settled by terminal — auto-finalizing")
+			try {
+				finalizePayment(false)
+			} catch (e) {
+				log.error("[PaymentDialog] Auto-finalize failed:", e)
+				// Fall back to manual: cashier will see the standard finalize button.
+			}
+		}
 	}, 1200)
 }
 

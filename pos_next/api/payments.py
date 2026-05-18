@@ -398,12 +398,18 @@ def pos_simulate_terminal_outcome(
 	"""
 	intent_doc = frappe.get_doc("Payment Intent", intent_name)
 
-	if intent_doc.status not in ("processing", "requires_action"):
-		frappe.throw(
-			_(
-				"Intent {0} is in status {1}, not eligible for simulation"
-			).format(intent_name, intent_doc.status)
-		)
+	# Idempotent: if the intent already reached a terminal status that matches
+	# the requested outcome (or any terminal status when the webhook beat the
+	# operator's click), return the current state without erroring. This avoids
+	# noisy ValidationError dialogs in the racy case where a Stripe webhook
+	# transitions the intent to `succeeded` just before the cashier hits Accept.
+	if intent_doc.status in ("succeeded", "failed", "canceled", "refunded"):
+		return {
+			"intent_name": intent_doc.name,
+			"status": intent_doc.status,
+			"outcome": outcome,
+			"already_in_terminal_state": True,
+		}
 
 	# Provider must be in test mode.
 	provider_mode = frappe.db.get_value("Payment Provider", intent_doc.provider, "mode")

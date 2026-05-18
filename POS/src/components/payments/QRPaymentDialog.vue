@@ -68,27 +68,27 @@
 					<div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
 						{{ __('Endpoint') }}
 					</div>
-					<div class="grid grid-cols-1 gap-2">
+					<div class="grid grid-cols-2 gap-2">
 						<button
 							v-for="dev in availableDevices"
 							:key="dev.name"
 							type="button"
 							@click="selectedDevice = dev.name"
 							:class="[
-								'flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all',
+								'relative rounded-xl border-2 px-3 py-2.5 text-left transition-all min-h-[58px]',
 								selectedDevice === dev.name
-									? 'border-blue-500 bg-blue-50 text-blue-700'
+									? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
 									: 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-gray-700',
 							]"
 						>
-							<span class="text-sm font-semibold">{{ dev.device_label || dev.name }}</span>
 							<svg
 								v-if="selectedDevice === dev.name"
-								class="w-4 h-4 text-blue-600"
+								class="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-blue-600"
 								fill="none" stroke="currentColor" viewBox="0 0 24 24"
 							>
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
 							</svg>
+							<span class="block text-sm font-semibold leading-tight pr-4">{{ dev.device_label || dev.name }}</span>
 						</button>
 					</div>
 				</div>

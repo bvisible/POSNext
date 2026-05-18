@@ -80,33 +80,36 @@
 					<div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
 						{{ __('Terminal') }}
 					</div>
-					<div class="grid grid-cols-1 gap-2">
+					<!-- Card grid: 2 columns to gain vertical space; ≥3 devices wraps. -->
+					<div class="grid grid-cols-2 gap-2">
 						<button
 							v-for="dev in availableDevices"
 							:key="dev.name"
 							type="button"
 							@click="selectedDevice = dev.name"
 							:class="[
-								'flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all',
+								'relative rounded-xl border-2 px-3 py-2.5 text-left transition-all min-h-[58px]',
 								selectedDevice === dev.name
-									? 'border-blue-500 bg-blue-50 text-blue-700'
+									? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
 									: 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40 text-gray-700',
 							]"
 						>
-							<div class="flex items-center gap-2">
-								<span class="text-sm font-semibold">{{ dev.device_label || dev.name }}</span>
-								<span
-									v-if="dev.status === 'offline'"
-									class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-100 text-red-700"
-								>{{ __('offline') }}</span>
-							</div>
 							<svg
 								v-if="selectedDevice === dev.name"
-								class="w-4 h-4 text-blue-600"
+								class="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-blue-600"
 								fill="none" stroke="currentColor" viewBox="0 0 24 24"
 							>
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
 							</svg>
+							<span class="block text-sm font-semibold leading-tight pr-4">{{ dev.device_label || dev.name }}</span>
+							<span
+								v-if="dev.status === 'offline'"
+								class="inline-block mt-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-red-100 text-red-700"
+							>{{ __('offline') }}</span>
+							<span
+								v-else-if="dev.is_simulator"
+								class="inline-block mt-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-700"
+							>{{ __('test') }}</span>
 						</button>
 					</div>
 				</div>
