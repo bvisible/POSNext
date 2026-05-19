@@ -22,6 +22,7 @@
  * ```
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { onUnmounted } from "vue"
 import { usePOSEventsStore } from "@/stores/posEvents"
 

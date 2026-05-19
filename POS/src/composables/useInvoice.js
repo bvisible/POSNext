@@ -23,6 +23,7 @@ export function useInvoice() {
 	const invoiceItems = ref([])
 	const customer = ref(null)
 	const payments = ref([])
+	//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 	const restaurantTable = ref(null)
 	const salesTeam = ref([]) // Sales team for Sales Invoice
 	const posProfile = ref(null)
@@ -129,6 +130,7 @@ export function useInvoice() {
 					price_list_rate: itemDetails.price_list_rate,
 				}
 			} catch (err) {
+				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 56877dc (+3 more)
 				log.warn(
 					"Server UOM pricing unavailable, resolving from IndexedDB",
 					err,
@@ -193,6 +195,7 @@ export function useInvoice() {
 	const totalDiscount = computed(() =>
 		roundCurrency(_cachedTotalDiscount.value + (additionalDiscount.value || 0)),
 	)
+	//// calculate discount on net total after pricing rules — 8e06bb9
 	// Net total after item-level discounts (pricing rules) but BEFORE additional discount (coupon/gift card)
 	// This is the correct base for gift card calculations
 	const netTotalBeforeAdditionalDiscount = computed(
@@ -229,6 +232,7 @@ export function useInvoice() {
 	// Actions
 	function addItem(item, quantity = 1) {
 		const itemUom = item.uom || item.stock_uom
+		//// linter formatting — 3e25c3b + f1e01ff
 		// In restaurant mode, items with modifiers/instructions are always separate lines
 		const hasModifiers =
 			item.posa_item_modifiers || item.posa_special_instructions
@@ -291,6 +295,7 @@ export function useInvoice() {
 				amount: quantity * (item.rate || item.price_list_rate || 0),
 				stock_qty: item.stock_qty || 0,
 				image: item.image,
+				//// cart color thumbnails, image upload, and card item color propagation — 983130d
 				custom_color: item.custom_color,
 				uom: item.uom || item.stock_uom,
 				stock_uom: item.stock_uom,
@@ -312,6 +317,7 @@ export function useInvoice() {
 				is_stock_item: item.is_stock_item ?? 1,
 				is_bundle: item.is_bundle || false,
 				allow_negative_stock: item.allow_negative_stock || 0,
+				//// table draft loading fails silently due to async clearCart race — 2f0b4b8 + f3e620c (+1 more)
 				// Restaurant fields
 				posa_special_instructions: item.posa_special_instructions || "",
 				posa_item_modifiers: item.posa_item_modifiers || "",
@@ -341,6 +347,7 @@ export function useInvoice() {
 	 *                            If provided, only removes the item with matching item_code AND uom.
 	 *                            If null, removes the first item matching item_code.
 	 */
+	//// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a
 	function removeItem(itemOrCode, uom = null) {
 		// Accept either an item object reference or item_code string
 		let itemToRemove
@@ -356,6 +363,7 @@ export function useInvoice() {
 		}
 
 		if (itemToRemove) {
+			//// optimize invoice totals and item catalog loading — 368754f
 			// Update cache incrementally (subtract removed item values)
 			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1
 			const effectiveRate = isManuallyEdited
@@ -999,6 +1007,7 @@ export function useInvoice() {
 			customer: customer.value?.name || customer.value,
 			items: formatItemsForSubmission(rawItems),
 			payments: invoicePayments,
+			//// use discount_amount instead of additional_discount_amount for gift ca… — b657e65
 			// Document-level discount for coupons and gift cards
 			discount_amount: additionalDiscount.value || 0,
 			coupon_code: couponCode.value,
@@ -1024,6 +1033,7 @@ export function useInvoice() {
 		targetDoctype = "Sales Invoice",
 		deliveryDate = null,
 		writeOffAmount = 0,
+		//// native loyalty points redemption in POS payment dialog — 104959e + e9d1622
 		loyaltyData = null,
 		tipAmount = 0,
 	) {
@@ -1129,6 +1139,7 @@ export function useInvoice() {
 
 				try {
 					const result = await submitInvoiceResource.submit({
+						//// preserve pricing rule discounts on submitted invoices — e62e69e
 						invoice: { ...invoiceData, name: invoiceDoc.name },
 						data: submitData,
 					})
@@ -1152,6 +1163,7 @@ export function useInvoice() {
 
 					resetInvoice()
 					return result
+				//// add mutex protection to prevent duplicate invoice submissions — cc63317
 				} catch (error) {
 					// If resource has error data, extract and attach it
 					if (submitInvoiceResource.error) {
@@ -1205,6 +1217,7 @@ export function useInvoice() {
 				}
 			}
 		} catch (error) {
+			//// auto-load default customer from POS Profile — ecd66b4
 			// Silently fail - default customer is optional
 		}
 	}
@@ -1310,6 +1323,7 @@ export function useInvoice() {
 		rebuildIncrementalCache()
 	}
 
+	//// replaceAllItems bypasses addItem dedup, get_table_order returns kds_s… — 707a330
 	/**
 	 * Replace all cart items at once from server data.
 	 * Bypasses addItem dedup logic — used for guest update reloads.

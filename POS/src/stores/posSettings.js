@@ -2,6 +2,7 @@ import { createResource } from "frappe-ui"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { useBootstrapStore } from "./bootstrap"
+//// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 82fcc1b
 import { call } from "@/utils/apiWrapper"
 
 export const usePOSSettingsStore = defineStore("posSettings", () => {
@@ -66,6 +67,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		allow_negative_stock: 0,
 		// Sales Persons
 		enable_sales_persons: "Disabled",
+		//// add address fields to customer creation form — 8bffb77 + 458d81a (+1 more)
 		// Customer Display Settings
 		enable_customer_display: 0,
 		enable_customer_display_account_creation: 0,
@@ -76,6 +78,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
+		//// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 		// Cash Management
 		closing_withdrawal_template: "",
 	})
@@ -87,6 +90,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const enableLoyaltyProgram = computed(() =>
 		Boolean(settings.value.enable_loyalty_program),
 	)
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 897793e
 	const defaultLoyaltyProgram = computed(
 		() => settings.value.default_loyalty_program || "",
 	)
@@ -281,6 +285,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		onSuccess(data) {
 			if (data) {
 				Object.assign(settings.value, data)
+				//// RESTO toggle no longer reset when saving Restaurant Settings — 03449a5
 				// Restore restaurant mode from localStorage (overrides DB value)
 				initRestaurantMode()
 				isLoaded.value = true
@@ -307,6 +312,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			const preloadedSettings = bootstrapStore.getPreloadedPOSSettings()
 			if (preloadedSettings && Object.keys(preloadedSettings).length > 0) {
 				Object.assign(settings.value, preloadedSettings)
+				//// save restaurant toggle in localStorage, rename setting to 'Default Re… — 82fcc1b + 8aa35c2 (+2 more)
 				initRestaurantMode()
 				isLoaded.value = true
 				isLoading.value = false

@@ -12,6 +12,7 @@
  * - settings:sync-configured - When background sync settings change
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { logger } from "@/utils/logger"

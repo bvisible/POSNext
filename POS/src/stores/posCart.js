@@ -8,6 +8,7 @@ import {
 	checkStockAvailability,
 } from "@/utils/stockValidator"
 import { offlineState } from "@/utils/offline/offlineState"
+//// rounding total, tips visibility, cash quick amounts — 4fdb5df + 8e06bb9
 import { roundTotal, roundCurrency } from "@/utils/currency"
 import { useToast } from "@/composables/useToast"
 import { defineStore } from "pinia"
@@ -88,6 +89,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		totalTax,
 		totalDiscount,
 		grandTotal,
+		//// calculate discount on net total after pricing rules — 8e06bb9
 		netTotalBeforeAdditionalDiscount,
 		posProfile,
 		posOpeningShift,
@@ -97,11 +99,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		taxInclusive,
 		isSubmitting,
 		addItem: addItemToInvoice,
+		//// destructure replaceAllItems from useInvoice in posCart store — 472293d
 		replaceAllItems,
 		removeItem,
 		updateItemQuantity: baseUpdateItemQuantity,
 		submitInvoice: baseSubmitInvoice,
 		clearCart: clearInvoiceCart,
+		//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 		restaurantTable: baseRestaurantTable,
 		loadTaxRules,
 		setTaxInclusive,
@@ -215,6 +219,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		}
 
 		addItemToInvoice(item, qty)
+		//// Phase 4A - structured item modifiers with groups, options, and price… — 4df0caf + 458d81a (+6 more)
 		hasUnsentChanges.value = true
 	}
 
@@ -313,6 +318,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		hasUnsentChanges.value = true
 	}
 
+	//// table draft loading fails silently due to async clearCart race — 2f0b4b8
 	async function clearCart() {
 		// Cancel any pending offer processing
 		debouncedProcessOffers.cancel()
@@ -346,6 +352,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	const deliveryDate = ref("")
 	const writeOffAmount = ref(0)
+	//// use setter functions for posProfile/posOpeningShift to avoid const as… — b44f194 + 458d81a (+6 more)
 	const tipAmount = ref(0)
 	const loyaltyData = ref(null)
 	const restaurantTable = ref(null)
@@ -409,6 +416,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {
 			writeOffAmount.value = 0
+			//// native loyalty points redemption in POS payment dialog — 104959e + e9d1622
 			loyaltyData.value = null
 			tipAmount.value = 0
 		}
@@ -418,6 +426,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	async function createSalesOrder() {
 		return await submitInvoice()
 	}
+//// submit sales order on checkout. — 257a5c2
 
 	function setCustomer(selectedCustomer) {
 		customer.value = selectedCustomer
@@ -442,6 +451,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		showSuccess(__("{0} applied successfully", [discount.name]))
 	}
 
+	//// restore draggable divider functionality in POS layout — 2aafa99
 	function removeDiscountFromCart() {
 		appliedOffers.value = []
 		removeDiscount()
@@ -709,6 +719,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					freeItems,
 					appliedRules,
 				} = parseOfferResponse(response)
+//// Resolve race condition causing offer applied but cart not updating — 248de8f
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
@@ -1518,6 +1529,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (updates.discount_amount !== undefined)
 				cartItem.discount_amount = updates.discount_amount
 			if (updates.rate !== undefined) cartItem.rate = updates.rate
+			//// allow rate update for zero-price items in cart store — fd901f8 + 458d81a
 			if (updates.price_list_rate !== undefined)
 				cartItem.price_list_rate = updates.price_list_rate
 			if (updates.rate !== undefined) {
@@ -1736,6 +1748,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			]
 
 			// All applied offers became invalid and no new offers to apply.
+			//// fix offerProcessingState updates inside try block, and prevent Unnece… — 3160a26
 			if (combinedCodes.length === 0 && invalidOffers.length > 0) {
 				appliedOffers.value = []
 				processFreeItems([])
@@ -2023,6 +2036,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Actions
 		addItem,
+		//// replaceAllItems bypasses addItem dedup, get_table_order returns kds_s… — 707a330
 		replaceAllItems,
 		removeItem,
 		updateItemQuantity,
@@ -2060,6 +2074,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Write-off feature
 		writeOffAmount,
+		//// pass tip_amount through full payment chain (PaymentDialog → POSSale →… — e9d1622
 		tipAmount,
 		setWriteOffAmount,
 		setLoyaltyData,

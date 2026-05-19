@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch } from "vue"
 // ── Module-level constants (created once, shared across all instances) ───
 const CART_SORT_OPTIONS = Object.freeze([
 	{
+		//// align POS design with Neoffice theme and improve customer display — c9d9c1c
 		field: "order",
 		label: __("Addition Order"),
 		icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",

@@ -68,6 +68,7 @@ export function useItems(posProfile, cartItems = ref([])) {
 					item.item_name?.toLowerCase().includes(term) ||
 					item.item_code?.toLowerCase().includes(term) ||
 					item.barcode?.toLowerCase().includes(term) ||
+					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					item.item_group?.toLowerCase().includes(term),
 			)
 		}

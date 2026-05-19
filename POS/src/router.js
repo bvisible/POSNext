@@ -14,6 +14,7 @@ const routes = [
 		path: "/account/login",
 		component: () => import("@/pages/Login.vue"),
 	},
+	//// QR self-ordering and takeaway web ordering — 3939a84 + 458d81a (+4 more)
 	{
 		name: "CustomerDisplay",
 		path: "/display",
@@ -82,6 +83,7 @@ router.beforeEach((to, from, next) => {
 		)
 	}
 
+	//// use dynamic customer group and territory lookup for customer display — 185c3c5
 	// Allow guest access to routes with meta.allowGuest (e.g., CustomerDisplay)
 	if (to.meta?.allowGuest) {
 		next()

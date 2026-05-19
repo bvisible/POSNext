@@ -7,6 +7,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue"
 
 export function useResponsivePayment() {
 	// Viewport dimension tracking
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const viewportWidth = ref(
 		typeof window !== "undefined" ? window.innerWidth : 1200,
 	)

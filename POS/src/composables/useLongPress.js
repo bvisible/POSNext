@@ -12,6 +12,7 @@ import { ref, onUnmounted } from "vue"
  * @returns {Object} - Event handlers and state
  */
 export function useLongPress(options = {}) {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const { duration = 500, onTap = null, onLongPress = null } = options
 
 	// State

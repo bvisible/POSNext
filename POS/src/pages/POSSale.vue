@@ -1,11 +1,13 @@
 <template>
 	<div
+		<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + f23daab (+3 more) -->
 		class="flex flex-col bg-[var(--neo-bg)] overflow-x-hidden"
 		style="height: 100vh; max-height: 100vh"
 	>
 		<!-- Loading State -->
 		<LoadingSpinner v-if="uiStore.isLoading" />
 
+		<!-- //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5 + 548757f -->
 		<!-- Payment Processing Overlay -->
 		<div v-if="isProcessingPayment" class="fixed inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-[400] flex flex-col items-center justify-center">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"></div>
@@ -33,6 +35,7 @@
 				:is-refreshing="stockStore.refreshing"
 				:silent-print-enabled="posSettingsStore.silentPrint"
 				:qz-connected="qzConnected"
+			<!-- //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 5959928 (+2 more) -->
 			:is-restaurant-mode="restaurantStore.isEnabled"
 			:can-toggle-restaurant="canToggleRestaurant"
 				@sync-click="handleSyncClick"
@@ -40,6 +43,7 @@
 				@refresh-click="handleRefresh"
 				@clear-cache="handleClearCache"
 				@logout="uiStore.showLogoutDialog = true"
+				<!-- //// move toggle-restaurant to correct position + language to dropdown — 5e5db36 -->
 				@toggle-restaurant="handleToggleRestaurant"
 			>
 				<template #menu-items>
@@ -226,6 +230,7 @@
 			<div
 				v-if="shiftStore.hasOpenShift"
 				class="flex-1 flex overflow-hidden relative"
+				<!-- //// remove footer height from max-height calc to use full viewport — c0bf6f8 -->
 				style="max-height: calc(100vh - var(--header-height, 60px))"
 			>
 				<!-- Icon-Only Management Slider - Always Visible -->
@@ -319,6 +324,7 @@
 							]"
 							style="contain: layout style paint"
 						>
+							<!-- //// add search bar and grid/list toggle to restaurant card display — 8357bf8 + 9f4e85d (+15 more) -->
 							<!-- Restaurant Mode: Table Selector -->
 							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable && !cartStore.isTakeaway">
 								<FloorPlanEditor
@@ -648,15 +654,18 @@
 								'flex flex-col bg-gray-50 overflow-hidden',
 								uiStore.isDesktop ? 'flex-1' : 'flex-1',
 							]"
+							<!-- //// right panel minimum width 450px (was 360/300) — 7e3f945 -->
 							style="min-width: 450px; contain: layout style paint"
 						>
 							<InvoiceCart
+								<!-- //// auto-open edit dialog for zero-price items (gift cards) — 5dddc52 -->
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
 								:customer="cartStore.customer"
 								:subtotal="cartStore.subtotal"
 								:tax-amount="cartStore.totalTax"
 								:discount-amount="cartStore.totalDiscount"
+								<!-- //// rounding total, tips visibility, cash quick amounts — 4fdb5df -->
 								:grand-total="cartStore.roundedGrandTotal"
 								:rounding-adjustment="cartStore.roundingAdjustment"
 								:pos-profile="shiftStore.profileName"
@@ -664,6 +673,7 @@
 								:applied-offers="cartStore.appliedOffers"
 								:warehouses="profileWarehouses"
 								@update-quantity="cartStore.updateItemQuantity"
+								<!-- //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a -->
 								@remove-item="(item) => cartStore.removeItem(item)"
 								@select-customer="handleCustomerSelected"
 								@create-customer="handleCreateCustomer"
@@ -688,6 +698,7 @@
 								@show-history="openHistoryDialog"
 								@show-return="openReturnDialog"
 								@close-shift="handleCloseShift"
+								<!-- //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 4df0caf (+5 more) -->
 								@send-to-kitchen="handleSendToKitchen"
 								@open-kitchen-dialog="kitchenDialogRef?.open()"
 								@print-provisional-ticket="handlePrintProvisionalTicket"
@@ -760,6 +771,7 @@
 						</svg>
 					</div>
 					<h3 class="mt-4 text-lg font-medium text-gray-900">
+						<!-- //// rebrand: rename POS Next to Neopos — 771950b -->
 						{{ __("Welcome to Neopos") }}
 					</h3>
 					<p class="mt-2 text-sm text-gray-500">
@@ -781,6 +793,7 @@
 			v-model="uiStore.showPaymentDialog"
 			:grand-total="cartStore.roundedGrandTotal"
 			:subtotal="cartStore.subtotal"
+			<!-- //// show remaining to collect in cart + payment dialog accounts for guest… — 214125e -->
 			:guest-paid-amount="cartStore.guestPaidAmount"
 			:pos-profile="shiftStore.profileName"
 			:currency="shiftStore.profileCurrency"
@@ -853,6 +866,7 @@
 			<CouponDialog
 				v-model="uiStore.showCouponDialog"
 				:subtotal="cartStore.subtotal"
+				<!-- //// calculate discount on net total after pricing rules — 8e06bb9 -->
 				:net-total="cartStore.netTotalBeforeAdditionalDiscount"
 				:tax-amount="cartStore.totalTax"
 				:grand-total="cartStore.roundedGrandTotal"
@@ -866,6 +880,7 @@
 				@discount-removed="handleDiscountRemoved"
 			/>
 
+			<!-- //// add GiftCardCreatedDialog and debug logging — 703f204 + 4239ea8 -->
 			<!-- Gift Card Created Dialog -->
 			<GiftCardCreatedDialog
 				:open="showGiftCardCreatedDialog"
@@ -916,6 +931,7 @@
 				@option-selected="handleOptionSelected"
 			/>
 
+			<!-- //// Phase 4B - restaurant menus with course selection dialog — 9f4e85d + 4df0caf (+2 more) -->
 			<!-- Item Modifiers Dialog -->
 			<ItemModifiersDialog ref="itemModifiersRef" @saved="handleModifiersSaved" />
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
@@ -975,6 +991,7 @@
 				v-model="showPOSSettings"
 				:pos-profile="shiftStore.profileName"
 				:current-warehouse="shiftStore.profileWarehouse"
+				<!-- //// hide permanent card from schedule settings, add edit schedule link — 6b38498 -->
 				:initial-tab="settingsInitialTab"
 			/>
 
@@ -986,6 +1003,7 @@
 				:company="shiftStore.profileCompany"
 			/>
 
+			<!-- //// cash in/out from POS using Journal Entry Templates — 6c59863 + d08c57e (+3 more) -->
 			<!-- Restaurant Editors -->
 			<WorkflowEditor v-if="showWorkflowEditor" v-model="showWorkflowEditor" />
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
@@ -1007,6 +1025,7 @@
 				v-model="showInvoiceManagement"
 				:pos-profile="shiftStore.profileName"
 				:currency="shiftStore.profileCurrency"
+				<!-- //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae -->
 				:pos-opening-shift="cartStore.posOpeningShift"
 				:history-invoices="invoiceHistoryData"
 				:draft-invoices="draftsStore.drafts"
@@ -1059,6 +1078,7 @@
 				</template>
 			</Dialog>
 
+			<!-- //// improve UX for customer creation flow — 912ef09 + 5959928 -->
 			<!-- Purge & Toggle Restaurant Mode Dialog -->
 			<Dialog
 				v-model="showPurgeDialog"
@@ -1282,6 +1302,7 @@
 			>
 				<template #body-content>
 					<div class="text-center py-6">
+						<!-- //// improve payment UX - table release debug, lighter processing overlay,… — 548757f + 4239ea8 -->
 						<div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100">
 							<svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -1300,6 +1321,7 @@
 						<Button variant="subtle" @click="uiStore.showSuccessDialog = false">
 							{{ __("Close") }}
 						</Button>
+						<!-- //// add email invoice functionality with PDF attachment — 4239ea8 + 548757f (+1 more) -->
 						<Button
 							variant="outline"
 							@click="showEmailInvoiceDialog = true"
@@ -1312,6 +1334,7 @@
 						<Button
 							variant="solid"
 							theme="blue"
+							<!-- //// keep success dialog open after Print or Email actions — 39a70d1 -->
 							@click="handlePrintInvoice({ name: uiStore.lastInvoiceName })"
 						>
 							<template #prefix>
@@ -1384,11 +1407,13 @@
 				@cancel="showClearCacheDialog = false"
 				@confirm="confirmClearCache"
 			/>
+<!-- //// Implement Sales Order in Point of Sale (POS) system with cart, invoic… — a046b16 -->
 
 		</template>
 
 		<!-- Session Lock Screen (outside v-if/v-else so it renders even during loading) -->
 		<SessionLockScreen />
+<!-- //// replace JS confirm with proper Dialog for QR confirmation — f3affea + 34751a2 (+6 more) -->
 
 		<!-- QR Self-Ordering Confirmation Dialog -->
 		<Dialog v-model="showQRConfirmDialog" :options="{ title: __('QR Self-Ordering'), size: 'sm' }">
@@ -1502,6 +1527,7 @@ import ClearCacheOverlay from "@/components/common/ClearCacheOverlay.vue";
 import SessionLockScreen from "@/components/common/SessionLockScreen.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
 import ManagementSlider from "@/components/pos/ManagementSlider.vue";
+//// set tip account type to Income Account and French label — d08c57e + 6c59863 (+2 more)
 import CashInOutDialog from "@/components/pos/CashInOutDialog.vue";
 import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";
@@ -1537,11 +1563,13 @@ import POSSettings from "@/components/settings/POSSettings.vue";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
 import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
+//// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a
 // Card realtime updates are handled in restaurant.js store via startRealtimeCardListeners()
 import { useSessionLock } from "@/composables/useSessionLock";
 import { usePOSEvents } from "@/composables/usePOSEvents";
 import { useGiftCard } from "@/composables/useGiftCard";
 import { useLocale } from "@/composables/useLocale";
+//// use dynamic customer group and territory lookup for customer display — 185c3c5 + 912ef09 (+1 more)
 import { useCustomerDisplaySync } from "@/composables/useCustomerDisplaySync";
 import { session } from "@/data/session";
 import { useUserData } from "@/data/user";
@@ -1555,6 +1583,7 @@ import {
 	printInvoice,
 	printInvoiceByName,
 	printWithSilentFallback,
+	//// Merge upstream/develop into version-15 — c87d0e9
 	printProvisionalTicket,
 } from "@/utils/printInvoice";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
@@ -1563,11 +1592,13 @@ import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@/composables/useToast";
+//// apply color/name display to restaurant card view + fix image text — 6a4ff7b
 import { isLightColor } from "@/utils/itemColors";
 
 import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { useStockStore } from "@/stores/stock";
+//// defer guest payment recording until Wallee confirms (no premature Pai… — 02f7445
 import { useStock } from "@/composables/useStock";
 // Pinia Stores
 import { usePOSCartStore } from "@/stores/posCart";
@@ -1647,6 +1678,7 @@ const logoutAfterClose = ref(false);
 const editCustomer = ref(null); // Customer being edited (null for create mode)
 const showClearCacheDialog = ref(false);
 const clearCacheOverlayRef = ref(null);
+//// restaurant card system (carte de restaurant) — f239211 + c7696bb (+17 more)
 const showMenus = ref(false);
 
 // Restaurant card selection
@@ -1991,6 +2023,7 @@ onMounted(async () => {
 	};
 	window.addEventListener("resize", handleResize, { passive: true });
 
+	//// payment summary in Paid table dialog + real-time cart refresh on gues… — 34751a2 + e762830 (+4 more)
 	// Listen for guest order updates to refresh POS cart when a guest orders on the active table
 	// Guest update handler with debounce + mutex to prevent item duplication
 	let _guestUpdateTimer = null
@@ -2234,6 +2267,7 @@ onMounted(async () => {
 
 		if (!shiftStore.currentProfile) return;
 
+		//// use setter functions for posProfile/posOpeningShift to avoid const as… — b44f194
 		cartStore.setPosProfile(shiftStore.profileName);
 		cartStore.setPosOpeningShift(shiftStore.currentShift?.name);
 
@@ -2275,6 +2309,7 @@ onMounted(async () => {
 		// Load tax rules (depends on settings being loaded)
 		await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
 
+		//// Merge feature/erpnext-coupon-sync: coupon sync, gift cards, large cat… — 1ec3ead + 2aafa99 (+1 more)
 		// Enable customer display sync
 		if (shiftStore.currentShift?.name) {
 			enableDisplaySync(
@@ -2628,6 +2663,7 @@ async function handleShiftOpened() {
 	// Load tax rules (depends on settings being loaded)
 	await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
 
+	//// Merge upstream/develop: latest upstream features (brands filter, over… — 7604810
 	// Enable customer display sync when new shift opens
 	if (shiftStore.currentShift?.name) {
 		enableDisplaySync(
@@ -2663,6 +2699,7 @@ async function handleShiftClosed() {
 	}
 }
 
+//// reload server draft when returning to occupied table - shows existing… — c8f9a36 + c5208ba (+20 more)
 // Restaurant mode handlers
 function handleTableSelected(table) {
 	// Table selected, cart already configured by TableSelector
@@ -2949,6 +2986,7 @@ function handleItemSelected(item, autoAdd = false) {
 	// Auto-add mode
 	if (autoAdd) {
 		try {
+			//// move station-item relation into Preparation Station child table, add… — 831857f + 34ee11a
 			// Assign preparation station from restaurant store map
 			if (restaurantStore.isEnabled && !item.preparation_station) {
 				const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
@@ -3030,6 +3068,7 @@ function handleItemSelected(item, autoAdd = false) {
 		return;
 	}
 
+	//// add dedicated price entry numpad dialog for zero-price items — 1ff2fba + f23daab (+1 more)
 	// Check for zero-price items (e.g., gift cards that need custom value)
 	const itemRate = item.price_list_rate || item.rate || 0;
 	if (itemRate === 0) {
@@ -3074,6 +3113,7 @@ function handleItemSelected(item, autoAdd = false) {
 			__("Item: {0}", [item.item_code])
 		);
 	}
+//// Phase 4A - structured item modifiers with groups, options, and price… — 4df0caf + eabe35e (+1 more)
 
 	// Auto-open modifiers dialog if item has required modifier groups
 	if (restaurantStore.isEnabled) {
@@ -3137,6 +3177,7 @@ function handleModifiersSaved(cartItem) {
 
 function handleAdditionalDiscountUpdate(discountAmount) {
 	// Update the additional discount value in the cart store
+	//// replace all direct cartStore property assignments with $patch to prev… — dd33c2f
 	cartStore.$patch({ additionalDiscount: discountAmount });
 
 	// Rebuild the cache to recalculate totals
@@ -3273,6 +3314,7 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.setWriteOffAmount(paymentData.write_off_amount);
 		}
 
+		//// pass tip_amount through full payment chain (PaymentDialog → POSSale →… — e9d1622 + 104959e (+2 more)
 		// Set tip amount if provided
 		if (paymentData.tip_amount && paymentData.tip_amount > 0) {
 			cartStore.$patch({ tipAmount: paymentData.tip_amount });
@@ -3310,6 +3352,7 @@ async function handlePaymentCompleted(paymentData) {
 				total_tax: cartStore.totalTax,
 				total_discount: cartStore.totalDiscount,
 				write_off_amount: paymentData.write_off_amount || 0,
+				//// use discount_amount instead of additional_discount_amount for gift ca… — b657e65
 				// Document-level discount for coupons and gift cards
 				discount_amount: cartStore.additionalDiscount || 0,
 				apply_discount_on: cartStore.additionalDiscount > 0 ? "Grand Total" : null,
@@ -3413,6 +3456,7 @@ async function handlePaymentCompleted(paymentData) {
 			// Get item codes from cart before clearing
 			const soldItemCodes = cartStore.invoiceItems.map((item) => item.item_code);
 
+			//// payment = auto-validate + partial payment confirmation dialog — f295bbe + 2584aa5
 			// Show processing overlay
 			isProcessingPayment.value = true
 			uiStore.showPaymentDialog = false
@@ -3480,11 +3524,13 @@ async function handlePaymentCompleted(paymentData) {
 				const invoiceName = result.name || result.message?.name || __("Unknown");
 				const invoiceTotal = result.grand_total || result.total || 0;
 				const paidAmount = paymentData.paid_amount || invoiceTotal;
+//// Implement initial POS Sale page with item selection, cart management,… — f2ad259
 
 				cartStore.clearCart();
 				// Reset cart hash after successful payment
 				previousCartHash = "";
 
+				//// skip local draft deletion in restaurant mode (drafts are server-side… — c89fb98
 				// Delete local draft after successful submission (not for restaurant — those are server-side)
 				if (draftIdToDelete && !restaurantStore.isEnabled) {
 					draftsStore.deleteDraft(draftIdToDelete);
@@ -3493,6 +3539,7 @@ async function handlePaymentCompleted(paymentData) {
 				// Refresh stock - Direct API (50-200ms), no Socket.IO lag!
 				console.time("[Payment] stockRefresh")
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
+				//// release restaurant table to Empty after successful payment — 130a613 + 185c3c5 (+2 more)
 				console.timeEnd("[Payment] stockRefresh")
 
 				// Release restaurant table after successful payment
@@ -3799,6 +3846,7 @@ async function handleLoadDraft(draft) {
 		}
 
 		const draftData = await draftsStore.loadDraft(draft);
+		//// replace direct invoiceItems assignment with addItem loop to avoid con… — cdef734
 		// Restore items via addItem to ensure proper reactivity
 		if (draftData.items && draftData.items.length > 0) {
 			for (const item of draftData.items) {
@@ -4341,6 +4389,7 @@ async function handlePrintInvoice(invoiceData) {
 	}
 }
 
+//// add provisional ticket print button in restaurant table view — 71050fa + 4fdb5df
 function handlePrintProvisionalTicket() {
 	try {
 		printProvisionalTicket({

@@ -3,6 +3,7 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 
 const LEFT_PANEL_MIN = 320
+//// right panel minimum width 450px (was 360/300) — 7e3f945
 const RIGHT_PANEL_MIN = 450
 
 export const usePOSUIStore = defineStore("posUI", () => {
@@ -27,6 +28,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	const { isOpen: showLogoutDialog } = useDialog("logout")
 	const { isOpen: showItemSelectionDialog } = useDialog("itemSelection")
 	const { isOpen: showErrorDialog } = useDialog("invoiceError")
+	//// improve UX for customer creation flow — 912ef09
 	const { isOpen: showCustomerCreatedDialog } = useDialog("customerCreated")
 
 	// Global dialog state
@@ -59,6 +61,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		typeof window !== "undefined" ? window.innerWidth : 1024,
 	)
 
+	//// persist left panel width in localStorage, default 80/20 ratio — 97d370d
 	// Layout state — restore from localStorage or default to 80% of viewport
 	const savedPanelWidth = parseFloat(localStorage.getItem("pos_left_panel_width"))
 	const defaultPanelWidth = savedPanelWidth && savedPanelWidth > LEFT_PANEL_MIN
@@ -164,6 +167,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		isResizing.value = resizing
 	}
 
+	//// maintain left/right panel ratio when browser window resizes — 1edd2aa
 	let lastContainerWidth = 0
 
 	function updateLayoutBounds(containerWidth) {

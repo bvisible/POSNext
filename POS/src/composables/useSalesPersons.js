@@ -54,6 +54,7 @@ export function useSalesPersons(posProfile) {
 				}
 				// Filter by search term if provided
 				if (searchLower) {
+					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					const name = (
 						person.sales_person_name ||
 						person.name ||

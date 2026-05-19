@@ -113,6 +113,7 @@ export function useOffline() {
 
 		// Update reactive refs
 		isOffline.value = nowOffline
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		connectionQuality.value =
 			state.quality || offlineState.getConnectionQuality()
 

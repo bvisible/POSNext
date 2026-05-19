@@ -23,6 +23,7 @@ import { QueuedMutex } from "@/utils/mutex"
  * @param {Object} options.showWarning        - useToast().showWarning
  * @param {import('vue').Ref<boolean>} options.isAnyDialogOpen
  */
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function useSearchInput({
 	itemStore,
 	onItemFound,

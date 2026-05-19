@@ -24,6 +24,7 @@ function formatQuantity(quantity) {
 	const num = Number.parseFloat(quantity)
 	if (isNaN(num)) return "0"
 	// Round to 4 decimal places and remove trailing zeros
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	return num.toFixed(4).replace(/\.?0+$/, "")
 }
 

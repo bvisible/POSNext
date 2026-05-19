@@ -167,6 +167,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		if (/^\d+$/.test(term)) {
 			recs.push({
 				type: "phone",
+				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 				text: __("Search by phone: {0}", [term]),
 				icon: "📱",
 			})

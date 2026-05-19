@@ -134,6 +134,7 @@ export const useCountriesStore = defineStore("countries", () => {
 
 	// Computed
 	const countryNameToISDMap = computed(() =>
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		Object.fromEntries(countries.value.map((c) => [c.name, c.isd])),
 	)
 

@@ -8,6 +8,7 @@
  * - Manual refresh requested
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { defineStore } from "pinia"
 import { ref } from "vue"
 import { call } from "@/utils/apiWrapper"

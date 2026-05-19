@@ -19,6 +19,7 @@
  * Everything else is just Pinia reactivity doing its job.
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { defineStore } from "pinia"
 import { ref, onMounted } from "vue"
 import { call } from "@/utils/apiWrapper"

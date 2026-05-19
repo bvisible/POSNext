@@ -250,6 +250,7 @@ export const useInvoiceFiltersStore = defineStore("invoiceFilters", () => {
 			return `${formatDateDisplay(dateFrom.value)} - ${formatDateDisplay(dateTo.value)}`
 		}
 		if (dateFrom.value) {
+			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			return __("From {0}", [formatDateDisplay(dateFrom.value)])
 		}
 		if (dateTo.value) {

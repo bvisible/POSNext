@@ -51,6 +51,7 @@ export const SUPPORTED_LOCALES = {
 	},
 	"pt-br": {
 		name: "Portuguese (Brazil)",
+		//// migrate to PO/MO translation system and add French language — 883e8a1
 		nativeName: "Português (Brasil)",
 		countryCode: "br",
 		dir: "ltr",
@@ -70,6 +71,7 @@ export const SUPPORTED_LOCALES = {
  */
 async function fetchAllowedLocalesFromServer() {
 	try {
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		const response = await call(
 			"pos_next.api.localization.get_allowed_locales",
 			{},

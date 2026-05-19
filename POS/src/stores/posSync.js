@@ -15,6 +15,7 @@
  */
 
 import { useToast } from "@/composables/useToast"
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { useRestaurantStore } from "@/stores/restaurant"
 import {
 	cacheCustomersFromServer,

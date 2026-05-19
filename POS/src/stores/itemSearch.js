@@ -12,6 +12,7 @@ import { usePOSSettingsStore } from "./posSettings"
 import { usePOSShiftStore } from "./posShift"
 import { useRealtimePosProfile } from "@/composables/useRealtimePosProfile"
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("ItemSearch")
 
 /**
@@ -1577,6 +1578,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 									start: offset,
 									limit: batchSize,
 									show_variants_as_items: getShowVariantsFlag(),
+									//// Add "Show Variants as Items" POS setting — 83f6275
 									include_variants: 1, // Always cache variants for offline barcode scanning
 								})
 									.then((r) => r?.message || r || [])

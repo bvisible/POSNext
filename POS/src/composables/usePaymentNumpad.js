@@ -67,6 +67,7 @@ export function usePaymentNumpad(options = {}) {
 	}
 
 	// Keyboard input handling
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const { isEnabled = ref(true), onEnter = null } = options
 
 	/**

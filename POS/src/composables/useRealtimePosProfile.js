@@ -20,6 +20,7 @@
 import { logger } from "@/utils/logger"
 import { readonly, ref } from "vue"
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("RealtimePosProfile")
 
 // ============================================================================

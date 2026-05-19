@@ -124,6 +124,7 @@ export const useBootstrapStore = defineStore("bootstrap", () => {
 	 * @returns {{ currency: number, float: number, rounding_method: string, number_format: string }}
 	 */
 	function getPreloadedPrecision() {
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		return (
 			data.value?.precision || {
 				currency: 2,

@@ -13,6 +13,7 @@ import { performanceConfig } from "@/utils/performanceConfig"
 import { logger } from "@/utils/logger"
 import { ref } from "vue"
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("RealtimeStock")
 
 // Shared state across all instances

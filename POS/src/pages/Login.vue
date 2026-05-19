@@ -3,6 +3,7 @@
     <div class="max-w-md w-full space-y-8">
       <div class="text-center">
         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+          <!-- //// rebrand: rename POS Next to Neopos — 771950b -->
           {{ __('Sign in to Neopos') }}
         </h2>
         <p class="mt-2 text-sm text-gray-600">

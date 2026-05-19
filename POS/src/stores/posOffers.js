@@ -12,6 +12,7 @@ const defaultSnapshot = () => ({
 	itemGroups: [],
 	brands: [],
 	// Quantity maps for accurate min_qty/max_qty validation
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	itemQuantities: {}, // { item_code: qty }
 	itemGroupQuantities: {}, // { item_group: qty }
 	brandQuantities: {}, // { brand: qty }

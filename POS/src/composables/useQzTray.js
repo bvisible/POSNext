@@ -24,6 +24,7 @@ const certLoading = ref(false)
 const certReady = ref(_loadCertReady())
 
 const printerOptions = computed(() =>
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	printers.value.map((p) => ({ label: p, value: p })),
 )
 

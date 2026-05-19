@@ -15,6 +15,7 @@ import { roundCurrency } from "@/utils/currency"
  * @param {Function} options.getMethodTotal - Function to get total for a payment method
  * @returns {Object} Computed payment calculations
  */
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function usePaymentCalculations({
 	paymentEntries,
 	grandTotal,
