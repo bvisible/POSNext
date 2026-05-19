@@ -63,6 +63,15 @@ repos:
                 pos_next/public/js/lib/.*
             )$
 
+  - repo: local
+    hooks:
+      - id: check-fork-annotations
+        name: "Enforce //// markers on upstream-tracked fork files"
+        entry: python3 scripts/check_annotations.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
 ci:
     autoupdate_schedule: weekly
     skip: []

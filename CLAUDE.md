@@ -199,3 +199,53 @@ FORCE_REBUILD=1 yarn build
 - ⚠️ Frontend dans `POS/` (majuscules), artefacts dans `pos_next/public/pos/`.
 - ⚠️ Repo GitHub : `bvisible/POSNext` (différent du nom du package `pos_next`).
 - `POS/yarn.lock` reste dans `.gitignore` (re-généré à chaque install).
+
+## Annotations fork (`////` markers)
+
+Ce repo est un **fork** de `BrainWise-DEV/POSNext`. Chaque fichier issu de l'upstream et que nous avons modifié porte un commentaire `//// <raison> — <sha7>` au-dessus de chaque bloc divergent. Cette discipline permet de résoudre les futurs merges upstream avec le contexte directement visible.
+
+### Convention
+
+- **Fichiers concernés** : ceux listés dans `.bvisible-tracked-files` (~145 fichiers issus de l'upstream et modifiés chez nous).
+- **Format** : `//// <raison courte ≤70 chars> — <sha7>` (JS/Vue script), `# //// …` (Python), `<!-- //// … -->` (Vue template/HTML), `/* //// … */` (CSS/Vue style).
+- **Granularité** : un marker par bloc logique = un par commit porteur dans le fichier, placé au-dessus du premier hunk du commit. Les hunks suivants du même commit ne sont pas annotés (le SHA reste greppable dans `git log`).
+- **Fichiers JSON / lockfiles** : interdiction d'annoter inline → mettre à jour `BVISIBLE-MODS.md` (registre central).
+
+### Outillage
+
+```bash
+# Régénérer / mettre à jour les annotations (idempotent via .bvisible-annotations.json)
+python3 scripts/annotate_fork.py --dry-run        # prévisualise
+python3 scripts/annotate_fork.py --apply          # applique sur tous les fichiers trackés
+python3 scripts/annotate_fork.py --apply --file <path>
+
+# Régénérer le registre des divergences JSON
+python3 scripts/json_diff_to_registry.py --apply
+
+# Hook pre-commit (vérifie que tout fichier tracké modifié dans le commit
+# contient au moins une nouvelle ligne ////)
+pre-commit run check-fork-annotations
+```
+
+### Bypass officiel pour commits triviaux
+
+Si un commit modifie un fichier tracké pour une raison réellement triviale (renames de variables non-fonctionnels, whitespace, suppression de blank line), ajouter le trailer dans le message :
+
+```
+fix: rename internal var
+
+Annotate: skip
+```
+
+**Ne JAMAIS bypasser via `--no-verify`** — c'est interdit par convention. Si une situation légitime nécessite un bypass, utiliser le trailer.
+
+### Après un merge upstream
+
+1. Résoudre les conflits comme d'habitude — les `////` aident à identifier nos modifications volontaires vs. simples updates upstream.
+2. Re-générer les annotations affectées : `python3 scripts/annotate_fork.py --apply` (le manifest skip les blocs déjà annotés et inchangés).
+3. Pour les fichiers JSON modifiés par le merge : `python3 scripts/json_diff_to_registry.py --apply`.
+4. Commit avec le trailer `Annotate: skip` si aucun nouveau bloc ne nécessite d'annotation, sinon laissé le pré-commit hook valider normalement.
+
+### Documentation complète
+
+Plan d'origine : `/Users/jeremy/.claude/plans/en-fait-il-faudrait-indexed-widget.md`.
