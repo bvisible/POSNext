@@ -17,6 +17,7 @@
  * @module workers/offline.worker
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { logger } from "../utils/logger"
 import { generateOfflineId } from "../utils/offline/uuid"
 
@@ -117,6 +118,7 @@ async function initDB() {
 					tables: tables.length,
 				})
 
+				//// implement proactive filter-aware caching with real-time sync — ce544c1
 				return db
 			} catch (error) {
 				lastError = error
@@ -625,6 +627,7 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 		recordMetric("searchCachedItems", duration, false)
 
 		cacheQueryResult(cacheKey, results)
+		//// Implement offline capabilities for POS Next — 541c6f1
 		return results
 	} catch (error) {
 		recordMetric("searchCachedItems", performance.now() - startTime, true)
@@ -691,6 +694,7 @@ async function searchCachedItemsByGroup(
 		)
 
 		cacheQueryResult(cacheKey, paginated)
+		//// enable full offline support for item groups, variants, and template s… — e7d3c6c
 		return paginated
 	} catch (error) {
 		recordMetric(
