@@ -5,6 +5,7 @@ import { getOfflineInvoiceByOfflineId } from "@/utils/offline/sync"
 import { offlineWorker } from "@/utils/offline/workerClient"
 import { printHTML as qzPrintHTML } from "@/utils/qzTray"
 
+//// use frappe-ui call instead of window.frappe.call in payment driver — cb23e1a8
 const log = logger.create("PrintInvoice")
 
 //// rebrand: rename POS Next to Neopos — 771950b

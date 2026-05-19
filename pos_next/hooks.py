@@ -227,6 +227,7 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
+# //// wallet functionality with loyalty points conversion — 77e7448
 doc_events = {
 	"Item": {
 		"validate": "pos_next.validations.validate_item"
@@ -281,6 +282,7 @@ doc_events = {
 	"Promotional Scheme": {
 		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"
 	},
+	# //// merge all restaurant enhancements - station groups, realtime cards, shift closing — 34ee11a
 	"Restaurant Card": {
 		"on_update": "pos_next.realtime_events.emit_card_updated_event",
 		"after_rename": "pos_next.realtime_events.emit_card_updated_event",

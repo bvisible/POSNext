@@ -1,6 +1,7 @@
 import { createResource } from "frappe-ui"
 import { computed, ref, toRaw } from "vue"
 import { isOffline, getCachedItem } from "@/utils/offline"
+//// enhance serial number management in POS — 7367119
 import { useSerialNumberStore } from "@/stores/serialNumber"
 import { CoalescingMutex } from "@/utils/mutex"
 import { logger } from "@/utils/logger"

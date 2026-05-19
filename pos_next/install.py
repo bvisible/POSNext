@@ -101,6 +101,7 @@ def ensure_coupon_code_field(quiet=False):
 	})
 
 
+# //// rebrand: rename POS Next to Neopos — 771950b
 def setup_default_print_format(quiet=False):
 	"""
 	Set Neopos Receipt as default print format for POS Profiles if not already set.

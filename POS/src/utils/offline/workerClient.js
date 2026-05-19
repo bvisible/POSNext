@@ -4,6 +4,7 @@
  * Enhanced with retry logic, graceful degradation, and error recovery
  */
 
+//// enterprise-grade offline state management system — 8887b36
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { logger } from "../logger"
 import { offlineState } from "./offlineState"

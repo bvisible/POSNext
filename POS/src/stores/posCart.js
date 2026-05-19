@@ -7,6 +7,7 @@ import {
 	shouldValidateItemStock,
 	checkStockAvailability,
 } from "@/utils/stockValidator"
+//// add offline support and fix mixed conditions for promotions — 5acebb3
 import { offlineState } from "@/utils/offline/offlineState"
 //// rounding total, tips visibility, cash quick amounts — 4fdb5df + 8e06bb9
 import { roundTotal, roundCurrency } from "@/utils/currency"
@@ -14,6 +15,7 @@ import { useToast } from "@/composables/useToast"
 import { defineStore } from "pinia"
 import { computed, nextTick, ref, toRaw, watch } from "vue"
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 /**
  * Creates an async task queue that ensures only one operation runs at a time.
  * Subsequent calls while processing will be queued and the latest one executed.
@@ -896,6 +898,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		return result
 	}
 
+	//// Refactor reapplyOffer fn to Do everything in ONE synchronized pipeline — 752af25
 	/**
 	 * Validates applied offers and removes invalid ones when cart changes.
 	 * This function is called from processOffersInternal - it does NOT manage

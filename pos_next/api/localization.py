@@ -89,6 +89,7 @@ def get_supported_locales():
 	return supported
 
 
+# //// configurable language settings and Brazilian Portuguese support — 148cec7
 def get_allowed_locales_from_settings():
 	"""
 	Get allowed locales from POS Settings.

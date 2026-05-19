@@ -10,6 +10,7 @@ import { computed, ref, watch } from "vue"
 import { useStockStore } from "./stock"
 import { usePOSSettingsStore } from "./posSettings"
 import { usePOSShiftStore } from "./posShift"
+//// implement proactive filter-aware caching with real-time sync — ce544c1
 import { useRealtimePosProfile } from "@/composables/useRealtimePosProfile"
 
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
