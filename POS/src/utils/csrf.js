@@ -4,6 +4,7 @@ const CSRF_TOKEN_ENDPOINT = "/api/method/pos_next.api.utilities.get_csrf_token"
 
 let refreshPromise = null
 let lastKnownToken = null
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const tokenRefreshCallbacks = [] // Callbacks to notify when token is refreshed
 
 function readCookie(name) {

@@ -241,6 +241,7 @@ export async function printHTML(html, printerName, options = {}) {
 
 	const printer = printerName || getSavedPrinterName()
 	if (!printer) {
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		throw new Error(
 			"No printer selected. Please select a printer in POS Settings.",
 		)

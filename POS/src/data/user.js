@@ -4,6 +4,7 @@ import { computed, reactive } from "vue"
 
 const getCookie = (key) => {
 	const cookies = new Map(
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		document.cookie
 			.split("; ")
 			.filter(Boolean)

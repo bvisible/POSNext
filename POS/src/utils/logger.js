@@ -33,6 +33,7 @@ const LOG_LEVELS = {
  * ANSI color codes for console styling
  */
 const COLORS = {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	DEBUG: "\x1b[36m", // Cyan
 	INFO: "\x1b[34m", // Blue
 	WARN: "\x1b[33m", // Yellow

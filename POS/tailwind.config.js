@@ -8,6 +8,7 @@ export default {
 		"./node_modules/frappe-ui/src/components/**/*.{vue,js,ts,jsx,tsx}",
 	],
 	theme: {
+		//// align POS design with Neoffice theme and improve customer display — c9d9c1c
 		extend: {
 			borderRadius: {
 				"neo-sm": "8px",

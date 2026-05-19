@@ -87,6 +87,7 @@ export class CoalescingMutex {
 	async _executeWithTimeout(fn) {
 		return new Promise((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
+				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 				reject(
 					new Error(
 						`${this._name}: Operation timed out after ${this._timeout}ms`,

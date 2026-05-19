@@ -187,6 +187,7 @@ export const translationCache = {
 			await db.translations.delete(normalized)
 			return true
 		} catch (error) {
+			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			log.error(
 				`Failed to clear translation cache for locale ${normalized}:`,
 				error,

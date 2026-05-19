@@ -65,6 +65,7 @@ export function parseError(error) {
 
 	// Build technical details
 	const detailsParts = []
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	if (error.exc_type) detailsParts.push(__("Type: {0}", [error.exc_type]))
 	if (error.httpStatus || error.status)
 		detailsParts.push(__("Status: {0}", [error.httpStatus || error.status]))
@@ -243,6 +244,7 @@ export function parseError(error) {
  */
 export function formatErrorReport(errorContext, additionalInfo = {}) {
 	const lines = [
+		//// rebrand: rename POS Next to Neopos — 771950b
 		__("Error Report - Neopos"),
 		"=".repeat(40),
 		__("Title: {0}", [errorContext.title]),

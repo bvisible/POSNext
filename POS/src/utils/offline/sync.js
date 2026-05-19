@@ -50,6 +50,7 @@ export const pingServer = async () => {
 
 	try {
 		const controller = new AbortController()
+		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		const timeoutId = setTimeout(
 			() => controller.abort(),
 			SYNC_CONFIG.PING_TIMEOUT_MS,

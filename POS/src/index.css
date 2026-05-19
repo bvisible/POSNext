@@ -2,6 +2,7 @@
 @import "frappe-ui/style.css";
 @import "@abdulrysr/saudi-riyal-new-symbol-font/style.css";
 
+/* //// align POS design with Neoffice theme and improve customer display — c9d9c1c + d8904ff */
 /* Neoffice heading font */
 @import url("https://fonts.googleapis.com/css2?family=Forum&display=swap");
 
@@ -21,6 +22,7 @@
 	--neo-accent: #1d4ed8;
 }
 
+/* //// reorder font-family to fix special character rendering — d8904ff */
 /* Apply fonts - Inter first for text, Saudi Riyal for currency symbol */
 body {
 	font-family: "Inter", "SaudiRiyalSymbol", sans-serif;

@@ -37,6 +37,7 @@ export const sectionThemes = {
 		badgeBg: "bg-green-100",
 		badgeColor: "text-green-700",
 	},
+	//// add Restaurant Settings with opening hours and time-based card availa… — 32f2415
 	amber: {
 		headerGradient: "from-amber-50 via-orange-50 to-yellow-50",
 		iconBg: "bg-amber-100",

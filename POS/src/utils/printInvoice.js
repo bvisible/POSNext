@@ -7,6 +7,7 @@ import { printHTML as qzPrintHTML } from "@/utils/qzTray"
 
 const log = logger.create("PrintInvoice")
 
+//// rebrand: rename POS Next to Neopos — 771950b
 const DEFAULT_PRINT_FORMAT = "Neopos Receipt"
 
 // ============================================================================
@@ -286,6 +287,7 @@ async function resolvePrintSettings(posProfile, printFormat, letterhead) {
  * The page includes trigger_print=1 so the OS print dialog appears automatically.
  * Falls back to the hardcoded receipt template if the popup is blocked.
  */
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export async function printInvoice(
 	invoiceData,
 	printFormat = null,
@@ -503,6 +505,7 @@ export function printInvoiceCustom(invoiceData) {
 	flagOfflineInvoicePrinted(invoiceData?.name)
 	return true
 }
+//// add provisional ticket print button in restaurant table view — 71050fa + d3ca695 (+1 more)
 
 // ============================================================================
 // Provisional ticket (restaurant mode — pre-payment table summary)

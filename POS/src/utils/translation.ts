@@ -1,4 +1,5 @@
 /**
+ //// rebrand: rename POS Next to Neopos — 771950b
  * @fileoverview Translation system for Neopos with offline support.
  *
  * This module provides:
@@ -23,6 +24,7 @@
  * @module translation
  */
 import { createResource } from "frappe-ui"
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { type App, ref } from "vue"
 import { call } from "./apiWrapper"
 import { translationCache } from "./offline/translationCache"

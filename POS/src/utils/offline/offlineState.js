@@ -14,6 +14,7 @@
  * @module utils/offline/offlineState
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { logger } from "../logger"
 
 const log = logger.create("OfflineState")

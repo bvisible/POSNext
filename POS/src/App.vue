@@ -2,6 +2,7 @@
   <div>
     <router-view :key="translationVersion" />
     <Toast />
+    <!-- //// integrate nora-learn-react via React Island bridge — 05053a5 -->
     <NoraLearnBridge />
   </div>
 </template>

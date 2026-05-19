@@ -12,6 +12,7 @@ export function getInvoiceStatusColor(invoice) {
 	const status = invoice.status?.toLowerCase()
 
 	// Red for overdue, cancelled
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	if (status === "overdue" || invoice.docstatus === 2) {
 		return "bg-red-100 text-red-800"
 	}

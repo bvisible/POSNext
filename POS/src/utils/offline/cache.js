@@ -198,6 +198,7 @@ export const cacheCustomersFromServer = async (posProfile) => {
 		console.log("Fetching customers from server...")
 
 		const response = await call("pos_next.api.customers.get_customers", {
+			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			pos_profile: posProfile,
 			start: 0,
 			limit: 0, // Get all customers

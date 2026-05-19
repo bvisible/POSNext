@@ -5,6 +5,7 @@ import { logger } from "../logger"
 const log = logger.create("OfflineDB")
 
 /**
+ //// rebrand: rename POS Next to Neopos — 771950b
  * @fileoverview IndexedDB persistence layer for Neopos offline functionality.
  *
  * This module provides:
@@ -45,6 +46,7 @@ const CURRENT_SCHEMA = {
 	// Items cache with searchable fields
 	// variant_of index allows querying variants by their template item
 	// brand index allows efficient brand-based filtering in offline mode
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	items:
 		"&item_code, item_name, item_group, variant_of, has_variants, brand, *barcodes",
 

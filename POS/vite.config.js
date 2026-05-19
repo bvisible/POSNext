@@ -19,6 +19,7 @@ function posNextBuildVersionPlugin(version) {
 		name: "pos-next-build-version",
 		apply: "build",
 		async writeBundle() {
+			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			const versionFile = path.resolve(
 				__dirname,
 				"../pos_next/public/pos/version.json",
@@ -74,6 +75,7 @@ export default defineConfig({
 			registerType: "autoUpdate",
 			includeAssets: ["favicon.png", "icon.svg", "icon-maskable.svg"],
 			manifest: {
+				//// rebrand: rename POS Next to Neopos — 771950b
 				name: "Neopos",
 				short_name: "Neopos",
 				description:
@@ -113,6 +115,7 @@ export default defineConfig({
 			workbox: {
 				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
 				maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 3 MB
+				//// remove CSRF header from guest calls + SW skipWaiting for instant upda… — fd65573
 				skipWaiting: true,
 				clientsClaim: true,
 				navigateFallback: null,

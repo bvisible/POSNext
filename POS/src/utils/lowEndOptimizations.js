@@ -5,6 +5,7 @@
  * low-end cashier devices with limited CPU and memory resources.
  */
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { logger } from "./logger"
 const log = logger.create("LowEndOptimizations")
 

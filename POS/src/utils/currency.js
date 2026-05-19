@@ -1,4 +1,5 @@
 /**
+ //// rebrand: rename POS Next to Neopos — 771950b
  * Currency Utility for Neopos
  * Handles formatting and rounding with ERPNext System Settings compatibility
  *
@@ -16,6 +17,7 @@ let settings = {
 	float: 3,
 	rounding_method: "Banker's Rounding",
 	number_format: "#,###.##",
+	//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 	smallest_currency_fraction: 0,
 }
 
@@ -101,6 +103,7 @@ function getFormatter(precision, locale = DEFAULT_LOCALE) {
 }
 
 /** Format value as currency string with symbol */
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function formatCurrency(
 	value,
 	currency = DEFAULT_CURRENCY,

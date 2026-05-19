@@ -1,3 +1,4 @@
+//// Add Inter font styles and integrate Frappe UI components — 081f782
 import { io } from "socket.io-client"
 
 let socket = null
@@ -18,6 +19,7 @@ export function initSocket(siteNameOverride) {
 			window.location.hostname
 
 		const host = window.location.hostname
+		//// resolve build errors after merge (socket.js import, duplicate declara… — c3b5a4b
 		// Use same port/protocol as the current page (Frappe proxies Socket.IO)
 		const protocol = window.location.protocol === "https:" ? "https" : "http"
 		const portPart = window.location.port ? `:${window.location.port}` : ""
@@ -48,6 +50,7 @@ export function initSocket(siteNameOverride) {
 		console.error("Failed to initialize socket:", error)
 		// Return a mock socket object to prevent crashes
 		return {
+			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			on: () => {},
 			emit: () => {},
 			connect: () => {},

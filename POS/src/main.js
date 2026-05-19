@@ -1,4 +1,5 @@
 /**
+ //// rebrand: rename POS Next to Neopos — 771950b
  * Neopos - Application Entry Point
  *
  * Initialization sequence:
@@ -25,6 +26,7 @@ import {
 import { logger } from "./utils/logger"
 import { offlineWorker } from "./utils/offline/workerClient"
 import translationPlugin from "./utils/translation"
+//// initialize Socket.IO for customer display notifications — 9566a90 + a212d42
 import { initRealtime } from "./realtime"
 import { initSocket } from "./socket"
 
@@ -195,6 +197,7 @@ async function initializeApp() {
 					await bootstrapStore.loadInitialData()
 					// Initialize precision settings from bootstrap data
 					const { initPrecision } = await import("./utils/currency")
+					//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 					const precision = bootstrapStore.getPreloadedPrecision()
 					const posProfile = bootstrapStore.getPreloadedPOSProfile()
 					initPrecision({
@@ -211,6 +214,7 @@ async function initializeApp() {
 						window.frappe.realtime = initSocket(siteName)
 
 						// Ensure connection is established
+						//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 						if (
 							window.frappe.realtime &&
 							typeof window.frappe.realtime.connect === "function"

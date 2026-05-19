@@ -1,3 +1,4 @@
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { db, getSetting, setSetting } from "./db"
 
 // Cache items in IndexedDB
