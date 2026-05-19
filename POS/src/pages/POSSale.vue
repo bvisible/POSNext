@@ -18,6 +18,9 @@
 		<!-- Main App -->
 		<template v-else>
 			<!-- Header -->
+			:qz-connected="qzConnected"
+			<!-- //// move toggle-restaurant to correct position + language to dropdown — 5e5db36 -->
+			<!-- //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 5959928 (+2 more) -->
 			<POSHeader
 				:current-time="shiftStore.currentTime"
 				:shift-duration="shiftStore.shiftDuration"
@@ -34,8 +37,6 @@
 				:stock-sync-active="isStockSyncActive"
 				:is-refreshing="stockStore.refreshing"
 				:silent-print-enabled="posSettingsStore.silentPrint"
-				:qz-connected="qzConnected"
-			<!-- //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 5959928 (+2 more) -->
 			:is-restaurant-mode="restaurantStore.isEnabled"
 			:can-toggle-restaurant="canToggleRestaurant"
 				@sync-click="handleSyncClick"
@@ -43,7 +44,6 @@
 				@refresh-click="handleRefresh"
 				@clear-cache="handleClearCache"
 				@logout="uiStore.showLogoutDialog = true"
-				<!-- //// move toggle-restaurant to correct position + language to dropdown — 5e5db36 -->
 				@toggle-restaurant="handleToggleRestaurant"
 			>
 				<template #menu-items>
@@ -227,10 +227,10 @@
 			</POSHeader>
 
 			<!-- Main Content: Responsive Layout -->
+			<!-- //// remove footer height from max-height calc to use full viewport — c0bf6f8 -->
 			<div
 				v-if="shiftStore.hasOpenShift"
 				class="flex-1 flex overflow-hidden relative"
-				<!-- //// remove footer height from max-height calc to use full viewport — c0bf6f8 -->
 				style="max-height: calc(100vh - var(--header-height, 60px))"
 			>
 				<!-- Icon-Only Management Slider - Always Visible -->
@@ -648,24 +648,25 @@
 
 					<!-- Right: Invoice Cart (Desktop) / Tab Content (Mobile) -->
 					<keep-alive>
+						<!-- //// right panel minimum width 450px (was 360/300) — 7e3f945 -->
 						<div
 							v-if="uiStore.isDesktop || uiStore.mobileActiveTab === 'cart'"
 							:class="[
 								'flex flex-col bg-gray-50 overflow-hidden',
 								uiStore.isDesktop ? 'flex-1' : 'flex-1',
 							]"
-							<!-- //// right panel minimum width 450px (was 360/300) — 7e3f945 -->
 							style="min-width: 450px; contain: layout style paint"
 						>
 							<!-- //// auto-open edit dialog for zero-price items (gift cards) — 5dddc52 -->
+							:discount-amount="cartStore.totalDiscount"
+							<!-- //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a -->
+							<!-- //// rounding total, tips visibility, cash quick amounts — 4fdb5df -->
 							<InvoiceCart
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
 								:customer="cartStore.customer"
 								:subtotal="cartStore.subtotal"
 								:tax-amount="cartStore.totalTax"
-								:discount-amount="cartStore.totalDiscount"
-								<!-- //// rounding total, tips visibility, cash quick amounts — 4fdb5df -->
 								:grand-total="cartStore.roundedGrandTotal"
 								:rounding-adjustment="cartStore.roundingAdjustment"
 								:pos-profile="shiftStore.profileName"
@@ -673,7 +674,6 @@
 								:applied-offers="cartStore.appliedOffers"
 								:warehouses="profileWarehouses"
 								@update-quantity="cartStore.updateItemQuantity"
-								<!-- //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a -->
 								@remove-item="(item) => cartStore.removeItem(item)"
 								@select-customer="handleCustomerSelected"
 								@create-customer="handleCreateCustomer"
@@ -789,11 +789,11 @@
 			</div>
 
 			<!-- Payment Dialog -->
+		<!-- //// show remaining to collect in cart + payment dialog accounts for guest… — 214125e -->
 		<PaymentDialog
 			v-model="uiStore.showPaymentDialog"
 			:grand-total="cartStore.roundedGrandTotal"
 			:subtotal="cartStore.subtotal"
-			<!-- //// show remaining to collect in cart + payment dialog accounts for guest… — 214125e -->
 			:guest-paid-amount="cartStore.guestPaidAmount"
 			:pos-profile="shiftStore.profileName"
 			:currency="shiftStore.profileCurrency"
@@ -863,10 +863,10 @@
 			/>
 
 			<!-- Coupon Dialog -->
+			<!-- //// calculate discount on net total after pricing rules — 8e06bb9 -->
 			<CouponDialog
 				v-model="uiStore.showCouponDialog"
 				:subtotal="cartStore.subtotal"
-				<!-- //// calculate discount on net total after pricing rules — 8e06bb9 -->
 				:net-total="cartStore.netTotalBeforeAdditionalDiscount"
 				:tax-amount="cartStore.totalTax"
 				:grand-total="cartStore.roundedGrandTotal"
@@ -987,11 +987,11 @@
 			/>
 
 			<!-- POS Settings -->
+			<!-- //// hide permanent card from schedule settings, add edit schedule link — 6b38498 -->
 			<POSSettings
 				v-model="showPOSSettings"
 				:pos-profile="shiftStore.profileName"
 				:current-warehouse="shiftStore.profileWarehouse"
-				<!-- //// hide permanent card from schedule settings, add edit schedule link — 6b38498 -->
 				:initial-tab="settingsInitialTab"
 			/>
 
@@ -1021,11 +1021,11 @@
 			/>
 
 			<!-- Invoice Management -->
+			<!-- //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae -->
 			<InvoiceManagement
 				v-model="showInvoiceManagement"
 				:pos-profile="shiftStore.profileName"
 				:currency="shiftStore.profileCurrency"
-				<!-- //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae -->
 				:pos-opening-shift="cartStore.posOpeningShift"
 				:history-invoices="invoiceHistoryData"
 				:draft-invoices="draftsStore.drafts"
@@ -1331,10 +1331,10 @@
 							</template>
 							{{ __("Email") }}
 						</Button>
+						<!-- //// keep success dialog open after Print or Email actions — 39a70d1 -->
 						<Button
 							variant="solid"
 							theme="blue"
-							<!-- //// keep success dialog open after Print or Email actions — 39a70d1 -->
 							@click="handlePrintInvoice({ name: uiStore.lastInvoiceName })"
 						>
 							<template #prefix>

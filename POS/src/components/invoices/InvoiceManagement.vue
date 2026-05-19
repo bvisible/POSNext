@@ -227,10 +227,10 @@
 
 								<!-- Invoices List -->
 								<div v-else class="flex flex-col gap-4">
+									<!-- //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5 -->
 									<div
 										v-for="invoice in searchedUnpaidInvoices"
 										:key="invoice.name"
-										<!-- //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5 -->
 										class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative"
 									>
 										<!-- Processing overlay -->

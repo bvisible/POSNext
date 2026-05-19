@@ -744,6 +744,7 @@
 			</div>
 
 			<div v-else class="flex flex-col gap-0.5 sm:gap-1">
+				<!-- //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 87f168f (+3 more) -->
 				<div
 					v-for="(item, index) in sortedItems"
 					:key="item.item_code + '-' + (item.uom || '') + (item.is_free_item ? '-free' : '')"
@@ -752,7 +753,6 @@
 						'border rounded-neo-sm p-1.5 sm:p-2 transition-all duration-200',
 						item.is_free_item
 							? 'bg-green-50 border-green-300 cursor-default'
-							<!-- //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 87f168f (+3 more) -->
 							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group',
 						item.kds_status === 'Delivered' ? 'opacity-50' : ''
 					]"
@@ -886,10 +886,10 @@
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
 								</button>
 
+								<!-- //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a -->
 								<button
 									v-if="!item.is_free_item"
 									type="button"
-									<!-- //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a -->
 									@click.stop="$emit('remove-item', item)"
 									class="text-gray-400 hover:text-red-600 active:text-red-700 transition-colors flex-shrink-0 p-0.5 -m-0.5 touch-manipulation active:scale-90"
 									:aria-label="__('Remove {0}', [item.item_name])"
