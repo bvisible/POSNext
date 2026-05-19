@@ -1,6 +1,6 @@
 <template>
+	<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + f23daab (+3 more) -->
 	<div
-		<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + f23daab (+3 more) -->
 		class="flex flex-col bg-[var(--neo-bg)] overflow-x-hidden"
 		style="height: 100vh; max-height: 100vh"
 	>
@@ -657,8 +657,8 @@
 							<!-- //// right panel minimum width 450px (was 360/300) — 7e3f945 -->
 							style="min-width: 450px; contain: layout style paint"
 						>
+							<!-- //// auto-open edit dialog for zero-price items (gift cards) — 5dddc52 -->
 							<InvoiceCart
-								<!-- //// auto-open edit dialog for zero-price items (gift cards) — 5dddc52 -->
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
 								:customer="cartStore.customer"

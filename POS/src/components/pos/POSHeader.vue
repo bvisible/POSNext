@@ -1,6 +1,6 @@
 <template>
+	<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + 3e25c3b -->
 	<div
-		<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + 3e25c3b -->
 		class="neo-glass shadow-neo sticky top-0 z-[200] border-b border-white/30"
 	>
 		<div class="flex py-0">

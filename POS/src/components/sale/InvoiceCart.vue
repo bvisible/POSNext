@@ -234,8 +234,8 @@
 						</button>
 
 						<!-- Document Type Toggle (Sales Invoice / Sales Order) -->
+						<!-- //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 71050fa (+6 more) -->
 						<div
-							<!-- //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 71050fa (+6 more) -->
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
 						>
@@ -759,8 +759,8 @@
 				>
 					<div class="flex gap-1.5 sm:gap-2">
 						<!-- Item Image Thumbnail -->
+						<!-- //// cart color thumbnails, image upload, and card item color propagation — 983130d -->
 						<div
-							<!-- //// cart color thumbnails, image upload, and card item color propagation — 983130d -->
 							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
 							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
 						>

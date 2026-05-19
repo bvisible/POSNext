@@ -106,8 +106,8 @@
 									]">
 										{{ coupon.coupon_code }}
 									</p>
+									<!-- //// include POS Next gift cards in gift card filter — ab6e77e + 771950b -->
 									<Badge
-										<!-- //// include POS Next gift cards in gift card filter — ab6e77e + 771950b -->
 										v-if="coupon.coupon_type === 'Gift Card' || coupon.pos_next_gift_card"
 										variant="subtle"
 										theme="purple"
