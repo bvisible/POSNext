@@ -353,6 +353,7 @@ def get_payment_account(mode_of_payment, company):
     )
 
 
+# //// preserve pricing rule discounts on submitted invoices — e62e69e + 26942a3 (+1 more)
 def _patch_set_missing_item_details(invoice_doc):
     """Wrap set_missing_item_details to preserve POS discount fields.
 
@@ -818,6 +819,7 @@ def update_invoice(data):
         # Normalize pricing_rules before document creation
         standardize_pricing_rules(data.get("items"))
 
+        # //// robust item kds_status preservation + visual Delivered items — a5c19a4 + 7e3187c (+2 more)
         # Preserve existing item kds_status before update (restaurant mode)
         # Build a map of item_code -> kds_status from BOTH DB and frontend data
         existing_item_kds = {}
@@ -852,6 +854,7 @@ def update_invoice(data):
         # Create or update invoice
         if data.get("name"):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
+# //// preserve guest (Wallee) payments when POS updates/submits invoice — 8bf46a2 + 3574de5 (+1 more)
 
             # Preserve guest payments (e.g. Wallee) before POS overwrites
             guest_payments = []
@@ -1086,6 +1089,7 @@ def update_invoice(data):
         # ========================================================================
         invoice_doc.set_missing_values(for_validate=True)
 
+        # //// re-enforce ignore_pricing_rule after set_missing_values() — e753512
         # Re-enforce ignore_pricing_rule after set_missing_values().
         # ERPNext's set_pos_fields() (called inside set_missing_values when
         # for_validate=False) overwrites ignore_pricing_rule with the POS
@@ -1097,6 +1101,7 @@ def update_invoice(data):
 
         # Calculate totals and apply discounts (with rounding disabled)
         invoice_doc.calculate_taxes_and_totals()
+# //// debug: add more logging to trace discount persistence — 833ef3d
 
         if invoice_doc.grand_total is None:
             invoice_doc.grand_total = 0.0
@@ -1120,6 +1125,7 @@ def update_invoice(data):
                     sum(p.base_amount or 0 for p in invoice_doc.payments)
                 )
 
+        # //// complete Phase 8 cleanup - remove POS Coupon dependency — 5091779 + 9bc096d (+1 more)
         # Validate and track coupon if coupon_code is provided
         coupon_code = data.get("coupon_code")
         if coupon_code:
@@ -1140,6 +1146,7 @@ def update_invoice(data):
             # This ensures proper linking even if the user entered the code in different case
             coupon_doc_name = coupon_result.get("coupon", {}).get("name") or coupon_code.upper()
 
+            # //// use native ERPNext coupon_code field on Sales Invoice — 9bc096d
             # Store coupon code on invoice using native ERPNext field (Link to Coupon Code)
             # This enables native ERPNext coupon tracking (usage counter on submit/cancel)
             invoice_doc.coupon_code = coupon_doc_name
@@ -1167,6 +1174,7 @@ def update_invoice(data):
                         frappe.throw(frappe.as_json({"errors": errors}), frappe.ValidationError)
 
         # Save as draft
+        # //// wrap set_missing_item_details instead of disabling it — 26942a3 + 6a3664b (+1 more)
         # Wrap set_missing_item_details to preserve POS discount fields
         _patch_set_missing_item_details(invoice_doc)
 
@@ -1175,6 +1183,7 @@ def update_invoice(data):
         invoice_doc.docstatus = 0
         invoice_doc.save()
 
+        # //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 07d0d49 (+7 more)
         # Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
         if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway"):
             update_data = {}
@@ -1541,6 +1550,7 @@ def submit_invoice(invoice=None, data=None):
 
     try:
         invoice_name = invoice.get("name")
+        # //// POS submit finds existing draft for restaurant table (prevents duplic… — b65018d + 7e3187c (+2 more)
         restaurant_table = invoice.get("restaurant_table")
         # Find existing draft for restaurant table if name was lost
 
@@ -1559,6 +1569,7 @@ def submit_invoice(invoice=None, data=None):
                     invoice["name"] = existing_draft
 
         # Get or create invoice
+        # //// prevent TIP item duplication in submit_invoice — c1bdd80
         saved_tip_amount = 0
         if not invoice_name or not frappe.db.exists(doctype, invoice_name):
             created = update_invoice(json.dumps(invoice))
@@ -1677,6 +1688,7 @@ def submit_invoice(invoice=None, data=None):
                         "POS Write-Off Error"
                     )
 
+        # //// native loyalty points redemption in POS payment dialog — 104959e + 146da2f (+3 more)
         # Handle loyalty points redemption
         loyalty_data = data.get("loyalty") or invoice.get("loyalty") or {}
         if loyalty_data and flt(loyalty_data.get("loyalty_amount")):
@@ -1730,6 +1742,7 @@ def submit_invoice(invoice=None, data=None):
         import time as _time
         _t0 = _time.time()
         invoice_doc.save()
+        # //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5
         _t1 = _time.time()
 
         # Submit invoice
@@ -1738,6 +1751,7 @@ def submit_invoice(invoice=None, data=None):
         frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
 
         invoice_submitted = True
+# //// release restaurant table to Empty in backend submit_invoice (not only… — 58e39d8 + df6270e
 
         # Set restaurant table to Cleaning after successful submission
         restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
@@ -1858,6 +1872,7 @@ def submit_invoice(invoice=None, data=None):
             _cleanup_failed_sync(sync_record_name)
 
 
+# //// preserve and cumulate TIP items across POS update/submit cycles — 3574de5 + 3f9ee06 (+2 more)
 def _extract_tip_items(invoice_doc):
     """Extract and return TIP items from an invoice before it gets overwritten.
 

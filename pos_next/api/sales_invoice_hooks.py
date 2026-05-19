@@ -141,6 +141,7 @@ def before_cancel(doc, method=None):
 			alert=True,
 			indicator="orange"
 		)
+# //// use native ERPNext coupon_code field on Sales Invoice — 9bc096d
 
 
 def validate_coupon_on_invoice(doc, method=None):

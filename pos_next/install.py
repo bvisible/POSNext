@@ -12,6 +12,7 @@ This module handles post-fixture tasks like setting defaults and clearing cache.
 """
 import frappe
 import logging
+# //// remove coupon_code from JSON, create programmatically for v15 — 3571c41
 from pos_next.hooks import _has_native_coupon_code_field
 
 # Configure logger

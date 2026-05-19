@@ -82,6 +82,7 @@ class POSClosingShift(Document):
         opening_entry.save()
         # link invoices with this closing shift so ERPNext can block edits
         self._set_closing_entry_invoices()
+        # //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
         # Create withdrawal journal entry if amount > 0
         self._create_withdrawal_journal_entry()
 
@@ -291,6 +292,7 @@ class POSClosingShift(Document):
             if currency:
                 row["currencies"][currency] += flt(amount)
 
+        # //// auto-select default customer group from POS profile — f5bffe4
         cash_mode_of_payment = _get_cash_mode_of_payment(self.pos_profile)
 
         for row in self.get("pos_transactions", []):
@@ -682,6 +684,7 @@ def make_closing_shift_from_opening(opening_shift):
         amount = get_base_value(py, "paid_amount", "base_paid_amount")
         _aggregate_payment(payments, py.mode_of_payment, amount)
 
+    # //// cash in/out from POS using Journal Entry Templates — 6c59863 + 5783eb2 (+2 more)
     # Process cash in/out entries
     from pos_next.api.cash_entry import get_cash_entries
     cash_entries = get_cash_entries(opening_shift.get("name"))
@@ -711,6 +714,7 @@ def make_closing_shift_from_opening(opening_shift):
 
     # Build response with display-only fields
     result = closing_shift.as_dict()
+    # //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a + f5bffe4 (+1 more)
     # Enrich payment entries with invoice reference for display
     external_payments = []
     for py in pos_payments_table:

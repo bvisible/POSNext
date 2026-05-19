@@ -109,6 +109,7 @@ def apply_referral_code(referral_code, referee_customer):
     if referral.disabled:
         frappe.throw(_("This referral code has been disabled"))
 
+    # //// add comprehensive test suite for ERPNext Coupon Code integration — 771595d + 56c0061 (+1 more)
     # Check if referee has already used this referral code (now using ERPNext Coupon Code)
     existing_coupon = frappe.db.exists("Coupon Code", {
         "referral_code": referral.name,
@@ -224,6 +225,7 @@ def generate_referrer_coupon(referral):
         "customer": referral.customer,
     })
     coupon.insert(ignore_permissions=True)
+# //// Implement referral code management with validation and coupon generat… — f02a815
 
     return coupon
 

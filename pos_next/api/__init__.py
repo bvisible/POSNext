@@ -12,6 +12,7 @@ from . import customers
 from . import offers
 from . import promotions
 from . import utilities
+# //// use dynamic customer group and territory lookup for customer display — 185c3c5
 from . import customer_display
 from . import auth
 

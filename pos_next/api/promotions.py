@@ -552,6 +552,7 @@ def search_items(search_term, pos_profile=None, limit=20):
 
 
 # ==================== COUPON MANAGEMENT ====================
+# //// complete Phase 8 cleanup - remove POS Coupon dependency — 5091779
 # Uses ERPNext Coupon Code directly for native integration
 
 @frappe.whitelist()
@@ -561,6 +562,7 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 	Uses ERPNext Coupon Code doctype directly for native integration.
 	"""
 	check_promotion_permissions("read")
+# //// Implement referral code management with validation and coupon generat… — f02a815
 
 	today = getdate(nowdate())
 
@@ -771,6 +773,7 @@ def create_coupon(data):
 		return {
 			"success": True,
 			"message": _("Coupon {0} created successfully").format(coupon.coupon_code),
+			# //// add customer field and use unique hash for coupon names — 56c0061
 			"name": coupon.name,
 			"coupon_code": coupon.coupon_code
 		}
@@ -785,6 +788,7 @@ def create_coupon(data):
 
 
 @frappe.whitelist()
+# //// update_coupon signature and pricing rule is_cumulative — 3be1f12 + 5091779
 def update_coupon(data):
 	"""
 	Update an existing coupon (ERPNext Coupon Code + Pricing Rule).
@@ -1007,6 +1011,7 @@ def get_referral_details(referral_name):
 	referral = frappe.get_doc("Referral Code", referral_name)
 	data = referral.as_dict()
 
+	# //// add comprehensive test suite for ERPNext Coupon Code integration — 771595d
 	# Get generated coupons for this referral (now using ERPNext Coupon Code)
 	coupons = frappe.get_all(
 		"Coupon Code",

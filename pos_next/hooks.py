@@ -1,5 +1,6 @@
 from pos_next.utils import get_build_version
 
+# //// restore hooks.py and custom_field.json with all coupon/gift card fiel… — f0c960f + 82b2493 (+1 more)
 
 def _has_native_coupon_code_field():
 	"""Check if ERPNext has a native coupon_code field on Sales Invoice (v16+)."""
@@ -22,6 +23,7 @@ def _has_native_coupon_code_field():
 
 
 app_name = "pos_next"
+# //// rebrand: rename POS Next to Neopos — 771950b
 app_title = "Neopos"
 app_publisher = "BrainWise"
 app_description = "POS built on ERPNext that brings together real-time billing, stock management, multi-user access, offline mode, and direct ERP integration. Run your store or restaurant with confidence and control, while staying 100% open source."
@@ -31,6 +33,7 @@ app_license = "agpl-3.0"
 # Apps
 # ------------------
 
+# //// Phase 3 — wire POSNext into unified Payments app — 9ff7305
 # The unified payments app provides the Provider × Channel × Driver layer that
 # POSNext uses via `pos_next.api.payments.*` (see ADR-001 in
 # `/Users/jeremy/GitHub/payments/docs/adr/ADR-001-unification-paiements.md`).
@@ -140,6 +143,7 @@ if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
 
 fixtures = [
+	# //// add custom POS print format with discount display — eca6f13 + f0c960f (+5 more)
 	{
 		"dt": "Print Format",
 		"filters": [
@@ -247,6 +251,7 @@ doc_events = {
 		"on_submit": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
 			"pos_next.realtime_events.emit_stock_update_event",
+			# //// use native ERPNext coupon_code field on Sales Invoice — 9bc096d + f0c960f (+1 more)
 			"pos_next.api.wallet.process_loyalty_to_wallet",
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
 			"pos_next.api.gift_cards.process_gift_card_on_submit",
@@ -290,10 +295,12 @@ doc_events = {
 
 scheduler_events = {
 	"hourly": [
+		# //// restaurant reservation system with POS dialog, online booking, and em… — ebc3ecc
 		"pos_next.api.reservations.send_reminders",
 		"pos_next.api.reservations.auto_no_show",
 	],
 	"daily": [
+		# //// add support for standalone pricing rules in promotions — 1ed8d44
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 	],
 }

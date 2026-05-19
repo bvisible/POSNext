@@ -70,6 +70,7 @@ def get_columns(payment_methods):
 			"fieldtype": "Int",
 			"width": 100
 		},
+		# //// add Invoice Collections, Cash In/Out columns + translate statuses — 024d87b
 		{
 			"fieldname": "invoice_collections",
 			"label": _("Invoice Collections"),

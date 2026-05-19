@@ -158,6 +158,7 @@ def update_pos_settings(pos_profile, settings):
 
 	if existing:
 		doc = frappe.get_doc("POS Settings", existing)
+		# //// prevent TimestampMismatchError when saving POS Settings — d646953
 		# Exclude internal fields that could cause timestamp mismatch
 		safe_settings = {k: v for k, v in settings.items()
 			if k not in ("name", "modified", "creation", "owner", "doctype", "docstatus", "idx")}

@@ -100,6 +100,7 @@ def check_opening_shift(user=None):
 	return data
 
 
+# //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 @frappe.whitelist()
 def get_suggested_opening_balance(pos_profile):
 	"""Get suggested cash opening balance from the user's last closing shift."""

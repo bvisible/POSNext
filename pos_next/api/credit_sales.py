@@ -605,6 +605,7 @@ def _create_payment_entry_from_advance(invoice_doc, payment_entry_name, amount):
 
 def get_credit_redeem_remark(invoice_name):
 	"""Get remark for credit redemption journal entry."""
+	# //// rebrand: rename POS Next to Neopos — 771950b
 	return f"Neopos credit redemption for invoice {invoice_name}"
 
 

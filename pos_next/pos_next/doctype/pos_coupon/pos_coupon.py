@@ -27,6 +27,7 @@ class POSCoupon(Document):
         # Gift Card validations
         if self.coupon_type == "Gift Card":
             self.maximum_use = 1
+            # //// implement phases 1-3 for ERPNext Coupon Code sync — d2a64f3
             # Customer is OPTIONAL for gift cards - they can be anonymous
             # If customer is set, only that customer can use the gift card
 

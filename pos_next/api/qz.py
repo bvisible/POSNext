@@ -45,6 +45,7 @@ def _key_path():
 
 @frappe.whitelist()
 def get_certificate():
+	# //// return None instead of throw for missing QZ cert, raise grid/list aut… — 34f4167
 	"""Return the public certificate PEM text for QZ Tray signing.
 	Returns None if no certificate exists (silent print not configured)."""
 	path = _cert_path()
@@ -149,6 +150,7 @@ def setup_qz_certificate():
 
 	# Build self-signed certificate (valid ~31 years)
 	subject = issuer = x509.Name([
+		# //// rebrand: rename POS Next to Neopos — 771950b
 		x509.NameAttribute(NameOID.COMMON_NAME, "Neopos QZ Tray Signing"),
 		x509.NameAttribute(NameOID.ORGANIZATION_NAME, frappe.db.get_default("company") or "Neopos"),
 	])

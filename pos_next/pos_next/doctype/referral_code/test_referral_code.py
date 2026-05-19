@@ -1,3 +1,4 @@
+# //// add comprehensive test suite for ERPNext Coupon Code integration — 771595d
 # -*- coding: utf-8 -*-
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt

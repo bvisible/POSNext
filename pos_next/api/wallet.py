@@ -100,6 +100,7 @@ def process_loyalty_to_wallet(doc, method=None):
 	if credit_amount <= 0:
 		return
 
+	# //// Merge upstream/develop: latest upstream features (brands filter, over… — 7604810 + f8b6c1e (+1 more)
 	# Check if wallet account is properly configured before proceeding
 	wallet_account = pos_settings.get("wallet_account")
 	if wallet_account:
@@ -447,6 +448,7 @@ def get_wallet_info(customer, company, pos_profile=None):
 		"wallet_name": None,
 		"auto_create": False,
 		"loyalty_program": None,
+		# //// display loyalty points in payment dialog next to customer name — c057c53
 		"loyalty_to_wallet": False,
 		"loyalty_points": 0,
 	}
@@ -503,6 +505,7 @@ def get_wallet_info(customer, company, pos_profile=None):
 	return result
 
 
+# //// native loyalty points redemption in POS payment dialog — 104959e
 @frappe.whitelist()
 def get_loyalty_details(customer, company):
 	"""

@@ -17,6 +17,7 @@ ITEM_RESULT_FIELDS = [
 	"description",
 	"stock_uom",
 	"image",
+	# //// add image and color support for items in POS restaurant — 26f5a3f
 	"custom_color",
 	"is_stock_item",
 	"has_batch_no",
@@ -799,6 +800,7 @@ def _build_item_base_conditions(
 	conditions = [
 		"i.disabled = 0",
 		"i.is_sales_item = 1",
+		# //// hide internal items from POS item grid — fa5e2ee
 		"IFNULL(i.is_internal_item, 0) != 1",
 	]
 	if exclude_variants:

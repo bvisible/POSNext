@@ -104,6 +104,7 @@ def remove_print_formats():
 
 		# List of print formats to remove
 		print_formats = [
+			# //// rebrand: rename POS Next to Neopos — 771950b
 			"Neopos Receipt",
 		]
 
@@ -167,6 +168,7 @@ def reset_pos_profiles():
 
 		# Find POS Profiles using POS Next print format
 		pos_profiles = frappe.get_all(
+			# //// add company-aware item filtering and improve installation system — 2ecd93c + 771950b
 			"POS Profile",
 			filters={"print_format": "Neopos Receipt"},
 			fields=["name"]

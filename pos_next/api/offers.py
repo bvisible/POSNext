@@ -528,6 +528,7 @@ def _get_standalone_pricing_rule_offers(company: str, date: str) -> List[Offer]:
 # ============================================================================
 
 @frappe.whitelist()
+# //// use ERPNext Coupon Code instead of POS Coupon — e34a269 + ce50590 (+3 more)
 def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	"""
 	Get active gift card coupons available for use.
@@ -572,6 +573,7 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 		if card.used and card.maximum_use and card.used >= card.maximum_use:
 			continue
 
+		# //// implement gift card API, splitting logic, and frontend components — ce50590 + e34a269
 		# Check balance
 		balance = flt(card.gift_card_amount)
 		if balance <= 0:

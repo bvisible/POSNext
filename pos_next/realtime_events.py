@@ -218,6 +218,7 @@ def emit_customer_event(doc, method=None):
 			title=_("Real-time Customer Update Event Error"),
 			message=f"Failed to emit customer update event for {doc.name}: {str(e)}",
 		)
+# //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a
 
 
 def emit_card_updated_event(doc, method=None):

@@ -37,6 +37,7 @@ POS_SETTINGS_FIELDS = [
 	"allow_sales_order",
 	"allow_select_sales_order",
 	"create_only_sales_order",
+	# //// add missing wallet/loyalty fields to POS_SETTINGS_FIELDS bootstrap — f91dcc9 + 1ec3ead
 	# Wallet & Loyalty
 	"enable_loyalty_program",
 	"default_loyalty_program",
@@ -50,6 +51,7 @@ POS_SETTINGS_FIELDS = [
 	"enable_session_lock",
 	"session_lock_timeout",
 	"show_variants_as_items",
+	# //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 5783eb2
 	# Restaurant Settings
 	"enable_restaurant_mode",
 	"default_restaurant_area",

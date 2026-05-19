@@ -9,6 +9,7 @@ from frappe import _
 from frappe.utils import cint
 
 
+# //// dynamic site name resolution for Socket.IO namespace — a212d42
 @frappe.whitelist(allow_guest=True)
 def get_site_info():
 	"""

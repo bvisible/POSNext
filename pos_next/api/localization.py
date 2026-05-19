@@ -2,6 +2,7 @@
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
+# //// show all languages when allowed_locales is empty — c081f41
 import os
 import frappe
 from frappe import translate

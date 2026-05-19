@@ -33,6 +33,7 @@ def item_query(doctype, txt, searchfield, start, page_len, filters):
 	conditions = ["disabled = 0"]
 	values = []
 
+	# //// hide internal items from search results — 6f59de4
 	# Hide internal items from non-Administrator users
 	if frappe.session.user != "Administrator":
 		conditions.append("IFNULL(is_internal_item, 0) != 1")

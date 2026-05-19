@@ -643,6 +643,7 @@ def get_unpaid_invoices(pos_profile: str, limit: int = DEFAULT_INVOICE_LIMIT) ->
     return invoices
 
 
+# //// modifier price adjustment lost on submit (price_list_rate not updated) — 02222a4
 @frappe.whitelist()
 def get_external_unpaid_invoices(pos_profile: str, limit: int = DEFAULT_INVOICE_LIMIT) -> List[Dict]:
     """
@@ -830,6 +831,7 @@ def get_partial_payment_details(invoice_name: str) -> Dict:
 
 
 @frappe.whitelist()
+# //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae
 def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shift: str = None) -> Dict:
     """
     Add payments to a partially paid invoice via Payment Entry.
