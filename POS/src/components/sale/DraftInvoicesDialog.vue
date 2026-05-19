@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<!-- Main Dialog -->
 	<Dialog
@@ -36,7 +42,6 @@
 								<p class="text-xs text-gray-400 mt-0.5">
 									{{ formatDateTime(draft.created_at) }}
 								</p>
-<!-- //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a -->
 
 								<div v-if="draft.restaurant_table" class="mt-1 flex items-center gap-2">
 									<span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">

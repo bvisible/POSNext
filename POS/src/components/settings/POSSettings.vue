@@ -1,3 +1,15 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// restaurant tab first in settings, smart slot defaults (Lunch/Dinner) — 9ae0044
+  //// add QR self-ordering and takeaway settings to POS Settings UI — 68786b2 + 32f2415 (+10 more)
+  //// add Restaurant Settings with opening hours and time-based card availa… — 32f2415
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+  //// hide permanent card from schedule settings, add edit schedule link — 6b38498
+  //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
+  //// linter formatting — 3e25c3b + 823cd5d (+4 more)
+-->
 <template>
 	<!-- Full Page Overlay -->
 	<Transition name="fade">
@@ -78,7 +90,6 @@
 						<div v-else-if="settings.pos_profile || posProfile" class="p-6 flex flex-col gap-6">
 							<!-- Tabs Navigation -->
 							<div class="flex p-1 bg-gray-200 rounded-lg self-start">
-								<!-- //// restaurant tab first in settings, smart slot defaults (Lunch/Dinner) — 9ae0044 -->
 								<button
 									v-if="restaurantStore.isEnabled"
 									@click="activeTab = 'restaurant'"
@@ -552,7 +563,6 @@
 								</div>
 							</div>
 
-							<!-- //// add QR self-ordering and takeaway settings to POS Settings UI — 68786b2 + 32f2415 (+10 more) -->
 							<!-- Cash Management -->
 							<div :class="operationsSubsectionClasses.container">
 								<div class="flex items-center gap-2 mb-4">
@@ -835,7 +845,6 @@
 import CheckboxField from "@/components/settings/CheckboxField.vue"
 import NumberField from "@/components/settings/NumberField.vue"
 import SelectField from "@/components/settings/SelectField.vue"
-//// add Restaurant Settings with opening hours and time-based card availa… — 32f2415
 import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { useToast } from "@/composables/useToast"
@@ -852,7 +861,6 @@ import { usePOSEvents } from "@/composables/usePOSEvents"
 import TranslatedHTML from "../common/TranslatedHTML.vue"
 import { useQzTray } from "@/composables/useQzTray"
 
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("POSSettings")
 const {
 	detectSettingsChanges,
@@ -865,7 +873,6 @@ const props = defineProps({
 	modelValue: Boolean,
 	posProfile: String,
 	currentWarehouse: String,
-	//// hide permanent card from schedule settings, add edit schedule link — 6b38498
 	initialTab: { type: String, default: "" },
 })
 
@@ -896,7 +903,6 @@ const settings = ref({
 	silent_print: 0,
 	allow_negative_stock: 0,
 	tax_inclusive: 0,
-	//// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 	closing_withdrawal_template: "",
 })
 
@@ -950,7 +956,6 @@ const stockSyncSubsectionClasses = computed(() =>
 )
 const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
 const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"))
-//// linter formatting — 3e25c3b + 823cd5d (+4 more)
 const restaurantSectionClasses = computed(() =>
 	getSectionHeaderClasses("amber"),
 )

@@ -1,3 +1,10 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// add email invoice functionality with PDF attachment — 4239ea8
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<Dialog
 		v-model="show"
@@ -262,7 +269,6 @@
 				<Button variant="subtle" @click="show = false">
 					{{ __('Close') }}
 				</Button>
-				<!-- //// add email invoice functionality with PDF attachment — 4239ea8 -->
 				<div class="flex gap-2">
 					<Button variant="outline" @click="showEmailDialog = true">
 						<template #prefix>
@@ -290,7 +296,6 @@
 
 <script setup>
 import { useFormatters } from "@/composables/useFormatters"
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,

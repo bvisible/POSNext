@@ -1,3 +1,11 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// implement gift card API, splitting logic, and frontend components — ce50590 + 458d81a (+1 more)
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 8e06bb9
+  //// calculate discount on net total after pricing rules — 8e06bb9 + 3890e67
+-->
 <template>
 	<Dialog v-model="show" :options="{ title: __('Apply'), size: 'md' }">
 		<template #body-content>
@@ -45,7 +53,6 @@
 									d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
 									clip-rule="evenodd" />
 							</svg>
-							<!-- //// implement gift card API, splitting logic, and frontend components — ce50590 + 458d81a (+1 more) -->
 							<span>{{ __('Available Gift Cards ({0})', [giftCards.length]) }}</span>
 						</div>
 					</label>
@@ -168,7 +175,6 @@
 </template>
 
 <script setup>
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 8e06bb9
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -379,7 +385,6 @@ async function applyCoupon() {
 			}
 		}
 
-		//// calculate discount on net total after pricing rules — 8e06bb9 + 3890e67
 		// Clamp discount to the appropriate total based on coupon type
 		// Gift cards: clamp to netTotal (after pricing rules)
 		// Regular coupons: clamp to baseAmount (respects apply_on setting)

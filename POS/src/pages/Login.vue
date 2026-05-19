@@ -1,9 +1,14 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// rebrand: rename POS Next to Neopos — 771950b
+-->
 <template>
   <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div class="text-center">
         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
-          <!-- //// rebrand: rename POS Next to Neopos — 771950b -->
           {{ __('Sign in to Neopos') }}
         </h2>
         <p class="mt-2 text-sm text-gray-600">

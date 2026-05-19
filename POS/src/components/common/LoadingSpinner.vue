@@ -1,5 +1,10 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// make LoadingSpinner a fixed overlay to prevent pushing POS content do… — c524a0d
+-->
 <template>
-	<!-- //// make LoadingSpinner a fixed overlay to prevent pushing POS content do… — c524a0d -->
 	<div class="fixed inset-0 flex items-center justify-center bg-gray-50 z-[500]">
 		<div class="text-center">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>

@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<button
 		@click="$emit('click', $event)"
@@ -74,7 +80,6 @@ const props = defineProps({
 defineEmits(["click"])
 
 const buttonClasses = computed(() => {
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const base =
 		"p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors group touch-manipulation"
 	const animation = props.animate ? "animate-pulse" : ""

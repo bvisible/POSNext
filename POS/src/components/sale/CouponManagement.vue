@@ -1,3 +1,11 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// include POS Next gift cards in gift card filter — ab6e77e + 771950b
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+  //// rebrand: rename POS Next to Neopos — 771950b
+-->
 <template>
 	<!-- Split Layout matching PromotionManagement -->
 	<div class="flex-1 flex overflow-hidden">
@@ -106,7 +114,6 @@
 									]">
 										{{ coupon.coupon_code }}
 									</p>
-									<!-- //// include POS Next gift cards in gift card filter — ab6e77e + 771950b -->
 									<Badge
 										v-if="coupon.coupon_type === 'Gift Card' || coupon.pos_next_gift_card"
 										variant="subtle"
@@ -562,7 +569,6 @@ import { useToast } from "@/composables/useToast"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@/utils/currency"
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	Badge,
 	Button,
@@ -659,7 +665,6 @@ const filteredCoupons = computed(() => {
 	}
 
 	// Filter by type
-	//// rebrand: rename POS Next to Neopos — 771950b
 	// Note: Neopos gift cards have coupon_type='Promotional' but pos_next_gift_card=1
 	if (filterType.value !== "all") {
 		filtered = filtered.filter((c) => {

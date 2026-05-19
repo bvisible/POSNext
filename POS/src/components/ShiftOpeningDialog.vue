@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
+-->
 <template>
   <Dialog v-model="open" :options="{ title: __('Open POS Shift'), size: 'xl' }">
     <template #body-content>
@@ -61,7 +67,6 @@
               {{ __('Opening Balance (Optional)') }}
             </label>
 
-            <!-- //// cash withdrawal at shift closing with suggested opening balance — 5783eb2 -->
             <div v-if="dialogDataResource.loading || suggestedBalanceResource.loading" class="text-center py-4">
               <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>

@@ -1,5 +1,16 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// align POS design with Neoffice theme and improve customer display — 87f168f + 3e25c3b
+  //// remove horizontal padding from POS header container — 82265c4
+  //// replace restaurant icon button with real on/off toggle switch — 5d4db32 + 8aa35c2 (+3 more)
+  //// move language switcher to user menu on mobile for compact header — c3ac72b
+  //// call toggleRestaurantMode directly from POSHeader instead of relying… — e8cecbc
+  //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2
+  //// purge dialog when toggling restaurant mode with active orders — 5959928 + 2f3e944 (+1 more)
+-->
 <template>
-	<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + 3e25c3b -->
 	<div
 		class="neo-glass shadow-neo sticky top-0 z-[200] border-b border-white/30"
 	>
@@ -41,7 +52,6 @@
 			</Teleport>
 
 			<!-- Main Header Content -->
-			<!-- //// remove horizontal padding from POS header container — 82265c4 -->
 			<div class="flex-1 flex justify-between items-center gap-1 sm:gap-2">
 				<!-- Left Side: Brand Info -->
 				<div class="flex items-center gap-1 sm:gap-4 min-w-0 flex-1 overflow-hidden">
@@ -84,7 +94,6 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
-					<!-- //// replace restaurant icon button with real on/off toggle switch — 5d4db32 + 8aa35c2 (+3 more) -->
 					<!-- Restaurant Mode Toggle Switch -->
 					<div
 						class="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
@@ -309,7 +318,6 @@
 						</svg>
 					</button>
 
-					<!-- //// move language switcher to user menu on mobile for compact header — c3ac72b -->
 					<div class="w-px h-4 sm:h-6 bg-gray-200 hidden md:block"></div>
 
 					<!-- User Menu -->
@@ -342,7 +350,6 @@ import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue"
 import { DEFAULT_LOCALE } from "@/utils/currency"
 import { ref } from "vue"
 import { version } from "../../../package.json"
-//// call toggleRestaurantMode directly from POSHeader instead of relying… — e8cecbc
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useRestaurantStore } from "@/stores/restaurant"
 
@@ -372,11 +379,9 @@ const emit = defineEmits([
 	"menu-opened",
 	"menu-closed",
 	"clear-cache",
-	//// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2
 	"toggle-restaurant",
 ])
 
-//// purge dialog when toggling restaurant mode with active orders — 5959928 + 2f3e944 (+1 more)
 function onToggleRestaurant() {
 	// Always emit — POSSale handles the logic (including purge dialog if needed)
 	emit("toggle-restaurant")

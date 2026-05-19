@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// rebrand: rename POS Next to Neopos — 771950b
+-->
 <template>
 	<!-- Install App Banner - Native Browser Style -->
 	<Transition
@@ -28,7 +34,6 @@
 					<!-- Text Content -->
 					<div class="flex-1 min-w-0 me-2">
 						<h3 id="install-banner-title" class="text-xs font-semibold mb-0.5 leading-tight" style="color: #111827;">
-							<!-- //// rebrand: rename POS Next to Neopos — 771950b -->
 							{{ __('Install Neopos') }}
 						</h3>
 						<p class="text-[10px] leading-tight mb-1" style="color: #4B5563;">

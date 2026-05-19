@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<Dialog v-model="show" :options="{ size: '3xl' }">
 		<template #body-title>
@@ -498,7 +504,6 @@
  * RTL Support: Fully compatible with right-to-left languages
  * Translations: All user-facing strings use __() for i18n
  */
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { ref, computed, watch, nextTick } from "vue"
 import { call, Dialog } from "frappe-ui"
 import { __ } from "@/utils/translation"

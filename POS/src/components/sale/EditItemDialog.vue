@@ -1,3 +1,10 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+  //// allow rate editing for zero-price items (gift cards) — 85f05bb + 458d81a
+-->
 <template>
 	<!-- Custom Modal matching frappe-ui Dialog styling -->
 	<!-- Uses @click.self pattern to properly handle teleported SelectInput dropdowns -->
@@ -286,7 +293,6 @@ import { useToast } from "@/composables/useToast"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useSerialNumberStore } from "@/stores/serialNumber"
 import { getItemStock } from "@/utils/stockValidator"
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	formatCurrency as formatCurrencyUtil,
 	getCurrencySymbol,
@@ -363,7 +369,6 @@ const hasPricingRules = computed(() => {
 	)
 })
 
-//// allow rate editing for zero-price items (gift cards) — 85f05bb + 458d81a
 // Zero-price items (e.g., gift cards) always allow rate editing
 const isZeroPriceItem = computed(() => {
 	if (!localItem.value) return false

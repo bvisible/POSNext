@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<Dialog
 		v-model="showDialog"
@@ -1072,7 +1078,6 @@ const createReturnResource = createResource({
 				: refundPayments.value.map((payment) => ({
 						mode_of_payment: payment.mode_of_payment,
 						amount: -Math.abs(payment.amount),
-					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					})),
 			remarks:
 				returnReason.value ||

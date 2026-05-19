@@ -1,4 +1,19 @@
 <!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// align POS design with Neoffice theme and improve customer display — 87f168f + e005b94 (+5 more)
+  //// hide both Sales Order toggle instances in restaurant mode — b3a9d85 + 87f168f
+  //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 71050fa (+6 more)
+  //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 87f168f (+3 more)
+  //// cart color thumbnails, image upload, and card item color propagation — 983130d
+  //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a
+  //// rounding total, tips visibility, cash quick amounts — 4fdb5df + 87f168f
+  //// show remaining to collect in cart + payment dialog accounts for guest… — 214125e + 1c05e7c (+2 more)
+  //// move station-item relation into Preparation Station child table, add… — 831857f + 4df0caf (+3 more)
+  //// auto-open edit dialog for zero-price items (gift cards) — 5dddc52 + 87f168f
+-->
+<!--
   InvoiceCart.vue - Shopping Cart Component for POS System
 
   ============================================================================
@@ -62,7 +77,6 @@
   ============================================================================
 -->
 <template>
-	<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + e005b94 (+5 more) -->
 	<div class="flex flex-col h-full bg-white rounded-neo-lg overflow-hidden">
 		<!-- Header with Customer -->
 		<div class="px-2.5 py-2 border-b border-gray-200 bg-gray-50">
@@ -125,7 +139,6 @@
 							</div>
 						</div>
 
-						<!-- //// hide both Sales Order toggle instances in restaurant mode — b3a9d85 + 87f168f -->
 						<!-- Document Type Card (hidden in restaurant mode) -->
 						<div
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
@@ -234,7 +247,6 @@
 						</button>
 
 						<!-- Document Type Toggle (Sales Invoice / Sales Order) -->
-						<!-- //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 71050fa (+6 more) -->
 						<div
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
@@ -744,7 +756,6 @@
 			</div>
 
 			<div v-else class="flex flex-col gap-0.5 sm:gap-1">
-				<!-- //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 87f168f (+3 more) -->
 				<div
 					v-for="(item, index) in sortedItems"
 					:key="item.item_code + '-' + (item.uom || '') + (item.is_free_item ? '-free' : '')"
@@ -759,7 +770,6 @@
 				>
 					<div class="flex gap-1.5 sm:gap-2">
 						<!-- Item Image Thumbnail -->
-						<!-- //// cart color thumbnails, image upload, and card item color propagation — 983130d -->
 						<div
 							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
 							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
@@ -886,7 +896,6 @@
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
 								</button>
 
-								<!-- //// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a -->
 								<button
 									v-if="!item.is_free_item"
 									type="button"
@@ -1216,7 +1225,6 @@
 				</div>
 			</div>
 
-			<!-- //// rounding total, tips visibility, cash quick amounts — 4fdb5df + 87f168f -->
 			<!-- Rounding Adjustment -->
 			<div v-if="roundingAdjustment !== 0" class="flex items-center justify-between text-xs text-gray-600 px-1 mb-1">
 				<span class="font-medium">{{ __("Rounding") }}</span>
@@ -1235,7 +1243,6 @@
 						{{ formatCurrency(displayGrandTotal) }}
 					</span>
 				</div>
-				<!-- //// show remaining to collect in cart + payment dialog accounts for guest… — 214125e + 1c05e7c (+2 more) -->
 				<!-- Guest payments already received on this table -->
 				<div v-if="cartStore.guestPaidAmount > 0" class="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1">
 					<div class="flex items-center justify-between">
@@ -1489,7 +1496,6 @@ const restaurantStore = useRestaurantStore() // Pinia store for restaurant featu
 const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
-	//// move station-item relation into Preparation Station child table, add… — 831857f + 4df0caf (+3 more)
 	emit("proceed-to-payment")
 }
 
@@ -2299,7 +2305,6 @@ onMounted(() => {
  * Prevents memory leaks by removing event listener.
  */
 onBeforeUnmount(() => {
-	//// auto-open edit dialog for zero-price items (gift cards) — 5dddc52 + 87f168f
 	if (typeof document === "undefined") return
 	document.removeEventListener("mousedown", handleOutsideClick)
 })

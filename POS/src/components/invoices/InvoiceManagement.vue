@@ -1,3 +1,14 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// modifier price adjustment lost on submit (price_list_rate not updated) — 02222a4 + 34ee11a (+2 more)
+  //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a + 3e25c3b (+2 more)
+  //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+  //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae
+  //// enhance partial payments with overdue status and major backend refact… — c3aabf7
+-->
 <template>
 	<!-- Full Page Overlay -->
 	<Transition name="fade">
@@ -94,7 +105,6 @@
 						<div class="p-6">
 							<!-- Unpaid Tab -->
 							<div v-if="activeTab === 'partial'" class="flex flex-col gap-4">
-								<!-- //// modifier price adjustment lost on submit (price_list_rate not updated) — 02222a4 + 34ee11a (+2 more) -->
 								<!-- Invoice Source Toggle -->
 								<div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
 									<button
@@ -216,7 +226,6 @@
 								</div>
 
 								<!-- Empty State -->
-								<!-- //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a + 3e25c3b (+2 more) -->
 								<div v-if="searchedUnpaidInvoices.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
 									<svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -227,7 +236,6 @@
 
 								<!-- Invoices List -->
 								<div v-else class="flex flex-col gap-4">
-									<!-- //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5 -->
 									<div
 										v-for="invoice in searchedUnpaidInvoices"
 										:key="invoice.name"
@@ -629,7 +637,6 @@ import InvoiceFilters from "@/components/invoices/InvoiceFilters.vue"
 import PaymentDialog from "@/components/sale/PaymentDialog.vue"
 import { useInvoiceFilters } from "@/composables/useInvoiceFilters"
 import { useInvoiceFiltersStore } from "@/stores/invoiceFilters"
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -668,7 +675,6 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
-	//// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae
 	posOpeningShift: {
 		type: String,
 		default: "",
@@ -1146,7 +1152,6 @@ function getPaymentSourceLabel(source) {
 			return source
 	}
 }
-//// enhance partial payments with overdue status and major backend refact… — c3aabf7
 
 function calculateDraftTotal(items) {
 	if (!items || items.length === 0) return 0

@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<div class="filters-simple">
 		<!-- Main Search Bar with Inline Filters -->
@@ -251,7 +257,6 @@ const quickDates = [
 		action: () => store.setYesterday(),
 	},
 	{ label: __("This Week"), value: "week", action: () => store.setThisWeek() },
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	{
 		label: __("This Month"),
 		value: "month",

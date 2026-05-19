@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<Teleport to="body">
 		<Transition name="overlay">
@@ -108,7 +114,6 @@
 </template>
 
 <script setup>
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { ref } from "vue"
 
 defineProps({

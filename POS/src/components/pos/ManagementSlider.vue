@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// restaurant sidebar buttons for Cards, Product Options, Workflows — 60d432a + c4460c6 (+2 more)
+-->
 <template>
 	<!-- Icon-Only Sidebar - Hidden on Mobile, Visible on Desktop -->
 	<div class="hidden lg:flex w-16 flex-shrink-0 bg-white border-e border-gray-200 flex-col items-center py-4 flex flex-col gap-2">
@@ -52,7 +58,6 @@
 			</div>
 		</button>
 
-		<!-- //// restaurant sidebar buttons for Cards, Product Options, Workflows — 60d432a + c4460c6 (+2 more) -->
 		<!-- Cash In/Out -->
 		<button
 			@click="handleMenuClick('cash-entry')"

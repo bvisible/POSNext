@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<!-- Full Page Overlay -->
 	<Transition name="fade">
@@ -872,7 +878,6 @@ const freeItemSearchResults = computed(() => {
 // Single source of truth for apply_on configuration
 // Used by both applyOnOptions dropdown and translateApplyOn function
 const APPLY_ON_CONFIG = {
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	"Item Code": { label: () => __("Specific Items") },
 	"Item Group": { label: () => __("Item Groups") },
 	Brand: { label: () => __("Brands") },

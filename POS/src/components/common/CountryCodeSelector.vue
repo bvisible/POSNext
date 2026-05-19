@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<div class="relative" ref="selectorRef">
 		<!-- Country Code Button -->
@@ -180,7 +186,6 @@ const filteredCountries = computed(() => {
 		(country) =>
 			country.name.toLowerCase().includes(query) ||
 			country.isd.includes(query) ||
-			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			country.code.toLowerCase().includes(query),
 	)
 })

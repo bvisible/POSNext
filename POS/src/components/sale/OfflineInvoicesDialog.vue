@@ -1,3 +1,9 @@
+<!--
+  BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
+  Each line corresponds to a logical block of fork-specific change in this file.
+  Grep the sha7 to find the originating commit via `git log`.
+  //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+-->
 <template>
 	<Dialog v-model="show" :options="{ title: __('Offline Invoices'), size: 'xl' }">
 		<template #body-content>
@@ -244,7 +250,6 @@
 </template>
 
 <script setup>
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
