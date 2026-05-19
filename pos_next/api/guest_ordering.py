@@ -787,7 +787,17 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	currency = invoice_doc.currency or frappe.defaults.get_global_default("currency")
 
 	try:
-		from wallee_integration.wallee_integration.api.transaction import create_transaction
+		# Resolve the Wallee Payment Provider (first enabled with the Wallee
+		# driver_class). Operators normally only run ONE Wallee provider per
+		# site (test xor live); cohabitation is supported but rare.
+		wallee_provider = frappe.db.get_value(
+			"Payment Provider",
+			{"driver_class": ["like", "payments.drivers.wallee.%"], "enabled": 1},
+			"name",
+			order_by="mode desc",
+		)
+		if not wallee_provider:
+			frappe.throw(_("No enabled Wallee Payment Provider configured on this instance."))
 
 		# Unique payment counter for split payments (prevents Wallee duplicate rejection)
 		existing_payment_count = frappe.db.count("Sales Invoice Payment", {"parent": invoice_doc.name})
@@ -812,15 +822,43 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"unique_id": f"{invoice_doc.name}-tip-p{payment_num}",
 			})
 
-		result = create_transaction(
-			line_items=line_items,
+		# Call the unified driver layer. The wallee.web driver creates the
+		# Wallee transaction with auto_confirmation_enabled=True and returns
+		# the hosted payment page URL in next_action_payload.url.
+		from payments.api import intent as intent_api
+
+		amount_minor = int(round(amount * 100))
+		intent = intent_api.create_intent(
+			provider=wallee_provider,
+			channel="wallee.web",
+			amount=amount_minor,
 			currency=currency,
-			merchant_reference=invoice_doc.name,
-			success_url=success_url or None,
-			failed_url=failed_url or None,
+			reference_doctype="Sales Invoice",
+			reference_name=invoice_doc.name,
+			metadata={
+				"line_items": line_items,
+				"token": token,
+				"tip": tip,
+				"success_url": success_url or None,
+				"failed_url": failed_url or None,
+			},
 		)
-	except ImportError:
-		frappe.throw(_("Wallee integration is not available on this instance."))
+
+		# Map the unified Payment Intent response back to the legacy shape the
+		# guest checkout frontend expects (transaction_id, payment_url, state).
+		payment_url = (intent.get("next_action_payload") or {}).get("url")
+		if not payment_url:
+			raise RuntimeError(
+				f"create_intent returned no redirect URL: {intent}"
+			)
+		result = {
+			"transaction_id": intent.get("provider_intent_id"),
+			"intent_name": intent.get("intent_name"),
+			"payment_url": payment_url,
+			"state": (intent.get("status") or "").upper(),
+		}
+	except frappe.ValidationError:
+		raise
 	except Exception as e:
 		import traceback
 		frappe.log_error("Guest payment creation failed",
@@ -866,8 +904,19 @@ def confirm_guest_payment(token, amount, tip=0):
 	order_payment = flt(amount) - flt(tip)
 
 	try:
-		# Get mode of payment from Wallee Settings
-		wallee_mop = frappe.db.get_single_value("Wallee Settings", "pos_mode_of_payment")
+		# Get mode of payment from Wallee Settings (per-provider record after
+		# the wallee_integration → payments merger, ADR-005).
+		wallee_provider = frappe.db.get_value(
+			"Payment Provider",
+			{"driver_class": ["like", "payments.drivers.wallee.%"], "enabled": 1},
+			"name",
+			order_by="mode desc",
+		)
+		wallee_mop = None
+		if wallee_provider:
+			wallee_mop = frappe.db.get_value(
+				"Wallee Settings", {"provider": wallee_provider}, "pos_mode_of_payment"
+			)
 		if not wallee_mop:
 			wallee_mop = "Carte de crédit"
 
@@ -1157,10 +1206,15 @@ def submit_takeaway_order(token, items, customer=None):
 		frappe.throw(_("Customer {0} not found.").format(customer_name))
 
 	# Enforce payment before order finalization
-	# Check if a Wallee transaction was created and completed for this token
+	# Check if a Payment Intent reached `succeeded` for this token's invoice
+	# (post-merger: Payment Intent replaces the legacy Wallee Transaction).
 	has_payment = frappe.db.exists(
-		"Wallee Transaction",
-		{"merchant_reference": token_doc.invoice, "status": ("in", ["Fulfill", "Completed", "Authorized"])}
+		"Payment Intent",
+		{
+			"reference_doctype": "Sales Invoice",
+			"reference_name": token_doc.invoice,
+			"status": "succeeded",
+		},
 	) if token_doc.invoice else False
 	if not has_payment:
 		frappe.throw(_("Payment must be completed before placing a takeaway order."))
