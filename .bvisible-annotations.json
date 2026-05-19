@@ -1,0 +1,1664 @@
+{
+  "POS/components.d.ts": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8cdbd9c736d5"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "42cd6c867a20"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fd0cbaa104e6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5ec3a93cf316"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "7d79e55afbb7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "636e8b46818d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5f718326371c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "59c2614dde07"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2807dba9419f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "dfd311a9910d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "421a0257d06a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4e24a8fd29e5"
+    }
+  ],
+  "POS/index.html": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a3179a14c4dd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2017b8cf97e2"
+    }
+  ],
+  "POS/public/offline.html": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f726c9cba1e0"
+    }
+  ],
+  "POS/src/App.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a52497f612c5"
+    }
+  ],
+  "POS/src/components/ShiftClosingDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d33aa8cc957f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2efb73d1d2fa"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "6817c4f7fb1e"
+    }
+  ],
+  "POS/src/components/ShiftOpeningDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c81f23c813ed"
+    }
+  ],
+  "POS/src/components/common/ActionButton.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "80971c582ff5"
+    }
+  ],
+  "POS/src/components/common/ClearCacheOverlay.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "dd5f8876c0eb"
+    }
+  ],
+  "POS/src/components/common/CountryCodeSelector.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "20f5e9433e73"
+    }
+  ],
+  "POS/src/components/common/InstallAppBadge.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9281c05e7875"
+    }
+  ],
+  "POS/src/components/common/LanguageSwitcher.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2bed00a64c1c"
+    }
+  ],
+  "POS/src/components/common/LoadingSpinner.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "33c2433d895d"
+    }
+  ],
+  "POS/src/components/common/PhoneInput.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "744c36f1b0b4"
+    }
+  ],
+  "POS/src/components/common/SelectInput.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "44ef3731df88"
+    }
+  ],
+  "POS/src/components/common/SessionLockScreen.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "afc3de15fb21"
+    }
+  ],
+  "POS/src/components/common/TranslatedHTML.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1fdf516358ed"
+    }
+  ],
+  "POS/src/components/common/UserMenu.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "28aff340cea6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "dfb480d5eae1"
+    }
+  ],
+  "POS/src/components/invoices/InvoiceDetailDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1b2930ce7af7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    }
+  ],
+  "POS/src/components/invoices/InvoiceFilters.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "750d83a00091"
+    }
+  ],
+  "POS/src/components/invoices/InvoiceManagement.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ce01aacf85e0"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f35f74e8cec9"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "07855e6274da"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e9d770140d27"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "POS/src/components/partials/PartialPayments.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "POS/src/components/pos/ManagementSlider.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1c1726edb2b9"
+    }
+  ],
+  "POS/src/components/pos/POSHeader.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bd346493cf72"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "107d4246bdc9"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bb9e7efff6bb"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "38e4d2f22c08"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e1ac798e011a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9f0d33d2dc1f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "10ba337adb5d"
+    }
+  ],
+  "POS/src/components/sale/BatchSerialDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5e7244c5829a"
+    }
+  ],
+  "POS/src/components/sale/CouponDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1571804bbeb7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d8203bb0e41c"
+    }
+  ],
+  "POS/src/components/sale/CouponManagement.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d9eea1b85ce5"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5bcf8da56872"
+    }
+  ],
+  "POS/src/components/sale/CreateCustomerDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8b09cdcbd9ba"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1b2930ce7af7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "81ef67d3dc74"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c6ad4c7d690c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "836a74f34393"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ff4b12b6d177"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "26cb79cc033d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a9e44f949cd3"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d12d3a49b4cf"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0c3b60ab4567"
+    }
+  ],
+  "POS/src/components/sale/DraftInvoicesDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "POS/src/components/sale/EditItemDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cd9f4953f69f"
+    }
+  ],
+  "POS/src/components/sale/InvoiceCart.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "79d4c5088982"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "de4485374a73"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "36d2fc79ff6d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b4747c75da57"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "02252b3f5fc0"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a320cfe67440"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "6f707fcf3bd6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e93cde8b8add"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "05485e3d8d74"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5cf16db768e9"
+    }
+  ],
+  "POS/src/components/sale/InvoiceHistoryDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    }
+  ],
+  "POS/src/components/sale/ItemSelectionDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    }
+  ],
+  "POS/src/components/sale/ItemsSelector.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0e5c4905c37d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4b5c571f2c68"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2b49b596d925"
+    }
+  ],
+  "POS/src/components/sale/OffersDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    }
+  ],
+  "POS/src/components/sale/OfflineInvoicesDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    }
+  ],
+  "POS/src/components/sale/PaymentDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "7b58597217fd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ed805042b301"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b4f5f01558e2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5c5f8174c4fd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4cebd470b0dc"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f1704c4b8156"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "223f632b56d2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "038d52649e2b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f4a9ea66b6d2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a333b3e7f7a7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9a2b48745105"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c45f6413437c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "35d76463f068"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "POS/src/components/sale/PromotionManagement.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9eab138eff99"
+    }
+  ],
+  "POS/src/components/sale/ReturnInvoiceDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "efc6792505af"
+    }
+  ],
+  "POS/src/components/sale/WarehouseAvailabilityDialog.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2a43d2f95a74"
+    }
+  ],
+  "POS/src/components/settings/POSSettings.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d77bb06f7d8e"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "eff4cfc38dc8"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0b3159efa4cd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "64e834b3cd9b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4489f86744d0"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8d1ec446c30c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "675768c51a32"
+    }
+  ],
+  "POS/src/components/settings/settingsConfig.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f9427a138f5d"
+    }
+  ],
+  "POS/src/composables/useCartSort.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2c78e9708976"
+    }
+  ],
+  "POS/src/composables/useFormatters.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4726ab578085"
+    }
+  ],
+  "POS/src/composables/useInvoice.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8649952bfffd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8e81943eb058"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "3c6e230d64ec"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9c6f79dd626c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cb02dbfbe878"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2a8466330e56"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "477b1dc58069"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "db2ce310100d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0439577d3b1d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e9d825753811"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "defe4837639a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "168b70ed35ea"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "31248db59dba"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bdfb8ffb4ec9"
+    }
+  ],
+  "POS/src/composables/useItems.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "169f8800acea"
+    }
+  ],
+  "POS/src/composables/useLocale.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "963a9451506c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c0bdee0b2de4"
+    }
+  ],
+  "POS/src/composables/useLongPress.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "966da0a3ac0d"
+    }
+  ],
+  "POS/src/composables/useOffline.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "3013e765babb"
+    }
+  ],
+  "POS/src/composables/usePOSEvents.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "38381b3523ab"
+    }
+  ],
+  "POS/src/composables/usePaymentCalculations.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "15f41bcda548"
+    }
+  ],
+  "POS/src/composables/usePaymentNumpad.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "18e49324c07b"
+    }
+  ],
+  "POS/src/composables/useQuickAmounts.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "61456e9e3e48"
+    }
+  ],
+  "POS/src/composables/useQzTray.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ccc60ad3271b"
+    }
+  ],
+  "POS/src/composables/useRealtimeCustomers.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fb64774d3b5c"
+    }
+  ],
+  "POS/src/composables/useRealtimePosProfile.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "431bb29b45a2"
+    }
+  ],
+  "POS/src/composables/useRealtimeStock.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cc5b2d16eb52"
+    }
+  ],
+  "POS/src/composables/useResponsivePayment.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5dabe71371db"
+    }
+  ],
+  "POS/src/composables/useSalesPersons.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f127ec09486c"
+    }
+  ],
+  "POS/src/composables/useSearchInput.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1cc30b633707"
+    }
+  ],
+  "POS/src/composables/useSessionLock.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "be31cffcde0e"
+    }
+  ],
+  "POS/src/composables/useShift.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0dc8b0b785c7"
+    }
+  ],
+  "POS/src/data/user.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4b321261dd6a"
+    }
+  ],
+  "POS/src/index.css": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "de26327fa883"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8d3d89b9fa85"
+    }
+  ],
+  "POS/src/main.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fb9beacd134e"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9c4fbd3d12e6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e94845455ceb"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "3db317fc5721"
+    }
+  ],
+  "POS/src/pages/Home.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c74fe41a0d63"
+    }
+  ],
+  "POS/src/pages/Login.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fad58d0fed32"
+    }
+  ],
+  "POS/src/pages/POSSale.vue": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c2410ff264ba"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2760477deecf"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2f9c39cd80c6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "788f6c4a57a9"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "6f25593390a0"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0afff0c3c475"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a42b191eb9a2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "75f64cd01911"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a36887bbaca6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "63fc7139526e"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "13334ee4400d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "6aeb209e154a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0013bce6a6c7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "080d30d6b275"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d26d1ae43252"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f912f7ad5291"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "53e1e2fe4c5f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "de9fca3ef3e2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e00f78e4741a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "19254b36c3a0"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1bf157acf74a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "68c4645e67e9"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5efece84dec1"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a2a5c22a8c8b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "026907931518"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c982e0ee8ce9"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5a0aa668c4df"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "de6cd2979552"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5c5965a06fb7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fb85caf0d97f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9b9fc6af305f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2bb4cac4542e"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cc4f1ce7a409"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "929f50b93618"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ff749c8e8990"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e1328253be18"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a5cc024b24ee"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4c3bfa5d05dd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d437074b6d46"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a4946c0755d6"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c78fe44e76e3"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ef42fb3045e5"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "18a5e220534d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "59be1e7d3c0e"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5b8bd258b271"
+    }
+  ],
+  "POS/src/router.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "750d83a00091"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "20d5e8d9926a"
+    }
+  ],
+  "POS/src/socket.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "287eb61b844a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bd20be394f67"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "17560d8eec43"
+    }
+  ],
+  "POS/src/stores/bootstrap.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "57cb0e6da499"
+    }
+  ],
+  "POS/src/stores/countries.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bd7e1930ec16"
+    }
+  ],
+  "POS/src/stores/customerSearch.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cba14724c876"
+    }
+  ],
+  "POS/src/stores/invoiceFilters.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "87377f09d939"
+    }
+  ],
+  "POS/src/stores/itemSearch.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "752a9b64617a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "49939c6840b6"
+    }
+  ],
+  "POS/src/stores/posCart.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "79e932f264f3"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "3aee0ec4ad79"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bd6efe8b61eb"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "411336c92a24"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d2457d2c129c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "91848857d5cf"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "74798d8825be"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5f089a638db3"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "97c378fcb052"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "905727b49667"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "779116255276"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bd6efe8b61eb"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5de012ac2772"
+    }
+  ],
+  "POS/src/stores/posDrafts.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23adbdbaf771"
+    }
+  ],
+  "POS/src/stores/posEvents.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c1546352235f"
+    }
+  ],
+  "POS/src/stores/posOffers.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "860169476593"
+    }
+  ],
+  "POS/src/stores/posSettings.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "f1439730bf30"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e5dc338a7b8d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "0360bcd28f5c"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "704a8ce64764"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "413919be7f8b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "80236a9ff3c8"
+    }
+  ],
+  "POS/src/stores/posShift.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "97b7ef4c9531"
+    }
+  ],
+  "POS/src/stores/posSync.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "479648cc818a"
+    }
+  ],
+  "POS/src/stores/posUI.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ef98064053fc"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2e95c5b07707"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1f52b505bb4a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "65570adc37bc"
+    }
+  ],
+  "POS/src/stores/serialNumber.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c1546352235f"
+    }
+  ],
+  "POS/src/stores/stock.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c1546352235f"
+    }
+  ],
+  "POS/src/utils/csrf.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d3526a493225"
+    }
+  ],
+  "POS/src/utils/currency.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "17bb10380ae4"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ca3ed716161d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ce5343078b66"
+    }
+  ],
+  "POS/src/utils/errorHandler.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "44cb89729f52"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "62053ea66a8c"
+    }
+  ],
+  "POS/src/utils/invoice.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8502ff5356b6"
+    }
+  ],
+  "POS/src/utils/logger.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "672749accc89"
+    }
+  ],
+  "POS/src/utils/lowEndOptimizations.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "99c8229326b2"
+    }
+  ],
+  "POS/src/utils/mutex.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "bb025ff2cb0c"
+    }
+  ],
+  "POS/src/utils/offline/cache.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "692ffffd7c22"
+    }
+  ],
+  "POS/src/utils/offline/db.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1eea77d5bacb"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d1f0e3c57497"
+    }
+  ],
+  "POS/src/utils/offline/items.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "8d7b3eade39a"
+    }
+  ],
+  "POS/src/utils/offline/offlineState.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5ca195e54ca2"
+    }
+  ],
+  "POS/src/utils/offline/sync.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "4330659343d3"
+    }
+  ],
+  "POS/src/utils/offline/translationCache.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "345147e44260"
+    }
+  ],
+  "POS/src/utils/offline/workerClient.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5ca195e54ca2"
+    }
+  ],
+  "POS/src/utils/performanceConfig.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "99c8229326b2"
+    }
+  ],
+  "POS/src/utils/printInvoice.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b36193d30ce3"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9ed7ce2d0611"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "POS/src/utils/qzTray.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fb484b24868c"
+    }
+  ],
+  "POS/src/utils/stockValidator.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cfb96efedc38"
+    }
+  ],
+  "POS/src/utils/translation.ts": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d65b80f2d993"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ea106f6d2c68"
+    }
+  ],
+  "POS/src/workers/offline.worker.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b337b70371d1"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "802d16539c00"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "805c5b3d3d62"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "27560afc7b94"
+    }
+  ],
+  "POS/tailwind.config.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "fab51c23dd16"
+    }
+  ],
+  "POS/vite.config.js": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c2ee06ad70b7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "02114e33a9b7"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "523525516a7b"
+    }
+  ],
+  "pos_next/api/__init__.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a1f859ab0aff"
+    }
+  ],
+  "pos_next/api/bootstrap.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "81a58ca2004d"
+    }
+  ],
+  "pos_next/api/constants.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5c191fe34817"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ce8e896b8a8c"
+    }
+  ],
+  "pos_next/api/credit_sales.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "067faa9216ab"
+    }
+  ],
+  "pos_next/api/invoices.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d1942a5ed3ce"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ab340d8c2d7d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c9549459e4fe"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e13d3768d2d4"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2e4605bbb772"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cdf0c9386959"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "00b616f41cf1"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "36f24f8639d2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d157d60d701f"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1a1dff879a29"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "cee168b59cd5"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "08a62bc33647"
+    }
+  ],
+  "pos_next/api/items.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9f2a3736d943"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c96b8d5de797"
+    }
+  ],
+  "pos_next/api/localization.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "89ed1aae8d33"
+    }
+  ],
+  "pos_next/api/offers.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d15a3666a949"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d77c788bf70a"
+    }
+  ],
+  "pos_next/api/partial_payments.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "356c10c57cea"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2993f4b6a1a8"
+    }
+  ],
+  "pos_next/api/promotions.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ba989e92a534"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "7952227511bd"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "ad1d9c571549"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "c3f600fc9854"
+    }
+  ],
+  "pos_next/api/qz.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "1a93a4e4f6e4"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "3eee1860fa38"
+    }
+  ],
+  "pos_next/api/sales_invoice_hooks.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "pos_next/api/shifts.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "356c10c57cea"
+    }
+  ],
+  "pos_next/api/utilities.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5801be60edd2"
+    }
+  ],
+  "pos_next/api/wallet.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b37c4d4e20d3"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "030501fbf6f4"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "356c10c57cea"
+    }
+  ],
+  "pos_next/hooks.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "d2eeced05f41"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "57c13876f85d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "750d83a00091"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b6b808fc253a"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "94bfc893ce94"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "68ae5ccaea19"
+    }
+  ],
+  "pos_next/install.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "86388e2c22bf"
+    }
+  ],
+  "pos_next/pos_next/doctype/pos_closing_shift/closing_shift_details.html": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "23632a722052"
+    }
+  ],
+  "pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e5faf9cbec7d"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "5a8592518db2"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "810c84be9b22"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9ac456aa1fa3"
+    }
+  ],
+  "pos_next/pos_next/doctype/pos_coupon/pos_coupon.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "e31613fd2182"
+    }
+  ],
+  "pos_next/pos_next/doctype/pos_settings/pos_settings.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "dfa63ec324c0"
+    }
+  ],
+  "pos_next/pos_next/doctype/referral_code/referral_code.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "b3c4ebcfe7da"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "pos_next/pos_next/doctype/referral_code/test_referral_code.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "9febed882ff3"
+    }
+  ],
+  "pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "2da16c89ab2a"
+    }
+  ],
+  "pos_next/realtime_events.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "da39a3ee5e6b"
+    }
+  ],
+  "pos_next/uninstall.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "10fca93b86b4"
+    },
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "a8e0b22d7e6e"
+    }
+  ],
+  "pos_next/validations.py": [
+    {
+      "head_sha_at_apply": "b8ef872fcd2a411bbcffc38f5c3ecd44eca54d48",
+      "target_hash": "95ecba74990f"
+    }
+  ]
+}
