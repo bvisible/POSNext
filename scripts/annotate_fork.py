@@ -34,14 +34,19 @@ from pathlib import Path
 
 MERGE_BASE = "97a4e833"
 
-# Languages supported. .vue is handled specially (multi-section: template / script / style).
+# Languages supported.
 LANG_JS = {".js", ".ts", ".mjs", ".cjs"}
 LANG_PY = {".py"}
 LANG_HTML = {".html", ".htm"}
 LANG_CSS = {".css", ".scss", ".sass", ".less"}
-LANG_VUE = {".vue"}
+# .vue files are EXCLUDED from inline insertion. Vue's template parser rejects
+# '<!-- //// -->' placed between '<tag' and its closing '>' or between
+# multi-line attributes, and the auto-generator can't reliably tell which
+# positions are safe. Vue annotations live in a single <!-- BVISIBLE-FORK -->
+# block at the top of each file — see scripts/rebuild_vue_annotations.py.
+LANG_VUE: set[str] = set()
 # Markdown / YAML are intentionally NOT auto-annotated — keep them for the registry
-SUPPORTED_EXTS = LANG_JS | LANG_PY | LANG_HTML | LANG_CSS | LANG_VUE
+SUPPORTED_EXTS = LANG_JS | LANG_PY | LANG_HTML | LANG_CSS
 
 # Threshold to split a same-commit block when hunks are far apart in the file.
 # Originally 8 lines, but real-world testing on posCart.js (one "rebrand" commit
