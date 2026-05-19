@@ -822,7 +822,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 				"unique_id": f"{invoice_doc.name}-tip-p{payment_num}",
 			})
 
-		# Call the unified driver layer. The wallee.web driver creates the
+		# Call the unified driver layer. The wallee_web driver creates the
 		# Wallee transaction with auto_confirmation_enabled=True and returns
 		# the hosted payment page URL in next_action_payload.url.
 		from payments.api import intent as intent_api
@@ -830,7 +830,7 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 		amount_minor = int(round(amount * 100))
 		intent = intent_api.create_intent(
 			provider=wallee_provider,
-			channel="wallee.web",
+			channel="wallee_web",
 			amount=amount_minor,
 			currency=currency,
 			reference_doctype="Sales Invoice",
