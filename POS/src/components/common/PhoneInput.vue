@@ -85,6 +85,7 @@ const props = defineProps({
 
 const emit = defineEmits(["update:modelValue", "validate"])
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const { parsePhoneNumber, formatPhoneNumber, validatePhoneNumber } =
 	useCountryCodes()
 

@@ -1,6 +1,7 @@
 <template>
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
+			<!-- //// customer form - toggle Individual/Company, required fields, default S… — 4b36d7b + 616d410 (+6 more) -->
 			<div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
 				<!-- Customer Type Toggle -->
 				<div class="flex bg-gray-100 rounded-neo-sm p-0.5">
@@ -52,6 +53,7 @@
 				</div>
 
 				<!-- Mobile Number with Country Code Selector -->
+				<!-- //// simplify customer creation form — 616d410 + 8bffb77 (+3 more) -->
 				<div class="flex gap-2">
 					<!-- Country Code Dropdown -->
 					<div class="relative" ref="dropdownRef">
@@ -109,6 +111,7 @@
 									{{ __("No countries found") }}
 								</div>
 							</div>
+						<!-- //// add country code selector with flags for customer phone numbers — 34469c3 -->
 						</div>
 					</div>
 
@@ -168,6 +171,7 @@
 							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 						/>
 					</div>
+<!-- //// add address fields to customer creation form — 8bffb77 + 458d81a (+5 more) -->
 
 					<select
 						v-model="customerData.country"
@@ -231,9 +235,11 @@
  * - First/Last name split for structured input
  * - Country code selector with flag icons and search
  * - Auto-sets territory based on selected country
+ //// Implement Bootstrap Store for optimized initial data loading — 4bb76f2
  * - Permission checking before allowing creation
  */
 
+//// add Swiss address autocomplete to customer creation forms — 6ed1256
 import AddressAutocomplete from "@/components/common/AddressAutocomplete.vue"
 import { usePOSPermissions } from "@/composables/usePermissions"
 import { useToast } from "@/composables/useToast"
@@ -267,6 +273,7 @@ const props = defineProps({
 	customer: Object, // Customer object for edit mode
 })
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 731374c
 const emit = defineEmits([
 	"update:modelValue",
 	"customer-created",
@@ -403,6 +410,7 @@ const handleClickOutside = (event) => {
 
 const setCountryFromName = (countryName) => {
 	if (!countryName) {
+		//// add company name field and default to Switzerland — 731374c + 4b36d7b (+2 more)
 		selectedCountryCode.value = "+41"
 		return
 	}
@@ -410,6 +418,7 @@ const setCountryFromName = (countryName) => {
 	const isd = countriesStore.countryNameToISDMap[countryName]
 	if (isd) {
 		selectedCountryCode.value = isd
+		//// preselect country from company in customer creation forms — 71619d1
 		// Also preselect country in address field
 		customerData.value.country = countryName
 		log.info(`Set country code to ${isd} and address country to ${countryName}`)
@@ -518,6 +527,7 @@ const createListResource = (doctype, onSuccess) =>
 		onError: (err) => log.error(`Error loading ${doctype}`, err),
 	})
 
+//// linter formatting — 3e25c3b + 458d81a (+1 more)
 const customerGroupsResource = createListResource("Customer Group", (names) => {
 	customerGroups.value = names
 	// Auto-select default if not already set
@@ -804,4 +814,5 @@ onMounted(() => {
 onBeforeUnmount(() => {
 	document.removeEventListener("click", handleClickOutside)
 })
+//// Implement offline capabilities for POS Next — 541c6f1
 </script>

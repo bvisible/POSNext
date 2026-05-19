@@ -207,6 +207,7 @@
 </template>
 
 <script setup>
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -370,6 +371,7 @@ function getPaymentSourceLabel(source) {
 			return source
 	}
 }
+//// enhance partial payments with overdue status and major backend refact… — c3aabf7
 
 // Lifecycle
 onMounted(() => {

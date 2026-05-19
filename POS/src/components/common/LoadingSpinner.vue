@@ -1,4 +1,5 @@
 <template>
+	<!-- //// make LoadingSpinner a fixed overlay to prevent pushing POS content do… — c524a0d -->
 	<div class="fixed inset-0 flex items-center justify-center bg-gray-50 z-[500]">
 		<div class="text-center">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>

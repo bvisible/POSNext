@@ -136,6 +136,7 @@ import { useOfflineStatus } from "@/composables/useOfflineStatus"
 import { session } from "@/data/session"
 import { cleanupUserSession } from "@/utils/sessionCleanup"
 
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const { isLocked, isVerifying, verifyError, lockedUser, unlock } =
 	useSessionLock()
 const { isOffline } = useOfflineStatus()

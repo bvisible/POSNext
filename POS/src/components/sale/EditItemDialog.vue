@@ -286,6 +286,7 @@ import { useToast } from "@/composables/useToast"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useSerialNumberStore } from "@/stores/serialNumber"
 import { getItemStock } from "@/utils/stockValidator"
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	formatCurrency as formatCurrencyUtil,
 	getCurrencySymbol,
@@ -362,6 +363,7 @@ const hasPricingRules = computed(() => {
 	)
 })
 
+//// allow rate editing for zero-price items (gift cards) — 85f05bb + 458d81a
 // Zero-price items (e.g., gift cards) always allow rate editing
 const isZeroPriceItem = computed(() => {
 	if (!localItem.value) return false

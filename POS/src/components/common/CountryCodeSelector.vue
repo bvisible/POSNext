@@ -180,6 +180,7 @@ const filteredCountries = computed(() => {
 		(country) =>
 			country.name.toLowerCase().includes(query) ||
 			country.isd.includes(query) ||
+			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			country.code.toLowerCase().includes(query),
 	)
 })

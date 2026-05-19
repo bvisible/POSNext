@@ -92,6 +92,7 @@ import { FeatherIcon, LoadingIndicator } from "frappe-ui"
 import { useLocale } from "@/composables/useLocale"
 
 // Locale state from composable
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const { locale, localeConfig, isRTL, supportedLocales, changeLocale } =
 	useLocale()
 

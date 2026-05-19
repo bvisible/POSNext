@@ -498,6 +498,7 @@
  * RTL Support: Fully compatible with right-to-left languages
  * Translations: All user-facing strings use __() for i18n
  */
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { ref, computed, watch, nextTick } from "vue"
 import { call, Dialog } from "frappe-ui"
 import { __ } from "@/utils/translation"

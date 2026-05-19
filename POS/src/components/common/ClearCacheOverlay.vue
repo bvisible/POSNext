@@ -108,6 +108,7 @@
 </template>
 
 <script setup>
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { ref } from "vue"
 
 defineProps({

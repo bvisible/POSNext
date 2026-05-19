@@ -283,6 +283,7 @@
 					</div>
 
 					<!-- Invoice Summary -->
+					<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f + c87d0e9 (+1 more) -->
 					<div class="bg-white rounded-neo-md border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
 						<!-- Header -->
 						<div :class="['px-3 border-b border-gray-200 bg-gray-50', isCompactMode ? 'py-1.5' : 'py-2']">
@@ -290,6 +291,7 @@
 								<h3 :class="['text-gray-900 font-semibold text-start', dynamicTextSize.header]">{{ __('Invoice Summary') }}</h3>
 								<span class="text-gray-500 text-xs text-end">{{ items.length === 1 ? __('1 item') : __('{0} items', [items.length]) }}</span>
 							</div>
+							<!-- //// display loyalty points in payment dialog next to customer name — c057c53 -->
 							<div v-if="customer" class="text-gray-600 text-xs mt-0.5 text-start flex items-center gap-2">
 								<span>{{ customer?.customer_name || customer?.name || customer }}</span>
 								<span v-if="walletInfo.loyalty_points > 0" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold text-[10px]">
@@ -510,6 +512,7 @@
 									<div class="text-xs font-medium text-purple-600 uppercase tracking-wide mb-1">{{ __('Write Off') }}</div>
 									<div :class="['font-bold text-purple-600', dynamicTextSize.amount]">{{ formatCurrency(writeOffAmount) }}</div>
 								</div>
+								<!-- //// add tip/pourboire management for restaurant module — a750c5e + 2a539d5 -->
 								<!-- Tip detection: show tip instead of change when restaurant tips enabled -->
 								<div v-else-if="changeAmount > 0 && allowsOverpayment && showTipDetection" :class="['bg-amber-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
 									<div class="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">{{ __('Tip') }}</div>
@@ -593,6 +596,7 @@
 					]"
 					:style="isMobileView ? {} : { minHeight: rightColumnMinHeight }"
 				>
+						<!-- //// move split payment below Payment Method title with proper heading and… — c9b94ce + 104959e (+3 more) -->
 						<!-- Payment Methods -->
 					<div :class="isSmallMobile ? 'mb-1' : 'mb-1.5 lg:mb-3'">
 						<div :class="['flex items-center justify-between', isSmallMobile ? 'mb-0.5' : 'mb-1 lg:mb-2']">
@@ -1079,6 +1083,7 @@
 						</div>
 
 					<!-- Action Buttons - Below Keypad (Desktop only) -->
+					<!-- //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5 + 87f168f -->
 					<div :class="['hidden lg:flex flex-col gap-1', isCompactMode ? 'mt-2' : 'mt-4']">
 						<!-- Complete/Partial Payment Button — Full Width -->
 						<button
@@ -1115,6 +1120,7 @@
 				<!-- End Right Column -->
 			</div>
 			<!-- End Two Column Layout -->
+<!-- //// defer terminal payment start until cashier picks amount + device — 958a226 + bd9e2f3 (+5 more) -->
 
 			<!-- Unified Terminal Payment Dialog Overlay -->
 			<!-- Replaces the legacy Wallee overlay. The dialog opens INSTANTLY -->
@@ -1195,6 +1201,7 @@
 			</div>
 		</template>
 	</Dialog>
+<!-- //// payment = auto-validate + partial payment confirmation dialog — f295bbe + f80046b (+3 more) -->
 
 	<!-- Partial Payment Confirmation Dialog -->
 	<Dialog v-model="showPartialPaymentConfirm" :options="{ title: __('Partial Payment'), size: 'sm' }">
@@ -1241,6 +1248,7 @@ import {
 	formatCurrency as formatCurrencyUtil,
 	getCurrencySymbol,
 	roundCurrency,
+	//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 	roundToFraction,
 	getPrecision,
 } from "@/utils/currency"
@@ -1254,6 +1262,7 @@ import { useLongPress } from "@/composables/useLongPress"
 import { usePaymentNumpad } from "@/composables/usePaymentNumpad"
 import { useResponsivePayment } from "@/composables/useResponsivePayment"
 import { useQuickAmounts } from "@/composables/useQuickAmounts"
+//// rename terminal dialogs to PSP-agnostic names + debug instrumentation — 9acebda + bd9e2f3
 // Unified payments — replaces the legacy Wallee terminal integration.
 // Routes a Mode of Payment to a Payment Provider × Channel via the
 // `POS Payment Driver Mapping` DocType (see payments app, ADR-001).
@@ -1267,6 +1276,7 @@ import QRPaymentDialog from "@/components/payments/QRPaymentDialog.vue"
 
 const log = logger.create("PaymentDialog")
 const settingsStore = usePOSSettingsStore()
+//// add split payment bar in restaurant PaymentDialog — 2a539d5 + 287b501 (+6 more)
 const restaurantStore = useRestaurantStore()
 
 // Split payment state
@@ -1357,6 +1367,7 @@ const props = defineProps({
 		type: String,
 		default: DEFAULT_CURRENCY,
 	},
+	//// show remaining to collect in cart + payment dialog accounts for guest… — 214125e
 	guestPaidAmount: {
 		type: Number,
 		default: 0,
@@ -1442,6 +1453,7 @@ const loadingPaymentMethods = ref(false)
 const lastSelectedMethod = ref(null)
 const customAmount = ref("")
 const paymentEntries = ref([])
+//// replace Wallee terminal integration with unified Stripe Terminal driv… — bd9e2f3 + 958a226 (+12 more)
 
 // Unified terminal payments — replaces the legacy Wallee integration.
 // `driverMappings` caches the POS Payment Driver Mapping records for this POS
@@ -1760,6 +1772,7 @@ async function identifyWalletPaymentMethods() {
 }
 
 // Check if a payment method is a wallet payment
+//// native loyalty points redemption in POS payment dialog — 104959e + 64604ed (+1 more)
 // Fetch loyalty details for the selected customer
 async function fetchLoyaltyDetails() {
 	try {
@@ -2144,6 +2157,7 @@ const changeAmount = computed(() => {
 	return change > 0 ? roundCurrency(change) : 0
 })
 
+//// linter formatting — 3e25c3b + 6c7e388 (+1 more)
 // Auto-set tip when change amount changes (if tips enabled)
 watch(
 	() => changeAmount.value,
@@ -2347,6 +2361,7 @@ const canComplete = computed(() => {
 		return false
 	}
 
+	//// allow completing payment when loyalty points cover entire amount — b9039de + d151bfd
 	// If grand total is 0 (fully covered by discount/gift card), can complete without payment entries
 	if (props.grandTotal === 0) {
 		return true
@@ -2458,6 +2473,7 @@ watch(
 	{ immediate: true },
 )
 
+//// Add Wallee terminal payment integration — ce24e1a + bd9e2f3
 watch(show, async (newVal) => {
 	if (newVal) {
 		// Reset state when dialog opens (but NOT customerBalance - it's pre-fetched)
@@ -3472,6 +3488,7 @@ watch(
 		if (isOpen) {
 			// Only sync when dialog opens, not continuously
 			localAdditionalDiscount.value = props.additionalDiscount || 0
+//// set discount type to amount when coupon is already applied — 3eb0177 + 87f168f
 
 			// If there's already a discount applied (e.g., from gift card/coupon),
 			// set the mode to 'amount' since coupon discounts are always amounts

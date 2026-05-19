@@ -1,4 +1,5 @@
 <template>
+	<!-- //// align POS design with Neoffice theme and improve customer display — 87f168f -->
 	<div class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
 		<!-- Item Groups Filter Tabs -->
 		<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
@@ -308,6 +309,7 @@
 							{{ Math.floor((item.actual_qty ?? item.stock_qty ?? 0)) }}
 						</div>
 
+						<!-- //// add image and color support for items in POS restaurant — 26f5a3f + 3e25c3b -->
 						<!-- Item Image / Color / Name -->
 						<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
 							:style="getCardBackgroundStyle(item)">
@@ -805,6 +807,7 @@ const {
 	isAnyDialogOpen,
 })
 
+//// persist grid/list view preference in localStorage — e80f113
 // Local state — restore user's view preference from localStorage
 const savedViewMode = localStorage.getItem("pos_items_view_mode")
 const viewMode = ref(savedViewMode || "grid")

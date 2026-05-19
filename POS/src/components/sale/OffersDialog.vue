@@ -200,6 +200,7 @@
 
 <script setup>
 import { usePOSOffersStore } from "@/stores/posOffers"
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	DEFAULT_CURRENCY,
 	DEFAULT_LOCALE,

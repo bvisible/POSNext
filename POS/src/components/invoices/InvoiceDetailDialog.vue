@@ -262,6 +262,7 @@
 				<Button variant="subtle" @click="show = false">
 					{{ __('Close') }}
 				</Button>
+				<!-- //// add email invoice functionality with PDF attachment — 4239ea8 -->
 				<div class="flex gap-2">
 					<Button variant="outline" @click="showEmailDialog = true">
 						<template #prefix>
@@ -289,6 +290,7 @@
 
 <script setup>
 import { useFormatters } from "@/composables/useFormatters"
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,

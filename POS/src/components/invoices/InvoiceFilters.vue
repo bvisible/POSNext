@@ -251,6 +251,7 @@ const quickDates = [
 		action: () => store.setYesterday(),
 	},
 	{ label: __("This Week"), value: "week", action: () => store.setThisWeek() },
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	{
 		label: __("This Month"),
 		value: "month",

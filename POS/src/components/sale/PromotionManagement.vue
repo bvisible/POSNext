@@ -872,6 +872,7 @@ const freeItemSearchResults = computed(() => {
 // Single source of truth for apply_on configuration
 // Used by both applyOnOptions dropdown and translateApplyOn function
 const APPLY_ON_CONFIG = {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	"Item Code": { label: () => __("Specific Items") },
 	"Item Group": { label: () => __("Item Groups") },
 	Brand: { label: () => __("Brands") },

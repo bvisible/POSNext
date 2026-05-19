@@ -1072,6 +1072,7 @@ const createReturnResource = createResource({
 				: refundPayments.value.map((payment) => ({
 						mode_of_payment: payment.mode_of_payment,
 						amount: -Math.abs(payment.amount),
+					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					})),
 			remarks:
 				returnReason.value ||

@@ -193,6 +193,7 @@
             </div>
           </div>
 
+          <!-- //// cash in/out from POS using Journal Entry Templates — 6c59863 + 34ee11a (+1 more) -->
           <!-- Sales by Payment Method -->
           <div v-if="shouldShowSummary && closingData.sales_by_payment && closingData.sales_by_payment.length > 0"
             class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
@@ -544,6 +545,7 @@
             </div>
           </div>
 
+          <!-- //// cash withdrawal at shift closing with suggested opening balance — 5783eb2 -->
           <!-- Cash Withdrawal Section -->
           <div v-if="closingData.closing_withdrawal_template && !showSuccessReport" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div class="px-3 py-3 md:px-6 md:py-4 bg-amber-50 border-b border-amber-200">
@@ -708,6 +710,7 @@ const open = computed({
 })
 
 const { getClosingShiftData, submitClosingShift } = useShift()
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 5783eb2
 const { formatCurrency, formatQuantity, formatDateTime, formatTime } =
 	useFormatters()
 const posSettingsStore = usePOSSettingsStore()

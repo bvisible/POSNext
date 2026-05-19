@@ -157,6 +157,7 @@ const dropdownPosition = ref({ top: 0, left: 0, width: 0 })
 const searchQuery = ref("")
 
 const selectedLabel = computed(() => {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const selected = props.options.find((opt) => opt.value === props.modelValue)
 	return selected?.label || ""
 })

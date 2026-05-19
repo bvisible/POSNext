@@ -74,6 +74,7 @@ const props = defineProps({
 defineEmits(["click"])
 
 const buttonClasses = computed(() => {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const base =
 		"p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors group touch-manipulation"
 	const animation = props.animate ? "animate-pulse" : ""

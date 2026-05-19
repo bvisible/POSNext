@@ -233,6 +233,7 @@ const serialSearchQuery = ref("")
 
 // Computed: Available batches with cart quantities subtracted
 const availableBatches = computed(() => {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	return warehouseBatches.value
 		.map((batch) => {
 			// Find quantity of this batch already in cart

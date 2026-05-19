@@ -39,6 +39,7 @@
 			<!-- Additional Actions -->
 			<slot name="additional-actions"></slot>
 
+			<!-- //// move toggle-restaurant to correct position + language to dropdown — 5e5db36 -->
 			<!-- Language Switcher -->
 			<div>
 				<hr class="my-2 border-gray-100">
@@ -128,6 +129,7 @@ import { useLocale } from "@/composables/useLocale"
 
 // Avatar Sub-component
 const Avatar = (props) => {
+	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const sizeClass = props.size === "sm" ? "w-9 h-9" : "w-10 h-10"
 	const bgClass = props.image
 		? "bg-gray-200"

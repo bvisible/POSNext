@@ -61,6 +61,7 @@
               {{ __('Opening Balance (Optional)') }}
             </label>
 
+            <!-- //// cash withdrawal at shift closing with suggested opening balance — 5783eb2 -->
             <div v-if="dialogDataResource.loading || suggestedBalanceResource.loading" class="text-center py-4">
               <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>

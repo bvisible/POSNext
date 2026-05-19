@@ -52,6 +52,7 @@
 			</div>
 		</button>
 
+		<!-- //// restaurant sidebar buttons for Cards, Product Options, Workflows — 60d432a + c4460c6 (+2 more) -->
 		<!-- Cash In/Out -->
 		<button
 			@click="handleMenuClick('cash-entry')"

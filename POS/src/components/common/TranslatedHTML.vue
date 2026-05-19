@@ -4,6 +4,7 @@
 </template>
 
 <script setup>
+//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { ref, onMounted } from "vue"
 import DOMPurify from "dompurify"
 
