@@ -134,6 +134,21 @@ def create_customer(
 	if not resolved_territory:
 		frappe.throw(_("No territory configured. Please create one before adding customers."))
 
+	# Resolve default_currency (Customer treats it as mandatory on some sites). Prefer the POS Profile,
+	# then the company default, then the global default. Stay None-tolerant so we don't crash if nothing
+	# is configured — Frappe will raise its own MandatoryError with a clearer location at that point.
+	resolved_currency = None
+	if pos_profile:
+		resolved_currency = frappe.db.get_value("POS Profile", pos_profile, "currency")
+	if not resolved_currency:
+		resolved_company = company
+		if not resolved_company and pos_profile:
+			resolved_company = frappe.db.get_value("POS Profile", pos_profile, "company")
+		if resolved_company:
+			resolved_currency = frappe.db.get_value("Company", resolved_company, "default_currency")
+	if not resolved_currency:
+		resolved_currency = frappe.db.get_default("currency")
+
 	customer = frappe.get_doc(
 		{
 			"doctype": "Customer",
@@ -144,6 +159,7 @@ def create_customer(
 			"mobile_no": mobile_no or "",
 			"email_id": email_id or "",
 			"loyalty_program": loyalty_program,
+			"default_currency": resolved_currency,
 		}
 	)
 
