@@ -856,16 +856,18 @@ def update_invoice(data):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
 # //// preserve guest (Wallee) payments when POS updates/submits invoice — 8bf46a2 + 3574de5 (+1 more)
 
-            # Preserve guest payments (e.g. Wallee) before POS overwrites
+            # Preserve guest payments (e.g. Wallee) before POS overwrites — Sales Invoice only
+            # (Sales Order has no `payments` child table, accessing it would AttributeError).
             guest_payments = []
-            pos_payment_modes = {p.get("mode_of_payment") for p in data.get("payments", []) if p.get("mode_of_payment")}
-            for existing_payment in invoice_doc.payments:
-                if flt(existing_payment.amount) > 0 and existing_payment.mode_of_payment not in pos_payment_modes:
-                    guest_payments.append({
-                        "mode_of_payment": existing_payment.mode_of_payment,
-                        "amount": existing_payment.amount,
-                        "account": existing_payment.account,
-                    })
+            if doctype == "Sales Invoice":
+                pos_payment_modes = {p.get("mode_of_payment") for p in data.get("payments", []) if p.get("mode_of_payment")}
+                for existing_payment in invoice_doc.payments:
+                    if flt(existing_payment.amount) > 0 and existing_payment.mode_of_payment not in pos_payment_modes:
+                        guest_payments.append({
+                            "mode_of_payment": existing_payment.mode_of_payment,
+                            "amount": existing_payment.amount,
+                            "account": existing_payment.account,
+                        })
 
             # Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
             saved_tip_items = _extract_tip_items(invoice_doc)
@@ -886,6 +888,15 @@ def update_invoice(data):
         # read linked docs (e.g., Customer) and trigger controller permission checks.
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
+
+        # Default Sales Order dates so a missing UI date picker can't 417 the save.
+        # validate_delivery_date() rejects empty delivery_date even on draft.
+        if invoice_doc.doctype == "Sales Order":
+            today = frappe.utils.nowdate()
+            if not invoice_doc.get("transaction_date"):
+                invoice_doc.transaction_date = today
+            if not invoice_doc.get("delivery_date"):
+                invoice_doc.delivery_date = invoice_doc.get("transaction_date") or today
 
         pos_profile_doc = None
         if pos_profile:
@@ -1582,16 +1593,18 @@ def submit_invoice(invoice=None, data=None):
         else:
             invoice_doc = frappe.get_doc(doctype, invoice_name)
 
-            # Preserve guest payments (e.g. Wallee) before POS overwrites the payments array
+            # Preserve guest payments (e.g. Wallee) before POS overwrites the payments array.
+            # Sales Order has no `payments` child table → accessing it would AttributeError.
             guest_payments = []
-            pos_payment_modes = {p.get("mode_of_payment") for p in invoice.get("payments", []) if p.get("mode_of_payment")}
-            for existing_payment in invoice_doc.payments:
-                if flt(existing_payment.amount) > 0 and existing_payment.mode_of_payment not in pos_payment_modes:
-                    guest_payments.append({
-                        "mode_of_payment": existing_payment.mode_of_payment,
-                        "amount": existing_payment.amount,
-                        "account": existing_payment.account,
-                    })
+            if doctype == "Sales Invoice":
+                pos_payment_modes = {p.get("mode_of_payment") for p in invoice.get("payments", []) if p.get("mode_of_payment")}
+                for existing_payment in invoice_doc.payments:
+                    if flt(existing_payment.amount) > 0 and existing_payment.mode_of_payment not in pos_payment_modes:
+                        guest_payments.append({
+                            "mode_of_payment": existing_payment.mode_of_payment,
+                            "amount": existing_payment.amount,
+                            "account": existing_payment.account,
+                        })
 
             # Preserve TIP items (e.g. guest tips via Wallee) before POS overwrites items
             saved_tip_amount = sum(flt(t.get("rate", 0)) * flt(t.get("qty", 1)) for t in _extract_tip_items(invoice_doc))
@@ -1700,8 +1713,8 @@ def submit_invoice(invoice=None, data=None):
             invoice_doc.loyalty_redemption_cost_center = loyalty_data.get("loyalty_redemption_cost_center")
 
             # If loyalty covers entire amount and no payments, clear payment entries
-            # to avoid validation errors from empty/default payment modes
-            if flt(loyalty_data.get("loyalty_amount")) >= flt(invoice_doc.grand_total or 0):
+            # to avoid validation errors from empty/default payment modes (Sales Invoice only)
+            if doctype == "Sales Invoice" and flt(loyalty_data.get("loyalty_amount")) >= flt(invoice_doc.grand_total or 0):
                 invoice_doc.payments = []
 
         # Handle tip amount — add TIP line item if tip > 0
@@ -1717,10 +1730,10 @@ def submit_invoice(invoice=None, data=None):
         # (global Stock Settings, POS Settings, and POS Profile flags)
         _validate_stock_on_invoice(invoice_doc)
 
-        # Allow pure customer-credit POS sales to submit without a payment row.
+        # Allow pure customer-credit POS sales to submit without a payment row (Sales Invoice only).
         customer_credit_dict = data.get("customer_credit_dict") or invoice.get("customer_credit_dict")
         redeemed_customer_credit = data.get("redeemed_customer_credit") or invoice.get("redeemed_customer_credit")
-        if redeemed_customer_credit and not invoice_doc.payments:
+        if doctype == "Sales Invoice" and redeemed_customer_credit and not invoice_doc.payments:
             invoice_doc.flags.pos_next_redeemed_customer_credit = flt(redeemed_customer_credit)
 
         # Save before submit
