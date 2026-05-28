@@ -349,9 +349,10 @@ function updateMobileNumber() {
 }
 
 function onAddressSelected(address) {
-	form.address_line1 = address.address_line1
-	form.city = address.city
-	form.pincode = address.pincode
+	console.info("[CreateCustomerModal] Address selected", address)
+	form.address_line1 = address.address_line1 || ""
+	form.city = address.city || ""
+	form.pincode = address.pincode || ""
 	if (address.country) form.country = address.country
 }
 
