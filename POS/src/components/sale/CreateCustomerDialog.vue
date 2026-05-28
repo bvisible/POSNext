@@ -531,14 +531,22 @@ const createListResource = (doctype, onSuccess) =>
 		onError: (err) => log.error(`Error loading ${doctype}`, err),
 	})
 
+// Map the customer-type toggle to the preferred default Customer Group.
+// Localised swiss POS UX convention: Individuel for Individual, Commercial for Company.
+// Falls back to ERPNext's Selling Settings default, then to the first available group.
+function preferredGroupFor(type) {
+	const preferred = type === "Company" ? "Commercial" : "Individuel"
+	if (customerGroups.value.includes(preferred)) return preferred
+	if (defaultCustomerGroup.value && customerGroups.value.includes(defaultCustomerGroup.value)) {
+		return defaultCustomerGroup.value
+	}
+	return customerGroups.value[0] || ""
+}
+
 const customerGroupsResource = createListResource("Customer Group", (names) => {
 	customerGroups.value = names
-	// Auto-select default if not already set
-	if (!customerGroup.value && defaultCustomerGroup.value) {
-		customerGroup.value = names.includes(defaultCustomerGroup.value)
-			? defaultCustomerGroup.value
-			: names[0] || ""
-	}
+	// Auto-select the customer-type-aware default (Individuel / Commercial).
+	customerGroup.value = preferredGroupFor(customerType.value)
 })
 const territoriesResource = createListResource(
 	"Territory",
@@ -561,7 +569,9 @@ const posProfileResource = createResource({
 	},
 })
 
-// Fetch default customer group from Selling Settings
+// Fetch default customer group from Selling Settings.
+// IMPORTANT: this is only stored as a fallback for preferredGroupFor(); it does NOT
+// override the customer-type-aware default (Individuel / Commercial) chosen above.
 const sellingSettingsResource = createResource({
 	url: "frappe.client.get_value",
 	makeParams: () => ({
@@ -573,10 +583,6 @@ const sellingSettingsResource = createResource({
 	onSuccess: (data) => {
 		if (data?.cust_master_group) {
 			defaultCustomerGroup.value = data.cust_master_group
-			// Set as current if not already changed by user
-			if (!customerGroup.value || customerGroup.value === "Individual") {
-				customerGroup.value = data.cust_master_group
-			}
 		}
 	},
 	onError: (err) => log.error("Error loading Selling Settings", err),
@@ -701,7 +707,7 @@ const resetForm = () => {
 		pincode: "",
 		country: "",
 	})
-	customerGroup.value = defaultCustomerGroup.value
+	customerGroup.value = preferredGroupFor(customerType.value)
 	territory.value = "All Territories"
 	selectedCountryCode.value = "+41"
 	phoneNumber.value = ""
@@ -722,6 +728,19 @@ watch(
 		}
 	},
 )
+
+// Toggle Individu ↔ Société — swap the default Customer Group accordingly
+// (Individuel for Individu, Commercial for Société), but ONLY if the user
+// hasn't manually picked a different group already in this dialog session.
+// We detect "manually picked" by comparing the current value against the
+// alternate type's preferred default.
+watch(customerType, (newType, oldType) => {
+	if (!customerGroups.value.length) return
+	const previousPreferred = preferredGroupFor(oldType)
+	if (customerGroup.value === previousPreferred || !customerGroup.value) {
+		customerGroup.value = preferredGroupFor(newType)
+	}
+})
 
 // Pre-fill form when customer prop changes (edit mode)
 watch(
