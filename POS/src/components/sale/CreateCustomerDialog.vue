@@ -471,6 +471,7 @@ const updateTerritoryFromCountry = () => {
 
 const createCustomerResource = createResource({
 	url: "pos_next.api.customers.create_customer",
+	auto: false,
 	makeParams: () => ({
 		customer_name: fullName.value,
 		mobile_no: customerData.value.mobile_no || "",
@@ -493,6 +494,7 @@ const createAddressResource = createResource({
 
 const updateCustomerResource = createResource({
 	url: "frappe.client.set_value",
+	auto: false,
 	makeParams: () => ({
 		doctype: "Customer",
 		name: props.customer?.name,
