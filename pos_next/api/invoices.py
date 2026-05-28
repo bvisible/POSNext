@@ -1857,9 +1857,29 @@ def submit_invoice(invoice=None, data=None):
                         FIELD_IS_RATE_MANUALLY_EDITED: 1
                     }, invoice_doc.name)
 
+        # Sales Order paid at POS: also create + submit the matching Sales Invoice
+        # so the payment is actually recorded. ERPNext's Sales Order has no
+        # `payments` child table, so the payment rows the cashier just collected
+        # would otherwise be silently dropped on the floor.
+        si_doc = None
+        si_payments = invoice.get("payments") or []
+        if (
+            invoice_doc.doctype == "Sales Order"
+            and si_payments
+            and flt(sum(flt(p.get("amount")) for p in si_payments)) > 0
+        ):
+            si_doc = _create_invoice_from_sales_order(
+                so=invoice_doc,
+                payments=si_payments,
+                pos_profile=pos_profile,
+                invoice_payload=invoice,
+                source_data=data,
+            )
+
         # Return complete invoice details
         result = {
             "name": invoice_doc.name,
+            "doctype": invoice_doc.doctype,
             "status": invoice_doc.docstatus,
             "grand_total": invoice_doc.grand_total,
             "total": invoice_doc.total,
@@ -1868,6 +1888,16 @@ def submit_invoice(invoice=None, data=None):
             "paid_amount": getattr(invoice_doc, "paid_amount", 0),
             "change_amount": getattr(invoice_doc, "change_amount", 0),
         }
+
+        if si_doc is not None:
+            result["sales_invoice"] = {
+                "name": si_doc.name,
+                "status": si_doc.docstatus,
+                "grand_total": si_doc.grand_total,
+                "paid_amount": si_doc.paid_amount,
+                "outstanding_amount": si_doc.outstanding_amount,
+                "change_amount": getattr(si_doc, "change_amount", 0),
+            }
 
         # Include offline_id in response for client-side tracking
         if offline_id:
@@ -1883,6 +1913,99 @@ def submit_invoice(invoice=None, data=None):
         # Cleanup sync record if invoice was not successfully submitted
         if sync_record_name and not invoice_submitted:
             _cleanup_failed_sync(sync_record_name)
+
+
+def _create_invoice_from_sales_order(so, payments, pos_profile, invoice_payload, source_data):
+    """Create + submit a paid Sales Invoice from a freshly-submitted Sales Order.
+
+    ERPNext's Sales Order has no `payments` child table, so when the cashier
+    collects payment on a Sales Order at the POS we have to materialize a
+    matching Sales Invoice that references the SO. This is what an ERPNext
+    user would otherwise do manually via "Create > Sales Invoice" on the SO.
+
+    Args:
+        so: the already-submitted Sales Order document
+        payments: list of payment dicts (mode_of_payment, amount, account)
+        pos_profile: name of the POS Profile (used for SI POS fields)
+        invoice_payload: original `invoice` dict from the frontend
+        source_data: original `data` dict from the frontend (change_amount, etc.)
+
+    Returns:
+        The submitted Sales Invoice document, or None if creation failed in a
+        non-fatal way (logged and surfaced via msgprint).
+    """
+    try:
+        from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
+    except Exception as e:
+        frappe.log_error("Cannot import make_sales_invoice", str(e))
+        return None
+
+    try:
+        # make_sales_invoice() copies items, customer, taxes, etc. from the SO
+        # and pre-links each SI item back to the SO via `sales_order` / `so_detail`.
+        si = make_sales_invoice(so.name, ignore_permissions=True)
+    except Exception as e:
+        frappe.log_error("make_sales_invoice failed", f"SO={so.name}: {str(e)}\n{frappe.get_traceback()}")
+        frappe.msgprint(
+            _("Sales Order {0} was created but the matching Sales Invoice could not be generated: {1}").format(so.name, str(e)),
+            alert=True,
+            indicator="orange",
+        )
+        return None
+
+    # Mark the SI as a POS invoice so ERPNext's POS logic kicks in (stock update,
+    # mandatory payments validation, etc.) and so the SI appears in the POS history.
+    si.is_pos = 1
+    si.update_stock = 1
+    if pos_profile:
+        si.pos_profile = pos_profile
+    if invoice_payload.get("posa_pos_opening_shift"):
+        si.posa_pos_opening_shift = invoice_payload.get("posa_pos_opening_shift")
+    if so.get("branch") and hasattr(si, "branch"):
+        si.branch = so.branch
+
+    # Copy the payment rows the cashier just collected.
+    si.payments = []
+    for p in payments:
+        if not p.get("mode_of_payment"):
+            continue
+        si.append("payments", {
+            "mode_of_payment": p.get("mode_of_payment"),
+            "amount": flt(p.get("amount")),
+            "account": p.get("account") or None,
+        })
+
+    # Resolve any missing payment account from POS Profile / company defaults
+    # (mirrors the regular POS Sales Invoice flow).
+    if pos_profile:
+        _set_payment_accounts(si.payments, si.company)
+
+    # Optional: change_amount on the SI matches what the cashier saw on screen.
+    change_amount = flt((source_data or {}).get("change_amount") or 0)
+    if change_amount > 0:
+        si.change_amount = change_amount
+
+    si.flags.ignore_permissions = True
+    si.flags.ignore_pricing_rule = True
+    frappe.flags.ignore_account_permission = True
+    _patch_set_missing_item_details(si)
+
+    try:
+        si.save()
+        si.submit()
+    except Exception as e:
+        frappe.log_error(
+            title="POS SO->SI submit failed",
+            message=f"SO={so.name}, SI={si.name if si.name else '?'}: {str(e)}\n{frappe.get_traceback()}",
+        )
+        frappe.msgprint(
+            _("Sales Order {0} was created but the Sales Invoice failed to submit: {1}").format(so.name, str(e)),
+            alert=True,
+            indicator="orange",
+        )
+        return None
+
+    return si
 
 
 # //// preserve and cumulate TIP items across POS update/submit cycles — 3574de5 + 3f9ee06 (+2 more)
