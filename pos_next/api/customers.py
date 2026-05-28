@@ -79,6 +79,7 @@ def create_customer(
 	email_id=None,
 	customer_group="Individual",
 	territory="All Territories",
+	customer_type="Individual",
 	company=None,
 	pos_profile=None,
 ):
@@ -91,6 +92,7 @@ def create_customer(
 	    email_id (str): Email address (optional)
 	    customer_group (str): Customer group (default: Individual)
 	    territory (str): Territory (default: All Territories)
+	    customer_type (str): Individual or Company (default: Individual)
 	    company (str): Company (optional, used to auto-assign loyalty program)
 	    pos_profile (str): POS Profile (optional, preferred for context-aware loyalty assignment)
 
@@ -109,16 +111,55 @@ def create_customer(
 		pos_profile=pos_profile,
 	)
 
+	# Normalize customer_type to the values accepted by ERPNext (Individual / Company)
+	customer_type = (customer_type or "Individual").strip().capitalize()
+	if customer_type not in ("Individual", "Company"):
+		customer_type = "Individual"
+
+	# Resolve customer_group with fallback (a localized site may not have "Individual" as a doc)
+	resolved_group = customer_group if customer_group and frappe.db.exists("Customer Group", customer_group) else None
+	if not resolved_group:
+		resolved_group = frappe.db.get_single_value("Selling Settings", "customer_group") or frappe.db.get_value(
+			"Customer Group", {"is_group": 0}, "name", order_by="name"
+		)
+	if not resolved_group:
+		frappe.throw(_("No customer group configured. Please create one before adding customers."))
+
+	# Resolve territory with fallback (localized sites rename "All Territories", e.g. "Tout les territoires")
+	resolved_territory = territory if territory and frappe.db.exists("Territory", territory) else None
+	if not resolved_territory:
+		resolved_territory = frappe.db.get_single_value("Selling Settings", "territory") or frappe.db.get_value(
+			"Territory", {"is_group": 0}, "name", order_by="name"
+		)
+	if not resolved_territory:
+		frappe.throw(_("No territory configured. Please create one before adding customers."))
+
+	# Resolve default_currency (Customer treats it as mandatory on some sites). Prefer the POS Profile,
+	# then the company default, then the global default. Stay None-tolerant so we don't crash if nothing
+	# is configured — Frappe will raise its own MandatoryError with a clearer location at that point.
+	resolved_currency = None
+	if pos_profile:
+		resolved_currency = frappe.db.get_value("POS Profile", pos_profile, "currency")
+	if not resolved_currency:
+		resolved_company = company
+		if not resolved_company and pos_profile:
+			resolved_company = frappe.db.get_value("POS Profile", pos_profile, "company")
+		if resolved_company:
+			resolved_currency = frappe.db.get_value("Company", resolved_company, "default_currency")
+	if not resolved_currency:
+		resolved_currency = frappe.db.get_default("currency")
+
 	customer = frappe.get_doc(
 		{
 			"doctype": "Customer",
 			"customer_name": customer_name,
-			"customer_type": "Individual",
-			"customer_group": customer_group or "Individual",
-			"territory": territory or "All Territories",
+			"customer_type": customer_type,
+			"customer_group": resolved_group,
+			"territory": resolved_territory,
 			"mobile_no": mobile_no or "",
 			"email_id": email_id or "",
 			"loyalty_program": loyalty_program,
+			"default_currency": resolved_currency,
 		}
 	)
 
