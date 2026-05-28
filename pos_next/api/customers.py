@@ -116,13 +116,31 @@ def create_customer(
 	if customer_type not in ("Individual", "Company"):
 		customer_type = "Individual"
 
+	# Resolve customer_group with fallback (a localized site may not have "Individual" as a doc)
+	resolved_group = customer_group if customer_group and frappe.db.exists("Customer Group", customer_group) else None
+	if not resolved_group:
+		resolved_group = frappe.db.get_single_value("Selling Settings", "customer_group") or frappe.db.get_value(
+			"Customer Group", {"is_group": 0}, "name", order_by="name"
+		)
+	if not resolved_group:
+		frappe.throw(_("No customer group configured. Please create one before adding customers."))
+
+	# Resolve territory with fallback (localized sites rename "All Territories", e.g. "Tout les territoires")
+	resolved_territory = territory if territory and frappe.db.exists("Territory", territory) else None
+	if not resolved_territory:
+		resolved_territory = frappe.db.get_single_value("Selling Settings", "territory") or frappe.db.get_value(
+			"Territory", {"is_group": 0}, "name", order_by="name"
+		)
+	if not resolved_territory:
+		frappe.throw(_("No territory configured. Please create one before adding customers."))
+
 	customer = frappe.get_doc(
 		{
 			"doctype": "Customer",
 			"customer_name": customer_name,
 			"customer_type": customer_type,
-			"customer_group": customer_group or "Individual",
-			"territory": territory or "All Territories",
+			"customer_group": resolved_group,
+			"territory": resolved_territory,
 			"mobile_no": mobile_no or "",
 			"email_id": email_id or "",
 			"loyalty_program": loyalty_program,
