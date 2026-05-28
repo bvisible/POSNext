@@ -364,9 +364,10 @@ const showAddressFields = computed(
 )
 
 function onAddressSelected(address) {
-	customerData.value.address_line1 = address.address_line1
-	customerData.value.city = address.city
-	customerData.value.pincode = address.pincode
+	log.info("Address selected", address)
+	customerData.value.address_line1 = address.address_line1 || ""
+	customerData.value.city = address.city || ""
+	customerData.value.pincode = address.pincode || ""
 	if (address.country) {
 		customerData.value.country = address.country
 	}
@@ -471,18 +472,14 @@ const updateTerritoryFromCountry = () => {
 const createCustomerResource = createResource({
 	url: "pos_next.api.customers.create_customer",
 	makeParams: () => ({
-		customer_name: customerData.value.customer_name,
+		customer_name: fullName.value,
 		mobile_no: customerData.value.mobile_no || "",
 		email_id: customerData.value.email_id || "",
-		customer_group: customerData.value.customer_group || __("Individual"),
-		territory: customerData.value.territory || __("All Territories"),
+		customer_group: customerGroup.value || defaultCustomerGroup.value,
+		territory: territory.value || "All Territories",
+		customer_type: customerType.value,
 		pos_profile: props.posProfile,
 	}),
-	onSuccess: (data) => {
-		showSuccess(__("Customer {0} created successfully", [data.customer_name]))
-		emit("customer-created", data)
-		show.value = false
-	},
 	onError: (error) => {
 		log.error("Error creating customer", error)
 		showError(error.message || __("Failed to create customer"))
@@ -630,19 +627,11 @@ const handleCreate = async () => {
 	}
 
 	try {
-		// Create customer
-		const customer = await createCustomerResource.fetch({
-			doc: {
-				doctype: "Customer",
-				customer_name: fullName.value,
-				customer_type: customerType.value,
-				customer_group: customerGroup.value || defaultCustomerGroup.value,
-				territory: territory.value || "All Territories",
-				mobile_no: customerData.value.mobile_no || "",
-				email_id: customerData.value.email_id || "",
-				default_currency: posShiftStore.profileCurrency,
-			},
-		})
+		// Create customer via custom endpoint (positional params, not frappe.client.insert wrapper)
+		const customer = await createCustomerResource.submit()
+		if (!customer?.name) {
+			throw new Error(__("Customer creation returned no document"))
+		}
 
 		// Create address if address fields are filled
 		const hasAddressData =

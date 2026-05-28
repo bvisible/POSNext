@@ -79,6 +79,7 @@ def create_customer(
 	email_id=None,
 	customer_group="Individual",
 	territory="All Territories",
+	customer_type="Individual",
 	company=None,
 	pos_profile=None,
 ):
@@ -91,6 +92,7 @@ def create_customer(
 	    email_id (str): Email address (optional)
 	    customer_group (str): Customer group (default: Individual)
 	    territory (str): Territory (default: All Territories)
+	    customer_type (str): Individual or Company (default: Individual)
 	    company (str): Company (optional, used to auto-assign loyalty program)
 	    pos_profile (str): POS Profile (optional, preferred for context-aware loyalty assignment)
 
@@ -109,11 +111,16 @@ def create_customer(
 		pos_profile=pos_profile,
 	)
 
+	# Normalize customer_type to the values accepted by ERPNext (Individual / Company)
+	customer_type = (customer_type or "Individual").strip().capitalize()
+	if customer_type not in ("Individual", "Company"):
+		customer_type = "Individual"
+
 	customer = frappe.get_doc(
 		{
 			"doctype": "Customer",
 			"customer_name": customer_name,
-			"customer_type": "Individual",
+			"customer_type": customer_type,
 			"customer_group": customer_group or "Individual",
 			"territory": territory or "All Territories",
 			"mobile_no": mobile_no or "",
