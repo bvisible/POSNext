@@ -1094,8 +1094,10 @@ export function useInvoice() {
 					update_stock: 1, // Critical: Ensures stock is updated
 				}
 
-				if (targetDoctype === "Sales Order" && deliveryDate) {
-					invoiceData.delivery_date = deliveryDate
+				if (targetDoctype === "Sales Order") {
+					const today = new Date().toISOString().split("T")[0]
+					invoiceData.delivery_date = deliveryDate || today
+					invoiceData.transaction_date = today
 				}
 
 				// Add sales_team if provided

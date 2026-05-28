@@ -887,6 +887,15 @@ def update_invoice(data):
         invoice_doc.flags.ignore_permissions = True
         frappe.flags.ignore_account_permission = True
 
+        # Default Sales Order dates so a missing UI date picker can't 417 the save.
+        # validate_delivery_date() rejects empty delivery_date even on draft.
+        if invoice_doc.doctype == "Sales Order":
+            today = frappe.utils.nowdate()
+            if not invoice_doc.get("transaction_date"):
+                invoice_doc.transaction_date = today
+            if not invoice_doc.get("delivery_date"):
+                invoice_doc.delivery_date = invoice_doc.get("transaction_date") or today
+
         pos_profile_doc = None
         if pos_profile:
             try:
