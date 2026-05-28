@@ -17,11 +17,21 @@
 
 		<!-- Teleported dropdown to avoid overflow clipping from parent containers -->
 		<Teleport to="body">
+			<!--
+				@pointerdown.stop: this dropdown is teleported to <body>, i.e. OUTSIDE
+				the Radix Dialog content subtree. Radix's DismissableLayer listens for
+				`pointerdown` on document (bubble phase) and closes the dialog whenever
+				the event target is not contained in the dialog. Selecting a suggestion
+				would therefore close the whole CreateCustomer dialog. Stopping the
+				pointerdown here keeps it from reaching that document listener so the
+				dialog stays open while the address fields are filled.
+			-->
 			<div
 				v-if="open && suggestions.length > 0"
 				ref="dropdownRef"
 				class="fixed bg-white border border-gray-200 rounded-neo-sm shadow-lg max-h-60 overflow-y-auto"
 				:style="dropdownStyle"
+				@pointerdown.stop
 			>
 				<button
 					v-for="(item, idx) in suggestions"
@@ -65,13 +75,14 @@ const dropdownStyle = computed(() => ({
 	left: `${dropdownPos.value.left}px`,
 	width: `${dropdownPos.value.width}px`,
 	zIndex: 99999,
-	// Re-enable native clicks here: when the autocomplete is used inside a
-	// Radix Vue Dialog (CreateCustomerDialog or CreateCustomerModal), Radix
-	// sets `body { pointer-events: none }` for its focus trap. Because this
-	// dropdown is teleported to <body>, it inherits that and the suggestion
-	// buttons become un-clickable — the city / postal / country fields would
-	// never get filled in. Forcing pointer-events:auto on the teleported
-	// wrapper restores click handling for all descendants.
+	// Required companion to @pointerdown.stop on this element (see template).
+	// Inside a modal Radix Dialog, Radix sets `body { pointer-events: none }`.
+	// As this dropdown is teleported to <body> it inherits that, so the
+	// suggestion buttons receive no pointer events and clicks fall through to
+	// whatever is behind them (the city/postal inputs), never triggering
+	// selectSuggestion(). pointer-events:auto makes the dropdown clickable;
+	// @pointerdown.stop then keeps that click from closing the dialog. Both
+	// are needed: auto alone closes the dialog, stop alone is inert.
 	pointerEvents: "auto",
 }))
 
