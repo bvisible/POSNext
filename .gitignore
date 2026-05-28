@@ -12,7 +12,12 @@ __pycache__
 # Build artifacts
 # pos_next/public/pos/
 # pos_next/www/
-yarn.lock
+# yarn.lock IS committed for POS/ — see fix below.
+# Ignoring it caused non-reproducible builds: each CI run could install a
+# different upstream version (e.g. frappe-ui upgrades) that introduced
+# regressions only on rebuild (Radix Vue Dialog focus trap blocked input clicks).
+# 2026-05-28: commit POS/yarn.lock + CI uses --frozen-lockfile.
+!POS/yarn.lock
 package-lock.json
 
 # IDE and editor files

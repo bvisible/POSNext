@@ -32,7 +32,12 @@ jobs:
           node-version: 20
 
       - name: Install
-        run: cd POS && yarn install
+        # --frozen-lockfile: refuse to mutate yarn.lock so the CI build uses the
+        # exact same dep versions as the committed POS/yarn.lock. Without it,
+        # every rebuild can pull newer frappe-ui / radix-vue and silently
+        # introduce regressions (notably 2026-05-28: Radix Vue Dialog click-to-
+        # focus break that made the Create Customer dialog inputs unusable).
+        run: cd POS && yarn install --frozen-lockfile
 
       - name: Build
         env:
