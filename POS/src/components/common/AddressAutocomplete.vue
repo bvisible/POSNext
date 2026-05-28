@@ -65,6 +65,14 @@ const dropdownStyle = computed(() => ({
 	left: `${dropdownPos.value.left}px`,
 	width: `${dropdownPos.value.width}px`,
 	zIndex: 99999,
+	// Re-enable native clicks here: when the autocomplete is used inside a
+	// Radix Vue Dialog (CreateCustomerDialog or CreateCustomerModal), Radix
+	// sets `body { pointer-events: none }` for its focus trap. Because this
+	// dropdown is teleported to <body>, it inherits that and the suggestion
+	// buttons become un-clickable — the city / postal / country fields would
+	// never get filled in. Forcing pointer-events:auto on the teleported
+	// wrapper restores click handling for all descendants.
+	pointerEvents: "auto",
 }))
 
 function updateDropdownPosition() {
