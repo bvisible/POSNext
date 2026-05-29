@@ -1953,10 +1953,16 @@ def _create_invoice_from_sales_order(so, payments, pos_profile, invoice_payload,
         )
         return None
 
-    # Mark the SI as a POS invoice so ERPNext's POS logic kicks in (stock update,
-    # mandatory payments validation, etc.) and so the SI appears in the POS history.
+    # Mark the SI as a POS invoice so ERPNext's POS logic kicks in (mandatory
+    # payments validation, etc.) and so the SI appears in the POS history.
     si.is_pos = 1
-    si.update_stock = 1
+    # //// SO at POS is paid, not delivered: bill without stock/delivery move
+    # Do NOT update stock here. This invoice only records the payment collected at
+    # the till for the Sales Order; the goods are handed over later (a Sales Order is
+    # fulfilled via a Delivery Note). With update_stock=1 the SI would mark the SO
+    # items as delivered (per_delivered=100, "Fully Delivered"), which is wrong for a
+    # paid-in-advance order.
+    si.update_stock = 0
     if pos_profile:
         si.pos_profile = pos_profile
     if invoice_payload.get("posa_pos_opening_shift"):
