@@ -3225,7 +3225,8 @@ function handleCustomerSelected(selectedCustomer) {
 
 		if (pendingPaymentAfterCustomer.value) {
 			pendingPaymentAfterCustomer.value = false;
-			uiStore.showPaymentDialog = true;
+			//// re-run guards (incl. Sales Order customer check) before opening payment
+			handleProceedToPayment();
 		}
 	} else {
 		cartStore.setCustomer(null);
@@ -3251,6 +3252,23 @@ function handleProceedToPayment() {
 	}
 
 	const customerValue = cartStore.customer?.name || cartStore.customer;
+
+	//// block Sales Order for the POS default/walk-in customer (e.g. Passage)
+	// A Sales Order is fulfilled later for a named customer, so creating one for
+	// the POS Profile's default customer makes no sense. Force the cashier to pick
+	// a real customer: clear the default and open the customer search dialog.
+	if (cartStore.targetDoctype === "Sales Order") {
+		const defaultCustomer = shiftStore.profileCustomer;
+		const isDefaultCustomer = !customerValue || customerValue === defaultCustomer;
+		if (isDefaultCustomer) {
+			showWarning(__("Please select a specific customer for the order"));
+			cartStore.setCustomer(null);
+			uiStore.showCustomerDialog = true;
+			pendingPaymentAfterCustomer.value = true;
+			return;
+		}
+	}
+
 	if (!customerValue && !shiftStore.profileCustomer) {
 		showWarning(__("Please select a customer before proceeding"));
 		uiStore.showCustomerDialog = true;
