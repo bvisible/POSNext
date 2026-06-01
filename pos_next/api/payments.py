@@ -358,7 +358,7 @@ def pos_get_active_devices(
 				# Virtual rows can't be "simulated readers"; the test-mode
 				# simulator panel is gated by is_test_mode alone for QR channels.
 				"is_simulator": False,
-				"is_test_mode": provider_mode == "test",
+				"is_test_mode": caller_provider_mode == "test",
 			})
 
 	return resolved
