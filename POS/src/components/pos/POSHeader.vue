@@ -352,7 +352,9 @@ import { ref } from "vue"
 import { version } from "../../../package.json"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useRestaurantStore } from "@/stores/restaurant"
+import { usePOSShiftStore } from "@/stores/posShift"
 
+const shiftStore = usePOSShiftStore()
 const showCacheTooltip = ref(false)
 const showExitDialog = ref(false)
 const appVersion = version
@@ -363,8 +365,17 @@ function navigateToBackOffice() {
 }
 
 function openCustomerDisplay() {
+	// Pin the display to THIS cashier's exact opening entry (+ profile). The
+	// display would otherwise resolve "the most recent open shift for this
+	// profile, any user" — which is wrong when several shifts are open at once
+	// on the same profile (it would follow another cashier's cart).
+	const params = new URLSearchParams()
+	const opening = shiftStore.currentShift?.name
+	if (opening) params.set("opening", opening)
+	if (props.profileName) params.set("profile", props.profileName)
+	const qs = params.toString()
 	window.open(
-		"/pos/display",
+		qs ? `/pos/display?${qs}` : "/pos/display",
 		"pos_customer_display",
 		"popup,width=1024,height=768",
 	)

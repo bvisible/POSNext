@@ -45,6 +45,13 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	)
 	const sessionInfo = ref(null)
 
+	// Launch params (?opening=…&profile=…) — set when the display is opened
+	// from a POS so it follows that exact cashier's shift instead of guessing
+	// "the most recent open shift on this profile".
+	const _launchParams = new URLSearchParams(window.location.search)
+	const pinnedOpeningEntry = ref(_launchParams.get("opening") || "")
+	const pinnedProfile = ref(_launchParams.get("profile") || "")
+
 	// Cart state
 	const cartData = ref({
 		items: [],
@@ -274,9 +281,14 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	 * Select a POS profile and find active session
 	 * @param {string} profileName - POS Profile name
 	 */
-	async function selectPosProfile(profileName) {
+	async function selectPosProfile(profileName, opening = null) {
 		posProfile.value = profileName
 		localStorage.setItem(STORAGE_KEY_POS_PROFILE, profileName)
+
+		// Pinned opening entry: prefer the explicit arg, else the one captured
+		// from the launch URL (?opening=…). This makes the display follow the
+		// exact cashier that opened it, not "the most recent open shift".
+		const pinnedOpening = opening || pinnedOpeningEntry.value || null
 
 		try {
 			// Load display settings for this profile
@@ -284,6 +296,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 
 			const entry = await getPosOpeningEntryResource.fetch({
 				pos_profile: profileName,
+				opening: pinnedOpening,
 			})
 
 			if (entry) {
@@ -627,8 +640,10 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 
 		if (savedApiKey) {
 			const success = await authenticate(savedApiKey)
-			if (success && savedProfile) {
-				await selectPosProfile(savedProfile)
+			// Prefer the profile pinned via the launch URL over the last-used one.
+			const profile = pinnedProfile.value || savedProfile
+			if (success && profile) {
+				await selectPosProfile(profile, pinnedOpeningEntry.value || null)
 			}
 			return success
 		}

@@ -104,12 +104,17 @@ def get_pos_profiles():
 
 
 @frappe.whitelist()
-def get_pos_opening_entry(pos_profile):
+def get_pos_opening_entry(pos_profile, opening=None):
     """
     Get the active POS Opening Entry for a given POS profile.
 
     Args:
         pos_profile (str): POS Profile name
+        opening (str, optional): a specific POS Opening Shift to pin to. When
+            the customer display is launched from a POS it passes that POS's
+            own opening entry here, so the display follows the right cashier
+            even when several shifts are open on the same profile. Falls back
+            to "most recent open shift for this profile" when omitted/invalid.
 
     Returns:
         dict: POS Opening Entry details or None if no active session
@@ -117,19 +122,38 @@ def get_pos_opening_entry(pos_profile):
     if not pos_profile:
         frappe.throw(_("POS Profile is required"))
 
-    # Find open shift for this profile (any user)
-    open_entry = frappe.db.get_value(
-        "POS Opening Shift",
-        {
-            "pos_profile": pos_profile,
-            "docstatus": 1,
-            "status": "Open",
-            "pos_closing_shift": ["is", "not set"]
-        },
-        ["name", "user", "pos_profile", "company", "period_start_date"],
-        as_dict=True,
-        order_by="period_start_date desc"
-    )
+    open_entry = None
+
+    # 1. Pinned opening entry (passed by the launching POS) — use it as long as
+    #    it is genuinely open for this profile.
+    if opening:
+        open_entry = frappe.db.get_value(
+            "POS Opening Shift",
+            {
+                "name": opening,
+                "pos_profile": pos_profile,
+                "docstatus": 1,
+                "status": "Open",
+                "pos_closing_shift": ["is", "not set"],
+            },
+            ["name", "user", "pos_profile", "company", "period_start_date"],
+            as_dict=True,
+        )
+
+    # 2. Fallback: most recent open shift for this profile (any user).
+    if not open_entry:
+        open_entry = frappe.db.get_value(
+            "POS Opening Shift",
+            {
+                "pos_profile": pos_profile,
+                "docstatus": 1,
+                "status": "Open",
+                "pos_closing_shift": ["is", "not set"]
+            },
+            ["name", "user", "pos_profile", "company", "period_start_date"],
+            as_dict=True,
+            order_by="period_start_date desc"
+        )
 
     if not open_entry:
         return None
