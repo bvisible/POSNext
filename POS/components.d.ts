@@ -9,11 +9,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ActionButton: typeof import('./src/components/common/ActionButton.vue')['default']
-    //// integrate nora-learn-react via React Island bridge — 05053a5
     AddressAutocomplete: typeof import('./src/components/common/AddressAutocomplete.vue')['default']
     AutocompleteSelect: typeof import('./src/components/common/AutocompleteSelect.vue')['default']
     BatchSerialDialog: typeof import('./src/components/sale/BatchSerialDialog.vue')['default']
-    //// add split payment bar in restaurant PaymentDialog — 2a539d5 + 9acebda (+1 more)
     CardEditor: typeof import('./src/components/restaurant/CardEditor.vue')['default']
     CardPresentDialog: typeof import('./src/components/payments/CardPresentDialog.vue')['default']
     CashInOutDialog: typeof import('./src/components/pos/CashInOutDialog.vue')['default']
@@ -23,7 +21,6 @@ declare module 'vue' {
     CouponDialog: typeof import('./src/components/sale/CouponDialog.vue')['default']
     CouponManagement: typeof import('./src/components/sale/CouponManagement.vue')['default']
     CreateCustomerDialog: typeof import('./src/components/sale/CreateCustomerDialog.vue')['default']
-    //// use dynamic customer group and territory lookup for customer display — 185c3c5 + 34ee11a
     CreateCustomerModal: typeof import('./src/components/customer-display/CreateCustomerModal.vue')['default']
     CreateItemDialog: typeof import('./src/components/restaurant/CreateItemDialog.vue')['default']
     CustomerDialog: typeof import('./src/components/sale/CustomerDialog.vue')['default']
@@ -32,7 +29,6 @@ declare module 'vue' {
     DisplayHeader: typeof import('./src/components/customer-display/DisplayHeader.vue')['default']
     DraftInvoicesDialog: typeof import('./src/components/sale/DraftInvoicesDialog.vue')['default']
     EditItemDialog: typeof import('./src/components/sale/EditItemDialog.vue')['default']
-    //// linter formatting — 3e25c3b + 34ee11a (+6 more)
     EmailInvoiceDialog: typeof import('./src/components/sale/EmailInvoiceDialog.vue')['default']
     FloorPlanEditor: typeof import('./src/components/pos/FloorPlanEditor.vue')['default']
     FloorPlanWalls: typeof import('./src/components/pos/FloorPlanWalls.vue')['default']
@@ -47,20 +43,17 @@ declare module 'vue' {
     InvoiceFilters: typeof import('./src/components/invoices/InvoiceFilters.vue')['default']
     InvoiceHistoryDialog: typeof import('./src/components/sale/InvoiceHistoryDialog.vue')['default']
     InvoiceManagement: typeof import('./src/components/invoices/InvoiceManagement.vue')['default']
-    //// add print-media-type to prevent double margins in PDF — 37746a8 + bbbe36f (+1 more)
     ItemBadgePanel: typeof import('./src/components/restaurant/ItemBadgePanel.vue')['default']
     ItemEditPanel: typeof import('./src/components/restaurant/ItemEditPanel.vue')['default']
     ItemModifiersDialog: typeof import('./src/components/sale/ItemModifiersDialog.vue')['default']
     ItemSaveConfirmDialog: typeof import('./src/components/restaurant/ItemSaveConfirmDialog.vue')['default']
     ItemSelectionDialog: typeof import('./src/components/sale/ItemSelectionDialog.vue')['default']
     ItemsSelector: typeof import('./src/components/sale/ItemsSelector.vue')['default']
-    //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
     KDSOrderCard: typeof import('./src/components/invoices/KDSOrderCard.vue')['default']
     LanguageSwitcher: typeof import('./src/components/common/LanguageSwitcher.vue')['default']
     LazyImage: typeof import('./src/components/common/LazyImage.vue')['default']
     LoadingSpinner: typeof import('./src/components/common/LoadingSpinner.vue')['default']
     ManagementSlider: typeof import('./src/components/pos/ManagementSlider.vue')['default']
-    //// strip HTML descriptions, add cover page with logo, save design, multi… — bbbe36f + 32f2415 (+1 more)
     MenuDesignerDialog: typeof import('./src/components/restaurant/MenuDesignerDialog.vue')['default']
     MenuPreview: typeof import('./src/components/restaurant/MenuPreview.vue')['default']
     MenuSelectionDialog: typeof import('./src/components/sale/MenuSelectionDialog.vue')['default']
@@ -69,19 +62,15 @@ declare module 'vue' {
     NumberField: typeof import('./src/components/settings/NumberField.vue')['default']
     OffersDialog: typeof import('./src/components/sale/OffersDialog.vue')['default']
     OfflineInvoicesDialog: typeof import('./src/components/sale/OfflineInvoicesDialog.vue')['default']
-    //// add Restaurant Settings with opening hours and time-based card availa… — 32f2415
     OpeningHoursEditor: typeof import('./src/components/settings/OpeningHoursEditor.vue')['default']
     PartialPayments: typeof import('./src/components/partials/PartialPayments.vue')['default']
     PaymentDialog: typeof import('./src/components/sale/PaymentDialog.vue')['default']
-    //// add country code selector with flags for customer phone numbers — 34469c3
     PhoneInput: typeof import('./src/components/common/PhoneInput.vue')['default']
     POSHeader: typeof import('./src/components/pos/POSHeader.vue')['default']
     POSSettings: typeof import('./src/components/settings/POSSettings.vue')['default']
-    //// item search in product options editor, search by name and code — f23daab + 2a539d5
     PriceEntryDialog: typeof import('./src/components/sale/PriceEntryDialog.vue')['default']
     ProductOptionsEditor: typeof import('./src/components/restaurant/ProductOptionsEditor.vue')['default']
     PromotionManagement: typeof import('./src/components/sale/PromotionManagement.vue')['default']
-    //// restaurant reservation system with POS dialog, online booking, and em… — ebc3ecc + 9acebda (+1 more)
     QRPaymentDialog: typeof import('./src/components/payments/QRPaymentDialog.vue')['default']
     ReservationBadge: typeof import('./src/components/restaurant/ReservationBadge.vue')['default']
     ReservationDialog: typeof import('./src/components/restaurant/ReservationDialog.vue')['default']
@@ -92,7 +81,6 @@ declare module 'vue' {
     ReturnInvoiceDialog: typeof import('./src/components/sale/ReturnInvoiceDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    //// table only marked Occupied when draft invoice exists, not before — c7f6932
     RunnerOrderCard: typeof import('./src/components/invoices/RunnerOrderCard.vue')['default']
     SelectField: typeof import('./src/components/settings/SelectField.vue')['default']
     SelectInput: typeof import('./src/components/common/SelectInput.vue')['default']

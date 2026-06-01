@@ -73,6 +73,34 @@
 					</div>
 				</transition>
 
+				<!-- Payment QR overlay (TWINT etc.) — shown full-screen while the
+				     buyer is asked to scan. z-40 so the green Thank-You (z-50)
+				     wins if both ever overlap. -->
+				<transition
+					enter-active-class="transition-opacity duration-300"
+					leave-active-class="transition-opacity duration-300"
+					enter-from-class="opacity-0"
+					leave-to-class="opacity-0"
+				>
+					<div
+						v-if="displayStore.paymentQR"
+						class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-white dark:bg-gray-900 px-8"
+					>
+						<h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 text-center">
+							{{ paymentQRTitle }}
+						</h1>
+						<p v-if="paymentQRAmount" class="text-5xl md:text-6xl font-extrabold mb-10" style="color: #ff0039">
+							{{ paymentQRAmount }}
+						</p>
+						<div class="bg-white p-6 rounded-3xl shadow-2xl">
+							<canvas ref="qrCanvas" class="w-72 h-72 md:w-96 md:h-96"></canvas>
+						</div>
+						<p class="mt-10 text-2xl md:text-3xl text-gray-600 dark:text-gray-300 text-center">
+							{{ __("Scan with your TWINT app") }}
+						</p>
+					</div>
+				</transition>
+
 				<!-- Cart display -->
 				<DisplayCart class="flex-1" />
 
@@ -115,7 +143,8 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
-import { onMounted, onUnmounted, reactive, ref } from "vue"
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import QRCode from "qrcode"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 import DisplayAuth from "@/components/customer-display/DisplayAuth.vue"
 import DisplayHeader from "@/components/customer-display/DisplayHeader.vue"
@@ -126,6 +155,7 @@ const displayStore = useCustomerDisplayStore()
 
 const selectedProfile = ref("")
 const showCreateCustomer = ref(false)
+const qrCanvas = ref(null)
 
 // Format currency
 function formatCurrency(amount) {
@@ -135,6 +165,48 @@ function formatCurrency(amount) {
 		currency: currency,
 	}).format(amount)
 }
+
+// ---- Payment QR overlay (TWINT etc.) ----
+const paymentQRTitle = computed(() => {
+	const provider = displayStore.paymentQR?.provider
+	return __("Pay with {0}", [provider || "TWINT"])
+})
+
+const paymentQRAmount = computed(() => {
+	const qr = displayStore.paymentQR
+	if (!qr || !qr.amount) return ""
+	return new Intl.NumberFormat("fr-CH", {
+		style: "currency",
+		currency: qr.currency || "CHF",
+	}).format(qr.amount)
+})
+
+async function renderPaymentQR(token) {
+	if (!token || !qrCanvas.value) return
+	try {
+		await QRCode.toCanvas(qrCanvas.value, token, {
+			errorCorrectionLevel: "M",
+			margin: 2,
+			width: 384,
+			color: { dark: "#000000", light: "#FFFFFF" },
+		})
+	} catch (e) {
+		console.error("[CustomerDisplay] QR render failed", e)
+	}
+}
+
+// Re-render the QR whenever the pushed pairing token changes (the canvas only
+// exists while the overlay is shown, so wait a tick for v-if to mount it).
+watch(
+	() => displayStore.paymentQR?.pairing_token,
+	async (token) => {
+		if (token) {
+			await nextTick()
+			renderPaymentQR(token)
+		}
+	},
+	{ immediate: true },
+)
 
 // Handle profile selection
 async function handleProfileSelect() {

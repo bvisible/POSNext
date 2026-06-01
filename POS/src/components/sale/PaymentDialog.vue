@@ -1284,6 +1284,10 @@ import { useQuickAmounts } from "@/composables/useQuickAmounts"
 // QRPaymentDialog for any QR-based provider (TWINT…). The PSP is chosen via the
 // mapping's `provider` — the dialogs never know which PSP is behind them.
 import { usePaymentDriver } from "@/composables/usePaymentDriver"
+import {
+	pushPaymentQR,
+	clearPaymentQR,
+} from "@/composables/useCustomerDisplaySync"
 import CardPresentDialog from "@/components/payments/CardPresentDialog.vue"
 import QRPaymentDialog from "@/components/payments/QRPaymentDialog.vue"
 
@@ -1530,6 +1534,66 @@ const currentDialogKind = computed(() => {
 	if (ch === "qr_bridge") return "qr"
 	return null
 })
+
+// ---------------------------------------------------------------------------
+// Mirror the QR-bridge (TWINT) QR onto the customer-facing display so the
+// buyer can scan it on the screen turned towards them — not just on the
+// cashier's screen. While a qr_bridge intent is awaiting the scan we push the
+// pairing token to the display; once it reaches a terminal state (or the
+// dialog closes / the intent resets) we retire it. A single watcher covers
+// every close path (succeeded / failed / cancel / close).
+// ---------------------------------------------------------------------------
+function _extractPairingToken(intent) {
+	const payload = intent?.next_action_payload
+	if (!payload) return null
+	if (typeof payload === "string") {
+		try {
+			return JSON.parse(payload).pairing_token ?? null
+		} catch {
+			return null
+		}
+	}
+	return payload.pairing_token ?? null
+}
+
+let _qrPushedForToken = null
+
+watch(
+	() => {
+		const it = terminalIntent.value
+		return {
+			kind: currentDialogKind.value,
+			status: it?.status ?? null,
+			token: _extractPairingToken(it),
+		}
+	},
+	({ kind, status, token }) => {
+		const awaitingScan =
+			kind === "qr" &&
+			!!token &&
+			(status === "requires_action" || status === "processing")
+
+		if (awaitingScan) {
+			if (_qrPushedForToken !== token) {
+				_qrPushedForToken = token
+				const it = terminalIntent.value
+				const amountMajor =
+					(it?.amount || 0) / 100 || terminalDialogAmount.value || 0
+				pushPaymentQR({
+					pairing_token: token,
+					amount: amountMajor,
+					currency: props.currency || "CHF",
+					mode_of_payment: terminalCurrentMethod.value?.mode_of_payment || null,
+					provider: terminalCurrentMapping.value?.provider || null,
+				})
+			}
+		} else if (_qrPushedForToken) {
+			_qrPushedForToken = null
+			clearPaymentQR()
+		}
+	},
+	{ deep: false },
+)
 
 // Delivery date for Sales Orders
 const deliveryDate = ref("")

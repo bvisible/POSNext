@@ -45,6 +45,16 @@ const notifySaleCompleteResource = createResource({
 	auto: false,
 })
 
+const pushPaymentQRResource = createResource({
+	url: "pos_next.api.customer_display.push_payment_qr",
+	auto: false,
+})
+
+const clearPaymentQRResource = createResource({
+	url: "pos_next.api.customer_display.clear_payment_qr",
+	auto: false,
+})
+
 /**
  * Build cart data payload for customer display
  */
@@ -131,6 +141,56 @@ async function clearDisplayCart() {
 		log.info("Display cart cleared")
 	} catch (error) {
 		log.error("Failed to clear display cart", error)
+	}
+}
+
+/**
+ * Push a payment QR (e.g. TWINT pairing token) to the customer display.
+ *
+ * Exported at module level (not only via the factory) so consumers like
+ * PaymentDialog can call it WITHOUT instantiating useCustomerDisplaySync()
+ * — whose onUnmounted hook would otherwise tear down the main POS's cart
+ * sync when the dialog unmounts. It relies on the module-level
+ * `currentPosOpeningEntry`, already set by the main POS via enableSync().
+ *
+ * @param {Object} qr - {pairing_token, amount, currency, mode_of_payment, provider}
+ */
+export async function pushPaymentQR(qr) {
+	if (!currentPosOpeningEntry.value || !qr?.pairing_token) {
+		return
+	}
+
+	try {
+		await pushPaymentQRResource.fetch({
+			pos_opening_entry: currentPosOpeningEntry.value,
+			pairing_token: qr.pairing_token,
+			amount: qr.amount || 0,
+			currency: qr.currency || "CHF",
+			mode_of_payment: qr.mode_of_payment || null,
+			provider: qr.provider || null,
+		})
+		log.info("Payment QR pushed to display")
+	} catch (error) {
+		log.error("Failed to push payment QR to display", error)
+	}
+}
+
+/**
+ * Remove the payment QR from the customer display.
+ * Exported at module level — see pushPaymentQR for the rationale.
+ */
+export async function clearPaymentQR() {
+	if (!currentPosOpeningEntry.value) {
+		return
+	}
+
+	try {
+		await clearPaymentQRResource.fetch({
+			pos_opening_entry: currentPosOpeningEntry.value,
+		})
+		log.info("Payment QR cleared from display")
+	} catch (error) {
+		log.error("Failed to clear payment QR from display", error)
 	}
 }
 
@@ -339,6 +399,10 @@ export function useCustomerDisplaySync() {
 		forceSync,
 		notifySaleComplete,
 		clearDisplayCart,
+
+		// Payment QR (TWINT etc.) shown on the customer display
+		pushPaymentQR,
+		clearPaymentQR,
 
 		// Customer created from display
 		onCustomerCreated,

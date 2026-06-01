@@ -69,6 +69,11 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	const lastSaleAmount = ref(0)
 	const isLoading = ref(false)
 
+	// Payment QR shown full-screen while a QR-bridge payment (TWINT) awaits the
+	// customer's scan. Shape: {pairing_token, amount, currency, mode_of_payment,
+	// provider} or null when none is active.
+	const paymentQR = ref(null)
+
 	// Display settings (from POS Settings)
 	const displaySettings = ref({
 		enableCustomerDisplay: false,
@@ -388,6 +393,8 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		const cartEventName = `pos_cart_updated_${posOpeningEntry.value}`
 		const saleEventName = `pos_sale_complete_${posOpeningEntry.value}`
 		const customerEventName = `customer_created_${posOpeningEntry.value}`
+		const paymentQREventName = `pos_payment_qr_${posOpeningEntry.value}`
+		const paymentQRClearedEventName = `pos_payment_qr_cleared_${posOpeningEntry.value}`
 
 		// Cart update handler
 		const handleCartUpdate = (data) => {
@@ -400,7 +407,21 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		// Sale complete handler
 		const handleSaleComplete = (data) => {
 			log.info("Sale complete", data)
+			paymentQR.value = null // retire any lingering payment QR
 			showThankYouMessage(data.grand_total)
+		}
+
+		// Payment QR handlers (TWINT etc.)
+		const handlePaymentQR = (data) => {
+			log.debug("Received payment QR via realtime", data)
+			paymentQR.value = data && data.pairing_token ? data : null
+			isConnected.value = true
+			connectionError.value = null
+		}
+
+		const handlePaymentQRCleared = () => {
+			log.debug("Payment QR cleared via realtime")
+			paymentQR.value = null
 		}
 
 		// Customer created handler (from main POS)
@@ -417,12 +438,16 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		window.frappe.realtime.on(cartEventName, handleCartUpdate)
 		window.frappe.realtime.on(saleEventName, handleSaleComplete)
 		window.frappe.realtime.on(customerEventName, handleCustomerCreated)
+		window.frappe.realtime.on(paymentQREventName, handlePaymentQR)
+		window.frappe.realtime.on(paymentQRClearedEventName, handlePaymentQRCleared)
 
 		// Store cleanup function
 		realtimeCleanup = () => {
 			window.frappe.realtime.off(cartEventName, handleCartUpdate)
 			window.frappe.realtime.off(saleEventName, handleSaleComplete)
 			window.frappe.realtime.off(customerEventName, handleCustomerCreated)
+			window.frappe.realtime.off(paymentQREventName, handlePaymentQR)
+			window.frappe.realtime.off(paymentQRClearedEventName, handlePaymentQRCleared)
 		}
 
 		log.info("Realtime listener setup complete")
@@ -484,6 +509,13 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	 */
 	function updateCartData(data) {
 		if (!data) return
+
+		// Sync the payment QR on the polling-fallback path: get_current_cart
+		// always includes a `_payment_qr` key (object or null), whereas the
+		// realtime cart event does not carry it (the QR has its own events).
+		if ("_payment_qr" in data) {
+			paymentQR.value = data._payment_qr || null
+		}
 
 		// Check if this is a "cleared" cart event
 		if (data._cleared) {
@@ -639,6 +671,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		showThankYou,
 		lastSaleAmount,
 		isLoading,
+		paymentQR,
 
 		// Display settings (from POS Settings)
 		displaySettings,

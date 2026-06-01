@@ -18,6 +18,12 @@ from frappe.utils import cint, flt, now
 CART_CACHE_PREFIX = "pos_next_cart_"
 CART_CACHE_TTL = 3600  # 1 hour TTL for cart cache
 
+# Payment QR (e.g. TWINT pairing token) shown on the customer display while a
+# QR-bridge payment is awaiting the customer's scan. Short TTL — it is cleared
+# as soon as the payment reaches a terminal state.
+PAYMENT_QR_CACHE_PREFIX = "pos_next_payment_qr_"
+PAYMENT_QR_CACHE_TTL = 600  # 10 minutes
+
 
 @frappe.whitelist(allow_guest=True)
 def validate_api_key(api_key_string):
@@ -272,7 +278,12 @@ def get_current_cart(pos_opening_entry):
     cache_key = f"{CART_CACHE_PREFIX}{pos_opening_entry}"
     cart_data = frappe.cache().get_value(cache_key)
 
+    # Attach the active payment QR (if any) so the polling fallback also
+    # surfaces it when Socket.IO is unavailable.
+    payment_qr = frappe.cache().get_value(f"{PAYMENT_QR_CACHE_PREFIX}{pos_opening_entry}")
+
     if cart_data:
+        cart_data["_payment_qr"] = payment_qr or None
         return cart_data
 
     # Return empty cart structure if not found
@@ -286,6 +297,7 @@ def get_current_cart(pos_opening_entry):
         "grand_total": 0,
         "currency": "EUR",
         "_updated_at": None,
+        "_payment_qr": payment_qr or None,
         "_pos_opening_entry": pos_opening_entry
     }
 
@@ -515,5 +527,92 @@ def notify_sale_complete(pos_opening_entry, invoice_name=None, grand_total=0):
 
     # Clear cart cache after sale
     clear_cart_cache(pos_opening_entry)
+
+    # A completed sale also retires any payment QR still on screen.
+    clear_payment_qr(pos_opening_entry)
+
+    return {"success": True}
+
+
+@frappe.whitelist()
+def push_payment_qr(pos_opening_entry, pairing_token, amount=0, currency="CHF",
+                    mode_of_payment=None, provider=None):
+    """
+    Push a payment QR code to the customer display.
+
+    Used by the main POS when a QR-bridge payment (TWINT) reaches the
+    "awaiting scan" state: the customer-facing screen shows the QR full-screen
+    so the buyer can scan it with their phone. The QR itself is rendered on the
+    display from ``pairing_token`` (the front-end already bundles a QR lib).
+
+    Args:
+        pos_opening_entry (str): POS Opening Entry name
+        pairing_token (str): the raw token to encode as a QR (e.g. TWINT pairing token)
+        amount (float): amount to pay, for display
+        currency (str): currency code, for display
+        mode_of_payment (str): payment method label, for display
+        provider (str): payment provider (e.g. "TWINT"), for display/branding
+
+    Returns:
+        dict: Success status
+    """
+    if not pos_opening_entry:
+        frappe.throw(_("POS Opening Entry is required"))
+    if not pairing_token:
+        frappe.throw(_("Pairing token is required"))
+
+    payload = {
+        "pairing_token": pairing_token,
+        "amount": flt(amount),
+        "currency": currency or "CHF",
+        "mode_of_payment": mode_of_payment,
+        "provider": provider,
+        "_updated_at": now(),
+        "_pos_opening_entry": pos_opening_entry,
+    }
+
+    cache_key = f"{PAYMENT_QR_CACHE_PREFIX}{pos_opening_entry}"
+    frappe.cache().set_value(cache_key, payload, expires_in_sec=PAYMENT_QR_CACHE_TTL)
+
+    frappe.publish_realtime(
+        event=f"pos_payment_qr_{pos_opening_entry}",
+        message=payload,
+        user=None,  # Broadcast to all
+        after_commit=False  # Emit immediately for responsiveness
+    )
+
+    return {"success": True}
+
+
+@frappe.whitelist()
+def clear_payment_qr(pos_opening_entry):
+    """
+    Remove the payment QR from the customer display.
+
+    Called when the QR-bridge payment reaches a terminal state (succeeded /
+    failed / canceled) or the cashier closes the payment dialog.
+
+    Args:
+        pos_opening_entry (str): POS Opening Entry name
+
+    Returns:
+        dict: Success status
+    """
+    if not pos_opening_entry:
+        frappe.throw(_("POS Opening Entry is required"))
+
+    cache_key = f"{PAYMENT_QR_CACHE_PREFIX}{pos_opening_entry}"
+    frappe.cache().delete_value(cache_key)
+
+    frappe.publish_realtime(
+        event=f"pos_payment_qr_cleared_{pos_opening_entry}",
+        message={
+            "_cleared": True,
+            "_updated_at": now(),
+            "_pos_opening_entry": pos_opening_entry,
+        },
+        user=None,
+        after_commit=False
+    )
 
     return {"success": True}
