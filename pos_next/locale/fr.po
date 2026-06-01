@@ -439,7 +439,7 @@ msgstr "Adresse"
 
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1413
 msgid "Adjust return quantities before submitting.\\n\\n{0}"
-msgstr "Ajustez les quantités de retour avant de soumettre.\\n\\n{0}"
+msgstr "Ajustez les quantités de retour avant de valider.\\n\\n{0}"
 
 #. Name of a role
 #: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json
@@ -1563,7 +1563,7 @@ msgstr "Impossible de supprimer le coupon {0} car il a été utilisé {1} fois"
 #: pos_next/api/invoices.py:2081
 #, python-brace-format
 msgid "Cannot delete submitted invoice {0}"
-msgstr "Impossible de supprimer la facture soumise {0}"
+msgstr "Impossible de supprimer la facture validée {0}"
 
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1509
 msgid "Cannot process return for this invoice"
@@ -2625,7 +2625,7 @@ msgstr "Retour de vente à crédit"
 
 #: pos_next/api/credit_sales.py:373
 msgid "Credit source invoice {0} not found or not submitted"
-msgstr "Facture source de crédit {0} introuvable ou non soumise"
+msgstr "Facture source de crédit {0} introuvable ou non validée"
 
 #: pos_next/api/credit_sales.py:331
 msgid "Credit source {0} does not belong to company {1}"
@@ -3958,7 +3958,7 @@ msgstr "Erreur lors de la recherche par code-barres : {0}"
 #: pos_next/api/shifts.py:215
 #, python-brace-format
 msgid "Error submitting closing shift: {0}"
-msgstr "Erreur lors de la soumission de la clôture de session : {0}"
+msgstr "Erreur lors de la validation de la clôture de session : {0}"
 
 #: pos_next/api/pos_profile.py:283
 #, python-brace-format
@@ -5409,15 +5409,15 @@ msgstr "Facture chargée dans le panier pour modification"
 
 #: pos_next/api/partial_payments.py:403
 msgid "Invoice must be submitted before adding payments"
-msgstr "La facture doit être soumise avant d'ajouter des paiements"
+msgstr "La facture doit être validée avant d'ajouter des paiements"
 
 #: pos_next/api/invoices.py:2656
 msgid "Invoice must be submitted to create a return"
-msgstr "La facture doit être soumise pour créer un retour"
+msgstr "La facture doit être validée pour créer un retour"
 
 #: pos_next/api/credit_sales.py:271
 msgid "Invoice must be submitted to redeem credit"
-msgstr "La facture doit être soumise pour utiliser le crédit"
+msgstr "La facture doit être validée pour utiliser le crédit"
 
 #: pos_next/api/email.py:14
 msgid "Invoice name and recipients are required"
@@ -5455,7 +5455,7 @@ msgid ""
 "Invoice submitted successfully but credit redemption failed. Please contact "
 "administrator."
 msgstr ""
-"Facture soumise avec succès mais l'utilisation du crédit a échoué. Veuillez "
+"Facture validée avec succès mais l'utilisation du crédit a échoué. Veuillez "
 "contacter l'administrateur."
 
 #: pos_next/api/invoices.py:2084
@@ -7855,7 +7855,7 @@ msgstr "L'écriture de paiement {0} n'est pas une avance client valide"
 
 #: pos_next/api/credit_sales.py:435
 msgid "Payment Entry {0} not found or not submitted"
-msgstr "Écriture de paiement {0} introuvable ou non soumise"
+msgstr "Écriture de paiement {0} introuvable ou non validée"
 
 #: POS/src/utils/errorHandler.js:190
 msgid "Payment Error"
@@ -8467,7 +8467,7 @@ msgstr "Imprimer le brouillon"
 #. 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 msgid "Print invoices before submission"
-msgstr "Imprimer les factures avant la soumission"
+msgstr "Imprimer les factures avant la validation"
 
 #: POS/src/components/sale/InvoiceCart.vue:1332
 msgid "Print provisional ticket"
@@ -9199,7 +9199,7 @@ msgstr "Réservation confirmée - {0}"
 
 #: POS/src/pages/GuestReservation.vue:44
 msgid "Reservation Submitted!"
-msgstr "Réservation soumise !"
+msgstr "Réservation validée !"
 
 #: POS/src/components/restaurant/ReservationDialog.vue:214
 msgid "Reservation cancelled"
@@ -9403,7 +9403,7 @@ msgid ""
 "Return invoice submitted successfully, but wallet reversal failed. Please "
 "contact administrator."
 msgstr ""
-"Facture de retour soumise avec succès, mais l'annulation du portefeuille a "
+"Facture de retour validée avec succès, mais l'annulation du portefeuille a "
 "échoué. Veuillez contacter l'administrateur."
 
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1105
@@ -9439,7 +9439,7 @@ msgstr ""
 msgid ""
 "Return submitted but wallet credit failed. Please contact administrator."
 msgstr ""
-"Retour soumis mais le crédit portefeuille a échoué. Veuillez contacter "
+"Retour validé mais le crédit portefeuille a échoué. Veuillez contacter "
 "l'administrateur."
 
 #: POS/src/components/ShiftClosingDialog.vue:42
@@ -10824,18 +10824,18 @@ msgstr "Sujet"
 
 #: POS/src/components/customer-display/CreateCustomerModal.vue:217
 msgid "Submit"
-msgstr "Soumettre"
+msgstr "Valider"
 
 #. Description of the 'Allow Submissions in Background Job' (Check) field in
 #. DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 msgid "Submit invoices in background"
-msgstr "Soumettre les factures en arrière-plan"
+msgstr "Valider les factures en arrière-plan"
 
 #: POS/src/components/customer-display/CreateCustomerModal.vue:217
 #: POS/src/pages/GuestReservation.vue:200
 msgid "Submitting..."
-msgstr "Soumission..."
+msgstr "Validation..."
 
 #: POS/src/components/customer-display/DisplayCart.vue:77
 #: POS/src/components/guest/GuestCheckout.vue:76
@@ -13138,7 +13138,8 @@ msgstr "Déficit"
 
 #. Description of 'Company' field in DocType 'Item'
 msgid "Leave empty for global items available to all companies"
-msgstr "Laisser vide pour les articles globaux disponibles pour toutes les sociétés"
+msgstr ""
+"Laisser vide pour les articles globaux disponibles pour toutes les sociétés"
 
 #. Label of a Section Break field in DocType 'Item'
 msgid "POS Badges"
