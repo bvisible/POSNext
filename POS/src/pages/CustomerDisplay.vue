@@ -75,7 +75,8 @@
 
 				<!-- Payment QR overlay (TWINT etc.) — shown full-screen while the
 				     buyer is asked to scan. z-40 so the green Thank-You (z-50)
-				     wins if both ever overlap. -->
+				     wins if both ever overlap. Styled after the webshop TWINT
+				     dialog: brand strip on top, logo, black amount pill, QR. -->
 				<transition
 					enter-active-class="transition-opacity duration-300"
 					leave-active-class="transition-opacity duration-300"
@@ -84,18 +85,52 @@
 				>
 					<div
 						v-if="displayStore.paymentQR"
-						class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-white dark:bg-gray-900 px-8"
+						class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-gray-50 px-8 overflow-hidden"
 					>
-						<h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 text-center">
+						<!-- TWINT brand strip (full-width line at the very top) -->
+						<img
+							v-if="isTwintPayment"
+							:src="twintLineSrc"
+							alt=""
+							class="absolute top-0 left-0 w-full pointer-events-none"
+						/>
+
+						<!-- TWINT logo (falls back to a text title for non-TWINT providers) -->
+						<img
+							v-if="isTwintPayment"
+							:src="twintLogoSrc"
+							alt="TWINT"
+							class="h-14 md:h-20 object-contain mb-8"
+						/>
+						<h1
+							v-else
+							class="text-4xl md:text-5xl font-bold text-gray-900 mb-8 text-center"
+						>
 							{{ paymentQRTitle }}
 						</h1>
-						<p v-if="paymentQRAmount" class="text-5xl md:text-6xl font-extrabold mb-10" style="color: #ff0039">
-							{{ paymentQRAmount }}
-						</p>
-						<div class="bg-white p-6 rounded-3xl shadow-2xl">
+
+						<!-- Amount, TWINT-style: white text on a black pill. Inline
+						     font-size (clamp) so it stays large regardless of which
+						     Tailwind text-* utilities survive purging. -->
+						<div v-if="paymentQRAmount" class="mb-10">
+							<span
+								class="inline-block bg-black text-white font-bold rounded-lg px-8 py-4 tracking-tight"
+								style="font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1"
+							>
+								{{ paymentQRAmount }}
+							</span>
+						</div>
+
+						<!-- QR card -->
+						<div class="bg-white p-8 rounded-2xl shadow-xl">
 							<canvas ref="qrCanvas" class="w-72 h-72 md:w-96 md:h-96"></canvas>
 						</div>
-						<p class="mt-10 text-2xl md:text-3xl text-gray-600 dark:text-gray-300 text-center">
+
+						<!-- Instruction -->
+						<p
+							class="mt-10 text-gray-600 text-center font-medium"
+							style="font-size: clamp(1.25rem, 2.2vw, 1.75rem)"
+						>
 							{{ __("Scan with your TWINT app") }}
 						</p>
 					</div>
@@ -167,6 +202,21 @@ function formatCurrency(amount) {
 }
 
 // ---- Payment QR overlay (TWINT etc.) ----
+// TWINT brand assets are served by the `payments` app (installed alongside
+// pos_next on every instance that does TWINT).
+const twintLogoSrc = "/assets/payments/images/twint/twint-app-icon.png"
+const twintLineSrc = "/assets/payments/images/twint/line.png"
+
+const isTwintPayment = computed(() => {
+	const p = (displayStore.paymentQR?.provider || "").toLowerCase()
+	const m = (displayStore.paymentQR?.mode_of_payment || "").toLowerCase()
+	// Default to the TWINT look when nothing else is specified (current V1 is
+	// TWINT-only); only fall back to the generic title for a clearly non-TWINT
+	// provider.
+	if (!p && !m) return true
+	return p.includes("twint") || m.includes("twint")
+})
+
 const paymentQRTitle = computed(() => {
 	const provider = displayStore.paymentQR?.provider
 	return __("Pay with {0}", [provider || "TWINT"])
