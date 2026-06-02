@@ -640,3 +640,20 @@ def clear_payment_qr(pos_opening_entry):
     )
 
     return {"success": True}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_in_app_ads():
+    """Return the enabled In-App Ads (image + name) for the customer display.
+
+    Shown on the buyer-facing screen while the cart is empty: nothing when
+    there are no ads, a single still image for one ad, an auto-scrolling
+    carousel for several. Only ads with an image are returned.
+    """
+    ads = frappe.get_all(
+        "In-App Ads",
+        filters={"enabled": 1},
+        fields=["name", "ad_name", "image"],
+        order_by="creation asc",
+    )
+    return [a for a in ads if a.get("image")]

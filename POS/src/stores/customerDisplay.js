@@ -81,6 +81,11 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	// provider} or null when none is active.
 	const paymentQR = ref(null)
 
+	// In-App Ads shown on the idle (empty-cart) screen. Empty array → keep the
+	// default "waiting for items" placeholder; one → still image; several →
+	// auto-scrolling carousel.
+	const ads = ref([])
+
 	// Display settings (from POS Settings)
 	const displaySettings = ref({
 		enableCustomerDisplay: false,
@@ -122,6 +127,11 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 
 	const getDisplaySettingsResource = createResource({
 		url: "pos_next.api.customer_display.get_display_settings",
+		auto: false,
+	})
+
+	const getAdsResource = createResource({
+		url: "pos_next.api.customer_display.get_in_app_ads",
 		auto: false,
 	})
 
@@ -278,6 +288,20 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	}
 
 	/**
+	 * Load the enabled In-App Ads for the idle carousel.
+	 */
+	async function loadAds() {
+		try {
+			const result = await getAdsResource.fetch()
+			ads.value = Array.isArray(result) ? result : []
+			log.info("In-App Ads loaded", { count: ads.value.length })
+		} catch (error) {
+			log.error("Failed to load In-App Ads", error)
+			ads.value = []
+		}
+	}
+
+	/**
 	 * Select a POS profile and find active session
 	 * @param {string} profileName - POS Profile name
 	 */
@@ -293,6 +317,9 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		try {
 			// Load display settings for this profile
 			await loadDisplaySettings(profileName)
+
+			// Load the In-App Ads for the idle carousel (best-effort).
+			loadAds()
 
 			const entry = await getPosOpeningEntryResource.fetch({
 				pos_profile: profileName,
@@ -687,6 +714,8 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		lastSaleAmount,
 		isLoading,
 		paymentQR,
+		ads,
+		loadAds,
 
 		// Display settings (from POS Settings)
 		displaySettings,

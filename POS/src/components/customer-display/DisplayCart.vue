@@ -1,8 +1,21 @@
 <template>
 	<div class="flex flex-col h-full bg-[var(--neo-bg)]">
 		<!-- Empty cart state -->
-		<div v-if="!displayStore.hasItems" class="flex-1 flex flex-col items-center justify-center">
-			<div class="bg-white rounded-neo-lg shadow-neo p-12 text-center max-w-md">
+		<div v-if="!displayStore.hasItems" class="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">
+			<!-- In-App Ads: nothing when none, a still image for one, an
+			     auto-scrolling carousel for several. Falls back to the default
+			     placeholder when there are no ads. -->
+			<div v-if="hasAds" class="w-full h-full flex items-center justify-center">
+				<transition name="ad-fade" mode="out-in">
+					<img
+						:key="currentAd.name || currentAd.image"
+						:src="currentAd.image"
+						:alt="currentAd.ad_name || ''"
+						class="max-w-full max-h-full object-contain rounded-neo-lg shadow-neo"
+					/>
+				</transition>
+			</div>
+			<div v-else class="bg-white rounded-neo-lg shadow-neo p-12 text-center max-w-md">
 				<div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
 					<FeatherIcon name="shopping-bag" class="w-10 h-10 text-blue-400" />
 				</div>
@@ -110,7 +123,7 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
-import { computed } from "vue"
+import { computed, ref, watch, onUnmounted } from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
 
 const displayStore = useCustomerDisplayStore()
@@ -118,6 +131,68 @@ const displayStore = useCustomerDisplayStore()
 const reversedItems = computed(() =>
 	[...(displayStore.cartData.items || [])].reverse(),
 )
+
+// ---- In-App Ads carousel (idle / empty-cart screen) ----
+const ads = computed(() => displayStore.ads || [])
+const hasAds = computed(() => ads.value.length > 0)
+const currentAdIndex = ref(0)
+const currentAd = computed(
+	() => ads.value[currentAdIndex.value] || ads.value[0] || {},
+)
+
+const AD_ROTATE_MS = 6000
+let adTimer = null // Web Worker (preferred) or a setInterval-backed shim
+
+function _advanceAd() {
+	const n = ads.value.length
+	if (n > 1) currentAdIndex.value = (currentAdIndex.value + 1) % n
+}
+
+function stopAdRotation() {
+	if (adTimer) {
+		adTimer.terminate()
+		adTimer = null
+	}
+}
+
+function startAdRotation() {
+	stopAdRotation()
+	// Only rotate when there is more than one ad — a single ad stays still.
+	if (ads.value.length <= 1) return
+
+	// Drive the rotation from a Web Worker rather than setInterval: a customer
+	// display popup may sit BEHIND the cashier's POS window on a single-screen
+	// setup, and the browser freezes setInterval in background tabs — which
+	// would freeze the carousel. Web Worker timers are not throttled.
+	try {
+		const src =
+			"let id=null;onmessage=function(e){" +
+			"if(e.data&&e.data.stop){clearInterval(id);return;}" +
+			"clearInterval(id);id=setInterval(function(){postMessage('tick')},(e.data&&e.data.ms)||6000);};"
+		const worker = new Worker(
+			URL.createObjectURL(new Blob([src], { type: "application/javascript" })),
+		)
+		worker.onmessage = _advanceAd
+		worker.postMessage({ ms: AD_ROTATE_MS })
+		adTimer = worker
+	} catch (e) {
+		// Fallback: plain setInterval wrapped to expose a terminate() method.
+		const id = setInterval(_advanceAd, AD_ROTATE_MS)
+		adTimer = { terminate: () => clearInterval(id) }
+	}
+}
+
+// (Re)start the rotation whenever the ad list changes (e.g. ads load async).
+watch(
+	() => ads.value.length,
+	() => {
+		currentAdIndex.value = 0
+		startAdRotation()
+	},
+	{ immediate: true },
+)
+
+onUnmounted(stopAdRotation)
 
 // Format currency
 function formatCurrency(amount) {
@@ -130,6 +205,17 @@ function formatCurrency(amount) {
 </script>
 
 <style scoped>
+/* Ad carousel cross-fade */
+.ad-fade-enter-active,
+.ad-fade-leave-active {
+	transition: opacity 0.6s ease;
+}
+
+.ad-fade-enter-from,
+.ad-fade-leave-to {
+	opacity: 0;
+}
+
 /* Cart item transitions */
 .cart-item-enter-active {
 	transition: all 0.35s ease-out;
