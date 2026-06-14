@@ -198,3 +198,39 @@ button.active\:scale-95:active,
 		transform: scale(0.98);
 	}
 }
+
+/* ============================================================================
+ * Neoffice — dark mode for the POS SPA, driven by the cockpit colour mode.
+ * The NeoCockpit sets data-theme="dark" on <html>; POS uses hardcoded light
+ * Tailwind utilities + the --neo-bg token + .neo-glass, so remap surfaces,
+ * text and borders to a coherent dark palette under [data-theme='dark'].
+ * ========================================================================== */
+[data-theme='dark'],
+.dark { color-scheme: dark; }
+[data-theme='dark'] { --neo-bg: #14161b; }
+[data-theme='dark'] .neo-glass,
+.dark .neo-glass { background: rgba(28, 31, 38, 0.82) !important; }
+[data-theme='dark'] .bg-white,
+.dark .bg-white { background-color: #1c1f26 !important; }
+[data-theme='dark'] .bg-gray-50,
+.dark .bg-gray-50 { background-color: #181b21 !important; }
+[data-theme='dark'] .bg-gray-100,
+.dark .bg-gray-100 { background-color: #23272f !important; }
+[data-theme='dark'] .bg-gray-200,
+.dark .bg-gray-200 { background-color: #2b2f38 !important; }
+[data-theme='dark'] .text-gray-900,
+.dark .text-gray-900 { color: #f1f3f5 !important; }
+[data-theme='dark'] .text-gray-800,
+.dark .text-gray-800 { color: #e6e8eb !important; }
+[data-theme='dark'] .text-gray-700,
+.dark .text-gray-700 { color: #c2c8d0 !important; }
+[data-theme='dark'] .text-gray-600,
+.dark .text-gray-600 { color: #9aa3b2 !important; }
+[data-theme='dark'] .text-gray-500,
+.dark .text-gray-500 { color: #828b99 !important; }
+[data-theme='dark'] .border-gray-100,
+.dark .border-gray-100 { border-color: rgba(255, 255, 255, 0.06) !important; }
+[data-theme='dark'] .border-gray-200,
+.dark .border-gray-200 { border-color: rgba(255, 255, 255, 0.1) !important; }
+[data-theme='dark'] .border-gray-300,
+.dark .border-gray-300 { border-color: rgba(255, 255, 255, 0.14) !important; }
