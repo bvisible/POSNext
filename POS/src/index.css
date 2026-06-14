@@ -324,3 +324,35 @@ button.active\:scale-95:active,
 [data-theme='dark'] .hover\:bg-green-50:hover, .dark .hover\:bg-green-50:hover,
 [data-theme='dark'] .hover\:bg-emerald-50:hover, .dark .hover\:bg-emerald-50:hover { background-color: rgba(34, 197, 94, 0.20) !important; }
 [data-theme='dark'] .hover\:bg-red-50:hover, .dark .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.20) !important; }
+/* Refine accent tints in dark mode: the *-50 clay tint at 0.16 was too loud on
+   large surfaces (coupon dialog banner + gift-card list all looked muddy clay)
+   and the blue→clay ramp text (text-blue-700 = clay-700) was too dark to read
+   on it. Make accent-tint cards/banners SUBTLE and lighten the accent text. */
+[data-theme='dark'] .bg-blue-50, .dark .bg-blue-50,
+[data-theme='dark'] .bg-orange-50, .dark .bg-orange-50,
+[data-theme='dark'] .bg-purple-50, .dark .bg-purple-50,
+[data-theme='dark'] .bg-indigo-50, .dark .bg-indigo-50,
+[data-theme='dark'] .bg-pink-50, .dark .bg-pink-50,
+[data-theme='dark'] .bg-violet-50, .dark .bg-violet-50 { background-color: rgba(214, 138, 89, 0.09) !important; }
+[data-theme='dark'] [class*="bg-gradient"][class*="from-blue-50"], .dark [class*="bg-gradient"][class*="from-blue-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-indigo-50"], .dark [class*="bg-gradient"][class*="from-indigo-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-orange-50"], .dark [class*="bg-gradient"][class*="from-orange-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-purple-50"], .dark [class*="bg-gradient"][class*="from-purple-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-pink-50"], .dark [class*="bg-gradient"][class*="from-pink-50"] {
+	background-image: none !important; background-color: rgba(214, 138, 89, 0.08) !important;
+}
+/* lighten mid/dark accent text so it reads on dark tints */
+[data-theme='dark'] .text-blue-600, .dark .text-blue-600,
+[data-theme='dark'] .text-blue-700, .dark .text-blue-700,
+[data-theme='dark'] .text-orange-600, .dark .text-orange-600,
+[data-theme='dark'] .text-orange-700, .dark .text-orange-700,
+[data-theme='dark'] .text-purple-600, .dark .text-purple-600,
+[data-theme='dark'] .text-purple-700, .dark .text-purple-700,
+[data-theme='dark'] .text-indigo-600, .dark .text-indigo-600,
+[data-theme='dark'] .text-indigo-700, .dark .text-indigo-700 { color: #dda479 !important; }
+[data-theme='dark'] .text-blue-800, .dark .text-blue-800,
+[data-theme='dark'] .text-blue-900, .dark .text-blue-900,
+[data-theme='dark'] .text-orange-800, .dark .text-orange-800,
+[data-theme='dark'] .text-orange-900, .dark .text-orange-900,
+[data-theme='dark'] .text-purple-800, .dark .text-purple-800,
+[data-theme='dark'] .text-purple-900, .dark .text-purple-900 { color: #e9c5a4 !important; }
