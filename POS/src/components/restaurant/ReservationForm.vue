@@ -475,8 +475,8 @@ onMounted(() => {
 
 .form-control:focus {
 	outline: none;
-	border-color: var(--primary, #3b82f6);
-	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+	border-color: var(--primary, #d68a59);
+	box-shadow: 0 0 0 2px rgba(214, 138, 89, 0.15);
 }
 
 textarea.form-control {
@@ -505,7 +505,7 @@ textarea.form-control {
 
 .service-tab.active {
 	background: var(--blue-100, #dbeafe);
-	border-color: var(--blue-500, #3b82f6);
+	border-color: var(--blue-500, #d68a59);
 }
 
 .service-tab-label {
@@ -515,7 +515,7 @@ textarea.form-control {
 }
 
 .service-tab.active .service-tab-label {
-	color: var(--blue-800, #1e40af);
+	color: var(--blue-800, #a15a2e);
 }
 
 .service-tab-time {
@@ -524,7 +524,7 @@ textarea.form-control {
 }
 
 .service-tab.active .service-tab-time {
-	color: var(--blue-600, #2563eb);
+	color: var(--blue-600, #d68a59);
 }
 
 /* Tables header with plan toggle */
@@ -546,8 +546,8 @@ textarea.form-control {
 }
 
 .btn-plan-toggle.active {
-	background: var(--blue-600, #2563eb);
-	border-color: var(--blue-600, #2563eb);
+	background: var(--blue-600, #d68a59);
+	border-color: var(--blue-600, #d68a59);
 	color: #fff;
 }
 
@@ -624,13 +624,13 @@ textarea.form-control {
 }
 
 .table-chip:hover:not(.unavailable) {
-	border-color: var(--primary, #3b82f6);
+	border-color: var(--primary, #d68a59);
 }
 
 .table-chip.selected {
 	background: var(--blue-100, #dbeafe);
-	border-color: var(--blue-500, #3b82f6);
-	color: var(--blue-800, #1e40af);
+	border-color: var(--blue-500, #d68a59);
+	color: var(--blue-800, #a15a2e);
 }
 
 .table-chip.unavailable {
@@ -699,7 +699,7 @@ textarea.form-control {
 }
 
 .btn-save {
-	background: var(--primary, #3b82f6);
+	background: var(--primary, #d68a59);
 	color: #fff;
 }
 
@@ -718,6 +718,6 @@ textarea.form-control {
 }
 
 .btn-save:hover:not(:disabled) {
-	background: var(--primary-dark, #2563eb);
+	background: var(--primary-dark, #d68a59);
 }
 </style>

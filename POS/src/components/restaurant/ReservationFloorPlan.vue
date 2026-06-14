@@ -273,10 +273,10 @@ function tableStyle(table) {
 }
 
 .fp-selected {
-	border-color: var(--blue-500, #3b82f6) !important;
+	border-color: var(--blue-500, #d68a59) !important;
 	background: var(--blue-100, #dbeafe) !important;
 	opacity: 1 !important;
-	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+	box-shadow: 0 0 0 2px rgba(214, 138, 89, 0.3);
 }
 
 .fp-table-name {
@@ -323,7 +323,7 @@ function tableStyle(table) {
 }
 
 .fp-dot-selected {
-	border-color: var(--blue-500, #3b82f6);
+	border-color: var(--blue-500, #d68a59);
 	background: var(--blue-100, #dbeafe);
 }
 </style>

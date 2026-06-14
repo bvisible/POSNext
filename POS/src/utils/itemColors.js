@@ -6,8 +6,8 @@ export const ITEM_COLOR_PALETTE = [
 	{ hex: "#EAB308", name: "Yellow" },
 	{ hex: "#22C55E", name: "Green" },
 	{ hex: "#14B8A6", name: "Teal" },
-	{ hex: "#3B82F6", name: "Blue" },
-	{ hex: "#6366F1", name: "Indigo" },
+	{ hex: "#d68a59", name: "Blue" },
+	{ hex: "#d68a59", name: "Indigo" },
 	{ hex: "#A855F7", name: "Purple" },
 	{ hex: "#EC4899", name: "Pink" },
 ]

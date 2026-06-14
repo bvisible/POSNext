@@ -173,7 +173,7 @@ function getStatusStyle(status) {
 	const styles = {
 		"Pending": "background-color: #FEF3C7; color: #92400E;",
 		"Waiting": "background-color: #E0E7FF; color: #3730A3;",
-		"Preparing": "background-color: #DBEAFE; color: #1E40AF;",
+		"Preparing": "background-color: #DBEAFE; color: #a15a2e;",
 		"Ready": "background-color: #D1FAE5; color: #065F46;",
 		"Delivered": "background-color: #F3F4F6; color: #6B7280;",
 	}

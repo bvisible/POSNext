@@ -12,7 +12,7 @@
 						@click="handleSave"
 						:disabled="saving || !hasChanges"
 						class="px-3 py-1 text-white text-xs font-bold rounded-md transition-colors"
-						:style="{ backgroundColor: saving ? '#9ca3af' : !hasChanges ? '#d1d5db' : '#3b82f6' }"
+						:style="{ backgroundColor: saving ? '#9ca3af' : !hasChanges ? '#d1d5db' : '#d68a59' }"
 					>
 						{{ saving ? '...' : __('Save') }}
 					</button>

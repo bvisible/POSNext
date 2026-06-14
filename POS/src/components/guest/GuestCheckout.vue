@@ -190,7 +190,7 @@
 								@click="splitBy = null; customPayAmount = ''"
 								class="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
 								:style="!splitBy
-									? 'background-color: #2563eb; color: white; border-color: #2563eb;'
+									? 'background-color: #d68a59; color: white; border-color: #d68a59;'
 									: 'background-color: #f3f4f6; color: #374151; border-color: #e5e7eb;'"
 							>{{ __('Full') }}</button>
 							<button
@@ -199,14 +199,14 @@
 								@click="splitBy = n; customPayAmount = ''"
 								class="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
 								:style="splitBy === n
-									? 'background-color: #2563eb; color: white; border-color: #2563eb;'
+									? 'background-color: #d68a59; color: white; border-color: #d68a59;'
 									: 'background-color: #f3f4f6; color: #374151; border-color: #e5e7eb;'"
 							>÷{{ n }}</button>
 							<button
 								@click="splitBy = -1"
 								class="px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all"
 								:style="splitBy === -1
-									? 'background-color: #2563eb; color: white; border-color: #2563eb;'
+									? 'background-color: #d68a59; color: white; border-color: #d68a59;'
 									: 'background-color: #f3f4f6; color: #374151; border-color: #e5e7eb;'"
 							>{{ __('Custom') }}</button>
 						</div>

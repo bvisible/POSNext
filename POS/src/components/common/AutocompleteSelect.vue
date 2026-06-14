@@ -370,13 +370,13 @@ onUnmounted(() => {
 
 .select-input:focus {
 	outline: none;
-	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	border-color: #d68a59;
+	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
 
 .select-input.has-value {
 	font-weight: 500;
-	color: #6366f1;
+	color: #d68a59;
 }
 
 .input-actions {
@@ -442,7 +442,7 @@ onUnmounted(() => {
 	width: 1.5rem;
 	height: 1.5rem;
 	border: 2px solid #e5e7eb;
-	border-top-color: #6366f1;
+	border-top-color: #d68a59;
 	border-radius: 50%;
 	animation: spin 0.6s linear infinite;
 }
@@ -506,7 +506,7 @@ onUnmounted(() => {
 
 .dropdown-item.active {
 	background: #eef2ff;
-	color: #6366f1;
+	color: #d68a59;
 }
 
 .dropdown-item.clear-item {
@@ -519,7 +519,7 @@ onUnmounted(() => {
 }
 
 .dropdown-item.load-more {
-	color: #6366f1;
+	color: #d68a59;
 	font-weight: 500;
 	justify-content: center;
 	border-top: 2px solid #e0e7ff;

@@ -424,7 +424,7 @@ class LoggerManager {
   ${JSON.stringify(this.getConfig(), null, 2)}
 		`,
 			"font-size: 16px; font-weight: bold",
-			"font-weight: bold; color: #2196F3",
+			"font-weight: bold; color: #d68a59",
 			"font-weight: normal",
 			"font-weight: bold; color: #4CAF50",
 			"font-weight: normal",

@@ -127,7 +127,7 @@
 				</span>
 				<span v-if="getStationPreparingCount(station.name) > 0"
 					class="text-[9px] font-bold px-1 py-0.5 rounded"
-					:style="{ backgroundColor: '#3B82F620', color: '#3B82F6' }">
+					:style="{ backgroundColor: '#d68a5920', color: '#d68a59' }">
 					{{ getStationPreparingCount(station.name) }}p
 				</span>
 				<span v-if="getStationReadyCount(station.name) > 0"

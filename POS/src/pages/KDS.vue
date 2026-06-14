@@ -35,9 +35,9 @@
 				@click="selectedStation = station.name; loadOrders()"
 				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
 				:class="selectedStation === station.name ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
-				:style="selectedStation === station.name ? { backgroundColor: station.color || '#3B82F6' } : {}"
+				:style="selectedStation === station.name ? { backgroundColor: station.color || '#d68a59' } : {}"
 			>
-				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#3B82F6' }"></span>
+				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#d68a59' }"></span>
 				{{ station.station_name }} ({{ getStationOrderCount(station.name) }})
 			</button>
 		</div>

@@ -24,7 +24,7 @@
 				<div class="flex items-center gap-2">
 					<!-- App Icon -->
 					<div class="flex-shrink-0">
-						<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm" style="background-color: #4F46E5;">
+						<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm" style="background-color: #c2723f;">
 							<svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 								<path fill="#ffffff" d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4zm10 16H4V9h16v11z"/>
 							</svg>
@@ -53,7 +53,7 @@
 						<button
 							@click="handleInstall"
 							class="px-3 py-1.5 text-xs font-medium rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation shadow-sm whitespace-nowrap"
-							style="background-color: #4F46E5; color: #ffffff;"
+							style="background-color: #c2723f; color: #ffffff;"
 						>
 							{{  __('Install') }}
 						</button>

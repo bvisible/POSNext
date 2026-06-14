@@ -236,7 +236,7 @@ const filteredReservations = computed(() => {
 
 .tag-confirmed {
 	background: var(--blue-100, #dbeafe);
-	color: var(--blue-700, #1d4ed8);
+	color: var(--blue-700, #a15a2e);
 }
 
 .tag-pending {

@@ -20,7 +20,7 @@
 			<template v-for="(seg, si) in getWallSegments(wall)" :key="wall.id + '-seg-' + si">
 				<line
 					:x1="seg.x1" :y1="seg.y1" :x2="seg.x2" :y2="seg.y2"
-					:stroke="selectedId === wall.id ? '#3B82F6' : '#374151'"
+					:stroke="selectedId === wall.id ? '#d68a59' : '#374151'"
 					stroke-width="4" stroke-linecap="round"
 				/>
 			</template>
@@ -33,9 +33,9 @@
 			/>
 			<!-- Endpoint handles in edit mode -->
 			<template v-if="isEditMode && selectedId === wall.id && activeTool === 'select'">
-				<circle :cx="wall.x1" :cy="wall.y1" r="6" fill="#3B82F6" stroke="white" stroke-width="2"
+				<circle :cx="wall.x1" :cy="wall.y1" r="6" fill="#d68a59" stroke="white" stroke-width="2"
 					class="cursor-crosshair pointer-events-auto" @pointerdown.stop="startDragEndpoint($event, wall, 'start')" />
-				<circle :cx="wall.x2" :cy="wall.y2" r="6" fill="#3B82F6" stroke="white" stroke-width="2"
+				<circle :cx="wall.x2" :cy="wall.y2" r="6" fill="#d68a59" stroke="white" stroke-width="2"
 					class="cursor-crosshair pointer-events-auto" @pointerdown.stop="startDragEndpoint($event, wall, 'end')" />
 			</template>
 		</template>
@@ -51,7 +51,7 @@
 					:class="isEditMode && activeTool === 'select' ? 'pointer-events-auto cursor-pointer' : ''" />
 				<!-- Selected highlight -->
 				<circle v-if="selectedId === door.id" :cx="getDoorGeometry(door).center.x" :cy="getDoorGeometry(door).center.y"
-					r="6" fill="none" stroke="#3B82F6" stroke-width="2" stroke-dasharray="3,2" />
+					r="6" fill="none" stroke="#d68a59" stroke-width="2" stroke-dasharray="3,2" />
 			</g>
 		</template>
 
@@ -64,20 +64,20 @@
 						:class="isEditMode && activeTool === 'select' ? 'pointer-events-auto cursor-pointer' : ''" />
 				</template>
 				<circle v-if="selectedId === win.id" :cx="getWindowGeometry(win).center.x" :cy="getWindowGeometry(win).center.y"
-					r="6" fill="none" stroke="#3B82F6" stroke-width="2" stroke-dasharray="3,2" />
+					r="6" fill="none" stroke="#d68a59" stroke-width="2" stroke-dasharray="3,2" />
 			</g>
 		</template>
 
 		<!-- Drawing preview (wall being drawn) -->
 		<line v-if="drawPreview"
 			:x1="drawPreview.x1" :y1="drawPreview.y1" :x2="drawPreview.x2" :y2="drawPreview.y2"
-			stroke="#3B82F6" stroke-width="3" stroke-dasharray="6,4" stroke-linecap="round" opacity="0.7"
+			stroke="#d68a59" stroke-width="3" stroke-dasharray="6,4" stroke-linecap="round" opacity="0.7"
 		/>
 
 		<!-- Door/window placement preview -->
 		<circle v-if="placementPreview"
 			:cx="placementPreview.x" :cy="placementPreview.y"
-			r="4" fill="#3B82F6" opacity="0.6"
+			r="4" fill="#d68a59" opacity="0.6"
 		/>
 		</g>
 	</svg>

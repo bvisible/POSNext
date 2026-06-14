@@ -394,8 +394,8 @@ function deleteSavedFilter(name) {
 
 .search-input:focus {
 	outline: none;
-	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	border-color: #d68a59;
+	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
 
 .clear-search {
@@ -439,14 +439,14 @@ function deleteSavedFilter(name) {
 }
 
 .filter-chip:hover {
-	border-color: #6366f1;
+	border-color: #d68a59;
 	background: #f5f3ff;
-	color: #6366f1;
+	color: #d68a59;
 }
 
 .filter-chip.active {
-	background: #6366f1;
-	border-color: #6366f1;
+	background: #d68a59;
+	border-color: #d68a59;
 	color: white;
 }
 
@@ -597,8 +597,8 @@ function deleteSavedFilter(name) {
 .field-input:focus,
 .field-select:focus {
 	outline: none;
-	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	border-color: #d68a59;
+	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
 
 /* Save Row */
@@ -621,8 +621,8 @@ function deleteSavedFilter(name) {
 
 .save-input:focus {
 	outline: none;
-	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	border-color: #d68a59;
+	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
 
 .save-btn {
@@ -630,7 +630,7 @@ function deleteSavedFilter(name) {
 	align-items: center;
 	gap: 0.375rem;
 	padding: 0.625rem 1rem;
-	background: #6366f1;
+	background: #d68a59;
 	border: none;
 	border-radius: 8px;
 	font-size: 0.875rem;
@@ -641,7 +641,7 @@ function deleteSavedFilter(name) {
 }
 
 .save-btn:hover:not(:disabled) {
-	background: #4f46e5;
+	background: #c2723f;
 }
 
 .save-btn:disabled {
@@ -686,9 +686,9 @@ function deleteSavedFilter(name) {
 }
 
 .saved-item:hover {
-	border-color: #6366f1;
+	border-color: #d68a59;
 	background: #f5f3ff;
-	color: #6366f1;
+	color: #d68a59;
 }
 
 .delete-saved {

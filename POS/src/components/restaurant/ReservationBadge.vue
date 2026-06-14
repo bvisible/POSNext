@@ -75,7 +75,7 @@ const tooltipText = computed(() => {
 
 .badge-confirmed {
 	background: var(--blue-100, #dbeafe);
-	color: var(--blue-800, #1e40af);
+	color: var(--blue-800, #a15a2e);
 	border-color: var(--blue-300, #93c5fd);
 }
 

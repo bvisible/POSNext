@@ -201,7 +201,7 @@ onMounted(() => loadStats())
 
 .bar-fill {
 	height: 100%;
-	background: var(--blue-500, #3b82f6);
+	background: var(--blue-500, #d68a59);
 	border-radius: 4px;
 	min-width: 2px;
 	transition: width 0.3s ease;
