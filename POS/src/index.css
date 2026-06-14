@@ -234,3 +234,16 @@ button.active\:scale-95:active,
 .dark .border-gray-200 { border-color: rgba(255, 255, 255, 0.1) !important; }
 [data-theme='dark'] .border-gray-300,
 .dark .border-gray-300 { border-color: rgba(255, 255, 255, 0.14) !important; }
+/* form controls — inputs/textarea/select keep a white background by default */
+[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='range']),
+[data-theme='dark'] textarea,
+[data-theme='dark'] select,
+.dark input:not([type='checkbox']):not([type='radio']):not([type='range']),
+.dark textarea,
+.dark select {
+	background-color: #23272f !important;
+	color: #e6e8eb !important;
+	border-color: rgba(255, 255, 255, 0.12) !important;
+}
+[data-theme='dark'] input::placeholder,
+.dark input::placeholder { color: #828b99 !important; }
