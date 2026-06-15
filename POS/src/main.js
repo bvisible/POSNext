@@ -47,6 +47,38 @@ import {
 
 import "./index.css"
 
+// Adopt the shared cockpit colour mode (neocockpit-colormode) BEFORE Vue mounts,
+// so the till opens in the right theme with no flash AND follows live changes
+// made elsewhere (the Frappe desk NeoCockpit toggle writes the same key). POS
+// runs without the NeoCockpit chrome, so it must drive data-theme itself and
+// listen for cross-tab changes via the storage event. //// neoffice
+;(function syncNeoColorMode() {
+	const apply = () => {
+		let mode = "system"
+		try {
+			mode = localStorage.getItem("neocockpit-colormode") || "system"
+		} catch (e) {
+			/* noop */
+		}
+		const sysDark =
+			typeof matchMedia !== "undefined" &&
+			matchMedia("(prefers-color-scheme: dark)").matches
+		const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode
+		document.documentElement.setAttribute("data-theme", theme)
+		document.documentElement.classList.toggle("dark", theme === "dark")
+	}
+	apply()
+	try {
+		matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply)
+	} catch (e) {
+		/* noop */
+	}
+	// live cross-tab sync: react when the desk cockpit (or another tab) toggles
+	window.addEventListener("storage", (e) => {
+		if (e.key === "neocockpit-colormode" || e.key === "theme_active") apply()
+	})
+})()
+
 const log = logger.create("Main")
 
 // =============================================================================

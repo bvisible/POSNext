@@ -356,3 +356,34 @@ button.active\:scale-95:active,
 [data-theme='dark'] .text-orange-900, .dark .text-orange-900,
 [data-theme='dark'] .text-purple-800, .dark .text-purple-800,
 [data-theme='dark'] .text-purple-900, .dark .text-purple-900 { color: #e9c5a4 !important; }
+/* Tailwind opacity-modifier LIGHT surfaces (bg-white/NN, bg-gray-{50,100,200}/NN)
+   compile to SEPARATE classes (.bg-white\/80 = rgba(255,255,255,.8)) that the
+   plain .bg-white / .bg-gray-50 overrides above do NOT match, so they stayed
+   light in dark mode — the white "warehouse selection" panels and the payment
+   "Coupons & offers" header strip (bg-gray-50/80 = #f8f8f8cc). Map the LIGHT
+   variants to dark; bg-gray-{700..900}/NN and bg-black/NN are already dark. */
+[data-theme='dark'] .bg-white\/90, .dark .bg-white\/90,
+[data-theme='dark'] .bg-white\/80, .dark .bg-white\/80 { background-color: rgba(28, 31, 38, 0.92) !important; }
+[data-theme='dark'] .bg-white\/70, .dark .bg-white\/70,
+[data-theme='dark'] .bg-white\/60, .dark .bg-white\/60,
+[data-theme='dark'] .bg-white\/50, .dark .bg-white\/50 { background-color: rgba(28, 31, 38, 0.66) !important; }
+[data-theme='dark'] .bg-white\/30, .dark .bg-white\/30,
+[data-theme='dark'] .bg-white\/20, .dark .bg-white\/20,
+[data-theme='dark'] .bg-white\/10, .dark .bg-white\/10 { background-color: rgba(255, 255, 255, 0.06) !important; }
+[data-theme='dark'] .bg-gray-50\/80, .dark .bg-gray-50\/80,
+[data-theme='dark'] .bg-gray-50\/50, .dark .bg-gray-50\/50,
+[data-theme='dark'] .bg-gray-100\/70, .dark .bg-gray-100\/70,
+[data-theme='dark'] .bg-gray-200\/70, .dark .bg-gray-200\/70,
+[data-theme='dark'] .bg-gray-200\/50, .dark .bg-gray-200\/50 { background-color: rgba(32, 36, 44, 0.80) !important; }
+/* Toast / inline alert (Toast.vue: border-s-4 + bg-*-50 + text-*-900/700/600).
+   The generic *-50 tint is far too faint for an ALERT, and the semantic *-900
+   text (red/green/orange are NOT remapped to clay) stays dark → dark-on-dark,
+   illegible. Give each variant a solid dark tinted surface + light text. */
+[data-theme='dark'] .border-s-4.bg-green-50, .dark .border-s-4.bg-green-50 { background-color: #13241b !important; }
+[data-theme='dark'] .border-s-4.bg-red-50, .dark .border-s-4.bg-red-50 { background-color: #2a1416 !important; }
+[data-theme='dark'] .border-s-4.bg-orange-50, .dark .border-s-4.bg-orange-50 { background-color: #2a1b10 !important; }
+[data-theme='dark'] .border-s-4.bg-blue-50, .dark .border-s-4.bg-blue-50 { background-color: #241a12 !important; }
+[data-theme='dark'] .border-s-4.bg-green-50 [class*="text-green-"], .dark .border-s-4.bg-green-50 [class*="text-green-"] { color: #bbf7d0 !important; }
+[data-theme='dark'] .border-s-4.bg-red-50 [class*="text-red-"], .dark .border-s-4.bg-red-50 [class*="text-red-"] { color: #fecaca !important; }
+[data-theme='dark'] .border-s-4.bg-orange-50 [class*="text-orange-"], .dark .border-s-4.bg-orange-50 [class*="text-orange-"] { color: #fed7aa !important; }
+[data-theme='dark'] .border-s-4.bg-blue-50 [class*="text-blue-"], .dark .border-s-4.bg-blue-50 [class*="text-blue-"] { color: #e9c5a4 !important; }

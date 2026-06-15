@@ -233,6 +233,9 @@ function applyColorMode(mode) {
 	const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode
 	document.documentElement.setAttribute("data-theme", theme)
 	document.documentElement.classList.toggle("dark", theme === "dark")
+	// parity with the NeoCockpit toggle: also publish the resolved theme so other
+	// open surfaces (desk, Insights) pick it up live via the storage event
+	try { localStorage.setItem("theme_active", theme) } catch (e) { /* noop */ }
 }
 
 const userInitials = computed(() => {
