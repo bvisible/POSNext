@@ -387,3 +387,21 @@ button.active\:scale-95:active,
 [data-theme='dark'] .border-s-4.bg-red-50 [class*="text-red-"], .dark .border-s-4.bg-red-50 [class*="text-red-"] { color: #fecaca !important; }
 [data-theme='dark'] .border-s-4.bg-orange-50 [class*="text-orange-"], .dark .border-s-4.bg-orange-50 [class*="text-orange-"] { color: #fed7aa !important; }
 [data-theme='dark'] .border-s-4.bg-blue-50 [class*="text-blue-"], .dark .border-s-4.bg-blue-50 [class*="text-blue-"] { color: #e9c5a4 !important; }
+/* more light GRADIENTS the first gradient block missed: neutral (from-gray-50/100,
+   the POS Settings "warehouse selection" panel = from-gray-50 to-gray-100) +
+   amber + red gradient chips. bg-color overrides don't touch background-image,
+   so flatten the gradient and set a dark surface / dark hue-tint. */
+[data-theme='dark'] [class*="bg-gradient"][class*="from-gray-50"], .dark [class*="bg-gradient"][class*="from-gray-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-gray-100"], .dark [class*="bg-gradient"][class*="from-gray-100"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-white"], .dark [class*="bg-gradient"][class*="from-white"] {
+	background-image: none !important; background-color: #1c1f26 !important;
+}
+[data-theme='dark'] [class*="bg-gradient"][class*="from-amber-50"], .dark [class*="bg-gradient"][class*="from-amber-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-yellow-50"], .dark [class*="bg-gradient"][class*="from-yellow-50"] {
+	background-image: none !important; background-color: rgba(245, 158, 11, 0.12) !important;
+}
+[data-theme='dark'] [class*="bg-gradient"][class*="from-red-50"], .dark [class*="bg-gradient"][class*="from-red-50"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-red-100"], .dark [class*="bg-gradient"][class*="from-red-100"],
+[data-theme='dark'] [class*="bg-gradient"][class*="from-rose-50"], .dark [class*="bg-gradient"][class*="from-rose-50"] {
+	background-image: none !important; background-color: rgba(239, 68, 68, 0.12) !important;
+}
