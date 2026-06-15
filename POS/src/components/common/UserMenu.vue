@@ -236,6 +236,38 @@ function applyColorMode(mode) {
 	// parity with the NeoCockpit toggle: also publish the resolved theme so other
 	// open surfaces (desk, Insights) pick it up live via the storage event
 	try { localStorage.setItem("theme_active", theme) } catch (e) { /* noop */ }
+	// Persist Frappe's native User.desk_theme too: the desk cockpit reads it via
+	// boot as the AUTHORITATIVE source on a fresh load (it deliberately never
+	// fights the server), so without this a reloaded desk would ignore a change
+	// made here. Use the ORM (frappe.client.set_value), NOT switch_theme: the
+	// latter writes the DB directly and leaves the desk's boot CACHE stale, so the
+	// change wouldn't survive a reload. set_value triggers User.on_update which
+	// invalidates the boot cache. Mirrors the cockpit toggle. Best-effort. //// neoffice
+	;(async () => {
+		try {
+			const deskTheme = mode === "system" ? "Automatic" : mode.charAt(0).toUpperCase() + mode.slice(1)
+			const csrf = window.csrf_token || ""
+			const user = await fetch("/api/method/frappe.auth.get_logged_user", {
+				headers: { "X-Frappe-CSRF-Token": csrf },
+			})
+				.then((r) => r.json())
+				.then((d) => d.message)
+				.catch(() => null)
+			if (!user || user === "Guest") return
+			await fetch("/api/method/frappe.client.set_value", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
+				body: JSON.stringify({
+					doctype: "User",
+					name: user,
+					fieldname: "desk_theme",
+					value: deskTheme,
+				}),
+			})
+		} catch (e) {
+			/* noop */
+		}
+	})()
 }
 
 const userInitials = computed(() => {
