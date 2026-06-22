@@ -13106,6 +13106,14 @@ msgstr "✓ Session fermée avec succès"
 msgid "✗ Connection failed: {0}"
 msgstr "✗ Échec de la connexion : {0}"
 
+#: POS/src/components/payments/QRPaymentDialog.vue:331
+msgid "Failed to load payment endpoints"
+msgstr "Échec du chargement des moyens de paiement"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:326
+msgid "This Mode of Payment is not enabled on the POS Profile. Add a row in POS Profile → Active Payment Methods & Terminals."
+msgstr "Ce mode de paiement n'est pas activé sur le profil POS. Ajoutez une ligne dans Profil POS → Méthodes & terminaux de paiement actifs."
+
 msgid "POS Legacy"
 msgstr "POS Ancien"
 

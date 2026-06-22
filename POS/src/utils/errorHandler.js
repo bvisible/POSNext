@@ -63,6 +63,14 @@ export function parseError(error) {
 		technicalDetails: null,
 	}
 
+	// Defensive: some call sites (especially aborted fetches and the resource
+	// wrapper) reject with `undefined` or a primitive. Reading `.exc_type` on
+	// that would throw "Cannot read properties of undefined (reading 'exc_type')"
+	// and get re-displayed verbatim — masking the real failure.
+	if (!error || typeof error !== "object") {
+		return context
+	}
+
 	// Build technical details
 	const detailsParts = []
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a

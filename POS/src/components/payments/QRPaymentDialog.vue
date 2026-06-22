@@ -328,7 +328,17 @@ async function loadDevices() {
 			)
 		}
 	} catch (e) {
-		devicesError.value = e?.message || __("Failed to load payment endpoints")
+		// Some failure paths (aborted fetch, undefined rejection from
+		// frappe-ui call helper) surface as a TypeError whose message —
+		// e.g. "Cannot read properties of undefined (reading 'exc_type')"
+		// — is unhelpful in the cashier UI. Hide it behind a generic
+		// fallback while still logging the raw error for ops.
+		console.error("[QRPaymentDialog] loadDevices failed", e)
+		const raw = e?.message || ""
+		const isInternalJsError = /cannot read|undefined is not|null is not/i.test(raw)
+		devicesError.value = isInternalJsError || !raw
+			? __("Failed to load payment endpoints")
+			: raw
 		availableDevices.value = []
 	} finally {
 		loadingDevices.value = false
