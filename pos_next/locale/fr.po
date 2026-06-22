@@ -13114,6 +13114,138 @@ msgstr "Échec du chargement des moyens de paiement"
 msgid "This Mode of Payment is not enabled on the POS Profile. Add a row in POS Profile → Active Payment Methods & Terminals."
 msgstr "Ce mode de paiement n'est pas activé sur le profil POS. Ajoutez une ligne dans Profil POS → Méthodes & terminaux de paiement actifs."
 
+#: POS/src/components/payments/QRPaymentDialog.vue:29
+msgid "QR Payment"
+msgstr "Paiement QR"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:50
+msgid "Amount to charge"
+msgstr "Montant à encaisser"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:62
+msgid "Loading…"
+msgstr "Chargement…"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:69
+msgid "Endpoint"
+msgstr "Terminal"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:130
+msgid "⌫ Backspace"
+msgstr "⌫ Effacer"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:143
+msgid "Generating QR…"
+msgstr "Génération du QR…"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:187
+msgid "Simulator (test mode)"
+msgstr "Simulateur (mode test)"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:191
+msgid "No customer scan will happen. Pick an outcome to advance the Payment Intent FSM."
+msgstr "Aucun scan client ne sera effectué. Choisissez un résultat pour faire avancer le Payment Intent."
+
+#: POS/src/components/payments/QRPaymentDialog.vue:200
+msgid "✓ Accept"
+msgstr "✓ Accepter"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:208
+msgid "✗ Decline"
+msgstr "✗ Refuser"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:452
+msgid "Simulator call failed"
+msgstr "Échec de l'appel au simulateur"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:495
+msgid "Enter amount and generate the QR"
+msgstr "Saisissez le montant puis générez le QR"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:497
+msgid "Scan with the TWINT app"
+msgstr "Scanner avec l'application TWINT"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:502
+msgid "Preparing the QR…"
+msgstr "Préparation du QR…"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:505
+msgid "Scan to pay"
+msgstr "Scanner pour payer"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:507
+msgid "Confirming with TWINT…"
+msgstr "Confirmation auprès de TWINT…"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:509
+msgid "Payment successful"
+msgstr "Paiement réussi"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:511
+msgid "Payment failed"
+msgstr "Paiement échoué"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:513
+msgid "Payment canceled"
+msgstr "Paiement annulé"
+
+#: POS/src/components/payments/QRPaymentDialog.vue:520
+msgid "Please wait a moment."
+msgstr "Veuillez patienter un instant."
+
+#: POS/src/components/payments/QRPaymentDialog.vue:525
+msgid "Open your TWINT app and point your camera at the code"
+msgstr "Ouvrez votre application TWINT et pointez la caméra sur le code"
+
+#: POS/src/components/payments/CardPresentDialog.vue:44
+msgid "Card Payment"
+msgstr "Paiement par carte"
+
+#: POS/src/components/payments/CardPresentDialog.vue:74
+msgid "Loading terminals…"
+msgstr "Chargement des terminaux…"
+
+#: POS/src/components/payments/CardPresentDialog.vue:108
+msgid "offline"
+msgstr "hors ligne"
+
+#: POS/src/components/payments/CardPresentDialog.vue:112
+msgid "test"
+msgstr "test"
+
+#: POS/src/components/payments/CardPresentDialog.vue:193
+msgid "No physical terminal will run. Pick an outcome to drive the simulated reader."
+msgstr "Aucun terminal physique ne sera utilisé. Choisissez un résultat pour piloter le lecteur simulé."
+
+#: POS/src/components/payments/CardPresentDialog.vue:238
+msgid "Start payment"
+msgstr "Démarrer le paiement"
+
+#: POS/src/components/payments/CardPresentDialog.vue:459
+msgid "Enter amount and start the payment"
+msgstr "Saisissez le montant puis démarrez le paiement"
+
+#: POS/src/components/payments/CardPresentDialog.vue:460
+msgid "Creating payment…"
+msgstr "Création du paiement…"
+
+#: POS/src/components/payments/CardPresentDialog.vue:466
+msgid "Preparing the terminal…"
+msgstr "Préparation du terminal…"
+
+#: POS/src/components/payments/CardPresentDialog.vue:469
+msgid "Present card on reader"
+msgstr "Présenter la carte sur le lecteur"
+
+#: POS/src/components/payments/CardPresentDialog.vue:471
+msgid "Processing payment…"
+msgstr "Traitement du paiement…"
+
+#: POS/src/components/payments/CardPresentDialog.vue:489
+msgid "Tap, insert or swipe the card on the terminal"
+msgstr "Tapez, insérez ou glissez la carte sur le terminal"
+
 msgid "POS Legacy"
 msgstr "POS Ancien"
 
