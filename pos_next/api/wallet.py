@@ -311,6 +311,31 @@ def create_wallet_on_customer_insert(doc, method=None):
 		frappe.log_error(frappe.get_traceback(), f"Wallet auto-create failed for {doc.name}")
 
 
+def delete_unused_wallet_on_customer_trash(doc, method=None):
+	"""Hook: on_trash on Customer.
+
+	A wallet is auto-created for every customer, and its reqd+unique link to the
+	customer blocks deletion via Frappe's link-integrity check. This runs before
+	that check (on_trash fires first in delete_doc) and removes the wallet only
+	when it has never been used (no transactions and a zero balance), so an unused
+	customer can be deleted. A wallet with real activity is left in place, which
+	preserves the link-integrity block and the existing error message.
+	"""
+	wallets = frappe.get_all("Wallet", filters={"customer": doc.name}, pluck="name")
+	for wallet_name in wallets:
+		if _wallet_has_activity(wallet_name):
+			continue
+		frappe.delete_doc("Wallet", wallet_name, ignore_permissions=True, force=True)
+
+
+def _wallet_has_activity(wallet_name):
+	"""A wallet is considered used if it has any transaction or a non-zero balance."""
+	if frappe.db.exists("Wallet Transaction", {"wallet": wallet_name}):
+		return True
+	wallet = frappe.get_doc("Wallet", wallet_name)
+	return abs(flt(wallet.get_balance())) > 0.005
+
+
 @frappe.whitelist()
 def get_or_create_wallet(customer, company, pos_settings=None, force_create=False):
 	"""Get existing wallet or create a new one."""

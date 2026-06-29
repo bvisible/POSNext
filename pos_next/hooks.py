@@ -239,7 +239,10 @@ doc_events = {
 			"pos_next.api.wallet.create_wallet_on_customer_insert"
 		],
 		"on_update": "pos_next.realtime_events.emit_customer_event",
-		"on_trash": "pos_next.realtime_events.emit_customer_event"
+		"on_trash": [
+			"pos_next.api.wallet.delete_unused_wallet_on_customer_trash",
+			"pos_next.realtime_events.emit_customer_event"
+		]
 	},
 	"Sales Invoice": {
 		"validate": [
