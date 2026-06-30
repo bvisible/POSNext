@@ -23,11 +23,43 @@ import { call } from "frappe-ui"
 
 const FINAL_STATUSES = new Set(["succeeded", "failed", "canceled", "refunded"])
 
+// Fallback polling cadence. The till finalizes a payment on the realtime
+// `payment.intent.*.updated` event, but realtime is a single point of failure
+// (e.g. SocketIO is dropped when the server restarts and an already-open till
+// never reconnects). Polling the status as a safety net guarantees the till
+// still validates even if no realtime event ever arrives.
+const POLL_INTERVAL_MS = 2500
+const POLL_MAX_MS = 240_000
+
 export function usePaymentDriver() {
 	const intent = ref(null)
 	const isInFlight = ref(false)
 	const lastError = ref(null)
 	let realtimeOff = null
+	let pollTimer = null
+	let pollDeadline = 0
+
+	function _startPolling(intentName) {
+		// Safety net for a missed/late realtime event: reconcile the intent
+		// status every few seconds until it is final. Harmless when realtime
+		// works — refreshStatus is idempotent and stops the poll once final.
+		if (pollTimer || !intentName) return
+		pollDeadline = Date.now() + POLL_MAX_MS
+		pollTimer = setInterval(() => {
+			if (Date.now() > pollDeadline) {
+				_stopPolling()
+				return
+			}
+			refreshStatus(intentName)
+		}, POLL_INTERVAL_MS)
+	}
+
+	function _stopPolling() {
+		if (pollTimer) {
+			clearInterval(pollTimer)
+			pollTimer = null
+		}
+	}
 
 	function _attachRealtime(intentName) {
 		_detachRealtime()
@@ -91,6 +123,9 @@ export function usePaymentDriver() {
 			}
 			if (FINAL_STATUSES.has(result?.status)) {
 				isInFlight.value = false
+			} else if (result?.intent_name) {
+				// Not final yet — poll as a safety net alongside realtime.
+				_startPolling(result.intent_name)
 			}
 			return result
 		} catch (err) {
@@ -111,6 +146,7 @@ export function usePaymentDriver() {
 			if (FINAL_STATUSES.has(fresh?.status)) {
 				isInFlight.value = false
 				_detachRealtime()
+				_stopPolling()
 			}
 			return fresh
 		} catch (err) {
@@ -129,6 +165,7 @@ export function usePaymentDriver() {
 			intent.value = result
 			isInFlight.value = false
 			_detachRealtime()
+			_stopPolling()
 			return result
 		} catch (err) {
 			lastError.value = err
@@ -161,6 +198,7 @@ export function usePaymentDriver() {
 
 	function reset() {
 		_detachRealtime()
+		_stopPolling()
 		intent.value = null
 		isInFlight.value = false
 		lastError.value = null
@@ -168,6 +206,7 @@ export function usePaymentDriver() {
 
 	onBeforeUnmount(() => {
 		_detachRealtime()
+		_stopPolling()
 	})
 
 	// Convenient computed refs the UI can bind to without optional-chaining everywhere.
