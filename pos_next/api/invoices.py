@@ -1823,6 +1823,25 @@ def submit_invoice(invoice=None, data=None):
                         alert=True,
                         indicator="orange"
                     )
+        # //// PSP refund/link wiring (TWINT, Stripe) — Neoffice
+        # On a sale: link the just-succeeded payment intent(s) to this invoice so
+        # a later return can find and reverse them. On a return: trigger the real
+        # PSP refund (TWINT reverseOrder / Stripe refund) for terminal payment
+        # lines, driven by the refund mode the cashier chose. Best-effort — the
+        # invoice is already submitted and must never be rolled back over a PSP
+        # call; failures are logged and surfaced so the cashier can act.
+        if doctype == DOCTYPE_SALES_INVOICE:
+            try:
+                if invoice_doc.get("is_return"):
+                    _process_psp_refunds_for_return(invoice_doc)
+                else:
+                    _link_psp_intents_to_invoice(invoice_doc)
+            except Exception:
+                frappe.log_error(
+                    "PSP refund/link wiring failed",
+                    f"{invoice_doc.name}: {frappe.get_traceback()}",
+                )
+
         # Complete the offline sync record
         if sync_record_name:
             _complete_offline_sync(sync_record_name, invoice_doc.name)
@@ -1913,6 +1932,157 @@ def submit_invoice(invoice=None, data=None):
         # Cleanup sync record if invoice was not successfully submitted
         if sync_record_name and not invoice_submitted:
             _cleanup_failed_sync(sync_record_name)
+
+
+# ---------------------------------------------------------------------------
+# PSP refund wiring (TWINT, Stripe, …) — link intents at sale, reverse at return
+# ---------------------------------------------------------------------------
+#
+# A POS payment goes through a Payment Intent (payments app). The intent is
+# created BEFORE the Sales Invoice exists, so it carries no reference to it. To
+# refund a card/TWINT payment when the cashier processes a return, we:
+#   1. at sale time, attach the just-succeeded intent(s) to the new invoice
+#      (Payment Intent.reference_name), and
+#   2. at return time, find the original intent via `return_against` and call
+#      payments.api.intent.refund_intent (→ driver.refund → TWINT reverseOrder /
+#      Stripe refund).
+# Whether a payment line is a PSP (vs cash) is decided by the POS Payment Driver
+# Mapping for (pos_profile, mode_of_payment): a mapping ⇒ refund via PSP, no
+# mapping (cash) ⇒ accounting credit note only, cashier hands the money back.
+
+
+def _resolve_psp_for_mode(pos_profile, mode_of_payment):
+    """Return ``(provider, channel)`` when ``(pos_profile, mode_of_payment)`` maps
+    to a payment-service-provider via an *enabled* POS Payment Driver Mapping,
+    else ``None`` (e.g. cash, which is not refunded through a PSP)."""
+    if not (pos_profile and mode_of_payment):
+        return None
+    row = frappe.db.get_value(
+        "POS Payment Driver Mapping",
+        {"pos_profile": pos_profile, "mode_of_payment": mode_of_payment, "enabled": 1},
+        ["provider", "channel"],
+    )
+    if not row or not row[0]:
+        return None
+    return row[0], row[1]
+
+
+def _link_psp_intents_to_invoice(invoice_doc):
+    """After a POS sale, attach the just-succeeded Payment Intent(s) to this
+    invoice so a future return can find and reverse them.
+
+    POS intents are created before the invoice exists and carry no reference, so
+    we match the most recent unlinked ``succeeded`` intent for the same provider
+    and amount. Best-effort — never blocks the sale."""
+    pos_profile = invoice_doc.get("pos_profile")
+    for p in (invoice_doc.get("payments") or []):
+        amount = flt(p.amount)
+        if amount <= 0:
+            continue
+        psp = _resolve_psp_for_mode(pos_profile, p.mode_of_payment)
+        if not psp:
+            continue
+        provider = psp[0]
+        amount_minor = int(round(amount * 100))
+        candidates = frappe.get_all(
+            "Payment Intent",
+            filters={
+                "provider": provider,
+                "amount": amount_minor,
+                "status": "succeeded",
+                "reference_name": ["is", "not set"],
+            },
+            fields=["name"],
+            order_by="creation desc",
+            limit=1,
+        )
+        if candidates:
+            frappe.db.set_value(
+                "Payment Intent",
+                candidates[0].name,
+                {"reference_doctype": "Sales Invoice", "reference_name": invoice_doc.name},
+                update_modified=False,
+            )
+
+
+def _find_original_intent(return_against, provider, amount_minor):
+    """Find the original ``succeeded`` Payment Intent to reverse for a return.
+
+    Primary: the intent linked to the original invoice at sale time
+    (``reference_name == return_against``). Fallback (sales made before this
+    linking existed): the most recent succeeded, not-yet-refunded intent for the
+    same provider + amount."""
+    if return_against:
+        linked = frappe.get_all(
+            "Payment Intent",
+            filters={
+                "reference_doctype": "Sales Invoice",
+                "reference_name": return_against,
+                "provider": provider,
+                "status": "succeeded",
+            },
+            fields=["name"],
+            order_by="creation desc",
+            limit=1,
+        )
+        if linked:
+            return linked[0].name
+    legacy = frappe.get_all(
+        "Payment Intent",
+        filters={"provider": provider, "amount": amount_minor, "status": "succeeded"},
+        fields=["name"],
+        order_by="creation desc",
+        limit=1,
+    )
+    return legacy[0].name if legacy else None
+
+
+def _process_psp_refunds_for_return(invoice_doc):
+    """For a return invoice, trigger the real PSP refund (TWINT reverseOrder /
+    Stripe refund) for each terminal payment line, found via ``return_against``.
+
+    The accounting credit note is already submitted and must not be rolled back
+    if a refund call fails — so every PSP error is caught, logged and surfaced to
+    the cashier (who can then refund manually). Cash lines (no PSP mapping) are
+    skipped: the cashier hands the money back at the till."""
+    from payments.api.intent import refund_intent
+
+    return_against = invoice_doc.get("return_against")
+    pos_profile = invoice_doc.get("pos_profile")
+    for p in (invoice_doc.get("payments") or []):
+        amount = flt(p.amount)
+        if amount >= 0:  # refund lines are negative
+            continue
+        psp = _resolve_psp_for_mode(pos_profile, p.mode_of_payment)
+        if not psp:
+            continue  # cash etc. — handed back manually, no PSP reversal
+        provider = psp[0]
+        amount_minor = int(round(abs(amount) * 100))
+        intent_name = _find_original_intent(return_against, provider, amount_minor)
+        if not intent_name:
+            frappe.msgprint(
+                _("Return submitted, but no original {0} payment was found to refund automatically — please refund manually.").format(p.mode_of_payment),
+                alert=True,
+                indicator="orange",
+            )
+            continue
+        try:
+            refund_intent(intent_name, amount=amount_minor)
+            frappe.msgprint(
+                _("{0} refund of {1} processed automatically.").format(p.mode_of_payment, abs(amount)),
+                alert=True,
+                indicator="green",
+            )
+        except Exception:
+            frappe.log_error(
+                "PSP refund failed",
+                f"return={invoice_doc.name} intent={intent_name}: {frappe.get_traceback()}",
+            )
+            frappe.msgprint(
+                _("Return submitted, but the {0} refund failed — please refund manually.").format(p.mode_of_payment),
+                alert=True,
+                indicator="orange",
+            )
 
 
 def _create_invoice_from_sales_order(so, payments, pos_profile, invoice_payload, source_data):
