@@ -1,4 +1,4 @@
-import { ref, watch, nextTick, onUnmounted } from "vue"
+import { ref, watch, nextTick, onMounted, onUnmounted } from "vue"
 import { QueuedMutex } from "@/utils/mutex"
 
 /**
@@ -41,6 +41,16 @@ export function useSearchInput({
 		timeout: 10000,
 		name: "BarcodeSearch",
 	})
+
+	//// global hardware-scanner capture: scan works anywhere, not just the focused bar
+	// A hardware scanner types fast then sends Enter. When scanner mode is on we
+	// capture those bursts at the document level so a scan lands in the cart even
+	// after the cashier clicked elsewhere. Human typing is filtered out by the
+	// inter-key gap; typing into a real field (or during a modal) is never hijacked.
+	let scanBuffer = ""
+	let lastScanKeyTime = 0
+	const SCAN_RESET_MS = 60 // gap above which the buffer resets (scanner ≪ human)
+	const SCAN_MIN_LENGTH = 3
 
 	// ---- Timer helpers ----
 
@@ -209,6 +219,63 @@ export function useSearchInput({
 		}
 	}
 
+	// ---- Global hardware-scanner capture ----
+
+	/** True when the event target is a field that owns its own text input. */
+	function isEditableTarget(el) {
+		if (!el) return false
+		const tag = el.tagName
+		return (
+			tag === "INPUT" ||
+			tag === "TEXTAREA" ||
+			tag === "SELECT" ||
+			el.isContentEditable === true
+		)
+	}
+
+	/**
+	 * Document-level keydown handler that turns a fast scanner burst into a
+	 * barcode lookup regardless of what is focused. Only active in scanner mode.
+	 *
+	 * Skipped when a field is focused (the search bar has its own handler; other
+	 * fields are human typing) or while a modal is open. The inter-key gap
+	 * (SCAN_RESET_MS) discards slow human keystrokes so only real scans fire.
+	 */
+	function handleGlobalKeydown(event) {
+		if (!scannerEnabled.value) return
+		if (isAnyDialogOpen?.value) return
+		// Editable fields (incl. the search input) handle their own keydown.
+		if (isEditableTarget(event.target)) return
+
+		const now = Date.now()
+		if (now - lastScanKeyTime > SCAN_RESET_MS) scanBuffer = ""
+		lastScanKeyTime = now
+
+		if (event.key === "Enter") {
+			const barcode = scanBuffer
+			scanBuffer = ""
+			if (barcode.length >= SCAN_MIN_LENGTH) {
+				event.preventDefault()
+				processBarcodeScan(barcode, autoAddEnabled.value)
+			}
+			return
+		}
+
+		// Accumulate single printable characters (ignore modifiers/navigation).
+		if (
+			event.key.length === 1 &&
+			!event.ctrlKey &&
+			!event.metaKey &&
+			!event.altKey
+		) {
+			scanBuffer += event.key
+		}
+	}
+
+	onMounted(() => {
+		document.addEventListener("keydown", handleGlobalKeydown, true)
+	})
+
 	// ---- Dialog-close watcher ----
 	// Refocuses the search bar when all dialogs close (scanner/auto-add modes)
 	const stopDialogWatcher = watch(isAnyDialogOpen, (isOpen, wasOpen) => {
@@ -221,6 +288,7 @@ export function useSearchInput({
 	function cleanup() {
 		clearAutoSearchTimer()
 		stopDialogWatcher()
+		document.removeEventListener("keydown", handleGlobalKeydown, true)
 	}
 
 	onUnmounted(cleanup)
