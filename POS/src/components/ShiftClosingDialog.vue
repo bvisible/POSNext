@@ -373,7 +373,7 @@
                       :id="`payment-${idx}`"
                       :value="payment.closing_amount"
                       @input="(e) => updateClosingAmount(payment, e.target.value)"
-                      @focus="(e) => e.target.select()"
+                      @focus="selectAmountField"
                       type="number"
                       step="10"
                       min="0"
@@ -420,7 +420,7 @@
                       <input
                         :value="payment.closing_amount"
                         @input="(e) => updateClosingAmount(payment, e.target.value)"
-                        @focus="(e) => e.target.select()"
+                        @focus="selectAmountField"
                         type="number"
                         step="0.01"
                         min="0"
@@ -772,6 +772,21 @@ function updateClosingAmount(payment, value) {
 	payment.closing_amount = value
 	payment._touched = true
 	calculateDifference(payment)
+}
+
+//// select the field content on focus so a pre-filled 0 is typed over.
+// Deferred to the next tick: on a mouse click the caret is placed on mouseup
+// (after focus), which would clear a synchronous select() — the timeout runs
+// after that, so the selection sticks for both click and keyboard focus.
+function selectAmountField(event) {
+	const el = event.target
+	setTimeout(() => {
+		try {
+			el.select()
+		} catch {
+			// some inputs don't support select(); ignore
+		}
+	}, 0)
 }
 
 const canSubmit = computed(() => {
