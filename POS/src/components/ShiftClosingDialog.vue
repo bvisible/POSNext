@@ -368,10 +368,12 @@
                     </div>
 
                     <!-- Live native input (updates on each keystroke, no blur needed) -->
+                    <!-- //// select-all on focus so a pre-filled 0 is typed over, not appended -->
                     <input
                       :id="`payment-${idx}`"
                       :value="payment.closing_amount"
                       @input="(e) => updateClosingAmount(payment, e.target.value)"
+                      @focus="(e) => e.target.select()"
                       type="number"
                       step="10"
                       min="0"
@@ -418,6 +420,7 @@
                       <input
                         :value="payment.closing_amount"
                         @input="(e) => updateClosingAmount(payment, e.target.value)"
+                        @focus="(e) => e.target.select()"
                         type="number"
                         step="0.01"
                         min="0"
