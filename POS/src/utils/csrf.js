@@ -220,6 +220,27 @@ export function createCSRFAwareRequest(
 	{ silent = false } = {},
 ) {
 	return async function csrfAwareRequest(...args) {
+		//// customer-display auth: paired display devices have no Frappe session,
+		// only an API key (localStorage). Send it as a Frappe token Authorization
+		// header so every request authenticates as the key's user and is
+		// CSRF-exempt. Scoped to the /display route so it never affects the POS.
+		try {
+			if (
+				typeof window !== "undefined" &&
+				window.location?.pathname?.includes("/display")
+			) {
+				const displayKey = window.localStorage?.getItem("pos_display_api_key")
+				if (displayKey && args[0] && typeof args[0] === "object") {
+					args[0].headers = {
+						...(args[0].headers || {}),
+						Authorization: `token ${displayKey}`,
+					}
+				}
+			}
+		} catch {
+			// ignore — fall back to normal (session) auth
+		}
+
 		try {
 			return await originalRequest.apply(this, args)
 		} catch (error) {
