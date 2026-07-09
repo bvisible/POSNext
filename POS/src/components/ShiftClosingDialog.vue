@@ -716,12 +716,16 @@ async function loadClosingData() {
 		if (data.payment_reconciliation) {
 			data.payment_reconciliation = data.payment_reconciliation.map((payment) => {
 				//// zero-activity methods (nothing expected) need no manual count:
-				// pre-fill 0 and mark touched so they never block the close.
+				// pre-fill 0 and mark touched so they never block the close. Methods
+				// that DO expect money start empty (the backend's default 0 is treated
+				// as "not counted yet") so the cashier gets a blank field, not a
+				// premature deficit.
 				const expected = Number.parseFloat(payment.expected_amount) || 0
 				const autoZero = expected === 0
+				const savedAmount = Number.parseFloat(payment.closing_amount) || null
 				return reactive({
 					...payment,
-					closing_amount: autoZero ? 0 : (payment.closing_amount ?? null),
+					closing_amount: autoZero ? 0 : savedAmount,
 					difference: 0,
 					_touched: autoZero,
 				})
