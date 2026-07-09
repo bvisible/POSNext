@@ -6944,6 +6944,42 @@ msgstr ""
 "\n"
 "Veuillez réduire la quantité ou vérifier la disponibilité du stock."
 
+#: POS/src/utils/stockValidator.js:95
+msgid "unit"
+msgstr "unité"
+
+#: POS/src/utils/stockValidator.js:95
+msgid "units"
+msgstr "unités"
+
+#: POS/src/utils/stockValidator.js:92
+msgid "\"{0}\" is out of stock in warehouse \"{1}\"."
+msgstr "« {0} » est en rupture de stock dans l'entrepôt « {1} »."
+
+#: POS/src/utils/stockValidator.js:97
+msgid ""
+"Not enough stock for \"{0}\".\n"
+"\n"
+"You requested {1} {2}, but only {3} {4} available in \"{5}\"."
+msgstr ""
+"Stock insuffisant pour « {0} ».\n"
+"\n"
+"Vous avez demandé {1} {2}, mais seulement {3} {4} disponible(s) dans « {5} »."
+
+#: POS/src/utils/errorHandler.js:148
+msgid ""
+"Not enough stock for \"{0}\".\n"
+"\n"
+"You need {1} {2} but the warehouse \"{3}\" doesn't have enough available.\n"
+"\n"
+"Please reduce the quantity or check another warehouse."
+msgstr ""
+"Stock insuffisant pour « {0} ».\n"
+"\n"
+"Il faut {1} {2} mais l'entrepôt « {3} » n'en a pas assez.\n"
+"\n"
+"Veuillez réduire la quantité ou vérifier un autre entrepôt."
+
 #: pos_next/api/guest_ordering.py:1032 pos_next/api/reservations.py:19
 #: pos_next/api/reservations.py:79 pos_next/api/reservations.py:133
 #: pos_next/api/reservations.py:181 pos_next/api/restaurant.py:101

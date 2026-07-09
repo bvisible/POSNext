@@ -253,9 +253,13 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 		doc = frappe._dict({"doctype": "Sales Invoice", "company": company})
 
 	# Fetch all needed Item fields in a single query (performance optimization)
+	# //// include is_stock_item so the barcode/search path can skip stock validation
 	item_data = (
 		frappe.db.get_value(
-			"Item", item_code, ["max_discount", "item_group", "brand", "stock_uom"], as_dict=True
+			"Item",
+			item_code,
+			["max_discount", "item_group", "brand", "stock_uom", "is_stock_item"],
+			as_dict=True,
 		)
 		or {}
 	)
@@ -285,6 +289,11 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 	res["serial_no_data"] = serial_no_data
 	res["item_group"] = item_data.get("item_group")
 	res["brand"] = item_data.get("brand")
+	# Non-stock items (is_stock_item=0) must not be stock-validated in the cart.
+	# The grid path (get_items) already returns this; the barcode/search path
+	# (get_item_detail) dropped it, so a non-stock item wrongly hit the stock
+	# guard (stock_qty=1 line qty was misread as "1 available").
+	res["is_stock_item"] = item_data.get("is_stock_item") or 0
 
 	# Add UOMs data
 	uoms = frappe.get_all(
