@@ -25,9 +25,10 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 	const CUSTOMERS_SYNC_KEY = "pos_customers_last_sync"
 	let serverDataFresh = false
 
+	//// tokenized any-order name search (find "Daniel Moret" via "Moret Daniel")
 	// Ultra-fast search helper - optimized for speed
 	function quickMatch(search, customer) {
-		const term = search.toLowerCase()
+		const term = search.toLowerCase().trim()
 
 		// Get or create cached lowercase strings for this customer
 		let cached = searchIndex.value.get(customer.name)
@@ -67,6 +68,26 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		// ID checks
 		if (cached.id.startsWith(term)) return 135
 		if (cached.id.includes(term)) return 90
+
+		// Multi-word, any-order fallback: split the query into tokens and require
+		// every token to match some name word (prefix) or a contact field. This
+		// finds "Daniel Moret" whether the cashier types "Moret Daniel", "Moret",
+		// "Daniel", or "dan mor" — the stored word order no longer matters.
+		const tokens = term.split(/\s+/).filter(Boolean)
+		if (tokens.length > 1) {
+			for (const tok of tokens) {
+				const matched =
+					cached.nameWords.some((w) => w.startsWith(tok)) ||
+					cached.mobile.includes(tok) ||
+					cached.email.includes(tok) ||
+					cached.id.includes(tok)
+				if (!matched) return 0
+			}
+			// Score >= 240 so the match is collected by the high-priority first
+			// pass in filteredCustomers (the second pass is skipped once the whole
+			// list has been scanned, so a lower score would be dropped).
+			return 250 // All tokens matched (order-independent)
+		}
 
 		return 0 // No match
 	}

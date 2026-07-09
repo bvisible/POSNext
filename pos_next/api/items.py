@@ -293,12 +293,13 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 		fields=["uom", "conversion_factor"],
 	)
 
-	# Add stock UOM if not already in uoms list
+	# //// item_uoms holds ALTERNATE uoms only (exclude stock_uom) to match get_items
+	# Keep item_uoms consistent with get_items(): it must contain only the
+	# ALTERNATE uoms, never the stock UOM. The frontend always adds the stock
+	# UOM itself, so including it here produced a duplicate button in the UOM
+	# dialog/cart dropdown and made single-UOM items pop a pointless dialog.
 	stock_uom = item_data.get("stock_uom")
-	if stock_uom and not any(u.get("uom") == stock_uom for u in uoms):
-		uoms.append({"uom": stock_uom, "conversion_factor": 1.0})
-
-	res["item_uoms"] = uoms
+	res["item_uoms"] = [u for u in uoms if u.get("uom") != stock_uom]
 
 	return res
 
@@ -343,8 +344,13 @@ def search_by_barcode(barcode, pos_profile):
 			item_code = frappe.db.get_value("Item", {"name": effective_barcode})
 			barcode_uom = None
 
+		# //// unknown barcode returns None (clean toast) instead of throwing
 		if not item_code:
-			frappe.throw(_("Item with barcode {0} not found").format(barcode))
+			# Unknown barcode is an expected, recoverable case. Returning None
+			# lets the frontend show a clean "not found" toast; raising here
+			# surfaced a server exception (error page / stray browser tab) and
+			# spammed the Error Log with a traceback on every mistyped code.
+			return None
 
 		# Get POS Profile details
 		pos_profile_doc = frappe.get_cached_doc("POS Profile", pos_profile)

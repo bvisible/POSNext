@@ -27,7 +27,6 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 		)
 
 		filters = {}
-		or_filters = []
 
 		# Filter by POS Profile customer group if specified
 		if pos_profile:
@@ -46,24 +45,51 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 			filters["disabled"] = 0
 
 		search_term = (search_term or "").strip()
-		if search_term:
-			like_term = f"%{search_term}%"
-			or_filters = [
-				["Customer", "name", "like", like_term],
-				["Customer", "customer_name", "like", like_term],
-				["Customer", "mobile_no", "like", like_term],
-				["Customer", "email_id", "like", like_term],
-			]
-
 		customer_limit = limit if limit not in (None, 0) else frappe.db.count("Customer", filters)
-		result = frappe.get_all(
-			"Customer",
-			filters=filters,
-			or_filters=or_filters or None,
-			fields=["name", "customer_name", "mobile_no", "email_id", "disabled"],
-			limit=customer_limit,
-			order_by="customer_name asc",
-		)
+		fields = ["name", "customer_name", "mobile_no", "email_id", "disabled"]
+
+		# Split the query into words so the order the name was entered in does not
+		# matter: "Moret Daniel" must find a customer stored as "Daniel Moret".
+		# Each word must match some field (OR across fields), and all words must
+		# match (AND across words) — which frappe.get_all's single or_filters group
+		# cannot express, so build the condition with the query builder.
+		words = search_term.split()
+		if words:
+			Customer = frappe.qb.DocType("Customer")
+			query = frappe.qb.from_(Customer).select(
+				Customer.name,
+				Customer.customer_name,
+				Customer.mobile_no,
+				Customer.email_id,
+				Customer.disabled,
+			)
+			# Re-apply the base filters (customer_group + disabled/modified).
+			if filters.get("customer_group"):
+				query = query.where(Customer.customer_group == filters["customer_group"])
+			if "modified" in filters:
+				query = query.where(Customer.modified >= modified_since)
+			else:
+				query = query.where(Customer.disabled == 0)
+			# AND across words, OR across fields for each word.
+			for word in words:
+				like = f"%{word}%"
+				query = query.where(
+					Customer.name.like(like)
+					| Customer.customer_name.like(like)
+					| Customer.mobile_no.like(like)
+					| Customer.email_id.like(like)
+				)
+			result = (
+				query.orderby(Customer.customer_name).limit(customer_limit).run(as_dict=True)
+			)
+		else:
+			result = frappe.get_all(
+				"Customer",
+				filters=filters,
+				fields=fields,
+				limit=customer_limit,
+				order_by="customer_name asc",
+			)
 		frappe.logger().debug(f"get_customers returned {len(result)} customers")
 		return result
 	except Exception as e:

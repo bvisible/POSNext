@@ -528,9 +528,12 @@ function buildUomOptions() {
 		priceLabel: __("per {0}", [props.item.stock_uom]),
 	})
 
-	// Additional UOMs
+	//// skip stock_uom in item_uoms — already added above (guard vs dup button)
+	// Additional UOMs (skip the stock UOM: it is always rendered above, and some
+	// backends still include it in item_uoms — guard against a duplicate button)
 	if (props.item.item_uoms && props.item.item_uoms.length > 0) {
 		props.item.item_uoms.forEach((uomData) => {
+			if (uomData.uom === props.item.stock_uom) return
 			uomOptions.push({
 				type: "uom",
 				uom: uomData.uom,

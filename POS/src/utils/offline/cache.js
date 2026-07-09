@@ -254,16 +254,24 @@ export const searchCachedCustomers = async (searchTerm = "", limit = 50) => {
 
 		const term = searchTerm.toLowerCase()
 
-		// Search by name, mobile, or email
-		const results = await db.customers
-			.where("customer_name")
-			.startsWithIgnoreCase(term)
-			.or("mobile_no")
-			.startsWithIgnoreCase(term)
-			.or("email_id")
-			.startsWithIgnoreCase(term)
-			.limit(limit)
-			.toArray()
+		//// tokenized any-order search (was startsWith → missed "Moret" in "Daniel Moret")
+		// Split the query into words and require each to match somewhere in the
+		// name / mobile / email, in any order. The previous startsWithIgnoreCase
+		// only matched the very beginning of customer_name, so "Moret" never
+		// found "Daniel Moret".
+		const tokens = term.split(/\s+/).filter(Boolean)
+		const all = await db.customers.toArray()
+		const results = all
+			.filter((cust) => {
+				const haystack =
+					(cust.customer_name || "").toLowerCase() +
+					" " +
+					(cust.mobile_no || "").toLowerCase() +
+					" " +
+					(cust.email_id || "").toLowerCase()
+				return tokens.every((tok) => haystack.includes(tok))
+			})
+			.slice(0, limit)
 
 		return results
 	} catch (error) {

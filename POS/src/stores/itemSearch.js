@@ -374,9 +374,15 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		},
 	})
 
+	//// explicit onError so frappe-ui's default handler can't surface an error page/tab
 	const searchByBarcodeResource = createResource({
 		url: "pos_next.api.items.search_by_barcode",
 		auto: false,
+		onError(error) {
+			// Handled by the caller (processBarcodeScan shows a clean toast).
+			// Defining onError prevents frappe-ui's default error UI from firing.
+			log.error("Barcode search error", error)
+		},
 	})
 
 	// Getters
