@@ -435,6 +435,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	function setCustomer(selectedCustomer) {
 		customer.value = selectedCustomer
+		//// clear stale transaction-rule header discount on customer removal — feature b
+		// A customer-group pricing rule can't qualify without a customer, and the
+		// offer recompute is skipped when there is none — so drop the rule discount
+		// here to avoid a phantom header discount lingering in the cart. A newly
+		// selected customer recomputes offers normally and re-applies if eligible.
+		if (!selectedCustomer) {
+			ruleHeaderDiscount.value = 0
+			rebuildIncrementalCache()
+		}
 	}
 
 	function setPendingItem(item, qty = 1, mode = "uom") {
