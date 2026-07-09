@@ -6944,6 +6944,14 @@ msgstr ""
 "\n"
 "Veuillez réduire la quantité ou vérifier la disponibilité du stock."
 
+#: POS/src/pages/CustomerDisplay.vue
+msgid "Fullscreen"
+msgstr "Plein écran"
+
+#: POS/src/pages/CustomerDisplay.vue
+msgid "Exit fullscreen"
+msgstr "Quitter le plein écran"
+
 #: POS/src/utils/stockValidator.js:95
 msgid "unit"
 msgstr "unité"

@@ -1,5 +1,16 @@
 <template>
 	<div class="customer-display min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+		<!-- //// fullscreen toggle (top bar), visible in every state -->
+		<button
+			type="button"
+			@click="toggleFullscreen"
+			class="fixed top-3 end-3 z-50 p-2 rounded-lg bg-gray-800/40 hover:bg-gray-800/70 text-white/70 hover:text-white backdrop-blur-sm transition-colors"
+			:title="isFullscreen ? __('Exit fullscreen') : __('Fullscreen')"
+			:aria-label="isFullscreen ? __('Exit fullscreen') : __('Fullscreen')"
+		>
+			<FeatherIcon :name="isFullscreen ? 'minimize' : 'maximize'" class="w-5 h-5" />
+		</button>
+
 		<!-- Not authenticated: Show auth modal -->
 		<DisplayAuth v-if="!displayStore.isAuthenticated" />
 
@@ -275,6 +286,25 @@ function handleCustomerCreated(customer) {
 	}
 }
 
+//// fullscreen toggle for the customer display (button in the top bar)
+const isFullscreen = ref(false)
+
+async function toggleFullscreen() {
+	try {
+		if (!document.fullscreenElement) {
+			await document.documentElement.requestFullscreen()
+		} else {
+			await document.exitFullscreen()
+		}
+	} catch {
+		// ignore (denied / unsupported)
+	}
+}
+
+function handleFullscreenChange() {
+	isFullscreen.value = !!document.fullscreenElement
+}
+
 //// keep the customer display (2nd screen) awake via the Wake Lock API
 // Keeps the tablet screen on while the display page is visible, regardless of
 // the tablet's sleep settings. The lock is auto-released when the page is
@@ -313,6 +343,7 @@ function handleWakeVisibility() {
 onMounted(async () => {
 	requestWakeLock()
 	document.addEventListener("visibilitychange", handleWakeVisibility)
+	document.addEventListener("fullscreenchange", handleFullscreenChange)
 
 	await displayStore.tryRestoreSession()
 
@@ -326,6 +357,7 @@ onMounted(async () => {
 onUnmounted(() => {
 	displayStore.stopCartSync()
 	document.removeEventListener("visibilitychange", handleWakeVisibility)
+	document.removeEventListener("fullscreenchange", handleFullscreenChange)
 	releaseWakeLock()
 })
 </script>
