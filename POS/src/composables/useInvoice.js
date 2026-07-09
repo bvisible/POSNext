@@ -30,6 +30,11 @@ export function useInvoice() {
 	const posProfile = ref(null)
 	const posOpeningShift = ref(null) // POS Opening Shift name
 	const additionalDiscount = ref(0)
+	//// transaction-level rule header discount (feature b) — kept separate from
+	// additionalDiscount so coupons/manual/gift-card and the coupon watcher stay
+	// untouched. effectiveHeaderDiscount (below) merges them for totals + payload.
+	const ruleHeaderDiscount = ref(0) // amount surfaced by an apply_on=Transaction rule
+	const bypassRuleDiscount = ref(false) // per-ticket "cashier may override the rule" flag
 	const couponCode = ref(null)
 	const taxRules = ref([]) // Tax rules from POS Profile
 	const taxInclusive = ref(false) // Tax inclusive setting from POS Settings
@@ -193,8 +198,18 @@ export function useInvoice() {
 	// Use roundCurrency for monetary totals to match ERPNext's currency precision (from System Settings)
 	const subtotal = computed(() => roundCurrency(_cachedSubtotal.value))
 	const totalTax = computed(() => roundCurrency(_cachedTotalTax.value))
+	// Effective document-level discount actually applied to totals and sent as
+	// discount_amount. Bypass ON (cashier override) → manual/coupon amount wins;
+	// otherwise a transaction-rule discount wins when present, else coupon/manual.
+	// When no rule fired and no bypass, this equals additionalDiscount → identical
+	// to the previous behaviour (no regression for coupon/manual/gift-card).
+	const effectiveHeaderDiscount = computed(() => {
+		if (bypassRuleDiscount.value) return additionalDiscount.value || 0
+		const rule = ruleHeaderDiscount.value || 0
+		return rule > 0 ? rule : additionalDiscount.value || 0
+	})
 	const totalDiscount = computed(() =>
-		roundCurrency(_cachedTotalDiscount.value + (additionalDiscount.value || 0)),
+		roundCurrency(_cachedTotalDiscount.value + effectiveHeaderDiscount.value),
 	)
 	//// calculate discount on net total after pricing rules — 8e06bb9
 	// Net total after item-level discounts (pricing rules) but BEFORE additional discount (coupon/gift card)
@@ -204,7 +219,7 @@ export function useInvoice() {
 	)
 	const grandTotal = computed(() => {
 		const discount =
-			_cachedTotalDiscount.value + (additionalDiscount.value || 0)
+			_cachedTotalDiscount.value + effectiveHeaderDiscount.value
 
 		if (taxInclusive.value) {
 			// Tax inclusive: Subtotal already includes tax, so don't add it again
@@ -1010,7 +1025,7 @@ export function useInvoice() {
 			payments: invoicePayments,
 			//// use discount_amount instead of additional_discount_amount for gift ca… — b657e65
 			// Document-level discount for coupons and gift cards
-			discount_amount: additionalDiscount.value || 0,
+			discount_amount: effectiveHeaderDiscount.value || 0,
 			coupon_code: couponCode.value,
 			posa_coupon_code: couponCode.value
 				? couponCode.value.toUpperCase()
@@ -1084,7 +1099,7 @@ export function useInvoice() {
 					items: formatItemsForSubmission(rawItems),
 					payments: invoicePayments,
 					// Document-level discount for coupons and gift cards
-					discount_amount: additionalDiscount.value || 0,
+					discount_amount: effectiveHeaderDiscount.value || 0,
 					coupon_code: couponCode.value,
 					posa_coupon_code: couponCode.value
 						? couponCode.value.toUpperCase()
@@ -1233,6 +1248,8 @@ export function useInvoice() {
 		invoiceItems.value = []
 		payments.value = []
 		additionalDiscount.value = 0
+		ruleHeaderDiscount.value = 0
+		bypassRuleDiscount.value = false
 		couponCode.value = null
 
 		// Reset incremental cache
@@ -1260,6 +1277,8 @@ export function useInvoice() {
 		invoiceItems.value = []
 		payments.value = []
 		additionalDiscount.value = 0
+		ruleHeaderDiscount.value = 0
+		bypassRuleDiscount.value = false
 		couponCode.value = null
 
 		// Reset incremental cache
@@ -1367,6 +1386,9 @@ export function useInvoice() {
 		posProfile,
 		posOpeningShift,
 		additionalDiscount,
+		ruleHeaderDiscount,
+		bypassRuleDiscount,
+		effectiveHeaderDiscount,
 		couponCode,
 		taxRules,
 		taxInclusive,

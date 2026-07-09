@@ -98,6 +98,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		payments,
 		salesTeam,
 		additionalDiscount,
+		ruleHeaderDiscount,
+		bypassRuleDiscount,
+		effectiveHeaderDiscount,
 		taxInclusive,
 		isSubmitting,
 		addItem: addItemToInvoice,
@@ -652,7 +655,43 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			appliedRules: Array.isArray(payload.applied_pricing_rules)
 				? payload.applied_pricing_rules
 				: [],
+			// Transaction-scope (apply_on=Transaction) header discount surfaced by
+			// the backend. Zero when no such rule applies. Already resolved to an
+			// amount server-side (percentage rules included).
+			headerDiscount: {
+				discountAmount: Number.parseFloat(payload.discount_amount) || 0,
+				applyDiscountOn: payload.apply_discount_on || null,
+			},
 		}
+	}
+
+	//// apply the transaction-level rule discount (feature b) into its own ref
+	// so it never collides with the coupon-driven additionalDiscount. When the
+	// cashier has bypassed the rule on this ticket, we ignore the server value
+	// and leave their manual/coupon additionalDiscount in charge.
+	function applyHeaderDiscountFromServer(headerDiscount) {
+		if (bypassRuleDiscount.value) {
+			// Cashier owns the header discount on this ticket — never overwrite.
+			return
+		}
+		const amount = Number.parseFloat(headerDiscount?.discountAmount) || 0
+		if (ruleHeaderDiscount.value !== amount) {
+			ruleHeaderDiscount.value = amount
+			rebuildIncrementalCache()
+		}
+	}
+
+	// Toggle the per-ticket "cashier may override the rule discount" flag. When
+	// enabled the transaction rule stops driving the header discount and the
+	// cashier's manual/coupon additionalDiscount takes over; when disabled the
+	// rule regains control on the next offer recompute.
+	function setBypassRuleDiscount(enabled) {
+		bypassRuleDiscount.value = !!enabled
+		if (bypassRuleDiscount.value) {
+			// Hand control back to the cashier: drop the rule-driven amount.
+			ruleHeaderDiscount.value = 0
+		}
+		rebuildIncrementalCache()
 	}
 
 	function getAppliedOfferCodes() {
@@ -720,11 +759,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					items: responseItems,
 					freeItems,
 					appliedRules,
+					headerDiscount,
 				} = parseOfferResponse(response)
 //// Resolve race condition causing offer applied but cart not updating — 248de8f
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
+				applyHeaderDiscountFromServer(headerDiscount)
 				filterActiveOffers(appliedRules)
 
 				const offerApplied = appliedRules.includes(offerCode)
@@ -741,10 +782,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 								items: rollbackItems,
 								freeItems: rollbackFreeItems,
 								appliedRules: rollbackRules,
+								headerDiscount: rollbackHeaderDiscount,
 							} = parseOfferResponse(rollbackResponse)
 
 							applyDiscountsFromServer(rollbackItems)
 							processFreeItems(rollbackFreeItems)
+							applyHeaderDiscountFromServer(rollbackHeaderDiscount)
 							filterActiveOffers(rollbackRules)
 						} catch (rollbackError) {
 							console.error("Error rolling back offers:", rollbackError)
@@ -820,6 +863,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			appliedOffers.value = []
 			processFreeItems([]) // Remove all free items
+			ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 			removeDiscount()
 			await nextTick()
 			showSuccess(__("Offer has been removed from cart"))
@@ -838,6 +882,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			appliedOffers.value = []
 			processFreeItems([]) // Remove all free items
+			ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 			removeDiscount()
 			await nextTick()
 			showSuccess(__("Offer has been removed from cart"))
@@ -867,10 +912,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					items: responseItems,
 					freeItems,
 					appliedRules,
+					headerDiscount,
 				} = parseOfferResponse(response)
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
+				applyHeaderDiscountFromServer(headerDiscount)
 				filterActiveOffers(appliedRules)
 
 				appliedOffers.value = appliedOffers.value.filter((entry) =>
@@ -911,6 +958,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (invoiceItems.value.length === 0 && appliedOffers.value.length) {
 			appliedOffers.value = []
 			processFreeItems([]) // Remove all free items when cart is empty
+			ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 			return true
 		}
 
@@ -957,6 +1005,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					// All offers invalid - clear everything
 					appliedOffers.value = []
 					processFreeItems([])
+					ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 
 					// Reset all item rates to original (remove discounts)
 					invoiceItems.value.forEach((item) => {
@@ -982,10 +1031,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 						items: responseItems,
 						freeItems,
 						appliedRules,
+						headerDiscount,
 					} = parseOfferResponse(response)
 
 					applyDiscountsFromServer(responseItems)
 					processFreeItems(freeItems)
+					applyHeaderDiscountFromServer(headerDiscount)
 					filterActiveOffers(appliedRules)
 
 					// Update appliedOffers to only include valid ones
@@ -1755,6 +1806,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (combinedCodes.length === 0 && invalidOffers.length > 0) {
 				appliedOffers.value = []
 				processFreeItems([])
+				ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 				invoiceItems.value.forEach((item) => {
 					if (item.pricing_rules && item.pricing_rules.length > 0) {
 						item.discount_percentage = 0
@@ -1783,12 +1835,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					items: responseItems,
 					freeItems,
 					appliedRules,
+					headerDiscount,
 				} = parseOfferResponse(response)
 
 				// 4. Update cart items with new discounts
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
+				applyHeaderDiscountFromServer(headerDiscount)
 
 				// 5. Update appliedOffers list based on server confirmation
 				const actuallyApplied = new Set(appliedRules)
@@ -1850,6 +1904,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				// Cart cleared, reset offers
 				appliedOffers.value = []
 				processFreeItems([])
+				ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 				rebuildIncrementalCache()
 			}
 			// Update last processed hash on success
@@ -2021,6 +2076,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		payments,
 		salesTeam,
 		additionalDiscount,
+		ruleHeaderDiscount,
+		bypassRuleDiscount,
+		effectiveHeaderDiscount,
+		applyHeaderDiscountFromServer,
+		setBypassRuleDiscount,
 		taxInclusive,
 		pendingItem,
 		pendingItemQty,

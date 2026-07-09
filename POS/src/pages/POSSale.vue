@@ -3382,9 +3382,12 @@ async function handlePaymentCompleted(paymentData) {
 				total_tax: cartStore.totalTax,
 				total_discount: cartStore.totalDiscount,
 				write_off_amount: paymentData.write_off_amount || 0,
-				// Document-level discount for coupons and gift cards
-				discount_amount: cartStore.additionalDiscount || 0,
-				apply_discount_on: cartStore.additionalDiscount > 0 ? "Grand Total" : null,
+				//// use the effective header discount (rule/coupon/manual) — feature b
+				// Document-level discount: transaction-rule discount OR coupon/manual
+				// (effectiveHeaderDiscount merges them). Gift-card field stays the
+				// coupon/manual amount so a rule discount never inflates it.
+				discount_amount: cartStore.effectiveHeaderDiscount || 0,
+				apply_discount_on: cartStore.effectiveHeaderDiscount > 0 ? "Grand Total" : null,
 				coupon_code: cartStore.couponCode || null,
 				posa_coupon_code: cartStore.couponCode ? cartStore.couponCode.toUpperCase() : null,
 				posa_gift_card_amount_used: cartStore.additionalDiscount || 0,
