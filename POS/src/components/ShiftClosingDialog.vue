@@ -25,7 +25,7 @@
 
           <!-- Shift Summary Header (hidden in entry mode when hideExpectedAmount is enabled) -->
           <div v-if="shouldShowSummary" class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
-            <div class="flex flex-col sm:flex-row justify-start items-start gap-3 mb-3 md:mb-6">
+            <div class="flex flex-col sm:flex-row justify-start items-start gap-3 mb-2 md:mb-3">
               <div class="flex-1">
                 <h3 class="text-start text-sm md:text-base font-medium text-gray-900">{{ closingData.pos_profile }}</h3>
                 <p class="text-start text-xs md:text-sm text-gray-500 mt-1">{{ formatDateTime(closingData.period_start_date) }}</p>
@@ -39,30 +39,30 @@
             <!-- Key Metrics Grid -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
               <!-- Gross Sales (before returns) -->
-              <div class="text-start bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+              <div class="text-start bg-blue-50 border border-blue-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-blue-600 text-xs uppercase font-medium mb-1">{{ __('Gross Sales') }}</div>
-                <div class="text-lg md:text-2xl font-bold text-blue-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(grossSales) }}</div>
+                <div class="text-base md:text-xl font-bold text-blue-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(grossSales) }}</div>
                 <div class="text-blue-600 text-xs">{{ __('{0} invoices', [closingData.sales_count || salesInvoiceCount]) }}</div>
               </div>
 
               <!-- Returns -->
-              <div v-if="hasReturns" class="text-start bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
+              <div v-if="hasReturns" class="text-start bg-red-50 border border-red-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-red-600 text-xs uppercase font-medium mb-1">{{ __('Returns') }}</div>
-                <div class="text-lg md:text-2xl font-bold text-red-700 mb-0.5 md:mb-1 truncate">-{{ formatCurrency(closingData.returns_total) }}</div>
+                <div class="text-base md:text-xl font-bold text-red-700 mb-0.5 md:mb-1 truncate">-{{ formatCurrency(closingData.returns_total) }}</div>
                 <div class="text-red-600 text-xs">{{ __('{0} returns', [closingData.returns_count]) }}</div>
               </div>
 
               <!-- Net Sales (after returns) -->
-              <div class="text-start bg-green-50 border border-green-200 rounded-lg p-3 md:p-4">
+              <div class="text-start bg-green-50 border border-green-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-green-600 text-xs uppercase font-medium mb-1">{{ __('Net Sales') }}</div>
-                <div class="text-lg md:text-2xl font-bold text-green-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(closingData.grand_total) }}</div>
+                <div class="text-base md:text-xl font-bold text-green-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(closingData.grand_total) }}</div>
                 <div class="text-green-600 text-xs">{{ __('After returns') }}</div>
               </div>
 
               <!-- Tax Collected -->
-              <div class="text-start bg-gray-50 border border-gray-200 rounded-lg p-3 md:p-4">
+              <div class="text-start bg-gray-50 border border-gray-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-gray-600 text-xs uppercase font-medium mb-1">{{ __('Tax Collected') }}</div>
-                <div class="text-lg md:text-2xl font-bold text-gray-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(totalTax) }}</div>
+                <div class="text-base md:text-xl font-bold text-gray-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(totalTax) }}</div>
                 <div class="text-gray-600 text-xs">{{ __('Net tax') }}</div>
               </div>
             </div>
@@ -350,149 +350,88 @@
 
             <div class="p-3 md:p-4">
               <!-- ENTRY MODE: Simple blind input list (when hideExpectedAmount is enabled and not showing report) -->
-              <div v-if="isInEntryMode" class="flex flex-col gap-3 md:gap-4">
+              <div v-if="isInEntryMode" class="flex flex-col gap-2 md:gap-2.5">
                 <div
                   v-for="(payment, idx) in closingData.payment_reconciliation"
                   :key="idx"
-                  class="border border-gray-200 rounded-lg p-3 md:p-4 bg-white hover:border-gray-300 transition-colors"
+                  class="border border-gray-200 rounded-lg px-2.5 py-2 md:px-3 md:py-2.5 bg-white hover:border-gray-300 transition-colors"
                 >
                   <div class="flex items-center justify-between gap-3">
                     <!-- Payment Method Name with Icon -->
-                    <div class="flex items-center gap-2 md:gap-3 flex-1">
-                      <div :class="['rounded-lg p-1.5 md:p-2 flex-shrink-0', getPaymentIcon(payment.mode_of_payment).color]">
-                        <span class="text-base md:text-xl">{{ getPaymentIcon(payment.mode_of_payment).icon }}</span>
+                    <div class="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                      <div :class="['rounded-lg p-1.5 flex-shrink-0', getPaymentIcon(payment.mode_of_payment).color]">
+                        <span class="text-base md:text-lg">{{ getPaymentIcon(payment.mode_of_payment).icon }}</span>
                       </div>
-                      <label :for="`payment-${idx}`" class="text-start text-sm md:text-base font-semibold text-gray-900 cursor-pointer">
+                      <label :for="`payment-${idx}`" class="text-start text-sm md:text-base font-semibold text-gray-900 cursor-pointer truncate">
                         {{ payment.mode_of_payment }}
                       </label>
                     </div>
 
-                    <!-- Simple Input with Native Arrows -->
-                    <div class="w-40 md:w-48">
-                      <Input
-                        :id="`payment-${idx}`"
-                        :modelValue="payment.closing_amount"
-                        @update:modelValue="(value) => updateClosingAmount(payment, value)"
-                        type="number"
-                        step="10"
-                        min="0"
-                        placeholder="0.00"
-                        :disabled="submitResource.loading"
-                        :aria-label="__('Enter actual amount for {0}', [payment.mode_of_payment])"
-                        class="text-base md:text-lg text-center font-semibold"
-                      />
-                    </div>
+                    <!-- Live native input (updates on each keystroke, no blur needed) -->
+                    <input
+                      :id="`payment-${idx}`"
+                      :value="payment.closing_amount"
+                      @input="(e) => updateClosingAmount(payment, e.target.value)"
+                      type="number"
+                      step="10"
+                      min="0"
+                      inputmode="decimal"
+                      placeholder="0.00"
+                      :disabled="submitResource.loading"
+                      :aria-label="__('Enter actual amount for {0}', [payment.mode_of_payment])"
+                      class="w-32 md:w-40 px-2.5 py-1.5 text-base md:text-lg text-center font-semibold text-gray-900 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    />
                   </div>
                 </div>
               </div>
 
-              <!-- REVIEW MODE: Full payment method cards (when not in entry mode) -->
-              <div v-else class="flex flex-col gap-4 md:gap-5">
+              <!-- REVIEW MODE: compact one-row cards (when not in entry mode) -->
+              <!-- //// compact single-row reconciliation + live native input (no blur needed) -->
+              <div v-else class="flex flex-col gap-2 md:gap-2.5">
                 <div
                   v-for="(payment, idx) in closingData.payment_reconciliation"
                   :key="idx"
                   :class="[
-                    'border rounded-lg p-3 md:p-4 transition-all',
+                    'border rounded-lg px-2.5 py-2 md:px-3 md:py-2.5 transition-all',
                     payment.difference === 0 ? 'border-green-200 bg-green-50' :
                     payment.difference > 0 ? 'border-blue-200 bg-blue-50' :
                     'border-red-200 bg-red-50'
                   ]"
                 >
-                  <div class="flex items-start justify-between mb-3 md:mb-4 gap-2">
-                    <div class="flex items-center gap-2 md:gap-3">
-                      <!-- Payment Method Icon -->
-                      <div :class="['rounded-lg p-1.5 md:p-2', getPaymentIcon(payment.mode_of_payment).color]">
-                        <span class="text-base md:text-xl">{{ getPaymentIcon(payment.mode_of_payment).icon }}</span>
+                  <div class="flex items-center justify-between gap-2 md:gap-3">
+                    <!-- Left: icon + name + opening/expected -->
+                    <div class="flex items-center gap-2 md:gap-3 min-w-0">
+                      <div :class="['rounded-lg p-1.5 flex-shrink-0', getPaymentIcon(payment.mode_of_payment).color]">
+                        <span class="text-base md:text-lg">{{ getPaymentIcon(payment.mode_of_payment).icon }}</span>
                       </div>
-                      <div>
-                        <h4 class="text-start text-sm md:text-base font-semibold text-gray-900">{{ payment.mode_of_payment }}</h4>
-                        <!-- //// plain translatable label instead of HTML-in-translation (untranslated) -->
-                        <p class="text-start text-xs md:text-sm text-gray-600">
-                          {{ __('Expected') }}: <span class="font-medium">{{ formatCurrency(payment.expected_amount) }}</span>
+                      <div class="min-w-0">
+                        <h4 class="text-start text-sm md:text-base font-semibold text-gray-900 truncate">{{ payment.mode_of_payment }}</h4>
+                        <p class="text-start text-xs text-gray-500 truncate">
+                          {{ __('Opening') }} {{ formatCurrency(payment.opening_amount) }} · {{ __('Expected') }}
+                          <span class="font-medium text-gray-700">{{ formatCurrency(payment.expected_amount) }}</span>
                         </p>
                       </div>
                     </div>
 
-                    <!-- Status Badge -->
-                    <div v-if="payment.closing_amount !== null && payment.closing_amount !== undefined" class="flex-shrink-0">
-                      <span v-if="payment.difference === 0" class="inline-flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {{ __('✓ Balanced') }}
-                      </span>
-                      <span v-else-if="payment.difference > 0" class="inline-flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {{ __('Over {0}', [formatCurrency(payment.difference)]) }}
-                      </span>
-                      <span v-else class="inline-flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        {{ __('Short {0}', [formatCurrency(Math.abs(payment.difference))]) }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Amount Entry Grid -->
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
-                    <!-- Opening Amount -->
-                    <div class="text-start bg-white rounded-lg p-2 md:p-3 border border-gray-200">
-                      <label class="block text-xs font-medium text-gray-500 uppercase mb-0.5 md:mb-1">{{ __('Opening') }}</label>
-                      <div class="text-base md:text-lg font-semibold text-gray-900">
-                        {{ formatCurrency(payment.opening_amount) }}
-                      </div>
-                      <div class="text-xs text-gray-500 mt-0.5 md:mt-1 hidden sm:block">{{ __('Shift start') }}</div>
-                    </div>
-
-                    <!-- Expected Amount -->
-                    <div class="text-start bg-white rounded-lg p-2 md:p-3 border border-gray-200">
-                      <label class="block text-xs font-medium text-gray-500 uppercase mb-0.5 md:mb-1">{{ __('Expected') }}</label>
-                      <div class="text-base md:text-lg font-semibold text-gray-900">
-                        {{ formatCurrency(payment.expected_amount) }}
-                      </div>
-                      <div class="text-xs text-gray-500 mt-0.5 md:mt-1 hidden sm:block">
-                        <span v-if="getSalesForPayment(payment) > 0">
-                          +{{ formatCurrency(getSalesForPayment(payment)) }}
-                        </span>
-                        <span v-else>{{ __('No sales') }}</span>
-                      </div>
-                    </div>
-
-                    <!-- Actual/Closing Amount -->
-                    <div class="text-start bg-white rounded-lg p-2 md:p-3 border border-gray-300">
-                      <label class="block text-xs font-medium text-gray-700 uppercase mb-0.5 md:mb-1">
-                        {{ __('Actual Amount *') }}
-                      </label>
-                      <Input
-                        :modelValue="payment.closing_amount"
-                        @update:modelValue="(value) => updateClosingAmount(payment, value)"
+                    <!-- Right: live input + inline status -->
+                    <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                      <input
+                        :value="payment.closing_amount"
+                        @input="(e) => updateClosingAmount(payment, e.target.value)"
                         type="number"
                         step="0.01"
                         min="0"
+                        inputmode="decimal"
                         placeholder="0.00"
                         :disabled="showSuccessReport || submitResource.loading"
                         :aria-label="__('Enter actual amount for {0}', [payment.mode_of_payment])"
-                        class="text-base md:text-lg"
+                        class="w-24 md:w-32 px-2.5 py-1.5 text-sm md:text-base text-end font-semibold text-gray-900 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                       />
-                      <div class="text-xs text-gray-500 mt-0.5 md:mt-1 hidden sm:block">
-                        {{ showSuccessReport ? __('Final Amount') : __('Count & enter') }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Difference Alert -->
-                  <div v-if="payment.closing_amount !== null && payment.closing_amount !== undefined && payment.difference !== 0"
-                       class="text-start mt-2 md:mt-3 p-2 md:p-3 rounded-lg" :class="[
-                    payment.difference > 0 ? 'bg-blue-50 border border-blue-200' : 'bg-red-50 border border-red-200'
-                  ]">
-                    <div class="flex items-center justify-between gap-2">
-                      <div class="flex-1">
-                        <p :class="['text-xs md:text-sm font-medium', payment.difference > 0 ? 'text-blue-900' : 'text-red-900']">
-                          {{ payment.difference > 0 ? __('Cash Over') : __('Cash Short') }}
-                        </p>
-                        <p :class="['text-xs', payment.difference > 0 ? 'text-blue-700' : 'text-red-700']">
-                          {{ payment.difference > 0
-                            ? __('You have more than expected.')
-                            : __('You have less than expected.')
-                          }}
-                        </p>
-                      </div>
-                      <div :class="['text-base md:text-xl font-bold', payment.difference > 0 ? 'text-blue-700' : 'text-red-700']">
-                        {{ payment.difference > 0 ? '+' : '' }}{{ formatCurrency(payment.difference) }}
+                      <div v-if="payment.closing_amount !== null && payment.closing_amount !== undefined && payment.closing_amount !== ''"
+                        class="w-16 md:w-24 text-end">
+                        <span v-if="payment.difference === 0" class="text-xs md:text-sm font-semibold text-green-700 whitespace-nowrap">{{ __('✓ Balanced') }}</span>
+                        <span v-else-if="payment.difference > 0" class="text-xs md:text-sm font-semibold text-blue-700 whitespace-nowrap">+{{ formatCurrency(payment.difference) }}</span>
+                        <span v-else class="text-xs md:text-sm font-semibold text-red-700 whitespace-nowrap">-{{ formatCurrency(Math.abs(payment.difference)) }}</span>
                       </div>
                     </div>
                   </div>
@@ -796,10 +735,9 @@ async function loadClosingData() {
 
 		closingData.value = data
 
-		// Auto-expand invoice details if there are few invoices
-		if (invoiceCount.value > 0 && invoiceCount.value <= 10) {
-			showInvoiceDetails.value = true
-		}
+		//// keep the invoice list collapsed by default (less scrolling)
+		// The cashier can expand it via the chevron when they need the detail.
+		showInvoiceDetails.value = false
 	} catch (error) {
 		console.error("Error loading closing data:", error)
 		errorMessage.value = __(
@@ -872,10 +810,7 @@ async function submitClosing() {
 		// If hideExpectedAmount is enabled, show success report before closing
 		if (hideExpectedAmount.value) {
 			showSuccessReport.value = true
-			// Auto-expand invoice details in success report
-			if (invoiceCount.value > 0 && invoiceCount.value <= 10) {
-				showInvoiceDetails.value = true
-			}
+			// Invoice list stays collapsed in the report too — expand on demand.
 		} else {
 			// Normal mode: close immediately
 			emit("shift-closed")
