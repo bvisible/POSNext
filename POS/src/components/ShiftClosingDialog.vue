@@ -808,10 +808,18 @@ async function loadClosingData() {
 	}
 }
 
+//// round to cents & kill -0 so float residue isn't a phantom deficit
+// e.g. 86.05 - 86.05 === -1.4e-14 which rendered as a red "Short 0.00" and
+// blocked a clean balance. Snap the difference to the nearest cent instead.
+function roundCents(value) {
+	const rounded = Math.round((Number.parseFloat(value) || 0) * 100) / 100
+	return rounded === 0 ? 0 : rounded
+}
+
 function calculateDifference(payment) {
 	const closing = Number.parseFloat(payment.closing_amount) || 0
 	const expected = Number.parseFloat(payment.expected_amount) || 0
-	payment.difference = closing - expected
+	payment.difference = roundCents(closing - expected)
 }
 
 // New function to handle closing amount updates with proper reactivity
@@ -963,7 +971,7 @@ const getTotalActual = computed(() => {
 })
 
 const getTotalDifference = computed(() => {
-	return getTotalActual.value - getTotalExpected.value
+	return roundCents(getTotalActual.value - getTotalExpected.value)
 })
 
 // Cash withdrawal computed properties
