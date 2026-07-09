@@ -1780,18 +1780,21 @@ const customerResults = computed(() => {
 		return []
 	}
 
-	// Instant in-memory filter
+	//// tokenized any-order search so "Moret Daniel" finds "Daniel Moret"
+	// Split the query into words and require each to match somewhere in the
+	// name / mobile / id, in any order — a plain includes() on the whole string
+	// missed reversed word order (the stored name may be "Daniel Moret").
+	const tokens = searchValue.split(/\s+/).filter(Boolean)
 	return allCustomers.value
 		.filter((cust) => {
-			const name = (cust.customer_name || "").toLowerCase()
-			const mobile = (cust.mobile_no || "").toLowerCase()
-			const id = (cust.name || "").toLowerCase()
+			const haystack =
+				(cust.customer_name || "").toLowerCase() +
+				" " +
+				(cust.mobile_no || "").toLowerCase() +
+				" " +
+				(cust.name || "").toLowerCase()
 
-			return (
-				name.includes(searchValue) ||
-				mobile.includes(searchValue) ||
-				id.includes(searchValue)
-			)
+			return tokens.every((tok) => haystack.includes(tok))
 		})
 		.slice(0, 20)
 })
