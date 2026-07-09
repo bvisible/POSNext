@@ -311,6 +311,9 @@ const defaultCustomerGroup = ref("Individual")
 const territory = ref("All Territories")
 const territories = ref(["All Territories"])
 const customerGroups = ref([])
+//// edit mode: track the loaded primary address so we update it (not duplicate)
+// Holds the Address docname loaded for the customer being edited, or null.
+const editingAddressName = ref(null)
 
 const customerData = ref({
 	company_name: "",
@@ -516,6 +519,19 @@ const updateCustomerResource = createResource({
 	},
 })
 
+//// edit mode: the cart only holds a lightweight customer (name/mobile/email)
+// so the edit form looked empty. Fetch the full Customer doc (+ primary
+// address) when opening in edit mode to pre-fill every field.
+const getCustomerResource = createResource({
+	url: "frappe.client.get",
+	auto: false,
+})
+
+const getAddressResource = createResource({
+	url: "frappe.client.get",
+	auto: false,
+})
+
 /** Helper to create list fetch resources */
 const createListResource = (doctype, onSuccess) =>
 	createResource({
@@ -622,6 +638,72 @@ const checkPermissions = async () => {
 	}
 }
 
+// Edit mode: persist the address alongside the customer. Updates the existing
+// primary address if one was loaded, otherwise creates + links a new one —
+// mirroring the create flow so editing an address actually saves.
+const persistAddressForEdit = async () => {
+	if (!showAddressFields.value) return
+
+	const hasAddressData =
+		customerData.value.address_line1 ||
+		customerData.value.city ||
+		customerData.value.pincode ||
+		customerData.value.country
+	if (!hasAddressData) return
+
+	try {
+		if (editingAddressName.value) {
+			// Update the existing primary address in place
+			await createResource({
+				url: "frappe.client.set_value",
+				auto: false,
+			}).fetch({
+				doctype: "Address",
+				name: editingAddressName.value,
+				fieldname: {
+					address_line1: customerData.value.address_line1 || "",
+					city: customerData.value.city || "",
+					pincode: customerData.value.pincode || "",
+					country: customerData.value.country || "",
+				},
+			})
+		} else {
+			// No address yet — create one and set it as the customer's primary
+			const address = await createAddressResource.fetch({
+				doc: {
+					doctype: "Address",
+					address_title: fullName.value,
+					address_type: "Billing",
+					address_line1: customerData.value.address_line1 || "",
+					city: customerData.value.city || "",
+					pincode: customerData.value.pincode || "",
+					country: customerData.value.country || "",
+					links: [
+						{
+							link_doctype: "Customer",
+							link_name: props.customer.name,
+						},
+					],
+				},
+			})
+			if (address?.name) {
+				await createResource({
+					url: "frappe.client.set_value",
+					auto: false,
+				}).fetch({
+					doctype: "Customer",
+					name: props.customer.name,
+					fieldname: "customer_primary_address",
+					value: address.name,
+				})
+				editingAddressName.value = address.name
+			}
+		}
+	} catch (addressError) {
+		log.error("Error saving customer address", addressError)
+	}
+}
+
 const handleCreate = async () => {
 	if (!fullName.value) {
 		return showError(__("Customer Name is required"))
@@ -629,6 +711,7 @@ const handleCreate = async () => {
 
 	if (isEditMode.value) {
 		await updateCustomerResource.submit()
+		await persistAddressForEdit()
 		return
 	}
 
@@ -711,6 +794,7 @@ const resetForm = () => {
 	territory.value = "All Territories"
 	selectedCountryCode.value = "+41"
 	phoneNumber.value = ""
+	editingAddressName.value = null
 }
 
 // =============================================================================
@@ -742,46 +826,79 @@ watch(customerType, (newType, oldType) => {
 	}
 })
 
-// Pre-fill form when customer prop changes (edit mode)
-watch(
-	() => props.customer,
-	(customer) => {
-		if (customer?.name) {
-			// Set customer type toggle
-			customerType.value =
-				customer.customer_type === "Company" ? "Company" : "Individual"
+// Populate the form fields from a customer object (lightweight cart object OR
+// the full doc fetched from the backend). Safe to call repeatedly.
+const applyCustomerDoc = (customer) => {
+	if (!customer?.name) return
 
-			if (customer.customer_type === "Company") {
-				customerData.value.company_name = customer.customer_name || ""
-				customerData.value.first_name = ""
-				customerData.value.last_name = ""
-			} else {
-				customerData.value.company_name = ""
-				const nameParts = (customer.customer_name || "").split(" ")
-				customerData.value.first_name = nameParts[0] || ""
-				customerData.value.last_name = nameParts.slice(1).join(" ") || ""
-			}
+	// Set customer type toggle
+	customerType.value =
+		customer.customer_type === "Company" ? "Company" : "Individual"
 
-			customerData.value.email_id = customer.email_id || ""
-			customerGroup.value =
-				customer.customer_group || defaultCustomerGroup.value
-			territory.value = customer.territory || "All Territories"
+	if (customer.customer_type === "Company") {
+		customerData.value.company_name = customer.customer_name || ""
+		customerData.value.first_name = ""
+		customerData.value.last_name = ""
+	} else {
+		customerData.value.company_name = ""
+		const nameParts = (customer.customer_name || "").split(" ")
+		customerData.value.first_name = nameParts[0] || ""
+		customerData.value.last_name = nameParts.slice(1).join(" ") || ""
+	}
 
-			// Handle mobile_no with country code
-			if (customer.mobile_no) {
-				customerData.value.mobile_no = customer.mobile_no
-				if (customer.mobile_no.includes("-")) {
-					const [code, ...rest] = customer.mobile_no.split("-")
-					selectedCountryCode.value = code
-					phoneNumber.value = rest.join("-")
-				} else {
-					phoneNumber.value = customer.mobile_no
-				}
+	customerData.value.email_id = customer.email_id || ""
+	if (customer.customer_group) customerGroup.value = customer.customer_group
+	if (customer.territory) territory.value = customer.territory
+
+	// Handle mobile_no with country code
+	if (customer.mobile_no) {
+		customerData.value.mobile_no = customer.mobile_no
+		if (customer.mobile_no.includes("-")) {
+			const [code, ...rest] = customer.mobile_no.split("-")
+			selectedCountryCode.value = code
+			phoneNumber.value = rest.join("-")
+		} else {
+			phoneNumber.value = customer.mobile_no
+		}
+	}
+}
+
+// Fetch the FULL customer doc (+ primary address) so every field is pre-filled.
+// The cart-supplied object is lightweight (name/mobile/email only), which left
+// the edit form looking empty — this enriches it once the dialog opens.
+const loadFullCustomerForEdit = async () => {
+	const name = props.customer?.name
+	if (!name) return
+	try {
+		const doc = await getCustomerResource.fetch({
+			doctype: "Customer",
+			name,
+		})
+		if (doc) applyCustomerDoc(doc)
+
+		// Load the linked primary address (only if the form shows address fields)
+		const addressName = doc?.customer_primary_address
+		if (addressName && showAddressFields.value) {
+			const addr = await getAddressResource.fetch({
+				doctype: "Address",
+				name: addressName,
+			})
+			if (addr) {
+				customerData.value.address_line1 = addr.address_line1 || ""
+				customerData.value.city = addr.city || ""
+				customerData.value.pincode = addr.pincode || ""
+				customerData.value.country = addr.country || ""
+				editingAddressName.value = addr.name
 			}
 		}
-	},
-	{ immediate: true },
-)
+	} catch (error) {
+		log.error("Error loading full customer for edit", error)
+	}
+}
+
+// Instant pre-fill from the lightweight prop (name shows immediately); the full
+// doc fetch on dialog open then enriches the remaining fields.
+watch(() => props.customer, applyCustomerDoc, { immediate: true })
 
 watch(
 	() => customerData.value.mobile_no,
@@ -810,7 +927,13 @@ watch(
 	() => props.modelValue,
 	async (isOpen) => {
 		show.value = isOpen
-		isOpen ? await loadDialogData() : resetForm()
+		if (isOpen) {
+			await loadDialogData()
+			// Edit mode: enrich the form with the full customer doc + address.
+			if (props.customer?.name) await loadFullCustomerForEdit()
+		} else {
+			resetForm()
+		}
 	},
 )
 

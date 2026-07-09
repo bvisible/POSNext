@@ -83,12 +83,20 @@
 			<!-- Inline Customer Search/Selection -->
 			<div ref="customerSearchContainer" class="relative">
 				<div v-if="customer">
+					<!-- //// click name to re-search (removed red X) + show email in results -->
 					<!-- Two Cards Layout: Customer Card + Document Type Card -->
 					<div class="flex items-stretch gap-2">
 						<!-- Customer Card -->
 						<div class="flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
 							<!-- Customer Avatar & Info -->
-							<div class="flex items-center gap-2 min-w-0 flex-1 px-1.5 py-1">
+							<div
+									@click.stop="clearCustomer"
+									role="button"
+									tabindex="0"
+									@keydown.enter.stop="clearCustomer"
+									:title="__('Change customer')"
+									class="flex items-center gap-2 min-w-0 flex-1 px-1.5 py-1 cursor-pointer rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+								>
 								<div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
 									<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -98,8 +106,10 @@
 									<p class="text-xs font-semibold text-gray-900 truncate leading-tight">
 										{{ customer.customer_name || customer.name }}
 									</p>
-									<p v-if="customer.mobile_no" class="text-[10px] text-gray-500 truncate leading-tight">
-										{{ customer.mobile_no }}
+									<p v-if="customer.mobile_no || customer.email_id" class="text-[10px] text-gray-500 truncate leading-tight">
+										<span v-if="customer.mobile_no">{{ customer.mobile_no }}</span>
+										<span v-if="customer.mobile_no && customer.email_id" class="text-gray-300"> · </span>
+										<span v-if="customer.email_id">{{ customer.email_id }}</span>
 									</p>
 								</div>
 							</div>
@@ -124,16 +134,6 @@
 								>
 									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
 										<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-									</svg>
-								</button>
-								<button
-									type="button"
-									@click.stop="removeCustomer"
-									class="w-7 h-7 flex items-center justify-center text-red-500 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors touch-manipulation"
-									:title="__('Remove customer')"
-								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
 									</svg>
 								</button>
 							</div>
@@ -321,8 +321,10 @@
 								<p class="text-[11px] font-semibold text-gray-900 truncate">
 									{{ cust.customer_name }}
 								</p>
-								<p v-if="cust.mobile_no" class="text-[9px] text-gray-600">
-									{{ cust.mobile_no }}
+								<p v-if="cust.mobile_no || cust.email_id" class="text-[9px] text-gray-600 truncate">
+									<span v-if="cust.mobile_no">{{ cust.mobile_no }}</span>
+									<span v-if="cust.mobile_no && cust.email_id" class="text-gray-300"> · </span>
+									<span v-if="cust.email_id">{{ cust.email_id }}</span>
 								</p>
 							</div>
 						</button>
@@ -1984,19 +1986,13 @@ function selectCustomer(cust) {
 }
 
 /**
- * Remove the selected customer.
- * Clears the customer and focuses the search input.
- */
-async function removeCustomer() {
-	previousCustomer.value = null
-	await clearCustomer()
-}
-
-/**
- * Clear the currently selected customer.
- * Emits select-customer with null to deselect.
+ * Clear the currently selected customer and re-open the search input.
+ * Triggered by clicking the selected customer's name (replaces the old
+ * red "remove" button) so the cashier can immediately search another one.
+ * Emits select-customer with null to deselect, then focuses the search box.
  */
 async function clearCustomer() {
+	previousCustomer.value = null
 	emit("select-customer", null)
 	await nextTick()
 	const searchInput = document.getElementById("cart-customer-search")
