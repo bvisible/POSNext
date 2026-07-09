@@ -406,11 +406,10 @@
                       </div>
                       <div>
                         <h4 class="text-start text-sm md:text-base font-semibold text-gray-900">{{ payment.mode_of_payment }}</h4>
-                        <TranslatedHTML
-                          :tag="'p'"
-                          class="text-xs md:text-sm text-gray-600"
-                          :inner="__('Expected: &lt;span class=&quot;font-medium&quot;&gt;{0}&lt;/span&gt;', [formatCurrency(payment.expected_amount)])"
-                        />
+                        <!-- //// plain translatable label instead of HTML-in-translation (untranslated) -->
+                        <p class="text-start text-xs md:text-sm text-gray-600">
+                          {{ __('Expected') }}: <span class="font-medium">{{ formatCurrency(payment.expected_amount) }}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -694,7 +693,6 @@ import { useShift, shiftState } from "../composables/useShift"
 import { useFormatters } from "../composables/useFormatters"
 import { usePOSSettingsStore } from "../stores/posSettings"
 import { usePOSShiftStore } from "../stores/posShift"
-import TranslatedHTML from "./common/TranslatedHTML.vue"
 
 const props = defineProps({
 	modelValue: {
