@@ -13352,3 +13352,29 @@ msgstr "Payer avec {0}"
 #. Customer display TWINT payment screen
 msgid "Scan with your TWINT app"
 msgstr "Scannez avec votre application TWINT"
+
+#. POS shift closing dialog
+
+msgid "Count your cash and enter actual amounts below"
+msgstr "Comptez votre caisse et saisissez les montants réels ci-dessous"
+
+msgid "Enter the actual counted amounts for each payment method"
+msgstr "Saisissez les montants réels comptés pour chaque mode de paiement"
+
+msgid "Failed to close shift. Please verify all amounts and try again."
+msgstr "Échec de la clôture de la session. Vérifiez tous les montants et réessayez."
+
+msgid "Hide invoice details"
+msgstr "Masquer les détails des factures"
+
+msgid "Shift closed successfully - Review the final reconciliation below"
+msgstr "Session clôturée — Vérifiez le rapprochement final ci-dessous"
+
+msgid "Show invoice details"
+msgstr "Afficher les détails des factures"
+
+msgid "Unable to load shift data. Please check your connection and try again."
+msgstr "Impossible de charger les données de la session. Vérifiez votre connexion et réessayez."
+
+msgid "{0} transactions • {1}"
+msgstr "{0} transactions • {1}"
