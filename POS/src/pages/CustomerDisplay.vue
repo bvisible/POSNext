@@ -275,8 +275,45 @@ function handleCustomerCreated(customer) {
 	}
 }
 
+//// keep the customer display (2nd screen) awake via the Wake Lock API
+// Keeps the tablet screen on while the display page is visible, regardless of
+// the tablet's sleep settings. The lock is auto-released when the page is
+// hidden/backgrounded, so we re-acquire it on visibilitychange.
+let wakeLock = null
+
+async function requestWakeLock() {
+	try {
+		if ("wakeLock" in navigator && document.visibilityState === "visible") {
+			wakeLock = await navigator.wakeLock.request("screen")
+			wakeLock.addEventListener?.("release", () => {
+				wakeLock = null
+			})
+		}
+	} catch {
+		// Unsupported / denied (e.g. low battery) — tablet sleep settings apply.
+	}
+}
+
+async function releaseWakeLock() {
+	try {
+		await wakeLock?.release()
+	} catch {
+		// ignore
+	}
+	wakeLock = null
+}
+
+function handleWakeVisibility() {
+	if (document.visibilityState === "visible" && !wakeLock) {
+		requestWakeLock()
+	}
+}
+
 // Try to restore session on mount
 onMounted(async () => {
+	requestWakeLock()
+	document.addEventListener("visibilitychange", handleWakeVisibility)
+
 	await displayStore.tryRestoreSession()
 
 	// Sync selected profile
@@ -288,6 +325,8 @@ onMounted(async () => {
 // Cleanup on unmount
 onUnmounted(() => {
 	displayStore.stopCartSync()
+	document.removeEventListener("visibilitychange", handleWakeVisibility)
+	releaseWakeLock()
 })
 </script>
 
