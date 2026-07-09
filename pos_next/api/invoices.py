@@ -3513,6 +3513,12 @@ def _evaluate_transaction_offers(
     doc.total = total
 
     initial_item_count = len(doc.items)
+    # //// surface transaction-level header discount (apply_on=Transaction) — feature b
+    # Snapshot header-discount fields before the engine runs so we report only the
+    # delta the transaction rule introduced (fresh doc starts at 0, but be safe).
+    pre_discount_amt = flt(doc.get("discount_amount") or 0)
+    pre_addl_pct = flt(doc.get("additional_discount_percentage") or 0)
+    empty_header = {"discount_amount": 0, "discount_percentage": 0, "apply_discount_on": None}
     try:
         erpnext_apply_pricing_rule_on_transaction(doc)
     except Exception:
@@ -3521,7 +3527,7 @@ def _evaluate_transaction_offers(
         frappe.log_error(
             frappe.get_traceback(), "POS Apply Offers (Transaction Rules)"
         )
-        return {"free_items": {}, "applied_rules": set()}
+        return {"free_items": {}, "applied_rules": set(), **empty_header}
 
     free_items = {}
     applied_rules = set()
@@ -3538,7 +3544,28 @@ def _evaluate_transaction_offers(
         free_items[(row.item_code, rule_name)] = fid
         applied_rules.add(rule_name)
 
-    return {"free_items": free_items, "applied_rules": applied_rules}
+    # Header-level (transaction-scope) discount the rule introduced. ERPNext sets
+    # either discount_amount directly or additional_discount_percentage; resolve
+    # both to a concrete amount so the cart can mirror it. apply_discount_on tells
+    # us the base ("Grand Total" or "Net Total").
+    apply_discount_on = doc.get("apply_discount_on") or "Grand Total"
+    header_pct = flt(doc.get("additional_discount_percentage") or 0) - pre_addl_pct
+    header_amt = flt(doc.get("discount_amount") or 0) - pre_discount_amt
+    if header_amt <= 0 and header_pct > 0:
+        # discount_amount not resolved yet (percentage rule): compute it from the
+        # same base ERPNext would use. doc.total is the pre-tax net total here.
+        base = flt(doc.get("grand_total") or doc.get("total") or total)
+        header_amt = flt(base * header_pct / 100.0)
+    if header_amt < 0:
+        header_amt = 0
+
+    return {
+        "free_items": free_items,
+        "applied_rules": applied_rules,
+        "discount_amount": header_amt,
+        "discount_percentage": header_pct if header_pct > 0 else 0,
+        "apply_discount_on": apply_discount_on if header_amt > 0 else None,
+    }
 
 
 @frappe.whitelist()
@@ -3965,10 +3992,15 @@ def apply_offers(invoice_data, selected_offers=None):
             free_items_map.setdefault(key, free_item_doc)
         applied_rules.update(txn_result.get("applied_rules", set()))
 
+        # //// surface the transaction-level header discount to the cart — feature b
         return {
             "items": [dict(item) for item in prepared_items],
             "free_items": [dict(item) for item in free_items_map.values()],
             "applied_pricing_rules": sorted(applied_rules),
+            # Transaction-scope (apply_on=Transaction) header discount, if any.
+            "discount_amount": flt(txn_result.get("discount_amount") or 0),
+            "discount_percentage": flt(txn_result.get("discount_percentage") or 0),
+            "apply_discount_on": txn_result.get("apply_discount_on"),
         }
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Apply Offers Error")
