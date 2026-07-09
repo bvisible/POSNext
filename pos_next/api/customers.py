@@ -46,7 +46,20 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 
 		search_term = (search_term or "").strip()
 		customer_limit = limit if limit not in (None, 0) else frappe.db.count("Customer", filters)
-		fields = ["name", "customer_name", "mobile_no", "email_id", "disabled"]
+		# Extra fields (group/territory/type/address) let the POS show an address
+		# snippet in search results and a full info popover on the selected card
+		# without an extra per-customer fetch — they ride along in the cache.
+		fields = [
+			"name",
+			"customer_name",
+			"mobile_no",
+			"email_id",
+			"disabled",
+			"customer_group",
+			"territory",
+			"customer_type",
+			"primary_address",
+		]
 
 		# Split the query into words so the order the name was entered in does not
 		# matter: "Moret Daniel" must find a customer stored as "Daniel Moret".
@@ -62,6 +75,10 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 				Customer.mobile_no,
 				Customer.email_id,
 				Customer.disabled,
+				Customer.customer_group,
+				Customer.territory,
+				Customer.customer_type,
+				Customer.primary_address,
 			)
 			# Re-apply the base filters (customer_group + disabled/modified).
 			if filters.get("customer_group"):

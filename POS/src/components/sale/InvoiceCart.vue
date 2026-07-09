@@ -86,8 +86,8 @@
 					<!-- //// click name to re-search (removed red X) + show email in results -->
 					<!-- Two Cards Layout: Customer Card + Document Type Card -->
 					<div class="flex items-stretch gap-2">
-						<!-- Customer Card -->
-						<div class="flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
+						<!-- Customer Card (hover shows full-info popover) -->
+						<div class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
 							<!-- Customer Avatar & Info -->
 							<div
 									@click.stop="clearCustomer"
@@ -111,6 +111,42 @@
 										<span v-if="customer.mobile_no && customer.email_id" class="text-gray-300"> · </span>
 										<span v-if="customer.email_id">{{ customer.email_id }}</span>
 									</p>
+								</div>
+							</div>
+
+							<!-- //// address snippet in results + full-info popover on selected card -->
+							<!-- Full-info popover (shown on hover over the customer card) -->
+							<div
+								class="pointer-events-none absolute top-full start-0 z-50 mt-1 hidden w-64 rounded-neo-md border border-gray-200 bg-white p-2.5 text-left shadow-neo-md group-hover:block"
+							>
+								<p class="text-xs font-bold text-gray-900 truncate">
+									{{ customer.customer_name || customer.name }}
+								</p>
+								<div class="mt-1.5 space-y-1">
+									<div v-if="customer.customer_type" class="flex items-start gap-1.5 text-[10px]">
+										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Type") }}</span>
+										<span class="text-gray-700">{{ __(customer.customer_type) }}</span>
+									</div>
+									<div v-if="customer.mobile_no" class="flex items-start gap-1.5 text-[10px]">
+										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Phone") }}</span>
+										<span class="text-gray-700 break-all">{{ customer.mobile_no }}</span>
+									</div>
+									<div v-if="customer.email_id" class="flex items-start gap-1.5 text-[10px]">
+										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Email") }}</span>
+										<span class="text-gray-700 break-all">{{ customer.email_id }}</span>
+									</div>
+									<div v-if="formatAddress(customer)" class="flex items-start gap-1.5 text-[10px]">
+										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Address") }}</span>
+										<span class="text-gray-700">{{ formatAddress(customer) }}</span>
+									</div>
+									<div v-if="customer.customer_group" class="flex items-start gap-1.5 text-[10px]">
+										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Group") }}</span>
+										<span class="text-gray-700">{{ customer.customer_group }}</span>
+									</div>
+									<div v-if="customer.territory" class="flex items-start gap-1.5 text-[10px]">
+										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Territory") }}</span>
+										<span class="text-gray-700">{{ customer.territory }}</span>
+									</div>
 								</div>
 							</div>
 
@@ -325,6 +361,13 @@
 									<span v-if="cust.mobile_no">{{ cust.mobile_no }}</span>
 									<span v-if="cust.mobile_no && cust.email_id" class="text-gray-300"> · </span>
 									<span v-if="cust.email_id">{{ cust.email_id }}</span>
+								</p>
+								<p v-if="addressSnippet(cust)" class="text-[9px] text-gray-400 truncate flex items-center gap-0.5">
+									<svg class="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+										<path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+									</svg>
+									<span class="truncate">{{ addressSnippet(cust) }}</span>
 								</p>
 							</div>
 						</button>
@@ -2035,6 +2078,46 @@ function getInitials(name) {
 		return (first + second).toUpperCase()
 	}
 	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase()
+}
+
+/**
+ * Strip HTML tags from a string and collapse whitespace/line breaks.
+ * The Customer `primary_address` field is stored as HTML (with <br>), so it
+ * needs sanitizing before it can be shown as plain text.
+ *
+ * @param {String} html - Raw HTML/text
+ * @returns {String} Plain text with single spaces
+ */
+function stripHtml(html) {
+	if (!html) return ""
+	return String(html)
+		.replace(/<br\s*\/?>/gi, ", ")
+		.replace(/<[^>]*>/g, " ")
+		.replace(/&nbsp;/gi, " ")
+		.replace(/\s*,\s*,\s*/g, ", ")
+		.replace(/\s+/g, " ")
+		.replace(/^[\s,]+|[\s,]+$/g, "")
+		.trim()
+}
+
+/**
+ * Short address snippet for a customer search result (single line).
+ *
+ * @param {Object} cust - Customer object (may carry primary_address)
+ * @returns {String} Truncated address, or "" when none
+ */
+function addressSnippet(cust) {
+	return stripHtml(cust?.primary_address)
+}
+
+/**
+ * Full, sanitized address for the selected-customer info popover.
+ *
+ * @param {Object} cust - Customer object
+ * @returns {String} Plain-text address, or "" when none
+ */
+function formatAddress(cust) {
+	return stripHtml(cust?.primary_address)
 }
 
 /**
