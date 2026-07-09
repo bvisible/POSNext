@@ -2080,34 +2080,39 @@ function getInitials(name) {
 	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase()
 }
 
+//// sanitize primary_address HTML, drop the appended Phone:/Email: lines
 /**
- * Strip HTML tags from a string and collapse whitespace/line breaks.
- * The Customer `primary_address` field is stored as HTML (with <br>), so it
- * needs sanitizing before it can be shown as plain text.
+ * Turn the Customer `primary_address` HTML into clean address lines.
+ * ERPNext stores it as HTML (<br>-separated) and appends "Phone:" / "Email:"
+ * lines — those are dropped here since phone/email are shown separately.
  *
- * @param {String} html - Raw HTML/text
- * @returns {String} Plain text with single spaces
+ * @param {String} raw - Raw primary_address HTML
+ * @returns {String[]} Cleaned address lines (street, city, country…)
  */
-function stripHtml(html) {
-	if (!html) return ""
-	return String(html)
-		.replace(/<br\s*\/?>/gi, ", ")
-		.replace(/<[^>]*>/g, " ")
-		.replace(/&nbsp;/gi, " ")
-		.replace(/\s*,\s*,\s*/g, ", ")
-		.replace(/\s+/g, " ")
-		.replace(/^[\s,]+|[\s,]+$/g, "")
-		.trim()
+function cleanAddressParts(raw) {
+	if (!raw) return []
+	return String(raw)
+		.split(/<br\s*\/?>/i)
+		.map((line) =>
+			line
+				.replace(/<[^>]*>/g, "")
+				.replace(/&nbsp;/gi, " ")
+				.replace(/\s+/g, " ")
+				.trim(),
+		)
+		.filter(
+			(line) => line && !/^(phone|email|t[ée]l(?:[ée]phone)?)\s*:/i.test(line),
+		)
 }
 
 /**
- * Short address snippet for a customer search result (single line).
+ * Short one-line address snippet for a customer search result.
  *
  * @param {Object} cust - Customer object (may carry primary_address)
- * @returns {String} Truncated address, or "" when none
+ * @returns {String} Address on one line, or "" when none
  */
 function addressSnippet(cust) {
-	return stripHtml(cust?.primary_address)
+	return cleanAddressParts(cust?.primary_address).join(", ")
 }
 
 /**
@@ -2117,7 +2122,7 @@ function addressSnippet(cust) {
  * @returns {String} Plain-text address, or "" when none
  */
 function formatAddress(cust) {
-	return stripHtml(cust?.primary_address)
+	return cleanAddressParts(cust?.primary_address).join(", ")
 }
 
 /**
