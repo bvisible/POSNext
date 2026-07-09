@@ -419,6 +419,25 @@
 						<div class="border-t border-gray-200 bg-gray-50 px-3 py-2 space-y-1">
 							<!-- Additional Discount Row -->
 							<div v-if="settingsStore.allowAdditionalDiscount" class="pb-1.5 mb-1 border-b border-dashed border-orange-200">
+								<!-- //// per-ticket override of an automatic transaction-rule discount — feature b -->
+								<div
+									v-if="cartStore.ruleHeaderDiscount > 0 || cartStore.bypassRuleDiscount"
+									class="flex items-center justify-between gap-2 mb-2 p-1.5 rounded-lg bg-amber-50 border border-amber-200"
+								>
+									<span class="text-[11px] font-medium text-amber-800 min-w-0 truncate">
+										<template v-if="cartStore.bypassRuleDiscount">{{ __('Règle de prix ignorée (remise manuelle)') }}</template>
+										<template v-else>{{ __('Remise règle : -{0}', [formatCurrency(cartStore.ruleHeaderDiscount)]) }}</template>
+									</span>
+									<label class="flex items-center gap-1 text-[11px] font-semibold text-amber-800 cursor-pointer flex-shrink-0">
+										<input
+											type="checkbox"
+											:checked="cartStore.bypassRuleDiscount"
+											@change="onToggleBypassRule($event.target.checked)"
+											class="w-3.5 h-3.5 accent-orange-500"
+										/>
+										{{ __('Modifier') }}
+									</label>
+								</div>
 								<!-- Label with calculated amount -->
 								<div class="flex items-center justify-between gap-2 mb-1.5">
 									<div class="flex items-center gap-1.5 min-w-0">
@@ -1257,6 +1276,8 @@
 
 <script setup>
 import { usePOSSettingsStore } from "@/stores/posSettings"
+//// per-ticket override of an automatic transaction-rule discount — feature b
+import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
 import {
 	DEFAULT_CURRENCY,
@@ -1293,7 +1314,15 @@ import QRPaymentDialog from "@/components/payments/QRPaymentDialog.vue"
 
 const log = logger.create("PaymentDialog")
 const settingsStore = usePOSSettingsStore()
+const cartStore = usePOSCartStore()
 const restaurantStore = useRestaurantStore()
+
+//// per-ticket toggle: let the cashier override an automatic transaction-rule
+// header discount. When enabled the rule stops driving the header discount and
+// the manual/coupon additional discount takes over; disabling re-applies it.
+function onToggleBypassRule(enabled) {
+	cartStore.setBypassRuleDiscount(enabled)
+}
 
 // Split payment state
 const splitMode = ref(false)

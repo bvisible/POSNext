@@ -697,10 +697,16 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function setBypassRuleDiscount(enabled) {
 		bypassRuleDiscount.value = !!enabled
 		if (bypassRuleDiscount.value) {
-			// Hand control back to the cashier: drop the rule-driven amount.
+			// Hand control to the cashier: drop the rule-driven amount so their
+			// manual/coupon additionalDiscount takes over.
 			ruleHeaderDiscount.value = 0
+			rebuildIncrementalCache()
+		} else if (invoiceItems.value.length > 0) {
+			// Rule regains control: recompute offers so it re-applies immediately.
+			triggerOfferProcessing(true)
+		} else {
+			rebuildIncrementalCache()
 		}
-		rebuildIncrementalCache()
 	}
 
 	function getAppliedOfferCodes() {
