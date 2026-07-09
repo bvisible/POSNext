@@ -816,13 +816,21 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 		// This is fast because IndexedDB is already in-memory for small datasets
 		const allCustomers = await db.table("customers").toArray()
 
+		//// tokenized any-order search: each word must match name/mobile/id
+		// Split the query into words so "Moret Daniel" matches "Daniel Moret"
+		// regardless of the order the name was entered in.
+		const tokens = term.split(/\s+/).filter(Boolean)
+
 		const results = allCustomers
 			.filter((cust) => {
-				const name = (cust.customer_name || "").toLowerCase()
-				const mobile = (cust.mobile_no || "").toLowerCase()
-				const id = (cust.name || "").toLowerCase()
+				const haystack =
+					(cust.customer_name || "").toLowerCase() +
+					" " +
+					(cust.mobile_no || "").toLowerCase() +
+					" " +
+					(cust.name || "").toLowerCase()
 
-				return name.includes(term) || mobile.includes(term) || id.includes(term)
+				return tokens.every((tok) => haystack.includes(tok))
 			})
 			.slice(0, limit || allCustomers.length)
 
