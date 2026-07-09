@@ -350,13 +350,20 @@ const fullName = computed(() => {
 	return last ? `${first} ${last}` : first
 })
 
+//// edit mode must not require phone/email — legacy customers may lack them,
+// which otherwise makes the Save button permanently disabled when editing.
 const isFormValid = computed(() => {
 	if (isCompany.value) {
 		return !!customerData.value.company_name.trim()
 	}
+	const hasName = !!(
+		customerData.value.first_name.trim() && customerData.value.last_name.trim()
+	)
+	// Editing an existing customer: only the name is mandatory.
+	if (isEditMode.value) return hasName
+	// Creating a new customer: keep phone + email required for data quality.
 	return !!(
-		customerData.value.first_name.trim() &&
-		customerData.value.last_name.trim() &&
+		hasName &&
 		phoneNumber.value.trim() &&
 		customerData.value.email_id.trim()
 	)
