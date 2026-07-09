@@ -13344,3 +13344,11 @@ msgstr "0 = non épicé, 1-3 = niveaux d'épices"
 #. Label of a Tab Break field in DocType 'Item'
 msgid "POS Variants"
 msgstr "Variantes POS"
+
+#. Customer display TWINT payment screen
+msgid "Pay with {0}"
+msgstr "Payer avec {0}"
+
+#. Customer display TWINT payment screen
+msgid "Scan with your TWINT app"
+msgstr "Scannez avec votre application TWINT"
