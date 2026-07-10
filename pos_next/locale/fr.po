@@ -13378,3 +13378,104 @@ msgstr "Impossible de charger les données de la session. Vérifiez votre connex
 
 msgid "{0} transactions • {1}"
 msgstr "{0} transactions • {1}"
+
+#. POS customer edit dialog
+
+msgid "Add address"
+msgstr "Ajouter une adresse"
+
+msgid "Add contact"
+msgstr "Ajouter un contact"
+
+msgid "Address Line 1"
+msgstr "Adresse ligne 1"
+
+msgid "Address Line 2"
+msgstr "Adresse ligne 2"
+
+msgid "Address Title"
+msgstr "Titre de l'adresse"
+
+msgid "Address Type"
+msgstr "Type d'adresse"
+
+msgid "Address saved"
+msgstr "Adresse enregistrée"
+
+msgid "Addresses"
+msgstr "Adresses"
+
+msgid "Addresses & Contacts"
+msgstr "Adresses & Contacts"
+
+msgid "Billing"
+msgstr "Facturation"
+
+msgid "City/Town"
+msgstr "Ville"
+
+msgid "Contact saved"
+msgstr "Contact enregistré"
+
+msgid "Contacts"
+msgstr "Contacts"
+
+msgid "Email Address"
+msgstr "Adresse e-mail"
+
+msgid "Failed to load address"
+msgstr "Échec du chargement de l'adresse"
+
+msgid "Failed to load customer"
+msgstr "Échec du chargement du client"
+
+msgid "Failed to save address"
+msgstr "Échec de l'enregistrement de l'adresse"
+
+msgid "Failed to save contact"
+msgstr "Échec de l'enregistrement du contact"
+
+msgid "First Name"
+msgstr "Prénom"
+
+msgid "Last Name"
+msgstr "Nom"
+
+msgid "Loading customer…"
+msgstr "Chargement du client…"
+
+msgid "Mobile No"
+msgstr "N° de mobile"
+
+msgid "No addresses yet."
+msgstr "Aucune adresse pour l'instant."
+
+msgid "No contacts yet."
+msgstr "Aucun contact pour l'instant."
+
+msgid "Postal Code"
+msgstr "Code postal"
+
+msgid "Preferred Billing Address"
+msgstr "Adresse de facturation préférée"
+
+msgid "Preferred Shipping Address"
+msgstr "Adresse de livraison préférée"
+
+msgid "Primary"
+msgstr "Principal"
+
+msgid "Primary Contact"
+msgstr "Contact principal"
+
+msgid "Searching…"
+msgstr "Recherche…"
+
+msgid "Shipping"
+msgstr "Livraison"
+
+msgid "State/Province"
+msgstr "Canton/Province"
+
+msgid "Yes"
+msgstr "Oui"

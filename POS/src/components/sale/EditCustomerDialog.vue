@@ -270,7 +270,7 @@
 </template>
 
 <script setup>
-import { Button, Dialog, createResource } from "frappe-ui"
+import { Button, Dialog, call, createResource } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import { useToast } from "@/composables/useToast"
 import LinkField from "@/components/common/LinkField.vue"
@@ -343,12 +343,11 @@ async function load() {
 async function loadRelations() {
 	relLoading.value = true
 	try {
-		const data = await window.frappe.call({
-			method: "pos_next.api.customers.get_customer_addresses_contacts",
-			args: { customer: customerName.value },
+		const data = await call("pos_next.api.customers.get_customer_addresses_contacts", {
+			customer: customerName.value,
 		})
-		addresses.value = data?.message?.addresses || []
-		contacts.value = data?.message?.contacts || []
+		addresses.value = data?.addresses || []
+		contacts.value = data?.contacts || []
 	} catch (error) {
 		console.error("Failed to load addresses/contacts", error)
 	} finally {
@@ -417,11 +416,7 @@ async function startEditAddress(addr) {
 	contactDraft.value = null
 	// The list rows carry a subset; fetch the full Address for the editor.
 	try {
-		const doc = await window.frappe.call({
-			method: "frappe.client.get",
-			args: { doctype: "Address", name: addr.name },
-		})
-		const d = doc?.message || {}
+		const d = (await call("frappe.client.get", { doctype: "Address", name: addr.name })) || {}
 		addressDraft.value = {
 			name: addr.name,
 			address_title: d.address_title || "",
@@ -449,9 +444,10 @@ async function saveAddress() {
 		delete fields.name
 		fields.is_primary_address = fields.is_primary_address ? 1 : 0
 		fields.is_shipping_address = fields.is_shipping_address ? 1 : 0
-		await window.frappe.call({
-			method: "pos_next.api.customers.save_customer_address",
-			args: { customer: customerName.value, fields: JSON.stringify(fields), address_name },
+		await call("pos_next.api.customers.save_customer_address", {
+			customer: customerName.value,
+			fields: JSON.stringify(fields),
+			address_name,
 		})
 		showSuccess(__("Address saved"))
 		addressDraft.value = null
@@ -493,9 +489,10 @@ async function saveContact() {
 		const contact_name = fields.name
 		delete fields.name
 		fields.is_primary_contact = fields.is_primary_contact ? 1 : 0
-		await window.frappe.call({
-			method: "pos_next.api.customers.save_customer_contact",
-			args: { customer: customerName.value, fields: JSON.stringify(fields), contact_name },
+		await call("pos_next.api.customers.save_customer_contact", {
+			customer: customerName.value,
+			fields: JSON.stringify(fields),
+			contact_name,
 		})
 		showSuccess(__("Contact saved"))
 		contactDraft.value = null

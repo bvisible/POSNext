@@ -54,6 +54,7 @@
 </template>
 
 <script setup>
+import { call } from "frappe-ui"
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 
 const props = defineProps({
@@ -84,11 +85,12 @@ watch(
 async function search(txt) {
 	loading.value = true
 	try {
-		const response = await window.frappe.call({
-			method: "frappe.desk.search.search_link",
-			args: { doctype: props.doctype, txt: txt || "", page_length: 10 },
+		const response = await call("frappe.desk.search.search_link", {
+			doctype: props.doctype,
+			txt: txt || "",
+			page_length: 10,
 		})
-		results.value = response?.message || []
+		results.value = response || []
 		highlighted.value = -1
 	} catch (error) {
 		console.error("LinkField search failed", error)
