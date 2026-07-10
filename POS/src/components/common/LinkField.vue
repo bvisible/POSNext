@@ -9,10 +9,11 @@
 			:value="query"
 			@input="onInput"
 			@focus="onFocus"
+			@blur="onBlur"
 			@keydown.down.prevent="move(1)"
 			@keydown.up.prevent="move(-1)"
 			@keydown.enter.prevent="chooseHighlighted"
-			@keydown.esc="open = false"
+			@keydown.esc="onBlur"
 			type="text"
 			:placeholder="placeholder"
 			:disabled="disabled"
@@ -30,6 +31,12 @@
 				<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
 			</svg>
 		</button>
+		<!-- Chevron affordance (shown when empty) — signals a picker, not free text -->
+		<div v-else class="absolute inset-y-0 end-2 flex items-center pointer-events-none text-gray-400">
+			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+			</svg>
+		</div>
 
 		<div
 			v-if="open && (results.length || loading)"
@@ -110,6 +117,23 @@ function onInput(event) {
 function onFocus() {
 	open.value = true
 	if (!results.value.length) search(query.value)
+}
+
+// Enforce that the value comes from the linked doctype: on blur, any free-typed
+// text that wasn't picked is discarded. If it happens to exactly match a result
+// (user typed the full valid name), auto-select it; otherwise revert to the last
+// valid value. This prevents cashiers from saving garbage into a Link field.
+function onBlur() {
+	setTimeout(() => {
+		open.value = false
+		if (query.value === (props.modelValue || "")) return
+		const exact = results.value.find((r) => r.value === query.value)
+		if (exact) {
+			select(exact)
+		} else {
+			query.value = props.modelValue || ""
+		}
+	}, 150)
 }
 
 function select(result) {
