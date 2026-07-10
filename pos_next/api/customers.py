@@ -336,3 +336,153 @@ def get_customer_details(customer):
 		frappe.throw(_("Customer is required"))
 
 	return frappe.get_cached_doc("Customer", customer).as_dict()
+
+
+# ////  meta-driven full customer edit for the POS (dialog, stays in the SPA)
+# Field types we can render as inputs in the POS edit dialog. Child tables,
+# HTML, attachments, etc. are intentionally skipped to keep the dialog clean.
+_RENDERABLE_FIELDTYPES = {
+	"Data",
+	"Small Text",
+	"Text",
+	"Long Text",
+	"Text Editor",
+	"Select",
+	"Check",
+	"Link",
+	"Int",
+	"Float",
+	"Currency",
+	"Percent",
+	"Date",
+	"Datetime",
+	"Time",
+	"Phone",
+	"Read Only",
+}
+
+# Internal / CRM-linkage fields that are pure noise for a cashier editing a
+# customer — skipped even though they are renderable field types.
+_SKIP_FIELDNAMES = {
+	"lead_name",
+	"opportunity_name",
+	"prospect_name",
+	"represents_company",
+	"is_internal_customer",
+	"companies",
+	"objects",
+}
+
+
+def _customer_form_layout():
+	"""Build the grouped (tab -> section -> fields) layout of the Customer
+	doctype, keeping only renderable, non-noise fields. Empty tabs/sections are
+	dropped so the dialog never shows a blank tab (e.g. Portal Users)."""
+	meta = frappe.get_meta("Customer")
+
+	tabs = []
+	cur_tab = {"label": _("Details"), "sections": []}
+	cur_section = {"label": "", "fields": []}
+
+	def flush_section():
+		if cur_section["fields"]:
+			cur_tab["sections"].append(dict(cur_section))
+
+	def flush_tab():
+		flush_section()
+		if cur_tab["sections"]:
+			tabs.append(dict(cur_tab))
+
+	for df in meta.fields:
+		if df.fieldtype == "Tab Break":
+			flush_tab()
+			cur_tab = {"label": _(df.label) if df.label else "", "sections": []}
+			cur_section = {"label": "", "fields": []}
+		elif df.fieldtype == "Section Break":
+			flush_section()
+			cur_section = {"label": _(df.label) if df.label else "", "fields": []}
+		elif df.fieldtype == "Column Break":
+			continue
+		elif (
+			df.fieldtype in _RENDERABLE_FIELDTYPES
+			and not df.hidden
+			and df.fieldname not in _SKIP_FIELDNAMES
+		):
+			cur_section["fields"].append(
+				{
+					"fieldname": df.fieldname,
+					"label": _(df.label) if df.label else df.fieldname,
+					"fieldtype": df.fieldtype,
+					"options": df.options,
+					"reqd": int(df.reqd or 0),
+					"read_only": int(df.read_only or 0),
+					"depends_on": df.depends_on or "",
+					"description": _(df.description) if df.description else "",
+				}
+			)
+
+	flush_tab()
+	return tabs
+
+
+@frappe.whitelist()
+def get_customer_form(customer):
+	"""Return the Customer values + a grouped, meta-driven field layout for the
+	POS full-edit dialog. Custom fields are included automatically; child tables
+	and other non-editable field types are omitted."""
+	if not customer:
+		frappe.throw(_("Customer is required"))
+	if not frappe.has_permission("Customer", "read", doc=customer):
+		frappe.throw(_("You are not permitted to view this customer"), frappe.PermissionError)
+
+	doc = frappe.get_doc("Customer", customer)
+	tabs = _customer_form_layout()
+
+	values = {"name": doc.name}
+	for tab in tabs:
+		for section in tab["sections"]:
+			for field in section["fields"]:
+				values[field["fieldname"]] = doc.get(field["fieldname"])
+
+	return {"name": doc.name, "tabs": tabs, "values": values}
+
+
+@frappe.whitelist()
+def save_customer_form(customer, values):
+	"""Persist edited values back onto the Customer doc. Only writable,
+	non-table fields are applied; the doc's own validation runs on save."""
+	import json
+
+	if not customer:
+		frappe.throw(_("Customer is required"))
+	if isinstance(values, str):
+		values = json.loads(values)
+	if not frappe.has_permission("Customer", "write", doc=customer):
+		frappe.throw(_("You are not permitted to edit this customer"), frappe.PermissionError)
+
+	meta = frappe.get_meta("Customer")
+	writable = {
+		df.fieldname
+		for df in meta.fields
+		if df.fieldtype in _RENDERABLE_FIELDTYPES
+		and df.fieldtype != "Read Only"
+		and not df.read_only
+		and df.fieldname not in _SKIP_FIELDNAMES
+	}
+
+	doc = frappe.get_doc("Customer", customer)
+	for fieldname, value in values.items():
+		if fieldname in writable:
+			doc.set(fieldname, value)
+	doc.save()
+
+	return {
+		"name": doc.name,
+		"customer_name": doc.customer_name,
+		"mobile_no": doc.mobile_no,
+		"email_id": doc.email_id,
+		"customer_group": doc.customer_group,
+		"territory": doc.territory,
+		"customer_type": doc.customer_type,
+		"primary_address": doc.get("primary_address"),
+	}

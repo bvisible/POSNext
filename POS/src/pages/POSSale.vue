@@ -1005,13 +1005,20 @@
 				@refresh="offlineStore.loadPendingInvoices"
 			/>
 
-			<!-- Create/Edit Customer Dialog -->
+			<!-- Create Customer Dialog (quick form) -->
 			<CreateCustomerDialog
 				v-model="uiStore.showCreateCustomerDialog"
 				:pos-profile="shiftStore.profileName"
 				:initial-name="uiStore.initialCustomerName"
 				:customer="editCustomer"
 				@customer-created="handleCustomerCreated"
+				@customer-updated="handleCustomerUpdated"
+			/>
+
+			<!-- //// Full meta-driven Customer edit dialog (pencil icon) -->
+			<EditCustomerDialog
+				v-model="showEditCustomerDialog"
+				:customer="editCustomer"
 				@customer-updated="handleCustomerUpdated"
 			/>
 
@@ -1566,6 +1573,7 @@ import POSHeader from "@/components/pos/POSHeader.vue";
 import BatchSerialDialog from "@/components/sale/BatchSerialDialog.vue";
 import CouponDialog from "@/components/sale/CouponDialog.vue";
 import CreateCustomerDialog from "@/components/sale/CreateCustomerDialog.vue";
+import EditCustomerDialog from "@/components/sale/EditCustomerDialog.vue";
 import GiftCardCreatedDialog from "@/components/sale/GiftCardCreatedDialog.vue";
 import CustomerDialog from "@/components/sale/CustomerDialog.vue";
 import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
@@ -1699,6 +1707,7 @@ const dividerRef = ref(null);
 const pendingPaymentAfterCustomer = ref(false);
 const logoutAfterClose = ref(false);
 const editCustomer = ref(null); // Customer being edited (null for create mode)
+const showEditCustomerDialog = ref(false); // Full meta-driven edit dialog
 const showClearCacheDialog = ref(false);
 const clearCacheOverlayRef = ref(null);
 const showMenus = ref(false);
@@ -3239,10 +3248,10 @@ function handleCreateCustomer(searchValue) {
 	uiStore.showCreateCustomerDialog = true;
 }
 
+//// pencil opens the full meta-driven Customer edit dialog (not the small form)
 function handleEditCustomer(customer) {
 	editCustomer.value = customer; // Set customer for edit mode
-	uiStore.setInitialCustomerName("");
-	uiStore.showCreateCustomerDialog = true;
+	showEditCustomerDialog.value = true;
 }
 
 function handleProceedToPayment() {
