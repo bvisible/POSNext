@@ -384,15 +384,24 @@ def _label(text):
 	return html.unescape(_(text))
 
 
+# The POS edit dialog only needs the identity fields — cashiers manage
+# addresses/contacts through the dedicated tab, and Tax/Accounting/Sales Team/
+# Settings are not their concern. Filter by the doctype's raw (English) labels.
+_ALLOWED_TAB_LABELS = {"Details"}
+_SKIP_SECTION_LABELS = {"More Information"}
+
+
 def _customer_form_layout():
 	"""Build the grouped (tab -> section -> fields) layout of the Customer
-	doctype, keeping only renderable, non-noise fields. Empty tabs/sections are
-	dropped so the dialog never shows a blank tab (e.g. Portal Users)."""
+	doctype, keeping only the identity fields cashiers edit (the "Details" tab
+	minus its "More Information" section). Empty tabs/sections are dropped."""
 	meta = frappe.get_meta("Customer")
 
 	tabs = []
 	cur_tab = {"label": _("Details"), "sections": []}
+	cur_tab_raw = "Details"
 	cur_section = {"label": "", "fields": []}
+	cur_section_raw = ""
 
 	def flush_section():
 		if cur_section["fields"]:
@@ -406,10 +415,13 @@ def _customer_form_layout():
 	for df in meta.fields:
 		if df.fieldtype == "Tab Break":
 			flush_tab()
+			cur_tab_raw = df.label or ""
 			cur_tab = {"label": _label(df.label), "sections": []}
 			cur_section = {"label": "", "fields": []}
+			cur_section_raw = ""
 		elif df.fieldtype == "Section Break":
 			flush_section()
+			cur_section_raw = df.label or ""
 			cur_section = {"label": _label(df.label), "fields": []}
 		elif df.fieldtype == "Column Break":
 			continue
@@ -418,6 +430,11 @@ def _customer_form_layout():
 			and not df.hidden
 			and df.fieldname not in _SKIP_FIELDNAMES
 		):
+			# Only keep the allowed tab, skipping the noisy sections.
+			if cur_tab_raw not in _ALLOWED_TAB_LABELS:
+				continue
+			if cur_section_raw in _SKIP_SECTION_LABELS:
+				continue
 			cur_section["fields"].append(
 				{
 					"fieldname": df.fieldname,
@@ -486,6 +503,12 @@ def save_customer_form(customer, values):
 			doc.set(fieldname, value)
 	doc.save()
 
+	# Rename the Customer ID to follow its name, mirroring the neoffice_theme
+	# desk behaviour ("Auto-rename Customer ID quand le nom du client change"):
+	# only when the name actually diverged and the target name is free.
+	final_name = _rename_customer_to_name(doc)
+
+	doc = frappe.get_doc("Customer", final_name)
 	return {
 		"name": doc.name,
 		"customer_name": doc.customer_name,
@@ -496,3 +519,90 @@ def save_customer_form(customer, values):
 		"customer_type": doc.customer_type,
 		"primary_address": doc.get("primary_address"),
 	}
+
+
+def _rename_customer_to_name(doc):
+	"""If the customer_name no longer matches the record's ID, rename the ID to
+	follow it (same rule as the desk). Returns the (possibly new) name."""
+	new_name = (doc.customer_name or "").strip()
+	if not new_name or new_name == doc.name:
+		return doc.name
+	if frappe.db.exists("Customer", new_name):
+		frappe.throw(
+			_("A customer named {0} already exists. Rename it manually to merge or choose another name.").format(
+				new_name
+			)
+		)
+	from frappe.model.rename_doc import update_document_title
+
+	update_document_title(doctype="Customer", docname=doc.name, name=new_name)
+	return new_name
+
+
+def _rename_to_expected(doctype, name):
+	"""Rename an Address/Contact so its ID follows its title, reusing
+	neoffice_theme's expected_document_name + the native rename flow. Returns
+	the final name; degrades gracefully if neoffice_theme is absent."""
+	try:
+		from neoffice_theme.contacts import expected_document_name
+	except Exception:
+		return name
+	target = expected_document_name(doctype, name)
+	if target and target != name:
+		from frappe.model.rename_doc import update_document_title
+
+		update_document_title(doctype=doctype, docname=name, name=target)
+		return target
+	return name
+
+
+@frappe.whitelist()
+def get_customer_addresses_contacts(customer):
+	"""Return the customer's addresses (rendered) and contacts for the POS
+	address/contact manager. Reuses the neoffice_theme endpoints."""
+	if not customer:
+		frappe.throw(_("Customer is required"))
+	if not frappe.has_permission("Customer", "read", doc=customer):
+		frappe.throw(_("You are not permitted to view this customer"), frappe.PermissionError)
+
+	addresses, contacts = [], []
+	try:
+		from neoffice_theme.events import get_customer_addresses, get_customer_contacts
+
+		addresses = get_customer_addresses(customer) or []
+		contacts = get_customer_contacts(customer) or []
+	except Exception:
+		frappe.log_error("POS address/contact fetch failed", frappe.get_traceback())
+	return {"addresses": addresses, "contacts": contacts}
+
+
+@frappe.whitelist()
+def save_customer_address(customer, fields, address_name=None):
+	"""Create/update an Address for the customer (reusing neoffice_theme) and
+	then rename its ID to follow the title — the same flow as the desk."""
+	if not customer:
+		frappe.throw(_("Customer is required"))
+	if not frappe.has_permission("Customer", "write", doc=customer):
+		frappe.throw(_("You are not permitted to edit this customer"), frappe.PermissionError)
+
+	from neoffice_theme.events import save_customer_address as _save_address
+
+	result = _save_address(customer, fields, address_name)
+	name = (result or {}).get("name") if isinstance(result, dict) else result
+	return {"name": _rename_to_expected("Address", name)}
+
+
+@frappe.whitelist()
+def save_customer_contact(customer, fields, contact_name=None):
+	"""Create/update a Contact for the customer (reusing neoffice_theme) and
+	then rename its ID to follow the full name — the same flow as the desk."""
+	if not customer:
+		frappe.throw(_("Customer is required"))
+	if not frappe.has_permission("Customer", "write", doc=customer):
+		frappe.throw(_("You are not permitted to edit this customer"), frappe.PermissionError)
+
+	from neoffice_theme.events import save_customer_contact as _save_contact
+
+	result = _save_contact(customer, fields, contact_name)
+	name = (result or {}).get("name") if isinstance(result, dict) else result
+	return {"name": _rename_to_expected("Contact", name)}
