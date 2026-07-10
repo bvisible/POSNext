@@ -59,8 +59,8 @@
 
 									<!-- Read only -->
 									<div v-else-if="field.read_only || field.fieldtype === 'Read Only'"
-										class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg min-h-[38px]">
-										{{ values[field.fieldname] || '—' }}
+										class="px-3 py-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg min-h-[38px] whitespace-pre-line">
+										{{ readOnlyDisplay(values[field.fieldname]) }}
 									</div>
 
 									<!-- Select -->
@@ -202,6 +202,19 @@ async function load() {
 
 function selectOptions(field) {
 	return (field.options || "").split("\n")
+}
+
+// Read-only fields like `primary_address` store HTML — show it as clean text.
+function readOnlyDisplay(value) {
+	if (value === null || value === undefined || value === "") return "—"
+	const text = String(value)
+		.replace(/<br\s*\/?>/gi, "\n")
+		.replace(/<[^>]*>/g, " ")
+		.replace(/&nbsp;/gi, " ")
+		.replace(/[ \t]+/g, " ")
+		.replace(/\n{2,}/g, "\n")
+		.replace(/^\s+|\s+$/g, "")
+	return text || "—"
 }
 
 // Full-width fields for readability (multi-line + address-ish data).

@@ -374,6 +374,16 @@ _SKIP_FIELDNAMES = {
 }
 
 
+def _label(text):
+	"""Translate a label and decode HTML entities (some doctype labels such as
+	'Address &amp; Contact' come HTML-escaped and would render literally)."""
+	import html
+
+	if not text:
+		return ""
+	return html.unescape(_(text))
+
+
 def _customer_form_layout():
 	"""Build the grouped (tab -> section -> fields) layout of the Customer
 	doctype, keeping only renderable, non-noise fields. Empty tabs/sections are
@@ -396,11 +406,11 @@ def _customer_form_layout():
 	for df in meta.fields:
 		if df.fieldtype == "Tab Break":
 			flush_tab()
-			cur_tab = {"label": _(df.label) if df.label else "", "sections": []}
+			cur_tab = {"label": _label(df.label), "sections": []}
 			cur_section = {"label": "", "fields": []}
 		elif df.fieldtype == "Section Break":
 			flush_section()
-			cur_section = {"label": _(df.label) if df.label else "", "fields": []}
+			cur_section = {"label": _label(df.label), "fields": []}
 		elif df.fieldtype == "Column Break":
 			continue
 		elif (
@@ -411,13 +421,13 @@ def _customer_form_layout():
 			cur_section["fields"].append(
 				{
 					"fieldname": df.fieldname,
-					"label": _(df.label) if df.label else df.fieldname,
+					"label": _label(df.label) if df.label else df.fieldname,
 					"fieldtype": df.fieldtype,
 					"options": df.options,
 					"reqd": int(df.reqd or 0),
 					"read_only": int(df.read_only or 0),
 					"depends_on": df.depends_on or "",
-					"description": _(df.description) if df.description else "",
+					"description": _label(df.description),
 				}
 			)
 
