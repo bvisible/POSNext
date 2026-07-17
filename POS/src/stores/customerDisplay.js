@@ -612,6 +612,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 				mobile_no: customerData.mobile_no || null,
 				// Address fields
 				address_line1: customerData.address_line1 || null,
+				house_number: customerData.house_number || null,
 				city: customerData.city || null,
 				pincode: customerData.pincode || null,
 				country: customerData.country || null,

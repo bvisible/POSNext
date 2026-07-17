@@ -109,8 +109,18 @@ function parseGeoAdminResult(attrs) {
 		city = labelLocation || capitalizeWords(city)
 	}
 
+	// Structured address: geo.admin returns the house number separately in
+	// attrs.num — use that authoritative value and strip it off the street
+	// label instead of guessing.
+	const houseNumber = attrs.num === 0 || attrs.num ? String(attrs.num) : ""
+	if (houseNumber && street) {
+		const esc = houseNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+		street = street.replace(new RegExp("\\s*" + esc + "\\s*$"), "").trim() || street
+	}
+
 	return {
 		address_line1: street,
+		house_number: houseNumber,
 		pincode: postalCode,
 		city,
 		state: CANTON_MAP[cantonCode] || "",

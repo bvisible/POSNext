@@ -161,25 +161,36 @@
 
 			<!-- Address fields (conditional) -->
 			<template v-if="showAddress">
-				<AddressAutocomplete
-					v-model="form.address_line1"
-					:placeholder="__('Street address')"
-					input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-					:disabled="isSubmitting"
-					@address-selected="onAddressSelected"
-				/>
-				<div class="grid grid-cols-2 gap-2">
-					<input
-						v-model="form.city"
-						type="text"
-						:placeholder="__('City')"
-						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+				<!-- Swiss postal format: street + N° on one row -->
+				<div class="grid grid-cols-[1fr_88px] gap-2">
+					<AddressAutocomplete
+						v-model="form.address_line1"
+						:placeholder="__('Street')"
+						input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 						:disabled="isSubmitting"
+						@address-selected="onAddressSelected"
 					/>
+					<input
+						v-model="form.house_number"
+						type="text"
+						:placeholder="__('N°')"
+						:disabled="isSubmitting"
+						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+					/>
+				</div>
+				<!-- Swiss postal format: NPA then city ("1907 Saxon") -->
+				<div class="grid grid-cols-[88px_1fr] gap-2">
 					<input
 						v-model="form.pincode"
 						type="text"
 						:placeholder="__('Postal code')"
+						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+						:disabled="isSubmitting"
+					/>
+					<input
+						v-model="form.city"
+						type="text"
+						:placeholder="__('City')"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 						:disabled="isSubmitting"
 					/>
@@ -261,6 +272,7 @@ const form = reactive({
 	mobile_no: "",
 	// Address fields
 	address_line1: "",
+	house_number: "",
 	city: "",
 	pincode: "",
 	country: defaultCountry,
@@ -351,6 +363,7 @@ function updateMobileNumber() {
 function onAddressSelected(address) {
 	console.info("[CreateCustomerModal] Address selected", address)
 	form.address_line1 = address.address_line1 || ""
+	form.house_number = address.house_number || ""
 	form.city = address.city || ""
 	form.pincode = address.pincode || ""
 	if (address.country) form.country = address.country
@@ -411,6 +424,8 @@ async function handleSubmit() {
 		if (props.showAddress) {
 			if (form.address_line1.trim())
 				customerData.address_line1 = form.address_line1.trim()
+			if (form.house_number.trim())
+				customerData.house_number = form.house_number.trim()
 			if (form.city.trim()) customerData.city = form.city.trim()
 			if (form.pincode.trim()) customerData.pincode = form.pincode.trim()
 			if (form.country.trim()) customerData.country = form.country.trim()
@@ -426,6 +441,7 @@ async function handleSubmit() {
 		form.email = ""
 		form.mobile_no = ""
 		form.address_line1 = ""
+		form.house_number = ""
 		form.city = ""
 		form.pincode = ""
 		form.country = defaultCountry
