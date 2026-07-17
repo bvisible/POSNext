@@ -681,6 +681,7 @@ const persistAddressForEdit = async () => {
 				name: editingAddressName.value,
 				fieldname: {
 					address_line1: customerData.value.address_line1 || "",
+					custom_house_number: customerData.value.house_number || "",
 					city: customerData.value.city || "",
 					pincode: customerData.value.pincode || "",
 					country: customerData.value.country || "",
@@ -694,6 +695,7 @@ const persistAddressForEdit = async () => {
 					address_title: fullName.value,
 					address_type: "Billing",
 					address_line1: customerData.value.address_line1 || "",
+					custom_house_number: customerData.value.house_number || "",
 					city: customerData.value.city || "",
 					pincode: customerData.value.pincode || "",
 					country: customerData.value.country || "",
