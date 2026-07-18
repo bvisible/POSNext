@@ -109,13 +109,23 @@ function parseGeoAdminResult(attrs) {
 		city = labelLocation || capitalizeWords(city)
 	}
 
-	// Structured address: geo.admin returns the house number separately in
-	// attrs.num — use that authoritative value and strip it off the street
-	// label instead of guessing.
-	const houseNumber = attrs.num === 0 || attrs.num ? String(attrs.num) : ""
-	if (houseNumber && street) {
-		const esc = houseNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-		street = street.replace(new RegExp("\\s*" + esc + "\\s*$"), "").trim() || street
+	// Structured address: split "street + number" into two distinct fields (no
+	// concatenation). attrs.num signals there IS a building number, but it is
+	// lossy on alphanumeric numbers (e.g. "1a" comes back as 1), so read the
+	// accurate number from the trailing token of the combined label and use
+	// attrs.num only as a fallback — otherwise the suffix would stay glued to
+	// the street and the number would appear twice.
+	const apiNumber = attrs.num === 0 || attrs.num ? String(attrs.num) : ""
+	let houseNumber = apiNumber
+	if (apiNumber && street) {
+		const trailing = street.match(/^(.*?)[,\s]+(\d+\s?[A-Za-z]?(?:[-/]\d+\s?[A-Za-z]?)*)$/)
+		if (trailing) {
+			street = trailing[1].trim()
+			houseNumber = trailing[2].replace(/\s+/g, "")
+		} else {
+			const esc = apiNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+			street = street.replace(new RegExp("\\s*" + esc + "\\s*$"), "").trim() || street
+		}
 	}
 
 	return {
