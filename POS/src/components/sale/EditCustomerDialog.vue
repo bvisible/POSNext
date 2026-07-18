@@ -134,9 +134,16 @@
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Country') }}</label>
 										<LinkField v-model="addressDraft.country" doctype="Country" :placeholder="__('Country')" />
 									</div>
-									<div class="sm:col-span-2">
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1') }}</label>
-										<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1')" :class="inputCls" />
+									<!-- Swiss postal format: street + N° on one row -->
+									<div class="sm:col-span-2 grid grid-cols-[1fr_96px] gap-2">
+										<div>
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1') }}</label>
+											<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1')" :class="inputCls" />
+										</div>
+										<div>
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('N°') }}</label>
+											<input v-model="addressDraft.custom_house_number" type="text" :placeholder="__('N°')" :class="inputCls" />
+										</div>
 									</div>
 									<div class="sm:col-span-2">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2') }}</label>
@@ -401,6 +408,7 @@ function startAddAddress() {
 		address_title: values.value.customer_name || "",
 		address_type: "Billing",
 		address_line1: "",
+		custom_house_number: "",
 		address_line2: "",
 		pincode: "",
 		city: "",
@@ -422,6 +430,7 @@ async function startEditAddress(addr) {
 			address_title: d.address_title || "",
 			address_type: d.address_type || "Billing",
 			address_line1: d.address_line1 || "",
+			custom_house_number: d.custom_house_number || "",
 			address_line2: d.address_line2 || "",
 			pincode: d.pincode || "",
 			city: d.city || "",

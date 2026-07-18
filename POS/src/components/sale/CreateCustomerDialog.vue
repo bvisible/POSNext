@@ -163,24 +163,34 @@
 						<p class="text-xs font-medium text-gray-500 mb-1">{{ __("Address") }}</p>
 					</div>
 
-					<AddressAutocomplete
-						v-model="customerData.address_line1"
-						:placeholder="__('Street address')"
-						input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-						@address-selected="onAddressSelected"
-					/>
-
-					<div class="grid grid-cols-2 gap-2">
+					<!-- Swiss postal format: street + N° on one row -->
+					<div class="grid grid-cols-[1fr_96px] gap-2">
+						<AddressAutocomplete
+							v-model="customerData.address_line1"
+							:placeholder="__('Street')"
+							input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+							@address-selected="onAddressSelected"
+						/>
 						<input
-							v-model="customerData.city"
+							v-model="customerData.house_number"
 							type="text"
-							:placeholder="__('City')"
+							:placeholder="__('N°')"
 							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 						/>
+					</div>
+
+					<!-- Swiss postal format: NPA then city ("1907 Saxon") -->
+					<div class="grid grid-cols-[96px_1fr] gap-2">
 						<input
 							v-model="customerData.pincode"
 							type="text"
 							:placeholder="__('Postal code')"
+							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+						/>
+						<input
+							v-model="customerData.city"
+							type="text"
+							:placeholder="__('City')"
 							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 						/>
 					</div>
@@ -321,8 +331,9 @@ const customerData = ref({
 	last_name: "",
 	mobile_no: "",
 	email_id: "",
-	// Address fields
+	// Address fields (structured: street and house number are separate)
 	address_line1: "",
+	house_number: "",
 	city: "",
 	pincode: "",
 	country: "",
@@ -376,6 +387,7 @@ const showAddressFields = computed(
 function onAddressSelected(address) {
 	log.info("Address selected", address)
 	customerData.value.address_line1 = address.address_line1 || ""
+	customerData.value.house_number = address.house_number || ""
 	customerData.value.city = address.city || ""
 	customerData.value.pincode = address.pincode || ""
 	if (address.country) {
@@ -669,6 +681,7 @@ const persistAddressForEdit = async () => {
 				name: editingAddressName.value,
 				fieldname: {
 					address_line1: customerData.value.address_line1 || "",
+					custom_house_number: customerData.value.house_number || "",
 					city: customerData.value.city || "",
 					pincode: customerData.value.pincode || "",
 					country: customerData.value.country || "",
@@ -682,6 +695,7 @@ const persistAddressForEdit = async () => {
 					address_title: fullName.value,
 					address_type: "Billing",
 					address_line1: customerData.value.address_line1 || "",
+					custom_house_number: customerData.value.house_number || "",
 					city: customerData.value.city || "",
 					pincode: customerData.value.pincode || "",
 					country: customerData.value.country || "",
@@ -744,6 +758,7 @@ const handleCreate = async () => {
 						address_title: fullName.value,
 						address_type: "Billing",
 						address_line1: customerData.value.address_line1 || "",
+						custom_house_number: customerData.value.house_number || "",
 						city: customerData.value.city || "",
 						pincode: customerData.value.pincode || "",
 						country: customerData.value.country || "",
@@ -793,6 +808,7 @@ const resetForm = () => {
 		mobile_no: "",
 		email_id: "",
 		address_line1: "",
+		house_number: "",
 		city: "",
 		pincode: "",
 		country: "",

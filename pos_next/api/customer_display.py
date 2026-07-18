@@ -329,7 +329,7 @@ def get_current_cart(pos_opening_entry):
 @frappe.whitelist()
 def create_customer_from_display(customer_name, pos_opening_entry, email=None, mobile_no=None,
                                   address_line1=None, city=None, pincode=None, country=None,
-                                  customer_type=None):
+                                  customer_type=None, house_number=None):
     """
     Create a new customer from the customer display.
     Optionally creates an address if address fields are provided.
@@ -340,7 +340,8 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
         pos_opening_entry (str): POS Opening Entry name (required)
         email (str): Email address (optional)
         mobile_no (str): Mobile number (optional)
-        address_line1 (str): Street address (optional)
+        address_line1 (str): Street name (optional)
+        house_number (str): House number, structured address (optional)
         city (str): City (optional)
         pincode (str): Postal code (optional)
         country (str): Country (optional)
@@ -438,6 +439,8 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
                 "address_title": customer_name,
                 "address_type": "Billing",
                 "address_line1": address_line1 or "",
+                # Structured address: the house number has its own field.
+                "custom_house_number": house_number or "",
                 "city": city or "",
                 "pincode": pincode or "",
                 "country": country or frappe.db.get_default("country") or "Switzerland",
