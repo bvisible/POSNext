@@ -13155,8 +13155,12 @@ msgid "Failed to load payment endpoints"
 msgstr "Échec du chargement des moyens de paiement"
 
 #: POS/src/components/payments/QRPaymentDialog.vue:326
-msgid "This Mode of Payment is not enabled on the POS Profile. Add a row in POS Profile → Active Payment Methods & Terminals."
-msgstr "Ce mode de paiement n'est pas activé sur le profil POS. Ajoutez une ligne dans Profil POS → Méthodes & terminaux de paiement actifs."
+msgid ""
+"This Mode of Payment is not enabled on the POS Profile. Add a row in POS "
+"Profile → Active Payment Methods & Terminals."
+msgstr ""
+"Ce mode de paiement n'est pas activé sur le profil POS. Ajoutez une ligne "
+"dans Profil POS → Méthodes & terminaux de paiement actifs."
 
 #: POS/src/components/payments/QRPaymentDialog.vue:29
 msgid "QR Payment"
@@ -13187,8 +13191,12 @@ msgid "Simulator (test mode)"
 msgstr "Simulateur (mode test)"
 
 #: POS/src/components/payments/QRPaymentDialog.vue:191
-msgid "No customer scan will happen. Pick an outcome to advance the Payment Intent FSM."
-msgstr "Aucun scan client ne sera effectué. Choisissez un résultat pour faire avancer le Payment Intent."
+msgid ""
+"No customer scan will happen. Pick an outcome to advance the Payment Intent "
+"FSM."
+msgstr ""
+"Aucun scan client ne sera effectué. Choisissez un résultat pour faire "
+"avancer le Payment Intent."
 
 #: POS/src/components/payments/QRPaymentDialog.vue:200
 msgid "✓ Accept"
@@ -13259,8 +13267,12 @@ msgid "test"
 msgstr "test"
 
 #: POS/src/components/payments/CardPresentDialog.vue:193
-msgid "No physical terminal will run. Pick an outcome to drive the simulated reader."
-msgstr "Aucun terminal physique ne sera utilisé. Choisissez un résultat pour piloter le lecteur simulé."
+msgid ""
+"No physical terminal will run. Pick an outcome to drive the simulated "
+"reader."
+msgstr ""
+"Aucun terminal physique ne sera utilisé. Choisissez un résultat pour piloter"
+" le lecteur simulé."
 
 #: POS/src/components/payments/CardPresentDialog.vue:238
 msgid "Start payment"
@@ -13354,7 +13366,6 @@ msgid "Scan with your TWINT app"
 msgstr "Scannez avec votre application TWINT"
 
 #. POS shift closing dialog
-
 msgid "Count your cash and enter actual amounts below"
 msgstr "Comptez votre caisse et saisissez les montants réels ci-dessous"
 
@@ -13362,7 +13373,8 @@ msgid "Enter the actual counted amounts for each payment method"
 msgstr "Saisissez les montants réels comptés pour chaque mode de paiement"
 
 msgid "Failed to close shift. Please verify all amounts and try again."
-msgstr "Échec de la clôture de la session. Vérifiez tous les montants et réessayez."
+msgstr ""
+"Échec de la clôture de la session. Vérifiez tous les montants et réessayez."
 
 msgid "Hide invoice details"
 msgstr "Masquer les détails des factures"
@@ -13374,13 +13386,14 @@ msgid "Show invoice details"
 msgstr "Afficher les détails des factures"
 
 msgid "Unable to load shift data. Please check your connection and try again."
-msgstr "Impossible de charger les données de la session. Vérifiez votre connexion et réessayez."
+msgstr ""
+"Impossible de charger les données de la session. Vérifiez votre connexion et"
+" réessayez."
 
 msgid "{0} transactions • {1}"
 msgstr "{0} transactions • {1}"
 
 #. POS customer edit dialog
-
 msgid "Add address"
 msgstr "Ajouter une adresse"
 
@@ -13479,3 +13492,95 @@ msgstr "Canton/Province"
 
 msgid "Yes"
 msgstr "Oui"
+
+msgid "Active Payment Methods & Terminals"
+msgstr "Méthodes de paiement & terminaux actifs"
+
+msgid ""
+"For each Mode of Payment routed to a terminal driver (POS Payment Driver "
+"Mapping), list one or more (MoP, device) rows. Payment Device is required "
+"for physical terminals (Stripe Reader…) and can be left blank for QR-only "
+"channels (TWINT). The cashier sees a picker when more than one row matches "
+"the same Mode of Payment; the row marked Default is pre-selected."
+msgstr ""
+"Pour chaque mode de paiement routé vers un pilote de terminal (Mappage de "
+"pilote de paiement POS), listez une ou plusieurs lignes (mode, terminal). Le"
+" terminal est requis pour les terminaux physiques (lecteur Stripe…) et peut "
+"rester vide pour les canaux QR uniquement (TWINT). Le caissier voit un "
+"sélecteur quand plusieurs lignes correspondent au même mode de paiement ; la"
+" ligne marquée « Par défaut » est présélectionnée."
+
+msgid "Cash Mode of Payment"
+msgstr "Mode de paiement en espèces"
+
+msgid "Default cash mode of payment for POS transactions"
+msgstr ""
+"Mode de paiement en espèces par défaut pour les transactions de caisse"
+
+msgid "Allow Delete Draft Invoices"
+msgstr "Autoriser la suppression des factures brouillon"
+
+msgid "Allow deletion of draft invoices during shift closing"
+msgstr ""
+"Autoriser la suppression des factures brouillon lors de la clôture de caisse"
+
+msgid "Disable Price Entry In The Default Payment Method"
+msgstr "Désactiver la saisie du prix dans le mode de paiement par défaut"
+
+msgid "Default Payment Device"
+msgstr "Terminal de paiement par défaut"
+
+msgid ""
+"Optional default terminal/reader for this POS Profile + Mode of Payment"
+msgstr ""
+"Terminal/lecteur par défaut (optionnel) pour ce profil POS + mode de "
+"paiement"
+
+msgid "Payment Device (Terminal)"
+msgstr "Appareil de paiement (terminal)"
+
+msgid "Payment Channel"
+msgstr "Canal de paiement"
+
+msgid "Auto-attach to Default Device"
+msgstr "Rattacher automatiquement au terminal par défaut"
+
+msgid "Driver Options (JSON)"
+msgstr "Options du pilote (JSON)"
+
+msgid ""
+"Physical terminal handling this Mode of Payment (Stripe Reader, etc.). Leave"
+" blank for channels with no physical device (TWINT QR, future bank QRs). If "
+"multiple rows share the same Mode of Payment, the cashier picks at runtime."
+msgstr ""
+"Terminal physique gérant ce mode de paiement (lecteur Stripe, etc.). Laissez"
+" vide pour les canaux sans appareil physique (QR TWINT, futurs QR "
+"bancaires). Si plusieurs lignes partagent le même mode de paiement, le "
+"caissier choisit au moment de l'encaissement."
+
+msgid ""
+"When several rows match the same Mode of Payment, the one with Default "
+"checked is pre-selected in the cashier picker."
+msgstr ""
+"Quand plusieurs lignes correspondent au même mode de paiement, celle cochée "
+"« Par défaut » est présélectionnée dans le sélecteur du caissier."
+
+msgid ""
+"Which Mode of Payment this row routes. Only Modes of Payment mapped to a "
+"terminal driver (POS Payment Driver Mapping) are useful here."
+msgstr ""
+"Le mode de paiement routé par cette ligne. Seuls les modes de paiement "
+"associés à un pilote de terminal (Mappage de pilote de paiement POS) sont "
+"utiles ici."
+
+msgid "Optional JSON merged into intent metadata (channel, branch, table, …)"
+msgstr ""
+"JSON optionnel fusionné dans les métadonnées de l'intention (canal, "
+"succursale, table, …)"
+
+msgid ""
+"If checked and channel=terminal, attach_intent_to_reader is called "
+"automatically after create_intent."
+msgstr ""
+"Si coché et canal=terminal, attach_intent_to_reader est appelé "
+"automatiquement après create_intent."
