@@ -2471,6 +2471,10 @@ msgstr "Nom du plat"
 msgid "Courses"
 msgstr "Plats"
 
+#: pos_next/doctype/restaurant_menu/restaurant_menu.json
+msgid "Meal Courses"
+msgstr "Plats"
+
 #: POS/src/components/restaurant/MenuSettings.vue:142
 msgid "Cover page with logo"
 msgstr "Page de couverture avec logo"

@@ -60,12 +60,12 @@
   {
    "fieldname": "section_break_courses",
    "fieldtype": "Section Break",
-   "label": "Courses"
+   "label": "Meal Courses"
   },
   {
    "fieldname": "courses",
    "fieldtype": "Table",
-   "label": "Courses",
+   "label": "Meal Courses",
    "options": "Restaurant Menu Course"
   }
  ],
