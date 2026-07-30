@@ -2469,7 +2469,7 @@ msgstr "Nom du plat"
 #. Label of a Table field in DocType 'Restaurant Menu'
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json
 msgid "Courses"
-msgstr "Plats"
+msgstr ""
 
 #: pos_next/doctype/restaurant_menu/restaurant_menu.json
 msgid "Meal Courses"
