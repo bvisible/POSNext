@@ -448,7 +448,15 @@ def pos_simulate_terminal_outcome(
 		# For Stripe Terminal only: round-trip the Stripe-side state via the
 		# official test helpers so the PaymentIntent on Stripe ends up captured.
 		# For qr_bridge we just transition the local FSM.
-		if channel == "terminal":
+		# Gate on the provider, not the channel: `terminal` is shared by Stripe,
+		# Wallee and Payrexx, and only Stripe exposes test helpers to round-trip
+		# provider-side state. For the others the local FSM transition below is the
+		# whole simulation — which is all a UI validation needs.
+		is_stripe = "payments.drivers.stripe." in (
+			frappe.db.get_value("Payment Provider", intent_doc.provider, "driver_class") or ""
+		)
+
+		if channel == "terminal" and is_stripe:
 			# 1. Trigger the simulated card presentation on the Stripe reader.
 			#    This is what `present_payment_method` does in real life — the
 			#    customer taps their card. The simulator runs through it instantly.
@@ -472,7 +480,7 @@ def pos_simulate_terminal_outcome(
 		# 2. Capture the PaymentIntent — what the webhook worker would do on
 		#    `terminal.reader.action_succeeded`. Stripe-only; TWINT/qr_bridge
 		#    has no "capture" step.
-		if channel == "terminal":
+		if channel == "terminal" and is_stripe:
 			try:
 				driver.capture_payment(intent_doc.provider_intent_id)
 			except Exception as exc:  # noqa: BLE001
