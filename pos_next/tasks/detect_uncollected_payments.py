@@ -62,12 +62,24 @@ def detect_uncollected_payments():
 	)
 
 	now = now_datetime()
-	ripe = [
+	candidates = [
 		o
 		for o in orphans
 		if time_diff_in_seconds(now, o.completed_at or o.creation) > GRACE_SECONDS
 		and not _already_flagged(o.name)
 	]
+
+	# An unlinked intent is NOT proof of a missing sale. The sale may have been
+	# recorded and only the back-link lost (a provider renamed in the mapping is
+	# enough — blowbackshop, 21.07: 180.- collected via `twint_migrated`, invoice
+	# ACC-SINV-2026-01898 booked 2 s later, link never made). Repair those
+	# silently. Crying wolf on a healthy sale is how an alert stops being read.
+	ripe = []
+	for o in candidates:
+		if _try_relink(o):
+			continue
+		ripe.append(o)
+
 	if not ripe:
 		return
 
@@ -110,6 +122,51 @@ def detect_uncollected_payments():
 	# re-sent every hour until people learn to ignore the alert.
 	for o in ripe:
 		_flag(o.name)
+
+
+def _try_relink(intent) -> bool:
+	"""Link the intent to a POS sale that clearly matches, if there is exactly one.
+
+	Deliberately strict — an ambiguous match is reported, never guessed:
+	  * a submitted POS invoice, paid the exact same amount,
+	  * created within ±10 min of the settlement,
+	  * that does not already carry a succeeded intent.
+	Returns True when the discrepancy was only a missing back-link.
+	"""
+	settled = intent.completed_at or intent.creation
+	rows = frappe.db.sql(
+		"""
+		SELECT si.name
+		FROM `tabSales Invoice` si
+		JOIN `tabSales Invoice Payment` p ON p.parent = si.name
+		WHERE si.is_pos = 1
+		  AND si.docstatus = 1
+		  AND ABS(p.amount * 100 - %(amount)s) < 1
+		  AND si.creation BETWEEN DATE_SUB(%(t)s, INTERVAL 10 MINUTE)
+		                      AND DATE_ADD(%(t)s, INTERVAL 10 MINUTE)
+		  AND NOT EXISTS (
+			SELECT 1 FROM `tabPayment Intent` pi
+			WHERE pi.reference_doctype = 'Sales Invoice'
+			  AND pi.reference_name = si.name
+			  AND pi.status = 'succeeded'
+		  )
+		""",
+		{"amount": intent.amount, "t": settled},
+		as_dict=True,
+	)
+	if len(rows) != 1:
+		return False
+
+	frappe.db.set_value(
+		"Payment Intent",
+		intent.name,
+		{"reference_doctype": "Sales Invoice", "reference_name": rows[0].name},
+		update_modified=False,
+	)
+	frappe.logger().info(
+		f"detect_uncollected_payments: relinked {intent.name} -> {rows[0].name}"
+	)
+	return True
 
 
 def _already_flagged(intent_name: str) -> bool:
