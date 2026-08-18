@@ -13611,3 +13611,9 @@ msgid "Took too long — payment stopped on the terminal. You can start again."
 msgstr ""
 "Trop long — le paiement a été interrompu sur le terminal. Vous pouvez "
 "relancer."
+
+#: POS/src/components/sale/PaymentDialog.vue
+msgid "No connection — {0} is unavailable. Use cash, or wait for the connection to come back."
+msgstr ""
+"Pas de connexion — {0} est indisponible. Utilisez les espèces, ou attendez le "
+"retour de la connexion."

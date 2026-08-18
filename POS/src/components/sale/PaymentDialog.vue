@@ -2751,9 +2751,39 @@ async function loadDriverMappings() {
 			}
 		}
 		driverMappings.value = map
+		//// Neoffice — remember which Modes of Payment are PSP-driven, so we
+		//// still know it when the network is gone (see the catch below).
+		try {
+			localStorage.setItem(
+				`neopos_driver_mappings_${props.posProfile}`,
+				JSON.stringify(map),
+			)
+		} catch (e) {
+			log.warn("[PaymentDialog] Could not cache driver mappings:", e)
+		}
 		log.debug("[PaymentDialog] Driver mappings loaded:", Object.keys(map))
 	} catch (e) {
+		//// Neoffice — offline, this list cannot be fetched. Falling back to an
+		//// EMPTY map was dangerous: an unmapped method is treated as a manual
+		//// one, so "Carte de crédit" would quietly record a payment nobody
+		//// collected — a sale booked against money that never moved, the exact
+		//// mirror of the 17.08 loss. Restore the cached map instead; the
+		//// offline guard in openTerminalDialog then refuses the method outright.
 		log.error("[PaymentDialog] Failed to load driver mappings:", e)
+		try {
+			const cached = localStorage.getItem(
+				`neopos_driver_mappings_${props.posProfile}`,
+			)
+			if (cached) {
+				driverMappings.value = JSON.parse(cached)
+				log.info(
+					"[PaymentDialog] Driver mappings restored from cache:",
+					Object.keys(driverMappings.value),
+				)
+			}
+		} catch (err) {
+			log.error("[PaymentDialog] Could not restore cached mappings:", err)
+		}
 	}
 }
 
@@ -2788,6 +2818,19 @@ function isLockedPayment(entry) {
 function openTerminalDialog(method) {
 	if (terminalInFlight.value) {
 		showWarning(__("A payment is already in progress"))
+		return
+	}
+	//// Neoffice — card and TWINT both need the PSP; offline they cannot be
+	//// collected at all. Refuse explicitly instead of letting the method fall
+	//// through to the manual path, which would book an uncollected payment.
+	//// Cash still works, and the sale still queues offline as usual.
+	if (props.isOffline) {
+		showWarning(
+			__("No connection — {0} is unavailable. Use cash, or wait for the connection to come back.").replace(
+				"{0}",
+				method.mode_of_payment,
+			),
+		)
 		return
 	}
 	const mapping = getMappedDriver(method.mode_of_payment)
