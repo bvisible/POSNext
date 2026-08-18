@@ -89,16 +89,18 @@ if ("serviceWorker" in navigator) {
 	window.addEventListener(
 		"load",
 		() => {
-			//// Neoffice — was: registerSW() with an `onNeedRefresh` that only
-			//// logged. In `autoUpdate` mode that callback is never even called,
-			//// and nothing ever re-checked for a new build, so a till open for
-			//// days served stale code (guigoz, 14→18 Aug). setupTillAutoUpdate
-			//// checks every 15 min and applies the update only at rest.
-			Promise.all([
-				import("virtual:pwa-register"),
-				import("./utils/tillAutoUpdate"),
-			]).then(([{ registerSW }, { setupTillAutoUpdate }]) => {
-				setupTillAutoUpdate(registerSW)
+			//// Neoffice — note: this worker's scope is /assets/pos_next/pos/,
+			//// while the till lives at /pos, so it never controls the till page
+			//// (verified osiris 2026-08-18). Keeping the build up to date is
+			//// therefore NOT its job — see setupTillAutoUpdate() below.
+			import("virtual:pwa-register").then(({ registerSW }) => {
+				registerSW({
+					immediate: true,
+					onOfflineReady: () => log.info("App ready to work offline"),
+					onRegistered: (reg) => log.info("Service Worker registered", reg),
+					onRegisterError: (err) =>
+						log.error("Service Worker registration error", err),
+				})
 			})
 		},
 		{ passive: true },
@@ -270,6 +272,14 @@ async function initializeApp() {
 	log.debug("Registering router, auth state:", session.isLoggedIn)
 	app.use(router)
 	app.mount("#app")
+
+	//// Neoffice — a till tab stays open for days and would otherwise keep
+	//// serving the build it was opened with (guigoz ran 14→18 Aug on stale
+	//// code, straight through the deploy that fixed the double charge).
+	//// Compares build stamps and reloads only when the till is at rest.
+	import("./utils/tillAutoUpdate")
+		.then(({ setupTillAutoUpdate }) => setupTillAutoUpdate())
+		.catch((err) => log.warn("till auto-update unavailable", err))
 
 	// -------------------------------------------------------------------------
 	// Scheduled CSRF Token Refresh (every 30 minutes)
