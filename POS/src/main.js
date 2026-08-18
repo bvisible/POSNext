@@ -89,15 +89,16 @@ if ("serviceWorker" in navigator) {
 	window.addEventListener(
 		"load",
 		() => {
-			import("virtual:pwa-register").then(({ registerSW }) => {
-				registerSW({
-					immediate: true,
-					onNeedRefresh: () => log.info("New content available, reloading..."),
-					onOfflineReady: () => log.info("App ready to work offline"),
-					onRegistered: (reg) => log.info("Service Worker registered", reg),
-					onRegisterError: (err) =>
-						log.error("Service Worker registration error", err),
-				})
+			//// Neoffice — was: registerSW() with an `onNeedRefresh` that only
+			//// logged. In `autoUpdate` mode that callback is never even called,
+			//// and nothing ever re-checked for a new build, so a till open for
+			//// days served stale code (guigoz, 14→18 Aug). setupTillAutoUpdate
+			//// checks every 15 min and applies the update only at rest.
+			Promise.all([
+				import("virtual:pwa-register"),
+				import("./utils/tillAutoUpdate"),
+			]).then(([{ registerSW }, { setupTillAutoUpdate }]) => {
+				setupTillAutoUpdate(registerSW)
 			})
 		},
 		{ passive: true },

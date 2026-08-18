@@ -72,7 +72,11 @@ export default defineConfig({
 			],
 		}),
 		VitePWA({
-			registerType: "autoUpdate",
+			//// Neoffice — was "autoUpdate", which reloads the page the instant a
+			//// new service worker activates. On a till that can land mid-sale or
+			//// mid-payment. "prompt" hands control to setupTillAutoUpdate, which
+			//// applies the update only when the cart is empty and nothing is pending.
+			registerType: "prompt",
 			includeAssets: ["favicon.png", "icon.svg", "icon-maskable.svg"],
 			manifest: {
 				//// rebrand: rename POS Next to Neopos — 771950b
