@@ -684,6 +684,13 @@
 									:class="['font-bold rounded', isSmallMobile ? 'text-[8px] px-1 py-0.5' : 'text-[10px] px-1.5 py-0.5', availableWalletBalance > 0 ? 'text-amber-700 bg-amber-100' : 'text-gray-500 bg-gray-200']">
 									{{ formatCurrency(availableWalletBalance) }}
 								</span>
+								<!-- //// Neoffice — offline, a card/TWINT method can only be
+								     recorded, never charged. Say it on the button itself: a
+								     toast is gone in three seconds, this stays visible. -->
+								<span v-if="isManualOnlyOffline(method.mode_of_payment)"
+									:class="['font-bold rounded bg-amber-100 text-amber-700', isSmallMobile ? 'text-[8px] px-1 py-0.5' : 'text-[10px] px-1.5 py-0.5']">
+									{{ __('manual') }}
+								</span>
 								<!-- Payment Amount Badge -->
 								<span v-if="getMethodTotal(method.mode_of_payment) > 0"
 									:class="['font-bold rounded', isSmallMobile ? 'text-[8px] px-0.5 py-0.5' : 'text-xs px-1 py-0.5', isWalletPaymentMethod(method.mode_of_payment) ? 'text-amber-600 bg-amber-200' : 'text-blue-600 bg-blue-100']">
@@ -2788,6 +2795,16 @@ async function loadDriverMappings() {
 }
 
 /**
+ //// Neoffice — true when this Mode of Payment is normally driven by a PSP but
+ //// cannot be right now, so the till can only write the payment down. Drives
+ //// the "manual" badge; relies on the cached mappings, which is exactly why
+ //// loadDriverMappings() persists them.
+ */
+function isManualOnlyOffline(methodName) {
+	return Boolean(props.isOffline && getMappedDriver(methodName))
+}
+
+/**
  * Return the driver mapping for a Mode of Payment, or null if it is not
  * mapped to a terminal driver (i.e. it should be recorded manually).
  */
@@ -2820,17 +2837,22 @@ function openTerminalDialog(method) {
 		showWarning(__("A payment is already in progress"))
 		return
 	}
-	//// Neoffice — card and TWINT both need the PSP; offline they cannot be
-	//// collected at all. Refuse explicitly instead of letting the method fall
-	//// through to the manual path, which would book an uncollected payment.
-	//// Cash still works, and the sale still queues offline as usual.
+	//// Neoffice — offline the PSP is unreachable, so the till cannot drive the
+	//// terminal. We deliberately do NOT block: the shop may well collect by
+	//// other means — a standalone terminal, the TWINT QR sitting on the counter,
+	//// or Tap to Pay on a phone over 4G —
+	//// and the sale still has to be recorded. But the cashier must know that
+	//// from here on the till only WRITES the payment down, it does not TAKE it
+	//// — silently switching to the manual path would book a sale against money
+	//// that never moved. Warn, then fall through to manual entry.
 	if (props.isOffline) {
 		showWarning(
-			__("No connection — {0} is unavailable. Use cash, or wait for the connection to come back.").replace(
+			__("No internet access — {0} must be collected manually. Take the payment another way (terminal, TWINT QR on the counter, Tap to Pay), then enter the amount: the till records it, it does not charge it.").replace(
 				"{0}",
 				method.mode_of_payment,
 			),
 		)
+		lastSelectedMethod.value = method
 		return
 	}
 	const mapping = getMappedDriver(method.mode_of_payment)

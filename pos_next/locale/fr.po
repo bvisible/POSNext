@@ -13613,7 +13613,12 @@ msgstr ""
 "relancer."
 
 #: POS/src/components/sale/PaymentDialog.vue
-msgid "No connection — {0} is unavailable. Use cash, or wait for the connection to come back."
+msgid "No internet access — {0} must be collected manually. Take the payment another way (terminal, TWINT QR on the counter, Tap to Pay), then enter the amount: the till records it, it does not charge it."
 msgstr ""
-"Pas de connexion — {0} est indisponible. Utilisez les espèces, ou attendez le "
-"retour de la connexion."
+"Pas d'accès à Internet — {0} doit être encaissé manuellement. Prenez le "
+"paiement par un autre moyen (terminal, QR TWINT sur le comptoir, Tap to Pay), "
+"puis saisissez le montant : la caisse l'enregistre, elle ne le prélève pas."
+
+#: POS/src/components/sale/PaymentDialog.vue
+msgid "manual"
+msgstr "manuel"
