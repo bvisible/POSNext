@@ -303,6 +303,10 @@ scheduler_events = {
 		# //// restaurant reservation system with POS dialog, online booking, and em… — ebc3ecc
 		"pos_next.api.reservations.send_reminders",
 		"pos_next.api.reservations.auto_no_show",
+		#//// Neoffice — the till finalizes a POS payment in the browser, so any
+		#//// browser-side failure charges the customer with no sale recorded and
+		#//// nothing to say so. Reconcile server-side (read-only) and alert.
+		"pos_next.tasks.detect_uncollected_payments.detect_uncollected_payments",
 	],
 	"daily": [
 		# //// add support for standalone pricing rules in promotions — 1ed8d44

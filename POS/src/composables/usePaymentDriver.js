@@ -21,7 +21,20 @@
 import { computed, onBeforeUnmount, ref } from "vue"
 import { call } from "frappe-ui"
 
-const FINAL_STATUSES = new Set(["succeeded", "failed", "canceled", "refunded"])
+//// Neoffice — added file (no upstream equivalent)
+//
+// A status ends the watch only once the money has actually settled one way or
+// another. `failed` is deliberately NOT in this set: Stripe Terminal emits
+// `payment_intent.payment_failed` on a *soft* decline (wrong PIN,
+// `online_or_offline_pin_required`) and then replays on the SAME PaymentIntent
+// when the customer re-enters the code — a `succeeded` lands 15-30 s later.
+// Treating `failed` as final made the till stop listening at the decline: the
+// card was charged with no sale recorded, the cashier re-ran the card, and the
+// customer paid twice (guigoz: 20.07 3x48.-, 22.07 2x52.-, 17.08 2x48.-).
+// The backend FSM was fixed for exactly this in `payments` (717f41d, db5d557);
+// this is its missing frontend counterpart. `canceled` stays final — it is only
+// reached when the till explicitly cancels the intent.
+const SETTLED_STATUSES = new Set(["succeeded", "canceled", "refunded"])
 
 // Fallback polling cadence. The till finalizes a payment on the realtime
 // `payment.intent.*.updated` event, but realtime is a single point of failure
@@ -121,11 +134,16 @@ export function usePaymentDriver() {
 			if (result?.intent_name) {
 				_attachRealtime(result.intent_name)
 			}
-			if (FINAL_STATUSES.has(result?.status)) {
+			if (SETTLED_STATUSES.has(result?.status)) {
 				isInFlight.value = false
-			} else if (result?.intent_name) {
-				// Not final yet — poll as a safety net alongside realtime.
-				_startPolling(result.intent_name)
+			} else {
+				// `failed` included: the reader may still be waiting on the
+				// customer, so drop the spinner but keep watching.
+				if (result?.status === "failed") isInFlight.value = false
+				if (result?.intent_name) {
+					// Not settled yet — poll as a safety net alongside realtime.
+					_startPolling(result.intent_name)
+				}
 			}
 			return result
 		} catch (err) {
@@ -143,8 +161,13 @@ export function usePaymentDriver() {
 				intent_name: name,
 			})
 			intent.value = fresh
-			if (FINAL_STATUSES.has(fresh?.status)) {
+			const settled = SETTLED_STATUSES.has(fresh?.status)
+			// A soft decline clears the spinner (the dialog shows the error) but
+			// must NOT end the watch — the PSP can still settle this same intent.
+			if (settled || fresh?.status === "failed") {
 				isInFlight.value = false
+			}
+			if (settled) {
 				_detachRealtime()
 				_stopPolling()
 			}
@@ -213,7 +236,8 @@ export function usePaymentDriver() {
 	const status = computed(() => intent.value?.status ?? null)
 	const nextActionType = computed(() => intent.value?.next_action_type ?? null)
 	const nextActionPayload = computed(() => intent.value?.next_action_payload ?? null)
-	const isTerminal = computed(() => FINAL_STATUSES.has(status.value))
+	// "the intent will not change any more" — a `failed` intent still can.
+	const isTerminal = computed(() => SETTLED_STATUSES.has(status.value))
 
 	return {
 		// state

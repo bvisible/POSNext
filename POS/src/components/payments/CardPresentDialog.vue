@@ -482,8 +482,13 @@ const headline = computed(() => {
 
 const subline = computed(() => {
 	if (isCreating.value) return __("Please wait a moment.")
-	if (status.value === "failed" && props.intent?.error_message) {
-		return props.intent.error_message
+	if (status.value === "failed") {
+		//// Neoffice — a decline on a Stripe reader is usually a *soft* one (the
+		//// reader simply asks for the PIN again) and the same intent can still
+		//// settle. The till keeps listening, so the cashier must NOT re-run the
+		//// card — doing so is what charged customers twice before this fix.
+		const hint = __("The customer can try again on the terminal — do not re-run the card.")
+		return props.intent?.error_message ? `${props.intent.error_message} — ${hint}` : hint
 	}
 	if (status.value === "requires_action") {
 		return __("Tap, insert or swipe the card on the terminal")

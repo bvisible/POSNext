@@ -10,7 +10,11 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { call } from "frappe-ui"
 
-const FINAL_STATUSES = new Set(["succeeded", "failed", "canceled", "refunded"])
+//// Neoffice — added file (no upstream equivalent)
+//
+// `failed` is NOT final — see the long note in usePaymentDriver.js: a PIN retry
+// on the reader settles the SAME intent 15-30 s after `payment_failed`.
+const SETTLED_STATUSES = new Set(["succeeded", "canceled", "refunded"])
 
 export const usePaymentIntentStore = defineStore("paymentIntent", () => {
 	// Currently displayed intent, if any. Keyed by intent_name.
@@ -60,7 +64,7 @@ export const usePaymentIntentStore = defineStore("paymentIntent", () => {
 		if (activeIntent.value?.intent_name === name) {
 			activeIntent.value = fresh
 		}
-		if (FINAL_STATUSES.has(fresh?.status)) {
+		if (SETTLED_STATUSES.has(fresh?.status)) {
 			_detach(name)
 		}
 		return fresh
@@ -79,7 +83,7 @@ export const usePaymentIntentStore = defineStore("paymentIntent", () => {
 	}
 
 	const status = computed(() => activeIntent.value?.status ?? null)
-	const isFinal = computed(() => FINAL_STATUSES.has(status.value))
+	const isFinal = computed(() => SETTLED_STATUSES.has(status.value))
 
 	return {
 		activeIntent,

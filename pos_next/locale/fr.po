@@ -13588,3 +13588,8 @@ msgid ""
 msgstr ""
 "Si coché et canal=terminal, attach_intent_to_reader est appelé "
 "automatiquement après create_intent."
+
+#: POS/src/components/payments/CardPresentDialog.vue
+msgid "The customer can try again on the terminal — do not re-run the card."
+msgstr ""
+"Le client peut réessayer sur le terminal — ne repassez pas la carte."
