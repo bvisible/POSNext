@@ -42,14 +42,14 @@ const SETTLED_STATUSES = new Set(["succeeded", "canceled", "refunded"])
 // never reconnects). Polling the status as a safety net guarantees the till
 // still validates even if no realtime event ever arrives.
 const POLL_INTERVAL_MS = 2500
-// The till must never give up before the PSP does. TWINT only declares a
-// `twint_timeout` after 10 minutes (`payments/api/twint.py`), and a customer
-// fumbling with their phone or slow to present a card routinely runs past a
-// few minutes. At 4 minutes the till stopped watching while the payment was
-// still live server-side — the same silent loss as a soft decline, just slower.
-// 11 minutes outlives every PSP window; the poll stops on its own as soon as
-// the intent settles, so the extra patience costs nothing on a normal sale.
-const POLL_MAX_MS = 660_000
+// A payment that has not settled after a minute is dead in shop terms: the
+// cashier must be told and be free to start over. But a deadline alone would
+// re-open the exact hole this module was fixed for — the till going quiet does
+// NOT stop the PSP, so the customer could still pay seconds later, unrecorded,
+// and the cashier would re-run the card. Hence `_expire()`: at the deadline we
+// ask the PSP one last time, and only if it is still unsettled do we CANCEL it
+// for real. Silence is never an outcome.
+const POLL_MAX_MS = 60_000
 
 export function usePaymentDriver() {
 	const intent = ref(null)
@@ -68,10 +68,40 @@ export function usePaymentDriver() {
 		pollTimer = setInterval(() => {
 			if (Date.now() > pollDeadline) {
 				_stopPolling()
+				_expire(intentName)
 				return
 			}
 			refreshStatus(intentName)
 		}, POLL_INTERVAL_MS)
+	}
+
+	async function _expire(intentName) {
+		// Deadline reached. Never just walk away from a live payment.
+		// 1. Ask the PSP one final time — it may have settled between two polls.
+		const fresh = await refreshStatus(intentName)
+		if (SETTLED_STATUSES.has(fresh?.status) || fresh?.status === "succeeded") {
+			return // it went through after all; the dialog finalizes as usual
+		}
+		// 2. Still unsettled: cancel it at the PSP so it can no longer be paid
+		//    behind our back, THEN report. `cancel()` is a no-op server-side on
+		//    an already-terminal intent, so a race resolves in the customer's
+		//    favour rather than stranding a paid transaction.
+		try {
+			// 3. Verify rather than assume. The server only reports `canceled`
+			//    once the PSP actually accepted it; if the PSP refused (usually
+			//    because the payment just went through), the status comes back
+			//    unchanged — or `succeeded`, in which case the sale completes
+			//    normally instead of being lost.
+			const after = await cancel()
+			if (after?.status === "succeeded") return
+		} catch (err) {
+			// Cancellation itself failed — the intent may still be live. Say so
+			// rather than claiming it is cancelled; the hourly server-side
+			// reconciler (pos_next.tasks.detect_uncollected_payments) is the
+			// backstop if money moved anyway.
+			lastError.value = err
+		}
+		isInFlight.value = false
 	}
 
 	function _stopPolling() {

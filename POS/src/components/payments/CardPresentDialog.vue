@@ -503,6 +503,11 @@ const subline = computed(() => {
 		const hint = __("The customer can try again on the terminal — do not re-run the card.")
 		return props.intent?.error_message ? `${props.intent.error_message} — ${hint}` : hint
 	}
+	if (status.value === "canceled") {
+		//// Neoffice — reached after the 60 s deadline, and ONLY once the PSP
+		//// confirmed the cancellation. Tell the cashier it is safe to start over.
+		return __("Canceled on the terminal. You can start the payment again.")
+	}
 	if (status.value === "requires_action") {
 		return __("Tap, insert or swipe the card on the terminal")
 	}

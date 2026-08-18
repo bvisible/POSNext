@@ -13597,3 +13597,7 @@ msgstr ""
 #: POS/src/components/payments/CardPresentDialog.vue
 msgid "Declined — waiting for a new attempt"
 msgstr "Refusé — en attente d'une nouvelle tentative"
+
+#: POS/src/components/payments/CardPresentDialog.vue
+msgid "Canceled on the terminal. You can start the payment again."
+msgstr "Annulé sur le terminal. Vous pouvez relancer le paiement."
