@@ -33,6 +33,11 @@ GRACE_SECONDS = 15 * 60
 # Don't re-alert forever on intents someone has already looked at.
 LOOKBACK_DAYS = 7
 
+# Marker left as a Comment on an intent already reported, so the hourly run
+# raises each discrepancy exactly once. Alert fatigue is how a real signal
+# becomes invisible — the same way the silent FSM rejection hid this bug.
+FLAG_MARKER = "[POS-UNCOLLECTED]"
+
 
 def detect_uncollected_payments():
 	"""Flag settled Payment Intents that never became a sale.
@@ -61,6 +66,7 @@ def detect_uncollected_payments():
 		o
 		for o in orphans
 		if time_diff_in_seconds(now, o.completed_at or o.creation) > GRACE_SECONDS
+		and not _already_flagged(o.name)
 	]
 	if not ripe:
 		return
@@ -98,6 +104,45 @@ def detect_uncollected_payments():
 	)
 
 	_notify_pos_managers(len(ripe), total, currency, message)
+
+	# Flag each intent so the next run stays quiet about it. An unresolved
+	# discrepancy must be raised once and stay visible on the record — not
+	# re-sent every hour until people learn to ignore the alert.
+	for o in ripe:
+		_flag(o.name)
+
+
+def _already_flagged(intent_name: str) -> bool:
+	return bool(
+		frappe.db.exists(
+			"Comment",
+			{
+				"reference_doctype": "Payment Intent",
+				"reference_name": intent_name,
+				"content": ["like", f"%{FLAG_MARKER}%"],
+			},
+		)
+	)
+
+
+def _flag(intent_name: str) -> None:
+	"""Leave a durable, human-visible trace on the intent itself."""
+	try:
+		c = frappe.new_doc("Comment")
+		c.comment_type = "Comment"
+		c.reference_doctype = "Payment Intent"
+		c.reference_name = intent_name
+		c.content = _(
+			"{0} Encaissé par le prestataire mais aucune vente correspondante dans "
+			"l'ERP. À rapprocher : saisir la vente manquante, ou rembourser le client "
+			"s'il a payé deux fois."
+		).format(FLAG_MARKER)
+		c.insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(
+			"detect_uncollected_payments: flag failed",
+			frappe.get_traceback(),
+		)
 
 
 def _notify_pos_managers(count, total, currency, message):

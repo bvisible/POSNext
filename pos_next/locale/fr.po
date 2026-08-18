@@ -13593,3 +13593,7 @@ msgstr ""
 msgid "The customer can try again on the terminal — do not re-run the card."
 msgstr ""
 "Le client peut réessayer sur le terminal — ne repassez pas la carte."
+
+#: POS/src/components/payments/CardPresentDialog.vue
+msgid "Declined — waiting for a new attempt"
+msgstr "Refusé — en attente d'une nouvelle tentative"

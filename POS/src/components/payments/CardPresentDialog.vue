@@ -166,7 +166,15 @@
 					<svg v-else-if="status === 'succeeded'" class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
 					</svg>
-					<svg v-else-if="status === 'failed' || status === 'canceled'" class="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<!-- //// Neoffice — a soft decline is a WAIT, not an end: the reader
+					     re-prompts for the PIN and the same intent settles ~20 s later.
+					     A pulsing amber clock keeps the cashier's hands off the card;
+					     the red cross is reserved for `canceled`, which really is over. -->
+					<svg v-else-if="status === 'failed'" class="w-16 h-16 text-amber-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 2"/>
+					</svg>
+					<svg v-else-if="status === 'canceled'" class="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
 					</svg>
 				</div>
@@ -472,7 +480,12 @@ const headline = computed(() => {
 		case "succeeded":
 			return __("Payment successful")
 		case "failed":
-			return __("Payment failed")
+			//// Neoffice — NOT "Payment failed". A card-present decline is usually
+			//// soft: the reader re-prompts for the PIN and the same intent settles
+			//// ~20 s later (measured at guigoz: 20 s and 19 s). A red "failed" for
+			//// those 20 s is precisely what made the cashier re-run the card and
+			//// charge the customer twice. Say what the cashier must DO: wait.
+			return __("Declined — waiting for a new attempt")
 		case "canceled":
 			return __("Payment canceled")
 		default:
@@ -501,6 +514,9 @@ const iconBgClass = computed(() => {
 		case "succeeded":
 			return "bg-green-100"
 		case "failed":
+			//// Neoffice — amber, not red: the till is still listening and the
+			//// payment can still go through. Red reads as "over, do something".
+			return "bg-amber-100"
 		case "canceled":
 			return "bg-red-100"
 		default:
