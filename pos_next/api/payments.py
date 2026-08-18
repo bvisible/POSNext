@@ -190,11 +190,16 @@ def pos_get_intent_status(intent_name: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def pos_cancel_payment(intent_name: str) -> dict[str, Any]:
-	"""Cancel an in-flight Payment Intent. No-op on terminal-state intents."""
+def pos_cancel_payment(intent_name: str, reason: str | None = None) -> dict[str, Any]:
+	"""Cancel an in-flight Payment Intent. No-op on terminal-state intents.
+
+	``reason`` distinguishes a cashier pressing Cancel from the till's own
+	deadline expiring (``till_timeout``) — same technical outcome, very
+	different meaning when reconciling later.
+	"""
 	from payments.api import intent as intent_api
 
-	return intent_api.cancel_intent(intent_name)
+	return intent_api.cancel_intent(intent_name, reason=reason)
 
 
 @frappe.whitelist()

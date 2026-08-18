@@ -487,7 +487,9 @@ const headline = computed(() => {
 			//// charge the customer twice. Say what the cashier must DO: wait.
 			return __("Declined — waiting for a new attempt")
 		case "canceled":
-			return __("Payment canceled")
+			return props.intent?.error_code === "till_timeout"
+				? __("Payment timed out")
+				: __("Payment canceled")
 		default:
 			return status.value || ""
 	}
@@ -504,8 +506,12 @@ const subline = computed(() => {
 		return props.intent?.error_message ? `${props.intent.error_message} — ${hint}` : hint
 	}
 	if (status.value === "canceled") {
-		//// Neoffice — reached after the 60 s deadline, and ONLY once the PSP
-		//// confirmed the cancellation. Tell the cashier it is safe to start over.
+		//// Neoffice — after the 60 s deadline we do cancel for real at the PSP,
+		//// but saying "cancelled" would suggest someone chose to stop it. Name
+		//// the actual cause, and only claim it once the PSP confirmed it.
+		if (props.intent?.error_code === "till_timeout") {
+			return __("Took too long — payment stopped on the terminal. You can start again.")
+		}
 		return __("Canceled on the terminal. You can start the payment again.")
 	}
 	if (status.value === "requires_action") {

@@ -49,6 +49,10 @@ const POLL_INTERVAL_MS = 2500
 // and the cashier would re-run the card. Hence `_expire()`: at the deadline we
 // ask the PSP one last time, and only if it is still unsettled do we CANCEL it
 // for real. Silence is never an outcome.
+//
+// The cancellation is real, but it is NOT the same event as a cashier pressing
+// Cancel — so it is recorded as `till_timeout` and shown as "took too long",
+// never as a bare "cancelled" that would suggest someone chose to stop it.
 const POLL_MAX_MS = 60_000
 
 export function usePaymentDriver() {
@@ -92,7 +96,7 @@ export function usePaymentDriver() {
 			//    because the payment just went through), the status comes back
 			//    unchanged — or `succeeded`, in which case the sale completes
 			//    normally instead of being lost.
-			const after = await cancel()
+			const after = await cancel("till_timeout")
 			if (after?.status === "succeeded") return
 		} catch (err) {
 			// Cancellation itself failed — the intent may still be live. Say so
@@ -215,12 +219,13 @@ export function usePaymentDriver() {
 		}
 	}
 
-	async function cancel() {
+	async function cancel(reason = null) {
 		const name = intent.value?.intent_name
 		if (!name) return null
 		try {
 			const result = await _call("pos_next.api.payments.pos_cancel_payment", {
 				intent_name: name,
+				reason,
 			})
 			intent.value = result
 			isInFlight.value = false

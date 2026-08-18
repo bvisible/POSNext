@@ -13601,3 +13601,13 @@ msgstr "Refusé — en attente d'une nouvelle tentative"
 #: POS/src/components/payments/CardPresentDialog.vue
 msgid "Canceled on the terminal. You can start the payment again."
 msgstr "Annulé sur le terminal. Vous pouvez relancer le paiement."
+
+#: POS/src/components/payments/CardPresentDialog.vue
+msgid "Payment timed out"
+msgstr "Délai de paiement dépassé"
+
+#: POS/src/components/payments/CardPresentDialog.vue
+msgid "Took too long — payment stopped on the terminal. You can start again."
+msgstr ""
+"Trop long — le paiement a été interrompu sur le terminal. Vous pouvez "
+"relancer."
