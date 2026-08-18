@@ -42,7 +42,14 @@ const SETTLED_STATUSES = new Set(["succeeded", "canceled", "refunded"])
 // never reconnects). Polling the status as a safety net guarantees the till
 // still validates even if no realtime event ever arrives.
 const POLL_INTERVAL_MS = 2500
-const POLL_MAX_MS = 240_000
+// The till must never give up before the PSP does. TWINT only declares a
+// `twint_timeout` after 10 minutes (`payments/api/twint.py`), and a customer
+// fumbling with their phone or slow to present a card routinely runs past a
+// few minutes. At 4 minutes the till stopped watching while the payment was
+// still live server-side — the same silent loss as a soft decline, just slower.
+// 11 minutes outlives every PSP window; the poll stops on its own as soon as
+// the intent settles, so the extra patience costs nothing on a normal sale.
+const POLL_MAX_MS = 660_000
 
 export function usePaymentDriver() {
 	const intent = ref(null)
