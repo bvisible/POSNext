@@ -13622,3 +13622,27 @@ msgstr ""
 #: POS/src/components/sale/PaymentDialog.vue
 msgid "manual"
 msgstr "manuel"
+
+#: POS/src/components/sale/PaymentDialog.vue
+msgid "{0} already charged to the customer"
+msgstr "{0} déjà encaissés auprès du client"
+
+#: POS/src/components/sale/PaymentDialog.vue
+msgid "The sale is not recorded yet — {0} left to collect. Do not close without finishing."
+msgstr ""
+"La vente n'est pas encore enregistrée — il reste {0} à encaisser. Ne fermez "
+"pas sans terminer."
+
+#: POS/src/pages/POSSale.vue
+msgid "{0} has already been charged to the customer"
+msgstr "{0} ont déjà été encaissés auprès du client"
+
+#: POS/src/pages/POSSale.vue
+msgid "Clearing the cart abandons that payment: the money stays taken and no sale is recorded. Finish the sale, or refund the customer first."
+msgstr ""
+"Vider le panier abandonne ce paiement : l'argent reste prélevé et aucune vente "
+"n'est enregistrée. Terminez la vente, ou remboursez le client d'abord."
+
+#: POS/src/pages/POSSale.vue
+msgid "Abandon the payment"
+msgstr "Abandonner le paiement"

@@ -634,6 +634,24 @@
 					]"
 					:style="isMobileView ? {} : { minHeight: rightColumnMinHeight }"
 				>
+					<!-- //// Neoffice — the customer HAS been charged but the sale is not
+					     booked yet. This must stay on screen the whole time: the money
+					     used to be invisible the moment the terminal dialog closed. -->
+					<div
+						v-if="cartStore.collectedUnbookedTotal > 0 && remainingAmount > 0"
+						class="mb-2 flex items-start gap-2 rounded-lg border-2 border-amber-300 bg-amber-50 px-3 py-2"
+					>
+						<span class="text-base leading-none mt-0.5">⚠️</span>
+						<div class="text-xs text-amber-900 leading-snug">
+							<div class="font-bold">
+								{{ __('{0} already charged to the customer', [formatCurrency(cartStore.collectedUnbookedTotal)]) }}
+							</div>
+							<div>
+								{{ __('The sale is not recorded yet — {0} left to collect. Do not close without finishing.', [formatCurrency(remainingAmount)]) }}
+							</div>
+						</div>
+					</div>
+
 						<!-- Payment Methods -->
 					<div :class="isSmallMobile ? 'mb-1' : 'mb-1.5 lg:mb-3'">
 						<div :class="['flex items-center justify-between', isSmallMobile ? 'mb-0.5' : 'mb-1 lg:mb-2']">
@@ -2983,6 +3001,14 @@ function onTerminalSucceeded() {
 	}
 	paymentEntries.value.push(lockedEntry)
 	lockedTerminalPayments.value.push(lockedEntry)
+	//// Neoffice — the customer has been charged. Record it in the cart store so
+	//// that closing this dialog, or clearing the cart, cannot make it vanish
+	//// without the cashier being told.
+	cartStore.noteCollected({
+		amount: amountMajor,
+		mode_of_payment: method.mode_of_payment,
+		intent_name: intent.intent_name,
+	})
 
 	// Auto-finalize when this payment fully settles the bill — no need to make
 	// the cashier click "Finaliser le paiement" after the terminal already
@@ -3539,6 +3565,8 @@ function finalizePayment(isPartial) {
 	// localStorage cleanup needed (the legacy Wallee localStorage cache is gone).
 
 	emit("payment-completed", paymentData)
+	//// Neoffice — booked: the collected money is no longer dangling.
+	cartStore.clearCollected()
 	pendingPartialPaymentData.value = null
 
 	show.value = false

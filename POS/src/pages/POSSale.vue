@@ -1093,10 +1093,29 @@
 				:options="{ title: __('Clear Cart?'), size: 'xs' }"
 			>
 				<template #body-content>
-					<div class="py-3">
+					<div class="py-3 flex flex-col gap-3">
 						<p class="text-sm text-gray-600">
 							{{ __("Remove all {0} items from cart?", [cartStore.itemCount]) }}
 						</p>
+						<!-- //// Neoffice — the irreversible step. If a terminal payment was
+						     already collected for this cart, clearing it loses the money:
+						     the customer is charged and no sale exists. This dialog used to
+						     talk only about items (guigoz, 18.08 — 10.- and 40.- lost that
+						     way). Name the amount, and make the button say what it does. -->
+						<div
+							v-if="cartStore.collectedUnbookedTotal > 0"
+							class="flex items-start gap-2 rounded-lg border-2 border-red-300 bg-red-50 px-3 py-2"
+						>
+							<span class="text-base leading-none mt-0.5">⚠️</span>
+							<div class="text-xs text-red-900 leading-snug">
+								<div class="font-bold">
+									{{ __("{0} has already been charged to the customer", [formatCurrency(cartStore.collectedUnbookedTotal)]) }}
+								</div>
+								<div>
+									{{ __("Clearing the cart abandons that payment: the money stays taken and no sale is recorded. Finish the sale, or refund the customer first.") }}
+								</div>
+							</div>
+						</div>
 					</div>
 				</template>
 				<template #actions>
@@ -1114,7 +1133,7 @@
 							theme="red"
 							@click="confirmClearCart"
 						>
-							{{ __("Clear All") }}
+							{{ cartStore.collectedUnbookedTotal > 0 ? __("Abandon the payment") : __("Clear All") }}
 						</Button>
 					</div>
 				</template>
@@ -3654,6 +3673,17 @@ function handleClearCart() {
 }
 
 function confirmClearCart() {
+	//// Neoffice — the cashier has been told what they are giving up (see the
+	//// dialog body); from here the collected money is no longer dangling for
+	//// the till. The server-side reconciler still reports it within the hour,
+	//// so it can never be lost quietly.
+	if (cartStore.collectedUnbookedTotal > 0) {
+		log.warn(
+			"[POSSale] Cart cleared while a terminal payment was already collected:",
+			cartStore.collectedUnbooked,
+		);
+		cartStore.clearCollected();
+	}
 	cartStore.clearCart();
 	// Reset cart hash when cart is cleared
 	previousCartHash = "";

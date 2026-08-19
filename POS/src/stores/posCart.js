@@ -323,6 +323,25 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		hasUnsentChanges.value = true
 	}
 
+	//// Neoffice — money ALREADY taken from the customer by a terminal or QR
+	//// payment whose sale is not yet booked. It lives in the store, not in the
+	//// payment dialog, because every way out of a sale must be able to see it:
+	//// closing the payment dialog, clearing the cart, starting a new sale. It
+	//// used to live only in the dialog, so closing that dialog made the money
+	//// invisible — guigoz, 18.08: 10.- and 40.- collected, no sale, no warning
+	//// anywhere. Reproduced on osiris the next morning (PI-2026-00000075).
+	const collectedUnbooked = ref([])
+	const collectedUnbookedTotal = computed(() =>
+		roundCurrency(collectedUnbooked.value.reduce((sum, e) => sum + (e.amount || 0), 0)),
+	)
+	function noteCollected(entry) {
+		collectedUnbooked.value.push(entry)
+	}
+	/** Call once the money is accounted for — booked, cancelled or refunded. */
+	function clearCollected() {
+		collectedUnbooked.value = []
+	}
+
 	//// table draft loading fails silently due to async clearCart race — 2f0b4b8
 	async function clearCart() {
 		// Cancel any pending offer processing
@@ -2076,6 +2095,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	)
 
 	return {
+		//// Neoffice — collected but not yet booked (see above)
+		collectedUnbooked,
+		collectedUnbookedTotal,
+		noteCollected,
+		clearCollected,
+
 		// State
 		invoiceItems,
 		customer,
