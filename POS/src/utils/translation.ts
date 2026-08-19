@@ -197,7 +197,13 @@ async function loadLocale(locale: string, options: LoadOptions = {}) {
 			applyMessages(cached.messages)
 			appliedFromCache = true
 
-			if (!translationCache.isStale(cached.timestamp) && !forceNetwork) {
+			//// Neoffice — pass the cached build stamp: without it this path
+			//// short-circuits on age alone and an always-open till keeps the
+			//// dictionary it was opened with, however many deploys go by.
+			if (
+				!translationCache.isStale(cached.timestamp, undefined, cached.build) &&
+				!forceNetwork
+			) {
 				return true
 			}
 		}

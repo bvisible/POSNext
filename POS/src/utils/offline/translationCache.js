@@ -125,10 +125,13 @@ export const translationCache = {
 	 * @param {number} [ttl=CACHE_TTL] - Time-to-live in milliseconds
 	 * @returns {boolean} True if stale or missing timestamp
 	 */
-	isStale(timestamp, ttl = CACHE_TTL, build = undefined) {
-		//// Neoffice — a dictionary cached by a different build is stale whatever
-		//// its age: that is how new strings reach an always-open till.
-		if (build !== undefined && build !== BUILD_STAMP) return true
+	isStale(timestamp, ttl = CACHE_TTL, build = null) {
+		//// Neoffice — a dictionary that does not carry THIS build's stamp is
+		//// stale whatever its age. Note "does not carry", not "carries a
+		//// different one": entries written before this stamp existed have none
+		//// at all, and treating those as fresh would have kept the very tills
+		//// we are fixing on the old dictionary. Costs one refetch per deploy.
+		if (build !== BUILD_STAMP) return true
 		return !timestamp || Date.now() - timestamp > ttl
 	},
 
