@@ -22,6 +22,14 @@ const log = logger.create("TranslationCache")
 /** @constant {number} Cache time-to-live in milliseconds (24 hours) */
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
+//// Neoffice — the build this bundle came from. A cache keyed on locale alone
+//// survives a deploy, so a till kept showing the OLD dictionary for up to 24 h
+//// after new translations shipped — today that meant the new "already charged
+//// to the customer" warnings appearing in English on a French till. Stamping
+//// the build makes a deploy invalidate the dictionary immediately.
+const BUILD_STAMP =
+	typeof __BUILD_VERSION__ !== "undefined" ? String(__BUILD_VERSION__) : "dev"
+
 /** @type {Map<string, TranslationEntry>} In-memory cache for fast lookups */
 const memoryCache = new Map()
 
@@ -52,7 +60,7 @@ const normalizeLocale = (locale) => (locale || "en").toLowerCase()
  */
 async function persist(locale, messages, timestamp) {
 	try {
-		const entry = { locale, messages, timestamp }
+		const entry = { locale, messages, timestamp, build: BUILD_STAMP }
 		memoryCache.set(locale, entry)
 		await db.translations.put(entry)
 		return entry
@@ -117,7 +125,10 @@ export const translationCache = {
 	 * @param {number} [ttl=CACHE_TTL] - Time-to-live in milliseconds
 	 * @returns {boolean} True if stale or missing timestamp
 	 */
-	isStale(timestamp, ttl = CACHE_TTL) {
+	isStale(timestamp, ttl = CACHE_TTL, build = undefined) {
+		//// Neoffice — a dictionary cached by a different build is stale whatever
+		//// its age: that is how new strings reach an always-open till.
+		if (build !== undefined && build !== BUILD_STAMP) return true
 		return !timestamp || Date.now() - timestamp > ttl
 	},
 
@@ -140,7 +151,7 @@ export const translationCache = {
 		const normalized = normalizeLocale(locale)
 		const cached = await read(normalized)
 
-		if (!force && cached && !this.isStale(cached.timestamp, ttl)) {
+		if (!force && cached && !this.isStale(cached.timestamp, ttl, cached.build)) {
 			return cached
 		}
 
