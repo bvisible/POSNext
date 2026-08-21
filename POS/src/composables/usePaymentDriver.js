@@ -228,9 +228,25 @@ export function usePaymentDriver() {
 				reason,
 			})
 			intent.value = result
-			isInFlight.value = false
-			_detachRealtime()
-			_stopPolling()
+			//// Neoffice — only stand down once the intent actually reached a
+			//// terminal state. Cancelling a card terminal is a request, not a
+			//// guarantee: the backend deliberately leaves the status untouched when
+			//// the reader has not confirmed (a Payrexx NexGo took up to ~40 s over
+			//// 4G), because a payment wrongly recorded as cancelled is money taken
+			//// against a sale nobody booked. Tearing down here on an unconfirmed
+			//// cancel would close the dialog and stop watching while the reader is
+			//// still live in front of the customer — so keep polling and let the
+			//// settled status close it.
+			//// `failed` counts as done here even though it is not in
+			//// SETTLED_STATUSES: a declined payment cannot take a card either, and
+			//// polling it forever would leave the dialog open on a dead intent.
+			if (SETTLED_STATUSES.has(result?.status) || result?.status === "failed") {
+				isInFlight.value = false
+				_detachRealtime()
+				_stopPolling()
+			} else {
+				_startPolling(name)
+			}
 			return result
 		} catch (err) {
 			lastError.value = err

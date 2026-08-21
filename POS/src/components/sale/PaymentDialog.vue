@@ -2909,6 +2909,53 @@ function openTerminalDialog(method) {
 	})
 }
 
+//// Neoffice — added. Build the Payrexx `shopItems` payload from the cart.
+////
+//// The NexGo prints its own receipt and we cannot replace it: the ECR API
+//// exposes no printing endpoint (every plausible path — print, printer,
+//// printReceipt, printText, document, printJob — answers 500, probed
+//// 2026-08-21). What the payment request *does* accept is a list of items,
+//// which the terminal prints as the body of that receipt. Sending them turns
+//// an anonymous card slip into the actual detail of the sale.
+////
+//// Only sent when the lines reconcile exactly with what we are charging. On a
+//// split payment the terminal takes a fraction of the basket, and a receipt
+//// itemising the whole basket under a smaller total is worse than no itemising
+//// at all — it is a wrong document in the customer's hand. Payrexx does NOT
+//// validate the sum (verified against a live N86), so this guard is ours.
+function buildTerminalShopItems(amountMinor) {
+	const lines = []
+	for (const item of props.items || []) {
+		const qty = Number(item.qty ?? item.quantity ?? 0)
+		const name = item.item_name || item.item_code || ""
+		if (!name || qty <= 0) continue
+		// Effective line amount, not the list price: the printed lines must add
+		// up to the figure the customer is asked to approve.
+		const lineTotal = Number(
+			item.amount ?? qty * Number(item.rate ?? item.price_list_rate ?? 0),
+		)
+		lines.push({
+			name,
+			price: Math.round((lineTotal * 100) / qty),
+			quantity: qty,
+			unit: "pc",
+			vat: null,
+			discount: 0,
+		})
+	}
+	if (!lines.length) return null
+
+	const linesTotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0)
+	if (linesTotal !== amountMinor) {
+		log.debug("[PaymentDialog] Skipping shopItems — lines do not match amount:", {
+			linesTotal,
+			amountMinor,
+		})
+		return null
+	}
+	return lines
+}
+
 /**
  * Cashier clicked "Démarrer" / "Generate QR" in the terminal dialog.
  * Now we know the chosen amount + device — create the Payment Intent.
@@ -2951,6 +2998,11 @@ async function onTerminalStart({ amount, device }) {
 				pos_profile: props.posProfile,
 				mode_of_payment: method.mode_of_payment,
 				target_doctype: props.targetDoctype || "Sales Invoice",
+				//// Neoffice — the sale detail the terminal prints on its own
+				//// receipt, and the instruction to print it. See
+				//// buildTerminalShopItems above for why it can come back null.
+				shop_items: buildTerminalShopItems(amountMinor),
+				print_slip: true,
 			},
 		})
 	} catch (e) {
