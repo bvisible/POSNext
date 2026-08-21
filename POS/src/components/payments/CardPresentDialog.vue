@@ -59,6 +59,13 @@
 
 			<!-- ============ IDLE STATE: amount entry + terminal selection ============ -->
 			<section v-if="isIdle" class="px-5 py-5">
+				<div
+					v-if="selectedDeviceIsOffline"
+					class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+				>
+					{{ __('This terminal did not answer last time. Check that it is on, awake and connected before sending an amount.') }}
+				</div>
+
 				<!-- Amount display -->
 				<div class="bg-gray-100 rounded-xl py-4 px-4 mb-4 text-center">
 					<div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
@@ -76,6 +83,14 @@
 				<div v-else-if="devicesError" class="mb-4 text-center text-sm text-red-600">
 					{{ devicesError }}
 				</div>
+				<!-- //// Neoffice — avertir quand le lecteur n'a pas répondu la dernière
+				     fois. Le serveur ne peut pas savoir à l'avance si un terminal
+				     écoute : l'API ECR n'expose aucun signal de vivacité (GET
+				     ecr/{sn}/pair répond AUTHORIZED même appareil éteint). Le seul
+				     signal disponible est l'échec précédent — sans lui, le caissier
+				     renvoie un montant dans le vide et la caisse se fige à nouveau.
+				     Placé hors de la chaîne v-if/v-else-if voisine, qu'un bloc
+				     intercalé romprait. -->
 				<div v-else-if="availableDevices.length > 1" class="mb-4">
 					<div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
 						{{ __('Terminal') }}
@@ -357,6 +372,17 @@ const availableDevices = ref([])
 const selectedDevice = ref(props.defaultDevice || null)
 const loadingDevices = ref(false)
 const devicesError = ref("")
+
+//// Neoffice — vrai quand le lecteur retenu est marqué hors ligne côté serveur.
+//// Le statut est posé par payments.api.intent.release_stuck_terminal, seul
+//// endroit de la pile qui apprenne quelque chose de la joignabilité réelle :
+//// une annulation est acquittée, ou elle ne l'est pas. Volontairement un
+//// avertissement et non un blocage — le statut peut dater, et refuser un
+//// encaissement sur une information périmée coûte plus cher que de la montrer.
+const selectedDeviceIsOffline = computed(() => {
+	const device = availableDevices.value.find((d) => d.name === selectedDevice.value)
+	return device?.status === "offline"
+})
 
 async function loadDevices() {
 	if (!props.posProfile) return

@@ -13646,3 +13646,9 @@ msgstr ""
 #: POS/src/pages/POSSale.vue
 msgid "Abandon the payment"
 msgstr "Abandonner le paiement"
+
+#: POS/src/components/payments/CardPresentDialog.vue
+msgid "This terminal did not answer last time. Check that it is on, awake and connected before sending an amount."
+msgstr ""
+"Ce terminal n'a pas répondu la dernière fois. Vérifiez qu'il est allumé, "
+"réveillé et connecté avant d'envoyer un montant."
