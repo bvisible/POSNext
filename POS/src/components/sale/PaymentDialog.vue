@@ -3065,6 +3065,14 @@ function onTerminalSucceeded() {
 		is_locked: true,
 		intent_name: intent.intent_name,
 		provider_intent_id: intent.provider_intent_id || null,
+		//// Neoffice — same value as intent_name, under the name the Sales Invoice
+		//// Payment row actually has a field for. `intent_name` is ours and the
+		//// server drops it; `card_payment_intent` is the custom field, and it is
+		//// what lets payments.api.card_receipt fill in the masked PAN, scheme, AID
+		//// and authorisation. Without it the till prints a sales receipt where a
+		//// card receipt is required — which matters now that the terminal prints
+		//// nothing of its own.
+		card_payment_intent: intent.intent_name,
 	}
 	paymentEntries.value.push(lockedEntry)
 	lockedTerminalPayments.value.push(lockedEntry)
