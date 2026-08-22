@@ -2998,11 +2998,26 @@ async function onTerminalStart({ amount, device }) {
 				pos_profile: props.posProfile,
 				mode_of_payment: method.mode_of_payment,
 				target_doctype: props.targetDoctype || "Sales Invoice",
-				//// Neoffice — the sale detail the terminal prints on its own
-				//// receipt, and the instruction to print it. See
-				//// buildTerminalShopItems above for why it can come back null.
+				//// Neoffice — the sale detail, sent as metadata on the payment.
+				////
+				//// NOT an instruction to print: verified on a NexGo N86 on
+				//// 2026-08-22 that the terminal accepts shopItems, returns them
+				//// intact, and prints none of them — its receipt is the acquirer's
+				//// card slip and nothing else. They are still worth sending: they
+				//// stay attached to the transaction on the Payrexx side, which is
+				//// what makes a terminal payment identifiable during
+				//// reconciliation.
+				////
+				//// `print_slip` is deliberately NOT set here. Left alone, the
+				//// mapping's options_json decides, and its absence means the
+				//// device's own setting applies — which is `printReceipt: false`,
+				//// i.e. the terminal prints nothing. That is what we want: its
+				//// receipt carries the acceptance platform's branding (NAKA), and
+				//// the customer's document is the one Neopos prints itself, which
+				//// is ours and carries the actual sale. A merchant with no receipt
+				//// printer of their own can turn the terminal's back on by putting
+				//// `{"print_slip": true}` in the POS Payment Driver Mapping.
 				shop_items: buildTerminalShopItems(amountMinor),
-				print_slip: true,
 			},
 		})
 	} catch (e) {
