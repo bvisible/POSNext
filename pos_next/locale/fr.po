@@ -13652,3 +13652,11 @@ msgid "This terminal did not answer last time. Check that it is on, awake and co
 msgstr ""
 "Ce terminal n'a pas répondu la dernière fois. Vérifiez qu'il est allumé, "
 "réveillé et connecté avant d'envoyer un montant."
+
+#: pos_next/print_format/neopos_receipt
+msgid "Total Paid"
+msgstr "Total payé"
+
+#: pos_next/print_format/neopos_receipt
+msgid "BALANCE DUE"
+msgstr "SOLDE DÛ"
