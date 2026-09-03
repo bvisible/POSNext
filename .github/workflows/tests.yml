@@ -24,6 +24,7 @@ jobs:
       app: pos_next
       install_apps: erpnext,payments
       skip_build: true   # SPA commit-the-build: assets committed, never built on instances
+      node_version: "20"  # root package.json pulls playwright (>=20); bench yarn-installs it even with --skip-assets
       test_args: ${{ inputs.test_args || '' }}
     # inherit: CI_REPORT_SECRET (deps are public bvisible forks: no read token needed)
     secrets: inherit
