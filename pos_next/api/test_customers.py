@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 from pos_next.api.customers import (
     _get_customer_assignment_context,
@@ -13,9 +13,12 @@ from pos_next.api.customers import (
 
 
 class TestCustomersAPI(unittest.TestCase):
+    # frappe.db is a werkzeug LocalProxy that inspect.isawaitable() reports as awaitable, so a
+    # bare patch("...frappe.db") builds an AsyncMock and every frappe.db.x() returns a coroutine
+    # ("object of type 'coroutine' has no len()", CI 2026-09-03). new_callable=MagicMock keeps it sync.
     @patch("pos_next.api.customers.frappe.logger")
     @patch("pos_next.api.customers.frappe.get_all")
-    @patch("pos_next.api.customers.frappe.db")
+    @patch("pos_next.api.customers.frappe.db", new_callable=MagicMock)
     def test_get_customers_applies_search_term_filters(self, mock_db, mock_get_all, mock_logger):
         mock_logger.return_value = Mock()
         mock_get_all.return_value = []
@@ -35,7 +38,7 @@ class TestCustomersAPI(unittest.TestCase):
             ],
         )
 
-    @patch("pos_next.api.customers.frappe.db")
+    @patch("pos_next.api.customers.frappe.db", new_callable=MagicMock)
     def test_get_default_loyalty_program_from_settings_uses_explicit_pos_profile(self, mock_db):
         mock_db.get_value.return_value = "LOYALTY-A"
 

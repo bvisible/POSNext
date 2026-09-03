@@ -2,7 +2,7 @@
 # See license.txt
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 from pos_next.pos_next.doctype.pos_coupon.pos_coupon import (
     _get_customer_coupon_usage_count,
@@ -10,8 +10,11 @@ from pos_next.pos_next.doctype.pos_coupon.pos_coupon import (
 
 
 class TestPOSCoupon(unittest.TestCase):
+    # frappe.db is a werkzeug LocalProxy that inspect.isawaitable() reports as awaitable, so a
+    # bare patch("...frappe.db") builds an AsyncMock and every frappe.db.x() returns a coroutine
+    # ("object of type 'coroutine' has no len()", CI 2026-09-03). new_callable=MagicMock keeps it sync.
     @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.get_meta")
-    @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.db")
+    @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.db", new_callable=MagicMock)
     def test_one_use_coupon_counts_sales_invoice_and_pos_invoice(self, mock_db, mock_get_meta):
         def table_exists(doctype):
             return doctype in {"Sales Invoice", "POS Invoice"}
@@ -37,7 +40,7 @@ class TestPOSCoupon(unittest.TestCase):
         )
 
     @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.get_meta")
-    @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.db")
+    @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.db", new_callable=MagicMock)
     def test_one_use_coupon_skips_doctypes_without_coupon_field(self, mock_db, mock_get_meta):
         mock_db.table_exists.return_value = True
         mock_db.count.return_value = 4
