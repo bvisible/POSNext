@@ -93,6 +93,23 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 		)
 
 		#//// Neoffice — removed cls.created_coupons/created_pricing_rules init here (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): moved up next to created_customers/created_invoices so every tracking list exists before anything is created
+
+		#//// Neoffice — added: pin the receivable account and bill in ITS currency.
+		# The invoice used to take its currency from the ambient default, which is
+		# not the company's: bench run-tests only bootstraps the app under test, so
+		# erpnext's before_tests never runs and Global Defaults keeps frappe's own
+		# USD while the test company is INR. Every invoice then died on "Party
+		# Account Debtors - _TC currency (INR) and document currency (USD) should
+		# be same" (CI, 2026-09-04). Taking the currency FROM the party account is
+		# the one choice that cannot disagree with the check that compares them.
+		from erpnext.accounts.party import get_party_account, get_party_account_currency
+
+		cls.debit_to = get_party_account("Customer", cls.test_customer, cls.test_company)
+		cls.test_currency = (
+			get_party_account_currency("Customer", cls.test_customer, cls.test_company)
+			or frappe.get_cached_value("Company", cls.test_company, "default_currency")
+		)
+
 		# Create a test Pricing Rule and Coupon Code
 		cls._create_test_coupon()
 
@@ -209,6 +226,12 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"company": self.test_company,
 			"posting_date": nowdate(),
 			"due_date": nowdate(),
+			# Bill in the receivable account's own currency - see setUpClass.
+			"debit_to": self.debit_to,
+			"currency": self.test_currency,
+			"conversion_rate": 1,
+			"price_list_currency": self.test_currency,
+			"plc_conversion_rate": 1,
 			"coupon_code": coupon_code,
 			"items": [{
 				"item_code": self.test_item,
@@ -295,6 +318,12 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"company": self.test_company,
 			"posting_date": nowdate(),
 			"due_date": nowdate(),
+			# Bill in the receivable account's own currency - see setUpClass.
+			"debit_to": self.debit_to,
+			"currency": self.test_currency,
+			"conversion_rate": 1,
+			"price_list_currency": self.test_currency,
+			"plc_conversion_rate": 1,
 			"items": [{
 				"item_code": self.test_item,
 				"qty": 1,
