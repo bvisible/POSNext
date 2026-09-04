@@ -114,21 +114,27 @@
 </template>
 
 <script setup>
+//// Neoffice — formatting only, no behaviour change: the fork ran Biome over the whole POS
+//// source (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+//// formatting"). Upstream is equivalent — re-run the formatter at the next merge.
 import { ref } from "vue"
 
 defineProps({
 	show: {
 		type: Boolean,
+		//// Neoffice — Biome trailing commas only, no behaviour change (458d81a9, 2026-03-20).
 		default: false,
 	},
 })
 
+//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 const emit = defineEmits(["cancel", "confirm"])
 
 const isClearing = ref(false)
 
 function handleConfirm() {
 	isClearing.value = true
+	//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 	emit("confirm")
 }
 

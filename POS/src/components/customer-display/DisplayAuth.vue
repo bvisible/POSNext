@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Pairing screen of the customer-facing -->
+	<!-- //// second screen. That display is a separate browser window with no cashier session, so -->
+	<!-- //// it authenticates with the display password alone before it may mirror any cart. -->
+	<!-- //// Upstream POSNext has no second screen. (185c3c50, 2026-02-03; c9d9c1cb, 2026-03-20 -->
+	<!-- //// aligns it with the Neoffice theme and the instance logo; 771950bd renames the -->
+	<!-- //// product to Neopos.) -->
 	<div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-8">
 		<div class="max-w-md w-full space-y-8">
 			<!-- Logo/Header -->

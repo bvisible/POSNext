@@ -98,10 +98,16 @@ import { FeatherIcon, LoadingIndicator } from "frappe-ui"
 import { useLocale } from "@/composables/useLocale"
 
 // Locale state from composable
+//// Neoffice — formatting only, no behaviour change: Biome 80-column wrap from the
+//// whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise branding, add
+//// restaurant mode, and code formatting").
 const { locale, localeConfig, isRTL, supportedLocales, changeLocale } =
 	useLocale()
 
 // Component state
+//// Neoffice — whitespace only: Biome collapsed the aligned trailing comments (458d81a9,
+//// 2026-03-20). `git blame -w` reports no author for these three lines precisely because
+//// nothing but the spacing changed.
 const isOpen = ref(false) // Dropdown visibility
 const isChanging = ref(false) // Language change in progress
 const dropdownRef = ref(null) // DOM ref for click-outside detection
@@ -127,6 +133,7 @@ const selectLanguage = async (code) => {
 }
 
 /** Closes dropdown when clicking outside the component */
+//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 const handleClickOutside = (e) =>
 	dropdownRef.value?.contains(e.target) || (isOpen.value = false)
 

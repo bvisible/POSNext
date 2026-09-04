@@ -10,10 +10,14 @@
 </template>
 
 <script setup>
+//// Neoffice — formatting only, no behaviour change: the fork ran Biome over the whole POS
+//// source (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+//// formatting"). Upstream is equivalent — re-run the formatter at the next merge.
 import { ref, onMounted } from "vue"
 import DOMPurify from "dompurify"
 
 const props = defineProps({
+	//// Neoffice — Biome quote style and trailing commas only, no behaviour change (458d81a9).
 	tag: {
 		type: String,
 		required: false,
@@ -28,6 +32,9 @@ const props = defineProps({
 const containerRef = ref(null)
 
 onMounted(() => {
+	//// Neoffice — indentation only: Biome re-indented this file from spaces to tabs (458d81a9,
+	//// 2026-03-20). `git blame -w` reports no author here precisely because nothing but the
+	//// whitespace changed; the DOMPurify sanitising is upstream's.
 	const sanitized = DOMPurify.sanitize(props.inner)
 	containerRef.value.innerHTML = sanitized
 })

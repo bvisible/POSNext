@@ -1,4 +1,13 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Editor for product options -->
+	<!-- //// (modifiers): option groups with price supplements, single or multiple selection, -->
+	<!-- //// required flag, quantity value, scoped by item or item group. "Medium rare", "extra -->
+	<!-- //// cheese" — things a kitchen needs and a retail till like upstream POSNext has no -->
+	<!-- //// concept of. (Introduced by d08c57e7, 2026-03-23, whose subject is about the tip -->
+	<!-- //// account and not about this file; the feature is 77267945, 2026-03-23 "Product -->
+	<!-- //// Options and Card editors in POS"; d96ad42b moves it onto dedicated whitelisted -->
+	<!-- //// APIs, c6c81bf1 adds quantity_value, 993392f1 and 3fb0d986 the item and item-group -->
+	<!-- //// selectors.) -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="handleClose">
 			<div class="fixed inset-0 flex items-center justify-center p-4">

@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Weekly opening-hours grid where each -->
+	<!-- //// slot names the restaurant card served during it: that is what makes a lunch card and -->
+	<!-- //// an evening card show different items on the same till at different hours. Upstream -->
+	<!-- //// POSNext sells one catalogue all day. (32f2415d, 2026-03-23 "add Restaurant Settings -->
+	<!-- //// with opening hours and time-based card availability"; 102b1208 moves the card -->
+	<!-- //// assignment off Restaurant Card and onto the slots, 9ae00441 the Lunch and Dinner -->
+	<!-- //// slot defaults.) -->
 	<div class="flex flex-col gap-3">
 		<div v-for="day in DAYS" :key="day" class="bg-gray-50 rounded-lg p-3">
 			<div class="flex items-center justify-between mb-2">

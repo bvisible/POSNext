@@ -370,12 +370,17 @@ onUnmounted(() => {
 
 .select-input:focus {
 	outline: none;
+	/* //// Neoffice — upstream POSNext leads on a blue/violet accent; the Neoffice Design */
+	/* //// System has a single saturated hue, clay #D68A59, so the hardcoded cool hexes */
+	/* //// were swept (e4769383, 2026-06-14 "retheme blue/violet to Design System clay"). */
 	border-color: #d68a59;
 	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
 
 .select-input.has-value {
 	font-weight: 500;
+	/* //// Neoffice — clay #D68A59 in place of upstream's blue/violet accent (e4769383, */
+	/* //// 2026-06-14 "retheme blue/violet to Design System clay"). */
 	color: #d68a59;
 }
 
@@ -442,6 +447,8 @@ onUnmounted(() => {
 	width: 1.5rem;
 	height: 1.5rem;
 	border: 2px solid #e5e7eb;
+	/* //// Neoffice — spinner picks up the clay accent instead of upstream's blue (e4769383, */
+	/* //// 2026-06-14 "retheme blue/violet to Design System clay"). */
 	border-top-color: #d68a59;
 	border-radius: 50%;
 	animation: spin 0.6s linear infinite;
@@ -506,6 +513,8 @@ onUnmounted(() => {
 
 .dropdown-item.active {
 	background: #eef2ff;
+	/* //// Neoffice — clay #D68A59 in place of upstream's blue/violet accent (e4769383, */
+	/* //// 2026-06-14 "retheme blue/violet to Design System clay"). */
 	color: #d68a59;
 }
 
@@ -519,6 +528,8 @@ onUnmounted(() => {
 }
 
 .dropdown-item.load-more {
+	/* //// Neoffice — clay #D68A59 in place of upstream's blue/violet accent (e4769383, */
+	/* //// 2026-06-14 "retheme blue/violet to Design System clay"). */
 	color: #d68a59;
 	font-weight: 500;
 	justify-content: center;

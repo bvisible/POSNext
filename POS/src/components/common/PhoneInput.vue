@@ -91,6 +91,9 @@ const props = defineProps({
 
 const emit = defineEmits(["update:modelValue", "validate"])
 
+//// Neoffice — formatting only, no behaviour change: Biome 80-column wrap from the
+//// whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise branding, add
+//// restaurant mode, and code formatting").
 const { parsePhoneNumber, formatPhoneNumber, validatePhoneNumber } =
 	useCountryCodes()
 
@@ -163,6 +166,7 @@ watch(
 	() => props.modelValue,
 	(newValue, oldValue) => {
 		// Only parse if value changed externally (not from our own update)
+		//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
 		const currentFullValue = formatPhoneNumber(
 			countryISD.value,
 			phoneNumber.value,
@@ -170,6 +174,7 @@ watch(
 		if (newValue !== currentFullValue) {
 			parseIncomingValue(newValue)
 		}
+	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 	},
 )
 

@@ -1,4 +1,10 @@
 <template>
+  <!-- //// Neoffice — added file (no upstream equivalent). React island that mounts -->
+  <!-- //// nora-learn-react (Neoffice's in-product training: popup, sidebar, session system) -->
+  <!-- //// inside the Vue POS. It lazily creates a React root on document.body and renders -->
+  <!-- //// through createPortal, so nothing React ever touches the Vue tree. Upstream POSNext -->
+  <!-- //// has no training surface. (05053a5b, 2026-04-07 "integrate nora-learn-react via -->
+  <!-- //// React Island bridge") -->
   <div />
 </template>
 

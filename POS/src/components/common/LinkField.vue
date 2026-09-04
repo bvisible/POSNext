@@ -4,6 +4,14 @@
   so it respects each doctype's search settings). Session-authenticated.
 -->
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Link autocomplete for the POS's own -->
+	<!-- //// customer editor: upstream POSNext only has a small quick-form popup and no Link -->
+	<!-- //// control at all, so a meta-driven Customer form had nothing to render Link fields -->
+	<!-- //// with. Backed by frappe.desk.search.search_link, the very endpoint the desk uses, so -->
+	<!-- //// each doctype's search settings still apply and the value is one that really exists. -->
+	<!-- //// (82fbfd9e, 2026-07-10 "full meta-driven customer edit dialog (stays in the POS)"; -->
+	<!-- //// 5012705c enforces a value from the linked doctype, 7e697fdd uses frappe-ui call() -->
+	<!-- //// instead of window.frappe.call.) -->
 	<div class="relative" ref="rootRef">
 		<input
 			:value="query"

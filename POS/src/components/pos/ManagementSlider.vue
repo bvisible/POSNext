@@ -58,6 +58,11 @@
 			</div>
 		</button>
 
+		<!-- //// Neoffice — added block: the sidebar entries upstream POSNext has no feature behind. -->
+		<!-- //// Cash In/Out is always there (6c598630, 2026-03-28, Journal Entry Templates); Cards, -->
+		<!-- //// Product Options and Workflows (60d432a2, 2026-03-23), Tips (c4460c61, 2026-03-29) -->
+		<!-- //// and Reservations (ebc3ecc5, 2026-03-29) are gated on the restaurant store, so a -->
+		<!-- //// retail till keeps upstream's bare sidebar. -->
 		<!-- Cash In/Out -->
 		<button
 			@click="handleMenuClick('cash-entry')"
@@ -195,13 +200,22 @@
 
 <script setup>
 import { FeatherIcon } from "frappe-ui"
+//// Neoffice — computed and the restaurant store: the sidebar has to hide its restaurant
+//// entries on a retail till (60d432a2, 2026-03-23 "restaurant sidebar buttons for Cards,
+//// Product Options, Workflows"). Upstream only needs ref here.
 import { ref, computed } from "vue"
 import { useRestaurantStore } from "@/stores/restaurant"
 
+//// Neoffice — restaurant store, which drives the visibility of the entries added above
+//// (60d432a2, 2026-03-23). Upstream POSNext has no restaurant mode.
 const restaurantStore = useRestaurantStore()
 const emit = defineEmits(["menu-clicked"])
 
 const activeMenu = ref("")
+//// Neoffice — gates for the added sidebar entries: restaurant mode for Cards, Product
+//// Options, Workflows and Reservations (60d432a2, 2026-03-23), and the tips toggle of
+//// Restaurant Settings for the Tips panel (c4460c61, 2026-03-29 "record guest tips in
+//// Restaurant Tip + Tips panel in POS sidebar").
 const isRestaurantMode = computed(() => restaurantStore.isEnabled)
 const isTipsEnabled = computed(() => restaurantStore.tipsEnabled)
 

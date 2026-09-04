@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Swiss address autocomplete for the -->
+	<!-- //// POS customer forms: queries the Federal Geoportal (GeoAdmin) as the cashier types, -->
+	<!-- //// then fills street, number, postcode, city and country. Upstream POSNext has no -->
+	<!-- //// address lookup at all, and typing a Swiss address by hand is how a delivery goes -->
+	<!-- //// nowhere. (6ed1256d, 2026-04-02 "add Swiss address autocomplete to customer creation -->
+	<!-- //// forms"; b2559631 teleports the dropdown to body so it escapes the dialog overflow, -->
+	<!-- //// b544e6e9 restores pointer-events on it, ac7ae319 keeps the Radix dialog open when a -->
+	<!-- //// suggestion is clicked.) -->
 	<div ref="wrapperRef">
 		<input
 			ref="inputRef"

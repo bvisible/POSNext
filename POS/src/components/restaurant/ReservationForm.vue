@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The booking form itself: date, -->
+	<!-- //// service, covers, tables, guest identity, notes. Used both by the POS dialog and by -->
+	<!-- //// the public /pos/reservation page, which is why it has to hold up on a phone as well -->
+	<!-- //// as on the till. Upstream POSNext has no reservations. (ebc3ecc5, 2026-03-29 -->
+	<!-- //// "restaurant reservation system with POS dialog, online booking, and email -->
+	<!-- //// notifications"; 6f17f723 the service selector and area tabs, e4769383 the clay -->
+	<!-- //// retheme.) -->
 	<div class="reservation-form">
 		<h3 class="form-title">
 			{{ editing ? __("Edit Reservation") : __("New Reservation") }}

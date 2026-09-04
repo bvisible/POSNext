@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Side panel to edit one item of a -->
+	<!-- //// restaurant card: card price against global Item Price (the same dish costs more on -->
+	<!-- //// the evening card), active toggle, description, colour and image, badges. Upstream -->
+	<!-- //// POSNext has one price per item and no cards. (Introduced by 37746a8f, 2026-03-26, -->
+	<!-- //// whose subject "add print-media-type to prevent double margins in PDF" describes -->
+	<!-- //// another part of the same commit; redesigned by ed3361f5, 2026-03-27 "redesign item -->
+	<!-- //// edit panel with card/global price, active toggle, header cleanup"; e4769383 the clay -->
+	<!-- //// retheme.) -->
 	<div class="bg-white" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; overflow: hidden;">
 		<!-- Header -->
 		<div class="px-3 py-2 border-b bg-gradient-to-r from-blue-50 to-indigo-50" style="flex-shrink: 0;">

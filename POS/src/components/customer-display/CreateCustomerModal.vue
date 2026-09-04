@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The "create account" form rendered -->
+	<!-- //// on the customer-facing second screen: the buyer types their own details while the -->
+	<!-- //// cashier keeps the till. Upstream POSNext has no customer display, hence no such -->
+	<!-- //// form. Customer group and territory are looked up on the site instead of hardcoded -->
+	<!-- //// (185c3c50, 2026-02-03), the country is preselected from the company (71619d17), an -->
+	<!-- //// Individual/Company toggle was added (bcc36a22), the address fields use the GeoAdmin -->
+	<!-- //// autocomplete (6ed1256d) and street and number are stored as separate fields per -->
+	<!-- //// ADR-002 (d7584e7b, 2026-07-17 "structured street + N° across POS Next"). -->
 	<div class="bg-white flex flex-col">
 		<!-- Header -->
 		<div class="flex items-center justify-between px-5 py-3 border-b border-gray-200">

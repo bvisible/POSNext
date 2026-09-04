@@ -163,6 +163,9 @@ const dropdownPosition = ref({ top: 0, left: 0, width: 0 })
 const searchQuery = ref("")
 
 const selectedLabel = computed(() => {
+	//// Neoffice — formatting only, no behaviour change: Biome parenthesises the single arrow
+	//// parameter, whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise
+	//// branding, add restaurant mode, and code formatting").
 	const selected = props.options.find((opt) => opt.value === props.modelValue)
 	return selected?.label || ""
 })
@@ -173,6 +176,7 @@ const filteredOptions = computed(() => {
 	// Apply search filter if searchable and query exists
 	if (props.searchable && searchQuery.value) {
 		const query = searchQuery.value.toLowerCase()
+		//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
 		result = props.options.filter(
 			(opt) =>
 				opt.label?.toLowerCase().includes(query) ||
@@ -268,6 +272,7 @@ function focusPrev(currentIndex) {
 
 // Close on click outside (check both container and teleported dropdown)
 function handleClickOutside(event) {
+	//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 	const clickedInContainer =
 		containerRef.value && containerRef.value.contains(event.target)
 	const clickedInDropdown =

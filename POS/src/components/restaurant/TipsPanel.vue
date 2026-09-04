@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Tips ledger in the POS sidebar: the -->
+	<!-- //// Restaurant Tip records created when a guest pays more than the invoice, filtered by -->
+	<!-- //// date, server and table, with the totals a shift close needs to share them. Upstream -->
+	<!-- //// POSNext has no tips. (c4460c61, 2026-03-29 "record guest tips in Restaurant Tip + -->
+	<!-- //// Tips panel in POS sidebar") -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="$emit('close')">
 			<div class="fixed inset-0 flex items-center justify-center p-4">

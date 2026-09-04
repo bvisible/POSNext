@@ -142,6 +142,9 @@ import { useOfflineStatus } from "@/composables/useOfflineStatus"
 import { session } from "@/data/session"
 import { cleanupUserSession } from "@/utils/sessionCleanup"
 
+//// Neoffice — formatting only, no behaviour change: Biome 80-column wrap from the
+//// whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise branding, add
+//// restaurant mode, and code formatting").
 const { isLocked, isVerifying, verifyError, lockedUser, unlock } =
 	useSessionLock()
 const { isOffline } = useOfflineStatus()

@@ -1,4 +1,13 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). SVG layer that draws the room itself -->
+	<!-- //// on the restaurant floor plan: walls as lines, doors as arcs, windows as parallel -->
+	<!-- //// lines, with click-to-click drawing, 10px snap-to-grid, endpoint snapping, segment -->
+	<!-- //// splitting for doors and windows, and a traceable background image. Stored as JSON on -->
+	<!-- //// Restaurant Area. Upstream POSNext has no floor plan. (032298a3, 2026-03-31 "wall -->
+	<!-- //// drawing, doors, windows and background image on floor plan"; d7a2025e switches -->
+	<!-- //// drawing from drag to click-to-click, 34274686 listens on document so a drag survives -->
+	<!-- //// leaving the SVG, 4b289676 moves the layer outside the zoom container so the whole -->
+	<!-- //// canvas is drawable.) -->
 	<svg
 		class="absolute inset-0 pointer-events-none"
 		:class="[

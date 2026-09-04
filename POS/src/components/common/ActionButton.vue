@@ -80,6 +80,9 @@ const props = defineProps({
 defineEmits(["click"])
 
 const buttonClasses = computed(() => {
+	//// Neoffice — formatting only, no behaviour change: the fork ran Biome over the whole POS
+	//// source (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting"). Upstream is equivalent — re-run the formatter at the next merge.
 	const base =
 		"p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors group touch-manipulation"
 	const animation = props.animate ? "animate-pulse" : ""

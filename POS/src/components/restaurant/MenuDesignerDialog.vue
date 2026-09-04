@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Designs the printed menu: design -->
+	<!-- //// template, fonts, cover page, which cards and which product-option groups appear, and -->
+	<!-- //// a live preview rendered from the very HTML the PDF is built from. A retail till like -->
+	<!-- //// upstream POSNext has no menu to print. (b6e757dd, 2026-03-26 "add menu PDF generator -->
+	<!-- //// with badges"; cf0d5410 makes the preview use the PDF's own HTML, 96398f9f fixes an -->
+	<!-- //// infinite reactivity loop that crashed the tab with OOM, fe2fcc72 renames "template" -->
+	<!-- //// to "design" because Jinja owns that name, eedb9d4c and ec29f5fa and fbc34f38 the -->
+	<!-- //// selectable option groups.) -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-60 z-[400]" @click.self="$emit('close')">
 			<div class="fixed inset-0 flex items-center justify-center p-4">

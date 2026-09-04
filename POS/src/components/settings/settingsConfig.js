@@ -69,6 +69,9 @@ export const subsectionThemes = {
 		border: "border-teal-200",
 		iconColor: "text-teal-600",
 	},
+	//// Neoffice — amber section theme, added for the Restaurant tab that upstream POSNext has no
+	//// equivalent of (32f2415d, 2026-03-23 "add Restaurant Settings with opening hours and
+	//// time-based card availability").
 	amber: {
 		gradient: "from-amber-50 to-orange-50",
 		border: "border-amber-200",

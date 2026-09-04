@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Day list of reservations with date -->
+	<!-- //// and status filters, and the transitions the host drives (confirm, seat, no show). -->
+	<!-- //// Upstream POSNext has no reservations. (ebc3ecc5, 2026-03-29 "restaurant reservation -->
+	<!-- //// system with POS dialog, online booking, and email notifications"; e4769383 the clay -->
+	<!-- //// retheme.) -->
 	<div class="reservation-list">
 		<!-- Filters -->
 		<div class="filters">

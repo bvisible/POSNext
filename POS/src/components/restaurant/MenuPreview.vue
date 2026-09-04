@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Shows the menu preview in an iframe -->
+	<!-- //// fed by the server-rendered HTML, so what the restaurateur sees is what wkhtmltopdf -->
+	<!-- //// will print; a client-side re-implementation of the layout would drift from the PDF. -->
+	<!-- //// Upstream POSNext prints no menu. (b6e757dd, 2026-03-26 "add menu PDF generator with -->
+	<!-- //// badges"; cf0d5410 moves the preview onto the PDF's own HTML, d19aaea8 restricts the -->
+	<!-- //// CSS to what wkhtmltopdf understands, 0d7b3d06 adds the font selector.) -->
 	<div class="h-full overflow-auto bg-gray-200 p-4">
 		<!-- Loading -->
 		<div v-if="loading" class="flex items-center justify-center h-full">

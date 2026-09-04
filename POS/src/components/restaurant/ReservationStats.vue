@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Covers, no-shows and cancellations -->
+	<!-- //// over a date range: the numbers a restaurateur uses to size a service and to judge -->
+	<!-- //// whether online booking is worth its no-show rate. Upstream POSNext has no -->
+	<!-- //// reservations to count. (ebc3ecc5, 2026-03-29 "restaurant reservation system with POS -->
+	<!-- //// dialog, online booking, and email notifications"; e4769383 the clay retheme.) -->
 	<div class="reservation-stats">
 		<!-- Date range -->
 		<div class="stats-filters">

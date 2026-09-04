@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Read-only floor plan used while taking -->
+	<!-- //// a booking: the host picks the actual table on the plan instead of from a list, -->
+	<!-- //// filtered by area so tables from different rooms cannot overlap, with the same zoom, -->
+	<!-- //// pan and wall rendering as the service plan. Upstream POSNext has neither. (6f17f723, -->
+	<!-- //// 2026-03-30 "reservation form UX — service selector, area filter tabs, floor plan -->
+	<!-- //// toggle"; 2e0ab706 the per-area filter, 9ccfe0d8 pinch-to-zoom, 032298a3 the -->
+	<!-- //// read-only walls.) -->
 	<div class="fp-wrap">
 		<!-- Area tabs + Zoom controls -->
 		<div class="fp-header">

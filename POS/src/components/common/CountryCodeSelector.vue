@@ -186,6 +186,9 @@ const filteredCountries = computed(() => {
 		(country) =>
 			country.name.toLowerCase().includes(query) ||
 			country.isd.includes(query) ||
+			//// Neoffice — formatting only, no behaviour change: Biome trailing comma from the
+			//// whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise branding, add
+			//// restaurant mode, and code formatting").
 			country.code.toLowerCase().includes(query),
 	)
 })
@@ -245,6 +248,7 @@ watch(
 				selectedCountry.value = country
 			}
 		}
+	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 	},
 )
 
@@ -261,6 +265,7 @@ onMounted(async () => {
 	} else if (props.defaultCountry) {
 		// Try to find default country by name or code
 		const country =
+			//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 			findCountryByName(props.defaultCountry) ||
 			findCountryByCode(props.defaultCountry)
 		if (country) {

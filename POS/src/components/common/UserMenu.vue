@@ -163,6 +163,9 @@ import { useLocale } from "@/composables/useLocale"
 
 // Avatar Sub-component
 const Avatar = (props) => {
+	//// Neoffice — formatting only, no behaviour change: Biome rewrote this h() call across 20
+	//// lines during the whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise
+	//// branding, add restaurant mode, and code formatting"). The Avatar itself is upstream's.
 	const sizeClass = props.size === "sm" ? "w-9 h-9" : "w-10 h-10"
 	const bgClass = props.image
 		? "bg-gray-200"
@@ -312,6 +315,12 @@ function handleClickOutside(event) {
 }
 
 onMounted(() => {
+	//// Neoffice — the POS runs standalone, outside the NeoCockpit chrome, so it never receives
+	//// the shared data-theme the rest of Neoffice is themed by. It adopts the saved
+	//// neocockpit-colormode on startup instead, and the user menu carries a System/Light/Dark
+	//// switch. Upstream POSNext has no theme concept. (3754fe8f, 2026-06-14 "appearance
+	//// (System/Light/Dark) switch in the user menu"; c83a22ce persists User.desk_theme so a
+	//// fresh desk load matches what the cashier chose.)
 	// adopt the saved colour mode on startup so the till follows the product theme
 	try { colorMode.value = localStorage.getItem("neocockpit-colormode") || "system" } catch (e) { /* noop */ }
 	applyColorMode(colorMode.value)

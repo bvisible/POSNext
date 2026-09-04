@@ -1,4 +1,17 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent), and the largest single piece of the -->
+	<!-- //// divergence. Upstream POSNext is a retail till with no table service, so nothing here -->
+	<!-- //// has a counterpart: drag-and-drop table positioning and resizing, per-area tabs, seat -->
+	<!-- //// indicators, walls, doors and windows (FloorPlanWalls), pinch-zoom and pan persisted -->
+	<!-- //// per area, table states (Occupied, Paid, Cleaning), preparation stations with live -->
+	<!-- //// KDS badges and delivery chevrons, the Runner and Takeaway pills, per-table QR codes, -->
+	<!-- //// and reload of the server-side draft invoice when a cashier returns to an occupied -->
+	<!-- //// table. (0ebfda03, 2026-03-20 "Phase 2 - visual floor plan editor with drag-and-drop -->
+	<!-- //// table positioning" plus some sixty follow-ups: 4087a695 stations and area -->
+	<!-- //// management, a1b911c2 the station activity bar, 032298a3 walls and background image, -->
+	<!-- //// 9ccfe0d8 pinch-to-zoom, 2aad6b2a the Paid state, 644ad918 takeaway, cc0fc583 table -->
+	<!-- //// deletion, 32f2415d the closed-hours banner, e4769383 the clay retheme. Run git log -->
+	<!-- //// on this path for the full list.) -->
 	<div class="flex flex-col h-full bg-white dark:bg-gray-900 overflow-hidden">
 		<!-- Header: Area tabs + Edit toggle -->
 		<div class="flex items-center justify-between px-4 py-2 border-b dark:border-gray-800">

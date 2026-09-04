@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Header of the customer-facing second -->
+	<!-- //// screen: instance logo, session and POS profile, connection state, so the buyer can -->
+	<!-- //// see which till the screen is following and that it is still live. Upstream POSNext -->
+	<!-- //// has no customer display. (185c3c50, 2026-02-03; c9d9c1cb, 2026-03-20 "align POS -->
+	<!-- //// design with Neoffice theme and improve customer display") -->
 	<header class="neo-glass border-b border-white/30 px-6 py-3">
 		<div class="flex items-center justify-between">
 			<!-- Left: Logo and session info -->

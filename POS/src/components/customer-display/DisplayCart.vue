@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The buyer-facing mirror of the cart: -->
+	<!-- //// newest line first, running total, and — while the cart is empty — the enabled In-App -->
+	<!-- //// Ads (neoffice_theme doctype) as a still image or a cross-fading carousel. The -->
+	<!-- //// rotation is driven by a Web Worker timer, not setInterval, because Chrome throttles -->
+	<!-- //// timers in a background window and the display usually sits behind the till. Upstream -->
+	<!-- //// POSNext has no customer display. (185c3c50, 2026-02-03; 87f168fe the Neoffice theme -->
+	<!-- //// and the reversed cart order; 34ad77fe, 2026-06-02 "In-App Ads carousel on the idle -->
+	<!-- //// customer display") -->
 	<div class="flex flex-col h-full bg-[var(--neo-bg)]">
 		<!-- Empty cart state -->
 		<div v-if="!displayStore.hasItems" class="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">

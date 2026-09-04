@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Cash in and cash out from the till: -->
+	<!-- //// the cashier picks an erpnextswiss Journal Entry Template and the movement is booked -->
+	<!-- //// and submitted immediately, so the closing report and the expected cash stay true. -->
+	<!-- //// Upstream POSNext has no cash movement at all — the drawer silently drifts from the -->
+	<!-- //// ledger. (6c598630, 2026-03-28 "cash in/out from POS using Journal Entry Templates"; -->
+	<!-- //// 2e2ef1a0 adapts to the ERPNext Swiss template structure (totalization and -->
+	<!-- //// counterparty), ee6587a0 reads template_title, dd53c641 adds the search filter, -->
+	<!-- //// 82b2493a the POS Profile template filter.) -->
 	<Dialog
 		v-model="open"
 		:options="{ title: __('Cash In/Out'), size: '3xl' }"

@@ -1,4 +1,13 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The diner pays from their own phone: -->
+	<!-- //// tip selection, split payment (free amount or per-item), Wallee redirect, receipt -->
+	<!-- //// with VAT and PDF download. Upstream POSNext only knows the cashier-side payment -->
+	<!-- //// dialog. (3939a848, 2026-03-28 "QR self-ordering and takeaway web ordering"; bb9d0c56 -->
+	<!-- //// tips + Wallee redirect, 03ec3d48 split payment, 02f74451 defers recording the -->
+	<!-- //// payment until Wallee confirms so nothing reads as Paid too early, 6963d8cf redirects -->
+	<!-- //// in the same tab to keep the session cookie, 2a0b109b updates the existing payment -->
+	<!-- //// row instead of duplicating it, 823304dd applies pricing rules and fixes -->
+	<!-- //// paid_amount.) -->
 	<div class="flex flex-col h-full bg-gray-50 overflow-hidden">
 		<!-- No Order Yet -->
 		<div v-if="orderItems.length === 0 && !guestStore.isLoading" class="flex-1 flex flex-col items-center justify-center p-8 text-gray-400">

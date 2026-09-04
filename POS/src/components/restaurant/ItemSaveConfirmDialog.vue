@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Asks what a price change means before -->
+	<!-- //// it is written: this card only, or the global Item Price and therefore every other -->
+	<!-- //// card that serves the dish. Upstream POSNext has a single price and never has to -->
+	<!-- //// ask. (Introduced by 37746a8f, 2026-03-26, whose subject is about PDF margins and -->
+	<!-- //// not about this file; the intent is ed3361f5, 2026-03-27 "redesign item edit panel -->
+	<!-- //// with card/global price, active toggle, header cleanup".) -->
 	<Dialog v-model="show" :options="{ title: dialogTitle, size: 'sm' }">
 		<template #body-content>
 			<div class="space-y-3">

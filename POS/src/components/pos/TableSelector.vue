@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). List view of the restaurant's tables, -->
+	<!-- //// the non-graphical alternative to FloorPlanEditor: area tabs with occupancy counts, -->
+	<!-- //// the per-table QR code for guest self-ordering and the reservation badge. Upstream -->
+	<!-- //// POSNext has no table service. (458d81a9, 2026-03-20 "remove BrainWise branding, add -->
+	<!-- //// restaurant mode, and code formatting"; 8aa35c29 the multi-room tabs, 3939a848 the -->
+	<!-- //// per-table QR code, ebc3ecc5 the reservation badge.) -->
 	<div class="flex flex-col h-full bg-white dark:bg-gray-900 overflow-hidden">
 		<!-- Header -->
 		<div class="flex items-center justify-between p-4 border-b dark:border-gray-800">

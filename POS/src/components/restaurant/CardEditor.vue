@@ -1,4 +1,13 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Editor for the restaurant's cards -->
+	<!-- //// (menus): categories, items, per-card price, drag-and-drop ordering, rename and -->
+	<!-- //// duplicate, item search and item creation. A retail till like upstream POSNext sells -->
+	<!-- //// one item catalogue and has no notion of a card served only at certain hours. -->
+	<!-- //// (Introduced by d08c57e7, 2026-03-23, whose subject "set tip account type to Income -->
+	<!-- //// Account and French label" describes another part of the same commit; the feature is -->
+	<!-- //// 77267945, 2026-03-23 "Product Options and Card editors in POS", then cd15eb8a -->
+	<!-- //// drag-drop and stock, f0d29663 Create Item, d526332f the permanent card, b6e757dd -->
+	<!-- //// the badges and menu PDF.) -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="handleClose">
 			<div class="fixed inset-0 flex items-center justify-center p-4">

@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Allergen and diet badges on a card -->
+	<!-- //// item (gluten, lactose, vegan and so on), which are printed in the menu PDF legend. A -->
+	<!-- //// Swiss restaurant menu is expected to declare them; a retail till like upstream -->
+	<!-- //// POSNext never had to. (b6e757dd, 2026-03-26 "add menu PDF generator with badges"; -->
+	<!-- //// 650970a3 keeps Save visible in the header, 77d202df uses inline styles because -->
+	<!-- //// Tailwind purged the active-state classes.) -->
 	<div class="bg-white" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; overflow: hidden;">
 		<!-- Header + Save -->
 		<div class="px-3 py-2 border-b bg-gradient-to-r from-emerald-50 to-teal-50" style="flex-shrink: 0;">

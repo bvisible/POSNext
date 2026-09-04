@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The public menu a diner browses on -->
+	<!-- //// their phone: same card, grid and list rendering as the POS item selector, with -->
+	<!-- //// categories, search and product options, but no stock figures — those are none of a -->
+	<!-- //// guest's business. Upstream POSNext has no guest surface. (3939a848, 2026-03-28 "QR -->
+	<!-- //// self-ordering and takeaway web ordering"; 93b2389a rewrites it to match the POS card -->
+	<!-- //// display, 018f0ccb flattens the categories so items render at all, cc0fc583 hides -->
+	<!-- //// stock, 82ff46c3 deduplicates categories and shows pricing-rule discounts.) -->
 	<div class="flex flex-col h-full overflow-hidden" style="background-color: var(--neo-bg, #f3f4f6)">
 		<!-- Category sub-filters -->
 		<div class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100 flex-shrink-0">

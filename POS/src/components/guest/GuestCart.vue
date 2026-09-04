@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The diner's own cart on their phone: -->
+	<!-- //// they scan the QR on the table (or open the takeaway link) and order without a -->
+	<!-- //// cashier. Upstream POSNext is a staffed retail till and has no guest-facing ordering -->
+	<!-- //// at all. (3939a848, 2026-03-28 "QR self-ordering and takeaway web ordering"; eec958db -->
+	<!-- //// adds order tracking, 89b67857 clears the cart once the order is fully paid, 14f151fc -->
+	<!-- //// takes the currency from the POS Profile instead of a hardcoded EUR, e4769383 the -->
+	<!-- //// clay retheme.) -->
 	<div class="flex flex-col h-full bg-gray-50 overflow-hidden">
 		<!-- Fully Paid State -->
 		<div v-if="guestStore.isFullyPaid" class="flex-1 flex flex-col items-center justify-center p-8 text-gray-400">

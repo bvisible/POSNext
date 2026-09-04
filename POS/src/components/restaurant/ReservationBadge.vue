@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Small overlay on a table showing its -->
+	<!-- //// next reservation (time, covers, status colour), so floor staff can see at a glance -->
+	<!-- //// that a free table is about to be taken. Upstream POSNext has neither tables nor -->
+	<!-- //// reservations. (ebc3ecc5, 2026-03-29 "restaurant reservation system with POS dialog, -->
+	<!-- //// online booking, and email notifications"; e4769383 the clay retheme.) -->
 	<div
 		v-if="reservation"
 		class="reservation-badge"

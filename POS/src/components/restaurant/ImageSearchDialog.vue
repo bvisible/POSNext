@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Picture picker for restaurant items: -->
+	<!-- //// searches Pexels through our own server-side proxy (no API key in the browser) and -->
+	<!-- //// attaches the chosen photo to the Item, so a card can be built visually without a -->
+	<!-- //// photo shoot. Upstream POSNext has no image search. (26f5a3f1, 2026-03-25 "add image -->
+	<!-- //// and color support for items in POS restaurant"; e7aa3918 drops the forced "food" -->
+	<!-- //// prefix and adds pagination.) -->
 	<Dialog v-model="show" :options="{ title: __('Search Food Images'), size: 'lg' }">
 		<template #body-content>
 			<div class="flex flex-col gap-4">

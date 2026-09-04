@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Shows and prints the QR code that -->
+	<!-- //// opens /pos/guest/<token> for one table: the entry point of guest self-ordering. -->
+	<!-- //// Upstream POSNext has no guest ordering. (3939a848, 2026-03-28 "QR self-ordering and -->
+	<!-- //// takeaway web ordering"; 28eff1d9 switches to v-show so the canvas is already in the -->
+	<!-- //// DOM when the code is drawn — with v-if it rendered nothing.) -->
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="emit('close')">
 		<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
 			<!-- Header -->

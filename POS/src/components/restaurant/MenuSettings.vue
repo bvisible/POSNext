@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The settings pane of the menu -->
+	<!-- //// designer: design template, 15 Google fonts, header on or off, which cards and which -->
+	<!-- //// product-option groups to include, and the per-item overrides that feed the PDF. -->
+	<!-- //// Upstream POSNext has no menu designer. (b6e757dd, 2026-03-26 "add menu PDF -->
+	<!-- //// generator with badges"; 0d7b3d06 fonts and the Moderne Minimaliste default, -->
+	<!-- //// eedb9d4c selectable option groups, 45cca680 removes the double margins and emits -->
+	<!-- //// the config after the overrides.) -->
 	<div class="h-full flex flex-col bg-white">
 		<!-- Header -->
 		<div class="px-4 py-3 border-b bg-gradient-to-r from-purple-50 to-indigo-50 flex-shrink-0">

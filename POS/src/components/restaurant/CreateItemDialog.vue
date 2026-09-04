@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Creates a saleable Item without -->
+	<!-- //// leaving the card editor: code, group, UOM, prices, optional opening stock, plus a -->
+	<!-- //// colour and an image, because a restaurant card is read visually and not by item -->
+	<!-- //// code. Upstream POSNext can only pick items that already exist. (f0d29663, -->
+	<!-- //// 2026-03-25 "add Create Item dialog in CardEditor for restaurant card management"; -->
+	<!-- //// 26f5a3f1 image and colour support, 4f9a42b0 preselects the default Item Group from -->
+	<!-- //// Stock Settings, eabe35e7 assigns product options at creation.) -->
 	<Dialog v-model="show" :options="{ title: __('Create New Item'), size: 'md' }">
 		<template #body-content>
 			<div v-if="loadingDefaults" class="flex items-center justify-center py-8">

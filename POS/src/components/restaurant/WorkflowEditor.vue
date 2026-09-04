@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Editor for preparation workflows: -->
+	<!-- //// which stations a dish goes through and in what order, which is what drives the -->
+	<!-- //// kitchen display and the runner screens. Upstream POSNext has no kitchen. -->
+	<!-- //// (Introduced by d08c57e7, 2026-03-23, whose subject is about the tip account and not -->
+	<!-- //// about this file; d96ad42b moves it onto dedicated whitelisted APIs, 12c84b8e makes -->
+	<!-- //// the editors full-screen, b07723a8 adds the per-product workflow and the Runner -->
+	<!-- //// toggle.) -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="handleClose">
 			<div class="fixed inset-0 flex items-center justify-center p-4">

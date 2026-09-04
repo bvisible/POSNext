@@ -24,6 +24,9 @@
 				<div class="flex items-center gap-2">
 					<!-- App Icon -->
 					<div class="flex-shrink-0">
+						<!-- //// Neoffice — upstream paints this icon tile indigo (#4F46E5); the Neoffice Design -->
+						<!-- //// System has a single saturated hue, clay (e4769383, 2026-06-14 "retheme blue/violet -->
+						<!-- //// to Design System clay"). -->
 						<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm" style="background-color: #c2723f;">
 							<svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 								<path fill="#ffffff" d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4zm10 16H4V9h16v11z"/>
@@ -34,6 +37,9 @@
 					<!-- Text Content -->
 					<div class="flex-1 min-w-0 me-2">
 						<h3 id="install-banner-title" class="text-xs font-semibold mb-0.5 leading-tight" style="color: #111827;">
+							<!-- //// Neoffice — upstream's PWA install banner offers to "Install POSNext"; the fork ships -->
+							<!-- //// this till as Neoffice's own product, so every user-facing name became Neopos -->
+							<!-- //// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos"). -->
 							{{ __('Install Neopos') }}
 						</h3>
 						<p class="text-[10px] leading-tight mb-1" style="color: #4B5563;">
@@ -50,6 +56,10 @@
 
 					<!-- Action Buttons -->
 					<div class="flex items-center gap-1.5 flex-shrink-0">
+						<!-- //// Neoffice — the Install button below is clay, not upstream's indigo #4F46E5: the -->
+						<!-- //// Design System has one saturated hue (e4769383, 2026-06-14 "retheme blue/violet to -->
+						<!-- //// Design System clay"). Marker sits above the tag because the changed line is an -->
+						<!-- //// attribute inside the opening tag. -->
 						<button
 							@click="handleInstall"
 							class="px-3 py-1.5 text-xs font-medium rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation shadow-sm whitespace-nowrap"

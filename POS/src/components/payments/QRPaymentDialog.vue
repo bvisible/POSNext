@@ -22,6 +22,15 @@
   Emits: same as CardPresentDialog (start, cancel, close, succeeded, failed).
 -->
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). QR payment at the till, which is the -->
+	<!-- //// Swiss reality upstream POSNext does not cover: TWINT today, any future QR PSP -->
+	<!-- //// tomorrow, driven through our own Payments app. The dialog is named by interaction -->
+	<!-- //// TYPE, not by brand, and the provider comes from POS Payment Driver Mapping -->
+	<!-- //// (ADR-004). (11ab96fe, 2026-05-13 "Phase 5 — Vue composable + Pinia store + -->
+	<!-- //// Stripe/TWINT dialogs", renamed from TwintQRDialog.vue by 9acebda9; 958a2264 defers -->
+	<!-- //// the start until the cashier has picked an amount, 2b6b45de binds the row to a Mode -->
+	<!-- //// of Payment, b5e4b383 adds the simulator panel, e2ac6de4 stops a cryptic JS error -->
+	<!-- //// when the device list fails to load.) -->
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
 		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
 			<header class="flex items-center justify-between px-5 py-4 border-b border-gray-200">

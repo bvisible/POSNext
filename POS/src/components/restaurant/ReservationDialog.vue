@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The reservation desk inside the POS: -->
+	<!-- //// list, form, floor-plan picker and statistics over the Restaurant Reservation doctype -->
+	<!-- //// (Pending, Confirmed, Seated, Completed, Cancelled, No Show). Upstream POSNext has no -->
+	<!-- //// booking of any kind. (ebc3ecc5, 2026-03-29 "restaurant reservation system with POS -->
+	<!-- //// dialog, online booking, and email notifications"; 6f17f723 adds the service -->
+	<!-- //// selector, area tabs and floor-plan toggle, 5cec738c uses apiWrapper call() instead -->
+	<!-- //// of window.frappe.call.) -->
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 z-[300]" @click.self="$emit('close')">
 			<div class="fixed inset-0 flex items-center justify-center p-4">

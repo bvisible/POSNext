@@ -90,6 +90,10 @@
 						<div v-else-if="settings.pos_profile || posProfile" class="p-6 flex flex-col gap-6">
 							<!-- Tabs Navigation -->
 							<div class="flex p-1 bg-gray-200 rounded-lg self-start">
+								<!-- //// Neoffice — added tab: Restaurant. Shown only when restaurant mode is on, and placed -->
+								<!-- //// first because it is what a restaurateur opens the settings for (9ae00441, 2026-03-23 -->
+								<!-- //// "restaurant tab first in settings, smart slot defaults (Lunch/Dinner)"; the tab -->
+								<!-- //// itself comes from 32f2415d "add Restaurant Settings with opening hours"). -->
 								<button
 									v-if="restaurantStore.isEnabled"
 									@click="activeTab = 'restaurant'"
@@ -563,6 +567,13 @@
 								</div>
 							</div>
 
+							<!-- //// Neoffice — added block of 260 lines, covering everything upstream POSNext has no -->
+							<!-- //// setting for: cash management (the Journal Entry Template used for the closing -->
+							<!-- //// withdrawal, which also feeds the suggested opening balance of the next shift — -->
+							<!-- //// 5783eb27, 2026-03-28), then the whole Restaurant tab: opening hours with the card -->
+							<!-- //// served in each slot (32f2415d, 102b1208), the Runner display toggle (823cd5d8, -->
+							<!-- //// 5229e016), tips (860a115b), and QR self-ordering and web takeaway with their guest -->
+							<!-- //// menu, validation mode, account mode and token expiry (68786b21, 2026-03-28). -->
 							<!-- Cash Management -->
 							<div :class="operationsSubsectionClasses.container">
 								<div class="flex items-center gap-2 mb-4">
@@ -845,6 +856,9 @@
 import CheckboxField from "@/components/settings/CheckboxField.vue"
 import NumberField from "@/components/settings/NumberField.vue"
 import SelectField from "@/components/settings/SelectField.vue"
+//// Neoffice — the opening-hours editor and the restaurant store, both for the Restaurant tab
+//// (32f2415d, 2026-03-23 "add Restaurant Settings with opening hours and time-based card
+//// availability").
 import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { useToast } from "@/composables/useToast"
@@ -861,6 +875,9 @@ import { usePOSEvents } from "@/composables/usePOSEvents"
 import TranslatedHTML from "../common/TranslatedHTML.vue"
 import { useQzTray } from "@/composables/useQzTray"
 
+//// Neoffice — formatting only, no behaviour change: the fork ran Biome over the whole POS
+//// source (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+//// formatting"). Upstream is equivalent — re-run the formatter at the next merge.
 const log = logger.create("POSSettings")
 const {
 	detectSettingsChanges,
@@ -873,6 +890,10 @@ const props = defineProps({
 	modelValue: Boolean,
 	posProfile: String,
 	currentWarehouse: String,
+	//// Neoffice — lets a caller open the dialog straight on a given tab: the floor plan links
+	//// "edit the schedule" to the Restaurant tab instead of making the user hunt for it
+	//// (6b38498b, 2026-03-27 "hide permanent card from schedule settings, add edit schedule
+	//// link").
 	initialTab: { type: String, default: "" },
 })
 
@@ -881,6 +902,9 @@ const emit = defineEmits(["update:modelValue"])
 const show = ref(props.modelValue)
 
 // State
+//// Neoffice — the real default tab is decided when the dialog opens, not here: a restaurant
+//// lands on Restaurant, a shop on Stock (9ae00441, 2026-03-23 "restaurant tab first in
+//// settings"). The double quotes are the Biome pass (458d81a9).
 const activeTab = ref("stock") // Updated in watch on show
 const loading = ref(true)
 const saving = ref(false)
@@ -903,6 +927,10 @@ const settings = ref({
 	silent_print: 0,
 	allow_negative_stock: 0,
 	tax_inclusive: 0,
+	//// Neoffice — Journal Entry Template used for the cash withdrawal at shift close, which also
+	//// sets the suggested opening balance of the next shift. Upstream POSNext books no cash
+	//// movement. (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested
+	//// opening balance")
 	closing_withdrawal_template: "",
 })
 
@@ -915,6 +943,7 @@ const stockSyncStatus = ref({
 	itemCount: 0,
 	intervalMs: 60000,
 	lastSync: null,
+	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 	running: false,
 })
 
@@ -951,11 +980,18 @@ const warehouseSubsectionClasses = computed(() => getSubsectionClasses("gray"))
 const stockPolicySubsectionClasses = computed(() =>
 	getSubsectionClasses("blue"),
 )
+//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 const stockSyncSubsectionClasses = computed(() =>
 	getSubsectionClasses("indigo"),
 )
 const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
 const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"))
+//// Neoffice — added state for the Restaurant tab: its amber section styling, the restaurant
+//// store, the opening-hours rows, the tip settings (860a115b) and the QR self-ordering and
+//// takeaway settings (68786b21), plus toggleRunner(), which writes Restaurant Settings
+//// directly so the runner display can be switched without saving the whole dialog
+//// (823cd5d8). Upstream POSNext has none of these settings. (32f2415d, 2026-03-23 "add
+//// Restaurant Settings with opening hours and time-based card availability")
 const restaurantSectionClasses = computed(() =>
 	getSectionHeaderClasses("amber"),
 )
@@ -1054,6 +1090,8 @@ watch(
 	(val) => {
 		show.value = val
 		if (val) {
+			//// Neoffice — a restaurant opens on the Restaurant tab, a shop on Stock (9ae00441,
+			//// 2026-03-23 "restaurant tab first in settings, smart slot defaults (Lunch/Dinner)").
 			activeTab.value = restaurantStore.isEnabled ? "restaurant" : "stock"
 			loadSettings()
 		}
@@ -1062,6 +1100,8 @@ watch(
 
 watch(show, (val) => {
 	emit("update:modelValue", val)
+	//// Neoffice — honours the initialTab prop, so the "edit the schedule" link on the floor plan
+	//// lands directly on the right tab (6b38498b, 2026-03-27).
 	if (val && props.initialTab) {
 		activeTab.value = props.initialTab
 	}
@@ -1089,6 +1129,7 @@ watch(
 		}
 
 		// Only show feedback if value actually changed from original
+		//// Neoffice — Biome wrap and quote style only, no behaviour change (458d81a9, 2026-03-20).
 		if (
 			originalTaxInclusive.value !== null &&
 			newValue !== originalTaxInclusive.value
@@ -1096,6 +1137,7 @@ watch(
 			const mode = newValue ? "inclusive" : "exclusive"
 			log.info(`Tax mode toggled to: ${mode}`)
 		}
+	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 	},
 )
 
@@ -1143,6 +1185,7 @@ async function saveSettings() {
 	saving.value = true
 	const oldWarehouse = props.currentWarehouse
 	const warehouseChanged = selectedWarehouse.value !== oldWarehouse
+	//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 	const negativeStockChanged =
 		originalAllowNegativeStock.value !== settings.value.allow_negative_stock
 	const taxInclusiveChanged =
@@ -1152,6 +1195,7 @@ async function saveSettings() {
 	// Capture old settings for change detection
 	const oldSettings = {
 		...settings.value,
+		//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 		warehouse: oldWarehouse, // Include warehouse in change detection
 	}
 
@@ -1212,14 +1256,21 @@ async function saveSettings() {
 		// Show success toast for other changes
 		let successMessage = __("Settings saved successfully")
 		if (warehouseChanged && taxInclusiveChanged) {
+			//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
 			successMessage = __(
 				"Settings saved, warehouse updated, and tax mode changed. Cart will be recalculated.",
 			)
 		} else if (warehouseChanged) {
+			//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
 			successMessage = __(
 				"Settings saved and warehouse updated. Reloading stock...",
 			)
 		} else if (taxInclusiveChanged) {
+			//// Neoffice — the Biome wrap of these two messages (458d81a9), then the block upstream has
+			//// nothing to save: opening hours, tip settings (860a115b) and the QR self-ordering and
+			//// takeaway fields, written one by one onto Restaurant Settings (68786b21, 2026-03-28
+			//// "add QR self-ordering and takeaway settings to POS Settings UI"). It runs after the POS
+			//// settings are already stored, and a failure there is reported without losing them.
 			successMessage = settings.value.tax_inclusive
 				? __(
 						'Settings saved. Tax mode is now "inclusive". Cart will be recalculated.',
@@ -1287,9 +1338,15 @@ watch(
 		if (enabled) {
 			await handleQzConnect()
 		}
+	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 	},
 )
 
+//// Neoffice — loads the Restaurant tab lazily, when it is actually opened: opening hours,
+//// tip and QR settings, and the active non-permanent cards for the card pickers. Doing it
+//// on dialog open would cost every shop four round-trips it has no use for. (32f2415d,
+//// 2026-03-23; 860a115b the tips; 68786b21 the QR and takeaway settings; 6b38498b excludes
+//// the permanent card from the schedule pickers.)
 // Load restaurant settings when the restaurant tab is activated
 watch(activeTab, async (tab) => {
 	if (tab === "restaurant") {
@@ -1339,6 +1396,7 @@ watch(activeTab, async (tab) => {
 // Load stock sync settings from localStorage
 function loadStockSyncSettings() {
 	try {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		const saved = localStorage.getItem("pos_stock_sync_settings")
 		if (saved) {
 			const parsed = JSON.parse(saved)
@@ -1346,6 +1404,7 @@ function loadStockSyncSettings() {
 			stockSyncIntervalSeconds.value = parsed.intervalSeconds ?? 60
 		}
 	} catch (error) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		log.error("Failed to load stock sync settings:", error)
 	}
 }
@@ -1353,6 +1412,7 @@ function loadStockSyncSettings() {
 // Save stock sync settings to localStorage
 function saveStockSyncSettings() {
 	try {
+		//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
 		localStorage.setItem(
 			"pos_stock_sync_settings",
 			JSON.stringify({
@@ -1361,6 +1421,7 @@ function saveStockSyncSettings() {
 			}),
 		)
 	} catch (error) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		log.error("Failed to save stock sync settings:", error)
 	}
 }
@@ -1371,6 +1432,7 @@ async function updateStockSyncStatus() {
 		const status = await offlineWorker.getStockSyncStatus()
 		stockSyncStatus.value = status
 	} catch (error) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		log.error("Failed to get stock sync status:", error)
 	}
 }
@@ -1383,6 +1445,7 @@ async function applyStockSyncConfig() {
 		if (stockSyncEnabled.value) {
 			// Configure and start sync
 			await offlineWorker.configureStockSync({
+				//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 				intervalMs,
 			})
 			await offlineWorker.startStockSync()
@@ -1400,23 +1463,28 @@ async function applyStockSyncConfig() {
 		// Emit sync configuration change event
 		emitStockSyncConfigured({
 			enabled: stockSyncEnabled.value,
+			//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 			intervalMs: intervalMs,
 		})
 	} catch (error) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		log.error("Failed to apply stock sync config:", error)
 	}
 }
 
 // Format sync time for display
 function formatSyncTime(timestamp) {
+	//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 	if (!timestamp) return __("Never")
 
 	const now = Date.now()
 	const diff = now - timestamp
 
 	if (diff < 60000) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		return __("{0}s ago", [Math.floor(diff / 1000)])
 	} else if (diff < 3600000) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		return __("{0}m ago", [Math.floor(diff / 60000)])
 	} else {
 		const date = new Date(timestamp)

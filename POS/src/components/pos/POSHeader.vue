@@ -11,11 +11,22 @@
   //// purge dialog when toggling restaurant mode with active orders — 5959928 + 2f3e944 (+1 more)
 -->
 <template>
+	<!-- //// Neoffice — upstream's header is a plain white bar (bg-white shadow-sm); the Neoffice -->
+	<!-- //// theme uses the glassmorphism surface and the shadow token instead (87f168fe, -->
+	<!-- //// 2026-03-20 "align POS design with Neoffice theme and improve customer display"). -->
 	<div
 		class="neo-glass shadow-neo sticky top-0 z-[200] border-b border-white/30"
 	>
+		<!-- //// Neoffice — header height: upstream pads the bar (py-2 sm:py-3), the Neoffice header -->
+		<!-- //// is flush so a 10 inch tablet keeps that vertical space for the cart (87f168fe, -->
+		<!-- //// 2026-03-20 "align POS design with Neoffice theme"). -->
 		<div class="flex py-0">
 			<!-- POS Icon - Aligned with Management Sidebar (64px) -->
+			<!-- //// Neoffice — upstream shows a blue gradient button labelled "POS Next" that does -->
+			<!-- //// nothing. The fork puts the Neoffice logo there and makes it the way back to the -->
+			<!-- //// back-office (/app/retail), through the confirmation dialog below: this till is one -->
+			<!-- //// app inside Neoffice, not a standalone product. (87f168fe, 2026-03-20 "align POS -->
+			<!-- //// design with Neoffice theme and improve customer display") -->
 			<div class="w-16 flex-shrink-0 flex items-center justify-center px-2">
 				<img
 					:src="neofficeLogo"
@@ -26,6 +37,10 @@
 				/>
 			</div>
 
+			<!-- //// Neoffice — added: a "Leave POS?" confirmation before returning to the back-office. -->
+			<!-- //// Upstream has no exit path at all (you close the tab); adding one without a -->
+			<!-- //// confirmation would put a mis-tap between a cashier and their open cart. (87f168fe, -->
+			<!-- //// 2026-03-20 "align POS design with Neoffice theme and improve customer display") -->
 			<!-- Exit POS Confirmation Dialog -->
 			<Teleport to="body">
 				<div v-if="showExitDialog" class="fixed inset-0 z-[9999] flex items-center justify-center">
@@ -52,11 +67,19 @@
 			</Teleport>
 
 			<!-- Main Header Content -->
+			<!-- //// Neoffice — the header container no longer carries its own horizontal padding -->
+			<!-- //// (upstream: px-2 sm:px-4 md:px-6): it has to line up with the 64px management -->
+			<!-- //// sidebar, which that padding pushed out of alignment (82265c45, 2026-04-02 "remove -->
+			<!-- //// horizontal padding from POS header container"). -->
 			<div class="flex-1 flex justify-between items-center gap-1 sm:gap-2">
 				<!-- Left Side: Brand Info -->
 				<div class="flex items-center gap-1 sm:gap-4 min-w-0 flex-1 overflow-hidden">
 					<div class="min-w-0 flex-shrink overflow-hidden">
 						<div class="flex items-center gap-1 sm:gap-2">
+							<!-- //// Neoffice — upstream prints a hardcoded "POS Next" title next to this version pill. -->
+							<!-- //// The title is gone (the logo already says whose product this is) and the pill moved -->
+							<!-- //// onto the Neoffice radius and shadow tokens (87f168fe, 2026-03-20 "align POS design -->
+							<!-- //// with Neoffice theme and improve customer display"). -->
 							<span class="hidden sm:inline-flex relative items-center px-1 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-neo-sm shadow-sm hover:shadow-neo transition-shadow flex-shrink-0">
 								<span class="absolute inset-0 bg-white/20 rounded-md animate-pulse"></span>
 								<span class="relative">v{{ appVersion }}</span>
@@ -94,6 +117,14 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+					<!-- //// Neoffice — added: the restaurant-mode switch. Upstream POSNext is retail-only, but -->
+					<!-- //// the same till has to become a table-service POS (floor plan, courses, KDS) for our -->
+					<!-- //// restaurant clients, and the cashier flips it here. A real on/off switch rather than -->
+					<!-- //// an icon button, so the current mode is readable without hovering. (8aa35c29, -->
+					<!-- //// 2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup, multi-room -->
+					<!-- //// tabs"; 5d4db328 turned the icon button into a switch, 924e688c gave it the fork and -->
+					<!-- //// knife icon, 59599289 moved the "orders still open" guard to POSSale's purge -->
+					<!-- //// dialog.) -->
 					<!-- Restaurant Mode Toggle Switch -->
 					<div
 						class="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
@@ -127,6 +158,11 @@
 					</div>
 
 					<!-- WiFi/Offline Status -->
+					<!-- //// Neoffice — Neoffice theme tokens on the sync button below: upstream uses rounded-lg -->
+					<!-- //// and opaque hover greys, the fork uses rounded-neo-sm and the translucent /70 greys -->
+					<!-- //// that sit on the glass header (87f168fe, 2026-03-20 "align POS design with Neoffice -->
+					<!-- //// theme"). Marker sits above the tag: the changed line is inside the :class binding, -->
+					<!-- //// where no HTML comment may go. -->
 					<button
 						@click="$emit('sync-click')"
 						:class="[
@@ -163,6 +199,10 @@
 
 					<!-- Cache Status Indicator -->
 					<div class="relative">
+						<!-- //// Neoffice — same theme swap on the cache-status button below: rounded-lg becomes -->
+						<!-- //// rounded-neo-sm and the hover greys become translucent for the glass header -->
+						<!-- //// (87f168fe, 2026-03-20 "align POS design with Neoffice theme"). Marker sits above -->
+						<!-- //// the tag: the changed line is an attribute inside the opening tag. -->
 						<button
 							@click="showCacheTooltip = !showCacheTooltip"
 							@blur="handleBlur"
@@ -205,6 +245,8 @@
 							class="absolute top-full mt-2 z-[999] w-[90vw] max-w-[240px] sm:max-w-[260px]"
 							:style="{ left: '50%', transform: 'translateX(-50%)' }"
 						>
+							<!-- //// Neoffice — tooltip surface on the Neoffice radius and shadow tokens (upstream: -->
+							<!-- //// rounded-lg shadow-xl) so it matches the rest of the theme (87f168fe, 2026-03-20). -->
 							<div class="bg-gray-900 text-white text-xs rounded-neo-md shadow-neo-lg py-2 px-2.5 sm:px-3">
 								<!-- Arrow -->
 								<div class="absolute bottom-full mb-px left-1/2 -translate-x-1/2"
@@ -306,6 +348,12 @@
 						:aria-label="isRefreshing ? __('Refreshing...') : __('Refresh items and customers')"
 					/>
 
+					<!-- //// Neoffice — added: opens the customer-facing second screen (/pos/display) in a popup. -->
+					<!-- //// Upstream POSNext has no customer display. This button stands where upstream had the -->
+					<!-- //// desktop language switcher, which moved into the user menu to keep the header -->
+					<!-- //// compact. The URL carries this cashier's opening entry and profile — see -->
+					<!-- //// openCustomerDisplay(). (87f168fe, 2026-03-20 "align POS design with Neoffice theme -->
+					<!-- //// and improve customer display") -->
 					<!-- Customer Display (Second Screen) -->
 					<button
 						@click="openCustomerDisplay"
@@ -318,6 +366,12 @@
 						</svg>
 					</button>
 
+					<!-- //// Neoffice — NOT our change. This divider is upstream's own line (c3ac72bf, -->
+					<!-- //// engahmed1190, 2025-11-26 "move language switcher to user menu on mobile for compact -->
+					<!-- //// header"). It only shows up as modified in the BASE..HEAD diff because the fork -->
+					<!-- //// deleted the identical divider plus the header LanguageSwitcher just above it -->
+					<!-- //// (87f168fe), so the two copies no longer line up. Nothing to carry over at the next -->
+					<!-- //// merge. -->
 					<div class="w-px h-4 sm:h-6 bg-gray-200 hidden md:block"></div>
 
 					<!-- User Menu -->
@@ -350,14 +404,31 @@ import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue"
 import { DEFAULT_LOCALE } from "@/utils/currency"
 import { ref } from "vue"
 import { version } from "../../../package.json"
+//// Neoffice — posShift is what pins the customer display to THIS cashier's opening entry
+//// (9a807f74, 2026-06-01 "customer display follows the launching POS's exact shift").
+//// The posSettings and restaurant imports are dead code: e8cecbcf (2026-03-20) had the
+//// header toggle the store itself, 59599289 (2026-03-21) put that decision back in
+//// POSSale and left the two imports behind.
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSShiftStore } from "@/stores/posShift"
 
+//// Neoffice — needed by openCustomerDisplay(): given no opening entry, the display resolves
+//// "the most recent open shift for this profile, whoever the user", which mirrors another
+//// cashier's cart as soon as two shifts share a profile (9a807f74, 2026-06-01).
 const shiftStore = usePOSShiftStore()
 const showCacheTooltip = ref(false)
+//// Neoffice — state of the "Leave POS?" confirmation that comes with the logo exit path
+//// (87f168fe, 2026-03-20). Upstream POSNext has no way out of the till.
 const showExitDialog = ref(false)
 const appVersion = version
+//// Neoffice — added: the Neoffice logo asset, the way back to the back-office (/app/retail)
+//// and the customer-display popup, none of which upstream POSNext has. The display URL
+//// carries the cashier's own opening entry and POS profile, because the display would
+//// otherwise pick the most recent open shift for the profile, whoever the user, and
+//// mirror the wrong cart. (87f168fe, 2026-03-20 "align POS design with Neoffice theme
+//// and improve customer display"; 9a807f74, 2026-06-01 "customer display follows the
+//// launching POS's exact shift")
 const neofficeLogo = "/assets/neoffice_theme/images/neoffice_logo.svg"
 
 function navigateToBackOffice() {
@@ -390,9 +461,15 @@ const emit = defineEmits([
 	"menu-opened",
 	"menu-closed",
 	"clear-cache",
+	//// Neoffice — event of the restaurant-mode switch; upstream has no such mode (8aa35c29,
+	//// 2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs").
 	"toggle-restaurant",
 ])
 
+//// Neoffice — the header only announces the intent: POSSale owns the toggle because it may
+//// have to purge open orders first. e8cecbcf (2026-03-20) had called the store straight
+//// from here and the purge dialog never ran; 59599289 (2026-03-21 "purge dialog when
+//// toggling restaurant mode with active orders") put the decision back in POSSale.
 function onToggleRestaurant() {
 	// Always emit — POSSale handles the logic (including purge dialog if needed)
 	emit("toggle-restaurant")
@@ -400,11 +477,13 @@ function onToggleRestaurant() {
 
 function handleClearCacheClick() {
 	showCacheTooltip.value = false
+	//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 	emit("clear-cache")
 }
 
 function handleBlur(event) {
 	// Don't close if clicking inside the tooltip
+	//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 	if (
 		!event.relatedTarget ||
 		!event.currentTarget.parentElement.contains(event.relatedTarget)
@@ -480,6 +559,10 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	//// Neoffice — props of the restaurant switch: whether the mode is on, and whether the
+	//// cashier may flip it. Upstream POSNext has no restaurant mode. (8aa35c29, 2026-03-20
+	//// "Phase 1 restaurant module".) canToggleRestaurant is no longer read anywhere in this
+	//// component since 59599289 removed the UI gate; the parent still passes it.
 	isRestaurantMode: {
 		type: Boolean,
 		default: false,
@@ -544,13 +627,16 @@ function getCacheAriaLabel() {
 }
 
 function formatNumber(num) {
+	//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 	if (!num) return "0"
 	return num.toLocaleString()
 }
 
 function formatCompactNumber(num) {
+	//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 	if (!num) return "0"
 	if (num >= 1000) {
+		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
 		return (num / 1000).toFixed(num >= 10000 ? 0 : 1) + "K"
 	}
 	return num.toString()
