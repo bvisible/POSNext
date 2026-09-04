@@ -855,7 +855,8 @@ async function loadClosingData() {
 				//// above (7d2771d4 + c91af424, 2026-07-09).
 				//// Neoffice — savedAmount is deliberately null and not 0: a 0 would read as a counted zero
 				//// and paint a deficit before the cashier has typed anything (c91af424, 2026-07-09 "start
-				//// counted payment methods with an empty amount field").
+				//// counted payment methods with an empty amount field"). The closing_amount and
+				//// _touched fields below carry that Neoffice rule, not upstream's passthrough.
 				return reactive({
 					...payment,
 					closing_amount: autoZero ? 0 : savedAmount,

@@ -342,7 +342,8 @@
 						<!-- //// toggle stayed visible here (b3a9d850 + 8aa35c29, 2026-03-20). -->
 						<!-- //// Neoffice — [R] the v-if on the tag below is what hides this second Sales Order -->
 						<!-- //// switch in restaurant mode; the marker sits above the opening tag because the changed -->
-						<!-- //// line is one of its attributes (b3a9d850, 2026-03-20). -->
+						<!-- //// line is one of its attributes (b3a9d850, 2026-03-20); an HTML comment -->
+						<!-- //// between them would break the tag, which is what Neoffice commit 4ed5051e undid. -->
 						<div
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
@@ -895,7 +896,8 @@
 						<!-- //// of colour-coded Items unreadable (983130d3, 2026-03-25). -->
 						<!-- //// Neoffice — [IMG] the class and :style below are what paint the Item's custom_color -->
 						<!-- //// on the thumbnail; the marker sits above the opening tag because both changed lines -->
-						<!-- //// are its attributes (983130d3, 2026-03-25). -->
+						<!-- //// are its attributes (983130d3, 2026-03-25); an HTML comment between them -->
+						<!-- //// would break the tag, which is what Neoffice commit 4ed5051e undid. -->
 						<div
 							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
 							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
@@ -914,7 +916,8 @@
 							<!-- //// the line stays legible whatever the manager picked (983130d3). -->
 							<!-- //// Neoffice — [IMG] the class and :class below flip the fallback name to white on a -->
 							<!-- //// dark tile; marker above the opening tag, the changed lines are attributes -->
-							<!-- //// (983130d3, 2026-03-25). -->
+							<!-- //// (983130d3, 2026-03-25); an HTML comment between them would break the tag, -->
+							<!-- //// which is what Neoffice commit 4ed5051e undid. -->
 							<span
 								v-else
 								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"

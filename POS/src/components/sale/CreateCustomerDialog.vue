@@ -252,7 +252,8 @@
 					<!-- //// (616d4102 2026-03-25, 8bffb770 2026-02-04). -->
 					<!-- //// Neoffice — the country select that replaced upstream's Territory picker; the marker -->
 					<!-- //// sits above the opening tag because the changed line is one of its attributes -->
-					<!-- //// (616d4102, 2026-03-25). -->
+					<!-- //// (616d4102, 2026-03-25); an HTML comment between them would break the tag, -->
+					<!-- //// which is what Neoffice commit 4ed5051e undid. -->
 					<select
 						v-model="customerData.country"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"

@@ -948,7 +948,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 							applyDiscountsFromServer(rollbackItems)
 							processFreeItems(rollbackFreeItems)
-							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
+							//// Neoffice — added call, NOT a reformat (44ea4e9a, 2026-07-09): the rollback path
+							//// has to re-apply the header discount the rollback response carried, otherwise the
+							//// rejected offer's amount survives the rollback. Upstream has no header discount
+							//// here at all — it only ever rolled back items and free items.
 							applyHeaderDiscountFromServer(rollbackHeaderDiscount)
 							filterActiveOffers(rollbackRules)
 						} catch (rollbackError) {

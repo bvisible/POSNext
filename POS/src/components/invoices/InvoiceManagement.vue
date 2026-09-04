@@ -326,7 +326,8 @@
 												<!-- //// colour follows the selected source (2584aa58 + 02222a44, 2026-03-24). -->
 												<!-- //// Neoffice — the :disabled and :class below are the per-invoice guard and the source -->
 												<!-- //// colour; the marker sits above the opening tag because both changed lines are its -->
-												<!-- //// attributes (2584aa58 + 02222a44, 2026-03-24). -->
+												<!-- //// attributes (2584aa58 + 02222a44, 2026-03-24); an HTML comment between -->
+												<!-- //// them would break the tag, which is what Neoffice commit 4ed5051e undid. -->
 												<button
 													@click="selectInvoiceForPayment(invoice)"
 													:disabled="loadingInvoiceName !== null || isOffline()"
