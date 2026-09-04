@@ -77,7 +77,35 @@
   ============================================================================
 -->
 <template>
+	<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 	<div class="flex flex-col h-full bg-white rounded-neo-lg overflow-hidden">
+		<!-- //// Neoffice — divergence map for this file. Each marker below carries a tag. -->
+		<!-- //// [D] design tokens: upstream styles with stock Tailwind (rounded-lg/xl, -->
+		<!-- ////     shadow-sm/lg). The fork swaps them for the Neoffice theme scale -->
+		<!-- ////     (rounded-neo-*, shadow-neo-*) so the POS looks like the rest of -->
+		<!-- ////     Neoffice and follows the theme from one place (87f168fe, 2026-03-20 -->
+		<!-- ////     "align POS design with Neoffice theme and improve customer display"). -->
+		<!-- //// [F] format only: the fork runs Biome (no semicolons, double quotes, 80 -->
+		<!-- ////     columns) where upstream is Prettier-shaped. A hunk tagged [F] carries -->
+		<!-- ////     no behaviour: at the next upstream merge take their line and re-run -->
+		<!-- ////     `yarn lint` rather than resolving by hand (87f168fe, 3e25c3b6). -->
+		<!-- //// [R] restaurant / table service: upstream POSNext is a retail POS and knows -->
+		<!-- ////     nothing of tables. Neoffice sells the POS to restaurants, so the cart -->
+		<!-- ////     also drives a table, preparation stations and per-item KDS status, item -->
+		<!-- ////     modifiers, takeaway, and the provisional (pre-payment) ticket, and it -->
+		<!-- ////     hides the retail-only controls when restaurant mode is on (8aa35c29, -->
+		<!-- ////     e005b94b, 831857f2, 4df0caf1, c7f6932c, 71050faf, d3ca6959, 884f8ebd, -->
+		<!-- ////     a268f4e9, 7269b953, 7fdaa8cf, b3a9d850). -->
+		<!-- //// [G] guest ordering: guests order and pay from their phone via a QR code, so -->
+		<!-- ////     the cashier's cart must show what the table has already paid, the tip -->
+		<!-- ////     they left, and what is still to collect. Upstream has no such flow -->
+		<!-- ////     (6d7195f4, 214125e5, 1c05e7c7, e25a9266, 48b2e6c0). -->
+		<!-- //// [CHF] Swiss cash rounds to the 0.05 fraction, so the grand total carries a -->
+		<!-- ////     rounding adjustment upstream does not model (4fdb5df4). -->
+		<!-- //// [CU] customer area rework: search, selection and the info shown about the -->
+		<!-- ////     selected customer (afb8f175, 4a0dd461, 53d0107c, 4aac18e5). -->
+		<!-- //// [GC] gift cards are Items priced at zero whose value is typed at the till -->
+		<!-- ////     (5dddc528). [CART] cart-line identity fixes (7e1376a3). -->
 		<!-- Header with Customer -->
 		<div class="px-2.5 py-2 border-b border-gray-200 bg-gray-50">
 			<!-- Inline Customer Search/Selection -->
@@ -89,6 +117,10 @@
 						<!-- Customer Card (hover shows full-info popover) -->
 						<div class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
 							<!-- Customer Avatar & Info -->
+							<!-- //// Neoffice — [CU] the customer name itself is the switch control. Upstream -->
+							<!-- //// needed two taps (a red X to clear, then the search); a cashier changes -->
+							<!-- //// customer constantly, so one tap re-opens the search instead (4a0dd461, -->
+							<!-- //// 2026-07-09 "smoother customer selection & full edit form"). -->
 							<div
 									@click.stop="clearCustomer"
 									role="button"
@@ -106,6 +138,8 @@
 									<p class="text-xs font-semibold text-gray-900 truncate leading-tight">
 										{{ customer.customer_name || customer.name }}
 									</p>
+									<!-- //// Neoffice — [CU] e-mail shown next to the phone: it was already cached and -->
+									<!-- //// never displayed, and business customers are identified by mail (4a0dd461). -->
 									<p v-if="customer.mobile_no || customer.email_id" class="text-[10px] text-gray-500 truncate leading-tight">
 										<span v-if="customer.mobile_no">{{ customer.mobile_no }}</span>
 										<span v-if="customer.mobile_no && customer.email_id" class="text-gray-300"> · </span>
@@ -171,11 +205,21 @@
 									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
 										<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 									</svg>
+								<!-- //// Neoffice — [CU] a red "remove customer" button used to sit right after this -->
+								<!-- //// line. It was dropped when the customer name became the way to re-open the -->
+								<!-- //// search, so clearing and switching is one tap instead of two (4a0dd461, -->
+								<!-- //// 2026-07-09). git blame attributes nothing here: the hunk is a pure deletion. -->
 								</button>
 							</div>
 						</div>
 
+						<!-- //// Neoffice — [R] a restaurant never raises a Sales Order at the till, so the -->
+						<!-- //// Invoice/Order switch is hidden whenever restaurant mode is on. Upstream -->
+						<!-- //// always shows it (b3a9d850, 2026-03-20; the same guard is repeated on the -->
+						<!-- //// second instance of this switch further down). -->
 						<!-- Document Type Card (hidden in restaurant mode) -->
+						<!-- //// Neoffice — [R] the restaurant guard is the note just above (b3a9d850); -->
+						<!-- //// [D] Neoffice theme tokens on the class below (87f168fe). -->
 						<div
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo flex-shrink-0"
@@ -242,6 +286,7 @@
 							</div>
 
 							<!-- Native Input for Instant Search -->
+							<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 							<input
 								id="cart-customer-search"
 								name="cart-customer-search"
@@ -260,6 +305,7 @@
 						</div>
 
 						<!-- Quick Create Customer Button -->
+						<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 						<button
 							type="button"
 							@click="createNewCustomer"
@@ -283,6 +329,9 @@
 						</button>
 
 						<!-- Document Type Toggle (Sales Invoice / Sales Order) -->
+						<!-- //// Neoffice — [R] second instance of the Sales Order switch, hidden in -->
+						<!-- //// restaurant mode for the same reason; the first one was fixed alone and the -->
+						<!-- //// toggle stayed visible here (b3a9d850 + 8aa35c29, 2026-03-20). -->
 						<div
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
@@ -357,6 +406,10 @@
 								<p class="text-[11px] font-semibold text-gray-900 truncate">
 									{{ cust.customer_name }}
 								</p>
+								<!-- //// Neoffice — [CU] a search row shows phone, e-mail and a one-line address so -->
+								<!-- //// the cashier can tell two same-named customers apart; upstream showed the -->
+								<!-- //// phone alone. get_customers was widened to return the address rather than -->
+								<!-- //// fetching per customer (4a0dd461 + 53d0107c, 2026-07-09). -->
 								<p v-if="cust.mobile_no || cust.email_id" class="text-[9px] text-gray-600 truncate">
 									<span v-if="cust.mobile_no">{{ cust.mobile_no }}</span>
 									<span v-if="cust.mobile_no && cust.email_id" class="text-gray-300"> · </span>
@@ -526,6 +579,7 @@
 			<!-- Offers & Coupon Buttons -->
 			<div class="flex gap-2">
 				<!-- View All Offers Button -->
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
 					type="button"
 					@click="$emit('show-offers')"
@@ -557,6 +611,7 @@
 				</button>
 
 				<!-- Enter Coupon Code Button -->
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
 					type="button"
 					@click="$emit('apply-coupon')"
@@ -619,6 +674,7 @@
 				<!-- Quick Actions Grid -->
 				<div class="grid grid-cols-2 gap-2 sm:gap-2.5 w-full max-w-lg">
 					<!-- View Shift -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						type="button"
 						@click="$emit('view-shift')"
@@ -654,6 +710,7 @@
 					</button>
 
 					<!-- Draft Invoices -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						type="button"
 						@click="$emit('show-drafts')"
@@ -683,6 +740,7 @@
 					</button>
 
 					<!-- Invoice History -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						type="button"
 						@click="$emit('show-history')"
@@ -712,6 +770,7 @@
 					</button>
 
 					<!-- Return Invoice -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						type="button"
 						@click="$emit('show-return')"
@@ -741,6 +800,7 @@
 					</button>
 
 					<!-- Close Shift -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						type="button"
 						@click="$emit('close-shift')"
@@ -770,6 +830,7 @@
 					</button>
 
 					<!-- Create Customer -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						type="button"
 						@click="$emit('create-customer', '')"
@@ -801,6 +862,9 @@
 			</div>
 
 			<div v-else class="flex flex-col gap-0.5 sm:gap-1">
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the cart line (87f168fe), and [R] a -->
+				<!-- //// line already delivered to the table is dimmed instead of removed, so the -->
+				<!-- //// waiter still sees what was served (c7f6932c, 2026-03-23). -->
 				<div
 					v-for="(item, index) in sortedItems"
 					:key="item.item_code + '-' + (item.uom || '') + (item.is_free_item ? '-free' : '')"
@@ -815,6 +879,9 @@
 				>
 					<div class="flex gap-1.5 sm:gap-2">
 						<!-- Item Image Thumbnail -->
+						<!-- //// Neoffice — [IMG] the cart thumbnail paints the Item's custom_color when it -->
+						<!-- //// has no photo; upstream drew an SVG placeholder, which made a restaurant cart -->
+						<!-- //// of colour-coded Items unreadable (983130d3, 2026-03-25). -->
 						<div
 							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
 							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
@@ -829,11 +896,15 @@
 								decoding="async"
 								class="w-full h-full object-cover"
 							/>
+							<!-- //// Neoffice — [IMG] name over the colour, in white when the colour is dark, so -->
+							<!-- //// the line stays legible whatever the manager picked (983130d3). -->
 							<span
 								v-else
 								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
 								:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-400'"
 							>
+								<!-- //// Neoffice — [IMG] the name is the fallback content of the thumbnail, hence -->
+								<!-- //// the truncation to 8 characters (983130d3). -->
 								{{ (item.item_name || '').substring(0, 8) }}
 							</span>
 						</div>
@@ -848,6 +919,11 @@
 									>
 										{{ item.item_name }}
 									</h4>
+									<!-- //// Neoffice — [R] restaurant badges on a cart line, none of which upstream has: -->
+									<!-- //// the free-text note the waiter typed, the preparation station the Item is -->
+									<!-- //// routed to (bar or kitchen, colour taken from the station record) and a -->
+									<!-- //// summary of the chosen modifiers, so the ticket can be checked before it is -->
+									<!-- //// sent (87f168fe, e005b94b, 831857f2, 4df0caf1, 2026-03-20/21). -->
 									<!-- Special Instructions Badge (Restaurant mode) -->
 								<span
 									v-if="item.posa_special_instructions"
@@ -911,6 +987,11 @@
 										}}
 									</div>
 								</div>
+								<!-- //// Neoffice — [R] added: per-line kitchen state and the two per-line actions -->
+								<!-- //// that go with it. A restaurant sends courses one at a time, so each line -->
+								<!-- //// carries its own kds_status, can be pushed to the kitchen on its own, and can -->
+								<!-- //// get a note or modifier. Upstream only knows a whole-order state (c7f6932c + -->
+								<!-- //// 87f168fe, 2026-03-20/23). -->
 								<!-- KDS Item Status Badge -->
 								<span
 									v-if="cartStore.restaurantTable && item.kds_status"
@@ -941,6 +1022,10 @@
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
 								</button>
 
+								<!-- //// Neoffice — [CART] emits the item OBJECT, not its item_code: with modifiers -->
+								<!-- //// the same item_code sits on several cart lines, and removing by code deleted -->
+								<!-- //// all of them at once (7e1376a3, 2026-03-31 "remove deletes only one item -->
+								<!-- //// (by ref)"). -->
 								<button
 									v-if="!item.is_free_item"
 									type="button"
@@ -1270,6 +1355,10 @@
 				</div>
 			</div>
 
+			<!-- //// Neoffice — [CHF] added: Swiss cash has no coin under 0.05, so the total is -->
+			<!-- //// rounded to the currency's smallest fraction and the adjustment is shown as -->
+			<!-- //// its own line; hiding it would make the receipt look wrong by a few cents -->
+			<!-- //// (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts"). -->
 			<!-- Rounding Adjustment -->
 			<div v-if="roundingAdjustment !== 0" class="flex items-center justify-between text-xs text-gray-600 px-1 mb-1">
 				<span class="font-medium">{{ __("Rounding") }}</span>
@@ -1277,6 +1366,7 @@
 			</div>
 
 			<!-- Grand Total -->
+			<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 			<div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-neo-md p-2.5 mb-1.5">
 				<div class="flex items-center justify-between">
 					<span class="text-sm font-extrabold text-gray-900">{{
@@ -1288,6 +1378,11 @@
 						{{ formatCurrency(displayGrandTotal) }}
 					</span>
 				</div>
+				<!-- //// Neoffice — [G] added: guests pay their own share from their phone, so the -->
+				<!-- //// cashier needs to see what the table already paid, the tip left (voluntary, -->
+				<!-- //// so it is NOT counted against the order) and what is still to collect. -->
+				<!-- //// Upstream has no guest payment at all (6d7195f4, 214125e5, 1c05e7c7, -->
+				<!-- //// e25a9266, 2026-03-30/04-01). -->
 				<!-- Guest payments already received on this table -->
 				<div v-if="cartStore.guestPaidAmount > 0" class="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1">
 					<div class="flex items-center justify-between">
@@ -1318,6 +1413,14 @@
 			</div>
 
 			<!-- Action Buttons -->
+			<!-- //// Neoffice — [R] added: the restaurant/takeaway action bar, shown instead of -->
+			<!-- //// the retail Checkout+Hold pair. Validate sends the round to the preparation -->
+			<!-- //// stations (it is disabled when nothing is sendable), Pay is disabled when the -->
+			<!-- //// guests already covered the whole table [G], and the printer button issues a -->
+			<!-- //// provisional ticket which is explicitly not a receipt. Hold is hidden here: -->
+			<!-- //// the table IS the hold, and saving a local draft raised "Draft not found". -->
+			<!-- //// (8aa35c29, 7269b953, 7fdaa8cf, c7f6932c, 71050faf, d3ca6959, 884f8ebd, -->
+			<!-- //// a268f4e9, 48b2e6c0, 2026-03-20 to 04-01.) -->
 			<!-- Restaurant Mode Buttons -->
 			<div v-if="restaurantStore.isEnabled && (cartStore.restaurantTable || cartStore.isTakeaway)" class="flex gap-1.5">
 				<!-- Send to Kitchen Button (Primary - green) -->
@@ -1434,6 +1537,7 @@
 			<!-- Normal Mode Buttons -->
 			<div v-else class="flex gap-1.5">
 				<!-- Checkout Button (Primary - 50% width) -->
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
 					type="button"
 					@click="handleProceedToPayment"
@@ -1463,6 +1567,7 @@
 				</button>
 
 				<!-- Hold Order Button (Secondary - 50% width) -->
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
 					type="button"
 					v-if="items.length > 0"
@@ -1506,6 +1611,9 @@
  * IMPORTS
  * ============================================================================
  */
+//// Neoffice — [R] the cart reads the restaurant store (table, takeaway, stations)
+//// and [IMG] the colour helper for Items with no photo, neither of which exists
+//// upstream (8aa35c29, 983130d3). [F] the currency import was wrapped by Biome.
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSOffersStore } from "@/stores/posOffers"
@@ -1533,6 +1641,9 @@ import EditItemDialog from "./EditItemDialog.vue"
  * STORES & COMPOSABLES
  * ============================================================================
  */
+//// Neoffice — [R] restaurant store added next to the retail ones: it holds the open
+//// table, takeaway state and the station map used by the badges (8aa35c29). [F]
+//// the surrounding lines only lost their semicolons (87f168fe).
 const cartStore = usePOSCartStore() // Pinia store for cart state management
 const settingsStore = usePOSSettingsStore() // Pinia store for POS settings
 const offersStore = usePOSOffersStore() // Pinia store for offers/promotions
@@ -1541,6 +1652,11 @@ const restaurantStore = useRestaurantStore() // Pinia store for restaurant featu
 const { formatQuantity } = useFormatters() // Quantity formatting utilities
 
 function handleProceedToPayment() {
+	//// Neoffice — [R] added: helpers the restaurant cart needs and upstream has no use
+	//// for. formatModifiers renders the JSON stored on the invoice line by the modifier
+	//// dialog, and the two station helpers resolve a station name to its display name
+	//// and colour through the station/item map rather than a field on Item, which was
+	//// dropped to stop polluting the Item doctype (4df0caf1, 831857f2, 2026-03-21).
 	emit("proceed-to-payment")
 }
 
@@ -1608,6 +1724,9 @@ const props = defineProps({
 		type: Number,
 		default: 0,
 	},
+	//// Neoffice — [CHF] added prop: the parent computes the Swiss 0.05 rounding and
+	//// passes the adjustment down, so the cart can show it and add it to the displayed
+	//// grand total (4fdb5df4, 2026-04-04).
 	roundingAdjustment: {
 		type: Number,
 		default: 0,
@@ -1625,6 +1744,7 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 })
 
 /**
@@ -1643,6 +1763,9 @@ const emit = defineEmits([
 	"clear-cart", // () - Clear all items from cart
 	"save-draft", // () - Save current cart as draft/hold order
 	"apply-coupon", // () - Open coupon application dialog
+	//// Neoffice — [R] added events: send the round to the kitchen, open the send dialog,
+	//// and send a single line. A restaurant fires a course at a time, which upstream's
+	//// pay-or-hold cart has no event for (8aa35c29, c7f6932c).
 	"send-to-kitchen", // () - Send order to kitchen (restaurant mode)
 	"open-kitchen-dialog", // () - Open kitchen dialog (restaurant mode)
 	"send-item-to-kitchen", // (item) - Send individual item to kitchen (restaurant mode)
@@ -1651,6 +1774,8 @@ const emit = defineEmits([
 	"remove-offer", // (offerId) - Remove applied offer
 	"update-uom", // (itemCode, newUom) - Change item's unit of measure
 	"edit-item", // (item) - Open item edit dialog
+	//// Neoffice — [R] added events: per-line note/modifier dialog and the provisional
+	//// pre-payment ticket the waiter drops on the table (87f168fe, 71050faf).
 	"open-modifiers", // (item) - Open special instructions dialog (restaurant mode)
 	"print-provisional-ticket", // () - Print provisional ticket (restaurant mode)
 	"view-shift", // () - View current shift details
@@ -1659,14 +1784,17 @@ const emit = defineEmits([
 	"show-return", // () - Open return invoice dialog
 	"close-shift", // () - Close current shift
 	// "create-sales-order", // () - Create Sales Order // Removed as per instruction
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 ])
 
 // Cart sort composable (must be after defineProps)
 const {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	cartSortBy,
 	cartSortOrder,
 	showCartSortDropdown,
 	sortedItems,
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	CART_SORT_OPTIONS,
 	CART_SORT_ICONS,
 	toggleCartSortDropdown,
@@ -1681,10 +1809,12 @@ const {
  * ============================================================================
  */
 // Customer search state
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const customerSearch = ref("") // Current search query
 const customerSearchContainer = ref(null) // Ref to search container for click-outside detection
 const customerSearchFocused = ref(false) // Track if search input is focused
 // Use Pinia store for allCustomers (shared with CustomerDialog, synced on customer creation)
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const allCustomers = computed(() => customerSearchStore.allCustomers)
 const customersLoaded = computed(
 	() => customerSearchStore.allCustomers.length > 0,
@@ -1694,13 +1824,16 @@ const availableGiftCards = ref([]) // Available gift cards for current customer
 const previousCustomer = ref(null) // Store previous customer for restore on blur
 
 // Edit item dialog state
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const showEditDialog = ref(false) // Controls edit dialog visibility
 const selectedItem = ref(null) // Item being edited
 
 // UOM dropdown state - tracks which item's UOM dropdown is open (by item_code)
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const openUomDropdown = ref(null)
 
 // Cart sort dropdown container (template ref for outside-click detection)
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const cartSortContainer = ref(null)
 
 /**
@@ -1720,12 +1853,14 @@ const cartSortContainer = ref(null)
  */
 // Load customers via the shared Pinia store (if not already loaded)
 if (props.posProfile) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	customerSearchStore.loadAllCustomers(props.posProfile)
 }
 
 // Load offers on component init (uses shared store method to prevent duplicate fetches)
 // ensureOffersFetched handles both online/offline cases and caching
 if (props.posProfile) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	offersStore.ensureOffersFetched(props.posProfile)
 }
 
@@ -1745,12 +1880,15 @@ const giftCardsResource = createResource({
 		return {
 			customer: props.customer?.name || props.customer,
 			company: props.posProfile, // Will get company from profile
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		}
 	},
 	auto: false,
 	onSuccess(data) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		availableGiftCards.value = data?.message || data || []
 	},
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 })
 
 /**
@@ -1762,10 +1900,13 @@ watch(
 	() => props.customer,
 	(newCustomer) => {
 		if (newCustomer && props.posProfile && !isOffline()) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			giftCardsResource.reload()
 		} else {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			availableGiftCards.value = []
 		}
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	},
 )
 
@@ -1780,6 +1921,7 @@ watch(
  * Used for the badge on the "Offers" button.
  * @returns {Number} Count of applied offers
  */
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const appliedOfferCount = computed(() => (props.appliedOffers || []).length)
 
 /**
@@ -1787,10 +1929,13 @@ const appliedOfferCount = computed(() => (props.appliedOffers || []).length)
  * Rebuilt when allCustomers changes.
  */
 const customerMap = computed(() => {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const map = new Map()
 	for (const cust of allCustomers.value) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		map.set(cust.name, cust)
 	}
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	return map
 })
 
@@ -1804,6 +1949,7 @@ const customerMap = computed(() => {
  * @returns {Array} Filtered customer objects matching search query
  */
 const customerResults = computed(() => {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const searchValue = customerSearch.value.trim().toLowerCase()
 
 	// When focused with no/short search term, show frequent customers (top 5)
@@ -1820,8 +1966,10 @@ const customerResults = computed(() => {
 			// 	return frequentCustomers;
 			// }
 			// If no frequent customers, show first 5 from the list
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			return allCustomers.value.slice(0, 10)
 		}
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		return []
 	}
 
@@ -1832,6 +1980,9 @@ const customerResults = computed(() => {
 	const tokens = searchValue.split(/\s+/).filter(Boolean)
 	return allCustomers.value
 		.filter((cust) => {
+			//// Neoffice — [CU] tokenised, order-independent match (see the note just above):
+			//// upstream's includes() on the whole string missed "Moret Daniel" for a customer
+			//// stored as "Daniel Moret" (afb8f175, 2026-07-09).
 			const haystack =
 				(cust.customer_name || "").toLowerCase() +
 				" " +
@@ -1841,6 +1992,7 @@ const customerResults = computed(() => {
 
 			return tokens.every((tok) => haystack.includes(tok))
 		})
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		.slice(0, 20)
 })
 
@@ -1849,6 +2001,7 @@ const customerResults = computed(() => {
  * Ensures the selection doesn't point to a non-existent result.
  */
 watch(customerResults, () => {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	selectedIndex.value = -1
 })
 
@@ -1859,8 +2012,10 @@ watch(customerResults, () => {
  */
 const totalQuantity = computed(() => {
 	return props.items.reduce((sum, item) => {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const qty = item.quantity || 0
 		// For dedicated free item rows, quantity IS the free qty — don't double-count
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const freeQty = item.is_free_item ? 0 : item.free_qty || 0
 		return sum + qty + freeQty
 	}, 0)
@@ -1883,9 +2038,11 @@ const displaySubtotal = computed(() => {
 	if (cartStore.taxInclusive) {
 		// Tax inclusive: subtotal from store is gross (includes tax)
 		// Display the net amount (before tax) for clarity
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		return props.subtotal - props.taxAmount
 	}
 	// Tax exclusive: subtotal is already net (before tax)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	return props.subtotal
 })
 
@@ -1900,6 +2057,8 @@ const displaySubtotal = computed(() => {
 const displayGrandTotal = computed(() => {
 	// Always: displaySubtotal + tax - discount + rounding
 	// This makes the display consistent and intuitive
+	//// Neoffice — [CHF] the displayed grand total carries the Swiss 0.05 rounding, so
+	//// the figure on screen equals the one that will be charged and printed (4fdb5df4).
 	return displaySubtotal.value + props.taxAmount - props.discountAmount + (props.roundingAdjustment || 0)
 })
 
@@ -1909,6 +2068,10 @@ const displayGrandTotal = computed(() => {
  * ============================================================================
  */
 
+//// Neoffice — [R] added: what the restaurant action bar needs. hasSendableItems
+//// gates the Validate button on there being a line not yet sent (it must also count
+//// takeaway, which was missed at first and left the button dead), and the badge
+//// classes render the per-line kitchen state (c7f6932c, a268f4e9, 2026-03-23/26).
 /**
  * Check if there are items that can be sent to kitchen.
  * Excludes free items and items that have already been sent/prepared.
@@ -1946,19 +2109,23 @@ function kdsStatusBadgeClass(status) {
  * @param {Event} event - Input event from search field
  */
 function handleSearchInput(event) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	customerSearch.value = event.target.value
 }
 
 // Track if customer history has been loaded this session
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const customerHistoryLoaded = ref(false)
 
 /**
  * Handle search input focus - shows frequent customers dropdown.
  */
 function handleSearchFocus() {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	customerSearchFocused.value = true
 	// Load customer history only once per session for faster subsequent focuses
 	if (!customerHistoryLoaded.value) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearchStore.loadCustomerHistory()
 		customerHistoryLoaded.value = true
 	}
@@ -1971,6 +2138,7 @@ function handleSearchFocus() {
 function handleSearchBlur() {
 	// Reduced delay - mousedown.prevent handles most cases, this is just for keyboard nav
 	setTimeout(() => {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearchFocused.value = false
 	}, 100)
 }
@@ -1985,18 +2153,22 @@ function handleSearchBlur() {
  * @param {KeyboardEvent} event - Keyboard event from search input
  */
 function handleKeydown(event) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (customerResults.value.length === 0) return
 
 	if (event.key === "ArrowDown") {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		event.preventDefault()
 		selectedIndex.value = Math.min(
 			selectedIndex.value + 1,
 			customerResults.value.length - 1,
 		)
 	} else if (event.key === "ArrowUp") {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		event.preventDefault()
 		selectedIndex.value = Math.max(selectedIndex.value - 1, -1)
 	} else if (event.key === "Enter") {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		event.preventDefault()
 		if (
 			selectedIndex.value >= 0 &&
@@ -2005,9 +2177,11 @@ function handleKeydown(event) {
 			selectCustomer(customerResults.value[selectedIndex.value])
 		} else if (customerResults.value.length === 1) {
 			// Auto-select if only one result
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			selectCustomer(customerResults.value[0])
 		}
 	} else if (event.key === "Escape") {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearch.value = ""
 	}
 }
@@ -2020,6 +2194,7 @@ function handleKeydown(event) {
  */
 function selectCustomer(cust) {
 	// Track selection for frequent customers feature
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	customerSearchStore.trackCustomerSelection(cust.name)
 	emit("select-customer", cust)
 	customerSearch.value = ""
@@ -2028,6 +2203,9 @@ function selectCustomer(cust) {
 	previousCustomer.value = null
 }
 
+//// Neoffice — [CU] this is the old removeCustomer path, folded into clearCustomer
+//// when the red X was replaced by clicking the customer name; it now also re-focuses
+//// the search so the cashier can type straight away (4a0dd461, 2026-07-09).
 /**
  * Clear the currently selected customer and re-open the search input.
  * Triggered by clicking the selected customer's name (replaces the old
@@ -2035,11 +2213,14 @@ function selectCustomer(cust) {
  * Emits select-customer with null to deselect, then focuses the search box.
  */
 async function clearCustomer() {
+	//// Neoffice — [CU] the reset moved here from the deleted removeCustomer, so a
+	//// blur cannot restore the customer the cashier just cleared (4a0dd461).
 	previousCustomer.value = null
 	emit("select-customer", null)
 	await nextTick()
 	const searchInput = document.getElementById("cart-customer-search")
 	if (searchInput) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		searchInput.focus()
 	}
 }
@@ -2049,11 +2230,14 @@ async function clearCustomer() {
  * Pre-fills the new customer name with the search query.
  */
 function createNewCustomer() {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const searchValue = customerSearch.value
 	// Close dropdown immediately
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	customerSearch.value = ""
 	customerSearchFocused.value = false
 	// Emit event to open customer creation dialog
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	emit("create-customer", searchValue)
 }
 
@@ -2069,11 +2253,13 @@ function createNewCustomer() {
  * @returns {String} 2-letter initials (uppercase)
  */
 function getInitials(name) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (!name || !name.trim()) return "?"
 	const parts = name.trim().split(/\s+/).filter(Boolean)
 	if (parts.length === 0) return "?"
 	const first = Array.from(parts[0])[0] || "?"
 	if (parts.length >= 2) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const second = Array.from(parts[1])[0] || "?"
 		return (first + second).toUpperCase()
 	}
@@ -2133,6 +2319,7 @@ function formatAddress(cust) {
  * @returns {String} Formatted currency string (e.g., "$1,234.56")
  */
 function formatCurrency(amount) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency)
 }
 
@@ -2151,28 +2338,34 @@ function formatCurrency(amount) {
 function getSmartStep(quantity) {
 	// Check if it's a whole number
 	if (quantity === Math.floor(quantity)) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		return 1
 	}
 
 	// Round to 4 decimal places to avoid floating point errors
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const rounded = Math.round(quantity * 10000) / 10000
 
 	// Check if it's a multiple of 0.5
 	if (Math.abs(rounded % 0.5) < 0.0001) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		return 0.5
 	}
 
 	// Check if it's a multiple of 0.25
 	if (Math.abs(rounded % 0.25) < 0.0001) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		return 0.25
 	}
 
 	// Check if it's a multiple of 0.1
 	if (Math.abs(rounded % 0.1) < 0.0001) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		return 0.1
 	}
 
 	// For other decimals, use 0.01 for fine control
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	return 0.01
 }
 
@@ -2184,8 +2377,10 @@ function getSmartStep(quantity) {
  */
 function incrementQuantity(item) {
 	// Prevent editing resolved barcode items
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (item.is_resolved_barcode) return
 
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const step = getSmartStep(item.quantity)
 	const newQty = Math.round((item.quantity + step) * 10000) / 10000
 	emit("update-quantity", item.item_code, newQty, item.uom)
@@ -2199,15 +2394,19 @@ function incrementQuantity(item) {
  */
 function decrementQuantity(item) {
 	// Prevent editing resolved barcode items
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (item.is_resolved_barcode) return
 
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const step = getSmartStep(item.quantity)
 	const newQty = Math.round((item.quantity - step) * 10000) / 10000
 
 	if (newQty <= 0) {
 		// If quantity would be 0 or negative, remove the item
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		emit("remove-item", item.item_code, item.uom)
 	} else {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		emit("update-quantity", item.item_code, newQty, item.uom)
 	}
 }
@@ -2222,17 +2421,22 @@ function decrementQuantity(item) {
 
 function updateQuantity(item, value) {
 	// Prevent editing resolved barcode items
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (item.is_resolved_barcode) return
 
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const qty = Number.parseFloat(value)
 
 	// If the input isn't a valid number (e.g., user cleared the field), do nothing
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (isNaN(qty)) return
 
 	// If quantity is zero or negative, remove the item from the cart
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (qty <= 0) return emit("remove-item", item.item_code, item.uom)
 
 	// For positive numbers, update quantity immediately (no rounding here while typing)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	emit("update-quantity", item.item_code, qty, item.uom)
 }
 
@@ -2248,11 +2452,14 @@ function handleQuantityBlur(item) {
 	// When user leaves the input field, round and validate
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		emit("remove-item", item.item_code, item.uom)
 	} else {
 		// Round to 4 decimal places for consistency
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const roundedQty = Math.round(item.quantity * 10000) / 10000
 		if (roundedQty !== item.quantity) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			emit("update-quantity", item.item_code, roundedQty, item.uom)
 		}
 	}
@@ -2267,6 +2474,7 @@ function handleQuantityBlur(item) {
  * Uses unique key combining item_code + uom to handle same item with different UOMs.
  */
 function toggleUomDropdown(itemCode, uom) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const key = `${itemCode}-${uom}`
 	openUomDropdown.value = openUomDropdown.value === key ? null : key
 }
@@ -2277,10 +2485,12 @@ function toggleUomDropdown(itemCode, uom) {
  */
 async function selectUom(item, newUom) {
 	if (item.uom === newUom) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		openUomDropdown.value = null
 		return
 	}
 
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const currentUom = item.uom || item.stock_uom
 	await cartStore.changeItemUOM(item.item_code, newUom, currentUom)
 	openUomDropdown.value = null
@@ -2299,6 +2509,7 @@ async function selectUom(item, newUom) {
  * @param {Object} item - Cart item to edit
  */
 function openEditDialog(item) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	selectedItem.value = { ...item }
 	showEditDialog.value = true
 }
@@ -2311,14 +2522,17 @@ function openEditDialog(item) {
  */
 async function handleUpdateItem(updatedItem) {
 	// Get the original UOM from selectedItem (before any changes)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const originalUom = selectedItem.value?.uom || selectedItem.value?.stock_uom
 	// Use store method to update item, passing original UOM to identify correct item
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	await cartStore.updateItemDetails(
 		updatedItem.item_code,
 		updatedItem,
 		originalUom,
 	)
 	// Also emit for parent component compatibility
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	emit("edit-item", updatedItem)
 }
 
@@ -2327,6 +2541,7 @@ async function handleUpdateItem(updatedItem) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function selectDocType(type) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	cartStore.setTargetDoctype(type)
 }
 
@@ -2339,6 +2554,7 @@ function selectDocType(type) {
  * @param {MouseEvent} event - Click event
  */
 function handleOutsideClick(event) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const target = event.target
 
 	// Close customer search if clicking outside
@@ -2347,10 +2563,12 @@ function handleOutsideClick(event) {
 		target instanceof Node &&
 		!customerSearchContainer.value.contains(target)
 	) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearch.value = ""
 
 		// Restore previous customer if set and no customer selected
 		if (previousCustomer.value && !props.customer) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			emit("select-customer", previousCustomer.value)
 			previousCustomer.value = null
 		}
@@ -2360,8 +2578,10 @@ function handleOutsideClick(event) {
 	if (openUomDropdown.value !== null) {
 		// Check if click is outside all UOM dropdowns
 		const clickedInsideUomDropdown =
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			target instanceof Element && target.closest(".group\\/uom")
 		if (!clickedInsideUomDropdown) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			openUomDropdown.value = null
 		}
 	}
@@ -2373,6 +2593,7 @@ function handleOutsideClick(event) {
 		target instanceof Node &&
 		!cartSortContainer.value.contains(target)
 	) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		showCartSortDropdown.value = false
 	}
 }
@@ -2382,8 +2603,10 @@ function handleOutsideClick(event) {
  * Used for click-outside detection on dropdowns.
  */
 onMounted(() => {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (typeof document === "undefined") return
 	// Use mousedown instead of click to catch events before they are swallowed by other handlers
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	document.addEventListener("mousedown", handleOutsideClick)
 })
 
@@ -2392,6 +2615,10 @@ onMounted(() => {
  * Prevents memory leaks by removing event listener.
  */
 onBeforeUnmount(() => {
+	//// Neoffice — [GC] the edit dialog is exposed to the parent so POSSale can open it
+	//// by itself the moment a zero-priced Item lands in the cart: a gift card has no
+	//// price until the cashier types one, and upstream offers no way in (5dddc528,
+	//// 2026-01-14 "auto-open edit dialog for zero-price items (gift cards)").
 	if (typeof document === "undefined") return
 	document.removeEventListener("mousedown", handleOutsideClick)
 })

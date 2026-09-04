@@ -6,6 +6,18 @@
   //// allow rate editing for zero-price items (gift cards) — 85f05bb + 458d81a
 -->
 <template>
+	<!-- //// Neoffice — divergence map for this file. Each marker below carries a tag. -->
+	<!-- //// [F] format only: upstream is Prettier-shaped (semicolons, single quotes, -->
+	<!-- ////     long lines); the fork runs Biome (no semicolons, double quotes, 80 -->
+	<!-- ////     columns), so a whole-tree reflow landed with 458d81a9 (2026-03-20 -->
+	<!-- ////     "remove BrainWise branding, add restaurant mode, and code formatting"). -->
+	<!-- ////     A hunk tagged [F] carries no behaviour: at the next upstream merge take -->
+	<!-- ////     their line and re-run `yarn lint` rather than resolving by hand. -->
+	<!-- //// [GC] gift cards: Neoffice sells gift cards as Items priced at zero whose -->
+	<!-- ////     value the cashier types in at the till. Upstream locks the Rate field -->
+	<!-- ////     whenever POS Settings forbids rate editing, which made such an Item -->
+	<!-- ////     unsellable, so a zero price_list_rate now always unlocks the rate -->
+	<!-- ////     (85f05bb9, 2026-01-14 "allow rate editing for zero-price items"). -->
 	<!-- Custom Modal matching frappe-ui Dialog styling -->
 	<!-- Uses @click.self pattern to properly handle teleported SelectInput dropdowns -->
 	<Teleport to="body">
@@ -293,6 +305,7 @@ import { useToast } from "@/composables/useToast"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useSerialNumberStore } from "@/stores/serialNumber"
 import { getItemStock } from "@/utils/stockValidator"
+//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 import {
 	formatCurrency as formatCurrencyUtil,
 	getCurrencySymbol,
@@ -363,12 +376,17 @@ const currencySymbol = computed(() => getCurrencySymbol(props.currency))
 // Check if item has pricing rules applied (promotional offers)
 const hasPricingRules = computed(() => {
 	if (!localItem.value) return false
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	return (
 		Boolean(localItem.value.pricing_rules) &&
 		localItem.value.pricing_rules.length > 0
 	)
 })
 
+//// Neoffice — [GC] added: a gift card is an Item with price_list_rate 0 and the
+//// cashier types the value in. Upstream has no such notion, so the flag below is
+//// what lets canEditRate() bypass the POS Settings lock (85f05bb9, 2026-01-14
+//// "allow rate editing for zero-price items (gift cards)"). [F] wrap by 458d81a9.
 // Zero-price items (e.g., gift cards) always allow rate editing
 const isZeroPriceItem = computed(() => {
 	if (!localItem.value) return false
@@ -381,6 +399,8 @@ const isZeroPriceItem = computed(() => {
 // 1. Item has zero price (gift cards with custom value), OR
 // 2. POS Settings allows rate editing AND item has no pricing rules applied
 const canEditRate = computed(() => {
+	//// Neoffice — [GC] zero-price wins over the setting: without this line a gift card
+	//// could not be sold at all on a profile where rate editing is off (85f05bb9).
 	if (isZeroPriceItem.value) return true
 	return settingsStore.allowUserToEditRate && !hasPricingRules.value
 })
@@ -388,21 +408,26 @@ const canEditRate = computed(() => {
 // Tooltip message for why rate editing is disabled
 const rateEditDisabledReason = computed(() => {
 	if (!settingsStore.allowUserToEditRate) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		return __("Rate editing is disabled")
 	}
 	if (hasPricingRules.value) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		return __("Locked (offer applied)")
 	}
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	return ""
 })
 
 // Options for SelectInput components
 const uomOptions = computed(() => {
 	if (!localItem.value) return []
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	const options = [
 		{ value: localItem.value.stock_uom, label: localItem.value.stock_uom },
 	]
 	if (availableUoms.value.length > 0) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		availableUoms.value.forEach((uomData) => {
 			options.push({ value: uomData.uom, label: uomData.uom })
 		})
@@ -412,11 +437,14 @@ const uomOptions = computed(() => {
 
 const warehouseOptions = computed(() => {
 	if (props.warehouses.length > 0) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		return props.warehouses.map((w) => ({
 			value: w.name,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 			label: w.warehouse || w.name,
 		}))
 	}
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	return [
 		{
 			value: localWarehouse.value,
@@ -426,6 +454,7 @@ const warehouseOptions = computed(() => {
 })
 
 const discountTypeOptions = computed(() => [
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	{ value: "percentage", label: __("Percentage (%)") },
 	{ value: "amount", label: __("Amount") },
 ])
@@ -447,6 +476,7 @@ watch(
 
 			// Initialize serial numbers
 			if (newItem.has_serial_no && newItem.serial_no) {
+				//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 				const serials = newItem.serial_no.split("\n").filter((s) => s.trim())
 				localSerials.value = [...serials]
 				originalSerials.value = [...serials] // Keep original for cancel
@@ -505,16 +535,19 @@ function getSmartStep(quantity) {
 	const rounded = Math.round(quantity * 10000) / 10000
 
 	// Check if it's a multiple of 0.5
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	if (Math.abs(rounded % 0.5) < 0.0001) {
 		return 0.5
 	}
 
 	// Check if it's a multiple of 0.25
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	if (Math.abs(rounded % 0.25) < 0.0001) {
 		return 0.25
 	}
 
 	// Check if it's a multiple of 0.1
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	if (Math.abs(rounded % 0.1) < 0.0001) {
 		return 0.1
 	}
@@ -549,6 +582,7 @@ function handleQuantityInput() {
 
 function handleQuantityBlur() {
 	// Validate and fix the quantity when user is done editing (leaves the field)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	if (
 		!localQuantity.value ||
 		localQuantity.value <= 0 ||
@@ -641,6 +675,7 @@ async function handleWarehouseChange() {
 		if (availableStock === 0) {
 			hasStock.value = false
 			showError(
+				//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 				__(
 					'"{0}" is not available in warehouse "{1}". Please select another warehouse.',
 					[localItem.value.item_name, localWarehouse.value],
@@ -649,6 +684,7 @@ async function handleWarehouseChange() {
 		} else if (availableStock < localQuantity.value) {
 			hasStock.value = false
 			showWarning(
+				//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 				__(
 					'Only {0} units of "{1}" available in "{2}". Current quantity: {3}',
 					[
@@ -662,6 +698,7 @@ async function handleWarehouseChange() {
 		} else {
 			hasStock.value = true
 			showSuccess(
+				//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 				__('{0} units available in "{1}"', [
 					availableStock,
 					localWarehouse.value,
@@ -684,6 +721,7 @@ function handleDiscountTypeChange() {
 
 function calculateDiscount() {
 	// Round to currency precision to prevent floating point precision issues (e.g., 10.000000000000002)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	if (
 		discountValue.value !== null &&
 		discountValue.value !== undefined &&
@@ -697,6 +735,7 @@ function calculateDiscount() {
 		if (discountValue.value > 100) {
 			discountValue.value = 100
 		}
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		calculatedDiscount.value = roundCurrency(
 			(calculatedSubtotal.value * discountValue.value) / 100,
 		)
@@ -707,6 +746,7 @@ function calculateDiscount() {
 		}
 		calculatedDiscount.value = roundCurrency(discountValue.value)
 	}
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	calculatedTotal.value = roundCurrency(
 		calculatedSubtotal.value - calculatedDiscount.value,
 	)
@@ -744,6 +784,7 @@ function updateItem() {
 	if (settingsStore.allowUserToEditRate && isRateManuallyEdited) {
 		// Validate rate is positive
 		if (localRate.value <= 0) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 			showError(__("Rate must be greater than zero"))
 			return
 		}
@@ -751,6 +792,7 @@ function updateItem() {
 		// Validate against max discount if rate was reduced
 		const maxDiscount = settingsStore.maxDiscountAllowed
 		if (maxDiscount > 0 && localRate.value < originalPriceListRate.value) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 			const discountPercent =
 				((originalPriceListRate.value - localRate.value) /
 					originalPriceListRate.value) *
@@ -759,6 +801,7 @@ function updateItem() {
 
 			if (roundedDiscount > maxDiscount) {
 				showError(
+					//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 					__(
 						"Rate reduction of {0}% exceeds maximum allowed discount of {1}%",
 						[roundedDiscount.toFixed(2), maxDiscount],
@@ -779,6 +822,7 @@ function updateItem() {
 		warehouse: localWarehouse.value,
 		discount_percentage:
 			discountType.value === "percentage" ? discountValue.value : 0,
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		discount_amount: discountType.value === "amount" ? discountValue.value : 0,
 		// Track manual rate edits for audit logging
 		is_rate_manually_edited: isRateManuallyEdited ? 1 : 0,
@@ -787,6 +831,7 @@ function updateItem() {
 
 	// Update serial numbers if item has serials
 	if (localItem.value.has_serial_no) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		updatedItem.serial_no = localSerials.value.join("\n")
 		updatedItem.quantity = localSerials.value.length
 

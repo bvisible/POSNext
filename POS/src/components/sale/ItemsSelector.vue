@@ -8,9 +8,27 @@
 -->
 <template>
 	<div class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
+		<!-- //// Neoffice — divergence map for this file. Each marker below carries a tag. -->
+		<!-- //// [D] design tokens: upstream styles with stock Tailwind (rounded-lg/md, -->
+		<!-- ////     shadow-sm/xl, bg-gray-50). The fork swaps them for the Neoffice theme -->
+		<!-- ////     scale (rounded-neo-*, shadow-neo-*, the neo-bg custom property) so the -->
+		<!-- ////     POS looks like the rest of Neoffice and follows the theme in one place -->
+		<!-- ////     (87f168fe, 2026-03-20 "align POS design with Neoffice theme"). -->
+		<!-- //// [F] format only: the fork runs Biome (no semicolons, double quotes, 80 -->
+		<!-- ////     columns) where upstream is Prettier-shaped. A hunk tagged [F] carries -->
+		<!-- ////     no behaviour: at the next upstream merge take their line and re-run -->
+		<!-- ////     `yarn lint` rather than resolving by hand (87f168fe, 3e25c3b6). -->
+		<!-- //// [IMG] item image and colour: a restaurant catalogue has few photos, so an -->
+		<!-- ////     Item carries a custom_color and the card falls back to colour plus name -->
+		<!-- ////     instead of upstream's grey placeholder. Upstream has neither the field -->
+		<!-- ////     nor the fallback (26f5a3f1, 2026-03-25 "add image and color support for -->
+		<!-- ////     items in POS restaurant"). -->
+		<!-- //// [VM] grid/list preference: upstream recomputes the view on every load, so -->
+		<!-- ////     the cashier's choice was lost at each reload (e80f113f). -->
 		<!-- Item Groups Filter Tabs -->
 		<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
 			<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
 					@click="handleAllFilterClick"
 					:class="[
@@ -25,6 +43,7 @@
 					</svg>
 					<span>{{ isBrandSortActive ? __('All Brands') : __('All Items') }}</span>
 				</button>
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
 					v-for="option in activeFilterOptions"
 					:key="option.value"
@@ -70,6 +89,7 @@
 						</svg>
 					</div>
 					<!-- Search Input -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<input
 						id="item-search"
 						name="item-search"
@@ -125,6 +145,7 @@
 						</button>
 					</div>
 				</div>
+				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<div class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0">
 					<button
 						@click="setViewMode('grid')"
@@ -156,6 +177,7 @@
 
 				<!-- Sort Dropdown -->
 				<div class="relative z-50">
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<button
 						@click="toggleSortDropdown"
 						data-sort-button
@@ -178,6 +200,7 @@
 					</button>
 
 					<!-- Dropdown Menu -->
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<div
 						v-if="showSortDropdown"
 						@click.stop
@@ -285,6 +308,7 @@
 				style="min-height: 0;"
 			>
 				<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
+					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 					<div
 						v-for="item in displayedItems"
 						:key="item.item_code"
@@ -316,6 +340,10 @@
 							{{ Math.floor((item.actual_qty ?? item.stock_qty ?? 0)) }}
 						</div>
 
+						<!-- //// Neoffice — [IMG] upstream draws a fixed grey square when an Item has no -->
+						<!-- //// picture. A restaurant catalogue is mostly photoless, so the card paints the -->
+						<!-- //// Item's custom_color (or grey) and prints the name over it, which is what -->
+						<!-- //// staff actually recognise at the till (26f5a3f1, 2026-03-25). -->
 						<!-- Item Image / Color / Name -->
 						<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
 							:style="getCardBackgroundStyle(item)">
@@ -323,6 +351,8 @@
 								'w-full h-full transition-all duration-300',
 								(item.is_stock_item || item.is_bundle) && (item.actual_qty ?? item.stock_qty ?? 0) <= 0 ? 'group-hover:blur-sm group-hover:brightness-75' : ''
 							]">
+								<!-- //// Neoffice — [IMG] state 1 of 3 (photo). States 2 and 3 (colour, then grey -->
+								<!-- //// plus name) follow below; upstream only has the photo case (26f5a3f1). -->
 								<!-- State 1: Has image -->
 								<LazyImage
 									v-if="item.image"
@@ -333,6 +363,8 @@
 									root-margin="100px"
 								>
 									<template #error>
+										<!-- //// Neoffice — [IMG] a broken/missing image falls back to the same colour and -->
+										<!-- //// name treatment instead of an empty tile (26f5a3f1). -->
 										<div class="w-full h-full flex items-center justify-center p-2"
 											:style="getCardBackgroundStyle(item, true)">
 											<span :class="getCardTextClasses(item)" class="text-center leading-tight">
@@ -341,6 +373,8 @@
 										</div>
 									</template>
 								</LazyImage>
+								<!-- //// Neoffice — [IMG] states 2 and 3: Item custom_color, else grey, with the -->
+								<!-- //// item name over it. No upstream equivalent (26f5a3f1). -->
 								<!-- State 2 & 3: Color bg or gray bg with name -->
 								<div v-else class="w-full h-full flex items-center justify-center p-2">
 									<span :class="getCardTextClasses(item)" class="text-center leading-tight">
@@ -517,6 +551,8 @@
 							class="group cursor-pointer hover:bg-blue-50 hover:shadow-md transition-[background-color,box-shadow] duration-100 touch-manipulation active:bg-blue-100"
 						>
 							<td class="px-2 sm:px-3 py-2 whitespace-nowrap w-[50px] sm:w-[60px]">
+								<!-- //// Neoffice — [IMG] the list thumbnail follows the same rule as the grid card: -->
+								<!-- //// photo, else the Item colour, else grey with a truncated name (26f5a3f1). -->
 								<div class="w-8 h-8 sm:w-10 sm:h-10 rounded flex items-center justify-center overflow-hidden"
 									:style="getCardBackgroundStyle(item)">
 									<LazyImage
@@ -528,12 +564,15 @@
 										root-margin="100px"
 									>
 										<template #error>
+											<!-- //// Neoffice — [IMG] text flips to white on a dark Item colour, so the name -->
+											<!-- //// stays readable whatever colour the manager picked (26f5a3f1). -->
 											<span class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5"
 												:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-500'">
 												{{ item.item_name.substring(0, 6) }}
 											</span>
 										</template>
 									</LazyImage>
+									<!-- //// Neoffice — [IMG] same fallback when the Item has no image at all (26f5a3f1). -->
 									<span v-else class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5"
 										:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-500'">
 										{{ item.item_name.substring(0, 6) }}
@@ -713,6 +752,8 @@
 
 <script setup>
 import LazyImage from "@/components/common/LazyImage.vue"
+//// Neoffice — [IMG] added: luminance helper used to pick black or white text over
+//// an Item's custom_color. No upstream equivalent (26f5a3f1, 2026-03-25).
 import { isLightColor } from "@/utils/itemColors"
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue"
 import { useItemSearchStore } from "@/stores/itemSearch"
@@ -720,6 +761,7 @@ import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useStock } from "@/composables/useStock"
 import { useDialogState } from "@/composables/useDialogState"
 import { useSearchInput } from "@/composables/useSearchInput"
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -731,6 +773,7 @@ import {
 	createOptimizedClickHandler,
 	throttleRAF,
 	addPassiveListener,
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	runWhenIdle,
 } from "@/utils/lowEndOptimizations"
 import { performanceConfig } from "@/utils/performanceConfig"
@@ -756,6 +799,10 @@ const settingsStore = usePOSSettingsStore()
 const { showError, showWarning } = useToast()
 const { isAnyDialogOpen } = useDialogState()
 
+//// Neoffice — [IMG] added: the three card states (photo / Item colour / grey plus
+//// name). Upstream renders a single grey placeholder, which is unusable for a
+//// restaurant catalogue where almost no Item has a photo but each has a colour
+//// (26f5a3f1, 2026-03-25 "add image and color support for items in POS restaurant").
 // Item card display helpers for grid view (image / color / name fallback)
 function getCardBackgroundStyle(item, skipImage = false) {
 	if (!skipImage && item.image) return {}
@@ -795,6 +842,7 @@ const {
 
 // Search input composable — owns search/scanner state, timers, concurrency
 const {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	searchInputRef,
 	scannerEnabled,
 	autoAddEnabled,
@@ -807,16 +855,23 @@ const {
 	clearSearchAndResetInput,
 	cleanup: cleanupSearchInput,
 } = useSearchInput({
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	itemStore,
 	onItemFound: selectItem,
 	showWarning,
 	isAnyDialogOpen,
 })
 
+//// Neoffice — [VM] the cashier's grid/list choice is read back from localStorage.
+//// Upstream defaults to grid and lets the auto-switch watcher flip to list above
+//// the item threshold on every reload, so the choice never survived a refresh
+//// (e80f113f, 2026-04-02 "persist grid/list view preference in localStorage").
 // Local state — restore user's view preference from localStorage
 const savedViewMode = localStorage.getItem("pos_items_view_mode")
 const viewMode = ref(savedViewMode || "grid")
 const itemThreshold = ref(50) // Threshold for auto-switching to list view
+//// Neoffice — [VM] a stored preference counts as a manual choice, which is what
+//// stops the auto-switch watcher from overriding it on load (e80f113f).
 const userManuallySetView = ref(!!savedViewMode) // If saved, user had a preference
 const lastAutoSwitchCount = ref(0)
 const showSortDropdown = ref(false) // Sort dropdown visibility
@@ -835,6 +890,7 @@ const scrollCleanupFns = ref([])
 
 // Pagination state (for client-side display)
 const currentPage = ref(1)
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const itemsPerPage = ref(performanceConfig.get("itemsPerPage") || 100)
 const lastFilterSignature = ref("")
 
@@ -874,21 +930,25 @@ const SEARCH_PLACEHOLDERS = Object.freeze({
 // Sort configuration
 const BASE_SORT_OPTIONS = Object.freeze([
 	{
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		field: "name",
 		label: __("Name"),
 		icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
 	},
 	{
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		field: "quantity",
 		label: __("Quantity"),
 		icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
 	},
 	{
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		field: "price",
 		label: __("Price"),
 		icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
 	},
 	{
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		field: "item_code",
 		label: __("Item Code"),
 		icon: "M7 20l4-16m2 16l4-16M6 9h14M4 15h14",
@@ -897,11 +957,13 @@ const BASE_SORT_OPTIONS = Object.freeze([
 
 const CONTEXT_SORT_OPTIONS = Object.freeze({
 	brand: {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		field: "brand",
 		label: __("Brand"),
 		icon: "M20 13V7a2 2 0 00-2-2h-4V3H10v2H6a2 2 0 00-2 2v6M8 21h8a2 2 0 002-2v-5H6v5a2 2 0 002 2z",
 	},
 	item_group: {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		field: "item_group",
 		label: __("Item Group"),
 		icon: "M9 12l2 2 4-4m5.586 1.414l-6.172 6.172a2 2 0 01-2.828 0L3.414 9.414a2 2 0 010-2.828l6.172-6.172a2 2 0 012.828 0l8.172 8.172a2 2 0 010 2.828z",
@@ -909,6 +971,7 @@ const CONTEXT_SORT_OPTIONS = Object.freeze({
 })
 
 const SORT_ICONS = Object.freeze({
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	ascending: "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12",
 	descending: "M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4",
 	inactive: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4",
@@ -927,6 +990,7 @@ const searchMode = computed(() => {
 })
 
 const searchPlaceholder = computed(() => SEARCH_PLACEHOLDERS[searchMode.value])
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const isBrandSortActive = computed(() => sortBy.value === "brand")
 const sortOptions = computed(() => {
 	// Context switcher:
@@ -944,12 +1008,14 @@ const sortOptions = computed(() => {
 		BASE_SORT_OPTIONS[3],
 	]
 })
+//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const activeFilterValue = computed(() =>
 	isBrandSortActive.value ? selectedBrand.value : selectedItemGroup.value,
 )
 const activeFilterOptions = computed(() =>
 	isBrandSortActive.value
 		? (brands.value || []).map((b) => ({ value: b.brand, label: b.brand }))
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		: (itemGroups.value || []).map((g) => ({
 				value: g.item_group,
 				label: g.item_group,
@@ -967,6 +1033,7 @@ watch(
 	() => {
 		itemStore.setCartItems(props.cartItems)
 	},
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	{ immediate: true, flush: "sync" }, // Synchronous to ensure immediate stock updates
 )
 
@@ -1044,25 +1111,32 @@ onMounted(() => {
 
 	// Add passive scroll listeners for better performance
 	// Only bind to the currently active view
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (viewMode.value === "grid" && gridScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			gridScrollContainer.value,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			"scroll",
 			handleScroll,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	} else if (viewMode.value === "list" && listScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			listScrollContainer.value,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			"scroll",
 			handleScroll,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
 	}
 
 	// Add click outside listener for sort dropdown
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	document.addEventListener("click", handleClickOutside)
 })
 
@@ -1077,6 +1151,7 @@ onUnmounted(() => {
 	}
 
 	// Cleanup passive listeners
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	scrollCleanupFns.value.forEach((cleanup) => cleanup())
 	scrollCleanupFns.value = []
 
@@ -1086,6 +1161,7 @@ onUnmounted(() => {
 	cleanupSearchInput()
 
 	// Remove click outside listener for sort dropdown
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	document.removeEventListener("click", handleClickOutside)
 })
 
@@ -1095,6 +1171,7 @@ const optimizedClickHandlers = new Map()
 function getOptimizedClickHandler(item) {
 	const key = item.item_code
 	if (!optimizedClickHandlers.has(key)) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const handler = createOptimizedClickHandler(
 			() => {
 				handleItemClick(item.item_code)
@@ -1155,6 +1232,7 @@ function selectItem(item, autoAdd = false) {
 	if (!item) return false
 
 	// Early out-of-stock guard — full qty validation happens in cartStore.addItem()
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (
 		!item.has_variants &&
 		settingsStore.shouldEnforceStockValidation() &&
@@ -1162,6 +1240,7 @@ function selectItem(item, autoAdd = false) {
 	) {
 		const qty = item.actual_qty ?? item.stock_qty ?? 0
 		if (qty <= 0) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			showError(
 				__('"{0}" is out of stock in warehouse "{1}".', [
 					item.item_name,
@@ -1182,6 +1261,7 @@ function handleItemClick(itemCode) {
 		itemHandledByLongPress = false
 		return
 	}
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const item = filteredItems.value.find((i) => i.item_code === itemCode)
 	selectItem(item)
 }
@@ -1195,6 +1275,7 @@ function showWarehouseAvailability(item) {
 	warehouseDialogItem.value = {
 		itemCode: item.item_code,
 		itemName: item.item_name,
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		uom: item.uom || item.stock_uom || "Nos",
 		company: settingsStore.company,
 	}
@@ -1215,23 +1296,30 @@ watch(viewMode, async () => {
 	await nextTick()
 
 	// Clean up existing listeners
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	scrollCleanupFns.value.forEach((cleanup) => cleanup())
 	scrollCleanupFns.value = []
 
 	// Rebind listeners to the new active container
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (viewMode.value === "grid" && gridScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			gridScrollContainer.value,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			"scroll",
 			handleScroll,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	} else if (viewMode.value === "list" && listScrollContainer.value) {
 		const cleanup = addPassiveListener(
 			listScrollContainer.value,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			"scroll",
 			handleScroll,
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			{ passive: true },
 		)
 		scrollCleanupFns.value.push(cleanup)
@@ -1242,6 +1330,8 @@ watch(viewMode, async () => {
 function setViewMode(mode) {
 	viewMode.value = mode
 	userManuallySetView.value = true
+	//// Neoffice — [VM] persist the choice on every toggle; this is the write side of
+	//// the localStorage restore at the top of the setup block (e80f113f).
 	localStorage.setItem("pos_items_view_mode", mode)
 }
 
@@ -1332,15 +1422,18 @@ function handleSortToggle(field) {
 
 	// If clicking the same field, toggle between asc/desc
 	if (sortBy.value === field) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const newOrder = sortOrder.value === "asc" ? "desc" : "asc"
 		itemStore.setSortFilter(field, newOrder)
 	} else {
 		// New field - start with ascending
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		itemStore.setSortFilter(field, "asc")
 	}
 }
 
 watch(sortBy, async (newSortBy, oldSortBy) => {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (newSortBy === "brand") {
 		await itemStore.loadBrands()
 		if (selectedItemGroup.value) {
@@ -1349,12 +1442,14 @@ watch(sortBy, async (newSortBy, oldSortBy) => {
 		return
 	}
 
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (oldSortBy === "brand" && selectedBrand.value) {
 		await itemStore.setSelectedBrand(null)
 	}
 })
 
 function getSortLabel(sortByValue) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	return (
 		CONTEXT_SORT_OPTIONS[sortByValue]?.label ||
 		BASE_SORT_OPTIONS.find((opt) => opt.field === sortByValue)?.label ||
@@ -1363,6 +1458,7 @@ function getSortLabel(sortByValue) {
 }
 
 function getSortIconState(field) {
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	if (sortBy.value !== field) return "inactive"
 	return sortOrder.value === "asc" ? "ascending" : "descending"
 }
@@ -1370,6 +1466,7 @@ function getSortIconState(field) {
 // Close dropdown when clicking outside
 function handleClickOutside(event) {
 	if (showSortDropdown.value) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		const dropdown = event.target.closest(".relative")
 		if (
 			!dropdown ||

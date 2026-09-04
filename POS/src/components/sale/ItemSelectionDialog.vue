@@ -5,6 +5,15 @@
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 -->
 <template>
+	<!-- //// Neoffice — divergence map for this file. Each marker below carries a tag. -->
+	<!-- //// [F] format only: upstream is Prettier-shaped (semicolons, single quotes, -->
+	<!-- ////     long lines); the fork runs Biome (no semicolons, double quotes, 80 -->
+	<!-- ////     columns), so a whole-tree reflow landed with 458d81a9 (2026-03-20). A -->
+	<!-- ////     hunk tagged [F] carries no behaviour: at the next upstream merge take -->
+	<!-- ////     their line and re-run `yarn lint` rather than resolving by hand. -->
+	<!-- //// [UOM] the stock unit is pushed into the option list by this component, so -->
+	<!-- ////     it must not be taken from item_uoms as well (d29af088); see the marker -->
+	<!-- ////     in buildUomOptions() below. -->
 	<Dialog v-model="isOpen" :options="{ title: dialogTitle, size: 'md' }">
 		<template #body-content>
 			<div class="py-4">
@@ -240,6 +249,7 @@
 </template>
 
 <script setup>
+//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -300,11 +310,13 @@ const confirmButtonText = computed(() => {
 const stockWarning = computed(() => {
 	if (props.mode !== "uom" || !selectedOption.value) return null
 
+	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 	const availableStock =
 		selectedOption.value.stock_qty ?? selectedOption.value.actual_qty ?? null
 	if (availableStock === null) return null
 
 	if (quantity.value > availableStock) {
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		return __("Requested quantity ({0}) exceeds available stock ({1})", [
 			quantity.value,
 			Math.floor(availableStock),
@@ -391,6 +403,7 @@ function mapVariantsToOptions(variants) {
 		description: v.item_code,
 		attributes: v.attributes || {},
 		rate: v.rate || v.price_list_rate || 0,
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		priceLabel: __("per {0}", [v.stock_uom]),
 		stock: v.actual_qty ?? 0,
 		data: v,
@@ -403,6 +416,7 @@ function mapVariantsToOptions(variants) {
 async function loadVariantsFromCache() {
 	try {
 		const cachedVariants = await getCachedVariants(props.item?.item_code)
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		options.value =
 			cachedVariants?.length > 0 ? mapVariantsToOptions(cachedVariants) : []
 	} catch (error) {
@@ -430,6 +444,7 @@ const variantsResource = createResource({
 
 		// Cache variants for offline use
 		if (variants.length > 0) {
+			//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 			cacheItems(variants).catch((err) =>
 				console.error("Error caching variants:", err),
 			)
@@ -525,6 +540,7 @@ function buildUomOptions() {
 		label: props.item.stock_uom,
 		description: __("Stock unit"),
 		rate: getUomPrice(props.item.stock_uom, 1),
+		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 		priceLabel: __("per {0}", [props.item.stock_uom]),
 	})
 
@@ -533,18 +549,25 @@ function buildUomOptions() {
 	// backends still include it in item_uoms — guard against a duplicate button)
 	if (props.item.item_uoms && props.item.item_uoms.length > 0) {
 		props.item.item_uoms.forEach((uomData) => {
+			//// Neoffice — [UOM] upstream's get_item_detail returns the stock unit inside
+			//// item_uoms while get_items does not, so this dialog listed it twice and popped
+			//// up even for a single-UOM item. The backend was aligned on get_items and this
+			//// guard keeps the dialog right even against an older backend (d29af088,
+			//// 2026-07-09 "barcode error toast, UOM dialog dedup, any-order customer search").
 			if (uomData.uom === props.item.stock_uom) return
 			uomOptions.push({
 				type: "uom",
 				uom: uomData.uom,
 				conversion_factor: uomData.conversion_factor,
 				label: uomData.uom,
+				//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 				description: __("1 {0} = {1} {2}", [
 					uomData.uom,
 					uomData.conversion_factor,
 					props.item.stock_uom,
 				]),
 				rate: getUomPrice(uomData.uom, uomData.conversion_factor),
+				//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 				priceLabel: __("per {0}", [uomData.uom]),
 			})
 		})
