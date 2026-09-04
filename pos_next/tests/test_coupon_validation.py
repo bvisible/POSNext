@@ -2,6 +2,10 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
+#//// Neoffice — added file (no upstream equivalent). Covers get_active_coupons / validate_coupon
+#//// after the migration off upstream's POS Coupon: a zero-balance gift card must not be offered
+#//// and a depleted one must be refused — upstream's coupon had no balance to be depleted
+#//// (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon Code integration").
 """
 Test Suite for Coupon Validation (offers.py)
 

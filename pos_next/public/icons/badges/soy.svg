@@ -1,1 +1,6 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Allergen / diet badge drawn on the -->
+<!-- //// card editor and on the printed carte; referenced by Menu Badge.icon. Its PNG twin -->
+<!-- //// under badges/png exists because wkhtmltopdf does not render inline SVG in the menu -->
+<!-- //// PDF, so the PDF path embeds the PNG as a data URI instead (b6e757dd, 2026-03-26 "add -->
+<!-- //// menu PDF generator with badges"; PNG twins 4ca979a4 + 0e22ff8c, 2026-03-28). -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="8" cy="10" rx="4" ry="6"/><ellipse cx="16" cy="10" rx="4" ry="6"/><path d="M12 4v-2"/><path d="M8 16c0 2 1 4 4 4s4-2 4-4"/></svg>

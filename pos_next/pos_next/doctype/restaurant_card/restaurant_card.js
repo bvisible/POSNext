@@ -1,3 +1,10 @@
+//// Neoffice — added file (no upstream equivalent). Desk form script for the Restaurant Card we
+//// added: it blanks the price cell of Category rows in the items grid and resets price/item/menu
+//// when a row is switched to Category. Frappe's grid renders the stored value whatever the row
+//// type, so a category header kept showing a leftover price; the server-side validate() cleans the
+//// data but not what an already-open form displays (2739503f, 2026-03-22 "hide price display for
+//// Category rows via client script formatter"; the working selector is data-fieldname, not
+//// data-field — 02c411c0, same day).
 frappe.ui.form.on("Restaurant Card", {
 	refresh: function(frm) {
 		setTimeout(function() { hide_category_prices(frm); }, 200);

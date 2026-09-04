@@ -1,3 +1,7 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Describes the suite that guards the -->
+<!-- //// migration off upstream's own POS Coupon doctype onto ERPNext's native Coupon Code, so -->
+<!-- //// the POS and the ERP agree on one discount table (771595d2, 2026-01-14 "add -->
+<!-- //// comprehensive test suite for ERPNext Coupon Code integration"). -->
 # POS Next Test Suite - ERPNext Coupon Code Integration
 
 This directory contains the test suite for the gift card and coupon refactoring that migrates from `POS Coupon` to native `ERPNext Coupon Code`.

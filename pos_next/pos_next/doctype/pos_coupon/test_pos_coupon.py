@@ -2,6 +2,12 @@
 # See license.txt
 
 import unittest
+#//// Neoffice — MagicMock imported and passed as new_callable on both @patch("...frappe.db")
+#//// decorators below. Upstream patches frappe.db bare; frappe.db is a werkzeug LocalProxy that
+#//// inspect.isawaitable() reports as awaitable, so mock.patch builds an AsyncMock and every
+#//// frappe.db.x() in the code under test returns a coroutine ("object of type 'coroutine' has no
+#//// len()"). new_callable=MagicMock keeps the double synchronous (dc55c203, 2026-09-03 "patch
+#//// frappe.db with a MagicMock, not the AsyncMock mock.patch picks by itself").
 from unittest.mock import Mock, patch, MagicMock
 
 from pos_next.pos_next.doctype.pos_coupon.pos_coupon import (

@@ -2,6 +2,10 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
+#//// Neoffice — added file (no upstream equivalent). Runs the whole coupon / gift-card suite in one
+#//// `bench execute`: these tests need a live site (real Pricing Rules, real Coupon Codes) and
+#//// cannot run under plain pytest (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext
+#//// Coupon Code integration").
 """
 Test Runner for POS Next - ERPNext Coupon Code Integration
 

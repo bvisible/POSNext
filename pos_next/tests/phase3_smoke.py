@@ -1,3 +1,9 @@
+#//// Neoffice — added file (no upstream equivalent). Acceptance smoke test for Phase 3 of the move
+#//// to the unified Payments app: asserts `payments` is installed, builds a Mock provider +
+#//// terminal channel, resolves a POS Payment Driver Mapping and runs pos_start_payment /
+#//// pos_cancel_payment end to end. It runs through `bench execute` on a real site on purpose — the
+#//// path it guards is a live PSP wiring no unit test can reach (9ff7305f, 2026-05-13
+#//// "feat(pos_next): Phase 3 — wire POSNext into unified Payments app").
 # Copyright (c) 2026, Neoffice and Contributors
 # License: AGPL-3.0
 """Phase 3 acceptance smoke test for POSNext.

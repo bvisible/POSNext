@@ -1,3 +1,10 @@
+#//// Neoffice — added file (no upstream equivalent). Table booking: a reservation may span several
+#//// tables, walks a 5-state workflow (Pending → Confirmed → Seated → Completed / Cancelled / No
+#//// Show), is checked against the configured opening hours, and takes its overlap check under a
+#//// row lock before insert — two clerks booking the same table at the same minute is the normal
+#//// case, not the rare one (ebc3ecc5, 2026-03-29 "restaurant reservation system with POS dialog,
+#//// online booking, and email notifications"; duration parsing hardened for int / float / HH:MM:SS
+#//// by ac07efed, same day). Upstream POSNext has no table service, so nothing to book.
 import frappe
 from frappe import _
 from frappe.model.document import Document

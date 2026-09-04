@@ -1,3 +1,11 @@
+#//// Neoffice — added file (no upstream equivalent). The till journal a Swiss cashier is actually
+#//// asked for: POS sales, invoices collected at the counter (Payment Entries) and cash in/out
+#//// (Journal Entries) in ONE register, grouped by profile / cashier / payment method / customer /
+#//// transaction type with subtotals. ERPNext's legacy POS Register only knows POS sales, so a
+#//// shift that collected an open invoice or moved cash out of the drawer never balanced (0a45914d,
+#//// 2026-04-12 "add Neopos Register report"; collections, cash in/out and the Transaction Type
+#//// filter: b7fc0516, same day). "Neopos" is the product name after the BrainWise rebrand
+#//// (458d81a9).
 # Copyright (c) 2026, BrainWise and contributors
 # For license information, please see license.txt
 

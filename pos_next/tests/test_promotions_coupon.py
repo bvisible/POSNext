@@ -2,6 +2,10 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
+#//// Neoffice — added file (no upstream equivalent). Covers the coupon CRUD of api/promotions.py
+#//// once it writes ERPNext Coupon Code records instead of upstream's POS Coupon, plus
+#//// get_referral_details (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon
+#//// Code integration").
 """
 Test Suite for Promotions API Coupon Functions
 

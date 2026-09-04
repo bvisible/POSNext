@@ -1,3 +1,7 @@
+//// Neoffice — added file (no upstream equivalent). Filter bar of the Neopos Register report we
+//// added: date range, company, POS Profile, cashier, customer, payment method, transaction type
+//// and group-by. The report itself is ours (0a45914d, 2026-04-12 "add Neopos Register report";
+//// Transaction Type filter b7fc0516, same day).
 // Copyright (c) 2026, BrainWise and contributors
 // For license information, please see license.txt
 

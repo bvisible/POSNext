@@ -95,6 +95,11 @@ class POSClosingShift(Document):
                 opening_entry.save()
         # remove links from invoices so they can be cancelled
         self._clear_closing_entry_invoices()
+        #//// Neoffice — mirror of the withdrawal Journal Entry posted on submit (see
+        #//// _create_withdrawal_journal_entry below). Cancelling a closing shift has to unwind the
+        #//// cash move too, otherwise the drawer stays short in the ledger while the shift itself
+        #//// is void (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested opening
+        #//// balance").
         # Cancel withdrawal journal entry if one was created
         self._cancel_withdrawal_journal_entry()
 
@@ -172,6 +177,13 @@ class POSClosingShift(Document):
             )
         )
 
+    #//// Neoffice — added block. Upstream closes a shift and leaves the money in the drawer. A
+    #//// Swiss till is emptied at closing: the cashier declares what is withdrawn and what float
+    #//// stays, and the cash must leave the cash account for a transit account the same night. We
+    #//// post it as a Journal Entry built from the Journal Entry Template configured in POS
+    #//// Settings (erpnextswiss structure), and _cancel_withdrawal_journal_entry unwinds it when
+    #//// the shift is cancelled (5783eb27, 2026-03-28 "cash withdrawal at shift closing with
+    #//// suggested opening balance").
     def _create_withdrawal_journal_entry(self):
         """Create a Journal Entry for cash withdrawal at shift closing."""
         withdrawal = flt(self.cash_withdrawal_amount)
@@ -488,6 +500,12 @@ def get_payments_entries(pos_opening_shift):
     )
 
 
+#//// Neoffice — upstream returns `cash_mode or "Cash"`. "Cash" is an English Mode of Payment name
+#//// that does not exist on a French / Swiss instance (it is "Espèces"), so a POS Profile that
+#//// never set posa_cash_mode_of_payment made the closing report aggregate change and cash returns
+#//// into a "Cash" bucket no payment method matched. We fall back to the first Cash-type Mode of
+#//// Payment declared on the profile instead (f5bffe4f, 2026-03-25 — the subject, "auto-select
+#//// default customer group from POS profile", only names the other half of that commit).
 def _get_cash_mode_of_payment(pos_profile):
     """Get the cash mode of payment for a POS profile.
 
@@ -536,6 +554,11 @@ def _aggregate_tax(taxes, account_head, rate, amount):
     }))
 
 
+#//// Neoffice — `sales_by_mode` argument added; upstream only aggregates into the reconciliation
+#//// buckets. The Swiss closing sheet has to show what was SOLD per payment method next to what is
+#//// expected in the drawer, and the reconciliation totals cannot answer that: they also carry the
+#//// opening float and the invoices collected at the counter. The two accumulation sites below (the
+#//// payment rows, then the change_amount subtraction) are the same change (f5bffe4f, 2026-03-25).
 def _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode=None):
     """Process a single invoice and update aggregates."""
     conversion_rate = invoice.get("conversion_rate")
@@ -647,6 +670,9 @@ def make_closing_shift_from_opening(opening_shift):
     payments = []
     taxes = []
     pos_transactions = []
+    #//// Neoffice — same change as _process_invoice above: this dict, the extra argument at the
+    #//// call below and the sales_by_payment list built further down are what feeds the
+    #//// sales-per-payment- method block of the closing report (f5bffe4f, 2026-03-25).
     sales_by_mode = {}
 
     # Summary for tracking totals
@@ -747,6 +773,12 @@ def make_closing_shift_from_opening(opening_shift):
         "closing_withdrawal_template",
     ) or ""
 
+    #//// Neoffice — keys added to the closing payload that upstream does not return:
+    #//// external_payments (invoices collected at the counter, 34ee11a8), sales_by_payment (sales
+    #//// per mode, f5bffe4f), cash_entries / cash_in_total / cash_out_total (drawer movements
+    #//// posted as Journal Entries, 6c598630) and closing_withdrawal_template (5783eb27). Without
+    #//// them the Swiss closing sheet cannot be reconciled — money enters and leaves the till
+    #//// outside sales (2026-03-25 → 03-28).
     result.update({
         "returns_total": summary["returns_total"],
         "returns_count": summary["returns_count"],

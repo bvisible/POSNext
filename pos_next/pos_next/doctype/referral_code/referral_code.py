@@ -125,6 +125,11 @@ def apply_referral_code(referral_code, referee_customer):
         "referee_coupon": None
     }
 
+    #//// Neoffice — the customer is read off the Referral Code and not off the coupon just created:
+    #//// `customer` is a Custom Field WE add to ERPNext's Coupon Code, so it is not on the record
+    #//// upstream's code built. The two frappe.log_error calls below also moved to the positional
+    #//// (title, message) form, which is the house rule for this app (771595d2 + 56c00619,
+    #//// 2026-01-14).
     # Generate coupon for referrer (primary customer)
     try:
         referrer_coupon = generate_referrer_coupon(referral)
@@ -162,6 +167,20 @@ def apply_referral_code(referral_code, referee_customer):
     return result
 
 
+#//// Neoffice — both coupon generators rewritten end to end ▼▼▼
+#//// Upstream mints its own `POS Coupon`, a doctype the ERP knows nothing about: a coupon granted
+#//// at the till was invisible to Selling, to Pricing Rules and to every report. Neoffice issues an
+#//// ERPNext-native Coupon Code backed by a real Pricing Rule instead, so the POS and the ERP share
+#//// one discount table (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon Code
+#//// integration").
+#//// coupon_type is Promotional, never Gift Card: ERPNext makes `customer` mandatory on a Gift
+#//// Card, and a referral reward is identified by our own pos_next_gift_card flag (a49beaf9,
+#//// 2026-01-14 "use Promotional coupon type instead of Gift Card").
+#//// Names carry frappe.generate_hash()[:8] rather than a %Y%m%d%H%M%S stamp — two referrals
+#//// applied within the same second collided on the coupon name (56c00619, 2026-01-14 "add customer
+#//// field and use unique hash for coupon names").
+#//// insert(ignore_permissions=True): the caller is the referee, a portal customer with no write
+#//// right on Pricing Rule or Coupon Code (771595d2).
 def generate_referrer_coupon(referral):
     """Generate a coupon for the referrer using ERPNext Coupon Code + Pricing Rule"""
     # Calculate validity dates
@@ -295,3 +314,4 @@ def generate_referee_coupon(referral, referee_customer):
     coupon.insert(ignore_permissions=True)
 
     return coupon
+#//// Neoffice — end of the rewritten coupon generators ▲▲▲

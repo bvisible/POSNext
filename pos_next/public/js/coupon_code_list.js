@@ -1,3 +1,9 @@
+//// Neoffice — added file (no upstream equivalent). Desk list customisation for ERPNext's Coupon
+//// Code: a "Create Gift Card" button and indicator colours for active / depleted cards. It exists
+//// because the fork dropped upstream's own POS Coupon doctype for ERPNext's native Coupon Code,
+//// and the native list offers no way to mint a gift card — staff would have had to hand-build a
+//// Pricing Rule (b14d3066, 2026-01-13 "feat(erpnext): add Create Gift Card button to Coupon Code
+//// list").
 // -*- coding: utf-8 -*-
 // Copyright (c) 2025, POS Next and contributors
 // For license information, please see license.txt

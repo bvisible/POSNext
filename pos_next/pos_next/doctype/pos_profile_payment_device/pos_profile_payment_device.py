@@ -1,3 +1,9 @@
+#//// Neoffice — added file (no upstream equivalent). A Swiss checkout runs several card readers and
+#//// TWINT side by side; upstream has no notion of a terminal at all. This child table declares
+#//// which (Mode of Payment, Payment Device) pairs are live on a POS Profile, so the cashier picks
+#//// the reader when charging instead of the mapping forcing its default one (958a2264, 2026-05-15
+#//// "defer terminal payment start until cashier picks amount + device"; the Mode of Payment
+#//// binding and the optional device — TWINT QR has no terminal — 2b6b45de, 2026-05-16).
 # Copyright (c) 2026, Neoffice and contributors
 # License: AGPL-3.0
 

@@ -99,6 +99,12 @@ def check_coupon_code(coupon_code, customer=None, company=None):
         res["msg"] = _("Sorry, this coupon code has been fully redeemed")
         return res
 
+    #//// Neoffice — added check. Upstream's POS Coupon is all-or-nothing: a Gift Card is spent once
+    #//// (one_use / maximum_use) and carries no balance, so a CHF 100 card used on a CHF 30 bill
+    #//// was burnt. We added gift_card_amount / residual tracking so a card can be split across
+    #//// bills — which means validation must also refuse a card whose remaining balance has reached
+    #//// zero, since the usage counter no longer says it (d2a64f30, 2026-01-12 "feat(gift-cards):
+    #//// implement phases 1-3 for ERPNext Coupon Code sync").
     # Check gift card balance (for gift cards with splitting enabled)
     if coupon.coupon_type == "Gift Card" and hasattr(coupon, 'gift_card_amount'):
         if coupon.gift_card_amount is not None and flt(coupon.gift_card_amount) <= 0:

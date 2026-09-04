@@ -2,6 +2,11 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
+#//// Neoffice — added file (no upstream equivalent). Guards the move to ERPNext's native
+#//// `coupon_code` field on Sales Invoice: validation on save, usage counter up on submit and back
+#//// down on cancel. Upstream tracked usage by patching the row after save, which left the counter
+#//// wrong whenever the invoice was cancelled (9bc096de, 2026-02-05 "feat(coupons): use native
+#//// ERPNext coupon_code field on Sales Invoice").
 """
 Test Suite for Coupon Code Integration with Sales Invoice
 

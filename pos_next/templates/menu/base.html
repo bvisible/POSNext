@@ -1,3 +1,10 @@
+{# //// Neoffice — added file (no upstream equivalent). Base of the printable carte: the price / #}
+{# //// badge / spice macros, the page geometry and the blocks the five themes override. Upstream #}
+{# //// POSNext prints receipts, never a menu. The CSS here is deliberately plain — no @import of #}
+{# //// Google Fonts and no flexbox — because wkhtmltopdf times out fetching the webfont and lays #}
+{# //// flex out wrong; badge icons are base64 PNG data URIs for the same reason (it does not #}
+{# //// render inline SVG) (b6e757dd, 2026-03-26 "add menu PDF generator with badges"; 1cffc9ca + #}
+{# //// 0a3c0b74 + 4ca979a4 + 72f2d0d4 + 57164782, 2026-03-26 → 03-28). #}
 {# Base template for PDF menu generation via WeasyPrint #}
 {# All theme templates extend this base and override blocks #}
 
