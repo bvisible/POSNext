@@ -237,8 +237,12 @@ export function buildReceiptHTML(invoiceData) {
 				</div>` : ""}
 
 				<div class="footer">
+					<!-- //// Neoffice — a "Powered by BrainWise" line linking to nexus.brainwise.me stood
+					//// below, printed whenever the POS Profile carried no footer of its own: an advert
+					//// for the upstream vendor, with a live link, on the copy handed to the CUSTOMER,
+					//// under the shop's own name. Removed — a receipt carries the shop's footer or the
+					//// plain thank-you line, nothing else (#217). -->
 					<div style="margin-bottom: 5px;">${invoiceData.footer || __("Thank you for your business!")}</div>
-					${invoiceData.footer ? "" : `<div style="font-size: 10px;">Powered by <a href="https://nexus.brainwise.me" target="_blank" style="color: #d68a59; text-decoration: none; font-weight: 600;">BrainWise</a></div>`}
 				</div>
 			</div>`
 }
