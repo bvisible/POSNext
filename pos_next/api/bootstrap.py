@@ -156,6 +156,11 @@ def _get_precision_settings():
 	}
 
 
+#//// Neoffice — Swiss cash rounds to CHF 0.05. That step lives in Currency's
+#//// smallest_currency_fraction_value, which upstream's bootstrap never exposed, so the POS
+#//// could only round to 2 decimals and the grand total / cash quick amounts were off by a
+#//// rappen at the till (4fdb5df4, 2026-04-04 "fix: rounding total, tips visibility, cash
+#//// quick amounts").
 def _get_smallest_currency_fraction(currency):
 	"""Get the smallest currency fraction value (e.g. 0.05 for CHF)."""
 	if not currency:

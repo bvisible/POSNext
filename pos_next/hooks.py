@@ -76,6 +76,9 @@ _asset_version = get_build_version()
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+#//// Neoffice — gift cards are ERPNext Coupon Code documents here, so the "Create Gift Card"
+#//// entry point belongs on that list view in the desk; upstream shipped no desk surface for
+#//// its own POS Coupon (b14d3066 2026-01-13, restored by f0c960ff 2026-03-21).
 doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -113,6 +116,14 @@ doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 
 # Fixtures
 # --------
+#//// Neoffice — the fixture list is built at import time instead of being a literal: ERPNext
+#//// v16 ships a native `coupon_code` field on Sales Invoice and our Custom Field of the same
+#//// name would collide on install, so it is added only on v15. Drop the branch once the whole
+#//// fleet is on v16. The rest of the list is the fork's own fields — gift-card tracking on
+#//// Coupon Code, restaurant table / KDS status / preparation station / modifiers on Sales
+#//// Invoice (Item), cash entry templates on POS Profile (f0c960ff 2026-03-21; efe964ae and
+#//// 5846bd04 2026-02-18 for the v16 detection; d2a64f30 2026-01-12, 4df0caf1 and 831857f2
+#//// 2026-03-21, 82b2493a 2026-03-28).
 # Build custom field list dynamically: skip coupon_code on Sales Invoice
 # if ERPNext already has it natively (v16+)
 _custom_field_names = [
@@ -239,6 +250,9 @@ doc_events = {
 			"pos_next.api.wallet.create_wallet_on_customer_insert"
 		],
 		"on_update": "pos_next.realtime_events.emit_customer_event",
+		#//// Neoffice — on_trash became a list so the unused-wallet cleanup runs before Frappe's
+		#//// link-integrity check, which otherwise lets an auto-created wallet block every customer
+		#//// deletion (c42d1cfc, 2026-06-29).
 		"on_trash": [
 			"pos_next.api.wallet.delete_unused_wallet_on_customer_trash",
 			"pos_next.realtime_events.emit_customer_event"
@@ -247,10 +261,17 @@ doc_events = {
 	"Sales Invoice": {
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",
+			#//// Neoffice — coupon validation hangs off the invoice's native ERPNext `coupon_code` link
+			#//// now; upstream validated its own POS Coupon doctype, which no longer exists here
+			#//// (9bc096de 2026-02-05, restored by f0c960ff 2026-03-21).
 			"pos_next.api.sales_invoice_hooks.validate_coupon_on_invoice",
 			"pos_next.api.wallet.validate_wallet_payment"
 		],
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",
+		#//// Neoffice — restaurant mode: the floor plan follows the document, not the browser, so a
+		#//// table flips to Occupied / Cleaning from the invoice's own lifecycle — otherwise a till
+		#//// that crashed or went offline left tables stuck (458d81a9 2026-03-20, restored by
+		#//// f0c960ff 2026-03-21).
 		"on_update": "pos_next.api.restaurant.on_invoice_update",
 		"on_submit": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
@@ -264,11 +285,18 @@ doc_events = {
 		"on_cancel": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_cancel",
 			"pos_next.realtime_events.emit_stock_update_event",
+			#//// Neoffice — on_cancel became a list: upstream published one stock event. A cancelled sale
+			#//// must also give the gift-card balance back, bring the coupon usage counter down and
+			#//// release the table (5091779d / 9bc096de for the coupon side, 458d81a9 for the restaurant
+			#//// side, restored by f0c960ff 2026-03-21).
 			"pos_next.api.gift_cards.process_gift_card_on_cancel",
 			"pos_next.api.restaurant.on_invoice_update"
 		],
 		"after_insert": "pos_next.realtime_events.emit_invoice_created_event"
 	},
+	#//// Neoffice — POS Invoice gets the same gift-card hooks as Sales Invoice: an instance running
+	#//// ERPNext's POS Invoice flow would otherwise sell a gift card without ever creating it, or
+	#//// cancel one without giving the balance back (f0c960ff, 2026-03-21).
 	"POS Invoice": {
 		"on_submit": [
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
@@ -298,6 +326,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
+#//// Neoffice — upstream scheduled three `pos_next.tasks.branding_monitor` jobs here (hourly
+#//// integrity check, daily session validation, monthly tamper-counter reset) policing its own
+#//// `BrainWise Branding` doctype. That doctype, `pos_next/api/branding.py` and
+#//// `pos_next/tasks/branding_monitor.py` were all removed by 458d81a9 (2026-03-20): a POS we
+#//// sell under our own name does not police its supplier's logo. A deletion leaves nothing to
+#//// mark inside those files, so it is recorded here, where the hooks were unregistered.
 scheduler_events = {
 	"hourly": [
 		# //// restaurant reservation system with POS dialog, online booking, and em… — ebc3ecc

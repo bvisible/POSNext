@@ -579,6 +579,11 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 		if balance <= 0:
 			continue
 
+		#//// Neoffice — ERPNext's Coupon Code carries no customer_name (upstream's POS Coupon did), so
+		#//// it is looked up and the row reshaped into the payload the POS cart expects — including
+		#//// the balance, which lives in the pos_next_gift_card custom fields the fork adds
+		#//// (ce505902 2026-01-12 and e34a269a 2026-01-13 "use ERPNext Coupon Code instead of POS
+		#//// Coupon").
 		# Get customer name if customer is set
 		customer_name = None
 		if card.customer:
@@ -605,6 +610,14 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	return valid_cards
 
 
+#//// Neoffice — ▼▼▼ validate_coupon rewritten against ERPNext's native Coupon Code. Upstream
+#//// read its own `POS Coupon` doctype, which the ERP knows nothing about: a coupon sold or
+#//// consumed at the till was invisible from the desk and its usage counter was ours to keep
+#//// in step. We query Coupon Code joined to its Pricing Rule (case-insensitive code, company
+#//// scoped), branch on the pos_next_gift_card flag for balance and splitting, and map the
+#//// Pricing Rule's rate_or_discount onto the Percentage / Amount vocabulary the cart speaks
+#//// (e34a269a 2026-01-13; ce505902 2026-01-12; a49beaf9, 44f1c2a1, c25da858 2026-01-14).
+#//// One marker for the whole function; every hunk in it shares this cause.
 @frappe.whitelist()
 def validate_coupon(coupon_code: str, customer: str = None, company: str = None) -> Dict:
 	"""
@@ -742,3 +755,4 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 				"discount_amount": discount_amount,
 			}
 		}
+#//// Neoffice — ▲▲▲ end of the ERPNext-Coupon-Code validate_coupon rewrite.

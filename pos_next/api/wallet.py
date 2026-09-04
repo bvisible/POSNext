@@ -311,6 +311,12 @@ def create_wallet_on_customer_insert(doc, method=None):
 		frappe.log_error(frappe.get_traceback(), f"Wallet auto-create failed for {doc.name}")
 
 
+#//// Neoffice — a wallet is auto-created for every customer and its reqd + unique link back to
+#//// the customer makes Frappe's link-integrity check refuse the deletion, so a customer
+#//// created by mistake could never be removed. Delete the wallet from Customer.on_trash
+#//// (which runs before that check) only when it was never used; a wallet with real activity
+#//// still blocks, with upstream's message (c42d1cfc, 2026-06-29 "feat(wallet): allow customer
+#//// deletion when wallet is unused").
 def delete_unused_wallet_on_customer_trash(doc, method=None):
 	"""Hook: on_trash on Customer.
 
@@ -491,6 +497,10 @@ def get_wallet_info(customer, company, pos_profile=None):
 	if not result["wallet_enabled"]:
 		return result
 
+	#//// Neoffice — the payment dialog shows the customer's loyalty balance next to their name so
+	#//// the cashier can offer to redeem it without leaving the till; upstream returned no points
+	#//// at all here. Summed from unexpired Loyalty Point Entries (c057c534, 2026-03-19;
+	#//// the redemption itself landed in 104959e6 the same day).
 	# Get customer's active loyalty points
 	if customer and result.get("loyalty_program"):
 		loyalty_points = frappe.db.sql("""

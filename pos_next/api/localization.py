@@ -90,6 +90,16 @@ def get_supported_locales():
 
 
 # //// configurable language settings and Brazilian Portuguese support — 148cec7
+#//// Neoffice — upstream fell back to a hardcoded {'ar', 'en'} whitelist whenever POS Settings
+#//// listed no allowed_locales, so a fresh site could not offer French at all. An empty table
+#//// now means "no restriction" and returns an empty set; get_supported_locales() above
+#//// derives the real list from the locale/*.po files the app ships (the fork moved its
+#//// translations from CSV to PO) (c081f418, 2026-01-12 "feat(i18n): show all languages when
+#//// allowed_locales is empty"). The docstring and the three `return set()` below are the
+#//// same change.
+#//// TO REVIEW: the comprehension reads `row.locale`, but the child doctype POS Allowed Locale
+#//// only defines a `language` field — the AttributeError is swallowed by the except clause
+#//// below, so a whitelist that IS configured is silently ignored.
 def get_allowed_locales_from_settings():
 	"""
 	Get allowed locales from POS Settings.
@@ -150,6 +160,9 @@ def change_user_language(locale):
 	# Normalize locale to lowercase
 	locale = locale.lower()
 
+	#//// Neoffice — an empty allowed_locales now means "all languages", so change_user_language
+	#//// must validate against the locales actually shipped as .po files instead of refusing
+	#//// everything (c081f418, 2026-01-12).
 	# Get dynamically supported locales from translation files
 	all_supported_locales = get_supported_locales()
 

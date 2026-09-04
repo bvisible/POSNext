@@ -49,6 +49,11 @@ def get_certificate():
 	"""Return the public certificate PEM text for QZ Tray signing.
 	Returns None if no certificate exists (silent print not configured)."""
 	path = _cert_path()
+	#//// Neoffice — upstream threw when no QZ Tray certificate was installed. Silent printing is
+	#//// optional, so every POS load on a till without QZ raised a server error and an error
+	#//// dialog on an otherwise healthy till; return None and let the frontend simply not offer
+	#//// silent print (34f4167c, 2026-03-19). get_certificate_download() below still throws —
+	#//// there the operator explicitly asked for the file.
 	if not os.path.exists(path):
 		return None
 

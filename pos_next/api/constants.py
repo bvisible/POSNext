@@ -84,6 +84,11 @@ DEFAULT_POS_SETTINGS = {
 	"allow_sales_order": 0,
 	"allow_select_sales_order": 0,
 	"create_only_sales_order": 0,
+	#//// Neoffice — DEFAULT_POS_SETTINGS has to mirror POS_SETTINGS_FIELDS above key for key, or
+	#//// the POS bootstraps without the key and the frontend reads undefined. These are the
+	#//// wallet / loyalty and customer-display keys the fork added
+	#//// (f91dcc94, 2026-03-19 "fix: add missing wallet/loyalty fields to POS_SETTINGS_FIELDS
+	#//// bootstrap"; merge 1ec3eadf).
 	# Wallet & Loyalty
 	"enable_loyalty_program": 0,
 	"default_loyalty_program": "",
@@ -97,6 +102,10 @@ DEFAULT_POS_SETTINGS = {
 	"enable_session_lock": 0,
 	"session_lock_timeout": 5,
 	"show_variants_as_items": 0,
+	#//// Neoffice — same mirror, for two things upstream does not have: restaurant mode (table
+	#//// service) and the Journal Entry Template used for the cash withdrawal at shift closing
+	#//// (458d81a9 2026-03-20 "remove BrainWise branding, add restaurant mode";
+	#//// 5783eb27 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 	# Restaurant Settings
 	"enable_restaurant_mode": 0,
 	"default_restaurant_area": "",

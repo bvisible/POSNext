@@ -26,6 +26,14 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 			f"get_customers called with search_term={search_term}, pos_profile={pos_profile}, limit={limit}, modified_since={modified_since}"
 		)
 
+		#//// Neoffice — ▼▼▼ get_customers search rewritten. Upstream built a single `or_filters`
+		#//// list (it sat right here, beside `filters`) and handed it to frappe.get_all, which ORs the
+		#//// whole group: a two-word query could not require BOTH words, so "Moret Daniel" never found
+		#//// the customer stored as "Daniel Moret". or_filters is gone; the condition is built with the
+		#//// query builder — AND across words, OR across fields — and the SELECT carries the extra
+		#//// columns (group / territory / type / primary_address) the cached customer objects need for
+		#//// the address snippet and the hover popover, so the POS never re-fetches per customer
+		#//// (d29af088 and 53d0107c, 2026-07-09).
 		filters = {}
 
 		# Filter by POS Profile customer group if specified
@@ -107,6 +115,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 				limit=customer_limit,
 				order_by="customer_name asc",
 			)
+		#//// Neoffice — ▲▲▲ end of the get_customers search rewrite.
 		frappe.logger().debug(f"get_customers returned {len(result)} customers")
 		return result
 	except Exception as e:
@@ -115,6 +124,15 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 		frappe.throw(_("Error fetching customers: {0}").format(str(e)))
 
 
+#//// Neoffice — ▼▼▼ create_customer made survivable on a localized site. Upstream hardcoded
+#//// customer_type="Individual", customer_group=... or "Individual" and territory=... or
+#//// "All Territories" — English document names that do not exist on a French site, so
+#//// creating a customer from the POS failed outright. We take a customer_type argument (the
+#//// POS dialog offers Individual/Company), resolve group and territory against Selling
+#//// Settings with a real fallback and an explicit throw when the site has none, and resolve
+#//// default_currency from POS Profile → Company → global default because Customer treats it
+#//// as mandatory on some sites (3affd2e0, 2026-05-28 "step A: re-apply backend customers.py
+#//// only (bug A + C + D fix)"). The customer_type line in the docstring is part of this.
 @frappe.whitelist()
 def create_customer(
 	customer_name,
@@ -206,6 +224,7 @@ def create_customer(
 		}
 	)
 
+	#//// Neoffice — ▲▲▲ end of the create_customer localization fallbacks.
 	frappe.flags.pos_next_customer_company = company
 	frappe.flags.pos_next_customer_pos_profile = pos_profile
 	try:

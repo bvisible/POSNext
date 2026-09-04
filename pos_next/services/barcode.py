@@ -1,3 +1,16 @@
+#//// Neoffice — ▼▼▼ NO Neoffice divergence in this file. Verified 2026-09-04: its content is
+#//// byte-for-byte identical to BrainWise-DEV/POSNext `version-15` (upstream b758b5c6,
+#//// 2026-06-14 "Fix lineter errors"). Every hunk a diff against the merge-base 97a4e833
+#//// shows here is upstream's own evolution, not ours: 682184b0 (2026-07-09, "feat(pos):
+#//// align weighted-barcode resolver with upstream + dialog nextTick") deliberately took the
+#//// upstream resolver wholesale — _coerce_value for the old (integer_value/decimal_value)
+#//// and new (direct qty/price) result shapes of the barcode_resolver app, plus the loggers —
+#//// because our copy had not moved since the merge-base. The module stays inert until the
+#//// optional barcode_resolver app is installed.
+#//// AT THE NEXT UPSTREAM MERGE: take upstream's version of this file wholesale (`git
+#//// checkout upstream/<branch> -- pos_next/services/barcode.py`). Do NOT resolve it hunk by
+#//// hunk — there is nothing of ours to preserve, and the apparent conflicts are only
+#//// re-formatting noise. This block is the only Neoffice content in the file. ▲▲▲
 """
 Barcode resolver service for POS Next.
 

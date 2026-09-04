@@ -929,6 +929,11 @@ def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shif
             payment_account = payment.get("account")
             reference_no = payment.get("reference_no")
 
+            #//// Neoffice — a Payment Entry created after the sale (partial payment) carried no link to
+            #//// the open shift, so the money was missing from the closing summary and the drawer never
+            #//// balanced. Stamp the POS Opening Shift as reference_no when the caller supplies one and
+            #//// the payment has none (a0084ae0, 2026-03-24). The `pos_opening_shift` line added to the
+            #//// docstring above is part of this change.
             # If POS Opening Shift is provided, use it as reference_no
             # so the payment appears in the shift closing summary
             if pos_opening_shift and not reference_no:

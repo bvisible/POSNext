@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+#//// Neoffice — added file (no upstream equivalent). Gift cards built on ERPNext's native
+#//// Coupon Code + Pricing Rule instead of upstream's own `POS Coupon` doctype, so the till
+#//// and the ERP describe one object: a card sold at the POS is visible, reportable and usable
+#//// from the desk. Covers creation from the selling invoice, balance tracking, splitting when
+#//// the card is worth more than the sale, usage counting, and balance restoration on a return
+#//// / credit note (ce505902 2026-01-12, then 6bd16a1b 2026-01-13 "remove POS Coupon
+#//// dependency, use ERPNext Coupon Code directly", then 5ce2d88d, a49beaf9, 3be1f124,
+#//// 56c00619, 7520d103, 56877dce, afef70fe, 7a6fc6d3, 3ad004aa, da050055).
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 

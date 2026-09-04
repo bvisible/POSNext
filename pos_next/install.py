@@ -24,6 +24,11 @@ def after_install():
 	try:
 		log_message("POS Next: Running post-install setup", level="info")
 
+		#//// Neoffice — the Sales Invoice `coupon_code` Custom Field is created here instead of being
+		#//// shipped in the fixture JSON: ERPNext v16 has the field natively and a fixture of the same
+		#//// name collides on install. Drop this call once the fleet is on v16
+		#//// (3571c411, 2026-02-18 "fix(fixtures): remove coupon_code from JSON, create
+		#//// programmatically for v15").
 		# Ensure coupon_code custom field exists on v15 (native on v16+)
 		ensure_coupon_code_field()
 
@@ -200,6 +205,11 @@ def setup_default_print_format(quiet=False):
 	"""
 	try:
 		# Check if the print format exists
+		#//// Neoffice — the receipt print format is "Neopos Receipt": the fork is sold as Neopos, not
+		#//// POS Next, and a Print Format's name IS its ID, so the string had to change here, in the
+		#//// log message and in the value written onto every POS Profile below. Installs that already
+		#//// carry the old document are renamed by patches/v2_0_0/rebrand_to_neopos.py
+		#//// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 		if not frappe.db.exists("Print Format", "Neopos Receipt"):
 			if not quiet:
 				log_message("Neopos Receipt print format not found, skipping default setup", level="warning")

@@ -1,3 +1,10 @@
+#//// Neoffice — added file (no upstream equivalent). Upstream POSNext has no cash in / cash
+#//// out: a till float taken out or a change fund put in had to be booked by hand in the ERP,
+#//// so the shift closing never matched the drawer. Movements are posted as submitted Journal
+#//// Entries built from Journal Entry Templates, following the erpnextswiss template
+#//// structure (totalization / counterparty accounts) and restricted to the templates the
+#//// POS Profile allows (6c598630 2026-03-28 "feat: cash in/out from POS using Journal Entry
+#//// Templates"; 9cb47184, ee6587a0, 2e2ef1a0, 82b2493a the same day).
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 

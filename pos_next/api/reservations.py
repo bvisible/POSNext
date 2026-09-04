@@ -1,3 +1,11 @@
+#//// Neoffice — added file (no upstream equivalent). Table reservations: a retail POS has no
+#//// booking notion at all. Covers the POS dialog and the public /pos/reservation form, the
+#//// Pending → Confirmed → Seated → Completed / Cancelled / No Show workflow, overlap detection
+#//// by duration, frappe.lock_doc so two clerks cannot book the same table, rate limiting per
+#//// e-mail for web bookings, the double opt-in / confirmation / reminder / cancellation mails
+#//// and the hourly reminder + auto-no-show jobs (ebc3ecc5, 2026-03-29 "feat: restaurant
+#//// reservation system with POS dialog, online booking, and email notifications"; 26659089
+#//// and 0e3f3fcd the same day — MySQL rejects a Duration default and stores it as seconds).
 import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date

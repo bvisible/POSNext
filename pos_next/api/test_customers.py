@@ -17,6 +17,10 @@ from pos_next.api.customers import (
 
 
 class TestCustomersAPI(unittest.TestCase):
+    #//// Neoffice — every @patch of frappe.db in this file carries new_callable=MagicMock, and
+    #//// MagicMock is imported for it (dc55c203, 2026-09-03 "test: patch frappe.db with a
+    #//// MagicMock, not the AsyncMock mock.patch picks by itself"). Upstream patches it bare;
+    #//// the comment below says why that only breaks under our bench test runner.
     # frappe.db is a werkzeug LocalProxy that inspect.isawaitable() reports as awaitable, so a
     # bare patch("...frappe.db") builds an AsyncMock and every frappe.db.x() returns a coroutine
     # ("object of type 'coroutine' has no len()", CI 2026-09-03). new_callable=MagicMock keeps it sync.

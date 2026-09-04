@@ -555,6 +555,19 @@ def search_items(search_term, pos_profile=None, limit=20):
 # //// complete Phase 8 cleanup - remove POS Coupon dependency — 5091779
 # Uses ERPNext Coupon Code directly for native integration
 
+#//// Neoffice — ▼▼▼ the whole coupon-management section that follows (get_coupons,
+#//// get_coupon_details, create_coupon, update_coupon, toggle_coupon_status, delete_coupon)
+#//// was rewritten against ERPNext's native Coupon Code + Pricing Rule. Upstream kept coupons
+#//// in its own `POS Coupon` doctype, invisible to the ERP: the same promotion had to be
+#//// maintained twice and nothing the till consumed ever showed up in accounting. Each
+#//// function now reads and writes Coupon Code joined to its Pricing Rule — which is also
+#//// where `company` and the enabled/disabled state live, hence the SQL joins and the
+#//// pr.disable toggling — and customer_name is looked up because Coupon Code has no such
+#//// field. Upstream's "a Gift Card needs a customer" check went with it: our gift cards are
+#//// bearer cards created as Promotional coupons (see api/gift_cards.py).
+#//// One marker for the section; all its hunks share this single cause
+#//// (5091779d 2026-01-13 "refactor: complete Phase 8 cleanup - remove POS Coupon
+#//// dependency"; 56c00619 and 3be1f124, 2026-01-14).
 @frappe.whitelist()
 def get_coupons(company=None, include_disabled=False, coupon_type=None):
 	"""Get all coupons for the company with enhanced filtering.
@@ -939,6 +952,7 @@ def delete_coupon(coupon_name):
 		frappe.throw(_("Failed to delete coupon: {0}").format(str(e)))
 
 
+#//// Neoffice — ▲▲▲ end of the ERPNext-Coupon-Code coupon-management section.
 # =============================================================================
 # REFERRAL CODE APIs
 # =============================================================================
@@ -1011,6 +1025,10 @@ def get_referral_details(referral_name):
 	referral = frappe.get_doc("Referral Code", referral_name)
 	data = referral.as_dict()
 
+	#//// Neoffice — the coupons a referral generates are ERPNext Coupon Code documents now, so the
+	#//// field list drops POS Coupon's columns and customer_name / disabled are derived here
+	#//// (Coupon Code has neither) — same POS Coupon removal as the section above
+	#//// (771595d2, 2026-01-14).
 	# //// add comprehensive test suite for ERPNext Coupon Code integration — 771595d
 	# Get generated coupons for this referral (now using ERPNext Coupon Code)
 	coupons = frappe.get_all(

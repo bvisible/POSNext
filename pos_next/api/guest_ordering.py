@@ -1,3 +1,12 @@
+#//// Neoffice — added file (no upstream equivalent). QR self-ordering at the table and web
+#//// takeaway; upstream POSNext is a retail POS with no guest-facing surface at all. A Guest
+#//// Order Token tied to a POS opening lets an anonymous phone browse the menu, order, tip and
+#//// pay without an account, while the very same invoice stays live in the cashier's POS —
+#//// hence the realtime rooms, the TIP items preserved across POS update/submit, the
+#//// duplicate-payment guards and the Occupied → Paid → Cleaning table states
+#//// (3939a848 2026-03-28 "feat: QR self-ordering and takeaway web ordering", followed by
+#//// ~45 fixes to 2026-04-02; 11a08f54 2026-06-01 moved the Wallee calls onto the unified
+#//// payments driver layer).
 # Copyright (c) 2026, BrainWise and contributors
 # For license information, please see license.txt
 

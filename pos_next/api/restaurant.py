@@ -1,3 +1,12 @@
+#//// Neoffice — added file (no upstream equivalent). The restaurant module's backend, because
+#//// upstream POSNext is a retail POS with no table service: floor plan (areas, tables, walls,
+#//// doors, background image), table state and its binding to the draft invoice, restaurant
+#//// cards / menus with time-based availability, product option groups (modifiers),
+#//// preparation stations with the KDS and runner workflow, takeaway, and tips
+#//// (458d81a9 2026-03-20 "feat: remove BrainWise branding, add restaurant mode, and code
+#//// formatting" — the same commit that removed upstream's `BrainWise Branding` doctype, its
+#//// API and its monitor tasks — then ~90 commits to 2026-04-24; c26ac28b 2026-04-24 stops
+#//// item creation in the root item group).
 import frappe
 from frappe import _
 from frappe.utils import flt

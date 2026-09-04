@@ -289,6 +289,9 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 	res["serial_no_data"] = serial_no_data
 	res["item_group"] = item_data.get("item_group")
 	res["brand"] = item_data.get("brand")
+	#//// Neoffice — key absent from upstream's get_item_detail; the mismatch with get_items it
+	#//// caused is described just below (ef2cbcfd, 2026-07-09 "fix(pos): don't stock-block
+	#//// non-stock items scanned from the search bar").
 	# Non-stock items (is_stock_item=0) must not be stock-validated in the cart.
 	# The grid path (get_items) already returns this; the barcode/search path
 	# (get_item_detail) dropped it, so a non-stock item wrongly hit the stock
@@ -302,6 +305,10 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 		fields=["uom", "conversion_factor"],
 	)
 
+	#//// Neoffice — upstream appended the stock UOM to item_uoms here; the frontend adds it too,
+	#//// so the UOM dialog listed the unit twice and popped up for single-UOM items
+	#//// (d29af088, 2026-07-09 "fix(pos): barcode error toast, UOM dialog dedup, any-order
+	#//// customer search").
 	# //// item_uoms holds ALTERNATE uoms only (exclude stock_uom) to match get_items
 	# Keep item_uoms consistent with get_items(): it must contain only the
 	# ALTERNATE uoms, never the stock UOM. The frontend always adds the stock

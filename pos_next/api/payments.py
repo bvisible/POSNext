@@ -1,3 +1,11 @@
+#//// Neoffice — added file (no upstream equivalent). The single door between POSNext and the
+#//// unified `payments` app (ADR-001): upstream talks to PSPs directly, we do not. It resolves
+#//// the POS Payment Driver Mapping (POS Profile × Mode of Payment → provider × channel ×
+#//// device) and forwards to payments.api.intent.*, which is what makes Swiss card-present
+#//// terminals and TWINT QR work from the till (9ff7305f 2026-05-13 "Phase 3 — wire POSNext
+#//// into unified Payments app", then 958a2264, 86f50747, b5e4b383, 2b6b45de, b2896941,
+#//// 4ba6126a, b8ef872f, 946177c1, 63146bd7, 26bf9a67 — the last one keeps "took too long"
+#//// and "cancelled" apart, because they are not the same event for the cashier).
 # Copyright (c) 2026, Neoffice and contributors
 # License: AGPL-3.0
 """POSNext payments façade — thin layer over ``payments.api.intent.*``.
