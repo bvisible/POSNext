@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- //// Neoffice — product name in the tab title of the offline shell: upstream reads -->
+  <!-- //// "No Internet - POSNext" (771950bd, 2026-04-02 "rebrand: rename POS Next to -->
+  <!-- //// Neopos"). The body text below carries the same rename, marked there. -->
   <!-- //// rebrand: rename POS Next to Neopos — 771950b -->
   <title>No Internet - Neopos</title>
   <style>
@@ -197,6 +200,10 @@
     </div>
 
     <h1>No Internet Connection</h1>
+    <!-- //// Neoffice — product name: the till is sold as Neopos, never "POS Next". This -->
+    <!-- //// offline shell is what the service worker serves when the network is down, so -->
+    <!-- //// it must not be the one place the vendor name survives (771950bd, 2026-04-02 -->
+    <!-- //// "rebrand: rename POS Next to Neopos"). -->
     <p>Unable to connect to Neopos. Please check your internet connection and try again.</p>
 
     <button onclick="location.reload()">Try Again</button>

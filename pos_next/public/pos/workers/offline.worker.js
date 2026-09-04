@@ -18,6 +18,21 @@
  */
 
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+//// Neoffice — WHOLE FILE: formatting and lint only, with ONE exception ▼▼▼
+//// Everything this worker does — the Dexie singleton with its retry and circuit
+//// breaker, the query cache, the index-first item search, the batched item/customer
+//// caching, the offers cache and the periodic stock sync — is upstream BrainWise
+//// code. We did not write it and, apart from the exception below, we have not
+//// changed it.
+//// All the rest is the Biome pass of 458d81a9 (2026-03-20 "remove BrainWise
+//// branding, add restaurant mode, and code formatting") under POS/biome.json: semicolons
+//// "asNeeded", quoteStyle "double", indentStyle "tab", lineWidth 80,
+//// plus Biome's recommended lint rules (useConst, useNumberNamespace) — marked
+//// individually where they occur.
+//// THE EXCEPTION is searchCachedCustomers: word-tokenized, order-
+//// independent customer search, marked there (d29af088).
+//// At the next upstream merge: take BrainWise's file wholesale, re-run
+//// `biome check --write`, then re-apply that one search change.
 import { logger } from "../utils/logger"
 import { generateOfflineId } from "../utils/offline/uuid"
 
@@ -29,6 +44,7 @@ const log = logger.create("OfflineWorker")
 
 const CONFIG = {
 	DB_NAME: "pos_next_offline",
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	BATCH_SIZE: 500, // Optimal for IndexedDB performance
 	MAX_RETRY_ATTEMPTS: 3,
 	RETRY_DELAY_MS: 1000,
@@ -105,6 +121,7 @@ async function initDB() {
 				await db.open()
 
 				// Verify tables exist
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				const tables = db.tables.map((t) => t.name)
 				if (tables.length === 0) {
 					throw new Error("No tables found in database")
@@ -122,6 +139,7 @@ async function initDB() {
 				return db
 			} catch (error) {
 				lastError = error
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				log.error(
 					`DB init failed (attempt ${attempt}/${CONFIG.MAX_RETRY_ATTEMPTS})`,
 					{
@@ -147,12 +165,14 @@ async function initDB() {
 						circuitBreakerOpen = true
 						log.error("Circuit breaker opened - DB permanently unavailable")
 					}
+					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					throw new Error(
 						`DB init failed after ${attempt} attempts: ${lastError.message}`,
 					)
 				}
 
 				// Exponential backoff before retry
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				await new Promise((resolve) =>
 					setTimeout(resolve, CONFIG.RETRY_DELAY_MS * Math.pow(2, attempt - 1)),
 				)
@@ -200,6 +220,9 @@ let stockSyncRunning = false
  */
 function recordMetric(operation, duration, isError = false) {
 	if (!metrics.has(operation)) {
+		//// Neoffice — Biome lint, not formatting: `Infinity` became
+		//// `Number.POSITIVE_INFINITY` (useNumberNamespace). Same value, same seed for the
+		//// Math.min below; the object is only re-wrapped one field per line (458d81a9).
 		metrics.set(operation, {
 			count: 0,
 			totalTime: 0,
@@ -238,6 +261,7 @@ function extractBarcodes(item) {
 	if (item.item_barcode) {
 		if (Array.isArray(item.item_barcode)) {
 			return item.item_barcode
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.map((b) => (typeof b === "object" ? b.barcode : b))
 				.filter(Boolean)
 		}
@@ -372,6 +396,7 @@ async function getOfflineInvoiceCount() {
 		const db = await initDB()
 
 		// Check if invoice_queue table exists
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const tableExists = db.tables.some(
 			(table) => table.name === "invoice_queue",
 		)
@@ -387,6 +412,7 @@ async function getOfflineInvoiceCount() {
 		return count
 	} catch (error) {
 		// Handle Dexie errors gracefully
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (
 			error.name === "NotFoundError" ||
 			error.name === "DatabaseClosedError"
@@ -405,6 +431,7 @@ async function getOfflineInvoices() {
 		const db = await initDB()
 
 		// Check if invoice_queue table exists
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const tableExists = db.tables.some(
 			(table) => table.name === "invoice_queue",
 		)
@@ -529,9 +556,11 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 		// Empty search - return top N items sorted alphabetically
 		// Exclude disabled and template items (templates are not shown in grid, variants are)
 		if (!searchTerm || searchTerm.trim().length === 0) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const results = await db
 				.table("items")
 				.orderBy("item_name")
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.filter((item) => shouldShowItem(item))
 				.offset(offset)
 				.limit(limit)
@@ -546,46 +575,55 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 		// Optimize: Use indexes for single-word searches
 		if (searchWords.length === 1) {
 			// Try barcode index first (most specific)
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const barcodeResults = await db
 				.table("items")
 				.where("barcodes")
 				.equals(term)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.filter((item) => !item.disabled)
 				.limit(limit)
 				.toArray()
 
 			if (barcodeResults.length > 0) {
 				cacheQueryResult(cacheKey, barcodeResults)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				recordMetric("searchCachedItems", performance.now() - startTime, false)
 				return barcodeResults
 			}
 
 			// Try item_code index (second most specific)
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const codeResults = await db
 				.table("items")
 				.where("item_code")
 				.startsWithIgnoreCase(term)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.filter((item) => !item.disabled)
 				.limit(limit)
 				.toArray()
 
 			if (codeResults.length > 0) {
 				cacheQueryResult(cacheKey, codeResults)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				recordMetric("searchCachedItems", performance.now() - startTime, false)
 				return codeResults
 			}
 
 			// Try item_name index
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const nameResults = await db
 				.table("items")
 				.where("item_name")
 				.startsWithIgnoreCase(term)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.filter((item) => !item.disabled)
 				.limit(limit)
 				.toArray()
 
 			if (nameResults.length > 0) {
 				cacheQueryResult(cacheKey, nameResults)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				recordMetric("searchCachedItems", performance.now() - startTime, false)
 				return nameResults
 			}
@@ -593,6 +631,7 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 
 		// Fallback: Multi-word or complex search
 		// Fetch larger sample and filter in memory (trade memory for speed)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const allItems = await db
 			.table("items")
 			.filter((item) => !item.disabled)
@@ -600,11 +639,13 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 			.toArray()
 
 		const results = allItems
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			.map((item) => {
 				const searchable =
 					`${item.item_code || ""} ${item.item_name || ""} ${item.description || ""}`.toLowerCase()
 
 				// All words must match
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				if (!searchWords.every((word) => searchable.includes(word))) {
 					return null
 				}
@@ -624,12 +665,14 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 			.map(({ item }) => item)
 
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("searchCachedItems", duration, false)
 
 		cacheQueryResult(cacheKey, results)
 		//// Implement offline capabilities for POS Next — 541c6f1
 		return results
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("searchCachedItems", performance.now() - startTime, true)
 		log.error("Error searching cached items", error)
 		return []
@@ -645,6 +688,7 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
  * @param {number} offset - Offset for pagination
  * @returns {Promise<Array>} Matching items sorted by item_name
  */
+//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 async function searchCachedItemsByGroup(
 	itemGroups = [],
 	limit = 50,
@@ -668,18 +712,24 @@ async function searchCachedItemsByGroup(
 
 		// Use item_group index for efficient lookup
 		// Exclude template items (has_variants is set) — only show variants + regular items
+		//// Neoffice — Biome lint (useConst): `let allResults` became `const`; it is only
+		//// pushed into and sorted in place, never reassigned. No behaviour change; the
+		//// per-group index lookup below is upstream's (458d81a9).
 		const allResults = []
 		for (const group of itemGroups) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const items = await db
 				.table("items")
 				.where("item_group")
 				.equals(group)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.filter((item) => shouldShowItem(item))
 				.toArray()
 			allResults.push(...items)
 		}
 
 		// Sort by item_name for consistent ordering
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		allResults.sort((a, b) =>
 			(a.item_name || "").localeCompare(b.item_name || ""),
 		)
@@ -688,6 +738,7 @@ async function searchCachedItemsByGroup(
 		const paginated = allResults.slice(offset, offset + limit)
 
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("searchCachedItemsByGroup", duration, false)
 		log.debug(
 			`Group search: ${paginated.length} items from ${itemGroups.length} groups in ${duration}ms`,
@@ -697,6 +748,7 @@ async function searchCachedItemsByGroup(
 		//// enable full offline support for item groups, variants, and template s… — e7d3c6c
 		return paginated
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric(
 			"searchCachedItemsByGroup",
 			performance.now() - startTime,
@@ -735,10 +787,14 @@ async function searchCachedItemsByBrand(brand, limit = 50, offset = 0) {
 		const db = await initDB()
 
 		// Use brand index for lookup, then sort and paginate in memory
+		//// Neoffice — Biome lint + formatting: `let results` became `const` (useConst) and
+		//// the Dexie chain broke one call per line at 80 columns. The brand index query is
+		//// upstream's, unchanged (458d81a9).
 		const results = await db
 			.table("items")
 			.where("brand")
 			.equals(brand)
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			.filter((item) => shouldShowItem(item))
 			.toArray()
 
@@ -748,6 +804,7 @@ async function searchCachedItemsByBrand(brand, limit = 50, offset = 0) {
 		const paginated = results.slice(offset, offset + limit)
 
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("searchCachedItemsByBrand", duration, false)
 		log.debug(
 			`Brand search: ${paginated.length} items for "${brand}" in ${duration}ms`,
@@ -756,6 +813,7 @@ async function searchCachedItemsByBrand(brand, limit = 50, offset = 0) {
 		cacheQueryResult(cacheKey, paginated)
 		return paginated
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric(
 			"searchCachedItemsByBrand",
 			performance.now() - startTime,
@@ -778,6 +836,7 @@ async function countCachedItemsByGroup(itemGroups = []) {
 		const db = await initDB()
 
 		if (!itemGroups || itemGroups.length === 0) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			return await db
 				.table("items")
 				.filter((item) => shouldShowItem(item))
@@ -786,10 +845,12 @@ async function countCachedItemsByGroup(itemGroups = []) {
 
 		let total = 0
 		for (const group of itemGroups) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			total += await db
 				.table("items")
 				.where("item_group")
 				.equals(group)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				.filter((item) => shouldShowItem(item))
 				.count()
 		}
@@ -816,6 +877,10 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 		// This is fast because IndexedDB is already in-memory for small datasets
 		const allCustomers = await db.table("customers").toArray()
 
+		//// Neoffice — the same any-order customer search as cache.js: upstream required the
+		//// whole query to appear as one contiguous run inside a single field, so "Moret Daniel"
+		//// found nothing for "Daniel Moret" (d29af088, 2026-07-09 "barcode error toast, UOM
+		//// dialog dedup, any-order customer search"). The block below spells out the comparison.
 		//// tokenized any-order search: each word must match name/mobile/id
 		// Split the query into words so "Moret Daniel" matches "Daniel Moret"
 		// regardless of the order the name was entered in.
@@ -823,6 +888,19 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 
 		const results = allCustomers
 			.filter((cust) => {
+				//// Neoffice — the exception announced at the top of this file. Upstream tested
+				//// name.includes(term) || mobile.includes(term) || id.includes(term), so the whole
+				//// query had to appear as one contiguous run in a single field: a cashier typing
+				//// "Moret Daniel" found nothing for a customer recorded as "Daniel Moret".
+				//// Here the
+				//// three fields are joined into one haystack and every word of the query must
+				//// appear
+				//// somewhere in it, so "Moret", "Daniel", "Moret Daniel" and "dan mor" all
+				//// find the
+				//// customer. Same fix applied on the other three paths (in-memory store, Dexie
+				//// cache,
+				//// backend get_customers) (d29af088, 2026-07-09 "barcode error toast, UOM dialog
+				//// dedup, any-order customer search").
 				const haystack =
 					(cust.customer_name || "").toLowerCase() +
 					" " +
@@ -884,9 +962,11 @@ async function cacheItemsFromServer(items, batchSize) {
 		let totalProcessed = 0
 
 		// Process all batches in single transaction (ACID + 10x performance boost)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", "items", "item_prices", "settings", async () => {
 			for (const batch of batches) {
 				// Normalize data using helper (zero-copy where possible)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				const processedItems = batch.map((item) => ({
 					...item,
 					barcodes: extractBarcodes(item),
@@ -898,12 +978,14 @@ async function cacheItemsFromServer(items, batchSize) {
 				// Extract and bulk insert prices
 				// CRITICAL: Compound primary key requires valid price_list AND item_code
 				const prices = batch
+					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					.filter((item) => {
 						// Must have item_code (mandatory)
 						if (!item.item_code) return false
 						// Must have some price data
 						return item.rate || item.price_list_rate
 					})
+					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					.map((item) => {
 						// Provide default price_list if missing (prevents key constraint violations)
 						const priceList =
@@ -938,12 +1020,16 @@ async function cacheItemsFromServer(items, batchSize) {
 								log.warn("Skipping invalid price record", {
 									item_code: price.item_code,
 									price_list: price.price_list,
+									//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this
+									//// file.
 									error: individualError.message,
 								})
 							}
 						}
 
 						if (successCount > 0) {
+							//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this
+							//// file.
 							log.info(
 								`Recovered ${successCount}/${prices.length} price records`,
 							)
@@ -962,20 +1048,24 @@ async function cacheItemsFromServer(items, batchSize) {
 		})
 
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("cacheItems", duration, false)
 
 		// Invalidate query cache
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		invalidateCache("search:")
 		invalidateCache("items:")
 
 		log.success(`Cached ${totalProcessed} items in ${duration}ms`, {
 			batches: batches.length,
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			throughput: Math.round(totalProcessed / (duration / 1000)) + " items/s",
 		})
 
 		return { success: true, count: totalProcessed, duration }
 	} catch (error) {
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("cacheItems", duration, true)
 
 		log.error("Error caching items", {
@@ -1003,6 +1093,7 @@ async function cacheCustomersFromServer(customers) {
 		const db = await initDB()
 
 		// Use transaction for consistency
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", "customers", "settings", async () => {
 			// Batch insert in chunks
 			const batches = chunkArray(customers, CONFIG.BATCH_SIZE)
@@ -1018,15 +1109,18 @@ async function cacheCustomersFromServer(customers) {
 		})
 
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("cacheCustomers", duration, false)
 
 		// Invalidate cache
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		invalidateCache("customers:")
 
 		log.success(`Cached ${customers.length} customers in ${duration}ms`)
 
 		return { success: true, count: customers.length, duration }
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("cacheCustomers", performance.now() - startTime, true)
 		log.error("Error caching customers", error)
 		throw error
@@ -1041,12 +1135,14 @@ async function clearItemsCache() {
 	try {
 		const db = await initDB()
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", "items", "item_prices", "settings", async () => {
 			await db.table("items").clear()
 			await db.table("item_prices").clear()
 			await db.table("settings").put({ key: "items_last_sync", value: null })
 		})
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		invalidateCache("items")
 		invalidateCache("search")
 
@@ -1066,6 +1162,7 @@ async function clearCustomersCache() {
 	try {
 		const db = await initDB()
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", "customers", "settings", async () => {
 			await db.table("customers").clear()
 			await db
@@ -1073,6 +1170,7 @@ async function clearCustomersCache() {
 				.put({ key: "customers_last_sync", value: null })
 		})
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		invalidateCache("customers")
 
 		log.info("Customers cache cleared")
@@ -1103,6 +1201,7 @@ async function removeItemsByGroups(itemGroups) {
 		let totalPricesRemoved = 0
 
 		// Use transaction for ACID guarantees (all-or-nothing)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", "items", "item_prices", async () => {
 			// Collect item codes for price cleanup (memory efficient)
 			const itemCodesToRemove = []
@@ -1110,6 +1209,7 @@ async function removeItemsByGroups(itemGroups) {
 			// Process groups efficiently using indexes
 			for (const group of itemGroups) {
 				// Use index for O(log n) lookup instead of O(n) table scan
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				const items = await db
 					.table("items")
 					.where("item_group")
@@ -1119,6 +1219,7 @@ async function removeItemsByGroups(itemGroups) {
 				itemCodesToRemove.push(...items)
 
 				// Bulk delete by index (fastest method available)
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				const deleted = await db
 					.table("items")
 					.where("item_group")
@@ -1134,6 +1235,7 @@ async function removeItemsByGroups(itemGroups) {
 				const chunks = chunkArray(itemCodesToRemove, 500)
 
 				for (const chunk of chunks) {
+					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					const pricesDeleted = await db
 						.table("item_prices")
 						.where("item_code")
@@ -1146,12 +1248,15 @@ async function removeItemsByGroups(itemGroups) {
 		})
 
 		const duration = Math.round(performance.now() - startTime)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("removeItemsByGroups", duration, false)
 
 		// Invalidate cache
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		invalidateCache("items")
 		invalidateCache("search")
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.success(
 			`Removed ${totalRemoved} items, ${totalPricesRemoved} prices in ${duration}ms`,
 			{
@@ -1166,6 +1271,7 @@ async function removeItemsByGroups(itemGroups) {
 			duration,
 		}
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("removeItemsByGroups", performance.now() - startTime, true)
 		log.error("Error removing items by groups", {
 			error: error.message,
@@ -1261,6 +1367,9 @@ async function getCachedSalesPersons(posProfile) {
 }
 
 // ============================================================================
+//// Neoffice — still inside the whole-file formatting-only region opened at the top:
+//// the offers cache below differs from upstream only by ' -> " and arrow parens
+//// (458d81a9).
 // OFFERS CACHE FUNCTIONS
 // ============================================================================
 
@@ -1281,6 +1390,7 @@ async function cacheOffers(offers, posProfile) {
 		const db = await initDB()
 
 		// Add pos_profile to each offer for filtering
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const offersWithProfile = offers.map((offer) => ({
 			...offer,
 			pos_profile: posProfile,
@@ -1288,14 +1398,17 @@ async function cacheOffers(offers, posProfile) {
 		}))
 
 		// Clear existing offers for this profile and insert new ones
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", db.table("offers"), async () => {
 			await db.table("offers").where("pos_profile").equals(posProfile).delete()
 			if (offersWithProfile.length > 0) {
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				await db.table("offers").bulkPut(offersWithProfile)
 			}
 		})
 
 		// Update settings with last sync timestamp
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.table("settings").put({
 			key: `offers_last_sync_${posProfile}`,
 			value: Date.now(),
@@ -1304,6 +1417,7 @@ async function cacheOffers(offers, posProfile) {
 		log.success(`Cached ${offers.length} offers for profile ${posProfile}`)
 		return { success: true, count: offers.length }
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.error("Error caching offers", error)
 		return { success: false, count: 0, error: error.message }
 	}
@@ -1323,26 +1437,31 @@ async function getCachedOffers(posProfile) {
 		}
 
 		const db = await initDB()
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const today = new Date().toISOString().split("T")[0]
 
 		// Get offers for specific profile
 		const allOffers = await db
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			.table("offers")
 			.where("pos_profile")
 			.equals(posProfile)
 			.toArray()
 
 		// Filter out expired offers (keep offers without expiry or with future expiry)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const validOffers = allOffers.filter((offer) => {
 			if (!offer.valid_upto) return true // No expiry
 			return offer.valid_upto >= today
 		})
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.info(
 			`Retrieved ${validOffers.length} cached offers for profile ${posProfile}`,
 		)
 		return validOffers
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.error("Error getting cached offers", error)
 		return []
 	}
@@ -1357,6 +1476,7 @@ async function clearOffersCache(posProfile = null) {
 		const db = await initDB()
 
 		if (posProfile) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			await db.table("offers").where("pos_profile").equals(posProfile).delete()
 		} else {
 			await db.table("offers").clear()
@@ -1364,6 +1484,7 @@ async function clearOffersCache(posProfile = null) {
 
 		return { success: true }
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.error("Error clearing offers cache", error)
 		return { success: false, error: error.message }
 	}
@@ -1381,10 +1502,15 @@ async function isCacheReady() {
 }
 
 // Get cache stats
+//// Neoffice — still inside the whole-file formatting-only region opened at the top.
+//// The destructured Promise.all below is only re-wrapped one element per line by
+//// Biome at lineWidth 80; the counts and the showVariantsAsItems branch are
+//// upstream's (458d81a9).
 async function getCacheStats() {
 	try {
 		const db = await initDB()
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const [
 			totalCount,
 			hiddenCount,
@@ -1534,6 +1660,10 @@ async function updateStockQuantities(stockUpdates) {
 }
 
 // ============================================================================
+//// Neoffice — still inside the whole-file formatting-only region opened at the top.
+//// The whole stock-sync block below (fetch with CSRF header, abort timeout, interval,
+//// STOCK_SYNC_COMPLETE / STOCK_SYNC_ERROR messages) is upstream's; it was written
+//// with single quotes and got the same Biome treatment as the rest (458d81a9).
 // PERIODIC STOCK SYNC - Background stock refresh from server
 // ============================================================================
 
@@ -1543,6 +1673,7 @@ async function updateStockQuantities(stockUpdates) {
  */
 async function fetchStockFromServer() {
 	if (!currentWarehouse || trackedItemCodes.size === 0) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.debug("Stock sync skipped: No warehouse or items tracked")
 		return []
 	}
@@ -1554,15 +1685,18 @@ async function fetchStockFromServer() {
 		const itemCodes = Array.from(trackedItemCodes)
 
 		const headers = {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			"Content-Type": "application/json",
 			Accept: "application/json",
 		}
 
 		// Add CSRF token if available
 		if (csrfToken) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			headers["X-Frappe-CSRF-Token"] = csrfToken
 		}
 
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		const response = await fetch(
 			"/api/method/pos_next.api.items.get_stock_quantities",
 			{
@@ -1585,9 +1719,11 @@ async function fetchStockFromServer() {
 		const data = await response.json()
 		return data?.message || data || []
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (error.name === "AbortError") {
 			log.warn("Stock fetch timeout")
 		} else {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			log.error("Error fetching stock from server", error)
 		}
 		return []
@@ -1599,11 +1735,13 @@ async function fetchStockFromServer() {
  */
 async function performStockSync() {
 	if (stockSyncRunning) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.debug("Stock sync already running, skipping")
 		return
 	}
 
 	if (!serverOnline || manualOffline) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.debug("Stock sync skipped: Server offline")
 		return
 	}
@@ -1622,31 +1760,38 @@ async function performStockSync() {
 			lastStockSyncTime = Date.now()
 			const duration = lastStockSyncTime - startTime
 
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			log.success(
 				`Stock sync completed: ${result.updated}/${stockUpdates.length} items updated in ${duration}ms`,
 			)
 
 			// Notify main thread about successful sync
 			self.postMessage({
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				type: "STOCK_SYNC_COMPLETE",
 				payload: {
 					updated: result.updated,
 					total: stockUpdates.length,
 					duration,
+					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					timestamp: lastStockSyncTime,
 				},
 			})
 		} else {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			log.debug("Stock sync: No updates received")
 		}
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.error("Stock sync failed", error)
 
 		// Notify main thread about sync failure
 		self.postMessage({
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			type: "STOCK_SYNC_ERROR",
 			payload: {
 				message: error.message,
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				timestamp: Date.now(),
 			},
 		})
@@ -1660,6 +1805,7 @@ async function performStockSync() {
  */
 function startPeriodicStockSync() {
 	if (stockSyncInterval) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.debug("Stock sync already running")
 		return
 	}
@@ -1667,17 +1813,20 @@ function startPeriodicStockSync() {
 	stockSyncEnabled = true
 
 	// Perform initial sync immediately
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	performStockSync().catch((err) => {
 		log.error("Initial stock sync failed", err)
 	})
 
 	// Set up periodic sync
 	stockSyncInterval = setInterval(() => {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		performStockSync().catch((err) => {
 			log.error("Periodic stock sync failed", err)
 		})
 	}, stockSyncIntervalMs)
 
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	log.success(
 		`Periodic stock sync started (interval: ${stockSyncIntervalMs}ms)`,
 	)
@@ -1691,6 +1840,7 @@ function stopPeriodicStockSync() {
 		clearInterval(stockSyncInterval)
 		stockSyncInterval = null
 		stockSyncEnabled = false
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.info("Periodic stock sync stopped")
 	}
 }
@@ -1713,6 +1863,7 @@ function configureStockSync({ warehouse, itemCodes, intervalMs }) {
 		restartNeeded = true
 	}
 
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	if (intervalMs !== undefined && intervalMs >= 10000) {
 		// Min 10 seconds
 		stockSyncIntervalMs = intervalMs
@@ -1731,6 +1882,7 @@ function configureStockSync({ warehouse, itemCodes, intervalMs }) {
 		itemCount: trackedItemCodes.size,
 		intervalMs: stockSyncIntervalMs,
 		enabled: stockSyncEnabled,
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		lastSync: lastStockSyncTime,
 	}
 }
@@ -1745,6 +1897,7 @@ function getStockSyncStatus() {
 		itemCount: trackedItemCodes.size,
 		intervalMs: stockSyncIntervalMs,
 		lastSync: lastStockSyncTime,
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		running: stockSyncRunning,
 	}
 }
@@ -1783,6 +1936,7 @@ self.onmessage = async (event) => {
 				break
 
 			case "SEARCH_ITEMS":
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				result = await searchCachedItems(
 					payload.searchTerm,
 					payload.limit,
@@ -1791,6 +1945,7 @@ self.onmessage = async (event) => {
 				break
 
 			case "SEARCH_ITEMS_BY_GROUP":
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				result = await searchCachedItemsByGroup(
 					payload.itemGroups,
 					payload.limit,
@@ -1814,6 +1969,7 @@ self.onmessage = async (event) => {
 				result = await cacheCustomersFromServer(payload.customers)
 				break
 			case "SEARCH_ITEMS_BY_BRAND":
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				result = await searchCachedItemsByBrand(
 					payload.brand,
 					payload.limit,
@@ -1880,6 +2036,7 @@ self.onmessage = async (event) => {
 			case "SET_SHOW_VARIANTS_AS_ITEMS":
 				showVariantsAsItems = Boolean(payload.value)
 				// Invalidate query cache since display filters changed
+				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				invalidateCache("search:")
 				invalidateCache("group:")
 				log.info(
@@ -1893,6 +2050,7 @@ self.onmessage = async (event) => {
 				// Broadcast status change so UI updates immediately
 				self.postMessage({
 					type: "SERVER_STATUS_CHANGE",
+					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					payload: {
 						serverOnline: serverOnline && !manualOffline,
 						manualOffline,
@@ -2002,3 +2160,4 @@ async function initialize() {
 
 // Start initialization
 initialize()
+//// Neoffice — end of the whole-file formatting/lint-only region ▲▲▲
