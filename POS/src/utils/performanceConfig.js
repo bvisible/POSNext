@@ -29,6 +29,10 @@ const PERFORMANCE_TIERS = {
 function detectPerformanceTier() {
 	const cpuCores = navigator.hardwareConcurrency || 2
 	const deviceMemory = navigator.deviceMemory || 4 // In GB, fallback to 4GB
+	//// Neoffice — this file's whole divergence from upstream is the "code formatting" third
+	//// of 458d81a9 (2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting"): the repo-wide Biome pass rewrote single quotes to double, reflowed long
+	//// calls and applied its useConst lint fix. No tier, threshold or batch size changed.
 	const isMobile =
 		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 			navigator.userAgent,
@@ -156,6 +160,7 @@ function getPerformanceConfig(tier) {
 class PerformanceConfig {
 	constructor() {
 		// SSR Safety: Check if running in browser environment
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window === "undefined" || typeof navigator === "undefined") {
 			// Server-side or non-browser environment - use medium tier defaults
 			this.tier = PERFORMANCE_TIERS.MEDIUM
@@ -171,6 +176,7 @@ class PerformanceConfig {
 		// Detect device capabilities
 		this.cpuCores = navigator.hardwareConcurrency || 2
 		this.deviceMemory = navigator.deviceMemory || 4
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		this.isMobile =
 			/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 				navigator.userAgent,
@@ -209,10 +215,12 @@ class PerformanceConfig {
 	 * Get stored tier from localStorage
 	 */
 	getStoredTier() {
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window === "undefined" || !window.localStorage) {
 			return null
 		}
 		try {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			return localStorage.getItem("pos_performance_tier")
 		} catch (error) {
 			log.error("Failed to read performance tier from localStorage", error)
@@ -228,6 +236,7 @@ class PerformanceConfig {
 		const normalizedTier = tier?.toLowerCase()
 
 		if (!normalizedTier || !PERFORMANCE_TIERS[normalizedTier.toUpperCase()]) {
+			//// Neoffice — same Biome formatter pass (458d81a9): log.error() reflowed, same message.
 			log.error(
 				`Invalid performance tier: ${tier}. Must be one of: low, medium, high`,
 			)
@@ -239,16 +248,19 @@ class PerformanceConfig {
 		this.config = getPerformanceConfig(normalizedTier)
 
 		// Save to localStorage
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window !== "undefined" && window.localStorage) {
 			try {
 				localStorage.setItem("pos_performance_tier", normalizedTier)
 				log.info(`Performance tier set to: ${normalizedTier}`)
 			} catch (error) {
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				log.error("Failed to save performance tier to localStorage", error)
 			}
 		}
 
 		// Emit custom event for reactive updates
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window !== "undefined") {
 			window.dispatchEvent(
 				new CustomEvent("performanceConfigChanged", {
@@ -269,11 +281,13 @@ class PerformanceConfig {
 	 */
 	resetTier() {
 		// Remove from localStorage
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window !== "undefined" && window.localStorage) {
 			try {
 				localStorage.removeItem("pos_performance_tier")
 				log.info("Removed manual performance tier override")
 			} catch (error) {
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				log.error("Failed to remove performance tier from localStorage", error)
 			}
 		}
@@ -283,6 +297,7 @@ class PerformanceConfig {
 		this.config = getPerformanceConfig(this.tier)
 
 		// Emit custom event for reactive updates
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window !== "undefined") {
 			window.dispatchEvent(
 				new CustomEvent("performanceConfigChanged", {
@@ -397,6 +412,8 @@ class PerformanceConfig {
 	 * Calculate dynamic batch size based on data size and device capability
 	 */
 	getDynamicBatchSize(dataSize, operation = "default") {
+		//// Neoffice — `let` → `const`: Biome's useConst lint fix, applied by the same pass as the
+		//// rest of this file (458d81a9). baseBatchSize was never reassigned, so nothing changed.
 		const baseBatchSize = this.config.backgroundSyncBatchSize
 
 		// Adjust based on operation type
@@ -431,6 +448,7 @@ export const performanceConfig = (() => {
 	try {
 		return new PerformanceConfig()
 	} catch (error) {
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		log.error("Failed to initialize PerformanceConfig, using defaults", error)
 		// Return a safe default config
 		return {

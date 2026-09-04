@@ -50,9 +50,15 @@ const COLORS = {
 class LoggerConfig {
 	constructor() {
 		// Check if we're in development mode
+		//// Neoffice — everything below in this file, bar the one clay hex in help(), is the
+		//// "code formatting" third of 458d81a9 (2026-03-20 "remove BrainWise branding, add
+		//// restaurant mode, and code formatting"): a repo-wide Biome pass that rewrote single
+		//// quotes to double, put parentheses round arrow parameters, added trailing commas and
+		//// reflowed long lines. No log level, namespace or output changed.
 		this.isDev = import.meta.env?.DEV || import.meta.env?.MODE === "development"
 
 		// Check for manual override in localStorage
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
 			const manualLevel = localStorage.getItem("POS_LOG_LEVEL")
 			const manualEnabled = localStorage.getItem("POS_LOGGING_ENABLED")
@@ -81,19 +87,23 @@ class LoggerConfig {
 	}
 
 	loadNamespaceConfig() {
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window === "undefined" || typeof localStorage === "undefined")
 			return
 
 		try {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			const enabled = localStorage.getItem("POS_LOG_NAMESPACES_ENABLED")
 			const disabled = localStorage.getItem("POS_LOG_NAMESPACES_DISABLED")
 
 			if (enabled) {
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				enabled
 					.split(",")
 					.forEach((ns) => this.enabledNamespaces.add(ns.trim()))
 			}
 			if (disabled) {
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				disabled
 					.split(",")
 					.forEach((ns) => this.disabledNamespaces.add(ns.trim()))
@@ -104,10 +114,12 @@ class LoggerConfig {
 	}
 
 	setLevel(level) {
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		const levelValue =
 			typeof level === "string" ? LOG_LEVELS[level.toUpperCase()] : level
 		if (levelValue !== undefined) {
 			this.currentLevel = levelValue
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			if (typeof localStorage !== "undefined") {
 				localStorage.setItem(
 					"POS_LOG_LEVEL",
@@ -119,6 +131,7 @@ class LoggerConfig {
 
 	setEnabled(enabled) {
 		this.enabled = enabled
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof localStorage !== "undefined") {
 			localStorage.setItem("POS_LOGGING_ENABLED", enabled.toString())
 		}
@@ -137,23 +150,28 @@ class LoggerConfig {
 	}
 
 	saveNamespaceConfig() {
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof localStorage === "undefined") return
 
 		if (this.enabledNamespaces.size > 0) {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			localStorage.setItem(
 				"POS_LOG_NAMESPACES_ENABLED",
 				Array.from(this.enabledNamespaces).join(","),
 			)
 		} else {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			localStorage.removeItem("POS_LOG_NAMESPACES_ENABLED")
 		}
 
 		if (this.disabledNamespaces.size > 0) {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			localStorage.setItem(
 				"POS_LOG_NAMESPACES_DISABLED",
 				Array.from(this.disabledNamespaces).join(","),
 			)
 		} else {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			localStorage.removeItem("POS_LOG_NAMESPACES_DISABLED")
 		}
 	}
@@ -193,14 +211,20 @@ class Logger {
 	 * Format log message with timestamp and namespace
 	 */
 	format(level, message, ...args) {
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		const timestamp = new Date().toISOString().split("T")[1].split(".")[0]
 		const levelName = Object.keys(LOG_LEVELS)[level]
 		const color = COLORS[levelName] || COLORS.RESET
 
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (typeof window !== "undefined") {
 			// Browser console with styling
 			return [
 				`%c[${timestamp}] %c${levelName}%c [${this.namespace}]%c ${message}`,
+				//// Neoffice — same Biome formatter pass (458d81a9) for these two console style strings
+				//// and the trailing comma below. Note the literal "blue" on the next-but-one line is a
+				//// CSS keyword, not a hex, so the clay sweep of e4769383 did not reach it: the namespace
+				//// tag in the dev console is still blue while the rest of the POS is clay.
 				"color: gray; font-size: 0.9em",
 				`${color}; font-weight: bold`,
 				"color: blue; font-weight: bold",
@@ -211,6 +235,7 @@ class Logger {
 			// Node.js/SSR with ANSI colors
 			return [
 				`${COLORS.DIM}[${timestamp}]${COLORS.RESET} ${color}${COLORS.BOLD}${levelName}${COLORS.RESET} ${COLORS.BOLD}[${this.namespace}]${COLORS.RESET} ${message}`,
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				...args,
 			]
 		}
@@ -249,12 +274,14 @@ class Logger {
 
 			// In browser context, formatted[1] and formatted[2] are style strings
 			// In Node.js/SSR/Worker context, formatted[0] is the message and formatted[1+] are args
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			if (typeof window !== "undefined") {
 				// Browser context: modify style strings
 				formatted[1] = formatted[1].replace("INFO", "✓ SUCCESS")
 				formatted[2] = `${COLORS.SUCCESS}; font-weight: bold`
 			} else {
 				// Node.js/SSR/Worker context: modify the message string
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				formatted[0] = formatted[0].replace("INFO", "✓ SUCCESS")
 			}
 
@@ -382,6 +409,7 @@ class LoggerManager {
 	 * Show help in console
 	 */
 	help() {
+		//// Neoffice — same Biome formatter pass (458d81a9): console.log() reflowed, template literal unchanged.
 		console.log(
 			`
 %c🔍 POS Logging System Help
@@ -423,6 +451,10 @@ class LoggerManager {
 %cCurrent Config:%c
   ${JSON.stringify(this.getConfig(), null, 2)}
 		`,
+			//// Neoffice — #2196F3 → clay #D68A59 in the console help banner: the POS-wide sweep of
+			//// hardcoded blue/violet hexes onto the Neoffice Design System accent (e4769383,
+			//// 2026-06-14 "style(pos): retheme blue/violet -> Design System clay (#D68A59)"). The
+			//// other style strings on this argument list are the Biome pass of 458d81a9.
 			"font-size: 16px; font-weight: bold",
 			"font-weight: bold; color: #d68a59",
 			"font-weight: normal",
@@ -445,12 +477,14 @@ export const logger = new LoggerManager()
 export { LOG_LEVELS }
 
 // Expose to window for console debugging
+//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 if (typeof window !== "undefined") {
 	window.posLogger = logger
 }
 
 // Log initialization (only in dev)
 if (logger.config.isDev) {
+	//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 	const initLog = logger.create("Logger")
 	initLog.info("Logger initialized", logger.getConfig())
 	initLog.debug("Type posLogger.help() in console for usage guide")

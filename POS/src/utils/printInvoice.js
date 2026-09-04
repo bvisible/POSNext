@@ -184,6 +184,16 @@ export function buildReceiptHTML(invoiceData) {
 		})
 		.join("")
 
+	//// Neoffice — two changes inside the template literal below cannot carry a marker of their
+	//// own without becoming text on the printed receipt, so they are recorded here:
+	////  · the company-name fallback "POS Next" → "Neopos" (771950bd, 2026-04-02 "rebrand:
+	////    rename POS Next to Neopos"; git blame lands on merge node c87d0e93);
+	////  · in the footer, the "Powered by BrainWise" link colour #3b82f6 → clay #d68a59
+	////    (e4769383, 2026-06-14 "retheme blue/violet -> Design System clay").
+	//// TO REVIEW: that footer still prints upstream's BrainWise credit and links to
+	//// nexus.brainwise.me whenever the POS Profile sets no custom footer — 458d81a9 removed
+	//// the BrainWise branding everywhere else, and 7224d94c removed it from the provisional
+	//// ticket, but this receipt kept it and only had its colour restyled.
 	return `
 			<div class="receipt">
 				<div class="header">
@@ -321,6 +331,7 @@ export async function printInvoice(
 		})
 		if (letterhead) params.append("letterhead", letterhead)
 
+		//// Neoffice — same Biome formatter pass (458d81a9): window.open() reflowed onto four lines.
 		const printWindow = window.open(
 			`/printview?${params}`,
 			"_blank",
@@ -346,6 +357,7 @@ export async function printInvoice(
  * Fetch an invoice by name, resolve its POS Profile print settings,
  * then open the browser print window.
  */
+//// Neoffice — same Biome formatter pass (458d81a9): the parameter list reflowed one per line.
 export async function printInvoiceByName(
 	invoiceName,
 	printFormat = null,
@@ -368,6 +380,7 @@ export async function printInvoiceByName(
 	})
 	if (!invoiceDoc) throw new Error("Invoice not found")
 
+	//// Neoffice — same Biome formatter pass (458d81a9): the call reflowed one argument per line.
 	const settings = await resolvePrintSettings(
 		invoiceDoc.pos_profile,
 		printFormat,
@@ -466,6 +479,7 @@ export async function printWithSilentFallback(invoiceData, printFormat = null) {
 		await silentPrintInvoice(invoiceName, printFormat)
 		return { method: "silent", success: true }
 	} catch (err) {
+		//// Neoffice — same Biome formatter pass (458d81a9): log.warn() reflowed onto three lines.
 		log.warn(
 			"Silent print failed, falling back to browser:",
 			err?.message || err,

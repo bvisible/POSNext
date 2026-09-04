@@ -37,6 +37,12 @@ type Messages = Record<string, string>
 
 // Extend Window interface with translation globals
 declare global {
+	//// Neoffice — from here down, every hunk of this file that is not already marked is the
+	//// "code formatting" third of 458d81a9 (2026-03-20 "remove BrainWise branding, add
+	//// restaurant mode, and code formatting"): the repo-wide Biome pass re-indented this file
+	//// from two spaces to tabs and reflowed its long signatures and calls. `git blame -w`
+	//// ignores whitespace and therefore still credits the upstream authors for these lines —
+	//// the change is ours, and it changes nothing but layout.
 	interface Window {
 		/** Global translation function */
 		__: typeof translate
@@ -61,6 +67,7 @@ const FALLBACK_LOCALE = "en"
 
 /** Options for locale loading behavior */
 type LoadOptions = {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	/** Try cached translations first before network */
 	preferCache?: boolean
 	/** Force network fetch even if cache is fresh */
@@ -78,6 +85,7 @@ type LoadOptions = {
  * app.use(translationPlugin)
  */
 export default function translationPlugin(app: App) {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	app.config.globalProperties.__ = translate
 	window.__ = translate
 	window.$changeLanguage = changeLanguage
@@ -103,6 +111,7 @@ export default function translationPlugin(app: App) {
  * // With context (for same source with different meanings)
  * __('Save', null, 'button')  // Uses key "Save:button"
  */
+//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 export function translate(
 	msg: string,
 	replace?: Record<string, string>,
@@ -112,10 +121,12 @@ export function translate(
 	const key = ctx ? `${msg}:${ctx}` : msg
 	let translated = messages[key] || messages[msg] || msg
 
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	if (replace) {
 		translated = translated.replace(/{(\d+)}/g, (_, n) => replace[n] ?? _)
 	}
 
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	return translated
 }
 
@@ -128,8 +139,10 @@ export const __ = translate
  * @returns Lowercase locale code
  */
 const getLocale = (): string => {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	if (typeof window === "undefined") return FALLBACK_LOCALE
 
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	return (
 		(window as any)?.frappe?.boot?.lang?.toLowerCase() ||
 		window.localStorage?.getItem("pos_next_language")?.toLowerCase() ||
@@ -142,6 +155,7 @@ const getLocale = (): string => {
  * Uses stale-while-revalidate: shows cached immediately, refreshes in background.
  */
 async function init() {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	const locale = getLocale()
 	const loaded = await loadLocale(locale, { preferCache: true })
 	if (!loaded) fallbackFetch(locale)
@@ -152,6 +166,7 @@ async function init() {
  * @param messages - New translation dictionary
  */
 function applyMessages(messages: Messages) {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	window.translatedMessages = messages
 	// Debounce: coalesce rapid calls (cache hit + network refresh)
 	// into a single version bump to avoid multiple component remounts
@@ -167,6 +182,7 @@ function applyMessages(messages: Messages) {
  * @returns Translation dictionary or null on failure
  */
 async function requestTranslations() {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	const messages = await call(
 		"pos_next.api.localization.get_app_translations",
 		{},
@@ -231,6 +247,7 @@ async function loadLocale(locale: string, options: LoadOptions = {}) {
  * @param locale - Locale code for logging
  */
 function fallbackFetch(locale?: string) {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	createResource({
 		url: "pos_next.api.localization.get_app_translations",
 		method: "GET",
@@ -253,6 +270,7 @@ function fallbackFetch(locale?: string) {
  * await changeLanguage('ar')
  */
 export async function changeLanguage(locale: string): Promise<void> {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	const success = await loadLocale(locale, {
 		preferCache: true,
 		forceNetwork: true,

@@ -182,6 +182,9 @@ export class QueuedMutex {
 	async _executeWithTimeout(fn) {
 		return new Promise((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
+				//// Neoffice — Biome formatter pass of 458d81a9 (2026-03-20 "remove BrainWise branding,
+				//// add restaurant mode, and code formatting"): the reject(new Error(...)) call reflowed
+				//// onto four lines. Identical code, and this file's only divergence from upstream.
 				reject(
 					new Error(
 						`${this._name}: Operation timed out after ${this._timeout}ms`,

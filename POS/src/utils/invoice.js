@@ -18,26 +18,34 @@ export function getInvoiceStatusColor(invoice) {
 	}
 
 	// Orange for partly paid (partial payment received)
+	//// Neoffice — from here to the end of the file the divergence from upstream is a single
+	//// cause: the repo-wide Biome pass of 458d81a9 (2026-03-20 "remove BrainWise branding, add
+	//// restaurant mode, and code formatting") rewrote every single-quoted string to double
+	//// quotes. No status, no colour and no branch changed.
 	if (status === "partly paid" || status === "partially paid") {
 		return "bg-orange-100 text-orange-800"
 	}
 
 	// Yellow for unpaid
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (status === "unpaid") {
 		return "bg-yellow-100 text-yellow-800"
 	}
 
 	// Blue for credit note issued
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (status === "credit note issued") {
 		return "bg-blue-100 text-blue-800"
 	}
 
 	// Green for paid, submitted
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (status === "paid" || invoice.docstatus === 1) {
 		return "bg-green-100 text-green-800"
 	}
 
 	// Gray for draft and others
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	return "bg-gray-100 text-gray-800"
 }
 
@@ -49,25 +57,31 @@ export function getInvoiceStatusColor(invoice) {
 export function getInvoiceStatusTheme(status) {
 	const statusLower = status?.toLowerCase()
 
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (statusLower === "overdue" || statusLower === "cancelled") {
 		return "red"
 	}
 
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (statusLower === "partly paid" || statusLower === "partially paid") {
 		return "orange"
 	}
 
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (statusLower === "unpaid") {
 		return "yellow"
 	}
 
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (statusLower === "credit note issued") {
 		return "blue"
 	}
 
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (statusLower === "paid") {
 		return "green"
 	}
 
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	return "gray"
 }

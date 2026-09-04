@@ -12,6 +12,11 @@ const log = logger.create("LowEndOptimizations")
 /**
  * requestIdleCallback polyfill for browsers that don't support it
  */
+//// Neoffice — this file's whole divergence from upstream is the "code formatting" third
+//// of 458d81a9 (2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+//// formatting"): the repo-wide Biome pass turned `function(cb)` expressions into arrow
+//// functions, rewrote single quotes to double, added trailing commas and reflowed long
+//// calls. The idle-callback polyfill and every threshold below behave exactly as upstream.
 const requestIdleCallback =
 	window.requestIdleCallback ||
 	((cb) => {
@@ -24,6 +29,7 @@ const requestIdleCallback =
 		}, 1)
 	})
 
+//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 const cancelIdleCallback =
 	window.cancelIdleCallback ||
 	((id) => {
@@ -41,6 +47,7 @@ const cancelIdleCallback =
 export function runWhenIdle(task, options = {}) {
 	const { timeout = 2000 } = options
 
+	//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 	return requestIdleCallback(
 		(deadline) => {
 			// Only run if we have time remaining or we've hit the timeout
@@ -54,6 +61,7 @@ export function runWhenIdle(task, options = {}) {
 				// Reschedule if we don't have time
 				runWhenIdle(task, options)
 			}
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		},
 		{ timeout },
 	)
@@ -134,6 +142,7 @@ export function addPassiveListener(element, event, handler, options = {}) {
 	const passiveOptions = {
 		passive: true,
 		capture: false,
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		...options,
 	}
 
@@ -198,10 +207,12 @@ class DOMBatcher {
 	flush() {
 		// Execute all reads first
 		const reads = this.reads.splice(0)
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		reads.forEach((read) => read())
 
 		// Then execute all writes
 		const writes = this.writes.splice(0)
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		writes.forEach((write) => write())
 
 		this.scheduled = false
@@ -242,6 +253,7 @@ export function createOptimizedClickHandler(handler, options = {}) {
 
 			// Visual feedback
 			if (feedback && event.currentTarget) {
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				event.currentTarget.style.opacity = "0.7"
 			}
 		},
@@ -256,6 +268,7 @@ export function createOptimizedClickHandler(handler, options = {}) {
 
 				// Remove feedback if moved
 				if (feedback && event.currentTarget) {
+					//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 					event.currentTarget.style.opacity = ""
 				}
 			}
@@ -264,6 +277,7 @@ export function createOptimizedClickHandler(handler, options = {}) {
 		touchend: (event) => {
 			// Remove feedback
 			if (feedback && event.currentTarget) {
+				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 				event.currentTarget.style.opacity = ""
 			}
 
@@ -298,6 +312,7 @@ export function createOptimizedClickHandler(handler, options = {}) {
 			requestAnimationFrame(() => {
 				handler(event)
 			})
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		},
 	}
 
@@ -326,6 +341,7 @@ export function createOptimizedClickHandler(handler, options = {}) {
  * @returns {Promise} Promise that resolves when processing complete
  */
 export async function processArrayInChunks(array, processor, options = {}) {
+	//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 	const { chunkSize = 50, onProgress = null, signal = null } = options
 
 	const total = array.length
@@ -334,11 +350,13 @@ export async function processArrayInChunks(array, processor, options = {}) {
 	for (let i = 0; i < total; i += chunkSize) {
 		// Check if cancelled
 		if (signal?.aborted) {
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 			throw new Error("Processing cancelled")
 		}
 
 		// Process chunk
 		const chunk = array.slice(i, i + chunkSize)
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		await new Promise((resolve) => {
 			runWhenIdle(() => {
 				chunk.forEach((item) => processor(item))
@@ -373,6 +391,7 @@ export function isLowEndDevice() {
 	// Check connection speed
 	if (navigator.connection) {
 		const conn = navigator.connection
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (conn.effectiveType === "slow-2g" || conn.effectiveType === "2g") {
 			return true
 		}
@@ -397,9 +416,11 @@ export function getPerformanceSettings() {
 		debounceDelay: isLowEnd ? 500 : 300,
 		throttleDelay: isLowEnd ? 200 : 100,
 		enableAnimations: !isLowEnd,
+		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		lazyLoadThreshold: isLowEnd ? "50px" : "200px",
 		maxVisibleItems: isLowEnd ? 50 : 100,
 	}
 }
 
+//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 log.info("Low-end optimizations loaded", { isLowEnd: isLowEndDevice() })

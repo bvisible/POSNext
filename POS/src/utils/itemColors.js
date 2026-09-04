@@ -1,3 +1,11 @@
+//// Neoffice — added file (no upstream equivalent). A restaurant sells dishes that have no
+//// photo, so the item grid needs a colour to tell tiles apart: this is the 10-swatch
+//// palette CreateItemDialog offers for Item.custom_color, plus the BT.601 luminance test
+//// that decides black or white label text (26f5a3f1, 2026-03-25 "add image and color
+//// support for items in POS restaurant"). The two "#d68a59" entries are the Design System
+//// clay sweep of e4769383 (2026-06-14 "retheme blue/violet -> Design System clay") landing
+//// on the old Blue and Indigo swatches: their names no longer match their hex and the two
+//// are now the same colour. TO REVIEW: the palette needs renaming or two fresh hues.
 // Predefined color palette for item display in POS grid
 export const ITEM_COLOR_PALETTE = [
 	{ hex: "#EF4444", name: "Red" },

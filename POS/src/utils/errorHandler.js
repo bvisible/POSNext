@@ -63,6 +63,12 @@ export function parseError(error) {
 		technicalDetails: null,
 	}
 
+	//// Neoffice — added guard. frappe-ui's call() can reject with `undefined` or a primitive
+	//// (aborted fetch, unconfigured POS Profile) and upstream read error.exc_type straight
+	//// away — so the helper whose job is to make errors readable threw its own TypeError, and
+	//// the cashier got "Cannot read properties of undefined (reading 'exc_type')" verbatim in
+	//// the TWINT dialog, hiding the real failure (e2ac6de4, 2026-06-22 "suppress cryptic JS
+	//// error when devices fail to load").
 	// Defensive: some call sites (especially aborted fetches and the resource
 	// wrapper) reject with `undefined` or a primitive. Reading `.exc_type` on
 	// that would throw "Cannot read properties of undefined (reading 'exc_type')"
@@ -144,6 +150,10 @@ export function parseError(error) {
 		if (match) {
 			const [, quantity, itemName, warehouse] = match
 			const qty = Number.parseFloat(quantity)
+			//// Neoffice — upstream built this shortage message by string interpolation, so it stayed
+			//// English on a French-speaking till. Rewritten as one __() msgid with positional slots —
+			//// the singular/plural unit word included — and shipped in the French PO (ef2cbcfd,
+			//// 2026-07-09 "don't stock-block non-stock items scanned from the search bar").
 			const unit = qty === 1 ? __("unit") : __("units")
 			context.message = __(
 				'Not enough stock for "{0}".\n\nYou need {1} {2} but the warehouse "{3}" doesn\'t have enough available.\n\nPlease reduce the quantity or check another warehouse.',
@@ -153,6 +163,7 @@ export function parseError(error) {
 			!context.message ||
 			context.message === "An unexpected error occurred"
 		) {
+			//// Neoffice — same Biome formatter pass (458d81a9): the __() call reflowed, same msgid.
 			context.message = __(
 				"Not enough stock available in the warehouse.\n\nPlease reduce the quantity or check stock availability.",
 			)
@@ -229,6 +240,7 @@ export function parseError(error) {
 	) {
 		context.type = "warning"
 		context.title = __("Connection Error")
+		//// Neoffice — same Biome formatter pass (458d81a9): the __() call reflowed, same msgid.
 		context.message = __(
 			"Unable to connect to server. Check your internet connection.",
 		)
@@ -265,17 +277,21 @@ export function formatErrorReport(errorContext, additionalInfo = {}) {
 	]
 
 	if (errorContext.technicalDetails) {
+		//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double inside __().
 		lines.push(__("Technical: {0}", [errorContext.technicalDetails]))
 		lines.push("")
 	}
 
 	if (additionalInfo.timestamp) {
+		//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double inside __().
 		lines.push(__("Timestamp: {0}", [additionalInfo.timestamp]))
 	}
 	if (additionalInfo.user) {
+		//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double inside __().
 		lines.push(__("User: {0}", [additionalInfo.user]))
 	}
 	if (additionalInfo.posProfile) {
+		//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double inside __().
 		lines.push(__("POS Profile: {0}", [additionalInfo.posProfile]))
 	}
 

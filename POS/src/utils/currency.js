@@ -29,6 +29,12 @@ export function initPrecision(data) {
 		float: data.float ?? 3,
 		rounding_method: data.rounding_method || "Banker's Rounding",
 		number_format: data.number_format || "#,###.##",
+		//// Neoffice — Swiss cash has no coin under 0.05, so a grand total of CHF 12.37 cannot be
+		//// tendered. Upstream carried only ERPNext's decimal precision, so we also read the
+		//// Currency doctype's smallest_currency_fraction out of the bootstrap payload and keep it
+		//// in the POS precision settings — that is what lets roundTotal() below snap the total to
+		//// the 0.05 step (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick
+		//// amounts").
 		smallest_currency_fraction: data.smallest_currency_fraction || 0,
 	}
 	_formatterCache.clear()
@@ -217,6 +223,11 @@ export function roundFloat(value) {
 	return round(value, settings.float)
 }
 
+//// Neoffice — added. Upstream rounds to the currency's decimal places and stops there,
+//// which leaves a CHF total the till cannot be paid in coins. roundToFraction snaps a
+//// value to an arbitrary step and roundTotal applies it to the grand total whenever the
+//// company currency declares one (0.05 for CHF), falling back to plain decimal rounding
+//// otherwise (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts").
 /** Round to nearest currency fraction step (e.g. 0.05 for CHF) */
 export function roundToFraction(value, fraction) {
 	if (!fraction || fraction <= 0) return roundCurrency(value)

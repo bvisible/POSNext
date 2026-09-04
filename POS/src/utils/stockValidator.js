@@ -27,6 +27,9 @@ export function shouldValidateItemStock(item) {
 	if (item.has_serial_no || item.has_batch_no) return false
 
 	// Must be a stock item or bundle (or have stock data)
+	//// Neoffice — Biome formatter pass of 458d81a9 (2026-03-20 "remove BrainWise branding,
+	//// add restaurant mode, and code formatting"): the assignment reflowed onto two lines.
+	//// Same condition, same result.
 	const hasStockData =
 		item.actual_qty !== undefined || item.stock_qty !== undefined
 	return !!(item.is_stock_item || item.is_bundle || hasStockData)
@@ -42,6 +45,7 @@ export function shouldValidateItemStock(item) {
  */
 export function checkStockAvailability(item, requestedQty, warehouse) {
 	const actualQty = item.actual_qty ?? item.stock_qty ?? 0
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	const wh = warehouse || item.warehouse || ""
 
 	if (actualQty >= requestedQty) {
@@ -89,9 +93,15 @@ export async function getItemStock(itemCode, warehouse) {
  */
 export function formatStockError(itemName, requested, available, warehouse) {
 	if (available <= 0) {
+		//// Neoffice — upstream returned this shortage text as an interpolated template string, so
+		//// it reached a French-speaking cashier in English. Turned into an __() msgid with
+		//// positional slots and shipped in the French PO (ef2cbcfd, 2026-07-09 "don't stock-block
+		//// non-stock items scanned from the search bar").
 		return __('"{0}" is out of stock in warehouse "{1}".', [itemName, warehouse])
 	}
 
+	//// Neoffice — same i18n move as above (ef2cbcfd): the singular/plural unit word goes
+	//// through __() too, because "unit"/"units" does not translate as a suffix in French.
 	const unit = requested === 1 ? __("unit") : __("units")
 	const availableUnit = available === 1 ? __("unit") : __("units")
 	return __(

@@ -39,6 +39,11 @@ function setGlobalToken(token, source) {
 		lastKnownToken = token
 
 		// Notify all registered callbacks about the token refresh
+		//// Neoffice — the "code formatting" third of 458d81a9 (2026-03-20 "remove BrainWise
+		//// branding, add restaurant mode, and code formatting"): a repo-wide Biome pass that
+		//// put parentheses round arrow parameters, rewrote single quotes to double and reflowed
+		//// long lines. It changes no behaviour — this file's only real divergence from upstream
+		//// is the customer-display Authorization block further down (6ad7a068).
 		tokenRefreshCallbacks.forEach((callback) => {
 			try {
 				callback(token)
@@ -52,6 +57,7 @@ function setGlobalToken(token, source) {
 }
 
 export function onCSRFTokenRefresh(callback) {
+	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (typeof callback === "function") {
 		tokenRefreshCallbacks.push(callback)
 	}
