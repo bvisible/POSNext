@@ -237,11 +237,13 @@ export function buildReceiptHTML(invoiceData) {
 				</div>` : ""}
 
 				<div class="footer">
-					<!-- //// Neoffice — a "Powered by BrainWise" line linking to nexus.brainwise.me stood
-					//// below, printed whenever the POS Profile carried no footer of its own: an advert
+					${/* //// Neoffice — a "Powered by BrainWise" line linking to nexus.brainwise.me stood
+					//// here, printed whenever the POS Profile carried no footer of its own: an advert
 					//// for the upstream vendor, with a live link, on the copy handed to the CUSTOMER,
 					//// under the shop's own name. Removed — a receipt carries the shop's footer or the
-					//// plain thank-you line, nothing else (#217). -->
+					//// plain thank-you line, nothing else (#217). A JS comment and not an HTML one on
+					//// purpose: an HTML comment would be part of the string and would print the vendor
+					//// name back into the source of every receipt. */ ""}
 					<div style="margin-bottom: 5px;">${invoiceData.footer || __("Thank you for your business!")}</div>
 				</div>
 			</div>`
