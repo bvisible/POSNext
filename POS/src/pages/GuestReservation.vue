@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Public booking form at -->
+	<!-- //// /pos/reservation: a guest reserves a table from the restaurant's website, -->
+	<!-- //// with double opt-in by e-mail, service slots and per-area table choice. -->
+	<!-- //// Upstream POSNext is a retail POS and books nothing (ebc3ecc5, 2026-03-29 -->
+	<!-- //// "restaurant reservation system with POS dialog, online booking, and email -->
+	<!-- //// notifications"). -->
 	<div class="flex flex-col min-h-screen bg-gray-50">
 		<!-- Header -->
 		<div class="bg-white border-b px-4 py-4 text-center">

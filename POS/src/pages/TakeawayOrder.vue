@@ -1,4 +1,9 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Public takeaway ordering at -->
+	<!-- //// /pos/order: the customer orders from the web, creates an account and pays -->
+	<!-- //// before the kitchen starts. Same guest components as the QR table flow, but -->
+	<!-- //// no token bound to a table. Nothing upstream serves a customer directly -->
+	<!-- //// (3939a848, 2026-03-28 "QR self-ordering and takeaway web ordering"). -->
 	<div class="flex flex-col h-screen bg-gray-50 overflow-hidden" style="max-height: 100dvh;">
 		<!-- Loading State -->
 		<div v-if="isInitializing" class="flex-1 flex flex-col items-center justify-center p-8">

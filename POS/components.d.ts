@@ -9,9 +9,24 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ActionButton: typeof import('./src/components/common/ActionButton.vue')['default']
+    //// Neoffice — GENERATED FILE (unplugin-vue-components), rewritten wholesale by
+    //// `yarn build`. Every declaration marked below is the mechanical consequence of a
+    //// component we added under POS/src/components/**; nothing here is hand-written, so
+    //// `git blame` on this file names the build that regenerated the line, not the commit
+    //// that introduced the component. At the next upstream merge do NOT resolve this file
+    //// by hand: take upstream's copy and let the plugin regenerate it.
+    //// Neoffice — AddressAutocomplete: geo.admin address lookup used by the POS customer
+    //// dialogs (structured street + N°, ADR-002). Upstream has a single free-text address
+    //// field (98500337, 2026-07-18 "fix(pos/address): geo.admin house number from label
+    //// token, not lossy attrs.num").
     AddressAutocomplete: typeof import('./src/components/common/AddressAutocomplete.vue')['default']
     AutocompleteSelect: typeof import('./src/components/common/AutocompleteSelect.vue')['default']
     BatchSerialDialog: typeof import('./src/components/sale/BatchSerialDialog.vue')['default']
+    //// Neoffice — restaurant carte editor, PSP-agnostic card-present terminal dialog and
+    //// the cash in/out dialog (Journal Entry Templates, erpnextswiss structure). Upstream
+    //// is a retail POS: no carte, one hardcoded PSP, no cash movements outside the shift
+    //// (2a539d5a 2026-03-24; 9acebda9 2026-05-14 "rename terminal dialogs to PSP-agnostic
+    //// names"; 5783eb27 2026-03-28 "cash withdrawal at shift closing").
     CardEditor: typeof import('./src/components/restaurant/CardEditor.vue')['default']
     CardPresentDialog: typeof import('./src/components/payments/CardPresentDialog.vue')['default']
     CashInOutDialog: typeof import('./src/components/pos/CashInOutDialog.vue')['default']
@@ -21,15 +36,31 @@ declare module 'vue' {
     CouponDialog: typeof import('./src/components/sale/CouponDialog.vue')['default']
     CouponManagement: typeof import('./src/components/sale/CouponManagement.vue')['default']
     CreateCustomerDialog: typeof import('./src/components/sale/CreateCustomerDialog.vue')['default']
+    //// Neoffice — customer creation from the customer-facing display, and item creation
+    //// from the restaurant card editor. Upstream has one screen and no item authoring in
+    //// the POS (185c3c50 2026-02-03 "dynamic customer group and territory lookup for
+    //// customer display"; 34ee11a8 2026-03-25 "merge all restaurant enhancements").
     CreateCustomerModal: typeof import('./src/components/customer-display/CreateCustomerModal.vue')['default']
     CreateItemDialog: typeof import('./src/components/restaurant/CreateItemDialog.vue')['default']
     CustomerDialog: typeof import('./src/components/sale/CustomerDialog.vue')['default']
+    //// Neoffice — the three panels of the second, customer-facing screen (CFD): auth,
+    //// mirrored cart, header. Upstream POSNext has no second screen at all (185c3c50,
+    //// 2026-02-03 "use dynamic customer group and territory lookup for customer display").
     DisplayAuth: typeof import('./src/components/customer-display/DisplayAuth.vue')['default']
     DisplayCart: typeof import('./src/components/customer-display/DisplayCart.vue')['default']
     DisplayHeader: typeof import('./src/components/customer-display/DisplayHeader.vue')['default']
     DraftInvoicesDialog: typeof import('./src/components/sale/DraftInvoicesDialog.vue')['default']
+    //// Neoffice — full meta-driven Customer edit dialog: the cart pencil stays inside the
+    //// SPA instead of sending a tablet cashier to the desk form (82fbfd9e, 2026-07-10
+    //// "full meta-driven customer edit dialog"); blame lands on the later rebuild
+    //// 98500337 (2026-07-18) because the file is regenerated at every build.
     EditCustomerDialog: typeof import('./src/components/sale/EditCustomerDialog.vue')['default']
     EditItemDialog: typeof import('./src/components/sale/EditItemDialog.vue')['default']
+    //// Neoffice — one block, six unrelated additions, all absent upstream: e-mailing the
+    //// invoice as a PDF from the success dialog (4239ea8d), the floor-plan editor and its
+    //// wall/door layer (0ebfda03 + 032298a3), the gift-card-created dialog (703f2046), the
+    //// three QR guest-ordering views (3939a848 "QR self-ordering and takeaway web
+    //// ordering"), and image search when creating a restaurant item (26f5a3f1).
     EmailInvoiceDialog: typeof import('./src/components/sale/EmailInvoiceDialog.vue')['default']
     FloorPlanEditor: typeof import('./src/components/pos/FloorPlanEditor.vue')['default']
     FloorPlanWalls: typeof import('./src/components/pos/FloorPlanWalls.vue')['default']
@@ -44,18 +75,31 @@ declare module 'vue' {
     InvoiceFilters: typeof import('./src/components/invoices/InvoiceFilters.vue')['default']
     InvoiceHistoryDialog: typeof import('./src/components/sale/InvoiceHistoryDialog.vue')['default']
     InvoiceManagement: typeof import('./src/components/invoices/InvoiceManagement.vue')['default']
+    //// Neoffice — restaurant item authoring (badge panel, edit panel, save confirmation)
+    //// and the structured item-modifiers dialog. A dish carries options and a preparation
+    //// badge; a retail article does not (34ee11a8 2026-03-25; 5aa8189f 2026-03-26;
+    //// 4df0caf1 2026-03-21 "Phase 4A - structured item modifiers").
     ItemBadgePanel: typeof import('./src/components/restaurant/ItemBadgePanel.vue')['default']
     ItemEditPanel: typeof import('./src/components/restaurant/ItemEditPanel.vue')['default']
     ItemModifiersDialog: typeof import('./src/components/sale/ItemModifiersDialog.vue')['default']
     ItemSaveConfirmDialog: typeof import('./src/components/restaurant/ItemSaveConfirmDialog.vue')['default']
     ItemSelectionDialog: typeof import('./src/components/sale/ItemSelectionDialog.vue')['default']
     ItemsSelector: typeof import('./src/components/sale/ItemsSelector.vue')['default']
+    //// Neoffice — the kitchen/preparation display order card. Upstream has no KDS
+    //// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode").
     KDSOrderCard: typeof import('./src/components/invoices/KDSOrderCard.vue')['default']
     LanguageSwitcher: typeof import('./src/components/common/LanguageSwitcher.vue')['default']
     LazyImage: typeof import('./src/components/common/LazyImage.vue')['default']
+    //// Neoffice — Link autocomplete field, backed by frappe.desk.search.search_link, that
+    //// the meta-driven customer editor needs to render Link fields inside the SPA
+    //// (82fbfd9e, 2026-07-10 "full meta-driven customer edit dialog").
     LinkField: typeof import('./src/components/common/LinkField.vue')['default']
     LoadingSpinner: typeof import('./src/components/common/LoadingSpinner.vue')['default']
     ManagementSlider: typeof import('./src/components/pos/ManagementSlider.vue')['default']
+    //// Neoffice — printable menu designer and preview, the course-selection dialog for a
+    //// restaurant menu, the menu settings panel, and the NoraLearn React island bridge.
+    //// None exist upstream (bbbe36f4 2026-03-26; 32f2415d 2026-03-23; 05053a5b 2026-04-07
+    //// "integrate nora-learn-react via React Island bridge").
     MenuDesignerDialog: typeof import('./src/components/restaurant/MenuDesignerDialog.vue')['default']
     MenuPreview: typeof import('./src/components/restaurant/MenuPreview.vue')['default']
     MenuSelectionDialog: typeof import('./src/components/sale/MenuSelectionDialog.vue')['default']
@@ -64,15 +108,30 @@ declare module 'vue' {
     NumberField: typeof import('./src/components/settings/NumberField.vue')['default']
     OffersDialog: typeof import('./src/components/sale/OffersDialog.vue')['default']
     OfflineInvoicesDialog: typeof import('./src/components/sale/OfflineInvoicesDialog.vue')['default']
+    //// Neoffice — opening-hours editor for Restaurant Settings: a card is only orderable
+    //// inside its service window (32f2415d, 2026-03-23 "add Restaurant Settings with
+    //// opening hours and time-based card availability").
     OpeningHoursEditor: typeof import('./src/components/settings/OpeningHoursEditor.vue')['default']
     PartialPayments: typeof import('./src/components/partials/PartialPayments.vue')['default']
     PaymentDialog: typeof import('./src/components/sale/PaymentDialog.vue')['default']
+    //// Neoffice — POSFooter's declaration was REMOVED here: we deleted the upstream
+    //// BrainWise branding footer, both to drop the vendor branding and to give the till
+    //// back the screen row it occupied (458d81a9 2026-03-20 "remove BrainWise branding";
+    //// db22e2ae 2026-03-20 "remove POSFooter branding component to reclaim screen space").
     PhoneInput: typeof import('./src/components/common/PhoneInput.vue')['default']
     POSHeader: typeof import('./src/components/pos/POSHeader.vue')['default']
     POSSettings: typeof import('./src/components/settings/POSSettings.vue')['default']
+    //// Neoffice — numpad dialog for zero-price items (gift cards, open-price dishes) and
+    //// the product-options editor. Upstream refuses a zero rate outright and has no
+    //// modifier authoring (1ff2fba2 2026-03-27; f23daabe 2026-03-27 "item search in
+    //// product options editor").
     PriceEntryDialog: typeof import('./src/components/sale/PriceEntryDialog.vue')['default']
     ProductOptionsEditor: typeof import('./src/components/restaurant/ProductOptionsEditor.vue')['default']
     PromotionManagement: typeof import('./src/components/sale/PromotionManagement.vue')['default']
+    //// Neoffice — the PSP-agnostic QR payment dialog (TWINT) plus the whole reservation
+    //// surface: badge on the floor plan, POS dialog, floor plan picker, form, list and
+    //// stats. Restaurants take bookings; upstream retail POS has none (9acebda9 2026-05-14;
+    //// ebc3ecc5 2026-03-29 "restaurant reservation system"; 6f17f723 2026-03-30).
     QRPaymentDialog: typeof import('./src/components/payments/QRPaymentDialog.vue')['default']
     ReservationBadge: typeof import('./src/components/restaurant/ReservationBadge.vue')['default']
     ReservationDialog: typeof import('./src/components/restaurant/ReservationDialog.vue')['default']
@@ -83,15 +142,24 @@ declare module 'vue' {
     ReturnInvoiceDialog: typeof import('./src/components/sale/ReturnInvoiceDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    //// Neoffice — the runner display card: who carries which prepared course to which
+    //// table (c7f6932c 2026-03-23; feature from d59036f1 2026-03-23 "preparation
+    //// workflows, runner display, and workflow APIs").
     RunnerOrderCard: typeof import('./src/components/invoices/RunnerOrderCard.vue')['default']
     SelectField: typeof import('./src/components/settings/SelectField.vue')['default']
     SelectInput: typeof import('./src/components/common/SelectInput.vue')['default']
+    //// Neoffice — the send-to-kitchen dialog: in a restaurant the order leaves for the
+    //// stations long before it is paid, so the cart needs a second, non-payment exit
+    //// (c7f6932c, 2026-03-23 "table only marked Occupied when draft invoice exists").
     SendToKitchenDialog: typeof import('./src/components/sale/SendToKitchenDialog.vue')['default']
     SessionLockScreen: typeof import('./src/components/common/SessionLockScreen.vue')['default']
     SettingsSection: typeof import('./src/components/settings/SettingsSection.vue')['default']
     ShiftClosingDialog: typeof import('./src/components/ShiftClosingDialog.vue')['default']
     ShiftOpeningDialog: typeof import('./src/components/ShiftOpeningDialog.vue')['default']
     StatusBadge: typeof import('./src/components/common/StatusBadge.vue')['default']
+    //// Neoffice — per-table QR code for guest self-ordering, the table selector, and the
+    //// tips panel (Swiss service tips are recorded per server). All restaurant-only
+    //// (3e25c3b6 2026-03-28; 458d81a9 2026-03-20; ebc3ecc5 2026-03-29).
     TableQRCode: typeof import('./src/components/restaurant/TableQRCode.vue')['default']
     TableSelector: typeof import('./src/components/pos/TableSelector.vue')['default']
     TipsPanel: typeof import('./src/components/restaurant/TipsPanel.vue')['default']
@@ -99,6 +167,9 @@ declare module 'vue' {
     TranslatedHTML: typeof import('./src/components/common/TranslatedHTML.vue')['default']
     UserMenu: typeof import('./src/components/common/UserMenu.vue')['default']
     WarehouseAvailabilityDialog: typeof import('./src/components/sale/WarehouseAvailabilityDialog.vue')['default']
+    //// Neoffice — the preparation-workflow editor (Bar -> Kitchen -> Runner step chain).
+    //// Upstream has no preparation stations, hence no workflow between them (2a539d5a,
+    //// 2026-03-24; feature from d59036f1 2026-03-23 "preparation workflows").
     WorkflowEditor: typeof import('./src/components/restaurant/WorkflowEditor.vue')['default']
   }
 }

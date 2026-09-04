@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Preparation display (KDS): -->
+	<!-- //// the screen in the kitchen and at the bar showing what to cook, per station, -->
+	<!-- //// as a post-it grid with per-item status and a timer. A retail POS has nothing -->
+	<!-- //// between the cart and the receipt, so upstream has no such screen (458d81a9 -->
+	<!-- //// 2026-03-20 added it; e005b94b 2026-03-21 split it per station; 0e226900 -->
+	<!-- //// 2026-03-22 made it a grid; f3e620c2 / db5f4ead / 97cf5339 2026-03-22 fixed -->
+	<!-- //// the per-item status and the socket — it rides window.frappe.realtime rather -->
+	<!-- //// than opening its own namespace, which failed with "Invalid namespace"). -->
 	<div class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
 		<!-- Header -->
 		<header class="bg-white dark:bg-gray-800 shadow-sm z-10 p-4 flex justify-between items-center">

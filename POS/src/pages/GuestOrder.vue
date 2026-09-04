@@ -1,4 +1,14 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). QR self-ordering at the -->
+	<!-- //// table: the guest scans the code on the table, lands on /pos/guest/:token -->
+	<!-- //// with no account, browses the menu, orders and pays from their own phone. -->
+	<!-- //// Upstream POSNext is cashier-only and has no guest surface at all (3939a848, -->
+	<!-- //// 2026-03-28 "QR self-ordering and takeaway web ordering"). The nine fixes of -->
+	<!-- //// 2026-03-29 folded in here are one story — what the guest sees when the -->
+	<!-- //// payment provider bounces them back: a thank-you page even on an expired -->
+	<!-- //// token (abc084dd, f0c3bc64), a way out of the error page (a0e06b68, -->
+	<!-- //// 685da596), the amount and the lock once paid (2e00caf8, d213abb2), and not -->
+	<!-- //// losing the cart afterwards (89b67857, 3b805c88, d5a11720). -->
 	<div class="flex flex-col h-screen bg-gray-50 overflow-hidden" style="max-height: 100dvh;">
 		<!-- Loading State -->
 		<div v-if="isValidating" class="flex-1 flex flex-col items-center justify-center p-8">

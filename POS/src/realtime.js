@@ -1,3 +1,12 @@
+//// Neoffice — added file (no upstream equivalent). The POS runs as a standalone SPA at
+//// /pos, not as a desk page, so the window.frappe.realtime that Frappe composables
+//// expect simply does not exist. This is the compatibility shim that builds it on top of
+//// socket.io-client: it resolves the Socket.IO port from common_site_config and the site
+//// name (boot > localStorage > API > hostname) so the namespace is right on a multi-site
+//// bench. Without it the customer display, the KDS/runner screens and the guest-order
+//// sync have no live channel (9566a909 2026-02-04 "initialize Socket.IO for customer
+//// display notifications"; 727c5673 + c6be193f 2026-02-04 fixed the URL and the
+//// namespace; a212d426 2026-02-04 made the site name dynamic; 458d81a9 reformatted).
 /**
  * Frappe Realtime Compatibility Layer
  *

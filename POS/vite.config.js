@@ -38,6 +38,10 @@ function posNextBuildVersionPlugin(version) {
 						}),
 					},
 					null,
+					//// Neoffice — FORMATTING ONLY. Biome pass of 458d81a9 (2026-03-20 "remove BrainWise
+					//// branding, add restaurant mode, and code formatting") added the trailing commas here
+					//// and on the "utf8" argument below. No behaviour change: at the next merge take
+					//// upstream's file and re-run `biome check --write` instead of resolving the noise.
 					2,
 				),
 				"utf8",

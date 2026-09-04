@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Runner display: what is -->
+	<!-- //// ready and to which table it goes, by area or by station, with delivery -->
+	<!-- //// arrows on the floor plan. It closes the preparation workflow the KDS opens, -->
+	<!-- //// and it renders an explicit disabled state instead of an empty screen when -->
+	<!-- //// the runner step is off in the settings (d59036f1 2026-03-23 "preparation -->
+	<!-- //// workflows, runner display, and workflow APIs"; 784f82bd + a17f7297 + -->
+	<!-- //// 20be8d0f 2026-03-23; 4637f08d + 059127f1 2026-03-24 the disabled state). -->
 	<!-- Runner disabled message -->
 	<div v-if="!runnerEnabled" class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 items-center justify-center">
 		<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

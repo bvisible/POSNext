@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Second, customer-facing -->
+	<!-- //// screen (CFD): it mirrors the cart, totals and taxes of the till on a display -->
+	<!-- //// turned towards the customer, fed over the Frappe socket. Upstream POSNext -->
+	<!-- //// has one screen (458d81a9, 2026-03-20 "remove BrainWise branding, add -->
+	<!-- //// restaurant mode, and code formatting"; renamed to Neopos by 771950bd, -->
+	<!-- //// reformatted by the Biome pass 3e25c3b6). -->
 	<div class="flex flex-col lg:flex-row h-screen bg-gray-50 text-gray-900 overflow-hidden font-sans">
 		<!-- Left Side: Order Items -->
 		<div class="flex-1 flex flex-col bg-white shadow-xl z-10 lg:w-2/3 max-w-4xl border-r">

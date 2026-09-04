@@ -12,6 +12,12 @@
 	--z-dialog-content: 500;
 	--z-dropdown: 10000;
 
+	/* //// Neoffice — Design System tokens. Upstream POSNext ships Tailwind defaults on a
+	   //// white page; Neoffice is warm paper + clay + ink, so the till carries the same
+	   //// radii (8/14/18px) and the same ground (#f8f8f8) as the rest of the suite
+	   //// (c9d9c1cb, 2026-03-20 "align POS design with Neoffice theme"). --neo-primary /
+	   //// --neo-accent were later recoloured from the upstream blue/violet to clay #d68a59
+	   //// (e4769383, 2026-06-14 "retheme blue/violet -> Design System clay"). */
 	/* Neoffice design tokens */
 	--neo-radius-sm: 8px;
 	--neo-radius-md: 14px;
@@ -199,6 +205,14 @@ button.active\:scale-95:active,
 	}
 }
 
+/* //// Neoffice — dark mode, ~200 lines with no upstream counterpart: POSNext has no
+   //// dark theme and paints surfaces with hardcoded light Tailwind utilities (bg-white,
+   //// bg-gray-50, from- and to- gradient stops). The NeoCockpit stamps data-theme="dark"
+   //// <html> and the till must follow the cockpit's colour mode, so rather than touch
+   //// ~85 component files we remap those utilities and the --neo-* tokens here
+   //// (59da06e1 + e39d2195 + 2d1841e0 + a563f3d4 + b9df7cc5, 2026-06-14; cfc64c9c live
+   //// theme sync + fd40b7ae flattened gradients, 2026-06-15). Everything is scoped to
+   //// [data-theme='dark'] / .dark, so the light rendering is byte-for-byte upstream's. */
 /* ============================================================================
  * Neoffice — dark mode for the POS SPA, driven by the cockpit colour mode.
  * The NeoCockpit sets data-theme="dark" on <html>; POS uses hardcoded light

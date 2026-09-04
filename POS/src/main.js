@@ -98,6 +98,11 @@ if ("serviceWorker" in navigator) {
 					immediate: true,
 					onOfflineReady: () => log.info("App ready to work offline"),
 					onRegistered: (reg) => log.info("Service Worker registered", reg),
+					//// Neoffice — tail of the registerSW rewrite marked just above: upstream also passed an
+					//// `onNeedRefresh` callback, which in autoUpdate mode is never called; it was dropped
+					//// so nobody mistakes it for an update path, and the remaining callback reflowed onto
+					//// two lines (7648dbff, 2026-08-18 — the commit that proved the auto-update cannot
+					//// go through the service worker at all).
 					onRegisterError: (err) =>
 						log.error("Service Worker registration error", err),
 				})
@@ -211,6 +216,12 @@ async function initializeApp() {
 	session.user = user
 	log.info(`User authenticated: ${session.user}`)
 
+	//// Neoffice — the POS is a standalone SPA, not a desk page, so window.frappe.realtime
+	//// does not exist here. We mint it at startup (only for an authenticated user) because
+	//// the customer display, the KDS/runner screens and the guest-order sync all publish
+	//// over the Frappe socket. `await` matters: the namespace needs the resolved site name
+	//// (9566a909 2026-02-04 "initialize Socket.IO for customer display notifications";
+	//// a212d426 2026-02-04 "dynamic site name resolution for Socket.IO namespace").
 	// -------------------------------------------------------------------------
 	// Initialize Realtime (Socket.IO for live updates)
 	// -------------------------------------------------------------------------
@@ -262,6 +273,10 @@ async function initializeApp() {
 					log.debug("Bootstrap preload failed (non-critical)", error)
 				}
 			})
+			//// Neoffice — FORMATTING ONLY: Biome pass of 458d81a9 (2026-03-20) closed the empty
+			//// arrow body, `.catch(() => { })` -> `.catch(() => {})`. `git blame -w` hides this and
+			//// credits the upstream author of the line; without -w it is 458d81a9. No behaviour
+			//// change — take upstream's file at the next merge and re-run `biome check --write`.
 			.catch(() => {})
 	}
 

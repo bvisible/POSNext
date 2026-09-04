@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Takeaway counter screen: -->
+	<!-- //// the orders to hand over, filtered by status, with a ready / picked-up -->
+	<!-- //// action and a numbered ticket (T-XXX). Upstream has no order that outlives -->
+	<!-- //// the cart, hence no pickup queue (644ad918, 2026-03-26 "takeaway module - -->
+	<!-- //// settings, page, badge, KDS integration"; 4bc7e6c1 2026-03-26 added the -->
+	<!-- //// show-completed toggle; 3e25c3b6 Biome pass). -->
 	<div class="flex flex-col h-screen bg-gray-50">
 		<!-- Header -->
 		<div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">

@@ -9,6 +9,9 @@
     <div class="max-w-md w-full space-y-8">
       <div class="text-center">
         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+          <!-- //// Neoffice — product name: Neopos, not upstream's "POS Next". This is the -->
+          <!-- //// first screen a cashier sees, so the vendor name must not survive here -->
+          <!-- //// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos"). -->
           {{ __('Sign in to Neopos') }}
         </h2>
         <p class="mt-2 text-sm text-gray-600">

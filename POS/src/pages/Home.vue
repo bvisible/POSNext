@@ -11,6 +11,8 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center space-x-4">
+            <!-- //// Neoffice — product name: the till is sold as Neopos, never upstream's -->
+            <!-- //// "POS Next" (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos"). -->
             <h1 class="text-xl font-semibold text-gray-900">{{ __('Neopos') }}</h1>
 
             <!-- Shift Status Indicator -->
@@ -56,6 +58,7 @@
         <div class="border-4 border-dashed border-gray-200 rounded-lg min-h-96 p-8">
           <div class="text-center">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">
+              <!-- //// Neoffice — product name, same rebrand (771950bd, 2026-04-02). -->
               {{ __('Welcome to Neopos!') }}
             </h2>
             <p class="text-gray-600 mb-8">
@@ -196,6 +199,7 @@
           </div>
 
           <p v-else class="text-sm text-gray-500">
+            <!-- //// Neoffice — product name, same rebrand (771950bd, 2026-04-02). -->
             {{ __('Are you sure you want to sign out of Neopos?') }}
           </p>
         </div>

@@ -53,6 +53,10 @@
   //// add provisional ticket print button in restaurant table view — 71050fa + 4fdb5df
 -->
 <template>
+	<!-- //// Neoffice — the page ground is the Design System neo-bg token (warm paper -->
+	<!-- //// #f8f8f8), not upstream's hardcoded bg-gray-50, so the till sits on the same -->
+	<!-- //// canvas as the rest of the suite (87f168fe, 2026-03-20 "align POS design -->
+	<!-- //// with Neoffice theme and improve customer display"). -->
 	<div
 		class="flex flex-col bg-[var(--neo-bg)] overflow-x-hidden"
 		style="height: 100vh; max-height: 100vh"
@@ -60,6 +64,12 @@
 		<!-- Loading State -->
 		<LoadingSpinner v-if="uiStore.isLoading" />
 
+		<!-- //// Neoffice — full-screen overlay while the invoice is submitted. Upstream -->
+		<!-- //// leaves the payment dialog up and the screen idle for the second or two the -->
+		<!-- //// server takes, and a cashier who taps again gets a second submit. The -->
+		<!-- //// payment dialog is now closed the instant submission starts and this spinner -->
+		<!-- //// takes the screen instead (2584aa58, 2026-03-24 "UX improvements ... -->
+		<!-- //// processing overlay with spinner"; lightened by 548757f7 the same day). -->
 		<!-- Payment Processing Overlay -->
 		<div v-if="isProcessingPayment" class="fixed inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-[400] flex flex-col items-center justify-center">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"></div>
@@ -70,6 +80,16 @@
 		<!-- Main App -->
 		<template v-else>
 			<!-- Header -->
+			<!-- //// Neoffice — two additions inside this opening tag (an HTML comment cannot -->
+			<!-- //// sit between attributes, hence the marker here): -->
+			<!-- ////   :is-restaurant-mode / :can-toggle-restaurant — the header carries the -->
+			<!-- ////   fork-knife toggle between retail and table service; the guard forbids -->
+			<!-- ////   switching while a cart or an occupied table is alive (8aa35c29, -->
+			<!-- ////   2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup"). -->
+			<!-- ////   @toggle-restaurant — the event the toggle emits; it was moved onto the -->
+			<!-- ////   header when the language picker went into the dropdown (5e5db360, -->
+			<!-- ////   2026-03-21 "move toggle-restaurant to correct position"). -->
+			<!-- //// Upstream POSNext is retail-only and has neither. -->
 			<POSHeader
 				:current-time="shiftStore.currentTime"
 				:shift-duration="shiftStore.shiftDuration"
@@ -277,6 +297,11 @@
 			</POSHeader>
 
 			<!-- Main Content: Responsive Layout -->
+			<!-- //// Neoffice — the max-height on the style= attribute below drops the footer -->
+			<!-- //// row upstream reserved (calc(100vh - 60px - header)): we deleted the -->
+			<!-- //// BrainWise branding footer, so the sales area takes the full viewport -->
+			<!-- //// (c0bf6f85, 2026-03-20 "remove footer height from max-height calc to use -->
+			<!-- //// full viewport"; footer removed by db22e2ae / 458d81a9 the same day). -->
 			<div
 				v-if="shiftStore.hasOpenShift"
 				class="flex-1 flex overflow-hidden relative"
@@ -373,6 +398,19 @@
 							]"
 							style="contain: layout style paint"
 						>
+							<!-- //// Neoffice — ▼▼▼ ~290 lines with no upstream counterpart: everything the -->
+							<!-- //// left pane becomes in restaurant mode. Upstream POSNext always shows the -->
+							<!-- //// item grid; a restaurant starts from the room. With no table picked we -->
+							<!-- //// render the floor plan (0ebfda03 2026-03-20 "Phase 2 - visual floor plan -->
+							<!-- //// editor", 8aa35c29 multi-room tabs), and once a table or a takeaway ticket -->
+							<!-- //// is open (80c90631 2026-03-26) a banner, then the carte instead of the raw -->
+							<!-- //// catalogue: cards, categories, grid/list, search, menus and per-item -->
+							<!-- //// colours and images (f2392119 2026-03-22 "restaurant card system", -->
+							<!-- //// c56eed4f + e172bdba + bd1794bb + 8357bf87 + af6d76d2 2026-03-22, 6a4ff7b3 -->
+							<!-- //// 2026-03-25, d526332f 2026-03-27 permanent card, 9f4e85df 2026-03-21 -->
+							<!-- //// menus), plus the QR self-ordering button (c5208ba7 2026-03-28) and the -->
+							<!-- //// guest-paid state (02f74451 2026-03-31). Returning to an occupied table -->
+							<!-- //// reloads the SERVER draft, not a local one (c8f9a36c 2026-03-21). -->
 							<!-- Restaurant Mode: Table Selector -->
 							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable && !cartStore.isTakeaway">
 								<FloorPlanEditor
@@ -663,6 +701,8 @@
 									@item-selected="handleItemSelected"
 								/>
 							</template>
+						<!-- //// Neoffice — ▲▲▲ end of the restaurant left-pane region opened at the -->
+						<!-- //// "Restaurant Mode: Table Selector" marker above. -->
 						</div>
 					</keep-alive>
 
@@ -695,6 +735,11 @@
 					</div>
 
 					<!-- Right: Invoice Cart (Desktop) / Tab Content (Mobile) -->
+					<!-- //// Neoffice — min-width on the style= attribute of the div below raised -->
+					<!-- //// 300px -> 450px: the cart now carries table, KDS and modifier badges and -->
+					<!-- //// no longer fits in upstream's width (7e3f9458, 2026-03-31 "right panel -->
+					<!-- //// minimum width 450px (was 360/300)"). Marker sits above keep-alive, not -->
+					<!-- //// inside it: a comment child would make KeepAlive see two children. -->
 					<keep-alive>
 						<div
 							v-if="uiStore.isDesktop || uiStore.mobileActiveTab === 'cart'"
@@ -704,6 +749,23 @@
 							]"
 							style="min-width: 450px; contain: layout style paint"
 						>
+							<!-- //// Neoffice — four divergences inside this opening tag (no HTML comment can -->
+							<!-- //// sit between attributes, so they are listed here): -->
+							<!-- ////   ref="invoiceCartRef" — the parent needs a handle on the cart to open -->
+							<!-- ////   the edit dialog by itself for a zero-price item, e.g. a gift card whose -->
+							<!-- ////   amount the cashier types in (5dddc528, 2026-01-14). -->
+							<!-- ////   :grand-total / :rounding-adjustment — CHF has a 0.05 smallest fraction, -->
+							<!-- ////   so the cart shows the ROUNDED total and the adjustment line beside it; -->
+							<!-- ////   upstream passes the raw grandTotal (4fdb5df4, 2026-04-04 "rounding -->
+							<!-- ////   total, tips visibility, cash quick amounts"). -->
+							<!-- ////   @remove-item — passes the item OBJECT, not (itemCode, uom): the same -->
+							<!-- ////   dish can sit twice in the cart with different modifiers, so removing by -->
+							<!-- ////   code deleted the wrong line (7e1376a3, 2026-03-31). -->
+							<!-- ////   @send-to-kitchen / @open-kitchen-dialog / @print-provisional-ticket / -->
+							<!-- ////   @send-item-to-kitchen / @open-modifiers — the cart exits a restaurant -->
+							<!-- ////   order needs besides paying: fire the order (8aa35c29, c7f6932c), print -->
+							<!-- ////   the pre-payment ticket (71050faf, 2026-03-25) and edit modifiers -->
+							<!-- ////   (4df0caf1, 2026-03-21). -->
 							<InvoiceCart
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
@@ -790,6 +852,8 @@
 			</div>
 
 			<!-- No Shift Placeholder -->
+			<!-- //// Neoffice — same footer-less viewport calc as the sales area above: the -->
+			<!-- //// removed BrainWise footer no longer costs 60px (c0bf6f85, 2026-03-20). -->
 			<div
 				v-else
 				class="flex-1 flex items-center justify-center bg-gray-50"
@@ -814,6 +878,8 @@
 						</svg>
 					</div>
 					<h3 class="mt-4 text-lg font-medium text-gray-900">
+						<!-- //// Neoffice — product name: Neopos, not upstream's "POS Next" (771950bd, -->
+						<!-- //// 2026-04-02 "rebrand: rename POS Next to Neopos"). -->
 						{{ __("Welcome to Neopos") }}
 					</h3>
 					<p class="mt-2 text-sm text-gray-500">
@@ -831,6 +897,13 @@
 			</div>
 
 			<!-- Payment Dialog -->
+		<!-- //// Neoffice — two attribute changes inside this tag: :grand-total is the CHF -->
+		<!-- //// 0.05-rounded total, so the amount tendered matches the amount printed -->
+		<!-- //// (4fdb5df4, 2026-04-04); :guest-paid-amount tells the dialog what the -->
+		<!-- //// guests already settled from their phones, so the cashier is asked for the -->
+		<!-- //// remainder and not for the whole bill (214125e5, 2026-03-30 "show -->
+		<!-- //// remaining to collect in cart + payment dialog accounts for guest -->
+		<!-- //// payments"). -->
 		<PaymentDialog
 			v-model="uiStore.showPaymentDialog"
 			:grand-total="cartStore.roundedGrandTotal"
@@ -897,6 +970,10 @@
 				@return-created="handleReturnCreated"
 			/>
 
+			<!-- //// Neoffice — in a restaurant the order leaves for the stations long before -->
+			<!-- //// it is paid, so the cart needs a second, non-payment exit. Upstream has -->
+			<!-- //// only "pay" (c7f6932c, 2026-03-23 "table only marked Occupied when draft -->
+			<!-- //// invoice exists, not before"). -->
 			<!-- Send to Kitchen Dialog -->
 			<SendToKitchenDialog
 				ref="kitchenDialogRef"
@@ -904,6 +981,12 @@
 			/>
 
 			<!-- Coupon Dialog -->
+			<!-- //// Neoffice — :net-total and :grand-total inside this tag. A gift card is -->
+			<!-- //// capped on the net total AFTER pricing rules, not on the raw subtotal: -->
+			<!-- //// capping on the subtotal let a card exceed the discounted price and the -->
+			<!-- //// server refused the invoice (8e06bb9c, 2026-01-16 "calculate discount on -->
+			<!-- //// net total after pricing rules"). The total is the CHF-rounded one -->
+			<!-- //// (4fdb5df4, 2026-04-04). -->
 			<CouponDialog
 				v-model="uiStore.showCouponDialog"
 				:subtotal="cartStore.subtotal"
@@ -920,6 +1003,10 @@
 				@discount-removed="handleDiscountRemoved"
 			/>
 
+			<!-- //// Neoffice — a gift card sold at the till must be handed over with its -->
+			<!-- //// code, so the codes created by the invoice are shown once, right after the -->
+			<!-- //// sale. Upstream keeps gift cards server-side and never surfaces them -->
+			<!-- //// (703f2046, 2026-01-14 "add GiftCardCreatedDialog and debug logging"). -->
 			<!-- Gift Card Created Dialog -->
 			<GiftCardCreatedDialog
 				:open="showGiftCardCreatedDialog"
@@ -970,6 +1057,11 @@
 				@option-selected="handleOptionSelected"
 			/>
 
+			<!-- //// Neoffice — three dialogs a dish needs and an article does not: structured -->
+			<!-- //// modifiers (4df0caf1, 2026-03-21 "Phase 4A - structured item modifiers"), a -->
+			<!-- //// numpad for an item whose price is entered at the till (1ff2fba2, -->
+			<!-- //// 2026-03-27), and course-by-course menu selection (9f4e85df, 2026-03-21 -->
+			<!-- //// "Phase 4B - restaurant menus with course selection dialog"). -->
 			<!-- Item Modifiers Dialog -->
 			<ItemModifiersDialog ref="itemModifiersRef" @saved="handleModifiersSaved" />
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
@@ -1005,6 +1097,11 @@
 				@refresh="offlineStore.loadPendingInvoices"
 			/>
 
+			<!-- //// Neoffice — label narrowed from upstream's "Create/Edit Customer Dialog": -->
+			<!-- //// this quick form now only creates. The cart pencil opens the meta-driven -->
+			<!-- //// EditCustomerDialog below instead, which picks up custom fields and stays -->
+			<!-- //// inside the SPA (82fbfd9e, 2026-07-10 "full meta-driven customer edit -->
+			<!-- //// dialog (stays in the POS)"). -->
 			<!-- Create Customer Dialog (quick form) -->
 			<CreateCustomerDialog
 				v-model="uiStore.showCreateCustomerDialog"
@@ -1032,6 +1129,10 @@
 			/>
 
 			<!-- POS Settings -->
+			<!-- //// Neoffice — :initial-tab inside this tag: the settings dialog can be opened -->
+			<!-- //// straight on one tab, so "edit the schedule" in the card editor lands on -->
+			<!-- //// the schedule rather than on the first tab (6b38498b, 2026-03-27 "hide -->
+			<!-- //// permanent card from schedule settings, add edit schedule link"). -->
 			<POSSettings
 				v-model="showPOSSettings"
 				:pos-profile="shiftStore.profileName"
@@ -1047,6 +1148,15 @@
 				:company="shiftStore.profileCompany"
 			/>
 
+			<!-- //// Neoffice — the restaurant authoring surface, none of it upstream: the -->
+			<!-- //// preparation-workflow editor and the product-options editor (d59036f1 -->
+			<!-- //// 2026-03-23, f23daabe 2026-03-27), the carte editor (f2392119 2026-03-22), -->
+			<!-- //// the tips panel — Swiss service tips are recorded per server (c4460c61, -->
+			<!-- //// 2026-03-29 "record guest tips in Restaurant Tip + Tips panel") — the -->
+			<!-- //// reservation dialog (ebc3ecc5, 2026-03-29) and cash in/out, which posts a -->
+			<!-- //// Journal Entry from a template instead of leaving the drawer unexplained -->
+			<!-- //// (6c598630, 2026-03-28 "cash in/out from POS using Journal Entry -->
+			<!-- //// Templates"). -->
 			<!-- Restaurant Editors -->
 			<WorkflowEditor v-if="showWorkflowEditor" v-model="showWorkflowEditor" />
 			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
@@ -1064,6 +1174,9 @@
 			/>
 
 			<!-- Invoice Management -->
+			<!-- //// Neoffice — :pos-opening-shift inside this tag, taken from the cart rather -->
+			<!-- //// than the shift store, so the invoice list is scoped to the shift the cart -->
+			<!-- //// actually belongs to (a0084ae0, 2026-03-24). -->
 			<InvoiceManagement
 				v-model="showInvoiceManagement"
 				:pos-profile="shiftStore.profileName"
@@ -1093,6 +1206,11 @@
 				:options="{ title: __('Clear Cart?'), size: 'xs' }"
 			>
 				<template #body-content>
+					<!-- //// Neoffice — the clear-cart confirmation had to grow a second line. Money -->
+					<!-- //// already taken on the terminal but not yet booked lives in the cart store, -->
+					<!-- //// so this dialog can name it: emptying the cart here is what made 10.- and -->
+					<!-- //// 40.- vanish at guigoz on 2026-08-18 (92c0c5ed, 2026-08-19 — the commit -->
+					<!-- //// that made a collected payment impossible to lose in silence). -->
 					<div class="py-3 flex flex-col gap-3">
 						<p class="text-sm text-gray-600">
 							{{ __("Remove all {0} items from cart?", [cartStore.itemCount]) }}
@@ -1133,6 +1251,14 @@
 							theme="red"
 							@click="confirmClearCart"
 						>
+							<!-- //// Neoffice — the destructive button renames itself: "Abandon the payment" -->
+							<!-- //// instead of "Clear All" as soon as money was collected and not booked, so -->
+							<!-- //// the cashier cannot read it as "just remove the items" (92c0c5ed, -->
+							<!-- //// 2026-08-19). The two dialogs that follow this one are ours as well: the -->
+							<!-- //// purge dialog that guards switching restaurant mode with live orders -->
+							<!-- //// (59599289 2026-03-21; 1e73b40d; ab2ee852 server-side reset_all_tables) and -->
+							<!-- //// the notice that a customer was just created on the second screen -->
+							<!-- //// (912ef092, 2026-02-04 "improve UX for customer creation flow"). -->
 							{{ cartStore.collectedUnbookedTotal > 0 ? __("Abandon the payment") : __("Clear All") }}
 						</Button>
 					</div>
@@ -1309,6 +1435,7 @@
 								{{ __("Sign Out?") }}
 							</h3>
 							<p class="text-sm text-gray-600">
+								<!-- //// Neoffice — product name, same rebrand (771950bd, 2026-04-02). -->
 								{{ __("You will be logged out of Neopos") }}
 							</p>
 						</div>
@@ -1362,12 +1489,18 @@
 			>
 				<template #body-content>
 					<div class="text-center py-6">
+						<!-- //// Neoffice — bigger success tick (h-12 -> h-14) and the whole icon collapsed -->
+						<!-- //// from six lines to three. Cosmetic half of the success-dialog rework -->
+						<!-- //// (548757f7, 2026-03-24 "improve payment UX ... better success dialog with -->
+						<!-- //// Print/Email/Close buttons"). -->
 						<div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100">
 							<svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
 							</svg>
 						</div>
 						<h3 class="mt-4 text-lg font-medium text-gray-900">
+							<!-- //// Neoffice — FORMATTING ONLY: the same interpolation, unwrapped from three -->
+							<!-- //// lines to one by the success-dialog rework (548757f7, 2026-03-24). -->
 							{{ __("Invoice {0} created successfully!", [uiStore.lastInvoiceName]) }}
 						</h3>
 						<p class="mt-2 text-sm text-gray-500">
@@ -1376,10 +1509,16 @@
 					</div>
 				</template>
 				<template #actions>
+					<!-- //// Neoffice — the action row is centred and full-width because it now holds -->
+					<!-- //// three buttons instead of two (548757f7, 2026-03-24). -->
 					<div class="flex justify-center gap-3 w-full">
 						<Button variant="subtle" @click="uiStore.showSuccessDialog = false">
 							{{ __("Close") }}
 						</Button>
+						<!-- //// Neoffice — Email button: the receipt can be sent as a PDF straight from -->
+						<!-- //// the success dialog. Upstream only prints, which strands a customer who -->
+						<!-- //// wants the invoice by mail (4239ea8d, 2026-03-24 "add email invoice -->
+						<!-- //// functionality with PDF attachment"). -->
 						<Button
 							variant="outline"
 							@click="showEmailInvoiceDialog = true"
@@ -1389,11 +1528,17 @@
 							</template>
 							{{ __("Email") }}
 						</Button>
+						<!-- //// Neoffice — the @click inside this tag collapsed from six lines to one, and -->
+						<!-- //// the #prefix slot below adds the printer icon, so Print/Email/Close read as -->
+						<!-- //// three peers (548757f7 + 4239ea8d, 2026-03-24). The dialog also stays open -->
+						<!-- //// after Print or Email so the cashier can do both (39a70d18, 2026-03-24). -->
 						<Button
 							variant="solid"
 							theme="blue"
 							@click="handlePrintInvoice({ name: uiStore.lastInvoiceName })"
 						>
+							<!-- //// Neoffice — printer icon on the Print button, added with the Email peer -->
+							<!-- //// (548757f7 + 4239ea8d, 2026-03-24). -->
 							<template #prefix>
 								<FeatherIcon name="printer" class="w-4 h-4" />
 							</template>
@@ -1403,6 +1548,9 @@
 				</template>
 			</Dialog>
 
+			<!-- //// Neoffice — host for the e-mail dialog opened by the Email button above -->
+			<!-- //// (4239ea8d, 2026-03-24 "add email invoice functionality with PDF -->
+			<!-- //// attachment"). -->
 			<!-- Email Invoice Dialog -->
 			<EmailInvoiceDialog
 				v-model="showEmailInvoiceDialog"
@@ -1465,11 +1613,25 @@
 				@confirm="confirmClearCache"
 			/>
 
+		<!-- //// Neoffice — the upstream Footer comment and its POSFooter element were -->
+		<!-- //// REMOVED here: that strip was the BrainWise branding, and dropping it both -->
+		<!-- //// removes the vendor mark and gives the till back a screen row (458d81a9 -->
+		<!-- //// 2026-03-20 "remove BrainWise branding"; db22e2ae 2026-03-20 "remove -->
+		<!-- //// POSFooter branding component to reclaim screen space"). -->
 		</template>
 
 		<!-- Session Lock Screen (outside v-if/v-else so it renders even during loading) -->
 		<SessionLockScreen />
 
+		<!-- //// Neoffice — ▼▼▼ ~95 lines of QR self-ordering and table-lifecycle dialogs, -->
+		<!-- //// none of them upstream: confirm before opening a table to guest ordering -->
+		<!-- //// and show the QR itself (c5208ba7 2026-03-28 "QR button on table view", -->
+		<!-- //// f3affeaa replaced a raw window.confirm with a real Dialog), then the -->
+		<!-- //// end-of-service dialog on a table that guests already paid from their -->
+		<!-- //// phones — Paid (blue) and Cleaning (green) are distinct states with -->
+		<!-- //// different exits, and the dialog shows what was actually collected, tips -->
+		<!-- //// included (07d0d493 2026-03-29, 2aad6b2a + 34751a29 + 6bfa3117 2026-03-30, -->
+		<!-- //// ddf510f6 2026-03-31, 3b805c88 2026-03-29). -->
 		<!-- QR Self-Ordering Confirmation Dialog -->
 		<Dialog v-model="showQRConfirmDialog" :options="{ title: __('QR Self-Ordering'), size: 'sm' }">
 			<template #body-content>
@@ -1564,6 +1726,7 @@
 				</div>
 			</template>
 		</Dialog>
+	<!-- //// Neoffice — ▲▲▲ end of the QR / table-lifecycle dialog region opened above. -->
 	</div>
 </template>
 
@@ -1580,8 +1743,16 @@ import ShiftClosingDialog from "@/components/ShiftClosingDialog.vue";
 import ShiftOpeningDialog from "@/components/ShiftOpeningDialog.vue";
 import ClearCacheOverlay from "@/components/common/ClearCacheOverlay.vue";
 import SessionLockScreen from "@/components/common/SessionLockScreen.vue";
+//// Neoffice — `import POSFooter from "@/components/common/POSFooter.vue";` was
+//// REMOVED here with the BrainWise branding footer it imported (458d81a9 2026-03-20;
+//// db22e2ae 2026-03-20 "remove POSFooter branding component to reclaim screen space").
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
 import ManagementSlider from "@/components/pos/ManagementSlider.vue";
+//// Neoffice — imports for the restaurant authoring dialogs rendered above: cash in/out
+//// via Journal Entry Templates (6c598630, 2026-03-28), preparation workflows and
+//// product options (d59036f1 2026-03-23, f23daabe 2026-03-27), the carte editor
+//// (f2392119, 2026-03-22), the tips panel (c4460c61 + d08c57e7, 2026-03-23/29) and the
+//// reservation dialog (ebc3ecc5, 2026-03-29). No upstream equivalent for any of them.
 import CashInOutDialog from "@/components/pos/CashInOutDialog.vue";
 import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";
@@ -1592,18 +1763,27 @@ import POSHeader from "@/components/pos/POSHeader.vue";
 import BatchSerialDialog from "@/components/sale/BatchSerialDialog.vue";
 import CouponDialog from "@/components/sale/CouponDialog.vue";
 import CreateCustomerDialog from "@/components/sale/CreateCustomerDialog.vue";
+//// Neoffice — the meta-driven customer editor (82fbfd9e, 2026-07-10) and the gift-card
+//// hand-over dialog (703f2046, 2026-01-14); neither exists upstream.
 import EditCustomerDialog from "@/components/sale/EditCustomerDialog.vue";
 import GiftCardCreatedDialog from "@/components/sale/GiftCardCreatedDialog.vue";
 import CustomerDialog from "@/components/sale/CustomerDialog.vue";
 import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
+//// Neoffice — send-to-kitchen dialog: the restaurant cart's non-payment exit
+//// (c7f6932c, 2026-03-23).
 import SendToKitchenDialog from "@/components/sale/SendToKitchenDialog.vue";
 import InvoiceCart from "@/components/sale/InvoiceCart.vue";
 import InvoiceHistoryDialog from "@/components/sale/InvoiceHistoryDialog.vue";
 import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
+//// Neoffice — modifiers, the zero-price numpad and course selection: what a dish needs
+//// and an article does not (4df0caf1 + 9f4e85df 2026-03-21, 1ff2fba2 2026-03-27).
 import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
 import PriceEntryDialog from "@/components/sale/PriceEntryDialog.vue";
 import MenuSelectionDialog from "@/components/sale/MenuSelectionDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
+//// Neoffice — table selection, the floor-plan editor and the per-table QR code: the POS
+//// starts from the room, not the catalogue (0ebfda03 2026-03-20 "Phase 2 - visual floor
+//// plan editor"; c5208ba7 2026-03-28 "QR button on table view").
 import TableSelector from "@/components/pos/TableSelector.vue";
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
@@ -1611,6 +1791,8 @@ import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
 import PromotionManagement from "@/components/sale/PromotionManagement.vue";
+//// Neoffice — e-mail-the-invoice dialog (4239ea8d, 2026-03-24 "add email invoice
+//// functionality with PDF attachment").
 import EmailInvoiceDialog from "@/components/sale/EmailInvoiceDialog.vue";
 import ReturnInvoiceDialog from "@/components/sale/ReturnInvoiceDialog.vue";
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue";
@@ -1621,8 +1803,14 @@ import { useRealtimeStock } from "@/composables/useRealtimeStock";
 // Card realtime updates are handled in restaurant.js store via startRealtimeCardListeners()
 import { useSessionLock } from "@/composables/useSessionLock";
 import { usePOSEvents } from "@/composables/usePOSEvents";
+//// Neoffice — gift cards live on ERPNext-native Coupon Code / Promotional Scheme in our
+//// fork, so the till needs this composable to read back the codes an invoice created
+//// (703f2046, 2026-01-14 "add GiftCardCreatedDialog and debug logging").
 import { useGiftCard } from "@/composables/useGiftCard";
 import { useLocale } from "@/composables/useLocale";
+//// Neoffice — the sync layer for the second, customer-facing screen; upstream has one
+//// screen and no such composable (185c3c50, 2026-02-03 "use dynamic customer group and
+//// territory lookup for customer display").
 import { useCustomerDisplaySync } from "@/composables/useCustomerDisplaySync";
 import { session } from "@/data/session";
 import { useUserData } from "@/data/user";
@@ -1636,19 +1824,36 @@ import {
 	printInvoice,
 	printInvoiceByName,
 	printWithSilentFallback,
+	//// Neoffice — the pre-payment (provisional) ticket a restaurant hands the table before
+	//// cashing in; it prints "THIS IS NOT A RECEIPT" (71050faf, 2026-03-25 "add provisional
+	//// ticket print button in restaurant table view"). `git blame` credits the merge node
+	//// c87d0e93 (2026-05-14) because that merge re-resolved this import list.
 	printProvisionalTicket,
 } from "@/utils/printInvoice";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
 
+//// Neoffice — FeatherIcon added to the frappe-ui import: the Neoffice header, the table
+//// banner and the reworked success dialog draw their icons with it (87f168fe 2026-03-20
+//// "align POS design with Neoffice theme"; 548757f7 2026-03-24).
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
+//// Neoffice — nextTick added to the vue import: several of our flows have to wait for
+//// the cart to render before reaching into it — auto-opening the price numpad on a
+//// zero-price item (5dddc528, 2026-01-14) and the modifiers dialog on a dish just added
+//// (4df0caf1, 2026-03-21).
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@/composables/useToast";
+//// Neoffice — a dish has a colour, an article has a barcode: the card and the cart show
+//// a colour tile when there is no photo, and this decides black or white text on it
+//// (6a4ff7b3, 2026-03-25 "apply color/name display to restaurant card view").
 import { isLightColor } from "@/utils/itemColors";
 
 import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { useStockStore } from "@/stores/stock";
+//// Neoffice — used to decide from the CARD data whether a line is a stock item, instead
+//// of inferring it from the stock store being populated (1a0abef1, 2026-03-31; import
+//// blamed to 02f74451, 2026-03-31).
 import { useStock } from "@/composables/useStock";
 // Pinia Stores
 import { usePOSCartStore } from "@/stores/posCart";
@@ -1656,6 +1861,8 @@ import { usePOSDraftsStore } from "@/stores/posDrafts";
 import { usePOSSettingsStore } from "@/stores/posSettings";
 import { usePOSShiftStore } from "@/stores/posShift";
 import { usePOSSyncStore } from "@/stores/posSync";
+//// Neoffice — the restaurant store: tables, areas, cards, menus, modifiers, preparation
+//// stations. The whole table-service model upstream does not have (87f168fe, 2026-03-20).
 import { useRestaurantStore } from "@/stores/restaurant";
 import { usePOSUIStore } from "@/stores/posUI";
 import { useBootstrapStore } from "@/stores/bootstrap";
@@ -1671,8 +1878,11 @@ const draftsStore = usePOSDraftsStore();
 const posSettingsStore = usePOSSettingsStore();
 const itemStore = useItemSearchStore();
 const stockStore = useStockStore();
+//// Neoffice — stock status per line, used by the restaurant card view which has no
+//// stock column of its own (02f74451, 2026-03-31).
 const { getStockStatus } = useStock();
 const customerSearchStore = useCustomerSearchStore();
+//// Neoffice — restaurant store instance for this page (87f168fe, 2026-03-20).
 const restaurantStore = useRestaurantStore();
 const bootstrapStore = useBootstrapStore();
 // Note: settingsStore is an alias to posSettingsStore (same Pinia store singleton)
@@ -1681,6 +1891,10 @@ const settingsStore = posSettingsStore;
 // Real-time stock updates
 const { onStockUpdate } = useRealtimeStock();
 
+//// Neoffice — the second screen is driven from here: enable/disable the mirror for the
+//// open shift, tell it a sale completed, and be told when the CUSTOMER created their own
+//// account on it. Upstream POSNext has one screen (185c3c50 2026-02-03; 912ef092
+//// 2026-02-04 "improve UX for customer creation flow").
 // Customer display sync
 const {
 	enableSync: enableDisplaySync,
@@ -1716,6 +1930,10 @@ const { isRTL } = useLocale();
 // Component refs
 const itemsSelectorRef = ref(null);
 const offersDialogRef = ref(null);
+//// Neoffice — handles the page needs on children that upstream does not have: the
+//// send-to-kitchen dialog (c7f6932c), the cart itself so a zero-price line can be opened
+//// for editing (5dddc528), the modifiers dialog (4df0caf1), the price numpad (1ff2fba2)
+//// and the menu course selector (9f4e85df).
 const kitchenDialogRef = ref(null);
 const invoiceCartRef = ref(null);
 const itemModifiersRef = ref(null);
@@ -1726,9 +1944,21 @@ const dividerRef = ref(null);
 const pendingPaymentAfterCustomer = ref(false);
 const logoutAfterClose = ref(false);
 const editCustomer = ref(null); // Customer being edited (null for create mode)
+//// Neoffice — the cart pencil now opens the full meta-driven editor, kept separate from
+//// the quick-create form above it (82fbfd9e, 2026-07-10 "full meta-driven customer edit
+//// dialog (stays in the POS)").
 const showEditCustomerDialog = ref(false); // Full meta-driven edit dialog
 const showClearCacheDialog = ref(false);
 const clearCacheOverlayRef = ref(null);
+//// Neoffice — ▼▼▼ ~145 lines of restaurant state with no upstream counterpart: the
+//// selected carte and category and their search / grid-list filtering (f2392119
+//// 2026-03-22 "restaurant card system", c56eed4f + e172bdba + 8357bf87 2026-03-22), the
+//// live QR tokens per table (c5208ba7 + f3affeaa, 2026-03-28), and the click paths that
+//// turn a card entry into a cart line — colour and image carried over (6a4ff7b3,
+//// 983130d3, f1e01ff1), price asked when it is 0 (c7696bb1, 2026-03-27), modifiers
+//// opened by themselves and resolved with findLast so the dialog edits the line just
+//// added rather than the first one with the same code (7e1376a3, 2026-03-31; b98cca7e,
+//// eabe35e7, 5982e48e 2026-03-25), and menus routed to the course dialog (9f4e85df).
 const showMenus = ref(false);
 
 // Restaurant card selection
@@ -1875,6 +2105,7 @@ function handleCardMenuClick(cardItem) {
 	}
 }
 
+//// Neoffice — ▲▲▲ end of the restaurant carte / QR state region opened above.
 // Debounce timer for offer reapplication
 const offerReapplyTimer = ref(null);
 
@@ -1904,6 +2135,10 @@ const showPromotionManagement = ref(false);
 
 // Settings dialog
 const showPOSSettings = ref(false);
+//// Neoffice — lets a caller open POS Settings directly on one tab, so "edit the
+//// schedule" from the card editor lands on the schedule instead of the first tab
+//// (6b38498b, 2026-03-27 "hide permanent card from schedule settings, add edit
+//// schedule link").
 const settingsInitialTab = ref("");
 
 function openSettingsTab(tab) {
@@ -1917,6 +2152,10 @@ const showStockLookup = ref(false);
 // Invoice Management dialog
 const showInvoiceManagement = ref(false);
 
+//// Neoffice — visibility flags for the sidebar tools upstream has no equivalent of:
+//// cash in/out posted as a Journal Entry (6c598630, 2026-03-28), the carte / options /
+//// workflow editors (f2392119, f23daabe, d59036f1), the tips panel (c4460c61 + d08c57e7)
+//// and the reservation dialog (ebc3ecc5, 2026-03-29).
 // Cash In/Out dialog
 const showCashInOut = ref(false);
 
@@ -1931,6 +2170,8 @@ const showReservationDialog = ref(false);
 const showInvoiceDetail = ref(false);
 const selectedInvoiceForView = ref(null);
 
+//// Neoffice — state for e-mailing the invoice (4239ea8d, 2026-03-24) and for handing
+//// over the gift-card codes an invoice just created (703f2046, 2026-01-14).
 // Email Invoice dialog
 const showEmailInvoiceDialog = ref(false);
 
@@ -1999,6 +2240,10 @@ const profileWarehouses = computed(() => {
 	return [];
 });
 
+//// Neoffice — switching between retail and table service is refused while a cart is
+//// open, and when LEAVING restaurant mode also while any table is still occupied:
+//// flipping the mode strands live orders nobody can reach any more (8aa35c29, 2026-03-20
+//// "Phase 1 restaurant module - header toggle").
 // Restaurant mode toggle computed
 const canToggleRestaurant = computed(() => {
 	const noItems = cartStore.invoiceItems.length === 0
@@ -2019,6 +2264,11 @@ const canSwitchToDesk = computed(() => Boolean(bootstrapStore.data?.can_switch_t
 let resizeState = null;
 let bodyStyleSnapshot = null;
 
+//// Neoffice — when the guard above refuses, offer the purge instead of failing silently:
+//// the dialog names what will be lost, then clears the cart and resets every occupied
+//// table server-side. Doing it from the client left tables Occupied with no order behind
+//// them (59599289 2026-03-21 "purge dialog when toggling restaurant mode with active
+//// orders"; 1e73b40d; ab2ee852 "use server-side reset_all_tables API").
 // Handle restaurant mode toggle
 const showPurgeDialog = ref(false);
 const purgeDialogMessage = ref("");
@@ -2073,6 +2323,15 @@ onMounted(async () => {
 	};
 	window.addEventListener("resize", handleResize, { passive: true });
 
+	//// Neoffice — the guests at the table order from their own phones, so the cashier's cart
+	//// has to follow a cart it does not own. Debounce plus a running flag because the
+	//// realtime event can arrive several times for one order and each pass re-added the
+	//// items (259cdb72 2026-03-31 "debounce guest update handler"; e7628309 2026-04-01 mutex
+	//// guard). replaceAllItems bypasses addItem's dedup, which merged distinct lines
+	//// (707a330c, 2026-04-01), and modifiers are carried so two identical dishes with
+	//// different options stay two lines (165065fa, 2026-03-31). Guest payments and tips are
+	//// mirrored into the cart (34751a29, 2026-03-30; 1c05e7c7 keeps the TIP item out of the
+	//// visible cart).
 	// Listen for guest order updates to refresh POS cart when a guest orders on the active table
 	// Guest update handler with debounce + mutex to prevent item duplication
 	let _guestUpdateTimer = null
@@ -2316,6 +2575,9 @@ onMounted(async () => {
 
 		if (!shiftStore.currentProfile) return;
 
+		//// Neoffice — setters instead of `cartStore.posProfile = ...`. The production Vite build
+		//// turns a direct write to a store-destructured binding into "Assignment to constant
+		//// variable" at runtime — invisible in dev (b44f194b, 2026-03-21).
 		cartStore.setPosProfile(shiftStore.profileName);
 		cartStore.setPosOpeningShift(shiftStore.currentShift?.name);
 
@@ -2357,6 +2619,10 @@ onMounted(async () => {
 		// Load tax rules (depends on settings being loaded)
 		await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
 
+		//// Neoffice — start mirroring to the second screen for this shift, and register the
+		//// callback for a customer the CUSTOMER created on it: the new record is pushed into the
+		//// cashier's search cache so it can be picked immediately instead of only after a
+		//// refresh (185c3c50 2026-02-03; 912ef092 + f3cccb1b 2026-02-04).
 		// Enable customer display sync
 		if (shiftStore.currentShift?.name) {
 			enableDisplaySync(
@@ -2674,6 +2940,8 @@ async function handleShiftOpened() {
 	uiStore.showOpenShiftDialog = false;
 	if (!shiftStore.currentProfile) return;
 
+	//// Neoffice — setters again, same production-build hazard as above (b44f194b,
+	//// 2026-03-21 "use setter functions for posProfile/posOpeningShift").
 	cartStore.setPosProfile(shiftStore.profileName);
 	cartStore.setPosOpeningShift(shiftStore.currentShift?.name);
 
@@ -2710,6 +2978,10 @@ async function handleShiftOpened() {
 	// Load tax rules (depends on settings being loaded)
 	await cartStore.loadTaxRules(shiftStore.profileName, posSettingsStore.settings);
 
+	//// Neoffice — the second screen must also come up when a shift is opened from here, not
+	//// only on page init (185c3c50, 2026-02-03 "use dynamic customer group and territory
+	//// lookup for customer display"); blame also names the merge 7604810e, which re-resolved
+	//// this block.
 	// Enable customer display sync when new shift opens
 	if (shiftStore.currentShift?.name) {
 		enableDisplaySync(
@@ -2729,6 +3001,8 @@ async function handleShiftClosed() {
 	uiStore.showCloseShiftDialog = false;
 	showSuccess(__("Shift closed successfully"));
 
+	//// Neoffice — and it must stop when the shift closes: otherwise the customer display
+	//// keeps showing the last cart of a closed shift (185c3c50, 2026-02-03).
 	// Disable customer display sync when shift closes
 	disableDisplaySync();
 
@@ -2745,6 +3019,19 @@ async function handleShiftClosed() {
 	}
 }
 
+//// Neoffice — ▼▼▼ ~280 lines of restaurant handlers, none of them upstream. Selecting,
+//// releasing and cleaning a table (87f168fe 2026-03-20; 2aad6b2a 2026-03-30 makes Paid a
+//// state distinct from Cleaning; 07d0d493 2026-03-29 expires the guest tokens with it),
+//// the payment summary shown on a table guests paid themselves (34751a29 + 6bfa3117,
+//// 2026-03-30), loading the SERVER draft when returning to an occupied table rather than
+//// a local one (c8f9a36c + 8098e70a, 2026-03-21; c89fb981 2026-03-24 keeps local-draft
+//// deletion out of restaurant mode), send-to-kitchen with a double-click guard
+//// (b26150cc 2026-03-21; a1a74052 2026-03-22), modifiers priced into the grand total
+//// (87b37ffd 2026-03-23) and free-text instructions kept apart from the modifier choices
+//// (135bad1d 2026-03-23), takeaway tickets (80c90631 2026-03-26), the QR flow and the
+//// receipt with VAT (c5208ba7 + f3affeaa 2026-03-28; 25ef6b34 2026-03-29). $patch is
+//// used throughout because direct store writes break the production build (dd33c2f6,
+//// 2026-03-21).
 // Restaurant mode handlers
 function handleTableSelected(table) {
 	// Table selected, cart already configured by TableSelector
@@ -3027,10 +3314,16 @@ async function handleSendToKitchen() {
 	}
 }
 
+//// Neoffice — ▲▲▲ end of the restaurant handlers region opened above.
 function handleItemSelected(item, autoAdd = false) {
 	// Auto-add mode
 	if (autoAdd) {
 		try {
+			//// Neoffice — a dish has to reach a preparation station (bar, kitchen) or it never
+			//// appears on any KDS screen. The station is resolved from the Preparation Station child
+			//// table by item, then by item group, at the moment the line enters the cart — we
+			//// deliberately do NOT store it as a custom field on Item (831857f2, 2026-03-21 "move
+			//// station-item relation into Preparation Station child table"; 34ee11a8, 2026-03-25).
 			// Assign preparation station from restaurant store map
 			if (restaurantStore.isEnabled && !item.preparation_station) {
 				const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
@@ -3083,6 +3376,9 @@ function handleItemSelected(item, autoAdd = false) {
 		}
 	}
 
+	//// Neoffice — same station assignment on the manual (non auto-add) path; both entries
+	//// into the cart must set it or half the order is invisible to the kitchen (831857f2,
+	//// 2026-03-21; 34ee11a8, 2026-03-25).
 	// Assign preparation station from restaurant store map
 	if (restaurantStore.isEnabled && !item.preparation_station) {
 		const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
@@ -3112,6 +3408,11 @@ function handleItemSelected(item, autoAdd = false) {
 		return;
 	}
 
+	//// Neoffice — upstream refuses a zero rate. We sell items whose price is decided at the
+	//// till (gift cards, open-price dishes), so a zero rate opens a numpad instead of an
+	//// error — and in restaurant mode the modifiers come FIRST, because choosing them may
+	//// set the price and make the numpad unnecessary (5dddc528 2026-01-14 "auto-open edit
+	//// dialog for zero-price items"; 1ff2fba2 2026-03-27 the dedicated numpad; f23daabe).
 	// Check for zero-price items (e.g., gift cards that need custom value)
 	const itemRate = item.price_list_rate || item.rate || 0;
 	if (itemRate === 0) {
@@ -3157,6 +3458,11 @@ function handleItemSelected(item, autoAdd = false) {
 		);
 	}
 
+	//// Neoffice — a dish with modifier groups must be configured before it means anything on
+	//// a kitchen ticket, so the dialog opens by itself. It opens for ANY group, not only a
+	//// required one: an optional cooking temperature was being skipped silently (4df0caf1
+	//// 2026-03-21; eabe35e7 + 5982e48e, 2026-03-25 "auto-open modifiers dialog for any
+	//// modifier group, not just required").
 	// Auto-open modifiers dialog if item has required modifier groups
 	if (restaurantStore.isEnabled) {
 		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group)
@@ -3176,6 +3482,11 @@ async function handleEditItem(updatedItem) {
 	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem);
 }
 
+//// Neoffice — the numpad's answer. Two paths on purpose: in restaurant mode the line is
+//// already in the cart (modifiers were shown first), so its rate is updated in place;
+//// otherwise the item is added with the entered price. is_rate_manually_edited stops a
+//// pricing rule from overwriting what the cashier typed (1ff2fba2 + f23daabe,
+//// 2026-03-27).
 function handlePriceConfirmed({ item, price }) {
 	// Check if item is already in cart (restaurant flow: modifiers were shown first)
 	const existingCartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
@@ -3219,12 +3530,18 @@ function handleModifiersSaved(cartItem) {
 
 function handleAdditionalDiscountUpdate(discountAmount) {
 	// Update the additional discount value in the cart store
+	//// Neoffice — $patch instead of a direct store write: the production build turns the
+	//// direct form into "Assignment to constant variable" (dd33c2f6, 2026-03-21).
 	cartStore.$patch({ additionalDiscount: discountAmount });
 
 	// Rebuild the cache to recalculate totals
 	cartStore.rebuildIncrementalCache();
 }
 
+//// Neoffice — open the modifiers dialog on demand from the cart (4df0caf1, 2026-03-21),
+//// and turn a chosen menu into one cart line per course, tagged with the menu and course
+//// name so the kitchen ticket reads correctly (9f4e85df, 2026-03-21 "Phase 4B -
+//// restaurant menus with course selection dialog").
 function handleOpenModifiers(item) {
 	if (itemModifiersRef.value) {
 		itemModifiersRef.value.open(item)
@@ -3344,6 +3661,7 @@ async function handlePaymentCompleted(paymentData) {
 			return;
 		}
 
+		//// Neoffice — $patch, same production-build hazard as above (dd33c2f6, 2026-03-21).
 		cartStore.$patch({ payments: [] });
 		if (paymentData.payments && Array.isArray(paymentData.payments)) {
 			paymentData.payments.forEach((p) => {
@@ -3358,6 +3676,8 @@ async function handlePaymentCompleted(paymentData) {
 
 		// Store sales team data if provided
 		if (paymentData.sales_team && Array.isArray(paymentData.sales_team)) {
+			//// Neoffice — $patch on both branches, same production-build hazard (dd33c2f6,
+			//// 2026-03-21 "replace all direct cartStore property assignments with $patch").
 			cartStore.$patch({ salesTeam: paymentData.sales_team });
 		} else {
 			cartStore.$patch({ salesTeam: [] });
@@ -3373,6 +3693,10 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.setWriteOffAmount(paymentData.write_off_amount);
 		}
 
+		//// Neoffice — the tip has to travel the whole payment chain (PaymentDialog -> here ->
+		//// posCart -> useInvoice -> submit_invoice) or it is collected and never posted; it
+		//// lands on an Income Account, not on sales (e9d1622a + d08c57e7, 2026-03-23). Loyalty
+		//// redemption is likewise handed to the cart (104959e6, 2026-03-19).
 		// Set tip amount if provided
 		if (paymentData.tip_amount && paymentData.tip_amount > 0) {
 			cartStore.$patch({ tipAmount: paymentData.tip_amount });
@@ -3405,6 +3729,10 @@ async function handlePaymentCompleted(paymentData) {
 				items: preparedItems,
 				payments: JSON.parse(JSON.stringify(cartStore.payments)),
 				sales_team: JSON.parse(JSON.stringify(cartStore.salesTeam || [])),
+				//// Neoffice — the offline invoice is built with the CHF-rounded total and carries the
+				//// rounding adjustment, so an invoice synced later matches the receipt the customer
+				//// already has in hand (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash
+				//// quick amounts").
 				grand_total: cartStore.roundedGrandTotal,
 				rounding_adjustment: cartStore.roundingAdjustment,
 				total_tax: cartStore.totalTax,
@@ -3479,6 +3807,9 @@ async function handlePaymentCompleted(paymentData) {
 			cacheOfflineReceiptPayload(offlineReceiptName, offlinePrintDoc);
 			uiStore.showPaymentDialog = false;
 
+			//// Neoffice — the second screen must be told the sale completed even offline, otherwise
+			//// it keeps showing the cart of a sale that is already done (185c3c50, 2026-02-03;
+			//// rounded total from 4fdb5df4, 2026-04-04).
 			// Notify customer display that sale is complete (even offline)
 			notifySaleComplete(cartStore.roundedGrandTotal, `OFFLINE-${Date.now()}`);
 
@@ -3516,6 +3847,11 @@ async function handlePaymentCompleted(paymentData) {
 			// Get item codes from cart before clearing
 			const soldItemCodes = cartStore.invoiceItems.map((item) => item.item_code);
 
+			//// Neoffice — the overlay goes up and the payment dialog comes down BEFORE submitting,
+			//// so a second tap cannot start a second submit (2584aa58, 2026-03-24). Then, in
+			//// restaurant mode, anything still unsent is fired to the kitchen first: paying is also
+			//// validating, and an item paid for but never sent is an item never cooked (f295bbeb,
+			//// 2026-03-26 "payment = auto-validate + partial payment confirmation dialog").
 			// Show processing overlay
 			isProcessingPayment.value = true
 			uiStore.showPaymentDialog = false
@@ -3556,6 +3892,8 @@ async function handlePaymentCompleted(paymentData) {
 
 			console.time("[Payment] submitInvoice")
 			const result = await cartStore.submitInvoice();
+			//// Neoffice — submit timing probe kept from the payment-latency work (2584aa58,
+			//// 2026-03-24 "performance timing logs").
 			console.timeEnd("[Payment] submitInvoice")
 
 			if (result) {
@@ -3584,18 +3922,30 @@ async function handlePaymentCompleted(paymentData) {
 				const invoiceTotal = result.grand_total || result.total || 0;
 				const paidAmount = paymentData.paid_amount || invoiceTotal;
 
+				//// Neoffice — upstream closed the payment dialog HERE, after submission returned. It is
+				//// now closed before the call, together with raising the processing overlay, so the
+				//// cashier never faces a live dialog over a request already in flight (2584aa58,
+				//// 2026-03-24 "processing overlay with spinner").
 				cartStore.clearCart();
 				// Reset cart hash after successful payment
 				previousCartHash = "";
 
+				//// Neoffice — restaurant drafts are server-side Sales Invoices, not local drafts, so
+				//// deleting a local draft here raised "Draft not found" on every table sale (c89fb981,
+				//// 2026-03-24 "skip local draft deletion in restaurant mode").
 				// Delete local draft after successful submission (not for restaurant — those are server-side)
 				if (draftIdToDelete && !restaurantStore.isEnabled) {
 					draftsStore.deleteDraft(draftIdToDelete);
 				}
 
 				// Refresh stock - Direct API (50-200ms), no Socket.IO lag!
+				//// Neoffice — stock-refresh timing probe (2584aa58, 2026-03-24).
 				console.time("[Payment] stockRefresh")
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
+				//// Neoffice — the table is released to Empty as soon as the bill is paid, and the floor
+				//// plan re-read from the server: leaving it Occupied blocks the next guests (130a6130,
+				//// 2026-03-24 "release restaurant table to Empty after successful payment"). The second
+				//// screen is told the sale completed (185c3c50, 2026-02-03).
 				console.timeEnd("[Payment] stockRefresh")
 
 				// Release restaurant table after successful payment
@@ -3612,6 +3962,9 @@ async function handlePaymentCompleted(paymentData) {
 					log.debug("Background invoice cache refresh failed:", err)
 				);
 
+				//// Neoffice — a gift card sold here has to be handed over with its code, so the codes
+				//// the invoice created are read back and shown once. Failure is logged, never fatal: the
+				//// sale is already booked (703f2046, 2026-01-14).
 				// Check if gift cards were created from this invoice
 				try {
 					const giftCards = await getGiftCardsFromInvoice(invoiceName);
@@ -3636,11 +3989,15 @@ async function handlePaymentCompleted(paymentData) {
 					showSuccess(__("Invoice {0} created successfully", [invoiceName]));
 				}
 
+				//// Neoffice — end of the payment timing probe (2584aa58, 2026-03-24).
 				console.timeEnd("[Payment] Total")
 			}
+			//// Neoffice — drop the processing overlay on the success path (2584aa58, 2026-03-24).
 			isProcessingPayment.value = false
 		}
 	} catch (error) {
+		//// Neoffice — and on the failure path too: without this the till stays frozen behind the
+		//// spinner after a failed submit (2584aa58, 2026-03-24).
 		isProcessingPayment.value = false
 		log.error("Error submitting invoice:", error);
 		uiStore.showPaymentDialog = false;
@@ -3692,6 +4049,9 @@ function confirmClearCart() {
 	showSuccess(__("All items removed from cart"));
 }
 
+//// Neoffice — the customer created by the CUSTOMER on the second screen can be adopted
+//// by the cart in one click, instead of the cashier retyping a record that already exists
+//// (912ef092, 2026-02-04 "improve UX for customer creation flow").
 /**
  * Select customer created from customer display
  */
@@ -3752,6 +4112,9 @@ async function handleOptionSelected(option) {
 					cartStore.clearPendingItem();
 					showSuccess(__("{0} added to cart", [variant.item_name]));
 
+					//// Neoffice — same auto-open of the modifiers dialog on the VARIANT path: a variant is
+					//// still a dish and still needs its options (4df0caf1 2026-03-21; eabe35e7 + 5982e48e,
+					//// 2026-03-25).
 					// Auto-open modifiers dialog if item has required modifier groups
 					if (restaurantStore.isEnabled) {
 						const modGroups = restaurantStore.getModifiersForItem(variant.item_code, variant.item_group)
@@ -3793,6 +4156,8 @@ async function handleOptionSelected(option) {
 					cartStore.clearPendingItem();
 					showSuccess(__("{0} ({1}) added to cart", [itemToAdd.item_name, option.uom]));
 
+					//// Neoffice — and on the UOM path, for the same reason (4df0caf1 2026-03-21; eabe35e7 +
+					//// 5982e48e, 2026-03-25).
 					// Auto-open modifiers dialog if item has required modifier groups
 					if (restaurantStore.isEnabled) {
 						const modGroups = restaurantStore.getModifiersForItem(itemToAdd.item_code, itemToAdd.item_group)
@@ -3913,6 +4278,9 @@ async function handleLoadDraft(draft) {
 		}
 
 		const draftData = await draftsStore.loadDraft(draft);
+		//// Neoffice — items are restored through addItem instead of assigning invoiceItems: the
+		//// direct assignment is what the production build rejects with "Assignment to constant
+		//// variable" (cdef7347, 2026-03-21).
 		// Restore items via addItem to ensure proper reactivity
 		if (draftData.items && draftData.items.length > 0) {
 			for (const item of draftData.items) {
@@ -3920,6 +4288,7 @@ async function handleLoadDraft(draft) {
 			}
 		}
 		cartStore.setCustomer(draftData.customer);
+		//// Neoffice — $patch, same production-build hazard (dd33c2f6, 2026-03-21).
 		cartStore.$patch({ currentDraftId: draft.draft_id }); // Set current draft ID
 
 		// Rebuild incremental cache to recalculate totals
@@ -3927,6 +4296,7 @@ async function handleLoadDraft(draft) {
 
 		// Restore applied offers if they were saved
 		if (draftData.applied_offers && draftData.applied_offers.length > 0) {
+			//// Neoffice — $patch, same production-build hazard (dd33c2f6, 2026-03-21).
 			cartStore.$patch({ appliedOffers: draftData.applied_offers });
 			// Trigger offer reapplication to ensure they apply to all items
 			await cartStore.reapplyOffer(shiftStore.currentProfile);
@@ -4335,6 +4705,10 @@ function handleManagementMenuClick(menuItem) {
 	} else if (menuItem === "products") {
 		// Open Stock Lookup dialog in search mode
 		showStockLookup.value = true;
+	//// Neoffice — the sidebar entries that only exist in our fork: carte, product options,
+	//// preparation workflows, cash in/out, tips and reservations (f2392119 2026-03-22;
+	//// f23daabe + d59036f1 2026-03-23/27; 6c598630 2026-03-28; c4460c61 + d08c57e7
+	//// 2026-03-23/29; ebc3ecc5 2026-03-29).
 	} else if (menuItem === "cards") {
 		showCardEditor.value = true;
 	} else if (menuItem === "options") {
@@ -4455,6 +4829,10 @@ async function handlePrintInvoice(invoiceData) {
 	}
 }
 
+//// Neoffice — the provisional ticket: a restaurant hands the table a priced summary
+//// before cashing in, printed with "THIS IS NOT A RECEIPT". Upstream prints only the
+//// final invoice (71050faf, 2026-03-25 "add provisional ticket print button in
+//// restaurant table view"); total is the CHF-rounded one (4fdb5df4, 2026-04-04).
 function handlePrintProvisionalTicket() {
 	try {
 		printProvisionalTicket({
