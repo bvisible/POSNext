@@ -783,6 +783,18 @@ function updateItem() {
 	// Check if rate was manually edited
 	const isRateManuallyEdited = localRate.value !== originalPriceListRate.value
 
+	//// Neoffice — [GC] added. A zero-price item (a gift card, an open-price dish) is exactly
+	//// the case canEditRate() lets through even when the profile forbids rate editing, yet the
+	//// "greater than zero" check below is gated on that same setting AND on the rate having
+	//// changed — and such an item starts at 0, so confirming the dialog without typing an
+	//// amount is not a change. Both paths saved a gift card worth 0, or negative if one was
+	//// typed: a voucher with no value, sold, printed and impossible to redeem. The check
+	//// belongs to the item, not to the setting.
+	if (isZeroPriceItem.value && !(localRate.value > 0)) {
+		showError(__("Rate must be greater than zero"))
+		return
+	}
+
 	// ========================================================================
 	// RATE EDIT VALIDATION
 	// ========================================================================
