@@ -3266,9 +3266,19 @@ async function handleItemsSentToKitchen() {
 
 async function handleSendSingleItem(item) {
 	// Quick-send a single Waiting item to the kitchen
-	const cartItem = cartStore.invoiceItems.find(
-		ci => ci.item_code === item.item_code && (ci.uom || "") === (item.uom || "")
-	)
+	//// Neoffice — was a lookup by item_code + UOM, which addressed the FIRST line carrying
+	//// them. The row arrives here straight out of the cart list (useCartSort.sortedItems only
+	//// copies the ARRAY, the rows are the store's own objects), and in restaurant mode the
+	//// same dish ordered twice is deliberately two lines, so the code lookup marked the wrong
+	//// course as sent and left the one the waiter clicked Waiting. Address the row by
+	//// identity, exactly as removeItem() has done since 7e1376a3. The code+UOM lookup stays
+	//// as a fallback for a caller handing over a detached copy, and takes the LAST match
+	//// there because that is the most recently added line.
+	const cartItem = cartStore.invoiceItems.includes(item)
+		? item
+		: cartStore.invoiceItems.findLast(
+				ci => ci.item_code === item.item_code && (ci.uom || "") === (item.uom || "")
+			)
 	if (cartItem) {
 		cartItem.kds_status = "Pending"
 		const activeStatuses = cartStore.invoiceItems
@@ -3447,7 +3457,12 @@ function handleItemSelected(item, autoAdd = false) {
 					return;
 				}
 				nextTick(() => {
-					const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+					//// Neoffice — findLast, not find: the line to configure is the one addItem() just
+					//// appended. With find() the modifiers dialog opened on the FIRST line carrying
+					//// that item_code, so a second identical dish got its options written onto the
+					//// first one. Same rule as 7e1376a3, which only reached two of the eight call
+					//// sites that resolve a cart line by item code.
+					const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code);
 					if (cartItem && itemModifiersRef.value) {
 						itemModifiersRef.value.open(cartItem);
 					}
@@ -3484,7 +3499,9 @@ function handleItemSelected(item, autoAdd = false) {
 		if (modGroups.length > 0) {
 			nextTick(() => {
 				// Find the item in cart and open modifiers
-				const cartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code)
+				//// Neoffice — findLast, not find: the line to configure is the one addItem() just
+				//// appended, not the first line that happens to share the item_code (7e1376a3).
+				const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code)
 				if (cartItem && itemModifiersRef.value) {
 					itemModifiersRef.value.open(cartItem)
 				}
@@ -3504,7 +3521,11 @@ async function handleEditItem(updatedItem) {
 //// 2026-03-27).
 function handlePriceConfirmed({ item, price }) {
 	// Check if item is already in cart (restaurant flow: modifiers were shown first)
-	const existingCartItem = cartStore.invoiceItems.find(i => i.item_code === item.item_code);
+	//// Neoffice — findLast, not find. In the restaurant flow the line waiting for its price is
+	//// the one just appended at rate 0; find() wrote the amount the cashier typed onto the
+	//// FIRST line with that item_code instead — a second gift card at 100 rewrote the first
+	//// one, which was already priced at 30, and the till was short. Same rule as 7e1376a3.
+	const existingCartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code);
 	if (existingCartItem) {
 		// Update existing cart item's rate
 		existingCartItem.rate = price;
@@ -4159,7 +4180,9 @@ async function handleOptionSelected(option) {
 						const modGroups = restaurantStore.getModifiersForItem(variant.item_code, variant.item_group)
 						if (modGroups.length > 0) {
 							nextTick(() => {
-								const cartItem = cartStore.invoiceItems.find(i => i.item_code === variant.item_code)
+								//// Neoffice — findLast, not find: the line to configure is the variant addItem()
+								//// just appended, not the first line sharing its item_code (7e1376a3).
+								const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === variant.item_code)
 								if (cartItem && itemModifiersRef.value) {
 									itemModifiersRef.value.open(cartItem)
 								}
@@ -4202,7 +4225,10 @@ async function handleOptionSelected(option) {
 						const modGroups = restaurantStore.getModifiersForItem(itemToAdd.item_code, itemToAdd.item_group)
 						if (modGroups.length > 0) {
 							nextTick(() => {
-								const cartItem = cartStore.invoiceItems.find(i => i.item_code === itemToAdd.item_code)
+								//// Neoffice — findLast, not find. This path matters twice over: the lookup drops
+								//// the UOM, so find() could return a line of the same item in another unit
+								//// entirely. The line to configure is the one addItem() just appended (7e1376a3).
+								const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === itemToAdd.item_code)
 								if (cartItem && itemModifiersRef.value) {
 									itemModifiersRef.value.open(cartItem)
 								}
