@@ -1,4 +1,10 @@
 <script setup>
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext has no gift cards. We
+//// sell one as an item and mint its code on ERPNext's native Coupon Code so the POS and the
+//// ERP agree on the same object; this dialog shows the code, value and validity right after
+//// the sale so the cashier can hand it over or print it. (703f2046 2026-01-14 "add
+//// GiftCardCreatedDialog and debug logging"; 41a70bb7 the same day replaced a hardcoded
+//// en-US locale with useLocale, PR #96 review.)
 /**
  * GiftCardCreatedDialog.vue
  *

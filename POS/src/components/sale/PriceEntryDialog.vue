@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Open-price items (plat du jour, -->
+	<!-- //// weighed goods) reach the cart at 0. Upstream reopens the full EditItemDialog for -->
+	<!-- //// that, far too heavy on a touch screen, so this asks for the price on a numpad -->
+	<!-- //// and nothing else — and only once the modifiers have left the price at 0. -->
+	<!-- //// (Added by f23daabe 2026-03-27; the flow it serves is described by 1ff2fba2 the -->
+	<!-- //// same day, "add dedicated price entry numpad dialog for zero-price items".) -->
 	<Dialog
 		v-model="show"
 		:options="{ title: itemName, size: 'md' }"

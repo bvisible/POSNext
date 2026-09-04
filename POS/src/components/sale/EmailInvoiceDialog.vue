@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Upstream can only print a -->
+	<!-- //// receipt, but a Swiss customer asks for the invoice by e-mail at the counter. -->
+	<!-- //// Inline composer (recipient / subject / message / print format prefilled from -->
+	<!-- //// the POS Profile) posting to pos_next.api.email, which sends through Frappe's -->
+	<!-- //// Communication so the mail is tracked on the invoice and carries the PDF. -->
+	<!-- //// (4239ea8d 2026-03-24 "add email invoice functionality with PDF attachment"; -->
+	<!-- //// 771950bd 2026-04-02 renamed the print format to "Neopos Receipt".) -->
 	<Dialog v-model="show" :options="{ title: __('Email Invoice'), size: 'md' }">
 		<template #body-content>
 			<div v-if="loading" class="flex items-center justify-center py-8">

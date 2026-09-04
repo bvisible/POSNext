@@ -17,6 +17,13 @@
 <template>
 	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
 		<template #body-content>
+			<!-- //// Neoffice — the whole form was rewritten. Upstream asks for one free-text -->
+			<!-- //// customer_name in a tall label-per-field layout, which is wrong for a Swiss -->
+			<!-- //// counter: we need to know Individual vs Company (it drives the Customer Group -->
+			<!-- //// and the invoice), and a scrollable placeholder-only form fits a tablet. Hence -->
+			<!-- //// the type toggle, the company-name field and the first/last name split -->
+			<!-- //// (616d4102 + 4b36d7be 2026-03-25, 731374c1 "add company name field", -->
+			<!-- //// c84cc34a 2026-02-04 "make customer dialog scrollable and compact"). -->
 			<div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
 				<!-- Customer Type Toggle -->
 				<div class="flex bg-gray-100 rounded-neo-sm p-0.5">
@@ -53,12 +60,16 @@
 
 				<!-- First Name + Last Name -->
 				<div class="grid grid-cols-2 gap-2">
+					<!-- //// Neoffice — upstream had a single customer_name input. A Customer is filed here -->
+					<!-- //// as first + last name so ERPNext gets structured data and the POS can rebuild -->
+					<!-- //// the parts when editing (616d4102, 4b36d7be 2026-03-25). -->
 					<input
 						v-model="customerData.first_name"
 						type="text"
 						:placeholder="__('First name') + ' *'"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 					/>
+					<!-- //// Neoffice — the last-name half of that same split (616d4102, 4b36d7be). -->
 					<input
 						v-model="customerData.last_name"
 						type="text"
@@ -67,6 +78,9 @@
 					/>
 				</div>
 
+				<!-- //// Neoffice — the mobile row lost its label and was restyled to the Neoffice theme -->
+				<!-- //// (rounded-neo, gray-50 fields); the dial code defaults to +41 instead of -->
+				<!-- //// upstream's Egyptian +20 (616d4102, 731374c1 2026-03-25). -->
 				<!-- Mobile Number with Country Code Selector -->
 				<div class="flex gap-2">
 					<!-- Country Code Dropdown -->
@@ -103,6 +117,8 @@
 									@keydown.escape="showCountryDropdown = false"
 								/>
 							</div>
+							<!-- //// Neoffice — country list restyled and tightened (max-h-48, lighter rows) so the -->
+							<!-- //// dropdown fits above the on-screen keyboard of a POS tablet (616d4102). -->
 							<div class="overflow-y-auto max-h-48">
 								<button
 									v-for="country in filteredCountries"
@@ -118,6 +134,8 @@
 										class="w-5 h-auto rounded-sm shadow-sm"
 										@error="(e) => (e.target.style.display = 'none')"
 									/>
+									<!-- //// Neoffice — same restyle (616d4102): truncated name + muted dial code, so a long -->
+									<!-- //// country name cannot push the code out of the row. -->
 									<span class="flex-1 text-sm text-gray-700 truncate">{{ country.name }}</span>
 									<span class="text-sm text-gray-400">{{ country.isd }}</span>
 								</button>
@@ -128,6 +146,10 @@
 						</div>
 					</div>
 
+					<!-- //// Neoffice — the phone input was moved out of upstream's label wrapper into the -->
+					<!-- //// dial-code flex row (that is the removal just above) and restyled; the -->
+					<!-- //// placeholder now carries the required mark since the labels are gone -->
+					<!-- //// (616d4102 + 4b36d7be 2026-03-25). -->
 					<!-- Phone Number Input -->
 					<input
 						v-model="phoneNumber"
@@ -138,6 +160,9 @@
 					/>
 				</div>
 
+				<!-- //// Neoffice — upstream's labelled frappe-ui <Input> replaced by a plain input with -->
+				<!-- //// a placeholder, to keep the whole form inside one tablet screen (616d4102, -->
+				<!-- //// 4b36d7be 2026-03-25). -->
 				<!-- Email -->
 				<input
 					v-model="customerData.email_id"
@@ -146,6 +171,11 @@
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
 				/>
 
+				<!-- //// Neoffice — two changes here. (1) The group select is bound to the dialog's own -->
+				<!-- //// customerGroup ref, not customerData.customer_group, so the Individuel/Commercial -->
+				<!-- //// default can follow the type toggle (53d87890 2026-05-28). (2) Upstream has no -->
+				<!-- //// address in this dialog at all; ours creates the Address record with the -->
+				<!-- //// Customer, gated on a POS setting (8bffb770 2026-02-04). -->
 				<!-- Customer Group -->
 				<select
 					v-model="customerGroup"
@@ -163,6 +193,10 @@
 						<p class="text-xs font-medium text-gray-500 mb-1">{{ __("Address") }}</p>
 					</div>
 
+					<!-- //// Neoffice — ADR-002 structured address: street and N° are separate fields (N° -->
+					<!-- //// lands in Address.custom_house_number), and the row below is NPA-then-city, the -->
+					<!-- //// Swiss postal order. The street box is the GeoAdmin autocomplete -->
+					<!-- //// (6ed1256d 2026-04-02 Swiss address autocomplete, d7584e7b 2026-07-17 ADR-002). -->
 					<!-- Swiss postal format: street + N° on one row -->
 					<div class="grid grid-cols-[1fr_96px] gap-2">
 						<AddressAutocomplete
@@ -195,15 +229,23 @@
 						/>
 					</div>
 
+					<!-- //// Neoffice — upstream offered a Territory picker here. Territory is an ERPNext -->
+					<!-- //// sales notion a cashier has no opinion about, so the visible field is the -->
+					<!-- //// address country; the territory is derived from it in updateTerritoryFromCountry -->
+					<!-- //// (616d4102 2026-03-25, 8bffb770 2026-02-04). -->
 					<select
 						v-model="customerData.country"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
 					>
+						<!-- //// Neoffice — options now come from the countries store instead of the Territory -->
+						<!-- //// list (616d4102). -->
 						<option value="">{{ __("Country") }}</option>
 						<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
 							{{ country.name }}
 						</option>
 					</select>
+				<!-- //// Neoffice — closes the showAddressFields block: upstream ended a plain <div> -->
+				<!-- //// here, the address group is conditional for us (8bffb770). -->
 				</template>
 			</div>
 		</template>
@@ -211,6 +253,8 @@
 		<template #actions>
 			<div class="flex flex-col gap-2">
 				<!-- Permission Warning -->
+				<!-- //// Neoffice — radius token swapped to the Neoffice theme scale (rounded-neo-sm) -->
+				<!-- //// (616d4102 2026-03-25). -->
 				<div v-if="!hasPermission" class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-neo-sm">
 					<div class="flex items-start gap-2">
 						<svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -230,6 +274,11 @@
 				</div>
 
 				<div class="flex gap-2">
+					<!-- //// Neoffice — the :disabled below is gated on isFormValid, not on a bare -->
+					<!-- //// customer_name: the fork validates company-vs-person and, in edit mode, drops -->
+					<!-- //// the phone/email requirement that kept Save disabled for legacy customers -->
+					<!-- //// (4b36d7be 2026-03-25, 8c59b735 2026-07-09). NB: the checker cannot see a -->
+					<!-- //// marker for that line — it sits inside the <Button> attribute list. -->
 					<Button
 						variant="solid"
 						@click="handleCreate"
@@ -260,13 +309,20 @@
  * - Permission checking before allowing creation
  */
 
+//// Neoffice — Swiss address autocomplete (GeoAdmin, Federal Geoportal): the cashier types
+//// a street and gets street/N°/NPA/city/country filled in. No upstream equivalent
+//// (6ed1256d, 2026-04-02 "add Swiss address autocomplete to customer creation forms").
 import AddressAutocomplete from "@/components/common/AddressAutocomplete.vue"
 import { usePOSPermissions } from "@/composables/usePermissions"
 import { useToast } from "@/composables/useToast"
 import { useCountriesStore } from "@/stores/countries"
+//// Neoffice — POS Settings decides whether the address block is shown at all
+//// (8bffb770); the shift store came in with the default_currency work (b43dce92).
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { logger } from "@/utils/logger"
+//// Neoffice — frappe-ui's <Input> is no longer imported: the compact form uses plain
+//// inputs with placeholders instead of labelled fields (616d4102, 2026-03-25).
 import { Button, Dialog, createResource } from "frappe-ui"
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
@@ -277,6 +333,8 @@ const log = logger.create("CreateCustomerDialog")
 // =============================================================================
 
 const countriesStore = useCountriesStore()
+//// Neoffice — added stores (8bffb770 for the address gate, b43dce92 for the currency
+//// fallback). NB posShiftStore is no longer read anywhere in this file.
 const posSettingsStore = usePOSSettingsStore()
 const posShiftStore = usePOSShiftStore()
 const { canCreateCustomer } = usePOSPermissions()
@@ -293,6 +351,8 @@ const props = defineProps({
 	customer: Object, // Customer object for edit mode
 })
 
+//// Neoffice — Biome pass (458d81a9) wrapped the list; "customer-updated" is ours: the
+//// dialog doubles as the edit form, which upstream does not do.
 const emit = defineEmits([
 	"update:modelValue",
 	"customer-created",
@@ -305,6 +365,8 @@ const emit = defineEmits([
 
 const hasPermission = ref(true)
 const checkingPermission = ref(false)
+//// Neoffice — upstream starts with no dial code and falls back to Egypt (+20). The fleet
+//// is Swiss, so +41 is the default everywhere in this file (731374c1, 4b36d7be).
 const selectedCountryCode = ref("+41")
 const phoneNumber = ref("")
 const showCountryDropdown = ref(false)
@@ -312,6 +374,9 @@ const countrySearchQuery = ref("")
 const dropdownRef = ref(null)
 const countrySearchRef = ref(null)
 
+//// Neoffice — the fork's own form state: an Individual/Company toggle, and the customer
+//// group / territory held locally instead of inside customerData, so the group can follow
+//// the toggle without dirtying the payload (4b36d7be, 616d4102 2026-03-25).
 // Customer type toggle
 const customerType = ref("Individual")
 
@@ -326,11 +391,15 @@ const customerGroups = ref([])
 const editingAddressName = ref(null)
 
 const customerData = ref({
+	//// Neoffice — company_name + first/last replace upstream's single customer_name; the
+	//// composed value is rebuilt in fullName (731374c1, 616d4102 2026-03-25).
 	company_name: "",
 	first_name: "",
 	last_name: "",
 	mobile_no: "",
 	email_id: "",
+	//// Neoffice — address carried in the same form (upstream creates none). house_number is
+	//// the ADR-002 N°, kept apart from the street (8bffb770 2026-02-04, d7584e7b 2026-07-17).
 	// Address fields (structured: street and house number are separate)
 	address_line1: "",
 	house_number: "",
@@ -396,6 +465,8 @@ function onAddressSelected(address) {
 }
 
 const currentCountryCode = computed(() => {
+	//// Neoffice — Biome reflow, plus the flag fallback: upstream returned "eg" when no dial
+	//// code matches, we return "ch" (458d81a9 formatting, 731374c1 Switzerland default).
 	const country = countriesStore.countries.find(
 		(c) => c.isd === selectedCountryCode.value,
 	)
@@ -407,6 +478,8 @@ const filteredCountries = computed(() => {
 
 	const query = countrySearchQuery.value.toLowerCase()
 	return countriesStore.countries.filter(
+		//// Neoffice — Biome pass (458d81a9): the predicate was split over three lines and given a
+		//// trailing comma. Same match on name / dial code / ISO code.
 		(c) =>
 			c.name.toLowerCase().includes(query) ||
 			c.isd.includes(query) ||
@@ -428,6 +501,7 @@ const selectCountry = (country) => {
 }
 
 const updateMobileNumber = () => {
+	//// Neoffice — Biome pass (458d81a9): the ternary was wrapped. Same "<isd>-<number>" shape.
 	customerData.value.mobile_no = phoneNumber.value
 		? `${selectedCountryCode.value}-${phoneNumber.value}`
 		: ""
@@ -442,6 +516,8 @@ const handleClickOutside = (event) => {
 
 const setCountryFromName = (countryName) => {
 	if (!countryName) {
+		//// Neoffice — Swiss default: upstream fell back to +20 (Egypt) whenever the country was
+		//// unknown (731374c1, 2026-03-25 "add company name field and default to Switzerland").
 		selectedCountryCode.value = "+41"
 		return
 	}
@@ -449,11 +525,14 @@ const setCountryFromName = (countryName) => {
 	const isd = countriesStore.countryNameToISDMap[countryName]
 	if (isd) {
 		selectedCountryCode.value = isd
+		//// Neoffice — the country picked for the phone also preselects the address country, so
+		//// the cashier does not set it twice (71619d17, 2026-02-04).
 		// Also preselect country in address field
 		customerData.value.country = countryName
 		log.info(`Set country code to ${isd} and address country to ${countryName}`)
 	} else {
 		log.warn(`Country "${countryName}" not found`)
+		//// Neoffice — same Swiss default on the not-found branch, +41 instead of +20 (731374c1).
 		selectedCountryCode.value = "+41"
 	}
 }
@@ -462,6 +541,7 @@ const setCountryFromName = (countryName) => {
 const updateTerritoryFromCountry = () => {
 	if (!territories.value.length) return
 
+	//// Neoffice — Biome pass (458d81a9): the find() call was wrapped. Same lookup.
 	const country = countriesStore.countries.find(
 		(c) => c.isd === selectedCountryCode.value,
 	)
@@ -469,6 +549,8 @@ const updateTerritoryFromCountry = () => {
 
 	// Try exact match first
 	if (territories.value.includes(country.name)) {
+		//// Neoffice — territory now lives in its own ref, not in customerData: the payload is
+		//// built from the refs at submit time (616d4102, 2026-03-25).
 		territory.value = country.name
 		log.info(`Territory set to: ${country.name}`)
 		return
@@ -476,12 +558,14 @@ const updateTerritoryFromCountry = () => {
 
 	// Try fuzzy match
 	const fuzzyMatch = territories.value.find(
+		//// Neoffice — Biome pass (458d81a9): the fuzzy predicate was wrapped. Same matching.
 		(t) =>
 			t.toLowerCase().includes(country.name.toLowerCase()) ||
 			country.name.toLowerCase().includes(t.toLowerCase()),
 	)
 
 	if (fuzzyMatch) {
+		//// Neoffice — same move to the territory ref (616d4102).
 		territory.value = fuzzyMatch
 		log.info(`Territory set to fuzzy match: ${fuzzyMatch}`)
 	}
@@ -494,20 +578,31 @@ const updateTerritoryFromCountry = () => {
 const createCustomerResource = createResource({
 	url: "pos_next.api.customers.create_customer",
 	makeParams: () => ({
+		//// Neoffice — the name sent to the backend is the composed fullName (company name, or
+		//// first + last), since upstream's single customer_name field no longer exists
+		//// (b6dd7f10 2026-05-28: makeParams is driven by the real reactive state).
 		customer_name: fullName.value,
 		mobile_no: customerData.value.mobile_no || "",
 		email_id: customerData.value.email_id || "",
+		//// Neoffice — group/territory/type come from the dialog refs. customer_type is ours:
+		//// upstream never asked whether the customer is a company (b6dd7f10, 4b36d7be).
 		customer_group: customerGroup.value || defaultCustomerGroup.value,
 		territory: territory.value || "All Territories",
 		customer_type: customerType.value,
 		pos_profile: props.posProfile,
 	}),
+	//// Neoffice — upstream announced success and closed the dialog from the resource's
+	//// onSuccess. We removed it: handleCreate awaits submit() so it can still create and link
+	//// the Address before telling the cashier it is done (b6dd7f10, 2026-05-28).
 	onError: (error) => {
 		log.error("Error creating customer", error)
 		showError(error.message || __("Failed to create customer"))
 	},
 })
 
+//// Neoffice — no upstream equivalent: the Address record created alongside the Customer
+//// when the POS profile shows the address block (8bffb770, 2026-02-04). auto:false so it
+//// never fires on mount (b6dd7f10).
 const createAddressResource = createResource({
 	url: "frappe.client.insert",
 	auto: false,
@@ -519,6 +614,8 @@ const updateCustomerResource = createResource({
 		doctype: "Customer",
 		name: props.customer?.name,
 		fieldname: {
+			//// Neoffice — the update path writes the same fork fields as the create path: composed
+			//// name, customer_type, and the group/territory refs (4b36d7be, 616d4102, b6dd7f10).
 			customer_name: fullName.value,
 			customer_type: customerType.value,
 			customer_group: customerGroup.value || defaultCustomerGroup.value,
@@ -566,6 +663,11 @@ const createListResource = (doctype, onSuccess) =>
 		onError: (err) => log.error(`Error loading ${doctype}`, err),
 	})
 
+//// Neoffice — upstream took the default group from Selling Settings, which is
+//// "Association" on our sites: every cashier had to correct every new customer. The
+//// preferred group now follows the type toggle (Individuel / Commercial), with Selling
+//// Settings kept only as a fallback (53d87890, 2026-05-28). The territory resource just
+//// got wrapped by the Biome pass.
 // Map the customer-type toggle to the preferred default Customer Group.
 // Localised swiss POS UX convention: Individuel for Individual, Commercial for Company.
 // Falls back to ERPNext's Selling Settings default, then to the first available group.
@@ -597,13 +699,19 @@ const posProfileResource = createResource({
 		fieldname: ["country"],
 	}),
 	auto: false,
+	//// Neoffice — Switzerland, not upstream's "Egypt", when the POS Profile has no country
+	//// (4b36d7be, 731374c1 2026-03-25).
 	onSuccess: (data) => setCountryFromName(data?.country || "Switzerland"),
 	onError: (err) => {
 		log.error("Error loading POS Profile", err)
+		//// Neoffice — Swiss dial-code default on the error path too (+41, not +20) (731374c1).
 		selectedCountryCode.value = "+41"
 	},
 })
 
+//// Neoffice — added resource. It only feeds the fallback chain of preferredGroupFor: it
+//// must NOT win over the Individuel/Commercial default, which is exactly the bug
+//// 53d87890 (2026-05-28) fixed.
 // Fetch default customer group from Selling Settings.
 // IMPORTANT: this is only stored as a fallback for preferredGroupFor(); it does NOT
 // override the customer-type-aware default (Individuel / Commercial) chosen above.
@@ -620,6 +728,8 @@ const sellingSettingsResource = createResource({
 			defaultCustomerGroup.value = data.cust_master_group
 		}
 	},
+	//// Neoffice — part of the same added resource (53d87890): a missing or unreadable Selling
+	//// Settings must not block customer creation, so the error is only logged.
 	onError: (err) => log.error("Error loading Selling Settings", err),
 })
 
@@ -631,9 +741,12 @@ const loadDialogData = async () => {
 	// Lazy load countries (non-blocking)
 	countriesStore.loadCountries()
 
+	//// Neoffice — the territory fetch is no longer awaited: the dialog must open at once on a
+	//// POS tablet, so the option lists load in parallel behind the form (4b36d7be).
 	// Load form options in parallel
 	territoriesResource.reload()
 	customerGroupsResource.reload()
+	//// Neoffice — added with the Selling Settings fallback (53d87890, 4b36d7be).
 	sellingSettingsResource.reload()
 	checkPermissions()
 
@@ -641,6 +754,8 @@ const loadDialogData = async () => {
 	if (props.posProfile) {
 		await posProfileResource.reload()
 	} else {
+		//// Neoffice — with no POS Profile, upstream just parked the dial code on +20. We resolve
+		//// the full Swiss default (dial code + address country) (4b36d7be, 731374c1).
 		setCountryFromName("Switzerland")
 	}
 }
@@ -657,6 +772,11 @@ const checkPermissions = async () => {
 	}
 }
 
+//// Neoffice — no upstream equivalent. Editing a customer used to leave the address behind:
+//// the form showed it but nothing wrote it back. This updates the primary Address in place,
+//// or creates and links one, mirroring the create path (4a0dd461 2026-07-09 "smoother
+//// customer selection & full edit form"; 195b3d29 2026-07-17 added custom_house_number,
+//// which both write paths were dropping).
 // Edit mode: persist the address alongside the customer. Updates the existing
 // primary address if one was loaded, otherwise creates + links a new one —
 // mirroring the create flow so editing an address actually saves.
@@ -726,12 +846,20 @@ const persistAddressForEdit = async () => {
 }
 
 const handleCreate = async () => {
+	//// Neoffice — guards on the composed fullName, since upstream's customer_name field is
+	//// gone (616d4102, b6dd7f10).
 	if (!fullName.value) {
 		return showError(__("Customer Name is required"))
 	}
 
 	if (isEditMode.value) {
 		await updateCustomerResource.submit()
+		//// Neoffice — everything below is ours. Upstream just called insert and let the resource's
+		//// onSuccess close the dialog. We (a) persist the address on the edit path, (b) await
+		//// submit() on the create path so the Address can be created and linked as the customer's
+		//// primary before the dialog closes, and (c) report the failure to the cashier instead of
+		//// only logging it (8bffb770 2026-02-04, b6dd7f10 2026-05-28, 4a0dd461 2026-07-09,
+		//// d7584e7b 2026-07-17 for custom_house_number).
 		await persistAddressForEdit()
 		return
 	}
@@ -800,23 +928,33 @@ const handleCreate = async () => {
 }
 
 const resetForm = () => {
+	//// Neoffice — the reset covers the fork's own state. Type toggle back to Individual
+	//// (4b36d7be, 2026-03-25).
 	customerType.value = "Individual"
 	Object.assign(customerData.value, {
+		//// Neoffice — company/first/last instead of upstream's single customer_name (731374c1).
 		company_name: "",
 		first_name: "",
 		last_name: "",
 		mobile_no: "",
 		email_id: "",
+		//// Neoffice — address fields cleared too; house_number is the ADR-002 N° (8bffb770,
+		//// d7584e7b).
 		address_line1: "",
 		house_number: "",
 		city: "",
 		pincode: "",
 		country: "",
 	})
+	//// Neoffice — reset to the fork's defaults: the type-aware group (Individuel/Commercial)
+	//// and +41, where upstream reset the group to "Individual" and blanked the dial code
+	//// (53d87890 2026-05-28, 731374c1 2026-03-25).
 	customerGroup.value = preferredGroupFor(customerType.value)
 	territory.value = "All Territories"
 	selectedCountryCode.value = "+41"
 	phoneNumber.value = ""
+	//// Neoffice — forget the Address loaded for the previous edit, or the next save would
+	//// overwrite someone else's address (4a0dd461, 2026-07-09).
 	editingAddressName.value = null
 }
 
@@ -824,9 +962,13 @@ const resetForm = () => {
 // Watchers
 // =============================================================================
 
+//// Neoffice — the search term typed in the customer search is split on the first space to
+//// prefill first/last name; upstream dropped it whole into customer_name (616d4102).
 // Pre-fill from search query (split on first space)
 watch(
 	() => props.initialName,
+	//// Neoffice — the handler itself is ours: upstream assigned the search term whole to
+	//// customer_name; we split it on the first space into first/last (616d4102).
 	(name) => {
 		if (name) {
 			const parts = name.split(" ")
@@ -836,6 +978,12 @@ watch(
 	},
 )
 
+//// Neoffice — everything from here to loadFullCustomerForEdit is ours. (1) The type toggle
+//// swaps the default group unless the cashier already picked one (53d87890). (2) Upstream
+//// prefilled the edit form inline from the prop; the cart only carries a lightweight
+//// customer (name/mobile/email), so the form looked empty — applyCustomerDoc is reusable
+//// and loadFullCustomerForEdit fetches the real doc plus its primary address
+//// (4a0dd461, 2026-07-09 "smoother customer selection & full edit form").
 // Toggle Individu ↔ Société — swap the default Customer Group accordingly
 // (Individuel for Individu, Commercial for Société), but ONLY if the user
 // hasn't manually picked a different group already in this dialog session.
@@ -914,6 +1062,8 @@ const loadFullCustomerForEdit = async () => {
 				editingAddressName.value = addr.name
 			}
 		}
+	//// Neoffice — a failed enrichment must not blank the form: the lightweight prefill stays
+	//// and we only log (4a0dd461, 2026-07-09).
 	} catch (error) {
 		log.error("Error loading full customer for edit", error)
 	}
@@ -931,6 +1081,7 @@ watch(
 			selectedCountryCode.value = code
 			phoneNumber.value = rest.join("-")
 		}
+	//// Neoffice — Biome pass (458d81a9): trailing comma on the watcher callback. No change.
 	},
 )
 
@@ -950,6 +1101,8 @@ watch(
 	() => props.modelValue,
 	async (isOpen) => {
 		show.value = isOpen
+		//// Neoffice — on open, edit mode also pulls the full customer doc and its address, which
+		//// upstream never needed (it had no edit mode here) (4a0dd461, 2026-07-09).
 		if (isOpen) {
 			await loadDialogData()
 			// Edit mode: enrich the form with the full customer doc + address.
@@ -974,4 +1127,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
 	document.removeEventListener("click", handleClickOutside)
 })
+//// Neoffice — upstream ended the file with a <style scoped> block defining .sr-only, which
+//// nothing in the template ever used; the compact rewrite dropped it (616d4102, 2026-03-25).
 </script>

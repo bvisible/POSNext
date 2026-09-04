@@ -156,6 +156,8 @@
 
 <script setup>
 import { useToast } from "@/composables/useToast"
+//// Neoffice — formatting only: the Biome pass of 458d81a9 (2026-03-20) wrapped this import
+//// one symbol per line. Same symbols, same module.
 import {
 	DEFAULT_CURRENCY,
 	DEFAULT_LOCALE,
@@ -182,6 +184,8 @@ function formatCurrency(amount) {
 	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency)
 }
 
+//// Neoffice — Biome pass (458d81a9): the emit list was wrapped one event per line. The
+//// events are upstream's.
 const emit = defineEmits([
 	"update:modelValue",
 	"create-return",
@@ -322,6 +326,8 @@ function canCreateReturn(invoice) {
 	// 1. Invoice is submitted (docstatus === 1)
 	// 2. Not already a return invoice
 	// 3. Status is not "Credit Note Issued" (already has a return)
+	//// Neoffice — Biome pass (458d81a9): the condition was parenthesised over three lines and
+	//// the string re-quoted to double quotes. Same test.
 	return (
 		invoice.docstatus === 1 &&
 		!invoice.is_return &&

@@ -239,6 +239,10 @@ const serialSearchQuery = ref("")
 
 // Computed: Available batches with cart quantities subtracted
 const availableBatches = computed(() => {
+	//// Neoffice — formatting only. The Biome pass of 458d81a9 (2026-03-20, "remove BrainWise
+	//// branding, add restaurant mode, and code formatting") unwrapped the chained
+	//// .map().filter() onto separate lines and added trailing commas. Upstream's logic
+	//// (warehouse qty minus what the cart already holds) is untouched.
 	return warehouseBatches.value
 		.map((batch) => {
 			// Find quantity of this batch already in cart
@@ -250,6 +254,8 @@ const availableBatches = computed(() => {
 				)
 				.reduce((sum, item) => sum + (item.quantity || 0), 0)
 
+			//// Neoffice — same Biome pass (458d81a9): this literal only moved one level deeper when
+			//// the .map()/.filter() chain above was unwrapped. No behaviour change.
 			return {
 				...batch,
 				qty: Math.max(0, batch.qty - cartQtyForBatch), // Available = warehouse - cart
@@ -311,6 +317,7 @@ const filteredSerials = computed(() => {
 	}
 	const query = serialSearchQuery.value.toLowerCase().trim()
 	return availableSerials.value.filter((serial) =>
+		//// Neoffice — Biome pass (458d81a9): trailing comma added on the arrow body. Same filter.
 		serial.serial_no.toLowerCase().includes(query),
 	)
 })

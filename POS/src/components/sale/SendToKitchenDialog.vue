@@ -1,4 +1,11 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Restaurant mode: the order is -->
+	<!-- //// fired to the preparation stations long before the bill is paid, which a retail -->
+	<!-- //// POS never does. Lines are routed per item, or by item group as a fallback; the -->
+	<!-- //// title names the station actually concerned (Send to Cuisine / Bar); lines held -->
+	<!-- //// back stay "Waiting" instead of being sent. (c7f6932c 2026-03-23, which also -->
+	<!-- //// stopped marking a table Occupied before any draft invoice existed; b86559db -->
+	<!-- //// dynamic title; 78a6fda7 colour thumbnail; 34ee11a8 item-group fallback.) -->
 	<Dialog
 		v-model="show"
 		:options="{

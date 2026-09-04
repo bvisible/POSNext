@@ -1078,6 +1078,9 @@ const createReturnResource = createResource({
 				: refundPayments.value.map((payment) => ({
 						mode_of_payment: payment.mode_of_payment,
 						amount: -Math.abs(payment.amount),
+					//// Neoffice — indentation only: the Biome pass of 458d81a9 (2026-03-20) re-indented this
+					//// closer from four tabs + two spaces to five tabs. `git blame -w` hides whitespace, which
+					//// is why the line still credits its upstream author. No behaviour change.
 					})),
 			remarks:
 				returnReason.value ||
@@ -1695,6 +1698,8 @@ function resetForm() {
 }
 
 // Date formatter instance (reused for performance)
+//// Neoffice — Biome pass (458d81a9): the constructor call was wrapped over three lines.
+//// DEFAULT_LOCALE and DATE_FORMAT_OPTIONS are unchanged.
 const dateFormatter = new Intl.DateTimeFormat(
 	DEFAULT_LOCALE,
 	DATE_FORMAT_OPTIONS,

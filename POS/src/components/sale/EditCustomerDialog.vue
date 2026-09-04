@@ -12,6 +12,16 @@
                       to the desk.
 -->
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Upstream sends the cashier to -->
+	<!-- //// the desk to edit a customer, a dead end on a PWA tablet. This editor is driven -->
+	<!-- //// by the Customer doctype meta (custom fields show up on their own) and keeps a -->
+	<!-- //// second tab for addresses and contacts backed by neoffice_theme, so the -->
+	<!-- //// ID-follows-title rename behaves exactly like the desk. (82fbfd9e 2026-07-10 -->
+	<!-- //// "full meta-driven customer edit dialog (stays in the POS)"; 5221894d lighter -->
+	<!-- //// two-tab layout + address/contact manager; 970934de decode HTML entities in -->
+	<!-- //// labels and strip HTML from read-only fields; 7e697fdd window.frappe has no -->
+	<!-- //// .call in the SPA, so the fetches failed silently — use frappe-ui call(); -->
+	<!-- //// d7584e7b 2026-07-17 the ADR-002 N° next to Address Line 1.) -->
 	<Dialog v-model="show" :options="{ title: __('Edit Customer'), size: '3xl' }">
 		<template #body-content>
 			<div v-if="loading" class="py-12 text-center">

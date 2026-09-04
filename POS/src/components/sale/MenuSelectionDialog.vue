@@ -1,4 +1,10 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Restaurant mode: a fixed-price -->
+	<!-- //// menu is one price spread over several courses, which upstream's retail cart -->
+	<!-- //// cannot express. Step-by-step course picker; the first chosen item carries the -->
+	<!-- //// whole menu price and the others go in at 0 so the ticket still totals right. -->
+	<!-- //// (9f4e85df, 2026-03-21 "Phase 4B - restaurant menus with course selection -->
+	<!-- //// dialog".) -->
 	<Dialog
 		v-model="show"
 		:options="{ title: menu ? menu.menu_name : __('Select Menu'), size: 'lg' }"

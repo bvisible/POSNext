@@ -250,6 +250,7 @@
 </template>
 
 <script setup>
+//// Neoffice — formatting only: Biome pass of 458d81a9 (2026-03-20) wrapped this import.
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -306,6 +307,8 @@ watch(show, async (newVal) => {
 })
 
 // Watch for prop changes (e.g., after delete or sync)
+//// Neoffice — Biome pass (458d81a9): watch() arguments split one per line, trailing comma
+//// added. Same watcher on props.pendingInvoices.
 watch(
 	() => props.pendingInvoices,
 	(newInvoices) => {
@@ -336,6 +339,8 @@ function formatDate(timestamp) {
 
 	if (diffInSeconds < 60) return __("Just now")
 	if (diffInSeconds < 3600)
+		//// Neoffice — Biome pass (458d81a9) re-quoted these two __() msgids from single to double
+		//// quotes (this branch and the "hours ago" one below). The strings are unchanged.
 		return __("{0} minutes ago", [Math.floor(diffInSeconds / 60)])
 	if (diffInSeconds < 86400)
 		return __("{0} hours ago", [Math.floor(diffInSeconds / 3600)])

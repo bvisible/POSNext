@@ -1,4 +1,14 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Restaurant mode: a dish is -->
+	<!-- //// ordered with choices (cooking, sauce, side) that move the price, which a retail -->
+	<!-- //// POS has no notion of. Modifier groups/options are structured doctypes and the -->
+	<!-- //// choice is stored as JSON on posa_item_modifiers. (458d81a9 2026-03-20 brought -->
+	<!-- //// the file in; 4df0caf1 2026-03-21 "Phase 4A - structured item modifiers" -->
+	<!-- //// rewrote it; 0125e4ec the price showed in hardcoded USD instead of the profile -->
+	<!-- //// currency; 135bad1d special instructions must hold the customer's free text -->
+	<!-- //// only, never the modifier names; c6c81bf1 quantity_value; f1b2c434 two identical -->
+	<!-- //// cart lines corrupted each other's price, hence the index-based lookup in -->
+	<!-- //// saveModifiers; 1ff2fba2 hands over to the price numpad when the price is 0.) -->
 	<Dialog
 		v-model="show"
 		:options="{ title: item ? item.item_name : __('Modifiers'), size: 'lg' }"

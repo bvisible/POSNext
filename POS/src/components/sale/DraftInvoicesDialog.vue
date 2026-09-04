@@ -43,6 +43,10 @@
 									{{ formatDateTime(draft.created_at) }}
 								</p>
 
+								<!-- //// Neoffice — restaurant mode. For upstream a draft is a parked retail cart; ours -->
+								<!-- //// can be a table's running order, so the card shows which table it belongs to and -->
+								<!-- //// how far the kitchen is with it, otherwise the waiter has to open every draft -->
+								<!-- //// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode..."). -->
 								<div v-if="draft.restaurant_table" class="mt-1 flex items-center gap-2">
 									<span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
 										Table: {{ draft.restaurant_table }}

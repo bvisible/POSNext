@@ -183,6 +183,7 @@
 import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { Button, Dialog } from "frappe-ui"
 import { storeToRefs } from "pinia"
+//// Neoffice — nextTick is imported for createNewCustomer below (682184b0, 2026-07-09).
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import CreateCustomerDialog from "./CreateCustomerDialog.vue"
 
@@ -277,6 +278,10 @@ function selectCustomer(customer) {
 	show.value = false
 }
 
+//// Neoffice — ported by hand from upstream c72894fa, which landed after our merge base:
+//// close the search dialog and await nextTick before opening the create dialog, otherwise
+//// the two modals stack and the cashier cannot reach the form (682184b0, 2026-07-09
+//// "align weighted-barcode resolver with upstream + dialog nextTick").
 async function createNewCustomer() {
 	// Close the search dialog before opening the create dialog so the two
 	// modals never stack (upstream c72894fa).
