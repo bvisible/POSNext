@@ -458,6 +458,11 @@ export async function cacheSalesPersonsFromServer(posProfile) {
 		const timestamp = Date.now()
 		await setSetting("sales_persons_last_sync", timestamp)
 
+		//// Neoffice — formatting only. The Biome pass rejoined this call onto one line
+		//// (it now fits lineWidth 80); upstream had it split over three. No behaviour
+		//// change — at the next merge take upstream's line and re-run `biome check
+		//// --write` rather than resolving by hand (458d81a9, 2026-03-20 "remove BrainWise
+		//// branding, add restaurant mode, and code formatting").
 		console.log(`Cached ${salesPersons.length} sales persons for ${posProfile}`)
 
 		return { sales_persons: salesPersons }

@@ -18,6 +18,21 @@
  */
 
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+//// Neoffice — WHOLE FILE: formatting and lint only, with ONE exception ▼▼▼
+//// Everything this worker does — the Dexie singleton with its retry and circuit
+//// breaker, the query cache, the index-first item search, the batched item/customer
+//// caching, the offers cache and the periodic stock sync — is upstream BrainWise
+//// code. We did not write it and, apart from the exception below, we have not
+//// changed it.
+//// All the rest is the Biome pass of 458d81a9 (2026-03-20 "remove BrainWise
+//// branding, add restaurant mode, and code formatting") under POS/biome.json: semicolons
+//// "asNeeded", quoteStyle "double", indentStyle "tab", lineWidth 80,
+//// plus Biome's recommended lint rules (useConst, useNumberNamespace) — marked
+//// individually where they occur.
+//// THE EXCEPTION is searchCachedCustomers: word-tokenized, order-
+//// independent customer search, marked there (d29af088).
+//// At the next upstream merge: take BrainWise's file wholesale, re-run
+//// `biome check --write`, then re-apply that one search change.
 import { logger } from "../utils/logger"
 import { generateOfflineId } from "../utils/offline/uuid"
 
@@ -200,6 +215,9 @@ let stockSyncRunning = false
  */
 function recordMetric(operation, duration, isError = false) {
 	if (!metrics.has(operation)) {
+		//// Neoffice — Biome lint, not formatting: `Infinity` became
+		//// `Number.POSITIVE_INFINITY` (useNumberNamespace). Same value, same seed for the
+		//// Math.min below; the object is only re-wrapped one field per line (458d81a9).
 		metrics.set(operation, {
 			count: 0,
 			totalTime: 0,
@@ -668,6 +686,9 @@ async function searchCachedItemsByGroup(
 
 		// Use item_group index for efficient lookup
 		// Exclude template items (has_variants is set) — only show variants + regular items
+		//// Neoffice — Biome lint (useConst): `let allResults` became `const`; it is only
+		//// pushed into and sorted in place, never reassigned. No behaviour change; the
+		//// per-group index lookup below is upstream's (458d81a9).
 		const allResults = []
 		for (const group of itemGroups) {
 			const items = await db
@@ -735,6 +756,9 @@ async function searchCachedItemsByBrand(brand, limit = 50, offset = 0) {
 		const db = await initDB()
 
 		// Use brand index for lookup, then sort and paginate in memory
+		//// Neoffice — Biome lint + formatting: `let results` became `const` (useConst) and
+		//// the Dexie chain broke one call per line at 80 columns. The brand index query is
+		//// upstream's, unchanged (458d81a9).
 		const results = await db
 			.table("items")
 			.where("brand")
@@ -823,6 +847,19 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 
 		const results = allCustomers
 			.filter((cust) => {
+				//// Neoffice — the exception announced at the top of this file. Upstream tested
+				//// name.includes(term) || mobile.includes(term) || id.includes(term), so the whole
+				//// query had to appear as one contiguous run in a single field: a cashier typing
+				//// "Moret Daniel" found nothing for a customer recorded as "Daniel Moret".
+				//// Here the
+				//// three fields are joined into one haystack and every word of the query must
+				//// appear
+				//// somewhere in it, so "Moret", "Daniel", "Moret Daniel" and "dan mor" all
+				//// find the
+				//// customer. Same fix applied on the other three paths (in-memory store, Dexie
+				//// cache,
+				//// backend get_customers) (d29af088, 2026-07-09 "barcode error toast, UOM dialog
+				//// dedup, any-order customer search").
 				const haystack =
 					(cust.customer_name || "").toLowerCase() +
 					" " +
@@ -1261,6 +1298,9 @@ async function getCachedSalesPersons(posProfile) {
 }
 
 // ============================================================================
+//// Neoffice — still inside the whole-file formatting-only region opened at the top:
+//// the offers cache below differs from upstream only by ' -> " and arrow parens
+//// (458d81a9).
 // OFFERS CACHE FUNCTIONS
 // ============================================================================
 
@@ -1381,6 +1421,10 @@ async function isCacheReady() {
 }
 
 // Get cache stats
+//// Neoffice — still inside the whole-file formatting-only region opened at the top.
+//// The destructured Promise.all below is only re-wrapped one element per line by
+//// Biome at lineWidth 80; the counts and the showVariantsAsItems branch are
+//// upstream's (458d81a9).
 async function getCacheStats() {
 	try {
 		const db = await initDB()
@@ -1534,6 +1578,10 @@ async function updateStockQuantities(stockUpdates) {
 }
 
 // ============================================================================
+//// Neoffice — still inside the whole-file formatting-only region opened at the top.
+//// The whole stock-sync block below (fetch with CSRF header, abort timeout, interval,
+//// STOCK_SYNC_COMPLETE / STOCK_SYNC_ERROR messages) is upstream's; it was written
+//// with single quotes and got the same Biome treatment as the rest (458d81a9).
 // PERIODIC STOCK SYNC - Background stock refresh from server
 // ============================================================================
 
@@ -2002,3 +2050,4 @@ async function initialize() {
 
 // Start initialization
 initialize()
+//// Neoffice — end of the whole-file formatting/lint-only region ▲▲▲

@@ -86,6 +86,14 @@ const CURRENT_SCHEMA = {
 	// Stores invoices with outstanding amounts for partial payment management
 	unpaid_invoices: "&name, pos_profile, outstanding_amount, customer",
 
+	//// Neoffice — two Dexie stores upstream has no equivalent for. Upstream POSNext is
+	//// a retail POS: it knows nothing about table service, so nothing here persisted a
+	//// floor plan. Neoffice sells the POS to restaurants, where the till must keep
+	//// serving a table and its area with the network down — hence the tables cached
+	//// offline like items and customers. Adding keys here bumps CURRENT_SCHEMA's hash,
+	//// so getSchemaVersion() below upgrades every existing browser database by itself
+	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting").
 	// Restaurant module tables
 	restaurant_tables: "&name, table_name, area, status",
 	restaurant_areas: "&name, area_name",
@@ -127,6 +135,8 @@ function getSchemaVersion() {
 	if (storedHash !== schemaHash.toString()) {
 		// Schema changed, increment version
 		const newVersion = storedVersion + 1
+		//// Neoffice — formatting only: Biome wrapped this log call at lineWidth 80
+		//// (458d81a9). Same message, same arguments.
 		log.info(
 			`Schema changed detected. Upgrading from v${storedVersion} to v${newVersion}`,
 		)
@@ -151,6 +161,10 @@ db.version(schemaVersion).stores(CURRENT_SCHEMA)
 export const initDB = async () => {
 	try {
 		await db.open()
+		//// Neoffice — product name in a log line: the POS ships to our customers as Neopos,
+		//// not "POS Next", so the console of a till in a shop must not name a product they
+		//// have never bought. String only, no logic (771950bd, 2026-04-02 "rebrand: rename
+		//// POS Next to Neopos").
 		log.success("Neopos offline database initialized")
 		return true
 	} catch (error) {
@@ -339,6 +353,11 @@ export const clearBrowserCache = () => {
 
 	try {
 		// Clear POS-specific localStorage items
+		//// Neoffice — formatting only, down to the log.info below ▼▼▼
+		//// Four hunks in this function, all from the Biome pass of 458d81a9: single quotes
+		//// became double ('pos_next_' -> "pos_next_") and arrow parameters gained their
+		//// parens (key => became (key) =>). The keys matched and the behaviour are
+		//// upstream's, untouched.
 		const keysToRemove = []
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i)
@@ -366,6 +385,7 @@ export const clearBrowserCache = () => {
 			results.sessionStorage++
 		})
 
+		//// Neoffice — end of the formatting-only region ▲▲▲
 		log.info("Browser cache cleared:", results)
 		return { success: true, cleared: results }
 	} catch (error) {

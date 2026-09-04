@@ -15,6 +15,20 @@
  */
 
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+//// Neoffice — WHOLE FILE: formatting only, no behaviour change ▼▼▼
+//// The offline state machine below — multi-signal detection, stability buffer,
+//// adaptive polling, backoff with jitter, captive-portal check, cross-tab sync — is
+//// upstream BrainWise code. We did not write it and we have not changed it.
+//// Every hunk here is the Biome pass of 458d81a9 (2026-03-20 "remove BrainWise
+//// branding, add restaurant mode, and code formatting") under POS/biome.json: semicolons
+//// "asNeeded", quoteStyle "double", indentStyle "tab", lineWidth 80:
+//// ' -> ", arrow parens, 80-column wrapping, trailing commas.
+//// The CONFIG block just below is the same story: only the alignment of the
+//// trailing comments changed (padded columns collapsed to one space). `git blame -w`
+//// ignores that whitespace and therefore still credits those lines to upstream —
+//// they are NOT of unknown origin, they are 458d81a9's formatter.
+//// At the next upstream merge: take BrainWise's file wholesale, re-run
+//// `biome check --write`.
 import { logger } from "../logger"
 
 const log = logger.create("OfflineState")
@@ -380,6 +394,10 @@ class NetworkMonitor {
 // OFFLINE STATE MANAGER CLASS
 // ============================================================================
 
+//// Neoffice — still inside the whole-file formatting-only region opened at the top
+//// of this file: quotes, arrow parens and 80-column wrapping from 458d81a9, nothing
+//// else. The browser-event listeners, the debounce and the cross-tab sync below are
+//// upstream's, unchanged.
 class OfflineStateManager {
 	constructor() {
 		// Core state
@@ -757,3 +775,4 @@ if (typeof window !== "undefined") {
 		setTimeout(() => offlineState.initialize(), 0)
 	}
 }
+//// Neoffice — end of the whole-file formatting-only region ▲▲▲

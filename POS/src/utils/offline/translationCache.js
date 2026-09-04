@@ -60,6 +60,12 @@ const normalizeLocale = (locale) => (locale || "en").toLowerCase()
  */
 async function persist(locale, messages, timestamp) {
 	try {
+		//// Neoffice — the write side of the build stamp declared at the top of this file.
+		//// Reading it is useless if nothing records it: an entry persisted without `build`
+		//// can never match the current bundle, so a till would refetch its dictionary on
+		//// every single call instead of once per deploy. Upstream stores locale + messages
+		//// + timestamp only (91864420, 2026-08-19 "une nouvelle traduction ne doit pas
+		//// attendre 24 h pour arriver en caisse").
 		const entry = { locale, messages, timestamp, build: BUILD_STAMP }
 		memoryCache.set(locale, entry)
 		await db.translations.put(entry)
@@ -154,6 +160,12 @@ export const translationCache = {
 		const normalized = normalizeLocale(locale)
 		const cached = await read(normalized)
 
+		//// Neoffice — pass the cached entry's stamp to isStale, which upstream calls with
+		//// (timestamp, ttl) only. Without the third argument the staleness test falls back to
+		//// age alone and the whole build-stamp mechanism is dead code — that is exactly the
+		//// bug 35e5b084 had to fix on the sibling call path in translation.ts, found by
+		//// checking on osiris that the new warnings still came out in English on a French
+		//// till (91864420, 2026-08-19).
 		if (!force && cached && !this.isStale(cached.timestamp, ttl, cached.build)) {
 			return cached
 		}

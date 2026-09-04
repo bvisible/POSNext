@@ -1,3 +1,13 @@
+//// Neoffice — WHOLE FILE: formatting and lint only, no behaviour change ▼▼▼
+//// The invoice queue, the duplicate-detection patterns and the retry logic in this
+//// file are upstream BrainWise code. Every hunk between the fork point and HEAD is
+//// the Biome pass of 458d81a9 (2026-03-20 "remove BrainWise branding, add restaurant
+//// mode, and code formatting") under POS/biome.json: semicolons "asNeeded", quoteStyle
+//// "double", indentStyle "tab", lineWidth 80 — plus two of Biome's
+//// recommended lint rules, marked where they occur further down (useConst,
+//// useNumberNamespace). Both are rewrites of form, not of meaning.
+//// At the next upstream merge: take BrainWise's file wholesale, re-run
+//// `biome check --write`.
 import { call } from "@/utils/apiWrapper"
 import { logger } from "@/utils/logger"
 import { CoalescingMutex } from "@/utils/mutex"
@@ -278,6 +288,9 @@ const handleSyncFailure = async (invoice, errorMessage) => {
  * Convert pricing_rules to comma-separated string.
  * Returns empty string for invalid/malformed values.
  */
+//// Neoffice — still inside the whole-file formatting-only region opened above:
+//// this helper differs from upstream by ' -> " and the wrapping of the log.warn
+//// argument object. Same parsing, same empty-string fallbacks (458d81a9).
 const stringifyPricingRules = (value) => {
 	if (!value) return ""
 	if (Array.isArray(value)) return value.filter(Boolean).join(",")
@@ -506,6 +519,8 @@ export const getLocalStock = async (itemCode, warehouse) => {
 		const stock = await db.stock.get({ item_code: itemCode, warehouse })
 		return stock?.qty || 0
 	} catch (error) {
+		//// Neoffice — formatting only: Biome broke this log call's context object one field
+		//// per line at 80 columns. Same message, same fields (458d81a9).
 		log.error("Failed to get local stock", {
 			item_code: itemCode,
 			warehouse,
@@ -701,6 +716,10 @@ export const getCachedUnpaidInvoices = async (posProfile, options = {}) => {
 			return []
 		}
 
+		//// Neoffice — Biome lint, not formatting: `let invoices` became `const` (useConst —
+		//// it is only ever sorted in place, never reassigned) and `parseFloat` below became
+		//// `Number.parseFloat` (useNumberNamespace, same function, explicit namespace).
+		//// Behaviour identical, including the descending sort (458d81a9).
 		const invoices = await db.unpaid_invoices
 			.where("pos_profile")
 			.equals(posProfile)
@@ -757,3 +776,4 @@ export const getCachedUnpaidSummary = async (posProfile) => {
 		return { count: 0, total_outstanding: 0, total_paid: 0 }
 	}
 }
+//// Neoffice — end of the whole-file formatting/lint-only region ▲▲▲

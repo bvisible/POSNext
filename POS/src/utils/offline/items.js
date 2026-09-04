@@ -1,4 +1,16 @@
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+//// Neoffice — WHOLE FILE: formatting only, no behaviour change ▼▼▼
+//// Every hunk of this file between the fork point and HEAD comes from the Biome
+//// pass of 458d81a9 (2026-03-20 "remove BrainWise branding, add restaurant mode,
+//// and code formatting"), run with POS/biome.json: semicolons "asNeeded", quoteStyle "double",
+//// indentStyle "tab", lineWidth 80.
+//// Concretely: semicolons dropped, ' -> ", arrow parens (word => became (word) =>),
+//// re-wrapping at 80 columns, trailing commas, and searchCachedCustomers re-indented
+//// from spaces to tabs. Not one line of logic differs from upstream here — no
+//// restaurant code, no offline hardening, no Neoffice behaviour at all.
+//// At the next upstream merge: take BrainWise's version of this file wholesale and
+//// re-run `biome check --write`. Resolving these hunks by hand buys nothing and
+//// risks dropping an upstream fix hidden inside the reformatting noise.
 import { db, getSetting, setSetting } from "./db"
 
 // Cache items in IndexedDB
@@ -53,6 +65,9 @@ export const getCachedItems = async (limit = 100) => {
 }
 
 // Fuzzy search: matches if any search word is contained in item text
+//// Neoffice — still inside the whole-file formatting-only region opened at the top:
+//// the fuzzy scoring below (exact 1000 / code 900 / prefix 500-400 / else 100) is
+//// upstream's, only re-punctuated by Biome (458d81a9).
 export const searchCachedItems = async (searchTerm, limit = 50) => {
 	try {
 		if (!searchTerm) {
@@ -220,6 +235,11 @@ export const cacheCustomers = async (customers) => {
 }
 
 // Search cached customers
+//// Neoffice — the widest hunk of this file, and still formatting only: upstream had
+//// this one function indented with SPACES while the rest of the file used tabs, so
+//// Biome re-indented every line of the body (458d81a9). The Dexie startsWithIgnoreCase
+//// query is untouched — note it is NOT the tokenized customer search, which lives in
+//// cache.js and offline.worker.js (d29af088).
 export const searchCachedCustomers = async (searchTerm, limit = 20) => {
 	try {
 		if (!searchTerm) {
@@ -295,3 +315,4 @@ export const clearCustomersCache = async () => {
 		return false
 	}
 }
+//// Neoffice — end of the whole-file formatting-only region ▲▲▲

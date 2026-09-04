@@ -6,6 +6,18 @@
 
 //// enterprise-grade offline state management system — 8887b36
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
+//// Neoffice — WHOLE FILE: formatting only, no behaviour change ▼▼▼
+//// The worker client below — promise-per-message, retry with exponential backoff,
+//// crash detection, graceful fallback — is upstream BrainWise code, unchanged.
+//// Every hunk between the fork point and HEAD is the Biome pass of 458d81a9
+//// (2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+//// formatting") under POS/biome.json: semicolons "asNeeded", quoteStyle "double", indentStyle
+//// "tab", lineWidth 80: ' -> ", arrow parens, trailing
+//// commas, and re-wrapping of the long log/sendMessage calls at 80 columns. One of
+//// those rewraps moves a log.success() line across a closing brace, which the diff
+//// shows as a removal — it is the same call with the same arguments.
+//// At the next upstream merge: take BrainWise's file wholesale, re-run
+//// `biome check --write`.
 import { logger } from "../logger"
 import { offlineState } from "./offlineState"
 
@@ -680,3 +692,4 @@ export const offlineWorker = new OfflineWorkerClient()
 if (typeof window !== "undefined") {
 	offlineWorker.init()
 }
+//// Neoffice — end of the whole-file formatting-only region ▲▲▲
