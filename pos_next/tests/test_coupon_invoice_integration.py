@@ -49,12 +49,21 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 		if not cls.test_company:
 			raise unittest.SkipTest("No company with an active fiscal year for today")
 
-		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): pick a deterministic, active customer instead of an unfiltered get_all(limit=1)
-		# Get test customer: an active one, and the same one from run to run.
-		customers = frappe.get_all(
-			"Customer", filters={"disabled": 0}, order_by="name asc", limit=1
-		)
-		cls.test_customer = customers[0].name if customers else None
+		#//// Neoffice — modified: create the test customer instead of borrowing an arbitrary get_all("Customer", limit=1) row — the row you land on decides the invoice currency, and on CI it put a USD customer against an INR company, failing all four invoice tests on "Party Account Debtors - _TC currency (INR) and document currency (USD) should be same"
+		# Track created docs for cleanup (before anything is created)
+		cls.created_customers = []
+		cls.created_coupons = []
+		cls.created_pricing_rules = []
+		cls.created_invoices = []
+
+		# Test customer: create our own instead of borrowing an arbitrary row.
+		# frappe.get_all("Customer", limit=1) returned whatever came back first,
+		# and which customer you land on decides the invoice currency: on CI it
+		# reached a USD customer against an INR company and every invoice died on
+		# "Party Account Debtors - _TC currency (INR) and document currency (USD)
+		# should be same". A customer with no default_currency of its own bills in
+		# the company currency, which is all these coupon tests need.
+		cls.test_customer = cls._create_test_customer()
 
 		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): exclude templates/fixed assets/disabled items and order by name so the pick is stable
 		# Get test item: one that can actually go on an invoice line.
@@ -83,13 +92,32 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"Company", cls.test_company, "default_income_account"
 		)
 
-		# Track created docs for cleanup
-		cls.created_coupons = []
-		cls.created_pricing_rules = []
-		cls.created_invoices = []
-
 		# Create a test Pricing Rule and Coupon Code
 		cls._create_test_coupon()
+
+	#//// Neoffice — added _create_test_customer: the coupon tests need a customer that bills in the company currency, which no borrowed row guarantees
+	@classmethod
+	def _create_test_customer(cls):
+		"""Create a customer that bills in the company currency."""
+		name = "POS Next Coupon Test Customer"
+		existing = frappe.db.get_value("Customer", {"customer_name": name})
+		if existing:
+			return existing
+
+		customer = frappe.get_doc({
+			"doctype": "Customer",
+			"customer_name": name,
+			"customer_type": "Individual",
+			"customer_group": frappe.get_all(
+				"Customer Group", filters={"is_group": 0}, limit=1
+			)[0].name,
+			"territory": frappe.get_all(
+				"Territory", filters={"is_group": 0}, limit=1
+			)[0].name,
+		})
+		customer.insert(ignore_permissions=True)
+		cls.created_customers.append(customer.name)
+		return customer.name
 
 	@classmethod
 	def _create_test_coupon(cls):
@@ -155,6 +183,14 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 		for pr_name in cls.created_pricing_rules:
 			try:
 				frappe.delete_doc("Pricing Rule", pr_name, force=True)
+			except Exception:
+				pass
+
+		# Delete the customer we created (only ours: created_customers is empty
+		# when the run reused one that was already on the site)
+		for customer_name in cls.created_customers:
+			try:
+				frappe.delete_doc("Customer", customer_name, force=True)
 			except Exception:
 				pass
 
