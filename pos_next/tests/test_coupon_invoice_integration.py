@@ -22,17 +22,56 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 	"""Test coupon_code field integration with Sales Invoice"""
 
 	@classmethod
+	def _pick_company(cls):
+		"""A company an invoice dated today can actually be booked in.
+
+		frappe.get_all("Company", limit=1) took whatever row came back first
+		(modified desc), which on any site holding more than one company is a
+		coin toss. On the dev instance it picked a company whose fiscal years do
+		not cover today and all four invoice tests died on FiscalYearError before
+		reaching the coupon behaviour they exist to check. Ask for the property
+		the test actually needs instead, and order by name so the pick is stable.
+		"""
+		from erpnext.accounts.utils import get_fiscal_year
+
+		for name in frappe.get_all("Company", pluck="name", order_by="name asc"):
+			if get_fiscal_year(nowdate(), company=name, boolean=True, verbose=0):
+				return name
+		return None
+
+	@classmethod
 	def setUpClass(cls):
 		"""Set up test fixtures"""
 		# Get test company
-		cls.test_company = frappe.get_all("Company", limit=1)[0].name
+		cls.test_company = cls._pick_company()
+		if not cls.test_company:
+			raise unittest.SkipTest("No company with an active fiscal year for today")
 
-		# Get test customer
-		customers = frappe.get_all("Customer", limit=1)
+		# Get test customer: an active one, and the same one from run to run.
+		customers = frappe.get_all(
+			"Customer", filters={"disabled": 0}, order_by="name asc", limit=1
+		)
 		cls.test_customer = customers[0].name if customers else None
 
-		# Get test item
-		items = frappe.get_all("Item", filters={"is_sales_item": 1}, limit=1)
+		# Get test item: one that can actually go on an invoice line.
+		# erpnext ships _Test Variant Item among its test records - a template
+		# (has_variants=1) whose variants are the sellable rows. Filtering only on
+		# is_sales_item picked it up and every invoice built here died on
+		# "Item _Test Variant Item is a template, please select one of its
+		# variants" (CI, 2026-09-03). Fixed assets need an Asset record and
+		# disabled items are refused too, so exclude all three; order by name so
+		# the fixture is the same row from one run to the next.
+		items = frappe.get_all(
+			"Item",
+			filters={
+				"is_sales_item": 1,
+				"has_variants": 0,
+				"is_fixed_asset": 0,
+				"disabled": 0,
+			},
+			order_by="name asc",
+			limit=1,
+		)
 		cls.test_item = items[0].name if items else None
 
 		# Get default income account
