@@ -53,6 +53,11 @@
 									d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
 									clip-rule="evenodd" />
 							</svg>
+							<!-- //// Neoffice — upstream titled this "My Gift Cards": its POS Coupon gift cards -->
+							<!-- //// always belonged to a customer. Ours are ERPNext Coupon Codes that can be -->
+							<!-- //// issued anonymously (bearer cards sold over the counter), so what the list -->
+							<!-- //// shows is not "mine" but what this till can accept (ce505902, 2026-01-12 -->
+							<!-- //// "implement gift card API, splitting logic, and frontend components"). -->
 							<span>{{ __('Available Gift Cards ({0})', [giftCards.length]) }}</span>
 						</div>
 					</label>
@@ -76,6 +81,9 @@
 											<h4 class="text-sm font-bold text-gray-900">
 												{{ card.coupon_code }}
 											</h4>
+											<!-- //// Neoffice — flag bearer cards. A gift card sold over the counter has no -->
+											<!-- //// customer, and the cashier has to tell it apart from a card tied to the -->
+											<!-- //// account being billed. Upstream's POS Coupon was always owned (ce505902). -->
 											<p class="text-xs text-gray-600">
 												{{ card.coupon_name }}
 												<span v-if="!card.customer" class="text-purple-500">({{ __('Anonymous') }})</span>
@@ -83,6 +91,9 @@
 										</div>
 									</div>
 								</div>
+								<!-- //// Neoffice — show the remaining balance on the card. Upstream's POS Coupon was -->
+								<!-- //// a fixed discount consumed whole; our gift cards keep a balance that survives -->
+								<!-- //// the sale, so the cashier must see what is left before applying it (ce505902). -->
 								<div class="flex items-center gap-2">
 									<div class="text-end">
 										<p class="text-sm font-bold text-purple-700">
@@ -111,12 +122,16 @@
 									clip-rule="evenodd" />
 							</svg>
 						</div>
+						<!-- //// Neoffice — a gift card is not a coupon to the customer: it is money already -->
+						<!-- //// paid. Both confirmations are worded per kind so what the cashier says at the -->
+						<!-- //// counter matches what actually happened (ce505902, 2026-01-12). -->
 						<h4 class="text-sm font-bold text-green-900">
 							{{ appliedDiscount.isGiftCard ? __('Gift Card Applied!') : __('Coupon Applied Successfully!') }}
 						</h4>
 					</div>
 					<div class="bg-white rounded-lg p-3">
 						<div class="flex justify-between items-center mb-2">
+							<!-- //// Neoffice — same split wording: "Gift Card Code" vs "Coupon Code" (ce505902). -->
 							<span class="text-xs text-gray-600">{{ appliedDiscount.isGiftCard ? __('Gift Card Code') : __('Coupon Code') }}</span>
 							<span class="text-sm font-bold text-gray-900">{{ appliedDiscount.code }}</span>
 						</div>
@@ -126,6 +141,10 @@
 								-{{ formatCurrency(appliedDiscount.amount) }}
 							</span>
 						</div>
+						<!-- //// Neoffice — gift-card splitting made visible: when the card is worth more than -->
+						<!-- //// the bill, the surplus stays on the card. Upstream had no balance to show — its -->
+						<!-- //// POS Coupon was spent whole — and showing the remainder here is what stops the -->
+						<!-- //// customer believing the rest was lost (ce505902, 2026-01-12). -->
 						<!-- Gift Card Balance Info -->
 						<div v-if="appliedDiscount.isGiftCard && appliedDiscount.availableBalance" class="mt-2 pt-2 border-t border-gray-200">
 							<div class="flex justify-between items-center text-xs">
@@ -175,6 +194,7 @@
 </template>
 
 <script setup>
+//// Neoffice — Biome formatter pass: import rewrapped, no behaviour change (458d81a9).
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -193,6 +213,12 @@ const props = defineProps({
 	subtotal: {
 		type: Number,
 		required: true,
+		//// Neoffice — netTotal added beside subtotal. A gift card is money already paid, so it
+		//// must be capped by what is left to pay AFTER pricing rules, not by the raw cart
+		//// subtotal: capping on the subtotal let the discount exceed the discounted price and
+		//// the server refused the invoice (8e06bb9c, 2026-01-16 "calculate discount on net
+		//// total after pricing rules"). The subtotal note was reworded to say it now serves
+		//// regular coupons only.
 		note: __(
 			"Cart subtotal BEFORE tax - used for regular coupon discount calculations",
 		),
@@ -330,12 +356,14 @@ async function applyCoupon() {
 		const result = couponResource.data?.message || couponResource.data
 
 		// Handle if result is the actual response object
+		//// Neoffice — Biome formatter pass, ternary wrapped. No behaviour change (458d81a9).
 		const validationData =
 			typeof result === "object" && result.valid !== undefined
 				? result
 				: couponResource.data
 
 		if (!validationData || !validationData.valid) {
+			//// Neoffice — Biome formatter pass, expression wrapped. No behaviour change (458d81a9).
 			errorMessage.value =
 				validationData?.message ||
 				__("The coupon code you entered is not valid")
@@ -344,11 +372,15 @@ async function applyCoupon() {
 		}
 
 		const coupon = validationData.coupon
+		//// Neoffice — a validated coupon can now be a gift card. Upstream had a single kind
+		//// (its own POS Coupon); we route ERPNext Coupon Code plus the gift-card flag through
+		//// the same validation endpoint, so the kind is decided once here (ce505902, 2026-01-12).
 		const isGiftCard = coupon.coupon_type === "Gift Card" || coupon.is_gift_card
 		const baseAmount = getCouponBaseAmount(coupon)
 
 		// Check minimum amount on the configured coupon base
 		if (coupon.min_amount && baseAmount < coupon.min_amount) {
+			//// Neoffice — Biome formatter pass, call wrapped. No behaviour change (458d81a9).
 			errorMessage.value = __("This coupon requires a minimum purchase of ", [
 				formatCurrency(coupon.min_amount),
 			])
@@ -356,6 +388,12 @@ async function applyCoupon() {
 			return
 		}
 
+		//// Neoffice — two ways to compute a discount where upstream had one. A gift card is
+		//// prepaid money: the discount is the card BALANCE capped at netTotal (what is left to
+		//// pay after pricing rules) and the surplus stays on the card for the next sale. A
+		//// regular coupon keeps upstream's percentage/amount computation on the subtotal
+		//// (ce505902, 2026-01-12 "implement gift card API, splitting logic"; the netTotal
+		//// capping is the fix of 8e06bb9c, 2026-01-16).
 		let discountAmount = 0
 		let availableBalance = 0
 		let remainingBalance = 0
@@ -385,6 +423,10 @@ async function applyCoupon() {
 			}
 		}
 
+		//// Neoffice — upstream clamped everything to baseAmount. A gift card must clamp to
+		//// netTotal instead: clamping a card to the pre-pricing-rule base let it exceed the
+		//// amount actually due and the invoice was rejected (8e06bb9c, 2026-01-16 "calculate
+		//// discount on net total after pricing rules").
 		// Clamp discount to the appropriate total based on coupon type
 		// Gift cards: clamp to netTotal (after pricing rules)
 		// Regular coupons: clamp to baseAmount (respects apply_on setting)
@@ -394,12 +436,16 @@ async function applyCoupon() {
 		appliedDiscount.value = {
 			name: coupon.coupon_name || coupon.coupon_code,
 			code: couponCode.value.toUpperCase(),
+			//// Neoffice — Biome formatter pass, ternary wrapped. No behaviour change (458d81a9).
 			percentage:
 				coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
 			amount: discountAmount,
 			type: coupon.discount_type,
 			coupon: coupon,
 			apply_on: coupon.apply_on,
+			//// Neoffice — the applied-discount object now carries the gift-card facts (kind,
+			//// balance, remainder) so the cart and this dialog can show what stays on the card.
+			//// Upstream's POS Coupon had no balance to carry (ce505902, 2026-01-12).
 			isGiftCard: isGiftCard,
 			availableBalance: isGiftCard ? availableBalance : null,
 			remainingBalance: isGiftCard ? remainingBalance : null,
@@ -408,6 +454,7 @@ async function applyCoupon() {
 
 		emit("discount-applied", appliedDiscount.value)
 
+		//// Neoffice — Biome formatter pass, call wrapped. No behaviour change (458d81a9).
 		showSuccess(
 			__("{0} applied successfully", [couponCode.value.toUpperCase()]),
 		)

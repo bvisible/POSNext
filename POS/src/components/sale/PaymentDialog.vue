@@ -305,6 +305,11 @@
 					</div>
 
 					<!-- Invoice Summary -->
+					<!-- //// Neoffice — upstream ships Tailwind's rounded-lg everywhere. The Neoffice -->
+					<!-- //// design system has its own radius scale (rounded-neo-sm/md/lg = 8/14/18px), -->
+					<!-- //// so the POS sits in the same visual language as the rest of the ERP -->
+					<!-- //// (87f168fe, 2026-03-20 "align POS design with Neoffice theme and improve -->
+					<!-- //// customer display"). Repeated wherever a radius appears below. -->
 					<div class="bg-white rounded-neo-md border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
 						<!-- Header -->
 						<div :class="['px-3 border-b border-gray-200 bg-gray-50', isCompactMode ? 'py-1.5' : 'py-2']">
@@ -312,6 +317,10 @@
 								<h3 :class="['text-gray-900 font-semibold text-start', dynamicTextSize.header]">{{ __('Invoice Summary') }}</h3>
 								<span class="text-gray-500 text-xs text-end">{{ items.length === 1 ? __('1 item') : __('{0} items', [items.length]) }}</span>
 							</div>
+							<!-- //// Neoffice — the customer's loyalty balance is shown next to their name. The -->
+							<!-- //// cashier decides whether to offer redemption while the bill is on screen, and -->
+							<!-- //// upstream gave no reason to open the customer record to find out (c057c534, -->
+							<!-- //// 2026-03-19 "display loyalty points in payment dialog next to customer name"). -->
 							<div v-if="customer" class="text-gray-600 text-xs mt-0.5 text-start flex items-center gap-2">
 								<span>{{ customer?.customer_name || customer?.name || customer }}</span>
 								<span v-if="walletInfo.loyalty_points > 0" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold text-[10px]">
@@ -551,6 +560,12 @@
 									<div class="text-xs font-medium text-purple-600 uppercase tracking-wide mb-1">{{ __('Write Off') }}</div>
 									<div :class="['font-bold text-purple-600', dynamicTextSize.amount]">{{ formatCurrency(writeOffAmount) }}</div>
 								</div>
+								<!-- //// Neoffice — restaurant tips. Upstream POSNext is a retail POS: any overpayment -->
+								<!-- //// is change to hand back. In a restaurant the overpayment is usually a tip, so -->
+								<!-- //// when tips are enabled we show it as a tip (with a way to decline) instead of -->
+								<!-- //// silently opening the drawer for change. Swiss accounting: the tip is booked on -->
+								<!-- //// a transit account, not revenue (a750c5e3, 2026-03-23 "add tip/pourboire -->
+								<!-- //// management for restaurant module"). -->
 								<!-- Tip detection: show tip instead of change when restaurant tips enabled -->
 								<div v-else-if="changeAmount > 0 && allowsOverpayment && showTipDetection" :class="['bg-amber-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
 									<div class="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">{{ __('Tip') }}</div>
@@ -562,6 +577,9 @@
 								<!-- Regular change (no tip or tip declined) -->
 								<div v-else-if="changeAmount > 0 && allowsOverpayment" :class="['bg-green-50 text-center', isCompactMode ? 'p-2' : 'p-3']">
 									<div class="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">{{ __('Change Due') }}</div>
+									<!-- //// Neoffice — the change shown must exclude what the customer left as a tip, and -->
+									<!-- //// change can be converted to a tip in one tap when the customer says 'keep it' -->
+									<!-- //// (a750c5e3, 2026-03-23 "add tip/pourboire management for restaurant module"). -->
 									<div :class="['font-bold text-green-600', dynamicTextSize.amount]">{{ formatCurrency(changeAmount - tipAmount) }}</div>
 									<div v-if="restaurantStore?.tipsEnabled" class="mt-1">
 										<button @click="tipAmount = changeAmount" class="text-[10px] text-amber-600 hover:text-amber-800 underline">{{ __('Convert to tip') }}</button>
@@ -587,6 +605,7 @@
 								<span class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Write Off') }}</span>
 								<span class="text-xs text-gray-400">{{ __('Max') }}: {{ formatCurrency(writeOffLimit) }}</span>
 							</div>
+							<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 							<div
 								class="relative h-12 rounded-neo-md overflow-hidden select-none cursor-pointer border"
 								:class="applyWriteOff ? 'bg-teal-500 border-teal-500' : 'bg-gray-100 border-gray-200'"
@@ -626,6 +645,7 @@
 				<!-- End Left Column -->
 
 				<!-- Right Column (3/5): Payment Methods + Quick Amounts + Numpad -->
+				<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 				<div
 					ref="rightColumnRef"
 					:class="[
@@ -673,6 +693,7 @@
 							<span :class="['text-gray-500', isSmallMobile ? 'text-xs' : 'text-sm']">{{ __('Loading...') }}</span>
 						</div>
 						<div v-else-if="filteredPaymentMethods.length > 0" :class="['flex flex-wrap', isSmallMobile ? 'gap-1' : 'gap-1.5 lg:gap-2']">
+							<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 							<button
 								v-for="method in filteredPaymentMethods"
 								:key="method.mode_of_payment"
@@ -716,6 +737,7 @@
 								</span>
 							</button>
 							<!-- Credit Balance as Payment Method -->
+							<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 							<button
 								v-if="customerCreditEnabled && (remainingAvailableCredit > 0 || getMethodTotal('Customer Credit') > 0)"
 								@click="applyCustomerCredit"
@@ -756,6 +778,18 @@
 						</div>
 					</div>
 
+					<!-- //// Neoffice — two blocks upstream has no equivalent for. -->
+					<!-- //// (1) Split payment (restaurant only): a table pays in several hands, so the -->
+					<!-- //// bill is divided ÷2/÷3/÷4/N, the per-person share is computed on what is LEFT -->
+					<!-- //// (not on the original total), is adjustable by ±1 CHF or typed, is rounded to -->
+					<!-- //// the Swiss 5-centime step, and the last person pays the exact remainder — so -->
+					<!-- //// the sum can never drift off the bill (2a539d5a + 9f7b70f0 + 287b501d + -->
+					<!-- //// c9b94ce9, 2026-03-24 "split payment bar", "adjustable split amount", -->
+					<!-- //// "editable split amount, Swiss 5-centime rounding"). -->
+					<!-- //// (2) Loyalty redemption: ERPNext holds the loyalty programme, but upstream's -->
+					<!-- //// POS could not spend the points at the till — the customer had to be credited -->
+					<!-- //// afterwards by hand (104959e6 + 64604eda, 2026-03-19 "native loyalty points -->
+					<!-- //// redemption in POS payment dialog", "custom amount input"). -->
 					<!-- Split Payment (restaurant mode) -->
 					<div v-if="restaurantStore?.isEnabled" :class="isCompactMode ? 'mb-2' : 'mb-3'">
 						<div :class="['text-start font-semibold text-gray-500 uppercase tracking-wide', isSmallMobile ? 'text-[10px] mb-0.5' : 'text-xs mb-1']">{{ __('Split Payment') }}</div>
@@ -968,6 +1002,7 @@
 							<div v-if="lastSelectedMethod && remainingAmount > 0 && allowCreditSale && paymentEntries.length === 0"
 								class="grid grid-cols-2" :class="isSmallMobile ? 'gap-1' : 'gap-1.5'">
 								<!-- Pay Full Amount Button -->
+								<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 								<button
 									@click="addCustomPayment(lastSelectedMethod, remainingAmount)"
 									:class="[
@@ -981,6 +1016,7 @@
 									<span class="truncate">{{ formatCurrency(remainingAmount) }}</span>
 								</button>
 								<!-- Pay on Account Button -->
+								<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 								<button
 									@click="addCreditAccountPayment"
 									:disabled="isSubmitting"
@@ -1004,6 +1040,7 @@
 							</div>
 
 							<!-- Single Pay button (when no credit sale option) -->
+							<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 							<button
 								v-else-if="lastSelectedMethod && remainingAmount > 0"
 								@click="addCustomPayment(lastSelectedMethod, remainingAmount)"
@@ -1023,6 +1060,7 @@
 							</button>
 
 							<!-- Complete Payment Button -->
+							<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 							<button
 								v-if="(remainingAmount === 0 || (applyWriteOff && canWriteOff)) && totalPaid > 0"
 								@click="completePayment"
@@ -1048,6 +1086,11 @@
 					</div>
 					<!-- End Mobile Payment Section -->
 
+					<!-- //// Neoffice — BLOCK ▼▼▼ in the numpad below, the ONLY divergence from upstream is -->
+					<!-- //// the radius token: every rounded-lg became rounded-neo-md / rounded-neo-lg so -->
+					<!-- //// the keypad matches the Neoffice design system's 8/14/18px scale. The keys, the -->
+					<!-- //// grid and the handlers are upstream's, untouched (87f168fe, 2026-03-20 "align -->
+					<!-- //// POS design with Neoffice theme"). 11 hunks are covered by this block. ▼▼▼ -->
 					<!-- Numeric Keypad (Desktop only) -->
 					<div :class="['hidden lg:block bg-white rounded-neo-md border border-gray-200', isCompactMode ? 'p-2' : 'p-3']">
 						<!-- Amount Display -->
@@ -1144,9 +1187,19 @@
 							</div>
 						</div>
 
+					<!-- //// Neoffice — end of the radius-only numpad region ▲▲▲ -->
 					<!-- Action Buttons - Below Keypad (Desktop only) -->
+					<!-- //// Neoffice — the desktop action area was stacked instead of a two-button row: -->
+					<!-- //// Complete Payment takes the full width and 'Pay on Account' is demoted to the -->
+					<!-- //// discrete link below it. Side by side, cashiers were putting sales on account -->
+					<!-- //// by mistake (2584aa58, 2026-03-24 "UX improvements - Complete Payment -->
+					<!-- //// full-width, Pay on Account as discrete link"). -->
 					<div :class="['hidden lg:flex flex-col gap-1', isCompactMode ? 'mt-2' : 'mt-4']">
 						<!-- Complete/Partial Payment Button — Full Width -->
+						<!-- //// Neoffice — the button below is the full-width Complete Payment of 2584aa58, -->
+						<!-- //// with the Neoffice radius token (rounded-neo-md) instead of upstream's -->
+						<!-- //// rounded-lg (87f168fe). Marked above the opening tag because the changed line -->
+						<!-- //// is inside the :class array — a comment between attributes would break the tag. -->
 						<button
 							@click="completePayment"
 							:disabled="!canComplete || isSubmitting"
@@ -1167,6 +1220,9 @@
 							</svg>
 							<span>{{ isSubmitting ? __('Processing...') : paymentButtonText }}</span>
 						</button>
+						<!-- //// Neoffice — 'Pay on Account' as a discrete link rather than a second solid -->
+						<!-- //// button: it is a credit sale, an exception, and it must not be one careless tap -->
+						<!-- //// away from the normal path (2584aa58, 2026-03-24 "UX improvements"). -->
 						<!-- Pay on Account — Discrete link (if credit sales enabled) -->
 						<button
 							v-if="allowCreditSale && paymentEntries.length === 0"
@@ -1182,6 +1238,18 @@
 			</div>
 			<!-- End Two Column Layout -->
 
+			<!-- //// Neoffice — the unified terminal payment overlay. It replaces the 192-line -->
+			<!-- //// Wallee overlay this fork first carried (ce24e1a0 + 9aa446a9, 2026-01-14): a POS -->
+			<!-- //// tied to one PSP could not be sold to Swiss merchants who already have their -->
+			<!-- //// own acquirer. The dialog is now picked by the mapping's CHANNEL, not the PSP — -->
+			<!-- //// CardPresentDialog for any card terminal, QRPaymentDialog for TWINT — so the -->
+			<!-- //// provider is a POS Payment Driver Mapping row, never code (bd9e2f30, 2026-05-14 -->
+			<!-- //// "replace Wallee terminal integration with unified Stripe Terminal driver"; -->
+			<!-- //// renamed PSP-agnostic by 9acebda9). It opens in idle state so the cashier can -->
+			<!-- //// pick the amount and the device before anything is charged — clicking used to -->
+			<!-- //// fire pos_start_payment straight away, with no partial amount and a second of -->
+			<!-- //// dead air (958a2264, 2026-05-15 "defer terminal payment start until cashier -->
+			<!-- //// picks amount + device"; test-mode simulator added by b5e4b383). -->
 			<!-- Unified Terminal Payment Dialog Overlay -->
 			<!-- Replaces the legacy Wallee overlay. The dialog opens INSTANTLY -->
 			<!-- in idle state (numpad + optional terminal selector); the actual -->
@@ -1262,6 +1330,11 @@
 		</template>
 	</Dialog>
 
+	<!-- //// Neoffice — partial payments must be confirmed, not assumed. Upstream submitted -->
+	<!-- //// whatever was collected; a till that books a bill as paid when it is short by -->
+	<!-- //// CHF 40 loses the money silently. The dialog states total / paid / remaining and -->
+	<!-- //// makes the cashier own the decision (f295bbeb, 2026-03-26 "payment = -->
+	<!-- //// auto-validate + partial payment confirmation dialog"). -->
 	<!-- Partial Payment Confirmation Dialog -->
 	<Dialog v-model="showPartialPaymentConfirm" :options="{ title: __('Partial Payment'), size: 'sm' }">
 		<template #body-content>
@@ -1309,12 +1382,19 @@ import {
 	formatCurrency as formatCurrencyUtil,
 	getCurrencySymbol,
 	roundCurrency,
+	//// Neoffice — roundToFraction/getPrecision imported for Swiss cash: CHF has a 0.05
+	//// smallest fraction, so the total the till asks for is rounded to that step, not to
+	//// two decimals like upstream (4fdb5df4, 2026-04-04 "rounding total, tips visibility,
+	//// cash quick amounts").
 	roundToFraction,
 	getPrecision,
 } from "@/utils/currency"
 import { getPaymentIcon } from "@/utils/payment"
 import { offlineWorker } from "@/utils/offline/workerClient"
 import { logger } from "@/utils/logger"
+//// Neoffice — Button pulled in for the partial-payment confirmation dialog added
+//// below (f295bbeb, 2026-03-26 "payment = auto-validate + partial payment
+//// confirmation dialog"). Upstream imported Dialog/createResource/call only.
 import { Dialog, Button, createResource, call } from "frappe-ui"
 import { computed, ref, watch, nextTick } from "vue"
 import { useToast } from "@/composables/useToast"
@@ -1322,6 +1402,13 @@ import { useLongPress } from "@/composables/useLongPress"
 import { usePaymentNumpad } from "@/composables/usePaymentNumpad"
 import { useResponsivePayment } from "@/composables/useResponsivePayment"
 import { useQuickAmounts } from "@/composables/useQuickAmounts"
+//// Neoffice — the payment-driver composable and the customer-display QR helpers.
+//// usePaymentDriver replaces the fork's own Wallee client (bd9e2f30, 2026-05-14
+//// "replace Wallee terminal integration with unified Stripe Terminal driver"; the
+//// dialogs were renamed by channel rather than PSP in 9acebda9). pushPaymentQR /
+//// clearPaymentQR are imported as bare functions, NOT through the composable: calling
+//// the composable here would register an onUnmounted that tears down the main POS
+//// cart sync (14a49016, 2026-06-01 "mirror TWINT QR onto the customer display").
 // Unified payments — replaces the legacy Wallee terminal integration.
 // Routes a Mode of Payment to a Payment Provider × Channel via the
 // `POS Payment Driver Mapping` DocType (see payments app, ADR-001).
@@ -1437,6 +1524,11 @@ const props = defineProps({
 		type: String,
 		default: DEFAULT_CURRENCY,
 	},
+	//// Neoffice — guestPaidAmount: with QR self-ordering at the table, part of the bill
+	//// may already have been paid by the guests on their own phones. Upstream has no guest
+	//// ordering, so its dialog only ever knew about what this till collected — and would
+	//// ask the table to pay twice (214125e5, 2026-03-30 "show remaining to collect in
+	//// cart + payment dialog accounts for guest payments").
 	guestPaidAmount: {
 		type: Number,
 		default: 0,
@@ -1523,6 +1615,11 @@ const lastSelectedMethod = ref(null)
 const customAmount = ref("")
 const paymentEntries = ref([])
 
+//// Neoffice — terminal state, driver-agnostic. driverMappings caches this profile's
+//// POS Payment Driver Mapping rows so a Mode of Payment can be routed to a provider +
+//// channel; lockedTerminalPayments holds what a terminal already captured, which the
+//// cashier must not be able to edit away. Replaces the fork's 12 wallee* refs and its
+//// localStorage cache — Payment Intents are server-side now (bd9e2f30, 2026-05-14).
 // Unified terminal payments — replaces the legacy Wallee integration.
 // `driverMappings` caches the POS Payment Driver Mapping records for this POS
 // Profile, keyed by mode_of_payment. `lockedTerminalPayments` holds payment
@@ -1547,6 +1644,17 @@ const walletInfo = ref({
 const loadingWallet = ref(false)
 const walletPaymentMethods = ref(new Set()) // Set of mode_of_payment names that are wallet payments
 
+//// Neoffice — three blocks with no upstream equivalent, from here to the end of this
+//// declaration run:
+//// (1) loyalty redemption state — ERPNext owns the loyalty programme but upstream's
+////     POS could not spend the points at the till (104959e6 + 64604eda, 2026-03-19);
+//// (2) unified terminal state — dialog visibility, the resolved mapping and the
+////     usePaymentDriver handles; the dialog kind is derived from the mapping's channel
+////     so it can render in idle state BEFORE any intent exists (bd9e2f30 + 958a2264);
+//// (3) the TWINT QR mirror — a QR shown only on the cashier's screen makes the buyer
+////     lean over the counter, so while a qr_bridge intent awaits the scan we push the
+////     pairing token to the customer-facing display and retire it on every close path
+////     (14a49016, 2026-06-01 "mirror TWINT QR onto the customer display").
 // Loyalty points redemption state
 const loyaltyDetails = ref({
 	has_loyalty: false,
@@ -1900,6 +2008,11 @@ async function identifyWalletPaymentMethods() {
 }
 
 // Check if a payment method is a wallet payment
+//// Neoffice — loyalty redemption helpers (fetch, apply, max, controlled input).
+//// Upstream's POS shows nothing of the ERPNext loyalty programme, so points could only
+//// be spent by editing the invoice afterwards. The redemption is capped by both the
+//// programme's max_redeemable_amount and what is left to pay (104959e6 + 64604eda,
+//// 2026-03-19 "native loyalty points redemption in POS payment dialog").
 // Fetch loyalty details for the selected customer
 async function fetchLoyaltyDetails() {
 	try {
@@ -2157,6 +2270,8 @@ async function refreshSalesPersons() {
 function onSalesPersonFocus() {
 	salesPersonDropdownOpen.value = true
 	// If list is empty and not loading, re-fetch as a safety net
+	//// Neoffice — Biome formatter pass: the condition was wrapped over three lines. No
+	//// behaviour change (87f168fe, 2026-03-20, formatting side of the theme commit).
 	if (
 		salesPersons.value.length === 0 &&
 		!loadingSalesPersons.value &&
@@ -2234,6 +2349,9 @@ const totalPaid = computed(() => {
 		(sum, entry) => sum + (entry.amount || 0),
 		0,
 	)
+	//// Neoffice — what the guests already paid from their phones counts as paid. Without
+	//// it the dialog would ask the table for the whole bill again (214125e5, 2026-03-30
+	//// "show remaining to collect in cart + payment dialog accounts for guest payments").
 	// Include guest payments already collected via QR/Wallee
 	return roundCurrency(sum + (props.guestPaidAmount || 0))
 })
@@ -2266,6 +2384,11 @@ const calculatedAdditionalDiscount = computed(() => {
 	return roundCurrency(localAdditionalDiscount.value)
 })
 
+//// Neoffice — the amount to collect is the grand total MINUS the loyalty points being
+//// redeemed. Upstream had no redemption, so it compared everything against grandTotal
+//// directly; keeping that would have asked the customer for money the points already
+//// covered (104959e6, 2026-03-19 "native loyalty points redemption in POS payment
+//// dialog").
 // Effective grand total after loyalty points redemption
 const effectiveGrandTotal = computed(() => {
 	return (
@@ -2275,15 +2398,24 @@ const effectiveGrandTotal = computed(() => {
 })
 
 const remainingAmount = computed(() => {
+	//// Neoffice — remaining is measured against effectiveGrandTotal, not grandTotal, so
+	//// redeemed points actually reduce what is still due (104959e6, 2026-03-19).
 	const remaining = effectiveGrandTotal.value - totalPaid.value
 	return remaining > 0 ? roundCurrency(remaining) : 0
 })
 
 const changeAmount = computed(() => {
+	//// Neoffice — change is measured against effectiveGrandTotal too: otherwise redeemed
+	//// points would be handed back to the customer as cash (104959e6, 2026-03-19).
 	const change = totalPaid.value - effectiveGrandTotal.value
 	return change > 0 ? roundCurrency(change) : 0
 })
 
+//// Neoffice — in a restaurant an overpayment is a tip far more often than change, so
+//// when auto-detection is on the surplus is proposed as a tip instead of opening the
+//// drawer. Retail keeps upstream's behaviour (a750c5e3, 2026-03-23 "add tip/pourboire
+//// management for restaurant module"); moved below its declaration by 6c7e3884 the
+//// next day because the production build hit a temporal-dead-zone error.
 // Auto-set tip when change amount changes (if tips enabled)
 watch(
 	() => changeAmount.value,
@@ -2487,6 +2619,11 @@ const canComplete = computed(() => {
 		return false
 	}
 
+	//// Neoffice — upstream required at least one payment entry to finish. Two Neoffice
+	//// features can leave nothing to collect: a gift card covering the whole bill (grand
+	//// total 0) and loyalty points covering the remainder. Without these the cashier was
+	//// stuck on a fully-settled sale (d151bfd5, 2026-01-12 "allow payment completion when
+	//// discount covers total"; b9039dec, 2026-03-19, for the loyalty case).
 	// If grand total is 0 (fully covered by discount/gift card), can complete without payment entries
 	if (props.grandTotal === 0) {
 		return true
@@ -2532,6 +2669,9 @@ const isLastMethodCash = computed(() => {
 		!lastSelectedMethod.value || isCashPaymentMethod(lastSelectedMethod.value)
 	)
 })
+//// Neoffice — in split mode the cash quick amounts must follow the PER-PERSON share,
+//// not the whole remaining bill: offering CHF 200 to someone paying their CHF 38 share
+//// is useless (e3875f46, 2026-03-24 "adapt quick amounts to split per-person amount").
 // In split mode, base quick amounts on the per-person split amount
 const quickAmountBase = computed(() =>
 	splitMode.value && splitAmount.value > 0
@@ -2567,6 +2707,7 @@ watch(
 		loadPaymentMethods()
 
 		// Fetch sales persons only when: feature is enabled, not already loaded, and not in-flight
+		//// Neoffice — Biome formatter pass: condition wrapped. No behaviour change (87f168fe).
 		if (
 			salesPersonsEnabled &&
 			salesPersons.value.length === 0 &&
@@ -2580,6 +2721,8 @@ watch(
 
 // Pre-fetch customer balance when customer changes (before dialog opens)
 // This ensures data is available immediately when dialog opens
+//// Neoffice — Biome formatter pass: the watched array was wrapped. No behaviour change
+//// (87f168fe, 2026-03-20, formatting side of the theme commit).
 watch(
 	() => [
 		props.customer,
@@ -2598,11 +2741,19 @@ watch(
 	{ immediate: true },
 )
 
+//// Neoffice — the open handler became async when terminal payments arrived: opening
+//// the dialog now has to await server state (driver mappings, terminal context) before
+//// the cashier can choose a method (ce24e1a0, 2026-01-14 "Add Wallee terminal payment
+//// integration"). The Wallee client behind it was later replaced by the unified driver
+//// (bd9e2f30), but the awaited open stayed.
 watch(show, async (newVal) => {
 	if (newVal) {
 		// Reset state when dialog opens (but NOT customerBalance - it's pre-fetched)
 		paymentEntries.value = []
 		customAmount.value = ""
+		//// Neoffice — reset the tip and leave split mode on every open. A tip or a half-done
+		//// ÷4 split leaking into the next table's bill is money charged to the wrong customer
+		//// (a750c5e3, 2026-03-23 tips; 2a539d5a, 2026-03-24 split payment bar).
 		tipAmount.value = 0
 		deactivateSplit()
 		numpadClear()
@@ -2622,8 +2773,13 @@ watch(show, async (newVal) => {
 		}
 		selectedSalesPersons.value = []
 		salesPersonSearch.value = ""
+		//// Neoffice — drop the terminal-captured payments from the previous sale: a locked
+		//// entry the cashier cannot edit must never be inherited by the next one (bd9e2f30,
+		//// 2026-05-14 "replace Wallee terminal integration with unified Stripe Terminal driver").
 		lockedTerminalPayments.value = []
 		applyWriteOff.value = false // Reset write-off state
+		//// Neoffice — reset the loyalty redemption on open, so points offered to one customer
+		//// are not silently applied to the next (104959e6 + 64604eda, 2026-03-19).
 		loyaltyRedeemAmount.value = 0
 		loyaltyRedeemInput.value = ""
 		// Set default delivery date to today for Sales Orders
@@ -2653,6 +2809,8 @@ watch(show, async (newVal) => {
 		}
 
 		if (creditEnabled) {
+			//// Neoffice — Biome formatter pass: the log call was wrapped. No behaviour change
+			//// (87f168fe, 2026-03-20, formatting side of the theme commit).
 			log.debug(
 				"[PaymentDialog] Customer credit/balance refetch triggered, current balance:",
 				customerBalance.value,
@@ -2674,6 +2832,9 @@ watch(show, async (newVal) => {
 			}
 		}
 
+		//// Neoffice — load the loyalty balance for whoever is being billed, and clear it when
+		//// there is no customer, so the redemption block only appears when it can be used
+		//// (104959e6, 2026-03-19 "native loyalty points redemption in POS payment dialog").
 		// Load loyalty details for the customer
 		loyaltyRedeemAmount.value = 0
 		if (props.customer && props.company) {
@@ -2696,6 +2857,11 @@ watch(show, async (newVal) => {
 
 // Select payment method (tap action)
 function selectPaymentMethod(method) {
+	//// Neoffice — a Mode of Payment mapped to a driver is collected by the terminal, not
+	//// typed in. Without this branch the cashier could record 'Carte' by hand while no card
+	//// was ever charged. The routing tests the POS Payment Driver Mapping, so it works for
+	//// any provider (bd9e2f30, 2026-05-14; the branch itself dates from the Wallee-era
+	//// dialog, 9aa446a9, 2026-01-14).
 	// If this Mode of Payment is mapped to a terminal driver (Stripe Terminal /
 	// TWINT QR via POS Payment Driver Mapping), open the unified terminal dialog
 	// instead of recording the payment manually.
@@ -3206,6 +3372,8 @@ function switchToNextPaymentMethod(partialAmount) {
 // Consolidate payment entries: if a row with the same mode already exists,
 // add to it instead of creating a duplicate row.
 function _upsertPaymentEntry(method, amt) {
+	//// Neoffice — Biome formatter pass: the predicate was wrapped. No behaviour change
+	//// (87f168fe, 2026-03-20, formatting side of the theme commit).
 	const existing = paymentEntries.value.find(
 		(e) =>
 			e.mode_of_payment === method.mode_of_payment && !e.is_customer_credit,
@@ -3226,6 +3394,9 @@ function _upsertPaymentEntry(method, amt) {
 function quickAddPayment(method) {
 	if (remainingAmount.value <= 0) return
 
+	//// Neoffice — same terminal routing on the long-press shortcut: every path that would
+	//// record a driver-backed method by hand has to open the terminal dialog instead
+	//// (bd9e2f30, 2026-05-14; long-press path from 9aa446a9, 2026-01-14).
 	// If mapped to a terminal driver, open the unified terminal dialog instead
 	if (getMappedDriver(method.mode_of_payment)) {
 		log.debug(
@@ -3317,6 +3488,9 @@ const {
 
 // Wrapper handlers to pass method to composable
 function onPaymentMethodDown(method, event) {
+	//// Neoffice — same terminal routing on pointerdown, and the event is stopped so the
+	//// long-press gesture does not also fire underneath (bd9e2f30, 2026-05-14; ce24e1a0,
+	//// 2026-01-14 for the original interception).
 	// If mapped to a terminal driver, open the unified terminal dialog
 	if (getMappedDriver(method.mode_of_payment)) {
 		event.preventDefault()
@@ -3448,6 +3622,8 @@ async function addCustomPayment(method, amount) {
 		if (grandTotal > 0 && overpay > 0 && overpay > grandTotal) {
 			const confirmed = await showOverpayConfirm({
 				title: __("Large Overpayment"),
+				//// Neoffice — Biome formatter pass: the message call was wrapped. No behaviour change
+				//// (87f168fe, 2026-03-20, formatting side of the theme commit).
 				message: __("Change due would be {0}. Continue?", [
 					formatCurrency(overpay),
 				]),
@@ -3461,6 +3637,11 @@ async function addCustomPayment(method, amount) {
 	log.debug("[PaymentDialog] Payment added, new entries:", paymentEntries.value)
 	customAmount.value = ""
 
+	//// Neoffice — after each hand pays, move to the next person and pre-fill the numpad
+	//// with their share. Upstream knows nothing of splitting, so without this the cashier
+	//// retypes every share and the ÷N progress never advances (2a539d5a + 9f7b70f0 +
+	//// 287b501d, 2026-03-24; 9a505a51 the same day switched the pre-fill to setNumpadValue
+	//// because writing customAmount did not reach the numpad).
 	// Advance split mode and pre-fill next amount
 	if (splitMode.value) {
 		splitPaymentIndex.value++
@@ -3570,12 +3751,22 @@ function completePayment() {
 		return
 	}
 
+	//// Neoffice — partial detection had to learn two things upstream ignores: redeemed
+	//// loyalty points count as paid, and Swiss 5-centime rounding leaves a residue. A bare
+	//// `effectivePaid < grandTotal` raised the partial-payment dialog on a 0.01 CHF
+	//// difference, so the comparison carries a 0.02 tolerance (f80046be, 2026-04-06 "add
+	//// rounding tolerance to partial payment detection"; loyalty from 104959e6).
 	// Calculate if this is a partial payment (considering write-off and loyalty)
 	// Use a small tolerance to account for rounding differences (e.g. 0.01 CHF)
 	const effectivePaid =
 		totalPaid.value + writeOffAmount.value + (loyaltyRedeemAmount.value || 0)
 	const isPartial = (props.grandTotal - effectivePaid) > 0.02
 
+	//// Neoffice — completePayment now stops on a short bill and asks. finalizePayment holds
+	//// what upstream did unconditionally, so the same submit path serves both the confirmed
+	//// partial and the full payment. Booking a bill as settled while it is short loses the
+	//// difference with nobody noticing (f295bbeb, 2026-03-26 "payment = auto-validate +
+	//// partial payment confirmation dialog").
 	// If partial payment, show confirmation dialog first
 	if (isPartial) {
 		pendingPartialPaymentData.value = { effectivePaid, isPartial }
@@ -3583,6 +3774,10 @@ function completePayment() {
 		return
 	}
 
+	//// Neoffice — the rest of the same split: finalizePayment() is upstream's submit path,
+	//// lifted out so the full payment and the confirmed partial both go through it, plus
+	//// the confirm/cancel handlers the dialog binds to (f295bbeb, 2026-03-26 "payment =
+	//// auto-validate + partial payment confirmation dialog").
 	finalizePayment(false)
 }
 
@@ -3602,6 +3797,9 @@ function cancelPartialPayment() {
 function finalizePayment(isPartial) {
 	const paymentData = {
 		payments: paymentEntries.value,
+		//// Neoffice — what the customer left as a tip is not change owed back to them, so the
+		//// drawer amount is the change minus the tip (a750c5e3, 2026-03-23 "add tip/pourboire
+		//// management for restaurant module").
 		change_amount: Math.max(0, changeAmount.value - (tipAmount.value || 0)),
 		is_partial_payment: isPartial,
 		paid_amount: totalPaid.value,
@@ -3611,11 +3809,18 @@ function finalizePayment(isPartial) {
 		sales_team:
 			selectedSalesPersons.value.length > 0 ? selectedSalesPersons.value : null,
 		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
+		//// Neoffice — the tip travels with the payment so the server can add the TIP line and
+		//// the Restaurant Tip record. Swiss accounting: it lands on a transit account, not
+		//// revenue (a750c5e3, 2026-03-23).
 		// Tip data
 		tip_amount: tipAmount.value > 0 ? tipAmount.value : 0,
 		// Write-off data
 		write_off_amount: writeOffAmount.value,
 		is_write_off: writeOffAmount.value > 0,
+		//// Neoffice — the redemption is sent as points + amount + the programme's redemption
+		//// account and cost centre, because ERPNext books a redemption as a journal entry on
+		//// those accounts; the POS cannot just shrink the total (104959e6, 2026-03-19 "native
+		//// loyalty points redemption in POS payment dialog").
 		// Loyalty points redemption
 		loyalty:
 			loyaltyRedeemAmount.value > 0
@@ -3756,6 +3961,11 @@ watch(
 			// Only sync when dialog opens, not continuously
 			localAdditionalDiscount.value = props.additionalDiscount || 0
 
+			//// Neoffice — a gift card or coupon discount is always an amount, never a percentage.
+			//// Reopening the dialog with a discount already applied left the selector on
+			//// 'percentage', so the same figure was reinterpreted as a percentage and the discount
+			//// exploded (3eb01779, 2026-01-13 "set discount type to amount when coupon is already
+			//// applied").
 			// If there's already a discount applied (e.g., from gift card/coupon),
 			// set the mode to 'amount' since coupon discounts are always amounts
 			if (props.additionalDiscount > 0) {

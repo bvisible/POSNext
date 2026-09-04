@@ -206,6 +206,9 @@
 
 <script setup>
 import { usePOSOffersStore } from "@/stores/posOffers"
+//// Neoffice — Biome formatter pass only: the currency import was rewrapped over
+//// several lines. Nothing else in this dialog differs from upstream (458d81a9,
+//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting").
 import {
 	DEFAULT_CURRENCY,
 	DEFAULT_LOCALE,

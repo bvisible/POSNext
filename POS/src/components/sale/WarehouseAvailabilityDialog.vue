@@ -504,6 +504,16 @@
  * RTL Support: Fully compatible with right-to-left languages
  * Translations: All user-facing strings use __() for i18n
  */
+//// Neoffice — BLOCK ▼▼▼ this whole <script setup> diverges from upstream ONLY by the
+//// Biome formatter pass: single→double quotes, trailing commas, parenthesised arrow
+//// params and long calls wrapped over several lines. Nothing in this dialog behaves
+//// differently from BrainWise-DEV/POSNext — the stock lookup, the variant selection
+//// and the pos_next.api.items calls are upstream's, untouched. The <template> and the
+//// <style> are unchanged (458d81a9, 2026-03-20 "remove BrainWise branding, add
+//// restaurant mode, and code formatting"). 52 hunks are covered by this block.
+//// Three of them (the watch() callback re-indentation, around resetSearchState) carry
+//// no fork commit in blame: whitespace-insensitive blame still sees the pre-fork text
+//// because only the indentation moved — same pass, nothing else. ▼▼▼
 import { ref, computed, watch, nextTick } from "vue"
 import { call, Dialog } from "frappe-ui"
 import { __ } from "@/utils/translation"
@@ -1023,6 +1033,7 @@ function formatPrice(price) {
 		maximumFractionDigits: 2,
 	})
 }
+//// Neoffice — end of the formatting-only region ▲▲▲
 </script>
 
 <style scoped>

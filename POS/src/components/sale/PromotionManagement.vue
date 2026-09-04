@@ -878,6 +878,11 @@ const freeItemSearchResults = computed(() => {
 // Single source of truth for apply_on configuration
 // Used by both applyOnOptions dropdown and translateApplyOn function
 const APPLY_ON_CONFIG = {
+	//// Neoffice — from here on this file diverges from upstream ONLY by the Biome
+	//// formatter pass: double quotes, trailing commas, parenthesised arrow params and
+	//// long calls wrapped. No behaviour change — the screen still drives ERPNext
+	//// Promotional Scheme / Pricing Rule as upstream wrote it (458d81a9, 2026-03-20
+	//// "remove BrainWise branding, add restaurant mode, and code formatting").
 	"Item Code": { label: () => __("Specific Items") },
 	"Item Group": { label: () => __("Item Groups") },
 	Brand: { label: () => __("Brands") },
@@ -888,17 +893,20 @@ const APPLY_ON_CONFIG = {
 const applyOnOptions = computed(() =>
 	Object.entries(APPLY_ON_CONFIG).map(([value, config]) => ({
 		label: config.label(),
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		value,
 	})),
 )
 
 // Computed: Options for Item Group dropdown
 const itemGroupOptions = computed(() =>
+	//// Neoffice — same Biome pass, formatting only (458d81a9).
 	itemGroups.value.map((g) => ({ label: g.name, value: g.name })),
 )
 
 // Computed: Options for Brand dropdown
 const brandOptions = computed(() =>
+	//// Neoffice — same Biome pass, formatting only (458d81a9).
 	brands.value.map((b) => ({ label: b.name, value: b.name })),
 )
 
@@ -908,9 +916,11 @@ const selectedItemCode = ref("")
 // Computed: Options for Item Code dropdown (searchable)
 const itemCodeOptions = computed(() => {
 	const allItems = itemSearchStore.allItems || []
+	//// Neoffice — same Biome pass, formatting only (458d81a9).
 	return allItems.map((item) => ({
 		label: item.item_name,
 		value: item.item_code,
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		subtitle: item.item_code,
 	}))
 })
@@ -978,6 +988,7 @@ const savePromotionResource = createResource({
 	},
 	onError(error) {
 		loading.value = false
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		handleError(error, __("Failed to create promotion"))
 	},
 })
@@ -1101,6 +1112,7 @@ watch(
 		if (isCreating.value && oldVal && newVal !== oldVal) {
 			form.value.items = []
 		}
+	//// Neoffice — same Biome pass, formatting only (458d81a9).
 	},
 )
 
@@ -1233,6 +1245,7 @@ function handleSubmit() {
 		)
 		if (duplicate) {
 			showWarning(
+				//// Neoffice — same Biome pass, formatting only (458d81a9).
 				__('Promotion "{0}" already exists. Please use a different name.', [
 					form.value.name,
 				]),
@@ -1242,6 +1255,7 @@ function handleSubmit() {
 	}
 
 	if (form.value.apply_on !== "Transaction" && form.value.items.length === 0) {
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		showWarning(
 			__("Please select at least one {0}", [
 				translateApplyOn(form.value.apply_on),
@@ -1274,10 +1288,12 @@ function addItemByCode() {
 	) {
 		// Find the item name from allItems
 		const allItems = itemSearchStore.allItems || []
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		const selectedItem = allItems.find(
 			(item) => item.item_code === selectedItemCode.value,
 		)
 		const itemName = selectedItem?.item_name || selectedItemCode.value
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		form.value.items.push({
 			item_code: selectedItemCode.value,
 			item_name: itemName,

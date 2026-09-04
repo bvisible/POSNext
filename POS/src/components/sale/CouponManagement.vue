@@ -114,6 +114,12 @@
 									]">
 										{{ coupon.coupon_code }}
 									</p>
+									<!-- //// Neoffice — upstream tagged a gift card on coupon_type alone, because its -->
+									<!-- //// gift cards were its own POS Coupon doctype. We migrated those to ERPNext's -->
+									<!-- //// native Coupon Code, where our cards are coupon_type 'Promotional' plus the -->
+									<!-- //// custom flag pos_next_gift_card=1 — so the badge must test both or every card -->
+									<!-- //// we issue reads as an ordinary coupon (ab6e77e6, 2026-01-15 "include POS Next -->
+									<!-- //// gift cards in gift card filter"). -->
 									<Badge
 										v-if="coupon.coupon_type === 'Gift Card' || coupon.pos_next_gift_card"
 										variant="subtle"
@@ -569,6 +575,10 @@ import { useToast } from "@/composables/useToast"
 import { useCustomerSearchStore } from "@/stores/customerSearch"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@/utils/currency"
+//// Neoffice — from here on the divergence is the Biome formatter pass (double quotes,
+//// trailing commas, parenthesised arrow params, wrapped calls), EXCEPT the gift-card
+//// filter marked further down. No behaviour change here (458d81a9, 2026-03-20
+//// "remove BrainWise branding, add restaurant mode, and code formatting").
 import {
 	Badge,
 	Button,
@@ -584,6 +594,7 @@ import TranslatedHTML from "../common/TranslatedHTML.vue"
 
 const { showSuccess, showError, showWarning } = useToast()
 const customerStore = useCustomerSearchStore()
+//// Neoffice — same Biome pass, formatting only (458d81a9).
 const { filteredCustomers, loading: customerLoading } =
 	storeToRefs(customerStore)
 const posSettingsStore = usePOSSettingsStore()
@@ -648,6 +659,7 @@ const filteredCoupons = computed(() => {
 	// Filter by search query
 	if (searchQuery.value) {
 		const term = searchQuery.value.toLowerCase()
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		filtered = filtered.filter(
 			(c) =>
 				c.coupon_code?.toLowerCase().includes(term) ||
@@ -667,6 +679,13 @@ const filteredCoupons = computed(() => {
 	// Filter by type
 	// Note: Neopos gift cards have coupon_type='Promotional' but pos_next_gift_card=1
 	if (filterType.value !== "all") {
+		//// Neoffice — upstream filtered on coupon_type only. Our gift cards live on ERPNext's
+		//// native Coupon Code (upstream's POS Coupon doctype is migrated away by
+		//// pos_next/patches/v2_0_0/migrate_pos_coupons_to_erpnext.py) and carry coupon_type
+		//// 'Promotional' + the custom flag pos_next_gift_card=1. So the 'Gift Card' tab has to
+		//// accept the flag and the 'Promotional' tab has to exclude it, otherwise every card
+		//// we issue shows up in the wrong tab (ab6e77e6, 2026-01-15 "include POS Next gift
+		//// cards in gift card filter"; wording refreshed by 771950bd "rename POS Next to Neopos").
 		filtered = filtered.filter((c) => {
 			if (filterType.value === "Gift Card") {
 				// Include both ERPNext gift cards (coupon_type) and Neopos gift cards (pos_next_gift_card)
@@ -686,6 +705,7 @@ const filteredCoupons = computed(() => {
 const campaignOptions = computed(() => {
 	return [
 		{ label: __("-- No Campaign --"), value: "" },
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		...campaigns.value.map((c) => ({ label: c.name, value: c.name })),
 	]
 })
@@ -714,6 +734,7 @@ const couponsResource = createResource({
 	},
 	onError(error) {
 		loading.value = false
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		handleError(error, __("Failed to load coupons"))
 	},
 })
@@ -731,6 +752,7 @@ const couponDetailsResource = createResource({
 	},
 	onError(error) {
 		loading.value = false
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		handleError(error, __("Failed to load coupon details"))
 	},
 })
@@ -814,6 +836,7 @@ const toggleCouponResource = createResource({
 	onSuccess(data) {
 		loading.value = false
 		const responseData = data?.message || data
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		showSuccess(
 			responseData?.message || __("Coupon status updated successfully"),
 		)
@@ -851,6 +874,7 @@ const deleteCouponResource = createResource({
 })
 
 // Watchers
+//// Neoffice — same Biome pass, formatting only (458d81a9).
 watch(
 	() => selectedCoupon.value,
 	(val) => {
@@ -911,6 +935,7 @@ function handleSubmit() {
 		return
 	}
 	if (form.value.discount_type === "Percentage") {
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		if (
 			!form.value.discount_percentage ||
 			form.value.discount_percentage <= 0 ||
@@ -946,6 +971,7 @@ function handleToggle() {
 
 function handleDelete() {
 	if (selectedCoupon.value.used > 0) {
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		showWarning(
 			__("Cannot delete coupon as it has been used {0} times", [
 				selectedCoupon.value.used,
@@ -994,13 +1020,16 @@ function resetForm() {
 function populateFormFromCoupon(coupon) {
 	form.value = {
 		coupon_name: coupon.coupon_name || "",
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		coupon_type: coupon.coupon_type || __("Promotional"),
 		coupon_code: coupon.coupon_code || "",
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		discount_type: coupon.discount_type || __("Percentage"),
 		discount_percentage: coupon.discount_percentage || null,
 		discount_amount: coupon.discount_amount || null,
 		min_amount: coupon.min_amount || null,
 		max_amount: coupon.max_amount || null,
+		//// Neoffice — same Biome pass, formatting only (458d81a9).
 		apply_on: coupon.apply_on || __("Grand Total"),
 		customer: coupon.customer || "",
 		campaign: coupon.campaign || "",
@@ -1051,6 +1080,7 @@ function parseErrorMessage(error) {
 		if (error._server_messages) {
 			const messages = JSON.parse(error._server_messages)
 			if (Array.isArray(messages) && messages.length > 0) {
+				//// Neoffice — same Biome pass, formatting only (458d81a9).
 				const firstMessage =
 					typeof messages[0] === "string"
 						? JSON.parse(messages[0])
