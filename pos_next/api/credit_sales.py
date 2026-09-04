@@ -613,6 +613,32 @@ def get_credit_redeem_remark(invoice_name):
 	return f"Neopos credit redemption for invoice {invoice_name}"
 
 
+#//// Neoffice — added. The rebrand above renamed the remark on the WRITE side only, and no
+#//// patch rewrote the rows already in the ledger. Every Journal Entry posted before
+#//// 2026-04-02 therefore still carries the "POS Next" wording, so a lookup on the current
+#//// label alone finds nothing on an installation older than the rebrand: cancelling such an
+#//// invoice left its redemption entries submitted, silently, and the original invoice kept
+#//// a reduced outstanding. Lookups must accept every label the fork has ever written; only
+#//// the first entry is ever written. A structural lookup (Journal Entry Account referencing
+#//// the invoice) is deliberately NOT used instead: it would also match manual accounting
+#//// entries this code did not create, and cancel_credit_journal_entries() cancels what it
+#//// finds. The remark is what says "we wrote this one".
+CREDIT_REDEEM_REMARK_PREFIXES = (
+	"Neopos credit redemption for invoice",
+	"POS Next credit redemption for invoice",  # pre-771950bd rows, never migrated
+)
+
+
+#//// Neoffice — added; see CREDIT_REDEEM_REMARK_PREFIXES above.
+def get_credit_redeem_remarks(invoice_name):
+	"""Every user_remark the fork has ever written for a credit redemption of this invoice.
+
+	Returns:
+		list: remarks to match a Journal Entry against, current wording first.
+	"""
+	return [f"{prefix} {invoice_name}" for prefix in CREDIT_REDEEM_REMARK_PREFIXES]
+
+
 @frappe.whitelist()
 def cancel_credit_journal_entries(invoice_name):
 	"""
@@ -621,14 +647,18 @@ def cancel_credit_journal_entries(invoice_name):
 	Args:
 		invoice_name: Sales Invoice name
 	"""
-	remark = get_credit_redeem_remark(invoice_name)
+	#//// Neoffice — was `"user_remark": get_credit_redeem_remark(invoice_name)`, i.e. the
+	#//// current label only, so redemption entries written before the 2026-04-02 rebrand were
+	#//// never found and never cancelled. See CREDIT_REDEEM_REMARK_PREFIXES above.
+	remarks = get_credit_redeem_remarks(invoice_name)
 
 	# Find linked journal entries
 	linked_journal_entries = frappe.get_all(
 		"Journal Entry",
 		filters={
 			"docstatus": 1,
-			"user_remark": remark
+			#//// Neoffice — was a single remark string; see CREDIT_REDEEM_REMARK_PREFIXES above.
+			"user_remark": ["in", remarks]
 		},
 		pluck="name"
 	)
