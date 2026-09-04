@@ -3765,7 +3765,10 @@ async function handlePaymentCompleted(paymentData) {
 
 		// Capture restaurant table before clearCart resets it
 		const restaurantTableName = cartStore.restaurantTable?.name || null
-		console.log("[Payment] restaurantTableName:", restaurantTableName, "restaurantTable:", JSON.stringify(cartStore.restaurantTable))
+		//// Neoffice — was console.log, which prints in production too and dumped the whole
+		//// restaurant table object into the console of a shop-floor till on every payment.
+		//// log.* is the app's own namespaced logger and is silent outside dev.
+		log.debug("Payment: restaurant table", restaurantTableName, cartStore.restaurantTable)
 		// Delete draft if it exists (since we're submitting/saving invoice)
 		const draftIdToDelete = cartStore.currentDraftId;
 
@@ -3942,7 +3945,8 @@ async function handlePaymentCompleted(paymentData) {
 						await call("pos_next.api.invoices.update_invoice", {
 							data: JSON.stringify(invoiceData)
 						})
-						console.log("[Payment] Auto-sent unsent items to kitchen")
+						//// Neoffice — was console.log; the app's logger is silent outside dev.
+						log.debug("Payment: auto-sent unsent items to kitchen")
 					} catch (err) {
 						// Non-blocking: payment continues even if kitchen send fails
 						console.error("[Payment] Failed to auto-send to kitchen:", err)

@@ -232,12 +232,18 @@ import {
 	formatCurrency as formatCurrencyUtil,
 } from "@/utils/currency"
 import { getInvoiceStatusColor } from "@/utils/invoice"
+//// Neoffice — added: the app's namespaced logger, used below in place of the console.log
+//// calls this component ran in production. See the marker on selectInvoice().
+import { logger } from "@/utils/logger"
 import PaymentDialog from "@/components/sale/PaymentDialog.vue"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { useToast } from "@/composables/useToast"
 import { useFormatters } from "@/composables/useFormatters"
 import { Button, call } from "frappe-ui"
 import { onMounted, ref, watch } from "vue"
+
+//// Neoffice — added; see the import of the logger above.
+const log = logger.create("PartialPayments")
 
 const posSettingsStore = usePOSSettingsStore()
 const { showSuccess, showError } = useToast()
@@ -329,11 +335,12 @@ async function loadSummary() {
 }
 
 function selectInvoice(invoice) {
-	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
-	console.log("[PartialPayments] Select invoice:", {
+	//// Neoffice — was console.log, so this ran in production: every click printed an invoice
+	//// number and the ENTIRE POS Settings object into the console of a till standing on a
+	//// shop counter. log.* is the app's namespaced logger and is silent outside dev.
+	log.debug("Select invoice", {
 		invoice: invoice.name,
 		allowPartialPayment: posSettingsStore.allowPartialPayment,
-		//// Neoffice — Biome reflow only; see the marker above (458d81a9, 2026-03-20).
 		posSettings: posSettingsStore.settings,
 	})
 	selectedInvoice.value = invoice
@@ -341,8 +348,8 @@ function selectInvoice(invoice) {
 }
 
 async function handlePaymentCompleted(paymentData) {
-	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
-	console.log("[PartialPayments] Payment completed:", {
+	//// Neoffice — was console.log; see the marker on selectInvoice() above.
+	log.debug("Payment completed", {
 		selectedInvoice: selectedInvoice.value?.name,
 		paymentData: paymentData,
 	})
@@ -354,8 +361,8 @@ async function handlePaymentCompleted(paymentData) {
 	}
 
 	try {
-		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
-		console.log("[PartialPayments] Calling API to add payment...")
+		//// Neoffice — was console.log; see the marker on selectInvoice() above.
+		log.debug("Calling API to add payment")
 		const result = await call(
 			"pos_next.api.partial_payments.add_payment_to_partial_invoice",
 			{
@@ -364,14 +371,14 @@ async function handlePaymentCompleted(paymentData) {
 			},
 		)
 
-		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
-		console.log("[PartialPayments] API response:", result)
+		//// Neoffice — was console.log; see the marker on selectInvoice() above.
+		log.debug("API response", result)
 
 		showSuccess(__("Payment added successfully"))
 
 		// Reload invoices and summary
-		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
-		console.log("[PartialPayments] Reloading invoices and summary...")
+		//// Neoffice — was console.log; see the marker on selectInvoice() above.
+		log.debug("Reloading invoices and summary")
 		await loadInvoices()
 		await loadSummary()
 
