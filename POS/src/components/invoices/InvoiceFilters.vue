@@ -257,6 +257,7 @@ const quickDates = [
 		action: () => store.setYesterday(),
 	},
 	{ label: __("This Week"), value: "week", action: () => store.setThisWeek() },
+	//// Neoffice — Biome reflow of the array entry, no behaviour change (458d81a9).
 	{
 		label: __("This Month"),
 		value: "month",
@@ -394,6 +395,10 @@ function deleteSavedFilter(name) {
 
 .search-input:focus {
 	outline: none;
+	/* //// Neoffice — POSNext leads on a blue/violet accent (#6366f1). The Neoffice design */
+	/* //// system has a single saturated brand hue, clay #D68A59, so the hardcoded indigo */
+	/* //// hexes in this stylesheet were swept to clay (e4769383, 2026-06-14 */
+	/* //// "retheme blue/violet -> Design System clay"). */
 	border-color: #d68a59;
 	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
@@ -439,12 +444,15 @@ function deleteSavedFilter(name) {
 }
 
 .filter-chip:hover {
+	/* //// Neoffice — indigo #6366f1 to clay #D68A59 (e4769383, 2026-06-14). The violet-50 */
+	/* //// hover background below was NOT swept and still reads cool next to the clay border. */
 	border-color: #d68a59;
 	background: #f5f3ff;
 	color: #d68a59;
 }
 
 .filter-chip.active {
+	/* //// Neoffice — indigo #6366f1 to clay #D68A59 (e4769383, 2026-06-14). */
 	background: #d68a59;
 	border-color: #d68a59;
 	color: white;
@@ -597,6 +605,7 @@ function deleteSavedFilter(name) {
 .field-input:focus,
 .field-select:focus {
 	outline: none;
+	/* //// Neoffice — indigo #6366f1 to clay #D68A59 (e4769383, 2026-06-14). */
 	border-color: #d68a59;
 	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
@@ -621,6 +630,7 @@ function deleteSavedFilter(name) {
 
 .save-input:focus {
 	outline: none;
+	/* //// Neoffice — indigo #6366f1 to clay #D68A59 (e4769383, 2026-06-14). */
 	border-color: #d68a59;
 	box-shadow: 0 0 0 3px rgba(214, 138, 89, 0.1);
 }
@@ -630,6 +640,7 @@ function deleteSavedFilter(name) {
 	align-items: center;
 	gap: 0.375rem;
 	padding: 0.625rem 1rem;
+	/* //// Neoffice — indigo #6366f1 to clay #D68A59 (e4769383, 2026-06-14). */
 	background: #d68a59;
 	border: none;
 	border-radius: 8px;
@@ -641,6 +652,7 @@ function deleteSavedFilter(name) {
 }
 
 .save-btn:hover:not(:disabled) {
+	/* //// Neoffice — hover shade #4f46e5 to dark clay #C2723F (e4769383, 2026-06-14). */
 	background: #c2723f;
 }
 
@@ -686,6 +698,8 @@ function deleteSavedFilter(name) {
 }
 
 .saved-item:hover {
+	/* //// Neoffice — indigo #6366f1 to clay #D68A59 (e4769383, 2026-06-14); as on .filter-chip, */
+	/* //// the violet-50 hover background below was left behind by the sweep. */
 	border-color: #d68a59;
 	background: #f5f3ff;
 	color: #d68a59;

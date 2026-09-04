@@ -214,6 +214,11 @@
 </template>
 
 <script setup>
+//// Neoffice ▼▼▼ — every difference from upstream in this block is the Biome formatter
+//// pass and nothing else: single to double quotes, calls and imports wrapped, trailing
+//// commas, arrow parens. Behaviour is upstream's, so at the next merge this whole block
+//// can be resolved in upstream's favour and simply re-formatted (458d81a9, 2026-03-20
+//// "remove BrainWise branding, add restaurant mode, and code formatting").
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -279,6 +284,7 @@ async function loadInvoices() {
 	loading.value = true
 
 	try {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		const result = await call(
 			"pos_next.api.partial_payments.get_partial_paid_invoices",
 			{
@@ -300,6 +306,7 @@ async function loadSummary() {
 	if (!props.posProfile) return
 
 	try {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		const result = await call(
 			"pos_next.api.partial_payments.get_partial_payment_summary",
 			{
@@ -314,6 +321,7 @@ async function loadSummary() {
 }
 
 function selectInvoice(invoice) {
+	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 	console.log("[PartialPayments] Select invoice:", {
 		invoice: invoice.name,
 		allowPartialPayment: posSettingsStore.allowPartialPayment,
@@ -324,17 +332,20 @@ function selectInvoice(invoice) {
 }
 
 async function handlePaymentCompleted(paymentData) {
+	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 	console.log("[PartialPayments] Payment completed:", {
 		selectedInvoice: selectedInvoice.value?.name,
 		paymentData: paymentData,
 	})
 
 	if (!selectedInvoice.value) {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		console.warn("[PartialPayments] No invoice selected")
 		return
 	}
 
 	try {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		console.log("[PartialPayments] Calling API to add payment...")
 		const result = await call(
 			"pos_next.api.partial_payments.add_payment_to_partial_invoice",
@@ -344,11 +355,13 @@ async function handlePaymentCompleted(paymentData) {
 			},
 		)
 
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		console.log("[PartialPayments] API response:", result)
 
 		showSuccess(__("Payment added successfully"))
 
 		// Reload invoices and summary
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		console.log("[PartialPayments] Reloading invoices and summary...")
 		await loadInvoices()
 		await loadSummary()
@@ -367,6 +380,7 @@ function formatCurrency(amount) {
 function getPaymentSourceLabel(source) {
 	// Convert source to user-friendly label
 	switch (source) {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		case "POS":
 			return "POS"
 		case "POS Payment Entry":
@@ -385,6 +399,7 @@ onMounted(() => {
 		loadSummary()
 	}
 })
+//// ▲▲▲ Neoffice — end of the formatter-only block.
 </script>
 
 <style scoped>

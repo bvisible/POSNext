@@ -9,6 +9,11 @@
 <template>
   <Dialog v-model="open" :options="{ title: __('Close POS Shift'), size: '4xl' }">
     <template #body-content>
+      <!-- //// Neoffice — upstream sizes this dialog for a desktop till. Our clients close the -->
+      <!-- //// shift on a 10-inch tablet, so the whole dialog was made mobile-first: every gap -->
+      <!-- //// and padding shrinks behind md: breakpoints, so the summary, the ticket list and -->
+      <!-- //// the reconciliation fit on one screen (7d2771d4 + ede9beb4, 2026-07-09 "compact -->
+      <!-- //// shift-closing dialog" / "live amount input, collapsed invoices"). -->
       <div class="flex flex-col gap-2 md:gap-4">
         <div v-if="closingDataResource.loading" class="text-center py-8 md:py-12">
           <div class="inline-block animate-spin rounded-full h-12 w-12 md:h-16 md:w-16 border-b-4 border-blue-600"></div>
@@ -16,6 +21,7 @@
           <p class="text-xs md:text-sm text-gray-500">{{ __('Calculating totals and reconciliation...') }}</p>
         </div>
 
+        <!-- //// Neoffice — same compaction: gap-3 md:gap-6 becomes gap-2 md:gap-4 (7d2771d4). -->
         <div v-else-if="closingData" class="flex flex-col gap-2 md:gap-4">
           <!-- Idle Warning -->
           <div v-if="showIdleWarning" class="rounded-lg bg-amber-50 border border-amber-300 p-3 flex items-center gap-2">
@@ -24,6 +30,8 @@
           </div>
 
           <!-- Shift Summary Header (hidden in entry mode when hideExpectedAmount is enabled) -->
+          <!-- //// Neoffice — summary header tightened (p-3 md:p-6 to md:p-4, mb-3 md:mb-6 to mb-2 -->
+          <!-- //// md:mb-3), same tablet compaction (7d2771d4, 2026-07-09). -->
           <div v-if="shouldShowSummary" class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
             <div class="flex flex-col sm:flex-row justify-start items-start gap-3 mb-2 md:mb-3">
               <div class="flex-1">
@@ -39,6 +47,9 @@
             <!-- Key Metrics Grid -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
               <!-- Gross Sales (before returns) -->
+              <!-- //// Neoffice — the four metric cards were shrunk (padding md:p-4 to md:p-3, figure -->
+              <!-- //// text-lg md:text-2xl to text-base md:text-xl) so they stay on one row and do not -->
+              <!-- //// push the reconciliation below the fold (7d2771d4, 2026-07-09). -->
               <div class="text-start bg-blue-50 border border-blue-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-blue-600 text-xs uppercase font-medium mb-1">{{ __('Gross Sales') }}</div>
                 <div class="text-base md:text-xl font-bold text-blue-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(grossSales) }}</div>
@@ -46,6 +57,7 @@
               </div>
 
               <!-- Returns -->
+              <!-- //// Neoffice — same card compaction as Gross Sales above (7d2771d4). -->
               <div v-if="hasReturns" class="text-start bg-red-50 border border-red-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-red-600 text-xs uppercase font-medium mb-1">{{ __('Returns') }}</div>
                 <div class="text-base md:text-xl font-bold text-red-700 mb-0.5 md:mb-1 truncate">-{{ formatCurrency(closingData.returns_total) }}</div>
@@ -53,6 +65,7 @@
               </div>
 
               <!-- Net Sales (after returns) -->
+              <!-- //// Neoffice — same card compaction as Gross Sales above (7d2771d4). -->
               <div class="text-start bg-green-50 border border-green-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-green-600 text-xs uppercase font-medium mb-1">{{ __('Net Sales') }}</div>
                 <div class="text-base md:text-xl font-bold text-green-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(closingData.grand_total) }}</div>
@@ -60,6 +73,7 @@
               </div>
 
               <!-- Tax Collected -->
+              <!-- //// Neoffice — same card compaction as Gross Sales above (7d2771d4). -->
               <div class="text-start bg-gray-50 border border-gray-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-gray-600 text-xs uppercase font-medium mb-1">{{ __('Tax Collected') }}</div>
                 <div class="text-base md:text-xl font-bold text-gray-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(totalTax) }}</div>
@@ -86,6 +100,11 @@
           </div>
 
           <!-- Invoice Details (Collapsible) (hidden in entry mode when hideExpectedAmount is enabled) -->
+          <!-- //// Neoffice — two changes in the toggle below. (1) The aria-label was a JS template -->
+          <!-- //// literal, which the PO extractor cannot see, so a French till spoke English to the -->
+          <!-- //// screen reader; it is now two plain __() strings. (2) Header padding compacted for -->
+          <!-- //// the tablet (7d2771d4, 2026-07-09 "compact shift-closing dialog, auto-fill zero -->
+          <!-- //// methods, i18n"). -->
           <div v-if="shouldShowSummary && invoiceCount > 0" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <button
               @click="showInvoiceDetails = !showInvoiceDetails"
@@ -111,6 +130,12 @@
             </button>
 
             <div v-show="showInvoiceDetails" class="border-t border-gray-200">
+              <!-- //// Neoffice ▼▼▼ — the ticket list below is upstream's markup, re-sized for a 10-inch -->
+              <!-- //// till: mobile cards and desktop table each get a capped height with their own -->
+              <!-- //// scrollbar (a busy shift used to stretch the dialog until the Close button left the -->
+              <!-- //// screen), the table head and the net-total row are sticky, and every cell padding -->
+              <!-- //// px-6 py-3/py-4 becomes px-4 py-2.5. Layout only, no data change (7d2771d4, -->
+              <!-- //// 2026-07-09 "compact shift-closing dialog, auto-fill zero methods, i18n"). -->
               <!-- Mobile Card View -->
               <div class="md:hidden divide-y divide-gray-200 max-h-56 overflow-y-auto">
                 <div v-for="(invoice, idx) in closingData.pos_transactions" :key="idx"
@@ -144,10 +169,13 @@
               </div>
 
               <!-- Desktop Table View -->
+              <!-- //// Neoffice — capped height with its own scrollbar, see the note above (7d2771d4). -->
               <div class="hidden md:block overflow-auto max-h-72">
                 <table class="min-w-full divide-y divide-gray-200">
+                  <!-- //// Neoffice — sticky head so the column titles survive scrolling (7d2771d4). -->
                   <thead class="bg-gray-50 sticky top-0 z-10">
                     <tr>
+                      <!-- //// Neoffice — header cells px-6 py-3 become px-4 py-2.5 (7d2771d4). -->
                       <th class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase">{{ __('Invoice') }}</th>
                       <th class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase">{{ __('Type') }}</th>
                       <th class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase">{{ __('Customer') }}</th>
@@ -158,11 +186,13 @@
                   <tbody class="bg-white divide-y divide-gray-200">
                     <tr v-for="(invoice, idx) in closingData.pos_transactions" :key="idx"
                         :class="invoice.is_return ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'">
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td class="text-start px-4 py-2.5 whitespace-nowrap">
                         <span :class="['text-sm font-medium', invoice.is_return ? 'text-red-700' : 'text-gray-900']">
                           {{ invoice.pos_invoice || invoice.sales_invoice || __('N/A') }}
                         </span>
                       </td>
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td class="text-start px-4 py-2.5 whitespace-nowrap">
                         <span v-if="invoice.is_return" class="px-2 py-1 text-xs font-medium bg-red-200 text-red-800 rounded">
                           {{ __('Return') }}
@@ -171,12 +201,15 @@
                           {{ __('Sale') }}
                         </span>
                       </td>
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td class="text-start px-4 py-2.5 whitespace-nowrap text-sm text-gray-600">
                         {{ invoice.customer }}
                       </td>
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td class="text-start px-4 py-2.5 whitespace-nowrap text-sm text-gray-500">
                         {{ formatTime(invoice.posting_date) }}
                       </td>
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td class="text-start px-4 py-2.5 whitespace-nowrap">
                         <span :class="['text-sm font-semibold', invoice.is_return ? 'text-red-700' : 'text-gray-900']">
                           {{ formatCurrency(invoice.grand_total) }}
@@ -184,11 +217,14 @@
                       </td>
                     </tr>
                   </tbody>
+                  <!-- //// Neoffice — sticky foot so the net total stays visible while scrolling (7d2771d4). -->
                   <tfoot class="bg-gray-50 sticky bottom-0 z-10">
                     <tr>
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td colspan="4" class="px-4 py-2.5 text-start text-sm font-semibold text-gray-700">
                         {{ __('Net Total:') }}
                       </td>
+                      <!-- //// Neoffice — cell padding px-6 py-4 becomes px-4 py-2.5, tablet compaction (7d2771d4). -->
                       <td class="px-4 py-2.5 whitespace-nowrap text-start">
                         <span class="text-base font-bold text-gray-900">
                           {{ formatCurrency(closingData.grand_total) }}
@@ -198,9 +234,20 @@
                   </tfoot>
                 </table>
               </div>
+            <!-- //// ▲▲▲ Neoffice — end of the re-sized ticket list. -->
             </div>
           </div>
 
+          <!-- //// Neoffice ▼▼▼ — three sections with no upstream equivalent. -->
+          <!-- //// · Sales by Payment Method — the cashier needs the split per method before counting -->
+          <!-- ////   the drawer; upstream shows only a grand total. -->
+          <!-- //// · External Payments — money taken at this till on an invoice created in the back -->
+          <!-- ////   office. It never becomes a POS Invoice, so without this it was cash in the drawer -->
+          <!-- ////   that the reconciliation could not explain (34ee11a8, 2026-03-25). -->
+          <!-- //// · Cash In/Out — float top-ups and pay-outs, posted as Journal Entries from a -->
+          <!-- ////   Journal Entry Template (erpnextswiss structure) and listed here because they move -->
+          <!-- ////   the expected cash (6c598630, 2026-03-28 "cash in/out from POS using Journal Entry -->
+          <!-- ////   Templates"). -->
           <!-- Sales by Payment Method -->
           <div v-if="shouldShowSummary && closingData.sales_by_payment && closingData.sales_by_payment.length > 0"
             class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
@@ -318,8 +365,11 @@
             </div>
           </div>
 
+          <!-- //// ▲▲▲ Neoffice — end of the sections added to the closing report. -->
           <!-- Payment Reconciliation -->
           <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <!-- //// Neoffice — reconciliation header padding md:px-6 md:py-4 becomes md:px-5 md:py-3, -->
+            <!-- //// tablet compaction (7d2771d4, 2026-07-09). -->
             <div :class="[
               'px-3 py-2.5 md:px-5 md:py-3 border-b border-gray-200',
               hideExpectedAmount && showSuccessReport ? 'bg-green-50 border-green-200' : 'bg-gray-50'
@@ -348,6 +398,18 @@
               </div>
             </div>
 
+            <!-- //// Neoffice ▼▼▼ — the payment reconciliation below is ours, not upstream's. Upstream -->
+            <!-- //// drew one tall card per method: icon, name, a three-box grid for opening / expected / -->
+            <!-- //// actual, and a difference alert underneath. With five methods the cashier had to -->
+            <!-- //// scroll to reach the Close button. We draw one compact row per method — icon, name, -->
+            <!-- //// 'Opening x · Expected y', the amount field, and the balanced / over / short status -->
+            <!-- //// inline (ede9beb4, 2026-07-09 "compact closing dialog, live amount input, collapsed -->
+            <!-- //// invoices"). The field is a native input with @input instead of a frappe-ui Input -->
+            <!-- //// with @update:modelValue, so the variance follows every keystroke instead of waiting -->
+            <!-- //// for a blur, and @focus selects its content so a pre-filled 0 is typed over -->
+            <!-- //// (2afb9f4c + 3cc8535f, 2026-07-09). The 'Expected:' hint used to be a TranslatedHTML -->
+            <!-- //// whose entity-encoded msgid never resolved and stayed English; it is now a plain -->
+            <!-- //// __('Expected') label (82ccf62b, 2026-07-09). -->
             <div class="p-3 md:p-4">
               <!-- ENTRY MODE: Simple blind input list (when hideExpectedAmount is enabled and not showing report) -->
               <div v-if="isInEntryMode" class="flex flex-col gap-2 md:gap-2.5">
@@ -358,10 +420,13 @@
                 >
                   <div class="flex items-center justify-between gap-3">
                     <!-- Payment Method Name with Icon -->
+                    <!-- //// Neoffice — min-w-0 so a long method name truncates instead of pushing the amount -->
+                    <!-- //// field off the row (ede9beb4, 2026-07-09). -->
                     <div class="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                       <div :class="['rounded-lg p-1.5 flex-shrink-0', getPaymentIcon(payment.mode_of_payment).color]">
                         <span class="text-base md:text-lg">{{ getPaymentIcon(payment.mode_of_payment).icon }}</span>
                       </div>
+                      <!-- //// Neoffice — truncate, for the same reason as min-w-0 above (ede9beb4). -->
                       <label :for="`payment-${idx}`" class="text-start text-sm md:text-base font-semibold text-gray-900 cursor-pointer truncate">
                         {{ payment.mode_of_payment }}
                       </label>
@@ -400,12 +465,16 @@
                     'border-red-200 bg-red-50'
                   ]"
                 >
+                  <!-- //// Neoffice — one compact row per method instead of upstream's tall card; see the note -->
+                  <!-- //// above the section (ede9beb4, 2026-07-09). -->
                   <div class="flex items-center justify-between gap-2 md:gap-3">
                     <!-- Left: icon + name + opening/expected -->
                     <div class="flex items-center gap-2 md:gap-3 min-w-0">
                       <div :class="['rounded-lg p-1.5 flex-shrink-0', getPaymentIcon(payment.mode_of_payment).color]">
                         <span class="text-base md:text-lg">{{ getPaymentIcon(payment.mode_of_payment).icon }}</span>
                       </div>
+                      <!-- //// Neoffice — opening and expected now sit inline under the name, replacing upstream's -->
+                      <!-- //// three-box grid (ede9beb4, 2026-07-09). -->
                       <div class="min-w-0">
                         <h4 class="text-start text-sm md:text-base font-semibold text-gray-900 truncate">{{ payment.mode_of_payment }}</h4>
                         <p class="text-start text-xs text-gray-500 truncate">
@@ -415,6 +484,8 @@
                       </div>
                     </div>
 
+                    <!-- //// Neoffice — amount field and status share the row; upstream put the status in a badge -->
+                    <!-- //// above the card and the difference in an alert below it (ede9beb4, 2026-07-09). -->
                     <!-- Right: live input + inline status -->
                     <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
                       <input
@@ -430,6 +501,9 @@
                         :aria-label="__('Enter actual amount for {0}', [payment.mode_of_payment])"
                         class="w-24 md:w-32 px-2.5 py-1.5 text-sm md:text-base text-end font-semibold text-gray-900 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                       />
+                      <!-- //// Neoffice — inline balanced / over / short instead of upstream's difference alert. The -->
+                      <!-- //// empty-string test comes with the 'not counted yet' default: a method that expects -->
+                      <!-- //// money starts blank, so no status shows before the cashier counts (c91af424, ede9beb4). -->
                       <div v-if="payment.closing_amount !== null && payment.closing_amount !== undefined && payment.closing_amount !== ''"
                         class="w-16 md:w-24 text-end">
                         <span v-if="payment.difference === 0" class="text-xs md:text-sm font-semibold text-green-700 whitespace-nowrap">{{ __('✓ Balanced') }}</span>
@@ -442,7 +516,9 @@
               </div>
             </div>
 
+            <!-- //// ▲▲▲ Neoffice — end of the reworked payment reconciliation. -->
             <!-- Reconciliation Summary (hidden in entry mode when hideExpectedAmount is enabled) -->
+            <!-- //// Neoffice — summary strip padding md:px-6 md:py-4 becomes md:px-5 md:py-3 (7d2771d4). -->
             <div v-if="shouldShowSummary" class="text-start bg-gray-50 px-3 py-2.5 md:px-5 md:py-3 border-t border-gray-200">
               <div class="grid grid-cols-3 gap-2 md:gap-4">
                 <div>
@@ -469,9 +545,12 @@
 
           <!-- Tax Summary (hidden in entry mode when hideExpectedAmount is enabled) -->
           <div v-if="shouldShowSummary && closingData.taxes && closingData.taxes.length > 0" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <!-- //// Neoffice — tax summary header padding md:px-6 md:py-4 becomes md:px-5 md:py-3 -->
+            <!-- //// (7d2771d4, 2026-07-09). -->
             <div class="px-3 py-2.5 md:px-5 md:py-3 bg-gray-50 border-b border-gray-200">
               <h3 class="text-sm md:text-lg font-medium text-gray-900">{{ __('Tax Summary') }}</h3>
             </div>
+            <!-- //// Neoffice — tax summary body padding md:p-6 becomes md:p-4, same compaction (7d2771d4). -->
             <div class="p-3 md:p-4">
               <div class="flex flex-col gap-2 md:gap-3">
                 <div v-for="(tax, idx) in closingData.taxes" :key="idx" class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -493,6 +572,13 @@
             </div>
           </div>
 
+          <!-- //// Neoffice ▼▼▼ — cash withdrawal at closing; no upstream equivalent. A Swiss shop -->
+          <!-- //// takes the day's takings out of the drawer and leaves a float behind. The cashier -->
+          <!-- //// types what they remove and sees what stays; on submit the server posts a Journal -->
+          <!-- //// Entry from POS Settings.closing_withdrawal_template (cash to transit account) and -->
+          <!-- //// stores the remainder on POS Closing Shift, which the next opening dialog offers as -->
+          <!-- //// opening balance. Only rendered when that template is configured (5783eb27, -->
+          <!-- //// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance"). -->
           <!-- Cash Withdrawal Section -->
           <div v-if="closingData.closing_withdrawal_template && !showSuccessReport" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <div class="px-3 py-2.5 md:px-5 md:py-3 bg-amber-50 border-b border-amber-200">
@@ -551,6 +637,7 @@
             </div>
           </div>
 
+          <!-- //// ▲▲▲ Neoffice — end of the cash-withdrawal block. -->
           <!-- Error Display -->
           <div v-if="submitResource.error || (errorMessage && !closingDataResource.error)" class="rounded-lg bg-red-50 border border-red-200 p-3 md:p-4">
             <div class="flex gap-2 md:gap-3">
@@ -634,6 +721,10 @@ import { storeToRefs } from "pinia"
 import { useShift, shiftState } from "../composables/useShift"
 import { useFormatters } from "../composables/useFormatters"
 import { usePOSSettingsStore } from "../stores/posSettings"
+//// Neoffice — the TranslatedHTML import that stood here is gone. Its only user was the
+//// per-method "Expected:" hint, whose msgid was HTML-entity-encoded and never resolved,
+//// so the label stayed English on a French till; it is a plain __('Expected') label now
+//// (82ccf62b, 2026-07-09 "translate the 'Expected:' label in closing reconciliation").
 import { usePOSShiftStore } from "../stores/posShift"
 
 const props = defineProps({
@@ -656,6 +747,8 @@ const open = computed({
 })
 
 const { getClosingShiftData, submitClosingShift } = useShift()
+//// Neoffice — Biome formatter pass only, no behaviour change (458d81a9, 2026-03-20
+//// "remove BrainWise branding, add restaurant mode, and code formatting").
 const { formatCurrency, formatQuantity, formatDateTime, formatTime } =
 	useFormatters()
 const posSettingsStore = usePOSSettingsStore()
@@ -668,6 +761,8 @@ const closingDataResource = getClosingShiftData
 const submitResource = submitClosingShift
 const showInvoiceDetails = ref(false)
 const showSuccessReport = ref(false) // Track if shift is closed and showing report
+//// Neoffice — Biome turned '' into "" here (458d81a9); the ref two lines below is ours:
+//// how much cash the cashier takes out of the drawer at closing (5783eb27, 2026-03-28).
 const errorMessage = ref("") // User-friendly error message
 const showIdleWarning = ref(false)
 const cashWithdrawalAmount = ref(0)
@@ -709,6 +804,7 @@ onBeforeUnmount(() => {
 
 async function loadClosingData() {
 	try {
+		//// Neoffice — Biome pass: single to double quotes (458d81a9, 2026-03-20).
 		errorMessage.value = "" // Clear any previous errors
 
 		const data = await closingDataResource.submit({
@@ -726,6 +822,8 @@ async function loadClosingData() {
 				const expected = Number.parseFloat(payment.expected_amount) || 0
 				const autoZero = expected === 0
 				const savedAmount = Number.parseFloat(payment.closing_amount) || null
+				//// Neoffice — closing_amount and _touched below carry the autoZero rule explained just
+				//// above (7d2771d4 + c91af424, 2026-07-09).
 				return reactive({
 					...payment,
 					closing_amount: autoZero ? 0 : savedAmount,
@@ -747,6 +845,9 @@ async function loadClosingData() {
 		showInvoiceDetails.value = false
 	} catch (error) {
 		console.error("Error loading closing data:", error)
+		//// Neoffice — upstream left this message a bare English literal, so a load failure spoke
+		//// English on a French till. Wrapped in __() and translated in fr.po (7d2771d4,
+		//// 2026-07-09 "compact shift-closing dialog, auto-fill zero methods, i18n").
 		errorMessage.value = __(
 			"Unable to load shift data. Please check your connection and try again.",
 		)
@@ -764,6 +865,9 @@ function roundCents(value) {
 function calculateDifference(payment) {
 	const closing = Number.parseFloat(payment.closing_amount) || 0
 	const expected = Number.parseFloat(payment.expected_amount) || 0
+	//// Neoffice — snapped to the cent by roundCents above: the raw float subtraction left
+	//// 86.05 - 86.05 === -1.4e-14, rendered as a red deficit no count could clear (4ce4bed2,
+	//// 2026-07-09 "snap closing reconciliation difference to the cent").
 	payment.difference = roundCents(closing - expected)
 }
 
@@ -794,6 +898,8 @@ const canSubmit = computed(() => {
 		return false
 
 	// Check if all closing amounts have been manually entered
+	//// Neoffice — the "every method counted" test moved into allFilled so the withdrawal
+	//// guard below can veto the close as well (5783eb27, 2026-03-28).
 	const allFilled = closingData.value.payment_reconciliation.every(
 		(payment) =>
 			payment._touched &&
@@ -802,6 +908,8 @@ const canSubmit = computed(() => {
 			payment.closing_amount !== "",
 	)
 
+	//// Neoffice — a cashier cannot take out more cash than was counted in the drawer;
+	//// refusing here keeps the withdrawal Journal Entry from ever going negative (5783eb27).
 	// Block if withdrawal exceeds cash
 	if (withdrawalExceedsCash.value) return false
 
@@ -812,6 +920,7 @@ async function submitClosing() {
 	if (!closingData.value) return
 
 	try {
+		//// Neoffice — Biome pass: single to double quotes (458d81a9, 2026-03-20).
 		errorMessage.value = "" // Clear any previous errors
 
 		// Ensure all differences are calculated
@@ -821,6 +930,8 @@ async function submitClosing() {
 			})
 		}
 
+		//// Neoffice — the withdrawal rides on the closing payload; the server creates the
+		//// Journal Entry and stores the remaining balance for the next shift (5783eb27).
 		// Inject cash withdrawal data
 		const withdrawal = Number.parseFloat(cashWithdrawalAmount.value || 0)
 		closingData.value.cash_withdrawal_amount = withdrawal
@@ -832,6 +943,9 @@ async function submitClosing() {
 		// If hideExpectedAmount is enabled, show success report before closing
 		if (hideExpectedAmount.value) {
 			showSuccessReport.value = true
+			//// Neoffice — upstream auto-expanded the invoice list in the success report, which
+			//// filled the screen after a busy shift. It stays collapsed; the cashier opens it on
+			//// demand (ede9beb4, 2026-07-09 "collapsed invoices").
 			// Invoice list stays collapsed in the report too — expand on demand.
 		} else {
 			// Normal mode: close immediately
@@ -840,6 +954,8 @@ async function submitClosing() {
 		}
 	} catch (error) {
 		console.error("Error submitting closing shift:", error)
+		//// Neoffice — bare English literal upstream; wrapped in __() for the French till
+		//// (7d2771d4, 2026-07-09).
 		errorMessage.value = __(
 			"Failed to close shift. Please verify all amounts and try again.",
 		)
@@ -856,24 +972,32 @@ function closeDialog() {
 	closingData.value = null
 	showInvoiceDetails.value = false
 	showSuccessReport.value = false // Reset report view
+	//// Neoffice — Biome quote pass (458d81a9); the reset below clears the withdrawal field
+	//// so a re-opened dialog never carries the previous amount (5783eb27, 2026-03-28).
 	errorMessage.value = "" // Clear error messages
 	cashWithdrawalAmount.value = 0
 }
 
 // UI State Computed Properties
+//// Neoffice — Biome reflow of the arrow body, no behaviour change (458d81a9).
 const shouldShowSummary = computed(
 	() => !hideExpectedAmount.value || showSuccessReport.value,
 )
 
+//// Neoffice — Biome reflow of the arrow body, no behaviour change (458d81a9).
 const isInEntryMode = computed(
 	() => hideExpectedAmount.value && !showSuccessReport.value,
 )
 
+//// Neoffice — the three hints below were bare English literals, so the French till gave
+//// English guidance while counting. Wrapped in __() and translated in fr.po (7d2771d4,
+//// 2026-07-09 "compact shift-closing dialog, auto-fill zero methods, i18n").
 const reconciliationMessage = computed(() => {
 	if (isInEntryMode.value) {
 		return __("Enter the actual counted amounts for each payment method")
 	}
 	if (showSuccessReport.value && hideExpectedAmount.value) {
+		//// Neoffice — same __() wrap as above (7d2771d4, 2026-07-09).
 		return __("Shift closed successfully - Review the final reconciliation below")
 	}
 	return __("Count your cash and enter actual amounts below")
@@ -896,6 +1020,7 @@ const hasReturns = computed(() => {
 const salesInvoiceCount = computed(() => {
 	if (!closingData.value) return 0
 	const transactions = closingData.value.pos_transactions || []
+	//// Neoffice — Biome added the arrow parens; no behaviour change (458d81a9).
 	return transactions.filter((t) => !t.is_return).length
 })
 
@@ -928,9 +1053,17 @@ const getTotalActual = computed(() => {
 })
 
 const getTotalDifference = computed(() => {
+	//// Neoffice — same cent snap as per method: a float residue used to show as a permanent
+	//// red Net Variance that no count could clear (4ce4bed2, 2026-07-09).
 	return roundCents(getTotalActual.value - getTotalExpected.value)
 })
 
+//// Neoffice ▼▼▼ — everything down to updateWithdrawalAmount serves the cash withdrawal:
+//// what was actually counted (the reconciliation row of the profile's cash Mode of
+//// Payment), what is left after the withdrawal — the amount proposed as the next shift's
+//// opening balance — and the guard that refuses to take out more than was counted
+//// (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested opening
+//// balance").
 // Cash withdrawal computed properties
 const cashClosingAmount = computed(() => {
 	if (!closingData.value || !closingData.value.payment_reconciliation) return 0
@@ -959,6 +1092,7 @@ function updateWithdrawalAmount(value) {
 	cashWithdrawalAmount.value = value
 }
 
+//// ▲▲▲ Neoffice — end of the cash-withdrawal helpers.
 function getSalesForPayment(payment) {
 	return (
 		Number.parseFloat(payment.expected_amount || 0) -
@@ -966,6 +1100,7 @@ function getSalesForPayment(payment) {
 	)
 }
 
+//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 function getShiftDuration() {
 	if (!closingData.value || !closingData.value.period_start_date)
 		return __("N/A")
@@ -980,10 +1115,12 @@ function getShiftDuration() {
 	const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
 
 	if (days > 0) {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		const dayLabel = days === 1 ? __("Day") : __("Days")
 		return __("{0} {1} {2}h {3}m", [days, dayLabel, hours, minutes])
 	}
 	if (hours > 0) {
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		return __("{0}h {1}m", [hours, minutes])
 	}
 	return __("{0}m", [minutes])

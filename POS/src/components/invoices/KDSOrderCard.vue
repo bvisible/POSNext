@@ -1,4 +1,19 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). Upstream POSNext is a retail POS: -->
+	<!-- //// no kitchen, no preparation. Neoffice sells POS to restaurants, so items are routed -->
+	<!-- //// to preparation stations (Bar / Kitchen) and shown on a Preparation Display as -->
+	<!-- //// post-it cards; this is one card. It carries: per-item kds_status with a context menu -->
+	<!-- //// that updates optimistically and rolls back on error (a touch screen behind a pass -->
+	<!-- //// cannot wait for a round trip), batch separators so a second send is visibly not part -->
+	<!-- //// of the first, a "Coming Next" preview of items ordered but not yet sent, two timers -->
+	<!-- //// (time since the last action, big, and total table time, small), takeaway orders, and -->
+	<!-- //// structured item modifiers. Also warns before Delivered when the Runner screen is -->
+	<!-- //// active, since that would skip the runner. (e005b94b 2026-03-21 preparation stations; -->
+	<!-- //// 831857f2 per-item KDS status; 0e226900 2026-03-22 post-it grid; 4d9eebb2 per-item -->
+	<!-- //// status menu; aee5c179 optimistic updates; db5f4ead + 425a228a 2026-03-23 timers; -->
+	<!-- //// a5c19a43 status preservation; 7a63644a "Coming Next"; 9eff4ab6 full invoice number; -->
+	<!-- //// 34ee11a8 2026-03-25 runner confirmation; 644ad918 2026-03-26 takeaway; 07d0d493 -->
+	<!-- //// 2026-03-29 batch separation.) -->
 	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 flex flex-col"
 		:class="borderColorClass">
 

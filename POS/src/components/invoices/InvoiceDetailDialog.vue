@@ -269,6 +269,10 @@
 				<Button variant="subtle" @click="show = false">
 					{{ __('Close') }}
 				</Button>
+				<!-- //// Neoffice — upstream offered Print only. A till receipt is not something a customer -->
+				<!-- //// can file, so the cashier can also mail the invoice as a PDF; the inline print SVG -->
+				<!-- //// became a FeatherIcon in the same pass (4239ea8d, 2026-03-24 "add email invoice -->
+				<!-- //// functionality with PDF attachment"). -->
 				<div class="flex gap-2">
 					<Button variant="outline" @click="showEmailDialog = true">
 						<template #prefix>
@@ -287,6 +291,8 @@
 		</template>
 	</Dialog>
 
+	<!-- //// Neoffice — mounted as a sibling of the Dialog, not inside it: a dialog nested in -->
+	<!-- //// another one renders under the parent's backdrop (4239ea8d, 2026-03-24). -->
 	<!-- Email Invoice Dialog -->
 	<EmailInvoiceDialog
 		v-model="showEmailDialog"
@@ -296,6 +302,7 @@
 
 <script setup>
 import { useFormatters } from "@/composables/useFormatters"
+//// Neoffice — Biome reflow of the import, no behaviour change (458d81a9).
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -303,10 +310,13 @@ import {
 import { getInvoiceStatusColor } from "@/utils/invoice"
 import { logger } from "@/utils/logger"
 import { hydrateLocalOnlyInvoice, isLocalOnlyInvoiceName } from "@/utils/printInvoice"
+//// Neoffice — FeatherIcon and the mail dialog, for the Email action added to the
+//// footer (4239ea8d, 2026-03-24).
 import { Button, Dialog, FeatherIcon, call } from "frappe-ui"
 import EmailInvoiceDialog from "@/components/sale/EmailInvoiceDialog.vue"
 import { ref, watch, nextTick, computed } from "vue"
 
+//// Neoffice — Biome quote pass (458d81a9, 2026-03-20).
 const log = logger.create("InvoiceDetailDialog")
 const { formatDate, formatTime } = useFormatters()
 
@@ -329,11 +339,17 @@ const emit = defineEmits(["update:modelValue", "print-invoice"])
 const show = ref(props.modelValue)
 const loading = ref(false)
 const invoiceData = ref(null)
+//// Neoffice — open state of the Email dialog (4239ea8d, 2026-03-24).
 const showEmailDialog = ref(false)
 
+//// Neoffice ▼▼▼ — down to the ▲▲▲ the only difference from upstream is the Biome
+//// formatter pass: single to double quotes, long expressions wrapped, arrow parens,
+//// trailing commas. No behaviour change, so at the next merge this stretch can be
+//// resolved in upstream's favour and simply re-formatted (458d81a9, 2026-03-20).
 // Computed: Check if this is a credit sale (Pay on Account - no payments, full outstanding)
 const isCreditSale = computed(() => {
 	if (!invoiceData.value) return false
+	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 	const hasNoPayments =
 		!invoiceData.value.payments || invoiceData.value.payments.length === 0
 	const totalPaid =
@@ -344,6 +360,7 @@ const isCreditSale = computed(() => {
 	const grandTotal = Math.abs(invoiceData.value.grand_total || 0)
 	const outstanding = Math.abs(invoiceData.value.outstanding_amount || 0)
 	// Credit sale if no payments and outstanding equals grand total
+	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 	return (
 		hasNoPayments ||
 		(totalPaid < 0.01 && Math.abs(outstanding - grandTotal) < 0.01)
@@ -353,6 +370,7 @@ const isCreditSale = computed(() => {
 // Computed: Check if this return was added to customer credit (no payments, negative outstanding)
 const isAddedToCustomerCredit = computed(() => {
 	if (!invoiceData.value || !invoiceData.value.is_return) return false
+	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 	const hasNoPayments =
 		!invoiceData.value.payments || invoiceData.value.payments.length === 0
 	const totalPaid =
@@ -368,6 +386,7 @@ const isAddedToCustomerCredit = computed(() => {
 // Computed: Check if this return was a cash refund (has payments)
 const isCashRefund = computed(() => {
 	if (!invoiceData.value || !invoiceData.value.is_return) return false
+	//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 	const totalPaid =
 		invoiceData.value.payments?.reduce(
 			(sum, p) => sum + Math.abs(p.amount || 0),
@@ -395,11 +414,13 @@ watch(show, async (val) => {
 	} else {
 		// Ensure dialog appears above other dialogs
 		await nextTick()
+		//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 		const dialogs = document.querySelectorAll(
 			".modal-container, .modal-backdrop",
 		)
 		dialogs.forEach((dialog) => {
 			const title = dialog.querySelector('[class*="title"]')
+			//// Neoffice — Biome reflow only, no behaviour change (458d81a9, 2026-03-20).
 			if (title && title.textContent?.includes("Invoice Details")) {
 				dialog.style.zIndex = "400"
 			}
@@ -407,6 +428,7 @@ watch(show, async (val) => {
 	}
 })
 
+//// ▲▲▲ Neoffice — end of the formatter-only stretch.
 async function loadInvoiceDetails() {
 	if (!props.invoiceName) return
 

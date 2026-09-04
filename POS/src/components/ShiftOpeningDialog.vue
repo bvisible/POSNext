@@ -67,6 +67,10 @@
               {{ __('Opening Balance (Optional)') }}
             </label>
 
+            <!-- //// Neoffice — the spinner must also cover the suggested-balance call: otherwise the -->
+            <!-- //// payment list rendered with empty amounts and the suggestion arrived afterwards, so -->
+            <!-- //// the cashier saw the field change under their fingers (5783eb27, 2026-03-28 "cash -->
+            <!-- //// withdrawal at shift closing with suggested opening balance"). -->
             <div v-if="dialogDataResource.loading || suggestedBalanceResource.loading" class="text-center py-4">
               <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
@@ -81,6 +85,9 @@
                   <label class="text-sm font-medium text-gray-700">
                     {{ method.mode_of_payment }}
                   </label>
+                  <!-- //// Neoffice — says where the pre-filled amount comes from: it is what the previous -->
+                  <!-- //// shift left in the drawer after its closing withdrawal, not something anyone typed -->
+                  <!-- //// (5783eb27, 2026-03-28). -->
                   <p v-if="suggestedCashMode === method.mode_of_payment && suggestedAmount > 0" class="text-xs text-blue-600 mt-0.5">
                     {{ __('Suggested from last shift: {0}', [suggestedAmount]) }}
                   </p>
@@ -229,6 +236,8 @@ const existingShift = ref(null)
 const showClosingDialog = ref(false)
 const closingExistingShift = ref(false)
 const restartProfileName = ref(null)
+//// Neoffice — what the last closing left in the drawer, and for which Mode of Payment
+//// (5783eb27, 2026-03-28).
 const suggestedAmount = ref(0)
 const suggestedCashMode = ref("")
 
@@ -244,6 +253,10 @@ const dialogDataResource = createResource({
 	auto: false,
 })
 
+//// Neoffice — upstream opens every shift at zero. A Swiss shop leaves a float in the
+//// till overnight, so we ask the server what the last closing kept back and propose it
+//// (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested opening
+//// balance").
 // Get suggested opening balance from last closing shift
 const suggestedBalanceResource = createResource({
 	url: "pos_next.api.shifts.get_suggested_opening_balance",
@@ -325,6 +338,9 @@ async function nextStep() {
 	if (step.value === 1 && selectedProfile.value) {
 		await dialogDataResource.fetch()
 
+		//// Neoffice — pre-fills the cash opening balance from the last closing. Best effort: a
+		//// failure here must never stop the cashier from opening the shift, hence the silent
+		//// catch (5783eb27, 2026-03-28).
 		// Fetch suggested opening balance from last closing shift
 		suggestedAmount.value = 0
 		suggestedCashMode.value = ""

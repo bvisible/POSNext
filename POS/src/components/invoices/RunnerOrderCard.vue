@@ -1,4 +1,12 @@
 <template>
+	<!-- //// Neoffice — added file (no upstream equivalent). The runner screen: what the kitchen -->
+	<!-- //// has finished and somebody must now carry to a table. Upstream POSNext has no -->
+	<!-- //// preparation workflow at all. One card per ready batch, grouped either by table or by -->
+	<!-- //// preparation station (the station colour tints the header), with the time since it was -->
+	<!-- //// marked Ready turning orange past 5 minutes and red past 10, so nothing sits under the -->
+	<!-- //// pass. Modifiers arrive as JSON groups and are flattened to readable names before -->
+	<!-- //// display (d59036f1, 2026-03-23 "preparation workflows, runner display, and workflow -->
+	<!-- //// APIs"; fbba3b7a, 2026-03-23, for the modifier names). -->
 	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 border-green-400 overflow-hidden flex flex-col">
 		<!-- Card Header -->
 		<div class="px-4 py-3 border-b flex justify-between items-center"

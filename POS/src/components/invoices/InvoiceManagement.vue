@@ -105,6 +105,18 @@
 						<div class="p-6">
 							<!-- Unpaid Tab -->
 							<div v-if="activeTab === 'partial'" class="flex flex-col gap-4">
+								<!-- //// Neoffice ▼▼▼ — everything down to the ▲▲▲ serves two additions upstream has no -->
+								<!-- //// equivalent for. -->
+								<!-- //// · POS / External Invoices toggle: a customer can walk in to settle an invoice the -->
+								<!-- ////   back office issued. That is a Sales Invoice, not a POS Invoice, so upstream's -->
+								<!-- ////   unpaid list never showed it and the cashier had no way to take the money. The -->
+								<!-- ////   blue variant marks the external source, and every count below now reads -->
+								<!-- ////   activeUnpaidInvoices (whichever source is selected) instead of unpaidInvoices. -->
+								<!-- //// · Search by invoice number or customer: a restaurant closes hundreds of tickets a -->
+								<!-- ////   day and the list was only navigable by scrolling (34ee11a8, 2026-03-25). -->
+								<!-- //// (02222a44, 2026-03-24 — TO REVIEW: that commit's subject describes an unrelated -->
+								<!-- //// modifier-price fix and says nothing about this UI; the reason above is read from -->
+								<!-- //// its diff, not from its message.) -->
 								<!-- Invoice Source Toggle -->
 								<div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
 									<button
@@ -155,6 +167,7 @@
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
+										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{ __('All ({0})', [activeUnpaidInvoices.length]) }}
 									</button>
 									<button
@@ -166,6 +179,7 @@
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
+										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{ __('Partially Paid ({0})', [activeUnpaidInvoices.filter(inv => inv.status === 'Partly Paid').length]) }}
 									</button>
 									<button
@@ -177,6 +191,7 @@
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
+										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{ __('Unpaid ({0})', [activeUnpaidInvoices.filter(inv => inv.status === 'Unpaid').length]) }}
 									</button>
 									<button
@@ -188,11 +203,14 @@
 												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
 										]"
 									>
+										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{ __('Overdue ({0})', [activeUnpaidInvoices.filter(inv => inv.status === 'Overdue').length]) }}
 									</button>
 								</div>
 
 								<!-- Summary -->
+								<!-- //// Neoffice — the outstanding card takes the blue external variant when the toggle is on -->
+								<!-- //// external, so the cashier cannot mistake one total for the other (02222a44). -->
 								<div
 									v-if="filteredUnpaidSummary.count > 0"
 									:class="[
@@ -204,6 +222,7 @@
 								>
 									<div class="flex items-center justify-between">
 										<div>
+											<!-- //// Neoffice — label colour follows the selected source (02222a44, 2026-03-24). -->
 											<div :class="['text-sm font-medium', invoiceSource === 'pos' ? 'text-orange-600' : 'text-blue-600']">{{ __('Outstanding Payments') }}</div>
 											<div class="text-2xl font-bold text-gray-900 mt-1">{{ formatCurrency(filteredUnpaidSummary.total_outstanding) }}</div>
 										</div>
@@ -214,6 +233,7 @@
 									</div>
 								</div>
 
+								<!-- //// ▲▲▲ Neoffice — end of the source toggle / search block. -->
 								<!-- Offline Warning -->
 								<div v-if="isOffline()" class="bg-yellow-50 border border-yellow-300 rounded-lg p-3 flex items-center gap-3">
 									<svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,6 +245,8 @@
 									</div>
 								</div>
 
+								<!-- //// Neoffice — the empty state follows the search result, not the status filter alone, -->
+								<!-- //// otherwise a search with no hit still rendered the full list (34ee11a8, 2026-03-25). -->
 								<!-- Empty State -->
 								<div v-if="searchedUnpaidInvoices.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
 									<svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,11 +258,16 @@
 
 								<!-- Invoices List -->
 								<div v-else class="flex flex-col gap-4">
+									<!-- //// Neoffice — iterates the searched list; `relative` below anchors the processing -->
+									<!-- //// overlay added just after (34ee11a8, 2026-03-25; 2584aa58, 2026-03-24). -->
 									<div
 										v-for="invoice in searchedUnpaidInvoices"
 										:key="invoice.name"
 										class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative"
 									>
+										<!-- //// Neoffice — a payment takes a round trip to the server. Without feedback on the card -->
+										<!-- //// itself the cashier taps Add Payment again and pays twice; this overlay covers the -->
+										<!-- //// card being settled (2584aa58, 2026-03-24 "processing overlay with spinner"). -->
 										<!-- Processing overlay -->
 										<div
 											v-if="processingInvoiceName === invoice.name"
@@ -263,6 +290,8 @@
 														>
 															{{ __(invoice.status) }}
 														</span>
+														<!-- //// Neoffice — marks a back-office invoice, so the cashier knows the money will not -->
+														<!-- //// land in a POS Invoice (02222a44, 2026-03-24). -->
 														<span
 															v-if="invoiceSource === 'external'"
 															class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700"
@@ -285,6 +314,9 @@
 														</div>
 													</div>
 												</div>
+												<!-- //// Neoffice — upstream had one shared loading flag, so a tap lit the spinner on every -->
+												<!-- //// card and disabled them all. The button now spins only for its own invoice, and its -->
+												<!-- //// colour follows the selected source (2584aa58 + 02222a44, 2026-03-24). -->
 												<button
 													@click="selectInvoiceForPayment(invoice)"
 													:disabled="loadingInvoiceName !== null || isOffline()"
@@ -296,6 +328,7 @@
 															: 'bg-blue-500 hover:bg-blue-600'
 													]"
 												>
+													<!-- //// Neoffice — spinner for THIS invoice only (2584aa58, 2026-03-24). -->
 													<LoadingIndicator v-if="loadingInvoiceName === invoice.name" class="w-4 h-4" />
 													{{ __('Add Payment') }}
 												</button>
@@ -637,6 +670,7 @@ import InvoiceFilters from "@/components/invoices/InvoiceFilters.vue"
 import PaymentDialog from "@/components/sale/PaymentDialog.vue"
 import { useInvoiceFilters } from "@/composables/useInvoiceFilters"
 import { useInvoiceFiltersStore } from "@/stores/invoiceFilters"
+//// Neoffice — Biome reflow of the import, no behaviour change (458d81a9).
 import {
 	DEFAULT_CURRENCY,
 	formatCurrency as formatCurrencyUtil,
@@ -675,6 +709,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	//// Neoffice — the shift the till is currently running. Passed down so a payment taken
+	//// here can be tagged with it and appear in the shift-closing reconciliation instead of
+	//// being cash the closing report cannot explain (a0084ae0, 2026-03-24 — TO REVIEW: the
+	//// commit subject is about the Runner and does not mention this).
 	posOpeningShift: {
 		type: String,
 		default: "",
@@ -712,6 +750,10 @@ const unpaidSummary = ref({
 const selectedInvoice = ref(null)
 const showPaymentDialog = ref(false)
 
+//// Neoffice — state behind the two template additions: a search box over the unpaid
+//// list, and the POS / External source toggle. activeUnpaidInvoices is the indirection
+//// every consumer below reads instead of unpaidInvoices (34ee11a8, 2026-03-25;
+//// 02222a44, 2026-03-24).
 // Search
 const unpaidSearchQuery = ref("")
 
@@ -727,18 +769,27 @@ const activeUnpaidInvoices = computed(() =>
 		: externalUnpaidInvoices.value,
 )
 
+//// Neoffice ▼▼▼ — the status filters read whichever source the toggle selects (POS or
+//// back-office invoices) instead of unpaidInvoices directly, and a second computed
+//// narrows that by the search box: invoice number, customer id or customer name
+//// (02222a44, 2026-03-24; 34ee11a8, 2026-03-25).
 // Filtered unpaid invoices based on payment amounts
 const filteredUnpaidInvoices = computed(() => {
 	const source = activeUnpaidInvoices.value
 	if (unpaidFilter.value === "partial") {
+		//// Neoffice — filters the selected source, see the note above (02222a44).
 		return source.filter((inv) => inv.status === "Partly Paid")
 	}
 	if (unpaidFilter.value === "unpaid") {
+		//// Neoffice — filters the selected source, see the note above (02222a44).
 		return source.filter((inv) => inv.status === "Unpaid")
 	}
 	if (unpaidFilter.value === "overdue") {
+		//// Neoffice — filters the selected source, see the note above (02222a44).
 		return source.filter((inv) => inv.status === "Overdue")
 	}
+	//// Neoffice — "all" returns the selected source; the search computed below narrows it
+	//// further (02222a44, 2026-03-24; 34ee11a8, 2026-03-25).
 	return source // "all"
 })
 
@@ -754,6 +805,7 @@ const searchedUnpaidInvoices = computed(() => {
 	)
 })
 
+//// ▲▲▲ Neoffice — end of the source-aware / searchable filtering.
 // Filtered summary based on selected filter
 const filteredUnpaidSummary = computed(() => {
 	const filtered = filteredUnpaidInvoices.value
@@ -792,6 +844,8 @@ const filteredHistoryInvoices = computed(() => {
 })
 
 // Tabs configuration
+//// Neoffice — the Unpaid tab badge counts the active source, not unpaidInvoices, so it
+//// matches the list on screen once the toggle is used (02222a44, 2026-03-24).
 const tabs = computed(() => [
 	{
 		id: "partial",
@@ -905,6 +959,9 @@ watch(activeTab, (newTab) => {
 	if (newTab === "history" || newTab === "returns") {
 		emit("refresh-history")
 	} else if (newTab === "partial") {
+		//// Neoffice — refresh whichever source is showing, and load the external list the first
+		//// time the toggle is used; the status filter is reset with it so the counts and the
+		//// list can never disagree (02222a44, 2026-03-24).
 		if (invoiceSource.value === "pos") {
 			loadUnpaidInvoices()
 			loadUnpaidSummary()
@@ -927,6 +984,8 @@ function handleClose() {
 	show.value = false
 }
 
+//// Neoffice — a manual refresh must hit the source on screen, not always the POS one
+//// (02222a44, 2026-03-24).
 async function refreshCurrentTab() {
 	if (activeTab.value === "partial") {
 		if (invoiceSource.value === "pos") {
@@ -960,6 +1019,7 @@ async function loadUnpaidInvoices() {
 		if (cachedInvoices && cachedInvoices.length > 0) {
 			unpaidInvoices.value = cachedInvoices
 			loading.value = false // Hide skeleton once we have cached data
+			//// Neoffice — Biome reflow of the call, no behaviour change (458d81a9).
 			log.debug(
 				"Loaded",
 				cachedInvoices.length,
@@ -1011,6 +1071,7 @@ async function loadUnpaidSummary() {
 	// Load cached summary immediately for instant display
 	try {
 		const cachedSummary = await getCachedUnpaidSummary(props.posProfile)
+		//// Neoffice — Biome reflow of the condition, no behaviour change (458d81a9).
 		if (
 			cachedSummary &&
 			(cachedSummary.count > 0 || cachedSummary.total_outstanding > 0)
@@ -1053,6 +1114,9 @@ async function loadUnpaidSummary() {
 	}
 }
 
+//// Neoffice — fetches unpaid Sales Invoices that the POS did not create, so a customer
+//// can settle a back-office invoice at the till; upstream only ever knows POS Invoices
+//// (02222a44, 2026-03-24 — TO REVIEW: the commit subject describes an unrelated fix).
 async function loadExternalUnpaidInvoices() {
 	if (!props.posProfile) return
 
@@ -1078,10 +1142,13 @@ async function loadExternalUnpaidInvoices() {
 const loadingInvoiceName = ref(null) // Track which invoice is loading
 const processingInvoiceName = ref(null) // Track which invoice is being paid
 
+//// Neoffice — track WHICH invoice is loading instead of a single boolean, so one tap
+//// does not spin every card at once (2584aa58, 2026-03-24).
 async function selectInvoiceForPayment(invoice) {
 	loadingInvoiceName.value = invoice.name
 	try {
 		// Fetch full invoice details including items for the payment dialog
+		//// Neoffice — Biome reflow of the call, no behaviour change (458d81a9).
 		const details = await call(
 			"pos_next.api.partial_payments.get_partial_payment_details",
 			{
@@ -1096,6 +1163,7 @@ async function selectInvoiceForPayment(invoice) {
 		selectedInvoice.value = invoice
 		showPaymentDialog.value = true
 	} finally {
+		//// Neoffice — clear the per-invoice spinner (2584aa58, 2026-03-24).
 		loadingInvoiceName.value = null
 	}
 }
@@ -1103,10 +1171,15 @@ async function selectInvoiceForPayment(invoice) {
 async function handlePaymentCompleted(paymentData) {
 	if (!selectedInvoice.value) return
 
+	//// Neoffice — capture the name before the await and raise the card overlay: the cashier
+	//// must see that THIS invoice is being settled and not tap it twice (2584aa58).
 	const invoiceName = selectedInvoice.value.name
 	processingInvoiceName.value = invoiceName
 
 	try {
+		//// Neoffice — the opening shift travels with the payment (pos_opening_shift below); the
+		//// server puts it on the Payment Entry reference so the money shows up in this shift's
+		//// closing summary instead of disappearing from the reconciliation (a0084ae0).
 		await call("pos_next.api.partial_payments.add_payment_to_partial_invoice", {
 			invoice_name: invoiceName,
 			payments: paymentData.payments,
@@ -1115,6 +1188,8 @@ async function handlePaymentCompleted(paymentData) {
 
 		showSuccess(__("Payment added successfully"))
 
+		//// Neoffice — reload whichever source is on screen, otherwise the settled invoice stays
+		//// listed as unpaid (02222a44, 2026-03-24).
 		// Reload the active invoice source
 		if (invoiceSource.value === "pos") {
 			await loadUnpaidInvoices()
@@ -1130,6 +1205,7 @@ async function handlePaymentCompleted(paymentData) {
 	} catch (error) {
 		console.error("Error adding payment:", error)
 		showError(error.message || __("Failed to add payment"))
+	//// Neoffice — the overlay must come down on failure too (2584aa58, 2026-03-24).
 	} finally {
 		processingInvoiceName.value = null
 	}
@@ -1141,6 +1217,7 @@ function formatCurrency(amount) {
 
 function getPaymentSourceLabel(source) {
 	// Convert source to user-friendly label
+	//// Neoffice — Biome quote pass (458d81a9, 2026-03-20).
 	switch (source) {
 		case "POS":
 			return "POS"
