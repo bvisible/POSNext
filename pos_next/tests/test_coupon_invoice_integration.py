@@ -226,6 +226,9 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"company": self.test_company,
 			"posting_date": nowdate(),
 			"due_date": nowdate(),
+			#//// Neoffice — bench run-tests only bootstraps pos_next, so Global Defaults keeps
+			#//// Neoffice — frappe's USD while the test company is INR; pin invoice currency/
+			#//// Neoffice — conversion to the receivable account's own currency (7b2e7ea7)
 			# Bill in the receivable account's own currency - see setUpClass.
 			"debit_to": self.debit_to,
 			"currency": self.test_currency,
@@ -318,6 +321,9 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"company": self.test_company,
 			"posting_date": nowdate(),
 			"due_date": nowdate(),
+			#//// Neoffice — bench run-tests only bootstraps pos_next, so Global Defaults keeps
+			#//// Neoffice — frappe's USD while the test company is INR; pin invoice currency/
+			#//// Neoffice — conversion to the receivable account's own currency (7b2e7ea7)
 			# Bill in the receivable account's own currency - see setUpClass.
 			"debit_to": self.debit_to,
 			"currency": self.test_currency,
