@@ -4,6 +4,7 @@
 import unittest
 from unittest.mock import Mock, patch, MagicMock
 
+#//// Neoffice — added (764047c "tests: fixtures must pick rows the test can actually use"): needed by TestGetCustomersSearch below, which runs against the real database
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -19,6 +20,7 @@ class TestCustomersAPI(unittest.TestCase):
     # frappe.db is a werkzeug LocalProxy that inspect.isawaitable() reports as awaitable, so a
     # bare patch("...frappe.db") builds an AsyncMock and every frappe.db.x() returns a coroutine
     # ("object of type 'coroutine' has no len()", CI 2026-09-03). new_callable=MagicMock keeps it sync.
+    #//// Neoffice — removed test_get_customers_applies_search_term_filters (764047c "tests: fixtures must pick rows the test can actually use"): asserted a frappe.get_all or_filters call that get_customers no longer makes; the search moved to frappe.qb, covered by TestGetCustomersSearch below
     #
     # test_get_customers_applies_search_term_filters used to live here and asserted
     # that a search called frappe.get_all with an or_filters list. get_customers no
@@ -96,6 +98,7 @@ class TestCustomersAPI(unittest.TestCase):
         self.assertEqual(result["loyalty_program"], "LOYALTY-A")
 
 
+#//// Neoffice ▼▼▼ — added TestGetCustomersSearch (764047c "tests: fixtures must pick rows the test can actually use"): asserts the get_customers search contract (word order, per-word AND, mobile/email match, disabled exclusion) against real rows, replacing the mock-based test above that pinned a call path the code no longer takes
 class TestGetCustomersSearch(FrappeTestCase):
     """get_customers search path, against the database.
 
@@ -167,3 +170,4 @@ class TestGetCustomersSearch(FrappeTestCase):
         found = [row["name"] for row in get_customers(limit=0)]
         self.assertIn(self.moret, found)
         self.assertNotIn(self.retired, found)
+#//// Neoffice ▲▲▲

@@ -21,6 +21,7 @@ from frappe.utils import nowdate, add_months, flt
 class TestCouponInvoiceIntegration(unittest.TestCase):
 	"""Test coupon_code field integration with Sales Invoice"""
 
+	#//// Neoffice — added _pick_company (764047c "tests: fixtures must pick rows the test can actually use"): frappe.get_all("Company", limit=1) picked whatever came first and had no fiscal year covering today on the dev instance, failing all four invoice tests with FiscalYearError
 	@classmethod
 	def _pick_company(cls):
 		"""A company an invoice dated today can actually be booked in.
@@ -43,16 +44,19 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 	def setUpClass(cls):
 		"""Set up test fixtures"""
 		# Get test company
+		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): use _pick_company() and skip instead of a random get_all() pick that could lack a fiscal year for today
 		cls.test_company = cls._pick_company()
 		if not cls.test_company:
 			raise unittest.SkipTest("No company with an active fiscal year for today")
 
+		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): pick a deterministic, active customer instead of an unfiltered get_all(limit=1)
 		# Get test customer: an active one, and the same one from run to run.
 		customers = frappe.get_all(
 			"Customer", filters={"disabled": 0}, order_by="name asc", limit=1
 		)
 		cls.test_customer = customers[0].name if customers else None
 
+		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): exclude templates/fixed assets/disabled items and order by name so the pick is stable
 		# Get test item: one that can actually go on an invoice line.
 		# erpnext ships _Test Variant Item among its test records - a template
 		# (has_variants=1) whose variants are the sellable rows. Filtering only on
