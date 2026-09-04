@@ -1,3 +1,13 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext has one screen, the
+//// cashier's. Swiss counters must show the customer what is being rung up, so this store
+//// drives a second, customer-facing screen: API-key pairing, cart mirrored over Socket.IO
+//// with a 5 s polling fallback for flaky counter Wi-Fi, an idle In-App Ads carousel, and
+//// the TWINT payment QR mirrored full-screen so the customer scans from their own side. It
+//// pins the launching POS's exact shift (?opening= & ?profile=) instead of guessing "the
+//// most recent open shift on this profile", and can create a customer — with the structured
+//// street + N° fields of ADR-002 — from the customer's side. (185c3c50 2026-02-03;
+//// 912ef092 2026-02-04; 87f168fe + bcc36a22 2026-03-20/25; 9a807f74 + 14a49016 2026-06-01;
+//// 34ad77fe 2026-06-02; d7584e7b 2026-07-17)
 /**
  * Customer Display Store
  *

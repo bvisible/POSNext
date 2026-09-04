@@ -17,6 +17,12 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { logger } from "@/utils/logger"
 
+//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+//// Upstream runs no formatter, so most hunks below are that pass and change no
+//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 const log = logger.create("POSEvents")
 const byteToHex = Array.from({ length: 256 }, (_, i) =>
 	i.toString(16).padStart(2, "0"),
@@ -27,6 +33,7 @@ const byteToHex = Array.from({ length: 256 }, (_, i) =>
  * @returns {string} - A unique identifier
  */
 function generateUUID() {
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const cryptoSource =
 		typeof globalThis !== "undefined" && globalThis.crypto
 			? globalThis.crypto
@@ -38,6 +45,7 @@ function generateUUID() {
 		try {
 			return cryptoSource.randomUUID()
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.warn(
 				"crypto.randomUUID failed, falling back to manual generation",
 				error,
@@ -46,15 +54,18 @@ function generateUUID() {
 	}
 
 	const getRandomValues = cryptoSource?.getRandomValues?.bind(cryptoSource)
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	if (getRandomValues && typeof Uint8Array !== "undefined") {
 		const bytes = getRandomValues(new Uint8Array(16))
 		bytes[6] = (bytes[6] & 0x0f) | 0x40
 		bytes[8] = (bytes[8] & 0x3f) | 0x80
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const hex = Array.from(bytes, (byte) => byteToHex[byte]).join("")
 		return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 	}
 
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
 		const r = (Math.random() * 16) | 0
 		const v = c === "x" ? r : (r & 0x3) | 0x8
@@ -62,6 +73,7 @@ function generateUUID() {
 	})
 }
 
+//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 export const usePOSEventsStore = defineStore("posEvents", () => {
 	// ========================================================================
 	// STATE - Event Tracking
@@ -126,6 +138,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 			type: eventType,
 			payload,
 			timestamp: Date.now(),
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			id: generateUUID(),
 		}
 
@@ -138,6 +151,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 		// Notify all listeners
 		if (listeners.value.has(eventType)) {
 			const callbacks = listeners.value.get(eventType)
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			callbacks.forEach((callback) => {
 				try {
 					callback(event.payload, event)
@@ -148,12 +162,14 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 		}
 
 		// Also notify wildcard listeners (listen to all events)
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		if (listeners.value.has("*")) {
 			const callbacks = listeners.value.get("*")
 			callbacks.forEach((callback) => {
 				try {
 					callback(event.payload, event)
 				} catch (error) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.error("Error in wildcard listener:", error)
 				}
 			})
@@ -203,6 +219,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 			if (newSettings[key] !== old[key]) {
 				changes[key] = {
 					old: old[key],
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					new: newSettings[key],
 				}
 			}
@@ -216,40 +233,47 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 		// Categorize changes and emit specific events
 
 		// Warehouse change
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		if ("warehouse" in changes) {
 			events.push({
 				type: "settings:warehouse-changed",
 				payload: {
 					oldWarehouse: changes.warehouse.old,
 					newWarehouse: changes.warehouse.new,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					requiresStockRefresh: true,
 				},
 			})
 		}
 
 		// Stock policy changes
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const stockPolicyFields = ["allow_negative_stock"]
 		const stockPolicyChanges = stockPolicyFields.filter(
 			(field) => field in changes,
 		)
 		if (stockPolicyChanges.length > 0) {
 			events.push({
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				type: "settings:stock-policy-changed",
 				payload: {
 					changes: stockPolicyChanges.reduce((acc, field) => {
 						acc[field] = changes[field]
 						return acc
 					}, {}),
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					requiresReload: true, // Critical change
 				},
 			})
 
 			// Mark for reload
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			pendingReloads.value.add("stock-policy")
 		}
 
 		// Pricing/discount changes
 		const pricingFields = [
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			"max_discount_allowed",
 			"use_percentage_discount",
 			"allow_user_to_edit_additional_discount",
@@ -258,14 +282,17 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 			"disable_rounded_total",
 			"tax_inclusive",
 		]
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const pricingChanges = pricingFields.filter((field) => field in changes)
 		if (pricingChanges.length > 0) {
 			events.push({
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				type: "settings:pricing-changed",
 				payload: {
 					changes: pricingChanges.reduce((acc, field) => {
 						acc[field] = changes[field]
 						return acc
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					}, {}),
 				},
 			})
@@ -273,20 +300,24 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 
 		// Sales operations changes
 		const salesFields = [
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			"allow_credit_sale",
 			"allow_return",
 			"allow_write_off_change",
 			"allow_partial_payment",
 			"silent_print",
 		]
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const salesChanges = salesFields.filter((field) => field in changes)
 		if (salesChanges.length > 0) {
 			events.push({
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				type: "settings:sales-operations-changed",
 				payload: {
 					changes: salesChanges.reduce((acc, field) => {
 						acc[field] = changes[field]
 						return acc
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					}, {}),
 				},
 			})
@@ -294,6 +325,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 
 		// Display settings changes
 		const displayFields = [
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			"default_card_view",
 			"display_item_code",
 			"show_customer_balance",
@@ -301,14 +333,17 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 			"display_discount_percentage",
 			"display_discount_amount",
 		]
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const displayChanges = displayFields.filter((field) => field in changes)
 		if (displayChanges.length > 0) {
 			events.push({
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				type: "settings:display-changed",
 				payload: {
 					changes: displayChanges.reduce((acc, field) => {
 						acc[field] = changes[field]
 						return acc
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					}, {}),
 				},
 			})
@@ -316,10 +351,12 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 
 		// Generic settings changed event (always emitted)
 		events.push({
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			type: "settings:changed",
 			payload: {
 				changes,
 				allChanges: changes,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				timestamp: Date.now(),
 			},
 		})
@@ -330,6 +367,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 		// Update snapshot
 		updateSettingsSnapshot(newSettings)
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.info(`Settings changes detected: ${Object.keys(changes).join(", ")}`)
 	}
 
@@ -370,9 +408,11 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 	 * @param {Object} config - Sync configuration
 	 */
 	function emitStockSyncConfigured(config) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		emit("settings:sync-configured", {
 			enabled: config.enabled,
 			intervalMs: config.intervalMs,
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			timestamp: Date.now(),
 		})
 	}
@@ -382,6 +422,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 	 * @param {Object} status - Sync status
 	 */
 	function emitStockSyncStatus(status) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		emit("sync:stock-updated", {
 			...status,
 			timestamp: Date.now(),
@@ -397,6 +438,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 	 */
 	function clearHistory() {
 		eventHistory.value = []
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.info("Event history cleared")
 	}
 
@@ -406,6 +448,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 	 * @returns {Array} - Filtered events
 	 */
 	function getEventsByType(eventType) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return eventHistory.value.filter((event) => event.type === eventType)
 	}
 
@@ -423,6 +466,7 @@ export const usePOSEventsStore = defineStore("posEvents", () => {
 	 */
 	function removeAllListeners() {
 		listeners.value.clear()
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.info("All listeners removed")
 	}
 

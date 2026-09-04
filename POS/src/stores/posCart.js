@@ -78,6 +78,12 @@ function createAsyncQueue() {
 		 */
 		get hasPending() {
 			return pendingTask !== null
+		//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+		//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+		//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+		//// Upstream runs no formatter, so most hunks below are that pass and change no
+		//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+		//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 		},
 	}
 }
@@ -98,6 +104,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		payments,
 		salesTeam,
 		additionalDiscount,
+		//// Neoffice — upstream knows a single header discount: the manual/coupon
+		//// additionalDiscount. An ERPNext Pricing Rule with apply_on=Transaction also returns a
+		//// header-level amount, and letting it write additionalDiscount would inflate
+		//// posa_gift_card_amount_used. These three refs keep the rule amount apart, with a
+		//// per-ticket bypass so the cashier can still override it (44ea4e9a, 2026-07-09
+		//// "apply transaction-level rule discount in the cart"; 4d61216b, same day, adds the UI).
 		ruleHeaderDiscount,
 		bypassRuleDiscount,
 		effectiveHeaderDiscount,
@@ -128,6 +140,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const offersStore = usePOSOffersStore()
 	const settingsStore = usePOSSettingsStore()
 
+	//// Neoffice — upstream charges the raw grand total. Swiss cash has no coin below CHF
+	//// 0.05, so what is actually collected is rounded to the currency's smallest fraction
+	//// (read from the Currency doctype through the bootstrap API) and the difference is shown
+	//// as its own line in the cart — unless the profile disables rounding (4fdb5df4,
+	//// 2026-04-04 "rounding total, tips visibility, cash quick amounts").
 	// Rounded grand total (applies currency fraction rounding when enabled)
 	const roundedGrandTotal = computed(() => {
 		if (settingsStore.disableRoundedTotal) return grandTotal.value
@@ -149,6 +166,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	// Offer processing state management
 	const offerProcessingState = ref({
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		isProcessing: false, // True while any offer operation is running
 		isAutoProcessing: false, // True during automatic offer processing
 		lastProcessedAt: 0, // Timestamp of last successful processing
@@ -164,6 +182,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const offerQueue = createAsyncQueue()
 
 	// Computed for backward compatibility and UI binding
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const isProcessingOffers = computed(
 		() => offerProcessingState.value.isProcessing,
 	)
@@ -176,6 +195,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		const items = invoiceItems.value
 		const parts = [
 			// Item details: code, quantity, uom, discount
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			items
 				.map(
 					(i) =>
@@ -187,10 +207,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Subtotal (rounded to avoid floating point issues)
 			Math.round((subtotal.value || 0) * 100).toString(),
 			// Customer
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			customer.value?.name || customer.value || "none",
 			// Applied offers count
 			appliedOffers.value.length.toString(),
 		]
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return parts.join("::")
 	}
 
@@ -204,6 +226,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	// Actions
 	function addItem(item, qty = 1, _autoAdd = false, currentProfile = null) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		if (
 			currentProfile &&
 			settingsStore.shouldEnforceStockValidation() &&
@@ -297,6 +320,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 */
 	function updateItemQuantity(itemCode, quantity, uom = null) {
 		const item = uom
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			? invoiceItems.value.find(
 					(i) => i.item_code === itemCode && i.uom === uom,
 				)
@@ -307,6 +331,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		const newQty = Number.parseFloat(quantity) || 1
 
 		// Only validate when quantity is increasing
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		if (
 			newQty > item.quantity &&
 			settingsStore.shouldEnforceStockValidation() &&
@@ -348,11 +373,20 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		debouncedProcessOffers.cancel()
 		offerQueue.cancel()
 
+		//// Neoffice — upstream calls clearCart() fire-and-forget. Selecting a table and then
+		//// loading its draft raced that un-awaited cleanup: the draft was wiped right after being
+		//// loaded, silently. clearCart is async now and every caller awaits it (2f0b4b8f,
+		//// 2026-03-21 "table draft loading fails silently due to async clearCart race").
 		await clearInvoiceCart()
 		appliedOffers.value = []
 		appliedCoupon.value = null
 		currentDraftId.value = null
 		targetDoctype.value = "Sales Invoice"
+		//// Neoffice — restaurant / takeaway / guest-order state has no upstream equivalent, so
+		//// upstream's clearCart leaves it behind and the NEXT ticket inherits the previous table,
+		//// its KDS status and whatever a guest had already paid by QR (458d81a9 2026-03-20
+		//// restaurant mode; 644ad918 2026-03-26 takeaway; 6d7195f4 2026-03-30 guest paid amount;
+		//// 1c05e7c7 2026-04-01 tips shown separately).
 		restaurantTable.value = null
 		isTakeaway.value = false
 		takeawayNumber.value = ""
@@ -362,6 +396,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		guestTipAmount.value = 0
 
 		// Reset offer processing state
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		offerProcessingState.value.lastCartHash = ""
 		offerProcessingState.value.error = null
 		offerProcessingState.value.retryCount = 0
@@ -403,6 +438,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		writeOffAmount.value = amount || 0
 	}
 
+	//// Neoffice — setters for cart state upstream does not carry: ERPNext-native loyalty
+	//// redemption chosen in the payment dialog (104959e6, 2026-03-19), the restaurant table
+	//// the ticket belongs to — mirrored into useInvoice so submit_invoice can release it
+	//// (45435e47, 2026-03-24) — and the per-ticket KDS status plus the "changes not yet sent
+	//// to the kitchen" flag (8aa35c29 / e005b94b, 2026-03-20/21).
 	function setLoyaltyData(data) {
 		loyaltyData.value = data || null
 	}
@@ -430,6 +470,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			return
 		}
 
+		//// Neoffice — upstream submits with (doctype, deliveryDate, writeOff) only. Loyalty points
+		//// redeemed at payment time and the restaurant tip are decided inside the payment dialog,
+		//// so they must travel the whole chain down to submit_invoice or they are silently dropped
+		//// from the invoice (104959e6 2026-03-19 loyalty; e9d1622a 2026-03-23 "pass tip_amount
+		//// through full payment chain").
 		const result = await baseSubmitInvoice(
 			targetDoctype.value,
 			deliveryDate.value,
@@ -481,6 +526,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function applyDiscountToCart(discount) {
 		applyDiscount(discount)
 		appliedCoupon.value = discount
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		showSuccess(__("{0} applied successfully", [discount.name]))
 	}
 
@@ -492,6 +538,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		showSuccess(__("Discount has been removed from cart"))
 	}
 
+	//// Neoffice — our gift cards are coupons whose amount can cover the whole ticket. When the
+	//// coupon came back from restored state, additionalDiscount did not come with it and the
+	//// payment dialog refused to finalise a zero grand total. This watcher re-syncs the
+	//// discount once Vue has settled — flush "post" + nextTick, because running earlier hits a
+	//// store that is not built yet (d151bfd5, 2026-01-12 "allow payment completion when
+	//// discount covers total").
 	// Watch appliedCoupon to ensure additionalDiscount stays in sync
 	// This handles cases where appliedCoupon is restored from state but additionalDiscount is lost
 	// Using flush: 'post' to ensure the watcher runs after Vue updates and store is fully initialized
@@ -524,6 +576,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			customer:
 				customer.value?.name || customer.value || currentProfile?.customer,
 			company: currentProfile?.company,
+			//// Neoffice — the offer-evaluation payload carries the restaurant context so a Pricing Rule
+			//// can be scoped to dine-in versus takeaway; upstream's payload is retail-only (458d81a9
+			//// 2026-03-20 restaurant mode; 644ad918 2026-03-26 "takeaway module").
 			restaurant_table: restaurantTable.value?.name,
 			is_takeaway: isTakeaway.value ? 1 : 0,
 			takeaway_number: takeawayNumber.value || "",
@@ -540,6 +595,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				uom: item.uom,
 				warehouse: item.warehouse,
 				conversion_factor: item.conversion_factor || 1,
+				//// Neoffice — per-line restaurant data (free-text instructions, the structured product
+				//// options with their price adjustments, the preparation station, the KDS status) has to
+				//// ride with the item into offer evaluation: dropping it here made a re-validated line lose
+				//// its modifiers and its kitchen state (4df0caf1 2026-03-21 modifiers; e005b94b 2026-03-21
+				//// stations; f3e620c2 2026-03-22 "preserve item kds_status on re-validation").
 				posa_special_instructions: item.posa_special_instructions || "",
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				preparation_station: item.preparation_station || "",
@@ -557,6 +617,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function hasPricingRules(value) {
 		if (!value) return false
 		if (Array.isArray(value)) return value.length > 0
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return typeof value === "string" && value.trim().length > 0
 	}
 
@@ -575,6 +636,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			const discountAmt = Number.parseFloat(serverItem.discount_amount) || 0
 
 			// Only update if server applied a pricing rule or discount
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (
 				hasPricingRules(serverItem.pricing_rules) ||
 				discountPct > 0 ||
@@ -608,6 +670,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 */
 	function processFreeItems(freeItems) {
 		// Reset free_qty on all non-free items
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		invoiceItems.value.forEach((item) => {
 			if (!item.is_free_item) {
 				item.free_qty = 0
@@ -615,6 +678,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		})
 
 		// Remove previously-added free item rows (they'll be re-added below if still valid)
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		invoiceItems.value = invoiceItems.value.filter((item) => !item.is_free_item)
 
 		// Early return if no free items
@@ -631,9 +695,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			// Check if this free item matches an existing (non-free) cart item
 			const cartItem = invoiceItems.value.find(
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				(item) =>
 					!item.is_free_item &&
 					item.item_code === freeItem.item_code &&
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					(item.uom || item.stock_uom) === freeUom,
 			)
 
@@ -799,6 +865,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
+				//// Neoffice — the transaction-scope rule discount comes back with every apply_offers
+				//// response, so every apply path has to push it into ruleHeaderDiscount; otherwise the rule
+				//// fires server-side and the cart shows no discount at all (44ea4e9a, 2026-07-09).
 				applyHeaderDiscountFromServer(headerDiscount)
 				filterActiveOffers(appliedRules)
 
@@ -816,11 +885,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 								items: rollbackItems,
 								freeItems: rollbackFreeItems,
 								appliedRules: rollbackRules,
+								//// Neoffice — the rollback re-submits the previously valid offers, so its response carries
+								//// its own header discount. Reading it back is what stops the rolled-back state from
+								//// keeping the rejected offer's amount (44ea4e9a, 2026-07-09).
 								headerDiscount: rollbackHeaderDiscount,
 							} = parseOfferResponse(rollbackResponse)
 
 							applyDiscountsFromServer(rollbackItems)
 							processFreeItems(rollbackFreeItems)
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							applyHeaderDiscountFromServer(rollbackHeaderDiscount)
 							filterActiveOffers(rollbackRules)
 						} catch (rollbackError) {
@@ -828,6 +901,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 						}
 					}
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					showWarning(
 						__("Your cart doesn't meet the requirements for this offer."),
 					)
@@ -863,6 +937,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				// Wait for Vue reactivity to propagate before showing toast
 				await nextTick()
 
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				showSuccess(__("{0} applied successfully", [offer.title || offer.name]))
 				result = true
 			} catch (error) {
@@ -897,6 +972,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			appliedOffers.value = []
 			processFreeItems([]) // Remove all free items
+			//// Neoffice — clearing the offers must also drop the transaction-rule discount, or the
+			//// header amount survives with no rule behind it (44ea4e9a, 2026-07-09).
 			ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 			removeDiscount()
 			await nextTick()
@@ -916,6 +993,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			appliedOffers.value = []
 			processFreeItems([]) // Remove all free items
+			//// Neoffice — same on the "last offer removed" path: no rule left, no rule discount
+			//// (44ea4e9a, 2026-07-09).
 			ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 			removeDiscount()
 			await nextTick()
@@ -942,6 +1021,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				if (signal?.aborted) return
 
+				//// Neoffice — parseOfferResponse now also returns the server's header discount
+				//// (discount_amount / apply_discount_on), which upstream's response shape ignored
+				//// (44ea4e9a, 2026-07-09). The re-wrap of the destructuring is the Biome pass.
 				const {
 					items: responseItems,
 					freeItems,
@@ -951,6 +1033,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
+				//// Neoffice — re-apply the rule discount from the recomputed response after an offer is
+				//// removed: the remaining offers may still trigger a transaction rule (44ea4e9a).
 				applyHeaderDiscountFromServer(headerDiscount)
 				filterActiveOffers(appliedRules)
 
@@ -992,6 +1076,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (invoiceItems.value.length === 0 && appliedOffers.value.length) {
 			appliedOffers.value = []
 			processFreeItems([]) // Remove all free items when cart is empty
+			//// Neoffice — an empty cart has no rule to apply, so the rule discount goes with the
+			//// offers (44ea4e9a, 2026-07-09).
 			ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 			return true
 		}
@@ -1021,6 +1107,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				if (!eligible) {
 					invalidOffers.push({
 						...appliedOffer,
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						reason,
 					})
 				}
@@ -1032,6 +1119,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// If any offers are invalid, remove them and reapply remaining
 			if (invalidOffers.length > 0) {
 				const validOfferCodes = appliedOffers.value
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					.filter((o) => !invalidOffers.find((inv) => inv.code === o.code))
 					.map((o) => o.code)
 
@@ -1039,9 +1127,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					// All offers invalid - clear everything
 					appliedOffers.value = []
 					processFreeItems([])
+					//// Neoffice — when every applied offer turns out invalid the rule discount is invalid too
+					//// (44ea4e9a, 2026-07-09).
 					ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 
 					// Reset all item rates to original (remove discounts)
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					invoiceItems.value.forEach((item) => {
 						if (item.pricing_rules && item.pricing_rules.length > 0) {
 							item.discount_percentage = 0
@@ -1061,6 +1152,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 					if (signal?.aborted) return false
 
+					//// Neoffice — headerDiscount read from the re-validation response as well; the re-wrap of
+					//// the destructuring itself is the Biome pass (44ea4e9a, 2026-07-09).
 					const {
 						items: responseItems,
 						freeItems,
@@ -1070,10 +1163,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 					applyDiscountsFromServer(responseItems)
 					processFreeItems(freeItems)
+					//// Neoffice — re-validation is also an apply path: without this the rule discount was
+					//// dropped every time the cart changed (44ea4e9a, 2026-07-09).
 					applyHeaderDiscountFromServer(headerDiscount)
 					filterActiveOffers(appliedRules)
 
 					// Update appliedOffers to only include valid ones
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					appliedOffers.value = appliedOffers.value.filter((entry) =>
 						appliedRules.includes(entry.code),
 					)
@@ -1083,6 +1179,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				await nextTick()
 
 				// Show warning about removed offers
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const offerNames = invalidOffers.map((o) => o.name).join(", ")
 				showWarning(
 					__("Offer removed: {0}. Cart no longer meets requirements.", [
@@ -1139,6 +1236,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 
 			// Find new offers to apply (both price and product discounts)
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const appliedOfferCodes = new Set(appliedOffers.value.map((o) => o.code))
 			const newOffers = eligibleOffers.filter(
 				(offer) => !appliedOfferCodes.has(offer.name),
@@ -1152,26 +1250,31 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			for (const offer of newOffers) {
 				// Determine offer type: "Item Price" (discount) or "Give Product" (free item)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const isProductDiscount = offer.offer === "Give Product"
 
 				// Find eligible items based on offer.apply_on
 				let eligibleItems = []
 
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				if (offer.apply_on === "Item Code") {
 					const eligibleCodes = offer.eligible_items || []
 					eligibleItems = invoiceItems.value.filter((item) =>
 						eligibleCodes.includes(item.item_code),
 					)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				} else if (offer.apply_on === "Item Group") {
 					const eligibleGroups = offer.eligible_item_groups || []
 					eligibleItems = invoiceItems.value.filter((item) =>
 						eligibleGroups.includes(item.item_group),
 					)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				} else if (offer.apply_on === "Brand") {
 					const eligibleBrands = offer.eligible_brands || []
 					eligibleItems = invoiceItems.value.filter((item) =>
 						eligibleBrands.includes(item.brand),
 					)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				} else if (offer.apply_on === "Transaction") {
 					// Transaction-level discount applies to all items
 					eligibleItems = invoiceItems.value
@@ -1211,6 +1314,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Rebuild cache after bulk changes
 			if (newlyAppliedOffers.length > 0) {
 				rebuildIncrementalCache()
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				showSuccess(__("Offline: {0} applied", [newlyAppliedOffers.join(", ")]))
 			}
 		} catch (error) {
@@ -1236,17 +1340,20 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Only apply if no existing pricing rule
 			if (item.pricing_rules && item.pricing_rules.length > 0) continue
 
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (discountType === "Discount Percentage" && discountPercentage > 0) {
 				item.discount_percentage = discountPercentage
 				item.pricing_rules = [offer.name]
 				recalculateItem(item)
 				applied = true
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			} else if (discountType === "Discount Amount" && discountAmount > 0) {
 				// Apply fixed discount amount
 				item.discount_amount = discountAmount
 				item.pricing_rules = [offer.name]
 				recalculateItem(item)
 				applied = true
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			} else if (discountType === "Rate" && rate > 0) {
 				// Apply fixed rate (override price)
 				item.rate = rate
@@ -1278,6 +1385,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		const sameItem = offer.same_item === 1
 		const isRecursive = offer.is_recursive === 1
 		const recurseFor = Number.parseFloat(offer.recurse_for) || 0
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const applyRecursionOver =
 			Number.parseFloat(offer.apply_recursion_over) || 0
 		const freeItemCode = offer.free_item
@@ -1358,6 +1466,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Free item is a specific different item
 			// Find if the free item is already in the cart
 			const freeItemInCart = invoiceItems.value.find(
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				(item) => item.item_code === freeItemCode,
 			)
 
@@ -1368,18 +1477,22 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				if (isRecursive && recurseFor > 0) {
 					// Calculate based on total eligible quantity
 					const totalEligibleQty = eligibleItems.reduce(
+						//// Neoffice — Biome reformat only: the reduce() call and the Math.max() below were
+						//// re-wrapped, nothing changed (458d81a9, 2026-03-20).
 						(sum, item) => sum + (item.quantity || 0),
 						0,
 					)
 					const effectiveQty = Math.max(
 						0,
 						totalEligibleQty - applyRecursionOver,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					)
 					const multiplier = Math.floor(effectiveQty / recurseFor)
 					freeItemsToGive = multiplier * freeQty
 				}
 
 				// Mark existing cart item as having free quantity
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				if (
 					freeItemsToGive > 0 &&
 					(!freeItemInCart.free_qty || freeItemInCart.free_qty === 0)
@@ -1405,6 +1518,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function buildCartSnapshot() {
 		const items = invoiceItems.value
 		const totalQty = items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const itemCodes = items.map((item) => item.item_code)
 		const itemGroups = items.map((item) => item.item_group).filter(Boolean)
 		const brands = items.map((item) => item.brand).filter(Boolean)
@@ -1422,12 +1536,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			// Aggregate by item code
 			if (item.item_code) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				itemQuantities[item.item_code] =
 					(itemQuantities[item.item_code] || 0) + qty
 			}
 
 			// Aggregate by item group
 			if (item.item_group) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				itemGroupQuantities[item.item_group] =
 					(itemGroupQuantities[item.item_group] || 0) + qty
 			}
@@ -1447,6 +1563,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// New: quantity maps for accurate min_qty/max_qty validation
 			itemQuantities,
 			itemGroupQuantities,
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			brandQuantities,
 		}
 	}
@@ -1458,6 +1575,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @returns {Object|undefined} Cart item or undefined
 	 */
 	function findCartItem(itemCode, uom = null) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return invoiceItems.value.find(
 			(item) => item.item_code === itemCode && (!uom || item.uom === uom),
 		)
@@ -1471,6 +1589,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @returns {Object|undefined} Existing item or undefined
 	 */
 	function findItemWithUom(itemCode, targetUom, excludeItem = null) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return invoiceItems.value.find(
 			(item) =>
 				item.item_code === itemCode &&
@@ -1514,6 +1633,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	async function applyUomChange(cartItem, newUom, qty) {
 		const uomData = cartItem.item_uoms?.find((u) => u.uom === newUom)
 		const conversionFactor = uomData?.conversion_factor || 1
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const pricing = await resolveUomPricing(
 			cartItem,
 			newUom,
@@ -1542,6 +1662,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			const existingItem = findItemWithUom(itemCode, newUom, cartItem)
 			if (existingItem) {
 				const totalQty = mergeItems(cartItem, existingItem, cartItem.quantity)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				showSuccess(__("Merged into {0} (Total: {1})", [newUom, totalQty]))
 				return
 			}
@@ -1550,6 +1671,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			await applyUomChange(cartItem, newUom, cartItem.quantity)
 			recalculateItem(cartItem)
 			rebuildIncrementalCache()
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			showSuccess(__("Unit changed to {0}", [newUom]))
 		} catch (error) {
 			console.error("Error changing UOM:", error)
@@ -1576,6 +1698,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				if (existingItem) {
 					const qtyToMerge = updates.quantity ?? cartItem.quantity
 					const totalQty = mergeItems(cartItem, existingItem, qtyToMerge)
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					showSuccess(
 						__("Merged into {0} (Total: {1})", [updates.uom, totalQty]),
 					)
@@ -1584,6 +1707,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				// Apply UOM change with new rate
 				try {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					await applyUomChange(
 						cartItem,
 						updates.uom,
@@ -1596,6 +1720,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 
 			// Validate stock if quantity is being increased
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (
 				updates.quantity !== undefined &&
 				updates.quantity > cartItem.quantity &&
@@ -1610,6 +1735,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			// Apply other updates
 			if (updates.quantity !== undefined) cartItem.quantity = updates.quantity
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (updates.warehouse !== undefined)
 				cartItem.warehouse = updates.warehouse
 			if (updates.discount_percentage !== undefined)
@@ -1631,6 +1757,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (updates.serial_no !== undefined)
 				cartItem.serial_no = updates.serial_no
 			// Track manual rate edits for audit purposes
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (updates.is_rate_manually_edited !== undefined)
 				cartItem.is_rate_manually_edited = updates.is_rate_manually_edited
 			if (updates.original_rate !== undefined)
@@ -1638,6 +1765,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			recalculateItem(cartItem)
 			rebuildIncrementalCache()
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			showSuccess(__("{0} updated", [cartItem.item_name]))
 			return true
 		} catch (error) {
@@ -1687,14 +1815,17 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					const qty = item.quantity || 0
 
 					if (item.item_code) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						cachedItemQuantities[item.item_code] =
 							(cachedItemQuantities[item.item_code] || 0) + qty
 					}
 					if (item.item_group) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						cachedItemGroupQuantities[item.item_group] =
 							(cachedItemGroupQuantities[item.item_group] || 0) + qty
 					}
 					if (item.brand) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						cachedBrandQuantities[item.brand] =
 							(cachedBrandQuantities[item.brand] || 0) + qty
 					}
@@ -1728,6 +1859,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {AbortSignal} signal - Abort signal for cancellation
 	 * @param {number} generation - Cart generation when this was triggered
 	 * @param {boolean} force - If true, process even if cart hash matches
+	 * //// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	 */
 	async function processOffersInternal(
 		signal = null,
@@ -1772,6 +1904,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		// Skip if cart hasn't changed since last successful processing (unless forced)
 		// Also force re-processing if offers were just fetched for the first time
 		const justFetched = !wasFetched && offersStore.hasFetched
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		if (
 			!force &&
 			!justFetched &&
@@ -1813,6 +1946,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			// 2. Identify new eligible offers to apply (client-side check)
 			const allEligibleOffers = offersStore.allEligibleOffers
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const currentAppliedCodes = new Set(
 				appliedOffers.value.map((o) => o.code),
 			)
@@ -1825,11 +1959,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// - We have applied offers
 			// - We have new auto-offers to apply
 			// - We have invalid offers to remove
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const invalidCodes = new Set(invalidOffers.map((o) => o.code))
 			const validExistingCodes = appliedOffers.value
 				.filter((o) => !invalidCodes.has(o.code))
 				.map((o) => o.code)
 
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const newOfferCodes = newOffers.map((o) => o.name)
 			const combinedCodes = [
 				...new Set([...validExistingCodes, ...newOfferCodes]),
@@ -1840,6 +1976,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (combinedCodes.length === 0 && invalidOffers.length > 0) {
 				appliedOffers.value = []
 				processFreeItems([])
+				//// Neoffice — all offers invalid and none to re-apply: the transaction-rule discount goes
+				//// too, otherwise a header amount lingers with no rule behind it (44ea4e9a, 2026-07-09).
+				//// The arrow-param parens on the next line are the Biome pass.
 				ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 				invoiceItems.value.forEach((item) => {
 					if (item.pricing_rules && item.pricing_rules.length > 0) {
@@ -1850,6 +1989,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				})
 				rebuildIncrementalCache()
 
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const names = invalidOffers.map((o) => o.name).join(", ")
 				showWarning(
 					__("Offer removed: {0}. Cart no longer meets requirements.", [names]),
@@ -1862,9 +2002,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				})
 
 				// Check for cancellation or stale operation
+				//// Neoffice — the main offer pipeline reads the server's header discount as well; the
+				//// re-wrapped destructuring is the Biome pass (44ea4e9a, 2026-07-09).
 				if (signal?.aborted || (generation > 0 && generation < cartGeneration))
 					return
 
+				//// Neoffice — headerDiscount is read out of the apply_offers response here too: it is the
+				//// transaction-scope Pricing Rule amount that upstream's response shape never returned
+				//// (44ea4e9a, 2026-07-09 "apply transaction-level rule discount in the cart").
 				const {
 					items: responseItems,
 					freeItems,
@@ -1876,6 +2021,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				applyDiscountsFromServer(responseItems)
 				processFreeItems(freeItems)
+				//// Neoffice — the transaction-rule discount is applied here on the normal recompute path,
+				//// which is what makes an automatic apply_on=Transaction rule visible in the cart at all
+				//// (44ea4e9a, 2026-07-09).
 				applyHeaderDiscountFromServer(headerDiscount)
 
 				// 5. Update appliedOffers list based on server confirmation
@@ -1885,6 +2033,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				// Handle existing ones
 				for (const entry of appliedOffers.value) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					if (
 						!invalidOffers.find((inv) => inv.code === entry.code) &&
 						actuallyApplied.has(entry.code)
@@ -1916,6 +2065,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				// 6. UI Feedback
 				if (invalidOffers.length > 0) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const names = invalidOffers.map((o) => o.name).join(", ")
 					showWarning(
 						__("Offer removed: {0}. Cart no longer meets requirements.", [
@@ -1926,11 +2076,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 				if (newlyAddedNames.length > 0) {
 					if (newlyAddedNames.length === 1) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						showSuccess(__("Offer applied: {0}", [newlyAddedNames[0]]))
 					} else {
 						showSuccess(__("Offers applied: {0}", [newlyAddedNames.join(", ")]))
 					}
 				}
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			} else if (
 				invoiceItems.value.length === 0 &&
 				appliedOffers.value.length > 0
@@ -1938,6 +2090,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				// Cart cleared, reset offers
 				appliedOffers.value = []
 				processFreeItems([])
+				//// Neoffice — the cart was emptied while offers were applied: drop the rule discount with
+				//// them (44ea4e9a, 2026-07-09).
 				ruleHeaderDiscount.value = 0 // clear any transaction-rule header discount
 				rebuildIncrementalCache()
 			}
@@ -1998,6 +2152,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		offerQueue.cancel()
 
 		// Clear the hash to force reprocessing
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		offerProcessingState.value.lastCartHash = ""
 		offerProcessingState.value.error = null
 		offerProcessingState.value.retryCount = 0
@@ -2057,6 +2212,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			// Watch item count (additions/removals)
 			() => invoiceItems.value.length,
 			// Watch item details (quantity, code, uom changes)
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			() =>
 				invoiceItems.value
 					.map(
@@ -2091,6 +2247,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (newLen < oldLen) {
 				syncOfferSnapshot()
 			}
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		},
 	)
 
@@ -2108,6 +2265,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		totalTax,
 		totalDiscount,
 		grandTotal,
+		//// Neoffice — exposed to the cart and payment UI: the CHF 0.05-rounded total with its
+		//// adjustment line (4fdb5df4, 2026-04-04), and the net total AFTER pricing rules, which is
+		//// what a gift card must be capped on — capping on the raw subtotal let a card exceed the
+		//// already discounted price and the invoice was refused (8e06bb9c, 2026-01-16).
 		roundedGrandTotal,
 		roundingAdjustment,
 		netTotalBeforeAdditionalDiscount,
@@ -2116,6 +2277,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		payments,
 		salesTeam,
 		additionalDiscount,
+		//// Neoffice — the transaction-rule discount, its per-ticket bypass and the effective amount
+		//// are exposed so the payment dialog can show the rule and let the cashier override it
+		//// (44ea4e9a + 4d61216b, 2026-07-09).
 		ruleHeaderDiscount,
 		bypassRuleDiscount,
 		effectiveHeaderDiscount,
@@ -2151,6 +2315,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		loadTaxRules,
 		setTaxInclusive,
 		submitInvoice,
+		//// Neoffice — the production (minified) build turns the destructured posProfile /
+		//// posOpeningShift into const bindings, so assigning them from a component threw at runtime
+		//// while dev mode worked. The store exposes setters instead (b44f194b, 2026-03-21).
 		setPosProfile,
 		setPosOpeningShift,
 		applyDiscountToCart,

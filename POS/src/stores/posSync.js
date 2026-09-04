@@ -33,6 +33,12 @@ import { offlineWorker } from "@/utils/offline/workerClient"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 
+//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+//// Upstream runs no formatter, so most hunks below are that pass and change no
+//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 const log = logger.create("POSSync")
 
 export const usePOSSyncStore = defineStore("posSync", () => {
@@ -77,15 +83,18 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 
 		// Update reactive state
 		isOffline.value = nowOffline
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		connectionQuality.value =
 			state.quality || offlineState.getConnectionQuality()
 
 		// Auto-sync when transitioning from offline to online
 		if (wasOffline && !nowOffline) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.info("Transition to online detected, auto-syncing pending invoices")
 			try {
 				await syncPending()
 			} catch (error) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.error("Auto-sync failed on reconnection", error)
 			}
 		}
@@ -111,6 +120,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 		try {
 			pendingInvoicesCount.value = await offlineWorker.getOfflineInvoiceCount()
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to get pending invoice count", error)
 		}
 	}
@@ -130,6 +140,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 			await updatePendingCount()
 			return result
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to sync invoices", error)
 			throw error
 		} finally {
@@ -168,6 +179,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 			}
 			return true
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to cache data", error)
 			return false
 		}
@@ -185,9 +197,11 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 		try {
 			const result = await offlineWorker.saveOfflineInvoice(invoiceData)
 			await updatePendingCount()
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.info("Invoice saved offline successfully")
 			return result || { success: true }
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to save invoice offline", error)
 			throw error
 		}
@@ -200,6 +214,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 		try {
 			pendingInvoicesList.value = await getPending()
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to load pending invoices", error)
 			pendingInvoicesList.value = []
 		}
@@ -215,6 +230,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 			await loadPendingInvoices()
 			showSuccess(__("Offline invoice deleted successfully"))
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to delete offline invoice", error)
 			showError(error.message || __("Failed to delete offline invoice"))
 			throw error
@@ -235,12 +251,14 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 			const result = await syncPending()
 
 			if (result.success > 0) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				showSuccess(__("{0} invoice(s) synced successfully", [result.success]))
 				await loadPendingInvoices()
 			}
 
 			return result
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Sync all pending failed", error)
 			throw error
 		}
@@ -259,6 +277,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 		// Prevent duplicate concurrent preloads (e.g., from component remounts
 		// triggered by language/translation version changes)
 		if (_preloadingProfile === currentProfile.name) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.debug(
 				"Preload already in progress for this profile, skipping duplicate",
 			)
@@ -269,10 +288,12 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 		try {
 			const cacheReady = await checkCacheReady()
 			const stats = await getCacheStats()
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const needsRefresh =
 				!stats.lastSync || Date.now() - stats.lastSync > 24 * 60 * 60 * 1000
 
 			// Always load payment methods for reliable offline support
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.info("Loading payment methods for offline use")
 			try {
 				const paymentMethodsData = await cachePaymentMethodsFromServer(
@@ -280,6 +301,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 				)
 
 				if (paymentMethodsData.payment_methods?.length > 0) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const methodsWithProfile = paymentMethodsData.payment_methods.map(
 						(method) => ({
 							...method,
@@ -290,16 +312,19 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 					log.success(`Cached ${methodsWithProfile.length} payment methods`)
 				}
 			} catch (error) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.error("Failed to load payment methods", error)
 				// Continue with other data loading
 			}
 
 			// Cache sales persons for offline use
 			try {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const salesPersonsData = await cacheSalesPersonsFromServer(
 					currentProfile.name,
 				)
 				if (salesPersonsData.sales_persons?.length > 0) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const personsWithProfile = salesPersonsData.sales_persons.map(
 						(person) => ({
 							...person,
@@ -310,6 +335,10 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 					log.success(`Cached ${personsWithProfile.length} sales persons`)
 				}
 			} catch (error) {
+				//// Neoffice — the offline preload also has to pull the restaurant room. A dining room that
+				//// loses the network mid-service must still show its tables, areas and open orders, and
+				//// upstream's preload knows nothing about them (458d81a9, 2026-03-20 restaurant mode).
+				//// Guarded by restaurantStore.isEnabled so a retail terminal pays nothing for it.
 				log.error("Failed to load sales persons", error)
 			}
 
@@ -324,6 +353,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 			if (!cacheReady || needsRefresh) {
 				showSuccess(__("Loading customers for offline use..."))
 
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const customersData = await cacheCustomersFromServer(
 					currentProfile.name,
 				)
@@ -333,12 +363,14 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 			}
 
 			// Preload invoice history and unpaid invoices in parallel for faster startup
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.info("Loading invoice data for offline use")
 			try {
 				const [invoices, unpaidInvoices, unpaidSummary] = await Promise.all([
 					call("pos_next.api.invoices.get_invoices", {
 						pos_profile: currentProfile.name,
 						limit: 100,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					}).catch((err) => {
 						log.error("Failed to load invoice history", err)
 						return []
@@ -346,12 +378,14 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 					call("pos_next.api.partial_payments.get_unpaid_invoices", {
 						pos_profile: currentProfile.name,
 						limit: 100,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					}).catch((err) => {
 						log.error("Failed to load unpaid invoices", err)
 						return []
 					}),
 					call("pos_next.api.partial_payments.get_unpaid_summary", {
 						pos_profile: currentProfile.name,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					}).catch((err) => {
 						log.error("Failed to load unpaid summary", err)
 						return null
@@ -362,12 +396,14 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 				await Promise.all([
 					invoices?.length > 0
 						? cacheInvoiceHistory(invoices, currentProfile.name).then(() =>
+								//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 								log.success(
 									`Cached ${invoices.length} invoices for offline viewing`,
 								),
 							)
 						: Promise.resolve(),
 					unpaidInvoices?.length > 0
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						? cacheUnpaidInvoices(unpaidInvoices, currentProfile.name).then(
 								() =>
 									log.success(
@@ -377,15 +413,18 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 						: Promise.resolve(),
 					unpaidSummary
 						? cacheUnpaidSummary(unpaidSummary, currentProfile.name).then(() =>
+								//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 								log.debug("Cached unpaid invoice summary"),
 							)
 						: Promise.resolve(),
 				])
 			} catch (error) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.error("Failed to load invoice data for offline", error)
 				// Continue - not critical for POS operation
 			}
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Failed to preload offline data", error)
 			showWarning(__("Some data may not be available offline"))
 		} finally {
@@ -400,6 +439,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 	async function checkOfflineCacheAvailability() {
 		const cacheReady = await checkCacheReady()
 		if (!cacheReady && isOffline.value) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			showWarning(
 				__("POS is offline without cached data. Please connect to sync."),
 			)

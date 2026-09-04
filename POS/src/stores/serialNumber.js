@@ -14,6 +14,12 @@ import { ref } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { logger } from "@/utils/logger"
 
+//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+//// Upstream runs no formatter, so most hunks below are that pass and change no
+//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 const log = logger.create("SerialNumber")
 
 export const useSerialNumberStore = defineStore("serialNumber", () => {
@@ -74,6 +80,7 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 	 */
 	const fetchSerials = async (itemCode, forceRefresh = false) => {
 		if (!itemCode || !currentWarehouse.value) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.warn("Missing itemCode or warehouse")
 			return []
 		}
@@ -87,11 +94,13 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 		loading.value = true
 
 		try {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const response = await call("frappe.client.get_list", {
 				doctype: "Serial No",
 				filters: {
 					item_code: itemCode,
 					warehouse: currentWarehouse.value,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					status: "Active",
 				},
 				fields: ["name as serial_no", "warehouse"],
@@ -127,6 +136,7 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 		const serialsToRemove = new Set(
 			Array.isArray(serialNumbers)
 				? serialNumbers
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				: serialNumbers
 						.split("\n")
 						.map((s) => s.trim())
@@ -134,6 +144,7 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 		)
 
 		cached.serials = cached.serials.filter(
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			(s) => !serialsToRemove.has(s.serial_no),
 		)
 
@@ -149,24 +160,28 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 
 		const serialsToReturn = Array.isArray(serialNumbers)
 			? serialNumbers
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			: serialNumbers
 					.split("\n")
 					.map((s) => s.trim())
 					.filter(Boolean)
 
 		// Add serials back to cache (avoid duplicates)
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const existingSerialNos = new Set(cached.serials.map((s) => s.serial_no))
 
 		for (const serialNo of serialsToReturn) {
 			if (!existingSerialNos.has(serialNo)) {
 				cached.serials.push({
 					serial_no: serialNo,
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					warehouse: currentWarehouse.value,
 				})
 			}
 		}
 
 		// Sort serials by serial_no for consistent ordering
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		cached.serials.sort((a, b) =>
 			a.serial_no.localeCompare(b.serial_no, undefined, { numeric: true }),
 		)
@@ -183,6 +198,7 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 			log.info(`Cache cleared for ${itemCode}`)
 		} else {
 			cache.value.clear()
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.info("All cache cleared")
 		}
 	}
@@ -191,6 +207,7 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 	 * Prefetch serials for multiple items (background loading)
 	 */
 	const prefetchSerials = async (itemCodes) => {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const codesToFetch = itemCodes.filter((code) => !isCacheValid(code))
 
 		if (codesToFetch.length === 0) return
@@ -201,6 +218,7 @@ export const useSerialNumberStore = defineStore("serialNumber", () => {
 		const batchSize = 3
 		for (let i = 0; i < codesToFetch.length; i += batchSize) {
 			const batch = codesToFetch.slice(i, i + batchSize)
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			await Promise.all(batch.map((code) => fetchSerials(code)))
 		}
 	}

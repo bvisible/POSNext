@@ -27,6 +27,12 @@ import { offlineWorker } from "@/utils/offline/workerClient"
 import { logger } from "@/utils/logger"
 import { usePOSEventsStore } from "@/stores/posEvents"
 
+//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+//// Upstream runs no formatter, so most hunks below are that pass and change no
+//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 const log = logger.create("Stock")
 
 export const useStockStore = defineStore("stock", () => {
@@ -35,6 +41,9 @@ export const useStockStore = defineStore("stock", () => {
 	// ========================================================================
 	// STATE - Just 2 Maps, that's it!
 	// ========================================================================
+	//// Neoffice — Biome reformat only: the aligned inline comments were collapsed to a single
+	//// space. `git blame -w` credits upstream here because nothing but whitespace changed
+	//// (458d81a9, 2026-03-20).
 	const server = ref(new Map()) // item_code -> { qty, warehouse, ts }
 	const reserved = ref(new Map()) // item_code -> qty
 	const warehouse = ref(null) // Current warehouse
@@ -46,6 +55,7 @@ export const useStockStore = defineStore("stock", () => {
 	const getDisplayStock = (itemCode) => {
 		// Always return the actual calculated stock (can be negative)
 		// Display is independent of whether negative stock sales are allowed
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return (
 			(server.value.get(itemCode)?.qty || 0) -
 			(reserved.value.get(itemCode) || 0)
@@ -57,6 +67,7 @@ export const useStockStore = defineStore("stock", () => {
 		server: server.value.get(itemCode)?.qty || 0,
 		reserved: reserved.value.get(itemCode) || 0,
 		display: getDisplayStock(itemCode),
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		warehouse: server.value.get(itemCode)?.warehouse || warehouse.value,
 	})
 
@@ -65,6 +76,7 @@ export const useStockStore = defineStore("stock", () => {
 	// ========================================================================
 
 	// Initialize items from server
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const init = (items) =>
 		items?.forEach((item) =>
 			server.value.set(item.item_code, {
@@ -83,6 +95,7 @@ export const useStockStore = defineStore("stock", () => {
 			return
 		}
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		cartItems.forEach((cartItem) => {
 			// Skip items with missing item_code
 			if (!cartItem?.item_code) return
@@ -95,6 +108,7 @@ export const useStockStore = defineStore("stock", () => {
 			const itemCode = cartItem.item_code
 
 			const current = reserved.value.get(itemCode) || 0
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			reserved.value.set(itemCode, current + quantity * factor)
 		})
 	}
@@ -103,6 +117,7 @@ export const useStockStore = defineStore("stock", () => {
 	// Called by: POSSale.vue:770 (realtime), various refresh flows
 	// Does NOT clear reservations - only updates server stock
 	// Pinia reactivity automatically recalculates display stock
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const update = (stockUpdates) =>
 		stockUpdates?.forEach((stockUpdate) =>
 			server.value.set(stockUpdate.item_code, {
@@ -129,10 +144,12 @@ export const useStockStore = defineStore("stock", () => {
 			if (!codesToRefresh.length) return
 
 			const response = await Promise.race([
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				call("pos_next.api.items.get_stock_quantities", {
 					item_codes: JSON.stringify(codesToRefresh),
 					warehouse: targetWarehouse || warehouse.value,
 				}),
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				new Promise((_, reject) => setTimeout(reject, 10000)),
 			])
 
@@ -147,6 +164,7 @@ export const useStockStore = defineStore("stock", () => {
 
 			log.success(`Refreshed ${stockData.length} items`)
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error("Refresh failed", error)
 			// Restore reservations even on error
 			reserved.value = reservationSnapshot
@@ -160,6 +178,7 @@ export const useStockStore = defineStore("stock", () => {
 	// ========================================================================
 
 	// Listen to warehouse changes from settings
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	eventsStore.on("settings:warehouse-changed", async ({ newWarehouse }) => {
 		log.info(`Event received: Warehouse changed to ${newWarehouse}`)
 
@@ -190,6 +209,7 @@ export const useStockStore = defineStore("stock", () => {
 		reserve,
 		update,
 		refresh,
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		setWarehouse: (targetWarehouse) => (warehouse.value = targetWarehouse),
 		clear: () => reserved.value.clear(),
 		reset: () => {

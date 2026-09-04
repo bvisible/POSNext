@@ -61,11 +61,18 @@ export const usePOSShiftStore = defineStore("posShift", () => {
 		const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
 		if (days > 0) {
+			//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+			//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+			//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+			//// Upstream runs no formatter, so most hunks below are that pass and change no
+			//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+			//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 			const dayLabel = days === 1 ? __("Day") : __("Days")
 			const hourLabel = hours === 1 ? __("Hour") : __("Hours")
 			const minLabel = minutes === 1 ? __("Minute") : __("Minutes")
 			shiftDuration.value = `${days} ${dayLabel} ${hours} ${hourLabel} ${minutes} ${minLabel}`
 		} else {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const hourLabel = hours === 1 ? __("Hour") : __("Hours")
 			const minLabel = minutes === 1 ? __("Minute") : __("Minutes")
 			const secLabel = seconds === 1 ? __("Second") : __("Seconds")
@@ -75,6 +82,7 @@ export const usePOSShiftStore = defineStore("posShift", () => {
 
 	function updateCurrentTime() {
 		const now = new Date()
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		currentTime.value = now.toLocaleTimeString(DEFAULT_LOCALE, {
 			hour12: false,
 		})

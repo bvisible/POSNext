@@ -94,6 +94,12 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const defaultLoyaltyProgram = computed(
 		() => settings.value.default_loyalty_program || "",
 	)
+	//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+	//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+	//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+	//// Upstream runs no formatter, so most hunks below are that pass and change no
+	//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+	//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 	const walletAccount = computed(() => settings.value.wallet_account || "")
 	const autoCreateWallet = computed(() =>
 		Boolean(settings.value.auto_create_wallet),
@@ -234,12 +240,16 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	)
 
 	// Computed - Sales Persons
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const enableSalesPersons = computed(
 		() => settings.value.enable_sales_persons !== "Disabled",
 	)
 	const salesPersonsMode = computed(
 		() => settings.value.enable_sales_persons || "Disabled",
 	)
+	//// Neoffice — Biome re-wrap of upstream's sales-person computeds, immediately followed by
+	//// our restaurant block: upstream POSNext is a retail POS with no table service, so
+	//// enableRestaurantMode has no upstream equivalent (458d81a9 / 8aa35c29, 2026-03-20).
 	const isSingleSalesPerson = computed(
 		() => settings.value.enable_sales_persons === "Single",
 	)
@@ -251,9 +261,17 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const enableRestaurantMode = computed(() =>
 		Boolean(settings.value.enable_restaurant_mode),
 	)
+	//// Neoffice — end of the Biome re-wrap, then two blocks upstream does not have: the default
+	//// restaurant area (8aa35c29, 2026-03-20 "Phase 1 restaurant module") and the
+	//// customer-facing display flags — enable, let the customer create their own account, and
+	//// show the structured street + N° address fields on that form (8bffb770 2026-02-04,
+	//// 912ef092 2026-02-04, d7584e7b 2026-07-17 ADR-002).
 	const defaultRestaurantArea = computed(
 		() => settings.value.default_restaurant_area || "",
 	)
+//// Neoffice — the customer-facing display has no upstream equivalent, so neither do these
+//// flags: turn the second screen on, and let the customer create their own account from it
+//// (8bffb770 2026-02-04; 912ef092 2026-02-04 "improve UX for customer creation flow").
 
 	// Computed - Customer Display Settings
 	const enableCustomerDisplay = computed(() =>
@@ -262,6 +280,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const enableCustomerDisplayAccountCreation = computed(() =>
 		Boolean(settings.value.enable_customer_display_account_creation),
 	)
+	//// Neoffice — the display's customer form asks for street and house number as two fields
+	//// (ADR-002); this flag is what shows them. Swiss addresses put the number after the street
+	//// name, and a single free-text line does not survive a later mailing (d7584e7b, 2026-07-17
+	//// "structured street + N° across POS Next").
 	const showAddressFieldsInCustomerForm = computed(() =>
 		Boolean(settings.value.customer_display_show_address_fields),
 	)
@@ -274,6 +296,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		() => Number.parseInt(settings.value.session_lock_timeout) || 5,
 	)
 
+	//// Neoffice — Journal Entry Template used to book the cash the cashier takes out of the
+	//// drawer when closing the shift; upstream closes a shift without moving money, which does
+	//// not match Swiss accounting practice (5783eb27, 2026-03-28 "cash withdrawal at shift
+	//// closing with suggested opening balance").
 	// Computed - Cash Management
 	const closingWithdrawalTemplate = computed(
 		() => settings.value.closing_withdrawal_template || "",
@@ -325,6 +351,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Fallback to API call
 		try {
 			await settingsResource.submit({ pos_profile: posProfile })
+			//// Neoffice — restaurant mode is a per-terminal choice kept in localStorage, so it has to be
+			//// restored after EVERY settings load — including this API fallback — or saving any other
+			//// setting silently flipped the RESTO toggle back to the DB value (82fcc1bf 2026-03-20;
+			//// 03449a57 2026-03-23 "RESTO toggle no longer reset when saving Restaurant Settings").
 			initRestaurantMode()
 			return true
 		} catch {
@@ -384,6 +414,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			input_qty: 0,
 			allow_negative_stock: 0,
 			enable_sales_persons: "Disabled",
+			//// Neoffice — resetSettings has to zero OUR fields too, otherwise a logout left the previous
+			//// terminal's customer-display and restaurant configuration in place for the next cashier
+			//// (8bffb770 2026-02-04 customer display; 8aa35c29 2026-03-20 restaurant mode).
 			// Customer Display Settings
 			enable_customer_display: 0,
 			enable_customer_display_account_creation: 0,
@@ -394,6 +427,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
+			//// Neoffice — same for the closing-withdrawal template (5783eb27, 2026-03-28).
 			// Cash Management
 			closing_withdrawal_template: "",
 		}
@@ -450,6 +484,11 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		}
 	}
 
+	//// Neoffice — the RESTO toggle lives in the POS header and must switch instantly, so it is
+	//// written locally and persisted in localStorage rather than round-tripping to the server:
+	//// the terminal in the dining room and the one at the bar of the same company can differ,
+	//// and a page reload must not flip it back. Reassigning settings.value wholesale is what
+	//// makes Vue see the change (8aa35c29 2026-03-20 → 82fcc1bf/f66c59ff/1b0b3b04, 2026-03-20).
 	/**
 	 * Toggle restaurant mode on and off
 	 * Persists the change to the API
@@ -557,6 +596,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		isSingleSalesPerson,
 		isMultipleSalesPersons,
 
+		//// Neoffice — exports for the restaurant and customer-display blocks above; no upstream
+		//// equivalent (8aa35c29 2026-03-20; 8bffb770 2026-02-04).
 		// Computed - Restaurant Settings
 		enableRestaurantMode,
 		defaultRestaurantArea,
@@ -570,6 +611,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		enableSessionLock,
 		sessionLockTimeout,
 
+		//// Neoffice — export for the closing-withdrawal template (5783eb27, 2026-03-28).
 		// Computed - Cash Management
 		closingWithdrawalTemplate,
 
@@ -580,6 +622,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		validateDiscount,
 		isNegativeStockAllowed,
 		shouldEnforceStockValidation,
+		//// Neoffice — restaurant-mode toggle and its localStorage restore, exported for the header
+		//// switch (8aa35c29 2026-03-20; 82fcc1bf 2026-03-20).
 		toggleRestaurantMode,
 		initRestaurantMode,
 	}

@@ -34,6 +34,10 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	// Global dialog state
 	const { isAnyDialogOpen } = useDialogState()
 
+	//// Neoffice — the customer-facing display can create a customer on its own screen, so the
+	//// cashier's side needs somewhere to hold that record until it is acknowledged; upstream
+	//// has no second screen at all (912ef092, 2026-02-04 "improve UX for customer creation
+	//// flow").
 	// Customer created from display dialog state
 	const customerCreatedData = ref(null)
 
@@ -129,6 +133,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		initialCustomerName.value = name
 	}
 
+	//// Neoffice — raise / clear the "a customer just signed up on the display" notification.
+	//// Same origin: no upstream customer display (912ef092, 2026-02-04).
 	function showCustomerCreatedNotification(customerData) {
 		customerCreatedData.value = customerData
 		showCustomerCreatedDialog.value = true
@@ -157,6 +163,10 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		if (containerWidth !== null) {
 			const clamped = clampLeftPanelWidth(width, containerWidth)
 			leftPanelWidth.value = clamped
+			//// Neoffice — the panel split is a per-terminal habit (a 24" counter screen is not a 13"
+			//// laptop), so it is persisted instead of resetting to upstream's fixed ratio on every
+			//// reload (97d370df, 2026-03-31 "persist left panel width in localStorage, default 80/20
+			//// ratio").
 			localStorage.setItem("pos_left_panel_width", clamped.toString())
 		} else {
 			leftPanelWidth.value = width
@@ -172,6 +182,11 @@ export const usePOSUIStore = defineStore("posUI", () => {
 
 	function updateLayoutBounds(containerWidth) {
 		if (containerWidth) {
+			//// Neoffice — upstream only re-clamps the stored pixel width, so widening the browser left
+			//// the item grid narrow and the cart huge. The split is now kept as a RATIO of the
+			//// container and rescaled on resize, then persisted (1edd2aa1, 2026-03-31 "maintain
+			//// left/right panel ratio when browser window resizes"; 7e3f9458 raised the right-panel
+			//// minimum to 450px so the payment column stays usable).
 			if (lastContainerWidth > 0 && lastContainerWidth !== containerWidth) {
 				// Scale proportionally when window resizes to maintain ratio
 				const ratio = leftPanelWidth.value / lastContainerWidth
@@ -207,6 +222,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showLogoutDialog.value = false
 		showItemSelectionDialog.value = false
 		showErrorDialog.value = false
+		//// Neoffice — logout must also close the display's "customer created" dialog and drop the
+		//// record it was showing, or the next cashier inherits it (912ef092, 2026-02-04).
 		showCustomerCreatedDialog.value = false
 		clearError()
 		clearCustomerCreatedNotification()
@@ -233,6 +250,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showLogoutDialog,
 		showItemSelectionDialog,
 		showErrorDialog,
+		//// Neoffice — customer-display dialog state exported for the cashier screen (912ef092,
+		//// 2026-02-04).
 		showCustomerCreatedDialog,
 		isAnyDialogOpen,
 		errorDialogTitle,
@@ -246,6 +265,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		lastPaidAmount,
 		lastOfflinePrintDoc,
 		initialCustomerName,
+		//// Neoffice — the customer record created on the display, exported for the acknowledgement
+		//// dialog (912ef092, 2026-02-04).
 		customerCreatedData,
 		mobileActiveTab,
 		windowWidth,
@@ -265,6 +286,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		setLastOfflinePrintDoc,
 		clearLastOfflinePrintDoc,
 		setInitialCustomerName,
+		//// Neoffice — actions for that notification; no upstream equivalent (912ef092, 2026-02-04).
 		showCustomerCreatedNotification,
 		clearCustomerCreatedNotification,
 		setLeftPanelWidth,

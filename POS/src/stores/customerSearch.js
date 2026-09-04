@@ -69,6 +69,12 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		if (cached.id.startsWith(term)) return 135
 		if (cached.id.includes(term)) return 90
 
+		//// Neoffice — upstream scores only prefixes of the whole stored name, so a cashier who types
+		//// the family name first ("Moret Daniel") finds nothing on a record named "Daniel Moret".
+		//// Every token must now match some name word or a contact field, in any order; the score is
+		//// >= 240 so the hit is collected by the high-priority first pass of filteredCustomers — a
+		//// lower one would be dropped once the whole list has been scanned (d29af088, 2026-07-09
+		//// "barcode error toast, UOM dialog dedup, any-order customer search").
 		// Multi-word, any-order fallback: split the query into tokens and require
 		// every token to match some name word (prefix) or a contact field. This
 		// finds "Daniel Moret" whether the cashier types "Moret Daniel", "Moret",
@@ -198,6 +204,12 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		if (term.includes("@")) {
 			recs.push({
 				type: "email",
+				//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+				//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+				//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+				//// Upstream runs no formatter, so most hunks below are that pass and change no
+				//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+				//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 				text: __("Search by email: {0}", [term]),
 				icon: "✉️",
 			})
@@ -210,6 +222,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		if (!exactMatch && filteredCustomers.value.length < 5) {
 			recs.push({
 				type: "create",
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				text: __("Create new customer: {0}", [term]),
 				icon: "➕",
 			})
@@ -232,6 +245,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		loading.value = true
 		try {
 			// Step 1: Load from IndexedDB cache (instant display)
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const cachedCustomers = await offlineWorker.searchCachedCustomers("", 0)
 
 			if (cachedCustomers && cachedCustomers.length > 0) {
@@ -241,6 +255,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 
 			// Step 2: If online, fetch delta from server
 			if (!isOffline()) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const lastSync = forceReload
 					? null
 					: localStorage.getItem(CUSTOMERS_SYNC_KEY)
@@ -259,6 +274,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 					const disabled = delta.filter((c) => c.disabled)
 
 					// Merge active customers into memory
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const existingMap = new Map(
 						allCustomers.value.map((c) => [c.name, c]),
 					)
@@ -280,6 +296,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 						await offlineWorker.deleteCustomers(disabled.map((c) => c.name))
 					}
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.debug(
 						`Synced ${active.length} active, removed ${disabled.length} disabled customers`,
 					)

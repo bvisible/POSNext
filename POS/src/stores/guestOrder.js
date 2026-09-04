@@ -1,3 +1,14 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext is cashier-only: every
+//// order goes through a signed-in POS session. Our restaurant clients wanted QR
+//// self-ordering at the table and web takeaway, so this store is the guest-side cart. It
+//// calls allow_guest endpoints through a table token and sends NO CSRF header at all —
+//// posting a stale one made Frappe answer 417 when the browser came back from the Wallee
+//// redirect — and it holds the totals the POS cart cannot see: tip already paid, modifier
+//// prices, TVA, and a Wallee payment only recorded once the provider confirms, so an order
+//// is never shown as Paid before the money moved. (3939a848, 2026-03-28 "QR self-ordering
+//// and takeaway web ordering", then 018f0ccb, 14f151fc, d5a11720, 25ef6b34, bb9d0c56,
+//// 07d0d493, 1866d5c0, 749f69c8, e108d31d, 15cb5663, 6d7195f4, 02f74451, 2a0b109b,
+//// 373880ee, 82ff46c3 — 2026-03-28 → 2026-04-01)
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 

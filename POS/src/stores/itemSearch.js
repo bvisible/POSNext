@@ -27,6 +27,12 @@ async function cacheBatchSerialForItems(items, warehouse) {
 
 	// Find items with batch or serial tracking
 	const batchSerialItems = items.filter(
+		//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
+		//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
+		//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
+		//// Upstream runs no formatter, so most hunks below are that pass and change no
+		//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
+		//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 		(item) => item.has_batch_no || item.has_serial_no,
 	)
 
@@ -39,12 +45,14 @@ async function cacheBatchSerialForItems(items, warehouse) {
 
 	// Fetch in batches to avoid too large requests
 	const BATCH_SIZE = 20
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const itemCodes = batchSerialItems.map((item) => item.item_code)
 
 	for (let i = 0; i < itemCodes.length; i += BATCH_SIZE) {
 		const batchCodes = itemCodes.slice(i, i + BATCH_SIZE)
 
 		try {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const response = await call(
 				"pos_next.api.items.get_batch_serial_data_for_items",
 				{
@@ -57,11 +65,13 @@ async function cacheBatchSerialForItems(items, warehouse) {
 
 			if (Object.keys(data).length > 0) {
 				await updateItemBatchSerialData(data)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.debug(
 					`Cached batch/serial data for ${Object.keys(data).length} items`,
 				)
 			}
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.warn(
 				`Failed to fetch batch/serial data for batch ${i}:`,
 				error.message,
@@ -78,10 +88,12 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 	// Get POS settings store for dynamic show_variants_as_items flag
 	const posSettingsStore = usePOSSettingsStore()
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const getShowVariantsFlag = () =>
 		posSettingsStore.showVariantsAsItems ? 1 : 0
 
 	// Sync show_variants_as_items setting to worker whenever it changes
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	watch(
 		() => posSettingsStore.showVariantsAsItems,
 		(newVal) => {
@@ -113,6 +125,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 	// Sorting state - for user-triggered sorting filters
 	const sortBy = ref(null) // Options: 'name', 'quantity', 'item_group', 'brand', null (no sorting)
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	const sortOrder = ref("asc") // Options: 'asc', 'desc'
 
 	// Lazy loading state - dynamically adjusted based on device performance
@@ -157,10 +170,12 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	 * @returns {Object} Delta with added and removed groups
 	 */
 	function calculateItemGroupDelta(oldGroups, newGroups) {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const oldSet = new Set(oldGroups.map((g) => g.item_group))
 		const newSet = new Set(newGroups.map((g) => g.item_group))
 
 		return {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			added: [...newSet].filter((g) => !oldSet.has(g)),
 			removed: [...oldSet].filter((g) => !newSet.has(g)),
 			unchanged: [...newSet].filter((g) => oldSet.has(g)),
@@ -183,6 +198,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			log.success(`Removed ${removed} items from ${groups.length} group(s)`, {
 				groups: groups.slice(0, 5), // Log first 5 to avoid spam
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				totalGroups: groups.length,
 			})
 
@@ -190,6 +206,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		} catch (error) {
 			log.error("Failed to remove items from groups", {
 				groups,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				error: error.message,
 			})
 			throw error
@@ -210,6 +227,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 		try {
 			// Convert group names to group objects format
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const groupObjects = groups.map((g) => ({ item_group: g }))
 
 			// Reuse the standard fetch function
@@ -217,6 +235,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			if (items.length > 0) {
 				await offlineWorker.cacheItems(items)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.success(
 					`Cached ${items.length} items from ${groups.length} group(s)`,
 				)
@@ -240,11 +259,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		if (updateData.pos_profile !== profile) {
 			log.debug("Ignoring update for different profile", {
 				received: updateData.pos_profile,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				current: profile,
 			})
 			return
 		}
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.info(
 			`POS Profile ${profile} updated remotely - applying smart cache update`,
 			{
@@ -256,6 +277,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// Calculate delta
 		const delta = calculateItemGroupDelta(
 			profileItemGroups.value || [],
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			updateData.item_groups || [],
 		)
 
@@ -273,6 +295,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		log.info("Item group delta calculated", {
 			added: delta.added.length,
 			removed: delta.removed.length,
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			unchanged: delta.unchanged.length,
 		})
 
@@ -296,11 +319,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				removed: removedCount,
 				cached: cachedCount,
 				addedGroups: delta.added.length,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				removedGroups: delta.removed.length,
 			})
 		} catch (error) {
 			log.error("Smart cache update failed - attempting recovery", {
 				error: error.message,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				stack: error.stack,
 			})
 
@@ -327,6 +352,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		} catch (recoveryError) {
 			log.error("Recovery failed - manual intervention required", {
 				error: recoveryError.message,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				stack: recoveryError.stack,
 			})
 
@@ -334,6 +360,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			// TODO: Integrate with notification system
 			console.error(
 				"Failed to update item cache. Please refresh the page manually.",
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				recoveryError,
 			)
 		}
@@ -349,6 +376,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		},
 		auto: false,
 		onSuccess(data) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			itemGroups.value = data?.message || data || []
 		},
 		onError(error) {
@@ -366,6 +394,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		},
 		auto: false,
 		onSuccess(data) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			brands.value = data?.message || data || []
 		},
 		onError(error) {
@@ -378,6 +407,11 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	const searchByBarcodeResource = createResource({
 		url: "pos_next.api.items.search_by_barcode",
 		auto: false,
+		//// Neoffice — frappe-ui's default resource error handler renders its own error surface, so a
+		//// mis-scanned barcode threw an error page at the cashier mid-sale. Declaring onError keeps
+		//// the failure quiet here and lets processBarcodeScan show one clean toast instead
+		//// (d29af088, 2026-07-09 "barcode error toast, UOM dialog dedup, any-order customer
+		//// search").
 		onError(error) {
 			// Handled by the caller (processBarcodeScan shows a clean toast).
 			// Defining onError prevents frappe-ui's default error UI from firing.
@@ -389,6 +423,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	function clearBaseCache() {
 		baseResultCache.clear()
 		filteredItemsCache.clear() // Also clear filtered items cache
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		lastFilterKey = ""
 	}
 
@@ -473,6 +508,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	 * - 20x faster for repeated filter selections
 	 */
 	const filteredItemsCache = new Map()
+	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	let lastFilterKey = ""
 
 	/**
@@ -510,6 +546,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	 * Get all groups to filter by, including child groups for parent item groups.
 	 */
 	const getGroupsToFilter = (groupName) => {
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const groupInfo = itemGroups.value?.find((g) => g.item_group === groupName)
 		if (groupInfo?.child_groups?.length) {
 			return new Set([groupName, ...groupInfo.child_groups])
@@ -528,6 +565,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// Step 2: Create cache key based on current filter state
 		// Key format: "itemGroup_version_searchTerm"
 		// This ensures cache invalidates when data or filters change
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const filterKey = `${selectedItemGroup.value || "all"}_${selectedBrand.value || "all"}_${allItemsVersion.value}_${searchTerm.value || ""}`
 
 		// Step 3: Check cache for filtered results
@@ -549,9 +587,11 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				// User selected a specific item group tab
 				// Items are ALREADY server-filtered, but verify for safety
 				const groupsToFilter = getGroupsToFilter(selectedItemGroup.value)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				list = sourceItems.filter((i) => groupsToFilter.has(i.item_group))
 			} else if (selectedBrand.value) {
 				// Brand tab selected — verify for safety (server already filters)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				list = sourceItems.filter(
 					(i) => (i.brand || "") === selectedBrand.value,
 				)
@@ -561,15 +601,18 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			) {
 				// "All Items" tab - items fetched without group filter
 				// Still filter by allowed groups as sanity check
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const allowedGroups = new Set(
 					profileItemGroups.value.map((g) => g.item_group),
 				)
 				// Also include child groups in allowed set
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				itemGroups.value.forEach((g) => {
 					if (g.child_groups) {
 						g.child_groups.forEach((child) => allowedGroups.add(child))
 					}
 				})
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				list = sourceItems.filter((i) => allowedGroups.has(i.item_group))
 			} else {
 				// No filters - show all items as-is
@@ -589,6 +632,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 		// Step 4: Inject live stock quantities (optimized)
 		// Use a simple map operation - O(n) complexity
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const itemsWithStock = list.map((item) => {
 			// Get display stock (includes reservations from cart)
 			const displayStock = stockStore.getDisplayStock(item.item_code)
@@ -600,6 +644,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				...item,
 				actual_qty: displayStock,
 				stock_qty: displayStock,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				original_stock: originalStock,
 			}
 		})
@@ -611,6 +656,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				let compareResult = 0
 
 				switch (sortBy.value) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					case "name":
 						// Sort by item_name alphabetically
 						const nameA = (a.item_name || "").toLowerCase()
@@ -618,6 +664,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						compareResult = nameA.localeCompare(nameB)
 						break
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					case "brand":
 						// Sort by brand alphabetically
 						const brandA = (a.brand || "").toLowerCase()
@@ -625,11 +672,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						compareResult = brandA.localeCompare(brandB)
 						break
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					case "quantity":
 						// Sort by stock quantity
 						compareResult = (a.actual_qty ?? 0) - (b.actual_qty ?? 0)
 						break
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					case "item_group":
 						// Sort by item_group alphabetically
 						const groupA = (a.item_group || "").toLowerCase()
@@ -637,11 +686,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						compareResult = groupA.localeCompare(groupB)
 						break
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					case "price":
 						// Sort by price_list_rate (standard selling rate)
 						compareResult = (a.price_list_rate ?? 0) - (b.price_list_rate ?? 0)
 						break
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					case "item_code":
 						// Sort by item_code alphabetically
 						const codeA = (a.item_code || "").toLowerCase()
@@ -655,6 +706,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				}
 
 				// Apply sort order (asc or desc)
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				return sortOrder.value === "desc" ? -compareResult : compareResult
 			})
 		}
@@ -760,6 +812,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			log.info("Loading items with filter strategy", {
 				profile,
 				filterCount: itemGroupFilters.length,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				filters: hasFilters
 					? itemGroupFilters.map((g) => g.item_group).slice(0, 3)
 					: [],
@@ -776,6 +829,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			const cacheStatsPromise = Promise.race([
 				offlineWorker.getCacheStats(),
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				new Promise((_, reject) =>
 					setTimeout(() => reject(new Error("Cache stats timeout")), 3000),
 				),
@@ -789,6 +843,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			// Start item count fetch early (only used in Strategy C, but cheap to fire now)
 			// Skip when offline — count can't be fetched without network
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const countPromise = !offline
 				? call("pos_next.api.items.get_items_count", {
 						pos_profile: profile,
@@ -806,6 +861,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			const prevTotalServerItems = cacheStats.value?.totalServerItems
 			cacheStats.value = {
 				...stats,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				...(prevTotalServerItems
 					? { totalServerItems: prevTotalServerItems }
 					: {}),
@@ -821,6 +877,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			// - stats.cacheReady = false: Cache not available, need server data
 			// - Otherwise: Use cache (already have fresh data this session)
 
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const shouldFetchFromServer =
 				forceServerFetch || !serverDataFresh.value || !stats.cacheReady
 
@@ -844,9 +901,11 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							totalItemsLoaded.value = cached.length
 							currentOffset.value = cached.length
 							// Use server count if available (excludes variants), fallback to IndexedDB count
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							totalServerItems.value =
 								cacheStats.value?.totalServerItems || stats.items
 							hasMore.value = cached.length >= limit
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							log.success(
 								`Loaded ${cached.length} items from cache (offline, total: ${stats.items})`,
 							)
@@ -873,6 +932,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			// This prevents redundant server fetches on page refreshes/navigations
 			// Condition: serverDataFresh=true AND cache is ready
 			if (!shouldFetchFromServer && stats.cacheReady && stats.items > 0) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.info(
 					"Using cached items (already fetched from server this session)",
 				)
@@ -886,10 +946,12 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						totalItemsLoaded.value = cached.length
 						currentOffset.value = cached.length
 						// Use server count if available (excludes variants), fallback to IndexedDB count
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						totalServerItems.value =
 							cacheStats.value?.totalServerItems || stats.items
 						hasMore.value = cached.length >= limit
 						loading.value = false
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						log.success(
 							`Loaded ${cached.length} items from cache (total: ${stats.items})`,
 						)
@@ -924,6 +986,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			// Determine initial load size based on catalog size
 			const SMALL_CATALOG_THRESHOLD = 1000
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const isSmallCatalog =
 				totalItemCount > 0 && totalItemCount <= SMALL_CATALOG_THRESHOLD
 			const INITIAL_LIMIT = isSmallCatalog ? totalItemCount : itemsPerPage.value
@@ -934,11 +997,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			// Load ONLY first batch from first group. Other groups load on-demand
 			// when user clicks the tab. This prevents loading 65K items at once.
 			if (hasFilters && selectedItemGroup.value) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.debug(
 					`Fetching first ${INITIAL_LIMIT} items (${isSmallCatalog ? "small catalog — loading all" : "large catalog mode"})`,
 				)
 
 				// Load items from first group only - other groups load on tab click
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const fetchedItems = await fetchItemsFromGroups(
 					profile,
 					itemGroupFilters,
@@ -954,18 +1019,21 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 				if (fetchedItems.length > 0) {
 					// Cache this batch for offline access (non-blocking)
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					offlineWorker.cacheItems(fetchedItems).catch((err) => {
 						log.warn("Background item caching failed:", err.message)
 					})
 					cacheReady.value = true
 					serverDataFresh.value = true
 
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.success(
 						`Loaded ${fetchedItems.length} items (server-side filtering)`,
 					)
 
 					// Cache batch/serial data for offline use
 					if (shiftStore.profileWarehouse) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						cacheBatchSerialForItems(
 							fetchedItems,
 							shiftStore.profileWarehouse,
@@ -980,6 +1048,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						startBackgroundCacheSync(profile, itemGroupFilters)
 					}
 				} else {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.info("No items found for the selected filter groups")
 				}
 
@@ -990,6 +1059,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				// and enable infinite scroll for progressive loading. Suitable for
 				// large catalogs (1000+ items) to minimize initial load time.
 			} else {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const unfilteredLimit = isSmallCatalog
 					? totalItemCount
 					: itemsPerPage.value
@@ -1018,6 +1088,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					hasMore.value = totalItemCount > unfilteredLimit
 
 					// Cache this batch (non-blocking — background sync fills the rest)
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					offlineWorker.cacheItems(list).catch((err) => {
 						log.warn("Background item caching failed:", err.message)
 					})
@@ -1029,6 +1100,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 					// Cache batch/serial data for offline use
 					if (shiftStore.profileWarehouse) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						cacheBatchSerialForItems(list, shiftStore.profileWarehouse).catch(
 							(err) => {
 								log.warn("Background batch/serial caching failed:", err.message)
@@ -1048,6 +1120,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			// Fallback to cache
 			try {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				const cached = await offlineWorker.searchCachedItems(
 					"",
 					itemsPerPage.value,
@@ -1083,6 +1156,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// For large catalogs: Load items from first/selected group only
 		// Other groups load on-demand when user clicks the tab
 		const firstGroup = itemGroups[0]?.item_group
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.debug(
 			`Fetching first ${effectiveLimit} items from group: ${firstGroup}`,
 		)
@@ -1108,6 +1182,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	/**
 	 * Fetch items for a specific item group (on-demand when user clicks tab)
 	 * Optimized for large catalogs - server-side filtering
+	 * //// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	 */
 	async function fetchItemsForGroup(
 		profile,
@@ -1120,11 +1195,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		const effectiveLimit = limit || itemsPerPage.value
 
 		// Get expanded groups (parent + children) for filtering
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const groupInfo = itemGroups.value?.find((g) => g.item_group === itemGroup)
 		const groupsToFetch = groupInfo?.child_groups?.length
 			? [itemGroup, ...groupInfo.child_groups]
 			: [itemGroup]
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.debug(
 			`Fetching items for group: ${itemGroup} (includes ${groupsToFetch.length} groups)`,
 		)
@@ -1208,6 +1285,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				try {
 					// Use group-aware cache query when a specific group is selected
 					if (selectedItemGroup.value) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						const groupsToFilter = Array.from(
 							getGroupsToFilter(selectedItemGroup.value),
 						)
@@ -1227,6 +1305,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					replaceAllItems(items)
 					currentOffset.value = start + items.length
 					totalItemsLoaded.value = items.length
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.debug(
 						`Fetched page ${page} from cache: ${items.length} items (offset ${start})`,
 					)
@@ -1273,6 +1352,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				// Cache for offline
 				await offlineWorker.cacheItems(items)
 
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.debug(
 					`Fetched page ${page}: ${items.length} items (offset ${start})`,
 				)
@@ -1283,6 +1363,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			try {
 				let cached = []
 				if (selectedItemGroup.value) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const groupsToFilter = Array.from(
 						getGroupsToFilter(selectedItemGroup.value),
 					)
@@ -1298,6 +1379,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					replaceAllItems(cached)
 					currentOffset.value = start + cached.length
 					totalItemsLoaded.value = cached.length
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.info(
 						`Fetched page ${page} from cache (fallback): ${cached.length} items`,
 					)
@@ -1388,6 +1470,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				// Cache new batch for offline support
 				await offlineWorker.cacheItems(list)
 
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.debug(
 					`Loaded ${list.length} more items, total: ${totalItemsLoaded.value}`,
 				)
@@ -1420,6 +1503,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	 * @param {string} profile - POS Profile name
 	 * @param {Array} filterGroups - Item group filters from POS Profile (optional)
 	 * @param {number} initialOffset - Items already loaded before sync started
+	 * //// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	 */
 	async function startBackgroundCacheSync(
 		profile,
@@ -1431,6 +1515,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		const myGeneration = syncGeneration
 
 		if (cacheSyncing.value) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.info(
 				`Cancelling previous sync, starting new sync (gen=${myGeneration})`,
 			)
@@ -1438,6 +1523,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 		const hasFilters = filterGroups.length > 0
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.info(
 			`Starting background sync gen=${myGeneration} ${hasFilters ? `for ${filterGroups.length} groups` : "(all items)"}`,
 		)
@@ -1445,6 +1531,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 		// Tuning knobs
 		const batchSize = 2000
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const PARALLEL_REQUESTS = Math.min(
 			3,
 			performanceConfig.getRecommendedWorkerCount() + 1,
@@ -1466,6 +1553,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 		// Get all groups to sync — deduplicated (parent groups may share children)
 		const groupsToSync = hasFilters
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			? [
 					...new Set(
 						filterGroups.flatMap((g) => {
@@ -1483,16 +1571,20 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 		// Use already-fetched total from loadAllItems (stored in reactive ref)
 		// Avoids a duplicate get_items_count API call
+		//// Neoffice — Biome reformat only (prefer-const: the binding is never reassigned)
+		//// (458d81a9, 2026-03-20).
 		const syncTotalItems = totalServerItems.value || 0
 		log.info(`Total server items (from loadAllItems): ${syncTotalItems}`)
 
 		// Dynamic IndexedDB batch size — larger catalogs benefit from fewer transactions
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const workerBatchSize =
 			syncTotalItems > 20000 ? 2000 : syncTotalItems > 5000 ? 1000 : 500
 
 		// Helper: update progress stats
 		const updateProgress = () => {
 			const totalCached = initialOffset + uniqueItemsSeen.size
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			const syncProgress =
 				syncTotalItems > 0
 					? Math.round((totalCached / syncTotalItems) * 100)
@@ -1502,6 +1594,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				items: totalCached,
 				totalServerItems: syncTotalItems,
 				syncProgress,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				lastSync: new Date().toISOString(),
 			}
 			cacheReady.value = true
@@ -1548,6 +1641,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						if (list.length < batchSize) {
 							groupIndex++
 							groupOffset = 0
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							log.debug(
 								`Completed group ${currentGroup} (${groupIndex}/${groupsToSync.length})`,
 							)
@@ -1560,6 +1654,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						// Log progress every 5 batches
 						if (batchCount % 5 === 0) {
 							const { totalCached, syncProgress } = updateProgress()
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							const progressStr =
 								syncProgress != null ? ` (${syncProgress}%)` : ""
 							log.info(
@@ -1567,6 +1662,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							)
 						}
 
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS))
 					} else {
 						// ============================================================
@@ -1608,6 +1704,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 						for (let i = 0; i < results.length; i++) {
 							const result = results[i]
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							const list = result.status === "fulfilled" ? result.value : null
 
 							if (list === null) {
@@ -1637,6 +1734,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 						// Log progress every few rounds
 						if (batchCount % 5 === 0) {
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							const progressStr =
 								syncProgress != null ? ` (${syncProgress}%)` : ""
 							log.info(
@@ -1649,17 +1747,20 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							break
 						}
 
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS))
 					}
 				} catch (error) {
 					consecutiveErrors++
 					if (consecutiveErrors >= MAX_SYNC_RETRIES) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						log.error(
 							`Sync failed after ${MAX_SYNC_RETRIES} consecutive errors, stopping`,
 							error.message,
 						)
 						break
 					}
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const backoffMs = Math.min(
 						2000 * Math.pow(2, consecutiveErrors - 1),
 						30000,
@@ -1674,6 +1775,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			// Only finalize if this sync generation is still active
 			if (myGeneration !== syncGeneration) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.info(
 					`Sync gen=${myGeneration} cancelled (current gen=${syncGeneration})`,
 				)
@@ -1686,6 +1788,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			cacheStats.value = {
 				...finalStats,
 				totalServerItems: syncTotalItems,
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				syncProgress:
 					syncTotalItems > 0
 						? Math.round((finalCached / syncTotalItems) * 100)
@@ -1693,6 +1796,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			}
 			cacheReady.value = true
 			cacheSyncing.value = false
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.success(
 				`Background sync COMPLETE - ${finalCached} items cached in ${batchCount} batches (${PARALLEL_REQUESTS}x parallel)`,
 			)
@@ -1700,6 +1804,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			// Cache batch/serial data after items are synced (in background)
 			if (shiftStore.profileWarehouse && finalCached > 0) {
 				log.info("Starting batch/serial data sync...")
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				offlineWorker
 					.searchCachedItems("", 10000)
 					.then(async (items) => {
@@ -1757,6 +1862,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					// 3. Then search server for fresh results in background
 
 					log.debug(`Searching cache for: "${term}"`)
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					const cached = await offlineWorker.searchCachedItems(
 						term,
 						searchLimit,
@@ -1808,6 +1914,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					// If we haven't shown cache results yet, try cache as fallback
 					if (!searchResults.value || searchResults.value.length === 0) {
 						try {
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							const cached = await offlineWorker.searchCachedItems(
 								term,
 								searchLimit,
@@ -1907,6 +2014,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	 * Set sorting filter - triggers sorting only when explicitly called
 	 * @param {string} field - Field to sort by: 'name', 'quantity', 'item_group', 'brand', 'price', 'item_code'
 	 * @param {string} order - Sort order: 'asc' or 'desc' (default: 'asc')
+	 * //// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	 */
 	function setSortFilter(field, order = "asc") {
 		sortBy.value = field
@@ -1923,11 +2031,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	 */
 	function clearSortFilter() {
 		sortBy.value = null
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		sortOrder.value = "asc"
 
 		// Clear filtered items cache to force re-computation
 		clearBaseCache()
 
+		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		log.debug("Sort filter cleared")
 	}
 
@@ -1972,6 +2082,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							// Get expanded groups (parent + children)
 							const groupsToFilter = Array.from(getGroupsToFilter(group))
 							const [cached, count] = await Promise.all([
+								//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 								offlineWorker.searchCachedItemsByGroup(
 									groupsToFilter,
 									pageSize,
@@ -1988,6 +2099,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 								offlineWorker.getCacheStats(),
 							])
 							items = cached || []
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							totalCount =
 								stats?.totalServerItems || stats?.items || items.length
 						}
@@ -1998,16 +2110,19 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							currentOffset.value = items.length
 							totalServerItems.value = totalCount
 							hasMore.value = items.length >= pageSize
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							log.info(
 								`Loaded ${items.length} cached items for group: ${group || "All Items"} (offline, total: ${totalCount})`,
 							)
 						} else {
 							replaceAllItems([])
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							log.warn(
 								`No cached items for group: ${group || "All Items"} (offline)`,
 							)
 						}
 					} catch (cacheErr) {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						log.error(
 							"Cache load failed for group tab (offline):",
 							cacheErr.message,
@@ -2034,6 +2149,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					pos_profile: posProfile.value,
 					item_group: group || undefined,
 					show_variants_as_items: getShowVariantsFlag(),
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				}).catch((err) => {
 					log.warn("Could not fetch item count:", err.message)
 					return 0
@@ -2060,6 +2176,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 				// Get total count for pagination
 				const countResult = await countPromise
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				totalServerItems.value =
 					countResult?.message ?? countResult ?? items.length
 
@@ -2072,6 +2189,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					// Server returned 0 but sync is still caching items — try cache fallback
 					try {
 						const groupsToFilter = Array.from(getGroupsToFilter(group))
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						const cached = await offlineWorker.searchCachedItemsByGroup(
 							groupsToFilter,
 							500,
@@ -2082,6 +2200,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 							totalItemsLoaded.value = cached.length
 							currentOffset.value = cached.length
 							hasMore.value = false
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							log.info(
 								`Loaded ${cached.length} cached items for group: ${group} (sync in progress)`,
 							)
@@ -2091,6 +2210,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					}
 				}
 			} catch (error) {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				log.error(
 					`Failed to load items for group ${group || "All Items"}`,
 					error,
@@ -2104,6 +2224,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					if (group) {
 						const groupsToFilter = Array.from(getGroupsToFilter(group))
 						const [cached, count] = await Promise.all([
+							//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 							offlineWorker.searchCachedItemsByGroup(
 								groupsToFilter,
 								pageSize,
@@ -2114,6 +2235,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						items = cached || []
 						totalCount = count || items.length
 					} else {
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						items =
 							(await offlineWorker.searchCachedItems("", pageSize, 0)) || []
 						totalCount = items.length
@@ -2124,11 +2246,13 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						currentOffset.value = items.length
 						totalServerItems.value = totalCount
 						hasMore.value = items.length >= pageSize
+						//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 						log.info(
 							`Loaded ${items.length} cached items for group: ${group || "All Items"} (network error fallback)`,
 						)
 					}
 				} catch (cacheErr) {
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.warn(
 						"Cache fallback after network error failed:",
 						cacheErr.message,
@@ -2165,6 +2289,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				let filtered = []
 				if (brand) {
 					// Use IndexedDB brand index via worker for efficient offline filtering
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					filtered = await offlineWorker.searchCachedItemsByBrand(
 						brand,
 						5000,
@@ -2189,6 +2314,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 				item_group: undefined,
 				brand: brand || undefined,
 				show_variants_as_items: getShowVariantsFlag(),
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			}).catch((err) => {
 				log.warn("Could not fetch item count:", err.message)
 				return 0
@@ -2212,6 +2338,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			}
 
 			const countResult = await countPromise
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			totalServerItems.value =
 				countResult?.message ?? countResult ?? items.length
 
@@ -2220,6 +2347,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 			currentOffset.value = items.length
 			hasMore.value = items.length >= pageSize
 		} catch (error) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.error(`Failed to load items for brand ${brand || "All Items"}`, error)
 		} finally {
 			loading.value = false
@@ -2253,6 +2381,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// This prevents redundant API calls when mobile tab switching
 		// remounts the ItemsSelector component
 		if (profile && profile === posProfile.value && serverDataFresh.value) {
+			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			log.debug("setPosProfile skipped — same profile already active", {
 				profile,
 			})
@@ -2278,6 +2407,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		try {
 			// Single API call returns EVERYTHING - no need for separate loadItemGroups()
 			const data = await call("pos_next.api.pos_profile.get_pos_profile_data", {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				pos_profile: profile,
 			})
 
@@ -2290,6 +2420,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 			// Cache profile data for offline use (survives component remount)
 			try {
+				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				sessionStorage.setItem(
 					`pos_profile_data:${profile}`,
 					JSON.stringify({
@@ -2324,6 +2455,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					const parsed = JSON.parse(cached)
 					profileItemGroups.value = parsed.profileItemGroups || []
 					itemGroups.value = parsed.itemGroups || []
+					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					log.info(
 						`Restored ${itemGroups.value.length} item groups from session cache (offline)`,
 					)
@@ -2412,6 +2544,9 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		// ========================================================================
 		// STOCK ACTIONS - Delegates to stock store
 		// ========================================================================
+		//// Neoffice — Biome reformat only: the aligned inline comments were collapsed to a single
+		//// space. `git blame -w` credits upstream here because nothing but whitespace changed
+		//// (458d81a9, 2026-03-20).
 		applyStockUpdates, // Delegates to stockStore.applyUpdates
 		refreshStockFromServer, // Delegates to stockStore.refreshFromServer
 

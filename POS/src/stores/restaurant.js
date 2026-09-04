@@ -1,3 +1,13 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext is a retail POS: no
+//// tables, no floor, no kitchen. Neoffice sells POS to restaurants, so this store holds the
+//// whole room — areas and tables with their occupancy, the drawn floor plan (walls, doors,
+//// windows, background image), preparation stations with their item and group maps, product
+//// option groups (modifiers), time-gated cards and menus, takeaway orders, tips, and the
+//// QR / web-ordering settings. It caches to IndexedDB because a dining room has to stay
+//// usable when the counter's network drops. (8aa35c29 2026-03-20 "Phase 1 restaurant
+//// module" → 4fdb5df4 2026-04-04; see 0ebfda03, 4087a695, aae45a6e, 831857f2, 4df0caf1,
+//// 9f4e85df, f2392119, 32f2415d, a750c5e3, 951b53f3, 823cd5d8, a1da8cc0, 34ee11a8,
+//// eabe35e7, 644ad918, 3939a848, 34751a29, 032298a3, 27a85667)
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { usePOSSettingsStore } from "./posSettings"

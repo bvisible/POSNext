@@ -42,6 +42,9 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 		posProfile,
 		appliedOffers = [],
 		draftId = null,
+		//// Neoffice — a parked ticket in a restaurant has to remember which table it belongs to and
+		//// where the kitchen is with it; upstream's draft is retail and carries neither (458d81a9,
+		//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting").
 		restaurantTable = null,
 		kdsStatus = null,
 	) {
@@ -56,6 +59,8 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 				customer: customer,
 				items: invoiceItems,
 				applied_offers: appliedOffers, // Save applied offers
+				//// Neoffice — and the same two fields inside the stored draft payload, so re-opening the
+				//// draft puts the ticket back on its table (458d81a9, 2026-03-20).
 				restaurant_table: restaurantTable,
 				kds_status: kdsStatus,
 			}
