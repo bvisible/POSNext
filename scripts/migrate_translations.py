@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#//// Neoffice — added file (no upstream equivalent). One-shot migration that converts
+#//// upstream's translations/*.csv into locale/*.po, run once when the app moved to the
+#//// PO/MO catalogues Frappe loads first (883e8a17, 2026-01-12). Kept in the tree as the
+#//// record of how the existing catalogues were produced; see docs/Translation-Migration-Guide.md.
 """
 Migration script: Convert CSV translations to PO format
 

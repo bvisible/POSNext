@@ -24,6 +24,11 @@ POS Next supports the following languages out of the box:
 | English | en | Left-to-Right |
 | Arabic | ar | Right-to-Left |
 | Portuguese (Brazil) | pt_br | Left-to-Right |
+<!-- //// Neoffice — upstream documented the locale as `pt-br`. Frappe identifies a locale by
+//// its catalogue name, and the catalogue is locale/pt_br.po — the hyphen form never matched
+//// anything, so the row was corrected to `pt_br` when we migrated the app from CSV
+//// translations to PO/MO (883e8a17, 2026-01-12). Marker sits after the row, not between two
+//// rows, so the table still renders. -->
 
 ### Default Behavior
 

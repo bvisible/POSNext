@@ -1,3 +1,8 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Design and phase plan for the
+//// restaurant module upstream does not have (floor plan, table state, cards/menus/courses,
+//// product options, preparation stations, reservations, tips). Started with 8aa35c29
+//// (2026-03-20, "Phase 1 restaurant module") and kept current by 9d254397 and 7580e999
+//// (2026-03-21/23). Body is in French: it is Jérémy's own planning prose, not code. -->
 # POS Next — Restaurant Module Plan
 
 ## Vision

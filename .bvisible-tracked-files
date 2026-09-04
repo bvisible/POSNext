@@ -1,3 +1,11 @@
+#//// Neoffice — added file (no upstream equivalent). Inventory of the files that already
+#//// carried a Neoffice change when the first-generation annotation tooling was bootstrapped
+#//// (4e0d3068, 2026-05-19 "chore(fork-annotations): bootstrap tooling for upstream divergence
+#//// tracking"). scripts/check_annotations.py reads it as a pre-commit gate: touching a file
+#//// listed here without annotating the change fails the commit. load_tracked() skips lines
+#//// starting with '#', so this header is inert for the tool. Superseded as the source of
+#//// truth by the inline //// Neoffice markers and NEOFFICE_FORK_MARKERS.md; kept because the
+#//// pre-commit hook still consumes it.
 .gitignore
 POS/components.d.ts
 POS/index.html

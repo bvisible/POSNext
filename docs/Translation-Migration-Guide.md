@@ -1,3 +1,9 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Upstream translates through
+//// translations/*.csv. Frappe loads locale/*.po BEFORE the CSV, so when both define the same
+//// msgid the PO wins at runtime and a fix applied only to the CSV is silently ignored. This
+//// guide is the record of the migration to PO/MO and of the French catalogue that came with
+//// it (883e8a17, 2026-01-12, "feat(i18n): migrate to PO/MO translation system and add French
+//// language"). -->
 # Translation System Migration Guide
 
 This guide documents the migration from CSV-based translations to the PO/MO (gettext) format.

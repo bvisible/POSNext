@@ -9,6 +9,12 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
+    #//// Neoffice — upstream declares only "erpnext" (no trailing comma). weasyprint added by
+    #//// b6e757dd (2026-03-26, "add menu PDF generator with badges") to render the restaurant menu
+    #//// PDF; fb475986 (2026-03-31) then dropped a pydyf pin that conflicted and relaxed the
+    #//// minimum to >=59.0. NOTE for the next merge: pos_next/api/menu_pdf.py now renders through
+    #//// wkhtmltopdf, not WeasyPrint (WeasyPrint OOM-crashes on small instances), so this
+    #//// dependency is a candidate for removal — check menu_pdf.py before dropping it.
     "erpnext",
     "weasyprint>=59.0",
 ]

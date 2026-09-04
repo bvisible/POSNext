@@ -1,3 +1,7 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Plan for moving gift cards off
+//// upstream's own POS Coupon doctype and onto ERPNext's native Coupon Code, so the POS and
+//// the ERP stop holding two disagreeing truths about a coupon. Tracked through 9c8e32cb,
+//// 771595d2, 85f05bb9 and e2253ef0 (2026-01-13/14). -->
 # Gift Card Refactoring Plan - ERPNext Native Integration
 
 ## 📊 Progression

@@ -1,3 +1,6 @@
+<!-- //// Neoffice — added file (no upstream equivalent). The implementation plan that preceded
+//// the gift-card work: phases, API surface and the splitting logic for a partly-spent card
+//// (9e5cd28b, then d2a64f30 and ce505902, 2026-01-12). Upstream has no gift cards at all. -->
 # Gift Card & ERPNext Coupon Code Sync - Implementation Plan
 
 ## Implementation Progress

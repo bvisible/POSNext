@@ -1,3 +1,7 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Documents QR self-ordering at the
+//// table and web takeaway: how a guest reaches the menu with no account, what the short-lived
+//// Guest Order Token grants, and the time-slot rules (c5208ba7, 2026-03-28, "QR button on
+//// table view + time-slot guest menu + docs"). -->
 # Guest Ordering — QR Self-Ordering & Takeaway Web
 
 ## Overview

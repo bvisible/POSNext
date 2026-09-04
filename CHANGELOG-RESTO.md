@@ -1,3 +1,8 @@
+<!-- //// Neoffice — added file (no upstream equivalent). The record of what the restaurant
+//// branch (version-15-resto) added on top of upstream's retail POS before it was merged into
+//// version-15 by 7b64f6c6 (2026-03-31). Written by 4419e066 (2026-03-31, "docs: add
+//// comprehensive changelog for version-15-resto branch") so the size of that divergence stays
+//// legible at the next upstream merge. -->
 # POSNext — Changelog `version-15-resto` vs `version-15`
 
 > Branch: `version-15-resto` | Base: `version-15`
