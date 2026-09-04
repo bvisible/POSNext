@@ -304,14 +304,39 @@ function scrollToHighlighted() {
 	}
 }
 
+//// Neoffice — added. Escapes text bound through v-html; see highlightMatch below.
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;")
+}
+
 function highlightMatch(text) {
+	//// Neoffice — rewritten, same defect as WarehouseAvailabilityDialog.highlightMatch and
+	//// found with it: the result is bound with v-html and the option label — customer names,
+	//// item names, whatever the caller lists — was injected raw, so a stored `<img
+	//// src=x onerror=…>` ran in the till as soon as the dropdown showed it. The query was not
+	//// escaped for the regex either, so a label containing `(` or `[` threw and blanked the
+	//// list. Split on the match, escape every piece, emit only the <mark> tags.
+	if (!text) return ""
 	if (!searchQuery.value || searchQuery.value === selectedOption.value?.label) {
-		return text
+		return escapeHtml(text)
 	}
 
-	const query = searchQuery.value
+	//// Neoffice — the query is escaped for the regex now; see the marker above.
+	const query = searchQuery.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 	const regex = new RegExp(`(${query})`, "gi")
-	return text.replace(regex, "<mark>$1</mark>")
+	//// Neoffice — split-and-escape instead of text.replace(); see the marker above.
+	return String(text)
+		.split(regex)
+		.map((part, index) =>
+			// split() with a capturing group puts the matches at the odd indices
+			index % 2 === 1 ? `<mark>${escapeHtml(part)}</mark>` : escapeHtml(part),
+		)
+		.join("")
 }
 
 // Click outside to close

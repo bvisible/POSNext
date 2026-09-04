@@ -1062,16 +1062,38 @@ async function loadAvailability() {
  * @param {string} query - Search query to highlight
  * @returns {string} HTML with highlighted matches
  */
-function highlightMatch(text, query) {
-	if (!text || !query) return text
+//// Neoffice — added. Escapes text bound through v-html; see highlightMatch below.
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;")
+}
 
-	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
+function highlightMatch(text, query) {
+	//// Neoffice — rewritten. The result of this function is bound with v-html, and only the
+	//// QUERY was escaped — for the regex, not for HTML. The TEXT was the item name and the
+	//// item code straight out of the database, injected raw: an item named
+	//// `<img src=x onerror=…>` ran its script in the till the moment a cashier searched for
+	//// it, with the session of whoever was signed in. Stored XSS, reachable by anyone who can
+	//// name an Item. Split on the match instead of replacing inside the string, and escape
+	//// every piece; the <mark> tags are the only markup this function now produces.
+	if (!text || !query) return escapeHtml(text ?? "")
+
 	const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 	const regex = new RegExp(`(${escapedQuery})`, "gi")
-	return text.replace(
-		regex,
-		'<mark class="bg-yellow-200 text-yellow-900 rounded px-0.5">$1</mark>',
-	)
+	//// Neoffice — split-and-escape instead of text.replace(); see the marker above.
+	return String(text)
+		.split(regex)
+		.map((part, index) =>
+			// split() with a capturing group puts the matches at the odd indices
+			index % 2 === 1
+				? `<mark class="bg-yellow-200 text-yellow-900 rounded px-0.5">${escapeHtml(part)}</mark>`
+				: escapeHtml(part),
+		)
+		.join("")
 }
 
 /**
