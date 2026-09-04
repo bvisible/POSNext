@@ -1,3 +1,10 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext has no floor plan,
+//// so nothing to navigate. A restaurant plan is a canvas the staff pans and zooms on a
+//// tablet, so this adds pinch-to-zoom centred on the finger midpoint, one-finger pan in
+//// view mode / two-finger in edit mode, and wheel zoom centred on the cursor — native
+//// Pointer Events, zero dependency (9ccfe0d8, 2026-03-31 "pinch-to-zoom and pan
+//// gestures on restaurant floor plan"). Every gesture end persists the pan so the view
+//// survives a reload in both modes (5a44ccb1, same day).
 /**
  * Composable for pinch-to-zoom, pan/drag, and wheel zoom on a canvas container.
  * Uses native Pointer Events — zero dependencies.

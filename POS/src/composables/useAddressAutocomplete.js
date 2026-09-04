@@ -1,3 +1,12 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext makes the cashier
+//// retype every address by hand, which on a Swiss counter means mistyped streets and
+//// wrong NPA on the customer record. This queries the Swiss federal geoportal
+//// (api3.geo.admin.ch, free, no auth) and fills street, house number, NPA, city and
+//// canton (6ed1256d, 2026-04-02 "add Swiss address autocomplete to customer creation
+//// forms"), feeding the street/house-number split of ADR-002 (d7584e7b, 2026-07-17).
+//// The house number is taken from the label's trailing token, not from attrs.num,
+//// which is lossy on alphanumerics ('1a' -> 1) and left the suffix glued to the street
+//// while duplicating the number (98500337, 2026-07-18).
 import { ref } from "vue"
 
 // Swiss Federal Geoportal API — free, no auth required

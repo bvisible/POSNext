@@ -56,6 +56,10 @@ export const SUPPORTED_LOCALES = {
 		countryCode: "br",
 		dir: "ltr",
 	},
+	//// Neoffice — French added to the locale table: the fleet is Suisse romande, so the POS
+	//// ships French first and the whole app moved from CSV translations to Frappe locale/*.po
+	//// (883e8a17, 2026-01-12 "migrate to PO/MO translation system and add French language").
+	//// The same commit restored the accents on the pt-br native name.
 	fr: {
 		name: "French",
 		nativeName: "Français",
@@ -78,6 +82,12 @@ async function fetchAllowedLocalesFromServer() {
 		)
 		if (response?.locales && Array.isArray(response.locales)) {
 			// Cache for offline use
+			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+			//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+			//// change anywhere in this file — at the next upstream merge take upstream's version
+			//// wholesale and re-run the formatter, do not hand-merge these hunks
+			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+			//// formatting").
 			localStorage.setItem(
 				ALLOWED_LOCALES_KEY,
 				JSON.stringify(response.locales),
@@ -127,6 +137,7 @@ async function fetchLanguageFromServer() {
 
 	// Fallback to direct API call
 	try {
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const response = await call(
 			"pos_next.api.localization.get_user_language",
 			{},
@@ -293,6 +304,7 @@ export function useLocale() {
 
 			// If server returned a different language, switch to it
 			if (serverLocale && serverLocale !== cachedLocale) {
+				//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 				log.info(
 					`Server language (${serverLocale}) differs from cached (${cachedLocale}), switching`,
 				)

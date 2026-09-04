@@ -1,3 +1,10 @@
+//// Neoffice — added file (no upstream equivalent). Restaurant cards (the menu card a
+//// station serves) are a Neoffice concept upstream does not have, and they are edited
+//// from the desk while the terminals are running a service. This listens to the card
+//// and restaurant-settings realtime events and refetches the active cards, debounced
+//// 500 ms so a burst of saves costs one fetch (34ee11a8, 2026-03-25 "merge all
+//// restaurant enhancements - station groups, realtime cards, shift closing, full
+//// editors").
 /**
  * Real-time Restaurant Card updates composable.
  * Listens to card save/update events and restaurant settings changes

@@ -1,3 +1,14 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext has no second,
+//// customer-facing screen; Swiss retail expects the buyer to watch what is being rung
+//// up. This watches the cart and pushes it to pos_next.api.customer_display, debounced
+//// so a burst of scans is one call, plus sale-complete / clear / customer-created
+//// events. Customer group and territory are looked up rather than hardcoded
+//// (185c3c50, 2026-02-03); the form is worded for the buyer, with split first/last
+//// name (912ef092 + f07aa35b, 2026-02-04).
+//// pushPaymentQR / clearPaymentQR are exported at MODULE level on purpose: PaymentDialog
+//// must mirror the TWINT QR onto the display without instantiating this composable,
+//// whose onUnmounted would tear down the main POS cart sync (14a49016, 2026-06-01
+//// "mirror TWINT QR onto the customer display").
 /**
  * Customer Display Sync Composable
  *

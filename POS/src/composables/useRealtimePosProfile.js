@@ -90,6 +90,12 @@ async function executeHandlerSafely(handler, data) {
 		log.error("Handler execution failed", {
 			error: error.message,
 			stack: error.stack,
+			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+			//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+			//// change anywhere in this file — at the next upstream merge take upstream's version
+			//// wholesale and re-run the formatter, do not hand-merge these hunks
+			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+			//// formatting").
 			profile: data.pos_profile,
 		})
 		// Don't rethrow - isolate handler errors
@@ -113,6 +119,7 @@ function handlePosProfileUpdate(data) {
 		changeType: change_type,
 		itemGroupCount: item_groups?.length ?? 0,
 		timestamp,
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		handlerCount: eventHandlers.size,
 	})
 
@@ -126,6 +133,7 @@ function handlePosProfileUpdate(data) {
 		debounceTimers.delete(pos_profile)
 
 		// Execute all registered handlers in parallel with error isolation
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const handlerPromises = Array.from(eventHandlers).map((handler) =>
 			executeHandlerSafely(handler, data),
 		)
@@ -133,6 +141,7 @@ function handlePosProfileUpdate(data) {
 		Promise.all(handlerPromises).then(() => {
 			log.debug("All handlers executed", {
 				profile: pos_profile,
+				//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 				handlerCount: eventHandlers.size,
 			})
 		})
@@ -176,6 +185,7 @@ function startListening() {
 			retryAttempts++
 			const delay = RETRY_DELAY_MS * retryAttempts
 
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			log.info(
 				`Socket unavailable, retrying in ${delay}ms (attempt ${retryAttempts}/${MAX_RETRY_ATTEMPTS})`,
 			)
@@ -201,6 +211,7 @@ function startListening() {
 
 		log.success("Started listening to POS Profile updates", {
 			event: EVENT_NAME,
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			handlerCount: eventHandlers.size,
 		})
 	} catch (error) {
@@ -226,6 +237,7 @@ function stopListening() {
 	}
 
 	// Clear debounce timers
+	//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 	debounceTimers.forEach((timer) => clearTimeout(timer))
 	debounceTimers.clear()
 
@@ -289,6 +301,7 @@ export function useRealtimePosProfile() {
 	function onPosProfileUpdate(handler) {
 		// Type validation
 		if (typeof handler !== "function") {
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			throw new TypeError(
 				`Handler must be a function, received: ${typeof handler}`,
 			)
@@ -303,6 +316,7 @@ export function useRealtimePosProfile() {
 		eventHandlers.add(handler)
 
 		log.debug("Handler registered", {
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			handlerCount: eventHandlers.size,
 		})
 
@@ -316,6 +330,7 @@ export function useRealtimePosProfile() {
 			eventHandlers.delete(handler)
 
 			log.debug("Handler unregistered", {
+				//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 				handlerCount: eventHandlers.size,
 			})
 
@@ -339,6 +354,7 @@ export function useRealtimePosProfile() {
 	 */
 	function clearAllHandlers() {
 		log.warn("Clearing all handlers", {
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			count: eventHandlers.size,
 		})
 		eventHandlers.clear()

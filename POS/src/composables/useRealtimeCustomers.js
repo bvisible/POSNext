@@ -55,6 +55,13 @@ let retryTimer = null
  * @returns {boolean} True if valid
  */
 function isValidEventPayload(data) {
+	//// Neoffice — Biome formatter pass shipped with the de-branding commit. This file was
+	//// indented with SPACES upstream and is re-indented to tabs wholesale, so almost every
+	//// line differs while nothing behaves differently. `git blame -w` therefore still credits
+	//// these lines to their upstream author (3252fe0d, MostafaKadry, pre-fork) — that is a
+	//// whitespace-blind blame, not an unknown origin: only 458d81a9 and the annotation
+	//// commit touched this file after the fork point. Take upstream wholesale at the next
+	//// merge and re-run the formatter (458d81a9, 2026-03-20).
 	if (!data || typeof data !== "object") {
 		log.warn("Invalid event payload: not an object", { data })
 		return false
@@ -76,6 +83,7 @@ function isValidEventPayload(data) {
  * @param {Object} data - Event data
  */
 async function executeHandlerSafely(handler, data) {
+	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	try {
 		await Promise.resolve(handler(data))
 	} catch (error) {
@@ -92,6 +100,7 @@ async function executeHandlerSafely(handler, data) {
  * @param {Object} data - Event payload from Socket.IO
  */
 function handleCustomerUpdate(data) {
+	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	if (!isValidEventPayload(data)) {
 		console.log("Invalid event payload", data)
 		return
@@ -136,6 +145,7 @@ function handleCustomerUpdate(data) {
  * @returns {boolean}
  */
 function isSocketAvailable() {
+	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	return !!(typeof window !== "undefined" && window.frappe?.realtime)
 }
 
@@ -143,6 +153,7 @@ function isSocketAvailable() {
  * Starts listening to real-time events
  */
 function startListening() {
+	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	if (isListening.value || isConnecting.value) return
 
 	if (!isSocketAvailable()) {
@@ -177,6 +188,7 @@ function startListening() {
  * Stops listening to real-time events
  */
 function stopListening() {
+	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	if (retryTimer) {
 		clearTimeout(retryTimer)
 		retryTimer = null
@@ -208,6 +220,7 @@ function stopListening() {
  * @returns {Object} Composable API
  */
 export function useRealtimeCustomers() {
+	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	/**
 	 * Registers a callback to be notified of Customer changes
 	 * @param {Function} handler - Async handler function: (data) => Promise<void>

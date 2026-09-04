@@ -140,6 +140,12 @@ export function useOffline() {
 
 	// Handle invoice sync completion
 	const handleInvoicesSynced = () => {
+		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+		//// change anywhere in this file — at the next upstream merge take upstream's version
+		//// wholesale and re-run the formatter, do not hand-merge these hunks
+		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+		//// formatting").
 		console.log(
 			"[useOffline] Invoices synced event received, updating count...",
 		)

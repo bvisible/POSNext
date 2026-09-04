@@ -1,3 +1,12 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext is a retail POS
+//// with no menu: nothing declares that a dish contains gluten or how hot it is. This
+//// reads the Menu Badge catalogue and the per-item badges + spice level from
+//// pos_next.api.restaurant, and backs the printable menu PDF (b6e757dd, 2026-03-26
+//// "add menu PDF generator with badges"). Reads go through utils/apiWrapper `call`,
+//// which retries once after refreshing the CSRF token — window.frappe.call does not,
+//// and a POS left open all day hits a stale token (4f6f8755). saveItemBadges keeps a
+//// raw fetch with an explicit CSRF header, and the PDF is fetched through an iframe
+//// (1b29c36f, 2026-03-26).
 import { ref } from "vue"
 import { call } from "@/utils/apiWrapper"
 

@@ -69,11 +69,18 @@ export function useResponsivePayment() {
 	})
 
 	// Check if we're in compact mode (small screens)
+	//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+	//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+	//// change anywhere in this file — at the next upstream merge take upstream's version
+	//// wholesale and re-run the formatter, do not hand-merge these hunks
+	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting").
 	const isCompactMode = computed(
 		() => viewportHeight.value < 700 || viewportWidth.value < 1024,
 	)
 
 	// Check if we're on a very small mobile screen
+	//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 	const isSmallMobile = computed(
 		() => viewportWidth.value < 360 || viewportHeight.value < 600,
 	)

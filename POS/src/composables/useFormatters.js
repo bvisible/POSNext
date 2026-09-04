@@ -48,6 +48,12 @@ function formatTime(time) {
 	if (!time) return ""
 
 	// If it's a time string (contains colon), extract HH:MM
+	//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+	//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+	//// change anywhere in this file — at the next upstream merge take upstream's version
+	//// wholesale and re-run the formatter, do not hand-merge these hunks
+	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting").
 	if (typeof time === "string" && time.includes(":")) {
 		const parts = time.split(":")
 		if (parts.length >= 2) {
@@ -70,6 +76,7 @@ function formatTime(time) {
  */
 function formatDate(date) {
 	if (!date) return ""
+	//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 	return new Date(date).toLocaleDateString("en-GB", {
 		day: "2-digit",
 		month: "2-digit",
@@ -85,6 +92,7 @@ function formatDate(date) {
  */
 function formatPercentage(value, decimals = 2) {
 	if (value === null || value === undefined) return "0%"
+	//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 	return `${Number.parseFloat(value)
 		.toFixed(decimals)
 		.replace(/\.?0+$/, "")}%`

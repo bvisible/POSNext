@@ -9,21 +9,29 @@ const CART_SORT_OPTIONS = Object.freeze([
 		icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
 	},
 	{
+		//// Neoffice — Biome formatter pass carried by the design-alignment commit: single to
+		//// double quotes, trailing commas, arrow parens. No behaviour change in any of these
+		//// hunks — the only real divergence in this file is the reversed default order below
+		//// (c9d9c1cb, 2026-03-20 "align POS design with Neoffice theme and improve customer
+		//// display").
 		field: "name",
 		label: __("Name"),
 		icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
 	},
 	{
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		field: "price",
 		label: __("Price"),
 		icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
 	},
 	{
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		field: "quantity",
 		label: __("Quantity"),
 		icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
 	},
 	{
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		field: "total",
 		label: __("Total"),
 		icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z",
@@ -31,6 +39,7 @@ const CART_SORT_OPTIONS = Object.freeze([
 ])
 
 const CART_SORT_ICONS = Object.freeze({
+	//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 	ascending: "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12",
 	descending: "M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4",
 	inactive: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4",
@@ -38,6 +47,7 @@ const CART_SORT_ICONS = Object.freeze({
 
 // O(1) label lookup instead of .find() per call
 const SORT_LABEL_MAP = Object.freeze(
+	//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 	Object.fromEntries(CART_SORT_OPTIONS.map((o) => [o.field, o.label])),
 )
 
@@ -52,17 +62,20 @@ const SORT_LABEL_MAP = Object.freeze(
  */
 export function useCartSort(itemsGetter) {
 	// Normalise getter once — avoid typeof check on every access
+	//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 	const getItems =
 		typeof itemsGetter === "function" ? itemsGetter : () => itemsGetter.value
 
 	// ── State ────────────────────────────────────────────────────────────
 	const cartSortBy = ref(null)
+	//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 	const cartSortOrder = ref("asc")
 	const showCartSortDropdown = ref(false)
 
 	// ── Addition-order tracking ─────────────────────────────────────────
 	const lastTouched = reactive(new Map())
 	let touchSeq = 0
+	//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 	const itemKey = (item) => `${item.item_code}\0${item.uom || ""}`
 
 	// Cached previous snapshot avoids re-parsing the prev string every tick
@@ -72,14 +85,17 @@ export function useCartSort(itemsGetter) {
 		() => {
 			// Build signature string — Vue compares by identity (cheap shallow watch)
 			const items = getItems() || []
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			return items
 				.map((i) => `${i.item_code}\0${i.uom || ""}:${i.quantity}`)
 				.join("|")
 		},
 		(cur) => {
 			const newSnapshot = new Map()
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			for (const entry of cur.split("|")) {
 				if (!entry) continue
+				//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 				const sep = entry.lastIndexOf(":")
 				const key = entry.slice(0, sep)
 				const qty = entry.slice(sep + 1)
@@ -94,6 +110,7 @@ export function useCartSort(itemsGetter) {
 			}
 			prevSnapshot = newSnapshot
 		},
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		{ immediate: true },
 	)
 
@@ -102,10 +119,17 @@ export function useCartSort(itemsGetter) {
 		const items = getItems()
 
 		const field = cartSortBy.value
+		//// Neoffice — with no sort field upstream returns the cart untouched, i.e. oldest line
+		//// first, so the line just scanned scrolls out of sight on a long ticket. Neoffice shows
+		//// the newest line first, and the POS and the customer display agree on that order. The
+		//// reverse is on a copy: this array is the store's own state (c9d9c1cb, 2026-03-20
+		//// "align POS design with Neoffice theme and improve customer display").
 		if (!field) return [...items].reverse()
 
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		const dir = cartSortOrder.value === "asc" ? 1 : -1
 
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		if (field === "order") {
 			return [...items].sort((a, b) => {
 				const ta = lastTouched.get(itemKey(a)) || 0
@@ -117,15 +141,19 @@ export function useCartSort(itemsGetter) {
 		// Capture comparator once — avoids reading the ref inside O(n log n) iterations
 		let cmp
 		switch (field) {
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			case "name":
 				cmp = (a, b) => (a.item_name || "").localeCompare(b.item_name || "")
 				break
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			case "price":
 				cmp = (a, b) => (a.rate || 0) - (b.rate || 0)
 				break
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			case "quantity":
 				cmp = (a, b) => (a.quantity || 0) - (b.quantity || 0)
 				break
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			case "total":
 				cmp = (a, b) => {
 					const aT = a.amount || (a.rate || 0) * (a.quantity || 0)
@@ -147,14 +175,17 @@ export function useCartSort(itemsGetter) {
 	function handleCartSortToggle(field) {
 		if (!field) {
 			cartSortBy.value = null
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			cartSortOrder.value = "asc"
 			showCartSortDropdown.value = false
 			return
 		}
 		if (cartSortBy.value === field) {
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			cartSortOrder.value = cartSortOrder.value === "asc" ? "desc" : "asc"
 		} else {
 			cartSortBy.value = field
+			//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 			cartSortOrder.value = "asc"
 		}
 	}
@@ -164,6 +195,7 @@ export function useCartSort(itemsGetter) {
 	}
 
 	function getCartSortIconState(field) {
+		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 		if (cartSortBy.value !== field) return "inactive"
 		return cartSortOrder.value === "asc" ? "ascending" : "descending"
 	}

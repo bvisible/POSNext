@@ -85,6 +85,12 @@ async function hashPassword(password, existingSalt = null) {
 		encoder.encode(password),
 		"PBKDF2",
 		false,
+		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+		//// change anywhere in this file — at the next upstream merge take upstream's version
+		//// wholesale and re-run the formatter, do not hand-merge these hunks
+		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+		//// formatting").
 		["deriveBits"],
 	)
 
@@ -96,6 +102,7 @@ async function hashPassword(password, existingSalt = null) {
 			hash: "SHA-256",
 		},
 		keyMaterial,
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		256,
 	)
 
@@ -110,6 +117,7 @@ function cachePasswordHash(user, hash, salt) {
 	try {
 		localStorage.setItem(
 			PASSWORD_HASH_KEY,
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			JSON.stringify({ user, hash, salt, ts: Date.now() }),
 		)
 	} catch {
@@ -182,6 +190,7 @@ function checkOfflineAttemptLimit() {
 			// Escalating lockout: doubles each time the limit is hit again
 			// level 1 = 60s, level 2 = 120s, level 3 = 240s, capped at 15 min
 			const level = data.level || 1
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const lockoutDuration = Math.min(
 				LOCKOUT_MS * Math.pow(2, level - 1),
 				15 * 60 * 1000,
@@ -234,6 +243,7 @@ let inactivityTimer = null
 let lastActivityTime = 0
 let listenersAttached = false
 
+//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 const ACTIVITY_EVENTS = [
 	"mousedown",
 	"mousemove",
@@ -312,6 +322,7 @@ async function verifyOfflinePassword(password) {
 	if (!limit.allowed) {
 		return {
 			success: false,
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			error: __("Too many attempts. Try again in {0} seconds.", [
 				limit.remaining,
 			]),
@@ -320,6 +331,7 @@ async function verifyOfflinePassword(password) {
 
 	const cached = getCachedPasswordHash()
 	if (!cached) {
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return {
 			success: false,
 			error: __(
@@ -346,6 +358,7 @@ async function unlock(password) {
 	const limit = checkOfflineAttemptLimit()
 	if (!limit.allowed) {
 		isVerifying.value = false
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		verifyError.value = __("Too many attempts. Try again in {0} seconds.", [
 			limit.remaining,
 		])
@@ -366,6 +379,7 @@ async function unlock(password) {
 
 	// Online — verify against server
 	try {
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const res = await call("pos_next.api.auth.verify_session_password", {
 			password,
 		})
@@ -439,6 +453,7 @@ function startActivityTracking() {
 	if (listenersAttached) return
 
 	for (const event of ACTIVITY_EVENTS) {
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		document.addEventListener(event, resetTimer, {
 			passive: true,
 			capture: true,

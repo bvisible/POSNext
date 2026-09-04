@@ -1,3 +1,12 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext has no booking of
+//// any kind. Restaurants take reservations by phone and from their website, so this
+//// drives the Restaurant Reservation doctype: the day's list, the CRUD behind the POS
+//// dialog, the table -> next-reservation map painted as a badge on the floor plan, and
+//// a 2-minute refresh so a booking taken elsewhere appears on the terminal (ebc3ecc5,
+//// 2026-03-29 "restaurant reservation system with POS dialog, online booking, and
+//// email notifications"). Calls go through utils/apiWrapper `call`, which retries once
+//// after refreshing the CSRF token — window.frappe.call does not, and a terminal left
+//// open all service hits a stale token (5cec738c, same day).
 /**
  * Reservation management composable.
  *

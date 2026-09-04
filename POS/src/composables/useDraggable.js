@@ -1,3 +1,10 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext sells to retail and
+//// has no table service, hence no floor plan and nothing to drag. Restaurants lay their
+//// tables out visually, so this gives the floor-plan editor pointer-based drag and
+//// resize — one Pointer Events path for mouse and touch — clamped to the canvas
+//// (0ebfda03, 2026-03-20 "Phase 2 - visual floor plan editor with drag-and-drop table
+//// positioning"). Deltas are divided by the zoom level so a drag still tracks the
+//// finger once the plan is zoomed (9ccfe0d8, 2026-03-31).
 /**
  * Composable for drag-and-drop and resize in the floor plan editor.
  * Uses native Pointer Events API for unified mouse/touch support.

@@ -69,6 +69,12 @@ export function useSalesPersons(posProfile) {
 
 	// Computed: Total allocation percentage
 	const totalSalesAllocation = computed(() => {
+		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+		//// change anywhere in this file — at the next upstream merge take upstream's version
+		//// wholesale and re-run the formatter, do not hand-merge these hunks
+		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+		//// formatting").
 		return selectedSalesPersons.value.reduce(
 			(sum, p) => sum + (p.allocated_percentage || 0),
 			0,
@@ -135,6 +141,7 @@ export function useSalesPersons(posProfile) {
 	 * @param {string} personName - Name of person to remove
 	 */
 	function removeSalesPerson(personName) {
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const index = selectedSalesPersons.value.findIndex(
 			(p) => p.sales_person === personName,
 		)

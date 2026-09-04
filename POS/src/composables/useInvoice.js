@@ -198,6 +198,13 @@ export function useInvoice() {
 	// Use roundCurrency for monetary totals to match ERPNext's currency precision (from System Settings)
 	const subtotal = computed(() => roundCurrency(_cachedSubtotal.value))
 	const totalTax = computed(() => roundCurrency(_cachedTotalTax.value))
+	//// Neoffice — upstream POSNext knows one document-level discount: the manual/coupon
+	//// amount. Neoffice also receives a header discount from an ERPNext apply_on=Transaction
+	//// pricing rule, and the cashier may override it for one ticket. ruleHeaderDiscount and
+	//// bypassRuleDiscount are deliberately kept OUT of additionalDiscount so the coupon and
+	//// gift-card path is untouched (no regression when no rule fires); this computed merges
+	//// them and is what the totals and both payloads use (44ea4e9a, 2026-07-09 "apply
+	//// transaction-level rule discount in the cart").
 	// Effective document-level discount actually applied to totals and sent as
 	// discount_amount. Bypass ON (cashier override) → manual/coupon amount wins;
 	// otherwise a transaction-rule discount wins when present, else coupon/manual.
@@ -218,6 +225,8 @@ export function useInvoice() {
 		() => _cachedSubtotal.value - _cachedTotalDiscount.value,
 	)
 	const grandTotal = computed(() => {
+		//// Neoffice — grandTotal nets the effective header discount (rule, or coupon/manual),
+		//// not additionalDiscount alone (44ea4e9a, 2026-07-09).
 		const discount =
 			_cachedTotalDiscount.value + effectiveHeaderDiscount.value
 
@@ -367,14 +376,22 @@ export function useInvoice() {
 	function removeItem(itemOrCode, uom = null) {
 		// Accept either an item object reference or item_code string
 		let itemToRemove
+		//// Neoffice — upstream removeItem takes an item_code and then FILTERS every row that
+		//// matches it, so deleting one dish deleted all the identical ones. In restaurant mode
+		//// the same item ordered twice with different modifiers is deliberately two lines, so
+		//// that is data loss. It now also accepts the row object itself and splices that single
+		//// row by identity (7e1376a3, 2026-03-31 "modifier dialog opens correct item
+		//// (findLast), remove deletes only one item (by ref)").
 		if (typeof itemOrCode === "object" && itemOrCode !== null) {
 			// Direct object reference — find exact match by identity
 			itemToRemove = itemOrCode
 		} else if (uom) {
 			itemToRemove = invoiceItems.value.find(
+				//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
 				(i) => i.item_code === itemOrCode && i.uom === uom,
 			)
 		} else {
+			//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
 			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode)
 		}
 
@@ -393,9 +410,14 @@ export function useInvoice() {
 
 			// Return serial numbers back to cache if item has serials
 			if (itemToRemove.serial_no && itemToRemove.has_serial_no) {
+				//// Neoffice — serials are returned using the row's OWN item_code: the caller may have
+				//// passed the row object, in which case the old parameter was not a code at all
+				//// (7e1376a3, 2026-03-31).
 				serialStore.returnSerials(itemToRemove.item_code, itemToRemove.serial_no)
 			}
 
+			//// Neoffice — splice the one row that was found instead of filtering the array by
+			//// item_code, which wiped every line of the same dish (7e1376a3, 2026-03-31).
 			// Remove only this exact item (by reference, not by item_code)
 			const idx = invoiceItems.value.indexOf(itemToRemove)
 			if (idx >= 0) {
@@ -426,6 +448,12 @@ export function useInvoice() {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
 			const isManuallyEdited = item.is_rate_manually_edited === 1
+			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+			//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+			//// change anywhere in this file — at the next upstream merge take upstream's version
+			//// wholesale and re-run the formatter, do not hand-merge these hunks
+			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+			//// formatting").
 			const effectiveRate = isManuallyEdited
 				? item.rate
 				: item.price_list_rate || item.rate
@@ -474,6 +502,7 @@ export function useInvoice() {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
 			const wasManuallyEdited = item.is_rate_manually_edited === 1
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const oldEffectiveRate = wasManuallyEdited
 				? item.rate
 				: item.price_list_rate || item.rate
@@ -502,9 +531,11 @@ export function useInvoice() {
 			// Update cache incrementally (new values - old values)
 			// Use the new rate for manually edited items
 			const isNowManuallyEdited = item.is_rate_manually_edited === 1
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const newEffectiveRate = isNowManuallyEdited
 				? item.rate
 				: item.price_list_rate || item.rate
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			_cachedSubtotal.value +=
 				roundCurrency(item.quantity * roundCurrency(newEffectiveRate)) -
 				oldAmount
@@ -524,6 +555,7 @@ export function useInvoice() {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
 			const isManuallyEdited = item.is_rate_manually_edited === 1
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const effectiveRate = isManuallyEdited
 				? item.rate
 				: item.price_list_rate || item.rate
@@ -678,6 +710,7 @@ export function useInvoice() {
 		for (const item of invoiceItems.value) {
 			// Use manually edited rate if set, otherwise use price_list_rate
 			const isManuallyEdited = item.is_rate_manually_edited === 1
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const effectiveRate = isManuallyEdited
 				? item.rate
 				: item.price_list_rate || item.rate
@@ -723,6 +756,7 @@ export function useInvoice() {
 		// Determine the base unit price
 		// If rate was manually edited, use the edited rate; otherwise use price_list_rate
 		const isManuallyEdited = item.is_rate_manually_edited === 1
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const effectiveRate = isManuallyEdited
 			? item.rate
 			: item.price_list_rate || item.rate
@@ -815,6 +849,7 @@ export function useInvoice() {
 			item_name: item.item_name,
 			qty: item.quantity || item.qty || 1,
 			rate: item.is_free_item ? 0 : computeBackendRate(item),
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			price_list_rate: item.is_free_item
 				? 0
 				: roundCurrency(item.price_list_rate || item.rate),
@@ -831,6 +866,12 @@ export function useInvoice() {
 			is_rate_manually_edited: item.is_rate_manually_edited || 0,
 			original_rate: item.original_rate || null,
 			is_free_item: item.is_free_item || 0,
+			//// Neoffice — restaurant fields carried into the submission payload. Upstream has no
+			//// table service, so a submitted line lost its modifiers, its free-text instruction, the
+			//// station that has to cook it and the KDS state it had already reached — re-validating
+			//// a table reset a dish already marked Ready back to Pending (e005b94b Phase 3
+			//// preparation stations; 4df0caf1 Phase 4A structured modifiers, both 2026-03-21;
+			//// f3e620c2, 2026-03-22 "preserve item kds_status on re-validation").
 			posa_special_instructions: item.posa_special_instructions || "",
 			posa_item_modifiers: item.posa_item_modifiers || "",
 			preparation_station: item.preparation_station || "",
@@ -1027,6 +1068,11 @@ export function useInvoice() {
 			// Document-level discount for coupons and gift cards
 			discount_amount: effectiveHeaderDiscount.value || 0,
 			coupon_code: couponCode.value,
+			//// Neoffice — ERPNext clears discount_amount on a saved invoice, so a gift card looked
+			//// fully spent whatever the ticket was worth and its balance was never restored on
+			//// cancel. The amount actually used is persisted in its own field, and the coupon is
+			//// upper-cased to match the native Coupon Code we migrated to (56877dce, 2026-01-14
+			//// "persist gift card amount used for reliable balance tracking").
 			posa_coupon_code: couponCode.value
 				? couponCode.value.toUpperCase()
 				: null,
@@ -1095,12 +1141,21 @@ export function useInvoice() {
 					pos_profile: posProfile.value,
 					posa_pos_opening_shift: posOpeningShift.value,
 					customer: customer.value?.name || customer.value,
+					//// Neoffice — restaurant_table was only ever set by update_invoice (Valider), never by
+					//// the submit payload, so the backend could not release the table and it stayed Occupied
+					//// after the ticket was paid (45435e47, 2026-03-24 "pass restaurant_table to
+					//// submit_invoice via useInvoice").
 					restaurant_table: restaurantTable.value?.name || null,
 					items: formatItemsForSubmission(rawItems),
 					payments: invoicePayments,
+					//// Neoffice — same effective header discount as the draft payload above: a
+					//// transaction-rule discount has to reach the submitted document too, and the field is
+					//// discount_amount, not additional_discount_amount (b657e65f, 2026-01-30; 44ea4e9a).
 					// Document-level discount for coupons and gift cards
 					discount_amount: effectiveHeaderDiscount.value || 0,
 					coupon_code: couponCode.value,
+					//// Neoffice — same persisted gift-card amount and upper-cased native Coupon Code as the
+					//// draft payload above (56877dce, 2026-01-14).
 					posa_coupon_code: couponCode.value
 						? couponCode.value.toUpperCase()
 						: null,
@@ -1109,6 +1164,9 @@ export function useInvoice() {
 					update_stock: 1, // Critical: Ensures stock is updated
 				}
 
+				//// Neoffice — a POS "Sales Order" submitted without a delivery date failed ERPNext's
+				//// mandatory-date validation in front of the customer. Both dates now default to today
+				//// (b6dd7f10, 2026-05-28 "reapply bug A/B/E fixes").
 				if (targetDoctype === "Sales Order") {
 					const today = new Date().toISOString().split("T")[0]
 					invoiceData.delivery_date = deliveryDate || today
@@ -1146,6 +1204,10 @@ export function useInvoice() {
 					change_amount:
 						remainingAmount.value < 0 ? Math.abs(remainingAmount.value) : 0,
 					write_off_amount: writeOffAmount || 0,
+					//// Neoffice — loyalty redemption and the restaurant tip travel with the submit call.
+					//// Upstream carries neither here, so points redeemed in the payment dialog and a tip
+					//// typed on the terminal were silently dropped (104959e6, 2026-03-19 native loyalty
+					//// redemption; e9d1622a, 2026-03-23 tip_amount through the full payment chain).
 					loyalty: loyaltyData || null,
 					tip_amount: tipAmount || 0,
 				}
@@ -1185,6 +1247,10 @@ export function useInvoice() {
 				} catch (error) {
 					// If resource has error data, extract and attach it
 					if (submitInvoiceResource.error) {
+						//// Neoffice — the debug dump of the whole resource error (exc_type, _server_messages,
+						//// every key, the stringified messages) was removed here on PR #96 review feedback; only
+						//// the properties re-attached to the thrown error remain, so the caller still gets the
+						//// server message (41a70bb7, 2026-01-14 "address PR #96 review feedback").
 						const resourceError = submitInvoiceResource.error
 
 						// Attach all resource error properties to the error
@@ -1193,11 +1259,14 @@ export function useInvoice() {
 						error.httpStatus = resourceError.httpStatus
 						error.messages = resourceError.messages
 						error.exception = resourceError.exception
+						//// Neoffice — same debug-log removal (41a70bb7): the post-attach console.log is gone.
 						error.data = resourceError.data
 					}
 
 					throw error
 				}
+			//// Neoffice — same debug-log removal (41a70bb7): the outer catch rethrows without
+			//// logging first.
 			} catch (error) {
 				throw error
 			} finally {
@@ -1248,6 +1317,9 @@ export function useInvoice() {
 		invoiceItems.value = []
 		payments.value = []
 		additionalDiscount.value = 0
+		//// Neoffice — the rule discount and the per-ticket bypass must die with the ticket:
+		//// leaving them set would carry one customer's transaction discount into the next sale
+		//// (44ea4e9a, 2026-07-09).
 		ruleHeaderDiscount.value = 0
 		bypassRuleDiscount.value = false
 		couponCode.value = null
@@ -1277,6 +1349,7 @@ export function useInvoice() {
 		invoiceItems.value = []
 		payments.value = []
 		additionalDiscount.value = 0
+		//// Neoffice — same reset on the clear-cart path, for the same reason (44ea4e9a).
 		ruleHeaderDiscount.value = 0
 		bypassRuleDiscount.value = false
 		couponCode.value = null
@@ -1381,11 +1454,15 @@ export function useInvoice() {
 		invoiceItems,
 		customer,
 		payments,
+		//// Neoffice — exposed so posCart can keep the selected table in sync with the invoice
+		//// being built (45435e47, 2026-03-24).
 		restaurantTable,
 		salesTeam,
 		posProfile,
 		posOpeningShift,
 		additionalDiscount,
+		//// Neoffice — exposed for posCart.applyHeaderDiscountFromServer / setBypassRuleDiscount
+		//// and for the submit build in POSSale.vue (44ea4e9a, 2026-07-09).
 		ruleHeaderDiscount,
 		bypassRuleDiscount,
 		effectiveHeaderDiscount,
@@ -1402,10 +1479,16 @@ export function useInvoice() {
 		totalPaid,
 		remainingAmount,
 		canSubmit,
+		//// Neoffice — the gift-card discount used to be computed on the raw subtotal, so a card
+		//// worth more than the price left after pricing rules failed validation. This exposes
+		//// the net total after item-level discounts as the correct cap (8e06bb9c, 2026-01-16).
 		netTotalBeforeAdditionalDiscount,
 
 		// Actions
 		addItem,
+		//// Neoffice — replaceAllItems bypasses addItem's dedup on purpose: reloading a table's
+		//// draft from the server must reproduce the lines as the server holds them, not merge
+		//// two identical dishes that were ordered separately (707a330c, 2026-04-01).
 		replaceAllItems,
 		removeItem,
 		updateItemQuantity,

@@ -1,3 +1,10 @@
+//// Neoffice — added file (no upstream equivalent). Upstream POSNext keeps gift cards on
+//// its own `POS Coupon`, which the ERP never sees, so accounting and the shop disagree.
+//// Neoffice sells gift cards as a real product and drives ERPNext's native Coupon Code
+//// + Pricing Rule instead (pos_next.api.offers / gift_cards): balance, partial use,
+//// splitting when the card is worth more than the ticket, and balance restored on
+//// cancel (ce505902, 2026-01-12 "implement gift card API, splitting logic, and frontend
+//// components"; 703f2046, 2026-01-14 adds the created-card dialog).
 /**
  * Gift Card Composable
  *

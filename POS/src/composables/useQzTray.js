@@ -130,6 +130,12 @@ export function useQzTray() {
 			certReady.value = true
 			_saveCertReady(true)
 			if (data?.status === "exists") {
+				//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+				//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+				//// change anywhere in this file — at the next upstream merge take upstream's version
+				//// wholesale and re-run the formatter, do not hand-merge these hunks
+				//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+				//// formatting").
 				showSuccess(
 					__("Certificate already exists. You can download it below."),
 				)
@@ -138,6 +144,7 @@ export function useQzTray() {
 			}
 		} catch (error) {
 			log.error("Failed to setup QZ certificate:", error)
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			showError(
 				error?.messages?.[0] ||
 					error?.message ||

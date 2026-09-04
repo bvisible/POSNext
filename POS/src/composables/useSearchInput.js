@@ -1,3 +1,5 @@
+//// Neoffice — onMounted imported for the document-level scanner listener added below
+//// (7fe0b7d1, 2026-07-09 "capture hardware scanner globally in scanner mode").
 import { ref, watch, nextTick, onMounted, onUnmounted } from "vue"
 import { QueuedMutex } from "@/utils/mutex"
 
@@ -93,6 +95,12 @@ export function useSearchInput({
 			clearAutoSearchTimer()
 
 			// Snapshot the barcode NOW from the DOM input, before anything overwrites it
+			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
+			//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
+			//// change anywhere in this file — at the next upstream merge take upstream's version
+			//// wholesale and re-run the formatter, do not hand-merge these hunks
+			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+			//// formatting").
 			const barcode =
 				searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim()
 			if (barcode) {
@@ -133,6 +141,7 @@ export function useSearchInput({
 		// Auto-add: after user stops typing for 500 ms, trigger barcode search
 		if (autoAddEnabled.value && value.trim().length > 0) {
 			autoSearchTimer = setTimeout(() => {
+				//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 				const barcode =
 					searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim()
 				if (barcode) {
@@ -164,6 +173,7 @@ export function useSearchInput({
 	 * @param {boolean} forceAutoAdd - When true, item is added without user click
 	 */
 	function processBarcodeScan(barcode, forceAutoAdd) {
+		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const shouldAutoAdd =
 			forceAutoAdd || (scannerEnabled.value && autoAddEnabled.value)
 
@@ -183,6 +193,7 @@ export function useSearchInput({
 			// Note: we cannot fall back to filteredItems here because
 			// clearSearch() was called before the API request, so
 			// filteredItems would contain ALL cached items (not search results).
+			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			showWarning(
 				__("Item Not Found: No item found with barcode: {0}", [barcode]),
 			)
@@ -219,6 +230,13 @@ export function useSearchInput({
 		}
 	}
 
+	//// Neoffice — upstream binds the barcode handler to the search input's keydown alone, so
+	//// a hardware scanner did nothing unless the search bar happened to hold focus — and at
+	//// a counter the cashier has just clicked something else. In scanner mode the burst is
+	//// captured at document level and routed to the same lookup. Human typing is filtered by
+	//// the inter-key gap (a scanner types far faster), and a focused editable field or an
+	//// open modal is never hijacked (7fe0b7d1, 2026-07-09 "capture hardware scanner
+	//// globally in scanner mode").
 	// ---- Global hardware-scanner capture ----
 
 	/** True when the event target is a field that owns its own text input. */
@@ -288,6 +306,9 @@ export function useSearchInput({
 	function cleanup() {
 		clearAutoSearchTimer()
 		stopDialogWatcher()
+		//// Neoffice — the document-level listener is torn down with the composable: a leaked
+		//// capture-phase keydown would keep swallowing keys for the rest of the session
+		//// (7fe0b7d1, 2026-07-09).
 		document.removeEventListener("keydown", handleGlobalKeydown, true)
 	}
 
