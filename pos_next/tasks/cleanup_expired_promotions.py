@@ -90,6 +90,7 @@ def disable_expired_promotional_schemes():
 		#//// never disabled. Dropped from the SELECT; nothing read it (35d84c1a, 2026-06-08).
 		# Find all active promotional schemes with expired valid_upto dates
 		expired_schemes = frappe.db.sql(
+			#//// Neoffice — selling_or_buying dropped from this SELECT; see the marker above (35d84c1a).
 			"""
 			SELECT name, valid_upto
 			FROM `tabPromotional Scheme`

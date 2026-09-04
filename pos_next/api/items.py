@@ -323,6 +323,7 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 	# UOM itself, so including it here produced a duplicate button in the UOM
 	# dialog/cart dropdown and made single-UOM items pop a pointless dialog.
 	stock_uom = item_data.get("stock_uom")
+	#//// Neoffice — stock UOM excluded from item_uoms; see the marker above (d29af088).
 	res["item_uoms"] = [u for u in uoms if u.get("uom") != stock_uom]
 
 	return res

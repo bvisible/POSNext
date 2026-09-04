@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import unittest
+#//// Neoffice — MagicMock for the @patch calls below; see the marker in the class (dc55c203).
 from unittest.mock import Mock, patch, MagicMock
 
 #//// Neoffice — added (764047c "tests: fixtures must pick rows the test can actually use"): needed by TestGetCustomersSearch below, which runs against the real database

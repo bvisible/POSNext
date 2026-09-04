@@ -866,6 +866,7 @@ const tabs = computed(() => [
 		icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z",
 		color: "orange",
 		activeClass: "text-orange-600",
+		//// Neoffice — the Unpaid badge counts the active source; see the marker above (02222a44).
 		badge: () => activeUnpaidInvoices.value.length,
 	},
 	{
@@ -1200,6 +1201,7 @@ async function handlePaymentCompleted(paymentData) {
 		await call("pos_next.api.partial_payments.add_payment_to_partial_invoice", {
 			invoice_name: invoiceName,
 			payments: paymentData.payments,
+			//// Neoffice — pos_opening_shift travels with the payment; see the marker above (a0084ae0).
 			pos_opening_shift: props.posOpeningShift || undefined,
 		})
 

@@ -522,6 +522,7 @@ def _get_cash_mode_of_payment(pos_profile):
     first cash-type mode from the profile's payment methods.
     """
     cash_mode = frappe.get_value("POS Profile", pos_profile, "posa_cash_mode_of_payment")
+    #//// Neoffice — cash Mode of Payment resolved from the profile; see the marker above (f5bffe4f).
     if cash_mode:
         return cash_mode
     # Fallback: find cash-type mode from POS Profile payment methods
@@ -636,6 +637,7 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
             mode = cash_mode
 
         _aggregate_payment(payments, mode, amount)
+        #//// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
         if sales_by_mode is not None:
             sales_by_mode[mode] = sales_by_mode.get(mode, 0) + amount
 
@@ -647,6 +649,7 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
     base_change = get_base_value(invoice, "change_amount", "base_change_amount", conversion_rate)
     if base_change:
         _aggregate_payment(payments, cash_mode, -base_change)
+        #//// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
         if sales_by_mode is not None:
             sales_by_mode[cash_mode] = sales_by_mode.get(cash_mode, 0) - base_change
 
@@ -703,6 +706,7 @@ def make_closing_shift_from_opening(opening_shift):
     # Process invoices
     invoices = get_pos_invoices(opening_shift.get("name"), doctype)
     for invoice in invoices:
+        #//// Neoffice — the extra sales_by_mode argument; see the marker above (f5bffe4f).
         txn = _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode)
         pos_transactions.append(txn)
 
@@ -798,6 +802,7 @@ def make_closing_shift_from_opening(opening_shift):
         "sales_total": summary["sales_total"],
         "sales_count": summary["sales_count"],
         "pos_transactions": pos_transactions,  # Include return info for display
+        #//// Neoffice — keys the Swiss closing sheet needs; see the marker above (2026-03-25 → 03-28).
         "external_payments": external_payments,
         "sales_by_payment": sales_by_payment,
         "cash_entries": cash_entries,

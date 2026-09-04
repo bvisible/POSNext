@@ -112,6 +112,7 @@ def get_allowed_locales_from_settings():
 	Returns:
 		set: Set of allowed locale codes, or empty set for all languages
 	"""
+	#//// Neoffice — upstream's {'ar','en'} default stood here; see the marker above (c081f418).
 	try:
 		# Get the first POS Settings (or we could use a specific one based on user's profile)
 		pos_settings_list = frappe.get_all(
@@ -122,15 +123,19 @@ def get_allowed_locales_from_settings():
 		)
 
 		if not pos_settings_list:
+			#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 			return set()  # Empty = all languages allowed
 
 		pos_settings = frappe.get_doc("POS Settings", pos_settings_list[0].name)
 
 		if pos_settings.allowed_locales and len(pos_settings.allowed_locales) > 0:
+			#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 			return {row.locale.lower() for row in pos_settings.allowed_locales}
 
+		#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 		return set()  # Empty = all languages allowed
 	except Exception:
+		#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 		return set()  # Empty = all languages allowed
 
 
@@ -171,6 +176,7 @@ def change_user_language(locale):
 	all_supported_locales = get_supported_locales()
 
 	allowed_locales = get_allowed_locales_from_settings()
+	#//// Neoffice — validated against the shipped .po locales; see the marker above (c081f418).
 	# If allowed_locales is empty, all supported locales are allowed
 	effective_allowed = allowed_locales if allowed_locales else all_supported_locales
 

@@ -861,6 +861,7 @@ async function loadClosingData() {
 					...payment,
 					closing_amount: autoZero ? 0 : savedAmount,
 					difference: 0,
+					//// Neoffice — the _touched half of the autoZero rule; see the marker above (c91af424).
 					_touched: autoZero,
 				})
 			})

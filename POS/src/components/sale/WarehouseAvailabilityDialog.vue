@@ -531,11 +531,13 @@ const props = defineProps({
 	itemName: String,
 	uom: {
 		type: String,
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		default: "Nos",
 	},
 	company: String,
 	currency: {
 		type: String,
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		default: "",
 	},
 	// For search mode
@@ -543,28 +545,34 @@ const props = defineProps({
 	// Mode: 'item' for single item (default), 'search' for general search
 	mode: {
 		type: String,
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		default: "item",
 	},
 })
 
+//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 const emit = defineEmits(["update:modelValue", "close"])
 
 // v-model binding for Dialog
 const show = computed({
 	get: () => props.modelValue,
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	set: (val) => emit("update:modelValue", val),
 })
 
 // Close dialog helper
 function closeDialog() {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	emit("update:modelValue", false)
 	emit("close")
 }
 
 // Determine if we're in search mode
+//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 const isSearchMode = computed(() => props.mode === "search")
 
 // Search state
+//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 const searchQuery = ref("")
 const searchResults = ref([])
 const searching = ref(false)
@@ -575,11 +583,13 @@ const resultRefs = ref([])
 let searchDebounce = null
 
 // Selected item state (for search mode)
+//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 const selectedItemCode = ref("")
 const selectedItemName = ref("")
 const selectedItemImage = ref("")
 const selectedUom = ref("Nos")
 const selectedItemHasVariants = ref(false)
+//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 const selectedBarcodeUom = ref("") // Single barcode UOM if different from default
 const selectedItemUoms = ref([]) // Conversion factors for UOMs
 
@@ -598,20 +608,25 @@ const isReady = ref(false) // Gate to prevent showing content before data is rea
 // Computed display values
 const displayItemName = computed(() => {
 	if (isSearchMode.value) {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		return selectedItemName.value || ""
 	}
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	return props.itemName || props.itemCode || ""
 })
 
 const displayUom = computed(() => {
 	if (isSearchMode.value) {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		return selectedUom.value || "Nos"
 	}
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	return props.uom || "Nos"
 })
 
 const totalAvailable = computed(() => {
 	if (!warehouses.value || warehouses.value.length === 0) return 0
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	return Math.floor(
 		warehouses.value.reduce((sum, w) => sum + (w.available_qty || 0), 0),
 	)
@@ -634,16 +649,19 @@ const groupedWarehouses = computed(() => {
 
 // Helper functions for variant info
 function getVariantName(itemCode) {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const variant = variants.value.find((v) => v.item_code === itemCode)
 	return variant ? variant.item_name : itemCode
 }
 
 function getVariantUom(itemCode) {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const variant = variants.value.find((v) => v.item_code === itemCode)
 	return variant ? variant.stock_uom || "Nos" : displayUom.value
 }
 
 // Initialize and load based on mode
+//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 watch(
 	() => props.modelValue,
 	async (newVal) => {
@@ -688,32 +706,39 @@ watch(
 					isReady.value = true
 					await loadAvailability()
 				}
+			//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 			} else {
 				// No item code provided
 				isReady.value = true
+				//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 				loading.value = false
 			}
 		} else {
+			//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 			// Reset when dialog closes
 			resetSearchState()
 			warehouses.value = []
 			error.value = null
 			isReady.value = false
 		}
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	},
 	{ immediate: true },
 )
 
 function resetSearchState() {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	searchQuery.value = ""
 	searchResults.value = []
 	selectedResultIndex.value = -1
 	showSearchResults.value = false
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	selectedItemCode.value = ""
 	selectedItemName.value = ""
 	selectedItemImage.value = ""
 	selectedUom.value = "Nos"
 	selectedItemHasVariants.value = false
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	selectedBarcodeUom.value = ""
 	selectedItemUoms.value = []
 	variants.value = []
@@ -760,10 +785,12 @@ async function performSearch() {
 	}
 
 	try {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		const response = await call("pos_next.api.items.get_items", {
 			pos_profile: props.posProfile,
 			search_term: searchQuery.value,
 			start: 0,
+			//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 			limit: 15, // Show more results for better autocomplete
 		})
 
@@ -774,6 +801,7 @@ async function performSearch() {
 			selectedResultIndex.value = 0
 		}
 	} catch (err) {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		console.error("Error searching items:", err)
 		searchResults.value = []
 	} finally {
@@ -793,6 +821,7 @@ function navigateResults(direction) {
 		nextTick(() => {
 			const resultElements = document.querySelectorAll('[ref="resultRefs"]')
 			if (resultElements[newIndex]) {
+				//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 				resultElements[newIndex].scrollIntoView({ block: "nearest" })
 			}
 		})
@@ -812,12 +841,14 @@ async function selectItem(item) {
 
 	selectedItemCode.value = item.item_code
 	selectedItemName.value = item.item_name
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	selectedItemImage.value = item.image || ""
 	selectedUom.value = item.stock_uom || item.uom || "Nos"
 	selectedItemHasVariants.value = item.has_variants || false
 	selectedItemUoms.value = item.item_uoms || []
 
 	// Check if barcode_uoms has a single value different from default UOM
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const barcodeUoms = item.barcode_uoms
 		? item.barcode_uoms
 				.split(",")
@@ -827,9 +858,11 @@ async function selectItem(item) {
 	if (barcodeUoms.length === 1 && barcodeUoms[0] !== selectedUom.value) {
 		selectedBarcodeUom.value = barcodeUoms[0]
 	} else {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		selectedBarcodeUom.value = ""
 	}
 
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	searchQuery.value = ""
 	searchResults.value = []
 	showSearchResults.value = false
@@ -858,6 +891,7 @@ function handleEscape() {
 }
 
 function clearSearch() {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	searchQuery.value = ""
 	searchResults.value = []
 	selectedResultIndex.value = -1
@@ -866,11 +900,13 @@ function clearSearch() {
 }
 
 function clearSelectedItem() {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	selectedItemCode.value = ""
 	selectedItemName.value = ""
 	selectedItemImage.value = ""
 	selectedUom.value = "Nos"
 	selectedItemHasVariants.value = false
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	selectedBarcodeUom.value = ""
 	selectedItemUoms.value = []
 	variants.value = []
@@ -891,6 +927,7 @@ function clearSelectedItem() {
 function convertToBarcodeUom(qty) {
 	if (!selectedBarcodeUom.value || !selectedItemUoms.value.length) return null
 
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const uomData = selectedItemUoms.value.find(
 		(u) => u.uom === selectedBarcodeUom.value,
 	)
@@ -901,6 +938,7 @@ function convertToBarcodeUom(qty) {
 }
 
 async function loadVariants() {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const templateItem = isSearchMode.value
 		? selectedItemCode.value
 		: props.itemCode
@@ -913,8 +951,10 @@ async function loadVariants() {
 	error.value = null
 
 	try {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		const response = await call("pos_next.api.items.get_item_variants", {
 			template_item: templateItem,
+			//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 			pos_profile: props.posProfile,
 		})
 
@@ -926,6 +966,7 @@ async function loadVariants() {
 			loadAvailability()
 		}
 	} catch (err) {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		console.error("Error loading variants:", err)
 		error.value = err.message || __("Failed to load variants")
 		showVariantSelection.value = false
@@ -935,6 +976,7 @@ async function loadVariants() {
 }
 
 function toggleVariantSelection(variant) {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const index = selectedVariants.value.findIndex(
 		(v) => v.item_code === variant.item_code,
 	)
@@ -946,11 +988,13 @@ function toggleVariantSelection(variant) {
 }
 
 function isVariantSelected(variant) {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	return selectedVariants.value.some((v) => v.item_code === variant.item_code)
 }
 
 function confirmVariantSelection() {
 	if (selectedVariants.value.length === 0) {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		error.value = __("Please select at least one variant")
 		return
 	}
@@ -967,6 +1011,7 @@ function deselectAllVariants() {
 }
 
 async function loadAvailability() {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const targetItemCode = isSearchMode.value
 		? selectedItemCode.value
 		: props.itemCode
@@ -980,6 +1025,7 @@ async function loadAvailability() {
 	try {
 		// If variants are selected, use item_codes parameter
 		if (selectedVariants.value.length > 0) {
+			//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 			const itemCodes = selectedVariants.value.map((v) => v.item_code)
 			const response = await call(
 				"pos_next.api.items.get_item_warehouse_availability",
@@ -991,6 +1037,7 @@ async function loadAvailability() {
 			warehouses.value = response || []
 		} else {
 			// Single item (backward compatible)
+			//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 			const response = await call(
 				"pos_next.api.items.get_item_warehouse_availability",
 				{
@@ -1001,6 +1048,7 @@ async function loadAvailability() {
 			warehouses.value = response || []
 		}
 	} catch (err) {
+		//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 		console.error("Error loading warehouse availability:", err)
 		error.value = err.message || __("Failed to load warehouse availability")
 	} finally {
@@ -1017,6 +1065,7 @@ async function loadAvailability() {
 function highlightMatch(text, query) {
 	if (!text || !query) return text
 
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 	const regex = new RegExp(`(${escapedQuery})`, "gi")
 	return text.replace(
@@ -1031,8 +1080,10 @@ function highlightMatch(text, query) {
  * @returns {string} Formatted price
  */
 function formatPrice(price) {
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	if (!price) return ""
 	const num = Number(price)
+	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	if (isNaN(num)) return ""
 	return num.toLocaleString(undefined, {
 		minimumFractionDigits: 2,

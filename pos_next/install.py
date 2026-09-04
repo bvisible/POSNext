@@ -243,6 +243,7 @@ def setup_default_print_format(quiet=False):
 						"POS Profile",
 						profile.name,
 						"print_format",
+						#//// Neoffice — the "Neopos Receipt" rebrand; see the marker above (771950bd, 2026-04-02).
 						"Neopos Receipt",
 						update_modified=False
 					)

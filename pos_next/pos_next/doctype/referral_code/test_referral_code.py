@@ -22,6 +22,7 @@ Run with: bench --site [site] run-tests --app pos_next --module pos_next.pos_nex
 
 import frappe
 import unittest
+#//// Neoffice — module rewritten for ERPNext Coupon Code; see the marker above (771595d2).
 from frappe.utils import nowdate, add_days, flt
 from pos_next.pos_next.doctype.referral_code.referral_code import (
 	create_referral_code,

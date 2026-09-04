@@ -249,6 +249,7 @@ def get_data(filters):
 				"shift_end": r.shift_end,
 				"shift_hours": shift_hours,
 				"total_transactions": transaction_map.get(r.shift, 0),
+				#//// Neoffice — the three drawer-reconciliation columns; see the marker above (024d87bb).
 				"invoice_collections": flt(collections_map.get(r.shift, 0), 2),
 				"cash_in": flt(cash_data.get("in", 0), 2),
 				"cash_out": flt(cash_data.get("out", 0), 2),
@@ -291,12 +292,16 @@ def get_data(filters):
 		# Determine status based on total difference
 		abs_diff = abs(row["total_difference"])
 		if abs_diff == 0:
+			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Balanced")
 		elif abs_diff <= 10:
+			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Minor Variance")
 		elif row["total_difference"] > 0:
+			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Over")
 		else:
+			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Short")
 
 		data.append(row)

@@ -546,6 +546,7 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	"""
 	today = getdate(nowdate())
 
+	#//// Neoffice — gift cards are ERPNext Coupon Code rows; see the marker above (ce505902).
 	# Build SQL query for ERPNext Coupon Code with gift card custom fields
 	# Get both customer-specific and anonymous gift cards
 	coupons = frappe.db.sql("""
@@ -637,6 +638,7 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	"""
 	date = getdate()
 
+	#//// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
 	# Fetch ERPNext Coupon Code with case-insensitive code matching
 	coupon = frappe.db.sql("""
 		SELECT
@@ -666,6 +668,7 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	if not coupon:
 		return {"valid": False, "message": _("Invalid coupon code")}
 
+	#//// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
 	coupon = coupon[0]
 
 	# Check validity dates

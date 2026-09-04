@@ -1098,6 +1098,7 @@
 					<!-- Numeric Keypad (Desktop only) -->
 					<div :class="['hidden lg:block bg-white rounded-neo-md border border-gray-200', isCompactMode ? 'p-2' : 'p-3']">
 						<!-- Amount Display -->
+						<!-- //// Neoffice — radius token only; see the numpad block header above (87f168fe). -->
 						<div :class="['bg-gray-100 rounded-neo-md', isCompactMode ? 'p-2 mb-2' : 'p-3 mb-3']">
 							<div dir="ltr" :class="['font-bold text-gray-900 text-center flex items-center justify-center gap-2', isCompactMode ? 'text-xl' : 'text-2xl']">
 								<span>{{ currencySymbol }}</span>

@@ -333,6 +333,7 @@ function selectInvoice(invoice) {
 	console.log("[PartialPayments] Select invoice:", {
 		invoice: invoice.name,
 		allowPartialPayment: posSettingsStore.allowPartialPayment,
+		//// Neoffice — Biome reflow only; see the marker above (458d81a9, 2026-03-20).
 		posSettings: posSettingsStore.settings,
 	})
 	selectedInvoice.value = invoice

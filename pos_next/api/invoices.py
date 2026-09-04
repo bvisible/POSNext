@@ -889,6 +889,7 @@ def update_invoice(data):
             saved_tip_items = _extract_tip_items(invoice_doc)
 
             invoice_doc.update(data)
+#//// Neoffice — guest payments preserved across update(); see the marker above (8bf46a28).
 
             # Re-add preserved guest payments
             for gp in guest_payments:
@@ -1165,9 +1166,11 @@ def update_invoice(data):
         # Validate and track coupon if coupon_code is provided
         coupon_code = data.get("coupon_code")
         if coupon_code:
+            #//// Neoffice — POS Coupon → ERPNext Coupon Code; see the marker below (5091779d, 9bc096de).
             # Validate coupon exists using ERPNext Coupon Code
             from pos_next.api.offers import validate_coupon
 
+            #//// Neoffice — POS Coupon → ERPNext Coupon Code; see the marker below (5091779d, 9bc096de).
             coupon_result = validate_coupon(
                 coupon_code,
                 customer=invoice_doc.customer,
@@ -1665,6 +1668,7 @@ def submit_invoice(invoice=None, data=None):
 
             invoice_doc.update(invoice)
 
+            #//// Neoffice — guest payments re-appended after update(); see the marker above (8bf46a28).
             # Re-add preserved guest payments
             for gp in guest_payments:
                 invoice_doc.append("payments", gp)
@@ -1841,6 +1845,7 @@ def submit_invoice(invoice=None, data=None):
 
         # Submit invoice
         invoice_doc.submit()
+        #//// Neoffice — save/submit timing probe; see the marker above (2584aa58, 2026-03-24).
         _t2 = _time.time()
         frappe.logger().info(f"submit_invoice perf: save={_t1-_t0:.2f}s submit={_t2-_t1:.2f}s total={_t2-_t0:.2f}s invoice={invoice_doc.name}")
 
@@ -1991,6 +1996,7 @@ def submit_invoice(invoice=None, data=None):
         # Return complete invoice details
         result = {
             "name": invoice_doc.name,
+            #//// Neoffice — part of the Sales Order → Sales Invoice block; see its header above (be846d7e).
             "doctype": invoice_doc.doctype,
             "status": invoice_doc.docstatus,
             "grand_total": invoice_doc.grand_total,
@@ -3632,6 +3638,7 @@ def _evaluate_transaction_offers(
         frappe.log_error(
             frappe.get_traceback(), "POS Apply Offers (Transaction Rules)"
         )
+        #//// Neoffice — transaction-scope header discount; see the marker above (648eeb9d).
         return {"free_items": {}, "applied_rules": set(), **empty_header}
 
     free_items = {}
@@ -4111,6 +4118,7 @@ def apply_offers(invoice_data, selected_offers=None):
             "items": [dict(item) for item in prepared_items],
             "free_items": [dict(item) for item in free_items_map.values()],
             "applied_pricing_rules": sorted(applied_rules),
+            #//// Neoffice — one of the three additive keys; see the marker above (648eeb9d).
             # Transaction-scope (apply_on=Transaction) header discount, if any.
             "discount_amount": flt(txn_result.get("discount_amount") or 0),
             "discount_percentage": flt(txn_result.get("discount_percentage") or 0),

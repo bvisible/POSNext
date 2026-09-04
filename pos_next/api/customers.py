@@ -52,6 +52,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 			# Full fetch: only active customers
 			filters["disabled"] = 0
 
+		#//// Neoffice — upstream's or_filters block stood here; see the block header above (d29af088).
 		search_term = (search_term or "").strip()
 		customer_limit = limit if limit not in (None, 0) else frappe.db.count("Customer", filters)
 		# Extra fields (group/territory/type/address) let the POS show an address
@@ -172,6 +173,7 @@ def create_customer(
 		pos_profile=pos_profile,
 	)
 
+	#//// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 	# Normalize customer_type to the values accepted by ERPNext (Individual / Company)
 	customer_type = (customer_type or "Individual").strip().capitalize()
 	if customer_type not in ("Individual", "Company"):
@@ -214,12 +216,14 @@ def create_customer(
 		{
 			"doctype": "Customer",
 			"customer_name": customer_name,
+			#//// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 			"customer_type": customer_type,
 			"customer_group": resolved_group,
 			"territory": resolved_territory,
 			"mobile_no": mobile_no or "",
 			"email_id": email_id or "",
 			"loyalty_program": loyalty_program,
+			#//// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 			"default_currency": resolved_currency,
 		}
 	)

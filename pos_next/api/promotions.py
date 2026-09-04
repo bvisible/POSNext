@@ -579,6 +579,7 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 
 	today = getdate(nowdate())
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	# Query ERPNext Coupon Code with Pricing Rule join for company filter
 	coupons = frappe.db.sql("""
 		SELECT
@@ -610,6 +611,7 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 
 	# Enrich with status and customer name
 	for coupon in coupons:
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		# Get customer name
 		if coupon.customer:
 			coupon["customer_name"] = frappe.db.get_value("Customer", coupon.customer, "customer_name")
@@ -640,6 +642,7 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 	return coupons
 
 
+#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 @frappe.whitelist()
 def get_coupon_details(coupon_name):
 	"""Get detailed information about a specific coupon.
@@ -648,12 +651,15 @@ def get_coupon_details(coupon_name):
 	"""
 	check_promotion_permissions("read")
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	if not frappe.db.exists("Coupon Code", coupon_name):
 		frappe.throw(_("Coupon {0} not found").format(coupon_name))
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	coupon = frappe.get_doc("Coupon Code", coupon_name)
 	data = coupon.as_dict()
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	# Add company from linked Pricing Rule
 	if coupon.pricing_rule:
 		data["company"] = frappe.db.get_value("Pricing Rule", coupon.pricing_rule, "company")
@@ -683,6 +689,7 @@ def get_coupon_details(coupon_name):
 
 @frappe.whitelist()
 def create_coupon(data):
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	"""
 	Create a new coupon using ERPNext Coupon Code + Pricing Rule.
 
@@ -734,6 +741,7 @@ def create_coupon(data):
 		if flt(data.get("discount_amount")) <= 0:
 			frappe.throw(_("Discount amount must be greater than 0"))
 
+	#//// Neoffice — upstream's "Gift Card needs a customer" check stood here; see that block header.
 	try:
 		# Generate coupon code if not provided
 		coupon_code = data.get("coupon_code")
@@ -756,14 +764,18 @@ def create_coupon(data):
 			"selling": 1,
 			"buying": 0,
 			"company": data.get("company"),
+			#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 			"coupon_code_based": 1,
 			"valid_from": data.get("valid_from") or nowdate(),
 			"valid_upto": data.get("valid_upto"),
+			#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 			"priority": 1,
 			"disable": 0,
 		})
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		pricing_rule.insert(ignore_permissions=True)
 
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		# Create Coupon Code
 		coupon = frappe.get_doc({
 			"doctype": "Coupon Code",
@@ -793,6 +805,7 @@ def create_coupon(data):
 
 	except Exception as e:
 		frappe.db.rollback()
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		frappe.log_error(
 			"Coupon Creation Failed",
 			frappe.get_traceback()
@@ -816,6 +829,7 @@ def update_coupon(data):
 	if isinstance(data, str):
 		data = json.loads(data)
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	coupon_name = data.get("name")
 	if not coupon_name:
 		frappe.throw(_("Coupon name is required"))
@@ -824,6 +838,7 @@ def update_coupon(data):
 		frappe.throw(_("Coupon {0} not found").format(coupon_name))
 
 	try:
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		coupon = frappe.get_doc("Coupon Code", coupon_name)
 
 		# Update Coupon Code fields
@@ -832,6 +847,7 @@ def update_coupon(data):
 		if "valid_upto" in data:
 			coupon.valid_upto = data["valid_upto"]
 		if "maximum_use" in data:
+			#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 			coupon.maximum_use = cint(data["maximum_use"]) or 0
 
 		coupon.save(ignore_permissions=True)
@@ -864,6 +880,7 @@ def update_coupon(data):
 
 	except Exception as e:
 		frappe.db.rollback()
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		frappe.log_error(
 			"Coupon Update Failed",
 			frappe.get_traceback()
@@ -871,15 +888,18 @@ def update_coupon(data):
 		frappe.throw(_("Failed to update coupon: {0}").format(str(e)))
 
 
+#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 @frappe.whitelist()
 def toggle_coupon(coupon_name, disabled=None):
 	"""Enable or disable a coupon by toggling its linked Pricing Rule."""
 	check_promotion_permissions("write")
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	if not frappe.db.exists("Coupon Code", coupon_name):
 		frappe.throw(_("Coupon {0} not found").format(coupon_name))
 
 	try:
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		coupon = frappe.get_doc("Coupon Code", coupon_name)
 
 		if not coupon.pricing_rule:
@@ -889,22 +909,28 @@ def toggle_coupon(coupon_name, disabled=None):
 		pr = frappe.get_doc("Pricing Rule", coupon.pricing_rule)
 
 		if disabled is not None:
+			#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 			pr.disable = cint(disabled)
 		else:
 			# Toggle current state
+			#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 			pr.disable = 0 if pr.disable else 1
 
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		pr.save(ignore_permissions=True)
 
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		status = "disabled" if pr.disable else "enabled"
 		return {
 			"success": True,
 			"message": _("Coupon {0} {1}").format(coupon.coupon_code, status),
+			#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 			"disabled": pr.disable
 		}
 
 	except Exception as e:
 		frappe.db.rollback()
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		frappe.log_error(
 			"Coupon Toggle Failed",
 			frappe.get_traceback()
@@ -912,22 +938,26 @@ def toggle_coupon(coupon_name, disabled=None):
 		frappe.throw(_("Failed to toggle coupon: {0}").format(str(e)))
 
 
+#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 @frappe.whitelist()
 def delete_coupon(coupon_name):
 	"""Delete a coupon (ERPNext Coupon Code and its linked Pricing Rule)."""
 	check_promotion_permissions("delete")
 
+	#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	if not frappe.db.exists("Coupon Code", coupon_name):
 		frappe.throw(_("Coupon {0} not found").format(coupon_name))
 
 	try:
 		# Check if coupon has been used
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		coupon = frappe.get_doc("Coupon Code", coupon_name)
 		if coupon.used > 0:
 			frappe.throw(_("Cannot delete coupon {0} as it has been used {1} times").format(
 				coupon.coupon_code, coupon.used
 			))
 
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		# Store pricing rule name before deletion
 		pricing_rule_name = coupon.pricing_rule
 
@@ -945,6 +975,7 @@ def delete_coupon(coupon_name):
 
 	except Exception as e:
 		frappe.db.rollback()
+		#//// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		frappe.log_error(
 			"Coupon Deletion Failed",
 			frappe.get_traceback()
@@ -1034,6 +1065,7 @@ def get_referral_details(referral_name):
 	coupons = frappe.get_all(
 		"Coupon Code",
 		filters={"referral_code": referral_name},
+		#//// Neoffice — same ERPNext Coupon Code field list; see the marker above (771595d2).
 		fields=[
 			"name", "coupon_code", "coupon_type", "customer",
 			"used", "valid_from", "valid_upto", "maximum_use"
@@ -1041,6 +1073,7 @@ def get_referral_details(referral_name):
 		order_by="creation desc"
 	)
 
+	#//// Neoffice — same ERPNext Coupon Code field list; see the marker above (771595d2).
 	# Add customer_name and used status for each coupon
 	for coupon in coupons:
 		if coupon.customer:

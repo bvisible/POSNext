@@ -34,19 +34,24 @@ Usage:
 
 from __future__ import annotations
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 import logging
 from functools import lru_cache
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 from typing import TypedDict
 
 import frappe
 from erpnext.stock.get_item_details import get_conversion_factor
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 logger = logging.getLogger(__name__)
 
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 class BarcodeResult(TypedDict, total=False):
 	"""Type definition for barcode resolution result."""
 
+	#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 	item_barcode: str  # The barcode from Item Barcodes table
 	integer_value: str  # Integer part of the encoded value
 	decimal_value: str  # Decimal part of the encoded value
@@ -55,15 +60,18 @@ class BarcodeResult(TypedDict, total=False):
 	qty: float | None  # Quantity (only for weighted barcodes)
 
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 class ResolvedItemData(TypedDict, total=False):
 	"""Type definition for resolved item data to be applied to cart."""
 
+	#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 	resolved_qty: float | None
 	resolved_uom: str | None
 	resolved_price: float | None
 	resolved_barcode_type: str | None
 
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 @lru_cache(maxsize=1)
 def is_barcode_resolver_available() -> bool:
 	"""
@@ -78,6 +86,7 @@ def is_barcode_resolver_available() -> bool:
 	return "barcode_resolver" in frappe.get_installed_apps()
 
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 def resolve_barcode(barcode: str, pos_profile: str) -> BarcodeResult | None:
 	"""
 	Resolve a barcode using the barcode_resolver app if available.
@@ -209,10 +218,12 @@ def _coerce_value(resolved_barcode, field: str) -> float | None:
 		return None
 
 
+#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 def compute_resolved_item_data(
 	resolved_barcode: BarcodeResult | None,
 	item,
 ) -> ResolvedItemData | None:
+	#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 	"""
 	Compute qty and uom from resolved barcode data.
 
