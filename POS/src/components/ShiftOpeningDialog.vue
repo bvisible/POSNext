@@ -2,6 +2,12 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream opens every shift on an empty drawer. A Swiss shop leaves a float in
+  //// the till overnight, so the dialog asks the server what the previous closing kept back
+  //// (pos_next.api.shifts.get_suggested_opening_balance), pre-fills the cash Mode of Payment
+  //// with it and says where the figure comes from; the spinner was widened to cover that
+  //// second call so the amount cannot change under the cashier's fingers, and the fetch is
+  //// best effort so it can never block opening a shift (5783eb27, 2026-03-28).
   //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 -->
 <template>

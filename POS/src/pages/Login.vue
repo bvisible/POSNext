@@ -1,3 +1,8 @@
+<!-- //// Neoffice — this BVISIBLE-FORK header is itself part of the divergence: -->
+<!-- //// scripts/annotate_fork.py wrote it in May 2026 (4e0d3068) and is kept only for the -->
+<!-- //// sha7 index it carries. The real change in this file is the product name on the -->
+<!-- //// first screen a cashier sees — upstream reads "POS Next", the till is sold as -->
+<!-- //// Neopos (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos"). -->
 <!--
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.

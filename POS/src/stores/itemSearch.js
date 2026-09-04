@@ -13,6 +13,10 @@ import { usePOSShiftStore } from "./posShift"
 //// implement proactive filter-aware caching with real-time sync — ce544c1
 import { useRealtimePosProfile } from "@/composables/useRealtimePosProfile"
 
+//// Neoffice — Biome reformat only, no behaviour change: the formatter pass rewrote upstream's
+//// single-quoted log-channel name to double quotes (458d81a9, 2026-03-20 "remove BrainWise
+//// branding, add restaurant mode, and code formatting"). At the next merge take upstream's
+//// file and re-run `biome check --write` instead of resolving this by hand.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("ItemSearch")
 
@@ -1682,8 +1686,14 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 									limit: batchSize,
 									show_variants_as_items: getShowVariantsFlag(),
 									//// Add "Show Variants as Items" POS setting — 83f6275
+									//// Neoffice — Biome reformat only, no behaviour change: the .then/.catch chain below was
+									//// re-indented and given a trailing comma by the formatter pass (458d81a9, 2026-03-20). At
+									//// the next merge take upstream's file and re-run `biome check --write`. NOTE: the legacy
+									//// line just above marks show_variants_as_items / include_variants as ours, but 83f6275c is
+									//// an UPSTREAM commit predating the fork point — that code is not our divergence.
 									include_variants: 1, // Always cache variants for offline barcode scanning
 								})
+									//// Neoffice — same Biome pass (458d81a9, 2026-03-20): re-wrap only, no behaviour change.
 									.then((r) => r?.message || r || [])
 									.catch((err) => {
 										log.warn(

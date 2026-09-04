@@ -29,6 +29,12 @@ export function useQuickAmounts(remainingAmount, isCash) {
 		const cash = isCash ? isCash.value : true
 		const amounts = new Set()
 		// Cash payments use ceil (physical denominations), non-cash use exact amount
+		//// Neoffice — upstream offered Math.ceil(remaining) as the first cash suggestion, so a
+		//// CHF 12.35 balance proposed 13.00 and the cashier had to key the real amount in by
+		//// hand. The exact remaining amount, rounded to the currency step, is now always the
+		//// first quick amount (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick
+		//// amounts"). NOTE: `cash` above and the comment on the line above it are now dead — the
+		//// branch they described no longer exists.
 		//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 		const exactAmount = roundCurrency(remaining)
 

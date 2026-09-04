@@ -68,6 +68,10 @@ export function useItems(posProfile, cartItems = ref([])) {
 					item.item_name?.toLowerCase().includes(term) ||
 					item.item_code?.toLowerCase().includes(term) ||
 					item.barcode?.toLowerCase().includes(term) ||
+					//// Neoffice — Biome reformat only: a trailing comma added to the last argument of the
+					//// filter callback. That is this file's whole divergence from upstream (458d81a9,
+					//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting");
+					//// at the next merge take their version and re-run `biome check --write`.
 					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					item.item_group?.toLowerCase().includes(term),
 			)

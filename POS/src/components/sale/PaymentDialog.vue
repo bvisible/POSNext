@@ -428,6 +428,10 @@
 						<div class="border-t border-gray-200 bg-gray-50 px-3 py-2 space-y-1">
 							<!-- Additional Discount Row -->
 							<div v-if="settingsStore.allowAdditionalDiscount" class="pb-1.5 mb-1 border-b border-dashed border-orange-200">
+								<!-- //// Neoffice — the banner and checkbox below let the cashier override a transaction -->
+								<!-- //// pricing rule for one ticket. The rule drives a header discount that the next offer -->
+								<!-- //// recompute would clobber, so a manual amount could not survive; checking the box -->
+								<!-- //// bypasses the rule, unchecking re-applies it at once (4d61216b, 2026-07-09). -->
 								<!-- //// per-ticket override of an automatic transaction-rule discount — feature b -->
 								<div
 									v-if="cartStore.ruleHeaderDiscount > 0 || cartStore.bypassRuleDiscount"
@@ -1374,6 +1378,10 @@
 
 <script setup>
 import { usePOSSettingsStore } from "@/stores/posSettings"
+//// Neoffice — the cart store is imported here for that per-ticket rule override
+//// (ruleHeaderDiscount / bypassRuleDiscount); upstream's payment dialog never reads the cart
+//// store (4d61216b, 2026-07-09 "per-ticket checkbox to override the transaction-rule
+//// discount").
 //// per-ticket override of an automatic transaction-rule discount — feature b
 import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
@@ -1429,6 +1437,9 @@ const settingsStore = usePOSSettingsStore()
 const cartStore = usePOSCartStore()
 const restaurantStore = useRestaurantStore()
 
+//// Neoffice — onToggleBypassRule has no upstream equivalent: it is the handler of that
+//// per-ticket override, and setBypassRuleDiscount re-triggers offer processing when the rule
+//// is put back so the header discount reappears immediately (4d61216b, 2026-07-09).
 //// per-ticket toggle: let the cashier override an automatic transaction-rule
 // header discount. When enabled the rule stops driving the header discount and
 // the manual/coupon additional discount takes over; disabling re-applies it.

@@ -12,6 +12,9 @@ export function getInvoiceStatusColor(invoice) {
 	const status = invoice.status?.toLowerCase()
 
 	// Red for overdue, cancelled
+	//// Neoffice — Biome reformat only: single quotes rewritten to double. Upstream runs no
+	//// formatter, so every string in this file shows up as a diff; no status and no colour
+	//// changed (458d81a9). The block below carries the merge instruction.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	if (status === "overdue" || invoice.docstatus === 2) {
 		return "bg-red-100 text-red-800"

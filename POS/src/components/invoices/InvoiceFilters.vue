@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — the divergence here is the palette. Upstream leads this filter bar on
+  //// indigo/violet (#6366f1, #4f46e5); the Neoffice Design System has one saturated hue, clay
+  //// #D68A59, so every hardcoded indigo hex was swept to clay (e4769383, 2026-06-14 "retheme
+  //// blue/violet to Design System clay"). Two violet-50 hover backgrounds were missed by that
+  //// sweep and still read cool next to a clay border. The rest is Biome (458d81a9).
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 -->
 <template>
@@ -448,6 +453,7 @@ function deleteSavedFilter(name) {
 	/* //// hover background below was NOT swept and still reads cool next to the clay border. */
 	border-color: #d68a59;
 	background: #f5f3ff;
+	/* //// Neoffice — the text colour of that same hover state (e4769383, 2026-06-14). */
 	color: #d68a59;
 }
 
@@ -702,6 +708,7 @@ function deleteSavedFilter(name) {
 	/* //// the violet-50 hover background below was left behind by the sweep. */
 	border-color: #d68a59;
 	background: #f5f3ff;
+	/* //// Neoffice — the text colour of that same hover state (e4769383, 2026-06-14). */
 	color: #d68a59;
 }
 

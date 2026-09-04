@@ -60,6 +60,8 @@ export const pingServer = async () => {
 
 	try {
 		const controller = new AbortController()
+		//// Neoffice — Biome reformat only: the setTimeout arguments wrapped onto three lines
+		//// (458d81a9). Same abort, same PING_TIMEOUT_MS.
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		const timeoutId = setTimeout(
 			() => controller.abort(),
@@ -295,6 +297,7 @@ const handleSyncFailure = async (invoice, errorMessage) => {
 //// this helper differs from upstream by ' -> " and the wrapping of the log.warn
 //// argument object. Same parsing, same empty-string fallbacks (458d81a9).
 const stringifyPricingRules = (value) => {
+	//// Neoffice — Biome reformat only, as announced in the block just above (458d81a9).
 	if (!value) return ""
 	if (Array.isArray(value)) return value.filter(Boolean).join(",")
 	if (typeof value !== "string") return ""

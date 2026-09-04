@@ -109,6 +109,10 @@ def apply_referral_code(referral_code, referee_customer):
     if referral.disabled:
         frappe.throw(_("This referral code has been disabled"))
 
+    #//// Neoffice — the "already used this code" check reads ERPNext's Coupon Code, matched on
+    #//// our referral_code Custom Field, because referral rewards are no longer minted as
+    #//// upstream's POS Coupon; querying the old doctype would have found nothing and handed a
+    #//// second reward to the same referee (771595d2 and 56c00619, 2026-01-14).
     # //// add comprehensive test suite for ERPNext Coupon Code integration — 771595d + 56c0061 (+1 more)
     # Check if referee has already used this referral code (now using ERPNext Coupon Code)
     existing_coupon = frappe.db.exists("Coupon Code", {

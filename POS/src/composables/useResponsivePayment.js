@@ -7,6 +7,9 @@ import { ref, computed, onMounted, onUnmounted } from "vue"
 
 export function useResponsivePayment() {
 	// Viewport dimension tracking
+	//// Neoffice — Biome reformat only: the two ref() initialisers wrapped onto three lines
+	//// each. Same 1200 / 800 fallbacks, same behaviour (458d81a9). Whole-file divergence:
+	//// take upstream's version at the next merge and re-run `biome check --write`.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const viewportWidth = ref(
 		typeof window !== "undefined" ? window.innerWidth : 1200,

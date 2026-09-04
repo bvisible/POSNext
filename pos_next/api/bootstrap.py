@@ -101,6 +101,11 @@ def get_initial_data():
 		"auto_print": pos_profile.get("print_receipt_on_order_complete", 0),
 		"country": pos_profile.get("country"),
 		"ignore_pricing_rule": pos_profile.ignore_pricing_rule or 0,
+		#//// Neoffice — Swiss cash has no coin below 0.05, so a grand total must be rounded to
+		#//// the currency's smallest fraction, not to 2 decimals. That value lives on the
+		#//// Currency doctype and was never sent, so the cart had no way to round; the bootstrap
+		#//// now ships it with the profile (4fdb5df4, 2026-04-04 "rounding total, tips
+		#//// visibility, cash quick amounts").
 		# //// rounding total, tips visibility, cash quick amounts — 4fdb5df
 		"smallest_currency_fraction_value": _get_smallest_currency_fraction(pos_profile.currency),
 	}

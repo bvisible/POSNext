@@ -1,5 +1,10 @@
 from pos_next.utils import get_build_version
 
+#//// Neoffice — ERPNext v16 ships coupon_code natively on Sales Invoice, v15 does not, and a
+#//// fixture recreating it as a Custom Field aborts the migration with a ValidationError. The
+#//// ERPNext package is probed on disk (importlib, because __file__ here resolves inside the app)
+#//// so the field is only declared on v15. Drop this once the fleet is on v16 (efe964ae +
+#//// 5846bd04, 2026-02-18; restored by f0c960ff, 2026-03-21).
 # //// restore hooks.py and custom_field.json with all coupon/gift card fiel… — f0c960f + 82b2493 (+1 more)
 
 def _has_native_coupon_code_field():
@@ -23,6 +28,10 @@ def _has_native_coupon_code_field():
 
 
 app_name = "pos_next"
+#//// Neoffice — the fork is sold as Neopos; app_title is what the user reads in the app list, the
+#//// switcher and the browser tab. app_name stays pos_next: it is the module path, and renaming
+#//// it would break every import and every DocType module reference (771950bd, 2026-04-02
+#//// "rebrand: rename POS Next to Neopos").
 # //// rebrand: rename POS Next to Neopos — 771950b
 app_title = "Neopos"
 app_publisher = "BrainWise"
@@ -33,6 +42,10 @@ app_license = "agpl-3.0"
 # Apps
 # ------------------
 
+#//// Neoffice — upstream talks to payment providers itself. Neoffice routes every card / TWINT
+#//// payment through the unified `payments` app (Provider x Channel x Driver, ADR-001), so that
+#//// app is a hard dependency: without it pos_next.api.payments has nothing to call (9ff7305f,
+#//// 2026-05-13 "Phase 3 — wire POSNext into unified Payments app").
 # //// Phase 3 — wire POSNext into unified Payments app — 9ff7305
 # The unified payments app provides the Provider × Channel × Driver layer that
 # POSNext uses via `pos_next.api.payments.*` (see ADR-001 in
@@ -153,6 +166,10 @@ _custom_field_names = [
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
 
+#//// Neoffice — the receipt Print Format is "Neopos Receipt": a Print Format's name IS its id, so
+#//// the rebrand had to rename the document itself (771950bd, 2026-04-02). Menu Badge and Menu
+#//// Design Template are doctypes of the restaurant menu-PDF generator, which has no upstream
+#//// equivalent (b6e757dd, 2026-03-26 "add menu PDF generator with badges").
 fixtures = [
 	# //// add custom POS print format with discount display — eca6f13 + f0c960f (+5 more)
 	{
@@ -273,6 +290,12 @@ doc_events = {
 		#//// that crashed or went offline left tables stuck (458d81a9 2026-03-20, restored by
 		#//// f0c960ff 2026-03-21).
 		"on_update": "pos_next.api.restaurant.on_invoice_update",
+		#//// Neoffice — everything booked on submit except the stock event is ours: ERPNext's
+		#//// coupon usage counter (coupons moved onto the native Coupon Code — 9bc096de,
+		#//// 2026-02-05), loyalty converted into wallet balance, gift cards issued and spent, and
+		#//// the restaurant table released. Each is a side effect of a sale upstream never had to
+		#//// book (458d81a9 2026-03-20 for the restaurant side; the whole list restored by
+		#//// f0c960ff, 2026-03-21).
 		"on_submit": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_submit",
 			"pos_next.realtime_events.emit_stock_update_event",
@@ -313,6 +336,10 @@ doc_events = {
 	"Promotional Scheme": {
 		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"
 	},
+	#//// Neoffice — restaurant mode: a Restaurant Card (the menu shown to guests) and the opening
+	#//// hours are edited at the desk but read by the tills and by the public menu page, so a
+	#//// change has to reach them without a reload — hence the realtime emitters, rename included
+	#//// (34ee11a8, 2026-03-25 "merge all restaurant enhancements").
 	# //// merge all restaurant enhancements - station groups, realtime cards, shift closing — 34ee11a
 	"Restaurant Card": {
 		"on_update": "pos_next.realtime_events.emit_card_updated_event",
@@ -343,6 +370,11 @@ scheduler_events = {
 		"pos_next.tasks.detect_uncollected_payments.detect_uncollected_payments",
 	],
 	"daily": [
+		#//// Neoffice — a deletion:
+		#//// "pos_next.tasks.branding_monitor.validate_all_active_sessions" was the second entry
+		#//// of this daily list and went with the BrainWise Branding doctype (see the block above
+		#//// scheduler_events for the why). Only cleanup_expired_promotions is left (458d81a9,
+		#//// 2026-03-20).
 		# //// add support for standalone pricing rules in promotions — 1ed8d44
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 	],

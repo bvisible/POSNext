@@ -2,6 +2,10 @@
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
+#//// Neoffice — `os` is imported for get_supported_locales(), which lists the languages by
+#//// scanning locale/*.po. Upstream hard-coded a default set of {'ar', 'en'} and hid the rest,
+#//// which is wrong for a fork whose translations are PO files (RULE: PO only, never CSV): an
+#//// empty allowed_locales now means "every language actually shipped" (c081f418, 2026-01-12).
 # //// show all languages when allowed_locales is empty — c081f41
 import os
 import frappe

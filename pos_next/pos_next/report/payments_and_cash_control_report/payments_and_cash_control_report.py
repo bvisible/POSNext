@@ -70,6 +70,10 @@ def get_columns(payment_methods):
 			"fieldtype": "Int",
 			"width": 100
 		},
+		#//// Neoffice — three columns the fork needs to reconcile a drawer: Invoice Collections
+		#//// (payments taken at the till on invoices raised elsewhere) and Cash In / Cash Out
+		#//// (the Journal Entries posted from the till). Without them the report's expected cash
+		#//// never matched the counted cash (024d87bb, 2026-04-12).
 		# //// add Invoice Collections, Cash In/Out columns + translate statuses — 024d87b
 		{
 			"fieldname": "invoice_collections",

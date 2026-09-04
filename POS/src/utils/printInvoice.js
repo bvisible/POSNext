@@ -8,6 +8,10 @@ import { printHTML as qzPrintHTML } from "@/utils/qzTray"
 //// use frappe-ui call instead of window.frappe.call in payment driver — cb23e1a8
 const log = logger.create("PrintInvoice")
 
+//// Neoffice — the receipt Print Format was renamed with the product: upstream's default
+//// is "POS Next Receipt", ours is "Neopos Receipt", and a migration patch renames the
+//// existing doc on every instance so this constant keeps resolving (771950bd,
+//// 2026-04-02 "rebrand: rename POS Next to Neopos").
 //// rebrand: rename POS Next to Neopos — 771950b
 const DEFAULT_PRINT_FORMAT = "Neopos Receipt"
 
@@ -298,6 +302,8 @@ async function resolvePrintSettings(posProfile, printFormat, letterhead) {
  * The page includes trigger_print=1 so the OS print dialog appears automatically.
  * Falls back to the hardcoded receipt template if the popup is blocked.
  */
+//// Neoffice — Biome reformat only: the printInvoice signature exploded onto one
+//// parameter per line (458d81a9). Same defaults, same body.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export async function printInvoice(
 	invoiceData,
@@ -520,6 +526,12 @@ export function printInvoiceCustom(invoiceData) {
 	flagOfflineInvoicePrinted(invoiceData?.name)
 	return true
 }
+//// Neoffice — added function, no upstream equivalent. Upstream POSNext is retail: a
+//// ticket is printed once, at payment. A restaurant hands the table a provisional bill
+//// first, so this prints the same 80 mm layout marked "THIS IS NOT A RECEIPT", from a
+//// button placed between Valider and Payer in table mode (71050faf, 2026-03-25 "add
+//// provisional ticket print button in restaurant table view"; d3ca6959 the same day
+//// moved and reworded the button; 7224d94c dropped the BrainWise footer from it).
 //// add provisional ticket print button in restaurant table view — 71050fa + d3ca695 (+1 more)
 
 // ============================================================================

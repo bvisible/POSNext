@@ -2,6 +2,12 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream applies a coupon: a percentage or an amount off the subtotal. A gift
+  //// card is different money — already paid, spendable over several visits — so this dialog
+  //// also lists the customer's cards with their balance, caps the discount at the net total
+  //// AFTER pricing rules (capping on the subtotal over-credited the card and the server then
+  //// refused the invoice) and shows what stays on the card (ce505902, 2026-01-12; 8e06bb9c,
+  //// 2026-01-16 "calculate discount on net total after pricing rules").
   //// implement gift card API, splitting logic, and frontend components — ce50590 + 458d81a (+1 more)
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 8e06bb9
   //// calculate discount on net total after pricing rules — 8e06bb9 + 3890e67
@@ -125,6 +131,8 @@
 						<!-- //// Neoffice — a gift card is not a coupon to the customer: it is money already -->
 						<!-- //// paid. Both confirmations are worded per kind so what the cashier says at the -->
 						<!-- //// counter matches what actually happened (ce505902, 2026-01-12). -->
+						<!-- //// Neoffice — the heading below is worded per kind, gift card or coupon; see the note -->
+						<!-- //// just above (ce505902, 2026-01-12). -->
 						<h4 class="text-sm font-bold text-green-900">
 							{{ appliedDiscount.isGiftCard ? __('Gift Card Applied!') : __('Coupon Applied Successfully!') }}
 						</h4>

@@ -63,6 +63,12 @@ repos:
                 pos_next/public/js/lib/.*
             )$
 
+  #//// Neoffice — added hook, no upstream equivalent. This fork diverges from
+  #//// BrainWise-DEV/POSNext by ~105k lines and is re-merged with it, so every change to a
+  #//// tracked file must carry a `////` marker saying why. The hook refuses a commit that
+  #//// touches a file listed in .bvisible-tracked-files without adding one; the
+  #//// `Annotate: skip` git trailer is the official bypass for trivial commits (0e92ed6a,
+  #//// 2026-05-19 "chore(annotations): pre-commit hook + CLAUDE.md governance section").
   - repo: local
     hooks:
       - id: check-fork-annotations

@@ -1,3 +1,7 @@
+//// Neoffice — Biome reformat only: the draftManager import exploded onto one name per
+//// line (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+//// formatting"). The real divergence of this file is the restaurant table and
+//// KDS state carried on a parked ticket, marked further down.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import {
 	deleteDraft,

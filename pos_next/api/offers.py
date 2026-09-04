@@ -527,6 +527,11 @@ def _get_standalone_pricing_rule_offers(company: str, date: str) -> List[Offer]:
 # Coupon Functions
 # ============================================================================
 
+#//// Neoffice — gift cards are ERPNext Coupon Code documents flagged with our pos_next_gift_card
+#//// Custom Field, not upstream's own POS Coupon doctype which the ERP knew nothing about. They
+#//// are bearer cards, so a card with no customer is valid for anyone; balance and validity are
+#//// read from the Coupon Code joined to its Pricing Rule (ce505902 2026-01-12 "implement gift
+#//// card API, splitting logic"; e34a269a 2026-01-13).
 @frappe.whitelist()
 # //// use ERPNext Coupon Code instead of POS Coupon — e34a269 + ce50590 (+3 more)
 def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
@@ -573,6 +578,10 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 		if card.used and card.maximum_use and card.used >= card.maximum_use:
 			continue
 
+		#//// Neoffice — a gift card is spent progressively, so what makes it usable is the
+		#//// REMAINING balance in gift_card_amount (a Custom Field of ours) and not just the
+		#//// usage counter upstream checked. A fully spent card is dropped here (ce505902
+		#//// 2026-01-12, e34a269a 2026-01-13).
 		# //// implement gift card API, splitting logic, and frontend components — ce50590 + e34a269
 		# Check balance
 		balance = flt(card.gift_card_amount)

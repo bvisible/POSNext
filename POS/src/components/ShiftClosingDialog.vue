@@ -2,6 +2,14 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream closes a retail till: count each Mode of Payment, submit, done.
+  //// Ours also settles a Swiss cash drawer, so this dialog gained the shift's cash in/out
+  //// movements and a withdrawal amount that books a Journal Entry from the configured
+  //// template, leaving the rest as the next shift's float (6c598630 + 5783eb27,
+  //// 2026-03-28). It was then rebuilt for a 10-inch tablet: compact metric cards, capped
+  //// scrolling ticket list, one row per payment method, a blind-count entry mode, a live
+  //// per-keystroke variance snapped to the cent, and __() around the labels upstream left
+  //// hardcoded in English (7d2771d4, ede9beb4, 4ce4bed2, 82ccf62b, 2026-07-09).
   //// cash in/out from POS using Journal Entry Templates — 6c59863 + 34ee11a (+1 more)
   //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 5783eb2
@@ -52,6 +60,8 @@
               <!-- //// push the reconciliation below the fold (7d2771d4, 2026-07-09). -->
               <div class="text-start bg-blue-50 border border-blue-200 rounded-lg p-2.5 md:p-3">
                 <div class="text-blue-600 text-xs uppercase font-medium mb-1">{{ __('Gross Sales') }}</div>
+                <!-- //// Neoffice — the Gross Sales figure: text-lg md:text-2xl down to text-base md:text-xl -->
+                <!-- //// plus truncate, per the card compaction noted above (7d2771d4, 2026-07-09). -->
                 <div class="text-base md:text-xl font-bold text-blue-900 mb-0.5 md:mb-1 truncate">{{ formatCurrency(grossSales) }}</div>
                 <div class="text-blue-600 text-xs">{{ __('{0} invoices', [closingData.sales_count || salesInvoiceCount]) }}</div>
               </div>
@@ -137,6 +147,8 @@
               <!-- //// px-6 py-3/py-4 becomes px-4 py-2.5. Layout only, no data change (7d2771d4, -->
               <!-- //// 2026-07-09 "compact shift-closing dialog, auto-fill zero methods, i18n"). -->
               <!-- Mobile Card View -->
+              <!-- //// Neoffice — the mobile ticket list gets its own capped height and scrollbar so a busy -->
+              <!-- //// shift cannot stretch the dialog past the Close button (7d2771d4, 2026-07-09). -->
               <div class="md:hidden divide-y divide-gray-200 max-h-56 overflow-y-auto">
                 <div v-for="(invoice, idx) in closingData.pos_transactions" :key="idx"
                      :class="['p-3', invoice.is_return ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50']">
@@ -412,6 +424,9 @@
             <!-- //// __('Expected') label (82ccf62b, 2026-07-09). -->
             <div class="p-3 md:p-4">
               <!-- ENTRY MODE: Simple blind input list (when hideExpectedAmount is enabled and not showing report) -->
+              <!-- //// Neoffice — entry mode has no upstream equivalent: when the profile hides expected -->
+              <!-- //// amounts the cashier counts blind, so this branch renders a bare list of methods with -->
+              <!-- //// no figure to anchor on (ede9beb4 + 7d2771d4, 2026-07-09). -->
               <div v-if="isInEntryMode" class="flex flex-col gap-2 md:gap-2.5">
                 <div
                   v-for="(payment, idx) in closingData.payment_reconciliation"
@@ -432,6 +447,11 @@
                       </label>
                     </div>
 
+                    <!-- //// Neoffice — a native input with @input replaces upstream's frappe-ui Input bound on -->
+                    <!-- //// @update:modelValue: the difference under the row has to follow every keystroke, not -->
+                    <!-- //// wait for a blur, or the cashier reads a stale variance (ede9beb4). @focus selects the -->
+                    <!-- //// content so the pre-filled 0 is typed over instead of appended to (2afb9f4c + -->
+                    <!-- //// 3cc8535f, 2026-07-09). -->
                     <!-- Live native input (updates on each keystroke, no blur needed) -->
                     <!-- //// select-all on focus so a pre-filled 0 is typed over, not appended -->
                     <input
@@ -452,6 +472,9 @@
                 </div>
               </div>
 
+              <!-- //// Neoffice — review mode: one compact row per Mode of Payment instead of upstream's -->
+              <!-- //// tall card, so five methods still fit above the Close button on a tablet (ede9beb4, -->
+              <!-- //// 2026-07-09 "compact closing dialog, live amount input, collapsed invoices"). -->
               <!-- REVIEW MODE: compact one-row cards (when not in entry mode) -->
               <!-- //// compact single-row reconciliation + live native input (no blur needed) -->
               <div v-else class="flex flex-col gap-2 md:gap-2.5">
@@ -725,6 +748,8 @@ import { usePOSSettingsStore } from "../stores/posSettings"
 //// per-method "Expected:" hint, whose msgid was HTML-entity-encoded and never resolved,
 //// so the label stayed English on a French till; it is a plain __('Expected') label now
 //// (82ccf62b, 2026-07-09 "translate the 'Expected:' label in closing reconciliation").
+//// Neoffice — the import deleted here is the TranslatedHTML named just above; the hint it
+//// rendered is a plain __('Expected') label now (82ccf62b, 2026-07-09).
 import { usePOSShiftStore } from "../stores/posShift"
 
 const props = defineProps({
@@ -765,6 +790,10 @@ const showSuccessReport = ref(false) // Track if shift is closed and showing rep
 //// how much cash the cashier takes out of the drawer at closing (5783eb27, 2026-03-28).
 const errorMessage = ref("") // User-friendly error message
 const showIdleWarning = ref(false)
+//// Neoffice — how much cash the cashier takes out of the drawer at closing. Upstream has no
+//// withdrawal at all: the count is the count. Ours books a Journal Entry from the template
+//// set in POS Settings and records what stays in the till for the next opening (5783eb27,
+//// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 const cashWithdrawalAmount = ref(0)
 let _idleWarningTimer = null
 
@@ -824,6 +853,9 @@ async function loadClosingData() {
 				const savedAmount = Number.parseFloat(payment.closing_amount) || null
 				//// Neoffice — closing_amount and _touched below carry the autoZero rule explained just
 				//// above (7d2771d4 + c91af424, 2026-07-09).
+				//// Neoffice — savedAmount is deliberately null and not 0: a 0 would read as a counted zero
+				//// and paint a deficit before the cashier has typed anything (c91af424, 2026-07-09 "start
+				//// counted payment methods with an empty amount field").
 				return reactive({
 					...payment,
 					closing_amount: autoZero ? 0 : savedAmount,
@@ -840,6 +872,9 @@ async function loadClosingData() {
 
 		closingData.value = data
 
+		//// Neoffice — upstream opens the closing dialog with the ticket list expanded, which on a
+		//// busy shift pushes the reconciliation and the Close button off a tablet screen. It starts
+		//// collapsed and the chevron opens it (ede9beb4, 2026-07-09).
 		//// keep the invoice list collapsed by default (less scrolling)
 		// The cashier can expand it via the chevron when they need the detail.
 		showInvoiceDetails.value = false
@@ -854,6 +889,10 @@ async function loadClosingData() {
 	}
 }
 
+//// Neoffice — upstream subtracts the two floats directly, so 86.05 - 86.05 came out at
+//// -1.4e-14 and the row showed a red "Short 0.00" that no recount could clear. roundCents
+//// snaps the difference to the cent and kills the negative zero (4ce4bed2, 2026-07-09
+//// "snap closing reconciliation difference to the cent").
 //// round to cents & kill -0 so float residue isn't a phantom deficit
 // e.g. 86.05 - 86.05 === -1.4e-14 which rendered as a red "Short 0.00" and
 // blocked a clean balance. Snap the difference to the nearest cent instead.
@@ -878,6 +917,10 @@ function updateClosingAmount(payment, value) {
 	calculateDifference(payment)
 }
 
+//// Neoffice — the amount fields are pre-filled, so a focus that leaves the caret in place
+//// makes the cashier type 5 onto 0 and count 05. The content is selected on focus, deferred
+//// one tick because on a mouse click the caret is placed on mouseup, after focus, which
+//// would wipe a synchronous select() (2afb9f4c + 3cc8535f, 2026-07-09).
 //// select the field content on focus so a pre-filled 0 is typed over.
 // Deferred to the next tick: on a mouse click the caret is placed on mouseup
 // (after focus), which would clear a synchronous select() — the timeout runs
@@ -994,6 +1037,7 @@ const isInEntryMode = computed(
 //// 2026-07-09 "compact shift-closing dialog, auto-fill zero methods, i18n").
 const reconciliationMessage = computed(() => {
 	if (isInEntryMode.value) {
+		//// Neoffice — the entry-mode hint, __() wrapped like the two below (7d2771d4, 2026-07-09).
 		return __("Enter the actual counted amounts for each payment method")
 	}
 	if (showSuccessReport.value && hideExpectedAmount.value) {

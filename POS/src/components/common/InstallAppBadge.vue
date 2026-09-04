@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — this PWA install banner is where upstream's product name and brand colour
+  //// reached the till: it offered to "Install POSNext" in indigo #4F46E5. The fork ships the
+  //// till as Neopos, and the Neoffice Design System has a single saturated hue, clay, so the
+  //// wording and both hardcoded indigo hexes changed (771950bd, 2026-04-02 "rebrand: rename
+  //// POS Next to Neopos"; e4769383, 2026-06-14 clay retheme).
   //// rebrand: rename POS Next to Neopos — 771950b
 -->
 <template>

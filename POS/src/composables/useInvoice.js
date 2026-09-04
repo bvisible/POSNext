@@ -24,12 +24,23 @@ export function useInvoice() {
 	const invoiceItems = ref([])
 	const customer = ref(null)
 	const payments = ref([])
+	//// Neoffice — the invoice being built has to remember which restaurant table it belongs to.
+	//// Upstream POSNext is a retail POS with no table service, and the field was only ever set by
+	//// update_invoice (Valider), never in the submit payload — so the backend could not release
+	//// the table, which stayed Occupied after the ticket was paid (45435e47, 2026-03-24 "pass
+	//// restaurant_table to submit_invoice via useInvoice").
 	//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 	const restaurantTable = ref(null)
 	const salesTeam = ref([]) // Sales team for Sales Invoice
 	const posProfile = ref(null)
 	const posOpeningShift = ref(null) // POS Opening Shift name
 	const additionalDiscount = ref(0)
+	//// Neoffice — two refs upstream does not have. An ERPNext Pricing Rule with
+	//// apply_on=Transaction returns a header-level discount; writing it into additionalDiscount
+	//// would have inflated posa_gift_card_amount_used and disturbed the coupon watcher, so the
+	//// rule amount is kept apart, with a per-ticket flag letting the cashier override it
+	//// (44ea4e9a, 2026-07-09 "apply transaction-level rule discount in the cart"; 4d61216b, same
+	//// day, adds the checkbox that sets the flag).
 	//// transaction-level rule header discount (feature b) — kept separate from
 	// additionalDiscount so coupons/manual/gift-card and the coupon watcher stay
 	// untouched. effectiveHeaderDiscount (below) merges them for totals + payload.
@@ -136,6 +147,10 @@ export function useInvoice() {
 					price_list_rate: itemDetails.price_list_rate,
 				}
 			} catch (err) {
+				//// Neoffice — Biome reformat only, no behaviour change: upstream's one-line log.warn was
+				//// re-wrapped to 80 columns by the formatter pass (458d81a9, 2026-03-20 "remove BrainWise
+				//// branding, add restaurant mode, and code formatting"). At the next upstream merge take
+				//// their file and re-run `biome check --write` instead of resolving this by hand.
 				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 56877dc (+3 more)
 				log.warn(
 					"Server UOM pricing unavailable, resolving from IndexedDB",
@@ -215,6 +230,12 @@ export function useInvoice() {
 		const rule = ruleHeaderDiscount.value || 0
 		return rule > 0 ? rule : additionalDiscount.value || 0
 	})
+	//// Neoffice — totalDiscount now nets the EFFECTIVE header discount (transaction-rule amount,
+	//// else coupon/manual) instead of additionalDiscount alone (44ea4e9a, 2026-07-09), and the
+	//// computed added right below exposes the net total AFTER item-level pricing rules: a gift
+	//// card capped on the raw subtotal could exceed the already discounted price and ERPNext
+	//// refused the invoice (8e06bb9c, 2026-01-16 "calculate discount on net total after pricing
+	//// rules").
 	const totalDiscount = computed(() =>
 		roundCurrency(_cachedTotalDiscount.value + effectiveHeaderDiscount.value),
 	)
@@ -257,6 +278,12 @@ export function useInvoice() {
 	// Actions
 	function addItem(item, quantity = 1) {
 		const itemUom = item.uom || item.stock_uom
+		//// Neoffice — upstream addItem merges a new line into an existing one with the same item_code
+		//// + UOM. In restaurant mode the same dish ordered twice with different modifiers or a
+		//// different instruction is deliberately two lines, so merging destroyed one of the two
+		//// orders. A row carrying modifiers/instructions now bypasses the dedup, and the dedup itself
+		//// only matches rows that carry none (f1e01ff1, 2026-03-24 "prevent merging items with
+		//// different modifiers"; the re-wrap is the Biome pass, 3e25c3b6, 2026-03-28).
 		//// linter formatting — 3e25c3b + f1e01ff
 		// In restaurant mode, items with modifiers/instructions are always separate lines
 		const hasModifiers =
@@ -320,6 +347,10 @@ export function useInvoice() {
 				amount: quantity * (item.rate || item.price_list_rate || 0),
 				stock_qty: item.stock_qty || 0,
 				image: item.image,
+				//// Neoffice — a restaurant card item can be given a colour instead of a photo, and the cart
+				//// thumbnail paints that colour rather than upstream's grey placeholder, so the value has to
+				//// ride from the card click into the cart line (983130d3, 2026-03-25 "cart color thumbnails,
+				//// image upload, and card item color propagation").
 				//// cart color thumbnails, image upload, and card item color propagation — 983130d
 				custom_color: item.custom_color,
 				uom: item.uom || item.stock_uom,
@@ -342,6 +373,12 @@ export function useInvoice() {
 				is_stock_item: item.is_stock_item ?? 1,
 				is_bundle: item.is_bundle || false,
 				allow_negative_stock: item.allow_negative_stock || 0,
+				//// Neoffice — restaurant fields carried on the cart line itself. Upstream has no table
+				//// service, so a line reloaded from a table's server draft lost its modifiers, its free-text
+				//// instruction, the station that has to cook it and the KDS state it had already reached — a
+				//// dish already marked Ready fell back to Pending when the table was re-validated (2f0b4b8f,
+				//// 2026-03-21; f3e620c2, 2026-03-22 "preserve item kds_status on re-validation"; the modifier
+				//// fields come from 4df0caf1, 2026-03-21, Phase 4A).
 				//// table draft loading fails silently due to async clearCart race — 2f0b4b8 + f3e620c (+1 more)
 				// Restaurant fields
 				posa_special_instructions: item.posa_special_instructions || "",
@@ -372,6 +409,12 @@ export function useInvoice() {
 	 *                            If provided, only removes the item with matching item_code AND uom.
 	 *                            If null, removes the first item matching item_code.
 	 */
+	//// Neoffice — the signature changed: removeItem(itemCode) became removeItem(itemOrCode), so a
+	//// caller can hand over the cart ROW itself. Upstream removed by item_code and filtered every
+	//// matching row out of the array, deleting all the identical dishes at once — data loss as
+	//// soon as the same item sits twice with different modifiers (7e1376a3, 2026-03-31 "modifier
+	//// dialog opens correct item (findLast), remove deletes only one item (by ref)"). The JSDoc
+	//// just above still describes upstream's string-only itemCode parameter.
 	//// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a
 	function removeItem(itemOrCode, uom = null) {
 		// Accept either an item object reference or item_code string
@@ -399,6 +442,11 @@ export function useInvoice() {
 			//// optimize invoice totals and item catalog loading — 368754f
 			// Update cache incrementally (subtract removed item values)
 			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1
+			//// Neoffice — Biome reformat only, no behaviour change: upstream's one-line ternary re-wrapped
+			//// and its redundant parentheses dropped (458d81a9, 2026-03-20). The effective-rate logic
+			//// itself is upstream's (368754f3, 2025-10-12, before the fork point) — the legacy line above
+			//// names that commit but does not mark a divergence. Re-run `biome check --write` on
+			//// upstream's file at the next merge rather than resolving this hunk by hand.
 			const effectiveRate = isManuallyEdited
 				? itemToRemove.rate
 				: itemToRemove.price_list_rate || itemToRemove.rate
@@ -1064,6 +1112,10 @@ export function useInvoice() {
 			customer: customer.value?.name || customer.value,
 			items: formatItemsForSubmission(rawItems),
 			payments: invoicePayments,
+			//// Neoffice — the draft payload sends ERPNext's own discount_amount, not upstream's
+			//// additional_discount_amount: with the wrong field the gift-card / coupon reduction never
+			//// reached the document (b657e65f, 2026-01-30). The value is the EFFECTIVE header discount, so
+			//// a transaction-rule discount reaches the draft as well (44ea4e9a, 2026-07-09).
 			//// use discount_amount instead of additional_discount_amount for gift ca… — b657e65
 			// Document-level discount for coupons and gift cards
 			discount_amount: effectiveHeaderDiscount.value || 0,
@@ -1095,6 +1147,11 @@ export function useInvoice() {
 		targetDoctype = "Sales Invoice",
 		deliveryDate = null,
 		writeOffAmount = 0,
+		//// Neoffice — two parameters upstream's submitInvoice does not take. Loyalty points redeemed
+		//// in the payment dialog and the restaurant tip typed on the terminal are both decided at
+		//// payment time, so they have to travel down to submit_invoice or the money is collected and
+		//// never posted (104959e6, 2026-03-19 "native loyalty points redemption in POS payment
+		//// dialog"; e9d1622a, 2026-03-23 "pass tip_amount through full payment chain").
 		//// native loyalty points redemption in POS payment dialog — 104959e + e9d1622
 		loyaltyData = null,
 		tipAmount = 0,
@@ -1219,6 +1276,12 @@ export function useInvoice() {
 
 				try {
 					const result = await submitInvoiceResource.submit({
+						//// Neoffice — submit_invoice is handed the ORIGINAL cart payload plus the draft's name, not
+						//// the draft document update_invoice returned. ERPNext lists pricing_rules in
+						//// force_item_fields, so set_missing_item_details() had already wiped the item discounts out
+						//// of that draft and a submitted invoice lost every pricing-rule reduction (e62e69e5,
+						//// 2026-04-06 "preserve pricing rule discounts on submitted invoices"; the backend re-patches
+						//// the discount fields after submit).
 						//// preserve pricing rule discounts on submitted invoices — e62e69e
 						invoice: { ...invoiceData, name: invoiceDoc.name },
 						data: submitData,
@@ -1251,6 +1314,10 @@ export function useInvoice() {
 						//// every key, the stringified messages) was removed here on PR #96 review feedback; only
 						//// the properties re-attached to the thrown error remain, so the caller still gets the
 						//// server message (41a70bb7, 2026-01-14 "address PR #96 review feedback").
+						//// Neoffice — (continues the note above) what was removed here is debug output only: the error
+						//// object handed back to the caller keeps every property upstream attached, so the server
+						//// message still reaches the cashier (41a70bb7, 2026-01-14 "address PR #96 review feedback" —
+						//// "Remove debug console.log/trace statements from useInvoice.js").
 						const resourceError = submitInvoiceResource.error
 
 						// Attach all resource error properties to the error
@@ -1305,6 +1372,10 @@ export function useInvoice() {
 			}
 		} catch (error) {
 			//// auto-load default customer from POS Profile — ecd66b4
+			//// Neoffice — the console.log that reported "no default customer" was removed: the catch is
+			//// deliberately silent (a POS Profile with no default customer is normal) and the line fired
+			//// on every POS boot for those profiles (41a70bb7, 2026-01-14 "address PR #96 review
+			//// feedback"). The surrounding auto-load is upstream's (ecd66b4, before the fork point).
 			// Silently fail - default customer is optional
 		}
 	}
@@ -1418,6 +1489,11 @@ export function useInvoice() {
 		rebuildIncrementalCache()
 	}
 
+	//// Neoffice — added function, no upstream equivalent. Reloading a table's order from the
+	//// server has to reproduce the lines exactly as the server holds them; going through addItem
+	//// would merge two identical dishes the guests ordered separately and would drop the
+	//// modifiers, preparation station and KDS status the server returns (707a330c, 2026-04-01
+	//// "replaceAllItems bypasses addItem dedup, get_table_order returns kds_status+image").
 	//// replaceAllItems bypasses addItem dedup, get_table_order returns kds_s… — 707a330
 	/**
 	 * Replace all cart items at once from server data.

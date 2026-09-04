@@ -124,6 +124,9 @@ export const useBootstrapStore = defineStore("bootstrap", () => {
 	 * @returns {{ currency: number, float: number, rounding_method: string, number_format: string }}
 	 */
 	function getPreloadedPrecision() {
+		//// Neoffice — Biome reformat only: the returned expression wrapped in parentheses so the
+		//// fallback object could be re-indented. Same defaults (458d81a9, 2026-03-20 "remove BrainWise
+		//// branding, add restaurant mode, and code formatting").
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		return (
 			data.value?.precision || {

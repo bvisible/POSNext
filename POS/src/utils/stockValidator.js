@@ -19,6 +19,9 @@ export function shouldValidateItemStock(item) {
 	if (item.is_stock_item === 0 || item.is_stock_item === false) return false
 
 	// Item-level allow_negative_stock bypasses validation
+	//// Neoffice — Biome reformat only: the allow_negative_stock guard's `return false` moved
+	//// onto its own line (458d81a9). Same condition; this file's real divergence is the
+	//// translated shortage messages further down (ef2cbcfd).
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	if (item.allow_negative_stock === 1 || item.allow_negative_stock === true)
 		return false

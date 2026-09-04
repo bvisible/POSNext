@@ -766,6 +766,12 @@
 							<!-- ////   order needs besides paying: fire the order (8aa35c29, c7f6932c), print -->
 							<!-- ////   the pre-payment ticket (71050faf, 2026-03-25) and edit modifiers -->
 							<!-- ////   (4df0caf1, 2026-03-21). -->
+							<!-- //// Neoffice — ref="invoiceCartRef" on the tag below: the page needs a handle on the -->
+							<!-- //// cart so it can open the line-edit dialog itself for a zero-price item — a gift card -->
+							<!-- //// whose amount the cashier types in at the till (5dddc528, 2026-01-14 "auto-open edit -->
+							<!-- //// dialog for zero-price items (gift cards)"). The other divergences carried by this -->
+							<!-- //// tag are listed just above; none can be marked in place, HTML allows no comment -->
+							<!-- //// between attributes. -->
 							<InvoiceCart
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
@@ -904,6 +910,10 @@
 		<!-- //// remainder and not for the whole bill (214125e5, 2026-03-30 "show -->
 		<!-- //// remaining to collect in cart + payment dialog accounts for guest -->
 		<!-- //// payments"). -->
+		<!-- //// Neoffice — :grand-total below is the CHF 0.05-rounded total, not upstream's raw -->
+		<!-- //// grandTotal: what the cashier tenders has to match what the receipt prints, and the -->
+		<!-- //// difference is shown as its own rounding line (4fdb5df4, 2026-04-04 "rounding total, -->
+		<!-- //// tips visibility, cash quick amounts"). -->
 		<PaymentDialog
 			v-model="uiStore.showPaymentDialog"
 			:grand-total="cartStore.roundedGrandTotal"
@@ -1112,6 +1122,11 @@
 				@customer-updated="handleCustomerUpdated"
 			/>
 
+			<!-- //// Neoffice — added dialog, no upstream equivalent. The cart pencil used to reopen the -->
+			<!-- //// small quick-create form in edit mode; this one is built from the Customer doctype -->
+			<!-- //// meta, so it picks up custom fields on its own, and it stays a dialog inside the SPA — -->
+			<!-- //// which is what the PWA / tablet till needs (82fbfd9e, 2026-07-10 "full meta-driven -->
+			<!-- //// customer edit dialog (stays in the POS)"). -->
 			<!-- //// Full meta-driven Customer edit dialog (pencil icon) -->
 			<EditCustomerDialog
 				v-model="showEditCustomerDialog"
@@ -3570,6 +3585,11 @@ function handleCustomerSelected(selectedCustomer) {
 
 		if (pendingPaymentAfterCustomer.value) {
 			pendingPaymentAfterCustomer.value = false;
+			//// Neoffice — resuming a payment that was parked to pick a customer re-enters
+			//// handleProceedToPayment instead of opening the payment dialog directly, so the Sales Order
+			//// guard runs again: picking the default / walk-in customer a second time must re-prompt
+			//// rather than slip through (f9e41abf, 2026-05-29 "require a specific customer for POS
+			//// orders").
 			//// re-run guards (incl. Sales Order customer check) before opening payment
 			handleProceedToPayment();
 		}
@@ -3587,6 +3607,9 @@ function handleCreateCustomer(searchValue) {
 //// pencil opens the full meta-driven Customer edit dialog (not the small form)
 function handleEditCustomer(customer) {
 	editCustomer.value = customer; // Set customer for edit mode
+	//// Neoffice — the pencil now opens the meta-driven EditCustomerDialog instead of reopening
+	//// the quick-create form in edit mode; that small form has no tabs and shows no custom fields
+	//// (82fbfd9e, 2026-07-10 "full meta-driven customer edit dialog (stays in the POS)").
 	showEditCustomerDialog.value = true;
 }
 
@@ -3596,6 +3619,12 @@ function handleProceedToPayment() {
 		return;
 	}
 
+	//// Neoffice — the Sales Order guard added just below: an order is fulfilled later, for a
+	//// named customer, so creating one under the POS Profile's default / walk-in customer
+	//// (Passage) is meaningless — and upstream lets it through. The cashier is warned, the
+	//// default customer cleared and the search dialog opened; the resume path above re-enters
+	//// this function so re-picking the default re-prompts (f9e41abf, 2026-05-29 "require a
+	//// specific customer for POS orders").
 	const customerValue = cartStore.customer?.name || cartStore.customer;
 
 	//// block Sales Order for the POS default/walk-in customer (e.g. Passage)
@@ -3680,6 +3709,10 @@ async function handlePaymentCompleted(paymentData) {
 			//// 2026-03-21 "replace all direct cartStore property assignments with $patch").
 			cartStore.$patch({ salesTeam: paymentData.sales_team });
 		} else {
+			//// Neoffice — $patch on the else branch too: a direct `cartStore.salesTeam = []` becomes an
+			//// assignment to a const binding once the bundle is minified, so it threw at the till while
+			//// dev mode worked (dd33c2f6, 2026-03-21 "replace all direct cartStore property assignments
+			//// with $patch").
 			cartStore.$patch({ salesTeam: [] });
 		}
 
@@ -3738,6 +3771,12 @@ async function handlePaymentCompleted(paymentData) {
 				total_tax: cartStore.totalTax,
 				total_discount: cartStore.totalDiscount,
 				write_off_amount: paymentData.write_off_amount || 0,
+				//// Neoffice — the offline invoice carries the EFFECTIVE header discount (transaction-rule
+				//// amount, else coupon/manual) in ERPNext's discount_amount with apply_discount_on set, while
+				//// posa_gift_card_amount_used keeps the coupon/manual part alone so a rule discount never
+				//// inflates the gift-card balance consumed; posa_coupon_code is upper-cased to match the
+				//// native Coupon Code we migrated to (b657e65f, 2026-01-30; 56877dce, 2026-01-14; 44ea4e9a,
+				//// 2026-07-09 "apply transaction-level rule discount in the cart").
 				//// use the effective header discount (rule/coupon/manual) — feature b
 				// Document-level discount: transaction-rule discount OR coupon/manual
 				// (effectiveHeaderDiscount merges them). Gift-card field stays the

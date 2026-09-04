@@ -250,6 +250,9 @@ export const useInvoiceFiltersStore = defineStore("invoiceFilters", () => {
 			return `${formatDateDisplay(dateFrom.value)} - ${formatDateDisplay(dateTo.value)}`
 		}
 		if (dateFrom.value) {
+			//// Neoffice — Biome reformat only: single quotes rewritten to double inside __(). Same
+			//// msgid, so the French PO entry is untouched (458d81a9); the block just below carries
+			//// the merge instruction for the rest of the file.
 			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			return __("From {0}", [formatDateDisplay(dateFrom.value)])
 		}

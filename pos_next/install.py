@@ -12,6 +12,10 @@ This module handles post-fixture tasks like setting defaults and clearing cache.
 """
 import frappe
 import logging
+#//// Neoffice — imported for the v15 / v16 split: _has_native_coupon_code_field() decides whether
+#//// this app must create the Sales Invoice `coupon_code` Custom Field itself. It cannot ship in
+#//// the fixture JSON — Frappe's import_doc reads the whole file and ignores the hooks.py
+#//// filters, so a v16 site aborted the migration (3571c411, 2026-02-18).
 # //// remove coupon_code from JSON, create programmatically for v15 — 3571c41
 from pos_next.hooks import _has_native_coupon_code_field
 
@@ -53,6 +57,11 @@ def after_install():
 def after_migrate():
 	"""Hook that runs after bench migrate"""
 	try:
+		#//// Neoffice — ERPNext is in required_apps, so its doctype sync runs AFTER this app's
+		#//// during `bench migrate` and its Single "POS Settings" lands on top of ours (non-
+		#//// Single, holding the per-profile barcode_rules table). The reclaim belongs in
+		#//// after_migrate and not in a one-shot patch, because the clobbering repeats at every
+		#//// migrate (682184b0, 2026-07-09).
 		# //// align w/ upstream weighted-barcode: reclaim POS Settings — 83cb95dc
 		# Reclaim POS Settings if ERPNext re-imported its Single on top of ours.
 		# Must run in after_migrate (not a one-shot patch) because ERPNext's
@@ -80,6 +89,10 @@ def after_migrate():
 		raise
 
 
+#//// Neoffice — added function, no upstream equivalent: upstream never had two apps fighting over
+#//// this doctype. Idempotent by design — it exits untouched when "POS Settings" already belongs
+#//// to the POS Next module, which is the state of every instance today (682184b0, 2026-07-09
+#//// "align weighted-barcode resolver with upstream + dialog nextTick").
 def reclaim_pos_settings_doctype(quiet=False):
 	"""Reclaim the `POS Settings` DocType from ERPNext.
 

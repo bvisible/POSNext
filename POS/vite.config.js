@@ -19,6 +19,9 @@ function posNextBuildVersionPlugin(version) {
 		name: "pos-next-build-version",
 		apply: "build",
 		async writeBundle() {
+			//// Neoffice — Biome reformat only: the path.resolve() call wrapped onto four lines
+			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+			//// formatting"). Same path.
 			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			const versionFile = path.resolve(
 				__dirname,
@@ -44,6 +47,7 @@ function posNextBuildVersionPlugin(version) {
 					//// upstream's file and re-run `biome check --write` instead of resolving the noise.
 					2,
 				),
+				//// Neoffice — the trailing comma announced in the block above: Biome only (458d81a9).
 				"utf8",
 			)
 			console.log(`\n✓ Build version written: ${version}`)
@@ -83,6 +87,9 @@ export default defineConfig({
 			registerType: "prompt",
 			includeAssets: ["favicon.png", "icon.svg", "icon-maskable.svg"],
 			manifest: {
+				//// Neoffice — PWA manifest name: upstream installs as "POSNext", the till is sold as
+				//// Neopos, and this is the label under the icon once a cashier adds it to the home
+				//// screen (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 				//// rebrand: rename POS Next to Neopos — 771950b
 				name: "Neopos",
 				short_name: "Neopos",
@@ -123,6 +130,13 @@ export default defineConfig({
 			workbox: {
 				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
 				maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 3 MB
+				//// Neoffice — added workbox options. Without skipWaiting/clientsClaim a new service
+				//// worker sits "waiting" until every till tab is closed, which on a shop floor is never,
+				//// so a deployed fix could stay unserved for days (fd65573b, 2026-03-30 "remove CSRF
+				//// header from guest calls + SW skipWaiting for instant updates"). NOTE: this worker's
+				//// scope is /assets/pos_next/pos/ while the till is served from /pos, so it never
+				//// controls the page — keeping the build fresh is setupTillAutoUpdate()'s job, not its
+				//// own (7648dbff, 2026-08-18).
 				//// remove CSRF header from guest calls + SW skipWaiting for instant upda… — fd65573
 				skipWaiting: true,
 				clientsClaim: true,

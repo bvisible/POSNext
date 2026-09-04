@@ -103,6 +103,9 @@ def remove_print_formats():
 		log_message("Removing print formats", level="info")
 
 		# List of print formats to remove
+		#//// Neoffice — the print format removed at uninstall is "Neopos Receipt": the rebrand
+		#//// renamed the document and a Print Format's name is its id, so uninstalling by the old
+		#//// name would leave it behind (771950bd, 2026-04-02).
 		print_formats = [
 			# //// rebrand: rename POS Next to Neopos — 771950b
 			"Neopos Receipt",
@@ -167,6 +170,9 @@ def reset_pos_profiles():
 		log_message("Resetting POS Profile configurations", level="info")
 
 		# Find POS Profiles using POS Next print format
+		#//// Neoffice — same rename on the other side: POS Profiles are found by the print_format
+		#//// value "Neopos Receipt" before it is cleared, so no profile is left pointing at a
+		#//// format that no longer exists (771950bd, 2026-04-02).
 		pos_profiles = frappe.get_all(
 			# //// add company-aware item filtering and improve installation system — 2ecd93c + 771950b
 			"POS Profile",

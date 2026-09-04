@@ -15,6 +15,12 @@
  */
 
 import { useToast } from "@/composables/useToast"
+//// Neoffice — added import. Upstream POSNext has no table service, so its sync store
+//// knows nothing about a dining room; ours preloads the restaurant tables alongside
+//// items and customers, because a till serving tables must keep them when the network
+//// drops. Guarded by restaurantStore.isEnabled so a retail terminal pays nothing for it
+//// — see the marked block further down (458d81a9, 2026-03-20 "remove BrainWise branding, add
+//// restaurant mode, and code formatting").
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { useRestaurantStore } from "@/stores/restaurant"
 import {

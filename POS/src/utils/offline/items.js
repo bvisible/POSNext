@@ -284,6 +284,7 @@ export const cacheCustomers = async (customers) => {
 //// query is untouched — note it is NOT the tokenized customer search, which lives in
 //// cache.js and offline.worker.js (d29af088).
 export const searchCachedCustomers = async (searchTerm, limit = 20) => {
+	//// Neoffice — Biome reformat only, as announced in the block just above (458d81a9).
 	try {
 		if (!searchTerm) {
 			return limit > 0

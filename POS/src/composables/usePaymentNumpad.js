@@ -67,6 +67,8 @@ export function usePaymentNumpad(options = {}) {
 	}
 
 	// Keyboard input handling
+	//// Neoffice — Biome reformat only: the destructured options collapsed onto one line
+	//// (458d81a9). No behaviour change; see the block just below for the merge instruction.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const { isEnabled = ref(true), onEnter = null } = options
 

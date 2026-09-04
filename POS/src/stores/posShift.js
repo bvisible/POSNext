@@ -24,6 +24,8 @@ export const usePOSShiftStore = defineStore("posShift", () => {
 	const autoPrintEnabled = computed(
 		() => currentProfile.value?.print_receipt_on_order_complete,
 	)
+	//// Neoffice — Biome reformat only: the three write-off computed() calls wrapped onto
+	//// three lines each (458d81a9). Same profile fields, same `|| 0` default.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const writeOffAccount = computed(
 		() => currentProfile.value?.write_off_account,

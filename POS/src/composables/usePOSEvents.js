@@ -22,6 +22,10 @@
  * ```
  */
 
+//// Neoffice — Biome reformat only: single quotes rewritten to double on these two
+//// imports. Upstream runs no formatter, and that is this file's entire divergence
+//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting").
+//// At the next merge take their file and re-run `biome check --write`.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { onUnmounted } from "vue"
 import { usePOSEventsStore } from "@/stores/posEvents"

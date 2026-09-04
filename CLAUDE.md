@@ -1,3 +1,10 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Upstream ships no agent guidance; -->
+<!-- //// this one records what a contributor cannot guess from the code: the -->
+<!-- //// commit-the-build pipeline (never run `yarn build` on a tenant — it OOM-kills a -->
+<!-- //// 4 GB instance; the GitHub Action builds and commits the SPA instead), the -->
+<!-- //// fork-annotation rules, and the POS gotchas. Grown in place by 55bf778b -->
+<!-- //// (2026-01-14), c5208ba7 (2026-03-28), 15e512a2 (2026-05-07 "unship CLAUDE.md and -->
+<!-- //// document commit-the-build pipeline") and 0e92ed6a (2026-05-19). -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

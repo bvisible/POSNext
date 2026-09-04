@@ -46,6 +46,9 @@ const CURRENT_SCHEMA = {
 	// Items cache with searchable fields
 	// variant_of index allows querying variants by their template item
 	// brand index allows efficient brand-based filtering in offline mode
+	//// Neoffice — Biome reformat only: the items schema string moved onto its own line
+	//// (458d81a9). The index list itself is unchanged; the two restaurant stores this fork
+	//// adds to the schema are marked further down.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	items:
 		"&item_code, item_name, item_group, variant_of, has_variants, brand, *barcodes",

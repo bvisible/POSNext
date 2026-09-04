@@ -33,6 +33,9 @@ const LOG_LEVELS = {
  * ANSI color codes for console styling
  */
 const COLORS = {
+	//// Neoffice — Biome reformat only: the ANSI colour table's single quotes rewritten to
+	//// double and a trailing comma added (458d81a9, 2026-03-20 "remove BrainWise branding, add
+	//// restaurant mode, and code formatting"). The escape sequences are untouched.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	DEBUG: "\x1b[36m", // Cyan
 	INFO: "\x1b[34m", // Blue
@@ -227,6 +230,8 @@ class Logger {
 				//// tag in the dev console is still blue while the rest of the POS is clay.
 				"color: gray; font-size: 0.9em",
 				`${color}; font-weight: bold`,
+				//// Neoffice — same Biome pass (458d81a9): quotes only. See the note just above about the
+				//// literal "blue" the clay retheme did not reach.
 				"color: blue; font-weight: bold",
 				"color: inherit",
 				...args,

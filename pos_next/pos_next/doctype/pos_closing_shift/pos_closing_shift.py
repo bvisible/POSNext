@@ -82,6 +82,11 @@ class POSClosingShift(Document):
         opening_entry.save()
         # link invoices with this closing shift so ERPNext can block edits
         self._set_closing_entry_invoices()
+        #//// Neoffice — no upstream equivalent: closing a shift also takes the cash out of the
+        #//// drawer. The move is posted as a real Journal Entry from the template configured on
+        #//// POS Settings (erpnextswiss structure), so the ledger matches the drawer and the next
+        #//// shift opens on the remaining balance (5783eb27, 2026-03-28). on_cancel unwinds it,
+        #//// see below.
         # //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
         # Create withdrawal journal entry if amount > 0
         self._create_withdrawal_journal_entry()
@@ -304,6 +309,10 @@ class POSClosingShift(Document):
             if currency:
                 row["currencies"][currency] += flt(amount)
 
+        #//// Neoffice — the cash Mode of Payment is resolved from the POS Profile instead of the
+        #//// literal "Cash": on a French / Swiss instance that Mode is named "Espèces", and the
+        #//// summary aggregated change and cash returns into a bucket no payment method matched
+        #//// (f5bffe4f, 2026-03-25 — see _get_cash_mode_of_payment below).
         # //// auto-select default customer group from POS profile — f5bffe4
         cash_mode_of_payment = _get_cash_mode_of_payment(self.pos_profile)
 
@@ -710,6 +719,10 @@ def make_closing_shift_from_opening(opening_shift):
         amount = get_base_value(py, "paid_amount", "base_paid_amount")
         _aggregate_payment(payments, py.mode_of_payment, amount)
 
+    #//// Neoffice — cash in / out from the till has no upstream equivalent: each movement is a
+    #//// Journal Entry made from a template, and the expected cash at closing has to be adjusted
+    #//// by it or the drawer always reads short (in) or over (out) (6c598630, 2026-03-28 "cash
+    #//// in/out from POS using Journal Entry Templates").
     # //// cash in/out from POS using Journal Entry Templates — 6c59863 + 5783eb2 (+2 more)
     # Process cash in/out entries
     from pos_next.api.cash_entry import get_cash_entries

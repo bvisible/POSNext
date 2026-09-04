@@ -87,6 +87,9 @@ export class CoalescingMutex {
 	async _executeWithTimeout(fn) {
 		return new Promise((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
+				//// Neoffice — Biome reformat only: the reject(new Error(...)) call wrapped onto five
+				//// lines (458d81a9). Same message, same timeout; see the identical note in QueuedMutex
+				//// below.
 				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 				reject(
 					new Error(

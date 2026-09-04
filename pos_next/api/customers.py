@@ -357,6 +357,12 @@ def get_customer_details(customer):
 	return frappe.get_cached_doc("Customer", customer).as_dict()
 
 
+#//// Neoffice — everything below is the meta-driven customer editor, added by the fork. Upstream
+#//// had a small quick-create popup only, so editing a customer meant leaving the POS for the
+#//// desk — unusable on a tablet / PWA till. get_customer_form / save_customer_form build a
+#//// tabbed form from the Customer doctype meta (custom fields included, child tables and non-
+#//// renderable fieldtypes skipped) and reuse neoffice_theme for addresses, contacts and the ID-
+#//// follows-title rename (82fbfd9e, 970934de and 5221894d, 2026-07-10).
 # ////  meta-driven full customer edit for the POS (dialog, stays in the SPA)
 # Field types we can render as inputs in the POS edit dialog. Child tables,
 # HTML, attachments, etc. are intentionally skipped to keep the dialog clean.

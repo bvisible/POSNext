@@ -54,6 +54,9 @@ export function useSalesPersons(posProfile) {
 				}
 				// Filter by search term if provided
 				if (searchLower) {
+					//// Neoffice — Biome reformat only: the name fallback chain wrapped onto four lines.
+					//// Same precedence, same toLowerCase() (458d81a9); re-run `biome check --write` over
+					//// upstream's file at the next merge rather than hand-resolving this.
 					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					const name = (
 						person.sales_person_name ||

@@ -2,6 +2,14 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — nothing behavioural in this file. Its only divergence from upstream
+  //// is the Biome reformat that 458d81a9 (2026-03-20, "remove BrainWise branding,
+  //// add restaurant mode, and code formatting") ran over the whole POS source.
+  //// Here: import and call wraps, and quote style.
+  //// At the next upstream merge take upstream's file as is and re-run the Biome
+  //// formatter over it, rather than resolving these hunks by hand.
+  //// Neoffice — the c3aabf7 line below is an UPSTREAM commit, blamed to the fork by mistake
+  //// by the May 2026 index; partial payments themselves are upstream's feature.
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
   //// enhance partial payments with overdue status and major backend refact… — c3aabf7
 -->

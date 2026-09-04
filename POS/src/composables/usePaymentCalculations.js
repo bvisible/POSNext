@@ -15,6 +15,9 @@ import { roundCurrency } from "@/utils/currency"
  * @param {Function} options.getMethodTotal - Function to get total for a payment method
  * @returns {Object} Computed payment calculations
  */
+//// Neoffice — Biome reformat only: the destructured parameter list exploded onto one
+//// name per line. Same arguments, same order (458d81a9); the block below repeats the
+//// merge instruction for the rest of the file.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function usePaymentCalculations({
 	paymentEntries,

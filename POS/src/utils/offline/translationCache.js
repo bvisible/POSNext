@@ -213,6 +213,8 @@ export const translationCache = {
 			await db.translations.delete(normalized)
 			return true
 		} catch (error) {
+			//// Neoffice — Biome reformat only: the log.error() arguments wrapped onto three lines
+			//// (458d81a9). Same message, same false return.
 			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			log.error(
 				`Failed to clear translation cache for locale ${normalized}:`,

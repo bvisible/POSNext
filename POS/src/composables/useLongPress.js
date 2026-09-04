@@ -12,6 +12,10 @@ import { ref, onUnmounted } from "vue"
  * @returns {Object} - Event handlers and state
  */
 export function useLongPress(options = {}) {
+	//// Neoffice — Biome reformat only: the destructured options collapsed onto one line.
+	//// Upstream runs no formatter, and this is the only divergence in this file
+	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting"). At the next merge take their file and re-run `biome check --write`.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const { duration = 500, onTap = null, onLongPress = null } = options
 

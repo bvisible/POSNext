@@ -37,6 +37,10 @@ export const sectionThemes = {
 		badgeBg: "bg-green-100",
 		badgeColor: "text-green-700",
 	},
+	//// Neoffice — the amber theme below exists only for the Restaurant tab this fork adds to POS
+	//// Settings; upstream's settings screen has purple and green section themes only (32f2415d,
+	//// 2026-03-23 "add Restaurant Settings with opening hours and time-based card
+	//// availability").
 	//// add Restaurant Settings with opening hours and time-based card availa… — 32f2415
 	amber: {
 		headerGradient: "from-amber-50 via-orange-50 to-yellow-50",

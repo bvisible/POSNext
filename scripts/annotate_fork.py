@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+#//// Neoffice — added file (no upstream equivalent). This fork diverges from
+#//// BrainWise-DEV/POSNext by 782 commits over 499 files, and the only way to tell our
+#//// intent from theirs at the next merge is a marker per changed block. This script
+#//// bootstrapped that map in May 2026 by attributing each hunk to its commit (4e0d3068,
+#//// 2026-05-19 "bootstrap tooling for upstream divergence tracking"). Its output — a
+#//// truncated commit subject with no owner and no reason — is precisely why the markers
+#//// it wrote are being replaced by hand.
 """annotate_fork.py — Annotate fork divergence vs upstream/version-15.
 
 For each hunk of difference between merge-base (`97a4e833`) and HEAD, this script

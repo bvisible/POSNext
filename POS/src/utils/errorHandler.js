@@ -79,8 +79,13 @@ export function parseError(error) {
 
 	// Build technical details
 	const detailsParts = []
+	//// Neoffice — Biome reformat only from here: single quotes rewritten to double inside
+	//// __() — same msgids, so the French PO is unaffected (458d81a9, 2026-03-20 "remove BrainWise
+	//// branding, add restaurant mode, and code formatting").
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	if (error.exc_type) detailsParts.push(__("Type: {0}", [error.exc_type]))
+	//// Neoffice — same Biome pass (458d81a9): quotes, and the two push() calls moved onto
+	//// their own lines under the `if`. Same msgids.
 	if (error.httpStatus || error.status)
 		detailsParts.push(__("Status: {0}", [error.httpStatus || error.status]))
 	if (error.exception)
@@ -267,9 +272,14 @@ export function parseError(error) {
  */
 export function formatErrorReport(errorContext, additionalInfo = {}) {
 	const lines = [
+		//// Neoffice — product name in the error-report header: upstream writes "Error Report -
+		//// POS Next" (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos"). The msgid
+		//// changed with it, so this string has its own entry in the French PO.
 		//// rebrand: rename POS Next to Neopos — 771950b
 		__("Error Report - Neopos"),
 		"=".repeat(40),
+		//// Neoffice — same Biome pass (458d81a9): single quotes rewritten to double inside these
+		//// three __() calls. Same msgids.
 		__("Title: {0}", [errorContext.title]),
 		__("Type: {0}", [errorContext.type]),
 		__("Message: {0}", [errorContext.message]),

@@ -17,6 +17,10 @@ ITEM_RESULT_FIELDS = [
 	"description",
 	"stock_uom",
 	"image",
+	#//// Neoffice — custom_color is a Custom Field the fork adds to Item. A restaurant menu has
+	#//// no product photos, so a tile falls back to a colour + name instead of an empty grey
+	#//// square; the field has to travel with every search result or the grid cannot draw it
+	#//// (26f5a3f1, 2026-03-25 "add image and color support for items in POS restaurant").
 	# //// add image and color support for items in POS restaurant — 26f5a3f
 	"custom_color",
 	"is_stock_item",
@@ -254,6 +258,10 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 
 	# Fetch all needed Item fields in a single query (performance optimization)
 	# //// include is_stock_item so the barcode/search path can skip stock validation
+	#//// Neoffice — is_stock_item added to this fetch. get_items (the grid) already returned it
+	#//// but get_item_detail (barcode / search bar) did not, so the cart fell back to reading the
+	#//// line qty as available stock and refused a NON-stock item with "Insufficient stock" —
+	#//// only when it was scanned (ef2cbcfd, 2026-07-09).
 	item_data = (
 		frappe.db.get_value(
 			"Item",
@@ -360,6 +368,10 @@ def search_by_barcode(barcode, pos_profile):
 			item_code = frappe.db.get_value("Item", {"name": effective_barcode})
 			barcode_uom = None
 
+		#//// Neoffice — an unknown barcode is an expected, recoverable event at a till. Upstream
+		#//// threw, which surfaced as a server error page / stray tab and filled the Error Log
+		#//// with a traceback on every mistyped code; returning None lets the frontend show a
+		#//// plain "not found" toast (d29af088, 2026-07-09).
 		# //// unknown barcode returns None (clean toast) instead of throwing
 		if not item_code:
 			# Unknown barcode is an expected, recoverable case. Returning None
@@ -819,6 +831,10 @@ def _build_item_base_conditions(
 			- params: list of params in SQL order (JOIN params first, then WHERE params)
 			- extra_joins: SQL JOIN string to insert before WHERE (empty string if none)
 	"""
+	#//// Neoffice — is_internal_item is a Neoffice Custom Field (neoffice_theme): items that
+	#//// exist only to be added by code, such as TIP, must never be browsable in the grid. The
+	#//// same rule is repeated for link-field searches in pos_next/validations.py, because
+	#//// POSNext's raw SQL bypasses permission_query_conditions (fa5e2ee5, 2026-04-02).
 	conditions = [
 		"i.disabled = 0",
 		"i.is_sales_item = 1",

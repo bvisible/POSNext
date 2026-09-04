@@ -2,6 +2,12 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — two separate reasons. First, the language switcher moved out of the header
+  //// into this menu (it was duplicated, and on a narrow till the header copy fell off screen),
+  //// and the @toggle-restaurant binding upstream had left inside a slot template — where Vue
+  //// rendered it as literal text — was put back on the element (5e5db360, 2026-03-21). Later
+  //// the menu also became where the cashier picks the colour mode: the POS is served outside
+  //// the NeoCockpit chrome, so nothing else gives it a theme (3754fe8f + c83a22ce, 2026-06).
   //// move toggle-restaurant to correct position + language to dropdown — 5e5db36
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 -->
@@ -46,6 +52,10 @@
 			<!-- Additional Actions -->
 			<slot name="additional-actions"></slot>
 
+			<!-- //// Neoffice — the appearance switch below has no upstream equivalent. The POS runs -->
+			<!-- //// without the NeoCockpit chrome, so it never receives the shared data-theme attribute -->
+			<!-- //// and the till stayed light whatever the user had chosen elsewhere; this writes the -->
+			<!-- //// same neocockpit-colormode key the cockpit uses (3754fe8f, 2026-06-14). -->
 			<!-- Appearance (theme) Switcher — System / Light / Dark.
 			     POS runs without the NeoCockpit chrome, so it never receives the
 			     shared data-theme; this lets the till follow / set the colour mode
@@ -219,6 +229,12 @@ const menuRef = ref(null)
 const isOpen = ref(false)
 const showLanguageDropdown = ref(false)
 
+//// Neoffice — colour-mode plumbing with no upstream counterpart. It mirrors the NeoCockpit
+//// toggle (localStorage neocockpit-colormode plus theme_active for other open surfaces) and
+//// also writes Frappe's native User.desk_theme through frappe.client.set_value, because the
+//// desk reads that from boot as authoritative on a fresh load; switch_theme would write the
+//// row but leave the boot cache stale, so the choice would not survive a reload (3754fe8f
+//// 2026-06-14, c83a22ce 2026-06-15 "persist User.desk_theme on theme change").
 // Appearance / colour mode (System / Light / Dark). POS runs without the
 // NeoCockpit chrome, so it never receives the shared data-theme attribute;
 // drive it here, synced via the same `neocockpit-colormode` localStorage key

@@ -353,6 +353,13 @@ def get_payment_account(mode_of_payment, company):
     )
 
 
+#//// Neoffice — no upstream equivalent. ERPNext lists `pricing_rules` in force_item_fields, so
+#//// set_missing_item_details() overwrites it from get_item_details(); under
+#//// ignore_pricing_rule=1 that comes back empty and calculate_item_values() then drops the
+#//// discount, posting GL entries at the undiscounted amount. Disabling the method outright left
+#//// warehouse / income_account unset, so it is wrapped instead: the discount fields are saved
+#//// and restored around the original call (e62e69e5 and fea7cddc 2026-04-06, then 6a3664ba /
+#//// 26942a3b 2026-04-07).
 # //// preserve pricing rule discounts on submitted invoices — e62e69e + 26942a3 (+1 more)
 def _patch_set_missing_item_details(invoice_doc):
     """Wrap set_missing_item_details to preserve POS discount fields.
@@ -819,6 +826,11 @@ def update_invoice(data):
         # Normalize pricing_rules before document creation
         standardize_pricing_rules(data.get("items"))
 
+        #//// Neoffice — restaurant mode: kds_status is a Custom Field the fork adds to Sales
+        #//// Invoice Item. Revalidating a table re-sends the cart and the incoming rows carry no
+        #//// status, so a dish already Preparing / Delivered fell back to Pending on the kitchen
+        #//// screen. The status is read back from BOTH the stored document and the payload before
+        #//// the update (db5f4ead 2026-03-22, hardened by a5c19a43 2026-03-23).
         # //// robust item kds_status preservation + visual Delivered items — a5c19a4 + 7e3187c (+2 more)
         # Preserve existing item kds_status before update (restaurant mode)
         # Build a map of item_code -> kds_status from BOTH DB and frontend data
@@ -856,6 +868,10 @@ def update_invoice(data):
             invoice_doc = frappe.get_doc(doctype, data.get("name"))
 # //// preserve guest (Wallee) payments when POS updates/submits invoice — 8bf46a2 + 3574de5 (+1 more)
 
+            #//// Neoffice — guest ordering is ours: the customer may already have paid their own
+            #//// order from their phone. invoice_doc.update() replaces the whole `payments` table
+            #//// with the cashier's rows, which silently dropped that payment; the non-POS rows
+            #//// are kept here and put back after the update (8bf46a28, 2026-04-01).
             # Preserve guest payments (e.g. Wallee) before POS overwrites — Sales Invoice only
             # (Sales Order has no `payments` child table, accessing it would AttributeError).
             guest_payments = []
@@ -1104,6 +1120,11 @@ def update_invoice(data):
         # ========================================================================
         invoice_doc.set_missing_values(for_validate=True)
 
+        #//// Neoffice — ERPNext's set_pos_fields(), reached through set_missing_values(), resets
+        #//// ignore_pricing_rule from the POS Profile (0 by default).
+        #//// apply_pricing_rule_on_transaction() then re-ran and replaced the capped discount the
+        #//// till had computed with the rule's full amount — a 500 CHF gift card on a 300 CHF
+        #//// sale, and a validation error (e7535129, 2026-02-19).
         # //// re-enforce ignore_pricing_rule after set_missing_values() — e753512
         # Re-enforce ignore_pricing_rule after set_missing_values().
         # ERPNext's set_pos_fields() (called inside set_missing_values when
@@ -1157,6 +1178,12 @@ def update_invoice(data):
                 error_msg = coupon_result.get("message", _("Invalid coupon code")) if coupon_result else _("Invalid coupon code")
                 frappe.throw(error_msg)
 
+            #//// Neoffice — the coupon is stored in ERPNext's native `coupon_code` Link field, so
+            #//// the value written has to be the Coupon Code document name, not the case the
+            #//// cashier typed. Upstream tracked coupons in its own POS Coupon doctype, which the
+            #//// ERP ignored; on the native link ERPNext runs its own usage counter at submit /
+            #//// cancel. posa_coupon_code is still filled for the gift-card code that reads it
+            #//// (9bc096de, 2026-02-05).
             # Get the actual Coupon Code document name for the Link field
             # This ensures proper linking even if the user entered the code in different case
             coupon_doc_name = coupon_result.get("coupon", {}).get("name") or coupon_code.upper()
@@ -1189,6 +1216,9 @@ def update_invoice(data):
                         frappe.throw(frappe.as_json({"errors": errors}), frappe.ValidationError)
 
         # Save as draft
+        #//// Neoffice — call site of the wrapper documented at _patch_set_missing_item_details
+        #//// above; without it ERPNext strips the POS discount fields during this very save
+        #//// (6a3664ba then 26942a3b, 2026-04-07).
         # //// wrap set_missing_item_details instead of disabling it — 26942a3 + 6a3664b (+1 more)
         # Wrap set_missing_item_details to preserve POS discount fields
         _patch_set_missing_item_details(invoice_doc)
@@ -1198,6 +1228,12 @@ def update_invoice(data):
         invoice_doc.docstatus = 0
         invoice_doc.save()
 
+        #//// Neoffice — restaurant mode: restaurant_table / kds_status / is_takeaway are Custom
+        #//// Fields of the fork, written with set_value AFTER the save rather than through the
+        #//// document, because ERPNext's validation cycle rejected them. Writing them only once
+        #//// the draft exists is also what stops a table showing Occupied with no invoice behind
+        #//// it (e6c5d678 2026-03-21, c7f6932c 2026-03-23, takeaway tokens added by 07d0d493
+        #//// 2026-03-29).
         # //// table only marked Occupied when draft invoice exists, not before — c7f6932 + 07d0d49 (+7 more)
         # Set restaurant fields via direct DB write AFTER save to avoid validation conflicts
         if data.get("restaurant_table") or data.get("kds_status") or data.get("is_takeaway"):
@@ -1565,6 +1601,10 @@ def submit_invoice(invoice=None, data=None):
 
     try:
         invoice_name = invoice.get("name")
+        #//// Neoffice — restaurant mode: on a split payment the till can lose the draft id it
+        #//// held, and submitting then created a SECOND invoice for the same table. The open
+        #//// draft is found again from restaurant_table before anything is created (b65018d9,
+        #//// 2026-04-01; the same guard went into update_invoice with 7e3187c4).
         # //// POS submit finds existing draft for restaurant table (prevents duplic… — b65018d + 7e3187c (+2 more)
         restaurant_table = invoice.get("restaurant_table")
         # Find existing draft for restaurant table if name was lost
@@ -1584,6 +1624,10 @@ def submit_invoice(invoice=None, data=None):
                     invoice["name"] = existing_draft
 
         # Get or create invoice
+        #//// Neoffice — tips are ours (restaurant module): the TIP line lives on the invoice but
+        #//// not in the cart, so re-sending the cart used to append a second one. The amount
+        #//// already on the document is remembered here and handed to _add_tip_to_invoice, which
+        #//// cumulates into a single TIP line (c1bdd807, after 3574de52, 2026-04-01).
         # //// prevent TIP item duplication in submit_invoice — c1bdd80
         saved_tip_amount = 0
         if not invoice_name or not frappe.db.exists(doctype, invoice_name):
@@ -1716,6 +1760,11 @@ def submit_invoice(invoice=None, data=None):
                         "POS Write-Off Error"
                     )
 
+        #//// Neoffice — redeeming loyalty points from the payment dialog has no upstream
+        #//// equivalent: the fields ERPNext needs (redeem_loyalty_points, loyalty_amount,
+        #//// redemption account and cost center) are filled from what the cashier accepted on
+        #//// screen. When the points cover the whole sale the payment rows are cleared, or an
+        #//// empty default mode fails validation (104959e6 and 146da2fb, 2026-03-19).
         # //// native loyalty points redemption in POS payment dialog — 104959e + 146da2f (+3 more)
         # Handle loyalty points redemption
         loyalty_data = data.get("loyalty") or invoice.get("loyalty") or {}
@@ -1784,6 +1833,9 @@ def submit_invoice(invoice=None, data=None):
         import time as _time
         _t0 = _time.time()
         invoice_doc.save()
+        #//// Neoffice — timing probes around save / submit. Submitting is the slowest thing a
+        #//// till does and cashiers reported frozen screens; logging the split between save and
+        #//// submit is what tells a slow instance from a slow network (2584aa58, 2026-03-24).
         # //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5
         _t1 = _time.time()
 
@@ -1795,6 +1847,11 @@ def submit_invoice(invoice=None, data=None):
         invoice_submitted = True
 # //// release restaurant table to Empty in backend submit_invoice (not only… — 58e39d8 + df6270e
 
+        #//// Neoffice — restaurant mode: the table is released by the SERVER once the invoice is
+        #//// submitted. Doing it in the browser only left tables stuck Occupied whenever the till
+        #//// crashed, went offline or was simply closed; the realtime event repaints the floor
+        #//// plan (58e39d88, 2026-03-24; df6270eb 2026-03-29 sends it to Cleaning rather than
+        #//// Empty).
         # Set restaurant table to Cleaning after successful submission
         restaurant_table = frappe.db.get_value("Sales Invoice", invoice_doc.name, "restaurant_table")
         if restaurant_table and frappe.db.exists("Restaurant Table", restaurant_table):
@@ -1971,6 +2028,12 @@ def submit_invoice(invoice=None, data=None):
             _cleanup_failed_sync(sync_record_name)
 
 
+#//// Neoffice — everything from here to the end of the PSP section is ours: upstream's POS has no
+#//// card terminal and no TWINT, so a return produced a credit note and the money went back by
+#//// hand. A Payment Intent (payments app) is created before the invoice exists, so nothing
+#//// linked the two; the succeeded intent(s) are attached to the invoice at sale time and
+#//// reversed at return through payments.api.intent.refund_intent. Best-effort by design: a PSP
+#//// failure never rolls the credit note back (7fe46efa, 2026-06-30).
 # ---------------------------------------------------------------------------
 # PSP refund wiring (TWINT, Stripe, …) — link intents at sale, reverse at return
 # ---------------------------------------------------------------------------
@@ -3550,6 +3613,11 @@ def _evaluate_transaction_offers(
     doc.total = total
 
     initial_item_count = len(doc.items)
+    #//// Neoffice — apply_on=Transaction pricing rules ("10% off the whole order") were harvested
+    #//// for their free items only, so the cart showed the gift but never the rebate. The header
+    #//// discount is measured as a delta against this snapshot because ERPNext writes
+    #//// discount_amount / additional_discount_percentage onto the doc in place (648eeb9d,
+    #//// 2026-07-09; the resolution itself is marked further down).
     # //// surface transaction-level header discount (apply_on=Transaction) — feature b
     # Snapshot header-discount fields before the engine runs so we report only the
     # delta the transaction rule introduced (fresh doc starts at 0, but be safe).

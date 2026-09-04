@@ -2,6 +2,12 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream's settings screen knows nothing about restaurants. Ours grew a
+  //// Restaurant tab, shown first when the mode is on: weekly opening hours driving time-based
+  //// card availability (32f2415d + 9ae00441, 2026-03-23), tips (860a115b), the Runner toggle
+  //// (823cd5d8, 2026-03-24), the closing-withdrawal Journal Entry template (5783eb27) and the
+  //// QR self-ordering and takeaway fields (68786b21, 2026-03-28). The rest is Biome
+  //// (458d81a9, 3e25c3b6).
   //// restaurant tab first in settings, smart slot defaults (Lunch/Dinner) — 9ae0044
   //// add QR self-ordering and takeaway settings to POS Settings UI — 68786b2 + 32f2415 (+10 more)
   //// add Restaurant Settings with opening hours and time-based card availa… — 32f2415
@@ -1281,6 +1287,10 @@ async function saveSettings() {
 		}
 
 		// Save restaurant settings (opening hours + tips)
+		//// Neoffice — the block below has no upstream counterpart: opening hours, tip settings and
+		//// the QR self-ordering / takeaway fields live on the Restaurant Settings single, not on the
+		//// POS profile. It runs after the POS settings are already stored, so a failure here is
+		//// reported without losing them (32f2415d + 860a115b 2026-03-23, 68786b21 2026-03-28).
 		if (restaurantStore.isEnabled) {
 			try {
 				await restaurantStore.saveRestaurantSettings(openingHours.value)

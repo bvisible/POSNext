@@ -12,9 +12,14 @@ const defaultSnapshot = () => ({
 	itemGroups: [],
 	brands: [],
 	// Quantity maps for accurate min_qty/max_qty validation
+	//// Neoffice — Biome reformat only, no behaviour change: the formatter collapsed upstream's
+	//// column-aligned trailing comments to a single space (458d81a9, 2026-03-20 "remove BrainWise
+	//// branding, add restaurant mode, and code formatting"). At the next merge take upstream's
+	//// file and re-run `biome check --write` rather than resolving this by hand.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	itemQuantities: {}, // { item_code: qty }
 	itemGroupQuantities: {}, // { item_group: qty }
+	//// Neoffice — same Biome pass, same comment re-alignment (458d81a9, 2026-03-20).
 	brandQuantities: {}, // { brand: qty }
 })
 

@@ -13,6 +13,10 @@ import { performanceConfig } from "@/utils/performanceConfig"
 import { logger } from "@/utils/logger"
 import { ref } from "vue"
 
+//// Neoffice — Biome reformat only: the logger namespace string went from single to
+//// double quotes. Upstream runs no formatter (458d81a9, 2026-03-20 "remove BrainWise branding,
+//// add restaurant mode, and code formatting"); at the next merge take
+//// their file and re-run `biome check --write`.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("RealtimeStock")
 

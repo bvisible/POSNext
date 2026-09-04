@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — a gift card is sold as an Item priced at zero whose value the cashier types
+  //// in, so rate editing has to stay open on a zero-price line even when the POS profile
+  //// forbids editing rates and even under a pricing rule (85f05bb9, 2026-01-14 "allow rate
+  //// editing for zero-price items (gift cards)"). Everything else is the Biome pass of
+  //// 458d81a9: at the next merge take upstream's file and re-run the Biome formatter.
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
   //// allow rate editing for zero-price items (gift cards) — 85f05bb + 458d81a
 -->

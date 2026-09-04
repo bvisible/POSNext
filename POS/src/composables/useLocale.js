@@ -51,6 +51,10 @@ export const SUPPORTED_LOCALES = {
 	},
 	"pt-br": {
 		name: "Portuguese (Brazil)",
+		//// Neoffice — the accents were missing: upstream stores "Portugues (Brasil)" as the
+		//// pt-br native name. Restored when the POS moved off CSV translations onto Frappe
+		//// locale/*.po and French was added (883e8a17, 2026-01-12 "migrate to PO/MO translation
+		//// system and add French language") — see the fr entry marked below.
 		//// migrate to PO/MO translation system and add French language — 883e8a1
 		nativeName: "Português (Brasil)",
 		countryCode: "br",
@@ -75,6 +79,8 @@ export const SUPPORTED_LOCALES = {
  */
 async function fetchAllowedLocalesFromServer() {
 	try {
+		//// Neoffice — Biome reformat only: the call() arguments wrapped onto three lines. Same
+		//// endpoint, same payload (458d81a9); the block below carries the merge instruction.
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		const response = await call(
 			"pos_next.api.localization.get_allowed_locales",

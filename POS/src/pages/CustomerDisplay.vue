@@ -1,3 +1,12 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Upstream POSNext is a -->
+<!-- //// single-screen retail till; Swiss counters run a second, customer-facing screen. -->
+<!-- //// This page mirrors the cart in real time over the Frappe socket, walks the -->
+<!-- //// customer through account creation, and mirrors the TWINT payment QR so they can -->
+<!-- //// scan it without leaning over the till. Customer group and territory are looked -->
+<!-- //// up dynamically instead of hardcoded, and the screen holds a Wake Lock so it -->
+<!-- //// never sleeps mid-service (185c3c50 2026-02-03, 912ef092 + f07aa35b 2026-02-04, -->
+<!-- //// c9d9c1cb 2026-03-20, 14a49016 + 4d5910e5 2026-06-01, 0c6926f9 + 42f68b16 -->
+<!-- //// 2026-07-09). -->
 <template>
 	<div class="customer-display min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
 		<!-- //// fullscreen toggle (top bar), visible in every state -->

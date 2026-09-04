@@ -37,6 +37,10 @@ POS_SETTINGS_FIELDS = [
 	"allow_sales_order",
 	"allow_select_sales_order",
 	"create_only_sales_order",
+	#//// Neoffice — POS_SETTINGS_FIELDS is the whitelist the bootstrap sends to the SPA: a
+	#//// setting missing here reads as "off" in the till however it is set on the doctype. The
+	#//// wallet / loyalty and customer-display settings the fork adds were absent, so both
+	#//// features looked disabled (f91dcc94, 2026-03-19).
 	# //// add missing wallet/loyalty fields to POS_SETTINGS_FIELDS bootstrap — f91dcc9 + 1ec3ead
 	# Wallet & Loyalty
 	"enable_loyalty_program",
@@ -51,6 +55,10 @@ POS_SETTINGS_FIELDS = [
 	"enable_session_lock",
 	"session_lock_timeout",
 	"show_variants_as_items",
+	#//// Neoffice — same whitelist, for two features with no upstream equivalent: restaurant mode
+	#//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode") and the cash
+	#//// withdrawal at shift closing, whose Journal Entry Template is named by
+	#//// closing_withdrawal_template (5783eb27, 2026-03-28).
 	# //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 5783eb2
 	# Restaurant Settings
 	"enable_restaurant_mode",

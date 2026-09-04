@@ -605,6 +605,10 @@ def _create_payment_entry_from_advance(invoice_doc, payment_entry_name, amount):
 
 def get_credit_redeem_remark(invoice_name):
 	"""Get remark for credit redemption journal entry."""
+	#//// Neoffice — the fork is sold as Neopos, so the remark carries that name. It is not
+	#//// cosmetic: cancel_credit_journal_entries() below looks the Journal Entries up BY this
+	#//// exact user_remark, which makes the string the key of the credit-redemption ledger
+	#//// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 	# //// rebrand: rename POS Next to Neopos — 771950b
 	return f"Neopos credit redemption for invoice {invoice_name}"
 

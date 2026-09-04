@@ -154,6 +154,9 @@ def setup_qz_certificate():
 	os.chmod(key_path, 0o600)
 
 	# Build self-signed certificate (valid ~31 years)
+	#//// Neoffice — the self-signed QZ Tray certificate is issued under the Neopos name, the
+	#//// brand the fork is sold as: the CN is what the cashier reads when the browser asks to
+	#//// trust silent printing (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 	subject = issuer = x509.Name([
 		# //// rebrand: rename POS Next to Neopos — 771950b
 		x509.NameAttribute(NameOID.COMMON_NAME, "Neopos QZ Tray Signing"),

@@ -3,6 +3,10 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 
 const LEFT_PANEL_MIN = 320
+//// Neoffice — the right-hand cart panel's minimum width goes from upstream's 360px to 450px,
+//// in step with the min-width: 450px the same commit sets on the cart column in POSSale.vue
+//// (7e3f9458, 2026-03-31 "right panel minimum width 450px (was 360/300)"). TO REVIEW: the
+//// commit records no rationale beyond the number itself.
 //// right panel minimum width 450px (was 360/300) — 7e3f945
 const RIGHT_PANEL_MIN = 450
 
@@ -28,6 +32,10 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	const { isOpen: showLogoutDialog } = useDialog("logout")
 	const { isOpen: showItemSelectionDialog } = useDialog("itemSelection")
 	const { isOpen: showErrorDialog } = useDialog("invoiceError")
+	//// Neoffice — dialog state with no upstream equivalent: a customer can create their own
+	//// account on the customer-facing display, and the cashier's screen has to acknowledge it —
+	//// upstream has no second screen at all (912ef092, 2026-02-04 "improve UX for customer
+	//// creation flow").
 	//// improve UX for customer creation flow — 912ef09
 	const { isOpen: showCustomerCreatedDialog } = useDialog("customerCreated")
 
@@ -65,6 +73,10 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		typeof window !== "undefined" ? window.innerWidth : 1024,
 	)
 
+	//// Neoffice — upstream hard-codes leftPanelWidth to 800px. The split is restored from
+	//// localStorage instead, defaulting to 80% of the viewport, so it survives a reload and fits
+	//// the terminal it runs on rather than a fixed pixel count (97d370df, 2026-03-31 "persist left
+	//// panel width in localStorage, default 80/20 ratio").
 	//// persist left panel width in localStorage, default 80/20 ratio — 97d370d
 	// Layout state — restore from localStorage or default to 80% of viewport
 	const savedPanelWidth = parseFloat(localStorage.getItem("pos_left_panel_width"))
@@ -177,6 +189,10 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		isResizing.value = resizing
 	}
 
+	//// Neoffice — module-level memory of the last container width. It is what lets
+	//// updateLayoutBounds below tell a real browser resize from a plain re-clamp, so the split can
+	//// be rescaled as a ratio instead of staying frozen in pixels (1edd2aa1, 2026-03-31 "maintain
+	//// left/right panel ratio when browser window resizes").
 	//// maintain left/right panel ratio when browser window resizes — 1edd2aa
 	let lastContainerWidth = 0
 
@@ -226,6 +242,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		//// record it was showing, or the next cashier inherits it (912ef092, 2026-02-04).
 		showCustomerCreatedDialog.value = false
 		clearError()
+		//// Neoffice — logout must also drop the customer record the display dialog was showing, not
+		//// merely hide the dialog, or the next cashier inherits it (912ef092, 2026-02-04).
 		clearCustomerCreatedNotification()
 		lastOfflinePrintDoc.value = null
 	}

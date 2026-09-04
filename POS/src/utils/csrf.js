@@ -4,6 +4,9 @@ const CSRF_TOKEN_ENDPOINT = "/api/method/pos_next.api.utilities.get_csrf_token"
 
 let refreshPromise = null
 let lastKnownToken = null
+//// Neoffice — Biome lint only (useConst): `let tokenRefreshCallbacks` became `const`.
+//// The array is pushed into but never reassigned, so nothing changes (458d81a9, 2026-03-20
+//// "remove BrainWise branding, add restaurant mode, and code formatting").
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const tokenRefreshCallbacks = [] // Callbacks to notify when token is refreshed
 
@@ -226,6 +229,12 @@ export function createCSRFAwareRequest(
 	{ silent = false } = {},
 ) {
 	return async function csrfAwareRequest(...args) {
+		//// Neoffice — added block, no upstream equivalent. A paired second screen (/display) has
+		//// no Frappe session, only an API key in localStorage: validate_api_key's
+		//// frappe.set_user() lasts a single request, so every later call ran as Guest and came
+		//// back 403 — the POS-profile dropdown on the display stayed empty. Scoped to /display
+		//// so the till itself is untouched (6ad7a068, 2026-07-09 "authenticate the customer
+		//// display with its API key on every request").
 		//// customer-display auth: paired display devices have no Frappe session,
 		// only an API key (localStorage). Send it as a Frappe token Authorization
 		// header so every request authenticates as the key's user and is

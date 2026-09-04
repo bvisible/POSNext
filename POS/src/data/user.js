@@ -4,6 +4,9 @@ import { computed, reactive } from "vue"
 
 const getCookie = (key) => {
 	const cookies = new Map(
+		//// Neoffice — Biome reformat only: the cookie parse chain broken onto one call per line
+		//// and given a trailing comma. Same Map, same decodeURIComponent (458d81a9, 2026-03-20 "remove
+		//// BrainWise branding, add restaurant mode, and code formatting").
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		document.cookie
 			.split("; ")

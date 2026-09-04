@@ -2,6 +2,12 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream shipped its own POS Coupon doctype; we migrated gift cards to
+  //// ERPNext's native Coupon Code so the POS and the ERP agree on one record. Ours carry
+  //// coupon_type 'Promotional' plus the custom flag pos_next_gift_card, so both the badge and
+  //// the type filter have to test the two, or every card we issue reads as an ordinary coupon
+  //// (ab6e77e6, 2026-01-15 "include POS Next gift cards in gift card filter"). The product
+  //// name shown to the user is Neopos (771950bd). The rest is the Biome pass of 458d81a9.
   //// include POS Next gift cards in gift card filter — ab6e77e + 771950b
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
   //// rebrand: rename POS Next to Neopos — 771950b
@@ -120,6 +126,8 @@
 									<!-- //// custom flag pos_next_gift_card=1 — so the badge must test both or every card -->
 									<!-- //// we issue reads as an ordinary coupon (ab6e77e6, 2026-01-15 "include POS Next -->
 									<!-- //// gift cards in gift card filter"). -->
+									<!-- //// Neoffice — the v-if below also tests pos_next_gift_card; the marker sits above the -->
+									<!-- //// opening tag because the changed line is one of its attributes (ab6e77e6, 2026-01-15). -->
 									<Badge
 										v-if="coupon.coupon_type === 'Gift Card' || coupon.pos_next_gift_card"
 										variant="subtle"

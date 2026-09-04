@@ -5,6 +5,9 @@
  * low-end cashier devices with limited CPU and memory resources.
  */
 
+//// Neoffice — Biome reformat only: single quotes rewritten to double on the logger
+//// import and namespace (458d81a9); the block below states the rest of this file's
+//// divergence and what to do at the next merge.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { logger } from "./logger"
 const log = logger.create("LowEndOptimizations")

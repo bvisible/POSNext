@@ -2,6 +2,10 @@ import { createResource } from "frappe-ui"
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { useBootstrapStore } from "./bootstrap"
+//// Neoffice — added import, for the restaurant-mode toggle that first persisted through the
+//// API (8aa35c29, 2026-03-20 "Phase 1 restaurant module"). 82fcc1bf (2026-03-20) then made the
+//// toggle a localStorage write so it switches instantly and stays per-terminal, which left
+//// this import UNUSED — the next upstream merge can simply drop it.
 //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 82fcc1b
 import { call } from "@/utils/apiWrapper"
 
@@ -67,6 +71,12 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		allow_negative_stock: 0,
 		// Sales Persons
 		enable_sales_persons: "Disabled",
+		//// Neoffice — defaults for settings upstream does not have: the customer-facing second screen
+		//// (turn it on, let the customer create their own account on it, show the address fields on
+		//// that form), and restaurant mode with its default dining area. They must exist in this seed
+		//// object or the store has no shape before the API answers (8bffb770, 2026-02-04 "add address
+		//// fields to customer creation form"; 912ef092, 2026-02-04 customer display; 8aa35c29,
+		//// 2026-03-20 restaurant mode).
 		//// add address fields to customer creation form — 8bffb77 + 458d81a (+1 more)
 		// Customer Display Settings
 		enable_customer_display: 0,
@@ -78,6 +88,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
+		//// Neoffice — the Journal Entry Template used to book the cash the cashier takes out of the
+		//// drawer at shift close, and to suggest the next opening balance. Upstream closes a shift
+		//// without moving any money, which does not match Swiss cash practice (5783eb27, 2026-03-28
+		//// "cash withdrawal at shift closing with suggested opening balance").
 		//// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 		// Cash Management
 		closing_withdrawal_template: "",
@@ -311,6 +325,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		onSuccess(data) {
 			if (data) {
 				Object.assign(settings.value, data)
+				//// Neoffice — restaurant mode is a per-terminal choice kept in localStorage, so it has to be
+				//// restored after the settings resource has overwritten settings.value; without this call,
+				//// saving any Restaurant Setting flipped the RESTO toggle back to the database value (03449a57,
+				//// 2026-03-23 "RESTO toggle no longer reset when saving Restaurant Settings").
 				//// RESTO toggle no longer reset when saving Restaurant Settings — 03449a5
 				// Restore restaurant mode from localStorage (overrides DB value)
 				initRestaurantMode()
@@ -338,6 +356,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			const preloadedSettings = bootstrapStore.getPreloadedPOSSettings()
 			if (preloadedSettings && Object.keys(preloadedSettings).length > 0) {
 				Object.assign(settings.value, preloadedSettings)
+				//// Neoffice — same restore on the bootstrap-preloaded path: this branch returns early, so
+				//// without it a terminal served by the preload never applied its local RESTO choice (82fcc1bf,
+				//// 2026-03-20 "save restaurant toggle in localStorage, rename setting to 'Default Restaurant
+				//// Mode'"; 8aa35c29, 2026-03-20).
 				//// save restaurant toggle in localStorage, rename setting to 'Default Re… — 82fcc1b + 8aa35c2 (+2 more)
 				initRestaurantMode()
 				isLoaded.value = true

@@ -113,6 +113,8 @@ export function useOffline() {
 
 		// Update reactive refs
 		isOffline.value = nowOffline
+		//// Neoffice — Biome reformat only: the assignment wrapped onto two lines. No behaviour
+		//// change (458d81a9); the block further down spells out the merge instruction.
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		connectionQuality.value =
 			state.quality || offlineState.getConnectionQuality()

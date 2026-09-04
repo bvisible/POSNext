@@ -7,6 +7,8 @@
  * - Dynamic batch sizes and debounce times
  */
 
+//// Neoffice — Biome reformat only: single quotes rewritten to double on the logger
+//// import and namespace (458d81a9); the block below covers the rest of the file.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { logger } from "./logger"
 const log = logger.create("PerformanceConfig")

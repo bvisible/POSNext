@@ -25,6 +25,9 @@ import { QueuedMutex } from "@/utils/mutex"
  * @param {Object} options.showWarning        - useToast().showWarning
  * @param {import('vue').Ref<boolean>} options.isAnyDialogOpen
  */
+//// Neoffice — Biome reformat only: the destructured parameters exploded onto one name
+//// per line (458d81a9). The real divergence of this file is the global scanner capture
+//// marked below (7fe0b7d1).
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function useSearchInput({
 	itemStore,
@@ -39,11 +42,17 @@ export function useSearchInput({
 
 	// --- Internal (non-reactive) ---
 	let autoSearchTimer = null
+	//// Neoffice — Biome reformat only here: the QueuedMutex options object wrapped onto
+	//// three lines (458d81a9). The block that follows is the real change.
 	const barcodeQueue = new QueuedMutex({
 		timeout: 10000,
 		name: "BarcodeSearch",
 	})
 
+	//// Neoffice — no upstream equivalent: upstream bound the barcode handler to the search
+	//// input's keydown only, so a hardware scanner stopped working the moment the cashier
+	//// clicked anywhere else (7fe0b7d1, 2026-07-09 "capture hardware scanner globally in
+	//// scanner mode"). The note below says how a scan is told apart from human typing.
 	//// global hardware-scanner capture: scan works anywhere, not just the focused bar
 	// A hardware scanner types fast then sends Enter. When scanner mode is on we
 	// capture those bursts at the document level so a scan lands in the cart even

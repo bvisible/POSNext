@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — for upstream a draft is a parked retail cart. In restaurant mode it can be a
+  //// table's running order, so each card shows the table it belongs to and how far the kitchen
+  //// is with it (kds_status); without that the waiter has to open every draft to find the
+  //// right one (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and
+  //// code formatting").
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 -->
 <template>

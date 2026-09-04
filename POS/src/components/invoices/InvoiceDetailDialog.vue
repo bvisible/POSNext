@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream can only print from this dialog. A Swiss counter is asked for the
+  //// receipt by mail as often as on paper, so a second action opens EmailInvoiceDialog, which
+  //// sends the PDF through Frappe's Communication so the send is tracked and lands in the
+  //// customer's timeline (4239ea8d, 2026-03-24 "add email invoice functionality with PDF
+  //// attachment"). Everything else is the Biome pass of 458d81a9.
   //// add email invoice functionality with PDF attachment — 4239ea8
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 -->

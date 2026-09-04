@@ -27,6 +27,11 @@ class POSCoupon(Document):
         # Gift Card validations
         if self.coupon_type == "Gift Card":
             self.maximum_use = 1
+            #//// Neoffice — gift cards are bearer cards here: `customer` stays optional (upstream
+            #//// made it mandatory on a Gift Card) and the balance is tracked on gift_card_amount
+            #//// / original_amount so one card can be spent over several sales. POS Coupon is the
+            #//// legacy doctype — new coupons are ERPNext Coupon Code documents — kept for sites
+            #//// that still hold POS Coupon records (d2a64f30, 2026-01-12).
             # //// implement phases 1-3 for ERPNext Coupon Code sync — d2a64f3
             # Customer is OPTIONAL for gift cards - they can be anonymous
             # If customer is set, only that customer can use the gift card

@@ -24,6 +24,11 @@ function formatQuantity(quantity) {
 	const num = Number.parseFloat(quantity)
 	if (isNaN(num)) return "0"
 	// Round to 4 decimal places and remove trailing zeros
+	//// Neoffice — Biome reformat only: the replacement string of the trailing-zero regex
+	//// went from single to double quotes. Upstream runs no formatter, so our repo-wide pass
+	//// shows up as a diff on every string in this file and changes nothing (458d81a9, 2026-03-20
+	//// "remove BrainWise branding, add restaurant mode, and code formatting").
+	//// At the next upstream merge take their file and re-run `biome check --write`.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	return num.toFixed(4).replace(/\.?0+$/, "")
 }

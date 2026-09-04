@@ -2,6 +2,13 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream lists the POS's own unpaid invoices only. Our clients also settle
+  //// back-office invoices at the till, so a source toggle was added and every filter, search,
+  //// refresh and reload reads whichever source is on screen (02222a44, 2026-03-24; 34ee11a8,
+  //// 2026-03-25). The payment carries the opening shift so the money lands in this shift's
+  //// closing summary (a0084ae0), and a per-invoice spinner replaced the single shared loading
+  //// flag that lit and disabled every card at once (2584aa58). Note that the c3aabf7 line
+  //// below is an UPSTREAM commit: the May 2026 index blamed it to the fork by mistake.
   //// modifier price adjustment lost on submit (price_list_rate not updated) — 02222a4 + 34ee11a (+2 more)
   //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a + 3e25c3b (+2 more)
   //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5
@@ -317,6 +324,9 @@
 												<!-- //// Neoffice — upstream had one shared loading flag, so a tap lit the spinner on every -->
 												<!-- //// card and disabled them all. The button now spins only for its own invoice, and its -->
 												<!-- //// colour follows the selected source (2584aa58 + 02222a44, 2026-03-24). -->
+												<!-- //// Neoffice — the :disabled and :class below are the per-invoice guard and the source -->
+												<!-- //// colour; the marker sits above the opening tag because both changed lines are its -->
+												<!-- //// attributes (2584aa58 + 02222a44, 2026-03-24). -->
 												<button
 													@click="selectInvoiceForPayment(invoice)"
 													:disabled="loadingInvoiceName !== null || isOffline()"
@@ -775,6 +785,8 @@ const activeUnpaidInvoices = computed(() =>
 //// (02222a44, 2026-03-24; 34ee11a8, 2026-03-25).
 // Filtered unpaid invoices based on payment amounts
 const filteredUnpaidInvoices = computed(() => {
+	//// Neoffice — the filters run on whichever source the toggle selects, not on unpaidInvoices
+	//// directly (02222a44, 2026-03-24).
 	const source = activeUnpaidInvoices.value
 	if (unpaidFilter.value === "partial") {
 		//// Neoffice — filters the selected source, see the note above (02222a44).
@@ -988,6 +1000,8 @@ function handleClose() {
 //// (02222a44, 2026-03-24).
 async function refreshCurrentTab() {
 	if (activeTab.value === "partial") {
+		//// Neoffice — a manual refresh must reload the source on screen: POS invoices or back-office
+		//// ones (02222a44, 2026-03-24).
 		if (invoiceSource.value === "pos") {
 			await Promise.all([loadUnpaidInvoices(), loadUnpaidSummary()])
 		} else {
@@ -1180,6 +1194,8 @@ async function handlePaymentCompleted(paymentData) {
 		//// Neoffice — the opening shift travels with the payment (pos_opening_shift below); the
 		//// server puts it on the Payment Entry reference so the money shows up in this shift's
 		//// closing summary instead of disappearing from the reconciliation (a0084ae0).
+		//// Neoffice — without the pos_opening_shift argument below the Payment Entry carries no
+		//// shift reference and the cash never shows up in the closing count (a0084ae0, 2026-03-24).
 		await call("pos_next.api.partial_payments.add_payment_to_partial_invoice", {
 			invoice_name: invoiceName,
 			payments: paymentData.payments,

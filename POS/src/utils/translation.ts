@@ -24,6 +24,9 @@
  * @module translation
  */
 import { createResource } from "frappe-ui"
+//// Neoffice — Biome/TypeScript lint only: `import { App }` became `import { type App }`,
+//// an explicit type-only import. Nothing changes in the emitted code (458d81a9, 2026-03-20
+//// "remove BrainWise branding, add restaurant mode, and code formatting").
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { type App, ref } from "vue"
 import { call } from "./apiWrapper"

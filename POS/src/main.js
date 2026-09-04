@@ -26,6 +26,12 @@ import {
 import { logger } from "./utils/logger"
 import { offlineWorker } from "./utils/offline/workerClient"
 import translationPlugin from "./utils/translation"
+//// Neoffice — added import. The POS is a standalone SPA, so nothing mints
+//// window.frappe.realtime for it the way the desk does. The customer display, the KDS
+//// and runner screens and the guest-order sync all publish over the Frappe socket, so
+//// the app initialises it itself at startup — see initRealtime() below (9566a909,
+//// 2026-02-04 "initialize Socket.IO for customer display notifications"; a212d426, same
+//// day, "dynamic site name resolution for Socket.IO namespace").
 //// initialize Socket.IO for customer display notifications — 9566a90 + a212d42
 import { initRealtime } from "./realtime"
 import { initSocket } from "./socket"
@@ -47,6 +53,13 @@ import {
 
 import "./index.css"
 
+//// Neoffice — added block, no upstream equivalent. Upstream POSNext is light-only; the
+//// Neoffice desk carries a NeoCockpit colour-mode toggle that writes the localStorage
+//// key neocockpit-colormode, and the till has to look like the rest of the suite. This
+//// runs before Vue mounts so the POS opens in the right theme with no flash, and listens
+//// on the storage event so a toggle made in another tab lands here too (cfc64c9c,
+//// 2026-06-15 "fix(pos-dark): live theme sync with Frappe"). The dark rules it switches
+//// on live in POS/src/index.css.
 // Adopt the shared cockpit colour mode (neocockpit-colormode) BEFORE Vue mounts,
 // so the till opens in the right theme with no flash AND follows live changes
 // made elsewhere (the Frappe desk NeoCockpit toggle writes the same key). POS
@@ -243,6 +256,11 @@ async function initializeApp() {
 					await bootstrapStore.loadInitialData()
 					// Initialize precision settings from bootstrap data
 					const { initPrecision } = await import("./utils/currency")
+					//// Neoffice — Swiss cash has no coin below 0.05, so an untouched grand total (CHF 12.37)
+					//// cannot be tendered. Upstream passed the bootstrap precision straight to
+					//// initPrecision(); we merge in smallest_currency_fraction_value read off the POS
+					//// Profile so currency.js roundTotal() can snap the total to the 0.05 step (4fdb5df4,
+					//// 2026-04-04 "rounding total, tips visibility, cash quick amounts").
 					//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 					const precision = bootstrapStore.getPreloadedPrecision()
 					const posProfile = bootstrapStore.getPreloadedPOSProfile()
@@ -260,6 +278,9 @@ async function initializeApp() {
 						window.frappe.realtime = initSocket(siteName)
 
 						// Ensure connection is established
+						//// Neoffice — Biome reformat only: the two-part condition wrapped onto four lines
+						//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+						//// formatting"). Same guard, same connect().
 						//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 						if (
 							window.frappe.realtime &&

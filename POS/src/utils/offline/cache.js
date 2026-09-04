@@ -198,6 +198,8 @@ export const cacheCustomersFromServer = async (posProfile) => {
 		console.log("Fetching customers from server...")
 
 		const response = await call("pos_next.api.customers.get_customers", {
+			//// Neoffice — Biome reformat only: the call() payload re-indented onto its own lines
+			//// (458d81a9). Same endpoint, same arguments — limit 0 already meant "all" upstream.
 			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			pos_profile: posProfile,
 			start: 0,
@@ -254,6 +256,12 @@ export const searchCachedCustomers = async (searchTerm = "", limit = 50) => {
 
 		const term = searchTerm.toLowerCase()
 
+		//// Neoffice — upstream searched customers with a Dexie startsWithIgnoreCase, so only a
+		//// prefix of a single field matched: a cashier typing "Moret" found nothing for "Daniel
+		//// Moret", and "Moret Daniel" found nothing at all. Replaced by an in-memory tokenized
+		//// match — every word must appear somewhere in name, mobile or email, in any order
+		//// (d29af088, 2026-07-09 "barcode error toast, UOM dialog dedup, any-order customer
+		//// search"). The same change was applied to the worker and to the backend query.
 		//// tokenized any-order search (was startsWith → missed "Moret" in "Daniel Moret")
 		// Split the query into words and require each to match somewhere in the
 		// name / mobile / email, in any order. The previous startsWithIgnoreCase

@@ -114,6 +114,9 @@
 					<!-- //// click name to re-search (removed red X) + show email in results -->
 					<!-- Two Cards Layout: Customer Card + Document Type Card -->
 					<div class="flex items-stretch gap-2">
+						<!-- //// Neoffice — [CU] the selected-customer card became a hover target (group relative, -->
+						<!-- //// min-w-0) so the full-info popover below can hang off it; upstream shows the name and -->
+						<!-- //// nothing else (53d0107c, 2026-07-09 "richer customer info"). -->
 						<!-- Customer Card (hover shows full-info popover) -->
 						<div class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
 							<!-- Customer Avatar & Info -->
@@ -148,6 +151,11 @@
 								</div>
 							</div>
 
+							<!-- //// Neoffice — [CU] a hover popover carrying the customer's type, phone, mail and postal -->
+							<!-- //// address. At a Swiss counter the cashier is asked to confirm the invoicing address, -->
+							<!-- //// and the data was already cached — upstream simply never showed it (53d0107c, -->
+							<!-- //// 2026-07-09; the Phone:/Email: lines ERPNext appends to primary_address are stripped -->
+							<!-- //// in cleanAddressParts, 4aac18e5). -->
 							<!-- //// address snippet in results + full-info popover on selected card -->
 							<!-- Full-info popover (shown on hover over the customer card) -->
 							<div
@@ -332,6 +340,9 @@
 						<!-- //// Neoffice — [R] second instance of the Sales Order switch, hidden in -->
 						<!-- //// restaurant mode for the same reason; the first one was fixed alone and the -->
 						<!-- //// toggle stayed visible here (b3a9d850 + 8aa35c29, 2026-03-20). -->
+						<!-- //// Neoffice — [R] the v-if on the tag below is what hides this second Sales Order -->
+						<!-- //// switch in restaurant mode; the marker sits above the opening tag because the changed -->
+						<!-- //// line is one of its attributes (b3a9d850, 2026-03-20). -->
 						<div
 							v-if="settingsStore.allowSalesOrder && !restaurantStore.isEnabled"
 							class="flex items-center bg-gray-100 rounded-xl p-0.5 h-10"
@@ -882,6 +893,9 @@
 						<!-- //// Neoffice — [IMG] the cart thumbnail paints the Item's custom_color when it -->
 						<!-- //// has no photo; upstream drew an SVG placeholder, which made a restaurant cart -->
 						<!-- //// of colour-coded Items unreadable (983130d3, 2026-03-25). -->
+						<!-- //// Neoffice — [IMG] the class and :style below are what paint the Item's custom_color -->
+						<!-- //// on the thumbnail; the marker sits above the opening tag because both changed lines -->
+						<!-- //// are its attributes (983130d3, 2026-03-25). -->
 						<div
 							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
 							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
@@ -898,6 +912,9 @@
 							/>
 							<!-- //// Neoffice — [IMG] name over the colour, in white when the colour is dark, so -->
 							<!-- //// the line stays legible whatever the manager picked (983130d3). -->
+							<!-- //// Neoffice — [IMG] the class and :class below flip the fallback name to white on a -->
+							<!-- //// dark tile; marker above the opening tag, the changed lines are attributes -->
+							<!-- //// (983130d3, 2026-03-25). -->
 							<span
 								v-else
 								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
@@ -1973,6 +1990,9 @@ const customerResults = computed(() => {
 		return []
 	}
 
+	//// Neoffice — [CU] upstream matched the whole query with a single includes(), so typing
+	//// "Moret Daniel" found nothing for a customer stored as "Daniel Moret". The query is split
+	//// into tokens that must each match somewhere, in any order (afb8f175, 2026-07-09).
 	//// tokenized any-order search so "Moret Daniel" finds "Daniel Moret"
 	// Split the query into words and require each to match somewhere in the
 	// name / mobile / id, in any order — a plain includes() on the whole string
@@ -2206,6 +2226,8 @@ function selectCustomer(cust) {
 //// Neoffice — [CU] this is the old removeCustomer path, folded into clearCustomer
 //// when the red X was replaced by clicking the customer name; it now also re-focuses
 //// the search so the cashier can type straight away (4a0dd461, 2026-07-09).
+//// Neoffice — [CU] the doc block below describes clearCustomer, which replaced upstream's
+//// removeCustomer and its red X (4a0dd461, 2026-07-09).
 /**
  * Clear the currently selected customer and re-open the search input.
  * Triggered by clicking the selected customer's name (replaces the old
@@ -2266,6 +2288,10 @@ function getInitials(name) {
 	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase()
 }
 
+//// Neoffice — [CU] cleanAddressParts has no upstream equivalent: ERPNext stores
+//// primary_address as HTML and appends its own Phone: / Email: lines, which would print
+//// twice in the popover since both are already shown above it. The HTML is split on the line
+//// breaks and those two lines dropped (53d0107c + 4aac18e5, 2026-07-09).
 //// sanitize primary_address HTML, drop the appended Phone:/Email: lines
 /**
  * Turn the Customer `primary_address` HTML into clean address lines.

@@ -24,6 +24,9 @@ export function useShift() {
 				let initialElapsedMs = 0
 				if (data.server_now && data.pos_opening_shift?.period_start_date) {
 					const serverNow = new Date(data.server_now).getTime()
+					//// Neoffice — Biome reformat only: the new Date(...) call wrapped onto three lines.
+					//// Same server timestamp, same elapsed computation (458d81a9). At the next merge take
+					//// upstream's file and re-run `biome check --write`.
 					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					const shiftStart = new Date(
 						data.pos_opening_shift.period_start_date,

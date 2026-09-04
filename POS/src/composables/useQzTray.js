@@ -24,6 +24,10 @@ const certLoading = ref(false)
 const certReady = ref(_loadCertReady())
 
 const printerOptions = computed(() =>
+	//// Neoffice — Biome reformat only: a trailing comma inside the computed()'s arrow body
+	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
+	//// formatting"). No behaviour change; take upstream's file at the next merge and
+	//// re-run `biome check --write`.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	printers.value.map((p) => ({ label: p, value: p })),
 )

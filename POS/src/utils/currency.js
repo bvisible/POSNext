@@ -17,6 +17,11 @@ let settings = {
 	float: 3,
 	rounding_method: "Banker's Rounding",
 	number_format: "#,###.##",
+	//// Neoffice — added default. Upstream's precision settings stop at ERPNext's decimal
+	//// places; a Swiss till also needs the currency's smallest fraction (0.05 for CHF) or
+	//// the grand total cannot be paid in coins. Defaulted to 0 so a currency without one
+	//// behaves exactly as upstream (4fdb5df4, 2026-04-04 "rounding total, tips visibility,
+	//// cash quick amounts"); initPrecision() below fills it from the bootstrap payload.
 	//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 	smallest_currency_fraction: 0,
 }
@@ -109,6 +114,8 @@ function getFormatter(precision, locale = DEFAULT_LOCALE) {
 }
 
 /** Format value as currency string with symbol */
+//// Neoffice — Biome reformat only: the formatCurrency signature exploded onto one
+//// parameter per line (458d81a9). Same defaults, same body.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function formatCurrency(
 	value,

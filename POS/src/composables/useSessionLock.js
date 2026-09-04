@@ -68,6 +68,9 @@ function bytesToHex(bytes) {
 function hexToBytes(hex) {
 	const bytes = new Uint8Array(hex.length / 2)
 	for (let i = 0; i < hex.length; i += 2) {
+		//// Neoffice — Biome lint only (useNumberNamespace): the global parseInt became
+		//// Number.parseInt. Identical function, identical radix-16 parse (458d81a9, 2026-03-20 "remove
+		//// BrainWise branding, add restaurant mode, and code formatting").
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		bytes[i / 2] = Number.parseInt(hex.substring(i, i + 2), 16)
 	}

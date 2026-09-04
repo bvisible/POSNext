@@ -144,6 +144,11 @@ def before_cancel(doc, method=None):
 # //// use native ERPNext coupon_code field on Sales Invoice — 9bc096d
 
 
+#//// Neoffice — no upstream equivalent: ERPNext validates coupon_code on Sales Order but not on
+#//// Sales Invoice, and this till issues invoices directly. Upstream policed its own POS Coupon
+#//// doctype instead, which the ERP ignored, so an expired or over-used coupon still passed at
+#//// the till. This calls ERPNext's own validate_coupon_code so both agree (9bc096de, 2026-02-05
+#//// "use native ERPNext coupon_code field on Sales Invoice").
 def validate_coupon_on_invoice(doc, method=None):
 	"""
 	Validate coupon code on Sales Invoice (like Sales Order does).

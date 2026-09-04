@@ -14,6 +14,15 @@ const routes = [
 		path: "/account/login",
 		component: () => import("@/pages/Login.vue"),
 	},
+	//// Neoffice — eight routes with no upstream equivalent. Upstream POSNext is a retail
+	//// till: one cashier screen. Neoffice sells it to restaurants and takeaways, so the
+	//// router also serves the customer display (/display, /cfd), the kitchen and runner
+	//// screens (/kds, /runner), the takeaway counter (/takeaway) and the pages a diner opens
+	//// on their own phone with no account at all — QR self-ordering (/guest/:token), web
+	//// takeaway (/order) and online booking (/reservation). Those carry meta.allowGuest,
+	//// honoured by the guard below (185c3c50 2026-02-03, d59036f1 2026-03-23, 644ad918
+	//// 2026-03-26, 3939a848 2026-03-28 "QR self-ordering and takeaway web ordering",
+	//// ebc3ecc5 2026-03-29).
 	//// QR self-ordering and takeaway web ordering — 3939a84 + 458d81a (+4 more)
 	{
 		name: "CustomerDisplay",
@@ -83,6 +92,11 @@ router.beforeEach((to, from, next) => {
 		)
 	}
 
+	//// Neoffice — added guard. Upstream's beforeEach sends every visitor without a session
+	//// to /account/login, a dead end for the screens that have no user at all: a paired
+	//// customer display, and a diner opening a QR menu on their own phone. Routes flagged
+	//// meta.allowGuest are let through; everything else keeps upstream's redirect (185c3c50,
+	//// 2026-02-03 "use dynamic customer group and territory lookup for customer display").
 	//// use dynamic customer group and territory lookup for customer display — 185c3c5
 	// Allow guest access to routes with meta.allowGuest (e.g., CustomerDisplay)
 	if (to.meta?.allowGuest) {

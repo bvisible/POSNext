@@ -28,6 +28,10 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 	//// tokenized any-order name search (find "Daniel Moret" via "Moret Daniel")
 	// Ultra-fast search helper - optimized for speed
 	function quickMatch(search, customer) {
+		//// Neoffice — .trim() added: the query is split into tokens for the order-independent name
+		//// search below, and a trailing space (easy on a touch keyboard) both broke every startsWith
+		//// comparison and made the multi-token path see one padded token (d29af088, 2026-07-09
+		//// "barcode error toast, UOM dialog dedup, any-order customer search").
 		const term = search.toLowerCase().trim()
 
 		// Get or create cached lowercase strings for this customer
@@ -194,6 +198,10 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		if (/^\d+$/.test(term)) {
 			recs.push({
 				type: "phone",
+				//// Neoffice — Biome reformat only, no behaviour change: the formatter pass rewrote upstream's
+				//// single-quoted string to double quotes (458d81a9, 2026-03-20 "remove BrainWise branding,
+				//// add restaurant mode, and code formatting"). At the next merge take upstream's file and
+				//// re-run `biome check --write` rather than resolving this by hand.
 				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 				text: __("Search by phone: {0}", [term]),
 				icon: "📱",

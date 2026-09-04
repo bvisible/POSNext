@@ -134,6 +134,9 @@ export const useCountriesStore = defineStore("countries", () => {
 
 	// Computed
 	const countryNameToISDMap = computed(() =>
+		//// Neoffice — Biome reformat only: a trailing comma after the Object.fromEntries call
+		//// (458d81a9). This is the file's only divergence from upstream; at the next merge take
+		//// their version and re-run `biome check --write`.
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		Object.fromEntries(countries.value.map((c) => [c.name, c.isd])),
 	)

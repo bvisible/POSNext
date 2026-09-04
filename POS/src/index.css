@@ -30,6 +30,12 @@
 
 /* //// reorder font-family to fix special character rendering — d8904ff */
 /* Apply fonts - Inter first for text, Saudi Riyal for currency symbol */
+/* //// Neoffice — two causes in this one rule. Upstream put "SaudiRiyalSymbol" first in
+   //// the stack, and that font carries no accented glyphs, so ê and ç fell back badly on
+   //// a French or Portuguese till — Inter now leads (d8904ff1, 2026-01-12 "reorder
+   //// font-family to fix special character rendering"). And the page ground is no longer
+   //// the browser default but the warm Neoffice paper token --neo-bg (c9d9c1cb,
+   //// 2026-03-20 "align POS design with Neoffice theme and improve customer display"). */
 body {
 	font-family: "Inter", "SaudiRiyalSymbol", sans-serif;
 	background-color: var(--neo-bg);

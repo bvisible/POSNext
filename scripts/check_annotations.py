@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+#//// Neoffice — added file (no upstream equivalent). Enforces the marker rule at commit
+#//// time: any staged file listed in .bvisible-tracked-files must add at least one new
+#//// `////` line or the commit is refused; `Annotate: skip` in the message is the
+#//// official bypass for trivial commits (0e92ed6a, 2026-05-19 "chore(annotations):
+#//// pre-commit hook + CLAUDE.md governance section"). Wired in as a local hook in
+#//// .pre-commit-config.yaml.
 """check_annotations.py — pre-commit hook for fork-annotation discipline.
 
 For every staged file listed in `.bvisible-tracked-files`, ensure that the

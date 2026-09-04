@@ -9,6 +9,11 @@ import {
 } from "@/utils/stockValidator"
 //// add offline support and fix mixed conditions for promotions — 5acebb3
 import { offlineState } from "@/utils/offline/offlineState"
+//// Neoffice — added import. CHF has no coin below 0.05, so the cart computes a rounded grand
+//// total plus the rounding-adjustment line shown beside it; upstream charges the raw total
+//// (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts"). roundCurrency
+//// also serves the gift-card base capped on the net total after pricing rules (8e06bb9c,
+//// 2026-01-16).
 //// rounding total, tips visibility, cash quick amounts — 4fdb5df + 8e06bb9
 import { roundTotal, roundCurrency } from "@/utils/currency"
 import { useToast } from "@/composables/useToast"
@@ -97,6 +102,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		totalTax,
 		totalDiscount,
 		grandTotal,
+		//// Neoffice — pulled out of useInvoice for the coupon / gift-card dialog: a gift card must be
+		//// capped on the total AFTER item-level pricing rules, not on the raw subtotal, or a card
+		//// worth more than the discounted price made ERPNext refuse the invoice (8e06bb9c, 2026-01-16
+		//// "calculate discount on net total after pricing rules").
 		//// calculate discount on net total after pricing rules — 8e06bb9
 		netTotalBeforeAdditionalDiscount,
 		posProfile,
@@ -116,12 +125,19 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		taxInclusive,
 		isSubmitting,
 		addItem: addItemToInvoice,
+		//// Neoffice — destructured so the store can expose it: reloading a table's order from the
+		//// server has to reproduce the server's lines verbatim rather than go through addItem's dedup
+		//// (472293d7, 2026-04-01; the function itself is 707a330c, 2026-04-01).
 		//// destructure replaceAllItems from useInvoice in posCart store — 472293d
 		replaceAllItems,
 		removeItem,
 		updateItemQuantity: baseUpdateItemQuantity,
 		submitInvoice: baseSubmitInvoice,
 		clearCart: clearInvoiceCart,
+		//// Neoffice — useInvoice keeps its own restaurantTable ref and the store mirrors every change
+		//// into it (setRestaurantTable below), because submit_invoice reads the table from the
+		//// payload: without it the backend never released the table, which stayed Occupied after the
+		//// ticket was paid (45435e47, 2026-03-24).
 		//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 		restaurantTable: baseRestaurantTable,
 		loadTaxRules,
@@ -247,6 +263,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		}
 
 		addItemToInvoice(item, qty)
+		//// Neoffice — restaurant editing of a cart line, none of which upstream has. hasUnsentChanges
+		//// tracks what has not yet been fired to the kitchen (8aa35c29, 2026-03-20), and the two
+		//// functions below write the free-text instruction and the structured modifier JSON,
+		//// re-applying the modifier price adjustment in place so a second edit replaces the first
+		//// instead of stacking (4df0caf1, 2026-03-21 Phase 4A; 87b37ffd, 2026-03-23, recalculates so
+		//// the Grand Total follows; c6c81bf1, 2026-03-27, quantity from an option; f1b2c434,
+		//// 2026-03-31, addresses the row by index since duplicates of a dish are legitimate).
 		//// Phase 4A - structured item modifiers with groups, options, and price… — 4df0caf + 458d81a (+6 more)
 		hasUnsentChanges.value = true
 	}
@@ -367,6 +390,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		collectedUnbooked.value = []
 	}
 
+	//// Neoffice — this function is async in our fork (see the note inside): upstream called
+	//// clearCart fire-and-forget, and selecting a table then loading its draft raced that
+	//// un-awaited cleanup (2f0b4b8f, 2026-03-21 "table draft loading fails silently due to async
+	//// clearCart race").
 	//// table draft loading fails silently due to async clearCart race — 2f0b4b8
 	async function clearCart() {
 		// Cancel any pending offer processing
@@ -411,6 +438,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	const deliveryDate = ref("")
 	const writeOffAmount = ref(0)
+	//// Neoffice — cart state upstream has none of: the tip and the loyalty redemption chosen in
+	//// the payment dialog, the restaurant table the ticket belongs to, takeaway mode and its
+	//// number, the KDS status, the "not yet sent to the kitchen" flag, and what the guests already
+	//// settled from their phones (104959e6, 2026-03-19; e9d1622a, 2026-03-23; 8aa35c29,
+	//// 2026-03-20; 644ad918, 2026-03-26 takeaway; 6d7195f4 / 214125e5, 2026-03-30 guest payments).
+	//// The two setters below exist because the production bundle turns the destructured
+	//// posProfile / posOpeningShift into const bindings, so assigning them from a component threw
+	//// at the till while dev mode worked (b44f194b, 2026-03-21).
 	//// use setter functions for posProfile/posOpeningShift to avoid const as… — b44f194 + 458d81a (+6 more)
 	const tipAmount = ref(0)
 	const loyaltyData = ref(null)
@@ -485,6 +520,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		// Reset write-off amount and loyalty after successful submission
 		if (result) {
 			writeOffAmount.value = 0
+			//// Neoffice — the loyalty redemption and the tip are one-shot: leaving them set after a
+			//// successful submit would re-apply the previous customer's points and re-charge their tip on
+			//// the next ticket (104959e6, 2026-03-19; e9d1622a, 2026-03-23).
 			//// native loyalty points redemption in POS payment dialog — 104959e + e9d1622
 			loyaltyData.value = null
 			tipAmount.value = 0
@@ -499,6 +537,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	function setCustomer(selectedCustomer) {
 		customer.value = selectedCustomer
+		//// Neoffice — removing the customer must drop the transaction-rule header discount: the rule
+		//// is customer-group driven and the offer recompute is skipped when there is no customer, so
+		//// the amount lingered as a phantom discount on the ticket. Found in live testing on osiris
+		//// with a B2B 10% rule (a377b2c4, 2026-07-09 "clear transaction-rule header discount when the
+		//// customer is removed").
 		//// clear stale transaction-rule header discount on customer removal — feature b
 		// A customer-group pricing rule can't qualify without a customer, and the
 		// offer recompute is skipped when there is none — so drop the rule discount
@@ -746,6 +789,14 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			freeItems: Array.isArray(payload.free_items) ? payload.free_items : [],
 			// CRITICAL: Only trust explicitly returned rules - NO FALLBACK
 			// If backend doesn't return applied_pricing_rules, NO offers were applied
+			//// Neoffice — from here down to setBypassRuleDiscount: apply_offers also returns a
+			//// transaction-scope (apply_on=Transaction) header discount, already resolved to an amount
+			//// server-side. parseOfferResponse surfaces it, applyHeaderDiscountFromServer writes it into
+			//// ruleHeaderDiscount — never into the coupon-driven additionalDiscount — and
+			//// setBypassRuleDiscount hands the header discount to the cashier for one ticket and gives it
+			//// back to the rule on the next recompute (44ea4e9a, 2026-07-09 "apply transaction-level rule
+			//// discount in the cart"; 4d61216b, same day, adds the checkbox). The re-wrap of appliedRules
+			//// itself is the Biome pass (458d81a9, 2026-03-20).
 			appliedRules: Array.isArray(payload.applied_pricing_rules)
 				? payload.applied_pricing_rules
 				: [],
@@ -855,6 +906,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				// Check if cancelled during API call
 				if (signal?.aborted) return
 
+				//// Neoffice — headerDiscount added to the destructuring: the apply-offer path has to read the
+				//// transaction-rule amount back out of the response and push it into ruleHeaderDiscount, or
+				//// the rule fires server-side and the cart shows no discount at all (44ea4e9a, 2026-07-09).
+				//// The re-wrap of the destructuring itself is the Biome pass (458d81a9, 2026-03-20).
 				const {
 					items: responseItems,
 					freeItems,
@@ -1743,6 +1798,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			if (updates.discount_amount !== undefined)
 				cartItem.discount_amount = updates.discount_amount
 			if (updates.rate !== undefined) cartItem.rate = updates.rate
+			//// Neoffice — a gift card is sold as a zero-price line whose amount the cashier types in, so
+			//// the cart must accept a rate on a line whose price_list_rate is 0 and mirror it there, or
+			//// the edit was recalculated straight back to zero (fd901f84, 2026-01-14 "allow rate update
+			//// for zero-price items in cart store"). Upstream's one-line `if (updates.rate !== undefined)`
+			//// just above is now redundant with this block.
 			//// allow rate update for zero-price items in cart store — fd901f8 + 458d81a
 			if (updates.price_list_rate !== undefined)
 				cartItem.price_list_rate = updates.price_list_rate
@@ -2303,6 +2363,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Actions
 		addItem,
+		//// Neoffice — exported so the page can refill the cart from a table / guest order fetched from
+		//// the server without going through addItem's dedup (707a330c, 2026-04-01).
 		//// replaceAllItems bypasses addItem dedup, get_table_order returns kds_s… — 707a330
 		replaceAllItems,
 		removeItem,
@@ -2344,9 +2406,19 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		// Write-off feature
 		writeOffAmount,
+		//// Neoffice — the tip is exposed to the payment dialog, which sets it before submit; it is
+		//// posted on an Income Account, not as sales (e9d1622a, 2026-03-23 "pass tip_amount through
+		//// full payment chain"; d08c57e7, same day, sets the account type).
 		//// pass tip_amount through full payment chain (PaymentDialog → POSSale →… — e9d1622
 		tipAmount,
 		setWriteOffAmount,
+		//// Neoffice — from here down: the loyalty setter and the whole restaurant / takeaway surface
+		//// the pages bind to — the table a ticket belongs to, takeaway mode and its number, the KDS
+		//// status, the "not yet sent to the kitchen" flag, and the modifier / instruction editors.
+		//// Upstream POSNext is a retail POS and has none of it (104959e6, 2026-03-19 loyalty;
+		//// 8aa35c29, 2026-03-20 Phase 1 restaurant; e005b94b, 2026-03-21 preparation stations;
+		//// 4df0caf1, 2026-03-21 modifiers; 644ad918, 2026-03-26 takeaway; 6d7195f4, 2026-03-30 guest
+		//// payments).
 		setLoyaltyData,
 
 		// Restaurant features

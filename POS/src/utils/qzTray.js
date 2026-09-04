@@ -241,6 +241,8 @@ export async function printHTML(html, printerName, options = {}) {
 
 	const printer = printerName || getSavedPrinterName()
 	if (!printer) {
+		//// Neoffice — Biome reformat only: the throw new Error(...) wrapped onto three lines
+		//// (458d81a9). Same message, same condition.
 		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		throw new Error(
 			"No printer selected. Please select a printer in POS Settings.",

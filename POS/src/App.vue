@@ -1,3 +1,8 @@
+<!-- //// Neoffice — this BVISIBLE-FORK header is itself part of the divergence: -->
+<!-- //// scripts/annotate_fork.py wrote it in May 2026 (4e0d3068) and it is kept only for -->
+<!-- //// the sha7 index it carries. The real change in this file is the NoraLearn React -->
+<!-- //// island mounted below (05053a5b, 2026-04-07 "integrate nora-learn-react via React -->
+<!-- //// Island bridge"), which has no upstream equivalent. -->
 <!--
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.

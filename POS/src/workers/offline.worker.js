@@ -672,6 +672,7 @@ async function searchCachedItems(searchTerm = "", limit = 50, offset = 0) {
 		//// Implement offline capabilities for POS Next — 541c6f1
 		return results
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric("searchCachedItems", performance.now() - startTime, true)
 		log.error("Error searching cached items", error)
 		return []
@@ -716,6 +717,7 @@ async function searchCachedItemsByGroup(
 		//// per-group index lookup below is upstream's (458d81a9).
 		const allResults = []
 		for (const group of itemGroups) {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const items = await db
 				.table("items")
 				.where("item_group")
@@ -746,6 +748,7 @@ async function searchCachedItemsByGroup(
 		//// enable full offline support for item groups, variants, and template s… — e7d3c6c
 		return paginated
 	} catch (error) {
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		recordMetric(
 			"searchCachedItemsByGroup",
 			performance.now() - startTime,
@@ -874,6 +877,10 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 		// This is fast because IndexedDB is already in-memory for small datasets
 		const allCustomers = await db.table("customers").toArray()
 
+		//// Neoffice — the same any-order customer search as cache.js: upstream required the
+		//// whole query to appear as one contiguous run inside a single field, so "Moret Daniel"
+		//// found nothing for "Daniel Moret" (d29af088, 2026-07-09 "barcode error toast, UOM
+		//// dialog dedup, any-order customer search"). The block below spells out the comparison.
 		//// tokenized any-order search: each word must match name/mobile/id
 		// Split the query into words so "Moret Daniel" matches "Daniel Moret"
 		// regardless of the order the name was entered in.
@@ -1013,14 +1020,16 @@ async function cacheItemsFromServer(items, batchSize) {
 								log.warn("Skipping invalid price record", {
 									item_code: price.item_code,
 									price_list: price.price_list,
-									//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
+									//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this
+									//// file.
 									error: individualError.message,
 								})
 							}
 						}
 
 						if (successCount > 0) {
-							//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
+							//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this
+							//// file.
 							log.info(
 								`Recovered ${successCount}/${prices.length} price records`,
 							)

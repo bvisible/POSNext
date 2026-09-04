@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream's sidebar is a retail one. The fork sells this POS to restaurants, so
+  //// the rail gained a Cash In/Out button backed by Journal Entry Templates (6c598630,
+  //// 2026-03-28) and, behind restaurantStore.isEnabled, Cards, Product Options and Workflows
+  //// (60d432a2, 2026-03-23), Tips (c4460c61, 2026-03-29) and Reservations (ebc3ecc5,
+  //// 2026-03-29). Nothing upstream shows was removed; the restaurant block is additive.
   //// restaurant sidebar buttons for Cards, Product Options, Workflows — 60d432a + c4460c6 (+2 more)
 -->
 <template>

@@ -2,6 +2,16 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — upstream asks for one free-text customer_name in a tall labelled form. A Swiss
+  //// counter has to know Individual vs Company (it drives the Customer Group and the invoice),
+  //// needs first and last name apart, and needs the postal address with the ADR-002 street +
+  //// N° split — upstream creates no Address at all. Hence the type toggle, the company field,
+  //// the placeholder-only compact layout that fits one tablet screen, the +41 dial code, a
+  //// country picker in place of the Territory field, and a full edit mode that re-fetches the
+  //// Customer and its primary Address (616d4102 + 4b36d7be + 731374c1 2026-03-25, 8bffb770
+  //// 2026-02-04, 53d87890 2026-05-28, 4a0dd461 + 8c59b735 2026-07-09, d7584e7b 2026-07-17).
+  //// Note: the 34469c3 and 4bb76f2 lines below are UPSTREAM commits, blamed to the fork by
+  //// mistake by the May 2026 index.
   //// customer form - toggle Individual/Company, required fields, default S… — 4b36d7b + 616d410 (+6 more)
   //// simplify customer creation form — 616d410 + 8bffb77 (+3 more)
   //// add country code selector with flags for customer phone numbers — 34469c3
@@ -82,6 +92,9 @@
 				<!-- //// (rounded-neo, gray-50 fields); the dial code defaults to +41 instead of -->
 				<!-- //// upstream's Egyptian +20 (616d4102, 731374c1 2026-03-25). -->
 				<!-- Mobile Number with Country Code Selector -->
+				<!-- //// Neoffice — the dial-code widget itself is upstream's (34469c37, before the fork -->
+				<!-- //// point); what changed in the rows below is the Neoffice restyle and the +41 default, -->
+				<!-- //// as described just above (616d4102 + 731374c1, 2026-03-25). -->
 				<div class="flex gap-2">
 					<!-- Country Code Dropdown -->
 					<div class="relative" ref="dropdownRef">
@@ -164,6 +177,8 @@
 				<!-- //// a placeholder, to keep the whole form inside one tablet screen (616d4102, -->
 				<!-- //// 4b36d7be 2026-03-25). -->
 				<!-- Email -->
+				<!-- //// Neoffice — the e-mail field of that same placeholder-only rewrite (616d4102 + -->
+				<!-- //// 4b36d7be, 2026-03-25). -->
 				<input
 					v-model="customerData.email_id"
 					type="email"
@@ -177,6 +192,8 @@
 				<!-- //// address in this dialog at all; ours creates the Address record with the -->
 				<!-- //// Customer, gated on a POS setting (8bffb770 2026-02-04). -->
 				<!-- Customer Group -->
+				<!-- //// Neoffice — the group select bound to the dialog's own ref so the default can follow -->
+				<!-- //// the Individual/Company toggle; see the note above (53d87890, 2026-05-28). -->
 				<select
 					v-model="customerGroup"
 					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
@@ -233,6 +250,9 @@
 					<!-- //// sales notion a cashier has no opinion about, so the visible field is the -->
 					<!-- //// address country; the territory is derived from it in updateTerritoryFromCountry -->
 					<!-- //// (616d4102 2026-03-25, 8bffb770 2026-02-04). -->
+					<!-- //// Neoffice — the country select that replaced upstream's Territory picker; the marker -->
+					<!-- //// sits above the opening tag because the changed line is one of its attributes -->
+					<!-- //// (616d4102, 2026-03-25). -->
 					<select
 						v-model="customerData.country"
 						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
@@ -386,6 +406,9 @@ const defaultCustomerGroup = ref("Individual")
 const territory = ref("All Territories")
 const territories = ref(["All Territories"])
 const customerGroups = ref([])
+//// Neoffice — edit mode has no upstream equivalent, and this ref is what keeps it honest:
+//// the docname of the Address loaded with the Customer, so saving updates that Address in
+//// place instead of leaving a second one behind (4a0dd461 2026-07-09, 195b3d29 2026-07-17).
 //// edit mode: track the loaded primary address so we update it (not duplicate)
 // Holds the Address docname loaded for the customer being edited, or null.
 const editingAddressName = ref(null)
@@ -419,6 +442,11 @@ const show = computed({
 
 const isEditMode = computed(() => !!props.customer?.name)
 
+//// Neoffice — the computeds below serve the Individual/Company toggle upstream does not
+//// have: isCompany decides which fields are mandatory, fullName recomposes the single
+//// customer_name ERPNext still stores, and isFormValid drops the phone/email requirement in
+//// edit mode — legacy customers often have neither, and requiring them left Save permanently
+//// disabled (731374c1 + 4b36d7be 2026-03-25, 8c59b735 2026-07-09).
 const isCompany = computed(() => customerType.value === "Company")
 
 const fullName = computed(() => {
@@ -635,6 +663,10 @@ const updateCustomerResource = createResource({
 	},
 })
 
+//// Neoffice — the cart only carries a lightweight customer (name, mobile, mail), so the edit
+//// form opened almost empty. Edit mode re-fetches the full Customer and its primary Address
+//// before the form is shown (4a0dd461, 2026-07-09 "smoother customer selection & full edit
+//// form").
 //// edit mode: the cart only holds a lightweight customer (name/mobile/email)
 // so the edit form looked empty. Fetch the full Customer doc (+ primary
 // address) when opening in edit mode to pre-fill every field.

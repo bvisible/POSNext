@@ -2,6 +2,11 @@
   BVISIBLE-FORK divergence markers vs upstream BrainWise-DEV/POSNext.
   Each line corresponds to a logical block of fork-specific change in this file.
   Grep the sha7 to find the originating commit via `git log`.
+  //// Neoffice — the UOM picker listed the stock unit twice on some catalogues: the backend
+  //// still returns it inside item_uoms and upstream renders that list under a row it has
+  //// already drawn, so the cashier saw two identical buttons. The duplicate is skipped
+  //// (d29af088, 2026-07-09 "barcode error toast, UOM dialog dedup, any-order customer
+  //// search"). The rest is the Biome pass of 458d81a9.
   //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 -->
 <template>

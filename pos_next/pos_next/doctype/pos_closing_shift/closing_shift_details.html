@@ -48,6 +48,11 @@
 				</div>
 				<!-- Section end -->
 
+				<!-- //// Neoffice — the closing summary lists the shift's transactions one -->
+				<!-- //// invoice at a time. Upstream printed totals per payment mode only, -->
+				<!-- //// which is not enough to reconcile a drawer: a discrepancy could not -->
+				<!-- //// be traced back to a sale (c9176305, 2026-03-28 "add transactions -->
+				<!-- //// table to closing shift HTML summary"). -->
 				<!-- //// add transactions table to closing shift HTML summary — c917630 -->
 				<!-- Transactions section -->
 				{% set transactions = data.pos_transactions or [] %}
