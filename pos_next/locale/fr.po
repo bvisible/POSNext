@@ -6598,9 +6598,17 @@ msgstr "Aucun tri"
 msgid "No Stock Available"
 msgstr "Aucun stock disponible"
 
-#: POS/src/components/invoices/InvoiceManagement.vue:222
+#: POS/src/components/invoices/InvoiceManagement.vue:266
+msgid "No Matching Invoices"
+msgstr "Aucune facture correspondante"
+
+#: POS/src/components/invoices/InvoiceManagement.vue:266
 msgid "No Unpaid Invoices"
 msgstr "Aucune facture impayée"
+
+#: POS/src/components/invoices/InvoiceManagement.vue:267
+msgid "No invoice matches the current filter or search"
+msgstr "Aucune facture ne correspond au filtre ou à la recherche"
 
 #: POS/src/components/sale/ItemSelectionDialog.vue:189
 msgid "No Variants Available"

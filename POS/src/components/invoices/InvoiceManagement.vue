@@ -259,8 +259,12 @@
 									<svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
 									</svg>
-									<p class="text-gray-600 font-medium">{{ __('No Unpaid Invoices') }}</p>
-									<p class="text-gray-500 text-sm mt-1">{{ __('All invoices are fully paid') }}</p>
+									<!-- //// Neoffice — the message follows the filter now. It read "No Unpaid Invoices / -->
+									<!-- //// All invoices are fully paid" even when the list was empty only because a status -->
+									<!-- //// button or the search box had narrowed it, which told the cashier the opposite of -->
+									<!-- //// the truth while the outstanding total sat right above. -->
+									<p class="text-gray-600 font-medium">{{ isUnpaidListNarrowed ? __('No Matching Invoices') : __('No Unpaid Invoices') }}</p>
+									<p class="text-gray-500 text-sm mt-1">{{ isUnpaidListNarrowed ? __('No invoice matches the current filter or search') : __('All invoices are fully paid') }}</p>
 								</div>
 
 								<!-- Invoices List -->
@@ -818,10 +822,23 @@ const searchedUnpaidInvoices = computed(() => {
 	)
 })
 
+//// Neoffice — added: is anything narrowing the list right now? The empty state used to
+//// claim "All invoices are fully paid" whether the list was empty because nothing is owed
+//// or because a filter button and a search box had narrowed everything away — a plain lie
+//// in the second case, and the one the cashier actually meets.
+const isUnpaidListNarrowed = computed(
+	() => unpaidFilter.value !== "all" || unpaidSearchQuery.value.trim() !== "",
+)
+
 //// ▲▲▲ Neoffice — end of the source-aware / searchable filtering.
 // Filtered summary based on selected filter
 const filteredUnpaidSummary = computed(() => {
-	const filtered = filteredUnpaidInvoices.value
+	//// Neoffice — reads searchedUnpaidInvoices, not filteredUnpaidInvoices: the card and the
+	//// list must describe the same set. The card ignored the search box, so a search matching
+	//// nothing left "Outstanding Payments — 7 invoices" standing above an empty list that
+	//// said every invoice was paid (34ee11a8 added the search below the card and did not
+	//// reach it).
+	const filtered = searchedUnpaidInvoices.value
 
 	return {
 		count: filtered.length,
