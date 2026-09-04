@@ -361,11 +361,13 @@ export const clearBrowserCache = () => {
 		const keysToRemove = []
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i)
+			//// Neoffice — Biome reformat only (458d81a9); see the region header opened above.
 			if (key?.startsWith("pos_next_") || key?.startsWith("frappe_")) {
 				keysToRemove.push(key)
 			}
 		}
 
+		//// Neoffice — Biome reformat only (458d81a9); see the region header opened above.
 		keysToRemove.forEach((key) => {
 			localStorage.removeItem(key)
 			results.localStorage++
@@ -375,11 +377,13 @@ export const clearBrowserCache = () => {
 		const sessionKeys = []
 		for (let i = 0; i < sessionStorage.length; i++) {
 			const key = sessionStorage.key(i)
+			//// Neoffice — Biome reformat only (458d81a9); see the region header opened above.
 			if (key?.startsWith("pos_next_") || key?.startsWith("frappe_")) {
 				sessionKeys.push(key)
 			}
 		}
 
+		//// Neoffice — Biome reformat only (458d81a9); see the region header opened above.
 		sessionKeys.forEach((key) => {
 			sessionStorage.removeItem(key)
 			results.sessionStorage++

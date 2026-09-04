@@ -215,6 +215,7 @@ export const checkOfflineIdSynced = async (offlineId) => {
  * @returns {{isDuplicate: boolean, invoiceName: string|null}}
  */
 const checkDuplicateError = (error) => {
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	const errorMessage =
 		error?.message || error?.exc || error?.title || String(error)
 	const isDuplicate = DUPLICATE_ERROR_PATTERNS.some((pattern) =>
@@ -233,6 +234,7 @@ const checkDuplicateError = (error) => {
  * @returns {boolean}
  */
 const isSyncInProgressError = (error) => {
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	const errorMessage =
 		error?.message || error?.exc || error?.title || String(error)
 	return SYNC_IN_PROGRESS_PATTERNS.some((pattern) =>
@@ -245,6 +247,7 @@ const isSyncInProgressError = (error) => {
  * @param {number} ms - Milliseconds to wait
  * @returns {Promise<void>}
  */
+//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // ============================================================================
@@ -297,10 +300,12 @@ const stringifyPricingRules = (value) => {
 	if (typeof value !== "string") return ""
 
 	const stripped = value.trim()
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	if (!stripped.startsWith("[")) return stripped
 
 	try {
 		const parsed = JSON.parse(stripped)
+		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (Array.isArray(parsed)) return parsed.filter(Boolean).join(",")
 	} catch (e) {
 		log.warn("Invalid pricing_rules JSON, clearing value", {
@@ -308,6 +313,7 @@ const stringifyPricingRules = (value) => {
 		})
 		return ""
 	}
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	return ""
 }
 
@@ -334,6 +340,7 @@ const normalizeInvoiceForSync = (invoiceData, offlineId) => ({
  */
 const syncInvoiceToServer = async (invoice, retryCount = 0) => {
 	const MAX_IN_PROGRESS_RETRIES = 3
+	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	const IN_PROGRESS_WAIT_MS = 2000 // Wait 2 seconds between retries
 
 	const offlineId = invoice.offline_id || invoice.data?.offline_id
@@ -623,6 +630,7 @@ export const getCachedInvoiceHistory = async (posProfile, options = {}) => {
 
 		// Sort by posting_date descending (newest first)
 		invoices.sort((a, b) => {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const dateA = new Date(
 				b.posting_date + " " + (b.posting_time || "00:00:00"),
 			)
@@ -727,6 +735,7 @@ export const getCachedUnpaidInvoices = async (posProfile, options = {}) => {
 
 		// Sort by outstanding_amount descending (highest first)
 		invoices.sort((a, b) => {
+			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const amountA = Number.parseFloat(b.outstanding_amount || 0)
 			const amountB = Number.parseFloat(a.outstanding_amount || 0)
 			return amountA - amountB
