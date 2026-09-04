@@ -344,6 +344,17 @@ export const nukeDatabase = async () => {
 	}
 }
 
+//// Neoffice — added. These two localStorage keys are not cache: they carry the version the
+//// Dexie database was actually created with (see getSchemaVersion above). They and the
+//// IndexedDB database are destroyed together or not at all — nukeDatabase() deletes both,
+//// checkDBHealth() deletes the database on VersionError — because dropping one without the
+//// other leaves the till with a database it can no longer open. clearBrowserCache() below
+//// used to break exactly that (#218).
+const SCHEMA_TRACKING_KEYS = new Set([
+	"pos_next_schema_hash",
+	"pos_next_schema_version",
+])
+
 /**
  * Clear browser cache and localStorage (POS-specific data only)
  * @returns {Object} - Status of cleared data
@@ -366,6 +377,16 @@ export const clearBrowserCache = () => {
 			const key = localStorage.key(i)
 			//// Neoffice — Biome reformat only (458d81a9); see the region header opened above.
 			if (key?.startsWith("pos_next_") || key?.startsWith("frappe_")) {
+				//// Neoffice — added: the schema keys are exempt from the sweep. They matched
+				//// "pos_next_" and were wiped along with the cache while the IndexedDB database was
+				//// deliberately left in place (this function's only caller, POSSale.confirmClearCache,
+				//// asks clearCachedData to PRESERVE invoices, drafts and settings). On the next load
+				//// getSchemaVersion() then found no stored hash, computed version 1 + 1 = 2 and asked
+				//// Dexie to open a database already at a higher version: VersionError, swallowed by
+				//// initDB()'s catch — and the logger is disabled outside dev — so the till went on
+				//// selling with no offline layer at all and nothing said so. See
+				//// SCHEMA_TRACKING_KEYS above (#218).
+				if (SCHEMA_TRACKING_KEYS.has(key)) continue
 				keysToRemove.push(key)
 			}
 		}
