@@ -650,10 +650,15 @@ def cancel_credit_journal_entries(invoice_name):
 			je_doc.flags.ignore_permissions = True
 			je_doc.cancel()
 			cancelled_count += 1
-		except Exception as e:
+		except Exception:
+			#//// Neoffice — the two arguments were the wrong way round: frappe.log_error takes
+			#//// (title, message) and truncates the title at 140 characters, so the sentence
+			#//// carrying the Journal Entry name and the error was the part being cut, while
+			#//// the message held the constant label. Swapped; the traceback goes in the body.
 			frappe.log_error(
-				f"Failed to cancel Journal Entry {journal_entry_name}: {str(e)}",
-				"Credit Sale JE Cancellation"
+				"Credit Sale JE Cancellation",
+				f"Failed to cancel Journal Entry {journal_entry_name} "
+				f"for invoice {invoice_name}\n{frappe.get_traceback()}"
 			)
 
 	if cancelled_count > 0:
