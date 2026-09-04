@@ -92,6 +92,7 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"Company", cls.test_company, "default_income_account"
 		)
 
+		#//// Neoffice — removed cls.created_coupons/created_pricing_rules init here (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): moved up next to created_customers/created_invoices so every tracking list exists before anything is created
 		# Create a test Pricing Rule and Coupon Code
 		cls._create_test_coupon()
 
@@ -186,6 +187,7 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			except Exception:
 				pass
 
+		#//// Neoffice — added (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): clean up the customer we created for the invoice-currency fixture, along with the coupon/pricing rule
 		# Delete the customer we created (only ours: created_customers is empty
 		# when the run reused one that was already on the site)
 		for customer_name in cls.created_customers:
