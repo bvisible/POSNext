@@ -7499,6 +7499,10 @@ msgstr "Réservations chevauchantes trouvées. Forcer pour passer outre."
 msgid "Overpayment"
 msgstr "Trop-perçu"
 
+#: POS/src/components/sale/PaymentDialog.vue:456
+msgid "Override"
+msgstr "Modifier"
+
 #: POS/src/components/settings/POSSettings.vue:689
 msgid "Overpayment is pre-filled as tip, server can adjust or cancel"
 msgstr ""
@@ -7856,6 +7860,7 @@ msgstr "Mot de passe"
 msgid "Password is required"
 msgstr "Le mot de passe est requis"
 
+#: POS/src/components/sale/InvoiceCart.vue:1322
 #: POS/src/components/sale/PaymentDialog.vue:904
 #: POS/src/pages/GuestOrder.vue:151
 msgid "Pay"
@@ -7873,10 +7878,6 @@ msgstr "Payer sur compte"
 #: POS/src/components/guest/GuestCheckout.vue:300
 msgid "Pay {0}"
 msgstr "Payer {0}"
-
-#: POS/src/components/sale/InvoiceCart.vue:1318
-msgid "Payer"
-msgstr "Payeur"
 
 #: POS/src/components/ShiftClosingDialog.vue:246
 msgid "Payment"
@@ -8483,6 +8484,10 @@ msgstr "Erreur de tarification"
 #: pos_next/pos_next/doctype/pos_coupon/pos_coupon.json
 msgid "Pricing Rule"
 msgstr "Règle de tarification"
+
+#: POS/src/components/sale/PaymentDialog.vue:443
+msgid "Pricing rule bypassed (manual discount)"
+msgstr "Règle de prix ignorée (remise manuelle)"
 
 #. Label of a Color field in DocType 'Menu Design Template'
 #: pos_next/pos_next/doctype/menu_design_template/menu_design_template.json
@@ -9519,6 +9524,10 @@ msgstr "ID de ligne"
 #: POS/src/components/sale/PromotionManagement.vue:182
 msgid "Rule"
 msgstr "Règle"
+
+#: POS/src/components/sale/PaymentDialog.vue:444
+msgid "Rule discount: -{0}"
+msgstr "Remise règle : -{0}"
 
 #. Label of a Section Break field in DocType 'Restaurant Settings'
 #: POS/src/components/pos/FloorPlanEditor.vue:152
@@ -12005,16 +12014,16 @@ msgstr "Valide jusqu'au"
 msgid "Valid until"
 msgstr "Valide jusqu'au"
 
+#: POS/src/components/sale/InvoiceCart.vue:1291
+msgid "Validate"
+msgstr "Valider"
+
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:835
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:1383
 #: POS/src/composables/useToast.js:63 POS/src/utils/errorHandler.js:79
 #: POS/src/utils/errorHandler.js:154
 msgid "Validation Error"
 msgstr "Erreur de validation"
-
-#: POS/src/components/sale/InvoiceCart.vue:1289
-msgid "Valider"
-msgstr "Valider"
 
 #: POS/src/components/sale/CouponManagement.vue:429
 msgid "Validity & Usage"

@@ -438,8 +438,10 @@
 									class="flex items-center justify-between gap-2 mb-2 p-1.5 rounded-lg bg-amber-50 border border-amber-200"
 								>
 									<span class="text-[11px] font-medium text-amber-800 min-w-0 truncate">
-										<template v-if="cartStore.bypassRuleDiscount">{{ __('Règle de prix ignorée (remise manuelle)') }}</template>
-										<template v-else>{{ __('Remise règle : -{0}', [formatCurrency(cartStore.ruleHeaderDiscount)]) }}</template>
+										<!-- //// Neoffice — the two msgids below were written in French (RULE: source files -->
+										<!-- //// are English, the French lives in locale/fr.po). Displayed text unchanged. -->
+										<template v-if="cartStore.bypassRuleDiscount">{{ __('Pricing rule bypassed (manual discount)') }}</template>
+										<template v-else>{{ __('Rule discount: -{0}', [formatCurrency(cartStore.ruleHeaderDiscount)]) }}</template>
 									</span>
 									<label class="flex items-center gap-1 text-[11px] font-semibold text-amber-800 cursor-pointer flex-shrink-0">
 										<input
@@ -448,7 +450,10 @@
 											@change="onToggleBypassRule($event.target.checked)"
 											class="w-3.5 h-3.5 accent-orange-500"
 										/>
-										{{ __('Modifier') }}
+										<!-- //// Neoffice — msgid was the French "Modifier", a word that is also English and -->
+										<!-- //// already means something else in this app (an item modifier). Displayed text -->
+										<!-- //// unchanged: "Override" is translated "Modifier" in fr.po. -->
+										{{ __('Override') }}
 									</label>
 								</div>
 								<!-- Label with calculated amount -->

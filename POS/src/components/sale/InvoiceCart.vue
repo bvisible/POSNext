@@ -1469,7 +1469,9 @@
 							d="M5 13l4 4L19 7"
 						/>
 					</svg>
-					<span>{{ __("Valider") }}</span>
+					<!-- //// Neoffice — msgid was the French "Valider" (RULE: source files are English, -->
+					<!-- //// the French lives in locale/fr.po). Displayed text unchanged. -->
+					<span>{{ __("Validate") }}</span>
 				</button>
 
 				<!-- Pay Button (blue) — disabled if fully paid by guest -->
@@ -1498,7 +1500,10 @@
 							d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
 						/>
 					</svg>
-					<span>{{ __("Payer") }}</span>
+					<!-- //// Neoffice — msgid was the French "Payer", which fr.po had picked up as the -->
+					<!-- //// ENGLISH noun and translated to "Payeur": the Pay button of a French till read -->
+					<!-- //// "Payeur". Reuses the existing "Pay" msgid, already translated "Payer". -->
+					<span>{{ __("Pay") }}</span>
 				</button>
 
 				<!-- Print Provisional Ticket Button (compact - gray) -->
