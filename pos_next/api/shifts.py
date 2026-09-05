@@ -100,10 +100,10 @@ def check_opening_shift(user=None):
 	return data
 
 
-#//// Neoffice — no upstream equivalent. Cash is withdrawn from the drawer when a shift closes, so
-#//// the next shift has to open on what was actually left in it: the suggestion is read from this
-#//// user's last closing on the same profile instead of being retyped from memory (5783eb27,
-#//// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
+# //// Neoffice — no upstream equivalent. Cash is withdrawn from the drawer when a shift closes, so
+# //// the next shift has to open on what was actually left in it: the suggestion is read from this
+# //// user's last closing on the same profile instead of being retyped from memory (5783eb27,
+# //// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 # //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 @frappe.whitelist()
 def get_suggested_opening_balance(pos_profile):

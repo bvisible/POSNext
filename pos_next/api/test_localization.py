@@ -2,13 +2,13 @@
 # Copyright (c) 2026, Neoffice and contributors
 # For license information, please see license.txt
 
-#//// Neoffice — added file (no upstream equivalent). Covers the language whitelist of POS
-#//// Settings, which this fork added (c081f418) and which was dead code until 2026-09-04:
-#//// get_allowed_locales_from_settings() read `row.locale` on a child doctype whose only field
-#//// is `language`, and the AttributeError was swallowed by a bare `except` that returned an
-#//// empty set — the value this fork reads as "no restriction". A configured whitelist was
-#//// therefore ignored on every instance, silently. These tests pin the field name and the
-#//// two meanings of the table (populated = restriction, empty = all languages).
+# //// Neoffice — added file (no upstream equivalent). Covers the language whitelist of POS
+# //// Settings, which this fork added (c081f418) and which was dead code until 2026-09-04:
+# //// get_allowed_locales_from_settings() read `row.locale` on a child doctype whose only field
+# //// is `language`, and the AttributeError was swallowed by a bare `except` that returned an
+# //// empty set — the value this fork reads as "no restriction". A configured whitelist was
+# //// therefore ignored on every instance, silently. These tests pin the field name and the
+# //// two meanings of the table (populated = restriction, empty = all languages).
 """
 Test Suite for the POS localization API
 

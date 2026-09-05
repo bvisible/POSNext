@@ -2,11 +2,11 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
-#//// Neoffice — added file (no upstream equivalent). Covers the gift-card API built on ERPNext
-#//// Coupon Code + Pricing Rule: code generation, manual creation, application, partial-balance
-#//// splitting and refund. Upstream's POS Coupon was single-use with no balance, so none of this
-#//// existed (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon Code
-#//// integration"; Promotional type rather than Gift Card: a49beaf9, same day).
+# //// Neoffice — added file (no upstream equivalent). Covers the gift-card API built on ERPNext
+# //// Coupon Code + Pricing Rule: code generation, manual creation, application, partial-balance
+# //// splitting and refund. Upstream's POS Coupon was single-use with no balance, so none of this
+# //// existed (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon Code
+# //// integration"; Promotional type rather than Gift Card: a49beaf9, same day).
 """
 Test Suite for Gift Cards API
 

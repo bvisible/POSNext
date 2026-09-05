@@ -26,14 +26,14 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 			f"get_customers called with search_term={search_term}, pos_profile={pos_profile}, limit={limit}, modified_since={modified_since}"
 		)
 
-		#//// Neoffice — ▼▼▼ get_customers search rewritten. Upstream built a single `or_filters`
-		#//// list (it sat right here, beside `filters`) and handed it to frappe.get_all, which ORs the
-		#//// whole group: a two-word query could not require BOTH words, so "Moret Daniel" never found
-		#//// the customer stored as "Daniel Moret". or_filters is gone; the condition is built with the
-		#//// query builder — AND across words, OR across fields — and the SELECT carries the extra
-		#//// columns (group / territory / type / primary_address) the cached customer objects need for
-		#//// the address snippet and the hover popover, so the POS never re-fetches per customer
-		#//// (d29af088 and 53d0107c, 2026-07-09).
+		# //// Neoffice — ▼▼▼ get_customers search rewritten. Upstream built a single `or_filters`
+		# //// list (it sat right here, beside `filters`) and handed it to frappe.get_all, which ORs the
+		# //// whole group: a two-word query could not require BOTH words, so "Moret Daniel" never found
+		# //// the customer stored as "Daniel Moret". or_filters is gone; the condition is built with the
+		# //// query builder — AND across words, OR across fields — and the SELECT carries the extra
+		# //// columns (group / territory / type / primary_address) the cached customer objects need for
+		# //// the address snippet and the hover popover, so the POS never re-fetches per customer
+		# //// (d29af088 and 53d0107c, 2026-07-09).
 		filters = {}
 
 		# Filter by POS Profile customer group if specified
@@ -52,7 +52,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 			# Full fetch: only active customers
 			filters["disabled"] = 0
 
-		#//// Neoffice — upstream's or_filters block stood here; see the block header above (d29af088).
+		# //// Neoffice — upstream's or_filters block stood here; see the block header above (d29af088).
 		search_term = (search_term or "").strip()
 		customer_limit = limit if limit not in (None, 0) else frappe.db.count("Customer", filters)
 		# Extra fields (group/territory/type/address) let the POS show an address
@@ -116,7 +116,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 				limit=customer_limit,
 				order_by="customer_name asc",
 			)
-		#//// Neoffice — ▲▲▲ end of the get_customers search rewrite.
+		# //// Neoffice — ▲▲▲ end of the get_customers search rewrite.
 		frappe.logger().debug(f"get_customers returned {len(result)} customers")
 		return result
 	except Exception as e:
@@ -125,15 +125,15 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 		frappe.throw(_("Error fetching customers: {0}").format(str(e)))
 
 
-#//// Neoffice — ▼▼▼ create_customer made survivable on a localized site. Upstream hardcoded
-#//// customer_type="Individual", customer_group=... or "Individual" and territory=... or
-#//// "All Territories" — English document names that do not exist on a French site, so
-#//// creating a customer from the POS failed outright. We take a customer_type argument (the
-#//// POS dialog offers Individual/Company), resolve group and territory against Selling
-#//// Settings with a real fallback and an explicit throw when the site has none, and resolve
-#//// default_currency from POS Profile → Company → global default because Customer treats it
-#//// as mandatory on some sites (3affd2e0, 2026-05-28 "step A: re-apply backend customers.py
-#//// only (bug A + C + D fix)"). The customer_type line in the docstring is part of this.
+# //// Neoffice — ▼▼▼ create_customer made survivable on a localized site. Upstream hardcoded
+# //// customer_type="Individual", customer_group=... or "Individual" and territory=... or
+# //// "All Territories" — English document names that do not exist on a French site, so
+# //// creating a customer from the POS failed outright. We take a customer_type argument (the
+# //// POS dialog offers Individual/Company), resolve group and territory against Selling
+# //// Settings with a real fallback and an explicit throw when the site has none, and resolve
+# //// default_currency from POS Profile → Company → global default because Customer treats it
+# //// as mandatory on some sites (3affd2e0, 2026-05-28 "step A: re-apply backend customers.py
+# //// only (bug A + C + D fix)"). The customer_type line in the docstring is part of this.
 @frappe.whitelist()
 def create_customer(
 	customer_name,
@@ -173,7 +173,7 @@ def create_customer(
 		pos_profile=pos_profile,
 	)
 
-	#//// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
+	# //// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 	# Normalize customer_type to the values accepted by ERPNext (Individual / Company)
 	customer_type = (customer_type or "Individual").strip().capitalize()
 	if customer_type not in ("Individual", "Company"):
@@ -216,19 +216,19 @@ def create_customer(
 		{
 			"doctype": "Customer",
 			"customer_name": customer_name,
-			#//// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
+			# //// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 			"customer_type": customer_type,
 			"customer_group": resolved_group,
 			"territory": resolved_territory,
 			"mobile_no": mobile_no or "",
 			"email_id": email_id or "",
 			"loyalty_program": loyalty_program,
-			#//// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
+			# //// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 			"default_currency": resolved_currency,
 		}
 	)
 
-	#//// Neoffice — ▲▲▲ end of the create_customer localization fallbacks.
+	# //// Neoffice — ▲▲▲ end of the create_customer localization fallbacks.
 	frappe.flags.pos_next_customer_company = company
 	frappe.flags.pos_next_customer_pos_profile = pos_profile
 	try:
@@ -361,12 +361,12 @@ def get_customer_details(customer):
 	return frappe.get_cached_doc("Customer", customer).as_dict()
 
 
-#//// Neoffice — everything below is the meta-driven customer editor, added by the fork. Upstream
-#//// had a small quick-create popup only, so editing a customer meant leaving the POS for the
-#//// desk — unusable on a tablet / PWA till. get_customer_form / save_customer_form build a
-#//// tabbed form from the Customer doctype meta (custom fields included, child tables and non-
-#//// renderable fieldtypes skipped) and reuse neoffice_theme for addresses, contacts and the ID-
-#//// follows-title rename (82fbfd9e, 970934de and 5221894d, 2026-07-10).
+# //// Neoffice — everything below is the meta-driven customer editor, added by the fork. Upstream
+# //// had a small quick-create popup only, so editing a customer meant leaving the POS for the
+# //// desk — unusable on a tablet / PWA till. get_customer_form / save_customer_form build a
+# //// tabbed form from the Customer doctype meta (custom fields included, child tables and non-
+# //// renderable fieldtypes skipped) and reuse neoffice_theme for addresses, contacts and the ID-
+# //// follows-title rename (82fbfd9e, 970934de and 5221894d, 2026-07-10).
 # ////  meta-driven full customer edit for the POS (dialog, stays in the SPA)
 # Field types we can render as inputs in the POS edit dialog. Child tables,
 # HTML, attachments, etc. are intentionally skipped to keep the dialog clean.

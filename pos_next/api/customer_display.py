@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-#//// Neoffice — added file (no upstream equivalent). Upstream POSNext has no customer-facing
-#//// second screen. This backend drives it: display pairing/auth, realtime cart mirroring
-#//// bound to the launching POS's exact shift, TWINT QR mirroring, the idle ads carousel, and
-#//// customer self-creation from the display — Individual/Company toggle, structured street +
-#//// N° (ADR-002), and customer group / territory / currency resolved from the site instead of
-#//// the hardcoded English defaults, which simply do not exist on a French site
-#//// (185c3c50, a2ffc7d5, 71619d17, f07aa35b 2026-02; 87f168fe, bcc36a22 2026-03;
-#//// 14a49016, 9a807f74, 34ad77fe 2026-06; d7584e7b 2026-07-17 "structured street + N°").
+# //// Neoffice — added file (no upstream equivalent). Upstream POSNext has no customer-facing
+# //// second screen. This backend drives it: display pairing/auth, realtime cart mirroring
+# //// bound to the launching POS's exact shift, TWINT QR mirroring, the idle ads carousel, and
+# //// customer self-creation from the display — Individual/Company toggle, structured street +
+# //// N° (ADR-002), and customer group / territory / currency resolved from the site instead of
+# //// the hardcoded English defaults, which simply do not exist on a French site
+# //// (185c3c50, a2ffc7d5, 71619d17, f07aa35b 2026-02; 87f168fe, bcc36a22 2026-03;
+# //// 14a49016, 9a807f74, 34ad77fe 2026-06; d7584e7b 2026-07-17 "structured street + N°").
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 

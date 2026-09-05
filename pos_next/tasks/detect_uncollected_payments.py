@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Neoffice and contributors
 # License: AGPL-3.0
 #
-#//// Neoffice — added file (no upstream equivalent)
+# //// Neoffice — added file (no upstream equivalent)
 #
 # Safety net for POS payments that the till never turned into a sale.
 #

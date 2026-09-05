@@ -643,11 +643,11 @@ def get_unpaid_invoices(pos_profile: str, limit: int = DEFAULT_INVOICE_LIMIT) ->
     return invoices
 
 
-#//// Neoffice — no upstream equivalent: the till also collects on invoices raised OUTSIDE it (a
-#//// desk invoice, or another POS Profile), which upstream's unpaid list never showed. Scoped to
-#//// the profile's own company and currency so a payment cannot land on a foreign ledger
-#//// (02222a44, 2026-03-24 — the subject names an unrelated modifier-price fix bundled into the
-#//// same commit).
+# //// Neoffice — no upstream equivalent: the till also collects on invoices raised OUTSIDE it (a
+# //// desk invoice, or another POS Profile), which upstream's unpaid list never showed. Scoped to
+# //// the profile's own company and currency so a payment cannot land on a foreign ledger
+# //// (02222a44, 2026-03-24 — the subject names an unrelated modifier-price fix bundled into the
+# //// same commit).
 # //// modifier price adjustment lost on submit (price_list_rate not updated) — 02222a4
 @frappe.whitelist()
 def get_external_unpaid_invoices(pos_profile: str, limit: int = DEFAULT_INVOICE_LIMIT) -> List[Dict]:
@@ -835,11 +835,11 @@ def get_partial_payment_details(invoice_name: str) -> Dict:
     }
 
 
-#//// Neoffice — pos_opening_shift added to the signature: a payment collected at the till on an
-#//// already-submitted invoice has to be attributable to the shift, or the closing summary is
-#//// short by that amount. It rides on the Payment Entry's reference_no when the caller left that
-#//// empty (a0084ae0, 2026-03-24 — the subject describes an unrelated Runner fix in the same
-#//// commit).
+# //// Neoffice — pos_opening_shift added to the signature: a payment collected at the till on an
+# //// already-submitted invoice has to be attributable to the shift, or the closing summary is
+# //// short by that amount. It rides on the Payment Entry's reference_no when the caller left that
+# //// empty (a0084ae0, 2026-03-24 — the subject describes an unrelated Runner fix in the same
+# //// commit).
 @frappe.whitelist()
 # //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae
 def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shift: str = None) -> Dict:
@@ -939,11 +939,11 @@ def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shif
             payment_account = payment.get("account")
             reference_no = payment.get("reference_no")
 
-            #//// Neoffice — a Payment Entry created after the sale (partial payment) carried no link to
-            #//// the open shift, so the money was missing from the closing summary and the drawer never
-            #//// balanced. Stamp the POS Opening Shift as reference_no when the caller supplies one and
-            #//// the payment has none (a0084ae0, 2026-03-24). The `pos_opening_shift` line added to the
-            #//// docstring above is part of this change.
+            # //// Neoffice — a Payment Entry created after the sale (partial payment) carried no link to
+            # //// the open shift, so the money was missing from the closing summary and the drawer never
+            # //// balanced. Stamp the POS Opening Shift as reference_no when the caller supplies one and
+            # //// the payment has none (a0084ae0, 2026-03-24). The `pos_opening_shift` line added to the
+            # //// docstring above is part of this change.
             # If POS Opening Shift is provided, use it as reference_no
             # so the payment appears in the shift closing summary
             if pos_opening_shift and not reference_no:

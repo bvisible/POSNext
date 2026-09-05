@@ -100,10 +100,10 @@ def process_loyalty_to_wallet(doc, method=None):
 	if credit_amount <= 0:
 		return
 
-	#//// Neoffice — guard before turning loyalty points into wallet balance: the wallet account
-	#//// is posted to as a customer balance, so an account of another type made the conversion
-	#//// fail INSIDE on_submit and took the whole sale down with it. Logged and skipped instead —
-	#//// a loyalty booking never blocks an invoice (f8b6c1e2, 2026-01-13).
+	# //// Neoffice — guard before turning loyalty points into wallet balance: the wallet account
+	# //// is posted to as a customer balance, so an account of another type made the conversion
+	# //// fail INSIDE on_submit and took the whole sale down with it. Logged and skipped instead —
+	# //// a loyalty booking never blocks an invoice (f8b6c1e2, 2026-01-13).
 	# //// Merge upstream/develop: latest upstream features (brands filter, over… — 7604810 + f8b6c1e (+1 more)
 	# Check if wallet account is properly configured before proceeding
 	wallet_account = pos_settings.get("wallet_account")
@@ -315,12 +315,12 @@ def create_wallet_on_customer_insert(doc, method=None):
 		frappe.log_error(frappe.get_traceback(), f"Wallet auto-create failed for {doc.name}")
 
 
-#//// Neoffice — a wallet is auto-created for every customer and its reqd + unique link back to
-#//// the customer makes Frappe's link-integrity check refuse the deletion, so a customer
-#//// created by mistake could never be removed. Delete the wallet from Customer.on_trash
-#//// (which runs before that check) only when it was never used; a wallet with real activity
-#//// still blocks, with upstream's message (c42d1cfc, 2026-06-29 "feat(wallet): allow customer
-#//// deletion when wallet is unused").
+# //// Neoffice — a wallet is auto-created for every customer and its reqd + unique link back to
+# //// the customer makes Frappe's link-integrity check refuse the deletion, so a customer
+# //// created by mistake could never be removed. Delete the wallet from Customer.on_trash
+# //// (which runs before that check) only when it was never used; a wallet with real activity
+# //// still blocks, with upstream's message (c42d1cfc, 2026-06-29 "feat(wallet): allow customer
+# //// deletion when wallet is unused").
 def delete_unused_wallet_on_customer_trash(doc, method=None):
 	"""Hook: on_trash on Customer.
 
@@ -483,9 +483,9 @@ def get_wallet_info(customer, company, pos_profile=None):
 		"wallet_name": None,
 		"auto_create": False,
 		"loyalty_program": None,
-		#//// Neoffice — the payment dialog shows the customer's loyalty balance next to their
-		#//// name, so get_wallet_info returns the points and the loyalty-to-wallet flag in the
-		#//// same call rather than making the till ask twice (c057c534, 2026-03-19).
+		# //// Neoffice — the payment dialog shows the customer's loyalty balance next to their
+		# //// name, so get_wallet_info returns the points and the loyalty-to-wallet flag in the
+		# //// same call rather than making the till ask twice (c057c534, 2026-03-19).
 		# //// display loyalty points in payment dialog next to customer name — c057c53
 		"loyalty_to_wallet": False,
 		"loyalty_points": 0,
@@ -504,10 +504,10 @@ def get_wallet_info(customer, company, pos_profile=None):
 	if not result["wallet_enabled"]:
 		return result
 
-	#//// Neoffice — the payment dialog shows the customer's loyalty balance next to their name so
-	#//// the cashier can offer to redeem it without leaving the till; upstream returned no points
-	#//// at all here. Summed from unexpired Loyalty Point Entries (c057c534, 2026-03-19;
-	#//// the redemption itself landed in 104959e6 the same day).
+	# //// Neoffice — the payment dialog shows the customer's loyalty balance next to their name so
+	# //// the cashier can offer to redeem it without leaving the till; upstream returned no points
+	# //// at all here. Summed from unexpired Loyalty Point Entries (c057c534, 2026-03-19;
+	# //// the redemption itself landed in 104959e6 the same day).
 	# Get customer's active loyalty points
 	if customer and result.get("loyalty_program"):
 		loyalty_points = frappe.db.sql("""
@@ -547,10 +547,10 @@ def get_wallet_info(customer, company, pos_profile=None):
 	return result
 
 
-#//// Neoffice — no upstream equivalent: points are redeemed from the POS payment dialog, so the
-#//// till needs what ERPNext's loyalty engine knows — points available, conversion factor and the
-#//// resulting maximum redeemable amount — before the cashier can offer it (104959e6,
-#//// 2026-03-19).
+# //// Neoffice — no upstream equivalent: points are redeemed from the POS payment dialog, so the
+# //// till needs what ERPNext's loyalty engine knows — points available, conversion factor and the
+# //// resulting maximum redeemable amount — before the cashier can offer it (104959e6,
+# //// 2026-03-19).
 # //// native loyalty points redemption in POS payment dialog — 104959e
 @frappe.whitelist()
 def get_loyalty_details(customer, company):

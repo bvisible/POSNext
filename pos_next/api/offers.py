@@ -527,11 +527,11 @@ def _get_standalone_pricing_rule_offers(company: str, date: str) -> List[Offer]:
 # Coupon Functions
 # ============================================================================
 
-#//// Neoffice — gift cards are ERPNext Coupon Code documents flagged with our pos_next_gift_card
-#//// Custom Field, not upstream's own POS Coupon doctype which the ERP knew nothing about. They
-#//// are bearer cards, so a card with no customer is valid for anyone; balance and validity are
-#//// read from the Coupon Code joined to its Pricing Rule (ce505902 2026-01-12 "implement gift
-#//// card API, splitting logic"; e34a269a 2026-01-13).
+# //// Neoffice — gift cards are ERPNext Coupon Code documents flagged with our pos_next_gift_card
+# //// Custom Field, not upstream's own POS Coupon doctype which the ERP knew nothing about. They
+# //// are bearer cards, so a card with no customer is valid for anyone; balance and validity are
+# //// read from the Coupon Code joined to its Pricing Rule (ce505902 2026-01-12 "implement gift
+# //// card API, splitting logic"; e34a269a 2026-01-13).
 @frappe.whitelist()
 # //// use ERPNext Coupon Code instead of POS Coupon — e34a269 + ce50590 (+3 more)
 def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
@@ -546,7 +546,7 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	"""
 	today = getdate(nowdate())
 
-	#//// Neoffice — gift cards are ERPNext Coupon Code rows; see the marker above (ce505902).
+	# //// Neoffice — gift cards are ERPNext Coupon Code rows; see the marker above (ce505902).
 	# Build SQL query for ERPNext Coupon Code with gift card custom fields
 	# Get both customer-specific and anonymous gift cards
 	coupons = frappe.db.sql("""
@@ -579,21 +579,21 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 		if card.used and card.maximum_use and card.used >= card.maximum_use:
 			continue
 
-		#//// Neoffice — a gift card is spent progressively, so what makes it usable is the
-		#//// REMAINING balance in gift_card_amount (a Custom Field of ours) and not just the
-		#//// usage counter upstream checked. A fully spent card is dropped here (ce505902
-		#//// 2026-01-12, e34a269a 2026-01-13).
+		# //// Neoffice — a gift card is spent progressively, so what makes it usable is the
+		# //// REMAINING balance in gift_card_amount (a Custom Field of ours) and not just the
+		# //// usage counter upstream checked. A fully spent card is dropped here (ce505902
+		# //// 2026-01-12, e34a269a 2026-01-13).
 		# //// implement gift card API, splitting logic, and frontend components — ce50590 + e34a269
 		# Check balance
 		balance = flt(card.gift_card_amount)
 		if balance <= 0:
 			continue
 
-		#//// Neoffice — ERPNext's Coupon Code carries no customer_name (upstream's POS Coupon did), so
-		#//// it is looked up and the row reshaped into the payload the POS cart expects — including
-		#//// the balance, which lives in the pos_next_gift_card custom fields the fork adds
-		#//// (ce505902 2026-01-12 and e34a269a 2026-01-13 "use ERPNext Coupon Code instead of POS
-		#//// Coupon").
+		# //// Neoffice — ERPNext's Coupon Code carries no customer_name (upstream's POS Coupon did), so
+		# //// it is looked up and the row reshaped into the payload the POS cart expects — including
+		# //// the balance, which lives in the pos_next_gift_card custom fields the fork adds
+		# //// (ce505902 2026-01-12 and e34a269a 2026-01-13 "use ERPNext Coupon Code instead of POS
+		# //// Coupon").
 		# Get customer name if customer is set
 		customer_name = None
 		if card.customer:
@@ -620,14 +620,14 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	return valid_cards
 
 
-#//// Neoffice — ▼▼▼ validate_coupon rewritten against ERPNext's native Coupon Code. Upstream
-#//// read its own `POS Coupon` doctype, which the ERP knows nothing about: a coupon sold or
-#//// consumed at the till was invisible from the desk and its usage counter was ours to keep
-#//// in step. We query Coupon Code joined to its Pricing Rule (case-insensitive code, company
-#//// scoped), branch on the pos_next_gift_card flag for balance and splitting, and map the
-#//// Pricing Rule's rate_or_discount onto the Percentage / Amount vocabulary the cart speaks
-#//// (e34a269a 2026-01-13; ce505902 2026-01-12; a49beaf9, 44f1c2a1, c25da858 2026-01-14).
-#//// One marker for the whole function; every hunk in it shares this cause.
+# //// Neoffice — ▼▼▼ validate_coupon rewritten against ERPNext's native Coupon Code. Upstream
+# //// read its own `POS Coupon` doctype, which the ERP knows nothing about: a coupon sold or
+# //// consumed at the till was invisible from the desk and its usage counter was ours to keep
+# //// in step. We query Coupon Code joined to its Pricing Rule (case-insensitive code, company
+# //// scoped), branch on the pos_next_gift_card flag for balance and splitting, and map the
+# //// Pricing Rule's rate_or_discount onto the Percentage / Amount vocabulary the cart speaks
+# //// (e34a269a 2026-01-13; ce505902 2026-01-12; a49beaf9, 44f1c2a1, c25da858 2026-01-14).
+# //// One marker for the whole function; every hunk in it shares this cause.
 @frappe.whitelist()
 def validate_coupon(coupon_code: str, customer: str = None, company: str = None) -> Dict:
 	"""
@@ -638,7 +638,7 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	"""
 	date = getdate()
 
-	#//// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
+	# //// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
 	# Fetch ERPNext Coupon Code with case-insensitive code matching
 	coupon = frappe.db.sql("""
 		SELECT
@@ -668,7 +668,7 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	if not coupon:
 		return {"valid": False, "message": _("Invalid coupon code")}
 
-	#//// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
+	# //// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
 	coupon = coupon[0]
 
 	# Check validity dates
@@ -767,4 +767,4 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 				"discount_amount": discount_amount,
 			}
 		}
-#//// Neoffice — ▲▲▲ end of the ERPNext-Coupon-Code validate_coupon rewrite.
+# //// Neoffice — ▲▲▲ end of the ERPNext-Coupon-Code validate_coupon rewrite.

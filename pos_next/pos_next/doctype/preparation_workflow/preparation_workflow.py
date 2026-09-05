@@ -1,8 +1,8 @@
-#//// Neoffice — added file (no upstream equivalent). The ordered states a dish walks through
-#//// between the KDS and the runner screen; each house names its own. validate() enforces the
-#//// single-default invariant because _resolve_workflow falls back to the default when neither the
-#//// product nor the station names one — two defaults would make the fallback arbitrary (d59036f1,
-#//// 2026-03-23 "preparation workflows, runner display, and workflow APIs").
+# //// Neoffice — added file (no upstream equivalent). The ordered states a dish walks through
+# //// between the KDS and the runner screen; each house names its own. validate() enforces the
+# //// single-default invariant because _resolve_workflow falls back to the default when neither the
+# //// product nor the station names one — two defaults would make the fallback arbitrary (d59036f1,
+# //// 2026-03-23 "preparation workflows, runner display, and workflow APIs").
 import frappe
 from frappe import _
 from frappe.model.document import Document

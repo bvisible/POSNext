@@ -158,10 +158,10 @@ def update_pos_settings(pos_profile, settings):
 
 	if existing:
 		doc = frappe.get_doc("POS Settings", existing)
-		#//// Neoffice — the settings payload comes from the SPA and carries the document's own
-		#//// metadata (name, modified, owner…). Feeding `modified` back into doc.update() made
-		#//// Frappe compare it against the row and raise TimestampMismatchError on an ordinary
-		#//// save, so those keys are dropped (d646953c, 2026-03-23).
+		# //// Neoffice — the settings payload comes from the SPA and carries the document's own
+		# //// metadata (name, modified, owner…). Feeding `modified` back into doc.update() made
+		# //// Frappe compare it against the row and raise TimestampMismatchError on an ordinary
+		# //// save, so those keys are dropped (d646953c, 2026-03-23).
 		# //// prevent TimestampMismatchError when saving POS Settings — d646953
 		# Exclude internal fields that could cause timestamp mismatch
 		safe_settings = {k: v for k, v in settings.items()

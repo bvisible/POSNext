@@ -1,8 +1,8 @@
-#//// Neoffice — added file (no upstream equivalent). Existing installs carry a "POS Next
-#//// Receipt" Print Format whose name is its ID and which every POS Profile references; the
-#//// fork is sold as Neopos, so the document is renamed (or dropped when the target already
-#//// exists), the references rewritten, and the "POS Next" wording in Custom Field labels and
-#//// descriptions replaced (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
+# //// Neoffice — added file (no upstream equivalent). Existing installs carry a "POS Next
+# //// Receipt" Print Format whose name is its ID and which every POS Profile references; the
+# //// fork is sold as Neopos, so the document is renamed (or dropped when the target already
+# //// exists), the references rewritten, and the "POS Next" wording in Custom Field labels and
+# //// descriptions replaced (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 import frappe
 
 

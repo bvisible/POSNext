@@ -1,8 +1,8 @@
-#//// Neoffice — added file (no upstream equivalent). Upstream POSNext talks to each PSP directly.
-#//// Neoffice routes every payment through the unified `payments` app (ADR-001), so the POS needs a
-#//// POS-domain routing table: (POS Profile × Mode of Payment) → provider, channel, default device,
-#//// driver options. It lives here and not in payments/ so that app stays PSP-agnostic (9ff7305f,
-#//// 2026-05-13 "feat(pos_next): Phase 3 — wire POSNext into unified Payments app").
+# //// Neoffice — added file (no upstream equivalent). Upstream POSNext talks to each PSP directly.
+# //// Neoffice routes every payment through the unified `payments` app (ADR-001), so the POS needs a
+# //// POS-domain routing table: (POS Profile × Mode of Payment) → provider, channel, default device,
+# //// driver options. It lives here and not in payments/ so that app stays PSP-agnostic (9ff7305f,
+# //// 2026-05-13 "feat(pos_next): Phase 3 — wire POSNext into unified Payments app").
 # Copyright (c) 2026, Neoffice and contributors
 # License: AGPL-3.0
 

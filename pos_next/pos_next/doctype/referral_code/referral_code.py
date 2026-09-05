@@ -109,10 +109,10 @@ def apply_referral_code(referral_code, referee_customer):
     if referral.disabled:
         frappe.throw(_("This referral code has been disabled"))
 
-    #//// Neoffice — the "already used this code" check reads ERPNext's Coupon Code, matched on
-    #//// our referral_code Custom Field, because referral rewards are no longer minted as
-    #//// upstream's POS Coupon; querying the old doctype would have found nothing and handed a
-    #//// second reward to the same referee (771595d2 and 56c00619, 2026-01-14).
+    # //// Neoffice — the "already used this code" check reads ERPNext's Coupon Code, matched on
+    # //// our referral_code Custom Field, because referral rewards are no longer minted as
+    # //// upstream's POS Coupon; querying the old doctype would have found nothing and handed a
+    # //// second reward to the same referee (771595d2 and 56c00619, 2026-01-14).
     # //// add comprehensive test suite for ERPNext Coupon Code integration — 771595d + 56c0061 (+1 more)
     # Check if referee has already used this referral code (now using ERPNext Coupon Code)
     existing_coupon = frappe.db.exists("Coupon Code", {
@@ -129,23 +129,23 @@ def apply_referral_code(referral_code, referee_customer):
         "referee_coupon": None
     }
 
-    #//// Neoffice — the customer is read off the Referral Code and not off the coupon just created:
-    #//// `customer` is a Custom Field WE add to ERPNext's Coupon Code, so it is not on the record
-    #//// upstream's code built. The two frappe.log_error calls below also moved to the positional
-    #//// (title, message) form, which is the house rule for this app (771595d2 + 56c00619,
-    #//// 2026-01-14).
+    # //// Neoffice — the customer is read off the Referral Code and not off the coupon just created:
+    # //// `customer` is a Custom Field WE add to ERPNext's Coupon Code, so it is not on the record
+    # //// upstream's code built. The two frappe.log_error calls below also moved to the positional
+    # //// (title, message) form, which is the house rule for this app (771595d2 + 56c00619,
+    # //// 2026-01-14).
     # Generate coupon for referrer (primary customer)
     try:
         referrer_coupon = generate_referrer_coupon(referral)
         result["referrer_coupon"] = {
             "name": referrer_coupon.name,
             "coupon_code": referrer_coupon.coupon_code,
-            #//// Neoffice — same POS Coupon → ERPNext Coupon Code change; see the marker above (771595d2).
+            # //// Neoffice — same POS Coupon → ERPNext Coupon Code change; see the marker above (771595d2).
             "customer": referral.customer
         }
     except Exception as e:
         frappe.log_error(
-            #//// Neoffice — same POS Coupon → ERPNext Coupon Code change; see the marker above (771595d2).
+            # //// Neoffice — same POS Coupon → ERPNext Coupon Code change; see the marker above (771595d2).
             "Referrer Coupon Generation Failed",
             f"Failed to generate referrer coupon: {str(e)}"
         )
@@ -160,7 +160,7 @@ def apply_referral_code(referral_code, referee_customer):
         }
     except Exception as e:
         frappe.log_error(
-            #//// Neoffice — same POS Coupon → ERPNext Coupon Code change; see the marker above (771595d2).
+            # //// Neoffice — same POS Coupon → ERPNext Coupon Code change; see the marker above (771595d2).
             "Referee Coupon Generation Failed",
             f"Failed to generate referee coupon: {str(e)}"
         )
@@ -174,20 +174,20 @@ def apply_referral_code(referral_code, referee_customer):
     return result
 
 
-#//// Neoffice — both coupon generators rewritten end to end ▼▼▼
-#//// Upstream mints its own `POS Coupon`, a doctype the ERP knows nothing about: a coupon granted
-#//// at the till was invisible to Selling, to Pricing Rules and to every report. Neoffice issues an
-#//// ERPNext-native Coupon Code backed by a real Pricing Rule instead, so the POS and the ERP share
-#//// one discount table (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon Code
-#//// integration").
-#//// coupon_type is Promotional, never Gift Card: ERPNext makes `customer` mandatory on a Gift
-#//// Card, and a referral reward is identified by our own pos_next_gift_card flag (a49beaf9,
-#//// 2026-01-14 "use Promotional coupon type instead of Gift Card").
-#//// Names carry frappe.generate_hash()[:8] rather than a %Y%m%d%H%M%S stamp — two referrals
-#//// applied within the same second collided on the coupon name (56c00619, 2026-01-14 "add customer
-#//// field and use unique hash for coupon names").
-#//// insert(ignore_permissions=True): the caller is the referee, a portal customer with no write
-#//// right on Pricing Rule or Coupon Code (771595d2).
+# //// Neoffice — both coupon generators rewritten end to end ▼▼▼
+# //// Upstream mints its own `POS Coupon`, a doctype the ERP knows nothing about: a coupon granted
+# //// at the till was invisible to Selling, to Pricing Rules and to every report. Neoffice issues an
+# //// ERPNext-native Coupon Code backed by a real Pricing Rule instead, so the POS and the ERP share
+# //// one discount table (771595d2, 2026-01-14 "add comprehensive test suite for ERPNext Coupon Code
+# //// integration").
+# //// coupon_type is Promotional, never Gift Card: ERPNext makes `customer` mandatory on a Gift
+# //// Card, and a referral reward is identified by our own pos_next_gift_card flag (a49beaf9,
+# //// 2026-01-14 "use Promotional coupon type instead of Gift Card").
+# //// Names carry frappe.generate_hash()[:8] rather than a %Y%m%d%H%M%S stamp — two referrals
+# //// applied within the same second collided on the coupon name (56c00619, 2026-01-14 "add customer
+# //// field and use unique hash for coupon names").
+# //// insert(ignore_permissions=True): the caller is the referee, a portal customer with no write
+# //// right on Pricing Rule or Coupon Code (771595d2).
 def generate_referrer_coupon(referral):
     """Generate a coupon for the referrer using ERPNext Coupon Code + Pricing Rule"""
     # Calculate validity dates
@@ -195,7 +195,7 @@ def generate_referrer_coupon(referral):
     valid_days = referral.referrer_coupon_valid_days or 30
     valid_upto = add_days(valid_from, valid_days)
 
-    #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+    # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
     # Generate unique coupon code and name
     unique_hash = frappe.generate_hash()[:8].upper()
     coupon_code = f"REF-{unique_hash}"
@@ -212,14 +212,14 @@ def generate_referrer_coupon(referral):
         "applicable_for": "Customer",
         "customer": referral.customer,
         "company": referral.company,
-        #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+        # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
         "valid_from": valid_from,
         "valid_upto": valid_upto,
         "coupon_code_based": 1,
         "disable": 0,
     }
 
-    #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+    # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
     # Set discount type
     if referral.referrer_discount_type == "Percentage":
         pricing_rule_data["rate_or_discount"] = "Discount Percentage"
@@ -246,7 +246,7 @@ def generate_referrer_coupon(referral):
         "pricing_rule": pricing_rule.name,
         "valid_from": valid_from,
         "valid_upto": valid_upto,
-        #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+        # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
         "maximum_use": 1,
         "used": 0,
         # Custom fields for POS Next
@@ -260,7 +260,7 @@ def generate_referrer_coupon(referral):
     return coupon
 
 
-#//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+# //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
 def generate_referee_coupon(referral, referee_customer):
     """Generate a Promotional coupon for the referee (new customer) using ERPNext Coupon Code + Pricing Rule"""
     # Calculate validity dates
@@ -268,7 +268,7 @@ def generate_referee_coupon(referral, referee_customer):
     valid_days = referral.referee_coupon_valid_days or 30
     valid_upto = add_days(valid_from, valid_days)
 
-    #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+    # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
     # Generate unique coupon code and name
     unique_hash = frappe.generate_hash()[:8].upper()
     coupon_code = f"WELCOME-{unique_hash}"
@@ -285,14 +285,14 @@ def generate_referee_coupon(referral, referee_customer):
         "applicable_for": "Customer",
         "customer": referee_customer,
         "company": referral.company,
-        #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+        # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
         "valid_from": valid_from,
         "valid_upto": valid_upto,
         "coupon_code_based": 1,
         "disable": 0,
     }
 
-    #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+    # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
     # Set discount type
     if referral.referee_discount_type == "Percentage":
         pricing_rule_data["rate_or_discount"] = "Discount Percentage"
@@ -319,7 +319,7 @@ def generate_referee_coupon(referral, referee_customer):
         "pricing_rule": pricing_rule.name,
         "valid_from": valid_from,
         "valid_upto": valid_upto,
-        #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+        # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
         "maximum_use": 1,
         "used": 0,
         # Custom fields for POS Next
@@ -327,8 +327,8 @@ def generate_referee_coupon(referral, referee_customer):
         "referral_code": referral.name,
         "customer": referee_customer,
     })
-    #//// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
+    # //// Neoffice — see the rewritten-coupon-generators block header above (771595d2, a49beaf9).
     coupon.insert(ignore_permissions=True)
 
     return coupon
-#//// Neoffice — end of the rewritten coupon generators ▲▲▲
+# //// Neoffice — end of the rewritten coupon generators ▲▲▲

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-#//// Neoffice — added file (no upstream equivalent). Companion to annotate_fork.py for
-#//// the files that cannot carry an inline marker at all — package.json, DocType JSON,
-#//// lockfiles, pyproject.toml. It writes their divergence into BVISIBLE-MODS.md so the
-#//// next upstream merge still has a written reason for them (4e0d3068, 2026-05-19
-#//// "bootstrap tooling for upstream divergence tracking").
+# //// Neoffice — added file (no upstream equivalent). Companion to annotate_fork.py for
+# //// the files that cannot carry an inline marker at all — package.json, DocType JSON,
+# //// lockfiles, pyproject.toml. It writes their divergence into BVISIBLE-MODS.md so the
+# //// next upstream merge still has a written reason for them (4e0d3068, 2026-05-19
+# //// "bootstrap tooling for upstream divergence tracking").
 """json_diff_to_registry.py — Generate BVISIBLE-MODS.md from non-annotable files.
 
 For each JSON / lockfile / TOML file modified between merge-base (97a4e833) and

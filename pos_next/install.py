@@ -12,10 +12,10 @@ This module handles post-fixture tasks like setting defaults and clearing cache.
 """
 import frappe
 import logging
-#//// Neoffice — imported for the v15 / v16 split: _has_native_coupon_code_field() decides whether
-#//// this app must create the Sales Invoice `coupon_code` Custom Field itself. It cannot ship in
-#//// the fixture JSON — Frappe's import_doc reads the whole file and ignores the hooks.py
-#//// filters, so a v16 site aborted the migration (3571c411, 2026-02-18).
+# //// Neoffice — imported for the v15 / v16 split: _has_native_coupon_code_field() decides whether
+# //// this app must create the Sales Invoice `coupon_code` Custom Field itself. It cannot ship in
+# //// the fixture JSON — Frappe's import_doc reads the whole file and ignores the hooks.py
+# //// filters, so a v16 site aborted the migration (3571c411, 2026-02-18).
 # //// remove coupon_code from JSON, create programmatically for v15 — 3571c41
 from pos_next.hooks import _has_native_coupon_code_field
 
@@ -28,11 +28,11 @@ def after_install():
 	try:
 		log_message("POS Next: Running post-install setup", level="info")
 
-		#//// Neoffice — the Sales Invoice `coupon_code` Custom Field is created here instead of being
-		#//// shipped in the fixture JSON: ERPNext v16 has the field natively and a fixture of the same
-		#//// name collides on install. Drop this call once the fleet is on v16
-		#//// (3571c411, 2026-02-18 "fix(fixtures): remove coupon_code from JSON, create
-		#//// programmatically for v15").
+		# //// Neoffice — the Sales Invoice `coupon_code` Custom Field is created here instead of being
+		# //// shipped in the fixture JSON: ERPNext v16 has the field natively and a fixture of the same
+		# //// name collides on install. Drop this call once the fleet is on v16
+		# //// (3571c411, 2026-02-18 "fix(fixtures): remove coupon_code from JSON, create
+		# //// programmatically for v15").
 		# Ensure coupon_code custom field exists on v15 (native on v16+)
 		ensure_coupon_code_field()
 
@@ -57,11 +57,11 @@ def after_install():
 def after_migrate():
 	"""Hook that runs after bench migrate"""
 	try:
-		#//// Neoffice — ERPNext is in required_apps, so its doctype sync runs AFTER this app's
-		#//// during `bench migrate` and its Single "POS Settings" lands on top of ours (non-
-		#//// Single, holding the per-profile barcode_rules table). The reclaim belongs in
-		#//// after_migrate and not in a one-shot patch, because the clobbering repeats at every
-		#//// migrate (682184b0, 2026-07-09).
+		# //// Neoffice — ERPNext is in required_apps, so its doctype sync runs AFTER this app's
+		# //// during `bench migrate` and its Single "POS Settings" lands on top of ours (non-
+		# //// Single, holding the per-profile barcode_rules table). The reclaim belongs in
+		# //// after_migrate and not in a one-shot patch, because the clobbering repeats at every
+		# //// migrate (682184b0, 2026-07-09).
 		# //// align w/ upstream weighted-barcode: reclaim POS Settings — 83cb95dc
 		# Reclaim POS Settings if ERPNext re-imported its Single on top of ours.
 		# Must run in after_migrate (not a one-shot patch) because ERPNext's
@@ -89,10 +89,10 @@ def after_migrate():
 		raise
 
 
-#//// Neoffice — added function, no upstream equivalent: upstream never had two apps fighting over
-#//// this doctype. Idempotent by design — it exits untouched when "POS Settings" already belongs
-#//// to the POS Next module, which is the state of every instance today (682184b0, 2026-07-09
-#//// "align weighted-barcode resolver with upstream + dialog nextTick").
+# //// Neoffice — added function, no upstream equivalent: upstream never had two apps fighting over
+# //// this doctype. Idempotent by design — it exits untouched when "POS Settings" already belongs
+# //// to the POS Next module, which is the state of every instance today (682184b0, 2026-07-09
+# //// "align weighted-barcode resolver with upstream + dialog nextTick").
 def reclaim_pos_settings_doctype(quiet=False):
 	"""Reclaim the `POS Settings` DocType from ERPNext.
 
@@ -218,11 +218,11 @@ def setup_default_print_format(quiet=False):
 	"""
 	try:
 		# Check if the print format exists
-		#//// Neoffice — the receipt print format is "Neopos Receipt": the fork is sold as Neopos, not
-		#//// POS Next, and a Print Format's name IS its ID, so the string had to change here, in the
-		#//// log message and in the value written onto every POS Profile below. Installs that already
-		#//// carry the old document are renamed by patches/v2_0_0/rebrand_to_neopos.py
-		#//// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
+		# //// Neoffice — the receipt print format is "Neopos Receipt": the fork is sold as Neopos, not
+		# //// POS Next, and a Print Format's name IS its ID, so the string had to change here, in the
+		# //// log message and in the value written onto every POS Profile below. Installs that already
+		# //// carry the old document are renamed by patches/v2_0_0/rebrand_to_neopos.py
+		# //// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 		if not frappe.db.exists("Print Format", "Neopos Receipt"):
 			if not quiet:
 				log_message("Neopos Receipt print format not found, skipping default setup", level="warning")
@@ -243,7 +243,7 @@ def setup_default_print_format(quiet=False):
 						"POS Profile",
 						profile.name,
 						"print_format",
-						#//// Neoffice — the "Neopos Receipt" rebrand; see the marker above (771950bd, 2026-04-02).
+						# //// Neoffice — the "Neopos Receipt" rebrand; see the marker above (771950bd, 2026-04-02).
 						"Neopos Receipt",
 						update_modified=False
 					)

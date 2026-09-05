@@ -1,11 +1,11 @@
-#//// Neoffice — added file (no upstream equivalent). The restaurant Single: weekly opening hours,
-#//// time-based card availability, runner toggle, tips. It also PROVISIONS what tipping needs the
-#//// first time it is enabled — a TIP service item (0% VAT template, is_internal_item so it never
-#//// shows up in a client's item list) and transit account 2211 — because a Swiss tip is a
-#//// pass-through (Durchlaufkonto) collected for the staff, not turnover: booking it to a revenue
-#//// account would inflate both the turnover and the VAT base (32f2415d + a750c5e3, 2026-03-23;
-#//// account type and label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item flag
-#//// e18d1885, 2026-04).
+# //// Neoffice — added file (no upstream equivalent). The restaurant Single: weekly opening hours,
+# //// time-based card availability, runner toggle, tips. It also PROVISIONS what tipping needs the
+# //// first time it is enabled — a TIP service item (0% VAT template, is_internal_item so it never
+# //// shows up in a client's item list) and transit account 2211 — because a Swiss tip is a
+# //// pass-through (Durchlaufkonto) collected for the staff, not turnover: booking it to a revenue
+# //// account would inflate both the turnover and the VAT base (32f2415d + a750c5e3, 2026-03-23;
+# //// account type and label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item flag
+# //// e18d1885, 2026-04).
 import frappe
 from frappe import _
 from frappe.model.document import Document

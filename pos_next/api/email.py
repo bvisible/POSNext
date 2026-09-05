@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-#//// Neoffice — added file (no upstream equivalent). Upstream POSNext can only print a
-#//// receipt, so a customer who wanted it by e-mail had to be served from the desk. Sends the
-#//// invoice PDF through Frappe's Communication system, so the mail lands on the invoice's
-#//// timeline like any other, with the print format taken from the POS Profile
-#//// (4239ea8d, 2026-03-24 "feat: add email invoice functionality with PDF attachment";
-#//// strings rebranded to Neopos by 771950bd, 2026-04-02).
+# //// Neoffice — added file (no upstream equivalent). Upstream POSNext can only print a
+# //// receipt, so a customer who wanted it by e-mail had to be served from the desk. Sends the
+# //// invoice PDF through Frappe's Communication system, so the mail lands on the invoice's
+# //// timeline like any other, with the print format taken from the POS Profile
+# //// (4239ea8d, 2026-03-24 "feat: add email invoice functionality with PDF attachment";
+# //// strings rebranded to Neopos by 771950bd, 2026-04-02).
 import frappe
 from frappe import _
 

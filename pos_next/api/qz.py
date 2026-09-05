@@ -49,11 +49,11 @@ def get_certificate():
 	"""Return the public certificate PEM text for QZ Tray signing.
 	Returns None if no certificate exists (silent print not configured)."""
 	path = _cert_path()
-	#//// Neoffice — upstream threw when no QZ Tray certificate was installed. Silent printing is
-	#//// optional, so every POS load on a till without QZ raised a server error and an error
-	#//// dialog on an otherwise healthy till; return None and let the frontend simply not offer
-	#//// silent print (34f4167c, 2026-03-19). get_certificate_download() below still throws —
-	#//// there the operator explicitly asked for the file.
+	# //// Neoffice — upstream threw when no QZ Tray certificate was installed. Silent printing is
+	# //// optional, so every POS load on a till without QZ raised a server error and an error
+	# //// dialog on an otherwise healthy till; return None and let the frontend simply not offer
+	# //// silent print (34f4167c, 2026-03-19). get_certificate_download() below still throws —
+	# //// there the operator explicitly asked for the file.
 	if not os.path.exists(path):
 		return None
 
@@ -154,9 +154,9 @@ def setup_qz_certificate():
 	os.chmod(key_path, 0o600)
 
 	# Build self-signed certificate (valid ~31 years)
-	#//// Neoffice — the self-signed QZ Tray certificate is issued under the Neopos name, the
-	#//// brand the fork is sold as: the CN is what the cashier reads when the browser asks to
-	#//// trust silent printing (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
+	# //// Neoffice — the self-signed QZ Tray certificate is issued under the Neopos name, the
+	# //// brand the fork is sold as: the CN is what the cashier reads when the browser asks to
+	# //// trust silent printing (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 	subject = issuer = x509.Name([
 		# //// rebrand: rename POS Next to Neopos — 771950b
 		x509.NameAttribute(NameOID.COMMON_NAME, "Neopos QZ Tray Signing"),

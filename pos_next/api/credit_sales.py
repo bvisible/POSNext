@@ -605,31 +605,31 @@ def _create_payment_entry_from_advance(invoice_doc, payment_entry_name, amount):
 
 def get_credit_redeem_remark(invoice_name):
 	"""Get remark for credit redemption journal entry."""
-	#//// Neoffice — the fork is sold as Neopos, so the remark carries that name. It is not
-	#//// cosmetic: cancel_credit_journal_entries() below looks the Journal Entries up BY this
-	#//// exact user_remark, which makes the string the key of the credit-redemption ledger
-	#//// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
+	# //// Neoffice — the fork is sold as Neopos, so the remark carries that name. It is not
+	# //// cosmetic: cancel_credit_journal_entries() below looks the Journal Entries up BY this
+	# //// exact user_remark, which makes the string the key of the credit-redemption ledger
+	# //// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
 	# //// rebrand: rename POS Next to Neopos — 771950b
 	return f"Neopos credit redemption for invoice {invoice_name}"
 
 
-#//// Neoffice — added. The rebrand above renamed the remark on the WRITE side only, and no
-#//// patch rewrote the rows already in the ledger. Every Journal Entry posted before
-#//// 2026-04-02 therefore still carries the "POS Next" wording, so a lookup on the current
-#//// label alone finds nothing on an installation older than the rebrand: cancelling such an
-#//// invoice left its redemption entries submitted, silently, and the original invoice kept
-#//// a reduced outstanding. Lookups must accept every label the fork has ever written; only
-#//// the first entry is ever written. A structural lookup (Journal Entry Account referencing
-#//// the invoice) is deliberately NOT used instead: it would also match manual accounting
-#//// entries this code did not create, and cancel_credit_journal_entries() cancels what it
-#//// finds. The remark is what says "we wrote this one".
+# //// Neoffice — added. The rebrand above renamed the remark on the WRITE side only, and no
+# //// patch rewrote the rows already in the ledger. Every Journal Entry posted before
+# //// 2026-04-02 therefore still carries the "POS Next" wording, so a lookup on the current
+# //// label alone finds nothing on an installation older than the rebrand: cancelling such an
+# //// invoice left its redemption entries submitted, silently, and the original invoice kept
+# //// a reduced outstanding. Lookups must accept every label the fork has ever written; only
+# //// the first entry is ever written. A structural lookup (Journal Entry Account referencing
+# //// the invoice) is deliberately NOT used instead: it would also match manual accounting
+# //// entries this code did not create, and cancel_credit_journal_entries() cancels what it
+# //// finds. The remark is what says "we wrote this one".
 CREDIT_REDEEM_REMARK_PREFIXES = (
 	"Neopos credit redemption for invoice",
 	"POS Next credit redemption for invoice",  # pre-771950bd rows, never migrated
 )
 
 
-#//// Neoffice — added; see CREDIT_REDEEM_REMARK_PREFIXES above.
+# //// Neoffice — added; see CREDIT_REDEEM_REMARK_PREFIXES above.
 def get_credit_redeem_remarks(invoice_name):
 	"""Every user_remark the fork has ever written for a credit redemption of this invoice.
 
@@ -647,9 +647,9 @@ def cancel_credit_journal_entries(invoice_name):
 	Args:
 		invoice_name: Sales Invoice name
 	"""
-	#//// Neoffice — was `"user_remark": get_credit_redeem_remark(invoice_name)`, i.e. the
-	#//// current label only, so redemption entries written before the 2026-04-02 rebrand were
-	#//// never found and never cancelled. See CREDIT_REDEEM_REMARK_PREFIXES above.
+	# //// Neoffice — was `"user_remark": get_credit_redeem_remark(invoice_name)`, i.e. the
+	# //// current label only, so redemption entries written before the 2026-04-02 rebrand were
+	# //// never found and never cancelled. See CREDIT_REDEEM_REMARK_PREFIXES above.
 	remarks = get_credit_redeem_remarks(invoice_name)
 
 	# Find linked journal entries
@@ -657,7 +657,7 @@ def cancel_credit_journal_entries(invoice_name):
 		"Journal Entry",
 		filters={
 			"docstatus": 1,
-			#//// Neoffice — was a single remark string; see CREDIT_REDEEM_REMARK_PREFIXES above.
+			# //// Neoffice — was a single remark string; see CREDIT_REDEEM_REMARK_PREFIXES above.
 			"user_remark": ["in", remarks]
 		},
 		pluck="name"
@@ -681,10 +681,10 @@ def cancel_credit_journal_entries(invoice_name):
 			je_doc.cancel()
 			cancelled_count += 1
 		except Exception:
-			#//// Neoffice — the two arguments were the wrong way round: frappe.log_error takes
-			#//// (title, message) and truncates the title at 140 characters, so the sentence
-			#//// carrying the Journal Entry name and the error was the part being cut, while
-			#//// the message held the constant label. Swapped; the traceback goes in the body.
+			# //// Neoffice — the two arguments were the wrong way round: frappe.log_error takes
+			# //// (title, message) and truncates the title at 140 characters, so the sentence
+			# //// carrying the Journal Entry name and the error was the part being cut, while
+			# //// the message held the constant label. Swapped; the traceback goes in the body.
 			frappe.log_error(
 				"Credit Sale JE Cancellation",
 				f"Failed to cancel Journal Entry {journal_entry_name} "

@@ -1,9 +1,9 @@
-#//// Neoffice — added file (no upstream equivalent). pre_model_sync patch for the rename of
-#//// upstream's Item Modifier* doctypes to Product Option*: they describe restaurant product
-#//// options (sauce, cooking, extras), which "modifier" made ambiguous against item variants.
-#//// It has to run before the doctype sync, otherwise migrate creates the renamed tables empty
-#//// and leaves the data behind (a1da8cc0, 2026-03-23 "feat: rename Item Modifier → Product
-#//// Option Group").
+# //// Neoffice — added file (no upstream equivalent). pre_model_sync patch for the rename of
+# //// upstream's Item Modifier* doctypes to Product Option*: they describe restaurant product
+# //// options (sauce, cooking, extras), which "modifier" made ambiguous against item variants.
+# //// It has to run before the doctype sync, otherwise migrate creates the renamed tables empty
+# //// and leaves the data behind (a1da8cc0, 2026-03-23 "feat: rename Item Modifier → Product
+# //// Option Group").
 import frappe
 
 def execute():

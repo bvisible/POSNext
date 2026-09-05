@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-#//// Neoffice — added file (no upstream equivalent). One-shot migration of the gift cards held
-#//// in upstream's own `POS Coupon` doctype onto ERPNext's Coupon Code + Pricing Rule, so an
-#//// instance that had already sold cards keeps their balance, original amount and source
-#//// invoice once the fork stopped using POS Coupon. Skips coupons already migrated and logs
-#//// rather than aborting the migrate (e12c8df8 2026-01-13; a49beaf9 2026-01-14 creates them
-#//// as "Promotional" — ERPNext's Gift Card coupon type demands a customer, ours are bearer
-#//// cards).
+# //// Neoffice — added file (no upstream equivalent). One-shot migration of the gift cards held
+# //// in upstream's own `POS Coupon` doctype onto ERPNext's Coupon Code + Pricing Rule, so an
+# //// instance that had already sold cards keeps their balance, original amount and source
+# //// invoice once the fork stopped using POS Coupon. Skips coupons already migrated and logs
+# //// rather than aborting the migrate (e12c8df8 2026-01-13; a49beaf9 2026-01-14 creates them
+# //// as "Promotional" — ERPNext's Gift Card coupon type demands a customer, ours are bearer
+# //// cards).
 # Copyright (c) 2025, POS Next and contributors
 # For license information, please see license.txt
 

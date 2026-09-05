@@ -3,11 +3,11 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
-#//// Neoffice — module rewritten end to end. Upstream's suite exercised its own POS Coupon doctype;
-#//// this one covers referral coupons issued as ERPNext Coupon Code + Pricing Rule after the
-#//// migration, and duplicate-use prevention. It needs a live site (real Pricing Rules), hence the
-#//// run-tests invocation documented just below (771595d2, 2026-01-14 "add comprehensive test suite
-#//// for ERPNext Coupon Code integration").
+# //// Neoffice — module rewritten end to end. Upstream's suite exercised its own POS Coupon doctype;
+# //// this one covers referral coupons issued as ERPNext Coupon Code + Pricing Rule after the
+# //// migration, and duplicate-use prevention. It needs a live site (real Pricing Rules), hence the
+# //// run-tests invocation documented just below (771595d2, 2026-01-14 "add comprehensive test suite
+# //// for ERPNext Coupon Code integration").
 """
 Test Suite for Referral Code functionality
 
@@ -22,7 +22,7 @@ Run with: bench --site [site] run-tests --app pos_next --module pos_next.pos_nex
 
 import frappe
 import unittest
-#//// Neoffice — module rewritten for ERPNext Coupon Code; see the marker above (771595d2).
+# //// Neoffice — module rewritten for ERPNext Coupon Code; see the marker above (771595d2).
 from frappe.utils import nowdate, add_days, flt
 from pos_next.pos_next.doctype.referral_code.referral_code import (
 	create_referral_code,
@@ -532,7 +532,7 @@ def run_referral_code_tests():
 	return runner.run(suite)
 
 
-#//// Neoffice — standalone entry point kept from the same rewrite, so the suite can also be run
-#//// directly and not only through `bench run-tests` (771595d2, 2026-01-14).
+# //// Neoffice — standalone entry point kept from the same rewrite, so the suite can also be run
+# //// directly and not only through `bench run-tests` (771595d2, 2026-01-14).
 if __name__ == "__main__":
 	run_referral_code_tests()

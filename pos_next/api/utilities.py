@@ -9,10 +9,10 @@ from frappe import _
 from frappe.utils import cint
 
 
-#//// Neoffice — the SPA needs the site name to build its Socket.IO namespace and it was hard-
-#//// coded, which cannot work on a fleet where every client is its own site. allow_guest because
-#//// the customer display and the guest-ordering pages ask for it before anyone is signed in
-#//// (a212d426, 2026-02-04).
+# //// Neoffice — the SPA needs the site name to build its Socket.IO namespace and it was hard-
+# //// coded, which cannot work on a fleet where every client is its own site. allow_guest because
+# //// the customer display and the guest-ordering pages ask for it before anyone is signed in
+# //// (a212d426, 2026-02-04).
 # //// dynamic site name resolution for Socket.IO namespace — a212d42
 @frappe.whitelist(allow_guest=True)
 def get_site_info():

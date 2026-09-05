@@ -17,10 +17,10 @@ ITEM_RESULT_FIELDS = [
 	"description",
 	"stock_uom",
 	"image",
-	#//// Neoffice — custom_color is a Custom Field the fork adds to Item. A restaurant menu has
-	#//// no product photos, so a tile falls back to a colour + name instead of an empty grey
-	#//// square; the field has to travel with every search result or the grid cannot draw it
-	#//// (26f5a3f1, 2026-03-25 "add image and color support for items in POS restaurant").
+	# //// Neoffice — custom_color is a Custom Field the fork adds to Item. A restaurant menu has
+	# //// no product photos, so a tile falls back to a colour + name instead of an empty grey
+	# //// square; the field has to travel with every search result or the grid cannot draw it
+	# //// (26f5a3f1, 2026-03-25 "add image and color support for items in POS restaurant").
 	# //// add image and color support for items in POS restaurant — 26f5a3f
 	"custom_color",
 	"is_stock_item",
@@ -258,10 +258,10 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 
 	# Fetch all needed Item fields in a single query (performance optimization)
 	# //// include is_stock_item so the barcode/search path can skip stock validation
-	#//// Neoffice — is_stock_item added to this fetch. get_items (the grid) already returned it
-	#//// but get_item_detail (barcode / search bar) did not, so the cart fell back to reading the
-	#//// line qty as available stock and refused a NON-stock item with "Insufficient stock" —
-	#//// only when it was scanned (ef2cbcfd, 2026-07-09).
+	# //// Neoffice — is_stock_item added to this fetch. get_items (the grid) already returned it
+	# //// but get_item_detail (barcode / search bar) did not, so the cart fell back to reading the
+	# //// line qty as available stock and refused a NON-stock item with "Insufficient stock" —
+	# //// only when it was scanned (ef2cbcfd, 2026-07-09).
 	item_data = (
 		frappe.db.get_value(
 			"Item",
@@ -297,9 +297,9 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 	res["serial_no_data"] = serial_no_data
 	res["item_group"] = item_data.get("item_group")
 	res["brand"] = item_data.get("brand")
-	#//// Neoffice — key absent from upstream's get_item_detail; the mismatch with get_items it
-	#//// caused is described just below (ef2cbcfd, 2026-07-09 "fix(pos): don't stock-block
-	#//// non-stock items scanned from the search bar").
+	# //// Neoffice — key absent from upstream's get_item_detail; the mismatch with get_items it
+	# //// caused is described just below (ef2cbcfd, 2026-07-09 "fix(pos): don't stock-block
+	# //// non-stock items scanned from the search bar").
 	# Non-stock items (is_stock_item=0) must not be stock-validated in the cart.
 	# The grid path (get_items) already returns this; the barcode/search path
 	# (get_item_detail) dropped it, so a non-stock item wrongly hit the stock
@@ -313,17 +313,17 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 		fields=["uom", "conversion_factor"],
 	)
 
-	#//// Neoffice — upstream appended the stock UOM to item_uoms here; the frontend adds it too,
-	#//// so the UOM dialog listed the unit twice and popped up for single-UOM items
-	#//// (d29af088, 2026-07-09 "fix(pos): barcode error toast, UOM dialog dedup, any-order
-	#//// customer search").
+	# //// Neoffice — upstream appended the stock UOM to item_uoms here; the frontend adds it too,
+	# //// so the UOM dialog listed the unit twice and popped up for single-UOM items
+	# //// (d29af088, 2026-07-09 "fix(pos): barcode error toast, UOM dialog dedup, any-order
+	# //// customer search").
 	# //// item_uoms holds ALTERNATE uoms only (exclude stock_uom) to match get_items
 	# Keep item_uoms consistent with get_items(): it must contain only the
 	# ALTERNATE uoms, never the stock UOM. The frontend always adds the stock
 	# UOM itself, so including it here produced a duplicate button in the UOM
 	# dialog/cart dropdown and made single-UOM items pop a pointless dialog.
 	stock_uom = item_data.get("stock_uom")
-	#//// Neoffice — stock UOM excluded from item_uoms; see the marker above (d29af088).
+	# //// Neoffice — stock UOM excluded from item_uoms; see the marker above (d29af088).
 	res["item_uoms"] = [u for u in uoms if u.get("uom") != stock_uom]
 
 	return res
@@ -369,10 +369,10 @@ def search_by_barcode(barcode, pos_profile):
 			item_code = frappe.db.get_value("Item", {"name": effective_barcode})
 			barcode_uom = None
 
-		#//// Neoffice — an unknown barcode is an expected, recoverable event at a till. Upstream
-		#//// threw, which surfaced as a server error page / stray tab and filled the Error Log
-		#//// with a traceback on every mistyped code; returning None lets the frontend show a
-		#//// plain "not found" toast (d29af088, 2026-07-09).
+		# //// Neoffice — an unknown barcode is an expected, recoverable event at a till. Upstream
+		# //// threw, which surfaced as a server error page / stray tab and filled the Error Log
+		# //// with a traceback on every mistyped code; returning None lets the frontend show a
+		# //// plain "not found" toast (d29af088, 2026-07-09).
 		# //// unknown barcode returns None (clean toast) instead of throwing
 		if not item_code:
 			# Unknown barcode is an expected, recoverable case. Returning None
@@ -832,10 +832,10 @@ def _build_item_base_conditions(
 			- params: list of params in SQL order (JOIN params first, then WHERE params)
 			- extra_joins: SQL JOIN string to insert before WHERE (empty string if none)
 	"""
-	#//// Neoffice — is_internal_item is a Neoffice Custom Field (neoffice_theme): items that
-	#//// exist only to be added by code, such as TIP, must never be browsable in the grid. The
-	#//// same rule is repeated for link-field searches in pos_next/validations.py, because
-	#//// POSNext's raw SQL bypasses permission_query_conditions (fa5e2ee5, 2026-04-02).
+	# //// Neoffice — is_internal_item is a Neoffice Custom Field (neoffice_theme): items that
+	# //// exist only to be added by code, such as TIP, must never be browsable in the grid. The
+	# //// same rule is repeated for link-field searches in pos_next/validations.py, because
+	# //// POSNext's raw SQL bypasses permission_query_conditions (fa5e2ee5, 2026-04-02).
 	conditions = [
 		"i.disabled = 0",
 		"i.is_sales_item = 1",

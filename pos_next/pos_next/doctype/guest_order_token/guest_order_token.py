@@ -1,12 +1,12 @@
-#//// Neoffice — added file (no upstream equivalent). Upstream POSNext is a cashier-only retail POS:
-#//// a guest never orders by himself. This doctype mints the one short-lived credential a QR
-#//// self-ordering or takeaway guest ever holds — secrets.token_urlsafe(32) bound to a table and to
-#//// a POS Opening Entry, so a token cannot outlive the shift that issued it (3939a848, 2026-03-28
-#//// "QR self-ordering and takeaway web ordering"). expire() clears a dangling invoice link and
-#//// sets ignore_validate on purpose: by the time the table is cleared the POS Opening may already
-#//// be closed, and a LinkValidationError there would leave the token Active for ever (b96ddc17 +
-#//// 70c81008). expire_tokens_for_table() is what the table-cleaning flow calls when a table goes
-#//// back to Empty (07d0d493, 2026-03-29).
+# //// Neoffice — added file (no upstream equivalent). Upstream POSNext is a cashier-only retail POS:
+# //// a guest never orders by himself. This doctype mints the one short-lived credential a QR
+# //// self-ordering or takeaway guest ever holds — secrets.token_urlsafe(32) bound to a table and to
+# //// a POS Opening Entry, so a token cannot outlive the shift that issued it (3939a848, 2026-03-28
+# //// "QR self-ordering and takeaway web ordering"). expire() clears a dangling invoice link and
+# //// sets ignore_validate on purpose: by the time the table is cleared the POS Opening may already
+# //// be closed, and a LinkValidationError there would leave the token Active for ever (b96ddc17 +
+# //// 70c81008). expire_tokens_for_table() is what the table-cleaning flow calls when a table goes
+# //// back to Empty (07d0d493, 2026-03-29).
 # Copyright (c) 2026, BrainWise and contributors
 # For license information, please see license.txt
 

@@ -2,11 +2,11 @@
 # Copyright (c) 2025, BrainWise and contributors
 # For license information, please see license.txt
 
-#//// Neoffice — added file (no upstream equivalent). Guards the move to ERPNext's native
-#//// `coupon_code` field on Sales Invoice: validation on save, usage counter up on submit and back
-#//// down on cancel. Upstream tracked usage by patching the row after save, which left the counter
-#//// wrong whenever the invoice was cancelled (9bc096de, 2026-02-05 "feat(coupons): use native
-#//// ERPNext coupon_code field on Sales Invoice").
+# //// Neoffice — added file (no upstream equivalent). Guards the move to ERPNext's native
+# //// `coupon_code` field on Sales Invoice: validation on save, usage counter up on submit and back
+# //// down on cancel. Upstream tracked usage by patching the row after save, which left the counter
+# //// wrong whenever the invoice was cancelled (9bc096de, 2026-02-05 "feat(coupons): use native
+# //// ERPNext coupon_code field on Sales Invoice").
 """
 Test Suite for Coupon Code Integration with Sales Invoice
 
@@ -26,7 +26,7 @@ from frappe.utils import nowdate, add_months, flt
 class TestCouponInvoiceIntegration(unittest.TestCase):
 	"""Test coupon_code field integration with Sales Invoice"""
 
-	#//// Neoffice — added _pick_company (764047c "tests: fixtures must pick rows the test can actually use"): frappe.get_all("Company", limit=1) picked whatever came first and had no fiscal year covering today on the dev instance, failing all four invoice tests with FiscalYearError
+	# //// Neoffice — added _pick_company (764047c "tests: fixtures must pick rows the test can actually use"): frappe.get_all("Company", limit=1) picked whatever came first and had no fiscal year covering today on the dev instance, failing all four invoice tests with FiscalYearError
 	@classmethod
 	def _pick_company(cls):
 		"""A company an invoice dated today can actually be booked in.
@@ -49,12 +49,12 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 	def setUpClass(cls):
 		"""Set up test fixtures"""
 		# Get test company
-		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): use _pick_company() and skip instead of a random get_all() pick that could lack a fiscal year for today
+		# //// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): use _pick_company() and skip instead of a random get_all() pick that could lack a fiscal year for today
 		cls.test_company = cls._pick_company()
 		if not cls.test_company:
 			raise unittest.SkipTest("No company with an active fiscal year for today")
 
-		#//// Neoffice — modified: create the test customer instead of borrowing an arbitrary get_all("Customer", limit=1) row — the row you land on decides the invoice currency, and on CI it put a USD customer against an INR company, failing all four invoice tests on "Party Account Debtors - _TC currency (INR) and document currency (USD) should be same"
+		# //// Neoffice — modified: create the test customer instead of borrowing an arbitrary get_all("Customer", limit=1) row — the row you land on decides the invoice currency, and on CI it put a USD customer against an INR company, failing all four invoice tests on "Party Account Debtors - _TC currency (INR) and document currency (USD) should be same"
 		# Track created docs for cleanup (before anything is created)
 		cls.created_customers = []
 		cls.created_coupons = []
@@ -70,7 +70,7 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 		# the company currency, which is all these coupon tests need.
 		cls.test_customer = cls._create_test_customer()
 
-		#//// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): exclude templates/fixed assets/disabled items and order by name so the pick is stable
+		# //// Neoffice — modified (764047c "tests: fixtures must pick rows the test can actually use"): exclude templates/fixed assets/disabled items and order by name so the pick is stable
 		# Get test item: one that can actually go on an invoice line.
 		# erpnext ships _Test Variant Item among its test records - a template
 		# (has_variants=1) whose variants are the sellable rows. Filtering only on
@@ -97,9 +97,9 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"Company", cls.test_company, "default_income_account"
 		)
 
-		#//// Neoffice — removed cls.created_coupons/created_pricing_rules init here (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): moved up next to created_customers/created_invoices so every tracking list exists before anything is created
+		# //// Neoffice — removed cls.created_coupons/created_pricing_rules init here (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): moved up next to created_customers/created_invoices so every tracking list exists before anything is created
 
-		#//// Neoffice — added: pin the receivable account and bill in ITS currency.
+		# //// Neoffice — added: pin the receivable account and bill in ITS currency.
 		# The invoice used to take its currency from the ambient default, which is
 		# not the company's: bench run-tests only bootstraps the app under test, so
 		# erpnext's before_tests never runs and Global Defaults keeps frappe's own
@@ -118,7 +118,7 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 		# Create a test Pricing Rule and Coupon Code
 		cls._create_test_coupon()
 
-	#//// Neoffice — added _create_test_customer: the coupon tests need a customer that bills in the company currency, which no borrowed row guarantees
+	# //// Neoffice — added _create_test_customer: the coupon tests need a customer that bills in the company currency, which no borrowed row guarantees
 	@classmethod
 	def _create_test_customer(cls):
 		"""Create a customer that bills in the company currency."""
@@ -209,7 +209,7 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			except Exception:
 				pass
 
-		#//// Neoffice — added (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): clean up the customer we created for the invoice-currency fixture, along with the coupon/pricing rule
+		# //// Neoffice — added (fa314f91 "tests(coupon): create the test customer instead of borrowing one"): clean up the customer we created for the invoice-currency fixture, along with the coupon/pricing rule
 		# Delete the customer we created (only ours: created_customers is empty
 		# when the run reused one that was already on the site)
 		for customer_name in cls.created_customers:
@@ -231,9 +231,9 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"company": self.test_company,
 			"posting_date": nowdate(),
 			"due_date": nowdate(),
-			#//// Neoffice — bench run-tests only bootstraps pos_next, so Global Defaults keeps
-			#//// Neoffice — frappe's USD while the test company is INR; pin invoice currency/
-			#//// Neoffice — conversion to the receivable account's own currency (7b2e7ea7)
+			# //// Neoffice — bench run-tests only bootstraps pos_next, so Global Defaults keeps
+			# //// Neoffice — frappe's USD while the test company is INR; pin invoice currency/
+			# //// Neoffice — conversion to the receivable account's own currency (7b2e7ea7)
 			# Bill in the receivable account's own currency - see setUpClass.
 			"debit_to": self.debit_to,
 			"currency": self.test_currency,
@@ -326,9 +326,9 @@ class TestCouponInvoiceIntegration(unittest.TestCase):
 			"company": self.test_company,
 			"posting_date": nowdate(),
 			"due_date": nowdate(),
-			#//// Neoffice — bench run-tests only bootstraps pos_next, so Global Defaults keeps
-			#//// Neoffice — frappe's USD while the test company is INR; pin invoice currency/
-			#//// Neoffice — conversion to the receivable account's own currency (7b2e7ea7)
+			# //// Neoffice — bench run-tests only bootstraps pos_next, so Global Defaults keeps
+			# //// Neoffice — frappe's USD while the test company is INR; pin invoice currency/
+			# //// Neoffice — conversion to the receivable account's own currency (7b2e7ea7)
 			# Bill in the receivable account's own currency - see setUpClass.
 			"debit_to": self.debit_to,
 			"currency": self.test_currency,

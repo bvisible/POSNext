@@ -1,16 +1,16 @@
-#//// Neoffice — ▼▼▼ NO Neoffice divergence in this file. Verified 2026-09-04: its content is
-#//// byte-for-byte identical to BrainWise-DEV/POSNext `version-15` (upstream b758b5c6,
-#//// 2026-06-14 "Fix lineter errors"). Every hunk a diff against the merge-base 97a4e833
-#//// shows here is upstream's own evolution, not ours: 682184b0 (2026-07-09, "feat(pos):
-#//// align weighted-barcode resolver with upstream + dialog nextTick") deliberately took the
-#//// upstream resolver wholesale — _coerce_value for the old (integer_value/decimal_value)
-#//// and new (direct qty/price) result shapes of the barcode_resolver app, plus the loggers —
-#//// because our copy had not moved since the merge-base. The module stays inert until the
-#//// optional barcode_resolver app is installed.
-#//// AT THE NEXT UPSTREAM MERGE: take upstream's version of this file wholesale (`git
-#//// checkout upstream/<branch> -- pos_next/services/barcode.py`). Do NOT resolve it hunk by
-#//// hunk — there is nothing of ours to preserve, and the apparent conflicts are only
-#//// re-formatting noise. This block is the only Neoffice content in the file. ▲▲▲
+# //// Neoffice — ▼▼▼ NO Neoffice divergence in this file. Verified 2026-09-04: its content is
+# //// byte-for-byte identical to BrainWise-DEV/POSNext `version-15` (upstream b758b5c6,
+# //// 2026-06-14 "Fix lineter errors"). Every hunk a diff against the merge-base 97a4e833
+# //// shows here is upstream's own evolution, not ours: 682184b0 (2026-07-09, "feat(pos):
+# //// align weighted-barcode resolver with upstream + dialog nextTick") deliberately took the
+# //// upstream resolver wholesale — _coerce_value for the old (integer_value/decimal_value)
+# //// and new (direct qty/price) result shapes of the barcode_resolver app, plus the loggers —
+# //// because our copy had not moved since the merge-base. The module stays inert until the
+# //// optional barcode_resolver app is installed.
+# //// AT THE NEXT UPSTREAM MERGE: take upstream's version of this file wholesale (`git
+# //// checkout upstream/<branch> -- pos_next/services/barcode.py`). Do NOT resolve it hunk by
+# //// hunk — there is nothing of ours to preserve, and the apparent conflicts are only
+# //// re-formatting noise. This block is the only Neoffice content in the file. ▲▲▲
 """
 Barcode resolver service for POS Next.
 
@@ -34,24 +34,24 @@ Usage:
 
 from __future__ import annotations
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 import logging
 from functools import lru_cache
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 from typing import TypedDict
 
 import frappe
 from erpnext.stock.get_item_details import get_conversion_factor
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 logger = logging.getLogger(__name__)
 
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 class BarcodeResult(TypedDict, total=False):
 	"""Type definition for barcode resolution result."""
 
-	#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+	# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 	item_barcode: str  # The barcode from Item Barcodes table
 	integer_value: str  # Integer part of the encoded value
 	decimal_value: str  # Decimal part of the encoded value
@@ -60,18 +60,18 @@ class BarcodeResult(TypedDict, total=False):
 	qty: float | None  # Quantity (only for weighted barcodes)
 
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 class ResolvedItemData(TypedDict, total=False):
 	"""Type definition for resolved item data to be applied to cart."""
 
-	#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+	# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 	resolved_qty: float | None
 	resolved_uom: str | None
 	resolved_price: float | None
 	resolved_barcode_type: str | None
 
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 @lru_cache(maxsize=1)
 def is_barcode_resolver_available() -> bool:
 	"""
@@ -86,7 +86,7 @@ def is_barcode_resolver_available() -> bool:
 	return "barcode_resolver" in frappe.get_installed_apps()
 
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 def resolve_barcode(barcode: str, pos_profile: str) -> BarcodeResult | None:
 	"""
 	Resolve a barcode using the barcode_resolver app if available.
@@ -218,12 +218,12 @@ def _coerce_value(resolved_barcode, field: str) -> float | None:
 		return None
 
 
-#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 def compute_resolved_item_data(
 	resolved_barcode: BarcodeResult | None,
 	item,
 ) -> ResolvedItemData | None:
-	#//// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
+	# //// Neoffice — not ours: upstream's own code, see the block at the top of this file (682184b0).
 	"""
 	Compute qty and uom from resolved barcode data.
 

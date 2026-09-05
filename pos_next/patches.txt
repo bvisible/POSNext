@@ -1,18 +1,18 @@
 [pre_model_sync]
 # Patches added in this section will be executed before doctypes are migrated
-#//// Neoffice — pre_model_sync patch: upstream's "Item Modifier*" doctypes were renamed to
-#//// "Product Option*" because they model restaurant product options, not item variants, and a
-#//// rename has to happen before the doctype sync or migrate creates the new tables empty
-#//// beside the old ones (a1da8cc0, 2026-03-23). This entry took the place of upstream's
-#//// documentation-link comment.
+# //// Neoffice — pre_model_sync patch: upstream's "Item Modifier*" doctypes were renamed to
+# //// "Product Option*" because they model restaurant product options, not item variants, and a
+# //// rename has to happen before the doctype sync or migrate creates the new tables empty
+# //// beside the old ones (a1da8cc0, 2026-03-23). This entry took the place of upstream's
+# //// documentation-link comment.
 pos_next.patches.rename_modifier_to_product_option
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
-#//// Neoffice — the two v2_0_0 entries below are the fork's: one migrates upstream's POS Coupon
-#//// gift cards onto ERPNext Coupon Code (e12c8df8, 2026-01-13), the other renames the receipt
-#//// Print Format to Neopos on existing installs (771950bd, 2026-04-02). The upstream line
-#//// above shows up in the diff only because the file had no trailing newline.
+# //// Neoffice — the two v2_0_0 entries below are the fork's: one migrates upstream's POS Coupon
+# //// gift cards onto ERPNext Coupon Code (e12c8df8, 2026-01-13), the other renames the receipt
+# //// Print Format to Neopos on existing installs (771950bd, 2026-04-02). The upstream line
+# //// above shows up in the diff only because the file had no trailing newline.
 pos_next.patches.v1_7_0.reinstall_workspace
 pos_next.patches.v2_0_0.migrate_pos_coupons_to_erpnext
 pos_next.patches.v2_0_0.rebrand_to_neopos

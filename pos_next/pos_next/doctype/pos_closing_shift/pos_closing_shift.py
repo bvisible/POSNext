@@ -82,11 +82,11 @@ class POSClosingShift(Document):
         opening_entry.save()
         # link invoices with this closing shift so ERPNext can block edits
         self._set_closing_entry_invoices()
-        #//// Neoffice — no upstream equivalent: closing a shift also takes the cash out of the
-        #//// drawer. The move is posted as a real Journal Entry from the template configured on
-        #//// POS Settings (erpnextswiss structure), so the ledger matches the drawer and the next
-        #//// shift opens on the remaining balance (5783eb27, 2026-03-28). on_cancel unwinds it,
-        #//// see below.
+        # //// Neoffice — no upstream equivalent: closing a shift also takes the cash out of the
+        # //// drawer. The move is posted as a real Journal Entry from the template configured on
+        # //// POS Settings (erpnextswiss structure), so the ledger matches the drawer and the next
+        # //// shift opens on the remaining balance (5783eb27, 2026-03-28). on_cancel unwinds it,
+        # //// see below.
         # //// cash withdrawal at shift closing with suggested opening balance — 5783eb2
         # Create withdrawal journal entry if amount > 0
         self._create_withdrawal_journal_entry()
@@ -100,11 +100,11 @@ class POSClosingShift(Document):
                 opening_entry.save()
         # remove links from invoices so they can be cancelled
         self._clear_closing_entry_invoices()
-        #//// Neoffice — mirror of the withdrawal Journal Entry posted on submit (see
-        #//// _create_withdrawal_journal_entry below). Cancelling a closing shift has to unwind the
-        #//// cash move too, otherwise the drawer stays short in the ledger while the shift itself
-        #//// is void (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested opening
-        #//// balance").
+        # //// Neoffice — mirror of the withdrawal Journal Entry posted on submit (see
+        # //// _create_withdrawal_journal_entry below). Cancelling a closing shift has to unwind the
+        # //// cash move too, otherwise the drawer stays short in the ledger while the shift itself
+        # //// is void (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested opening
+        # //// balance").
         # Cancel withdrawal journal entry if one was created
         self._cancel_withdrawal_journal_entry()
 
@@ -182,13 +182,13 @@ class POSClosingShift(Document):
             )
         )
 
-    #//// Neoffice — added block. Upstream closes a shift and leaves the money in the drawer. A
-    #//// Swiss till is emptied at closing: the cashier declares what is withdrawn and what float
-    #//// stays, and the cash must leave the cash account for a transit account the same night. We
-    #//// post it as a Journal Entry built from the Journal Entry Template configured in POS
-    #//// Settings (erpnextswiss structure), and _cancel_withdrawal_journal_entry unwinds it when
-    #//// the shift is cancelled (5783eb27, 2026-03-28 "cash withdrawal at shift closing with
-    #//// suggested opening balance").
+    # //// Neoffice — added block. Upstream closes a shift and leaves the money in the drawer. A
+    # //// Swiss till is emptied at closing: the cashier declares what is withdrawn and what float
+    # //// stays, and the cash must leave the cash account for a transit account the same night. We
+    # //// post it as a Journal Entry built from the Journal Entry Template configured in POS
+    # //// Settings (erpnextswiss structure), and _cancel_withdrawal_journal_entry unwinds it when
+    # //// the shift is cancelled (5783eb27, 2026-03-28 "cash withdrawal at shift closing with
+    # //// suggested opening balance").
     def _create_withdrawal_journal_entry(self):
         """Create a Journal Entry for cash withdrawal at shift closing."""
         withdrawal = flt(self.cash_withdrawal_amount)
@@ -309,10 +309,10 @@ class POSClosingShift(Document):
             if currency:
                 row["currencies"][currency] += flt(amount)
 
-        #//// Neoffice — the cash Mode of Payment is resolved from the POS Profile instead of the
-        #//// literal "Cash": on a French / Swiss instance that Mode is named "Espèces", and the
-        #//// summary aggregated change and cash returns into a bucket no payment method matched
-        #//// (f5bffe4f, 2026-03-25 — see _get_cash_mode_of_payment below).
+        # //// Neoffice — the cash Mode of Payment is resolved from the POS Profile instead of the
+        # //// literal "Cash": on a French / Swiss instance that Mode is named "Espèces", and the
+        # //// summary aggregated change and cash returns into a bucket no payment method matched
+        # //// (f5bffe4f, 2026-03-25 — see _get_cash_mode_of_payment below).
         # //// auto-select default customer group from POS profile — f5bffe4
         cash_mode_of_payment = _get_cash_mode_of_payment(self.pos_profile)
 
@@ -509,12 +509,12 @@ def get_payments_entries(pos_opening_shift):
     )
 
 
-#//// Neoffice — upstream returns `cash_mode or "Cash"`. "Cash" is an English Mode of Payment name
-#//// that does not exist on a French / Swiss instance (it is "Espèces"), so a POS Profile that
-#//// never set posa_cash_mode_of_payment made the closing report aggregate change and cash returns
-#//// into a "Cash" bucket no payment method matched. We fall back to the first Cash-type Mode of
-#//// Payment declared on the profile instead (f5bffe4f, 2026-03-25 — the subject, "auto-select
-#//// default customer group from POS profile", only names the other half of that commit).
+# //// Neoffice — upstream returns `cash_mode or "Cash"`. "Cash" is an English Mode of Payment name
+# //// that does not exist on a French / Swiss instance (it is "Espèces"), so a POS Profile that
+# //// never set posa_cash_mode_of_payment made the closing report aggregate change and cash returns
+# //// into a "Cash" bucket no payment method matched. We fall back to the first Cash-type Mode of
+# //// Payment declared on the profile instead (f5bffe4f, 2026-03-25 — the subject, "auto-select
+# //// default customer group from POS profile", only names the other half of that commit).
 def _get_cash_mode_of_payment(pos_profile):
     """Get the cash mode of payment for a POS profile.
 
@@ -522,7 +522,7 @@ def _get_cash_mode_of_payment(pos_profile):
     first cash-type mode from the profile's payment methods.
     """
     cash_mode = frappe.get_value("POS Profile", pos_profile, "posa_cash_mode_of_payment")
-    #//// Neoffice — cash Mode of Payment resolved from the profile; see the marker above (f5bffe4f).
+    # //// Neoffice — cash Mode of Payment resolved from the profile; see the marker above (f5bffe4f).
     if cash_mode:
         return cash_mode
     # Fallback: find cash-type mode from POS Profile payment methods
@@ -564,11 +564,11 @@ def _aggregate_tax(taxes, account_head, rate, amount):
     }))
 
 
-#//// Neoffice — `sales_by_mode` argument added; upstream only aggregates into the reconciliation
-#//// buckets. The Swiss closing sheet has to show what was SOLD per payment method next to what is
-#//// expected in the drawer, and the reconciliation totals cannot answer that: they also carry the
-#//// opening float and the invoices collected at the counter. The two accumulation sites below (the
-#//// payment rows, then the change_amount subtraction) are the same change (f5bffe4f, 2026-03-25).
+# //// Neoffice — `sales_by_mode` argument added; upstream only aggregates into the reconciliation
+# //// buckets. The Swiss closing sheet has to show what was SOLD per payment method next to what is
+# //// expected in the drawer, and the reconciliation totals cannot answer that: they also carry the
+# //// opening float and the invoices collected at the counter. The two accumulation sites below (the
+# //// payment rows, then the change_amount subtraction) are the same change (f5bffe4f, 2026-03-25).
 def _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode=None):
     """Process a single invoice and update aggregates."""
     conversion_rate = invoice.get("conversion_rate")
@@ -637,7 +637,7 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
             mode = cash_mode
 
         _aggregate_payment(payments, mode, amount)
-        #//// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
+        # //// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
         if sales_by_mode is not None:
             sales_by_mode[mode] = sales_by_mode.get(mode, 0) + amount
 
@@ -649,7 +649,7 @@ def _process_invoice(invoice, invoice_field, company_currency, cash_mode, paymen
     base_change = get_base_value(invoice, "change_amount", "base_change_amount", conversion_rate)
     if base_change:
         _aggregate_payment(payments, cash_mode, -base_change)
-        #//// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
+        # //// Neoffice — sales_by_mode accumulation; see the marker above (f5bffe4f, 2026-03-25).
         if sales_by_mode is not None:
             sales_by_mode[cash_mode] = sales_by_mode.get(cash_mode, 0) - base_change
 
@@ -682,9 +682,9 @@ def make_closing_shift_from_opening(opening_shift):
     payments = []
     taxes = []
     pos_transactions = []
-    #//// Neoffice — same change as _process_invoice above: this dict, the extra argument at the
-    #//// call below and the sales_by_payment list built further down are what feeds the
-    #//// sales-per-payment- method block of the closing report (f5bffe4f, 2026-03-25).
+    # //// Neoffice — same change as _process_invoice above: this dict, the extra argument at the
+    # //// call below and the sales_by_payment list built further down are what feeds the
+    # //// sales-per-payment- method block of the closing report (f5bffe4f, 2026-03-25).
     sales_by_mode = {}
 
     # Summary for tracking totals
@@ -706,7 +706,7 @@ def make_closing_shift_from_opening(opening_shift):
     # Process invoices
     invoices = get_pos_invoices(opening_shift.get("name"), doctype)
     for invoice in invoices:
-        #//// Neoffice — the extra sales_by_mode argument; see the marker above (f5bffe4f).
+        # //// Neoffice — the extra sales_by_mode argument; see the marker above (f5bffe4f).
         txn = _process_invoice(invoice, invoice_field, company_currency, cash_mode, payments, taxes, summary, sales_by_mode)
         pos_transactions.append(txn)
 
@@ -723,10 +723,10 @@ def make_closing_shift_from_opening(opening_shift):
         amount = get_base_value(py, "paid_amount", "base_paid_amount")
         _aggregate_payment(payments, py.mode_of_payment, amount)
 
-    #//// Neoffice — cash in / out from the till has no upstream equivalent: each movement is a
-    #//// Journal Entry made from a template, and the expected cash at closing has to be adjusted
-    #//// by it or the drawer always reads short (in) or over (out) (6c598630, 2026-03-28 "cash
-    #//// in/out from POS using Journal Entry Templates").
+    # //// Neoffice — cash in / out from the till has no upstream equivalent: each movement is a
+    # //// Journal Entry made from a template, and the expected cash at closing has to be adjusted
+    # //// by it or the drawer always reads short (in) or over (out) (6c598630, 2026-03-28 "cash
+    # //// in/out from POS using Journal Entry Templates").
     # //// cash in/out from POS using Journal Entry Templates — 6c59863 + 5783eb2 (+2 more)
     # Process cash in/out entries
     from pos_next.api.cash_entry import get_cash_entries
@@ -790,19 +790,19 @@ def make_closing_shift_from_opening(opening_shift):
         "closing_withdrawal_template",
     ) or ""
 
-    #//// Neoffice — keys added to the closing payload that upstream does not return:
-    #//// external_payments (invoices collected at the counter, 34ee11a8), sales_by_payment (sales
-    #//// per mode, f5bffe4f), cash_entries / cash_in_total / cash_out_total (drawer movements
-    #//// posted as Journal Entries, 6c598630) and closing_withdrawal_template (5783eb27). Without
-    #//// them the Swiss closing sheet cannot be reconciled — money enters and leaves the till
-    #//// outside sales (2026-03-25 → 03-28).
+    # //// Neoffice — keys added to the closing payload that upstream does not return:
+    # //// external_payments (invoices collected at the counter, 34ee11a8), sales_by_payment (sales
+    # //// per mode, f5bffe4f), cash_entries / cash_in_total / cash_out_total (drawer movements
+    # //// posted as Journal Entries, 6c598630) and closing_withdrawal_template (5783eb27). Without
+    # //// them the Swiss closing sheet cannot be reconciled — money enters and leaves the till
+    # //// outside sales (2026-03-25 → 03-28).
     result.update({
         "returns_total": summary["returns_total"],
         "returns_count": summary["returns_count"],
         "sales_total": summary["sales_total"],
         "sales_count": summary["sales_count"],
         "pos_transactions": pos_transactions,  # Include return info for display
-        #//// Neoffice — keys the Swiss closing sheet needs; see the marker above (2026-03-25 → 03-28).
+        # //// Neoffice — keys the Swiss closing sheet needs; see the marker above (2026-03-25 → 03-28).
         "external_payments": external_payments,
         "sales_by_payment": sales_by_payment,
         "cash_entries": cash_entries,

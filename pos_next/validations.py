@@ -33,11 +33,11 @@ def item_query(doctype, txt, searchfield, start, page_len, filters):
 	conditions = ["disabled = 0"]
 	values = []
 
-	#//// Neoffice — is_internal_item is a Neoffice Custom Field: items that exist only to be
-	#//// added by code (TIP…) must not be reachable from a link-field search. POSNext registers
-	#//// this as a standard_query doing raw SQL, which bypasses neoffice_theme's
-	#//// permission_query_conditions, so the condition has to be repeated here (6f59de47,
-	#//// 2026-04-02).
+	# //// Neoffice — is_internal_item is a Neoffice Custom Field: items that exist only to be
+	# //// added by code (TIP…) must not be reachable from a link-field search. POSNext registers
+	# //// this as a standard_query doing raw SQL, which bypasses neoffice_theme's
+	# //// permission_query_conditions, so the condition has to be repeated here (6f59de47,
+	# //// 2026-04-02).
 	# //// hide internal items from search results — 6f59de4
 	# Hide internal items from non-Administrator users
 	if frappe.session.user != "Administrator":

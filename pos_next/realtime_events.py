@@ -221,10 +221,10 @@ def emit_customer_event(doc, method=None):
 # //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a
 
 
-#//// Neoffice — restaurant mode: Restaurant Card and Restaurant Settings are ours. A menu or an
-#//// opening-hours change is made at the desk but read by every till and by the public menu page,
-#//// so it is pushed instead of waited for on the next reload (34ee11a8, 2026-03-25 "merge all
-#//// restaurant enhancements — station groups, realtime cards, shift closing").
+# //// Neoffice — restaurant mode: Restaurant Card and Restaurant Settings are ours. A menu or an
+# //// opening-hours change is made at the desk but read by every till and by the public menu page,
+# //// so it is pushed instead of waited for on the next reload (34ee11a8, 2026-03-25 "merge all
+# //// restaurant enhancements — station groups, realtime cards, shift closing").
 def emit_card_updated_event(doc, method=None):
 	"""Emit realtime event when a Restaurant Card is saved/updated."""
 	try:

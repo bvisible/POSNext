@@ -2,12 +2,12 @@
 # See license.txt
 
 import unittest
-#//// Neoffice — MagicMock imported and passed as new_callable on both @patch("...frappe.db")
-#//// decorators below. Upstream patches frappe.db bare; frappe.db is a werkzeug LocalProxy that
-#//// inspect.isawaitable() reports as awaitable, so mock.patch builds an AsyncMock and every
-#//// frappe.db.x() in the code under test returns a coroutine ("object of type 'coroutine' has no
-#//// len()"). new_callable=MagicMock keeps the double synchronous (dc55c203, 2026-09-03 "patch
-#//// frappe.db with a MagicMock, not the AsyncMock mock.patch picks by itself").
+# //// Neoffice — MagicMock imported and passed as new_callable on both @patch("...frappe.db")
+# //// decorators below. Upstream patches frappe.db bare; frappe.db is a werkzeug LocalProxy that
+# //// inspect.isawaitable() reports as awaitable, so mock.patch builds an AsyncMock and every
+# //// frappe.db.x() in the code under test returns a coroutine ("object of type 'coroutine' has no
+# //// len()"). new_callable=MagicMock keeps the double synchronous (dc55c203, 2026-09-03 "patch
+# //// frappe.db with a MagicMock, not the AsyncMock mock.patch picks by itself").
 from unittest.mock import Mock, patch, MagicMock
 
 from pos_next.pos_next.doctype.pos_coupon.pos_coupon import (
@@ -19,7 +19,7 @@ class TestPOSCoupon(unittest.TestCase):
     # frappe.db is a werkzeug LocalProxy that inspect.isawaitable() reports as awaitable, so a
     # bare patch("...frappe.db") builds an AsyncMock and every frappe.db.x() returns a coroutine
     # ("object of type 'coroutine' has no len()", CI 2026-09-03). new_callable=MagicMock keeps it sync.
-    #//// Neoffice — new_callable=MagicMock, not AsyncMock; see the file-top marker (dc55c203).
+    # //// Neoffice — new_callable=MagicMock, not AsyncMock; see the file-top marker (dc55c203).
     @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.get_meta")
     @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.db", new_callable=MagicMock)
     def test_one_use_coupon_counts_sales_invoice_and_pos_invoice(self, mock_db, mock_get_meta):
@@ -46,7 +46,7 @@ class TestPOSCoupon(unittest.TestCase):
             filters={"customer": "Customer A", "coupon_code": "SAVE10", "docstatus": 1},
         )
 
-    #//// Neoffice — new_callable=MagicMock, not AsyncMock; see the file-top marker (dc55c203).
+    # //// Neoffice — new_callable=MagicMock, not AsyncMock; see the file-top marker (dc55c203).
     @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.get_meta")
     @patch("pos_next.pos_next.doctype.pos_coupon.pos_coupon.frappe.db", new_callable=MagicMock)
     def test_one_use_coupon_skips_doctypes_without_coupon_field(self, mock_db, mock_get_meta):

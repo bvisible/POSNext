@@ -1,11 +1,11 @@
-#//// Neoffice — added file (no upstream equivalent). A restaurant needs a printable menu
-#//// card, which a retail POS has no notion of: renders a Restaurant Card (categories, items,
-#//// allergen / spice badges, cover page with the company logo) to HTML and to PDF through
-#//// wkhtmltopdf, the on-screen preview being served from the very same HTML so what is shown
-#//// is what prints (b6e757dd 2026-03-26 "feat: add menu PDF generator with badges", then
-#//// bbbe36f4, cf0d5410, 8bfc37f3, 125046dd / 005436df — WeasyPrint OOM'd on Osiris —,
-#//// 57687612 / 57164782 / 37746a8f for DPI and margins, 72f2d0d4 base64 badge icons,
-#//// fe2fcc72, eedb9d4c, 7835b234).
+# //// Neoffice — added file (no upstream equivalent). A restaurant needs a printable menu
+# //// card, which a retail POS has no notion of: renders a Restaurant Card (categories, items,
+# //// allergen / spice badges, cover page with the company logo) to HTML and to PDF through
+# //// wkhtmltopdf, the on-screen preview being served from the very same HTML so what is shown
+# //// is what prints (b6e757dd 2026-03-26 "feat: add menu PDF generator with badges", then
+# //// bbbe36f4, cf0d5410, 8bfc37f3, 125046dd / 005436df — WeasyPrint OOM'd on Osiris —,
+# //// 57687612 / 57164782 / 37746a8f for DPI and margins, 72f2d0d4 base64 badge icons,
+# //// fe2fcc72, eedb9d4c, 7835b234).
 import json
 
 import frappe

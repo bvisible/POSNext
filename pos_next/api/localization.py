@@ -2,10 +2,10 @@
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
-#//// Neoffice — `os` is imported for get_supported_locales(), which lists the languages by
-#//// scanning locale/*.po. Upstream hard-coded a default set of {'ar', 'en'} and hid the rest,
-#//// which is wrong for a fork whose translations are PO files (RULE: PO only, never CSV): an
-#//// empty allowed_locales now means "every language actually shipped" (c081f418, 2026-01-12).
+# //// Neoffice — `os` is imported for get_supported_locales(), which lists the languages by
+# //// scanning locale/*.po. Upstream hard-coded a default set of {'ar', 'en'} and hid the rest,
+# //// which is wrong for a fork whose translations are PO files (RULE: PO only, never CSV): an
+# //// empty allowed_locales now means "every language actually shipped" (c081f418, 2026-01-12).
 # //// show all languages when allowed_locales is empty — c081f41
 import os
 import frappe
@@ -94,13 +94,13 @@ def get_supported_locales():
 
 
 # //// configurable language settings and Brazilian Portuguese support — 148cec7
-#//// Neoffice — upstream fell back to a hardcoded {'ar', 'en'} whitelist whenever POS Settings
-#//// listed no allowed_locales, so a fresh site could not offer French at all. An empty table
-#//// now means "no restriction" and returns an empty set; get_supported_locales() above
-#//// derives the real list from the locale/*.po files the app ships (the fork moved its
-#//// translations from CSV to PO) (c081f418, 2026-01-12 "feat(i18n): show all languages when
-#//// allowed_locales is empty"). The docstring and the three `return set()` below are the
-#//// same change.
+# //// Neoffice — upstream fell back to a hardcoded {'ar', 'en'} whitelist whenever POS Settings
+# //// listed no allowed_locales, so a fresh site could not offer French at all. An empty table
+# //// now means "no restriction" and returns an empty set; get_supported_locales() above
+# //// derives the real list from the locale/*.po files the app ships (the fork moved its
+# //// translations from CSV to PO) (c081f418, 2026-01-12 "feat(i18n): show all languages when
+# //// allowed_locales is empty"). The docstring and the three `return set()` below are the
+# //// same change.
 def get_allowed_locales_from_settings():
 	"""
 	Get allowed locales from POS Settings.
@@ -109,14 +109,14 @@ def get_allowed_locales_from_settings():
 	Returns:
 		set: Set of allowed locale codes, or empty set for all languages
 	"""
-	#//// Neoffice — upstream's {'ar','en'} default stood here; see the marker above (c081f418).
-	#//// Only the two database reads are guarded now. The set comprehension used to sit inside
-	#//// this try as well, and it read `row.locale` — a field POS Allowed Locale has never had,
-	#//// it stores the code in `language`. The AttributeError landed in the bare `except` and
-	#//// came back as an empty set, which this fork reads as "no restriction": every configured
-	#//// whitelist was silently ignored, everywhere. A read that fails must be loud, and only
-	#//// an infrastructure failure (missing table during install, database unreachable) may
-	#//// fall back to "all languages" — and it now says so in the Error Log.
+	# //// Neoffice — upstream's {'ar','en'} default stood here; see the marker above (c081f418).
+	# //// Only the two database reads are guarded now. The set comprehension used to sit inside
+	# //// this try as well, and it read `row.locale` — a field POS Allowed Locale has never had,
+	# //// it stores the code in `language`. The AttributeError landed in the bare `except` and
+	# //// came back as an empty set, which this fork reads as "no restriction": every configured
+	# //// whitelist was silently ignored, everywhere. A read that fails must be loud, and only
+	# //// an infrastructure failure (missing table during install, database unreachable) may
+	# //// fall back to "all languages" — and it now says so in the Error Log.
 	try:
 		# Get the first POS Settings (or we could use a specific one based on user's profile)
 		pos_settings_list = frappe.get_all(
@@ -127,25 +127,25 @@ def get_allowed_locales_from_settings():
 		)
 
 		if not pos_settings_list:
-			#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
+			# //// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 			return set()  # Empty = all languages allowed
 
 		pos_settings = frappe.get_doc("POS Settings", pos_settings_list[0].name)
 	except Exception:
-		#//// Neoffice — added. The bare `except` used to swallow the AttributeError raised by
-		#//// the `row.locale` lookup and answer "no restriction"; a read that fails is now
-		#//// recorded, so an infrastructure failure stops looking like a working whitelist.
+		# //// Neoffice — added. The bare `except` used to swallow the AttributeError raised by
+		# //// the `row.locale` lookup and answer "no restriction"; a read that fails is now
+		# //// recorded, so an infrastructure failure stops looking like a working whitelist.
 		frappe.log_error("POS allowed locales", frappe.get_traceback())
-		#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
+		# //// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 		return set()  # Empty = all languages allowed
 
-	#//// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
+	# //// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
 	if not pos_settings.allowed_locales:
 		return set()  # Empty = all languages allowed
 
-	#//// Neoffice — `language` is the only field POS Allowed Locale defines (see the marker
-	#//// above); lowercased because the frontend keys SUPPORTED_LOCALES in useLocale.js in
-	#//// lowercase (pt-br, not pt-BR).
+	# //// Neoffice — `language` is the only field POS Allowed Locale defines (see the marker
+	# //// above); lowercased because the frontend keys SUPPORTED_LOCALES in useLocale.js in
+	# //// lowercase (pt-br, not pt-BR).
 	return {row.language.lower() for row in pos_settings.allowed_locales if row.language}
 
 
@@ -179,14 +179,14 @@ def change_user_language(locale):
 	# Normalize locale to lowercase
 	locale = locale.lower()
 
-	#//// Neoffice — an empty allowed_locales now means "all languages", so change_user_language
-	#//// must validate against the locales actually shipped as .po files instead of refusing
-	#//// everything (c081f418, 2026-01-12).
+	# //// Neoffice — an empty allowed_locales now means "all languages", so change_user_language
+	# //// must validate against the locales actually shipped as .po files instead of refusing
+	# //// everything (c081f418, 2026-01-12).
 	# Get dynamically supported locales from translation files
 	all_supported_locales = get_supported_locales()
 
 	allowed_locales = get_allowed_locales_from_settings()
-	#//// Neoffice — validated against the shipped .po locales; see the marker above (c081f418).
+	# //// Neoffice — validated against the shipped .po locales; see the marker above (c081f418).
 	# If allowed_locales is empty, all supported locales are allowed
 	effective_allowed = allowed_locales if allowed_locales else all_supported_locales
 

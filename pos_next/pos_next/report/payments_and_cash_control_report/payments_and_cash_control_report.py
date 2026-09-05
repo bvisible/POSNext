@@ -70,10 +70,10 @@ def get_columns(payment_methods):
 			"fieldtype": "Int",
 			"width": 100
 		},
-		#//// Neoffice — three columns the fork needs to reconcile a drawer: Invoice Collections
-		#//// (payments taken at the till on invoices raised elsewhere) and Cash In / Cash Out
-		#//// (the Journal Entries posted from the till). Without them the report's expected cash
-		#//// never matched the counted cash (024d87bb, 2026-04-12).
+		# //// Neoffice — three columns the fork needs to reconcile a drawer: Invoice Collections
+		# //// (payments taken at the till on invoices raised elsewhere) and Cash In / Cash Out
+		# //// (the Journal Entries posted from the till). Without them the report's expected cash
+		# //// never matched the counted cash (024d87bb, 2026-04-12).
 		# //// add Invoice Collections, Cash In/Out columns + translate statuses — 024d87b
 		{
 			"fieldname": "invoice_collections",
@@ -165,12 +165,12 @@ def get_data(filters):
 	"""Get payment reconciliation data — one row per shift."""
 	conditions = get_conditions(filters)
 
-	#//// Neoffice — pcs.pos_opening_shift added to the SELECT below. Cash in/out is posted as
-	#//// Journal Entries tagged with the OPENING shift, not the closing one, so the report
-	#//// cannot join them without carrying it through (024d87bb, 2026-04-12
-	#//// "feat(payments-cash-control): add Invoice Collections, Cash In/Out columns + translate
-	#//// statuses"). The marker sits here and not on the changed line because that line is
-	#//// inside the SQL string literal.
+	# //// Neoffice — pcs.pos_opening_shift added to the SELECT below. Cash in/out is posted as
+	# //// Journal Entries tagged with the OPENING shift, not the closing one, so the report
+	# //// cannot join them without carrying it through (024d87bb, 2026-04-12
+	# //// "feat(payments-cash-control): add Invoice Collections, Cash In/Out columns + translate
+	# //// statuses"). The marker sits here and not on the changed line because that line is
+	# //// inside the SQL string literal.
 	# Get payment reconciliation details from closing shifts
 	query = """
 		SELECT
@@ -210,10 +210,10 @@ def get_data(filters):
 	# Batch-fetch transaction counts per shift (total, not per method)
 	transaction_map = _get_transaction_counts(raw)
 
-	#//// Neoffice — two batch fetches added. A Swiss till also collects open invoices at the
-	#//// counter (Payment Entries) and moves cash in and out of the drawer (Journal Entries);
-	#//// counting sales alone made every shift look short. Both are fetched once per report
-	#//// rather than once per row (024d87bb, 2026-04-12).
+	# //// Neoffice — two batch fetches added. A Swiss till also collects open invoices at the
+	# //// counter (Payment Entries) and moves cash in and out of the drawer (Journal Entries);
+	# //// counting sales alone made every shift look short. Both are fetched once per report
+	# //// rather than once per row (024d87bb, 2026-04-12).
 	# Batch-fetch invoice collections per shift
 	collections_map = _get_invoice_collections(raw)
 
@@ -235,9 +235,9 @@ def get_data(filters):
 			else:
 				shift_hours = 0
 
-			#//// Neoffice — feeds the three columns added to each shift row just below
-			#//// (invoice_collections, cash_in, cash_out) from the maps fetched above
-			#//// (024d87bb, 2026-04-12).
+			# //// Neoffice — feeds the three columns added to each shift row just below
+			# //// (invoice_collections, cash_in, cash_out) from the maps fetched above
+			# //// (024d87bb, 2026-04-12).
 			cash_data = cash_in_out_map.get(r.pos_opening_shift, {})
 
 			shifts[r.shift] = {
@@ -249,7 +249,7 @@ def get_data(filters):
 				"shift_end": r.shift_end,
 				"shift_hours": shift_hours,
 				"total_transactions": transaction_map.get(r.shift, 0),
-				#//// Neoffice — the three drawer-reconciliation columns; see the marker above (024d87bb).
+				# //// Neoffice — the three drawer-reconciliation columns; see the marker above (024d87bb).
 				"invoice_collections": flt(collections_map.get(r.shift, 0), 2),
 				"cash_in": flt(cash_data.get("in", 0), 2),
 				"cash_out": flt(cash_data.get("out", 0), 2),
@@ -284,24 +284,24 @@ def get_data(filters):
 		row["total_closing"] = flt(row["total_closing"], 2)
 		row["total_difference"] = flt(row["total_difference"], 2)
 
-		#//// Neoffice — the four status labels below are wrapped in _() and the hardcoded
-		#//// emojis they used to carry were dropped. Upstream returned untranslatable
-		#//// English literals, so a French instance printed "Balanced" / "Short" in the
-		#//// middle of an otherwise translated report (024d87bb, 2026-04-12; FR: Équilibré,
-		#//// Écart mineur, Excédent, Déficit).
+		# //// Neoffice — the four status labels below are wrapped in _() and the hardcoded
+		# //// emojis they used to carry were dropped. Upstream returned untranslatable
+		# //// English literals, so a French instance printed "Balanced" / "Short" in the
+		# //// middle of an otherwise translated report (024d87bb, 2026-04-12; FR: Équilibré,
+		# //// Écart mineur, Excédent, Déficit).
 		# Determine status based on total difference
 		abs_diff = abs(row["total_difference"])
 		if abs_diff == 0:
-			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
+			# //// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Balanced")
 		elif abs_diff <= 10:
-			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
+			# //// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Minor Variance")
 		elif row["total_difference"] > 0:
-			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
+			# //// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Over")
 		else:
-			#//// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
+			# //// Neoffice — status labels wrapped in _(); see the marker above (024d87bb).
 			row["status"] = _("Short")
 
 		data.append(row)
@@ -333,10 +333,10 @@ def _get_transaction_counts(data):
 	return {r.shift: r.cnt for r in rows}
 
 
-#//// Neoffice — added helpers. _get_invoice_collections sums the POS Payment Entry Reference rows
-#//// of each closing shift; _get_cash_in_out sums the Journal Entries our cash in/out feature
-#//// writes, matched on their `POS Cash Entry|<opening shift>|…` user_remark because a Journal
-#//// Entry carries no link back to a shift (024d87bb, 2026-04-12).
+# //// Neoffice — added helpers. _get_invoice_collections sums the POS Payment Entry Reference rows
+# //// of each closing shift; _get_cash_in_out sums the Journal Entries our cash in/out feature
+# //// writes, matched on their `POS Cash Entry|<opening shift>|…` user_remark because a Journal
+# //// Entry carries no link back to a shift (024d87bb, 2026-04-12).
 def _get_invoice_collections(data):
 	"""Batch-fetch total invoice collection amounts per closing shift."""
 	shift_names = list({row.shift for row in data})
