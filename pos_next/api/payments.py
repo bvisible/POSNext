@@ -74,9 +74,19 @@ def pos_get_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+# //// Neoffice — reference_doctype / reference_name may be None, and were annotated as
+# //// plain `str`: a till payment is started before the document that will carry it
+# //// exists, so the POS passes both as null. `payments.api.intent.create_intent`, which
+# //// receives them straight from here, has always declared them `str | None` — this
+# //// signature was the only thing claiming otherwise.
+# //// No default is added on purpose: the caller does pass them, so they stay required
+# //// and every position is unchanged. Only what is ALLOWED in them changes.
+# //// Found on guigoz on 2026-09-07 by the report-only argument validation of tracker
+# //// #244 — had that validation been enforcing, every till payment without a reference
+# //// would have been refused.
 def pos_start_payment(
-	reference_doctype: str,
-	reference_name: str,
+	reference_doctype: str | None,
+	reference_name: str | None,
 	pos_profile: str,
 	mode_of_payment: str,
 	amount: int,
