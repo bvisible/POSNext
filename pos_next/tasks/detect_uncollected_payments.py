@@ -15,7 +15,7 @@
 # the till stopped listening on a soft decline.
 #
 # In every one of those cases the customer IS charged and the shop has no sale,
-# no receipt and no accounting entry — and nothing anywhere says so. At guigoz
+# no receipt and no accounting entry — and nothing anywhere says so. On one till
 # that silence lasted from 24.06 to 18.08: 6 uncollected sales and 3 customers
 # charged twice, found only because a cashier happened to mention it.
 #
@@ -71,8 +71,8 @@ def detect_uncollected_payments():
 
 	# An unlinked intent is NOT proof of a missing sale. The sale may have been
 	# recorded and only the back-link lost (a provider renamed in the mapping is
-	# enough — blowbackshop, 21.07: 180.- collected via `twint_migrated`, invoice
-	# ACC-SINV-2026-01898 booked 2 s later, link never made). Repair those
+	# enough — 21.07: a payment collected via `twint_migrated`, its invoice
+	# booked 2 s later, link never made). Repair those
 	# silently. Crying wolf on a healthy sale is how an alert stops being read.
 	ripe = []
 	for o in candidates:

@@ -81,7 +81,7 @@ def pos_get_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 # //// signature was the only thing claiming otherwise.
 # //// No default is added on purpose: the caller does pass them, so they stay required
 # //// and every position is unchanged. Only what is ALLOWED in them changes.
-# //// Found on guigoz on 2026-09-07 by the report-only argument validation of tracker
+# //// Found on a live till on 2026-09-07 by the report-only argument validation of tracker
 # //// #244 — had that validation been enforcing, every till payment without a reference
 # //// would have been refused.
 def pos_start_payment(
