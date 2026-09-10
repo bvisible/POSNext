@@ -30,7 +30,7 @@ import { call } from "frappe-ui"
 // when the customer re-enters the code — a `succeeded` lands 15-30 s later.
 // Treating `failed` as final made the till stop listening at the decline: the
 // card was charged with no sale recorded, the cashier re-ran the card, and the
-// customer paid twice (guigoz: 20.07 3x48.-, 22.07 2x52.-, 17.08 2x48.-).
+// customer paid twice (three times over two months on one till).
 // The backend FSM was fixed for exactly this in `payments` (717f41d, db5d557);
 // this is its missing frontend counterpart. `canceled` stays final — it is only
 // reached when the till explicitly cancels the intent.

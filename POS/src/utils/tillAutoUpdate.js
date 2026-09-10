@@ -6,7 +6,7 @@
 // Why this exists
 // ---------------
 // The till is a Chrome tab the shop opens in the morning and never touches
-// again. At guigoz it ran from 14 to 18 August without a single reload, straight
+// again. One till ran from 14 to 18 August without a single reload, straight
 // through three `bench restart`s. A fix can therefore sit deployed on the server
 // for days while the shop keeps running the broken build — which is exactly how
 // the 17 August double charge happened, under a fix that had already shipped.

@@ -310,7 +310,7 @@ async function initializeApp() {
 	app.mount("#app")
 
 	//// Neoffice — a till tab stays open for days and would otherwise keep
-	//// serving the build it was opened with (guigoz ran 14→18 Aug on stale
+	//// serving the build it was opened with (one till ran 14→18 Aug on stale
 	//// code, straight through the deploy that fixed the double charge).
 	//// Compares build stamps and reloads only when the till is at rest.
 	import("./utils/tillAutoUpdate")

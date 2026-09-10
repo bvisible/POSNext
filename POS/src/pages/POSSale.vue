@@ -1224,7 +1224,7 @@
 					<!-- //// Neoffice — the clear-cart confirmation had to grow a second line. Money -->
 					<!-- //// already taken on the terminal but not yet booked lives in the cart store, -->
 					<!-- //// so this dialog can name it: emptying the cart here is what made 10.- and -->
-					<!-- //// 40.- vanish at guigoz on 2026-08-18 (92c0c5ed, 2026-08-19 — the commit -->
+					<!-- //// a payment vanish on 2026-08-18 (92c0c5ed, 2026-08-19 — the commit -->
 					<!-- //// that made a collected payment impossible to lose in silence). -->
 					<div class="py-3 flex flex-col gap-3">
 						<p class="text-sm text-gray-600">
@@ -1233,7 +1233,7 @@
 						<!-- //// Neoffice — the irreversible step. If a terminal payment was
 						     already collected for this cart, clearing it loses the money:
 						     the customer is charged and no sale exists. This dialog used to
-						     talk only about items (guigoz, 18.08 — 10.- and 40.- lost that
+						     talk only about items (18.08 — two payments lost that
 						     way). Name the amount, and make the button say what it does. -->
 						<div
 							v-if="cartStore.collectedUnbookedTotal > 0"

@@ -376,7 +376,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	//// payment dialog, because every way out of a sale must be able to see it:
 	//// closing the payment dialog, clearing the cart, starting a new sale. It
 	//// used to live only in the dialog, so closing that dialog made the money
-	//// invisible — guigoz, 18.08: 10.- and 40.- collected, no sale, no warning
+	//// invisible — 18.08: two payments collected, no sale, no warning
 	//// anywhere. Reproduced on osiris the next morning (PI-2026-00000075).
 	const collectedUnbooked = ref([])
 	const collectedUnbookedTotal = computed(() =>

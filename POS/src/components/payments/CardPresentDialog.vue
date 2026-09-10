@@ -508,7 +508,7 @@ const headline = computed(() => {
 		case "failed":
 			//// Neoffice — NOT "Payment failed". A card-present decline is usually
 			//// soft: the reader re-prompts for the PIN and the same intent settles
-			//// ~20 s later (measured at guigoz: 20 s and 19 s). A red "failed" for
+			//// ~20 s later (measured on a till: 20 s and 19 s). A red "failed" for
 			//// those 20 s is precisely what made the cashier re-run the card and
 			//// charge the customer twice. Say what the cashier must DO: wait.
 			return __("Declined — waiting for a new attempt")
