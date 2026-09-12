@@ -38,6 +38,20 @@ def validate_wallet_payment(doc, method=None):
 		)
 
 
+# //// Neoffice — added helper (no upstream equivalent), used by the guard in
+# //// process_loyalty_to_wallet below.
+def _till_accepts_wallet(pos_profile):
+	"""True when the POS Profile lists an enabled mode of payment flagged is_wallet_payment."""
+	if not pos_profile or not frappe.get_meta("Mode of Payment").has_field("is_wallet_payment"):
+		return False
+	modes = frappe.get_all("POS Payment Method", filters={"parent": pos_profile}, pluck="mode_of_payment")
+	if not modes:
+		return False
+	return bool(
+		frappe.db.exists("Mode of Payment", {"name": ["in", modes], "is_wallet_payment": 1, "enabled": 1})
+	)
+
+
 def process_loyalty_to_wallet(doc, method=None):
 	"""
 	Convert earned loyalty points to wallet balance after invoice submission.
@@ -57,6 +71,16 @@ def process_loyalty_to_wallet(doc, method=None):
 	# Check if customer has loyalty program
 	loyalty_program = frappe.db.get_value("Customer", doc.customer, "loyalty_program")
 	if not loyalty_program:
+		return
+
+	# //// Neoffice — never credit a wallet the till cannot spend. Upstream converts the points of
+	# //// every POS sale as soon as loyalty is on (loyalty_to_wallet defaults to 1) and does not take
+	# //// them off the ERPNext balance. With no wallet mode of payment on the profile, the value then
+	# //// exists twice: points the cashier still redeems, plus a balance nobody can use, booked to the
+	# //// loyalty expense account and as a credit on the customer's receivable. A live till ran that
+	# //// way for three weeks, one credit per sale (#374). With a wallet mode of payment the
+	# //// conversion still runs and still leaves the points — read #374 before enabling one.
+	if not _till_accepts_wallet(doc.pos_profile):
 		return
 
 	# Check if the invoice amount meets the applicable tier's min_spent threshold.
