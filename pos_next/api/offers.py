@@ -13,6 +13,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 import frappe
 
+# //// Neoffice — recognize both gift-card families (POS flag + ERPNext-native coupon_type) so validate_coupon routes them correctly (45b52c86 "fix(gift-cards): a card bought online kept its full balance after being spent")
 from pos_next.api.gift_cards import is_gift_card
 from frappe import _
 from frappe.utils import flt, getdate, nowdate
