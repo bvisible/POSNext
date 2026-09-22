@@ -71,7 +71,9 @@ class TestCouponLinkResolution(unittest.TestCase):
 
 	def test_an_empty_field_is_a_no_op(self):
 		self.assertEqual(resolve_coupon_document_name(""), "")
-		self.assertEqual(resolve_coupon_document_name(None), None)
+		# None normalises to the empty string rather than propagating None into a
+		# Link field — the caller assigns the result straight onto the payload.
+		self.assertEqual(resolve_coupon_document_name(None), "")
 
 	def test_surrounding_whitespace_from_a_scanner_is_tolerated(self):
 		self.assertEqual(resolve_coupon_document_name("  %s  " % self.code_named_apart), self.doc_name)
