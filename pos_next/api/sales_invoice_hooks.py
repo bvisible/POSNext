@@ -149,6 +149,37 @@ def before_cancel(doc, method=None):
 # //// doctype instead, which the ERP ignored, so an expired or over-used coupon still passed at
 # //// the till. This calls ERPNext's own validate_coupon_code so both agree (9bc096de, 2026-02-05
 # //// "use native ERPNext coupon_code field on Sales Invoice").
+def normalise_coupon_code(doc, method=None):
+	"""Accept a coupon's CODE where the Link field wants its document NAME.
+
+	//// Neoffice — added. `coupon_code` on Sales Invoice and POS Invoice is a Link to
+	//// Coupon Code, so it holds the DOCUMENT NAME. The POS sends what the cashier
+	//// typed or scanned, which is the code — a different string as soon as the coupon
+	//// was not named after its own code. Every gift card issued by the webshop is in
+	//// that case: name "Carte cadeau CHF 100.00 - ... - YMI2-RYUC-DGM3" for code
+	//// "YMI2-RYUC-DGM3". The sale then died at submit on LinkValidationError
+	//// ("Impossible de trouver Code de coupon: ..."), with the basket already paid on
+	//// screen. Resolving it here rather than in the POS bundle repairs every client
+	//// without rebuilding the SPA, and leaves a coupon whose name IS its code
+	//// untouched (2026-09-22, found by running the till in Chrome).
+
+	Args:
+		doc: Sales Invoice or POS Invoice document
+		method: Hook method name (unused)
+	"""
+	code = (doc.get("coupon_code") or "").strip()
+	if not code:
+		return
+
+	# Already a document name — nothing to do (the common case for POS-issued cards).
+	if frappe.db.exists("Coupon Code", code):
+		return
+
+	name = frappe.db.get_value("Coupon Code", {"coupon_code": code}, "name")
+	if name:
+		doc.coupon_code = name
+
+
 def validate_coupon_on_invoice(doc, method=None):
 	"""
 	Validate coupon code on Sales Invoice (like Sales Order does).
