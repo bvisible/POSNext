@@ -121,11 +121,16 @@ def check_coupon_code(coupon_code, customer=None, company=None):
         res["msg"] = _("Sorry, this coupon is not valid for this company")
         return res
 
-    # Check customer (for Gift Cards)
-    if coupon.coupon_type == "Gift Card" and coupon.customer:
-        if not customer or coupon.customer != customer:
-            res["msg"] = _("Sorry, this gift card is assigned to a specific customer")
-            return res
+    # //// Neoffice — removed check. Upstream tied a Gift Card to the customer named
+    # //// on it and refused it to anyone else ("Sorry, this gift card is assigned to a
+    # //// specific customer"). A gift card is a bearer instrument: it is bought by one
+    # //// person precisely so another can spend it. The name stays on the record — it
+    # //// keeps the card and its balance visible on the buyer's account — but it is no
+    # //// longer an authorisation. Kept in step with the same change in
+    # //// `pos_next/api/offers.py`, which is the path the current POS actually uses
+    # //// (this doctype is the pre-2.0 model, still reachable through the legacy
+    # //// endpoints). Promotional coupons keep their customer restriction: a referral
+    # //// code IS meant for one person (2026-09-22).
 
     # Check one-time use per customer
     if coupon.one_use and customer:

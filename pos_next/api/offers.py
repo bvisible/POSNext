@@ -678,8 +678,16 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	if coupon.valid_upto and coupon.valid_upto < date:
 		return {"valid": False, "message": _("This coupon has expired")}
 
-	# Check customer restriction - gift cards with no customer can be used by anyone
-	if coupon.customer and coupon.customer != customer:
+	# //// Neoffice — a gift card is a BEARER instrument, so the name on it no longer
+	# //// decides who may spend it. Upstream refused any coupon whose `customer`
+	# //// differed from the one at the till, which made every card given as a present
+	# //// unusable: the person who receives a birthday or Christmas card is, by
+	# //// definition, not the person it was bought for. The name is kept on purpose —
+	# //// it is how the card and its balance stay visible on an account — it is simply
+	# //// not an authorisation any more. Promotional coupons keep the check: a referral
+	# //// code IS legitimately reserved to one person (2026-09-22).
+	is_bearer_instrument = bool(coupon.pos_next_gift_card) or coupon.coupon_type == "Gift Card"
+	if coupon.customer and coupon.customer != customer and not is_bearer_instrument:
 		return {"valid": False, "message": _("This coupon is not valid for this customer")}
 
 	# POS Next Gift Card specific validations

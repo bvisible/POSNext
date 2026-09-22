@@ -188,6 +188,44 @@ class TestValidateCoupon(unittest.TestCase):
 			cls.gc_customer_specific = result3.get("coupon_code")
 			cls.gc_customer_specific_name = result3.get("name")
 
+		# 4. A promotional coupon assigned to a customer (a referral code, say).
+		#    It must stay refused to everyone else — the bearer rule is about gift
+		#    cards only, and nothing else in this file would catch a regression.
+		if cls.test_customer:
+			promo_code = "ZZ-TEST-PROMO-NAMED"
+			if not frappe.db.exists("Coupon Code", {"coupon_code": promo_code}):
+				promo_rule = frappe.get_doc({
+					"doctype": "Pricing Rule",
+					"title": "ZZ Test Named Promo",
+					"apply_on": "Transaction",
+					"price_or_product_discount": "Price",
+					"rate_or_discount": "Discount Amount",
+					"discount_amount": 5,
+					"selling": 1,
+					"company": cls.test_company,
+					"currency": frappe.get_cached_value("Company", cls.test_company, "default_currency"),
+					"valid_from": nowdate(),
+					"coupon_code_based": 1,
+					"priority": "1",
+				})
+				promo_rule.insert(ignore_permissions=True)
+				cls.created_pricing_rules.append(promo_rule.name)
+
+				promo = frappe.get_doc({
+					"doctype": "Coupon Code",
+					"coupon_name": "ZZ Test Named Promo",
+					"coupon_type": "Promotional",
+					"coupon_code": promo_code,
+					"pricing_rule": promo_rule.name,
+					"valid_from": nowdate(),
+					"maximum_use": 10,
+					"used": 0,
+					"customer": cls.test_customer,
+				})
+				promo.insert(ignore_permissions=True)
+				cls.created_coupons.append(promo.name)
+				cls.promo_customer_specific = promo_code
+
 		# Track pricing rules
 		for name in cls.created_coupons:
 			coupon = frappe.get_doc("Coupon Code", name)
@@ -253,22 +291,64 @@ class TestValidateCoupon(unittest.TestCase):
 		self.assertFalse(result.get("valid"))
 		self.assertIn("balance", result.get("message", "").lower())
 
-	def test_validate_customer_restriction(self):
-		"""Test that customer-specific coupons reject other customers"""
+	def test_a_named_gift_card_is_accepted_for_someone_else(self):
+		"""A gift card is a bearer instrument: the name on it does not gate its use.
+
+		//// Neoffice — this test asserted the opposite until 2026-09-22. Upstream
+		//// refused a named card to anyone but the named customer, which made every
+		//// card given as a present unusable: the person holding a birthday or
+		//// Christmas card is, by definition, not the one it was bought for.
+		"""
 		if not self.test_customer or not hasattr(self, 'gc_customer_specific'):
 			self.skipTest("No customer-specific gift card available")
 
-		# Should fail for different customer
 		result = validate_coupon(
 			coupon_code=self.gc_customer_specific,
 			customer="Some-Other-Customer",
 			company=self.test_company
 		)
 
+		self.assertTrue(result.get("valid"), result.get("message"))
+
+	def test_the_name_is_kept_on_the_card_it_is_just_not_an_authorisation(self):
+		"""Accepting the bearer must not erase who the card belongs to.
+
+		The name is what keeps the card and its balance visible on an account, so
+		lifting the restriction must not be implemented by clearing the field.
+		"""
+		if not self.test_customer or not hasattr(self, 'gc_customer_specific'):
+			self.skipTest("No customer-specific gift card available")
+
+		validate_coupon(
+			coupon_code=self.gc_customer_specific,
+			customer="Some-Other-Customer",
+			company=self.test_company
+		)
+
+		still_named = frappe.db.get_value(
+			"Coupon Code", self.gc_customer_specific_name, "customer"
+		)
+		self.assertEqual(still_named, self.test_customer)
+
+	def test_a_named_promotional_coupon_is_still_refused(self):
+		"""A referral code IS meant for one person — that restriction stays.
+
+		The bearer rule is about gift cards, not about every coupon carrying a
+		customer. Without this test, lifting one would quietly lift the other.
+		"""
+		if not self.test_customer or not hasattr(self, 'promo_customer_specific'):
+			self.skipTest("No customer-specific promotional coupon available")
+
+		result = validate_coupon(
+			coupon_code=self.promo_customer_specific,
+			customer="Some-Other-Customer",
+			company=self.test_company
+		)
+
 		self.assertFalse(result.get("valid"))
 
-	def test_validate_customer_restriction_correct_customer(self):
-		"""Test that customer-specific coupons accept correct customer"""
+	def test_a_named_gift_card_is_accepted_for_the_named_customer(self):
+		"""The named customer keeps working, obviously — this is the control case."""
 		if not self.test_customer or not hasattr(self, 'gc_customer_specific'):
 			self.skipTest("No customer-specific gift card available")
 
