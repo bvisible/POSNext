@@ -12,6 +12,8 @@ Promotional Schemes and standalone Pricing Rules.
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 import frappe
+
+from pos_next.api.gift_cards import is_gift_card
 from frappe import _
 from frappe.utils import flt, getdate, nowdate
 
@@ -686,12 +688,14 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	# //// it is how the card and its balance stay visible on an account — it is simply
 	# //// not an authorisation any more. Promotional coupons keep the check: a referral
 	# //// code IS legitimately reserved to one person (2026-09-22).
-	is_bearer_instrument = bool(coupon.pos_next_gift_card) or coupon.coupon_type == "Gift Card"
-	if coupon.customer and coupon.customer != customer and not is_bearer_instrument:
+	if coupon.customer and coupon.customer != customer and not is_gift_card(coupon):
 		return {"valid": False, "message": _("This coupon is not valid for this customer")}
 
 	# POS Next Gift Card specific validations
-	if coupon.pos_next_gift_card:
+	# //// Neoffice - was this flag alone, so a card issued by the webshop fell
+	# //// through to the promotional branch and was validated as a flat discount
+	# //// with no balance check at all. Both families take the balance path.
+	if is_gift_card(coupon):
 		# Check balance
 		balance = flt(coupon.gift_card_amount)
 		if balance <= 0:

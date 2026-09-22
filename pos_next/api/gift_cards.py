@@ -417,6 +417,23 @@ def create_gift_card_manual(amount, company, customer=None, validity_months=12):
 # Gift Card Application
 # ==========================================
 
+
+# //// Neoffice - added. TWO families of gift card coexist on the same site and
+# //// neither recognised the other. The POS issues coupon_type="Promotional" plus
+# //// our custom flag pos_next_gift_card; the webshop issues the ERPNext-native
+# //// coupon_type="Gift Card" with no flag. Every gate below tested the flag alone,
+# //// so a card bought online and spent at the till was ACCEPTED and its balance was
+# //// NEVER decremented - a permanent discount - and the return path never gave it
+# //// back either. Measured on a retail instance: 126 such cards still carrying
+# //// CHF 8 909.80, against 14 of the POS family (2026-09-22).
+def is_gift_card(coupon):
+	"""True for a gift card of either family - the POS one or the webshop one."""
+	if not coupon:
+		return False
+	get = coupon.get if hasattr(coupon, "get") else (lambda k, d=None: getattr(coupon, k, d))
+	return bool(get("pos_next_gift_card")) or get("coupon_type") == "Gift Card"
+
+
 @frappe.whitelist()
 def apply_gift_card(coupon_code, invoice_total, customer=None, company=None):
 	"""
@@ -452,8 +469,9 @@ def apply_gift_card(coupon_code, invoice_total, customer=None, company=None):
 		return {"success": False, "message": _("Gift card not found")}
 
 	# Check if it's a POS Next gift card
-	if not coupon.get("pos_next_gift_card"):
-		return {"success": False, "message": _("This is not a Neopos gift card")}
+	# //// Neoffice - both gift card families, not just the POS one (see is_gift_card).
+	if not is_gift_card(coupon):
+		return {"success": False, "message": _("This is not a gift card")}
 
 	# Check validity dates
 	today = getdate(nowdate())
@@ -629,7 +647,8 @@ def process_gift_card_on_submit(doc, method=None):
 		return
 
 	# Only process POS Next gift cards
-	if not coupon.get("pos_next_gift_card"):
+	# //// Neoffice - both gift card families, not just the POS one (see is_gift_card).
+	if not is_gift_card(coupon):
 		return
 
 	# Get gift card settings for splitting option
@@ -744,7 +763,8 @@ def _process_gift_card_return(return_invoice):
 			return
 
 		# Only process POS Next gift cards
-		if not coupon.get("pos_next_gift_card"):
+		# //// Neoffice - both gift card families, not just the POS one (see is_gift_card).
+		if not is_gift_card(coupon):
 			return
 
 		# Calculate the refund amount from the return invoice
@@ -871,7 +891,8 @@ def process_gift_card_on_cancel(doc, method=None):
 		return
 
 	# Only process POS Next gift cards
-	if not coupon.get("pos_next_gift_card"):
+	# //// Neoffice - both gift card families, not just the POS one (see is_gift_card).
+	if not is_gift_card(coupon):
 		return
 
 	try:
