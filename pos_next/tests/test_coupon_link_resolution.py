@@ -17,6 +17,8 @@ class TestCouponLinkResolution(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		cls.company = frappe.get_all("Company", limit=1)[0].name
+		# ERPNext requires a customer on a Gift Card coupon.
+		cls.customer = frappe.get_all("Customer", limit=1)[0].name
 		cls.created = []
 
 		# A coupon whose document name differs from its code — how the webshop names
@@ -39,6 +41,7 @@ class TestCouponLinkResolution(unittest.TestCase):
 			"pricing_rule": rule.name, "valid_from": nowdate(),
 			"maximum_use": 0, "used": 0,
 			"gift_card_amount": 25, "original_gift_card_amount": 25,
+			"customer": cls.customer,
 		})
 		card.insert(ignore_permissions=True)
 		cls.created.append(("Coupon Code", card.name))
