@@ -11,7 +11,11 @@ import frappe
 import unittest
 from frappe.utils import flt, nowdate
 
-from pos_next.api.gift_cards import is_gift_card, process_gift_card_on_submit
+# `is_gift_card` is imported inside its own test on purpose: a module-level import
+# would make the WHOLE file fail to import when the fix is absent, and "cannot
+# import name" says nothing about which guarantee broke. The balance tests below
+# must still run — and fail on the balance — against the unfixed code.
+from pos_next.api.gift_cards import process_gift_card_on_submit
 from pos_next.api.offers import validate_coupon
 
 
@@ -75,6 +79,8 @@ class TestGiftCardFamilies(unittest.TestCase):
 		return card
 
 	def test_the_predicate_recognises_both_families(self):
+		from pos_next.api.gift_cards import is_gift_card
+
 		self.assertTrue(is_gift_card({"pos_next_gift_card": 1, "coupon_type": "Promotional"}))
 		self.assertTrue(is_gift_card({"pos_next_gift_card": 0, "coupon_type": "Gift Card"}))
 		self.assertFalse(is_gift_card({"pos_next_gift_card": 0, "coupon_type": "Promotional"}))
