@@ -10,7 +10,7 @@ import frappe
 import unittest
 from frappe.utils import nowdate
 
-from pos_next.api.sales_invoice_hooks import normalise_coupon_code
+from pos_next.api.sales_invoice_hooks import resolve_coupon_document_name
 
 
 class TestCouponLinkResolution(unittest.TestCase):
@@ -58,32 +58,20 @@ class TestCouponLinkResolution(unittest.TestCase):
 		frappe.db.commit()
 
 	def test_a_code_is_resolved_to_the_document_name(self):
-		doc = frappe._dict({"coupon_code": self.code_named_apart,
-		                    "get": lambda k, d=None: self.code_named_apart})
-		normalise_coupon_code(doc)
-		self.assertEqual(doc.coupon_code, self.doc_name)
-		self.assertNotEqual(doc.coupon_code, self.code_named_apart)
+		got = resolve_coupon_document_name(self.code_named_apart)
+		self.assertEqual(got, self.doc_name)
+		self.assertNotEqual(got, self.code_named_apart)
 
 	def test_a_name_is_left_alone(self):
-		doc = frappe._dict({"coupon_code": self.doc_name,
-		                    "get": lambda k, d=None: self.doc_name})
-		normalise_coupon_code(doc)
-		self.assertEqual(doc.coupon_code, self.doc_name)
+		self.assertEqual(resolve_coupon_document_name(self.doc_name), self.doc_name)
 
 	def test_an_unknown_code_is_left_for_the_link_to_refuse(self):
 		"""Silently blanking it would turn a typo into a sale with no coupon at all."""
-		doc = frappe._dict({"coupon_code": "ZZ-NO-SUCH-CODE",
-		                    "get": lambda k, d=None: "ZZ-NO-SUCH-CODE"})
-		normalise_coupon_code(doc)
-		self.assertEqual(doc.coupon_code, "ZZ-NO-SUCH-CODE")
+		self.assertEqual(resolve_coupon_document_name("ZZ-NO-SUCH-CODE"), "ZZ-NO-SUCH-CODE")
 
 	def test_an_empty_field_is_a_no_op(self):
-		doc = frappe._dict({"coupon_code": "", "get": lambda k, d=None: ""})
-		normalise_coupon_code(doc)
-		self.assertEqual(doc.coupon_code, "")
+		self.assertEqual(resolve_coupon_document_name(""), "")
+		self.assertEqual(resolve_coupon_document_name(None), None)
 
 	def test_surrounding_whitespace_from_a_scanner_is_tolerated(self):
-		doc = frappe._dict({"coupon_code": "  %s  " % self.code_named_apart,
-		                    "get": lambda k, d=None: "  %s  " % self.code_named_apart})
-		normalise_coupon_code(doc)
-		self.assertEqual(doc.coupon_code, self.doc_name)
+		self.assertEqual(resolve_coupon_document_name("  %s  " % self.code_named_apart), self.doc_name)

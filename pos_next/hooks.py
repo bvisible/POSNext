@@ -276,9 +276,6 @@ doc_events = {
 		]
 	},
 	"Sales Invoice": {
-		# //// Neoffice — the POS sends the coupon CODE into a Link field that holds the
-		# //// document NAME; resolve it before anything validates the link.
-		"before_validate": "pos_next.api.sales_invoice_hooks.normalise_coupon_code",
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",
 			# //// Neoffice — coupon validation hangs off the invoice's native ERPNext `coupon_code` link
@@ -324,8 +321,6 @@ doc_events = {
 	# //// ERPNext's POS Invoice flow would otherwise sell a gift card without ever creating it, or
 	# //// cancel one without giving the balance back (f0c960ff, 2026-03-21).
 	"POS Invoice": {
-		# //// Neoffice — same as Sales Invoice above: the code is not the document name.
-		"before_validate": "pos_next.api.sales_invoice_hooks.normalise_coupon_code",
 		"on_submit": [
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
 			"pos_next.api.gift_cards.process_gift_card_on_submit"

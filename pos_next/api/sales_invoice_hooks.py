@@ -149,35 +149,33 @@ def before_cancel(doc, method=None):
 # //// doctype instead, which the ERP ignored, so an expired or over-used coupon still passed at
 # //// the till. This calls ERPNext's own validate_coupon_code so both agree (9bc096de, 2026-02-05
 # //// "use native ERPNext coupon_code field on Sales Invoice").
-def normalise_coupon_code(doc, method=None):
-	"""Accept a coupon's CODE where the Link field wants its document NAME.
+def resolve_coupon_document_name(code):
+	"""Return the Coupon Code DOCUMENT NAME for a coupon code, or the code unchanged.
 
 	//// Neoffice — added. `coupon_code` on Sales Invoice and POS Invoice is a Link to
-	//// Coupon Code, so it holds the DOCUMENT NAME. The POS sends what the cashier
+	//// Coupon Code, so it holds the document NAME. The POS posts what the cashier
 	//// typed or scanned, which is the code — a different string as soon as the coupon
-	//// was not named after its own code. Every gift card issued by the webshop is in
-	//// that case: name "Carte cadeau CHF 100.00 - ... - YMI2-RYUC-DGM3" for code
-	//// "YMI2-RYUC-DGM3". The sale then died at submit on LinkValidationError
-	//// ("Impossible de trouver Code de coupon: ..."), with the basket already paid on
-	//// screen. Resolving it here rather than in the POS bundle repairs every client
-	//// without rebuilding the SPA, and leaves a coupon whose name IS its code
-	//// untouched (2026-09-22, found by running the till in Chrome).
+	//// is not named after its own code. Every gift card the webshop issues is in that
+	//// case: name "Carte cadeau CHF 100.00 - <someone> - YMI2-RYUC-DGM3" for code
+	//// "YMI2-RYUC-DGM3". The sale then died at submit on LinkValidationError, with the
+	//// basket already shown as fully paid.
+	////
+	//// This is NOT a document hook on purpose: frappe runs `_validate_links()` BEFORE
+	//// `run_before_save_methods()` (frappe/model/document.py:315 then :323), so no
+	//// `before_validate` or `validate` hook can ever repair a Link in time. It has to
+	//// happen on the payload, before the document is built (2026-09-22, found by
+	//// running the till in Chrome).
 
-	Args:
-		doc: Sales Invoice or POS Invoice document
-		method: Hook method name (unused)
+	An unknown code is returned unchanged, deliberately: blanking it would turn a
+	typo into a sale quietly recorded with no coupon at all.
 	"""
-	code = (doc.get("coupon_code") or "").strip()
+	code = (code or "").strip()
 	if not code:
-		return
-
-	# Already a document name — nothing to do (the common case for POS-issued cards).
+		return code
+	# Already a document name — the common case for POS-issued cards.
 	if frappe.db.exists("Coupon Code", code):
-		return
-
-	name = frappe.db.get_value("Coupon Code", {"coupon_code": code}, "name")
-	if name:
-		doc.coupon_code = name
+		return code
+	return frappe.db.get_value("Coupon Code", {"coupon_code": code}, "name") or code
 
 
 def validate_coupon_on_invoice(doc, method=None):

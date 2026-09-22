@@ -1568,6 +1568,15 @@ def submit_invoice(invoice=None, data=None):
 
     invoice = _strip_server_managed_fields(invoice)
 
+    # //// Neoffice — the POS posts the coupon CODE, but `coupon_code` is a Link that
+    # //// holds the document NAME. `update_invoice` (the draft step) already resolved
+    # //// it; this path did not, so paying a gift card whose name differs from its code
+    # //// failed at submit on LinkValidationError. See resolve_coupon_document_name for
+    # //// why this cannot be a document hook (2026-09-22).
+    if invoice.get("coupon_code"):
+        from pos_next.api.sales_invoice_hooks import resolve_coupon_document_name
+        invoice["coupon_code"] = resolve_coupon_document_name(invoice["coupon_code"])
+
     pos_profile = invoice.get("pos_profile")
     doctype = invoice.get("doctype", "Sales Invoice")
 
