@@ -4,13 +4,14 @@ Installation and Migration hooks for POS Next
 This module relies on Frappe's fixture system for:
 - Custom fields (custom_field.json)
 - Roles (role.json)
-- Custom DocPerm (custom_docperm.json)
+- Custom DocPerm (custom_docperm.json)  [//// Neoffice — no longer: see grant_cashier_permissions()]
 - Print formats (print_format.json)
 
 The fixtures are defined in hooks.py and synced automatically during install/migrate.
 This module handles post-fixture tasks like setting defaults and clearing cache.
 """
 import frappe
+import json  # //// Neoffice — grant_cashier_permissions() reads setup/custom_docperm.json
 import logging
 # //// Neoffice — imported for the v15 / v16 split: _has_native_coupon_code_field() decides whether
 # //// this app must create the Sales Invoice `coupon_code` Custom Field itself. It cannot ship in
@@ -38,6 +39,9 @@ def after_install():
 
 		# Setup default print format for POS Profiles
 		setup_default_print_format()
+
+		# //// Neoffice — the cashier's permissions, formerly a fixture (see grant_cashier_permissions).
+		grant_cashier_permissions()
 
 		# Clear cache to ensure changes take effect
 		frappe.clear_cache()
@@ -73,6 +77,9 @@ def after_migrate():
 
 		# Setup default print format
 		setup_default_print_format(quiet=True)
+
+		# //// Neoffice — the cashier's permissions, formerly a fixture (see grant_cashier_permissions).
+		grant_cashier_permissions()
 
 		# Clear cache
 		frappe.clear_cache()
@@ -262,6 +269,50 @@ def setup_default_print_format(quiet=False):
 			title="Default Print Format Setup Error",
 			message=frappe.get_traceback()
 		)
+
+
+# //// Neoffice — added function (no upstream equivalent). Upstream ships these rules as a Custom
+# //// DocPerm fixture, and Frappe imports every file of fixtures/ at each migrate whatever hooks.py
+# //// filters: the file's 58 rules — 48 of them copies of other roles' standard rules, taken on
+# //// the author's site — landed next to a site's own rules as duplicates (which make
+# //// add_permission() refuse the doctype), and on a doctype the site had never customized they
+# //// froze its permissions on that snapshot. The file now lives in setup/ and only its POSNext
+# //// Cashier rules are granted, the way add_permission() does: the doctype's standard rules are
+# //// copied first when it has no custom rule yet. Idempotent: a rule already there is left as is.
+CASHIER_ROLE = "POSNext Cashier"
+
+
+def grant_cashier_permissions():
+	"""Give the POSNext Cashier role its rules from setup/custom_docperm.json."""
+	if not frappe.db.exists("Role", CASHIER_ROLE):
+		return
+	from frappe.permissions import rights, setup_custom_perms
+	from frappe.utils import cint
+
+	with open(frappe.get_app_path("pos_next", "setup", "custom_docperm.json")) as f:
+		rules = [rule for rule in json.load(f) if rule.get("role") == CASHIER_ROLE]
+	for rule in rules:
+		doctype, permlevel = rule["parent"], cint(rule.get("permlevel"))
+		if not frappe.db.exists("DocType", doctype) or frappe.db.exists(
+			"Custom DocPerm", {"parent": doctype, "role": CASHIER_ROLE, "permlevel": permlevel}
+		):
+			continue
+		try:
+			setup_custom_perms(doctype)
+			frappe.get_doc(
+				{
+					"doctype": "Custom DocPerm",
+					"parent": doctype,
+					"parenttype": "DocType",
+					"parentfield": "permissions",
+					"role": CASHIER_ROLE,
+					"permlevel": permlevel,
+					"if_owner": cint(rule.get("if_owner")),
+					**{right: cint(rule.get(right)) for right in rights},
+				}
+			).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(f"POS Next: cashier permission on {doctype}", frappe.get_traceback())
 
 
 def log_message(message, level="info", indent=0):

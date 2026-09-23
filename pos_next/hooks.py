@@ -190,12 +190,10 @@ fixtures = [
 			["role_name", "in", ["POSNext Cashier", "Nexus POS Manager"]]
 		]
 	},
-	{
-		"dt": "Custom DocPerm",
-		"filters": [
-			["role", "in", ["POSNext Cashier"]]
-		]
-	},
+	# //// Neoffice — no Custom DocPerm fixture. Frappe imports every file of fixtures/ at each
+	# //// migrate whatever these filters say, and a Custom DocPerm fixture either freezes a doctype
+	# //// on the author's snapshot or lands next to a site's own rules as duplicates. The cashier's
+	# //// rules are granted by install.grant_cashier_permissions() from setup/custom_docperm.json.
 	{"dt": "Menu Badge"},
 	{"dt": "Menu Design Template"},
 ]
