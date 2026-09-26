@@ -58,6 +58,8 @@ class TestCreditSales(unittest.TestCase):
 		with self.assertRaisesRegex(RuntimeError, "does not belong to company Sonex"):
 			credit_sales._validate_and_lock_advance_credit("PE-0001", 50, "Guest", "Sonex")
 
+	# //// Neoffice — the till access guard is tested on its own (test_till_money_guards).
+	@patch("pos_next.api.cash_entry.require_till_access")
 	@patch("pos_next.api.credit_sales._create_credit_allocation_journal_entry")
 	@patch("pos_next.api.credit_sales._validate_and_lock_invoice_credit")
 	@patch("pos_next.api.credit_sales.frappe.get_doc")
@@ -66,6 +68,8 @@ class TestCreditSales(unittest.TestCase):
 		mock_get_doc,
 		mock_validate_invoice,
 		mock_create_je,
+		# //// Neoffice — the patched require_till_access above.
+		_mock_till_access,
 	):
 		invoice_doc = Mock()
 		invoice_doc.docstatus = 1

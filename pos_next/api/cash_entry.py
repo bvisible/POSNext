@@ -13,6 +13,20 @@ from frappe import _
 from frappe.utils import flt, today
 
 
+# //// Neoffice — added function (no upstream equivalent). The till's money endpoints
+# //// (cash in/out, customer credit) posted Journal Entries for whoever called them, a portal
+# //// account included. Only a desk account that may work at the till passes: assigned to the
+# //// POS Profile, or reading sales invoices, as every cashier does.
+def require_till_access(pos_profile):
+	from pos_next.api.partial_payments import _has_pos_profile_access
+
+	user = frappe.session.user
+	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not pos_profile or not _has_pos_profile_access(pos_profile):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
 @frappe.whitelist()
 def get_cash_entry_templates(company, pos_profile=None):
 	"""Fetch Journal Entry Templates available for cash in/out operations."""
@@ -63,6 +77,8 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None):
 
 	# Validate shift is open
 	shift = frappe.get_doc("POS Opening Shift", pos_opening_shift)
+	# //// Neoffice — only an account that may work at this shift's till (require_till_access).
+	require_till_access(shift.pos_profile)
 	if shift.status != "Open" or shift.pos_closing_shift:
 		frappe.throw(_("Shift is not open"))
 

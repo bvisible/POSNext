@@ -271,6 +271,11 @@ def redeem_customer_credit(invoice_name, customer_credit_dict):
 	# Get invoice document
 	invoice_doc = frappe.get_doc("Sales Invoice", invoice_name)
 
+	# //// Neoffice — only an account that may work at the invoice's till (cash_entry.require_till_access).
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(invoice_doc.pos_profile)
+
 	if invoice_doc.docstatus != 1:
 		frappe.throw(_("Invoice must be submitted to redeem credit"))
 
@@ -641,6 +646,16 @@ def get_credit_redeem_remarks(invoice_name):
 
 @frappe.whitelist()
 def cancel_credit_journal_entries(invoice_name):
+	"""Cancel the credit redemption entries of an invoice, for whoever may cancel it."""
+	# //// Neoffice — the endpoint cancelled these Journal Entries for whoever called it. It now
+	# //// needs the right to cancel the invoice itself; the cancel hook calls the internal
+	# //// function below directly, whoever cancels (an accountant on the desk included).
+	frappe.has_permission("Sales Invoice", "cancel", doc=invoice_name, throw=True)
+	return _cancel_credit_journal_entries(invoice_name)
+
+
+# //// Neoffice — the former body of cancel_credit_journal_entries, unguarded, for the cancel hook.
+def _cancel_credit_journal_entries(invoice_name):
 	"""
 	Cancel journal entries created for credit redemption when invoice is cancelled.
 

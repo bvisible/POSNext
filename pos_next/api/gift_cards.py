@@ -361,6 +361,10 @@ def create_gift_card_manual(amount, company, customer=None, validity_months=12):
 	Returns:
 		dict: Created gift card info
 	"""
+	# //// Neoffice — whoever called this got a spendable gift card of the amount they chose:
+	# //// it is the Coupon Code list button's, so it now needs the right to create a Coupon
+	# //// Code, which that button's users hold and a portal account or a cashier does not.
+	frappe.has_permission("Coupon Code", "create", throw=True)
 	try:
 		code = generate_gift_card_code()
 
