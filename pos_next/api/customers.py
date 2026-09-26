@@ -233,8 +233,9 @@ def create_customer(
 	frappe.flags.pos_next_customer_pos_profile = pos_profile
 	# //// Neoffice — a cashier holding only POSNext Cashier gets THIS customer's primary Contact
 	# //// created for it; see _elevate_primary_contact below (#790 follow-up, 26.09).
-	elevated = _elevate_primary_contact(customer)
+	elevated = False
 	try:
+		elevated = _elevate_primary_contact(customer)
 		customer.insert()
 	finally:
 		# //// Neoffice — the flag must not outlive this insert (a later save would skip the check).
