@@ -281,7 +281,7 @@ def _elevate_primary_contact(customer):
 		frappe.throw(
 			_(
 				"A contact already uses the e-mail {0}. Look for the existing customer, or ask someone allowed to manage contacts."
-			).format(frappe.bold(email)),
+			).format(email),
 			frappe.PermissionError,
 		)
 	customer.flags.ignore_permissions = True
