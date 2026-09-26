@@ -629,6 +629,8 @@ def _rename_customer_to_name(doc):
 	return new_name
 
 
+# //// Neoffice — ignore_permissions added (#790 follow-up): a record saved through the till's
+# //// guarded path for a cashier without rights on it is renamed on the same terms.
 def _rename_to_expected(doctype, name, ignore_permissions=False):
 	"""Rename an Address/Contact so its ID follows its title, reusing
 	neoffice_theme's expected_document_name + the native rename flow. Returns
@@ -690,6 +692,7 @@ def save_customer_address(customer, fields, address_name=None):
 	else:
 		result = _save_address(customer, fields, address_name)
 	name = (result or {}).get("name") if isinstance(result, dict) else result
+	# //// Neoffice — renamed on the same terms as the guarded save above.
 	return {"name": _rename_to_expected("Address", name, ignore_permissions=bool(guarded))}
 
 
@@ -712,4 +715,5 @@ def save_customer_contact(customer, fields, contact_name=None):
 	else:
 		result = _save_contact(customer, fields, contact_name)
 	name = (result or {}).get("name") if isinstance(result, dict) else result
+	# //// Neoffice — renamed on the same terms as the guarded save above.
 	return {"name": _rename_to_expected("Contact", name, ignore_permissions=bool(guarded))}
