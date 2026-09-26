@@ -436,7 +436,16 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
         "default_currency": default_currency
     })
 
-    customer.insert()
+    # A cashier holding only POSNext Cashier gets THIS customer's primary Contact and address
+    # created for it, as in pos_next.api.customers.create_customer (see its address book block).
+    from pos_next.api.customers import _elevate_primary_contact, _lacks_right
+
+    elevated = _elevate_primary_contact(customer)
+    try:
+        customer.insert()
+    finally:
+        if elevated:
+            customer.flags.ignore_permissions = False
 
     # Create address if address fields are provided
     address_name = None
@@ -457,7 +466,11 @@ def create_customer_from_display(customer_name, pos_opening_entry, email=None, m
                     "link_name": customer.name
                 }]
             })
-            address.insert()
+            # Linked to the customer just created, and to nothing else.
+            address.insert(
+                ignore_permissions=_lacks_right("Address")
+                and frappe.has_permission("Customer", "write", doc=customer.name)
+            )
             address_name = address.name
 
             # Set as primary address

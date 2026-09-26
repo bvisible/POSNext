@@ -231,13 +231,73 @@ def create_customer(
 	# //// Neoffice — ▲▲▲ end of the create_customer localization fallbacks.
 	frappe.flags.pos_next_customer_company = company
 	frappe.flags.pos_next_customer_pos_profile = pos_profile
+	# //// Neoffice — a cashier holding only POSNext Cashier gets THIS customer's primary Contact
+	# //// created for it; see _elevate_primary_contact below (#790 follow-up, 26.09).
+	elevated = _elevate_primary_contact(customer)
 	try:
 		customer.insert()
 	finally:
+		# //// Neoffice — the flag must not outlive this insert (a later save would skip the check).
+		if elevated:
+			customer.flags.ignore_permissions = False
 		frappe.flags.pos_next_customer_company = None
 		frappe.flags.pos_next_customer_pos_profile = None
 
 	return customer.as_dict()
+
+
+# //// Neoffice — ▼▼▼ the till writes THIS customer's own address book for a cashier who holds
+# //// only POSNext Cashier (#790 follow-up, 26.09). That role writes Customer
+# //// (setup/custom_docperm.json) but not Contact nor Address, and sites run a frozen custom
+# //// rule set on those two, without upstream's "All, if creator" rule. ERPNext inserts a new
+# //// customer's primary Contact with the caller's rights (make_contact follows
+# //// customer.flags.ignore_permissions), so creating a customer with its phone and e-mail failed,
+# //// and so did adding an address or a contact from the till. Granting Contact and Address to the
+# //// role would open every party's address book (suppliers, employees, other customers). Instead,
+# //// once the caller is proven to create or write THIS customer, only its own contact and address
+# //// saves skip the caller's rights, and only when the caller's own rights fall short.
+def _lacks_right(doctype, name=None):
+	"""True when the caller cannot create (no name) or write (name) this record themselves."""
+	if name:
+		return not frappe.has_permission(doctype, "write", doc=name)
+	return not frappe.has_permission(doctype, "create")
+
+
+def _elevate_primary_contact(customer):
+	"""Let ERPNext create the new customer's primary Contact for a caller who may create the
+	customer but not a Contact. Returns True when customer.flags.ignore_permissions was set.
+
+	Only with an e-mail, and only for a NEW one: our ERPNext's make_contact reuses the Contact
+	that already carries the e-mail (without one, any Contact without an e-mail), and that
+	Contact belongs to another party. Skipping the rights there would write into someone else's
+	address book, so the caller is told instead.
+	"""
+	email = (customer.get("email_id") or "").strip()
+	if not email or not _lacks_right("Contact"):
+		return False
+	customer.check_permission("create")
+	if frappe.db.exists("Contact", {"email_id": email}):
+		frappe.throw(
+			_(
+				"A contact already uses the e-mail {0}. Look for the existing customer, or ask someone allowed to manage contacts."
+			).format(frappe.bold(email)),
+			frappe.PermissionError,
+		)
+	customer.flags.ignore_permissions = True
+	return True
+
+
+def _theme_saver(public_name):
+	"""neoffice_theme's save behind a public endpoint, the variant that can skip the caller's
+	rights when this neoffice_theme has it, else None."""
+	try:
+		from neoffice_theme import events
+	except ImportError:
+		return None
+	return getattr(events, "_" + public_name, None)
+
+
+# //// Neoffice — ▲▲▲ end of the till's own address book helpers.
 
 
 def get_default_loyalty_program(company):
@@ -568,7 +628,7 @@ def _rename_customer_to_name(doc):
 	return new_name
 
 
-def _rename_to_expected(doctype, name):
+def _rename_to_expected(doctype, name, ignore_permissions=False):
 	"""Rename an Address/Contact so its ID follows its title, reusing
 	neoffice_theme's expected_document_name + the native rename flow. Returns
 	the final name; degrades gracefully if neoffice_theme is absent."""
@@ -578,6 +638,11 @@ def _rename_to_expected(doctype, name):
 		return name
 	target = expected_document_name(doctype, name)
 	if target and target != name:
+		# //// Neoffice — the record was just saved through the till's guarded path for a cashier
+		# //// without rights on it (see the address book block above); update_document_title
+		# //// would refuse that cashier its rename.
+		if ignore_permissions:
+			return frappe.rename_doc(doctype=doctype, old=name, new=target, ignore_permissions=True)
 		from frappe.model.rename_doc import update_document_title
 
 		update_document_title(doctype=doctype, docname=name, name=target)
@@ -616,9 +681,15 @@ def save_customer_address(customer, fields, address_name=None):
 
 	from neoffice_theme.events import save_customer_address as _save_address
 
-	result = _save_address(customer, fields, address_name)
+	# //// Neoffice — a cashier without Address rights saves THIS customer's own address through
+	# //// neoffice_theme's guarded save (see the address book block above).
+	guarded = _theme_saver("save_customer_address") if _lacks_right("Address", address_name) else None
+	if guarded:
+		result = guarded(customer, fields, address_name, ignore_permissions=True)
+	else:
+		result = _save_address(customer, fields, address_name)
 	name = (result or {}).get("name") if isinstance(result, dict) else result
-	return {"name": _rename_to_expected("Address", name)}
+	return {"name": _rename_to_expected("Address", name, ignore_permissions=bool(guarded))}
 
 
 @frappe.whitelist()
@@ -632,6 +703,12 @@ def save_customer_contact(customer, fields, contact_name=None):
 
 	from neoffice_theme.events import save_customer_contact as _save_contact
 
-	result = _save_contact(customer, fields, contact_name)
+	# //// Neoffice — a cashier without Contact rights saves THIS customer's own contact through
+	# //// neoffice_theme's guarded save (see the address book block above).
+	guarded = _theme_saver("save_customer_contact") if _lacks_right("Contact", contact_name) else None
+	if guarded:
+		result = guarded(customer, fields, contact_name, ignore_permissions=True)
+	else:
+		result = _save_contact(customer, fields, contact_name)
 	name = (result or {}).get("name") if isinstance(result, dict) else result
-	return {"name": _rename_to_expected("Contact", name)}
+	return {"name": _rename_to_expected("Contact", name, ignore_permissions=bool(guarded))}
