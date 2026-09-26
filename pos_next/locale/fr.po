@@ -7985,6 +7985,7 @@ msgstr ""
 
 #: POS/src/components/sale/PaymentDialog.vue:3058
 #: POS/src/components/sale/PaymentDialog.vue:3137
+#: POS/src/components/payments/QRPaymentDialog.vue:511
 msgid "Payment failed"
 msgstr "Échec du paiement"
 
@@ -13255,10 +13256,6 @@ msgstr "Confirmation auprès de TWINT…"
 msgid "Payment successful"
 msgstr "Paiement réussi"
 
-#: POS/src/components/payments/QRPaymentDialog.vue:511
-msgid "Payment failed"
-msgstr "Paiement échoué"
-
 #: POS/src/components/payments/QRPaymentDialog.vue:513
 msgid "Payment canceled"
 msgstr "Paiement annulé"
@@ -13677,3 +13674,7 @@ msgstr "Total payé"
 #: pos_next/print_format/neopos_receipt
 msgid "BALANCE DUE"
 msgstr "SOLDE DÛ"
+
+#: pos_next/api/customers.py:283
+msgid "A contact already uses the e-mail {0}. Look for the existing customer, or ask someone allowed to manage contacts."
+msgstr "Un contact utilise déjà l'e-mail {0}. Recherchez le client existant, ou demandez à une personne autorisée à gérer les contacts."
