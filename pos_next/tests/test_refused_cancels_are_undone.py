@@ -22,7 +22,7 @@ from unittest import mock
 import frappe
 
 from pos_next import utils
-from pos_next.api import credit_sales
+from pos_next.api import credit_sales, sales_invoice_hooks
 from pos_next.pos_next.doctype.wallet_transaction import wallet_transaction
 
 
@@ -130,30 +130,41 @@ class TestCreditRedemptionEntriesOfACancelledInvoice(unittest.TestCase):
 			for name in names
 		}
 		log = RecordingLog(database)
+		count, error = None, None
 		with (
 			mock.patch.object(frappe, "db", database),
 			mock.patch.object(frappe, "get_all", return_value=names),
 			mock.patch.object(frappe, "get_doc", side_effect=lambda doctype, name: entries[name]),
 			mock.patch.object(frappe, "log_error", side_effect=log),
-			mock.patch.object(frappe, "msgprint"),
+			mock.patch.object(frappe, "msgprint") as msgprint,
 			mock.patch.object(credit_sales, "_", lambda text: text),
 		):
-			count = credit_sales._cancel_credit_journal_entries("SINV-1")
+			try:
+				count = credit_sales._cancel_credit_journal_entries("SINV-1")
+			except frappe.ValidationError as raised:
+				error = raised
 		database.commit()
-		return count, database, log
+		self.msgprint = msgprint
+		return count, error, database, log
 
 	def test_an_entry_frappe_refuses_to_cancel_is_put_back_as_it_was(self):
-		_, database, _ = self._run(refusing={"JE-1"})
+		_, _, database, _ = self._run(refusing={"JE-1"})
 		self.assertEqual(database.committed[("Journal Entry", "JE-1")], 1)
 		self.assertNotIn(("On cancel", "JE-1"), database.committed)
 
 	def test_the_other_entries_are_still_cancelled(self):
-		count, database, _ = self._run(refusing={"JE-1"})
-		self.assertEqual(count, 1)
+		_, _, database, _ = self._run(refusing={"JE-1"})
 		self.assertEqual(database.committed[("Journal Entry", "JE-2")], 2)
+		self.msgprint.assert_called_once()  # "Cancelled 1 credit redemption journal entries"
+
+	def test_the_caller_is_told_that_an_entry_was_not_cancelled(self):
+		count, error, _, _ = self._run(refusing={"JE-1"})
+		self.assertIsNone(count)
+		self.assertIn("JE-1", str(error))
+		self.assertNotIn("JE-2", str(error))
 
 	def test_the_refusal_is_logged_after_the_rollback_so_that_the_log_survives(self):
-		_, database, log = self._run(refusing={"JE-1"})
+		_, _, database, log = self._run(refusing={"JE-1"})
 		self.assertEqual(len(log.calls), 1)
 		title, message = log.calls[0]
 		self.assertEqual(title, "Credit Sale JE Cancellation")
@@ -161,11 +172,40 @@ class TestCreditRedemptionEntriesOfACancelledInvoice(unittest.TestCase):
 		self.assertIn("LinkExistsError", message)
 		self.assertIn(("Error Log", 1), database.committed)
 
-	def test_when_every_cancel_works_nothing_is_rolled_back(self):
-		count, database, log = self._run()
-		self.assertEqual(count, 2)
+	def test_when_every_cancel_works_nothing_is_rolled_back_and_nothing_is_raised(self):
+		count, error, database, log = self._run()
+		self.assertEqual((count, error), (2, None))
 		self.assertNotIn("rollback", database.kinds())
 		self.assertEqual(log.calls, [])
+
+	def test_the_cancel_hook_of_the_invoice_now_warns_instead_of_seeing_nothing(self):
+		database = FakeDatabase([("Journal Entry", "JE-1")])
+		refusing = FakeDocument(
+			database,
+			"Journal Entry",
+			"JE-1",
+			True,
+			accounts=[frappe._dict(reference_type="Sales Invoice", reference_name="SINV-1")],
+		)
+		log = RecordingLog(database)
+		with (
+			mock.patch.object(frappe, "db", database),
+			mock.patch.object(frappe, "get_all", return_value=["JE-1"]),
+			mock.patch.object(frappe, "get_doc", return_value=refusing),
+			mock.patch.object(frappe, "log_error", side_effect=log),
+			mock.patch.object(frappe, "msgprint") as msgprint,
+			mock.patch.object(credit_sales, "_", lambda text: text),
+			mock.patch.object(sales_invoice_hooks, "_", lambda text: text),
+		):
+			# the hook must not raise: the cancel of the invoice goes on
+			sales_invoice_hooks.before_cancel(SimpleNamespace(name="SINV-1"))
+		warning = msgprint.call_args_list[-1]
+		self.assertIn("may not have been cancelled", warning.args[0])
+		self.assertEqual(warning.kwargs["indicator"], "orange")
+		self.assertEqual(
+			[title for title, _message in log.calls],
+			["Credit Sale JE Cancellation", "Credit Sale JE Cancellation Error"],
+		)
 
 
 class TestTheBrokenWalletTransactionOfAReturn(unittest.TestCase):
@@ -239,6 +279,7 @@ class TestWalletTransactionsAReturnReverses(unittest.TestCase):
 			"__wrapped__",
 			wallet_transaction.reverse_wallet_transactions_for_return,
 		)
+		error = None
 		with (
 			mock.patch.object(frappe, "db", database),
 			mock.patch.object(frappe, "get_doc", side_effect=get_doc),
@@ -247,28 +288,44 @@ class TestWalletTransactionsAReturnReverses(unittest.TestCase):
 			mock.patch.object(frappe, "msgprint"),
 			mock.patch.object(wallet_transaction, "_", lambda text: text),
 		):
-			function("SINV-0", "SINV-RET-1")
+			try:
+				function("SINV-0", "SINV-RET-1")
+			except frappe.ValidationError as raised:
+				error = raised
 		database.commit()
-		return database, log
+		return database, log, error
 
 	def test_a_transaction_frappe_refuses_to_cancel_is_put_back_as_it_was(self):
-		database, _ = self._run(refusing={"WT-1"})
+		database, _, _ = self._run(refusing={"WT-1"})
 		self.assertEqual(database.committed[("Wallet Transaction", "WT-1")], 1)
 		self.assertNotIn(("On cancel", "WT-1"), database.committed)
 
 	def test_the_other_transaction_is_still_cancelled(self):
-		database, _ = self._run(refusing={"WT-1"})
+		database, _, _ = self._run(refusing={"WT-1"})
+		self.assertEqual(database.committed[("Wallet Transaction", "WT-2")], 2)
+
+	def test_the_caller_is_told_so_that_it_does_not_credit_the_return_on_top(self):
+		_, _, error = self._run(refusing={"WT-1"})
+		self.assertIsNotNone(error)
+		self.assertIn("WT-1", str(error))
+		self.assertNotIn("WT-2", str(error))
+
+	def test_nothing_is_raised_when_every_cancel_works(self):
+		database, log, error = self._run()
+		self.assertIsNone(error)
+		self.assertEqual(log.calls, [])
+		self.assertEqual(database.committed[("Wallet Transaction", "WT-1")], 2)
 		self.assertEqual(database.committed[("Wallet Transaction", "WT-2")], 2)
 
 	def test_the_refusal_is_logged_after_the_rollback_so_that_the_log_survives(self):
-		database, log = self._run(refusing={"WT-1"})
+		database, log, _ = self._run(refusing={"WT-1"})
 		self.assertEqual(len(log.calls), 1)
 		self.assertEqual(log.calls[0][0], "Wallet Transaction Cancel on Return Error")
 		self.assertIn("WT: WT-1", log.calls[0][1])
 		self.assertIn(("Error Log", 1), database.committed)
 
 	def test_each_cancel_runs_under_its_own_savepoint_and_none_is_left_open(self):
-		database, _ = self._run(refusing={"WT-1"})
+		database, _, _ = self._run(refusing={"WT-1"})
 		self.assertEqual(database.kinds(), ["savepoint", "rollback", "savepoint", "release"])
 		self.assertEqual(database._savepoints, {})
 

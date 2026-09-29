@@ -521,6 +521,7 @@ def reverse_wallet_transactions_for_return(original_invoice, return_invoice):
 	# Determine the applicable tier for the post-return effective amount
 	new_tier = _find_tier(invoiced_amount_after_return) if tiers else None
 
+	not_cancelled = []  # //// Neoffice — #951
 	for wt in wallet_transactions:
 		# ── Decide: cancel entirely  OR  create a partial Debit ──
 		should_cancel = False
@@ -563,6 +564,7 @@ def reverse_wallet_transactions_for_return(original_invoice, return_invoice):
 					alert=True, indicator="blue"
 				)
 			except Exception as e:
+				not_cancelled.append(wt.name)  # //// Neoffice — #951
 				frappe.log_error(
 					title="Wallet Transaction Cancel on Return Error",
 					message=f"WT: {wt.name}, Return: {return_invoice}, Error: {str(e)}\n{frappe.get_traceback()}"
@@ -607,3 +609,16 @@ def reverse_wallet_transactions_for_return(original_invoice, return_invoice):
 						f"Error: {str(e)}\n{frappe.get_traceback()}"
 					)
 				)
+
+	# //// Neoffice — #951. A transaction that could not be cancelled is now left exactly as it was, still
+	# //// submitted, so the customer keeps the credit of a sale that was returned. The caller
+	# //// (submit_invoice) is built for that: it catches the error, shows "wallet reversal failed, contact
+	# //// the administrator" and, because the reversal did not succeed, does NOT credit the return to the
+	# //// wallet on top ("to avoid double-crediting"). This loop swallowed each failure, so the caller never
+	# //// saw one; with the transaction left submitted, that would credit the return on top of a credit
+	# //// that had not been reversed.
+	if not_cancelled:
+		raise frappe.ValidationError(
+			f"Wallet Transactions of {original_invoice} not cancelled for return {return_invoice}: "
+			f"{', '.join(not_cancelled)}"
+		)

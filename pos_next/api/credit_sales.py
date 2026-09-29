@@ -681,6 +681,7 @@ def _cancel_credit_journal_entries(invoice_name):
 	)
 
 	cancelled_count = 0
+	not_cancelled = []  # //// Neoffice — #951
 	for journal_entry_name in linked_journal_entries:
 		try:
 			je_doc = frappe.get_doc("Journal Entry", journal_entry_name)
@@ -701,6 +702,7 @@ def _cancel_credit_journal_entries(invoice_name):
 			cancel_or_undo(je_doc)
 			cancelled_count += 1
 		except Exception:
+			not_cancelled.append(journal_entry_name)  # //// Neoffice — #951
 			# //// Neoffice — the two arguments were the wrong way round: frappe.log_error takes
 			# //// (title, message) and truncates the title at 140 characters, so the sentence
 			# //// carrying the Journal Entry name and the error was the part being cut, while
@@ -715,6 +717,16 @@ def _cancel_credit_journal_entries(invoice_name):
 		frappe.msgprint(
 			_("Cancelled {0} credit redemption journal entries").format(cancelled_count),
 			alert=True
+		)
+
+	# //// Neoffice — #951. An entry that could not be cancelled is now left exactly as it was, still
+	# //// submitted, so the customer's credit stays redeemed for an invoice that is being cancelled. The
+	# //// cancel hook (sales_invoice_hooks.before_cancel) is built for this: it catches the error, logs it
+	# //// and shows "Some credit journal entries may not have been cancelled, check manually" without
+	# //// blocking the cancel. It never saw a failure, because this loop swallowed each one.
+	if not_cancelled:
+		raise frappe.ValidationError(
+			f"Credit redemption Journal Entries of {invoice_name} not cancelled: {', '.join(not_cancelled)}"
 		)
 
 	return cancelled_count
