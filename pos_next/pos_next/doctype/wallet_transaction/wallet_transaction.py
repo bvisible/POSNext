@@ -7,6 +7,7 @@ from frappe.utils import flt, today
 from erpnext.accounts.general_ledger import make_gl_entries
 from erpnext.controllers.accounts_controller import AccountsController
 from pos_next.api.wallet import get_or_create_wallet
+from pos_next.utils import cancel_or_undo  # //// Neoffice — #951
 
 class WalletTransaction(AccountsController):
 	def validate(self):
@@ -394,7 +395,10 @@ def credit_return_to_wallet(return_invoice, amount=None):
 			# and can be rolled back if the subsequent re-creation fails.
 			try:
 				existing_transaction.flags.ignore_permissions = True
-				existing_transaction.cancel()
+				# //// Neoffice — #951. A cancel Frappe refuses has already written docstatus 2 and run
+				# //// on_cancel (the reversal entries, the wallet balance) by the time it raises; the caller
+				# //// gets None and the return goes on, so that half cancellation was committed with it.
+				cancel_or_undo(existing_transaction)
 			except Exception:
 				frappe.log_error(
 					title="Wallet Transaction Recovery Error",
@@ -551,7 +555,9 @@ def reverse_wallet_transactions_for_return(original_invoice, return_invoice):
 			try:
 				wt_doc = frappe.get_doc("Wallet Transaction", wt.name)
 				wt_doc.flags.ignore_permissions = True
-				wt_doc.cancel()
+				# //// Neoffice — #951. Same as above, and here the loop carries on with the next
+				# //// transaction: a refused cancel is put back as it was instead of kept half done.
+				cancel_or_undo(wt_doc)
 				frappe.msgprint(
 					_("Cancelled Wallet Transaction {0} due to return").format(wt.name),
 					alert=True, indicator="blue"

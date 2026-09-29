@@ -13,6 +13,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, nowdate, today, cint, get_datetime
 
+from pos_next.utils import cancel_or_undo  # //// Neoffice — #951
+
 
 @frappe.whitelist()
 def get_customer_balance(customer, company=None):
@@ -693,7 +695,10 @@ def _cancel_credit_journal_entries(invoice_name):
 				continue
 
 			je_doc.flags.ignore_permissions = True
-			je_doc.cancel()
+			# //// Neoffice — #951. A cancel Frappe refuses (LinkExistsError) has already written docstatus 2
+			# //// and run on_cancel by the time it raises; this loop carries on and the cancel of the invoice
+			# //// commits, so the entry stayed half cancelled. It is put back as it was, then logged below.
+			cancel_or_undo(je_doc)
 			cancelled_count += 1
 		except Exception:
 			# //// Neoffice — the two arguments were the wrong way round: frappe.log_error takes

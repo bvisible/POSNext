@@ -83,3 +83,29 @@ def get_app_version() -> str:
 		str: Application version
 	"""
 	return app_version
+
+
+# //// Neoffice — added (#951). Name of the savepoint one cancel runs under.
+_CANCEL_SAVEPOINT = "pos_next_cancel"
+
+
+# //// Neoffice — added (#951): cancels that are caught and carried on from (the credit redemption entries
+# //// of a cancelled invoice, the wallet transactions of a return) must not keep a cancel Frappe refused.
+def cancel_or_undo(doc):
+	"""Cancel `doc`; when Frappe refuses, put back what the refused cancel already wrote, then re-raise.
+
+	Frappe cancels by writing docstatus 2 to the row, running on_cancel (the reversal entries, the wallet
+	balance) and only then checking that no submitted document still links to it. When that check raises
+	LinkExistsError the row and what on_cancel wrote are already there, so a caller that catches the error
+	and carries on commits a cancellation that half happened. The savepoint undoes it; whatever the caller
+	does with the error, logging included, then runs on the state as it was before the cancel.
+	"""
+	import frappe
+
+	frappe.db.savepoint(_CANCEL_SAVEPOINT)
+	try:
+		doc.cancel()
+	except Exception:
+		frappe.db.rollback(save_point=_CANCEL_SAVEPOINT)
+		raise
+	frappe.db.release_savepoint(_CANCEL_SAVEPOINT)
