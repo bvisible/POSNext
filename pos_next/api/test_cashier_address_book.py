@@ -138,6 +138,52 @@ class TestCashierAddressBook(FrappeTestCase):
 		frappe.set_user("Administrator")
 		self.assertIn(contact, _linked("Contact", name))
 
+	def test_cashier_keeps_every_email_and_number_and_the_print_fields(self):
+		# //// Neoffice — maintenance#1031/#1032: the till's editor sends the contact's two tables and
+		# //// the address's print fields; an edit used to keep one e-mail and one number only.
+		self._needs_theme()
+		name, _email = self._new_customer("tables")
+
+		address = save_customer_address(
+			name,
+			{
+				"address_line1": "Rue du Marché",
+				"city": "Lausanne",
+				"country": "Switzerland",
+				"company": "Till Property Management SA",
+				"to_the_attention_of": "Anna Till",
+			},
+		)["name"]
+		contact = save_customer_contact(
+			name,
+			{
+				"first_name": "Anna",
+				"last_name": "Till",
+				"designation": "Accountant",
+				"email_ids": [
+					{"email_id": f"anna-a-{frappe.generate_hash(length=6)}@yopmail.com", "is_primary": 1},
+					{"email_id": f"anna-b-{frappe.generate_hash(length=6)}@yopmail.com", "is_primary": 0},
+				],
+				"phone_nos": [
+					{"phone": "+41 21 000 00 01", "is_primary_phone": 1},
+					{"phone": "+41 79 000 00 01", "is_primary_mobile_no": 1},
+				],
+			},
+		)["name"]
+		# The one-value form of an older till replaces the first marked number (the one it showed)
+		# and keeps the other rows.
+		save_customer_contact(name, {"first_name": "Anna", "mobile_no": "+41 78 000 00 01"}, contact)
+
+		frappe.set_user("Administrator")
+		self.assertEqual(
+			frappe.db.get_value("Address", address, ["company", "to_the_attention_of"]),
+			("Till Property Management SA", "Anna Till"),
+		)
+		doc = frappe.get_doc("Contact", contact)
+		self.assertEqual(len(doc.email_ids), 2)
+		self.assertEqual(sorted(r.phone for r in doc.phone_nos), ["+41 78 000 00 01", "+41 79 000 00 01"])
+		self.assertEqual(doc.designation, "Accountant")
+
 	def test_cashier_cannot_touch_another_partys_address(self):
 		self._needs_theme()
 		mine, _email = self._new_customer("mine")
