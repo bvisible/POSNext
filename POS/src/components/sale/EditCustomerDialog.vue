@@ -133,7 +133,7 @@
 							<!-- inline address editor -->
 							<div v-if="addressDraft" class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
 								<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-									<div class="sm:col-span-2">
+									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Title', null, 'Address book') }}</label>
 										<input v-model="addressDraft.address_title" type="text" :placeholder="__('Address Title', null, 'Address book')" :class="inputCls" />
 									</div>
@@ -143,21 +143,8 @@
 											<option v-for="t in ADDRESS_TYPES" :key="t" :value="t">{{ __(t, null, 'Address type') }}</option>
 										</select>
 									</div>
-									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Country', null, 'Address book') }}</label>
-										<LinkField v-model="addressDraft.country" doctype="Country" :placeholder="__('Country', null, 'Address book')" />
-									</div>
-									<!-- Swiss postal format: street + N° on one row -->
-									<div class="sm:col-span-2 grid grid-cols-[1fr_96px] gap-2">
-										<div>
-											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1', null, 'Address book') }}</label>
-											<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1', null, 'Address book')" :class="inputCls" />
-										</div>
-										<div>
-											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('N°') }}</label>
-											<input v-model="addressDraft.custom_house_number" type="text" :placeholder="__('N°')" :class="inputCls" />
-										</div>
-									</div>
+									<!-- The envelope's lines in the order the print writes them (Daniel, 02.10): the name printed
+									     instead of the customer's, « to the attention of », then the street, before the town. -->
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Name on documents') }}</label>
 										<input v-model="addressDraft.company" type="text" :class="inputCls" />
@@ -177,6 +164,17 @@
 											</button>
 										</div>
 									</div>
+									<!-- Swiss postal format: street + N° on one row -->
+									<div class="sm:col-span-2 grid grid-cols-[1fr_96px] gap-2">
+										<div>
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1', null, 'Address book') }}</label>
+											<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1', null, 'Address book')" :class="inputCls" />
+										</div>
+										<div>
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('N°') }}</label>
+											<input v-model="addressDraft.custom_house_number" type="text" :placeholder="__('N°')" :class="inputCls" />
+										</div>
+									</div>
 									<div class="sm:col-span-2">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2', null, 'Address book') }}</label>
 										<input v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2', null, 'Address book')" :class="inputCls" />
@@ -192,6 +190,10 @@
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('State/Province', null, 'Address book') }}</label>
 										<input v-model="addressDraft.state" type="text" :placeholder="__('State/Province', null, 'Address book')" :class="inputCls" />
+									</div>
+									<div>
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Country', null, 'Address book') }}</label>
+										<LinkField v-model="addressDraft.country" doctype="Country" :placeholder="__('Country', null, 'Address book')" />
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Email Address', null, 'Address book') }}</label>
