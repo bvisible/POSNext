@@ -154,7 +154,7 @@
 									<div class="relative">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('To the attention of') }}</label>
 										<input v-model="addressDraft.to_the_attention_of" type="text" :class="inputCls" />
-										<button v-if="contacts.length" type="button" class="mt-1 text-xs font-semibold text-blue-600" @click="attentionMenu = !attentionMenu">
+										<button v-if="contacts.length" type="button" class="mt-1 py-2 text-xs font-semibold text-blue-600" @click="attentionMenu = !attentionMenu">
 											{{ __('Choose a contact', null, 'Address book') }}
 										</button>
 										<div v-if="attentionMenu" class="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
@@ -209,12 +209,12 @@
 										<textarea v-model="addressDraft.neo_delivery_instructions" rows="2" :class="inputCls"></textarea>
 									</div>
 									<div class="sm:col-span-2 flex flex-wrap gap-4 pt-1">
-										<label class="flex items-center gap-2 cursor-pointer">
-											<input type="checkbox" v-model="addressDraft.is_primary_address" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+										<label class="flex items-center gap-2 min-h-[40px] cursor-pointer">
+											<input type="checkbox" v-model="addressDraft.is_primary_address" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
 											<span class="text-sm text-gray-700">{{ __('Preferred Billing Address', null, 'Address book') }}</span>
 										</label>
-										<label class="flex items-center gap-2 cursor-pointer">
-											<input type="checkbox" v-model="addressDraft.is_shipping_address" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+										<label class="flex items-center gap-2 min-h-[40px] cursor-pointer">
+											<input type="checkbox" v-model="addressDraft.is_shipping_address" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
 											<span class="text-sm text-gray-700">{{ __('Preferred Shipping Address', null, 'Address book') }}</span>
 										</label>
 									</div>
@@ -275,13 +275,13 @@
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('E-mails', null, 'Address book') }}</label>
 										<div v-for="(row, i) in contactDraft.email_ids" :key="'e' + i" class="flex items-center gap-3 mb-1.5">
 											<input v-model="row.email_id" type="email" :class="inputCls" />
-											<label class="flex shrink-0 items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
-												<input type="radio" :checked="!!row.is_primary" @change="setPrimary(contactDraft.email_ids, 'is_primary', i)" />
+											<label class="flex shrink-0 items-center gap-2 min-h-[40px] px-1 text-xs text-gray-700 cursor-pointer">
+												<input type="radio" class="h-5 w-5" :checked="!!row.is_primary" @change="setPrimary(contactDraft.email_ids, 'is_primary', i)" />
 												{{ __('Primary', null, 'Contact row') }}
 											</label>
-											<button type="button" class="shrink-0 rounded border border-gray-200 px-2 text-gray-500 hover:bg-gray-100" :title="__('Remove', null, 'Address book')" @click="removeRow(contactDraft.email_ids, i, ['is_primary'])">×</button>
+											<button type="button" class="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-lg text-gray-500 hover:bg-gray-100" :title="__('Remove', null, 'Address book')" @click="removeRow(contactDraft.email_ids, i, ['is_primary'])">×</button>
 										</div>
-										<button type="button" class="text-xs font-semibold text-blue-600" @click="addRow(contactDraft.email_ids, { email_id: '', is_primary: 0 }, ['is_primary'])">
+										<button type="button" class="py-2 text-xs font-semibold text-blue-600" @click="addRow(contactDraft.email_ids, { email_id: '', is_primary: 0 }, ['is_primary'])">
 											+ {{ __('Add an e-mail', null, 'Address book') }}
 										</button>
 									</div>
@@ -289,23 +289,23 @@
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Numbers', null, 'Address book') }}</label>
 										<div v-for="(row, i) in contactDraft.phone_nos" :key="'p' + i" class="flex flex-wrap items-center gap-3 mb-1.5">
 											<input v-model="row.phone" type="tel" :class="[inputCls, 'min-w-0 flex-1']" />
-											<label class="flex shrink-0 items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
-												<input type="radio" :checked="!!row.is_primary_phone" @change="setPrimary(contactDraft.phone_nos, 'is_primary_phone', i)" />
+											<label class="flex shrink-0 items-center gap-2 min-h-[40px] px-1 text-xs text-gray-700 cursor-pointer">
+												<input type="radio" class="h-5 w-5" :checked="!!row.is_primary_phone" @change="setPrimary(contactDraft.phone_nos, 'is_primary_phone', i)" />
 												{{ __('Primary', null, 'Contact row') }}
 											</label>
-											<label class="flex shrink-0 items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
-												<input type="radio" :checked="!!row.is_primary_mobile_no" @change="setPrimary(contactDraft.phone_nos, 'is_primary_mobile_no', i)" />
+											<label class="flex shrink-0 items-center gap-2 min-h-[40px] px-1 text-xs text-gray-700 cursor-pointer">
+												<input type="radio" class="h-5 w-5" :checked="!!row.is_primary_mobile_no" @change="setPrimary(contactDraft.phone_nos, 'is_primary_mobile_no', i)" />
 												{{ __('Primary mobile', null, 'Contact row') }}
 											</label>
-											<button type="button" class="shrink-0 rounded border border-gray-200 px-2 text-gray-500 hover:bg-gray-100" :title="__('Remove', null, 'Address book')" @click="removeRow(contactDraft.phone_nos, i, ['is_primary_phone', 'is_primary_mobile_no'])">×</button>
+											<button type="button" class="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-lg text-gray-500 hover:bg-gray-100" :title="__('Remove', null, 'Address book')" @click="removeRow(contactDraft.phone_nos, i, ['is_primary_phone', 'is_primary_mobile_no'])">×</button>
 										</div>
-										<button type="button" class="text-xs font-semibold text-blue-600" @click="addRow(contactDraft.phone_nos, { phone: '', is_primary_phone: 0, is_primary_mobile_no: 0 }, ['is_primary_phone', 'is_primary_mobile_no'])">
+										<button type="button" class="py-2 text-xs font-semibold text-blue-600" @click="addRow(contactDraft.phone_nos, { phone: '', is_primary_phone: 0, is_primary_mobile_no: 0 }, ['is_primary_phone', 'is_primary_mobile_no'])">
 											+ {{ __('Add a number', null, 'Address book') }}
 										</button>
 									</div>
 									<div class="sm:col-span-3">
-										<label class="flex items-center gap-2 cursor-pointer">
-											<input type="checkbox" v-model="contactDraft.is_primary_contact" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+										<label class="flex items-center gap-2 min-h-[40px] cursor-pointer">
+											<input type="checkbox" v-model="contactDraft.is_primary_contact" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
 											<span class="text-sm text-gray-700">{{ __('Primary Contact') }}</span>
 										</label>
 									</div>
