@@ -137,7 +137,7 @@
 								<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Title', null, 'Address book') }}</label>
-										<input v-model="addressDraft.address_title" type="text" :placeholder="__('Address Title', null, 'Address book')" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.address_title" type="text" :placeholder="__('Address Title', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Type', null, 'Address book') }}</label>
@@ -149,12 +149,12 @@
 									     instead of the customer's, « to the attention of », then the street, before the town. -->
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Name on documents') }}</label>
-										<input v-model="addressDraft.company" type="text" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.company" type="text" :class="inputCls" />
 										<p class="mt-1 text-[11px] text-gray-400">{{ __('Replaces the name printed on invoices and letters') }}</p>
 									</div>
 									<div class="relative">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('To the attention of') }}</label>
-										<input v-model="addressDraft.to_the_attention_of" type="text" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.to_the_attention_of" type="text" :class="inputCls" />
 										<button v-if="contacts.length" type="button" class="mt-1 py-2 text-xs font-semibold text-blue-600" @click="attentionMenu = !attentionMenu">
 											{{ __('Choose a contact', null, 'Address book') }}
 										</button>
@@ -170,31 +170,31 @@
 									<div class="sm:col-span-2 grid grid-cols-[1fr_96px] gap-2">
 										<div>
 											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1', null, 'Address book') }}</label>
-											<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1', null, 'Address book')" :class="inputCls" />
+											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1', null, 'Address book')" :class="inputCls" />
 										</div>
 										<div>
 											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('N°') }}</label>
-											<input v-model="addressDraft.custom_house_number" type="text" :placeholder="__('N°')" :class="inputCls" />
+											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.custom_house_number" type="text" :placeholder="__('N°')" :class="inputCls" />
 										</div>
 									</div>
 									<div class="sm:col-span-2">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2', null, 'Address book') }}</label>
-										<input v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2', null, 'Address book')" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2', null, 'Address book')" :class="inputCls" />
 									</div>
 									<!-- A narrow postal code beside a wide town, as the number beside the street (02.10). -->
 									<div class="sm:col-span-2 grid grid-cols-[110px_1fr] gap-2">
 										<div>
 											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Postal Code', null, 'Address book') }}</label>
-											<input v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code', null, 'Address book')" :class="inputCls" />
+											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code', null, 'Address book')" :class="inputCls" />
 										</div>
 										<div>
 											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('City/Town', null, 'Address book') }}</label>
-											<input v-model="addressDraft.city" type="text" :placeholder="__('City/Town', null, 'Address book')" :class="inputCls" />
+											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.city" type="text" :placeholder="__('City/Town', null, 'Address book')" :class="inputCls" />
 										</div>
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('State/Province', null, 'Address book') }}</label>
-										<input v-model="addressDraft.state" type="text" :placeholder="__('State/Province', null, 'Address book')" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.state" type="text" :placeholder="__('State/Province', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Country', null, 'Address book') }}</label>
@@ -202,11 +202,11 @@
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Email Address', null, 'Address book') }}</label>
-										<input v-model="addressDraft.email_id" type="email" :placeholder="__('Email Address', null, 'Address book')" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.email_id" type="email" :placeholder="__('Email Address', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Phone', null, 'Address book') }}</label>
-										<input v-model="addressDraft.phone" type="tel" :placeholder="__('Phone', null, 'Address book')" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.phone" type="tel" :placeholder="__('Phone', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div v-if="addressDraft.address_type === 'Shipping' || addressDraft.neo_delivery_instructions" class="sm:col-span-2">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Delivery instructions') }}</label>
@@ -273,21 +273,21 @@
 									</div>
 									<div :class="salutations.length ? '' : 'sm:col-span-2'">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('First Name') }}</label>
-										<input v-model="contactDraft.first_name" type="text" :placeholder="__('First Name')" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="contactDraft.first_name" type="text" :placeholder="__('First Name')" :class="inputCls" />
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Last Name', null, 'Address book') }}</label>
-										<input v-model="contactDraft.last_name" type="text" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="contactDraft.last_name" type="text" :class="inputCls" />
 									</div>
 									<div class="sm:col-span-3">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Designation', null, 'Address book') }}</label>
-										<input v-model="contactDraft.designation" type="text" :class="inputCls" />
+										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="contactDraft.designation" type="text" :class="inputCls" />
 									</div>
 									<!-- One row per e-mail and per number, as in the Contact's own tables; one primary per column. -->
 									<div class="sm:col-span-3">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('E-mails', null, 'Address book') }}</label>
 										<div v-for="(row, i) in contactDraft.email_ids" :key="'e' + i" class="flex items-center gap-3 mb-1.5">
-											<input v-model="row.email_id" type="email" :class="inputCls" />
+											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="row.email_id" type="email" :class="inputCls" />
 											<label class="flex shrink-0 items-center gap-2 min-h-[40px] px-1 text-xs text-gray-700 cursor-pointer">
 												<input type="radio" class="h-5 w-5" :checked="!!row.is_primary" @change="setPrimary(contactDraft.email_ids, 'is_primary', i)" />
 												{{ __('Primary', null, 'Contact row') }}
@@ -301,7 +301,7 @@
 									<div class="sm:col-span-3">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Numbers', null, 'Address book') }}</label>
 										<div v-for="(row, i) in contactDraft.phone_nos" :key="'p' + i" class="flex flex-wrap items-center gap-3 mb-1.5">
-											<input v-model="row.phone" type="tel" :class="[inputCls, 'min-w-0 flex-1']" />
+											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="row.phone" type="tel" :class="[inputCls, 'min-w-0 flex-1']" />
 											<label class="flex shrink-0 items-center gap-2 min-h-[40px] px-1 text-xs text-gray-700 cursor-pointer">
 												<input type="radio" class="h-5 w-5" :checked="!!row.is_primary_phone" @change="setPrimary(contactDraft.phone_nos, 'is_primary_phone', i)" />
 												{{ __('Primary', null, 'Contact row') }}
