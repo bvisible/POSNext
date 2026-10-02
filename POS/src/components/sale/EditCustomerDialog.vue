@@ -1,3 +1,16 @@
+<!-- //// Neoffice — added file (no upstream equivalent). Upstream sends the cashier to -->
+<!-- //// the desk to edit a customer, a dead end on a PWA tablet. This editor is driven -->
+<!-- //// by the Customer doctype meta (custom fields show up on their own) and keeps a -->
+<!-- //// second tab for addresses and contacts backed by neoffice_theme, so the -->
+<!-- //// ID-follows-title rename behaves exactly like the desk. (82fbfd9e 2026-07-10 -->
+<!-- //// "full meta-driven customer edit dialog (stays in the POS)"; 5221894d lighter -->
+<!-- //// two-tab layout + address/contact manager; 970934de decode HTML entities in -->
+<!-- //// labels and strip HTML from read-only fields; 7e697fdd window.frappe has no -->
+<!-- //// .call in the SPA, so the fetches failed silently — use frappe-ui call(); -->
+<!-- //// d7584e7b 2026-07-17 the ADR-002 N° next to Address Line 1; 2026-10-02 maintenance#1032: -->
+<!-- //// the address editor gains the name printed on documents, « to the attention of » (filled -->
+<!-- //// from a contact) and the delivery instructions, the contact editor the salutation, the job -->
+<!-- //// title and every e-mail and number of the Contact's two tables, as the desk's address book.) -->
 <!--
   EditCustomerDialog — customer editor for the POS, kept as a dialog so the
   cashier never leaves the SPA (PWA / tablet).
@@ -12,19 +25,6 @@
                       to the desk.
 -->
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). Upstream sends the cashier to -->
-	<!-- //// the desk to edit a customer, a dead end on a PWA tablet. This editor is driven -->
-	<!-- //// by the Customer doctype meta (custom fields show up on their own) and keeps a -->
-	<!-- //// second tab for addresses and contacts backed by neoffice_theme, so the -->
-	<!-- //// ID-follows-title rename behaves exactly like the desk. (82fbfd9e 2026-07-10 -->
-	<!-- //// "full meta-driven customer edit dialog (stays in the POS)"; 5221894d lighter -->
-	<!-- //// two-tab layout + address/contact manager; 970934de decode HTML entities in -->
-	<!-- //// labels and strip HTML from read-only fields; 7e697fdd window.frappe has no -->
-	<!-- //// .call in the SPA, so the fetches failed silently — use frappe-ui call(); -->
-	<!-- //// d7584e7b 2026-07-17 the ADR-002 N° next to Address Line 1; 2026-10-02 maintenance#1032: -->
-	<!-- //// the address editor gains the name printed on documents, « to the attention of » (filled -->
-	<!-- //// from a contact) and the delivery instructions, the contact editor the salutation, the job -->
-	<!-- //// title and every e-mail and number of the Contact's two tables, as the desk's address book.) -->
 	<Dialog v-model="show" :options="{ title: __('Edit Customer'), size: '5xl' }">
 		<template #body-content>
 			<div v-if="loading" class="py-12 text-center">
