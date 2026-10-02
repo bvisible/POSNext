@@ -25,7 +25,7 @@
 	<!-- //// the address editor gains the name printed on documents, « to the attention of » (filled -->
 	<!-- //// from a contact) and the delivery instructions, the contact editor the salutation, the job -->
 	<!-- //// title and every e-mail and number of the Contact's two tables, as the desk's address book.) -->
-	<Dialog v-model="show" :options="{ title: __('Edit Customer'), size: '3xl' }">
+	<Dialog v-model="show" :options="{ title: __('Edit Customer'), size: '5xl' }">
 		<template #body-content>
 			<div v-if="loading" class="py-12 text-center">
 				<div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
@@ -119,8 +119,9 @@
 				</div>
 
 				<!-- ADDRESSES & CONTACTS TAB -->
-				<div v-show="activeTab === 'contacts'" class="flex flex-col gap-5">
-					<div v-if="relLoading" class="py-6 text-center text-sm text-gray-500">{{ __('Loading…') }}</div>
+				<!-- Addresses on the left, contacts on the right (maintenance#1032): less to scroll. -->
+				<div v-show="activeTab === 'contacts'" class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-5 items-start">
+					<div v-if="relLoading" class="lg:col-span-2 py-6 text-center text-sm text-gray-500">{{ __('Loading…') }}</div>
 
 					<template v-else>
 						<!-- ADDRESSES -->
