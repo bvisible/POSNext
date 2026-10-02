@@ -120,7 +120,8 @@
 
 				<!-- ADDRESSES & CONTACTS TAB -->
 				<!-- Addresses on the left, contacts on the right (maintenance#1032): less to scroll. -->
-				<div v-show="activeTab === 'contacts'" class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-5 items-start">
+				<!-- An editor open takes the whole width: in two columns it was squeezed into one (02.10). -->
+				<div v-show="activeTab === 'contacts'" class="grid grid-cols-1 gap-x-6 gap-y-5 items-start" :class="addressDraft || contactDraft ? '' : 'lg:grid-cols-2'">
 					<div v-if="relLoading" class="lg:col-span-2 py-6 text-center text-sm text-gray-500">{{ __('Loading…') }}</div>
 
 					<template v-else>
@@ -180,13 +181,16 @@
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2', null, 'Address book') }}</label>
 										<input v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2', null, 'Address book')" :class="inputCls" />
 									</div>
-									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Postal Code', null, 'Address book') }}</label>
-										<input v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code', null, 'Address book')" :class="inputCls" />
-									</div>
-									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('City/Town', null, 'Address book') }}</label>
-										<input v-model="addressDraft.city" type="text" :placeholder="__('City/Town', null, 'Address book')" :class="inputCls" />
+									<!-- A narrow postal code beside a wide town, as the number beside the street (02.10). -->
+									<div class="sm:col-span-2 grid grid-cols-[110px_1fr] gap-2">
+										<div>
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Postal Code', null, 'Address book') }}</label>
+											<input v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code', null, 'Address book')" :class="inputCls" />
+										</div>
+										<div>
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('City/Town', null, 'Address book') }}</label>
+											<input v-model="addressDraft.city" type="text" :placeholder="__('City/Town', null, 'Address book')" :class="inputCls" />
+										</div>
 									</div>
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('State/Province', null, 'Address book') }}</label>
