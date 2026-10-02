@@ -339,7 +339,7 @@
 											<span v-if="c.is_primary_contact" class="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{{ __('Primary', null, 'Contact card') }}</span>
 										</div>
 										<div v-if="c.designation" class="text-xs italic text-gray-500">{{ c.designation }}</div>
-										<div v-if="contactEmails(c).length" class="text-xs text-gray-500 break-all">{{ contactEmails(c).join(' · ') }}</div>
+										<div v-for="email in contactEmails(c)" :key="email" class="text-xs text-gray-500 break-words">{{ email }}</div>
 										<div v-if="contactPhones(c).length" class="text-xs text-gray-500">{{ contactPhones(c).join(' · ') }}</div>
 									</div>
 									<Button variant="subtle" @click="startEditContact(c)">{{ __('Edit') }}</Button>
