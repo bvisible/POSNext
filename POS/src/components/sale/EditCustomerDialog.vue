@@ -126,32 +126,32 @@
 						<!-- ADDRESSES -->
 						<section>
 							<div class="flex items-center justify-between mb-2">
-								<h4 class="text-sm font-semibold text-gray-700">{{ __('Addresses') }}</h4>
-								<Button v-if="!addressDraft" variant="subtle" @click="startAddAddress">+ {{ __('Add address') }}</Button>
+								<h4 class="text-sm font-semibold text-gray-700">{{ __('Addresses', null, 'Address book') }}</h4>
+								<Button v-if="!addressDraft" variant="subtle" @click="startAddAddress">+ {{ __('Add an address') }}</Button>
 							</div>
 
 							<!-- inline address editor -->
 							<div v-if="addressDraft" class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
 								<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
 									<div class="sm:col-span-2">
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Title') }}</label>
-										<input v-model="addressDraft.address_title" type="text" :placeholder="__('Address Title')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Title', null, 'Address book') }}</label>
+										<input v-model="addressDraft.address_title" type="text" :placeholder="__('Address Title', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Type') }}</label>
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Type', null, 'Address book') }}</label>
 										<select v-model="addressDraft.address_type" :class="inputCls">
-											<option v-for="t in ADDRESS_TYPES" :key="t" :value="t">{{ __(t) }}</option>
+											<option v-for="t in ADDRESS_TYPES" :key="t" :value="t">{{ __(t, null, 'Address type') }}</option>
 										</select>
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Country') }}</label>
-										<LinkField v-model="addressDraft.country" doctype="Country" :placeholder="__('Country')" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Country', null, 'Address book') }}</label>
+										<LinkField v-model="addressDraft.country" doctype="Country" :placeholder="__('Country', null, 'Address book')" />
 									</div>
 									<!-- Swiss postal format: street + N° on one row -->
 									<div class="sm:col-span-2 grid grid-cols-[1fr_96px] gap-2">
 										<div>
-											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1') }}</label>
-											<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1')" :class="inputCls" />
+											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 1', null, 'Address book') }}</label>
+											<input v-model="addressDraft.address_line1" type="text" :placeholder="__('Address Line 1', null, 'Address book')" :class="inputCls" />
 										</div>
 										<div>
 											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('N°') }}</label>
@@ -178,28 +178,28 @@
 										</div>
 									</div>
 									<div class="sm:col-span-2">
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2') }}</label>
-										<input v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2', null, 'Address book') }}</label>
+										<input v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Postal Code') }}</label>
-										<input v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Postal Code', null, 'Address book') }}</label>
+										<input v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('City/Town') }}</label>
-										<input v-model="addressDraft.city" type="text" :placeholder="__('City/Town')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('City/Town', null, 'Address book') }}</label>
+										<input v-model="addressDraft.city" type="text" :placeholder="__('City/Town', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('State/Province') }}</label>
-										<input v-model="addressDraft.state" type="text" :placeholder="__('State/Province')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('State/Province', null, 'Address book') }}</label>
+										<input v-model="addressDraft.state" type="text" :placeholder="__('State/Province', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Email Address') }}</label>
-										<input v-model="addressDraft.email_id" type="email" :placeholder="__('Email Address')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Email Address', null, 'Address book') }}</label>
+										<input v-model="addressDraft.email_id" type="email" :placeholder="__('Email Address', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div>
-										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Phone') }}</label>
-										<input v-model="addressDraft.phone" type="tel" :placeholder="__('Phone')" :class="inputCls" />
+										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Phone', null, 'Address book') }}</label>
+										<input v-model="addressDraft.phone" type="tel" :placeholder="__('Phone', null, 'Address book')" :class="inputCls" />
 									</div>
 									<div v-if="addressDraft.address_type === 'Shipping' || addressDraft.neo_delivery_instructions" class="sm:col-span-2">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Delivery instructions') }}</label>
@@ -208,11 +208,11 @@
 									<div class="sm:col-span-2 flex flex-wrap gap-4 pt-1">
 										<label class="flex items-center gap-2 cursor-pointer">
 											<input type="checkbox" v-model="addressDraft.is_primary_address" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-											<span class="text-sm text-gray-700">{{ __('Preferred Billing Address') }}</span>
+											<span class="text-sm text-gray-700">{{ __('Preferred Billing Address', null, 'Address book') }}</span>
 										</label>
 										<label class="flex items-center gap-2 cursor-pointer">
 											<input type="checkbox" v-model="addressDraft.is_shipping_address" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-											<span class="text-sm text-gray-700">{{ __('Preferred Shipping Address') }}</span>
+											<span class="text-sm text-gray-700">{{ __('Preferred Shipping Address', null, 'Address book') }}</span>
 										</label>
 									</div>
 								</div>
@@ -229,8 +229,8 @@
 									<div class="min-w-0">
 										<div class="flex flex-wrap items-center gap-1.5 mb-1">
 											<span class="text-sm font-medium text-gray-900 truncate">{{ addr.address_title || addr.name }}</span>
-											<span v-if="addr.is_primary_address" class="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{{ __('Billing') }}</span>
-											<span v-if="addr.is_shipping_address" class="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded">{{ __('Shipping') }}</span>
+											<span v-if="addr.is_primary_address" class="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{{ __('Preferred billing', null, 'Address book') }}</span>
+											<span v-if="addr.is_shipping_address" class="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded">{{ __('Preferred delivery', null, 'Address book') }}</span>
 										</div>
 										<div class="text-xs text-gray-500 whitespace-pre-line" v-html="sanitizeDisplay(addr.display)"></div>
 									</div>
@@ -242,8 +242,8 @@
 						<!-- CONTACTS -->
 						<section>
 							<div class="flex items-center justify-between mb-2">
-								<h4 class="text-sm font-semibold text-gray-700">{{ __('Contacts') }}</h4>
-								<Button v-if="!contactDraft" variant="subtle" @click="startAddContact">+ {{ __('Add contact') }}</Button>
+								<h4 class="text-sm font-semibold text-gray-700">{{ __('Contacts', null, 'Address book') }}</h4>
+								<Button v-if="!contactDraft" variant="subtle" @click="startAddContact">+ {{ __('Add a contact', null, 'Address book') }}</Button>
 							</div>
 
 							<div v-if="contactDraft" class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
@@ -320,7 +320,7 @@
 									<div class="min-w-0">
 										<div class="flex flex-wrap items-center gap-1.5 mb-0.5">
 											<span class="text-sm font-medium text-gray-900 truncate">{{ c.full_name }}</span>
-											<span v-if="c.is_primary_contact" class="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{{ __('Primary') }}</span>
+											<span v-if="c.is_primary_contact" class="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{{ __('Primary', null, 'Contact card') }}</span>
 										</div>
 										<div v-if="c.designation" class="text-xs italic text-gray-500">{{ c.designation }}</div>
 										<div v-if="contactEmails(c).length" class="text-xs text-gray-500 break-all">{{ contactEmails(c).join(' · ') }}</div>
