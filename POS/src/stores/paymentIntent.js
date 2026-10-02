@@ -1,5 +1,7 @@
 // Copyright (c) 2026, Neoffice and contributors
 // License: AGPL-3.0
+//// Neoffice — added file (no upstream equivalent): the unified `payments` flow as a Pinia store, for
+//// the components that cannot hold the local usePaymentDriver() composable (customer display, KDS).
 //
 // Pinia store wrapping the unified payments flow for cross-component access.
 // Most components should prefer the local `usePaymentDriver()` composable
@@ -10,8 +12,6 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { call } from "frappe-ui"
 
-//// Neoffice — added file (no upstream equivalent)
-//
 // `failed` is NOT final — see the long note in usePaymentDriver.js: a PIN retry
 // on the reader settles the SAME intent 15-30 s after `payment_failed`.
 const SETTLED_STATUSES = new Set(["succeeded", "canceled", "refunded"])

@@ -1,5 +1,7 @@
 // Copyright (c) 2026, Neoffice and contributors
 // License: AGPL-3.0
+//// Neoffice — added file (no upstream equivalent): the till's side of our unified `payments`
+//// app (card readers, TWINT QR). The note on SETTLED_STATUSES below says why `failed` is not final.
 //
 // usePaymentDriver — PSP-agnostic composable bridging POSNext to the unified
 // `payments` app. Reactive intent state + SocketIO subscription + Frappe API
@@ -21,8 +23,6 @@
 import { computed, onBeforeUnmount, ref } from "vue"
 import { call } from "frappe-ui"
 
-//// Neoffice — added file (no upstream equivalent)
-//
 // A status ends the watch only once the money has actually settled one way or
 // another. `failed` is deliberately NOT in this set: Stripe Terminal emits
 // `payment_intent.payment_failed` on a *soft* decline (wrong PIN,
