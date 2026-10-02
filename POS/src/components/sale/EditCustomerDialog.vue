@@ -132,7 +132,7 @@
 							</div>
 
 							<!-- inline address editor -->
-							<div v-if="addressDraft" class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
+							<div v-if="addressDraft" data-pos-editor class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
 								<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
 									<div>
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Title', null, 'Address book') }}</label>
@@ -219,7 +219,7 @@
 										</label>
 									</div>
 								</div>
-								<div class="flex justify-end gap-2 mt-3">
+								<div class="sticky bottom-0 z-10 -mx-3 -mb-3 mt-3 flex justify-end gap-2 rounded-b-lg bg-blue-50 px-3 pb-3 pt-2">
 									<Button variant="subtle" @click="addressDraft = null">{{ __('Cancel') }}</Button>
 									<Button variant="solid" theme="blue" :loading="relSaving" @click="saveAddress">{{ __('Save') }}</Button>
 								</div>
@@ -235,7 +235,16 @@
 											<span v-if="addr.is_primary_address" class="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{{ __('Preferred billing', null, 'Address book') }}</span>
 											<span v-if="addr.is_shipping_address" class="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded">{{ __('Preferred delivery', null, 'Address book') }}</span>
 										</div>
-										<div class="text-xs text-gray-500 whitespace-pre-line" v-html="sanitizeDisplay(addr.display)"></div>
+										<!-- The name printed instead of the customer's in bold, with its label (02.10). -->
+										<div class="text-xs text-gray-500">
+											<div v-for="(line, i) in displayLines(addr)" :key="i">
+												<template v-if="line.override">
+													<span class="font-semibold text-gray-900">{{ line.text }}</span>
+													<span class="ml-1.5 rounded-full bg-blue-100 px-1.5 text-[10px] font-medium text-blue-700">{{ __('Name on documents') }}</span>
+												</template>
+												<template v-else>{{ line.text }}</template>
+											</div>
+										</div>
 									</div>
 									<Button variant="subtle" @click="startEditAddress(addr)">{{ __('Edit') }}</Button>
 								</div>
@@ -249,7 +258,7 @@
 								<Button v-if="!contactDraft" variant="subtle" @click="startAddContact">+ {{ __('Add a contact', null, 'Address book') }}</Button>
 							</div>
 
-							<div v-if="contactDraft" class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
+							<div v-if="contactDraft" data-pos-editor class="border border-blue-200 bg-blue-50/40 rounded-lg p-3 mb-3">
 								<div class="grid grid-cols-1 sm:grid-cols-[140px_1fr_1fr] gap-x-4 gap-y-3">
 									<div v-if="salutations.length">
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Salutation', null, 'Address book') }}</label>
@@ -310,7 +319,7 @@
 										</label>
 									</div>
 								</div>
-								<div class="flex justify-end gap-2 mt-3">
+								<div class="sticky bottom-0 z-10 -mx-3 -mb-3 mt-3 flex justify-end gap-2 rounded-b-lg bg-blue-50 px-3 pb-3 pt-2">
 									<Button variant="subtle" @click="contactDraft = null">{{ __('Cancel') }}</Button>
 									<Button variant="solid" theme="blue" :loading="relSaving" @click="saveContact">{{ __('Save') }}</Button>
 								</div>
@@ -351,7 +360,7 @@
 
 <script setup>
 import { Button, Dialog, call, createResource } from "frappe-ui"
-import { computed, ref, watch } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import { useToast } from "@/composables/useToast"
 import LinkField from "@/components/common/LinkField.vue"
 
@@ -501,6 +510,15 @@ function removeRow(rows, index, flags) {
 	settle(rows, flags)
 }
 
+// The editor opened comes to the middle of the screen, its « Save » in view (Daniel, 02.10: « je
+// n'arrive pas à enregistrer, je dois scroller »).
+function revealEditor() {
+	nextTick(() => {
+		const el = document.querySelector("[data-pos-editor]")
+		if (el) el.scrollIntoView({ block: "center", behavior: "smooth" })
+	})
+}
+
 // ---- details field helpers ----
 function selectOptions(field) {
 	return (field.options || "").split("\n")
@@ -532,11 +550,23 @@ function isVisible(field) {
 		return true
 	}
 }
-// Address display HTML is server-rendered from a trusted template; only <br>
-// and plain text survive our sanitize.
-function sanitizeDisplay(html) {
-	if (!html) return ""
-	return String(html).replace(/<(?!br\s*\/?>)[^>]*>/gi, " ")
+
+// An address's lines as its template writes them, the name printed instead of the customer's marked.
+function displayLines(addr) {
+	const text =
+		new DOMParser().parseFromString(String(addr.display || "").replace(/<br\s*\/?>/gi, "\n"), "text/html").body
+			.textContent || ""
+	const printed = (addr.company || "").trim()
+	let marked = false
+	return text
+		.split("\n")
+		.map((l) => l.trim())
+		.filter(Boolean)
+		.map((line) => {
+			const override = !!printed && !marked && line === printed
+			if (override) marked = true
+			return { text: line, override }
+		})
 }
 
 // ---- addresses ----
@@ -562,6 +592,7 @@ function startAddAddress() {
 		is_shipping_address: false,
 	}
 	attentionMenu.value = false
+	revealEditor()
 }
 async function startEditAddress(addr) {
 	contactDraft.value = null
@@ -588,6 +619,7 @@ async function startEditAddress(addr) {
 			is_primary_address: !!d.is_primary_address,
 			is_shipping_address: !!d.is_shipping_address,
 		}
+		revealEditor()
 	} catch (error) {
 		showError(error.message || __("Failed to load address"))
 	}
@@ -628,6 +660,7 @@ function startAddContact() {
 		phone_nos: [{ phone: "", is_primary_phone: 1, is_primary_mobile_no: 1 }],
 		is_primary_contact: !contacts.value.length,
 	}
+	revealEditor()
 }
 function startEditContact(c) {
 	addressDraft.value = null
@@ -652,6 +685,7 @@ function startEditContact(c) {
 		phone_nos: phones,
 		is_primary_contact: !!c.is_primary_contact,
 	}
+	revealEditor()
 }
 async function saveContact() {
 	const draft = contactDraft.value
