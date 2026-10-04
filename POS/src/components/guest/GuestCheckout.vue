@@ -85,9 +85,8 @@
 								<span>{{ __('Subtotal') }}</span>
 								<span>{{ formatPrice(guestStore.orderTotal - guestStore.taxAmount) }}</span>
 							</div>
-							<!-- //// Neoffice — msgid was French, now English (house rule); the French screen is unchanged, served by the translation catalogue. -->
 							<div v-if="guestStore.taxAmount > 0" class="flex items-center justify-between text-sm text-gray-500">
-								<span>{{ __('VAT') }}</span>
+								<span>{{ __('TVA') }}</span>
 								<span>{{ formatPrice(guestStore.taxAmount) }}</span>
 							</div>
 							<div class="flex items-center justify-between pt-1">

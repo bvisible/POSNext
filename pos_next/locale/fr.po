@@ -11058,7 +11058,7 @@ msgid "TOTAL:"
 msgstr "TOTAL :"
 
 #: POS/src/components/guest/GuestCheckout.vue:80
-msgid "VAT"
+msgid "TVA"
 msgstr "TVA"
 
 #. Label of a Link field in DocType 'Guest Order Token'

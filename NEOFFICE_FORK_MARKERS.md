@@ -244,4 +244,5 @@ House rule: the source text of a translatable string is English; the French live
 catalogue and the French screen is unchanged. JSON and `.po` files cannot carry a comment, so
 those edits are recorded here (the code edits are marked in place with `//// Neoffice`).
 
-- `pos_next/locale/fr.po` — the two entries `TVA` and `articles` were renamed to `VAT` and `items` (the second dropped, `items` already existed with the same French). The Vue components are marked in place.
+- `pos_next/locale/fr.po` — the entry `articles` is dropped: the code asks for `items` now, which already existed with the same French. The Vue component is marked in place.
+- Left as it is on purpose: `GuestCheckout.vue` keeps `__('TVA')`: the QR self-ordering page is used by a guest and the translation endpoint of the POS is not open to guests, so an English msgid would show `VAT` to a French guest.
