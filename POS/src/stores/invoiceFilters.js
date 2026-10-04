@@ -244,19 +244,9 @@ export const useInvoiceFiltersStore = defineStore("invoiceFilters", () => {
 			return `${formatDateDisplay(dateFrom.value)} - ${formatDateDisplay(dateTo.value)}`;
 		}
 		if (dateFrom.value) {
-			//// Neoffice — Biome reformat only: single quotes rewritten to double inside __(). Same
-			//// msgid, so the French PO entry is untouched (458d81a9); the block just below carries
-			//// the merge instruction for the rest of the file.
-			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 			return __("From {0}", [formatDateDisplay(dateFrom.value)]);
 		}
 		if (dateTo.value) {
-			//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
-			//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
-			//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
-			//// Upstream runs no formatter, so most hunks below are that pass and change no
-			//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
-			//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 			return __("Until {0}", [formatDateDisplay(dateTo.value)]);
 		}
 		return "";

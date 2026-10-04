@@ -22,11 +22,6 @@
  * ```
  */
 
-//// Neoffice — Biome reformat only: single quotes rewritten to double on these two
-//// imports. Upstream runs no formatter, and that is this file's entire divergence
-//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting").
-//// At the next merge take their file and re-run `biome check --write`.
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 import { onUnmounted } from "vue";
 import { usePOSEventsStore } from "@/stores/posEvents";
 
@@ -65,12 +60,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onSettingsChanged(callback) {
-		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-		//// change anywhere in this file — at the next upstream merge take upstream's version
-		//// wholesale and re-run the formatter, do not hand-merge these hunks
-		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-		//// formatting").
 		return on("settings:changed", callback);
 	}
 
@@ -80,7 +69,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onWarehouseChanged(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("settings:warehouse-changed", callback);
 	}
 
@@ -90,7 +78,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onStockPolicyChanged(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("settings:stock-policy-changed", callback);
 	}
 
@@ -100,7 +87,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onPricingChanged(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("settings:pricing-changed", callback);
 	}
 
@@ -110,7 +96,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onSalesOperationsChanged(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("settings:sales-operations-changed", callback);
 	}
 
@@ -120,7 +105,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onDisplayChanged(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("settings:display-changed", callback);
 	}
 
@@ -130,7 +114,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onStockSyncConfigured(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("settings:sync-configured", callback);
 	}
 
@@ -140,7 +123,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onStockSyncUpdate(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("sync:stock-updated", callback);
 	}
 
@@ -150,7 +132,6 @@ export function usePOSEvents() {
 	 * @returns {Function} - Unsubscribe function
 	 */
 	function onAny(callback) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		return on("*", callback);
 	}
 
@@ -227,7 +208,6 @@ export function usePOSEvents() {
 	 * Manually unsubscribe all listeners registered by this composable instance
 	 */
 	function unsubscribeAll() {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		unsubscribers.forEach((unsub) => unsub());
 		unsubscribers.length = 0;
 	}

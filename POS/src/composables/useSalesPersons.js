@@ -54,10 +54,6 @@ export function useSalesPersons(posProfile) {
 				}
 				// Filter by search term if provided
 				if (searchLower) {
-					//// Neoffice — Biome reformat only: the name fallback chain wrapped onto four lines.
-					//// Same precedence, same toLowerCase() (458d81a9); re-run `biome check --write` over
-					//// upstream's file at the next merge rather than hand-resolving this.
-					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					const name = (person.sales_person_name || person.name || "").toLowerCase();
 					return name.includes(searchLower);
 				}
@@ -68,12 +64,6 @@ export function useSalesPersons(posProfile) {
 
 	// Computed: Total allocation percentage
 	const totalSalesAllocation = computed(() => {
-		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-		//// change anywhere in this file — at the next upstream merge take upstream's version
-		//// wholesale and re-run the formatter, do not hand-merge these hunks
-		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-		//// formatting").
 		return selectedSalesPersons.value.reduce(
 			(sum, p) => sum + (p.allocated_percentage || 0),
 			0
@@ -140,7 +130,6 @@ export function useSalesPersons(posProfile) {
 	 * @param {string} personName - Name of person to remove
 	 */
 	function removeSalesPerson(personName) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const index = selectedSalesPersons.value.findIndex((p) => p.sales_person === personName);
 		if (index > -1) {
 			selectedSalesPersons.value.splice(index, 1);

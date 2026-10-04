@@ -87,10 +87,6 @@ export class CoalescingMutex {
 	async _executeWithTimeout(fn) {
 		return new Promise((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
-				//// Neoffice — Biome reformat only: the reject(new Error(...)) call wrapped onto five
-				//// lines (458d81a9). Same message, same timeout; see the identical note in QueuedMutex
-				//// below.
-				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 				reject(new Error(`${this._name}: Operation timed out after ${this._timeout}ms`));
 			}, this._timeout);
 
@@ -181,9 +177,6 @@ export class QueuedMutex {
 	async _executeWithTimeout(fn) {
 		return new Promise((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
-				//// Neoffice — Biome formatter pass of 458d81a9 (2026-03-20 "remove BrainWise branding,
-				//// add restaurant mode, and code formatting"): the reject(new Error(...)) call reflowed
-				//// onto four lines. Identical code, and this file's only divergence from upstream.
 				reject(new Error(`${this._name}: Operation timed out after ${this._timeout}ms`));
 			}, this._timeout);
 

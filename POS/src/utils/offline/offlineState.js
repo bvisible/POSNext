@@ -14,21 +14,6 @@
  * @module utils/offline/offlineState
  */
 
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-//// Neoffice — WHOLE FILE: formatting only, no behaviour change ▼▼▼
-//// The offline state machine below — multi-signal detection, stability buffer,
-//// adaptive polling, backoff with jitter, captive-portal check, cross-tab sync — is
-//// upstream BrainWise code. We did not write it and we have not changed it.
-//// Every hunk here is the Biome pass of 458d81a9 (2026-03-20 "remove BrainWise
-//// branding, add restaurant mode, and code formatting") under POS/biome.json: semicolons
-//// "asNeeded", quoteStyle "double", indentStyle "tab", lineWidth 80:
-//// ' -> ", arrow parens, 80-column wrapping, trailing commas.
-//// The CONFIG block just below is the same story: only the alignment of the
-//// trailing comments changed (padded columns collapsed to one space). `git blame -w`
-//// ignores that whitespace and therefore still credits those lines to upstream —
-//// they are NOT of unknown origin, they are 458d81a9's formatter.
-//// At the next upstream merge: take BrainWise's file wholesale, re-run
-//// `biome check --write`.
 import { logger } from "../logger";
 
 const log = logger.create("OfflineState");
@@ -39,18 +24,15 @@ const log = logger.create("OfflineState");
 
 const CONFIG = {
 	// Ping settings
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	PING_URL: "/api/method/pos_next.api.ping",
 	PING_TIMEOUT_MS: 5000,
 	PING_RETRY_COUNT: 2,
 
 	// Stability buffer - prevents flapping
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	OFFLINE_THRESHOLD: 2, // Consecutive failures before going offline
 	ONLINE_THRESHOLD: 2, // Consecutive successes before going online
 
 	// Adaptive intervals
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	INTERVAL_ONLINE_MS: 30000, // 30s when stable online
 	INTERVAL_OFFLINE_MS: 10000, // 10s when offline (try to recover faster)
 	INTERVAL_UNSTABLE_MS: 5000, // 5s when connection is unstable
@@ -59,7 +41,6 @@ const CONFIG = {
 	// Backoff settings
 	BACKOFF_BASE_MS: 1000,
 	BACKOFF_MAX_MS: 30000,
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	BACKOFF_JITTER: 0.3, // 30% jitter to prevent thundering herd
 
 	// Quality tracking
@@ -71,7 +52,6 @@ const CONFIG = {
 	DEBOUNCE_DELAY_MS: 150,
 
 	// Cross-tab sync
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	BROADCAST_CHANNEL_NAME: "pos_next_offline_state",
 };
 
@@ -108,7 +88,6 @@ class NetworkMonitor {
 		// Start adaptive interval
 		this._scheduleNextPing();
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.info("Network monitor started");
 	}
 
@@ -128,7 +107,6 @@ class NetworkMonitor {
 			this._broadcastChannel = null;
 		}
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.info("Network monitor stopped");
 	}
 
@@ -136,15 +114,12 @@ class NetworkMonitor {
 	 * Initialize BroadcastChannel for cross-tab sync
 	 */
 	_initBroadcastChannel() {
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (typeof BroadcastChannel === "undefined") return;
 
 		try {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			this._broadcastChannel = new BroadcastChannel(CONFIG.BROADCAST_CHANNEL_NAME);
 			this._broadcastChannel.onmessage = (event) => {
 				const { type, state } = event.data;
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				if (type === "STATE_SYNC") {
 					// Another tab detected state change, update our state
 					log.debug("Received cross-tab state sync", state);
@@ -152,7 +127,6 @@ class NetworkMonitor {
 				}
 			};
 		} catch (error) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			log.warn("BroadcastChannel not available", error);
 		}
 	}
@@ -163,7 +137,6 @@ class NetworkMonitor {
 	_broadcastState(state) {
 		if (this._broadcastChannel) {
 			try {
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				this._broadcastChannel.postMessage({ type: "STATE_SYNC", state });
 			} catch (error) {
 				// Channel might be closed
@@ -175,7 +148,6 @@ class NetworkMonitor {
 	 * Initialize tab visibility listener
 	 */
 	_initVisibilityListener() {
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (typeof document === "undefined") return;
 
 		document.addEventListener(
@@ -183,14 +155,12 @@ class NetworkMonitor {
 			() => {
 				this._tabVisible = document.visibilityState === "visible";
 
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				if (this._tabVisible) {
 					// Tab became visible - do immediate ping
 					log.debug("Tab visible, performing immediate ping");
 					this._performPing();
 				}
 
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				// Reschedule with appropriate interval
 				this._scheduleNextPing();
 			},
@@ -208,7 +178,6 @@ class NetworkMonitor {
 		}
 
 		// If we're in an unstable state (transitioning), check more frequently
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (
 			this._consecutiveFailures > 0 &&
 			this._consecutiveFailures < CONFIG.OFFLINE_THRESHOLD
@@ -216,7 +185,6 @@ class NetworkMonitor {
 			return CONFIG.INTERVAL_UNSTABLE_MS;
 		}
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (
 			this._consecutiveSuccesses > 0 &&
 			this._consecutiveSuccesses < CONFIG.ONLINE_THRESHOLD
@@ -228,7 +196,6 @@ class NetworkMonitor {
 		if (offlineState._serverOnline === false) {
 			const backoffInterval = Math.min(
 				CONFIG.INTERVAL_OFFLINE_MS * this._backoffMultiplier,
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				CONFIG.BACKOFF_MAX_MS
 			);
 			// Add jitter
@@ -274,16 +241,13 @@ class NetworkMonitor {
 		for (let attempt = 1; attempt <= CONFIG.PING_RETRY_COUNT; attempt++) {
 			try {
 				const controller = new AbortController();
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				const timeoutId = setTimeout(() => controller.abort(), CONFIG.PING_TIMEOUT_MS);
 
 				const response = await fetch(CONFIG.PING_URL, {
-					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					method: "GET",
 					signal: controller.signal,
 					cache: "no-store",
 					headers: {
-						//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 						"Cache-Control": "no-cache",
 					},
 				});
@@ -294,18 +258,15 @@ class NetworkMonitor {
 				if (response.ok) {
 					// Verify it's not a captive portal (check response content)
 					const text = await response.text();
-					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					if (text.includes('"message"') || text.includes("pong") || text.length < 100) {
 						success = true;
 						break;
 					} else {
 						// Possible captive portal
-						//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 						log.warn("Possible captive portal detected");
 					}
 				}
 			} catch (error) {
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				if (error.name === "AbortError") {
 					log.debug(`Ping timeout (attempt ${attempt})`);
 				} else {
@@ -314,7 +275,6 @@ class NetworkMonitor {
 
 				// Small delay before retry
 				if (attempt < CONFIG.PING_RETRY_COUNT) {
-					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					await new Promise((r) => setTimeout(r, 500 * attempt));
 				}
 			}
@@ -337,7 +297,6 @@ class NetworkMonitor {
 			// Check if we've reached online threshold
 			if (this._consecutiveSuccesses >= CONFIG.ONLINE_THRESHOLD) {
 				if (!offlineState._serverOnline) {
-					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					log.info(
 						`Server online (${CONFIG.ONLINE_THRESHOLD} consecutive successes, latency: ${latency}ms)`
 					);
@@ -352,7 +311,6 @@ class NetworkMonitor {
 			// Check if we've reached offline threshold
 			if (this._consecutiveFailures >= CONFIG.OFFLINE_THRESHOLD) {
 				if (offlineState._serverOnline) {
-					//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 					log.warn(`Server offline (${CONFIG.OFFLINE_THRESHOLD} consecutive failures)`);
 					offlineState.setServerOnline(false);
 					this._broadcastState(offlineState.getState());
@@ -381,21 +339,17 @@ class NetworkMonitor {
 	 */
 	getQuality() {
 		if (this._latencyHistory.length === 0) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			return { quality: "unknown", avgLatency: 0, successRate: 0 };
 		}
 
 		const avgLatency = Math.round(
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			this._latencyHistory.reduce((a, b) => a + b, 0) / this._latencyHistory.length
 		);
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		let quality = "good";
 		if (avgLatency > CONFIG.QUALITY_POOR_THRESHOLD_MS) {
 			quality = "poor";
 		} else if (avgLatency > CONFIG.QUALITY_DEGRADED_THRESHOLD_MS) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			quality = "degraded";
 		}
 
@@ -413,16 +367,11 @@ class NetworkMonitor {
 // OFFLINE STATE MANAGER CLASS
 // ============================================================================
 
-//// Neoffice — still inside the whole-file formatting-only region opened at the top
-//// of this file: quotes, arrow parens and 80-column wrapping from 458d81a9, nothing
-//// else. The browser-event listeners, the debounce and the cross-tab sync below are
-//// upstream's, unchanged.
 class OfflineStateManager {
 	constructor() {
 		// Core state
 		this._manualOffline = false;
 		this._serverOnline = true;
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		this._browserOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
 		this._initialized = false;
 
@@ -442,7 +391,6 @@ class OfflineStateManager {
 		this._previousIsOffline = false;
 
 		// Initialize browser event listeners
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (typeof window !== "undefined") {
 			this._initBrowserListeners();
 		}
@@ -452,14 +400,12 @@ class OfflineStateManager {
 	 * Initialize browser online/offline event listeners
 	 */
 	_initBrowserListeners() {
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		window.addEventListener(
 			"online",
 			() => {
 				log.debug("Browser online event");
 				this._browserOnline = true;
 
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				// Browser came online - trigger immediate server check
 				this._networkMonitor.checkNow();
 				this._notifyChange("browser");
@@ -467,7 +413,6 @@ class OfflineStateManager {
 			{ passive: true }
 		);
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		window.addEventListener(
 			"offline",
 			() => {
@@ -479,7 +424,6 @@ class OfflineStateManager {
 		);
 
 		// Also listen for network information changes (if available)
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if ("connection" in navigator) {
 			const connection = navigator.connection;
 			connection.addEventListener(
@@ -503,14 +447,12 @@ class OfflineStateManager {
 	_handleCrossTabSync(state) {
 		let changed = false;
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (state.serverOnline !== undefined && this._serverOnline !== state.serverOnline) {
 			this._serverOnline = state.serverOnline;
 			changed = true;
 		}
 
 		if (changed) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			this._notifyChange("cross-tab");
 		}
 	}
@@ -519,7 +461,6 @@ class OfflineStateManager {
 	 * Sync state to window variables for backward compatibility
 	 */
 	_syncToWindow() {
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (typeof window === "undefined") return;
 
 		window.posNextManualOffline = this._manualOffline;
@@ -529,7 +470,6 @@ class OfflineStateManager {
 	/**
 	 * Notify listeners of state change with debouncing
 	 */
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	_notifyChange(source = "unknown") {
 		const currentIsOffline = this.isOffline;
 		const newState = {
@@ -538,7 +478,6 @@ class OfflineStateManager {
 			serverOnline: this._serverOnline,
 			browserOnline: this._browserOnline,
 			source,
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			transition:
 				this._previousIsOffline !== currentIsOffline
 					? currentIsOffline
@@ -575,13 +514,11 @@ class OfflineStateManager {
 					try {
 						listener(state);
 					} catch (error) {
-						//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 						log.error("Error in offline state listener", error);
 					}
 				}
 
 				// Dispatch DOM event for components
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 				if (typeof window !== "undefined") {
 					window.dispatchEvent(new CustomEvent("offlineStateChange", { detail: state }));
 				}
@@ -629,11 +566,9 @@ class OfflineStateManager {
 		if (this._manualOffline === newValue) return;
 
 		this._manualOffline = newValue;
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.info(`Manual offline mode ${newValue ? "enabled" : "disabled"}`);
 
 		if (!silent) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			this._notifyChange("manual");
 		} else {
 			this._syncToWindow();
@@ -658,7 +593,6 @@ class OfflineStateManager {
 		this._serverOnline = newValue;
 
 		if (!silent) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			this._notifyChange("server");
 		} else {
 			this._syncToWindow();
@@ -682,7 +616,6 @@ class OfflineStateManager {
 		}
 
 		if (changed) {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			this._notifyChange("batch");
 		}
 	}
@@ -691,7 +624,6 @@ class OfflineStateManager {
 	 * Subscribe to state changes
 	 */
 	subscribe(listener) {
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (typeof listener !== "function") {
 			throw new Error("Listener must be a function");
 		}
@@ -735,7 +667,6 @@ class OfflineStateManager {
 		// Start network monitoring
 		this._networkMonitor.start();
 
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		log.info("Offline state initialized", this.getState());
 	}
 
@@ -761,7 +692,6 @@ class OfflineStateManager {
 		this._manualOffline = false;
 		this._serverOnline = true;
 		this._syncToWindow();
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		this._notifyChange("reset");
 	}
 
@@ -797,7 +727,6 @@ export const checkConnectivity = () => offlineState.checkConnectivity();
 export const getConnectionQuality = () => offlineState.getConnectionQuality();
 
 // Auto-initialize when module loads (if in browser context)
-//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 if (typeof window !== "undefined") {
 	// Defer initialization to after DOM is ready
 	if (document.readyState === "loading") {
@@ -809,4 +738,3 @@ if (typeof window !== "undefined") {
 		setTimeout(() => offlineState.initialize(), 0);
 	}
 }
-//// Neoffice — end of the whole-file formatting-only region ▲▲▲

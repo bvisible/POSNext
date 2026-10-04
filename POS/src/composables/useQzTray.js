@@ -23,14 +23,7 @@ const loadingPrinters = ref(false);
 const certLoading = ref(false);
 const certReady = ref(_loadCertReady());
 
-const printerOptions = computed(() =>
-	//// Neoffice — Biome reformat only: a trailing comma inside the computed()'s arrow body
-	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-	//// formatting"). No behaviour change; take upstream's file at the next merge and
-	//// re-run `biome check --write`.
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-	printers.value.map((p) => ({ label: p, value: p }))
-);
+const printerOptions = computed(() => printers.value.map((p) => ({ label: p, value: p })));
 
 function _buildCertFileName(company) {
 	const safeName = company?.replace(/[^a-zA-Z0-9_\- ]/g, "").trim();
@@ -134,19 +127,12 @@ export function useQzTray() {
 			certReady.value = true;
 			_saveCertReady(true);
 			if (data?.status === "exists") {
-				//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-				//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-				//// change anywhere in this file — at the next upstream merge take upstream's version
-				//// wholesale and re-run the formatter, do not hand-merge these hunks
-				//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-				//// formatting").
 				showSuccess(__("Certificate already exists. You can download it below."));
 			} else {
 				showSuccess(__("Certificate generated successfully."));
 			}
 		} catch (error) {
 			log.error("Failed to setup QZ certificate:", error);
-			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			showError(
 				error?.messages?.[0] ||
 					error?.message ||

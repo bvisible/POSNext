@@ -24,12 +24,6 @@ function formatQuantity(quantity) {
 	const num = Number.parseFloat(quantity);
 	if (Number.isNaN(num)) return "0";
 	// Round to 4 decimal places and remove trailing zeros
-	//// Neoffice — Biome reformat only: the replacement string of the trailing-zero regex
-	//// went from single to double quotes. Upstream runs no formatter, so our repo-wide pass
-	//// shows up as a diff on every string in this file and changes nothing (458d81a9, 2026-03-20
-	//// "remove BrainWise branding, add restaurant mode, and code formatting").
-	//// At the next upstream merge take their file and re-run `biome check --write`.
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	return num.toFixed(4).replace(/\.?0+$/, "");
 }
 
@@ -53,12 +47,6 @@ function formatTime(time) {
 	if (!time) return "";
 
 	// If it's a time string (contains colon), extract HH:MM
-	//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-	//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-	//// change anywhere in this file — at the next upstream merge take upstream's version
-	//// wholesale and re-run the formatter, do not hand-merge these hunks
-	//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-	//// formatting").
 	if (typeof time === "string" && time.includes(":")) {
 		const parts = time.split(":");
 		if (parts.length >= 2) {
@@ -112,7 +100,6 @@ function formatDate(date) {
  */
 function formatPercentage(value, decimals = 2) {
 	if (value === null || value === undefined) return "0%";
-	//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 	return `${Number.parseFloat(value)
 		.toFixed(decimals)
 		.replace(/\.?0+$/, "")}%`;

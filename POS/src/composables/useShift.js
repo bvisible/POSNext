@@ -24,10 +24,6 @@ export function useShift() {
 				let initialElapsedMs = 0;
 				if (data.server_now && data.pos_opening_shift?.period_start_date) {
 					const serverNow = new Date(data.server_now).getTime();
-					//// Neoffice — Biome reformat only: the new Date(...) call wrapped onto three lines.
-					//// Same server timestamp, same elapsed computation (458d81a9). At the next merge take
-					//// upstream's file and re-run `biome check --write`.
-					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					const shiftStart = new Date(
 						data.pos_opening_shift.period_start_date
 					).getTime();
@@ -42,12 +38,6 @@ export function useShift() {
 					_receivedAt: Date.now(),
 				};
 				// Store in localStorage for offline support
-				//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-				//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-				//// change anywhere in this file — at the next upstream merge take upstream's version
-				//// wholesale and re-run the formatter, do not hand-merge these hunks
-				//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-				//// formatting").
 				localStorage.setItem(
 					"pos_shift_data",
 					JSON.stringify({
@@ -116,7 +106,6 @@ export function useShift() {
 				_receivedAt: Date.now(),
 			};
 			// Store in localStorage
-			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			localStorage.setItem(
 				"pos_shift_data",
 				JSON.stringify({

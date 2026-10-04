@@ -4,10 +4,6 @@ import { computed, reactive } from "vue";
 
 const getCookie = (key) => {
 	const cookies = new Map(
-		//// Neoffice — Biome reformat only: the cookie parse chain broken onto one call per line
-		//// and given a trailing comma. Same Map, same decodeURIComponent (458d81a9, 2026-03-20 "remove
-		//// BrainWise branding, add restaurant mode, and code formatting").
-		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		document.cookie
 			.split("; ")
 			.filter(Boolean)
@@ -35,10 +31,6 @@ export const userData = reactive({
 	},
 
 	getDisplayName() {
-		//// Neoffice — FORMATTING ONLY. Biome pass of 458d81a9 (2026-03-20 "remove BrainWise
-		//// branding, add restaurant mode, and code formatting") rewrapped this one-line return
-		//// to 80 columns. Identical behaviour. At the next merge take upstream's file and
-		//// re-run `biome check --write` rather than resolving the reflow by hand.
 		return (
 			this.fullName ||
 			window.frappe?.session?.user_fullname ||
@@ -53,8 +45,6 @@ export const userData = reactive({
 
 	getInitials() {
 		const parts = this.getDisplayName().split(" ").filter(Boolean);
-		//// Neoffice — FORMATTING ONLY: same Biome pass (458d81a9), ternary rewrapped over
-		//// three lines. No behaviour change.
 		return parts.length >= 2
 			? (parts[0][0] + parts[1][0]).toUpperCase()
 			: this.getDisplayName().substring(0, 2).toUpperCase();
@@ -66,8 +56,6 @@ userData.refresh();
 
 // Watch for cookie changes (e.g., after login) and auto-refresh
 // This uses MutationObserver to detect document.cookie changes
-//// Neoffice — FORMATTING ONLY: same Biome pass (458d81a9), single quotes -> double
-//// quotes. No behaviour change.
 if (typeof window !== "undefined") {
 	let lastCookie = document.cookie;
 	setInterval(() => {

@@ -17,14 +17,8 @@ const defaultSnapshot = () => ({
 	itemGroups: [],
 	brands: [],
 	// Quantity maps for accurate min_qty/max_qty validation
-	//// Neoffice — Biome reformat only, no behaviour change: the formatter collapsed upstream's
-	//// column-aligned trailing comments to a single space (458d81a9, 2026-03-20 "remove BrainWise
-	//// branding, add restaurant mode, and code formatting"). At the next merge take upstream's
-	//// file and re-run `biome check --write` rather than resolving this by hand.
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	itemQuantities: {}, // { item_code: qty }
 	itemGroupQuantities: {}, // { item_group: qty }
-	//// Neoffice — same Biome pass, same comment re-alignment (458d81a9, 2026-03-20).
 	brandQuantities: {}, // { brand: qty }
 });
 
@@ -123,12 +117,6 @@ export const usePOSOffersStore = defineStore("posOffers", () => {
 		const brands = Array.isArray(snapshot.brands) ? snapshot.brands : [];
 
 		// Quantity maps for accurate offer validation
-		//// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
-		//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
-		//// tabs, double quotes, trailing commas, parenthesised arrow params, 80-column rewrap.
-		//// Upstream runs no formatter, so most hunks below are that pass and change no
-		//// behaviour — every marker reading "Biome reformat only" is one of them. At the next
-		//// upstream merge, take their code and re-run Biome instead of resolving these by hand.
 		const itemQuantities =
 			snapshot.itemQuantities && typeof snapshot.itemQuantities === "object"
 				? snapshot.itemQuantities
@@ -309,7 +297,6 @@ export const usePOSOffersStore = defineStore("posOffers", () => {
 		if (offer?.min_qty && eligibleItemQty < offer.min_qty) {
 			return {
 				eligible: false,
-				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				reason: __("At least {0} eligible items required", [offer.min_qty]),
 			};
 		}
@@ -318,7 +305,6 @@ export const usePOSOffersStore = defineStore("posOffers", () => {
 		if (offer?.max_qty && eligibleItemQty > offer.max_qty) {
 			return {
 				eligible: false,
-				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				reason: __("Maximum {0} eligible items allowed for this offer", [offer.max_qty]),
 			};
 		}
@@ -327,7 +313,6 @@ export const usePOSOffersStore = defineStore("posOffers", () => {
 		if (offer?.min_amt && subtotal < offer.min_amt) {
 			return {
 				eligible: false,
-				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				reason: __("Minimum cart value of {0} required", [offer.min_amt]),
 			};
 		}
@@ -336,7 +321,6 @@ export const usePOSOffersStore = defineStore("posOffers", () => {
 		if (offer?.max_amt && subtotal > offer.max_amt) {
 			return {
 				eligible: false,
-				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				reason: __("Maximum cart value exceeded ({0})", [offer.max_amt]),
 			};
 		}

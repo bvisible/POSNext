@@ -1,13 +1,3 @@
-//// Neoffice — WHOLE FILE: formatting and lint only, no behaviour change ▼▼▼
-//// The invoice queue, the duplicate-detection patterns and the retry logic in this
-//// file are upstream BrainWise code. Every hunk between the fork point and HEAD is
-//// the Biome pass of 458d81a9 (2026-03-20 "remove BrainWise branding, add restaurant
-//// mode, and code formatting") under POS/biome.json: semicolons "asNeeded", quoteStyle
-//// "double", indentStyle "tab", lineWidth 80 — plus two of Biome's
-//// recommended lint rules, marked where they occur further down (useConst,
-//// useNumberNamespace). Both are rewrites of form, not of meaning.
-//// At the next upstream merge: take BrainWise's file wholesale, re-run
-//// `biome check --write`.
 import { call } from "@/utils/apiWrapper";
 import { logger } from "@/utils/logger";
 import { CoalescingMutex } from "@/utils/mutex";
@@ -54,9 +44,6 @@ export const pingServer = async () => {
 
 	try {
 		const controller = new AbortController();
-		//// Neoffice — Biome reformat only: the setTimeout arguments wrapped onto three lines
-		//// (458d81a9). Same abort, same PING_TIMEOUT_MS.
-		//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 		const timeoutId = setTimeout(() => controller.abort(), SYNC_CONFIG.PING_TIMEOUT_MS);
 
 		const response = await fetch("/api/method/pos_next.api.ping", {
@@ -207,7 +194,6 @@ export const checkOfflineIdSynced = async (offlineId) => {
  * @returns {{isDuplicate: boolean, invoiceName: string|null}}
  */
 const checkDuplicateError = (error) => {
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	const errorMessage = error?.message || error?.exc || error?.title || String(error);
 	const isDuplicate = DUPLICATE_ERROR_PATTERNS.some((pattern) => errorMessage.includes(pattern));
 
@@ -223,7 +209,6 @@ const checkDuplicateError = (error) => {
  * @returns {boolean}
  */
 const isSyncInProgressError = (error) => {
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	const errorMessage = error?.message || error?.exc || error?.title || String(error);
 	return SYNC_IN_PROGRESS_PATTERNS.some((pattern) => errorMessage.includes(pattern));
 };
@@ -233,7 +218,6 @@ const isSyncInProgressError = (error) => {
  * @param {number} ms - Milliseconds to wait
  * @returns {Promise<void>}
  */
-//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ============================================================================
@@ -277,30 +261,21 @@ const handleSyncFailure = async (invoice, errorMessage) => {
  * Convert pricing_rules to comma-separated string.
  * Returns empty string for invalid/malformed values.
  */
-//// Neoffice — still inside the whole-file formatting-only region opened above:
-//// this helper differs from upstream by ' -> " and the wrapping of the log.warn
-//// argument object. Same parsing, same empty-string fallbacks (458d81a9).
 const stringifyPricingRules = (value) => {
-	//// Neoffice — Biome reformat only, as announced in the block just above (458d81a9).
 	if (!value) return "";
 	if (Array.isArray(value)) return value.filter(Boolean).join(",");
 	if (typeof value !== "string") return "";
 
 	const stripped = value.trim();
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	if (!stripped.startsWith("[")) return stripped;
 
 	try {
 		const parsed = JSON.parse(stripped);
-		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		if (Array.isArray(parsed)) return parsed.filter(Boolean).join(",");
 	} catch (e) {
-		log.warn("Invalid pricing_rules JSON, clearing value", {
-			value: stripped.slice(0, 100),
-		});
+		log.warn("Invalid pricing_rules JSON, clearing value", { value: stripped.slice(0, 100) });
 		return "";
 	}
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	return "";
 };
 
@@ -327,7 +302,6 @@ const normalizeInvoiceForSync = (invoiceData, offlineId) => ({
  */
 const syncInvoiceToServer = async (invoice, retryCount = 0) => {
 	const MAX_IN_PROGRESS_RETRIES = 3;
-	//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 	const IN_PROGRESS_WAIT_MS = 2000; // Wait 2 seconds between retries
 
 	const offlineId = invoice.offline_id || invoice.data?.offline_id;
@@ -511,13 +485,7 @@ export const getLocalStock = async (itemCode, warehouse) => {
 		const stock = await db.stock.get({ item_code: itemCode, warehouse });
 		return stock?.qty || 0;
 	} catch (error) {
-		//// Neoffice — formatting only: Biome broke this log call's context object one field
-		//// per line at 80 columns. Same message, same fields (458d81a9).
-		log.error("Failed to get local stock", {
-			item_code: itemCode,
-			warehouse,
-			error,
-		});
+		log.error("Failed to get local stock", { item_code: itemCode, warehouse, error });
 		return 0;
 	}
 };
@@ -615,7 +583,6 @@ export const getCachedInvoiceHistory = async (posProfile, options = {}) => {
 
 		// Sort by posting_date descending (newest first)
 		invoices.sort((a, b) => {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 			const dateA = new Date(b.posting_date + " " + (b.posting_time || "00:00:00"));
 			const dateB = new Date(a.posting_date + " " + (a.posting_time || "00:00:00"));
 			return dateA - dateB;
@@ -705,20 +672,12 @@ export const getCachedUnpaidInvoices = async (posProfile, options = {}) => {
 			return [];
 		}
 
-		//// Neoffice — Biome lint, not formatting: `let invoices` became `const` (useConst —
-		//// it is only ever sorted in place, never reassigned) and `parseFloat` below became
-		//// `Number.parseFloat` (useNumberNamespace, same function, explicit namespace).
-		//// Behaviour identical, including the descending sort (458d81a9).
-		const invoices = await db.unpaid_invoices
-			.where("pos_profile")
-			.equals(posProfile)
-			.toArray();
+		let invoices = await db.unpaid_invoices.where("pos_profile").equals(posProfile).toArray();
 
 		// Sort by outstanding_amount descending (highest first)
 		invoices.sort((a, b) => {
-			//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
-			const amountA = Number.parseFloat(b.outstanding_amount || 0);
-			const amountB = Number.parseFloat(a.outstanding_amount || 0);
+			const amountA = parseFloat(b.outstanding_amount || 0);
+			const amountB = parseFloat(a.outstanding_amount || 0);
 			return amountA - amountB;
 		});
 
@@ -766,4 +725,3 @@ export const getCachedUnpaidSummary = async (posProfile) => {
 		return { count: 0, total_outstanding: 0, total_paid: 0 };
 	}
 };
-//// Neoffice — end of the whole-file formatting/lint-only region ▲▲▲

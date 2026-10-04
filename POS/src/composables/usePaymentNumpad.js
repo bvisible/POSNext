@@ -67,9 +67,6 @@ export function usePaymentNumpad(options = {}) {
 	}
 
 	// Keyboard input handling
-	//// Neoffice — Biome reformat only: the destructured options collapsed onto one line
-	//// (458d81a9). No behaviour change; see the block just below for the merge instruction.
-	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 	const { isEnabled = ref(true), onEnter = null } = options;
 
 	/**
@@ -78,18 +75,11 @@ export function usePaymentNumpad(options = {}) {
 	 */
 	function handleKeyboardInput(event) {
 		// Check if keyboard input is enabled (e.g., dialog is open)
-		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-		//// change anywhere in this file — at the next upstream merge take upstream's version
-		//// wholesale and re-run the formatter, do not hand-merge these hunks
-		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-		//// formatting").
 		const enabled = typeof isEnabled === "function" ? isEnabled() : isEnabled.value;
 		if (!enabled) return;
 
 		// Don't handle if user is typing in an input field
 		const activeElement = document.activeElement;
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const isInInput =
 			activeElement &&
 			(activeElement.tagName === "INPUT" ||
@@ -107,16 +97,13 @@ export function usePaymentNumpad(options = {}) {
 		}
 
 		// Handle decimal point (. or ,)
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "." || key === ",") {
 			event.preventDefault();
-			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			numpadInput(".");
 			return;
 		}
 
 		// Handle backspace
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "Backspace") {
 			event.preventDefault();
 			numpadBackspace();
@@ -124,7 +111,6 @@ export function usePaymentNumpad(options = {}) {
 		}
 
 		// Handle Delete or Escape to clear
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "Delete" || key === "Escape") {
 			event.preventDefault();
 			numpadClear();
@@ -132,10 +118,8 @@ export function usePaymentNumpad(options = {}) {
 		}
 
 		// Handle Enter - call custom handler if provided
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "Enter") {
 			event.preventDefault();
-			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			if (onEnter && typeof onEnter === "function") {
 				onEnter(numpadValue.value);
 			}
@@ -145,12 +129,10 @@ export function usePaymentNumpad(options = {}) {
 
 	// Set up keyboard event listeners
 	onMounted(() => {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		window.addEventListener("keydown", handleKeyboardInput);
 	});
 
 	onUnmounted(() => {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		window.removeEventListener("keydown", handleKeyboardInput);
 	});
 

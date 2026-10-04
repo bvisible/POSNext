@@ -15,10 +15,6 @@ import { roundCurrency } from "@/utils/currency";
  * @param {Function} options.getMethodTotal - Function to get total for a payment method
  * @returns {Object} Computed payment calculations
  */
-//// Neoffice — Biome reformat only: the destructured parameter list exploded onto one
-//// name per line. Same arguments, same order (458d81a9); the block below repeats the
-//// merge instruction for the rest of the file.
-//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 export function usePaymentCalculations({
 	paymentEntries,
 	grandTotal,
@@ -29,12 +25,6 @@ export function usePaymentCalculations({
 	 * Total amount paid across all payment entries
 	 */
 	const totalPaid = computed(() => {
-		//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-		//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-		//// change anywhere in this file — at the next upstream merge take upstream's version
-		//// wholesale and re-run the formatter, do not hand-merge these hunks
-		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-		//// formatting").
 		const sum = paymentEntries.value.reduce((acc, entry) => acc + (entry.amount || 0), 0);
 		return roundCurrency(sum);
 	});
