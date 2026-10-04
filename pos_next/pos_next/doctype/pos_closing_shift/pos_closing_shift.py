@@ -620,7 +620,12 @@ def _process_invoice(
 	# replacing them: grand_total / net_total / taxes stay invoiced so they
 	# keep tying to the GL and to every existing report, while
 	# collected_amount / outstanding_total answer "what is in the drawer".
-	collected = base_grand_total if is_return else base_paid
+	# //// Neoffice — a return counts what was refunded (its paid_amount), as a sale counts what was
+	# //// taken. Upstream counted the return's grand_total, which is not what left the drawer when the
+	# //// till rounds cash (CHF 0.05: a -13.41 return refunds -13.40) nor when a return goes onto the
+	# //// customer's balance, so the closing's "Money taken" disagreed with the cash line of the same
+	# //// screen (osiris, 2026-10-04: -0.08 against 40.23). Remove if upstream counts refunds the same way.
+	collected = base_paid
 	outstanding = 0 if is_return else (base_grand_total - base_paid)
 
 	# Build transaction record
