@@ -55,6 +55,18 @@ class TestTillMoneyGuards(FrappeTestCase):
 	def test_the_administrator_passes(self):
 		cash_entry.require_till_access("Any POS Profile")
 
+	def test_receivable_accounts_answer_only_the_till(self):
+		# Upstream v2.0.0's "Pay on Receivable Account" list read accounts with frappe.get_all,
+		# which ignores permissions: any signed-in account got the company's receivable accounts.
+		from pos_next.api import pos_profile
+
+		frappe.set_user(PORTAL)
+		with self.assertRaises(frappe.PermissionError):
+			pos_profile.get_receivable_accounts("Any POS Profile")
+		frappe.set_user(DESK)
+		with self.assertRaises(frappe.PermissionError):
+			pos_profile.get_receivable_accounts("Any POS Profile")
+
 	def test_a_manual_gift_card_needs_the_right_to_create_a_coupon(self):
 		frappe.set_user(PORTAL)
 		with self.assertRaises(frappe.PermissionError):

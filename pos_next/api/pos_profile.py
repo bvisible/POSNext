@@ -153,6 +153,13 @@ def get_receivable_accounts(pos_profile):
 	if not pos_profile:
 		frappe.throw(_("POS Profile is required"))
 
+	# //// Neoffice — upstream v2.0.0 answered any signed-in account: frappe.get_all below ignores
+	# //// permissions, so a portal customer could list the company's receivable accounts. Same gate
+	# //// as the till's money endpoints (cash_entry.require_till_access, test_till_money_guards).
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
+
 	company = frappe.db.get_value("POS Profile", pos_profile, "company")
 	if not company:
 		return []
