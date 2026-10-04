@@ -133,6 +133,17 @@ def get_pos_settings(pos_profile):
 		frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
 	)
 
+	# //// Neoffice — derived from the POS Profile, as bootstrap._get_pos_settings already does. The
+	# //// till falls back to this endpoint when a shift is opened on its page (the bootstrap knew no
+	# //// profile at load), and without these two keys its store kept its defaults: rounding off
+	# //// (disable_rounded_total: 1), so a whole CHF session charged 26.91 instead of 26.90 and its
+	# //// returns refunded 0.01 (neoffice-maintenance#1157). Remove if upstream returns them here.
+	profile = frappe.get_cached_doc("POS Profile", pos_profile)
+	settings["disable_rounded_total"] = cint(profile.disable_rounded_total)
+	settings["allow_write_off_change"] = (
+		1 if (profile.write_off_account and flt(profile.write_off_limit) > 0) else 0
+	)
+
 	return settings
 
 
