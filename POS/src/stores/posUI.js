@@ -61,6 +61,9 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	const lastInvoiceName = ref("");
 	const lastInvoiceTotal = ref(0);
 	const lastPaidAmount = ref(0);
+	//// Neoffice — what the customer still owes on that invoice (credit or partial sale), shown
+	//// under "Paid" by the success dialog. Read from the server's outstanding_amount.
+	const lastDueAmount = ref(0);
 	/** Full receipt payload for invoices not yet on the server (offline queue) */
 	const lastOfflinePrintDoc = ref(null);
 
@@ -119,10 +122,13 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showErrorDialog.value = false;
 	}
 
-	function showSuccess(invoiceName, total, paidAmount = null) {
+	//// Neoffice — dueAmount added (the amount still owed, 0 for a paid or offline sale).
+	function showSuccess(invoiceName, total, paidAmount = null, dueAmount = 0) {
 		lastInvoiceName.value = invoiceName;
 		lastInvoiceTotal.value = total;
 		lastPaidAmount.value = paidAmount !== null ? paidAmount : total;
+		//// Neoffice — see lastDueAmount above.
+		lastDueAmount.value = Number(dueAmount) > 0 ? Number(dueAmount) : 0;
 		showSuccessDialog.value = true;
 	}
 
@@ -271,6 +277,8 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		lastInvoiceName,
 		lastInvoiceTotal,
 		lastPaidAmount,
+		//// Neoffice — see lastDueAmount above.
+		lastDueAmount,
 		lastOfflinePrintDoc,
 		initialCustomerName,
 		//// Neoffice — the customer record created on the display, exported for the acknowledgement

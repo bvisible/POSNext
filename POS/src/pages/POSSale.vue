@@ -1950,6 +1950,10 @@
 						<p class="mt-2 text-sm text-gray-500">
 							{{ __("Paid: {0}", [formatCurrency(uiStore.lastPaidAmount)]) }}
 						</p>
+						<!-- //// Neoffice — on a credit or partial sale, what the customer still owes. -->
+						<p v-if="uiStore.lastDueAmount > 0" class="mt-1 text-sm font-medium text-amber-700">
+							{{ __("Remaining: {0}", [formatCurrency(uiStore.lastDueAmount)]) }}
+						</p>
 					</div>
 				</template>
 				<template #actions>
@@ -4605,7 +4609,12 @@ async function handlePaymentCompleted(paymentData) {
 
 				const invoiceName = result.name || result.message?.name || __("Unknown");
 				const invoiceTotal = result.grand_total || result.total || 0;
-				const paidAmount = paymentData.paid_amount || invoiceTotal;
+				//// Neoffice — `??`, not `||`: a sale put on the customer's account pays 0, and `||` turned
+				//// that 0 into the invoice total, so the success dialog read "Paid: 14.90" for nothing paid.
+				const paidAmount = paymentData.paid_amount ?? invoiceTotal;
+				//// Neoffice — what is still owed, from the server (0 for a paid sale, rounding included).
+				const dueAmount =
+					Number(result.outstanding_amount ?? result.message?.outstanding_amount) || 0;
 
 				//// Neoffice — upstream closed the payment dialog HERE, after submission returned. It is
 				//// now closed before the call, together with raising the processing overlay, so the
@@ -4670,7 +4679,8 @@ async function handlePaymentCompleted(paymentData) {
 						showWarning(__("Invoice {0} created but print failed", [invoiceName]));
 					}
 				} else {
-					uiStore.showSuccess(invoiceName, invoiceTotal, paidAmount);
+					//// Neoffice — dueAmount passed for the "Remaining" line of the success dialog.
+					uiStore.showSuccess(invoiceName, invoiceTotal, paidAmount, dueAmount);
 					showSuccess(__("Invoice {0} created successfully", [invoiceName]));
 				}
 
