@@ -67,6 +67,56 @@ class TestTillMoneyGuards(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			pos_profile.get_receivable_accounts("Any POS Profile")
 
+	def test_item_endpoints_answer_only_the_till_over_http(self):
+		# Upstream's item endpoints only asked for a session: a portal account read the catalogue,
+		# stock per warehouse and serial numbers (neoffice-maintenance#1137). Both API routes count.
+		from types import SimpleNamespace
+
+		from pos_next.api import items
+
+		saved = getattr(frappe.local, "request", None)
+		try:
+			for path in (
+				"/api/method/pos_next.api.items.get_items",
+				"/api/v2/method/pos_next.api.items.get_items",
+			):
+				frappe.local.request = SimpleNamespace(path=path, method="POST", headers={})
+				for user in (PORTAL, DESK):
+					frappe.set_user(user)
+					with self.assertRaises(frappe.PermissionError):
+						items.get_items(pos_profile="Any POS Profile")
+			frappe.local.request = SimpleNamespace(
+				path="/api/method/pos_next.api.items.get_stock_quantities", method="POST", headers={}
+			)
+			frappe.set_user(PORTAL)
+			with self.assertRaises(frappe.PermissionError):
+				items.get_stock_quantities(item_codes="[]", warehouse="Any Warehouse")
+		finally:
+			frappe.local.request = saved
+
+	def test_item_code_reused_on_the_server_is_not_gated(self):
+		# realtime_events calls get_stock_quantities after a stock change, as whoever caused it
+		# (a webshop customer's checkout included): that call must never be refused.
+		from types import SimpleNamespace
+
+		from pos_next.api import items
+
+		saved = getattr(frappe.local, "request", None)
+		try:
+			frappe.local.request = SimpleNamespace(
+				path="/api/method/frappe.desk.form.save.savedocs", method="POST", headers={}
+			)
+			frappe.set_user(PORTAL)
+			self.assertEqual(items.get_stock_quantities(item_codes="[]", warehouse="Any Warehouse"), [])
+		finally:
+			frappe.local.request = saved
+
+	def test_the_till_reads_items(self):
+		from pos_next.api import items
+
+		items._require_item_reader("Any POS Profile")
+		items._require_item_reader()
+
 	def test_a_manual_gift_card_needs_the_right_to_create_a_coupon(self):
 		frappe.set_user(PORTAL)
 		with self.assertRaises(frappe.PermissionError):
