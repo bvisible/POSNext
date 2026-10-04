@@ -7,6 +7,13 @@ from unittest.mock import MagicMock, patch
 from pos_next.api.offers import validate_coupon
 
 
+# //// Neoffice — skipped: these cases pin upstream's validate_coupon, which reads the POS Coupon
+# //// doctype and refuses any coupon without a customer (PR #333). Ours reads ERPNext's Coupon Code
+# //// and lets a gift card through without one, since it is a bearer card; a named promotional coupon
+# //// is refused further down. That contract is tested in tests/test_coupon_validation.py
+# //// (test_validate_returns_balance) and tests/test_gift_card_families.py. Remove the skip once
+# //// upstream's validate_coupon reads Coupon Code as well.
+@unittest.skip("Neoffice: validate_coupon reads ERPNext Coupon Code, see tests/test_coupon_validation.py")
 class TestValidateCoupon(unittest.TestCase):
 	# new_callable=MagicMock: some environments have unittest.mock auto-detect
 	# frappe.db as async and substitute an AsyncMock, which returns coroutines
