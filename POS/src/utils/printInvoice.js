@@ -211,10 +211,8 @@ export function buildReceiptHTML(invoiceData) {
 	////    rename POS Next to Neopos"; git blame lands on merge node c87d0e93);
 	////  · in the footer, the "Powered by BrainWise" link colour #3b82f6 → clay #d68a59
 	////    (e4769383, 2026-06-14 "retheme blue/violet -> Design System clay").
-	//// TO REVIEW: that footer still prints upstream's BrainWise credit and links to
-	//// nexus.brainwise.me whenever the POS Profile sets no custom footer — 458d81a9 removed
-	//// the BrainWise branding everywhere else, and 7224d94c removed it from the provisional
-	//// ticket, but this receipt kept it and only had its colour restyled.
+	//// The vendor credit that footer printed when the POS Profile set no footer of its own was
+	//// removed later (#217): see the comment inside the footer below.
 	return `
 			<div class="receipt">
 				<div class="header">
