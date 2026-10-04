@@ -65,6 +65,9 @@
 							class="flex-shrink-0"
 							:aria-label="__('Apply')"
 						>
+							<!-- //// Neoffice — the check mark goes in the prefix slot, which lays it out on the -->
+							<!-- //// word's line: as a plain child it sat above "Apply", which overflowed the button. -->
+							<template #prefix>
 							<svg
 								class="w-3.5 h-3.5"
 								fill="none"
@@ -78,8 +81,9 @@
 									d="M5 13l4 4L19 7"
 								/>
 							</svg>
-							<!-- //// Neoffice — the word next to the check mark, see above. -->
-							<span class="ms-1">{{ __("Apply") }}</span>
+							<!-- //// Neoffice — end of the prefix slot, then the button's word (see above). -->
+							</template>
+							{{ __("Apply") }}
 						</Button>
 					</div>
 					<p class="text-xs text-gray-500 mt-1">{{ __("Code is case-insensitive") }}</p>
