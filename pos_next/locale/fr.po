@@ -2460,8 +2460,17 @@ msgstr "Coupon {0} {1}"
 msgid "Coupons"
 msgstr "Coupons"
 
+# //// Neoffice — bare key released to its commonest sense (LMS: the name of a course; « Nom du plat » showed on its Course
+# //// Progress Summary report). The restaurant menu's own label keeps « Nom du plat » through its DocType
+# //// context just below.
 #. Label of a Data field in DocType 'Restaurant Menu Course'
 #: pos_next/pos_next/doctype/restaurant_menu_course/restaurant_menu_course.json
+msgid "Course Name"
+msgstr "Nom du cours"
+
+# //// Neoffice — label of the `course_name` field of Restaurant Menu Course. Anchored in pos_next/i18n_anchors.py so that
+# //// update-po-files keeps it.
+msgctxt "Restaurant Menu Course"
 msgid "Course Name"
 msgstr "Nom du plat"
 
@@ -11168,7 +11177,15 @@ msgstr "Commande en ligne à emporter"
 msgid "Takeaway web ordering is not enabled."
 msgstr "La commande en ligne à emporter n'est pas activée."
 
+# //// Neoffice — bare key released to its commonest sense (equipment or material that was taken). The floor plan's legend,
+# //// a table in use, stays « Occupé » through the context just below; pos_next/api/localization.py
+# //// puts it under the bare key of the SPA's dictionary.
 #: POS/src/components/restaurant/ReservationFloorPlan.vue:57
+msgid "Taken"
+msgstr "Pris"
+
+# //// Neoffice — the legend of the reservation floor plan: the table is in use.
+msgctxt "Table status"
 msgid "Taken"
 msgstr "Occupé"
 
@@ -12743,13 +12760,22 @@ msgstr "bistrot"
 msgid "comm."
 msgstr "comm."
 
+# //// Neoffice — bare key released to its commonest sense (LMS: "3 courses" in a programme). The restaurant menu tile
+# //// ("3 courses") keeps its own word through the context just below, and « formules » was wrong for it:
+# //// a menu is one formule, its courses are « plats ». pos_next/api/localization.py hands it to the SPA.
 #: POS/src/pages/POSSale.vue:593
 msgid "courses"
-msgstr "formules"
+msgstr "cours"
 
+# //// Neoffice — the number of courses of a fixed-price restaurant menu, on the menu tile of the sale page.
+msgctxt "Menu courses"
+msgid "courses"
+msgstr "plats"
+
+# //// Neoffice — same wrong word as `courses`: « formules sélectionnées » for the courses picked in a menu ("2/3 courses selected").
 #: POS/src/components/sale/MenuSelectionDialog.vue:51
 msgid "courses selected"
-msgstr "formules sélectionnées"
+msgstr "plats sélectionnés"
 
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:743
 #: POS/src/components/sale/ReturnInvoiceDialog.vue:747
@@ -13192,7 +13218,15 @@ msgstr "Montant à encaisser"
 msgid "Loading…"
 msgstr "Chargement…"
 
+# //// Neoffice — bare key released to its commonest sense (an API endpoint, e.g. a payment provider's settings). The till's own use,
+# //// the heading of its payment-device picker, stays « Terminal » through the context just below;
+# //// pos_next/api/localization.py puts it under the bare key of the SPA's dictionary.
 #: POS/src/components/payments/QRPaymentDialog.vue:69
+msgid "Endpoint"
+msgstr "Point d'accès"
+
+# //// Neoffice — the heading of the payment-device picker of the QR payment dialog.
+msgctxt "Payment terminal"
 msgid "Endpoint"
 msgstr "Terminal"
 

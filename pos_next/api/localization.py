@@ -14,6 +14,28 @@ from frappe import _
 from frappe import translate
 
 
+# //// Neoffice — added (semantic collisions). The till reads ONE flat dictionary: every installed app's
+# //// French, merged in load order, so a bare English key is won by whichever app loads last. The till's own
+# //// senses of three bare keys lost to other apps' (`Endpoint`: a payment terminal, not an API address;
+# //// `Taken`: a table in use, not equipment taken; `courses`: the courses of a menu, not training courses).
+# //// The SPA is a committed build that cannot pass a translation context, so the dictionary handed to it
+# //// carries the till's sense under the bare key, looked up through its context. A language without the
+# //// context entry keeps its bare word (Frappe's own fallback), so nothing changes for it.
+def _keep_till_senses(messages):
+	"""Put the till's own sense of a bare key back into the dictionary handed to the SPA.
+
+	One explicit `_()` call per sense: `bench generate-pot-file` then extracts the context and
+	`update-po-files` keeps its French.
+	"""
+	for text, word in (
+		("Endpoint", _("Endpoint", context="Payment terminal")),
+		("Taken", _("Taken", context="Table status")),
+		("courses", _("courses", context="Menu courses")),
+	):
+		messages[text] = word
+	return messages
+
+
 @frappe.whitelist()
 def get_app_translations():
 	"""
@@ -25,7 +47,9 @@ def get_app_translations():
 		dict: Translation dictionary {source: translated}
 	"""
 	lang = frappe.local.lang or "en"
-	return translate.get_all_translations(lang)
+	# //// Neoffice — a copy, then the till's own senses (see _keep_till_senses()). Upstream returns the
+	# //// merged dictionary as is.
+	return _keep_till_senses(dict(translate.get_all_translations(lang)))
 
 
 @frappe.whitelist()
