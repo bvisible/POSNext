@@ -3530,9 +3530,6 @@ onUnmounted(() => {
 async function handleShiftOpened() {
 	uiStore.showOpenShiftDialog = false;
 	if (!shiftStore.currentProfile) return;
-	//// Neoffice — a shift opened on this page: read its profile's cash rounding step now instead of
-	//// running the whole session unrounded until a reload (utils/cashRounding.js).
-	ensureCashRounding({ force: true });
 
 	//// Neoffice — setters again, same production-build hazard as above (b44f194b,
 	//// 2026-03-21 "use setter functions for posProfile/posOpeningShift").

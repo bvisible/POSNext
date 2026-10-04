@@ -1,5 +1,7 @@
 import { createResource } from "frappe-ui";
 import { computed, ref } from "vue";
+//// Neoffice — the cash rounding step is read again once a shift is open (utils/cashRounding.js).
+import { ensureCashRounding } from "@/utils/cashRounding";
 
 export const shiftState = ref({
 	pos_opening_shift: null,
@@ -97,6 +99,10 @@ export function useShift() {
 			};
 		},
 		onSuccess(data) {
+			//// Neoffice — every shift opened in the till passes here: read its profile's cash rounding
+			//// step now. main.js read it at page load, when no shift was open, so a session opened on
+			//// the same page ran unrounded until a reload (26.91 charged instead of 26.90).
+			ensureCashRounding({ force: true });
 			shiftState.value = {
 				pos_opening_shift: data.pos_opening_shift,
 				pos_profile: data.pos_profile,
