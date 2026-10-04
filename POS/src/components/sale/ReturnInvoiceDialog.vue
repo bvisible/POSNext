@@ -1193,12 +1193,17 @@
 <script setup>
 import { useOfflineStatus } from "@/composables/useOfflineStatus";
 import { useToast } from "@/composables/useToast";
+//// Neoffice — the settings store and roundTotal give the refund the till's cash rounding,
+//// see returnTotal below.
+import { usePOSSettingsStore } from "@/stores/posSettings";
 import { getPaymentIcon } from "@/utils/payment";
 import {
 	DEFAULT_CURRENCY,
 	DEFAULT_LOCALE,
 	formatCurrency as formatCurrencyUtil,
 	roundCurrency,
+	//// Neoffice — roundTotal: the refund gets the sale's cash rounding (see returnTotal).
+	roundTotal,
 } from "@/utils/currency";
 import { getInvoiceStatusColor } from "@/utils/invoice";
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
@@ -1614,16 +1619,26 @@ const filteredReturnItems = computed(() => {
 
 const hasOpenShift = computed(() => Boolean(props.posOpeningShift));
 
+//// Neoffice — the refund is rounded like the sale (CHF 0.05, unless the profile disables
+//// rounding). The return invoice gets a rounded total (-13.40 for -13.41 of goods); a refund
+//// sent unrounded (-13.41) is 0.01 more than that, and ERPNext's set_total_amount_to_default_mop
+//// then replaces every refund line of a POS return by that 0.01 on the default mode of payment:
+//// the drawer was never debited and the customer was left with -13.39 owed to them.
+const posSettingsStore = usePOSSettingsStore();
+
 // Use rate_with_tax (includes tax) for accurate refund calculation
-const returnTotal = computed(() =>
-	roundCurrency(
+//// Neoffice — a block body now, to round the total below (see the note above).
+const returnTotal = computed(() => {
+	const total = roundCurrency(
 		selectedItems.value.reduce(
 			(sum, item) =>
 				sum + roundCurrency(item.return_qty * (item.rate_with_tax || item.rate)),
 			0
 		)
-	)
-);
+	);
+	//// Neoffice — the till's cash rounding, as on the sale (see the note above returnTotal).
+	return posSettingsStore.disableRoundedTotal ? total : roundCurrency(roundTotal(total));
+});
 
 const totalPaymentAmount = computed(() =>
 	roundCurrency(
