@@ -2469,7 +2469,7 @@ msgstr "Nom du plat"
 #. Label of a Table field in DocType 'Restaurant Menu'
 #: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json
 msgid "Courses"
-msgstr ""
+msgstr "Plats"
 
 #: pos_next/doctype/restaurant_menu/restaurant_menu.json
 msgid "Meal Courses"
@@ -13674,3 +13674,1294 @@ msgstr "SOLDE DÛ"
 #: pos_next/api/customers.py:283
 msgid "A contact already uses the e-mail {0}. Look for the existing customer, or ask someone allowed to manage contacts."
 msgstr "Un contact utilise déjà l'e-mail {0}. Recherchez le client existant, ou demandez à une personne autorisée à gérer les contacts."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:36
+msgid "'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Credit Sale'. Please disable Credit Sale first."
+msgstr "'Utiliser le montant exact pour le non-espèces' ne peut pas être activé en même temps que 'Autoriser la vente à crédit'. Veuillez d'abord désactiver la vente à crédit."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:45
+msgid "'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Partial Payment'. Please disable Partial Payment first."
+msgstr "'Utiliser le montant exact pour le non-espèces' ne peut pas être activé en même temps que 'Autoriser le paiement partiel'. Veuillez d'abord désactiver le paiement partiel."
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:16
+msgid "1 {0} = {1} {2}"
+msgstr "1 {0} = {1} {2}"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:60
+msgid "1M"
+msgstr "1M"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:52
+msgid "7D"
+msgstr "7J"
+
+#: pos_next/overrides/pricing_rule.py:146
+msgid "<b>Min/Max Discount Qty Limit</b> cannot be negative on the price discount row using <b>{0}</b> discount. Use 0 for no limit."
+msgstr "<b>Limite de quantité de remise Min/Max</b> ne peut pas être négative sur la ligne de remise sur prix utilisant la remise <b>{0}</b>. Utilisez 0 pour ne fixer aucune limite."
+
+#: pos_next/overrides/pricing_rule.py:159
+msgid "<b>Min/Max Discount Qty Limit</b> cannot be negative when <b>Apply Discount On</b> is <b>{0}</b>. Use 0 for no limit."
+msgstr "<b>Limite de quantité de remise Min/Max</b> ne peut pas être négative lorsque <b>Appliquer la remise sur</b> est réglé sur <b>{0}</b>. Utilisez 0 pour ne fixer aucune limite."
+
+#: pos_next/api/customers.py:631
+msgid "A customer named {0} already exists. Rename it manually to merge or choose another name."
+msgstr "Un client nommé {0} existe déjà. Renommez-le manuellement pour fusionner, ou choisissez un autre nom."
+
+#: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.py:39
+msgid "A mapping already exists for {0} × {1}: {2}"
+msgstr "Un mappage existe déjà pour {0} × {1} : {2}"
+
+#: POS/src/pages/POSSale.vue:5181
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "A receipt for this invoice was already printed — the customer may have a physical copy. Use Return Invoice to issue a credit note instead."
+msgstr "Un reçu a déjà été imprimé pour cette facture — le client en a peut-être un exemplaire papier. Utilisez une facture de retour pour émettre une note de crédit à la place."
+
+#: pos_next/api/invoices.py:523
+msgid "Account {0} is not a Receivable account"
+msgstr "Le compte {0} n'est pas un compte débiteur"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:118
+msgid "Actions"
+msgstr "Actions"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:262
+msgctxt "Address book"
+msgid "Add a contact"
+msgstr "Ajouter un contact"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:316
+msgctxt "Address book"
+msgid "Add a number"
+msgstr "Ajouter un numéro"
+
+#: POS/src/components/sale/ProductManagement.vue:354
+msgid "Add a product image"
+msgstr "Ajouter une image du produit"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:132
+msgid "Add an address"
+msgstr "Ajouter une adresse"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:298
+msgctxt "Address book"
+msgid "Add an e-mail"
+msgstr "Ajouter un e-mail"
+
+#: POS/src/components/sale/ProductManagement.vue:79
+msgid "Add Product"
+msgstr "Ajouter un produit"
+
+#: POS/src/components/sale/ProductManagement.vue:606
+msgid "Add UOM"
+msgstr "Ajouter une unité"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:172
+#: POS/src/components/sale/EditCustomerDialog.vue:173
+msgctxt "Address book"
+msgid "Address Line 1"
+msgstr "Adresse ligne 1"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:181
+#: POS/src/components/sale/EditCustomerDialog.vue:182
+msgctxt "Address book"
+msgid "Address Line 2"
+msgstr "Adresse ligne 2"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:139
+#: POS/src/components/sale/EditCustomerDialog.vue:140
+msgctxt "Address book"
+msgid "Address Title"
+msgstr "Titre de l'adresse"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:143
+msgctxt "Address book"
+msgid "Address Type"
+msgstr "Type d'adresse"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:131
+msgctxt "Address book"
+msgid "Addresses"
+msgstr "Adresses"
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:12
+msgid ""
+"Adjust return quantities before submitting.\n"
+"\n"
+"{0}"
+msgstr ""
+"Ajustez les quantités retournées avant de valider.\n"
+"\n"
+"{0}"
+
+#: POS/src/components/sale/ProductManagement.vue:124
+msgid "Adjust the search or item group filter."
+msgstr "Ajustez la recherche ou le filtre par groupe d'articles."
+
+#: POS/src/components/sale/ProductManagement.vue:67
+#: POS/src/components/sale/ProductManagement.vue:844
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "All Groups"
+msgstr "Tous les groupes"
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:60
+msgid "already exists"
+msgstr "existe déjà"
+
+#: POS/src/components/common/UserMenu.vue:96
+msgid "Appearance"
+msgstr "Apparence"
+
+#: POS/src/components/sale/PaymentDialog.vue:595
+msgid "Apply coupon or gift card"
+msgstr "Appliquer un coupon ou une carte cadeau"
+
+#: pos_next/public/js/pricing_rule.js:24
+msgid "Automatically enabled and locked because <b>Apply Discount On</b> is set to Min/Max. A cheapest/most-expensive-item discount must evaluate all document items together (not line by line), which requires Mixed Conditions. Clear <b>Apply Discount On</b> to edit this."
+msgstr "Activé et verrouillé automatiquement, car <b>Appliquer la remise sur</b> est réglé sur Min/Max. Une remise sur l'article le moins cher ou le plus cher doit évaluer ensemble tous les articles du document (et non ligne par ligne), ce qui nécessite les conditions mixtes. Videz <b>Appliquer la remise sur</b> pour le modifier."
+
+#: pos_next/public/js/promotional_scheme.js:31
+msgid "Automatically enabled and locked because a price discount row uses a Min/Max discount. A cheapest/most-expensive-item discount must evaluate all document items together which requires Mixed Conditions. Remove the Min/Max rows to edit this."
+msgstr "Activé et verrouillé automatiquement, car une ligne de remise sur prix utilise une remise Min/Max. Une remise sur l'article le moins cher ou le plus cher doit évaluer ensemble tous les articles du document, ce qui nécessite les conditions mixtes. Supprimez les lignes Min/Max pour le modifier."
+
+#: POS/src/components/sale/ProductManagement.vue:242
+msgid "Back to products"
+msgstr "Retour aux produits"
+
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:100
+msgid "Bank Deposit Amount"
+msgstr "Montant du dépôt bancaire"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:57
+msgid "Bank Deposit {0} already exists for this shift"
+msgstr "Le dépôt bancaire {0} existe déjà pour cette session"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.json
+msgid "Bank Deposits"
+msgstr "Dépôts bancaires"
+
+#. Label of a Section Break field in DocType 'Bank Deposits'
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.json
+msgid "Bank Receipt"
+msgstr "Reçu bancaire"
+
+#. Label of a Attach field in DocType 'Bank Deposits'
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.json
+msgid "Bank Transaction Document"
+msgstr "Document de transaction bancaire"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:67
+msgid "Bank Transaction Document is required"
+msgstr "Le document de transaction bancaire est requis"
+
+#: pos_next/api/restaurant.py:1921
+msgid "Cannot create items in the root group '{0}'. Please select a child group."
+msgstr "Impossible de créer des articles dans le groupe racine '{0}'. Veuillez sélectionner un sous-groupe."
+
+#: POS/src/components/sale/CouponManagement.vue:1115
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Cannot delete coupon as it has been used {0} times"
+msgstr "Impossible de supprimer le coupon car il a été utilisé {0} fois"
+
+#: POS/src/pages/POSSale.vue:5228
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Cannot delete while syncing — please wait for sync to finish."
+msgstr "Impossible de supprimer pendant la synchronisation — veuillez attendre la fin de la synchronisation."
+
+#: POS/src/pages/POSSale.vue:5180
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Cannot edit printed invoice"
+msgstr "Impossible de modifier une facture imprimée"
+
+#: POS/src/pages/POSSale.vue:5174
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Cannot edit while syncing — please wait for sync to finish."
+msgstr "Impossible de modifier pendant la synchronisation — veuillez attendre la fin de la synchronisation."
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:117
+msgid "Cash Diff"
+msgstr "Écart caisse"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:365
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:15
+msgid "Cash Difference"
+msgstr "Écart de caisse"
+
+#: POS/src/components/sale/ProductManagement.vue:378
+#: POS/src/components/sale/ProductManagement.vue:402
+msgid "Change"
+msgstr "Changer"
+
+#: POS/src/components/sale/InvoiceCart.vue:134
+msgid "Change customer"
+msgstr "Changer de client"
+
+#: POS/src/components/sale/PaymentDialog.vue:4684
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Change due would be {0}. Continue?"
+msgstr "La monnaie à rendre serait de {0}. Continuer ?"
+
+#: POS/src/components/sale/ProductManagement.vue:328
+msgid "Change product image"
+msgstr "Changer l'image du produit"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:159
+msgctxt "Address book"
+msgid "Choose a contact"
+msgstr "Choisir un contact"
+
+#: POS/src/components/sale/ProductManagement.vue:221
+msgid "Choose a product from the list to view or edit its details, or create a new one."
+msgstr "Choisissez un produit dans la liste pour afficher ou modifier ses détails, ou créez-en un nouveau."
+
+#: POS/src/components/sale/EditCustomerDialog.vue:191
+#: POS/src/components/sale/EditCustomerDialog.vue:192
+msgctxt "Address book"
+msgid "City/Town"
+msgstr "Ville"
+
+#: POS/src/components/sale/ProductManagement.vue:358
+msgid "Click to browse or drop a file here"
+msgstr "Cliquez pour parcourir ou déposez un fichier ici"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:233
+msgid "Close History"
+msgstr "Fermer l'historique"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:361
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:15
+msgid "Close Time"
+msgstr "Heure de clôture"
+
+#. Label of a Currency field in DocType 'POS Closing Shift'
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json
+msgid "Collected Amount"
+msgstr "Montant encaissé"
+
+#: pos_next/api/invoices.py:510
+msgid "Company is required to set a receivable account"
+msgstr "La société est requise pour définir un compte débiteur"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:261
+msgctxt "Address book"
+msgid "Contacts"
+msgstr "Contacts"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:200
+#: POS/src/components/sale/EditCustomerDialog.vue:201
+msgctxt "Address book"
+msgid "Country"
+msgstr "Pays"
+
+#: pos_next/api/invoices.py:533 pos_next/api/invoices.py:1911
+msgid "Credit sales are not enabled for this POS Profile."
+msgstr "Les ventes à crédit ne sont pas activées pour ce profil POS."
+
+#: POS/src/components/sale/CustomerFormDialog.vue:911
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:4
+msgid "Customer creation returned no document"
+msgstr "La création du client n'a renvoyé aucun document"
+
+#: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.py:68
+msgid "Default Payment Device {0} is bound to ({1}, {2}) which does not match this mapping ({3}, {4})."
+msgstr "Le terminal de paiement par défaut {0} est lié à ({1}, {2}), qui ne correspond pas à ce mappage ({3}, {4})."
+
+#: POS/src/components/sale/ProductManagement.vue:590
+msgid "Define alternate selling units against the base UOM."
+msgstr "Définissez des unités de vente alternatives par rapport à l'unité de base."
+
+#: POS/src/components/sale/EditCustomerDialog.vue:212
+msgid "Delivery instructions"
+msgstr "Instructions de livraison"
+
+#. Label of a Currency field in DocType 'Bank Deposits'
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.json
+msgid "Deposit Amount"
+msgstr "Montant du dépôt"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:63
+msgid "Deposit Amount must be greater than zero"
+msgstr "Le montant du dépôt doit être supérieur à zéro"
+
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:104
+msgid "Deposit Date"
+msgstr "Date du dépôt"
+
+#. Label of a Section Break field in DocType 'Bank Deposits'
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.json
+msgid "Deposit Details"
+msgstr "Détails du dépôt"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:283
+msgctxt "Address book"
+msgid "Designation"
+msgstr "Fonction"
+
+#: pos_next/api/payments.py:456
+msgid "Device {0} is not a simulator (device_type={1})"
+msgstr "L'appareil {0} n'est pas un simulateur (device_type={1})"
+
+#. Name of a DocType
+#. Label of a Data field in DocType 'District'
+#: POS/src/components/sale/CreateCustomerDialog.vue:189
+#: pos_next/pos_next/doctype/district/district.json
+msgid "District"
+msgstr "District"
+
+#: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.py:50
+msgid "Driver Options JSON is invalid: {0}"
+msgstr "Le JSON des options du pilote est invalide : {0}"
+
+#: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.py:52
+msgid "Driver Options JSON must be a JSON object (dict)"
+msgstr "Le JSON des options du pilote doit être un objet JSON (dict)"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:58
+msgid "Duplicate Bank Deposit"
+msgstr "Dépôt bancaire en double"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:288
+msgctxt "Address book"
+msgid "E-mails"
+msgstr "E-mails"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:204
+#: POS/src/components/sale/EditCustomerDialog.vue:205
+msgctxt "Address book"
+msgid "Email Address"
+msgstr "Adresse e-mail"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:19
+msgid "Enter customer name"
+msgstr "Saisissez le nom du client"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:114
+msgid "Enter phone number"
+msgstr "Saisissez le numéro de téléphone"
+
+#: POS/src/components/ShiftClosingDialog.vue:1764
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:209
+msgid "EOD report did not print. Please check QZ Tray and retry."
+msgstr "Le rapport de fin de journée n'a pas été imprimé. Veuillez vérifier QZ Tray et réessayer."
+
+#: POS/src/components/ShiftClosingDialog.vue:1725
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:209
+msgid "EOD report did not print. Use the Reprint button to retry."
+msgstr "Le rapport de fin de journée n'a pas été imprimé. Utilisez le bouton Réimprimer pour réessayer."
+
+#: POS/src/components/ShiftClosingDialog.vue:1437
+msgid "EOD report pending print"
+msgstr "Rapport de fin de journée en attente d'impression"
+
+#: POS/src/components/ShiftClosingDialog.vue:1760
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:209
+msgid "EOD report printed successfully"
+msgstr "Rapport de fin de journée imprimé avec succès"
+
+#: POS/src/components/sale/ProductManagement.vue:665
+msgid "Example: if base UOM is Piece, Box factor 12 means 1 Box = 12 Pieces."
+msgstr "Exemple : si l'unité de base est Pièce, un facteur de 12 pour Boîte signifie 1 Boîte = 12 Pièces."
+
+#: pos_next/public/pos/assets/index-S3-tQBTu.js:95
+msgid "Exception: {0}"
+msgstr "Exception : {0}"
+
+#: POS/src/components/sale/ProductManagement.vue:641
+msgid "Factor"
+msgstr "Facteur"
+
+#: pos_next/api/localization.py:202
+msgid "Failed to change language: {0}"
+msgstr "Échec du changement de langue : {0}"
+
+#: POS/src/components/sale/ProductManagement.vue:1289
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Failed to load products"
+msgstr "Échec du chargement des produits"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:489
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:16
+msgid "Failed to load shift history"
+msgstr "Échec du chargement de l'historique des sessions"
+
+#: POS/src/components/sale/ProductManagement.vue:1339
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Failed to load UOMs"
+msgstr "Échec du chargement des unités de mesure"
+
+#: POS/src/components/sale/ProductManagement.vue:1237
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Failed to save product"
+msgstr "Échec de l'enregistrement du produit"
+
+#: POS/src/components/sale/PaymentDialog.vue:4257
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Failed to start terminal payment"
+msgstr "Échec du démarrage du paiement par terminal"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:697
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:9
+msgid "First or last name is required."
+msgstr "Le prénom ou le nom est requis."
+
+#: pos_next/pos_next/doctype/pos_offer/pos_offer.js:28
+msgid "Given Quantity most be more then zero"
+msgstr "La quantité offerte doit être supérieure à zéro"
+
+#. Label of a Link field in DocType 'District'
+#. Name of a DocType
+#. Label of a Data field in DocType 'Governorate'
+#: POS/src/components/sale/CreateCustomerDialog.vue:173
+#: pos_next/pos_next/doctype/district/district.json
+#: pos_next/pos_next/doctype/governorate/governorate.json
+msgid "Governorate"
+msgstr "Gouvernorat"
+
+#: POS/src/components/sale/InvoiceCart.vue:246
+msgid "Group"
+msgstr "Groupe"
+
+#: POS/src/utils/translation.ts:14
+msgid "Hello"
+msgstr "Bonjour"
+
+#: POS/src/utils/translation.ts:21
+msgid "Hello {0}"
+msgstr "Bonjour {0}"
+
+#: POS/src/components/sale/ProductManagement.vue:723
+msgid "Hide this product from the POS."
+msgstr "Masquer ce produit du POS."
+
+#: pos_next/api/product_management.py:332
+msgid "Image must be attached to this product"
+msgstr "L'image doit être jointe à ce produit"
+
+#: POS/src/components/sale/ProductManagement.vue:1097
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Image must be one of: {0}"
+msgstr "Le format de l'image doit être l'un des suivants : {0}"
+
+#: POS/src/components/sale/ProductManagement.vue:1102
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Image must be {0} or smaller"
+msgstr "L'image ne doit pas dépasser {0}"
+
+#: POS/src/components/sale/ProductManagement.vue:1190
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Image upload did not return a file URL"
+msgstr "Le téléchargement de l'image n'a renvoyé aucune URL de fichier"
+
+#: POS/src/components/sale/ProductManagement.vue:1183
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Image upload failed"
+msgstr "Échec du téléchargement de l'image"
+
+#: pos_next/api/shifts.py:249
+msgid "Insufficient permissions to view shift history"
+msgstr "Permissions insuffisantes pour consulter l'historique des sessions"
+
+#: pos_next/api/payments.py:451
+msgid "Intent has no device attached"
+msgstr "L'intention de paiement n'a aucun appareil rattaché"
+
+#: pos_next/api/product_management.py:272
+#: pos_next/api/product_management.py:325
+msgid "Invalid image path"
+msgstr "Chemin d'image invalide"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:24
+msgid "Invalid POS Profile"
+msgstr "Profil POS invalide"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.js:48
+msgid "Invalid Shift"
+msgstr "Session invalide"
+
+#: POS/src/pages/POSSale.vue:4498
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Invoice {0} saved offline and sent to printer — will sync when online"
+msgstr "Facture {0} enregistrée hors ligne et envoyée à l'imprimante — sera synchronisée une fois en ligne"
+
+#: POS/src/pages/POSSale.vue:4507
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Invoice {0} saved offline but print failed — open Print from the success dialog"
+msgstr "Facture {0} enregistrée hors ligne, mais l'impression a échoué — utilisez Imprimer dans la boîte de dialogue de confirmation"
+
+#. Description of the 'Outstanding Total' (Currency) field in DocType 'POS
+#. Closing Shift'
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json
+msgid "Invoiced value still owed by customers at the end of the shift."
+msgstr "Montant facturé encore dû par les clients à la fin de la session."
+
+#: pos_next/api/product_management.py:239
+msgid "Item Group is not allowed for this POS Profile"
+msgstr "Le groupe d'articles n'est pas autorisé pour ce profil POS"
+
+#: POS/src/components/sale/ProductManagement.vue:1125
+#: pos_next/api/product_management.py:226
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Item Group is required"
+msgstr "Le groupe d'articles est requis"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:279
+msgctxt "Address book"
+msgid "Last Name"
+msgstr "Nom"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:96
+msgid "Loading your history..."
+msgstr "Chargement de votre historique..."
+
+#: pos_next/api/localization.py:191
+msgid "Locale '{0}' is not supported"
+msgstr "La langue '{0}' n'est pas prise en charge"
+
+#: pos_next/api/localization.py:173
+msgid "Locale parameter is required"
+msgstr "Le paramètre de langue est requis"
+
+#: pos_next/pos_next/doctype/pos_offer/pos_offer.js:34
+msgid "Loyalty Points most be more then zero"
+msgstr "Les points de fidélité doivent être supérieurs à zéro"
+
+#: POS/src/components/sale/ProductManagement.vue:25
+msgid "Manage products for POS"
+msgstr "Gérez les produits du POS"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:21
+msgid "Max Discount Allowed must be between 0 and 100"
+msgstr "La remise maximum autorisée doit être comprise entre 0 et 100"
+
+#: POS/src/components/sale/PaymentDialog.vue:4937
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Maximum allowed discount is {0}%"
+msgstr "La remise maximum autorisée est de {0}%"
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Maximum allowed discount is {0}% ({1} {2})"
+msgstr "La remise maximum autorisée est de {0}% ({1} {2})"
+
+#: pos_next/pos_next/doctype/pos_offer/pos_offer.js:22
+msgid "Min Amount most be more then zero"
+msgstr "Le montant minimum doit être supérieur à zéro"
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Mixed payment cannot exceed invoice total. Limit: {0}"
+msgstr "Le paiement mixte ne peut pas dépasser le total de la facture. Limite : {0}"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:27
+msgid "Mobile Number"
+msgstr "Numéro de mobile"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:650
+msgid "Mobile Number is required"
+msgstr "Le numéro de mobile est requis"
+
+#: pos_next/pos_next/doctype/pos_profile_payment_device/pos_profile_payment_device.py:29
+msgid "Mode of Payment is required on Active Payment Methods rows."
+msgstr "Le mode de paiement est requis sur les lignes des méthodes de paiement actives."
+
+#: pos_next/pos_next/doctype/pos_profile_payment_device/pos_profile_payment_device.py:47
+msgid "Mode of Payment {0} is routed to a terminal channel — a Payment Device is required on this row."
+msgstr "Le mode de paiement {0} est routé vers un canal terminal — un terminal de paiement est requis sur cette ligne."
+
+#. Description of the 'Collected Amount' (Currency) field in DocType 'POS
+#. Closing Shift'
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json
+msgid "Money actually taken during the shift. Excludes amounts put on customer account."
+msgstr "Sommes réellement encaissées pendant la session. Exclut les montants mis sur le compte client."
+
+#: POS/src/components/ShiftClosingDialog.vue:167
+msgid "Money taken"
+msgstr "Encaissé"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:151
+#: POS/src/components/sale/EditCustomerDialog.vue:247
+msgid "Name on documents"
+msgstr "Nom sur les documents"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:19
+msgid "Net Cash Diff"
+msgstr "Écart net de caisse"
+
+#: POS/src/components/sale/ProductManagement.vue:254
+msgid "New Product"
+msgstr "Nouveau produit"
+
+#. Name of a role
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.json
+#: pos_next/pos_next/doctype/one_time_customer_offer_usage/one_time_customer_offer_usage.json
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json
+#: pos_next/pos_next/doctype/pos_coupon/pos_coupon.json
+#: pos_next/pos_next/doctype/pos_offer/pos_offer.json
+#: pos_next/pos_next/doctype/pos_opening_shift/pos_opening_shift.json
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+#: pos_next/pos_next/doctype/referral_code/referral_code.json
+msgid "Nexus POS Manager"
+msgstr "Responsable Nexus POS"
+
+#: POS/src/components/payments/CardPresentDialog.vue:408
+msgid "No active terminal configured for this Mode of Payment on this POS Profile. Add one in POS Profile → Active Payment Methods & Terminals."
+msgstr "Aucun terminal actif n'est configuré pour ce mode de paiement sur ce profil POS. Ajoutez-en un dans Profil POS → Méthodes de paiement & terminaux actifs."
+
+#: POS/src/components/sale/ProductManagement.vue:614
+msgid "No alternate UOMs configured."
+msgstr "Aucune unité de mesure alternative configurée."
+
+#: pos_next/api/customers.py:196
+msgid "No customer group configured. Please create one before adding customers."
+msgstr "Aucun groupe de clients configuré. Veuillez en créer un avant d'ajouter des clients."
+
+#: pos_next/api/payments.py:47
+msgid "No enabled POS Payment Driver Mapping found for POS Profile {0} × Mode of Payment {1}. Create one to route payments via the unified driver layer."
+msgstr "Aucun mappage de pilote de paiement POS activé n'a été trouvé pour le profil POS {0} × mode de paiement {1}. Créez-en un pour acheminer les paiements via la couche de pilotes unifiée."
+
+#: pos_next/api/guest_ordering.py:794
+msgid "No enabled Wallee Payment Provider configured on this instance."
+msgstr "Aucun prestataire de paiement Wallee activé n'est configuré sur cette instance."
+
+#: POS/src/components/sale/ProductManagement.vue:1090
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "No image file types are allowed by System Settings."
+msgstr "Les Paramètres système n'autorisent aucun type de fichier image."
+
+#: POS/src/components/sale/ProductManagement.vue:447
+msgid "No image file types are currently allowed. Add an image extension under Allowed File Extensions in System Settings."
+msgstr "Aucun type de fichier image n'est actuellement autorisé. Ajoutez une extension d'image dans Extensions de fichiers autorisées (Paramètres système)."
+
+#: POS/src/components/sale/ProductManagement.vue:116
+msgid "No matching products found"
+msgstr "Aucun produit correspondant trouvé"
+
+#: POS/src/components/invoices/InvoiceManagement.vue:1735
+#: POS/src/components/sale/InvoiceHistoryDialog.vue:362
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:14
+msgid "No payment mode"
+msgstr "Aucun mode de paiement"
+
+#: POS/src/components/sale/ProductManagement.vue:117
+msgid "No products found"
+msgstr "Aucun produit trouvé"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:103
+msgid "No shifts found for this range"
+msgstr "Aucune session trouvée pour cette période"
+
+#: POS/src/components/sale/PaymentDialog.vue:4112
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "No terminal driver mapped for this payment method"
+msgstr "Aucun pilote de terminal associé à ce mode de paiement"
+
+#: pos_next/api/customers.py:207
+msgid "No territory configured. Please create one before adding customers."
+msgstr "Aucun territoire configuré. Veuillez en créer un avant d'ajouter des clients."
+
+#: pos_next/api/items.py:637
+msgid "No variants created for template item '{0}'. Please create variants first."
+msgstr "Aucune variante créée pour l'article modèle '{0}'. Veuillez d'abord créer des variantes."
+
+#: POS/src/components/sale/PaymentDialog.vue:4650
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Non-cash payment must equal {0} exactly"
+msgstr "Le paiement non-espèces doit correspondre exactement à {0}"
+
+#: POS/src/components/ShiftClosingDialog.vue:185
+msgid "Not collected"
+msgstr "Non encaissé"
+
+#: pos_next/api/product_management.py:300
+msgid "Not permitted to create Item Price"
+msgstr "Non autorisé à créer un prix d'article"
+
+#: pos_next/api/product_management.py:108
+#: pos_next/api/product_management.py:136
+msgid "Not permitted to read Item"
+msgstr "Non autorisé à consulter les articles"
+
+#: pos_next/api/product_management.py:294
+msgid "Not permitted to write Item Price"
+msgstr "Non autorisé à modifier un prix d'article"
+
+#: pos_next/api/product_management.py:233
+msgid "Not permitted to {0} Item"
+msgstr "Non autorisé à effectuer cette opération sur les articles ({0})"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:302
+msgctxt "Address book"
+msgid "Numbers"
+msgstr "Numéros"
+
+#: POS/src/components/customer-display/CreateCustomerModal.vue:184
+#: POS/src/components/sale/CustomerFormDialog.vue:235
+#: POS/src/components/sale/EditCustomerDialog.vue:176
+#: POS/src/components/sale/EditCustomerDialog.vue:177
+#: pos_next/public/pos/assets/CustomerDisplay-CJK0nkPY.js:1
+msgid "N°"
+msgstr "N°"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:190
+msgid "of"
+msgstr "sur"
+
+#: POS/src/utils/printInvoice.js:224
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:67
+msgid "OFFLINE — PENDING SYNC"
+msgstr "HORS LIGNE — SYNCHRONISATION EN ATTENTE"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/one_time_customer_offer_usage/one_time_customer_offer_usage.json
+msgid "One Time Customer Offer Usage"
+msgstr "Utilisation d'offre à usage unique par client"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.js:49
+msgid "Only submitted POS Closing Shifts can be selected."
+msgstr "Seules les clôtures de session POS validées peuvent être sélectionnées."
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:10
+msgid "Only {0} units of \"{1}\" available in \"{2}\". Current quantity: {3}"
+msgstr "Seulement {0} unités de \"{1}\" disponibles dans \"{2}\". Quantité actuelle : {3}"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:360
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:15
+msgid "Open Time"
+msgstr "Heure d'ouverture"
+
+#. Label of a Currency field in DocType 'POS Closing Shift'
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json
+msgid "Outstanding Total"
+msgstr "Total du solde dû"
+
+#: pos_next/api/customer_display.py:610
+msgid "Pairing token is required"
+msgstr "Le jeton d'appairage est requis"
+
+#: POS/src/components/ShiftClosingDialog.vue:345
+#: POS/src/components/ShiftClosingDialog.vue:472
+msgid "Partially Paid"
+msgstr "Partiellement payé"
+
+#: POS/src/components/invoices/InvoiceManagement.vue:865
+msgid "Payment Mode"
+msgstr "Mode de paiement"
+
+#. Label of a Link field in DocType 'POS Payment Driver Mapping'
+#: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.json
+msgid "Payment Provider"
+msgstr "Prestataire de paiement"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:208
+#: POS/src/components/sale/EditCustomerDialog.vue:209
+msgctxt "Address book"
+msgid "Phone"
+msgstr "Téléphone"
+
+#: POS/src/components/sale/CouponDialog.vue:462
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:4
+msgid "Please choose a customer"
+msgstr "Veuillez choisir un client"
+
+#: POS/src/components/sale/ProductManagement.vue:1155
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Please fix the highlighted fields"
+msgstr "Veuillez corriger les champs en surbrillance"
+
+#: POS/src/pages/POSSale.vue:4263
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Please select a specific customer for the order"
+msgstr "Veuillez sélectionner un client précis pour la commande"
+
+#: POS/src/components/sale/PromotionManagement.vue:1566
+msgid "Please select at least one {0}"
+msgstr "Veuillez sélectionner au moins un élément : {0}"
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Points applied: {0}. Please pay remaining {1} with {2}"
+msgstr "Points appliqués : {0}. Veuillez payer le montant restant de {1} avec {2}"
+
+#: POS/src/utils/printInvoice.js:596
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:122
+msgid "Popup blocked — check your browser settings."
+msgstr "Fenêtre contextuelle bloquée — vérifiez les paramètres de votre navigateur."
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:45
+msgid "POS Closing Shift does not belong to the selected POS Profile"
+msgstr "La clôture de session POS n'appartient pas au profil POS sélectionné"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:42
+msgid "POS Closing Shift must be closed"
+msgstr "La clôture de session POS doit être fermée"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:38
+msgid "POS Closing Shift must be submitted"
+msgstr "La clôture de session POS doit être validée"
+
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.py:59
+msgid "POS Closing Shift {0} against {1} between selected period"
+msgstr "La clôture de session POS {0} pour {1} durant la période sélectionnée"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:35
+msgid "POS Closing Shift {0} does not exist"
+msgstr "La clôture de session POS {0} n'existe pas"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.json
+msgid "POS Payment Driver Mapping"
+msgstr "Mappage de pilote de paiement POS"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/pos_profile_payment_device/pos_profile_payment_device.json
+msgid "POS Profile Payment Device"
+msgstr "Appareil de paiement du profil POS"
+
+#: pos_next/pos_next/doctype/bank_deposits/bank_deposits.py:23
+msgid "POS Profile {0} is not active"
+msgstr "Le profil POS {0} n'est pas actif"
+
+#: pos_next/api/payments.py:270
+msgid "POS Profile {0} not found"
+msgstr "Profil POS {0} non trouvé"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:4
+msgid "POS Shift History"
+msgstr "Historique des sessions POS"
+
+#: pos_next/tasks/detect_uncollected_payments.py:114
+msgid "POS: {0} payment(s) collected but never recorded as a sale"
+msgstr "POS : {0} paiement(s) encaissé(s) mais jamais enregistré(s) comme vente"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:187
+#: POS/src/components/sale/EditCustomerDialog.vue:188
+msgctxt "Address book"
+msgid "Postal Code"
+msgstr "Code postal"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:239
+msgctxt "Address book"
+msgid "Preferred billing"
+msgstr "Facturation préférée"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:218
+msgctxt "Address book"
+msgid "Preferred Billing Address"
+msgstr "Adresse de facturation préférée"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:240
+msgctxt "Address book"
+msgid "Preferred delivery"
+msgstr "Livraison préférée"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:222
+msgctxt "Address book"
+msgid "Preferred Shipping Address"
+msgstr "Adresse de livraison préférée"
+
+#: POS/src/components/sale/ProductManagement.vue:852
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Price ({0})"
+msgstr "Prix ({0})"
+
+#: POS/src/components/sale/ProductManagement.vue:1133
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Price is required"
+msgstr "Le prix est requis"
+
+#: POS/src/components/sale/ProductManagement.vue:1135
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Price must be zero or greater"
+msgstr "Le prix doit être supérieur ou égal à zéro"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:339
+msgctxt "Contact card"
+msgid "Primary"
+msgstr "Principal"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:293
+#: POS/src/components/sale/EditCustomerDialog.vue:307
+msgctxt "Contact row"
+msgid "Primary"
+msgstr "Principal"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:311
+msgctxt "Contact row"
+msgid "Primary mobile"
+msgstr "Mobile principal"
+
+#: POS/src/components/ShiftClosingDialog.vue:1459
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.js:32
+msgid "Print EOD Report"
+msgstr "Imprimer le rapport de fin de journée"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:229
+msgid "Print receipt"
+msgstr "Imprimer le reçu"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:132
+msgid "Printed"
+msgstr "Imprimé"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:176
+msgid "Printed invoices cannot be edited — use Return to issue a credit note"
+msgstr "Les factures imprimées ne peuvent pas être modifiées — utilisez Retour pour émettre une note de crédit"
+
+#: POS/src/components/pos/ManagementSlider.vue:65
+#: POS/src/components/pos/ManagementSlider.vue:71
+#: POS/src/components/sale/ProductManagement.vue:22
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:2
+msgid "Product Management"
+msgstr "Gestion des produits"
+
+#: POS/src/components/sale/ProductManagement.vue:484
+msgid "Product Name"
+msgstr "Nom du produit"
+
+#: POS/src/components/sale/ProductManagement.vue:1121
+#: pos_next/api/product_management.py:224
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Product Name is required"
+msgstr "Le nom du produit est requis"
+
+#: POS/src/components/sale/ProductManagement.vue:1224
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "Product saved successfully"
+msgstr "Produit enregistré avec succès"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:127
+msgid "Receipt was printed — customer may hold a physical copy"
+msgstr "Le reçu a été imprimé — le client en détient peut-être une copie papier"
+
+#: pos_next/api/invoices.py:521
+msgid "Receivable account {0} does not belong to company {1}"
+msgstr "Le compte débiteur {0} n'appartient pas à la société {1}"
+
+#: pos_next/api/invoices.py:519
+msgid "Receivable account {0} does not exist"
+msgstr "Le compte débiteur {0} n'existe pas"
+
+#: pos_next/api/invoices.py:525
+msgid "Receivable account {0} is a group account"
+msgstr "Le compte débiteur {0} est un compte de groupe"
+
+#: pos_next/api/invoices.py:527
+msgid "Receivable account {0} is disabled"
+msgstr "Le compte débiteur {0} est désactivé"
+
+#. Label of a Datetime field in DocType 'One Time Customer Offer Usage'
+#: pos_next/pos_next/doctype/one_time_customer_offer_usage/one_time_customer_offer_usage.json
+msgid "Redemption Date"
+msgstr "Date d'utilisation"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:295
+#: POS/src/components/sale/EditCustomerDialog.vue:313
+msgctxt "Address book"
+msgid "Remove"
+msgstr "Supprimer"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:153
+msgid "Replaces the name printed on invoices and letters"
+msgstr "Remplace le nom imprimé sur les factures et les courriers"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:228
+msgid "Reprint receipt (already printed once)"
+msgstr "Réimprimer le reçu (déjà imprimé une fois)"
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:16
+msgid "Requested quantity ({0}) exceeds available stock ({1})"
+msgstr "La quantité demandée ({0}) dépasse le stock disponible ({1})"
+
+#: pos_next/api/invoices.py:2291
+msgid "Return submitted, but no original {0} payment was found to refund automatically — please refund manually."
+msgstr "Retour validé, mais aucun paiement {0} d'origine n'a été trouvé pour un remboursement automatique — veuillez rembourser manuellement."
+
+#: pos_next/api/invoices.py:2311
+msgid "Return submitted, but the {0} refund failed — please refund manually."
+msgstr "Retour validé, mais le remboursement {0} a échoué — veuillez rembourser manuellement."
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:143
+msgid "Running"
+msgstr "En cours"
+
+#: pos_next/api/invoices.py:2351
+msgid "Sales Order {0} was created but the matching Sales Invoice could not be generated: {1}"
+msgstr "La commande client {0} a été créée, mais la facture de vente correspondante n'a pas pu être générée : {1}"
+
+#: pos_next/api/invoices.py:2414
+msgid "Sales Order {0} was created but the Sales Invoice failed to submit: {1}"
+msgstr "La commande client {0} a été créée, mais la facture de vente n'a pas pu être validée : {1}"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:268
+msgctxt "Address book"
+msgid "Salutation"
+msgstr "Civilité"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:71
+msgid "Search country or code..."
+msgstr "Rechercher un pays ou un code..."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:28
+msgid "Search Limit must be greater than 0"
+msgstr "La limite de recherche doit être supérieure à 0"
+
+#: POS/src/components/sale/ProductManagement.vue:545
+#: POS/src/components/sale/ProductManagement.vue:635
+msgid "Search UOMs..."
+msgstr "Rechercher des unités de mesure..."
+
+#: POS/src/stores/posOffers.js:234
+#: pos_next/public/pos/assets/index-S3-tQBTu.js:95
+msgid "Select a customer to use this one-time offer"
+msgstr "Sélectionnez un client pour utiliser cette offre à usage unique"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:200
+msgid "Select a governorate first"
+msgstr "Sélectionner d'abord un gouvernorat"
+
+#: POS/src/components/sale/ProductManagement.vue:217
+msgid "Select a Product"
+msgstr "Sélectionnez un produit"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:143
+msgid "Select Customer Group"
+msgstr "Sélectionner un groupe de clients"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:199
+msgid "Select District"
+msgstr "Sélectionner un district"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:179
+msgid "Select Governorate"
+msgstr "Sélectionner un gouvernorat"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:159
+msgid "Select Territory"
+msgstr "Sélectionner un territoire"
+
+#: POS/src/components/sale/ProductManagement.vue:542
+#: POS/src/components/sale/ProductManagement.vue:632
+msgid "Select UOM"
+msgstr "Sélectionner une unité de mesure"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:110
+msgid "Shift Date"
+msgstr "Date de la session"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:190
+msgid "shifts"
+msgstr "sessions"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:188
+msgid "Showing"
+msgstr "Affichage de"
+
+#: POS/src/components/sale/ProductManagement.vue:192
+msgid "Showing all products"
+msgstr "Affichage de tous les produits"
+
+#: pos_next/api/payments.py:440
+msgid "Simulator controls are only available in test mode"
+msgstr "Les commandes du simulateur ne sont disponibles qu'en mode test"
+
+#: pos_next/api/payments.py:445
+msgid "Simulator does not support channel {0}"
+msgstr "Le simulateur ne prend pas en charge le canal {0}"
+
+#: pos_next/overrides/pricing_rule.py:271
+msgid "Some Min/Max pricing rules could not be applied. Please review the cart discounts."
+msgstr "Certaines règles de prix Min/Max n'ont pas pu être appliquées. Veuillez vérifier les remises du panier."
+
+#: POS/src/components/sale/EditCustomerDialog.vue:196
+#: POS/src/components/sale/EditCustomerDialog.vue:197
+msgctxt "Address book"
+msgid "State/Province"
+msgstr "Canton/Province"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:98
+msgid "Stock Settings 'Allow Negative Stock' has been automatically disabled."
+msgstr "Le paramètre 'Autoriser un stock négatif' des Paramètres du stock a été désactivé automatiquement."
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py:75
+msgid "Stock Settings 'Allow Negative Stock' has been automatically enabled."
+msgstr "Le paramètre 'Autoriser un stock négatif' des Paramètres du stock a été activé automatiquement."
+
+#: POS/src/components/customer-display/CreateCustomerModal.vue:176
+#: POS/src/components/sale/CustomerFormDialog.vue:228
+#: pos_next/public/pos/assets/CustomerDisplay-CJK0nkPY.js:1
+msgid "Street"
+msgstr "Rue"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:252
+msgid "Sync in progress — deletion disabled"
+msgstr "Synchronisation en cours — suppression désactivée"
+
+#: POS/src/components/sale/OfflineInvoicesDialog.vue:180
+msgid "Sync in progress — editing disabled"
+msgstr "Synchronisation en cours — modification désactivée"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:153
+#: POS/src/components/sale/InvoiceCart.vue:257
+msgid "Territory"
+msgstr "Territoire"
+
+#: POS/src/components/sale/ProductManagement.vue:464
+msgid "These are configurable in System Settings. Upload happens when the product is saved."
+msgstr "Ces valeurs sont configurables dans les Paramètres système. Le téléversement a lieu à l'enregistrement du produit."
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:4
+msgid "This coupon requires a minimum purchase of "
+msgstr "Ce coupon nécessite un achat minimum de "
+
+#: pos_next/api/gift_cards.py:478
+msgid "This is not a gift card"
+msgstr "Ce n'est pas une carte cadeau"
+
+#: POS/src/utils/printInvoice.js:461
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:118
+msgid "This offline receipt is no longer in browser storage. Complete checkout again or sync, then print from history."
+msgstr "Ce reçu hors ligne n'est plus dans le stockage du navigateur. Finalisez à nouveau le paiement ou synchronisez, puis imprimez depuis l'historique."
+
+#: POS/src/utils/printInvoice.js:416
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:118
+msgid "This offline receipt is no longer in browser storage. Sync the invoice, then print from history."
+msgstr "Ce reçu hors ligne n'est plus dans le stockage du navigateur. Synchronisez la facture, puis imprimez depuis l'historique."
+
+#: POS/src/utils/printInvoice.js:518
+#: pos_next/public/pos/assets/ShiftOpeningDialog-wiyrT6CB.js:122
+msgid "This offline receipt is no longer in browser storage. Use browser print from the success dialog after checkout."
+msgstr "Ce reçu hors ligne n'est plus dans le stockage du navigateur. Utilisez l'impression du navigateur depuis la boîte de dialogue de confirmation après le paiement."
+
+#: POS/src/stores/posOffers.js:240
+#: pos_next/public/pos/assets/index-S3-tQBTu.js:95
+msgid "This one-time offer has already been used by this customer"
+msgstr "Cette offre à usage unique a déjà été utilisée par ce client"
+
+#: pos_next/api/product_management.py:254
+#: pos_next/api/product_management.py:323
+msgid "This product belongs to an Item Group not allowed for this POS Profile"
+msgstr "Ce produit appartient à un groupe d'articles non autorisé pour ce profil POS"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:113
+msgid "Times (Open - Close)"
+msgstr "Horaires (ouverture - clôture)"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:156
+msgid "To the attention of"
+msgstr "À l'attention de"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:15
+msgid "Total Shifts"
+msgstr "Sessions totales"
+
+#: POS/src/components/sale/ProductManagement.vue:700
+msgid "Track quantity on hand for this product."
+msgstr "Suivre la quantité en stock de ce produit."
+
+#. Description of a DocType
+#: pos_next/pos_next/doctype/one_time_customer_offer_usage/one_time_customer_offer_usage.json
+msgid "Tracks that a customer has already benefited from a one-time-per-customer Pricing Rule. The document name is the composite key {customer}::{pricing_rule}, so a duplicate redemption raises a DuplicateEntryError."
+msgstr "Enregistre qu'un client a déjà bénéficié d'une règle de prix à usage unique par client. Le nom du document est la clé composite {customer}::{pricing_rule}, de sorte qu'une utilisation en double déclenche une DuplicateEntryError."
+
+#: pos_next/api/payments.py:578
+msgid "Unknown simulator outcome: {0} (expected 'succeeded' or 'declined')"
+msgstr "Résultat de simulateur inconnu : {0} (attendu : 'succeeded' ou 'declined')"
+
+#: POS/src/components/sale/ProductManagement.vue:1142
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "UOM conversion factor must be greater than zero"
+msgstr "Le facteur de conversion de l'unité de mesure doit être supérieur à zéro"
+
+#: POS/src/components/sale/ProductManagement.vue:586
+msgid "UOM Conversions"
+msgstr "Conversions d'unités de mesure"
+
+#: POS/src/components/sale/ProductManagement.vue:1129
+#: pos_next/api/product_management.py:228
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:36
+msgid "UOM is required"
+msgstr "L'unité de mesure est requise"
+
+#: POS/src/components/sale/ProductManagement.vue:329
+msgid "Upload product image"
+msgstr "Téléverser l'image du produit"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:170
+msgid "View Closing Shift"
+msgstr "Voir la clôture de session"
+
+#: POS/src/components/sale/ProductManagement.vue:271
+msgid "View on Desk"
+msgstr "Voir dans le Bureau"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:162
+msgid "View Opening Shift"
+msgstr "Voir l'ouverture de session"
+
+#: POS/src/components/sale/InvoiceCart.vue:1113
+msgid "View shift history"
+msgstr "Voir l'historique des sessions"
+
+#: pos_next/api/guest_ordering.py:873
+msgid "Wallee transaction creation failed"
+msgstr "Échec de la création de la transaction Wallee"
+
+#: pos_next/api/customers.py:587 pos_next/api/customers.py:692
+#: pos_next/api/customers.py:715
+msgid "You are not permitted to edit this customer"
+msgstr "Vous n'avez pas la permission de modifier ce client"
+
+#: pos_next/api/customers.py:562 pos_next/api/customers.py:672
+msgid "You are not permitted to view this customer"
+msgstr "Vous n'avez pas la permission de voir ce client"
+
+#: pos_next/api/payments.py:375
+msgid "{0} (no device)"
+msgstr "{0} (sans appareil)"
+
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:82
+msgid "{0} Closing"
+msgstr "Clôture {0}"
+
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:89
+msgid "{0} Diff"
+msgstr "Écart {0}"
+
+#: pos_next/tasks/detect_uncollected_payments.py:193
+msgid "{0} Collected by the provider but no matching sale in the ERP. To reconcile: enter the missing sale, or refund the customer if they paid twice."
+msgstr "{0} Encaissé par le prestataire mais aucune vente correspondante dans l'ERP. À rapprocher : saisir la vente manquante, ou rembourser le client s'il a payé deux fois."
+
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:75
+msgid "{0} Expected"
+msgstr "Attendu {0}"
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:9
+msgid "{0} is not a valid e-mail address"
+msgstr "{0} n'est pas une adresse e-mail valide"
+
+#: POS/src/components/sale/EditCustomerDialog.vue:705
+msgctxt "Address book"
+msgid "{0} is not a valid e-mail address"
+msgstr "{0} n'est pas une adresse e-mail valide"
+
+#: pos_next/pos_next/report/payments_and_cash_control_report/payments_and_cash_control_report.py:68
+msgid "{0} Opening"
+msgstr "Ouverture {0}"
+
+#: pos_next/tasks/detect_uncollected_payments.py:227
+msgid "{0} POS payment(s) collected without a sale — {1:.2f} {2}"
+msgstr "{0} paiement(s) POS encaissé(s) sans vente — {1:.2f} {2}"
+
+#: pos_next/api/invoices.py:2301
+msgid "{0} refund of {1} processed automatically."
+msgstr "Remboursement {0} de {1} traité automatiquement."
+
+#: POS/src/components/sale/EditItemDialog.vue:879
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:10
+msgid "{0} units available in \"{1}\""
+msgstr "{0} unités disponibles dans \"{1}\""
+
+#: pos_next/public/pos/assets/POSSale-zlaQVp8Z.js:2
+msgid "{0}: {1} recorded ({2})"
+msgstr "{0} enregistrée : {1} ({2})"
+
+#: pos_next/tasks/detect_uncollected_payments.py:104
+msgid "{count} payment(s) confirmed by the payment provider led to NO sale in the ERP. The customer paid, the till recorded nothing.\n\nTotal: {total:.2f} {cur}\n\n{lines}\n\nTo do: check each line with the provider, then either enter the missing sale, or refund the customer if they paid twice."
+msgstr "{count} encaissement(s) confirmé(s) par le prestataire de paiement n'ont donné lieu à AUCUNE vente dans l'ERP. Le client a payé, la caisse n'a rien enregistré.\n\nTotal : {total:.2f} {cur}\n\n{lines}\n\nÀ faire : vérifier chaque ligne côté prestataire, puis soit saisir la vente manquante, soit rembourser le client s'il a payé deux fois."
