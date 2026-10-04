@@ -797,11 +797,11 @@ const checkPermissions = async () => {
 const persistAddressForEdit = async () => {
 	if (!showAddressFields.value) return
 
+	// The country is pre-filled from the POS Profile, so it says nothing about whether an
+	// address was typed: counting it made every save without an address try to insert one
+	// with an empty street and city, and the cashier got "Missing value for Address Line 1".
 	const hasAddressData =
-		customerData.value.address_line1 ||
-		customerData.value.city ||
-		customerData.value.pincode ||
-		customerData.value.country
+		customerData.value.address_line1 || customerData.value.city || customerData.value.pincode
 	if (!hasAddressData) return
 
 	try {
@@ -885,12 +885,10 @@ const handleCreate = async () => {
 			throw new Error(__("Customer creation returned no document"))
 		}
 
-		// Create address if address fields are filled
+		// Create address if address fields are filled (the pre-filled country alone does not
+		// count, see persistAddressForEdit)
 		const hasAddressData =
-			customerData.value.address_line1 ||
-			customerData.value.city ||
-			customerData.value.pincode ||
-			customerData.value.country
+			customerData.value.address_line1 || customerData.value.city || customerData.value.pincode
 
 		if (hasAddressData && showAddressFields.value) {
 			try {
