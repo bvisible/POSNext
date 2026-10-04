@@ -2379,6 +2379,8 @@ import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@
 //// "align POS design with Neoffice theme"; 548757f7 2026-03-24).
 import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
+//// Neoffice — reads the cash rounding step again once a shift is open (see utils/cashRounding.js).
+import { ensureCashRounding } from "@/utils/cashRounding";
 //// Neoffice — nextTick added to the vue import: several of our flows have to wait for
 //// the cart to render before reaching into it — auto-opening the price numpad on a
 //// zero-price item (5dddc528, 2026-01-14) and the modifiers dialog on a dish just added
@@ -3161,6 +3163,8 @@ onMounted(async () => {
 		}
 
 		if (!shiftStore.currentProfile) return;
+		//// Neoffice — the cash rounding step may still be unknown here (utils/cashRounding.js).
+		ensureCashRounding();
 
 		//// Neoffice — setters instead of `cartStore.posProfile = ...`. The production Vite build
 		//// turns a direct write to a store-destructured binding into "Assignment to constant
@@ -3526,6 +3530,9 @@ onUnmounted(() => {
 async function handleShiftOpened() {
 	uiStore.showOpenShiftDialog = false;
 	if (!shiftStore.currentProfile) return;
+	//// Neoffice — a shift opened on this page: read its profile's cash rounding step now instead of
+	//// running the whole session unrounded until a reload (utils/cashRounding.js).
+	ensureCashRounding({ force: true });
 
 	//// Neoffice — setters again, same production-build hazard as above (b44f194b,
 	//// 2026-03-21 "use setter functions for posProfile/posOpeningShift").
