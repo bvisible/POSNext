@@ -55,12 +55,15 @@
 							@keyup.enter="applyCoupon"
 							:disabled="applying"
 						/>
+						<!-- //// Neoffice — the button said nothing but a check mark, so a cashier did not -->
+						<!-- //// see how to apply the code (only Enter did it): it now reads "Apply". -->
 						<Button
 							@click="applyCoupon"
 							:loading="applying"
 							theme="blue"
 							variant="solid"
 							class="flex-shrink-0"
+							:aria-label="__('Apply')"
 						>
 							<svg
 								class="w-3.5 h-3.5"
@@ -75,6 +78,8 @@
 									d="M5 13l4 4L19 7"
 								/>
 							</svg>
+							<!-- //// Neoffice — the word next to the check mark, see above. -->
+							<span class="ms-1">{{ __("Apply") }}</span>
 						</Button>
 					</div>
 					<p class="text-xs text-gray-500 mt-1">{{ __("Code is case-insensitive") }}</p>
