@@ -15074,3 +15074,8 @@ msgstr "Imprimé par"
 #: pos_next/pos_next/print_format/pos_next_receipt/pos_next_receipt.json
 msgid "TOTAL"
 msgstr "TOTAL"
+
+# Chosen at run time (summaryRefundLabel) and passed to __(): Babel cannot see it, keep by hand.
+#: POS/src/components/sale/ReturnInvoiceDialog.vue
+msgid "Refund Amount:"
+msgstr "Montant du remboursement :"
