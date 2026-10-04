@@ -2,14 +2,14 @@
 
 This repository is **Neoffice's fork** of `BrainWise-DEV/POSNext` (Frappe app `pos_next`).
 
-- **Upstream**: `BrainWise-DEV/POSNext`, branch `version-15`.
-- **Common ancestor (BASE)**: `97a4e833e2871439e28b727c230ab1fcf819611b`
-  (2026-05-14, *"Merge pull request #262 from BrainWise-DEV/fix/revert-company-isolation-enforcement"*).
-- **Divergence at the time of writing**: 782 commits, 499 files, ~105 000 inserted lines.
-  **780 of those 782 commits are Neoffice's own work**; the other two (`2623aabe`, `1bd205bb`,
-  Ahmed Osama) are content-free merge nodes whose parents are already below BASE. Nothing in
-  `BASE..HEAD` is upstream content waiting to be given back, and no commit carries a
-  `(cherry picked from …)` trailer.
+- **Upstream**: `BrainWise-DEV/POSNext`. Its releases are tags on `develop`; its `version-15` branch
+  stopped on 2026-06-17. We merge release tags.
+- **Last upstream merge**: tag **`v2.0.0`** (`e0a52c54`, 2026-09-08), merged on 2026-10-04. The
+  previous one was `97a4e833` (2026-05-14).
+- **Divergence after that merge**: 394 files, ~74 700 inserted lines (committed SPA build and
+  catalogues excluded). The v2.0.0 merge also gave 32 files back to upstream as committed, because
+  our side had only reformatted them, and moved our customer form into a file of its own (see
+  *Merged from upstream v2.0.0* below).
 
 Every change we make to code that is not ours carries an inline `//// Neoffice — …` comment that
 says **why**. `grep -rn "////"` gives the complete map of the divergence.
@@ -81,10 +81,16 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
 
 | File | Why |
 |---|---|
-| `pos_next/fixtures/custom_field.json` | 38 Custom Fields on **ERPNext** doctypes — the fork's contract with the ERP. `Sales Invoice`: `posa_pos_opening_shift`, `posa_is_printed`, `posa_coupon_code`, `posa_gift_card_amount_used`, `restaurant_table`, `kds_status`, `is_takeaway`, `takeaway_number`. `Sales Invoice Item`: `posa_special_instructions`, `preparation_station`, `kds_status`, `kds_batch`, `posa_item_modifiers`. `POS Profile`: `posa_cash_mode_of_payment`, `posa_block_sale_beyond_available_qty`, `posa_allow_delete`, `posa_cash_entry_templates`. `Coupon Code`: `pos_next_section`, `pos_next_gift_card`, `gift_card_amount`, `original_gift_card_amount`, `coupon_code_residual`, `source_invoice`, `referral_code`. `Item`: `custom_company`, `custom_color`, `custom_pos_badges_section`, `custom_item_badges`, `custom_spice_level`, `preparation_station`. `Sales Order`: `pos_profile`, `posa_pos_opening_shift`. `Mode of Payment`: `is_wallet_payment`. `Restaurant Card` / `Restaurant Card Item`: `custom_menu_design_section`, `custom_design_template`, `custom_design_overrides`, `custom_price_text`. ⚠ **A Custom Field on an upstream doctype is the one thing that collides silently when the upstream later adds a field of the same name** — check these names at every merge. |
+| `pos_next/fixtures/custom_field.json` | 36 Custom Fields on **ERPNext** doctypes — the fork's contract with the ERP. `Sales Invoice`: `posa_pos_opening_shift`, `posa_is_printed`, `posa_coupon_code`, `posa_gift_card_amount_used`, `restaurant_table`, `kds_status`, `is_takeaway`, `takeaway_number`. `Sales Invoice Item`: `posa_special_instructions`, `preparation_station`, `kds_status`, `kds_batch`, `posa_item_modifiers`. `POS Profile`: `posa_cash_mode_of_payment`, `posa_block_sale_beyond_available_qty`, `posa_allow_delete`, `posa_cash_entry_templates`. `Coupon Code`: `pos_next_section`, `pos_next_gift_card`, `gift_card_amount`, `original_gift_card_amount`, `coupon_code_residual`, `source_invoice`, `referral_code`. `Item`: `custom_color`, `custom_pos_badges_section`, `custom_item_badges`, `custom_spice_level`, `preparation_station`. `Sales Order`: `pos_profile`, `posa_pos_opening_shift`. `Mode of Payment`: `is_wallet_payment`. `Restaurant Card` / `Restaurant Card Item`: `custom_menu_design_section`, `custom_design_template`, `custom_design_overrides`, `custom_price_text`. `Item-custom_company` left this fixture in the v2.0.0 merge: upstream dropped its single-database company isolation (`63581b59`) and its `v2_0_0.remove_custom_company_fields` patch deletes the field; kept here, every migrate would have recreated it. ⚠ **A Custom Field on an upstream doctype is the one thing that collides silently when the upstream later adds a field of the same name** — check these names at every merge. |
 | `pos_next/fixtures/menu_badge.json` | The allergen / diet badge catalogue shipped with the PDF menu generator (`b6e757dd`, `083f043e`, 2026-03-26). |
 | `pos_next/fixtures/menu_design_template.json` | The five menu layouts (ardoise, bistrot, elegant, modern, base) plus the 15-font selector; *Moderne* is the default (`b6e757dd`, `0d7b3d06`). |
 | `pos_next/fixtures/print_format.json` | Card-payment mentions on the till receipt, printed in the merchant's language and inside the paper width (`10047bb0`, `a026e629`, 2026-08-22). The footer's "Powered by Neopos" now goes through `_("Powered by {0}")` too (2026-10-04): it was the last bare English label on the receipt. |
+
+### Upstream customisations we neutralise
+
+| File | Why |
+|---|---|
+| `pos_next/pos_next/custom/customer.json` | Upstream's v2.0.0 adds `custom_governorate` and `custom_district` to **Customer** (Link fields to its `Governorate` / `District` doctypes): a Middle-East address model, shown in the desk form, the list view and the preview. Our customers carry a structured Swiss address (ADR-002), so both fields are set `hidden: 1`, `in_list_view: 0`, `in_preview: 0` here; the till never shows them (`CustomerFormDialog.vue`). The doctypes and upstream's code that fills the fields stay as they are. Decision of 2026-10-04. |
 
 ### Translations — `pos_next/locale/`
 
@@ -104,6 +110,10 @@ sesame, soy, celery, mustard, lupin, sulfites, vegan, vegetarian, halal, kosher,
 homemade, lactose-free, chilli). SVG for the screen, PNG for wkhtmltopdf, which does not render
 inline SVG. The SVGs carry an inline `<!-- //// Neoffice -->` header; the PNGs cannot.
 
+| Binary | Why |
+|---|---|
+| `pos_next/public/icons/badges/png/*.png` | PNG twins of the badge SVGs, for wkhtmltopdf (see above). |
+
 ### Committed SPA build — `pos_next/public/pos/**`
 
 **Out of scope for markers, by design.** `POS/` (Vue 3 + Vite) builds into `pos_next/public/pos/`,
@@ -116,6 +126,10 @@ gets OOM-killed. Everything under that directory — `assets/**`, `index.html`, 
 A marker written there would be erased by the next build and would fight the build bot at every
 rebase.
 
+| Artifact | Why |
+|---|---|
+| `pos_next/public/pos/*` | The committed build of `POS/` (see above): `icon.svg` and `icon-maskable.svg` included. |
+
 ### Root and tooling files
 
 | File | Why |
@@ -127,6 +141,28 @@ rebase.
 | `POS/yarn.lock` | Lockfile for the dependencies above. Regenerated, never hand-edited. |
 
 ---
+
+## Merged from upstream v2.0.0 (2026-10-04) — what was not taken, and why
+
+The decisions a later merge will meet again. Each one is also marked in the code where it lives.
+
+| Upstream v2.0.0 | Here | Why |
+|---|---|---|
+| Governorate / district on Customer | hidden (`custom/customer.json`), not in the till | Middle-East address model; ours is the Swiss structured address. |
+| Customer creation dialog changes (Selling Settings defaults, governorate, mobile required) | `CustomerFormDialog.vue`, ours; upstream's `CreateCustomerDialog.vue` kept byte-identical and unused | Our form (type toggle, address, edit mode) is a full rewrite; a separate file keeps upstream's later changes conflict-free. |
+| Mobile number required when editing a customer | not taken | Legacy customers without a mobile could no longer be saved (fixed here in `8c59b735`); ours requires mobile + e-mail on creation. |
+| `nexus_demo` countdown loader in `POS/index.html` | not taken | Upstream's private demo app; it exists on none of our instances. |
+| `pypdf>=6.12.0` in `pyproject.toml` | not taken | Nothing in the app imports pypdf; our frappe pins `pypdf~=6.1.3`. |
+| Transaction-rule header discount written into `additionalDiscount` (`8e6bc21c`) | ours kept (`ruleHeaderDiscount`, cashier bypass) | Upstream's overwrote a coupon or manual discount the cashier typed, and reported a percentage rule as 0. Its rule attribution was taken. |
+| Coupon validation refusing a missing customer (#333) | not taken | Gift cards are bearer cards; named promotional coupons stay refused for someone else. |
+| Customer group / territory fallback on "All Customer Groups" / "All Territories" | ours kept | A French site has no such names; ours resolves Selling Settings, then the first leaf, then throws. |
+| Default 0 in shift-closing counted amounts (#299) | ours kept (empty field) | A 0 reads as a counted zero and shows a deficit before anything is typed (`c91af424`). |
+| Single-database company isolation removal (`63581b59`) | **taken** | Every client instance runs one company (checked on the fleet, 2026-10-04); `validations.py` went with it, the Item link search now uses ERPNext's `item_query` and the theme's permission query conditions. |
+| Bank deposits, credit sales / pay on receivable account, one-time offers, min/max discounts, EOD report, product management, shift history, Item Price validity windows | **taken** | Upstream features and fixes we want. |
+
+Fixed while merging: two `"POS Invoice"` keys in `doc_events` (the second would have dropped our
+gift-card hooks), `finalizePayment` using variables of `completePayment`'s scope after our split of
+the two, and upstream's missing `cint` import in `get_receivable_accounts` (fixed on their `develop`).
 
 ## Path index (every non-commentable file that diverges)
 
@@ -178,6 +214,7 @@ detail is in the sections above.
 | `pos_next/fixtures/menu_badge.json` |
 | `pos_next/fixtures/menu_design_template.json` |
 | `pos_next/fixtures/print_format.json` |
+| `pos_next/pos_next/custom/customer.json` |
 | `pos_next/pos_next/custom/pos_profile.json` |
 | `pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json` |
 | `pos_next/pos_next/doctype/pos_coupon/pos_coupon.json` |
