@@ -14965,3 +14965,78 @@ msgstr "{0} enregistrée : {1} ({2})"
 #: pos_next/tasks/detect_uncollected_payments.py:104
 msgid "{count} payment(s) confirmed by the payment provider led to NO sale in the ERP. The customer paid, the till recorded nothing.\n\nTotal: {total:.2f} {cur}\n\n{lines}\n\nTo do: check each line with the provider, then either enter the missing sale, or refund the customer if they paid twice."
 msgstr "{count} encaissement(s) confirmé(s) par le prestataire de paiement n'ont donné lieu à AUCUNE vente dans l'ERP. Le client a payé, la caisse n'a rien enregistré.\n\nTotal : {total:.2f} {cur}\n\n{lines}\n\nÀ faire : vérifier chaque ligne côté prestataire, puis soit saisir la vente manquante, soit rembourser le client s'il a payé deux fois."
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "END-OF-DAY REPORT"
+msgstr "RAPPORT DE FIN DE JOURNÉE"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Closing Shift"
+msgstr "Clôture de session"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Sales Totals"
+msgstr "Totaux des ventes"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Invoice Count"
+msgstr "Nombre de factures"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "No item rows found"
+msgstr "Aucun article trouvé"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "No tax rows"
+msgstr "Aucune taxe"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "SHORT"
+msgstr "DÉFICIT"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "OVER"
+msgstr "EXCÉDENT"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "No payment rows"
+msgstr "Aucun paiement"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Final Summary"
+msgstr "Récapitulatif final"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Total Counted"
+msgstr "Total compté"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Short / Over"
+msgstr "Déficit / Excédent"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Printed at"
+msgstr "Imprimé le"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json
+msgid "Printed by"
+msgstr "Imprimé par"
+
+# Used in the print format's HTML, which Babel does not extract: keep by hand.
+#: pos_next/pos_next/print_format/pos_next_receipt/pos_next_receipt.json
+msgid "TOTAL"
+msgstr "TOTAL"
