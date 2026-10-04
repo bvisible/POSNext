@@ -11058,7 +11058,7 @@ msgid "TOTAL:"
 msgstr "TOTAL :"
 
 #: POS/src/components/guest/GuestCheckout.vue:80
-msgid "TVA"
+msgid "VAT"
 msgstr "TVA"
 
 #. Label of a Link field in DocType 'Guest Order Token'
@@ -12727,10 +12727,6 @@ msgstr "Dézoomer"
 #: pos_next/pos_next/doctype/menu_design_template/menu_design_template.json
 msgid "ardoise"
 msgstr "ardoise"
-
-#: POS/src/pages/POSSale.vue:350
-msgid "articles"
-msgstr "articles"
 
 #: POS/src/components/restaurant/ReservationForm.vue:177
 msgid "at"

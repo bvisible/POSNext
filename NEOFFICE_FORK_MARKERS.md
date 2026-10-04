@@ -237,3 +237,11 @@ detail is in the sections above.
 | `pos_next/public/icons/badges/png/` |
 | `pos_next/public/pos/` |
 | `POS/yarn.lock` |
+
+### English msgids instead of French source strings (2026-10-04)
+
+House rule: the source text of a translatable string is English; the French lives in the
+catalogue and the French screen is unchanged. JSON and `.po` files cannot carry a comment, so
+those edits are recorded here (the code edits are marked in place with `//// Neoffice`).
+
+- `pos_next/locale/fr.po` — the two entries `TVA` and `articles` were renamed to `VAT` and `items` (the second dropped, `items` already existed with the same French). The Vue components are marked in place.

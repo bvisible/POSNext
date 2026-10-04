@@ -189,10 +189,11 @@ def _flag(intent_name: str) -> None:
 		c.comment_type = "Comment"
 		c.reference_doctype = "Payment Intent"
 		c.reference_name = intent_name
+		# //// Neoffice — the comment text was a French msgid; it is English now (house rule), the French screen is unchanged, served by the translation catalogue.
 		c.content = _(
-			"{0} Encaissé par le prestataire mais aucune vente correspondante dans "
-			"l'ERP. À rapprocher : saisir la vente manquante, ou rembourser le client "
-			"s'il a payé deux fois."
+			"{0} Collected by the provider but no matching sale in the ERP. "
+			"To reconcile: enter the missing sale, or refund the customer if they "
+			"paid twice."
 		).format(FLAG_MARKER)
 		c.insert(ignore_permissions=True)
 	except Exception:

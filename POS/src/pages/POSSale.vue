@@ -485,9 +485,10 @@
 														: cartStore.restaurantTable?.table_name
 												}}
 											</span>
+											<!-- //// Neoffice — msgid was French, now English (house rule); the French screen is unchanged, served by the translation catalogue. -->
 											<span class="text-xs text-blue-700 ms-2">
 												{{ cartStore.invoiceItems.length }}
-												{{ __("articles") }}
+												{{ __("items") }}
 											</span>
 										</div>
 										<!-- KDS Status Badge -->
