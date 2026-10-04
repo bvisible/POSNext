@@ -705,12 +705,12 @@ const createListResource = (doctype, onSuccess) =>
 
 //// Neoffice — upstream took the default group from Selling Settings, which is
 //// "Association" on our sites: every cashier had to correct every new customer. The
-//// preferred group now follows the type toggle (Individuel / Commercial), with Selling
-//// Settings kept only as a fallback (53d87890, 2026-05-28). The territory resource just
-//// got wrapped by the Biome pass.
+//// preferred group now follows the type toggle (Individuel / Commercial) (53d87890,
+//// 2026-05-28). The territory resource just got wrapped by the Biome pass.
 // Map the customer-type toggle to the preferred default Customer Group.
 // Localised swiss POS UX convention: Individuel for Individual, Commercial for Company.
-// Falls back to ERPNext's Selling Settings default, then to the first available group.
+// Falls back to the English default name, then to the first available group. With no group
+// at all, the server's create_customer applies the Selling Settings default itself.
 function preferredGroupFor(type) {
 	const preferred = type === "Company" ? "Commercial" : "Individuel"
 	if (customerGroups.value.includes(preferred)) return preferred
@@ -749,30 +749,6 @@ const posProfileResource = createResource({
 	},
 })
 
-//// Neoffice — added resource. It only feeds the fallback chain of preferredGroupFor: it
-//// must NOT win over the Individuel/Commercial default, which is exactly the bug
-//// 53d87890 (2026-05-28) fixed.
-// Fetch default customer group from Selling Settings.
-// IMPORTANT: this is only stored as a fallback for preferredGroupFor(); it does NOT
-// override the customer-type-aware default (Individuel / Commercial) chosen above.
-const sellingSettingsResource = createResource({
-	url: "frappe.client.get_value",
-	makeParams: () => ({
-		doctype: "Selling Settings",
-		filters: { name: "Selling Settings" },
-		fieldname: ["cust_master_group"],
-	}),
-	auto: false,
-	onSuccess: (data) => {
-		if (data?.cust_master_group) {
-			defaultCustomerGroup.value = data.cust_master_group
-		}
-	},
-	//// Neoffice — part of the same added resource (53d87890): a missing or unreadable Selling
-	//// Settings must not block customer creation, so the error is only logged.
-	onError: (err) => log.error("Error loading Selling Settings", err),
-})
-
 // =============================================================================
 // Dialog Lifecycle
 // =============================================================================
@@ -786,8 +762,6 @@ const loadDialogData = async () => {
 	// Load form options in parallel
 	territoriesResource.reload()
 	customerGroupsResource.reload()
-	//// Neoffice — added with the Selling Settings fallback (53d87890, 4b36d7be).
-	sellingSettingsResource.reload()
 	checkPermissions()
 
 	// Set country from POS Profile

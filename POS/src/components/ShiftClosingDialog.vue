@@ -1151,7 +1151,10 @@
 										<p class="text-xs md:text-sm font-medium text-gray-900">
 											{{ tax.account_head }}
 										</p>
-										<p class="text-xs text-gray-500">
+										<!-- //// Neoffice — rate shown only when the tax row has one. With item tax templates -->
+										<!-- //// (Swiss VAT at 8.1 / 2.6 / 3.8 %), the row's own rate is 0 and the dialog read -->
+										<!-- //// "0%" under every VAT account. Same rule as the end-of-day print format. -->
+										<p v-if="Number(tax.rate)" class="text-xs text-gray-500">
 											{{ formatQuantity(tax.rate) }}%
 										</p>
 									</div>
