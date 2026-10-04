@@ -43,6 +43,9 @@ declare module 'vue' {
     CreateCustomerModal: typeof import('./src/components/customer-display/CreateCustomerModal.vue')['default']
     CreateItemDialog: typeof import('./src/components/restaurant/CreateItemDialog.vue')['default']
     CustomerDialog: typeof import('./src/components/sale/CustomerDialog.vue')['default']
+    //// Neoffice — our customer form (an added file), which replaced upstream's CreateCustomerDialog at
+    //// its two call sites in the v2.0.0 merge.
+    CustomerFormDialog: typeof import('./src/components/sale/CustomerFormDialog.vue')['default']
     //// Neoffice — the three panels of the second, customer-facing screen (CFD): auth,
     //// mirrored cart, header. Upstream POSNext has no second screen at all (185c3c50,
     //// 2026-02-03 "use dynamic customer group and territory lookup for customer display").

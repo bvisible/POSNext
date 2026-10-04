@@ -225,7 +225,9 @@ import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { Button, Dialog } from "frappe-ui";
 import { storeToRefs } from "pinia";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import CreateCustomerDialog from "./CreateCustomerDialog.vue";
+//// Neoffice — our customer form lives in CustomerFormDialog.vue (an added file); upstream's
+//// CreateCustomerDialog.vue stays as upstream ships it. Same local name, so the template is unchanged.
+import CreateCustomerDialog from "./CustomerFormDialog.vue";
 
 const props = defineProps({
 	modelValue: Boolean,

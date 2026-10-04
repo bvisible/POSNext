@@ -2298,7 +2298,9 @@ import ReservationDialog from "@/components/restaurant/ReservationDialog.vue";
 import POSHeader from "@/components/pos/POSHeader.vue";
 import BatchSerialDialog from "@/components/sale/BatchSerialDialog.vue";
 import CouponDialog from "@/components/sale/CouponDialog.vue";
-import CreateCustomerDialog from "@/components/sale/CreateCustomerDialog.vue";
+//// Neoffice — our customer form lives in CustomerFormDialog.vue (an added file); upstream's
+//// CreateCustomerDialog.vue stays as upstream ships it. Same local name, so the template is unchanged.
+import CreateCustomerDialog from "@/components/sale/CustomerFormDialog.vue";
 //// Neoffice — the meta-driven customer editor (82fbfd9e, 2026-07-10) and the gift-card
 //// hand-over dialog (703f2046, 2026-01-14); neither exists upstream.
 import EditCustomerDialog from "@/components/sale/EditCustomerDialog.vue";
