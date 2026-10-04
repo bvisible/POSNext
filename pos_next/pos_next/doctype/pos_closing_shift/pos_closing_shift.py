@@ -51,11 +51,11 @@ class POSClosingShift(Document):
         )
 
         if user:
+            # //// Neoffice — `.format()` was inside `_()`: the key changed with every cashier and never matched
+            # //// the catalogue entry, so the message stayed English. Format after the translation.
             frappe.throw(
-                _(
-                    "POS Closing Shift <strong>already exists</strong> against {0} between selected period".format(
-                        frappe.bold(self.user)
-                    )
+                _("POS Closing Shift <strong>already exists</strong> against {0} between selected period").format(
+                    frappe.bold(self.user)
                 ),
                 title=_("Invalid Period"),
             )

@@ -9,6 +9,8 @@
 # //// show all languages when allowed_locales is empty — c081f41
 import os
 import frappe
+# //// Neoffice — `_` added: the refusals below were bare English strings, shown as is.
+from frappe import _
 from frappe import translate
 
 
@@ -38,8 +40,10 @@ def get_user_language():
 	- User must be authenticated (not Guest)
 	"""
 	# Check if user is authenticated
+	# //// Neoffice — the refusals in this file were bare English strings, shown as is; they go through _()
+	# //// (the same sentences are already translated in bootstrap.py and utilities.py).
 	if frappe.session.user == "Guest":
-		frappe.throw("Authentication required", frappe.AuthenticationError)
+		frappe.throw(_("Authentication required"), frappe.AuthenticationError)
 
 	# Get user's language preference
 	language = frappe.db.get_value("User", frappe.session.user, "language") or "en"
@@ -165,16 +169,17 @@ def change_user_language(locale):
 	- User must be enabled
 	"""
 	# Check if user is authenticated
+	# //// Neoffice — bare English refusals now go through _(), see get_user_language.
 	if frappe.session.user == "Guest":
-		frappe.throw("Authentication required", frappe.AuthenticationError)
+		frappe.throw(_("Authentication required"), frappe.AuthenticationError)
 
 	# Verify user is enabled
 	if not frappe.db.get_value("User", frappe.session.user, "enabled"):
-		frappe.throw("User is disabled", frappe.AuthenticationError)
+		frappe.throw(_("User is disabled"), frappe.AuthenticationError)
 
 	# Validate locale parameter
 	if not locale:
-		frappe.throw("Locale parameter is required", frappe.ValidationError)
+		frappe.throw(_("Locale parameter is required"), frappe.ValidationError)
 
 	# Normalize locale to lowercase
 	locale = locale.lower()
@@ -191,7 +196,8 @@ def change_user_language(locale):
 	effective_allowed = allowed_locales if allowed_locales else all_supported_locales
 
 	if locale not in effective_allowed:
-		frappe.throw(f"Locale '{locale}' is not supported", frappe.ValidationError)
+		# //// Neoffice — template translated first, the locale formatted in after (the f-string was bare English).
+		frappe.throw(_("Locale '{0}' is not supported").format(locale), frappe.ValidationError)
 
 	# Update user's language preference
 	try:
@@ -205,4 +211,5 @@ def change_user_language(locale):
 		}
 	except Exception as e:
 		frappe.log_error(f"Failed to change user language: {str(e)}")
-		frappe.throw(f"Failed to change language: {str(e)}", frappe.ValidationError)
+		# //// Neoffice — template translated first, the error text formatted in after (the f-string was bare English).
+		frappe.throw(_("Failed to change language: {0}").format(str(e)), frappe.ValidationError)

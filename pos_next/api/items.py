@@ -582,8 +582,11 @@ def get_item_variants(template_item, pos_profile):
 
 		# If no variants found, return empty with helpful message
 		if not variants:
+			# //// Neoffice — the f-string was passed to _(): the key changed with every item and never
+			# //// matched a catalogue entry, so the message stayed English. The template is the key now
+			# //// and the item code is formatted in after the translation.
 			frappe.msgprint(
-				_(f"No variants created for template item '{template_item}'. Please create variants first.")
+				_("No variants created for template item '{0}'. Please create variants first.").format(template_item)
 			)
 			return []
 

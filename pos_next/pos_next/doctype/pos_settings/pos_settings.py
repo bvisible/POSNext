@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
+# //// Neoffice — `_` added at module level: the settings validations below were bare English strings.
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt
 
@@ -10,27 +12,34 @@ class POSSettings(Document):
 	def validate(self):
 		"""Validate POS Settings"""
 		# Guard against None values and validate discount percentage
+		# //// Neoffice — upstream passed these validation and notification texts to frappe.throw /
+		# //// frappe.msgprint as bare strings, which Frappe does not translate: they stayed English whatever
+		# //// the user language. They go through _() (adjacent literals are joined before the lookup).
 		max_discount = flt(self.max_discount_allowed)
 		if max_discount < 0 or max_discount > 100:
-			frappe.throw("Max Discount Allowed must be between 0 and 100")
+			frappe.throw(_("Max Discount Allowed must be between 0 and 100"))
 
 		# Guard against None values and validate search limit
 		if self.use_limit_search:
 			search_limit = cint(self.search_limit)
 			if search_limit <= 0:
-				frappe.throw("Search Limit must be greater than 0")
+				frappe.throw(_("Search Limit must be greater than 0"))
 
 		# Validate use_exact_amount cannot be enabled with credit sale or partial payment
 		if cint(self.use_exact_amount):
 			if cint(self.allow_credit_sale):
 				frappe.throw(
-					"'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Credit Sale'. "
-					"Please disable Credit Sale first."
+					_(
+						"'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Credit Sale'. "
+						"Please disable Credit Sale first."
+					)
 				)
 			if cint(self.allow_partial_payment):
 				frappe.throw(
-					"'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Partial Payment'. "
-					"Please disable Partial Payment first."
+					_(
+						"'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Partial Payment'. "
+						"Please disable Partial Payment first."
+					)
 				)
 
 	def on_update(self):
@@ -55,8 +64,9 @@ class POSSettings(Document):
 			# Enable Stock Settings if not already enabled
 			if not current_stock_setting:
 				frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1, update_modified=False)
+				# //// Neoffice — bare English string, see validate(); goes through _().
 				frappe.msgprint(
-					"Stock Settings 'Allow Negative Stock' has been automatically enabled.",
+					_("Stock Settings 'Allow Negative Stock' has been automatically enabled."),
 					indicator="green",
 					alert=True
 				)
@@ -75,8 +85,9 @@ class POSSettings(Document):
 
 				if other_enabled_count == 0:
 					frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 0, update_modified=False)
+					# //// Neoffice — bare English string, see validate(); goes through _().
 					frappe.msgprint(
-						"Stock Settings 'Allow Negative Stock' has been automatically disabled.",
+						_("Stock Settings 'Allow Negative Stock' has been automatically disabled."),
 						indicator="orange",
 						alert=True
 					)

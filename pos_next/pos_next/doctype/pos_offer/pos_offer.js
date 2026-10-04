@@ -14,19 +14,22 @@ frappe.ui.form.on("POS Offer", {
 		controllers(frm);
 	},
 	validate: function (frm) {
+		//// Neoffice — frappe.throw does not translate its argument: these three validation messages were
+		//// bare English strings whatever the user language. They go through __() (wording kept as is, so
+		//// the msgids match the upstream text).
 		if (frm.doc.apply_on === "Transaction") {
 			if (!frm.doc.min_amt > 0) {
-				frappe.throw("Min Amount most be more then zero");
+				frappe.throw(__("Min Amount most be more then zero"));
 			}
 		}
 		if (frm.doc.offer === "Give Product") {
 			if (!frm.doc.given_qty > 0) {
-				frappe.throw("Given Quantity most be more then zero");
+				frappe.throw(__("Given Quantity most be more then zero"));
 			}
 		}
 		if (frm.doc.offer === "Loyalty Point") {
 			if (!frm.doc.loyalty_points > 0) {
-				frappe.throw("Loyalty Points most be more then zero");
+				frappe.throw(__("Loyalty Points most be more then zero"));
 			}
 		}
 		if (
