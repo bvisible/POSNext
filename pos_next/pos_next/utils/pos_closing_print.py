@@ -87,6 +87,11 @@ def _fetch_items_for_targets(parent_targets: set[tuple[str, str]]) -> list[dict]
 def get_items_sold(doc) -> list[dict]:
 	closing_doc = _as_closing_doc(doc)
 	parent_targets = _collect_parent_targets(closing_doc.get("pos_transactions"))
+	# //// Neoffice — a shift with no sale returns here. Upstream's own test
+	# //// (test_get_items_sold_returns_empty_when_no_transactions) expects no fetch then, and v2.0.0
+	# //// called it anyway, so that test failed. Drop this once upstream's code matches its test.
+	if not parent_targets:
+		return []
 	items = _fetch_items_for_targets(parent_targets)
 
 	return [
