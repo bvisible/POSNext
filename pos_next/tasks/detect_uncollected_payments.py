@@ -100,13 +100,13 @@ def detect_uncollected_payments():
 			)
 		)
 
-	message = (
-		"{count} encaissement(s) confirmé(s) par le prestataire de paiement n'ont "
-		"donné lieu à AUCUNE vente dans l'ERP. Le client a payé, la caisse n'a rien "
-		"enregistré.\n\n"
-		"Total : {total:.2f} {cur}\n\n{lines}\n\n"
-		"À faire : vérifier chaque ligne côté prestataire, puis soit saisir la vente "
-		"manquante, soit rembourser le client s'il a payé deux fois."
+	# English source, French in locale/fr.po: this text reaches the POS managers.
+	message = _(
+		"{count} payment(s) confirmed by the payment provider led to NO sale in the "
+		"ERP. The customer paid, the till recorded nothing.\n\n"
+		"Total: {total:.2f} {cur}\n\n{lines}\n\n"
+		"To do: check each line with the provider, then either enter the missing sale, "
+		"or refund the customer if they paid twice."
 	).format(count=len(ripe), total=total, cur=currency, lines="\n".join(lines))
 
 	# frappe.log_error(title, message) — title is capped at 140 chars.
