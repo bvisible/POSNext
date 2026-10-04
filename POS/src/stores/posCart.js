@@ -1323,7 +1323,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 						? invoiceItems.value
 						: invoiceItems.value.filter((item) =>
 								eligibleGroups.includes(item.item_group)
-						  );
+							);
 				} else if (offer.apply_on === "Brand") {
 					const eligibleBrands = offer.eligible_brands || [];
 					eligibleItems = invoiceItems.value.filter((item) =>

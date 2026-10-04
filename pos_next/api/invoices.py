@@ -2559,17 +2559,7 @@ def get_invoice(invoice_name):
 
 
 @frappe.whitelist()
-def get_invoices(
-	pos_profile: str,
-	search=None,
-	limit: int = 20,
-	offset=0,
-	from_date=None,
-	to_date=None,
-	include_items=False,
-	docstatus=None,
-	start: int = 0,
-) -> list:
+def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_date=None, to_date=None, include_items=False, docstatus=None, start: int = 0) -> list:
 	"""
 	Get paginated, server-side filtered list of invoices for a POS Profile.
 
