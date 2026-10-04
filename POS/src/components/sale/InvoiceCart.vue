@@ -163,6 +163,7 @@
 										v-if="customer.mobile_no || customer.email_id"
 										class="text-[10px] text-gray-500 truncate leading-tight"
 									>
+										<!-- //// Neoffice — feat(pos): smoother customer selection & full edit form (4a0dd461, 2026-07-09). -->
 										<span v-if="customer.mobile_no">{{
 											customer.mobile_no
 										}}</span>
@@ -2037,6 +2038,7 @@ import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSSettingsStore } from "@/stores/posSettings";
 import { usePOSOffersStore } from "@/stores/posOffers";
 import { useCustomerSearchStore } from "@/stores/customerSearch";
+//// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 import { useRestaurantStore } from "@/stores/restaurant";
 import { isLightColor } from "@/utils/itemColors";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
@@ -2064,6 +2066,7 @@ const cartStore = usePOSCartStore(); // Pinia store for cart state management
 const settingsStore = usePOSSettingsStore(); // Pinia store for POS settings
 const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
+//// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 const restaurantStore = useRestaurantStore(); // Pinia store for restaurant features
 const { formatQuantity } = useFormatters(); // Quantity formatting utilities
 
@@ -2076,6 +2079,7 @@ function handleProceedToPayment() {
 	emit("proceed-to-payment");
 }
 
+//// Neoffice — refactor: move station-item relation into Preparation Station child table, add per-item KDS status (831857f2, 2026-03-21).
 function formatModifiers(modifiersJson) {
 	try {
 		const mods = JSON.parse(modifiersJson);
@@ -3040,6 +3044,7 @@ onBeforeUnmount(() => {
 	if (typeof document === "undefined") return;
 	document.removeEventListener("mousedown", handleOutsideClick);
 });
+//// Neoffice — feat(pos): auto-open edit dialog for zero-price items (gift cards) (5dddc528, 2026-02-18).
 
 /**
  * Expose methods to parent component.

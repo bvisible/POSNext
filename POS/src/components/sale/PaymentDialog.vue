@@ -1051,6 +1051,7 @@
 											dynamicTextSize.amount,
 										]"
 									>
+										<!-- //// Neoffice — feat: add tip/pourboire management for restaurant module (a750c5e3, 2026-03-23). -->
 										{{ formatCurrency(changeAmount - tipAmount) }}
 									</div>
 									<div v-if="restaurantStore?.tipsEnabled" class="mt-1">
@@ -2117,6 +2118,7 @@
 						<!-- Keypad Grid (4 columns) -->
 						<div :class="['grid grid-cols-4', isCompactMode ? 'gap-1' : 'gap-1.5']">
 							<!-- Row 1: 7, 8, 9, Backspace -->
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								v-for="num in ['7', '8', '9']"
 								:key="num"
@@ -2128,6 +2130,7 @@
 							>
 								{{ num }}
 							</button>
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								@click="numpadBackspace"
 								:class="[
@@ -2151,6 +2154,7 @@
 							</button>
 
 							<!-- Row 2: 4, 5, 6, Clear -->
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								v-for="num in ['4', '5', '6']"
 								:key="num"
@@ -2162,6 +2166,7 @@
 							>
 								{{ num }}
 							</button>
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								@click="numpadClear"
 								:class="[
@@ -2173,6 +2178,7 @@
 							</button>
 
 							<!-- Row 3: 1, 2, 3, Add (spans 2 rows) -->
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								v-for="num in ['1', '2', '3']"
 								:key="num"
@@ -2184,6 +2190,7 @@
 							>
 								{{ num }}
 							</button>
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								@click="numpadAddPayment"
 								:disabled="!numpadValue || numpadValue <= 0 || !lastSelectedMethod"
@@ -2199,6 +2206,7 @@
 							</button>
 
 							<!-- Row 4: 00, 0, . -->
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								@click="numpadInput('00')"
 								:class="[
@@ -2208,6 +2216,7 @@
 							>
 								00
 							</button>
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								@click="numpadInput('0')"
 								:class="[
@@ -2217,6 +2226,7 @@
 							>
 								0
 							</button>
+							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
 								@click="numpadInput('.')"
 								:disabled="numpadDisplay.includes('.')"

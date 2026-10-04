@@ -240,6 +240,7 @@ def generate_referrer_coupon(referral):
 	# Create Coupon Code linked to Pricing Rule
 	coupon = frappe.get_doc(
 		{
+			# //// Neoffice — test: add comprehensive test suite for ERPNext Coupon Code integration (771595d2, 2026-02-18).
 			"doctype": "Coupon Code",
 			"coupon_name": coupon_name,
 			"coupon_code": coupon_code,
@@ -315,10 +316,12 @@ def generate_referee_coupon(referral, referee_customer):
 	# Create Coupon Code linked to Pricing Rule
 	coupon = frappe.get_doc(
 		{
+			# //// Neoffice — test: add comprehensive test suite for ERPNext Coupon Code integration (771595d2, 2026-02-18).
 			"doctype": "Coupon Code",
 			"coupon_name": coupon_name,
 			"coupon_code": coupon_code,
 			"coupon_type": "Promotional",
+			# //// Neoffice — test: add comprehensive test suite for ERPNext Coupon Code integration (771595d2, 2026-02-18).
 			"pricing_rule": pricing_rule.name,
 			"valid_from": valid_from,
 			"valid_upto": valid_upto,

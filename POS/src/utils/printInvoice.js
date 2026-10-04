@@ -218,6 +218,7 @@ export function buildReceiptHTML(invoiceData) {
 	return `
 			<div class="receipt">
 				<div class="header">
+					<!-- //// Neoffice — "Neopos" when the company name is unset (771950bd, 2026-04-02). -->
 					<div class="company-name">${invoiceData.company || "Neopos"}</div>
 					<div style="font-size: 12px;">${invoiceData.header || __("TAX INVOICE")}</div>
 				</div>

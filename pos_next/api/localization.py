@@ -164,10 +164,12 @@ def change_user_language(locale):
 
 	# Verify user is enabled
 	if not frappe.db.get_value("User", frappe.session.user, "enabled"):
+		# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 		frappe.throw(_("User is disabled"), frappe.AuthenticationError)
 
 	# Validate locale parameter
 	if not locale:
+		# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 		frappe.throw(_("Locale parameter is required"), frappe.ValidationError)
 
 	# Normalize locale to lowercase

@@ -3873,6 +3873,7 @@ def _evaluate_transaction_offers(
 	return {
 		"free_items": free_items,
 		"applied_rules": applied_rules,
+		# //// Neoffice — feat(offers): surface transaction-level header discount from apply_offers (backend) (648eeb9d, 2026-07-09).
 		"discount_amount": header_amt,
 		"discount_percentage": header_pct if header_pct > 0 else 0,
 		"additional_discount_percentage": header_pct if header_pct > 0 else 0,

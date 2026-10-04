@@ -24,12 +24,15 @@ class POSSettings(Document):
 		if self.use_limit_search:
 			search_limit = cint(self.search_limit)
 			if search_limit <= 0:
+				# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 				frappe.throw(_("Search Limit must be greater than 0"))
 
 		# Validate use_exact_amount cannot be enabled with credit sale or partial payment
 		if cint(self.use_exact_amount):
 			if cint(self.allow_credit_sale):
 				frappe.throw(
+					# //// Neoffice — fix(i18n): translate validation messages, composed templates and the
+					# //// receipt footer (5a6f5a99, 2026-10-04): the message goes through _().
 					_(
 						"'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Credit Sale'. "
 						"Please disable Credit Sale first."
@@ -37,6 +40,8 @@ class POSSettings(Document):
 				)
 			if cint(self.allow_partial_payment):
 				frappe.throw(
+					# //// Neoffice — fix(i18n): translate validation messages, composed templates and the
+					# //// receipt footer (5a6f5a99, 2026-10-04): the message goes through _().
 					_(
 						"'Use Exact Amount for Non-Cash' cannot be enabled together with 'Allow Partial Payment'. "
 						"Please disable Partial Payment first."

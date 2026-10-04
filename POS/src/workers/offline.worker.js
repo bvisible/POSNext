@@ -225,6 +225,7 @@ function recordMetric(operation, duration, isError = false) {
 			totalTime: 0,
 			errors: 0,
 			avgTime: 0,
+			//// Neoffice — feat: remove BrainWise branding, add restaurant mode, and code formatting (458d81a9, 2026-03-20).
 			minTime: Number.POSITIVE_INFINITY,
 			maxTime: 0,
 		});

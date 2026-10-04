@@ -62,6 +62,7 @@
 						v-if="shouldShowSummary"
 						class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm"
 					>
+						<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 						<div
 							class="flex flex-col sm:flex-row justify-start items-start gap-3 mb-2 md:mb-3"
 						>
@@ -122,6 +123,7 @@
 								<div class="text-red-600 text-xs uppercase font-medium mb-1">
 									{{ __("Returns") }}
 								</div>
+								<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 								<div
 									class="text-base md:text-xl font-bold text-red-700 mb-0.5 md:mb-1 truncate"
 								>
@@ -140,6 +142,7 @@
 								<div class="text-green-600 text-xs uppercase font-medium mb-1">
 									{{ __("Net Sales") }}
 								</div>
+								<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 								<div
 									class="text-base md:text-xl font-bold text-green-900 mb-0.5 md:mb-1 truncate"
 								>
@@ -191,6 +194,7 @@
 								<div class="text-gray-600 text-xs uppercase font-medium mb-1">
 									{{ __("Tax Collected") }}
 								</div>
+								<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 								<div
 									class="text-base md:text-xl font-bold text-gray-900 mb-0.5 md:mb-1 truncate"
 								>
@@ -245,6 +249,7 @@
 						v-if="shouldShowSummary && invoiceCount > 0"
 						class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
 					>
+						<!-- //// Neoffice — feat(pos): compact shift-closing dialog, auto-fill zero methods, i18n (7d2771d4, 2026-07-09). -->
 						<button
 							@click="showInvoiceDetails = !showInvoiceDetails"
 							:aria-label="
@@ -397,21 +402,25 @@
 											>
 												{{ __("Invoice") }}
 											</th>
+											<!-- //// Neoffice — feat(pos): compact shift-closing dialog, auto-fill zero methods, i18n (7d2771d4, 2026-07-09). -->
 											<th
 												class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase"
 											>
 												{{ __("Type") }}
 											</th>
+											<!-- //// Neoffice — feat(pos): compact shift-closing dialog, auto-fill zero methods, i18n (7d2771d4, 2026-07-09). -->
 											<th
 												class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase"
 											>
 												{{ __("Customer") }}
 											</th>
+											<!-- //// Neoffice — feat(pos): compact shift-closing dialog, auto-fill zero methods, i18n (7d2771d4, 2026-07-09). -->
 											<th
 												class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase"
 											>
 												{{ __("Time") }}
 											</th>
+											<!-- //// Neoffice — feat(pos): compact shift-closing dialog, auto-fill zero methods, i18n (7d2771d4, 2026-07-09). -->
 											<th
 												class="px-4 py-2.5 text-start text-xs font-medium text-gray-500 uppercase"
 											>
@@ -878,12 +887,14 @@
 										<div
 											class="flex items-center gap-2 md:gap-3 flex-1 min-w-0"
 										>
+											<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 											<div
 												:class="[
 													'rounded-lg p-1.5 flex-shrink-0',
 													getPaymentIcon(payment.mode_of_payment).color,
 												]"
 											>
+												<!-- //// Neoffice — fix: auto-select default customer group from POS profile (f5bffe4f, 2026-03-25). -->
 												<span class="text-base md:text-lg">{{
 													getPaymentIcon(payment.mode_of_payment).icon
 												}}</span>
@@ -951,12 +962,14 @@
 									<div class="flex items-center justify-between gap-2 md:gap-3">
 										<!-- Left: icon + name + opening/expected -->
 										<div class="flex items-center gap-2 md:gap-3 min-w-0">
+											<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 											<div
 												:class="[
 													'rounded-lg p-1.5 flex-shrink-0',
 													getPaymentIcon(payment.mode_of_payment).color,
 												]"
 											>
+												<!-- //// Neoffice — fix: auto-select default customer group from POS profile (f5bffe4f, 2026-03-25). -->
 												<span class="text-base md:text-lg">{{
 													getPaymentIcon(payment.mode_of_payment).icon
 												}}</span>
@@ -969,6 +982,7 @@
 												>
 													{{ payment.mode_of_payment }}
 												</h4>
+												<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 												<p
 													class="text-start text-xs text-gray-500 truncate"
 												>
@@ -988,6 +1002,7 @@
 										<div
 											class="flex items-center gap-2 md:gap-3 flex-shrink-0"
 										>
+											<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 											<input
 												:value="payment.closing_amount"
 												@input="
@@ -1024,11 +1039,13 @@
 												"
 												class="w-16 md:w-24 text-end"
 											>
+												<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 												<span
 													v-if="payment.difference === 0"
 													class="text-xs md:text-sm font-semibold text-green-700 whitespace-nowrap"
 													>{{ __("✓ Balanced") }}</span
 												>
+												<!-- //// Neoffice — feat(pos): compact closing dialog, live amount input, collapsed invoices (ede9beb4, 2026-07-09). -->
 												<span
 													v-else-if="payment.difference > 0"
 													class="text-xs md:text-sm font-semibold text-blue-700 whitespace-nowrap"
@@ -1045,6 +1062,9 @@
 														)
 													}}</span
 												>
+												<!-- //// Neoffice — upstream's sentence under each variance ("You have more / less than -->
+												<!-- //// expected.") and its large signed amount are gone: the coloured amount above says the -->
+												<!-- //// same, on one row per payment method that fits a 10-inch tablet (ede9beb4, 2026-07-09). -->
 											</div>
 										</div>
 									</div>

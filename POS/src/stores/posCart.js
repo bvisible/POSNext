@@ -838,10 +838,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	// cashier has bypassed the rule on this ticket, we ignore the server value
 	// and leave their manual/coupon additionalDiscount in charge.
 	function applyHeaderDiscountFromServer(headerDiscount) {
+		//// Neoffice — feat(offers): apply transaction-level rule discount in the cart (feature b, core) (44ea4e9a, 2026-07-09).
 		if (bypassRuleDiscount.value) {
 			// Cashier owns the header discount on this ticket — never overwrite.
 			return;
 		}
+		//// Neoffice — feat(offers): apply transaction-level rule discount in the cart (feature b, core) (44ea4e9a, 2026-07-09).
 		const amount = Number.parseFloat(headerDiscount?.discountAmount) || 0;
 		if (ruleHeaderDiscount.value !== amount) {
 			ruleHeaderDiscount.value = amount;
@@ -849,6 +851,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		}
 	}
 
+	//// Neoffice — feat(offers): apply transaction-level rule discount in the cart (feature b, core) (44ea4e9a, 2026-07-09).
 	// Toggle the per-ticket "cashier may override the rule discount" flag. When
 	// enabled the transaction rule stops driving the header discount and the
 	// cashier's manual/coupon additionalDiscount takes over; when disabled the

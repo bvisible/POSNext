@@ -139,6 +139,7 @@ def create_customer(
 	email_id=None,
 	customer_group=None,
 	territory=None,
+	# //// Neoffice — step A: re-apply backend customers.py only (bug A + C + D fix) (3affd2e0, 2026-05-28).
 	customer_type="Individual",
 	company=None,
 	pos_profile=None,
@@ -197,10 +198,12 @@ def create_customer(
 	# Resolve territory with fallback (localized sites rename "All Territories", e.g. "Tout les territoires")
 	resolved_territory = territory if territory and frappe.db.exists("Territory", territory) else None
 	if not resolved_territory:
+		# //// Neoffice — step A: re-apply backend customers.py only (bug A + C + D fix) (3affd2e0, 2026-05-28).
 		resolved_territory = frappe.db.get_single_value(
 			"Selling Settings", "territory"
 		) or frappe.db.get_value("Territory", {"is_group": 0}, "name", order_by="name")
 	if not resolved_territory:
+		# //// Neoffice — step A: re-apply backend customers.py only (bug A + C + D fix) (3affd2e0, 2026-05-28).
 		frappe.throw(_("No territory configured. Please create one before adding customers."))
 
 	# Resolve default_currency (Customer treats it as mandatory on some sites). Prefer the POS Profile,

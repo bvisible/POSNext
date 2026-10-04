@@ -24,11 +24,13 @@ frappe.ui.form.on("POS Offer", {
 		}
 		if (frm.doc.offer === "Give Product") {
 			if (!frm.doc.given_qty > 0) {
+				//// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 				frappe.throw(__("Given Quantity most be more then zero"));
 			}
 		}
 		if (frm.doc.offer === "Loyalty Point") {
 			if (!frm.doc.loyalty_points > 0) {
+				//// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 				frappe.throw(__("Loyalty Points most be more then zero"));
 			}
 		}

@@ -761,6 +761,7 @@ def create_coupon(data):
 		# Create Pricing Rule first
 		pricing_rule = frappe.get_doc(
 			{
+				# //// Neoffice — refactor: complete Phase 8 cleanup - remove POS Coupon dependency (5091779d, 2026-02-18).
 				"doctype": "Pricing Rule",
 				"title": f"Coupon - {coupon_code}",
 				"apply_on": "Transaction",
@@ -768,11 +769,14 @@ def create_coupon(data):
 				"rate_or_discount": "Discount Percentage"
 				if data.get("discount_type") == "Percentage"
 				else "Discount Amount",
+				# //// Neoffice — 0, not None: these keys feed an ERPNext Pricing Rule in our Coupon Code
+				# //// rewrite (see this section's block header, 5091779d).
 				"discount_percentage": flt(data.get("discount_percentage"))
 				if data.get("discount_type") == "Percentage"
 				else 0,
 				"discount_amount": flt(data.get("discount_amount"))
 				if data.get("discount_type") == "Amount"
+				# //// Neoffice — refactor: complete Phase 8 cleanup - remove POS Coupon dependency (5091779d, 2026-02-18).
 				else 0,
 				"min_amt": flt(data.get("min_amount")) if data.get("min_amount") else 0,
 				"max_amt": flt(data.get("max_amount")) if data.get("max_amount") else 0,
@@ -872,6 +876,7 @@ def update_coupon(data):
 
 		coupon.save(ignore_permissions=True)
 
+		# //// Neoffice — refactor: complete Phase 8 cleanup - remove POS Coupon dependency (5091779d, 2026-02-18).
 		# Update linked Pricing Rule for discount fields
 		if coupon.pricing_rule:
 			pr = frappe.get_doc("Pricing Rule", coupon.pricing_rule)
@@ -1091,9 +1096,11 @@ def get_referral_details(referral_name):
 			"coupon_code",
 			"coupon_type",
 			"customer",
+			# //// Neoffice — no "customer_name": Coupon Code has no such field (771595d2).
 			"used",
 			"valid_from",
 			"valid_upto",
+			# //// Neoffice — refactor: complete Phase 8 cleanup - remove POS Coupon dependency (5091779d, 2026-02-18).
 			"maximum_use",
 		],
 		order_by="creation desc",

@@ -341,6 +341,7 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 				log.error("Failed to load sales persons", error);
 			}
 
+			//// Neoffice — feat: remove BrainWise branding, add restaurant mode, and code formatting (458d81a9, 2026-03-20).
 			// Load restaurant tables for offline use
 			const restaurantStore = useRestaurantStore();
 			if (restaurantStore.isEnabled) {

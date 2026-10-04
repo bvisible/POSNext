@@ -494,6 +494,7 @@
 							class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
 							:style="getCardBackgroundStyle(item)"
 						>
+							<!-- Image with conditional blur on hover -->
 							<div
 								:class="[
 									'w-full h-full transition-all duration-300',
@@ -521,6 +522,7 @@
 											class="w-full h-full flex items-center justify-center p-2"
 											:style="getCardBackgroundStyle(item, true)"
 										>
+											<!-- //// Neoffice — feat: add image and color support for items in POS restaurant (26f5a3f1, 2026-03-25). -->
 											<span
 												:class="getCardTextClasses(item)"
 												class="text-center leading-tight"
@@ -541,6 +543,7 @@
 										:class="getCardTextClasses(item)"
 										class="text-center leading-tight"
 									>
+										<!-- //// Neoffice — feat: add image and color support for items in POS restaurant (26f5a3f1, 2026-03-25). -->
 										{{ item.item_name }}
 									</span>
 								</div>
@@ -819,6 +822,7 @@
 														: 'text-gray-500'
 												"
 											>
+												<!-- //// Neoffice — feat: add image and color support for items in POS restaurant (26f5a3f1, 2026-03-25). -->
 												{{ item.item_name.substring(0, 6) }}
 											</span>
 										</template>
@@ -833,6 +837,7 @@
 												: 'text-gray-500'
 										"
 									>
+										<!-- //// Neoffice — feat: add image and color support for items in POS restaurant (26f5a3f1, 2026-03-25). -->
 										{{ item.item_name.substring(0, 6) }}
 									</span>
 								</div>

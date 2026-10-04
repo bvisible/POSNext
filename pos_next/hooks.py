@@ -282,6 +282,7 @@ doc_events = {
 			"pos_next.api.sales_invoice_hooks.record_one_time_offer_usage",
 		],
 		"on_cancel": [
+			# //// Neoffice — fix: restore hooks.py and custom_field.json with all coupon/gift card fields, clean P3 changes (f0c960ff, 2026-03-21).
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_cancel",
 			"pos_next.realtime_events.emit_stock_update_event",
 			# //// Neoffice — on_cancel became a list: upstream published one stock event. A cancelled sale

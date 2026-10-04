@@ -64,24 +64,28 @@ def get_columns(payment_methods):
 			[
 				{
 					"fieldname": f"{safe}_opening",
+					# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 					"label": _("{0} Opening").format(method),
 					"fieldtype": "Currency",
 					"width": 130,
 				},
 				{
 					"fieldname": f"{safe}_expected",
+					# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 					"label": _("{0} Expected").format(method),
 					"fieldtype": "Currency",
 					"width": 130,
 				},
 				{
 					"fieldname": f"{safe}_closing",
+					# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 					"label": _("{0} Closing").format(method),
 					"fieldtype": "Currency",
 					"width": 130,
 				},
 				{
 					"fieldname": f"{safe}_diff",
+					# //// Neoffice — fix(i18n): translate validation messages, composed templates and the receipt footer (5a6f5a99, 2026-10-04).
 					"label": _("{0} Diff").format(method),
 					"fieldtype": "Currency",
 					"width": 110,
@@ -144,6 +148,7 @@ def get_data(filters):
 		SELECT
 			pcs.name as shift,
 			pcs.pos_profile,
+			# //// Neoffice — feat(payments-cash-control): add Invoice Collections, Cash In/Out columns + translate statuses (024d87bb, 2026-04-12).
 			pcs.pos_opening_shift,
 			pcs.user as cashier,
 			DATE(pcs.period_end_date) as posting_date,

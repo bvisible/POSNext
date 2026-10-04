@@ -680,6 +680,7 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 			}
 		)
 
+	# //// Neoffice — feat(gift-cards): implement gift card API, splitting logic, and frontend components (ce505902, 2026-02-18).
 	return valid_cards
 
 

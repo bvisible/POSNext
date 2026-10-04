@@ -1924,6 +1924,7 @@
 						<div
 							class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100"
 						>
+							<!-- //// Neoffice — fix: improve payment UX - table release debug, lighter processing overlay, better success dialog with Print/Email/Close buttons (548757f7, 2026-03-24). -->
 							<svg
 								class="h-7 w-7 text-green-600"
 								fill="none"

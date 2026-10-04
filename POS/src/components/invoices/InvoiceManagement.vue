@@ -234,6 +234,7 @@
 
 								<!-- Filter Buttons -->
 								<div class="flex items-center gap-2 mb-4 flex-wrap gap-2">
+									<!-- //// Neoffice — fix: modifier price adjustment lost on submit (price_list_rate not updated) (02222a44, 2026-03-24). -->
 									<button
 										@click="unpaidFilter = 'all'"
 										:class="[
@@ -268,6 +269,7 @@
 											])
 										}}
 									</button>
+									<!-- //// Neoffice — fix: modifier price adjustment lost on submit (price_list_rate not updated) (02222a44, 2026-03-24). -->
 									<button
 										@click="unpaidFilter = 'unpaid'"
 										:class="[
@@ -427,6 +429,7 @@
 										}}
 									</p>
 									<p class="text-gray-500 text-sm mt-1">
+										<!-- //// Neoffice — fix(invoices): the empty state contradicted the total shown above it (0c85f01f, 2026-09-04). -->
 										{{
 											isUnpaidListNarrowed
 												? __(
