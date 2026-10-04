@@ -28,7 +28,9 @@
 					:alt="localeConfig.name"
 					class="w-5 h-3.5 sm:w-6 sm:h-4 object-cover rounded-sm shadow-sm"
 				/>
-				<span class="hidden sm:inline text-xs sm:text-sm">{{ localeConfig.nativeName }}</span>
+				<span class="hidden sm:inline text-xs sm:text-sm">{{
+					localeConfig.nativeName
+				}}</span>
 				<FeatherIcon
 					name="chevron-down"
 					class="w-3 h-3 sm:w-4 sm:h-4 transition-transform text-gray-500"
@@ -58,8 +60,10 @@
 						@click="selectLanguage(code)"
 						class="flex items-center w-full px-4 py-2 text-sm transition-colors"
 						:class="[
-							locale === code ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100',
-							config.dir === 'rtl' ? 'flex-row-reverse' : ''
+							locale === code
+								? 'bg-blue-50 text-blue-700'
+								: 'text-gray-700 hover:bg-gray-100',
+							config.dir === 'rtl' ? 'flex-row-reverse' : '',
 						]"
 						role="menuitem"
 					>
@@ -69,7 +73,10 @@
 							class="w-6 h-4 object-cover rounded-sm shadow-sm"
 							:class="config.dir === 'rtl' ? 'ms-3' : 'me-3'"
 						/>
-						<span class="flex-1" :class="config.dir === 'rtl' ? 'text-end' : 'text-start'">
+						<span
+							class="flex-1"
+							:class="config.dir === 'rtl' ? 'text-end' : 'text-start'"
+						>
 							{{ config.nativeName }}
 						</span>
 						<FeatherIcon
@@ -99,27 +106,26 @@
  * @example
  * <LanguageSwitcher />
  */
-import { ref, onMounted, onUnmounted } from "vue"
-import { FeatherIcon, LoadingIndicator } from "frappe-ui"
-import { useLocale } from "@/composables/useLocale"
+import { ref, onMounted, onUnmounted } from "vue";
+import { FeatherIcon, LoadingIndicator } from "frappe-ui";
+import { useLocale } from "@/composables/useLocale";
 
 // Locale state from composable
 //// Neoffice — formatting only, no behaviour change: Biome 80-column wrap from the
 //// whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise branding, add
 //// restaurant mode, and code formatting").
-const { locale, localeConfig, isRTL, supportedLocales, changeLocale } =
-	useLocale()
+const { locale, localeConfig, isRTL, supportedLocales, changeLocale } = useLocale();
 
 // Component state
 //// Neoffice — whitespace only: Biome collapsed the aligned trailing comments (458d81a9,
 //// 2026-03-20). `git blame -w` reports no author for these three lines precisely because
 //// nothing but the spacing changed.
-const isOpen = ref(false) // Dropdown visibility
-const isChanging = ref(false) // Language change in progress
-const dropdownRef = ref(null) // DOM ref for click-outside detection
+const isOpen = ref(false); // Dropdown visibility
+const isChanging = ref(false); // Language change in progress
+const dropdownRef = ref(null); // DOM ref for click-outside detection
 
 /** Toggles dropdown (disabled while changing language) */
-const toggleDropdown = () => !isChanging.value && (isOpen.value = !isOpen.value)
+const toggleDropdown = () => !isChanging.value && (isOpen.value = !isOpen.value);
 
 /**
  * Handles language selection from dropdown.
@@ -127,23 +133,22 @@ const toggleDropdown = () => !isChanging.value && (isOpen.value = !isOpen.value)
  * @param {string} code - Locale code to switch to
  */
 const selectLanguage = async (code) => {
-	isOpen.value = false
-	if (code === locale.value || isChanging.value) return
+	isOpen.value = false;
+	if (code === locale.value || isChanging.value) return;
 
-	isChanging.value = true
+	isChanging.value = true;
 	try {
-		await changeLocale(code)
+		await changeLocale(code);
 	} finally {
-		isChanging.value = false
+		isChanging.value = false;
 	}
-}
+};
 
 /** Closes dropdown when clicking outside the component */
 //// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
-const handleClickOutside = (e) =>
-	dropdownRef.value?.contains(e.target) || (isOpen.value = false)
+const handleClickOutside = (e) => dropdownRef.value?.contains(e.target) || (isOpen.value = false);
 
 // Event listener lifecycle
-onMounted(() => document.addEventListener("click", handleClickOutside))
-onUnmounted(() => document.removeEventListener("click", handleClickOutside))
+onMounted(() => document.addEventListener("click", handleClickOutside));
+onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>

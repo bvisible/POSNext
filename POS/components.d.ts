@@ -126,6 +126,7 @@ declare module 'vue' {
     //// modifier authoring (1ff2fba2 2026-03-27; f23daabe 2026-03-27 "item search in
     //// product options editor").
     PriceEntryDialog: typeof import('./src/components/sale/PriceEntryDialog.vue')['default']
+    ProductManagement: typeof import('./src/components/sale/ProductManagement.vue')['default']
     ProductOptionsEditor: typeof import('./src/components/restaurant/ProductOptionsEditor.vue')['default']
     PromotionManagement: typeof import('./src/components/sale/PromotionManagement.vue')['default']
     //// Neoffice — the PSP-agnostic QR payment dialog (TWINT) plus the whole reservation
@@ -155,6 +156,7 @@ declare module 'vue' {
     SessionLockScreen: typeof import('./src/components/common/SessionLockScreen.vue')['default']
     SettingsSection: typeof import('./src/components/settings/SettingsSection.vue')['default']
     ShiftClosingDialog: typeof import('./src/components/ShiftClosingDialog.vue')['default']
+    ShiftHistoryDialog: typeof import('./src/components/sale/ShiftHistoryDialog.vue')['default']
     ShiftOpeningDialog: typeof import('./src/components/ShiftOpeningDialog.vue')['default']
     StatusBadge: typeof import('./src/components/common/StatusBadge.vue')['default']
     //// Neoffice — per-table QR code for guest self-ordering, the table selector, and the

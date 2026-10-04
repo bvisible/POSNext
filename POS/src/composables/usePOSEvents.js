@@ -27,12 +27,12 @@
 //// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting").
 //// At the next merge take their file and re-run `biome check --write`.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-import { onUnmounted } from "vue"
-import { usePOSEventsStore } from "@/stores/posEvents"
+import { onUnmounted } from "vue";
+import { usePOSEventsStore } from "@/stores/posEvents";
 
 export function usePOSEvents() {
-	const eventsStore = usePOSEventsStore()
-	const unsubscribers = []
+	const eventsStore = usePOSEventsStore();
+	const unsubscribers = [];
 
 	/**
 	 * Register event listener with automatic cleanup on component unmount
@@ -41,9 +41,9 @@ export function usePOSEvents() {
 	 * @returns {Function} - Manual unsubscribe function
 	 */
 	function on(eventType, callback) {
-		const unsubscribe = eventsStore.on(eventType, callback)
-		unsubscribers.push(unsubscribe)
-		return unsubscribe
+		const unsubscribe = eventsStore.on(eventType, callback);
+		unsubscribers.push(unsubscribe);
+		return unsubscribe;
 	}
 
 	/**
@@ -52,7 +52,7 @@ export function usePOSEvents() {
 	 * @param {Object} payload - Event payload
 	 */
 	function emit(eventType, payload) {
-		eventsStore.emit(eventType, payload)
+		eventsStore.emit(eventType, payload);
 	}
 
 	// ========================================================================
@@ -71,7 +71,7 @@ export function usePOSEvents() {
 		//// wholesale and re-run the formatter, do not hand-merge these hunks
 		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
 		//// formatting").
-		return on("settings:changed", callback)
+		return on("settings:changed", callback);
 	}
 
 	/**
@@ -81,7 +81,7 @@ export function usePOSEvents() {
 	 */
 	function onWarehouseChanged(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("settings:warehouse-changed", callback)
+		return on("settings:warehouse-changed", callback);
 	}
 
 	/**
@@ -91,7 +91,7 @@ export function usePOSEvents() {
 	 */
 	function onStockPolicyChanged(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("settings:stock-policy-changed", callback)
+		return on("settings:stock-policy-changed", callback);
 	}
 
 	/**
@@ -101,7 +101,7 @@ export function usePOSEvents() {
 	 */
 	function onPricingChanged(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("settings:pricing-changed", callback)
+		return on("settings:pricing-changed", callback);
 	}
 
 	/**
@@ -111,7 +111,7 @@ export function usePOSEvents() {
 	 */
 	function onSalesOperationsChanged(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("settings:sales-operations-changed", callback)
+		return on("settings:sales-operations-changed", callback);
 	}
 
 	/**
@@ -121,7 +121,7 @@ export function usePOSEvents() {
 	 */
 	function onDisplayChanged(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("settings:display-changed", callback)
+		return on("settings:display-changed", callback);
 	}
 
 	/**
@@ -131,7 +131,7 @@ export function usePOSEvents() {
 	 */
 	function onStockSyncConfigured(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("settings:sync-configured", callback)
+		return on("settings:sync-configured", callback);
 	}
 
 	/**
@@ -141,7 +141,7 @@ export function usePOSEvents() {
 	 */
 	function onStockSyncUpdate(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("sync:stock-updated", callback)
+		return on("sync:stock-updated", callback);
 	}
 
 	/**
@@ -151,7 +151,7 @@ export function usePOSEvents() {
 	 */
 	function onAny(callback) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		return on("*", callback)
+		return on("*", callback);
 	}
 
 	// ========================================================================
@@ -164,7 +164,7 @@ export function usePOSEvents() {
 	 * @param {Object} oldSettings - Old settings (optional)
 	 */
 	function detectSettingsChanges(newSettings, oldSettings) {
-		eventsStore.detectSettingsChanges(newSettings, oldSettings)
+		eventsStore.detectSettingsChanges(newSettings, oldSettings);
 	}
 
 	/**
@@ -172,7 +172,7 @@ export function usePOSEvents() {
 	 * @param {Object} settings - Current settings
 	 */
 	function updateSettingsSnapshot(settings) {
-		eventsStore.updateSettingsSnapshot(settings)
+		eventsStore.updateSettingsSnapshot(settings);
 	}
 
 	// ========================================================================
@@ -184,7 +184,7 @@ export function usePOSEvents() {
 	 * @param {Object} config - Sync config
 	 */
 	function emitStockSyncConfigured(config) {
-		eventsStore.emitStockSyncConfigured(config)
+		eventsStore.emitStockSyncConfigured(config);
 	}
 
 	/**
@@ -192,7 +192,7 @@ export function usePOSEvents() {
 	 * @param {Object} status - Sync status
 	 */
 	function emitStockSyncStatus(status) {
-		eventsStore.emitStockSyncStatus(status)
+		eventsStore.emitStockSyncStatus(status);
 	}
 
 	// ========================================================================
@@ -204,7 +204,7 @@ export function usePOSEvents() {
 	 * @returns {Array} - Recent events
 	 */
 	function getRecentEvents() {
-		return eventsStore.recentEvents
+		return eventsStore.recentEvents;
 	}
 
 	/**
@@ -213,14 +213,14 @@ export function usePOSEvents() {
 	 * @returns {Array} - Filtered events
 	 */
 	function getEventsByType(eventType) {
-		return eventsStore.getEventsByType(eventType)
+		return eventsStore.getEventsByType(eventType);
 	}
 
 	/**
 	 * Clear event history
 	 */
 	function clearHistory() {
-		eventsStore.clearHistory()
+		eventsStore.clearHistory();
 	}
 
 	/**
@@ -228,14 +228,14 @@ export function usePOSEvents() {
 	 */
 	function unsubscribeAll() {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		unsubscribers.forEach((unsub) => unsub())
-		unsubscribers.length = 0
+		unsubscribers.forEach((unsub) => unsub());
+		unsubscribers.length = 0;
 	}
 
 	// Auto-cleanup on component unmount
 	onUnmounted(() => {
-		unsubscribeAll()
-	})
+		unsubscribeAll();
+	});
 
 	return {
 		// Core API
@@ -269,5 +269,5 @@ export function usePOSEvents() {
 
 		// Store access (for advanced use)
 		store: eventsStore,
-	}
+	};
 }

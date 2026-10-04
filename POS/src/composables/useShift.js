@@ -1,5 +1,5 @@
-import { createResource } from "frappe-ui"
-import { computed, ref } from "vue"
+import { createResource } from "frappe-ui";
+import { computed, ref } from "vue";
 
 export const shiftState = ref({
 	pos_opening_shift: null,
@@ -10,7 +10,7 @@ export const shiftState = ref({
 	_initialElapsedMs: 0,
 	/** Local timestamp (Date.now()) when shift data was received */
 	_receivedAt: 0,
-})
+});
 
 export function useShift() {
 	// Check for existing open shift
@@ -21,17 +21,17 @@ export function useShift() {
 			if (data) {
 				// Compute initial elapsed time using server timestamps
 				// (avoids timezone mismatch between server and browser)
-				let initialElapsedMs = 0
+				let initialElapsedMs = 0;
 				if (data.server_now && data.pos_opening_shift?.period_start_date) {
-					const serverNow = new Date(data.server_now).getTime()
+					const serverNow = new Date(data.server_now).getTime();
 					//// Neoffice — Biome reformat only: the new Date(...) call wrapped onto three lines.
 					//// Same server timestamp, same elapsed computation (458d81a9). At the next merge take
 					//// upstream's file and re-run `biome check --write`.
 					//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 					const shiftStart = new Date(
-						data.pos_opening_shift.period_start_date,
-					).getTime()
-					initialElapsedMs = Math.max(0, serverNow - shiftStart)
+						data.pos_opening_shift.period_start_date
+					).getTime();
+					initialElapsedMs = Math.max(0, serverNow - shiftStart);
 				}
 				shiftState.value = {
 					pos_opening_shift: data.pos_opening_shift,
@@ -40,7 +40,7 @@ export function useShift() {
 					isOpen: true,
 					_initialElapsedMs: initialElapsedMs,
 					_receivedAt: Date.now(),
-				}
+				};
 				// Store in localStorage for offline support
 				//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
 				//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
@@ -54,8 +54,8 @@ export function useShift() {
 						...data,
 						_initialElapsedMs: initialElapsedMs,
 						_receivedAt: Date.now(),
-					}),
-				)
+					})
+				);
 			} else {
 				shiftState.value = {
 					pos_opening_shift: null,
@@ -64,17 +64,17 @@ export function useShift() {
 					isOpen: false,
 					_initialElapsedMs: 0,
 					_receivedAt: 0,
-				}
-				localStorage.removeItem("pos_shift_data")
+				};
+				localStorage.removeItem("pos_shift_data");
 			}
 		},
 		onError(error) {
-			console.error("Error checking opening shift:", error)
+			console.error("Error checking opening shift:", error);
 			// Try to load from localStorage
-			const cachedData = localStorage.getItem("pos_shift_data")
+			const cachedData = localStorage.getItem("pos_shift_data");
 			if (cachedData) {
 				try {
-					const data = JSON.parse(cachedData)
+					const data = JSON.parse(cachedData);
 					shiftState.value = {
 						pos_opening_shift: data.pos_opening_shift,
 						pos_profile: data.pos_profile,
@@ -82,19 +82,19 @@ export function useShift() {
 						isOpen: true,
 						_initialElapsedMs: data._initialElapsedMs || 0,
 						_receivedAt: data._receivedAt || Date.now(),
-					}
+					};
 				} catch (e) {
-					console.error("Error parsing cached shift data:", e)
+					console.error("Error parsing cached shift data:", e);
 				}
 			}
 		},
-	})
+	});
 
 	// Get opening dialog data (POS profiles, payment methods, etc.)
 	const getOpeningDialogData = createResource({
 		url: "pos_next.api.shifts.get_opening_dialog_data",
 		auto: false,
-	})
+	});
 
 	// Create new opening shift
 	const createOpeningShift = createResource({
@@ -104,7 +104,7 @@ export function useShift() {
 				pos_profile,
 				company,
 				balance_details: JSON.stringify(balance_details),
-			}
+			};
 		},
 		onSuccess(data) {
 			shiftState.value = {
@@ -114,7 +114,7 @@ export function useShift() {
 				isOpen: true,
 				_initialElapsedMs: 0,
 				_receivedAt: Date.now(),
-			}
+			};
 			// Store in localStorage
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			localStorage.setItem(
@@ -123,28 +123,28 @@ export function useShift() {
 					...data,
 					_initialElapsedMs: 0,
 					_receivedAt: Date.now(),
-				}),
-			)
+				})
+			);
 		},
 		onError(error) {
-			console.error("Error creating opening shift:", error)
+			console.error("Error creating opening shift:", error);
 		},
-	})
+	});
 
 	// Get closing shift data
 	const getClosingShiftData = createResource({
 		url: "pos_next.api.shifts.get_closing_shift_data",
 		makeParams({ opening_shift }) {
-			return { opening_shift }
+			return { opening_shift };
 		},
 		auto: false,
-	})
+	});
 
 	// Submit closing shift
 	const submitClosingShift = createResource({
 		url: "pos_next.api.shifts.submit_closing_shift",
 		makeParams({ closing_shift }) {
-			return { closing_shift: JSON.stringify(closing_shift) }
+			return { closing_shift: JSON.stringify(closing_shift) };
 		},
 		onSuccess() {
 			shiftState.value = {
@@ -154,19 +154,19 @@ export function useShift() {
 				isOpen: false,
 				_initialElapsedMs: 0,
 				_receivedAt: 0,
-			}
-			localStorage.removeItem("pos_shift_data")
+			};
+			localStorage.removeItem("pos_shift_data");
 		},
 		onError(error) {
-			console.error("Error submitting closing shift:", error)
+			console.error("Error submitting closing shift:", error);
 		},
-	})
+	});
 
 	// Computed properties
-	const hasOpenShift = computed(() => shiftState.value.isOpen)
-	const currentShift = computed(() => shiftState.value.pos_opening_shift)
-	const currentProfile = computed(() => shiftState.value.pos_profile)
-	const currentCompany = computed(() => shiftState.value.company)
+	const hasOpenShift = computed(() => shiftState.value.isOpen);
+	const currentShift = computed(() => shiftState.value.pos_opening_shift);
+	const currentProfile = computed(() => shiftState.value.pos_profile);
+	const currentCompany = computed(() => shiftState.value.company);
 
 	return {
 		// State
@@ -182,5 +182,5 @@ export function useShift() {
 		createOpeningShift,
 		getClosingShiftData,
 		submitClosingShift,
-	}
+	};
 }

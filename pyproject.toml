@@ -9,12 +9,16 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
-    # //// Neoffice — upstream declares only "erpnext" (no trailing comma). weasyprint added by
-    # //// b6e757dd (2026-03-26, "add menu PDF generator with badges") to render the restaurant menu
-    # //// PDF; fb475986 (2026-03-31) then dropped a pydyf pin that conflicted and relaxed the
-    # //// minimum to >=59.0. NOTE for the next merge: pos_next/api/menu_pdf.py now renders through
-    # //// wkhtmltopdf, not WeasyPrint (WeasyPrint OOM-crashes on small instances), so this
-    # //// dependency is a candidate for removal — check menu_pdf.py before dropping it.
+    # //// Neoffice — weasyprint is ours: added by b6e757dd (2026-03-26, "add menu PDF generator
+    # //// with badges") to render the restaurant menu PDF; fb475986 (2026-03-31) then dropped a
+    # //// pydyf pin that conflicted and relaxed the minimum to >=59.0. NOTE for the next merge:
+    # //// pos_next/api/menu_pdf.py now renders through wkhtmltopdf, not WeasyPrint (WeasyPrint
+    # //// OOM-crashes on small instances), so this dependency is a candidate for removal — check
+    # //// menu_pdf.py before dropping it.
+    # //// Upstream v2.0.0 also declares "pypdf>=6.12.0" here. Not taken: pos_next imports pypdf
+    # //// nowhere (upstream added it only to clear its pip-audit gate), and our frappe pins
+    # //// "pypdf~=6.1.3" — installing this app's requirements would have pulled pypdf past
+    # //// frappe's pin on every instance. A pypdf upgrade belongs in the frappe fork.
     "erpnext",
     "weasyprint>=59.0",
 ]

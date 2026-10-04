@@ -3,8 +3,8 @@
  * Handles payment totals, remaining amounts, and change calculations
  */
 
-import { computed } from "vue"
-import { roundCurrency } from "@/utils/currency"
+import { computed } from "vue";
+import { roundCurrency } from "@/utils/currency";
 
 /**
  * Create payment calculation computed properties
@@ -35,12 +35,9 @@ export function usePaymentCalculations({
 		//// wholesale and re-run the formatter, do not hand-merge these hunks
 		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
 		//// formatting").
-		const sum = paymentEntries.value.reduce(
-			(acc, entry) => acc + (entry.amount || 0),
-			0,
-		)
-		return roundCurrency(sum)
-	})
+		const sum = paymentEntries.value.reduce((acc, entry) => acc + (entry.amount || 0), 0);
+		return roundCurrency(sum);
+	});
 
 	/**
 	 * Total available credit from customer balance
@@ -49,33 +46,33 @@ export function usePaymentCalculations({
 	const totalAvailableCredit = computed(() => {
 		// Use net_balance: negative means customer has credit, positive means they owe
 		// Return negative of net_balance so positive = credit available, negative = outstanding
-		return roundCurrency(-customerBalance.value.net_balance)
-	})
+		return roundCurrency(-customerBalance.value.net_balance);
+	});
 
 	/**
 	 * Remaining credit after deducting what's already been applied as payment
 	 */
 	const remainingAvailableCredit = computed(() => {
-		const usedCredit = getMethodTotal("Customer Credit")
-		const remaining = totalAvailableCredit.value - usedCredit
-		return remaining > 0 ? roundCurrency(remaining) : 0
-	})
+		const usedCredit = getMethodTotal("Customer Credit");
+		const remaining = totalAvailableCredit.value - usedCredit;
+		return remaining > 0 ? roundCurrency(remaining) : 0;
+	});
 
 	/**
 	 * Amount still remaining to be paid
 	 */
 	const remainingAmount = computed(() => {
-		const remaining = roundCurrency(grandTotal.value) - totalPaid.value
-		return remaining > 0 ? roundCurrency(remaining) : 0
-	})
+		const remaining = roundCurrency(grandTotal.value) - totalPaid.value;
+		return remaining > 0 ? roundCurrency(remaining) : 0;
+	});
 
 	/**
 	 * Change amount to return to customer (overpayment)
 	 */
 	const changeAmount = computed(() => {
-		const change = totalPaid.value - roundCurrency(grandTotal.value)
-		return change > 0 ? roundCurrency(change) : 0
-	})
+		const change = totalPaid.value - roundCurrency(grandTotal.value);
+		return change > 0 ? roundCurrency(change) : 0;
+	});
 
 	return {
 		totalPaid,
@@ -83,5 +80,5 @@ export function usePaymentCalculations({
 		remainingAvailableCredit,
 		remainingAmount,
 		changeAmount,
-	}
+	};
 }

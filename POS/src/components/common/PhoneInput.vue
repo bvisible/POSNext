@@ -56,9 +56,9 @@
 </template>
 
 <script setup>
-import CountryCodeSelector from "./CountryCodeSelector.vue"
-import { useCountryCodes } from "@/composables/useCountryCodes"
-import { computed, ref, watch, onMounted } from "vue"
+import CountryCodeSelector from "./CountryCodeSelector.vue";
+import { useCountryCodes } from "@/composables/useCountryCodes";
+import { computed, ref, watch, onMounted } from "vue";
 
 const props = defineProps({
 	modelValue: {
@@ -93,77 +93,76 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
-})
+});
 
-const emit = defineEmits(["update:modelValue", "validate"])
+const emit = defineEmits(["update:modelValue", "validate"]);
 
 //// Neoffice — formatting only, no behaviour change: Biome 80-column wrap from the
 //// whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise branding, add
 //// restaurant mode, and code formatting").
-const { parsePhoneNumber, formatPhoneNumber, validatePhoneNumber } =
-	useCountryCodes()
+const { parsePhoneNumber, formatPhoneNumber, validatePhoneNumber } = useCountryCodes();
 
-const countryISD = ref("")
-const phoneNumber = ref("")
-const showError = ref(false)
-const currentCountry = ref(null)
+const countryISD = ref("");
+const phoneNumber = ref("");
+const showError = ref(false);
+const currentCountry = ref(null);
 
 // Validation
 const isValid = computed(() => {
-	if (!phoneNumber.value) return true // Empty is valid unless required
-	return validatePhoneNumber(phoneNumber.value)
-})
+	if (!phoneNumber.value) return true; // Empty is valid unless required
+	return validatePhoneNumber(phoneNumber.value);
+});
 
 const errorMessage = computed(() => {
-	if (!phoneNumber.value) return ""
+	if (!phoneNumber.value) return "";
 	if (!isValid.value) {
-		return "Please enter a valid phone number (7-15 digits)"
+		return "Please enter a valid phone number (7-15 digits)";
 	}
-	return ""
-})
+	return "";
+});
 
 // Handle country change
 function handleCountryChange(country) {
-	currentCountry.value = country
-	updateFullValue()
+	currentCountry.value = country;
+	updateFullValue();
 }
 
 // Handle input
 function handleInput() {
 	// Only allow digits, spaces, hyphens, parentheses
-	phoneNumber.value = phoneNumber.value.replace(/[^\d\s\-\(\)]/g, "")
-	showError.value = false
-	updateFullValue()
+	phoneNumber.value = phoneNumber.value.replace(/[^\d\s\-\(\)]/g, "");
+	showError.value = false;
+	updateFullValue();
 }
 
 // Handle blur
 function handleBlur() {
 	if (props.validateOnBlur) {
-		showError.value = !isValid.value && !!phoneNumber.value
-		emit("validate", isValid.value)
+		showError.value = !isValid.value && !!phoneNumber.value;
+		emit("validate", isValid.value);
 	}
 }
 
 // Update full value (ISD-NUMBER format)
 function updateFullValue() {
-	const fullValue = formatPhoneNumber(countryISD.value, phoneNumber.value)
-	emit("update:modelValue", fullValue)
+	const fullValue = formatPhoneNumber(countryISD.value, phoneNumber.value);
+	emit("update:modelValue", fullValue);
 }
 
 // Parse incoming value
 function parseIncomingValue(value) {
 	if (!value) {
-		countryISD.value = ""
-		phoneNumber.value = ""
-		return
+		countryISD.value = "";
+		phoneNumber.value = "";
+		return;
 	}
 
-	const parsed = parsePhoneNumber(value)
+	const parsed = parsePhoneNumber(value);
 	if (parsed.isd) {
-		countryISD.value = parsed.isd
-		phoneNumber.value = parsed.number
+		countryISD.value = parsed.isd;
+		phoneNumber.value = parsed.number;
 	} else {
-		phoneNumber.value = value
+		phoneNumber.value = value;
 	}
 }
 
@@ -173,23 +172,20 @@ watch(
 	(newValue, oldValue) => {
 		// Only parse if value changed externally (not from our own update)
 		//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
-		const currentFullValue = formatPhoneNumber(
-			countryISD.value,
-			phoneNumber.value,
-		)
+		const currentFullValue = formatPhoneNumber(countryISD.value, phoneNumber.value);
 		if (newValue !== currentFullValue) {
-			parseIncomingValue(newValue)
+			parseIncomingValue(newValue);
 		}
-	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
-	},
-)
+		//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
+	}
+);
 
 // Initialize
 onMounted(() => {
 	if (props.modelValue) {
-		parseIncomingValue(props.modelValue)
+		parseIncomingValue(props.modelValue);
 	}
-})
+});
 </script>
 
 <style scoped>

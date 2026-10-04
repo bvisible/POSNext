@@ -8,7 +8,7 @@ Handles wallet payments, validation, and loyalty points conversion
 
 import frappe
 from frappe import _
-from frappe.utils import flt, cint
+from frappe.utils import cint, flt
 
 
 def validate_wallet_payment(doc, method=None):
@@ -32,9 +32,9 @@ def validate_wallet_payment(doc, method=None):
 		frappe.throw(
 			_("Insufficient wallet balance. Available: {0}, Requested: {1}").format(
 				frappe.format_value(wallet_balance, {"fieldtype": "Currency"}),
-				frappe.format_value(wallet_amount, {"fieldtype": "Currency"})
+				frappe.format_value(wallet_amount, {"fieldtype": "Currency"}),
 			),
-			title=_("Wallet Balance Error")
+			title=_("Wallet Balance Error"),
 		)
 
 
@@ -65,7 +65,9 @@ def process_loyalty_to_wallet(doc, method=None):
 	if not pos_settings:
 		return
 
-	if not cint(pos_settings.get("enable_loyalty_program")) or not cint(pos_settings.get("loyalty_to_wallet")):
+	if not cint(pos_settings.get("enable_loyalty_program")) or not cint(
+		pos_settings.get("loyalty_to_wallet")
+	):
 		return
 
 	# Check if customer has loyalty program
@@ -103,13 +105,9 @@ def process_loyalty_to_wallet(doc, method=None):
 	# Get the loyalty points earned from this invoice
 	loyalty_entry = frappe.db.get_value(
 		"Loyalty Point Entry",
-		{
-			"invoice_type": "Sales Invoice",
-			"invoice": doc.name,
-			"loyalty_points": [">", 0]
-		},
+		{"invoice_type": "Sales Invoice", "invoice": doc.name, "loyalty_points": [">", 0]},
 		["loyalty_points", "name"],
-		as_dict=True
+		as_dict=True,
 	)
 
 	if not loyalty_entry or loyalty_entry.loyalty_points <= 0:
@@ -136,7 +134,7 @@ def process_loyalty_to_wallet(doc, method=None):
 		if account_type != "Receivable":
 			frappe.log_error(
 				"Wallet Account Configuration Error",
-				f"Wallet account {wallet_account} is not a Receivable type. Skipping loyalty to wallet conversion."
+				f"Wallet account {wallet_account} is not a Receivable type. Skipping loyalty to wallet conversion.",
 			)
 			return
 
@@ -150,33 +148,32 @@ def process_loyalty_to_wallet(doc, method=None):
 		# Create wallet transaction
 		from pos_next.pos_next.doctype.wallet_transaction.wallet_transaction import create_wallet_credit
 
-		transaction = create_wallet_credit(
+		create_wallet_credit(
 			wallet=wallet.name,
 			amount=credit_amount,
 			source_type="Loyalty Program",
 			remarks=_("Loyalty points conversion from {0}: {1} points = {2}").format(
 				doc.name,
 				loyalty_entry.loyalty_points,
-				frappe.format_value(credit_amount, {"fieldtype": "Currency"})
+				frappe.format_value(credit_amount, {"fieldtype": "Currency"}),
 			),
 			reference_doctype="Sales Invoice",
 			reference_name=doc.name,
-			submit=True
+			submit=True,
 		)
 
 		frappe.msgprint(
 			_("Loyalty points converted to wallet: {0} points = {1}").format(
-				loyalty_entry.loyalty_points,
-				frappe.format_value(credit_amount, {"fieldtype": "Currency"})
+				loyalty_entry.loyalty_points, frappe.format_value(credit_amount, {"fieldtype": "Currency"})
 			),
 			alert=True,
-			indicator="green"
+			indicator="green",
 		)
 
 	except Exception as e:
 		frappe.log_error(
 			title="Loyalty to Wallet Conversion Error",
-			message=f"Invoice: {doc.name}, Error: {str(e)}\n{frappe.get_traceback()}"
+			message=f"Invoice: {doc.name}, Error: {e!s}\n{frappe.get_traceback()}",
 		)
 
 
@@ -190,11 +187,7 @@ def get_wallet_amount_from_payments(payments):
 		if not payment.mode_of_payment:
 			continue
 
-		is_wallet = frappe.db.get_value(
-			"Mode of Payment",
-			payment.mode_of_payment,
-			"is_wallet_payment"
-		)
+		is_wallet = frappe.db.get_value("Mode of Payment", payment.mode_of_payment, "is_wallet_payment")
 
 		if is_wallet:
 			wallet_amount += flt(payment.amount)
@@ -232,11 +225,7 @@ def get_customer_wallet_balance(customer, company=None, exclude_invoice=None):
 			return 0.0
 
 		# Get balance from GL entries
-		gl_balance = get_balance_on(
-			account=wallet.account,
-			party_type="Customer",
-			party=customer
-		)
+		gl_balance = get_balance_on(account=wallet.account, party_type="Customer", party=customer)
 
 		# Negate because negative receivable balance = positive wallet credit
 		wallet_balance = -flt(gl_balance)
@@ -257,18 +246,9 @@ def get_pending_wallet_payments(customer, exclude_invoice=None):
 	"""
 	Get total wallet payments from unconsolidated/pending POS invoices.
 	"""
-	filters = {
-		"customer": customer,
-		"docstatus": ["in", [0, 1]],
-		"outstanding_amount": [">", 0],
-		"is_pos": 1
-	}
+	filters = {"customer": customer, "docstatus": ["in", [0, 1]], "outstanding_amount": [">", 0], "is_pos": 1}
 
-	invoices = frappe.get_all(
-		"Sales Invoice",
-		filters=filters,
-		fields=["name"]
-	)
+	invoices = frappe.get_all("Sales Invoice", filters=filters, fields=["name"])
 
 	pending_amount = 0.0
 
@@ -277,15 +257,11 @@ def get_pending_wallet_payments(customer, exclude_invoice=None):
 			continue
 
 		payments = frappe.get_all(
-			"Sales Invoice Payment",
-			filters={"parent": invoice.name},
-			fields=["mode_of_payment", "amount"]
+			"Sales Invoice Payment", filters={"parent": invoice.name}, fields=["mode_of_payment", "amount"]
 		)
 
 		for payment in payments:
-			is_wallet = frappe.db.get_value(
-				"Mode of Payment", payment.mode_of_payment, "is_wallet_payment"
-			)
+			is_wallet = frappe.db.get_value("Mode of Payment", payment.mode_of_payment, "is_wallet_payment")
 			if is_wallet:
 				pending_amount += flt(payment.amount)
 
@@ -303,7 +279,7 @@ def get_customer_wallet(customer, company=None):
 		"Wallet",
 		filters,
 		["name", "customer", "company", "account", "status", "current_balance"],
-		as_dict=True
+		as_dict=True,
 	)
 
 	if wallet:
@@ -321,11 +297,7 @@ def create_wallet_on_customer_insert(doc, method=None):
 		return
 
 	# Only auto-create wallets when a POS profile with auto_create_wallet exists
-	pos_profile = frappe.db.get_value(
-		"POS Profile",
-		{"company": company, "disabled": 0},
-		"name"
-	)
+	pos_profile = frappe.db.get_value("POS Profile", {"company": company, "disabled": 0}, "name")
 	if not pos_profile:
 		return
 
@@ -379,7 +351,7 @@ def get_or_create_wallet(customer, company, pos_settings=None, force_create=Fals
 		"Wallet",
 		{"customer": customer, "company": company},
 		["name", "customer", "company", "account", "status"],
-		as_dict=True
+		as_dict=True,
 	)
 
 	if wallet:
@@ -387,11 +359,7 @@ def get_or_create_wallet(customer, company, pos_settings=None, force_create=Fals
 
 	# Check if auto-create is enabled
 	if not pos_settings:
-		pos_profile = frappe.db.get_value(
-			"POS Profile",
-			{"company": company, "disabled": 0},
-			"name"
-		)
+		pos_profile = frappe.db.get_value("POS Profile", {"company": company, "disabled": 0}, "name")
 		if pos_profile:
 			pos_settings = get_pos_settings(pos_profile)
 
@@ -407,13 +375,8 @@ def get_or_create_wallet(customer, company, pos_settings=None, force_create=Fals
 		# Try to find a receivable account with 'wallet' in name
 		wallet_account = frappe.db.get_value(
 			"Account",
-			{
-				"company": company,
-				"account_type": "Receivable",
-				"is_group": 0,
-				"name": ["like", "%wallet%"]
-			},
-			"name"
+			{"company": company, "account_type": "Receivable", "is_group": 0, "name": ["like", "%wallet%"]},
+			"name",
 		)
 
 	if not wallet_account:
@@ -422,29 +385,27 @@ def get_or_create_wallet(customer, company, pos_settings=None, force_create=Fals
 
 	if not wallet_account:
 		frappe.log_error(
-			f"Cannot create wallet for {customer}: No wallet account configured",
-			"Wallet Creation Error"
+			f"Cannot create wallet for {customer}: No wallet account configured", "Wallet Creation Error"
 		)
 		return None
 
 	# Create new wallet
 	try:
-		wallet_doc = frappe.get_doc({
-			"doctype": "Wallet",
-			"customer": customer,
-			"company": company,
-			"account": wallet_account,
-			"status": "Active"
-		})
+		wallet_doc = frappe.get_doc(
+			{
+				"doctype": "Wallet",
+				"customer": customer,
+				"company": company,
+				"account": wallet_account,
+				"status": "Active",
+			}
+		)
 		wallet_doc.insert(ignore_permissions=True)
 
 		return wallet_doc
 
 	except Exception as e:
-		frappe.log_error(
-			f"Failed to create wallet for {customer}: {str(e)}",
-			"Wallet Creation Error"
-		)
+		frappe.log_error(f"Failed to create wallet for {customer}: {e!s}", "Wallet Creation Error")
 		return None
 
 
@@ -461,9 +422,9 @@ def get_pos_settings(pos_profile):
 			"default_loyalty_program",
 			"wallet_account",
 			"auto_create_wallet",
-			"loyalty_to_wallet"
+			"loyalty_to_wallet",
 		],
-		as_dict=True
+		as_dict=True,
 	)
 
 
@@ -471,24 +432,20 @@ def get_pos_settings(pos_profile):
 def get_wallet_payment_methods(pos_profile):
 	"""Get payment methods that are wallet-enabled for a POS profile."""
 	payment_methods = frappe.get_all(
-		"POS Payment Method",
-		filters={"parent": pos_profile},
-		fields=["mode_of_payment", "default"]
+		"POS Payment Method", filters={"parent": pos_profile}, fields=["mode_of_payment", "default"]
 	)
 
 	wallet_methods = []
 	for method in payment_methods:
-		is_wallet = frappe.db.get_value(
-			"Mode of Payment",
-			method.mode_of_payment,
-			"is_wallet_payment"
-		)
+		is_wallet = frappe.db.get_value("Mode of Payment", method.mode_of_payment, "is_wallet_payment")
 		if is_wallet:
-			wallet_methods.append({
-				"mode_of_payment": method.mode_of_payment,
-				"default": method.default,
-				"is_wallet_payment": True
-			})
+			wallet_methods.append(
+				{
+					"mode_of_payment": method.mode_of_payment,
+					"default": method.default,
+					"is_wallet_payment": True,
+				}
+			)
 
 	return wallet_methods
 
@@ -534,12 +491,16 @@ def get_wallet_info(customer, company, pos_profile=None):
 	# //// the redemption itself landed in 104959e6 the same day).
 	# Get customer's active loyalty points
 	if customer and result.get("loyalty_program"):
-		loyalty_points = frappe.db.sql("""
+		loyalty_points = frappe.db.sql(
+			"""
 			SELECT COALESCE(SUM(loyalty_points), 0) as total_points
 			FROM `tabLoyalty Point Entry`
 			WHERE customer = %s
 			AND expiry_date >= CURDATE()
-		""", (customer,), as_dict=True)
+		""",
+			(customer,),
+			as_dict=True,
+		)
 		result["loyalty_points"] = int(loyalty_points[0].total_points) if loyalty_points else 0
 
 	# Get wallet details (support both pos_next and wallete status values)
@@ -547,7 +508,7 @@ def get_wallet_info(customer, company, pos_profile=None):
 		"Wallet",
 		{"customer": customer, "company": company, "status": ["in", ["Active", "active"]]},
 		["name", "account"],
-		as_dict=True
+		as_dict=True,
 	)
 
 	if wallet:
@@ -560,12 +521,14 @@ def get_wallet_info(customer, company, pos_profile=None):
 			new_wallet = get_or_create_wallet(customer, company, pos_settings)
 			if new_wallet:
 				result["wallet_exists"] = True
-				result["wallet_name"] = new_wallet.name if hasattr(new_wallet, 'name') else new_wallet.get("name")
+				result["wallet_name"] = (
+					new_wallet.name if hasattr(new_wallet, "name") else new_wallet.get("name")
+				)
 				result["wallet_balance"] = 0.0  # New wallet starts with 0 balance
 		except Exception as e:
 			frappe.log_error(
 				title="Auto-create Wallet Error",
-				message=f"Customer: {customer}, Company: {company}, Error: {str(e)}"
+				message=f"Customer: {customer}, Company: {company}, Error: {e!s}",
 			)
 
 	return result
@@ -663,11 +626,11 @@ def create_manual_wallet_credit(customer, company, amount, remarks=None):
 	from pos_next.pos_next.doctype.wallet_transaction.wallet_transaction import create_wallet_credit
 
 	transaction = create_wallet_credit(
-		wallet=wallet.name if hasattr(wallet, 'name') else wallet["name"],
+		wallet=wallet.name if hasattr(wallet, "name") else wallet["name"],
 		amount=amount,
 		source_type="Manual Adjustment",
 		remarks=remarks or _("Manual wallet credit"),
-		submit=True
+		submit=True,
 	)
 
 	return transaction.name

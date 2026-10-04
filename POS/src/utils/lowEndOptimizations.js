@@ -9,8 +9,8 @@
 //// import and namespace (458d81a9); the block below states the rest of this file's
 //// divergence and what to do at the next merge.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-import { logger } from "./logger"
-const log = logger.create("LowEndOptimizations")
+import { logger } from "./logger";
+const log = logger.create("LowEndOptimizations");
 
 /**
  * requestIdleCallback polyfill for browsers that don't support it
@@ -23,21 +23,21 @@ const log = logger.create("LowEndOptimizations")
 const requestIdleCallback =
 	window.requestIdleCallback ||
 	((cb) => {
-		const start = Date.now()
+		const start = Date.now();
 		return setTimeout(() => {
 			cb({
 				didTimeout: false,
 				timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
-			})
-		}, 1)
-	})
+			});
+		}, 1);
+	});
 
 //// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 const cancelIdleCallback =
 	window.cancelIdleCallback ||
 	((id) => {
-		clearTimeout(id)
-	})
+		clearTimeout(id);
+	});
 
 /**
  * Schedule a task to run during browser idle time
@@ -48,7 +48,7 @@ const cancelIdleCallback =
  * @returns {number} Handle to cancel the callback
  */
 export function runWhenIdle(task, options = {}) {
-	const { timeout = 2000 } = options
+	const { timeout = 2000 } = options;
 
 	//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 	return requestIdleCallback(
@@ -56,25 +56,25 @@ export function runWhenIdle(task, options = {}) {
 			// Only run if we have time remaining or we've hit the timeout
 			if (deadline.timeRemaining() > 0 || deadline.didTimeout) {
 				try {
-					task()
+					task();
 				} catch (error) {
-					log.error("Error in idle callback", error)
+					log.error("Error in idle callback", error);
 				}
 			} else {
 				// Reschedule if we don't have time
-				runWhenIdle(task, options)
+				runWhenIdle(task, options);
 			}
-		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		},
-		{ timeout },
-	)
+		{ timeout }
+	);
 }
 
 /**
  * Cancel a scheduled idle callback
  */
 export function cancelIdleTask(handle) {
-	cancelIdleCallback(handle)
+	cancelIdleCallback(handle);
 }
 
 /**
@@ -86,25 +86,25 @@ export function cancelIdleTask(handle) {
  * @returns {Function} Debounced function
  */
 export function debounceRAF(func, wait = 16) {
-	let timeout
-	let rafId
+	let timeout;
+	let rafId;
 
 	return function executedFunction(...args) {
 		const later = () => {
-			clearTimeout(timeout)
+			clearTimeout(timeout);
 
 			rafId = requestAnimationFrame(() => {
-				func(...args)
-			})
-		}
+				func(...args);
+			});
+		};
 
-		clearTimeout(timeout)
+		clearTimeout(timeout);
 		if (rafId) {
-			cancelAnimationFrame(rafId)
+			cancelAnimationFrame(rafId);
 		}
 
-		timeout = setTimeout(later, wait)
-	}
+		timeout = setTimeout(later, wait);
+	};
 }
 
 /**
@@ -115,20 +115,20 @@ export function debounceRAF(func, wait = 16) {
  * @returns {Function} Throttled function
  */
 export function throttleRAF(func) {
-	let rafId = null
-	let lastArgs = null
+	let rafId = null;
+	let lastArgs = null;
 
 	return function executedFunction(...args) {
-		lastArgs = args
+		lastArgs = args;
 
 		if (rafId === null) {
 			rafId = requestAnimationFrame(() => {
-				func(...lastArgs)
-				rafId = null
-				lastArgs = null
-			})
+				func(...lastArgs);
+				rafId = null;
+				lastArgs = null;
+			});
 		}
-	}
+	};
 }
 
 /**
@@ -147,14 +147,14 @@ export function addPassiveListener(element, event, handler, options = {}) {
 		capture: false,
 		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		...options,
-	}
+	};
 
-	element.addEventListener(event, handler, passiveOptions)
+	element.addEventListener(event, handler, passiveOptions);
 
 	// Return cleanup function
 	return () => {
-		element.removeEventListener(event, handler, passiveOptions)
-	}
+		element.removeEventListener(event, handler, passiveOptions);
+	};
 }
 
 /**
@@ -163,9 +163,9 @@ export function addPassiveListener(element, event, handler, options = {}) {
  */
 class DOMBatcher {
 	constructor() {
-		this.reads = []
-		this.writes = []
-		this.scheduled = false
+		this.reads = [];
+		this.writes = [];
+		this.scheduled = false;
 	}
 
 	/**
@@ -176,11 +176,11 @@ class DOMBatcher {
 	read(readFn) {
 		return new Promise((resolve) => {
 			this.reads.push(() => {
-				const result = readFn()
-				resolve(result)
-			})
-			this.schedule()
-		})
+				const result = readFn();
+				resolve(result);
+			});
+			this.schedule();
+		});
 	}
 
 	/**
@@ -191,38 +191,38 @@ class DOMBatcher {
 	write(writeFn) {
 		return new Promise((resolve) => {
 			this.writes.push(() => {
-				writeFn()
-				resolve()
-			})
-			this.schedule()
-		})
+				writeFn();
+				resolve();
+			});
+			this.schedule();
+		});
 	}
 
 	schedule() {
-		if (this.scheduled) return
+		if (this.scheduled) return;
 
-		this.scheduled = true
+		this.scheduled = true;
 		requestAnimationFrame(() => {
-			this.flush()
-		})
+			this.flush();
+		});
 	}
 
 	flush() {
 		// Execute all reads first
-		const reads = this.reads.splice(0)
+		const reads = this.reads.splice(0);
 		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-		reads.forEach((read) => read())
+		reads.forEach((read) => read());
 
 		// Then execute all writes
-		const writes = this.writes.splice(0)
+		const writes = this.writes.splice(0);
 		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-		writes.forEach((write) => write())
+		writes.forEach((write) => write());
 
-		this.scheduled = false
+		this.scheduled = false;
 	}
 }
 
-export const domBatcher = new DOMBatcher()
+export const domBatcher = new DOMBatcher();
 
 /**
  * Optimize click handler for low-end devices
@@ -233,46 +233,46 @@ export const domBatcher = new DOMBatcher()
  * @returns {Object} Touch and click handlers
  */
 export function createOptimizedClickHandler(handler, options = {}) {
-	const { feedback = true } = options
+	const { feedback = true } = options;
 
-	let touchStartTime = 0
-	let touchMoved = false
-	let touchHandled = false
-	let touchEndTime = 0
-	const MOVE_THRESHOLD = 10
-	const GHOST_CLICK_THRESHOLD = 500 // Time window to ignore click after touch
-	let startX = 0
-	let startY = 0
+	let touchStartTime = 0;
+	let touchMoved = false;
+	let touchHandled = false;
+	let touchEndTime = 0;
+	const MOVE_THRESHOLD = 10;
+	const GHOST_CLICK_THRESHOLD = 500; // Time window to ignore click after touch
+	let startX = 0;
+	let startY = 0;
 
 	const handlers = {
 		touchstart: (event) => {
-			touchStartTime = Date.now()
-			touchMoved = false
-			touchHandled = false
+			touchStartTime = Date.now();
+			touchMoved = false;
+			touchHandled = false;
 
-			const touch = event.touches[0]
-			startX = touch.clientX
-			startY = touch.clientY
+			const touch = event.touches[0];
+			startX = touch.clientX;
+			startY = touch.clientY;
 
 			// Visual feedback
 			if (feedback && event.currentTarget) {
 				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-				event.currentTarget.style.opacity = "0.7"
+				event.currentTarget.style.opacity = "0.7";
 			}
 		},
 
 		touchmove: (event) => {
-			const touch = event.touches[0]
-			const deltaX = Math.abs(touch.clientX - startX)
-			const deltaY = Math.abs(touch.clientY - startY)
+			const touch = event.touches[0];
+			const deltaX = Math.abs(touch.clientX - startX);
+			const deltaY = Math.abs(touch.clientY - startY);
 
 			if (deltaX > MOVE_THRESHOLD || deltaY > MOVE_THRESHOLD) {
-				touchMoved = true
+				touchMoved = true;
 
 				// Remove feedback if moved
 				if (feedback && event.currentTarget) {
 					//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-					event.currentTarget.style.opacity = ""
+					event.currentTarget.style.opacity = "";
 				}
 			}
 		},
@@ -281,57 +281,57 @@ export function createOptimizedClickHandler(handler, options = {}) {
 			// Remove feedback
 			if (feedback && event.currentTarget) {
 				//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-				event.currentTarget.style.opacity = ""
+				event.currentTarget.style.opacity = "";
 			}
 
 			// Only trigger if touch was quick and didn't move
-			const touchDuration = Date.now() - touchStartTime
+			const touchDuration = Date.now() - touchStartTime;
 			if (!touchMoved && touchDuration < 500) {
-				event.preventDefault() // Prevent mouse events
-				touchHandled = true
-				touchEndTime = Date.now()
+				event.preventDefault(); // Prevent mouse events
+				touchHandled = true;
+				touchEndTime = Date.now();
 
 				// Use requestAnimationFrame for smooth execution
 				requestAnimationFrame(() => {
-					handler(event)
-				})
+					handler(event);
+				});
 			}
 
-			touchStartTime = 0
-			touchMoved = false
+			touchStartTime = 0;
+			touchMoved = false;
 		},
 
 		click: (event) => {
 			// Prevent ghost clicks after touch events
-			const timeSinceTouchEnd = Date.now() - touchEndTime
+			const timeSinceTouchEnd = Date.now() - touchEndTime;
 			if (touchHandled && timeSinceTouchEnd < GHOST_CLICK_THRESHOLD) {
 				// This is a ghost click from a touch event - ignore it
-				event.preventDefault()
-				event.stopPropagation()
-				return
+				event.preventDefault();
+				event.stopPropagation();
+				return;
 			}
 
 			// Real click from mouse or non-touch device
 			requestAnimationFrame(() => {
-				handler(event)
-			})
-		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
+				handler(event);
+			});
+			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		},
-	}
+	};
 
 	// Reset touchHandled flag after GHOST_CLICK_THRESHOLD
 	// to prevent indefinite blocking of mouse clicks
 	const resetTouchHandled = () => {
 		if (touchHandled) {
-			const timeSinceTouchEnd = Date.now() - touchEndTime
+			const timeSinceTouchEnd = Date.now() - touchEndTime;
 			if (timeSinceTouchEnd >= GHOST_CLICK_THRESHOLD) {
-				touchHandled = false
+				touchHandled = false;
 			}
 		}
-	}
-	setInterval(resetTouchHandled, GHOST_CLICK_THRESHOLD)
+	};
+	setInterval(resetTouchHandled, GHOST_CLICK_THRESHOLD);
 
-	return handlers
+	return handlers;
 }
 
 /**
@@ -345,36 +345,36 @@ export function createOptimizedClickHandler(handler, options = {}) {
  */
 export async function processArrayInChunks(array, processor, options = {}) {
 	//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-	const { chunkSize = 50, onProgress = null, signal = null } = options
+	const { chunkSize = 50, onProgress = null, signal = null } = options;
 
-	const total = array.length
-	let processed = 0
+	const total = array.length;
+	let processed = 0;
 
 	for (let i = 0; i < total; i += chunkSize) {
 		// Check if cancelled
 		if (signal?.aborted) {
 			//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-			throw new Error("Processing cancelled")
+			throw new Error("Processing cancelled");
 		}
 
 		// Process chunk
-		const chunk = array.slice(i, i + chunkSize)
+		const chunk = array.slice(i, i + chunkSize);
 		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		await new Promise((resolve) => {
 			runWhenIdle(() => {
-				chunk.forEach((item) => processor(item))
-				processed += chunk.length
+				chunk.forEach((item) => processor(item));
+				processed += chunk.length;
 
 				if (onProgress) {
-					onProgress(processed, total)
+					onProgress(processed, total);
 				}
 
-				resolve()
-			})
-		})
+				resolve();
+			});
+		});
 	}
 
-	return processed
+	return processed;
 }
 
 /**
@@ -383,27 +383,27 @@ export async function processArrayInChunks(array, processor, options = {}) {
  */
 export function isLowEndDevice() {
 	// Check hardware concurrency (CPU cores)
-	const cores = navigator.hardwareConcurrency || 2
-	if (cores <= 2) return true
+	const cores = navigator.hardwareConcurrency || 2;
+	if (cores <= 2) return true;
 
 	// Check device memory (if available)
 	if (navigator.deviceMemory && navigator.deviceMemory <= 2) {
-		return true
+		return true;
 	}
 
 	// Check connection speed
 	if (navigator.connection) {
-		const conn = navigator.connection
+		const conn = navigator.connection;
 		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		if (conn.effectiveType === "slow-2g" || conn.effectiveType === "2g") {
-			return true
+			return true;
 		}
 		if (conn.saveData) {
-			return true // User has enabled data saver
+			return true; // User has enabled data saver
 		}
 	}
 
-	return false
+	return false;
 }
 
 /**
@@ -411,7 +411,7 @@ export function isLowEndDevice() {
  * @returns {Object} Performance settings
  */
 export function getPerformanceSettings() {
-	const isLowEnd = isLowEndDevice()
+	const isLowEnd = isLowEndDevice();
 
 	return {
 		isLowEnd,
@@ -422,8 +422,8 @@ export function getPerformanceSettings() {
 		//// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
 		lazyLoadThreshold: isLowEnd ? "50px" : "200px",
 		maxVisibleItems: isLowEnd ? 50 : 100,
-	}
+	};
 }
 
 //// Neoffice — same Biome formatter pass (458d81a9): layout only, no behaviour change.
-log.info("Low-end optimizations loaded", { isLowEnd: isLowEndDevice() })
+log.info("Low-end optimizations loaded", { isLowEnd: isLowEndDevice() });

@@ -1,7 +1,7 @@
 //// Neoffice — onMounted imported for the document-level scanner listener added below
 //// (7fe0b7d1, 2026-07-09 "capture hardware scanner globally in scanner mode").
-import { ref, watch, nextTick, onMounted, onUnmounted } from "vue"
-import { QueuedMutex } from "@/utils/mutex"
+import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
+import { QueuedMutex } from "@/utils/mutex";
 
 /**
  * Composable for search input, barcode scanning, and auto-add logic.
@@ -29,25 +29,20 @@ import { QueuedMutex } from "@/utils/mutex"
 //// per line (458d81a9). The real divergence of this file is the global scanner capture
 //// marked below (7fe0b7d1).
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-export function useSearchInput({
-	itemStore,
-	onItemFound,
-	showWarning,
-	isAnyDialogOpen,
-}) {
+export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialogOpen }) {
 	// --- Reactive state (exposed) ---
-	const searchInputRef = ref(null)
-	const scannerEnabled = ref(false)
-	const autoAddEnabled = ref(false)
+	const searchInputRef = ref(null);
+	const scannerEnabled = ref(false);
+	const autoAddEnabled = ref(false);
 
 	// --- Internal (non-reactive) ---
-	let autoSearchTimer = null
+	let autoSearchTimer = null;
 	//// Neoffice — Biome reformat only here: the QueuedMutex options object wrapped onto
 	//// three lines (458d81a9). The block that follows is the real change.
 	const barcodeQueue = new QueuedMutex({
 		timeout: 10000,
 		name: "BarcodeSearch",
-	})
+	});
 
 	//// Neoffice — no upstream equivalent: upstream bound the barcode handler to the search
 	//// input's keydown only, so a hardware scanner stopped working the moment the cashier
@@ -58,17 +53,17 @@ export function useSearchInput({
 	// capture those bursts at the document level so a scan lands in the cart even
 	// after the cashier clicked elsewhere. Human typing is filtered out by the
 	// inter-key gap; typing into a real field (or during a modal) is never hijacked.
-	let scanBuffer = ""
-	let lastScanKeyTime = 0
-	const SCAN_RESET_MS = 60 // gap above which the buffer resets (scanner ≪ human)
-	const SCAN_MIN_LENGTH = 3
+	let scanBuffer = "";
+	let lastScanKeyTime = 0;
+	const SCAN_RESET_MS = 60; // gap above which the buffer resets (scanner ≪ human)
+	const SCAN_MIN_LENGTH = 3;
 
 	// ---- Timer helpers ----
 
 	function clearAutoSearchTimer() {
 		if (autoSearchTimer) {
-			clearTimeout(autoSearchTimer)
-			autoSearchTimer = null
+			clearTimeout(autoSearchTimer);
+			autoSearchTimer = null;
 		}
 	}
 
@@ -77,22 +72,22 @@ export function useSearchInput({
 	function focusSearchInput() {
 		nextTick(() => {
 			if (searchInputRef.value) {
-				searchInputRef.value.focus()
+				searchInputRef.value.focus();
 			}
-		})
+		});
 	}
 
 	// ---- Clear ----
 
 	/** Atomic clear: timer -> store -> DOM input.value -> refocus */
 	function clearSearchAndResetInput() {
-		clearAutoSearchTimer()
-		itemStore.clearSearch()
+		clearAutoSearchTimer();
+		itemStore.clearSearch();
 		if (searchInputRef.value) {
-			searchInputRef.value.value = ""
+			searchInputRef.value.value = "";
 		}
 		if (scannerEnabled.value || autoAddEnabled.value) {
-			focusSearchInput()
+			focusSearchInput();
 		}
 	}
 
@@ -100,8 +95,8 @@ export function useSearchInput({
 
 	function handleKeyDown(event) {
 		if (event.key === "Enter") {
-			event.preventDefault()
-			clearAutoSearchTimer()
+			event.preventDefault();
+			clearAutoSearchTimer();
 
 			// Snapshot the barcode NOW from the DOM input, before anything overwrites it
 			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
@@ -110,17 +105,16 @@ export function useSearchInput({
 			//// wholesale and re-run the formatter, do not hand-merge these hunks
 			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
 			//// formatting").
-			const barcode =
-				searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim()
+			const barcode = searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim();
 			if (barcode) {
 				// Clear input immediately so next scan starts clean
-				itemStore.clearSearch()
-				if (searchInputRef.value) searchInputRef.value.value = ""
+				itemStore.clearSearch();
+				if (searchInputRef.value) searchInputRef.value.value = "";
 
 				// Queue the search with the captured barcode
-				processBarcodeScan(barcode, autoAddEnabled.value)
+				processBarcodeScan(barcode, autoAddEnabled.value);
 			}
-			return
+			return;
 		}
 		// All other keys: no special handling needed.
 		// Dead scanner-speed-detection code removed.
@@ -136,35 +130,35 @@ export function useSearchInput({
 	 *      separate from display.
 	 */
 	function handleSearchInput(event) {
-		const value = event.target.value
+		const value = event.target.value;
 
 		// Guard: ignore stale empty events after search was already cleared
 		if (!value && !itemStore.searchTerm) {
-			return
+			return;
 		}
 
-		itemStore.setSearchTerm(value)
+		itemStore.setSearchTerm(value);
 
-		clearAutoSearchTimer()
+		clearAutoSearchTimer();
 
 		// Auto-add: after user stops typing for 500 ms, trigger barcode search
 		if (autoAddEnabled.value && value.trim().length > 0) {
 			autoSearchTimer = setTimeout(() => {
 				//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 				const barcode =
-					searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim()
+					searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim();
 				if (barcode) {
-					itemStore.clearSearch()
-					if (searchInputRef.value) searchInputRef.value.value = ""
-					processBarcodeScan(barcode, true)
+					itemStore.clearSearch();
+					if (searchInputRef.value) searchInputRef.value.value = "";
+					processBarcodeScan(barcode, true);
 				}
-			}, 500)
+			}, 500);
 		}
 	}
 
 	/** Clicking the search input clears search + timer atomically. */
 	function handleSearchClick() {
-		clearSearchAndResetInput()
+		clearSearchAndResetInput();
 	}
 
 	/**
@@ -183,19 +177,18 @@ export function useSearchInput({
 	 */
 	function processBarcodeScan(barcode, forceAutoAdd) {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		const shouldAutoAdd =
-			forceAutoAdd || (scannerEnabled.value && autoAddEnabled.value)
+		const shouldAutoAdd = forceAutoAdd || (scannerEnabled.value && autoAddEnabled.value);
 
 		barcodeQueue.withLock(async () => {
 			try {
-				const item = await itemStore.searchByBarcode(barcode)
+				const item = await itemStore.searchByBarcode(barcode);
 				if (item) {
-					onItemFound(item, shouldAutoAdd)
-					focusSearchInput()
-					return
+					onItemFound(item, shouldAutoAdd);
+					focusSearchInput();
+					return;
 				}
 			} catch (error) {
-				console.error("Barcode API error:", error)
+				console.error("Barcode API error:", error);
 			}
 
 			// Barcode not found — show clear "not found" message.
@@ -203,39 +196,37 @@ export function useSearchInput({
 			// clearSearch() was called before the API request, so
 			// filteredItems would contain ALL cached items (not search results).
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-			showWarning(
-				__("Item Not Found: No item found with barcode: {0}", [barcode]),
-			)
-			focusSearchInput()
-		})
+			showWarning(__("Item Not Found: No item found with barcode: {0}", [barcode]));
+			focusSearchInput();
+		});
 	}
 
 	// ---- Toggles ----
 
 	function toggleBarcodeScanner() {
-		scannerEnabled.value = !scannerEnabled.value
+		scannerEnabled.value = !scannerEnabled.value;
 
 		if (scannerEnabled.value) {
-			autoAddEnabled.value = true
-			focusSearchInput()
+			autoAddEnabled.value = true;
+			focusSearchInput();
 		} else {
-			autoAddEnabled.value = false
+			autoAddEnabled.value = false;
 		}
 	}
 
 	function toggleAutoAdd() {
-		autoAddEnabled.value = !autoAddEnabled.value
+		autoAddEnabled.value = !autoAddEnabled.value;
 
 		if (autoAddEnabled.value && !scannerEnabled.value) {
-			scannerEnabled.value = true
+			scannerEnabled.value = true;
 		}
 
 		if (!autoAddEnabled.value) {
-			clearAutoSearchTimer()
+			clearAutoSearchTimer();
 		}
 
 		if (autoAddEnabled.value) {
-			focusSearchInput()
+			focusSearchInput();
 		}
 	}
 
@@ -250,14 +241,14 @@ export function useSearchInput({
 
 	/** True when the event target is a field that owns its own text input. */
 	function isEditableTarget(el) {
-		if (!el) return false
-		const tag = el.tagName
+		if (!el) return false;
+		const tag = el.tagName;
 		return (
 			tag === "INPUT" ||
 			tag === "TEXTAREA" ||
 			tag === "SELECT" ||
 			el.isContentEditable === true
-		)
+		);
 	}
 
 	/**
@@ -269,59 +260,54 @@ export function useSearchInput({
 	 * (SCAN_RESET_MS) discards slow human keystrokes so only real scans fire.
 	 */
 	function handleGlobalKeydown(event) {
-		if (!scannerEnabled.value) return
-		if (isAnyDialogOpen?.value) return
+		if (!scannerEnabled.value) return;
+		if (isAnyDialogOpen?.value) return;
 		// Editable fields (incl. the search input) handle their own keydown.
-		if (isEditableTarget(event.target)) return
+		if (isEditableTarget(event.target)) return;
 
-		const now = Date.now()
-		if (now - lastScanKeyTime > SCAN_RESET_MS) scanBuffer = ""
-		lastScanKeyTime = now
+		const now = Date.now();
+		if (now - lastScanKeyTime > SCAN_RESET_MS) scanBuffer = "";
+		lastScanKeyTime = now;
 
 		if (event.key === "Enter") {
-			const barcode = scanBuffer
-			scanBuffer = ""
+			const barcode = scanBuffer;
+			scanBuffer = "";
 			if (barcode.length >= SCAN_MIN_LENGTH) {
-				event.preventDefault()
-				processBarcodeScan(barcode, autoAddEnabled.value)
+				event.preventDefault();
+				processBarcodeScan(barcode, autoAddEnabled.value);
 			}
-			return
+			return;
 		}
 
 		// Accumulate single printable characters (ignore modifiers/navigation).
-		if (
-			event.key.length === 1 &&
-			!event.ctrlKey &&
-			!event.metaKey &&
-			!event.altKey
-		) {
-			scanBuffer += event.key
+		if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+			scanBuffer += event.key;
 		}
 	}
 
 	onMounted(() => {
-		document.addEventListener("keydown", handleGlobalKeydown, true)
-	})
+		document.addEventListener("keydown", handleGlobalKeydown, true);
+	});
 
 	// ---- Dialog-close watcher ----
 	// Refocuses the search bar when all dialogs close (scanner/auto-add modes)
 	const stopDialogWatcher = watch(isAnyDialogOpen, (isOpen, wasOpen) => {
 		if (wasOpen && !isOpen && (scannerEnabled.value || autoAddEnabled.value)) {
-			focusSearchInput()
+			focusSearchInput();
 		}
-	})
+	});
 
 	// ---- Cleanup ----
 	function cleanup() {
-		clearAutoSearchTimer()
-		stopDialogWatcher()
+		clearAutoSearchTimer();
+		stopDialogWatcher();
 		//// Neoffice — the document-level listener is torn down with the composable: a leaked
 		//// capture-phase keydown would keep swallowing keys for the rest of the session
 		//// (7fe0b7d1, 2026-07-09).
-		document.removeEventListener("keydown", handleGlobalKeydown, true)
+		document.removeEventListener("keydown", handleGlobalKeydown, true);
 	}
 
-	onUnmounted(cleanup)
+	onUnmounted(cleanup);
 
 	return {
 		// State
@@ -342,5 +328,5 @@ export function useSearchInput({
 		focusSearchInput,
 		clearSearchAndResetInput,
 		cleanup,
-	}
+	};
 }

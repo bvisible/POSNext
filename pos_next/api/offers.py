@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2025, POS Next and contributors
 # For license information, please see license.txt
 
@@ -9,28 +8,31 @@ This module provides a clean API for retrieving promotional offers from both
 Promotional Schemes and standalone Pricing Rules.
 """
 
+from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
+
 import frappe
 
 # //// Neoffice — recognize both gift-card families (POS flag + ERPNext-native coupon_type) so validate_coupon routes them correctly (45b52c86 "fix(gift-cards): a card bought online kept its full balance after being spent")
 from pos_next.api.gift_cards import is_gift_card
 from frappe import _
-from frappe.utils import flt, getdate, nowdate
-
+from frappe.utils import cint, flt, getdate, nowdate
 
 # ============================================================================
 # Constants
 # ============================================================================
 
+
 class DiscountType:
 	"""Discount type constants"""
+
 	PRICE = "Price"
 	PRODUCT = "Product"
 
 
 class ApplyOn:
 	"""Apply on constants"""
+
 	ITEM_CODE = "Item Code"
 	ITEM_GROUP = "Item Group"
 	BRAND = "Brand"
@@ -39,6 +41,7 @@ class ApplyOn:
 
 class OfferSource:
 	"""Offer source constants"""
+
 	PROMOTIONAL_SCHEME = "Promotional Scheme"
 	PRICING_RULE = "Pricing Rule"
 
@@ -47,17 +50,20 @@ class OfferSource:
 # Data Classes
 # ============================================================================
 
+
 @dataclass
 class OfferEligibility:
 	"""Eligibility criteria for an offer"""
-	items: List[str]
-	item_groups: List[str]
-	brands: List[str]
+
+	items: list[str]
+	item_groups: list[str]
+	brands: list[str]
 
 
 @dataclass
 class Offer:
 	"""Structured offer data"""
+
 	name: str
 	title: str
 	description: str
@@ -69,28 +75,31 @@ class Offer:
 	max_qty: float
 	min_amt: float
 	max_amt: float
-	discount_type: Optional[str]
+	discount_type: str | None
 	rate: float
 	discount_amount: float
 	discount_percentage: float
-	valid_from: Optional[str]
-	valid_upto: Optional[str]
+	apply_discount_on_price: str | None
+	min_or_max_discount_qty_limit: int
+	valid_from: str | None
+	valid_upto: str | None
 	source: str
-	promotional_scheme: Optional[str]
-	promotional_scheme_id: Optional[str]
-	eligible_items: List[str]
-	eligible_item_groups: List[str]
-	eligible_brands: List[str]
+	promotional_scheme: str | None
+	promotional_scheme_id: str | None
+	eligible_items: list[str]
+	eligible_item_groups: list[str]
+	eligible_brands: list[str]
 	# Free item fields for product discounts
-	free_item: Optional[str] = None
+	free_item: str | None = None
 	free_qty: float = 0
-	free_item_uom: Optional[str] = None
+	free_item_uom: str | None = None
 	same_item: int = 0  # 1 if free item should be same as purchased item
 	is_recursive: int = 0  # 1 if offer applies recursively (e.g., buy 2 get 1 free for every 2)
 	recurse_for: float = 0  # Give free item for every N quantity (used when is_recursive=1)
 	apply_recursion_over: float = 0  # Qty for which recursion isn't applicable
+	one_time_per_customer: int = 0  # 1 if each customer may redeem this offer only once
 
-	def to_dict(self) -> Dict:
+	def to_dict(self) -> dict:
 		"""Convert to dictionary for API response"""
 		return asdict(self)
 
@@ -99,11 +108,12 @@ class Offer:
 # Database Query Helpers
 # ============================================================================
 
+
 class EligibilityFetcher:
 	"""Fetches eligibility criteria for pricing rules/schemes in bulk"""
 
 	@staticmethod
-	def fetch_all(parent_names: List[str]) -> Dict[str, OfferEligibility]:
+	def fetch_all(parent_names: list[str]) -> dict[str, OfferEligibility]:
 		"""
 		Fetch all eligibility criteria for given parent names
 
@@ -126,13 +136,13 @@ class EligibilityFetcher:
 			eligibility[parent] = OfferEligibility(
 				items=items_map.get(parent, []),
 				item_groups=item_groups_map.get(parent, []),
-				brands=brands_map.get(parent, [])
+				brands=brands_map.get(parent, []),
 			)
 
 		return eligibility
 
 	@staticmethod
-	def _fetch_items(parent_names: List[str]) -> Dict[str, List[str]]:
+	def _fetch_items(parent_names: list[str]) -> dict[str, list[str]]:
 		"""
 		Fetch item codes for given parents, expanding template items to include variants.
 
@@ -140,11 +150,15 @@ class EligibilityFetcher:
 		automatically includes all its variant items in the eligible items list.
 		This ensures offers work correctly when variants are added to cart.
 		"""
-		results = frappe.db.sql("""
+		results = frappe.db.sql(
+			"""
 			SELECT parent, item_code
 			FROM `tabPricing Rule Item Code`
 			WHERE parent IN %s
-		""", [parent_names], as_dict=1)
+		""",
+			[parent_names],
+			as_dict=1,
+		)
 
 		if not results:
 			return {}
@@ -154,12 +168,7 @@ class EligibilityFetcher:
 
 		# Find which items are templates (have variants)
 		template_items = frappe.get_all(
-			"Item",
-			filters={
-				"name": ["in", all_item_codes],
-				"has_variants": 1
-			},
-			pluck="name"
+			"Item", filters={"name": ["in", all_item_codes], "has_variants": 1}, pluck="name"
 		)
 
 		# Fetch variants for all template items in one query
@@ -167,11 +176,8 @@ class EligibilityFetcher:
 		if template_items:
 			variants = frappe.get_all(
 				"Item",
-				filters={
-					"variant_of": ["in", template_items],
-					"disabled": 0
-				},
-				fields=["name", "variant_of"]
+				filters={"variant_of": ["in", template_items], "disabled": 0},
+				fields=["name", "variant_of"],
 			)
 			for variant in variants:
 				variants_map.setdefault(variant["variant_of"], []).append(variant["name"])
@@ -191,13 +197,17 @@ class EligibilityFetcher:
 		return items_map
 
 	@staticmethod
-	def _fetch_item_groups(parent_names: List[str]) -> Dict[str, List[str]]:
+	def _fetch_item_groups(parent_names: list[str]) -> dict[str, list[str]]:
 		"""Fetch item groups for given parents"""
-		results = frappe.db.sql("""
+		results = frappe.db.sql(
+			"""
 			SELECT parent, item_group
 			FROM `tabPricing Rule Item Group`
 			WHERE parent IN %s
-		""", [parent_names], as_dict=1)
+		""",
+			[parent_names],
+			as_dict=1,
+		)
 
 		groups_map = {}
 		for row in results:
@@ -205,13 +215,17 @@ class EligibilityFetcher:
 		return groups_map
 
 	@staticmethod
-	def _fetch_brands(parent_names: List[str]) -> Dict[str, List[str]]:
+	def _fetch_brands(parent_names: list[str]) -> dict[str, list[str]]:
 		"""Fetch brands for given parents"""
-		results = frappe.db.sql("""
+		results = frappe.db.sql(
+			"""
 			SELECT parent, brand
 			FROM `tabPricing Rule Brand`
 			WHERE parent IN %s
-		""", [parent_names], as_dict=1)
+		""",
+			[parent_names],
+			as_dict=1,
+		)
 
 		brands_map = {}
 		for row in results:
@@ -223,20 +237,25 @@ class SlabFetcher:
 	"""Fetches discount slabs for promotional schemes"""
 
 	@staticmethod
-	def fetch_price_slabs(scheme_names: List[str]) -> Dict[str, Dict]:
+	def fetch_price_slabs(scheme_names: list[str]) -> dict[str, dict]:
 		"""Fetch first price discount slab for each scheme"""
 		if not scheme_names:
 			return {}
 
-		results = frappe.db.sql("""
+		results = frappe.db.sql(
+			"""
 			SELECT
 				parent, min_qty, max_qty, min_amount, max_amount,
 				rate_or_discount, rate, discount_amount, discount_percentage,
+				apply_discount_on_price, min_or_max_discount_qty_limit,
 				apply_multiple_pricing_rules
 			FROM `tabPromotional Scheme Price Discount`
 			WHERE parent IN %s AND disable = 0
 			ORDER BY parent, min_amount ASC, min_qty ASC
-		""", [scheme_names], as_dict=1)
+		""",
+			[scheme_names],
+			as_dict=1,
+		)
 
 		# Take first slab for each parent
 		slabs_map = {}
@@ -247,12 +266,13 @@ class SlabFetcher:
 		return slabs_map
 
 	@staticmethod
-	def fetch_product_slabs(scheme_names: List[str]) -> Dict[str, Dict]:
+	def fetch_product_slabs(scheme_names: list[str]) -> dict[str, dict]:
 		"""Fetch first product discount slab for each scheme"""
 		if not scheme_names:
 			return {}
 
-		results = frappe.db.sql("""
+		results = frappe.db.sql(
+			"""
 			SELECT
 				parent, min_qty, max_qty, min_amount, max_amount,
 				apply_multiple_pricing_rules,
@@ -261,7 +281,10 @@ class SlabFetcher:
 			FROM `tabPromotional Scheme Product Discount`
 			WHERE parent IN %s AND disable = 0
 			ORDER BY parent, min_amount ASC, min_qty ASC
-		""", [scheme_names], as_dict=1)
+		""",
+			[scheme_names],
+			as_dict=1,
+		)
 
 		# Take first slab for each parent
 		slabs_map = {}
@@ -276,15 +299,12 @@ class SlabFetcher:
 # Offer Builders
 # ============================================================================
 
+
 class OfferBuilder:
 	"""Builds Offer objects from pricing rules and schemes"""
 
 	@staticmethod
-	def build_from_scheme_rule(
-		rule: Dict,
-		slab: Dict,
-		eligibility: OfferEligibility
-	) -> Offer:
+	def build_from_scheme_rule(rule: dict, slab: dict, eligibility: OfferEligibility) -> Offer:
 		"""Build offer from promotional scheme pricing rule"""
 
 		# Determine if auto-apply
@@ -324,6 +344,10 @@ class OfferBuilder:
 			rate=flt(slab.get("rate", 0)) if is_price_discount else 0,
 			discount_amount=flt(slab.get("discount_amount", 0)) if is_price_discount else 0,
 			discount_percentage=flt(slab.get("discount_percentage", 0)) if is_price_discount else 0,
+			apply_discount_on_price=(slab.get("apply_discount_on_price") if is_price_discount else None),
+			min_or_max_discount_qty_limit=(
+				cint(slab.get("min_or_max_discount_qty_limit", 0)) if is_price_discount else 0
+			),
 			valid_from=rule.get("valid_from"),
 			valid_upto=rule.get("valid_upto"),
 			source=OfferSource.PROMOTIONAL_SCHEME,
@@ -339,14 +363,12 @@ class OfferBuilder:
 			same_item=1 if slab.get("same_item") and not is_price_discount else 0,
 			is_recursive=1 if slab.get("is_recursive") and not is_price_discount else 0,
 			recurse_for=flt(slab.get("recurse_for", 0)) if not is_price_discount else 0,
-			apply_recursion_over=flt(slab.get("apply_recursion_over", 0)) if not is_price_discount else 0
+			apply_recursion_over=flt(slab.get("apply_recursion_over", 0)) if not is_price_discount else 0,
+			one_time_per_customer=1 if rule.get("one_time_per_customer") else 0,
 		)
 
 	@staticmethod
-	def build_from_standalone_rule(
-		rule: Dict,
-		eligibility: OfferEligibility
-	) -> Offer:
+	def build_from_standalone_rule(rule: dict, eligibility: OfferEligibility) -> Offer:
 		"""Build offer from standalone pricing rule"""
 
 		# Standalone rules auto-apply unless coupon-based
@@ -380,6 +402,8 @@ class OfferBuilder:
 			rate=flt(rule.get("rate", 0)),
 			discount_amount=flt(rule.get("discount_amount", 0)),
 			discount_percentage=flt(rule.get("discount_percentage", 0)),
+			apply_discount_on_price=rule.get("apply_discount_on_price"),
+			min_or_max_discount_qty_limit=cint(rule.get("min_or_max_discount_qty_limit", 0)),
 			valid_from=rule.get("valid_from"),
 			valid_upto=rule.get("valid_upto"),
 			source=OfferSource.PRICING_RULE,
@@ -387,7 +411,8 @@ class OfferBuilder:
 			promotional_scheme_id=None,
 			eligible_items=eligible_items,
 			eligible_item_groups=eligible_item_groups,
-			eligible_brands=eligible_brands
+			eligible_brands=eligible_brands,
+			one_time_per_customer=1 if rule.get("one_time_per_customer") else 0,
 		)
 
 
@@ -395,8 +420,9 @@ class OfferBuilder:
 # Main API Functions
 # ============================================================================
 
+
 @frappe.whitelist()
-def get_offers(pos_profile: str) -> List[Dict]:
+def get_offers(pos_profile: str) -> list[dict]:
 	"""
 	Fetch all auto-applicable offers for the POS profile
 
@@ -428,18 +454,37 @@ def get_offers(pos_profile: str) -> List[Dict]:
 		return [offer.to_dict() for offer in offers]
 
 	except Exception as e:
-		frappe.log_error(f"Error fetching offers: {str(e)}", "Offers API")
+		frappe.log_error(f"Error fetching offers: {e!s}", "Offers API")
 		return []
 
 
-def _get_promotional_scheme_offers(company: str, date: str) -> List[Offer]:
+@frappe.whitelist()
+def get_customer_one_time_redemptions(customer: str) -> list[str]:
+	"""Return the Pricing Rule names a customer has already redeemed once.
+
+	Used by the POS frontend to enforce one-time-per-customer offers OFFLINE:
+	the cart caches this list when a customer is selected (while online) so the
+	offline offer engine can mirror the server-side gate in ``apply_offers``.
+	"""
+	if not customer or not frappe.db.table_exists("One Time Customer Offer Usage"):
+		return []
+
+	return frappe.get_all(
+		"One Time Customer Offer Usage",
+		filters={"customer": customer},
+		pluck="pricing_rule",
+	)
+
+
+def _get_promotional_scheme_offers(company: str, date: str) -> list[Offer]:
 	"""Fetch offers from promotional schemes"""
 
 	# Fetch pricing rules linked to promotional schemes
-	pricing_rules = frappe.db.sql("""
+	pricing_rules = frappe.db.sql(
+		"""
 		SELECT
 			name, title, apply_on, selling, promotional_scheme,
-			promotional_scheme_id, coupon_code_based,
+			promotional_scheme_id, coupon_code_based, one_time_per_customer,
 			price_or_product_discount, priority, valid_from, valid_upto
 		FROM `tabPricing Rule`
 		WHERE
@@ -450,7 +495,10 @@ def _get_promotional_scheme_offers(company: str, date: str) -> List[Offer]:
 			AND (valid_from IS NULL OR valid_from <= %(date)s)
 			AND (valid_upto IS NULL OR valid_upto >= %(date)s)
 		ORDER BY priority DESC, name
-	""", {"company": company, "date": date}, as_dict=1)
+	""",
+		{"company": company, "date": date},
+		as_dict=1,
+	)
 
 	if not pricing_rules:
 		return []
@@ -484,15 +532,17 @@ def _get_promotional_scheme_offers(company: str, date: str) -> List[Offer]:
 	return offers
 
 
-def _get_standalone_pricing_rule_offers(company: str, date: str) -> List[Offer]:
+def _get_standalone_pricing_rule_offers(company: str, date: str) -> list[Offer]:
 	"""Fetch offers from standalone pricing rules"""
 
 	# Fetch standalone pricing rules (not linked to schemes)
-	pricing_rules = frappe.db.sql("""
+	pricing_rules = frappe.db.sql(
+		"""
 		SELECT
 			name, title, apply_on, selling,
-			coupon_code_based, price_or_product_discount,
+			coupon_code_based, one_time_per_customer, price_or_product_discount,
 			rate_or_discount, rate, discount_amount, discount_percentage,
+			apply_discount_on_price, min_or_max_discount_qty_limit,
 			min_qty, max_qty, min_amt, max_amt,
 			priority, valid_from, valid_upto
 		FROM `tabPricing Rule`
@@ -505,7 +555,10 @@ def _get_standalone_pricing_rule_offers(company: str, date: str) -> List[Offer]:
 			AND (valid_upto IS NULL OR valid_upto >= %(date)s)
 			AND price_or_product_discount = %(discount_type)s
 		ORDER BY priority DESC, name
-	""", {"company": company, "date": date, "discount_type": DiscountType.PRICE}, as_dict=1)
+	""",
+		{"company": company, "date": date, "discount_type": DiscountType.PRICE},
+		as_dict=1,
+	)
 
 	if not pricing_rules:
 		return []
@@ -530,6 +583,7 @@ def _get_standalone_pricing_rule_offers(company: str, date: str) -> List[Offer]:
 # Coupon Functions
 # ============================================================================
 
+
 # //// Neoffice — gift cards are ERPNext Coupon Code documents flagged with our pos_next_gift_card
 # //// Custom Field, not upstream's own POS Coupon doctype which the ERP knew nothing about. They
 # //// are bearer cards, so a card with no customer is valid for anyone; balance and validity are
@@ -552,7 +606,8 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	# //// Neoffice — gift cards are ERPNext Coupon Code rows; see the marker above (ce505902).
 	# Build SQL query for ERPNext Coupon Code with gift card custom fields
 	# Get both customer-specific and anonymous gift cards
-	coupons = frappe.db.sql("""
+	coupons = frappe.db.sql(
+		"""
 		SELECT
 			cc.name,
 			cc.coupon_code,
@@ -574,7 +629,10 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 			AND (cc.customer = %(customer)s OR cc.customer IS NULL OR cc.customer = '')
 			AND (cc.valid_from IS NULL OR cc.valid_from <= %(today)s)
 			AND (cc.valid_upto IS NULL OR cc.valid_upto >= %(today)s)
-	""", {"company": company, "customer": customer or "", "today": today}, as_dict=1)
+	""",
+		{"company": company, "customer": customer or "", "today": today},
+		as_dict=1,
+	)
 
 	valid_cards = []
 	for card in coupons:
@@ -603,22 +661,24 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 			customer_name = frappe.db.get_value("Customer", card.customer, "customer_name")
 
 		# Add balance and format response for frontend compatibility
-		valid_cards.append({
-			"name": card.name,
-			"coupon_code": card.coupon_code,
-			"coupon_name": card.coupon_name or card.coupon_code,
-			"customer": card.customer,
-			"customer_name": customer_name,
-			"gift_card_amount": card.gift_card_amount,
-			"original_amount": card.original_gift_card_amount,
-			"balance": balance,
-			"valid_from": card.valid_from,
-			"valid_upto": card.valid_upto,
-			"used": card.used,
-			"maximum_use": card.maximum_use,
-			"source_invoice": card.source_invoice,
-			"company": card.company,
-		})
+		valid_cards.append(
+			{
+				"name": card.name,
+				"coupon_code": card.coupon_code,
+				"coupon_name": card.coupon_name or card.coupon_code,
+				"customer": card.customer,
+				"customer_name": customer_name,
+				"gift_card_amount": card.gift_card_amount,
+				"original_amount": card.original_gift_card_amount,
+				"balance": balance,
+				"valid_from": card.valid_from,
+				"valid_upto": card.valid_upto,
+				"used": card.used,
+				"maximum_use": card.maximum_use,
+				"source_invoice": card.source_invoice,
+				"company": card.company,
+			}
+		)
 
 	return valid_cards
 
@@ -639,11 +699,15 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 	Works with ERPNext Coupon Code directly.
 	For gift cards (pos_next_gift_card=1), also checks balance and supports splitting.
 	"""
+	# //// Neoffice — no "Please choose a customer" refusal here, unlike upstream v2.0.0 (PR #333):
+	# //// a gift card is a bearer card and stays valid without a customer, and a named promotional
+	# //// coupon is refused further down when the customer does not match (test_coupon_validation).
 	date = getdate()
 
 	# //// Neoffice — see the validate_coupon block header above (e34a269a); same Coupon Code rewrite.
 	# Fetch ERPNext Coupon Code with case-insensitive code matching
-	coupon = frappe.db.sql("""
+	coupon = frappe.db.sql(
+		"""
 		SELECT
 			cc.name,
 			cc.coupon_code,
@@ -666,7 +730,10 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 		WHERE
 			UPPER(cc.coupon_code) = %(coupon_code)s
 			AND (pr.company = %(company)s OR pr.company IS NULL)
-	""", {"coupon_code": coupon_code.upper(), "company": company}, as_dict=1)
+	""",
+		{"coupon_code": coupon_code.upper(), "company": company},
+		as_dict=1,
+	)
 
 	if not coupon:
 		return {"valid": False, "message": _("Invalid coupon code")}
@@ -728,7 +795,7 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 				"is_gift_card": True,
 				"pricing_rule": coupon.pricing_rule,
 				"company": coupon.company,
-			}
+			},
 		}
 	else:
 		# Standard promotional coupons - check usage limits
@@ -745,7 +812,7 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 				"Pricing Rule",
 				coupon.pricing_rule,
 				["rate_or_discount", "discount_percentage", "discount_amount"],
-				as_dict=True
+				as_dict=True,
 			)
 			if pr:
 				# Map Pricing Rule values to frontend expected values
@@ -778,6 +845,8 @@ def validate_coupon(coupon_code: str, customer: str = None, company: str = None)
 				"discount_type": discount_type,
 				"discount_percentage": discount_percentage,
 				"discount_amount": discount_amount,
-			}
+			},
 		}
+
+
 # //// Neoffice — ▲▲▲ end of the ERPNext-Coupon-Code validate_coupon rewrite.

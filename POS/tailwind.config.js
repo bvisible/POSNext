@@ -1,4 +1,4 @@
-import frappeUIPreset from "frappe-ui/tailwind"
+import frappeUIPreset from "frappe-ui/tailwind";
 
 export default {
 	presets: [frappeUIPreset],
@@ -27,8 +27,8 @@ export default {
 					800: "#633619",
 					900: "#4a2812",
 					950: "#2e190b",
-				}
-				return { blue: clay, violet: clay, purple: clay, indigo: clay }
+				};
+				return { blue: clay, violet: clay, purple: clay, indigo: clay };
 			})(),
 			borderRadius: {
 				"neo-sm": "8px",
@@ -40,12 +40,10 @@ export default {
 			},
 			boxShadow: {
 				neo: "0 2px 8px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-				"neo-md":
-					"0 4px 16px 0 rgba(0, 0, 0, 0.06), 0 2px 4px 0 rgba(0, 0, 0, 0.04)",
-				"neo-lg":
-					"0 8px 32px 0 rgba(0, 0, 0, 0.08), 0 4px 8px 0 rgba(0, 0, 0, 0.04)",
+				"neo-md": "0 4px 16px 0 rgba(0, 0, 0, 0.06), 0 2px 4px 0 rgba(0, 0, 0, 0.04)",
+				"neo-lg": "0 8px 32px 0 rgba(0, 0, 0, 0.08), 0 4px 8px 0 rgba(0, 0, 0, 0.04)",
 			},
 		},
 	},
 	plugins: [],
-}
+};

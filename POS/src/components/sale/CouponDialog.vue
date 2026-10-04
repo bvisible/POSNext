@@ -19,14 +19,24 @@
 				<!-- Info Banner -->
 				<div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
 					<div class="flex items-start gap-2">
-						<svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd"
+						<svg
+							class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								fill-rule="evenodd"
 								d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-								clip-rule="evenodd" />
+								clip-rule="evenodd"
+							/>
 						</svg>
 						<div class="flex-1">
-							<p class="text-xs font-medium text-blue-900">{{ __('Have a coupon code?') }}</p>
-							<p class="text-xs text-blue-700 mt-0.5">{{ __('Enter your promotional or gift card code below') }}</p>
+							<p class="text-xs font-medium text-blue-900">
+								{{ __("Have a coupon code?") }}
+							</p>
+							<p class="text-xs text-blue-700 mt-0.5">
+								{{ __("Enter your promotional or gift card code below") }}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -34,53 +44,92 @@
 				<!-- Coupon Code Input -->
 				<div v-if="!appliedDiscount">
 					<label class="block text-sm font-medium text-gray-700 mb-2 text-start">
-						{{ __('Coupon Code') }}
+						{{ __("Coupon Code") }}
 					</label>
 					<div class="flex gap-2">
-						<Input v-model="couponCode" type="text" :placeholder="__('ENTER-CODE-HERE')" class="flex-1 uppercase"
-							@keyup.enter="applyCoupon" :disabled="applying" />
-						<Button @click="applyCoupon" :loading="applying" theme="blue" variant="solid" class="flex-shrink-0">
-							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M5 13l4 4L19 7" />
+						<Input
+							v-model="couponCode"
+							type="text"
+							:placeholder="__('ENTER-CODE-HERE')"
+							class="flex-1 uppercase"
+							@keyup.enter="applyCoupon"
+							:disabled="applying"
+						/>
+						<Button
+							@click="applyCoupon"
+							:loading="applying"
+							theme="blue"
+							variant="solid"
+							class="flex-shrink-0"
+						>
+							<svg
+								class="w-3.5 h-3.5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M5 13l4 4L19 7"
+								/>
 							</svg>
 						</Button>
 					</div>
-					<p class="text-xs text-gray-500 mt-1">{{ __('Code is case-insensitive') }}</p>
+					<p class="text-xs text-gray-500 mt-1">{{ __("Code is case-insensitive") }}</p>
 				</div>
 
 				<!-- My Gift Cards -->
 				<div v-if="giftCards.length > 0 && !appliedDiscount">
 					<label class="block text-sm font-medium text-gray-700 mb-2 text-start">
 						<div class="flex items-center gap-2">
-							<svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+							<svg
+								class="w-4 h-4 text-purple-600"
+								fill="currentColor"
+								viewBox="0 0 20 20"
+							>
 								<path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-								<path fill-rule="evenodd"
+								<path
+									fill-rule="evenodd"
 									d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-									clip-rule="evenodd" />
+									clip-rule="evenodd"
+								/>
 							</svg>
 							<!-- //// Neoffice — upstream titled this "My Gift Cards": its POS Coupon gift cards -->
 							<!-- //// always belonged to a customer. Ours are ERPNext Coupon Codes that can be -->
 							<!-- //// issued anonymously (bearer cards sold over the counter), so what the list -->
 							<!-- //// shows is not "mine" but what this till can accept (ce505902, 2026-01-12 -->
 							<!-- //// "implement gift card API, splitting logic, and frontend components"). -->
-							<span>{{ __('Available Gift Cards ({0})', [giftCards.length]) }}</span>
+							<span>{{ __("Available Gift Cards ({0})", [giftCards.length]) }}</span>
 						</div>
 					</label>
 					<div class="flex flex-col gap-2 max-h-60 overflow-y-auto pe-1">
-						<div v-for="card in giftCards" :key="card.coupon_code" @click="applyGiftCard(card)"
-							class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-purple-400 transition-all">
+						<div
+							v-for="card in giftCards"
+							:key="card.coupon_code"
+							@click="applyGiftCard(card)"
+							class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-purple-400 transition-all"
+						>
 							<div class="flex items-center justify-between">
 								<div class="flex-1">
 									<div class="flex items-center gap-2">
 										<div
-											class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-											<svg class="w-4 h-4 text-purple-600" fill="currentColor"
-												viewBox="0 0 20 20">
-												<path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-												<path fill-rule="evenodd"
+											class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center"
+										>
+											<svg
+												class="w-4 h-4 text-purple-600"
+												fill="currentColor"
+												viewBox="0 0 20 20"
+											>
+												<path
+													d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"
+												/>
+												<path
+													fill-rule="evenodd"
 													d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-													clip-rule="evenodd" />
+													clip-rule="evenodd"
+												/>
 											</svg>
 										</div>
 										<div class="flex-1">
@@ -92,7 +141,9 @@
 											<!-- //// account being billed. Upstream's POS Coupon was always owned (ce505902). -->
 											<p class="text-xs text-gray-600">
 												{{ card.coupon_name }}
-												<span v-if="!card.customer" class="text-purple-500">({{ __('Anonymous') }})</span>
+												<span v-if="!card.customer" class="text-purple-500"
+													>({{ __("Anonymous") }})</span
+												>
 											</p>
 										</div>
 									</div>
@@ -103,14 +154,26 @@
 								<div class="flex items-center gap-2">
 									<div class="text-end">
 										<p class="text-sm font-bold text-purple-700">
-											{{ formatCurrency(card.balance || card.gift_card_amount || card.discount_amount) }}
+											{{
+												formatCurrency(
+													card.balance ||
+														card.gift_card_amount ||
+														card.discount_amount
+												)
+											}}
 										</p>
-										<p class="text-xs text-gray-500">{{ __('Balance') }}</p>
+										<p class="text-xs text-gray-500">{{ __("Balance") }}</p>
 									</div>
-									<svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd"
+									<svg
+										class="w-5 h-5 text-purple-600"
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fill-rule="evenodd"
 											d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-											clip-rule="evenodd" />
+											clip-rule="evenodd"
+										/>
 									</svg>
 								</div>
 							</div>
@@ -119,13 +182,24 @@
 				</div>
 
 				<!-- Applied Coupon Preview -->
-				<div v-if="appliedDiscount" class="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+				<div
+					v-if="appliedDiscount"
+					class="bg-green-50 border-2 border-green-500 rounded-lg p-4"
+				>
 					<div class="flex items-center gap-2 mb-3">
-						<div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-							<svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd"
+						<div
+							class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"
+						>
+							<svg
+								class="w-5 h-5 text-green-600"
+								fill="currentColor"
+								viewBox="0 0 20 20"
+							>
+								<path
+									fill-rule="evenodd"
 									d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-									clip-rule="evenodd" />
+									clip-rule="evenodd"
+								/>
 							</svg>
 						</div>
 						<!-- //// Neoffice — a gift card is not a coupon to the customer: it is money already -->
@@ -134,17 +208,27 @@
 						<!-- //// Neoffice — the heading below is worded per kind, gift card or coupon; see the note -->
 						<!-- //// just above (ce505902, 2026-01-12). -->
 						<h4 class="text-sm font-bold text-green-900">
-							{{ appliedDiscount.isGiftCard ? __('Gift Card Applied!') : __('Coupon Applied Successfully!') }}
+							{{
+								appliedDiscount.isGiftCard
+									? __("Gift Card Applied!")
+									: __("Coupon Applied Successfully!")
+							}}
 						</h4>
 					</div>
 					<div class="bg-white rounded-lg p-3">
 						<div class="flex justify-between items-center mb-2">
 							<!-- //// Neoffice — same split wording: "Gift Card Code" vs "Coupon Code" (ce505902). -->
-							<span class="text-xs text-gray-600">{{ appliedDiscount.isGiftCard ? __('Gift Card Code') : __('Coupon Code') }}</span>
-							<span class="text-sm font-bold text-gray-900">{{ appliedDiscount.code }}</span>
+							<span class="text-xs text-gray-600">{{
+								appliedDiscount.isGiftCard
+									? __("Gift Card Code")
+									: __("Coupon Code")
+							}}</span>
+							<span class="text-sm font-bold text-gray-900">{{
+								appliedDiscount.code
+							}}</span>
 						</div>
 						<div class="flex justify-between items-center">
-							<span class="text-xs text-gray-600">{{ __('Discount Amount') }}</span>
+							<span class="text-xs text-gray-600">{{ __("Discount Amount") }}</span>
 							<span class="text-lg font-bold text-green-600">
 								-{{ formatCurrency(appliedDiscount.amount) }}
 							</span>
@@ -154,14 +238,26 @@
 						<!-- //// POS Coupon was spent whole — and showing the remainder here is what stops the -->
 						<!-- //// customer believing the rest was lost (ce505902, 2026-01-12). -->
 						<!-- Gift Card Balance Info -->
-						<div v-if="appliedDiscount.isGiftCard && appliedDiscount.availableBalance" class="mt-2 pt-2 border-t border-gray-200">
+						<div
+							v-if="appliedDiscount.isGiftCard && appliedDiscount.availableBalance"
+							class="mt-2 pt-2 border-t border-gray-200"
+						>
 							<div class="flex justify-between items-center text-xs">
-								<span class="text-gray-500">{{ __('Card Balance') }}</span>
-								<span class="text-gray-700">{{ formatCurrency(appliedDiscount.availableBalance) }}</span>
+								<span class="text-gray-500">{{ __("Card Balance") }}</span>
+								<span class="text-gray-700">{{
+									formatCurrency(appliedDiscount.availableBalance)
+								}}</span>
 							</div>
-							<div v-if="appliedDiscount.remainingBalance > 0" class="flex justify-between items-center text-xs mt-1">
-								<span class="text-purple-600">{{ __('Remaining after purchase') }}</span>
-								<span class="text-purple-700 font-medium">{{ formatCurrency(appliedDiscount.remainingBalance) }}</span>
+							<div
+								v-if="appliedDiscount.remainingBalance > 0"
+								class="flex justify-between items-center text-xs mt-1"
+							>
+								<span class="text-purple-600">{{
+									__("Remaining after purchase")
+								}}</span>
+								<span class="text-purple-700 font-medium">{{
+									formatCurrency(appliedDiscount.remainingBalance)
+								}}</span>
 							</div>
 						</div>
 					</div>
@@ -170,10 +266,16 @@
 				<!-- Error Message -->
 				<div v-if="errorMessage" class="bg-red-50 border border-red-200 rounded-lg p-3">
 					<div class="flex items-start gap-2">
-						<svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd"
+						<svg
+							class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								fill-rule="evenodd"
 								d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-								clip-rule="evenodd" />
+								clip-rule="evenodd"
+							/>
 						</svg>
 						<p class="text-xs text-red-800">{{ errorMessage }}</p>
 					</div>
@@ -182,18 +284,28 @@
 		</template>
 		<template #actions>
 			<div class="flex justify-between items-center w-full gap-2">
-				<Button v-if="appliedDiscount" variant="subtle" theme="red" @click="removeDiscount" class="flex-shrink-0">
+				<Button
+					v-if="appliedDiscount"
+					variant="subtle"
+					theme="red"
+					@click="removeDiscount"
+					class="flex-shrink-0"
+				>
 					<template #prefix>
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M6 18L18 6M6 6l12 12" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"
+							/>
 						</svg>
 					</template>
-					{{ __('Remove') }}
+					{{ __("Remove") }}
 				</Button>
 				<div class="flex gap-2 ms-auto">
 					<Button variant="subtle" @click="show = false">
-						{{ __('Close') }}
+						{{ __("Close") }}
 					</Button>
 				</div>
 			</div>
@@ -203,18 +315,15 @@
 
 <script setup>
 //// Neoffice — Biome formatter pass: import rewrapped, no behaviour change (458d81a9).
-import {
-	DEFAULT_CURRENCY,
-	formatCurrency as formatCurrencyUtil,
-} from "@/utils/currency"
-import { Button, Dialog, Input, createResource } from "frappe-ui"
-import { ref, watch } from "vue"
-import { useInvoice } from "@/composables/useInvoice"
-import { useToast } from "@/composables/useToast"
+import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
+import { Button, Dialog, Input, createResource } from "frappe-ui";
+import { ref, watch } from "vue";
+import { useInvoice } from "@/composables/useInvoice";
+import { useToast } from "@/composables/useToast";
 
 // Get calculateDiscountAmount helper from composable
-const { calculateDiscountAmount } = useInvoice()
-const { showSuccess, showError, showWarning } = useToast()
+const { calculateDiscountAmount } = useInvoice();
+const { showSuccess, showError, showWarning } = useToast();
 
 const props = defineProps({
 	modelValue: Boolean,
@@ -227,15 +336,13 @@ const props = defineProps({
 		//// the server refused the invoice (8e06bb9c, 2026-01-16 "calculate discount on net
 		//// total after pricing rules"). The subtotal note was reworded to say it now serves
 		//// regular coupons only.
-		note: __(
-			"Cart subtotal BEFORE tax - used for regular coupon discount calculations",
-		),
+		note: __("Cart subtotal BEFORE tax - used for regular coupon discount calculations"),
 	},
 	netTotal: {
 		type: Number,
 		required: true,
 		note: __(
-			"Net total AFTER pricing rules but BEFORE additional discount - used for gift card calculations",
+			"Net total AFTER pricing rules but BEFORE additional discount - used for gift card calculations"
 		),
 	},
 	taxAmount: {
@@ -258,20 +365,16 @@ const props = defineProps({
 		type: Object,
 		default: null,
 	},
-})
+});
 
-const emit = defineEmits([
-	"update:modelValue",
-	"discount-applied",
-	"discount-removed",
-])
+const emit = defineEmits(["update:modelValue", "discount-applied", "discount-removed"]);
 
-const show = ref(props.modelValue)
-const couponCode = ref("")
-const giftCards = ref([])
-const appliedDiscount = ref(null)
-const applying = ref(false)
-const errorMessage = ref("")
+const show = ref(props.modelValue);
+const couponCode = ref("");
+const giftCards = ref([]);
+const appliedDiscount = ref(null);
+const applying = ref(false);
+const errorMessage = ref("");
 
 // Resource to load gift cards
 const giftCardsResource = createResource({
@@ -280,13 +383,13 @@ const giftCardsResource = createResource({
 		return {
 			customer: props.customer,
 			company: props.company,
-		}
+		};
 	},
 	auto: false,
 	onSuccess(data) {
-		giftCards.value = data?.message || data || []
+		giftCards.value = data?.message || data || [];
 	},
-})
+});
 
 // Resource to validate coupon
 const couponResource = createResource({
@@ -296,104 +399,109 @@ const couponResource = createResource({
 			coupon_code: couponCode.value,
 			customer: props.customer,
 			company: props.company,
-		}
+		};
 	},
 	auto: false,
-})
+});
 
 watch(
 	() => props.modelValue,
 	(val) => {
-		show.value = val
+		show.value = val;
 		if (val) {
-			loadGiftCards()
-			errorMessage.value = ""
-			couponCode.value = ""
+			loadGiftCards();
+			errorMessage.value = "";
+			couponCode.value = "";
 			// Sync with external state
-			appliedDiscount.value = props.appliedCoupon
+			appliedDiscount.value = props.appliedCoupon;
 		}
-	},
-)
+	}
+);
 
 watch(show, (val) => {
-	emit("update:modelValue", val)
-})
+	emit("update:modelValue", val);
+});
 
 // Watch for external coupon removal
 watch(
 	() => props.appliedCoupon,
 	(val) => {
-		appliedDiscount.value = val
-	},
-)
+		appliedDiscount.value = val;
+	}
+);
 
 async function loadGiftCards() {
-	if (!props.customer || !props.company) return
+	if (!props.customer || !props.company) return;
 	try {
-		await giftCardsResource.reload()
+		await giftCardsResource.reload();
 	} catch (error) {
-		console.error("Error loading gift cards:", error)
+		console.error("Error loading gift cards:", error);
 	}
 }
 
 function applyGiftCard(card) {
-	couponCode.value = card.coupon_code
-	applyCoupon()
+	couponCode.value = card.coupon_code;
+	applyCoupon();
 }
 
 function getCouponBaseAmount(coupon) {
-	const grandTotal = Number.parseFloat(props.grandTotal || 0)
-	const taxAmount = Number.parseFloat(props.taxAmount || 0)
-	const netTotal = Math.max(grandTotal - taxAmount, 0)
+	const grandTotal = Number.parseFloat(props.grandTotal || 0);
+	const taxAmount = Number.parseFloat(props.taxAmount || 0);
+	const netTotal = Math.max(grandTotal - taxAmount, 0);
 
-	return coupon.apply_on === "Grand Total" ? grandTotal : netTotal
+	return coupon.apply_on === "Grand Total" ? grandTotal : netTotal;
 }
 
 async function applyCoupon() {
 	if (!couponCode.value.trim()) {
-		errorMessage.value = __("Please enter a coupon code")
-		return
+		errorMessage.value = __("Please enter a coupon code");
+		return;
 	}
 
-	applying.value = true
-	errorMessage.value = ""
+	if (!props.customer) {
+		errorMessage.value = __("Please choose a customer");
+		showError(errorMessage.value);
+		return;
+	}
+
+	applying.value = true;
+	errorMessage.value = "";
 
 	try {
-		await couponResource.reload()
+		await couponResource.reload();
 		// Frappe wraps response in { message: {...} }
-		const result = couponResource.data?.message || couponResource.data
+		const result = couponResource.data?.message || couponResource.data;
 
 		// Handle if result is the actual response object
 		//// Neoffice — Biome formatter pass, ternary wrapped. No behaviour change (458d81a9).
 		const validationData =
 			typeof result === "object" && result.valid !== undefined
 				? result
-				: couponResource.data
+				: couponResource.data;
 
 		if (!validationData || !validationData.valid) {
 			//// Neoffice — Biome formatter pass, expression wrapped. No behaviour change (458d81a9).
 			errorMessage.value =
-				validationData?.message ||
-				__("The coupon code you entered is not valid")
-			showError(errorMessage.value)
-			return
+				validationData?.message || __("The coupon code you entered is not valid");
+			showError(errorMessage.value);
+			return;
 		}
 
-		const coupon = validationData.coupon
+		const coupon = validationData.coupon;
 		//// Neoffice — a validated coupon can now be a gift card. Upstream had a single kind
 		//// (its own POS Coupon); we route ERPNext Coupon Code plus the gift-card flag through
 		//// the same validation endpoint, so the kind is decided once here (ce505902, 2026-01-12).
-		const isGiftCard = coupon.coupon_type === "Gift Card" || coupon.is_gift_card
-		const baseAmount = getCouponBaseAmount(coupon)
+		const isGiftCard = coupon.coupon_type === "Gift Card" || coupon.is_gift_card;
+		const baseAmount = getCouponBaseAmount(coupon);
 
 		// Check minimum amount on the configured coupon base
 		if (coupon.min_amount && baseAmount < coupon.min_amount) {
 			//// Neoffice — Biome formatter pass, call wrapped. No behaviour change (458d81a9).
 			errorMessage.value = __("This coupon requires a minimum purchase of ", [
 				formatCurrency(coupon.min_amount),
-			])
-			showWarning(errorMessage.value)
-			return
+			]);
+			showWarning(errorMessage.value);
+			return;
 		}
 
 		//// Neoffice — two ways to compute a discount where upstream had one. A gift card is
@@ -402,32 +510,29 @@ async function applyCoupon() {
 		//// regular coupon keeps upstream's percentage/amount computation on the subtotal
 		//// (ce505902, 2026-01-12 "implement gift card API, splitting logic"; the netTotal
 		//// capping is the fix of 8e06bb9c, 2026-01-16).
-		let discountAmount = 0
-		let availableBalance = 0
-		let remainingBalance = 0
+		let discountAmount = 0;
+		let availableBalance = 0;
+		let remainingBalance = 0;
 
 		if (isGiftCard) {
 			// Gift card: use balance as discount, cap at netTotal (after pricing rules)
 			// This is critical: gift card discount must be based on the ACTUAL amount to pay
 			// after pricing rules have been applied, not the original subtotal
 			availableBalance =
-				coupon.balance || coupon.gift_card_amount || coupon.discount_amount || 0
-			discountAmount = Math.min(availableBalance, props.netTotal)
-			remainingBalance = availableBalance - discountAmount
+				coupon.balance || coupon.gift_card_amount || coupon.discount_amount || 0;
+			discountAmount = Math.min(availableBalance, props.netTotal);
+			remainingBalance = availableBalance - discountAmount;
 		} else {
 			// Regular coupon: calculate based on discount type (uses original subtotal)
 			const discountObj = {
-				percentage:
-					coupon.discount_type === "Percentage"
-						? coupon.discount_percentage
-						: 0,
+				percentage: coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
 				amount: coupon.discount_type === "Amount" ? coupon.discount_amount : 0,
-			}
-			discountAmount = calculateDiscountAmount(discountObj, props.subtotal)
+			};
+			discountAmount = calculateDiscountAmount(discountObj, props.subtotal);
 
 			// Apply maximum discount limit if specified
 			if (coupon.max_amount && discountAmount > coupon.max_amount) {
-				discountAmount = coupon.max_amount
+				discountAmount = coupon.max_amount;
 			}
 		}
 
@@ -438,15 +543,14 @@ async function applyCoupon() {
 		// Clamp discount to the appropriate total based on coupon type
 		// Gift cards: clamp to netTotal (after pricing rules)
 		// Regular coupons: clamp to baseAmount (respects apply_on setting)
-		const maxDiscount = isGiftCard ? props.netTotal : baseAmount
-		discountAmount = Math.min(discountAmount, maxDiscount)
+		const maxDiscount = isGiftCard ? props.netTotal : baseAmount;
+		discountAmount = Math.min(discountAmount, maxDiscount);
 
 		appliedDiscount.value = {
 			name: coupon.coupon_name || coupon.coupon_code,
 			code: couponCode.value.toUpperCase(),
 			//// Neoffice — Biome formatter pass, ternary wrapped. No behaviour change (458d81a9).
-			percentage:
-				coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
+			percentage: coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
 			amount: discountAmount,
 			type: coupon.discount_type,
 			coupon: coupon,
@@ -458,32 +562,30 @@ async function applyCoupon() {
 			availableBalance: isGiftCard ? availableBalance : null,
 			remainingBalance: isGiftCard ? remainingBalance : null,
 			base_amount: baseAmount,
-		}
+		};
 
-		emit("discount-applied", appliedDiscount.value)
+		emit("discount-applied", appliedDiscount.value);
 
 		//// Neoffice — Biome formatter pass, call wrapped. No behaviour change (458d81a9).
-		showSuccess(
-			__("{0} applied successfully", [couponCode.value.toUpperCase()]),
-		)
+		showSuccess(__("{0} applied successfully", [couponCode.value.toUpperCase()]));
 
-		errorMessage.value = ""
+		errorMessage.value = "";
 	} catch (error) {
-		console.error("Error applying coupon:", error)
-		errorMessage.value = __("Failed to apply coupon. Please try again.")
-		showError(errorMessage.value)
+		console.error("Error applying coupon:", error);
+		errorMessage.value = __("Failed to apply coupon. Please try again.");
+		showError(errorMessage.value);
 	} finally {
-		applying.value = false
+		applying.value = false;
 	}
 }
 
 function removeDiscount() {
-	appliedDiscount.value = null
-	emit("discount-removed")
-	showSuccess(__("Discount has been removed"))
+	appliedDiscount.value = null;
+	emit("discount-removed");
+	showSuccess(__("Discount has been removed"));
 }
 
 function formatCurrency(amount) {
-	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency)
+	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency);
 }
 </script>

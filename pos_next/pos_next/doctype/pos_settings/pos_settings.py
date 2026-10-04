@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+
 # //// Neoffice — `_` added at module level: the settings validations below were bare English strings.
 from frappe import _
 from frappe.model.document import Document
@@ -68,7 +69,7 @@ class POSSettings(Document):
 				frappe.msgprint(
 					_("Stock Settings 'Allow Negative Stock' has been automatically enabled."),
 					indicator="green",
-					alert=True
+					alert=True,
 				)
 		else:
 			# Only disable if no other enabled POS Settings have it enabled
@@ -79,17 +80,19 @@ class POSSettings(Document):
 					{
 						"allow_negative_stock": 1,
 						"enabled": 1,  # Only check enabled POS Settings
-						"name": ["!=", self.name]
-					}
+						"name": ["!=", self.name],
+					},
 				)
 
 				if other_enabled_count == 0:
-					frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 0, update_modified=False)
+					frappe.db.set_single_value(
+						"Stock Settings", "allow_negative_stock", 0, update_modified=False
+					)
 					# //// Neoffice — bare English string, see validate(); goes through _().
 					frappe.msgprint(
 						_("Stock Settings 'Allow Negative Stock' has been automatically disabled."),
 						indicator="orange",
-						alert=True
+						alert=True,
 					)
 
 
@@ -108,20 +111,12 @@ def get_pos_settings(pos_profile):
 		return None
 
 	# Check if user has access to this POS Profile
-	has_access = frappe.db.exists(
-		"POS Profile User",
-		{"parent": pos_profile, "user": frappe.session.user}
-	)
+	has_access = frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": frappe.session.user})
 
 	if not has_access and not frappe.has_permission("POS Settings", "read"):
 		frappe.throw(_("You don't have access to this POS Profile"))
 
-	settings = frappe.db.get_value(
-		"POS Settings",
-		{"pos_profile": pos_profile},
-		"*",
-		as_dict=True
-	)
+	settings = frappe.db.get_value("POS Settings", {"pos_profile": pos_profile}, "*", as_dict=True)
 
 	# If no settings exist, create default settings
 	if not settings:
@@ -150,16 +145,14 @@ def create_default_settings(pos_profile):
 def update_pos_settings(pos_profile, settings):
 	"""Update POS Settings for a POS Profile"""
 	import json
+
 	from frappe import _
 
 	if isinstance(settings, str):
 		settings = json.loads(settings)
 
 	# Check if user has access to this POS Profile
-	has_access = frappe.db.exists(
-		"POS Profile User",
-		{"parent": pos_profile, "user": frappe.session.user}
-	)
+	has_access = frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": frappe.session.user})
 
 	if not has_access and not frappe.has_permission("POS Settings", "write"):
 		frappe.throw(_("You don't have permission to update this POS Profile"))
@@ -175,8 +168,11 @@ def update_pos_settings(pos_profile, settings):
 		# //// save, so those keys are dropped (d646953c, 2026-03-23).
 		# //// prevent TimestampMismatchError when saving POS Settings — d646953
 		# Exclude internal fields that could cause timestamp mismatch
-		safe_settings = {k: v for k, v in settings.items()
-			if k not in ("name", "modified", "creation", "owner", "doctype", "docstatus", "idx")}
+		safe_settings = {
+			k: v
+			for k, v in settings.items()
+			if k not in ("name", "modified", "creation", "owner", "doctype", "docstatus", "idx")
+		}
 		doc.update(safe_settings)
 		doc.save()
 	else:

@@ -26,21 +26,52 @@
 		>
 			<!-- Main Container -->
 			<div class="fixed inset-0 flex items-center justify-center p-4 md:p-6">
-				<div class="w-full max-w-5xl max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
+				<div
+					class="w-full max-w-5xl max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col"
+				>
 					<!-- Header -->
-					<div class="flex items-center justify-between px-6 py-5 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+					<div
+						class="flex items-center justify-between px-6 py-5 border-b bg-gradient-to-r from-blue-50 to-indigo-50"
+					>
 						<div class="flex items-center gap-3">
 							<div class="p-2 bg-blue-100 rounded-lg">
-								<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+								<svg
+									class="w-6 h-6 text-blue-600"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+									/>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+									/>
 								</svg>
 							</div>
 							<div>
-								<h2 class="text-xl font-bold text-gray-900">{{ __('POS Settings') }}</h2>
+								<h2 class="text-xl font-bold text-gray-900">
+									{{ __("POS Settings") }}
+								</h2>
 								<p class="text-sm text-gray-600 flex items-center mt-0.5">
-									<svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+									<svg
+										class="w-4 h-4 me-1.5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+										/>
 									</svg>
 									{{ settings.pos_profile || posProfile }}
 								</p>
@@ -54,11 +85,21 @@
 								size="sm"
 							>
 								<template #prefix>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+									<svg
+										class="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+										/>
 									</svg>
 								</template>
-								{{ __('Refresh') }}
+								{{ __("Refresh") }}
 							</Button>
 							<Button
 								@click="saveSettings"
@@ -67,18 +108,38 @@
 								theme="blue"
 							>
 								<template #prefix>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+									<svg
+										class="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M5 13l4 4L19 7"
+										/>
 									</svg>
 								</template>
-								{{ __('Save Changes') }}
+								{{ __("Save Changes") }}
 							</Button>
 							<button
 								@click="handleClose"
 								class="p-2 hover:bg-white/50 rounded-lg transition-colors"
 							>
-								<svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+								<svg
+									class="w-5 h-5 text-gray-600"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
 								</svg>
 							</button>
 						</div>
@@ -87,13 +148,23 @@
 					<!-- Main Content -->
 					<div class="flex-1 overflow-y-auto bg-gray-50">
 						<!-- Loading State -->
-						<div v-if="loading" class="flex flex-col items-center justify-center py-16">
-							<div class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"></div>
-							<p class="text-sm font-medium text-gray-600">{{ __('Loading settings...') }}</p>
+						<div
+							v-if="loading"
+							class="flex flex-col items-center justify-center py-16"
+						>
+							<div
+								class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"
+							></div>
+							<p class="text-sm font-medium text-gray-600">
+								{{ __("Loading settings...") }}
+							</p>
 						</div>
 
 						<!-- Settings Form -->
-						<div v-else-if="settings.pos_profile || posProfile" class="p-6 flex flex-col gap-6">
+						<div
+							v-else-if="settings.pos_profile || posProfile"
+							class="p-6 flex flex-col gap-6"
+						>
 							<!-- Tabs Navigation -->
 							<div class="flex p-1 bg-gray-200 rounded-lg self-start">
 								<!-- //// Neoffice — added tab: Restaurant. Shown only when restaurant mode is on, and placed -->
@@ -103,44 +174,92 @@
 								<button
 									v-if="restaurantStore.isEnabled"
 									@click="activeTab = 'restaurant'"
-									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'restaurant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
+									:class="[
+										'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
+										activeTab === 'restaurant'
+											? 'bg-white text-gray-900 shadow-sm'
+											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+									]"
 								>
-									{{ __('Restaurant') }}
+									{{ __("Restaurant") }}
 								</button>
 								<button
 									@click="activeTab = 'stock'"
-									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'stock' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
+									:class="[
+										'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
+										activeTab === 'stock'
+											? 'bg-white text-gray-900 shadow-sm'
+											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+									]"
 								>
-									{{ __('Stock Management') }}
+									{{ __("Stock Management") }}
 								</button>
 								<button
 									@click="activeTab = 'sales'"
-									:class="['px-4 py-2 text-sm font-medium rounded-md transition-all duration-200', activeTab === 'sales' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50']"
+									:class="[
+										'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
+										activeTab === 'sales'
+											? 'bg-white text-gray-900 shadow-sm'
+											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+									]"
 								>
-									{{ __('Sales Management') }}
+									{{ __("Sales Management") }}
 								</button>
 							</div>
 
 							<!-- Stock Settings Section - Prominent -->
-							<div v-if="activeTab === 'stock'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+							<div
+								v-if="activeTab === 'stock'"
+								class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+							>
 								<div :class="stockSectionClasses.header">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center gap-3">
 											<div :class="stockSectionClasses.iconContainer">
-												<svg :class="stockSectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.warehouse"/>
+												<svg
+													:class="stockSectionClasses.icon"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														:d="icons.warehouse"
+													/>
 												</svg>
 											</div>
 											<div>
-												<h3 class="text-lg font-bold text-gray-900">{{ __('Stock Management') }}</h3>
-												<p class="text-xs text-gray-600 mt-0.5">{{ __('Configure warehouse and inventory settings') }}</p>
+												<h3 class="text-lg font-bold text-gray-900">
+													{{ __("Stock Management") }}
+												</h3>
+												<p class="text-xs text-gray-600 mt-0.5">
+													{{
+														__(
+															"Configure warehouse and inventory settings"
+														)
+													}}
+												</p>
 											</div>
 										</div>
 										<div :class="stockSectionClasses.badge">
-											<svg :class="stockSectionClasses.badgeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.checkCircle"/>
+											<svg
+												:class="stockSectionClasses.badgeIcon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.checkCircle"
+												/>
 											</svg>
-											<span :class="stockSectionClasses.badgeText">{{ __('Stock Controls') }}</span>
+											<span :class="stockSectionClasses.badgeText">{{
+												__("Stock Controls")
+											}}</span>
 										</div>
 									</div>
 								</div>
@@ -148,49 +267,110 @@
 									<!-- Warehouse Selection -->
 									<div :class="warehouseSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="warehouseSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.location"/>
+											<svg
+												:class="warehouseSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.location"
+												/>
 											</svg>
-											<h4 class="text-sm font-semibold text-gray-900">{{ __('Warehouse Selection') }}</h4>
+											<h4 class="text-sm font-semibold text-gray-900">
+												{{ __("Warehouse Selection") }}
+											</h4>
 										</div>
-										<div v-if="warehouseOptions.length === 0" class="flex items-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-											<svg class="w-5 h-5 text-yellow-600 me-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.warning"/>
+										<div
+											v-if="warehouseOptions.length === 0"
+											class="flex items-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+										>
+											<svg
+												class="w-5 h-5 text-yellow-600 me-3 flex-shrink-0"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.warning"
+												/>
 											</svg>
-											<p class="text-sm text-yellow-800 font-medium">{{ __('Loading warehouses...') }}</p>
+											<p class="text-sm text-yellow-800 font-medium">
+												{{ __("Loading warehouses...") }}
+											</p>
 										</div>
 										<SelectField
 											v-else
 											v-model="selectedWarehouse"
 											:label="__('Active Warehouse')"
 											:options="warehouseOptions"
-											:description="__('All stock operations will use this warehouse. Stock quantities will refresh after saving.')"
+											:description="
+												__(
+													'All stock operations will use this warehouse. Stock quantities will refresh after saving.'
+												)
+											"
 										/>
 									</div>
 
 									<!-- Stock Policy Settings -->
 									<div :class="stockPolicySubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="stockPolicySubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.clipboard"/>
+											<svg
+												:class="stockPolicySubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.clipboard"
+												/>
 											</svg>
-											<h4 class="text-sm font-semibold text-gray-900">{{ __('Stock Validation Policy') }}</h4>
+											<h4 class="text-sm font-semibold text-gray-900">
+												{{ __("Stock Validation Policy") }}
+											</h4>
 										</div>
 										<div class="flex flex-col gap-3">
 											<CheckboxField
 												v-model="settings.allow_negative_stock"
 												:label="__('Allow Negative Stock')"
-												:description="__('Enable selling items even when stock reaches zero or below. Integrates with Back Office stock settings.')"
+												:description="
+													__(
+														'Enable selling items even when stock reaches zero or below. Integrates with Back Office stock settings.'
+													)
+												"
 											/>
 											<div class="mt-3 p-3 bg-blue-100 rounded-md">
 												<div class="flex items-start gap-2">
-													<svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.info"/>
+													<svg
+														class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															:d="icons.info"
+														/>
 													</svg>
-													<TranslatedHTML 
+													<TranslatedHTML
 														:tag="'p'"
-														class="text-xs text-blue-800 leading-relaxed" 
-														:inner="__('&lt;strong&gt;Note:&lt;strong&gt; When enabled, the system will allow sales even when stock quantity is zero or negative. This is useful for handling stock sync delays or backorders. All transactions are tracked in the stock ledger.')"
+														class="text-xs text-blue-800 leading-relaxed"
+														:inner="
+															__(
+																'&lt;strong&gt;Note:&lt;strong&gt; When enabled, the system will allow sales even when stock quantity is zero or negative. This is useful for handling stock sync delays or backorders. All transactions are tracked in the stock ledger.'
+															)
+														"
 													/>
 												</div>
 											</div>
@@ -200,17 +380,43 @@
 									<!-- Background Stock Sync Settings -->
 									<div :class="stockSyncSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="stockSyncSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+											<svg
+												:class="stockSyncSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+												/>
 											</svg>
-											<h4 class="text-sm font-semibold text-gray-900">{{ __('Background Stock Sync') }}</h4>
-											<div v-if="stockSyncStatus.enabled" class="ms-auto flex items-center px-2.5 py-1 bg-green-100 border border-green-300 rounded-full">
-												<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse me-2"></div>
-												<span class="text-xs font-medium text-green-800">{{ __('Active') }}</span>
+											<h4 class="text-sm font-semibold text-gray-900">
+												{{ __("Background Stock Sync") }}
+											</h4>
+											<div
+												v-if="stockSyncStatus.enabled"
+												class="ms-auto flex items-center px-2.5 py-1 bg-green-100 border border-green-300 rounded-full"
+											>
+												<div
+													class="w-2 h-2 bg-green-500 rounded-full animate-pulse me-2"
+												></div>
+												<span class="text-xs font-medium text-green-800">{{
+													__("Active")
+												}}</span>
 											</div>
-											<div v-else class="ms-auto flex items-center px-2.5 py-1 bg-gray-100 border border-gray-300 rounded-full">
-												<div class="w-2 h-2 bg-gray-400 rounded-full me-2"></div>
-												<span class="text-xs font-medium text-gray-600">{{ __('Inactive') }}</span>
+											<div
+												v-else
+												class="ms-auto flex items-center px-2.5 py-1 bg-gray-100 border border-gray-300 rounded-full"
+											>
+												<div
+													class="w-2 h-2 bg-gray-400 rounded-full me-2"
+												></div>
+												<span class="text-xs font-medium text-gray-600">{{
+													__("Inactive")
+												}}</span>
 											</div>
 										</div>
 
@@ -219,63 +425,147 @@
 											<CheckboxField
 												v-model="stockSyncEnabled"
 												:label="__('Enable Automatic Stock Sync')"
-												:description="__('Periodically sync stock quantities from server in the background (runs in Web Worker)')"
+												:description="
+													__(
+														'Periodically sync stock quantities from server in the background (runs in Web Worker)'
+													)
+												"
 											/>
 
 											<!-- Sync Interval -->
-											<div v-if="stockSyncEnabled" class="ps-6 flex flex-col gap-3 border-s-2 border-blue-200">
+											<div
+												v-if="stockSyncEnabled"
+												class="ps-6 flex flex-col gap-3 border-s-2 border-blue-200"
+											>
 												<NumberField
 													v-model="stockSyncIntervalSeconds"
 													:label="__('Sync Interval (seconds)')"
-													:description="__('How often to check server for stock updates (minimum 10 seconds)')"
+													:description="
+														__(
+															'How often to check server for stock updates (minimum 10 seconds)'
+														)
+													"
 													:min="10"
 													:max="300"
 													:step="10"
 												/>
 
 												<!-- Sync Status Info -->
-												<div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+												<div
+													class="p-3 bg-blue-50 border border-blue-200 rounded-lg"
+												>
 													<div class="flex items-start gap-2">
-														<svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.info"/>
+														<svg
+															class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																:d="icons.info"
+															/>
 														</svg>
-														<div class="text-xs text-blue-800 flex flex-col gap-1">
-															<TranslatedHTML 
+														<div
+															class="text-xs text-blue-800 flex flex-col gap-1"
+														>
+															<TranslatedHTML
 																:tag="'p'"
-																:inner="stockSyncStatus.enabled 
-																	? __('&lt;strong&gt;Status:&lt;strong&gt; Running')
-																	: __('&lt;strong&gt;Status:&lt;strong&gt; Stopped')"
+																:inner="
+																	stockSyncStatus.enabled
+																		? __(
+																				'&lt;strong&gt;Status:&lt;strong&gt; Running'
+																		  )
+																		: __(
+																				'&lt;strong&gt;Status:&lt;strong&gt; Stopped'
+																		  )
+																"
 															/>
 															<TranslatedHTML
 																:tag="'p'"
-																:inner="__('&lt;strong&gt;Items Tracked:&lt;strong&gt; {0}', [stockSyncStatus.itemCount || 0])"
+																:inner="
+																	__(
+																		'&lt;strong&gt;Items Tracked:&lt;strong&gt; {0}',
+																		[
+																			stockSyncStatus.itemCount ||
+																				0,
+																		]
+																	)
+																"
 															/>
-															<TranslatedHTML 
+															<TranslatedHTML
 																:tag="'p'"
-																:inner="stockSyncStatus.warehouse
-																	? __('&lt;strong&gt;Warehouse:&lt;strong&gt; {0}', [stockSyncStatus.warehouse])
-																	: __('Warehouse not set')"
+																:inner="
+																	stockSyncStatus.warehouse
+																		? __(
+																				'&lt;strong&gt;Warehouse:&lt;strong&gt; {0}',
+																				[
+																					stockSyncStatus.warehouse,
+																				]
+																		  )
+																		: __('Warehouse not set')
+																"
 															/>
-															<TranslatedHTML 
+															<TranslatedHTML
 																:tag="'p'"
-																:inner="stockSyncStatus.lastSync
-																	? __('&lt;strong&gt;Last Sync:&lt;strong&gt; {0}', [formatSyncTime(stockSyncStatus.lastSync)]) 
-																	: __('&lt;strong&gt;Last Sync:&lt;strong&gt; Never')"
+																:inner="
+																	stockSyncStatus.lastSync
+																		? __(
+																				'&lt;strong&gt;Last Sync:&lt;strong&gt; {0}',
+																				[
+																					formatSyncTime(
+																						stockSyncStatus.lastSync
+																					),
+																				]
+																		  )
+																		: __(
+																				'&lt;strong&gt;Last Sync:&lt;strong&gt; Never'
+																		  )
+																"
 															/>
 														</div>
 													</div>
 												</div>
 
 												<!-- Network Usage Info -->
-												<div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+												<div
+													class="p-3 bg-gray-50 border border-gray-200 rounded-lg"
+												>
 													<div class="flex items-start gap-2">
-														<svg class="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+														<svg
+															class="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M13 10V3L4 14h7v7l9-11h-7z"
+															/>
 														</svg>
 														<div class="text-xs text-gray-700">
-															<p class="font-medium mb-1">{{ __('Network Usage:') }}</p>
-															<p>{{ __('~15 KB per sync cycle') }}</p>
-															<p>{{ __('~{0} MB per hour', [Math.round((3600 / stockSyncIntervalSeconds) * 15 / 1024)]) }}</p>
+															<p class="font-medium mb-1">
+																{{ __("Network Usage:") }}
+															</p>
+															<p>
+																{{ __("~15 KB per sync cycle") }}
+															</p>
+															<p>
+																{{
+																	__("~{0} MB per hour", [
+																		Math.round(
+																			((3600 /
+																				stockSyncIntervalSeconds) *
+																				15) /
+																				1024
+																		),
+																	])
+																}}
+															</p>
 														</div>
 													</div>
 												</div>
@@ -286,25 +576,58 @@
 							</div>
 
 							<!-- Sales Management Section - Prominent -->
-							<div v-if="activeTab === 'sales'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+							<div
+								v-if="activeTab === 'sales'"
+								class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+							>
 								<div :class="salesSectionClasses.header">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center gap-3">
 											<div :class="salesSectionClasses.iconContainer">
-												<svg :class="salesSectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.shoppingCart"/>
+												<svg
+													:class="salesSectionClasses.icon"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														:d="icons.shoppingCart"
+													/>
 												</svg>
 											</div>
 											<div>
-												<h3 class="text-lg font-bold text-gray-900">{{ __('Sales Management') }}</h3>
-												<p class="text-xs text-gray-600 mt-0.5">{{ __('Configure pricing, discounts, and sales operations') }}</p>
+												<h3 class="text-lg font-bold text-gray-900">
+													{{ __("Sales Management") }}
+												</h3>
+												<p class="text-xs text-gray-600 mt-0.5">
+													{{
+														__(
+															"Configure pricing, discounts, and sales operations"
+														)
+													}}
+												</p>
 											</div>
 										</div>
 										<div :class="salesSectionClasses.badge">
-											<svg :class="salesSectionClasses.badgeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.currency"/>
+											<svg
+												:class="salesSectionClasses.badgeIcon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.currency"
+												/>
 											</svg>
-											<span :class="salesSectionClasses.badgeText">{{ __('Sales Controls') }}</span>
+											<span :class="salesSectionClasses.badgeText">{{
+												__("Sales Controls")
+											}}</span>
 										</div>
 									</div>
 								</div>
@@ -312,16 +635,32 @@
 									<!-- Pricing & Discounts -->
 									<div :class="pricingSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="pricingSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.tag"/>
+											<svg
+												:class="pricingSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.tag"
+												/>
 											</svg>
-											<h4 class="text-sm font-semibold text-gray-900">{{ __('Pricing & Discounts') }}</h4>
+											<h4 class="text-sm font-semibold text-gray-900">
+												{{ __("Pricing & Discounts") }}
+											</h4>
 										</div>
 										<div class="flex flex-col gap-3">
 											<CheckboxField
 												v-model="settings.tax_inclusive"
 												:label="__('Tax Inclusive')"
-												:description="__('When enabled, displayed prices include tax. When disabled, tax is calculated separately. Changes apply immediately to your cart when you save.')"
+												:description="
+													__(
+														'When enabled, displayed prices include tax. When disabled, tax is calculated separately. Changes apply immediately to your cart when you save.'
+													)
+												"
 											/>
 											<NumberField
 												v-model="settings.max_discount_allowed"
@@ -336,24 +675,34 @@
 												:description="__('Show discounts as percentages')"
 											/>
 											<CheckboxField
-												v-model="settings.allow_user_to_edit_additional_discount"
+												v-model="
+													settings.allow_user_to_edit_additional_discount
+												"
 												:label="__('Allow Additional Discount')"
 												:description="__('Enable invoice-level discount')"
 											/>
 											<CheckboxField
 												v-model="settings.allow_user_to_edit_item_discount"
 												:label="__('Allow Item Discount')"
-												:description="__('Enable item-level discount in edit dialog')"
+												:description="
+													__('Enable item-level discount in edit dialog')
+												"
 											/>
 											<CheckboxField
 												v-model="settings.allow_user_to_edit_rate"
 												:label="__('Allow User To Edit Rate')"
-												:description="__('Allow editing item rate in cart. Disabled when offers are applied.')"
+												:description="
+													__(
+														'Allow editing item rate in cart. Disabled when offers are applied.'
+													)
+												"
 											/>
 											<CheckboxField
 												v-model="settings.disable_rounded_total"
 												:label="__('Disable Rounded Total')"
-												:description="__('Show exact totals without rounding')"
+												:description="
+													__('Show exact totals without rounding')
+												"
 											/>
 										</div>
 									</div>
@@ -361,10 +710,22 @@
 									<!-- Sales Operations -->
 									<div :class="operationsSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="operationsSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.checkCircle"/>
+											<svg
+												:class="operationsSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="icons.checkCircle"
+												/>
 											</svg>
-											<h4 class="text-sm font-semibold text-gray-900">{{ __('Sales Operations') }}</h4>
+											<h4 class="text-sm font-semibold text-gray-900">
+												{{ __("Sales Operations") }}
+											</h4>
 										</div>
 										<div class="flex flex-col gap-3">
 											<CheckboxField
@@ -385,34 +746,61 @@
 											<CheckboxField
 												v-model="settings.allow_partial_payment"
 												:label="__('Allow Partial Payment')"
-												:description="__('Enable partial payment for invoices')"
+												:description="
+													__('Enable partial payment for invoices')
+												"
 											/>
 											<CheckboxField
 												v-model="settings.silent_print"
 												:label="__('Silent Print')"
-												:description="__('Send receipts directly to a thermal printer via QZ Tray (no browser dialog)')"
+												:description="
+													__(
+														'Send receipts directly to a thermal printer via QZ Tray (no browser dialog)'
+													)
+												"
 											/>
 
 											<!-- QZ Tray Printer Settings (shown when silent print is enabled) -->
-											<div v-if="settings.silent_print" class="ps-6 flex flex-col gap-3 border-s-2 border-teal-200">
+											<div
+												v-if="settings.silent_print"
+												class="ps-6 flex flex-col gap-3 border-s-2 border-teal-200"
+											>
 												<!-- Connection Status -->
 												<div class="flex items-center gap-2">
 													<div
 														class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-														:class="qzConnecting ? 'bg-yellow-500 animate-pulse' : qzConnected ? 'bg-green-500' : 'bg-red-500'"
+														:class="
+															qzConnecting
+																? 'bg-yellow-500 animate-pulse'
+																: qzConnected
+																? 'bg-green-500'
+																: 'bg-red-500'
+														"
 													></div>
 													<span
 														class="text-xs font-medium"
-														:class="qzConnecting ? 'text-yellow-700' : qzConnected ? 'text-green-700' : 'text-red-700'"
+														:class="
+															qzConnecting
+																? 'text-yellow-700'
+																: qzConnected
+																? 'text-green-700'
+																: 'text-red-700'
+														"
 													>
-														{{ qzConnecting ? __('Connecting to QZ Tray...') : qzConnected ? __('QZ Tray Connected') : __('QZ Tray Not Connected') }}
+														{{
+															qzConnecting
+																? __("Connecting to QZ Tray...")
+																: qzConnected
+																? __("QZ Tray Connected")
+																: __("QZ Tray Not Connected")
+														}}
 													</span>
 													<button
 														v-if="!qzConnected && !qzConnecting"
 														@click="handleQzConnect"
 														class="ms-auto text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
 													>
-														{{ __('Retry') }}
+														{{ __("Retry") }}
 													</button>
 												</div>
 
@@ -423,7 +811,14 @@
 															v-model="selectedPrinter"
 															:label="__('Printer')"
 															:options="printerOptions"
-															:description="qzPrinters.length === 0 && !loadingPrinters ? __('No printers found. Is QZ Tray running?') : ''"
+															:description="
+																qzPrinters.length === 0 &&
+																!loadingPrinters
+																	? __(
+																			'No printers found. Is QZ Tray running?'
+																	  )
+																	: ''
+															"
 														/>
 													</div>
 													<button
@@ -434,10 +829,21 @@
 													>
 														<svg
 															class="w-4 h-4 text-gray-600"
-															:class="loadingPrinters ? 'animate-spin' : ''"
-															fill="none" stroke="currentColor" viewBox="0 0 24 24"
+															:class="
+																loadingPrinters
+																	? 'animate-spin'
+																	: ''
+															"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
 														>
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+															/>
 														</svg>
 													</button>
 												</div>
@@ -449,49 +855,108 @@
 														qzCertStatus === 'trusted'
 															? 'bg-green-50 border-green-200'
 															: qzCertStatus === 'untrusted'
-																? 'bg-red-50 border-red-200'
-																: 'bg-amber-50 border-amber-200'
+															? 'bg-red-50 border-red-200'
+															: 'bg-amber-50 border-amber-200',
 													]"
 												>
 													<div class="flex items-start gap-2">
 														<!-- Icon changes based on status -->
 														<svg
 															class="w-4 h-4 mt-0.5 flex-shrink-0"
-															:class="qzCertStatus === 'trusted' ? 'text-green-600' : qzCertStatus === 'untrusted' ? 'text-red-600' : 'text-amber-600'"
-															fill="none" stroke="currentColor" viewBox="0 0 24 24"
+															:class="
+																qzCertStatus === 'trusted'
+																	? 'text-green-600'
+																	: qzCertStatus === 'untrusted'
+																	? 'text-red-600'
+																	: 'text-amber-600'
+															"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
 														>
-															<path v-if="qzCertStatus === 'trusted'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-															<path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+															<path
+																v-if="qzCertStatus === 'trusted'"
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+															/>
+															<path
+																v-else
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+															/>
 														</svg>
 														<div class="flex-1">
 															<!-- Title with inline status badge -->
-															<div class="flex items-center gap-2 mb-1">
+															<div
+																class="flex items-center gap-2 mb-1"
+															>
 																<p
 																	class="text-xs font-semibold"
-																	:class="qzCertStatus === 'trusted' ? 'text-green-900' : qzCertStatus === 'untrusted' ? 'text-red-900' : 'text-amber-900'"
+																	:class="
+																		qzCertStatus === 'trusted'
+																			? 'text-green-900'
+																			: qzCertStatus ===
+																			  'untrusted'
+																			? 'text-red-900'
+																			: 'text-amber-900'
+																	"
 																>
-																	{{ __('Silent Print Certificate') }}
+																	{{
+																		__(
+																			"Silent Print Certificate"
+																		)
+																	}}
 																</p>
 																<span
-																	v-if="qzCertStatus === 'trusted'"
+																	v-if="
+																		qzCertStatus === 'trusted'
+																	"
 																	class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 border border-green-300 rounded-full"
 																>
-																	<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-																	<span class="text-[10px] font-medium text-green-800">{{ __('Installed') }}</span>
+																	<span
+																		class="w-1.5 h-1.5 bg-green-500 rounded-full"
+																	></span>
+																	<span
+																		class="text-[10px] font-medium text-green-800"
+																		>{{
+																			__("Installed")
+																		}}</span
+																	>
 																</span>
 																<span
-																	v-else-if="qzCertStatus === 'untrusted'"
+																	v-else-if="
+																		qzCertStatus ===
+																		'untrusted'
+																	"
 																	class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-100 border border-red-300 rounded-full"
 																>
-																	<span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-																	<span class="text-[10px] font-medium text-red-800">{{ __('Not Installed') }}</span>
+																	<span
+																		class="w-1.5 h-1.5 bg-red-500 rounded-full"
+																	></span>
+																	<span
+																		class="text-[10px] font-medium text-red-800"
+																		>{{
+																			__("Not Installed")
+																		}}</span
+																	>
 																</span>
 																<span
 																	v-else
 																	class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 border border-amber-300 rounded-full"
 																>
-																	<span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
-																	<span class="text-[10px] font-medium text-amber-800">{{ __('Checking...') }}</span>
+																	<span
+																		class="w-1.5 h-1.5 bg-amber-500 rounded-full"
+																	></span>
+																	<span
+																		class="text-[10px] font-medium text-amber-800"
+																		>{{
+																			__("Checking...")
+																		}}</span
+																	>
 																</span>
 															</div>
 
@@ -500,70 +965,173 @@
 																v-if="qzCertStatus === 'trusted'"
 																class="text-xs text-green-800 leading-relaxed mb-2"
 															>
-																{{ __('Certificate is installed and signing is active. Print jobs will be sent silently without confirmation dialogs.') }}
+																{{
+																	__(
+																		"Certificate is installed and signing is active. Print jobs will be sent silently without confirmation dialogs."
+																	)
+																}}
 															</p>
 															<p
-																v-else-if="qzCertStatus === 'untrusted'"
+																v-else-if="
+																	qzCertStatus === 'untrusted'
+																"
 																class="text-xs text-red-800 leading-relaxed mb-2"
 															>
-																{{ __('Certificate is not installed on this machine. Generate a certificate, download it, and import it into QZ Tray.') }}
+																{{
+																	__(
+																		"Certificate is not installed on this machine. Generate a certificate, download it, and import it into QZ Tray."
+																	)
+																}}
 															</p>
 															<p
 																v-else
 																class="text-xs text-amber-800 leading-relaxed mb-2"
 															>
-																{{ __('To print without confirmation dialogs, generate a signing certificate and install it on each POS machine.') }}
+																{{
+																	__(
+																		"To print without confirmation dialogs, generate a signing certificate and install it on each POS machine."
+																	)
+																}}
 															</p>
 
 															<!-- Action buttons -->
-															<div class="flex items-center gap-2 flex-wrap">
+															<div
+																class="flex items-center gap-2 flex-wrap"
+															>
 																<button
-																	v-if="qzCertStatus !== 'trusted'"
-																	@click="handleSetupQzCertificate"
+																	v-if="
+																		qzCertStatus !== 'trusted'
+																	"
+																	@click="
+																		handleSetupQzCertificate
+																	"
 																	:disabled="qzCertLoading"
 																	class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md transition-colors bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400"
 																>
-																	<svg v-if="qzCertLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-																		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-																		<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+																	<svg
+																		v-if="qzCertLoading"
+																		class="w-3.5 h-3.5 animate-spin"
+																		fill="none"
+																		viewBox="0 0 24 24"
+																	>
+																		<circle
+																			class="opacity-25"
+																			cx="12"
+																			cy="12"
+																			r="10"
+																			stroke="currentColor"
+																			stroke-width="4"
+																		/>
+																		<path
+																			class="opacity-75"
+																			fill="currentColor"
+																			d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+																		/>
 																	</svg>
-																	<svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+																	<svg
+																		v-else
+																		class="w-3.5 h-3.5"
+																		fill="none"
+																		stroke="currentColor"
+																		viewBox="0 0 24 24"
+																	>
+																		<path
+																			stroke-linecap="round"
+																			stroke-linejoin="round"
+																			stroke-width="2"
+																			d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+																		/>
 																	</svg>
-																	{{ __('Generate Certificate') }}
+																	{{
+																		__("Generate Certificate")
+																	}}
 																</button>
 																<button
 																	v-if="qzCertReady"
-																	@click="handleDownloadQzCertificate"
+																	@click="
+																		handleDownloadQzCertificate
+																	"
 																	class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
 																>
-																	<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+																	<svg
+																		class="w-3.5 h-3.5"
+																		fill="none"
+																		stroke="currentColor"
+																		viewBox="0 0 24 24"
+																	>
+																		<path
+																			stroke-linecap="round"
+																			stroke-linejoin="round"
+																			stroke-width="2"
+																			d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+																		/>
 																	</svg>
-																	{{ __('Download Certificate') }}
+																	{{
+																		__("Download Certificate")
+																	}}
 																</button>
 															</div>
 
 															<!-- Install instructions (only when cert exists but not trusted yet) -->
-															<p v-if="qzCertReady && qzCertStatus !== 'trusted'" class="text-xs mt-2"
-																:class="qzCertStatus === 'untrusted' ? 'text-red-700' : 'text-amber-700'"
+															<p
+																v-if="
+																	qzCertReady &&
+																	qzCertStatus !== 'trusted'
+																"
+																class="text-xs mt-2"
+																:class="
+																	qzCertStatus === 'untrusted'
+																		? 'text-red-700'
+																		: 'text-amber-700'
+																"
 															>
-																{{ __('Download the certificate and import it into QZ Tray, then restart QZ Tray.') }}
+																{{
+																	__(
+																		"Download the certificate and import it into QZ Tray, then restart QZ Tray."
+																	)
+																}}
 															</p>
 														</div>
 													</div>
 												</div>
 
 												<!-- Help text -->
-												<div class="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+												<div
+													class="p-3 bg-teal-50 border border-teal-200 rounded-lg"
+												>
 													<div class="flex items-start gap-2">
-														<svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+														<svg
+															class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+															/>
 														</svg>
-														<p class="text-xs text-teal-800 leading-relaxed">
-															{{ __('QZ Tray must be installed and running on this computer. Download from') }}
-															<a href="https://qz.io/download/" target="_blank" class="font-semibold underline">qz.io</a>.
-															{{ __('If QZ Tray is unavailable, printing will fall back to the browser dialog.') }}
+														<p
+															class="text-xs text-teal-800 leading-relaxed"
+														>
+															{{
+																__(
+																	"QZ Tray must be installed and running on this computer. Download from"
+																)
+															}}
+															<a
+																href="https://qz.io/download/"
+																target="_blank"
+																class="font-semibold underline"
+																>qz.io</a
+															>.
+															{{
+																__(
+																	"If QZ Tray is unavailable, printing will fall back to the browser dialog."
+																)
+															}}
 														</p>
 													</div>
 												</div>
@@ -583,46 +1151,101 @@
 							<!-- Cash Management -->
 							<div :class="operationsSubsectionClasses.container">
 								<div class="flex items-center gap-2 mb-4">
-									<svg :class="operationsSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+									<svg
+										:class="operationsSubsectionClasses.icon"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+										/>
 									</svg>
-									<h4 class="text-sm font-semibold text-gray-900">{{ __('Cash Management') }}</h4>
+									<h4 class="text-sm font-semibold text-gray-900">
+										{{ __("Cash Management") }}
+									</h4>
 								</div>
 								<div class="flex flex-col gap-3">
 									<div class="flex flex-col gap-1.5">
-										<label class="text-sm font-medium text-gray-700">{{ __('Closing Withdrawal Template') }}</label>
+										<label class="text-sm font-medium text-gray-700">{{
+											__("Closing Withdrawal Template")
+										}}</label>
 										<input
 											v-model="settings.closing_withdrawal_template"
 											type="text"
 											:placeholder="__('Journal Entry Template name')"
 											class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 										/>
-										<p class="text-xs text-gray-500">{{ __('When set, cashiers can withdraw cash at closing. The remaining balance is suggested as the next opening amount.') }}</p>
+										<p class="text-xs text-gray-500">
+											{{
+												__(
+													"When set, cashiers can withdraw cash at closing. The remaining balance is suggested as the next opening amount."
+												)
+											}}
+										</p>
 									</div>
 								</div>
 							</div>
 
 							<!-- Restaurant Settings Section -->
-							<div v-if="activeTab === 'restaurant'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+							<div
+								v-if="activeTab === 'restaurant'"
+								class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+							>
 								<div :class="restaurantSectionClasses.header">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center gap-3">
 											<div :class="restaurantSectionClasses.iconContainer">
-												<svg :class="restaurantSectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+												<svg
+													:class="restaurantSectionClasses.icon"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+													/>
 												</svg>
 											</div>
 											<div>
-												<h3 class="text-lg font-bold text-gray-900">{{ __('Restaurant Settings') }}</h3>
-												<p class="text-xs text-gray-600 mt-0.5">{{ __('Configure opening hours and card availability') }}</p>
+												<h3 class="text-lg font-bold text-gray-900">
+													{{ __("Restaurant Settings") }}
+												</h3>
+												<p class="text-xs text-gray-600 mt-0.5">
+													{{
+														__(
+															"Configure opening hours and card availability"
+														)
+													}}
+												</p>
 											</div>
 										</div>
 										<div :class="restaurantSectionClasses.badge">
-											<svg :class="restaurantSectionClasses.badgeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											<svg
+												:class="restaurantSectionClasses.badgeIcon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+												/>
 											</svg>
 											<span :class="restaurantSectionClasses.badgeText">
-												{{ restaurantStatus.isOpen ? __('Open') : __('Closed') }}
+												{{
+													restaurantStatus.isOpen
+														? __("Open")
+														: __("Closed")
+												}}
 											</span>
 										</div>
 									</div>
@@ -631,106 +1254,281 @@
 									<!-- Runner Toggle -->
 									<div :class="restaurantSubsectionClasses.container">
 										<CheckboxField
-											:modelValue="restaurantStore.restaurantSettings.enable_runner ? 1 : 0"
+											:modelValue="
+												restaurantStore.restaurantSettings.enable_runner
+													? 1
+													: 0
+											"
 											@update:modelValue="toggleRunner($event)"
 											:label="__('Enable Runner')"
-											:description="__('Enable a runner display for delivering ready items from stations to tables')"
+											:description="
+												__(
+													'Enable a runner display for delivering ready items from stations to tables'
+												)
+											"
 										/>
 									</div>
 
 									<!-- Opening Hours -->
 									<div :class="restaurantSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											<svg
+												:class="restaurantSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+												/>
 											</svg>
-											<h4 class="text-sm font-bold text-gray-900">{{ __('Opening Hours') }}</h4>
+											<h4 class="text-sm font-bold text-gray-900">
+												{{ __("Opening Hours") }}
+											</h4>
 										</div>
-										<p class="text-xs text-gray-500 mb-3">{{ __('Define when the restaurant is open. Each day can have multiple time slots (e.g. lunch and dinner).') }}</p>
-										<OpeningHoursEditor v-model="openingHours" :cards="allCards" />
+										<p class="text-xs text-gray-500 mb-3">
+											{{
+												__(
+													"Define when the restaurant is open. Each day can have multiple time slots (e.g. lunch and dinner)."
+												)
+											}}
+										</p>
+										<OpeningHoursEditor
+											v-model="openingHours"
+											:cards="allCards"
+										/>
 									</div>
 
 									<!-- Cards Summary -->
-									<div v-if="allCards.length > 0" :class="restaurantSubsectionClasses.container">
+									<div
+										v-if="allCards.length > 0"
+										:class="restaurantSubsectionClasses.container"
+									>
 										<div class="flex items-center justify-between mb-4">
 											<div class="flex items-center gap-2">
-												<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+												<svg
+													:class="restaurantSubsectionClasses.icon"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+													/>
 												</svg>
-												<h4 class="text-sm font-bold text-gray-900">{{ __('Restaurant Cards') }}</h4>
+												<h4 class="text-sm font-bold text-gray-900">
+													{{ __("Restaurant Cards") }}
+												</h4>
 											</div>
 										</div>
 										<div class="flex flex-col gap-2">
-											<div v-for="card in allCards" :key="card.name"
-												class="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-200">
+											<div
+												v-for="card in allCards"
+												:key="card.name"
+												class="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-200"
+											>
 												<div class="flex items-center gap-2">
-													<span class="w-2 h-2 rounded-full flex-shrink-0"
-														:class="getCardSlots(card.name).length > 0 ? 'bg-green-400' : 'bg-gray-300'"></span>
+													<span
+														class="w-2 h-2 rounded-full flex-shrink-0"
+														:class="
+															getCardSlots(card.name).length > 0
+																? 'bg-green-400'
+																: 'bg-gray-300'
+														"
+													></span>
 													<div>
-														<span class="text-sm font-medium text-gray-900">{{ card.card_name }}</span>
-														<span v-if="getCardSlots(card.name).length > 0" class="text-[10px] text-gray-500 ml-2">
-															{{ getCardSlots(card.name).map(s => s.label || (s.from_time?.substring(0,5) + '→' + s.to_time?.substring(0,5))).join(', ') }}
+														<span
+															class="text-sm font-medium text-gray-900"
+															>{{ card.card_name }}</span
+														>
+														<span
+															v-if="
+																getCardSlots(card.name).length > 0
+															"
+															class="text-[10px] text-gray-500 ml-2"
+														>
+															{{
+																getCardSlots(card.name)
+																	.map(
+																		(s) =>
+																			s.label ||
+																			s.from_time?.substring(
+																				0,
+																				5
+																			) +
+																				"→" +
+																				s.to_time?.substring(
+																					0,
+																					5
+																				)
+																	)
+																	.join(", ")
+															}}
 														</span>
-														<span v-else class="text-[10px] text-gray-400 ml-2">{{ __('Not assigned to any slot') }}</span>
+														<span
+															v-else
+															class="text-[10px] text-gray-400 ml-2"
+															>{{
+																__("Not assigned to any slot")
+															}}</span
+														>
 													</div>
 												</div>
-												<a :href="'/app/restaurant-card/' + encodeURIComponent(card.name)"
+												<a
+													:href="
+														'/app/restaurant-card/' +
+														encodeURIComponent(card.name)
+													"
 													target="_blank"
-													class="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">
-													<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+													class="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1"
+												>
+													<svg
+														class="w-3.5 h-3.5"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+														/>
 													</svg>
-													{{ __('Edit') }}
+													{{ __("Edit") }}
 												</a>
 											</div>
 										</div>
 									</div>
 
 									<!-- Warning if no card for current slot -->
-									<div v-if="restaurantStatus.warning"
-										class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-										<svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+									<div
+										v-if="restaurantStatus.warning"
+										class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg"
+									>
+										<svg
+											class="w-5 h-5 text-amber-600 flex-shrink-0"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+											/>
 										</svg>
-										<span class="text-sm text-amber-800">{{ restaurantStatus.warning }}</span>
+										<span class="text-sm text-amber-800">{{
+											restaurantStatus.warning
+										}}</span>
 									</div>
 
 									<!-- Tips / Pourboires -->
 									<div :class="restaurantSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											<svg
+												:class="restaurantSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+												/>
 											</svg>
-											<h4 class="text-sm font-bold text-gray-900">{{ __('Tips / Pourboires') }}</h4>
+											<h4 class="text-sm font-bold text-gray-900">
+												{{ __("Tips / Pourboires") }}
+											</h4>
 										</div>
 										<div class="flex flex-col gap-3">
 											<CheckboxField
 												:modelValue="tipSettings.enable_tips ? 1 : 0"
-												@update:modelValue="tipSettings.enable_tips = !!$event"
+												@update:modelValue="
+													tipSettings.enable_tips = !!$event
+												"
 												:label="__('Enable tip management')"
-												:description="__('Automatically detect tips when customers pay more than the invoice total')"
+												:description="
+													__(
+														'Automatically detect tips when customers pay more than the invoice total'
+													)
+												"
 											/>
-											<div v-if="tipSettings.enable_tips" class="pl-6 flex flex-col gap-2">
+											<div
+												v-if="tipSettings.enable_tips"
+												class="pl-6 flex flex-col gap-2"
+											>
 												<CheckboxField
-													:modelValue="tipSettings.auto_detect_tip ? 1 : 0"
-													@update:modelValue="tipSettings.auto_detect_tip = !!$event"
+													:modelValue="
+														tipSettings.auto_detect_tip ? 1 : 0
+													"
+													@update:modelValue="
+														tipSettings.auto_detect_tip = !!$event
+													"
 													:label="__('Auto-detect tip from overpayment')"
-													:description="__('Overpayment is pre-filled as tip, server can adjust or cancel')"
+													:description="
+														__(
+															'Overpayment is pre-filled as tip, server can adjust or cancel'
+														)
+													"
 												/>
-												<div v-if="tipSettings.tip_item" class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-													<svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+												<div
+													v-if="tipSettings.tip_item"
+													class="flex items-center gap-2 p-2 bg-green-50 rounded-lg"
+												>
+													<svg
+														class="w-4 h-4 text-green-600 flex-shrink-0"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M5 13l4 4L19 7"
+														/>
 													</svg>
 													<span class="text-xs text-green-800">
-														{{ __('TIP item and transit account will be created automatically when saved') }}
+														{{
+															__(
+																"TIP item and transit account will be created automatically when saved"
+															)
+														}}
 													</span>
 												</div>
-												<div v-else class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-													<svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+												<div
+													v-else
+													class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg"
+												>
+													<svg
+														class="w-4 h-4 text-blue-600 flex-shrink-0"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+														/>
 													</svg>
 													<span class="text-xs text-blue-800">
-														{{ __('Save to auto-create the TIP item and transit account (2211)') }}
+														{{
+															__(
+																"Save to auto-create the TIP item and transit account (2211)"
+															)
+														}}
 													</span>
 												</div>
 											</div>
@@ -740,67 +1538,143 @@
 									<!-- QR Self-Ordering -->
 									<div :class="restaurantSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+											<svg
+												:class="restaurantSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+												/>
 											</svg>
-											<h4 class="text-sm font-bold text-gray-900">{{ __('QR Self-Ordering') }}</h4>
+											<h4 class="text-sm font-bold text-gray-900">
+												{{ __("QR Self-Ordering") }}
+											</h4>
 										</div>
 										<div class="flex flex-col gap-3">
 											<CheckboxField
 												:modelValue="qrSettings.enable_qr_ordering ? 1 : 0"
-												@update:modelValue="qrSettings.enable_qr_ordering = !!$event"
+												@update:modelValue="
+													qrSettings.enable_qr_ordering = !!$event
+												"
 												:label="__('Enable QR Self-Ordering')"
-												:description="__('Allow customers to scan a QR code on the table to order and pay from their phone')"
+												:description="
+													__(
+														'Allow customers to scan a QR code on the table to order and pay from their phone'
+													)
+												"
 											/>
-											<div v-if="qrSettings.enable_qr_ordering" class="pl-6 flex flex-col gap-3">
+											<div
+												v-if="qrSettings.enable_qr_ordering"
+												class="pl-6 flex flex-col gap-3"
+											>
 												<div>
-													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Guest Menu') }}</label>
+													<label
+														class="text-xs font-medium text-gray-700 mb-1 block"
+														>{{ __("Guest Menu") }}</label
+													>
 													<select
 														v-model="qrSettings.guest_menu"
 														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 													>
-														<option value="">{{ __('Select a card...') }}</option>
-														<option v-for="card in allCards" :key="card.name" :value="card.name">{{ card.card_name }}</option>
+														<option value="">
+															{{ __("Select a card...") }}
+														</option>
+														<option
+															v-for="card in allCards"
+															:key="card.name"
+															:value="card.name"
+														>
+															{{ card.card_name }}
+														</option>
 													</select>
-													<p class="text-[10px] text-gray-400 mt-0.5">{{ __('The menu card shown to guests who scan the QR code') }}</p>
+													<p class="text-[10px] text-gray-400 mt-0.5">
+														{{
+															__(
+																"The menu card shown to guests who scan the QR code"
+															)
+														}}
+													</p>
 												</div>
 												<div>
-													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Order Validation') }}</label>
+													<label
+														class="text-xs font-medium text-gray-700 mb-1 block"
+														>{{ __("Order Validation") }}</label
+													>
 													<select
 														v-model="qrSettings.qr_order_validation"
 														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 													>
-														<option value="Direct to Kitchen">{{ __('Direct to Kitchen') }}</option>
-														<option value="Server Approval">{{ __('Server Approval') }}</option>
+														<option value="Direct to Kitchen">
+															{{ __("Direct to Kitchen") }}
+														</option>
+														<option value="Server Approval">
+															{{ __("Server Approval") }}
+														</option>
 													</select>
-													<p class="text-[10px] text-gray-400 mt-0.5">{{ __('Whether guest orders go straight to kitchen or need server confirmation') }}</p>
+													<p class="text-[10px] text-gray-400 mt-0.5">
+														{{
+															__(
+																"Whether guest orders go straight to kitchen or need server confirmation"
+															)
+														}}
+													</p>
 												</div>
 												<div>
-													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Guest Account Mode') }}</label>
+													<label
+														class="text-xs font-medium text-gray-700 mb-1 block"
+														>{{ __("Guest Account Mode") }}</label
+													>
 													<select
 														v-model="qrSettings.guest_account_mode"
 														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 													>
-														<option value="Not Proposed">{{ __('Not Proposed') }}</option>
-														<option value="Optional">{{ __('Optional') }}</option>
-														<option value="Mandatory">{{ __('Mandatory') }}</option>
+														<option value="Not Proposed">
+															{{ __("Not Proposed") }}
+														</option>
+														<option value="Optional">
+															{{ __("Optional") }}
+														</option>
+														<option value="Mandatory">
+															{{ __("Mandatory") }}
+														</option>
 													</select>
 												</div>
 												<div>
-													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Token Expiry') }}</label>
+													<label
+														class="text-xs font-medium text-gray-700 mb-1 block"
+														>{{ __("Token Expiry") }}</label
+													>
 													<select
 														v-model="qrSettings.token_expiry_mode"
 														class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 													>
-														<option value="On Table Close">{{ __('On Table Close') }}</option>
-														<option value="On Payment">{{ __('On Payment') }}</option>
-														<option value="Timed">{{ __('Timed') }}</option>
+														<option value="On Table Close">
+															{{ __("On Table Close") }}
+														</option>
+														<option value="On Payment">
+															{{ __("On Payment") }}
+														</option>
+														<option value="Timed">
+															{{ __("Timed") }}
+														</option>
 													</select>
 												</div>
-												<div v-if="qrSettings.token_expiry_mode === 'Timed'">
-													<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Expiry Days') }}</label>
+												<div
+													v-if="qrSettings.token_expiry_mode === 'Timed'"
+												>
+													<label
+														class="text-xs font-medium text-gray-700 mb-1 block"
+														>{{ __("Expiry Days") }}</label
+													>
 													<input
-														v-model.number="qrSettings.token_expiry_days"
+														v-model.number="
+															qrSettings.token_expiry_days
+														"
 														type="number"
 														min="1"
 														class="w-24 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -813,43 +1687,98 @@
 									<!-- Takeaway Web Ordering -->
 									<div :class="restaurantSubsectionClasses.container">
 										<div class="flex items-center gap-2 mb-4">
-											<svg :class="restaurantSubsectionClasses.icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+											<svg
+												:class="restaurantSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+												/>
 											</svg>
-											<h4 class="text-sm font-bold text-gray-900">{{ __('Takeaway Web Ordering') }}</h4>
+											<h4 class="text-sm font-bold text-gray-900">
+												{{ __("Takeaway Web Ordering") }}
+											</h4>
 										</div>
 										<div class="flex flex-col gap-3">
 											<CheckboxField
-												:modelValue="qrSettings.enable_web_takeaway ? 1 : 0"
-												@update:modelValue="qrSettings.enable_web_takeaway = !!$event"
+												:modelValue="
+													qrSettings.enable_web_takeaway ? 1 : 0
+												"
+												@update:modelValue="
+													qrSettings.enable_web_takeaway = !!$event
+												"
 												:label="__('Enable Takeaway Web Ordering')"
-												:description="__('Allow customers to order online for pickup via /pos/order')"
+												:description="
+													__(
+														'Allow customers to order online for pickup via /pos/order'
+													)
+												"
 											/>
-											<div v-if="qrSettings.enable_web_takeaway" class="pl-6">
-												<label class="text-xs font-medium text-gray-700 mb-1 block">{{ __('Takeaway Menu') }}</label>
+											<div
+												v-if="qrSettings.enable_web_takeaway"
+												class="pl-6"
+											>
+												<label
+													class="text-xs font-medium text-gray-700 mb-1 block"
+													>{{ __("Takeaway Menu") }}</label
+												>
 												<select
 													v-model="qrSettings.takeaway_menu"
 													class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 												>
-													<option value="">{{ __('Select a card...') }}</option>
-													<option v-for="card in allCards" :key="card.name" :value="card.name">{{ card.card_name }}</option>
+													<option value="">
+														{{ __("Select a card...") }}
+													</option>
+													<option
+														v-for="card in allCards"
+														:key="card.name"
+														:value="card.name"
+													>
+														{{ card.card_name }}
+													</option>
 												</select>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-
 						</div>
 
 						<!-- Empty State -->
-						<div v-else class="flex flex-col items-center justify-center py-16 text-center">
-							<svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+						<div
+							v-else
+							class="flex flex-col items-center justify-center py-16 text-center"
+						>
+							<svg
+								class="w-16 h-16 text-gray-400 mb-4"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+								/>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+								/>
 							</svg>
-							<p class="text-gray-600 font-medium">{{ __('No POS Profile Selected') }}</p>
-							<p class="text-gray-500 text-sm mt-1">{{ __('Please select a POS Profile to configure settings') }}</p>
+							<p class="text-gray-600 font-medium">
+								{{ __("No POS Profile Selected") }}
+							</p>
+							<p class="text-gray-500 text-sm mt-1">
+								{{ __("Please select a POS Profile to configure settings") }}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -859,38 +1788,30 @@
 </template>
 
 <script setup>
-import CheckboxField from "@/components/settings/CheckboxField.vue"
-import NumberField from "@/components/settings/NumberField.vue"
-import SelectField from "@/components/settings/SelectField.vue"
+import CheckboxField from "@/components/settings/CheckboxField.vue";
+import NumberField from "@/components/settings/NumberField.vue";
+import SelectField from "@/components/settings/SelectField.vue";
 //// Neoffice — the opening-hours editor and the restaurant store, both for the Restaurant tab
 //// (32f2415d, 2026-03-23 "add Restaurant Settings with opening hours and time-based card
 //// availability").
-import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
-import { useRestaurantStore } from "@/stores/restaurant"
-import { useToast } from "@/composables/useToast"
-import { Button, call, createResource } from "frappe-ui"
-import { computed, onMounted, onUnmounted, ref, watch } from "vue"
-import {
-	getSectionHeaderClasses,
-	getSubsectionClasses,
-	icons,
-} from "./settingsConfig"
-import { offlineWorker } from "@/utils/offline/workerClient"
-import { logger } from "@/utils/logger"
-import { usePOSEvents } from "@/composables/usePOSEvents"
-import TranslatedHTML from "../common/TranslatedHTML.vue"
-import { useQzTray } from "@/composables/useQzTray"
+import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue";
+import { useRestaurantStore } from "@/stores/restaurant";
+import { useToast } from "@/composables/useToast";
+import { Button, call, createResource } from "frappe-ui";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { getSectionHeaderClasses, getSubsectionClasses, icons } from "./settingsConfig";
+import { offlineWorker } from "@/utils/offline/workerClient";
+import { logger } from "@/utils/logger";
+import { usePOSEvents } from "@/composables/usePOSEvents";
+import TranslatedHTML from "../common/TranslatedHTML.vue";
+import { useQzTray } from "@/composables/useQzTray";
 
 //// Neoffice — formatting only, no behaviour change: the fork ran Biome over the whole POS
 //// source (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
 //// formatting"). Upstream is equivalent — re-run the formatter at the next merge.
-const log = logger.create("POSSettings")
-const {
-	detectSettingsChanges,
-	updateSettingsSnapshot,
-	emitStockSyncConfigured,
-} = usePOSEvents()
-const { showSuccess, showError } = useToast()
+const log = logger.create("POSSettings");
+const { detectSettingsChanges, updateSettingsSnapshot, emitStockSyncConfigured } = usePOSEvents();
+const { showSuccess, showError } = useToast();
 
 const props = defineProps({
 	modelValue: Boolean,
@@ -901,21 +1822,21 @@ const props = defineProps({
 	//// (6b38498b, 2026-03-27 "hide permanent card from schedule settings, add edit schedule
 	//// link").
 	initialTab: { type: String, default: "" },
-})
+});
 
-const emit = defineEmits(["update:modelValue"])
+const emit = defineEmits(["update:modelValue"]);
 
-const show = ref(props.modelValue)
+const show = ref(props.modelValue);
 
 // State
 //// Neoffice — the real default tab is decided when the dialog opens, not here: a restaurant
 //// lands on Restaurant, a shop on Stock (9ae00441, 2026-03-23 "restaurant tab first in
 //// settings"). The double quotes are the Biome pass (458d81a9).
-const activeTab = ref("stock") // Updated in watch on show
-const loading = ref(true)
-const saving = ref(false)
-const warehousesList = ref([])
-const selectedWarehouse = ref(props.currentWarehouse || "")
+const activeTab = ref("stock"); // Updated in watch on show
+const loading = ref(true);
+const saving = ref(false);
+const warehousesList = ref([]);
+const selectedWarehouse = ref(props.currentWarehouse || "");
 const settings = ref({
 	pos_profile: props.posProfile || "",
 	enabled: 1,
@@ -938,11 +1859,11 @@ const settings = ref({
 	//// movement. (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested
 	//// opening balance")
 	closing_withdrawal_template: "",
-})
+});
 
 // Stock Sync Settings (localStorage persisted)
-const stockSyncEnabled = ref(false)
-const stockSyncIntervalSeconds = ref(60) // Default 60 seconds
+const stockSyncEnabled = ref(false);
+const stockSyncIntervalSeconds = ref(60); // Default 60 seconds
 const stockSyncStatus = ref({
 	enabled: false,
 	warehouse: null,
@@ -951,7 +1872,7 @@ const stockSyncStatus = ref({
 	lastSync: null,
 	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 	running: false,
-})
+});
 
 // QZ Tray composable
 const {
@@ -968,54 +1889,46 @@ const {
 	refreshPrinters: handleRefreshPrinters,
 	generateCertificate: handleSetupQzCertificate,
 	downloadCertificate: handleDownloadQzCertificate,
-} = useQzTray()
+} = useQzTray();
 
 // Warehouse options
 const warehouseOptions = computed(() => {
-	if (warehousesList.value.length === 0) return []
+	if (warehousesList.value.length === 0) return [];
 	return warehousesList.value.map((w) => ({
 		label: w.warehouse_name || w.name,
 		value: w.name,
-	}))
-})
+	}));
+});
 
 // Dynamic classes using configuration helpers (DRY principle)
-const stockSectionClasses = computed(() => getSectionHeaderClasses("purple"))
-const salesSectionClasses = computed(() => getSectionHeaderClasses("green"))
-const warehouseSubsectionClasses = computed(() => getSubsectionClasses("gray"))
-const stockPolicySubsectionClasses = computed(() =>
-	getSubsectionClasses("blue"),
-)
+const stockSectionClasses = computed(() => getSectionHeaderClasses("purple"));
+const salesSectionClasses = computed(() => getSectionHeaderClasses("green"));
+const warehouseSubsectionClasses = computed(() => getSubsectionClasses("gray"));
+const stockPolicySubsectionClasses = computed(() => getSubsectionClasses("blue"));
 //// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
-const stockSyncSubsectionClasses = computed(() =>
-	getSubsectionClasses("indigo"),
-)
-const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
-const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"))
+const stockSyncSubsectionClasses = computed(() => getSubsectionClasses("indigo"));
+const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"));
+const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"));
 //// Neoffice — added state for the Restaurant tab: its amber section styling, the restaurant
 //// store, the opening-hours rows, the tip settings (860a115b) and the QR self-ordering and
 //// takeaway settings (68786b21), plus toggleRunner(), which writes Restaurant Settings
 //// directly so the runner display can be switched without saving the whole dialog
 //// (823cd5d8). Upstream POSNext has none of these settings. (32f2415d, 2026-03-23 "add
 //// Restaurant Settings with opening hours and time-based card availability")
-const restaurantSectionClasses = computed(() =>
-	getSectionHeaderClasses("amber"),
-)
-const restaurantSubsectionClasses = computed(() =>
-	getSubsectionClasses("amber"),
-)
+const restaurantSectionClasses = computed(() => getSectionHeaderClasses("amber"));
+const restaurantSubsectionClasses = computed(() => getSubsectionClasses("amber"));
 
 // Restaurant settings
-const restaurantStore = useRestaurantStore()
-const openingHours = ref([])
-const allCards = ref([])
-const restaurantStatus = computed(() => restaurantStore.restaurantStatus)
+const restaurantStore = useRestaurantStore();
+const openingHours = ref([]);
+const allCards = ref([]);
+const restaurantStatus = computed(() => restaurantStore.restaurantStatus);
 const tipSettings = ref({
 	enable_tips: false,
 	auto_detect_tip: true,
 	tip_item: null,
 	tip_account: null,
-})
+});
 const qrSettings = ref({
 	enable_qr_ordering: false,
 	guest_menu: "",
@@ -1025,7 +1938,7 @@ const qrSettings = ref({
 	token_expiry_days: 7,
 	enable_web_takeaway: false,
 	takeaway_menu: "",
-})
+});
 
 async function toggleRunner(val) {
 	try {
@@ -1034,15 +1947,15 @@ async function toggleRunner(val) {
 			name: "Restaurant Settings",
 			fieldname: "enable_runner",
 			value: val ? 1 : 0,
-		})
-		restaurantStore.restaurantSettings.enable_runner = !!val
+		});
+		restaurantStore.restaurantSettings.enable_runner = !!val;
 	} catch (error) {
-		console.error("Failed to toggle runner:", error)
+		console.error("Failed to toggle runner:", error);
 	}
 }
 
 function getCardSlots(cardName) {
-	return openingHours.value.filter((s) => s.restaurant_card === cardName)
+	return openingHours.value.filter((s) => s.restaurant_card === cardName);
 }
 
 // Resources
@@ -1051,159 +1964,153 @@ const warehousesResource = createResource({
 	makeParams() {
 		return {
 			pos_profile: props.posProfile,
-		}
+		};
 	},
 	auto: false,
 	onSuccess(data) {
-		const warehouses = data?.message || data || []
-		warehousesList.value = warehouses
+		const warehouses = data?.message || data || [];
+		warehousesList.value = warehouses;
 	},
 	onError(error) {
-		warehousesList.value = []
+		warehousesList.value = [];
 	},
-})
+});
 
 // Track original allow_negative_stock value for detecting changes
-const originalAllowNegativeStock = ref(null)
+const originalAllowNegativeStock = ref(null);
 
 const settingsResource = createResource({
 	url: "pos_next.pos_next.doctype.pos_settings.pos_settings.get_pos_settings",
 	makeParams() {
 		return {
 			pos_profile: props.posProfile,
-		}
+		};
 	},
 	onSuccess(data) {
 		if (data) {
-			Object.assign(settings.value, data)
-			settings.value.pos_profile = props.posProfile
+			Object.assign(settings.value, data);
+			settings.value.pos_profile = props.posProfile;
 			// Store original value
-			originalAllowNegativeStock.value = data.allow_negative_stock
+			originalAllowNegativeStock.value = data.allow_negative_stock;
 			// Update event system snapshot
-			updateSettingsSnapshot(settings.value)
+			updateSettingsSnapshot(settings.value);
 		}
-		loading.value = false
+		loading.value = false;
 	},
 	onError(error) {
-		loading.value = false
-		showError(__("Failed to load settings"))
+		loading.value = false;
+		showError(__("Failed to load settings"));
 	},
-})
+});
 
 // Watchers
 watch(
 	() => props.modelValue,
 	(val) => {
-		show.value = val
+		show.value = val;
 		if (val) {
 			//// Neoffice — a restaurant opens on the Restaurant tab, a shop on Stock (9ae00441,
 			//// 2026-03-23 "restaurant tab first in settings, smart slot defaults (Lunch/Dinner)").
-			activeTab.value = restaurantStore.isEnabled ? "restaurant" : "stock"
-			loadSettings()
+			activeTab.value = restaurantStore.isEnabled ? "restaurant" : "stock";
+			loadSettings();
 		}
-	},
-)
+	}
+);
 
 watch(show, (val) => {
-	emit("update:modelValue", val)
+	emit("update:modelValue", val);
 	//// Neoffice — honours the initialTab prop, so the "edit the schedule" link on the floor plan
 	//// lands directly on the right tab (6b38498b, 2026-03-27).
 	if (val && props.initialTab) {
-		activeTab.value = props.initialTab
+		activeTab.value = props.initialTab;
 	}
-})
+});
 
 // Watch for currentWarehouse prop changes and always sync
 watch(
 	() => props.currentWarehouse,
 	(newWarehouse) => {
 		if (newWarehouse) {
-			selectedWarehouse.value = newWarehouse
+			selectedWarehouse.value = newWarehouse;
 		}
 	},
-	{ immediate: true },
-)
+	{ immediate: true }
+);
 
 // Watch for tax_inclusive changes to provide immediate feedback
-const originalTaxInclusive = ref(null)
+const originalTaxInclusive = ref(null);
 watch(
 	() => settings.value.tax_inclusive,
 	(newValue, oldValue) => {
 		// Store original value on first load
 		if (originalTaxInclusive.value === null && oldValue !== undefined) {
-			originalTaxInclusive.value = oldValue
+			originalTaxInclusive.value = oldValue;
 		}
 
 		// Only show feedback if value actually changed from original
 		//// Neoffice — Biome wrap and quote style only, no behaviour change (458d81a9, 2026-03-20).
-		if (
-			originalTaxInclusive.value !== null &&
-			newValue !== originalTaxInclusive.value
-		) {
-			const mode = newValue ? "inclusive" : "exclusive"
-			log.info(`Tax mode toggled to: ${mode}`)
+		if (originalTaxInclusive.value !== null && newValue !== originalTaxInclusive.value) {
+			const mode = newValue ? "inclusive" : "exclusive";
+			log.info(`Tax mode toggled to: ${mode}`);
 		}
-	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
-	},
-)
+		//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
+	}
+);
 
 // Methods
 function handleClose() {
-	show.value = false
+	show.value = false;
 }
 
 async function loadSettings() {
-	if (!props.posProfile) return
-	loading.value = true
-	settings.value.pos_profile = props.posProfile
+	if (!props.posProfile) return;
+	loading.value = true;
+	settings.value.pos_profile = props.posProfile;
 
 	// Always set the current warehouse from props (from current shift/profile)
-	selectedWarehouse.value = props.currentWarehouse || ""
+	selectedWarehouse.value = props.currentWarehouse || "";
 
 	try {
 		// Load warehouses first using call API directly
-		const warehousesData = await call(
-			"pos_next.api.pos_profile.get_warehouses",
-			{
-				pos_profile: props.posProfile,
-			},
-		)
+		const warehousesData = await call("pos_next.api.pos_profile.get_warehouses", {
+			pos_profile: props.posProfile,
+		});
 
 		// Handle frappe-ui call response format { message: [...] }
-		warehousesList.value = warehousesData?.message || warehousesData || []
+		warehousesList.value = warehousesData?.message || warehousesData || [];
 
 		// Load settings
-		settingsResource.reload()
+		settingsResource.reload();
 	} catch (error) {
-		log.error("Error loading warehouses:", error)
-		warehousesList.value = []
+		log.error("Error loading warehouses:", error);
+		warehousesList.value = [];
 		// Still load settings even if warehouses fail
-		settingsResource.reload()
+		settingsResource.reload();
 	}
 }
 
 async function saveSettings() {
 	if (!props.posProfile) {
-		showError(__("POS Profile not found"))
-		return
+		showError(__("POS Profile not found"));
+		return;
 	}
 
-	saving.value = true
-	const oldWarehouse = props.currentWarehouse
-	const warehouseChanged = selectedWarehouse.value !== oldWarehouse
+	saving.value = true;
+	const oldWarehouse = props.currentWarehouse;
+	const warehouseChanged = selectedWarehouse.value !== oldWarehouse;
 	//// Neoffice — Biome 80-column wrap only, no behaviour change (458d81a9, 2026-03-20).
 	const negativeStockChanged =
-		originalAllowNegativeStock.value !== settings.value.allow_negative_stock
+		originalAllowNegativeStock.value !== settings.value.allow_negative_stock;
 	const taxInclusiveChanged =
 		originalTaxInclusive.value !== null &&
-		originalTaxInclusive.value !== settings.value.tax_inclusive
+		originalTaxInclusive.value !== settings.value.tax_inclusive;
 
 	// Capture old settings for change detection
 	const oldSettings = {
 		...settings.value,
 		//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 		warehouse: oldWarehouse, // Include warehouse in change detection
-	}
+	};
 
 	try {
 		// Save POS Settings (without warehouse)
@@ -1212,37 +2119,34 @@ async function saveSettings() {
 			{
 				pos_profile: props.posProfile,
 				settings: settings.value,
-			},
-		)
+			}
+		);
 
 		if (result) {
-			Object.assign(settings.value, result)
-			settings.value.pos_profile = props.posProfile
+			Object.assign(settings.value, result);
+			settings.value.pos_profile = props.posProfile;
 			// Update original values after successful save
-			originalAllowNegativeStock.value = result.allow_negative_stock
-			originalTaxInclusive.value = result.tax_inclusive
+			originalAllowNegativeStock.value = result.allow_negative_stock;
+			originalTaxInclusive.value = result.tax_inclusive;
 		}
 
 		// Update warehouse in POS Profile if changed
 		if (warehouseChanged && selectedWarehouse.value) {
-			const warehouseResult = await call(
-				"pos_next.api.pos_profile.update_warehouse",
-				{
-					pos_profile: props.posProfile,
-					warehouse: selectedWarehouse.value,
-				},
-			)
+			const warehouseResult = await call("pos_next.api.pos_profile.update_warehouse", {
+				pos_profile: props.posProfile,
+				warehouse: selectedWarehouse.value,
+			});
 
 			if (warehouseResult && warehouseResult.success) {
 				// Add warehouse to new settings for change detection
 				// (detectSettingsChanges below will emit settings:warehouse-changed via event bus)
-				settings.value.warehouse = selectedWarehouse.value
+				settings.value.warehouse = selectedWarehouse.value;
 			}
 		}
 
 		// Detect and emit settings changes through event system
 		// This will notify all listeners (POSSale, stock store, cart store, etc.)
-		detectSettingsChanges(settings.value, oldSettings)
+		detectSettingsChanges(settings.value, oldSettings);
 
 		// IMPORTANT: Page reload for critical stock policy change
 		// The allow_negative_stock setting affects deep stock validation logic
@@ -1254,23 +2158,21 @@ async function saveSettings() {
 		// prevents inconsistent state. Event listeners are still notified
 		// before reload for any cleanup needed.
 		if (negativeStockChanged) {
-			log.info("Stock policy changed, reloading page for consistency...")
-			window.location.reload()
-			return
+			log.info("Stock policy changed, reloading page for consistency...");
+			window.location.reload();
+			return;
 		}
 
 		// Show success toast for other changes
-		let successMessage = __("Settings saved successfully")
+		let successMessage = __("Settings saved successfully");
 		if (warehouseChanged && taxInclusiveChanged) {
 			//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
 			successMessage = __(
-				"Settings saved, warehouse updated, and tax mode changed. Cart will be recalculated.",
-			)
+				"Settings saved, warehouse updated, and tax mode changed. Cart will be recalculated."
+			);
 		} else if (warehouseChanged) {
 			//// Neoffice — Biome argument wrap only, no behaviour change (458d81a9, 2026-03-20).
-			successMessage = __(
-				"Settings saved and warehouse updated. Reloading stock...",
-			)
+			successMessage = __("Settings saved and warehouse updated. Reloading stock...");
 		} else if (taxInclusiveChanged) {
 			//// Neoffice — the Biome wrap of these two messages (458d81a9), then the block upstream has
 			//// nothing to save: opening hours, tip settings (860a115b) and the QR self-ordering and
@@ -1278,12 +2180,8 @@ async function saveSettings() {
 			//// "add QR self-ordering and takeaway settings to POS Settings UI"). It runs after the POS
 			//// settings are already stored, and a failure there is reported without losing them.
 			successMessage = settings.value.tax_inclusive
-				? __(
-						'Settings saved. Tax mode is now "inclusive". Cart will be recalculated.',
-					)
-				: __(
-						'Settings saved. Tax mode is now "exclusive". Cart will be recalculated.',
-					)
+				? __('Settings saved. Tax mode is now "inclusive". Cart will be recalculated.')
+				: __('Settings saved. Tax mode is now "exclusive". Cart will be recalculated.');
 		}
 
 		// Save restaurant settings (opening hours + tips)
@@ -1293,51 +2191,48 @@ async function saveSettings() {
 		//// reported without losing them (32f2415d + 860a115b 2026-03-23, 68786b21 2026-03-28).
 		if (restaurantStore.isEnabled) {
 			try {
-				await restaurantStore.saveRestaurantSettings(openingHours.value)
+				await restaurantStore.saveRestaurantSettings(openingHours.value);
 				// Save tip settings
 				await call("pos_next.api.restaurant.save_tip_settings", {
 					enable_tips: tipSettings.value.enable_tips ? 1 : 0,
 					auto_detect_tip: tipSettings.value.auto_detect_tip ? 1 : 0,
-				})
+				});
 				// Save QR settings
 				const qrFields = {
 					enable_qr_ordering: qrSettings.value.enable_qr_ordering ? 1 : 0,
 					guest_menu: qrSettings.value.guest_menu || "",
 					qr_order_validation:
 						qrSettings.value.qr_order_validation || "Direct to Kitchen",
-					guest_account_mode:
-						qrSettings.value.guest_account_mode || "Not Proposed",
-					token_expiry_mode:
-						qrSettings.value.token_expiry_mode || "On Table Close",
+					guest_account_mode: qrSettings.value.guest_account_mode || "Not Proposed",
+					token_expiry_mode: qrSettings.value.token_expiry_mode || "On Table Close",
 					token_expiry_days: qrSettings.value.token_expiry_days || 7,
 					enable_web_takeaway: qrSettings.value.enable_web_takeaway ? 1 : 0,
 					takeaway_menu: qrSettings.value.takeaway_menu || "",
-				}
+				};
 				for (const [field, value] of Object.entries(qrFields)) {
 					await call("frappe.client.set_value", {
 						doctype: "Restaurant Settings",
 						name: "Restaurant Settings",
 						fieldname: field,
 						value: value,
-					})
+					});
 				}
-				await restaurantStore.fetchRestaurantSettings()
+				await restaurantStore.fetchRestaurantSettings();
 				// Update local tip display after save (item may have been auto-created)
-				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item
-				tipSettings.value.tip_account =
-					restaurantStore.restaurantSettings.tip_account
+				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item;
+				tipSettings.value.tip_account = restaurantStore.restaurantSettings.tip_account;
 			} catch (err) {
-				log.error("Error saving restaurant settings:", err)
-				showError(__("Failed to save restaurant settings"))
+				log.error("Error saving restaurant settings:", err);
+				showError(__("Failed to save restaurant settings"));
 			}
 		}
 
-		showSuccess(successMessage)
+		showSuccess(successMessage);
 	} catch (error) {
-		log.error("Error saving settings:", error)
-		showError(error.message || __("Failed to save settings"))
+		log.error("Error saving settings:", error);
+		showError(error.message || __("Failed to save settings"));
 	} finally {
-		saving.value = false
+		saving.value = false;
 	}
 }
 
@@ -1346,11 +2241,11 @@ watch(
 	() => settings.value.silent_print,
 	async (enabled) => {
 		if (enabled) {
-			await handleQzConnect()
+			await handleQzConnect();
 		}
-	//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
-	},
-)
+		//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
+	}
+);
 
 //// Neoffice — loads the Restaurant tab lazily, when it is actually opened: opening hours,
 //// tip and QR settings, and the active non-permanent cards for the card pickers. Doing it
@@ -1361,19 +2256,17 @@ watch(
 watch(activeTab, async (tab) => {
 	if (tab === "restaurant") {
 		try {
-			await restaurantStore.fetchRestaurantSettings()
-			openingHours.value =
-				restaurantStore.restaurantSettings.opening_hours || []
+			await restaurantStore.fetchRestaurantSettings();
+			openingHours.value = restaurantStore.restaurantSettings.opening_hours || [];
 			// Load tip settings
 			tipSettings.value = {
 				enable_tips: !!restaurantStore.restaurantSettings.enable_tips,
-				auto_detect_tip:
-					restaurantStore.restaurantSettings.auto_detect_tip !== false,
+				auto_detect_tip: restaurantStore.restaurantSettings.auto_detect_tip !== false,
 				tip_item: restaurantStore.restaurantSettings.tip_item || null,
 				tip_account: restaurantStore.restaurantSettings.tip_account || null,
-			}
+			};
 			// Load QR settings
-			const rs = restaurantStore.restaurantSettings
+			const rs = restaurantStore.restaurantSettings;
 			qrSettings.value = {
 				enable_qr_ordering: !!rs.enable_qr_ordering,
 				guest_menu: rs.guest_menu || "",
@@ -1383,7 +2276,7 @@ watch(activeTab, async (tab) => {
 				token_expiry_days: rs.token_expiry_days || 7,
 				enable_web_takeaway: !!rs.enable_web_takeaway,
 				takeaway_menu: rs.takeaway_menu || "",
-			}
+			};
 			// Load all active cards (not time-filtered) for the card selector
 			const cardsRes = await call("frappe.client.get_list", {
 				doctype: "Restaurant Card",
@@ -1391,13 +2284,13 @@ watch(activeTab, async (tab) => {
 				fields: ["name", "card_name"],
 				order_by: "card_name asc",
 				limit_page_length: 0,
-			})
-			allCards.value = cardsRes?.message || cardsRes || []
+			});
+			allCards.value = cardsRes?.message || cardsRes || [];
 		} catch (error) {
-			log.error("Error loading restaurant settings:", error)
+			log.error("Error loading restaurant settings:", error);
 		}
 	}
-})
+});
 
 // ============================================================================
 // STOCK SYNC FUNCTIONS
@@ -1407,15 +2300,15 @@ watch(activeTab, async (tab) => {
 function loadStockSyncSettings() {
 	try {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		const saved = localStorage.getItem("pos_stock_sync_settings")
+		const saved = localStorage.getItem("pos_stock_sync_settings");
 		if (saved) {
-			const parsed = JSON.parse(saved)
-			stockSyncEnabled.value = parsed.enabled ?? false
-			stockSyncIntervalSeconds.value = parsed.intervalSeconds ?? 60
+			const parsed = JSON.parse(saved);
+			stockSyncEnabled.value = parsed.enabled ?? false;
+			stockSyncIntervalSeconds.value = parsed.intervalSeconds ?? 60;
 		}
 	} catch (error) {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		log.error("Failed to load stock sync settings:", error)
+		log.error("Failed to load stock sync settings:", error);
 	}
 }
 
@@ -1428,109 +2321,109 @@ function saveStockSyncSettings() {
 			JSON.stringify({
 				enabled: stockSyncEnabled.value,
 				intervalSeconds: stockSyncIntervalSeconds.value,
-			}),
-		)
+			})
+		);
 	} catch (error) {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		log.error("Failed to save stock sync settings:", error)
+		log.error("Failed to save stock sync settings:", error);
 	}
 }
 
 // Update stock sync status
 async function updateStockSyncStatus() {
 	try {
-		const status = await offlineWorker.getStockSyncStatus()
-		stockSyncStatus.value = status
+		const status = await offlineWorker.getStockSyncStatus();
+		stockSyncStatus.value = status;
 	} catch (error) {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		log.error("Failed to get stock sync status:", error)
+		log.error("Failed to get stock sync status:", error);
 	}
 }
 
 // Apply stock sync configuration to worker
 async function applyStockSyncConfig() {
 	try {
-		const intervalMs = stockSyncIntervalSeconds.value * 1000
+		const intervalMs = stockSyncIntervalSeconds.value * 1000;
 
 		if (stockSyncEnabled.value) {
 			// Configure and start sync
 			await offlineWorker.configureStockSync({
 				//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 				intervalMs,
-			})
-			await offlineWorker.startStockSync()
+			});
+			await offlineWorker.startStockSync();
 		} else {
 			// Stop sync
-			await offlineWorker.stopStockSync()
+			await offlineWorker.stopStockSync();
 		}
 
 		// Update status
-		await updateStockSyncStatus()
+		await updateStockSyncStatus();
 
 		// Save to localStorage
-		saveStockSyncSettings()
+		saveStockSyncSettings();
 
 		// Emit sync configuration change event
 		emitStockSyncConfigured({
 			enabled: stockSyncEnabled.value,
 			//// Neoffice — Biome trailing comma only, no behaviour change (458d81a9, 2026-03-20).
 			intervalMs: intervalMs,
-		})
+		});
 	} catch (error) {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		log.error("Failed to apply stock sync config:", error)
+		log.error("Failed to apply stock sync config:", error);
 	}
 }
 
 // Format sync time for display
 function formatSyncTime(timestamp) {
 	//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-	if (!timestamp) return __("Never")
+	if (!timestamp) return __("Never");
 
-	const now = Date.now()
-	const diff = now - timestamp
+	const now = Date.now();
+	const diff = now - timestamp;
 
 	if (diff < 60000) {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		return __("{0}s ago", [Math.floor(diff / 1000)])
+		return __("{0}s ago", [Math.floor(diff / 1000)]);
 	} else if (diff < 3600000) {
 		//// Neoffice — Biome quote style only, no behaviour change (458d81a9, 2026-03-20).
-		return __("{0}m ago", [Math.floor(diff / 60000)])
+		return __("{0}m ago", [Math.floor(diff / 60000)]);
 	} else {
-		const date = new Date(timestamp)
-		return date.toLocaleTimeString()
+		const date = new Date(timestamp);
+		return date.toLocaleTimeString();
 	}
 }
 
 // Watch for changes and apply
 watch(stockSyncEnabled, () => {
-	applyStockSyncConfig()
-})
+	applyStockSyncConfig();
+});
 
 watch(stockSyncIntervalSeconds, () => {
 	if (stockSyncEnabled.value) {
-		applyStockSyncConfig()
+		applyStockSyncConfig();
 	}
-})
+});
 
 // Lifecycle hooks
 onMounted(async () => {
 	// Load settings
-	loadStockSyncSettings()
+	loadStockSyncSettings();
 
 	// Update status initially
-	await updateStockSyncStatus()
+	await updateStockSyncStatus();
 
 	// Poll status every 5 seconds
 	const statusInterval = setInterval(() => {
-		updateStockSyncStatus()
-	}, 5000)
+		updateStockSyncStatus();
+	}, 5000);
 
 	// Cleanup on unmount
 	onUnmounted(() => {
-		clearInterval(statusInterval)
-	})
-})
+		clearInterval(statusInterval);
+	});
+});
 </script>
 
 <style scoped>

@@ -1,8 +1,8 @@
-import { db } from "./db"
-import { logger } from "../logger"
+import { db } from "./db";
+import { logger } from "../logger";
 
 /** @type {import('../logger').Logger} */
-const log = logger.create("TranslationCache")
+const log = logger.create("TranslationCache");
 
 /**
  * @fileoverview Lightweight IndexedDB-backed cache for translation bundles.
@@ -20,21 +20,20 @@ const log = logger.create("TranslationCache")
  */
 
 /** @constant {number} Cache time-to-live in milliseconds (24 hours) */
-const CACHE_TTL = 24 * 60 * 60 * 1000
+const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 //// Neoffice — the build this bundle came from. A cache keyed on locale alone
 //// survives a deploy, so a till kept showing the OLD dictionary for up to 24 h
 //// after new translations shipped — today that meant the new "already charged
 //// to the customer" warnings appearing in English on a French till. Stamping
 //// the build makes a deploy invalidate the dictionary immediately.
-const BUILD_STAMP =
-	typeof __BUILD_VERSION__ !== "undefined" ? String(__BUILD_VERSION__) : "dev"
+const BUILD_STAMP = typeof __BUILD_VERSION__ !== "undefined" ? String(__BUILD_VERSION__) : "dev";
 
 /** @type {Map<string, TranslationEntry>} In-memory cache for fast lookups */
-const memoryCache = new Map()
+const memoryCache = new Map();
 
 /** @type {Map<string, Promise<TranslationEntry|null>>} Tracks in-flight refresh requests */
-const pendingRefreshes = new Map()
+const pendingRefreshes = new Map();
 
 /**
  * @typedef {Object} TranslationEntry
@@ -48,7 +47,7 @@ const pendingRefreshes = new Map()
  * @param {string|null|undefined} locale - Raw locale code
  * @returns {string} Normalized lowercase locale
  */
-const normalizeLocale = (locale) => (locale || "en").toLowerCase()
+const normalizeLocale = (locale) => (locale || "en").toLowerCase();
 
 /**
  * Persists translation entry to both memory and IndexedDB.
@@ -66,13 +65,13 @@ async function persist(locale, messages, timestamp) {
 		//// every single call instead of once per deploy. Upstream stores locale + messages
 		//// + timestamp only (91864420, 2026-08-19 "une nouvelle traduction ne doit pas
 		//// attendre 24 h pour arriver en caisse").
-		const entry = { locale, messages, timestamp, build: BUILD_STAMP }
-		memoryCache.set(locale, entry)
-		await db.translations.put(entry)
-		return entry
+		const entry = { locale, messages, timestamp, build: BUILD_STAMP };
+		memoryCache.set(locale, entry);
+		await db.translations.put(entry);
+		return entry;
 	} catch (error) {
-		log.error("Failed to cache translations:", error)
-		return null
+		log.error("Failed to cache translations:", error);
+		return null;
 	}
 }
 
@@ -83,20 +82,20 @@ async function persist(locale, messages, timestamp) {
  * @private
  */
 async function read(locale) {
-	const memoized = memoryCache.get(locale)
+	const memoized = memoryCache.get(locale);
 	if (memoized) {
-		return memoized
+		return memoized;
 	}
 
 	try {
-		const stored = await db.translations.get(locale)
+		const stored = await db.translations.get(locale);
 		if (stored) {
-			memoryCache.set(locale, stored)
+			memoryCache.set(locale, stored);
 		}
-		return stored || null
+		return stored || null;
 	} catch (error) {
-		log.error("Failed to get cached translations:", error)
-		return null
+		log.error("Failed to get cached translations:", error);
+		return null;
 	}
 }
 
@@ -113,7 +112,7 @@ export const translationCache = {
 	 * @returns {Promise<TranslationEntry|null>} Stored entry or null on failure
 	 */
 	async set(locale, messages, timestamp = Date.now()) {
-		return persist(normalizeLocale(locale), messages, timestamp)
+		return persist(normalizeLocale(locale), messages, timestamp);
 	},
 
 	/**
@@ -122,7 +121,7 @@ export const translationCache = {
 	 * @returns {Promise<TranslationEntry|null>} Cached entry or null if not found
 	 */
 	async get(locale) {
-		return read(normalizeLocale(locale))
+		return read(normalizeLocale(locale));
 	},
 
 	/**
@@ -137,8 +136,8 @@ export const translationCache = {
 		//// different one": entries written before this stamp existed have none
 		//// at all, and treating those as fresh would have kept the very tills
 		//// we are fixing on the old dictionary. Costs one refetch per deploy.
-		if (build !== BUILD_STAMP) return true
-		return !timestamp || Date.now() - timestamp > ttl
+		if (build !== BUILD_STAMP) return true;
+		return !timestamp || Date.now() - timestamp > ttl;
 	},
 
 	/**
@@ -156,9 +155,9 @@ export const translationCache = {
 	 * const entry = await translationCache.getFresh('ar', () => fetchFromAPI())
 	 */
 	async getFresh(locale, fetcher, options = {}) {
-		const { force = false, ttl = CACHE_TTL } = options
-		const normalized = normalizeLocale(locale)
-		const cached = await read(normalized)
+		const { force = false, ttl = CACHE_TTL } = options;
+		const normalized = normalizeLocale(locale);
+		const cached = await read(normalized);
 
 		//// Neoffice — pass the cached entry's stamp to isStale, which upstream calls with
 		//// (timestamp, ttl) only. Without the third argument the staleness test falls back to
@@ -167,27 +166,27 @@ export const translationCache = {
 		//// checking on osiris that the new warnings still came out in English on a French
 		//// till (91864420, 2026-08-19).
 		if (!force && cached && !this.isStale(cached.timestamp, ttl, cached.build)) {
-			return cached
+			return cached;
 		}
 
-		if (!fetcher) return cached
+		if (!fetcher) return cached;
 
 		// Return existing in-flight request to avoid duplicate fetches
-		const inflight = pendingRefreshes.get(normalized)
-		if (inflight) return inflight
+		const inflight = pendingRefreshes.get(normalized);
+		if (inflight) return inflight;
 
 		const promise = (async () => {
 			try {
-				const messages = await fetcher()
-				if (messages) return await persist(normalized, messages, Date.now())
+				const messages = await fetcher();
+				if (messages) return await persist(normalized, messages, Date.now());
 			} catch (error) {
-				log.error(`Failed to refresh translations for ${normalized}:`, error)
+				log.error(`Failed to refresh translations for ${normalized}:`, error);
 			}
-			return cached
-		})().finally(() => pendingRefreshes.delete(normalized))
+			return cached;
+		})().finally(() => pendingRefreshes.delete(normalized));
 
-		pendingRefreshes.set(normalized, promise)
-		return promise
+		pendingRefreshes.set(normalized, promise);
+		return promise;
 	},
 
 	/**
@@ -197,30 +196,27 @@ export const translationCache = {
 	 */
 	async clear(locale) {
 		if (!locale) {
-			memoryCache.clear()
+			memoryCache.clear();
 			try {
-				await db.translations.clear()
-				return true
+				await db.translations.clear();
+				return true;
 			} catch (error) {
-				log.error("Failed to clear translation cache:", error)
-				return false
+				log.error("Failed to clear translation cache:", error);
+				return false;
 			}
 		}
 
-		const normalized = normalizeLocale(locale)
-		memoryCache.delete(normalized)
+		const normalized = normalizeLocale(locale);
+		memoryCache.delete(normalized);
 		try {
-			await db.translations.delete(normalized)
-			return true
+			await db.translations.delete(normalized);
+			return true;
 		} catch (error) {
 			//// Neoffice — Biome reformat only: the log.error() arguments wrapped onto three lines
 			//// (458d81a9). Same message, same false return.
 			//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-			log.error(
-				`Failed to clear translation cache for locale ${normalized}:`,
-				error,
-			)
-			return false
+			log.error(`Failed to clear translation cache for locale ${normalized}:`, error);
+			return false;
 		}
 	},
-}
+};

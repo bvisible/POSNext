@@ -10,22 +10,22 @@
  * 5. Register router and mount app
  */
 
-import { createPinia } from "pinia"
-import { createApp } from "vue"
+import { createPinia } from "pinia";
+import { createApp } from "vue";
 
-import App from "./App.vue"
-import { session, sessionUser } from "./data/session"
-import { userResource } from "./data/user"
-import router from "./router"
+import App from "./App.vue";
+import { session, sessionUser } from "./data/session";
+import { userResource } from "./data/user";
+import router from "./router";
 import {
 	createCSRFAwareRequest,
 	ensureCSRFToken,
 	getCSRFTokenFromCookie,
 	onCSRFTokenRefresh,
-} from "./utils/csrf"
-import { logger } from "./utils/logger"
-import { offlineWorker } from "./utils/offline/workerClient"
-import translationPlugin from "./utils/translation"
+} from "./utils/csrf";
+import { logger } from "./utils/logger";
+import { offlineWorker } from "./utils/offline/workerClient";
+import translationPlugin from "./utils/translation";
 //// Neoffice — added import. The POS is a standalone SPA, so nothing mints
 //// window.frappe.realtime for it the way the desk does. The customer display, the KDS
 //// and runner screens and the guest-order sync all publish over the Frappe socket, so
@@ -33,8 +33,8 @@ import translationPlugin from "./utils/translation"
 //// 2026-02-04 "initialize Socket.IO for customer display notifications"; a212d426, same
 //// day, "dynamic site name resolution for Socket.IO namespace").
 //// initialize Socket.IO for customer display notifications — 9566a90 + a212d42
-import { initRealtime } from "./realtime"
-import { initSocket } from "./socket"
+import { initRealtime } from "./realtime";
+import { initSocket } from "./socket";
 
 import {
 	Alert,
@@ -49,9 +49,9 @@ import {
 	pageMetaPlugin,
 	resourcesPlugin,
 	setConfig,
-} from "frappe-ui"
+} from "frappe-ui";
 
-import "./index.css"
+import "./index.css";
 
 //// Neoffice — added block, no upstream equivalent. Upstream POSNext is light-only; the
 //// Neoffice desk carries a NeoCockpit colour-mode toggle that writes the localStorage
@@ -65,34 +65,34 @@ import "./index.css"
 // made elsewhere (the Frappe desk NeoCockpit toggle writes the same key). POS
 // runs without the NeoCockpit chrome, so it must drive data-theme itself and
 // listen for cross-tab changes via the storage event. //// neoffice
-;(function syncNeoColorMode() {
+(function syncNeoColorMode() {
 	const apply = () => {
-		let mode = "system"
+		let mode = "system";
 		try {
-			mode = localStorage.getItem("neocockpit-colormode") || "system"
+			mode = localStorage.getItem("neocockpit-colormode") || "system";
 		} catch (e) {
 			/* noop */
 		}
 		const sysDark =
 			typeof matchMedia !== "undefined" &&
-			matchMedia("(prefers-color-scheme: dark)").matches
-		const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode
-		document.documentElement.setAttribute("data-theme", theme)
-		document.documentElement.classList.toggle("dark", theme === "dark")
-	}
-	apply()
+			matchMedia("(prefers-color-scheme: dark)").matches;
+		const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode;
+		document.documentElement.setAttribute("data-theme", theme);
+		document.documentElement.classList.toggle("dark", theme === "dark");
+	};
+	apply();
 	try {
-		matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply)
+		matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
 	} catch (e) {
 		/* noop */
 	}
 	// live cross-tab sync: react when the desk cockpit (or another tab) toggles
 	window.addEventListener("storage", (e) => {
-		if (e.key === "neocockpit-colormode" || e.key === "theme_active") apply()
-	})
-})()
+		if (e.key === "neocockpit-colormode" || e.key === "theme_active") apply();
+	});
+})();
 
-const log = logger.create("Main")
+const log = logger.create("Main");
 
 // =============================================================================
 // PWA Service Worker Registration
@@ -116,13 +116,12 @@ if ("serviceWorker" in navigator) {
 					//// so nobody mistakes it for an update path, and the remaining callback reflowed onto
 					//// two lines (7648dbff, 2026-08-18 — the commit that proved the auto-update cannot
 					//// go through the service worker at all).
-					onRegisterError: (err) =>
-						log.error("Service Worker registration error", err),
-				})
-			})
+					onRegisterError: (err) => log.error("Service Worker registration error", err),
+				});
+			});
 		},
-		{ passive: true },
-	)
+		{ passive: true }
+	);
 }
 
 // =============================================================================
@@ -138,7 +137,7 @@ const globalComponents = {
 	Dialog,
 	Alert,
 	Badge,
-}
+};
 
 // =============================================================================
 // CSRF Token Management
@@ -148,10 +147,10 @@ const globalComponents = {
 async function syncCSRFTokenToWorker() {
 	if (window.csrf_token && typeof window.csrf_token === "string") {
 		try {
-			await offlineWorker.setCSRFToken(window.csrf_token)
-			log.debug("CSRF token synced to worker")
+			await offlineWorker.setCSRFToken(window.csrf_token);
+			log.debug("CSRF token synced to worker");
 		} catch (error) {
-			log.warn("Failed to sync CSRF token to worker", error)
+			log.warn("Failed to sync CSRF token to worker", error);
 		}
 	}
 }
@@ -161,73 +160,73 @@ async function syncCSRFTokenToWorker() {
 // =============================================================================
 
 async function initializeApp() {
-	const app = createApp(App)
-	const pinia = createPinia()
+	const app = createApp(App);
+	const pinia = createPinia();
 
 	// Keep worker in sync when CSRF token refreshes
 	onCSRFTokenRefresh((newToken) => {
 		offlineWorker.setCSRFToken(newToken).catch((error) => {
-			log.warn("Failed to sync refreshed CSRF token to worker", error)
-		})
-	})
+			log.warn("Failed to sync refreshed CSRF token to worker", error);
+		});
+	});
 
 	// Enable automatic CSRF token refresh on 401/403 errors
-	const csrfAwareFrappeRequest = createCSRFAwareRequest(frappeRequest)
-	setConfig("resourceFetcher", csrfAwareFrappeRequest)
+	const csrfAwareFrappeRequest = createCSRFAwareRequest(frappeRequest);
+	setConfig("resourceFetcher", csrfAwareFrappeRequest);
 
 	// Register plugins
-	app.use(pinia)
-	app.use(resourcesPlugin)
-	app.use(pageMetaPlugin)
-	app.use(translationPlugin)
+	app.use(pinia);
+	app.use(resourcesPlugin);
+	app.use(pageMetaPlugin);
+	app.use(translationPlugin);
 
 	// Register global components
 	for (const key in globalComponents) {
-		app.component(key, globalComponents[key])
+		app.component(key, globalComponents[key]);
 	}
 
 	// Disable double-tap zoom on mobile for faster touch response
 	app.directive("touch-action", {
 		mounted: (el) => (el.style.touchAction = "manipulation"),
-	})
+	});
 
 	// -------------------------------------------------------------------------
 	// Authentication (CSRF + User fetched in parallel for faster startup)
 	// -------------------------------------------------------------------------
 
 	const csrfPromise = (async () => {
-		const existingToken = getCSRFTokenFromCookie()
+		const existingToken = getCSRFTokenFromCookie();
 		if (existingToken) {
-			log.debug("CSRF token found in cookie")
-			await syncCSRFTokenToWorker()
-			return true
+			log.debug("CSRF token found in cookie");
+			await syncCSRFTokenToWorker();
+			return true;
 		}
 
-		log.debug("Fetching CSRF token...")
+		log.debug("Fetching CSRF token...");
 		try {
-			await ensureCSRFToken({ silent: true })
-			await syncCSRFTokenToWorker()
-			return true
+			await ensureCSRFToken({ silent: true });
+			await syncCSRFTokenToWorker();
+			return true;
 		} catch {
-			log.debug("CSRF fetch failed, will retry on first API call")
-			return false
+			log.debug("CSRF fetch failed, will retry on first API call");
+			return false;
 		}
-	})()
+	})();
 
 	const userPromise = (async () => {
 		try {
-			if (!userResource.loading) userResource.fetch()
-			await userResource.promise
-			return sessionUser()
+			if (!userResource.loading) userResource.fetch();
+			await userResource.promise;
+			return sessionUser();
 		} catch (error) {
-			log.debug("User not logged in", error?.message || "No session")
-			return null
+			log.debug("User not logged in", error?.message || "No session");
+			return null;
 		}
-	})()
+	})();
 
-	const [, user] = await Promise.all([csrfPromise, userPromise])
-	session.user = user
-	log.info(`User authenticated: ${session.user}`)
+	const [, user] = await Promise.all([csrfPromise, userPromise]);
+	session.user = user;
+	log.info(`User authenticated: ${session.user}`);
 
 	//// Neoffice — the POS is a standalone SPA, not a desk page, so window.frappe.realtime
 	//// does not exist here. We mint it at startup (only for an authenticated user) because
@@ -240,8 +239,8 @@ async function initializeApp() {
 	// -------------------------------------------------------------------------
 
 	if (user) {
-		await initRealtime()
-		log.info("Realtime initialized for authenticated user")
+		await initRealtime();
+		log.info("Realtime initialized for authenticated user");
 	}
 
 	// -------------------------------------------------------------------------
@@ -251,31 +250,31 @@ async function initializeApp() {
 	if (user) {
 		import("./stores/bootstrap")
 			.then(async ({ useBootstrapStore }) => {
-				const bootstrapStore = useBootstrapStore()
+				const bootstrapStore = useBootstrapStore();
 				try {
-					await bootstrapStore.loadInitialData()
+					await bootstrapStore.loadInitialData();
 					// Initialize precision settings from bootstrap data
-					const { initPrecision } = await import("./utils/currency")
+					const { initPrecision } = await import("./utils/currency");
 					//// Neoffice — Swiss cash has no coin below 0.05, so an untouched grand total (CHF 12.37)
 					//// cannot be tendered. Upstream passed the bootstrap precision straight to
 					//// initPrecision(); we merge in smallest_currency_fraction_value read off the POS
 					//// Profile so currency.js roundTotal() can snap the total to the 0.05 step (4fdb5df4,
 					//// 2026-04-04 "rounding total, tips visibility, cash quick amounts").
 					//// rounding total, tips visibility, cash quick amounts — 4fdb5df
-					const precision = bootstrapStore.getPreloadedPrecision()
-					const posProfile = bootstrapStore.getPreloadedPOSProfile()
+					const precision = bootstrapStore.getPreloadedPrecision();
+					const posProfile = bootstrapStore.getPreloadedPOSProfile();
 					initPrecision({
 						...precision,
 						smallest_currency_fraction:
 							posProfile?.smallest_currency_fraction_value || 0,
-					})
-					log.debug("Precision settings initialized from bootstrap")
+					});
+					log.debug("Precision settings initialized from bootstrap");
 
 					// Initialize Socket.IO with correct site name from bootstrap
 					if (typeof window !== "undefined") {
-						if (!window.frappe) window.frappe = {}
-						const siteName = bootstrapStore.getSiteName()
-						window.frappe.realtime = initSocket(siteName)
+						if (!window.frappe) window.frappe = {};
+						const siteName = bootstrapStore.getSiteName();
+						window.frappe.realtime = initSocket(siteName);
 
 						// Ensure connection is established
 						//// Neoffice — Biome reformat only: the two-part condition wrapped onto four lines
@@ -286,28 +285,28 @@ async function initializeApp() {
 							window.frappe.realtime &&
 							typeof window.frappe.realtime.connect === "function"
 						) {
-							window.frappe.realtime.connect()
-							log.info("Socket initialized and connecting...", { siteName })
+							window.frappe.realtime.connect();
+							log.info("Socket initialized and connecting...", { siteName });
 						}
 					}
 				} catch (error) {
-					log.debug("Bootstrap preload failed (non-critical)", error)
+					log.debug("Bootstrap preload failed (non-critical)", error);
 				}
 			})
 			//// Neoffice — FORMATTING ONLY: Biome pass of 458d81a9 (2026-03-20) closed the empty
 			//// arrow body, `.catch(() => { })` -> `.catch(() => {})`. `git blame -w` hides this and
 			//// credits the upstream author of the line; without -w it is 458d81a9. No behaviour
 			//// change — take upstream's file at the next merge and re-run `biome check --write`.
-			.catch(() => {})
+			.catch(() => {});
 	}
 
 	// -------------------------------------------------------------------------
 	// Mount Application
 	// -------------------------------------------------------------------------
 
-	log.debug("Registering router, auth state:", session.isLoggedIn)
-	app.use(router)
-	app.mount("#app")
+	log.debug("Registering router, auth state:", session.isLoggedIn);
+	app.use(router);
+	app.mount("#app");
 
 	//// Neoffice — a till tab stays open for days and would otherwise keep
 	//// serving the build it was opened with (one till ran 14→18 Aug on stale
@@ -315,20 +314,17 @@ async function initializeApp() {
 	//// Compares build stamps and reloads only when the till is at rest.
 	import("./utils/tillAutoUpdate")
 		.then(({ setupTillAutoUpdate }) => setupTillAutoUpdate())
-		.catch((err) => log.warn("till auto-update unavailable", err))
+		.catch((err) => log.warn("till auto-update unavailable", err));
 
 	// -------------------------------------------------------------------------
 	// Scheduled CSRF Token Refresh (every 30 minutes)
 	// -------------------------------------------------------------------------
 
-	setInterval(
-		async () => {
-			log.debug("Scheduled CSRF token refresh")
-			await ensureCSRFToken({ forceRefresh: true, silent: true })
-			await syncCSRFTokenToWorker()
-		},
-		30 * 60 * 1000,
-	)
+	setInterval(async () => {
+		log.debug("Scheduled CSRF token refresh");
+		await ensureCSRFToken({ forceRefresh: true, silent: true });
+		await syncCSRFTokenToWorker();
+	}, 30 * 60 * 1000);
 }
 
-initializeApp()
+initializeApp();

@@ -41,10 +41,7 @@ def apply_tax_inclusive(doc):
 	try:
 		# Get POS Settings for this profile
 		pos_settings = frappe.db.get_value(
-			"POS Settings",
-			{"pos_profile": doc.pos_profile},
-			["tax_inclusive"],
-			as_dict=True
+			"POS Settings", {"pos_profile": doc.pos_profile}, ["tax_inclusive"], as_dict=True
 		)
 		tax_inclusive = pos_settings.get("tax_inclusive", 0) if pos_settings else 0
 	except Exception:
@@ -95,7 +92,7 @@ def auto_assign_loyalty_program_on_invoice(doc):
 		"POS Settings",
 		{"pos_profile": doc.pos_profile},
 		["enable_loyalty_program", "default_loyalty_program"],
-		as_dict=True
+		as_dict=True,
 	)
 
 	if not pos_settings:
@@ -109,13 +106,55 @@ def auto_assign_loyalty_program_on_invoice(doc):
 		return
 
 	# Assign loyalty program to customer
-	frappe.db.set_value(
-		"Customer",
-		doc.customer,
-		"loyalty_program",
-		loyalty_program,
-		update_modified=False
-	)
+	frappe.db.set_value("Customer", doc.customer, "loyalty_program", loyalty_program, update_modified=False)
+
+
+def record_one_time_offer_usage(doc, method=None):
+	"""Record redemption of one-time-per-customer Pricing Rules on submit.
+
+	The applied one-time rules are read from ``pos_applied_one_time_rules`` (a
+	JSON list stamped by update_invoice before item.pricing_rules is cleared —
+	the cleared field can't be read back here). Inserts a
+	``One Time Customer Offer Usage`` row per (customer, rule); the doctype's
+	composite name ({customer}::{pricing_rule}) makes a duplicate insert raise
+	DuplicateEntryError, so it stays idempotent and race-safe.
+	"""
+	import json
+
+	if doc.get("is_return") or not doc.get("customer"):
+		return
+
+	raw = doc.get("pos_applied_one_time_rules")
+	if not raw:
+		return
+	try:
+		rule_names = json.loads(raw)
+	except (ValueError, TypeError):
+		return
+	if not rule_names:
+		return
+
+	from frappe.utils import now
+
+	for rule in rule_names:
+		try:
+			frappe.get_doc(
+				{
+					"doctype": "One Time Customer Offer Usage",
+					"customer": doc.customer,
+					"pricing_rule": rule,
+					"sales_invoice": doc.name,
+					"redemption_date": now(),
+				}
+			).insert(ignore_permissions=True, ignore_if_duplicate=True)
+		except frappe.DuplicateEntryError:
+			# Customer already recorded for this rule — one-time guard intact.
+			pass
+
+
+def release_one_time_offer_usage(doc, method=None):
+	"""Release one-time redemptions on cancel so the customer can redeem again."""
+	frappe.db.delete("One Time Customer Offer Usage", {"sales_invoice": doc.name})
 
 
 def before_cancel(doc, method=None):
@@ -130,18 +169,21 @@ def before_cancel(doc, method=None):
 	try:
 		# //// Neoffice — the internal function: the endpoint now checks the caller's right to cancel.
 		from pos_next.api.credit_sales import _cancel_credit_journal_entries
+
 		_cancel_credit_journal_entries(doc.name)
 	except Exception as e:
 		frappe.log_error(
 			title="Credit Sale JE Cancellation Error",
-			message=f"Invoice: {doc.name}, Error: {str(e)}\n{frappe.get_traceback()}"
+			message=f"Invoice: {doc.name}, Error: {e!s}\n{frappe.get_traceback()}",
 		)
 		# Don't block invoice cancellation if JE cancellation fails
 		frappe.msgprint(
 			_("Warning: Some credit journal entries may not have been cancelled. Please check manually."),
 			alert=True,
-			indicator="orange"
+			indicator="orange",
 		)
+
+
 # //// use native ERPNext coupon_code field on Sales Invoice — 9bc096d
 
 
@@ -193,11 +235,11 @@ def validate_coupon_on_invoice(doc, method=None):
 
 	try:
 		from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
+
 		validate_coupon_code(doc.coupon_code)
 	except Exception as e:
 		frappe.log_error(
-			"Coupon Validation Error",
-			f"Invoice: {doc.name}, Coupon: {doc.coupon_code}, Error: {str(e)}"
+			"Coupon Validation Error", f"Invoice: {doc.name}, Coupon: {doc.coupon_code}, Error: {str(e)}"
 		)
 		raise
 
@@ -216,11 +258,12 @@ def update_coupon_usage_on_submit(doc, method=None):
 
 	try:
 		from erpnext.accounts.doctype.pricing_rule.utils import update_coupon_code_count
+
 		update_coupon_code_count(doc.coupon_code, "used")
 	except Exception as e:
 		frappe.log_error(
 			"Coupon Usage Update Error",
-			f"Invoice: {doc.name}, Coupon: {doc.coupon_code}, Action: used, Error: {str(e)}"
+			f"Invoice: {doc.name}, Coupon: {doc.coupon_code}, Action: used, Error: {str(e)}",
 		)
 		# Don't block invoice submission if coupon update fails
 
@@ -239,9 +282,10 @@ def update_coupon_usage_on_cancel(doc, method=None):
 
 	try:
 		from erpnext.accounts.doctype.pricing_rule.utils import update_coupon_code_count
+
 		update_coupon_code_count(doc.coupon_code, "cancelled")
 	except Exception as e:
 		frappe.log_error(
 			"Coupon Usage Update Error",
-			f"Invoice: {doc.name}, Coupon: {doc.coupon_code}, Action: cancelled, Error: {str(e)}"
+			f"Invoice: {doc.name}, Coupon: {doc.coupon_code}, Action: cancelled, Error: {str(e)}",
 		)

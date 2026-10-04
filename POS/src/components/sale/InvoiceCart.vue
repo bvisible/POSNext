@@ -118,35 +118,63 @@
 						<!-- //// min-w-0) so the full-info popover below can hang off it; upstream shows the name and -->
 						<!-- //// nothing else (53d0107c, 2026-07-09 "richer customer info"). -->
 						<!-- Customer Card (hover shows full-info popover) -->
-						<div class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0">
+						<div
+							class="group relative flex-1 flex items-center gap-1.5 bg-white border border-gray-200 rounded-neo-md p-1.5 shadow-neo min-w-0"
+						>
 							<!-- Customer Avatar & Info -->
 							<!-- //// Neoffice — [CU] the customer name itself is the switch control. Upstream -->
 							<!-- //// needed two taps (a red X to clear, then the search); a cashier changes -->
 							<!-- //// customer constantly, so one tap re-opens the search instead (4a0dd461, -->
 							<!-- //// 2026-07-09 "smoother customer selection & full edit form"). -->
 							<div
-									@click.stop="clearCustomer"
-									role="button"
-									tabindex="0"
-									@keydown.enter.stop="clearCustomer"
-									:title="__('Change customer')"
-									class="flex items-center gap-2 min-w-0 flex-1 px-1.5 py-1 cursor-pointer rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+								@click.stop="clearCustomer"
+								role="button"
+								tabindex="0"
+								@keydown.enter.stop="clearCustomer"
+								:title="__('Change customer')"
+								class="flex items-center gap-2 min-w-0 flex-1 px-1.5 py-1 cursor-pointer rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+							>
+								<div
+									class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0"
 								>
-								<div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-									<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+									<svg
+										class="w-4 h-4 text-white"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+										/>
 									</svg>
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="text-xs font-semibold text-gray-900 truncate leading-tight">
+									<p
+										class="text-xs font-semibold text-gray-900 truncate leading-tight"
+									>
 										{{ customer.customer_name || customer.name }}
 									</p>
 									<!-- //// Neoffice — [CU] e-mail shown next to the phone: it was already cached and -->
 									<!-- //// never displayed, and business customers are identified by mail (4a0dd461). -->
-									<p v-if="customer.mobile_no || customer.email_id" class="text-[10px] text-gray-500 truncate leading-tight">
-										<span v-if="customer.mobile_no">{{ customer.mobile_no }}</span>
-										<span v-if="customer.mobile_no && customer.email_id" class="text-gray-300"> · </span>
-										<span v-if="customer.email_id">{{ customer.email_id }}</span>
+									<p
+										v-if="customer.mobile_no || customer.email_id"
+										class="text-[10px] text-gray-500 truncate leading-tight"
+									>
+										<span v-if="customer.mobile_no">{{
+											customer.mobile_no
+										}}</span>
+										<span
+											v-if="customer.mobile_no && customer.email_id"
+											class="text-gray-300"
+										>
+											·
+										</span>
+										<span v-if="customer.email_id">{{
+											customer.email_id
+										}}</span>
 									</p>
 								</div>
 							</div>
@@ -165,28 +193,68 @@
 									{{ customer.customer_name || customer.name }}
 								</p>
 								<div class="mt-1.5 space-y-1">
-									<div v-if="customer.customer_type" class="flex items-start gap-1.5 text-[10px]">
-										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Type") }}</span>
-										<span class="text-gray-700">{{ __(customer.customer_type) }}</span>
+									<div
+										v-if="customer.customer_type"
+										class="flex items-start gap-1.5 text-[10px]"
+									>
+										<span class="w-12 flex-shrink-0 text-gray-400">{{
+											__("Type")
+										}}</span>
+										<span class="text-gray-700">{{
+											__(customer.customer_type)
+										}}</span>
 									</div>
-									<div v-if="customer.mobile_no" class="flex items-start gap-1.5 text-[10px]">
-										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Phone") }}</span>
-										<span class="text-gray-700 break-all">{{ customer.mobile_no }}</span>
+									<div
+										v-if="customer.mobile_no"
+										class="flex items-start gap-1.5 text-[10px]"
+									>
+										<span class="w-12 flex-shrink-0 text-gray-400">{{
+											__("Phone")
+										}}</span>
+										<span class="text-gray-700 break-all">{{
+											customer.mobile_no
+										}}</span>
 									</div>
-									<div v-if="customer.email_id" class="flex items-start gap-1.5 text-[10px]">
-										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Email") }}</span>
-										<span class="text-gray-700 break-all">{{ customer.email_id }}</span>
+									<div
+										v-if="customer.email_id"
+										class="flex items-start gap-1.5 text-[10px]"
+									>
+										<span class="w-12 flex-shrink-0 text-gray-400">{{
+											__("Email")
+										}}</span>
+										<span class="text-gray-700 break-all">{{
+											customer.email_id
+										}}</span>
 									</div>
-									<div v-if="formatAddress(customer)" class="flex items-start gap-1.5 text-[10px]">
-										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Address") }}</span>
-										<span class="text-gray-700">{{ formatAddress(customer) }}</span>
+									<div
+										v-if="formatAddress(customer)"
+										class="flex items-start gap-1.5 text-[10px]"
+									>
+										<span class="w-12 flex-shrink-0 text-gray-400">{{
+											__("Address")
+										}}</span>
+										<span class="text-gray-700">{{
+											formatAddress(customer)
+										}}</span>
 									</div>
-									<div v-if="customer.customer_group" class="flex items-start gap-1.5 text-[10px]">
-										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Group") }}</span>
-										<span class="text-gray-700">{{ customer.customer_group }}</span>
+									<div
+										v-if="customer.customer_group"
+										class="flex items-start gap-1.5 text-[10px]"
+									>
+										<span class="w-12 flex-shrink-0 text-gray-400">{{
+											__("Group")
+										}}</span>
+										<span class="text-gray-700">{{
+											customer.customer_group
+										}}</span>
 									</div>
-									<div v-if="customer.territory" class="flex items-start gap-1.5 text-[10px]">
-										<span class="w-12 flex-shrink-0 text-gray-400">{{ __("Territory") }}</span>
+									<div
+										v-if="customer.territory"
+										class="flex items-start gap-1.5 text-[10px]"
+									>
+										<span class="w-12 flex-shrink-0 text-gray-400">{{
+											__("Territory")
+										}}</span>
 										<span class="text-gray-700">{{ customer.territory }}</span>
 									</div>
 								</div>
@@ -200,8 +268,18 @@
 									class="w-7 h-7 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation"
 									:title="__('Edit customer details')"
 								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+									<svg
+										class="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+										/>
 									</svg>
 								</button>
 								<button
@@ -210,13 +288,23 @@
 									class="w-7 h-7 flex items-center justify-center text-green-600 hover:bg-green-50 active:bg-green-100 rounded-lg transition-colors touch-manipulation"
 									:title="__('Create new customer')"
 								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+									<svg
+										class="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										stroke-width="2.5"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M12 4v16m8-8H4"
+										/>
 									</svg>
-								<!-- //// Neoffice — [CU] a red "remove customer" button used to sit right after this -->
-								<!-- //// line. It was dropped when the customer name became the way to re-open the -->
-								<!-- //// search, so clearing and switching is one tap instead of two (4a0dd461, -->
-								<!-- //// 2026-07-09). git blame attributes nothing here: the hunk is a pure deletion. -->
+									<!-- //// Neoffice — [CU] a red "remove customer" button used to sit right after this -->
+									<!-- //// line. It was dropped when the customer name became the way to re-open the -->
+									<!-- //// search, so clearing and switching is one tap instead of two (4a0dd461, -->
+									<!-- //// 2026-07-09). git blame attributes nothing here: the hunk is a pure deletion. -->
 								</button>
 							</div>
 						</div>
@@ -237,13 +325,25 @@
 									type="button"
 									@click="selectDocType('Sales Invoice')"
 									class="px-2.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-200 flex items-center gap-1"
-									:class="cartStore.targetDoctype === 'Sales Invoice'
-										? 'bg-white text-blue-600 shadow-sm'
-										: 'text-gray-500 hover:text-gray-700'"
+									:class="
+										cartStore.targetDoctype === 'Sales Invoice'
+											? 'bg-white text-blue-600 shadow-sm'
+											: 'text-gray-500 hover:text-gray-700'
+									"
 									:title="__('Sales Invoice')"
 								>
-									<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+									<svg
+										class="w-3.5 h-3.5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										/>
 									</svg>
 									<span>{{ __("Invoice") }}</span>
 								</button>
@@ -251,13 +351,25 @@
 									type="button"
 									@click="selectDocType('Sales Order')"
 									class="px-2.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-200 flex items-center gap-1"
-									:class="cartStore.targetDoctype === 'Sales Order'
-										? 'bg-white text-orange-600 shadow-sm'
-										: 'text-gray-500 hover:text-gray-700'"
+									:class="
+										cartStore.targetDoctype === 'Sales Order'
+											? 'bg-white text-orange-600 shadow-sm'
+											: 'text-gray-500 hover:text-gray-700'
+									"
 									:title="__('Sales Order')"
 								>
-									<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+									<svg
+										class="w-3.5 h-3.5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+										/>
 									</svg>
 									<span>{{ __("Order") }}</span>
 								</button>
@@ -352,13 +464,25 @@
 								type="button"
 								@click="selectDocType('Sales Invoice')"
 								class="h-full px-2.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5"
-								:class="cartStore.targetDoctype === 'Sales Invoice'
-									? 'bg-white text-blue-600 shadow-sm'
-									: 'text-gray-500 hover:text-gray-700'"
+								:class="
+									cartStore.targetDoctype === 'Sales Invoice'
+										? 'bg-white text-blue-600 shadow-sm'
+										: 'text-gray-500 hover:text-gray-700'
+								"
 								:title="__('Sales Invoice')"
 							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+								<svg
+									class="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+									/>
 								</svg>
 								<span class="hidden sm:inline">{{ __("Invoice") }}</span>
 							</button>
@@ -366,13 +490,25 @@
 								type="button"
 								@click="selectDocType('Sales Order')"
 								class="h-full px-2.5 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5"
-								:class="cartStore.targetDoctype === 'Sales Order'
-									? 'bg-white text-orange-600 shadow-sm'
-									: 'text-gray-500 hover:text-gray-700'"
+								:class="
+									cartStore.targetDoctype === 'Sales Order'
+										? 'bg-white text-orange-600 shadow-sm'
+										: 'text-gray-500 hover:text-gray-700'
+								"
 								:title="__('Sales Order')"
 							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+								<svg
+									class="w-4 h-4"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+									/>
 								</svg>
 								<span class="hidden sm:inline">{{ __("Order") }}</span>
 							</button>
@@ -387,16 +523,25 @@
 				>
 					<!-- Frequent Customers Header (when showing suggestions) -->
 					<div
-						v-if="customerSearchFocused && customerSearch.trim().length < 2 && customerResults.length > 0"
+						v-if="
+							customerSearchFocused &&
+							customerSearch.trim().length < 2 &&
+							customerResults.length > 0
+						"
 						class="px-2 py-1 bg-gray-50 border-b border-gray-200"
 					>
-						<span class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-							{{ __('Frequent Customers') }}
+						<span
+							class="text-[10px] font-medium text-gray-500 uppercase tracking-wide"
+						>
+							{{ __("Frequent Customers") }}
 						</span>
 					</div>
 
 					<!-- Customer Results -->
-					<div v-if="customerResults.length > 0" class="max-h-48 overflow-y-auto overscroll-contain">
+					<div
+						v-if="customerResults.length > 0"
+						class="max-h-48 overflow-y-auto overscroll-contain"
+					>
 						<button
 							type="button"
 							v-for="(cust, index) in customerResults"
@@ -404,7 +549,9 @@
 							@mousedown.prevent="selectCustomer(cust)"
 							:class="[
 								'w-full text-start px-2 py-1.5 flex items-center gap-1.5 border-b border-gray-100 last:border-0 touch-manipulation select-none cursor-pointer active:bg-blue-200',
-								index === selectedIndex ? 'bg-blue-100' : 'hover:bg-blue-50 active:bg-blue-100',
+								index === selectedIndex
+									? 'bg-blue-100'
+									: 'hover:bg-blue-50 active:bg-blue-100',
 							]"
 						>
 							<div
@@ -422,15 +569,40 @@
 								<!-- //// the cashier can tell two same-named customers apart; upstream showed the -->
 								<!-- //// phone alone. get_customers was widened to return the address rather than -->
 								<!-- //// fetching per customer (4a0dd461 + 53d0107c, 2026-07-09). -->
-								<p v-if="cust.mobile_no || cust.email_id" class="text-[9px] text-gray-600 truncate">
+								<p
+									v-if="cust.mobile_no || cust.email_id"
+									class="text-[9px] text-gray-600 truncate"
+								>
 									<span v-if="cust.mobile_no">{{ cust.mobile_no }}</span>
-									<span v-if="cust.mobile_no && cust.email_id" class="text-gray-300"> · </span>
+									<span
+										v-if="cust.mobile_no && cust.email_id"
+										class="text-gray-300"
+									>
+										·
+									</span>
 									<span v-if="cust.email_id">{{ cust.email_id }}</span>
 								</p>
-								<p v-if="addressSnippet(cust)" class="text-[9px] text-gray-400 truncate flex items-center gap-0.5">
-									<svg class="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-										<path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+								<p
+									v-if="addressSnippet(cust)"
+									class="text-[9px] text-gray-400 truncate flex items-center gap-0.5"
+								>
+									<svg
+										class="w-2.5 h-2.5 flex-shrink-0"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+										/>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+										/>
 									</svg>
 									<span class="truncate">{{ addressSnippet(cust) }}</span>
 								</p>
@@ -494,8 +666,18 @@
 						type="button"
 						:title="__('Clear all items')"
 					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v2M4 7h16"/>
+						<svg
+							class="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v2M4 7h16"
+							/>
 						</svg>
 						<span>{{ __("Clear") }}</span>
 					</button>
@@ -507,18 +689,30 @@
 								'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors touch-manipulation',
 								cartSortBy
 									? 'text-blue-600 hover:bg-blue-50'
-									: 'text-gray-600 hover:bg-gray-50'
+									: 'text-gray-600 hover:bg-gray-50',
 							]"
-							:title="cartSortBy
-								? (cartSortOrder === 'asc'
-									? __('Sorted by {0} A-Z', [getCartSortLabel()])
-									: __('Sorted by {0} Z-A', [getCartSortLabel()]))
-								: __('Sort cart items')"
+							:title="
+								cartSortBy
+									? cartSortOrder === 'asc'
+										? __('Sorted by {0} A-Z', [getCartSortLabel()])
+										: __('Sorted by {0} Z-A', [getCartSortLabel()])
+									: __('Sort cart items')
+							"
 							:aria-label="__('Sort cart items')"
 							type="button"
 						>
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+							<svg
+								class="w-4 h-4"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+								stroke-width="2"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+								/>
 							</svg>
 							<span>{{ __("Sort") }}</span>
 						</button>
@@ -530,8 +724,10 @@
 							class="absolute end-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]"
 						>
 							<div class="py-2">
-								<div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase border-b border-gray-100">
-									{{ __('Sort Cart') }}
+								<div
+									class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase border-b border-gray-100"
+								>
+									{{ __("Sort Cart") }}
 								</div>
 								<div class="py-1">
 									<!-- No Sorting (clear) -->
@@ -539,15 +735,27 @@
 										@click="handleCartSortToggle(null)"
 										:class="[
 											'w-full px-3 py-2 text-sm transition-colors flex items-center justify-between group',
-											!cartSortBy ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+											!cartSortBy
+												? 'bg-blue-50 text-blue-700'
+												: 'text-gray-700 hover:bg-gray-50',
 										]"
 										type="button"
 									>
 										<span class="flex items-center gap-2.5">
-											<svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+											<svg
+												class="w-4 h-4 text-gray-400 group-hover:text-gray-600"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
 											</svg>
-											<span>{{ __('No Sorting') }}</span>
+											<span>{{ __("No Sorting") }}</span>
 										</span>
 									</button>
 
@@ -560,25 +768,50 @@
 										@click="handleCartSortToggle(option.field)"
 										:class="[
 											'w-full px-3 py-2 text-sm transition-colors flex items-center justify-between group',
-											cartSortBy === option.field ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+											cartSortBy === option.field
+												? 'bg-blue-50 text-blue-700'
+												: 'text-gray-700 hover:bg-gray-50',
 										]"
 										type="button"
 									>
 										<span class="flex items-center gap-2.5">
-											<svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="option.icon"/>
+											<svg
+												class="w-4 h-4 text-gray-400 group-hover:text-gray-600"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													:d="option.icon"
+												/>
 											</svg>
 											<span>{{ option.label }}</span>
 										</span>
 										<!-- Sort direction icon -->
 										<svg
 											class="w-5 h-5"
-											:class="cartSortBy === option.field ? 'text-blue-600' : 'text-gray-300'"
+											:class="
+												cartSortBy === option.field
+													? 'text-blue-600'
+													: 'text-gray-300'
+											"
 											fill="none"
 											stroke="currentColor"
 											viewBox="0 0 24 24"
 										>
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="CART_SORT_ICONS[getCartSortIconState(option.field)]"/>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												:d="
+													CART_SORT_ICONS[
+														getCartSortIconState(option.field)
+													]
+												"
+											/>
 										</svg>
 									</button>
 								</div>
@@ -870,6 +1103,35 @@
 							__("Create Customer")
 						}}</span>
 					</button>
+
+					<!-- Shift History -->
+					<button
+						type="button"
+						@click="$emit('show-shift-history')"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 active:bg-indigo-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						:title="__('View shift history')"
+					>
+						<div
+							class="w-9 h-9 sm:w-10 sm:h-10 bg-indigo-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-100 transition-colors"
+						>
+							<svg
+								class="w-5 h-5 text-indigo-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+								/>
+							</svg>
+						</div>
+						<span class="text-[11px] sm:text-xs font-semibold text-gray-700">{{
+							__("Shift History")
+						}}</span>
+					</button>
 				</div>
 			</div>
 
@@ -879,14 +1141,19 @@
 				<!-- //// waiter still sees what was served (c7f6932c, 2026-03-23). -->
 				<div
 					v-for="(item, index) in sortedItems"
-					:key="item.item_code + '-' + (item.uom || '') + (item.is_free_item ? '-free' : '')"
+					:key="
+						item.item_code +
+						'-' +
+						(item.uom || '') +
+						(item.is_free_item ? '-free' : '')
+					"
 					@click="item.is_free_item ? null : openEditDialog(item)"
 					:class="[
 						'border rounded-neo-sm p-1.5 sm:p-2 transition-all duration-200',
 						item.is_free_item
 							? 'bg-green-50 border-green-300 cursor-default'
 							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group',
-						item.kds_status === 'Delivered' ? 'opacity-50' : ''
+						item.kds_status === 'Delivered' ? 'opacity-50' : '',
 					]"
 				>
 					<div class="flex gap-1.5 sm:gap-2">
@@ -900,7 +1167,19 @@
 						<!-- //// would break the tag, which is what Neoffice commit 4ed5051e undid. -->
 						<div
 							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
-							:style="item.image ? {} : item.custom_color ? { backgroundColor: item.custom_color, borderColor: item.custom_color } : { background: 'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)' }"
+							:style="
+								item.image
+									? {}
+									: item.custom_color
+									? {
+											backgroundColor: item.custom_color,
+											borderColor: item.custom_color,
+									  }
+									: {
+											background:
+												'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)',
+									  }
+							"
 						>
 							<img
 								v-if="item.image"
@@ -921,11 +1200,15 @@
 							<span
 								v-else
 								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
-								:class="item.custom_color && !isLightColor(item.custom_color) ? 'text-white' : 'text-gray-400'"
+								:class="
+									item.custom_color && !isLightColor(item.custom_color)
+										? 'text-white'
+										: 'text-gray-400'
+								"
 							>
 								<!-- //// Neoffice — [IMG] the name is the fallback content of the thumbnail, hence -->
 								<!-- //// the truncation to 8 characters (983130d3). -->
-								{{ (item.item_name || '').substring(0, 8) }}
+								{{ (item.item_name || "").substring(0, 8) }}
 							</span>
 						</div>
 
@@ -945,31 +1228,58 @@
 									<!-- //// summary of the chosen modifiers, so the ticket can be checked before it is -->
 									<!-- //// sent (87f168fe, e005b94b, 831857f2, 4df0caf1, 2026-03-20/21). -->
 									<!-- Special Instructions Badge (Restaurant mode) -->
-								<span
-									v-if="item.posa_special_instructions"
-									class="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[9px] font-bold flex-shrink-0"
-									:title="item.posa_special_instructions"
-								>
-									<svg class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-									{{ __("Note") }}
-								</span>
-								<!-- Preparation Station Badge (Restaurant mode) -->
-								<span
-									v-if="item.preparation_station && restaurantStore.isEnabled"
-									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0 text-white"
-									:style="{ backgroundColor: getStationColor(item.preparation_station) }"
-								>
-									{{ getStationDisplayName(item.preparation_station) }}
-								</span>
-								<!-- Item Modifiers Summary -->
-								<div v-if="item.posa_item_modifiers && restaurantStore.isEnabled" class="text-[10px] text-gray-500 mt-0.5 truncate">
-									{{ formatModifiers(item.posa_item_modifiers) }}
-								</div>
-								<!-- Free Item Badge -->
+									<span
+										v-if="item.posa_special_instructions"
+										class="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[9px] font-bold flex-shrink-0"
+										:title="item.posa_special_instructions"
+									>
+										<svg
+											class="w-2.5 h-2.5 me-0.5"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+											></path>
+										</svg>
+										{{ __("Note") }}
+									</span>
+									<!-- Preparation Station Badge (Restaurant mode) -->
+									<span
+										v-if="
+											item.preparation_station && restaurantStore.isEnabled
+										"
+										class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0 text-white"
+										:style="{
+											backgroundColor: getStationColor(
+												item.preparation_station
+											),
+										}"
+									>
+										{{ getStationDisplayName(item.preparation_station) }}
+									</span>
+									<!-- Item Modifiers Summary -->
+									<div
+										v-if="
+											item.posa_item_modifiers && restaurantStore.isEnabled
+										"
+										class="text-[10px] text-gray-500 mt-0.5 truncate"
+									>
+										{{ formatModifiers(item.posa_item_modifiers) }}
+									</div>
+									<!-- Free Item Badge -->
 									<span
 										v-if="item.free_qty && item.free_qty > 0"
 										class="inline-flex items-center px-1.5 py-0.5 bg-green-600 text-white rounded-full text-[9px] font-bold flex-shrink-0"
-										:title="item.is_free_item ? __('Free item') : __('{0} free item(s) included', [item.free_qty])"
+										:title="
+											item.is_free_item
+												? __('Free item')
+												: __('{0} free item(s) included', [item.free_qty])
+										"
 									>
 										<svg
 											class="w-2.5 h-2.5 me-0.5"
@@ -982,7 +1292,11 @@
 												clip-rule="evenodd"
 											/>
 										</svg>
-										{{ item.is_free_item ? __("FREE") : __("+{0} FREE", [item.free_qty]) }}
+										{{
+											item.is_free_item
+												? __("FREE")
+												: __("+{0} FREE", [item.free_qty])
+										}}
 									</span>
 									<!-- Discount Badge -->
 									<div
@@ -1018,18 +1332,45 @@
 									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
 									:class="kdsStatusBadgeClass(item.kds_status)"
 								>
-									<svg v-if="item.kds_status === 'Waiting'" class="w-2.5 h-2.5 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+									<svg
+										v-if="item.kds_status === 'Waiting'"
+										class="w-2.5 h-2.5 me-0.5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+										></path>
+									</svg>
 									{{ __(item.kds_status) }}
 								</span>
 								<!-- Quick Send Button (for Waiting items in restaurant mode) -->
 								<button
-									v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
+									v-if="
+										cartStore.restaurantTable && item.kds_status === 'Waiting'
+									"
 									type="button"
 									@click.stop="$emit('send-item-to-kitchen', item)"
 									class="text-purple-500 hover:text-purple-700 active:text-purple-800 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
 									:title="__('Send to kitchen')"
 								>
-									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+									<svg
+										class="h-4 w-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M13 10V3L4 14h7v7l9-11h-7z"
+										></path>
+									</svg>
 								</button>
 								<!-- Add Modifiers Button (Restaurant mode) -->
 								<button
@@ -1039,7 +1380,19 @@
 									class="text-gray-400 hover:text-blue-600 active:text-blue-700 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
 									:title="__('Add Note / Modifier')"
 								>
-									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+									<svg
+										class="h-4 w-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+										></path>
+									</svg>
 								</button>
 
 								<!-- //// Neoffice — [CART] emits the item OBJECT, not its item_code: with modifiers -->
@@ -1079,7 +1432,10 @@
 										v-if="item.is_free_item"
 										class="flex items-center bg-green-100 border border-green-300 rounded px-2 h-6 sm:h-7"
 									>
-										<span class="text-xs sm:text-sm font-bold text-green-700">{{ item.quantity }}</span>
+										<span
+											class="text-xs sm:text-sm font-bold text-green-700"
+											>{{ item.quantity }}</span
+										>
 									</div>
 									<!-- For serial items, show serial badge with edit button -->
 									<div
@@ -1115,7 +1471,9 @@
 										v-else
 										:class="[
 											'flex items-center bg-gray-50 border rounded overflow-hidden',
-											item.is_resolved_barcode ? 'border-amber-300 bg-amber-50' : 'border-gray-200'
+											item.is_resolved_barcode
+												? 'border-amber-300 bg-amber-50'
+												: 'border-gray-200',
 										]"
 									>
 										<button
@@ -1126,10 +1484,14 @@
 												'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-bold transition-colors touch-manipulation border-e',
 												item.is_resolved_barcode
 													? 'bg-gray-100 text-gray-400 cursor-not-allowed border-amber-300'
-													: 'bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border-gray-200'
+													: 'bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border-gray-200',
 											]"
 											:aria-label="__('Decrease quantity')"
-											:title="item.is_resolved_barcode ? __('Quantity locked (barcode item)') : __('Decrease quantity')"
+											:title="
+												item.is_resolved_barcode
+													? __('Quantity locked (barcode item)')
+													: __('Decrease quantity')
+											"
 										>
 											<svg
 												class="w-3 h-3"
@@ -1158,10 +1520,14 @@
 												'w-16 sm:w-20 h-6 sm:h-7 text-center border-0 text-xs sm:text-sm font-bold focus:outline-none',
 												item.is_resolved_barcode
 													? 'bg-amber-50 text-amber-700 cursor-not-allowed'
-													: 'bg-white text-gray-900 focus:ring-2 focus:ring-blue-500'
+													: 'bg-white text-gray-900 focus:ring-2 focus:ring-blue-500',
 											]"
 											:aria-label="__('Quantity')"
-											:title="item.is_resolved_barcode ? __('Quantity locked (barcode item)') : ''"
+											:title="
+												item.is_resolved_barcode
+													? __('Quantity locked (barcode item)')
+													: ''
+											"
 										/>
 										<button
 											type="button"
@@ -1171,10 +1537,14 @@
 												'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-bold transition-colors touch-manipulation border-s',
 												item.is_resolved_barcode
 													? 'bg-gray-100 text-gray-400 cursor-not-allowed border-amber-300'
-													: 'bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border-gray-200'
+													: 'bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border-gray-200',
 											]"
 											:aria-label="__('Increase quantity')"
-											:title="item.is_resolved_barcode ? __('Quantity locked (barcode item)') : __('Increase quantity')"
+											:title="
+												item.is_resolved_barcode
+													? __('Quantity locked (barcode item)')
+													: __('Increase quantity')
+											"
 										>
 											<svg
 												class="w-3 h-3"
@@ -1198,22 +1568,24 @@
 											type="button"
 											@click="toggleUomDropdown(item.item_code, item.uom)"
 											:disabled="
-												item.is_resolved_barcode || !item.item_uoms || item.item_uoms.length === 0
+												item.is_resolved_barcode ||
+												!item.item_uoms ||
+												item.item_uoms.length === 0
 											"
 											:class="[
 												'h-6 sm:h-7 text-[10px] sm:text-xs font-bold rounded ps-2 pe-5 transition-all touch-manipulation flex items-center justify-center min-w-[45px]',
 												item.is_resolved_barcode
 													? 'bg-amber-100 text-amber-700 border border-amber-300 cursor-not-allowed'
 													: item.item_uoms && item.item_uoms.length > 0
-														? 'bg-blue-500 text-white border border-blue-400 hover:bg-blue-600 active:scale-95 cursor-pointer'
-														: 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed opacity-60',
+													? 'bg-blue-500 text-white border border-blue-400 hover:bg-blue-600 active:scale-95 cursor-pointer'
+													: 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed opacity-60',
 											]"
 											:title="
 												item.is_resolved_barcode
 													? __('UOM locked (barcode item)')
 													: item.item_uoms && item.item_uoms.length > 0
-														? __('Click to change unit')
-														: __('Only one unit available')
+													? __('Click to change unit')
+													: __('Only one unit available')
 											"
 										>
 											{{
@@ -1231,8 +1603,8 @@
 												item.is_resolved_barcode
 													? 'text-amber-600'
 													: item.item_uoms && item.item_uoms.length > 0
-														? 'text-white'
-														: 'text-gray-400',
+													? 'text-white'
+													: 'text-gray-400',
 											]"
 											fill="none"
 											stroke="currentColor"
@@ -1380,9 +1752,14 @@
 			<!-- //// its own line; hiding it would make the receipt look wrong by a few cents -->
 			<!-- //// (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts"). -->
 			<!-- Rounding Adjustment -->
-			<div v-if="roundingAdjustment !== 0" class="flex items-center justify-between text-xs text-gray-600 px-1 mb-1">
+			<div
+				v-if="roundingAdjustment !== 0"
+				class="flex items-center justify-between text-xs text-gray-600 px-1 mb-1"
+			>
 				<span class="font-medium">{{ __("Rounding") }}</span>
-				<span class="font-bold text-center min-w-[60px]">{{ formatCurrency(roundingAdjustment) }}</span>
+				<span class="font-bold text-center min-w-[60px]">{{
+					formatCurrency(roundingAdjustment)
+				}}</span>
 			</div>
 
 			<!-- Grand Total -->
@@ -1404,7 +1781,10 @@
 				<!-- //// Upstream has no guest payment at all (6d7195f4, 214125e5, 1c05e7c7, -->
 				<!-- //// e25a9266, 2026-03-30/04-01). -->
 				<!-- Guest payments already received on this table -->
-				<div v-if="cartStore.guestPaidAmount > 0" class="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1">
+				<div
+					v-if="cartStore.guestPaidAmount > 0"
+					class="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1"
+				>
 					<div class="flex items-center justify-between">
 						<span class="text-xs font-semibold text-green-700">
 							{{ __("Already paid (guest)") }}
@@ -1413,7 +1793,10 @@
 							{{ formatCurrency(cartStore.guestPaidAmount) }}
 						</span>
 					</div>
-					<div v-if="cartStore.guestTipAmount > 0" class="flex items-center justify-between">
+					<div
+						v-if="cartStore.guestTipAmount > 0"
+						class="flex items-center justify-between"
+					>
 						<span class="text-xs text-green-600 italic">
 							{{ __("Tip (guest)") }}
 						</span>
@@ -1426,7 +1809,11 @@
 							{{ __("Remaining to collect") }}
 						</span>
 						<span class="text-sm font-bold text-orange-600">
-							{{ formatCurrency(Math.max(0, displayGrandTotal - cartStore.guestPaidAmount)) }}
+							{{
+								formatCurrency(
+									Math.max(0, displayGrandTotal - cartStore.guestPaidAmount)
+								)
+							}}
 						</span>
 					</div>
 				</div>
@@ -1442,7 +1829,13 @@
 			<!-- //// (8aa35c29, 7269b953, 7fdaa8cf, c7f6932c, 71050faf, d3ca6959, 884f8ebd, -->
 			<!-- //// a268f4e9, 48b2e6c0, 2026-03-20 to 04-01.) -->
 			<!-- Restaurant Mode Buttons -->
-			<div v-if="restaurantStore.isEnabled && (cartStore.restaurantTable || cartStore.isTakeaway)" class="flex gap-1.5">
+			<div
+				v-if="
+					restaurantStore.isEnabled &&
+					(cartStore.restaurantTable || cartStore.isTakeaway)
+				"
+				class="flex gap-1.5"
+			>
 				<!-- Send to Kitchen Button (Primary - green) -->
 				<button
 					type="button"
@@ -1463,11 +1856,7 @@
 						viewBox="0 0 24 24"
 						stroke-width="2"
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M5 13l4 4L19 7"
-						/>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
 					</svg>
 					<!-- //// Neoffice — msgid was the French "Valider" (RULE: source files are English, -->
 					<!-- //// the French lives in locale/fr.po). Displayed text unchanged. -->
@@ -1478,10 +1867,16 @@
 				<button
 					type="button"
 					@click="handleProceedToPayment"
-					:disabled="items.length === 0 || (cartStore.guestPaidAmount > 0 && cartStore.guestPaidAmount >= displayGrandTotal)"
+					:disabled="
+						items.length === 0 ||
+						(cartStore.guestPaidAmount > 0 &&
+							cartStore.guestPaidAmount >= displayGrandTotal)
+					"
 					:class="[
 						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
-						items.length === 0 || (cartStore.guestPaidAmount > 0 && cartStore.guestPaidAmount >= displayGrandTotal)
+						items.length === 0 ||
+						(cartStore.guestPaidAmount > 0 &&
+							cartStore.guestPaidAmount >= displayGrandTotal)
 							? 'bg-gray-300 cursor-not-allowed'
 							: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-neo-md hover:shadow-neo-lg active:scale-[0.98]',
 					]"
@@ -1626,7 +2021,6 @@
 			:currency="currency"
 			@update-item="handleUpdateItem"
 		/>
-
 	</div>
 </template>
 
@@ -1639,27 +2033,24 @@
 //// Neoffice — [R] the cart reads the restaurant store (table, takeaway, stations)
 //// and [IMG] the colour helper for Items with no photo, neither of which exists
 //// upstream (8aa35c29, 983130d3). [F] the currency import was wrapped by Biome.
-import { usePOSCartStore } from "@/stores/posCart"
-import { usePOSSettingsStore } from "@/stores/posSettings"
-import { usePOSOffersStore } from "@/stores/posOffers"
-import { useCustomerSearchStore } from "@/stores/customerSearch"
-import { useRestaurantStore } from "@/stores/restaurant"
-import { isLightColor } from "@/utils/itemColors"
-import {
-	DEFAULT_CURRENCY,
-	formatCurrency as formatCurrencyUtil,
-} from "@/utils/currency"
-import { useFormatters } from "@/composables/useFormatters"
-import { useCartSort } from "@/composables/useCartSort"
-import { isOffline } from "@/utils/offline"
-import { offlineWorker } from "@/utils/offline/workerClient"
-import { logger } from "@/utils/logger"
-import { FeatherIcon } from "frappe-ui"
+import { usePOSCartStore } from "@/stores/posCart";
+import { usePOSSettingsStore } from "@/stores/posSettings";
+import { usePOSOffersStore } from "@/stores/posOffers";
+import { useCustomerSearchStore } from "@/stores/customerSearch";
+import { useRestaurantStore } from "@/stores/restaurant";
+import { isLightColor } from "@/utils/itemColors";
+import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
+import { useFormatters } from "@/composables/useFormatters";
+import { useCartSort } from "@/composables/useCartSort";
+import { isOffline } from "@/utils/offline";
+import { offlineWorker } from "@/utils/offline/workerClient";
+import { logger } from "@/utils/logger";
+import { FeatherIcon } from "frappe-ui";
 
-const log = logger.create("InvoiceCart")
-import { createResource } from "frappe-ui"
-import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue"
-import EditItemDialog from "./EditItemDialog.vue"
+const log = logger.create("InvoiceCart");
+import { createResource } from "frappe-ui";
+import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
+import EditItemDialog from "./EditItemDialog.vue";
 
 /**
  * ============================================================================
@@ -1669,12 +2060,12 @@ import EditItemDialog from "./EditItemDialog.vue"
 //// Neoffice — [R] restaurant store added next to the retail ones: it holds the open
 //// table, takeaway state and the station map used by the badges (8aa35c29). [F]
 //// the surrounding lines only lost their semicolons (87f168fe).
-const cartStore = usePOSCartStore() // Pinia store for cart state management
-const settingsStore = usePOSSettingsStore() // Pinia store for POS settings
-const offersStore = usePOSOffersStore() // Pinia store for offers/promotions
-const customerSearchStore = useCustomerSearchStore() // Pinia store for customer search
-const restaurantStore = useRestaurantStore() // Pinia store for restaurant features
-const { formatQuantity } = useFormatters() // Quantity formatting utilities
+const cartStore = usePOSCartStore(); // Pinia store for cart state management
+const settingsStore = usePOSSettingsStore(); // Pinia store for POS settings
+const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
+const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
+const restaurantStore = useRestaurantStore(); // Pinia store for restaurant features
+const { formatQuantity } = useFormatters(); // Quantity formatting utilities
 
 function handleProceedToPayment() {
 	//// Neoffice — [R] added: helpers the restaurant cart needs and upstream has no use
@@ -1682,34 +2073,34 @@ function handleProceedToPayment() {
 	//// dialog, and the two station helpers resolve a station name to its display name
 	//// and colour through the station/item map rather than a field on Item, which was
 	//// dropped to stop polluting the Item doctype (4df0caf1, 831857f2, 2026-03-21).
-	emit("proceed-to-payment")
+	emit("proceed-to-payment");
 }
 
 function formatModifiers(modifiersJson) {
 	try {
-		const mods = JSON.parse(modifiersJson)
-		return mods.map((m) => m.options.map((o) => o.name).join(", ")).join(" · ")
+		const mods = JSON.parse(modifiersJson);
+		return mods.map((m) => m.options.map((o) => o.name).join(", ")).join(" · ");
 	} catch {
-		return ""
+		return "";
 	}
 }
 
 function getStationColor(stationName) {
 	// Look through station items map to find color
-	const map = restaurantStore.stationItemsMap
+	const map = restaurantStore.stationItemsMap;
 	for (const [, info] of Object.entries(map)) {
-		if (info.station === stationName) return info.color
+		if (info.station === stationName) return info.color;
 	}
-	return "#6B7280"
+	return "#6B7280";
 }
 
 function getStationDisplayName(stationName) {
 	// Look through station items map to find display name
-	const map = restaurantStore.stationItemsMap
+	const map = restaurantStore.stationItemsMap;
 	for (const [, info] of Object.entries(map)) {
-		if (info.station === stationName) return info.station_name
+		if (info.station === stationName) return info.station_name;
 	}
-	return stationName
+	return stationName;
 }
 
 /**
@@ -1769,8 +2160,8 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
-//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-})
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+});
 
 /**
  * ============================================================================
@@ -1808,9 +2199,10 @@ const emit = defineEmits([
 	"show-history", // () - Show invoice history
 	"show-return", // () - Open return invoice dialog
 	"close-shift", // () - Close current shift
+	"show-shift-history", // () - Open shift history dialog
 	// "create-sales-order", // () - Create Sales Order // Removed as per instruction
-//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-])
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+]);
 
 // Cart sort composable (must be after defineProps)
 const {
@@ -1826,7 +2218,7 @@ const {
 	handleCartSortToggle,
 	getCartSortLabel,
 	getCartSortIconState,
-} = useCartSort(() => props.items)
+} = useCartSort(() => props.items);
 
 /**
  * ============================================================================
@@ -1835,31 +2227,29 @@ const {
  */
 // Customer search state
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const customerSearch = ref("") // Current search query
-const customerSearchContainer = ref(null) // Ref to search container for click-outside detection
-const customerSearchFocused = ref(false) // Track if search input is focused
+const customerSearch = ref(""); // Current search query
+const customerSearchContainer = ref(null); // Ref to search container for click-outside detection
+const customerSearchFocused = ref(false); // Track if search input is focused
 // Use Pinia store for allCustomers (shared with CustomerDialog, synced on customer creation)
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const allCustomers = computed(() => customerSearchStore.allCustomers)
-const customersLoaded = computed(
-	() => customerSearchStore.allCustomers.length > 0,
-)
-const selectedIndex = ref(-1) // Keyboard navigation index for search results
-const availableGiftCards = ref([]) // Available gift cards for current customer
-const previousCustomer = ref(null) // Store previous customer for restore on blur
+const allCustomers = computed(() => customerSearchStore.allCustomers);
+const customersLoaded = computed(() => customerSearchStore.allCustomers.length > 0);
+const selectedIndex = ref(-1); // Keyboard navigation index for search results
+const availableGiftCards = ref([]); // Available gift cards for current customer
+const previousCustomer = ref(null); // Store previous customer for restore on blur
 
 // Edit item dialog state
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const showEditDialog = ref(false) // Controls edit dialog visibility
-const selectedItem = ref(null) // Item being edited
+const showEditDialog = ref(false); // Controls edit dialog visibility
+const selectedItem = ref(null); // Item being edited
 
 // UOM dropdown state - tracks which item's UOM dropdown is open (by item_code)
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const openUomDropdown = ref(null)
+const openUomDropdown = ref(null);
 
 // Cart sort dropdown container (template ref for outside-click detection)
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const cartSortContainer = ref(null)
+const cartSortContainer = ref(null);
 
 /**
  * ============================================================================
@@ -1879,14 +2269,14 @@ const cartSortContainer = ref(null)
 // Load customers via the shared Pinia store (if not already loaded)
 if (props.posProfile) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	customerSearchStore.loadAllCustomers(props.posProfile)
+	customerSearchStore.loadAllCustomers(props.posProfile);
 }
 
 // Load offers on component init (uses shared store method to prevent duplicate fetches)
 // ensureOffersFetched handles both online/offline cases and caching
 if (props.posProfile) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	offersStore.ensureOffersFetched(props.posProfile)
+	offersStore.ensureOffersFetched(props.posProfile);
 }
 
 /**
@@ -1905,16 +2295,16 @@ const giftCardsResource = createResource({
 		return {
 			customer: props.customer?.name || props.customer,
 			company: props.posProfile, // Will get company from profile
-		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		}
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+		};
 	},
 	auto: false,
 	onSuccess(data) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		availableGiftCards.value = data?.message || data || []
+		availableGiftCards.value = data?.message || data || [];
 	},
-//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-})
+	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+});
 
 /**
  * Watch for customer changes to load their gift cards.
@@ -1926,14 +2316,14 @@ watch(
 	(newCustomer) => {
 		if (newCustomer && props.posProfile && !isOffline()) {
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			giftCardsResource.reload()
+			giftCardsResource.reload();
 		} else {
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			availableGiftCards.value = []
+			availableGiftCards.value = [];
 		}
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	},
-)
+		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+	}
+);
 
 /**
  * ============================================================================
@@ -1947,7 +2337,7 @@ watch(
  * @returns {Number} Count of applied offers
  */
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const appliedOfferCount = computed(() => (props.appliedOffers || []).length)
+const appliedOfferCount = computed(() => (props.appliedOffers || []).length);
 
 /**
  * Pre-computed customer lookup map for O(1) access by ID.
@@ -1955,14 +2345,14 @@ const appliedOfferCount = computed(() => (props.appliedOffers || []).length)
  */
 const customerMap = computed(() => {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const map = new Map()
+	const map = new Map();
 	for (const cust of allCustomers.value) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		map.set(cust.name, cust)
+		map.set(cust.name, cust);
 	}
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	return map
-})
+	return map;
+});
 
 /**
  * Instant customer search results with in-memory filtering.
@@ -1975,7 +2365,7 @@ const customerMap = computed(() => {
  */
 const customerResults = computed(() => {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const searchValue = customerSearch.value.trim().toLowerCase()
+	const searchValue = customerSearch.value.trim().toLowerCase();
 
 	// When focused with no/short search term, show frequent customers (top 5)
 	if (searchValue.length < 2) {
@@ -1992,10 +2382,10 @@ const customerResults = computed(() => {
 			// }
 			// If no frequent customers, show first 5 from the list
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			return allCustomers.value.slice(0, 10)
+			return allCustomers.value.slice(0, 10);
 		}
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		return []
+		return [];
 	}
 
 	//// Neoffice — [CU] upstream matched the whole query with a single includes(), so typing
@@ -2005,24 +2395,26 @@ const customerResults = computed(() => {
 	// Split the query into words and require each to match somewhere in the
 	// name / mobile / id, in any order — a plain includes() on the whole string
 	// missed reversed word order (the stored name may be "Daniel Moret").
-	const tokens = searchValue.split(/\s+/).filter(Boolean)
-	return allCustomers.value
-		.filter((cust) => {
-			//// Neoffice — [CU] tokenised, order-independent match (see the note just above):
-			//// upstream's includes() on the whole string missed "Moret Daniel" for a customer
-			//// stored as "Daniel Moret" (afb8f175, 2026-07-09).
-			const haystack =
-				(cust.customer_name || "").toLowerCase() +
-				" " +
-				(cust.mobile_no || "").toLowerCase() +
-				" " +
-				(cust.name || "").toLowerCase()
+	const tokens = searchValue.split(/\s+/).filter(Boolean);
+	return (
+		allCustomers.value
+			.filter((cust) => {
+				//// Neoffice — [CU] tokenised, order-independent match (see the note just above):
+				//// upstream's includes() on the whole string missed "Moret Daniel" for a customer
+				//// stored as "Daniel Moret" (afb8f175, 2026-07-09).
+				const haystack =
+					(cust.customer_name || "").toLowerCase() +
+					" " +
+					(cust.mobile_no || "").toLowerCase() +
+					" " +
+					(cust.name || "").toLowerCase();
 
-			return tokens.every((tok) => haystack.includes(tok))
-		})
-		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		.slice(0, 20)
-})
+				return tokens.every((tok) => haystack.includes(tok));
+			})
+			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+			.slice(0, 20)
+	);
+});
 
 /**
  * Reset keyboard selection index when search results change.
@@ -2030,8 +2422,8 @@ const customerResults = computed(() => {
  */
 watch(customerResults, () => {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	selectedIndex.value = -1
-})
+	selectedIndex.value = -1;
+});
 
 /**
  * Total quantity of all items in cart (including free items).
@@ -2041,13 +2433,13 @@ watch(customerResults, () => {
 const totalQuantity = computed(() => {
 	return props.items.reduce((sum, item) => {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		const qty = item.quantity || 0
+		const qty = item.quantity || 0;
 		// For dedicated free item rows, quantity IS the free qty — don't double-count
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		const freeQty = item.is_free_item ? 0 : item.free_qty || 0
-		return sum + qty + freeQty
-	}, 0)
-})
+		const freeQty = item.is_free_item ? 0 : item.free_qty || 0;
+		return sum + qty + freeQty;
+	}, 0);
+});
 
 /**
  * Display subtotal adjusted for tax-inclusive mode.
@@ -2067,12 +2459,12 @@ const displaySubtotal = computed(() => {
 		// Tax inclusive: subtotal from store is gross (includes tax)
 		// Display the net amount (before tax) for clarity
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		return props.subtotal - props.taxAmount
+		return props.subtotal - props.taxAmount;
 	}
 	// Tax exclusive: subtotal is already net (before tax)
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	return props.subtotal
-})
+	return props.subtotal;
+});
 
 /**
  * Display grand total that visually equals Subtotal + Tax - Discount.
@@ -2087,8 +2479,13 @@ const displayGrandTotal = computed(() => {
 	// This makes the display consistent and intuitive
 	//// Neoffice — [CHF] the displayed grand total carries the Swiss 0.05 rounding, so
 	//// the figure on screen equals the one that will be charged and printed (4fdb5df4).
-	return displaySubtotal.value + props.taxAmount - props.discountAmount + (props.roundingAdjustment || 0)
-})
+	return (
+		displaySubtotal.value +
+		props.taxAmount -
+		props.discountAmount +
+		(props.roundingAdjustment || 0)
+	);
+});
 
 /**
  * ============================================================================
@@ -2106,12 +2503,11 @@ const displayGrandTotal = computed(() => {
  * @returns {Boolean} True if at least one item can be sent
  */
 const hasSendableItems = computed(() => {
-	if (!cartStore.restaurantTable && !cartStore.isTakeaway) return false
+	if (!cartStore.restaurantTable && !cartStore.isTakeaway) return false;
 	return cartStore.invoiceItems.some(
-		(item) =>
-			!item.is_free_item && (!item.kds_status || item.kds_status === "Waiting"),
-	)
-})
+		(item) => !item.is_free_item && (!item.kds_status || item.kds_status === "Waiting")
+	);
+});
 
 /**
  * Get CSS classes for KDS status badge based on status value.
@@ -2119,12 +2515,12 @@ const hasSendableItems = computed(() => {
  * @returns {String} CSS classes for the badge
  */
 function kdsStatusBadgeClass(status) {
-	if (status === "Waiting") return "bg-gray-100 text-gray-600"
-	if (status === "Pending") return "bg-yellow-100 text-yellow-700"
-	if (status === "Preparing") return "bg-blue-100 text-blue-700"
-	if (status === "Ready") return "bg-green-100 text-green-700"
-	if (status === "Delivered") return "bg-gray-200 text-gray-500"
-	return "bg-indigo-100 text-indigo-700"
+	if (status === "Waiting") return "bg-gray-100 text-gray-600";
+	if (status === "Pending") return "bg-yellow-100 text-yellow-700";
+	if (status === "Preparing") return "bg-blue-100 text-blue-700";
+	if (status === "Ready") return "bg-green-100 text-green-700";
+	if (status === "Delivered") return "bg-gray-200 text-gray-500";
+	return "bg-indigo-100 text-indigo-700";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2138,24 +2534,24 @@ function kdsStatusBadgeClass(status) {
  */
 function handleSearchInput(event) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	customerSearch.value = event.target.value
+	customerSearch.value = event.target.value;
 }
 
 // Track if customer history has been loaded this session
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-const customerHistoryLoaded = ref(false)
+const customerHistoryLoaded = ref(false);
 
 /**
  * Handle search input focus - shows frequent customers dropdown.
  */
 function handleSearchFocus() {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	customerSearchFocused.value = true
+	customerSearchFocused.value = true;
 	// Load customer history only once per session for faster subsequent focuses
 	if (!customerHistoryLoaded.value) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		customerSearchStore.loadCustomerHistory()
-		customerHistoryLoaded.value = true
+		customerSearchStore.loadCustomerHistory();
+		customerHistoryLoaded.value = true;
 	}
 }
 
@@ -2167,8 +2563,8 @@ function handleSearchBlur() {
 	// Reduced delay - mousedown.prevent handles most cases, this is just for keyboard nav
 	setTimeout(() => {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		customerSearchFocused.value = false
-	}, 100)
+		customerSearchFocused.value = false;
+	}, 100);
 }
 
 /**
@@ -2182,35 +2578,29 @@ function handleSearchBlur() {
  */
 function handleKeydown(event) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (customerResults.value.length === 0) return
+	if (customerResults.value.length === 0) return;
 
 	if (event.key === "ArrowDown") {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		event.preventDefault()
-		selectedIndex.value = Math.min(
-			selectedIndex.value + 1,
-			customerResults.value.length - 1,
-		)
+		event.preventDefault();
+		selectedIndex.value = Math.min(selectedIndex.value + 1, customerResults.value.length - 1);
 	} else if (event.key === "ArrowUp") {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		event.preventDefault()
-		selectedIndex.value = Math.max(selectedIndex.value - 1, -1)
+		event.preventDefault();
+		selectedIndex.value = Math.max(selectedIndex.value - 1, -1);
 	} else if (event.key === "Enter") {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		event.preventDefault()
-		if (
-			selectedIndex.value >= 0 &&
-			selectedIndex.value < customerResults.value.length
-		) {
-			selectCustomer(customerResults.value[selectedIndex.value])
+		event.preventDefault();
+		if (selectedIndex.value >= 0 && selectedIndex.value < customerResults.value.length) {
+			selectCustomer(customerResults.value[selectedIndex.value]);
 		} else if (customerResults.value.length === 1) {
 			// Auto-select if only one result
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			selectCustomer(customerResults.value[0])
+			selectCustomer(customerResults.value[0]);
 		}
 	} else if (event.key === "Escape") {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		customerSearch.value = ""
+		customerSearch.value = "";
 	}
 }
 
@@ -2223,12 +2613,12 @@ function handleKeydown(event) {
 function selectCustomer(cust) {
 	// Track selection for frequent customers feature
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	customerSearchStore.trackCustomerSelection(cust.name)
-	emit("select-customer", cust)
-	customerSearch.value = ""
-	selectedIndex.value = -1
-	customerSearchFocused.value = false
-	previousCustomer.value = null
+	customerSearchStore.trackCustomerSelection(cust.name);
+	emit("select-customer", cust);
+	customerSearch.value = "";
+	selectedIndex.value = -1;
+	customerSearchFocused.value = false;
+	previousCustomer.value = null;
 }
 
 //// Neoffice — [CU] this is the old removeCustomer path, folded into clearCustomer
@@ -2245,13 +2635,13 @@ function selectCustomer(cust) {
 async function clearCustomer() {
 	//// Neoffice — [CU] the reset moved here from the deleted removeCustomer, so a
 	//// blur cannot restore the customer the cashier just cleared (4a0dd461).
-	previousCustomer.value = null
-	emit("select-customer", null)
-	await nextTick()
-	const searchInput = document.getElementById("cart-customer-search")
+	previousCustomer.value = null;
+	emit("select-customer", null);
+	await nextTick();
+	const searchInput = document.getElementById("cart-customer-search");
 	if (searchInput) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		searchInput.focus()
+		searchInput.focus();
 	}
 }
 
@@ -2261,14 +2651,14 @@ async function clearCustomer() {
  */
 function createNewCustomer() {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const searchValue = customerSearch.value
+	const searchValue = customerSearch.value;
 	// Close dropdown immediately
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	customerSearch.value = ""
-	customerSearchFocused.value = false
+	customerSearch.value = "";
+	customerSearchFocused.value = false;
 	// Emit event to open customer creation dialog
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	emit("create-customer", searchValue)
+	emit("create-customer", searchValue);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2284,16 +2674,16 @@ function createNewCustomer() {
  */
 function getInitials(name) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (!name || !name.trim()) return "?"
-	const parts = name.trim().split(/\s+/).filter(Boolean)
-	if (parts.length === 0) return "?"
-	const first = Array.from(parts[0])[0] || "?"
+	if (!name || !name.trim()) return "?";
+	const parts = name.trim().split(/\s+/).filter(Boolean);
+	if (parts.length === 0) return "?";
+	const first = Array.from(parts[0])[0] || "?";
 	if (parts.length >= 2) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		const second = Array.from(parts[1])[0] || "?"
-		return (first + second).toUpperCase()
+		const second = Array.from(parts[1])[0] || "?";
+		return (first + second).toUpperCase();
 	}
-	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase()
+	return Array.from(parts[0]).slice(0, 2).join("").toUpperCase();
 }
 
 //// Neoffice — [CU] cleanAddressParts has no upstream equivalent: ERPNext stores
@@ -2310,7 +2700,7 @@ function getInitials(name) {
  * @returns {String[]} Cleaned address lines (street, city, country…)
  */
 function cleanAddressParts(raw) {
-	if (!raw) return []
+	if (!raw) return [];
 	return String(raw)
 		.split(/<br\s*\/?>/i)
 		.map((line) =>
@@ -2318,11 +2708,9 @@ function cleanAddressParts(raw) {
 				.replace(/<[^>]*>/g, "")
 				.replace(/&nbsp;/gi, " ")
 				.replace(/\s+/g, " ")
-				.trim(),
+				.trim()
 		)
-		.filter(
-			(line) => line && !/^(phone|email|t[ée]l(?:[ée]phone)?)\s*:/i.test(line),
-		)
+		.filter((line) => line && !/^(phone|email|t[ée]l(?:[ée]phone)?)\s*:/i.test(line));
 }
 
 /**
@@ -2332,7 +2720,7 @@ function cleanAddressParts(raw) {
  * @returns {String} Address on one line, or "" when none
  */
 function addressSnippet(cust) {
-	return cleanAddressParts(cust?.primary_address).join(", ")
+	return cleanAddressParts(cust?.primary_address).join(", ");
 }
 
 /**
@@ -2342,7 +2730,7 @@ function addressSnippet(cust) {
  * @returns {String} Plain-text address, or "" when none
  */
 function formatAddress(cust) {
-	return cleanAddressParts(cust?.primary_address).join(", ")
+	return cleanAddressParts(cust?.primary_address).join(", ");
 }
 
 /**
@@ -2354,7 +2742,7 @@ function formatAddress(cust) {
  */
 function formatCurrency(amount) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency)
+	return formatCurrencyUtil(Number.parseFloat(amount || 0), props.currency);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2373,34 +2761,34 @@ function getSmartStep(quantity) {
 	// Check if it's a whole number
 	if (quantity === Math.floor(quantity)) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		return 1
+		return 1;
 	}
 
 	// Round to 4 decimal places to avoid floating point errors
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const rounded = Math.round(quantity * 10000) / 10000
+	const rounded = Math.round(quantity * 10000) / 10000;
 
 	// Check if it's a multiple of 0.5
 	if (Math.abs(rounded % 0.5) < 0.0001) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		return 0.5
+		return 0.5;
 	}
 
 	// Check if it's a multiple of 0.25
 	if (Math.abs(rounded % 0.25) < 0.0001) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		return 0.25
+		return 0.25;
 	}
 
 	// Check if it's a multiple of 0.1
 	if (Math.abs(rounded % 0.1) < 0.0001) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		return 0.1
+		return 0.1;
 	}
 
 	// For other decimals, use 0.01 for fine control
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	return 0.01
+	return 0.01;
 }
 
 /**
@@ -2412,12 +2800,12 @@ function getSmartStep(quantity) {
 function incrementQuantity(item) {
 	// Prevent editing resolved barcode items
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (item.is_resolved_barcode) return
+	if (item.is_resolved_barcode) return;
 
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const step = getSmartStep(item.quantity)
-	const newQty = Math.round((item.quantity + step) * 10000) / 10000
-	emit("update-quantity", item.item_code, newQty, item.uom)
+	const step = getSmartStep(item.quantity);
+	const newQty = Math.round((item.quantity + step) * 10000) / 10000;
+	emit("update-quantity", item.item_code, newQty, item.uom);
 }
 
 /**
@@ -2429,19 +2817,19 @@ function incrementQuantity(item) {
 function decrementQuantity(item) {
 	// Prevent editing resolved barcode items
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (item.is_resolved_barcode) return
+	if (item.is_resolved_barcode) return;
 
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const step = getSmartStep(item.quantity)
-	const newQty = Math.round((item.quantity - step) * 10000) / 10000
+	const step = getSmartStep(item.quantity);
+	const newQty = Math.round((item.quantity - step) * 10000) / 10000;
 
 	if (newQty <= 0) {
 		// If quantity would be 0 or negative, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		emit("remove-item", item.item_code, item.uom)
+		emit("remove-item", item.item_code, item.uom);
 	} else {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		emit("update-quantity", item.item_code, newQty, item.uom)
+		emit("update-quantity", item.item_code, newQty, item.uom);
 	}
 }
 
@@ -2456,22 +2844,22 @@ function decrementQuantity(item) {
 function updateQuantity(item, value) {
 	// Prevent editing resolved barcode items
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (item.is_resolved_barcode) return
+	if (item.is_resolved_barcode) return;
 
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const qty = Number.parseFloat(value)
+	const qty = Number.parseFloat(value);
 
 	// If the input isn't a valid number (e.g., user cleared the field), do nothing
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (isNaN(qty)) return
+	if (isNaN(qty)) return;
 
 	// If quantity is zero or negative, remove the item from the cart
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (qty <= 0) return emit("remove-item", item.item_code, item.uom)
+	if (qty <= 0) return emit("remove-item", item.item_code, item.uom);
 
 	// For positive numbers, update quantity immediately (no rounding here while typing)
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	emit("update-quantity", item.item_code, qty, item.uom)
+	emit("update-quantity", item.item_code, qty, item.uom);
 }
 
 /**
@@ -2487,14 +2875,14 @@ function handleQuantityBlur(item) {
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		emit("remove-item", item.item_code, item.uom)
+		emit("remove-item", item.item_code, item.uom);
 	} else {
 		// Round to 4 decimal places for consistency
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		const roundedQty = Math.round(item.quantity * 10000) / 10000
+		const roundedQty = Math.round(item.quantity * 10000) / 10000;
 		if (roundedQty !== item.quantity) {
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			emit("update-quantity", item.item_code, roundedQty, item.uom)
+			emit("update-quantity", item.item_code, roundedQty, item.uom);
 		}
 	}
 }
@@ -2509,8 +2897,8 @@ function handleQuantityBlur(item) {
  */
 function toggleUomDropdown(itemCode, uom) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const key = `${itemCode}-${uom}`
-	openUomDropdown.value = openUomDropdown.value === key ? null : key
+	const key = `${itemCode}-${uom}`;
+	openUomDropdown.value = openUomDropdown.value === key ? null : key;
 }
 
 /**
@@ -2520,15 +2908,15 @@ function toggleUomDropdown(itemCode, uom) {
 async function selectUom(item, newUom) {
 	if (item.uom === newUom) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		openUomDropdown.value = null
-		return
+		openUomDropdown.value = null;
+		return;
 	}
 
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const currentUom = item.uom || item.stock_uom
-	await cartStore.changeItemUOM(item.item_code, newUom, currentUom)
-	openUomDropdown.value = null
-	emit("update-uom", item.item_code, newUom)
+	const currentUom = item.uom || item.stock_uom;
+	await cartStore.changeItemUOM(item.item_code, newUom, currentUom);
+	openUomDropdown.value = null;
+	emit("update-uom", item.item_code, newUom);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2544,8 +2932,8 @@ async function selectUom(item, newUom) {
  */
 function openEditDialog(item) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	selectedItem.value = { ...item }
-	showEditDialog.value = true
+	selectedItem.value = { ...item };
+	showEditDialog.value = true;
 }
 
 /**
@@ -2557,17 +2945,13 @@ function openEditDialog(item) {
 async function handleUpdateItem(updatedItem) {
 	// Get the original UOM from selectedItem (before any changes)
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const originalUom = selectedItem.value?.uom || selectedItem.value?.stock_uom
+	const originalUom = selectedItem.value?.uom || selectedItem.value?.stock_uom;
 	// Use store method to update item, passing original UOM to identify correct item
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	await cartStore.updateItemDetails(
-		updatedItem.item_code,
-		updatedItem,
-		originalUom,
-	)
+	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem, originalUom);
 	// Also emit for parent component compatibility
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	emit("edit-item", updatedItem)
+	emit("edit-item", updatedItem);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2576,7 +2960,7 @@ async function handleUpdateItem(updatedItem) {
 
 function selectDocType(type) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	cartStore.setTargetDoctype(type)
+	cartStore.setTargetDoctype(type);
 }
 
 /**
@@ -2589,7 +2973,7 @@ function selectDocType(type) {
  */
 function handleOutsideClick(event) {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const target = event.target
+	const target = event.target;
 
 	// Close customer search if clicking outside
 	if (
@@ -2598,13 +2982,13 @@ function handleOutsideClick(event) {
 		!customerSearchContainer.value.contains(target)
 	) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		customerSearch.value = ""
+		customerSearch.value = "";
 
 		// Restore previous customer if set and no customer selected
 		if (previousCustomer.value && !props.customer) {
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			emit("select-customer", previousCustomer.value)
-			previousCustomer.value = null
+			emit("select-customer", previousCustomer.value);
+			previousCustomer.value = null;
 		}
 	}
 
@@ -2613,10 +2997,10 @@ function handleOutsideClick(event) {
 		// Check if click is outside all UOM dropdowns
 		const clickedInsideUomDropdown =
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			target instanceof Element && target.closest(".group\\/uom")
+			target instanceof Element && target.closest(".group\\/uom");
 		if (!clickedInsideUomDropdown) {
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-			openUomDropdown.value = null
+			openUomDropdown.value = null;
 		}
 	}
 
@@ -2628,7 +3012,7 @@ function handleOutsideClick(event) {
 		!cartSortContainer.value.contains(target)
 	) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		showCartSortDropdown.value = false
+		showCartSortDropdown.value = false;
 	}
 }
 
@@ -2638,11 +3022,11 @@ function handleOutsideClick(event) {
  */
 onMounted(() => {
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (typeof document === "undefined") return
+	if (typeof document === "undefined") return;
 	// Use mousedown instead of click to catch events before they are swallowed by other handlers
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	document.addEventListener("mousedown", handleOutsideClick)
-})
+	document.addEventListener("mousedown", handleOutsideClick);
+});
 
 /**
  * Component unmounting - cleanup global click listener.
@@ -2653,9 +3037,9 @@ onBeforeUnmount(() => {
 	//// by itself the moment a zero-priced Item lands in the cart: a gift card has no
 	//// price until the cashier types one, and upstream offers no way in (5dddc528,
 	//// 2026-01-14 "auto-open edit dialog for zero-price items (gift cards)").
-	if (typeof document === "undefined") return
-	document.removeEventListener("mousedown", handleOutsideClick)
-})
+	if (typeof document === "undefined") return;
+	document.removeEventListener("mousedown", handleOutsideClick);
+});
 
 /**
  * Expose methods to parent component.
@@ -2663,6 +3047,6 @@ onBeforeUnmount(() => {
  */
 defineExpose({
 	openEditDialog,
-})
+});
 </script>
 ```

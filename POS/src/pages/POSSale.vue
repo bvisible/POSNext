@@ -71,10 +71,15 @@
 		<!-- //// takes the screen instead (2584aa58, 2026-03-24 "UX improvements ... -->
 		<!-- //// processing overlay with spinner"; lightened by 548757f7 the same day). -->
 		<!-- Payment Processing Overlay -->
-		<div v-if="isProcessingPayment" class="fixed inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-[400] flex flex-col items-center justify-center">
+		<div
+			v-if="isProcessingPayment"
+			class="fixed inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-[400] flex flex-col items-center justify-center"
+		>
 			<div class="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-500 mb-4"></div>
-			<p class="text-lg font-medium text-gray-700 dark:text-gray-200">{{ __('Processing payment...') }}</p>
-			<p class="text-sm text-gray-400 mt-1">{{ __('Please wait') }}</p>
+			<p class="text-lg font-medium text-gray-700 dark:text-gray-200">
+				{{ __("Processing payment...") }}
+			</p>
+			<p class="text-sm text-gray-400 mt-1">{{ __("Please wait") }}</p>
 		</div>
 
 		<!-- Main App -->
@@ -107,8 +112,8 @@
 				:is-refreshing="stockStore.refreshing"
 				:silent-print-enabled="posSettingsStore.silentPrint"
 				:qz-connected="qzConnected"
-			:is-restaurant-mode="restaurantStore.isEnabled"
-			:can-toggle-restaurant="canToggleRestaurant"
+				:is-restaurant-mode="restaurantStore.isEnabled"
+				:can-toggle-restaurant="canToggleRestaurant"
 				@sync-click="handleSyncClick"
 				@printer-click="openHistoryDialog"
 				@refresh-click="handleRefresh"
@@ -184,6 +189,25 @@
 						<span>{{ __("Invoice History") }}</span>
 					</button>
 					<button
+						@click="navigateToShiftHistory"
+						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 flex items-center gap-3 transition-colors"
+					>
+						<svg
+							class="w-5 h-5 text-indigo-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+							/>
+						</svg>
+						<span>{{ __("Shift History") }}</span>
+					</button>
+					<button
 						v-if="offlineStore.pendingInvoicesCount > 0"
 						@click="
 							uiStore.showOfflineInvoicesDialog = true;
@@ -251,7 +275,7 @@
 						</svg>
 						<span>{{ __("Switch To Desk") }}</span>
 					</button>
-					<hr class="my-1 border-gray-100"> 
+					<hr class="my-1 border-gray-100" />
 					<button
 						@click="lockSession()"
 						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 flex items-center gap-3 transition-colors"
@@ -308,7 +332,10 @@
 				style="max-height: calc(100vh - var(--header-height, 60px))"
 			>
 				<!-- Icon-Only Management Slider - Always Visible -->
-				<ManagementSlider @menu-clicked="handleManagementMenuClick" />
+				<ManagementSlider
+					:can-access-product-management="canAccessProductManagement"
+					@menu-clicked="handleManagementMenuClick"
+				/>
 
 				<!-- Main Content Container -->
 				<div
@@ -412,7 +439,13 @@
 							<!-- //// guest-paid state (02f74451 2026-03-31). Returning to an occupied table -->
 							<!-- //// reloads the SERVER draft, not a local one (c8f9a36c 2026-03-21). -->
 							<!-- Restaurant Mode: Table Selector -->
-							<template v-if="restaurantStore.isEnabled && !cartStore.restaurantTable && !cartStore.isTakeaway">
+							<template
+								v-if="
+									restaurantStore.isEnabled &&
+									!cartStore.restaurantTable &&
+									!cartStore.isTakeaway
+								"
+							>
 								<FloorPlanEditor
 									@table-selected="handleTableSelected"
 									@load-table-draft="handleLoadTableDraft"
@@ -426,20 +459,35 @@
 							<template v-else>
 								<!-- Restaurant table / takeaway banner -->
 								<div
-									v-if="restaurantStore.isEnabled && (cartStore.restaurantTable || cartStore.isTakeaway)"
+									v-if="
+										restaurantStore.isEnabled &&
+										(cartStore.restaurantTable || cartStore.isTakeaway)
+									"
 									class="flex items-center justify-between px-4 py-3 border-b-2"
-									:class="cartStore.isTakeaway
-										? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300'
-										: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'"
+									:class="
+										cartStore.isTakeaway
+											? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300'
+											: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+									"
 								>
 									<div class="flex items-center gap-3">
-										<FeatherIcon :name="cartStore.isTakeaway ? 'shopping-bag' : 'coffee'" class="w-5 h-5 text-blue-600" />
+										<FeatherIcon
+											:name="
+												cartStore.isTakeaway ? 'shopping-bag' : 'coffee'
+											"
+											class="w-5 h-5 text-blue-600"
+										/>
 										<div>
 											<span class="text-lg font-bold text-blue-900">
-												{{ cartStore.isTakeaway ? cartStore.takeawayNumber : cartStore.restaurantTable?.table_name }}
+												{{
+													cartStore.isTakeaway
+														? cartStore.takeawayNumber
+														: cartStore.restaurantTable?.table_name
+												}}
 											</span>
 											<span class="text-xs text-blue-700 ms-2">
-												{{ cartStore.invoiceItems.length }} {{ __("articles") }}
+												{{ cartStore.invoiceItems.length }}
+												{{ __("articles") }}
 											</span>
 										</div>
 										<!-- KDS Status Badge -->
@@ -450,83 +498,148 @@
 													? 'bg-yellow-500'
 													: cartStore.kdsStatus === 'Preparing'
 													? 'bg-blue-500'
-													: 'bg-green-500'
+													: 'bg-green-500',
 											]"
 										>
 											{{ cartStore.kdsStatus }}
 										</div>
 									</div>
-									<Button
-										variant="subtle"
-										size="sm"
-										@click="closeTable"
-									>
+									<Button variant="subtle" size="sm" @click="closeTable">
 										{{ __("Back") }}
 									</Button>
 								</div>
 
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
-								<div v-if="restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && (cartStore.restaurantTable || cartStore.isTakeaway)"
-									class="flex flex-col flex-1 min-h-0 overflow-hidden">
+								<div
+									v-if="
+										restaurantStore.isEnabled &&
+										restaurantStore.activeCards.length > 0 &&
+										(cartStore.restaurantTable || cartStore.isTakeaway)
+									"
+									class="flex flex-col flex-1 min-h-0 overflow-hidden"
+								>
 									<!-- Card tabs (like category tabs) -->
-									<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
-										<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+									<div
+										class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200"
+									>
+										<div
+											class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory"
+										>
 											<button
 												v-for="card in restaurantStore.activeCards"
 												:key="card.name"
-												@click="selectedCard = card.name; selectedCardCategory = null"
+												@click="
+													selectedCard = card.name;
+													selectedCardCategory = null;
+												"
 												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0"
 												:class="[
 													selectedCard === card.name
-														? (card.is_permanent ? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-500 shadow-neo' : 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo')
-														: (card.is_permanent ? 'bg-indigo-50/50 text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:bg-indigo-100' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100')
+														? card.is_permanent
+															? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-500 shadow-neo'
+															: 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
+														: card.is_permanent
+														? 'bg-indigo-50/50 text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:bg-indigo-100'
+														: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100',
 												]"
 											>
-												<svg v-if="card.is_permanent" class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+												<svg
+													v-if="card.is_permanent"
+													class="w-3 h-3 flex-shrink-0"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+													/>
 												</svg>
 												{{ card.card_name }}
 											</button>
 											<!-- QR Self-Ordering button -->
 											<button
-												v-if="restaurantStore.restaurantSettings.enable_qr_ordering && cartStore.restaurantTable"
+												v-if="
+													restaurantStore.restaurantSettings
+														.enable_qr_ordering &&
+													cartStore.restaurantTable
+												"
 												@click="handleQRButtonClick"
 												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0 ml-auto bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 active:bg-emerald-200"
 												:title="__('Generate QR code for guest ordering')"
 											>
-												<svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+												<svg
+													class="w-3.5 h-3.5 flex-shrink-0"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+													/>
 												</svg>
 												QR
 											</button>
 										</div>
 									</div>
 									<!-- Category sub-filters -->
-									<div v-if="cardCategories.length > 0" class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100">
-										<div class="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+									<div
+										v-if="cardCategories.length > 0"
+										class="px-1.5 sm:px-3 py-1 bg-white border-b border-gray-100"
+									>
+										<div
+											class="flex items-center gap-1 overflow-x-auto scrollbar-hide"
+										>
 											<button
 												@click="selectedCardCategory = null"
 												class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
-												:class="!selectedCardCategory
-													? 'bg-amber-100 text-amber-800'
-													: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-											>{{ __("All") }}</button>
+												:class="
+													!selectedCardCategory
+														? 'bg-amber-100 text-amber-800'
+														: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+												"
+											>
+												{{ __("All") }}
+											</button>
 											<button
 												v-for="cat in cardCategories"
 												:key="cat"
 												@click="selectedCardCategory = cat"
 												class="px-2 py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors"
-												:class="selectedCardCategory === cat
-													? 'bg-amber-100 text-amber-800'
-													: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-											>{{ cat }}</button>
+												:class="
+													selectedCardCategory === cat
+														? 'bg-amber-100 text-amber-800'
+														: 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+												"
+											>
+												{{ cat }}
+											</button>
 										</div>
 									</div>
 									<!-- Search + view toggle -->
-									<div class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200">
+									<div
+										class="px-1.5 sm:px-3 py-1.5 sm:py-2 bg-white border-b border-gray-200"
+									>
 										<div class="flex items-center gap-1 sm:gap-2">
 											<div class="flex-1 relative min-w-0">
-												<svg class="absolute start-2 sm:start-3 top-1/2 -translate-y-1/2 w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+												<svg
+													class="absolute start-2 sm:start-3 top-1/2 -translate-y-1/2 w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-400 pointer-events-none"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+													/>
+												</svg>
 												<input
 													v-model="cardSearchQuery"
 													type="text"
@@ -534,112 +647,329 @@
 													class="w-full text-[11px] sm:text-sm border border-gray-300 rounded-neo-sm px-2 sm:px-3 py-2 ps-7 sm:ps-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
 												/>
 											</div>
-											<div class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0">
-												<button @click="cardViewMode = 'grid'" class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation" :class="cardViewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'">
-													<svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+											<div
+												class="flex items-center gap-0.5 bg-gray-100 rounded-neo-sm p-0.5 flex-shrink-0"
+											>
+												<button
+													@click="cardViewMode = 'grid'"
+													class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation"
+													:class="
+														cardViewMode === 'grid'
+															? 'bg-white shadow-sm'
+															: 'hover:bg-gray-200'
+													"
+												>
+													<svg
+														class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600"
+														fill="currentColor"
+														viewBox="0 0 20 20"
+													>
+														<path
+															d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+														/>
+													</svg>
 												</button>
-												<button @click="cardViewMode = 'list'" class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation" :class="cardViewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'">
-													<svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+												<button
+													@click="cardViewMode = 'list'"
+													class="p-1.5 sm:p-2 rounded transition-[background-color,box-shadow] duration-75 touch-manipulation"
+													:class="
+														cardViewMode === 'list'
+															? 'bg-white shadow-sm'
+															: 'hover:bg-gray-200'
+													"
+												>
+													<svg
+														class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-gray-600"
+														fill="currentColor"
+														viewBox="0 0 20 20"
+													>
+														<path
+															fill-rule="evenodd"
+															d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+															clip-rule="evenodd"
+														/>
+													</svg>
 												</button>
 											</div>
 										</div>
 									</div>
 									<!-- Items display -->
-									<div class="flex-1 overflow-y-auto p-1.5 sm:p-3" style="background-color: var(--neo-bg)">
+									<div
+										class="flex-1 overflow-y-auto p-1.5 sm:p-3"
+										style="background-color: var(--neo-bg)"
+									>
 										<!-- Grid view -->
 										<template v-if="cardViewMode === 'grid'">
-										<template v-for="(group, gi) in filteredCardGroups" :key="'g'+gi">
-											<div v-if="group.category && !selectedCardCategory" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
-												<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
-											</div>
-											<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5" :class="!selectedCardCategory && group.category ? 'mt-1' : 'mt-0'">
+											<template
+												v-for="(group, gi) in filteredCardGroups"
+												:key="'g' + gi"
+											>
 												<div
-													v-for="(ci_item, ii) in group.items"
-													:key="ii"
-													@click="ci_item.item_type === 'Menu' ? handleCardMenuClick(ci_item) : handleCardItemClick(ci_item)"
-													:class="[
-														'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
-														isCardItemOutOfStock(ci_item) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md'
-													]"
+													v-if="group.category && !selectedCardCategory"
+													class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg"
 												>
-													<!-- Stock Badge -->
+													<h3
+														class="text-[10px] font-bold text-gray-400 uppercase tracking-wider"
+													>
+														{{ group.category }}
+													</h3>
+												</div>
+												<div
+													class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5"
+													:class="
+														!selectedCardCategory && group.category
+															? 'mt-1'
+															: 'mt-0'
+													"
+												>
 													<div
-														v-if="getCardItemStock(ci_item) !== null"
+														v-for="(ci_item, ii) in group.items"
+														:key="ii"
+														@click="
+															ci_item.item_type === 'Menu'
+																? handleCardMenuClick(ci_item)
+																: handleCardItemClick(ci_item)
+														"
 														:class="[
-															'absolute -top-1.5 -end-1.5 sm:-top-2 sm:-end-2 rounded-md shadow-lg z-10',
-															'px-2 sm:px-2.5 py-1 sm:py-1 text-[10px] sm:text-xs font-bold',
-															'border-2 border-white select-none',
-															getStockStatus(getCardItemStock(ci_item)).color,
-															getStockStatus(getCardItemStock(ci_item)).textColor
+															'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
+															isCardItemOutOfStock(ci_item)
+																? 'opacity-50 cursor-not-allowed'
+																: 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md',
 														]"
 													>
-														{{ Math.floor(getCardItemStock(ci_item)) }}
-													</div>
-													<div class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
-													:style="getCardItemBgStyle(ci_item)">
-														<img v-if="ci_item.image" :src="ci_item.image" class="w-full h-full object-cover" />
-														<div v-else class="w-full h-full flex items-center justify-center p-2">
-															<svg v-if="ci_item.item_type === 'Menu'" class="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-															<span v-else :class="getCardItemTextClasses(ci_item)" class="text-center leading-tight">
-																{{ ci_item.item_name || ci_item.label }}
-															</span>
+														<!-- Stock Badge -->
+														<div
+															v-if="
+																getCardItemStock(ci_item) !== null
+															"
+															:class="[
+																'absolute -top-1.5 -end-1.5 sm:-top-2 sm:-end-2 rounded-md shadow-lg z-10',
+																'px-2 sm:px-2.5 py-1 sm:py-1 text-[10px] sm:text-xs font-bold',
+																'border-2 border-white select-none',
+																getStockStatus(
+																	getCardItemStock(ci_item)
+																).color,
+																getStockStatus(
+																	getCardItemStock(ci_item)
+																).textColor,
+															]"
+														>
+															{{
+																Math.floor(
+																	getCardItemStock(ci_item)
+																)
+															}}
 														</div>
-														<span v-if="ci_item.item_type === 'Menu'" class="absolute top-1 right-1 text-[8px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full">Menu</span>
-													</div>
-													<div class="min-w-0">
-														<p class="text-[10px] sm:text-xs font-semibold text-gray-900 truncate mb-0.5 leading-tight">{{ ci_item.item_name || ci_item.menu_name || ci_item.label }}</p>
-														<div class="text-[9px] sm:text-[10px] leading-tight">
-															<span class="font-semibold" :class="ci_item.item_type === 'Menu' ? 'text-amber-600' : 'text-blue-600'">{{ formatCurrency(ci_item.price || ci_item.default_price || 0) }}</span>
+														<div
+															class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
+															:style="getCardItemBgStyle(ci_item)"
+														>
+															<img
+																v-if="ci_item.image"
+																:src="ci_item.image"
+																class="w-full h-full object-cover"
+															/>
+															<div
+																v-else
+																class="w-full h-full flex items-center justify-center p-2"
+															>
+																<svg
+																	v-if="
+																		ci_item.item_type ===
+																		'Menu'
+																	"
+																	class="w-8 h-8 text-amber-400"
+																	fill="currentColor"
+																	viewBox="0 0 24 24"
+																>
+																	<path
+																		d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"
+																	/>
+																</svg>
+																<span
+																	v-else
+																	:class="
+																		getCardItemTextClasses(
+																			ci_item
+																		)
+																	"
+																	class="text-center leading-tight"
+																>
+																	{{
+																		ci_item.item_name ||
+																		ci_item.label
+																	}}
+																</span>
+															</div>
+															<span
+																v-if="ci_item.item_type === 'Menu'"
+																class="absolute top-1 right-1 text-[8px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full"
+																>Menu</span
+															>
+														</div>
+														<div class="min-w-0">
+															<p
+																class="text-[10px] sm:text-xs font-semibold text-gray-900 truncate mb-0.5 leading-tight"
+															>
+																{{
+																	ci_item.item_name ||
+																	ci_item.menu_name ||
+																	ci_item.label
+																}}
+															</p>
+															<div
+																class="text-[9px] sm:text-[10px] leading-tight"
+															>
+																<span
+																	class="font-semibold"
+																	:class="
+																		ci_item.item_type ===
+																		'Menu'
+																			? 'text-amber-600'
+																			: 'text-blue-600'
+																	"
+																	>{{
+																		formatCurrency(
+																			ci_item.price ||
+																				ci_item.default_price ||
+																				0
+																		)
+																	}}</span
+																>
+															</div>
 														</div>
 													</div>
 												</div>
-											</div>
-										</template>
+											</template>
 										</template>
 
 										<!-- List view -->
 										<template v-else>
-											<template v-for="(group, gi) in filteredCardGroups" :key="'l'+gi">
-												<div v-if="group.category && !selectedCardCategory" class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg">
-													<h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ group.category }}</h3>
+											<template
+												v-for="(group, gi) in filteredCardGroups"
+												:key="'l' + gi"
+											>
+												<div
+													v-if="group.category && !selectedCardCategory"
+													class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg"
+												>
+													<h3
+														class="text-[10px] font-bold text-gray-400 uppercase tracking-wider"
+													>
+														{{ group.category }}
+													</h3>
 												</div>
 												<div
 													v-for="(li_item, li) in group.items"
 													:key="li"
-													@click="li_item.item_type === 'Menu' ? handleCardMenuClick(li_item) : handleCardItemClick(li_item)"
+													@click="
+														li_item.item_type === 'Menu'
+															? handleCardMenuClick(li_item)
+															: handleCardItemClick(li_item)
+													"
 													:class="[
 														'flex items-center gap-3 px-2 py-2 border-b border-gray-100 transition-colors',
-														isCardItemOutOfStock(li_item) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'
+														isCardItemOutOfStock(li_item)
+															? 'opacity-50 cursor-not-allowed'
+															: 'hover:bg-blue-50 cursor-pointer',
 													]"
 												>
 													<div class="relative flex-shrink-0">
-														<img v-if="li_item.image" :src="li_item.image" class="w-10 h-10 rounded-lg object-cover" />
-														<div v-else class="w-10 h-10 rounded-lg flex items-center justify-center"
-															:style="getCardItemBgStyle(li_item)">
-															<svg v-if="li_item.item_type === 'Menu'" class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-															<span v-else class="text-[7px] font-bold leading-tight text-center px-0.5"
-																:class="li_item.custom_color && !isLightColor(li_item.custom_color) ? 'text-white' : 'text-gray-500'">
-																{{ (li_item.item_name || li_item.label || '').substring(0, 6) }}
+														<img
+															v-if="li_item.image"
+															:src="li_item.image"
+															class="w-10 h-10 rounded-lg object-cover"
+														/>
+														<div
+															v-else
+															class="w-10 h-10 rounded-lg flex items-center justify-center"
+															:style="getCardItemBgStyle(li_item)"
+														>
+															<svg
+																v-if="li_item.item_type === 'Menu'"
+																class="w-5 h-5 text-amber-400"
+																fill="currentColor"
+																viewBox="0 0 24 24"
+															>
+																<path
+																	d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"
+																/>
+															</svg>
+															<span
+																v-else
+																class="text-[7px] font-bold leading-tight text-center px-0.5"
+																:class="
+																	li_item.custom_color &&
+																	!isLightColor(
+																		li_item.custom_color
+																	)
+																		? 'text-white'
+																		: 'text-gray-500'
+																"
+															>
+																{{
+																	(
+																		li_item.item_name ||
+																		li_item.label ||
+																		""
+																	).substring(0, 6)
+																}}
 															</span>
 														</div>
 														<span
-															v-if="getCardItemStock(li_item) !== null"
+															v-if="
+																getCardItemStock(li_item) !== null
+															"
 															:class="[
 																'absolute -top-1.5 -end-1.5 rounded-md shadow-sm z-10',
 																'px-1.5 py-0.5 text-[9px] font-bold',
 																'border border-white',
-																getStockStatus(getCardItemStock(li_item)).color,
-																getStockStatus(getCardItemStock(li_item)).textColor
+																getStockStatus(
+																	getCardItemStock(li_item)
+																).color,
+																getStockStatus(
+																	getCardItemStock(li_item)
+																).textColor,
 															]"
 														>
-															{{ Math.floor(getCardItemStock(li_item)) }}
+															{{
+																Math.floor(
+																	getCardItemStock(li_item)
+																)
+															}}
 														</span>
 													</div>
 													<div class="flex-1 min-w-0">
-														<p class="text-xs font-semibold text-gray-900 truncate">{{ li_item.item_name || li_item.menu_name || li_item.label }}</p>
-														<span v-if="li_item.item_type === 'Menu'" class="text-[9px] font-semibold text-amber-600 bg-amber-100 px-1 py-0.5 rounded">Menu</span>
+														<p
+															class="text-xs font-semibold text-gray-900 truncate"
+														>
+															{{
+																li_item.item_name ||
+																li_item.menu_name ||
+																li_item.label
+															}}
+														</p>
+														<span
+															v-if="li_item.item_type === 'Menu'"
+															class="text-[9px] font-semibold text-amber-600 bg-amber-100 px-1 py-0.5 rounded"
+															>Menu</span
+														>
 													</div>
-													<span class="text-xs font-bold flex-shrink-0" :class="li_item.item_type === 'Menu' ? 'text-amber-600' : 'text-blue-600'">{{ formatCurrency(li_item.price || li_item.default_price || 0) }}</span>
+													<span
+														class="text-xs font-bold flex-shrink-0"
+														:class="
+															li_item.item_type === 'Menu'
+																? 'text-amber-600'
+																: 'text-blue-600'
+														"
+														>{{
+															formatCurrency(
+																li_item.price ||
+																	li_item.default_price ||
+																	0
+															)
+														}}</span
+													>
 												</div>
 											</template>
 										</template>
@@ -647,10 +977,17 @@
 								</div>
 
 								<!-- Menu cards (when Menus tab is active, no cards) -->
-								<div v-else-if="showMenus && restaurantStore.isEnabled" class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden">
+								<div
+									v-else-if="showMenus && restaurantStore.isEnabled"
+									class="flex flex-col h-full bg-[var(--neo-bg)] rounded-neo-lg overflow-hidden"
+								>
 									<!-- Menus Tab Navigation -->
-									<div class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200">
-										<div class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+									<div
+										class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200"
+									>
+										<div
+											class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory"
+										>
 											<button
 												@click="showMenus = false"
 												class="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0 bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100"
@@ -661,7 +998,7 @@
 												v-if="restaurantStore.activeMenus.length > 0"
 												:class="[
 													'flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0',
-													'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
+													'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo',
 												]"
 											>
 												<span>{{ __("Menus") }}</span>
@@ -671,29 +1008,59 @@
 
 									<!-- Menu cards grid -->
 									<div class="flex-1 overflow-y-auto p-3 sm:p-4">
-										<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+										<div
+											class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
+										>
 											<div
 												v-for="menu in restaurantStore.activeMenus"
 												:key="menu.name"
 												@click="menuSelectionRef?.open(menu)"
 												class="cursor-pointer rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-md transition-all p-4 bg-white"
 											>
-												<img v-if="menu.image" :src="menu.image" class="w-full h-32 object-cover rounded-lg mb-3" />
-												<h3 class="font-bold text-gray-900">{{ menu.menu_name }}</h3>
-												<p v-if="menu.description" class="text-xs text-gray-500 mt-1 line-clamp-2">{{ menu.description }}</p>
-												<div class="mt-2 text-lg font-bold text-blue-600">{{ formatCurrency(menu.price) }}</div>
-												<div class="mt-1 text-[10px] text-gray-400">{{ menu.courses?.length || 0 }} {{ __("courses") }}</div>
+												<img
+													v-if="menu.image"
+													:src="menu.image"
+													class="w-full h-32 object-cover rounded-lg mb-3"
+												/>
+												<h3 class="font-bold text-gray-900">
+													{{ menu.menu_name }}
+												</h3>
+												<p
+													v-if="menu.description"
+													class="text-xs text-gray-500 mt-1 line-clamp-2"
+												>
+													{{ menu.description }}
+												</p>
+												<div class="mt-2 text-lg font-bold text-blue-600">
+													{{ formatCurrency(menu.price) }}
+												</div>
+												<div class="mt-1 text-[10px] text-gray-400">
+													{{ menu.courses?.length || 0 }}
+													{{ __("courses") }}
+												</div>
 											</div>
 										</div>
-										<div v-if="restaurantStore.activeMenus.length === 0" class="flex items-center justify-center h-40">
-											<p class="text-gray-500 text-sm">{{ __("No menus available") }}</p>
+										<div
+											v-if="restaurantStore.activeMenus.length === 0"
+											class="flex items-center justify-center h-40"
+										>
+											<p class="text-gray-500 text-sm">
+												{{ __("No menus available") }}
+											</p>
 										</div>
 									</div>
 								</div>
 
 								<!-- Items Selector (default view, hidden when card is active) -->
 								<ItemsSelector
-									v-if="!showMenus && !(restaurantStore.isEnabled && restaurantStore.activeCards.length > 0 && (cartStore.restaurantTable || cartStore.isTakeaway))"
+									v-if="
+										!showMenus &&
+										!(
+											restaurantStore.isEnabled &&
+											restaurantStore.activeCards.length > 0 &&
+											(cartStore.restaurantTable || cartStore.isTakeaway)
+										)
+									"
 									ref="itemsSelectorRef"
 									:pos-profile="shiftStore.profileName"
 									:cart-items="cartStore.invoiceItems"
@@ -701,8 +1068,8 @@
 									@item-selected="handleItemSelected"
 								/>
 							</template>
-						<!-- //// Neoffice — ▲▲▲ end of the restaurant left-pane region opened at the -->
-						<!-- //// "Restaurant Mode: Table Selector" marker above. -->
+							<!-- //// Neoffice — ▲▲▲ end of the restaurant left-pane region opened at the -->
+							<!-- //// "Restaurant Mode: Table Selector" marker above. -->
 						</div>
 					</keep-alive>
 
@@ -806,10 +1173,11 @@
 								@update-uom="cartStore.changeItemUOM"
 								@edit-item="handleEditItem"
 								@view-shift="uiStore.showOpenShiftDialog = true"
-								@show-drafts="openDraftDialog"
-								@show-history="openHistoryDialog"
-								@show-return="openReturnDialog"
-								@close-shift="handleCloseShift"
+								@show-drafts="uiStore.showDraftDialog = true"
+								@show-history="uiStore.showHistoryDialog = true"
+								@show-return="uiStore.showReturnDialog = true"
+								@close-shift="handleCloseShift()"
+								@show-shift-history="navigateToShiftHistory"
 								@send-to-kitchen="handleSendToKitchen"
 								@open-kitchen-dialog="kitchenDialogRef?.open()"
 								@print-provisional-ticket="handlePrintProvisionalTicket"
@@ -903,44 +1271,44 @@
 			</div>
 
 			<!-- Payment Dialog -->
-		<!-- //// Neoffice — two attribute changes inside this tag: :grand-total is the CHF -->
-		<!-- //// 0.05-rounded total, so the amount tendered matches the amount printed -->
-		<!-- //// (4fdb5df4, 2026-04-04); :guest-paid-amount tells the dialog what the -->
-		<!-- //// guests already settled from their phones, so the cashier is asked for the -->
-		<!-- //// remainder and not for the whole bill (214125e5, 2026-03-30 "show -->
-		<!-- //// remaining to collect in cart + payment dialog accounts for guest -->
-		<!-- //// payments"). -->
-		<!-- //// Neoffice — :grand-total below is the CHF 0.05-rounded total, not upstream's raw -->
-		<!-- //// grandTotal: what the cashier tenders has to match what the receipt prints, and the -->
-		<!-- //// difference is shown as its own rounding line (4fdb5df4, 2026-04-04 "rounding total, -->
-		<!-- //// tips visibility, cash quick amounts"). -->
-		<PaymentDialog
-			v-model="uiStore.showPaymentDialog"
-			:grand-total="cartStore.roundedGrandTotal"
-			:subtotal="cartStore.subtotal"
-			:guest-paid-amount="cartStore.guestPaidAmount"
-			:pos-profile="shiftStore.profileName"
-			:currency="shiftStore.profileCurrency"
-			:is-offline="offlineStore.isOffline"
-			:allow-partial-payment="posSettingsStore.allowPartialPayment"
-			:allow-credit-sale="posSettingsStore.allowCreditSale"
-			:allow-customer-credit-payment="posSettingsStore.allowCustomerCreditPayment"
-			:allow-write-off="posSettingsStore.allowWriteOffChange"
-			:write-off-limit="shiftStore.writeOffLimit"
-			:customer="cartStore.customer"
-			:company="shiftStore.profileCompany"
-			:additional-discount="cartStore.additionalDiscount"
-			:items="cartStore.invoiceItems"
-			:tax-amount="cartStore.totalTax"
-			:discount-amount="cartStore.totalDiscount"
-			:target-doctype="cartStore.targetDoctype"
-			:is-submitting="cartStore.isSubmitting"
-			:applied-offer-count="cartStore.appliedOffers.length"
-			@payment-completed="handlePaymentCompleted"
-			@update-additional-discount="handleAdditionalDiscountUpdate"
-			@show-offers="uiStore.showOffersDialog = true"
-			@show-coupon="uiStore.showCouponDialog = true"
-		/>
+			<!-- //// Neoffice — two attribute changes inside this tag: :grand-total is the CHF -->
+			<!-- //// 0.05-rounded total, so the amount tendered matches the amount printed -->
+			<!-- //// (4fdb5df4, 2026-04-04); :guest-paid-amount tells the dialog what the -->
+			<!-- //// guests already settled from their phones, so the cashier is asked for the -->
+			<!-- //// remainder and not for the whole bill (214125e5, 2026-03-30 "show -->
+			<!-- //// remaining to collect in cart + payment dialog accounts for guest -->
+			<!-- //// payments"). -->
+			<!-- //// Neoffice — :grand-total below is the CHF 0.05-rounded total, not upstream's raw -->
+			<!-- //// grandTotal: what the cashier tenders has to match what the receipt prints, and the -->
+			<!-- //// difference is shown as its own rounding line (4fdb5df4, 2026-04-04 "rounding total, -->
+			<!-- //// tips visibility, cash quick amounts"). -->
+			<PaymentDialog
+				v-model="uiStore.showPaymentDialog"
+				:grand-total="cartStore.roundedGrandTotal"
+				:subtotal="cartStore.subtotal"
+				:guest-paid-amount="cartStore.guestPaidAmount"
+				:pos-profile="shiftStore.profileName"
+				:currency="shiftStore.profileCurrency"
+				:is-offline="offlineStore.isOffline"
+				:allow-partial-payment="posSettingsStore.allowPartialPayment"
+				:allow-credit-sale="posSettingsStore.allowCreditSale"
+				:allow-customer-credit-payment="posSettingsStore.allowCustomerCreditPayment"
+				:allow-write-off="posSettingsStore.allowWriteOffChange"
+				:write-off-limit="shiftStore.writeOffLimit"
+				:customer="cartStore.customer"
+				:company="shiftStore.profileCompany"
+				:additional-discount="cartStore.additionalDiscount"
+				:items="cartStore.invoiceItems"
+				:tax-amount="cartStore.totalTax"
+				:discount-amount="cartStore.totalDiscount"
+				:target-doctype="cartStore.targetDoctype"
+				:is-submitting="cartStore.isSubmitting"
+				:applied-offer-count="cartStore.appliedOffers.length"
+				@payment-completed="handlePaymentCompleted"
+				@update-additional-discount="handleAdditionalDiscountUpdate"
+				@show-offers="uiStore.showOffersDialog = true"
+				@show-coupon="uiStore.showCouponDialog = true"
+			/>
 
 			<!-- Customer Selection Dialog -->
 			<CustomerDialog
@@ -985,10 +1353,7 @@
 			<!-- //// only "pay" (c7f6932c, 2026-03-23 "table only marked Occupied when draft -->
 			<!-- //// invoice exists, not before"). -->
 			<!-- Send to Kitchen Dialog -->
-			<SendToKitchenDialog
-				ref="kitchenDialogRef"
-				@items-sent="handleItemsSentToKitchen"
-			/>
+			<SendToKitchenDialog ref="kitchenDialogRef" @items-sent="handleItemsSentToKitchen" />
 
 			<!-- Coupon Dialog -->
 			<!-- //// Neoffice — :net-total and :grand-total inside this tag. A gift card is -->
@@ -1077,10 +1442,7 @@
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
 
 			<!-- Menu Selection Dialog -->
-			<MenuSelectionDialog
-				ref="menuSelectionRef"
-				@menu-confirmed="handleMenuConfirmed"
-			/>
+			<MenuSelectionDialog ref="menuSelectionRef" @menu-confirmed="handleMenuConfirmed" />
 
 			<!-- Invoice History Dialog -->
 			<InvoiceHistoryDialog
@@ -1091,6 +1453,13 @@
 				@view-invoice="handleViewInvoice"
 				@print-invoice="handlePrintInvoice"
 				@return-created="handleReturnCreated"
+			/>
+
+			<!-- Shift History Dialog -->
+			<ShiftHistoryDialog
+				v-model="showShiftHistoryDialog"
+				:pos-profile="shiftStore.profileName"
+				:currency="shiftStore.profileCurrency"
 			/>
 
 			<!-- Offline Invoices Dialog -->
@@ -1143,6 +1512,14 @@
 				@promotion-saved="handlePromotionSaved"
 			/>
 
+			<!-- Product Management -->
+			<ProductManagement
+				v-model="showProductManagement"
+				:pos-profile="shiftStore.profileName"
+				:company="shiftStore.profileCompany"
+				:currency="shiftStore.profileCurrency"
+			/>
+
 			<!-- POS Settings -->
 			<!-- //// Neoffice — :initial-tab inside this tag: the settings dialog can be opened -->
 			<!-- //// straight on one tab, so "edit the schedule" in the card editor lands on -->
@@ -1174,10 +1551,21 @@
 			<!-- //// Templates"). -->
 			<!-- Restaurant Editors -->
 			<WorkflowEditor v-if="showWorkflowEditor" v-model="showWorkflowEditor" />
-			<ProductOptionsEditor v-if="showProductOptionsEditor" v-model="showProductOptionsEditor" />
-			<CardEditor v-if="showCardEditor" v-model="showCardEditor" @cards-updated="restaurantStore.fetchActiveCards()" @open-settings="openSettingsTab" />
-		<TipsPanel :show="showTipsPanel" @close="showTipsPanel = false" />
-		<ReservationDialog :show="showReservationDialog" @close="showReservationDialog = false" />
+			<ProductOptionsEditor
+				v-if="showProductOptionsEditor"
+				v-model="showProductOptionsEditor"
+			/>
+			<CardEditor
+				v-if="showCardEditor"
+				v-model="showCardEditor"
+				@cards-updated="restaurantStore.fetchActiveCards()"
+				@open-settings="openSettingsTab"
+			/>
+			<TipsPanel :show="showTipsPanel" @close="showTipsPanel = false" />
+			<ReservationDialog
+				:show="showReservationDialog"
+				@close="showReservationDialog = false"
+			/>
 
 			<!-- Cash In/Out -->
 			<CashInOutDialog
@@ -1242,10 +1630,18 @@
 							<span class="text-base leading-none mt-0.5">⚠️</span>
 							<div class="text-xs text-red-900 leading-snug">
 								<div class="font-bold">
-									{{ __("{0} has already been charged to the customer", [formatCurrency(cartStore.collectedUnbookedTotal)]) }}
+									{{
+										__("{0} has already been charged to the customer", [
+											formatCurrency(cartStore.collectedUnbookedTotal),
+										])
+									}}
 								</div>
 								<div>
-									{{ __("Clearing the cart abandons that payment: the money stays taken and no sale is recorded. Finish the sale, or refund the customer first.") }}
+									{{
+										__(
+											"Clearing the cart abandons that payment: the money stays taken and no sale is recorded. Finish the sale, or refund the customer first."
+										)
+									}}
 								</div>
 							</div>
 						</div>
@@ -1274,7 +1670,11 @@
 							<!-- //// (59599289 2026-03-21; 1e73b40d; ab2ee852 server-side reset_all_tables) and -->
 							<!-- //// the notice that a customer was just created on the second screen -->
 							<!-- //// (912ef092, 2026-02-04 "improve UX for customer creation flow"). -->
-							{{ cartStore.collectedUnbookedTotal > 0 ? __("Abandon the payment") : __("Clear All") }}
+							{{
+								cartStore.collectedUnbookedTotal > 0
+									? __("Abandon the payment")
+									: __("Clear All")
+							}}
 						</Button>
 					</div>
 				</template>
@@ -1295,7 +1695,12 @@
 						<Button class="flex-1" variant="subtle" @click="showPurgeDialog = false">
 							{{ __("Cancel") }}
 						</Button>
-						<Button class="flex-1" variant="solid" theme="red" @click="handlePurgeAndToggle">
+						<Button
+							class="flex-1"
+							variant="solid"
+							theme="red"
+							@click="handlePurgeAndToggle"
+						>
 							{{ __("Clear & Switch") }}
 						</Button>
 					</div>
@@ -1309,9 +1714,21 @@
 			>
 				<template #body-content>
 					<div class="py-4 text-center">
-						<div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 mb-4">
-							<svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+						<div
+							class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100 mb-4"
+						>
+							<svg
+								class="h-8 w-8 text-green-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+								/>
 							</svg>
 						</div>
 						<p class="text-gray-700 text-base mb-2">
@@ -1334,11 +1751,7 @@
 						>
 							{{ __("No") }}
 						</Button>
-						<Button
-							class="flex-1"
-							variant="solid"
-							@click="selectCustomerFromDisplay"
-						>
+						<Button class="flex-1" variant="solid" @click="selectCustomerFromDisplay">
 							{{ __("Yes, select") }}
 						</Button>
 					</div>
@@ -1508,15 +1921,29 @@
 						<!-- //// from six lines to three. Cosmetic half of the success-dialog rework -->
 						<!-- //// (548757f7, 2026-03-24 "improve payment UX ... better success dialog with -->
 						<!-- //// Print/Email/Close buttons"). -->
-						<div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100">
-							<svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+						<div
+							class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-green-100"
+						>
+							<svg
+								class="h-7 w-7 text-green-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M5 13l4 4L19 7"
+								/>
 							</svg>
 						</div>
 						<h3 class="mt-4 text-lg font-medium text-gray-900">
 							<!-- //// Neoffice — FORMATTING ONLY: the same interpolation, unwrapped from three -->
 							<!-- //// lines to one by the success-dialog rework (548757f7, 2026-03-24). -->
-							{{ __("Invoice {0} created successfully!", [uiStore.lastInvoiceName]) }}
+							{{
+								__("Invoice {0} created successfully!", [uiStore.lastInvoiceName])
+							}}
 						</h3>
 						<p class="mt-2 text-sm text-gray-500">
 							{{ __("Paid: {0}", [formatCurrency(uiStore.lastPaidAmount)]) }}
@@ -1534,10 +1961,7 @@
 						<!-- //// the success dialog. Upstream only prints, which strands a customer who -->
 						<!-- //// wants the invoice by mail (4239ea8d, 2026-03-24 "add email invoice -->
 						<!-- //// functionality with PDF attachment"). -->
-						<Button
-							variant="outline"
-							@click="showEmailInvoiceDialog = true"
-						>
+						<Button variant="outline" @click="showEmailInvoiceDialog = true">
 							<template #prefix>
 								<FeatherIcon name="mail" class="w-4 h-4" />
 							</template>
@@ -1628,11 +2052,11 @@
 				@confirm="confirmClearCache"
 			/>
 
-		<!-- //// Neoffice — the upstream Footer comment and its POSFooter element were -->
-		<!-- //// REMOVED here: that strip was the BrainWise branding, and dropping it both -->
-		<!-- //// removes the vendor mark and gives the till back a screen row (458d81a9 -->
-		<!-- //// 2026-03-20 "remove BrainWise branding"; db22e2ae 2026-03-20 "remove -->
-		<!-- //// POSFooter branding component to reclaim screen space"). -->
+			<!-- //// Neoffice — the upstream Footer comment and its POSFooter element were -->
+			<!-- //// REMOVED here: that strip was the BrainWise branding, and dropping it both -->
+			<!-- //// removes the vendor mark and gives the till back a screen row (458d81a9 -->
+			<!-- //// 2026-03-20 "remove BrainWise branding"; db22e2ae 2026-03-20 "remove -->
+			<!-- //// POSFooter branding component to reclaim screen space"). -->
 		</template>
 
 		<!-- Session Lock Screen (outside v-if/v-else so it renders even during loading) -->
@@ -1648,28 +2072,68 @@
 		<!-- //// included (07d0d493 2026-03-29, 2aad6b2a + 34751a29 + 6bfa3117 2026-03-30, -->
 		<!-- //// ddf510f6 2026-03-31, 3b805c88 2026-03-29). -->
 		<!-- QR Self-Ordering Confirmation Dialog -->
-		<Dialog v-model="showQRConfirmDialog" :options="{ title: __('QR Self-Ordering'), size: 'sm' }">
+		<Dialog
+			v-model="showQRConfirmDialog"
+			:options="{ title: __('QR Self-Ordering'), size: 'sm' }"
+		>
 			<template #body-content>
 				<div class="flex flex-col items-center text-center p-4">
-					<div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-						<svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+					<div
+						class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4"
+					>
+						<svg
+							class="w-7 h-7 text-emerald-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+							/>
 						</svg>
 					</div>
-					<p class="text-base font-semibold text-gray-900 mb-2">{{ currentQR.tableName }}</p>
-					<p class="text-sm text-gray-600">{{ __('Open this table for QR self-ordering? Customers will be able to scan a QR code and order directly from their phone.') }}</p>
+					<p class="text-base font-semibold text-gray-900 mb-2">
+						{{ currentQR.tableName }}
+					</p>
+					<p class="text-sm text-gray-600">
+						{{
+							__(
+								"Open this table for QR self-ordering? Customers will be able to scan a QR code and order directly from their phone."
+							)
+						}}
+					</p>
 				</div>
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
-					<Button class="flex-1" @click="showQRConfirmDialog = false">{{ __('Cancel') }}</Button>
-					<Button class="flex-1" variant="solid" theme="green" @click="confirmQRGeneration">
+					<Button class="flex-1" @click="showQRConfirmDialog = false">{{
+						__("Cancel")
+					}}</Button>
+					<Button
+						class="flex-1"
+						variant="solid"
+						theme="green"
+						@click="confirmQRGeneration"
+					>
 						<template #prefix>
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+							<svg
+								class="w-4 h-4"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M5 13l4 4L19 7"
+								/>
 							</svg>
 						</template>
-						{{ __('Generate QR') }}
+						{{ __("Generate QR") }}
 					</Button>
 				</div>
 			</template>
@@ -1685,63 +2149,118 @@
 		/>
 
 		<!-- Paid/Cleaning Table Dialog -->
-		<Dialog v-model="showCleaningDialog" :options="{ title: cleaningTable?.table_name || __('Table'), size: 'sm' }">
+		<Dialog
+			v-model="showCleaningDialog"
+			:options="{ title: cleaningTable?.table_name || __('Table'), size: 'sm' }"
+		>
 			<template #body-content>
 				<div class="flex flex-col items-center text-center p-4">
-					<div class="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-						:class="cleaningTable?.status === 'Paid' ? 'bg-blue-100' : 'bg-emerald-100'">
-						<svg class="w-7 h-7" :class="cleaningTable?.status === 'Paid' ? 'text-blue-600' : 'text-emerald-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+					<div
+						class="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+						:class="
+							cleaningTable?.status === 'Paid' ? 'bg-blue-100' : 'bg-emerald-100'
+						"
+					>
+						<svg
+							class="w-7 h-7"
+							:class="
+								cleaningTable?.status === 'Paid'
+									? 'text-blue-600'
+									: 'text-emerald-600'
+							"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2.5"
+								d="M5 13l4 4L19 7"
+							/>
 						</svg>
 					</div>
 					<p class="text-base font-semibold text-gray-900">
-						{{ cleaningTable?.status === 'Paid' ? __('Table paid') : __('Table ready for cleanup') }}
+						{{
+							cleaningTable?.status === "Paid"
+								? __("Table paid")
+								: __("Table ready for cleanup")
+						}}
 					</p>
 				</div>
 
 				<!-- Payment summary -->
-				<div v-if="tablePaymentSummary" class="mx-4 mb-4 bg-gray-50 rounded-xl p-4 text-left">
+				<div
+					v-if="tablePaymentSummary"
+					class="mx-4 mb-4 bg-gray-50 rounded-xl p-4 text-left"
+				>
 					<!-- Items -->
 					<div class="space-y-1 mb-3">
-						<div v-for="(item, idx) in tablePaymentSummary.items" :key="idx"
-							class="flex justify-between text-sm">
+						<div
+							v-for="(item, idx) in tablePaymentSummary.items"
+							:key="idx"
+							class="flex justify-between text-sm"
+						>
 							<span class="text-gray-700">{{ item.qty }}× {{ item.item_name }}</span>
-							<span class="text-gray-500">{{ formatCleaningPrice(item.amount) }}</span>
+							<span class="text-gray-500">{{
+								formatCleaningPrice(item.amount)
+							}}</span>
 						</div>
 					</div>
 					<div class="border-t border-dashed border-gray-300 pt-2 space-y-1">
 						<div class="flex justify-between text-sm">
-							<span class="text-gray-700">{{ __('Order') }}</span>
-							<span class="font-semibold">{{ formatCleaningPrice(tablePaymentSummary.grand_total) }}</span>
+							<span class="text-gray-700">{{ __("Order") }}</span>
+							<span class="font-semibold">{{
+								formatCleaningPrice(tablePaymentSummary.grand_total)
+							}}</span>
 						</div>
-						<div v-if="tablePaymentSummary.tip_total > 0" class="flex justify-between text-sm">
-							<span class="text-gray-700">{{ __('Tips') }}</span>
-							<span class="text-green-600 font-semibold">+{{ formatCleaningPrice(tablePaymentSummary.tip_total) }}</span>
+						<div
+							v-if="tablePaymentSummary.tip_total > 0"
+							class="flex justify-between text-sm"
+						>
+							<span class="text-gray-700">{{ __("Tips") }}</span>
+							<span class="text-green-600 font-semibold"
+								>+{{ formatCleaningPrice(tablePaymentSummary.tip_total) }}</span
+							>
 						</div>
-						<div class="flex justify-between text-sm font-bold pt-1 border-t border-gray-200">
-							<span class="text-gray-900">{{ __('Total collected') }}</span>
-							<span class="text-green-700">{{ formatCleaningPrice(tablePaymentSummary.paid_amount + tablePaymentSummary.tip_total) }}</span>
+						<div
+							class="flex justify-between text-sm font-bold pt-1 border-t border-gray-200"
+						>
+							<span class="text-gray-900">{{ __("Total collected") }}</span>
+							<span class="text-green-700">{{
+								formatCleaningPrice(
+									tablePaymentSummary.paid_amount + tablePaymentSummary.tip_total
+								)
+							}}</span>
 						</div>
 					</div>
 					<!-- Invoice ref -->
 					<p class="text-[10px] text-gray-400 mt-2">{{ tablePaymentSummary.invoice }}</p>
 				</div>
 				<div v-else-if="loadingPaymentSummary" class="flex justify-center py-4">
-					<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
+					<div
+						class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"
+					></div>
 				</div>
 			</template>
 			<template #actions>
 				<div class="flex gap-2 w-full">
 					<Button class="flex-1" variant="solid" @click="markTableAvailable">
-						{{ __('Available') }}
+						{{ __("Available") }}
 					</Button>
-					<Button v-if="cleaningTable?.status === 'Paid'" class="flex-1" variant="solid" theme="green" @click="confirmTableCleaning">
-						{{ __('Cleaning') }}
+					<Button
+						v-if="cleaningTable?.status === 'Paid'"
+						class="flex-1"
+						variant="solid"
+						theme="green"
+						@click="confirmTableCleaning"
+					>
+						{{ __("Cleaning") }}
 					</Button>
 				</div>
 			</template>
 		</Dialog>
-	<!-- //// Neoffice — ▲▲▲ end of the QR / table-lifecycle dialog region opened above. -->
+		<!-- //// Neoffice — ▲▲▲ end of the QR / table-lifecycle dialog region opened above. -->
 	</div>
 </template>
 
@@ -1749,8 +2268,10 @@
 // Module-scoped init guard — prevents redundant heavy initialization
 // when component remounts due to translationVersion changes.
 // Tracks the profile+shift key so a user/shift change correctly re-initializes.
-let _initializedKey = null
-let _posInitPromise = null
+// biome-ignore lint/style/useConst: Reassigned from script setup lifecycle handlers.
+let _initializedKey = null;
+// biome-ignore lint/style/useConst: Reassigned from script setup lifecycle handlers.
+let _posInitPromise = null;
 </script>
 
 <script setup>
@@ -1789,6 +2310,7 @@ import DraftInvoicesDialog from "@/components/sale/DraftInvoicesDialog.vue";
 import SendToKitchenDialog from "@/components/sale/SendToKitchenDialog.vue";
 import InvoiceCart from "@/components/sale/InvoiceCart.vue";
 import InvoiceHistoryDialog from "@/components/sale/InvoiceHistoryDialog.vue";
+import ShiftHistoryDialog from "@/components/sale/ShiftHistoryDialog.vue";
 import ItemSelectionDialog from "@/components/sale/ItemSelectionDialog.vue";
 //// Neoffice — modifiers, the zero-price numpad and course selection: what a dish needs
 //// and an article does not (4df0caf1 + 9f4e85df 2026-03-21, 1ff2fba2 2026-03-27).
@@ -1805,6 +2327,7 @@ import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
+import ProductManagement from "@/components/sale/ProductManagement.vue";
 import PromotionManagement from "@/components/sale/PromotionManagement.vue";
 //// Neoffice — e-mail-the-invoice dialog (4239ea8d, 2026-03-24 "add email invoice
 //// functionality with PDF attachment").
@@ -1919,7 +2442,12 @@ const {
 } = useCustomerDisplaySync();
 
 // Session lock (inactivity + tab-refocus)
-const { lock: lockSession, configure: configureSessionLock, startActivityTracking, stopActivityTracking } = useSessionLock();
+const {
+	lock: lockSession,
+	configure: configureSessionLock,
+	startActivityTracking,
+	stopActivityTracking,
+} = useSessionLock();
 
 // POS Events system
 const {
@@ -1977,91 +2505,97 @@ const clearCacheOverlayRef = ref(null);
 const showMenus = ref(false);
 
 // Restaurant card selection
-const selectedCard = ref(null)
-const selectedCardCategory = ref(null)
+const selectedCard = ref(null);
+const selectedCardCategory = ref(null);
 
 // QR Self-Ordering state
-const activeQRTokens = ref(new Map()) // table name → { token, url }
-const showQRDialog = ref(false)
-const showQRConfirmDialog = ref(false)
-const currentQR = ref({ token: "", url: "", tableName: "" })
-const cardSearchQuery = ref("")
-const cardViewMode = ref("grid")
+const activeQRTokens = ref(new Map()); // table name → { token, url }
+const showQRDialog = ref(false);
+const showQRConfirmDialog = ref(false);
+const currentQR = ref({ token: "", url: "", tableName: "" });
+const cardSearchQuery = ref("");
+const cardViewMode = ref("grid");
 const cardCategories = computed(() => {
-	return selectedCardItems.value
-		.filter(i => i.item_type === "Category")
-		.map(i => i.label)
-})
+	return selectedCardItems.value.filter((i) => i.item_type === "Category").map((i) => i.label);
+});
 const filteredCardGroups = computed(() => {
-	let groups = cardItemGroups.value
+	let groups = cardItemGroups.value;
 	if (selectedCardCategory.value) {
-		const group = groups.find(g => g.category === selectedCardCategory.value)
-		groups = group ? [{ category: null, items: group.items }] : []
+		const group = groups.find((g) => g.category === selectedCardCategory.value);
+		groups = group ? [{ category: null, items: group.items }] : [];
 	}
 	// Apply search filter
-	const q = cardSearchQuery.value?.toLowerCase().trim()
-	if (!q) return groups
-	return groups.map(g => ({
-		category: g.category,
-		items: g.items.filter(i =>
-			(i.item_name || i.menu_name || i.label || "").toLowerCase().includes(q)
-		)
-	})).filter(g => g.items.length > 0)
-})
+	const q = cardSearchQuery.value?.toLowerCase().trim();
+	if (!q) return groups;
+	return groups
+		.map((g) => ({
+			category: g.category,
+			items: g.items.filter((i) =>
+				(i.item_name || i.menu_name || i.label || "").toLowerCase().includes(q)
+			),
+		}))
+		.filter((g) => g.items.length > 0);
+});
 const cardItemGroups = computed(() => {
-	const groups = []
-	let current = { category: null, items: [] }
+	const groups = [];
+	let current = { category: null, items: [] };
 	for (const item of selectedCardItems.value) {
 		if (item.item_type === "Category") {
-			if (current.items.length > 0 || current.category) groups.push(current)
-			current = { category: item.label, items: [] }
+			if (current.items.length > 0 || current.category) groups.push(current);
+			current = { category: item.label, items: [] };
 		} else {
-			current.items.push(item)
+			current.items.push(item);
 		}
 	}
-	if (current.items.length > 0 || current.category) groups.push(current)
-	return groups
-})
+	if (current.items.length > 0 || current.category) groups.push(current);
+	return groups;
+});
 const selectedCardItems = computed(() => {
-	if (!selectedCard.value) return []
-	const card = restaurantStore.activeCards.find(c => c.name === selectedCard.value)
-	return card?.items || []
-})
+	if (!selectedCard.value) return [];
+	const card = restaurantStore.activeCards.find((c) => c.name === selectedCard.value);
+	return card?.items || [];
+});
 
-watch(() => restaurantStore.activeCards, (cards) => {
-	if (cards.length > 0 && !selectedCard.value) {
-		selectedCard.value = cards[0].name
-	}
-}, { immediate: true })
+watch(
+	() => restaurantStore.activeCards,
+	(cards) => {
+		if (cards.length > 0 && !selectedCard.value) {
+			selectedCard.value = cards[0].name;
+		}
+	},
+	{ immediate: true }
+);
 
 // Card item stock helpers
 function getCardItemStock(cardItem) {
-	if (!cardItem.item || cardItem.item_type !== 'Item') return null
-	if (!cardItem.is_stock_item) return null
-	return stockStore.getDisplayStock(cardItem.item)
+	if (!cardItem.item || cardItem.item_type !== "Item") return null;
+	if (!cardItem.is_stock_item) return null;
+	return stockStore.getDisplayStock(cardItem.item);
 }
 function isCardItemOutOfStock(cardItem) {
-	const stock = getCardItemStock(cardItem)
-	if (stock === null) return false // non-stock items are always available
-	return stock <= 0
+	const stock = getCardItemStock(cardItem);
+	if (stock === null) return false; // non-stock items are always available
+	return stock <= 0;
 }
 
 // Card item display helpers (image / color / name fallback)
 function getCardItemBgStyle(item) {
-	if (item.image) return {}
-	if (item.custom_color) return { backgroundColor: item.custom_color }
-	return { backgroundColor: '#F3F4F6' }
+	if (item.image) return {};
+	if (item.custom_color) return { backgroundColor: item.custom_color };
+	return { backgroundColor: "#F3F4F6" };
 }
 function getCardItemTextClasses(item) {
-	const base = 'font-bold line-clamp-3'
+	const base = "font-bold line-clamp-3";
 	if (item.custom_color) {
-		return `${base} ${isLightColor(item.custom_color) ? 'text-gray-800' : 'text-white'} text-sm sm:text-base`
+		return `${base} ${
+			isLightColor(item.custom_color) ? "text-gray-800" : "text-white"
+		} text-sm sm:text-base`;
 	}
-	return `${base} text-gray-500 text-xs sm:text-sm`
+	return `${base} text-gray-500 text-xs sm:text-sm`;
 }
 
 function handleCardItemClick(cardItem) {
-	if (isCardItemOutOfStock(cardItem)) return
+	if (isCardItemOutOfStock(cardItem)) return;
 	const item = {
 		item_code: cardItem.item,
 		item_name: cardItem.item_name || cardItem.label,
@@ -2069,10 +2603,10 @@ function handleCardItemClick(cardItem) {
 		rate: cardItem.price || cardItem.default_price || 0,
 		image: cardItem.image || "",
 		custom_color: cardItem.custom_color || "",
-	}
-	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
+	};
+	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group);
 	if (stationInfo) {
-		item.preparation_station = stationInfo.station
+		item.preparation_station = stationInfo.station;
 	}
 
 	// Check for zero-price items
@@ -2084,7 +2618,9 @@ function handleCardItemClick(cardItem) {
 			cartStore.addItem(item, 1);
 			nextTick(() => {
 				// Use findLast to get the NEWEST item (just added), not the first match
-				const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code);
+				const cartItem = cartStore.invoiceItems.findLast(
+					(i) => i.item_code === item.item_code
+				);
 				if (cartItem && itemModifiersRef.value) {
 					itemModifiersRef.value.open(cartItem);
 				}
@@ -2098,25 +2634,27 @@ function handleCardItemClick(cardItem) {
 		return;
 	}
 
-	cartStore.addItem(item, 1)
+	cartStore.addItem(item, 1);
 
 	// Auto-open modifiers dialog if item has required modifier groups
-	const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group)
+	const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group);
 	if (modGroups.length > 0) {
 		nextTick(() => {
 			// Use findLast to get the NEWEST item (just added), not the first match
-			const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code)
+			const cartItem = cartStore.invoiceItems.findLast(
+				(i) => i.item_code === item.item_code
+			);
 			if (cartItem && itemModifiersRef.value) {
-				itemModifiersRef.value.open(cartItem)
+				itemModifiersRef.value.open(cartItem);
 			}
-		})
+		});
 	}
 }
 
 function handleCardMenuClick(cardItem) {
-	const menu = restaurantStore.activeMenus.find(m => m.name === cardItem.menu)
+	const menu = restaurantStore.activeMenus.find((m) => m.name === cardItem.menu);
 	if (menu) {
-		menuSelectionRef.value?.open(menu)
+		menuSelectionRef.value?.open(menu);
 	}
 }
 
@@ -2148,6 +2686,10 @@ function computeCartHash() {
 // Promotion dialog
 const showPromotionManagement = ref(false);
 
+// Product Management dialog
+const showProductManagement = ref(false);
+const canAccessProductManagement = ref(false);
+
 // Settings dialog
 const showPOSSettings = ref(false);
 //// Neoffice — lets a caller open POS Settings directly on one tab, so "edit the
@@ -2157,8 +2699,8 @@ const showPOSSettings = ref(false);
 const settingsInitialTab = ref("");
 
 function openSettingsTab(tab) {
-	settingsInitialTab.value = tab || ""
-	showPOSSettings.value = true
+	settingsInitialTab.value = tab || "";
+	showPOSSettings.value = true;
 }
 
 // Stock Lookup dialog (Products menu)
@@ -2200,6 +2742,9 @@ const { getGiftCardsFromInvoice } = useGiftCard();
 // Invoice history data (used by InvoiceManagement component)
 const invoiceHistoryData = ref([]);
 
+// Shift History dialog
+const showShiftHistoryDialog = ref(false);
+
 // Stock sync status
 const isStockSyncActive = ref(false);
 
@@ -2230,10 +2775,23 @@ watch(
 	(newProfile) => {
 		if (newProfile) {
 			warehousesResource.reload();
+			loadProductManagementPermissions();
 		}
 	},
 	{ immediate: true }
 );
+
+async function loadProductManagementPermissions() {
+	try {
+		const result = await call(
+			"pos_next.api.product_management.get_product_management_permissions"
+		);
+		canAccessProductManagement.value = Boolean(result?.can_access);
+	} catch (error) {
+		log.error("Error loading product management permissions:", error);
+		canAccessProductManagement.value = false;
+	}
+}
 
 // Computed for warehouses - returns all warehouses for the company
 const profileWarehouses = computed(() => {
@@ -2261,14 +2819,14 @@ const profileWarehouses = computed(() => {
 //// "Phase 1 restaurant module - header toggle").
 // Restaurant mode toggle computed
 const canToggleRestaurant = computed(() => {
-	const noItems = cartStore.invoiceItems.length === 0
-	const noOccupiedTables = restaurantStore.totalOccupiedCount === 0
-	const isDisabling = restaurantStore.isEnabled
+	const noItems = cartStore.invoiceItems.length === 0;
+	const noOccupiedTables = restaurantStore.totalOccupiedCount === 0;
+	const isDisabling = restaurantStore.isEnabled;
 	if (isDisabling) {
-		return noItems && noOccupiedTables
+		return noItems && noOccupiedTables;
 	}
-	return noItems
-})
+	return noItems;
+});
 
 const canAccessShiftActions = computed(() => shiftStore.hasOpenShift);
 
@@ -2290,44 +2848,49 @@ const purgeDialogMessage = ref("");
 
 async function handleToggleRestaurant() {
 	if (!canToggleRestaurant.value) {
-		const isDisabling = restaurantStore.isEnabled
+		const isDisabling = restaurantStore.isEnabled;
 		if (isDisabling && restaurantStore.totalOccupiedCount > 0) {
-			purgeDialogMessage.value = __("There are {0} occupied tables. Clear all orders and disable restaurant mode?", [restaurantStore.totalOccupiedCount])
+			purgeDialogMessage.value = __(
+				"There are {0} occupied tables. Clear all orders and disable restaurant mode?",
+				[restaurantStore.totalOccupiedCount]
+			);
 		} else if (cartStore.invoiceItems.length > 0) {
-			purgeDialogMessage.value = __("There are items in the cart. Clear the cart and toggle restaurant mode?")
+			purgeDialogMessage.value = __(
+				"There are items in the cart. Clear the cart and toggle restaurant mode?"
+			);
 		}
-		showPurgeDialog.value = true
-		return
+		showPurgeDialog.value = true;
+		return;
 	}
 
-	await doToggleRestaurant()
+	await doToggleRestaurant();
 }
 
 async function doToggleRestaurant() {
 	try {
-		const newValue = !restaurantStore.isEnabled
-		await cartStore.clearCart()
+		const newValue = !restaurantStore.isEnabled;
+		await cartStore.clearCart();
 
 		// When disabling, reset all occupied tables to Empty via server API
 		if (!newValue) {
-			await call("pos_next.api.restaurant.reset_all_tables")
+			await call("pos_next.api.restaurant.reset_all_tables");
 		}
 
-		await posSettingsStore.toggleRestaurantMode()
+		await posSettingsStore.toggleRestaurantMode();
 		if (newValue) {
-			await restaurantStore.fetchFromNetwork()
-			showSuccess(__("Restaurant mode enabled"))
+			await restaurantStore.fetchFromNetwork();
+			showSuccess(__("Restaurant mode enabled"));
 		} else {
-			showSuccess(__("Restaurant mode disabled"))
+			showSuccess(__("Restaurant mode disabled"));
 		}
 	} catch (error) {
-		showError(__("Failed to toggle restaurant mode"), String(error))
+		showError(__("Failed to toggle restaurant mode"), String(error));
 	}
 }
 
 async function handlePurgeAndToggle() {
-	showPurgeDialog.value = false
-	await doToggleRestaurant()
+	showPurgeDialog.value = false;
+	await doToggleRestaurant();
 }
 
 onMounted(async () => {
@@ -2349,38 +2912,43 @@ onMounted(async () => {
 	//// visible cart).
 	// Listen for guest order updates to refresh POS cart when a guest orders on the active table
 	// Guest update handler with debounce + mutex to prevent item duplication
-	let _guestUpdateTimer = null
-	let _guestUpdateRunning = false
+	let _guestUpdateTimer = null;
+	let _guestUpdateRunning = false;
 	const handleGuestUpdate = (e) => {
-		const table = cartStore.restaurantTable
-		if (!table || e.detail?.table !== table.name) return
-		if (_guestUpdateRunning) return
+		const table = cartStore.restaurantTable;
+		if (!table || e.detail?.table !== table.name) return;
+		if (_guestUpdateRunning) return;
 
-		clearTimeout(_guestUpdateTimer)
+		clearTimeout(_guestUpdateTimer);
 		_guestUpdateTimer = setTimeout(async () => {
-			if (_guestUpdateRunning) return
-			_guestUpdateRunning = true
+			if (_guestUpdateRunning) return;
+			_guestUpdateRunning = true;
 			try {
-				const orderData = await call("pos_next.api.restaurant.get_table_order", { table_name: table.name })
+				const orderData = await call("pos_next.api.restaurant.get_table_order", {
+					table_name: table.name,
+				});
 				if (orderData?.items) {
 					// Direct replacement — bypasses addItem dedup logic entirely
-					await cartStore.clearCart()
-					cartStore.setRestaurantTable(table)
-					cartStore.replaceAllItems(orderData.items)
+					await cartStore.clearCart();
+					cartStore.setRestaurantTable(table);
+					cartStore.replaceAllItems(orderData.items);
 					cartStore.$patch({
 						currentDraftId: orderData.name,
 						hasUnsentChanges: false,
 						guestPaidAmount: orderData.paid_amount || 0,
 						guestTipAmount: orderData.tip_total || 0,
 						kdsStatus: orderData.kds_status || "Pending",
-					})
-					if (orderData.customer) cartStore.setCustomer(orderData.customer)
+					});
+					if (orderData.customer) cartStore.setCustomer(orderData.customer);
 				}
-			} catch { /* ignore */ }
-			finally { _guestUpdateRunning = false }
-		}, 500)
-	}
-	window.addEventListener("pos:guest-order-update", handleGuestUpdate)
+			} catch {
+				/* ignore */
+			} finally {
+				_guestUpdateRunning = false;
+			}
+		}, 500);
+	};
+	window.addEventListener("pos:guest-order-update", handleGuestUpdate);
 
 	// Set up real-time stock update listener
 	const cleanup = onStockUpdate(async (stockUpdates) => {
@@ -3052,154 +3620,164 @@ function handleTableSelected(table) {
 	// Table selected, cart already configured by TableSelector
 }
 
-const cleaningTable = ref(null)
-const showCleaningDialog = ref(false)
-const tablePaymentSummary = ref(null)
-const loadingPaymentSummary = ref(false)
+const cleaningTable = ref(null);
+const showCleaningDialog = ref(false);
+const tablePaymentSummary = ref(null);
+const loadingPaymentSummary = ref(false);
 
 function formatCleaningPrice(amount) {
 	return new Intl.NumberFormat(undefined, {
 		style: "currency",
 		currency: shiftStore.currency || "CHF",
 		minimumFractionDigits: 2,
-	}).format(amount || 0)
+	}).format(amount || 0);
 }
 
 async function handleCleaningTableClicked(table) {
-	cleaningTable.value = table
-	tablePaymentSummary.value = null
-	showCleaningDialog.value = true
+	cleaningTable.value = table;
+	tablePaymentSummary.value = null;
+	showCleaningDialog.value = true;
 	// Load payment details
-	loadingPaymentSummary.value = true
+	loadingPaymentSummary.value = true;
 	try {
 		const result = await call("pos_next.api.restaurant.get_table_payment_summary", {
 			table_name: table.name,
-		})
-		tablePaymentSummary.value = result
-	} catch { /* ignore */ }
-	loadingPaymentSummary.value = false
+		});
+		tablePaymentSummary.value = result;
+	} catch {
+		/* ignore */
+	}
+	loadingPaymentSummary.value = false;
 }
 
 async function confirmTableCleaning() {
-	if (!cleaningTable.value) return
+	if (!cleaningTable.value) return;
 	try {
 		await call("pos_next.api.restaurant.update_table_status", {
 			table_name: cleaningTable.value.name,
 			status: "Cleaning",
-		})
-		activeQRTokens.value.delete(cleaningTable.value.name)
-		showCleaningDialog.value = false
-		showSuccess(__("Table marked for cleaning"))
-		cleaningTable.value = null
+		});
+		activeQRTokens.value.delete(cleaningTable.value.name);
+		showCleaningDialog.value = false;
+		showSuccess(__("Table marked for cleaning"));
+		cleaningTable.value = null;
 	} catch (e) {
-		showError(e.message || __("Failed to update table status"))
+		showError(e.message || __("Failed to update table status"));
 	}
 }
 
 async function markTableAvailable() {
-	if (!cleaningTable.value) return
+	if (!cleaningTable.value) return;
 	try {
 		await call("pos_next.api.restaurant.mark_table_available", {
 			table_name: cleaningTable.value.name,
-		})
-		activeQRTokens.value.delete(cleaningTable.value.name)
-		showCleaningDialog.value = false
-		cleaningTable.value = null
+		});
+		activeQRTokens.value.delete(cleaningTable.value.name);
+		showCleaningDialog.value = false;
+		cleaningTable.value = null;
 	} catch (e) {
-		showError(e.message || __("Failed to update table status"))
+		showError(e.message || __("Failed to update table status"));
 	}
 }
 
 async function handleQRButtonClick() {
-	const table = cartStore.restaurantTable
-	if (!table) return
+	const table = cartStore.restaurantTable;
+	if (!table) return;
 
-	const tableName = table.name || table.table_name
+	const tableName = table.name || table.table_name;
 	// If we already have a token for this table, show QR directly
 	if (activeQRTokens.value.has(tableName)) {
-		const qr = activeQRTokens.value.get(tableName)
-		currentQR.value = { token: qr.token, url: qr.url, tableName: table.table_name || tableName }
-		showQRDialog.value = true
-		return
+		const qr = activeQRTokens.value.get(tableName);
+		currentQR.value = {
+			token: qr.token,
+			url: qr.url,
+			tableName: table.table_name || tableName,
+		};
+		showQRDialog.value = true;
+		return;
 	}
 
 	// Show confirmation dialog
-	currentQR.value = { token: "", url: "", tableName: table.table_name || tableName }
-	showQRConfirmDialog.value = true
+	currentQR.value = { token: "", url: "", tableName: table.table_name || tableName };
+	showQRConfirmDialog.value = true;
 }
 
 async function confirmQRGeneration() {
-	showQRConfirmDialog.value = false
-	const table = cartStore.restaurantTable
-	if (!table) return
-	const tableName = table.name || table.table_name
+	showQRConfirmDialog.value = false;
+	const table = cartStore.restaurantTable;
+	if (!table) return;
+	const tableName = table.name || table.table_name;
 
 	try {
 		const result = await call("pos_next.api.guest_ordering.create_table_token", {
 			table: tableName,
 			pos_profile: settingsStore.settings.pos_profile || settingsStore.posProfile,
-		})
+		});
 		if (result?.token) {
-			const siteUrl = window.location.origin
-			const url = result.url || `${siteUrl}/pos/guest/${result.token}`
-			activeQRTokens.value.set(tableName, { token: result.token, url })
-			currentQR.value = { token: result.token, url, tableName: table.table_name || tableName }
-			showQRDialog.value = true
+			const siteUrl = window.location.origin;
+			const url = result.url || `${siteUrl}/pos/guest/${result.token}`;
+			activeQRTokens.value.set(tableName, { token: result.token, url });
+			currentQR.value = {
+				token: result.token,
+				url,
+				tableName: table.table_name || tableName,
+			};
+			showQRDialog.value = true;
 		}
 	} catch (err) {
-		showError(__("Failed to generate QR code: {0}", [err.message || err]))
+		showError(__("Failed to generate QR code: {0}", [err.message || err]));
 	}
 }
 
 async function handleStartTakeaway() {
-	await cartStore.clearCart()
+	await cartStore.clearCart();
 	try {
-		const number = await call("pos_next.api.restaurant.get_next_takeaway_number")
+		const number = await call("pos_next.api.restaurant.get_next_takeaway_number");
 		cartStore.$patch({
 			isTakeaway: true,
 			takeawayNumber: number,
-		})
+		});
 	} catch (err) {
 		cartStore.$patch({
 			isTakeaway: true,
 			takeawayNumber: "T-???",
-		})
+		});
 	}
 }
 
 function handleLoadTableDraft(draft) {
 	// Set the restaurant table so the UI switches from floor plan to items view
-	const table = restaurantStore.tables.find(t => t.name === draft.restaurant_table)
+	const table = restaurantStore.tables.find((t) => t.name === draft.restaurant_table);
 	if (table) {
-		cartStore.setRestaurantTable(table)
+		cartStore.setRestaurantTable(table);
 	}
 
 	// Restore cart items from the draft
 	if (draft.items && draft.items.length > 0) {
 		for (const item of draft.items) {
-			cartStore.addItem(item, item.quantity || item.qty || 1)
+			cartStore.addItem(item, item.quantity || item.qty || 1);
 		}
 	}
 
 	// Restore customer
 	if (draft.customer) {
-		cartStore.setCustomer(draft.customer)
+		cartStore.setCustomer(draft.customer);
 	}
 
 	// Restore draft ID for future updates
 	if (draft.draft_id) {
-		cartStore.$patch({ currentDraftId: draft.draft_id })
+		cartStore.$patch({ currentDraftId: draft.draft_id });
 	}
 
 	// Restore KDS status
 	if (draft.kds_status) {
-		cartStore.setKdsStatus(draft.kds_status)
+		cartStore.setKdsStatus(draft.kds_status);
 	}
 
 	// Mark as no unsent changes since we just loaded
-	cartStore.markChangesSent()
+	cartStore.markChangesSent();
 
-	showSuccess(__("Draft invoice loaded successfully"))
+	showSuccess(__("Draft invoice loaded successfully"));
 }
 
 function handleLoadServerDraft(order) {
@@ -3207,45 +3785,50 @@ function handleLoadServerDraft(order) {
 	if (order.items && order.items.length > 0) {
 		for (const item of order.items) {
 			// Calculate modifier price adjustment from saved JSON
-			let modifierPriceAdjustment = 0
+			let modifierPriceAdjustment = 0;
 			if (item.posa_item_modifiers) {
 				try {
-					const mods = JSON.parse(item.posa_item_modifiers)
+					const mods = JSON.parse(item.posa_item_modifiers);
 					for (const mod of mods) {
-						for (const opt of (mod.options || [])) {
-							modifierPriceAdjustment += (opt.price_adjustment || opt.price || 0)
+						for (const opt of mod.options || []) {
+							modifierPriceAdjustment += opt.price_adjustment || opt.price || 0;
 						}
 					}
-				} catch { /* ignore parse errors */ }
+				} catch {
+					/* ignore parse errors */
+				}
 			}
-			cartStore.addItem({
-				item_code: item.item_code,
-				item_name: item.item_name,
-				rate: item.rate,
-				uom: item.uom,
-				preparation_station: item.preparation_station,
-				posa_special_instructions: item.posa_special_instructions,
-				posa_item_modifiers: item.posa_item_modifiers,
-				_modifiers_applied: modifierPriceAdjustment || 0,
-			}, item.qty || 1)
+			cartStore.addItem(
+				{
+					item_code: item.item_code,
+					item_name: item.item_name,
+					rate: item.rate,
+					uom: item.uom,
+					preparation_station: item.preparation_station,
+					posa_special_instructions: item.posa_special_instructions,
+					posa_item_modifiers: item.posa_item_modifiers,
+					_modifiers_applied: modifierPriceAdjustment || 0,
+				},
+				item.qty || 1
+			);
 		}
 	}
 
 	// Restore customer
 	if (order.customer) {
-		cartStore.setCustomer(order.customer)
+		cartStore.setCustomer(order.customer);
 	}
 
 	// Store the server draft ID for future updates
-	cartStore.$patch({ currentDraftId: order.name })
+	cartStore.$patch({ currentDraftId: order.name });
 
 	// Restore KDS status
 	if (order.kds_status) {
-		cartStore.setKdsStatus(order.kds_status)
+		cartStore.setKdsStatus(order.kds_status);
 	}
 
 	// Mark as no unsent changes since we just loaded from server
-	cartStore.markChangesSent()
+	cartStore.markChangesSent();
 }
 
 function closeTable() {
@@ -3256,12 +3839,12 @@ async function handleItemsSentToKitchen() {
 	// Items already have their kds_status updated by the SendToKitchenDialog
 	// Derive order-level status from item statuses
 	const activeStatuses = cartStore.invoiceItems
-		.map(i => i.kds_status)
-		.filter(s => s && s !== "Waiting")
+		.map((i) => i.kds_status)
+		.filter((s) => s && s !== "Waiting");
 	if (activeStatuses.length > 0) {
-		cartStore.setKdsStatus(activeStatuses[0])
+		cartStore.setKdsStatus(activeStatuses[0]);
 	}
-	await handleSendToKitchen()
+	await handleSendToKitchen();
 }
 
 async function handleSendSingleItem(item) {
@@ -3277,65 +3860,65 @@ async function handleSendSingleItem(item) {
 	const cartItem = cartStore.invoiceItems.includes(item)
 		? item
 		: cartStore.invoiceItems.findLast(
-				ci => ci.item_code === item.item_code && (ci.uom || "") === (item.uom || "")
-			)
+				(ci) => ci.item_code === item.item_code && (ci.uom || "") === (item.uom || "")
+		  );
 	if (cartItem) {
-		cartItem.kds_status = "Pending"
+		cartItem.kds_status = "Pending";
 		const activeStatuses = cartStore.invoiceItems
-			.map(i => i.kds_status)
-			.filter(s => s && s !== "Waiting")
+			.map((i) => i.kds_status)
+			.filter((s) => s && s !== "Waiting");
 		if (activeStatuses.length > 0) {
-			cartStore.setKdsStatus(activeStatuses[0])
+			cartStore.setKdsStatus(activeStatuses[0]);
 		}
-		await handleSendToKitchen()
+		await handleSendToKitchen();
 	}
 }
 
-let isSendingToKitchen = false
-const isProcessingPayment = ref(false)
+let isSendingToKitchen = false;
+const isProcessingPayment = ref(false);
 async function handleSendToKitchen() {
-	if (cartStore.invoiceItems.length === 0) return
-	if (isSendingToKitchen) return
-	isSendingToKitchen = true
+	if (cartStore.invoiceItems.length === 0) return;
+	if (isSendingToKitchen) return;
+	isSendingToKitchen = true;
 
 	try {
 		// Build invoice data for server-side draft creation
-		const currentProfile = shiftStore.currentProfile
-		const invoiceData = cartStore.buildOfferEvaluationPayload(currentProfile)
-		invoiceData.kds_status = "Pending"
-		invoiceData.is_pos = 1
-		invoiceData.docstatus = 0
-		invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift
+		const currentProfile = shiftStore.currentProfile;
+		const invoiceData = cartStore.buildOfferEvaluationPayload(currentProfile);
+		invoiceData.kds_status = "Pending";
+		invoiceData.is_pos = 1;
+		invoiceData.docstatus = 0;
+		invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift;
 
 		// If we already have a server draft, include its name for update
 		if (cartStore.currentDraftId) {
-			invoiceData.name = cartStore.currentDraftId
+			invoiceData.name = cartStore.currentDraftId;
 		}
 
 		// Create/update server-side draft invoice via API
 		const result = await call("pos_next.api.invoices.update_invoice", {
-			data: JSON.stringify(invoiceData)
-		})
+			data: JSON.stringify(invoiceData),
+		});
 
 		if (result?.name) {
 			// Store the server draft ID for future updates
-			cartStore.$patch({ currentDraftId: result.name })
+			cartStore.$patch({ currentDraftId: result.name });
 		}
 
 		// Mark changes as sent
-		cartStore.markChangesSent()
-		cartStore.setKdsStatus("Pending")
+		cartStore.markChangesSent();
+		cartStore.setKdsStatus("Pending");
 
-		showSuccess(__("Order validated"))
+		showSuccess(__("Order validated"));
 
 		// Return to floor plan and refresh table data for badges
-		cartStore.clearCart()
-		restaurantStore.fetchFromNetwork()
+		cartStore.clearCart();
+		restaurantStore.fetchFromNetwork();
 	} catch (error) {
-		console.error("Failed to send to kitchen:", error)
-		showError(__("Failed to send order to kitchen"))
+		console.error("Failed to send to kitchen:", error);
+		showError(__("Failed to send order to kitchen"));
 	} finally {
-		isSendingToKitchen = false
+		isSendingToKitchen = false;
 	}
 }
 
@@ -3351,9 +3934,12 @@ function handleItemSelected(item, autoAdd = false) {
 			//// station-item relation into Preparation Station child table"; 34ee11a8, 2026-03-25).
 			// Assign preparation station from restaurant store map
 			if (restaurantStore.isEnabled && !item.preparation_station) {
-				const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
+				const stationInfo = restaurantStore.getStationForItem(
+					item.item_code,
+					item.item_group
+				);
 				if (stationInfo) {
-					item.preparation_station = stationInfo.station
+					item.preparation_station = stationInfo.station;
 				}
 			}
 
@@ -3370,7 +3956,12 @@ function handleItemSelected(item, autoAdd = false) {
 					price_list_rate: unitRate,
 					is_resolved_barcode: true, // Mark as readonly
 				};
-				cartStore.addItem(resolvedItem, item.resolved_qty, true, shiftStore.currentProfile);
+				cartStore.addItem(
+					resolvedItem,
+					item.resolved_qty,
+					true,
+					shiftStore.currentProfile
+				);
 			} else {
 				cartStore.addItem(item, 1, true, shiftStore.currentProfile);
 			}
@@ -3386,7 +3977,11 @@ function handleItemSelected(item, autoAdd = false) {
 
 	// Early out-of-stock guard — prevent opening dialogs for zero-stock items
 	// Full qty validation happens in cartStore.addItem()
-	if (!item.has_variants && settingsStore.shouldEnforceStockValidation() && shouldValidateItemStock(item)) {
+	if (
+		!item.has_variants &&
+		settingsStore.shouldEnforceStockValidation() &&
+		shouldValidateItemStock(item)
+	) {
 		const actualQty = item.actual_qty ?? item.stock_qty ?? 0;
 		if (actualQty <= 0) {
 			uiStore.showError(
@@ -3406,9 +4001,9 @@ function handleItemSelected(item, autoAdd = false) {
 	//// 2026-03-21; 34ee11a8, 2026-03-25).
 	// Assign preparation station from restaurant store map
 	if (restaurantStore.isEnabled && !item.preparation_station) {
-		const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group)
+		const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group);
 		if (stationInfo) {
-			item.preparation_station = stationInfo.station
+			item.preparation_station = stationInfo.station;
 		}
 	}
 
@@ -3462,7 +4057,9 @@ function handleItemSelected(item, autoAdd = false) {
 					//// that item_code, so a second identical dish got its options written onto the
 					//// first one. Same rule as 7e1376a3, which only reached two of the eight call
 					//// sites that resolve a cart line by item code.
-					const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code);
+					const cartItem = cartStore.invoiceItems.findLast(
+						(i) => i.item_code === item.item_code
+					);
 					if (cartItem && itemModifiersRef.value) {
 						itemModifiersRef.value.open(cartItem);
 					}
@@ -3495,17 +4092,19 @@ function handleItemSelected(item, autoAdd = false) {
 	//// modifier group, not just required").
 	// Auto-open modifiers dialog if item has required modifier groups
 	if (restaurantStore.isEnabled) {
-		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group)
+		const modGroups = restaurantStore.getModifiersForItem(item.item_code, item.item_group);
 		if (modGroups.length > 0) {
 			nextTick(() => {
 				// Find the item in cart and open modifiers
 				//// Neoffice — findLast, not find: the line to configure is the one addItem() just
 				//// appended, not the first line that happens to share the item_code (7e1376a3).
-				const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code)
+				const cartItem = cartStore.invoiceItems.findLast(
+					(i) => i.item_code === item.item_code
+				);
 				if (cartItem && itemModifiersRef.value) {
-					itemModifiersRef.value.open(cartItem)
+					itemModifiersRef.value.open(cartItem);
 				}
-			})
+			});
 		}
 	}
 }
@@ -3525,7 +4124,9 @@ function handlePriceConfirmed({ item, price }) {
 	//// the one just appended at rate 0; find() wrote the amount the cashier typed onto the
 	//// FIRST line with that item_code instead — a second gift card at 100 rewrote the first
 	//// one, which was already priced at 30, and the till was short. Same rule as 7e1376a3.
-	const existingCartItem = cartStore.invoiceItems.findLast(i => i.item_code === item.item_code);
+	const existingCartItem = cartStore.invoiceItems.findLast(
+		(i) => i.item_code === item.item_code
+	);
 	if (existingCartItem) {
 		// Update existing cart item's rate
 		existingCartItem.rate = price;
@@ -3580,7 +4181,7 @@ function handleAdditionalDiscountUpdate(discountAmount) {
 //// restaurant menus with course selection dialog").
 function handleOpenModifiers(item) {
 	if (itemModifiersRef.value) {
-		itemModifiersRef.value.open(item)
+		itemModifiersRef.value.open(item);
 	}
 }
 
@@ -3592,9 +4193,9 @@ function handleMenuConfirmed(menuItems) {
 			rate: menuItem.price_override,
 			is_menu_item: true,
 			menu_name: menuItem.menu_name,
-			posa_special_instructions: `[${menuItem.menu_name}] ${menuItem.course_name}`
-		}
-		cartStore.addItem(fullItem, 1)
+			posa_special_instructions: `[${menuItem.menu_name}] ${menuItem.course_name}`,
+		};
+		cartStore.addItem(fullItem, 1);
 	}
 }
 
@@ -3764,11 +4365,11 @@ async function handlePaymentCompleted(paymentData) {
 		}
 
 		// Capture restaurant table before clearCart resets it
-		const restaurantTableName = cartStore.restaurantTable?.name || null
+		const restaurantTableName = cartStore.restaurantTable?.name || null;
 		//// Neoffice — was console.log, which prints in production too and dumped the whole
 		//// restaurant table object into the console of a shop-floor till on every payment.
 		//// log.* is the app's own namespaced logger and is silent outside dev.
-		log.debug("Payment: restaurant table", restaurantTableName, cartStore.restaurantTable)
+		log.debug("Payment: restaurant table", restaurantTableName, cartStore.restaurantTable);
 		// Delete draft if it exists (since we're submitting/saving invoice)
 		const draftIdToDelete = cartStore.currentDraftId;
 
@@ -3813,6 +4414,8 @@ async function handlePaymentCompleted(paymentData) {
 				is_pos: 1,
 				update_stock: 1,
 				change_amount: paymentData.change_amount || 0,
+				is_credit_sale: paymentData.is_credit_sale ? 1 : 0,
+				receivable_account: paymentData.receivable_account || null,
 				edited_from: editingOfflineContext?.originalOfflineId || null,
 			};
 
@@ -3829,7 +4432,7 @@ async function handlePaymentCompleted(paymentData) {
 				try {
 					await offlineWorker.supersedeOfflineInvoice(
 						editingOfflineContext.originalQueueId,
-						offlineReceiptName,
+						offlineReceiptName
 					);
 				} catch (err) {
 					log.error("Failed to supersede original offline invoice:", err);
@@ -3889,17 +4492,19 @@ async function handlePaymentCompleted(paymentData) {
 				try {
 					await handlePrintInvoice({ name: offlineReceiptName });
 					showSuccess(
-						__("Invoice {0} saved offline and sent to printer — will sync when online", [
-							offlineReceiptName,
-						]),
+						__(
+							"Invoice {0} saved offline and sent to printer — will sync when online",
+							[offlineReceiptName]
+						)
 					);
 				} catch (error) {
 					log.error("Offline auto-print error:", error);
 					uiStore.showSuccess(offlineReceiptName, grandTotal, paymentData.paid_amount);
 					showWarning(
-						__("Invoice {0} saved offline but print failed — open Print from the success dialog", [
-							offlineReceiptName,
-						]),
+						__(
+							"Invoice {0} saved offline but print failed — open Print from the success dialog",
+							[offlineReceiptName]
+						)
 					);
 				}
 			} else {
@@ -3916,49 +4521,54 @@ async function handlePaymentCompleted(paymentData) {
 			//// validating, and an item paid for but never sent is an item never cooked (f295bbeb,
 			//// 2026-03-26 "payment = auto-validate + partial payment confirmation dialog").
 			// Show processing overlay
-			isProcessingPayment.value = true
-			uiStore.showPaymentDialog = false
+			isProcessingPayment.value = true;
+			uiStore.showPaymentDialog = false;
 
-			console.time("[Payment] Total")
+			console.time("[Payment] Total");
 
 			// Auto-send unsent items to kitchen before payment (Payer = Valider)
 			if (restaurantStore.isEnabled) {
 				const unsentItems = cartStore.invoiceItems.filter(
-					i => !i.kds_status || i.kds_status === "Waiting"
-				)
+					(i) => !i.kds_status || i.kds_status === "Waiting"
+				);
 				if (unsentItems.length > 0) {
 					try {
 						// Mark unsent items as Pending
 						for (const item of unsentItems) {
-							item.kds_status = "Pending"
+							item.kds_status = "Pending";
 						}
-						cartStore.setKdsStatus("Pending")
+						cartStore.setKdsStatus("Pending");
 
-						const invoiceData = cartStore.buildOfferEvaluationPayload(shiftStore.currentProfile)
-						invoiceData.kds_status = "Pending"
-						invoiceData.is_pos = 1
-						invoiceData.docstatus = 0
-						invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift
+						const invoiceData = cartStore.buildOfferEvaluationPayload(
+							shiftStore.currentProfile
+						);
+						invoiceData.kds_status = "Pending";
+						invoiceData.is_pos = 1;
+						invoiceData.docstatus = 0;
+						invoiceData.posa_pos_opening_shift = cartStore.posOpeningShift;
 						if (cartStore.currentDraftId) {
-							invoiceData.name = cartStore.currentDraftId
+							invoiceData.name = cartStore.currentDraftId;
 						}
 						await call("pos_next.api.invoices.update_invoice", {
-							data: JSON.stringify(invoiceData)
-						})
+							data: JSON.stringify(invoiceData),
+						});
 						//// Neoffice — was console.log; the app's logger is silent outside dev.
-						log.debug("Payment: auto-sent unsent items to kitchen")
+						log.debug("Payment: auto-sent unsent items to kitchen");
 					} catch (err) {
 						// Non-blocking: payment continues even if kitchen send fails
-						console.error("[Payment] Failed to auto-send to kitchen:", err)
+						console.error("[Payment] Failed to auto-send to kitchen:", err);
 					}
 				}
 			}
 
-			console.time("[Payment] submitInvoice")
-			const result = await cartStore.submitInvoice();
+			console.time("[Payment] submitInvoice");
+			const result = await cartStore.submitInvoice({
+				isCreditSale: Boolean(paymentData.is_credit_sale),
+				receivableAccount: paymentData.receivable_account || null,
+			});
 			//// Neoffice — submit timing probe kept from the payment-latency work (2584aa58,
 			//// 2026-03-24 "performance timing logs").
-			console.timeEnd("[Payment] submitInvoice")
+			console.timeEnd("[Payment] submitInvoice");
 
 			if (result) {
 				uiStore.clearLastOfflinePrintDoc();
@@ -3972,10 +4582,13 @@ async function handlePaymentCompleted(paymentData) {
 					try {
 						await offlineWorker.supersedeOfflineInvoice(
 							editingOfflineContext.originalQueueId,
-							serverName,
+							serverName
 						);
 					} catch (err) {
-						log.error("Failed to supersede edited offline invoice after online submit:", err);
+						log.error(
+							"Failed to supersede edited offline invoice after online submit:",
+							err
+						);
 					}
 					editingOfflineContext = null;
 					// Refresh pending count so the OfflineInvoicesDialog badge updates.
@@ -4004,18 +4617,18 @@ async function handlePaymentCompleted(paymentData) {
 
 				// Refresh stock - Direct API (50-200ms), no Socket.IO lag!
 				//// Neoffice — stock-refresh timing probe (2584aa58, 2026-03-24).
-				console.time("[Payment] stockRefresh")
+				console.time("[Payment] stockRefresh");
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
 				//// Neoffice — the table is released to Empty as soon as the bill is paid, and the floor
 				//// plan re-read from the server: leaving it Occupied blocks the next guests (130a6130,
 				//// 2026-03-24 "release restaurant table to Empty after successful payment"). The second
 				//// screen is told the sale completed (185c3c50, 2026-02-03).
-				console.timeEnd("[Payment] stockRefresh")
+				console.timeEnd("[Payment] stockRefresh");
 
 				// Release restaurant table after successful payment
 				if (restaurantTableName) {
-					restaurantStore.updateTableStatus(restaurantTableName, "Empty")
-					restaurantStore.fetchFromNetwork()
+					restaurantStore.updateTableStatus(restaurantTableName, "Empty");
+					restaurantStore.fetchFromNetwork();
 				}
 
 				// Notify customer display that sale is complete
@@ -4054,15 +4667,15 @@ async function handlePaymentCompleted(paymentData) {
 				}
 
 				//// Neoffice — end of the payment timing probe (2584aa58, 2026-03-24).
-				console.timeEnd("[Payment] Total")
+				console.timeEnd("[Payment] Total");
 			}
 			//// Neoffice — drop the processing overlay on the success path (2584aa58, 2026-03-24).
-			isProcessingPayment.value = false
+			isProcessingPayment.value = false;
 		}
 	} catch (error) {
 		//// Neoffice — and on the failure path too: without this the till stays frozen behind the
 		//// spinner after a failed submit (2584aa58, 2026-03-24).
-		isProcessingPayment.value = false
+		isProcessingPayment.value = false;
 		log.error("Error submitting invoice:", error);
 		uiStore.showPaymentDialog = false;
 
@@ -4101,7 +4714,7 @@ function confirmClearCart() {
 	if (cartStore.collectedUnbookedTotal > 0) {
 		log.warn(
 			"[POSSale] Cart cleared while a terminal payment was already collected:",
-			cartStore.collectedUnbooked,
+			cartStore.collectedUnbooked
 		);
 		cartStore.clearCollected();
 	}
@@ -4181,16 +4794,21 @@ async function handleOptionSelected(option) {
 					//// 2026-03-25).
 					// Auto-open modifiers dialog if item has required modifier groups
 					if (restaurantStore.isEnabled) {
-						const modGroups = restaurantStore.getModifiersForItem(variant.item_code, variant.item_group)
+						const modGroups = restaurantStore.getModifiersForItem(
+							variant.item_code,
+							variant.item_group
+						);
 						if (modGroups.length > 0) {
 							nextTick(() => {
 								//// Neoffice — findLast, not find: the line to configure is the variant addItem()
 								//// just appended, not the first line sharing its item_code (7e1376a3).
-								const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === variant.item_code)
+								const cartItem = cartStore.invoiceItems.findLast(
+									(i) => i.item_code === variant.item_code
+								);
 								if (cartItem && itemModifiersRef.value) {
-									itemModifiersRef.value.open(cartItem)
+									itemModifiersRef.value.open(cartItem);
 								}
-							})
+							});
 						}
 					}
 				} catch (error) {
@@ -4200,7 +4818,10 @@ async function handleOptionSelected(option) {
 		} else if (option.type === "uom") {
 			const qty = option.quantity || cartStore.pendingItemQty;
 			const pricing = await cartStore.resolveUomPricing(
-				cartStore.pendingItem, option.uom, option.conversion_factor, qty
+				cartStore.pendingItem,
+				option.uom,
+				option.conversion_factor,
+				qty
 			);
 
 			const itemToAdd = {
@@ -4226,17 +4847,22 @@ async function handleOptionSelected(option) {
 					//// 5982e48e, 2026-03-25).
 					// Auto-open modifiers dialog if item has required modifier groups
 					if (restaurantStore.isEnabled) {
-						const modGroups = restaurantStore.getModifiersForItem(itemToAdd.item_code, itemToAdd.item_group)
+						const modGroups = restaurantStore.getModifiersForItem(
+							itemToAdd.item_code,
+							itemToAdd.item_group
+						);
 						if (modGroups.length > 0) {
 							nextTick(() => {
 								//// Neoffice — findLast, not find. This path matters twice over: the lookup drops
 								//// the UOM, so find() could return a line of the same item in another unit
 								//// entirely. The line to configure is the one addItem() just appended (7e1376a3).
-								const cartItem = cartStore.invoiceItems.findLast(i => i.item_code === itemToAdd.item_code)
+								const cartItem = cartStore.invoiceItems.findLast(
+									(i) => i.item_code === itemToAdd.item_code
+								);
 								if (cartItem && itemModifiersRef.value) {
-									itemModifiersRef.value.open(cartItem)
+									itemModifiersRef.value.open(cartItem);
 								}
-							})
+							});
 						}
 					}
 				} catch (error) {
@@ -4256,6 +4882,10 @@ function handleCloseShift() {
 	}
 
 	uiStore.showCloseShiftDialog = true;
+}
+
+function navigateToShiftHistory() {
+	showShiftHistoryDialog.value = true;
 }
 
 function openDraftDialog() {
@@ -4353,7 +4983,7 @@ async function handleLoadDraft(draft) {
 		// Restore items via addItem to ensure proper reactivity
 		if (draftData.items && draftData.items.length > 0) {
 			for (const item of draftData.items) {
-				cartStore.addItem(item, item.quantity || item.qty || 1)
+				cartStore.addItem(item, item.quantity || item.qty || 1);
 			}
 		}
 		cartStore.setCustomer(draftData.customer);
@@ -4382,7 +5012,7 @@ async function handleLoadDraft(draft) {
 
 function handleReturnCreated(returnInvoice) {
 	// Success message is already shown by ReturnInvoiceDialog
-	log.debug("Return invoice created:", returnInvoice.name)
+	log.debug("Return invoice created:", returnInvoice.name);
 }
 
 function handleDiscountApplied(discount) {
@@ -4546,8 +5176,8 @@ async function handleEditOfflineInvoice(invoice) {
 			uiStore.showError(
 				__("Cannot edit printed invoice"),
 				__(
-					"A receipt for this invoice was already printed — the customer may have a physical copy. Use Return Invoice to issue a credit note instead.",
-				),
+					"A receipt for this invoice was already printed — the customer may have a physical copy. Use Return Invoice to issue a credit note instead."
+				)
 			);
 			return;
 		}
@@ -4763,6 +5393,8 @@ function restoreBodyStyles() {
 function handleManagementMenuClick(menuItem) {
 	if (menuItem === "promotions") {
 		showPromotionManagement.value = true;
+	} else if (menuItem === "product-management") {
+		showProductManagement.value = true;
 	} else if (menuItem === "settings") {
 		showPOSSettings.value = true;
 	} else if (menuItem === "invoices") {
@@ -4774,10 +5406,10 @@ function handleManagementMenuClick(menuItem) {
 	} else if (menuItem === "products") {
 		// Open Stock Lookup dialog in search mode
 		showStockLookup.value = true;
-	//// Neoffice — the sidebar entries that only exist in our fork: carte, product options,
-	//// preparation workflows, cash in/out, tips and reservations (f2392119 2026-03-22;
-	//// f23daabe + d59036f1 2026-03-23/27; 6c598630 2026-03-28; c4460c61 + d08c57e7
-	//// 2026-03-23/29; ebc3ecc5 2026-03-29).
+		//// Neoffice — the sidebar entries that only exist in our fork: carte, product options,
+		//// preparation workflows, cash in/out, tips and reservations (f2392119 2026-03-22;
+		//// f23daabe + d59036f1 2026-03-23/27; 6c598630 2026-03-28; c4460c61 + d08c57e7
+		//// 2026-03-23/29; ebc3ecc5 2026-03-29).
 	} else if (menuItem === "cards") {
 		showCardEditor.value = true;
 	} else if (menuItem === "options") {
@@ -4911,10 +5543,10 @@ function handlePrintProvisionalTicket() {
 			grand_total: cartStore.roundedGrandTotal,
 			customer_name: cartStore.customer?.customer_name || cartStore.customer?.name || null,
 			total_taxes_and_charges: cartStore.totalTax || 0,
-		})
+		});
 	} catch (error) {
-		log.error("Error printing provisional ticket:", error)
-		showError(__("Failed to print provisional ticket"))
+		log.error("Error printing provisional ticket:", error);
+		showError(__("Failed to print provisional ticket"));
 	}
 }
 

@@ -1,40 +1,40 @@
-import { createResource } from "frappe-ui"
-import { computed, ref, toRaw } from "vue"
-import { isOffline, getCachedItem } from "@/utils/offline"
+import { createResource } from "frappe-ui";
+import { computed, ref, toRaw } from "vue";
+import { isOffline, getCachedItem } from "@/utils/offline";
 //// enhance serial number management in POS — 7367119
-import { useSerialNumberStore } from "@/stores/serialNumber"
-import { CoalescingMutex } from "@/utils/mutex"
-import { logger } from "@/utils/logger"
-import { roundCurrency } from "@/utils/currency"
+import { useSerialNumberStore } from "@/stores/serialNumber";
+import { CoalescingMutex } from "@/utils/mutex";
+import { logger } from "@/utils/logger";
+import { roundCurrency } from "@/utils/currency";
 
-const log = logger.create("Invoice")
+const log = logger.create("Invoice");
 
 // Shared mutex for invoice submission across all useInvoice instances
 // This prevents duplicate invoice creation from rapid clicks or concurrent submissions
 const submitMutex = new CoalescingMutex({
 	timeout: 60000,
 	name: "InvoiceSubmit",
-})
+});
 
 export function useInvoice() {
 	// Serial Number Store for returning serials when items are removed
-	const serialStore = useSerialNumberStore()
+	const serialStore = useSerialNumberStore();
 
 	// State
-	const invoiceItems = ref([])
-	const customer = ref(null)
-	const payments = ref([])
+	const invoiceItems = ref([]);
+	const customer = ref(null);
+	const payments = ref([]);
 	//// Neoffice — the invoice being built has to remember which restaurant table it belongs to.
 	//// Upstream POSNext is a retail POS with no table service, and the field was only ever set by
 	//// update_invoice (Valider), never in the submit payload — so the backend could not release
 	//// the table, which stayed Occupied after the ticket was paid (45435e47, 2026-03-24 "pass
 	//// restaurant_table to submit_invoice via useInvoice").
 	//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
-	const restaurantTable = ref(null)
-	const salesTeam = ref([]) // Sales team for Sales Invoice
-	const posProfile = ref(null)
-	const posOpeningShift = ref(null) // POS Opening Shift name
-	const additionalDiscount = ref(0)
+	const restaurantTable = ref(null);
+	const salesTeam = ref([]); // Sales team for Sales Invoice
+	const posProfile = ref(null);
+	const posOpeningShift = ref(null); // POS Opening Shift name
+	const additionalDiscount = ref(0);
 	//// Neoffice — two refs upstream does not have. An ERPNext Pricing Rule with
 	//// apply_on=Transaction returns a header-level discount; writing it into additionalDiscount
 	//// would have inflated posa_gift_card_amount_used and disturbed the coupon watcher, so the
@@ -44,30 +44,30 @@ export function useInvoice() {
 	//// transaction-level rule header discount (feature b) — kept separate from
 	// additionalDiscount so coupons/manual/gift-card and the coupon watcher stay
 	// untouched. effectiveHeaderDiscount (below) merges them for totals + payload.
-	const ruleHeaderDiscount = ref(0) // amount surfaced by an apply_on=Transaction rule
-	const bypassRuleDiscount = ref(false) // per-ticket "cashier may override the rule" flag
-	const couponCode = ref(null)
-	const taxRules = ref([]) // Tax rules from POS Profile
-	const taxInclusive = ref(false) // Tax inclusive setting from POS Settings
+	const ruleHeaderDiscount = ref(0); // amount surfaced by an apply_on=Transaction rule
+	const bypassRuleDiscount = ref(false); // per-ticket "cashier may override the rule" flag
+	const couponCode = ref(null);
+	const taxRules = ref([]); // Tax rules from POS Profile
+	const taxInclusive = ref(false); // Tax inclusive setting from POS Settings
 
 	// Submission state - prevents duplicate submissions
-	const isSubmitting = ref(false)
+	const isSubmitting = ref(false);
 
 	// Performance: Incrementally maintained aggregates (updated on add/remove/change)
 	// This avoids O(n) array reductions on every reactive change
-	const _cachedSubtotal = ref(0)
-	const _cachedTotalTax = ref(0)
-	const _cachedTotalDiscount = ref(0)
-	const _cachedTotalPaid = ref(0)
+	const _cachedSubtotal = ref(0);
+	const _cachedTotalTax = ref(0);
+	const _cachedTotalDiscount = ref(0);
+	const _cachedTotalPaid = ref(0);
 
 	// Resources
 	const updateInvoiceResource = createResource({
 		url: "pos_next.api.invoices.update_invoice",
 		makeParams(params) {
-			return { data: JSON.stringify(params.data) }
+			return { data: JSON.stringify(params.data) };
 		},
 		auto: false,
-	})
+	});
 
 	const submitInvoiceResource = createResource({
 		url: "pos_next.api.invoices.submit_invoice",
@@ -75,19 +75,19 @@ export function useInvoice() {
 			return {
 				invoice: JSON.stringify(params.invoice),
 				data: JSON.stringify(params.data || {}),
-			}
+			};
 		},
 		auto: false,
 		onError(error) {
 			// Store the full error details for later access
-			console.error("submitInvoiceResource onError:", error)
+			console.error("submitInvoiceResource onError:", error);
 
 			// Attach the resource's error data to the error object
 			if (submitInvoiceResource.error) {
-				error.resourceError = submitInvoiceResource.error
+				error.resourceError = submitInvoiceResource.error;
 			}
 		},
-	})
+	});
 
 	const validateCartItemsResource = createResource({
 		url: "pos_next.api.invoices.validate_cart_items",
@@ -95,31 +95,31 @@ export function useInvoice() {
 			return {
 				items: JSON.stringify(items),
 				pos_profile: pos_profile,
-			}
+			};
 		},
 		auto: false,
-	})
+	});
 
 	const applyOffersResource = createResource({
 		url: "pos_next.api.invoices.apply_offers",
 		makeParams({ invoice_data, selected_offers }) {
 			const params = {
 				invoice_data: JSON.stringify(invoice_data),
-			}
+			};
 
 			if (selected_offers && selected_offers.length) {
-				params.selected_offers = JSON.stringify(selected_offers)
+				params.selected_offers = JSON.stringify(selected_offers);
 			}
 
-			return params
+			return params;
 		},
 		auto: false,
-	})
+	});
 
 	const getItemDetailsResource = createResource({
 		url: "pos_next.api.items.get_item_details",
 		auto: false,
-	})
+	});
 
 	/**
 	 * Resolve UOM pricing from IndexedDB or server.
@@ -141,57 +141,54 @@ export function useInvoice() {
 					customer: customer.value?.name || customer.value,
 					qty,
 					uom,
-				})
+				});
 				return {
 					rate: itemDetails.price_list_rate || itemDetails.rate,
 					price_list_rate: itemDetails.price_list_rate,
-				}
+				};
 			} catch (err) {
 				//// Neoffice — Biome reformat only, no behaviour change: upstream's one-line log.warn was
 				//// re-wrapped to 80 columns by the formatter pass (458d81a9, 2026-03-20 "remove BrainWise
 				//// branding, add restaurant mode, and code formatting"). At the next upstream merge take
 				//// their file and re-run `biome check --write` instead of resolving this by hand.
 				//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 56877dc (+3 more)
-				log.warn(
-					"Server UOM pricing unavailable, resolving from IndexedDB",
-					err,
-				)
+				log.warn("Server UOM pricing unavailable, resolving from IndexedDB", err);
 			}
 		}
 
 		// Offline: resolve from IndexedDB
-		const cachedItem = await getCachedItem(item.item_code)
-		const source = cachedItem || item
+		const cachedItem = await getCachedItem(item.item_code);
+		const source = cachedItem || item;
 
-		let rate
+		let rate;
 		if (source.uom_prices?.[uom]) {
-			rate = source.uom_prices[uom]
+			rate = source.uom_prices[uom];
 		} else {
-			const baseRate = source.price_list_rate || source.rate || 0
-			const currentConversion = source.conversion_factor || 1
-			rate = (baseRate / currentConversion) * conversionFactor
+			const baseRate = source.price_list_rate || source.rate || 0;
+			const currentConversion = source.conversion_factor || 1;
+			rate = (baseRate / currentConversion) * conversionFactor;
 		}
 
-		return { rate, price_list_rate: rate }
+		return { rate, price_list_rate: rate };
 	}
 
 	const getTaxesResource = createResource({
 		url: "pos_next.api.pos_profile.get_taxes",
 		auto: false,
-	})
+	});
 
 	const getDefaultCustomerResource = createResource({
 		url: "pos_next.api.pos_profile.get_default_customer",
 		makeParams({ pos_profile }) {
-			return { pos_profile }
+			return { pos_profile };
 		},
 		auto: false,
-	})
+	});
 
 	const cleanupDraftsResource = createResource({
 		url: "pos_next.api.invoices.cleanup_old_drafts",
 		auto: false,
-	})
+	});
 
 	// ========================================================================
 	// COMPUTED TOTALS - IMPORTANT: Subtotal uses price_list_rate (original price)
@@ -211,8 +208,8 @@ export function useInvoice() {
 	// This ensures tax is not double-counted in inclusive mode!
 	// ========================================================================
 	// Use roundCurrency for monetary totals to match ERPNext's currency precision (from System Settings)
-	const subtotal = computed(() => roundCurrency(_cachedSubtotal.value))
-	const totalTax = computed(() => roundCurrency(_cachedTotalTax.value))
+	const subtotal = computed(() => roundCurrency(_cachedSubtotal.value));
+	const totalTax = computed(() => roundCurrency(_cachedTotalTax.value));
 	//// Neoffice — upstream POSNext knows one document-level discount: the manual/coupon
 	//// amount. Neoffice also receives a header discount from an ERPNext apply_on=Transaction
 	//// pricing rule, and the cashier may override it for one ticket. ruleHeaderDiscount and
@@ -226,10 +223,10 @@ export function useInvoice() {
 	// When no rule fired and no bypass, this equals additionalDiscount → identical
 	// to the previous behaviour (no regression for coupon/manual/gift-card).
 	const effectiveHeaderDiscount = computed(() => {
-		if (bypassRuleDiscount.value) return additionalDiscount.value || 0
-		const rule = ruleHeaderDiscount.value || 0
-		return rule > 0 ? rule : additionalDiscount.value || 0
-	})
+		if (bypassRuleDiscount.value) return additionalDiscount.value || 0;
+		const rule = ruleHeaderDiscount.value || 0;
+		return rule > 0 ? rule : additionalDiscount.value || 0;
+	});
 	//// Neoffice — totalDiscount now nets the EFFECTIVE header discount (transaction-rule amount,
 	//// else coupon/manual) instead of additionalDiscount alone (44ea4e9a, 2026-07-09), and the
 	//// computed added right below exposes the net total AFTER item-level pricing rules: a gift
@@ -237,47 +234,44 @@ export function useInvoice() {
 	//// refused the invoice (8e06bb9c, 2026-01-16 "calculate discount on net total after pricing
 	//// rules").
 	const totalDiscount = computed(() =>
-		roundCurrency(_cachedTotalDiscount.value + effectiveHeaderDiscount.value),
-	)
+		roundCurrency(_cachedTotalDiscount.value + effectiveHeaderDiscount.value)
+	);
 	//// calculate discount on net total after pricing rules — 8e06bb9
 	// Net total after item-level discounts (pricing rules) but BEFORE additional discount (coupon/gift card)
 	// This is the correct base for gift card calculations
 	const netTotalBeforeAdditionalDiscount = computed(
-		() => _cachedSubtotal.value - _cachedTotalDiscount.value,
-	)
+		() => _cachedSubtotal.value - _cachedTotalDiscount.value
+	);
 	const grandTotal = computed(() => {
 		//// Neoffice — grandTotal nets the effective header discount (rule, or coupon/manual),
 		//// not additionalDiscount alone (44ea4e9a, 2026-07-09).
-		const discount =
-			_cachedTotalDiscount.value + effectiveHeaderDiscount.value
+		const discount = _cachedTotalDiscount.value + effectiveHeaderDiscount.value;
 
 		if (taxInclusive.value) {
 			// Tax inclusive: Subtotal already includes tax, so don't add it again
 			// Use roundCurrency to match ERPNext's currency precision (from System Settings)
-			return roundCurrency(_cachedSubtotal.value - discount)
+			return roundCurrency(_cachedSubtotal.value - discount);
 		} else {
 			// Tax exclusive: Add tax on top of subtotal
 			// Use roundCurrency to match ERPNext's currency precision (from System Settings)
-			return roundCurrency(
-				_cachedSubtotal.value + _cachedTotalTax.value - discount,
-			)
+			return roundCurrency(_cachedSubtotal.value + _cachedTotalTax.value - discount);
 		}
-	})
-	const totalPaid = computed(() => _cachedTotalPaid.value)
+	});
+	const totalPaid = computed(() => _cachedTotalPaid.value);
 
 	const remainingAmount = computed(() => {
-		return grandTotal.value - totalPaid.value
-	})
+		return grandTotal.value - totalPaid.value;
+	});
 
 	const canSubmit = computed(() => {
 		return (
 			invoiceItems.value.length > 0 && remainingAmount.value <= 0.01 // Allow small rounding differences
-		)
-	})
+		);
+	});
 
 	// Actions
 	function addItem(item, quantity = 1) {
-		const itemUom = item.uom || item.stock_uom
+		const itemUom = item.uom || item.stock_uom;
 		//// Neoffice — upstream addItem merges a new line into an existing one with the same item_code
 		//// + UOM. In restaurant mode the same dish ordered twice with different modifiers or a
 		//// different instruction is deliberately two lines, so merging destroyed one of the two
@@ -286,8 +280,7 @@ export function useInvoice() {
 		//// different modifiers"; the re-wrap is the Biome pass, 3e25c3b6, 2026-03-28).
 		//// linter formatting — 3e25c3b + f1e01ff
 		// In restaurant mode, items with modifiers/instructions are always separate lines
-		const hasModifiers =
-			item.posa_item_modifiers || item.posa_special_instructions
+		const hasModifiers = item.posa_item_modifiers || item.posa_special_instructions;
 		const existingItem = hasModifiers
 			? null
 			: invoiceItems.value.find(
@@ -295,45 +288,43 @@ export function useInvoice() {
 						i.item_code === item.item_code &&
 						i.uom === itemUom &&
 						!i.posa_item_modifiers &&
-						!i.posa_special_instructions,
-				)
+						!i.posa_special_instructions
+			  );
 
 		if (existingItem) {
 			// Store old values before update for incremental cache adjustment
 			// Use price_list_rate for subtotal calculations (before discount)
 			// IMPORTANT: Calculate oldAmount using same rounding as cache to ensure consistency
-			const oldPriceListRate = existingItem.price_list_rate || existingItem.rate
+			const oldPriceListRate = existingItem.price_list_rate || existingItem.rate;
 			const oldAmount = roundCurrency(
-				existingItem.quantity * roundCurrency(oldPriceListRate),
-			)
-			const oldTax = existingItem.tax_amount || 0
-			const oldDiscount = existingItem.discount_amount || 0
+				existingItem.quantity * roundCurrency(oldPriceListRate)
+			);
+			const oldTax = existingItem.tax_amount || 0;
+			const oldDiscount = existingItem.discount_amount || 0;
 
 			// For serial items, merge the serial numbers
 			if (existingItem.has_serial_no && item.serial_no) {
 				const existingSerials = existingItem.serial_no
 					? existingItem.serial_no.split("\n").filter((s) => s.trim())
-					: []
-				const newSerials = item.serial_no.split("\n").filter((s) => s.trim())
+					: [];
+				const newSerials = item.serial_no.split("\n").filter((s) => s.trim());
 				// Combine serials (avoid duplicates)
-				const allSerials = [...new Set([...existingSerials, ...newSerials])]
-				existingItem.serial_no = allSerials.join("\n")
+				const allSerials = [...new Set([...existingSerials, ...newSerials])];
+				existingItem.serial_no = allSerials.join("\n");
 				// For serial items, quantity must match serial count
-				existingItem.quantity = allSerials.length
+				existingItem.quantity = allSerials.length;
 			} else {
-				existingItem.quantity += quantity
+				existingItem.quantity += quantity;
 			}
-			recalculateItem(existingItem)
+			recalculateItem(existingItem);
 
 			// Update cache incrementally (new values - old values)
 			// Use rounded price_list_rate for subtotal to match ERPNext
-			const priceListRate = existingItem.price_list_rate || existingItem.rate
+			const priceListRate = existingItem.price_list_rate || existingItem.rate;
 			_cachedSubtotal.value +=
-				roundCurrency(existingItem.quantity * roundCurrency(priceListRate)) -
-				oldAmount
-			_cachedTotalTax.value += (existingItem.tax_amount || 0) - oldTax
-			_cachedTotalDiscount.value +=
-				(existingItem.discount_amount || 0) - oldDiscount
+				roundCurrency(existingItem.quantity * roundCurrency(priceListRate)) - oldAmount;
+			_cachedTotalTax.value += (existingItem.tax_amount || 0) - oldTax;
+			_cachedTotalDiscount.value += (existingItem.discount_amount || 0) - oldDiscount;
 		} else {
 			const newItem = {
 				item_code: item.item_code,
@@ -386,19 +377,19 @@ export function useInvoice() {
 				preparation_station: item.preparation_station || "",
 				kds_status: item.kds_status || "",
 				_modifiers_applied: item._modifiers_applied || 0,
-			}
-			invoiceItems.value.push(newItem)
+			};
+			invoiceItems.value.push(newItem);
 			// Recalculate the newly added item to apply taxes
-			recalculateItem(newItem)
+			recalculateItem(newItem);
 
 			// Update cache incrementally (add new item values)
 			// Use rounded price_list_rate for subtotal to match ERPNext
-			const priceListRate = newItem.price_list_rate || newItem.rate
+			const priceListRate = newItem.price_list_rate || newItem.rate;
 			_cachedSubtotal.value += roundCurrency(
-				newItem.quantity * roundCurrency(priceListRate),
-			)
-			_cachedTotalTax.value += newItem.tax_amount || 0
-			_cachedTotalDiscount.value += newItem.discount_amount || 0
+				newItem.quantity * roundCurrency(priceListRate)
+			);
+			_cachedTotalTax.value += newItem.tax_amount || 0;
+			_cachedTotalDiscount.value += newItem.discount_amount || 0;
 		}
 	}
 
@@ -418,7 +409,7 @@ export function useInvoice() {
 	//// modifier dialog opens correct item (findLast), remove deletes only on… — 7e1376a
 	function removeItem(itemOrCode, uom = null) {
 		// Accept either an item object reference or item_code string
-		let itemToRemove
+		let itemToRemove;
 		//// Neoffice — upstream removeItem takes an item_code and then FILTERS every row that
 		//// matches it, so deleting one dish deleted all the identical ones. In restaurant mode
 		//// the same item ordered twice with different modifiers is deliberately two lines, so
@@ -427,21 +418,21 @@ export function useInvoice() {
 		//// (findLast), remove deletes only one item (by ref)").
 		if (typeof itemOrCode === "object" && itemOrCode !== null) {
 			// Direct object reference — find exact match by identity
-			itemToRemove = itemOrCode
+			itemToRemove = itemOrCode;
 		} else if (uom) {
 			itemToRemove = invoiceItems.value.find(
 				//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
-				(i) => i.item_code === itemOrCode && i.uom === uom,
-			)
+				(i) => i.item_code === itemOrCode && i.uom === uom
+			);
 		} else {
 			//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
-			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode)
+			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode);
 		}
 
 		if (itemToRemove) {
 			//// optimize invoice totals and item catalog loading — 368754f
 			// Update cache incrementally (subtract removed item values)
-			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1
+			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1;
 			//// Neoffice — Biome reformat only, no behaviour change: upstream's one-line ternary re-wrapped
 			//// and its redundant parentheses dropped (458d81a9, 2026-03-20). The effective-rate logic
 			//// itself is upstream's (368754f3, 2025-10-12, before the fork point) — the legacy line above
@@ -449,27 +440,27 @@ export function useInvoice() {
 			//// upstream's file at the next merge rather than resolving this hunk by hand.
 			const effectiveRate = isManuallyEdited
 				? itemToRemove.rate
-				: itemToRemove.price_list_rate || itemToRemove.rate
+				: itemToRemove.price_list_rate || itemToRemove.rate;
 			_cachedSubtotal.value -= roundCurrency(
-				itemToRemove.quantity * roundCurrency(effectiveRate),
-			)
-			_cachedTotalTax.value -= itemToRemove.tax_amount || 0
-			_cachedTotalDiscount.value -= itemToRemove.discount_amount || 0
+				itemToRemove.quantity * roundCurrency(effectiveRate)
+			);
+			_cachedTotalTax.value -= itemToRemove.tax_amount || 0;
+			_cachedTotalDiscount.value -= itemToRemove.discount_amount || 0;
 
 			// Return serial numbers back to cache if item has serials
 			if (itemToRemove.serial_no && itemToRemove.has_serial_no) {
 				//// Neoffice — serials are returned using the row's OWN item_code: the caller may have
 				//// passed the row object, in which case the old parameter was not a code at all
 				//// (7e1376a3, 2026-03-31).
-				serialStore.returnSerials(itemToRemove.item_code, itemToRemove.serial_no)
+				serialStore.returnSerials(itemToRemove.item_code, itemToRemove.serial_no);
 			}
 
 			//// Neoffice — splice the one row that was found instead of filtering the array by
 			//// item_code, which wiped every line of the same dish (7e1376a3, 2026-03-31).
 			// Remove only this exact item (by reference, not by item_code)
-			const idx = invoiceItems.value.indexOf(itemToRemove)
+			const idx = invoiceItems.value.indexOf(itemToRemove);
 			if (idx >= 0) {
-				invoiceItems.value.splice(idx, 1)
+				invoiceItems.value.splice(idx, 1);
 			}
 		}
 	}
@@ -483,146 +474,133 @@ export function useInvoice() {
 	 *                            If null, updates the first item matching item_code.
 	 */
 	function updateItemQuantity(itemCode, quantity, uom = null) {
-		let item
+		let item;
 		if (uom) {
-			item = invoiceItems.value.find(
-				(i) => i.item_code === itemCode && i.uom === uom,
-			)
+			item = invoiceItems.value.find((i) => i.item_code === itemCode && i.uom === uom);
 		} else {
-			item = invoiceItems.value.find((i) => i.item_code === itemCode)
+			item = invoiceItems.value.find((i) => i.item_code === itemCode);
 		}
 
 		if (item) {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
-			const isManuallyEdited = item.is_rate_manually_edited === 1
+			const isManuallyEdited = item.is_rate_manually_edited === 1;
 			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
 			//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
 			//// change anywhere in this file — at the next upstream merge take upstream's version
 			//// wholesale and re-run the formatter, do not hand-merge these hunks
 			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
 			//// formatting").
-			const effectiveRate = isManuallyEdited
-				? item.rate
-				: item.price_list_rate || item.rate
-			const oldAmount = roundCurrency(
-				item.quantity * roundCurrency(effectiveRate),
-			)
-			const oldTax = item.tax_amount || 0
-			const oldDiscount = item.discount_amount || 0
-			const oldQuantity = item.quantity
+			const effectiveRate = isManuallyEdited ? item.rate : item.price_list_rate || item.rate;
+			const oldAmount = roundCurrency(item.quantity * roundCurrency(effectiveRate));
+			const oldTax = item.tax_amount || 0;
+			const oldDiscount = item.discount_amount || 0;
+			const oldQuantity = item.quantity;
 
-			const newQuantity = Number.parseFloat(quantity) || 1
+			const newQuantity = Number.parseFloat(quantity) || 1;
 
 			// Handle serial number items - adjust serials when quantity changes
 			if (item.has_serial_no && item.serial_no) {
-				const serialList = item.serial_no.split("\n").filter((s) => s.trim())
+				const serialList = item.serial_no.split("\n").filter((s) => s.trim());
 
 				if (newQuantity < oldQuantity) {
 					// Quantity decreased - return excess serials to cache
-					const serialsToReturn = serialList.slice(newQuantity)
-					const serialsToKeep = serialList.slice(0, newQuantity)
+					const serialsToReturn = serialList.slice(newQuantity);
+					const serialsToKeep = serialList.slice(0, newQuantity);
 
 					if (serialsToReturn.length > 0) {
-						serialStore.returnSerials(itemCode, serialsToReturn)
-						item.serial_no = serialsToKeep.join("\n")
+						serialStore.returnSerials(itemCode, serialsToReturn);
+						item.serial_no = serialsToKeep.join("\n");
 					}
 				}
 				// Note: Increasing quantity for serial items requires selecting new serials
 				// which should be handled by reopening the serial dialog
 			}
 
-			item.quantity = newQuantity
-			recalculateItem(item)
+			item.quantity = newQuantity;
+			recalculateItem(item);
 
 			// Update cache incrementally (new values - old values)
 			// Use effective rate for manually edited items
 			_cachedSubtotal.value +=
-				roundCurrency(item.quantity * roundCurrency(effectiveRate)) - oldAmount
-			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax
-			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount
+				roundCurrency(item.quantity * roundCurrency(effectiveRate)) - oldAmount;
+			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax;
+			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount;
 		}
 	}
 
 	function updateItemRate(itemCode, rate, isManualEdit = false) {
-		const item = invoiceItems.value.find((i) => i.item_code === itemCode)
+		const item = invoiceItems.value.find((i) => i.item_code === itemCode);
 		if (item) {
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
-			const wasManuallyEdited = item.is_rate_manually_edited === 1
+			const wasManuallyEdited = item.is_rate_manually_edited === 1;
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const oldEffectiveRate = wasManuallyEdited
 				? item.rate
-				: item.price_list_rate || item.rate
-			const oldAmount = roundCurrency(
-				item.quantity * roundCurrency(oldEffectiveRate),
-			)
-			const oldTax = item.tax_amount || 0
-			const oldDiscount = item.discount_amount || 0
+				: item.price_list_rate || item.rate;
+			const oldAmount = roundCurrency(item.quantity * roundCurrency(oldEffectiveRate));
+			const oldTax = item.tax_amount || 0;
+			const oldDiscount = item.discount_amount || 0;
 
-			const newRate = Number.parseFloat(rate) || 0
+			const newRate = Number.parseFloat(rate) || 0;
 
 			// Update rate but PRESERVE price_list_rate (original catalog price)
 			// This maintains auditability - we can always see the original price
-			item.rate = newRate
+			item.rate = newRate;
 			// price_list_rate is NOT updated - it remains the original catalog price
 
 			// Track manual rate edits for audit purposes
-			const originalPriceListRate = item.price_list_rate || oldEffectiveRate
+			const originalPriceListRate = item.price_list_rate || oldEffectiveRate;
 			if (isManualEdit && newRate !== originalPriceListRate) {
-				item.is_rate_manually_edited = 1
-				item.original_rate = originalPriceListRate
+				item.is_rate_manually_edited = 1;
+				item.original_rate = originalPriceListRate;
 			}
 
-			recalculateItem(item)
+			recalculateItem(item);
 
 			// Update cache incrementally (new values - old values)
 			// Use the new rate for manually edited items
-			const isNowManuallyEdited = item.is_rate_manually_edited === 1
+			const isNowManuallyEdited = item.is_rate_manually_edited === 1;
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			const newEffectiveRate = isNowManuallyEdited
 				? item.rate
-				: item.price_list_rate || item.rate
+				: item.price_list_rate || item.rate;
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			_cachedSubtotal.value +=
-				roundCurrency(item.quantity * roundCurrency(newEffectiveRate)) -
-				oldAmount
-			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax
-			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount
+				roundCurrency(item.quantity * roundCurrency(newEffectiveRate)) - oldAmount;
+			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax;
+			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount;
 		}
 	}
 
 	function updateItemDiscount(itemCode, discountPercentage) {
-		const item = invoiceItems.value.find((i) => i.item_code === itemCode)
+		const item = invoiceItems.value.find((i) => i.item_code === itemCode);
 		if (item) {
 			// Validate discount percentage (0-100)
-			let validDiscount = Number.parseFloat(discountPercentage) || 0
-			if (validDiscount < 0) validDiscount = 0
-			if (validDiscount > 100) validDiscount = 100
+			let validDiscount = Number.parseFloat(discountPercentage) || 0;
+			if (validDiscount < 0) validDiscount = 0;
+			if (validDiscount > 100) validDiscount = 100;
 
 			// Store old values before update for incremental cache adjustment
 			// Use effective rate (manually edited rate or price_list_rate)
-			const isManuallyEdited = item.is_rate_manually_edited === 1
+			const isManuallyEdited = item.is_rate_manually_edited === 1;
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-			const effectiveRate = isManuallyEdited
-				? item.rate
-				: item.price_list_rate || item.rate
-			const oldAmount = roundCurrency(
-				item.quantity * roundCurrency(effectiveRate),
-			)
-			const oldTax = item.tax_amount || 0
-			const oldDiscount = item.discount_amount || 0
+			const effectiveRate = isManuallyEdited ? item.rate : item.price_list_rate || item.rate;
+			const oldAmount = roundCurrency(item.quantity * roundCurrency(effectiveRate));
+			const oldTax = item.tax_amount || 0;
+			const oldDiscount = item.discount_amount || 0;
 
-			item.discount_percentage = validDiscount
-			item.discount_amount = 0 // Let recalculateItem compute it
-			recalculateItem(item)
+			item.discount_percentage = validDiscount;
+			item.discount_amount = 0; // Let recalculateItem compute it
+			recalculateItem(item);
 
 			// Update cache incrementally (new values - old values)
 			// Use effective rate for manually edited items
 			_cachedSubtotal.value +=
-				roundCurrency(item.quantity * roundCurrency(effectiveRate)) - oldAmount
-			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax
-			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount
+				roundCurrency(item.quantity * roundCurrency(effectiveRate)) - oldAmount;
+			_cachedTotalTax.value += (item.tax_amount || 0) - oldTax;
+			_cachedTotalDiscount.value += (item.discount_amount || 0) - oldDiscount;
 		}
 	}
 
@@ -647,19 +625,19 @@ export function useInvoice() {
 		 * @param {Number} baseAmount - Base amount to calculate on (defaults to subtotal)
 		 * @returns {Number} Calculated discount amount
 		 */
-		if (!discount) return 0
+		if (!discount) return 0;
 
-		const base = baseAmount !== null ? baseAmount : subtotal.value
+		const base = baseAmount !== null ? baseAmount : subtotal.value;
 
 		if (discount.percentage > 0) {
 			// Percentage discount on SUBTOTAL (before tax)
-			return roundCurrency((base * discount.percentage) / 100)
+			return roundCurrency((base * discount.percentage) / 100);
 		} else if (discount.amount > 0) {
 			// Fixed amount discount
-			return roundCurrency(discount.amount)
+			return roundCurrency(discount.amount);
 		}
 
-		return 0
+		return 0;
 	}
 
 	function applyDiscount(discount) {
@@ -668,35 +646,33 @@ export function useInvoice() {
 		 * This prevents conflicts with item-level pricing rules
 		 * @param {Object} discount - { percentage, amount, name, code, apply_on }
 		 */
-		if (!discount) return
+		if (!discount) return;
 
 		// Store coupon code for tracking
-		couponCode.value = discount.code || discount.name
+		couponCode.value = discount.code || discount.name;
 
 		const baseAmount =
-			typeof discount.base_amount === "number"
-				? discount.base_amount
-				: subtotal.value
+			typeof discount.base_amount === "number" ? discount.base_amount : subtotal.value;
 
 		// Use centralized calculation to handle percentage/amount and clamping
-		let discountAmount = calculateDiscountAmount(discount, baseAmount)
+		let discountAmount = calculateDiscountAmount(discount, baseAmount);
 
 		// Clamp discount to the same base the coupon was calculated against
 		if (discountAmount > baseAmount) {
-			discountAmount = baseAmount
+			discountAmount = baseAmount;
 		}
 
 		// Ensure non-negative
 		if (discountAmount < 0) {
-			discountAmount = 0
+			discountAmount = 0;
 		}
 
 		// Apply discount as Additional Discount on grand total
 		// This preserves item-level pricing rules while applying coupon discount
-		additionalDiscount.value = discountAmount
+		additionalDiscount.value = discountAmount;
 
 		// Rebuild cache after applying additional discount
-		rebuildIncrementalCache()
+		rebuildIncrementalCache();
 	}
 
 	function removeDiscount() {
@@ -704,46 +680,46 @@ export function useInvoice() {
 		 * Remove additional discount (coupon discount)
 		 */
 		// Clear additional discount
-		additionalDiscount.value = 0
+		additionalDiscount.value = 0;
 
 		// Clear coupon code
-		couponCode.value = null
+		couponCode.value = null;
 
 		// Rebuild cache after removing discount
-		rebuildIncrementalCache()
+		rebuildIncrementalCache();
 	}
 
 	// Performance: Cache tax calculation to avoid repeated loops
-	let cachedTaxRate = 0
-	let taxRulesCacheKey = ""
+	let cachedTaxRate = 0;
+	let taxRulesCacheKey = "";
 
 	function calculateTotalTaxRate() {
 		// Create cache key from tax rules
-		const currentKey = JSON.stringify(taxRules.value)
+		const currentKey = JSON.stringify(taxRules.value);
 
 		// Return cached value if tax rules haven't changed
 		if (currentKey === taxRulesCacheKey && cachedTaxRate !== 0) {
-			return cachedTaxRate
+			return cachedTaxRate;
 		}
 
 		// Calculate total tax rate
-		let totalRate = 0
+		let totalRate = 0;
 		if (taxRules.value && taxRules.value.length > 0) {
 			for (const taxRule of taxRules.value) {
 				if (
 					taxRule.charge_type === "On Net Total" ||
 					taxRule.charge_type === "On Previous Row Total"
 				) {
-					totalRate += taxRule.rate || 0
+					totalRate += taxRule.rate || 0;
 				}
 			}
 		}
 
 		// Cache the result
-		cachedTaxRate = totalRate
-		taxRulesCacheKey = currentKey
+		cachedTaxRate = totalRate;
+		taxRulesCacheKey = currentKey;
 
-		return totalRate
+		return totalRate;
 	}
 
 	function rebuildIncrementalCache() {
@@ -751,27 +727,23 @@ export function useInvoice() {
 		 * Rebuild cache from scratch - used when bulk operations modify all items
 		 * (e.g., loading tax rules, applying discounts to all items)
 		 */
-		_cachedSubtotal.value = 0
-		_cachedTotalTax.value = 0
-		_cachedTotalDiscount.value = 0
+		_cachedSubtotal.value = 0;
+		_cachedTotalTax.value = 0;
+		_cachedTotalDiscount.value = 0;
 
 		for (const item of invoiceItems.value) {
 			// Use manually edited rate if set, otherwise use price_list_rate
-			const isManuallyEdited = item.is_rate_manually_edited === 1
+			const isManuallyEdited = item.is_rate_manually_edited === 1;
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-			const effectiveRate = isManuallyEdited
-				? item.rate
-				: item.price_list_rate || item.rate
-			_cachedSubtotal.value += roundCurrency(
-				item.quantity * roundCurrency(effectiveRate),
-			)
-			_cachedTotalTax.value += item.tax_amount || 0
-			_cachedTotalDiscount.value += item.discount_amount || 0
+			const effectiveRate = isManuallyEdited ? item.rate : item.price_list_rate || item.rate;
+			_cachedSubtotal.value += roundCurrency(item.quantity * roundCurrency(effectiveRate));
+			_cachedTotalTax.value += item.tax_amount || 0;
+			_cachedTotalDiscount.value += item.discount_amount || 0;
 		}
 
-		_cachedTotalPaid.value = 0
+		_cachedTotalPaid.value = 0;
 		for (const payment of payments.value) {
-			_cachedTotalPaid.value += payment.amount || 0
+			_cachedTotalPaid.value += payment.amount || 0;
 		}
 	}
 
@@ -803,53 +775,48 @@ export function useInvoice() {
 	function recalculateItem(item) {
 		// Determine the base unit price
 		// If rate was manually edited, use the edited rate; otherwise use price_list_rate
-		const isManuallyEdited = item.is_rate_manually_edited === 1
+		const isManuallyEdited = item.is_rate_manually_edited === 1;
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		const effectiveRate = isManuallyEdited
-			? item.rate
-			: item.price_list_rate || item.rate
-		const roundedRate = roundCurrency(effectiveRate)
-		const baseAmount = roundCurrency(item.quantity * roundedRate)
+		const effectiveRate = isManuallyEdited ? item.rate : item.price_list_rate || item.rate;
+		const roundedRate = roundCurrency(effectiveRate);
+		const baseAmount = roundCurrency(item.quantity * roundedRate);
 
 		// Calculate discount from either percentage or fixed amount
-		let discountAmount = 0
+		let discountAmount = 0;
 		if (item.discount_percentage > 0) {
-			discountAmount = roundCurrency(
-				(baseAmount * item.discount_percentage) / 100,
-			)
+			discountAmount = roundCurrency((baseAmount * item.discount_percentage) / 100);
 		} else if (item.discount_amount > 0) {
-			discountAmount = roundCurrency(item.discount_amount)
+			discountAmount = roundCurrency(item.discount_amount);
 			// Sync percentage when amount is provided directly
-			item.discount_percentage =
-				baseAmount > 0 ? (discountAmount / baseAmount) * 100 : 0
+			item.discount_percentage = baseAmount > 0 ? (discountAmount / baseAmount) * 100 : 0;
 		}
-		item.discount_amount = discountAmount
+		item.discount_amount = discountAmount;
 
 		// Calculate tax based on inclusive/exclusive mode
 		// Use currency precision for all monetary calculations to match ERPNext
-		const totalTaxRate = calculateTotalTaxRate()
-		let netAmount = 0
-		let taxAmount = 0
+		const totalTaxRate = calculateTotalTaxRate();
+		let netAmount = 0;
+		let taxAmount = 0;
 
 		if (taxInclusive.value && totalTaxRate > 0) {
 			// Tax-inclusive: Work backwards from gross to extract net and tax
-			const grossAmount = roundCurrency(baseAmount - discountAmount)
-			netAmount = roundCurrency(grossAmount / (1 + totalTaxRate / 100))
-			taxAmount = roundCurrency(grossAmount - netAmount)
+			const grossAmount = roundCurrency(baseAmount - discountAmount);
+			netAmount = roundCurrency(grossAmount / (1 + totalTaxRate / 100));
+			taxAmount = roundCurrency(grossAmount - netAmount);
 		} else {
 			// Tax-exclusive: Calculate tax on top of net amount
-			netAmount = roundCurrency(baseAmount - discountAmount)
-			taxAmount = roundCurrency((netAmount * totalTaxRate) / 100)
+			netAmount = roundCurrency(baseAmount - discountAmount);
+			taxAmount = roundCurrency((netAmount * totalTaxRate) / 100);
 		}
 
 		// Update item fields with rounded values
-		item.tax_amount = taxAmount
+		item.tax_amount = taxAmount;
 		// For manually edited rates, preserve the edited rate; otherwise use price_list_rate
 		if (!isManuallyEdited) {
-			item.rate = effectiveRate // Preserve original price for display
+			item.rate = effectiveRate; // Preserve original price for display
 		}
 		// If manually edited, item.rate is already set to the edited value
-		item.amount = netAmount // Net amount for backend calculations
+		item.amount = netAmount; // Net amount for backend calculations
 	}
 
 	/**
@@ -858,16 +825,16 @@ export function useInvoice() {
 	 * - Tax-exclusive: net rate (amount / qty, after discount)
 	 */
 	function computeBackendRate(item) {
-		const qty = item.quantity || item.qty || 1
-		const priceListRate = item.price_list_rate || item.rate || 0
-		const discountAmount = item.discount_amount || 0
+		const qty = item.quantity || item.qty || 1;
+		const priceListRate = item.price_list_rate || item.rate || 0;
+		const discountAmount = item.discount_amount || 0;
 
 		if (taxInclusive.value) {
 			// Gross rate: price minus per-unit discount
-			return roundCurrency(priceListRate - discountAmount / qty)
+			return roundCurrency(priceListRate - discountAmount / qty);
 		}
 		// Net rate: total amount divided by quantity
-		return qty > 0 ? roundCurrency((item.amount || 0) / qty) : item.rate || 0
+		return qty > 0 ? roundCurrency((item.amount || 0) / qty) : item.rate || 0;
 	}
 
 	/**
@@ -875,9 +842,9 @@ export function useInvoice() {
 	 * Handles: array, string, or empty value.
 	 */
 	function stringifyPricingRules(pricingRules) {
-		if (!pricingRules) return ""
-		if (Array.isArray(pricingRules)) return pricingRules.join(",")
-		return String(pricingRules)
+		if (!pricingRules) return "";
+		if (Array.isArray(pricingRules)) return pricingRules.join(",");
+		return String(pricingRules);
 	}
 
 	/**
@@ -924,20 +891,20 @@ export function useInvoice() {
 			posa_item_modifiers: item.posa_item_modifiers || "",
 			preparation_station: item.preparation_station || "",
 			kds_status: item.kds_status || "",
-		})
+		});
 
-		const out = []
+		const out = [];
 		for (const item of items) {
-			out.push(mapRow(item))
-			const fq = Number.parseFloat(item.free_qty) || 0
+			out.push(mapRow(item));
+			const fq = Number.parseFloat(item.free_qty) || 0;
 			if (!item.is_free_item && fq > 0) {
-				const u = item.uom || item.stock_uom
+				const u = item.uom || item.stock_uom;
 				const hasDedicatedFree = items.some(
 					(i) =>
 						i.is_free_item &&
 						i.item_code === item.item_code &&
-						(i.uom || i.stock_uom) === u,
-				)
+						(i.uom || i.stock_uom) === u
+				);
 				if (!hasDedicatedFree) {
 					out.push({
 						item_code: item.item_code,
@@ -957,42 +924,42 @@ export function useInvoice() {
 						is_rate_manually_edited: 0,
 						original_rate: null,
 						is_free_item: 1,
-					})
+					});
 				}
 			}
 		}
-		return out
+		return out;
 	}
 
 	function addPayment(payment) {
-		const amount = Number.parseFloat(payment.amount) || 0
+		const amount = Number.parseFloat(payment.amount) || 0;
 		payments.value.push({
 			mode_of_payment: payment.mode_of_payment,
 			amount: amount,
 			type: payment.type,
-		})
+		});
 		// Update cache incrementally
-		_cachedTotalPaid.value += amount
+		_cachedTotalPaid.value += amount;
 	}
 
 	function removePayment(index) {
 		if (payments.value[index]) {
 			// Update cache incrementally (subtract removed payment)
-			_cachedTotalPaid.value -= payments.value[index].amount || 0
+			_cachedTotalPaid.value -= payments.value[index].amount || 0;
 		}
-		payments.value.splice(index, 1)
+		payments.value.splice(index, 1);
 	}
 
 	function updatePayment(index, amount) {
 		if (payments.value[index]) {
 			// Store old value before update for incremental cache adjustment
-			const oldAmount = payments.value[index].amount || 0
-			const newAmount = Number.parseFloat(amount) || 0
+			const oldAmount = payments.value[index].amount || 0;
+			const newAmount = Number.parseFloat(amount) || 0;
 
-			payments.value[index].amount = newAmount
+			payments.value[index].amount = newAmount;
 
 			// Update cache incrementally (new value - old value)
-			_cachedTotalPaid.value += newAmount - oldAmount
+			_cachedTotalPaid.value += newAmount - oldAmount;
 		}
 	}
 
@@ -1002,7 +969,7 @@ export function useInvoice() {
 		 * Returns array of errors if stock is insufficient
 		 */
 		// Use toRaw() to ensure we get current, non-reactive values (prevents stale cached quantities)
-		const rawItems = toRaw(invoiceItems.value)
+		const rawItems = toRaw(invoiceItems.value);
 
 		const items = rawItems.map((item) => ({
 			item_code: item.item_code,
@@ -1011,17 +978,17 @@ export function useInvoice() {
 			conversion_factor: item.conversion_factor || 1,
 			stock_qty: item.quantity * (item.conversion_factor || 1),
 			is_stock_item: item.is_stock_item !== false, // default to true
-		}))
+		}));
 
 		try {
 			const result = await validateCartItemsResource.submit({
 				items: items,
 				pos_profile: posProfile.value,
-			})
-			return result || []
+			});
+			return result || [];
 		} catch (error) {
-			console.error("Stock validation error:", error)
-			return []
+			console.error("Stock validation error:", error);
+			return [];
 		}
 	}
 
@@ -1032,67 +999,65 @@ export function useInvoice() {
 				mode_of_payment: payment.mode_of_payment,
 				amount: payment.amount,
 				type: payment.type,
-			}))
+			}));
 	}
 
 	function buildCustomerCreditPayload(rawPayments) {
-		const creditPayments = rawPayments.filter((payment) => payment?.is_customer_credit)
+		const creditPayments = rawPayments.filter((payment) => payment?.is_customer_credit);
 
 		if (!creditPayments.length) {
 			return {
 				invoicePayments: serializeInvoicePayments(rawPayments),
 				redeemedCustomerCredit: 0,
 				customerCreditDict: [],
-			}
+			};
 		}
 
-		const creditSources = new Map()
+		const creditSources = new Map();
 		for (const payment of creditPayments) {
 			for (const credit of payment.credit_details || []) {
-				if (!credit?.type || !credit?.credit_origin) continue
-				const key = `${credit.type}:${credit.credit_origin}`
+				if (!credit?.type || !credit?.credit_origin) continue;
+				const key = `${credit.type}:${credit.credit_origin}`;
 				if (!creditSources.has(key)) {
-					creditSources.set(key, credit)
+					creditSources.set(key, credit);
 				}
 			}
 		}
 
 		const redeemedCustomerCredit = roundCurrency(
-			creditPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
-		)
+			creditPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+		);
 
-		let remainingCreditToAllocate = redeemedCustomerCredit
-		const customerCreditDict = []
+		let remainingCreditToAllocate = redeemedCustomerCredit;
+		const customerCreditDict = [];
 
 		for (const credit of creditSources.values()) {
-			if (remainingCreditToAllocate <= 0) break
+			if (remainingCreditToAllocate <= 0) break;
 
 			const availableCredit = roundCurrency(
-				Number(credit.available_credit ?? credit.total_credit ?? 0),
-			)
-			if (availableCredit <= 0) continue
+				Number(credit.available_credit ?? credit.total_credit ?? 0)
+			);
+			if (availableCredit <= 0) continue;
 
-			const creditToRedeem = Math.min(availableCredit, remainingCreditToAllocate)
-			if (creditToRedeem <= 0) continue
+			const creditToRedeem = Math.min(availableCredit, remainingCreditToAllocate);
+			if (creditToRedeem <= 0) continue;
 
 			customerCreditDict.push({
 				...credit,
 				credit_to_redeem: roundCurrency(creditToRedeem),
-			})
-			remainingCreditToAllocate = roundCurrency(
-				remainingCreditToAllocate - creditToRedeem,
-			)
+			});
+			remainingCreditToAllocate = roundCurrency(remainingCreditToAllocate - creditToRedeem);
 		}
 
 		if (remainingCreditToAllocate > 0.01) {
-			throw new Error("Unable to allocate the selected customer credit")
+			throw new Error("Unable to allocate the selected customer credit");
 		}
 
 		return {
 			invoicePayments: serializeInvoicePayments(rawPayments),
 			redeemedCustomerCredit,
 			customerCreditDict,
-		}
+		};
 	}
 
 	async function saveDraft(targetDoctype = "Sales Invoice") {
@@ -1101,9 +1066,9 @@ export function useInvoice() {
 		 * This creates the invoice with docstatus=0
 		 */
 		// Use toRaw() to ensure we get current, non-reactive values (prevents stale cached quantities)
-		const rawItems = toRaw(invoiceItems.value)
-		const rawPayments = toRaw(payments.value)
-		const { invoicePayments } = buildCustomerCreditPayload(rawPayments)
+		const rawItems = toRaw(invoiceItems.value);
+		const rawPayments = toRaw(payments.value);
+		const { invoicePayments } = buildCustomerCreditPayload(rawPayments);
 
 		const invoiceData = {
 			doctype: targetDoctype,
@@ -1125,22 +1090,20 @@ export function useInvoice() {
 			//// cancel. The amount actually used is persisted in its own field, and the coupon is
 			//// upper-cased to match the native Coupon Code we migrated to (56877dce, 2026-01-14
 			//// "persist gift card amount used for reliable balance tracking").
-			posa_coupon_code: couponCode.value
-				? couponCode.value.toUpperCase()
-				: null,
+			posa_coupon_code: couponCode.value ? couponCode.value.toUpperCase() : null,
 			posa_gift_card_amount_used: additionalDiscount.value || 0,
 			is_pos: 1,
 			update_stock: 1,
-		}
+		};
 
 		if (targetDoctype === "Sales Order") {
-			const today = new Date().toISOString().split("T")[0]
-			invoiceData.delivery_date = today
-			invoiceData.transaction_date = today
+			const today = new Date().toISOString().split("T")[0];
+			invoiceData.delivery_date = today;
+			invoiceData.transaction_date = today;
 		}
 
-		const result = await updateInvoiceResource.submit({ data: invoiceData })
-		return result?.data || result
+		const result = await updateInvoiceResource.submit({ data: invoiceData });
+		return result?.data || result;
 	}
 
 	async function submitInvoice(
@@ -1151,10 +1114,12 @@ export function useInvoice() {
 		//// in the payment dialog and the restaurant tip typed on the terminal are both decided at
 		//// payment time, so they have to travel down to submit_invoice or the money is collected and
 		//// never posted (104959e6, 2026-03-19 "native loyalty points redemption in POS payment
-		//// dialog"; e9d1622a, 2026-03-23 "pass tip_amount through full payment chain").
-		//// native loyalty points redemption in POS payment dialog — 104959e + e9d1622
+		//// dialog"; e9d1622a, 2026-03-23 "pass tip_amount through full payment chain"). Upstream's
+		//// own two (credit sale, receivable account) follow them.
 		loyaltyData = null,
 		tipAmount = 0,
+		isCreditSale = false,
+		receivableAccount = null
 	) {
 		/**
 		 * Two-step submission process with mutex protection:
@@ -1173,25 +1138,20 @@ export function useInvoice() {
 		return await submitMutex.withLock(async () => {
 			// Check if already submitting (belt and suspenders with mutex)
 			if (isSubmitting.value) {
-				log.warn(
-					"Invoice submission already in progress, skipping duplicate request",
-				)
-				return null
+				log.warn("Invoice submission already in progress, skipping duplicate request");
+				return null;
 			}
 
-			isSubmitting.value = true
+			isSubmitting.value = true;
 
 			try {
 				// Step 1: Create invoice draft
 				// Use toRaw() to ensure we get current, non-reactive values (prevents stale cached quantities)
-				const rawItems = toRaw(invoiceItems.value)
-				const rawPayments = toRaw(payments.value)
-				const rawSalesTeam = toRaw(salesTeam.value)
-				const {
-					invoicePayments,
-					redeemedCustomerCredit,
-					customerCreditDict,
-				} = buildCustomerCreditPayload(rawPayments)
+				const rawItems = toRaw(invoiceItems.value);
+				const rawPayments = toRaw(payments.value);
+				const rawSalesTeam = toRaw(salesTeam.value);
+				const { invoicePayments, redeemedCustomerCredit, customerCreditDict } =
+					buildCustomerCreditPayload(rawPayments);
 
 				const invoiceData = {
 					doctype: targetDoctype,
@@ -1213,21 +1173,24 @@ export function useInvoice() {
 					coupon_code: couponCode.value,
 					//// Neoffice — same persisted gift-card amount and upper-cased native Coupon Code as the
 					//// draft payload above (56877dce, 2026-01-14).
-					posa_coupon_code: couponCode.value
-						? couponCode.value.toUpperCase()
-						: null,
+					posa_coupon_code: couponCode.value ? couponCode.value.toUpperCase() : null,
 					posa_gift_card_amount_used: additionalDiscount.value || 0,
 					is_pos: 1,
 					update_stock: 1, // Critical: Ensures stock is updated
+				};
+
+				// "Pay on Receivable Account": route the invoice's debit_to to a chosen AR
+				if (receivableAccount) {
+					invoiceData.receivable_account = receivableAccount;
 				}
 
 				//// Neoffice — a POS "Sales Order" submitted without a delivery date failed ERPNext's
 				//// mandatory-date validation in front of the customer. Both dates now default to today
 				//// (b6dd7f10, 2026-05-28 "reapply bug A/B/E fixes").
 				if (targetDoctype === "Sales Order") {
-					const today = new Date().toISOString().split("T")[0]
-					invoiceData.delivery_date = deliveryDate || today
-					invoiceData.transaction_date = today
+					const today = new Date().toISOString().split("T")[0];
+					invoiceData.delivery_date = deliveryDate || today;
+					invoiceData.transaction_date = today;
 				}
 
 				// Add sales_team if provided
@@ -1235,31 +1198,24 @@ export function useInvoice() {
 					invoiceData.sales_team = rawSalesTeam.map((member) => ({
 						sales_person: member.sales_person,
 						allocated_percentage: member.allocated_percentage || 0,
-					}))
+					}));
 				}
 
 				const draftInvoice = await updateInvoiceResource.submit({
 					data: invoiceData,
-				})
+				});
 
-				let invoiceDoc = draftInvoice
-				if (
-					draftInvoice &&
-					typeof draftInvoice === "object" &&
-					"data" in draftInvoice
-				) {
-					invoiceDoc = draftInvoice.data
+				let invoiceDoc = draftInvoice;
+				if (draftInvoice && typeof draftInvoice === "object" && "data" in draftInvoice) {
+					invoiceDoc = draftInvoice.data;
 				}
 
 				if (!invoiceDoc || !invoiceDoc.name) {
-					throw new Error(
-						"Failed to create draft invoice - no invoice name returned",
-					)
+					throw new Error("Failed to create draft invoice - no invoice name returned");
 				}
 
 				const submitData = {
-					change_amount:
-						remainingAmount.value < 0 ? Math.abs(remainingAmount.value) : 0,
+					change_amount: remainingAmount.value < 0 ? Math.abs(remainingAmount.value) : 0,
 					write_off_amount: writeOffAmount || 0,
 					//// Neoffice — loyalty redemption and the restaurant tip travel with the submit call.
 					//// Upstream carries neither here, so points redeemed in the payment dialog and a tip
@@ -1267,11 +1223,14 @@ export function useInvoice() {
 					//// redemption; e9d1622a, 2026-03-23 tip_amount through the full payment chain).
 					loyalty: loyaltyData || null,
 					tip_amount: tipAmount || 0,
-				}
+				};
 
 				if (redeemedCustomerCredit > 0 && customerCreditDict.length > 0) {
-					submitData.redeemed_customer_credit = redeemedCustomerCredit
-					submitData.customer_credit_dict = customerCreditDict
+					submitData.redeemed_customer_credit = redeemedCustomerCredit;
+					submitData.customer_credit_dict = customerCreditDict;
+				}
+				if (isCreditSale && invoicePayments.length === 0) {
+					submitData.is_credit_sale = 1;
 				}
 
 				try {
@@ -1285,28 +1244,28 @@ export function useInvoice() {
 						//// preserve pricing rule discounts on submitted invoices — e62e69e
 						invoice: { ...invoiceData, name: invoiceDoc.name },
 						data: submitData,
-					})
+					});
 
 					// Check if resource has error (frappe-ui pattern)
 					if (submitInvoiceResource.error) {
-						const resourceError = submitInvoiceResource.error
-						console.error("Submit invoice resource error:", resourceError)
+						const resourceError = submitInvoiceResource.error;
+						console.error("Submit invoice resource error:", resourceError);
 
 						// Create a detailed error object
 						const detailedError = new Error(
-							resourceError.message || "Invoice submission failed",
-						)
-						detailedError.exc_type = resourceError.exc_type
-						detailedError._server_messages = resourceError._server_messages
-						detailedError.httpStatus = resourceError.httpStatus
-						detailedError.messages = resourceError.messages
+							resourceError.message || "Invoice submission failed"
+						);
+						detailedError.exc_type = resourceError.exc_type;
+						detailedError._server_messages = resourceError._server_messages;
+						detailedError.httpStatus = resourceError.httpStatus;
+						detailedError.messages = resourceError.messages;
 
-						throw detailedError
+						throw detailedError;
 					}
 
-					resetInvoice()
-					return result
-				//// add mutex protection to prevent duplicate invoice submissions — cc63317
+					resetInvoice();
+					return result;
+					//// add mutex protection to prevent duplicate invoice submissions — cc63317
 				} catch (error) {
 					// If resource has error data, extract and attach it
 					if (submitInvoiceResource.error) {
@@ -1318,28 +1277,28 @@ export function useInvoice() {
 						//// object handed back to the caller keeps every property upstream attached, so the server
 						//// message still reaches the cashier (41a70bb7, 2026-01-14 "address PR #96 review feedback" —
 						//// "Remove debug console.log/trace statements from useInvoice.js").
-						const resourceError = submitInvoiceResource.error
+						const resourceError = submitInvoiceResource.error;
 
 						// Attach all resource error properties to the error
-						error.exc_type = resourceError.exc_type || error.exc_type
-						error._server_messages = resourceError._server_messages
-						error.httpStatus = resourceError.httpStatus
-						error.messages = resourceError.messages
-						error.exception = resourceError.exception
+						error.exc_type = resourceError.exc_type || error.exc_type;
+						error._server_messages = resourceError._server_messages;
+						error.httpStatus = resourceError.httpStatus;
+						error.messages = resourceError.messages;
+						error.exception = resourceError.exception;
 						//// Neoffice — same debug-log removal (41a70bb7): the post-attach console.log is gone.
-						error.data = resourceError.data
+						error.data = resourceError.data;
 					}
 
-					throw error
+					throw error;
 				}
-			//// Neoffice — same debug-log removal (41a70bb7): the outer catch rethrows without
-			//// logging first.
+				//// Neoffice — same debug-log removal (41a70bb7): the outer catch rethrows without
+				//// logging first.
 			} catch (error) {
-				throw error
+				throw error;
 			} finally {
-				isSubmitting.value = false
+				isSubmitting.value = false;
 			}
-		}) // End of submitMutex.withLock
+		}); // End of submitMutex.withLock
 	}
 
 	/**
@@ -1349,17 +1308,17 @@ export function useInvoice() {
 	 */
 	async function setDefaultCustomer() {
 		// Reset to null first
-		customer.value = null
+		customer.value = null;
 
 		// Only fetch default customer if we have a POS Profile
 		if (!posProfile.value) {
-			return
+			return;
 		}
 
 		try {
 			const result = await getDefaultCustomerResource.submit({
 				pos_profile: posProfile.value,
-			})
+			});
 
 			// Set the default customer if one is configured
 			if (result && result.customer) {
@@ -1368,7 +1327,7 @@ export function useInvoice() {
 					name: result.customer,
 					customer_name: result.customer_name || result.customer,
 					customer_group: result.customer_group,
-				}
+				};
 			}
 		} catch (error) {
 			//// auto-load default customer from POS Profile — ecd66b4
@@ -1385,24 +1344,24 @@ export function useInvoice() {
 	 * If a POS Profile is active and has a default customer, it will be pre-selected.
 	 */
 	function resetInvoice() {
-		invoiceItems.value = []
-		payments.value = []
-		additionalDiscount.value = 0
+		invoiceItems.value = [];
+		payments.value = [];
+		additionalDiscount.value = 0;
 		//// Neoffice — the rule discount and the per-ticket bypass must die with the ticket:
 		//// leaving them set would carry one customer's transaction discount into the next sale
 		//// (44ea4e9a, 2026-07-09).
-		ruleHeaderDiscount.value = 0
-		bypassRuleDiscount.value = false
-		couponCode.value = null
+		ruleHeaderDiscount.value = 0;
+		bypassRuleDiscount.value = false;
+		couponCode.value = null;
 
 		// Reset incremental cache
-		_cachedSubtotal.value = 0
-		_cachedTotalTax.value = 0
-		_cachedTotalDiscount.value = 0
-		_cachedTotalPaid.value = 0
+		_cachedSubtotal.value = 0;
+		_cachedTotalTax.value = 0;
+		_cachedTotalDiscount.value = 0;
+		_cachedTotalPaid.value = 0;
 
 		// Set default customer from POS Profile if available
-		setDefaultCustomer()
+		setDefaultCustomer();
 	}
 
 	/**
@@ -1413,26 +1372,26 @@ export function useInvoice() {
 		// Return all serial numbers back to cache before clearing
 		for (const item of invoiceItems.value) {
 			if (item.has_serial_no && item.serial_no) {
-				serialStore.returnSerials(item.item_code, item.serial_no)
+				serialStore.returnSerials(item.item_code, item.serial_no);
 			}
 		}
 
-		invoiceItems.value = []
-		payments.value = []
-		additionalDiscount.value = 0
+		invoiceItems.value = [];
+		payments.value = [];
+		additionalDiscount.value = 0;
 		//// Neoffice — same reset on the clear-cart path, for the same reason (44ea4e9a).
-		ruleHeaderDiscount.value = 0
-		bypassRuleDiscount.value = false
-		couponCode.value = null
+		ruleHeaderDiscount.value = 0;
+		bypassRuleDiscount.value = false;
+		couponCode.value = null;
 
 		// Reset incremental cache
-		_cachedSubtotal.value = 0
-		_cachedTotalTax.value = 0
-		_cachedTotalDiscount.value = 0
-		_cachedTotalPaid.value = 0
+		_cachedSubtotal.value = 0;
+		_cachedTotalTax.value = 0;
+		_cachedTotalDiscount.value = 0;
+		_cachedTotalPaid.value = 0;
 
 		// Set default customer from POS Profile if available
-		setDefaultCustomer()
+		setDefaultCustomer();
 
 		// Cleanup old draft invoices (older than 1 hour) in background
 		// Skip if offline to avoid network errors
@@ -1441,10 +1400,10 @@ export function useInvoice() {
 				await cleanupDraftsResource.submit({
 					pos_profile: posProfile.value,
 					max_age_hours: 1,
-				})
+				});
 			} catch (error) {
 				// Silent fail - don't block cart clearing
-				console.warn("Failed to cleanup old drafts:", error)
+				console.warn("Failed to cleanup old drafts:", error);
 			}
 		}
 	}
@@ -1454,25 +1413,25 @@ export function useInvoice() {
 		 * Load tax rules from POS Profile and tax inclusive setting from POS Settings
 		 */
 		try {
-			const result = await getTaxesResource.submit({ pos_profile: profileName })
-			taxRules.value = result?.data || result || []
+			const result = await getTaxesResource.submit({ pos_profile: profileName });
+			taxRules.value = result?.data || result || [];
 
 			// Load tax inclusive setting from POS Settings if provided
 			if (posSettings && posSettings.tax_inclusive !== undefined) {
-				taxInclusive.value = posSettings.tax_inclusive || false
+				taxInclusive.value = posSettings.tax_inclusive || false;
 			}
 
 			// Recalculate all items with new tax rules and tax inclusive setting
-			invoiceItems.value.forEach((item) => recalculateItem(item))
+			invoiceItems.value.forEach((item) => recalculateItem(item));
 
 			// Rebuild cache after bulk operation
-			rebuildIncrementalCache()
+			rebuildIncrementalCache();
 
-			return taxRules.value
+			return taxRules.value;
 		} catch (error) {
-			console.error("Error loading tax rules:", error)
-			taxRules.value = []
-			return []
+			console.error("Error loading tax rules:", error);
+			taxRules.value = [];
+			return [];
 		}
 	}
 
@@ -1480,13 +1439,13 @@ export function useInvoice() {
 		/**
 		 * Set tax inclusive mode and recalculate all items
 		 */
-		taxInclusive.value = value
+		taxInclusive.value = value;
 
 		// Recalculate all items with new tax inclusive setting
-		invoiceItems.value.forEach((item) => recalculateItem(item))
+		invoiceItems.value.forEach((item) => recalculateItem(item));
 
 		// Rebuild cache after bulk operation
-		rebuildIncrementalCache()
+		rebuildIncrementalCache();
 	}
 
 	//// Neoffice — added function, no upstream equivalent. Reloading a table's order from the
@@ -1518,11 +1477,11 @@ export function useInvoice() {
 				tax_amount: 0,
 				discount_percentage: 0,
 				discount_amount: 0,
-			}
-			recalculateItem(newItem)
-			return newItem
-		})
-		rebuildIncrementalCache()
+			};
+			recalculateItem(newItem);
+			return newItem;
+		});
+		rebuildIncrementalCache();
 	}
 
 	return {
@@ -1596,5 +1555,5 @@ export function useInvoice() {
 		applyOffersResource,
 		getItemDetailsResource,
 		getTaxesResource,
-	}
+	};
 }

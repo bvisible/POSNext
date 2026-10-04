@@ -8,46 +8,46 @@
  * @module composables/useRealtimeCustomers
  */
 
-import { logger } from "@/utils/logger"
-import { readonly, ref } from "vue"
+import { logger } from "@/utils/logger";
+import { readonly, ref } from "vue";
 
 //// Neoffice — Biome reformat only: the logger namespace string went from single to
 //// double quotes. Upstream runs no formatter (458d81a9, 2026-03-20 "remove BrainWise branding,
 //// add restaurant mode, and code formatting"); at the next merge take
 //// their file and re-run `biome check --write`.
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-const log = logger.create("RealtimeCustomers")
+const log = logger.create("RealtimeCustomers");
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const EVENT_NAME = "pos_customer_changed"
-const DEBOUNCE_DELAY_MS = 300 // Prevent rapid-fire updates
-const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY_MS = 1000
+const EVENT_NAME = "pos_customer_changed";
+const DEBOUNCE_DELAY_MS = 300; // Prevent rapid-fire updates
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000;
 
 // ============================================================================
 // SINGLETON STATE (shared across all component instances)
 // ============================================================================
 
 /** @type {import('vue').Ref<boolean>} */
-const isListening = ref(false)
+const isListening = ref(false);
 
 /** @type {import('vue').Ref<boolean>} */
-const isConnecting = ref(false)
+const isConnecting = ref(false);
 
 /** @type {Set<Function>} Registered event handlers */
-const eventHandlers = new Set()
+const eventHandlers = new Set();
 
 /** @type {Map<string, NodeJS.Timeout>} Debounce timers per customer */
-const debounceTimers = new Map()
+const debounceTimers = new Map();
 
 /** @type {number} Connection retry attempts */
-let retryAttempts = 0
+let retryAttempts = 0;
 
 /** @type {NodeJS.Timeout|null} Retry timer */
-let retryTimer = null
+let retryTimer = null;
 
 // ============================================================================
 // INTERNAL HELPERS
@@ -67,18 +67,18 @@ function isValidEventPayload(data) {
 	//// commit touched this file after the fork point. Take upstream wholesale at the next
 	//// merge and re-run the formatter (458d81a9, 2026-03-20).
 	if (!data || typeof data !== "object") {
-		log.warn("Invalid event payload: not an object", { data })
-		return false
+		log.warn("Invalid event payload: not an object", { data });
+		return false;
 	}
 
 	if (!data.name || typeof data.name !== "string") {
 		log.warn("Invalid event payload: missing or invalid customer ID (name)", {
 			data,
-		})
-		return false
+		});
+		return false;
 	}
 
-	return true
+	return true;
 }
 
 /**
@@ -89,13 +89,13 @@ function isValidEventPayload(data) {
 async function executeHandlerSafely(handler, data) {
 	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	try {
-		await Promise.resolve(handler(data))
+		await Promise.resolve(handler(data));
 	} catch (error) {
 		log.error("Handler execution failed", {
 			error: error.message,
 			stack: error.stack,
 			customer: data.name,
-		})
+		});
 	}
 }
 
@@ -106,42 +106,42 @@ async function executeHandlerSafely(handler, data) {
 function handleCustomerUpdate(data) {
 	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	if (!isValidEventPayload(data)) {
-		console.log("Invalid event payload", data)
-		return
+		console.log("Invalid event payload", data);
+		return;
 	}
 
-	const { name, action, timestamp } = data
+	const { name, action, timestamp } = data;
 
 	log.info("Customer update received", {
 		customer: name,
 		action,
 		timestamp,
 		handlerCount: eventHandlers.size,
-	})
+	});
 
 	// Debounce updates per customer
-	const existingTimer = debounceTimers.get(name)
+	const existingTimer = debounceTimers.get(name);
 	if (existingTimer) {
-		clearTimeout(existingTimer)
+		clearTimeout(existingTimer);
 	}
 
 	const timer = setTimeout(() => {
-		debounceTimers.delete(name)
+		debounceTimers.delete(name);
 
 		// Execute all registered handlers in parallel with error isolation
 		const handlerPromises = Array.from(eventHandlers).map((handler) =>
-			executeHandlerSafely(handler, data),
-		)
+			executeHandlerSafely(handler, data)
+		);
 
 		Promise.all(handlerPromises).then(() => {
 			log.debug("All handlers executed", {
 				customer: name,
 				handlerCount: eventHandlers.size,
-			})
-		})
-	}, DEBOUNCE_DELAY_MS)
+			});
+		});
+	}, DEBOUNCE_DELAY_MS);
 
-	debounceTimers.set(name, timer)
+	debounceTimers.set(name, timer);
 }
 
 /**
@@ -150,7 +150,7 @@ function handleCustomerUpdate(data) {
  */
 function isSocketAvailable() {
 	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
-	return !!(typeof window !== "undefined" && window.frappe?.realtime)
+	return !!(typeof window !== "undefined" && window.frappe?.realtime);
 }
 
 /**
@@ -158,32 +158,29 @@ function isSocketAvailable() {
  */
 function startListening() {
 	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
-	if (isListening.value || isConnecting.value) return
+	if (isListening.value || isConnecting.value) return;
 
 	if (!isSocketAvailable()) {
 		if (retryAttempts < MAX_RETRY_ATTEMPTS) {
-			retryAttempts++
-			retryTimer = setTimeout(
-				() => startListening(),
-				RETRY_DELAY_MS * retryAttempts,
-			)
+			retryAttempts++;
+			retryTimer = setTimeout(() => startListening(), RETRY_DELAY_MS * retryAttempts);
 		}
-		return
+		return;
 	}
 
 	try {
-		isConnecting.value = true
-		window.frappe.realtime.on(EVENT_NAME, handleCustomerUpdate)
-		isListening.value = true
-		isConnecting.value = false
-		retryAttempts = 0
-		log.success("Started listening to Customer updates", { event: EVENT_NAME })
+		isConnecting.value = true;
+		window.frappe.realtime.on(EVENT_NAME, handleCustomerUpdate);
+		isListening.value = true;
+		isConnecting.value = false;
+		retryAttempts = 0;
+		log.success("Started listening to Customer updates", { event: EVENT_NAME });
 	} catch (error) {
-		isConnecting.value = false
-		log.error("Failed to start listening", error)
+		isConnecting.value = false;
+		log.error("Failed to start listening", error);
 		if (retryAttempts < MAX_RETRY_ATTEMPTS) {
-			retryAttempts++
-			retryTimer = setTimeout(() => startListening(), RETRY_DELAY_MS)
+			retryAttempts++;
+			retryTimer = setTimeout(() => startListening(), RETRY_DELAY_MS);
 		}
 	}
 }
@@ -194,24 +191,24 @@ function startListening() {
 function stopListening() {
 	//// Neoffice — same Biome re-indent (458d81a9): spaces to tabs, no behaviour change.
 	if (retryTimer) {
-		clearTimeout(retryTimer)
-		retryTimer = null
+		clearTimeout(retryTimer);
+		retryTimer = null;
 	}
-	debounceTimers.forEach((timer) => clearTimeout(timer))
-	debounceTimers.clear()
+	debounceTimers.forEach((timer) => clearTimeout(timer));
+	debounceTimers.clear();
 
-	if (!isListening.value) return
+	if (!isListening.value) return;
 
 	try {
 		if (isSocketAvailable()) {
-			window.frappe.realtime.off(EVENT_NAME, handleCustomerUpdate)
+			window.frappe.realtime.off(EVENT_NAME, handleCustomerUpdate);
 		}
-		isListening.value = false
-		retryAttempts = 0
-		log.info("Stopped listening to Customer updates")
+		isListening.value = false;
+		retryAttempts = 0;
+		log.info("Stopped listening to Customer updates");
 	} catch (error) {
-		isListening.value = false
-		log.error("Error while stopping listener", error)
+		isListening.value = false;
+		log.error("Error while stopping listener", error);
 	}
 }
 
@@ -232,28 +229,28 @@ export function useRealtimeCustomers() {
 	 */
 	function onCustomerUpdate(handler) {
 		if (typeof handler !== "function") {
-			throw new TypeError(`Handler must be a function`)
+			throw new TypeError(`Handler must be a function`);
 		}
 
-		if (eventHandlers.has(handler)) return () => {}
+		if (eventHandlers.has(handler)) return () => {};
 
-		eventHandlers.add(handler)
+		eventHandlers.add(handler);
 
 		if (eventHandlers.size === 1) {
-			startListening()
+			startListening();
 		}
 
 		return () => {
-			eventHandlers.delete(handler)
+			eventHandlers.delete(handler);
 			if (eventHandlers.size === 0) {
-				stopListening()
+				stopListening();
 			}
-		}
+		};
 	}
 
 	return {
 		isListening: readonly(isListening),
 		isConnecting: readonly(isConnecting),
 		onCustomerUpdate,
-	}
+	};
 }

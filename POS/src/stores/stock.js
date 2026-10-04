@@ -20,12 +20,12 @@
  */
 
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-import { defineStore } from "pinia"
-import { ref, onMounted } from "vue"
-import { call } from "@/utils/apiWrapper"
-import { offlineWorker } from "@/utils/offline/workerClient"
-import { logger } from "@/utils/logger"
-import { usePOSEventsStore } from "@/stores/posEvents"
+import { defineStore } from "pinia";
+import { ref, onMounted } from "vue";
+import { call } from "@/utils/apiWrapper";
+import { offlineWorker } from "@/utils/offline/workerClient";
+import { logger } from "@/utils/logger";
+import { usePOSEventsStore } from "@/stores/posEvents";
 
 //// Neoffice — the whole file went through our Biome formatter pass (458d81a9,
 //// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting"):
@@ -33,21 +33,21 @@ import { usePOSEventsStore } from "@/stores/posEvents"
 //// Upstream runs no formatter, so most hunks below are that pass and change no
 //// behaviour — every marker reading "Biome reformat only" is one of them. At the next
 //// upstream merge, take their code and re-run Biome instead of resolving these by hand.
-const log = logger.create("Stock")
+const log = logger.create("Stock");
 
 export const useStockStore = defineStore("stock", () => {
 	// Get event store instance
-	const eventsStore = usePOSEventsStore()
+	const eventsStore = usePOSEventsStore();
 	// ========================================================================
 	// STATE - Just 2 Maps, that's it!
 	// ========================================================================
 	//// Neoffice — Biome reformat only: the aligned inline comments were collapsed to a single
 	//// space. `git blame -w` credits upstream here because nothing but whitespace changed
 	//// (458d81a9, 2026-03-20).
-	const server = ref(new Map()) // item_code -> { qty, warehouse, ts }
-	const reserved = ref(new Map()) // item_code -> qty
-	const warehouse = ref(null) // Current warehouse
-	const refreshing = ref(false) // Loading state
+	const server = ref(new Map()); // item_code -> { qty, warehouse, ts }
+	const reserved = ref(new Map()); // item_code -> qty
+	const warehouse = ref(null); // Current warehouse
+	const refreshing = ref(false); // Loading state
 
 	// ========================================================================
 	// GETTERS - Functions that return reactive computed values
@@ -56,11 +56,8 @@ export const useStockStore = defineStore("stock", () => {
 		// Always return the actual calculated stock (can be negative)
 		// Display is independent of whether negative stock sales are allowed
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-		return (
-			(server.value.get(itemCode)?.qty || 0) -
-			(reserved.value.get(itemCode) || 0)
-		)
-	}
+		return (server.value.get(itemCode)?.qty || 0) - (reserved.value.get(itemCode) || 0);
+	};
 
 	const getStockInfo = (itemCode) => ({
 		code: itemCode,
@@ -69,7 +66,7 @@ export const useStockStore = defineStore("stock", () => {
 		display: getDisplayStock(itemCode),
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		warehouse: server.value.get(itemCode)?.warehouse || warehouse.value,
-	})
+	});
 
 	// ========================================================================
 	// ACTIONS - Minimal, focused
@@ -83,35 +80,35 @@ export const useStockStore = defineStore("stock", () => {
 				qty: item.actual_qty ?? item.stock_qty ?? 0,
 				warehouse: item.warehouse || warehouse.value,
 				ts: Date.now(),
-			}),
-		)
+			})
+		);
 
 	// Update reservations from cart
 	const reserve = (cartItems) => {
-		reserved.value.clear()
+		reserved.value.clear();
 
 		// Early return for empty or invalid cart
 		if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-			return
+			return;
 		}
 
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		cartItems.forEach((cartItem) => {
 			// Skip items with missing item_code
-			if (!cartItem?.item_code) return
+			if (!cartItem?.item_code) return;
 
-			const quantity = Number(cartItem.quantity) || 0
+			const quantity = Number(cartItem.quantity) || 0;
 			// Skip items with zero or negative quantity
-			if (quantity <= 0) return
+			if (quantity <= 0) return;
 
-			const factor = Number(cartItem.conversion_factor) || 1
-			const itemCode = cartItem.item_code
+			const factor = Number(cartItem.conversion_factor) || 1;
+			const itemCode = cartItem.item_code;
 
-			const current = reserved.value.get(itemCode) || 0
+			const current = reserved.value.get(itemCode) || 0;
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-			reserved.value.set(itemCode, current + quantity * factor)
-		})
-	}
+			reserved.value.set(itemCode, current + quantity * factor);
+		});
+	};
 
 	// Apply updates from server or realtime Socket.IO events
 	// Called by: POSSale.vue:770 (realtime), various refresh flows
@@ -124,24 +121,24 @@ export const useStockStore = defineStore("stock", () => {
 				qty: stockUpdate.actual_qty ?? stockUpdate.stock_qty,
 				warehouse: stockUpdate.warehouse || warehouse.value,
 				ts: Date.now(),
-			}),
-		)
+			})
+		);
 
 	// Refresh stock from server (direct API call)
 	// Called after invoice submission, manual refresh, or warehouse change
 	// Snapshots reservations before fetching to prevent UI flicker
 	// This is the fallback when realtime Socket.IO is down
 	const refresh = async (itemCodes, targetWarehouse) => {
-		if (!targetWarehouse && !warehouse.value) return
+		if (!targetWarehouse && !warehouse.value) return;
 
-		refreshing.value = true
+		refreshing.value = true;
 
 		// Snapshot current reservations to restore after fetch
-		const reservationSnapshot = new Map(reserved.value)
+		const reservationSnapshot = new Map(reserved.value);
 
 		try {
-			const codesToRefresh = itemCodes || Array.from(server.value.keys())
-			if (!codesToRefresh.length) return
+			const codesToRefresh = itemCodes || Array.from(server.value.keys());
+			if (!codesToRefresh.length) return;
 
 			const response = await Promise.race([
 				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
@@ -151,27 +148,27 @@ export const useStockStore = defineStore("stock", () => {
 				}),
 				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 				new Promise((_, reject) => setTimeout(reject, 10000)),
-			])
+			]);
 
-			const stockData = response?.message || response || []
-			update(stockData)
+			const stockData = response?.message || response || [];
+			update(stockData);
 
 			// Update IndexedDB and wait for timestamp update
-			await offlineWorker.updateStockQuantities(stockData).catch(() => {})
+			await offlineWorker.updateStockQuantities(stockData).catch(() => {});
 
 			// Restore reservations after fetch completes
-			reserved.value = reservationSnapshot
+			reserved.value = reservationSnapshot;
 
-			log.success(`Refreshed ${stockData.length} items`)
+			log.success(`Refreshed ${stockData.length} items`);
 		} catch (error) {
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-			log.error("Refresh failed", error)
+			log.error("Refresh failed", error);
 			// Restore reservations even on error
-			reserved.value = reservationSnapshot
+			reserved.value = reservationSnapshot;
 		} finally {
-			refreshing.value = false
+			refreshing.value = false;
 		}
-	}
+	};
 
 	// ========================================================================
 	// EVENT LISTENERS - React to settings changes
@@ -180,18 +177,18 @@ export const useStockStore = defineStore("stock", () => {
 	// Listen to warehouse changes from settings
 	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 	eventsStore.on("settings:warehouse-changed", async ({ newWarehouse }) => {
-		log.info(`Event received: Warehouse changed to ${newWarehouse}`)
+		log.info(`Event received: Warehouse changed to ${newWarehouse}`);
 
 		// Update warehouse
-		warehouse.value = newWarehouse
+		warehouse.value = newWarehouse;
 
 		// Refresh all stock for new warehouse
-		const itemCodes = Array.from(server.value.keys())
+		const itemCodes = Array.from(server.value.keys());
 		if (itemCodes.length > 0) {
-			log.info(`Refreshing ${itemCodes.length} items for new warehouse`)
-			await refresh(itemCodes, newWarehouse)
+			log.info(`Refreshing ${itemCodes.length} items for new warehouse`);
+			await refresh(itemCodes, newWarehouse);
 		}
-	})
+	});
 
 	return {
 		// State
@@ -213,8 +210,8 @@ export const useStockStore = defineStore("stock", () => {
 		setWarehouse: (targetWarehouse) => (warehouse.value = targetWarehouse),
 		clear: () => reserved.value.clear(),
 		reset: () => {
-			server.value.clear()
-			reserved.value.clear()
+			server.value.clear();
+			reserved.value.clear();
 		},
-	}
-})
+	};
+});

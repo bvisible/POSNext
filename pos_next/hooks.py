@@ -7,17 +7,17 @@ from pos_next.utils import get_build_version
 # //// 5846bd04, 2026-02-18; restored by f0c960ff, 2026-03-21).
 # //// restore hooks.py and custom_field.json with all coupon/gift card fiel… — f0c960f + 82b2493 (+1 more)
 
+
 def _has_native_coupon_code_field():
 	"""Check if ERPNext has a native coupon_code field on Sales Invoice (v16+)."""
 	try:
 		import json
 		import os
 		import importlib
+
 		erpnext_mod = importlib.import_module("erpnext")
 		erpnext_dir = os.path.dirname(erpnext_mod.__file__)
-		si_json_path = os.path.join(
-			erpnext_dir, "accounts", "doctype", "sales_invoice", "sales_invoice.json"
-		)
+		si_json_path = os.path.join(erpnext_dir, "accounts", "doctype", "sales_invoice", "sales_invoice.json")
 		if os.path.exists(si_json_path):
 			with open(si_json_path) as f:
 				meta = json.load(f)
@@ -88,7 +88,11 @@ _asset_version = get_build_version()
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	"Customer": "public/js/customer.js",
+	"Pricing Rule": "public/js/pricing_rule.js",
+	"Promotional Scheme": "public/js/promotional_scheme.js",
+}
 # //// Neoffice — gift cards are ERPNext Coupon Code documents here, so the "Create Gift Card"
 # //// entry point belongs on that list view in the desk; upstream shipped no desk surface for
 # //// its own POS Coupon (b14d3066 2026-01-13, restored by f0c960ff 2026-03-21).
@@ -122,10 +126,11 @@ doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "pos_next.utils.jinja_methods",
-# 	"filters": "pos_next.utils.jinja_filters"
-# }
+jinja = {
+	"methods": [
+		"pos_next.pos_next.utils.pos_closing_print.get_items_sold",
+	]
+}
 
 # Fixtures
 # --------
@@ -143,7 +148,6 @@ _custom_field_names = [
 	"Sales Invoice-posa_pos_opening_shift",
 	"Sales Invoice-posa_is_printed",
 	"Sales Invoice-posa_coupon_code",
-	"Item-custom_company",
 	"POS Profile-posa_cash_mode_of_payment",
 	"POS Profile-posa_allow_delete",
 	"POS Profile-posa_cash_entry_templates",
@@ -172,24 +176,8 @@ if not _has_native_coupon_code_field():
 # //// equivalent (b6e757dd, 2026-03-26 "add menu PDF generator with badges").
 fixtures = [
 	# //// add custom POS print format with discount display — eca6f13 + f0c960f (+5 more)
-	{
-		"dt": "Print Format",
-		"filters": [
-			[
-				"name",
-				"in",
-				[
-					"Neopos Receipt"
-				]
-			]
-		]
-	},
-	{
-		"dt": "Role",
-		"filters": [
-			["role_name", "in", ["POSNext Cashier", "Nexus POS Manager"]]
-		]
-	},
+	{"dt": "Print Format", "filters": [["name", "in", ["Neopos Receipt"]]]},
+	{"dt": "Role", "filters": [["role_name", "in", ["POSNext Cashier", "Nexus POS Manager"]]]},
 	# //// Neoffice — no Custom DocPerm fixture. Frappe imports every file of fixtures/ at each
 	# //// migrate whatever these filters say, and a Custom DocPerm fixture either freezes a doctype
 	# //// on the author's snapshot or lands next to a site's own rules as duplicates. The cashier's
@@ -233,21 +221,11 @@ before_uninstall = "pos_next.uninstall.before_uninstall"
 
 # notification_config = "pos_next.notifications.get_notification_config"
 
-# Permissions
-# Standard Queries
-# ----------------
-# Custom query for company-aware item filtering
-standard_queries = {
-	"Item": "pos_next.validations.item_query"
-}
-
 # DocType Class
 # ---------------
 # Override standard doctype classes
 
-override_doctype_class = {
-	"Sales Invoice": "pos_next.overrides.sales_invoice.CustomSalesInvoice"
-}
+override_doctype_class = {"Sales Invoice": "pos_next.overrides.sales_invoice.CustomSalesInvoice"}
 
 # Document Events
 # ---------------
@@ -255,14 +233,11 @@ override_doctype_class = {
 
 # //// wallet functionality with loyalty points conversion — 77e7448
 doc_events = {
-	"Item": {
-		"validate": "pos_next.validations.validate_item"
-	},
 	"Customer": {
 		"after_insert": [
 			"pos_next.api.customers.auto_assign_loyalty_program",
 			"pos_next.realtime_events.emit_customer_event",
-			"pos_next.api.wallet.create_wallet_on_customer_insert"
+			"pos_next.api.wallet.create_wallet_on_customer_insert",
 		],
 		"on_update": "pos_next.realtime_events.emit_customer_event",
 		# //// Neoffice — on_trash became a list so the unused-wallet cleanup runs before Frappe's
@@ -270,8 +245,8 @@ doc_events = {
 		# //// deletion (c42d1cfc, 2026-06-29).
 		"on_trash": [
 			"pos_next.api.wallet.delete_unused_wallet_on_customer_trash",
-			"pos_next.realtime_events.emit_customer_event"
-		]
+			"pos_next.realtime_events.emit_customer_event",
+		],
 	},
 	"Sales Invoice": {
 		"validate": [
@@ -280,7 +255,8 @@ doc_events = {
 			# //// now; upstream validated its own POS Coupon doctype, which no longer exists here
 			# //// (9bc096de 2026-02-05, restored by f0c960ff 2026-03-21).
 			"pos_next.api.sales_invoice_hooks.validate_coupon_on_invoice",
-			"pos_next.api.wallet.validate_wallet_payment"
+			"pos_next.api.wallet.validate_wallet_payment",
+			"pos_next.overrides.pricing_rule.apply_min_max_price_discounts",
 		],
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",
 		# //// Neoffice — restaurant mode: the floor plan follows the document, not the browser, so a
@@ -288,7 +264,8 @@ doc_events = {
 		# //// that crashed or went offline left tables stuck (458d81a9 2026-03-20, restored by
 		# //// f0c960ff 2026-03-21).
 		"on_update": "pos_next.api.restaurant.on_invoice_update",
-		# //// Neoffice — everything booked on submit except the stock event is ours: ERPNext's
+		# //// Neoffice — everything booked on submit except the stock event and upstream's one-time
+		# //// offer record (v2.0.0, last line) is ours: ERPNext's
 		# //// coupon usage counter (coupons moved onto the native Coupon Code — 9bc096de,
 		# //// 2026-02-05), loyalty converted into wallet balance, gift cards issued and spent, and
 		# //// the restaurant table released. Each is a side effect of a sale upstream never had to
@@ -301,7 +278,8 @@ doc_events = {
 			"pos_next.api.wallet.process_loyalty_to_wallet",
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
 			"pos_next.api.gift_cards.process_gift_card_on_submit",
-			"pos_next.api.restaurant.on_invoice_update"
+			"pos_next.api.restaurant.on_invoice_update",
+			"pos_next.api.sales_invoice_hooks.record_one_time_offer_usage",
 		],
 		"on_cancel": [
 			"pos_next.api.sales_invoice_hooks.update_coupon_usage_on_cancel",
@@ -309,36 +287,40 @@ doc_events = {
 			# //// Neoffice — on_cancel became a list: upstream published one stock event. A cancelled sale
 			# //// must also give the gift-card balance back, bring the coupon usage counter down and
 			# //// release the table (5091779d / 9bc096de for the coupon side, 458d81a9 for the restaurant
-			# //// side, restored by f0c960ff 2026-03-21).
+			# //// side, restored by f0c960ff 2026-03-21). Upstream's v2.0.0 one-time offer release follows.
 			"pos_next.api.gift_cards.process_gift_card_on_cancel",
-			"pos_next.api.restaurant.on_invoice_update"
+			"pos_next.api.restaurant.on_invoice_update",
+			"pos_next.api.sales_invoice_hooks.release_one_time_offer_usage",
 		],
-		"after_insert": "pos_next.realtime_events.emit_invoice_created_event"
+		"after_insert": "pos_next.realtime_events.emit_invoice_created_event",
 	},
 	# //// Neoffice — POS Invoice gets the same gift-card hooks as Sales Invoice: an instance running
 	# //// ERPNext's POS Invoice flow would otherwise sell a gift card without ever creating it, or
 	# //// cancel one without giving the balance back (f0c960ff, 2026-03-21).
 	"POS Invoice": {
+		"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts",
 		"on_submit": [
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
-			"pos_next.api.gift_cards.process_gift_card_on_submit"
+			"pos_next.api.gift_cards.process_gift_card_on_submit",
 		],
-		"on_cancel": "pos_next.api.gift_cards.process_gift_card_on_cancel"
+		"on_cancel": "pos_next.api.gift_cards.process_gift_card_on_cancel",
 	},
-	"POS Profile": {
-		"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"
-	},
-	"POS Settings": {
-		"on_update": "pos_next.api.items.invalidate_pos_settings_cache"
-	},
+	"POS Profile": {"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"},
 	"Promotional Scheme": {
-		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules"
+		"validate": "pos_next.overrides.pricing_rule.enforce_min_max_pricing_config",
+		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules",
 	},
-	# //// Neoffice — restaurant mode: a Restaurant Card (the menu shown to guests) and the opening
+	"Pricing Rule": {"validate": "pos_next.overrides.pricing_rule.enforce_min_max_pricing_config"},
+	"Sales Order": {"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts"},
+	"Quotation": {"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts"},
+	"Delivery Note": {"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts"},
+	# //// Neoffice — upstream v2.0.0 adds a "POS Invoice" key here for its min/max discount check;
+	# //// a second key of the same name would silently replace our POS Invoice gift-card hooks
+	# //// above, so that `validate` lives in the single "POS Invoice" entry instead.
+	# //// Restaurant mode: a Restaurant Card (the menu shown to guests) and the opening
 	# //// hours are edited at the desk but read by the tills and by the public menu page, so a
 	# //// change has to reach them without a reload — hence the realtime emitters, rename included
 	# //// (34ee11a8, 2026-03-25 "merge all restaurant enhancements").
-	# //// merge all restaurant enhancements - station groups, realtime cards, shift closing — 34ee11a
 	"Restaurant Card": {
 		"on_update": "pos_next.realtime_events.emit_card_updated_event",
 		"after_rename": "pos_next.realtime_events.emit_card_updated_event",
@@ -455,4 +437,6 @@ scheduler_events = {
 # }
 
 
-website_route_rules = [{'from_route': '/pos/<path:app_path>', 'to_route': 'pos'},]
+website_route_rules = [
+	{"from_route": "/pos/<path:app_path>", "to_route": "pos"},
+]

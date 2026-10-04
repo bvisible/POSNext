@@ -22,6 +22,7 @@ Run with: bench --site [site] run-tests --app pos_next --module pos_next.pos_nex
 
 import frappe
 import unittest
+
 # //// Neoffice — module rewritten for ERPNext Coupon Code; see the marker above (771595d2).
 from frappe.utils import nowdate, add_days, flt
 from pos_next.pos_next.doctype.referral_code.referral_code import (
@@ -88,7 +89,7 @@ class TestReferralCodeCreation(unittest.TestCase):
 			referrer_discount_type="Percentage",
 			referrer_discount_percentage=10,
 			referee_discount_type="Percentage",
-			referee_discount_percentage=15
+			referee_discount_percentage=15,
 		)
 
 		self.assertIsNotNone(referral)
@@ -110,7 +111,7 @@ class TestReferralCodeCreation(unittest.TestCase):
 			referrer_discount_type="Amount",
 			referrer_discount_amount=20,
 			referee_discount_type="Amount",
-			referee_discount_amount=25
+			referee_discount_amount=25,
 		)
 
 		self.assertIsNotNone(referral)
@@ -130,7 +131,7 @@ class TestReferralCodeCreation(unittest.TestCase):
 			referrer_discount_type="Percentage",
 			referrer_discount_percentage=10,
 			referee_discount_type="Percentage",
-			referee_discount_percentage=10
+			referee_discount_percentage=10,
 		)
 
 		self.assertIsNotNone(referral.referral_code)
@@ -200,7 +201,7 @@ class TestReferralCouponGeneration(unittest.TestCase):
 			referrer_discount_type="Amount",
 			referrer_discount_amount=50,
 			referee_discount_type="Percentage",
-			referee_discount_percentage=10
+			referee_discount_percentage=10,
 		)
 		self.created_referral_codes.append(referral.name)
 
@@ -236,7 +237,7 @@ class TestReferralCouponGeneration(unittest.TestCase):
 			referrer_discount_type="Percentage",
 			referrer_discount_percentage=10,
 			referee_discount_type="Percentage",
-			referee_discount_percentage=20
+			referee_discount_percentage=20,
 		)
 		self.created_referral_codes.append(referral.name)
 
@@ -356,15 +357,14 @@ class TestApplyReferralCode(unittest.TestCase):
 			referrer_discount_type="Amount",
 			referrer_discount_amount=25,
 			referee_discount_type="Amount",
-			referee_discount_amount=25
+			referee_discount_amount=25,
 		)
 		self.created_referral_codes.append(referral.name)
 		frappe.db.commit()
 
 		# Apply referral code
 		result = apply_referral_code(
-			referral_code=referral.referral_code,
-			referee_customer=self.referee_customer1
+			referral_code=referral.referral_code, referee_customer=self.referee_customer1
 		)
 
 		self.assertIsNotNone(result)
@@ -391,10 +391,7 @@ class TestApplyReferralCode(unittest.TestCase):
 			self.skipTest("No test customer available")
 
 		with self.assertRaises(frappe.exceptions.ValidationError):
-			apply_referral_code(
-				referral_code="INVALID-CODE-12345",
-				referee_customer=self.referee_customer1
-			)
+			apply_referral_code(referral_code="INVALID-CODE-12345", referee_customer=self.referee_customer1)
 
 	def test_apply_referral_code_case_insensitive(self):
 		"""Test that referral code is case insensitive"""
@@ -407,15 +404,14 @@ class TestApplyReferralCode(unittest.TestCase):
 			referrer_discount_type="Percentage",
 			referrer_discount_percentage=10,
 			referee_discount_type="Percentage",
-			referee_discount_percentage=10
+			referee_discount_percentage=10,
 		)
 		self.created_referral_codes.append(referral.name)
 		frappe.db.commit()
 
 		# Apply with lowercase
 		result = apply_referral_code(
-			referral_code=referral.referral_code.lower(),
-			referee_customer=self.referee_customer1
+			referral_code=referral.referral_code.lower(), referee_customer=self.referee_customer1
 		)
 
 		self.assertIsNotNone(result)
@@ -436,7 +432,7 @@ class TestApplyReferralCode(unittest.TestCase):
 			referrer_discount_type="Amount",
 			referrer_discount_amount=20,
 			referee_discount_type="Amount",
-			referee_discount_amount=20
+			referee_discount_amount=20,
 		)
 		self.created_referral_codes.append(referral.name)
 
@@ -444,8 +440,7 @@ class TestApplyReferralCode(unittest.TestCase):
 		frappe.db.commit()
 
 		result = apply_referral_code(
-			referral_code=referral.referral_code,
-			referee_customer=self.referee_customer1
+			referral_code=referral.referral_code, referee_customer=self.referee_customer1
 		)
 
 		if result.get("referrer_coupon"):

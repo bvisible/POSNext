@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2025, POS Next and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate, getdate, cstr, cint
-import re
+from frappe.utils import cint, cstr, flt, getdate, nowdate
 
 
 def check_promotion_permissions(action="read"):
@@ -24,7 +24,9 @@ def check_promotion_permissions(action="read"):
 			frappe.throw(_("You don't have permission to view promotions"), frappe.PermissionError)
 	elif action == "write":
 		if not frappe.has_permission("Promotional Scheme", "write"):
-			frappe.throw(_("You don't have permission to create or modify promotions"), frappe.PermissionError)
+			frappe.throw(
+				_("You don't have permission to create or modify promotions"), frappe.PermissionError
+			)
 	elif action == "delete":
 		if not frappe.has_permission("Promotional Scheme", "delete"):
 			frappe.throw(_("You don't have permission to delete promotions"), frappe.PermissionError)
@@ -54,11 +56,19 @@ def get_promotions(pos_profile=None, company=None, include_disabled=False):
 		"Promotional Scheme",
 		filters=filters,
 		fields=[
-			"name", "apply_on", "disable", "selling", "buying",
-			"applicable_for", "valid_from", "valid_upto", "company",
-			"mixed_conditions", "is_cumulative"
+			"name",
+			"apply_on",
+			"disable",
+			"selling",
+			"buying",
+			"applicable_for",
+			"valid_from",
+			"valid_upto",
+			"company",
+			"mixed_conditions",
+			"is_cumulative",
 		],
-		order_by="modified desc"
+		order_by="modified desc",
 	)
 
 	# Enrich with pricing rules count and details
@@ -69,10 +79,7 @@ def get_promotions(pos_profile=None, company=None, include_disabled=False):
 		scheme["source"] = "Promotional Scheme"
 
 		# Get pricing rules count
-		scheme["pricing_rules_count"] = frappe.db.count(
-			"Pricing Rule",
-			{"promotional_scheme": scheme.name}
-		)
+		scheme["pricing_rules_count"] = frappe.db.count("Pricing Rule", {"promotional_scheme": scheme.name})
 
 		# Get discount slabs
 		scheme_doc = frappe.get_doc("Promotional Scheme", scheme.name)
@@ -107,12 +114,26 @@ def get_promotions(pos_profile=None, company=None, include_disabled=False):
 		"Pricing Rule",
 		filters=pr_filters,
 		fields=[
-			"name", "title", "apply_on", "disable", "selling", "buying",
-			"applicable_for", "valid_from", "valid_upto", "company",
-			"rate_or_discount", "discount_percentage", "discount_amount",
-			"min_qty", "max_qty", "min_amt", "max_amt", "priority"
+			"name",
+			"title",
+			"apply_on",
+			"disable",
+			"selling",
+			"buying",
+			"applicable_for",
+			"valid_from",
+			"valid_upto",
+			"company",
+			"rate_or_discount",
+			"discount_percentage",
+			"discount_amount",
+			"min_qty",
+			"max_qty",
+			"min_amt",
+			"max_amt",
+			"priority",
 		],
-		order_by="modified desc"
+		order_by="modified desc",
 	)
 
 	# Transform pricing rules to match promotional scheme structure
@@ -165,7 +186,7 @@ def get_promotion_details(scheme_name):
 		data["pricing_rules"] = frappe.get_all(
 			"Pricing Rule",
 			filters={"promotional_scheme": scheme_name, "disable": 0},
-			fields=["name", "title", "priority", "valid_from", "valid_upto"]
+			fields=["name", "title", "priority", "valid_from", "valid_upto"],
 		)
 
 		return data
@@ -182,15 +203,19 @@ def get_promotion_details(scheme_name):
 
 		# Create a synthetic price discount slab from pricing rule fields
 		if pr.rate_or_discount in ["Discount Percentage", "Discount Amount"]:
-			data["price_discount_slabs"] = [{
-				"min_qty": pr.min_qty or 0,
-				"max_qty": pr.max_qty or 0,
-				"min_amount": pr.min_amt or 0,
-				"max_amount": pr.max_amt or 0,
-				"discount_percentage": pr.discount_percentage if pr.rate_or_discount == "Discount Percentage" else 0,
-				"discount_amount": pr.discount_amount if pr.rate_or_discount == "Discount Amount" else 0,
-				"rate_or_discount": pr.rate_or_discount
-			}]
+			data["price_discount_slabs"] = [
+				{
+					"min_qty": pr.min_qty or 0,
+					"max_qty": pr.max_qty or 0,
+					"min_amount": pr.min_amt or 0,
+					"max_amount": pr.max_amt or 0,
+					"discount_percentage": pr.discount_percentage
+					if pr.rate_or_discount == "Discount Percentage"
+					else 0,
+					"discount_amount": pr.discount_amount if pr.rate_or_discount == "Discount Amount" else 0,
+					"rate_or_discount": pr.rate_or_discount,
+				}
+			]
 		else:
 			data["price_discount_slabs"] = []
 
@@ -228,6 +253,7 @@ def create_promotion(data):
 	check_promotion_permissions("write")
 
 	import json
+
 	if isinstance(data, str):
 		data = json.loads(data)
 
@@ -242,17 +268,19 @@ def create_promotion(data):
 	try:
 		# Create promotional scheme
 		scheme = frappe.new_doc("Promotional Scheme")
-		scheme.update({
-			"name": data.get("name"),
-			"company": data.get("company"),
-			"apply_on": data.get("apply_on"),
-			"selling": 1,  # Always enable selling for POS
-			"buying": 0,
-			"valid_from": data.get("valid_from") or nowdate(),
-			"valid_upto": data.get("valid_upto"),
-			"mixed_conditions": cint(data.get("mixed_conditions", 0)),
-			"is_cumulative": cint(data.get("is_cumulative", 0)),
-		})
+		scheme.update(
+			{
+				"name": data.get("name"),
+				"company": data.get("company"),
+				"apply_on": data.get("apply_on"),
+				"selling": 1,  # Always enable selling for POS
+				"buying": 0,
+				"valid_from": data.get("valid_from") or nowdate(),
+				"valid_upto": data.get("valid_upto"),
+				"mixed_conditions": cint(data.get("mixed_conditions", 0)),
+				"is_cumulative": cint(data.get("is_cumulative", 0)),
+			}
+		)
 
 		# Set applicable for
 		if data.get("applicable_for"):
@@ -260,32 +288,24 @@ def create_promotion(data):
 			applicable_key = frappe.scrub(data["applicable_for"])
 			if data.get(applicable_key):
 				# Handle both single value and list
-				values = data[applicable_key] if isinstance(data[applicable_key], list) else [data[applicable_key]]
+				values = (
+					data[applicable_key] if isinstance(data[applicable_key], list) else [data[applicable_key]]
+				)
 				for value in values:
 					scheme.append(applicable_key, {applicable_key: value})
 
 		# Add items/groups/brands based on apply_on
-		apply_on_key = frappe.scrub(data["apply_on"])
 		items_data = data.get("items", [])
 
 		if data["apply_on"] == "Item Code" and items_data:
 			for item in items_data:
-				scheme.append("items", {
-					"item_code": item.get("item_code"),
-					"uom": item.get("uom")
-				})
+				scheme.append("items", {"item_code": item.get("item_code"), "uom": item.get("uom")})
 		elif data["apply_on"] == "Item Group" and items_data:
 			for item in items_data:
-				scheme.append("item_groups", {
-					"item_group": item.get("item_group"),
-					"uom": item.get("uom")
-				})
+				scheme.append("item_groups", {"item_group": item.get("item_group"), "uom": item.get("uom")})
 		elif data["apply_on"] == "Brand" and items_data:
 			for item in items_data:
-				scheme.append("brands", {
-					"brand": item.get("brand"),
-					"uom": item.get("uom")
-				})
+				scheme.append("brands", {"brand": item.get("brand"), "uom": item.get("uom")})
 
 		# Add discount slab
 		discount_type = data.get("discount_type", "percentage")
@@ -331,15 +351,12 @@ def create_promotion(data):
 		return {
 			"success": True,
 			"message": _("Promotion {0} created successfully").format(scheme.name),
-			"scheme_name": scheme.name
+			"scheme_name": scheme.name,
 		}
 
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title=_("Promotion Creation Failed"),
-			message=frappe.get_traceback()
-		)
+		frappe.log_error(title=_("Promotion Creation Failed"), message=frappe.get_traceback())
 		frappe.throw(_("Failed to create promotion: {0}").format(str(e)))
 
 
@@ -352,6 +369,7 @@ def update_promotion(scheme_name, data):
 	check_promotion_permissions("write")
 
 	import json
+
 	if isinstance(data, str):
 		data = json.loads(data)
 
@@ -370,7 +388,13 @@ def update_promotion(scheme_name, data):
 			scheme.disable = cint(data["disable"])
 
 		# Update discount values in slabs
-		if "discount_value" in data or "min_qty" in data or "max_qty" in data or "min_amt" in data or "max_amt" in data:
+		if (
+			"discount_value" in data
+			or "min_qty" in data
+			or "max_qty" in data
+			or "min_amt" in data
+			or "max_amt" in data
+		):
 			# Update price discount slabs
 			if scheme.price_discount_slabs and len(scheme.price_discount_slabs) > 0:
 				slab = scheme.price_discount_slabs[0]
@@ -389,7 +413,14 @@ def update_promotion(scheme_name, data):
 						slab.discount_amount = flt(data["discount_value"])
 
 		# Update free item slabs
-		if "free_item" in data or "free_qty" in data or "min_qty" in data or "max_qty" in data or "min_amt" in data or "max_amt" in data:
+		if (
+			"free_item" in data
+			or "free_qty" in data
+			or "min_qty" in data
+			or "max_qty" in data
+			or "min_amt" in data
+			or "max_amt" in data
+		):
 			if scheme.product_discount_slabs and len(scheme.product_discount_slabs) > 0:
 				slab = scheme.product_discount_slabs[0]
 				if "free_item" in data:
@@ -408,17 +439,11 @@ def update_promotion(scheme_name, data):
 		# Save
 		scheme.save()
 
-		return {
-			"success": True,
-			"message": _("Promotion {0} updated successfully").format(scheme_name)
-		}
+		return {"success": True, "message": _("Promotion {0} updated successfully").format(scheme_name)}
 
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title=_("Promotion Update Failed"),
-			message=frappe.get_traceback()
-		)
+		frappe.log_error(title=_("Promotion Update Failed"), message=frappe.get_traceback())
 		frappe.throw(_("Failed to update promotion: {0}").format(str(e)))
 
 
@@ -444,15 +469,12 @@ def toggle_promotion(scheme_name, disable=None):
 		return {
 			"success": True,
 			"message": _("Promotion {0} {1}").format(scheme_name, status),
-			"disabled": scheme.disable
+			"disabled": scheme.disable,
 		}
 
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title=_("Promotion Toggle Failed"),
-			message=frappe.get_traceback()
-		)
+		frappe.log_error(title=_("Promotion Toggle Failed"), message=frappe.get_traceback())
 		frappe.throw(_("Failed to toggle promotion: {0}").format(str(e)))
 
 
@@ -468,17 +490,11 @@ def delete_promotion(scheme_name):
 		# This will automatically delete associated pricing rules via on_trash
 		frappe.delete_doc("Promotional Scheme", scheme_name)
 
-		return {
-			"success": True,
-			"message": _("Promotion {0} deleted successfully").format(scheme_name)
-		}
+		return {"success": True, "message": _("Promotion {0} deleted successfully").format(scheme_name)}
 
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title=_("Promotion Deletion Failed"),
-			message=frappe.get_traceback()
-		)
+		frappe.log_error(title=_("Promotion Deletion Failed"), message=frappe.get_traceback())
 		frappe.throw(_("Failed to delete promotion: {0}").format(str(e)))
 
 
@@ -487,21 +503,13 @@ def get_item_groups(company=None):
 	"""Get all item groups."""
 	# Item Group is a global doctype, not company-specific
 	# Return all item groups (both parent groups and leaf nodes)
-	return frappe.get_all(
-		"Item Group",
-		fields=["name", "parent_item_group", "is_group"],
-		order_by="name"
-	)
+	return frappe.get_all("Item Group", fields=["name", "parent_item_group", "is_group"], order_by="name")
 
 
 @frappe.whitelist()
 def get_brands():
 	"""Get all brands."""
-	return frappe.get_all(
-		"Brand",
-		fields=["name"],
-		order_by="name"
-	)
+	return frappe.get_all("Brand", fields=["name"], order_by="name")
 
 
 @frappe.whitelist()
@@ -522,7 +530,7 @@ def search_items(search_term, pos_profile=None, limit=20):
 		return []
 
 	# Remove any special SQL characters and limit length
-	search_term = re.sub(r'[^\w\s-]', '', search_term)[:100]
+	search_term = re.sub(r"[^\w\s-]", "", search_term)[:100]
 
 	if len(search_term) < 2:
 		return []
@@ -541,19 +549,17 @@ def search_items(search_term, pos_profile=None, limit=20):
 	return frappe.get_all(
 		"Item",
 		filters=filters,
-		or_filters={
-			"item_code": ["like", f"%{search_term}%"],
-			"item_name": ["like", f"%{search_term}%"]
-		},
+		or_filters={"item_code": ["like", f"%{search_term}%"], "item_name": ["like", f"%{search_term}%"]},
 		fields=["item_code", "item_name", "item_group", "brand", "stock_uom"],
 		limit=limit,
-		order_by="item_name"
+		order_by="item_name",
 	)
 
 
 # ==================== COUPON MANAGEMENT ====================
 # //// complete Phase 8 cleanup - remove POS Coupon dependency — 5091779
 # Uses ERPNext Coupon Code directly for native integration
+
 
 # //// Neoffice — ▼▼▼ the whole coupon-management section that follows (get_coupons,
 # //// get_coupon_details, create_coupon, update_coupon, toggle_coupon_status, delete_coupon)
@@ -575,13 +581,14 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 	Uses ERPNext Coupon Code doctype directly for native integration.
 	"""
 	check_promotion_permissions("read")
-# //// Implement referral code management with validation and coupon generat… — f02a815
+	# //// Implement referral code management with validation and coupon generat… — f02a815
 
 	today = getdate(nowdate())
 
 	# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 	# Query ERPNext Coupon Code with Pricing Rule join for company filter
-	coupons = frappe.db.sql("""
+	coupons = frappe.db.sql(
+		"""
 		SELECT
 			cc.name,
 			cc.coupon_name,
@@ -603,11 +610,10 @@ def get_coupons(company=None, include_disabled=False, coupon_type=None):
 			AND (%(include_disabled)s = 1 OR pr.disable = 0 OR pr.disable IS NULL)
 			AND (%(coupon_type)s IS NULL OR cc.coupon_type = %(coupon_type)s)
 		ORDER BY cc.modified DESC
-	""", {
-		"company": company,
-		"include_disabled": 1 if include_disabled else 0,
-		"coupon_type": coupon_type
-	}, as_dict=True)
+	""",
+		{"company": company, "include_disabled": 1 if include_disabled else 0, "coupon_type": coupon_type},
+		as_dict=True,
+	)
 
 	# Enrich with status and customer name
 	for coupon in coupons:
@@ -674,7 +680,7 @@ def get_coupon_details(coupon_name):
 			"Pricing Rule",
 			coupon.pricing_rule,
 			["rate_or_discount", "discount_percentage", "discount_amount", "min_amt", "max_amt"],
-			as_dict=True
+			as_dict=True,
 		)
 		if pr:
 			data["discount_type"] = "Percentage" if pr.rate_or_discount == "Discount Percentage" else "Amount"
@@ -716,6 +722,7 @@ def create_coupon(data):
 	check_promotion_permissions("write")
 
 	import json
+
 	if isinstance(data, str):
 		data = json.loads(data)
 
@@ -748,51 +755,66 @@ def create_coupon(data):
 		if not coupon_code:
 			import random
 			import string
+
 			coupon_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
 		# Create Pricing Rule first
-		pricing_rule = frappe.get_doc({
-			"doctype": "Pricing Rule",
-			"title": f"Coupon - {coupon_code}",
-			"apply_on": "Transaction",
-			"price_or_product_discount": "Price",
-			"rate_or_discount": "Discount Percentage" if data.get("discount_type") == "Percentage" else "Discount Amount",
-			"discount_percentage": flt(data.get("discount_percentage")) if data.get("discount_type") == "Percentage" else 0,
-			"discount_amount": flt(data.get("discount_amount")) if data.get("discount_type") == "Amount" else 0,
-			"min_amt": flt(data.get("min_amount")) if data.get("min_amount") else 0,
-			"max_amt": flt(data.get("max_amount")) if data.get("max_amount") else 0,
-			"selling": 1,
-			"buying": 0,
-			"company": data.get("company"),
-			# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-			"coupon_code_based": 1,
-			"valid_from": data.get("valid_from") or nowdate(),
-			"valid_upto": data.get("valid_upto"),
-			# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-			"priority": 1,
-			"disable": 0,
-		})
+		pricing_rule = frappe.get_doc(
+			{
+				"doctype": "Pricing Rule",
+				"title": f"Coupon - {coupon_code}",
+				"apply_on": "Transaction",
+				"price_or_product_discount": "Price",
+				"rate_or_discount": "Discount Percentage"
+				if data.get("discount_type") == "Percentage"
+				else "Discount Amount",
+				"discount_percentage": flt(data.get("discount_percentage"))
+				if data.get("discount_type") == "Percentage"
+				else 0,
+				"discount_amount": flt(data.get("discount_amount"))
+				if data.get("discount_type") == "Amount"
+				else 0,
+				"min_amt": flt(data.get("min_amount")) if data.get("min_amount") else 0,
+				"max_amt": flt(data.get("max_amount")) if data.get("max_amount") else 0,
+				"selling": 1,
+				"buying": 0,
+				"company": data.get("company"),
+				# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
+				"coupon_code_based": 1,
+				"valid_from": data.get("valid_from") or nowdate(),
+				"valid_upto": data.get("valid_upto"),
+				# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
+				"priority": 1,
+				"disable": 0,
+			}
+		)
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		pricing_rule.insert(ignore_permissions=True)
 
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		# Create Coupon Code
-		coupon = frappe.get_doc({
-			"doctype": "Coupon Code",
-			"coupon_name": data.get("coupon_name"),
-			"coupon_code": coupon_code,
-			"coupon_type": data.get("coupon_type"),
-			"pricing_rule": pricing_rule.name,
-			"valid_from": data.get("valid_from") or nowdate(),
-			"valid_upto": data.get("valid_upto"),
-			"maximum_use": cint(data.get("maximum_use", 0)) or 0,
-			"used": 0,
-			"customer": data.get("customer"),
-			# Gift card custom fields
-			"pos_next_gift_card": 1 if data.get("coupon_type") == "Gift Card" else 0,
-			"gift_card_amount": flt(data.get("discount_amount")) if data.get("coupon_type") == "Gift Card" else 0,
-			"original_gift_card_amount": flt(data.get("discount_amount")) if data.get("coupon_type") == "Gift Card" else 0,
-		})
+		coupon = frappe.get_doc(
+			{
+				"doctype": "Coupon Code",
+				"coupon_name": data.get("coupon_name"),
+				"coupon_code": coupon_code,
+				"coupon_type": data.get("coupon_type"),
+				"pricing_rule": pricing_rule.name,
+				"valid_from": data.get("valid_from") or nowdate(),
+				"valid_upto": data.get("valid_upto"),
+				"maximum_use": cint(data.get("maximum_use", 0)) or 0,
+				"used": 0,
+				"customer": data.get("customer"),
+				# Gift card custom fields
+				"pos_next_gift_card": 1 if data.get("coupon_type") == "Gift Card" else 0,
+				"gift_card_amount": flt(data.get("discount_amount"))
+				if data.get("coupon_type") == "Gift Card"
+				else 0,
+				"original_gift_card_amount": flt(data.get("discount_amount"))
+				if data.get("coupon_type") == "Gift Card"
+				else 0,
+			}
+		)
 		coupon.insert(ignore_permissions=True)
 
 		return {
@@ -800,16 +822,13 @@ def create_coupon(data):
 			"message": _("Coupon {0} created successfully").format(coupon.coupon_code),
 			# //// add customer field and use unique hash for coupon names — 56c0061
 			"name": coupon.name,
-			"coupon_code": coupon.coupon_code
+			"coupon_code": coupon.coupon_code,
 		}
 
 	except Exception as e:
 		frappe.db.rollback()
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-		frappe.log_error(
-			"Coupon Creation Failed",
-			frappe.get_traceback()
-		)
+		frappe.log_error("Coupon Creation Failed", frappe.get_traceback())
 		frappe.throw(_("Failed to create coupon: {0}").format(str(e)))
 
 
@@ -826,6 +845,7 @@ def update_coupon(data):
 	check_promotion_permissions("write")
 
 	import json
+
 	if isinstance(data, str):
 		data = json.loads(data)
 
@@ -857,9 +877,13 @@ def update_coupon(data):
 			pr = frappe.get_doc("Pricing Rule", coupon.pricing_rule)
 
 			if "discount_type" in data:
-				pr.rate_or_discount = "Discount Percentage" if data["discount_type"] == "Percentage" else "Discount Amount"
+				pr.rate_or_discount = (
+					"Discount Percentage" if data["discount_type"] == "Percentage" else "Discount Amount"
+				)
 			if "discount_percentage" in data:
-				pr.discount_percentage = flt(data["discount_percentage"]) if data["discount_percentage"] else 0
+				pr.discount_percentage = (
+					flt(data["discount_percentage"]) if data["discount_percentage"] else 0
+				)
 			if "discount_amount" in data:
 				pr.discount_amount = flt(data["discount_amount"]) if data["discount_amount"] else 0
 			if "min_amount" in data:
@@ -873,18 +897,12 @@ def update_coupon(data):
 
 			pr.save(ignore_permissions=True)
 
-		return {
-			"success": True,
-			"message": _("Coupon {0} updated successfully").format(coupon.coupon_code)
-		}
+		return {"success": True, "message": _("Coupon {0} updated successfully").format(coupon.coupon_code)}
 
 	except Exception as e:
 		frappe.db.rollback()
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-		frappe.log_error(
-			"Coupon Update Failed",
-			frappe.get_traceback()
-		)
+		frappe.log_error("Coupon Update Failed", frappe.get_traceback())
 		frappe.throw(_("Failed to update coupon: {0}").format(str(e)))
 
 
@@ -925,16 +943,13 @@ def toggle_coupon(coupon_name, disabled=None):
 			"success": True,
 			"message": _("Coupon {0} {1}").format(coupon.coupon_code, status),
 			# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-			"disabled": pr.disable
+			"disabled": pr.disable,
 		}
 
 	except Exception as e:
 		frappe.db.rollback()
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-		frappe.log_error(
-			"Coupon Toggle Failed",
-			frappe.get_traceback()
-		)
+		frappe.log_error("Coupon Toggle Failed", frappe.get_traceback())
 		frappe.throw(_("Failed to toggle coupon: {0}").format(str(e)))
 
 
@@ -953,9 +968,11 @@ def delete_coupon(coupon_name):
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		coupon = frappe.get_doc("Coupon Code", coupon_name)
 		if coupon.used > 0:
-			frappe.throw(_("Cannot delete coupon {0} as it has been used {1} times").format(
-				coupon.coupon_code, coupon.used
-			))
+			frappe.throw(
+				_("Cannot delete coupon {0} as it has been used {1} times").format(
+					coupon.coupon_code, coupon.used
+				)
+			)
 
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
 		# Store pricing rule name before deletion
@@ -968,18 +985,12 @@ def delete_coupon(coupon_name):
 		if pricing_rule_name and frappe.db.exists("Pricing Rule", pricing_rule_name):
 			frappe.delete_doc("Pricing Rule", pricing_rule_name, ignore_permissions=True)
 
-		return {
-			"success": True,
-			"message": _("Coupon deleted successfully")
-		}
+		return {"success": True, "message": _("Coupon deleted successfully")}
 
 	except Exception as e:
 		frappe.db.rollback()
 		# //// Neoffice — POS Coupon → ERPNext Coupon Code; see this section's block header (5091779d).
-		frappe.log_error(
-			"Coupon Deletion Failed",
-			frappe.get_traceback()
-		)
+		frappe.log_error("Coupon Deletion Failed", frappe.get_traceback())
 		frappe.throw(_("Failed to delete coupon: {0}").format(str(e)))
 
 
@@ -987,6 +998,7 @@ def delete_coupon(coupon_name):
 # =============================================================================
 # REFERRAL CODE APIs
 # =============================================================================
+
 
 @frappe.whitelist()
 def apply_referral_code(referral_code, customer):
@@ -1008,14 +1020,11 @@ def apply_referral_code(referral_code, customer):
 			"success": True,
 			"message": _("Referral code applied successfully! You've received a welcome coupon."),
 			"referrer_coupon": result.get("referrer_coupon"),
-			"referee_coupon": result.get("referee_coupon")
+			"referee_coupon": result.get("referee_coupon"),
 		}
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title=_("Apply Referral Code Failed"),
-			message=frappe.get_traceback()
-		)
+		frappe.log_error(title=_("Apply Referral Code Failed"), message=frappe.get_traceback())
 		frappe.throw(_("Failed to apply referral code: {0}").format(str(e)))
 
 
@@ -1034,12 +1043,23 @@ def get_referral_codes(company=None, include_disabled=False):
 		"Referral Code",
 		filters=filters,
 		fields=[
-			"name", "referral_name", "referral_code", "customer", "customer_name",
-			"company", "campaign", "disabled", "referrals_count",
-			"referrer_discount_type", "referrer_discount_percentage", "referrer_discount_amount",
-			"referee_discount_type", "referee_discount_percentage", "referee_discount_amount"
+			"name",
+			"referral_name",
+			"referral_code",
+			"customer",
+			"customer_name",
+			"company",
+			"campaign",
+			"disabled",
+			"referrals_count",
+			"referrer_discount_type",
+			"referrer_discount_percentage",
+			"referrer_discount_amount",
+			"referee_discount_type",
+			"referee_discount_percentage",
+			"referee_discount_amount",
 		],
-		order_by="creation desc"
+		order_by="creation desc",
 	)
 
 	return referrals
@@ -1067,10 +1087,16 @@ def get_referral_details(referral_name):
 		filters={"referral_code": referral_name},
 		# //// Neoffice — same ERPNext Coupon Code field list; see the marker above (771595d2).
 		fields=[
-			"name", "coupon_code", "coupon_type", "customer",
-			"used", "valid_from", "valid_upto", "maximum_use"
+			"name",
+			"coupon_code",
+			"coupon_type",
+			"customer",
+			"used",
+			"valid_from",
+			"valid_upto",
+			"maximum_use",
 		],
-		order_by="creation desc"
+		order_by="creation desc",
 	)
 
 	# //// Neoffice — same ERPNext Coupon Code field list; see the marker above (771595d2).

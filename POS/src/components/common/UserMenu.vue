@@ -21,8 +21,18 @@
 				<p class="text-sm font-semibold text-gray-900">{{ userName }}</p>
 			</div>
 			<Avatar :image="profileImage" :name="userName" :initials="userInitials" size="sm" />
-			<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+			<svg
+				class="w-4 h-4 text-gray-500"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M19 9l-7 7-7-7"
+				/>
 			</svg>
 		</button>
 
@@ -34,10 +44,17 @@
 		>
 			<!-- User Info Header -->
 			<div class="px-4 py-3 border-b border-gray-100 flex items-center">
-				<Avatar :image="profileImage" :name="userName" :initials="userInitials" size="md" />
+				<Avatar
+					:image="profileImage"
+					:name="userName"
+					:initials="userInitials"
+					size="md"
+				/>
 				<div class="flex-1 mx-2 min-w-0">
 					<p class="text-sm font-semibold text-gray-900 truncate">{{ userName }}</p>
-					<p v-if="profileName" class="text-xs text-gray-500 mt-0.5 truncate">{{ profileName }}</p>
+					<p v-if="profileName" class="text-xs text-gray-500 mt-0.5 truncate">
+						{{ profileName }}
+					</p>
 				</div>
 			</div>
 
@@ -47,7 +64,7 @@
 			</div>
 
 			<!-- Divider -->
-			<hr v-if="showDivider" class="my-2 border-gray-100">
+			<hr v-if="showDivider" class="my-2 border-gray-100" />
 
 			<!-- Additional Actions -->
 			<slot name="additional-actions"></slot>
@@ -61,12 +78,22 @@
 			     shared data-theme; this lets the till follow / set the colour mode
 			     itself (synced via the same neocockpit-colormode key). //// neoffice -->
 			<div>
-				<hr class="my-2 border-gray-100">
+				<hr class="my-2 border-gray-100" />
 				<div class="px-4 py-2 flex items-center gap-3">
-					<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+					<svg
+						class="w-5 h-5 text-gray-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+						/>
 					</svg>
-					<span class="flex-1 text-sm text-gray-700">{{ __('Appearance') }}</span>
+					<span class="flex-1 text-sm text-gray-700">{{ __("Appearance") }}</span>
 					<div class="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5">
 						<button
 							v-for="m in colorModes"
@@ -74,10 +101,24 @@
 							@click.stop="applyColorMode(m.value)"
 							:title="__(m.label)"
 							class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
-							:class="colorMode === m.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+							:class="
+								colorMode === m.value
+									? 'bg-white text-gray-900 shadow-sm'
+									: 'text-gray-500 hover:text-gray-700'
+							"
 						>
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="m.icon"/>
+							<svg
+								class="w-4 h-4"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									:d="m.icon"
+								/>
 							</svg>
 						</button>
 					</div>
@@ -86,15 +127,25 @@
 
 			<!-- Language Switcher -->
 			<div>
-				<hr class="my-2 border-gray-100">
+				<hr class="my-2 border-gray-100" />
 				<button
 					@click.stop="showLanguageDropdown = !showLanguageDropdown"
 					class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
 				>
-					<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+					<svg
+						class="w-5 h-5 text-gray-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+						/>
 					</svg>
-					<span class="flex-1">{{ __('Language') }}</span>
+					<span class="flex-1">{{ __("Language") }}</span>
 					<div class="flex items-center gap-2">
 						<img
 							:src="supportedLocales[locale]?.flagUrlSvg"
@@ -108,24 +159,28 @@
 							stroke="currentColor"
 							viewBox="0 0 24 24"
 						>
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
 						</svg>
 					</div>
 				</button>
 
 				<!-- Language Dropdown -->
-				<div
-					v-if="showLanguageDropdown"
-					class="bg-gray-50 border-t border-gray-100"
-				>
+				<div v-if="showLanguageDropdown" class="bg-gray-50 border-t border-gray-100">
 					<button
 						v-for="(config, code) in supportedLocales"
 						:key="code"
 						@click.stop="handleLanguageChange(code)"
 						class="w-full text-start px-4 py-2.5 text-sm flex items-center gap-3 transition-colors"
-						:class="locale === code
-							? 'bg-blue-50 text-blue-700'
-							: 'text-gray-600 hover:bg-gray-100'"
+						:class="
+							locale === code
+								? 'bg-blue-50 text-blue-700'
+								: 'text-gray-600 hover:bg-gray-100'
+						"
 					>
 						<img
 							:src="config.flagUrlSvg"
@@ -150,7 +205,7 @@
 			</div>
 
 			<!-- Divider -->
-			<hr v-if="showLogout" class="my-2 border-gray-100">
+			<hr v-if="showLogout" class="my-2 border-gray-100" />
 
 			<!-- Logout -->
 			<button
@@ -159,27 +214,30 @@
 				class="w-full text-start px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
 			>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+					/>
 				</svg>
-				<span class="mx-4">{{ __('Logout') }}</span>
+				<span class="mx-4">{{ __("Logout") }}</span>
 			</button>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { computed, h, onMounted, onUnmounted, ref, watch } from "vue"
-import { useLocale } from "@/composables/useLocale"
+import { computed, h, onMounted, onUnmounted, ref, watch } from "vue";
+import { useLocale } from "@/composables/useLocale";
 
 // Avatar Sub-component
 const Avatar = (props) => {
 	//// Neoffice — formatting only, no behaviour change: Biome rewrote this h() call across 20
 	//// lines during the whole-source formatter pass (458d81a9, 2026-03-20 "remove BrainWise
 	//// branding, add restaurant mode, and code formatting"). The Avatar itself is upstream's.
-	const sizeClass = props.size === "sm" ? "w-9 h-9" : "w-10 h-10"
-	const bgClass = props.image
-		? "bg-gray-200"
-		: "bg-gradient-to-br from-blue-500 to-blue-600"
+	const sizeClass = props.size === "sm" ? "w-9 h-9" : "w-10 h-10";
+	const bgClass = props.image ? "bg-gray-200" : "bg-gradient-to-br from-blue-500 to-blue-600";
 
 	return h(
 		"div",
@@ -192,13 +250,13 @@ const Avatar = (props) => {
 						src: props.image,
 						alt: props.name,
 						class: "w-full h-full object-cover",
-					})
+				  })
 				: h("span", { class: "text-sm font-bold text-white" }, props.initials),
-		],
-	)
-}
+		]
+	);
+};
 
-const { locale, supportedLocales, changeLocale } = useLocale()
+const { locale, supportedLocales, changeLocale } = useLocale();
 
 const props = defineProps({
 	userName: {
@@ -221,13 +279,13 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
-})
+});
 
-const emit = defineEmits(["logout", "menu-opened", "menu-closed"])
+const emit = defineEmits(["logout", "menu-opened", "menu-closed"]);
 
-const menuRef = ref(null)
-const isOpen = ref(false)
-const showLanguageDropdown = ref(false)
+const menuRef = ref(null);
+const isOpen = ref(false);
+const showLanguageDropdown = ref(false);
 
 //// Neoffice — colour-mode plumbing with no upstream counterpart. It mirrors the NeoCockpit
 //// toggle (localStorage neocockpit-colormode plus theme_active for other open surfaces) and
@@ -240,21 +298,42 @@ const showLanguageDropdown = ref(false)
 // drive it here, synced via the same `neocockpit-colormode` localStorage key
 // used by the cockpit so the till matches the rest of the product.
 const colorModes = [
-	{ value: "system", label: "System", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
-	{ value: "light", label: "Light", icon: "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" },
-	{ value: "dark", label: "Dark", icon: "M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" },
-]
-const colorMode = ref("system")
+	{
+		value: "system",
+		label: "System",
+		icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
+	},
+	{
+		value: "light",
+		label: "Light",
+		icon: "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z",
+	},
+	{
+		value: "dark",
+		label: "Dark",
+		icon: "M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z",
+	},
+];
+const colorMode = ref("system");
 function applyColorMode(mode) {
-	colorMode.value = mode
-	try { localStorage.setItem("neocockpit-colormode", mode) } catch (e) { /* noop */ }
-	const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
-	const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode
-	document.documentElement.setAttribute("data-theme", theme)
-	document.documentElement.classList.toggle("dark", theme === "dark")
+	colorMode.value = mode;
+	try {
+		localStorage.setItem("neocockpit-colormode", mode);
+	} catch (e) {
+		/* noop */
+	}
+	const sysDark =
+		typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+	const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode;
+	document.documentElement.setAttribute("data-theme", theme);
+	document.documentElement.classList.toggle("dark", theme === "dark");
 	// parity with the NeoCockpit toggle: also publish the resolved theme so other
 	// open surfaces (desk, Insights) pick it up live via the storage event
-	try { localStorage.setItem("theme_active", theme) } catch (e) { /* noop */ }
+	try {
+		localStorage.setItem("theme_active", theme);
+	} catch (e) {
+		/* noop */
+	}
 	// Persist Frappe's native User.desk_theme too: the desk cockpit reads it via
 	// boot as the AUTHORITATIVE source on a fresh load (it deliberately never
 	// fights the server), so without this a reloaded desk would ignore a change
@@ -262,17 +341,18 @@ function applyColorMode(mode) {
 	// latter writes the DB directly and leaves the desk's boot CACHE stale, so the
 	// change wouldn't survive a reload. set_value triggers User.on_update which
 	// invalidates the boot cache. Mirrors the cockpit toggle. Best-effort. //// neoffice
-	;(async () => {
+	(async () => {
 		try {
-			const deskTheme = mode === "system" ? "Automatic" : mode.charAt(0).toUpperCase() + mode.slice(1)
-			const csrf = window.csrf_token || ""
+			const deskTheme =
+				mode === "system" ? "Automatic" : mode.charAt(0).toUpperCase() + mode.slice(1);
+			const csrf = window.csrf_token || "";
 			const user = await fetch("/api/method/frappe.auth.get_logged_user", {
 				headers: { "X-Frappe-CSRF-Token": csrf },
 			})
 				.then((r) => r.json())
 				.then((d) => d.message)
-				.catch(() => null)
-			if (!user || user === "Guest") return
+				.catch(() => null);
+			if (!user || user === "Guest") return;
 			await fetch("/api/method/frappe.client.set_value", {
 				method: "POST",
 				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
@@ -282,51 +362,51 @@ function applyColorMode(mode) {
 					fieldname: "desk_theme",
 					value: deskTheme,
 				}),
-			})
+			});
 		} catch (e) {
 			/* noop */
 		}
-	})()
+	})();
 }
 
 const userInitials = computed(() => {
-	const parts = (props.userName || "").split(" ").filter(Boolean)
+	const parts = (props.userName || "").split(" ").filter(Boolean);
 	if (parts.length >= 2) {
-		return (parts[0][0] + parts[1][0]).toUpperCase()
+		return (parts[0][0] + parts[1][0]).toUpperCase();
 	}
-	return (props.userName || "U").substring(0, 2).toUpperCase() || "U"
-})
+	return (props.userName || "U").substring(0, 2).toUpperCase() || "U";
+});
 
 // Watch isOpen and emit events
 watch(isOpen, (newValue) => {
 	if (newValue) {
-		emit("menu-opened")
+		emit("menu-opened");
 	} else {
-		emit("menu-closed")
-		showLanguageDropdown.value = false
+		emit("menu-closed");
+		showLanguageDropdown.value = false;
 	}
-})
+});
 
 function handleMenuItemClick() {
-	isOpen.value = false
+	isOpen.value = false;
 }
 
 function handleLogout() {
-	isOpen.value = false
-	emit("logout")
+	isOpen.value = false;
+	emit("logout");
 }
 
 async function handleLanguageChange(code) {
 	if (code === locale.value) {
-		return
+		return;
 	}
-	isOpen.value = false
-	await changeLocale(code)
+	isOpen.value = false;
+	await changeLocale(code);
 }
 
 function handleClickOutside(event) {
 	if (isOpen.value && menuRef.value && !menuRef.value.contains(event.target)) {
-		isOpen.value = false
+		isOpen.value = false;
 	}
 }
 
@@ -338,12 +418,16 @@ onMounted(() => {
 	//// (System/Light/Dark) switch in the user menu"; c83a22ce persists User.desk_theme so a
 	//// fresh desk load matches what the cashier chose.)
 	// adopt the saved colour mode on startup so the till follows the product theme
-	try { colorMode.value = localStorage.getItem("neocockpit-colormode") || "system" } catch (e) { /* noop */ }
-	applyColorMode(colorMode.value)
-	document.addEventListener("click", handleClickOutside)
-})
+	try {
+		colorMode.value = localStorage.getItem("neocockpit-colormode") || "system";
+	} catch (e) {
+		/* noop */
+	}
+	applyColorMode(colorMode.value);
+	document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-	document.removeEventListener("click", handleClickOutside)
-})
+	document.removeEventListener("click", handleClickOutside);
+});
 </script>

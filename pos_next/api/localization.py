@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
@@ -9,6 +8,7 @@
 # //// show all languages when allowed_locales is empty — c081f41
 import os
 import frappe
+
 # //// Neoffice — `_` added: the refusals below were bare English strings, shown as is.
 from frappe import _
 from frappe import translate
@@ -48,10 +48,7 @@ def get_user_language():
 	# Get user's language preference
 	language = frappe.db.get_value("User", frappe.session.user, "language") or "en"
 
-	return {
-		"success": True,
-		"locale": language.lower()
-	}
+	return {"success": True, "locale": language.lower()}
 
 
 @frappe.whitelist()
@@ -63,10 +60,7 @@ def get_allowed_locales():
 		dict: List of allowed locale codes
 	"""
 	allowed = get_allowed_locales_from_settings()
-	return {
-		"success": True,
-		"locales": list(allowed)
-	}
+	return {"success": True, "locales": list(allowed)}
 
 
 def get_supported_locales():
@@ -77,22 +71,22 @@ def get_supported_locales():
 	Returns:
 		set: Set of supported locale codes
 	"""
-	supported = {'en'}  # English is always supported as base language
+	supported = {"en"}  # English is always supported as base language
 
 	try:
 		# Get the locale directory path for pos_next app
-		locale_path = frappe.get_app_path('pos_next', 'locale')
+		locale_path = frappe.get_app_path("pos_next", "locale")
 
 		if os.path.exists(locale_path):
 			for filename in os.listdir(locale_path):
-				if filename.endswith('.po'):
+				if filename.endswith(".po"):
 					# Extract locale code from filename (e.g., 'fr.po' -> 'fr')
 					locale_code = filename[:-3]  # Remove '.po' extension
-					if locale_code != 'main':  # Skip template file
+					if locale_code != "main":  # Skip template file
 						supported.add(locale_code.lower())
 	except Exception:
 		# Fallback to known locales if directory scan fails
-		supported = {'en', 'ar', 'pt_br', 'fr'}
+		supported = {"en", "ar", "pt_br", "fr"}
 
 	return supported
 
@@ -123,12 +117,7 @@ def get_allowed_locales_from_settings():
 	# //// fall back to "all languages" — and it now says so in the Error Log.
 	try:
 		# Get the first POS Settings (or we could use a specific one based on user's profile)
-		pos_settings_list = frappe.get_all(
-			"POS Settings",
-			filters={"enabled": 1},
-			fields=["name"],
-			limit=1
-		)
+		pos_settings_list = frappe.get_all("POS Settings", filters={"enabled": 1}, fields=["name"], limit=1)
 
 		if not pos_settings_list:
 			# //// Neoffice — empty allowed_locales now means "all languages"; see the marker above (c081f418).
@@ -204,12 +193,8 @@ def change_user_language(locale):
 		frappe.db.set_value("User", frappe.session.user, "language", locale)
 		frappe.db.commit()
 
-		return {
-			"success": True,
-			"message": f"Language changed to {locale}",
-			"locale": locale
-		}
+		return {"success": True, "message": f"Language changed to {locale}", "locale": locale}
 	except Exception as e:
-		frappe.log_error(f"Failed to change user language: {str(e)}")
+		frappe.log_error(f"Failed to change user language: {e!s}")
 		# //// Neoffice — template translated first, the error text formatted in after (the f-string was bare English).
 		frappe.throw(_("Failed to change language: {0}").format(str(e)), frappe.ValidationError)

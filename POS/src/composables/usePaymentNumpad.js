@@ -3,15 +3,15 @@
  * Handles numeric keypad state, input, and keyboard support for payment dialog
  */
 
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
 export function usePaymentNumpad(options = {}) {
-	const numpadDisplay = ref("")
+	const numpadDisplay = ref("");
 
 	const numpadValue = computed(() => {
-		const val = Number.parseFloat(numpadDisplay.value)
-		return Number.isNaN(val) ? 0 : val
-	})
+		const val = Number.parseFloat(numpadDisplay.value);
+		return Number.isNaN(val) ? 0 : val;
+	});
 
 	/**
 	 * Add a character to the numpad display
@@ -20,38 +20,38 @@ export function usePaymentNumpad(options = {}) {
 	function numpadInput(char) {
 		// Prevent multiple decimal points
 		if (char === "." && numpadDisplay.value.includes(".")) {
-			return
+			return;
 		}
 
 		// Limit decimal places to 2
 		if (numpadDisplay.value.includes(".")) {
-			const [, decimal] = numpadDisplay.value.split(".")
+			const [, decimal] = numpadDisplay.value.split(".");
 			if (decimal && decimal.length >= 2) {
-				return
+				return;
 			}
 		}
 
 		// Limit total length to reasonable amount
 		if (numpadDisplay.value.length >= 10) {
-			return
+			return;
 		}
 
 		// Add the character
-		numpadDisplay.value += char
+		numpadDisplay.value += char;
 	}
 
 	/**
 	 * Remove the last character from numpad display
 	 */
 	function numpadBackspace() {
-		numpadDisplay.value = numpadDisplay.value.slice(0, -1)
+		numpadDisplay.value = numpadDisplay.value.slice(0, -1);
 	}
 
 	/**
 	 * Clear the numpad display
 	 */
 	function numpadClear() {
-		numpadDisplay.value = ""
+		numpadDisplay.value = "";
 	}
 
 	/**
@@ -60,9 +60,9 @@ export function usePaymentNumpad(options = {}) {
 	 */
 	function setNumpadValue(value) {
 		if (typeof value === "number") {
-			numpadDisplay.value = value.toFixed(2)
+			numpadDisplay.value = value.toFixed(2);
 		} else {
-			numpadDisplay.value = String(value)
+			numpadDisplay.value = String(value);
 		}
 	}
 
@@ -70,7 +70,7 @@ export function usePaymentNumpad(options = {}) {
 	//// Neoffice — Biome reformat only: the destructured options collapsed onto one line
 	//// (458d81a9). No behaviour change; see the block just below for the merge instruction.
 	//// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
-	const { isEnabled = ref(true), onEnter = null } = options
+	const { isEnabled = ref(true), onEnter = null } = options;
 
 	/**
 	 * Handle keyboard input for physical keyboard support
@@ -84,76 +84,75 @@ export function usePaymentNumpad(options = {}) {
 		//// wholesale and re-run the formatter, do not hand-merge these hunks
 		//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
 		//// formatting").
-		const enabled =
-			typeof isEnabled === "function" ? isEnabled() : isEnabled.value
-		if (!enabled) return
+		const enabled = typeof isEnabled === "function" ? isEnabled() : isEnabled.value;
+		if (!enabled) return;
 
 		// Don't handle if user is typing in an input field
-		const activeElement = document.activeElement
+		const activeElement = document.activeElement;
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		const isInInput =
 			activeElement &&
 			(activeElement.tagName === "INPUT" ||
 				activeElement.tagName === "TEXTAREA" ||
-				activeElement.isContentEditable)
-		if (isInInput) return
+				activeElement.isContentEditable);
+		if (isInInput) return;
 
-		const key = event.key
+		const key = event.key;
 
 		// Handle numeric keys (0-9)
 		if (/^[0-9]$/.test(key)) {
-			event.preventDefault()
-			numpadInput(key)
-			return
+			event.preventDefault();
+			numpadInput(key);
+			return;
 		}
 
 		// Handle decimal point (. or ,)
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "." || key === ",") {
-			event.preventDefault()
+			event.preventDefault();
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-			numpadInput(".")
-			return
+			numpadInput(".");
+			return;
 		}
 
 		// Handle backspace
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "Backspace") {
-			event.preventDefault()
-			numpadBackspace()
-			return
+			event.preventDefault();
+			numpadBackspace();
+			return;
 		}
 
 		// Handle Delete or Escape to clear
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "Delete" || key === "Escape") {
-			event.preventDefault()
-			numpadClear()
-			return
+			event.preventDefault();
+			numpadClear();
+			return;
 		}
 
 		// Handle Enter - call custom handler if provided
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 		if (key === "Enter") {
-			event.preventDefault()
+			event.preventDefault();
 			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
 			if (onEnter && typeof onEnter === "function") {
-				onEnter(numpadValue.value)
+				onEnter(numpadValue.value);
 			}
-			return
+			return;
 		}
 	}
 
 	// Set up keyboard event listeners
 	onMounted(() => {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		window.addEventListener("keydown", handleKeyboardInput)
-	})
+		window.addEventListener("keydown", handleKeyboardInput);
+	});
 
 	onUnmounted(() => {
 		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-		window.removeEventListener("keydown", handleKeyboardInput)
-	})
+		window.removeEventListener("keydown", handleKeyboardInput);
+	});
 
 	return {
 		// State
@@ -165,5 +164,5 @@ export function usePaymentNumpad(options = {}) {
 		numpadBackspace,
 		numpadClear,
 		setNumpadValue,
-	}
+	};
 }

@@ -105,9 +105,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 					| Customer.mobile_no.like(like)
 					| Customer.email_id.like(like)
 				)
-			result = (
-				query.orderby(Customer.customer_name).limit(customer_limit).run(as_dict=True)
-			)
+			result = query.orderby(Customer.customer_name).limit(customer_limit).run(as_dict=True)
 		else:
 			result = frappe.get_all(
 				"Customer",
@@ -120,7 +118,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 		frappe.logger().debug(f"get_customers returned {len(result)} customers")
 		return result
 	except Exception as e:
-		frappe.logger().error(f"Error in get_customers: {str(e)}")
+		frappe.logger().error(f"Error in get_customers: {e!s}")
 		frappe.logger().error(frappe.get_traceback())
 		frappe.throw(_("Error fetching customers: {0}").format(str(e)))
 
@@ -139,11 +137,13 @@ def create_customer(
 	customer_name,
 	mobile_no=None,
 	email_id=None,
-	customer_group="Individual",
-	territory="All Territories",
+	customer_group=None,
+	territory=None,
 	customer_type="Individual",
 	company=None,
 	pos_profile=None,
+	custom_governorate=None,
+	custom_district=None,
 ):
 	"""
 	Create a new customer from POS.
@@ -152,11 +152,13 @@ def create_customer(
 	    customer_name (str): Customer name (required)
 	    mobile_no (str): Mobile number (optional)
 	    email_id (str): Email address (optional)
-	    customer_group (str): Customer group (default: Individual)
-	    territory (str): Territory (default: All Territories)
+	    customer_group (str): Customer group (default: from Selling Settings)
+	    territory (str): Territory (default: from Selling Settings)
 	    customer_type (str): Individual or Company (default: Individual)
 	    company (str): Company (optional, used to auto-assign loyalty program)
 	    pos_profile (str): POS Profile (optional, preferred for context-aware loyalty assignment)
+	    custom_governorate (str): Governorate (optional)
+	    custom_district (str): District (optional, must belong to the governorate)
 
 	Returns:
 	    dict: Created customer document
@@ -174,26 +176,30 @@ def create_customer(
 	)
 
 	# //// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
+	# //// Upstream v2.0.0 resolves group and territory from Selling Settings too, but falls back on
+	# //// "All Customer Groups" / "All Territories" — names a French site does not have — so ours stays.
 	# Normalize customer_type to the values accepted by ERPNext (Individual / Company)
 	customer_type = (customer_type or "Individual").strip().capitalize()
 	if customer_type not in ("Individual", "Company"):
 		customer_type = "Individual"
 
 	# Resolve customer_group with fallback (a localized site may not have "Individual" as a doc)
-	resolved_group = customer_group if customer_group and frappe.db.exists("Customer Group", customer_group) else None
+	resolved_group = (
+		customer_group if customer_group and frappe.db.exists("Customer Group", customer_group) else None
+	)
 	if not resolved_group:
-		resolved_group = frappe.db.get_single_value("Selling Settings", "customer_group") or frappe.db.get_value(
-			"Customer Group", {"is_group": 0}, "name", order_by="name"
-		)
+		resolved_group = frappe.db.get_single_value(
+			"Selling Settings", "customer_group"
+		) or frappe.db.get_value("Customer Group", {"is_group": 0}, "name", order_by="name")
 	if not resolved_group:
 		frappe.throw(_("No customer group configured. Please create one before adding customers."))
 
 	# Resolve territory with fallback (localized sites rename "All Territories", e.g. "Tout les territoires")
 	resolved_territory = territory if territory and frappe.db.exists("Territory", territory) else None
 	if not resolved_territory:
-		resolved_territory = frappe.db.get_single_value("Selling Settings", "territory") or frappe.db.get_value(
-			"Territory", {"is_group": 0}, "name", order_by="name"
-		)
+		resolved_territory = frappe.db.get_single_value(
+			"Selling Settings", "territory"
+		) or frappe.db.get_value("Territory", {"is_group": 0}, "name", order_by="name")
 	if not resolved_territory:
 		frappe.throw(_("No territory configured. Please create one before adding customers."))
 
@@ -225,6 +231,8 @@ def create_customer(
 			"loyalty_program": loyalty_program,
 			# //// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 			"default_currency": resolved_currency,
+			"custom_governorate": custom_governorate or None,
+			"custom_district": custom_district or None,
 		}
 	)
 
@@ -516,9 +524,7 @@ def _customer_form_layout():
 		elif df.fieldtype == "Column Break":
 			continue
 		elif (
-			df.fieldtype in _RENDERABLE_FIELDTYPES
-			and not df.hidden
-			and df.fieldname not in _SKIP_FIELDNAMES
+			df.fieldtype in _RENDERABLE_FIELDTYPES and not df.hidden and df.fieldname not in _SKIP_FIELDNAMES
 		):
 			# Only keep the allowed tab, skipping the noisy sections.
 			if cur_tab_raw not in _ALLOWED_TAB_LABELS:
@@ -619,9 +625,9 @@ def _rename_customer_to_name(doc):
 		return doc.name
 	if frappe.db.exists("Customer", new_name):
 		frappe.throw(
-			_("A customer named {0} already exists. Rename it manually to merge or choose another name.").format(
-				new_name
-			)
+			_(
+				"A customer named {0} already exists. Rename it manually to merge or choose another name."
+			).format(new_name)
 		)
 	from frappe.model.rename_doc import update_document_title
 

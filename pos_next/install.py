@@ -10,9 +10,12 @@ This module relies on Frappe's fixture system for:
 The fixtures are defined in hooks.py and synced automatically during install/migrate.
 This module handles post-fixture tasks like setting defaults and clearing cache.
 """
-import frappe
+
 import json  # //// Neoffice — grant_cashier_permissions() reads setup/custom_docperm.json
 import logging
+
+import frappe
+
 # //// Neoffice — imported for the v15 / v16 split: _has_native_coupon_code_field() decides whether
 # //// this app must create the Sales Invoice `coupon_code` Custom Field itself. It cannot ship in
 # //// the fixture JSON — Frappe's import_doc reads the whole file and ignores the hooks.py
@@ -50,28 +53,23 @@ def after_install():
 		log_message("POS Next: Installation completed successfully", level="success")
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title="POS Next Installation Error",
-			message=frappe.get_traceback()
-		)
-		log_message(f"POS Next: Installation error - {str(e)}", level="error")
+		frappe.log_error(title="POS Next Installation Error", message=frappe.get_traceback())
+		log_message(f"POS Next: Installation error - {e!s}", level="error")
 		raise
 
 
 def after_migrate():
 	"""Hook that runs after bench migrate"""
 	try:
-		# //// Neoffice — ERPNext is in required_apps, so its doctype sync runs AFTER this app's
-		# //// during `bench migrate` and its Single "POS Settings" lands on top of ours (non-
-		# //// Single, holding the per-profile barcode_rules table). The reclaim belongs in
-		# //// after_migrate and not in a one-shot patch, because the clobbering repeats at every
-		# //// migrate (682184b0, 2026-07-09).
-		# //// align w/ upstream weighted-barcode: reclaim POS Settings — 83cb95dc
 		# Reclaim POS Settings if ERPNext re-imported its Single on top of ours.
-		# Must run in after_migrate (not a one-shot patch) because ERPNext's
-		# doctype sync runs after pos_next's during `bench migrate`.
+		# Must run in after_migrate (not as a one-shot patch) because ERPNext's
+		# doctype sync runs after pos_next's and would overwrite anything we did
+		# during pre/post-model-sync.
 		reclaim_pos_settings_doctype(quiet=True)
 
+		# //// Neoffice — v15 has no native Sales Invoice `coupon_code`, so this app creates it as a
+		# //// Custom Field there; it cannot ship in the fixture JSON (see the import above, 3571c411,
+		# //// 2026-02-18). after_migrate puts it back if a migrate dropped it.
 		# Ensure coupon_code custom field exists on v15 (native on v16+)
 		ensure_coupon_code_field(quiet=True)
 
@@ -88,18 +86,180 @@ def after_migrate():
 		log_message("POS Next: Migration completed successfully", level="success")
 	except Exception as e:
 		frappe.db.rollback()
-		frappe.log_error(
-			title="POS Next Migration Error",
-			message=frappe.get_traceback()
-		)
+		frappe.log_error(title="POS Next Migration Error", message=frappe.get_traceback())
 		log_message(f"POS Next: Migration error - {str(e)}", level="error")
 		raise
 
 
-# //// Neoffice — added function, no upstream equivalent: upstream never had two apps fighting over
-# //// this doctype. Idempotent by design — it exits untouched when "POS Settings" already belongs
-# //// to the POS Next module, which is the state of every instance today (682184b0, 2026-07-09
-# //// "align weighted-barcode resolver with upstream + dialog nextTick").
+def ensure_coupon_code_field(quiet=False):
+	"""Create coupon_code Custom Field on Sales Invoice for ERPNext v15 (not needed on v16+)."""
+	if _has_native_coupon_code_field():
+		if not quiet:
+			log_message(
+				"ERPNext has native coupon_code on Sales Invoice, skipping custom field", level="info"
+			)
+		return
+
+	if frappe.db.exists("Custom Field", "Sales Invoice-coupon_code"):
+		if not quiet:
+			log_message("Custom Field Sales Invoice-coupon_code already exists", level="info")
+		return
+
+	if not quiet:
+		log_message("Creating coupon_code Custom Field on Sales Invoice (ERPNext v15)", level="info")
+
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+	create_custom_fields(
+		{
+			"Sales Invoice": [
+				{
+					"fieldname": "coupon_code",
+					"fieldtype": "Link",
+					"label": "Coupon Code",
+					"options": "Coupon Code",
+					"insert_after": "additional_discount_percentage",
+					"no_copy": 1,
+					"print_hide": 1,
+					"description": "Coupon Code used for this invoice",
+				}
+			]
+		}
+	)
+
+
+# //// rebrand: rename POS Next to Neopos — 771950b
+def setup_default_print_format(quiet=False):
+	"""
+	Set Neopos Receipt as default print format for POS Profiles if not already set.
+
+	Args:
+		quiet (bool): If True, suppress detailed logs
+	"""
+	try:
+		# Check if the print format exists
+		# //// Neoffice — the receipt print format is "Neopos Receipt": the fork is sold as Neopos, not
+		# //// POS Next, and a Print Format's name IS its ID, so the string had to change here, in the
+		# //// log message and in the value written onto every POS Profile below. Installs that already
+		# //// carry the old document are renamed by patches/v2_0_0/rebrand_to_neopos.py
+		# //// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
+		if not frappe.db.exists("Print Format", "Neopos Receipt"):
+			if not quiet:
+				log_message("Neopos Receipt print format not found, skipping default setup", level="warning")
+			return
+
+		# Get all POS Profiles without a print format
+		pos_profiles = frappe.get_all(
+			"POS Profile", filters={"print_format": ["in", ["", None]]}, fields=["name"]
+		)
+
+		if pos_profiles:
+			updated_count = 0
+			for profile in pos_profiles:
+				try:
+					frappe.db.set_value(
+						"POS Profile",
+						profile.name,
+						"print_format",
+						# //// Neoffice — the "Neopos Receipt" rebrand; see the marker above (771950bd, 2026-04-02).
+						"Neopos Receipt",
+						update_modified=False,
+					)
+					if not quiet:
+						log_message(f"Set default print format for: {profile.name}", level="info", indent=1)
+					updated_count += 1
+				except Exception as e:
+					log_message(
+						f"Error updating POS Profile {profile.name}: {str(e)}", level="error", indent=1
+					)
+
+			if updated_count > 0 and not quiet:
+				log_message(
+					f"Updated {updated_count} POS Profile(s) with default print format", level="success"
+				)
+
+	except Exception as e:
+		log_message(f"Error setting up default print format: {str(e)}", level="error")
+		frappe.log_error(title="Default Print Format Setup Error", message=frappe.get_traceback())
+
+
+# //// Neoffice — added function (no upstream equivalent). Upstream ships these rules as a Custom
+# //// DocPerm fixture, and Frappe imports every file of fixtures/ at each migrate whatever hooks.py
+# //// filters: the file's 58 rules — 48 of them copies of other roles' standard rules, taken on
+# //// the author's site — landed next to a site's own rules as duplicates (which make
+# //// add_permission() refuse the doctype), and on a doctype the site had never customized they
+# //// froze its permissions on that snapshot. The file now lives in setup/ and only its POSNext
+# //// Cashier rules are granted, the way add_permission() does: the doctype's standard rules are
+# //// copied first when it has no custom rule yet. Idempotent: a rule already there is left as is.
+CASHIER_ROLE = "POSNext Cashier"
+
+
+def grant_cashier_permissions():
+	"""Give the POSNext Cashier role its rules from setup/custom_docperm.json."""
+	if not frappe.db.exists("Role", CASHIER_ROLE):
+		return
+	from frappe.permissions import rights, setup_custom_perms
+	from frappe.utils import cint
+
+	with open(frappe.get_app_path("pos_next", "setup", "custom_docperm.json")) as f:
+		rules = [rule for rule in json.load(f) if rule.get("role") == CASHIER_ROLE]
+	for rule in rules:
+		doctype, permlevel = rule["parent"], cint(rule.get("permlevel"))
+		if not frappe.db.exists("DocType", doctype) or frappe.db.exists(
+			"Custom DocPerm", {"parent": doctype, "role": CASHIER_ROLE, "permlevel": permlevel}
+		):
+			continue
+		try:
+			setup_custom_perms(doctype)
+			frappe.get_doc(
+				{
+					"doctype": "Custom DocPerm",
+					"parent": doctype,
+					"parenttype": "DocType",
+					"parentfield": "permissions",
+					"role": CASHIER_ROLE,
+					"permlevel": permlevel,
+					"if_owner": cint(rule.get("if_owner")),
+					**{right: cint(rule.get(right)) for right in rights},
+				}
+			).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(f"POS Next: cashier permission on {doctype}", frappe.get_traceback())
+
+
+def log_message(message, level="info", indent=0):
+	"""
+	Standardized logging function with consistent formatting.
+
+	Args:
+		message (str): The message to log
+		level (str): Log level - info, success, warning, error
+		indent (int): Indentation level (0, 1, 2, etc.)
+	"""
+	indent_str = "  " * indent
+
+	prefixes = {
+		"info": "[INFO]",
+		"success": "[SUCCESS]",
+		"warning": "[WARNING]",
+		"error": "[ERROR]",
+	}
+
+	prefix = prefixes.get(level, "[INFO]")
+	formatted_message = f"{indent_str}{prefix} {message}"
+
+	# Print to console
+	print(formatted_message)
+
+	# Also log to frappe logger
+	if level == "error":
+		logger.error(message)
+	elif level == "warning":
+		logger.warning(message)
+	else:
+		logger.info(message)
+
+
 def reclaim_pos_settings_doctype(quiet=False):
 	"""Reclaim the `POS Settings` DocType from ERPNext.
 
@@ -181,168 +341,3 @@ def reclaim_pos_settings_doctype(quiet=False):
 			f"POS Settings reclaimed (module={after.module}, issingle={after.issingle})",
 			level="success",
 		)
-
-
-def ensure_coupon_code_field(quiet=False):
-	"""Create coupon_code Custom Field on Sales Invoice for ERPNext v15 (not needed on v16+)."""
-	if _has_native_coupon_code_field():
-		if not quiet:
-			log_message("ERPNext has native coupon_code on Sales Invoice, skipping custom field", level="info")
-		return
-
-	if frappe.db.exists("Custom Field", "Sales Invoice-coupon_code"):
-		if not quiet:
-			log_message("Custom Field Sales Invoice-coupon_code already exists", level="info")
-		return
-
-	if not quiet:
-		log_message("Creating coupon_code Custom Field on Sales Invoice (ERPNext v15)", level="info")
-
-	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
-	create_custom_fields({
-		"Sales Invoice": [
-			{
-				"fieldname": "coupon_code",
-				"fieldtype": "Link",
-				"label": "Coupon Code",
-				"options": "Coupon Code",
-				"insert_after": "additional_discount_percentage",
-				"no_copy": 1,
-				"print_hide": 1,
-				"description": "Coupon Code used for this invoice",
-			}
-		]
-	})
-
-
-# //// rebrand: rename POS Next to Neopos — 771950b
-def setup_default_print_format(quiet=False):
-	"""
-	Set Neopos Receipt as default print format for POS Profiles if not already set.
-
-	Args:
-		quiet (bool): If True, suppress detailed logs
-	"""
-	try:
-		# Check if the print format exists
-		# //// Neoffice — the receipt print format is "Neopos Receipt": the fork is sold as Neopos, not
-		# //// POS Next, and a Print Format's name IS its ID, so the string had to change here, in the
-		# //// log message and in the value written onto every POS Profile below. Installs that already
-		# //// carry the old document are renamed by patches/v2_0_0/rebrand_to_neopos.py
-		# //// (771950bd, 2026-04-02 "rebrand: rename POS Next to Neopos").
-		if not frappe.db.exists("Print Format", "Neopos Receipt"):
-			if not quiet:
-				log_message("Neopos Receipt print format not found, skipping default setup", level="warning")
-			return
-
-		# Get all POS Profiles without a print format
-		pos_profiles = frappe.get_all(
-			"POS Profile",
-			filters={"print_format": ["in", ["", None]]},
-			fields=["name"]
-		)
-
-		if pos_profiles:
-			updated_count = 0
-			for profile in pos_profiles:
-				try:
-					frappe.db.set_value(
-						"POS Profile",
-						profile.name,
-						"print_format",
-						# //// Neoffice — the "Neopos Receipt" rebrand; see the marker above (771950bd, 2026-04-02).
-						"Neopos Receipt",
-						update_modified=False
-					)
-					if not quiet:
-						log_message(f"Set default print format for: {profile.name}", level="info", indent=1)
-					updated_count += 1
-				except Exception as e:
-					log_message(f"Error updating POS Profile {profile.name}: {str(e)}", level="error", indent=1)
-
-			if updated_count > 0 and not quiet:
-				log_message(f"Updated {updated_count} POS Profile(s) with default print format", level="success")
-
-	except Exception as e:
-		log_message(f"Error setting up default print format: {str(e)}", level="error")
-		frappe.log_error(
-			title="Default Print Format Setup Error",
-			message=frappe.get_traceback()
-		)
-
-
-# //// Neoffice — added function (no upstream equivalent). Upstream ships these rules as a Custom
-# //// DocPerm fixture, and Frappe imports every file of fixtures/ at each migrate whatever hooks.py
-# //// filters: the file's 58 rules — 48 of them copies of other roles' standard rules, taken on
-# //// the author's site — landed next to a site's own rules as duplicates (which make
-# //// add_permission() refuse the doctype), and on a doctype the site had never customized they
-# //// froze its permissions on that snapshot. The file now lives in setup/ and only its POSNext
-# //// Cashier rules are granted, the way add_permission() does: the doctype's standard rules are
-# //// copied first when it has no custom rule yet. Idempotent: a rule already there is left as is.
-CASHIER_ROLE = "POSNext Cashier"
-
-
-def grant_cashier_permissions():
-	"""Give the POSNext Cashier role its rules from setup/custom_docperm.json."""
-	if not frappe.db.exists("Role", CASHIER_ROLE):
-		return
-	from frappe.permissions import rights, setup_custom_perms
-	from frappe.utils import cint
-
-	with open(frappe.get_app_path("pos_next", "setup", "custom_docperm.json")) as f:
-		rules = [rule for rule in json.load(f) if rule.get("role") == CASHIER_ROLE]
-	for rule in rules:
-		doctype, permlevel = rule["parent"], cint(rule.get("permlevel"))
-		if not frappe.db.exists("DocType", doctype) or frappe.db.exists(
-			"Custom DocPerm", {"parent": doctype, "role": CASHIER_ROLE, "permlevel": permlevel}
-		):
-			continue
-		try:
-			setup_custom_perms(doctype)
-			frappe.get_doc(
-				{
-					"doctype": "Custom DocPerm",
-					"parent": doctype,
-					"parenttype": "DocType",
-					"parentfield": "permissions",
-					"role": CASHIER_ROLE,
-					"permlevel": permlevel,
-					"if_owner": cint(rule.get("if_owner")),
-					**{right: cint(rule.get(right)) for right in rights},
-				}
-			).insert(ignore_permissions=True)
-		except Exception:
-			frappe.log_error(f"POS Next: cashier permission on {doctype}", frappe.get_traceback())
-
-
-def log_message(message, level="info", indent=0):
-	"""
-	Standardized logging function with consistent formatting.
-
-	Args:
-		message (str): The message to log
-		level (str): Log level - info, success, warning, error
-		indent (int): Indentation level (0, 1, 2, etc.)
-	"""
-	indent_str = "  " * indent
-
-	prefixes = {
-		"info": "[INFO]",
-		"success": "[SUCCESS]",
-		"warning": "[WARNING]",
-		"error": "[ERROR]",
-	}
-
-	prefix = prefixes.get(level, "[INFO]")
-	formatted_message = f"{indent_str}{prefix} {message}"
-
-	# Print to console
-	print(formatted_message)
-
-	# Also log to frappe logger
-	if level == "error":
-		logger.error(message)
-	elif level == "warning":
-		logger.warning(message)
-	else:
-		logger.info(message)
