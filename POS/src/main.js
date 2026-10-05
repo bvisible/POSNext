@@ -316,6 +316,15 @@ async function initializeApp() {
 		.then(({ setupTillAutoUpdate }) => setupTillAutoUpdate())
 		.catch((err) => log.warn("till auto-update unavailable", err));
 
+	//// Neoffice — remote assistance on the till: a session that followed the user to /pos rejoins
+	//// here (loadNeoAssist below). Customer-facing screens (meta.allowGuest) are skipped.
+	router
+		.isReady()
+		.then(() => {
+			if (!router.currentRoute.value.meta.allowGuest) loadNeoAssist(sessionUser());
+		})
+		.catch(() => {});
+
 	// -------------------------------------------------------------------------
 	// Scheduled CSRF Token Refresh (every 30 minutes)
 	// -------------------------------------------------------------------------
@@ -328,3 +337,34 @@ async function initializeApp() {
 }
 
 initializeApp();
+
+//// Neoffice — added function, no upstream equivalent: remote assistance on the till. The desk
+//// loads the theme's assist_client.js through app_include_js and the other standalone apps through
+//// the NeoCockpit (frappe-sidebar-react src/assistLoader.ts); the till wears neither, so a session
+//// that followed the user to /pos showed the agent nothing. Same contract as the cockpit: the theme
+//// says whether assistance is set up here and which script to load (client_config, desk users only),
+//// and only that script is accepted. frappe.boot.user is set because the client checks the stored
+//// session's user against it before it rejoins. Nothing here blocks the till: a failure is silent.
+const NEO_ASSIST_CLIENT = /^\/assets\/neoffice_theme\/js\/assist_client\.js(\?v=[\w.-]+)?$/;
+
+function loadNeoAssist(user) {
+	if (!user || window.neo_assist) return;
+	fetch("/api/method/neoffice_theme.assist.client_config", {
+		credentials: "same-origin",
+		headers: { Accept: "application/json" },
+	})
+		.then((response) => (response.ok ? response.json() : null))
+		.then((body) => {
+			const conf = body?.message;
+			const src = (conf?.enabled && conf.script) || "";
+			if (!NEO_ASSIST_CLIENT.test(src)) return;
+			window.frappe = window.frappe || {};
+			window.frappe.boot = window.frappe.boot || {};
+			window.frappe.boot.neo_assist = conf;
+			window.frappe.boot.user = window.frappe.boot.user || { name: user };
+			const tag = document.createElement("script");
+			tag.src = src;
+			document.head.appendChild(tag);
+		})
+		.catch(() => {});
+}
