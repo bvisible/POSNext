@@ -46,16 +46,8 @@ def _send(closing_shift, recipients, message=None):
 			content=message or _("Please find the end-of-day report attached."),
 			recipients=",".join(recipients),
 			send_email=True,
-			attachments=[
-				{
-					"print_format_attachment": 1,
-					"doctype": "POS Closing Shift",
-					"name": closing_shift,
-					"print_format": EOD_PRINT_FORMAT,
-					"html": None,
-					"lang": frappe.local.lang,
-				}
-			],
+			print_format=EOD_PRINT_FORMAT,
+			print_letterhead=False,
 		)
 	finally:
 		frappe.flags.ignore_permissions = previous
