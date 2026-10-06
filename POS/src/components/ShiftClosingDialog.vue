@@ -1461,7 +1461,7 @@
 	<Teleport to="body">
 		<div
 			v-if="isClosing"
-			class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
+			class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"
 			role="status"
 			aria-live="polite"
 		>
