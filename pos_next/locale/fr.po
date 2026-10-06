@@ -15079,3 +15079,39 @@ msgstr "TOTAL"
 #: POS/src/components/sale/ReturnInvoiceDialog.vue
 msgid "Refund Amount:"
 msgstr "Montant du remboursement :"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Print the end-of-day report"
+msgstr "Imprimer le rapport de fin de journée"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Choose where to print the report. You can also print it later from the shift history."
+msgstr "Choisissez où imprimer le rapport. Vous pourrez aussi l'imprimer plus tard depuis l'historique des sessions."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Browser print dialog (any printer)"
+msgstr "Fenêtre d'impression du navigateur (toute imprimante)"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Looking for printers..."
+msgstr "Recherche des imprimantes..."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "QZ Tray was not found: only the browser print dialog is available."
+msgstr "QZ Tray est introuvable : seule la fenêtre d'impression du navigateur est disponible."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "The report did not print. Pick another printer or the browser dialog, or print it later."
+msgstr "Le rapport ne s'est pas imprimé. Choisissez une autre imprimante ou la fenêtre du navigateur, ou imprimez-le plus tard."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Print later"
+msgstr "Imprimer plus tard"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Closing the shift..."
+msgstr "Clôture de la session en cours..."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Please do not close this window."
+msgstr "Merci de ne pas fermer cette fenêtre."

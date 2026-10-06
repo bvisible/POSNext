@@ -480,7 +480,11 @@ export async function printInvoiceByName(invoiceName, printFormat = null, letter
 // Silent printing (QZ Tray — no browser dialog)
 // ============================================================================
 
-export async function silentPrintDoc(doctype, name, printFormat) {
+//// Neoffice — the HTML fetch is shared by the QZ Tray and the browser paths below, and
+//// silentPrintDoc takes an optional printer name: the end-of-day report lets the cashier
+//// pick the printer instead of always using the one saved in the settings
+//// (neoffice-maintenance#1235).
+async function fetchPrintDocHTML(doctype, name, printFormat) {
 	const result = await call("frappe.www.printview.get_html_and_style", {
 		doc: doctype,
 		name,
@@ -492,13 +496,41 @@ export async function silentPrintDoc(doctype, name, printFormat) {
 	const style = result?.style || result?.message?.style || "";
 	if (!html) throw new Error("Failed to get print HTML from server");
 
-	const fullHTML = `<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><style>${style}</style></head>
 <body>${html}</body>
 </html>`;
+}
 
-	await qzPrintHTML(fullHTML);
+export async function silentPrintDoc(doctype, name, printFormat, printerName = "") {
+	const fullHTML = await fetchPrintDocHTML(doctype, name, printFormat);
+	await qzPrintHTML(fullHTML, printerName || undefined);
+	return true;
+}
+
+//// Neoffice — print through the browser's own dialog, so the cashier can use any printer
+//// of the workstation (A4 laser, PDF) when QZ Tray is absent or the thermal printer is not
+//// the right one. A hidden iframe keeps the page and its popup blocker out of it.
+export async function browserPrintDoc(doctype, name, printFormat) {
+	const fullHTML = await fetchPrintDocHTML(doctype, name, printFormat);
+	await new Promise((resolve, reject) => {
+		const frame = document.createElement("iframe");
+		frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+		frame.onload = () => {
+			try {
+				frame.contentWindow.focus();
+				frame.contentWindow.print();
+				resolve();
+			} catch (err) {
+				reject(err);
+			} finally {
+				setTimeout(() => frame.remove(), 60_000);
+			}
+		};
+		frame.srcdoc = fullHTML;
+		document.body.appendChild(frame);
+	});
 	return true;
 }
 

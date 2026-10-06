@@ -171,6 +171,15 @@
 											>
 												{{ __('Close') }}
 											</button>
+											<!-- //// Neoffice — print the end-of-day report later, on the printer of one's choice -->
+											<button
+												v-if="shift.closing_shift_name"
+												@click.stop="eodPrintShift = shift.closing_shift_name"
+												class="text-[10px] font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+												:title="__('Print the end-of-day report')"
+											>
+												{{ __('Print') }}
+											</button>
 										</div>
 									</td>
 								</tr>
@@ -234,6 +243,7 @@
 			</Button>
 		</template>
 	</Dialog>
+	<EodPrintDialog v-model="eodPrintOpen" :closing-shift-name="eodPrintShift" />
 </template>
 
 <script setup>
@@ -241,6 +251,16 @@ import { useToast } from "@/composables/useToast"
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { ref, watch, reactive, onMounted, computed } from "vue"
+//// Neoffice — reprint of the end-of-day report from the history (neoffice-maintenance#1235)
+import EodPrintDialog from "../EodPrintDialog.vue"
+
+const eodPrintShift = ref("")
+const eodPrintOpen = computed({
+	get: () => Boolean(eodPrintShift.value),
+	set: (value) => {
+		if (!value) eodPrintShift.value = ""
+	},
+})
 
 const { showError } = useToast()
 

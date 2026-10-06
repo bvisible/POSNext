@@ -1408,7 +1408,7 @@
 				<Button
 					variant="subtle"
 					@click="closeDialog"
-					:disabled="submitResource.loading"
+					:disabled="submitResource.loading || isClosing"
 					class="order-2 sm:order-1"
 				>
 					{{ showSuccessReport ? __("Close") : __("Cancel") }}
@@ -1433,38 +1433,51 @@
 						{{ __("✓ Shift closed successfully") }}
 					</div>
 
-					<div
-						v-if="eodPrintFailed"
-						class="text-xs md:text-sm text-amber-600 font-medium text-center sm:text-end"
-					>
-						{{ __("EOD report pending print") }}
-					</div>
-
 					<!-- Submit/Close button (only shown in entry mode) -->
 					<Button
 						v-if="!showSuccessReport"
 						variant="solid"
 						theme="blue"
 						@click="submitClosing"
-						:loading="submitResource.loading"
-						:disabled="!canSubmit"
+						:loading="submitResource.loading || isClosing"
+						:disabled="!canSubmit || isClosing"
 					>
 						{{ submitResource.loading ? __("Closing Shift...") : __("Close Shift") }}
 					</Button>
 
 					<Button
-						v-if="eodPrintFailed"
+						v-if="showSuccessReport && closedShiftName"
 						variant="solid"
 						theme="blue"
-						@click="retryEodPrint"
-						:loading="retryPrintLoading"
+						@click="showEodPrint = true"
 					>
-						{{ __("Print EOD Report") }}
+						{{ __("Print the end-of-day report") }}
 					</Button>
 				</div>
 			</div>
 		</template>
 	</Dialog>
+	<!-- //// Neoffice — blocking loader while the shift closes (neoffice-maintenance#1235). -->
+	<Teleport to="body">
+		<div
+			v-if="isClosing"
+			class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
+			role="status"
+			aria-live="polite"
+		>
+			<div class="flex flex-col items-center gap-3 rounded-xl bg-white px-8 py-6 shadow-xl">
+				<div class="h-12 w-12 animate-spin rounded-full border-b-4 border-blue-600"></div>
+				<p class="text-base font-medium text-gray-700">{{ __("Closing the shift...") }}</p>
+				<p class="text-xs text-gray-500">{{ __("Please do not close this window.") }}</p>
+			</div>
+		</div>
+	</Teleport>
+	<EodPrintDialog
+		v-model="showEodPrint"
+		:closing-shift-name="closedShiftName"
+		@done="onEodPrinted"
+		@later="onEodLater"
+	/>
 </template>
 
 <script setup>
@@ -1482,7 +1495,8 @@ import { usePOSSettingsStore } from "../stores/posSettings";
 //// Neoffice — the import deleted here is the TranslatedHTML named just above; the hint it
 //// rendered is a plain __('Expected') label now (82ccf62b, 2026-07-09).
 import { usePOSShiftStore } from "../stores/posShift";
-import { printEODReport } from "../utils/printEod";
+//// Neoffice — the end-of-day report is printed through EodPrintDialog (printer choice, or later).
+import EodPrintDialog from "./EodPrintDialog.vue";
 
 const props = defineProps({
 	modelValue: {
@@ -1521,8 +1535,13 @@ const showSuccessReport = ref(false); // Track if shift is closed and showing re
 //// Neoffice — Biome turned '' into "" here (458d81a9); the ref two lines below is ours:
 //// how much cash the cashier takes out of the drawer at closing (5783eb27, 2026-03-28).
 const errorMessage = ref(""); // User-friendly error message
-const eodPrintFailed = ref(null);
-const retryPrintLoading = ref(false);
+//// Neoffice — closing takes seconds (server submit, journal entry, report); without a loader the
+//// cashier thought nothing was happening. isClosing covers the whole submit, and the closed
+//// shift's name is kept so the end-of-day report can be printed now, or again from the report
+//// view (neoffice-maintenance#1235).
+const isClosing = ref(false);
+const closedShiftName = ref("");
+const showEodPrint = ref(false);
 const showIdleWarning = ref(false);
 //// Neoffice — how much cash the cashier takes out of the drawer at closing. Upstream has no
 //// withdrawal at all: the count is the count. Ours books a Journal Entry from the template
@@ -1554,7 +1573,7 @@ watch(open, async (isOpen) => {
 			clearTimeout(_idleWarningTimer);
 			_idleWarningTimer = null;
 		}
-		eodPrintFailed.value = null;
+		showEodPrint.value = false;
 	}
 });
 
@@ -1696,8 +1715,9 @@ const canSubmit = computed(() => {
 });
 
 async function submitClosing() {
-	if (!closingData.value) return;
+	if (!closingData.value || isClosing.value) return;
 
+	isClosing.value = true;
 	try {
 		//// Neoffice — Biome pass: single to double quotes (458d81a9, 2026-03-20).
 		errorMessage.value = ""; // Clear any previous errors
@@ -1719,55 +1739,45 @@ async function submitClosing() {
 		// Submit to server
 		const result = await submitResource.submit({ closing_shift: closingData.value });
 		const closingShiftName = result?.name ?? submitResource.data?.name;
+		closedShiftName.value = closingShiftName || "";
 		if (closingShiftName) {
-			try {
-				await printEODReport(closingShiftName);
-				eodPrintFailed.value = null;
-			} catch (err) {
-				console.warn("[eod] print failed", err);
-				showWarning(__("EOD report did not print. Use the Reprint button to retry."));
-				eodPrintFailed.value = { closingShiftName };
-				showSuccessReport.value = true;
-				return;
-			}
+			// The shift is closed; the cashier decides where (or whether) to print the report.
+			showEodPrint.value = true;
+			return;
 		}
-
-		// If hideExpectedAmount is enabled, show success report before closing
-		if (hideExpectedAmount.value) {
-			showSuccessReport.value = true;
-			//// Neoffice — upstream auto-expanded the invoice list in the success report, which
-			//// filled the screen after a busy shift. It stays collapsed; the cashier opens it on
-			//// demand (ede9beb4, 2026-07-09 "collapsed invoices").
-			// Invoice list stays collapsed in the report too — expand on demand.
-		} else {
-			// Normal mode: close immediately
-			emit("shift-closed");
-			closeDialog();
-		}
+		finishClosing();
 	} catch (error) {
 		console.error("Error submitting closing shift:", error);
 		//// Neoffice — bare English literal upstream; wrapped in __() for the French till
 		//// (7d2771d4, 2026-07-09).
 		errorMessage.value = __("Failed to close shift. Please verify all amounts and try again.");
+	} finally {
+		isClosing.value = false;
 	}
 }
 
-async function retryEodPrint() {
-	const closingShiftName = eodPrintFailed.value?.closingShiftName;
-	if (!closingShiftName) return;
-
-	retryPrintLoading.value = true;
-	try {
-		await printEODReport(closingShiftName);
-		eodPrintFailed.value = null;
-		showSuccess(__("EOD report printed successfully"));
+//// Neoffice — what used to follow the automatic print, now run once the cashier has printed
+//// or put it off (neoffice-maintenance#1235).
+function finishClosing() {
+	showEodPrint.value = false;
+	// If hideExpectedAmount is enabled, show success report before closing
+	if (hideExpectedAmount.value) {
+		showSuccessReport.value = true;
+		// Invoice list stays collapsed in the report too — expand on demand.
+	} else {
+		// Normal mode: close immediately
+		emit("shift-closed");
 		closeDialog();
-	} catch (err) {
-		console.warn("[eod] retry print failed", err);
-		showWarning(__("EOD report did not print. Please check QZ Tray and retry."));
-	} finally {
-		retryPrintLoading.value = false;
 	}
+}
+
+function onEodPrinted() {
+	showSuccess(__("EOD report printed successfully"));
+	if (!showSuccessReport.value) finishClosing();
+}
+
+function onEodLater() {
+	if (!showSuccessReport.value) finishClosing();
 }
 
 function closeDialog() {
@@ -1780,11 +1790,12 @@ function closeDialog() {
 	closingData.value = null;
 	showInvoiceDetails.value = false;
 	showSuccessReport.value = false; // Reset report view
+	closedShiftName.value = "";
 	//// Neoffice — Biome quote pass (458d81a9); the reset below clears the withdrawal field
 	//// so a re-opened dialog never carries the previous amount (5783eb27, 2026-03-28).
 	errorMessage.value = ""; // Clear error messages
 	cashWithdrawalAmount.value = 0;
-	eodPrintFailed.value = null;
+	showEodPrint.value = false;
 }
 
 // UI State Computed Properties
