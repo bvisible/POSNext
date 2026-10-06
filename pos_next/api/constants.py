@@ -64,6 +64,9 @@ POS_SETTINGS_FIELDS = [
 	"default_restaurant_area",
 	# Cash Management
 	"closing_withdrawal_template",
+	# //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
+	"eod_email_recipients",
+	"eod_email_auto",
 ]
 
 # Default POS Settings values
@@ -118,4 +121,7 @@ DEFAULT_POS_SETTINGS = {
 	"default_restaurant_area": "",
 	# Cash Management
 	"closing_withdrawal_template": "",
+	# //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
+	"eod_email_recipients": "",
+	"eod_email_auto": 0,
 }

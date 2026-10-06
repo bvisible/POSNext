@@ -35,6 +35,8 @@
   "gift_card_notification",
   "section_break_cash_management",
   "closing_withdrawal_template",
+  "eod_email_recipients",
+  "eod_email_auto",
   "section_break_general",
   "allow_user_to_edit_additional_discount",
   "allow_user_to_edit_item_discount",
@@ -309,6 +311,20 @@
    "label": "Closing Withdrawal Template",
    "options": "Journal Entry Template",
    "description": "Journal Entry Template used for cash withdrawal at shift closing. When set, cashiers can withdraw cash at closing and the remaining balance is suggested as next opening amount."
+  },
+  {
+   "description": "E-mail addresses (comma separated) that receive the end-of-day report as a PDF. Pre-filled in the send form; empty = the cashier's own address. Neoffice addition (no upstream equivalent).",
+   "fieldname": "eod_email_recipients",
+   "fieldtype": "Small Text",
+   "label": "End-of-Day Report Recipients"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.eod_email_recipients",
+   "description": "Send the end-of-day report to these addresses as soon as a shift is closed.",
+   "fieldname": "eod_email_auto",
+   "fieldtype": "Check",
+   "label": "Send the End-of-Day Report Automatically"
   },
   {
    "collapsible": 0,

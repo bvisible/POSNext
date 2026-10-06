@@ -15115,3 +15115,59 @@ msgstr "Clôture de la session en cours..."
 #: POS/src/components/EodPrintDialog.vue
 msgid "Please do not close this window."
 msgstr "Merci de ne pas fermer cette fenêtre."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Or keep it as a PDF"
+msgstr "Ou le conserver en PDF"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "E-mail address(es), separated by commas"
+msgstr "Adresse(s) e-mail, séparées par des virgules"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Send by e-mail"
+msgstr "Envoyer par e-mail"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Download the PDF"
+msgstr "Télécharger le PDF"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "The report was sent by e-mail."
+msgstr "Le rapport a été envoyé par e-mail."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "The e-mail was not sent. Check the address and try again."
+msgstr "L'e-mail n'a pas été envoyé. Vérifiez l'adresse et réessayez."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "End-of-Day Report Recipients"
+msgstr "Destinataires du rapport de fin de journée"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Pre-filled when the report is sent by e-mail. Empty: the cashier's own address."
+msgstr "Pré-rempli à l'envoi du rapport par e-mail. Vide : l'adresse du caissier."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Send the report automatically"
+msgstr "Envoyer le rapport automatiquement"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "E-mail the end-of-day report (PDF) to these addresses as soon as a shift is closed"
+msgstr "Envoyer le rapport de fin de journée (PDF) à ces adresses dès la clôture d'une session"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "End-of-day report {0} - {1}"
+msgstr "Rapport de fin de journée {0} - {1}"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Please find the end-of-day report attached."
+msgstr "Veuillez trouver ci-joint le rapport de fin de journée."
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Closing shift and recipients are required"
+msgstr "La clôture et les destinataires sont requis"
+
+#: POS/src/components/EodPrintDialog.vue
+msgid "Closing shift not found"
+msgstr "Clôture introuvable"

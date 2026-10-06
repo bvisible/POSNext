@@ -1187,6 +1187,34 @@
 											}}
 										</p>
 									</div>
+									<!-- //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235) -->
+									<div class="flex flex-col gap-1.5">
+										<label class="text-sm font-medium text-gray-700">{{
+											__("End-of-Day Report Recipients")
+										}}</label>
+										<input
+											v-model="settings.eod_email_recipients"
+											type="text"
+											:placeholder="__('E-mail address(es), separated by commas')"
+											class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+										/>
+										<p class="text-xs text-gray-500">
+											{{
+												__(
+													"Pre-filled when the report is sent by e-mail. Empty: the cashier's own address."
+												)
+											}}
+										</p>
+									</div>
+									<CheckboxField
+										v-model="settings.eod_email_auto"
+										:label="__('Send the report automatically')"
+										:description="
+											__(
+												'E-mail the end-of-day report (PDF) to these addresses as soon as a shift is closed'
+											)
+										"
+									/>
 								</div>
 							</div>
 
@@ -1859,6 +1887,9 @@ const settings = ref({
 	//// movement. (5783eb27, 2026-03-28 "cash withdrawal at shift closing with suggested
 	//// opening balance")
 	closing_withdrawal_template: "",
+	//// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
+	eod_email_recipients: "",
+	eod_email_auto: 0,
 });
 
 // Stock Sync Settings (localStorage persisted)

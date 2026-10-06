@@ -27,6 +27,26 @@
 					{{ __("QZ Tray was not found: only the browser print dialog is available.") }}
 				</p>
 				<p v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
+				<!-- PDF: download, or send by e-mail (recipients set in the POS settings) -->
+				<div class="flex flex-col gap-2 border-t border-gray-200 pt-3">
+					<span class="text-sm font-medium text-gray-700">{{ __("Or keep it as a PDF") }}</span>
+					<div class="flex items-center gap-2">
+						<input
+							v-model="emailRecipients"
+							type="text"
+							:disabled="sendingEmail"
+							:placeholder="__('E-mail address(es), separated by commas')"
+							class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+						/>
+						<Button variant="subtle" :loading="sendingEmail" :disabled="!emailRecipients.trim()" @click="sendEmail">
+							{{ __("Send by e-mail") }}
+						</Button>
+					</div>
+					<p v-if="emailMessage" class="text-sm text-green-700">{{ emailMessage }}</p>
+					<a :href="pdfUrl" target="_blank" rel="noopener" class="text-sm text-blue-600 hover:underline">
+						{{ __("Download the PDF") }}
+					</a>
+				</div>
 			</div>
 		</template>
 		<template #actions>
@@ -51,6 +71,7 @@ import {
 	printEODReport,
 	saveEodPrinter,
 } from "../utils/printEod";
+import { call } from "@/utils/apiWrapper";
 import { findPrinters } from "../utils/qzTray";
 
 const BROWSER = EOD_BROWSER_PRINTER;
@@ -72,13 +93,23 @@ const selectedPrinter = ref(BROWSER);
 const loadingPrinters = ref(false);
 const printing = ref(false);
 const errorMessage = ref("");
+const emailRecipients = ref("");
+const sendingEmail = ref(false);
+const emailMessage = ref("");
+
+const pdfUrl = computed(
+	() =>
+		`/api/method/frappe.utils.print_format.download_pdf?doctype=${encodeURIComponent("POS Closing Shift")}&name=${encodeURIComponent(props.closingShiftName)}&format=${encodeURIComponent("POS Next EOD Report")}&no_letterhead=1`,
+);
 
 watch(
 	() => props.modelValue,
 	async (isOpen) => {
 		if (!isOpen) return;
 		errorMessage.value = "";
+		emailMessage.value = "";
 		selectedPrinter.value = BROWSER;
+		loadEmailDefaults();
 		loadingPrinters.value = true;
 		try {
 			printers.value = await findPrinters();
@@ -94,6 +125,36 @@ watch(
 	},
 	{ immediate: true },
 );
+
+async function loadEmailDefaults() {
+	try {
+		const result = await call("pos_next.api.eod_report.get_eod_email_defaults", {
+			closing_shift: props.closingShiftName,
+		});
+		emailRecipients.value = (result?.message || result)?.recipients || "";
+	} catch {
+		emailRecipients.value = "";
+	}
+}
+
+async function sendEmail() {
+	if (!props.closingShiftName || !emailRecipients.value.trim()) return;
+	sendingEmail.value = true;
+	errorMessage.value = "";
+	emailMessage.value = "";
+	try {
+		await call("pos_next.api.eod_report.send_eod_email", {
+			closing_shift: props.closingShiftName,
+			recipients: emailRecipients.value,
+		});
+		emailMessage.value = __("The report was sent by e-mail.");
+	} catch (err) {
+		console.warn("[eod] e-mail failed", err);
+		errorMessage.value = __("The e-mail was not sent. Check the address and try again.");
+	} finally {
+		sendingEmail.value = false;
+	}
+}
 
 async function print() {
 	if (!props.closingShiftName) return;

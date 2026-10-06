@@ -233,6 +233,12 @@ override_doctype_class = {"Sales Invoice": "pos_next.overrides.sales_invoice.Cus
 
 # //// wallet functionality with loyalty points conversion — 77e7448
 doc_events = {
+	# //// Neoffice — added entry (no upstream equivalent): keep the end-of-day report as a PDF
+	# //// attached to the closing shift, and e-mailed when the profile asks for it, both in the
+	# //// background after the commit so closing stays fast (neoffice-maintenance#1235).
+	"POS Closing Shift": {
+		"on_submit": "pos_next.api.eod_report.enqueue_after_close",
+	},
 	"Customer": {
 		"after_insert": [
 			"pos_next.api.customers.auto_assign_loyalty_program",
