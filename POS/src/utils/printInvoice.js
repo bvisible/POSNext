@@ -496,6 +496,8 @@ async function fetchPrintDocHTML(doctype, name, printFormat) {
 	const style = result?.style || result?.message?.style || "";
 	if (!html) throw new Error("Failed to get print HTML from server");
 
+	//// Neoffice — returns the HTML instead of printing it directly: silentPrintDoc and
+	//// browserPrintDoc below both build on this shared fetch (5024c1cd, maintenance#1235).
 	return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><style>${style}</style></head>
@@ -503,6 +505,8 @@ async function fetchPrintDocHTML(doctype, name, printFormat) {
 </html>`;
 }
 
+//// Neoffice — optional printerName lets the end-of-day report use the printer the cashier
+//// picked instead of always the one saved in the settings (5024c1cd, maintenance#1235).
 export async function silentPrintDoc(doctype, name, printFormat, printerName = "") {
 	const fullHTML = await fetchPrintDocHTML(doctype, name, printFormat);
 	await qzPrintHTML(fullHTML, printerName || undefined);

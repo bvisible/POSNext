@@ -243,6 +243,8 @@
 			</Button>
 		</template>
 	</Dialog>
+	<!-- //// Neoffice — reprint the end-of-day report for a past shift through the same -->
+	<!-- //// EodPrintDialog used at closing time (5024c1cd, maintenance#1235). -->
 	<EodPrintDialog v-model="eodPrintOpen" :closing-shift-name="eodPrintShift" />
 </template>
 

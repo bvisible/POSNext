@@ -1,3 +1,5 @@
+//// Neoffice — now also imports browserPrintDoc, used below for the browser-print-dialog
+//// choice (5024c1cd, maintenance#1235).
 import { browserPrintDoc, silentPrintDoc } from "./printInvoice";
 
 const EOD_PRINT_FORMAT = "POS Next EOD Report";

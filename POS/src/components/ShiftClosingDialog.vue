@@ -1405,6 +1405,7 @@
 				class="flex flex-col sm:flex-row justify-between w-full items-stretch sm:items-center gap-2 sm:gap-0"
 			>
 				<!-- Left side - Cancel/Close button -->
+				<!-- //// Neoffice — also disabled while isClosing so the cashier can't dismiss the dialog mid-close (5024c1cd, maintenance#1235). -->
 				<Button
 					variant="subtle"
 					@click="closeDialog"
@@ -1433,7 +1434,12 @@
 						{{ __("✓ Shift closed successfully") }}
 					</div>
 
+					<!-- //// Neoffice — removed the "EOD report pending print" banner (shown when the old -->
+					<!-- //// automatic print failed); printing is now an explicit choice via EodPrintDialog, -->
+					<!-- //// not a retry after a failed auto-print (5024c1cd, maintenance#1235). -->
+
 					<!-- Submit/Close button (only shown in entry mode) -->
+					<!-- //// Neoffice — also disabled/loading while isClosing, so a double-click can't resubmit mid-close (5024c1cd, maintenance#1235). -->
 					<Button
 						v-if="!showSuccessReport"
 						variant="solid"
@@ -1445,12 +1451,16 @@
 						{{ submitResource.loading ? __("Closing Shift...") : __("Close Shift") }}
 					</Button>
 
+					<!-- //// Neoffice — this button used to retry a failed automatic print (eodPrintFailed / -->
+					<!-- //// retryEodPrint); it now opens EodPrintDialog so the cashier picks the printer or -->
+					<!-- //// defers printing (5024c1cd, maintenance#1235). -->
 					<Button
 						v-if="showSuccessReport && closedShiftName"
 						variant="solid"
 						theme="blue"
 						@click="showEodPrint = true"
 					>
+						<!-- //// Neoffice — label matches the on-demand print flow above (5024c1cd). -->
 						{{ __("Print the end-of-day report") }}
 					</Button>
 				</div>
@@ -1573,6 +1583,8 @@ watch(open, async (isOpen) => {
 			clearTimeout(_idleWarningTimer);
 			_idleWarningTimer = null;
 		}
+		//// Neoffice — reset the on-demand EOD print dialog along with the rest of the dialog
+		//// state (replaces the old eodPrintFailed reset) (5024c1cd, maintenance#1235).
 		showEodPrint.value = false;
 	}
 });
@@ -1715,6 +1727,8 @@ const canSubmit = computed(() => {
 });
 
 async function submitClosing() {
+	//// Neoffice — bail out while a close is already in flight (isClosing), so the loader can't
+	//// be re-triggered by a double submit (5024c1cd, maintenance#1235).
 	if (!closingData.value || isClosing.value) return;
 
 	isClosing.value = true;
@@ -1739,12 +1753,16 @@ async function submitClosing() {
 		// Submit to server
 		const result = await submitResource.submit({ closing_shift: closingData.value });
 		const closingShiftName = result?.name ?? submitResource.data?.name;
+		//// Neoffice — keep the closed shift's name so EodPrintDialog can print it now or again
+		//// from the success report (5024c1cd, maintenance#1235).
 		closedShiftName.value = closingShiftName || "";
 		if (closingShiftName) {
 			// The shift is closed; the cashier decides where (or whether) to print the report.
 			showEodPrint.value = true;
 			return;
 		}
+		//// Neoffice — no closing shift name (shouldn't happen): skip straight to the post-print
+		//// steps instead of leaving the dialog stuck (5024c1cd, maintenance#1235).
 		finishClosing();
 	} catch (error) {
 		console.error("Error submitting closing shift:", error);
@@ -1767,10 +1785,16 @@ function finishClosing() {
 	} else {
 		// Normal mode: close immediately
 		emit("shift-closed");
+		//// Neoffice — removed here: the old retryEodPrint's catch/finally ("EOD report did not
+		//// print. Please check QZ Tray and retry.") — printing is no longer automatic, so there
+		//// is nothing left to retry (5024c1cd, maintenance#1235).
 		closeDialog();
 	}
 }
 
+//// Neoffice — onEodPrinted/onEodLater replace retryEodPrint: they are EodPrintDialog's
+//// @done/@later callbacks now that printing is a cashier choice, not an automatic retry
+//// (5024c1cd, maintenance#1235).
 function onEodPrinted() {
 	showSuccess(__("EOD report printed successfully"));
 	if (!showSuccessReport.value) finishClosing();
@@ -1790,6 +1814,8 @@ function closeDialog() {
 	closingData.value = null;
 	showInvoiceDetails.value = false;
 	showSuccessReport.value = false; // Reset report view
+	//// Neoffice — reset the closed shift's name too, so a re-opened dialog never offers to
+	//// print the previous shift's report (5024c1cd, maintenance#1235).
 	closedShiftName.value = "";
 	//// Neoffice — Biome quote pass (458d81a9); the reset below clears the withdrawal field
 	//// so a re-opened dialog never carries the previous amount (5783eb27, 2026-03-28).
