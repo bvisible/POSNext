@@ -197,6 +197,11 @@ class TestPackedItemsNoDuplicates(FrappeTestCase):
 		si.company = ctx.company
 		si.customer = ctx.customer
 		si.debit_to = ctx.debit_to
+		# //// Neoffice — the invoice in the company's currency: left empty it took the site's default (USD on the bare
+		# //// site of the CI) while `Debtors - _TC` is in INR, and ERPNext refused the save before any packed row was
+		# //// made (maintenance#1266). create_sales_invoice, used by the test above, sets it the same way.
+		si.currency = frappe.get_cached_value("Company", ctx.company, "default_currency")
+		si.conversion_rate = 1
 		si.update_stock = 1
 		si.posting_date = nowdate()
 		si.naming_series = ctx.naming_series
