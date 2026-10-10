@@ -15144,6 +15144,18 @@ msgstr "L'e-mail n'a pas été envoyé. Vérifiez l'adresse et réessayez."
 msgid "End-of-Day Report Recipients"
 msgstr "Destinataires du rapport de fin de journée"
 
+#: pos_next/doctype/pos_settings/pos_settings.json
+msgid "Send the End-of-Day Report Automatically"
+msgstr "Envoyer automatiquement le rapport de fin de journée"
+
+#: pos_next/doctype/pos_settings/pos_settings.json
+msgid "Send the end-of-day report to these addresses as soon as a shift is closed."
+msgstr "Envoie le rapport de fin de journée à ces adresses dès la clôture d'une session."
+
+#: pos_next/doctype/pos_settings/pos_settings.json
+msgid "E-mail addresses (comma separated) that receive the end-of-day report as a PDF. Pre-filled in the send form; empty = the cashier's own address."
+msgstr "Adresses e-mail (séparées par des virgules) qui reçoivent le rapport de fin de journée en PDF. Pré-remplies dans le formulaire d'envoi ; vide = l'adresse du caissier."
+
 #: POS/src/components/EodPrintDialog.vue
 msgid "Pre-filled when the report is sent by e-mail. Empty: the cashier's own address."
 msgstr "Pré-rempli à l'envoi du rapport par e-mail. Vide : l'adresse du caissier."

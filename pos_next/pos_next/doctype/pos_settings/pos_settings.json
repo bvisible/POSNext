@@ -313,7 +313,7 @@
    "description": "Journal Entry Template used for cash withdrawal at shift closing. When set, cashiers can withdraw cash at closing and the remaining balance is suggested as next opening amount."
   },
   {
-   "description": "E-mail addresses (comma separated) that receive the end-of-day report as a PDF. Pre-filled in the send form; empty = the cashier's own address. Neoffice addition (no upstream equivalent).",
+   "description": "E-mail addresses (comma separated) that receive the end-of-day report as a PDF. Pre-filled in the send form; empty = the cashier's own address.",
    "fieldname": "eod_email_recipients",
    "fieldtype": "Small Text",
    "label": "End-of-Day Report Recipients"
