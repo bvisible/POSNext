@@ -15183,3 +15183,22 @@ msgstr "La clôture et les destinataires sont requis"
 #: POS/src/components/EodPrintDialog.vue
 msgid "Closing shift not found"
 msgstr "Clôture introuvable"
+# //// Neoffice — translations added by our fork (12.10.2026): labels and messages that read in English on a French screen.
+#: pos_next/fixtures/custom_field.json
+msgid "Block Sale Beyond Available Qty"
+msgstr "Bloquer la vente au-delà de la quantité disponible"
+#: pos_next/fixtures/custom_field.json
+msgid "Cash In/Out Templates"
+msgstr "Modèles d’entrée et de sortie de caisse"
+#: pos_next/fixtures/custom_field.json
+msgid "Is Wallet Payment"
+msgstr "Paiement par portefeuille électronique"
+#: POS Profile custom field
+msgid "Enable Gift Card"
+msgstr "Activer la carte cadeau"
+#: POS Profile custom field
+msgid "Link Gift Card"
+msgstr "Lier une carte cadeau"
+#: POS Profile custom field
+msgid "Stripe Terminal Settings"
+msgstr "Réglages de Stripe Terminal"
