@@ -10,10 +10,12 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import cint
 
 
+# //// Neoffice — the site's negative stock (Stock Settings), which a till now shows and writes.
 def site():
 	return cint(frappe.db.get_single_value("Stock Settings", "allow_negative_stock"))
 
 
+# //// Neoffice — upstream's class was empty: a till's negative stock as the site's one setting.
 class TestPOSSettings(FrappeTestCase):
 	def setUp(self):
 		self.name = frappe.db.get_value("POS Settings", {}, "name")
