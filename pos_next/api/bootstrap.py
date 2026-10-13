@@ -242,6 +242,11 @@ def _get_pos_settings(pos_profile_doc):
 			1 if (pos_profile_doc.write_off_account and (pos_profile_doc.write_off_limit or 0) > 0) else 0
 		)
 		settings["disable_rounded_total"] = pos_profile_doc.disable_rounded_total or 0
+		# //// Neoffice — negative stock is the site's one setting (Stock Settings), not a copy per till: the till
+		# //// sells below zero as the site allows it (pos_settings._site_allows_negative_stock, 13.10.2026).
+		settings["allow_negative_stock"] = frappe.utils.cint(
+			frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
+		)
 
 		return settings
 	except Exception:

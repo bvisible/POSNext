@@ -9,9 +9,27 @@ from frappe.model.document import Document
 from frappe.utils import cint, flt
 
 
+# //// Neoffice — negative stock is one setting, the site's (Stock Settings), 13.10.2026. Upstream kept a copy per till
+# //// and pushed it to the site with frappe.db.set_single_value: that skipped the Stock Settings' own save - ERPNext
+# //// keeps negative stock or stock reservation, never both, and its page refuses the pair; its copy in the global
+# //// defaults stayed behind -, and a till switched off left the site on while another till's stale copy said yes.
+# //// A till now shows the site's setting and, when it is changed here, writes it through the Stock Settings document
+# //// (where neoffice_theme switches the reservation off with it). The tills' screens read the site's setting too
+# //// (bootstrap._get_pos_settings, get_pos_settings). Remove if upstream makes the setting the site's.
+def _site_allows_negative_stock():
+	return cint(frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0)
+
+
 class POSSettings(Document):
+	# //// Neoffice — the site's negative stock, shown in the form (see _site_allows_negative_stock).
+	def onload(self):
+		self.allow_negative_stock = _site_allows_negative_stock()
+
 	def validate(self):
 		"""Validate POS Settings"""
+		# //// Neoffice — unchanged here, the till says what the site says (see _site_allows_negative_stock).
+		if self.is_new() or not self.has_value_changed("allow_negative_stock"):
+			self.allow_negative_stock = _site_allows_negative_stock()
 		# Guard against None values and validate discount percentage
 		# //// Neoffice — upstream passed these validation and notification texts to frappe.throw /
 		# //// frappe.msgprint as bare strings, which Frappe does not translate: they stayed English whatever
@@ -56,49 +74,32 @@ class POSSettings(Document):
 		"""
 		Synchronize allow_negative_stock with Stock Settings.
 
-		When enabled in POS Settings, it enables the global Stock Settings.
-		When disabled, it only disables global Stock Settings if no other
-		POS Settings have it enabled.
-
 		Note: Runs in the same transaction as the save, no manual commits.
 		"""
-		current_stock_setting = cint(
-			frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
-		)
-
-		if cint(self.allow_negative_stock):
-			# Enable Stock Settings if not already enabled
-			if not current_stock_setting:
-				frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1, update_modified=False)
-				# //// Neoffice — bare English string, see validate(); goes through _().
-				frappe.msgprint(
-					_("Stock Settings 'Allow Negative Stock' has been automatically enabled."),
-					indicator="green",
-					alert=True,
-				)
+		# //// Neoffice — one setting, written through the Stock Settings document when this till changed it
+		# //// (see _site_allows_negative_stock). Upstream wrote it with frappe.db.set_single_value, and switched
+		# //// the site off only when no other till's copy said yes.
+		value = cint(self.allow_negative_stock)
+		if _site_allows_negative_stock() == value:
+			return
+		stock_settings = frappe.get_single("Stock Settings")
+		stock_settings.allow_negative_stock = value
+		stock_settings.flags.ignore_permissions = True
+		stock_settings.save()
+		if value:
+			# //// Neoffice — bare English string, see validate(); goes through _().
+			frappe.msgprint(
+				_("Stock Settings 'Allow Negative Stock' has been automatically enabled."),
+				indicator="green",
+				alert=True,
+			)
 		else:
-			# Only disable if no other enabled POS Settings have it enabled
-			if current_stock_setting:
-				# Use count for better performance and clarity
-				other_enabled_count = frappe.db.count(
-					"POS Settings",
-					{
-						"allow_negative_stock": 1,
-						"enabled": 1,  # Only check enabled POS Settings
-						"name": ["!=", self.name],
-					},
-				)
-
-				if other_enabled_count == 0:
-					frappe.db.set_single_value(
-						"Stock Settings", "allow_negative_stock", 0, update_modified=False
-					)
-					# //// Neoffice — bare English string, see validate(); goes through _().
-					frappe.msgprint(
-						_("Stock Settings 'Allow Negative Stock' has been automatically disabled."),
-						indicator="orange",
-						alert=True,
-					)
+			# //// Neoffice — bare English string, see validate(); goes through _().
+			frappe.msgprint(
+				_("Stock Settings 'Allow Negative Stock' has been automatically disabled."),
+				indicator="orange",
+				alert=True,
+			)
 
 
 @frappe.whitelist()
@@ -132,6 +133,8 @@ def get_pos_settings(pos_profile):
 	settings["_global_allow_negative_stock"] = cint(
 		frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
 	)
+	# //// Neoffice — the till sells below zero as the site allows it (see _site_allows_negative_stock).
+	settings["allow_negative_stock"] = settings["_global_allow_negative_stock"]
 
 	# //// Neoffice — derived from the POS Profile, as bootstrap._get_pos_settings already does. The
 	# //// till falls back to this endpoint when a shift is opened on its page (the bootstrap knew no
