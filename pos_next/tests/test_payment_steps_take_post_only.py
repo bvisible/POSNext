@@ -35,6 +35,14 @@ class TestPaymentStepsTakePostOnly(FrappeTestCase):
 			with self.subTest(function=function.__name__):
 				self.assertIn("GET", tuple(frappe.allowed_http_methods_for_whitelisted_func[function]))
 
+	def test_submitting_an_invoice_refuses_a_get(self):
+		# A return refunds its PSP payment while the invoice is submitted: a GET would refund and roll back.
+		from pos_next.api import invoices
+
+		self.assertEqual(
+			tuple(frappe.allowed_http_methods_for_whitelisted_func[invoices.submit_invoice]), ("POST",)
+		)
+
 	def test_every_whitelisted_function_of_the_module_is_classified(self):
 		# A new endpoint must be put on one side or the other, not left open to GET by default.
 		whitelisted = {

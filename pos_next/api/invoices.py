@@ -1591,7 +1591,11 @@ def check_offline_invoice_synced(offline_id):
 	return result
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only (maintenance#1721): submitting a return refunds its TWINT or card payment at the PSP
+# //// (_process_psp_refunds_for_return -> payments.api.intent.refund_intent), and Frappe rolls a GET's transaction
+# //// back: the money would go back and the invoice and the intent would not change. The till posts it (useInvoice,
+# //// ReturnInvoiceDialog, offline sync: frappe-ui's createResource and call always post).
+@frappe.whitelist(methods=["POST"])
 def submit_invoice(invoice=None, data=None):
 	"""Submit the invoice (Step 2)."""
 	# Handle different calling conventions
