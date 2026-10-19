@@ -73,7 +73,14 @@ def pos_get_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 	return _resolve_mapping(pos_profile, mode_of_payment)
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only (maintenance#1721). Frappe rolls the transaction of a GET request back,
+# //// and checks no CSRF token on it: a payment step reached by opening its address happens at the
+# //// PSP while the Payment Intent keeps its old status. A refund made that way on 19.10 (through
+# //// payments.api.intent.refund_intent, fixed in payments fe8a33a) returned the money and left
+# //// the intent `succeeded`, refundable a second time. Starting, attaching, cancelling, refunding
+# //// and simulating change state; reading a mapping, a status or the devices stays open. The till
+# //// calls all of them through frappe-ui's `call`, which always POSTs.
+@frappe.whitelist(methods=["POST"])
 # //// Neoffice — reference_doctype / reference_name may be None, and were annotated as
 # //// plain `str`: a till payment is started before the document that will carry it
 # //// exists, so the POS passes both as null. `payments.api.intent.create_intent`, which
@@ -187,7 +194,8 @@ def pos_start_payment(
 	return result
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only (maintenance#1721): see pos_start_payment.
+@frappe.whitelist(methods=["POST"])
 def pos_attach_device(intent_name: str, device: str) -> dict[str, Any]:
 	"""Attach an existing Payment Intent to a Payment Device.
 
@@ -207,7 +215,8 @@ def pos_get_intent_status(intent_name: str) -> dict[str, Any]:
 	return intent_api.get_intent_status(intent_name)
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only (maintenance#1721): see pos_start_payment.
+@frappe.whitelist(methods=["POST"])
 def pos_cancel_payment(intent_name: str, reason: str | None = None) -> dict[str, Any]:
 	"""Cancel an in-flight Payment Intent. No-op on terminal-state intents.
 
@@ -220,7 +229,8 @@ def pos_cancel_payment(intent_name: str, reason: str | None = None) -> dict[str,
 	return intent_api.cancel_intent(intent_name, reason=reason)
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only (maintenance#1721): see pos_start_payment.
+@frappe.whitelist(methods=["POST"])
 def pos_refund_payment(intent_name: str, amount: int | None = None) -> dict[str, Any]:
 	"""Refund a settled Payment Intent (partial or full)."""
 	from payments.api import intent as intent_api
@@ -275,8 +285,7 @@ def pos_get_active_devices(
 	#    `mode_of_payment` column may have it empty — those are NOT matched,
 	#    forcing the admin to backfill them. (Cleaner than guessing.)
 	mop_rows = [
-		row for row in all_rows
-		if (not mode_of_payment) or (row.get("mode_of_payment") == mode_of_payment)
+		row for row in all_rows if (not mode_of_payment) or (row.get("mode_of_payment") == mode_of_payment)
 	]
 	if not mop_rows:
 		return []
@@ -337,8 +346,7 @@ def pos_get_active_devices(
 			)
 			# Re-attach is_default from the matching child row.
 			default_by_name = {
-				row.payment_device: bool(row.get("is_default"))
-				for row in mop_rows if row.payment_device
+				row.payment_device: bool(row.get("is_default")) for row in mop_rows if row.payment_device
 			}
 			# Provider mode is per-device when caller didn't fix it: read the PCS
 			# → provider for each row. Cached to avoid repeated lookups.
@@ -358,7 +366,8 @@ def pos_get_active_devices(
 						)
 						pcs_to_mode[device_pcs] = (
 							frappe.db.get_value("Payment Provider", dev_provider, "mode")
-							if dev_provider else None
+							if dev_provider
+							else None
 						)
 					dev["is_test_mode"] = pcs_to_mode[device_pcs] == "test"
 				else:
@@ -370,24 +379,27 @@ def pos_get_active_devices(
 	#     channels — a row with no device on a terminal channel is misconfigured.
 	if virtual_rows and channel and channel != "terminal":
 		for idx, row in enumerate(virtual_rows):
-			resolved.append({
-				"name": f"virtual:{row.mode_of_payment}:{idx}",
-				"device_label": _("{0} (no device)").format(row.mode_of_payment),
-				"provider_device_id": None,
-				"device_type": "virtual_qr",
-				"status": "online",
-				"location_ref": None,
-				"is_default": bool(row.get("is_default")) or (idx == 0 and len(virtual_rows) == 1),
-				# Virtual rows can't be "simulated readers"; the test-mode
-				# simulator panel is gated by is_test_mode alone for QR channels.
-				"is_simulator": False,
-				"is_test_mode": caller_provider_mode == "test",
-			})
+			resolved.append(
+				{
+					"name": f"virtual:{row.mode_of_payment}:{idx}",
+					"device_label": _("{0} (no device)").format(row.mode_of_payment),
+					"provider_device_id": None,
+					"device_type": "virtual_qr",
+					"status": "online",
+					"location_ref": None,
+					"is_default": bool(row.get("is_default")) or (idx == 0 and len(virtual_rows) == 1),
+					# Virtual rows can't be "simulated readers"; the test-mode
+					# simulator panel is gated by is_test_mode alone for QR channels.
+					"is_simulator": False,
+					"is_test_mode": caller_provider_mode == "test",
+				}
+			)
 
 	return resolved
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only (maintenance#1721): see pos_start_payment.
+@frappe.whitelist(methods=["POST"])
 def pos_simulate_terminal_outcome(
 	intent_name: str,
 	outcome: str = "succeeded",
@@ -441,9 +453,7 @@ def pos_simulate_terminal_outcome(
 
 	channel = (intent_doc.channel or "").lower()
 	if channel not in ("terminal", "qr_bridge"):
-		frappe.throw(
-			_("Simulator does not support channel {0}").format(channel or "<none>")
-		)
+		frappe.throw(_("Simulator does not support channel {0}").format(channel or "<none>"))
 
 	# For terminal payments only: device must be a simulator. QR has no device.
 	if channel == "terminal":
@@ -453,9 +463,9 @@ def pos_simulate_terminal_outcome(
 		device_type = (device_doc.device_type or "").lower()
 		if not device_type.startswith("simulated"):
 			frappe.throw(
-				_(
-					"Device {0} is not a simulator (device_type={1})"
-				).format(device_doc.name, device_doc.device_type or "<none>")
+				_("Device {0} is not a simulator (device_type={1})").format(
+					device_doc.name, device_doc.device_type or "<none>"
+				)
 			)
 	else:
 		device_doc = None  # noqa: F841 — referenced only in the terminal branch below
@@ -556,8 +566,7 @@ def pos_simulate_terminal_outcome(
 			error_code="card_declined",
 			error_message="Card declined by issuer (simulated)",
 			payload_excerpt=(
-				f"payment_intent.payment_failed pi={intent_doc.provider_intent_id} "
-				f"(simulated decline)"
+				f"payment_intent.payment_failed pi={intent_doc.provider_intent_id} " f"(simulated decline)"
 			),
 			ignore_invalid=True,
 		)
@@ -574,9 +583,7 @@ def pos_simulate_terminal_outcome(
 		)
 
 	else:
-		frappe.throw(
-			_("Unknown simulator outcome: {0} (expected 'succeeded' or 'declined')").format(outcome)
-		)
+		frappe.throw(_("Unknown simulator outcome: {0} (expected 'succeeded' or 'declined')").format(outcome))
 
 	return {
 		"intent_name": intent_doc.name,
