@@ -28,6 +28,43 @@ import frappe
 from frappe import _
 
 
+# //// Neoffice — maintenance#1732: the till's payment calls answered any signed-in account, a shop customer included —
+# //// pos_refund_payment refunded any settled intent named to it, since it reaches payments.api.intent in Python, where
+# //// no permission is asked (those functions serve guests and cashiers alike). A call that names a POS Profile now
+# //// answers whoever may work at that till (cash_entry.require_till_access, the rule of the till's other money
+# //// endpoints); one that names an intent answers whoever may work at the till that started it (the profile
+# //// pos_start_payment writes into its metadata); an intent no till started answers only an account the Payment
+# //// Intent DocType permits.
+def _require_till(pos_profile: str | None) -> None:
+	"""Refuse (403) unless the session user may work at this till."""
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
+
+
+def _require_till_intent(intent_name: str, ptype: str) -> None:
+	"""Refuse (403) unless the session user may work at the till that started this intent.
+
+	A portal account is refused before the name is looked up, so it cannot learn which intents exist. A name that
+	does not exist is left to the call itself (404), for a desk account only.
+	"""
+	user = frappe.session.user
+	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	metadata = frappe.db.get_value("Payment Intent", intent_name, "metadata_json")
+	try:
+		pos_profile = (json.loads(metadata) if metadata else {}).get("pos_profile")
+	except (ValueError, TypeError, AttributeError):
+		pos_profile = None
+	if pos_profile:
+		_require_till(pos_profile)
+	elif frappe.db.exists("Payment Intent", intent_name) and not frappe.has_permission(
+		"Payment Intent", ptype, doc=intent_name
+	):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
 def _resolve_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 	"""Return the mapping dict for the given (pos_profile, mode_of_payment).
 
@@ -70,6 +107,8 @@ def _resolve_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 @frappe.whitelist()
 def pos_get_mapping(pos_profile: str, mode_of_payment: str) -> dict[str, Any]:
 	"""Return the driver mapping a POS UI can use to decide what to render."""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till(pos_profile)
 	return _resolve_mapping(pos_profile, mode_of_payment)
 
 
@@ -111,6 +150,8 @@ def pos_start_payment(
 	- ``metadata`` is merged with the mapping's ``options_json`` and the POS
 	  context (pos_profile, mode_of_payment, reference_*).
 	"""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till(pos_profile)
 	from payments.api import intent as intent_api
 
 	mapping = _resolve_mapping(pos_profile, mode_of_payment)
@@ -202,6 +243,8 @@ def pos_attach_device(intent_name: str, device: str) -> dict[str, Any]:
 	Used when the cashier picks a reader after the intent has been created
 	(e.g. for ad-hoc / mobile terminals).
 	"""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till_intent(intent_name, "write")
 	from payments.api import terminal as terminal_api
 
 	return terminal_api.attach_intent_to_reader(intent_name, device)
@@ -210,6 +253,8 @@ def pos_attach_device(intent_name: str, device: str) -> dict[str, Any]:
 @frappe.whitelist()
 def pos_get_intent_status(intent_name: str) -> dict[str, Any]:
 	"""Proxy of :func:`payments.api.intent.get_intent_status`."""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till_intent(intent_name, "read")
 	from payments.api import intent as intent_api
 
 	return intent_api.get_intent_status(intent_name)
@@ -224,6 +269,8 @@ def pos_cancel_payment(intent_name: str, reason: str | None = None) -> dict[str,
 	deadline expiring (``till_timeout``) — same technical outcome, very
 	different meaning when reconciling later.
 	"""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till_intent(intent_name, "write")
 	from payments.api import intent as intent_api
 
 	return intent_api.cancel_intent(intent_name, reason=reason)
@@ -233,6 +280,8 @@ def pos_cancel_payment(intent_name: str, reason: str | None = None) -> dict[str,
 @frappe.whitelist(methods=["POST"])
 def pos_refund_payment(intent_name: str, amount: int | None = None) -> dict[str, Any]:
 	"""Refund a settled Payment Intent (partial or full)."""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till_intent(intent_name, "write")
 	from payments.api import intent as intent_api
 
 	return intent_api.refund_intent(intent_name, amount=amount)
@@ -273,6 +322,8 @@ def pos_get_active_devices(
 	When the result has one row, the picker is hidden and the row is auto-used.
 	When the result has more than one, the picker is shown.
 	"""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till(pos_profile)
 	# 1. Read the active rows declared on the POS Profile.
 	try:
 		profile_doc = frappe.get_doc("POS Profile", pos_profile)
@@ -431,6 +482,8 @@ def pos_simulate_terminal_outcome(
 	  - For ``terminal``: intent.device must exist and be a simulator
 	    (device_type starts with ``simulated``).
 	"""
+	# //// Neoffice — maintenance#1732: see _require_till.
+	_require_till_intent(intent_name, "write")
 	intent_doc = frappe.get_doc("Payment Intent", intent_name)
 
 	# Idempotent: if the intent already reached a terminal status that matches
