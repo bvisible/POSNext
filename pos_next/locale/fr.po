@@ -15202,3 +15202,7 @@ msgstr "Lier une carte cadeau"
 #: POS Profile custom field
 msgid "Stripe Terminal Settings"
 msgstr "Réglages de Stripe Terminal"
+
+#: POS/src/components/restaurant/CardEditor.vue:159
+msgid "No time slot: this card is shown at all hours."
+msgstr "Aucun créneau horaire : cette carte est affichée à toute heure."
