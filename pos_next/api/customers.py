@@ -652,9 +652,13 @@ def _rename_to_expected(doctype, name, ignore_permissions=False):
 	if target and target != name:
 		# //// Neoffice — the record was just saved through the till's guarded path for a cashier
 		# //// without rights on it (see the address book block above); update_document_title
-		# //// would refuse that cashier its rename.
+		# //// would refuse that cashier its rename. The model function, not the frappe.rename_doc
+		# //// endpoint: our frappe fork takes ignore_permissions off that endpoint, as upstream has it
+		# //// (neoffice-maintenance#1758).
 		if ignore_permissions:
-			return frappe.rename_doc(doctype=doctype, old=name, new=target, ignore_permissions=True)
+			from frappe.model.rename_doc import rename_doc
+
+			return rename_doc(doctype=doctype, old=name, new=target, ignore_permissions=True)
 		from frappe.model.rename_doc import update_document_title
 
 		update_document_title(doctype=doctype, docname=name, name=target)
