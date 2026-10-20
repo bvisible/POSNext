@@ -64,6 +64,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			restaurantStatus.value.isOpen && !restaurantStatus.value.hasActiveCards,
 	)
 	let statusInterval = null
+	let statusSeen = false // the first status read sets the slot; only later ones are changes
 
 	// Computed - Occupied counts by area
 	const occupiedCountByArea = computed(() => {
@@ -413,11 +414,14 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 					hasActiveCards: res.has_active_cards !== false,
 					warning: res.warning || null,
 				}
-				// If time slot changed (e.g. Lunch → Dinner), refresh active cards
-				if (previousSlot && res.current_slot !== previousSlot) {
-					log.info("Time slot changed:", previousSlot, "→", res.current_slot)
+				// If time slot changed (e.g. Lunch → Dinner), refresh active cards. Closed → open counts too: a till
+				// opened before the first slot of the day never loaded that slot's cards (maintenance#1754).
+				const currentSlot = res.current_slot || null
+				if (statusSeen && currentSlot !== previousSlot) {
+					log.info("Time slot changed:", previousSlot, "→", currentSlot)
 					await fetchActiveCards()
 				}
+				statusSeen = true
 			}
 		} catch (error) {
 			log.error("Failed to fetch restaurant status:", error)

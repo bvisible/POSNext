@@ -2569,8 +2569,11 @@ const selectedCardItems = computed(() => {
 watch(
 	() => restaurantStore.activeCards,
 	(cards) => {
-		if (cards.length > 0 && !selectedCard.value) {
+		//// Neoffice — a selected card that left the list (its time slot ended, it was deactivated) kept the grid
+		//// empty until the cashier clicked another tab; move to the first card instead (maintenance#1754).
+		if (cards.length > 0 && !cards.some((card) => card.name === selectedCard.value)) {
 			selectedCard.value = cards[0].name;
+			selectedCardCategory.value = null;
 		}
 	},
 	{ immediate: true }

@@ -1088,6 +1088,8 @@ def delete_area(name):
 @frappe.whitelist()
 def get_active_cards():
 	"""Fetch active restaurant cards filtered by date and current time slot assignment.
+	A card the opening hours assign to a time slot is shown during its slots only; a card they assign to no
+	slot is shown at every hour (its dates still apply).
 	Permanent cards bypass all date/time filters and appear at the end."""
 	from frappe.utils import today
 
@@ -1101,6 +1103,9 @@ def get_active_cards():
 
 	# Get cards assigned to current time slot via opening hours
 	slot_cards = _get_current_slot_cards()
+	# Until 20.10.2026 the slot filter applied to every card as soon as one slot named a card: a card the schedule
+	# names nowhere (every card just created in the card editor) never showed at the till (maintenance#1754).
+	scheduled_cards = _get_scheduled_cards() if slot_cards is not None else set()
 
 	result_normal = []
 	result_permanent = []
@@ -1115,8 +1120,8 @@ def get_active_cards():
 				continue
 			if card.get("available_to") and str(card.available_to) < current_date:
 				continue
-			# Time slot filtering
-			if slot_cards is not None and card.name not in slot_cards:
+			# Time slot filtering, for a card the schedule names
+			if slot_cards is not None and card.name in scheduled_cards and card.name not in slot_cards:
 				continue
 
 		items = frappe.get_all(
@@ -1389,6 +1394,19 @@ def _format_time(val):
 	if len(parts) >= 2:
 		return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
 	return s
+
+
+def _get_scheduled_cards():
+	"""Names of the cards the opening hours assign to at least one time slot."""
+	try:
+		settings = frappe.get_single("Restaurant Settings")
+	except Exception:
+		return set()
+	return {
+		slot.restaurant_card
+		for slot in settings.opening_hours or []
+		if getattr(slot, "restaurant_card", None)
+	}
 
 
 def _get_current_slot_cards():

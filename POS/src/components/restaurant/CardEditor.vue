@@ -153,8 +153,10 @@
 										</button>
 									</template>
 									<template v-else>
-										<span class="text-[10px] text-amber-600">
-											{{ __("This card is not assigned to any time slot.") }}
+										<!-- //// Neoffice — a card in no time slot is shown at every hour since maintenance#1754 (it was -->
+										<!-- //// hidden from the till as soon as another card had a slot): say so, as information. -->
+										<span class="text-[10px] text-gray-500">
+											{{ __("No time slot: this card is shown at all hours.") }}
 										</span>
 										<button @click="openScheduleSettings"
 											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 font-medium transition-colors">
