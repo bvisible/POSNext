@@ -24,6 +24,7 @@
 import { createResource } from "frappe-ui"
 import { defineStore } from "pinia"
 import { computed, ref, watch } from "vue"
+import { ensureCSRFToken } from "@/utils/csrf"
 import { logger } from "@/utils/logger"
 
 const log = logger.create("CustomerDisplay")
@@ -176,7 +177,7 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 
 	/**
 	 * Validate API key and authenticate
-	 * Uses direct fetch to avoid CSRF issues with guest endpoints
+	 * Uses a direct fetch (the display has no session of its own), carrying the page's CSRF token
 	 * @param {string} key - API key in format api_key:api_secret
 	 * @returns {Promise<boolean>} Success status
 	 */
@@ -185,15 +186,28 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 		authError.value = null
 
 		try {
-			// Use direct fetch for guest endpoint to avoid CSRF issues
+			// A raw fetch, but not without the CSRF token: a browser where someone is signed in to
+			// the desk (the till's own, when the cashier opens the display from the till) sends that
+			// session's cookie, and Frappe refuses a POST without the session's token before the key
+			// is even read ("Invalid Request", HTTP 400), whatever the password. A browser with no
+			// session needs no token and ignores it. (maintenance#1721, 20.10.2026)
+			await ensureCSRFToken({ silent: true }).catch(() => false)
+			const headers = {
+				"Content-Type": "application/x-www-form-urlencoded",
+				Accept: "application/json",
+			}
+			if (
+				typeof window.csrf_token === "string" &&
+				window.csrf_token &&
+				window.csrf_token !== "{{ csrf_token }}"
+			) {
+				headers["X-Frappe-CSRF-Token"] = window.csrf_token
+			}
 			const response = await fetch(
 				"/api/method/pos_next.api.customer_display.validate_api_key",
 				{
 					method: "POST",
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-						Accept: "application/json",
-					},
+					headers,
 					body: new URLSearchParams({
 						api_key_string: key,
 					}),
