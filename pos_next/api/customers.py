@@ -194,6 +194,12 @@ def create_customer(
 		) or frappe.db.get_value("Customer Group", {"is_group": 0}, "name", order_by="name")
 	if not resolved_group:
 		frappe.throw(_("No customer group configured. Please create one before adding customers."))
+	# //// Neoffice — erpnext 15.123 refuses a customer created in a group-type Customer Group, and the Customer Group
+	# //// of Selling Settings is one on the fleet (the French root): the first group that is not a group instead.
+	if frappe.db.get_value("Customer Group", resolved_group, "is_group"):
+		resolved_group = (
+			frappe.db.get_value("Customer Group", {"is_group": 0}, "name", order_by="name") or resolved_group
+		)
 
 	# Resolve territory with fallback (localized sites rename "All Territories", e.g. "Tout les territoires")
 	resolved_territory = territory if territory and frappe.db.exists("Territory", territory) else None

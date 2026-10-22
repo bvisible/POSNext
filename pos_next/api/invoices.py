@@ -718,6 +718,15 @@ def _auto_set_return_batches(invoice_doc):
 # ==========================================
 
 
+# //// Neoffice — added function (no upstream equivalent): see the customer created for an unknown name below.
+def _leaf_customer_group():
+	"""The Customer Group of Selling Settings when it is not a group, else the first one that is not."""
+	group = frappe.db.get_single_value("Selling Settings", "customer_group")
+	if group and not frappe.db.get_value("Customer Group", group, "is_group"):
+		return group
+	return frappe.db.get_value("Customer Group", {"is_group": 0}, "name", order_by="name") or "All Customer Groups"
+
+
 @frappe.whitelist()
 def validate_cart_items(items, pos_profile=None):
 	"""Validate cart items for available stock.
@@ -1001,7 +1010,8 @@ def update_invoice(data):
 					{
 						"doctype": "Customer",
 						"customer_name": customer_name,
-						"customer_group": "All Customer Groups",
+						# //// Neoffice — the root "All Customer Groups" is a group, which erpnext 15.123 refuses for a customer.
+						"customer_group": _leaf_customer_group(),
 						"territory": "All Territories",
 						"customer_type": "Individual",
 					}
