@@ -27,6 +27,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+# //// Neoffice — for _ERPNEXT_APPLIES_MARGIN_ITSELF below.
+from erpnext.accounts.doctype.pricing_rule import pricing_rule as _erpnext_pricing_rule
 from erpnext.accounts.doctype.pricing_rule.pricing_rule import (
 	apply_price_discount_rule as _original_apply_price_discount_rule,
 )
@@ -34,6 +36,12 @@ from erpnext.accounts.doctype.pricing_rule.utils import get_applied_pricing_rule
 
 # Values of the ``apply_discount_on_price`` custom field that trigger ranking.
 MIN_MAX_OPTIONS = ("Min", "Max")
+
+# //// Neoffice — erpnext 15.123 moved the margin of a Price rule out of apply_price_discount_rule into
+# //// apply_pricing_rule_margin(), which get_pricing_rule_for_item() calls for EVERY Price rule afterwards.
+# //// The copy of that margin handling kept below for Min/Max rules then added the margin twice when the
+# //// rule has apply_multiple_pricing_rules. Kept only for an erpnext that does not have the function.
+_ERPNEXT_APPLIES_MARGIN_ITSELF = hasattr(_erpnext_pricing_rule, "apply_pricing_rule_margin")
 
 
 def _has_pos_only_column():
@@ -178,7 +186,8 @@ def apply_price_discount_rule(pricing_rule, item_details, args):
 		# Keep parity with the original function's side effects.
 		item_details.pricing_rule_for = pricing_rule.get("rate_or_discount")
 
-		margin_type = pricing_rule.get("margin_type")
+		# //// Neoffice — no margin of our own when erpnext applies it (see _ERPNEXT_APPLIES_MARGIN_ITSELF).
+		margin_type = None if _ERPNEXT_APPLIES_MARGIN_ITSELF else pricing_rule.get("margin_type")
 		if (
 			margin_type in ["Amount", "Percentage"]
 			and pricing_rule.get("currency") == args.get("currency")
