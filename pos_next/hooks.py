@@ -90,8 +90,11 @@ _asset_version = get_build_version()
 # include js in doctype views
 doctype_js = {
 	"Customer": "public/js/customer.js",
-	"Pricing Rule": "public/js/pricing_rule.js",
-	"Promotional Scheme": "public/js/promotional_scheme.js",
+	"User": "public/js/user.js",
+	"POS Profile": "public/js/pos_profile.js",
+	# //// Neoffice — no "Pricing Rule" / "Promotional Scheme" entries: upstream develop deleted
+	# //// public/js/pricing_rule.js and promotional_scheme.js with the Min/Max discounts (moved to its
+	# //// optional posnext_promotions app) but kept the two entries pointing at the missing files.
 }
 # //// Neoffice — gift cards are ERPNext Coupon Code documents here, so the "Create Gift Card"
 # //// entry point belongs on that list view in the desk; upstream shipped no desk surface for
@@ -262,8 +265,8 @@ doc_events = {
 			# //// (9bc096de 2026-02-05, restored by f0c960ff 2026-03-21).
 			"pos_next.api.sales_invoice_hooks.validate_coupon_on_invoice",
 			"pos_next.api.wallet.validate_wallet_payment",
-			"pos_next.overrides.pricing_rule.apply_min_max_price_discounts",
 		],
+		"before_submit": "pos_next.authorization.gate.enforce_document",
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",
 		# //// Neoffice — restaurant mode: the floor plan follows the document, not the browser, so a
 		# //// table flips to Occupied / Cleaning from the invoice's own lifecycle — otherwise a till
@@ -304,8 +307,10 @@ doc_events = {
 	# //// Neoffice — POS Invoice gets the same gift-card hooks as Sales Invoice: an instance running
 	# //// ERPNext's POS Invoice flow would otherwise sell a gift card without ever creating it, or
 	# //// cancel one without giving the balance back (f0c960ff, 2026-03-21).
+	# //// The Min/Max `validate` that sat here left with upstream develop, which moved Min/Max
+	# //// discounts out of the core into its optional posnext_promotions app (removed 2026-10-28,
+	# //// measured unused on 12 instances).
 	"POS Invoice": {
-		"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts",
 		"on_submit": [
 			"pos_next.api.gift_cards.create_gift_card_from_invoice",
 			"pos_next.api.gift_cards.process_gift_card_on_submit",
@@ -313,18 +318,15 @@ doc_events = {
 		"on_cancel": "pos_next.api.gift_cards.process_gift_card_on_cancel",
 	},
 	"POS Profile": {"on_update": "pos_next.realtime_events.emit_pos_profile_updated_event"},
-	"Promotional Scheme": {
-		"validate": "pos_next.overrides.pricing_rule.enforce_min_max_pricing_config",
-		"on_update": "pos_next.overrides.pricing_rule.sync_pos_only_to_pricing_rules",
+	"Sales Person": {
+		"validate": "pos_next.pos_next.utils.sales_person_commission.validate_sales_person_commission_tables"
 	},
-	"Pricing Rule": {"validate": "pos_next.overrides.pricing_rule.enforce_min_max_pricing_config"},
-	"Sales Order": {"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts"},
-	"Quotation": {"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts"},
-	"Delivery Note": {"validate": "pos_next.overrides.pricing_rule.apply_min_max_price_discounts"},
-	# //// Neoffice — upstream v2.0.0 adds a "POS Invoice" key here for its min/max discount check;
-	# //// a second key of the same name would silently replace our POS Invoice gift-card hooks
-	# //// above, so that `validate` lives in the single "POS Invoice" entry instead.
-	# //// Restaurant mode: a Restaurant Card (the menu shown to guests) and the opening
+	"Mode of Payment": {
+		"after_insert": "pos_next.api.wallet.clear_wallet_payment_modes_cache",
+		"on_update": "pos_next.api.wallet.clear_wallet_payment_modes_cache",
+		"on_trash": "pos_next.api.wallet.clear_wallet_payment_modes_cache",
+	},
+	# //// Neoffice — Restaurant mode: a Restaurant Card (the menu shown to guests) and the opening
 	# //// hours are edited at the desk but read by the tills and by the public menu page, so a
 	# //// change has to reach them without a reload — hence the realtime emitters, rename included
 	# //// (34ee11a8, 2026-03-25 "merge all restaurant enhancements").
@@ -432,6 +434,12 @@ scheduler_events = {
 # Authentication and authorization
 # --------------------------------
 
+# Restrict Nexus POS Manager Journal Entry desk/report access to POS expenses only.
+# Broader accounting roles are left unrestricted (see get_journal_entry_permission_query_conditions).
+permission_query_conditions = {
+	"Journal Entry": "pos_next.api.expenses.get_journal_entry_permission_query_conditions",
+}
+
 # auth_hooks = [
 # 	"pos_next.auth.validate"
 # ]
@@ -444,6 +452,18 @@ scheduler_events = {
 # }
 
 
+
+# Extension points consumed by POS Next, implemented by optional apps
+pos_next_loyalty_provider = []
+pos_next_bootstrap_settings = []
+pos_next_customer_validators = []
+pos_next_customer_prepare = []
+pos_next_customer_after_insert = []
+
+
 website_route_rules = [
 	{"from_route": "/pos/<path:app_path>", "to_route": "pos"},
 ]
+
+# /pos is not the Desk: expose optional-app install flags to the Vue app.
+update_website_context = ["pos_next.optional_apps.update_pos_page_context"]

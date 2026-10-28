@@ -2,13 +2,15 @@
 # Copyright (c) 2026, Neoffice and contributors
 # For license information, please see license.txt
 
-# //// Neoffice — added file (no upstream equivalent). Covers the language whitelist of POS
+# //// Neoffice — both sides added this file. TestAllowedLocales is ours: it covers the language whitelist of POS
 # //// Settings, which this fork added (c081f418) and which was dead code until 2026-09-04:
 # //// get_allowed_locales_from_settings() read `row.locale` on a child doctype whose only field
 # //// is `language`, and the AttributeError was swallowed by a bare `except` that returned an
 # //// empty set — the value this fork reads as "no restriction". A configured whitelist was
 # //// therefore ignored on every instance, silently. These tests pin the field name and the
 # //// two meanings of the table (populated = restriction, empty = all languages).
+# //// TestAppTranslationsPrecedence, at the end, is upstream develop's, added under the same file
+# //// name (pos_next's own translations win over other apps'); both were kept at the 2026-10-28 merge.
 """
 Test Suite for the POS localization API
 
@@ -16,9 +18,17 @@ Run with:
 	bench --site [site] run-tests --app pos_next --module pos_next.api.test_localization
 """
 
+import unittest
+from unittest.mock import patch
+
+# //// Neoffice — frappe and FrappeTestCase are for TestAllowedLocales below, which runs against a site;
+# //// upstream's test in this file is a plain unittest.
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from pos_next.api import localization
+
+# //// Neoffice — from this import to the end of TestAllowedLocales everything is ours (see the header above).
 from pos_next.api.localization import (
 	get_allowed_locales,
 	get_allowed_locales_from_settings,
@@ -94,3 +104,22 @@ class TestAllowedLocales(FrappeTestCase):
 		response = get_allowed_locales()
 		self.assertTrue(response["success"])
 		self.assertEqual(set(response["locales"]), {"fr", "en"})
+
+
+class TestAppTranslationsPrecedence(unittest.TestCase):
+	def test_pos_next_csv_overrides_other_apps(self):
+		merged = {"Clear": "واضح", "Apply": "تقديم", "Save": "حفظ"}
+		own = {"Clear": "مسح", "Apply": "تطبيق"}
+		with (
+			patch.object(localization.translate, "get_all_translations", return_value=merged),
+			patch.object(localization.translate, "get_translations_from_apps", return_value=own) as own_apps,
+			patch.object(localization.translate, "get_user_translations", return_value={"Save": "احفظ"}),
+			patch.object(localization.frappe.local, "lang", "ar", create=True),
+			# //// Neoffice — get_app_translations() puts the till's own senses back on top
+			# //// (_keep_till_senses); they are not what this test is about, so they stay out of it.
+			patch.object(localization, "_keep_till_senses", side_effect=lambda messages: messages),
+		):
+			result = localization.get_app_translations()
+		own_apps.assert_called_once_with("ar", ["pos_next"])
+		self.assertEqual(result, {"Clear": "مسح", "Apply": "تطبيق", "Save": "احفظ"})
+		self.assertEqual(merged["Clear"], "واضح")

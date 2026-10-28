@@ -28,8 +28,9 @@ import frappe
 from frappe import _
 from frappe.query_builder import DocType
 from frappe.query_builder.functions import Coalesce
+from frappe.utils import get_system_timezone
 
-from pos_next.api.constants import DEFAULT_POS_SETTINGS, POS_SETTINGS_FIELDS
+from pos_next.api.constants import DEFAULT_POS_SETTINGS, POS_SETTINGS_FIELDS, merge_pos_settings
 
 
 @frappe.whitelist()
@@ -64,6 +65,7 @@ def get_initial_data():
 		"site_name": frappe.local.site,
 		"locale": _get_user_language(),
 		"precision": _get_precision_settings(),
+		"system_timezone": get_system_timezone(),
 		"can_switch_to_desk": "Nexus POS Manager" in frappe.get_roles(),
 		"shift": None,
 		"pos_profile": None,
@@ -107,10 +109,14 @@ def get_initial_data():
 		# //// visibility, cash quick amounts").
 		# //// rounding total, tips visibility, cash quick amounts — 4fdb5df
 		"smallest_currency_fraction_value": _get_smallest_currency_fraction(pos_profile.currency),
+		"posa_allow_pos_expense": pos_profile.get("posa_allow_pos_expense") or 0,
+		"posa_maximum_expense_amount": pos_profile.get("posa_maximum_expense_amount") or 0,
 	}
 
 	result["pos_settings"] = _get_pos_settings(pos_profile)
 	result["payment_methods"] = _get_payment_methods(pos_profile_name)
+	result["authorization_policy"] = _get_authorization_policy(pos_profile_name)
+	result["authorization_pin_length"] = _get_authorization_pin_length()
 
 	return result
 
@@ -118,6 +124,26 @@ def get_initial_data():
 # =============================================================================
 # Private Helper Functions
 # =============================================================================
+
+
+def _get_authorization_policy(pos_profile_name):
+	try:
+		from pos_next.api.authorization import get_authorization_policy
+
+		return get_authorization_policy(pos_profile_name)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Get Authorization Policy Error")
+		return {}
+
+
+def _get_authorization_pin_length():
+	try:
+		from pos_next.authorization import pin as pin_store
+
+		return pin_store.pin_length()
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Get Authorization PIN Length Error")
+		return 4
 
 
 def _get_user_language():
@@ -227,15 +253,13 @@ def _get_pos_settings(pos_profile_doc):
 		dict: POS Settings with derived values
 	"""
 	try:
-		settings = (
-			frappe.db.get_value(
-				"POS Settings",
-				{"pos_profile": pos_profile_doc.name, "enabled": 1},
-				POS_SETTINGS_FIELDS,
-				as_dict=True,
-			)
-			or DEFAULT_POS_SETTINGS.copy()
+		row = frappe.db.get_value(
+			"POS Settings",
+			{"pos_profile": pos_profile_doc.name, "enabled": 1},
+			POS_SETTINGS_FIELDS,
+			as_dict=True,
 		)
+		settings = merge_pos_settings(row)
 
 		# Derive from POS Profile (single source of truth)
 		settings["allow_write_off_change"] = (
@@ -247,6 +271,10 @@ def _get_pos_settings(pos_profile_doc):
 		settings["allow_negative_stock"] = frappe.utils.cint(
 			frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
 		)
+
+		from pos_next.integrations.registry import extend_bootstrap_settings
+
+		extend_bootstrap_settings(settings, pos_profile_doc.name)
 
 		return settings
 	except Exception:

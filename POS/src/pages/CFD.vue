@@ -89,6 +89,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { initSocket } from "@/socket"
+//// Neoffice — the customer display shows amounts like the till (formatCFDCurrency below).
+import { formatCurrency } from "@/utils/currency"
 
 const items = ref([])
 const grandTotal = ref(0)
@@ -108,11 +110,8 @@ const subtotal = computed(() => {
 })
 
 function formatCFDCurrency(amount) {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: currency.value || "EUR",
-		minimumFractionDigits: 2,
-	}).format(amount)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not fr-FR.
+	return formatCurrency(Number(amount) || 0, currency.value || "EUR")
 }
 
 let channel = null

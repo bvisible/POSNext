@@ -138,6 +138,24 @@
 								</div>
 							</div>
 
+							<!-- POS Expenses -->
+							<div
+								v-if="hasExpenses"
+								class="text-start bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4"
+							>
+								<div class="text-amber-700 text-xs uppercase font-medium mb-1">
+									{{ __("POS Expenses") }}
+								</div>
+								<div
+									class="text-lg md:text-2xl font-bold text-amber-900 mb-0.5 md:mb-1 truncate"
+								>
+									-{{ formatCurrency(closingData.expenses_total) }}
+								</div>
+								<div class="text-amber-700 text-xs">
+									{{ __("{0} expenses", [closingData.expenses_count]) }}
+								</div>
+							</div>
+
 							<!-- Net Sales (after returns) -->
 							<!-- //// Neoffice — same card compaction as Gross Sales above (7d2771d4). -->
 							<div
@@ -187,6 +205,24 @@
 								</div>
 								<div class="text-amber-600 text-xs">
 									{{ __("Not collected") }}
+								</div>
+							</div>
+
+							<!-- Net Cash Impact -->
+							<div
+								v-if="hasExpenses"
+								class="text-start bg-purple-50 border border-purple-200 rounded-lg p-3 md:p-4"
+							>
+								<div class="text-purple-700 text-xs uppercase font-medium mb-1">
+									{{ __("Net Cash Impact") }}
+								</div>
+								<div
+									class="text-lg md:text-2xl font-bold text-purple-900 mb-0.5 md:mb-1 truncate"
+								>
+									{{ formatCurrency(netCashImpact) }}
+								</div>
+								<div class="text-purple-700 text-xs">
+									{{ __("Sales - Returns - Expenses") }}
 								</div>
 							</div>
 
@@ -806,6 +842,86 @@
 					</div>
 
 					<!-- //// ▲▲▲ Neoffice — end of the sections added to the closing report. -->
+					<!-- POS Expenses Summary -->
+					<div
+						v-if="hasExpenses"
+						class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
+					>
+						<div class="px-3 py-3 md:px-6 md:py-4 border-b border-gray-200 bg-amber-50">
+							<h3 class="text-sm md:text-lg font-semibold text-gray-900 text-start">
+								{{ __("POS Expenses") }}
+							</h3>
+							<p class="text-xs md:text-sm text-gray-600 text-start">
+								{{
+									__(
+										"{0} expenses totaling {1}",
+										[
+											closingData.expenses_count,
+											formatCurrency(closingData.expenses_total),
+										]
+									)
+								}}
+							</p>
+						</div>
+						<div class="overflow-x-auto">
+							<table class="min-w-full divide-y divide-gray-200">
+								<thead class="bg-gray-50">
+									<tr>
+										<th
+											class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+										>
+											{{ __("Journal Entry") }}
+										</th>
+										<th
+											class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+										>
+											{{ __("Expense Account") }}
+										</th>
+										<th
+											class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+										>
+											{{ __("Amount") }}
+										</th>
+										<th
+											class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+										>
+											{{ __("Cashier") }}
+										</th>
+										<th
+											class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+										>
+											{{ __("Remarks") }}
+										</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-gray-200">
+									<tr
+										v-for="(expense, idx) in closingData.pos_expenses"
+										:key="expense.journal_entry || idx"
+									>
+										<td class="px-4 py-3 text-sm text-gray-900 text-start">
+											{{ expense.journal_entry || __("N/A") }}
+										</td>
+										<td class="px-4 py-3 text-sm text-gray-900 text-start">
+											{{ expense.expense_account }}
+										</td>
+										<td
+											class="px-4 py-3 text-sm font-semibold text-amber-800 text-start"
+										>
+											{{ formatCurrency(expense.amount) }}
+										</td>
+										<td class="px-4 py-3 text-sm text-gray-600 text-start">
+											{{ expense.cashier || __("N/A") }}
+										</td>
+										<td class="px-4 py-3 text-sm text-gray-600 text-start">
+											{{ expense.remarks || __("N/A") }}
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
 					<!-- Payment Reconciliation -->
 					<div
 						class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
@@ -996,6 +1112,18 @@
 													<span class="font-medium text-gray-700">{{
 														formatCurrency(payment.expected_amount)
 													}}</span>
+												</p>
+												<!-- //// Neoffice — upstream develop's per-mode expense line, kept in our compact row. -->
+												<p
+													v-if="payment.expense_amount > 0"
+													class="text-start text-xs text-amber-700"
+												>
+													<!-- //// Neoffice — same message and argument as upstream's expense line; only the wrapping of the `__()` call differs. -->
+													{{
+														__("Expenses: -{0}", [
+															formatCurrency(payment.expense_amount),
+														])
+													}}
 												</p>
 											</div>
 										</div>
@@ -1863,6 +1991,22 @@ const invoiceCount = computed(() => {
 const hasReturns = computed(() => {
 	if (!closingData.value) return false;
 	return (closingData.value.returns_count || 0) > 0;
+});
+
+const hasExpenses = computed(() => {
+	if (!closingData.value) return false;
+	return (closingData.value.expenses_count || 0) > 0;
+});
+
+const netCashImpact = computed(() => {
+	if (!closingData.value) return 0;
+	// ?? keeps sales_total=0; || would fall back to grand_total and double-count returns
+	const sales = Number.parseFloat(
+		closingData.value.sales_total ?? closingData.value.grand_total ?? 0,
+	);
+	const returns = Number.parseFloat(closingData.value.returns_total || 0);
+	const expenses = Number.parseFloat(closingData.value.expenses_total || 0);
+	return sales - returns - expenses;
 });
 
 // Count of sales invoices (non-returns)

@@ -20,6 +20,10 @@ import { useRealtimePosProfile } from "@/composables/useRealtimePosProfile";
 //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a
 const log = logger.create("ItemSearch");
 
+/** Recently fetched batch/serial item codes → timestamp (dedupe search fan-out) */
+const recentlyFetchedBatchSerial = new Map();
+const BATCH_SERIAL_FETCH_TTL_MS = 5 * 60 * 1000;
+
 /**
  * Fetch and cache batch/serial data for items with batch or serial tracking
  * This ensures batch/serial selection works offline
@@ -45,15 +49,29 @@ async function cacheBatchSerialForItems(items, warehouse) {
 		return;
 	}
 
-	log.info(`Caching batch/serial data for ${batchSerialItems.length} items`);
+	const now = Date.now();
+	const itemCodes = batchSerialItems
+		.map((item) => item.item_code)
+		.filter((code) => {
+			const lastFetched = recentlyFetchedBatchSerial.get(code);
+			return !lastFetched || now - lastFetched > BATCH_SERIAL_FETCH_TTL_MS;
+		});
+
+	if (itemCodes.length === 0) {
+		log.debug("All batch/serial items were fetched recently — skipping");
+		return;
+	}
+
+	log.info(`Caching batch/serial data for ${itemCodes.length} items`);
 
 	// Fetch in batches to avoid too large requests
 	const BATCH_SIZE = 20;
-	//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-	const itemCodes = batchSerialItems.map((item) => item.item_code);
 
 	for (let i = 0; i < itemCodes.length; i += BATCH_SIZE) {
 		const batchCodes = itemCodes.slice(i, i + BATCH_SIZE);
+		// Mark before the request so concurrent searches skip in-flight codes
+		const fetchedAt = Date.now();
+		for (const code of batchCodes) recentlyFetchedBatchSerial.set(code, fetchedAt);
 
 		try {
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
@@ -70,7 +88,8 @@ async function cacheBatchSerialForItems(items, warehouse) {
 				log.debug(`Cached batch/serial data for ${Object.keys(data).length} items`);
 			}
 		} catch (error) {
-			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
+			// Unmark so the next search retries
+			for (const code of batchCodes) recentlyFetchedBatchSerial.delete(code);
 			log.warn(`Failed to fetch batch/serial data for batch ${i}:`, error.message);
 		}
 	}
@@ -133,6 +152,11 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 	// Cache state
 	const cacheReady = ref(false);
 	const cacheSyncing = ref(false);
+
+	// Re-read cache stats so the header cache indicator reflects what was just cached
+	const refreshCacheStats = async () => {
+		cacheStats.value = { ...cacheStats.value, ...(await offlineWorker.getCacheStats()) };
+	};
 	const cacheStats = ref({ items: 0, lastSync: null });
 	const serverDataFresh = ref(false); // Track if we have fresh server data in current session
 
@@ -1055,10 +1079,12 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 				if (fetchedItems.length > 0) {
 					// Cache this batch for offline access (non-blocking)
-					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-					offlineWorker.cacheItems(fetchedItems).catch((err) => {
-						log.warn("Background item caching failed:", err.message);
-					});
+					offlineWorker
+						.cacheItems(fetchedItems)
+						.then(refreshCacheStats)
+						.catch((err) => {
+							log.warn("Background item caching failed:", err.message);
+						});
 					cacheReady.value = true;
 					serverDataFresh.value = true;
 
@@ -1121,10 +1147,12 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 					hasMore.value = totalItemCount > unfilteredLimit;
 
 					// Cache this batch (non-blocking — background sync fills the rest)
-					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-					offlineWorker.cacheItems(list).catch((err) => {
-						log.warn("Background item caching failed:", err.message);
-					});
+					offlineWorker
+						.cacheItems(list)
+						.then(refreshCacheStats)
+						.catch((err) => {
+							log.warn("Background item caching failed:", err.message);
+						});
 
 					// Mark data as fresh
 					serverDataFresh.value = true;
@@ -1896,6 +1924,15 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 						// Cache server results for future searches
 						await offlineWorker.cacheItems(serverResults);
 
+						if (shiftStore.profileWarehouse) {
+							cacheBatchSerialForItems(
+								serverResults,
+								shiftStore.profileWarehouse
+							).catch((err) => {
+								log.warn("Background batch/serial caching failed:", err.message);
+							});
+						}
+
 						// If we didn't resolve with cache, resolve with server results
 						if (!cached || cached.length === 0) {
 							resolve(serverResults);
@@ -2463,6 +2500,11 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 	// Stock delegates - Smart & minimal!
 	const applyStockUpdates = (updates) => stockStore.update(updates);
+	// Re-fetch cached batch/serial data, bypassing the search dedupe (e.g. after offline sync)
+	const refreshBatchSerialCache = () => {
+		recentlyFetchedBatchSerial.clear();
+		return cacheBatchSerialForItems(allItems.value, shiftStore.profileWarehouse);
+	};
 	const refreshStockFromServer = (codes, wh) => stockStore.refresh(codes, wh);
 
 	return {
@@ -2529,6 +2571,7 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		//// space. `git blame -w` credits upstream here because nothing but whitespace changed
 		//// (458d81a9, 2026-03-20).
 		applyStockUpdates, // Delegates to stockStore.applyUpdates
+		refreshBatchSerialCache,
 		refreshStockFromServer, // Delegates to stockStore.refreshFromServer
 
 		// ========================================================================

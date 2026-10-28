@@ -22,12 +22,8 @@ const log = logger.create("TranslationCache");
 /** @constant {number} Cache time-to-live in milliseconds (24 hours) */
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
-//// Neoffice — the build this bundle came from. A cache keyed on locale alone
-//// survives a deploy, so a till kept showing the OLD dictionary for up to 24 h
-//// after new translations shipped — today that meant the new "already charged
-//// to the customer" warnings appearing in English on a French till. Stamping
-//// the build makes a deploy invalidate the dictionary immediately.
-const BUILD_STAMP = typeof __BUILD_VERSION__ !== "undefined" ? String(__BUILD_VERSION__) : "dev";
+/** @constant {string} Bundle format version plus the build, so each release refetches its strings */
+export const CACHE_VERSION = `2-${typeof __BUILD_VERSION__ !== "undefined" ? __BUILD_VERSION__ : "dev"}`;
 
 /** @type {Map<string, TranslationEntry>} In-memory cache for fast lookups */
 const memoryCache = new Map();
@@ -40,6 +36,7 @@ const pendingRefreshes = new Map();
  * @property {string} locale - Normalized locale code (e.g., "en", "ar")
  * @property {Record<string, string>} messages - Key-value translation pairs
  * @property {number} timestamp - Unix timestamp when cached
+ * @property {string} version - CACHE_VERSION the bundle was cached under
  */
 
 /**
@@ -59,13 +56,7 @@ const normalizeLocale = (locale) => (locale || "en").toLowerCase();
  */
 async function persist(locale, messages, timestamp) {
 	try {
-		//// Neoffice — the write side of the build stamp declared at the top of this file.
-		//// Reading it is useless if nothing records it: an entry persisted without `build`
-		//// can never match the current bundle, so a till would refetch its dictionary on
-		//// every single call instead of once per deploy. Upstream stores locale + messages
-		//// + timestamp only (91864420, 2026-08-19 "une nouvelle traduction ne doit pas
-		//// attendre 24 h pour arriver en caisse").
-		const entry = { locale, messages, timestamp, build: BUILD_STAMP };
+		const entry = { locale, messages, timestamp, version: CACHE_VERSION };
 		memoryCache.set(locale, entry);
 		await db.translations.put(entry);
 		return entry;
@@ -78,7 +69,7 @@ async function persist(locale, messages, timestamp) {
 /**
  * Reads translation entry from memory cache, falling back to IndexedDB.
  * @param {string} locale - Normalized locale code
- * @returns {Promise<TranslationEntry|null>} Cached entry or null if not found
+ * @returns {Promise<TranslationEntry|null>} Cached entry (stale if from an older version) or null if not found
  * @private
  */
 async function read(locale) {
@@ -89,10 +80,11 @@ async function read(locale) {
 
 	try {
 		const stored = await db.translations.get(locale);
-		if (stored) {
-			memoryCache.set(locale, stored);
-		}
-		return stored || null;
+		if (!stored) return null;
+		// Older-version bundles stay usable offline but are always stale
+		const entry = stored.version === CACHE_VERSION ? stored : { ...stored, timestamp: 0 };
+		memoryCache.set(locale, entry);
+		return entry;
 	} catch (error) {
 		log.error("Failed to get cached translations:", error);
 		return null;
@@ -130,13 +122,7 @@ export const translationCache = {
 	 * @param {number} [ttl=CACHE_TTL] - Time-to-live in milliseconds
 	 * @returns {boolean} True if stale or missing timestamp
 	 */
-	isStale(timestamp, ttl = CACHE_TTL, build = null) {
-		//// Neoffice — a dictionary that does not carry THIS build's stamp is
-		//// stale whatever its age. Note "does not carry", not "carries a
-		//// different one": entries written before this stamp existed have none
-		//// at all, and treating those as fresh would have kept the very tills
-		//// we are fixing on the old dictionary. Costs one refetch per deploy.
-		if (build !== BUILD_STAMP) return true;
+	isStale(timestamp, ttl = CACHE_TTL) {
 		return !timestamp || Date.now() - timestamp > ttl;
 	},
 
@@ -159,13 +145,7 @@ export const translationCache = {
 		const normalized = normalizeLocale(locale);
 		const cached = await read(normalized);
 
-		//// Neoffice — pass the cached entry's stamp to isStale, which upstream calls with
-		//// (timestamp, ttl) only. Without the third argument the staleness test falls back to
-		//// age alone and the whole build-stamp mechanism is dead code — that is exactly the
-		//// bug 35e5b084 had to fix on the sibling call path in translation.ts, found by
-		//// checking on osiris that the new warnings still came out in English on a French
-		//// till (91864420, 2026-08-19).
-		if (!force && cached && !this.isStale(cached.timestamp, ttl, cached.build)) {
+		if (!force && cached && !this.isStale(cached.timestamp, ttl)) {
 			return cached;
 		}
 

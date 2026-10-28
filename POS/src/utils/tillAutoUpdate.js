@@ -20,6 +20,12 @@
 // verified on osiris 2026-08-18), so no update event ever reaches it. Wiring the
 // update to it would have looked right and done nothing.
 //
+// Since the merge of upstream develop (2026-10-28) the worker is registered at
+// `/pos-sw.js` with scope `/pos`, so it does control the till now, with
+// skipWaiting + clientsClaim — but without `registerSW` nothing reloads the page
+// when a new worker takes over, so the reasoning stands: the check below is still
+// the only thing that moves a running till onto a new build.
+//
 // So we compare build stamps instead: `__BUILD_VERSION__` is baked into this
 // bundle at build time, and the same value is written to `version.json` next to
 // the assets. Different values = a newer build is deployed. No worker involved.

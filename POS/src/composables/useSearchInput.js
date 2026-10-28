@@ -1,6 +1,6 @@
 //// Neoffice — onMounted imported for the document-level scanner listener added below
 //// (7fe0b7d1, 2026-07-09 "capture hardware scanner globally in scanner mode").
-import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { QueuedMutex } from "@/utils/mutex";
 
 /**
@@ -17,6 +17,8 @@ import { QueuedMutex } from "@/utils/mutex";
  *     (`processBarcodeScan`), which processes barcode lookups sequentially.
  *   - This guarantees no barcode is ever lost, even when scanning different
  *     items faster than the API can respond (~50 ms between scans).
+ *   - The visible results are snapshotted with the barcode, so a name search
+ *     that misses as a barcode can still add its single visible result.
  *
  * @param {Object} options
  * @param {Object} options.itemStore          - Pinia item-search store
@@ -34,6 +36,11 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 	const searchInputRef = ref(null);
 	const scannerEnabled = ref(false);
 	const autoAddEnabled = ref(false);
+	// Result highlighted with the arrow keys (-1 = none)
+	const highlightedIndex = ref(-1);
+	const highlightedCode = computed(
+		() => itemStore.filteredItems?.[highlightedIndex.value]?.item_code ?? null
+	);
 
 	// --- Internal (non-reactive) ---
 	let autoSearchTimer = null;
@@ -82,6 +89,7 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 	/** Atomic clear: timer -> store -> DOM input.value -> refocus */
 	function clearSearchAndResetInput() {
 		clearAutoSearchTimer();
+		highlightedIndex.value = -1;
 		itemStore.clearSearch();
 		if (searchInputRef.value) {
 			searchInputRef.value.value = "";
@@ -94,25 +102,39 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 	// ---- Event handlers ----
 
 	function handleKeyDown(event) {
+		if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+			const count = itemStore.searchTerm?.trim() ? itemStore.filteredItems?.length || 0 : 0;
+			if (!count) return;
+			event.preventDefault();
+			const step = event.key === "ArrowDown" ? 1 : -1;
+			highlightedIndex.value = Math.min(count - 1, Math.max(0, highlightedIndex.value + step));
+			return;
+		}
+		if (event.key === "Escape") {
+			clearSearchAndResetInput();
+			return;
+		}
 		if (event.key === "Enter") {
 			event.preventDefault();
 			clearAutoSearchTimer();
 
-			// Snapshot the barcode NOW from the DOM input, before anything overwrites it
-			//// Neoffice — Biome formatter pass shipped with the de-branding commit: line reflow,
-			//// double quotes, trailing commas, Number.parseInt over the global. No behaviour
-			//// change anywhere in this file — at the next upstream merge take upstream's version
-			//// wholesale and re-run the formatter, do not hand-merge these hunks
-			//// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode, and code
-			//// formatting").
+			// Snapshot the barcode and the visible results NOW, before anything overwrites them
 			const barcode = searchInputRef.value?.value?.trim() || itemStore.searchTerm?.trim();
+			const visibleItems = itemStore.searchTerm?.trim() ? [...(itemStore.filteredItems || [])] : [];
+			const highlighted = visibleItems[highlightedIndex.value];
 			if (barcode) {
 				// Clear input immediately so next scan starts clean
-				itemStore.clearSearch();
-				if (searchInputRef.value) searchInputRef.value.value = "";
+				clearSearchAndResetInput();
+
+				// Highlighted result: add it directly
+				if (highlighted) {
+					onItemFound(highlighted, false);
+					focusSearchInput();
+					return;
+				}
 
 				// Queue the search with the captured barcode
-				processBarcodeScan(barcode, autoAddEnabled.value);
+				processBarcodeScan(barcode, autoAddEnabled.value, visibleItems);
 			}
 			return;
 		}
@@ -138,6 +160,7 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 		}
 
 		itemStore.setSearchTerm(value);
+		highlightedIndex.value = -1;
 
 		clearAutoSearchTimer();
 
@@ -156,9 +179,9 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 		}
 	}
 
-	/** Clicking the search input clears search + timer atomically. */
+	/** Clicking the search input selects its text so the next scan or typing replaces it. */
 	function handleSearchClick() {
-		clearSearchAndResetInput();
+		searchInputRef.value?.select();
 	}
 
 	/**
@@ -170,13 +193,15 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 	 * the next begins, preventing double-adds and lost barcodes.
 	 *
 	 * Lookup: exact barcode match via `itemStore.searchByBarcode()`.
-	 * If the barcode is not found, shows a "not found" warning.
+	 * If the barcode is not found, adds the single visible result; with several
+	 * results it restores the query and asks the cashier to pick; otherwise
+	 * shows a "not found" warning.
 	 *
 	 * @param {string}  barcode      - Pre-captured barcode value
 	 * @param {boolean} forceAutoAdd - When true, item is added without user click
+	 * @param {Array}   [visibleItems] - Results that were visible when Enter was pressed
 	 */
-	function processBarcodeScan(barcode, forceAutoAdd) {
-		//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
+	function processBarcodeScan(barcode, forceAutoAdd, visibleItems = []) {
 		const shouldAutoAdd = forceAutoAdd || (scannerEnabled.value && autoAddEnabled.value);
 
 		barcodeQueue.withLock(async () => {
@@ -191,12 +216,27 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 				console.error("Barcode API error:", error);
 			}
 
-			// Barcode not found — show clear "not found" message.
-			// Note: we cannot fall back to filteredItems here because
-			// clearSearch() was called before the API request, so
-			// filteredItems would contain ALL cached items (not search results).
-			//// Neoffice — same Biome pass (458d81a9): reflow only, no behaviour change.
-			showWarning(__("Item Not Found: No item found with barcode: {0}", [barcode]));
+			// Barcode not found — fall back to the results snapshotted on Enter
+			if (visibleItems.length === 1) {
+				onItemFound(visibleItems[0], false);
+				focusSearchInput();
+				return;
+			}
+			if (visibleItems.length > 1) {
+				// Restore the query unless a new scan has started
+				if (!searchInputRef.value?.value && !itemStore.searchTerm) {
+					itemStore.setSearchTerm(barcode);
+					if (searchInputRef.value) searchInputRef.value.value = barcode;
+				}
+				showWarning(
+					__("No barcode matches «{0}». Pick from the results or scan the barcode again.", [
+						barcode,
+					])
+				);
+				focusSearchInput();
+				return;
+			}
+			showWarning(__("No item matches «{0}». Search by name or scan the barcode again.", [barcode]));
 			focusSearchInput();
 		});
 	}
@@ -314,6 +354,8 @@ export function useSearchInput({ itemStore, onItemFound, showWarning, isAnyDialo
 		searchInputRef,
 		scannerEnabled,
 		autoAddEnabled,
+		highlightedIndex,
+		highlightedCode,
 
 		// Event handlers
 		handleSearchInput,

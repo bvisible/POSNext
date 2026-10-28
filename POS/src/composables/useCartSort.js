@@ -60,7 +60,7 @@ const SORT_LABEL_MAP = Object.freeze(
  * @param {() => Array} itemsGetter - Getter (or ref) that returns the raw cart
  *        items array.  Typically `() => props.items`.
  */
-export function useCartSort(itemsGetter) {
+export function useCartSort(itemsGetter, lifoMode = null) {
 	// Normalise getter once — avoid typeof check on every access
 	//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.
 	const getItems = typeof itemsGetter === "function" ? itemsGetter : () => itemsGetter.value;
@@ -121,6 +121,9 @@ export function useCartSort(itemsGetter) {
 		//// the newest line first, and the POS and the customer display agree on that order. The
 		//// reverse is on a copy: this array is the store's own state (c9d9c1cb, 2026-03-20
 		//// "align POS design with Neoffice theme and improve customer display").
+		//// Upstream develop made the same order optional (lifoMode, the cart_lifo POS setting,
+		//// off by default); ours stays unconditional so no till falls back to oldest-first and
+		//// the customer display keeps the same order (merge of 2026-10-28).
 		if (!field) return [...items].reverse();
 
 		//// Neoffice — same Biome pass (c9d9c1cb): quote style / trailing comma only.

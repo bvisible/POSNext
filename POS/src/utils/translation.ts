@@ -206,6 +206,7 @@ async function requestTranslations() {
  * @returns True if translations were successfully applied
  */
 async function loadLocale(locale: string, options: LoadOptions = {}) {
+	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	const { preferCache = false, forceNetwork = false } = options
 	const target = locale || FALLBACK_LOCALE
 	let appliedFromCache = false
@@ -216,13 +217,10 @@ async function loadLocale(locale: string, options: LoadOptions = {}) {
 			applyMessages(cached.messages)
 			appliedFromCache = true
 
-			//// Neoffice — pass the cached build stamp: without it this path
-			//// short-circuits on age alone and an always-open till keeps the
-			//// dictionary it was opened with, however many deploys go by.
-			if (
-				!translationCache.isStale(cached.timestamp, undefined, cached.build) &&
-				!forceNetwork
-			) {
+			//// Neoffice — upstream's isStale(timestamp) alone: its cache entries carry the build they were stored under
+			//// (CACHE_VERSION) and read back as expired when it differs, which is what the build stamp we used to pass
+			//// here as a third argument did (91864420 and 35e5b084, 2026-08-19). That argument went with our stamp.
+			if (!translationCache.isStale(cached.timestamp) && !forceNetwork) {
 				return true
 			}
 		}

@@ -764,6 +764,11 @@
 												"
 											/>
 											<CheckboxField
+												v-model="settings.cart_lifo"
+												:label="__('LIFO Cart Order (Newest on Top)')"
+												:description="__('Show the most recently added item at the top of the cart instead of the bottom.')"
+											/>
+											<CheckboxField
 												v-model="settings.silent_print"
 												:label="__('Silent Print')"
 												:description="
@@ -1851,6 +1856,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { getSectionHeaderClasses, getSubsectionClasses, icons } from "./settingsConfig";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
+import { formatTime } from "@/utils/currency";
 import { usePOSEvents } from "@/composables/usePOSEvents";
 import TranslatedHTML from "../common/TranslatedHTML.vue";
 import { useQzTray } from "@/composables/useQzTray";
@@ -1911,6 +1917,7 @@ const settings = ref({
 	//// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
 	eod_email_recipients: "",
 	eod_email_auto: 0,
+	cart_lifo: 0,
 });
 
 // Stock Sync Settings (localStorage persisted)
@@ -2443,7 +2450,7 @@ function formatSyncTime(timestamp) {
 		return __("{0}m ago", [Math.floor(diff / 60000)]);
 	} else {
 		const date = new Date(timestamp);
-		return date.toLocaleTimeString();
+		return formatTime(date);
 	}
 }
 

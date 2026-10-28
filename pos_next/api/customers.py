@@ -6,7 +6,11 @@ Handles customer search, creation, and management for POS operations
 import frappe
 from frappe import _
 
-
+from pos_next.integrations.registry import (
+	after_customer_insert,
+	prepare_customer_doc,
+	validate_customer_create,
+)
 @frappe.whitelist()
 def get_customers(search_term="", pos_profile=None, limit=20, modified_since=None):
 	"""
@@ -28,8 +32,8 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 
 		# //// Neoffice — ▼▼▼ get_customers search rewritten. Upstream built a single `or_filters`
 		# //// list (it sat right here, beside `filters`) and handed it to frappe.get_all, which ORs the
-		# //// whole group: a two-word query could not require BOTH words, so "Moret Daniel" never found
-		# //// the customer stored as "Daniel Moret". or_filters is gone; the condition is built with the
+		# //// whole group: a two-word query could not require BOTH words, so "Dupont Jean" never found
+		# //// the customer stored as "Jean Dupont". or_filters is gone; the condition is built with the
 		# //// query builder — AND across words, OR across fields — and the SELECT carries the extra
 		# //// columns (group / territory / type / primary_address) the cached customer objects need for
 		# //// the address snippet and the hover popover, so the POS never re-fetches per customer
@@ -71,7 +75,7 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 		]
 
 		# Split the query into words so the order the name was entered in does not
-		# matter: "Moret Daniel" must find a customer stored as "Daniel Moret".
+		# matter: "Dupont Jean" must find a customer stored as "Jean Dupont".
 		# Each word must match some field (OR across fields), and all words must
 		# match (AND across words) — which frappe.get_all's single or_filters group
 		# cannot express, so build the condition with the query builder.
@@ -145,6 +149,9 @@ def create_customer(
 	pos_profile=None,
 	custom_governorate=None,
 	custom_district=None,
+	custom_first_name=None,
+	custom_last_name=None,
+	custom_is_publish=1,
 ):
 	"""
 	Create a new customer from POS.
@@ -160,6 +167,9 @@ def create_customer(
 	    pos_profile (str): POS Profile (optional, preferred for context-aware loyalty assignment)
 	    custom_governorate (str): Governorate (optional)
 	    custom_district (str): District (optional, must belong to the governorate)
+	    custom_first_name (str): First name for Magento sync (required when masar_miraaya installed)
+	    custom_last_name (str): Last name for Magento sync (required when masar_miraaya installed)
+	    custom_is_publish (int): Publish customer to Magento (default 1)
 
 	Returns:
 	    dict: Created customer document
@@ -171,6 +181,13 @@ def create_customer(
 	if not customer_name:
 		frappe.throw(_("Customer name is required"))
 
+	validate_customer_create(
+		customer_name=customer_name,
+		email_id=email_id,
+		custom_first_name=custom_first_name,
+		custom_last_name=custom_last_name,
+	)
+
 	loyalty_program = get_default_loyalty_program_from_settings(
 		company=company,
 		pos_profile=pos_profile,
@@ -179,6 +196,10 @@ def create_customer(
 	# //// Neoffice — see the create_customer block header above (3affd2e0); same localization fix.
 	# //// Upstream v2.0.0 resolves group and territory from Selling Settings too, but falls back on
 	# //// "All Customer Groups" / "All Territories" — names a French site does not have — so ours stays.
+	# //// Upstream develop replaced that with _resolve_leaf_customer_group / _resolve_leaf_territory:
+	# //// the group side matches ours (leaf only, throw when none), but the territory side skips a
+	# //// group territory set in Selling Settings and still ends on "All Territories", so ours stays
+	# //// and the two helpers were not taken (merge of 2026-10-28).
 	# Normalize customer_type to the values accepted by ERPNext (Individual / Company)
 	customer_type = (customer_type or "Individual").strip().capitalize()
 	if customer_type not in ("Individual", "Company"):
@@ -246,6 +267,14 @@ def create_customer(
 	)
 
 	# //// Neoffice — ▲▲▲ end of the create_customer localization fallbacks.
+
+	sync_external_customer = prepare_customer_doc(
+		customer,
+		custom_first_name=custom_first_name,
+		custom_last_name=custom_last_name,
+		custom_is_publish=custom_is_publish,
+	)
+
 	frappe.flags.pos_next_customer_company = company
 	frappe.flags.pos_next_customer_pos_profile = pos_profile
 	# //// Neoffice — a cashier holding only POSNext Cashier gets THIS customer's primary Contact
@@ -254,6 +283,15 @@ def create_customer(
 	try:
 		elevated = _elevate_primary_contact(customer)
 		customer.insert()
+		if sync_external_customer:
+			after_customer_insert(
+				customer,
+				email_id=email_id,
+				mobile_no=mobile_no,
+				custom_first_name=custom_first_name,
+				custom_last_name=custom_last_name,
+				custom_is_publish=custom_is_publish,
+			)
 	finally:
 		# //// Neoffice — the flag must not outlive this insert (a later save would skip the check).
 		if elevated:
@@ -290,6 +328,8 @@ def _elevate_primary_contact(customer):
 	Contact belongs to another party. Skipping the rights there would write into someone else's
 	address book, so the caller is told instead.
 	"""
+	# //// Neoffice — the guard that keeps the elevation narrow (see the block header above): nothing is elevated
+	# //// for a caller who already holds the Contact right, nor without an e-mail to look the Contact up by.
 	email = (customer.get("email_id") or "").strip()
 	if not email or not _lacks_right("Contact"):
 		return False
@@ -305,6 +345,8 @@ def _elevate_primary_contact(customer):
 	return True
 
 
+# //// Neoffice — neoffice_theme's own-rights variant of a save, used when the installed theme has it (see the
+# //// block header above); upstream has no counterpart, its address book code writes with the caller's rights.
 def _theme_saver(public_name):
 	"""neoffice_theme's save behind a public endpoint, the variant that can skip the caller's
 	rights when this neoffice_theme has it, else None."""

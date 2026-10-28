@@ -25,7 +25,7 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 	const CUSTOMERS_SYNC_KEY = "pos_customers_last_sync";
 	let serverDataFresh = false;
 
-	//// tokenized any-order name search (find "Daniel Moret" via "Moret Daniel")
+	//// tokenized any-order name search (find "Jean Dupont" via "Dupont Jean")
 	// Ultra-fast search helper - optimized for speed
 	function quickMatch(search, customer) {
 		//// Neoffice — .trim() added: the query is split into tokens for the order-independent name
@@ -74,15 +74,15 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 		if (cached.id.includes(term)) return 90;
 
 		//// Neoffice — upstream scores only prefixes of the whole stored name, so a cashier who types
-		//// the family name first ("Moret Daniel") finds nothing on a record named "Daniel Moret".
+		//// the family name first ("Dupont Jean") finds nothing on a record named "Jean Dupont".
 		//// Every token must now match some name word or a contact field, in any order; the score is
 		//// >= 240 so the hit is collected by the high-priority first pass of filteredCustomers — a
 		//// lower one would be dropped once the whole list has been scanned (d29af088, 2026-07-09
 		//// "barcode error toast, UOM dialog dedup, any-order customer search").
 		// Multi-word, any-order fallback: split the query into tokens and require
 		// every token to match some name word (prefix) or a contact field. This
-		// finds "Daniel Moret" whether the cashier types "Moret Daniel", "Moret",
-		// "Daniel", or "dan mor" — the stored word order no longer matters.
+		// finds "Jean Dupont" whether the cashier types "Dupont Jean", "Dupont",
+		// "Jean", or "jea dup" — the stored word order no longer matters.
 		const tokens = term.split(/\s+/).filter(Boolean);
 		if (tokens.length > 1) {
 			for (const tok of tokens) {
@@ -261,8 +261,9 @@ export const useCustomerSearchStore = defineStore("customerSearch", () => {
 
 			// Step 2: If online, fetch delta from server
 			if (!isOffline()) {
-				//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
-				const lastSync = forceReload ? null : localStorage.getItem(CUSTOMERS_SYNC_KEY);
+				// Empty cache: a delta since the last sync would return nothing, so fetch everything
+				const lastSync =
+					forceReload || !cachedCustomers?.length ? null : localStorage.getItem(CUSTOMERS_SYNC_KEY);
 
 				const response = await call("pos_next.api.customers.get_customers", {
 					pos_profile: posProfile,

@@ -102,23 +102,27 @@ if ("serviceWorker" in navigator) {
 	window.addEventListener(
 		"load",
 		() => {
-			//// Neoffice — note: this worker's scope is /assets/pos_next/pos/,
-			//// while the till lives at /pos, so it never controls the till page
-			//// (verified osiris 2026-08-18). Keeping the build up to date is
-			//// therefore NOT its job — see setupTillAutoUpdate() below.
-			import("virtual:pwa-register").then(({ registerSW }) => {
-				registerSW({
-					immediate: true,
-					onOfflineReady: () => log.info("App ready to work offline"),
-					onRegistered: (reg) => log.info("Service Worker registered", reg),
-					//// Neoffice — tail of the registerSW rewrite marked just above: upstream also passed an
-					//// `onNeedRefresh` callback, which in autoUpdate mode is never called; it was dropped
-					//// so nobody mistakes it for an update path, and the remaining callback reflowed onto
-					//// two lines (7648dbff, 2026-08-18 — the commit that proved the auto-update cannot
-					//// go through the service worker at all).
-					onRegisterError: (err) => log.error("Service Worker registration error", err),
-				});
-			});
+			//// Neoffice — upstream develop registers its worker at /pos-sw.js with scope /pos, so it
+			//// now controls the till page (the old /assets/pos_next/pos/ worker never did, verified
+			//// osiris 2026-08-18). It no longer goes through registerSW, so a new worker never reloads
+			//// the till (the reason we had set registerType to "prompt"); moving a running till onto a
+			//// new build is still setupTillAutoUpdate()'s job below, at rest.
+			// Scope /pos (not /assets/...) so the POS page itself can open offline.
+			// No trailing slash: the page is first opened as /pos, then routed to /pos/
+			navigator.serviceWorker
+				.register("/pos-sw.js", { scope: "/pos" })
+				.then(async (reg) => {
+					log.info("Service Worker registered", reg);
+					// Drop the old worker registered under the assets scope
+					for (const old of await navigator.serviceWorker.getRegistrations()) {
+						if (old.scope.endsWith("/assets/pos_next/pos/")) old.unregister();
+					}
+					// Cache the POS page now so the first visit already works offline
+					await navigator.serviceWorker.ready;
+					const shell = await caches.open("pos-page-cache");
+					if (!(await shell.match("/pos/"))) await shell.add("/pos/");
+				})
+				.catch((err) => log.error("Service Worker registration error", err));
 		},
 		{ passive: true }
 	);
@@ -220,7 +224,10 @@ async function initializeApp() {
 			return sessionUser();
 		} catch (error) {
 			log.debug("User not logged in", error?.message || "No session");
-			return null;
+			// Only a server "not logged in" logs out. A network failure (offline start,
+			// server unreachable) can't confirm the session, so trust the session cookie.
+			// navigator.onLine is not used: it stays true on a LAN without the server.
+			return error?.exc_type === "AuthenticationError" ? null : sessionUser();
 		}
 	})();
 

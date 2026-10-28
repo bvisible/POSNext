@@ -133,6 +133,8 @@
 import { FeatherIcon } from "frappe-ui"
 import { computed, ref, watch, onUnmounted } from "vue"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
+//// Neoffice — the second screen shows amounts like the till (formatCurrency below).
+import { formatCurrency as formatSiteCurrency } from "@/utils/currency"
 
 const displayStore = useCustomerDisplayStore()
 
@@ -205,10 +207,8 @@ onUnmounted(stopAdRotation)
 // Format currency
 function formatCurrency(amount) {
 	const currency = displayStore.cartData.currency || "EUR"
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: currency,
-	}).format(amount || 0)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not fr-FR.
+	return formatSiteCurrency(Number(amount) || 0, currency)
 }
 </script>
 

@@ -84,7 +84,8 @@
 							</Button>
 							<button
 								@click="handleClose"
-								class="p-2 hover:bg-white/50 rounded-lg transition-colors"
+								class="flex items-center justify-center min-h-target min-w-target hover:bg-white/50 rounded-lg transition-colors pos-focus"
+								:aria-label="__('Close')"
 							>
 								<svg
 									class="w-5 h-5 text-gray-600"
@@ -238,12 +239,12 @@
 									<button
 										@click="unpaidFilter = 'all'"
 										:class="[
-											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+											'min-h-target px-4 rounded-lg border font-medium text-sm tabular-nums transition-colors pos-focus',
 											unpaidFilter === 'all'
 												? invoiceSource === 'pos'
-													? 'bg-orange-500 text-white shadow-md'
-													: 'bg-blue-500 text-white shadow-md'
-												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+													? 'bg-pos-action-soft text-pos-action border-pos-action font-semibold'
+													: 'bg-blue-500 text-white border-blue-500 shadow-md'
+												: 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
 										]"
 									>
 										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
@@ -252,20 +253,18 @@
 									<button
 										@click="unpaidFilter = 'partial'"
 										:class="[
-											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+											'min-h-target px-4 rounded-lg border font-medium text-sm tabular-nums transition-colors pos-focus',
 											unpaidFilter === 'partial'
 												? invoiceSource === 'pos'
-													? 'bg-orange-500 text-white shadow-md'
-													: 'bg-blue-500 text-white shadow-md'
-												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+													? 'bg-pos-action-soft text-pos-action border-pos-action font-semibold'
+													: 'bg-blue-500 text-white border-blue-500 shadow-md'
+												: 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
 										]"
 									>
 										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{
 											__("Partially Paid ({0})", [
-												activeUnpaidInvoices.filter(
-													(inv) => inv.status === "Partly Paid"
-												).length,
+												unpaidBucketCounts.partial,
 											])
 										}}
 									</button>
@@ -273,38 +272,34 @@
 									<button
 										@click="unpaidFilter = 'unpaid'"
 										:class="[
-											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+											'min-h-target px-4 rounded-lg border font-medium text-sm tabular-nums transition-colors pos-focus',
 											unpaidFilter === 'unpaid'
 												? invoiceSource === 'pos'
-													? 'bg-orange-500 text-white shadow-md'
-													: 'bg-blue-500 text-white shadow-md'
-												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+													? 'bg-pos-action-soft text-pos-action border-pos-action font-semibold'
+													: 'bg-blue-500 text-white border-blue-500 shadow-md'
+												: 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
 										]"
 									>
 										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{
 											__("Unpaid ({0})", [
-												activeUnpaidInvoices.filter(
-													(inv) => inv.status === "Unpaid"
-												).length,
+												unpaidBucketCounts.unpaid,
 											])
 										}}
 									</button>
 									<button
 										@click="unpaidFilter = 'overdue'"
 										:class="[
-											'px-4 py-2 rounded-lg font-medium text-sm transition-all',
+											'min-h-target px-4 rounded-lg border font-medium text-sm tabular-nums transition-colors pos-focus',
 											unpaidFilter === 'overdue'
-												? 'bg-red-500 text-white shadow-md'
-												: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
+												? 'bg-pos-action-soft text-pos-action border-pos-action font-semibold'
+												: 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
 										]"
 									>
 										<!-- //// Neoffice — counts the source the toggle selects, not unpaidInvoices (02222a44). -->
 										{{
 											__("Overdue ({0})", [
-												activeUnpaidInvoices.filter(
-													(inv) => inv.status === "Overdue"
-												).length,
+												unpaidBucketCounts.overdue,
 											])
 										}}
 									</button>
@@ -440,261 +435,119 @@
 									</p>
 								</div>
 
-								<!-- Invoices List -->
-								<div v-else class="flex flex-col gap-4">
-									<!-- //// Neoffice — iterates the searched list; `relative` below anchors the processing -->
-									<!-- //// overlay added just after (34ee11a8, 2026-03-25; 2584aa58, 2026-03-24). -->
-									<div
-										v-for="invoice in searchedUnpaidInvoices"
-										:key="invoice.name"
-										class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative"
-									>
-										<!-- //// Neoffice — a payment takes a round trip to the server. Without feedback on the card -->
-										<!-- //// itself the cashier taps Add Payment again and pays twice; this overlay covers the -->
-										<!-- //// card being settled (2584aa58, 2026-03-24 "processing overlay with spinner"). -->
-										<!-- Processing overlay -->
-										<div
-											v-if="processingInvoiceName === invoice.name"
-											class="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center gap-3 rounded-xl"
-										>
-											<LoadingIndicator class="w-8 h-8 text-green-500" />
-											<p class="text-sm font-semibold text-gray-700">
-												{{ __("Processing payment...") }}
-											</p>
-										</div>
-										<!-- Invoice Header -->
-										<div class="p-4 border-b bg-gray-50">
-											<div class="flex items-start justify-between">
-												<div>
-													<div class="flex items-center gap-2">
-														<h3
-															class="text-lg font-bold text-gray-900"
-														>
-															{{ invoice.name }}
-														</h3>
-														<span
-															:class="[
-																'px-2 py-0.5 text-xs font-semibold rounded-full',
-																getInvoiceStatusColor(invoice),
-															]"
-														>
-															{{ __(invoice.status) }}
-														</span>
-														<!-- //// Neoffice — marks a back-office invoice, so the cashier knows the money will not -->
-														<!-- //// land in a POS Invoice (02222a44, 2026-03-24). -->
-														<span
-															v-if="invoiceSource === 'external'"
-															class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700"
-														>
-															{{ __("External") }}
-														</span>
-													</div>
-													<div
-														class="flex items-center gap-4 mt-1 text-sm text-gray-600"
-													>
-														<div class="flex items-center">
-															<svg
-																class="w-4 h-4 me-1"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-																/>
-															</svg>
-															{{
-																invoice.customer_name ||
-																invoice.customer
-															}}
-														</div>
-														<div class="flex items-center">
-															<svg
-																class="w-4 h-4 me-1"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-																/>
-															</svg>
-															{{ formatDate(invoice.posting_date) }}
-															{{ formatTime(invoice.posting_time) }}
-														</div>
-													</div>
-												</div>
-												<!-- //// Neoffice — upstream had one shared loading flag, so a tap lit the spinner on every -->
-												<!-- //// card and disabled them all. The button now spins only for its own invoice, and its -->
-												<!-- //// colour follows the selected source (2584aa58 + 02222a44, 2026-03-24). -->
-												<!-- //// Neoffice — the :disabled and :class below are the per-invoice guard and the source -->
-												<!-- //// colour; the marker sits above the opening tag because both changed lines are its -->
-												<!-- //// attributes (2584aa58 + 02222a44, 2026-03-24); an HTML comment between -->
-												<!-- //// them would break the tag, which is what Neoffice commit 4ed5051e undid. -->
-												<button
-													@click="selectInvoiceForPayment(invoice)"
-													:disabled="
-														loadingInvoiceName !== null || isOffline()
-													"
-													:title="
-														isOffline()
-															? __(
-																	'Payments cannot be added while offline'
-															  )
-															: ''
-													"
-													:class="[
-														'px-4 py-2 text-white rounded-lg transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2',
-														invoiceSource === 'pos'
-															? 'bg-orange-500 hover:bg-orange-600'
-															: 'bg-blue-500 hover:bg-blue-600',
-													]"
-												>
-													<!-- //// Neoffice — spinner for THIS invoice only (2584aa58, 2026-03-24). -->
-													<LoadingIndicator
-														v-if="loadingInvoiceName === invoice.name"
-														class="w-4 h-4"
-													/>
-													{{ __("Add Payment") }}
-												</button>
-											</div>
-										</div>
-
-										<!-- Payment Summary -->
-										<div class="p-4">
-											<div class="grid grid-cols-3 gap-4 mb-4">
-												<div
-													class="text-center p-3 bg-blue-50 rounded-lg border border-blue-100"
-												>
-													<div class="text-xs text-gray-600 mb-1">
-														{{ __("Total Amount") }}
-													</div>
-													<div class="text-lg font-bold text-gray-900">
-														{{ formatCurrency(invoice.grand_total) }}
-													</div>
-												</div>
-												<div
-													class="text-center p-3 bg-green-50 rounded-lg border border-green-100"
-												>
-													<div class="text-xs text-gray-600 mb-1">
-														{{ __("Paid") }}
-													</div>
-													<div class="text-lg font-bold text-green-600">
-														{{ formatCurrency(invoice.paid_amount) }}
-													</div>
-												</div>
-												<div
-													class="text-center p-3 bg-orange-50 rounded-lg border border-orange-100"
-												>
-													<div class="text-xs text-gray-600 mb-1">
-														{{ __("Outstanding") }}
-													</div>
-													<div class="text-lg font-bold text-orange-600">
-														{{
-															formatCurrency(
-																invoice.outstanding_amount
-															)
-														}}
-													</div>
-												</div>
-											</div>
-
-											<!-- Payment Progress Bar -->
-											<div
-												class="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3"
+								<!-- //// Neoffice — upstream develop's dense table, iterating the searched list of the -->
+								<!-- //// selected source (34ee11a8, 02222a44), with the External badge and the per-invoice -->
+								<!-- //// payment state of 2584aa58 re-attached in the rows below. -->
+								<!-- Invoices List: one dense row per invoice -->
+								<div
+									v-else
+									class="bg-white rounded-lg border border-gray-200 overflow-x-auto"
+								>
+									<table class="min-w-full text-pos-sm">
+										<thead class="bg-pos-panel text-xs font-semibold text-gray-700">
+											<tr>
+												<th scope="col" class="px-3 py-2 text-start">{{ __("Invoice") }}</th>
+												<th scope="col" class="px-3 py-2 text-start">{{ __("Customer") }}</th>
+												<th scope="col" class="px-3 py-2 text-start">{{ __("Date") }}</th>
+												<th scope="col" class="px-3 py-2 text-end">{{ __("Total Amount") }}</th>
+												<th scope="col" class="px-3 py-2 text-end">{{ __("Paid") }}</th>
+												<th scope="col" class="px-3 py-2 text-end">{{ __("Outstanding") }}</th>
+												<th scope="col" class="px-3 py-2"><span class="sr-only">{{ __("Add Payment") }}</span></th>
+											</tr>
+										</thead>
+										<tbody class="divide-y divide-gray-200">
+											<!-- //// Neoffice — v-for on our searched list of the selected source (see above). -->
+											<tr
+												v-for="invoice in searchedUnpaidInvoices"
+												:key="invoice.name"
+												class="hover:bg-gray-50 align-middle"
 											>
-												<div
-													class="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-300"
-													:style="{
-														width: `${
-															(invoice.paid_amount /
-																invoice.grand_total) *
-															100
-														}%`,
-													}"
-												></div>
-											</div>
-
-											<!-- Payment Methods -->
-											<div
-												v-if="
-													invoice.payments && invoice.payments.length > 0
-												"
-												class="mt-3"
-											>
-												<div
-													class="text-xs font-medium text-gray-600 mb-2"
-												>
-													{{ __("Payment History") }}
-												</div>
-												<div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-													<div
-														v-for="(payment, idx) in invoice.payments"
-														:key="idx"
+												<td class="px-3 py-2 whitespace-nowrap">
+													<div class="font-semibold text-pos-ink tabular-nums" dir="ltr">
+														{{ invoice.name }}
+													</div>
+													<span
 														:class="[
-															'flex flex-col p-2 rounded-lg border text-sm',
-															payment.source === 'Payment Entry'
-																? 'bg-blue-50 border-blue-200'
-																: 'bg-gray-50 border-gray-200',
+															'inline-block mt-0.5 px-2 py-0.5 text-xs font-semibold rounded-full',
+															getInvoiceStatusColor(invoice),
 														]"
 													>
-														<div
-															class="flex items-center justify-between mb-1"
-														>
-															<span
-																class="text-gray-700 font-medium"
-																>{{
-																	payment.mode_of_payment ||
-																	__("N/A")
-																}}</span
-															>
-															<span
-																class="font-semibold text-gray-900"
-																>{{
-																	formatCurrency(payment.amount)
-																}}</span
-															>
-														</div>
-														<div
-															class="flex items-center justify-between"
-														>
-															<span
-																v-if="payment.posting_date"
-																class="text-[9px] text-gray-500"
-															>
-																{{
-																	formatDate(
-																		payment.posting_date
-																	)
-																}}
-															</span>
-															<span
-																:class="[
-																	'text-[9px] font-semibold',
-																	payment.source ===
-																	'Payment Entry'
-																		? 'text-blue-600'
-																		: 'text-gray-500',
-																]"
-															>
-																{{
-																	getPaymentSourceLabel(
-																		payment.source
-																	)
-																}}
-															</span>
-														</div>
+														{{ __(invoice.status) }}
+													</span>
+													<!-- //// Neoffice — marks a back-office invoice, so the cashier knows the money will not -->
+													<!-- //// land in a POS Invoice (02222a44, 2026-03-24). -->
+													<span
+														v-if="invoiceSource === 'external'"
+														class="inline-block mt-0.5 ms-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700"
+													>
+														{{ __("External") }}
+													</span>
+												</td>
+												<td class="px-3 py-2 max-w-[14rem] truncate text-pos-ink" dir="auto">
+													{{ invoice.customer_name || invoice.customer }}
+												</td>
+												<td class="px-3 py-2 whitespace-nowrap text-gray-600 tabular-nums">
+													<span dir="ltr">
+														{{ formatDate(invoice.posting_date) }}
+														{{ formatTime(invoice.posting_time) }}
+													</span>
+												</td>
+												<td class="px-3 py-2 text-end whitespace-nowrap font-medium text-pos-ink tabular-nums">
+													{{ formatCurrency(invoice.grand_total) }}
+												</td>
+												<td class="px-3 py-2 text-end whitespace-nowrap tabular-nums">
+													<div class="font-medium text-pos-saving">
+														{{ formatCurrency(invoice.paid_amount) }}
 													</div>
-												</div>
-											</div>
-										</div>
-									</div>
+													<!-- Payment history, one line per payment -->
+													<div
+														v-for="(payment, idx) in invoice.payments || []"
+														:key="idx"
+														class="text-xs text-gray-600"
+														:title="getPaymentSourceLabel(payment.source)"
+													>
+														{{ payment.mode_of_payment || __("N/A") }}
+														{{ formatCurrency(payment.amount) }}
+													</div>
+												</td>
+												<td class="px-3 py-2 text-end whitespace-nowrap font-semibold text-pos-caution tabular-nums">
+													{{ formatCurrency(invoice.outstanding_amount) }}
+												</td>
+												<td class="px-3 py-2 text-end whitespace-nowrap">
+													<!-- //// Neoffice — a payment takes a round trip to the server: the row being settled -->
+													<!-- //// says so instead of offering the button again (the cashier tapped it twice and -->
+													<!-- //// paid twice), and only this invoice's button spins and blocks the others -->
+													<!-- //// (2584aa58, 2026-03-24); upstream shares one loading flag across all rows. -->
+													<span
+														v-if="processingInvoiceName === invoice.name"
+														class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700"
+													>
+														<LoadingIndicator class="w-4 h-4 text-green-500" />
+														{{ __("Processing payment...") }}
+													</span>
+													<!-- //// Neoffice — v-else and the per-invoice :disabled (see above). -->
+													<button
+														v-else
+														@click="selectInvoiceForPayment(invoice)"
+														:disabled="loadingInvoiceName !== null || isOffline()"
+														:title="
+															isOffline()
+																? __('Payments cannot be added while offline')
+																: ''
+														"
+														class="pos-btn pos-btn-primary"
+													>
+														<!-- //// Neoffice — spins for THIS invoice only (see above). -->
+														<LoadingIndicator
+															v-if="loadingInvoiceName === invoice.name"
+															class="w-4 h-4"
+														/>
+														{{ __("Add Payment") }}
+													</button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
 								</div>
 							</div>
 
@@ -1195,8 +1048,10 @@ import { useInvoiceFiltersStore } from "@/stores/invoiceFilters";
 //// Neoffice — Biome reflow of the import, no behaviour change (458d81a9).
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
 import { getInvoiceStatusColor } from "@/utils/invoice";
+import { unpaidInvoiceBucket } from "@/utils/unpaidInvoiceBucket";
 import { useFormatters } from "@/composables/useFormatters";
 import { useToast } from "@/composables/useToast";
+import { useShift } from "@/composables/useShift";
 import { Button, call, LoadingIndicator } from "frappe-ui";
 import { computed, onMounted, ref, watch } from "vue";
 import { isOffline } from "@/utils/offline/offlineState";
@@ -1210,6 +1065,7 @@ import { logger } from "@/utils/logger";
 
 const log = logger.create("InvoiceManagement");
 const { showSuccess, showError } = useToast();
+const { currentShift } = useShift();
 const { formatDate, formatDateTime, formatTime } = useFormatters();
 
 const props = defineProps({
@@ -1290,26 +1146,14 @@ const activeUnpaidInvoices = computed(() =>
 //// back-office invoices) instead of unpaidInvoices directly, and a second computed
 //// narrows that by the search box: invoice number, customer id or customer name
 //// (02222a44, 2026-03-24; 34ee11a8, 2026-03-25).
-// Filtered unpaid invoices based on payment amounts
+// Filtered unpaid invoices: each invoice sits in exactly one bucket (overdue, partial, unpaid)
 const filteredUnpaidInvoices = computed(() => {
 	//// Neoffice — the filters run on whichever source the toggle selects, not on unpaidInvoices
 	//// directly (02222a44, 2026-03-24).
 	const source = activeUnpaidInvoices.value;
-	if (unpaidFilter.value === "partial") {
-		//// Neoffice — filters the selected source, see the note above (02222a44).
-		return source.filter((inv) => inv.status === "Partly Paid");
-	}
-	if (unpaidFilter.value === "unpaid") {
-		//// Neoffice — filters the selected source, see the note above (02222a44).
-		return source.filter((inv) => inv.status === "Unpaid");
-	}
-	if (unpaidFilter.value === "overdue") {
-		//// Neoffice — filters the selected source, see the note above (02222a44).
-		return source.filter((inv) => inv.status === "Overdue");
-	}
-	//// Neoffice — "all" returns the selected source; the search computed below narrows it
-	//// further (02222a44, 2026-03-24; 34ee11a8, 2026-03-25).
-	return source; // "all"
+	//// Neoffice — upstream develop's buckets (one per invoice), on the selected source.
+	if (unpaidFilter.value === "all") return source;
+	return source.filter((inv) => unpaidInvoiceBucket(inv) === unpaidFilter.value);
 });
 
 // Search filter on top of status filter
@@ -1330,6 +1174,18 @@ const searchedUnpaidInvoices = computed(() => {
 //// in the second case, and the one the cashier actually meets.
 const isUnpaidListNarrowed = computed(
 	() => unpaidFilter.value !== "all" || unpaidSearchQuery.value.trim() !== ""
+);
+
+// Chip counts from the same buckets, so they add up to the tab total
+const unpaidBucketCounts = computed(() =>
+	//// Neoffice — counts the source the toggle selects, like the list (02222a44).
+	activeUnpaidInvoices.value.reduce(
+		(counts, inv) => {
+			counts[unpaidInvoiceBucket(inv)]++;
+			return counts;
+		},
+		{ overdue: 0, partial: 0, unpaid: 0 }
+	)
 );
 
 //// ▲▲▲ Neoffice — end of the source-aware / searchable filtering.
@@ -1694,8 +1550,9 @@ async function handlePaymentCompleted(paymentData) {
 		await call("pos_next.api.partial_payments.add_payment_to_partial_invoice", {
 			invoice_name: invoiceName,
 			payments: paymentData.payments,
-			//// Neoffice — pos_opening_shift travels with the payment; see the marker above (a0084ae0).
-			pos_opening_shift: props.posOpeningShift || undefined,
+			//// Neoffice — pos_opening_shift travels with the payment (a0084ae0); upstream develop now sends
+			//// the shift too, ours stays as the fallback when the shift composable has none.
+			pos_opening_shift: currentShift.value?.name || props.posOpeningShift || undefined,
 		});
 
 		showSuccess(__("Payment added successfully"));

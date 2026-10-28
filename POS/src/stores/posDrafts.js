@@ -11,12 +11,14 @@ import {
 	updateDraft,
 } from "@/utils/draftManager";
 import { useToast } from "@/composables/useToast";
+import { useSerialNumberStore } from "@/stores/serialNumber";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
 export const usePOSDraftsStore = defineStore("posDrafts", () => {
 	// Use custom toast
 	const { showSuccess, showError, showWarning } = useToast();
+	const serialStore = useSerialNumberStore();
 
 	// State
 	const draftsCount = ref(0);
@@ -46,9 +48,11 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 		posProfile,
 		appliedOffers = [],
 		draftId = null,
+		appliedCoupon = null,
 		//// Neoffice — a parked ticket in a restaurant has to remember which table it belongs to and
 		//// where the kitchen is with it; upstream's draft is retail and carries neither (458d81a9,
 		//// 2026-03-20 "remove BrainWise branding, add restaurant mode, and code formatting").
+		//// Kept after upstream develop's appliedCoupon, which its callers pass in sixth position.
 		restaurantTable = null,
 		kdsStatus = null
 	) {
@@ -67,6 +71,8 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 				//// draft puts the ticket back on its table (458d81a9, 2026-03-20).
 				restaurant_table: restaurantTable,
 				kds_status: kdsStatus,
+				// Scoped coupons live on the lines; the coupon must travel with them.
+				applied_coupon: appliedCoupon?.line_level ? appliedCoupon : null,
 			};
 
 			let savedDraft;
@@ -78,7 +84,7 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 
 			await loadDrafts(); // Refresh drafts list and count
 
-			showSuccess(__("Invoice saved as draft successfully"));
+			showSuccess(__("Invoice held"));
 
 			return savedDraft;
 		} catch (error) {
@@ -90,12 +96,13 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 
 	async function loadDraft(draft) {
 		try {
-			showSuccess(__("Draft invoice loaded successfully"));
+			showSuccess(__("Held invoice opened"));
 
 			return {
 				items: draft.items || [],
 				customer: draft.customer,
 				applied_offers: draft.applied_offers || [], // Restore applied offers
+				applied_coupon: draft.applied_coupon || null,
 			};
 		} catch (error) {
 			console.error("Error loading draft:", error);
@@ -104,9 +111,24 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 		}
 	}
 
-	async function deleteDraftById(draftId) {
+	// Return a parked draft's serials to the offline cache
+	function returnDraftSerials(draft) {
+		for (const item of draft?.items || []) {
+			if (item.has_serial_no && item.serial_no) {
+				serialStore.returnSerials(item.item_code, item.serial_no);
+			}
+		}
+	}
+
+	/**
+	 * @param {{ returnSerials?: boolean }} [options]
+	 *   true when the user discards the draft; false (default) after the draft was sold
+	 */
+	async function deleteDraftById(draftId, { returnSerials = false } = {}) {
 		try {
+			const draft = drafts.value.find((d) => d.draft_id === draftId);
 			await deleteDraft(draftId);
+			if (returnSerials) returnDraftSerials(draft);
 			await loadDrafts(); // Refresh drafts list and count
 			showSuccess(__("Draft deleted successfully"));
 		} catch (error) {
@@ -126,5 +148,6 @@ export const usePOSDraftsStore = defineStore("posDrafts", () => {
 		saveDraftInvoice,
 		loadDraft,
 		deleteDraft: deleteDraftById,
+		returnDraftSerials,
 	};
 });

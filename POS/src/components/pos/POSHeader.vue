@@ -84,27 +84,22 @@
 			<div class="flex-1 flex justify-between items-center gap-1 sm:gap-2">
 				<!-- Left Side: Brand Info -->
 				<div class="flex items-center gap-1 sm:gap-4 min-w-0 flex-1 overflow-hidden">
-					<div class="min-w-0 flex-shrink overflow-hidden">
-						<div class="flex items-center gap-1 sm:gap-2">
-							<!-- //// Neoffice — upstream prints a hardcoded "POS Next" title next to this version pill. -->
-							<!-- //// The title is gone (the logo already says whose product this is) and the pill moved -->
-							<!-- //// onto the Neoffice radius and shadow tokens (87f168fe, 2026-03-20 "align POS design -->
-							<!-- //// with Neoffice theme and improve customer display"). -->
-							<span
-								class="hidden sm:inline-flex relative items-center px-1 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-neo-sm shadow-sm hover:shadow-neo transition-shadow flex-shrink-0"
-							>
-								<span
-									class="absolute inset-0 bg-white/20 rounded-md animate-pulse"
-								></span>
-								<span class="relative">v{{ appVersion }}</span>
-							</span>
-						</div>
-						<p
+					<div class="min-w-0 flex-shrink overflow-hidden flex items-baseline gap-2">
+						<!-- //// Neoffice — upstream prints a hardcoded "POS Next" title before the version. The -->
+						<!-- //// title is gone: the logo already says whose product this is (87f168fe, 2026-03-20 -->
+						<!-- //// "align POS design with Neoffice theme and improve customer display"). -->
+						<span
+							class="hidden sm:inline text-xs font-medium text-gray-500 tabular-nums flex-shrink-0"
+							dir="ltr"
+							>v{{ appVersion }}</span
+						>
+						<span
 							v-if="profileName"
-							class="text-[9px] sm:text-xs text-gray-500 truncate hidden sm:block mt-0.5"
+							dir="auto"
+							class="text-pos-sm text-gray-600 truncate hidden sm:inline border-s border-gray-300 ps-2"
 						>
 							{{ profileName }}
-						</p>
+						</span>
 					</div>
 
 					<!-- Time and Shift Duration - Compact on mobile -->
@@ -130,9 +125,10 @@
 
 					<!-- Mobile Time Display - Very compact -->
 					<div
-						class="flex lg:hidden items-center text-[10px] text-gray-600 font-medium flex-shrink-0 ms-1"
+						class="flex lg:hidden items-center text-xs text-gray-600 font-medium flex-shrink-0 ms-1 tabular-nums"
+						dir="ltr"
 					>
-						<span class="hidden xs:inline whitespace-nowrap">{{ currentTime }}</span>
+						<span class="hidden sm:inline whitespace-nowrap">{{ currentTime }}</span>
 					</div>
 				</div>
 
@@ -205,7 +201,7 @@
 					<button
 						@click="$emit('sync-click')"
 						:class="[
-							'p-1.5 sm:p-2 hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors relative group touch-manipulation',
+							'flex items-center justify-center min-h-target min-w-target hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors relative group touch-manipulation pos-focus',
 							isSyncing ? 'animate-pulse' : '',
 						]"
 						:title="
@@ -258,7 +254,7 @@
 						<button
 							@click="showCacheTooltip = !showCacheTooltip"
 							@blur="handleBlur"
-							class="p-1.5 sm:p-2 hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors relative touch-manipulation"
+							class="flex items-center justify-center min-h-target min-w-target hover:bg-gray-100/70 active:bg-gray-200/70 rounded-neo-sm transition-colors relative touch-manipulation pos-focus"
 							:aria-label="getCacheAriaLabel()"
 						>
 							<svg
@@ -273,7 +269,7 @@
 							</svg>
 							<svg
 								v-if="cacheSyncing || isRefreshing"
-								class="w-4 h-4 sm:w-5 sm:h-5 absolute top-2 start-2 animate-spin opacity-70"
+								class="w-4 h-4 sm:w-5 sm:h-5 absolute inset-0 m-auto animate-spin opacity-70"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -468,6 +464,7 @@
 									: __('Print Invoice')
 							"
 							@click="$emit('printer-click')"
+							class="min-h-target min-w-target flex items-center justify-center"
 						/>
 						<span
 							v-if="cloudPrinterStatus || silentPrintEnabled"
@@ -499,7 +496,7 @@
 						:title="isRefreshing ? __('Refreshing...') : __('Refresh')"
 						@click="$emit('refresh-click')"
 						:class="[
-							'touch-manipulation p-1 sm:p-2',
+							'touch-manipulation min-h-target min-w-target flex items-center justify-center',
 							isRefreshing ? 'animate-spin' : '',
 						]"
 						:aria-label="

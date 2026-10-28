@@ -625,6 +625,12 @@ const createCustomerResource = createResource({
 		customer_group: customerGroup.value || defaultCustomerGroup.value,
 		territory: territory.value || "All Territories",
 		customer_type: customerType.value,
+		//// Neoffice — upstream develop's create_customer takes the person's first and last name and a
+		//// publish flag for its optional customer-sync apps (pos_next_customer_* hooks, none on our
+		//// fleet); our form already splits the name, so it sends them like upstream's dialog does.
+		custom_first_name: isCompany.value ? "" : customerData.value.first_name.trim(),
+		custom_last_name: isCompany.value ? "" : customerData.value.last_name.trim(),
+		custom_is_publish: 1,
 		pos_profile: props.posProfile,
 	}),
 	//// Neoffice — upstream announced success and closed the dialog from the resource's

@@ -4,6 +4,7 @@ import { call } from "../utils/apiWrapper";
 import { offlineState } from "../utils/offline/offlineState";
 import { logger } from "../utils/logger";
 import { useBootstrapStore } from "../stores/bootstrap";
+import { setLocale } from "../utils/currency";
 
 const log = logger.create("Locale");
 
@@ -213,6 +214,7 @@ export function useLocale() {
 		// Update reactive refs
 		currentLocale.value = newLocale;
 		currentDir.value = config.dir;
+		setLocale(newLocale);
 
 		// Update document attributes
 		document.documentElement.setAttribute("dir", config.dir);
@@ -258,6 +260,7 @@ export function useLocale() {
 
 		currentLocale.value = locale;
 		currentDir.value = config.dir;
+		setLocale(locale);
 
 		// Set document attributes
 		if (typeof document !== "undefined") {

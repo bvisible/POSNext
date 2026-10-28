@@ -13,7 +13,7 @@
   //// calculate discount on net total after pricing rules — 8e06bb9 + 3890e67
 -->
 <template>
-	<Dialog v-model="show" :options="{ title: __('Apply'), size: 'md' }">
+	<Dialog v-model="show" :options="{ title: __('Coupon'), size: 'md' }">
 		<template #body-content>
 			<div class="flex flex-col gap-4">
 				<!-- Info Banner -->
@@ -65,24 +65,6 @@
 							class="flex-shrink-0"
 							:aria-label="__('Apply')"
 						>
-							<!-- //// Neoffice — the check mark goes in the prefix slot, which lays it out on the -->
-							<!-- //// word's line: as a plain child it sat above "Apply", which overflowed the button. -->
-							<template #prefix>
-							<svg
-								class="w-3.5 h-3.5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M5 13l4 4L19 7"
-								/>
-							</svg>
-							<!-- //// Neoffice — end of the prefix slot, then the button's word (see above). -->
-							</template>
 							{{ __("Apply") }}
 						</Button>
 					</div>
@@ -323,16 +305,20 @@
 </template>
 
 <script setup>
-//// Neoffice — Biome formatter pass: import rewrapped, no behaviour change (458d81a9).
+import { isPromotionsAppInstalled, promoApi } from "@/utils/promoApi";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
-import { Button, Dialog, Input, createResource } from "frappe-ui";
+import { Button, Dialog, Input, call, createResource } from "frappe-ui";
 import { ref, watch } from "vue";
 import { useInvoice } from "@/composables/useInvoice";
 import { useToast } from "@/composables/useToast";
+import { usePOSCartStore } from "@/stores/posCart";
+
+const cartStore = usePOSCartStore();
 
 // Get calculateDiscountAmount helper from composable
 const { calculateDiscountAmount } = useInvoice();
-const { showSuccess, showError, showWarning } = useToast();
+// Errors show inline in the dialog only
+const { showSuccess } = useToast();
 
 const props = defineProps({
 	modelValue: Boolean,
@@ -387,7 +373,7 @@ const errorMessage = ref("");
 
 // Resource to load gift cards
 const giftCardsResource = createResource({
-	url: "pos_next.api.offers.get_active_coupons",
+	url: promoApi.getActiveCoupons(),
 	makeParams() {
 		return {
 			customer: props.customer,
@@ -400,18 +386,17 @@ const giftCardsResource = createResource({
 	},
 });
 
-// Resource to validate coupon
-const couponResource = createResource({
-	url: "pos_next.api.offers.validate_coupon",
-	makeParams() {
-		return {
-			coupon_code: couponCode.value,
-			customer: props.customer,
-			company: props.company,
-		};
-	},
-	auto: false,
-});
+async function validateCouponCode(withItems) {
+	const params = {
+		coupon_code: couponCode.value,
+		customer: props.customer,
+		company: props.company,
+	};
+	if (withItems) {
+		params.items = JSON.stringify(cartStore.buildCouponItemsPayload());
+	}
+	return call(promoApi.validateCoupon(), params);
+}
 
 watch(
 	() => props.modelValue,
@@ -469,7 +454,6 @@ async function applyCoupon() {
 
 	if (!props.customer) {
 		errorMessage.value = __("Please choose a customer");
-		showError(errorMessage.value);
 		return;
 	}
 
@@ -477,26 +461,23 @@ async function applyCoupon() {
 	errorMessage.value = "";
 
 	try {
-		await couponResource.reload();
-		// Frappe wraps response in { message: {...} }
-		const result = couponResource.data?.message || couponResource.data;
-
-		// Handle if result is the actual response object
-		//// Neoffice — Biome formatter pass, ternary wrapped. No behaviour change (458d81a9).
-		const validationData =
-			typeof result === "object" && result.valid !== undefined
-				? result
-				: couponResource.data;
+		// Only posnext_promotions prices cart lines (honouring excluded brands and already
+		// discounted items); pos_next's validate_coupon takes no items.
+		const linePriced = isPromotionsAppInstalled();
+		const validationData = await validateCouponCode(linePriced);
 
 		if (!validationData || !validationData.valid) {
 			//// Neoffice — Biome formatter pass, expression wrapped. No behaviour change (458d81a9).
 			errorMessage.value =
 				validationData?.message || __("The coupon code you entered is not valid");
-			showError(errorMessage.value);
 			return;
 		}
 
 		const coupon = validationData.coupon;
+		if (linePriced) {
+			applyLineCoupon(coupon, validationData);
+			return;
+		}
 		//// Neoffice — a validated coupon can now be a gift card. Upstream had a single kind
 		//// (its own POS Coupon); we route ERPNext Coupon Code plus the gift-card flag through
 		//// the same validation endpoint, so the kind is decided once here (ce505902, 2026-01-12).
@@ -505,11 +486,9 @@ async function applyCoupon() {
 
 		// Check minimum amount on the configured coupon base
 		if (coupon.min_amount && baseAmount < coupon.min_amount) {
-			//// Neoffice — Biome formatter pass, call wrapped. No behaviour change (458d81a9).
-			errorMessage.value = __("This coupon requires a minimum purchase of ", [
+			errorMessage.value = __("This coupon requires a minimum purchase of {0}", [
 				formatCurrency(coupon.min_amount),
 			]);
-			showWarning(errorMessage.value);
 			return;
 		}
 
@@ -522,6 +501,7 @@ async function applyCoupon() {
 		let discountAmount = 0;
 		let availableBalance = 0;
 		let remainingBalance = 0;
+		let capped = false;
 
 		if (isGiftCard) {
 			// Gift card: use balance as discount, cap at netTotal (after pricing rules)
@@ -540,7 +520,10 @@ async function applyCoupon() {
 			discountAmount = calculateDiscountAmount(discountObj, props.subtotal);
 
 			// Apply maximum discount limit if specified
-			if (coupon.max_amount && discountAmount > coupon.max_amount) {
+			//// Neoffice — upstream develop's `capped` flag kept: a capped percentage coupon is
+			//// applied as a fixed amount (see appliedDiscount below), never recomputed uncapped.
+			capped = Boolean(coupon.max_amount && discountAmount > coupon.max_amount);
+			if (capped) {
 				discountAmount = coupon.max_amount;
 			}
 		}
@@ -558,8 +541,9 @@ async function applyCoupon() {
 		appliedDiscount.value = {
 			name: coupon.coupon_name || coupon.coupon_code,
 			code: couponCode.value.toUpperCase(),
-			//// Neoffice — Biome formatter pass, ternary wrapped. No behaviour change (458d81a9).
-			percentage: coupon.discount_type === "Percentage" ? coupon.discount_percentage : 0,
+			// Capped coupons apply as a fixed amount; a percentage would be recomputed uncapped
+			percentage:
+				coupon.discount_type === "Percentage" && !capped ? coupon.discount_percentage : 0,
 			amount: discountAmount,
 			type: coupon.discount_type,
 			coupon: coupon,
@@ -582,10 +566,36 @@ async function applyCoupon() {
 	} catch (error) {
 		console.error("Error applying coupon:", error);
 		errorMessage.value = __("Failed to apply coupon. Please try again.");
-		showError(errorMessage.value);
 	} finally {
 		applying.value = false;
 	}
+}
+
+// Priced by the server per cart line; min amount is checked on eligible lines there.
+function applyLineCoupon(coupon, result) {
+	const code = couponCode.value.toUpperCase();
+	appliedDiscount.value = {
+		name: coupon.coupon_name || coupon.coupon_code,
+		code,
+		percentage: 0,
+		amount: Number.parseFloat(result.total_discount) || 0,
+		type: coupon.discount_type,
+		coupon,
+		apply_on: coupon.apply_on,
+		line_level: true,
+		line_updates: result.line_updates || [],
+	};
+	emit("discount-applied", appliedDiscount.value);
+	// Lines whose own promotion beats the coupon (coupon set to "Better of the two")
+	const kept = (result.kept_promotion_items || []).map(
+		(itemCode) => cartStore.invoiceItems.find((i) => i.item_code === itemCode)?.item_name || itemCode
+	);
+	showSuccess(
+		kept.length
+			? __("{0} applied. The current promotion saves more on: {1}", [code, kept.join(", ")])
+			: __("{0} applied successfully", [code])
+	);
+	errorMessage.value = "";
 }
 
 function removeDiscount() {

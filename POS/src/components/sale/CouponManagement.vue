@@ -30,26 +30,15 @@
 				</FormControl>
 
 				<div class="grid grid-cols-2 gap-2">
-					<FormControl
-						type="select"
+					<SelectInput
 						v-model="filterStatus"
-						:options="[
-							{ label: __('All Status'), value: 'all' },
-							{ label: __('Active Only'), value: 'active' },
-							{ label: __('Expired'), value: 'expired' },
-							{ label: __('Not Started'), value: 'not_started' },
-							{ label: __('Exhausted'), value: 'exhausted' },
-							{ label: __('Disabled'), value: 'disabled' },
-						]"
+						:options="statusFilterOptions"
+						:min-dropdown-width="180"
 					/>
-					<FormControl
-						type="select"
+					<SelectInput
 						v-model="filterType"
-						:options="[
-							{ label: __('All Types'), value: 'all' },
-							{ label: __('Promotional'), value: 'Promotional' },
-							{ label: __('Gift Card'), value: 'Gift Card' },
-						]"
+						:options="typeFilterOptions"
+						:min-dropdown-width="180"
 					/>
 				</div>
 			</div>
@@ -60,7 +49,7 @@
 					v-if="permissions.create"
 					@click="handleCreateNew"
 					variant="solid"
-					class="w-full"
+					class="pos-btn pos-btn-primary w-full"
 				>
 					<template #prefix>
 						<FeatherIcon name="plus-circle" class="w-4 h-4" />
@@ -151,7 +140,7 @@
 								:theme="getStatusTheme(coupon.status)"
 								size="sm"
 							>
-								{{ coupon.status || __("Active") }}
+								{{ __(coupon.status || "Active") }}
 							</Badge>
 						</div>
 						<div class="flex items-center justify-between text-xs">
@@ -196,7 +185,7 @@
 							)
 						}}
 					</p>
-					<Button v-if="permissions.create" @click="handleCreateNew" variant="solid">
+					<Button v-if="permissions.create" @click="handleCreateNew" variant="solid" class="pos-btn pos-btn-primary">
 						<template #prefix>
 							<FeatherIcon name="plus" class="w-4 h-4" />
 						</template>
@@ -283,6 +272,7 @@
 								@click="handleSubmit"
 								:loading="loading"
 								variant="solid"
+								class="pos-btn pos-btn-primary"
 							>
 								<template #prefix>
 									<FeatherIcon
@@ -318,17 +308,20 @@
 										/>
 									</div>
 
-									<FormControl
-										type="select"
-										:label="__('Coupon Type')"
-										v-model="form.coupon_type"
-										:disabled="!isCreating"
-										:options="[
-											{ label: __('Promotional'), value: 'Promotional' },
-											{ label: __('Gift Card'), value: 'Gift Card' },
-										]"
-										required
-									/>
+									<div>
+										<label
+											class="block text-sm font-medium text-gray-700 mb-2 text-start"
+										>
+											{{ __("Coupon Type") }}
+											<span class="text-red-500">*</span>
+										</label>
+										<SelectInput
+											v-model="form.coupon_type"
+											:disabled="!isCreating"
+											:options="couponTypeOptions"
+											:placeholder="__('Select coupon type')"
+										/>
+									</div>
 
 									<FormControl
 										type="text"
@@ -389,14 +382,19 @@
 										</div>
 									</div>
 
-									<FormControl
-										v-if="campaigns.length > 0"
-										type="select"
-										:label="__('Campaign')"
-										v-model="form.campaign"
-										:disabled="!isCreating"
-										:options="campaignOptions"
-									/>
+									<div v-if="campaigns.length > 0">
+										<label
+											class="block text-sm font-medium text-gray-700 mb-2 text-start"
+										>
+											{{ __("Campaign") }}
+										</label>
+										<SelectInput
+											v-model="form.campaign"
+											:disabled="!isCreating"
+											:options="campaignOptions"
+											:placeholder="__('Select campaign')"
+										/>
+									</div>
 
 									<!-- Company field -->
 									<div>
@@ -443,27 +441,33 @@
 									</h4>
 								</div>
 								<div class="grid grid-cols-2 gap-4">
-									<FormControl
-										type="select"
-										:label="__('Discount Type')"
-										v-model="form.discount_type"
-										:options="[
-											{ label: __('Percentage'), value: 'Percentage' },
-											{ label: __('Amount'), value: 'Amount' },
-										]"
-										required
-									/>
+									<div>
+										<label
+											class="block text-sm font-medium text-gray-700 mb-2 text-start"
+										>
+											{{ __("Discount Type") }}
+											<span class="text-red-500">*</span>
+										</label>
+										<SelectInput
+											v-model="form.discount_type"
+											:options="discountTypeOptions"
+											:placeholder="__('Select discount type')"
+										/>
+									</div>
 
-									<FormControl
-										type="select"
-										:label="__('Apply Discount On')"
-										v-model="form.apply_on"
-										:options="[
-											{ label: __('Grand Total'), value: 'Grand Total' },
-											{ label: __('Net Total'), value: 'Net Total' },
-										]"
-										required
-									/>
+									<div>
+										<label
+											class="block text-sm font-medium text-gray-700 mb-2 text-start"
+										>
+											{{ __("Apply Discount On") }}
+											<span class="text-red-500">*</span>
+										</label>
+										<SelectInput
+											v-model="form.apply_on"
+											:options="applyOnOptions"
+											:placeholder="__('Select option')"
+										/>
+									</div>
 
 									<FormControl
 										v-if="form.discount_type === 'Percentage'"
@@ -501,6 +505,19 @@
 										:placeholder="__('Optional cap in {0}', [currency])"
 										:min="0"
 									/>
+
+									<!-- What the coupon does on a line that already has a discount -->
+									<div v-if="scopeSupported" class="sm:col-span-2">
+										<FormControl
+											type="select"
+											:label="__('When a Line Already Has a Discount')"
+											v-model="form.promotion_conflict"
+											:options="promotionConflictOptions"
+										/>
+										<p class="mt-1 text-xs text-gray-600">
+											{{ promotionConflictHint(form.promotion_conflict) }}
+										</p>
+									</div>
 								</div>
 								<div
 									v-if="!isCreating && couponDetails.discount_type"
@@ -541,6 +558,109 @@
 											}}
 										</span>
 									</p>
+								</div>
+							</div>
+						</Card>
+
+						<!-- Scope Card -->
+						<Card v-if="scopeSupported">
+							<div class="p-5">
+								<div class="flex items-center gap-2 mb-4">
+									<FeatherIcon name="filter" class="w-4 h-4 text-blue-600" />
+									<h4 class="text-sm font-semibold text-gray-900">
+										{{ __("Applies To") }}
+									</h4>
+								</div>
+								<div class="grid grid-cols-2 gap-4">
+									<div>
+										<label
+											class="block text-sm font-medium text-gray-700 mb-2 text-start"
+										>
+											{{ __("Apply Scope") }}
+										</label>
+										<SelectInput
+											v-model="form.apply_scope"
+											:options="applyScopeOptions"
+										/>
+									</div>
+									<div v-if="activeScope">
+										<label
+											class="block text-sm font-medium text-gray-700 mb-2 text-start"
+										>
+											{{ activeScope.addLabel() }}
+										</label>
+										<SelectInput
+											v-model="scopeSelection"
+											:options="scopeOptions"
+											:placeholder="activeScope.addLabel()"
+											:searchable="true"
+											:searchPlaceholder="__('Search...')"
+											:noResultsText="__('No results found')"
+											:maxDisplayed="30"
+											@change="addScopeRow"
+										/>
+									</div>
+								</div>
+
+								<div
+									v-if="activeScope"
+									class="mt-4 border border-gray-200 rounded-lg overflow-hidden"
+								>
+									<table class="w-full text-sm">
+										<thead class="bg-gray-50 text-gray-600">
+											<tr>
+												<th class="px-3 py-2 w-12 text-start font-medium">
+													{{ __("No.") }}
+												</th>
+												<th class="px-3 py-2 text-start font-medium">
+													{{ activeScope.columnLabel() }}
+												</th>
+												<th
+													v-if="form.apply_scope === 'Item Code'"
+													class="px-3 py-2 text-start font-medium"
+												>
+													{{ __("Item Name") }}
+												</th>
+												<th class="px-3 py-2 w-12"></th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr
+												v-for="(row, index) in scopeRows"
+												:key="row[activeScope.column]"
+												class="border-t border-gray-100"
+											>
+												<td class="px-3 py-2 text-gray-500">{{ index + 1 }}</td>
+												<td class="px-3 py-2 text-gray-900">
+													{{ row[activeScope.column] }}
+												</td>
+												<td
+													v-if="form.apply_scope === 'Item Code'"
+													class="px-3 py-2 text-gray-600"
+												>
+													{{ row.item_name }}
+												</td>
+												<td class="px-3 py-2 text-end">
+													<button
+														type="button"
+														class="text-red-600 hover:text-red-800"
+														:aria-label="__('Remove')"
+														@click="removeScopeRow(index)"
+													>
+														<FeatherIcon name="x" class="w-4 h-4" />
+													</button>
+												</td>
+											</tr>
+											<tr v-if="!scopeRows.length">
+												<td
+													colspan="4"
+													class="px-3 py-4 text-center text-gray-500"
+												>
+													{{ __("No rows added yet") }}
+												</td>
+											</tr>
+										</tbody>
+									</table>
 								</div>
 							</div>
 						</Card>
@@ -706,7 +826,7 @@
 					<Button @click="showDeleteConfirm = false" variant="ghost">
 						{{ __("Cancel") }}
 					</Button>
-					<Button @click="confirmDelete" variant="solid" theme="red" :loading="loading">
+					<Button @click="confirmDelete" variant="solid" theme="red" class="pos-btn pos-btn-danger" :loading="loading">
 						<template #prefix>
 							<FeatherIcon name="trash-2" class="w-4 h-4" />
 						</template>
@@ -719,11 +839,15 @@
 </template>
 
 <script setup>
+import { isPromotionsAppInstalled, promoApi } from "@/utils/promoApi";
 import AutocompleteSelect from "@/components/common/AutocompleteSelect.vue";
+import SelectInput from "@/components/common/SelectInput.vue";
 import { useToast } from "@/composables/useToast";
 import { useCustomerSearchStore } from "@/stores/customerSearch";
+import { useItemSearchStore } from "@/stores/itemSearch";
 import { usePOSSettingsStore } from "@/stores/posSettings";
-import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "@/utils/currency";
+//// Neoffice — formatCurrency (aliased): coupon amounts in the site's number format, see formatCurrency below.
+import { DEFAULT_CURRENCY, DEFAULT_LOCALE, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
 //// Neoffice — from here on the divergence is the Biome formatter pass (double quotes,
 //// trailing commas, parenthesised arrow params, wrapped calls), EXCEPT the gift-card
 //// filter marked further down. No behaviour change here (458d81a9, 2026-03-20
@@ -739,6 +863,56 @@ const customerStore = useCustomerSearchStore();
 //// Neoffice — same Biome pass, formatting only (458d81a9).
 const { filteredCustomers, loading: customerLoading } = storeToRefs(customerStore);
 const posSettingsStore = usePOSSettingsStore();
+const itemSearchStore = useItemSearchStore();
+
+const SCOPE_ALL = "All Eligible Items";
+// Scope tables live in posnext_promotions; plain pos_next coupons always apply to the whole cart.
+const scopeSupported = isPromotionsAppInstalled();
+
+// The coupon engine (posnext_promotions) reads this per coupon; POS Settings holds the default for new ones
+const PROMOTION_CONFLICT_SKIP = "Skip the line";
+const promotionConflictOptions = [
+	{ label: __("Skip the line"), value: PROMOTION_CONFLICT_SKIP },
+	{ label: __("Add on top"), value: "Add on top" },
+	{ label: __("Better of the two"), value: "Better of the two" },
+];
+const PROMOTION_CONFLICT_HINTS = {
+	"Skip the line": () => __("The coupon leaves lines that already have a discount alone."),
+	"Add on top": () => __("The coupon also applies to what is left after the existing discount."),
+	"Better of the two": () => __("Each line gets whichever saves the customer more."),
+};
+
+function promotionConflictHint(mode) {
+	return (PROMOTION_CONFLICT_HINTS[mode] || PROMOTION_CONFLICT_HINTS[PROMOTION_CONFLICT_SKIP])();
+}
+
+function defaultPromotionConflict() {
+	return posSettingsStore.settings?.default_coupon_promotion_conflict || PROMOTION_CONFLICT_SKIP;
+}
+
+const SCOPE_CONFIG = {
+	"Item Code": {
+		field: "applicable_items",
+		column: "item_code",
+		label: () => __("Specific Items"),
+		columnLabel: () => __("Item Code"),
+		addLabel: () => __("Add Item"),
+	},
+	"Item Group": {
+		field: "applicable_item_groups",
+		column: "item_group",
+		label: () => __("Item Groups"),
+		columnLabel: () => __("Item Group"),
+		addLabel: () => __("Add Item Group"),
+	},
+	Brand: {
+		field: "applicable_brands",
+		column: "brand",
+		label: () => __("Brands"),
+		columnLabel: () => __("Brand"),
+		addLabel: () => __("Add Brand"),
+	},
+};
 
 const props = defineProps({
 	company: String,
@@ -772,6 +946,9 @@ const filterType = ref("all");
 
 // Data for dropdowns
 const campaigns = ref([]);
+const itemGroups = ref([]);
+const brands = ref([]);
+const scopeSelection = ref("");
 
 // Form
 const form = ref({
@@ -791,6 +968,8 @@ const form = ref({
 	maximum_use: null,
 	one_use: 0,
 	company: props.company,
+	promotion_conflict: defaultPromotionConflict(),
+	...emptyScope(),
 });
 
 // Computed
@@ -812,7 +991,7 @@ const filteredCoupons = computed(() => {
 	// Filter by status
 	if (filterStatus.value !== "all") {
 		filtered = filtered.filter((c) => {
-			const status = c.status.toLowerCase().replace(" ", "_");
+			const status = (c.status || "").toLowerCase().replace(" ", "_");
 			return status === filterStatus.value;
 		});
 	}
@@ -843,6 +1022,63 @@ const filteredCoupons = computed(() => {
 	return filtered;
 });
 
+const statusFilterOptions = computed(() => [
+	{ label: __("All Status"), value: "all" },
+	{ label: __("Active Only"), value: "active" },
+	{ label: __("Expired"), value: "expired" },
+	{ label: __("Not Started"), value: "not_started" },
+	{ label: __("Exhausted"), value: "exhausted" },
+	{ label: __("Disabled"), value: "disabled" },
+]);
+
+const typeFilterOptions = computed(() => [
+	{ label: __("All Types"), value: "all" },
+	{ label: __("Promotional"), value: "Promotional" },
+	{ label: __("Gift Card"), value: "Gift Card" },
+]);
+
+const couponTypeOptions = computed(() => [
+	{ label: __("Promotional"), value: "Promotional" },
+	{ label: __("Gift Card"), value: "Gift Card" },
+]);
+
+const discountTypeOptions = computed(() => [
+	{ label: __("Percentage"), value: "Percentage" },
+	{ label: __("Amount"), value: "Amount" },
+]);
+
+const applyOnOptions = computed(() => [
+	{ label: __("Grand Total"), value: "Grand Total" },
+	{ label: __("Net Total"), value: "Net Total" },
+]);
+
+const applyScopeOptions = computed(() => [
+	{ label: __("Entire Cart"), value: SCOPE_ALL },
+	...Object.entries(SCOPE_CONFIG).map(([value, config]) => ({ label: config.label(), value })),
+]);
+
+const activeScope = computed(() => SCOPE_CONFIG[form.value.apply_scope] || null);
+
+const scopeRows = computed(() => (activeScope.value ? form.value[activeScope.value.field] : []));
+
+const scopeOptions = computed(() => {
+	if (!activeScope.value) return [];
+	const taken = new Set(scopeRows.value.map((row) => row[activeScope.value.column]));
+	let options = [];
+	if (form.value.apply_scope === "Item Code") {
+		options = (itemSearchStore.allItems || []).map((item) => ({
+			label: item.item_name,
+			value: item.item_code,
+			subtitle: item.item_code,
+		}));
+	} else if (form.value.apply_scope === "Item Group") {
+		options = itemGroups.value.map((group) => ({ label: group.name, value: group.name }));
+	} else {
+		options = brands.value.map((brand) => ({ label: brand.name, value: brand.name }));
+	}
+	return options.filter((option) => !taken.has(option.value));
+});
+
 const campaignOptions = computed(() => {
 	return [
 		{ label: __("-- No Campaign --"), value: "" },
@@ -861,7 +1097,7 @@ const customerOptions = computed(() => {
 
 // Resources
 const couponsResource = createResource({
-	url: "pos_next.api.promotions.get_coupons",
+	url: promoApi.getCoupons(),
 	makeParams() {
 		return {
 			company: props.company,
@@ -881,7 +1117,7 @@ const couponsResource = createResource({
 });
 
 const couponDetailsResource = createResource({
-	url: "pos_next.api.promotions.get_coupon_details",
+	url: promoApi.getCouponDetails(),
 	makeParams() {
 		return { coupon_name: selectedCoupon.value?.name };
 	},
@@ -914,10 +1150,41 @@ const campaignsResource = createResource({
 	},
 });
 
-const createCouponResource = createResource({
-	url: "pos_next.api.promotions.create_coupon",
+const itemGroupsResource = createResource({
+	url: promoApi.getItemGroups(),
 	makeParams() {
-		return { data: JSON.stringify(form.value) };
+		return { company: props.company };
+	},
+	auto: false,
+	onSuccess(data) {
+		itemGroups.value = data || [];
+	},
+	onError(error) {
+		handleError(error, __("Failed to load item groups"));
+	},
+});
+
+const brandsResource = createResource({
+	url: promoApi.getBrands(),
+	auto: false,
+	onSuccess(data) {
+		brands.value = data || [];
+	},
+	onError(error) {
+		handleError(error, __("Failed to load brands"));
+	},
+});
+
+const createCouponResource = createResource({
+	url: promoApi.createCoupon(),
+	makeParams() {
+		return {
+			data: JSON.stringify({
+				...form.value,
+				pos_profile: posSettingsStore.settings?.pos_profile,
+				...scopePayload(),
+			}),
+		};
 	},
 	auto: false,
 	onSuccess(data) {
@@ -935,7 +1202,7 @@ const createCouponResource = createResource({
 });
 
 const updateCouponResource = createResource({
-	url: "pos_next.api.promotions.update_coupon",
+	url: promoApi.updateCoupon(),
 	makeParams() {
 		return {
 			coupon_name: selectedCoupon.value?.name,
@@ -950,6 +1217,8 @@ const updateCouponResource = createResource({
 				valid_upto: form.value.valid_upto,
 				maximum_use: form.value.maximum_use,
 				one_use: form.value.one_use,
+				...(scopeSupported ? { promotion_conflict: form.value.promotion_conflict } : {}),
+				...scopePayload(),
 			}),
 		};
 	},
@@ -969,7 +1238,7 @@ const updateCouponResource = createResource({
 });
 
 const toggleCouponResource = createResource({
-	url: "pos_next.api.promotions.toggle_coupon",
+	url: promoApi.toggleCoupon(),
 	makeParams() {
 		return { coupon_name: selectedCoupon.value?.name };
 	},
@@ -992,7 +1261,7 @@ const toggleCouponResource = createResource({
 });
 
 const deleteCouponResource = createResource({
-	url: "pos_next.api.promotions.delete_coupon",
+	url: promoApi.deleteCoupon(),
 	makeParams() {
 		return { coupon_name: selectedCoupon.value?.name };
 	},
@@ -1021,6 +1290,15 @@ watch(
 			loading.value = true;
 			couponDetailsResource.reload();
 		}
+	}
+);
+
+watch(
+	() => form.value.apply_scope,
+	(scope) => {
+		scopeSelection.value = "";
+		if (scope === "Item Group" && !itemGroups.value.length) itemGroupsResource.reload();
+		if (scope === "Brand" && !brands.value.length) brandsResource.reload();
 	}
 );
 
@@ -1093,6 +1371,10 @@ function handleSubmit() {
 		showWarning(__("Please select a customer for gift card"));
 		return;
 	}
+	if (scopeSupported && activeScope.value && !scopeRows.value.length) {
+		showWarning(__("Add at least one row to {0}", [activeScope.value.label()]));
+		return;
+	}
 
 	loading.value = true;
 
@@ -1133,6 +1415,61 @@ function generateCouponCode() {
 	form.value.coupon_code = code;
 }
 
+function emptyScope() {
+	return {
+		apply_scope: SCOPE_ALL,
+		applicable_items: [],
+		applicable_item_groups: [],
+		applicable_brands: [],
+	};
+}
+
+function scopeFromCoupon(coupon) {
+	const scope = emptyScope();
+	scope.apply_scope = SCOPE_CONFIG[coupon.apply_scope] ? coupon.apply_scope : SCOPE_ALL;
+	for (const config of Object.values(SCOPE_CONFIG)) {
+		scope[config.field] = (coupon[config.field] || []).map((row) => ({
+			[config.column]: row[config.column],
+			...(config.column === "item_code" ? { item_name: row.item_name } : {}),
+		}));
+	}
+	return scope;
+}
+
+// Only the active scope's table is sent; the others are cleared so stale rows don't persist.
+function scopePayload() {
+	if (!scopeSupported) return {};
+	const payload = { apply_scope: form.value.apply_scope || SCOPE_ALL };
+	for (const [scope, config] of Object.entries(SCOPE_CONFIG)) {
+		payload[config.field] =
+			scope === payload.apply_scope
+				? form.value[config.field].map((row) => row[config.column])
+				: [];
+	}
+	return payload;
+}
+
+function addScopeRow(value) {
+	const config = activeScope.value;
+	if (!config || !value) return;
+	const rows = form.value[config.field];
+	if (!rows.some((row) => row[config.column] === value)) {
+		const row = { [config.column]: value };
+		if (config.column === "item_code") {
+			const item = (itemSearchStore.allItems || []).find((i) => i.item_code === value);
+			row.item_name = item?.item_name || value;
+		}
+		rows.push(row);
+	}
+	scopeSelection.value = "";
+}
+
+function removeScopeRow(index) {
+	const config = activeScope.value;
+	if (!config) return;
+	form.value[config.field].splice(index, 1);
+}
+
 function resetForm() {
 	form.value = {
 		coupon_name: "",
@@ -1151,6 +1488,8 @@ function resetForm() {
 		maximum_use: null,
 		one_use: 0,
 		company: props.company,
+		promotion_conflict: defaultPromotionConflict(),
+		...emptyScope(),
 	};
 }
 
@@ -1175,6 +1514,8 @@ function populateFormFromCoupon(coupon) {
 		maximum_use: coupon.maximum_use || null,
 		one_use: coupon.one_use || 0,
 		company: coupon.company || props.company,
+		promotion_conflict: coupon.promotion_conflict || PROMOTION_CONFLICT_SKIP,
+		...scopeFromCoupon(coupon),
 	};
 }
 
@@ -1189,10 +1530,8 @@ function formatDate(dateStr) {
 }
 
 function formatCurrency(amount) {
-	return new Intl.NumberFormat(DEFAULT_LOCALE, {
-		style: "currency",
-		currency: props.currency,
-	}).format(amount || 0);
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not the user's language (upstream: Intl with DEFAULT_LOCALE).
+	return formatCurrencyUtil(Number(amount) || 0, props.currency);
 }
 
 function getStatusTheme(status) {

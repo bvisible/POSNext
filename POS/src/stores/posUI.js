@@ -9,6 +9,23 @@ const LEFT_PANEL_MIN = 320;
 //// commit records no rationale beyond the number itself.
 //// right panel minimum width 450px (was 360/300) — 7e3f945
 const RIGHT_PANEL_MIN = 450;
+// The cart stops growing here on wide screens; the rest goes to the item grid
+export const RIGHT_PANEL_MAX = 520;
+//// Neoffice — default split 80/20 instead of upstream's 0.62, and the split a cashier drags is
+//// remembered per terminal (97d370df, 2026-03-31 "persist left panel width in localStorage,
+//// default 80/20 ratio"). Upstream develop now keeps the split as a ratio of the container
+//// (what our 1edd2aa1 did on resize), so the ratio is what is stored, under a new key.
+const DEFAULT_LEFT_PANEL_RATIO = 0.8;
+const LEFT_PANEL_RATIO_KEY = "pos_left_panel_ratio";
+
+function readSavedLeftPanelRatio() {
+	try {
+		const saved = Number.parseFloat(localStorage.getItem(LEFT_PANEL_RATIO_KEY));
+		return saved > 0 && saved < 1 ? saved : DEFAULT_LEFT_PANEL_RATIO;
+	} catch {
+		return DEFAULT_LEFT_PANEL_RATIO;
+	}
+}
 
 export const usePOSUIStore = defineStore("posUI", () => {
 	// Loading state
@@ -22,6 +39,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	const { isOpen: showCloseShiftDialog } = useDialog("closeShift");
 	const { isOpen: showDraftDialog } = useDialog("draft");
 	const { isOpen: showReturnDialog } = useDialog("return");
+	const { isOpen: showExpenseDialog } = useDialog("expense");
 	const { isOpen: showCouponDialog } = useDialog("coupon");
 	const { isOpen: showOffersDialog } = useDialog("offers");
 	const { isOpen: showBatchSerialDialog } = useDialog("batchSerial");
@@ -74,18 +92,13 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	const mobileActiveTab = ref("items"); // 'items' or 'cart'
 	const windowWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1024);
 
-	//// Neoffice — upstream hard-codes leftPanelWidth to 800px. The split is restored from
-	//// localStorage instead, defaulting to 80% of the viewport, so it survives a reload and fits
-	//// the terminal it runs on rather than a fixed pixel count (97d370df, 2026-03-31 "persist left
-	//// panel width in localStorage, default 80/20 ratio").
-	//// persist left panel width in localStorage, default 80/20 ratio — 97d370d
-	// Layout state — restore from localStorage or default to 80% of viewport
-	const savedPanelWidth = parseFloat(localStorage.getItem("pos_left_panel_width"));
-	const defaultPanelWidth =
-		savedPanelWidth && savedPanelWidth > LEFT_PANEL_MIN
-			? savedPanelWidth
-			: Math.round(window.innerWidth * 0.8);
-	const leftPanelWidth = ref(defaultPanelWidth);
+	// Layout state: the split is a ratio of the container, so it follows window resizes
+	//// Neoffice — restored from this terminal's last split (see readSavedLeftPanelRatio).
+	const leftPanelRatio = ref(readSavedLeftPanelRatio());
+	const containerWidth = ref(0);
+	const leftPanelWidth = computed(() =>
+		clampLeftPanelWidth(leftPanelRatio.value * containerWidth.value, containerWidth.value)
+	);
 	const isResizing = ref(false);
 
 	// Computed
@@ -157,27 +170,35 @@ export const usePOSUIStore = defineStore("posUI", () => {
 	}
 
 	// Layout actions
+	// Items pane width kept between its minimum and the cart's min/max widths
 	function clampLeftPanelWidth(width, containerWidth) {
 		const safeContainerWidth =
 			Number.isFinite(containerWidth) && containerWidth > 0
 				? containerWidth
 				: LEFT_PANEL_MIN + RIGHT_PANEL_MIN;
 		const maxWidth = Math.max(LEFT_PANEL_MIN, safeContainerWidth - RIGHT_PANEL_MIN);
-		const clampedWidth = Math.min(Math.max(width, LEFT_PANEL_MIN), maxWidth);
+		const minWidth = Math.min(
+			maxWidth,
+			Math.max(LEFT_PANEL_MIN, safeContainerWidth - RIGHT_PANEL_MAX)
+		);
+		const clampedWidth = Math.min(Math.max(width, minWidth), maxWidth);
 		return Number.isFinite(clampedWidth) ? clampedWidth : LEFT_PANEL_MIN;
 	}
 
-	function setLeftPanelWidth(width, containerWidth = null) {
-		if (containerWidth !== null) {
-			const clamped = clampLeftPanelWidth(width, containerWidth);
-			leftPanelWidth.value = clamped;
+	// Stores the dragged width as a ratio of the container
+	function setLeftPanelWidth(width, newContainerWidth = null) {
+		if (newContainerWidth) containerWidth.value = newContainerWidth;
+		if (containerWidth.value > 0) {
+			leftPanelRatio.value =
+				clampLeftPanelWidth(width, containerWidth.value) / containerWidth.value;
 			//// Neoffice — the panel split is a per-terminal habit (a 24" counter screen is not a 13"
-			//// laptop), so it is persisted instead of resetting to upstream's fixed ratio on every
-			//// reload (97d370df, 2026-03-31 "persist left panel width in localStorage, default 80/20
-			//// ratio").
-			localStorage.setItem("pos_left_panel_width", clamped.toString());
-		} else {
-			leftPanelWidth.value = width;
+			//// laptop), so it is persisted instead of resetting to the default ratio on every reload
+			//// (97d370df, 2026-03-31).
+			try {
+				localStorage.setItem(LEFT_PANEL_RATIO_KEY, String(leftPanelRatio.value));
+			} catch {
+				/* storage unavailable: the split just does not survive a reload */
+			}
 		}
 	}
 
@@ -185,33 +206,10 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		isResizing.value = resizing;
 	}
 
-	//// Neoffice — module-level memory of the last container width. It is what lets
-	//// updateLayoutBounds below tell a real browser resize from a plain re-clamp, so the split can
-	//// be rescaled as a ratio instead of staying frozen in pixels (1edd2aa1, 2026-03-31 "maintain
-	//// left/right panel ratio when browser window resizes").
-	//// maintain left/right panel ratio when browser window resizes — 1edd2aa
-	let lastContainerWidth = 0;
-
-	function updateLayoutBounds(containerWidth) {
-		if (containerWidth) {
-			//// Neoffice — upstream only re-clamps the stored pixel width, so widening the browser left
-			//// the item grid narrow and the cart huge. The split is now kept as a RATIO of the
-			//// container and rescaled on resize, then persisted (1edd2aa1, 2026-03-31 "maintain
-			//// left/right panel ratio when browser window resizes"; 7e3f9458 raised the right-panel
-			//// minimum to 450px so the payment column stays usable).
-			if (lastContainerWidth > 0 && lastContainerWidth !== containerWidth) {
-				// Scale proportionally when window resizes to maintain ratio
-				const ratio = leftPanelWidth.value / lastContainerWidth;
-				const scaled = clampLeftPanelWidth(
-					Math.round(ratio * containerWidth),
-					containerWidth
-				);
-				leftPanelWidth.value = scaled;
-				localStorage.setItem("pos_left_panel_width", scaled.toString());
-			} else {
-				leftPanelWidth.value = clampLeftPanelWidth(leftPanelWidth.value, containerWidth);
-			}
-			lastContainerWidth = containerWidth;
+	// New container width: leftPanelWidth recomputes from the ratio and re-clamps
+	function updateLayoutBounds(newContainerWidth) {
+		if (newContainerWidth) {
+			containerWidth.value = newContainerWidth;
 		}
 	}
 
@@ -224,6 +222,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showCloseShiftDialog.value = false;
 		showDraftDialog.value = false;
 		showReturnDialog.value = false;
+		showExpenseDialog.value = false;
 		showCouponDialog.value = false;
 		showOffersDialog.value = false;
 		showBatchSerialDialog.value = false;
@@ -254,6 +253,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		showCloseShiftDialog,
 		showDraftDialog,
 		showReturnDialog,
+		showExpenseDialog,
 		showCouponDialog,
 		showOffersDialog,
 		showBatchSerialDialog,
@@ -287,6 +287,7 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		mobileActiveTab,
 		windowWidth,
 		leftPanelWidth,
+		leftPanelRatio,
 		isResizing,
 
 		// Computed

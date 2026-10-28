@@ -43,13 +43,22 @@ def get_app_translations():
 	This is a wrapper around frappe.translate.get_all_translations
 	since the original function is not whitelisted.
 
+	pos_next's own translations override other apps' for the same source string;
+	the site's Translation records still override both.
+
 	Returns:
 		dict: Translation dictionary {source: translated}
 	"""
 	lang = frappe.local.lang or "en"
-	# //// Neoffice — a copy, then the till's own senses (see _keep_till_senses()). Upstream returns the
-	# //// merged dictionary as is.
-	return _keep_till_senses(dict(translate.get_all_translations(lang)))
+	# //// Neoffice — the till's own senses go back on top of upstream's dictionary (see
+	# //// _keep_till_senses()); upstream returns the merged dictionary as is.
+	return _keep_till_senses(
+		{
+			**translate.get_all_translations(lang),
+			**translate.get_translations_from_apps(lang, ["pos_next"]),
+			**translate.get_user_translations(lang),
+		}
+	)
 
 
 @frappe.whitelist()

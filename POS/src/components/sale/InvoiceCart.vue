@@ -110,8 +110,7 @@
 		<div class="px-2.5 py-2 border-b border-gray-200 bg-gray-50">
 			<!-- Inline Customer Search/Selection -->
 			<div ref="customerSearchContainer" class="relative">
-				<div v-if="customer">
-					<!-- //// click name to re-search (removed red X) + show email in results -->
+				<div v-if="customer && !changingCustomer">
 					<!-- Two Cards Layout: Customer Card + Document Type Card -->
 					<div class="flex items-stretch gap-2">
 						<!-- //// Neoffice — [CU] the selected-customer card became a hover target (group relative, -->
@@ -137,7 +136,13 @@
 								<div
 									class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0"
 								>
+									<FeatherIcon
+										v-if="isPhoneName(customer.customer_name || customer.name)"
+										name="phone"
+										class="w-4 h-4 text-white"
+									/>
 									<svg
+										v-else
 										class="w-4 h-4 text-white"
 										fill="none"
 										stroke="currentColor"
@@ -153,6 +158,7 @@
 								</div>
 								<div class="min-w-0 flex-1">
 									<p
+										dir="auto"
 										class="text-xs font-semibold text-gray-900 truncate leading-tight"
 									>
 										{{ customer.customer_name || customer.name }}
@@ -161,7 +167,8 @@
 									<!-- //// never displayed, and business customers are identified by mail (4a0dd461). -->
 									<p
 										v-if="customer.mobile_no || customer.email_id"
-										class="text-[10px] text-gray-500 truncate leading-tight"
+										dir="ltr"
+										class="text-[10px] text-gray-500 truncate leading-tight text-start"
 									>
 										<!-- //// Neoffice — feat(pos): smoother customer selection & full edit form (4a0dd461, 2026-07-09). -->
 										<span v-if="customer.mobile_no">{{
@@ -176,6 +183,16 @@
 										<span v-if="customer.email_id">{{
 											customer.email_id
 										}}</span>
+									</p>
+									<p
+										v-if="customerLpInfo.wallet_enabled"
+										class="text-[10px] text-amber-600 font-medium truncate leading-tight"
+									>
+										{{ __("LP") }}:
+										{{ formatCurrency(customerLpInfo.balance_iqd) }}
+										<span v-if="customerLpInfo.balance_points">
+											({{ customerLpInfo.balance_points }} {{ __("pts") }})
+										</span>
 									</p>
 								</div>
 							</div>
@@ -266,7 +283,7 @@
 								<button
 									type="button"
 									@click.stop="$emit('edit-customer', customer)"
-									class="w-7 h-7 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation"
+									class="w-10 h-10 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-manipulation"
 									:title="__('Edit customer details')"
 								>
 									<svg
@@ -286,7 +303,7 @@
 								<button
 									type="button"
 									@click.stop="$emit('create-customer', '')"
-									class="w-7 h-7 flex items-center justify-center text-green-600 hover:bg-green-50 active:bg-green-100 rounded-lg transition-colors touch-manipulation"
+									class="w-10 h-10 flex items-center justify-center text-green-600 hover:bg-green-50 active:bg-green-100 rounded-lg transition-colors touch-manipulation"
 									:title="__('Create new customer')"
 								>
 									<svg
@@ -409,6 +426,7 @@
 							<!-- Native Input for Instant Search -->
 							<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 							<input
+								ref="customerSearchInputRef"
 								id="cart-customer-search"
 								name="cart-customer-search"
 								:value="customerSearch"
@@ -558,12 +576,17 @@
 							<div
 								class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 pointer-events-none"
 							>
-								<span class="text-[10px] font-bold text-blue-600">{{
+								<FeatherIcon
+									v-if="isPhoneName(cust.customer_name)"
+									name="phone"
+									class="w-3 h-3 text-blue-600"
+								/>
+								<span v-else class="text-[10px] font-bold text-blue-600">{{
 									getInitials(cust.customer_name)
 								}}</span>
 							</div>
 							<div class="flex-1 min-w-0 pointer-events-none">
-								<p class="text-[11px] font-semibold text-gray-900 truncate">
+								<p dir="auto" class="text-[11px] font-semibold text-gray-900 truncate">
 									{{ cust.customer_name }}
 								</p>
 								<!-- //// Neoffice — [CU] a search row shows phone, e-mail and a one-line address so -->
@@ -572,7 +595,8 @@
 								<!-- //// fetching per customer (4a0dd461 + 53d0107c, 2026-07-09). -->
 								<p
 									v-if="cust.mobile_no || cust.email_id"
-									class="text-[9px] text-gray-600 truncate"
+									dir="ltr"
+									class="text-[9px] text-gray-600 truncate text-start"
 								>
 									<span v-if="cust.mobile_no">{{ cust.mobile_no }}</span>
 									<span
@@ -856,9 +880,36 @@
 					</span>
 				</button>
 
+				<!-- Applied coupon: code and saving, × removes it -->
+				<div
+					v-if="cartStore.appliedCoupon"
+					class="flex-1 flex items-center min-w-0 rounded-lg border border-emerald-300 bg-emerald-50"
+				>
+					<button
+						type="button"
+						@click="$emit('apply-coupon')"
+						class="flex-1 flex items-center gap-1.5 px-2.5 py-2 min-w-0 text-start"
+						:aria-label="__('Coupon')"
+					>
+						<FeatherIcon name="tag" class="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+						<span class="text-xs font-bold text-emerald-800 truncate" dir="ltr">
+							{{ cartStore.appliedCoupon.code }} −{{ formatCurrency(cartStore.appliedCoupon.amount) }}
+						</span>
+					</button>
+					<button
+						type="button"
+						@click="cartStore.removeDiscountFromCart()"
+						class="w-10 h-9 flex items-center justify-center text-emerald-800 hover:text-red-700 flex-shrink-0"
+						:aria-label="__('Remove coupon {0}', [cartStore.appliedCoupon.code])"
+						:title="__('Remove coupon {0}', [cartStore.appliedCoupon.code])"
+					>
+						<FeatherIcon name="x" class="w-4 h-4" />
+					</button>
+				</div>
 				<!-- Enter Coupon Code Button -->
 				<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
 				<button
+					v-else
 					type="button"
 					@click="$emit('apply-coupon')"
 					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-neo-md bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 hover:border-purple-400 hover:from-purple-100 hover:to-violet-100 hover:shadow-neo transition-all min-w-0 touch-manipulation active:scale-[0.98]"
@@ -890,7 +941,7 @@
 		<div class="flex-1 overflow-y-auto p-0.5 sm:p-1.5 bg-gray-50">
 			<div
 				v-if="items.length === 0"
-				class="flex flex-col items-center justify-center h-full px-3 sm:px-4 py-6"
+				class="flex flex-col items-center justify-center min-h-full px-3 sm:px-4 py-6"
 			>
 				<!-- Empty Cart Icon & Message -->
 				<div
@@ -961,7 +1012,7 @@
 						type="button"
 						@click="$emit('show-drafts')"
 						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-neo-md hover:border-purple-300 hover:bg-purple-50 active:bg-purple-100 transition-colors shadow-neo hover:shadow-neo-md touch-manipulation group"
-						:title="__('View draft invoices')"
+						:title="__('Draft Invoices')"
 					>
 						<div
 							class="w-9 h-9 sm:w-10 sm:h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-purple-100 transition-colors"
@@ -1042,6 +1093,36 @@
 						</div>
 						<span class="text-[11px] sm:text-xs font-semibold text-gray-700">{{
 							__("Return Invoice")
+						}}</span>
+					</button>
+
+					<!-- POS Expense -->
+					<button
+						v-if="allowPosExpense"
+						type="button"
+						@click="$emit('show-expense')"
+						class="flex flex-col items-center justify-center p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-amber-300 hover:bg-amber-50 active:bg-amber-100 transition-colors shadow-sm hover:shadow touch-manipulation group"
+						:title="__('Record POS expense')"
+					>
+						<div
+							class="w-9 h-9 sm:w-10 sm:h-10 bg-amber-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-amber-100 transition-colors"
+						>
+							<svg
+								class="w-5 h-5 text-amber-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+								/>
+							</svg>
+						</div>
+						<span class="text-[11px] sm:text-xs font-semibold text-gray-700">{{
+							__("POS Expense")
 						}}</span>
 					</button>
 
@@ -1136,357 +1217,289 @@
 				</div>
 			</div>
 
-			<div v-else class="flex flex-col gap-0.5 sm:gap-1">
-				<!-- //// Neoffice — [D] Neoffice theme tokens on the cart line (87f168fe), and [R] a -->
-				<!-- //// line already delivered to the table is dimmed instead of removed, so the -->
-				<!-- //// waiter still sees what was served (c7f6932c, 2026-03-23). -->
-				<div
-					v-for="(item, index) in sortedItems"
+			<div v-else ref="cartListRef" class="flex flex-col gap-1">
+				<template
+					v-for="item in displayCartItems"
 					:key="
 						item.item_code +
 						'-' +
 						(item.uom || '') +
 						(item.is_free_item ? '-free' : '')
 					"
-					@click="item.is_free_item ? null : openEditDialog(item)"
-					:class="[
-						'border rounded-neo-sm p-1.5 sm:p-2 transition-all duration-200',
-						item.is_free_item
-							? 'bg-green-50 border-green-300 cursor-default'
-							: 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-neo-md active:scale-[0.99] cursor-pointer group',
-						item.kds_status === 'Delivered' ? 'opacity-50' : '',
-					]"
 				>
-					<div class="flex gap-1.5 sm:gap-2">
-						<!-- Item Image Thumbnail -->
-						<!-- //// Neoffice — [IMG] the cart thumbnail paints the Item's custom_color when it -->
-						<!-- //// has no photo; upstream drew an SVG placeholder, which made a restaurant cart -->
-						<!-- //// of colour-coded Items unreadable (983130d3, 2026-03-25). -->
-						<!-- //// Neoffice — [IMG] the class and :style below are what paint the Item's custom_color -->
-						<!-- //// on the thumbnail; the marker sits above the opening tag because both changed lines -->
-						<!-- //// are its attributes (983130d3, 2026-03-25); an HTML comment between them -->
-						<!-- //// would break the tag, which is what Neoffice commit 4ed5051e undid. -->
+					<!-- Free gift: its own mini line under the line that earned it, no quantity controls -->
+					<div
+						v-if="isLockedFreeRow(item)"
+						:class="[
+							'flex items-center gap-2 rounded-md border border-[#0f7a4a]/30 bg-[#e9f5ef] p-2',
+							item._giftOf ? 'ms-6 -mt-0.5' : '',
+						]"
+					>
 						<div
-							class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
-							:style="
-								item.image
-									? {}
-									: item.custom_color
-									? {
-											backgroundColor: item.custom_color,
-											borderColor: item.custom_color,
-									  }
-									: {
-											background:
-												'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)',
-									  }
-							"
+							class="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-[#0f7a4a]/20 flex items-center justify-center"
 						>
 							<img
-								v-if="item.image"
-								:src="item.image"
+								v-if="giftImage(item)"
+								:src="giftImage(item)"
 								:alt="item.item_name"
 								loading="lazy"
-								width="48"
-								height="48"
-								decoding="async"
 								class="w-full h-full object-cover"
 							/>
-							<!-- //// Neoffice — [IMG] name over the colour, in white when the colour is dark, so -->
-							<!-- //// the line stays legible whatever the manager picked (983130d3). -->
-							<!-- //// Neoffice — [IMG] the class and :class below flip the fallback name to white on a -->
-							<!-- //// dark tile; marker above the opening tag, the changed lines are attributes -->
-							<!-- //// (983130d3, 2026-03-25); an HTML comment between them would break the tag, -->
-							<!-- //// which is what Neoffice commit 4ed5051e undid. -->
+							<FeatherIcon v-else name="gift" class="w-5 h-5 text-[#0f7a4a]" />
+						</div>
+						<div class="flex-1 min-w-0">
 							<span
-								v-else
-								class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
-								:class="
-									item.custom_color && !isLightColor(item.custom_color)
-										? 'text-white'
-										: 'text-gray-400'
+								class="inline-flex items-center gap-1 rounded-full bg-[#0f7a4a] px-2 py-0.5 text-[11px] font-bold text-white"
+							>
+								<FeatherIcon name="gift" class="w-3 h-3" />{{ __("Free gift") }}
+							</span>
+							<div dir="auto" class="mt-0.5 text-sm font-semibold text-[#1d2433] leading-snug line-clamp-2">
+								{{ item.item_name }}
+							</div>
+						</div>
+						<div class="flex-shrink-0 text-end tabular-nums">
+							<div class="text-sm font-bold text-[#0f7a4a]">{{ __("Free of charge") }}</div>
+							<div v-if="giftValue(item) > 0" class="text-xs text-gray-500 line-through">
+								<bdi>{{ formatCurrency(giftValue(item)) }}</bdi>
+							</div>
+							<div class="text-xs text-gray-600 inline-flex items-center gap-1">
+								<bdi>{{ formatQuantity(item.quantity) }}</bdi><span aria-hidden="true">×</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Paid line -->
+					<!-- //// Neoffice — [D] Neoffice radius token on the line (87f168fe), and [R] a line already -->
+					<!-- //// delivered to the table is dimmed instead of removed, so the waiter still sees what -->
+					<!-- //// was served (c7f6932c, 2026-03-23); both are in the :class of the tag below, re-attached -->
+					<!-- //// to upstream develop's new cart line at the 2026-10-28 merge. -->
+					<div
+						v-else
+						:data-line-key="lineKey(item)"
+						@click="openEditDialog(item)"
+						:class="[
+							'rounded-neo-sm border bg-white p-2 cursor-pointer motion-safe:transition-colors motion-safe:duration-500',
+							flashKey === lineKey(item)
+								? 'border-blue-400 bg-blue-50'
+								: 'border-gray-200 hover:border-blue-300',
+							lineSaving(item) > 0 ? 'border-s-[3px] border-s-[#0f7a4a]' : '',
+							item.kds_status === 'Delivered' ? 'opacity-50' : '',
+						]"
+					>
+						<div class="flex gap-2">
+							<!-- Item Image Thumbnail -->
+							<!-- //// Neoffice — [IMG] the cart thumbnail paints the Item's custom_color when it -->
+							<!-- //// has no photo; upstream drew a placeholder icon, which made a restaurant cart -->
+							<!-- //// of colour-coded Items unreadable (983130d3, 2026-03-25). The :style below is -->
+							<!-- //// that change; the marker sits above the opening tag because it is an attribute. -->
+							<div
+								class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+								:style="
+									item.image
+										? {}
+										: item.custom_color
+										? {
+												backgroundColor: item.custom_color,
+												borderColor: item.custom_color,
+										  }
+										: {
+												background:
+													'linear-gradient(to bottom right, #F9FAFB, #F3F4F6)',
+										  }
 								"
 							>
-								<!-- //// Neoffice — [IMG] the name is the fallback content of the thumbnail, hence -->
-								<!-- //// the truncation to 8 characters (983130d3). -->
-								{{ (item.item_name || "").substring(0, 8) }}
-							</span>
-						</div>
+								<img
+									v-if="item.image"
+									:src="item.image"
+									:alt="item.item_name"
+									loading="lazy"
+									width="48"
+									height="48"
+									decoding="async"
+									class="w-full h-full object-cover"
+								/>
+								<!-- //// Neoffice — [IMG] name over the colour, in white when the colour is dark, so -->
+								<!-- //// the line stays legible whatever the manager picked; truncated to 8 characters -->
+								<!-- //// because it is the thumbnail's fallback content (983130d3). -->
+								<span
+									v-else
+									class="text-[7px] sm:text-[8px] font-bold leading-tight text-center px-0.5 line-clamp-2"
+									:class="
+										item.custom_color && !isLightColor(item.custom_color)
+											? 'text-white'
+											: 'text-gray-400'
+									"
+								>
+									{{ (item.item_name || "").substring(0, 8) }}
+								</span>
+							</div>
 
-						<!-- Item Content -->
-						<div class="flex-1 min-w-0 flex flex-col justify-center">
-							<!-- Header: Item Name, Badges & Delete -->
-							<div class="flex items-start justify-between gap-0.5 mb-0.5">
-								<div class="flex items-center gap-1.5 flex-1 min-w-0">
+							<div class="flex-1 min-w-0">
+								<!-- Name and line total; the total wraps under the name below 1100px -->
+								<div class="flex flex-col min-[1100px]:flex-row min-[1100px]:items-start gap-x-2">
 									<h4
-										class="text-xs sm:text-sm font-extrabold text-gray-900 truncate leading-tight"
+										dir="auto"
+										class="flex-1 min-w-0 text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
 									>
 										{{ item.item_name }}
 									</h4>
-									<!-- //// Neoffice — [R] restaurant badges on a cart line, none of which upstream has: -->
-									<!-- //// the free-text note the waiter typed, the preparation station the Item is -->
-									<!-- //// routed to (bar or kitchen, colour taken from the station record) and a -->
-									<!-- //// summary of the chosen modifiers, so the ticket can be checked before it is -->
-									<!-- //// sent (87f168fe, e005b94b, 831857f2, 4df0caf1, 2026-03-20/21). -->
+									<div class="flex-shrink-0 tabular-nums min-[1100px]:text-end">
+										<div class="text-base font-bold text-[#1d2433]">
+											{{ formatCurrency(getLineAmount(item)) }}
+										</div>
+										<div v-if="lineSaving(item) > 0" class="text-xs text-gray-500 line-through">
+											{{ formatCurrency(getLineAmount(item) + lineSaving(item)) }}
+										</div>
+									</div>
+								</div>
+
+								<!-- Meta row: unit price, gift split, batch, serial, unit -->
+								<div
+									class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-600 mt-0.5"
+								>
+									<!-- Quantity × price as separate boxes, so they order with the page direction -->
+									<span class="inline-flex items-center gap-1 tabular-nums">
+										<bdi>{{ formatQuantity(item.quantity) }}</bdi>
+										<span aria-hidden="true">×</span>
+										<s v-if="getLineStrikePrice(item)" class="text-gray-500"
+											><bdi>{{ formatCurrency(getLineStrikePrice(item)) }}</bdi></s
+										>
+										<bdi :class="getLineStrikePrice(item) ? 'font-semibold text-[#0f7a4a]' : ''">{{
+											formatCurrency(getLineNetRate(item))
+										}}</bdi>
+									</span>
+									<span
+										v-if="item._bundledFreeQty > 0"
+										class="font-semibold text-emerald-700"
+									>
+										{{
+											__("{0} = {1} + {2} gift", [
+												formatQuantity(getDisplayQuantity(item)),
+												formatQuantity(item.quantity),
+												formatQuantity(item._bundledFreeQty),
+											])
+										}}
+									</span>
+									<span v-if="item.batch_no" :class="batchExpiryClass(item)">
+										{{ __("Batch {0}", [item.batch_no]) }}
+										<template v-if="batchExpiry(item)">
+											· {{ __("expires {0}", [formatDate(batchExpiry(item))]) }}
+										</template>
+									</span>
+									<span
+										v-if="item.serial_no"
+										dir="ltr"
+										:title="serialList(item).join(', ')"
+									>
+										SN …{{ serialList(item).at(-1)?.slice(-6) }}
+										<template v-if="serialList(item).length > 1">
+											+{{ serialList(item).length - 1 }}
+										</template>
+									</span>
+									<span
+										v-if="(item.uom || item.stock_uom) !== item.stock_uom"
+										class="font-semibold text-gray-700"
+									>
+										{{ item.uom }}
+									</span>
+									<span
+										v-if="item.sales_person"
+										class="text-blue-700 truncate max-w-[8rem]"
+										:title="item.sales_person_name || item.sales_person"
+									>
+										{{ item.sales_person_name || item.sales_person }}
+									</span>
+								</div>
+
+								<!-- //// Neoffice — [R] restaurant facts of the line, none of which upstream has: the -->
+								<!-- //// free-text note the waiter typed, the preparation station the Item is routed to -->
+								<!-- //// (colour from the station record), the line's own kitchen state, and a summary of -->
+								<!-- //// the chosen product options, so the ticket can be checked before it is sent -->
+								<!-- //// (87f168fe, e005b94b, 831857f2, 4df0caf1, c7f6932c, 2026-03-20/23). -->
+								<div
+									v-if="
+										item.posa_special_instructions ||
+										(item.preparation_station && restaurantStore.isEnabled) ||
+										(cartStore.restaurantTable && item.kds_status)
+									"
+									class="flex flex-wrap items-center gap-1 mt-0.5"
+								>
 									<!-- Special Instructions Badge (Restaurant mode) -->
 									<span
 										v-if="item.posa_special_instructions"
 										class="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[9px] font-bold flex-shrink-0"
 										:title="item.posa_special_instructions"
 									>
-										<svg
-											class="w-2.5 h-2.5 me-0.5"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-											></path>
-										</svg>
+										<FeatherIcon name="edit-3" class="w-2.5 h-2.5 me-0.5" />
 										{{ __("Note") }}
 									</span>
 									<!-- Preparation Station Badge (Restaurant mode) -->
 									<span
-										v-if="
-											item.preparation_station && restaurantStore.isEnabled
-										"
+										v-if="item.preparation_station && restaurantStore.isEnabled"
 										class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0 text-white"
-										:style="{
-											backgroundColor: getStationColor(
-												item.preparation_station
-											),
-										}"
+										:style="{ backgroundColor: getStationColor(item.preparation_station) }"
 									>
 										{{ getStationDisplayName(item.preparation_station) }}
 									</span>
-									<!-- Item Modifiers Summary -->
-									<div
-										v-if="
-											item.posa_item_modifiers && restaurantStore.isEnabled
-										"
-										class="text-[10px] text-gray-500 mt-0.5 truncate"
-									>
-										{{ formatModifiers(item.posa_item_modifiers) }}
-									</div>
-									<!-- Free Item Badge -->
+									<!-- KDS Item Status Badge -->
 									<span
-										v-if="item.free_qty && item.free_qty > 0"
-										class="inline-flex items-center px-1.5 py-0.5 bg-green-600 text-white rounded-full text-[9px] font-bold flex-shrink-0"
-										:title="
-											item.is_free_item
-												? __('Free item')
-												: __('{0} free item(s) included', [item.free_qty])
-										"
+										v-if="cartStore.restaurantTable && item.kds_status"
+										class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
+										:class="kdsStatusBadgeClass(item.kds_status)"
 									>
-										<svg
+										<FeatherIcon
+											v-if="item.kds_status === 'Waiting'"
+											name="clock"
 											class="w-2.5 h-2.5 me-0.5"
-											fill="currentColor"
-											viewBox="0 0 20 20"
-										>
-											<path
-												fill-rule="evenodd"
-												d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-												clip-rule="evenodd"
-											/>
-										</svg>
-										{{
-											item.is_free_item
-												? __("FREE")
-												: __("+{0} FREE", [item.free_qty])
-										}}
-									</span>
-									<!-- Discount Badge -->
-									<div
-										v-if="item.discount_amount && item.discount_amount > 0"
-										class="inline-flex items-center px-1.5 py-0.5 bg-gradient-to-r from-red-50 to-orange-50 text-red-700 rounded-full text-[9px] font-bold border border-red-200 flex-shrink-0"
-									>
-										<svg
-											class="w-2.5 h-2.5 me-0.5"
-											fill="currentColor"
-											viewBox="0 0 20 20"
-										>
-											<path
-												fill-rule="evenodd"
-												d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z"
-												clip-rule="evenodd"
-											/>
-										</svg>
-										{{
-											__("{0}%", [
-												Number(item.discount_percentage).toFixed(0),
-											])
-										}}
-									</div>
-								</div>
-								<!-- //// Neoffice — [R] added: per-line kitchen state and the two per-line actions -->
-								<!-- //// that go with it. A restaurant sends courses one at a time, so each line -->
-								<!-- //// carries its own kds_status, can be pushed to the kitchen on its own, and can -->
-								<!-- //// get a note or modifier. Upstream only knows a whole-order state (c7f6932c + -->
-								<!-- //// 87f168fe, 2026-03-20/23). -->
-								<!-- KDS Item Status Badge -->
-								<span
-									v-if="cartStore.restaurantTable && item.kds_status"
-									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
-									:class="kdsStatusBadgeClass(item.kds_status)"
-								>
-									<svg
-										v-if="item.kds_status === 'Waiting'"
-										class="w-2.5 h-2.5 me-0.5"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-										></path>
-									</svg>
-									{{ __(item.kds_status) }}
-								</span>
-								<!-- Quick Send Button (for Waiting items in restaurant mode) -->
-								<button
-									v-if="
-										cartStore.restaurantTable && item.kds_status === 'Waiting'
-									"
-									type="button"
-									@click.stop="$emit('send-item-to-kitchen', item)"
-									class="text-purple-500 hover:text-purple-700 active:text-purple-800 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
-									:title="__('Send to kitchen')"
-								>
-									<svg
-										class="h-4 w-4"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M13 10V3L4 14h7v7l9-11h-7z"
-										></path>
-									</svg>
-								</button>
-								<!-- Add Modifiers Button (Restaurant mode) -->
-								<button
-									v-if="!item.is_free_item && cartStore.restaurantTable"
-									type="button"
-									@click.stop="$emit('open-modifiers', item)"
-									class="text-gray-400 hover:text-blue-600 active:text-blue-700 transition-colors flex-shrink-0 p-0.5 -m-0.5 mr-1 touch-manipulation active:scale-90"
-									:title="__('Add Note / Modifier')"
-								>
-									<svg
-										class="h-4 w-4"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-										></path>
-									</svg>
-								</button>
-
-								<!-- //// Neoffice — [CART] emits the item OBJECT, not its item_code: with modifiers -->
-								<!-- //// the same item_code sits on several cart lines, and removing by code deleted -->
-								<!-- //// all of them at once (7e1376a3, 2026-03-31 "remove deletes only one item -->
-								<!-- //// (by ref)"). -->
-								<button
-									v-if="!item.is_free_item"
-									type="button"
-									@click.stop="$emit('remove-item', item)"
-									class="text-gray-400 hover:text-red-600 active:text-red-700 transition-colors flex-shrink-0 p-0.5 -m-0.5 touch-manipulation active:scale-90"
-									:aria-label="__('Remove {0}', [item.item_name])"
-									:title="__('Remove item')"
-								>
-									<svg
-										class="h-4 w-4"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M6 18L18 6M6 6l12 12"
 										/>
-									</svg>
-								</button>
-							</div>
+										{{ __(item.kds_status) }}
+									</span>
+								</div>
+								<!-- Item Modifiers Summary -->
+								<div
+									v-if="item.posa_item_modifiers && restaurantStore.isEnabled"
+									class="text-[10px] text-gray-500 mt-0.5 truncate"
+								>
+									{{ formatModifiers(item.posa_item_modifiers) }}
+								</div>
 
-							<!-- Single Row: Quantity Counter, UOM, Price & Total -->
-							<div class="flex items-center justify-between gap-1.5">
-								<div class="flex items-center gap-1.5">
-									<!-- Quantity Counter -->
-									<!-- For free items, show static quantity badge -->
+								<!-- Controls: quantity, unit, remove -->
+								<div class="flex items-center gap-2 mt-1.5" @click.stop>
+									<!-- Serial items: count + edit serials -->
 									<div
-										v-if="item.is_free_item"
-										class="flex items-center bg-green-100 border border-green-300 rounded px-2 h-6 sm:h-7"
+										v-if="item.has_serial_no && item.serial_no"
+										class="flex items-center gap-1"
 									>
 										<span
-											class="text-xs sm:text-sm font-bold text-green-700"
-											>{{ item.quantity }}</span
+											class="flex items-center h-10 px-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-bold text-blue-700 tabular-nums"
 										>
-									</div>
-									<!-- For serial items, show serial badge with edit button -->
-									<div
-										v-else-if="item.has_serial_no && item.serial_no"
-										class="flex items-center gap-1"
-										@click.stop
-									>
-										<!-- Serial count badge -->
-										<div
-											class="flex items-center bg-blue-50 border border-blue-200 rounded px-1.5 h-6 sm:h-7"
-										>
-											<FeatherIcon
-												name="hash"
-												class="w-3 h-3 text-blue-500 me-0.5"
-											/>
-											<span
-												class="text-xs sm:text-sm font-bold text-blue-700"
-												>{{ item.quantity }}</span
-											>
-										</div>
-										<!-- Edit button -->
+											<FeatherIcon name="hash" class="w-3.5 h-3.5 me-0.5" />{{ item.quantity }}
+										</span>
 										<button
 											type="button"
 											@click="openEditDialog(item)"
-											class="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded transition-colors shadow-sm"
+											class="w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md border border-gray-200 text-blue-700 hover:bg-blue-50"
 											:title="__('Edit serials')"
+											:aria-label="__('Edit serials')"
 										>
-											<FeatherIcon name="edit-2" class="w-3 h-3" />
+											<FeatherIcon name="edit-2" class="w-4 h-4" />
 										</button>
 									</div>
-									<!-- For non-serial items, show normal quantity controls -->
+									<!-- Quantity stepper (total units, including a carved gift) -->
 									<div
 										v-else
 										:class="[
-											'flex items-center bg-gray-50 border rounded overflow-hidden',
+											'flex items-center border rounded-md overflow-hidden',
 											item.is_resolved_barcode
 												? 'border-amber-300 bg-amber-50'
-												: 'border-gray-200',
+												: 'border-gray-200 bg-white',
 										]"
 									>
 										<button
 											type="button"
-											@click.stop="decrementQuantity(item)"
+											@click="decrementQuantity(item)"
 											:disabled="item.is_resolved_barcode"
-											:class="[
-												'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-bold transition-colors touch-manipulation border-e',
-												item.is_resolved_barcode
-													? 'bg-gray-100 text-gray-400 cursor-not-allowed border-amber-300'
-													: 'bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border-gray-200',
-											]"
+											class="w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center text-gray-700 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-300 disabled:hover:bg-transparent touch-manipulation"
 											:aria-label="__('Decrease quantity')"
 											:title="
 												item.is_resolved_barcode
@@ -1494,35 +1507,18 @@
 													: __('Decrease quantity')
 											"
 										>
-											<svg
-												class="w-3 h-3"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="3"
-													d="M20 12H4"
-												/>
-											</svg>
+											<FeatherIcon name="minus" class="w-4 h-4" />
 										</button>
 										<input
-											:value="formatQuantity(item.quantity)"
-											@click.stop
+											:value="formatQuantity(getDisplayQuantity(item))"
 											@input="updateQuantity(item, $event.target.value)"
 											@blur="handleQuantityBlur(item)"
 											@keydown.enter="$event.target.blur()"
 											type="text"
 											inputmode="decimal"
+											dir="ltr"
 											:disabled="item.is_resolved_barcode"
-											:class="[
-												'w-16 sm:w-20 h-6 sm:h-7 text-center border-0 text-xs sm:text-sm font-bold focus:outline-none',
-												item.is_resolved_barcode
-													? 'bg-amber-50 text-amber-700 cursor-not-allowed'
-													: 'bg-white text-gray-900 focus:ring-2 focus:ring-blue-500',
-											]"
+											class="w-14 h-10 max-[1100px]:h-11 text-center border-x border-gray-200 text-sm font-bold tabular-nums bg-transparent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600 disabled:text-amber-700"
 											:aria-label="__('Quantity')"
 											:title="
 												item.is_resolved_barcode
@@ -1532,14 +1528,9 @@
 										/>
 										<button
 											type="button"
-											@click.stop="incrementQuantity(item)"
+											@click="incrementQuantity(item)"
 											:disabled="item.is_resolved_barcode"
-											:class="[
-												'w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-bold transition-colors touch-manipulation border-s',
-												item.is_resolved_barcode
-													? 'bg-gray-100 text-gray-400 cursor-not-allowed border-amber-300'
-													: 'bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 border-gray-200',
-											]"
+											class="w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center text-gray-700 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-300 disabled:hover:bg-transparent touch-manipulation"
 											:aria-label="__('Increase quantity')"
 											:title="
 												item.is_resolved_barcode
@@ -1547,137 +1538,132 @@
 													: __('Increase quantity')
 											"
 										>
-											<svg
-												class="w-3 h-3"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="3"
-													d="M12 4v16m8-8H4"
-												/>
-											</svg>
+											<FeatherIcon name="plus" class="w-4 h-4" />
 										</button>
 									</div>
 
-									<!-- UOM Selector Dropdown -->
-									<div class="relative group/uom" @click.stop>
+									<!-- UOM Selector Dropdown (only when the item has other units) -->
+									<div
+										v-if="item.item_uoms && item.item_uoms.length > 0"
+										class="relative group/uom"
+									>
 										<button
 											type="button"
 											@click="toggleUomDropdown(item.item_code, item.uom)"
-											:disabled="
-												item.is_resolved_barcode ||
-												!item.item_uoms ||
-												item.item_uoms.length === 0
-											"
-											:class="[
-												'h-6 sm:h-7 text-[10px] sm:text-xs font-bold rounded ps-2 pe-5 transition-all touch-manipulation flex items-center justify-center min-w-[45px]',
-												item.is_resolved_barcode
-													? 'bg-amber-100 text-amber-700 border border-amber-300 cursor-not-allowed'
-													: item.item_uoms && item.item_uoms.length > 0
-													? 'bg-blue-500 text-white border border-blue-400 hover:bg-blue-600 active:scale-95 cursor-pointer'
-													: 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed opacity-60',
-											]"
+											:disabled="item.is_resolved_barcode"
+											class="h-10 max-[1100px]:h-11 px-3 flex items-center gap-1 rounded-md border border-gray-200 text-sm font-semibold text-gray-700 hover:border-blue-400 disabled:text-amber-700 disabled:bg-amber-50"
 											:title="
 												item.is_resolved_barcode
 													? __('UOM locked (barcode item)')
-													: item.item_uoms && item.item_uoms.length > 0
-													? __('Click to change unit')
-													: __('Only one unit available')
+													: __('Click to change unit')
 											"
 										>
-											{{
-												item.uom ||
-												item.stock_uom ||
-												__("Nos", null, "UOM")
-											}}
-										</button>
-										<svg
-											:class="[
-												'absolute end-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 pointer-events-none transition-transform',
-												openUomDropdown === `${item.item_code}-${item.uom}`
-													? 'rotate-180'
-													: '',
-												item.is_resolved_barcode
-													? 'text-amber-600'
-													: item.item_uoms && item.item_uoms.length > 0
-													? 'text-white'
-													: 'text-gray-400',
-											]"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2.5"
-												d="M19 9l-7 7-7-7"
+											{{ item.uom || item.stock_uom || __("Nos", null, "UOM") }}
+											<FeatherIcon
+												name="chevron-down"
+												:class="[
+													'w-3.5 h-3.5 transition-transform',
+													openUomDropdown === `${item.item_code}-${item.uom}`
+														? 'rotate-180'
+														: '',
+												]"
 											/>
-										</svg>
+										</button>
 										<div
-											v-if="
-												openUomDropdown ===
-													`${item.item_code}-${item.uom}` &&
-												item.item_uoms &&
-												item.item_uoms.length > 0
-											"
-											class="absolute top-full start-0 mt-0.5 bg-white border border-blue-300 rounded shadow-xl z-50 min-w-full overflow-hidden"
+											v-if="openUomDropdown === `${item.item_code}-${item.uom}`"
+											class="absolute top-full start-0 mt-0.5 bg-white border border-gray-200 rounded-md shadow-xl z-50 min-w-full overflow-hidden"
 										>
 											<button
+												v-for="uom in [item.stock_uom, ...item.item_uoms.map((u) => u.uom)]"
+												:key="uom"
 												type="button"
-												@click="selectUom(item, item.stock_uom)"
+												@click="selectUom(item, uom)"
 												:class="[
-													'w-full text-start px-2 py-1.5 text-[10px] sm:text-xs font-semibold transition-colors border-b border-gray-100',
-													(item.uom || item.stock_uom) === item.stock_uom
+													'w-full text-start px-3 py-2.5 text-sm font-semibold border-b border-gray-100 last:border-0',
+													(item.uom || item.stock_uom) === uom
 														? 'bg-blue-50 text-blue-700'
 														: 'text-gray-700 hover:bg-blue-50',
 												]"
 											>
-												{{ item.stock_uom || __("Nos", null, "UOM") }}
-											</button>
-											<button
-												v-for="uomData in item.item_uoms"
-												:key="uomData.uom"
-												type="button"
-												@click="selectUom(item, uomData.uom)"
-												:class="[
-													'w-full text-start px-2 py-1.5 text-[10px] sm:text-xs font-semibold transition-colors border-b border-gray-100 last:border-0',
-													(item.uom || item.stock_uom) === uomData.uom
-														? 'bg-blue-50 text-blue-700'
-														: 'text-gray-700 hover:bg-blue-50',
-												]"
-											>
-												{{ uomData.uom }}
+												{{ uom || __("Nos", null, "UOM") }}
 											</button>
 										</div>
 									</div>
 
-									<!-- Price -->
-									<span class="text-[10px] sm:text-xs font-bold text-gray-700">
-										{{ formatCurrency(item.rate) }}
-									</span>
+									<!-- //// Neoffice — [R] the two per-line restaurant actions: push this line to the -->
+									<!-- //// kitchen on its own (a restaurant sends courses one at a time) and add a note or -->
+									<!-- //// product option (c7f6932c + 87f168fe, 2026-03-20/23; 4df0caf1). -->
+									<button
+										v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
+										type="button"
+										@click="$emit('send-item-to-kitchen', item)"
+										class="ms-auto w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-purple-600 hover:text-purple-800 hover:bg-purple-50 touch-manipulation"
+										:aria-label="__('Send to kitchen')"
+										:title="__('Send to kitchen')"
+									>
+										<FeatherIcon name="zap" class="w-4 h-4" />
+									</button>
+									<button
+										v-if="cartStore.restaurantTable"
+										type="button"
+										@click="$emit('open-modifiers', item)"
+										:class="[
+											'w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-gray-500 hover:text-blue-700 hover:bg-blue-50 touch-manipulation',
+											item.kds_status === 'Waiting' ? '' : 'ms-auto',
+										]"
+										:aria-label="__('Add Note / Modifier')"
+										:title="__('Add Note / Modifier')"
+									>
+										<FeatherIcon name="edit-3" class="w-4 h-4" />
+									</button>
+									<!-- //// Neoffice — [CART] emits the item OBJECT, not (item_code, uom): with product options -->
+									<!-- //// the same item_code sits on several cart lines, and removing by code deleted the wrong -->
+									<!-- //// one (7e1376a3, 2026-03-31 "remove deletes only one item (by ref)"). -->
+									<button
+										type="button"
+										@click="$emit('remove-item', item)"
+										:class="[
+											'w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-gray-500 hover:text-red-700 hover:bg-red-50 touch-manipulation',
+											cartStore.restaurantTable ? '' : 'ms-auto',
+										]"
+										:aria-label="__('Remove {0}', [item.item_name])"
+										:title="__('Remove item')"
+									>
+										<FeatherIcon name="trash-2" class="w-4 h-4" />
+									</button>
 								</div>
 
-								<!-- Item Total -->
-								<div class="text-end flex-shrink-0">
+								<!-- Saving: its own full-size line with the offer name -->
+								<!-- Saving: what the customer gets and keeps; the offer's name on its own line -->
+								<div
+									v-if="lineSaving(item) > 0"
+									class="mt-1.5 rounded-md bg-[#e9f5ef] px-2 py-1 text-sm text-[#0f7a4a]"
+								>
+									<div class="flex items-center justify-between gap-2">
+										<span class="flex items-center gap-1.5 min-w-0 font-bold">
+											<FeatherIcon
+												:name="isGiftSaving(item) ? 'gift' : 'tag'"
+												class="w-4 h-4 flex-shrink-0"
+											/>
+											<span class="truncate">{{ savingTitle(item) }}</span>
+										</span>
+										<span class="font-bold tabular-nums flex-shrink-0">
+											{{ __("You save {0}", [formatCurrency(lineSaving(item))]) }}
+										</span>
+									</div>
 									<div
-										class="text-xs sm:text-sm font-bold text-blue-600 leading-none"
+										v-if="savingSource(item)"
+										dir="auto"
+										class="truncate text-xs text-[#0f7a4a]/80 ps-[22px]"
+										:title="savingSource(item)"
 									>
-										{{
-											formatCurrency(
-												item.amount || item.rate * item.quantity
-											)
-										}}
+										{{ savingSource(item) }}
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
+				</template>
 			</div>
 		</div>
 
@@ -1701,28 +1687,32 @@
 
 			<!-- Summary Details (continued) -->
 			<div v-if="items.length > 0" class="mb-1.5">
-				<!-- Discount Display - Highlighted -->
+				<!-- Discount Display: savings in green, with the applied coupon -->
 				<div
-					v-if="discountAmount > 0"
-					class="flex items-center justify-between mb-0.5 bg-red-50 rounded px-1.5 py-1 -mx-0.5"
+					v-if="displayDiscountAmount > 0"
+					class="flex items-center justify-between gap-2 mb-0.5 bg-emerald-50 rounded px-1.5 py-1 -mx-0.5"
 				>
-					<div class="flex items-center gap-1">
-						<svg
-							class="w-3.5 h-3.5 text-red-600"
-							fill="currentColor"
-							viewBox="0 0 20 20"
+					<div class="flex items-center gap-1.5 min-w-0">
+						<FeatherIcon name="tag" class="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+						<span class="text-xs font-bold text-emerald-800">{{ __("Customer saves") }}</span>
+						<span
+							v-if="cartStore.appliedCoupon"
+							class="inline-flex items-center rounded-full border border-emerald-300 bg-white ps-2 text-[11px] font-bold text-emerald-800 min-w-0"
 						>
-							<path
-								fill-rule="evenodd"
-								d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<span class="text-xs font-bold text-red-700">{{ __("Discount") }}</span>
+							<span class="truncate" dir="ltr">{{ cartStore.appliedCoupon.code }}</span>
+							<button
+								type="button"
+								@click="cartStore.removeDiscountFromCart()"
+								class="w-7 h-6 flex items-center justify-center hover:text-red-700"
+								:aria-label="__('Remove coupon {0}', [cartStore.appliedCoupon.code])"
+							>
+								<FeatherIcon name="x" class="w-3 h-3" />
+							</button>
+						</span>
 					</div>
-					<span class="text-sm font-extrabold text-red-600 text-center min-w-[60px]">{{
-						formatCurrency(discountAmount)
-					}}</span>
+					<span class="text-sm font-extrabold text-emerald-700 tabular-nums" dir="ltr">
+						−{{ formatCurrency(displayDiscountAmount) }}
+					</span>
 				</div>
 
 				<div class="flex items-center justify-between text-xs text-gray-600">
@@ -1994,7 +1984,7 @@
 					v-if="items.length > 0"
 					@click="$emit('save-draft')"
 					class="flex-1 py-2.5 px-2 rounded-neo-md font-semibold text-xs text-orange-700 bg-orange-50 hover:bg-orange-100 active:bg-orange-200 transition-all touch-manipulation active:scale-[0.98] flex items-center justify-center"
-					:aria-label="__('Hold order as draft')"
+					:aria-label="__('Hold')"
 				>
 					<svg
 						class="w-4 h-4 me-1.5"
@@ -2009,7 +1999,7 @@
 							d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
 						/>
 					</svg>
-					<span>{{ __("Hold", null, "order") }}</span>
+					<span>{{ __("Hold") }}</span>
 				</button>
 			</div>
 		</div>
@@ -2031,6 +2021,7 @@
  * IMPORTS
  * ============================================================================
  */
+import { promoApi } from "@/utils/promoApi";
 //// Neoffice — [R] the cart reads the restaurant store (table, takeaway, stations)
 //// and [IMG] the colour helper for Items with no photo, neither of which exists
 //// upstream (8aa35c29, 983130d3). [F] the currency import was wrapped by Biome.
@@ -2045,6 +2036,8 @@ import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/
 import { useFormatters } from "@/composables/useFormatters";
 import { useCartSort } from "@/composables/useCartSort";
 import { isOffline } from "@/utils/offline";
+import { nestFreeRows } from "@/utils/gwpSameItemFreeRows";
+import { useItemSearchStore } from "@/stores/itemSearch";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
 import { FeatherIcon } from "frappe-ui";
@@ -2053,6 +2046,10 @@ const log = logger.create("InvoiceCart");
 import { createResource } from "frappe-ui";
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import EditItemDialog from "./EditItemDialog.vue";
+import {
+	getDisplayQuantity as getDisplayQuantityForLine,
+	resolvePaidQuantityFromDisplay as resolvePaidQtyForLine,
+} from "@/utils/gwpSameItemFreeRows";
 
 /**
  * ============================================================================
@@ -2068,7 +2065,7 @@ const offersStore = usePOSOffersStore(); // Pinia store for offers/promotions
 const customerSearchStore = useCustomerSearchStore(); // Pinia store for customer search
 //// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 const restaurantStore = useRestaurantStore(); // Pinia store for restaurant features
-const { formatQuantity } = useFormatters(); // Quantity formatting utilities
+const { formatQuantity, formatDate } = useFormatters(); // Quantity and date formatting utilities
 
 function handleProceedToPayment() {
 	//// Neoffice — [R] added: helpers the restaurant cart needs and upstream has no use
@@ -2152,6 +2149,7 @@ const props = defineProps({
 		default: 0,
 	},
 	posProfile: String,
+	company: String,
 	currency: {
 		type: String,
 		default: DEFAULT_CURRENCY,
@@ -2164,7 +2162,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+	allowPosExpense: {
+		type: Boolean,
+		default: false,
+	},
 });
 
 /**
@@ -2202,6 +2203,7 @@ const emit = defineEmits([
 	"show-drafts", // () - Show draft/held orders
 	"show-history", // () - Show invoice history
 	"show-return", // () - Open return invoice dialog
+	"show-expense", // () - Open POS expense dialog
 	"close-shift", // () - Close current shift
 	"show-shift-history", // () - Open shift history dialog
 	// "create-sales-order", // () - Create Sales Order // Removed as per instruction
@@ -2222,11 +2224,64 @@ const {
 	handleCartSortToggle,
 	getCartSortLabel,
 	getCartSortIconState,
-} = useCartSort(() => props.items);
+} = useCartSort(
+	() => props.items,
+	computed(() => settingsStore.cartLifo),
+);
 
 /**
- * ============================================================================
- * REACTIVE STATE
+ * Display cart lines with each free gift nested under the line that earned it.
+ * Same-SKU GWP gifts carved out of a line (buy 2 get 1 free → 2 paid + 1 free
+ * after 3 scans) count in that line's `_bundledFreeQty`.
+ */
+const displayCartItems = computed(() => nestFreeRows(sortedItems.value));
+
+// Last-touched line: highlighted for 600ms and scrolled into view
+const cartListRef = ref(null);
+const flashKey = ref(null);
+let flashTimer = null;
+
+function lineKey(item) {
+	return `${item.item_code}-${item.uom || ""}`;
+}
+
+const itemSearchStore = useItemSearchStore();
+
+function listedItem(item) {
+	return itemSearchStore.allItems?.find((i) => i.item_code === item.item_code);
+}
+
+// What a free gift would normally cost, so the cashier can tell the customer its value
+function giftValue(item) {
+	const listed = listedItem(item);
+	const unit = Number.parseFloat(listed?.price_list_rate ?? listed?.rate) || 0;
+	return unit * (Number.parseFloat(item.quantity) || 0);
+}
+
+// Gift picture from the free row, else from the item list (some offer engines send none)
+function giftImage(item) {
+	return item.image || listedItem(item)?.image || null;
+}
+
+watch(
+	() => props.items.filter((i) => !i.is_free_item).map((i) => `${lineKey(i)}=${i.quantity}`),
+	async (lines, oldLines = []) => {
+		const touched = lines.find((line) => !oldLines.includes(line));
+		if (!touched) return;
+		flashKey.value = touched.slice(0, touched.lastIndexOf("="));
+		clearTimeout(flashTimer);
+		flashTimer = setTimeout(() => {
+			flashKey.value = null;
+		}, 600);
+		await nextTick();
+		cartListRef.value
+			?.querySelector(`[data-line-key="${CSS.escape(flashKey.value || "")}"]`)
+			?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+	}
+);
+
+/**
+ * Reactive State
  * ============================================================================
  */
 // Customer search state
@@ -2234,6 +2289,7 @@ const {
 const customerSearch = ref(""); // Current search query
 const customerSearchContainer = ref(null); // Ref to search container for click-outside detection
 const customerSearchFocused = ref(false); // Track if search input is focused
+const customerSearchInputRef = ref(null); // Ref to the native search input element
 // Use Pinia store for allCustomers (shared with CustomerDialog, synced on customer creation)
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const allCustomers = computed(() => customerSearchStore.allCustomers);
@@ -2241,6 +2297,7 @@ const customersLoaded = computed(() => customerSearchStore.allCustomers.length >
 const selectedIndex = ref(-1); // Keyboard navigation index for search results
 const availableGiftCards = ref([]); // Available gift cards for current customer
 const previousCustomer = ref(null); // Store previous customer for restore on blur
+const changingCustomer = ref(false); // Search shown over the selected customer
 
 // Edit item dialog state
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
@@ -2294,12 +2351,12 @@ if (props.posProfile) {
  * @endpoint pos_next.api.offers.get_active_coupons
  */
 const giftCardsResource = createResource({
-	url: "pos_next.api.offers.get_active_coupons",
+	url: promoApi.getActiveCoupons(),
 	makeParams() {
+		const customerName = props.customer?.name || props.customer;
 		return {
-			customer: props.customer?.name || props.customer,
-			company: props.posProfile, // Will get company from profile
-			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+			customer: customerName,
+			company: props.company,
 		};
 	},
 	auto: false,
@@ -2310,6 +2367,40 @@ const giftCardsResource = createResource({
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 });
 
+const customerLpInfo = ref({
+	wallet_enabled: false,
+	balance_points: 0,
+	balance_iqd: 0,
+});
+
+const customerLpResource = createResource({
+	url: "pos_next.api.wallet.get_wallet_info",
+	makeParams() {
+		const customerName = props.customer?.name || props.customer;
+		return {
+			customer: customerName,
+			company: props.company,
+			pos_profile: props.posProfile,
+		};
+	},
+	auto: false,
+	onSuccess(data) {
+		const payload = data?.message || data || {};
+		customerLpInfo.value = {
+			wallet_enabled: Boolean(payload.wallet_enabled),
+			balance_points: Number(payload.balance_points) || 0,
+			balance_iqd: Number(payload.balance_iqd ?? payload.wallet_balance) || 0,
+		};
+	},
+	onError() {
+		customerLpInfo.value = {
+			wallet_enabled: false,
+			balance_points: 0,
+			balance_iqd: 0,
+		};
+	},
+});
+
 /**
  * Watch for customer changes to load their gift cards.
  * Reloads gift cards resource when customer is selected (and online).
@@ -2318,14 +2409,37 @@ const giftCardsResource = createResource({
 watch(
 	() => props.customer,
 	(newCustomer) => {
-		if (newCustomer && props.posProfile && !isOffline()) {
-			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+		const customerName = newCustomer?.name || newCustomer;
+		if (customerName && props.company && !isOffline()) {
 			giftCardsResource.reload();
 		} else {
 			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 			availableGiftCards.value = [];
 		}
-		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+
+		if (customerName && props.company && props.posProfile && !isOffline()) {
+			customerLpResource.reload();
+		} else {
+			customerLpInfo.value = {
+				wallet_enabled: false,
+				balance_points: 0,
+				balance_iqd: 0,
+			};
+		}
+	}
+);
+
+// Refresh wallet / LP balance after a completed sale when the cart is cleared
+// but the same customer stays selected (watch on customer alone won't re-fire).
+watch(
+	() => props.items?.length ?? 0,
+	(newLen, oldLen) => {
+		if (oldLen > 0 && newLen === 0) {
+			const customerName = props.customer?.name || props.customer;
+			if (customerName && props.company && props.posProfile && !isOffline()) {
+				customerLpResource.reload();
+			}
+		}
 	}
 );
 
@@ -2393,19 +2507,19 @@ const customerResults = computed(() => {
 	}
 
 	//// Neoffice — [CU] upstream matched the whole query with a single includes(), so typing
-	//// "Moret Daniel" found nothing for a customer stored as "Daniel Moret". The query is split
+	//// "Dupont Jean" found nothing for a customer stored as "Jean Dupont". The query is split
 	//// into tokens that must each match somewhere, in any order (afb8f175, 2026-07-09).
-	//// tokenized any-order search so "Moret Daniel" finds "Daniel Moret"
+	//// tokenized any-order search so "Dupont Jean" finds "Jean Dupont"
 	// Split the query into words and require each to match somewhere in the
 	// name / mobile / id, in any order — a plain includes() on the whole string
-	// missed reversed word order (the stored name may be "Daniel Moret").
+	// missed reversed word order (the stored name may be "Jean Dupont").
 	const tokens = searchValue.split(/\s+/).filter(Boolean);
 	return (
 		allCustomers.value
 			.filter((cust) => {
 				//// Neoffice — [CU] tokenised, order-independent match (see the note just above):
-				//// upstream's includes() on the whole string missed "Moret Daniel" for a customer
-				//// stored as "Daniel Moret" (afb8f175, 2026-07-09).
+				//// upstream's includes() on the whole string missed "Dupont Jean" for a customer
+				//// stored as "Jean Dupont" (afb8f175, 2026-07-09).
 				const haystack =
 					(cust.customer_name || "").toLowerCase() +
 					" " +
@@ -2486,9 +2600,24 @@ const displayGrandTotal = computed(() => {
 	return (
 		displaySubtotal.value +
 		props.taxAmount -
-		props.discountAmount +
+		displayDiscountAmount.value +
 		(props.roundingAdjustment || 0)
 	);
+});
+
+/**
+ * Sum line discounts directly from cart items for instant, exact footer display.
+ * Avoids waiting on incremental cache updates after offer application.
+ */
+const displayDiscountAmount = computed(() => {
+	const lineDiscounts = props.items.reduce(
+		(sum, item) => sum + (Number.parseFloat(item.discount_amount) || 0),
+		0
+	);
+	const storeDiscount = Number.parseFloat(props.discountAmount) || 0;
+	// Prefer the larger value: store total includes header/additional discounts;
+	// line sum is fresher when offer stamps land before the incremental cache.
+	return Math.max(lineDiscounts, storeDiscount);
 });
 
 /**
@@ -2568,7 +2697,21 @@ function handleSearchBlur() {
 	setTimeout(() => {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearchFocused.value = false;
+		// Nothing typed: keep the selected customer
+		if (!customerSearch.value.trim()) changingCustomer.value = false;
 	}, 100);
+}
+
+/** Open customer search over the selected customer, keeping it until another is picked. */
+async function startChangingCustomer() {
+	changingCustomer.value = true;
+	await nextTick();
+	customerSearchInputRef.value?.focus();
+}
+
+/** A customer saved with only a phone number as the name */
+function isPhoneName(name) {
+	return /^\+?[\d\s-]{6,}$/.test(String(name || "").trim());
 }
 
 /**
@@ -2605,6 +2748,7 @@ function handleKeydown(event) {
 	} else if (event.key === "Escape") {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearch.value = "";
+		changingCustomer.value = false;
 	}
 }
 
@@ -2623,6 +2767,7 @@ function selectCustomer(cust) {
 	selectedIndex.value = -1;
 	customerSearchFocused.value = false;
 	previousCustomer.value = null;
+	changingCustomer.value = false;
 }
 
 //// Neoffice — [CU] this is the old removeCustomer path, folded into clearCustomer
@@ -2738,6 +2883,125 @@ function formatAddress(cust) {
 }
 
 /**
+ * Effective discount % for badges. Coupon max_amount caps are stored as
+ * absolute amounts (discount_percentage=0), so derive % from amount/base.
+ */
+function isLockedFreeRow(item) {
+	return Boolean(item?.is_free_item || item?._isStandaloneFreeRow);
+}
+
+const getDisplayQuantity = getDisplayQuantityForLine;
+
+function serialList(item) {
+	return String(item?.serial_no || "")
+		.split("\n")
+		.filter((s) => s.trim());
+}
+
+function batchExpiry(item) {
+	return item?.batch_expiry_date || item?.expiry_date || null;
+}
+
+/** Amber when the batch expires within 30 days */
+function batchExpiryClass(item) {
+	const expiry = batchExpiry(item);
+	return expiry && new Date(expiry) - Date.now() < 30 * 86400000 ? "text-amber-700 font-semibold" : "";
+}
+
+/** "20% off (Fairy 3 pcs)": the discount and the offer or coupon that gave it */
+// Money the customer keeps on this line, from an offer, a gift or a coupon
+function lineSaving(item) {
+	return Number.parseFloat(item?.discount_amount) || 0;
+}
+
+function isGiftSaving(item) {
+	return ["free_item", "gwp"].includes(item?.discount_source);
+}
+
+function savingOffer(item) {
+	const rules = Array.isArray(item.pricing_rules)
+		? item.pricing_rules
+		: String(item.pricing_rules || "").split(",");
+	return (props.appliedOffers || []).find(
+		(o) => rules.includes(o.code) || (o.rules || []).some((r) => rules.includes(r))
+	);
+}
+
+// What the customer gets on this line: "1 free", "20% off", "Coupon WELCOME10"
+function savingTitle(item) {
+	if (item.coupon_code) {
+		// A coupon stacked on a promotion names both
+		const pre = Number(item.pre_coupon_discount?.discount_percentage) || 0;
+		return pre > 0
+			? __("{0}% off + Coupon {1}", [pre.toFixed(0), item.coupon_code])
+			: __("Coupon {0}", [item.coupon_code]);
+	}
+	if (isGiftSaving(item)) {
+		const unit = Number.parseFloat(item.price_list_rate || item.rate) || 0;
+		const units = unit ? Math.round(lineSaving(item) / unit) : 0;
+		if (units > 0) return __("{0} free", [units]);
+	}
+	return __("{0}% off", [Number(getItemDiscountPercent(item)).toFixed(0)]);
+}
+
+// The offer that gave it, shown quieter beside the title
+function savingSource(item) {
+	return item.coupon_code ? "" : savingOffer(item)?.name || "";
+}
+
+const resolvePaidQuantityFromDisplay = resolvePaidQtyForLine;
+
+/**
+ * Net line amount. Uses `??` so a legitimate 0 (100% discount / free item)
+ * is not replaced by the full rate × qty.
+ */
+function getLineAmount(item) {
+	const amount = item?.amount;
+	if (amount !== null && amount !== undefined && amount !== "") {
+		return Number.parseFloat(amount) || 0;
+	}
+	return (Number.parseFloat(item?.rate) || 0) * (Number.parseFloat(item?.quantity) || 0);
+}
+
+/** Effective unit price after line discount (0 for a fully free line). */
+function getLineNetRate(item) {
+	const qty = Number.parseFloat(item?.quantity ?? item?.qty) || 0;
+	const hasDiscount =
+		(Number.parseFloat(item?.discount_amount) || 0) > 0 ||
+		(Number.parseFloat(item?.discount_percentage) || 0) > 0 ||
+		item?.is_free_item;
+	const rate = Number.parseFloat(item?.rate) || 0;
+	if (hasDiscount && qty > 0) {
+		// Gross (tax-mode independent) unit price after discount
+		const discount = Number.parseFloat(item?.discount_amount) || 0;
+		if (discount > 0) return Math.max(0, rate - discount / qty);
+		if (item?.is_free_item) return getLineAmount(item) / qty;
+		const pct = Number.parseFloat(item?.discount_percentage) || 0;
+		return Math.max(0, rate * (1 - pct / 100));
+	}
+	return rate;
+}
+
+/** Original list price to show struck through, or null when there is no discount. */
+function getLineStrikePrice(item) {
+	const list = Number.parseFloat(item?.price_list_rate ?? item?.rate) || 0;
+	const net = getLineNetRate(item);
+	return list > net + 0.0001 ? list : null;
+}
+
+function getItemDiscountPercent(item) {
+	const pct = Number.parseFloat(item?.discount_percentage) || 0;
+	if (pct > 0) return pct;
+	const discountAmount = Number.parseFloat(item?.discount_amount) || 0;
+	if (discountAmount <= 0) return 0;
+	const qty = Number.parseFloat(item?.quantity || item?.qty) || 0;
+	const rate = Number.parseFloat(item?.price_list_rate || item?.rate) || 0;
+	const base = qty * rate;
+	if (base <= 0) return 0;
+	return (discountAmount / base) * 100;
+}
+
+/**
  * Format a numeric amount as currency string.
  * Uses the component's currency prop for formatting.
  *
@@ -2802,14 +3066,11 @@ function getSmartStep(quantity) {
  * @param {Object} item - Cart item to increment
  */
 function incrementQuantity(item) {
-	// Prevent editing resolved barcode items
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (item.is_resolved_barcode) return;
+	if (item.is_resolved_barcode || isLockedFreeRow(item)) return;
 
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const step = getSmartStep(item.quantity);
-	const newQty = Math.round((item.quantity + step) * 10000) / 10000;
-	emit("update-quantity", item.item_code, newQty, item.uom);
+	const step = getSmartStep(getDisplayQuantity(item));
+	const newPaidQty = Math.round((getDisplayQuantity(item) + step) * 10000) / 10000;
+	emit("update-quantity", item.item_code, newPaidQty, item.uom);
 }
 
 /**
@@ -2819,21 +3080,17 @@ function incrementQuantity(item) {
  * @param {Object} item - Cart item to decrement
  */
 function decrementQuantity(item) {
-	// Prevent editing resolved barcode items
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (item.is_resolved_barcode) return;
+	if (item.is_resolved_barcode || isLockedFreeRow(item)) return;
 
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const step = getSmartStep(item.quantity);
-	const newQty = Math.round((item.quantity - step) * 10000) / 10000;
+	const step = getSmartStep(getDisplayQuantity(item));
+	const newPaidQty = Math.round((getDisplayQuantity(item) - step) * 10000) / 10000;
 
-	if (newQty <= 0) {
+	if (newPaidQty <= 0) {
 		// If quantity would be 0 or negative, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		emit("remove-item", item.item_code, item.uom);
 	} else {
-		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		emit("update-quantity", item.item_code, newQty, item.uom);
+		emit("update-quantity", item.item_code, newPaidQty, item.uom);
 	}
 }
 
@@ -2847,23 +3104,20 @@ function decrementQuantity(item) {
 
 function updateQuantity(item, value) {
 	// Prevent editing resolved barcode items
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (item.is_resolved_barcode) return;
+	if (item.is_resolved_barcode || isLockedFreeRow(item)) return;
 
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	const qty = Number.parseFloat(value);
+	const displayQty = Number.parseFloat(value);
 
 	// If the input isn't a valid number (e.g., user cleared the field), do nothing
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (isNaN(qty)) return;
+	if (isNaN(displayQty)) return;
+
+	const paidQty = resolvePaidQuantityFromDisplay(item, displayQty);
 
 	// If quantity is zero or negative, remove the item from the cart
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	if (qty <= 0) return emit("remove-item", item.item_code, item.uom);
+	if (paidQty <= 0) return emit("remove-item", item.item_code, item.uom);
 
-	// For positive numbers, update quantity immediately (no rounding here while typing)
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	emit("update-quantity", item.item_code, qty, item.uom);
+	// For positive numbers, update paid quantity (free row stays separate in data)
+	emit("update-quantity", item.item_code, paidQty, item.uom);
 }
 
 /**
@@ -2875,6 +3129,7 @@ function updateQuantity(item, value) {
  * @param {Object} item - Cart item that lost focus
  */
 function handleQuantityBlur(item) {
+	if (isLockedFreeRow(item)) return;
 	// When user leaves the input field, round and validate
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item
@@ -2882,10 +3137,8 @@ function handleQuantityBlur(item) {
 		emit("remove-item", item.item_code, item.uom);
 	} else {
 		// Round to 4 decimal places for consistency
-		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		const roundedQty = Math.round(item.quantity * 10000) / 10000;
-		if (roundedQty !== item.quantity) {
-			//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+		const roundedQty = Math.round(getDisplayQuantity(item) * 10000) / 10000;
+		if (roundedQty !== getDisplayQuantity(item)) {
 			emit("update-quantity", item.item_code, roundedQty, item.uom);
 		}
 	}
@@ -2910,6 +3163,11 @@ function toggleUomDropdown(itemCode, uom) {
  * Handles merging if target UOM already exists in cart
  */
 async function selectUom(item, newUom) {
+	// Defense in depth: free/GWP rows stay promotion-owned even if UI disable fails.
+	if (isLockedFreeRow(item)) {
+		openUomDropdown.value = null;
+		return;
+	}
 	if (item.uom === newUom) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		openUomDropdown.value = null;
@@ -2935,7 +3193,9 @@ async function selectUom(item, newUom) {
  * @param {Object} item - Cart item to edit
  */
 function openEditDialog(item) {
-	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
+	// Free / GWP / promo gift rows are promotion-owned — cashier must not
+	// change qty or rate (would oversell free stock beyond the offer).
+	if (isLockedFreeRow(item)) return;
 	selectedItem.value = { ...item };
 	showEditDialog.value = true;
 }
@@ -2987,6 +3247,7 @@ function handleOutsideClick(event) {
 	) {
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 		customerSearch.value = "";
+		changingCustomer.value = false;
 
 		// Restore previous customer if set and no customer selected
 		if (previousCustomer.value && !props.customer) {
@@ -3051,7 +3312,15 @@ onBeforeUnmount(() => {
  * Allows POSSale to trigger edit dialog for zero-price items (e.g., gift cards).
  */
 defineExpose({
-	openEditDialog,
+	openEditDialog, //// Neoffice — the page opens a zero-price line (gift card) for editing (5dddc528).
+	focusCustomerSearch() {
+		if (props.customer) {
+			// Show the search over the assigned customer; it stays until another is picked
+			startChangingCustomer();
+		} else {
+			customerSearchInputRef.value?.focus();
+		}
+	},
 });
 </script>
 ```

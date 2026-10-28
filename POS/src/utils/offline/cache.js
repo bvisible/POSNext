@@ -242,16 +242,16 @@ export const searchCachedCustomers = async (searchTerm = "", limit = 50) => {
 		const term = searchTerm.toLowerCase();
 
 		//// Neoffice — upstream searched customers with a Dexie startsWithIgnoreCase, so only a
-		//// prefix of a single field matched: a cashier typing "Moret" found nothing for "Daniel
-		//// Moret", and "Moret Daniel" found nothing at all. Replaced by an in-memory tokenized
+		//// prefix of a single field matched: a cashier typing "Dupont" found nothing for "Jean
+		//// Dupont", and "Dupont Jean" found nothing at all. Replaced by an in-memory tokenized
 		//// match — every word must appear somewhere in name, mobile or email, in any order
 		//// (d29af088, 2026-07-09 "barcode error toast, UOM dialog dedup, any-order customer
 		//// search"). The same change was applied to the worker and to the backend query.
-		//// tokenized any-order search (was startsWith → missed "Moret" in "Daniel Moret")
+		//// tokenized any-order search (was startsWith → missed "Dupont" in "Jean Dupont")
 		// Split the query into words and require each to match somewhere in the
 		// name / mobile / email, in any order. The previous startsWithIgnoreCase
-		// only matched the very beginning of customer_name, so "Moret" never
-		// found "Daniel Moret".
+		// only matched the very beginning of customer_name, so "Dupont" never
+		// found "Jean Dupont".
 		const tokens = term.split(/\s+/).filter(Boolean);
 		const all = await db.customers.toArray();
 		const results = all

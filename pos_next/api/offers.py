@@ -16,7 +16,7 @@ import frappe
 # //// Neoffice — recognize both gift-card families (POS flag + ERPNext-native coupon_type) so validate_coupon routes them correctly (45b52c86 "fix(gift-cards): a card bought online kept its full balance after being spent")
 from pos_next.api.gift_cards import is_gift_card
 from frappe import _
-from frappe.utils import cint, flt, getdate, nowdate
+from frappe.utils import flt, getdate, nowdate
 
 # ============================================================================
 # Constants
@@ -79,8 +79,6 @@ class Offer:
 	rate: float
 	discount_amount: float
 	discount_percentage: float
-	apply_discount_on_price: str | None
-	min_or_max_discount_qty_limit: int
 	valid_from: str | None
 	valid_upto: str | None
 	source: str
@@ -247,7 +245,6 @@ class SlabFetcher:
 			SELECT
 				parent, min_qty, max_qty, min_amount, max_amount,
 				rate_or_discount, rate, discount_amount, discount_percentage,
-				apply_discount_on_price, min_or_max_discount_qty_limit,
 				apply_multiple_pricing_rules
 			FROM `tabPromotional Scheme Price Discount`
 			WHERE parent IN %s AND disable = 0
@@ -344,10 +341,6 @@ class OfferBuilder:
 			rate=flt(slab.get("rate", 0)) if is_price_discount else 0,
 			discount_amount=flt(slab.get("discount_amount", 0)) if is_price_discount else 0,
 			discount_percentage=flt(slab.get("discount_percentage", 0)) if is_price_discount else 0,
-			apply_discount_on_price=(slab.get("apply_discount_on_price") if is_price_discount else None),
-			min_or_max_discount_qty_limit=(
-				cint(slab.get("min_or_max_discount_qty_limit", 0)) if is_price_discount else 0
-			),
 			valid_from=rule.get("valid_from"),
 			valid_upto=rule.get("valid_upto"),
 			source=OfferSource.PROMOTIONAL_SCHEME,
@@ -402,8 +395,6 @@ class OfferBuilder:
 			rate=flt(rule.get("rate", 0)),
 			discount_amount=flt(rule.get("discount_amount", 0)),
 			discount_percentage=flt(rule.get("discount_percentage", 0)),
-			apply_discount_on_price=rule.get("apply_discount_on_price"),
-			min_or_max_discount_qty_limit=cint(rule.get("min_or_max_discount_qty_limit", 0)),
 			valid_from=rule.get("valid_from"),
 			valid_upto=rule.get("valid_upto"),
 			source=OfferSource.PRICING_RULE,
@@ -542,7 +533,6 @@ def _get_standalone_pricing_rule_offers(company: str, date: str) -> list[Offer]:
 			name, title, apply_on, selling,
 			coupon_code_based, one_time_per_customer, price_or_product_discount,
 			rate_or_discount, rate, discount_amount, discount_percentage,
-			apply_discount_on_price, min_or_max_discount_qty_limit,
 			min_qty, max_qty, min_amt, max_amt,
 			priority, valid_from, valid_upto
 		FROM `tabPricing Rule`

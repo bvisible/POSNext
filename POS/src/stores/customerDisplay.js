@@ -26,6 +26,8 @@ import { defineStore } from "pinia"
 import { computed, ref, watch } from "vue"
 import { ensureCSRFToken } from "@/utils/csrf"
 import { logger } from "@/utils/logger"
+//// Neoffice — the second screen's total in the site's number format (formattedTotal below).
+import { formatCurrency } from "@/utils/currency"
 
 const log = logger.create("CustomerDisplay")
 
@@ -157,10 +159,8 @@ export const useCustomerDisplayStore = defineStore("customerDisplay", () => {
 	const formattedTotal = computed(() => {
 		const currency = cartData.value.currency || "EUR"
 		const amount = cartData.value.grand_total || 0
-		return new Intl.NumberFormat("fr-FR", {
-			style: "currency",
-			currency: currency,
-		}).format(amount)
+		//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not fr-FR.
+		return formatCurrency(Number(amount) || 0, currency)
 	})
 
 	const connectionStatus = computed(() => {

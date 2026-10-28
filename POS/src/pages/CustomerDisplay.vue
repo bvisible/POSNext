@@ -201,6 +201,8 @@ import { FeatherIcon } from "frappe-ui"
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import QRCode from "qrcode"
 import { useCustomerDisplayStore } from "@/stores/customerDisplay"
+//// Neoffice — the second screen shows amounts like the till (formatCurrency below).
+import { formatCurrency as formatSiteCurrency } from "@/utils/currency"
 import DisplayAuth from "@/components/customer-display/DisplayAuth.vue"
 import DisplayHeader from "@/components/customer-display/DisplayHeader.vue"
 import DisplayCart from "@/components/customer-display/DisplayCart.vue"
@@ -215,10 +217,8 @@ const qrCanvas = ref(null)
 // Format currency
 function formatCurrency(amount) {
 	const currency = displayStore.cartData.currency || "EUR"
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: currency,
-	}).format(amount)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not fr-FR.
+	return formatSiteCurrency(Number(amount) || 0, currency)
 }
 
 // ---- Payment QR overlay (TWINT etc.) ----
@@ -245,10 +245,8 @@ const paymentQRTitle = computed(() => {
 const paymentQRAmount = computed(() => {
 	const qr = displayStore.paymentQR
 	if (!qr || !qr.amount) return ""
-	return new Intl.NumberFormat("fr-CH", {
-		style: "currency",
-		currency: qr.currency || "CHF",
-	}).format(qr.amount)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not fr-CH.
+	return formatSiteCurrency(Number(qr.amount) || 0, qr.currency || "CHF")
 })
 
 async function renderPaymentQR(token) {

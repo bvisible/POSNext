@@ -38,15 +38,9 @@ POS_SETTINGS_FIELDS = [
 	"create_only_sales_order",
 	# //// Neoffice — POS_SETTINGS_FIELDS is the whitelist the bootstrap sends to the SPA: a
 	# //// setting missing here reads as "off" in the till however it is set on the doctype. The
-	# //// wallet / loyalty and customer-display settings the fork adds were absent, so both
-	# //// features looked disabled (f91dcc94, 2026-03-19).
-	# //// add missing wallet/loyalty fields to POS_SETTINGS_FIELDS bootstrap — f91dcc9 + 1ec3ead
-	# Wallet & Loyalty
-	"enable_loyalty_program",
-	"default_loyalty_program",
-	"wallet_account",
-	"auto_create_wallet",
-	"loyalty_to_wallet",
+	# //// customer-display settings the fork adds were absent, so the feature looked disabled
+	# //// (f91dcc94, 2026-03-19). The wallet / loyalty keys added by the same commit are now
+	# //// upstream's own (develop, end of this list), so ours were dropped at the 2026-10-28 merge.
 	# Customer Display Settings
 	"enable_customer_display",
 	"enable_customer_display_account_creation",
@@ -67,6 +61,13 @@ POS_SETTINGS_FIELDS = [
 	# //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
 	"eod_email_recipients",
 	"eod_email_auto",
+	"enable_loyalty_program",
+	"default_loyalty_program",
+	"wallet_account",
+	"auto_create_wallet",
+	"loyalty_to_wallet",
+	"cart_lifo",
+	"display_item_code",
 ]
 
 # Default POS Settings values
@@ -96,15 +97,9 @@ DEFAULT_POS_SETTINGS = {
 	"create_only_sales_order": 0,
 	# //// Neoffice — DEFAULT_POS_SETTINGS has to mirror POS_SETTINGS_FIELDS above key for key, or
 	# //// the POS bootstraps without the key and the frontend reads undefined. These are the
-	# //// wallet / loyalty and customer-display keys the fork added
-	# //// (f91dcc94, 2026-03-19 "fix: add missing wallet/loyalty fields to POS_SETTINGS_FIELDS
-	# //// bootstrap"; merge 1ec3eadf).
-	# Wallet & Loyalty
-	"enable_loyalty_program": 0,
-	"default_loyalty_program": "",
-	"wallet_account": "",
-	"auto_create_wallet": 0,
-	"loyalty_to_wallet": 0,
+	# //// customer-display keys the fork added (f91dcc94, 2026-03-19; merge 1ec3eadf). Its wallet /
+	# //// loyalty keys are upstream's since develop (end of this dict, with the doctype's defaults
+	# //// auto_create_wallet = loyalty_to_wallet = 1 instead of our 0), dropped here on 2026-10-28.
 	# Customer Display Settings
 	"enable_customer_display": 0,
 	"enable_customer_display_account_creation": 0,
@@ -124,4 +119,26 @@ DEFAULT_POS_SETTINGS = {
 	# //// Neoffice — end-of-day report e-mail (neoffice-maintenance#1235)
 	"eod_email_recipients": "",
 	"eod_email_auto": 0,
+	"enable_loyalty_program": 0,
+	"default_loyalty_program": "",
+	"wallet_account": "",
+	"auto_create_wallet": 1,
+	"loyalty_to_wallet": 1,
+	"magento_loyalty_available": 0,
+	"miraaya_installed": 0,
+	"cart_lifo": 0,
+	"display_item_code": 1,
 }
+
+
+def merge_pos_settings(row=None):
+	"""DB row over defaults so runtime integration flags always exist.
+
+	`miraaya_installed` / `magento_loyalty_available` are not DocType columns;
+	hooks may overwrite them, but vanilla benches still need the keys present
+	when a POS Settings row exists (defaults alone only apply on miss/error).
+	"""
+	settings = DEFAULT_POS_SETTINGS.copy()
+	if row:
+		settings.update(row)
+	return settings

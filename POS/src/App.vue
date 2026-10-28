@@ -10,7 +10,7 @@
   //// integrate nora-learn-react via React Island bridge — 05053a5
 -->
 <template>
-	<div>
+	<div class="flex flex-1 flex-col min-h-0">
 		<router-view :key="translationVersion" />
 		<Toast />
 		<!-- //// Neoffice — NoraLearn (our in-app guidance) is a React app; this bridge -->
@@ -19,10 +19,12 @@
 		<!-- //// nodes. No upstream equivalent (05053a5b, 2026-04-07 "integrate -->
 		<!-- //// nora-learn-react via React Island bridge"). -->
 		<NoraLearnBridge />
+		<AuthorizationDialog />
 	</div>
 </template>
 
 <script setup>
+import AuthorizationDialog from "@/components/common/AuthorizationDialog.vue";
 import Toast from "@/components/common/Toast.vue";
 //// Neoffice — import for the React-island bridge above (05053a5b, 2026-04-07
 //// "integrate nora-learn-react via React Island bridge").

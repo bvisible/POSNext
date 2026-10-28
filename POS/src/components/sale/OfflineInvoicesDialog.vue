@@ -431,8 +431,7 @@
 </template>
 
 <script setup>
-//// Neoffice — formatting only: Biome pass of 458d81a9 (2026-03-20) wrapped this import.
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
+import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil, formatDateTime } from "@/utils/currency";
 import { Button, Dialog } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 
@@ -524,7 +523,7 @@ function formatDate(timestamp) {
 		//// Neoffice — the "hours ago" half of that same Biome re-quote (458d81a9, 2026-03-20).
 		return __("{0} hours ago", [Math.floor(diffInSeconds / 3600)]);
 
-	return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+	return formatDateTime(date);
 }
 
 function viewDetails(invoice) {

@@ -36,7 +36,13 @@
 					dynamicGap,
 					isMobileView ? '' : 'overflow-hidden',
 				]"
-				:style="isMobileView ? {} : { maxHeight: dialogContentMaxHeight }"
+				:style="{
+					// Whole dialog within 100dvh - 32px (6rem for title and padding)
+					maxHeight: isMobileView
+						? 'calc(100dvh - 32px - 6rem)'
+						: `min(${dialogContentMaxHeight}, calc(100dvh - 32px - 6rem))`,
+					overflowY: isMobileView ? 'auto' : undefined,
+				}"
 			>
 				<!-- Left Column (2/5): Sales Person + Invoice Summary -->
 				<div
@@ -88,6 +94,16 @@
 								: 'bg-purple-50 border border-purple-200',
 						]"
 					>
+						<p
+							v-if="allItemsHaveSalesPerson"
+							class="text-xs text-purple-700 mb-1.5"
+						>
+							{{
+								__(
+									"All items have a Sales Person — invoice-level selection is optional."
+								)
+							}}
+						</p>
 						<!-- Single Mode: Show selected person or dropdown -->
 						<template v-if="settingsStore.isSingleSalesPerson">
 							<!-- Show selected person as a nice display -->
@@ -554,6 +570,12 @@
 									{{ __("pts") }}
 								</span>
 							</div>
+							<div
+								v-else-if="requiresCustomerForPayment"
+								class="text-amber-700 text-xs mt-0.5 text-start font-medium"
+							>
+								{{ __("Customer required for this payment method") }}
+							</div>
 						</div>
 
 						<!-- Promotional offers & coupons (same entry points as cart — usable while paying) -->
@@ -773,7 +795,7 @@
 									</div>
 									<span
 										v-if="localAdditionalDiscount > 0"
-										class="text-xs font-bold text-red-600"
+										class="text-xs font-bold text-[#0f7a4a]"
 									>
 										-{{ formatCurrency(calculatedAdditionalDiscount) }}
 									</span>
@@ -898,7 +920,7 @@
 								class="flex items-center justify-between text-sm"
 							>
 								<span class="text-gray-600 text-start">{{ __("Discount") }}</span>
-								<span class="font-medium text-red-600 text-end"
+								<span class="font-medium text-[#0f7a4a] text-end"
 									>-{{ formatCurrency(discountAmount) }}</span
 								>
 							</div>
@@ -1313,11 +1335,14 @@
 										: 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-700',
 								]"
 							>
-								<span :class="isSmallMobile ? 'text-xs' : 'text-sm lg:text-lg'">{{
-									isWalletPaymentMethod(method.mode_of_payment)
-										? "🎁"
-										: getPaymentIcon(method.type)
-								}}</span>
+								<FeatherIcon
+									:name="
+										isWalletPaymentMethod(method.mode_of_payment)
+											? 'gift'
+											: paymentFeatherIcon(method)
+									"
+									:class="isSmallMobile ? 'w-3 h-3' : 'w-4 h-4 lg:w-5 lg:h-5'"
+								/>
 								<span class="truncate max-w-[80px] lg:max-w-none">{{
 									__(method.mode_of_payment)
 								}}</span>
@@ -1338,6 +1363,12 @@
 									]"
 								>
 									{{ formatCurrency(availableWalletBalance) }}
+									<span
+										v-if="walletInfo.balance_points"
+										class="ms-0.5"
+									>
+										({{ walletInfo.balance_points }} {{ __("pts") }})
+									</span>
 								</span>
 								<!-- //// Neoffice — offline, a card/TWINT method can only be
 								     recorded, never charged. Say it on the button itself: a
@@ -1392,9 +1423,10 @@
 										: 'border-emerald-300 bg-emerald-50 hover:border-emerald-500 hover:bg-emerald-100 text-emerald-700',
 								]"
 							>
-								<span :class="isSmallMobile ? 'text-xs' : 'text-sm lg:text-lg'"
-									>💳</span
-								>
+								<FeatherIcon
+									name="credit-card"
+									:class="isSmallMobile ? 'w-3 h-3' : 'w-4 h-4 lg:w-5 lg:h-5'"
+								/>
 								<span class="truncate">{{ __("Credit Balance") }}</span>
 								<span
 									v-if="getMethodTotal('Customer Credit') > 0"
@@ -1429,9 +1461,10 @@
 											: 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-700',
 									]"
 								>
-									<span :class="isSmallMobile ? 'text-xs' : 'text-sm lg:text-lg'"
-										>🧾</span
-									>
+									<FeatherIcon
+										name="file-text"
+										:class="isSmallMobile ? 'w-3 h-3' : 'w-4 h-4 lg:w-5 lg:h-5'"
+									/>
 									<span class="truncate max-w-[80px] lg:max-w-none">{{
 										__(acc.account_name || acc.name)
 									}}</span>
@@ -1936,13 +1969,15 @@
 								<!-- Pay on Account Button -->
 								<!-- //// Neoffice — same Neoffice radius token swap, rounded-lg → rounded-neo-* (87f168fe). -->
 								<button
-									@click="addCreditAccountPayment"
-									:disabled="isSubmitting"
+									@click="confirmCreditSale"
+									:disabled="isSubmitting || !isSalesPersonValid"
 									:class="[
-										'font-semibold rounded-neo-md flex items-center justify-center',
-										isSubmitting
-											? 'bg-orange-300 text-white cursor-not-allowed'
-											: 'bg-orange-500 text-white active:bg-orange-600',
+										'font-semibold rounded-neo-md flex items-center justify-center border-2',
+										isSubmitting || !isSalesPersonValid
+											? 'border-gray-200 text-gray-400 cursor-not-allowed'
+											: creditConfirming
+												? 'border-amber-700 bg-amber-700 text-white'
+												: 'border-amber-600 bg-white text-amber-800 active:bg-amber-50',
 										mobileButtonSize.height,
 										mobileButtonSize.text,
 										mobileButtonSize.gap,
@@ -1984,7 +2019,11 @@
 										/>
 									</svg>
 									<span class="truncate">{{
-										isSubmitting ? __("Processing...") : __("On Account")
+										isSubmitting
+											? __("Processing...")
+											: creditConfirming
+												? __("Tap again to confirm")
+												: __("On Account")
 									}}</span>
 								</button>
 							</div>
@@ -2116,7 +2155,7 @@
 						</div>
 
 						<!-- Keypad Grid (4 columns) -->
-						<div :class="['grid grid-cols-4', isCompactMode ? 'gap-1' : 'gap-1.5']">
+						<div dir="ltr" :class="['grid grid-cols-4', isCompactMode ? 'gap-1' : 'gap-1.5']">
 							<!-- Row 1: 7, 8, 9, Backspace -->
 							<!-- //// Neoffice — feat: align POS design with Neoffice theme and improve customer display (87f168fe, 2026-03-20). -->
 							<button
@@ -2253,12 +2292,32 @@
 					<div
 						:class="['hidden lg:flex flex-col gap-1', isCompactMode ? 'mt-2' : 'mt-4']"
 					>
+						<!-- //// Neoffice — upstream develop's "Exact cash" button (Enter) is taken and comes first -->
+						<!-- //// while nothing is entered, full width like Complete Payment in our stacked layout. -->
+						<!-- //// Its outlined "Pay on Account" button is not: ours stays the discrete link below -->
+						<!-- //// (2584aa58), with upstream's second-click confirmation and sales-person check. -->
+						<!-- Exact cash (Enter): the primary action while nothing is entered -->
+						<button
+							v-if="exactCashMethod"
+							@click="payExactCash"
+							:disabled="isSubmitting"
+							:class="[
+								'w-full inline-flex items-center justify-center gap-2 transition-colors focus:outline-none',
+								dynamicButtonHeight,
+								'text-sm font-semibold px-5 rounded-neo-md bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-2 focus-visible:ring-blue-400',
+							]"
+						>
+							<FeatherIcon name="dollar-sign" class="w-4 h-4" />
+							<span dir="auto">{{ __("Exact cash {0}", [formatCurrency(remainingAmount)]) }}</span>
+							<kbd class="text-[11px] font-mono bg-blue-600 rounded px-1.5 py-0.5">Enter</kbd>
+						</button>
 						<!-- Complete/Partial Payment Button — Full Width -->
 						<!-- //// Neoffice — the button below is the full-width Complete Payment of 2584aa58, -->
 						<!-- //// with the Neoffice radius token (rounded-neo-md) instead of upstream's -->
 						<!-- //// rounded-lg (87f168fe). Marked above the opening tag because the changed line -->
 						<!-- //// is inside the :class array — a comment between attributes would break the tag. -->
 						<button
+							v-else
 							@click="completePayment"
 							:disabled="!canComplete || isSubmitting"
 							:class="[
@@ -2307,11 +2366,11 @@
 						<!-- Pay on Account — Discrete link (if credit sales enabled) -->
 						<button
 							v-if="allowCreditSale && paymentEntries.length === 0"
-							@click="addCreditAccountPayment"
-							:disabled="isSubmitting"
+							@click="confirmCreditSale"
+							:disabled="isSubmitting || !isSalesPersonValid"
 							class="text-xs text-gray-400 hover:text-gray-600 transition-colors py-1 text-center"
 						>
-							{{ __("Pay on Account") }}
+							{{ creditConfirming ? __("Click again to confirm") : __("Pay on Account") }}
 						</button>
 					</div>
 				</div>
@@ -2511,14 +2570,22 @@ import {
 	//// cash quick amounts").
 	roundToFraction,
 	getPrecision,
+	//// Neoffice — formatCurrencyNumber: the max-discount warning's amount in the site's format.
+	formatCurrencyNumber,
 } from "@/utils/currency";
-import { getPaymentIcon } from "@/utils/payment";
+//// Neoffice — the keypad / completion guard for terminal payments (see the file's header).
+import {
+	isPaymentKeypadEnabled,
+	isTerminalDialogOnScreen,
+	isTerminalPaymentActive,
+	terminalDialogKind,
+} from "@/utils/terminalPaymentGuard";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
 //// Neoffice — Button pulled in for the partial-payment confirmation dialog added
 //// below (f295bbeb, 2026-03-26 "payment = auto-validate + partial payment
-//// confirmation dialog"). Upstream imported Dialog/createResource/call only.
-import { Dialog, Button, createResource, call } from "frappe-ui";
+//// confirmation dialog"). Upstream imports Dialog/FeatherIcon/createResource/call.
+import { Dialog, Button, FeatherIcon, createResource, call } from "frappe-ui";
 import { computed, ref, watch, nextTick } from "vue";
 import { useToast } from "@/composables/useToast";
 import { useLongPress } from "@/composables/useLongPress";
@@ -2764,6 +2831,8 @@ const walletInfo = ref({
 	wallet_exists: false,
 	wallet_balance: 0,
 	wallet_name: null,
+	balance_points: 0,
+	magento_loyalty: false,
 });
 const loadingWallet = ref(false);
 const walletPaymentMethods = ref(new Set()); // Set of mode_of_payment names that are wallet payments
@@ -2813,13 +2882,32 @@ const {
 //   qr_bridge → QRPaymentDialog (TWINT via PHP bridge)
 // Knowing the kind upfront lets us render the dialog in idle state BEFORE
 // any intent exists — and react instantly to the cashier's click.
-const currentDialogKind = computed(() => {
-	const ch = terminalCurrentMapping.value?.channel;
-	if (!ch) return null;
-	if (ch === "terminal") return "card_present";
-	if (ch === "qr_bridge") return "qr";
-	return null;
-});
+//// Neoffice — same rule as openTerminalDialog's refusal, in one place (terminalDialogKind).
+const currentDialogKind = computed(() => terminalDialogKind(terminalCurrentMapping.value?.channel));
+
+//// Neoffice — "a terminal dialog is actually on screen": the flag alone stayed true with nothing
+//// drawn for a channel that has no dialog, which locked the keypad and "Complete" with nothing to
+//// close. This, not showTerminalDialog, is what the terminal guards read.
+const terminalDialogOnScreen = computed(() =>
+	isTerminalDialogOnScreen({
+		open: showTerminalDialog.value,
+		channel: terminalCurrentMapping.value?.channel,
+	})
+);
+
+//// Neoffice — PaymentDialog stays mounted between sales, so a terminal dialog left open with no
+//// payment started must not outlive the payment dialog. An intent that exists is left alone: its
+//// own success / failure / cancel path closes it, and reopening the dialog shows where it stands.
+watch(
+	() => props.modelValue,
+	(open) => {
+		if (open || !showTerminalDialog.value || terminalInFlight.value || terminalIntent.value) return;
+		showTerminalDialog.value = false;
+		terminalCurrentMethod.value = null;
+		terminalCurrentMapping.value = null;
+		resetTerminalDriver();
+	}
+);
 
 // ---------------------------------------------------------------------------
 // Mirror the QR-bridge (TWINT) QR onto the customer-facing display so the
@@ -2930,6 +3018,8 @@ watch(
 function handleNumpadEnter(value) {
 	if (value > 0 && lastSelectedMethod.value) {
 		numpadAddPayment();
+	} else if (!value && exactCashMethod.value) {
+		payExactCash();
 	} else if (remainingAmount.value === 0 && totalPaid.value > 0 && canComplete.value) {
 		// If fully paid and can complete, trigger complete payment
 		completePayment();
@@ -2939,7 +3029,17 @@ function handleNumpadEnter(value) {
 // Use numpad composable for keypad input handling with keyboard support
 const { numpadDisplay, numpadValue, numpadInput, numpadBackspace, numpadClear, setNumpadValue } =
 	usePaymentNumpad({
-		isEnabled: computed(() => props.modelValue), // Only enabled when dialog is open
+		//// Neoffice — off while a card / TWINT terminal dialog is on screen or its payment is in
+		//// flight: upstream's window-level Enter would otherwise book "Exact cash" for the remainder
+		//// and complete the sale under our CardPresentDialog / QRPaymentDialog, and the digits typed
+		//// into that dialog's own numpad would land in this one too (see terminalPaymentGuard.js).
+		isEnabled: computed(() =>
+			isPaymentKeypadEnabled({
+				dialogOpen: props.modelValue,
+				terminalDialogShown: terminalDialogOnScreen.value,
+				terminalInFlight: terminalInFlight.value,
+			})
+		),
 		onEnter: handleNumpadEnter,
 	});
 
@@ -3077,6 +3177,8 @@ const walletInfoResource = createResource({
 			wallet_exists: false,
 			wallet_balance: 0,
 			wallet_name: null,
+			balance_points: 0,
+			magento_loyalty: false,
 		};
 		loadingWallet.value = false;
 	},
@@ -3205,6 +3307,30 @@ function isCashPaymentMethod(method) {
 	return name.includes("cash") || name.includes("نقد") || name.includes("نقدي");
 }
 
+// Check if a payment method posts to a Receivable account (requires customer)
+function isReceivablePaymentMethod(method) {
+	if (!method) return false;
+	return (method.account_type || "").toLowerCase() === "receivable";
+}
+
+function getCustomerName() {
+	if (!props.customer) return "";
+	if (typeof props.customer === "string") return props.customer;
+	return props.customer?.name || props.customer?.customer_name || "";
+}
+
+const requiresCustomerForPayment = computed(() => {
+	if (selectedReceivableAccount.value) return true;
+	return paymentEntries.value.some((entry) => {
+		const method = paymentMethods.value.find(
+			(m) => m.mode_of_payment === entry.mode_of_payment,
+		);
+		return isReceivablePaymentMethod(method);
+	});
+});
+
+const hasCustomerForPayment = computed(() => !!getCustomerName());
+
 // Get available wallet balance for payment (considering already added wallet payments)
 const availableWalletBalance = computed(() => {
 	const totalWalletPayments = paymentEntries.value
@@ -3287,7 +3413,13 @@ const totalSalesAllocation = computed(() => {
 	return selectedSalesPersons.value.reduce((sum, p) => sum + (p.allocated_percentage || 0), 0);
 });
 
-// Computed: Validation - sales person is required when enabled and online
+// Computed: Validation - sales person is required when enabled and online,
+// unless every cart line already has an item-level sales person.
+const allItemsHaveSalesPerson = computed(() => {
+	const cartItems = (props.items || []).filter((item) => !item?.is_free_item);
+	return cartItems.length > 0 && cartItems.every((item) => item?.sales_person);
+});
+
 const isSalesPersonValid = computed(() => {
 	// If sales persons feature is disabled, always valid
 	if (!settingsStore.enableSalesPersons) {
@@ -3298,7 +3430,11 @@ const isSalesPersonValid = computed(() => {
 	if (props.isOffline) {
 		return true;
 	}
-	// At least one sales person must be selected
+	// All lines covered by item-level SP → invoice-level SP not required
+	if (allItemsHaveSalesPerson.value) {
+		return true;
+	}
+	// At least one sales person must be selected at invoice level
 	return selectedSalesPersons.value.length > 0;
 });
 
@@ -3411,20 +3547,23 @@ async function loadPaymentMethods() {
 
 	loadingPaymentMethods.value = true;
 
+	// Load from cache using worker
+	const loadCachedPaymentMethods = async () => {
+		const cached = await offlineWorker.getCachedPaymentMethods(props.posProfile);
+		if (cached && cached.length > 0) {
+			paymentMethods.value = cached;
+			const defaultMethod = paymentMethods.value.find((m) => m.default);
+			lastSelectedMethod.value = defaultMethod || paymentMethods.value[0];
+		}
+	};
+
 	try {
 		if (props.isOffline) {
-			// Load from cache when offline using worker
-			const cached = await offlineWorker.getCachedPaymentMethods(props.posProfile);
-			if (cached && cached.length > 0) {
-				paymentMethods.value = cached;
-				if (paymentMethods.value.length > 0) {
-					const defaultMethod = paymentMethods.value.find((m) => m.default);
-					lastSelectedMethod.value = defaultMethod || paymentMethods.value[0];
-				}
-			}
+			await loadCachedPaymentMethods();
 		} else {
-			// Load from server when online
-			await paymentMethodsResource.fetch();
+			// Load from server when online; a failed request (offline not detected yet,
+			// e.g. right after an offline start) falls back to the cache
+			await paymentMethodsResource.fetch().catch(loadCachedPaymentMethods);
 			// Receivable accounts for "Pay on Receivable Account" (online only)
 			receivableAccountsResource.fetch();
 		}
@@ -3695,6 +3834,11 @@ const isExactAmountValid = computed(() => {
 const canComplete = computed(() => {
 	// Check sales person validation first (mandatory when enabled)
 	if (!isSalesPersonValid.value) {
+		return false;
+	}
+
+	// Receivable payment modes require a customer on the invoice
+	if (requiresCustomerForPayment.value && !hasCustomerForPayment.value) {
 		return false;
 	}
 
@@ -4112,6 +4256,19 @@ function openTerminalDialog(method) {
 		showWarning(__("No terminal driver mapped for this payment method"));
 		return;
 	}
+	//// Neoffice — only a terminal or a QR bridge has a dialog at the till; a web channel
+	//// (twint_web, wallee_web, payrexx_web…) used to set the dialog flag with nothing drawn, which
+	//// locked the keypad and "Complete" until a page reload. Say so and stop instead.
+	if (!terminalDialogKind(mapping.channel)) {
+		showWarning(
+			__(
+				"{0} cannot be collected at the till: its payment channel ({1}) is not a payment terminal or a QR code. Choose another payment method."
+			)
+				.replace("{0}", method.mode_of_payment)
+				.replace("{1}", mapping.channel || "-")
+		);
+		return;
+	}
 
 	// Pre-fill with the split amount (split mode) or the remaining amount.
 	// The cashier can override via the numpad in the dialog — needed for
@@ -4394,6 +4551,10 @@ watch(
 // invoice's debit_to). It's a destination, not a tendered amount — the outstanding is
 // grand_total minus the cash tendered. Tapping again clears it (back to default Debtors).
 function toggleReceivableAccount(acc) {
+	if (!hasCustomerForPayment.value) {
+		showWarning(__("Please select a customer before paying on account"));
+		return;
+	}
 	selectedReceivableAccount.value = selectedReceivableAccount.value === acc.name ? "" : acc.name;
 	// Drop the active payment-method highlight so only one option looks active at a time.
 	if (selectedReceivableAccount.value) {
@@ -4446,8 +4607,13 @@ function switchToNextPaymentMethod(partialAmount) {
 // Consolidate payment entries: if a row with the same mode already exists,
 // add to it instead of creating a duplicate row.
 function _upsertPaymentEntry(method, amt) {
-	//// Neoffice — Biome formatter pass: the predicate was wrapped. No behaviour change
-	//// (87f168fe, 2026-03-20, formatting side of the theme commit).
+	if (isReceivablePaymentMethod(method) && !hasCustomerForPayment.value) {
+		showWarning(
+			__("Please select a customer before paying with {0}", [method.mode_of_payment]),
+		);
+		return;
+	}
+
 	const existing = paymentEntries.value.find(
 		(e) => e.mode_of_payment === method.mode_of_payment && !e.is_customer_credit
 	);
@@ -4746,12 +4912,93 @@ function applyCustomerCredit() {
 }
 
 // Add "Pay on Account" - Credit Sale (invoice with outstanding amount)
+// Cash method for "Exact cash", offered while nothing has been entered yet
+const exactCashMethod = computed(() =>
+	paymentEntries.value.length === 0 &&
+	remainingAmount.value > 0 &&
+	!(applyWriteOff.value && canWriteOff.value)
+		? filteredPaymentMethods.value.find((m) => isCashPaymentMethod(m))
+		: null
+);
+
+// Pay the remainder in cash, then complete (Enter)
+async function payExactCash() {
+	//// Neoffice — no cash row for the remainder while a card / TWINT terminal owns the sale: the
+	//// keypad is already off then, this covers any other caller (see terminalPaymentGuard.js).
+	if (
+		isTerminalPaymentActive({
+			terminalDialogShown: terminalDialogOnScreen.value,
+			terminalInFlight: terminalInFlight.value,
+		})
+	) {
+		return;
+	}
+	await addCustomPayment(exactCashMethod.value, remainingAmount.value);
+	await nextTick();
+	if (remainingAmount.value === 0 && canComplete.value) completePayment();
+}
+
+// Pay on account (credit sale) needs a second click within 4 seconds
+const creditConfirming = ref(false);
+let creditConfirmTimer = null;
+
+function confirmCreditSale() {
+	//// Neoffice — no credit sale while a card / TWINT terminal owns the sale: Enter or Space on the
+	//// focused "Pay on Account" link would book the sale on account and close the dialog while the
+	//// card payment may still be in flight (same guard as completePayment).
+	if (
+		isTerminalPaymentActive({
+			terminalDialogShown: terminalDialogOnScreen.value,
+			terminalInFlight: terminalInFlight.value,
+		})
+	) {
+		showWarning(__("A payment is already in progress"));
+		return;
+	}
+	if (!creditConfirming.value) {
+		creditConfirming.value = true;
+		creditConfirmTimer = setTimeout(() => {
+			creditConfirming.value = false;
+		}, 4000);
+		return;
+	}
+	clearTimeout(creditConfirmTimer);
+	creditConfirming.value = false;
+	addCreditAccountPayment();
+}
+
+/** Feather icon for a payment method, by account or Mode of Payment type */
+function paymentFeatherIcon(method) {
+	if (isCashPaymentMethod(method)) return "dollar-sign";
+	const type = (method?.type || "").toLowerCase();
+	return type === "bank" ? "home" : type === "phone" || type.includes("mobile") ? "smartphone" : "credit-card";
+}
+
 function addCreditAccountPayment() {
+	//// Neoffice — same terminal guard as confirmCreditSale, for any other caller.
+	if (
+		isTerminalPaymentActive({
+			terminalDialogShown: terminalDialogOnScreen.value,
+			terminalInFlight: terminalInFlight.value,
+		})
+	) {
+		log.warn("[PaymentDialog] Not paying on account - a terminal payment is in progress");
+		return;
+	}
 	log.debug("[PaymentDialog] Add credit account payment (Pay Later):", {
 		grandTotal: props.grandTotal,
 		currentPaid: totalPaid.value,
 		remainingAmount: remainingAmount.value,
+		salesPersons: selectedSalesPersons.value,
+		isSalesPersonValid: isSalesPersonValid.value,
 	});
+
+	// Same sales-person gate as Complete Payment — credit sales still need
+	// coverage when the feature is enabled (backend validates too).
+	if (!isSalesPersonValid.value) {
+		log.warn("[PaymentDialog] Cannot pay on account - sales person required");
+		return;
+	}
 
 	// Close dialog and complete as credit sale (0 payment)
 	// The backend will create an invoice with outstanding amount
@@ -4762,6 +5009,8 @@ function addCreditAccountPayment() {
 		is_credit_sale: true, // Mark as credit sale
 		paid_amount: 0,
 		outstanding_amount: props.grandTotal,
+		sales_team: selectedSalesPersons.value.length > 0 ? selectedSalesPersons.value : null,
+		delivery_date: isSalesOrder.value ? deliveryDate.value : null,
 	};
 
 	log.debug("[PaymentDialog] Emitting credit sale payment-completed:", paymentData);
@@ -4791,6 +5040,20 @@ function completePayment() {
 
 	if (!canComplete.value) {
 		log.warn("[PaymentDialog] Cannot complete - validation failed");
+		return;
+	}
+
+	//// Neoffice — never complete the sale while a payment terminal owns it (dialog on screen or
+	//// intent in flight): whatever path calls this, the money being taken by card or TWINT is not
+	//// in paymentEntries yet. The terminal's own success path finalizes once the dialog is closed.
+	if (
+		isTerminalPaymentActive({
+			terminalDialogShown: terminalDialogOnScreen.value,
+			terminalInFlight: terminalInFlight.value,
+		})
+	) {
+		log.warn("[PaymentDialog] Cannot complete - a terminal payment is in progress");
+		showWarning(__("A payment is already in progress"));
 		return;
 	}
 
@@ -4841,6 +5104,18 @@ function cancelPartialPayment() {
 }
 
 function finalizePayment(isPartial) {
+	//// Neoffice — same guard as completePayment, for every other caller (partial-payment
+	//// confirmation). onTerminalSucceeded hides the dialog and resets the driver before it
+	//// auto-finalizes, so its own call passes.
+	if (
+		isTerminalPaymentActive({
+			terminalDialogShown: terminalDialogOnScreen.value,
+			terminalInFlight: terminalInFlight.value,
+		})
+	) {
+		log.warn("[PaymentDialog] Not finalizing - a terminal payment is in progress");
+		return;
+	}
 	//// Neoffice — completePayment is split in two here (see above), so the two values upstream
 	//// v2.0.0 computes in completePayment for this payload are computed in finalizePayment: the
 	//// receivable account picked for "Pay on Receivable Account" and the outstanding balance.
@@ -4962,7 +5237,8 @@ function handleAdditionalDiscountChange() {
 					__("Maximum allowed discount is {0}% ({1} {2})", [
 						settingsStore.maxDiscountAllowed,
 						props.currency,
-						maxAmount.toFixed(2),
+						//// Neoffice — the site's number format (CHF 1'234.50), not toFixed(2); same msgid.
+						formatCurrencyNumber(maxAmount),
 					])
 				);
 			}

@@ -346,6 +346,7 @@ def create_payment_entry(
 	reference_no: Optional[str] = None,
 	remarks: Optional[str] = None,
 	posting_date: Optional[str] = None,
+	pos_opening_shift: str | None = None,
 ) -> str:
 	"""
 	Create a proper Payment Entry that updates Payment Ledger.
@@ -369,6 +370,7 @@ def create_payment_entry(
 	    reference_no: Optional reference number
 	    remarks: Optional remarks
 	    posting_date: Optional posting date (defaults to today)
+	    pos_opening_shift: Optional active opening shift for POS reconciliation
 
 	Returns:
 	    str: Created Payment Entry name
@@ -419,6 +421,17 @@ def create_payment_entry(
 	if not frappe.db.exists("Mode of Payment", mode_of_payment):
 		frappe.throw(_("Mode of Payment {0} does not exist").format(mode_of_payment))
 
+	if pos_opening_shift and not frappe.db.exists(
+		"POS Opening Shift",
+		{
+			"name": pos_opening_shift,
+			"user": frappe.session.user,
+			"status": "Open",
+			"docstatus": 1,
+		},
+	):
+		frappe.throw(_("Shift {0} is not open for you. Reload POS and try again.").format(pos_opening_shift))
+
 	# Save and submit with proper error handling
 	try:
 		from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
@@ -450,6 +463,10 @@ def create_payment_entry(
 
 		if reference_no:
 			pe.reference_no = str(reference_no)[:140]
+		elif pos_opening_shift:
+			# Tag with the opening shift name so POS shift closing can find
+			# this payment entry during reconciliation.
+			pe.reference_no = str(pos_opening_shift)[:140]
 		else:
 			pe.reference_no = f"POS-{invoice_name}"
 
@@ -821,14 +838,8 @@ def get_partial_payment_details(invoice_name: str) -> Dict:
 	}
 
 
-# //// Neoffice — pos_opening_shift added to the signature: a payment collected at the till on an
-# //// already-submitted invoice has to be attributable to the shift, or the closing summary is
-# //// short by that amount. It rides on the Payment Entry's reference_no when the caller left that
-# //// empty (a0084ae0, 2026-03-24 — the subject describes an unrelated Runner fix in the same
-# //// commit).
 @frappe.whitelist()
-# //// Runner accepts both workflow last step and 'Ready' status (fixes Fren… — a0084ae
-def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shift: str = None) -> Dict:
+def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shift: str | None = None) -> Dict:
 	"""
 	Add payments to a partially paid invoice via Payment Entry.
 
@@ -846,7 +857,7 @@ def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shif
 	        - account: (optional) Specific payment account
 	        - reference_no: (optional) Reference number
 	    Can also accept JSON string which will be parsed.
-	    pos_opening_shift: (optional) POS Opening Shift name to link payment to shift closing
+	    pos_opening_shift: Optional active opening shift for POS reconciliation
 
 	Returns:
 	    dict: Updated invoice details with created Payment Entry names
@@ -921,16 +932,6 @@ def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shif
 			payment_account = payment.get("account")
 			reference_no = payment.get("reference_no")
 
-			# //// Neoffice — a Payment Entry created after the sale (partial payment) carried no link to
-			# //// the open shift, so the money was missing from the closing summary and the drawer never
-			# //// balanced. Stamp the POS Opening Shift as reference_no when the caller supplies one and
-			# //// the payment has none (a0084ae0, 2026-03-24). The `pos_opening_shift` line added to the
-			# //// docstring above is part of this change.
-			# If POS Opening Shift is provided, use it as reference_no
-			# so the payment appears in the shift closing summary
-			if pos_opening_shift and not reference_no:
-				reference_no = pos_opening_shift
-
 			pe_name = create_payment_entry(
 				invoice_name=invoice_name,
 				amount=amount,
@@ -938,6 +939,7 @@ def add_payment_to_partial_invoice(invoice_name: str, payments, pos_opening_shif
 				payment_account=payment_account,
 				reference_no=reference_no,
 				remarks=f"POS Payment - {mode_of_payment}",
+				pos_opening_shift=pos_opening_shift,
 			)
 
 			payment_entries_created.append(pe_name)

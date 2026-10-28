@@ -149,6 +149,8 @@
 import { ref, onMounted, watch } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { useRestaurantStore } from "@/stores/restaurant"
+//// Neoffice — tip amounts in the site's number format (formatPrice below).
+import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({
 	show: { type: Boolean, default: false },
@@ -174,11 +176,8 @@ const dateFilters = [
 const currency = ref(restaurantStore.restaurantSettings?.currency || "CHF")
 
 function formatPrice(amount) {
-	return new Intl.NumberFormat(undefined, {
-		style: "currency",
-		currency: currency.value,
-		minimumFractionDigits: 2,
-	}).format(amount || 0)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not the device's locale.
+	return formatCurrency(Number(amount) || 0, currency.value)
 }
 
 function formatDate(dateStr) {

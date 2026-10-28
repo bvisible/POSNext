@@ -52,6 +52,9 @@ function posNextBuildVersionPlugin(version) {
 	};
 }
 
+// vite-plugin-pwa instance, captured for the pos-sw-absolute-entries plugin below
+let pwaPlugin;
+
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [
@@ -77,12 +80,9 @@ export default defineConfig({
 			],
 		}),
 		VitePWA({
-			//// Neoffice — was "autoUpdate", which reloads the page the instant a
-			//// new service worker activates. On a till that can land mid-sale or
-			//// mid-payment. "prompt" hands control to setupTillAutoUpdate, which
-			//// applies the update only when the cart is empty and nothing is pending.
-			registerType: "prompt",
-			includeAssets: ["favicon.png", "icon.svg", "icon-maskable.svg"],
+			registerType: "autoUpdate",
+			// Registered from main.js at /pos-sw.js so its scope covers the /pos page
+			injectRegister: false,
 			manifest: {
 				//// Neoffice — PWA manifest name: upstream installs as "POSNext", the till is sold as
 				//// Neopos, and this is the label under the icon once a cashier adds it to the home
@@ -95,7 +95,7 @@ export default defineConfig({
 				theme_color: "#4F46E5",
 				background_color: "#ffffff",
 				display: "standalone",
-				scope: "/assets/pos_next/pos/",
+				scope: "/pos",
 				start_url: "/pos",
 				icons: [
 					{
@@ -128,6 +128,10 @@ export default defineConfig({
 				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
 				maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 3 MB
 				navigateFallback: null,
+				// sw.js is also served from the site root, so precache URLs must be absolute
+				modifyURLPrefix: { "": "/assets/pos_next/pos/" },
+				// Single file: the copy served from the site root has no sibling workbox chunk
+				inlineWorkboxRuntime: true,
 				navigateFallbackDenylist: [/^\/api/, /^\/app/],
 				runtimeCaching: [
 					{
@@ -184,21 +188,8 @@ export default defineConfig({
 							},
 						},
 					},
-					{
-						urlPattern: /\/api\/.*/i,
-						handler: "NetworkFirst",
-						options: {
-							cacheName: "api-cache",
-							networkTimeoutSeconds: 10,
-							expiration: {
-								maxEntries: 100,
-								maxAgeSeconds: 60 * 60 * 24, // 24 hours
-							},
-							cacheableResponse: {
-								statuses: [0, 200],
-							},
-						},
-					},
+					// No /api rule: API calls must reach the server (a cached ping hides being offline);
+					// offline data lives in IndexedDB
 					{
 						urlPattern: ({ request, url }) =>
 							request.mode === "navigate" && url.pathname.startsWith("/pos"),
@@ -206,18 +197,17 @@ export default defineConfig({
 						options: {
 							cacheName: "pos-page-cache",
 							networkTimeoutSeconds: 3,
-							expiration: {
-								maxEntries: 1,
-								maxAgeSeconds: 60 * 60 * 24, // 24 hours
-							},
+							// One entry for every /pos route (offline there is no server to redirect),
+							// kept until the next online load replaces it
+							plugins: [{ cacheKeyWillBeUsed: async () => "/pos/" }],
 						},
 					},
 				],
 				cleanupOutdatedCaches: true,
-				//// Neoffice — note: this worker's scope is /assets/pos_next/pos/ while the till is served
-				//// from /pos, so it never controls the page; keeping the build fresh is
-				//// setupTillAutoUpdate()'s job, not its own (7648dbff, 2026-08-18). The two options below
-				//// are upstream's since v2.0.0 (we had added the same pair in fd65573b, 2026-03-30).
+				//// Neoffice — note: the two options below are upstream's since v2.0.0 (we had added the
+				//// same pair in fd65573b, 2026-03-30). Since develop the worker's scope is /pos, so a new
+				//// worker takes over the open till, but nothing reloads the page when it does: keeping
+				//// the build fresh stays setupTillAutoUpdate()'s job (7648dbff, 2026-08-18).
 				skipWaiting: true,
 				clientsClaim: true,
 			},
@@ -226,6 +216,23 @@ export default defineConfig({
 				type: "module",
 			},
 		}),
+		{
+			// vite-plugin-pwa adds the web manifest and manifest icons to the precache
+			// with relative URLs; sw.js is also served from the site root, so make them absolute
+			name: "pos-sw-absolute-entries",
+			configResolved(config) {
+				pwaPlugin = config.plugins.find((p) => p.name === "vite-plugin-pwa");
+			},
+			buildStart() {
+				pwaPlugin?.api?.extendManifestEntries((entries) =>
+					entries.map((entry) =>
+						typeof entry === "string" || entry.url.startsWith("/")
+							? entry
+							: { ...entry, url: `/assets/pos_next/pos/${entry.url}` }
+					)
+				);
+			},
+		},
 	],
 	build: {
 		chunkSizeWarningLimit: 1500,
@@ -273,5 +280,16 @@ export default defineConfig({
 				},
 			},
 		},
+	},
+	//// Neoffice — vitest: Node 25 turns on its own Web Storage global, an empty shell without a
+	//// --localstorage-file, and it shadows jsdom's localStorage in the test workers ("getItem is not
+	//// a function"). It is switched off in the workers wherever Node knows the flag (22.4 and later);
+	//// an older Node has neither the global nor the flag and would refuse it. No workflow runs vitest
+	//// today (build-frontend.yml builds with Node 20, ci.yml runs Node 22): this keeps
+	//// `npx vitest run` deterministic on any of them and on a developer's machine.
+	test: {
+		execArgv: process.allowedNodeEnvironmentFlags.has("--experimental-webstorage")
+			? ["--no-experimental-webstorage"]
+			: [],
 	},
 });

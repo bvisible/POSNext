@@ -272,6 +272,8 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import QRCode from "qrcode"
 import { call } from "frappe-ui"
+//// Neoffice — the amount the terminal collects, in the site's number format (formatMajor below).
+import { formatCurrency } from "@/utils/currency"
 
 const props = defineProps({
 	// Idle-state config (subset of CardPresentDialog props for parent symmetry)
@@ -549,11 +551,8 @@ const displayCurrency = computed(
 )
 
 function formatMajor(amount, currency) {
-	const formatter = new Intl.NumberFormat(undefined, {
-		style: "currency",
-		currency: currency || "CHF",
-	})
-	return formatter.format(Number(amount) || 0)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not the device's locale.
+	return formatCurrency(Number(amount) || 0, currency || "CHF")
 }
 
 function formatMinor(amount, currency) {

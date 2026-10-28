@@ -322,6 +322,7 @@ import { Dialog } from "frappe-ui";
 import { createResource } from "frappe-ui";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { formatDateTime as formatLocaleDateTime } from "@/utils/currency";
 import ShiftClosingDialog from "../components/ShiftClosingDialog.vue";
 import ShiftOpeningDialog from "../components/ShiftOpeningDialog.vue";
 import { useShift } from "../composables/useShift";
@@ -396,7 +397,7 @@ function handleShiftClosed() {
 
 function formatDateTime(datetime) {
 	if (!datetime) return "";
-	return new Date(datetime).toLocaleString();
+	return formatLocaleDateTime(datetime);
 }
 
 function openCloseShiftDialog() {

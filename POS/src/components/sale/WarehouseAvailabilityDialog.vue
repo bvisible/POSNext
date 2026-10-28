@@ -877,6 +877,8 @@
 import { ref, computed, watch, nextTick } from "vue";
 import { call, Dialog } from "frappe-ui";
 import { __ } from "@/utils/translation";
+//// Neoffice — prices in the site's number format (formatPrice below).
+import { formatCurrencyNumber } from "@/utils/currency";
 
 const props = defineProps({
 	modelValue: Boolean,
@@ -1447,10 +1449,8 @@ function formatPrice(price) {
 	const num = Number(price);
 	//// Neoffice — formatting-only hunk of the 458d81a9 Biome pass; see this script's block header.
 	if (isNaN(num)) return "";
-	return num.toLocaleString(undefined, {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not the device's locale (upstream: toLocaleString(undefined)).
+	return formatCurrencyNumber(num);
 }
 //// Neoffice — end of the formatting-only region ▲▲▲
 </script>

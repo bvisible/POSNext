@@ -31,8 +31,8 @@ class TestCustomersAPI(unittest.TestCase):
 	# test_get_customers_applies_search_term_filters used to live here and asserted
 	# that a search called frappe.get_all with an or_filters list. get_customers no
 	# longer takes that path: a single or_filters group is ONE or, so it could not
-	# express "every word must match some field" and "Moret Daniel" never found
-	# "Daniel Moret". The search moved to the query builder (AND across words, OR
+	# express "every word must match some field" and "Dupont Jean" never found
+	# "Jean Dupont". The search moved to the query builder (AND across words, OR
 	# across fields), which left the mock asserting a call that is never made
 	# ("Expected 'get_all' to have been called once. Called 0 times.", CI
 	# 2026-09-03). Mocking the query builder instead would only prove the mock, so
@@ -147,7 +147,7 @@ class TestGetCustomersSearch(FrappeTestCase):
 			doc.insert(ignore_permissions=True)
 			return doc.name
 
-		cls.moret = make(f"Daniel Moret {cls.MARKER}")
+		cls.dupont = make(f"Jean Dupont {cls.MARKER}")
 		cls.zufferey = make(
 			f"Sophie Zufferey {cls.MARKER}",
 			mobile_no="0791234567",
@@ -159,19 +159,19 @@ class TestGetCustomersSearch(FrappeTestCase):
 		return [row["name"] for row in get_customers(search_term=search_term, limit=50)]
 
 	def test_search_ignores_word_order(self):
-		"""A search for "Moret Daniel" finds a customer stored as "Daniel Moret"."""
+		"""A search for "Dupont Jean" finds a customer stored as "Jean Dupont"."""
 		# This is the case one or_filters group cannot express, and the reason the
 		# search left frappe.get_all for the query builder.
-		self.assertIn(self.moret, self.names(f"Moret Daniel {self.MARKER}"))
+		self.assertIn(self.dupont, self.names(f"Dupont Jean {self.MARKER}"))
 
 	def test_every_word_must_match(self):
 		"""Words taken from two different customers match neither."""
-		found = self.names(f"Daniel Zufferey {self.MARKER}")
-		self.assertNotIn(self.moret, found)
+		found = self.names(f"Jean Zufferey {self.MARKER}")
+		self.assertNotIn(self.dupont, found)
 		self.assertNotIn(self.zufferey, found)
 
 	def test_search_matches_a_partial_word(self):
-		self.assertIn(self.moret, self.names(f"Dani {self.MARKER}"))
+		self.assertIn(self.dupont, self.names(f"Jea {self.MARKER}"))
 
 	def test_search_matches_mobile_and_email(self):
 		self.assertIn(self.zufferey, self.names("0791234"))
@@ -183,7 +183,7 @@ class TestGetCustomersSearch(FrappeTestCase):
 	def test_listing_without_a_search_term_excludes_disabled_customers(self):
 		"""The no-search-term branch still goes through frappe.get_all."""
 		found = [row["name"] for row in get_customers(limit=0)]
-		self.assertIn(self.moret, found)
+		self.assertIn(self.dupont, found)
 		self.assertNotIn(self.retired, found)
 
 

@@ -53,13 +53,22 @@
   //// add provisional ticket print button in restaurant table view — 71050fa + 4fdb5df
 -->
 <template>
+	<!--
+		No height: 100vh here. The page fills whatever the host leaves it (see the
+		flex chain in index.css), so chrome above POS — Frappe's navbar, a demo
+		countdown banner — shortens the page instead of pushing its bottom off the
+		screen. padding-bottom keeps POSFooter's fixed strip from sitting on top of
+		the cart's Checkout button; the footer publishes its own height, so this
+		follows if it is ever restyled.
+	-->
 	<!-- //// Neoffice — the page ground is the Design System neo-bg token (warm paper -->
 	<!-- //// #f8f8f8), not upstream's hardcoded bg-gray-50, so the till sits on the same -->
 	<!-- //// canvas as the rest of the suite (87f168fe, 2026-03-20 "align POS design -->
-	<!-- //// with Neoffice theme and improve customer display"). -->
+	<!-- //// with Neoffice theme and improve customer display"). Upstream develop's flex -->
+	<!-- //// sizing is taken (no 100vh), but not the padding-bottom described just above: -->
+	<!-- //// POSFooter was removed with the BrainWise branding (458d81a9), nothing to leave room for. -->
 	<div
-		class="flex flex-col bg-[var(--neo-bg)] overflow-x-hidden"
-		style="height: 100vh; max-height: 100vh"
+		class="flex flex-1 flex-col min-h-0 bg-[var(--neo-bg)] overflow-x-hidden"
 	>
 		<!-- Loading State -->
 		<LoadingSpinner v-if="uiStore.isLoading" />
@@ -106,7 +115,7 @@
 				:user-image="userImage"
 				:is-offline="offlineStore.isOffline"
 				:is-syncing="offlineStore.isSyncing"
-				:pending-invoices-count="offlineStore.pendingInvoicesCount"
+				:pending-invoices-count="offlineStore.totalPendingCount"
 				:is-any-dialog-open="uiStore.isAnyDialogOpen"
 				:cache-syncing="itemStore.cacheSyncing"
 				:cache-stats="itemStore.cacheStats"
@@ -264,6 +273,26 @@
 						</span>
 					</button>
 					<button
+						v-if="canRecordPosExpense"
+						@click="openExpenseDialog"
+						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 flex items-center gap-3 transition-colors"
+					>
+						<svg
+							class="w-5 h-5 text-amber-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+							/>
+						</svg>
+						<span>{{ __("POS Expense") }}</span>
+					</button>
+					<button
 						v-if="canAccessShiftActions"
 						@click="openReturnDialog"
 						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 flex items-center gap-3 transition-colors"
@@ -349,15 +378,9 @@
 			</POSHeader>
 
 			<!-- Main Content: Responsive Layout -->
-			<!-- //// Neoffice — the max-height on the style= attribute below drops the footer -->
-			<!-- //// row upstream reserved (calc(100vh - 60px - header)): we deleted the -->
-			<!-- //// BrainWise branding footer, so the sales area takes the full viewport -->
-			<!-- //// (c0bf6f85, 2026-03-20 "remove footer height from max-height calc to use -->
-			<!-- //// full viewport"; footer removed by db22e2ae / 458d81a9 the same day). -->
 			<div
 				v-if="shiftStore.hasOpenShift"
-				class="flex-1 flex overflow-hidden relative"
-				style="max-height: calc(100vh - var(--header-height, 60px))"
+				class="flex-1 min-h-0 flex overflow-hidden relative"
 			>
 				<!-- Icon-Only Management Slider - Always Visible -->
 				<ManagementSlider
@@ -1145,29 +1168,17 @@
 							]"
 							style="min-width: 450px; contain: layout style paint"
 						>
-							<!-- //// Neoffice — four divergences inside this opening tag (no HTML comment can -->
+							<!-- //// Neoffice — two divergences inside this opening tag (no HTML comment can -->
 							<!-- //// sit between attributes, so they are listed here): -->
-							<!-- ////   ref="invoiceCartRef" — the parent needs a handle on the cart to open -->
-							<!-- ////   the edit dialog by itself for a zero-price item, e.g. a gift card whose -->
-							<!-- ////   amount the cashier types in (5dddc528, 2026-01-14). -->
 							<!-- ////   :grand-total / :rounding-adjustment — CHF has a 0.05 smallest fraction, -->
 							<!-- ////   so the cart shows the ROUNDED total and the adjustment line beside it; -->
 							<!-- ////   upstream passes the raw grandTotal (4fdb5df4, 2026-04-04 "rounding -->
 							<!-- ////   total, tips visibility, cash quick amounts"). -->
-							<!-- ////   @remove-item — passes the item OBJECT, not (itemCode, uom): the same -->
-							<!-- ////   dish can sit twice in the cart with different modifiers, so removing by -->
-							<!-- ////   code deleted the wrong line (7e1376a3, 2026-03-31). -->
 							<!-- ////   @send-to-kitchen / @open-kitchen-dialog / @print-provisional-ticket / -->
 							<!-- ////   @send-item-to-kitchen / @open-modifiers — the cart exits a restaurant -->
 							<!-- ////   order needs besides paying: fire the order (8aa35c29, c7f6932c), print -->
 							<!-- ////   the pre-payment ticket (71050faf, 2026-03-25) and edit modifiers -->
 							<!-- ////   (4df0caf1, 2026-03-21). -->
-							<!-- //// Neoffice — ref="invoiceCartRef" on the tag below: the page needs a handle on the -->
-							<!-- //// cart so it can open the line-edit dialog itself for a zero-price item — a gift card -->
-							<!-- //// whose amount the cashier types in at the till (5dddc528, 2026-01-14 "auto-open edit -->
-							<!-- //// dialog for zero-price items (gift cards)"). The other divergences carried by this -->
-							<!-- //// tag are listed just above; none can be marked in place, HTML allows no comment -->
-							<!-- //// between attributes. -->
 							<InvoiceCart
 								ref="invoiceCartRef"
 								:items="cartStore.invoiceItems"
@@ -1178,11 +1189,19 @@
 								:grand-total="cartStore.roundedGrandTotal"
 								:rounding-adjustment="cartStore.roundingAdjustment"
 								:pos-profile="shiftStore.profileName"
+								:company="shiftStore.profileCompany"
 								:currency="shiftStore.profileCurrency"
 								:applied-offers="cartStore.appliedOffers"
 								:warehouses="profileWarehouses"
+								@send-to-kitchen="handleSendToKitchen"
+								@open-kitchen-dialog="kitchenDialogRef?.open()"
+								@print-provisional-ticket="handlePrintProvisionalTicket"
+								@send-item-to-kitchen="handleSendSingleItem"
+								@open-modifiers="handleOpenModifiers"
 								@update-quantity="cartStore.updateItemQuantity"
-								@remove-item="(item) => cartStore.removeItem(item)"
+								@remove-item="
+									(itemCode, uom) => cartStore.removeItem(itemCode, uom)
+								"
 								@select-customer="handleCustomerSelected"
 								@create-customer="handleCreateCustomer"
 								@edit-customer="handleEditCustomer"
@@ -1202,16 +1221,13 @@
 								@update-uom="cartStore.changeItemUOM"
 								@edit-item="handleEditItem"
 								@view-shift="uiStore.showOpenShiftDialog = true"
-								@show-drafts="uiStore.showDraftDialog = true"
-								@show-history="uiStore.showHistoryDialog = true"
-								@show-return="uiStore.showReturnDialog = true"
-								@close-shift="handleCloseShift()"
+								@show-drafts="openDraftDialog"
+								@show-history="openHistoryDialog"
+								@show-return="openReturnDialog"
+								@show-expense="openExpenseDialog"
+								:allow-pos-expense="canRecordPosExpense"
+								@close-shift="handleCloseShift"
 								@show-shift-history="navigateToShiftHistory"
-								@send-to-kitchen="handleSendToKitchen"
-								@open-kitchen-dialog="kitchenDialogRef?.open()"
-								@print-provisional-ticket="handlePrintProvisionalTicket"
-								@send-item-to-kitchen="handleSendSingleItem"
-								@open-modifiers="handleOpenModifiers"
 							/>
 						</div>
 					</keep-alive>
@@ -1255,12 +1271,9 @@
 			</div>
 
 			<!-- No Shift Placeholder -->
-			<!-- //// Neoffice — same footer-less viewport calc as the sales area above: the -->
-			<!-- //// removed BrainWise footer no longer costs 60px (c0bf6f85, 2026-03-20). -->
 			<div
 				v-else
-				class="flex-1 flex items-center justify-center bg-gray-50"
-				style="max-height: calc(100vh - var(--header-height, 60px))"
+				class="flex-1 min-h-0 flex items-center justify-center bg-gray-50"
 			>
 				<div class="text-center">
 					<div
@@ -1383,6 +1396,16 @@
 			<!-- //// invoice exists, not before"). -->
 			<!-- Send to Kitchen Dialog -->
 			<SendToKitchenDialog ref="kitchenDialogRef" @items-sent="handleItemsSentToKitchen" />
+			<!-- POS Expense Dialog -->
+			<ExpenseDialog
+				v-model="uiStore.showExpenseDialog"
+				:pos-profile="shiftStore.profileName"
+				:pos-opening-shift="shiftStore.currentShift?.name"
+				:currency="shiftStore.companyCurrency"
+				:maximum-expense-amount="shiftStore.maximumExpenseAmount"
+				@expense-created="handleExpenseCreated"
+				@expense-cancelled="handleExpenseCancelled"
+			/>
 
 			<!-- Coupon Dialog -->
 			<!-- //// Neoffice — :net-total and :grand-total inside this tag. A gift card is -->
@@ -2061,13 +2084,22 @@
 						<Button
 							v-if="
 								uiStore.errorRetryAction === 'sync' &&
-								uiStore.errorRetryActionData?.failedInvoiceId
+								(uiStore.errorRetryActionData?.failedInvoiceId ||
+									uiStore.errorRetryActionData?.failedExpenseId)
 							"
 							variant="outline"
 							theme="red"
-							@click="handleDeleteFailedInvoice"
+							@click="
+								uiStore.errorRetryActionData?.failedInvoiceId
+									? handleDeleteFailedInvoice()
+									: handleDeleteFailedExpense()
+							"
 						>
-							{{ __("Delete Invoice") }}
+							{{
+								uiStore.errorRetryActionData?.failedInvoiceId
+									? __("Delete Invoice")
+									: __("Delete Expense")
+							}}
 						</Button>
 						<div v-else></div>
 						<div class="flex gap-2">
@@ -2380,6 +2412,7 @@ import PromotionManagement from "@/components/sale/PromotionManagement.vue";
 //// functionality with PDF attachment").
 import EmailInvoiceDialog from "@/components/sale/EmailInvoiceDialog.vue";
 import ReturnInvoiceDialog from "@/components/sale/ReturnInvoiceDialog.vue";
+import ExpenseDialog from "@/components/sale/ExpenseDialog.vue";
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue";
 import POSSettings from "@/components/settings/POSSettings.vue";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
@@ -2387,6 +2420,8 @@ import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
 // Card realtime updates are handled in restaurant.js store via startRealtimeCardListeners()
 import { useSessionLock } from "@/composables/useSessionLock";
+import { useGlobalShortcuts } from "@/composables/useKeyboardShortcuts";
+import { getDistinctUoms } from "@/utils/itemUoms";
 import { usePOSEvents } from "@/composables/usePOSEvents";
 //// Neoffice — gift cards live on ERPNext-native Coupon Code / Promotional Scheme in our
 //// fork, so the till needs this composable to read back the codes an invoice created
@@ -2402,6 +2437,7 @@ import { useUserData } from "@/data/user";
 import { parseError } from "@/utils/errorHandler";
 import { cleanupUserSession } from "@/utils/sessionCleanup";
 import { offlineWorker } from "@/utils/offline/workerClient";
+import { deductCachedBatchQty } from "@/utils/offline/items";
 import { cacheOfflineReceiptPayload } from "@/utils/offline/offlineReceiptCache";
 import { cacheInvoiceHistory, getCachedInvoiceHistory } from "@/utils/offline/sync";
 import {
@@ -2424,6 +2460,8 @@ import { Button, Dialog, FeatherIcon, createResource } from "frappe-ui";
 import { call } from "@/utils/apiWrapper";
 //// Neoffice — reads the cash rounding step again once a shift is open (see utils/cashRounding.js).
 import { ensureCashRounding } from "@/utils/cashRounding";
+//// Neoffice — amounts in the site's number format (formatCurrency / formatCleaningPrice below).
+import { formatCurrency as formatSiteCurrency, formatCurrencyNumber } from "@/utils/currency";
 //// Neoffice — nextTick added to the vue import: several of our flows have to wait for
 //// the cart to render before reaching into it — auto-opening the price numpad on a
 //// zero-price item (5dddc528, 2026-01-14) and the modifiers dialog on a dish just added
@@ -2437,6 +2475,7 @@ import { isLightColor } from "@/utils/itemColors";
 
 import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useItemSearchStore } from "@/stores/itemSearch";
+import { useSerialNumberStore } from "@/stores/serialNumber";
 import { useStockStore } from "@/stores/stock";
 //// Neoffice — used to decide from the CARD data whether a line is a stock item, instead
 //// of inferring it from the stock store being populated (1a0abef1, 2026-03-31; import
@@ -2454,6 +2493,7 @@ import { useRestaurantStore } from "@/stores/restaurant";
 import { usePOSUIStore } from "@/stores/posUI";
 import { useBootstrapStore } from "@/stores/bootstrap";
 import { logger } from "@/utils/logger";
+import { canCloseShiftWithPendingExpenses } from "@/utils/shiftGuards";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
 
 // Initialize stores
@@ -2492,6 +2532,7 @@ const {
 
 // Session lock (inactivity + tab-refocus)
 const {
+	isLocked,
 	lock: lockSession,
 	configure: configureSessionLock,
 	startActivityTracking,
@@ -2521,17 +2562,27 @@ const { isRTL } = useLocale();
 
 // Component refs
 const itemsSelectorRef = ref(null);
+const invoiceCartRef = ref(null);
 const offersDialogRef = ref(null);
 //// Neoffice — handles the page needs on children that upstream does not have: the
-//// send-to-kitchen dialog (c7f6932c), the cart itself so a zero-price line can be opened
-//// for editing (5dddc528), the modifiers dialog (4df0caf1), the price numpad (1ff2fba2)
-//// and the menu course selector (9f4e85df).
+//// send-to-kitchen dialog (c7f6932c), the modifiers dialog (4df0caf1), the price numpad
+//// (1ff2fba2) and the menu course selector (9f4e85df). The cart handle (invoiceCartRef, ours
+//// since 5dddc528 to open a zero-price line) is declared by upstream develop above, for F8.
 const kitchenDialogRef = ref(null);
-const invoiceCartRef = ref(null);
 const itemModifiersRef = ref(null);
 const priceEntryRef = ref(null);
 const menuSelectionRef = ref(null);
 const containerRef = ref(null);
+// The item/cart split follows the container's own width (sidebar, banner, window)
+const containerObserver =
+	typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => updateLayoutBounds()) : null;
+watch(containerRef, (el, oldEl) => {
+	if (oldEl) containerObserver?.unobserve(oldEl);
+	if (el) {
+		containerObserver?.observe(el);
+		updateLayoutBounds();
+	}
+});
 const dividerRef = ref(null);
 const pendingPaymentAfterCustomer = ref(false);
 const logoutAfterClose = ref(false);
@@ -2893,6 +2944,9 @@ const canToggleRestaurant = computed(() => {
 });
 
 const canAccessShiftActions = computed(() => shiftStore.hasOpenShift);
+const canRecordPosExpense = computed(
+	() => canAccessShiftActions.value && shiftStore.allowPosExpense,
+);
 
 /** Desk link only for users with the Nexus POS Manager role (from bootstrap API). */
 const canSwitchToDesk = computed(() => Boolean(bootstrapStore.data?.can_switch_to_desk));
@@ -2940,6 +2994,7 @@ async function doToggleRestaurant() {
 			await call("pos_next.api.restaurant.reset_all_tables");
 		}
 
+		//// Neoffice — restaurant mode toggle, continued (see the purge marker above).
 		await posSettingsStore.toggleRestaurantMode();
 		if (newValue) {
 			await restaurantStore.fetchFromNetwork();
@@ -2952,18 +3007,33 @@ async function doToggleRestaurant() {
 	}
 }
 
+//// Neoffice — the purge dialog's confirm: clears the cart and toggles (see the purge marker above).
 async function handlePurgeAndToggle() {
 	showPurgeDialog.value = false;
 	await doToggleRestaurant();
 }
 
+// Window resize listener (passive for better performance)
+function handleWindowResize() {
+	uiStore.setWindowWidth(window.innerWidth);
+	updateLayoutBounds();
+}
+
 onMounted(async () => {
-	// Window resize listeners (passive for better performance)
-	const handleResize = () => {
-		uiStore.setWindowWidth(window.innerWidth);
-		updateLayoutBounds();
-	};
-	window.addEventListener("resize", handleResize, { passive: true });
+	window.addEventListener("resize", handleWindowResize, { passive: true });
+
+	// Global keyboard shortcuts (F-keys also fire from the search input)
+	// Skip if any dialog is open, the session is locked or the clear-cache overlay is
+	// showing. isLocked/showClearCacheDialog aren't wired into uiStore.isAnyDialogOpen,
+	// so they're checked explicitly here.
+	useGlobalShortcuts(
+		() => uiStore.isAnyDialogOpen || isLocked.value || showClearCacheDialog.value,
+		{
+			F4: () => itemsSelectorRef.value?.focusSearchInput(),
+			F8: () => invoiceCartRef.value?.focusCustomerSearch(),
+			F9: () => handleProceedToPayment(),
+		}
+	);
 
 	//// Neoffice — the guests at the table order from their own phones, so the cashier's cart
 	//// has to follow a cart it does not own. Debounce plus a running flag because the
@@ -3243,8 +3313,13 @@ onMounted(async () => {
 			cartStore.setDefaultCustomer(),
 			offlineStore.isOffline
 				? offlineStore.checkOfflineCacheAvailability()
-				: offlineStore.preloadDataForOffline(shiftStore.currentProfile),
+				: offlineStore.preloadDataForOffline(
+						shiftStore.currentProfile,
+						shiftStore.currentShift?.name,
+					),
 			draftsStore.updateDraftsCount(),
+			// Invoices queued in an earlier offline session: sync now, not on the next reconnect
+			offlineStore.isOffline ? null : offlineStore.syncAllPending(),
 		]);
 
 		// Wait for settings (required for tax rules) + all background ops
@@ -3440,10 +3515,8 @@ watch(
 );
 
 onUnmounted(() => {
-	window.removeEventListener("resize", () => {
-		uiStore.setWindowWidth(window.innerWidth);
-		updateLayoutBounds();
-	});
+	window.removeEventListener("resize", handleWindowResize);
+	containerObserver?.disconnect();
 	stopResize();
 
 	// Stop periodic stock sync on unmount
@@ -3578,10 +3651,27 @@ async function updatePeriodicStockSyncItems(warehouse) {
 	}
 }
 
+/**
+ * Offline invoices synced: replace local stock, batch and serial figures with server values
+ */
+async function handleOfflineInvoicesSynced() {
+	useSerialNumberStore().clearCache();
+	try {
+		await Promise.all([
+			stockStore.refresh(null, shiftStore.profileWarehouse),
+			itemStore.refreshBatchSerialCache(),
+		]);
+	} catch (error) {
+		log.error("Failed to refresh stock after offline sync:", error);
+	}
+}
+window.addEventListener("offlineInvoicesSynced", handleOfflineInvoicesSynced);
+
 // Cleanup event listeners on unmount
 onUnmounted(() => {
 	window.removeEventListener("stockSyncComplete", handleStockSyncComplete);
 	window.removeEventListener("stockSyncError", handleStockSyncError);
+	window.removeEventListener("offlineInvoicesSynced", handleOfflineInvoicesSynced);
 });
 
 // Handlers
@@ -3606,8 +3696,13 @@ async function handleShiftOpened() {
 		cartStore.setDefaultCustomer(),
 		offlineStore.isOffline
 			? offlineStore.checkOfflineCacheAvailability()
-			: offlineStore.preloadDataForOffline(shiftStore.currentProfile),
+			: offlineStore.preloadDataForOffline(
+					shiftStore.currentProfile,
+					shiftStore.currentShift?.name,
+				),
 		draftsStore.updateDraftsCount(),
+		// Invoices queued in an earlier offline session: sync now, not on the next reconnect
+		offlineStore.isOffline ? null : offlineStore.syncAllPending(),
 	]);
 
 	// Wait for settings (required for tax rules) + all background ops
@@ -3692,11 +3787,8 @@ const tablePaymentSummary = ref(null);
 const loadingPaymentSummary = ref(false);
 
 function formatCleaningPrice(amount) {
-	return new Intl.NumberFormat(undefined, {
-		style: "currency",
-		currency: shiftStore.currency || "CHF",
-		minimumFractionDigits: 2,
-	}).format(amount || 0);
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not the device's locale.
+	return formatSiteCurrency(Number(amount) || 0, shiftStore.currency || "CHF");
 }
 
 async function handleCleaningTableClicked(table) {
@@ -4080,8 +4172,8 @@ function handleItemSelected(item, autoAdd = false) {
 		return;
 	}
 
-	// Check for UOMs
-	if (item.item_uoms && item.item_uoms.length > 0) {
+	// Check for UOMs (picker only when there is a real choice, or to keep a scanned weight)
+	if (getDistinctUoms(item).length > 1 || (item.resolved_qty && item.item_uoms?.length > 0)) {
 		cartStore.setPendingItem(item, 1, "uom");
 		uiStore.showItemSelectionDialog = true;
 		return;
@@ -4269,7 +4361,6 @@ function handleCustomerSelected(selectedCustomer) {
 	if (selectedCustomer) {
 		cartStore.setCustomer(selectedCustomer);
 		uiStore.showCustomerDialog = false;
-		showSuccess(__("{0} selected", [selectedCustomer.customer_name]));
 
 		if (pendingPaymentAfterCustomer.value) {
 			pendingPaymentAfterCustomer.value = false;
@@ -4349,6 +4440,19 @@ async function handleDeleteFailedInvoice() {
 
 	try {
 		await offlineStore.deleteOfflineInvoice(invoiceId);
+	} catch (error) {
+		// Error is handled in the store
+	}
+}
+
+async function handleDeleteFailedExpense() {
+	if (!uiStore.errorRetryActionData?.failedExpenseId) return;
+
+	const expenseId = uiStore.errorRetryActionData.failedExpenseId;
+	uiStore.clearError();
+
+	try {
+		await offlineStore.deleteOfflineExpense(expenseId);
 	} catch (error) {
 		// Error is handled in the store
 	}
@@ -4537,6 +4641,26 @@ async function handlePaymentCompleted(paymentData) {
 			};
 			uiStore.setLastOfflinePrintDoc(offlinePrintDoc);
 			cacheOfflineReceiptPayload(offlineReceiptName, offlinePrintDoc);
+
+			// Deduct sold stock locally; the server refresh after sync replaces it
+			const soldQty = new Map();
+			for (const item of preparedItems) {
+				const qty = (item.qty || 0) * (item.conversion_factor || 1);
+				soldQty.set(item.item_code, (soldQty.get(item.item_code) || 0) + qty);
+				if (item.batch_no) {
+					deductCachedBatchQty(item.item_code, item.batch_no, qty).catch(() => {});
+				}
+			}
+			const stockUpdates = [...soldQty]
+				.filter(([itemCode]) => stockStore.server.has(itemCode))
+				.map(([itemCode, qty]) => ({
+					item_code: itemCode,
+					actual_qty: stockStore.getStockInfo(itemCode).server - qty,
+					warehouse: shiftStore.profileWarehouse,
+				}));
+			stockStore.update(stockUpdates);
+			offlineWorker.updateStockQuantities(stockUpdates).catch(() => {});
+
 			uiStore.showPaymentDialog = false;
 
 			//// Neoffice — the second screen must be told the sale completed even offline, otherwise
@@ -4545,7 +4669,7 @@ async function handlePaymentCompleted(paymentData) {
 			// Notify customer display that sale is complete (even offline)
 			notifySaleComplete(cartStore.roundedGrandTotal, `OFFLINE-${Date.now()}`);
 
-			cartStore.clearCart();
+			cartStore.clearCart({ returnSerials: false });
 			// Reset cart hash after successful payment
 			previousCartHash = "";
 
@@ -4580,6 +4704,7 @@ async function handlePaymentCompleted(paymentData) {
 		} else {
 			// Get item codes from cart before clearing
 			const soldItemCodes = cartStore.invoiceItems.map((item) => item.item_code);
+			const soldBatches = cartStore.invoiceItems.filter((item) => item.batch_no);
 
 			//// Neoffice — the overlay goes up and the payment dialog comes down BEFORE submitting,
 			//// so a second tap cannot start a second submit (2584aa58, 2026-03-24). Then, in
@@ -4674,7 +4799,7 @@ async function handlePaymentCompleted(paymentData) {
 				//// now closed before the call, together with raising the processing overlay, so the
 				//// cashier never faces a live dialog over a request already in flight (2584aa58,
 				//// 2026-03-24 "processing overlay with spinner").
-				cartStore.clearCart();
+				cartStore.clearCart({ returnSerials: false });
 				// Reset cart hash after successful payment
 				previousCartHash = "";
 
@@ -4704,6 +4829,12 @@ async function handlePaymentCompleted(paymentData) {
 
 				// Notify customer display that sale is complete
 				notifySaleComplete(invoiceTotal, invoiceName);
+
+				// Keep the offline batch cache in step; the refresh above covers stock only
+				for (const item of soldBatches) {
+					const qty = (item.quantity || item.qty || 0) * (item.conversion_factor || 1);
+					deductCachedBatchQty(item.item_code, item.batch_no, qty).catch(() => {});
+				}
 
 				// Refresh invoice history cache in background (non-blocking)
 				loadInvoiceHistoryData().catch((err) =>
@@ -4849,7 +4980,7 @@ async function handleOptionSelected(option) {
 				}
 			}
 
-			if (variant.item_uoms && variant.item_uoms.length > 0) {
+			if (getDistinctUoms(variant).length > 1) {
 				cartStore.setPendingItem(variant, cartStore.pendingItemQty, "uom");
 				return;
 			}
@@ -4868,8 +4999,6 @@ async function handleOptionSelected(option) {
 					);
 					uiStore.showItemSelectionDialog = false;
 					cartStore.clearPendingItem();
-					showSuccess(__("{0} added to cart", [variant.item_name]));
-
 					//// Neoffice — same auto-open of the modifiers dialog on the VARIANT path: a variant is
 					//// still a dish and still needs its options (4df0caf1 2026-03-21; eabe35e7 + 5982e48e,
 					//// 2026-03-25).
@@ -4922,8 +5051,6 @@ async function handleOptionSelected(option) {
 					cartStore.addItem(itemToAdd, qty, false, shiftStore.currentProfile);
 					uiStore.showItemSelectionDialog = false;
 					cartStore.clearPendingItem();
-					showSuccess(__("{0} ({1}) added to cart", [itemToAdd.item_name, option.uom]));
-
 					//// Neoffice — and on the UOM path, for the same reason (4df0caf1 2026-03-21; eabe35e7 +
 					//// 5982e48e, 2026-03-25).
 					// Auto-open modifiers dialog if item has required modifier groups
@@ -4962,6 +5089,15 @@ function handleCloseShift() {
 		return;
 	}
 
+	if (!canCloseShiftWithPendingExpenses(offlineStore.pendingExpensesCount)) {
+		showError(
+			__(
+				"Sync or delete pending offline expenses before closing this shift. Unsynced cash expenses cannot be booked after the shift is closed.",
+			),
+		);
+		return;
+	}
+
 	uiStore.showCloseShiftDialog = true;
 }
 
@@ -4993,6 +5129,14 @@ function openReturnDialog() {
 	uiStore.showReturnDialog = true;
 }
 
+function openExpenseDialog() {
+	if (!canRecordPosExpense.value) {
+		return;
+	}
+
+	uiStore.showExpenseDialog = true;
+}
+
 function switchToDesk() {
 	if (!canAccessShiftActions.value || !canSwitchToDesk.value || typeof window === "undefined") {
 		return;
@@ -5002,7 +5146,8 @@ function switchToDesk() {
 }
 
 function formatCurrency(amount) {
-	return Number.parseFloat(amount || 0).toFixed(2);
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28); upstream returned toFixed(2) without group separators.
+	return formatCurrencyNumber(Number.parseFloat(amount || 0) || 0);
 }
 
 async function confirmLogout() {
@@ -5013,6 +5158,16 @@ async function confirmLogout() {
 }
 
 function logoutWithCloseShift() {
+	if (!canCloseShiftWithPendingExpenses(offlineStore.pendingExpensesCount)) {
+		uiStore.showLogoutDialog = false;
+		showError(
+			__(
+				"Sync or delete pending offline expenses before closing this shift. Unsynced cash expenses cannot be booked after the shift is closed.",
+			),
+		);
+		return;
+	}
+
 	// Open close shift dialog and remember to logout after closing
 	logoutAfterClose.value = true;
 	uiStore.showLogoutDialog = false;
@@ -5025,10 +5180,12 @@ async function handleSaveDraft() {
 		cartStore.customer,
 		cartStore.posProfile,
 		cartStore.appliedOffers,
-		cartStore.currentDraftId
+		cartStore.currentDraftId,
+		cartStore.appliedCoupon
 	);
 	if (savedDraft) {
-		cartStore.clearCart();
+		// The draft now holds the serials
+		cartStore.clearCart({ returnSerials: false });
 		// Reset cart hash when cart is saved as draft and cleared
 		previousCartHash = "";
 	}
@@ -5043,7 +5200,8 @@ async function handleLoadDraft(draft) {
 				cartStore.customer,
 				cartStore.posProfile,
 				cartStore.appliedOffers,
-				cartStore.currentDraftId
+				cartStore.currentDraftId,
+				cartStore.appliedCoupon
 			);
 
 			if (!saved) {
@@ -5070,6 +5228,7 @@ async function handleLoadDraft(draft) {
 		cartStore.setCustomer(draftData.customer);
 		//// Neoffice — $patch, same production-build hazard (dd33c2f6, 2026-03-21).
 		cartStore.$patch({ currentDraftId: draft.draft_id }); // Set current draft ID
+		cartStore.restoreLineCoupon(draftData.applied_coupon);
 
 		// Rebuild incremental cache to recalculate totals
 		cartStore.rebuildIncrementalCache();
@@ -5094,6 +5253,16 @@ async function handleLoadDraft(draft) {
 function handleReturnCreated(returnInvoice) {
 	// Success message is already shown by ReturnInvoiceDialog
 	log.debug("Return invoice created:", returnInvoice.name);
+}
+
+function handleExpenseCreated(expense) {
+	// ExpenseDialog reloads its own list/limits; toast is shown there too
+	log.debug("POS expense recorded:", expense?.journal_entry || expense?.name);
+}
+
+function handleExpenseCancelled(expense) {
+	// ExpenseDialog reloads its own list/limits; toast is shown there too
+	log.debug("POS expense cancelled:", expense?.journal_entry || expense?.name);
 }
 
 function handleDiscountApplied(discount) {
@@ -5319,7 +5488,12 @@ async function handleSyncClick() {
 		return;
 	}
 
-	showSuccess(__("No pending invoices to sync"));
+	if (offlineStore.hasPendingExpenses) {
+		await handleSyncAll();
+		return;
+	}
+
+	showSuccess(__("No pending documents to sync"));
 }
 
 async function handleSyncAll() {
@@ -5339,19 +5513,26 @@ async function handleSyncAll() {
 		if (result.failed > 0 && result.errors && result.errors.length > 0) {
 			const firstError = result.errors[0];
 			const errorContext = parseError(firstError.error);
+			const label =
+				firstError.customer ||
+				firstError.offlineId ||
+				firstError.expenseId ||
+				firstError.invoiceId ||
+				__("document");
 
 			uiStore.showError(
 				errorContext.title,
 				__(
-					"Failed to sync invoice for {0}\n\n${1}\n\nYou can delete this invoice from the offline queue if you don't need it.",
-					[firstError.customer, errorContext.message]
+					"Failed to sync {0}\n\n{1}\n\nYou can review or remove it from the offline queue if needed.",
+					[label, errorContext.message]
 				),
-				errorContext.technicalDetails || __("Invoice ID: {0}", [firstError.invoiceId]),
+				errorContext.technicalDetails ||
+					__("Queue ID: {0}", [firstError.invoiceId || firstError.expenseId || ""]),
 				"sync",
-				{ failedInvoiceId: firstError.invoiceId }
+				{ failedInvoiceId: firstError.invoiceId, failedExpenseId: firstError.expenseId }
 			);
 		} else if (result.failed > 0) {
-			showWarning(__("{0} invoice(s) failed to sync", [result.failed]));
+			showWarning(__("{0} document(s) failed to sync", [result.failed]));
 		}
 	} catch (error) {
 		log.error("Sync error:", error);
@@ -5659,7 +5840,7 @@ function handleLoadDraftFromManagement(draft) {
 }
 
 function handleDeleteDraft(draftId) {
-	draftsStore.deleteDraft(draftId);
+	draftsStore.deleteDraft(draftId, { returnSerials: draftId !== cartStore.currentDraftId });
 }
 
 async function handleWarehouseChanged(newWarehouse) {

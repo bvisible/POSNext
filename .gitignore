@@ -28,6 +28,7 @@ __pycache__
 # 2026-05-28: commit POS/yarn.lock + CI uses --frozen-lockfile.
 !POS/yarn.lock
 package-lock.json
+CLAUDE.md
 
 # IDE and editor files
 .vscode/

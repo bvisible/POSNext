@@ -856,11 +856,11 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 		const allCustomers = await db.table("customers").toArray();
 
 		//// Neoffice — the same any-order customer search as cache.js: upstream required the
-		//// whole query to appear as one contiguous run inside a single field, so "Moret Daniel"
-		//// found nothing for "Daniel Moret" (d29af088, 2026-07-09 "barcode error toast, UOM
+		//// whole query to appear as one contiguous run inside a single field, so "Dupont Jean"
+		//// found nothing for "Jean Dupont" (d29af088, 2026-07-09 "barcode error toast, UOM
 		//// dialog dedup, any-order customer search"). The block below spells out the comparison.
 		//// tokenized any-order search: each word must match name/mobile/id
-		// Split the query into words so "Moret Daniel" matches "Daniel Moret"
+		// Split the query into words so "Dupont Jean" matches "Jean Dupont"
 		// regardless of the order the name was entered in.
 		const tokens = term.split(/\s+/).filter(Boolean);
 
@@ -869,11 +869,11 @@ async function searchCachedCustomers(searchTerm = "", limit = 20) {
 				//// Neoffice — the exception announced at the top of this file. Upstream tested
 				//// name.includes(term) || mobile.includes(term) || id.includes(term), so the whole
 				//// query had to appear as one contiguous run in a single field: a cashier typing
-				//// "Moret Daniel" found nothing for a customer recorded as "Daniel Moret".
+				//// "Dupont Jean" found nothing for a customer recorded as "Jean Dupont".
 				//// Here the
 				//// three fields are joined into one haystack and every word of the query must
 				//// appear
-				//// somewhere in it, so "Moret", "Daniel", "Moret Daniel" and "dan mor" all
+				//// somewhere in it, so "Dupont", "Jean", "Dupont Jean" and "jea dup" all
 				//// find the
 				//// customer. Same fix applied on the other three paths (in-memory store, Dexie
 				//// cache,
@@ -943,9 +943,13 @@ async function cacheItemsFromServer(items, batchSize) {
 		//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
 		await db.transaction("rw", "items", "item_prices", "settings", async () => {
 			for (const batch of batches) {
+				// Keep cached batch/serial data: server item rows don't carry it
+				const existing = await db.table("items").bulkGet(batch.map((item) => item.item_code));
+
 				// Normalize data using helper (zero-copy where possible)
-				//// Neoffice — Biome reformat only (458d81a9); see the block header at the top of this file.
-				const processedItems = batch.map((item) => ({
+				const processedItems = batch.map((item, index) => ({
+					batch_no_data: existing[index]?.batch_no_data,
+					serial_no_data: existing[index]?.serial_no_data,
 					...item,
 					barcodes: extractBarcodes(item),
 				}));
@@ -1581,21 +1585,15 @@ async function updateStockQuantities(stockUpdates) {
 				continue;
 			}
 
-			// Get the cached item
-			const item = await db.table("items").get(item_code);
+			// Update only the stock fields: a whole-row put would drop batch/serial data written meanwhile
+			const changes = {
+				actual_qty: actual_qty !== undefined ? actual_qty : stock_qty,
+				stock_qty: stock_qty !== undefined ? stock_qty : actual_qty,
+				...(warehouse ? { warehouse } : {}),
+			};
 
-			if (!item) {
-				continue;
-			}
-
-			// Update stock quantities for this warehouse
-			item.actual_qty = actual_qty !== undefined ? actual_qty : stock_qty;
-			item.stock_qty = stock_qty !== undefined ? stock_qty : actual_qty;
-			item.warehouse = warehouse || item.warehouse;
-
-			// Save updated item back to cache
-			await db.table("items").put(item);
-			updatedCount++;
+			// update() returns 0 when the item is not cached
+			updatedCount += await db.table("items").update(item_code, changes);
 		}
 
 		// Update the last sync timestamp so cache tooltip shows latest update

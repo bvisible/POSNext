@@ -14,28 +14,33 @@ declare module 'vue' {
     //// component we added under POS/src/components/**; nothing here is hand-written, so
     //// `git blame` on this file names the build that regenerated the line, not the commit
     //// that introduced the component. At the next upstream merge do NOT resolve this file
-    //// by hand: take upstream's copy and let the plugin regenerate it.
+    //// by hand: take upstream's copy and let the plugin regenerate it. The regeneration erases
+    //// these `////` lines: put them back from the previous copy of this file, and give each new
+    //// component of ours a marker of its own, in the same style.
     //// Neoffice — AddressAutocomplete: geo.admin address lookup used by the POS customer
     //// dialogs (structured street + N°, ADR-002). Upstream has a single free-text address
     //// field (98500337, 2026-07-18 "fix(pos/address): geo.admin house number from label
     //// token, not lossy attrs.num").
     AddressAutocomplete: typeof import('./src/components/common/AddressAutocomplete.vue')['default']
+    AuthorizationDialog: typeof import('./src/components/common/AuthorizationDialog.vue')['default']
     AutocompleteSelect: typeof import('./src/components/common/AutocompleteSelect.vue')['default']
     BatchSerialDialog: typeof import('./src/components/sale/BatchSerialDialog.vue')['default']
-    //// Neoffice — restaurant carte editor, PSP-agnostic card-present terminal dialog and
-    //// the cash in/out dialog (Journal Entry Templates, erpnextswiss structure). Upstream
-    //// is a retail POS: no carte, one hardcoded PSP, no cash movements outside the shift
-    //// (2a539d5a 2026-03-24; 9acebda9 2026-05-14 "rename terminal dialogs to PSP-agnostic
-    //// names"; 5783eb27 2026-03-28 "cash withdrawal at shift closing").
+    //// Neoffice — restaurant carte editor and the PSP-agnostic card-present terminal dialog.
+    //// Upstream is a retail POS: no carte, one hardcoded PSP (2a539d5a 2026-03-24; 9acebda9
+    //// 2026-05-14 "rename terminal dialogs to PSP-agnostic names").
     CardEditor: typeof import('./src/components/restaurant/CardEditor.vue')['default']
     CardPresentDialog: typeof import('./src/components/payments/CardPresentDialog.vue')['default']
-    CashInOutDialog: typeof import('./src/components/pos/CashInOutDialog.vue')['default']
-    //// Neoffice — the cash drawer of the till's CloudPRNT printer (opening with a reason, the
-    //// session's openings at closing) and the Printing tab of the settings (maintenance#1935).
+    //// Neoffice — the cash drawer of the till's CloudPRNT printer: opening with a reason, and the
+    //// session's openings at closing. Upstream has no cash drawer (maintenance#1935).
     CashDrawerDialog: typeof import('./src/components/pos/CashDrawerDialog.vue')['default']
     CashDrawerSummary: typeof import('./src/components/pos/CashDrawerSummary.vue')['default']
+    //// Neoffice — the cash in/out dialog (Journal Entry Templates, erpnextswiss structure). Upstream
+    //// has no cash movement outside the shift (6c598630 2026-03-28 "cash in/out from POS using
+    //// Journal Entry Templates"; 5783eb27 2026-03-28 "cash withdrawal at shift closing").
+    CashInOutDialog: typeof import('./src/components/pos/CashInOutDialog.vue')['default']
     CheckboxField: typeof import('./src/components/settings/CheckboxField.vue')['default']
     ClearCacheOverlay: typeof import('./src/components/common/ClearCacheOverlay.vue')['default']
+    //// Neoffice — the Printing tab of the till's settings (maintenance#1935).
     CloudPrntTillSettings: typeof import('./src/components/settings/CloudPrntTillSettings.vue')['default']
     CountryCodeSelector: typeof import('./src/components/common/CountryCodeSelector.vue')['default']
     CouponDialog: typeof import('./src/components/sale/CouponDialog.vue')['default']
@@ -64,12 +69,18 @@ declare module 'vue' {
     //// 98500337 (2026-07-18) because the file is regenerated at every build.
     EditCustomerDialog: typeof import('./src/components/sale/EditCustomerDialog.vue')['default']
     EditItemDialog: typeof import('./src/components/sale/EditItemDialog.vue')['default']
-    //// Neoffice — one block, six unrelated additions, all absent upstream: e-mailing the
-    //// invoice as a PDF from the success dialog (4239ea8d), the floor-plan editor and its
-    //// wall/door layer (0ebfda03 + 032298a3), the gift-card-created dialog (703f2046), the
-    //// three QR guest-ordering views (3939a848 "QR self-ordering and takeaway web
-    //// ordering"), and image search when creating a restaurant item (26f5a3f1).
+    //// Neoffice — e-mailing the invoice as a PDF from the success dialog; absent upstream (4239ea8d).
     EmailInvoiceDialog: typeof import('./src/components/sale/EmailInvoiceDialog.vue')['default']
+    //// Neoffice — the end-of-day report's print dialog: the cashier picks a QZ Tray printer or the
+    //// browser print dialog, or prints later, at shift closing and from the shift history. Upstream
+    //// prints the report silently to the one printer saved in the settings (5024c1cd, 2026-10-06;
+    //// maintenance#1235).
+    EodPrintDialog: typeof import('./src/components/EodPrintDialog.vue')['default']
+    ExpenseDialog: typeof import('./src/components/sale/ExpenseDialog.vue')['default']
+    //// Neoffice — the floor-plan editor and its wall/door layer (0ebfda03 + 032298a3), the
+    //// gift-card-created dialog (703f2046), the three QR guest-ordering views (3939a848 "QR
+    //// self-ordering and takeaway web ordering") and image search when creating a restaurant item
+    //// (26f5a3f1): all absent upstream.
     FloorPlanEditor: typeof import('./src/components/pos/FloorPlanEditor.vue')['default']
     FloorPlanWalls: typeof import('./src/components/pos/FloorPlanWalls.vue')['default']
     GiftCardCreatedDialog: typeof import('./src/components/sale/GiftCardCreatedDialog.vue')['default']
@@ -92,6 +103,7 @@ declare module 'vue' {
     ItemModifiersDialog: typeof import('./src/components/sale/ItemModifiersDialog.vue')['default']
     ItemSaveConfirmDialog: typeof import('./src/components/restaurant/ItemSaveConfirmDialog.vue')['default']
     ItemSelectionDialog: typeof import('./src/components/sale/ItemSelectionDialog.vue')['default']
+    ItemsPagination: typeof import('./src/components/sale/ItemsPagination.vue')['default']
     ItemsSelector: typeof import('./src/components/sale/ItemsSelector.vue')['default']
     //// Neoffice — the kitchen/preparation display order card. Upstream has no KDS
     //// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode").
@@ -122,19 +134,20 @@ declare module 'vue' {
     OpeningHoursEditor: typeof import('./src/components/settings/OpeningHoursEditor.vue')['default']
     PartialPayments: typeof import('./src/components/partials/PartialPayments.vue')['default']
     PaymentDialog: typeof import('./src/components/sale/PaymentDialog.vue')['default']
+    PhoneInput: typeof import('./src/components/common/PhoneInput.vue')['default']
+    PickerDialogFooter: typeof import('./src/components/sale/PickerDialogFooter.vue')['default']
     //// Neoffice — POSFooter's declaration was REMOVED here: we deleted the upstream
     //// BrainWise branding footer, both to drop the vendor branding and to give the till
     //// back the screen row it occupied (458d81a9 2026-03-20 "remove BrainWise branding";
     //// db22e2ae 2026-03-20 "remove POSFooter branding component to reclaim screen space").
-    PhoneInput: typeof import('./src/components/common/PhoneInput.vue')['default']
     POSHeader: typeof import('./src/components/pos/POSHeader.vue')['default']
     POSSettings: typeof import('./src/components/settings/POSSettings.vue')['default']
-    //// Neoffice — numpad dialog for zero-price items (gift cards, open-price dishes) and
-    //// the product-options editor. Upstream refuses a zero rate outright and has no
-    //// modifier authoring (1ff2fba2 2026-03-27; f23daabe 2026-03-27 "item search in
-    //// product options editor").
+    //// Neoffice — numpad dialog for zero-price items (gift cards, open-price dishes). Upstream
+    //// refuses a zero rate outright (1ff2fba2 2026-03-27).
     PriceEntryDialog: typeof import('./src/components/sale/PriceEntryDialog.vue')['default']
     ProductManagement: typeof import('./src/components/sale/ProductManagement.vue')['default']
+    //// Neoffice — the product-options editor. Upstream has no modifier authoring (f23daabe
+    //// 2026-03-27 "item search in product options editor").
     ProductOptionsEditor: typeof import('./src/components/restaurant/ProductOptionsEditor.vue')['default']
     PromotionManagement: typeof import('./src/components/sale/PromotionManagement.vue')['default']
     //// Neoffice — the PSP-agnostic QR payment dialog (TWINT) plus the whole reservation

@@ -43,6 +43,9 @@ const CURRENT_SCHEMA = {
 	// offline_id is a unique UUID for deduplication across syncs
 	invoice_queue: "++id, &offline_id, timestamp, synced",
 
+	// Expense queue for offline POS expense submissions (with optional Blob attachments)
+	expense_queue: "++id, &offline_id, timestamp, synced",
+
 	// Items cache with searchable fields
 	// variant_of index allows querying variants by their template item
 	// brand index allows efficient brand-based filtering in offline mode
@@ -244,8 +247,10 @@ export const getSetting = async (key, defaultValue = null) => {
 export const setSetting = async (key, value) => {
 	try {
 		await db.settings.put({ key, value });
+		return true;
 	} catch (error) {
 		log.error(`Error setting ${key}:`, error);
+		return false;
 	}
 };
 
@@ -321,6 +326,7 @@ export const clearCachedData = async (options = {}) => {
 		sales_persons: 0,
 		invoices: 0,
 		payments: 0,
+		expenses: 0,
 		drafts: 0,
 		settings: 0,
 	};
@@ -338,6 +344,7 @@ export const clearCachedData = async (options = {}) => {
 		if (!preserveInvoices) {
 			results.invoices = await db.invoice_queue.clear();
 			results.payments = await db.payment_queue.clear();
+			results.expenses = await db.expense_queue.clear();
 		}
 
 		// Conditionally clear drafts

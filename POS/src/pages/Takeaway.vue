@@ -121,6 +121,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
+//// Neoffice — takeaway amounts in the site's number format (formatCurrency below).
+import { formatCurrencyNumber } from "@/utils/currency"
 
 const orders = ref([])
 const loading = ref(true)
@@ -223,10 +225,8 @@ function getStatusBadgeClass(status) {
 }
 
 function formatCurrency(amount) {
-	return new Intl.NumberFormat("fr-CH", {
-		style: "decimal",
-		minimumFractionDigits: 2,
-	}).format(amount || 0)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not fr-CH.
+	return formatCurrencyNumber(Number(amount) || 0)
 }
 
 function formatTime(creation) {

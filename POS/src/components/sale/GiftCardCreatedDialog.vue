@@ -14,6 +14,8 @@
 
 import { computed } from "vue"
 import { useLocale } from "@/composables/useLocale"
+//// Neoffice — the gift card amount in the site's number format (formatAmount below).
+import { formatCurrency } from "@/utils/currency"
 
 const { locale } = useLocale()
 
@@ -43,10 +45,8 @@ function formatDate(dateStr) {
 }
 
 function formatAmount(amount) {
-	return new Intl.NumberFormat(locale.value, {
-		style: "currency",
-		currency: props.currency,
-	}).format(amount || 0)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28), not the user's language.
+	return formatCurrency(Number(amount) || 0, props.currency)
 }
 
 function handleClose() {

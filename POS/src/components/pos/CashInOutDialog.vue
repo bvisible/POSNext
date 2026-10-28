@@ -235,6 +235,8 @@
 import { ref, computed, watch, nextTick } from "vue"
 import { Dialog, Button, FeatherIcon, call } from "frappe-ui"
 import { useToast } from "@/composables/useToast"
+//// Neoffice — cash in/out amounts in the site's number format (formatAmount below).
+import { formatCurrencyNumber } from "@/utils/currency"
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -312,7 +314,8 @@ function selectTemplate(template) {
 }
 
 function formatAmount(val) {
-	return Number.parseFloat(val || 0).toFixed(2)
+	//// Neoffice — the site's number format (System Settings, CHF 1'234.50 on a Swiss site) as everywhere on the till, see utils/currency.js (product owner, 2026-10-28) (was toFixed(2), no group separators).
+	return formatCurrencyNumber(Number.parseFloat(val || 0) || 0)
 }
 
 async function loadTemplates() {
