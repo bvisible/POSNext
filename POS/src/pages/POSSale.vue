@@ -553,7 +553,9 @@
 													: 'bg-green-500',
 											]"
 										>
-											{{ cartStore.kdsStatus }}
+											<!-- //// Neoffice — the status goes through __() like the kitchen display's (KDSOrderCard): the five values it can take -->
+											<!-- //// (Waiting, Pending, Preparing, Ready, Delivered) have a French msgid; upstream printed the raw English word. -->
+											{{ __(cartStore.kdsStatus) }}
 										</div>
 									</div>
 									<Button variant="subtle" size="sm" @click="closeTable">

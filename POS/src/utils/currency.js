@@ -200,7 +200,10 @@ export function formatCurrencyNumber(value, locale = DEFAULT_LOCALE) {
 // =============================================================================
 
 const DATE_OPTIONS = { day: "numeric", month: "short", year: "numeric" };
-const TIME_OPTIONS = { hour: "numeric", minute: "2-digit", hour12: true };
+//// Neoffice — a 24-hour clock, like the desk: Frappe v15's System Settings only offer 24-hour time formats
+//// (HH:mm:ss, HH:mm), so the till must not write "8:53 PM" as upstream's options do (hour12: true). "h23" and not
+//// hour12: false, which some engines write as "24:07" just after midnight.
+const TIME_OPTIONS = { hour: "2-digit", minute: "2-digit", hourCycle: "h23" };
 
 /** Parse a Date, timestamp, "YYYY-MM-DD" (local day), "HH:MM[:SS]" or Frappe datetime string */
 function toDate(value) {
@@ -220,13 +223,13 @@ export function formatDate(value, locale = DEFAULT_LOCALE) {
 	return date ? date.toLocaleDateString(locale, DATE_OPTIONS) : "";
 }
 
-/** Format 12h time: "9:15 م" / "9:15 PM" */
+/** Format 24h time: "21:15" */
 export function formatTime(value, locale = DEFAULT_LOCALE) {
 	const date = value ? toDate(value) : null;
 	return date ? date.toLocaleTimeString(locale, TIME_OPTIONS) : "";
 }
 
-/** Format date and 12h time: "5 نوفمبر 2026، 9:15 م" / "Nov 5, 2026, 9:15 PM" */
+/** Format date and 24h time: "5 نوفمبر 2026، 21:15" / "Nov 5, 2026, 21:15" */
 export function formatDateTime(value, locale = DEFAULT_LOCALE) {
 	const date = value ? toDate(value) : null;
 	return date ? date.toLocaleString(locale, { ...DATE_OPTIONS, ...TIME_OPTIONS }) : "";

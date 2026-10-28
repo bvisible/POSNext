@@ -343,7 +343,12 @@
 	<!-- Return Process Modal -->
 	<Dialog v-model="returnModal.visible" :options="{ title: __('Process Return'), size: '5xl' }">
 		<template #body-content>
-			<div class="flex flex-col gap-4">
+			<!-- //// Neoffice — the body scrolls inside the dialog and its title and buttons stay in view. Upstream's grows with -->
+			<!-- //// what it holds (959 px with one invoice open), which put "Cancel" and "Create Return" below the fold at 1366x768; -->
+			<!-- //// an entry window fits that screen without scrolling the page (PaymentDialog does the same). 18rem is what the -->
+			<!-- //// dialog takes around the body (margins, title row, footer, room for an error line); [&>*]:shrink-0 keeps the -->
+			<!-- //// sections at their height: without it the capped items list below shrinks to nothing instead of the body scrolling. -->
+			<div class="flex flex-col gap-4 max-h-[calc(100dvh-18rem)] overflow-y-auto px-1 -mx-1 [&>*]:shrink-0">
 				<!-- Invoice Details -->
 				<div
 					v-if="originalInvoice"

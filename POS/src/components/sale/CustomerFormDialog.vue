@@ -238,7 +238,9 @@
 					</div>
 
 					<!-- Swiss postal format: NPA then city ("1907 Saxon") -->
-					<div class="grid grid-cols-[96px_1fr] gap-2">
+					<!-- The NPA column is wide enough for its placeholder: "Code postal" needs about 116px in Inter, which 96px cut to -->
+					<!-- "Code posta"; 144px also holds a longer translation such as "Código postal" (about 130px). -->
+					<div class="grid grid-cols-[144px_1fr] gap-2">
 						<input
 							v-model="customerData.pincode"
 							type="text"

@@ -30,17 +30,20 @@ describe("locale formatting", () => {
 	it("formats Arabic dates with month names and Latin digits", () => {
 		setLocale("ar")
 		expect(formatDate("2026-11-05")).toBe("5 نوفمبر 2026")
-		expect(formatTime("2026-11-05 21:15:00")).toBe("9:15 م")
-		expect(formatTime("09:05:33.123")).toBe("9:05 ص")
-		expect(formatDateTime("2026-11-05 21:15:00")).toBe("5 نوفمبر 2026، 9:15 م")
+		//// Neoffice — the till writes a 24-hour clock, like the desk (product owner, 2026-10-28; timeFormat24Hour.spec.js):
+		//// upstream expected AM/PM here ("9:15 م").
+		expect(formatTime("2026-11-05 21:15:00")).toBe("21:15")
+		expect(formatTime("09:05:33.123")).toBe("09:05")
+		expect(formatDateTime("2026-11-05 21:15:00")).toBe("5 نوفمبر 2026، 21:15")
 		expect(formatDateTime("2026-11-05 21:15:00")).toMatch(NO_ARABIC_DIGITS)
 	})
 
 	it("formats English dates unambiguously", () => {
 		setLocale("en")
 		expect(formatDate("2026-11-05")).toBe("Nov 5, 2026")
-		expect(formatTime("21:15")).toBe("9:15 PM")
-		expect(formatDateTime(new Date(2026, 10, 5, 21, 15))).toBe("Nov 5, 2026, 9:15 PM")
+		//// Neoffice — 24-hour clock, like the desk (see the Arabic case above); upstream expected "9:15 PM".
+		expect(formatTime("21:15")).toBe("21:15")
+		expect(formatDateTime(new Date(2026, 10, 5, 21, 15))).toBe("Nov 5, 2026, 21:15")
 		expect(formatDate("")).toBe("")
 		expect(formatDate("not a date")).toBe("")
 	})
@@ -68,7 +71,8 @@ describe("locale formatting", () => {
 		setLocale("ar")
 		const f = useFormatters()
 		expect(f.formatDate("2026-11-05")).toBe("5 نوفمبر 2026")
-		expect(f.formatTime("15:31:22.975239")).toBe("3:31 م")
-		expect(f.formatDateTime("2026-11-05 21:15:00")).toBe("5 نوفمبر 2026، 9:15 م")
+		//// Neoffice — 24-hour clock, like the desk (see the Arabic case above); upstream expected AM/PM.
+		expect(f.formatTime("15:31:22.975239")).toBe("15:31")
+		expect(f.formatDateTime("2026-11-05 21:15:00")).toBe("5 نوفمبر 2026، 21:15")
 	})
 })

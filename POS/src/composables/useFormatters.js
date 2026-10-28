@@ -38,17 +38,18 @@ function formatQuantity(quantity) {
 /**
  * Format date and time in the user's locale
  * @param {string|Date} datetime - The datetime to format
- * @returns {string} Formatted date and time string (e.g. "Nov 5, 2026, 9:15 PM")
+ * @returns {string} Formatted date and time string (e.g. "Nov 5, 2026, 21:15")
  */
 function formatDateTime(datetime) {
 	return formatLocaleDateTime(datetime);
 }
 
+//// Neoffice — the examples below said AM/PM; the till writes a 24-hour clock now (see TIME_OPTIONS in utils/currency.js).
 /**
- * Format time to HH:MM AM/PM only (hours and minutes)
+ * Format time to HH:MM only (24-hour, hours and minutes)
  * Handles both Date objects and time strings (e.g., "15:31:22.975239")
  * @param {string|Date} time - The time to format
- * @returns {string} Formatted time string (e.g. "9:15 PM", "9:15 م")
+ * @returns {string} Formatted time string (e.g. "21:15")
  */
 function formatTime(time) {
 	return formatLocaleTime(time);
