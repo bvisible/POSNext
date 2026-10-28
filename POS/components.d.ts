@@ -30,8 +30,13 @@ declare module 'vue' {
     CardEditor: typeof import('./src/components/restaurant/CardEditor.vue')['default']
     CardPresentDialog: typeof import('./src/components/payments/CardPresentDialog.vue')['default']
     CashInOutDialog: typeof import('./src/components/pos/CashInOutDialog.vue')['default']
+    //// Neoffice — the cash drawer of the till's CloudPRNT printer (opening with a reason, the
+    //// session's openings at closing) and the Printing tab of the settings (maintenance#1935).
+    CashDrawerDialog: typeof import('./src/components/pos/CashDrawerDialog.vue')['default']
+    CashDrawerSummary: typeof import('./src/components/pos/CashDrawerSummary.vue')['default']
     CheckboxField: typeof import('./src/components/settings/CheckboxField.vue')['default']
     ClearCacheOverlay: typeof import('./src/components/common/ClearCacheOverlay.vue')['default']
+    CloudPrntTillSettings: typeof import('./src/components/settings/CloudPrntTillSettings.vue')['default']
     CountryCodeSelector: typeof import('./src/components/common/CountryCodeSelector.vue')['default']
     CouponDialog: typeof import('./src/components/sale/CouponDialog.vue')['default']
     CouponManagement: typeof import('./src/components/sale/CouponManagement.vue')['default']

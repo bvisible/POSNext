@@ -453,10 +453,15 @@
 
 					<!-- Printer - Visible only while shift is open -->
 					<div v-if="hasOpenShift" class="hidden md:block relative">
+						<!-- //// Neoffice — with a Star CloudPRNT printer on this till, the button's title and dot -->
+						<!-- //// show that printer's live state (ready, paper low, paper out or cover open, offline) -->
+						<!-- //// instead of QZ Tray's; upstream knows QZ Tray only (maintenance#1935). -->
 						<ActionButton
 							:icon="printerIcon"
 							:title="
-								silentPrintEnabled
+								cloudPrinterStatus
+									? cloudPrinterTitle
+									: silentPrintEnabled
 									? qzConnected
 										? __('Silent Print: Connected')
 										: __('Silent Print: Disconnected')
@@ -465,10 +470,27 @@
 							@click="$emit('printer-click')"
 						/>
 						<span
-							v-if="silentPrintEnabled"
+							v-if="cloudPrinterStatus || silentPrintEnabled"
 							class="absolute top-0.5 end-0.5 w-2 h-2 rounded-full border border-white"
-							:class="qzConnected ? 'bg-green-500' : 'bg-red-500'"
+							:class="
+								cloudPrinterStatus
+									? cloudPrinterDotClass
+									: qzConnected
+									? 'bg-green-500'
+									: 'bg-red-500'
+							"
 						></span>
+					</div>
+
+					<!-- //// Neoffice — opens the cash drawer wired to the till's CloudPRNT printer, with a reason -->
+					<!-- //// (CashDrawerDialog); shown only when the till has such a printer. Upstream has no cash -->
+					<!-- //// drawer (maintenance#1935). -->
+					<div v-if="hasOpenShift && drawerAvailable" class="hidden md:block">
+						<ActionButton
+							:icon="drawerIcon"
+							:title="__('Open the cash drawer')"
+							@click="$emit('drawer-click')"
+						/>
 					</div>
 
 					<!-- Refresh -->
@@ -549,7 +571,8 @@ import StatusBadge from "@/components/common/StatusBadge.vue";
 import UserMenu from "@/components/common/UserMenu.vue";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue";
 import { DEFAULT_LOCALE } from "@/utils/currency";
-import { ref } from "vue";
+//// Neoffice — computed added for the CloudPRNT printer state (maintenance#1935).
+import { computed, ref } from "vue";
 import { version } from "../../../package.json";
 //// Neoffice — posShift is what pins the customer display to THIS cashier's opening entry
 //// (9a807f74, 2026-06-01 "customer display follows the launching POS's exact shift").
@@ -611,6 +634,8 @@ const emit = defineEmits([
 	//// Neoffice — event of the restaurant-mode switch; upstream has no such mode (8aa35c29,
 	//// 2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs").
 	"toggle-restaurant",
+	//// Neoffice — the cash drawer button; POSSale opens CashDrawerDialog (maintenance#1935).
+	"drawer-click",
 ]);
 
 //// Neoffice — the header only announces the intent: POSSale owns the toggle because it may
@@ -715,7 +740,38 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
+	//// Neoffice — the till's CloudPRNT printer, from the cloudPrnt store: its label, its state
+	//// (ready, warning, error, offline; empty without such a printer) and whether a drawer can be
+	//// opened through it (maintenance#1935).
+	cloudPrinterLabel: {
+		type: String,
+		default: "",
+	},
+	cloudPrinterStatus: {
+		type: String,
+		default: "",
+	},
+	drawerAvailable: {
+		type: Boolean,
+		default: false,
+	},
 });
+
+//// Neoffice — what the printer button says and which colour its dot takes for a CloudPRNT
+//// printer (maintenance#1935).
+const CLOUD_PRINTER_STATES = {
+	ready: { title: __("Ready"), dot: "bg-green-500" },
+	warning: { title: __("Paper low"), dot: "bg-orange-400" },
+	error: { title: __("Paper out or cover open"), dot: "bg-red-500" },
+	offline: { title: __("Offline"), dot: "bg-red-500" },
+};
+const cloudPrinterTitle = computed(() => {
+	const state = CLOUD_PRINTER_STATES[props.cloudPrinterStatus];
+	return state ? `${props.cloudPrinterLabel}: ${state.title}` : props.cloudPrinterLabel;
+});
+const cloudPrinterDotClass = computed(
+	() => CLOUD_PRINTER_STATES[props.cloudPrinterStatus]?.dot || "bg-gray-400"
+);
 
 // Cache status helpers
 function getCacheIconColor() {
@@ -794,4 +850,6 @@ const printerIcon =
 	"M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z";
 const refreshIcon =
 	"M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15";
+//// Neoffice — a cash drawer: a box with an open tray and a handle (maintenance#1935).
+const drawerIcon = "M3 10h18v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9zm2-5h14l2 5H3l2-5zm5 9h4";
 </script>

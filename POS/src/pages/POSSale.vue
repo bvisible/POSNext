@@ -95,6 +95,8 @@
 			<!-- ////   header when the language picker went into the dropdown (5e5db360, -->
 			<!-- ////   2026-03-21 "move toggle-restaurant to correct position"). -->
 			<!-- //// Upstream POSNext is retail-only and has neither. -->
+			<!-- //// Neoffice — the till's CloudPRNT printer (its state on the printer button) and its cash -->
+			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). -->
 			<POSHeader
 				:current-time="shiftStore.currentTime"
 				:shift-duration="shiftStore.shiftDuration"
@@ -114,6 +116,10 @@
 				:qz-connected="qzConnected"
 				:is-restaurant-mode="restaurantStore.isEnabled"
 				:can-toggle-restaurant="canToggleRestaurant"
+				:cloud-printer-label="cloudPrntStore.receiptPrinter?.label || ''"
+				:cloud-printer-status="cloudPrntStore.printerStatus || ''"
+				:drawer-available="cloudPrntStore.drawerAvailable"
+				@drawer-click="showCashDrawer = true"
 				@sync-click="handleSyncClick"
 				@printer-click="openHistoryDialog"
 				@refresh-click="handleRefresh"
@@ -141,6 +147,28 @@
 							/>
 						</svg>
 						<span>{{ __("View Shift") }}</span>
+					</button>
+					<!-- //// Neoffice — the cash drawer from the menu too: the header button is hidden on a -->
+					<!-- //// phone-sized screen (maintenance#1935). -->
+					<button
+						v-if="shiftStore.hasOpenShift && cloudPrntStore.drawerAvailable"
+						@click="showCashDrawer = true"
+						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 flex items-center gap-3 transition-colors"
+					>
+						<svg
+							class="w-5 h-5 text-orange-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M3 10h18v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9zm2-5h14l2 5H3l2-5zm5 9h4"
+							/>
+						</svg>
+						<span>{{ __("Open the cash drawer") }}</span>
 					</button>
 					<button
 						v-if="canAccessShiftActions"
@@ -1577,6 +1605,14 @@
 				:currency="shiftStore.profileCurrency"
 			/>
 
+			<!-- //// Neoffice — opening the cash drawer without a sale, with a reason (maintenance#1935). -->
+			<CashDrawerDialog
+				v-model="showCashDrawer"
+				:pos-profile="shiftStore.profileName"
+				:pos-opening-shift="cartStore.posOpeningShift"
+				:printer-label="cloudPrntStore.receiptPrinter?.label || ''"
+			/>
+
 			<!-- Invoice Management -->
 			<!-- //// Neoffice — :pos-opening-shift inside this tag, taken from the cart rather -->
 			<!-- //// than the shift store, so the invoice list is scoped to the shift the cart -->
@@ -2296,6 +2332,9 @@ import ManagementSlider from "@/components/pos/ManagementSlider.vue";
 //// (f2392119, 2026-03-22), the tips panel (c4460c61 + d08c57e7, 2026-03-23/29) and the
 //// reservation dialog (ebc3ecc5, 2026-03-29). No upstream equivalent for any of them.
 import CashInOutDialog from "@/components/pos/CashInOutDialog.vue";
+//// Neoffice — the till's CloudPRNT printer and cash drawer (maintenance#1935).
+import CashDrawerDialog from "@/components/pos/CashDrawerDialog.vue";
+import { useCloudPrntStore } from "@/stores/cloudPrnt";
 import WorkflowEditor from "@/components/restaurant/WorkflowEditor.vue";
 import ProductOptionsEditor from "@/components/restaurant/ProductOptionsEditor.vue";
 import CardEditor from "@/components/restaurant/CardEditor.vue";
@@ -2728,6 +2767,18 @@ const showInvoiceManagement = ref(false);
 //// and the reservation dialog (ebc3ecc5, 2026-03-29).
 // Cash In/Out dialog
 const showCashInOut = ref(false);
+
+//// Neoffice — the till's CloudPRNT printer, followed while a session is open on this till: it says
+//// whether the receipt prints on the server at validation (then the till prints nothing itself), the
+//// printer's state for the header, and whether a cash drawer can be opened (maintenance#1935).
+const cloudPrntStore = useCloudPrntStore();
+const showCashDrawer = ref(false);
+watch(
+	() => (shiftStore.hasOpenShift ? shiftStore.profileName : null),
+	(profile) => cloudPrntStore.follow(profile),
+	{ immediate: true }
+);
+onUnmounted(() => cloudPrntStore.stop());
 
 // Restaurant editors
 const showCardEditor = ref(false);
@@ -4673,7 +4724,16 @@ async function handlePaymentCompleted(paymentData) {
 					log.warn("Failed to check for created gift cards:", err);
 				}
 
-				if (shiftStore.autoPrintEnabled || posSettingsStore.silentPrint) {
+				//// Neoffice — a till whose CloudPRNT printer prints receipts by itself has the server print
+				//// this one at submission: the till prints nothing more (maintenance#1935).
+				if (cloudPrntStore.printsOnSubmit) {
+					showSuccess(
+						__("Invoice {0} created, receipt on {1}", [
+							invoiceName,
+							cloudPrntStore.receiptPrinter.label,
+						])
+					);
+				} else if (shiftStore.autoPrintEnabled || posSettingsStore.silentPrint) {
 					try {
 						await handlePrintInvoice({ name: invoiceName });
 						showSuccess(__("Invoice {0} created and sent to printer", [invoiceName]));
@@ -5522,6 +5582,27 @@ async function handlePrintInvoice(invoiceData) {
 			offlineSnapshot.items?.length > 0
 		) {
 			invoiceData = offlineSnapshot;
+		}
+
+		//// Neoffice — a till with a CloudPRNT printer prints a booked invoice's receipt there, through the
+		//// server (never the drawer again: a sale opens it once). A sale still offline (pos_offline_…)
+		//// and a failure fall back to QZ Tray or the browser below (maintenance#1935).
+		const invoiceName = String(invoiceData?.name || "");
+		if (
+			cloudPrntStore.receiptPrinter &&
+			invoiceName &&
+			!invoiceName.startsWith("pos_offline_")
+		) {
+			try {
+				const answer = await cloudPrntStore.printReceipt(invoiceName);
+				showSuccess(
+					answer?.message ||
+						__("Receipt sent to {0}", [cloudPrntStore.receiptPrinter.label])
+				);
+				return;
+			} catch (error) {
+				log.warn("CloudPRNT receipt failed, printing here instead:", error);
+			}
 		}
 
 		// Silent print path — send directly to thermal printer via QZ Tray

@@ -624,6 +624,13 @@ def submit_guest_order(token, items):
 		invoice_doc.flags.ignore_version = True
 		invoice_doc.save()
 
+	# //// Neoffice — a guest order that goes straight to the kitchen is a send like the till's: tell the
+	# //// kitchen-send listeners (cloudprnt prints each station's ticket; maintenance#1935).
+	if has_kds and has_kds_batch and validation_mode == "Direct to Kitchen":
+		from pos_next.api.kitchen_events import kitchen_send
+
+		kitchen_send(invoice_doc.name, next_batch)
+
 	if token_doc.table:
 		event_type = "order_submitted" if validation_mode == "Direct to Kitchen" else "order_pending_approval"
 		_broadcast_order_update(token_doc.table, event_type, {

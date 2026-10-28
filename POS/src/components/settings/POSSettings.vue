@@ -205,6 +205,19 @@
 								>
 									{{ __("Sales Management") }}
 								</button>
+								<!-- //// Neoffice — added tab: Printing, the till's Star CloudPRNT printer, its cash drawer -->
+								<!-- //// and the printer of each preparation station (maintenance#1935). -->
+								<button
+									@click="activeTab = 'printing'"
+									:class="[
+										'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
+										activeTab === 'printing'
+											? 'bg-white text-gray-900 shadow-sm'
+											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+									]"
+								>
+									{{ __("Printing") }}
+								</button>
 							</div>
 
 							<!-- Stock Settings Section - Prominent -->
@@ -1218,6 +1231,12 @@
 								</div>
 							</div>
 
+							<!-- //// Neoffice — the Printing tab's panel (maintenance#1935). -->
+							<CloudPrntTillSettings
+								v-if="activeTab === 'printing'"
+								:pos-profile="settings.pos_profile || posProfile"
+							/>
+
 							<!-- Restaurant Settings Section -->
 							<div
 								v-if="activeTab === 'restaurant'"
@@ -1824,6 +1843,8 @@ import SelectField from "@/components/settings/SelectField.vue";
 //// availability").
 import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue";
 import { useRestaurantStore } from "@/stores/restaurant";
+//// Neoffice — the Printing tab (maintenance#1935).
+import CloudPrntTillSettings from "@/components/settings/CloudPrntTillSettings.vue";
 import { useToast } from "@/composables/useToast";
 import { Button, call, createResource } from "frappe-ui";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";

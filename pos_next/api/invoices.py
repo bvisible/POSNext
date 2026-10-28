@@ -1341,6 +1341,9 @@ def update_invoice(data):
 					]
 					next_batch = max(existing_batches, default=0) + 1
 
+				# //// Neoffice — whether this save sent lines to the kitchen as next_batch, for the kitchen-send
+				# //// listeners called below (cloudprnt prints each station's ticket; maintenance#1935).
+				sent_to_kitchen = False
 				for item_data in data.get("items", []):
 					item_kds = item_data.get("kds_status")
 					if item_kds:
@@ -1368,7 +1371,13 @@ def update_invoice(data):
 										next_batch,
 										update_modified=False,
 									)
+									sent_to_kitchen = True
 								break
+				# //// Neoffice — the lines just sent form send next_batch: tell the kitchen-send listeners.
+				if sent_to_kitchen:
+					from pos_next.api.kitchen_events import kitchen_send
+
+					kitchen_send(invoice_doc.name, next_batch)
 			except Exception as inner_e:
 				frappe.log_error("Failed to set item KDS status", str(inner_e))
 
@@ -1961,6 +1970,11 @@ def submit_invoice(invoice=None, data=None):
 		# //// submit is what tells a slow instance from a slow network (2584aa58, 2026-03-24).
 		# //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5
 		_t1 = _time.time()
+
+		# //// Neoffice — a sale made offline and synced now carries this flag, so that what reacts to a
+		# //// POS sale being submitted (cloudprnt prints its receipt and opens the cash drawer) does not
+		# //// act long after the customer has left (maintenance#1935).
+		invoice_doc.flags.pos_next_offline_sync = bool(offline_id)
 
 		# Submit invoice
 		invoice_doc.submit()

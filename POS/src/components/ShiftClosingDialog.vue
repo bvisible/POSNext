@@ -55,6 +55,10 @@
 						</p>
 					</div>
 
+					<!-- //// Neoffice — the session's cash drawer openings (all, without a sale, not opened), so -->
+					<!-- //// that an opening without a sale is seen at the closing; nothing without any (maintenance#1935). -->
+					<CashDrawerSummary :opening-shift="openingShift" />
+
 					<!-- Shift Summary Header (hidden in entry mode when hideExpectedAmount is enabled) -->
 					<!-- //// Neoffice — summary header tightened (p-3 md:p-6 to md:p-4, mb-3 md:mb-6 to mb-2 -->
 					<!-- //// md:mb-3), same tablet compaction (7d2771d4, 2026-07-09). -->
@@ -1507,6 +1511,8 @@ import { usePOSSettingsStore } from "../stores/posSettings";
 import { usePOSShiftStore } from "../stores/posShift";
 //// Neoffice — the end-of-day report is printed through EodPrintDialog (printer choice, or later).
 import EodPrintDialog from "./EodPrintDialog.vue";
+//// Neoffice — the session's cash drawer openings (maintenance#1935).
+import CashDrawerSummary from "./pos/CashDrawerSummary.vue";
 
 const props = defineProps({
 	modelValue: {
