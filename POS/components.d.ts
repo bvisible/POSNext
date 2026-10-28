@@ -36,6 +36,7 @@ declare module 'vue' {
     CashDrawerSummary: typeof import('./src/components/pos/CashDrawerSummary.vue')['default']
     CheckboxField: typeof import('./src/components/settings/CheckboxField.vue')['default']
     ClearCacheOverlay: typeof import('./src/components/common/ClearCacheOverlay.vue')['default']
+    //// Neoffice — the Printing tab of the till's settings (maintenance#1935).
     CloudPrntTillSettings: typeof import('./src/components/settings/CloudPrntTillSettings.vue')['default']
     CountryCodeSelector: typeof import('./src/components/common/CountryCodeSelector.vue')['default']
     CouponDialog: typeof import('./src/components/sale/CouponDialog.vue')['default']

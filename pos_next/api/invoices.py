@@ -1371,6 +1371,7 @@ def update_invoice(data):
 										next_batch,
 										update_modified=False,
 									)
+									# //// Neoffice — a line went to the kitchen: the listeners are called below (maintenance#1935).
 									sent_to_kitchen = True
 								break
 				# //// Neoffice — the lines just sent form send next_batch: tell the kitchen-send listeners.
