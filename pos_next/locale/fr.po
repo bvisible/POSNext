@@ -15206,3 +15206,171 @@ msgstr "Réglages de Stripe Terminal"
 #: POS/src/components/restaurant/CardEditor.vue:159
 msgid "No time slot: this card is shown at all hours."
 msgstr "Aucun créneau horaire : cette carte est affichée à toute heure."
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:87
+#, python-brace-format
+msgid "A cash drawer is plugged into {0}"
+msgstr "Un tiroir-caisse est branché sur {0}"
+
+#: POS/src/components/pos/CashDrawerSummary.vue:10
+msgid "Cash drawer"
+msgstr "Tiroir-caisse"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:100
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Cash float"
+msgstr "Fond de caisse"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:169
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:36
+msgid "Cash sales"
+msgstr "Ventes en espèces"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:101
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Change error"
+msgstr "Erreur de rendu de monnaie"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:119
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+#, python-brace-format
+msgid "Drawer opened, confirmed by {0}"
+msgstr "Tiroir ouvert, confirmé par {0}"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:38
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "For example: a 50 note changed"
+msgstr "Par exemple : échange d'un billet de 50"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:99
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Give change"
+msgstr "Rendre la monnaie"
+
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:36
+#, python-brace-format
+msgid "Invoice {0} created, receipt on {1}"
+msgstr "Facture {0} créée, ticket sur {1}"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:21
+msgid "Network printer (Star, no computer needed)"
+msgstr "Imprimante réseau (Star, sans ordinateur)"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:122
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "no answer from the printer"
+msgstr "aucune réponse de l'imprimante"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:11
+msgid "No network printer: the cloudprnt app is not installed on this site."
+msgstr "Aucune imprimante réseau : l'application cloudprnt n'est pas installée sur ce site."
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:31
+msgid "None: QZ Tray or the browser print the receipt"
+msgstr "Aucune : QZ Tray ou le navigateur imprime le ticket"
+
+#: POS/src/components/pos/CashDrawerSummary.vue:16
+#, python-brace-format
+msgid "Not opened: {0}"
+msgstr "Non ouvert : {0}"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:31
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Note (optional)"
+msgstr "Remarque (facultative)"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:31
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Note (required)"
+msgstr "Remarque (obligatoire)"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:15
+msgid "Only a manager can change these settings."
+msgstr "Seul un responsable peut modifier ces réglages."
+
+#: POS/src/components/pos/CashDrawerDialog.vue:66
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Open the drawer"
+msgstr "Ouvrir le tiroir"
+
+#: POS/src/components/pos/CashDrawerSummary.vue:11
+#, python-brace-format
+msgid "Openings: {0}"
+msgstr "Ouvertures : {0}"
+
+#: POS/src/components/pos/POSHeader.vue:761
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:3
+msgid "Paper out or cover open"
+msgstr "Plus de papier ou capot ouvert"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:105
+msgid "Preparation stations"
+msgstr "Stations de préparation"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:43
+msgid "Print the receipt when the sale is validated"
+msgstr "Imprimer le ticket à la validation de la vente"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:189
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:36
+msgid "Printing settings saved"
+msgstr "Réglages d'impression enregistrés"
+
+#: POS/src/pages/POSSale.vue:5600
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:40
+#, python-brace-format
+msgid "Receipt sent to {0}"
+msgstr "Ticket envoyé à {0}"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:137
+msgid "Screen only"
+msgstr "Écran seulement"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:125
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+#, python-brace-format
+msgid "Sent to {0}…"
+msgstr "Envoyé à {0}…"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:205
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:36
+msgid "Test print sent"
+msgstr "Test d'impression envoyé"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:59
+msgid "The cash drawer opens at a sale"
+msgstr "Ouverture du tiroir-caisse lors d'une vente"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:148
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "The drawer could not be opened"
+msgstr "Le tiroir n'a pas pu être ouvert"
+
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+#, python-brace-format
+msgid "The drawer did not open: {0}"
+msgstr "Le tiroir ne s'est pas ouvert : {0}"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:194
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:36
+msgid "The printing settings could not be saved"
+msgstr "Les réglages d'impression n'ont pas pu être enregistrés"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:208
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:36
+msgid "The test print could not be sent"
+msgstr "Le test d'impression n'a pas pu être envoyé"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:109
+msgid "When an order goes to the kitchen, each station with a printer gets its ticket. A printer may serve several stations."
+msgstr "Lorsqu'une commande part en cuisine, chaque station disposant d'une imprimante reçoit son ticket. Une imprimante peut desservir plusieurs stations."
+
+#: POS/src/components/pos/CashDrawerDialog.vue:10
+#: pos_next/public/pos/assets/POSSale-B5SOmhmA.js:2
+msgid "Without a sale: say why. The opening is recorded under your name."
+msgstr "Sans vente : indiquez le motif. L'ouverture est enregistrée à votre nom."
+
+#: POS/src/components/pos/CashDrawerSummary.vue:13
+#, python-brace-format
+msgid "Without a sale: {0}"
+msgstr "Sans vente : {0}"

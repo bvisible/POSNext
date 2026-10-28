@@ -11,8 +11,9 @@ HOOK = "pos_next_kitchen_send"
 
 
 def kitchen_send(invoice, batch):
-	"""Lines of table order `invoice` went to the kitchen as send `batch`: call every listener of HOOK with
-	(invoice, batch). A listener's failure is logged and never stops the order."""
+	"""A save of table order `invoice` has lines at the kitchen (send `batch` when the till numbered it): call
+	every listener of HOOK with (invoice, batch). It is called at every such save, so a listener acts once per
+	line itself. A listener's failure is logged and never stops the order."""
 	if not invoice or not batch:
 		return
 	for method in frappe.get_hooks(HOOK):

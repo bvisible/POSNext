@@ -466,16 +466,12 @@
 							@click="$emit('printer-click')"
 							class="min-h-target min-w-target flex items-center justify-center"
 						/>
+						<!-- //// Neoffice — the dot shows the CloudPRNT printer's state when the till has one, -->
+						<!-- //// QZ Tray's otherwise (maintenance#1935). -->
 						<span
 							v-if="cloudPrinterStatus || silentPrintEnabled"
+							:class="printerDotClass"
 							class="absolute top-0.5 end-0.5 w-2 h-2 rounded-full border border-white"
-							:class="
-								cloudPrinterStatus
-									? cloudPrinterDotClass
-									: qzConnected
-									? 'bg-green-500'
-									: 'bg-red-500'
-							"
 						></span>
 					</div>
 
@@ -766,9 +762,11 @@ const cloudPrinterTitle = computed(() => {
 	const state = CLOUD_PRINTER_STATES[props.cloudPrinterStatus];
 	return state ? `${props.cloudPrinterLabel}: ${state.title}` : props.cloudPrinterLabel;
 });
-const cloudPrinterDotClass = computed(
-	() => CLOUD_PRINTER_STATES[props.cloudPrinterStatus]?.dot || "bg-gray-400"
-);
+//// Neoffice — the dot's colour: the CloudPRNT printer's state, else QZ Tray's connection (maintenance#1935).
+const printerDotClass = computed(() => {
+	if (props.cloudPrinterStatus) return CLOUD_PRINTER_STATES[props.cloudPrinterStatus]?.dot || "bg-gray-400";
+	return props.qzConnected ? "bg-green-500" : "bg-red-500";
+});
 
 // Cache status helpers
 function getCacheIconColor() {

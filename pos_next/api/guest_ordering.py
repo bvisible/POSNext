@@ -626,7 +626,7 @@ def submit_guest_order(token, items):
 
 	# //// Neoffice — a guest order that goes straight to the kitchen is a send like the till's: tell the
 	# //// kitchen-send listeners (cloudprnt prints each station's ticket; maintenance#1935).
-	if has_kds and has_kds_batch and validation_mode == "Direct to Kitchen":
+	if has_kds and validation_mode == "Direct to Kitchen":
 		from pos_next.api.kitchen_events import kitchen_send
 
 		kitchen_send(invoice_doc.name, next_batch)

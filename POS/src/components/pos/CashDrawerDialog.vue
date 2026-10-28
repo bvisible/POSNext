@@ -85,8 +85,9 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"]);
 const { showSuccess, showError } = useToast();
 
+// The printer has a minute to take an opening (cloudprnt DRAWER_VALID_SECONDS), then confirms it: follow that long.
 const POLL_MS = 1500;
-const POLL_TRIES = 12;
+const POLL_TRIES = 50;
 
 const open = computed({
 	get: () => props.modelValue,
