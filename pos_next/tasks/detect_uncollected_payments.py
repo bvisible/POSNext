@@ -21,6 +21,8 @@
 #
 # So: never rely on the till alone to notice. Reconcile server-side and shout.
 
+import json
+
 import frappe
 from frappe import _
 from frappe.utils import get_url_to_form, now_datetime, time_diff_in_seconds
@@ -57,7 +59,16 @@ def detect_uncollected_payments():
 			"reference_name": ["is", "not set"],
 			"creation": [">", frappe.utils.add_days(None, -LOOKBACK_DAYS)],
 		},
-		fields=["name", "amount", "currency", "provider", "channel", "creation", "completed_at"],
+		fields=[
+			"name",
+			"amount",
+			"currency",
+			"provider",
+			"channel",
+			"creation",
+			"completed_at",
+			"metadata_json",
+		],
 		order_by="creation asc",
 	)
 
@@ -66,6 +77,7 @@ def detect_uncollected_payments():
 		o
 		for o in orphans
 		if time_diff_in_seconds(now, o.completed_at or o.creation) > GRACE_SECONDS
+		and not _is_standalone_mobile_payment(o)
 		and not _already_flagged(o.name)
 	]
 
@@ -124,6 +136,26 @@ def detect_uncollected_payments():
 		_flag(o.name)
 
 
+def _is_standalone_mobile_payment(intent) -> bool:
+	"""A payment the phone's Collect tool took on its own: an amount and a label, no sale behind it.
+
+	This check watches the till, whose payments end in a sale. The Collect tool of the mobile app (Tap to Pay
+	or TWINT, with no document to attach the payment to) is not a till: its Payment Intent IS the record, and
+	nothing would ever turn it into a sale, so the hourly run reported every one of them as « the customer paid,
+	the till recorded nothing » (maintenance#1188). The app marks such an intent in its metadata, in
+	`payments.api.mobile_payments.mobile_start_payment`: {"origin": "mobile", "kind": "standalone"}. A payment
+	the phone takes against a document carries `reference_name` and never gets here.
+
+	Only that exact mark hides a payment. Metadata we cannot read, or that says something else, keeps the
+	payment reported: a missing sale is worth a false alarm, a hidden one is not.
+	"""
+	try:
+		meta = json.loads(intent.get("metadata_json") or "{}")
+	except ValueError:
+		return False
+	return isinstance(meta, dict) and meta.get("origin") == "mobile" and meta.get("kind") == "standalone"
+
+
 def _try_relink(intent) -> bool:
 	"""Link the intent to a POS sale that clearly matches, if there is exactly one.
 
@@ -163,9 +195,7 @@ def _try_relink(intent) -> bool:
 		{"reference_doctype": "Sales Invoice", "reference_name": rows[0].name},
 		update_modified=False,
 	)
-	frappe.logger().info(
-		f"detect_uncollected_payments: relinked {intent.name} -> {rows[0].name}"
-	)
+	frappe.logger().info(f"detect_uncollected_payments: relinked {intent.name} -> {rows[0].name}")
 	return True
 
 
@@ -219,8 +249,7 @@ def _notify_pos_managers(count, total, currency, message):
 		recipients = [
 			u
 			for u in set(recipients)
-			if u not in ("Administrator", "Guest")
-			and frappe.db.get_value("User", u, "enabled")
+			if u not in ("Administrator", "Guest") and frappe.db.get_value("User", u, "enabled")
 		]
 		if not recipients:
 			return
