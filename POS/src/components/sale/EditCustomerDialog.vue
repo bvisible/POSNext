@@ -181,8 +181,9 @@
 										<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Address Line 2', null, 'Address book') }}</label>
 										<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.address_line2" type="text" :placeholder="__('Address Line 2', null, 'Address book')" :class="inputCls" />
 									</div>
-									<!-- A narrow postal code beside a wide town, as the number beside the street (02.10). -->
-									<div class="sm:col-span-2 grid grid-cols-[110px_1fr] gap-2">
+									<!-- A narrow postal code beside a wide town, as the number beside the street (02.10), but wide enough for its -->
+									<!-- placeholder: "Code postal" needs about 116px in Inter, which 110px cut short (same 144px as CustomerFormDialog). -->
+									<div class="sm:col-span-2 grid grid-cols-[144px_1fr] gap-2">
 										<div>
 											<label class="block text-xs font-medium text-gray-600 mb-1">{{ __('Postal Code', null, 'Address book') }}</label>
 											<input data-1p-ignore data-lpignore="true" autocomplete="off" v-model="addressDraft.pincode" type="text" :placeholder="__('Postal Code', null, 'Address book')" :class="inputCls" />
