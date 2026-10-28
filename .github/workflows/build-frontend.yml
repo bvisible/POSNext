@@ -48,7 +48,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pos_next/public/pos pos_next/www/pos.html
+          # //// Neoffice — upstream develop registers /pos-sw.js from POS/src/main.js; without this the installed web app has no service worker
+          git add pos_next/public/pos pos_next/www/pos.html pos_next/www/pos-sw.js
           if git diff --cached --quiet; then
             echo "No artifact changes to commit"
             exit 0

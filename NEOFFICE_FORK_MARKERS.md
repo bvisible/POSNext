@@ -141,6 +141,24 @@ rebase.
 | `.bvisible-annotations.json`, `.bvisible-tracked-files` | State of the first-generation annotation tooling (`4e0d3068`, 2026-05-19, *"chore(fork-annotations): bootstrap tooling for upstream divergence tracking"*), consumed by `scripts/annotate_fork.py` and `scripts/check_annotations.py`. Machine-written, no upstream equivalent. Superseded by the `//// Neoffice` markers and this file. |
 | `POS/yarn.lock` | Lockfile for the dependencies above. Regenerated, never hand-edited. |
 
+### Toolchain taken from upstream develop `f7c55a30` (2026-10-28)
+
+Committed on its own, before the merge of `develop`, so that CI proves the build tools alone before
+any conflict is touched. None of it can carry a `////` comment (JSON, lockfile), hence this entry.
+
+- `POS/package.json` is upstream's manifest at `f7c55a30`: `vite` ^6.4.3 (also pinned in
+  `resolutions`), `vitest` and `@vitest/coverage-v8` ^4.1.11, `vite-plugin-static-copy` ^2.3.2,
+  `@vitejs/plugin-vue` ^5.2.4, `reka-ui` ^2.5.0, version 2.0.0, and a `build` script that also copies
+  the generated `sw.js` to `pos_next/www/pos-sw.js` (upstream's `POS/src/main.js` registers `/pos-sw.js`).
+- **Kept on top of it, ours**: `qrcode`, `react`, `react-dom` and `@neoffice/nora-learn-react` (a git
+  dependency, still locked on the same commit `7f5b233f`), at the ranges we already had.
+- `POS/yarn.lock`: upstream commits no lockfile (it ignores `yarn.lock`), so there is nothing to take.
+  Ours was updated in place with `yarn install`: every locked version that still satisfies the manifest
+  stays, only `vite` (5.4.21 to 6.4.5), `vitest` and `@vitest/coverage-v8` (2.1.9 to 4.1.12),
+  `vite-plugin-static-copy` (1.0.6 to 2.3.2) and what they pull in moved. CI keeps `--frozen-lockfile`.
+- `.github/workflows/build-frontend.yml`: the artefact commit also stages `pos_next/www/pos-sw.js`
+  (marked in place).
+
 ---
 
 ## Merged from upstream v2.0.0 (2026-10-04) — what was not taken, and why
