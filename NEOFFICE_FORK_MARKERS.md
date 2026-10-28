@@ -127,9 +127,15 @@ gets OOM-killed. Everything under that directory — `assets/**`, `index.html`, 
 A marker written there would be erased by the next build and would fight the build bot at every
 rebase.
 
+One generated copy lives outside that directory: `yarn build` also copies `sw.js` to
+`pos_next/www/pos-sw.js` (upstream's `POS/src/main.js` registers `/pos-sw.js` with scope `/pos`, so
+the worker must be served from the root and not from `/assets/...`), and `build-frontend.yml`
+commits it with the rest. Same rule: generated, never marked, listed in the table below.
+
 | Artifact | Why |
 |---|---|
 | `pos_next/public/pos/*` | The committed build of `POS/` (see above): `icon.svg` and `icon-maskable.svg` included. |
+| `pos_next/www/pos-sw.js` | Copy of the generated `sw.js`, written by `yarn build`, committed by `build-frontend.yml`. |
 
 ### Root and tooling files
 
@@ -143,8 +149,9 @@ rebase.
 
 ### Toolchain taken from upstream develop `f7c55a30` (2026-10-28)
 
-Committed on its own, before the merge of `develop`, so that CI proves the build tools alone before
-any conflict is touched. None of it can carry a `////` comment (JSON, lockfile), hence this entry.
+Kept as a commit of its own, ahead of the merge of `develop`, so that the toolchain change can be
+reviewed apart from the conflict resolution. It was built locally on its own; CI sees it together
+with the merge. None of it can carry a `////` comment (JSON, lockfile), hence this entry.
 
 - `POS/package.json` is upstream's manifest at `f7c55a30`: `vite` ^6.4.3 (also pinned in
   `resolutions`), `vitest` and `@vitest/coverage-v8` ^4.1.11, `vite-plugin-static-copy` ^2.3.2,
@@ -157,7 +164,7 @@ any conflict is touched. None of it can carry a `////` comment (JSON, lockfile),
   stays, only `vite` (5.4.21 to 6.4.5), `vitest` and `@vitest/coverage-v8` (2.1.9 to 4.1.12),
   `vite-plugin-static-copy` (1.0.6 to 2.3.2) and what they pull in moved. CI keeps `--frozen-lockfile`.
 - `.github/workflows/build-frontend.yml`: the artefact commit also stages `pos_next/www/pos-sw.js`
-  (marked in place).
+  (marked in place; the file itself is declared in the `Artifact` table above).
 
 ---
 
