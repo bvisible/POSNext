@@ -1154,6 +1154,12 @@
 								</div>
 							</div>
 
+							<!-- //// Neoffice — the Printing tab's panel, first on that tab: the cash management block below shows on every tab (maintenance#1935). -->
+							<CloudPrntTillSettings
+								v-if="activeTab === 'printing'"
+								:pos-profile="settings.pos_profile || posProfile"
+							/>
+
 							<!-- //// Neoffice — added block of 260 lines, covering everything upstream POSNext has no -->
 							<!-- //// setting for: cash management (the Journal Entry Template used for the closing -->
 							<!-- //// withdrawal, which also feeds the suggested opening balance of the next shift — -->
@@ -1231,12 +1237,7 @@
 								</div>
 							</div>
 
-							<!-- //// Neoffice — the Printing tab's panel (maintenance#1935). -->
-							<CloudPrntTillSettings
-								v-if="activeTab === 'printing'"
-								:pos-profile="settings.pos_profile || posProfile"
-							/>
-
+							<!-- //// Neoffice — the Printing tab's panel stood here; it moved above the cash management block. -->
 							<!-- Restaurant Settings Section -->
 							<div
 								v-if="activeTab === 'restaurant'"

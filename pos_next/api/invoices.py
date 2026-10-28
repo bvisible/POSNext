@@ -1341,8 +1341,8 @@ def update_invoice(data):
 					]
 					next_batch = max(existing_batches, default=0) + 1
 
-				# //// Neoffice — whether this save sent lines to the kitchen as next_batch, for the kitchen-send
-				# //// listeners called below (cloudprnt prints each station's ticket; maintenance#1935).
+				# //// Neoffice — whether this save has lines at the kitchen, for the kitchen-send listeners
+				# //// called below (cloudprnt prints each station's ticket; maintenance#1935).
 				sent_to_kitchen = False
 				for item_data in data.get("items", []):
 					item_kds = item_data.get("kds_status")
@@ -1358,6 +1358,9 @@ def update_invoice(data):
 									item_kds,
 									update_modified=False,
 								)
+								# //// Neoffice — a line marked Pending is at the kitchen, whether or not it gets a send
+								# //// number below: a line sent with the order's first save gets none (maintenance#1935).
+								sent_to_kitchen = sent_to_kitchen or item_kds == "Pending"
 								# Assign batch when item is sent to kitchen (Waiting→Pending)
 								if (
 									has_kds_batch
@@ -1371,10 +1374,8 @@ def update_invoice(data):
 										next_batch,
 										update_modified=False,
 									)
-									# //// Neoffice — a line went to the kitchen: the listeners are called below (maintenance#1935).
-									sent_to_kitchen = True
 								break
-				# //// Neoffice — the lines just sent form send next_batch: tell the kitchen-send listeners.
+				# //// Neoffice — lines are at the kitchen: tell the kitchen-send listeners, which act once per line.
 				if sent_to_kitchen:
 					from pos_next.api.kitchen_events import kitchen_send
 
