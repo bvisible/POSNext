@@ -346,7 +346,7 @@ def _elevate_primary_contact(customer):
 
 
 # //// Neoffice — neoffice_theme's own-rights variant of a save, used when the installed theme has it (see the
-# //// block header above); upstream has no counterpart, its address book code writes with the caller's rights.
+# //// block header above). Ours alone: upstream has no address book code in this module.
 def _theme_saver(public_name):
 	"""neoffice_theme's save behind a public endpoint, the variant that can skip the caller's
 	rights when this neoffice_theme has it, else None."""

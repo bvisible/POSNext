@@ -148,10 +148,10 @@ class TestGetCustomersSearch(FrappeTestCase):
 			return doc.name
 
 		cls.dupont = make(f"Jean Dupont {cls.MARKER}")
-		cls.zufferey = make(
-			f"Sophie Zufferey {cls.MARKER}",
+		cls.muster = make(
+			f"Sophie Muster {cls.MARKER}",
 			mobile_no="0791234567",
-			email_id="sophie.zufferey@yopmail.com",
+			email_id="sophie.muster@yopmail.com",
 		)
 		cls.retired = make(f"Retired Person {cls.MARKER}", disabled=1)
 
@@ -166,16 +166,16 @@ class TestGetCustomersSearch(FrappeTestCase):
 
 	def test_every_word_must_match(self):
 		"""Words taken from two different customers match neither."""
-		found = self.names(f"Jean Zufferey {self.MARKER}")
+		found = self.names(f"Jean Muster {self.MARKER}")
 		self.assertNotIn(self.dupont, found)
-		self.assertNotIn(self.zufferey, found)
+		self.assertNotIn(self.muster, found)
 
 	def test_search_matches_a_partial_word(self):
 		self.assertIn(self.dupont, self.names(f"Jea {self.MARKER}"))
 
 	def test_search_matches_mobile_and_email(self):
-		self.assertIn(self.zufferey, self.names("0791234"))
-		self.assertIn(self.zufferey, self.names("sophie.zufferey@yopmail.com"))
+		self.assertIn(self.muster, self.names("0791234"))
+		self.assertIn(self.muster, self.names("sophie.muster@yopmail.com"))
 
 	def test_search_excludes_disabled_customers(self):
 		self.assertNotIn(self.retired, self.names(f"Retired {self.MARKER}"))
