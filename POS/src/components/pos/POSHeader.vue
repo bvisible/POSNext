@@ -483,6 +483,7 @@
 							:icon="drawerIcon"
 							:title="__('Open the cash drawer')"
 							@click="$emit('drawer-click')"
+							class="min-h-target min-w-target flex items-center justify-center"
 						/>
 					</div>
 

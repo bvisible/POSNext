@@ -1118,11 +1118,11 @@
 													v-if="payment.expense_amount > 0"
 													class="text-start text-xs text-amber-700"
 												>
-													<!-- //// Neoffice — same message and argument as upstream's expense line; only the wrapping of the `__()` call differs. -->
 													{{
-														__("Expenses: -{0}", [
-															formatCurrency(payment.expense_amount),
-														])
+														__(
+															"Expenses: -{0}",
+															[formatCurrency(payment.expense_amount)],
+														)
 													}}
 												</p>
 											</div>

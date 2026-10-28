@@ -16,10 +16,10 @@
   cashier never leaves the SPA (PWA / tablet).
 
   Two tabs:
-    • Détails       — identity fields, driven by the Customer doctype meta
+    • Details       — identity fields, driven by the Customer doctype meta
                       (custom fields included), trimmed server-side to what a
                       cashier needs.
-    • Adresses & Contacts — manage the customer's addresses and contacts
+    • Addresses & Contacts — manage the customer's addresses and contacts
                       (list / edit inline / add), reusing the neoffice_theme
                       backend so the ID-follows-title rename logic is identical
                       to the desk.
@@ -514,8 +514,8 @@ function removeRow(rows, index, flags) {
 	settle(rows, flags)
 }
 
-// The editor opened comes to the middle of the screen, its « Save » in view (Daniel, 02.10: « je
-// n'arrive pas à enregistrer, je dois scroller »).
+// The editor opened comes to the middle of the screen, its "Save" in view (Daniel, 02.10: "I can't
+// save, I have to scroll").
 function revealEditor() {
 	nextTick(() => {
 		const el = document.querySelector("[data-pos-editor]")

@@ -16,7 +16,8 @@ declare module 'vue' {
     //// that introduced the component. At the next upstream merge do NOT resolve this file
     //// by hand: take upstream's copy and let the plugin regenerate it. The regeneration erases
     //// these `////` lines: put them back from the previous copy of this file, and give each new
-    //// component of ours a marker of its own, in the same style.
+    //// component of ours a marker of its own, in the same style. `vitest` and the dev server
+    //// regenerate the file too: after either, run `git checkout -- POS/components.d.ts`.
     //// Neoffice — AddressAutocomplete: geo.admin address lookup used by the POS customer
     //// dialogs (structured street + N°, ADR-002). Upstream has a single free-text address
     //// field (98500337, 2026-07-18 "fix(pos/address): geo.admin house number from label
@@ -40,7 +41,8 @@ declare module 'vue' {
     CashInOutDialog: typeof import('./src/components/pos/CashInOutDialog.vue')['default']
     CheckboxField: typeof import('./src/components/settings/CheckboxField.vue')['default']
     ClearCacheOverlay: typeof import('./src/components/common/ClearCacheOverlay.vue')['default']
-    //// Neoffice — the Printing tab of the till's settings (maintenance#1935).
+    //// Neoffice — the Printing tab of the till's settings (maintenance#1935). Upstream's settings have
+    //// two tabs, Stock and Sales, and no Printing tab.
     CloudPrntTillSettings: typeof import('./src/components/settings/CloudPrntTillSettings.vue')['default']
     CountryCodeSelector: typeof import('./src/components/common/CountryCodeSelector.vue')['default']
     CouponDialog: typeof import('./src/components/sale/CouponDialog.vue')['default']
