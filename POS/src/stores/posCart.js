@@ -498,7 +498,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// its KDS status and whatever a guest had already paid by QR (458d81a9 2026-03-20
 		//// restaurant mode; 644ad918 2026-03-26 takeaway; 6d7195f4 2026-03-30 guest paid amount;
 		//// 1c05e7c7 2026-04-01 tips shown separately).
-		restaurantTable.value = null;
+		//// Neoffice — the table goes through its setter: useInvoice keeps a mirror of it (see
+		//// setRestaurantTable) and submit_invoice reads THAT copy, so clearing only the store's own
+		//// ref let the ticket after a paid table ticket be saved on the same table.
+		setRestaurantTable(null);
 		isTakeaway.value = false;
 		takeawayNumber.value = "";
 		kdsStatus.value = "Pending";
