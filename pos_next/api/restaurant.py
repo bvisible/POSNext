@@ -326,8 +326,14 @@ def broadcast_cfd_update(payload):
 	return {"status": "success"}
 
 @frappe.whitelist()
-def get_preparation_stations(restaurant=None):
-	"""Fetch the active preparation stations of the restaurant (the till's own unless one is named)."""
+def get_preparation_stations(restaurant=None, station=None):
+	"""Fetch the active preparation stations of the restaurant (the till's own unless one is named).
+
+	A kitchen screen opened on a station alone (a bookmark made before a site could hold several restaurants) names
+	that station: the restaurant is then the station's, as for `get_kds_orders`.
+	"""
+	if not restaurant and station:
+		restaurant = scope.restaurant_of_record("Preparation Station", station)
 	restaurant = restaurant or scope.current_restaurant()
 	return scope.stamp(
 		frappe.get_all(
@@ -1217,6 +1223,88 @@ def delete_area(name):
 
 
 @frappe.whitelist()
+def get_restaurant_cards(restaurant=None, selectable_only=0):
+	"""The cards of one restaurant (the till's own unless one is named), as the card editor and the settings lists them.
+
+	Every card of the restaurant, the inactive ones and the permanent card included. With `selectable_only`, the
+	active cards that are not the permanent one: what a menu or a takeaway lane can be set to. A card that names no
+	restaurant is the default restaurant's, like everywhere else (`scope.restaurant_or_filters`).
+	"""
+	from frappe.utils import cint
+
+	restaurant = restaurant or scope.current_restaurant()
+	return scope.stamp(
+		frappe.get_list(
+			"Restaurant Card",
+			filters={"is_active": 1, "is_permanent": 0} if cint(selectable_only) else {},
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=["name", "card_name", "is_active", "is_permanent"],
+			order_by="is_active desc, card_name asc",
+			limit_page_length=0,
+		),
+		restaurant,
+	)
+
+
+# The length of the card name field, which is also the name of the card
+CARD_NAME_LENGTH = 140
+
+
+def _free_card_name(base, restaurant):
+	"""The first free name for a new card of a restaurant: `base`, else `base - <restaurant>`, else that and a number.
+
+	A card is named by its card name, which is unique on the whole site: what one restaurant took is not free for
+	another.
+	"""
+	label = frappe.db.get_value("Restaurant", restaurant, "restaurant_name") if restaurant else None
+	stems = [base] + ([f"{base} - {label}"] if label else [])
+	for stem in stems:
+		if not frappe.db.exists("Restaurant Card", stem[:CARD_NAME_LENGTH]):
+			return stem[:CARD_NAME_LENGTH]
+	number = 2
+	while True:
+		suffix = f" {number}"
+		name = stems[-1][: CARD_NAME_LENGTH - len(suffix)] + suffix
+		if not frappe.db.exists("Restaurant Card", name):
+			return name
+		number += 1
+
+
+@frappe.whitelist()
+def get_or_create_permanent_card(restaurant=None):
+	"""The card of the permanent items of a restaurant (the till's own unless one is named), made when it has none.
+
+	Every restaurant has its own, and its name is free: "Permanent items", else "Permanent items - <restaurant>"
+	when another restaurant already took the first (see `_free_card_name`). Asked again, it answers the same card.
+	"""
+	if not frappe.has_permission("Restaurant Card", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	restaurant = restaurant or scope.current_restaurant()
+	existing = frappe.get_all(
+		"Restaurant Card",
+		filters={"is_permanent": 1},
+		or_filters=scope.restaurant_or_filters(restaurant),
+		pluck="name",
+		order_by="creation asc",
+		limit=1,
+	)
+	if existing:
+		return {"name": existing[0], "created": False}
+	# Inserted as the user: whoever may not create a card cannot make this one either
+	doc = frappe.get_doc(
+		{
+			"doctype": "Restaurant Card",
+			"restaurant": restaurant,
+			"card_name": _free_card_name(_("Permanent items"), restaurant),
+			"is_active": 1,
+			"is_permanent": 1,
+		}
+	)
+	doc.insert()
+	return {"name": doc.name, "created": True}
+
+
+@frappe.whitelist()
 def get_active_cards(restaurant=None):
 	"""Fetch the active cards of one restaurant, filtered by date and current time slot assignment.
 	The restaurant is the one named, else the till's own: its cards, and its opening hours.
@@ -1799,12 +1887,18 @@ def delete_preparation_workflow(name):
 
 
 @frappe.whitelist()
-def get_station_workflows():
-	"""Fetch all active stations with their resolved workflow steps."""
-	stations = frappe.get_all(
-		"Preparation Station",
-		filters={"is_active": 1},
-		fields=["name", "station_name", "color"]
+def get_station_workflows(restaurant=None):
+	"""Fetch the active stations of the restaurant (the till's own unless one is named) with their resolved workflow steps."""
+	restaurant = restaurant or scope.current_restaurant()
+	stations = scope.stamp(
+		frappe.get_all(
+			"Preparation Station",
+			filters={"is_active": 1},
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=["name", "station_name", "color"],
+			order_by="station_name",
+		),
+		restaurant,
 	)
 
 	# Safely check for workflow field

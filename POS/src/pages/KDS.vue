@@ -88,10 +88,15 @@ import { initSocket } from "@/socket"
 const { showError } = useToast()
 const restaurantStore = useRestaurantStore()
 // The restaurant whose orders this screen shows: the one in the address (a kitchen tablet has no till of its own),
-// else the till's restaurant. With neither the server picks the restaurant of the station asked for, else the default.
-const urlRestaurant = new URLSearchParams(window.location.search).get("restaurant")
+// else the one of the station in the address (a bookmark made before a site could hold several restaurants names a
+// station alone), else the till's restaurant. With none of them the server picks the user's open till, else the default.
+const urlParams = new URLSearchParams(window.location.search)
+const urlStation = urlParams.get("station")
+let screenRestaurant = urlParams.get("restaurant")
 const ofTheRestaurant = () => ({
-	restaurant: urlRestaurant || restaurantStore.tillRestaurant,
+	restaurant:
+		screenRestaurant ||
+		(urlStation ? undefined : restaurantStore.tillRestaurant),
 })
 const orders = ref([])
 const loading = ref(true)
@@ -156,17 +161,21 @@ async function loadOrders() {
 
 onMounted(async () => {
 	try {
-		// Load preparation stations
+		// Load preparation stations (those of the restaurant of the station in the address, when only it is named)
 		const stationsRes = await call(
 			"pos_next.api.restaurant.get_preparation_stations",
-			ofTheRestaurant(),
+			{ ...ofTheRestaurant(), ...(urlStation ? { station: urlStation } : {}) },
 		)
-		if (stationsRes) stations.value = stationsRes
+		if (stationsRes) {
+			stations.value = stationsRes
+			// The server answered for the station's restaurant: the orders of this screen are that restaurant's too
+			if (!screenRestaurant && urlStation) {
+				screenRestaurant = stationsRes[0]?.restaurant || null
+			}
+		}
 
 		// Check URL query param for pre-selection
-		const urlParams = new URLSearchParams(window.location.search)
-		const stationParam = urlParams.get("station")
-		if (stationParam) selectedStation.value = stationParam
+		if (urlStation) selectedStation.value = urlStation
 	} catch (error) {
 		console.error("Failed to load stations:", error)
 	}

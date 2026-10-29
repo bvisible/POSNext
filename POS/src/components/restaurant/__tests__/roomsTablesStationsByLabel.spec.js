@@ -51,11 +51,11 @@ describe("the kitchen screen shows labels", () => {
 				qty: 1,
 				kds_status: "Pending",
 				preparation_station: STATION_NAME,
-				station_name: "Cuisine",
+				station_name: "Kitchen",
 			},
 		],
 	}
-	const stations = [{ name: STATION_NAME, station_name: "Cuisine", color: "#d68a59" }]
+	const stations = [{ name: STATION_NAME, station_name: "Kitchen", color: "#d68a59" }]
 
 	it("names the table of an order by its label", () => {
 		const text = show(KDSOrderCard, { order, stations }).text()
@@ -67,7 +67,7 @@ describe("the kitchen screen shows labels", () => {
 	it("names the station of a line by its label", () => {
 		const text = show(KDSOrderCard, { order, stations, showStationBadge: true }).text()
 
-		expect(text).toContain("Cuisine")
+		expect(text).toContain("Kitchen")
 		expect(text).not.toContain(STATION_NAME)
 	})
 
@@ -100,7 +100,7 @@ describe("the runner's cards show labels", () => {
 					item_name: "Soup",
 					qty: 1,
 					preparation_station: STATION_NAME,
-					station_name: "Cuisine",
+					station_name: "Kitchen",
 					station_color: "#d68a59",
 				},
 			],
@@ -109,7 +109,7 @@ describe("the runner's cards show labels", () => {
 		const text = show(RunnerOrderCard, { card, viewMode: "table" }).text()
 
 		expect(text).toContain("T1")
-		expect(text).toContain("Cuisine")
+		expect(text).toContain("Kitchen")
 		expect(text).not.toContain(STATION_NAME)
 	})
 })
@@ -119,20 +119,20 @@ describe("the reservation desk shows labels", () => {
 		{
 			name: "RES-2026-00001",
 			status: "Confirmed",
-			guest_name: "Jules",
+			guest_name: "Jane",
 			no_of_guests: 2,
 			reservation_time: "20:00:00",
 			channel: "Phone",
-			tables: [{ restaurant_table: TABLE_NAME, table_name: "T1", area: "r0o1m2h3a4", area_name: "Salle 1" }],
+			tables: [{ restaurant_table: TABLE_NAME, table_name: "T1", area: "r0o1m2h3a4", area_name: "Room 1" }],
 		},
 	]
 
 	it("offers a room by its label and chooses it by its name", () => {
 		const wrapper = show(ReservationList, {
 			reservations,
-			areas: [{ name: "r0o1m2h3a4", label: "Salle 1" }],
+			areas: [{ name: "r0o1m2h3a4", label: "Room 1" }],
 		})
-		const option = wrapper.findAll("option").find((o) => o.text() === "Salle 1")
+		const option = wrapper.findAll("option").find((o) => o.text() === "Room 1")
 
 		expect(option.element.value).toBe("r0o1m2h3a4")
 		expect(wrapper.text()).not.toContain("r0o1m2h3a4")
@@ -160,7 +160,7 @@ describe("the reservation desk shows labels", () => {
 
 describe("the reservation form shows labels", () => {
 	const tables = [
-		{ name: "t0h1a2s3h4", table_name: "T1", area: "r0o1m2h3a4", area_name: "Salle 1", capacity: 4 },
+		{ name: "t0h1a2s3h4", table_name: "T1", area: "r0o1m2h3a4", area_name: "Room 1", capacity: 4 },
 		{ name: "t5h6a7s8h9", table_name: "B1", area: "r5o6m7h8a9", area_name: "Bar", capacity: 2 },
 	]
 
@@ -170,9 +170,9 @@ describe("the reservation form shows labels", () => {
 		const text = wrapper.text()
 
 		expect(wrapper.findAll(".area-tab").map((tab) => tab.text())).toEqual(
-			expect.arrayContaining([expect.stringContaining("Salle 1"), expect.stringContaining("Bar")]),
+			expect.arrayContaining([expect.stringContaining("Room 1"), expect.stringContaining("Bar")]),
 		)
-		expect(wrapper.findAll(".table-chip-area").map((chip) => chip.text())).toEqual(["Salle 1", "Bar"])
+		expect(wrapper.findAll(".table-chip-area").map((chip) => chip.text())).toEqual(["Room 1", "Bar"])
 		expect(text).not.toContain("r0o1m2h3a4")
 		wrapper.unmount()
 	})

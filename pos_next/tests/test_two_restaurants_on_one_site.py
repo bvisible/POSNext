@@ -7,7 +7,7 @@ restaurant's, and the name of a room, a table or a station only has to be unique
 
 The suite relies on neither the patches nor any restaurant: a fresh CI site runs no patch, while the clone of a
 working site holds a real restaurant with its rooms, its cards and its reservations. Every test builds the two
-restaurants it needs, with the same labels in each ("Salle 1", "T1", "Cuisine"), and nothing here commits: the tests
+restaurants it needs, with the same labels in each ("Room 1", "T1", "Kitchen"), and nothing here commits: the tests
 that reach a commit run with it switched off, and each test rolls back.
 """
 
@@ -35,9 +35,9 @@ from pos_next.tests.test_till_writes_need_the_till import (
 	_user,
 )
 
-ROOM = "Salle 1"
+ROOM = "Room 1"
 TABLE = "T1"
-STATION = "Cuisine"
+STATION = "Kitchen"
 NO_ONE = "_Test Till Nowhere"
 BOOKING_ONLINE = {"enable_reservations": 1, "enable_online_reservations": 1}
 # The records a site made before the restaurants existed, by the key the patch tests use for each
@@ -67,8 +67,18 @@ def a_request_from(ip):
 			frappe.local.request_ip = before
 
 
+@contextmanager
+def the_default_restaurant_is(restaurant):
+	"""The default restaurant as every module that names it reads it (None: a site without any restaurant)."""
+	with (
+		patch.object(settings, "default_restaurant", return_value=restaurant),
+		patch.object(scope, "default_restaurant", return_value=restaurant),
+	):
+		yield
+
+
 class TwoRestaurants:
-	"""Restaurant A and restaurant B, each with a room "Salle 1", a table "T1" in it and a station "Cuisine"."""
+	"""Restaurant A and restaurant B, each with a room "Room 1", a table "T1" in it and a station "Kitchen"."""
 
 	def setUp(self):
 		super().setUp()
@@ -224,7 +234,7 @@ class TestLabelsAreUniqueWithinARestaurant(TwoRestaurants, FrappeTestCase):
 			self.make_station(self.a, station_name=STATION)
 
 	def test_a_label_is_unique_in_the_restaurant_whatever_the_room_or_the_case(self):
-		second_room = self.make_room(self.a, label="Terrasse")
+		second_room = self.make_room(self.a, label="Terrace")
 		with self.assertRaises(frappe.ValidationError):
 			self.make_table(self.a, second_room, table_name=TABLE.lower())
 		with self.assertRaises(frappe.ValidationError):
@@ -249,8 +259,8 @@ class TestLabelsAreUniqueWithinARestaurant(TwoRestaurants, FrappeTestCase):
 		self.assertNotEqual(self.room_a, self.room_b)
 
 	def test_renaming_a_room_changes_its_label_and_keeps_its_name(self):
-		restaurant_api.rename_area(self.room_a, "Terrasse")
-		self.assertEqual(frappe.db.get_value("Restaurant Area", self.room_a, "area_name"), "Terrasse")
+		restaurant_api.rename_area(self.room_a, "Terrace")
+		self.assertEqual(frappe.db.get_value("Restaurant Area", self.room_a, "area_name"), "Terrace")
 		# The table still links to the same room
 		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_a, "area"), self.room_a)
 		# The label B's room carries is free in A, and taken in B
@@ -276,7 +286,7 @@ class TestLabelsAreUniqueWithinARestaurant(TwoRestaurants, FrappeTestCase):
 		room.restaurant = self.b
 		with self.assertRaises(frappe.ValidationError):
 			room.save(ignore_permissions=True)
-		empty = self.make_room(self.a, label="Cave")
+		empty = self.make_room(self.a, label="Cellar")
 		room = frappe.get_doc("Restaurant Area", empty)
 		room.restaurant = self.b
 		room.save(ignore_permissions=True)
@@ -290,10 +300,10 @@ class TestLabelsAreUniqueWithinARestaurant(TwoRestaurants, FrappeTestCase):
 
 	def test_a_record_naming_no_restaurant_joins_the_default_one(self):
 		for doctype, values in (
-			("Restaurant Area", {"area_name": "Sans restaurant"}),
-			("Restaurant Card", {"card_name": "_Test Card Sans Restaurant", "is_active": 1}),
-			("Restaurant Menu", {"menu_name": "_Test Menu Sans Restaurant", "price": 10}),
-			("Preparation Station", {"station_name": "Sans restaurant"}),
+			("Restaurant Area", {"area_name": "No restaurant"}),
+			("Restaurant Card", {"card_name": "_Test Card No Restaurant", "is_active": 1}),
+			("Restaurant Menu", {"menu_name": "_Test Menu No Restaurant", "price": 10}),
+			("Preparation Station", {"station_name": "No restaurant"}),
 		):
 			with self.subTest(doctype=doctype):
 				doc = frappe.get_doc({"doctype": doctype, **values}).insert(ignore_permissions=True)
@@ -358,6 +368,33 @@ class TestEachTillSeesItsOwnRestaurant(TwoRestaurants, FrappeTestCase):
 			self.station_b,
 		)
 
+	def test_the_workflows_of_the_stations_are_the_restaurants(self):
+		answer = restaurant_api.get_station_workflows(restaurant=self.b)
+		names = [station["name"] for station in answer["stations"]]
+		self.assertIn(self.station_b, names)
+		self.assertNotIn(self.station_a, names)
+		self.assertEqual({station["restaurant"] for station in answer["stations"]}, {self.b})
+		self.assertEqual(
+			[station["station_name"] for station in answer["stations"] if station["name"] == self.station_b],
+			[STATION],
+		)
+
+	def test_the_workflows_of_a_till_are_the_ones_of_its_restaurants_stations(self):
+		self.make_till("_Test Till A", self.a)
+		with self.at_the_till_of("_Test Till A"):
+			names = [station["name"] for station in restaurant_api.get_station_workflows()["stations"]]
+		self.assertIn(self.station_a, names)
+		self.assertNotIn(self.station_b, names)
+
+	def test_a_kitchen_screen_opened_on_a_station_alone_lists_the_stations_of_its_restaurant(self):
+		stations = restaurant_api.get_preparation_stations(station=self.station_b)
+		self.assertEqual({station["restaurant"] for station in stations}, {self.b})
+		self.assertEqual([station["name"] for station in stations], [self.station_b])
+
+	def test_the_restaurant_in_the_address_of_a_kitchen_screen_wins_over_its_station(self):
+		stations = restaurant_api.get_preparation_stations(restaurant=self.a, station=self.station_b)
+		self.assertEqual([station["name"] for station in stations], [self.station_a])
+
 	def test_cards_menus_and_tips_are_scoped(self):
 		card_a, card_b = self.make_card(self.a, "_Test Card A"), self.make_card(self.b, "_Test Card B")
 		menu_a, menu_b = self.make_menu(self.a, "_Test Menu A"), self.make_menu(self.b, "_Test Menu B")
@@ -395,19 +432,113 @@ class TestEachTillSeesItsOwnRestaurant(TwoRestaurants, FrappeTestCase):
 		)
 
 	def test_created_rooms_and_stations_belong_to_the_restaurant_asked_or_the_tills(self):
-		room = restaurant_api.create_area("Patio", restaurant=self.b)
+		room = restaurant_api.create_area("Garden", restaurant=self.b)
 		self.assertEqual(frappe.db.get_value("Restaurant Area", room["name"], "restaurant"), self.b)
 		self.make_till("_Test Till A", self.a)
 		with self.at_the_till_of("_Test Till A"):
-			room = restaurant_api.create_area("Patio")
+			room = restaurant_api.create_area("Garden")
 			station = restaurant_api.create_station("Pizza")
 		self.assertEqual(frappe.db.get_value("Restaurant Area", room["name"], "restaurant"), self.a)
 		self.assertEqual(frappe.db.get_value("Preparation Station", station["name"], "restaurant"), self.a)
 		# A station drawn on a room is in that room's restaurant
-		station = restaurant_api.create_station("Glaces", area=self.room_b)
+		station = restaurant_api.create_station("Ice creams", area=self.room_b)
 		self.assertEqual(frappe.db.get_value("Preparation Station", station["name"], "restaurant"), self.b)
 		table = restaurant_api.create_table("T9", self.room_b)
 		self.assertEqual(frappe.db.get_value("Restaurant Table", table["name"], "restaurant"), self.b)
+
+
+class TestEachRestaurantHasItsOwnCards(TwoRestaurants, FrappeTestCase):
+	"""What the card editor and the settings dialog list, and the card of the permanent items."""
+
+	@property
+	def plain(self):
+		"""The name the first restaurant to ask gets, in the language of the user."""
+		return frappe._("Permanent items")
+
+	def permanent(self, restaurant):
+		return restaurant_api.get_or_create_permanent_card(restaurant=restaurant)
+
+	def names(self, cards):
+		return [card["name"] for card in cards]
+
+	def test_every_restaurant_gets_a_permanent_card_whoever_took_the_name_first(self):
+		first, second = self.permanent(self.a), self.permanent(self.b)
+		self.assertTrue(second["created"])
+		self.assertNotEqual(first["name"], second["name"])
+		for answer, restaurant in ((first, self.a), (second, self.b)):
+			card = frappe.db.get_value(
+				"Restaurant Card", answer["name"], ["restaurant", "is_permanent", "is_active"], as_dict=True
+			)
+			self.assertEqual((card.restaurant, card.is_permanent, card.is_active), (restaurant, 1, 1))
+
+	def test_the_name_is_free_when_a_card_of_another_restaurant_already_has_the_plain_one(self):
+		if not frappe.db.exists("Restaurant Card", self.plain):
+			self.make_card(self.a, self.plain)
+		answer = self.permanent(self.b)
+		self.assertEqual(answer["name"], f"{self.plain} - _Test Restaurant B")
+		self.assertEqual(frappe.db.get_value("Restaurant Card", answer["name"], "restaurant"), self.b)
+
+	def test_the_name_is_still_free_when_even_the_restaurants_own_one_is_taken(self):
+		for taken in (self.plain, f"{self.plain} - _Test Restaurant B"):
+			if not frappe.db.exists("Restaurant Card", taken):
+				self.make_card(self.a, taken)
+		self.assertEqual(self.permanent(self.b)["name"], f"{self.plain} - _Test Restaurant B 2")
+
+	def test_a_restaurant_asked_again_gets_the_same_card(self):
+		first = self.permanent(self.b)
+		again = self.permanent(self.b)
+		self.assertEqual((again["name"], again["created"]), (first["name"], False))
+		self.assertEqual(frappe.db.count("Restaurant Card", {"restaurant": self.b, "is_permanent": 1}), 1)
+
+	def test_a_till_gets_the_permanent_card_of_its_own_restaurant(self):
+		self.make_till("_Test Till B", self.b)
+		with self.at_the_till_of("_Test Till B"):
+			answer = restaurant_api.get_or_create_permanent_card()
+		self.assertEqual(frappe.db.get_value("Restaurant Card", answer["name"], "restaurant"), self.b)
+
+	def test_whoever_may_not_read_the_cards_gets_no_permanent_card(self):
+		self.two_real_tills()
+		frappe.set_user(OTHER_TILL)
+		with self.assertRaises(frappe.PermissionError):
+			self.permanent(self.b)
+
+	def test_the_editor_lists_the_cards_of_the_restaurant_with_its_permanent_card(self):
+		card_a, card_b = self.make_card(self.a, "_Test Card A"), self.make_card(self.b, "_Test Card B")
+		permanent_b = self.permanent(self.b)["name"]
+		cards = restaurant_api.get_restaurant_cards(restaurant=self.b)
+		self.assertTrue({card_b, permanent_b} <= set(self.names(cards)))
+		self.assertNotIn(card_a, self.names(cards))
+		self.assertEqual({card["restaurant"] for card in cards}, {self.b})
+		self.assertEqual([card["is_permanent"] for card in cards if card["name"] == permanent_b], [1])
+
+	def test_a_card_that_names_no_restaurant_is_the_default_restaurants_in_the_editor(self):
+		card = self.make_card(self.a, "_Test Card Legacy")
+		frappe.db.set_value("Restaurant Card", card, "restaurant", None)
+		with the_default_restaurant_is(self.a):
+			self.assertIn(card, self.names(restaurant_api.get_restaurant_cards(restaurant=self.a)))
+			self.assertNotIn(card, self.names(restaurant_api.get_restaurant_cards(restaurant=self.b)))
+
+	def test_the_editor_of_a_till_lists_its_restaurants_cards(self):
+		card_a, card_b = self.make_card(self.a, "_Test Card A"), self.make_card(self.b, "_Test Card B")
+		self.make_till("_Test Till A", self.a)
+		with self.at_the_till_of("_Test Till A"):
+			names = self.names(restaurant_api.get_restaurant_cards())
+		self.assertIn(card_a, names)
+		self.assertNotIn(card_b, names)
+
+	def test_the_settings_dialog_offers_the_active_cards_of_the_restaurant_that_are_not_permanent(self):
+		active = self.make_card(self.a, "_Test Card Active")
+		inactive = self.make_card(self.a, "_Test Card Inactive", is_active=0)
+		other = self.make_card(self.b, "_Test Card Of The Other")
+		permanent = self.permanent(self.a)["name"]
+		offered = self.names(restaurant_api.get_restaurant_cards(restaurant=self.a, selectable_only=1))
+		self.assertIn(active, offered)
+		self.assertNotIn(inactive, offered)
+		self.assertNotIn(permanent, offered)
+		self.assertNotIn(other, offered)
+		# The editor lists them all
+		listed = self.names(restaurant_api.get_restaurant_cards(restaurant=self.a))
+		self.assertTrue({active, inactive, permanent} <= set(listed))
 
 
 class TestReservationsAreScoped(TwoRestaurants, FrappeTestCase):
@@ -472,23 +603,37 @@ class TestReservationsAreScoped(TwoRestaurants, FrappeTestCase):
 			[(t["name"], t["table_name"], t["area_name"]) for t in tables], [(self.table_b, TABLE, ROOM)]
 		)
 
-	def test_the_online_booking_form_refuses_the_table_of_another_restaurant(self):
-		frappe.db.set_value("Restaurant", self.a, BOOKING_ONLINE)
+	def book_online(self, table, restaurant):
+		"""A visitor books `table` on the public form of `restaurant`."""
+		frappe.db.set_value("Restaurant", restaurant, BOOKING_ONLINE)
 		frappe.clear_document_cache("Restaurant")
-		with (
-			patch.object(reservations, "_send_verification_email"),
-			self.assertRaises(frappe.ValidationError),
-		):
-			reservations.submit_guest_reservation(
+		with patch.object(reservations, "_send_verification_email"):
+			return reservations.submit_guest_reservation(
 				add_days(nowdate(), 1),
 				"20:00:00",
 				2,
 				"_Test Guest",
 				"0000000000",
 				"test-two-restaurants@yopmail.com",
-				tables=json.dumps([self.table_b]),
-				restaurant=self.a,
+				tables=json.dumps([table]),
+				restaurant=restaurant,
 			)
+
+	def test_the_online_booking_form_refuses_the_table_of_another_restaurant(self):
+		# The refusal is the table's: the form got as far as saving the reservation (the customer is made before)
+		with self.assertRaises(frappe.ValidationError) as refused:
+			self.book_online(self.table_b, self.a)
+		self.assertIn(f"Table {TABLE} belongs to another restaurant", str(refused.exception))
+		self.assertFalse(
+			frappe.db.exists("Restaurant Reservation", {"email": "test-two-restaurants@yopmail.com"})
+		)
+
+	def test_the_online_booking_form_books_a_table_of_the_restaurant_asked(self):
+		answer = self.book_online(self.table_a, self.a)
+		self.assertEqual(answer["status"], "ok")
+		reservation = frappe.get_doc("Restaurant Reservation", answer["name"])
+		self.assertEqual(reservation.restaurant, self.a)
+		self.assertEqual([row.restaurant_table for row in reservation.tables], [self.table_a])
 
 
 class TestWhichRestaurantATillWorksFor(TwoRestaurants, FrappeTestCase):
@@ -511,11 +656,45 @@ class TestWhichRestaurantATillWorksFor(TwoRestaurants, FrappeTestCase):
 			with self.at_the_till_of(None):
 				self.assertEqual(scope.current_restaurant(), self.b)
 
-	def test_a_till_whose_settings_name_no_restaurant_belongs_to_the_default_one(self):
+	def test_a_till_whose_settings_name_no_restaurant_belongs_to_none(self):
 		self.make_till("_Test Till Retail", None, enable_restaurant_mode=0)
-		with patch.object(settings, "default_restaurant", return_value=self.b):
-			self.assertEqual(settings.restaurant_for_profile("_Test Till Retail"), self.b)
-			self.assertEqual(settings.restaurant_for_profile(NO_ONE), self.b)
+		with the_default_restaurant_is(self.b):
+			# It is not a restaurant till: not the default restaurant's either, which only "no till at all" gets
+			self.assertIsNone(settings.restaurant_for_profile("_Test Till Retail"))
+			self.assertIsNone(scope.current_restaurant("_Test Till Retail"))
+			self.assertEqual(settings.restaurant_for_profile(None), self.b)
+
+	def test_a_profile_without_any_settings_belongs_to_none(self):
+		with the_default_restaurant_is(self.b):
+			self.assertIsNone(settings.restaurant_for_profile(NO_ONE))
+			self.assertIsNone(scope.current_restaurant(NO_ONE))
+
+	def test_a_till_whose_settings_are_disabled_belongs_to_none_and_has_no_takeaway_lane(self):
+		# One row is read for both: the restaurant of a till and its other settings agree on whether it has settings
+		self.make_till("_Test Till Off", self.a, enabled=0, enable_takeaway=1)
+		self.assertIsNone(settings.restaurant_for_profile("_Test Till Off"))
+		self.assertFalse(scope.till_settings("_Test Till Off", ["enable_takeaway"]).enable_takeaway)
+		self.make_till("_Test Till On", self.a, enable_takeaway=1)
+		self.assertEqual(settings.restaurant_for_profile("_Test Till On"), self.a)
+		self.assertTrue(scope.till_settings("_Test Till On", ["enable_takeaway"]).enable_takeaway)
+
+	def test_the_settings_and_the_lists_of_a_screen_come_from_the_same_restaurant(self):
+		self.make_till("_Test Till B", self.b)
+		self.make_till("_Test Till Retail", None, enable_restaurant_mode=0)
+		with the_default_restaurant_is(self.a):
+			for profile, expected in (("_Test Till B", self.b), ("_Test Till Retail", None), (None, self.a)):
+				with self.subTest(till=profile), self.at_the_till_of(profile):
+					self.assertEqual(scope.current_restaurant(), expected)
+					self.assertEqual(settings.get_restaurant_settings().get("name"), expected)
+
+	def test_a_user_whose_till_is_not_a_restaurant_till_sees_no_floor(self):
+		self.make_till("_Test Till Retail", None, enable_restaurant_mode=0)
+		with self.at_the_till_of("_Test Till Retail"):
+			floor = restaurant_api.get_tables()
+			stations = restaurant_api.get_preparation_stations()
+			cards = restaurant_api.get_restaurant_cards()
+		self.assertEqual((floor["tables"], floor["areas"], floor["stations"]), ([], [], []))
+		self.assertEqual((stations, cards), ([], []))
 
 	def test_a_guest_takeaway_token_without_a_till_reads_the_default_restaurants_settings(self):
 		frappe.db.set_value("Restaurant", self.a, "enable_web_takeaway", 1)
@@ -567,6 +746,70 @@ class TestWhichRestaurantATillWorksFor(TwoRestaurants, FrappeTestCase):
 			scope.till_settings("_Test Till B", ["enable_loyalty_program"]).enable_loyalty_program
 		)
 		self.assertFalse(scope.till_settings(None, ["enable_loyalty_program"]).enable_loyalty_program)
+
+
+class TestWhichRestaurantARecordBelongsTo(TwoRestaurants, FrappeTestCase):
+	"""A record names its restaurant; one that names none is the default restaurant's, whatever else is asked."""
+
+	def kept_by(self, restaurant, doctype="Restaurant Area"):
+		return frappe.get_all(doctype, or_filters=scope.restaurant_or_filters(restaurant), pluck="name")
+
+	def an_unattached_room(self):
+		room = self.make_room(self.a, label="Orphan")
+		frappe.db.set_value("Restaurant Area", room, "restaurant", None)
+		return room
+
+	def test_a_record_that_names_no_restaurant_is_the_default_ones_and_nobody_elses(self):
+		room = self.an_unattached_room()
+		with the_default_restaurant_is(self.a):
+			self.assertIn(room, self.kept_by(self.a))
+			self.assertNotIn(room, self.kept_by(self.b))
+
+	def test_a_till_that_belongs_to_no_restaurant_keeps_no_record_on_a_site_that_has_restaurants(self):
+		room = self.an_unattached_room()
+		with the_default_restaurant_is(self.a):
+			self.assertEqual(self.kept_by(None), [])
+			self.assertNotIn(room, self.kept_by(None))
+
+	def test_on_a_site_without_any_restaurant_the_records_that_name_none_are_kept(self):
+		room = self.an_unattached_room()
+		with the_default_restaurant_is(None):
+			self.assertIn(room, self.kept_by(None))
+			self.assertNotIn(self.room_a, self.kept_by(None))
+
+	def test_the_restaurant_of_a_record_is_the_one_it_names_else_the_default_one(self):
+		with the_default_restaurant_is(self.a):
+			self.assertEqual(scope.restaurant_of_record("Restaurant Table", self.table_b), self.b)
+			# A record that is gone, and no record at all, are the default restaurant's: the link validation says
+			# the record does not exist, not this lookup
+			self.assertEqual(scope.restaurant_of_record("Restaurant Table", "no such table"), self.a)
+			self.assertEqual(scope.restaurant_of_record("Restaurant Table", None), self.a)
+
+	def test_an_order_belongs_to_the_restaurant_of_its_table_else_of_its_till_else_to_the_default_one(self):
+		self.make_till("_Test Till B", self.b)
+		self.make_till("_Test Till Retail", None, enable_restaurant_mode=0)
+		orders = [
+			# A takeaway order of a till that is not a restaurant till names no restaurant: the default one's
+			frappe._dict(name="ORDER-RETAIL", restaurant_table=None, pos_profile="_Test Till Retail"),
+			frappe._dict(name="ORDER-TILL-B", restaurant_table=None, pos_profile="_Test Till B"),
+			frappe._dict(name="ORDER-NO-TILL", restaurant_table=None, pos_profile=None),
+			# The table decides, whatever the till
+			frappe._dict(
+				name="ORDER-TABLE-B", restaurant_table=self.table_b, pos_profile="_Test Till Retail"
+			),
+		]
+
+		def kept(restaurant):
+			return {order.name for order in scope.keep_orders_of(orders, restaurant)}
+
+		with the_default_restaurant_is(self.a):
+			self.assertEqual(kept(self.a), {"ORDER-RETAIL", "ORDER-NO-TILL"})
+			self.assertEqual(kept(self.b), {"ORDER-TILL-B", "ORDER-TABLE-B"})
+			# A till that belongs to no restaurant keeps no order
+			self.assertEqual(kept(None), set())
+		# A site without any restaurant has no default one: what names none is all there is to keep
+		with the_default_restaurant_is(None):
+			self.assertEqual(kept(None), {"ORDER-RETAIL", "ORDER-NO-TILL"})
 
 
 class TestTheTillTellsItsRestaurant(TwoRestaurants, FrappeTestCase):
@@ -675,6 +918,47 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 		)
 		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_b, "status"), "Occupied")
 
+	def test_the_alert_of_a_guest_event_names_the_restaurant_of_its_table(self):
+		with patch.object(frappe, "publish_realtime") as published:
+			guest_ordering._publish_to_the_tills(
+				"guest_order_submitted", self.table_b, {"table": self.table_b}
+			)
+		published.assert_called_once_with(
+			"guest_order_submitted", {"restaurant": self.b, "table": self.table_b}
+		)
+
+	def test_a_table_that_names_no_restaurant_is_announced_for_the_default_one(self):
+		frappe.db.set_value("Restaurant Table", self.table_a, "restaurant", None)
+		with (
+			the_default_restaurant_is(self.b),
+			patch.object(frappe, "publish_realtime") as published,
+		):
+			guest_ordering._publish_to_the_tills("guest_payment_received", self.table_a, {})
+		self.assertEqual(published.call_args.args[1]["restaurant"], self.b)
+
+	def test_every_alert_a_guest_order_sends_to_the_tills_names_its_restaurant(self):
+		token = frappe.get_doc(
+			{
+				"doctype": "Guest Order Token",
+				"mode": "restaurant",
+				"table": self.table_b,
+				"pos_profile": self.fx.other_profile,
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.set_value(
+			"Restaurant", self.b, {"enable_qr_ordering": 1, "qr_order_validation": "Server Approval"}
+		)
+		frappe.clear_document_cache("Restaurant")
+		with patch.object(frappe, "publish_realtime") as published:
+			guest_ordering.submit_guest_order(
+				token.token, json.dumps([{"item_code": self.fx.item, "qty": 1, "rate": 5}])
+			)
+		sent = {call.args[0]: call.args[1] for call in published.call_args_list if len(call.args) > 1}
+		for event in ("guest_order_submitted", "guest_order_pending"):
+			with self.subTest(event=event):
+				self.assertEqual(sent[event]["restaurant"], self.b)
+				self.assertEqual(sent[event]["table"], self.table_b)
+
 	def test_the_guest_page_shows_the_label_of_the_room_and_the_loyalty_of_its_till(self):
 		token = frappe.get_doc(
 			{
@@ -691,6 +975,12 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 		self.assertFalse(answer["has_loyalty_program"])
 		frappe.db.set_value("POS Settings", {"pos_profile": self.fx.profile}, "enable_loyalty_program", 1)
 		self.assertTrue(guest_ordering.validate_token(token.token)["has_loyalty_program"])
+
+	def test_a_tip_of_a_till_that_is_not_a_restaurant_till_is_the_default_restaurants(self):
+		self.make_till(self.fx.profile, None, enable_restaurant_mode=0)
+		with the_default_restaurant_is(self.b):
+			tip = self.make_tip(None, 2, sales_invoice=self.takeaway_a)
+		self.assertEqual(frappe.db.get_value("Restaurant Tip", tip, "restaurant"), self.b)
 
 	def test_a_tip_is_recorded_in_the_restaurant_whose_settings_priced_it(self):
 		frappe.db.set_value("Restaurant", self.a, {"enable_tips": 1, "tip_item": self.fx.item})
@@ -743,6 +1033,10 @@ class TestExistingRecordsJoinTheDefaultRestaurant(FrappeTestCase):
 			patcher = patch.object(Restaurant, method)
 			patcher.start()
 			self.addCleanup(patcher.stop)
+		# The restaurants of the clone are deleted below: nothing that commits may make that stay
+		commit = patch.object(frappe.db, "commit")
+		commit.start()
+		self.addCleanup(commit.stop)
 		# The clone of a working site already holds the restaurants its own migration made: start from none
 		for name in frappe.get_all("Restaurant", pluck="name"):
 			frappe.delete_doc("Restaurant", name, force=True, ignore_permissions=True)
@@ -751,9 +1045,9 @@ class TestExistingRecordsJoinTheDefaultRestaurant(FrappeTestCase):
 	def make_legacy_records(self):
 		"""Records as a site made them before the restaurants existed: none of them names a restaurant."""
 		legacy = frappe._dict()
-		legacy.area = self.insert("Restaurant Area", area_name="Salle 1")
+		legacy.area = self.insert("Restaurant Area", area_name="Room 1")
 		legacy.table = self.insert("Restaurant Table", table_name="T1", area=legacy.area)
-		legacy.station = self.insert("Preparation Station", station_name="Cuisine")
+		legacy.station = self.insert("Preparation Station", station_name="Kitchen")
 		legacy.card = self.insert("Restaurant Card", card_name="_Test Legacy Card", is_active=1)
 		legacy.menu = self.insert("Restaurant Menu", menu_name="_Test Legacy Menu", price=20)
 		legacy.reservation = self.insert(

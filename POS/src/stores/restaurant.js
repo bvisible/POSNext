@@ -514,8 +514,15 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 				fetchRestaurantSettings()
 			}, 500)
 		})
-		// Guest order realtime events
+		// Guest order realtime events. They reach every till of the site, and a guest alert is about a table of one
+		// restaurant: a till answers the alerts of its own restaurant only. An alert that names no restaurant, or a till
+		// whose settings do not name theirs yet, answers as it always did.
+		const isOfThisRestaurant = (data) =>
+			!data?.restaurant ||
+			!tillRestaurant.value ||
+			data.restaurant === tillRestaurant.value
 		rt.on("guest_order_submitted", (data) => {
+			if (!isOfThisRestaurant(data)) return
 			log.info("Guest order submitted for table:", data?.table)
 			if (window.frappe?.show_alert) {
 				window.frappe.show_alert(
@@ -532,6 +539,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
 		rt.on("guest_payment_received", (data) => {
+			if (!isOfThisRestaurant(data)) return
 			log.info("Guest payment received for table:", data?.table)
 			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})

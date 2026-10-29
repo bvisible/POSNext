@@ -3,6 +3,21 @@
 # //// restaurants, so every list the till reads is the list of ONE restaurant (the till's), a record is
 # //// created in the restaurant that asked, and a label (the name of a room, a table, a station) only has to be
 # //// unique within its restaurant. This module holds the rules those endpoints and doctypes share.
+"""Which restaurant a thing belongs to: two rules, which every list and every write of the restaurant code follows.
+
+A TILL (a POS Profile) belongs to the restaurant its enabled POS Settings name. A till whose settings name none, or
+that has no enabled settings, is not a restaurant till and belongs to no restaurant. Only "no till at all" (a guest, a
+web order, an invoice without a POS Profile, a user with no shift open) works for the default restaurant. See
+`restaurant_for_profile`.
+
+A RECORD (a room, a table, a station, a card, a menu, a reservation, a tip) belongs to the restaurant it names. One
+that names none (saved before the restaurants existed, until the patch attaches it) belongs to the default
+restaurant, so that a site that predates the restaurants keeps reading what it always read: the data stays
+compatible, and a till that belongs to no restaurant does not see it. An ORDER has no restaurant field: it belongs to
+the restaurant of its table, else of the restaurant till that took it, else to the default restaurant. See
+`keep_orders_of`.
+"""
+
 import frappe
 from frappe import _
 
@@ -18,8 +33,10 @@ def current_profile() -> str | None:
 def current_restaurant(pos_profile: str | None = None) -> str | None:
 	"""The restaurant the caller works for: the one of the POS Profile named, else of the user's open shift.
 
-	Without a till at all (no profile named, no shift open) it is the default restaurant, as for any code that
-	cannot name its till. A site without any restaurant answers None.
+	A till that is not a restaurant till has none (None); a caller that cannot name a till at all (no profile named,
+	no shift open) works for the default restaurant. It is the restaurant `get_restaurant_settings()` reads the
+	settings of, so that the settings and the lists of a screen never come from two restaurants. A site without
+	any restaurant answers None.
 	"""
 	return restaurant_for_profile(pos_profile or current_profile())
 
@@ -28,10 +45,14 @@ def restaurant_or_filters(restaurant: str | None) -> list[list]:
 	"""The `or_filters` of `frappe.get_all` that keep the records of one restaurant.
 
 	A record that names no restaurant belongs to the default restaurant (it is how the records of a site that
-	predates the restaurants read until the patch attaches them), and on a site without any restaurant every
-	record names none.
+	predates the restaurants read until the patch attaches them), so asked for no restaurant (a till that is not a
+	restaurant till) the answer is no record at all. On a site without any restaurant every record names none, and
+	the records that name none are the ones kept.
 	"""
 	if not restaurant:
+		if default_restaurant():
+			# `name` is never empty: this keeps nothing
+			return [["name", "is", "not set"]]
 		return [["restaurant", "is", "not set"]]
 	filters = [["restaurant", "=", restaurant]]
 	if restaurant == default_restaurant():
@@ -40,7 +61,11 @@ def restaurant_or_filters(restaurant: str | None) -> list[list]:
 
 
 def restaurant_of_record(doctype: str, name: str | None) -> str | None:
-	"""The restaurant of a record: the one it names, else the default restaurant (None for a record that is gone)."""
+	"""The restaurant of a record: the one it names, else the default restaurant.
+
+	A record that names none, and a record that does not exist (or no record at all), answer the default restaurant:
+	it is for the link validation to refuse a record that is gone, with its own message, not for this lookup.
+	"""
 	if not name:
 		return default_restaurant()
 	return frappe.db.get_value(doctype, name, "restaurant") or default_restaurant()
@@ -87,8 +112,10 @@ def validate_label_unique_in_restaurant(doc, label_field: str) -> None:
 def keep_orders_of(orders: list, restaurant: str | None) -> list:
 	"""The draft orders (Sales Invoice rows) that belong to one restaurant.
 
-	An order belongs to the restaurant of its table. A takeaway order has no table: it belongs to the restaurant
-	of the till that took it (its POS Profile), the default restaurant when it names none.
+	An order belongs to the restaurant of its table, and a table that names none to the default restaurant. A
+	takeaway order has no table: it belongs to the restaurant of the till that took it (its POS Profile). An order
+	whose till is not a restaurant till (its settings name no restaurant, or it has none) names no restaurant, and
+	so belongs to the default restaurant, like any record that names none; an order with no till as well.
 	"""
 	table_names = {order.get("restaurant_table") for order in orders if order.get("restaurant_table")}
 	of_table = {}
@@ -111,7 +138,7 @@ def keep_orders_of(orders: list, restaurant: str | None) -> list:
 		else:
 			profile = order.get("pos_profile")
 			if profile not in of_profile:
-				of_profile[profile] = restaurant_for_profile(profile)
+				of_profile[profile] = restaurant_for_profile(profile) or default
 			owner = of_profile[profile]
 		if owner == restaurant:
 			kept.append(order)
@@ -132,14 +159,10 @@ def till_settings(pos_profile: str | None, fields: list[str]) -> dict:
 	"""Some fields of the POS Settings row of a till, as the till itself reads it (all empty without such a row).
 
 	POS Settings is one row per POS Profile, not a single: `frappe.db.get_single_value("POS Settings", …)` reads a
-	stray row of `tabSingles` that holds whatever an earlier version left there, not any till's setting.
+	stray row of `tabSingles` that holds whatever an earlier version left there, not any till's setting. It is the
+	row `restaurant_for_profile` reads the restaurant of the till from (`pos_settings_of`): enabled rows only.
 	"""
-	row = None
-	if pos_profile:
-		row = frappe.db.get_value(
-			"POS Settings", {"pos_profile": pos_profile, "enabled": 1}, fields, as_dict=True
-		)
-	return row or frappe._dict.fromkeys(fields)
+	return restaurant_settings.pos_settings_of(pos_profile, fields) or frappe._dict.fromkeys(fields)
 
 
 def extend_bootstrap_settings(settings: dict, pos_profile: str | None = None) -> None:

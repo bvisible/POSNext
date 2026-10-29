@@ -1525,15 +1525,19 @@ function restaurantQuery() {
 	return restaurant ? `restaurant=${encodeURIComponent(restaurant)}` : ""
 }
 
+// Every page opened in a tab of its own (the kitchen screen, the pass, the takeaway counter) is told the restaurant
+function openRestaurantTab(path, ...query) {
+	const parts = [...query, restaurantQuery()].filter(Boolean)
+	window.open(parts.length ? `${path}?${parts.join("&")}` : path, "_blank")
+}
+
 function openStationKDS(station) {
 	// Open KDS page filtered by this station in a new tab
-	const query = [`station=${encodeURIComponent(station.name)}`, restaurantQuery()]
-	window.open(`/pos/kds?${query.filter(Boolean).join("&")}`, "_blank")
+	openRestaurantTab("/pos/kds", `station=${encodeURIComponent(station.name)}`)
 }
 
 function openRunnerTab() {
-	const query = restaurantQuery()
-	window.open(query ? `/pos/runner?${query}` : "/pos/runner", "_blank")
+	openRestaurantTab("/pos/runner")
 }
 
 // Takeaway
@@ -1544,7 +1548,7 @@ const takeawayReadyCount = computed(
 			.length,
 )
 function openTakeawayTab() {
-	window.open("/pos/takeaway", "_blank")
+	openRestaurantTab("/pos/takeaway")
 }
 function startNewTakeaway() {
 	emit("start-takeaway")

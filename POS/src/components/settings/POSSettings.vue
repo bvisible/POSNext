@@ -2336,12 +2336,11 @@ watch(activeTab, async (tab) => {
 				takeaway_menu: rs.takeaway_menu || "",
 			};
 			// Load all active cards (not time-filtered) for the card selector
-			const cardsRes = await call("frappe.client.get_list", {
-				doctype: "Restaurant Card",
-				filters: { is_active: 1, is_permanent: 0 },
-				fields: ["name", "card_name"],
-				order_by: "card_name asc",
-				limit_page_length: 0,
+			//// Neoffice — only the cards of this till's restaurant: a menu or a takeaway lane cannot be set to the
+			//// card of another restaurant (NeoRestau lot 1, task 2). Was every active card of the site.
+			const cardsRes = await call("pos_next.api.restaurant.get_restaurant_cards", {
+				...restaurantStore.ofTheRestaurant(),
+				selectable_only: 1,
 			});
 			allCards.value = cardsRes?.message || cardsRes || [];
 		} catch (error) {

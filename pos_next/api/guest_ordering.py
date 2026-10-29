@@ -411,6 +411,15 @@ def _broadcast_order_update(table_name, event_type, data):
 	)
 
 
+# //// Neoffice — added (no upstream equivalent): a realtime event reaches every till of the site, and with several
+# //// restaurants on one site a till only knows the tables of its own. The event names the restaurant of the table
+# //// it is about (NeoRestau lot 1, task 2), and a till ignores the alerts of another restaurant (restaurant store).
+def _publish_to_the_tills(event, table_name, payload):
+	"""Tell every till of the site about a guest event on a table, saying which restaurant that table is in."""
+	restaurant = scope.restaurant_of_record("Restaurant Table", table_name)
+	frappe.publish_realtime(event, {"restaurant": restaurant, **payload})
+
+
 # ==========================================
 # Public guest API endpoints
 # ==========================================
@@ -645,8 +654,8 @@ def submit_guest_order(token, items):
 			"validation_mode": validation_mode,
 		})
 
-		# Notify all POS clients (global, not room-scoped)
-		frappe.publish_realtime("guest_order_submitted", {
+		# Notify all POS clients (global, not room-scoped); they ignore the tables of another restaurant
+		_publish_to_the_tills("guest_order_submitted", token_doc.table, {
 			"table": token_doc.table,
 			"invoice": invoice_doc.name,
 			"items_count": len(items),
@@ -654,7 +663,7 @@ def submit_guest_order(token, items):
 		frappe.publish_realtime("table_update")
 
 		if validation_mode == "Server Approval":
-			frappe.publish_realtime("guest_order_pending", {
+			_publish_to_the_tills("guest_order_pending", token_doc.table, {
 				"table": token_doc.table,
 				"invoice": invoice_doc.name,
 				"items": items,
@@ -1087,7 +1096,7 @@ def confirm_guest_payment(token, amount, tip=0):
 				frappe.log_error("Guest tip record failed", str(tip_err))
 
 		if token_doc.table:
-			frappe.publish_realtime("guest_payment_received", {
+			_publish_to_the_tills("guest_payment_received", token_doc.table, {
 				"table": token_doc.table,
 				"invoice": invoice_doc.name,
 				"paid_amount": new_paid,
@@ -1319,8 +1328,9 @@ def submit_takeaway_order(token, items, customer=None):
 	token_doc.flags.ignore_version = True
 	token_doc.save(ignore_permissions=True)
 
-	# Notify POS of new takeaway web order
+	# Notify POS of new takeaway web order, in the restaurant whose settings priced it
 	frappe.publish_realtime("takeaway_web_order", {
+		"restaurant": settings.get("name"),
 		"invoice": invoice_doc.name,
 		"customer": customer_name,
 		"grand_total": flt(invoice_doc.grand_total),

@@ -508,21 +508,16 @@ async function selectOrCreatePermanentCard() {
 		selectCard(permanentCard.value.name)
 		return
 	}
-	// Auto-create permanent card
+	// Auto-create the restaurant's permanent card. The server picks its name: a card is named by its card name, unique on
+	// the whole site, and another restaurant may already hold "Permanent items".
 	try {
-		const doc = await call("frappe.client.insert", {
-			doc: {
-				doctype: "Restaurant Card",
-				restaurant: restaurantStore.tillRestaurant,
-				card_name: __("Permanent items"),
-				is_active: 1,
-				is_permanent: 1,
-				items: [],
-			},
-		})
-		showSuccess(__("Permanent card created"))
+		const permanent = await call(
+			"pos_next.api.restaurant.get_or_create_permanent_card",
+			restaurantStore.ofTheRestaurant(),
+		)
+		if (permanent?.created) showSuccess(__("Permanent card created"))
 		await loadCards()
-		if (doc) selectCard(doc.name)
+		if (permanent) selectCard(permanent.name)
 	} catch (error) {
 		showError(__("Failed to create permanent card"))
 	}
@@ -531,16 +526,12 @@ async function selectOrCreatePermanentCard() {
 async function loadCards() {
 	loading.value = true
 	try {
-		const res = await call("frappe.client.get_list", {
-			doctype: "Restaurant Card",
-			// The cards of the till's restaurant
-			filters: restaurantStore.tillRestaurant
-				? [["restaurant", "=", restaurantStore.tillRestaurant]]
-				: undefined,
-			fields: ["name", "card_name", "is_active", "is_permanent"],
-			order_by: "is_active desc, card_name asc",
-			limit_page_length: 0,
-		})
+		// The cards of the till's restaurant, by the server's rule (a card that names no restaurant is the default
+		// restaurant's)
+		const res = await call(
+			"pos_next.api.restaurant.get_restaurant_cards",
+			restaurantStore.ofTheRestaurant(),
+		)
 		if (res) cards.value = res
 		// Auto-select first card if none selected
 		if (cards.value.length > 0 && !selectedCard.value) {

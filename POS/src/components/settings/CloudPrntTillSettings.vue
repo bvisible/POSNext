@@ -120,7 +120,7 @@
 						:for="`cloudprnt-station-${station.station}`"
 						class="text-sm font-medium text-gray-800"
 					>
-						{{ station.station }}
+						{{ station.station_name || station.station }}
 					</label>
 					<select
 						:id="`cloudprnt-station-${station.station}`"

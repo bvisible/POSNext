@@ -126,6 +126,12 @@ import { initSocket } from "@/socket"
 import { formatCurrencyNumber } from "@/utils/currency"
 
 const restaurantStore = useRestaurantStore()
+// The restaurant whose orders this screen shows: the one in the address (the counter is opened from a till in a tab of
+// its own, with no till settings loaded), else the till's restaurant, else the server picks the user's open till.
+const urlRestaurant = new URLSearchParams(window.location.search).get("restaurant")
+const ofTheRestaurant = () => ({
+	restaurant: urlRestaurant || restaurantStore.tillRestaurant,
+})
 const orders = ref([])
 const loading = ref(true)
 const selectedStatus = ref("")
@@ -173,10 +179,10 @@ const filteredOrders = computed(() => {
 
 async function loadOrders() {
 	try {
-		// The takeaway orders of the till's restaurant
+		// The takeaway orders of the restaurant of this screen
 		const res = await call("pos_next.api.restaurant.get_takeaway_orders", {
 			_: Date.now(),
-			...restaurantStore.ofTheRestaurant(),
+			...ofTheRestaurant(),
 		})
 		orders.value = res || []
 	} catch (err) {
