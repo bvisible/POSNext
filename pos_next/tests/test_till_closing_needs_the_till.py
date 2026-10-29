@@ -117,6 +117,8 @@ def _draft(shift, till):
 			{
 				"doctype": "Sales Invoice",
 				"company": till.company,
+				# Named, as the sweep's sale: a blank currency follows the default price list's.
+				"currency": frappe.get_cached_value("Company", till.company, "default_currency"),
 				"customer": _customer(),
 				"posa_pos_opening_shift": shift,
 				"posa_is_printed": 0,

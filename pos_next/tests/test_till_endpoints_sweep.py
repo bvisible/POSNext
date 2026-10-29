@@ -114,7 +114,9 @@ def _till():
 			"applicable_for_users": [{"user": TILL}, {"user": PORTAL}],
 		}
 	).insert(ignore_permissions=True)
-	return frappe._dict(company=company, mode=mode, customer=_customer(), item=_item(company))
+	return frappe._dict(
+		company=company, currency=currency, mode=mode, customer=_customer(), item=_item(company)
+	)
 
 
 @contextmanager
@@ -219,6 +221,9 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				{
 					"doctype": "Sales Invoice",
 					"company": self.fx.company,
+					# The company's currency, named: left blank, an invoice takes the default price
+					# list's, which on a fresh CI site differs from the receivable account's.
+					"currency": self.fx.currency,
 					"customer": self.fx.customer,
 					"pos_profile": PROFILE,
 					"posa_pos_opening_shift": self.fx.shift,
