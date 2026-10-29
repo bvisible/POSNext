@@ -281,17 +281,21 @@ class POSClosingShift(Document):
 	def delete_draft_invoices(self):
 		if frappe.get_value("POS Profile", self.pos_profile, "posa_allow_delete"):
 			doctype = "Sales Invoice"
-			data = frappe.db.sql(
-				f"""
-		select
-		    name
-		from
-		    `tab{doctype}`
-		where
-		    docstatus = 0 and posa_is_printed = 0 and posa_pos_opening_shift = %s
-		""",
-				(self.pos_opening_shift),
-				as_dict=1,
+			# //// Neoffice — upstream deleted every unprinted draft of the shift. A restaurant table's order
+			# //// and a takeaway order are open on purpose and outlive the shift, so the closing deletes only
+			# //// what the till's own draft cleanup may delete: the same exclusions (_kept_draft_exclusions,
+			# //// one list for both, read where the site has each field), applied as filters in place of the
+			# //// fixed SQL.
+			from pos_next.api.invoices import _kept_draft_exclusions
+
+			data = frappe.get_all(
+				doctype,
+				filters={
+					"docstatus": 0,
+					"posa_pos_opening_shift": self.pos_opening_shift,
+					**_kept_draft_exclusions(),
+				},
+				fields=["name"],
 			)
 
 			for invoice in data:

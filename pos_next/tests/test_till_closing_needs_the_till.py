@@ -131,9 +131,11 @@ def _draft(shift, till):
 class TestTillClosingNeedsTheTill(FrappeTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
-		# Nothing may outlive the test: a commit would keep its documents past the rollback.
-		self.no_commit = patch.object(frappe.local.db, "commit")
-		self.no_commit.start()
+		# Nothing may outlive the test: a commit would keep its documents past the rollback. Stopped by
+		# addCleanup, which runs even when setUp fails.
+		no_commit = patch.object(frappe.local.db, "commit")
+		no_commit.start()
+		self.addCleanup(no_commit.stop)
 		# A portal account holding the manager role: a role does not make it a desk account.
 		_user(PORTAL, ["Customer", MANAGER_ROLE], "Website User")
 		_user(DESK, ["Blogger"], "System User")
@@ -155,7 +157,6 @@ class TestTillClosingNeedsTheTill(FrappeTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
-		self.no_commit.stop()
 		frappe.db.rollback()
 
 	def _assert_refused(self, user, payload, error=frappe.PermissionError):

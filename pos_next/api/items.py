@@ -1,10 +1,11 @@
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
-# //// Neoffice — contextlib and functools for in_process_item_reads and _till_only below
+# //// Neoffice — contextlib, functools and inspect for in_process_item_reads and _till_only below
 # //// (neoffice-maintenance#1137).
 import contextlib
 import functools
+import inspect
 import json
 from collections import defaultdict
 
@@ -70,11 +71,21 @@ def in_process_item_reads():
 # //// through, except inside in_process_item_reads. With no request (a background job, the console),
 # //// it does not run.
 def _till_only(fn):
+	signature = inspect.signature(fn)
+
 	@functools.wraps(fn)
 	def gated(*args, **kwargs):
 		serving_a_request = getattr(frappe.local, "request", None) is not None
 		if serving_a_request and not frappe.flags.get(_IN_PROCESS_ITEM_READS):
-			_require_item_reader(kwargs.get("pos_profile"))
+			# //// Neoffice — the POS Profile is read where the function receives it, by keyword or by
+			# //// position: frappe's search endpoints call a query function positionally, and a profile
+			# //// read from the keywords alone left such a call checked against no till. Arguments the
+			# //// function does not accept are refused by the call itself, once the caller is known.
+			try:
+				pos_profile = signature.bind_partial(*args, **kwargs).arguments.get("pos_profile")
+			except TypeError:
+				pos_profile = kwargs.get("pos_profile")
+			_require_item_reader(pos_profile)
 		return fn(*args, **kwargs)
 
 	return gated

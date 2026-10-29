@@ -4,7 +4,8 @@
 After every sale the till calls cleanup_old_drafts(pos_profile, max_age_hours=1). It removes the caller's
 own drafts, saved at their till shift and left for that long; a restaurant table's order, a takeaway
 order, a printed draft the shift's closing submits, a colleague's draft and a draft made outside a till
-shift all stay.
+shift all stay. A shift's closing, on a profile that deletes the shift's unprinted drafts, leaves the same
+drafts kept on purpose (a table's order, a takeaway order) and deletes the abandoned one.
 """
 
 import json
@@ -15,6 +16,7 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_to_date, now_datetime
 
 from pos_next.api import invoices, shifts
+from pos_next.tests.test_till_closing_needs_the_till import _closing
 from pos_next.tests.test_till_writes_need_the_till import (
 	CASHIER_ROLE,
 	OTHER_TILL,
@@ -136,3 +138,21 @@ class TestCleanupKeepsKeptDrafts(FrappeTestCase):
 		draft = self._draft(at_shift=False)
 		self._sale_ends()
 		self._assert_kept(draft)
+
+	def test_closing_the_shift_deletes_the_abandoned_draft_and_keeps_table_and_takeaway_orders(self):
+		# The profile asks for the shift's unprinted drafts to go at closing; an open table's order and a
+		# takeaway order are not abandoned carts, whatever their age.
+		if not frappe.get_meta("POS Profile").has_field("posa_allow_delete"):
+			self.skipTest("No posa_allow_delete on POS Profile")
+		frappe.db.set_value("POS Profile", self.fx.profile, "posa_allow_delete", 1)
+		abandoned = self._draft(hours_old=0)
+		table_order = self._draft(hours_old=0, restaurant_table=TABLE)
+		takeaway_order = self._draft(hours_old=0, is_takeaway=1, takeaway_number="T-902")
+		closing = _closing(TILL, self.shifts[TILL], self.fx)
+		frappe.set_user(TILL)
+		done = shifts.submit_closing_shift(json.dumps(closing))
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("POS Closing Shift", done["name"], "docstatus"), 1)
+		self.assertFalse(frappe.db.exists("Sales Invoice", abandoned))
+		self._assert_kept(table_order)
+		self._assert_kept(takeaway_order)

@@ -54,9 +54,11 @@ TILL = "tillsweep-till@yopmail.com"
 OTHER_CASHIER = "tillsweep-other-cashier@yopmail.com"
 MANAGER = "tillsweep-manager@yopmail.com"
 REPORTER = "tillsweep-reporter@yopmail.com"
+COUNTER = "tillsweep-counter@yopmail.com"
 CASHIER_ROLE = "POSNext Cashier"
 MANAGER_ROLE = "Nexus POS Manager"
 PROFILE = "_PNXT tillsweep till"
+OTHER_PROFILE = "_PNXT tillsweep other till"
 NONE = "tillsweep-no-such-name"
 
 # Document hooks and server helpers: they run in-process, as whoever caused them, and no web client
@@ -689,6 +691,31 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			with self.subTest(dotted), _request(f"/api/method/{dotted}", cmd=dotted, pos_profile=PROFILE):
 				self.assertIsNotNone(self._served(TILL, dotted, lambda: frappe.handler.execute_cmd(dotted)))
 				self._refused(PORTAL, dotted, lambda: frappe.handler.execute_cmd(dotted))
+
+	def test_an_item_endpoint_checks_the_till_it_is_given_by_position_too(self):
+		# frappe's search endpoints call a query function positionally, so the POS Profile is not always a
+		# keyword. A desk account assigned to one till (with no cashier role: a cashier reads every till's
+		# invoices) is served that till's data and refused another till's, however the till is given.
+		_user(COUNTER, ["Blogger"], "System User")
+		own = frappe.get_doc("POS Profile", PROFILE)
+		other = frappe.copy_doc(own)
+		other.name = OTHER_PROFILE
+		other.set("applicable_for_users", [])
+		other.insert(ignore_permissions=True)
+		own.append("applicable_for_users", {"user": COUNTER})
+		own.save(ignore_permissions=True)
+		search = "frappe.desk.search.search_widget"
+		calls = (
+			("get_item_groups, by keyword", lambda profile: items.get_item_groups(pos_profile=profile)),
+			("get_item_groups, by position", lambda profile: items.get_item_groups(profile)),
+			# The POS Profile is not the first argument of every item endpoint.
+			("search_by_barcode, by position", lambda profile: items.search_by_barcode(NONE, profile)),
+		)
+		with _request(f"/api/method/{search}", cmd=search):
+			for label, call in calls:
+				with self.subTest(label):
+					self._served(COUNTER, label, lambda: call(PROFILE))
+					self._refused(COUNTER, label, lambda: call(OTHER_PROFILE))
 
 	def test_the_item_endpoints_in_process_callers_are_served(self):
 		# The stock event after a sale reads the new quantities as whoever submitted the invoice: the

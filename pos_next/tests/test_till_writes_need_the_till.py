@@ -196,9 +196,10 @@ class TestTillWritesNeedTheTill(FrappeTestCase):
 		frappe.set_user("Administrator")
 		self.account_flag = frappe.flags.ignore_account_permission
 		# update_invoice commits (restaurant fields): a no-op here keeps the test inside the
-		# transaction tearDown rolls back.
-		self.no_commit = patch.object(frappe.local.db, "commit")
-		self.no_commit.start()
+		# transaction tearDown rolls back. Stopped by addCleanup, which runs even when setUp fails.
+		no_commit = patch.object(frappe.local.db, "commit")
+		no_commit.start()
+		self.addCleanup(no_commit.stop)
 		_user(PORTAL, ["Customer"], "Website User")
 		_user(DESK, ["Blogger"], "System User")
 		_user(TILL, [CASHIER_ROLE], "System User")
@@ -207,7 +208,6 @@ class TestTillWritesNeedTheTill(FrappeTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
-		self.no_commit.stop()
 		frappe.db.rollback()
 		# update_invoice sets it for the rest of the request and never resets it.
 		frappe.flags.ignore_account_permission = self.account_flag
