@@ -4,7 +4,7 @@
   Grep the sha7 to find the originating commit via `git log`.
   //// align POS design with Neoffice theme and improve customer display — 87f168f + f23daab (+3 more)
   //// UX improvements - Complete Payment full-width, Pay on Account as disc… — 2584aa5 + 548757f
-  //// move toggle-restaurant to correct position + language to dropdown — 5e5db36
+  //// Neoffice — the header's restaurant switch (5e5db36, 8aa35c2, 5959928) and its purge dialog are gone: the till's own POS Settings decide restaurant or counter
   //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 5959928 (+2 more)
   //// remove footer height from max-height calc to use full viewport — c0bf6f8
   //// add search bar and grid/list toggle to restaurant card display — 8357bf8 + 9f4e85d (+15 more)
@@ -94,16 +94,9 @@
 		<!-- Main App -->
 		<template v-else>
 			<!-- Header -->
-			<!-- //// Neoffice — two additions inside this opening tag (an HTML comment cannot -->
-			<!-- //// sit between attributes, hence the marker here): -->
-			<!-- ////   :is-restaurant-mode / :can-toggle-restaurant — the header carries the -->
-			<!-- ////   fork-knife toggle between retail and table service; the guard forbids -->
-			<!-- ////   switching while a cart or an occupied table is alive (8aa35c29, -->
-			<!-- ////   2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup"). -->
-			<!-- ////   @toggle-restaurant — the event the toggle emits; it was moved onto the -->
-			<!-- ////   header when the language picker went into the dropdown (5e5db360, -->
-			<!-- ////   2026-03-21 "move toggle-restaurant to correct position"). -->
-			<!-- //// Upstream POSNext is retail-only and has neither. -->
+			<!-- //// Neoffice — the header takes no restaurant props and emits no restaurant event: it has -->
+			<!-- //// no restaurant switch any more. A till is a restaurant till or a counter till by its own -->
+			<!-- //// POS Settings (Default Restaurant Mode on its POS Profile), a device switch is not wanted. -->
 			<!-- //// Neoffice — the till's CloudPRNT printer (its state on the printer button) and its cash -->
 			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). -->
 			<POSHeader
@@ -123,8 +116,6 @@
 				:is-refreshing="stockStore.refreshing"
 				:silent-print-enabled="posSettingsStore.silentPrint"
 				:qz-connected="qzConnected"
-				:is-restaurant-mode="restaurantStore.isEnabled"
-				:can-toggle-restaurant="canToggleRestaurant"
 				:cloud-printer-label="cloudPrntStore.receiptPrinter?.label || ''"
 				:cloud-printer-status="cloudPrntStore.printerStatus || ''"
 				:drawer-available="cloudPrntStore.drawerAvailable"
@@ -134,7 +125,6 @@
 				@refresh-click="handleRefresh"
 				@clear-cache="handleClearCache"
 				@logout="uiStore.showLogoutDialog = true"
-				@toggle-restaurant="handleToggleRestaurant"
 			>
 				<template #menu-items>
 					<button
@@ -1751,11 +1741,9 @@
 							<!-- //// Neoffice — the destructive button renames itself: "Abandon the payment" -->
 							<!-- //// instead of "Clear All" as soon as money was collected and not booked, so -->
 							<!-- //// the cashier cannot read it as "just remove the items" (92c0c5ed, -->
-							<!-- //// 2026-08-19). The two dialogs that follow this one are ours as well: the -->
-							<!-- //// purge dialog that guards switching restaurant mode with live orders -->
-							<!-- //// (59599289 2026-03-21; 1e73b40d; ab2ee852 server-side reset_all_tables) and -->
-							<!-- //// the notice that a customer was just created on the second screen -->
-							<!-- //// (912ef092, 2026-02-04 "improve UX for customer creation flow"). -->
+							<!-- //// 2026-08-19). The dialog that follows this one is ours as well: the notice that a -->
+							<!-- //// customer was just created on the second screen (912ef092, 2026-02-04 "improve UX -->
+							<!-- //// for customer creation flow"). -->
 							{{
 								cartStore.collectedUnbookedTotal > 0
 									? __("Abandon the payment")
@@ -1766,32 +1754,9 @@
 				</template>
 			</Dialog>
 
-			<!-- Purge & Toggle Restaurant Mode Dialog -->
-			<Dialog
-				v-model="showPurgeDialog"
-				:options="{ title: __('Switch Restaurant Mode?'), size: 'xs' }"
-			>
-				<template #body-content>
-					<div class="py-3">
-						<p class="text-sm text-gray-600">{{ purgeDialogMessage }}</p>
-					</div>
-				</template>
-				<template #actions>
-					<div class="flex gap-2 w-full">
-						<Button class="flex-1" variant="subtle" @click="showPurgeDialog = false">
-							{{ __("Cancel") }}
-						</Button>
-						<Button
-							class="flex-1"
-							variant="solid"
-							theme="red"
-							@click="handlePurgeAndToggle"
-						>
-							{{ __("Clear & Switch") }}
-						</Button>
-					</div>
-				</template>
-			</Dialog>
+			<!-- //// Neoffice — no restaurant-mode purge dialog: it belonged to the header switch, which is -->
+			<!-- //// gone. Nothing flips a till's mode on the device, so the till no longer calls -->
+			<!-- //// reset_all_tables to free every table. -->
 
 			<!-- Customer Created from Display Dialog -->
 			<Dialog
@@ -2961,20 +2926,8 @@ const profileWarehouses = computed(() => {
 	return [];
 });
 
-//// Neoffice — switching between retail and table service is refused while a cart is
-//// open, and when LEAVING restaurant mode also while any table is still occupied:
-//// flipping the mode strands live orders nobody can reach any more (8aa35c29, 2026-03-20
-//// "Phase 1 restaurant module - header toggle").
-// Restaurant mode toggle computed
-const canToggleRestaurant = computed(() => {
-	const noItems = cartStore.invoiceItems.length === 0;
-	const noOccupiedTables = restaurantStore.totalOccupiedCount === 0;
-	const isDisabling = restaurantStore.isEnabled;
-	if (isDisabling) {
-		return noItems && noOccupiedTables;
-	}
-	return noItems;
-});
+//// Neoffice — no canToggleRestaurant guard: nothing switches a till between retail and table
+//// service on the device any more, the till's own POS Settings decide.
 
 const canAccessShiftActions = computed(() => shiftStore.hasOpenShift);
 const canRecordPosExpense = computed(
@@ -2988,63 +2941,8 @@ const canSwitchToDesk = computed(() => Boolean(bootstrapStore.data?.can_switch_t
 let resizeState = null;
 let bodyStyleSnapshot = null;
 
-//// Neoffice — when the guard above refuses, offer the purge instead of failing silently:
-//// the dialog names what will be lost, then clears the cart and resets every occupied
-//// table server-side. Doing it from the client left tables Occupied with no order behind
-//// them (59599289 2026-03-21 "purge dialog when toggling restaurant mode with active
-//// orders"; 1e73b40d; ab2ee852 "use server-side reset_all_tables API").
-// Handle restaurant mode toggle
-const showPurgeDialog = ref(false);
-const purgeDialogMessage = ref("");
-
-async function handleToggleRestaurant() {
-	if (!canToggleRestaurant.value) {
-		const isDisabling = restaurantStore.isEnabled;
-		if (isDisabling && restaurantStore.totalOccupiedCount > 0) {
-			purgeDialogMessage.value = __(
-				"There are {0} occupied tables. Clear all orders and disable restaurant mode?",
-				[restaurantStore.totalOccupiedCount]
-			);
-		} else if (cartStore.invoiceItems.length > 0) {
-			purgeDialogMessage.value = __(
-				"There are items in the cart. Clear the cart and toggle restaurant mode?"
-			);
-		}
-		showPurgeDialog.value = true;
-		return;
-	}
-
-	await doToggleRestaurant();
-}
-
-async function doToggleRestaurant() {
-	try {
-		const newValue = !restaurantStore.isEnabled;
-		await cartStore.clearCart();
-
-		// When disabling, reset all occupied tables to Empty via server API
-		if (!newValue) {
-			await call("pos_next.api.restaurant.reset_all_tables");
-		}
-
-		//// Neoffice — restaurant mode toggle, continued (see the purge marker above).
-		await posSettingsStore.toggleRestaurantMode();
-		if (newValue) {
-			await restaurantStore.fetchFromNetwork();
-			showSuccess(__("Restaurant mode enabled"));
-		} else {
-			showSuccess(__("Restaurant mode disabled"));
-		}
-	} catch (error) {
-		showError(__("Failed to toggle restaurant mode"), String(error));
-	}
-}
-
-//// Neoffice — the purge dialog's confirm: clears the cart and toggles (see the purge marker above).
-async function handlePurgeAndToggle() {
-	showPurgeDialog.value = false;
-	await doToggleRestaurant();
-}
+//// Neoffice — no toggle handlers and no purge dialog: they cleared the cart and called
+//// reset_all_tables (every table Empty) to flip the mode from the header, which is gone.
 
 // Window resize listener (passive for better performance)
 function handleWindowResize() {

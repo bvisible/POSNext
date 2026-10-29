@@ -4,11 +4,9 @@
   Grep the sha7 to find the originating commit via `git log`.
   //// align POS design with Neoffice theme and improve customer display — 87f168f + 3e25c3b
   //// remove horizontal padding from POS header container — 82265c4
-  //// replace restaurant icon button with real on/off toggle switch — 5d4db32 + 8aa35c2 (+3 more)
+  //// Neoffice — the restaurant switch this header carried (5d4db32, 8aa35c2, e8cecbc, 5959928) is gone: the till's own POS Settings decide restaurant or counter
   //// move language switcher to user menu on mobile for compact header — c3ac72b
-  //// call toggleRestaurantMode directly from POSHeader instead of relying… — e8cecbc
   //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2
-  //// purge dialog when toggling restaurant mode with active orders — 5959928 + 2f3e944 (+1 more)
 -->
 <template>
 	<!-- //// Neoffice — upstream's header is a plain white bar (bg-white shadow-sm); the Neoffice -->
@@ -134,63 +132,10 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
-					<!-- //// Neoffice — added: the restaurant-mode switch. Upstream POSNext is retail-only, but -->
-					<!-- //// the same till has to become a table-service POS (floor plan, courses, KDS) for our -->
-					<!-- //// restaurant clients, and the cashier flips it here. A real on/off switch rather than -->
-					<!-- //// an icon button, so the current mode is readable without hovering. (8aa35c29, -->
-					<!-- //// 2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup, multi-room -->
-					<!-- //// tabs"; 5d4db328 turned the icon button into a switch, 924e688c gave it the fork and -->
-					<!-- //// knife icon, 59599289 moved the "orders still open" guard to POSSale's purge -->
-					<!-- //// dialog.) -->
-					<!-- Restaurant Mode Toggle Switch -->
-					<div
-						class="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
-						:title="
-							isRestaurantMode
-								? __('Click to disable restaurant mode')
-								: __('Click to enable restaurant mode')
-						"
-					>
-						<svg
-							class="w-3.5 h-3.5 flex-shrink-0"
-							:class="isRestaurantMode ? 'text-amber-600' : 'text-gray-400'"
-							fill="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"
-							/>
-						</svg>
-						<span
-							class="text-[10px] font-bold uppercase tracking-wide hidden sm:inline"
-							:class="isRestaurantMode ? 'text-amber-700' : 'text-gray-400'"
-						>
-							{{ __("Resto") }}
-						</span>
-						<button
-							type="button"
-							role="switch"
-							:aria-checked="isRestaurantMode"
-							:aria-label="
-								isRestaurantMode
-									? __('Disable restaurant mode')
-									: __('Enable restaurant mode')
-							"
-							@click="onToggleRestaurant"
-							:class="[
-								'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1',
-								isRestaurantMode ? 'bg-amber-500' : 'bg-gray-300',
-								'cursor-pointer',
-							]"
-						>
-							<span
-								:class="[
-									'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-									isRestaurantMode ? 'translate-x-4' : 'translate-x-0',
-								]"
-							/>
-						</button>
-					</div>
+					<!-- //// Neoffice — no restaurant-mode switch in the header: a till is a restaurant till or a -->
+					<!-- //// counter till by its own POS Settings (Default Restaurant Mode on its POS Profile), a -->
+					<!-- //// device switch is not wanted. The switch (8aa35c29, 2026-03-20 "Phase 1 restaurant -->
+					<!-- //// module"; 5d4db328, 924e688c, 59599289) stood here. -->
 
 					<!-- WiFi/Offline Status -->
 					<!-- //// Neoffice — Neoffice theme tokens on the sync button below: upstream uses rounded-lg -->
@@ -625,21 +570,14 @@ const emit = defineEmits([
 	"menu-opened",
 	"menu-closed",
 	"clear-cache",
-	//// Neoffice — event of the restaurant-mode switch; upstream has no such mode (8aa35c29,
-	//// 2026-03-20 "Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs").
-	"toggle-restaurant",
+	//// Neoffice — no "toggle-restaurant" event: the header has no restaurant switch any more, the
+	//// till's own POS Settings decide restaurant or counter (a device switch is not wanted).
 	//// Neoffice — the cash drawer button; POSSale opens CashDrawerDialog (maintenance#1935).
 	"drawer-click",
 ]);
 
-//// Neoffice — the header only announces the intent: POSSale owns the toggle because it may
-//// have to purge open orders first. e8cecbcf (2026-03-20) had called the store straight
-//// from here and the purge dialog never ran; 59599289 (2026-03-21 "purge dialog when
-//// toggling restaurant mode with active orders") put the decision back in POSSale.
-function onToggleRestaurant() {
-	// Always emit — POSSale handles the logic (including purge dialog if needed)
-	emit("toggle-restaurant");
-}
+//// Neoffice — no onToggleRestaurant: it relayed the removed switch to POSSale, which purged open
+//// orders and freed every table before flipping the mode. The mode is the till's own setting now.
 
 function handleClearCacheClick() {
 	showCacheTooltip.value = false;
@@ -722,18 +660,8 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
-	//// Neoffice — props of the restaurant switch: whether the mode is on, and whether the
-	//// cashier may flip it. Upstream POSNext has no restaurant mode. (8aa35c29, 2026-03-20
-	//// "Phase 1 restaurant module".) canToggleRestaurant is no longer read anywhere in this
-	//// component since 59599289 removed the UI gate; the parent still passes it.
-	isRestaurantMode: {
-		type: Boolean,
-		default: false,
-	},
-	canToggleRestaurant: {
-		type: Boolean,
-		default: true,
-	},
+	//// Neoffice — no isRestaurantMode / canToggleRestaurant props: they fed the restaurant switch,
+	//// which is gone (the till's own POS Settings decide restaurant or counter).
 	//// Neoffice — the till's CloudPRNT printer, from the cloudPrnt store: its label, its state
 	//// (ready, warning, error, offline; empty without such a printer) and whether a drawer can be
 	//// opened through it (maintenance#1935).

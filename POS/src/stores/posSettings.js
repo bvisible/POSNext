@@ -265,12 +265,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		onSuccess(data) {
 			if (data) {
 				Object.assign(settings.value, data);
-				//// Neoffice — restaurant mode is a per-terminal choice kept in localStorage, so it has to be
-				//// restored after the settings resource has overwritten settings.value; without this call,
-				//// saving any Restaurant Setting flipped the RESTO toggle back to the database value (03449a57,
-				//// 2026-03-23 "RESTO toggle no longer reset when saving Restaurant Settings").
-				//// RESTO toggle no longer reset when saving Restaurant Settings — 03449a5
-				// Restore restaurant mode from localStorage (overrides DB value)
+				//// Neoffice — the loaded settings ARE the restaurant mode: no device override wins over them
+				//// any more (it was restored here by 03449a57, 2026-03-23). This only forgets the key old
+				//// devices still carry.
 				initRestaurantMode();
 				isLoaded.value = true;
 			}
@@ -296,11 +293,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			const preloadedSettings = bootstrapStore.getPreloadedPOSSettings();
 			if (preloadedSettings && Object.keys(preloadedSettings).length > 0) {
 				Object.assign(settings.value, preloadedSettings);
-				//// Neoffice — same restore on the bootstrap-preloaded path: this branch returns early, so
-				//// without it a terminal served by the preload never applied its local RESTO choice (82fcc1bf,
-				//// 2026-03-20 "save restaurant toggle in localStorage, rename setting to 'Default Restaurant
-				//// Mode'"; 8aa35c29, 2026-03-20).
-				//// save restaurant toggle in localStorage, rename setting to 'Default Re… — 82fcc1b + 8aa35c2 (+2 more)
+				//// Neoffice — same forgetting on the bootstrap-preloaded path, which returns early: the
+				//// preloaded settings are the restaurant mode, whatever an old device still stores
+				//// (82fcc1bf, 2026-03-20 kept it here).
 				initRestaurantMode();
 				isLoaded.value = true;
 				isLoading.value = false;
@@ -313,10 +308,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Fallback to API call
 		try {
 			await settingsResource.submit({ pos_profile: posProfile });
-			//// Neoffice — restaurant mode is a per-terminal choice kept in localStorage, so it has to be
-			//// restored after EVERY settings load — including this API fallback — or saving any other
-			//// setting silently flipped the RESTO toggle back to the DB value (82fcc1bf 2026-03-20;
-			//// 03449a57 2026-03-23 "RESTO toggle no longer reset when saving Restaurant Settings").
+			//// Neoffice — same forgetting after the API fallback: the loaded settings are the mode.
 			initRestaurantMode();
 			return true;
 		} catch {
@@ -449,37 +441,19 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		}
 	}
 
-	//// Neoffice — the RESTO toggle lives in the POS header and must switch instantly, so it is
-	//// written locally and persisted in localStorage rather than round-tripping to the server:
-	//// the terminal in the dining room and the one at the bar of the same company can differ,
-	//// and a page reload must not flip it back. Reassigning settings.value wholesale is what
-	//// makes Vue see the change (8aa35c29 2026-03-20 → 82fcc1bf/f66c59ff/1b0b3b04, 2026-03-20).
+	//// Neoffice — a till is a restaurant till or a counter till by its OWN POS Settings
+	//// (enable_restaurant_mode, "Default Restaurant Mode" on its POS Profile), never by a switch on the
+	//// device. The header switch and the per-device override it wrote (8aa35c29, 82fcc1bf, 2026-03-20)
+	//// are gone: this only forgets the key old devices still carry, so a stale "1" or "0" can never
+	//// win over the setting again.
 	/**
-	 * Toggle restaurant mode on and off
-	 * Persists the change to the API
-	 */
-	async function toggleRestaurantMode() {
-		const newValue = settings.value.enable_restaurant_mode ? 0 : 1;
-
-		// Update locally for instant UI feedback
-		settings.value = { ...settings.value, enable_restaurant_mode: newValue };
-
-		// Save to localStorage for instant restore on page reload
-		localStorage.setItem("pos_next_restaurant_mode", newValue.toString());
-
-		return true;
-	}
-
-	/**
-	 * Initialize restaurant mode from localStorage, falling back to POS Settings default
+	 * Forget the legacy per-device restaurant-mode override; the mode is settings.enable_restaurant_mode
 	 */
 	function initRestaurantMode() {
-		const stored = localStorage.getItem("pos_next_restaurant_mode");
-		if (stored !== null) {
-			const val = Number.parseInt(stored);
-			if (val !== settings.value.enable_restaurant_mode) {
-				settings.value = { ...settings.value, enable_restaurant_mode: val };
-			}
+		try {
+			localStorage.removeItem("pos_next_restaurant_mode");
+		} catch {
+			// Storage can be blocked (private mode); the key is a leftover that nothing reads
 		}
 	}
 
@@ -590,9 +564,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		validateDiscount,
 		isNegativeStockAllowed,
 		shouldEnforceStockValidation,
-		//// Neoffice — restaurant-mode toggle and its localStorage restore, exported for the header
-		//// switch (8aa35c29 2026-03-20; 82fcc1bf 2026-03-20).
-		toggleRestaurantMode,
+		//// Neoffice — no restaurant-mode toggle any more, the till's own setting decides; only the
+		//// clean-up of the old device override stays exported (8aa35c29, 82fcc1bf, 2026-03-20).
 		initRestaurantMode,
 	};
 });
