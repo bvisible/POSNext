@@ -8885,7 +8885,7 @@ msgstr "Montants rapides pour {0}"
 #: pos_next/pos_next/doctype/pos_closing_shift_taxes/pos_closing_shift_taxes.json
 #: pos_next/pos_next/doctype/pos_offer/pos_offer.json
 msgid "Rate"
-msgstr "Taux"
+msgstr "Prix"
 
 #: POS/src/components/sale/EditItemDialog.vue:384
 msgid "Rate editing is disabled"
@@ -15374,3 +15374,1572 @@ msgstr "Sans vente : indiquez le motif. L'ouverture est enregistrée à votre no
 #, python-brace-format
 msgid "Without a sale: {0}"
 msgstr "Sans vente : {0}"
+
+#: POS/src/components/common/AuthorizationDialog.vue:15
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "A manager must approve this action."
+msgstr "Un responsable doit approuver cette action."
+
+#: pos_next/authorization/policy.py:131
+msgid "Add at least one approver, otherwise this action can never be authorized."
+msgstr "Ajoutez au moins un approbateur, sinon cette action ne pourra jamais être autorisée."
+
+#: POS/src/components/sale/CouponManagement.vue:1375
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Add at least one row to {0}"
+msgstr "Ajoutez au moins une ligne à {0}"
+
+#: POS/src/components/sale/CouponManagement.vue:913
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Add Brand"
+msgstr "Ajouter une marque"
+
+#: POS/src/components/sale/CouponManagement.vue:906
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Add Item Group"
+msgstr "Ajouter un groupe d'articles"
+
+#: POS/src/components/sale/CouponManagement.vue:876
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Add on top"
+msgstr "Ajouter en haut"
+
+#: POS/src/components/sale/OffersDialog.vue:375
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Add {0} more and get {1}"
+msgstr "Ajoutez encore {0} pour obtenir {1}"
+
+#: POS/src/components/sale/PaymentDialog.vue:102
+msgid "All items have a Sales Person — invoice-level selection is optional."
+msgstr "Tous les articles ont un commercial : le choix au niveau de la facture est facultatif."
+
+#: POS/src/components/sale/ExpenseDialog.vue:326
+msgid "Already Spent"
+msgstr "Déjà dépensé"
+
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Amount exceeds the remaining shift expense allowance of {0}"
+msgstr "Le montant dépasse le plafond de dépenses restant pour cette session, soit {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1058
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "An active POS shift is required"
+msgstr "Une session POS active est requise"
+
+#: POS/src/components/sale/CouponManagement.vue:579
+msgid "Apply Scope"
+msgstr "Portée d'application"
+
+#. Label of a Section Break field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:68
+msgid "Approval Validity"
+msgstr "Validité de l'approbation"
+
+#. Label of a Int field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:75
+msgid "Approval Validity (minutes)"
+msgstr "Validité de l'approbation (minutes)"
+
+#. Label of a Select field in DocType 'POS Authorization Approver'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_approver/pos_authorization_approver.json:22
+msgid "Approver Type"
+msgstr "Type d'approbateur"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1271
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Attachments added to expense {0}"
+msgstr "Pièces jointes ajoutées à la dépense {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1378
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Attachments are still pending for {0}. Use Retry Attach instead of Submit."
+msgstr "Les pièces jointes sont encore en attente pour {0}. Utilisez « Réessayer les pièces jointes » au lieu de valider."
+
+#: POS/src/components/common/AuthorizationDialog.vue:189
+#: POS/src/components/common/AuthorizationDialog.vue:193
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "Authorization failed"
+msgstr "Échec de l'autorisation"
+
+#: POS/src/components/common/AuthorizationDialog.vue:12
+#: pos_next/authorization/gate.py:112
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "Authorization Required"
+msgstr "Autorisation requise"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:57
+msgid "Auto-generated from first and last name"
+msgstr "Généré automatiquement à partir du prénom et du nom"
+
+#: pos_next/public/js/user.js:41
+msgid "Avoid repeated digits and simple sequences. "
+msgstr "Évitez les chiffres répétés et les suites simples. "
+
+#: POS/src/components/sale/CouponManagement.vue:877
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Better of the two"
+msgstr "Le plus avantageux des deux"
+
+#: POS/src/components/sale/PromotionManagement.vue:541
+msgid "Buy any item in a group (except pool items) and get Free Qty units spread across that group's pool items."
+msgstr "Achetez un article quelconque d'un groupe (hors articles du pool) et recevez la Qté gratuite, en unités réparties entre les articles du pool de ce groupe"
+
+#: POS/src/components/sale/OffersDialog.vue:374
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Buy {0} more to get {1}"
+msgstr "Achetez encore {0} pour obtenir {1}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1477
+#: POS/src/components/sale/ExpenseDialog.vue:1479
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Cancel Expense"
+msgstr "Annuler la dépense"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1467
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Cancel expense {0} ({1})? This reverses the journal entry and cannot be undone from POS."
+msgstr "Annuler la dépense {0} ({1}) ? Cette opération annule l'écriture de journal et ne peut pas être annulée depuis le POS."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1471
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Cancel expense {0}? This reverses the journal entry and cannot be undone from POS."
+msgstr "Annuler la dépense {0} ? Cette opération annule l'écriture de journal et ne peut pas être annulée depuis le POS."
+
+#: pos_next/api/expenses.py:758
+msgid "Cancelling POS expenses is not allowed for this POS Profile"
+msgstr "L'annulation des dépenses POS n'est pas autorisée pour ce POS Profile"
+
+#: POS/src/components/sale/EditItemDialog.vue:793
+#: POS/src/components/sale/EditItemDialog.vue:1297
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:9
+msgid "Cannot add item discount while a promotional offer applies to this item"
+msgstr "Impossible d'ajouter une remise sur l'article tant qu'une offre promotionnelle s'applique à cet article"
+
+#: POS/src/stores/posCart.js:895 POS/src/stores/posCart.js:2884
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:104
+msgid "Cart no longer meets requirements"
+msgstr "Le panier ne remplit plus les conditions requises"
+
+#: POS/src/components/sale/ExpenseDialog.vue:23
+msgid "Cash Expense"
+msgstr "Dépense en espèces"
+
+#: pos_next/api/expenses.py:845
+msgid "Cash Mode Required"
+msgstr "Mode espèces requis"
+
+#: pos_next/public/js/user.js:21
+msgid "Change POS Authorization PIN"
+msgstr "Modifier le PIN d'autorisation POS"
+
+#: POS/src/components/sale/PaymentDialog.vue:2373
+msgid "Click again to confirm"
+msgstr "Cliquez à nouveau pour confirmer"
+
+#: pos_next/public/js/user.js:64
+msgid "Confirm PIN"
+msgstr "Confirmer le PIN"
+
+#. Description of the 'Max Failed Attempts' (Int) field in DocType 'POS
+#. Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:45
+msgid "Consecutive wrong PINs before an approver is locked out of granting authorization."
+msgstr "Nombre de PIN erronés consécutifs avant qu'un approbateur ne soit bloqué pour accorder une autorisation."
+
+#: POS/src/components/sale/ExpenseDialog.vue:109
+msgid "Continue without attachments"
+msgstr "Continuer sans pièces jointes"
+
+#: pos_next/api/expenses.py:1016
+#, python-brace-format
+msgid "Could not determine exchange rate from {0} to {1} on {2}"
+msgstr "Impossible de déterminer le taux de change de {0} vers {1} à la date du {2}"
+
+#: POS/src/stores/posCart.js:906
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:104
+#, python-brace-format
+msgid "Could not re-check coupon {0}. It will be validated again on payment."
+msgstr "Impossible de revérifier le coupon {0}. Il sera de nouveau validé au paiement."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1104
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Could not save expense data for offline use. Reconnect and reopen expenses."
+msgstr "Impossible d'enregistrer les données de dépense pour un usage hors ligne. Rétablissez la connexion et rouvrez les dépenses."
+
+#: pos_next/public/js/user.js:91
+msgid "Could not update the PIN"
+msgstr "Impossible de mettre à jour le PIN"
+
+#: POS/src/components/invoices/InvoiceDetailDialog.vue:77
+msgid "Coupon Applied:"
+msgstr "Coupon appliqué :"
+
+#: POS/src/stores/posCart.js:893 POS/src/stores/posCart.js:2882
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:104
+#, python-brace-format
+msgid "Coupon {0} removed: {1}"
+msgstr "Coupon {0} retiré : {1}"
+
+#: POS/src/utils/printInvoice.js:266
+#: pos_next/public/pos/assets/ShiftOpeningDialog-DMtK6paj.js:74
+msgid "Coupon:"
+msgstr "Coupon :"
+
+#: pos_next/public/js/user.js:50
+msgid "Current PIN"
+msgstr "PIN actuel"
+
+#: pos_next/api/authorization.py:198
+msgid "Current PIN is incorrect"
+msgstr "Le PIN actuel est incorrect"
+
+#: pos_next/api/invoices.py:2290
+msgid "Customer is required for credit sales"
+msgstr "Un client est requis pour les ventes à crédit"
+
+#: pos_next/api/invoices.py:764
+#, python-brace-format
+msgid "Customer is required when paying with {0}"
+msgstr "Un client est requis pour payer par {0}"
+
+#: pos_next/api/invoices.py:714 pos_next/overrides/sales_invoice.py:141
+msgid "Customer is required. Please select a customer or configure a default customer in POS Profile."
+msgstr "Un client est requis. Veuillez sélectionner un client ou définir un client par défaut dans le POS Profile."
+
+#: pos_next/api/invoices.py:715 pos_next/api/invoices.py:765
+#: pos_next/api/invoices.py:2290 pos_next/overrides/sales_invoice.py:143
+msgid "Customer Required"
+msgstr "Client requis"
+
+#: POS/src/components/sale/PaymentDialog.vue:577
+msgid "Customer required for this payment method"
+msgstr "Client requis pour ce mode de paiement"
+
+#: POS/src/components/sale/InvoiceCart.vue:1697
+msgid "Customer saves"
+msgstr "Économie client"
+
+#: pos_next/overrides/sales_invoice.py:64
+#, python-brace-format
+msgid "Customer {0} does not exist. Please select a valid customer."
+msgstr "Le client {0} n'existe pas. Veuillez sélectionner un client valide."
+
+#: POS/src/pages/POSSale.vue:2103
+msgid "Delete Expense"
+msgstr "Supprimer la dépense"
+
+#: POS/src/components/sale/DraftInvoicesDialog.vue:117
+#: POS/src/components/sale/DraftInvoicesDialog.vue:118
+msgid "Delete held invoice"
+msgstr "Supprimer la facture en attente"
+
+#: POS/src/components/sale/DraftInvoicesDialog.vue:180
+msgid "Delete held invoice?"
+msgstr "Supprimer la facture en attente ?"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1003
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Delete Offline Expense"
+msgstr "Supprimer la dépense hors ligne"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1004
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Delete this unsynced offline expense? It will not be sent to the server."
+msgstr "Supprimer cette dépense hors ligne non synchronisée ? Elle ne sera pas envoyée au serveur."
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "Denied"
+msgstr "Refusé"
+
+#. Description of the 'PIN Length' (Int) field in DocType 'POS Authorization
+#. Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:20
+msgid "Digits required in an authorization PIN. Changing this only affects PINs set from now on. existing PINs keep working at their original length."
+msgstr "Nombre de chiffres requis dans un PIN d'autorisation. Ce réglage ne concerne que les PIN définis à partir de maintenant ; les PIN existants restent valables à leur longueur d'origine."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1027
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Discard Attachments"
+msgstr "Abandonner les pièces jointes"
+
+#: POS/src/components/sale/ExpenseDialog.vue:400
+#: POS/src/components/sale/ExpenseDialog.vue:1032
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Discard files"
+msgstr "Abandonner les fichiers"
+
+#. Description of the 'Cashier' (Data) field in DocType 'POS Closing Shift
+#. Expense'
+#: pos_next/pos_next/doctype/pos_closing_shift_expense/pos_closing_shift_expense.json
+msgid "Display name of the user who recorded the expense (Journal Entry owner). Display-only, not a Link — cashiers are often not resolvable via a User Link for other users."
+msgstr "Nom affiché de l'utilisateur qui a enregistré la dépense (propriétaire de l'écriture de journal). Affichage seul, pas un champ Link : les caissiers ne sont souvent pas accessibles par un lien vers User pour les autres utilisateurs."
+
+#: pos_next/pos_next/utils/sales_person_commission.py:159
+msgid "Duplicate Commission"
+msgstr "Commission en double"
+
+#: pos_next/authorization/policy.py:78
+msgid "Duplicate Rule"
+msgstr "Règle en double"
+
+#: POS/src/components/sale/CouponManagement.vue:882
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Each line gets whichever saves the customer more."
+msgstr "Chaque ligne reçoit l'option la plus avantageuse pour le client."
+
+#: pos_next/api/expenses.py:917
+#, python-brace-format
+msgid "Employee {0} does not belong to company {1}"
+msgstr "L'employé {0} n'appartient pas à la société {1}"
+
+#: pos_next/api/expenses.py:914
+#, python-brace-format
+msgid "Employee {0} is not active"
+msgstr "L'employé {0} n'est pas actif"
+
+#. Label of a Check field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:36
+msgid "Enforce Strict PIN"
+msgstr "Imposer un PIN strict"
+
+#: POS/src/components/sale/ExpenseDialog.vue:210
+msgid "Enter a short description"
+msgstr "Saisissez une brève description"
+
+#: POS/src/components/sale/ExpenseDialog.vue:624
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Enter amount in {0}"
+msgstr "Saisissez le montant en {0}"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:181
+msgid "Enter email address (optional)"
+msgstr "Saisissez une adresse e-mail (facultatif)"
+
+#: POS/src/components/sale/CouponManagement.vue:1056
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Entire Cart"
+msgstr "Panier entier"
+
+#: pos_next/authorization/policy.py:72
+msgid "every POS Profile"
+msgstr "tous les POS Profile"
+
+#: POS/src/components/sale/PaymentDialog.vue:2311
+#, python-brace-format
+msgid "Exact cash {0}"
+msgstr "Espèces exactes {0}"
+
+#: pos_next/public/js/user.js:62
+#, python-brace-format
+msgid "Exactly {0} digits"
+msgstr "Exactement {0} chiffres"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1334 pos_next/api/expenses.py:716
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Expense Account is required"
+msgstr "Le compte de charges est requis"
+
+#: pos_next/api/expenses.py:731
+msgid "Expense Account must be a ledger account"
+msgstr "Le compte de charges doit être un compte du grand livre"
+
+#: pos_next/api/expenses.py:728
+#, python-brace-format
+msgid "Expense Account must belong to company {0}"
+msgstr "Le compte de charges doit appartenir à la société {0}"
+
+#: pos_next/api/expenses.py:725
+#, python-brace-format
+msgid "Expense Account {0} does not exist"
+msgstr "Le compte de charges {0} n'existe pas"
+
+#: pos_next/api/expenses.py:734
+#, python-brace-format
+msgid "Expense Account {0} is disabled"
+msgstr "Le compte de charges {0} est désactivé"
+
+#: pos_next/api/expenses.py:742
+#, python-brace-format
+msgid "Expense Account {0} is not allowed for POS Profile {1}"
+msgstr "Le compte de charges {0} n'est pas autorisé pour le POS Profile {1}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:204
+msgid "Expense Description"
+msgstr "Description de la dépense"
+
+#: pos_next/api/expenses.py:646
+msgid "Expense Limit Not Configured"
+msgstr "Plafond de dépenses non configuré"
+
+#: POS/src/components/sale/ExpenseDialog.vue:946
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Expense recorded, but attaching {0} failed"
+msgstr "Dépense enregistrée, mais l'ajout de {0} a échoué"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1240
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Expense recorded, but file upload did not return a file"
+msgstr "Dépense enregistrée, mais le téléversement du fichier n'a renvoyé aucun fichier"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1425
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Expense saved offline; will sync when you reconnect"
+msgstr "Dépense enregistrée hors ligne ; elle sera synchronisée à la reconnexion"
+
+#: POS/src/components/sale/ExpenseDialog.vue:852
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Expense {0} recorded, but attachments failed. Retry attach below."
+msgstr "Dépense {0} enregistrée, mais les pièces jointes ont échoué. Réessayez ci-dessous."
+
+#: POS/src/components/sale/ExpenseDialog.vue:310
+msgid "Expenses This Shift"
+msgstr "Dépenses de cette session"
+
+#: POS/src/components/sale/ExpenseDialog.vue:459
+msgid "Expenses you record this shift will appear here"
+msgstr "Les dépenses que vous enregistrez pendant cette session apparaîtront ici"
+
+#: POS/src/components/ShiftClosingDialog.vue:1122
+#, python-brace-format
+msgid "Expenses: -{0}"
+msgstr "Dépenses : -{0}"
+
+#: POS/src/components/sale/BatchSerialDialog.vue:374
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:3
+msgid "Expires today"
+msgstr "Expire aujourd'hui"
+
+#: POS/src/components/sale/InvoiceCart.vue:1386
+#, python-brace-format
+msgid "expires {0}"
+msgstr "expire le {0}"
+
+#: POS/src/stores/posSync.js:341
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Failed to delete offline expense"
+msgstr "Échec de la suppression de la dépense hors ligne"
+
+#: POS/src/stores/posSync.js:357
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Failed to discard attachments"
+msgstr "Échec de l'abandon des pièces jointes"
+
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid ""
+"Failed to sync {0}\n"
+"\n"
+"{1}\n"
+"\n"
+"You can review or remove it from the offline queue if needed."
+msgstr ""
+"Échec de la synchronisation de {0}\n"
+"\n"
+"{1}\n"
+"\n"
+"Vous pouvez examiner l'élément ou le retirer de la file d'attente hors ligne si nécessaire."
+
+#: POS/src/pages/POSSale.vue:5527
+#, python-brace-format
+msgid "Failed to sync {0}\\n\\n{1}\\n\\nYou can review or remove it from the offline queue if needed."
+msgstr "Échec de la synchronisation de {0}\\n\\n{1}\\n\\nVous pouvez examiner l'élément ou le retirer de la file d'attente hors ligne si nécessaire."
+
+#: pos_next/api/expenses.py:438 pos_next/api/expenses.py:443
+#: pos_next/api/expenses.py:448
+msgid "File is required"
+msgstr "Le fichier est requis"
+
+#: pos_next/api/expenses.py:527 pos_next/api/expenses.py:540
+msgid "File Too Large"
+msgstr "Fichier trop volumineux"
+
+#: pos_next/api/expenses.py:513
+msgid "File type not allowed. Use JPG, PNG, GIF, PDF, TXT, CSV, or Office documents."
+msgstr "Type de fichier non autorisé. Utilisez des fichiers JPG, PNG, GIF, PDF, TXT, CSV ou des documents Office."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1168
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "File type not allowed: {0}"
+msgstr "Type de fichier non autorisé : {0}"
+
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "File {0} exceeds the maximum size of {1} MB"
+msgstr "Le fichier {0} dépasse la taille maximale de {1} Mo"
+
+#: POS/src/components/sale/PromotionManagement.vue:782
+msgid "For each item group, choose free items and set Free Qty as the total free units (default 1). They are given in list order across those item codes — not one per paid unit."
+msgstr "Pour chaque groupe d'articles, choisissez les articles gratuits et indiquez la Qté gratuite comme nombre total d'unités gratuites (1 par défaut). Elles sont attribuées dans l'ordre de la liste, réparties entre ces codes articles, et non une par unité payée."
+
+#: POS/src/components/sale/InvoiceCart.vue:1254
+#: POS/src/utils/offerProgress.js:42
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Free gift"
+msgstr "Cadeau gratuit"
+
+#: POS/src/components/sale/EditItemDialog.vue:552
+msgid "Free Item Locked"
+msgstr "Article gratuit verrouillé"
+
+#: POS/src/components/sale/EditItemDialog.vue:1218
+#: POS/src/stores/posCart.js:2185 POS/src/stores/posCart.js:2221
+#: POS/src/stores/posCart.js:2262
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:10
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:104
+msgid "Free promotional items cannot be edited"
+msgstr "Les articles gratuits d'une promotion ne peuvent pas être modifiés"
+
+#: POS/src/components/sale/PromotionManagement.vue:845
+msgid "Free Qty"
+msgstr "Qté gratuite"
+
+#: POS/src/components/sale/PromotionManagement.vue:1314
+msgid "Gift Pool"
+msgstr "Pool de cadeaux"
+
+#: POS/src/components/sale/PromotionManagement.vue:771
+msgid "Gift Pool Free Items"
+msgstr "Articles gratuits du pool de cadeaux"
+
+#: POS/src/utils/offerProgress.js:29
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Gift: {0}"
+msgstr "Cadeau : {0}"
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "Granted"
+msgstr "Accordé"
+
+#: pos_next/pos_next/report/inventory_impact_and_fast_movers_report/inventory_impact_and_fast_movers_report.js:40
+msgid "Group by POS Profile"
+msgstr "Grouper par POS Profile"
+
+#: POS/src/stores/posDrafts.js:99
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:9
+msgid "Held invoice opened"
+msgstr "Facture en attente ouverte"
+
+#: POS/src/components/sale/DraftInvoicesDialog.vue:38
+msgid "Hold an invoice to finish it later"
+msgstr "Mettez une facture en attente pour la terminer plus tard"
+
+#. Description of the 'Approval Validity (minutes)' (Int) field in DocType 'POS
+#. Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:72
+msgid "How long an approval stays usable before the manager must approve again. It is spent by the first document it is submitted against and is tied to the till session that asked for it, so a longer window lets a slow or offline sale finish without letting the approval be reused elsewhere."
+msgstr "Durée pendant laquelle une approbation reste utilisable avant que le responsable doive approuver de nouveau. Elle est consommée par le premier document auquel elle est associée et elle est liée à la session POS qui l'a demandée : une durée plus longue permet à une vente lente ou hors ligne de se terminer, sans que l'approbation puisse être réutilisée ailleurs."
+
+#. Description of the 'Lockout Duration (minutes)' (Int) field in DocType 'POS
+#. Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:58
+msgid "How long the lockout lasts, and the window over which failed attempts accumulate."
+msgstr "Durée du verrouillage, et période pendant laquelle les tentatives échouées s'accumulent."
+
+#: pos_next/api/restaurant.py:2250
+msgid "Images can only be downloaded from the image search"
+msgstr "Les images ne peuvent être téléchargées que depuis la recherche d'images"
+
+#: POS/src/components/sale/ExpenseDialog.vue:338
+#, python-brace-format
+msgid "Includes {0} pending local"
+msgstr "Comprend {0} en attente en local"
+
+#: pos_next/api/authorization.py:178
+msgid "Incorrect PIN"
+msgstr "PIN incorrect"
+
+#: pos_next/api/expenses.py:514
+msgid "Invalid Attachment"
+msgstr "Pièce jointe invalide"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:150
+msgid "Invalid Commission Rate"
+msgstr "Taux de commission invalide"
+
+#: pos_next/authorization/policy.py:232
+msgid "Invalid Condition"
+msgstr "Condition invalide"
+
+#: pos_next/overrides/sales_invoice.py:67
+msgid "Invalid Customer"
+msgstr "Client invalide"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:524
+#, python-brace-format
+msgid "Invalid or disabled Sales Person(s): {0}"
+msgstr "Commercial(s) invalide(s) ou désactivé(s) : {0}"
+
+#: pos_next/api/invoices.py:694 pos_next/overrides/sales_invoice.py:241
+msgid "Invalid Payment Account"
+msgstr "Compte de paiement invalide"
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/authorization/pin.py:74 pos_next/authorization/pin.py:77
+#: pos_next/authorization/pin.py:82
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "Invalid PIN"
+msgstr "PIN invalide"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:694
+#: pos_next/pos_next/utils/sales_person_commission.py:701
+msgid "Invalid Return Item"
+msgstr "Article de retour invalide"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:525
+msgid "Invalid Sales Person"
+msgstr "Commercial invalide"
+
+#: pos_next/api/restaurant.py:1964
+#, python-brace-format
+msgid "Invalid status: {0}"
+msgstr "Statut invalide : {0}"
+
+#: POS/src/stores/posDrafts.js:87
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:9
+msgid "Invoice held"
+msgstr "Facture mise en attente"
+
+#: POS/src/components/sale/ExpenseDialog.vue:367
+#, python-brace-format
+msgid "JE {0}; files pending"
+msgstr "Écriture {0} ; fichiers en attente"
+
+#: POS/src/components/sale/ExpenseDialog.vue:997
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Journal Entry already created on the server. Discard remaining attachments instead of deleting."
+msgstr "L'écriture de journal est déjà créée sur le serveur. Abandonnez les pièces jointes restantes au lieu de les supprimer."
+
+#: pos_next/api/expenses.py:569
+msgid "Journal Entry does not belong to the selected POS Opening Shift"
+msgstr "L'écriture de journal n'appartient pas au POS Opening Shift sélectionné"
+
+#: pos_next/api/expenses.py:572
+msgid "Journal Entry does not belong to the selected POS Profile"
+msgstr "L'écriture de journal n'appartient pas au POS Profile sélectionné"
+
+#: pos_next/api/expenses.py:376 pos_next/api/expenses.py:430
+#: pos_next/authorization/actions/pos_expense.py:37
+msgid "Journal Entry is required"
+msgstr "L'écriture de journal est requise"
+
+#: pos_next/api/expenses.py:563
+#, python-brace-format
+msgid "Journal Entry {0} does not exist"
+msgstr "L'écriture de journal {0} n'existe pas"
+
+#: pos_next/api/expenses.py:566
+#, python-brace-format
+msgid "Journal Entry {0} is not a POS expense"
+msgstr "L'écriture de journal {0} n'est pas une dépense POS"
+
+#: pos_next/authorization/actions/pos_expense.py:46
+#, python-brace-format
+msgid "Journal Entry {0} is not a submitted POS expense"
+msgstr "L'écriture de journal {0} n'est pas une dépense POS validée"
+
+#: POS/src/components/sale/ExpenseDialog.vue:706
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "JPG, PNG or PDF, maximum {0} MB"
+msgstr "JPG, PNG ou PDF, {0} Mo au maximum"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1028
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Keep Journal Entry {0} and discard remaining queued attachments?"
+msgstr "Conserver l'écriture de journal {0} et abandonner les pièces jointes restantes en file d'attente ?"
+
+#. Description of the 'POS Profile' (Link) field in DocType 'POS Authorization
+#. Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:28
+msgid "Leave blank to apply to every POS Profile. A rule naming a profile takes precedence over a blank one."
+msgstr "Laissez vide pour appliquer à tous les POS Profile. Une règle qui désigne un POS Profile prime sur une règle vide."
+
+#. Label of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/POSSettings.vue:768
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:483
+msgid "LIFO Cart Order (Newest on Top)"
+msgstr "Ordre LIFO du panier (le plus récent en haut)"
+
+#: POS/src/components/common/AuthorizationDialog.vue:36
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "Loading approvers…"
+msgstr "Chargement des approbateurs…"
+
+#: POS/src/components/sale/ExpenseDialog.vue:57
+msgid "Loading expense data..."
+msgstr "Chargement des données de dépense..."
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:112
+msgid "Loading shifts..."
+msgstr "Chargement des sessions..."
+
+#: POS/src/components/sale/EditItemDialog.vue:242
+#: POS/src/components/sale/EditItemDialog.vue:482
+#: POS/src/components/sale/EditItemDialog.vue:786
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:9
+msgid "Locked (promotional offer)"
+msgstr "Verrouillé (offre promotionnelle)"
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "Locked Out"
+msgstr "Verrouillé"
+
+#. Label of a Section Break field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:41
+msgid "Lockout"
+msgstr "Verrouillage"
+
+#. Label of a Int field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:61
+msgid "Lockout Duration (minutes)"
+msgstr "Durée du verrouillage (minutes)"
+
+#: POS/src/components/sale/InvoiceCart.vue:191
+msgid "LP"
+msgstr "PF"
+
+#. Label of a Int field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:48
+msgid "Max Failed Attempts"
+msgstr "Nombre maximal de tentatives échouées"
+
+#: pos_next/api/expenses.py:643
+#, python-brace-format
+msgid "Maximum Expense Amount is not configured on POS Profile {0}. Set a positive limit before recording expenses."
+msgstr "Le montant maximal de dépense n'est pas configuré sur le POS Profile {0}. Définissez un plafond positif avant d'enregistrer des dépenses."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1343
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Maximum Expense Amount is not configured on this POS Profile. Set a positive limit before recording expenses."
+msgstr "Le montant maximal de dépense n'est pas configuré sur ce POS Profile. Définissez un plafond positif avant d'enregistrer des dépenses."
+
+#: pos_next/api/expenses.py:893
+msgid "Missing Payment Account"
+msgstr "Compte de paiement manquant"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1355 pos_next/api/expenses.py:818
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Mode of Payment is required"
+msgstr "Le mode de paiement est requis"
+
+#: pos_next/api/expenses.py:827
+#, python-brace-format
+msgid "Mode of Payment {0} is not configured in POS Profile {1}"
+msgstr "Le mode de paiement {0} n'est pas configuré dans le POS Profile {1}"
+
+#: pos_next/api/invoices.py:691 pos_next/overrides/sales_invoice.py:238
+#, python-brace-format
+msgid "Mode of Payment {0} uses account {1}, which is the same as the invoice receivable account. Please set a Cash or Bank account on the Mode of Payment."
+msgstr "Le mode de paiement {0} utilise le compte {1}, qui est le même que le compte débiteurs de la facture. Définissez un compte de caisse ou de banque sur le mode de paiement."
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:98
+msgid "Net Cash Difference"
+msgstr "Écart de caisse net"
+
+#: POS/src/components/ShiftClosingDialog.vue:217
+msgid "Net Cash Impact"
+msgstr "Impact net sur la caisse"
+
+#: pos_next/public/js/user.js:59
+msgid "New PIN"
+msgstr "Nouveau PIN"
+
+#: POS/src/components/common/AuthorizationDialog.vue:44
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "No approver is available. Ask a System Manager to set an authorization PIN for a manager."
+msgstr "Aucun approbateur n'est disponible. Demandez à un gestionnaire système de définir un PIN d'autorisation pour un responsable."
+
+#: pos_next/authorization/policy.py:132
+msgid "No Approvers"
+msgstr "Aucun approbateur"
+
+#: pos_next/api/authorization.py:135
+msgid "No authorization rule applies to this action."
+msgstr "Aucune règle d'autorisation ne s'applique à cette action."
+
+#: POS/src/composables/useSearchInput.js:232
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:17
+#, python-brace-format
+msgid "No barcode matches «{0}». Pick from the results or scan the barcode again."
+msgstr "Aucun code-barres ne correspond à « {0} ». Choisissez dans les résultats ou scannez à nouveau le code-barres."
+
+#: POS/src/components/sale/ExpenseDialog.vue:197
+msgid "No expense accounts found. Try a different search."
+msgstr "Aucun compte de charges trouvé. Essayez une autre recherche."
+
+#: POS/src/components/sale/ExpenseDialog.vue:457
+msgid "No expenses yet"
+msgstr "Aucune dépense pour l'instant"
+
+#: POS/src/components/sale/DraftInvoicesDialog.vue:36
+msgid "No held invoices"
+msgstr "Aucune facture en attente"
+
+#: POS/src/composables/useSearchInput.js:239
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:17
+#, python-brace-format
+msgid "No item matches «{0}». Search by name or scan the barcode again."
+msgstr "Aucun article ne correspond à « {0} ». Recherchez par nom ou scannez à nouveau le code-barres."
+
+#: POS/src/components/sale/PromotionManagement.vue:887
+msgid "No items in this group"
+msgstr "Aucun article dans ce groupe"
+
+#: POS/src/pages/POSSale.vue:5498
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "No pending documents to sync"
+msgstr "Aucun document en attente de synchronisation"
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "No PIN Set"
+msgstr "Aucun PIN défini"
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:320
+msgid "No recent invoices to return"
+msgstr "Aucune facture récente à retourner"
+
+#: POS/src/components/sale/CouponManagement.vue:659
+msgid "No rows added yet"
+msgstr "Aucune ligne ajoutée pour l'instant"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:119
+msgid "No shifts in this period"
+msgstr "Aucune session sur cette période"
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "Not Authorized"
+msgstr "Non autorisé"
+
+#: pos_next/pos_next/report/pos_expense_report/pos_expense_report.py:161
+#, python-brace-format
+msgid "Not permitted to access Company {0}"
+msgstr "Accès à la société {0} non autorisé"
+
+#: POS/src/stores/posSync.js:338
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Offline expense deleted"
+msgstr "Dépense hors ligne supprimée"
+
+#: pos_next/api/expenses.py:575
+msgid "Only submitted POS expenses are allowed"
+msgstr "Seules les dépenses POS validées sont autorisées"
+
+#: POS/src/components/sale/ExpenseDialog.vue:194
+#: POS/src/components/sale/ExpenseDialog.vue:1087
+#: POS/src/components/sale/ExpenseDialog.vue:1386
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Open expenses once while online to cache accounts and limits before recording offline."
+msgstr "Ouvrez les dépenses une fois en ligne pour mettre en cache les comptes et les plafonds avant d'enregistrer hors ligne."
+
+#: POS/src/components/sale/DraftInvoicesDialog.vue:72
+msgid "Open in the cart now"
+msgstr "Ouvrir maintenant dans le panier"
+
+#: POS/src/pages/Login.vue:35 pos_next/public/pos/assets/Login-BHBk15Mr.js:1
+msgid "Open POS Next over https:// to sign in. Passwords are never sent over an insecure connection."
+msgstr "Ouvrez POS Next en https:// pour vous connecter. Les mots de passe ne sont jamais envoyés sur une connexion non sécurisée."
+
+#: POS/src/components/sale/ExpenseDialog.vue:697
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Optional. JPG, PNG, GIF, PDF, TXT, CSV, or Office docs. Max {0} MB each. Attached after submit."
+msgstr "Facultatif. JPG, PNG, GIF, PDF, TXT, CSV ou documents Office. {0} Mo au maximum chacun. Jointes après la validation."
+
+#: POS/src/components/sale/ExpenseDialog.vue:692
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Optional. JPG, PNG, GIF, PDF, TXT, CSV, or Office docs. Max {0} MB each. Files sync after reconnect."
+msgstr "Facultatif. JPG, PNG, GIF, PDF, TXT, CSV ou documents Office. {0} Mo au maximum chacun. Les fichiers seront synchronisés après la reconnexion."
+
+#. Description of the 'Condition' (Data) field in DocType 'POS Authorization
+#. Approver'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_approver/pos_authorization_approver.json:52
+msgid "Optional. Python expression, e.g. <code>amount &gt; 50000</code>. Available names: doc, amount, pos_profile, customer, requested_by, nowdate, getdate. Leave blank to always apply."
+msgstr "Facultatif. Expression Python, par ex. <code>amount &gt; 50000</code>. Noms disponibles : doc, amount, pos_profile, customer, requested_by, nowdate, getdate. Laissez vide pour toujours appliquer."
+
+#: POS/src/components/sale/ItemsSelector.vue:676
+msgid "Other warehouses"
+msgstr "Autres entrepôts"
+
+#: POS/src/components/sale/DraftInvoicesDialog.vue:184
+msgid "Permanently delete this held invoice?"
+msgstr "Supprimer définitivement cette facture en attente ?"
+
+#. Label of a Int field in DocType 'POS Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:23
+msgid "PIN Length"
+msgstr "Longueur du PIN"
+
+#: pos_next/authorization/pin.py:77
+#, python-brace-format
+msgid "PIN must be exactly {0} digits"
+msgstr "Le PIN doit comporter exactement {0} chiffres"
+
+#: pos_next/authorization/pin.py:74
+msgid "PIN must contain digits only"
+msgstr "Le PIN ne doit contenir que des chiffres"
+
+#: pos_next/public/js/user.js:110
+msgid "PIN removed"
+msgstr "PIN supprimé"
+
+#. Option for the 'Result' (Select) field in DocType 'POS Authorization Log'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:43
+msgid "PIN Set"
+msgstr "PIN défini"
+
+#: pos_next/api/authorization.py:207 pos_next/public/js/user.js:88
+msgid "PIN updated"
+msgstr "PIN mis à jour"
+
+#: POS/src/components/sale/PromotionManagement.vue:1843
+msgid "Please choose at least one free item"
+msgstr "Veuillez choisir au moins un article gratuit"
+
+#: POS/src/components/sale/PaymentDialog.vue:4555
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Please select a customer before paying on account"
+msgstr "Veuillez sélectionner un client avant de payer sur compte"
+
+#: POS/src/components/sale/PaymentDialog.vue:4612
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "Please select a customer before paying with {0}"
+msgstr "Veuillez sélectionner un client avant de payer par {0}"
+
+#: pos_next/api/expenses.py:890
+#, python-brace-format
+msgid "Please set default Cash account in Mode of Payment {0} for company {1} before recording POS expenses."
+msgstr "Veuillez définir le compte de caisse par défaut dans le mode de paiement {0} pour la société {1} avant d'enregistrer des dépenses POS."
+
+#: pos_next/public/js/user.js:45
+msgid "POS Authorization PIN"
+msgstr "PIN d'autorisation POS"
+
+#: POS/src/components/sale/InvoiceCart.vue:1125 POS/src/pages/POSSale.vue:293
+msgid "POS Expense"
+msgstr "Dépense POS"
+
+#: pos_next/api/expenses.py:215
+#, python-brace-format
+msgid "POS Expense already recorded in Journal Entry {0}"
+msgstr "Dépense POS déjà enregistrée dans l'écriture de journal {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:889
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "POS Expense cancelled"
+msgstr "Dépense POS annulée"
+
+#: pos_next/api/expenses.py:587
+msgid "POS Expense Disabled"
+msgstr "Dépense POS désactivée"
+
+#: pos_next/api/expenses.py:586
+#, python-brace-format
+msgid "POS Expense is not enabled for POS Profile {0}"
+msgstr "Les dépenses POS ne sont pas activées pour le POS Profile {0}"
+
+#: pos_next/api/expenses.py:145
+#, python-brace-format
+msgid "POS Expense recorded in Journal Entry {0}"
+msgstr "Dépense POS enregistrée dans l'écriture de journal {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:842
+#: POS/src/components/sale/ExpenseDialog.vue:859
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "POS Expense recorded successfully"
+msgstr "Dépense POS enregistrée avec succès"
+
+#. Name of a report
+#. Label of a Link in the POSNext Workspace
+#: pos_next/pos_next/report/pos_expense_report/pos_expense_report.json:20
+#: pos_next/pos_next/workspace/posnext/posnext.json:183
+msgid "POS Expense Report"
+msgstr "Rapport des dépenses POS"
+
+#: pos_next/api/expenses.py:414
+#, python-brace-format
+msgid "POS Expense {0} cancelled"
+msgstr "Dépense POS {0} annulée"
+
+#. Label of a Section Break field in DocType 'POS Closing Shift'
+#. Label of a Table field in DocType 'POS Closing Shift'
+#: POS/src/components/ShiftClosingDialog.vue:147
+#: POS/src/components/ShiftClosingDialog.vue:852
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json:249
+msgid "POS Expenses"
+msgstr "Dépenses POS"
+
+#: pos_next/api/expenses.py:838
+#, python-brace-format
+msgid "POS expenses can only be paid from Cash accounts. Mode of Payment {0} resolves to {1} (account type: {2})."
+msgstr "Les dépenses POS ne peuvent être payées que depuis des comptes de caisse. Le mode de paiement {0} renvoie vers {1} (type de compte : {2})."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1458
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "POS expenses cannot be cancelled while offline. Please connect to the internet and try again."
+msgstr "Les dépenses POS ne peuvent pas être annulées hors ligne. Connectez-vous à Internet et réessayez."
+
+#: POS/src/components/sale/ExpenseDialog.vue:1250
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "POS expenses cannot be recorded while offline. Please connect to the internet and try again."
+msgstr "Les dépenses POS ne peuvent pas être enregistrées hors ligne. Connectez-vous à Internet et réessayez."
+
+#: pos_next/api/expenses.py:616
+#: pos_next/authorization/actions/pos_expense.py:62
+msgid "POS Opening Shift does not belong to the selected POS Profile"
+msgstr "Le POS Opening Shift n'appartient pas au POS Profile sélectionné"
+
+#: pos_next/api/expenses.py:593
+msgid "POS Opening Shift is required"
+msgstr "Le POS Opening Shift est requis"
+
+#: pos_next/authorization/actions/pos_expense.py:55
+msgid "POS Opening Shift must be open to cancel an expense"
+msgstr "Le POS Opening Shift doit être ouvert pour annuler une dépense"
+
+#: pos_next/api/expenses.py:613
+msgid "POS Opening Shift must be open to record or cancel an expense"
+msgstr "Le POS Opening Shift doit être ouvert pour enregistrer ou annuler une dépense"
+
+#: pos_next/api/expenses.py:610
+#, python-brace-format
+msgid "POS Opening Shift {0} does not exist"
+msgstr "Le POS Opening Shift {0} n'existe pas"
+
+#: POS/src/components/sale/ItemsSelector.vue:191
+msgid "Press F4 to focus search"
+msgstr "Appuyez sur F4 pour aller à la recherche"
+
+#: POS/src/utils/offerProgress.js:42
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Price discount"
+msgstr "Remise sur prix"
+
+#: POS/src/components/sale/PromotionManagement.vue:528
+msgid "Promotion Type"
+msgstr "Type de promotion"
+
+#: POS/src/pages/POSSale.vue:5532
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:41
+#, python-brace-format
+msgid "Queue ID: {0}"
+msgstr "ID de file d'attente : {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:297
+msgid "Record Expense"
+msgstr "Enregistrer la dépense"
+
+#: POS/src/components/sale/ExpenseDialog.vue:26
+msgid "Record money paid from the cash drawer during this shift."
+msgstr "Enregistrez l'argent sorti du tiroir-caisse pendant cette session."
+
+#: POS/src/components/sale/InvoiceCart.vue:1105
+msgid "Record POS expense"
+msgstr "Enregistrer une dépense POS"
+
+#. Description of the 'Enforce Strict PIN' (Check) field in DocType 'POS
+#. Authorization Settings'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:33
+msgid "Reject PINs that are trivially guessable."
+msgstr "Refusez les PIN trop faciles à deviner."
+
+#: POS/src/stores/posSync.js:354
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Remaining attachments discarded; Journal Entry kept"
+msgstr "Pièces jointes restantes abandonnées ; écriture de journal conservée"
+
+#: POS/src/components/sale/ExpenseDialog.vue:1359 pos_next/api/expenses.py:101
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Remarks are required"
+msgstr "Les remarques sont requises"
+
+#: POS/src/components/sale/InvoiceCart.vue:903
+#: POS/src/components/sale/InvoiceCart.vue:904
+#: POS/src/components/sale/InvoiceCart.vue:1707
+#, python-brace-format
+msgid "Remove coupon {0}"
+msgstr "Retirer le coupon {0}"
+
+#: pos_next/public/js/user.js:28
+msgid "Remove POS Authorization PIN"
+msgstr "Supprimer le PIN d'autorisation POS"
+
+#: pos_next/public/js/user.js:102
+#, python-brace-format
+msgid "Remove the POS authorization PIN for {0}? They will no longer be able to approve POS actions."
+msgstr "Supprimer le PIN d'autorisation POS de {0} ? Cette personne ne pourra plus approuver d'actions POS."
+
+#: POS/src/components/sale/ExpenseDialog.vue:106
+msgid "Retry Attach"
+msgstr "Réessayer les pièces jointes"
+
+#: POS/src/components/sale/ExpenseDialog.vue:96
+msgid "Retry attach below — do not submit again."
+msgstr "Réessayez ci-dessous, sans valider à nouveau."
+
+#: pos_next/api/invoices.py:1097
+#: pos_next/pos_next/utils/sales_person_commission.py:693
+#, python-brace-format
+msgid "Return item link {0} does not belong to invoice {1}"
+msgstr "Le lien d'article de retour {0} n'appartient pas à la facture {1}"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:718
+msgid "Return Item Required"
+msgstr "Article de retour requis"
+
+#: pos_next/api/invoices.py:1104
+#: pos_next/pos_next/utils/sales_person_commission.py:698
+#, python-brace-format
+msgid "Return item {0} does not match original row {1} ({2})"
+msgstr "L'article de retour {0} ne correspond pas à la ligne d'origine {1} ({2})"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:156
+#, python-brace-format
+msgid "Row #{0}: Commission for {1} {2} is already defined in row #{3}"
+msgstr "Ligne #{0} : la commission pour {1} {2} est déjà définie à la ligne #{3}"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:147
+#, python-brace-format
+msgid "Row #{0}: Commission Rate for {1} {2} must be between 0 and 100"
+msgstr "Ligne #{0} : le taux de commission pour {1} {2} doit être compris entre 0 et 100"
+
+#: pos_next/authorization/policy.py:139
+#, python-brace-format
+msgid "Row {0}: select a Role"
+msgstr "Ligne {0} : sélectionnez un rôle"
+
+#: pos_next/authorization/policy.py:143
+#, python-brace-format
+msgid "Row {0}: select a User"
+msgstr "Ligne {0} : sélectionnez un utilisateur"
+
+#: POS/src/components/ShiftClosingDialog.vue:225
+msgid "Sales - Returns - Expenses"
+msgstr "Ventes - Retours - Dépenses"
+
+#. Option for the 'Action' (Select) field in DocType 'POS Authorization Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:24
+msgid "Sales Invoice Return"
+msgstr "Retour de facture de vente"
+
+#: pos_next/api/restaurant.py:1969
+#, python-brace-format
+msgid "Sales Invoice {0} not found"
+msgstr "Facture de vente {0} introuvable"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:488
+msgid "Sales Person is required. Select a Sales Person on the payment screen, or assign a Sales Person to every item in the cart."
+msgstr "Un commercial est requis. Sélectionnez un commercial sur l'écran de paiement, ou attribuez un commercial à chaque article du panier."
+
+#: pos_next/pos_next/utils/sales_person_commission.py:491
+msgid "Sales Person Required"
+msgstr "Commercial requis"
+
+#: POS/src/components/invoices/InvoiceDetailDialog.vue:71
+#: POS/src/utils/printInvoice.js:261
+#: pos_next/public/pos/assets/ShiftOpeningDialog-DMtK6paj.js:73
+msgid "Sales Person:"
+msgstr "Commercial :"
+
+#. Option for the 'Action' (Select) field in DocType 'POS Authorization Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:24
+msgid "Sales Return Without Invoice"
+msgstr "Retour de vente sans facture"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:715
+#, python-brace-format
+msgid "sales_invoice_item is required when returning {0} (multiple matching lines on the original invoice)."
+msgstr "sales_invoice_item est requis lors du retour de {0} (plusieurs lignes correspondantes sur la facture d'origine)."
+
+#: POS/src/components/sale/ExpenseDialog.vue:72
+msgid "Saved locally; syncs when you reconnect. Cancel of submitted expenses requires online."
+msgstr "Enregistré localement ; synchronisé à la reconnexion. L'annulation des dépenses validées nécessite une connexion en ligne."
+
+#: POS/src/components/sale/ExpenseDialog.vue:222
+msgid "Search cash payment method..."
+msgstr "Rechercher un mode de paiement en espèces..."
+
+#: POS/src/components/sale/ExpenseDialog.vue:182
+msgid "Search expense account..."
+msgstr "Rechercher un compte de charge…"
+
+#: POS/src/pages/Login.vue:33 pos_next/public/pos/assets/Login-BHBk15Mr.js:1
+msgid "Secure connection required"
+msgstr "Connexion sécurisée requise"
+
+#: pos_next/api/authorization.py:121
+msgid "Select an approver"
+msgstr "Sélectionnez un approbateur"
+
+#: POS/src/components/sale/PromotionManagement.vue:824
+msgid "Select at least one item group, then add free items."
+msgstr "Sélectionnez au moins un groupe d'articles, puis ajoutez des articles gratuits."
+
+#: POS/src/components/sale/CouponManagement.vue:395
+msgid "Select campaign"
+msgstr "Sélectionner une campagne"
+
+#: POS/src/components/sale/CouponManagement.vue:322
+msgid "Select coupon type"
+msgstr "Sélectionner le type de coupon"
+
+#: POS/src/components/sale/CouponManagement.vue:454
+msgid "Select discount type"
+msgstr "Sélectionner le type de remise"
+
+#: POS/src/components/sale/PromotionManagement.vue:880
+msgid "Select free items"
+msgstr "Sélectionner les articles gratuits"
+
+#: POS/src/components/sale/PromotionManagement.vue:534
+msgid "Select promotion type"
+msgstr "Sélectionner le type de promotion"
+
+#: pos_next/api/expenses.py:737
+msgid "Selected account must be an expense account"
+msgstr "Le compte sélectionné doit être un compte de charge"
+
+#: pos_next/public/js/user.js:21
+msgid "Set POS Authorization PIN"
+msgstr "Définir le PIN d'autorisation PDV"
+
+#: pos_next/api/expenses.py:680
+msgid "Shift Expense Limit Exceeded"
+msgstr "Plafond de dépenses de la session dépassé"
+
+#: POS/src/components/sale/ExpenseDialog.vue:320
+msgid "Shift Limit"
+msgstr "Plafond de la session"
+
+#: pos_next/api/partial_payments.py:433
+#, python-brace-format
+msgid "Shift {0} is not open for you. Reload POS and try again."
+msgstr "La session de caisse {0} n'est pas ouverte pour vous. Rechargez le PDV et réessayez."
+
+#: POS/src/components/sale/ItemsSelector.vue:102
+msgid "Show more categories"
+msgstr "Afficher plus de catégories"
+
+#. Description of the 'LIFO Cart Order (Newest on Top)' (Check) field in
+#. DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:480
+msgid "Show most recently added item at the top of the cart"
+msgstr "Afficher l'article ajouté en dernier en haut du panier"
+
+#: POS/src/components/sale/ItemsSelector.vue:38
+msgid "Show previous categories"
+msgstr "Afficher les catégories précédentes"
+
+#: POS/src/components/settings/POSSettings.vue:769
+msgid "Show the most recently added item at the top of the cart instead of the bottom."
+msgstr "Afficher le dernier article ajouté en haut du panier, et non en bas."
+
+#: POS/src/components/sale/CouponManagement.vue:875
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Skip the line"
+msgstr "Ignorer la ligne"
+
+#: POS/src/components/sale/EditItemDialog.vue:490
+msgid "SKU promotion applied — discount is locked"
+msgstr "Promotion SKU appliquée : la remise est verrouillée"
+
+#: POS/src/utils/offerProgress.js:37
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Special price"
+msgstr "Prix spécial"
+
+#: POS/src/components/sale/ItemsSelector.vue:914
+msgid "Stock varies by variant"
+msgstr "Le stock varie selon la variante"
+
+#: POS/src/pages/POSSale.vue:5096 POS/src/pages/POSSale.vue:5166
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Sync or delete pending offline expenses before closing this shift. Unsynced cash expenses cannot be booked after the shift is closed."
+msgstr "Synchronisez ou supprimez les dépenses hors ligne en attente avant de clôturer cette session. Les dépenses en espèces non synchronisées ne pourront plus être comptabilisées une fois la session clôturée."
+
+#: POS/src/components/sale/PaymentDialog.vue:2025
+msgid "Tap again to confirm"
+msgstr "Appuyez à nouveau pour confirmer"
+
+#: pos_next/authorization/pin.py:81
+msgid "That PIN is too easy to guess. Avoid repeated digits and simple sequences."
+msgstr "Ce PIN est trop facile à deviner. Évitez les chiffres répétés et les séquences simples."
+
+#: pos_next/api/restaurant.py:2269
+msgid "The address does not point to an image"
+msgstr "L'adresse ne renvoie pas à une image"
+
+#: pos_next/authorization/policy.py:231
+#, python-brace-format
+msgid "The condition {0} in row {1} is invalid"
+msgstr "La condition {0} de la ligne {1} n'est pas valide"
+
+#: POS/src/components/sale/CouponManagement.vue:881
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "The coupon also applies to what is left after the existing discount."
+msgstr "Le coupon s'applique aussi au montant restant après la remise existante."
+
+#: POS/src/components/sale/CouponManagement.vue:880
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "The coupon leaves lines that already have a discount alone."
+msgstr "Le coupon ne touche pas aux lignes qui ont déjà une remise."
+
+#: pos_next/api/restaurant.py:2270
+#, python-brace-format
+msgid "The image is larger than {0} MB"
+msgstr "L'image dépasse {0} Mo"
+
+#: pos_next/public/js/user.js:75
+msgid "The two PINs do not match"
+msgstr "Les deux PIN ne correspondent pas"
+
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:4
+#, python-brace-format
+msgid "This coupon requires a minimum purchase of {0}"
+msgstr "Ce coupon nécessite un achat minimum de {0}"
+
+#: pos_next/api/expenses.py:274
+msgid "This expense is currently being processed. Please wait."
+msgstr "Cette dépense est en cours de traitement. Veuillez patienter."
+
+#: pos_next/api/expenses.py:673
+#, python-brace-format
+msgid "This expense would exceed the shift expense limit of {0}. Expenses recorded this shift: {1}. Remaining allowance: {2}"
+msgstr "Cette dépense dépasserait le plafond de dépenses de la session, fixé à {0}. Dépenses enregistrées pendant cette session : {1}. Montant restant disponible : {2}"
+
+#: pos_next/api/expenses.py:288
+msgid "This offline expense was cancelled and cannot be synced again."
+msgstr "Cette dépense hors ligne a été annulée et ne peut plus être synchronisée."
+
+#: pos_next/public/js/user.js:67
+msgid "This PIN authorizes POS actions only. it cannot be used to sign in."
+msgstr "Ce PIN n'autorise que les actions du PDV. Il ne peut pas servir à se connecter."
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:2082
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:15
+msgid "This return was closed before authorization completed. Please start again."
+msgstr "Ce retour a été fermé avant la fin de l'autorisation. Veuillez recommencer."
+
+#: pos_next/api/authorization.py:158
+msgid "This user is not permitted to approve this action."
+msgstr "Cet utilisateur n'est pas autorisé à approuver cette action."
+
+#: pos_next/api/authorization.py:150 pos_next/api/authorization.py:174
+#, python-brace-format
+msgid "Too many failed attempts. Approval is locked for {0} minutes."
+msgstr "Trop de tentatives échouées. L'approbation est bloquée pendant {0} minutes."
+
+#: POS/src/components/common/AuthorizationDialog.vue:192
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "Too many PIN attempts just now. Wait a moment and try again."
+msgstr "Trop de tentatives de PIN en peu de temps. Patientez un instant, puis réessayez."
+
+#. Label of a Currency field in DocType 'POS Closing Shift'
+#: pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json:262
+msgid "Total POS Expenses"
+msgstr "Total des dépenses PDV"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:120
+msgid "Try a wider date range"
+msgstr "Essayez une période plus large"
+
+#: POS/src/components/sale/ReturnInvoiceDialog.vue:327
+msgid "Type an invoice number to search all invoices"
+msgstr "Saisissez un numéro de facture pour rechercher parmi toutes les factures"
+
+#: POS/src/components/sale/ExpenseDialog.vue:789
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+msgid "Unable to load expense data"
+msgstr "Impossible de charger les données des dépenses"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.py:25
+msgid "Unknown Action"
+msgstr "Action inconnue"
+
+#: pos_next/api/authorization.py:125
+msgid "Unknown authorization action"
+msgstr "Action d'autorisation inconnue"
+
+#: pos_next/authorization/gate.py:64
+#, python-brace-format
+msgid "Unknown authorization action {0}"
+msgstr "Action d'autorisation inconnue : {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:253
+msgid "Upload Receipt"
+msgstr "Charger le reçu"
+
+#: POS/src/components/common/AuthorizationDialog.vue:116
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+msgid "Verifying…"
+msgstr "Vérification…"
+
+#: POS/src/components/sale/ExpenseDialog.vue:447
+msgid "Void"
+msgstr "Annuler"
+
+#. Option for the 'Action' (Select) field in DocType 'POS Authorization Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:24
+msgid "Void POS Expense"
+msgstr "Annuler une dépense PDV"
+
+#: POS/src/components/sale/ExpenseDialog.vue:442
+msgid "Void this expense"
+msgstr "Annuler cette dépense"
+
+#: POS/src/components/sale/ExpenseDialog.vue:442
+msgid "Voiding requires a connection"
+msgstr "L'annulation nécessite une connexion"
+
+#: POS/src/components/sale/CouponManagement.vue:513
+msgid "When a Line Already Has a Discount"
+msgstr "Lorsqu'une ligne a déjà une remise"
+
+#. Description of the 'Allow Self Approval' (Check) field in DocType 'POS
+#. Authorization Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:48
+msgid "When enabled, an approver may authorize an action they started themselves."
+msgstr "Si cette option est activée, un approbateur peut autoriser une action qu'il a lui-même initiée."
+
+#. Description of the 'Action' (Select) field in DocType 'POS Authorization
+#. Rule'
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:19
+msgid "Which POS action this rule gates."
+msgstr "Action du PDV soumise à cette règle."
+
+#: pos_next/api/expenses.py:763
+msgid "You are not allowed to cancel POS expenses"
+msgstr "Vous n'êtes pas autorisé à annuler les dépenses PDV"
+
+#: pos_next/api/invoices.py:1113
+#, python-brace-format
+msgid "You are trying to return more quantity for item {0} than remains on that line."
+msgstr "Vous tentez de retourner une quantité supérieure à celle qui reste sur cette ligne pour l'article {0}."
+
+#: pos_next/api/expenses.py:769
+msgid "You can only cancel POS expenses you created"
+msgstr "Vous ne pouvez annuler que les dépenses PDV que vous avez créées"
+
+#: pos_next/api/expenses.py:619
+#: pos_next/authorization/actions/pos_expense.py:58
+msgid "You can only manage expenses for your own open shift"
+msgstr "Vous ne pouvez gérer que les dépenses de votre propre session de caisse ouverte"
+
+#: POS/src/components/sale/InvoiceCart.vue:1651
+#, python-brace-format
+msgid "You save {0}"
+msgstr "Vous économisez {0}"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:18
+msgid "Your opened and closed shifts"
+msgstr "Vos sessions de caisse ouvertes et clôturées"
+
+#: pos_next/authorization/policy.py:75
+#, python-brace-format
+msgid "{0} already gates {1} for {2}. Disable it first, or edit it directly instead of creating a duplicate"
+msgstr "La règle {0} contrôle déjà {1} pour {2}. Désactivez cette règle d'abord, ou modifiez-la directement plutôt que d'en créer un doublon"
+
+#: POS/src/components/sale/CouponDialog.vue:595
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:4
+#, python-brace-format
+msgid "{0} applied. The current promotion saves more on: {1}"
+msgstr "{0} appliqué. La promotion en cours fait davantage économiser sur : {1}"
+
+#: POS/src/stores/posCart.js:707
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:104
+#, python-brace-format
+msgid "{0} can't be combined with the order discount already applied"
+msgstr "{0} ne peut pas être cumulé avec la remise sur la commande déjà appliquée"
+
+#: POS/src/components/sale/PaymentDialog.vue:4264
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "{0} cannot be collected at the till: its payment channel ({1}) is not a payment terminal or a QR code. Choose another payment method."
+msgstr "{0} ne peut pas être encaissé à la caisse : son canal de paiement ({1}) n'est ni un terminal de paiement ni un QR code. Choisissez un autre mode de paiement."
+
+#: POS/src/pages/POSSale.vue:5537
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:41
+#, python-brace-format
+msgid "{0} document(s) failed to sync"
+msgstr "Échec de la synchronisation de {0} document(s)"
+
+#: POS/src/stores/posSync.js:288
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "{0} document(s) synced successfully"
+msgstr "{0} document(s) synchronisé(s) avec succès"
+
+#: POS/src/components/ShiftClosingDialog.vue:155
+#, python-brace-format
+msgid "{0} expenses"
+msgstr "{0} dépenses"
+
+#: pos_next/api/authorization.py:164
+#, python-brace-format
+msgid "{0} has no authorization PIN yet. A System Manager can set one on the User record."
+msgstr "{0} n'a pas encore de PIN d'autorisation. Un responsable système peut en définir un sur la fiche de l'utilisateur."
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.py:24
+#, python-brace-format
+msgid "{0} is not a registered authorization action."
+msgstr "{0} n'est pas une action d'autorisation enregistrée."
+
+#: POS/src/utils/offerProgress.js:35
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:37
+#, python-brace-format
+msgid "{0} off"
+msgstr "{0} de remise"
+
+#: pos_next/authorization/gate.py:109
+#, python-brace-format
+msgid "{0} requires authorization by: {1}"
+msgstr "{0} nécessite une autorisation de : {1}"
+
+#: pos_next/authorization/gate.py:111
+#, python-brace-format
+msgid "{0} requires authorization."
+msgstr "{0} nécessite une autorisation."
+
+#: POS/src/components/sale/InvoiceCart.vue:2944
+#: POS/src/utils/offerProgress.js:32
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:12
+#, python-brace-format, python-format
+msgid "{0}% off"
+msgstr "{0} % de remise"
+
+#: POS/src/components/sale/InvoiceCart.vue:2936
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:12
+#, python-brace-format, python-format
+msgid "{0}% off + Coupon {1}"
+msgstr "{0} % de remise + coupon {1}"
+
+#: POS/src/components/common/AuthorizationDialog.vue:84
+#: pos_next/public/pos/assets/index-BCOgvuaj.js:86
+#, python-brace-format
+msgid "{0}-digit PIN"
+msgstr "PIN à {0} chiffres"
+
+#: POS/src/components/sale/EditItemDialog.vue:838
+#: pos_next/public/pos/assets/POSSale-B8C49Dja.js:9
+msgid "— None —"
+msgstr "— Aucun —"
