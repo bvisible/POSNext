@@ -94,7 +94,7 @@ class RestaurantSettings(Document):
 			"is_stock_item": 0,
 			"standard_rate": 0,
 			"is_internal_item": 1,
-			"description": _("Gratuity"),
+			"description": _("Gratuity", context="Restaurant tip line"),
 		})
 
 		# Set default income account to the tip transit account

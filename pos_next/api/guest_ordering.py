@@ -995,7 +995,7 @@ def confirm_guest_payment(token, amount, tip=0):
 						"rate": flt(tip),
 						"income_account": tip_account or None,
 						"cost_center": invoice_doc.cost_center,
-						"description": _("Gratuity"),
+						"description": _("Gratuity", context="Restaurant tip line"),
 					})
 				# Recalculate totals with tip item
 				invoice_doc.run_method("calculate_taxes_and_totals")

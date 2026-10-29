@@ -4939,6 +4939,7 @@ msgstr "Total général :"
 #: pos_next/api/guest_ordering.py:998 pos_next/api/invoices.py:2881
 #: pos_next/pos_next/doctype/restaurant/restaurant.py:102
 #: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:97
+msgctxt "Restaurant tip line"
 msgid "Gratuity"
 msgstr "Pourboire"
 
