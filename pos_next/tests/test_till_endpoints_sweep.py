@@ -222,6 +222,19 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		# Accounts User: the role that reads Sales Invoice reports in a standard ERPNext.
 		_user(REPORTER, ["Sales Manager", "Accounts User"], "System User")
 		self.fx = _till()
+		# The till's settings name a wallet account, as a till that sells wallets has: the wallet
+		# helpers run to their end instead of stopping on the missing setting.
+		settings = frappe.db.get_value("POS Settings", {"pos_profile": PROFILE}) or (
+			frappe.get_doc({"doctype": "POS Settings", "pos_profile": PROFILE}).insert(ignore_permissions=True).name
+		)
+		frappe.db.set_value(
+			"POS Settings",
+			settings,
+			"wallet_account",
+			frappe.db.get_value(
+				"Account", {"company": self.fx.company, "account_type": "Receivable", "is_group": 0}, "name"
+			),
+		)
 		frappe.set_user(TILL)
 		opened = shifts.create_opening_shift(
 			PROFILE,
