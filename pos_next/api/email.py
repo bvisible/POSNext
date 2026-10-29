@@ -67,6 +67,11 @@ def send_invoice_email(invoice_name, recipients, subject=None, message=None, pri
 @frappe.whitelist()
 def get_invoice_email_context(invoice_name):
 	"""Get pre-filled email context for an invoice (recipient, subject, etc.)."""
+	# //// Neoffice — its caller is the till (EmailInvoiceDialog): whoever may work at the invoice's till
+	# //// passes (cash_entry.require_document_till).
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice_name)
 	if not invoice_name:
 		frappe.throw(_("Invoice name is required"))
 

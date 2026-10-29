@@ -153,6 +153,11 @@ def get_menu_preview_html(card_name=None, card_names=None, template_name=None, o
 @frappe.whitelist()
 def save_card_design(card_name, template_name=None, overrides=None):
 	"""Save design settings to a Restaurant Card (not to the template)."""
+	# //// Neoffice — its caller is the till (MenuDesignerDialog), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	if isinstance(overrides, str):
 		try:
 			overrides = json.loads(overrides)

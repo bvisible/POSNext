@@ -53,6 +53,11 @@ def get_customer_balance(customer, company=None):
 			'net_balance': float (positive = customer owes, negative = customer has credit)
 		}
 	"""
+	# //// Neoffice — a customer's outstanding balance, for the till (PaymentDialog): only the till's
+	# //// users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	if not customer:
 		frappe.throw(_("Customer is required"))
 
@@ -135,6 +140,11 @@ def get_available_credit(customer, company, pos_profile=None):
 	Returns:
 		list: Available credit sources with amounts and modified timestamps
 	"""
+	# //// Neoffice — a customer's credit notes and advances, for the till (PaymentDialog): only the
+	# //// till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	if not customer:
 		frappe.throw(_("Customer is required"))
 
@@ -594,9 +604,9 @@ def get_credit_redeem_remarks(invoice_name):
 @frappe.whitelist()
 def cancel_credit_journal_entries(invoice_name):
 	"""Cancel the credit redemption entries of an invoice, for whoever may cancel it."""
-	# //// Neoffice — the endpoint cancelled these Journal Entries for whoever called it. It now
-	# //// needs the right to cancel the invoice itself; the cancel hook calls the internal
-	# //// function below directly, whoever cancels (an accountant on the desk included).
+	# //// Neoffice — cancelling these Journal Entries needs the right to cancel the invoice itself; the
+	# //// cancel hook calls the internal function below directly, whoever cancels (an accountant on the
+	# //// desk included).
 	frappe.has_permission("Sales Invoice", "cancel", doc=invoice_name, throw=True)
 	return _cancel_credit_journal_entries(invoice_name)
 
@@ -687,6 +697,11 @@ def get_credit_sale_summary(pos_profile):
 	Returns:
 		dict: Summary statistics
 	"""
+	# //// Neoffice — a till's credit sales figures: one of the till's endpoints (nothing in the app calls
+	# //// it), so only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	if not pos_profile:
 		frappe.throw(_("POS Profile is required"))
 

@@ -28,13 +28,13 @@ import frappe
 from frappe import _
 
 
-# //// Neoffice — maintenance#1732: the till's payment calls answered any signed-in account, a shop customer included —
-# //// pos_refund_payment refunded any settled intent named to it, since it reaches payments.api.intent in Python, where
-# //// no permission is asked (those functions serve guests and cashiers alike). A call that names a POS Profile now
-# //// answers whoever may work at that till (cash_entry.require_till_access, the rule of the till's other money
-# //// endpoints); one that names an intent answers whoever may work at the till that started it (the profile
-# //// pos_start_payment writes into its metadata); an intent no till started answers only an account the Payment
-# //// Intent DocType permits.
+# //// Neoffice — maintenance#1732: the till's payment calls answer whoever may work at the till. They
+# //// reach payments.api.intent in Python, where no permission is asked (those functions serve guests and
+# //// cashiers alike), so they check their caller here: a call that names a POS Profile answers whoever
+# //// may work at that till (cash_entry.require_till_access, the rule of the till's other money
+# //// endpoints); one that names an intent answers whoever may work at the till that started it (the
+# //// profile pos_start_payment writes into its metadata); an intent no till started answers only an
+# //// account the Payment Intent DocType permits.
 def _require_till(pos_profile: str | None) -> None:
 	"""Refuse (403) unless the session user may work at this till."""
 	from pos_next.api.cash_entry import require_till_access

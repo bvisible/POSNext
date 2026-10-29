@@ -91,6 +91,8 @@ def after_migrate():
 		raise
 
 
+# //// Neoffice — added (no upstream equivalent, 3571c411): the coupon_code Custom Field ERPNext v15
+# //// lacks on Sales Invoice, made here rather than in the fixtures, which v16 would refuse.
 def ensure_coupon_code_field(quiet=False):
 	"""Create coupon_code Custom Field on Sales Invoice for ERPNext v15 (not needed on v16+)."""
 	if _has_native_coupon_code_field():
@@ -194,6 +196,7 @@ def setup_default_print_format(quiet=False):
 CASHIER_ROLE = "POSNext Cashier"
 
 
+# //// Neoffice — added (no upstream equivalent): see the marker above CASHIER_ROLE.
 def grant_cashier_permissions():
 	"""Give the POSNext Cashier role its rules from setup/custom_docperm.json."""
 	if not frappe.db.exists("Role", CASHIER_ROLE):

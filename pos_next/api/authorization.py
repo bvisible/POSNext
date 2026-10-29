@@ -35,6 +35,12 @@ def _parse_context(context) -> dict:
 
 @frappe.whitelist()
 def get_authorization_policy(pos_profile: str | None = None) -> dict:
+	# //// Neoffice — the till's own endpoint: only its users pass, a desk account with access to the POS
+	# //// Profile when one is named (cash_entry.require_till_access). The bootstrap asks it for the
+	# //// cashier's own open shift, so the till itself is never refused.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile, profile_optional=True)
 	policy_map = {}
 	for action in registry.all_actions():
 		if gate.is_required(action.name, pos_profile):
@@ -45,6 +51,11 @@ def get_authorization_policy(pos_profile: str | None = None) -> dict:
 
 @frappe.whitelist()
 def get_authorizers(action: str, pos_profile: str | None = None, context=None) -> list[dict]:
+	# //// Neoffice — the approvers' user ids and full names, for the till: only its users pass, a desk
+	# //// account with access to the POS Profile the rule is resolved for (the context's wins, as below).
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(_parse_context(context).get("pos_profile", pos_profile), profile_optional=True)
 	action_def = registry.get(action)
 	if not action_def:
 		return []
@@ -99,6 +110,12 @@ RATE_LIMIT_PER_MINUTE = 20
 @rate_limit(key="approver", limit=RATE_LIMIT_PER_MINUTE, seconds=60, ip_based=True)
 def request_grant(action: str, approver: str, pin: str, context=None) -> dict:
 
+	# //// Neoffice — it tries an approver's PIN and logs the attempt. Its callers are the till's
+	# //// authorization dialog and cancel_pos_expense, run by desk accounts, so a desk account is
+	# //// required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	approver = (approver or "").strip()
 	if not approver:
 		return {"authorized": False, "message": _("Select an approver")}
@@ -203,6 +220,11 @@ def clear_authorization_pin(user: str) -> dict:
 
 @frappe.whitelist()
 def has_authorization_pin(user: str | None = None) -> dict:
+	# //// Neoffice — its caller is the desk's User form (public/js/user.js), so a desk account is
+	# //// required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	user = user or frappe.session.user
 	if user != frappe.session.user:
 		frappe.has_permission("User", ptype="read", doc=user, throw=True)

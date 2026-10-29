@@ -242,7 +242,8 @@ def clear_wallet_payment_modes_cache(doc=None, method=None):
 	frappe.cache().delete_value(WALLET_PAYMENT_MODES_CACHE_KEY)
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def get_customer_wallet_balance(customer, company=None, exclude_invoice=None, pos_profile=None):
 	"""
 	Get customer's available wallet balance.
@@ -326,7 +327,8 @@ def get_pending_wallet_payments(customer, exclude_invoice=None):
 	return pending_amount
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def get_customer_wallet(customer, company=None):
 	"""Get wallet details for a customer."""
 	filters = {"customer": customer}
@@ -401,6 +403,7 @@ def delete_unused_wallet_on_customer_trash(doc, method=None):
 		frappe.delete_doc("Wallet", wallet_name, ignore_permissions=True, force=True)
 
 
+# //// Neoffice — added (no upstream equivalent): delete_unused_wallet_on_customer_trash's test.
 def _wallet_has_activity(wallet_name):
 	"""A wallet is considered used if it has any transaction or a non-zero balance."""
 	if frappe.db.exists("Wallet Transaction", {"wallet": wallet_name}):
@@ -409,7 +412,8 @@ def _wallet_has_activity(wallet_name):
 	return abs(flt(wallet.get_balance())) > 0.005
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def get_or_create_wallet(customer, company, pos_settings=None, force_create=False):
 	"""Get existing wallet or create a new one."""
 
@@ -501,6 +505,11 @@ def get_pos_settings(pos_profile):
 @frappe.whitelist()
 def get_wallet_payment_methods(pos_profile):
 	"""Get payment methods that are wallet-enabled for a POS profile."""
+	# //// Neoffice — a till's wallet payment methods: one of the till's endpoints (nothing in the app
+	# //// calls it), so only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	payment_methods = frappe.get_all(
 		"POS Payment Method", filters={"parent": pos_profile}, fields=["mode_of_payment", "default"]
 	)
@@ -526,6 +535,11 @@ def get_wallet_info(customer, company, pos_profile=None):
 	Get comprehensive wallet information for a customer.
 	Used by POS frontend.
 	"""
+	# //// Neoffice — a customer's wallet and loyalty balance, for the till (PaymentDialog, InvoiceCart):
+	# //// only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	result = {
 		"wallet_enabled": False,
 		"wallet_exists": False,
@@ -635,6 +649,11 @@ def get_loyalty_details(customer, company):
 	Get loyalty points details for a customer using ERPNext native loyalty system.
 	Returns points available, conversion factor, and max redeemable amount.
 	"""
+	# //// Neoffice — its caller is the till (PaymentDialog), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	result = {
 		"has_loyalty": False,
 		"loyalty_program": None,

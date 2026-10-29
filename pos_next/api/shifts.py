@@ -13,6 +13,11 @@ from pos_next.api.utilities import get_wallet_payment_modes
 @frappe.whitelist()
 def get_opening_dialog_data():
 	"""Get data required for opening shift dialog"""
+	# //// Neoffice — the caller's tills with their companies and payment methods, for the till's shift
+	# //// opening, run by desk accounts: a desk account is required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	data = {}
 
 	# Get POS Profiles where current user is defined in POS Profile User table
@@ -69,6 +74,15 @@ def get_opening_dialog_data():
 @frappe.whitelist()
 def check_opening_shift(user=None):
 	"""Check if user has an open shift"""
+	# //// Neoffice — a desk account asks for its own open shift, with its POS Profile and Company
+	# //// documents (the till never names a user: useShift.js, create_opening_shift below); naming
+	# //// another user takes a till manager (cash_entry.TILL_MANAGER_ROLES), who may close any till's
+	# //// shift too.
+	from pos_next.api.cash_entry import is_till_manager, require_system_user
+
+	require_system_user()
+	if user and user != frappe.session.user and not is_till_manager():
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not user:
 		user = frappe.session.user
 
@@ -108,6 +122,11 @@ def check_opening_shift(user=None):
 @frappe.whitelist()
 def get_suggested_opening_balance(pos_profile):
 	"""Get suggested cash opening balance from the user's last closing shift."""
+	# //// Neoffice — its caller is the till (ShiftOpeningDialog), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	from frappe.utils import flt
 
 	last_closing = frappe.db.get_value(
@@ -139,6 +158,12 @@ def get_suggested_opening_balance(pos_profile):
 @frappe.whitelist()
 def create_opening_shift(pos_profile, company, balance_details):
 	"""Create a new POS Opening Shift"""
+	# //// Neoffice — opening a shift (inserted and submitted with permissions off) takes the till: a desk
+	# //// account assigned to the POS Profile, or reading sales invoices as every cashier does
+	# //// (cash_entry.require_till_access).
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
 	balance_details = json.loads(balance_details) if isinstance(balance_details, str) else balance_details
 
 	# Check if user already has an open shift
@@ -183,8 +208,16 @@ def create_opening_shift(pos_profile, company, balance_details):
 @frappe.whitelist()
 def get_closing_shift_data(opening_shift):
 	"""Get data for closing shift"""
-	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import make_closing_shift_from_opening
+	# //// Neoffice — require_shift_access added: the gate called below.
+	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import (
+		make_closing_shift_from_opening,
+		require_shift_access,
+	)
 
+	# //// Neoffice — the closing data follows the rule of the close (require_shift_access: a till manager
+	# //// any shift, a cashier their own at a till they may use), checked before the try, so a refusal is
+	# //// neither logged nor reworded and nothing is read first.
+	require_shift_access(opening_shift)
 	try:
 		# Get the opening shift document
 		opening_shift_doc = frappe.get_doc("POS Opening Shift", opening_shift)
@@ -206,10 +239,18 @@ def get_closing_shift_data(opening_shift):
 @frappe.whitelist()
 def submit_closing_shift(closing_shift):
 	"""Submit closing shift"""
+	# //// Neoffice — the closing gate called below, imported next to the function it guards.
+	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import require_caller_may_close
 	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import (
 		submit_closing_shift as submit_shift,
 	)
 
+	# //// Neoffice — the endpoint only ever closes a shift its caller may close: their own open shift at
+	# //// a till they may use, or any till's for a till manager (require_caller_may_close). The payload
+	# //// is read before the try, so a refusal is neither logged nor reworded as a "Submit Closing Shift
+	# //// Error"; it is serialized again below, and the module function checks it again.
+	closing_shift = json.loads(closing_shift) if isinstance(closing_shift, str) else closing_shift
+	require_caller_may_close(closing_shift)
 	try:
 		# closing_shift is already a JSON string from frontend
 		# If it's a dict, convert to JSON string

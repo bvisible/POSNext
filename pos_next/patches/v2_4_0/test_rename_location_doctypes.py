@@ -34,6 +34,17 @@ def _db(columns, doctypes=("Governorate", "District"), counts=None, linked=False
 
 	db.sql.side_effect = sql
 	db.sql_calls = calls
+	# //// Neoffice — the patch now asks frappe.db.table_exists / has_column / get_value / get_all
+	# //// instead of the raw information_schema and DocField queries above, and a bare MagicMock
+	# //// answers every one of them with something truthy: 4 of these 6 tests failed on upstream's
+	# //// own code. Answer them from the same fake schema; the Customer custom fields still point
+	# //// at an old doctype whenever its table is there.
+	db.table_exists.side_effect = lambda doctype, *args, **kwargs: doctype in columns
+	db.has_column.side_effect = lambda doctype, column: column in columns.get(doctype, set())
+	db.get_all.side_effect = lambda doctype, *args, **kwargs: ["Other"] if linked else []
+	db.get_value.side_effect = lambda doctype, filters=None, *args, **kwargs: (
+		f"{filters['dt']}-{filters['fieldname']}" if filters.get("options") in columns else None
+	)
 	return db
 
 
@@ -53,7 +64,15 @@ class TestRenameLocationDoctypes(unittest.TestCase):
 		self.assertEqual(len(inserts), 2)
 		self.assertIn("`tabPOS Governorate`", inserts[0])
 		self.assertIn("`tabPOS District`", inserts[1])
-		self.assertTrue(any("update `tabCustom Field`" in q for q in db.sql_calls))
+		# //// Neoffice — the patch repoints the Customer custom fields with frappe.db.set_value now,
+		# //// not a raw `update tabCustom Field`.
+		self.assertEqual(
+			[c.args for c in db.set_value.call_args_list],
+			[
+				("Custom Field", "Customer-custom_governorate", "options", "POS Governorate"),
+				("Custom Field", "Customer-custom_district", "options", "POS District"),
+			],
+		)
 		# District first: it links to Governorate
 		self.assertEqual([c.args[1] for c in fake.delete_doc.call_args_list], ["District", "Governorate"])
 		self.assertEqual(
@@ -83,7 +102,9 @@ class TestRenameLocationDoctypes(unittest.TestCase):
 		deletes = [q for q in db.sql_calls if q.startswith("delete from")]
 		self.assertEqual(len(deletes), 2)
 		for q in deletes:
-			self.assertIn("name in (select name from `tabPOS", q)
+			# //// Neoffice — the patch wraps the subquery in a derived table (MySQL error 1093): the
+			# //// delete still keeps to the rows the POS doctype holds.
+			self.assertIn("name in (select name from (select name from `tabPOS", q)
 
 	def test_old_doctype_kept_when_row_count_exceeds_copies(self):
 		db = _db({**OLD_TABLES, **NEW_TABLES}, counts={**COUNTS, "Governorate": 5, "District": 5})

@@ -94,7 +94,7 @@ doctype_js = {
 	"POS Profile": "public/js/pos_profile.js",
 	# //// Neoffice — no "Pricing Rule" / "Promotional Scheme" entries: upstream develop deleted
 	# //// public/js/pricing_rule.js and promotional_scheme.js with the Min/Max discounts (moved to its
-	# //// optional posnext_promotions app) but kept the two entries pointing at the missing files.
+	# //// optional POSNext Promotions app) but kept the two entries pointing at the missing files.
 }
 # //// Neoffice — gift cards are ERPNext Coupon Code documents here, so the "Create Gift Card"
 # //// entry point belongs on that list view in the desk; upstream shipped no desk surface for
@@ -308,7 +308,7 @@ doc_events = {
 	# //// ERPNext's POS Invoice flow would otherwise sell a gift card without ever creating it, or
 	# //// cancel one without giving the balance back (f0c960ff, 2026-03-21).
 	# //// The Min/Max `validate` that sat here left with upstream develop, which moved Min/Max
-	# //// discounts out of the core into its optional posnext_promotions app (removed 2026-10-28,
+	# //// discounts out of the core into its optional POSNext Promotions app (removed 2026-10-28,
 	# //// measured unused on 12 instances).
 	"POS Invoice": {
 		"on_submit": [

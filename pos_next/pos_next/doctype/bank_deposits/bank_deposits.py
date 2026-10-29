@@ -89,6 +89,12 @@ class BankDeposits(Document):
 @frappe.validate_and_sanitize_search_inputs
 def get_pos_closing_shifts(doctype, txt, searchfield, start, page_len, filters):
 	"""Return submitted, closed POS Closing Shifts without an existing Bank Deposit."""
+	# //// Neoffice — the Bank Deposits form's closing shift query answers whoever may read the POS
+	# //// Closing Shifts it lists.
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	frappe.has_permission("POS Closing Shift", "read", throw=True)
 	filters = filters or {}
 	pos_profile = filters.get("pos_profile")
 	profile_condition = "AND pcs.pos_profile = %(pos_profile)s" if pos_profile else ""

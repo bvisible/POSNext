@@ -1,7 +1,9 @@
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
-# //// Neoffice — functools for _till_only below (neoffice-maintenance#1137).
+# //// Neoffice — contextlib and functools for in_process_item_reads and _till_only below
+# //// (neoffice-maintenance#1137).
+import contextlib
 import functools
 import json
 from collections import defaultdict
@@ -40,49 +42,50 @@ ITEM_RESULT_FIELDS = [
 ITEM_RESULT_COLUMNS = ",\n\t".join(ITEM_RESULT_FIELDS)
 
 
-# //// Neoffice — added (no upstream equivalent). Upstream's item endpoints only ask for a signed-in
-# //// session, so a portal account (Website User, a webshop customer for instance) read the catalogue,
-# //// stock per warehouse, batch and serial numbers over the API (neoffice-maintenance#1137). They now
-# //// admit the till's users: a System User with access to the POS Profile when one is given (the
-# //// gate of the till's money endpoints, cash_entry.require_till_access), otherwise a System User
-# //// assigned to some POS Profile or allowed to read Sales Invoice. Only the HTTP call of the
-# //// endpoint itself is gated, on both API routes: server code that reuses one of these functions
-# //// (realtime_events -> get_stock_quantities after a stock change) runs as whoever caused it, a
-# //// webshop customer's checkout included, and must never be refused.
-def _till_only(fn):
-	endpoint = f"{fn.__module__}.{fn.__name__}"
+# //// Neoffice — added (no upstream equivalent). The frappe.flags key in_process_item_reads sets.
+_IN_PROCESS_ITEM_READS = "pos_next_in_process_item_reads"
 
+
+# //// Neoffice — added (no upstream equivalent). The scope server code opens around its own call of an
+# //// item endpoint: inside it _till_only does not check the caller. Its users are the endpoints' known
+# //// in-process callers, which run as whoever caused them or check their caller first:
+# //// realtime_events.emit_stock_update_event (stock quantities after a stock change, as whoever
+# //// submitted or cancelled the invoice) and pos_profile.get_pos_profile_data (the till's item groups,
+# //// once get_pos_settings has checked the caller's access to that till). The flag is put back as it
+# //// was on the way out, so the scope ends with the block.
+@contextlib.contextmanager
+def in_process_item_reads():
+	previous = frappe.flags.get(_IN_PROCESS_ITEM_READS)
+	frappe.flags[_IN_PROCESS_ITEM_READS] = True
+	try:
+		yield
+	finally:
+		frappe.flags[_IN_PROCESS_ITEM_READS] = previous
+
+
+# //// Neoffice — added (no upstream equivalent). The item endpoints (catalogue, stock per warehouse,
+# //// batch and serial numbers) are the till's (neoffice-maintenance#1137): whoever may work at the POS
+# //// Profile when one is given, otherwise a till user (_require_item_reader). The check runs on every
+# //// call made while a web request is served, whatever route, name or endpoint the call comes
+# //// through, except inside in_process_item_reads. With no request (a background job, the console),
+# //// it does not run.
+def _till_only(fn):
 	@functools.wraps(fn)
 	def gated(*args, **kwargs):
-		if _called_over_http(endpoint):
+		serving_a_request = getattr(frappe.local, "request", None) is not None
+		if serving_a_request and not frappe.flags.get(_IN_PROCESS_ITEM_READS):
 			_require_item_reader(kwargs.get("pos_profile"))
 		return fn(*args, **kwargs)
 
 	return gated
 
 
-def _called_over_http(endpoint):
-	request = getattr(frappe.local, "request", None)
-	if not request:
-		return False
-	if frappe.form_dict.get("cmd") == endpoint:
-		return True
-	return (getattr(request, "path", "") or "").rstrip("/").endswith("/" + endpoint)
-
-
+# //// Neoffice — added (no upstream equivalent). The item endpoints' check: a till user
+# //// (cash_entry.require_till_user; with a POS Profile, whoever may work at that till).
 def _require_item_reader(pos_profile=None):
-	from pos_next.api.cash_entry import require_till_access
+	from pos_next.api.cash_entry import require_till_user
 
-	if pos_profile:
-		require_till_access(pos_profile)
-		return
-	user = frappe.session.user
-	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	if not (
-		frappe.db.exists("POS Profile User", {"user": user}) or frappe.has_permission("Sales Invoice", "read")
-	):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	require_till_user(pos_profile)
 
 
 def _get_item_price_transaction_date(transaction_date=None):
@@ -443,7 +446,7 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None, company=Non
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def search_by_barcode(barcode, pos_profile):
 	"""Search item by barcode"""
@@ -564,7 +567,7 @@ def search_by_barcode(barcode, pos_profile):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_item_stock(item_code, warehouse):
 	"""Get real-time stock for item"""
@@ -596,7 +599,7 @@ def get_item_stock(item_code, warehouse):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_batch_serial_details(item_code, warehouse):
 	"""Get batch/serial number details"""
@@ -652,7 +655,7 @@ def get_batch_serial_details(item_code, warehouse):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_item_variants(template_item, pos_profile):
 	"""Get all variants for a template item with prices and stock"""
@@ -1285,7 +1288,7 @@ def _get_bundle_warehouse_availability_bulk(bundle_codes, warehouses):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_items(
 	pos_profile,
@@ -1658,7 +1661,7 @@ def get_items(
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_items_bulk(
 	pos_profile, item_groups=None, start=0, limit=2000, include_variants=0, show_variants_as_items=0
@@ -1840,7 +1843,7 @@ def get_items_bulk(
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_items_count(pos_profile, item_group=None, brand=None, include_variants=0, show_variants_as_items=0):
 	"""
@@ -1893,7 +1896,7 @@ def get_items_count(pos_profile, item_group=None, brand=None, include_variants=0
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_item_details(item_code, pos_profile, customer=None, qty=1, uom=None):
 	"""Get detailed item info including price, tax, stock"""
@@ -1945,7 +1948,7 @@ def get_item_details(item_code, pos_profile, customer=None, qty=1, uom=None):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_item_groups(pos_profile):
 	"""Get item groups configured in POS Profile with hierarchy info for filtering."""
@@ -1999,7 +2002,7 @@ def get_item_groups(pos_profile):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_brands(pos_profile):
 	"""Get brands configured in POS Profile for filtering."""
@@ -2033,7 +2036,7 @@ def get_brands(pos_profile):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_stock_quantities(item_codes, warehouse):
 	"""
@@ -2206,7 +2209,7 @@ def _parse_item_codes_param(item_codes):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_item_warehouse_availability(item_code=None, item_codes=None, company=None):
 	"""
@@ -2353,7 +2356,7 @@ def get_item_warehouse_availability(item_code=None, item_codes=None, company=Non
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_product_bundle_availability(item_code, warehouse):
 	"""
@@ -2450,7 +2453,7 @@ def get_product_bundle_availability(item_code, warehouse):
 
 
 @frappe.whitelist()
-# //// Neoffice — the till's users only, over HTTP: see _till_only (#1137).
+# //// Neoffice — the till's users only: see _till_only (#1137).
 @_till_only
 def get_batch_serial_data_for_items(item_codes, warehouse):
 	"""

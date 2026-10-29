@@ -36,6 +36,11 @@ def on_invoice_update(doc, method):
 @frappe.whitelist()
 def get_tables():
 	"""Fetch all restaurant areas, tables, floor plan stations, and active order summaries."""
+	# //// Neoffice — it is called from the till, tips panel and runner screen, run by desk accounts, so a
+	# //// desk account is required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description", "sort_order", "floor_plan_walls", "floor_plan_bg"], order_by="sort_order asc, area_name asc")
 	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
 
@@ -125,6 +130,11 @@ def update_table_status(table_name, status):
 @frappe.whitelist()
 def get_table_payment_summary(table_name):
 	"""Get payment summary for a Paid/Cleaning table (for the server dialog)."""
+	# //// Neoffice — its caller is the till (POSSale), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	# Priority 1: draft invoice linked directly to the table
 	invoice = frappe.get_all(
 		"Sales Invoice",
@@ -261,6 +271,11 @@ def update_kds_status(invoice_name, status):
 @frappe.whitelist()
 def broadcast_cfd_update(payload):
 	"""Broadcasts CFD payload to all clients using Frappe Realtime."""
+	# //// Neoffice — nothing in the app calls it; it is one of the till's endpoints, so only the till's users
+	# //// pass (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	if isinstance(payload, str):
 		import json
 		payload = json.loads(payload)
@@ -330,6 +345,11 @@ def get_station_items_map():
 @frappe.whitelist()
 def get_table_order(table_name):
 	"""Get the active invoice for a specific table (draft or recently submitted)."""
+	# //// Neoffice — its caller is the till (POSSale, useInvoice), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	# First try draft
 	orders = frappe.get_all(
 		"Sales Invoice",
@@ -413,6 +433,11 @@ def get_table_order(table_name):
 @frappe.whitelist()
 def get_kds_orders(station=None):
 	"""Fetch all pending and preparing orders for the KDS."""
+	# //// Neoffice — it is called from the kitchen display and floor plan, run by desk accounts, so a desk
+	# //// account is required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	# Only fetch submitted invoices or drafts depending on how POS Next saves KDS orders.
 	# Assuming here we fetch draft invoices that have a table and are not delivered.
 	# We remove the database-level filter on restaurant_table to prevent MariaDB NULL issues
@@ -515,6 +540,11 @@ def get_kds_orders(station=None):
 @frappe.whitelist()
 def get_tips(from_date=None, to_date=None, server=None, table=None):
 	"""Fetch Restaurant Tip records with optional filters."""
+	# //// Neoffice — its caller is the till (TipsPanel), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	filters = {}
 	if from_date:
 		filters["tip_date"] = (">=", from_date)
@@ -681,6 +711,11 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 @frappe.whitelist()
 def delete_table(name):
 	"""Delete a restaurant table if it has no active orders."""
+	# //// Neoffice — its caller is the till (FloorPlanEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	table = frappe.get_doc("Restaurant Table", name)
 	if table.status == "Occupied":
 		frappe.throw(_("Cannot delete an occupied table. Clear the order first."))
@@ -738,6 +773,11 @@ def get_station_details(name):
 def update_station(name, station_name=None, station_type=None, color=None, workflow=None,
                    is_active=None, use_runner=None, items=None, item_groups=None):
 	"""Update an existing preparation station."""
+	# //// Neoffice — its caller is the till (FloorPlanEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	import json
 	from frappe.utils import cint
 
@@ -786,6 +826,11 @@ def update_station(name, station_name=None, station_type=None, color=None, workf
 @frappe.whitelist()
 def delete_station(name):
 	"""Delete a preparation station."""
+	# //// Neoffice — its caller is the till (FloorPlanEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	frappe.delete_doc("Preparation Station", name, ignore_permissions=True)
 	return {"status": "success"}
 
@@ -866,6 +911,11 @@ def open_table(table_name, pos_profile, customer=None):
 @frappe.whitelist()
 def save_product_option_group(name, group_name=None, selection_type=None, required=None, options=None, applicable_items=None, applicable_item_groups=None):
 	"""Save a product option group."""
+	# //// Neoffice — its caller is the till (ProductOptionsEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	import json
 	if isinstance(options, str):
 		options = json.loads(options)
@@ -907,6 +957,11 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 @frappe.whitelist()
 def create_product_option_group(group_name):
 	"""Create a new product option group."""
+	# //// Neoffice — its caller is the till (ProductOptionsEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	doctype = _resolve_option_doctypes()[0]
 	doc = frappe.get_doc({
 		"doctype": doctype,
@@ -921,6 +976,11 @@ def create_product_option_group(group_name):
 @frappe.whitelist()
 def delete_product_option_group(name):
 	"""Delete a product option group."""
+	# //// Neoffice — its caller is the till (ProductOptionsEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	doctype = _resolve_option_doctypes()[0]
 	frappe.delete_doc(doctype, name, ignore_permissions=True)
 	return {"status": "success"}
@@ -1161,37 +1221,6 @@ def get_active_cards():
 
 	# Permanent cards at the end
 	return result_normal + result_permanent
-
-
-@frappe.whitelist()
-def duplicate_card(card_name):
-	"""Duplicate a restaurant card with all its items."""
-	original = frappe.get_doc("Restaurant Card", card_name)
-	new_doc = frappe.copy_doc(original)
-	new_doc.card_name = f"{original.card_name} (Copy)"
-	new_doc.is_active = 0
-	new_doc.insert(ignore_permissions=True)
-	return new_doc.as_dict()
-
-
-@frappe.whitelist()
-def get_card_items_stock(card_name):
-	"""Get stock quantities for stock-managed items in a card, grouped by warehouse."""
-	card = frappe.get_doc("Restaurant Card", card_name)
-	result = {}
-	for item in card.items:
-		if item.item_type != "Item" or not item.item:
-			continue
-		is_stock_item = frappe.db.get_value("Item", item.item, "is_stock_item")
-		if not is_stock_item:
-			continue
-		bins = frappe.get_all(
-			"Bin",
-			filters={"item_code": item.item},
-			fields=["warehouse", "actual_qty"]
-		)
-		result[item.item] = [{"warehouse": b.warehouse, "qty": b.actual_qty} for b in bins]
-	return result
 
 
 @frappe.whitelist()
@@ -1586,6 +1615,11 @@ def get_preparation_workflows():
 @frappe.whitelist()
 def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=None, applicable_items=None):
 	"""Save a preparation workflow and its steps."""
+	# //// Neoffice — its caller is the till (WorkflowEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	import json
 	if isinstance(steps, str):
 		steps = json.loads(steps)
@@ -1620,6 +1654,11 @@ def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=N
 @frappe.whitelist()
 def create_preparation_workflow(workflow_name, steps=None):
 	"""Create a new preparation workflow."""
+	# //// Neoffice — its caller is the till (WorkflowEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	import json
 	if isinstance(steps, str):
 		steps = json.loads(steps)
@@ -1641,6 +1680,11 @@ def create_preparation_workflow(workflow_name, steps=None):
 @frappe.whitelist()
 def delete_preparation_workflow(name):
 	"""Delete a preparation workflow."""
+	# //// Neoffice — its caller is the till (WorkflowEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	frappe.delete_doc("Preparation Workflow", name, ignore_permissions=True)
 	return {"status": "success"}
 
@@ -1702,6 +1746,11 @@ def get_runner_orders(area=None):
 	Args:
 		area: Optional area name to filter tables by area.
 	"""
+	# //// Neoffice — it is called from the runner screen and floor plan, run by desk accounts, so a desk
+	# //// account is required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0},
@@ -1857,6 +1906,11 @@ def mark_items_delivered(invoice_name, item_names=None):
 @frappe.whitelist()
 def get_takeaway_orders():
 	"""Fetch active takeaway orders (draft invoices with is_takeaway=1)."""
+	# //// Neoffice — it is called from the takeaway screen and till, run by desk accounts, so a desk account
+	# //// is required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={
@@ -1899,6 +1953,22 @@ def get_next_takeaway_number():
 @frappe.whitelist()
 def update_takeaway_status(invoice_name, status):
 	"""Update the KDS status of a takeaway order."""
+	# //// Neoffice — it is called from the takeaway screen, run by desk accounts, so a desk account is
+	# //// required (cash_entry.require_system_user). It sets one of the statuses the kds_status field offers,
+	# //// on a takeaway order still in draft: the orders get_takeaway_orders lists.
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	statuses = (frappe.get_meta("Sales Invoice").get_options("kds_status") or "").split("\n")
+	if not status or status not in statuses:
+		frappe.throw(_("Invalid status: {0}").format(status))
+	order = isinstance(invoice_name, str) and frappe.db.get_value(
+		"Sales Invoice", invoice_name, ["docstatus", "is_pos", "is_takeaway"], as_dict=True
+	)
+	if not order:
+		frappe.throw(_("Sales Invoice {0} not found").format(invoice_name), frappe.DoesNotExistError)
+	if order.docstatus != 0 or not order.is_pos or not order.is_takeaway:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status)
 	frappe.db.commit()
 	frappe.publish_realtime("kds_update")
@@ -2139,23 +2209,98 @@ def search_food_images(query, per_page=15, page=1):
 	}
 
 
+# //// Neoffice — the images search_food_images offers are photos on Pexels, served from these hosts.
+# //// download_food_image fetches only an https address on one of them, follows a redirect only to
+# //// another such address, and keeps only a raster image no larger than FOOD_IMAGE_MAX_BYTES.
+FOOD_IMAGE_HOSTS = ("images.pexels.com",)
+FOOD_IMAGE_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}
+FOOD_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+FOOD_IMAGE_MAX_REDIRECTS = 3
+FOOD_IMAGE_TIMEOUT = (5, 10)  # seconds: connect, then each read
+
+
+def _food_image_url_allowed(url):
+	from urllib.parse import urlsplit
+
+	try:
+		parts = urlsplit(url) if isinstance(url, str) else None
+		port = parts.port if parts else None
+	except ValueError:
+		return False
+	return bool(
+		parts
+		and parts.scheme == "https"
+		and (parts.hostname or "").lower() in FOOD_IMAGE_HOSTS
+		and port in (None, 443)
+		and not parts.username
+		and not parts.password
+	)
+
+
+def _fetch_food_image(url):
+	"""The body and file extension of an image from the image search's provider; refused otherwise."""
+	from urllib.parse import urljoin
+
+	import requests
+
+	response = None
+	try:
+		for _hop in range(FOOD_IMAGE_MAX_REDIRECTS + 1):
+			if not _food_image_url_allowed(url):
+				frappe.throw(_("Images can only be downloaded from the image search"))
+			response = requests.get(
+				url,
+				timeout=FOOD_IMAGE_TIMEOUT,
+				stream=True,
+				allow_redirects=False,
+				headers={"Accept": ", ".join(FOOD_IMAGE_TYPES)},
+			)
+			if not response.is_redirect:
+				break
+			url = urljoin(url, response.headers.get("Location") or "")
+			response.close()
+		else:
+			frappe.throw(_("Failed to download image"))
+
+		response.raise_for_status()
+		content_type = (response.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+		extension = FOOD_IMAGE_TYPES.get(content_type)
+		if not extension:
+			frappe.throw(_("The address does not point to an image"))
+		too_large = _("The image is larger than {0} MB").format(FOOD_IMAGE_MAX_BYTES // (1024 * 1024))
+		declared = response.headers.get("Content-Length") or ""
+		if declared.isdigit() and int(declared) > FOOD_IMAGE_MAX_BYTES:
+			frappe.throw(too_large)
+		body = bytearray()
+		for chunk in response.iter_content(64 * 1024):
+			body.extend(chunk)
+			if len(body) > FOOD_IMAGE_MAX_BYTES:
+				frappe.throw(too_large)
+		return bytes(body), extension
+	except requests.RequestException as e:
+		frappe.log_error("Image download failed", str(e))
+		frappe.throw(_("Failed to download image"))
+	finally:
+		if response is not None:
+			response.close()
+
+
 @frappe.whitelist()
 def download_food_image(image_url, item_name):
 	"""Download an external image and save it as a Frappe File."""
-	import requests
+	# //// Neoffice — its caller is the till (ImageSearchDialog), so only the till's users pass
+	# //// (cash_entry.require_till_user); the image comes from the image search's provider only
+	# //// (_fetch_food_image).
+	from pos_next.api.cash_entry import require_till_user
 
-	try:
-		response = requests.get(image_url, timeout=15)
-		response.raise_for_status()
-	except Exception as e:
-		frappe.log_error("Image download failed", str(e))
-		frappe.throw(_("Failed to download image"))
+	require_till_user()
+	content, extension = _fetch_food_image(image_url)
 
-	filename = f"{frappe.scrub(item_name)}.jpg"
+	filename = f"{frappe.scrub(item_name)}.{extension}"
 	file_doc = frappe.get_doc({
 		"doctype": "File",
 		"file_name": filename,
-		"content": response.content,
+		"content": content,
 		"is_private": 0,
 	})
 	file_doc.save(ignore_permissions=True)
@@ -2165,6 +2310,11 @@ def download_food_image(image_url, item_name):
 @frappe.whitelist()
 def duplicate_card(card_name):
 	"""Duplicate a restaurant card with all its items."""
+	# //// Neoffice — its caller is the till (CardEditor), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	original = frappe.get_doc("Restaurant Card", card_name)
 	new_doc = frappe.copy_doc(original)
 	new_doc.card_name = f"{original.card_name} (Copy)"
@@ -2285,6 +2435,11 @@ def get_item_edit_data(item_code, pos_profile=None):
 @frappe.whitelist()
 def update_item_details(item_code, description=None, image=None, color=None, option_groups=None, badges=None, spice_level=0):
 	"""Update global Item fields (description, image, color, option groups, badges)."""
+	# //// Neoffice — its caller is the till (ItemEditPanel), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	import json
 	from frappe.utils import cint
 
@@ -2352,6 +2507,11 @@ def update_item_price(item_code, price, scope="local", card_name=None, pos_profi
 	scope = "global": Update Item Price + Item.standard_rate + sync ALL cards
 	scope = "global_only": Update Item Price + Item.standard_rate only (no card sync)
 	"""
+	# //// Neoffice — its caller is the till (ItemEditPanel), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	from frappe.utils import flt
 
 	price = flt(price)
@@ -2413,6 +2573,11 @@ def update_item_active(item_code, disabled=0, scope="local", card_name=None):
 	scope = "local": Only toggle disabled on the given card
 	scope = "all": Toggle disabled on ALL cards that have this item
 	"""
+	# //// Neoffice — its caller is the till (ItemEditPanel), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	from frappe.utils import cint
 
 	disabled = cint(disabled)
@@ -2518,6 +2683,11 @@ def get_item_badges(item_code):
 @frappe.whitelist()
 def update_item_badges(item_code, badges=None, spice_level=0):
 	"""Update badges and spice level for an item. Called from POS CardEditor."""
+	# //// Neoffice — its caller is the till (useBadges), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	import json
 
 	if isinstance(badges, str):

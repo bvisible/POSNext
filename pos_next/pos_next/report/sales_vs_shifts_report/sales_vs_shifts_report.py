@@ -1139,6 +1139,15 @@ def get_chart(data):
 @frappe.whitelist()
 def get_hourly_breakdown(filters):
 	"""Get hourly sales breakdown"""
+	# //// Neoffice — the report's chart helpers (sales_vs_shifts_report.js) return the sales figures, so
+	# //// they ask for a desk account (a portal account is refused whatever roles it holds) and what
+	# //// running the report asks (its roles, Sales Invoice report).
+	from frappe.desk.query_report import get_report_doc
+
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	get_report_doc("Sales vs Shifts Report")
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
 
 	conditions = []
@@ -1173,6 +1182,14 @@ def get_hourly_breakdown(filters):
 @frappe.whitelist()
 def get_payment_method_breakdown(filters):
 	"""Get payment method breakdown"""
+	# //// Neoffice — the report's chart helpers return the sales figures: a desk account and what running
+	# //// the report asks (see above).
+	from frappe.desk.query_report import get_report_doc
+
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	get_report_doc("Sales vs Shifts Report")
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
 
 	conditions = []
@@ -1208,6 +1225,14 @@ def get_payment_method_breakdown(filters):
 @frappe.whitelist()
 def get_daily_trend(filters):
 	"""Get daily sales trend"""
+	# //// Neoffice — the report's chart helpers return the sales figures: a desk account and what running
+	# //// the report asks (see above).
+	from frappe.desk.query_report import get_report_doc
+
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	get_report_doc("Sales vs Shifts Report")
 	filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
 
 	conditions = []

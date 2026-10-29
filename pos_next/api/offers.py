@@ -423,6 +423,11 @@ def get_offers(pos_profile: str) -> list[dict]:
 	Returns:
 		List of offer dictionaries
 	"""
+	# //// Neoffice — a till's promotions, for the till (promoApi): only the till's users may call it
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	try:
 		profile = frappe.get_doc("POS Profile", pos_profile)
 
@@ -457,6 +462,11 @@ def get_customer_one_time_redemptions(customer: str) -> list[str]:
 	the cart caches this list when a customer is selected (while online) so the
 	offline offer engine can mirror the server-side gate in ``apply_offers``.
 	"""
+	# //// Neoffice — a customer's offer redemptions, for the till (promoApi): only the till's users may
+	# //// call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	if not customer or not frappe.db.table_exists("One Time Customer Offer Usage"):
 		return []
 
@@ -591,6 +601,12 @@ def get_active_coupons(customer: str = None, company: str = None) -> List[Dict]:
 	- Have remaining balance > 0
 	- Are within validity dates
 	"""
+	# //// Neoffice — the active coupon codes, a customer's included, for the till (InvoiceCart,
+	# //// useGiftCard): only the till's users may call it
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	today = getdate(nowdate())
 
 	# //// Neoffice — gift cards are ERPNext Coupon Code rows; see the marker above (ce505902).

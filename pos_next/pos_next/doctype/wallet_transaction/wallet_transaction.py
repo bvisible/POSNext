@@ -7,7 +7,8 @@ from erpnext.controllers.accounts_controller import AccountsController
 from frappe import _
 from frappe.utils import flt, today
 
-from pos_next.api.wallet import get_or_create_wallet
+# //// Neoffice — get_or_create_wallet is imported where it is called, so that this doctype module
+# //// does not carry it as an attribute of its own.
 from pos_next.utils import cancel_or_undo  # //// Neoffice — #951
 
 
@@ -189,7 +190,8 @@ class WalletTransaction(AccountsController):
 		return None
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def create_wallet_credit(
 	wallet,
 	amount,
@@ -250,7 +252,8 @@ def create_wallet_credit(
 	return transaction
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def credit_loyalty_points_to_wallet(customer, company, loyalty_points, conversion_factor=None):
 	"""
 	Convert loyalty points to wallet credit.
@@ -283,6 +286,8 @@ def credit_loyalty_points_to_wallet(customer, company, loyalty_points, conversio
 		return None
 
 	# Get or create customer wallet
+	from pos_next.api.wallet import get_or_create_wallet  # //// Neoffice — see the imports above
+
 	wallet = get_or_create_wallet(customer, company, force_create=True)
 
 	# Create wallet credit transaction
@@ -339,6 +344,8 @@ def credit_return_to_wallet(return_invoice, amount=None):
 		return None
 
 	# Get or create customer wallet
+	from pos_next.api.wallet import get_or_create_wallet  # //// Neoffice — see the imports above
+
 	wallet = get_or_create_wallet(customer, company, force_create=True)
 
 	if not wallet:
@@ -435,7 +442,8 @@ def credit_return_to_wallet(return_invoice, amount=None):
 	return transaction
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def reverse_wallet_transactions_for_return(original_invoice, return_invoice):
 	"""
 	Reverse wallet transactions linked to the original invoice when a return is made.

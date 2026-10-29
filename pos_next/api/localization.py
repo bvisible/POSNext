@@ -96,6 +96,8 @@ def get_allowed_locales():
 	return {"success": True, "locales": list(allowed)}
 
 
+# //// Neoffice — added (no upstream equivalent, c081f418): the languages the app has a .po file for,
+# //// offered when the POS Settings language list is empty.
 def get_supported_locales():
 	"""
 	Get all supported locales by scanning available .po translation files.

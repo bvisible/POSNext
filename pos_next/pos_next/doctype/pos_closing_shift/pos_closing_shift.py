@@ -81,6 +81,12 @@ class POSClosingShift(Document):
 		opening_entry.pos_closing_shift = self.name
 		opening_entry.set_status()
 		self.delete_draft_invoices()
+		# //// Neoffice — the opening shift is saved with the closing's own permission flag: a till
+		# //// manager may close any till (require_caller_may_close) without the right to write POS Opening
+		# //// Shift (the customer's Admin). A closing the till's endpoint submits runs with permissions off
+		# //// once that check has passed, and the writes it makes do too; a closing submitted from the
+		# //// desk form keeps its permission checks (the flag is unset).
+		opening_entry.flags.ignore_permissions = self.flags.ignore_permissions
 		opening_entry.save()
 		# link invoices with this closing shift so ERPNext can block edits
 		self._set_closing_entry_invoices()
@@ -289,7 +295,12 @@ class POSClosingShift(Document):
 			)
 
 			for invoice in data:
-				frappe.delete_doc(doctype, invoice.name, force=1)
+				# //// Neoffice — like the opening shift's save in on_submit: the shift's unprinted drafts go
+				# //// with the closing's own permission flag, not the closer's right to delete an invoice
+				# //// (a cashier holds none, so the close failed on a profile that deletes drafts).
+				frappe.delete_doc(
+					doctype, invoice.name, force=1, ignore_permissions=self.flags.ignore_permissions
+				)
 
 	@frappe.whitelist()
 	def get_payment_reconciliation_details(self):
@@ -453,6 +464,13 @@ class POSClosingShift(Document):
 
 @frappe.whitelist()
 def get_cashiers(doctype, txt, searchfield, start, page_len, filters):
+	# //// Neoffice — the shift forms' user query (a till's cashiers with their e-mail, filters taken from
+	# //// the request) answers whoever reads either shift form.
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	if not (frappe.has_permission("POS Opening Shift") or frappe.has_permission("POS Closing Shift")):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	cashiers_list = frappe.get_all("POS Profile User", filters=filters, fields=["user"])
 	result = []
 	for cashier in cashiers_list:
@@ -465,6 +483,9 @@ def get_cashiers(doctype, txt, searchfield, start, page_len, filters):
 
 @frappe.whitelist()
 def get_pos_invoices(pos_opening_shift, doctype=None):
+	# //// Neoffice — a shift's invoices (its printed drafts submitted on the way) follow
+	# //// require_closing_form_access: the desk form's rights, or the shift's rule.
+	require_closing_form_access(pos_opening_shift)
 	if not doctype:
 		use_pos_invoice = False
 		doctype = "POS Invoice" if use_pos_invoice else "Sales Invoice"
@@ -490,6 +511,9 @@ def get_pos_invoices(pos_opening_shift, doctype=None):
 
 @frappe.whitelist()
 def get_payments_entries(pos_opening_shift):
+	# //// Neoffice — a shift's payment entries follow require_closing_form_access: the desk form's
+	# //// rights, or the shift's rule.
+	require_closing_form_access(pos_opening_shift)
 	return frappe.get_all(
 		"Payment Entry",
 		filters={
@@ -707,10 +731,15 @@ def _process_invoice(
 @frappe.whitelist()
 def make_closing_shift_from_opening(opening_shift):
 	opening_shift = json.loads(opening_shift)
+	# //// Neoffice — the closing data answers the rule of the close (require_shift_access) for the stored
+	# //// shift the payload names and describes, before anything is read or submitted; the printed drafts
+	# //// then go with permissions off, like the close's own writes (on_submit).
+	require_shift_payload_access(opening_shift)
 	doctype = "Sales Invoice"
 	invoice_field = "sales_invoice"
 
-	submit_printed_invoices(opening_shift.get("name"), doctype)
+	# //// Neoffice — ignore_permissions: the printed drafts go like the close's own writes (see above).
+	submit_printed_invoices(opening_shift.get("name"), doctype, ignore_permissions=True)
 
 	# Initialize closing shift document
 	closing_shift = frappe.new_doc("POS Closing Shift")
@@ -930,9 +959,98 @@ def make_closing_shift_from_opening(opening_shift):
 	return result
 
 
+# //// Neoffice — added functions (no upstream equivalent). The closing endpoints (the closing data:
+# //// make_closing_shift_from_opening above and pos_next.api.shifts.get_closing_shift_data; the close:
+# //// submit_closing_shift below and its pos_next.api.shifts wrapper; all whitelisted) share one rule,
+# //// checked before anything is read, built or submitted:
+# //// - require_shift_access: a desk account; a till manager (cash_entry.TILL_MANAGER_ROLES) works on
+# ////   any till's shift, a cashier on their own shift only, at a till they may use
+# ////   (cash_entry.require_till_access);
+# //// - require_shift_payload_access: the closing data is built from the stored shift the payload
+# ////   names and describes (its POS Profile, cashier and company);
+# //// - require_caller_may_close: the close takes a new POS Closing Shift, as get_closing_shift_data
+# ////   builds it for the till, for a submitted shift still open, carrying that shift's values.
+_SHIFT_FIELDS = ("pos_profile", "user", "company")
+
+
+# //// Neoffice — added (no upstream equivalent): the closing endpoints' rule, see above.
+def require_shift_access(opening_shift):
+	"""Refuse unless the caller may work on this POS Opening Shift; return its stored values."""
+	from pos_next.api.cash_entry import is_till_manager, require_system_user, require_till_access
+
+	require_system_user()
+	opening = isinstance(opening_shift, str) and frappe.db.get_value(
+		"POS Opening Shift",
+		opening_shift,
+		["docstatus", "status", "pos_closing_shift", *_SHIFT_FIELDS],
+		as_dict=True,
+	)
+	if not opening:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not is_till_manager():
+		if opening.user != frappe.session.user:
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
+		require_till_access(opening.pos_profile)
+	return opening
+
+
+# //// Neoffice — added function (no upstream equivalent). The desk form's data (get_pos_invoices and
+# //// get_payments_entries, whitelisted, called by pos_closing_shift.js) answers whoever may create a
+# //// closing and read that shift in the desk, or whoever the shift's rule admits (require_shift_access):
+# //// the till's closing data reads it too.
+def require_closing_form_access(pos_opening_shift):
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	if (
+		isinstance(pos_opening_shift, str)
+		and frappe.has_permission("POS Closing Shift", "create")
+		and frappe.db.exists("POS Opening Shift", pos_opening_shift)
+		and frappe.has_permission("POS Opening Shift", "read", pos_opening_shift)
+	):
+		return
+	require_shift_access(pos_opening_shift)
+
+
+# //// Neoffice — added (no upstream equivalent): the payload carries the stored shift's values.
+def _require_shift_values(payload, opening):
+	if any(payload.get(field) != opening[field] for field in _SHIFT_FIELDS):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added (no upstream equivalent): the closing data's rule (see the list above
+# //// require_shift_access).
+def require_shift_payload_access(payload):
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	payload = payload if isinstance(payload, dict) else {}
+	_require_shift_values(payload, require_shift_access(payload.get("name")))
+
+
+# //// Neoffice — added (no upstream equivalent): the close's rule (see the list above
+# //// require_shift_access).
+def require_caller_may_close(payload):
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	payload = payload if isinstance(payload, dict) else {}
+	is_new_closing = not payload.get("name") and not frappe.utils.cint(payload.get("docstatus"))
+	if payload.get("doctype") != "POS Closing Shift" or not is_new_closing:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	opening = require_shift_access(payload.get("pos_opening_shift"))
+	_require_shift_values(payload, opening)
+	if opening.docstatus != 1 or opening.status != "Open" or opening.pos_closing_shift:
+		frappe.throw(_("Selected POS Opening Shift should be open."), title=_("Invalid Opening Entry"))
+
+
 @frappe.whitelist()
 def submit_closing_shift(closing_shift):
 	closing_shift = json.loads(closing_shift)
+	# //// Neoffice — this function builds, saves and submits the payload's document with permissions off,
+	# //// and is whitelisted too, so it checks the caller like its pos_next.api.shifts wrapper does
+	# //// (require_caller_may_close, above) before anything is built.
+	require_caller_may_close(closing_shift)
 	closing_shift_doc = frappe.get_doc(closing_shift)
 	closing_shift_doc.flags.ignore_permissions = True
 	closing_shift_doc.save()
@@ -940,7 +1058,10 @@ def submit_closing_shift(closing_shift):
 	return closing_shift_doc.name
 
 
-def submit_printed_invoices(pos_opening_shift, doctype):
+# //// Neoffice — ignore_permissions added (default off): make_closing_shift_from_opening passes it once
+# //// its gate has passed, so a till manager without the right to submit an invoice can still close;
+# //// get_pos_invoices (the desk form's call) keeps the caller's rights.
+def submit_printed_invoices(pos_opening_shift, doctype, ignore_permissions=False):
 	invoices_list = frappe.get_all(
 		doctype,
 		filters={
@@ -951,4 +1072,6 @@ def submit_printed_invoices(pos_opening_shift, doctype):
 	)
 	for invoice in invoices_list:
 		invoice_doc = frappe.get_doc(doctype, invoice.name)
+		# //// Neoffice — see the marker above the function.
+		invoice_doc.flags.ignore_permissions = ignore_permissions
 		invoice_doc.submit()

@@ -15,8 +15,9 @@ from frappe.utils import flt, nowdate
 # would make the WHOLE file fail to import when the fix is absent, and "cannot
 # import name" says nothing about which guarantee broke. The balance tests below
 # must still run — and fail on the balance — against the unfixed code.
-from pos_next.api.gift_cards import process_gift_card_on_submit
-from pos_next.api.offers import validate_coupon
+# The modules, not their functions: a function imported here would also be reachable under this
+# test module's name.
+from pos_next.api import gift_cards, offers
 
 
 def _fake_invoice(coupon_name, used):
@@ -89,7 +90,7 @@ class TestGiftCardFamilies(unittest.TestCase):
 	def test_a_webshop_card_spent_at_the_till_loses_its_balance(self):
 		"""The defect that was costing real money: the balance never moved."""
 		card = self._web_card(amount=100, code="ZZ-WEB-GC-SPEND")
-		process_gift_card_on_submit(_fake_invoice(card.name, 30))
+		gift_cards.process_gift_card_on_submit(_fake_invoice(card.name, 30))
 		frappe.db.commit()
 
 		after = frappe.db.get_value(
@@ -100,7 +101,7 @@ class TestGiftCardFamilies(unittest.TestCase):
 
 	def test_a_webshop_card_is_validated_on_its_balance_not_as_a_flat_discount(self):
 		card = self._web_card(amount=40, code="ZZ-WEB-GC-VALID")
-		result = validate_coupon(
+		result = offers.validate_coupon(
 			coupon_code=card.coupon_code, customer=self.customer, company=self.company
 		)
 		self.assertTrue(result.get("valid"), result.get("message"))
@@ -112,7 +113,7 @@ class TestGiftCardFamilies(unittest.TestCase):
 		frappe.db.set_value("Coupon Code", card.name, "gift_card_amount", 0)
 		frappe.db.commit()
 
-		result = validate_coupon(
+		result = offers.validate_coupon(
 			coupon_code=card.coupon_code, customer=self.customer, company=self.company
 		)
 		self.assertFalse(result.get("valid"))
@@ -120,7 +121,7 @@ class TestGiftCardFamilies(unittest.TestCase):
 
 	def test_a_webshop_card_is_a_bearer_instrument_too(self):
 		card = self._web_card(amount=25, code="ZZ-WEB-GC-BEARER")
-		result = validate_coupon(
+		result = offers.validate_coupon(
 			coupon_code=card.coupon_code, customer="Some-Other-Customer", company=self.company
 		)
 		self.assertTrue(result.get("valid"), result.get("message"))

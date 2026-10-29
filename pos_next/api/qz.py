@@ -89,6 +89,11 @@ def sign_message(message):
 	Returns:
 		Base64-encoded RSA-PKCS1v15-SHA512 signature.
 	"""
+	# //// Neoffice — messages signed with the site's QZ Tray key, for the till (qzTray): only the till's
+	# //// users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	path = _key_path()
 	if not os.path.exists(path):
 		frappe.throw(

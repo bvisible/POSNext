@@ -33,6 +33,17 @@ PAYMENT_QR_CACHE_PREFIX = "pos_next_payment_qr_"
 PAYMENT_QR_CACHE_TTL = 600  # 10 minutes
 
 
+# //// Neoffice — the customer display's writes come from the till, for its own shift: a submitted POS
+# //// Opening Shift still open, the caller's own (a till manager may write to any till's), at a till the
+# //// caller may use. The shift's rule is pos_closing_shift.require_shift_access.
+def _require_display_writer(pos_opening_entry):
+    from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import require_shift_access
+
+    opening = require_shift_access(pos_opening_entry)
+    if opening.docstatus != 1 or opening.status != "Open" or opening.pos_closing_shift:
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
 @frappe.whitelist(allow_guest=True)
 def validate_api_key(api_key_string):
     """
@@ -252,6 +263,9 @@ def update_cart_data(pos_opening_entry, cart_data):
     Returns:
         dict: Success status
     """
+    # //// Neoffice — its caller is the till (useCustomerDisplaySync), writing to its own shift's display:
+    # //// the shift's own cashier while the shift is open, or a till manager (_require_display_writer).
+    _require_display_writer(pos_opening_entry)
     if not pos_opening_entry:
         frappe.throw(_("POS Opening Entry is required"))
 
@@ -515,6 +529,9 @@ def clear_cart_cache(pos_opening_entry):
     Returns:
         dict: Success status
     """
+    # //// Neoffice — its caller is the till (useCustomerDisplaySync), writing to its own shift's display:
+    # //// the shift's own cashier while the shift is open, or a till manager (_require_display_writer).
+    _require_display_writer(pos_opening_entry)
     if not pos_opening_entry:
         frappe.throw(_("POS Opening Entry is required"))
 
@@ -558,6 +575,9 @@ def notify_sale_complete(pos_opening_entry, invoice_name=None, grand_total=0):
     Returns:
         dict: Success status
     """
+    # //// Neoffice — its caller is the till (useCustomerDisplaySync), writing to its own shift's display:
+    # //// the shift's own cashier while the shift is open, or a till manager (_require_display_writer).
+    _require_display_writer(pos_opening_entry)
     if not pos_opening_entry:
         frappe.throw(_("POS Opening Entry is required"))
 
@@ -604,6 +624,9 @@ def push_payment_qr(pos_opening_entry, pairing_token, amount=0, currency="CHF",
     Returns:
         dict: Success status
     """
+    # //// Neoffice — its caller is the till (useCustomerDisplaySync), writing to its own shift's display:
+    # //// the shift's own cashier while the shift is open, or a till manager (_require_display_writer).
+    _require_display_writer(pos_opening_entry)
     if not pos_opening_entry:
         frappe.throw(_("POS Opening Entry is required"))
     if not pairing_token:
@@ -646,6 +669,9 @@ def clear_payment_qr(pos_opening_entry):
     Returns:
         dict: Success status
     """
+    # //// Neoffice — its caller is the till (useCustomerDisplaySync), writing to its own shift's display:
+    # //// the shift's own cashier while the shift is open, or a till manager (_require_display_writer).
+    _require_display_writer(pos_opening_entry)
     if not pos_opening_entry:
         frappe.throw(_("POS Opening Entry is required"))
 

@@ -1017,6 +1017,13 @@ def apply_referral_code(referral_code, customer):
 	Returns:
 		dict with generated coupon information
 	"""
+	# //// Neoffice — applying a referral code creates coupons with permissions off: it asks for a desk
+	# //// account (a portal account is refused whatever roles it holds) and what the module's other
+	# //// promotion writes ask.
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	check_promotion_permissions("write")
 	from pos_next.pos_next.doctype.referral_code.referral_code import apply_referral_code as apply_code
 
 	try:
@@ -1036,6 +1043,12 @@ def apply_referral_code(referral_code, customer):
 @frappe.whitelist()
 def get_referral_codes(company=None, include_disabled=False):
 	"""Get all referral codes with optional filters."""
+	# //// Neoffice — the referral codes: it asks for a desk account and what the module's other promotion
+	# //// reads ask.
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+	check_promotion_permissions("read")
 	filters = {}
 
 	if company:

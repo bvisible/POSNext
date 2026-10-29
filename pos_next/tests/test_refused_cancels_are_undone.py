@@ -223,7 +223,8 @@ class TestTheBrokenWalletTransactionOfAReturn(unittest.TestCase):
 			mock.patch.object(frappe, "get_doc", side_effect=get_doc),
 			mock.patch.object(frappe, "get_cached_value", return_value="1100 - Debtors"),
 			mock.patch.object(frappe, "log_error", side_effect=log),
-			mock.patch.object(wallet_transaction, "get_or_create_wallet", return_value={"name": "W-1"}),
+			# The doctype module imports get_or_create_wallet where it calls it, from pos_next.api.wallet.
+			mock.patch("pos_next.api.wallet.get_or_create_wallet", return_value={"name": "W-1"}),
 		):
 			result = wallet_transaction.credit_return_to_wallet("SINV-RET-1")
 		database.commit()

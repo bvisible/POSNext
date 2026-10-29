@@ -56,8 +56,8 @@ class TestTillMoneyGuards(FrappeTestCase):
 		cash_entry.require_till_access("Any POS Profile")
 
 	def test_receivable_accounts_answer_only_the_till(self):
-		# Upstream v2.0.0's "Pay on Receivable Account" list read accounts with frappe.get_all,
-		# which ignores permissions: any signed-in account got the company's receivable accounts.
+		# The "Pay on Receivable Account" list is the till's: it reads the company's receivable accounts
+		# with frappe.get_all, so the endpoint asks for the till itself (require_till_access).
 		from pos_next.api import pos_profile
 
 		frappe.set_user(PORTAL)
@@ -68,8 +68,8 @@ class TestTillMoneyGuards(FrappeTestCase):
 			pos_profile.get_receivable_accounts("Any POS Profile")
 
 	def test_item_endpoints_answer_only_the_till_over_http(self):
-		# Upstream's item endpoints only asked for a session: a portal account read the catalogue,
-		# stock per warehouse and serial numbers (neoffice-maintenance#1137). Both API routes count.
+		# The item endpoints (catalogue, stock per warehouse, serial numbers) are the till's
+		# (neoffice-maintenance#1137). Both API routes count.
 		from types import SimpleNamespace
 
 		from pos_next.api import items
@@ -94,9 +94,10 @@ class TestTillMoneyGuards(FrappeTestCase):
 		finally:
 			frappe.local.request = saved
 
-	def test_item_code_reused_on_the_server_is_not_gated(self):
-		# realtime_events calls get_stock_quantities after a stock change, as whoever caused it
-		# (a webshop customer's checkout included): that call must never be refused.
+	def test_item_code_reused_on_the_server_runs_in_its_scope(self):
+		# realtime_events calls get_stock_quantities after a stock change, as whoever caused it (a shop
+		# checkout included), inside items.in_process_item_reads: that call is never refused. Outside
+		# the scope, a call made while a request is served checks its caller.
 		from types import SimpleNamespace
 
 		from pos_next.api import items
@@ -107,7 +108,10 @@ class TestTillMoneyGuards(FrappeTestCase):
 				path="/api/method/frappe.desk.form.save.savedocs", method="POST", headers={}
 			)
 			frappe.set_user(PORTAL)
-			self.assertEqual(items.get_stock_quantities(item_codes="[]", warehouse="Any Warehouse"), [])
+			with items.in_process_item_reads():
+				self.assertEqual(items.get_stock_quantities(item_codes="[]", warehouse="Any Warehouse"), [])
+			with self.assertRaises(frappe.PermissionError):
+				items.get_stock_quantities(item_codes="[]", warehouse="Any Warehouse")
 		finally:
 			frappe.local.request = saved
 

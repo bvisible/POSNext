@@ -63,7 +63,8 @@ class Wallet(Document):
 		self.db_set("available_balance", self.available_balance, update_modified=False)
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def get_customer_wallet(customer, company=None):
 	"""Get wallet for a customer"""
 	filters = {"customer": customer}
@@ -77,7 +78,8 @@ def get_customer_wallet(customer, company=None):
 	return wallet
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def get_customer_wallet_balance(customer, company=None, exclude_invoice=None):
 	"""
 	Get customer's available wallet balance.
@@ -156,7 +158,8 @@ def get_pending_wallet_payments(customer, exclude_invoice=None):
 	return pending_amount
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def create_customer_wallet(customer, company, account=None):
 	"""
 	Create a wallet for a customer.
@@ -213,7 +216,8 @@ def get_default_wallet_account(company):
 	return wallet_account
 
 
-@frappe.whitelist()
+# //// Neoffice — not whitelisted (upstream whitelists it): no web client calls this helper; server
+# //// code calls it in-process, which needs no whitelisting.
 def get_or_create_wallet(customer, company):
 	"""Get existing wallet or create a new one"""
 	wallet = get_customer_wallet(customer, company)

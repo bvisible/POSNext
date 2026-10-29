@@ -13,23 +13,100 @@ from frappe import _
 from frappe.utils import flt, today
 
 
-# //// Neoffice — added function (no upstream equivalent). The till's money endpoints
-# //// (cash in/out, customer credit) posted Journal Entries for whoever called them, a portal
-# //// account included. Only a desk account that may work at the till passes: assigned to the
-# //// POS Profile, or reading sales invoices, as every cashier does.
-def require_till_access(pos_profile):
+# //// Neoffice — added function (no upstream equivalent). Whoever may work at the named till: a desk
+# //// account assigned to the POS Profile, or reading sales invoices as every cashier does, or a till
+# //// manager (TILL_MANAGER_ROLES), who works at any till. The till's money endpoints (cash in/out,
+# //// customer credit) and its read endpoints (settings, payment methods, taxes, approvers...) use
+# //// it; those whose POS Profile may be blank pass profile_optional=True: without a profile only
+# //// the desk-account half applies, and their blank-profile answer is unchanged.
+def require_till_access(pos_profile, profile_optional=False):
 	from pos_next.api.partial_payments import _has_pos_profile_access
 
+	require_system_user()
+	if profile_optional and not pos_profile:
+		return
+	if not pos_profile:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if is_till_manager():
+		return
+	if not _has_pos_profile_access(pos_profile):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added function (no upstream equivalent). The desk-account half of
+# //// require_till_access, for the till's endpoints that name no POS Profile: a visitor or a portal
+# //// account (Website User) is refused. Administrator is a desk account by construction (frappe
+# //// fixes its user_type), so it is answered without a lookup.
+def require_system_user():
 	user = frappe.session.user
+	if user == "Administrator":
+		return
 	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	if not pos_profile or not _has_pos_profile_access(pos_profile):
+
+
+# //// Neoffice — added (no upstream equivalent). The roles that run every till, not just the ones
+# //// they are assigned to: the fork's till manager, the customer's own administrator (Admin; System
+# //// Manager is held by our Administrator alone, so an admin capability is never gated on it alone)
+# //// and System Manager. The one list of them: a new manager role is added here.
+TILL_MANAGER_ROLES = ("Nexus POS Manager", "Admin", "System Manager")
+
+
+# //// Neoffice — added function (no upstream equivalent). A desk account holding one of
+# //// TILL_MANAGER_ROLES. A portal account is never a till manager, whatever roles it was given.
+def is_till_manager():
+	user = frappe.session.user
+	if user == "Administrator":
+		return True
+	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
+		return False
+	return bool(set(TILL_MANAGER_ROLES).intersection(frappe.get_roles(user)))
+
+
+# //// Neoffice — added function (no upstream equivalent). An endpoint that reads across every till
+# //// (every gift card with its balance, for instance) answers a till manager only.
+def require_till_manager():
+	if not is_till_manager():
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added function (no upstream equivalent). The till's endpoints that may name no POS
+# //// Profile: with one named, whoever may work at that till (require_till_access); with none, a
+# //// desk account that works at some till (assigned to a POS Profile, reading sales invoices as
+# //// every cashier does, or a till manager). A visitor, a portal account and a desk account with
+# //// no till are refused.
+def require_till_user(pos_profile=None):
+	if pos_profile:
+		require_till_access(pos_profile)
+		return
+	require_system_user()
+	user = frappe.session.user
+	if user == "Administrator" or is_till_manager():
+		return
+	if not (
+		frappe.db.exists("POS Profile User", {"user": user}) or frappe.has_permission("Sales Invoice", "read")
+	):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+# //// Neoffice — added function (no upstream equivalent). A till endpoint that names a document (an
+# //// invoice, a shift): whoever may work at the document's till, its pos_profile; a document with no
+# //// till asks for a till user. The desk-account check runs before the name is looked up, so a
+# //// portal account cannot learn which documents exist.
+def require_document_till(doctype, name):
+	require_system_user()
+	pos_profile = None
+	if name and isinstance(name, str):
+		pos_profile = frappe.db.get_value(doctype, name, "pos_profile")
+	require_till_user(pos_profile)
 
 
 @frappe.whitelist()
 def get_cash_entry_templates(company, pos_profile=None):
 	"""Fetch Journal Entry Templates available for cash in/out operations."""
+	# //// Neoffice — the till's own endpoint: it reads the company's templates and accounts, so only the
+	# //// till's users may call it (require_till_user).
+	require_till_user(pos_profile)
 	# Check if POS Profile has specific templates configured
 	allowed_templates = []
 	if pos_profile:
@@ -171,6 +248,11 @@ def _is_cash_account(account, pos_cash_account):
 @frappe.whitelist()
 def get_cash_entries(pos_opening_shift):
 	"""Get all cash in/out entries for a shift."""
+	# //// Neoffice — a shift's entries follow the shift's rule (its cashier at a till they may use, or a
+	# //// till manager), as its closing data does (require_shift_access).
+	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import require_shift_access
+
+	require_shift_access(pos_opening_shift)
 	entries = frappe.get_all(
 		"Journal Entry",
 		filters={

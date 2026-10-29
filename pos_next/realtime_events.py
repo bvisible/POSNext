@@ -9,7 +9,8 @@ Emits Socket.IO events when stock-affecting transactions occur.
 import frappe
 from frappe import _
 
-from pos_next.api.items import get_stock_quantities
+# //// Neoffice — in_process_item_reads: the scope emit_stock_update_event reads the stock in.
+from pos_next.api.items import get_stock_quantities, in_process_item_reads
 
 
 def emit_stock_update_event(doc, method=None):
@@ -58,7 +59,10 @@ def emit_stock_update_event(doc, method=None):
 		for warehouse, codes in item_codes_by_warehouse.items():
 			warehouses.add(warehouse)
 			# Use shared stock utility to keep logic consistent with API responses
-			warehouse_updates = get_stock_quantities(list(codes), warehouse)
+			# //// Neoffice — inside the item endpoints' in-process scope (items._till_only): this hook runs
+			# //// as whoever submitted or cancelled the invoice, a till user or not.
+			with in_process_item_reads():
+				warehouse_updates = get_stock_quantities(list(codes), warehouse)
 
 			# Ensure events always have numeric qty fields, even if API returns None
 			for update in warehouse_updates:
@@ -238,6 +242,7 @@ def emit_card_updated_event(doc, method=None):
 		pass
 
 
+# //// Neoffice — added (no upstream equivalent): an opening-hours change pushed like a card change.
 def emit_restaurant_settings_updated_event(doc, method=None):
 	"""Emit realtime event when Restaurant Settings change (opening hours)."""
 	try:

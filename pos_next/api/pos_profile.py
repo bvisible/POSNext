@@ -12,6 +12,11 @@ from pos_next.api.utilities import _parse_list_parameter, check_user_company
 @frappe.whitelist()
 def get_pos_profiles():
 	"""Get all POS Profiles accessible by current user"""
+	# //// Neoffice — the caller's own tills, for the till's shift opening, run by desk accounts: a desk
+	# //// account is required, like every till endpoint (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	pos_profiles = frappe.db.sql(
 		"""
 		SELECT DISTINCT p.name, p.company, p.currency, p.warehouse,
@@ -48,9 +53,12 @@ def get_pos_profile_data(pos_profile):
 
 	# Get hierarchical item groups (with child_groups info) in same call
 	# This eliminates a separate API call to get_item_groups
-	from pos_next.api.items import get_item_groups
+	# //// Neoffice — inside the item endpoints' in-process scope (items._till_only): get_pos_settings
+	# //// above has checked the caller's access to this till (cash_entry.require_till_access).
+	from pos_next.api.items import get_item_groups, in_process_item_reads
 
-	item_groups_with_hierarchy = get_item_groups(pos_profile)
+	with in_process_item_reads():
+		item_groups_with_hierarchy = get_item_groups(pos_profile)
 
 	return {
 		"pos_profile": profile_doc,
@@ -68,6 +76,12 @@ def get_pos_profile_data(pos_profile):
 @frappe.whitelist()
 def get_pos_settings(pos_profile):
 	"""Get POS Settings for a given POS Profile"""
+	# //// Neoffice — the till's settings: only the till's users pass (cash_entry.require_till_access);
+	# //// with no profile, a desk account still gets the defaults below. get_pos_profile_data calls it
+	# //// for its own till.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile, profile_optional=True)
 	from pos_next.api.constants import DEFAULT_POS_SETTINGS, POS_SETTINGS_FIELDS, merge_pos_settings
 
 	if not pos_profile:
@@ -92,6 +106,12 @@ def get_pos_settings(pos_profile):
 @frappe.whitelist()
 def get_payment_methods(pos_profile):
 	"""Get available payment methods from POS Profile with optimized queries"""
+	# //// Neoffice — the till's payment methods: only the till's users pass
+	# //// (cash_entry.require_till_access), checked before the try below, which would turn the refusal
+	# //// into an error and log it.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile, profile_optional=True)
 	try:
 		# Validate pos_profile parameter
 		if not pos_profile:
@@ -150,9 +170,8 @@ def get_receivable_accounts(pos_profile):
 	if not pos_profile:
 		frappe.throw(_("POS Profile is required"))
 
-	# //// Neoffice — upstream v2.0.0 answered any signed-in account: frappe.get_all below ignores
-	# //// permissions, so a portal customer could list the company's receivable accounts. Same gate
-	# //// as the till's money endpoints (cash_entry.require_till_access, test_till_money_guards).
+	# //// Neoffice — the company's receivable accounts, read below with frappe.get_all: the same check as
+	# //// the till's money endpoints (cash_entry.require_till_access, test_till_money_guards).
 	from pos_next.api.cash_entry import require_till_access
 
 	require_till_access(pos_profile)
@@ -187,6 +206,12 @@ def get_receivable_accounts(pos_profile):
 @frappe.whitelist()
 def get_taxes(pos_profile):
 	"""Get tax configuration from POS Profile"""
+	# //// Neoffice — the till's tax rows and their accounts: only the till's users pass
+	# //// (cash_entry.require_till_access), checked before the try below, which would swallow the refusal
+	# //// into an empty answer and log it.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile, profile_optional=True)
 	try:
 		if not pos_profile:
 			return []
@@ -225,6 +250,11 @@ def get_taxes(pos_profile):
 @frappe.whitelist()
 def get_warehouses(pos_profile):
 	"""Get all warehouses for the company in POS Profile"""
+	# //// Neoffice — the till's warehouses: only the till's users pass (cash_entry.require_till_access),
+	# //// checked before the try below, which would swallow the refusal into an empty answer and log it.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile, profile_optional=True)
 	try:
 		if not pos_profile:
 			return []
@@ -254,6 +284,12 @@ def get_warehouses(pos_profile):
 @frappe.whitelist()
 def get_default_customer(pos_profile):
 	"""Get the default customer configured in POS Profile"""
+	# //// Neoffice — the till's default customer and its group: only the till's users pass
+	# //// (cash_entry.require_till_access), checked before the try below, which would swallow the refusal
+	# //// into an empty answer and log it.
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile, profile_optional=True)
 	try:
 		if not pos_profile:
 			return {"customer": None}

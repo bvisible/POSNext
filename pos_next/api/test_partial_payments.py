@@ -56,11 +56,17 @@ class TestShiftTaggedPartialPayments(unittest.TestCase):
 		self.payment_entry.insert.assert_called_once()
 		self.payment_entry.submit.assert_called_once()
 
+		# //// Neoffice — get_payments_entries first asks the closing form's rule about the shift
+		# //// (require_closing_form_access); this shift is a stand-in, so the rule is replaced here and
+		# //// checked to be asked about it.
 		with patch(
 			"pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift.frappe.get_all",
 			return_value=[self.payment_entry],
-		) as get_all:
+		) as get_all, patch(  # //// Neoffice — the closing form's rule, replaced (see above)
+			"pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift.require_closing_form_access"
+		) as closing_form_rule:
 			self.assertEqual(get_payments_entries(shift), [self.payment_entry])
+			closing_form_rule.assert_called_once_with(shift)  # //// Neoffice — asked about this shift
 			self.assertEqual(
 				get_all.call_args.kwargs["filters"]["reference_no"], self.payment_entry.reference_no
 			)

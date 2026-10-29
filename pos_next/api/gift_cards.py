@@ -112,7 +112,8 @@ def is_gift_card_item(item_code, pos_profile):
 # Gift Card Creation (Direct to ERPNext Coupon Code)
 # ==========================================
 
-@frappe.whitelist()
+# //// Neoffice — a document hook (hooks.py doc_events of Sales Invoice and POS Invoice), run in-process
+# //// as whoever submits or cancels the invoice: not a web endpoint, so not whitelisted.
 def create_gift_card_from_invoice(doc, method=None):
 	"""
 	Create gift card(s) when a gift card item is sold.
@@ -361,9 +362,8 @@ def create_gift_card_manual(amount, company, customer=None, validity_months=12):
 	Returns:
 		dict: Created gift card info
 	"""
-	# //// Neoffice — whoever called this got a spendable gift card of the amount they chose:
-	# //// it is the Coupon Code list button's, so it now needs the right to create a Coupon
-	# //// Code, which that button's users hold and a portal account or a cashier does not.
+	# //// Neoffice — it creates a spendable gift card of the amount given. It is the Coupon Code list
+	# //// button's, so it needs the right to create a Coupon Code, which that button's users hold.
 	frappe.has_permission("Coupon Code", "create", throw=True)
 	try:
 		code = generate_gift_card_code()
@@ -452,6 +452,11 @@ def apply_gift_card(coupon_code, invoice_total, customer=None, company=None):
 	Returns:
 		dict: Discount amount and gift card info
 	"""
+	# //// Neoffice — its caller is the till (useGiftCard), so only the till's users pass
+	# //// (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	coupon_code = (coupon_code or "").strip().upper()
 
 	if not coupon_code:
@@ -521,6 +526,11 @@ def get_gift_cards_with_balance(customer=None, company=None):
 	Returns:
 		list: Gift cards with balance > 0
 	"""
+	# //// Neoffice — every gift card code with its balance, across every till: a till manager only
+	# //// (cash_entry.require_till_manager). Nothing in the app calls it.
+	from pos_next.api.cash_entry import require_till_manager
+
+	require_till_manager()
 	filters = {
 		"coupon_type": "Promotional",
 		"pos_next_gift_card": 1
@@ -603,7 +613,8 @@ def _get_gift_card_coupon(coupon_ref, fields):
 # Gift Card Processing on Invoice Submit
 # ==========================================
 
-@frappe.whitelist()
+# //// Neoffice — a document hook (hooks.py doc_events of Sales Invoice and POS Invoice), run in-process
+# //// as whoever submits or cancels the invoice: not a web endpoint, so not whitelisted.
 def process_gift_card_on_submit(doc, method=None):
 	"""
 	Process gift card after invoice submission.
@@ -835,6 +846,11 @@ def get_gift_cards_from_invoice(invoice_name):
 	Returns:
 		list: Gift cards created from this invoice
 	"""
+	# //// Neoffice — its caller is the till (useGiftCard): whoever may work at the invoice's till passes
+	# //// (cash_entry.require_document_till).
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice_name)
 	if not invoice_name:
 		return []
 
@@ -855,7 +871,8 @@ def get_gift_cards_from_invoice(invoice_name):
 	return gift_cards
 
 
-@frappe.whitelist()
+# //// Neoffice — a document hook (hooks.py doc_events of Sales Invoice and POS Invoice), run in-process
+# //// as whoever submits or cancels the invoice: not a web endpoint, so not whitelisted.
 def process_gift_card_on_cancel(doc, method=None):
 	"""
 	Process gift card when invoice is cancelled.

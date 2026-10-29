@@ -512,6 +512,7 @@ def _patch_set_missing_item_details(invoice_doc):
 	invoice_doc.set_missing_item_details = types.MethodType(patched_set_missing_item_details, invoice_doc)
 
 
+# //// Neoffice — added (no upstream equivalent): the restore half of _patch_set_missing_item_details.
 def _restore_item_discounts(invoice_doc, frontend_items):
 	"""Restore POS item discounts that ERPNext's validate() stripped.
 
@@ -957,6 +958,11 @@ def validate_cart_items(items, pos_profile=None):
 	Returns a list of item dicts where requested quantity exceeds availability.
 	This can be used on the front-end for pre-submission checks.
 	"""
+	# //// Neoffice — stock and prices of the cart's items, for the till (useInvoice): only the till's
+	# //// users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	if isinstance(items, str):
 		items = json.loads(items)
 
@@ -981,6 +987,11 @@ def validate_return_items(original_invoice_name, return_items, doctype="Sales In
 	Uses query builder for parameterized queries. Fetches invoice details, original
 	item quantities, and already-returned quantities in 3 queries total.
 	"""
+	# //// Neoffice — the items an invoice sold, for the till (its update_invoice and submit_invoice):
+	# //// only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	from frappe.query_builder.functions import Abs, Sum
 	from frappe.utils import date_diff, getdate
 
@@ -1122,9 +1133,41 @@ def _check_return_quantities(original_invoice_name, original_items, returned_qty
 # ==========================================
 
 
+# //// Neoffice — added (no upstream equivalent). update_invoice and submit_invoice save and submit with
+# //// permissions off, on the document type, till and draft their payload names, so only the till writes:
+# //// a desk account with access to the POS Profile the payload carries (without one, to the profile of
+# //// the draft it names; both when they differ), on the two document types the till sends. A portal
+# //// account is refused before anything is read.
+_TILL_DOCTYPES = ("Sales Invoice", "Sales Order")
+
+
+# //// Neoffice — added (no upstream equivalent): the till-write check described above.
+def _require_till_document(payload):
+	from pos_next.api.cash_entry import require_system_user, require_till_access
+
+	require_system_user()
+	payload = payload if isinstance(payload, dict) else {}
+	doctype = payload.get("doctype", "Sales Invoice")
+	if doctype not in _TILL_DOCTYPES:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	pos_profile = payload.get("pos_profile")
+	name = payload.get("name")
+	stored_profile = None
+	if name and isinstance(name, str) and frappe.get_meta(doctype).has_field("pos_profile"):
+		stored_profile = frappe.db.get_value(doctype, name, "pos_profile")
+	require_till_access(pos_profile or stored_profile)
+	if pos_profile and stored_profile and stored_profile != pos_profile:
+		require_till_access(stored_profile)
+
+
 @frappe.whitelist()
 def update_invoice(data):
 	"""Create or update invoice draft (Step 1)."""
+	# //// Neoffice — only the till writes (_require_till_document above). The payload is read before the
+	# //// try, so a refusal is not logged as an "Update Invoice Error"; the same parse below is then a
+	# //// no-op.
+	data = json.loads(data) if isinstance(data, str) else data
+	_require_till_document(data)
 	try:
 		data = json.loads(data) if isinstance(data, str) else data
 		data = _strip_server_managed_fields(data)
@@ -1886,6 +1929,11 @@ def check_offline_invoice_synced(offline_id):
 	Returns:
 	    dict with 'synced' (bool) and 'sales_invoice' (str or None)
 	"""
+	# //// Neoffice — whether an offline sale was synced, and its invoice, for the till's offline sync,
+	# //// run by desk accounts: a desk account is required (cash_entry.require_system_user).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	from pos_next.pos_next.doctype.offline_invoice_sync.offline_invoice_sync import (
 		OfflineInvoiceSync,
 	)
@@ -1955,6 +2003,9 @@ def submit_invoice(invoice=None, data=None):
 	if not isinstance(data, dict):
 		data = {}
 
+	# //// Neoffice — only the till submits (_require_till_document, above update_invoice), checked before
+	# //// the coupon lookup and the offline reservation below, so a refused call writes nothing.
+	_require_till_document(invoice)
 	invoice = _strip_server_managed_fields(invoice)
 
 	# //// Neoffice — the POS posts the coupon CODE, but `coupon_code` is a Link that
@@ -2792,6 +2843,7 @@ def _extract_tip_items(invoice_doc):
 	return tip_items
 
 
+# //// Neoffice — added (no upstream equivalent): a tip line and its Restaurant Tip record.
 def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 	"""Add a TIP line item to the invoice and create a Restaurant Tip tracking record.
 
@@ -3093,21 +3145,56 @@ def delete_invoice(invoice):
 	return _("Invoice {0} Deleted").format(invoice)
 
 
+# //// Neoffice — added function (no upstream equivalent). The drafts kept on purpose, as the filters
+# //// cleanup_old_drafts leaves them out by: a restaurant table's order (a guest's QR order too), a
+# //// takeaway order (its flag, or its number), and a printed draft, which the shift's closing submits
+# //// (pos_closing_shift.submit_printed_invoices). Each is a field the fork adds, read where the site has
+# //// it. Held carts are not here: the till keeps them in the browser (utils/draftManager.js), not on
+# //// the server. Nor is the kitchen's status: every Sales Invoice is born kds_status "Pending" (the
+# //// field's default) and update_invoice writes "Pending" on each line it saves, so it marks nothing.
+def _kept_draft_exclusions():
+	exclusions = {
+		"restaurant_table": ["is", "not set"],
+		"is_takeaway": 0,
+		"takeaway_number": ["is", "not set"],
+		"posa_is_printed": 0,
+	}
+	return {
+		column: condition
+		for column, condition in exclusions.items()
+		if frappe.db.has_column("Sales Invoice", column)
+	}
+
+
 @frappe.whitelist()
 def cleanup_old_drafts(pos_profile=None, max_age_hours=48):
 	"""
 	Clean up old draft invoices to prevent stock reservation issues.
 	Deletes drafts older than max_age_hours (default 24 hours).
 	"""
-	from datetime import datetime, timedelta
+	# //// Neoffice — it deletes the till's old POS drafts, for the till (useInvoice, after every sale):
+	# //// only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 
 	doctype = "Sales Invoice"
-	cutoff_time = datetime.now() - timedelta(hours=int(max_age_hours))
+	# //// Neoffice — the cutoff is read on the site's clock, the time zone `modified` is written in.
+	# //// datetime.now() read the server's: on a UTC server under a Zurich site one hour became two, and
+	# //// on a server ahead of its site it reached drafts only minutes old.
+	cutoff_time = frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-int(max_age_hours))
 
 	filters = {
 		"docstatus": 0,  # Draft only
 		"is_pos": 1,  # Only POS Sales Invoices
 		"modified": ["<", cutoff_time.strftime("%Y-%m-%d %H:%M:%S")],
+		# //// Neoffice — the till calls this after every sale: only what the caller's own till made and
+		# //// left goes, the caller's drafts saved at a till shift (the till always sends its shift; a
+		# //// desk draft or a guest's order is saved without one), none of them a draft kept on purpose
+		# //// (_kept_draft_exclusions).
+		"owner": frappe.session.user,
+		"posa_pos_opening_shift": ["is", "set"],
+		**_kept_draft_exclusions(),
 	}
 
 	# Optionally filter by POS profile
@@ -3199,6 +3286,11 @@ def get_returnable_invoices(limit=50, pos_profile=None):
 	1. Fetch recent POS invoices (fast indexed query, no JOINs)
 	2. Filter out fully-returned ones via _filter_fully_returned
 	"""
+	# //// Neoffice — invoices with their customers and amounts, for the till (ReturnInvoiceDialog): only
+	# //// the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	from frappe.utils import add_days, today
 
 	# Check return validity days from POS Settings
@@ -3257,6 +3349,11 @@ def search_invoice_by_number(search_term, pos_profile=None):
 	Returns:
 	    List of matching invoices with return availability info (max 10 results)
 	"""
+	# //// Neoffice — invoices with their customers and amounts, for the till (ReturnInvoiceDialog): only
+	# //// the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	if not search_term or len(search_term) < 3:
 		return []
 
@@ -3299,6 +3396,11 @@ def check_invoice_return_validity(invoice_name):
 	- error_type: 'not_found' or 'return_period_expired' if invalid
 	- Additional context (invoice_date, days_since, allowed_days) for expired returns
 	"""
+	# //// Neoffice — an invoice's return status, for the till (ReturnInvoiceDialog): whoever may work at
+	# //// the invoice's till passes (cash_entry.require_document_till).
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice_name)
 	from frappe.utils import date_diff, formatdate, getdate
 
 	# Fetch only the fields needed for validation
@@ -3349,6 +3451,11 @@ def get_invoice_for_return(invoice_name):
 	Returns the full invoice document with each item's qty adjusted to show
 	only the remaining returnable quantity (original qty minus already returned).
 	"""
+	# //// Neoffice — a whole invoice: one of the till's endpoints (nothing in the app calls it), so
+	# //// whoever may work at the invoice's till passes (cash_entry.require_document_till).
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice_name)
 	from frappe.query_builder.functions import Abs, Coalesce, Sum
 	from frappe.utils import date_diff, getdate
 
@@ -3611,6 +3718,11 @@ def prepare_return_invoice(invoice_name, pos_opening_shift=None):
 	        - _original_invoice: Reference data from original invoice (payments, amounts)
 	        - Each item includes original_qty, already_returned, and remaining_qty
 	"""
+	# //// Neoffice — a whole invoice as a return draft, for the till (ReturnInvoiceDialog): whoever may
+	# //// work at the invoice's till passes (cash_entry.require_document_till).
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice_name)
 	from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
 	from frappe.query_builder.functions import Abs, Coalesce, Sum
 	from frappe.utils import date_diff, getdate
@@ -3838,6 +3950,11 @@ def search_invoices_for_return(
 
 	Returns invoices with their items adjusted to show remaining returnable quantities.
 	"""
+	# //// Neoffice — invoices searched by customer, phone or amount: one of the till's endpoints (nothing
+	# //// in the app calls it), so only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	from frappe.query_builder.functions import Abs, Count, Sum
 
 	page = cint(page) or 1

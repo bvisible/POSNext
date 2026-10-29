@@ -25,6 +25,11 @@ def get_customers(search_term="", pos_profile=None, limit=20, modified_since=Non
 	Returns:
 	    list: List of customer dictionaries with name, customer_name, mobile_no, email_id, disabled
 	"""
+	# //// Neoffice — the customer list with contact details, for the till (customer search, offline
+	# //// cache): only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user(pos_profile)
 	try:
 		frappe.logger().debug(
 			f"get_customers called with search_term={search_term}, pos_profile={pos_profile}, limit={limit}, modified_since={modified_since}"
@@ -475,6 +480,11 @@ def get_customer_details(customer):
 	Returns:
 	    dict: Customer details
 	"""
+	# //// Neoffice — a customer's document: one of the till's endpoints (nothing in the app calls it), so
+	# //// only the till's users may call it (cash_entry.require_till_user).
+	from pos_next.api.cash_entry import require_till_user
+
+	require_till_user()
 	if not customer:
 		frappe.throw(_("Customer is required"))
 

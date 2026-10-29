@@ -1,8 +1,8 @@
 # //// Neoffice — added file (no upstream equivalent).
 """The till's payment calls answer only whoever may work at the till (maintenance#1732).
 
-They reach payments.api.intent in Python, where no permission is asked: before this, any signed-in account, a shop
-customer included, could refund a settled intent by naming it to pos_refund_payment.
+They reach payments.api.intent in Python, where no permission is asked, so they check their caller
+themselves.
 """
 
 import json

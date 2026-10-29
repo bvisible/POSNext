@@ -160,6 +160,11 @@ def check_offline_expense_synced(offline_id):
 	Submitted (docstatus 1) and cancelled (docstatus 2) Journal Entries are both
 	terminal for a given ``offline_id`` — a resend must not mint a second JE.
 	"""
+	# //// Neoffice — the Journal Entry an offline id maps to, for the till's offline sync: a desk account
+	# //// is required (cash_entry.require_system_user; the id names no POS Profile to check).
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
 	from pos_next.pos_next.doctype.offline_expense_sync.offline_expense_sync import (
 		OfflineExpenseSync,
 	)
