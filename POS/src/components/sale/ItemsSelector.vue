@@ -1106,9 +1106,10 @@ const activeHighlightCode = computed(
 
 // Local state
 // Grid/list choice, remembered per user
-const { viewMode, userManuallySetView, setViewMode } = useItemsViewMode(session.user);
-const itemThreshold = ref(50); // Threshold for auto-switching to list view
-const lastAutoSwitchCount = ref(0);
+//// Neoffice — tiles are the till's view unless the cashier picks the list (remembered per user): upstream
+//// switched to the list by itself whenever a search or a category showed more than 50 items, so the same till
+//// opened in tiles or in a list depending on the last filter. Its threshold and counter are removed with it.
+const { viewMode, setViewMode } = useItemsViewMode(session.user);
 const showSortDropdown = ref(false); // Sort dropdown visibility
 const skipPageReset = ref(false); // Skip page reset when navigating via pagination
 
@@ -1306,21 +1307,8 @@ watch(
 			currentPage.value = 1;
 			lastFilterSignature.value = signature;
 		}
-
-		// Only auto-switch if user hasn't manually set a preference
-		// and we're in grid view with many items
-		if (
-			!userManuallySetView.value &&
-			viewMode.value === "grid" &&
-			itemCount > itemThreshold.value
-		) {
-			if (lastAutoSwitchCount.value !== itemCount) {
-				viewMode.value = "list";
-				lastAutoSwitchCount.value = itemCount;
-			}
-		} else if (itemCount <= itemThreshold.value) {
-			lastAutoSwitchCount.value = 0;
-		}
+		//// Neoffice — removed upstream's automatic switch to the list for more than 50 items: the view is the
+		//// cashier's choice only (see the note at useItemsViewMode above).
 	},
 	{ immediate: false }
 );

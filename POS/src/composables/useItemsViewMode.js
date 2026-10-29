@@ -5,8 +5,8 @@ const VIEW_MODES = ["grid", "list"]
 /**
  * Items grid/list view mode, remembered per user in localStorage.
  *
- * A remembered choice counts as a manual one, so the auto-switch to list view
- * for long pages does not override it after a reload.
+ * Tiles by default; the list only when the user picks it, and the choice is
+ * remembered for the next visit.
  *
  * @param {string|null} user - Session user the choice is stored for
  * @returns {{ viewMode: import("vue").Ref<string>, userManuallySetView: import("vue").Ref<boolean>, setViewMode: Function }}
