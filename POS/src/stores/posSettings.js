@@ -450,6 +450,7 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	 * Forget the legacy per-device restaurant-mode override; the mode is settings.enable_restaurant_mode
 	 */
 	function initRestaurantMode() {
+		//// Neoffice — only removes the old device override described above; nothing reads the key.
 		try {
 			localStorage.removeItem("pos_next_restaurant_mode");
 		} catch {
