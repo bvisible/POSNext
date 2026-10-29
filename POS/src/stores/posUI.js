@@ -9,8 +9,17 @@ const LEFT_PANEL_MIN = 320;
 //// commit records no rationale beyond the number itself.
 //// right panel minimum width 450px (was 360/300) — 7e3f945
 const RIGHT_PANEL_MIN = 450;
-// The cart stops growing here on wide screens; the rest goes to the item grid
+//// Neoffice — RIGHT_PANEL_MAX is the floor of the cart's cap, not the cap itself: upstream stops
+//// the cart at a flat 520 px, which the develop merge brought back after our fork had let it grow
+//// wider. The product owner wants a cap, but a generous one: the cart may take half the container,
+//// never less than 520 px (rightPanelMaxWidth below), and the item grid keeps its own minimum.
+// The cart's cap never drops below this; on wider screens it is half the container
 export const RIGHT_PANEL_MAX = 520;
+//// Neoffice — the cart's cap for a given container width (see the note above).
+const RIGHT_PANEL_MAX_RATIO = 0.5;
+function rightPanelMaxWidth(containerWidth) {
+	return Math.max(RIGHT_PANEL_MAX, Math.round(containerWidth * RIGHT_PANEL_MAX_RATIO));
+}
 //// Neoffice — default split 80/20 instead of upstream's 0.62, and the split a cashier drags is
 //// remembered per terminal (97d370df, 2026-03-31 "persist left panel width in localStorage,
 //// default 80/20 ratio"). Upstream develop now keeps the split as a ratio of the container
@@ -179,7 +188,9 @@ export const usePOSUIStore = defineStore("posUI", () => {
 		const maxWidth = Math.max(LEFT_PANEL_MIN, safeContainerWidth - RIGHT_PANEL_MIN);
 		const minWidth = Math.min(
 			maxWidth,
-			Math.max(LEFT_PANEL_MIN, safeContainerWidth - RIGHT_PANEL_MAX)
+			//// Neoffice — the cart's cap grows with the container (half of it, never under 520 px)
+			//// instead of upstream's flat RIGHT_PANEL_MAX; see rightPanelMaxWidth at the top.
+			Math.max(LEFT_PANEL_MIN, safeContainerWidth - rightPanelMaxWidth(safeContainerWidth))
 		);
 		const clampedWidth = Math.min(Math.max(width, minWidth), maxWidth);
 		return Number.isFinite(clampedWidth) ? clampedWidth : LEFT_PANEL_MIN;

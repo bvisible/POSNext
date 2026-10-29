@@ -14,12 +14,25 @@ describe("posUI split ratio", () => {
 	})
 
 	//// Neoffice — our default split is 0.8 (97d370df), not upstream's 0.62: on a wide screen it puts
-	//// the cart at our 450 px minimum; the RIGHT_PANEL_MAX cap is reached by dragging the cart wider.
-	it("caps the cart at RIGHT_PANEL_MAX on wide screens", () => {
+	//// the cart at our 450 px minimum; the cap is reached by dragging the cart wider, and ours is
+	//// half the container, never under RIGHT_PANEL_MAX (upstream's flat cap).
+	it("caps the cart at half the container on wide screens", () => {
 		ui.updateLayoutBounds(1856)
 		expect(1856 - ui.leftPanelWidth).toBe(450)
 		ui.setLeftPanelWidth(100, 1856)
-		expect(1856 - ui.leftPanelWidth).toBe(RIGHT_PANEL_MAX)
+		//// Neoffice — 1856 / 2, where upstream stops at RIGHT_PANEL_MAX.
+		expect(1856 - ui.leftPanelWidth).toBe(928)
+	})
+
+	//// Neoffice — added case: the cap is half the container, never under RIGHT_PANEL_MAX (520 px),
+	//// and the item grid keeps its 320 px minimum when the container is too narrow for both.
+	it("lets the cart reach half a wide container and keeps 520px as the floor of its cap", () => {
+		ui.setLeftPanelWidth(0, 1860)
+		expect(1860 - ui.leftPanelWidth).toBe(930)
+		ui.setLeftPanelWidth(0, 1000)
+		expect(1000 - ui.leftPanelWidth).toBe(RIGHT_PANEL_MAX)
+		ui.setLeftPanelWidth(0, 800)
+		expect(ui.leftPanelWidth).toBe(320)
 	})
 
 	//// Neoffice — the cart keeps our 450 px minimum (7e3f9458), not upstream's 360.
@@ -50,7 +63,8 @@ describe("posUI split ratio", () => {
 
 	it("clamps a drag outside the bounds", () => {
 		ui.setLeftPanelWidth(100, 1302)
-		expect(1302 - ui.leftPanelWidth).toBe(RIGHT_PANEL_MAX)
+		//// Neoffice — 1302 / 2 rounded: our cap is half the container, upstream's RIGHT_PANEL_MAX.
+		expect(1302 - ui.leftPanelWidth).toBe(651)
 		ui.setLeftPanelWidth(5000, 1302)
 		//// Neoffice — our cart minimum is 450 px (7e3f9458), not upstream's 360.
 		expect(1302 - ui.leftPanelWidth).toBe(450)
