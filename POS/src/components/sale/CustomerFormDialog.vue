@@ -32,260 +32,230 @@
   //// Implement offline capabilities for POS Next — 541c6f1
 -->
 <template>
-	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: 'md' }">
+	<Dialog v-model="show" :options="{ title: isEditMode ? __('Edit Customer') : __('Create New Customer'), size: '2xl' }">
 		<template #body-content>
 			<!-- //// Neoffice — the whole form was rewritten. Upstream asks for one free-text -->
 			<!-- //// customer_name in a tall label-per-field layout, which is wrong for a Swiss -->
 			<!-- //// counter: we need to know Individual vs Company (it drives the Customer Group -->
-			<!-- //// and the invoice), and a scrollable placeholder-only form fits a tablet. Hence -->
+			<!-- //// and the invoice), first and last name apart, and the postal address. Hence -->
 			<!-- //// the type toggle, the company-name field and the first/last name split -->
-			<!-- //// (616d4102 + 4b36d7be 2026-03-25, 731374c1 "add company name field", -->
-			<!-- //// c84cc34a 2026-02-04 "make customer dialog scrollable and compact"). -->
-			<div class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-				<!-- Customer Type Toggle -->
-				<div class="flex bg-gray-100 rounded-neo-sm p-0.5">
-					<button
-						type="button"
-						@click="customerType = 'Individual'"
-						class="flex-1 py-1.5 px-3 text-sm font-medium rounded-neo-sm transition-colors"
-						:class="customerType === 'Individual'
-							? 'bg-white text-gray-900 shadow-sm'
-							: 'text-gray-500 hover:text-gray-700'"
-					>
-						{{ __("Individual") }}
-					</button>
-					<button
-						type="button"
-						@click="customerType = 'Company'"
-						class="flex-1 py-1.5 px-3 text-sm font-medium rounded-neo-sm transition-colors"
-						:class="customerType === 'Company'
-							? 'bg-white text-gray-900 shadow-sm'
-							: 'text-gray-500 hover:text-gray-700'"
-					>
-						{{ __("Company") }}
-					</button>
-				</div>
+			<!-- //// (616d4102 + 4b36d7be 2026-03-25, 731374c1 "add company name field"). -->
+			<!-- Layout (2026-10-29): a 2xl dialog (672 px) laid out on a two-column grid, so the -->
+			<!-- whole form fits 1366 x 768 with no inner scroll box. The former md dialog (448 px) -->
+			<!-- scrolled inside a max-h-[60vh] box (c84cc34a) that clipped the fields' focus rings, -->
+			<!-- hid the country on the Company tab and made the right margin wider than the left. -->
+			<!-- Every field shares the Design System look (fieldClass in the script). -->
+			<div class="flex flex-col gap-5">
+				<section class="flex flex-col gap-3">
+					<h4 :class="sectionTitleClass">{{ __("Customer") }}</h4>
+					<div class="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+						<!-- Customer Type Toggle -->
+						<div class="grid h-10 grid-cols-2 gap-1 rounded-[10px] border border-[#ECE7DE] bg-[#F6F3ED] p-1">
+							<button
+								type="button"
+								@click="customerType = 'Individual'"
+								class="h-full rounded-[7px] px-3 text-base font-medium transition-colors"
+								:class="customerType === 'Individual'
+									? 'bg-white text-[#141414] shadow-sm'
+									: 'text-[#6F665A] hover:text-[#141414]'"
+							>
+								{{ __("Individual") }}
+							</button>
+							<button
+								type="button"
+								@click="customerType = 'Company'"
+								class="h-full rounded-[7px] px-3 text-base font-medium transition-colors"
+								:class="customerType === 'Company'
+									? 'bg-white text-[#141414] shadow-sm'
+									: 'text-[#6F665A] hover:text-[#141414]'"
+							>
+								{{ __("Company") }}
+							</button>
+						</div>
 
-				<!-- Company Name (only when Company type) -->
-				<input
-					v-if="customerType === 'Company'"
-					v-model="customerData.company_name"
-					type="text"
-					:placeholder="__('Company name') + ' *'"
-					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-				/>
+						<!-- //// Neoffice — the group select is bound to the dialog's own customerGroup ref, -->
+						<!-- //// not customerData.customer_group, so the Individuel/Commercial default can -->
+						<!-- //// follow the type toggle (53d87890 2026-05-28); it sits beside that toggle. -->
+						<!-- Customer Group -->
+						<select v-model="customerGroup" :class="selectClass">
+							<option value="" disabled>{{ __("Customer Group") }}</option>
+							<option v-for="group in customerGroups" :key="group" :value="group">
+								{{ group }}
+							</option>
+						</select>
 
-				<!-- First Name + Last Name -->
-				<div class="grid grid-cols-2 gap-2">
-					<!-- //// Neoffice — upstream had a single customer_name input. A Customer is filed here -->
-					<!-- //// as first + last name so ERPNext gets structured data and the POS can rebuild -->
-					<!-- //// the parts when editing (616d4102, 4b36d7be 2026-03-25). -->
-					<input
-						v-model="customerData.first_name"
-						type="text"
-						:placeholder="__('First name') + ' *'"
-						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-					/>
-					<!-- //// Neoffice — the last-name half of that same split (616d4102, 4b36d7be). -->
-					<input
-						v-model="customerData.last_name"
-						type="text"
-						:placeholder="__('Last name') + ' *'"
-						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-					/>
-				</div>
+						<!-- Company Name (only when Company type) -->
+						<input
+							v-if="customerType === 'Company'"
+							v-model="customerData.company_name"
+							type="text"
+							:placeholder="__('Company name') + ' *'"
+							:class="[fieldClass, 'sm:col-span-2']"
+						/>
 
-				<!-- //// Neoffice — the mobile row lost its label and was restyled to the Neoffice theme -->
-				<!-- //// (rounded-neo, gray-50 fields); the dial code defaults to +41 instead of -->
-				<!-- //// upstream's Egyptian +20 (616d4102, 731374c1 2026-03-25). -->
-				<!-- Mobile Number with Country Code Selector -->
-				<!-- //// Neoffice — the dial-code widget itself is upstream's (34469c37, before the fork -->
-				<!-- //// point); what changed in the rows below is the Neoffice restyle and the +41 default, -->
-				<!-- //// as described just above (616d4102 + 731374c1, 2026-03-25). -->
-				<div class="flex gap-2">
-					<!-- Country Code Dropdown -->
-					<div class="relative" ref="dropdownRef">
-						<button
-							type="button"
-							@click="showCountryDropdown = !showCountryDropdown"
-							class="flex items-center gap-1 w-24 ps-2 pe-1 py-2.5 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-gray-100"
-						>
-							<img
-								:src="`https://flagcdn.com/h24/${currentCountryCode}.png`"
-								:alt="currentCountryCode"
-								class="w-6 h-auto rounded-sm"
-								@error="handleFlagError"
-							/>
-							<span class="flex-1 text-start">{{ selectedCountryCode || "+41" }}</span>
-							<svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-							</svg>
-						</button>
+						<!-- //// Neoffice — upstream had a single customer_name input. A Customer is filed here -->
+						<!-- //// as first + last name so ERPNext gets structured data and the POS can rebuild -->
+						<!-- //// the parts when editing (616d4102, 4b36d7be 2026-03-25). -->
+						<!-- First Name + Last Name -->
+						<input
+							v-model="customerData.first_name"
+							type="text"
+							:placeholder="__('First name') + ' *'"
+							:class="fieldClass"
+						/>
+						<input
+							v-model="customerData.last_name"
+							type="text"
+							:placeholder="__('Last name') + ' *'"
+							:class="fieldClass"
+						/>
 
-						<!-- Country Search Dropdown -->
-						<div
-							v-if="showCountryDropdown"
-							class="absolute start-0 z-50 mt-1 w-72 max-h-64 bg-white rounded-neo-md shadow-neo-lg border border-gray-200 overflow-hidden"
-						>
-							<div class="sticky top-0 bg-white border-b border-gray-200 p-2">
-								<input
-									ref="countrySearchRef"
-									v-model="countrySearchQuery"
-									type="text"
-									:placeholder="__('Search country...')"
-									class="w-full px-3 py-2 text-sm border border-gray-200 rounded-neo-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-									@keydown.escape="showCountryDropdown = false"
-								/>
-							</div>
-							<!-- //// Neoffice — country list restyled and tightened (max-h-48, lighter rows) so the -->
-							<!-- //// dropdown fits above the on-screen keyboard of a POS tablet (616d4102). -->
-							<div class="overflow-y-auto max-h-48">
+						<!-- //// Neoffice — the dial-code widget itself is upstream's (34469c37, before the fork -->
+						<!-- //// point); ours has no label (the placeholder carries the required mark), the -->
+						<!-- //// Neoffice field look and a +41 default instead of upstream's Egyptian +20 -->
+						<!-- //// (616d4102, 731374c1 2026-03-25). -->
+						<!-- Mobile Number with Country Code Selector -->
+						<div class="flex min-w-0 gap-2">
+							<!-- Country Code Dropdown -->
+							<div class="relative shrink-0" ref="dropdownRef">
 								<button
-									v-for="country in filteredCountries"
-									:key="country.code"
 									type="button"
-									@click="selectCountry(country)"
-									class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-start"
-									:class="{ 'bg-blue-50': selectedCountryCode === country.isd }"
+									@click="showCountryDropdown = !showCountryDropdown"
+									:class="[fieldBase, 'flex w-[92px] items-center gap-1.5 ps-2.5 pe-2']"
 								>
 									<img
-										:src="`https://flagcdn.com/h24/${country.code.toLowerCase()}.png`"
-										:alt="country.name"
-										class="w-5 h-auto rounded-sm shadow-sm"
-										@error="(e) => (e.target.style.display = 'none')"
+										:src="`https://flagcdn.com/h24/${currentCountryCode}.png`"
+										:alt="currentCountryCode"
+										class="h-auto w-5 rounded-sm"
+										@error="handleFlagError"
 									/>
-									<!-- //// Neoffice — same restyle (616d4102): truncated name + muted dial code, so a long -->
-									<!-- //// country name cannot push the code out of the row. -->
-									<span class="flex-1 text-sm text-gray-700 truncate">{{ country.name }}</span>
-									<span class="text-sm text-gray-400">{{ country.isd }}</span>
+									<span class="flex-1 text-start">{{ selectedCountryCode || "+41" }}</span>
+									<svg class="h-3 w-3 text-[#968C7C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
 								</button>
-								<div v-if="filteredCountries.length === 0" class="px-4 py-6 text-center text-sm text-gray-400">
-									{{ __("No countries found") }}
+
+								<!-- Country Search Dropdown -->
+								<div
+									v-if="showCountryDropdown"
+									class="absolute start-0 z-50 mt-1 max-h-64 w-72 overflow-hidden rounded-[10px] border border-[#DCD4C7] bg-white shadow-neo-lg"
+								>
+									<div class="sticky top-0 border-b border-[#ECE7DE] bg-white p-2">
+										<input
+											ref="countrySearchRef"
+											v-model="countrySearchQuery"
+											type="text"
+											:placeholder="__('Search country...')"
+											:class="[fieldClass, '!h-9']"
+											@keydown.escape="showCountryDropdown = false"
+										/>
+									</div>
+									<!-- //// Neoffice — a short list (max-h-48) so the dropdown fits above the on-screen -->
+									<!-- //// keyboard of a POS tablet, with a truncated name and a muted dial code so a -->
+									<!-- //// long country name cannot push the code out of the row (616d4102). -->
+									<div class="max-h-48 overflow-y-auto">
+										<button
+											v-for="country in filteredCountries"
+											:key="country.code"
+											type="button"
+											@click="selectCountry(country)"
+											class="flex w-full items-center gap-3 px-3 py-2 text-start transition-colors hover:bg-[#F6F3ED]"
+											:class="{ 'bg-blue-50': selectedCountryCode === country.isd }"
+										>
+											<img
+												:src="`https://flagcdn.com/h24/${country.code.toLowerCase()}.png`"
+												:alt="country.name"
+												class="h-auto w-5 rounded-sm shadow-sm"
+												@error="(e) => (e.target.style.display = 'none')"
+											/>
+											<span class="flex-1 truncate text-base text-[#141414]">{{ country.name }}</span>
+											<span class="text-base text-[#968C7C]">{{ country.isd }}</span>
+										</button>
+										<div v-if="filteredCountries.length === 0" class="px-4 py-6 text-center text-base text-[#968C7C]">
+											{{ __("No countries found") }}
+										</div>
+									</div>
 								</div>
 							</div>
+
+							<!-- Phone Number Input -->
+							<input
+								v-model="phoneNumber"
+								type="tel"
+								:placeholder="__('Phone number') + ' *'"
+								:class="[fieldClass, 'flex-1 text-start']"
+								@input="updateMobileNumber"
+							/>
 						</div>
+
+						<!-- //// Neoffice — upstream's labelled frappe-ui <Input> replaced by a plain input with -->
+						<!-- //// a placeholder, like every field of this form (616d4102, 4b36d7be 2026-03-25). -->
+						<!-- Email -->
+						<input
+							v-model="customerData.email_id"
+							type="email"
+							:placeholder="__('Email') + ' *'"
+							:class="fieldClass"
+						/>
 					</div>
+				</section>
 
-					<!-- //// Neoffice — the phone input was moved out of upstream's label wrapper into the -->
-					<!-- //// dial-code flex row (that is the removal just above) and restyled; the -->
-					<!-- //// placeholder now carries the required mark since the labels are gone -->
-					<!-- //// (616d4102 + 4b36d7be 2026-03-25). -->
-					<!-- Phone Number Input -->
-					<input
-						v-model="phoneNumber"
-						type="tel"
-						:placeholder="__('Phone number') + ' *'"
-						class="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-start"
-						@input="updateMobileNumber"
-					/>
-				</div>
-
-				<!-- //// Neoffice — upstream's labelled frappe-ui <Input> replaced by a plain input with -->
-				<!-- //// a placeholder, to keep the whole form inside one tablet screen (616d4102, -->
-				<!-- //// 4b36d7be 2026-03-25). -->
-				<!-- Email -->
-				<!-- //// Neoffice — the e-mail field of that same placeholder-only rewrite (616d4102 + -->
-				<!-- //// 4b36d7be, 2026-03-25). -->
-				<input
-					v-model="customerData.email_id"
-					type="email"
-					:placeholder="__('Email') + ' *'"
-					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-				/>
-
-				<!-- //// Neoffice — two changes here. (1) The group select is bound to the dialog's own -->
-				<!-- //// customerGroup ref, not customerData.customer_group, so the Individuel/Commercial -->
-				<!-- //// default can follow the type toggle (53d87890 2026-05-28). (2) Upstream has no -->
-				<!-- //// address in this dialog at all; ours creates the Address record with the -->
-				<!-- //// Customer, gated on a POS setting (8bffb770 2026-02-04). -->
-				<!-- Customer Group -->
-				<!-- //// Neoffice — the group select bound to the dialog's own ref so the default can follow -->
-				<!-- //// the Individual/Company toggle; see the note above (53d87890, 2026-05-28). -->
-				<select
-					v-model="customerGroup"
-					class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-				>
-					<option value="" disabled>{{ __("Customer Group") }}</option>
-					<option v-for="group in customerGroups" :key="group" :value="group">
-						{{ group }}
-					</option>
-				</select>
-
+				<!-- //// Neoffice — upstream has no address in this dialog at all; ours creates the -->
+				<!-- //// Address record with the Customer, gated on a POS setting (8bffb770 2026-02-04). -->
 				<!-- Address Fields (conditional) -->
-				<template v-if="showAddressFields">
-					<div class="pt-2 border-t border-gray-200">
-						<p class="text-xs font-medium text-gray-500 mb-1">{{ __("Address") }}</p>
-					</div>
-
+				<section v-if="showAddressFields" class="flex flex-col gap-3 border-t border-[#ECE7DE] pt-4">
+					<h4 :class="sectionTitleClass">{{ __("Address") }}</h4>
 					<!-- //// Neoffice — ADR-002 structured address: street and N° are separate fields (N° -->
-					<!-- //// lands in Address.custom_house_number), and the row below is NPA-then-city, the -->
-					<!-- //// Swiss postal order. The street box is the GeoAdmin autocomplete -->
+					<!-- //// lands in Address.custom_house_number), then NPA before city, the Swiss postal -->
+					<!-- //// order, then the country. The street box is the GeoAdmin autocomplete -->
 					<!-- //// (6ed1256d 2026-04-02 Swiss address autocomplete, d7584e7b 2026-07-17 ADR-002). -->
-					<!-- Swiss postal format: street + N° on one row -->
-					<div class="grid grid-cols-[1fr_96px] gap-2">
+					<!-- //// Upstream offered a Territory picker; a cashier has no opinion about that ERPNext -->
+					<!-- //// sales notion, so the visible field is the address country and the territory is -->
+					<!-- //// derived from it in updateTerritoryFromCountry (616d4102, 8bffb770). -->
+					<!-- Six columns: street 5 + N° 1, NPA 2 + city 4 ("1907 Saxon"), country 3 (the -->
+					<!-- left column of the grid above). The NPA cell holds "Code postal" and longer -->
+					<!-- translations such as "Código postal" (about 130 px). -->
+					<div class="grid grid-cols-6 gap-x-4 gap-y-3">
 						<AddressAutocomplete
 							v-model="customerData.address_line1"
 							:placeholder="__('Street')"
-							input-class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+							:input-class="fieldClass"
+							class="col-span-4 min-w-0 sm:col-span-5"
 							@address-selected="onAddressSelected"
 						/>
 						<input
 							v-model="customerData.house_number"
 							type="text"
 							:placeholder="__('N°')"
-							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+							:class="[fieldClass, 'col-span-2 sm:col-span-1']"
 						/>
-					</div>
-
-					<!-- Swiss postal format: NPA then city ("1907 Saxon") -->
-					<!-- The NPA column is wide enough for its placeholder: "Code postal" needs about 116px in Inter, which 96px cut to -->
-					<!-- "Code posta"; 144px also holds a longer translation such as "Código postal" (about 130px). -->
-					<div class="grid grid-cols-[144px_1fr] gap-2">
 						<input
 							v-model="customerData.pincode"
 							type="text"
 							:placeholder="__('Postal code')"
-							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+							:class="[fieldClass, 'col-span-3 sm:col-span-2']"
 						/>
 						<input
 							v-model="customerData.city"
 							type="text"
 							:placeholder="__('City')"
-							class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+							:class="[fieldClass, 'col-span-3 sm:col-span-4']"
 						/>
+						<select v-model="customerData.country" :class="[selectClass, 'col-span-6 sm:col-span-3']">
+							<option value="">{{ __("Country") }}</option>
+							<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
+								{{ country.name }}
+							</option>
+						</select>
 					</div>
-
-					<!-- //// Neoffice — upstream offered a Territory picker here. Territory is an ERPNext -->
-					<!-- //// sales notion a cashier has no opinion about, so the visible field is the -->
-					<!-- //// address country; the territory is derived from it in updateTerritoryFromCountry -->
-					<!-- //// (616d4102 2026-03-25, 8bffb770 2026-02-04). -->
-					<!-- //// Neoffice — the country select that replaced upstream's Territory picker; the marker -->
-					<!-- //// sits above the opening tag because the changed line is one of its attributes -->
-					<!-- //// (616d4102, 2026-03-25); an HTML comment between them would break the tag, -->
-					<!-- //// which is what Neoffice commit 4ed5051e undid. -->
-					<select
-						v-model="customerData.country"
-						class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-neo-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-					>
-						<!-- //// Neoffice — options now come from the countries store instead of the Territory -->
-						<!-- //// list (616d4102). -->
-						<option value="">{{ __("Country") }}</option>
-						<option v-for="country in countriesStore.countries" :key="country.code" :value="country.name">
-							{{ country.name }}
-						</option>
-					</select>
-				<!-- //// Neoffice — closes the showAddressFields block: upstream ended a plain <div> -->
-				<!-- //// here, the address group is conditional for us (8bffb770). -->
-				</template>
+				</section>
 			</div>
 		</template>
 
 		<template #actions>
-			<div class="flex flex-col gap-2">
+			<div class="flex flex-col gap-3">
 				<!-- Permission Warning -->
-				<!-- //// Neoffice — radius token swapped to the Neoffice theme scale (rounded-neo-sm) -->
-				<!-- //// (616d4102 2026-03-25). -->
-				<div v-if="!hasPermission" class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-neo-sm">
+				<div v-if="!hasPermission" class="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2">
 					<div class="flex items-start gap-2">
 						<svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
 							<path
@@ -303,22 +273,23 @@
 					</div>
 				</div>
 
-				<div class="flex gap-2">
+				<!-- The primary action (ink, frappe-ui solid) ends the row; Cancel stands just before it. -->
+				<div class="flex items-center justify-end gap-2">
+					<Button variant="outline" size="lg" @click="show = false">
+						{{ __("Cancel") }}
+					</Button>
 					<!-- //// Neoffice — the :disabled below is gated on isFormValid, not on a bare -->
 					<!-- //// customer_name: the fork validates company-vs-person and, in edit mode, drops -->
 					<!-- //// the phone/email requirement that kept Save disabled for legacy customers -->
-					<!-- //// (4b36d7be 2026-03-25, 8c59b735 2026-07-09). NB: the checker cannot see a -->
-					<!-- //// marker for that line — it sits inside the <Button> attribute list. -->
+					<!-- //// (4b36d7be 2026-03-25, 8c59b735 2026-07-09). -->
 					<Button
 						variant="solid"
+						size="lg"
 						@click="handleCreate"
 						:loading="createCustomerResource.loading || updateCustomerResource.loading || checkingPermission"
 						:disabled="!isFormValid || !hasPermission"
 					>
 						{{ isEditMode ? __("Save Changes") : __("Create Customer") }}
-					</Button>
-					<Button variant="subtle" @click="show = false">
-						{{ __("Cancel") }}
 					</Button>
 				</div>
 			</div>
@@ -357,6 +328,18 @@ import { Button, Dialog, createResource } from "frappe-ui"
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
 const log = logger.create("CreateCustomerDialog")
+
+// =============================================================================
+// Field styling (Neoffice Design System): one look for every input and select —
+// white field, warm sand border, 10 px radius, 40 px high, clay focus ring.
+// =============================================================================
+
+const fieldBase =
+	"h-10 rounded-[10px] border border-[#DCD4C7] bg-white text-base text-[#141414] transition-colors hover:border-[#BFB5A4] focus:border-[#D68A59] focus:outline-none focus:ring-[3px] focus:ring-[#D68A59]/40"
+const fieldClass = `${fieldBase} w-full min-w-0 px-3 placeholder:text-[#968C7C]`
+const selectClass = `${fieldBase} w-full min-w-0 ps-3 pe-9`
+// Section eyebrow: small caps in muted sand ink, the Design System's overline
+const sectionTitleClass = "text-xs font-bold uppercase tracking-[0.14em] text-[#6F665A]"
 
 // =============================================================================
 // Composables & Stores
