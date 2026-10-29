@@ -6,9 +6,10 @@
 # //// Like the single before it, a restaurant PROVISIONS what tipping needs the first time tips are
 # //// enabled — a TIP service item (0% VAT template, is_internal_item so it never shows up in a
 # //// client's item list) and a transit account 2211 — because a Swiss tip is a pass-through
-# //// (Durchlaufkonto) collected for the staff, not turnover: booking it to a revenue account would
-# //// inflate both the turnover and the VAT base (32f2415d + a750c5e3, 2026-03-23; account type and
-# //// label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item flag e18d1885, 2026-04).
+# //// collected for the staff (it goes through a transit account), not turnover: booking it to a
+# //// revenue account would inflate both the turnover and the VAT base (32f2415d + a750c5e3,
+# //// 2026-03-23; account type and label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item
+# //// flag e18d1885, 2026-04).
 # //// The difference with the single: the account and the item default are made in the company of
 # //// THIS restaurant, not in the site's default company.
 import frappe
@@ -98,7 +99,7 @@ class Restaurant(Document):
 				"is_stock_item": 0,
 				"standard_rate": 0,
 				"is_internal_item": 1,
-				"description": _("Gratuity / Pourboire"),
+				"description": _("Gratuity"),
 			}
 		)
 
@@ -115,7 +116,7 @@ class Restaurant(Document):
 		item.insert(ignore_permissions=True)
 		self.tip_item = "TIP"
 
-		# Auto-assign 0% tax template (e.g. "Sans TVA") if one exists
+		# Auto-assign a 0% tax template (any Item Tax Template whose rates are all 0) if one exists
 		self._assign_zero_tax_template(item)
 
 		frappe.msgprint(_("Created tip item: TIP"))

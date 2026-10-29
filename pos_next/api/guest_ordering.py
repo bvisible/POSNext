@@ -942,6 +942,8 @@ def confirm_guest_payment(token, amount, tip=0):
 				"Wallee Settings", {"provider": wallee_provider}, "pos_mode_of_payment"
 			)
 		if not wallee_mop:
+			# The name of the card Mode of Payment record our (French-language) instances carry: a record
+			# name to look up, not a text to translate
 			wallee_mop = "Carte de crédit"
 
 		# Prevent duplicate confirmation: check if a Restaurant Tip or payment
@@ -993,7 +995,7 @@ def confirm_guest_payment(token, amount, tip=0):
 						"rate": flt(tip),
 						"income_account": tip_account or None,
 						"cost_center": invoice_doc.cost_center,
-						"description": _("Gratuity / Pourboire"),
+						"description": _("Gratuity"),
 					})
 				# Recalculate totals with tip item
 				invoice_doc.run_method("calculate_taxes_and_totals")
@@ -1016,7 +1018,7 @@ def confirm_guest_payment(token, amount, tip=0):
 				"amount": total_payment,
 			})
 
-		# Remove zero-amount payment rows (e.g. default "Espèce" at 0.00)
+		# Remove zero-amount payment rows (e.g. the default cash mode of payment at 0.00)
 		invoice_doc.payments = [p for p in invoice_doc.payments if flt(p.amount) > 0]
 
 		# Recalculate paid_amount

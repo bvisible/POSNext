@@ -55,11 +55,11 @@ describe("restaurant settings are read and saved per restaurant", () => {
 	})
 
 	it("reads the settings of the restaurant the till belongs to", async () => {
-		tillSettings.restaurant = "Brasserie"
+		tillSettings.restaurant = "Main Restaurant"
 
 		await store.fetchRestaurantSettings()
 
-		expect(call).toHaveBeenCalledWith(GET, { restaurant: "Brasserie" })
+		expect(call).toHaveBeenCalledWith(GET, { restaurant: "Main Restaurant" })
 	})
 
 	it("names no restaurant while the till does not, and lets the server pick", async () => {
@@ -70,7 +70,7 @@ describe("restaurant settings are read and saved per restaurant", () => {
 
 	it("keeps what the server answers: the hours, the tips and the open status", async () => {
 		call.mockResolvedValue({
-			restaurant: "Brasserie",
+			restaurant: "Main Restaurant",
 			opening_hours: [LUNCH],
 			enable_tips: true,
 			is_open: false,
@@ -79,7 +79,7 @@ describe("restaurant settings are read and saved per restaurant", () => {
 
 		await store.fetchRestaurantSettings()
 
-		expect(store.restaurantSettings.restaurant).toBe("Brasserie")
+		expect(store.restaurantSettings.restaurant).toBe("Main Restaurant")
 		expect(store.restaurantSettings.opening_hours).toEqual([LUNCH])
 		expect(store.restaurantSettings.enable_tips).toBe(true)
 		expect(store.restaurantStatus.isOpen).toBe(false)
@@ -96,7 +96,7 @@ describe("restaurant settings are read and saved per restaurant", () => {
 
 	it("saves the opening hours onto the restaurant the settings were read for", async () => {
 		call.mockResolvedValue({
-			restaurant: "Brasserie",
+			restaurant: "Main Restaurant",
 			opening_hours: [],
 			is_open: true,
 		})
@@ -109,7 +109,7 @@ describe("restaurant settings are read and saved per restaurant", () => {
 			SAVE,
 			{
 				settings: JSON.stringify({ opening_hours: [LUNCH] }),
-				restaurant: "Brasserie",
+				restaurant: "Main Restaurant",
 			},
 		])
 		// The screen then shows what the server kept
@@ -123,20 +123,20 @@ describe("restaurant settings are read and saved per restaurant", () => {
 			is_open: true,
 		})
 		await store.fetchRestaurantSettings()
-		tillSettings.restaurant = "Brasserie"
+		tillSettings.restaurant = "Main Restaurant"
 
 		await store.updateRestaurantSettings({ enable_runner: 0 })
 
 		expect(call).toHaveBeenLastCalledWith(SAVE, {
 			settings: JSON.stringify({ enable_runner: 0 }),
-			restaurant: "Brasserie",
+			restaurant: "Main Restaurant",
 		})
 	})
 
 	it("saves the other settings, the QR and takeaway ones, in a single call", async () => {
 		const fields = {
 			enable_qr_ordering: 1,
-			guest_menu: "Carte",
+			guest_menu: "Main Menu",
 			token_expiry_days: 7,
 		}
 

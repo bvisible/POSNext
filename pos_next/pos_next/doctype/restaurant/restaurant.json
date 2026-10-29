@@ -110,7 +110,7 @@
   {
    "fieldname": "section_tips",
    "fieldtype": "Section Break",
-   "label": "Tips / Pourboires"
+   "label": "Tips"
   },
   {
    "default": "0",
@@ -285,7 +285,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 19:30:00.000000",
+ "modified": "2026-10-29 20:10:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

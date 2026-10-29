@@ -883,7 +883,7 @@ def open_table(table_name, pos_profile, customer=None):
 			"is_new": False,
 		}
 
-	# No existing draft — return empty result, draft will be created at first "Valider"
+	# No existing draft — return empty result, the draft will be created when the cashier first validates the order
 	# Table is NOT marked Occupied until an invoice exists (prevents orphaned tables)
 	return {
 		"name": None,
@@ -1259,7 +1259,13 @@ def get_active_menus():
 
 @frappe.whitelist()
 def get_restaurant_settings(restaurant=None):
-	"""Return a restaurant's opening hours, current status and settings (the till's restaurant by default)."""
+	"""Return a restaurant's opening hours, current status and settings (the till's restaurant by default).
+
+	The answer holds what the till's screens read, and nothing else: the settings dialog (hours, tips, QR and
+	takeaway ordering), the restaurant store's flags, the card editor (hours) and the reservation dialog (default
+	duration and channels). Whatever only the server uses — the reminder and no-show rules, online booking, the
+	restaurant's e-mail — stays out: this endpoint answers any signed-in user.
+	"""
 	settings = restaurant_config.get_restaurant_settings(restaurant)
 	if not settings:
 		# No restaurant yet: nothing is set up, the restaurant features stay off
@@ -1278,8 +1284,8 @@ def get_restaurant_settings(restaurant=None):
 	is_open, current_slot = _check_restaurant_open(hours)
 
 	return {
+		# Which restaurant the settings on screen are: a save goes back to the same one (restaurant store)
 		"restaurant": settings.name,
-		"restaurant_name": settings.restaurant_name,
 		"opening_hours": hours,
 		"is_open": is_open,
 		"current_slot": current_slot,
@@ -1298,13 +1304,8 @@ def get_restaurant_settings(restaurant=None):
 		"token_expiry_days": settings.token_expiry_days,
 		"enable_web_takeaway": bool(settings.enable_web_takeaway),
 		"takeaway_menu": settings.takeaway_menu,
-		"enable_reservations": bool(settings.enable_reservations),
+		# The reservation dialog reads these two
 		"default_reservation_duration": settings.default_reservation_duration,
-		"no_show_delay": settings.no_show_delay,
-		"reservation_reminder_hours": settings.reservation_reminder_hours,
-		"enable_online_reservations": bool(settings.enable_online_reservations),
-		"require_reservation_validation": bool(settings.require_reservation_validation),
-		"restaurant_email": settings.restaurant_email,
 		"reservation_channels": settings.reservation_channels,
 	}
 

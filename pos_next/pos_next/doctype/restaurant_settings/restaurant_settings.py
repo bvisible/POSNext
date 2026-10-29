@@ -2,10 +2,10 @@
 # //// time-based card availability, runner toggle, tips. It also PROVISIONS what tipping needs the
 # //// first time it is enabled — a TIP service item (0% VAT template, is_internal_item so it never
 # //// shows up in a client's item list) and transit account 2211 — because a Swiss tip is a
-# //// pass-through (Durchlaufkonto) collected for the staff, not turnover: booking it to a revenue
-# //// account would inflate both the turnover and the VAT base (32f2415d + a750c5e3, 2026-03-23;
-# //// account type and label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item flag
-# //// e18d1885, 2026-04).
+# //// pass-through collected for the staff (it goes through a transit account), not turnover: booking
+# //// it to a revenue account would inflate both the turnover and the VAT base (32f2415d + a750c5e3,
+# //// 2026-03-23; account type and label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item
+# //// flag e18d1885, 2026-04).
 # //// SUPERSEDED since NeoRestau lot 1: the settings are a `Restaurant`'s own now (one set per restaurant),
 # //// and nothing reads this single any more. It stays, tip provisioning included, so that whatever still
 # //// saves it does not break; the patch `pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant`
@@ -94,7 +94,7 @@ class RestaurantSettings(Document):
 			"is_stock_item": 0,
 			"standard_rate": 0,
 			"is_internal_item": 1,
-			"description": _("Gratuity / Pourboire"),
+			"description": _("Gratuity"),
 		})
 
 		# Set default income account to the tip transit account
@@ -107,7 +107,7 @@ class RestaurantSettings(Document):
 		item.insert(ignore_permissions=True)
 		self.tip_item = "TIP"
 
-		# Auto-assign 0% tax template (e.g. "Sans TVA") if one exists
+		# Auto-assign a 0% tax template (any Item Tax Template whose rates are all 0) if one exists
 		self._assign_zero_tax_template(item)
 
 		frappe.msgprint(_("Created tip item: TIP"))

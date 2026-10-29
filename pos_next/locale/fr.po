@@ -4936,9 +4936,10 @@ msgstr "Total général"
 msgid "Grand Total:"
 msgstr "Total général :"
 
-#: pos_next/api/guest_ordering.py:923 pos_next/api/invoices.py:1898
-#: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:85
-msgid "Gratuity / Pourboire"
+#: pos_next/api/guest_ordering.py:998 pos_next/api/invoices.py:2881
+#: pos_next/pos_next/doctype/restaurant/restaurant.py:102
+#: pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.py:97
+msgid "Gratuity"
 msgstr "Pourboire"
 
 #: POS/src/components/sale/ItemsSelector.vue:127
@@ -11563,10 +11564,13 @@ msgstr "Pourboire déjà payé"
 msgid "Tip amount"
 msgstr "Montant du pourboire"
 
+#. Label of a Section Break field in DocType 'Restaurant'
 #: POS/src/components/pos/ManagementSlider.vue:138
 #: POS/src/components/pos/ManagementSlider.vue:142
 #: POS/src/components/restaurant/TipsPanel.vue:9
+#: POS/src/components/settings/POSSettings.vue:1504
 #: POS/src/pages/POSSale.vue:1457
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
 msgid "Tips"
 msgstr "Pourboires"
 

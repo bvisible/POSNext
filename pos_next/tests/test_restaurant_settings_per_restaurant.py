@@ -29,6 +29,42 @@ A_MONDAY = "2026-10-19"
 LUNCH = {"day_of_week": "Monday", "from_time": "09:00:00", "to_time": "14:00:00", "label": "Lunch"}
 DINNER = {"day_of_week": "Monday", "from_time": "18:00:00", "to_time": "23:00:00", "label": "Dinner"}
 
+# What the till's screens read of a restaurant's settings (the settings dialog, the restaurant store, the card
+# editor, the reservation dialog): the only keys `get_restaurant_settings` may answer with
+READ_BY_THE_TILL = {
+	"restaurant",
+	"opening_hours",
+	"is_open",
+	"current_slot",
+	"enable_runner",
+	"enable_takeaway",
+	"takeaway_card",
+	"enable_tips",
+	"auto_detect_tip",
+	"tip_item",
+	"tip_account",
+	"enable_qr_ordering",
+	"guest_menu",
+	"qr_order_validation",
+	"guest_account_mode",
+	"token_expiry_mode",
+	"token_expiry_days",
+	"enable_web_takeaway",
+	"takeaway_menu",
+	"default_reservation_duration",
+	"reservation_channels",
+}
+# What only the server uses: the call answers any signed-in user, so none of it may leave
+ONLY_THE_SERVER_USES = (
+	"restaurant_email",
+	"restaurant_name",
+	"enable_reservations",
+	"no_show_delay",
+	"reservation_reminder_hours",
+	"enable_online_reservations",
+	"require_reservation_validation",
+)
+
 
 def today_at(hour, minute=0):
 	return datetime.combine(getdate(nowdate()), time(hour, minute))
@@ -115,7 +151,6 @@ class TestRestaurantSettingsPerRestaurant(RestaurantFixtures, FrappeTestCase):
 			"_Test Restaurant A",
 			enable_tips=1,
 			enable_runner=0,
-			enable_reservations=1,
 			reservation_channels="Phone\nWalk-in",
 			opening_hours=[LUNCH],
 		)
@@ -124,7 +159,6 @@ class TestRestaurantSettingsPerRestaurant(RestaurantFixtures, FrappeTestCase):
 		self.assertEqual(answer["restaurant"], a)
 		self.assertTrue(answer["enable_tips"])
 		self.assertFalse(answer["enable_runner"])
-		self.assertTrue(answer["enable_reservations"])
 		self.assertEqual(answer["reservation_channels"], "Phone\nWalk-in")
 		self.assertEqual(
 			answer["opening_hours"],
@@ -139,6 +173,28 @@ class TestRestaurantSettingsPerRestaurant(RestaurantFixtures, FrappeTestCase):
 			],
 		)
 		self.assertFalse(restaurant_api.get_restaurant_settings(b)["enable_tips"])
+
+	def test_the_api_answers_with_what_the_till_reads_and_nothing_else(self):
+		a = self.make_restaurant(
+			"_Test Restaurant A",
+			enable_reservations=1,
+			enable_online_reservations=1,
+			require_reservation_validation=1,
+			no_show_delay=45,
+			reservation_reminder_hours=2,
+			restaurant_email="test-restaurant-a@yopmail.com",
+			default_reservation_duration=3600,
+			reservation_channels="Phone\nWalk-in",
+		)
+		answer = restaurant_api.get_restaurant_settings(a)
+		# The call is open to any signed-in user: the e-mail and the reservation rules the server alone uses stay out
+		for field in ONLY_THE_SERVER_USES:
+			self.assertNotIn(field, answer)
+		self.assertNotIn("test-restaurant-a@yopmail.com", str(answer))
+		self.assertEqual(set(answer), READ_BY_THE_TILL)
+		# What the reservation dialog reads is there
+		self.assertEqual(answer["default_reservation_duration"], 3600)
+		self.assertEqual(answer["reservation_channels"], "Phone\nWalk-in")
 
 	def test_saving_settings_writes_the_restaurant_named_and_no_other(self):
 		a = self.make_restaurant("_Test Restaurant A")

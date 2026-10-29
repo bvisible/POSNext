@@ -2877,7 +2877,8 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 			"price_list_rate": tip_amount,
 			"income_account": tip_account,
 			"cost_center": invoice_doc.cost_center,
-			"description": _("Gratuity / Pourboire"),
+			# //// Neoffice — the msgid is English ("Gratuity"); the French is in fr.po, one msgid for every TIP line.
+			"description": _("Gratuity"),
 		},
 	)
 
