@@ -131,6 +131,9 @@ export function usePaymentNumpad(options = {}) {
 		// Handle Enter - call custom handler if provided
 		if (key === "Enter") {
 			event.preventDefault();
+			//// Neoffice — a held key repeats Enter. Ctrl/Cmd+Enter opens this dialog (useKeyboardShortcuts),
+			//// and a hand that stays on it past ENTER_GUARD_MS would book "Exact cash" and complete the sale.
+			if (event.repeat) return;
 			if (Date.now() - enabledAt < ENTER_GUARD_MS) return;
 			if (onEnter && typeof onEnter === "function") {
 				onEnter(numpadValue.value);

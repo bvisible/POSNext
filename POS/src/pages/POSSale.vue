@@ -332,6 +332,27 @@
 						</svg>
 						<span>{{ __("Switch To Desk") }}</span>
 					</button>
+					<!-- //// Neoffice — added: where the cashier reads the keyboard shortcuts. A Mac keyboard -->
+					<!-- //// sends the F-keys to the system, so the till has shortcuts that need no function key. -->
+					<button
+						@click="showShortcutsDialog = true"
+						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+					>
+						<svg
+							class="w-5 h-5 text-gray-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zM6 9h.01M10 9h.01M14 9h.01M18 9h.01M8 13h.01M12 13h.01M16 13h.01M7 16h10"
+							/>
+						</svg>
+						<span>{{ __("Keyboard shortcuts") }}</span>
+					</button>
 					<hr class="my-1 border-gray-100" />
 					<button
 						@click="lockSession()"
@@ -1638,6 +1659,9 @@
 				:printer-label="cloudPrntStore.receiptPrinter?.label || ''"
 			/>
 
+			<!-- //// Neoffice — the keyboard shortcuts help, opened from the user menu. -->
+			<ShortcutsDialog v-model="showShortcutsDialog" />
+
 			<!-- Invoice Management -->
 			<!-- //// Neoffice — :pos-opening-shift inside this tag, taken from the cart rather -->
 			<!-- //// than the shift store, so the invoice list is scoped to the shift the cart -->
@@ -2423,6 +2447,10 @@ import { useRealtimeStock } from "@/composables/useRealtimeStock";
 // Card realtime updates are handled in restaurant.js store via startRealtimeCardListeners()
 import { useSessionLock } from "@/composables/useSessionLock";
 import { useGlobalShortcuts } from "@/composables/useKeyboardShortcuts";
+//// Neoffice — the keyboard shortcuts help, a dialog opened from the user menu. It registers with
+//// the global dialog state, which holds the shortcuts and the scanner capture back while it shows.
+import ShortcutsDialog from "@/components/pos/ShortcutsDialog.vue";
+import { useDialog } from "@/composables/useDialogState";
 import { getDistinctUoms } from "@/utils/itemUoms";
 import { usePOSEvents } from "@/composables/usePOSEvents";
 //// Neoffice — gift cards live on ERPNext-native Coupon Code / Promotional Scheme in our
@@ -2833,6 +2861,9 @@ watch(
 );
 onUnmounted(() => cloudPrntStore.stop());
 
+//// Neoffice — open state of the keyboard shortcuts help (user menu entry), see the import above.
+const { isOpen: showShortcutsDialog } = useDialog("shortcuts");
+
 // Restaurant editors
 const showCardEditor = ref(false);
 const showProductOptionsEditor = ref(false);
@@ -3034,6 +3065,11 @@ onMounted(async () => {
 			F4: () => itemsSelectorRef.value?.focusSearchInput(),
 			F8: () => invoiceCartRef.value?.focusCustomerSearch(),
 			F9: () => handleProceedToPayment(),
+			//// Neoffice — the same three actions without a function key (see useKeyboardShortcuts):
+			//// a Mac sends the F-keys to the system and some till keyboards have no fn key at all.
+			"/": () => itemsSelectorRef.value?.focusSearchInput(),
+			"Mod+k": () => invoiceCartRef.value?.focusCustomerSearch(),
+			"Mod+Enter": () => handleProceedToPayment(),
 		}
 	);
 

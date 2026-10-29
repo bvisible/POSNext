@@ -184,12 +184,14 @@
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</button>
+						<!-- //// Neoffice — the hint shows "/", the item search shortcut that needs no function key: -->
+						<!-- //// a Mac sends the F-keys to the system, and F4 still works (see useKeyboardShortcuts). -->
 						<kbd
 							v-else
 							class="hidden sm:inline-block px-1.5 py-0.5 me-1 rounded border border-gray-300 bg-white text-xs font-medium text-gray-600 tabular-nums"
 							dir="ltr"
-							:title="__('Press F4 to focus search')"
-							>F4</kbd
+							:title="__('Search items ({0})', ['/'])"
+							>/</kbd
 						>
 						<button
 							@click="toggleBarcodeScanner"

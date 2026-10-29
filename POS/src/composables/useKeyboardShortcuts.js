@@ -1,23 +1,22 @@
 import { onUnmounted, watch } from "vue";
+//// Neoffice — the key matching moved to utils/shortcutKeys.js, ours whole (shortcuts that need no function key).
+import { createKeydownListener } from "@/utils/shortcutKeys";
 
 /**
- * Window-level shortcuts. F-keys never type text, so they fire from inputs too;
- * any other key is skipped while an input or textarea has focus.
+ * Window-level shortcuts. F-keys and "Mod+" chords type no text, so they fire from fields too;
+ * any other key gives way to a field that owns its text and to a barcode scan in progress.
  *
  * @param {() => boolean} isBlocked - True while a dialog, lock screen or overlay is showing
- * @param {Record<string, () => void>} handlers - Keyed by KeyboardEvent.key, e.g. { F9: pay }
+ * @param {Record<string, () => void>} handlers - Keyed by KeyboardEvent.key ("F9", "/") or by
+ *   "Mod+<key>" ("Mod+k", "Mod+Enter"), Mod being Cmd on a Mac and Ctrl elsewhere
  */
 export function useGlobalShortcuts(isBlocked, handlers) {
-	const onKeydown = (event) => {
-		const handler = handlers[event.key];
-		if (!handler || isBlocked()) return;
-		const tag = document.activeElement?.tagName;
-		if ((tag === "INPUT" || tag === "TEXTAREA") && !/^F\d{1,2}$/.test(event.key)) return;
-		event.preventDefault();
-		handler();
-	};
-	window.addEventListener("keydown", onKeydown);
-	onUnmounted(() => window.removeEventListener("keydown", onKeydown));
+	//// Neoffice — upstream matched event.key in a listener written here and skipped every key but the
+	//// F-keys in an input or a textarea. The listener now runs in the capture phase, so a chord is
+	//// decided before the element that has focus handles the key (its own Enter, for one).
+	const onKeydown = createKeydownListener(isBlocked, handlers);
+	window.addEventListener("keydown", onKeydown, true);
+	onUnmounted(() => window.removeEventListener("keydown", onKeydown, true));
 }
 
 /**

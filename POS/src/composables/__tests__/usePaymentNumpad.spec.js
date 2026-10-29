@@ -42,4 +42,19 @@ describe("usePaymentNumpad Enter guard", () => {
 		expect(onEnter).toHaveBeenCalledTimes(1)
 		wrapper.unmount()
 	})
+
+	//// Neoffice — Ctrl/Cmd+Enter opens the payment dialog; the key held down repeats Enter past the guard.
+	it("never takes an auto-repeated Enter for a decision", async () => {
+		vi.useFakeTimers()
+		const { isEnabled, onEnter, wrapper } = setup()
+
+		isEnabled.value = true
+		await nextTick()
+		vi.advanceTimersByTime(600)
+		window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", repeat: true }))
+		expect(onEnter).not.toHaveBeenCalled()
+		pressEnter()
+		expect(onEnter).toHaveBeenCalledTimes(1)
+		wrapper.unmount()
+	})
 })
