@@ -201,7 +201,13 @@ def create_customer_wallet(customer, company, account=None):
 def get_default_wallet_account(company):
 	"""Get default wallet account for a company"""
 	# Try to get from POS Settings
-	wallet_account = frappe.db.get_value("POS Settings", {"company": company}, "wallet_account")
+	# //// Neoffice — POS Settings has no company column (one row per POS Profile): upstream's lookup
+	# //// by company raised "Unknown column 'company'" on every site, so creating a customer's wallet
+	# //// always failed. The account is read from the settings of one of the company's tills.
+	profiles = frappe.get_all("POS Profile", filters={"company": company}, pluck="name")
+	wallet_account = profiles and frappe.db.get_value(
+		"POS Settings", {"pos_profile": ["in", profiles], "wallet_account": ["is", "set"]}, "wallet_account"
+	)
 
 	if wallet_account:
 		return wallet_account
