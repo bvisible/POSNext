@@ -121,7 +121,9 @@
 			<div class="w-8 border-t border-gray-200 my-1"></div>
 
 			<!-- Cards / Menu -->
+			<!-- //// Neoffice — each restaurant entry shows to whoever the server lets manage it (restaurant_can, NeoRestau lot 1, task 3) -->
 			<button
+				v-if="restaurantCan.manage_cards"
 				@click="handleMenuClick('cards')"
 				:class="[
 					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
@@ -140,7 +142,9 @@
 			</button>
 
 			<!-- Product Options -->
+			<!-- //// Neoffice — for whoever may manage the option groups (restaurant_can.manage_options) -->
 			<button
+				v-if="restaurantCan.manage_options"
 				@click="handleMenuClick('options')"
 				:class="[
 					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
@@ -159,7 +163,9 @@
 			</button>
 
 			<!-- Workflows -->
+			<!-- //// Neoffice — for whoever may manage the preparation workflows (restaurant_can.manage_workflows) -->
 			<button
+				v-if="restaurantCan.manage_workflows"
 				@click="handleMenuClick('workflows')"
 				:class="[
 					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
@@ -178,8 +184,9 @@
 			</button>
 
 			<!-- Tips -->
+			<!-- //// Neoffice — and for whoever may read the tips (restaurant_can.view_tips) -->
 			<button
-				v-if="isTipsEnabled"
+				v-if="isTipsEnabled && restaurantCan.view_tips"
 				@click="handleMenuClick('tips')"
 				:class="[
 					'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
@@ -272,6 +279,9 @@ const activeMenu = ref("");
 //// Restaurant Tip + Tips panel in POS sidebar").
 const isRestaurantMode = computed(() => restaurantStore.isEnabled);
 const isTipsEnabled = computed(() => restaurantStore.tipsEnabled);
+//// Neoffice — what the user may manage of the restaurant, as the server told the till (NeoRestau lot 1, task 3): an
+//// entry he may not use is not shown, and the server refuses its writes whatever the till shows.
+const restaurantCan = computed(() => restaurantStore.can || {});
 
 function handleMenuClick(menuItem) {
 	activeMenu.value = menuItem;

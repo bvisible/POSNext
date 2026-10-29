@@ -37,6 +37,7 @@ from pos_next.api import (
 	offers,
 	promotions,
 	qz,
+	reservations,
 	restaurant,
 	shifts,
 	wallet,
@@ -320,6 +321,37 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("get_table_order", lambda: restaurant.get_table_order(NONE)),
 			("get_tips", lambda: restaurant.get_tips()),
 			("broadcast_cfd_update", lambda: restaurant.broadcast_cfd_update("{}")),
+			# What the till reads of its restaurant, and the service's own writes (a table's status, the
+			# reservations): the restaurant doctypes' rules, which a cashier holds (NeoRestau lot 1, task 3). A
+			# made-up table or reservation is past the gate when it is reported missing.
+			("get_restaurant_settings", lambda: restaurant.get_restaurant_settings()),
+			("get_restaurant_cards", lambda: restaurant.get_restaurant_cards()),
+			("get_preparation_stations", lambda: restaurant.get_preparation_stations(station=NONE)),
+			("get_station_workflows", lambda: restaurant.get_station_workflows()),
+			(
+				"update_table_status",
+				_past_the_gate(lambda: restaurant.update_table_status(NONE, "Empty"), frappe.ValidationError),
+			),
+			(
+				"mark_table_available",
+				_past_the_gate(lambda: restaurant.mark_table_available(NONE), frappe.ValidationError),
+			),
+			("get_reservations", lambda: reservations.get_reservations()),
+			("get_reservation_stats", lambda: reservations.get_reservation_stats(nowdate(), nowdate())),
+			(
+				"check_table_availability",
+				lambda: reservations.check_table_availability("[]", nowdate(), "12:00:00", 3600),
+			),
+			(
+				"update_reservation_status",
+				_past_the_gate(lambda: reservations.update_reservation_status(NONE, "Seated")),
+			),
+		]
+
+	def _restaurant_management_calls(self):
+		"""The restaurant's set-up: refused to a cashier, answered to the restaurant's managers (NeoRestau lot 1, task 3;
+		maintenance#1967). A made-up name is past the gate when it is reported missing."""
+		return [
 			("delete_table", _past_the_gate(lambda: restaurant.delete_table(NONE))),
 			("update_station", _past_the_gate(lambda: restaurant.update_station(NONE))),
 			("delete_station", lambda: restaurant.delete_station(NONE)),
@@ -343,6 +375,31 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("update_item_active", lambda: restaurant.update_item_active(NONE)),
 			("update_item_badges", _past_the_gate(lambda: restaurant.update_item_badges(NONE))),
 			("save_card_design", _past_the_gate(lambda: menu_pdf.save_card_design(NONE))),
+			# The cashier's till names no restaurant, so it has no permanent card: making one is a manager's
+			("get_or_create_permanent_card", lambda: restaurant.get_or_create_permanent_card()),
+			# The floor plan
+			("save_table_positions", lambda: restaurant.save_table_positions("[]")),
+			("reset_all_tables", lambda: restaurant.reset_all_tables(restaurant=NONE)),
+			("save_station_positions", lambda: restaurant.save_station_positions("[]")),
+			(
+				"save_floor_plan_walls",
+				_past_the_gate(lambda: restaurant.save_floor_plan_walls(NONE, "{}"), frappe.ValidationError),
+			),
+			(
+				"save_floor_plan_bg",
+				_past_the_gate(lambda: restaurant.save_floor_plan_bg(NONE), frappe.ValidationError),
+			),
+			(
+				"create_table",
+				_past_the_gate(lambda: restaurant.create_table("tillsweep table", NONE), frappe.ValidationError),
+			),
+			("create_station", lambda: restaurant.create_station("tillsweep station")),
+			("create_area", lambda: restaurant.create_area("tillsweep room")),
+			("rename_area", _past_the_gate(lambda: restaurant.rename_area(NONE, "tillsweep room"))),
+			("reorder_areas", lambda: restaurant.reorder_areas("[]")),
+			("delete_area", lambda: restaurant.delete_area(NONE)),
+			# The restaurant's settings
+			("save_restaurant_settings", lambda: restaurant.save_restaurant_settings("{}")),
 		]
 
 	def _manager_calls(self):
@@ -506,21 +563,46 @@ class TestTillEndpointsSweep(FrappeTestCase):
 
 	# --- tests ------------------------------------------------------------------------------------------
 
+	def _every_call(self):
+		return (
+			self._till_calls()
+			+ self._manager_calls()
+			+ self._desk_calls()
+			+ self._form_calls()
+			+ self._restaurant_management_calls()
+		)
+
 	def test_a_portal_account_is_refused_everywhere(self):
 		before = self._written()
-		for label, call in self._till_calls() + self._manager_calls() + self._desk_calls() + self._form_calls():
+		for label, call in self._every_call():
 			self._refused(PORTAL, label, call)
 		self.assertEqual(self._written(), before)
 
 	def test_a_visitor_is_refused_everywhere(self):
-		for label, call in self._till_calls() + self._manager_calls() + self._desk_calls() + self._form_calls():
+		for label, call in self._every_call():
 			self._refused("Guest", label, call)
 
 	def test_a_desk_account_with_no_till_is_refused_at_the_till(self):
-		for label, call in self._till_calls() + self._manager_calls() + self._form_calls():
+		for label, call in (
+			self._till_calls()
+			+ self._manager_calls()
+			+ self._form_calls()
+			+ self._restaurant_management_calls()
+		):
 			self._refused(DESK, label, call)
 		for label, call in self._desk_calls():
 			self._served(DESK, label, call)
+
+	def test_the_restaurant_is_set_up_by_its_managers(self):
+		# The till's cashier may not set the restaurant up; a till manager (who manages the restaurant as well)
+		# may. Each served call is undone before the next, so that none depends on another.
+		for label, call in self._restaurant_management_calls():
+			self._refused(TILL, label, call)
+			frappe.db.savepoint("tillsweep_restaurant")
+			try:
+				self._served(MANAGER, label, call)
+			finally:
+				frappe.db.rollback(save_point="tillsweep_restaurant")
 
 	def test_the_till_is_served(self):
 		for label, call in self._till_calls() + self._desk_calls():

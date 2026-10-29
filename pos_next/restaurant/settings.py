@@ -156,11 +156,15 @@ def default_company() -> str | None:
 	return companies[0] if companies else None
 
 
-def create_default_restaurant(values: dict | None = None, ignore_validate: bool = False) -> str | None:
+def create_default_restaurant(
+	values: dict | None = None, ignore_validate: bool = False, ignore_permissions: bool = True
+) -> str | None:
 	"""Create the default restaurant, named after the default company, with the settings given (if any).
 
 	`ignore_validate` skips the restaurant's own validation, which provisions the tip item and account: a
-	restaurant made as the copy of what the former single held must not provision anything.
+	restaurant made as the copy of what the former single held must not provision anything. The patches make it
+	whoever runs them; a user who saves the first settings from the till makes it as himself (`ignore_permissions`
+	False: he must be allowed to create a restaurant).
 	Returns its name, or None when the site has no company to attach it to.
 	"""
 	company = default_company()
@@ -169,5 +173,5 @@ def create_default_restaurant(values: dict | None = None, ignore_validate: bool 
 		return None
 	doc = frappe.get_doc({"doctype": "Restaurant", "restaurant_name": company, "company": company, **(values or {})})
 	doc.flags.ignore_validate = ignore_validate
-	doc.insert(ignore_permissions=True)
+	doc.insert(ignore_permissions=ignore_permissions)
 	return doc.name

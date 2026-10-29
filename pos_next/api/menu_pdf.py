@@ -11,7 +11,7 @@ import json
 import frappe
 from frappe import _
 
-from pos_next.restaurant import scope
+from pos_next.restaurant import permissions, scope
 
 
 @frappe.whitelist()
@@ -178,6 +178,8 @@ def save_card_design(card_name, template_name=None, overrides=None):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may write the card (not a cashier), saved as that user (NeoRestau lot 1, task 3)
+	permissions.require("Restaurant Card", "write", card_name)
 	if isinstance(overrides, str):
 		try:
 			overrides = json.loads(overrides)
@@ -189,7 +191,7 @@ def save_card_design(card_name, template_name=None, overrides=None):
 		card.custom_design_template = template_name
 	if overrides:
 		card.custom_design_overrides = json.dumps(overrides)
-	card.save(ignore_permissions=True)
+	card.save()
 	frappe.db.commit()
 	return {"status": "ok"}
 

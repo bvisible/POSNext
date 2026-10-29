@@ -46,6 +46,9 @@ def after_install():
 		# //// Neoffice — the cashier's permissions, formerly a fixture (see grant_cashier_permissions).
 		grant_cashier_permissions()
 
+		# //// Neoffice — the restaurant's roles and rules (NeoRestau lot 1, task 3): see grant_restaurant_rights.
+		grant_restaurant_rights()
+
 		# Clear cache to ensure changes take effect
 		frappe.clear_cache()
 		frappe.db.commit()
@@ -78,6 +81,9 @@ def after_migrate():
 
 		# //// Neoffice — the cashier's permissions, formerly a fixture (see grant_cashier_permissions).
 		grant_cashier_permissions()
+
+		# //// Neoffice — the restaurant's roles and rules (NeoRestau lot 1, task 3): see grant_restaurant_rights.
+		grant_restaurant_rights()
 
 		# Clear cache
 		frappe.clear_cache()
@@ -228,6 +234,18 @@ def grant_cashier_permissions():
 			).insert(ignore_permissions=True)
 		except Exception:
 			frappe.log_error(f"POS Next: cashier permission on {doctype}", frappe.get_traceback())
+
+
+# //// Neoffice — added function (no upstream equivalent). Restaurant management is its managers' (NeoRestau lot 1,
+# //// task 3; maintenance#1967): the two roles of the restaurant (`Restaurant Manager`, `Restaurant Kitchen` with no
+# //// desk access), and the rules its doctypes' JSON gives them carried over to a site that customized those doctypes.
+# //// At every migrate and install, since a fresh site's doctype sync makes the roles with desk access.
+def grant_restaurant_rights():
+	"""Make the restaurant's roles and give them their rules (pos_next.restaurant.permissions)."""
+	from pos_next.restaurant.permissions import ensure_restaurant_roles, grant_restaurant_permissions
+
+	ensure_restaurant_roles()
+	grant_restaurant_permissions()
 
 
 def log_message(message, level="info", indent=0):

@@ -10,7 +10,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import _parse_duration
-from pos_next.restaurant import scope
+from pos_next.restaurant import permissions, scope
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 import json
 import secrets
@@ -25,8 +25,8 @@ from datetime import datetime, timedelta
 @frappe.whitelist()
 def get_reservations(date=None, area=None, status=None, restaurant=None):
 	"""Get the reservations of one restaurant (the till's own unless one is named) for a date, with optional filters."""
-	if not frappe.has_permission("Restaurant Reservation", "read"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# Whoever reads the reservations (a cashier, a manager), from a desk account (NeoRestau lot 1, task 3)
+	permissions.require("Restaurant Reservation", "read")
 
 	restaurant = restaurant or scope.current_restaurant()
 	if not date:
@@ -96,8 +96,7 @@ def create_reservation(
 	restaurant=None,
 ):
 	"""Create a reservation from POS (status=Confirmed, skips Pending), in the restaurant named or the till's own."""
-	if not frappe.has_permission("Restaurant Reservation", "create"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Reservation", "create")
 
 	if isinstance(tables, str):
 		tables = json.loads(tables)
@@ -152,8 +151,7 @@ def create_reservation(
 @frappe.whitelist()
 def update_reservation_status(name, status, force=False):
 	"""Update reservation status (check-in, cancel, no-show, complete)."""
-	if not frappe.has_permission("Restaurant Reservation", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Reservation", "write", name)
 
 	doc = frappe.get_doc("Restaurant Reservation", name)
 	old_status = doc.status
@@ -179,6 +177,8 @@ def update_reservation_status(name, status, force=False):
 @frappe.whitelist()
 def check_table_availability(tables, date, time, duration, exclude=None):
 	"""Check table availability for a given slot."""
+	# It names the guests already booked on those tables: whoever reads the reservations, from a desk account
+	permissions.require("Restaurant Reservation", "read")
 	if isinstance(tables, str):
 		tables = json.loads(tables)
 
@@ -200,8 +200,7 @@ def check_table_availability(tables, date, time, duration, exclude=None):
 @frappe.whitelist()
 def get_reservation_stats(from_date, to_date, restaurant=None):
 	"""Get the reservation statistics of one restaurant (the till's own unless one is named) for a date range."""
-	if not frappe.has_permission("Restaurant Reservation", "read"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Reservation", "read")
 
 	reservations = _reservations_of(
 		restaurant or scope.current_restaurant(),

@@ -81,8 +81,9 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-				<!-- Edit Mode Toggle -->
+				<!-- Edit Mode Toggle: only for whoever may lay out the floor plan (the server checks it again) -->
 				<button
+					v-if="canManageFloor || isEditMode"
 					@click="toggleEditMode"
 					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
 					:class="isEditMode
@@ -918,6 +919,9 @@ const { showSuccess, showError } = useToast()
 const canvasRef = ref(null)
 const isEditMode = ref(false)
 const isDirty = ref(false)
+// Laying out the floor (rooms, tables, stations, walls) is for whoever the server lets manage the floor (NeoRestau lot
+// 1, task 3): a cashier sees the plan and serves its tables, the Edit button is not his
+const canManageFloor = computed(() => Boolean(restaurantStore.can?.manage_floor))
 const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
 const savedZoom = Number.parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
 
@@ -1673,6 +1677,8 @@ async function toggleEditMode() {
 		isDirty.value = false
 		wallTool.value = "select"
 	} else {
+		// Entering the editor takes the right to lay out the floor, whatever calls this
+		if (!canManageFloor.value) return
 		syncLocalWalls()
 		isDirty.value = false
 		isEditMode.value = true

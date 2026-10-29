@@ -196,7 +196,7 @@
 		}
 	],
 	"links": [],
-	"modified": "2026-03-26 10:00:00.000000",
+	"modified": "2026-10-29 23:00:00.000000",
 	"modified_by": "Administrator",
 	"module": "Pos Next",
 	"name": "Menu Design Template",
@@ -224,6 +224,42 @@
 		{
 			"read": 1,
 			"role": "POSNext Cashier"
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Restaurant Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Admin",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nexus POS Manager",
+			"share": 1,
+			"write": 1
 		}
 	],
 	"sort_field": "template_name",

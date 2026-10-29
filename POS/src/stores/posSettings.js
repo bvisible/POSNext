@@ -91,6 +91,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// bootstrap with the till's settings.
 		restaurant: "",
 		restaurant_name: "",
+		//// Neoffice — what the user may manage of that restaurant, sent with the settings (NeoRestau lot 1, task 3):
+		//// nothing until the server says so.
+		restaurant_can: {},
 		default_restaurant_area: "",
 		// Security
 		enable_session_lock: 0,
@@ -384,9 +387,11 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			customer_display_show_address_fields: 0,
 			// Restaurant Settings
 			enable_restaurant_mode: 0,
-			//// Neoffice — the restaurant a till works for is zeroed with the rest (NeoRestau lot 1, task 2).
+			//// Neoffice — the restaurant a till works for is zeroed with the rest (NeoRestau lot 1, task 2), and what
+			//// the previous user could manage of it (task 3): the next cashier is told his own rights.
 			restaurant: "",
 			restaurant_name: "",
+			restaurant_can: {},
 			default_restaurant_area: "",
 			// Security
 			enable_session_lock: 0,

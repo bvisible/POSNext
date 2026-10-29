@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import scope
+from pos_next.restaurant import permissions, scope
 from pos_next.restaurant import settings as restaurant_config
 
 
@@ -143,8 +143,8 @@ def get_tables(restaurant=None):
 @frappe.whitelist()
 def update_table_status(table_name, status):
 	"""Update the status of a specific table."""
-	if not frappe.has_permission("Restaurant Table", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# A table's status is the service's: whoever may write a table (a cashier) sets it, from a desk account
+	permissions.require("Restaurant Table", "write")
 
 	if not frappe.db.exists("Restaurant Table", table_name):
 		frappe.throw(_("Table {0} not found").format(table_name))
@@ -222,8 +222,7 @@ def get_table_payment_summary(table_name):
 @frappe.whitelist()
 def mark_table_available(table_name):
 	"""Mark a Cleaning table as Empty and expire its guest tokens."""
-	if not frappe.has_permission("Restaurant Table", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Table", "write")
 
 	if not frappe.db.exists("Restaurant Table", table_name):
 		frappe.throw(_("Table {0} not found").format(table_name))
@@ -259,8 +258,9 @@ def reset_all_tables(restaurant=None):
 
 	The restaurant is the one named, else the till's own; the other restaurants' tables and orders stay as they are.
 	"""
-	if not frappe.has_permission("Restaurant Table", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# It empties the whole floor and unlinks its orders: the floor plan's right, more than a table's status
+	permissions.require_right("manage_floor")
+	permissions.require("Restaurant Table", "write")
 
 	restaurant = restaurant or scope.current_restaurant()
 	tables = frappe.get_all("Restaurant Table", or_filters=scope.restaurant_or_filters(restaurant), pluck="name")
@@ -332,6 +332,8 @@ def get_preparation_stations(restaurant=None, station=None):
 	A kitchen screen opened on a station alone (a bookmark made before a site could hold several restaurants) names
 	that station: the restaurant is then the station's, as for `get_kds_orders`.
 	"""
+	# Whoever reads the stations (a cashier, the kitchen, a manager), from a desk account
+	permissions.require("Preparation Station", "read")
 	if not restaurant and station:
 		restaurant = scope.restaurant_of_record("Preparation Station", station)
 	restaurant = restaurant or scope.current_restaurant()
@@ -618,6 +620,8 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may read the tips (the till's `view_tips`)
+	permissions.require_right("view_tips")
 	restaurant = restaurant or scope.current_restaurant()
 	filters = {}
 	if from_date:
@@ -687,14 +691,15 @@ def update_item_kds_status(invoice_name, item_code, status):
 def save_table_positions(positions):
 	"""Save table positions from the floor plan editor."""
 	import json
+
+	# Moving tables is laying out the floor: a cashier writes a table's status, never its place
+	permissions.require_right("manage_floor")
+	permissions.require("Restaurant Table", "write")
 	if isinstance(positions, str):
 		positions = json.loads(positions)
 
 	if not isinstance(positions, list):
 		frappe.throw(_("Invalid positions data"))
-
-	if not frappe.has_permission("Restaurant Table", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	for pos in positions:
 		table_name = pos.get("name")
@@ -714,14 +719,13 @@ def save_table_positions(positions):
 def save_station_positions(positions):
 	"""Save station positions from the floor plan editor."""
 	import json
+
+	permissions.require("Preparation Station", "write")
 	if isinstance(positions, str):
 		positions = json.loads(positions)
 
 	if not isinstance(positions, list):
 		frappe.throw(_("Invalid positions data"))
-
-	if not frappe.has_permission("Preparation Station", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	for pos in positions:
 		station_name = pos.get("name")
@@ -741,8 +745,8 @@ def save_station_positions(positions):
 def save_floor_plan_walls(area, walls_data):
 	"""Save floor plan wall/door/window data for a restaurant area."""
 	import json
-	if not frappe.has_permission("Restaurant Area", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	permissions.require("Restaurant Area", "write", area)
 	if not frappe.db.exists("Restaurant Area", area):
 		frappe.throw(_("Area not found"))
 	if isinstance(walls_data, str):
@@ -754,8 +758,7 @@ def save_floor_plan_walls(area, walls_data):
 @frappe.whitelist()
 def save_floor_plan_bg(area, file_url=None):
 	"""Save or clear the floor plan background image for a restaurant area."""
-	if not frappe.has_permission("Restaurant Area", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Area", "write", area)
 	if not frappe.db.exists("Restaurant Area", area):
 		frappe.throw(_("Area not found"))
 	frappe.db.set_value("Restaurant Area", area, "floor_plan_bg", file_url or "")
@@ -765,8 +768,7 @@ def save_floor_plan_bg(area, file_url=None):
 @frappe.whitelist()
 def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
 	"""Create a new restaurant table, in the restaurant of its room."""
-	if not frappe.has_permission("Restaurant Table", "create"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Table", "create")
 
 	doc = frappe.get_doc({
 		"doctype": "Restaurant Table",
@@ -792,18 +794,19 @@ def delete_table(name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may delete a table (the floor plan's managers, not a cashier), deleted as that user
+	permissions.require("Restaurant Table", "delete", name)
 	table = frappe.get_doc("Restaurant Table", name)
 	if table.status == "Occupied":
 		frappe.throw(_("Cannot delete an occupied table. Clear the order first."))
-	frappe.delete_doc("Restaurant Table", name, ignore_permissions=True)
+	frappe.delete_doc("Restaurant Table", name)
 	return {"status": "success"}
 
 
 @frappe.whitelist()
 def create_station(station_name, station_type="Kitchen", color="#F97316", area=None, pos_x=0, pos_y=0, restaurant=None):
 	"""Create a new preparation station, in the restaurant named, else the one of its room, else the till's."""
-	if not frappe.has_permission("Preparation Station", "create"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Preparation Station", "create")
 
 	if not restaurant and area:
 		restaurant = scope.restaurant_of_record("Restaurant Area", area)
@@ -857,6 +860,8 @@ def update_station(name, station_name=None, station_type=None, color=None, workf
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may write a station (not a cashier), saved as that user
+	permissions.require("Preparation Station", "write", name)
 	import json
 	from frappe.utils import cint
 
@@ -898,7 +903,7 @@ def update_station(name, station_name=None, station_type=None, color=None, workf
 				"priority": row.get("priority", "Normal"),
 			})
 
-	doc.save(ignore_permissions=True)
+	doc.save()
 	return doc.as_dict()
 
 
@@ -910,7 +915,9 @@ def delete_station(name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
-	frappe.delete_doc("Preparation Station", name, ignore_permissions=True)
+	# And whoever may delete a station (not a cashier), deleted as that user
+	permissions.require("Preparation Station", "delete", name)
+	frappe.delete_doc("Preparation Station", name)
 	return {"status": "success"}
 
 
@@ -988,6 +995,10 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 
 	require_till_user()
 	import json
+
+	doctype, option_dt, item_dt = _resolve_option_doctypes()
+	# And whoever may write an option group (not a cashier), saved as that user
+	permissions.require(doctype, "write", name)
 	if isinstance(options, str):
 		options = json.loads(options)
 	if isinstance(applicable_items, str):
@@ -995,7 +1006,6 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 	if isinstance(applicable_item_groups, str):
 		applicable_item_groups = json.loads(applicable_item_groups)
 
-	doctype, option_dt, item_dt = _resolve_option_doctypes()
 	doc = frappe.get_doc(doctype, name)
 	if group_name is not None:
 		doc.group_name = group_name
@@ -1021,7 +1031,7 @@ def save_product_option_group(name, group_name=None, selection_type=None, requir
 		doc.applicable_item_groups = []
 		for ig in applicable_item_groups:
 			doc.append("applicable_item_groups", {"item_group": ig})
-	doc.save(ignore_permissions=True)
+	doc.save()
 	return {"status": "success"}
 
 
@@ -1034,13 +1044,15 @@ def create_product_option_group(group_name):
 
 	require_till_user()
 	doctype = _resolve_option_doctypes()[0]
+	# And whoever may create an option group (not a cashier), made as that user
+	permissions.require(doctype, "create")
 	doc = frappe.get_doc({
 		"doctype": doctype,
 		"group_name": group_name,
 		"selection_type": "Single",
 		"required": 0,
 	})
-	doc.insert(ignore_permissions=True)
+	doc.insert()
 	return doc.as_dict()
 
 
@@ -1053,7 +1065,9 @@ def delete_product_option_group(name):
 
 	require_till_user()
 	doctype = _resolve_option_doctypes()[0]
-	frappe.delete_doc(doctype, name, ignore_permissions=True)
+	# And whoever may delete an option group (not a cashier), deleted as that user
+	permissions.require(doctype, "delete", name)
+	frappe.delete_doc(doctype, name)
 	return {"status": "success"}
 
 
@@ -1172,11 +1186,9 @@ get_all_modifier_groups = get_all_product_option_groups
 def reorder_areas(order):
 	"""Update area sort order."""
 	import json
+	permissions.require("Restaurant Area", "write")
 	if isinstance(order, str):
 		order = json.loads(order)
-
-	if not frappe.has_permission("Restaurant Area", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	for idx, area_name in enumerate(order):
 		if frappe.db.exists("Restaurant Area", area_name):
@@ -1188,8 +1200,7 @@ def reorder_areas(order):
 @frappe.whitelist()
 def create_area(area_name, restaurant=None):
 	"""Create a new restaurant area, in the restaurant named (the till's own by default)."""
-	if not frappe.has_permission("Restaurant Area", "create"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Area", "create")
 	doc = frappe.get_doc({
 		"doctype": "Restaurant Area",
 		"restaurant": restaurant or scope.current_restaurant(),
@@ -1201,8 +1212,7 @@ def create_area(area_name, restaurant=None):
 @frappe.whitelist()
 def rename_area(name, new_name):
 	"""Rename a restaurant area: change its label. Its name stays what it is, which is what the records link to."""
-	if not frappe.has_permission("Restaurant Area", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Area", "write", name)
 	doc = frappe.get_doc("Restaurant Area", name)
 	doc.area_name = new_name
 	doc.save()
@@ -1211,8 +1221,7 @@ def rename_area(name, new_name):
 @frappe.whitelist()
 def delete_area(name):
 	"""Delete a restaurant area (only if no tables/stations assigned)."""
-	if not frappe.has_permission("Restaurant Area", "delete"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Area", "delete", name)
 
 	tables_count = frappe.db.count("Restaurant Table", {"area": name})
 	if tables_count > 0:
@@ -1232,6 +1241,8 @@ def get_restaurant_cards(restaurant=None, selectable_only=0):
 	"""
 	from frappe.utils import cint
 
+	# Whoever reads the cards (a cashier, a manager), from a desk account
+	permissions.require("Restaurant Card", "read")
 	restaurant = restaurant or scope.current_restaurant()
 	return scope.stamp(
 		frappe.get_list(
@@ -1276,9 +1287,9 @@ def get_or_create_permanent_card(restaurant=None):
 
 	Every restaurant has its own, and its name is free: "Permanent items", else "Permanent items - <restaurant>"
 	when another restaurant already took the first (see `_free_card_name`). Asked again, it answers the same card.
+	Whoever reads the cards gets it; only whoever may create a card makes it.
 	"""
-	if not frappe.has_permission("Restaurant Card", "read"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Restaurant Card", "read")
 	restaurant = restaurant or scope.current_restaurant()
 	existing = frappe.get_all(
 		"Restaurant Card",
@@ -1291,6 +1302,7 @@ def get_or_create_permanent_card(restaurant=None):
 	if existing:
 		return {"name": existing[0], "created": False}
 	# Inserted as the user: whoever may not create a card cannot make this one either
+	permissions.require("Restaurant Card", "create")
 	doc = frappe.get_doc(
 		{
 			"doctype": "Restaurant Card",
@@ -1447,8 +1459,10 @@ def get_restaurant_settings(restaurant=None):
 	The answer holds what the till's screens read, and nothing else: the settings dialog (hours, tips, QR and
 	takeaway ordering), the restaurant store's flags, the card editor (hours) and the reservation dialog (default
 	duration and channels). Whatever only the server uses — the reminder and no-show rules, online booking, the
-	restaurant's e-mail — stays out: this endpoint answers any signed-in user.
+	restaurant's e-mail — stays out. It answers whoever reads the restaurant (a cashier, the kitchen's pass, a
+	manager) from a desk account: a portal account is refused.
 	"""
+	permissions.require("Restaurant", "read")
 	settings = restaurant_config.get_restaurant_settings(restaurant)
 	if not settings:
 		# No restaurant yet: nothing is set up, the restaurant features stay off
@@ -1498,22 +1512,36 @@ def get_restaurant_settings(restaurant=None):
 
 
 def _restaurant_to_save(restaurant=None):
-	"""The Restaurant a settings save applies to: the one named, else the till's own."""
+	"""The Restaurant a settings save applies to: the one named, else the till's own.
+
+	A site that saves its first restaurant settings from the till has no restaurant yet: it gets the default one, made
+	as the user who saves, who must be allowed to create a restaurant. A site that has restaurants and none the save
+	can name (the user's till is not a restaurant till, or every restaurant is disabled) gets no new one: a second
+	restaurant named after the company would collide with the first, and settings belong to a restaurant chosen on
+	purpose.
+	"""
 	name = restaurant or restaurant_config.get_restaurant_settings().get("name")
 	if not name:
-		# A site that saves its first restaurant settings from the till has no restaurant yet: it gets the default one
-		name = restaurant_config.create_default_restaurant()
+		if frappe.db.count("Restaurant"):
+			frappe.throw(
+				_(
+					"These settings belong to a restaurant, and none is named: open the till of a restaurant, or name"
+					" the restaurant of this till in its POS Settings"
+				)
+			)
+		permissions.require("Restaurant", "create")
+		name = restaurant_config.create_default_restaurant(ignore_permissions=False)
 	if not name:
 		frappe.throw(_("No restaurant is set up yet"))
 	return frappe.get_doc("Restaurant", name)
 
 
 def _save_settings(settings, restaurant, allowed):
-	"""Write the fields `settings` names (among `allowed`) onto a restaurant and save it."""
+	"""Write the fields `settings` names (among `allowed`) onto a restaurant and save it, as the user."""
 	import json
 
-	if not frappe.has_permission("Restaurant", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	# The restaurant's settings are its managers' (the till's `manage_settings`), not a cashier's
+	permissions.require("Restaurant", "write", restaurant)
 
 	if isinstance(settings, str):
 		settings = json.loads(settings)
@@ -1817,6 +1845,8 @@ def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=N
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may write a workflow (not a cashier), saved as that user
+	permissions.require("Preparation Workflow", "write", name)
 	import json
 	if isinstance(steps, str):
 		steps = json.loads(steps)
@@ -1844,7 +1874,7 @@ def save_preparation_workflow(name, workflow_name=None, steps=None, is_default=N
 		doc.applicable_items = []
 		for item_code in applicable_items:
 			doc.append("applicable_items", {"item": item_code})
-	doc.save(ignore_permissions=True)
+	doc.save()
 	return {"status": "success"}
 
 
@@ -1856,6 +1886,8 @@ def create_preparation_workflow(workflow_name, steps=None):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may create a workflow (not a cashier), made as that user
+	permissions.require("Preparation Workflow", "create")
 	import json
 	if isinstance(steps, str):
 		steps = json.loads(steps)
@@ -1870,7 +1902,7 @@ def create_preparation_workflow(workflow_name, steps=None):
 		"workflow_name": workflow_name,
 		"steps": [{"step_name": s["step_name"], "color": s.get("color", "#6B7280"), "allow_edit": s.get("allow_edit", 0)} for s in steps]
 	})
-	doc.insert(ignore_permissions=True)
+	doc.insert()
 	return doc.as_dict()
 
 
@@ -1882,13 +1914,17 @@ def delete_preparation_workflow(name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
-	frappe.delete_doc("Preparation Workflow", name, ignore_permissions=True)
+	# And whoever may delete a workflow (not a cashier), deleted as that user
+	permissions.require("Preparation Workflow", "delete", name)
+	frappe.delete_doc("Preparation Workflow", name)
 	return {"status": "success"}
 
 
 @frappe.whitelist()
 def get_station_workflows(restaurant=None):
 	"""Fetch the active stations of the restaurant (the till's own unless one is named) with their resolved workflow steps."""
+	# Whoever reads the stations (a cashier, the kitchen, a manager), from a desk account
+	permissions.require("Preparation Station", "read")
 	restaurant = restaurant or scope.current_restaurant()
 	stations = scope.stamp(
 		frappe.get_all(
@@ -2223,6 +2259,9 @@ def create_item(
 
 	if not frappe.has_permission("Item", "create"):
 		frappe.throw(_("You don't have permission to create items"), frappe.PermissionError)
+	# Linking the new item to option groups writes them: the restaurant's right, checked before anything is made
+	if option_groups:
+		permissions.require("Product Option Group", "write")
 
 	if not item_name or not item_group or not stock_uom:
 		frappe.throw(_("Item Name, Item Group, and Unit of Measure are required"))
@@ -2326,7 +2365,7 @@ def create_item(
 					"item": item_doc.name,
 					"item_name": item_doc.item_name,
 				})
-				group_doc.save(ignore_permissions=True)
+				group_doc.save()
 
 	return {
 		"name": item_doc.name,
@@ -2518,6 +2557,8 @@ def download_food_image(image_url, item_name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever manages the cards (the till's `manage_cards`), before anything is fetched; the file is the user's
+	permissions.require_right("manage_cards")
 	content, extension = _fetch_food_image(image_url)
 
 	filename = f"{frappe.scrub(item_name)}.{extension}"
@@ -2527,7 +2568,7 @@ def download_food_image(image_url, item_name):
 		"content": content,
 		"is_private": 0,
 	})
-	file_doc.save(ignore_permissions=True)
+	file_doc.save()
 	return file_doc.file_url
 
 
@@ -2539,11 +2580,14 @@ def duplicate_card(card_name):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever may read the card and create one (not a cashier); the copy is made as that user
+	permissions.require("Restaurant Card", "read", card_name)
+	permissions.require("Restaurant Card", "create")
 	original = frappe.get_doc("Restaurant Card", card_name)
 	new_doc = frappe.copy_doc(original)
 	new_doc.card_name = f"{original.card_name} (Copy)"
 	new_doc.is_active = 0
-	new_doc.insert(ignore_permissions=True)
+	new_doc.insert()
 	return new_doc.as_dict()
 
 
@@ -2664,6 +2708,11 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever manages the cards (the till's `manage_cards`). The item is the ERP's: it is saved as the user, so
+	# whoever may not edit items in the ERP does not edit them from the till either
+	permissions.require_right("manage_cards")
+	if option_groups is not None:
+		permissions.require("Product Option Group", "write")
 	import json
 	from frappe.utils import cint
 
@@ -2688,7 +2737,7 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 	if spice_level is not None:
 		item.custom_spice_level = max(0, min(3, cint(spice_level)))
 
-	item.save(ignore_permissions=True)
+	item.save()
 
 	# Update option groups
 	if option_groups is not None:
@@ -2707,7 +2756,7 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 					updated = True
 			if updated:
 				group_doc.applicable_items = new_items
-				group_doc.save(ignore_permissions=True)
+				group_doc.save()
 
 		# Add item to selected groups
 		for group_name in (option_groups or []):
@@ -2717,7 +2766,7 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 					"item": item_code,
 					"item_name": item.item_name,
 				})
-				group_doc.save(ignore_permissions=True)
+				group_doc.save()
 
 	frappe.db.commit()
 	return {"status": "ok"}
@@ -2736,41 +2785,48 @@ def update_item_price(item_code, price, scope="local", card_name=None, pos_profi
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user(pos_profile)
+	# And whoever manages the cards (the till's `manage_cards`), whatever the scope
+	permissions.require_right("manage_cards")
 	from frappe.utils import flt
 
 	price = flt(price)
 
 	if scope == "local" and card_name:
+		permissions.require("Restaurant Card", "write", card_name)
 		card = frappe.get_doc("Restaurant Card", card_name)
 		for ci in card.items:
 			if ci.item == item_code and ci.item_type == "Item":
 				ci.price = price
-		card.save(ignore_permissions=True)
+		card.save()
 		frappe.db.commit()
 		return {"status": "ok", "scope": "local"}
 
 	elif scope in ("global", "global_only"):
+		# The item and the till's price list are the ERP's: their own rights, all checked before anything is written
+		permissions.require("Item", "write", item_code)
+		price_list = existing = None
+		if pos_profile:
+			price_list = frappe.get_cached_doc("POS Profile", pos_profile).selling_price_list
+		if price_list:
+			existing = frappe.db.get_value(
+				"Item Price", {"item_code": item_code, "price_list": price_list}, "name"
+			)
+			permissions.require("Item Price", "write" if existing else "create", existing)
+
 		# Update Item.standard_rate
 		frappe.db.set_value("Item", item_code, "standard_rate", price)
 
 		# Update Item Price in selling price list
-		if pos_profile:
-			profile = frappe.get_cached_doc("POS Profile", pos_profile)
-			if profile.selling_price_list:
-				existing = frappe.db.get_value(
-					"Item Price",
-					{"item_code": item_code, "price_list": profile.selling_price_list},
-					"name"
-				)
-				if existing:
-					frappe.db.set_value("Item Price", existing, "price_list_rate", price)
-				else:
-					frappe.get_doc({
-						"doctype": "Item Price",
-						"item_code": item_code,
-						"price_list": profile.selling_price_list,
-						"price_list_rate": price,
-					}).insert(ignore_permissions=True)
+		if price_list:
+			if existing:
+				frappe.db.set_value("Item Price", existing, "price_list_rate", price)
+			else:
+				frappe.get_doc({
+					"doctype": "Item Price",
+					"item_code": item_code,
+					"price_list": price_list,
+					"price_list_rate": price,
+				}).insert()
 
 		cards_updated = 0
 		if scope == "global":
@@ -2802,16 +2858,19 @@ def update_item_active(item_code, disabled=0, scope="local", card_name=None):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever manages the cards (the till's `manage_cards`), whatever the scope; a card is saved as that user
+	permissions.require_right("manage_cards")
 	from frappe.utils import cint
 
 	disabled = cint(disabled)
 
 	if scope == "local" and card_name:
+		permissions.require("Restaurant Card", "write", card_name)
 		card = frappe.get_doc("Restaurant Card", card_name)
 		for ci in card.items:
 			if ci.item == item_code and ci.item_type == "Item":
 				ci.disabled = disabled
-		card.save(ignore_permissions=True)
+		card.save()
 		frappe.db.commit()
 		return {"status": "ok", "scope": "local"}
 
@@ -2912,6 +2971,8 @@ def update_item_badges(item_code, badges=None, spice_level=0):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	# And whoever manages the cards (the till's `manage_cards`); the item is the ERP's, saved as the user
+	permissions.require_right("manage_cards")
 	import json
 
 	if isinstance(badges, str):
@@ -2926,7 +2987,7 @@ def update_item_badges(item_code, badges=None, spice_level=0):
 		item.append("custom_item_badges", {"menu_badge": badge_name})
 
 	item.custom_spice_level = max(0, min(3, spice_level))
-	item.save(ignore_permissions=True)
+	item.save()
 	frappe.db.commit()
 	return {"status": "ok"}
 

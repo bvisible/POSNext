@@ -17,6 +17,16 @@ import { call } from "../utils/apiWrapper"
 
 const log = logger.create("RestaurantStore")
 
+// The rights the server tells the till of (pos_next.restaurant.permissions.RIGHTS)
+export const RESTAURANT_RIGHTS = [
+	"manage_floor",
+	"manage_cards",
+	"manage_options",
+	"manage_workflows",
+	"manage_settings",
+	"view_tips",
+]
+
 export const useRestaurantStore = defineStore("restaurant", () => {
 	const posSettingsStore = usePOSSettingsStore()
 
@@ -57,6 +67,16 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const isEnabled = computed(
 		() => posSettingsStore.settings.enable_restaurant_mode,
 	)
+	// What the user may manage of the restaurant, as the server told the till (`restaurant_can` of the till's settings,
+	// NeoRestau lot 1, task 3): the floor plan, the cards, the option groups, the workflows, the settings, the tips.
+	// A right the server did not grant, or did not send yet, is refused: the till shows only what the server allows,
+	// and the server refuses the rest whatever the till shows.
+	const can = computed(() => {
+		const granted = posSettingsStore.settings.restaurant_can || {}
+		return Object.fromEntries(
+			RESTAURANT_RIGHTS.map((right) => [right, granted[right] === true]),
+		)
+	})
 	// The restaurant the till belongs to, once the till's settings name it. Until then the server picks the
 	// restaurant of the user's open till, else the default one: every call below works without it.
 	const tillRestaurant = computed(
@@ -654,6 +674,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		takeawayOrders,
 		fetchTakeawayOrders,
 		tipsEnabled,
+		can,
 		autoDetectTip,
 		tipItem,
 		qrOrderingEnabled,
