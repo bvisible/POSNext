@@ -457,7 +457,10 @@ permission_query_conditions = {
 
 # Extension points consumed by POS Next, implemented by optional apps
 pos_next_loyalty_provider = []
-pos_next_bootstrap_settings = []
+# //// Neoffice — the restaurant a till belongs to rides the seam upstream gave satellite apps: the bootstrap, the
+# //// settings dialog and the profile data all call it after they read the till's POS Settings, so one function tells
+# //// every screen which restaurant (`restaurant`, `restaurant_name`) the till works for (NeoRestau lot 1, task 2).
+pos_next_bootstrap_settings = ["pos_next.restaurant.scope.extend_bootstrap_settings"]
 pos_next_customer_validators = []
 pos_next_customer_prepare = []
 pos_next_customer_after_insert = []

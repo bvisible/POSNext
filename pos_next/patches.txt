@@ -26,3 +26,8 @@ pos_next.patches.v2_4_0.rename_locations_doctypes
 # //// default restaurant, named after the default company (lot 1, task 1). It runs after the doctype sync,
 # //// which is what creates the Restaurant table, and does nothing on a site that never used the module.
 pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant
+# //// Neoffice — NeoRestau: the records a site made before the restaurants (rooms, tables, stations, cards, menus,
+# //// reservations, tips) and every till in restaurant mode join the default restaurant (lot 1, task 2). It runs
+# //// after the entry above, which is what makes that restaurant, and makes one itself for a till in restaurant mode
+# //// on a site that never used the module.
+pos_next.patches.neorestau.attach_records_to_the_default_restaurant

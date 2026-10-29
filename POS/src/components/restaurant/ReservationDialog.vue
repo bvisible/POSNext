@@ -128,23 +128,24 @@ const todayCount = computed(() => {
 	).length
 })
 
+// The rooms of the day's reservations: chosen by their name, shown by their label
 const areas = computed(() => {
-	const areaSet = new Set()
+	const areaMap = new Map()
 	for (const res of reservations.value) {
 		for (const t of res.tables || []) {
-			if (t.area) areaSet.add(t.area)
+			if (t.area) areaMap.set(t.area, t.area_name || t.area)
 		}
 	}
-	return Array.from(areaSet).sort()
+	return Array.from(areaMap, ([name, label]) => ({ name, label })).sort((a, b) =>
+		a.label.localeCompare(b.label),
+	)
 })
 
 async function loadSettings() {
 	try {
 		const settings = await call(
 			"pos_next.api.restaurant.get_restaurant_settings",
-			{
-				restaurant: restaurantStore.tillRestaurant,
-			},
+			restaurantStore.ofTheRestaurant(),
 		)
 		if (settings) {
 			const dur = settings.default_reservation_duration || 5400
@@ -166,26 +167,18 @@ async function loadSettings() {
 	}
 }
 
+// The tables of the till's restaurant, each with the label of its room (`area_name`) beside the room's name
 async function loadTables() {
 	try {
-		const response = await call("frappe.client.get_list", {
-			doctype: "Restaurant Table",
-			fields: [
-				"name",
-				"table_name",
-				"area",
-				"capacity",
-				"status",
-				"pos_x",
-				"pos_y",
-				"width",
-				"height",
-				"shape",
-			],
-			order_by: "area asc, table_name asc",
-			limit_page_length: 0,
-		})
-		allTables.value = response || []
+		const response = await call(
+			"pos_next.api.restaurant.get_tables",
+			restaurantStore.ofTheRestaurant(),
+		)
+		allTables.value = [...(response?.tables || [])].sort(
+			(a, b) =>
+				(a.area_name || "").localeCompare(b.area_name || "") ||
+				(a.table_name || "").localeCompare(b.table_name || ""),
+		)
 	} catch {
 		allTables.value = []
 	}

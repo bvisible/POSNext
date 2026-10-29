@@ -11,14 +11,26 @@ from frappe.model.document import Document
 from frappe.utils import getdate, nowdate, get_time, time_diff_in_seconds, add_to_date
 from datetime import timedelta
 
+from pos_next.restaurant import scope
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 
 
 class RestaurantReservation(Document):
 	def validate(self):
+		# A reservation naming no restaurant belongs to the default one, and holds that restaurant's tables only
+		scope.attach_to_restaurant(self)
+		self._validate_tables_belong_to_the_restaurant()
 		self._validate_date()
 		self._validate_within_opening_hours()
 		self._compute_end_time()
+
+	def _validate_tables_belong_to_the_restaurant(self):
+		"""A table of another restaurant cannot be booked: it is not on this restaurant's floor."""
+		restaurant = restaurant_of(self)
+		for row in self.tables:
+			if scope.restaurant_of_record("Restaurant Table", row.restaurant_table) != restaurant:
+				label = frappe.db.get_value("Restaurant Table", row.restaurant_table, "table_name")
+				frappe.throw(_("Table {0} belongs to another restaurant").format(label or row.restaurant_table))
 
 	def before_insert(self):
 		self._lock_and_check_overlap()
@@ -84,7 +96,7 @@ class RestaurantReservation(Document):
 		)
 
 		if conflicts:
-			table_names = ", ".join(set(c["table"] for c in conflicts))
+			table_names = ", ".join(sorted({c["table_name"] for c in conflicts}))
 			frappe.throw(
 				_("Tables {0} have overlapping reservations at the requested time").format(
 					table_names
@@ -140,7 +152,8 @@ def _parse_duration(duration):
 def check_overlap(tables, date, time, duration, exclude=None):
 	"""Check if any of the given tables have overlapping reservations.
 
-	Returns list of conflicts: [{table, reservation, guest_name, time}]
+	Returns list of conflicts: [{table, table_name, reservation, guest_name, time}], a table being named by its
+	name (`table`) and shown by its label (`table_name`).
 	"""
 	if not tables:
 		return []
@@ -197,6 +210,8 @@ def check_overlap(tables, date, time, duration, exclude=None):
 			for rt in res_tables:
 				conflicts.append({
 					"table": rt.restaurant_table,
+					"table_name": frappe.db.get_value("Restaurant Table", rt.restaurant_table, "table_name")
+					or rt.restaurant_table,
 					"reservation": res.name,
 					"guest_name": res.guest_name,
 					"time": str(res.reservation_time),

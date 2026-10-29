@@ -1972,10 +1972,12 @@ const pricingSubsectionClasses = computed(() => getSubsectionClasses("emerald"))
 const operationsSubsectionClasses = computed(() => getSubsectionClasses("teal"));
 //// Neoffice — added state for the Restaurant tab: its amber section styling, the restaurant
 //// store, the opening-hours rows, the tip settings (860a115b) and the QR self-ordering and
-//// takeaway settings (68786b21), plus toggleRunner(), which writes Restaurant Settings
-//// directly so the runner display can be switched without saving the whole dialog
-//// (823cd5d8). Upstream POSNext has none of these settings. (32f2415d, 2026-03-23 "add
-//// Restaurant Settings with opening hours and time-based card availability")
+//// takeaway settings (68786b21), plus toggleRunner(), which saves the till's Restaurant (its
+//// enable_runner setting, through the restaurant store) directly so the runner display can be
+//// switched without saving the whole dialog (823cd5d8). Upstream POSNext has none of these
+//// settings. (32f2415d, 2026-03-23 "add Restaurant Settings with opening hours and time-based
+//// card availability"; the settings moved from the site-wide Restaurant Settings single onto
+//// each Restaurant in NeoRestau lot 1)
 const restaurantSectionClasses = computed(() => getSectionHeaderClasses("amber"));
 const restaurantSubsectionClasses = computed(() => getSubsectionClasses("amber"));
 

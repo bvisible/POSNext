@@ -87,6 +87,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		customer_display_show_address_fields: 0,
 		// Restaurant Settings
 		enable_restaurant_mode: 0,
+		//// Neoffice — the restaurant this till works for and its label (NeoRestau lot 1, task 2), sent by the
+		//// bootstrap with the till's settings.
+		restaurant: "",
+		restaurant_name: "",
 		default_restaurant_area: "",
 		// Security
 		enable_session_lock: 0,
@@ -380,6 +384,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			customer_display_show_address_fields: 0,
 			// Restaurant Settings
 			enable_restaurant_mode: 0,
+			//// Neoffice — the restaurant a till works for is zeroed with the rest (NeoRestau lot 1, task 2).
+			restaurant: "",
+			restaurant_name: "",
 			default_restaurant_area: "",
 			// Security
 			enable_session_lock: 0,

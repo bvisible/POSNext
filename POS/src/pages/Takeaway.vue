@@ -120,10 +120,12 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { call } from "@/utils/apiWrapper"
+import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
 //// Neoffice — takeaway amounts in the site's number format (formatCurrency below).
 import { formatCurrencyNumber } from "@/utils/currency"
 
+const restaurantStore = useRestaurantStore()
 const orders = ref([])
 const loading = ref(true)
 const selectedStatus = ref("")
@@ -171,8 +173,10 @@ const filteredOrders = computed(() => {
 
 async function loadOrders() {
 	try {
+		// The takeaway orders of the till's restaurant
 		const res = await call("pos_next.api.restaurant.get_takeaway_orders", {
 			_: Date.now(),
+			...restaurantStore.ofTheRestaurant(),
 		})
 		orders.value = res || []
 	} catch (err) {

@@ -40,7 +40,7 @@
 								color: item.station_color || '#6B7280',
 								border: '1px solid ' + (item.station_color || '#6B7280') + '40'
 							}">
-							{{ item.preparation_station }}
+							{{ item.station_name || item.preparation_station }}
 						</span>
 
 						<!-- Item info -->

@@ -123,7 +123,7 @@
 					:class="{ active: selectedArea === area.name }"
 					@click="selectedArea = area.name"
 				>
-					{{ area.name }}
+					{{ area.label }}
 					<span class="area-count" :class="{ 'area-count-zero': area.available === 0 }">
 						{{ area.available }}
 					</span>
@@ -152,7 +152,7 @@
 					@click="toggleTable(table)"
 				>
 					<span class="table-chip-name">{{ table.table_name }}</span>
-					<span class="table-chip-area">{{ table.area }}</span>
+					<span class="table-chip-area">{{ table.area_name || table.area }}</span>
 					<span class="table-chip-capacity">{{ table.capacity }}p</span>
 				</div>
 			</div>
@@ -181,7 +181,7 @@
 		<div v-if="conflicts.length > 0" class="conflict-warning">
 			<strong>{{ __("Overlap Warning") }}:</strong>
 			<span v-for="(c, idx) in conflicts" :key="idx">
-				{{ c.table }} ({{ c.guest_name }} {{ __("at") }} {{ c.time }}){{ idx < conflicts.length - 1 ? ", " : "" }}
+				{{ c.table_name || c.table }} ({{ c.guest_name }} {{ __("at") }} {{ c.time }}){{ idx < conflicts.length - 1 ? ", " : "" }}
 			</span>
 		</div>
 
@@ -300,12 +300,18 @@ const tableAreas = computed(() => {
 	const areaMap = {}
 	for (const t of availableTables.value) {
 		if (!t.area) continue
+		// A room is chosen by its name and shown by its label
 		if (!areaMap[t.area])
-			areaMap[t.area] = { name: t.area, available: 0, total: 0 }
+			areaMap[t.area] = {
+				name: t.area,
+				label: t.area_name || t.area,
+				available: 0,
+				total: 0,
+			}
 		areaMap[t.area].total++
 		if (t.available) areaMap[t.area].available++
 	}
-	return Object.values(areaMap).sort((a, b) => a.name.localeCompare(b.name))
+	return Object.values(areaMap).sort((a, b) => a.label.localeCompare(b.label))
 })
 
 const availableCount = computed(() => {

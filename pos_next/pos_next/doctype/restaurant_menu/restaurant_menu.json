@@ -4,6 +4,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "restaurant",
   "menu_name",
   "price",
   "description",
@@ -15,6 +16,13 @@
   "courses"
  ],
  "fields": [
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Restaurant",
+   "options": "Restaurant"
+  },
   {
    "fieldname": "menu_name",
    "fieldtype": "Data",
@@ -70,7 +78,7 @@
   }
  ],
  "links": [],
- "modified": "2026-03-21T00:00:00.000000",
+ "modified": "2026-10-29 21:30:00.000000",
  "module": "POS Next",
  "name": "Restaurant Menu",
  "naming_rule": "By fieldname",

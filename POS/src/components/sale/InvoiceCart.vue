@@ -2096,12 +2096,9 @@ function getStationColor(stationName) {
 }
 
 function getStationDisplayName(stationName) {
-	// Look through station items map to find display name
-	const map = restaurantStore.stationItemsMap;
-	for (const [, info] of Object.entries(map)) {
-		if (info.station === stationName) return info.station_name;
-	}
-	return stationName;
+	//// Neoffice — a station is shown by its label, never by its name: a new one is named by a hash, and the
+	//// item map alone missed a station reached through its item group (NeoRestau lot 1, task 2).
+	return restaurantStore.stationLabel(stationName);
 }
 
 /**

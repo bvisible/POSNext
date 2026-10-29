@@ -11,6 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from pos_next.restaurant import scope
 from pos_next.restaurant import settings as restaurant_config
 
 
@@ -36,22 +37,51 @@ def on_invoice_update(doc, method):
 
 
 @frappe.whitelist()
-def get_tables():
-	"""Fetch all restaurant areas, tables, floor plan stations, and active order summaries."""
+def get_tables(restaurant=None):
+	"""Fetch the restaurant's areas, tables, floor plan stations, and active order summaries.
+
+	The restaurant is the one named, else the till's own. Every row says which restaurant it is of, and each
+	table the label of its room (`area_name`) beside the room's name.
+	"""
 	# //// Neoffice — it is called from the till, tips panel and runner screen, run by desk accounts, so a
 	# //// desk account is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
 
 	require_system_user()
-	areas = frappe.get_all("Restaurant Area", fields=["name", "area_name", "description", "sort_order", "floor_plan_walls", "floor_plan_bg"], order_by="sort_order asc, area_name asc")
-	tables = frappe.get_all("Restaurant Table", fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"])
+	restaurant = restaurant or scope.current_restaurant()
+	of_the_restaurant = scope.restaurant_or_filters(restaurant)
+	areas = scope.stamp(
+		frappe.get_all(
+			"Restaurant Area",
+			or_filters=of_the_restaurant,
+			fields=["name", "area_name", "description", "sort_order", "floor_plan_walls", "floor_plan_bg"],
+			order_by="sort_order asc, area_name asc",
+		),
+		restaurant,
+	)
+	tables = scope.stamp(
+		frappe.get_all(
+			"Restaurant Table",
+			or_filters=of_the_restaurant,
+			fields=["name", "table_name", "area", "capacity", "status", "pos_x", "pos_y", "width", "height", "shape"],
+		),
+		restaurant,
+	)
+	area_labels = {area.name: area.area_name for area in areas}
+	for table in tables:
+		table["area_name"] = area_labels.get(table.area) or table.area
 
 	# Fetch stations that should appear on floor plan
 	stations = []
 	if frappe.db.has_column("Preparation Station", "show_on_floor_plan"):
-		stations = frappe.get_all("Preparation Station",
-			filters={"is_active": 1, "show_on_floor_plan": 1},
-			fields=["name", "station_name", "station_type", "color", "area", "pos_x", "pos_y", "width", "height"]
+		stations = scope.stamp(
+			frappe.get_all(
+				"Preparation Station",
+				filters={"is_active": 1, "show_on_floor_plan": 1},
+				or_filters=of_the_restaurant,
+				fields=["name", "station_name", "station_type", "color", "area", "pos_x", "pos_y", "width", "height"],
+			),
+			restaurant,
 		)
 
 	# Fetch active order summaries for occupied tables
@@ -200,7 +230,9 @@ def mark_table_available(table_name):
 
 	current_status = frappe.db.get_value("Restaurant Table", table_name, "status")
 	if current_status not in ("Cleaning", "Paid"):
-		frappe.throw(_("Table {0} is not in Paid or Cleaning status").format(table_name))
+		# The table is named to the waiter by its label, never by its name
+		label = frappe.db.get_value("Restaurant Table", table_name, "table_name") or table_name
+		frappe.throw(_("Table {0} is not in Paid or Cleaning status").format(label))
 
 	frappe.db.set_value("Restaurant Table", table_name, "status", "Empty")
 
@@ -222,20 +254,29 @@ def mark_table_available(table_name):
 
 
 @frappe.whitelist()
-def reset_all_tables():
-	"""Reset all occupied tables to Empty and clear associated draft invoices."""
+def reset_all_tables(restaurant=None):
+	"""Reset the restaurant's occupied tables to Empty and clear their draft invoices.
+
+	The restaurant is the one named, else the till's own; the other restaurants' tables and orders stay as they are.
+	"""
 	if not frappe.has_permission("Restaurant Table", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	# Clear restaurant_table and kds_status on all draft invoices linked to tables
-	frappe.db.sql("""
-		UPDATE `tabSales Invoice`
-		SET restaurant_table = NULL, kds_status = NULL
-		WHERE docstatus = 0 AND restaurant_table IS NOT NULL
-	""")
+	restaurant = restaurant or scope.current_restaurant()
+	tables = frappe.get_all("Restaurant Table", or_filters=scope.restaurant_or_filters(restaurant), pluck="name")
+	if tables:
+		# Clear restaurant_table and kds_status on the draft invoices linked to the restaurant's tables
+		frappe.db.sql("""
+			UPDATE `tabSales Invoice`
+			SET restaurant_table = NULL, kds_status = NULL
+			WHERE docstatus = 0 AND restaurant_table IN %(tables)s
+		""", {"tables": tuple(tables)})
 
-	# Reset all occupied tables to Empty
-	frappe.db.sql("UPDATE `tabRestaurant Table` SET status='Empty' WHERE status='Occupied'")
+		# Reset the restaurant's occupied tables to Empty
+		frappe.db.sql(
+			"UPDATE `tabRestaurant Table` SET status='Empty' WHERE status='Occupied' AND name IN %(tables)s",
+			{"tables": tuple(tables)},
+		)
 	frappe.db.commit()
 	frappe.publish_realtime("kds_update")
 	frappe.publish_realtime("table_update")
@@ -285,21 +326,28 @@ def broadcast_cfd_update(payload):
 	return {"status": "success"}
 
 @frappe.whitelist()
-def get_preparation_stations():
-	"""Fetch all active preparation stations."""
-	return frappe.get_all(
-		"Preparation Station",
-		filters={"is_active": 1},
-		fields=["name", "station_name", "station_type", "color"],
-		order_by="station_name"
+def get_preparation_stations(restaurant=None):
+	"""Fetch the active preparation stations of the restaurant (the till's own unless one is named)."""
+	restaurant = restaurant or scope.current_restaurant()
+	return scope.stamp(
+		frappe.get_all(
+			"Preparation Station",
+			filters={"is_active": 1},
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=["name", "station_name", "station_type", "color"],
+			order_by="station_name",
+		),
+		restaurant,
 	)
 
 @frappe.whitelist()
-def get_station_items_map():
-	"""Return a mapping of item_code -> station and item_group -> station for all active stations."""
+def get_station_items_map(restaurant=None):
+	"""Return a mapping of item_code -> station and item_group -> station for the restaurant's active stations."""
+	restaurant = restaurant or scope.current_restaurant()
 	stations = frappe.get_all(
 		"Preparation Station",
 		filters={"is_active": 1},
+		or_filters=scope.restaurant_or_filters(restaurant),
 		fields=["name", "station_name", "color"]
 	)
 	items_map = {}
@@ -425,13 +473,21 @@ def get_table_order(table_name):
 	return order
 
 @frappe.whitelist()
-def get_kds_orders(station=None):
-	"""Fetch all pending and preparing orders for the KDS."""
+def get_kds_orders(station=None, restaurant=None):
+	"""Fetch the pending and preparing orders of one restaurant for the KDS.
+
+	The restaurant is the one named, else the one of the station asked for (a kitchen screen opened on a station has
+	no till of its own), else the till's. Each order says the label of its table (`table_display_name`) and each
+	line the label of its station (`station_name`).
+	"""
 	# //// Neoffice — it is called from the kitchen display and floor plan, run by desk accounts, so a desk
 	# //// account is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
 
 	require_system_user()
+	if not restaurant and station:
+		restaurant = scope.restaurant_of_record("Preparation Station", station)
+	restaurant = restaurant or scope.current_restaurant()
 	# Only fetch submitted invoices or drafts depending on how POS Next saves KDS orders.
 	# Assuming here we fetch draft invoices that have a table and are not delivered.
 	# We remove the database-level filter on restaurant_table to prevent MariaDB NULL issues
@@ -444,11 +500,15 @@ def get_kds_orders(station=None):
 			"docstatus": 0, # Drafts
 		},
 		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
-				"is_takeaway", "takeaway_number"]
+				"is_takeaway", "takeaway_number", "pos_profile"]
 	)
 
-	# Filter purely in Python - include orders with table OR takeaway orders
+	# Filter purely in Python - include orders with table OR takeaway orders, of this restaurant
 	orders = [o for o in raw_orders if o.get("restaurant_table") or o.get("is_takeaway")]
+	orders = scope.keep_orders_of(orders, restaurant)
+	table_labels = scope.labels_of("Restaurant Table", "table_name", {o.get("restaurant_table") for o in orders})
+	for order in orders:
+		order["table_display_name"] = table_labels.get(order.get("restaurant_table")) or order.get("restaurant_table")
 
 	# Fallback safety: Check if the custom field actually exists in the DB to prevent 500 errors
 	# if the user hasn't run `bench migrate` yet.
@@ -471,7 +531,13 @@ def get_kds_orders(station=None):
 	# Build station maps for resolving items without explicit preparation_station
 	_station_map = {}
 	_group_station_map = {}
-	_all_stations = frappe.get_all("Preparation Station", filters={"is_active": 1}, fields=["name", "station_name", "color"])
+	_all_stations = frappe.get_all(
+		"Preparation Station",
+		filters={"is_active": 1},
+		or_filters=scope.restaurant_or_filters(restaurant),
+		fields=["name", "station_name", "color"],
+	)
+	_station_labels = {_st.name: _st.station_name for _st in _all_stations}
 	for _st in _all_stations:
 		_st_items = frappe.get_all("Preparation Station Item", filters={"parent": _st.name}, fields=["item"])
 		for _si in _st_items:
@@ -503,6 +569,13 @@ def get_kds_orders(station=None):
 					# Persist to DB so counts and filters work everywhere
 					frappe.db.set_value("Sales Invoice Item", item.name, "preparation_station", resolved_station, update_modified=False)
 
+		# The label of each line's station, beside its name
+		_unknown = {i.get("preparation_station") for i in items} - set(_station_labels) - {None, ""}
+		_station_labels.update(scope.labels_of("Preparation Station", "station_name", _unknown))
+		for item in items:
+			if item.get("preparation_station"):
+				item["station_name"] = _station_labels.get(item.preparation_station) or item.preparation_station
+
 		# Filter by station if specified
 		if station:
 			items = [i for i in items if i.get("preparation_station") == station]
@@ -532,13 +605,14 @@ def get_kds_orders(station=None):
 
 
 @frappe.whitelist()
-def get_tips(from_date=None, to_date=None, server=None, table=None):
-	"""Fetch Restaurant Tip records with optional filters."""
+def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=None):
+	"""Fetch the Restaurant Tip records of one restaurant (the till's own unless one is named), with optional filters."""
 	# //// Neoffice — its caller is the till (TipsPanel), so only the till's users pass
 	# //// (cash_entry.require_till_user).
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
+	restaurant = restaurant or scope.current_restaurant()
 	filters = {}
 	if from_date:
 		filters["tip_date"] = (">=", from_date)
@@ -555,11 +629,13 @@ def get_tips(from_date=None, to_date=None, server=None, table=None):
 	tips = frappe.get_all(
 		"Restaurant Tip",
 		filters=filters,
+		or_filters=scope.restaurant_or_filters(restaurant),
 		fields=["name", "tip_date", "sales_invoice", "restaurant_table",
 				"server", "amount", "payment_method", "status", "creation"],
 		order_by="creation desc",
 		limit=200,
 	)
+	scope.stamp(tips, restaurant)
 
 	# Enrich with server full names and table display names
 	for tip in tips:
@@ -682,7 +758,7 @@ def save_floor_plan_bg(area, file_url=None):
 
 @frappe.whitelist()
 def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
-	"""Create a new restaurant table."""
+	"""Create a new restaurant table, in the restaurant of its room."""
 	if not frappe.has_permission("Restaurant Table", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -718,13 +794,16 @@ def delete_table(name):
 
 
 @frappe.whitelist()
-def create_station(station_name, station_type="Kitchen", color="#F97316", area=None, pos_x=0, pos_y=0):
-	"""Create a new preparation station."""
+def create_station(station_name, station_type="Kitchen", color="#F97316", area=None, pos_x=0, pos_y=0, restaurant=None):
+	"""Create a new preparation station, in the restaurant named, else the one of its room, else the till's."""
 	if not frappe.has_permission("Preparation Station", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+	if not restaurant and area:
+		restaurant = scope.restaurant_of_record("Restaurant Area", area)
 	doc = frappe.get_doc({
 		"doctype": "Preparation Station",
+		"restaurant": restaurant or scope.current_restaurant(),
 		"station_name": station_name,
 		"station_type": station_type,
 		"color": color,
@@ -1101,20 +1180,26 @@ def reorder_areas(order):
 	return {"status": "success"}
 
 @frappe.whitelist()
-def create_area(area_name):
-	"""Create a new restaurant area."""
+def create_area(area_name, restaurant=None):
+	"""Create a new restaurant area, in the restaurant named (the till's own by default)."""
 	if not frappe.has_permission("Restaurant Area", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	doc = frappe.get_doc({"doctype": "Restaurant Area", "area_name": area_name})
+	doc = frappe.get_doc({
+		"doctype": "Restaurant Area",
+		"restaurant": restaurant or scope.current_restaurant(),
+		"area_name": area_name,
+	})
 	doc.insert()
 	return doc.as_dict()
 
 @frappe.whitelist()
 def rename_area(name, new_name):
-	"""Rename a restaurant area."""
+	"""Rename a restaurant area: change its label. Its name stays what it is, which is what the records link to."""
 	if not frappe.has_permission("Restaurant Area", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	frappe.rename_doc("Restaurant Area", name, new_name)
+	doc = frappe.get_doc("Restaurant Area", name)
+	doc.area_name = new_name
+	doc.save()
 	return {"status": "success"}
 
 @frappe.whitelist()
@@ -1133,17 +1218,22 @@ def delete_area(name):
 
 @frappe.whitelist()
 def get_active_cards(restaurant=None):
-	"""Fetch active restaurant cards filtered by date and current time slot assignment.
+	"""Fetch the active cards of one restaurant, filtered by date and current time slot assignment.
+	The restaurant is the one named, else the till's own: its cards, and its opening hours.
 	A card the opening hours assign to a time slot is shown during its slots only; a card they assign to no
-	slot is shown at every hour (its dates still apply). The opening hours are the restaurant's: the till's
-	own unless one is named.
+	slot is shown at every hour (its dates still apply).
 	Permanent cards bypass all date/time filters and appear at the end."""
 	from frappe.utils import today
 
-	cards = frappe.get_all(
-		"Restaurant Card",
-		filters={"is_active": 1},
-		fields=["name", "card_name", "description", "image", "available_from", "available_to", "is_permanent"]
+	restaurant = restaurant or scope.current_restaurant()
+	cards = scope.stamp(
+		frappe.get_all(
+			"Restaurant Card",
+			filters={"is_active": 1},
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=["name", "card_name", "description", "image", "available_from", "available_to", "is_permanent"]
+		),
+		restaurant,
 	)
 
 	current_date = today()
@@ -1211,16 +1301,21 @@ def get_active_cards(restaurant=None):
 
 
 @frappe.whitelist()
-def get_active_menus():
-	"""Fetch all active restaurant menus with their courses."""
+def get_active_menus(restaurant=None):
+	"""Fetch the active menus of one restaurant (the till's own unless one is named) with their courses."""
 	import json
 	from frappe.utils import today
 
+	restaurant = restaurant or scope.current_restaurant()
 	filters = {"is_active": 1}
-	menus = frappe.get_all(
-		"Restaurant Menu",
-		filters=filters,
-		fields=["name", "menu_name", "price", "description", "image", "available_from", "available_to"]
+	menus = scope.stamp(
+		frappe.get_all(
+			"Restaurant Menu",
+			filters=filters,
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=["name", "menu_name", "price", "description", "image", "available_from", "available_to"]
+		),
+		restaurant,
 	)
 
 	current_date = today()
@@ -1283,6 +1378,10 @@ def get_restaurant_settings(restaurant=None):
 
 	is_open, current_slot = _check_restaurant_open(hours)
 
+	# Takeaway is a setting of the till (one POS Settings row per POS Profile), not of the restaurant: read the row of
+	# the user's open till (maintenance#1981: get_single_value read a stray row of tabSingles, whatever the till says)
+	till = scope.till_settings(scope.current_profile(), ["enable_takeaway", "takeaway_card"])
+
 	return {
 		# Which restaurant the settings on screen are: a save goes back to the same one (restaurant store)
 		"restaurant": settings.name,
@@ -1290,8 +1389,8 @@ def get_restaurant_settings(restaurant=None):
 		"is_open": is_open,
 		"current_slot": current_slot,
 		"enable_runner": bool(settings.enable_runner),
-		"enable_takeaway": bool(frappe.db.get_single_value("POS Settings", "enable_takeaway") or 0),
-		"takeaway_card": frappe.db.get_single_value("POS Settings", "takeaway_card") or None,
+		"enable_takeaway": bool(till.enable_takeaway),
+		"takeaway_card": till.takeaway_card or None,
 		"enable_tips": bool(settings.enable_tips),
 		"auto_detect_tip": bool(settings.auto_detect_tip),
 		"tip_item": settings.tip_item,
@@ -1750,24 +1849,28 @@ def get_next_step(station_name, current_step, item_code=None):
 
 
 @frappe.whitelist()
-def get_runner_orders(area=None):
+def get_runner_orders(area=None, restaurant=None):
 	"""Fetch orders with items ready for pickup (at last workflow step, not yet Delivered).
 
 	Args:
 		area: Optional area name to filter tables by area.
+		restaurant: The restaurant whose orders are wanted (the till's own by default).
+	Each order says the label of its table (`table_display_name`) and each line the label of its station
+	(`station_name`).
 	"""
 	# //// Neoffice — it is called from the runner screen and floor plan, run by desk accounts, so a desk
 	# //// account is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
 
 	require_system_user()
+	restaurant = restaurant or scope.current_restaurant()
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0},
 		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified"]
 	)
 
-	orders = [o for o in raw_orders if o.get("restaurant_table")]
+	orders = scope.keep_orders_of([o for o in raw_orders if o.get("restaurant_table")], restaurant)
 
 	# Filter by area if specified
 	if area:
@@ -1793,7 +1896,13 @@ def get_runner_orders(area=None):
 	# Build station map for enrichment (individual items + item groups)
 	station_map = {}
 	group_station_map = {}
-	all_stations = frappe.get_all("Preparation Station", filters={"is_active": 1}, fields=["name", "station_name", "color"])
+	all_stations = frappe.get_all(
+		"Preparation Station",
+		filters={"is_active": 1},
+		or_filters=scope.restaurant_or_filters(restaurant),
+		fields=["name", "station_name", "color"],
+	)
+	station_labels = {st.name: st.station_name for st in all_stations}
 	for st in all_stations:
 		station_info = {"station_name": st.station_name, "station_color": st.color, "station_id": st.name}
 		st_items = frappe.get_all("Preparation Station Item", filters={"parent": st.name}, fields=["item"])
@@ -1853,6 +1962,15 @@ def get_runner_orders(area=None):
 						item["station_color"] = "#6B7280"
 				else:
 					item["station_color"] = "#6B7280"
+
+				# The label of the station beside its name (a station of another restaurant is looked up once)
+				shown_station = item.get("preparation_station") or station_id
+				if shown_station:
+					if shown_station not in station_labels:
+						station_labels[shown_station] = (
+							frappe.db.get_value("Preparation Station", shown_station, "station_name") or shown_station
+						)
+					item["station_name"] = station_labels[shown_station]
 
 				ready_items.append(item)
 
@@ -1914,8 +2032,10 @@ def mark_items_delivered(invoice_name, item_names=None):
 
 
 @frappe.whitelist()
-def get_takeaway_orders():
-	"""Fetch active takeaway orders (draft invoices with is_takeaway=1)."""
+def get_takeaway_orders(restaurant=None):
+	"""Fetch the active takeaway orders of one restaurant (draft invoices with is_takeaway=1).
+
+	An order is the restaurant's of the till that took it; the till's own restaurant is the default."""
 	# //// Neoffice — it is called from the takeaway screen and till, run by desk accounts, so a desk account
 	# //// is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
@@ -1929,12 +2049,12 @@ def get_takeaway_orders():
 			"is_takeaway": 1,
 		},
 		fields=["name", "customer_name", "grand_total", "kds_status",
-				"takeaway_number", "creation", "modified"],
+				"takeaway_number", "creation", "modified", "pos_profile"],
 		order_by="creation asc",
 	)
 
 	result = []
-	for order in raw_orders:
+	for order in scope.keep_orders_of(raw_orders, restaurant or scope.current_restaurant()):
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},

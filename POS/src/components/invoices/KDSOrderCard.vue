@@ -26,7 +26,7 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
 						</svg>{{ order.takeaway_number || __("Takeaway") }}
 					</template>
-					<template v-else>{{ order.restaurant_table }}</template>
+					<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
 				</h3>
 				<div class="text-right">
 					<span class="font-mono text-base font-bold tabular-nums block" :class="timeColorClass">
@@ -111,7 +111,7 @@
 					<span v-if="showStationBadge && item.preparation_station"
 						class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block"
 						:style="{ backgroundColor: getStationColor(item.preparation_station) }">
-						{{ item.preparation_station }}
+						{{ item.station_name || item.preparation_station }}
 					</span>
 				</div>
 			</template>

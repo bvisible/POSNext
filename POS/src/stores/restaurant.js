@@ -62,6 +62,12 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const tillRestaurant = computed(
 		() => posSettingsStore.settings.restaurant || undefined,
 	)
+	// What every read of the restaurant's rooms, stations, cards, menus, orders and tips passes: the till's restaurant
+	// (rooms, tables, stations, cards, menus, reservations and tips belong to a restaurant)
+	const ofTheRestaurant = () => ({ restaurant: tillRestaurant.value })
+	const restaurantName = computed(
+		() => posSettingsStore.settings.restaurant_name || "",
+	)
 	const defaultArea = computed(
 		() => posSettingsStore.settings.default_restaurant_area,
 	)
@@ -105,7 +111,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 		try {
 			log.info("Fetching tables from network")
-			const res = await call("pos_next.api.restaurant.get_tables")
+			const res = await call("pos_next.api.restaurant.get_tables", ofTheRestaurant())
 
 			if (res) {
 				const {
@@ -147,7 +153,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	async function fetchActiveCards() {
 		if (!isEnabled.value) return
 		try {
-			const res = await call("pos_next.api.restaurant.get_active_cards")
+			const res = await call(
+				"pos_next.api.restaurant.get_active_cards",
+				ofTheRestaurant(),
+			)
 			if (res) activeCards.value = res
 		} catch (error) {
 			log.error("Failed to fetch active cards:", error)
@@ -226,7 +235,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function fetchStationItemsMap() {
 		try {
-			const res = await call("pos_next.api.restaurant.get_station_items_map")
+			const res = await call(
+				"pos_next.api.restaurant.get_station_items_map",
+				ofTheRestaurant(),
+			)
 			if (res) {
 				if (res.items && res.groups) {
 					stationItemsMap.value = res.items
@@ -255,7 +267,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function fetchActiveMenus() {
 		try {
-			const res = await call("pos_next.api.restaurant.get_active_menus")
+			const res = await call(
+				"pos_next.api.restaurant.get_active_menus",
+				ofTheRestaurant(),
+			)
 			if (res) activeMenus.value = res
 		} catch (error) {
 			log.error("Failed to fetch active menus:", error)
@@ -361,6 +376,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	async function createArea(areaName) {
 		const res = await call("pos_next.api.restaurant.create_area", {
 			area_name: areaName,
+			...ofTheRestaurant(),
 		})
 		if (res) await fetchFromNetwork()
 		return res
@@ -379,12 +395,13 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		await fetchFromNetwork()
 	}
 
-	async function fetchRestaurantSettings() {
+	// A page opened for a restaurant of its own (a kitchen or pass tablet has no till) names it; a till reads its own
+	async function fetchRestaurantSettings(restaurant) {
 		try {
 			const res = await call(
 				"pos_next.api.restaurant.get_restaurant_settings",
 				{
-					restaurant: tillRestaurant.value,
+					restaurant: restaurant || tillRestaurant.value,
 				},
 			)
 			if (res) {
@@ -438,7 +455,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		if (!isEnabled.value) return
 		try {
 			const previousSlot = restaurantStatus.value.currentSlot
-			const res = await call("pos_next.api.restaurant.get_restaurant_status")
+			const res = await call(
+				"pos_next.api.restaurant.get_restaurant_status",
+				ofTheRestaurant(),
+			)
 			if (res) {
 				restaurantStatus.value = {
 					isOpen: res.is_open !== false,
@@ -501,7 +521,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 				window.frappe.show_alert(
 					{
 						message: data?.table
-							? `${__("New guest order for table")} ${data.table}`
+							? `${__("New guest order for table")} ${tableLabel(data.table)}`
 							: __("New guest order received"),
 						indicator: "orange",
 					},
@@ -524,6 +544,32 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			clearInterval(statusInterval)
 			statusInterval = null
 		}
+	}
+
+	// A room, a table or a station is shown by its label, never by its name: a new one is named by a hash, and the
+	// name is only what the invoices and the other records link to.
+	function stationLabel(stationId) {
+		if (!stationId) return ""
+		const floorStation = floorStations.value.find((s) => s.name === stationId)
+		if (floorStation?.station_name) return floorStation.station_name
+		for (const info of [
+			...Object.values(stationItemsMap.value),
+			...Object.values(stationGroupsMap.value),
+		]) {
+			if (info.station === stationId && info.station_name)
+				return info.station_name
+		}
+		return stationId
+	}
+
+	function tableLabel(tableId) {
+		const table = tables.value.find((t) => t.name === tableId)
+		return table?.table_name || tableId || ""
+	}
+
+	function areaLabel(areaId) {
+		const area = areas.value.find((a) => a.name === areaId)
+		return area?.area_name || areaId || ""
 	}
 
 	function getStationForItem(itemCode, itemGroup) {
@@ -551,6 +597,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		try {
 			const res = await call("pos_next.api.restaurant.get_takeaway_orders", {
 				_: Date.now(),
+				...ofTheRestaurant(),
 			})
 			if (res) takeawayOrders.value = res
 		} catch (error) {
@@ -630,6 +677,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		fetchActiveMenus,
 		fetchActiveCards,
 		tillRestaurant,
+		ofTheRestaurant,
+		restaurantName,
+		stationLabel,
+		tableLabel,
+		areaLabel,
 		fetchRestaurantSettings,
 		saveRestaurantSettings,
 		updateRestaurantSettings,

@@ -11,10 +11,16 @@ import json
 import frappe
 from frappe import _
 
+from pos_next.restaurant import scope
+
 
 @frappe.whitelist()
 def get_menu_preview_data(card_name, template_name=None):
-	"""Return structured data for menu preview and PDF generation."""
+	"""Return structured data for menu preview and PDF generation.
+
+	The printed card carries its restaurant: the restaurant's name (`restaurant_name`) and logo (`logo`) head the
+	card, the company's name and logo standing in for a restaurant that has none of its own.
+	"""
 	from pos_next.api.restaurant import get_card_items_with_badges
 
 	card_data = get_card_items_with_badges(card_name)
@@ -49,8 +55,16 @@ def get_menu_preview_data(card_name, template_name=None):
 			if value is not None:
 				template[key] = value
 
+	# The restaurant the card belongs to, and the company behind it
+	restaurant = scope.restaurant_of_record("Restaurant Card", card_name)
+	restaurant_name, logo, restaurant_company = "", "", None
+	if restaurant:
+		restaurant_name, logo, restaurant_company = frappe.db.get_value(
+			"Restaurant", restaurant, ["restaurant_name", "logo", "company"]
+		) or ("", "", None)
+
 	# Get currency and company logo
-	company = frappe.defaults.get_defaults().get("company")
+	company = restaurant_company or frappe.defaults.get_defaults().get("company")
 	currency = frappe.db.get_value("Company", company, "default_currency") or "CHF"
 	company_logo = frappe.db.get_value("Company", company, "company_logo") or ""
 	company_name = frappe.db.get_value("Company", company, "company_name") or ""
@@ -79,6 +93,9 @@ def get_menu_preview_data(card_name, template_name=None):
 		"design": template,
 		"currency": currency,
 		"site_url": frappe.utils.get_url(),
+		"restaurant": restaurant,
+		"restaurant_name": restaurant_name or "",
+		"logo": logo or "",
 		"company_logo": company_logo,
 		"company_name": company_name,
 		"chili_uri": chili_uri,
@@ -129,6 +146,9 @@ def get_menu_preview_html(card_name=None, card_names=None, template_name=None, o
 			"design": first_data.get("design"),
 			"currency": first_data.get("currency", "CHF"),
 			"site_url": first_data.get("site_url", ""),
+			"restaurant": first_data.get("restaurant"),
+			"restaurant_name": first_data.get("restaurant_name", ""),
+			"logo": first_data.get("logo", ""),
 			"company_logo": first_data.get("company_logo", ""),
 			"company_name": first_data.get("company_name", ""),
 		}
@@ -253,6 +273,9 @@ def generate_multi_card_pdf(card_names, template_name=None, overrides=None, pape
 		"design": design,
 		"currency": first_data.get("currency", "CHF"),
 		"site_url": first_data.get("site_url", ""),
+		"restaurant": first_data.get("restaurant"),
+		"restaurant_name": first_data.get("restaurant_name", ""),
+		"logo": first_data.get("logo", ""),
 		"company_logo": first_data.get("company_logo", ""),
 		"company_name": first_data.get("company_name", ""),
 		"chili_uri": first_data.get("chili_uri", ""),

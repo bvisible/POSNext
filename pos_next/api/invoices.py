@@ -2897,6 +2897,8 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 			tip_record = frappe.get_doc(
 				{
 					"doctype": "Restaurant Tip",
+					# //// Neoffice — the tip belongs to the restaurant whose settings priced it (NeoRestau lot 1, task 2)
+					"restaurant": settings.get("name"),
 					"tip_date": frappe.utils.today(),
 					"sales_invoice": invoice_doc.name,
 					"restaurant_table": data.get("restaurant_table")

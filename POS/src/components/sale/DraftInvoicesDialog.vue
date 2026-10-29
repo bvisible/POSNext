@@ -83,7 +83,8 @@
 									<span
 										class="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded"
 									>
-										Table: {{ draft.restaurant_table }}
+										<!-- //// Neoffice — the table is shown by its label, never by its name: a new table is named by a hash (NeoRestau lot 1, task 2) -->
+										Table: {{ tableLabel(draft.restaurant_table) }}
 									</span>
 									<span
 										v-if="draft.kds_status"
@@ -232,6 +233,8 @@ import { useToast } from "@/composables/useToast";
 import { usePOSShiftStore } from "@/stores/posShift";
 import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSDraftsStore } from "@/stores/posDrafts";
+//// Neoffice — a draft shows its table by the table's label (NeoRestau lot 1, task 2)
+import { useRestaurantStore } from "@/stores/restaurant";
 import { Button, Dialog, FeatherIcon } from "frappe-ui";
 import { onMounted, ref, watch } from "vue";
 
@@ -239,6 +242,11 @@ const { showSuccess, showError } = useToast();
 const shiftStore = usePOSShiftStore();
 const cartStore = usePOSCartStore();
 const draftsStore = usePOSDraftsStore();
+
+//// Neoffice — only a restaurant draft asks for the restaurant store (a retail till never needs it).
+function tableLabel(tableId) {
+	return useRestaurantStore().tableLabel(tableId);
+}
 
 const props = defineProps({
 	modelValue: Boolean,

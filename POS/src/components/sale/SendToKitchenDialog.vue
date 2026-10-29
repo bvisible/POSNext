@@ -137,7 +137,9 @@ const selectedCount = computed(
 
 // Resolve station name for an item (individual item > item group fallback)
 function getStationName(item) {
-	if (item.preparation_station) return item.preparation_station
+	// A station is shown by its label, never by its name
+	if (item.preparation_station)
+		return restaurantStore.stationLabel(item.preparation_station)
 	const stationInfo = restaurantStore.getStationForItem(
 		item.item_code,
 		item.item_group,

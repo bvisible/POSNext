@@ -55,6 +55,10 @@ POS_SETTINGS_FIELDS = [
 	# //// remove BrainWise branding, add restaurant mode, and code formatting — 458d81a + 5783eb2
 	# Restaurant Settings
 	"enable_restaurant_mode",
+	# //// Neoffice — the restaurant a till works for (NeoRestau lot 1, task 2): the screens pass it to every
+	# //// restaurant endpoint. Its label (`restaurant_name`) is added by pos_next.restaurant.scope, on the hook
+	# //// pos_next_bootstrap_settings.
+	"restaurant",
 	"default_restaurant_area",
 	# Cash Management
 	"closing_withdrawal_template",
@@ -113,6 +117,10 @@ DEFAULT_POS_SETTINGS = {
 	# //// 5783eb27 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 	# Restaurant Settings
 	"enable_restaurant_mode": 0,
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: the restaurant a till works for, and its label (NeoRestau lot 1,
+	# //// task 2).
+	"restaurant": "",
+	"restaurant_name": "",
 	"default_restaurant_area": "",
 	# Cash Management
 	"closing_withdrawal_template": "",

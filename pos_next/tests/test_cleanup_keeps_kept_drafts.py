@@ -49,12 +49,13 @@ class TestCleanupKeepsKeptDrafts(FrappeTestCase):
 		profile.append("applicable_for_users", {"user": COLLEAGUE})
 		profile.save(ignore_permissions=True)
 		self.shifts = {user: self._open_shift(user) for user in (TILL, COLLEAGUE)}
-		if not frappe.db.exists("Restaurant Area", AREA):
-			frappe.get_doc({"doctype": "Restaurant Area", "area_name": AREA}).insert(ignore_permissions=True)
-		if not frappe.db.exists("Restaurant Table", TABLE):
-			frappe.get_doc({"doctype": "Restaurant Table", "table_name": TABLE, "area": AREA}).insert(
-				ignore_permissions=True
-			)
+		# A room and a table are named by a hash now, their label is not their name: the drafts link to the name
+		area = frappe.get_doc({"doctype": "Restaurant Area", "area_name": AREA}).insert(ignore_permissions=True)
+		self.table = (
+			frappe.get_doc({"doctype": "Restaurant Table", "table_name": TABLE, "area": area.name})
+			.insert(ignore_permissions=True)
+			.name
+		)
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -111,8 +112,8 @@ class TestCleanupKeepsKeptDrafts(FrappeTestCase):
 
 	def test_an_old_table_order_stays(self):
 		# Between the main course and dessert nobody touches the table's order for an hour.
-		draft = self._draft(restaurant_table=TABLE)
-		self.assertEqual(frappe.db.get_value("Sales Invoice", draft, "restaurant_table"), TABLE)
+		draft = self._draft(restaurant_table=self.table)
+		self.assertEqual(frappe.db.get_value("Sales Invoice", draft, "restaurant_table"), self.table)
 		self._sale_ends()
 		self._assert_kept(draft)
 
@@ -146,7 +147,7 @@ class TestCleanupKeepsKeptDrafts(FrappeTestCase):
 			self.skipTest("No posa_allow_delete on POS Profile")
 		frappe.db.set_value("POS Profile", self.fx.profile, "posa_allow_delete", 1)
 		abandoned = self._draft(hours_old=0)
-		table_order = self._draft(hours_old=0, restaurant_table=TABLE)
+		table_order = self._draft(hours_old=0, restaurant_table=self.table)
 		takeaway_order = self._draft(hours_old=0, is_takeaway=1, takeaway_number="T-902")
 		closing = _closing(TILL, self.shifts[TILL], self.fx)
 		frappe.set_user(TILL)

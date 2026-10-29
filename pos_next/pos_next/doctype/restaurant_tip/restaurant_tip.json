@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "restaurant",
   "tip_date",
   "sales_invoice",
   "restaurant_table",
@@ -19,6 +20,13 @@
   "distribution_date"
  ],
  "fields": [
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Restaurant",
+   "options": "Restaurant"
+  },
   {
    "fieldname": "tip_date",
    "fieldtype": "Date",
@@ -98,7 +106,7 @@
  ],
  "index_web_link_preview": 0,
  "links": [],
- "modified": "2026-03-23 13:00:00.000000",
+ "modified": "2026-10-29 21:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Tip",

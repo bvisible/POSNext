@@ -1,12 +1,13 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "allow_rename": 0,
  "creation": "2024-05-20 10:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "table_name",
   "area",
+  "restaurant",
   "capacity",
   "status",
   "pos_x",
@@ -21,8 +22,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Table Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "area",
@@ -31,6 +31,15 @@
    "label": "Area",
    "options": "Restaurant Area",
    "reqd": 1
+  },
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Restaurant",
+   "options": "Restaurant",
+   "fetch_from": "area.restaurant",
+   "read_only": 1
   },
   {
    "default": "4",
@@ -80,11 +89,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-20 10:00:00.000000",
+ "modified": "2026-10-29 21:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Table",
- "naming_rule": "By fieldname",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -117,9 +126,12 @@
    "write": 1
   }
  ],
- "autoname": "field:table_name",
+ "autoname": "hash",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "title_field": "table_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "table_name"
 }

@@ -50,7 +50,7 @@ whose schema we widened; **the field names below are ours** and are what a merge
 
 | File | Added `fieldname`s | Why |
 |---|---|---|
-| `pos_next/pos_next/doctype/pos_settings/pos_settings.json` | `section_break_customer_display`, `enable_customer_display`, `enable_customer_display_account_creation`, `column_break_customer_display`, `customer_display_show_address_fields`, `section_break_restaurant`, `enable_restaurant_mode`, `default_restaurant_area`, `column_break_takeaway`, `enable_takeaway`, `takeaway_card`, `section_break_gift_card`, `enable_gift_cards`, `gift_card_item`, `column_break_gift_card`, `enable_gift_card_splitting`, `gift_card_validity_months`, `gift_card_notification`, `section_break_cash_management`, `closing_withdrawal_template` | The single switchboard for the four features upstream does not have: customer display, restaurant mode, takeaway, gift cards — plus the cash-withdrawal template used when closing a shift. `458d81a9`, `82fcc1bf`, `644ad918`, `5783eb27`, `d2a64f30`, `185c3c50`, `c081f418`. `310377d3` also **removed** upstream's `sync_with_erpnext_coupon` field, obsolete once coupons became natively ERPNext. |
+| `pos_next/pos_next/doctype/pos_settings/pos_settings.json` | `section_break_customer_display`, `enable_customer_display`, `enable_customer_display_account_creation`, `column_break_customer_display`, `customer_display_show_address_fields`, `section_break_restaurant`, `enable_restaurant_mode`, `restaurant`, `default_restaurant_area`, `column_break_takeaway`, `enable_takeaway`, `takeaway_card`, `section_break_gift_card`, `enable_gift_cards`, `gift_card_item`, `column_break_gift_card`, `enable_gift_card_splitting`, `gift_card_validity_months`, `gift_card_notification`, `section_break_cash_management`, `closing_withdrawal_template` | The single switchboard for the four features upstream does not have: customer display, restaurant mode, takeaway, gift cards — plus the cash-withdrawal template used when closing a shift. `458d81a9`, `82fcc1bf`, `644ad918`, `5783eb27`, `d2a64f30`, `185c3c50`, `c081f418`. `310377d3` also **removed** upstream's `sync_with_erpnext_coupon` field, obsolete once coupons became natively ERPNext. NeoRestau lot 1 added `restaurant` (a Link to `Restaurant`, mandatory once restaurant mode is on): the restaurant a till works for, which everything the till reads of the restaurant module is scoped to. |
 | `pos_next/pos_next/doctype/pos_coupon/pos_coupon.json` | `gift_card_section`, `gift_card_amount`, `original_amount`, `column_break_gift_card`, `coupon_code_residual`, `source_invoice` | Gift-card balance carried on the coupon: a partly-spent gift card must keep its residual and point back at the invoice that sold it (`d2a64f30`, 2026-01-12, *"feat(gift-cards): implement phases 1-3 for ERPNext Coupon Code sync"*). The `customer` field also gained a description: setting it restricts the gift card to one customer. |
 | `pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json` | `section_break_withdrawal`, `cash_withdrawal_amount`, `column_break_withdrawal`, `cash_remaining_balance` | Upstream closes a shift by counting the drawer and stopping there. Swiss practice is to withdraw the takings and leave a float, so the closing records what was taken out and what stays as the next shift's suggested opening balance (`5783eb27`, 2026-03-28). |
 | `pos_next/pos_next/custom/pos_profile.json` | `custom_active_payment_devices` | Binds each `Mode of Payment` routed to a terminal driver to one or more (MoP, device) rows. Required for physical readers (Stripe Reader…), left blank for QR-only channels (TWINT); the cashier gets a picker when several rows match (`958a2264`, `2b6b45de`, 2026-05-15/16). |
@@ -67,6 +67,15 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
   `restaurant` (a restaurant and its own settings: the fields the site-wide `restaurant_settings` single
   held, now one set per restaurant; the single stays in place and a patch,
   `pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant`, moves it into a default restaurant).
+  Also since NeoRestau lot 1: `restaurant_area`, `restaurant_table`, `preparation_station`, `restaurant_card`,
+  `restaurant_menu`, `restaurant_reservation` and `restaurant_tip` carry a `restaurant` link (a table's is its
+  room's), and `pos_settings` names the restaurant a till works for. A room, a table and a preparation station are
+  named by a hash from now on (`autoname: hash`; the ones that exist keep their names, which the invoices link to),
+  their label (`area_name`, `table_name`, `station_name`) is no longer unique on the site but within its restaurant
+  (`pos_next.restaurant.scope.validate_label_unique_in_restaurant`), and the patch
+  `pos_next.patches.neorestau.attach_records_to_the_default_restaurant` attaches what the site already has to the
+  default restaurant. The cards and menus keep their names (`field:card_name`, `field:menu_name`), so a card name is
+  still unique on the whole site.
 - **Preparation / KDS** (`831857f`, `4df0caf` and follow-ups): `preparation_station`,
   `preparation_station_item`, `preparation_station_item_group`, `preparation_workflow`,
   `preparation_workflow_item`, `preparation_workflow_step`.
@@ -235,7 +244,7 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/pos_cash_entry_template/pos_cash_entry_template.json` | 1: `journal_entry_template` |
 | `pos_next/pos_next/doctype/pos_payment_driver_mapping/pos_payment_driver_mapping.json` | 10: `pos_profile`, `mode_of_payment`, `enabled`, `column_break_1`, `provider`, `channel`, `default_device`, `section_break_options`, `auto_attach_device`, `options_json` |
 | `pos_next/pos_next/doctype/pos_profile_payment_device/pos_profile_payment_device.json` | 3: `mode_of_payment`, `payment_device`, `is_default` |
-| `pos_next/pos_next/doctype/preparation_station/preparation_station.json` | 20: `section_break_main`, `station_name`, `station_type`, `column_break_1`, `color`, `is_active`, `workflow`, `use_runner`, `section_break_floor_plan`, `show_on_floor_plan`, `area`, `column_break_fp`, `pos_x`, `pos_y` … |
+| `pos_next/pos_next/doctype/preparation_station/preparation_station.json` | 21: `section_break_main`, `restaurant`, `station_name`, `station_type`, `column_break_1`, `color`, `is_active`, `workflow`, `use_runner`, `section_break_floor_plan`, `show_on_floor_plan`, `area`, `column_break_fp`, `pos_x`, `pos_y` … |
 | `pos_next/pos_next/doctype/preparation_station_item/preparation_station_item.json` | 5: `item`, `item_name`, `prep_time`, `priority`, `workflow` |
 | `pos_next/pos_next/doctype/preparation_station_item_group/preparation_station_item_group.json` | 3: `item_group`, `prep_time`, `priority` |
 | `pos_next/pos_next/doctype/preparation_workflow/preparation_workflow.json` | 6: `workflow_name`, `is_default`, `section_steps`, `steps`, `section_items`, `applicable_items` |
@@ -246,17 +255,17 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/product_option_group_item/product_option_group_item.json` | 2: `item`, `item_name` |
 | `pos_next/pos_next/doctype/product_option_group_item_group/product_option_group_item_group.json` | 1: `item_group` |
 | `pos_next/pos_next/doctype/restaurant/restaurant.json` | 37: `restaurant_name`, `company`, `enabled`, `column_break_identity`, `logo`, `address`, `section_runner`, `enable_runner`, `section_hours`, `opening_hours`, `section_tips`, `enable_tips`, `auto_detect_tip`, `column_break_tips` … |
-| `pos_next/pos_next/doctype/restaurant_area/restaurant_area.json` | 6: `area_name`, `description`, `sort_order`, `floor_plan_section`, `floor_plan_walls`, `floor_plan_bg` |
-| `pos_next/pos_next/doctype/restaurant_card/restaurant_card.json` | 14: `section_break_details`, `card_name`, `description`, `column_break_2`, `image`, `is_active`, `is_permanent`, `is_guest_menu`, `section_break_dates`, `available_from`, `column_break_3`, `available_to`, `section_break_items`, `items` |
+| `pos_next/pos_next/doctype/restaurant_area/restaurant_area.json` | 7: `restaurant`, `area_name`, `description`, `sort_order`, `floor_plan_section`, `floor_plan_walls`, `floor_plan_bg` |
+| `pos_next/pos_next/doctype/restaurant_card/restaurant_card.json` | 15: `section_break_details`, `restaurant`, `card_name`, `description`, `column_break_2`, `image`, `is_active`, `is_permanent`, `is_guest_menu`, `section_break_dates`, `available_from`, `column_break_3`, `available_to`, `section_break_items`, `items` |
 | `pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json` | 7: `item_type`, `label`, `item`, `menu`, `price`, `sort_order`, `disabled` |
-| `pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json` | 9: `menu_name`, `price`, `description`, `image`, `is_active`, `available_from`, `available_to`, `section_break_courses`, `courses` |
+| `pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json` | 10: `restaurant`, `menu_name`, `price`, `description`, `image`, `is_active`, `available_from`, `available_to`, `section_break_courses`, `courses` |
 | `pos_next/pos_next/doctype/restaurant_menu_course/restaurant_menu_course.json` | 4: `course_name`, `item`, `item_name`, `sort_order` |
 | `pos_next/pos_next/doctype/restaurant_opening_hours/restaurant_opening_hours.json` | 5: `day_of_week`, `from_time`, `to_time`, `label`, `restaurant_card` |
 | `pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json` | 24: `section_reservation`, `restaurant`, `status`, `channel`, `column_break_1`, `reservation_date`, `reservation_time`, `duration`, `end_time`, `section_guest`, `no_of_guests`, `guest_name`, `column_break_2`, `phone`, `email` … |
 | `pos_next/pos_next/doctype/restaurant_reservation_table/restaurant_reservation_table.json` | 4: `restaurant_table`, `table_name`, `area`, `capacity` |
 | `pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json` | 31: `section_runner`, `enable_runner`, `section_hours`, `opening_hours`, `section_tips`, `enable_tips`, `auto_detect_tip`, `column_break_tips`, `tip_item`, `tip_account`, `section_qr_ordering`, `enable_qr_ordering`, `guest_menu`, `qr_order_validation` … |
-| `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json` | 9: `table_name`, `area`, `capacity`, `status`, `pos_x`, `pos_y`, `width`, `height`, `shape` |
-| `pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json` | 12: `tip_date`, `sales_invoice`, `restaurant_table`, `column_break_1`, `server`, `amount`, `payment_method`, `section_distribution`, `status`, `column_break_2`, `distributed_to`, `distribution_date` |
+| `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json` | 10: `table_name`, `area`, `restaurant`, `capacity`, `status`, `pos_x`, `pos_y`, `width`, `height`, `shape` |
+| `pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json` | 13: `restaurant`, `tip_date`, `sales_invoice`, `restaurant_table`, `column_break_1`, `server`, `amount`, `payment_method`, `section_distribution`, `status`, `column_break_2`, `distributed_to`, `distribution_date` |
 
 ### Already detailed above
 

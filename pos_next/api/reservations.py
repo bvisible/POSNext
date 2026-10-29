@@ -10,7 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import _parse_duration
-from pos_next.restaurant.settings import default_restaurant, get_restaurant_settings, restaurant_of
+from pos_next.restaurant import scope
+from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 import json
 import secrets
 from datetime import datetime, timedelta
@@ -22,11 +23,12 @@ from datetime import datetime, timedelta
 
 
 @frappe.whitelist()
-def get_reservations(date=None, area=None, status=None):
-	"""Get reservations for a given date with optional filters."""
+def get_reservations(date=None, area=None, status=None, restaurant=None):
+	"""Get the reservations of one restaurant (the till's own unless one is named) for a date, with optional filters."""
 	if not frappe.has_permission("Restaurant Reservation", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+	restaurant = restaurant or scope.current_restaurant()
 	if not date:
 		date = nowdate()
 
@@ -39,24 +41,33 @@ def get_reservations(date=None, area=None, status=None):
 		else:
 			filters["status"] = status
 
-	reservations = frappe.get_all(
-		"Restaurant Reservation",
-		filters=filters,
-		fields=[
-			"name", "status", "reservation_date", "reservation_time",
-			"end_time", "duration", "no_of_guests", "guest_name",
-			"phone", "email", "customer", "channel", "notes",
-		],
-		order_by="reservation_time asc",
+	reservations = scope.stamp(
+		_reservations_of(
+			restaurant,
+			filters=filters,
+			fields=[
+				"name", "status", "reservation_date", "reservation_time",
+				"end_time", "duration", "no_of_guests", "guest_name",
+				"phone", "email", "customer", "channel", "notes",
+			],
+			order_by="reservation_time asc",
+		),
+		restaurant,
 	)
 
-	# Attach tables for each reservation
+	# Attach tables for each reservation, each with the label of its room (`area_name`) beside the room's name
 	for res in reservations:
 		res["tables"] = frappe.get_all(
 			"Restaurant Reservation Table",
 			filters={"parent": res["name"]},
 			fields=["restaurant_table", "table_name", "area", "capacity"],
 		)
+	area_labels = scope.labels_of(
+		"Restaurant Area", "area_name", {t.area for res in reservations for t in res["tables"]}
+	)
+	for res in reservations:
+		for t in res["tables"]:
+			t["area_name"] = area_labels.get(t.area) or t.area
 
 	# Filter by area if specified
 	if area:
@@ -82,8 +93,9 @@ def create_reservation(
 	notes=None,
 	duration=None,
 	force=False,
+	restaurant=None,
 ):
-	"""Create a reservation from POS (status=Confirmed, skips Pending)."""
+	"""Create a reservation from POS (status=Confirmed, skips Pending), in the restaurant named or the till's own."""
 	if not frappe.has_permission("Restaurant Reservation", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -91,7 +103,7 @@ def create_reservation(
 		tables = json.loads(tables)
 
 	# The reservation belongs to the restaurant of the till that takes it
-	settings = get_restaurant_settings()
+	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not duration:
 		duration = settings.default_reservation_duration or 5400
 
@@ -186,13 +198,13 @@ def check_table_availability(tables, date, time, duration, exclude=None):
 
 
 @frappe.whitelist()
-def get_reservation_stats(from_date, to_date):
-	"""Get reservation statistics for a date range."""
+def get_reservation_stats(from_date, to_date, restaurant=None):
+	"""Get the reservation statistics of one restaurant (the till's own unless one is named) for a date range."""
 	if not frappe.has_permission("Restaurant Reservation", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	reservations = frappe.get_all(
-		"Restaurant Reservation",
+	reservations = _reservations_of(
+		restaurant or scope.current_restaurant(),
 		filters={
 			"reservation_date": ["between", [from_date, to_date]],
 		},
@@ -225,9 +237,12 @@ def get_reservation_stats(from_date, to_date):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_available_slots(date):
-	"""Return available time slots for a given date based on opening hours."""
-	settings = get_restaurant_settings()
+def get_available_slots(date, restaurant=None):
+	"""Return available time slots for a given date based on the opening hours of the restaurant.
+
+	A visitor names no restaurant on a site with one; the default restaurant answers.
+	"""
+	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
@@ -249,21 +264,32 @@ def get_available_slots(date):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_available_tables(date, time, duration=None, no_of_guests=None):
-	"""Return tables with their availability status for a given slot."""
-	settings = get_restaurant_settings()
+def get_available_tables(date, time, duration=None, no_of_guests=None, restaurant=None):
+	"""Return the restaurant's tables with their availability status for a given slot.
+
+	A visitor names no restaurant on a site with one; the default restaurant answers.
+	"""
+	restaurant = restaurant or scope.current_restaurant()
+	settings = get_restaurant_settings(restaurant)
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
 	if not duration:
 		duration = settings.default_reservation_duration or 5400
 
-	# Get all tables grouped by area
-	tables = frappe.get_all(
-		"Restaurant Table",
-		fields=["name", "table_name", "area", "capacity", "status"],
-		order_by="area asc, table_name asc",
+	# Get the restaurant's tables grouped by area
+	tables = scope.stamp(
+		frappe.get_all(
+			"Restaurant Table",
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=["name", "table_name", "area", "capacity", "status"],
+			order_by="area asc, table_name asc",
+		),
+		restaurant,
 	)
+	area_labels = scope.labels_of("Restaurant Area", "area_name", {t.area for t in tables})
+	for table in tables:
+		table["area_name"] = area_labels.get(table.area) or table.area
 
 	# Get existing reservations for this slot
 	from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import check_overlap
@@ -294,9 +320,10 @@ def submit_guest_reservation(
 	tables=None,
 	notes=None,
 	duration=None,
+	restaurant=None,
 ):
-	"""Create a reservation from the public web form."""
-	settings = get_restaurant_settings()
+	"""Create a reservation from the public web form, in the restaurant named (the default restaurant otherwise)."""
+	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
@@ -482,12 +509,15 @@ def _mark_no_shows_of(restaurant):
 	frappe.db.commit()
 
 
-def _reservations_of(restaurant, filters, fields):
+def _reservations_of(restaurant, filters, fields, **options):
 	"""The reservations of a restaurant; one that names none belongs to the default restaurant."""
-	or_filters = [["restaurant", "=", restaurant]]
-	if restaurant == default_restaurant():
-		or_filters.append(["restaurant", "is", "not set"])
-	return frappe.get_all("Restaurant Reservation", filters=filters, or_filters=or_filters, fields=fields)
+	return frappe.get_all(
+		"Restaurant Reservation",
+		filters=filters,
+		or_filters=scope.restaurant_or_filters(restaurant),
+		fields=fields,
+		**options,
+	)
 
 
 # ==========================================

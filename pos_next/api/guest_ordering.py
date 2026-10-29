@@ -15,6 +15,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
 
+from pos_next.restaurant import scope
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 
 
@@ -42,7 +43,8 @@ def _require_valid_token(token):
 def _get_restaurant_settings(pos_profile=None):
 	"""Return the settings of the restaurant a guest session belongs to: the one of its POS Profile.
 
-	A session without a till (a web takeaway order that has not picked one) belongs to the default restaurant.
+	A session without a till (a web takeaway order that has not picked one) belongs to the default restaurant: that
+	is the rule of `restaurant_for_profile(None)`, which this relies on.
 	"""
 	return get_restaurant_settings_for_profile(pos_profile)
 
@@ -124,9 +126,15 @@ def _get_guest_menu_card(settings):
 	"""Return the Restaurant Card to use as guest menu."""
 	if settings.guest_menu:
 		return settings.guest_menu
-	# Fall back to a card flagged as is_guest_menu
-	name = frappe.db.get_value("Restaurant Card", {"is_guest_menu": 1, "is_active": 1}, "name")
-	return name
+	# Fall back to a card of this restaurant flagged as is_guest_menu
+	names = frappe.get_all(
+		"Restaurant Card",
+		filters={"is_guest_menu": 1, "is_active": 1},
+		or_filters=scope.restaurant_or_filters(settings.get("name")),
+		pluck="name",
+		limit=1,
+	)
+	return names[0] if names else None
 
 
 def _build_menu_from_card(card_name, warehouse=None):
@@ -425,6 +433,10 @@ def validate_token(token):
 			["name", "table_name", "area", "capacity", "status"],
 			as_dict=True,
 		)
+		if table_info:
+			# The guest page shows the label of the room, never its name
+			area_name = frappe.db.get_value("Restaurant Area", table_info.area, "area_name")
+			table_info["area_name"] = area_name or table_info.area
 
 	# Get currency from POS Profile
 	currency = None
@@ -454,7 +466,10 @@ def validate_token(token):
 		"company_logo": company_logo,
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
 		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
-		"has_loyalty_program": bool(frappe.db.get_single_value("POS Settings", "enable_loyalty_program") or 0),
+		# The loyalty programme is a setting of the till the session belongs to (a POS Settings row per POS Profile)
+		"has_loyalty_program": bool(
+			scope.till_settings(token_doc.pos_profile, ["enable_loyalty_program"]).enable_loyalty_program
+		),
 	}
 
 
@@ -1058,6 +1073,7 @@ def confirm_guest_payment(token, amount, tip=0):
 			try:
 				frappe.get_doc({
 					"doctype": "Restaurant Tip",
+					"restaurant": _get_restaurant_settings(token_doc.pos_profile).get("name"),
 					"tip_date": frappe.utils.today(),
 					"sales_invoice": invoice_doc.name,
 					"restaurant_table": token_doc.table,

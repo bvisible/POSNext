@@ -15,6 +15,7 @@
   "customer_display_show_address_fields",
   "section_break_restaurant",
   "enable_restaurant_mode",
+  "restaurant",
   "default_restaurant_area",
   "column_break_takeaway",
   "enable_takeaway",
@@ -171,6 +172,15 @@
    "fieldname": "enable_restaurant_mode",
    "fieldtype": "Check",
    "label": "Default Restaurant Mode"
+  },
+  {
+   "depends_on": "enable_restaurant_mode",
+   "description": "The restaurant this till works for",
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "label": "Restaurant",
+   "mandatory_depends_on": "enable_restaurant_mode",
+   "options": "Restaurant"
   },
   {
    "fieldname": "default_restaurant_area",
@@ -729,7 +739,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-03 15:54:09.903964",
+ "modified": "2026-10-29 21:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

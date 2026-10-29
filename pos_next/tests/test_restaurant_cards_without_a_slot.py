@@ -24,31 +24,35 @@ A_MONDAY = "2026-10-19"
 
 class TestRestaurantCardsWithoutASlot(FrappeTestCase):
 	def setUp(self):
-		for name in (IN_A_SLOT, WITHOUT_A_SLOT):
-			if not frappe.db.exists("Restaurant Card", name):
-				frappe.get_doc({"doctype": "Restaurant Card", "card_name": name, "is_active": 1}).insert(
-					ignore_permissions=True
-				)
+		# The cards are the restaurant's own: the restaurant is asked for its cards, and they are the ones it owns
 		self.restaurant = (
 			frappe.get_doc(
 				{
 					"doctype": "Restaurant",
 					"restaurant_name": RESTAURANT,
 					"company": frappe.get_all("Company", limit=1, pluck="name")[0],
-					"opening_hours": [
-						{
-							"day_of_week": "Monday",
-							"from_time": "09:00:00",
-							"to_time": "10:00:00",
-							"label": "Breakfast",
-							"restaurant_card": IN_A_SLOT,
-						}
-					],
 				}
 			)
 			.insert(ignore_permissions=True)
 			.name
 		)
+		for name in (IN_A_SLOT, WITHOUT_A_SLOT):
+			if not frappe.db.exists("Restaurant Card", name):
+				frappe.get_doc(
+					{"doctype": "Restaurant Card", "restaurant": self.restaurant, "card_name": name, "is_active": 1}
+				).insert(ignore_permissions=True)
+		restaurant = frappe.get_doc("Restaurant", self.restaurant)
+		restaurant.append(
+			"opening_hours",
+			{
+				"day_of_week": "Monday",
+				"from_time": "09:00:00",
+				"to_time": "10:00:00",
+				"label": "Breakfast",
+				"restaurant_card": IN_A_SLOT,
+			},
+		)
+		restaurant.save(ignore_permissions=True)
 
 	def tearDown(self):
 		frappe.delete_doc("Restaurant", self.restaurant, ignore_permissions=True, force=True)

@@ -5,6 +5,11 @@
 import frappe
 from frappe.model.document import Document
 
+from pos_next.restaurant import scope
+
 
 class RestaurantMenu(Document):
-	pass
+	def validate(self):
+		# //// Neoffice — a menu belongs to a restaurant (NeoRestau lot 1, task 2); one that names none, a menu
+		# //// made before the restaurants, belongs to the default restaurant.
+		scope.attach_to_restaurant(self)

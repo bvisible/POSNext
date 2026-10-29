@@ -16,6 +16,7 @@
 
 import { ref, computed, onMounted, onUnmounted } from "vue"
 import { call } from "@/utils/apiWrapper"
+import { useRestaurantStore } from "@/stores/restaurant"
 
 const reservations = ref([])
 const loading = ref(false)
@@ -55,7 +56,11 @@ const upcomingByTable = computed(() => {
 async function fetchReservations(date, filters = {}) {
 	loading.value = true
 	try {
-		const args = { date: date || currentDate.value }
+		// The reservations of the till's restaurant
+		const args = {
+			date: date || currentDate.value,
+			...useRestaurantStore().ofTheRestaurant(),
+		}
 		if (filters.status) args.status = JSON.stringify(filters.status)
 		if (filters.area) args.area = filters.area
 
@@ -75,7 +80,7 @@ async function createReservation(data) {
 	try {
 		const result = await call(
 			"pos_next.api.reservations.create_reservation",
-			data,
+			{ ...data, ...useRestaurantStore().ofTheRestaurant() },
 		)
 		if (result?.status === "conflict") {
 			return result
@@ -121,7 +126,11 @@ async function getStats(fromDate, toDate) {
 	try {
 		const result = await call(
 			"pos_next.api.reservations.get_reservation_stats",
-			{ from_date: fromDate, to_date: toDate },
+			{
+				from_date: fromDate,
+				to_date: toDate,
+				...useRestaurantStore().ofTheRestaurant(),
+			},
 		)
 		return result
 	} catch (error) {

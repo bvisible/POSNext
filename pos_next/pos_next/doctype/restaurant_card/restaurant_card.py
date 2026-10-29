@@ -6,9 +6,14 @@
 import frappe
 from frappe.model.document import Document
 
+from pos_next.restaurant import scope
+
 
 class RestaurantCard(Document):
 	def validate(self):
+		# //// Neoffice — a card belongs to a restaurant (NeoRestau lot 1, task 2); one that names none, a card
+		# //// made before the restaurants, belongs to the default restaurant.
+		scope.attach_to_restaurant(self)
 		for item in self.items:
 			# Clear irrelevant fields for category rows
 			if item.item_type == "Category":

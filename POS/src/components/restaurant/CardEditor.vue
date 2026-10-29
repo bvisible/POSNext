@@ -513,6 +513,7 @@ async function selectOrCreatePermanentCard() {
 		const doc = await call("frappe.client.insert", {
 			doc: {
 				doctype: "Restaurant Card",
+				restaurant: restaurantStore.tillRestaurant,
 				card_name: __("Permanent items"),
 				is_active: 1,
 				is_permanent: 1,
@@ -532,6 +533,10 @@ async function loadCards() {
 	try {
 		const res = await call("frappe.client.get_list", {
 			doctype: "Restaurant Card",
+			// The cards of the till's restaurant
+			filters: restaurantStore.tillRestaurant
+				? [["restaurant", "=", restaurantStore.tillRestaurant]]
+				: undefined,
 			fields: ["name", "card_name", "is_active", "is_permanent"],
 			order_by: "is_active desc, card_name asc",
 			limit_page_length: 0,
@@ -550,9 +555,10 @@ async function loadCards() {
 
 async function loadOpeningHours() {
 	try {
-		const res = await call("pos_next.api.restaurant.get_restaurant_settings", {
-			restaurant: restaurantStore.tillRestaurant,
-		})
+		const res = await call(
+			"pos_next.api.restaurant.get_restaurant_settings",
+			restaurantStore.ofTheRestaurant(),
+		)
 		openingHours.value = res?.opening_hours || []
 	} catch {
 		openingHours.value = []
@@ -665,6 +671,7 @@ async function createCard() {
 		const doc = await call("frappe.client.insert", {
 			doc: {
 				doctype: "Restaurant Card",
+				restaurant: restaurantStore.tillRestaurant,
 				card_name: newCardName.value,
 				is_active: 1,
 				items: [],

@@ -115,8 +115,10 @@
 	</div>
 {%- endmacro -%}
 
-{%- macro render_header(card, design, site_url, company_logo, company_name) -%}
-	{%- set logo_url = card.image or company_logo -%}
+{# The header names the restaurant the card belongs to, with its logo: the card's own picture comes first, then #}
+{# the restaurant's logo, then the company's. A restaurant without a name of its own falls back on the company's. #}
+{%- macro render_header(card, design, site_url, company_logo, company_name, restaurant_name="", logo="") -%}
+	{%- set logo_url = card.image or logo or company_logo -%}
 	<header class="menu-header">
 		{%- if logo_url -%}
 			<div class="header-logo">
@@ -125,6 +127,8 @@
 		{%- endif -%}
 		{%- if design.header_text -%}
 			<h1 class="header-title">{{ design.header_text }}</h1>
+		{%- elif restaurant_name -%}
+			<h1 class="header-title">{{ restaurant_name }}</h1>
 		{%- elif company_name -%}
 			<h1 class="header-title">{{ company_name }}</h1>
 		{%- endif -%}
@@ -475,7 +479,7 @@
 </head>
 <body>
 	{% block header %}
-		{{ render_header(card, design, site_url, company_logo, company_name) }}
+		{{ render_header(card, design, site_url, company_logo, company_name, restaurant_name, logo) }}
 	{% endblock %}
 
 	<div class="menu-body columns-{{ design.columns | default(1) }}">

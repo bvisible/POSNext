@@ -2,13 +2,15 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 0,
- "autoname": "field:station_name",
+ "autoname": "hash",
+ "naming_rule": "Random",
  "creation": "2026-03-21 00:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "section_break_main",
+  "restaurant",
   "station_name",
   "station_type",
   "column_break_1",
@@ -35,11 +37,17 @@
    "fieldtype": "Section Break"
   },
   {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Restaurant",
+   "options": "Restaurant"
+  },
+  {
    "fieldname": "station_name",
    "fieldtype": "Data",
    "label": "Station Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "station_type",
@@ -155,7 +163,7 @@
  ],
  "index_web_link_preview": 0,
  "links": [],
- "modified": "2026-03-22 00:00:01.000000",
+ "modified": "2026-10-29 21:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Preparation Station",
@@ -191,5 +199,8 @@
  "sort_field": "station_name",
  "sort_order": "ASC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "title_field": "station_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "station_name"
 }

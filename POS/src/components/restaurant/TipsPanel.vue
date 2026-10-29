@@ -216,7 +216,8 @@ async function loadTips() {
 	loading.value = true
 	try {
 		const range = getDateRange()
-		const args = { ...range }
+		// The tips of the till's restaurant
+		const args = { ...range, ...restaurantStore.ofTheRestaurant() }
 		if (serverFilter.value) args.server = serverFilter.value
 		if (tableFilter.value) args.table = tableFilter.value
 
@@ -241,7 +242,10 @@ async function loadTips() {
 
 async function loadTables() {
 	try {
-		const result = await call("pos_next.api.restaurant.get_tables")
+		const result = await call(
+			"pos_next.api.restaurant.get_tables",
+			restaurantStore.ofTheRestaurant(),
+		)
 		tables.value = result?.tables || []
 	} catch { /* ignore */ }
 }

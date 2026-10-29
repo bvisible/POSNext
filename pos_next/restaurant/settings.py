@@ -50,12 +50,27 @@ def default_restaurant() -> str | None:
 
 
 def restaurant_for_profile(pos_profile: str | None) -> str | None:
-	"""The restaurant a till (a POS Profile) belongs to.
+	"""The restaurant a till (a POS Profile) belongs to: the one its POS Settings name.
 
-	Interim: a till does not name its restaurant yet, so every till belongs to the default restaurant. The
-	profile's own setting replaces this when POS Settings gain their `restaurant` link.
+	Two cases fall back on the default restaurant, on purpose, so that the code that cannot name a till keeps
+	working on a site with one restaurant:
+	- no till at all: a guest takeaway session that has not picked one, an invoice rung up without a POS Profile;
+	- a till whose settings name no restaurant: restaurant mode is off, or the settings were saved before the link
+	  existed.
+	A site without any restaurant answers None.
 	"""
-	return default_restaurant()
+	if not pos_profile:
+		# No till: the default restaurant, written here once for every caller (guest takeaway token, tip of an
+		# invoice with no profile) instead of resting on a lookup that happens to ignore its argument
+		return default_restaurant()
+	try:
+		restaurant = frappe.db.get_value("POS Settings", {"pos_profile": pos_profile}, "restaurant")
+	except Exception as error:
+		if frappe.db.is_missing_column(error):
+			# The code is updated and the site is not migrated yet: no till names a restaurant
+			return default_restaurant()
+		raise
+	return restaurant or default_restaurant()
 
 
 def restaurant_of(record) -> str | None:
@@ -87,21 +102,22 @@ def get_restaurant_settings(restaurant: str | None = None) -> frappe._dict:
 
 
 def get_restaurant_settings_for_profile(pos_profile: str | None) -> frappe._dict:
-	"""The settings of the restaurant a till (a POS Profile) belongs to; empty when it belongs to none.
+	"""The settings of the restaurant a till (a POS Profile) belongs to; empty on a site without any restaurant.
 
 	For the code that knows its till (an invoice, a guest session): it never falls back on the user's own
-	open shift, as `get_restaurant_settings()` does when it is given no restaurant.
+	open shift, as `get_restaurant_settings()` does when it is given no restaurant. Code that has no till to name
+	(`pos_profile` None) reads the default restaurant's settings, see `restaurant_for_profile`.
 	"""
 	restaurant = restaurant_for_profile(pos_profile)
 	return get_restaurant_settings(restaurant) if restaurant else frappe._dict()
 
 
 def _restaurant_of_the_session() -> str | None:
-	profile = _open_shift_profile()
+	profile = open_shift_profile()
 	return (restaurant_for_profile(profile) if profile else None) or default_restaurant()
 
 
-def _open_shift_profile() -> str | None:
+def open_shift_profile() -> str | None:
 	"""The POS Profile of the till the current user has open."""
 	user = frappe.session.user
 	if not user or user == "Guest":

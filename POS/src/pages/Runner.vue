@@ -97,7 +97,7 @@
 				:style="selectedStation === station.name ? { backgroundColor: station.color } : {}"
 			>
 				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color }"></span>
-				{{ station.name }}
+				{{ station.label }}
 				<span v-if="station.count > 0"
 					class="text-[10px] font-bold px-1 py-0.5 rounded"
 					:style="selectedStation === station.name
@@ -198,7 +198,7 @@
 						<span v-if="item.preparation_station"
 							class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full text-white flex-shrink-0"
 							:style="{ backgroundColor: item.station_color || '#6B7280' }">
-							{{ item.preparation_station }}
+							{{ item.station_name || item.preparation_station }}
 						</span>
 						<span class="flex-1 text-sm font-medium">{{ item.item_name }}</span>
 						<span class="font-bold text-sm bg-gray-100 dark:bg-gray-700 w-7 h-7 flex items-center justify-center rounded">{{ item.qty }}</span>
@@ -226,6 +226,12 @@ import { initSocket } from "@/socket"
 
 const restaurantStore = useRestaurantStore()
 const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
+// The restaurant whose orders this screen shows: the one in the address (a pass tablet has no till of its own), else
+// the till's restaurant, else the server picks the user's open till, else the default restaurant.
+const urlRestaurant = new URLSearchParams(window.location.search).get("restaurant")
+const ofTheRestaurant = () => ({
+	restaurant: urlRestaurant || restaurantStore.tillRestaurant,
+})
 const { showError } = useToast()
 const orders = ref([])
 const showDelivered = ref(
@@ -274,13 +280,15 @@ const orderStations = computed(() => {
 			if (!map[sid])
 				map[sid] = {
 					name: sid,
+					// A station is shown by its label, never by its name
+					label: item.station_name || sid,
 					color: item.station_color || "#6B7280",
 					count: 0,
 				}
 			map[sid].count++
 		}
 	}
-	return Object.values(map).sort((a, b) => a.name.localeCompare(b.name))
+	return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
 })
 
 watch(showDelivered, (val) => {
@@ -343,7 +351,9 @@ function groupByStation() {
 		for (const item of order.items || []) {
 			const stationId = item.preparation_station || "__general__"
 			const stationName =
-				stationId === "__general__" ? __("General") : stationId
+				stationId === "__general__"
+					? __("General")
+					: item.station_name || stationId
 			if (!stationMap[stationId]) {
 				stationMap[stationId] = {
 					key: stationId,
@@ -388,7 +398,8 @@ function groupItemsByStation(items) {
 		const sid = item.preparation_station || "__general__"
 		if (!groups[sid])
 			groups[sid] = {
-				stationName: sid === "__general__" ? __("General") : sid,
+				stationName:
+					sid === "__general__" ? __("General") : item.station_name || sid,
 				stationColor: item.station_color || "#6B7280",
 				items: [],
 			}
@@ -450,6 +461,7 @@ async function loadAreas() {
 	try {
 		const res = await call("pos_next.api.restaurant.get_tables", {
 			_: Date.now(),
+			...ofTheRestaurant(),
 		})
 		if (res?.areas) areas.value = res.areas
 		if (res?.tables) allTables.value = res.tables
@@ -463,7 +475,7 @@ async function loadAreas() {
 
 async function loadOrders() {
 	try {
-		const params = { _: Date.now() }
+		const params = { _: Date.now(), ...ofTheRestaurant() }
 		if (selectedArea.value) params.area = selectedArea.value
 		const res = await call("pos_next.api.restaurant.get_runner_orders", params)
 		if (res) {
@@ -505,7 +517,7 @@ let pollInterval = null
 
 onMounted(async () => {
 	// Load restaurant settings to check if runner is enabled
-	await restaurantStore.fetchRestaurantSettings()
+	await restaurantStore.fetchRestaurantSettings(urlRestaurant)
 	if (!runnerEnabled.value) return // Don't load data if runner is disabled
 	loadAreas()
 	loadOrders()

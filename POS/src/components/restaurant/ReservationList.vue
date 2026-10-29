@@ -19,8 +19,8 @@
 				@change="$emit('area-change', $event.target.value)"
 			>
 				<option value="">{{ __("All Areas") }}</option>
-				<option v-for="area in areas" :key="area" :value="area">
-					{{ area }}
+				<option v-for="area in areas" :key="area.name" :value="area.name">
+					{{ area.label }}
 				</option>
 			</select>
 			<select
@@ -123,6 +123,7 @@ const props = defineProps({
 	currentDate: { type: String, default: "" },
 	selectedArea: { type: String, default: "" },
 	selectedStatus: { type: String, default: "" },
+	// The rooms of the day's reservations: { name, label }, a room being shown by its label and chosen by its name
 	areas: { type: Array, default: () => [] },
 })
 

@@ -17,7 +17,7 @@
 					:class="{ active: localArea === area }"
 					@click="localArea = area"
 				>
-					{{ area }}
+					{{ areaLabels[area] || area }}
 				</button>
 			</div>
 			<div class="fp-controls" data-gesture-ignore>
@@ -106,7 +106,16 @@ const floorAreas = computed(() => {
 		...new Set(
 			props.tables.filter((t) => t.pos_x || t.pos_y).map((t) => t.area),
 		),
-	].sort()
+	].sort((a, b) => (areaLabels.value[a] || a).localeCompare(areaLabels.value[b] || b))
+})
+
+// A room is shown by its label (`area_name` on its tables), never by its name
+const areaLabels = computed(() => {
+	const labels = {}
+	for (const t of props.tables) {
+		if (t.area) labels[t.area] = t.area_name || t.area
+	}
+	return labels
 })
 
 // Local area state — syncs with parent selectedArea or defaults to first

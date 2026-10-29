@@ -232,6 +232,12 @@ const availableTables = ref([])
 const selectedTables = ref([])
 
 const today = new Date().toISOString().slice(0, 10)
+// A site that runs several restaurants gives each its own address: /pos/reservation?restaurant=<restaurant>. Without
+// it the form is the default restaurant's.
+const restaurant = new URLSearchParams(window.location.search).get("restaurant")
+const restaurantQuery = restaurant
+	? `&restaurant=${encodeURIComponent(restaurant)}`
+	: ""
 
 const form = reactive({
 	reservation_date: today,
@@ -290,7 +296,7 @@ async function fetchSlots() {
 	if (!form.reservation_date) return
 	try {
 		const response = await fetch(
-			`/api/method/pos_next.api.reservations.get_available_slots?date=${form.reservation_date}`,
+			`/api/method/pos_next.api.reservations.get_available_slots?date=${form.reservation_date}${restaurantQuery}`,
 			{
 				headers: {
 					"X-Frappe-CSRF-Token": window.csrf_token || "",
@@ -312,6 +318,7 @@ async function fetchTables() {
 			time: `${form.reservation_time}:00`,
 			no_of_guests: form.no_of_guests,
 		})
+		if (restaurant) params.set("restaurant", restaurant)
 		const response = await fetch(
 			`/api/method/pos_next.api.reservations.get_available_tables?${params}`,
 			{
@@ -350,6 +357,7 @@ async function submitReservation() {
 					email: form.email,
 					tables: JSON.stringify(selectedTables.value),
 					notes: form.notes,
+					restaurant: restaurant || undefined,
 				}),
 			},
 		)
@@ -378,7 +386,7 @@ async function checkEnabled() {
 	try {
 		// Quick check if online reservations are enabled
 		const response = await fetch(
-			`/api/method/pos_next.api.reservations.get_available_slots?date=${today}`,
+			`/api/method/pos_next.api.reservations.get_available_slots?date=${today}${restaurantQuery}`,
 			{
 				headers: {
 					"X-Frappe-CSRF-Token": window.csrf_token || "",

@@ -1078,8 +1078,10 @@ function toggleDeliveryArrows() {
 async function loadRunnerOrders() {
 	// Always load — needed for station bar counters and runner button, not just arrows
 	try {
+		// The orders are the till's restaurant's
 		const res = await call("pos_next.api.restaurant.get_runner_orders", {
 			_: Date.now(),
+			...restaurantStore.ofTheRestaurant(),
 		})
 		if (res) runnerOrders.value = res
 	} catch {
@@ -1093,8 +1095,10 @@ const kdsOrders = ref([])
 async function loadKdsOrders() {
 	if (isEditMode.value) return
 	try {
+		// The orders are the till's restaurant's
 		const res = await call("pos_next.api.restaurant.get_kds_orders", {
 			_: Date.now(),
+			...restaurantStore.ofTheRestaurant(),
 		})
 		if (res) kdsOrders.value = res
 	} catch {
@@ -1515,14 +1519,21 @@ function onWallKeyDown(event) {
 	}
 }
 
+// The new tab is a page of its own, with no till settings loaded yet: it is told the till's restaurant in its address
+function restaurantQuery() {
+	const restaurant = restaurantStore.tillRestaurant
+	return restaurant ? `restaurant=${encodeURIComponent(restaurant)}` : ""
+}
+
 function openStationKDS(station) {
 	// Open KDS page filtered by this station in a new tab
-	const url = `/pos/kds?station=${encodeURIComponent(station.name)}`
-	window.open(url, "_blank")
+	const query = [`station=${encodeURIComponent(station.name)}`, restaurantQuery()]
+	window.open(`/pos/kds?${query.filter(Boolean).join("&")}`, "_blank")
 }
 
 function openRunnerTab() {
-	window.open("/pos/runner", "_blank")
+	const query = restaurantQuery()
+	window.open(query ? `/pos/runner?${query}` : "/pos/runner", "_blank")
 }
 
 // Takeaway
@@ -1902,6 +1913,8 @@ async function handleAddStation() {
 			area: selectedArea.value,
 			pos_x,
 			pos_y,
+			// A station is created in the till's restaurant
+			...restaurantStore.ofTheRestaurant(),
 		})
 		showAddStationDialog.value = false
 		newStation.value = {

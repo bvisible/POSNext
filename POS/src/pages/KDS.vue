@@ -82,9 +82,17 @@ import { Button } from "frappe-ui"
 import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
+import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
 
 const { showError } = useToast()
+const restaurantStore = useRestaurantStore()
+// The restaurant whose orders this screen shows: the one in the address (a kitchen tablet has no till of its own),
+// else the till's restaurant. With neither the server picks the restaurant of the station asked for, else the default.
+const urlRestaurant = new URLSearchParams(window.location.search).get("restaurant")
+const ofTheRestaurant = () => ({
+	restaurant: urlRestaurant || restaurantStore.tillRestaurant,
+})
 const orders = ref([])
 const loading = ref(true)
 const stations = ref([])
@@ -123,6 +131,7 @@ async function loadOrders() {
 		// Always load all orders for counting
 		const allRes = await call("pos_next.api.restaurant.get_kds_orders", {
 			_: Date.now(),
+			...ofTheRestaurant(),
 		})
 		if (allRes) allOrders.value = allRes
 
@@ -131,6 +140,7 @@ async function loadOrders() {
 			const filteredRes = await call("pos_next.api.restaurant.get_kds_orders", {
 				station: selectedStation.value,
 				_: Date.now(),
+				...ofTheRestaurant(),
 			})
 			if (filteredRes) orders.value = filteredRes
 		} else {
@@ -149,6 +159,7 @@ onMounted(async () => {
 		// Load preparation stations
 		const stationsRes = await call(
 			"pos_next.api.restaurant.get_preparation_stations",
+			ofTheRestaurant(),
 		)
 		if (stationsRes) stations.value = stationsRes
 
