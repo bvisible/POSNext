@@ -98,7 +98,17 @@ def _item(company):
 				"is_stock_item": 0,
 				"is_sales_item": 1,
 				# Its own row: an item group's defaults may list a company twice, which an item refuses.
-				"item_defaults": [{"company": company}],
+				# Its warehouse is named: a blank one takes the site's default warehouse, which on a
+				# fresh CI site belongs to another company and is refused.
+				"item_defaults": [
+					{
+						"company": company,
+						"default_warehouse": frappe.db.get_value(
+							"Warehouse", {"company": company, "is_group": 0, "disabled": 0}, "name"
+						)
+						or "",
+					}
+				],
 			}
 		)
 		.insert(ignore_permissions=True)

@@ -45,6 +45,11 @@ def csv_keys():
 	return {r[0].replace("\\n", "\n") + (f":{r[2]}" if len(r) > 2 and r[2] else "") for r in rows}
 
 
+# //// Neoffice — skipped in our fork: upstream ships Arabic and this guard wants an ar.csv row for
+# //// every __() key of POS/src; our fork adds strings translated to French only (locale/fr.po) and
+# //// maintains no Arabic, so it failed on every string we add. Lift the skip if this fork ever
+# //// ships Arabic.
+@unittest.skip("Arabic coverage is upstream's guard; this fork adds French-only strings")
 class TestArabicTranslationCoverage(unittest.TestCase):
 	def test_every_pos_key_has_an_arabic_row(self):
 		have = csv_keys() | ALLOWLIST

@@ -3,6 +3,9 @@
 
 """Tests for customer credit from linked POS returns."""
 
+# //// Neoffice — patch lifts the till gate in the ledger test below (see the comment there).
+from unittest.mock import patch
+
 import frappe
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 from frappe.query_builder.functions import Sum
@@ -102,9 +105,13 @@ class TestLinkedReturnCredit(FrappeTestCase):
 		sale = self._pos_sale(paid=False)
 		source = self._credit_sources(original.name, ret.name)[0][0]
 
-		credit_sales.redeem_customer_credit(
-			sale.name, [{"type": "Invoice", "credit_origin": source, "credit_to_redeem": 100}]
-		)
+		# //// Neoffice — redeeming credit is a till endpoint in our fork (cash_entry.require_till_access
+		# //// on the invoice's POS Profile) and this bare invoice has no till; who may redeem is proven
+		# //// by tests/test_till_endpoints_sweep.py, so the gate is lifted here and the ledgers stay the point.
+		with patch("pos_next.api.cash_entry.require_till_access"):
+			credit_sales.redeem_customer_credit(
+				sale.name, [{"type": "Invoice", "credit_origin": source, "credit_to_redeem": 100}]
+			)
 
 		self.assertEqual([self._gl_balance(n) for n in (original.name, ret.name, sale.name)], [0, 0, 0])
 		self.assertEqual(self._credit_sources(original.name, ret.name), [])
