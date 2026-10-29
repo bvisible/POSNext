@@ -16943,3 +16943,13 @@ msgstr "PIN à {0} chiffres"
 #: pos_next/public/pos/assets/POSSale-B8C49Dja.js:9
 msgid "— None —"
 msgstr "— Aucun —"
+
+msgid "Keyboard shortcuts"
+msgstr "Raccourcis clavier"
+
+#, python-brace-format
+msgid "Search items ({0})"
+msgstr "Rechercher des articles ({0})"
+
+msgid "Function keys (PC keyboards)"
+msgstr "Touches de fonction (claviers PC)"

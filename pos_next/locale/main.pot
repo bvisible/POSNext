@@ -18209,3 +18209,13 @@ msgstr ""
 msgid "✗ Decline"
 msgstr ""
 
+
+msgid "Keyboard shortcuts"
+msgstr ""
+
+#, python-brace-format
+msgid "Search items ({0})"
+msgstr ""
+
+msgid "Function keys (PC keyboards)"
+msgstr ""
