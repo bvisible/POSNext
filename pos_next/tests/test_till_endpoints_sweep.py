@@ -18,6 +18,7 @@ import frappe
 import frappe.handler
 import requests
 from frappe.api import v2 as api_v2
+from frappe.custom.doctype.custom_field.custom_field import create_custom_field
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt, nowdate
 
@@ -183,6 +184,18 @@ def _past_the_gate(call, *errors):
 
 
 class TestTillEndpointsSweep(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		# The till's item queries leave out internal items through a Custom Field every instance gets
+		# from the hub (Item.is_internal_item); a fresh CI site never had it, so the class adds it
+		# before any write (the schema change commits).
+		if not frappe.db.has_column("Item", "is_internal_item"):
+			create_custom_field(
+				"Item",
+				{"fieldname": "is_internal_item", "label": "Is Internal Item", "fieldtype": "Check", "hidden": 1},
+			)
+
 	def setUp(self):
 		frappe.set_user("Administrator")
 		# Nothing may outlive the test: some endpoints commit, and one rolls back on its own error, which
@@ -206,7 +219,8 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		_user(TILL, [CASHIER_ROLE], "System User")
 		_user(OTHER_CASHIER, [CASHIER_ROLE], "System User")
 		_user(MANAGER, [MANAGER_ROLE], "System User")
-		_user(REPORTER, ["Sales Manager"], "System User")
+		# Accounts User: the role that reads Sales Invoice reports in a standard ERPNext.
+		_user(REPORTER, ["Sales Manager", "Accounts User"], "System User")
 		self.fx = _till()
 		frappe.set_user(TILL)
 		opened = shifts.create_opening_shift(
