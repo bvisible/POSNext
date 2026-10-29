@@ -2806,6 +2806,16 @@ def _create_invoice_from_sales_order(so, payments, pos_profile, invoice_payload,
 	return si
 
 
+# //// Neoffice — added (no upstream equivalent): the tip settings are a restaurant's own since the
+# //// site-wide single `Restaurant Settings` was split per restaurant (NeoRestau lot 1, task 1); an
+# //// invoice's restaurant is the one of its POS Profile.
+def _restaurant_settings_of(invoice_doc):
+	"""The settings of the restaurant an invoice was rung up in (empty when the site has no restaurant)."""
+	from pos_next.restaurant.settings import get_restaurant_settings_for_profile
+
+	return get_restaurant_settings_for_profile(invoice_doc.get("pos_profile"))
+
+
 # //// preserve and cumulate TIP items across POS update/submit cycles — 3574de5 + 3f9ee06 (+2 more)
 def _extract_tip_items(invoice_doc):
 	"""Extract and return TIP items from an invoice before it gets overwritten.
@@ -2813,15 +2823,8 @@ def _extract_tip_items(invoice_doc):
 	Used to preserve guest-paid tips when the POS rebuilds the items array.
 	Returns a list of dicts suitable for invoice_doc.append("items", ...).
 	"""
-	tip_item_code = None
-	try:
-		result = frappe.db.sql(
-			"SELECT value FROM `tabSingles` WHERE doctype='Restaurant Settings' AND field='tip_item'",
-		)
-		if result:
-			tip_item_code = result[0][0]
-	except Exception:
-		pass
+	# //// Neoffice — the tip item is the one of the invoice's restaurant (NeoRestau lot 1, task 1).
+	tip_item_code = _restaurant_settings_of(invoice_doc).get("tip_item")
 
 	if not tip_item_code:
 		return []
@@ -2852,12 +2855,9 @@ def _add_tip_to_invoice(invoice_doc, tip_amount, data, record_amount=None):
 	    record_amount: Amount for the Restaurant Tip record (POS tip only, excludes prior guest tips).
 	                   If None, uses tip_amount. Pass 0 to skip creating a record.
 	"""
-	try:
-		settings = frappe.get_single("Restaurant Settings")
-	except Exception:
-		return
-
-	if not settings.enable_tips or not settings.tip_item:
+	# //// Neoffice — the tip settings are the ones of the invoice's restaurant (NeoRestau lot 1, task 1).
+	settings = _restaurant_settings_of(invoice_doc)
+	if not settings.get("enable_tips") or not settings.get("tip_item"):
 		return
 
 	tip_item_code = settings.tip_item

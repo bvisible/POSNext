@@ -6,6 +6,10 @@
 # //// account would inflate both the turnover and the VAT base (32f2415d + a750c5e3, 2026-03-23;
 # //// account type and label d08c57e7; 0% tax template 07f2e560 + f46164e4; internal-item flag
 # //// e18d1885, 2026-04).
+# //// SUPERSEDED since NeoRestau lot 1: the settings are a `Restaurant`'s own now (one set per restaurant),
+# //// and nothing reads this single any more. It stays, tip provisioning included, so that whatever still
+# //// saves it does not break; the patch `pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant`
+# //// copied it into a default restaurant. To delete, with the doctype itself, once the fleet has migrated.
 import frappe
 from frappe import _
 from frappe.model.document import Document

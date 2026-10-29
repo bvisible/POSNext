@@ -11,6 +11,8 @@ from frappe.model.document import Document
 from frappe.utils import getdate, nowdate, get_time, time_diff_in_seconds, add_to_date
 from datetime import timedelta
 
+from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
+
 
 class RestaurantReservation(Document):
 	def validate(self):
@@ -33,8 +35,8 @@ class RestaurantReservation(Document):
 			frappe.throw(_("Cannot create a reservation in the past"))
 
 	def _validate_within_opening_hours(self):
-		"""Ensure reservation time falls within configured opening hours for the day."""
-		settings = frappe.get_single("Restaurant Settings")
+		"""Ensure reservation time falls within the opening hours its restaurant sets for the day."""
+		settings = get_restaurant_settings(restaurant_of(self))
 		if not settings.opening_hours:
 			return
 

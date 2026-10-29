@@ -244,7 +244,7 @@ def emit_card_updated_event(doc, method=None):
 
 # //// Neoffice — added (no upstream equivalent): an opening-hours change pushed like a card change.
 def emit_restaurant_settings_updated_event(doc, method=None):
-	"""Emit realtime event when Restaurant Settings change (opening hours)."""
+	"""Emit realtime event when a Restaurant is saved (its settings, opening hours included)."""
 	try:
 		frappe.publish_realtime(
 			"pos_restaurant_settings_updated",

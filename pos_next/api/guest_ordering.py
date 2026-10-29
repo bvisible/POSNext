@@ -15,6 +15,8 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
 
+from pos_next.restaurant.settings import get_restaurant_settings_for_profile
+
 
 # ==========================================
 # Internal helpers
@@ -37,23 +39,12 @@ def _require_valid_token(token):
 	return token_doc
 
 
-def _get_restaurant_settings():
-	"""Return Restaurant Settings as a dict (reads from Singles table as fallback)."""
-	try:
-		return frappe.get_single("Restaurant Settings")
-	except Exception:
-		# Fallback: read from Singles table directly
-		settings = frappe._dict()
-		rows = frappe.db.sql(
-			"SELECT field, value FROM `tabSingles` WHERE doctype='Restaurant Settings'",
-			as_dict=True,
-		)
-		for row in rows:
-			settings[row.field] = row.value
-		# Convert check fields to boolean
-		settings.enable_tips = settings.get("enable_tips") == "1"
-		settings.auto_detect_tip = settings.get("auto_detect_tip") == "1"
-		return settings
+def _get_restaurant_settings(pos_profile=None):
+	"""Return the settings of the restaurant a guest session belongs to: the one of its POS Profile.
+
+	A session without a till (a web takeaway order that has not picked one) belongs to the default restaurant.
+	"""
+	return get_restaurant_settings_for_profile(pos_profile)
 
 
 def _get_active_pos_opening(pos_profile):
@@ -424,7 +415,7 @@ def validate_token(token):
 	Used on guest app mount to check session validity.
 	"""
 	token_doc = _require_valid_token(token)
-	settings = _get_restaurant_settings()
+	settings = _get_restaurant_settings(token_doc.pos_profile)
 
 	table_info = None
 	if token_doc.table:
@@ -475,7 +466,7 @@ def get_guest_menu(token):
 	settings.guest_menu or the card flagged as_guest_menu.
 	"""
 	token_doc = _require_valid_token(token)
-	settings = _get_restaurant_settings()
+	settings = _get_restaurant_settings(token_doc.pos_profile)
 
 	# Resolve warehouse from POS Profile for stock display
 	warehouse = None
@@ -524,7 +515,7 @@ def submit_guest_order(token, items):
 	if not items:
 		frappe.throw(_("No items provided."))
 
-	settings = _get_restaurant_settings()
+	settings = _get_restaurant_settings(token_doc.pos_profile)
 	validation_mode = settings.qr_order_validation or "Direct to Kitchen"
 
 	invoice_doc = _get_or_create_invoice(token_doc)
@@ -699,7 +690,7 @@ def get_order_status(token):
 	)
 
 	# Get tip item code to exclude from order items display
-	settings = _get_restaurant_settings()
+	settings = _get_restaurant_settings(token_doc.pos_profile)
 	tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item") if settings else None
 
 	# Separate order items from tip items
@@ -982,7 +973,7 @@ def confirm_guest_payment(token, amount, tip=0):
 
 		# Add TIP item to invoice if tip > 0
 		if flt(tip) > 0:
-			settings = _get_restaurant_settings()
+			settings = _get_restaurant_settings(token_doc.pos_profile)
 			tip_item_code = getattr(settings, "tip_item", None) or settings.get("tip_item")
 			tip_account = getattr(settings, "tip_account", None) or settings.get("tip_account")
 			if tip_item_code:
@@ -1135,7 +1126,7 @@ def create_table_token(table, pos_profile):
 			frappe.log_error("Token expire fallback", f"Token {t_name}: {str(e)}")
 
 	# Compute expires_at from settings
-	settings = _get_restaurant_settings()
+	settings = _get_restaurant_settings(pos_profile)
 	expires_at = None
 	if settings.token_expiry_mode == "Timed":
 		days = settings.token_expiry_days or 7
@@ -1252,7 +1243,7 @@ def submit_takeaway_order(token, items, customer=None):
 	if not has_payment:
 		frappe.throw(_("Payment must be completed before placing a takeaway order."))
 
-	settings = _get_restaurant_settings()
+	settings = _get_restaurant_settings(token_doc.pos_profile)
 	card_name = settings.takeaway_menu or _get_guest_menu_card(settings)
 	if not card_name:
 		frappe.throw(_("No takeaway menu is configured."))

@@ -404,6 +404,7 @@ import { ref, computed, onMounted, watch, nextTick } from "vue"
 import { Button, Dialog, Input } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
+import { useRestaurantStore } from "@/stores/restaurant"
 import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
 import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
@@ -426,6 +427,7 @@ function handleClose() {
 }
 
 const { showSuccess, showError } = useToast()
+const restaurantStore = useRestaurantStore()
 const cards = ref([])
 const cardDetail = ref(null)
 const selectedCard = ref(null)
@@ -548,9 +550,8 @@ async function loadCards() {
 
 async function loadOpeningHours() {
 	try {
-		const res = await call("frappe.client.get", {
-			doctype: "Restaurant Settings",
-			name: "Restaurant Settings",
+		const res = await call("pos_next.api.restaurant.get_restaurant_settings", {
+			restaurant: restaurantStore.tillRestaurant,
 		})
 		openingHours.value = res?.opening_hours || []
 	} catch {

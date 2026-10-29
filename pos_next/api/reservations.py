@@ -10,6 +10,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import _parse_duration
+from pos_next.restaurant.settings import default_restaurant, get_restaurant_settings, restaurant_of
 import json
 import secrets
 from datetime import datetime, timedelta
@@ -89,7 +90,8 @@ def create_reservation(
 	if isinstance(tables, str):
 		tables = json.loads(tables)
 
-	settings = frappe.get_single("Restaurant Settings")
+	# The reservation belongs to the restaurant of the till that takes it
+	settings = get_restaurant_settings()
 	if not duration:
 		duration = settings.default_reservation_duration or 5400
 
@@ -114,6 +116,7 @@ def create_reservation(
 
 	doc = frappe.get_doc({
 		"doctype": "Restaurant Reservation",
+		"restaurant": settings.get("name"),
 		"status": "Confirmed",
 		"reservation_date": reservation_date,
 		"reservation_time": reservation_time,
@@ -224,7 +227,7 @@ def get_reservation_stats(from_date, to_date):
 @frappe.whitelist(allow_guest=True)
 def get_available_slots(date):
 	"""Return available time slots for a given date based on opening hours."""
-	settings = frappe.get_single("Restaurant Settings")
+	settings = get_restaurant_settings()
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
@@ -248,7 +251,7 @@ def get_available_slots(date):
 @frappe.whitelist(allow_guest=True)
 def get_available_tables(date, time, duration=None, no_of_guests=None):
 	"""Return tables with their availability status for a given slot."""
-	settings = frappe.get_single("Restaurant Settings")
+	settings = get_restaurant_settings()
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
@@ -293,7 +296,7 @@ def submit_guest_reservation(
 	duration=None,
 ):
 	"""Create a reservation from the public web form."""
-	settings = frappe.get_single("Restaurant Settings")
+	settings = get_restaurant_settings()
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
@@ -340,6 +343,7 @@ def submit_guest_reservation(
 
 	doc = frappe.get_doc({
 		"doctype": "Restaurant Reservation",
+		"restaurant": settings.get("name"),
 		"status": initial_status,
 		"reservation_date": reservation_date,
 		"reservation_time": reservation_time,
@@ -406,17 +410,20 @@ def verify_reservation(token):
 
 
 def send_reminders():
-	"""Scheduled job: send reminder emails for upcoming reservations."""
-	settings = frappe.get_single("Restaurant Settings")
-	if not settings.enable_reservations:
-		return
+	"""Scheduled job: send reminder emails for upcoming reservations, restaurant by restaurant."""
+	for restaurant in frappe.get_all("Restaurant", filters={"enable_reservations": 1}, pluck="name"):
+		_send_reminders_of(restaurant)
 
+
+def _send_reminders_of(restaurant):
+	"""Remind the guests of one restaurant, within the reminder window that restaurant sets."""
+	settings = get_restaurant_settings(restaurant)
 	reminder_hours = settings.reservation_reminder_hours or 3
 	now = now_datetime()
 	reminder_cutoff = add_to_date(now, hours=reminder_hours)
 
-	reservations = frappe.get_all(
-		"Restaurant Reservation",
+	reservations = _reservations_of(
+		restaurant,
 		filters={
 			"status": "Confirmed",
 			"reminder_sent": 0,
@@ -441,16 +448,19 @@ def send_reminders():
 
 
 def auto_no_show():
-	"""Scheduled job: mark overdue confirmed reservations as No Show."""
-	settings = frappe.get_single("Restaurant Settings")
-	if not settings.enable_reservations:
-		return
+	"""Scheduled job: mark overdue confirmed reservations as No Show, restaurant by restaurant."""
+	for restaurant in frappe.get_all("Restaurant", filters={"enable_reservations": 1}, pluck="name"):
+		_mark_no_shows_of(restaurant)
 
+
+def _mark_no_shows_of(restaurant):
+	"""Mark the overdue reservations of one restaurant, after the no-show delay that restaurant sets."""
+	settings = get_restaurant_settings(restaurant)
 	delay_minutes = settings.no_show_delay or 60
 	now = now_datetime()
 
-	reservations = frappe.get_all(
-		"Restaurant Reservation",
+	reservations = _reservations_of(
+		restaurant,
 		filters={
 			"status": "Confirmed",
 			"reservation_date": ["<=", nowdate()],
@@ -470,6 +480,14 @@ def auto_no_show():
 			frappe.publish_realtime("reservation_update")
 
 	frappe.db.commit()
+
+
+def _reservations_of(restaurant, filters, fields):
+	"""The reservations of a restaurant; one that names none belongs to the default restaurant."""
+	or_filters = [["restaurant", "=", restaurant]]
+	if restaurant == default_restaurant():
+		or_filters.append(["restaurant", "is", "not set"])
+	return frappe.get_all("Restaurant Reservation", filters=filters, or_filters=or_filters, fields=fields)
 
 
 # ==========================================
@@ -536,7 +554,7 @@ def _send_confirmation_email(reservation):
 		)
 
 		# Email to restaurant
-		settings = frappe.get_single("Restaurant Settings")
+		settings = get_restaurant_settings(restaurant_of(reservation))
 		if settings.restaurant_email:
 			restaurant_subject = _("New Reservation - {0} ({1} guests)").format(
 				reservation.guest_name, reservation.no_of_guests
@@ -600,7 +618,7 @@ def _send_cancellation_email(reservation):
 			now=True,
 		)
 
-		settings = frappe.get_single("Restaurant Settings")
+		settings = get_restaurant_settings(restaurant_of(reservation))
 		if settings.restaurant_email:
 			frappe.sendmail(
 				recipients=[settings.restaurant_email],

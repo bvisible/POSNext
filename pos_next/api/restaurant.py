@@ -11,6 +11,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from pos_next.restaurant import settings as restaurant_config
+
 
 def get_station_for_item(item_code):
 	"""Look up which preparation station an item belongs to."""
@@ -397,16 +399,8 @@ def get_table_order(table_name):
 		fields=item_fields
 	)
 
-	# Exclude TIP items from order display
-	tip_item_code = None
-	try:
-		result = frappe.db.sql(
-			"SELECT value FROM `tabSingles` WHERE doctype='Restaurant Settings' AND field='tip_item'",
-		)
-		if result:
-			tip_item_code = result[0][0]
-	except Exception:
-		pass
+	# Exclude TIP items from order display (the tip item of the till's restaurant)
+	tip_item_code = restaurant_config.get_restaurant_settings().get("tip_item")
 	tip_total = 0
 	order_items = []
 	for item in all_items:
@@ -865,16 +859,8 @@ def open_table(table_name, pos_profile, customer=None):
 				"posa_item_modifiers", "kds_status"]
 		)
 
-		# Exclude TIP items (same filter as get_table_order)
-		tip_item_code = None
-		try:
-			result = frappe.db.sql(
-				"SELECT value FROM `tabSingles` WHERE doctype='Restaurant Settings' AND field='tip_item'",
-			)
-			if result:
-				tip_item_code = result[0][0]
-		except Exception:
-			pass
+		# Exclude TIP items (same filter as get_table_order), the tip item being the profile's restaurant's
+		tip_item_code = restaurant_config.get_restaurant_settings_for_profile(pos_profile).get("tip_item")
 		tip_total = 0
 		order_items = []
 		for item in items:
@@ -1146,10 +1132,11 @@ def delete_area(name):
 
 
 @frappe.whitelist()
-def get_active_cards():
+def get_active_cards(restaurant=None):
 	"""Fetch active restaurant cards filtered by date and current time slot assignment.
 	A card the opening hours assign to a time slot is shown during its slots only; a card they assign to no
-	slot is shown at every hour (its dates still apply).
+	slot is shown at every hour (its dates still apply). The opening hours are the restaurant's: the till's
+	own unless one is named.
 	Permanent cards bypass all date/time filters and appear at the end."""
 	from frappe.utils import today
 
@@ -1162,10 +1149,10 @@ def get_active_cards():
 	current_date = today()
 
 	# Get cards assigned to current time slot via opening hours
-	slot_cards = _get_current_slot_cards()
+	slot_cards = _get_current_slot_cards(restaurant)
 	# Until 20.10.2026 the slot filter applied to every card as soon as one slot named a card: a card the schedule
 	# names nowhere (every card just created in the card editor) never showed at the till (maintenance#1754).
-	scheduled_cards = _get_scheduled_cards() if slot_cards is not None else set()
+	scheduled_cards = _get_scheduled_cards(restaurant) if slot_cards is not None else set()
 
 	result_normal = []
 	result_permanent = []
@@ -1271,115 +1258,143 @@ def get_active_menus():
 
 
 @frappe.whitelist()
-def get_restaurant_settings():
-	"""Return restaurant opening hours and current status."""
-	from frappe.utils import nowtime, get_time, nowdate, getdate
-
-	try:
-		settings = frappe.get_single("Restaurant Settings")
-	except Exception:
+def get_restaurant_settings(restaurant=None):
+	"""Return a restaurant's opening hours, current status and settings (the till's restaurant by default)."""
+	settings = restaurant_config.get_restaurant_settings(restaurant)
+	if not settings:
+		# No restaurant yet: nothing is set up, the restaurant features stay off
 		return {"opening_hours": [], "is_open": True, "current_slot": None}
 
 	hours = []
-	for row in settings.opening_hours:
+	for row in settings.opening_hours or []:
 		hours.append({
 			"day_of_week": row.day_of_week,
 			"from_time": _format_time(row.from_time),
 			"to_time": _format_time(row.to_time),
 			"label": row.label,
-			"restaurant_card": row.restaurant_card if hasattr(row, "restaurant_card") else None,
+			"restaurant_card": row.restaurant_card,
 		})
 
 	is_open, current_slot = _check_restaurant_open(hours)
 
 	return {
+		"restaurant": settings.name,
+		"restaurant_name": settings.restaurant_name,
 		"opening_hours": hours,
 		"is_open": is_open,
 		"current_slot": current_slot,
-		"enable_runner": bool(settings.enable_runner) if hasattr(settings, "enable_runner") else True,
+		"enable_runner": bool(settings.enable_runner),
 		"enable_takeaway": bool(frappe.db.get_single_value("POS Settings", "enable_takeaway") or 0),
 		"takeaway_card": frappe.db.get_single_value("POS Settings", "takeaway_card") or None,
-		"enable_tips": bool(settings.enable_tips) if hasattr(settings, "enable_tips") else False,
-		"auto_detect_tip": bool(settings.auto_detect_tip) if hasattr(settings, "auto_detect_tip") else True,
-		"tip_item": settings.tip_item if hasattr(settings, "tip_item") else None,
-		"tip_account": settings.tip_account if hasattr(settings, "tip_account") else None,
-		"enable_qr_ordering": bool(settings.enable_qr_ordering) if hasattr(settings, "enable_qr_ordering") else False,
-		"guest_menu": settings.guest_menu if hasattr(settings, "guest_menu") else None,
-		"qr_order_validation": settings.qr_order_validation if hasattr(settings, "qr_order_validation") else "Direct to Kitchen",
-		"guest_account_mode": settings.guest_account_mode if hasattr(settings, "guest_account_mode") else "Not Proposed",
-		"token_expiry_mode": settings.token_expiry_mode if hasattr(settings, "token_expiry_mode") else "On Table Close",
-		"token_expiry_days": settings.token_expiry_days if hasattr(settings, "token_expiry_days") else None,
-		"enable_web_takeaway": bool(settings.enable_web_takeaway) if hasattr(settings, "enable_web_takeaway") else False,
-		"takeaway_menu": settings.takeaway_menu if hasattr(settings, "takeaway_menu") else None,
+		"enable_tips": bool(settings.enable_tips),
+		"auto_detect_tip": bool(settings.auto_detect_tip),
+		"tip_item": settings.tip_item,
+		"tip_account": settings.tip_account,
+		"enable_qr_ordering": bool(settings.enable_qr_ordering),
+		"guest_menu": settings.guest_menu,
+		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
+		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
+		"token_expiry_mode": settings.token_expiry_mode or "On Table Close",
+		"token_expiry_days": settings.token_expiry_days,
+		"enable_web_takeaway": bool(settings.enable_web_takeaway),
+		"takeaway_menu": settings.takeaway_menu,
+		"enable_reservations": bool(settings.enable_reservations),
+		"default_reservation_duration": settings.default_reservation_duration,
+		"no_show_delay": settings.no_show_delay,
+		"reservation_reminder_hours": settings.reservation_reminder_hours,
+		"enable_online_reservations": bool(settings.enable_online_reservations),
+		"require_reservation_validation": bool(settings.require_reservation_validation),
+		"restaurant_email": settings.restaurant_email,
+		"reservation_channels": settings.reservation_channels,
 	}
 
 
-@frappe.whitelist()
-def save_restaurant_settings(opening_hours):
-	"""Save restaurant opening hours from the POS frontend."""
+def _restaurant_to_save(restaurant=None):
+	"""The Restaurant a settings save applies to: the one named, else the till's own."""
+	name = restaurant or restaurant_config.get_restaurant_settings().get("name")
+	if not name:
+		# A site that saves its first restaurant settings from the till has no restaurant yet: it gets the default one
+		name = restaurant_config.create_default_restaurant()
+	if not name:
+		frappe.throw(_("No restaurant is set up yet"))
+	return frappe.get_doc("Restaurant", name)
+
+
+def _save_settings(settings, restaurant, allowed):
+	"""Write the fields `settings` names (among `allowed`) onto a restaurant and save it."""
 	import json
 
-	if not frappe.has_permission("Restaurant Settings", "write"):
+	if not frappe.has_permission("Restaurant", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	if isinstance(opening_hours, str):
-		opening_hours = json.loads(opening_hours)
+	if isinstance(settings, str):
+		settings = json.loads(settings)
 
-	settings = frappe.get_single("Restaurant Settings")
-	settings.opening_hours = []
+	unknown = [field for field in settings if field not in allowed]
+	if unknown:
+		frappe.throw(_("Unknown restaurant setting: {0}").format(", ".join(unknown)))
 
-	for row in opening_hours:
-		settings.append("opening_hours", {
-			"day_of_week": row.get("day_of_week"),
-			"from_time": row.get("from_time"),
-			"to_time": row.get("to_time"),
-			"label": row.get("label"),
-			"restaurant_card": row.get("restaurant_card"),
-		})
+	doc = _restaurant_to_save(restaurant)
+	for field, value in settings.items():
+		if field != "opening_hours":
+			doc.set(field, value)
+			continue
+		doc.set("opening_hours", [])
+		for row in value or []:
+			doc.append("opening_hours", {
+				"day_of_week": row.get("day_of_week"),
+				"from_time": row.get("from_time"),
+				"to_time": row.get("to_time"),
+				"label": row.get("label"),
+				"restaurant_card": row.get("restaurant_card"),
+			})
 
-	settings.save()
+	doc.save()
+	return doc
+
+
+@frappe.whitelist()
+def save_restaurant_settings(settings, restaurant=None):
+	"""Save a restaurant's settings from the POS frontend (the till's restaurant by default).
+
+	`settings` maps field names to values, the opening hours being a list of rows; only the fields it names change.
+	"""
+	_save_settings(settings, restaurant, (*restaurant_config.SETTINGS_FIELDS, "opening_hours"))
 	return {"status": "success"}
 
 
 @frappe.whitelist()
-def save_tip_settings(enable_tips=0, auto_detect_tip=1):
-	"""Save tip-related settings and auto-create TIP item/account if needed."""
-	if not frappe.has_permission("Restaurant Settings", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+def save_tip_settings(settings, restaurant=None):
+	"""Save a restaurant's tip settings and auto-create its TIP item/account if needed.
 
-	settings = frappe.get_single("Restaurant Settings")
-	settings.enable_tips = int(enable_tips)
-	settings.auto_detect_tip = int(auto_detect_tip)
-	settings.save()
+	`settings` carries `enable_tips` and/or `auto_detect_tip`.
+	"""
+	doc = _save_settings(settings, restaurant, ("enable_tips", "auto_detect_tip"))
 
 	return {
 		"status": "success",
-		"tip_item": settings.tip_item,
-		"tip_account": settings.tip_account,
+		"tip_item": doc.tip_item,
+		"tip_account": doc.tip_account,
 	}
 
 
 @frappe.whitelist()
-def get_restaurant_status():
+def get_restaurant_status(restaurant=None):
 	"""Lightweight endpoint returning restaurant open/closed status and card availability."""
 
 	# Get opening hours
-	try:
-		settings = frappe.get_single("Restaurant Settings")
-		hours = [
-			{
-				"day_of_week": r.day_of_week,
-				"from_time": str(r.from_time) if r.from_time else None,
-				"to_time": str(r.to_time) if r.to_time else None,
-				"label": r.label,
-			}
-			for r in settings.opening_hours
-		]
-	except Exception:
-		# No settings configured = always open, no warnings
-		return {"is_open": True, "current_slot": None, "has_active_cards": True, "warning": None}
+	settings = restaurant_config.get_restaurant_settings(restaurant)
+	hours = [
+		{
+			"day_of_week": r.day_of_week,
+			"from_time": str(r.from_time) if r.from_time else None,
+			"to_time": str(r.to_time) if r.to_time else None,
+			"label": r.label,
+		}
+		for r in settings.opening_hours or []
+	]
 
-	# If no hours defined, restaurant is considered always open
+	# No restaurant, or no hours defined: the restaurant is considered always open, no warnings
 	if not hours:
 		return {"is_open": True, "current_slot": None, "has_active_cards": True, "warning": None}
 
@@ -1389,7 +1404,7 @@ def get_restaurant_status():
 		return {"is_open": False, "current_slot": None, "has_active_cards": False, "warning": None}
 
 	# Check if there are active cards for the current time
-	active_cards = get_active_cards()
+	active_cards = get_active_cards(settings.name)
 	has_active_cards = len(active_cards) > 0
 
 	warning = None
@@ -1425,12 +1440,9 @@ def _format_time(val):
 	return s
 
 
-def _get_scheduled_cards():
-	"""Names of the cards the opening hours assign to at least one time slot."""
-	try:
-		settings = frappe.get_single("Restaurant Settings")
-	except Exception:
-		return set()
+def _get_scheduled_cards(restaurant=None):
+	"""Names of the cards the restaurant's opening hours assign to at least one time slot."""
+	settings = restaurant_config.get_restaurant_settings(restaurant)
 	return {
 		slot.restaurant_card
 		for slot in settings.opening_hours or []
@@ -1438,15 +1450,12 @@ def _get_scheduled_cards():
 	}
 
 
-def _get_current_slot_cards():
+def _get_current_slot_cards(restaurant=None):
 	"""Return set of card names assigned to the current time slot, or None if no slots have cards."""
 	import calendar
 	from frappe.utils import nowtime, get_time, nowdate, getdate
 
-	try:
-		settings = frappe.get_single("Restaurant Settings")
-	except Exception:
-		return None
+	settings = restaurant_config.get_restaurant_settings(restaurant)
 
 	if not settings.opening_hours:
 		return None

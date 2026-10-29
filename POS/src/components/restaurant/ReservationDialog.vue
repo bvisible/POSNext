@@ -91,6 +91,7 @@ import { ref, computed, watch, onMounted } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { useReservations } from "@/composables/useReservations"
 import { useToast } from "@/composables/useToast"
+import { useRestaurantStore } from "@/stores/restaurant"
 import ReservationList from "./ReservationList.vue"
 import ReservationForm from "./ReservationForm.vue"
 import ReservationStats from "./ReservationStats.vue"
@@ -104,6 +105,7 @@ defineEmits(["close"])
 const { reservations, loading, currentDate, fetchReservations, updateStatus } =
 	useReservations()
 const { showSuccess, showError } = useToast()
+const restaurantStore = useRestaurantStore()
 
 const activeTab = ref("list")
 const selectedArea = ref("")
@@ -138,10 +140,12 @@ const areas = computed(() => {
 
 async function loadSettings() {
 	try {
-		const settings = await call("frappe.client.get", {
-			doctype: "Restaurant Settings",
-			name: "Restaurant Settings",
-		})
+		const settings = await call(
+			"pos_next.api.restaurant.get_restaurant_settings",
+			{
+				restaurant: restaurantStore.tillRestaurant,
+			},
+		)
 		if (settings) {
 			const dur = settings.default_reservation_duration || 5400
 			// Convert seconds to HH:MM:SS

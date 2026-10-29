@@ -31,6 +31,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	const activeMenus = ref([])
 	const takeawayOrders = ref([])
 	const restaurantSettings = ref({
+		restaurant: null,
 		opening_hours: [],
 		enable_tips: false,
 		auto_detect_tip: true,
@@ -55,6 +56,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	})
 	const isEnabled = computed(
 		() => posSettingsStore.settings.enable_restaurant_mode,
+	)
+	// The restaurant the till belongs to, once the till's settings name it. Until then the server picks the
+	// restaurant of the user's open till, else the default one: every call below works without it.
+	const tillRestaurant = computed(
+		() => posSettingsStore.settings.restaurant || undefined,
 	)
 	const defaultArea = computed(
 		() => posSettingsStore.settings.default_restaurant_area,
@@ -375,7 +381,12 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 
 	async function fetchRestaurantSettings() {
 		try {
-			const res = await call("pos_next.api.restaurant.get_restaurant_settings")
+			const res = await call(
+				"pos_next.api.restaurant.get_restaurant_settings",
+				{
+					restaurant: tillRestaurant.value,
+				},
+			)
 			if (res) {
 				restaurantSettings.value = res
 				restaurantStatus.value = {
@@ -390,14 +401,35 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
-	async function saveRestaurantSettings(openingHours) {
+	// Saves go to the restaurant the settings on screen were read for
+	const savedRestaurant = () =>
+		tillRestaurant.value || restaurantSettings.value.restaurant || undefined
+
+	async function updateRestaurantSettings(fields) {
 		try {
 			await call("pos_next.api.restaurant.save_restaurant_settings", {
-				opening_hours: JSON.stringify(openingHours),
+				settings: JSON.stringify(fields),
+				restaurant: savedRestaurant(),
 			})
-			await fetchRestaurantSettings()
 		} catch (error) {
 			log.error("Failed to save restaurant settings:", error)
+			throw error
+		}
+	}
+
+	async function saveRestaurantSettings(openingHours) {
+		await updateRestaurantSettings({ opening_hours: openingHours })
+		await fetchRestaurantSettings()
+	}
+
+	async function saveTipSettings(fields) {
+		try {
+			return await call("pos_next.api.restaurant.save_tip_settings", {
+				settings: JSON.stringify(fields),
+				restaurant: savedRestaurant(),
+			})
+		} catch (error) {
+			log.error("Failed to save tip settings:", error)
 			throw error
 		}
 	}
@@ -597,8 +629,11 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		getModifiersForItem,
 		fetchActiveMenus,
 		fetchActiveCards,
+		tillRestaurant,
 		fetchRestaurantSettings,
 		saveRestaurantSettings,
+		updateRestaurantSettings,
+		saveTipSettings,
 		fetchRestaurantStatus,
 		startStatusPolling,
 		stopStatusPolling,

@@ -2002,12 +2002,9 @@ const qrSettings = ref({
 
 async function toggleRunner(val) {
 	try {
-		await call("frappe.client.set_value", {
-			doctype: "Restaurant Settings",
-			name: "Restaurant Settings",
-			fieldname: "enable_runner",
-			value: val ? 1 : 0,
-		});
+		//// Neoffice — the runner switch is a setting of the till's restaurant, not of the whole site
+		//// any more: it is written through the restaurant store (NeoRestau lot 1, task 1).
+		await restaurantStore.updateRestaurantSettings({ enable_runner: val ? 1 : 0 });
 		restaurantStore.restaurantSettings.enable_runner = !!val;
 	} catch (error) {
 		console.error("Failed to toggle runner:", error);
@@ -2246,14 +2243,17 @@ async function saveSettings() {
 
 		// Save restaurant settings (opening hours + tips)
 		//// Neoffice — the block below has no upstream counterpart: opening hours, tip settings and
-		//// the QR self-ordering / takeaway fields live on the Restaurant Settings single, not on the
-		//// POS profile. It runs after the POS settings are already stored, so a failure here is
-		//// reported without losing them (32f2415d + 860a115b 2026-03-23, 68786b21 2026-03-28).
+		//// the QR self-ordering / takeaway fields live on the till's Restaurant (they lived on the
+		//// Restaurant Settings single until NeoRestau lot 1), not on the POS profile. It runs after
+		//// the POS settings are already stored, so a failure here is reported without losing them
+		//// (32f2415d + 860a115b 2026-03-23, 68786b21 2026-03-28).
 		if (restaurantStore.isEnabled) {
 			try {
 				await restaurantStore.saveRestaurantSettings(openingHours.value);
 				// Save tip settings
-				await call("pos_next.api.restaurant.save_tip_settings", {
+				//// Neoffice — tips are the till's restaurant's own setting: saved through the restaurant
+				//// store, which names that restaurant (NeoRestau lot 1, task 1).
+				await restaurantStore.saveTipSettings({
 					enable_tips: tipSettings.value.enable_tips ? 1 : 0,
 					auto_detect_tip: tipSettings.value.auto_detect_tip ? 1 : 0,
 				});
@@ -2269,14 +2269,9 @@ async function saveSettings() {
 					enable_web_takeaway: qrSettings.value.enable_web_takeaway ? 1 : 0,
 					takeaway_menu: qrSettings.value.takeaway_menu || "",
 				};
-				for (const [field, value] of Object.entries(qrFields)) {
-					await call("frappe.client.set_value", {
-						doctype: "Restaurant Settings",
-						name: "Restaurant Settings",
-						fieldname: field,
-						value: value,
-					});
-				}
+				//// Neoffice — the QR and takeaway fields live on the till's restaurant, not on the former
+				//// Restaurant Settings single: one write instead of one request per field (NeoRestau lot 1).
+				await restaurantStore.updateRestaurantSettings(qrFields);
 				await restaurantStore.fetchRestaurantSettings();
 				// Update local tip display after save (item may have been auto-created)
 				tipSettings.value.tip_item = restaurantStore.restaurantSettings.tip_item;

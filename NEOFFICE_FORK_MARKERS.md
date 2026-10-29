@@ -63,7 +63,10 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
 - **Restaurant module** (`7b64f6c6` merge, 2026-03-31, and follow-ups): `restaurant_area`,
   `restaurant_table`, `restaurant_card`, `restaurant_card_item`, `restaurant_menu`,
   `restaurant_menu_course`, `restaurant_opening_hours`, `restaurant_reservation`,
-  `restaurant_reservation_table`, `restaurant_settings`, `restaurant_tip`.
+  `restaurant_reservation_table`, `restaurant_settings`, `restaurant_tip`; and, since NeoRestau lot 1,
+  `restaurant` (a restaurant and its own settings: the fields the site-wide `restaurant_settings` single
+  held, now one set per restaurant; the single stays in place and a patch,
+  `pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant`, moves it into a default restaurant).
 - **Preparation / KDS** (`831857f`, `4df0caf` and follow-ups): `preparation_station`,
   `preparation_station_item`, `preparation_station_item_group`, `preparation_workflow`,
   `preparation_workflow_item`, `preparation_workflow_step`.
@@ -242,13 +245,14 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/product_option_group/product_option_group.json` | 10: `group_name`, `selection_type`, `required`, `max_selections`, `section_break_options`, `options`, `section_break_item_groups`, `applicable_item_groups`, `section_break_items`, `applicable_items` |
 | `pos_next/pos_next/doctype/product_option_group_item/product_option_group_item.json` | 2: `item`, `item_name` |
 | `pos_next/pos_next/doctype/product_option_group_item_group/product_option_group_item_group.json` | 1: `item_group` |
+| `pos_next/pos_next/doctype/restaurant/restaurant.json` | 37: `restaurant_name`, `company`, `enabled`, `column_break_identity`, `logo`, `address`, `section_runner`, `enable_runner`, `section_hours`, `opening_hours`, `section_tips`, `enable_tips`, `auto_detect_tip`, `column_break_tips` … |
 | `pos_next/pos_next/doctype/restaurant_area/restaurant_area.json` | 6: `area_name`, `description`, `sort_order`, `floor_plan_section`, `floor_plan_walls`, `floor_plan_bg` |
 | `pos_next/pos_next/doctype/restaurant_card/restaurant_card.json` | 14: `section_break_details`, `card_name`, `description`, `column_break_2`, `image`, `is_active`, `is_permanent`, `is_guest_menu`, `section_break_dates`, `available_from`, `column_break_3`, `available_to`, `section_break_items`, `items` |
 | `pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json` | 7: `item_type`, `label`, `item`, `menu`, `price`, `sort_order`, `disabled` |
 | `pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json` | 9: `menu_name`, `price`, `description`, `image`, `is_active`, `available_from`, `available_to`, `section_break_courses`, `courses` |
 | `pos_next/pos_next/doctype/restaurant_menu_course/restaurant_menu_course.json` | 4: `course_name`, `item`, `item_name`, `sort_order` |
 | `pos_next/pos_next/doctype/restaurant_opening_hours/restaurant_opening_hours.json` | 5: `day_of_week`, `from_time`, `to_time`, `label`, `restaurant_card` |
-| `pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json` | 23: `section_reservation`, `status`, `channel`, `column_break_1`, `reservation_date`, `reservation_time`, `duration`, `end_time`, `section_guest`, `no_of_guests`, `guest_name`, `column_break_2`, `phone`, `email` … |
+| `pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json` | 24: `section_reservation`, `restaurant`, `status`, `channel`, `column_break_1`, `reservation_date`, `reservation_time`, `duration`, `end_time`, `section_guest`, `no_of_guests`, `guest_name`, `column_break_2`, `phone`, `email` … |
 | `pos_next/pos_next/doctype/restaurant_reservation_table/restaurant_reservation_table.json` | 4: `restaurant_table`, `table_name`, `area`, `capacity` |
 | `pos_next/pos_next/doctype/restaurant_settings/restaurant_settings.json` | 31: `section_runner`, `enable_runner`, `section_hours`, `opening_hours`, `section_tips`, `enable_tips`, `auto_detect_tip`, `column_break_tips`, `tip_item`, `tip_account`, `section_qr_ordering`, `enable_qr_ordering`, `guest_menu`, `qr_order_validation` … |
 | `pos_next/pos_next/doctype/restaurant_table/restaurant_table.json` | 9: `table_name`, `area`, `capacity`, `status`, `pos_x`, `pos_y`, `width`, `height`, `shape` |

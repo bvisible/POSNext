@@ -334,7 +334,9 @@ doc_events = {
 		"on_update": "pos_next.realtime_events.emit_card_updated_event",
 		"after_rename": "pos_next.realtime_events.emit_card_updated_event",
 	},
-	"Restaurant Settings": {
+	# //// Neoffice — the opening hours and the other settings moved from the single `Restaurant Settings`
+	# //// onto each Restaurant (NeoRestau lot 1, task 1): a restaurant's save is what tells the tills now.
+	"Restaurant": {
 		"on_update": "pos_next.realtime_events.emit_restaurant_settings_updated_event",
 	},
 }

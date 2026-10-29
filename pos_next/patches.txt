@@ -22,3 +22,7 @@ pos_next.patches.v2_0_0.remove_custom_company_fields
 pos_next.patches.v2_4_0.rehome_auth_gate_to_pos_next
 pos_next.patches.v2_3_0.enable_posa_allow_cancel_pos_expense
 pos_next.patches.v2_4_0.rename_locations_doctypes
+# //// Neoffice — NeoRestau: the site-wide Restaurant Settings single becomes the settings of a
+# //// default restaurant, named after the default company (lot 1, task 1). It runs after the doctype sync,
+# //// which is what creates the Restaurant table, and does nothing on a site that never used the module.
+pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant
