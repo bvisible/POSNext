@@ -89,7 +89,8 @@
 									v-if="tablet.disconnected"
 									class="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
 								>
-									{{ __("Disconnected") }}
+									<!-- A tablet that is disconnected (its own context: the bare word is the customer display's) -->
+									{{ __("Disconnected", null, "Tablet") }}
 								</span>
 								<button
 									v-else-if="confirming !== tablet.name"
