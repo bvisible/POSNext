@@ -2,7 +2,8 @@
 import { cartRowOf } from "@/utils/cartRow";
 import { promoApi } from "@/utils/promoApi";
 import { createResource } from "frappe-ui";
-import { computed, ref, toRaw } from "vue";
+//// Neoffice — watch: the lines of an order that turns to take away are taxed again (NeoRestau lot 1, task 11).
+import { computed, ref, toRaw, watch } from "vue";
 import { isOffline, getCachedItem } from "@/utils/offline";
 //// enhance serial number management in POS — 7367119
 import { useSerialNumberStore } from "@/stores/serialNumber";
@@ -59,6 +60,12 @@ export function useInvoice() {
 	const couponCode = ref(null);
 	const taxRules = ref([]); // Tax rules from POS Profile
 	const taxInclusive = ref(false); // Tax inclusive setting from POS Settings
+	//// Neoffice — the cart is a takeaway order, and its number (NeoRestau lot 1, task 11). They live here, where the
+	//// lines are taxed and the sale is paid: a takeaway order's lines take their takeaway VAT, and its payment carries
+	//// the flag and the number to the server, which gives the invoice the restaurant's takeaway tax category. posCart
+	//// exposes these two refs as its own: the floor plan's takeaway button patches them, its clearCart resets them.
+	const isTakeaway = ref(false);
+	const takeawayNumber = ref("");
 
 	// Submission state - prevents duplicate submissions
 	const isSubmitting = ref(false);
@@ -394,6 +401,10 @@ export function useInvoice() {
 				// Optional item-level Sales Person (commission attribution)
 				sales_person: item.sales_person || null,
 				sales_person_name: item.sales_person_name || null,
+				//// Neoffice — the item's VAT maps as the server sends them (pos_next.api.items): for the till's own
+				//// tax category, and for a takeaway order (null where the till has no takeaway rule). See itemTaxRows.
+				item_tax_rate: item.item_tax_rate,
+				takeaway_item_tax_rate: item.takeaway_item_tax_rate,
 			};
 			invoiceItems.value.push(newItem);
 			// Recalculate the newly added item to apply taxes
@@ -407,6 +418,8 @@ export function useInvoice() {
 			);
 			_cachedTotalTax.value += newItem.tax_amount || 0;
 			_cachedTotalDiscount.value += newItem.discount_amount || 0;
+			//// Neoffice — a line that comes without its VAT maps reads them from the item cache (takeTaxMapsFromCache).
+			if (newItem.item_tax_rate == null) takeTaxMapsFromCache(newItem);
 		}
 	}
 
@@ -711,37 +724,122 @@ export function useInvoice() {
 		rebuildIncrementalCache();
 	}
 
-	// Performance: Cache tax calculation to avoid repeated loops
-	let cachedTaxRate = 0;
-	let taxRulesCacheKey = "";
+	//// Neoffice — an item's VAT is its own (NeoRestau lot 1, task 11). Upstream added up the rates of the till's tax rows
+	//// and taxed every line at that one rate (calculateTotalTaxRate, removed here): no item's own rate was ever read, so a
+	//// Swiss till laid out item by item (its rows at 0, each item's template giving 8.1 % or 2.6 %) showed no VAT at all,
+	//// and a dish to take away showed 8.1 % where the invoice says 2.6 %. An item's rate on each of the till's rows is now
+	//// ERPNext's (taxes_and_totals._get_tax_rate): the item's own rate for the row's account when its VAT map names that
+	//// account, else the row's rate. The map is the one the server sends with each item, for the till's own tax category
+	//// (item_tax_rate) or, while the cart is a takeaway order, for the restaurant's takeaway category
+	//// (takeaway_item_tax_rate, null where the till has no takeaway rule). The rows that count are upstream's.
+	const isTaxRateRow = (row) =>
+		row.charge_type === "On Net Total" || row.charge_type === "On Previous Row Total";
+	// A map is a JSON string, the same few for a whole catalogue: each is read once
+	const parsedTaxMaps = new Map();
 
-	function calculateTotalTaxRate() {
-		// Create cache key from tax rules
-		const currentKey = JSON.stringify(taxRules.value);
-
-		// Return cached value if tax rules haven't changed
-		if (currentKey === taxRulesCacheKey && cachedTaxRate !== 0) {
-			return cachedTaxRate;
+	function parseTaxMap(raw) {
+		if (raw == null || raw === "") return null;
+		if (typeof raw === "object") return raw;
+		if (!parsedTaxMaps.has(raw)) {
+			let map = null;
+			try {
+				const parsed = JSON.parse(raw);
+				map = parsed && typeof parsed === "object" ? parsed : null;
+			} catch {
+				map = null;
+			}
+			parsedTaxMaps.set(raw, map);
 		}
+		return parsedTaxMaps.get(raw);
+	}
 
-		// Calculate total tax rate
-		let totalRate = 0;
-		if (taxRules.value && taxRules.value.length > 0) {
-			for (const taxRule of taxRules.value) {
-				if (
-					taxRule.charge_type === "On Net Total" ||
-					taxRule.charge_type === "On Previous Row Total"
-				) {
-					totalRate += taxRule.rate || 0;
-				}
+	//// Neoffice — the line's VAT map: its takeaway one while the cart is a takeaway order (task 11).
+	function itemTaxMap(item) {
+		const takeawayMap = isTakeaway.value ? item.takeaway_item_tax_rate : null;
+		return parseTaxMap(takeawayMap != null ? takeawayMap : item.item_tax_rate);
+	}
+
+	//// Neoffice — ERPNext marks a tax that does not apply to an item "N/A" in its map (NOT_APPLICABLE_TAX): no tax there.
+	const mapRate = (value) => (value === "N/A" ? 0 : Number.parseFloat(value) || 0);
+
+	//// Neoffice — the till's tax rows as they tax one line: [{account_head, rate}], its own rate on each account.
+	function itemTaxRows(item) {
+		const map = itemTaxMap(item);
+		return (taxRules.value || []).filter(isTaxRateRow).map((row) => ({
+			account_head: row.account_head,
+			rate:
+				map && Object.prototype.hasOwnProperty.call(map, row.account_head)
+					? mapRate(map[row.account_head])
+					: row.rate || 0,
+		}));
+	}
+
+	//// Neoffice — what of a line's tax goes to each account: in proportion to the accounts' rates, the last account
+	//// taking what the rounding left, so that the accounts add up to the line's tax to the cent.
+	function taxByAccount(rows, taxAmount, totalRate) {
+		const shares = {};
+		const taxed = rows.filter((row) => row.rate);
+		let left = taxAmount;
+		taxed.forEach((row, index) => {
+			const share =
+				index === taxed.length - 1
+					? roundCurrency(left)
+					: roundCurrency((taxAmount * row.rate) / totalRate);
+			shares[row.account_head] = roundCurrency((shares[row.account_head] || 0) + share);
+			left -= share;
+		});
+		return shares;
+	}
+
+	//// Neoffice — the cart's VAT per account, as the invoice's tax rows will hold it: each line's share of each account
+	//// (tax_by_account, written by recalculateItem) added up, in the order of the till's rows.
+	const taxesByAccount = computed(() => {
+		const amounts = new Map();
+		for (const item of invoiceItems.value) {
+			for (const [account, amount] of Object.entries(item.tax_by_account || {})) {
+				amounts.set(account, (amounts.get(account) || 0) + amount);
 			}
 		}
+		//// Neoffice — one row per account, as the till's rows name them.
+		const rows = [];
+		for (const row of (taxRules.value || []).filter(isTaxRateRow)) {
+			if (rows.some((seen) => seen.account_head === row.account_head)) continue;
+			rows.push({
+				account_head: row.account_head,
+				description: row.description,
+				tax_amount: roundCurrency(amounts.get(row.account_head) || 0),
+			});
+		}
+		return rows;
+	});
 
-		// Cache the result
-		cachedTaxRate = totalRate;
-		taxRulesCacheKey = currentKey;
+	//// Neoffice — tax every line again: the order turned to take away, or back.
+	function retaxAllItems() {
+		for (const item of invoiceItems.value) recalculateItem(item);
+		rebuildIncrementalCache();
+	}
 
-		return totalRate;
+	//// Neoffice — whatever turns the order to take away (posCart's $patch, its clearCart), the lines follow at once.
+	watch(isTakeaway, retaxAllItems, { flush: "sync" });
+
+	//// Neoffice — a line that comes without its VAT maps (a dish of the restaurant's card, a guest's order reloaded from
+	//// the server) reads them from the item cache, where the catalogue the till caches keeps both, and is taxed again.
+	//// Until then, and for an item the cache does not hold, it keeps the till's own rates.
+	async function takeTaxMapsFromCache(line) {
+		let cached = null;
+		try {
+			cached = await getCachedItem(line.item_code);
+		} catch {
+			return;
+		}
+		if (!cached || cached.item_tax_rate == null) return;
+		// The line as the cart holds it (reactive), if it is still there and still without its maps
+		const row = invoiceItems.value.find((item) => toRaw(item) === toRaw(line));
+		if (!row || row.item_tax_rate != null) return;
+		row.item_tax_rate = cached.item_tax_rate;
+		row.takeaway_item_tax_rate = cached.takeaway_item_tax_rate ?? null;
+		recalculateItem(row);
+		rebuildIncrementalCache();
 	}
 
 	function rebuildIncrementalCache() {
@@ -831,7 +929,9 @@ export function useInvoice() {
 
 		// Calculate tax based on inclusive/exclusive mode
 		// Use currency precision for all monetary calculations to match ERPNext
-		const totalTaxRate = calculateTotalTaxRate();
+		//// Neoffice — the line's own rate (itemTaxRows), the takeaway one in a takeaway order, not the till's sum.
+		const taxRows = itemTaxRows(item);
+		const totalTaxRate = taxRows.reduce((sum, row) => sum + row.rate, 0);
 		let netAmount = 0;
 		let taxAmount = 0;
 
@@ -848,6 +948,8 @@ export function useInvoice() {
 
 		// Update item fields with rounded values
 		item.tax_amount = taxAmount;
+		//// Neoffice — and what of it goes to each VAT account (taxesByAccount adds the lines up).
+		item.tax_by_account = taxByAccount(taxRows, taxAmount, totalTaxRate);
 		// For manually edited rates, preserve the edited rate; otherwise use price_list_rate
 		if (!isManuallyEdited) {
 			item.rate = effectiveRate; // Preserve original price for display
@@ -1153,6 +1255,15 @@ export function useInvoice() {
 		return result?.data || result;
 	}
 
+	//// Neoffice — added function (no upstream equivalent), NeoRestau lot 1, task 11. What a takeaway sale's payment
+	//// carries to the server: the order's flag and number, which give the invoice the takeaway tax category of the till's
+	//// restaurant (pos_next.restaurant.takeaway_tax), the very rates its lines were taxed at here. Nothing for a sale on
+	//// site. The draft the payment saves first never carries them: a takeaway draft is a kitchen ticket to the kitchen
+	//// screen and the takeaway counter, where the payment's own draft would show as a second order.
+	function takeawaySaleFields() {
+		return isTakeaway.value ? { is_takeaway: 1, takeaway_number: takeawayNumber.value || null } : {};
+	}
+
 	async function submitInvoice(
 		targetDoctype = "Sales Invoice",
 		deliveryDate = null,
@@ -1298,7 +1409,8 @@ export function useInvoice() {
 						//// 2026-04-06 "preserve pricing rule discounts on submitted invoices"; the backend re-patches
 						//// the discount fields after submit).
 						//// preserve pricing rule discounts on submitted invoices — e62e69e
-						invoice: { ...invoiceData, name: invoiceDoc.name },
+						//// Neoffice — a takeaway order's payment carries its flag and number (takeawaySaleFields), its draft not.
+						invoice: { ...invoiceData, name: invoiceDoc.name, ...takeawaySaleFields() },
 						data: submitData,
 					});
 
@@ -1554,11 +1666,18 @@ export function useInvoice() {
 				tax_amount: 0,
 				discount_percentage: 0,
 				discount_amount: 0,
+				//// Neoffice — the line's VAT maps when the server sends them (NeoRestau lot 1, task 11).
+				item_tax_rate: item.item_tax_rate,
+				takeaway_item_tax_rate: item.takeaway_item_tax_rate,
 			};
 			recalculateItem(newItem);
 			return newItem;
 		});
 		rebuildIncrementalCache();
+		//// Neoffice — the lines that came without their VAT maps read them from the item cache (takeTaxMapsFromCache).
+		for (const line of invoiceItems.value) {
+			if (line.item_tax_rate == null) takeTaxMapsFromCache(line);
+		}
 	}
 
 	return {
@@ -1581,6 +1700,12 @@ export function useInvoice() {
 		couponCode,
 		taxRules,
 		taxInclusive,
+		//// Neoffice — the takeaway order and its number (posCart exposes them as its own), the cart's VAT per account,
+		//// and what a takeaway sale's payment carries (NeoRestau lot 1, task 11).
+		isTakeaway,
+		takeawayNumber,
+		taxesByAccount,
+		takeawaySaleFields,
 		isSubmitting,
 
 		// Computed

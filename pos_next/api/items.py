@@ -18,6 +18,9 @@ from frappe.query_builder import functions as fn
 from frappe.query_builder.functions import IfNull
 from frappe.utils import flt, getdate, nowdate
 
+# //// Neoffice — every item the till loads carries its VAT maps, on site and to take away (NeoRestau lot 1, task 11).
+from pos_next.restaurant.takeaway_tax import attach_item_tax_rates
+
 ITEM_RESULT_FIELDS = [
 	"name as item_code",
 	"item_name",
@@ -571,6 +574,9 @@ def search_by_barcode(barcode, pos_profile):
 			if resolved_item_data:
 				item_details.update(resolved_item_data)
 
+		# //// Neoffice — a scanned item carries its VAT maps, for the till's own category (in place of the one ERPNext
+		# //// answered for none) and to take away (attach_item_tax_rates, task 11).
+		attach_item_tax_rates([item_details], pos_profile)
 		return item_details
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "Search by Barcode Error")
@@ -787,7 +793,8 @@ def get_item_variants(template_item, pos_profile):
 			# Add UOM-specific prices
 			variant["uom_prices"] = uom_prices_map.get(variant["item_code"], {})
 
-		return variants
+		# //// Neoffice — a variant picked for the cart carries its VAT maps too (attach_item_tax_rates, task 11).
+		return attach_item_tax_rates(variants, pos_profile)
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "Get Item Variants Error")
 		frappe.throw(_("Error fetching item variants: {0}").format(str(e)))
@@ -918,9 +925,12 @@ def _build_item_base_conditions(
 	conditions = [
 		"i.disabled = 0",
 		"i.is_sales_item = 1",
-		# //// hide internal items from POS item grid — fa5e2ee
-		"IFNULL(i.is_internal_item, 0) != 1",
 	]
+	# //// hide internal items from POS item grid — fa5e2ee
+	# //// Neoffice — read where the site has the field: a site without the theme (a fresh CI site) has no internal
+	# //// item to hide, and the bare condition failed every catalogue query there (NeoRestau lot 1, task 11).
+	if frappe.db.has_column("Item", "is_internal_item"):
+		conditions.append("IFNULL(i.is_internal_item, 0) != 1")
 	if exclude_variants:
 		conditions.append("IFNULL(i.variant_of, '') = ''")
 	if exclude_templates:
@@ -1665,7 +1675,8 @@ def get_items(
 		if hide_unavailable and bundle_availability_map:
 			items = [item for item in items if not item.get("is_bundle") or item.get("actual_qty", 0) > 0]
 
-		return items
+		# //// Neoffice — each item's VAT maps, on site and to take away (attach_item_tax_rates, task 11).
+		return attach_item_tax_rates(items, pos_profile)
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "Get Items Error")
 		frappe.throw(_("Error fetching items: {0}").format(str(e)))
@@ -1847,7 +1858,8 @@ def get_items_bulk(
 		if hide_unavailable and bundle_availability_map:
 			items = [item for item in items if not item.get("is_bundle") or item.get("actual_qty", 0) > 0]
 
-		return items
+		# //// Neoffice — the catalogue the till caches offline carries each item's VAT maps (task 11).
+		return attach_item_tax_rates(items, pos_profile)
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "Get Items Bulk Error")
 		frappe.throw(_("Error fetching items: {0}").format(str(e)))

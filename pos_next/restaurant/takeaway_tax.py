@@ -4,11 +4,12 @@
 # //// ERPNext's own mechanism carries that rule and is reused as it is, the one the desk invoices already use: a Tax
 # //// Category on the invoice and, on the item or on its item group (which its items inherit, up the tree), an Item
 # //// Tax row for that category; an item without one keeps its usual rate. The server is the reference: the invoice's
-# //// taxes come from ERPNext's own lookup, made here once for the invoice and for what the till is told.
+# //// taxes come from ERPNext's own lookup, made here once for the invoice and for what the till is told (task 11:
+# //// each item the till loads carries its VAT map on site and to take away, attach_item_tax_rates).
 """A takeaway sale takes its restaurant's takeaway tax category, item by item."""
 
 import frappe
-from frappe.utils import cint, cstr
+from frappe.utils import cint, cstr, flt, nowdate
 
 from pos_next.restaurant.mode import effective_restaurant_mode
 from pos_next.restaurant.settings import pos_settings_of
@@ -131,3 +132,91 @@ def apply_takeaway_tax_category(doc, method=None) -> None:
 		)
 		item.item_tax_template = template
 		item.item_tax_rate = get_item_tax_map(doc.company, template, as_json=True)
+
+
+def _item_tax_rows(item_codes: list[str]) -> dict[str, list]:
+	"""The Item Tax rows of each item, in their order, read in one query: {item_code: [row, ...]}."""
+	if not item_codes:
+		return {}
+	rows = frappe.get_all(
+		"Item Tax",
+		filters={"parenttype": "Item", "parentfield": "taxes", "parent": ["in", item_codes]},
+		fields=[
+			"parent",
+			"item_tax_template",
+			"tax_category",
+			"valid_from",
+			"minimum_net_rate",
+			"maximum_net_rate",
+		],
+		order_by="parent asc, idx asc",
+	)
+	by_item = {}
+	for row in rows:
+		by_item.setdefault(row.parent, []).append(row)
+	return by_item
+
+
+def attach_item_tax_rates(items: list[dict], pos_profile: str | None) -> list[dict]:
+	"""Give each item the till loads its VAT rates, as its invoice will charge them (NeoRestau lot 1, task 11).
+
+	- `item_tax_rate`: the JSON map account -> rate of the template ERPNext's lookup gives the item for the till's own
+	  tax category (`item_tax_template`), "{}" when it has none;
+	- `takeaway_item_tax_rate`: the same for a takeaway order, the template of the restaurant's takeaway category, else
+	  the usual one (`takeaway_item_tax_template`, what the invoice takes); None when the till has no takeaway rule.
+
+	The till taxes each line with these maps, as ERPNext reads `item_tax_rate`, so that the screen, the receipt and the
+	invoice agree. One query for the items' own rows, each item group read once: a catalogue of thousands of items
+	costs the same few reads. Returns `items`, each given the two fields.
+	"""
+	if not items or not pos_profile:
+		return items
+	from erpnext.stock.get_item_details import get_item_tax_map
+
+	company = frappe.get_cached_value("POS Profile", pos_profile, "company")
+	usual_category = till_tax_category(pos_profile)
+	category = takeaway_tax_category(pos_profile)
+	own_rows = _item_tax_rows(list({item.get("item_code") for item in items if item.get("item_code")}))
+	today = nowdate()
+	chains, maps = {}, {}
+
+	def tax_map(template):
+		if template not in maps:
+			maps[template] = get_item_tax_map(company, template, as_json=True)
+		return maps[template]
+
+	failed, first_error = [], None
+	for item in items:
+		code = item.get("item_code")
+		if not code:
+			continue
+		try:
+			group = item.get("item_group") or frappe.get_cached_value("Item", code, "item_group")
+			taxes = own_rows.get(code, [])
+			# What ERPNext reads for a row's validity: the day, and the price as the item's net rate
+			args = {
+				"company": company,
+				"posting_date": today,
+				"transaction_date": today,
+				"base_net_rate": flt(item.get("rate") or item.get("price_list_rate")),
+			}
+			usual = item_tax_template({**args, "tax_category": usual_category}, taxes, group, chains)
+			item["item_tax_rate"] = tax_map(usual)
+			item["takeaway_item_tax_rate"] = (
+				tax_map(item_tax_template({**args, "tax_category": category}, taxes, group, chains) or usual)
+				if category
+				else None
+			)
+		except Exception:
+			# One item whose tax rows cannot be read never stops the till from loading its catalogue: it goes without
+			# its maps, and the till taxes it at its own rows' rates, as before; the failure is logged
+			item.pop("item_tax_rate", None)
+			item.pop("takeaway_item_tax_rate", None)
+			failed.append(code)
+			first_error = first_error or frappe.get_traceback()
+	if failed:
+		frappe.log_error(
+			"POS items loaded without their VAT rates",
+			f"Till {pos_profile}, items {', '.join(failed[:50])}:\n{first_error}",
+		)
+	return items

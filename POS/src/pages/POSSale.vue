@@ -4521,6 +4521,9 @@ async function handlePaymentCompleted(paymentData) {
 				items: preparedItems,
 				payments: JSON.parse(JSON.stringify(cartStore.payments)),
 				sales_team: JSON.parse(JSON.stringify(cartStore.salesTeam || [])),
+				//// Neoffice — a takeaway sale made offline carries its flag and number, so that once synced its invoice
+				//// takes the takeaway tax category its cart and receipt were taxed with (NeoRestau lot 1, task 11).
+				...cartStore.takeawaySaleFields(),
 				//// Neoffice — the offline invoice is built with the CHF-rounded total and carries the
 				//// rounding adjustment, so an invoice synced later matches the receipt the customer
 				//// already has in hand (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash

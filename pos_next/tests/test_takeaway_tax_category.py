@@ -221,11 +221,11 @@ class TakeawayTill:
 		profile.save(ignore_permissions=True)
 
 		takeaway_row = {"item_tax_template": cls.reduced_template, "tax_category": cls.category}
-		dishes = _item_group(DISHES)
-		desserts = _item_group(DESSERTS, taxes=[takeaway_row])
-		cls.food = _item(FOOD, dishes, company, [{"item_tax_template": cls.usual_template}, takeaway_row])
-		cls.alcohol = _item(ALCOHOL, dishes, company, [{"item_tax_template": cls.usual_template}])
-		cls.dessert = _item(DESSERT, desserts, company, [{"item_tax_template": cls.usual_template}])
+		cls.dishes = _item_group(DISHES)
+		cls.desserts = _item_group(DESSERTS, taxes=[takeaway_row])
+		cls.food = _item(FOOD, cls.dishes, company, [{"item_tax_template": cls.usual_template}, takeaway_row])
+		cls.alcohol = _item(ALCOHOL, cls.dishes, company, [{"item_tax_template": cls.usual_template}])
+		cls.dessert = _item(DESSERT, cls.desserts, company, [{"item_tax_template": cls.usual_template}])
 
 		_fresh("Restaurant", RESTAURANT)
 		cls.restaurant = (
@@ -387,6 +387,51 @@ class TestTakeawayTaxCategory(TakeawayTill, FrappeTestCase):
 		self.assertEqual(inv.tax_category, self.category)
 		self.assertEqual((self.vat_rate(inv, self.food), self.vat_rate(inv, self.alcohol)), (2.6, 8.1))
 		self.assertEqual(inv.grand_total, flt(2 * PRICE, 2))
+
+	def test_a_takeaway_sale_made_offline_syncs_with_the_takeaway_rate(self):
+		# The offline queue replays the sale later, in the shape of utils/offline/sync.js. The draft the server makes for
+		# it on the way never carries the takeaway flag (update_invoice commits it and tells the kitchen screen, where a
+		# takeaway draft is an order to cook); the paid invoice takes the flag, and so the category, before its save.
+		sale = self.sale(
+			[self.food], offline_id="_Test takeaway offline sale", is_takeaway=1, takeaway_number="T-903"
+		)
+		frappe.set_user(TILL)
+		try:
+			with patch.object(invoices, "update_invoice", wraps=invoices.update_invoice) as draft:
+				synced = invoices.submit_invoice(
+					data=json.dumps({"invoice": sale, "data": {"sales_team": []}})
+				)
+		finally:
+			frappe.set_user("Administrator")
+		drafted = json.loads(draft.call_args.args[0])
+		self.assertNotIn("is_takeaway", drafted)
+		self.assertNotIn("takeaway_number", drafted)
+		inv = frappe.get_doc("Sales Invoice", synced["name"])
+		self.assertEqual((inv.docstatus, inv.is_takeaway, inv.takeaway_number), (1, 1, "T-903"))
+		self.assertEqual(inv.tax_category, self.category)
+		self.assertEqual(self.vat_rate(inv, self.food), 2.6)
+
+	def test_the_kitchen_ticket_and_the_payment_of_an_order_take_one_number(self):
+		from pos_next.api.restaurant import get_next_takeaway_number
+
+		number = get_next_takeaway_number()
+		# The order's kitchen ticket: the draft the till validates (Valider), under the order's number
+		self.pos_invoice(is_takeaway=1, items=[self.food], takeaway_number=number)
+		following = get_next_takeaway_number()
+		self.assertEqual(int(following[2:]), int(number[2:]) + 1)
+		# Its payment: the invoice the till pays with the order's flag and number is the same order
+		sale = self.sale([self.food])
+		frappe.set_user(TILL)
+		try:
+			draft = invoices.update_invoice(json.dumps(sale))
+			paid = {**sale, "name": draft["name"], "is_takeaway": 1, "takeaway_number": number}
+			invoices.submit_invoice(invoice=json.dumps(paid), data="{}")
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(get_next_takeaway_number(), following)
+		# A web order has no number: it counts on its own, as before
+		self.pos_invoice(is_takeaway=1, items=[self.food])
+		self.assertEqual(int(get_next_takeaway_number()[2:]), int(following[2:]) + 1)
 
 	def test_a_return_and_an_invoice_made_outside_a_till_are_left_as_they_come(self):
 		def takeaway(**values):

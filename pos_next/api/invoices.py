@@ -2082,6 +2082,11 @@ def submit_invoice(invoice=None, data=None):
 		# //// prevent TIP item duplication in submit_invoice — c1bdd80
 		saved_tip_amount = 0
 		if not invoice_name or not frappe.db.exists(doctype, invoice_name):
+			# //// Neoffice — a takeaway sale (a sale made offline, replayed) is drafted without its takeaway flag and
+			# //// number, which the document takes right after, before its save and submit: update_invoice commits the
+			# //// draft and tells the kitchen screen, where a takeaway draft is an order to cook. The flag gives the
+			# //// paid invoice its takeaway tax category (pos_next.restaurant.takeaway_tax; NeoRestau lot 1, task 11).
+			takeaway = {key: invoice.pop(key) for key in ("is_takeaway", "takeaway_number") if key in invoice}
 			created = update_invoice(json.dumps(invoice))
 			if not created or not isinstance(created, dict):
 				frappe.throw(_("Failed to create invoice draft"))
@@ -2089,6 +2094,8 @@ def submit_invoice(invoice=None, data=None):
 			if not invoice_name:
 				frappe.throw(_("Failed to get invoice name from draft"))
 			invoice_doc = frappe.get_doc(doctype, invoice_name)
+			# //// Neoffice — the takeaway flag and number of the sale, on the document only (see above).
+			invoice_doc.update(takeaway)
 		else:
 			invoice_doc = frappe.get_doc(doctype, invoice_name)
 

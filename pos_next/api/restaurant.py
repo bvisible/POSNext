@@ -2543,10 +2543,17 @@ def get_next_takeaway_number():
 	# It counts the day's sales invoices: whoever reads them (every cashier), from a desk account
 	permissions.require("Sales Invoice", "read")
 	current_date = today()
-	count = frappe.db.count("Sales Invoice", filters={
-		"is_takeaway": 1,
-		"creation": [">=", f"{current_date} 00:00:00"],
-	})
+	# One takeaway order counts once: its kitchen ticket (the draft the till validates) and its payment (the invoice the
+	# till pays, which carries the order's flag and number for its takeaway VAT, NeoRestau lot 1, task 11) share the
+	# order's number. An order without a number (a web order) counts on its own.
+	count = frappe.db.sql(
+		"""
+		SELECT COUNT(DISTINCT IFNULL(NULLIF(takeaway_number, ''), name))
+		FROM `tabSales Invoice`
+		WHERE is_takeaway = 1 AND creation >= %s
+		""",
+		(f"{current_date} 00:00:00",),
+	)[0][0]
 	return f"T-{(count + 1):03d}"
 
 

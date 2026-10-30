@@ -169,6 +169,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// ticket was paid (45435e47, 2026-03-24).
 		//// pass restaurant_table to submit_invoice via useInvoice (was missing,… — 45435e4
 		restaurantTable: baseRestaurantTable,
+		//// Neoffice — the takeaway order and its number are useInvoice's refs, exposed below as the store's own: the
+		//// lines are taxed and the sale paid there, at the takeaway rates and with the order's flag and number (NeoRestau
+		//// lot 1, task 11). The cart's VAT per account and the payment's takeaway fields come from there too.
+		isTakeaway,
+		takeawayNumber,
+		taxesByAccount,
+		takeawaySaleFields,
 		loadTaxRules,
 		setTaxInclusive,
 		setDefaultCustomer,
@@ -537,8 +544,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	const tipAmount = ref(0);
 	const loyaltyData = ref(null);
 	const restaurantTable = ref(null);
-	const isTakeaway = ref(false);
-	const takeawayNumber = ref("");
+	//// Neoffice — isTakeaway and takeawayNumber are no longer the store's own refs: they are useInvoice's (destructured
+	//// at the top of the store), where the lines are taxed and the sale is paid (NeoRestau lot 1, task 11).
 	const kdsStatus = ref("Pending");
 	const hasUnsentChanges = ref(false);
 	const guestPaidAmount = ref(0);
@@ -3018,6 +3025,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		restaurantTable,
 		isTakeaway,
 		takeawayNumber,
+		//// Neoffice — the cart's VAT per account, and the takeaway fields a sale saved offline carries (NeoRestau lot 1,
+		//// task 11; POSSale.vue's offline payment).
+		taxesByAccount,
+		takeawaySaleFields,
 		kdsStatus,
 		hasUnsentChanges,
 		guestPaidAmount,
