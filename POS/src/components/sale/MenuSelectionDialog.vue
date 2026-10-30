@@ -114,6 +114,9 @@ function confirmMenu() {
 		([courseName, item], idx) => ({
 			item_code: item.item,
 			item_name: item.item_name,
+			// The units of the item, as get_active_menus answers them: the cart line is made in the unit of the item
+			stock_uom: item.stock_uom,
+			item_uoms: item.item_uoms,
 			course_name: courseName,
 			menu_name: menu.value.menu_name,
 			menu_price: menu.value.price,

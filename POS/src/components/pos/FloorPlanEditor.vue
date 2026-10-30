@@ -2076,6 +2076,11 @@ async function selectTable(table) {
 							item_name: item.item_name,
 							rate: item.rate,
 							uom: item.uom,
+							//// Neoffice — the order row names the item's stock unit, the factor of the line and the item's other units
+							//// (open_table): the line carries them, or its unit select could not list them (NeoRestau lot 1, task 22).
+							stock_uom: item.stock_uom,
+							conversion_factor: item.conversion_factor,
+							item_uoms: item.item_uoms,
 							image: item.image,
 							preparation_station: item.preparation_station,
 							posa_special_instructions: item.posa_special_instructions,

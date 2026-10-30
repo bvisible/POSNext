@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import devices, permissions, scope
+from pos_next.restaurant import devices, item_units, permissions, scope
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -614,7 +614,8 @@ def get_table_order(table_name):
 	order = orders[0]
 
 	# Fetch items
-	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom", "image"]
+	# stock_uom and conversion_factor: the unit the line is in and what it is worth in stock units (task 22)
+	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom", "stock_uom", "conversion_factor", "image"]
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
 	if frappe.db.has_column("Sales Invoice Item", "preparation_station"):
@@ -643,6 +644,9 @@ def get_table_order(table_name):
 	order["tip_total"] = tip_total
 	# Tip is a voluntary extra — never counted as payment toward the order
 	order["paid_amount"] = flt(order.get("paid_amount", 0)) - tip_total
+
+	# The item's other units, read together for the order: the till makes its lines of these rows (task 22)
+	item_units.stamp(order["items"], "item_code", item_units.units_of(i.item_code for i in order["items"]))
 
 	# Enrich items with image from Item master
 	item_codes = list({i.item_code for i in order["items"] if i.get("item_code")})
@@ -1234,7 +1238,7 @@ def open_table(table_name, pos_profile, customer=None):
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
-			fields=["item_code", "item_name", "qty", "rate", "uom",
+			fields=["item_code", "item_name", "qty", "rate", "uom", "stock_uom", "conversion_factor",
 				"posa_special_instructions", "preparation_station",
 				"posa_item_modifiers", "kds_status"]
 		)
@@ -1248,6 +1252,9 @@ def open_table(table_name, pos_profile, customer=None):
 				tip_total += flt(item.rate) * flt(item.qty)
 			else:
 				order_items.append(item)
+
+		# The item's other units, read together for the order (task 22)
+		item_units.stamp(order_items, "item_code", item_units.units_of(item.item_code for item in order_items))
 
 		# Enrich with images
 		for item in order_items:
@@ -1661,10 +1668,24 @@ def get_active_cards(restaurant=None):
 			order_by="sort_order asc, idx asc"
 		)
 
+		# The items of the card are read together with their units (two queries, not one per item): the cart line made from
+		# an entry has to carry its unit and the item's other units, as a line made from the grid does (task 22)
+		item_codes = [ci.item for ci in items if ci.item_type == "Item" and ci.item]
+		item_rows = {}
+		if item_codes:
+			item_rows = {
+				row.name: row
+				for row in frappe.get_all(
+					"Item",
+					filters={"name": ["in", item_codes]},
+					fields=["name", "item_name", "image", "custom_color", "item_group", "standard_rate", "is_stock_item", "stock_uom"],
+				)
+			}
+		units = item_units.units_of(item_codes, {name: row.stock_uom for name, row in item_rows.items()})
+
 		for ci in items:
 			if ci.item_type == "Item" and ci.item:
-				item_data = frappe.db.get_value("Item", ci.item,
-					["item_name", "image", "custom_color", "item_group", "standard_rate", "is_stock_item"], as_dict=True)
+				item_data = item_rows.get(ci.item)
 				if item_data:
 					ci["item_name"] = item_data.item_name
 					ci["image"] = item_data.image
@@ -1672,6 +1693,8 @@ def get_active_cards(restaurant=None):
 					ci["item_group"] = item_data.item_group
 					ci["default_price"] = item_data.standard_rate or 0
 					ci["is_stock_item"] = item_data.is_stock_item
+					ci["stock_uom"] = units[ci.item]["stock_uom"]
+					ci["item_uoms"] = units[ci.item]["item_uoms"]
 			elif ci.item_type == "Menu" and ci.menu:
 				menu_data = frappe.db.get_value("Restaurant Menu", ci.menu,
 					["menu_name", "price", "image"], as_dict=True)
@@ -1729,16 +1752,19 @@ def get_active_menus(restaurant=None):
 			order_by="sort_order, idx"
 		)
 
+		# The units of the menu's items, read together: a line made from a course item is in the unit of its item (task 22)
+		units = item_units.units_of([course.get("item") for course in courses])
+
 		# Group by course_name
 		grouped = {}
 		for course in courses:
 			cn = course.get("course_name")
 			if cn not in grouped:
 				grouped[cn] = {"course_name": cn, "sort_order": course.get("sort_order", 0), "items": []}
-			grouped[cn]["items"].append({
+			grouped[cn]["items"].append(item_units.stamp([{
 				"item": course.get("item"),
 				"item_name": course.get("item_name")
-			})
+			}], "item", units)[0])
 
 		menu["courses"] = sorted(grouped.values(), key=lambda x: x["sort_order"])
 		result.append(menu)

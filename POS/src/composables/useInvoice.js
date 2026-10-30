@@ -16,6 +16,8 @@ import { preCouponLineDiscount } from "@/utils/couponLines";
 import { getPrecision } from "@/utils/currency";
 import { calculateTaxesAndTotals } from "@/utils/invoiceTaxes";
 import { vatMapsFor } from "@/utils/offline/vatMaps";
+//// Neoffice — a cart line carries its real units, completed from what its source knows (NeoRestau lot 1, task 22).
+import { unitsOf } from "@/utils/cartLineUnits";
 
 const log = logger.create("Invoice");
 
@@ -358,9 +360,12 @@ export function useInvoice() {
 				//// image upload, and card item color propagation").
 				//// cart color thumbnails, image upload, and card item color propagation — 983130d
 				custom_color: item.custom_color,
-				uom: item.uom || item.stock_uom,
-				stock_uom: item.stock_uom,
-				conversion_factor: item.conversion_factor || 1,
+				//// Neoffice — upstream copied uom, stock_uom and conversion_factor as the source gave them, and
+				//// a source that knew only some of them (a restaurant card entry, a menu course, an order read
+				//// back from the server) made a line the edit dialog could not read: « Nos » in its header and
+				//// an empty unit select. The missing part is derived from the rest, never invented, and
+				//// item_uoms (below) comes with it (NeoRestau lot 1, task 22).
+				...unitsOf(item),
 				warehouse: item.warehouse,
 				actual_batch_qty: item.actual_batch_qty || 0,
 				has_batch_no: item.has_batch_no || 0,
@@ -368,7 +373,7 @@ export function useInvoice() {
 				batch_no: item.batch_no,
 				batch_expiry_date: item.batch_expiry_date, // Cart meta row only, not sent to the server
 				serial_no: item.serial_no,
-				item_uoms: item.item_uoms || [], // Available UOMs for this item
+				//// Neoffice — item_uoms, the line's other units, now comes with its uom and stock_uom from unitsOf (above).
 				// Add item_group and brand for offer eligibility checking
 				item_group: item.item_group,
 				brand: item.brand,
@@ -1682,7 +1687,10 @@ export function useInvoice() {
 				rate: item.rate || 0,
 				price_list_rate: item.rate || 0,
 				quantity: item.qty || 1,
-				uom: item.uom || "Nos",
+				//// Neoffice — the unit of the line as the server holds it, with the item's others: the line
+				//// used to be given « Nos » when its row named no unit, and carried no stock unit nor other
+				//// unit at all (NeoRestau lot 1, task 22).
+				...unitsOf(item),
 				image: item.image || "",
 				kds_status: item.kds_status || "Pending",
 				posa_item_modifiers: item.posa_item_modifiers || "",

@@ -2408,6 +2408,9 @@ import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 //// Neoffice — and the permanent card's tab is its label (NeoRestau lot 1, task 9, fix round 1)
 import { cardLabel } from "@/utils/cardLabel";
+//// Neoffice — the cart line a card entry becomes, and the units it carries, are built in one place that a test can reach
+//// (NeoRestau lot 1, task 22).
+import { cardItemToCartItem, unitsOf, withKnownUnits } from "@/utils/cartLineUnits";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
@@ -2446,7 +2449,8 @@ import { useUserData } from "@/data/user";
 import { parseError } from "@/utils/errorHandler";
 import { cleanupUserSession } from "@/utils/sessionCleanup";
 import { offlineWorker } from "@/utils/offline/workerClient";
-import { deductCachedBatchQty } from "@/utils/offline/items";
+//// Neoffice — getItemWithPrice: the units the till keeps of an item, for the rows of an offline invoice taken back (task 22).
+import { deductCachedBatchQty, getItemWithPrice } from "@/utils/offline/items";
 import { cacheOfflineReceiptPayload } from "@/utils/offline/offlineReceiptCache";
 import { cacheInvoiceHistory, getCachedInvoiceHistory } from "@/utils/offline/sync";
 import {
@@ -2711,14 +2715,8 @@ function getCardItemTextClasses(item) {
 
 function handleCardItemClick(cardItem) {
 	if (isCardItemOutOfStock(cardItem)) return;
-	const item = {
-		item_code: cardItem.item,
-		item_name: cardItem.item_name || cardItem.label,
-		item_group: cardItem.item_group || "",
-		rate: cardItem.price || cardItem.default_price || 0,
-		image: cardItem.image || "",
-		custom_color: cardItem.custom_color || "",
-	};
+	//// Neoffice — was an inline object that carried no unit at all: see cardItemToCartItem (NeoRestau lot 1, task 22).
+	const item = cardItemToCartItem(cardItem);
 	const stationInfo = restaurantStore.getStationForItem(item.item_code, item.item_group);
 	if (stationInfo) {
 		item.preparation_station = stationInfo.station;
@@ -3926,6 +3924,11 @@ function handleLoadServerDraft(order) {
 					item_name: item.item_name,
 					rate: item.rate,
 					uom: item.uom,
+					//// Neoffice — the order row names the item's stock unit, the factor of the line and the item's other units
+					//// (get_table_order): the line carries them, or its unit select could not list them (task 22).
+					stock_uom: item.stock_uom,
+					conversion_factor: item.conversion_factor,
+					item_uoms: item.item_uoms,
 					preparation_station: item.preparation_station,
 					posa_special_instructions: item.posa_special_instructions,
 					posa_item_modifiers: item.posa_item_modifiers,
@@ -4316,6 +4319,9 @@ function handleMenuConfirmed(menuItems) {
 			is_menu_item: true,
 			menu_name: menuItem.menu_name,
 			posa_special_instructions: `[${menuItem.menu_name}] ${menuItem.course_name}`,
+			//// Neoffice — the course item carries the item's units (get_active_menus), so the line is in a unit the invoice
+			//// and the edit dialog agree on (task 22).
+			...unitsOf(menuItem),
 		};
 		cartStore.addItem(fullItem, 1);
 	}
@@ -5414,7 +5420,11 @@ async function handleEditOfflineInvoice(invoice) {
 		}
 
 		if (invoiceData.items && invoiceData.items.length > 0) {
-			for (const item of invoiceData.items) {
+			//// Neoffice — a queued invoice's rows are in the invoice's format: the unit of the line and its factor, not the
+			//// item's other units. Each row is given the units the till keeps of its item, so the line can still be changed
+			//// to another unit (task 22).
+			const rows = await withKnownUnits(invoiceData.items, getItemWithPrice);
+			for (const item of rows) {
 				// Use autoAdd=true to skip stock validation when loading saved invoices
 				// Check both quantity and qty fields since items are stored with 'quantity'
 				cartStore.addItem(

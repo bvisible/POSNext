@@ -106,11 +106,8 @@
 																	localItem.rate
 															)
 														}}
-														/
-														{{
-															localItem.stock_uom ||
-															__("Nos", null, "UOM")
-														}}
+														<!-- //// Neoffice — the price is per the unit the line is in, and the header says nothing when the line has none: upstream wrote « Nos » for a line without a stock unit, an item that has another one (NeoRestau lot 1, task 22). -->
+														<template v-if="lineUom"> / {{ lineUom }}</template>
 													</p>
 												</div>
 											</div>
@@ -578,6 +575,8 @@ import { usePOSOffersStore } from "@/stores/posOffers";
 import { usePOSShiftStore } from "@/stores/posShift";
 import { useSerialNumberStore } from "@/stores/serialNumber";
 import { getItemStock } from "@/utils/stockValidator";
+//// Neoffice — the unit select lists the units of the line, built where every cart line's units are (NeoRestau lot 1, task 22).
+import { unitsOf, uomChoices } from "@/utils/cartLineUnits";
 //// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
 import {
 	formatCurrency as formatCurrencyUtil,
@@ -720,10 +719,9 @@ const show = computed({
 	set: (val) => emit("update:modelValue", val),
 });
 
-const availableUoms = computed(() => {
-	if (!localItem.value || !localItem.value.item_uoms) return [];
-	return localItem.value.item_uoms.filter((u) => u.uom !== localItem.value.stock_uom);
-});
+//// Neoffice — the unit the line is in, named in the header (replaces availableUoms, which fed the unit select only:
+//// uomOptions below now reads the same list as the cart does).
+const lineUom = computed(() => localItem.value?.uom || localItem.value?.stock_uom || "");
 
 const currencySymbol = computed(() => getCurrencySymbol(props.currency));
 
@@ -799,15 +797,11 @@ const discountEditDisabledReason = computed(() => {
 // Options for SelectInput components
 const uomOptions = computed(() => {
 	if (!localItem.value) return [];
-	//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
-	const options = [{ value: localItem.value.stock_uom, label: localItem.value.stock_uom }];
-	if (availableUoms.value.length > 0) {
-		//// Neoffice — [F] Biome reformat only, no behaviour change (458d81a9); see file map.
-		availableUoms.value.forEach((uomData) => {
-			options.push({ value: uomData.uom, label: uomData.uom });
-		});
-	}
-	return options;
+	//// Neoffice — upstream started the list with the item's stock unit whether the line had one or not: a line
+	//// without a stock unit (a dish added from a restaurant card) listed one option with an empty value, and the
+	//// select showed nothing. The unit the line is in is now always a choice, and no choice is empty
+	//// (NeoRestau lot 1, task 22).
+	return uomChoices(localItem.value).map((uom) => ({ value: uom, label: uom }));
 });
 
 const warehouseOptions = computed(() => {
@@ -860,9 +854,12 @@ watch(
 	(newItem) => {
 		if (newItem) {
 			isInitializingItem.value = true;
-			localItem.value = { ...newItem };
+			//// Neoffice — whatever added the line, it is read with the units it can be derived to have, and the select
+			//// starts on the unit the line is in: upstream fell back to « Nos », a unit the item may not have, and
+			//// « Update Item » then wrote it onto the line (NeoRestau lot 1, task 22).
+			localItem.value = { ...newItem, ...unitsOf(newItem) };
 			localQuantity.value = newItem.quantity || 1;
-			localUom.value = newItem.uom || newItem.stock_uom || __("Nos");
+			localUom.value = localItem.value.uom || "";
 			localRate.value = newItem.rate || 0;
 			// Store original price_list_rate for rate edit validation
 			originalPriceListRate.value = newItem.price_list_rate || newItem.rate || 0;

@@ -1,0 +1,185 @@
+/**
+ * //// Neoffice — added file (no upstream equivalent). The units of a cart line, from whichever source added it
+ * //// (NeoRestau lot 1, task 22).
+ * @vitest-environment node
+ */
+import { describe, expect, it, vi } from "vitest"
+import {
+	cardItemToCartItem,
+	uomChoices,
+	unitsOf,
+	withKnownUnits,
+} from "../cartLineUnits"
+
+// What each source says of the same bottle of water: stocked by the bottle, sold by the case too (6 bottles)
+const CASE = { uom: "Caisse", conversion_factor: 6 }
+
+describe("unitsOf: the units of a cart line, from whatever its source knows", () => {
+	it("a grid item keeps everything it says", () => {
+		const gridItem = {
+			uom: "Bouteille",
+			stock_uom: "Bouteille",
+			conversion_factor: 1,
+			item_uoms: [CASE],
+		}
+
+		expect(unitsOf(gridItem)).toEqual(gridItem)
+	})
+
+	it("a card entry puts the line in the stock unit of the item, worth one", () => {
+		const entry = { stock_uom: "Bouteille", item_uoms: [CASE] }
+
+		expect(unitsOf(entry)).toEqual({
+			uom: "Bouteille",
+			stock_uom: "Bouteille",
+			conversion_factor: 1,
+			item_uoms: [CASE],
+		})
+	})
+
+	it("an order row that names only the unit of the line makes it the stock unit when it is worth one stock unit", () => {
+		expect(unitsOf({ uom: "Unité", conversion_factor: 1 })).toMatchObject({
+			uom: "Unité",
+			stock_uom: "Unité",
+			item_uoms: [],
+		})
+		expect(unitsOf({ uom: "Unité" })).toMatchObject({ stock_uom: "Unité" })
+	})
+
+	it("an order row in a bigger unit does not make that unit the stock unit", () => {
+		expect(unitsOf({ uom: "Caisse", conversion_factor: 6 })).toEqual({
+			uom: "Caisse",
+			stock_uom: undefined,
+			conversion_factor: 6,
+			item_uoms: [],
+		})
+	})
+
+	it("a source that knows no unit gives a line without one, never « Nos »", () => {
+		const units = unitsOf({ item_code: "vin" })
+
+		expect(units.uom).toBeUndefined()
+		expect(units.stock_uom).toBeUndefined()
+		expect(units.conversion_factor).toBe(1)
+		expect(units.item_uoms).toEqual([])
+		expect(JSON.stringify(units)).not.toContain("Nos")
+	})
+})
+
+describe("uomChoices: the units a cart line can be changed to", () => {
+	it("lists the stock unit, then the others of the item", () => {
+		expect(uomChoices({ stock_uom: "Bouteille", item_uoms: [CASE] })).toEqual([
+			"Bouteille",
+			"Caisse",
+		])
+	})
+
+	it("lists a unit once, however many times the item names it", () => {
+		const item = {
+			stock_uom: "Bouteille",
+			item_uoms: [{ uom: "Bouteille", conversion_factor: 1 }, CASE, CASE],
+		}
+
+		expect(uomChoices(item)).toEqual(["Bouteille", "Caisse"])
+	})
+
+	it("always holds the unit the line is in", () => {
+		expect(uomChoices({ uom: "Caisse", stock_uom: undefined })).toEqual([
+			"Caisse",
+		])
+		expect(
+			uomChoices({ uom: "Carton", stock_uom: "Bouteille", item_uoms: [CASE] }),
+		).toEqual(["Carton", "Bouteille", "Caisse"])
+	})
+
+	it("never holds an empty choice", () => {
+		expect(uomChoices({})).toEqual([])
+		expect(
+			uomChoices({
+				uom: "",
+				stock_uom: undefined,
+				item_uoms: [{ uom: "" }, { uom: null }, undefined],
+			}),
+		).toEqual([])
+	})
+})
+
+describe("cardItemToCartItem: the cart line a restaurant card entry becomes", () => {
+	const entry = {
+		item_type: "Item",
+		item: "vin",
+		item_name: "Vin",
+		item_group: "Drinks",
+		price: 29,
+		default_price: 25,
+		image: "/files/vin.png",
+		custom_color: "#aa3344",
+		stock_uom: "Unité",
+		item_uoms: [],
+	}
+
+	it("keeps what the line showed before, and adds the unit of the item", () => {
+		expect(cardItemToCartItem(entry)).toEqual({
+			item_code: "vin",
+			item_name: "Vin",
+			item_group: "Drinks",
+			rate: 29,
+			image: "/files/vin.png",
+			custom_color: "#aa3344",
+			uom: "Unité",
+			stock_uom: "Unité",
+			conversion_factor: 1,
+			item_uoms: [],
+		})
+	})
+
+	it("prices the line at the item's default price when the card gives none, and names it by its label otherwise", () => {
+		const line = cardItemToCartItem({
+			item: "vin",
+			label: "Wine",
+			default_price: 25,
+			stock_uom: "Unité",
+		})
+
+		expect(line).toMatchObject({ rate: 25, item_name: "Wine" })
+	})
+})
+
+describe("withKnownUnits: the rows of a stored invoice, given the units the till keeps", () => {
+	const known = { item_code: "eau", stock_uom: "Bouteille", item_uoms: [CASE] }
+	const find = vi.fn(async (code) => (code === "eau" ? known : null))
+
+	it("gives a row the other units of its item and its stock unit", async () => {
+		const [row] = await withKnownUnits(
+			[{ item_code: "eau", uom: "Bouteille", conversion_factor: 1 }],
+			find,
+		)
+
+		expect(row).toMatchObject({
+			uom: "Bouteille",
+			stock_uom: "Bouteille",
+			item_uoms: [CASE],
+		})
+	})
+
+	it("leaves alone a row whose item the till does not know, a row that already has its units and a row without an item", async () => {
+		const unknown = { item_code: "vin", uom: "Unité" }
+		const complete = { item_code: "eau", item_uoms: [CASE], stock_uom: "X" }
+		const nothing = { qty: 1 }
+
+		expect(await withKnownUnits([unknown, complete, nothing], find)).toEqual([
+			unknown,
+			complete,
+			nothing,
+		])
+	})
+
+	it("survives a lookup that fails", async () => {
+		const failing = vi.fn(async () => {
+			throw new Error("IndexedDB is closed")
+		})
+		const row = { item_code: "eau", uom: "Bouteille" }
+
+		expect(await withKnownUnits([row], failing)).toEqual([row])
+	})
+})
