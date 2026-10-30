@@ -17196,3 +17196,11 @@ msgstr "{0} {1} existe déjà dans ce restaurant"
 #, python-brace-format
 msgid "{0} · taken today"
 msgstr "{0} · encaissé du jour"
+
+#: POS/src/components/restaurant/RoomStationFilterLine.vue
+msgid "Filter by room"
+msgstr "Filtrer par salle"
+
+#: POS/src/components/restaurant/RoomStationFilterLine.vue
+msgid "Filter by station"
+msgstr "Filtrer par poste"
