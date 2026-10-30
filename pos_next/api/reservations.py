@@ -6,16 +6,63 @@
 # //// and the hourly reminder + auto-no-show jobs (ebc3ecc5, 2026-03-29 "feat: restaurant
 # //// reservation system with POS dialog, online booking, and email notifications"; 26659089
 # //// and 0e3f3fcd the same day — MySQL rejects a Duration default and stores it as seconds).
+# //// The public form gives a visitor which tables are free and nothing of the other guests, counts
+# //// the bookings it mails per visitor, per address and per site, and a booking its guest never
+# //// confirms expires instead of holding its tables (NeoRestau lot 1, task 18).
 import frappe
 from frappe import _
-from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date
-from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import _parse_duration
+from frappe.utils import (
+	add_to_date,
+	cint,
+	escape_html,
+	get_time,
+	getdate,
+	now_datetime,
+	nowdate,
+	validate_email_address,
+)
+from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import (
+	EXPIRED,
+	HOLD_STATUSES,
+	_parse_duration,
+	awaits_its_guest,
+	hold_has_expired,
+)
 from pos_next.restaurant import permissions, scope
 from pos_next.restaurant.mode import require_neorestau
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
+import hashlib
+import hmac
+import ipaddress
 import json
+import re
 import secrets
 from datetime import datetime, timedelta
+from time import time as epoch_seconds
+
+# What a visitor reads of a table on the public form: which one it is, its label, its seats, and whether it is free
+# for the slot he asks. Never who holds it, nor when.
+VISITOR_TABLE_FIELDS = ("name", "table_name", "capacity", "available")
+
+# How many bookings the public form takes, as (count, window in seconds): per visitor (his IP address, an IPv6 one by
+# its /64 network), per e-mail address, and for the whole site, each counted in fixed windows. A booking mails an
+# address nobody has confirmed yet: whatever the visitors, the site never mails more than its own budget.
+# `guest_reservation_limits` in the site config overrides any entry, e.g. {"site_day": [400, 86400]}.
+GUEST_LIMITS = {
+	"ip_minute": (3, 60),
+	"ip_hour": (10, 3600),
+	"ip_day": (20, 86400),
+	"address_hour": (3, 3600),
+	"address_day": (5, 86400),
+	"site_hour": (40, 3600),
+	"site_day": (200, 86400),
+}
+LIMIT_KEY = "pos_next:guest_reservation_limit:"
+# The minutes a guest has to confirm an online booking from the e-mail, when his restaurant sets none
+DEFAULT_CONFIRMATION_MINUTES = 30
+# The longest name the public form takes, and what a name never holds: a link, an address, markup
+GUEST_NAME_MAX = 80
+NOT_A_NAME = re.compile(r"https?:|://|www\.|@|<|>", re.IGNORECASE)
 
 
 # ==========================================
@@ -41,6 +88,9 @@ def get_reservations(date=None, area=None, status=None, restaurant=None):
 			filters["status"] = ["in", status]
 		else:
 			filters["status"] = status
+	else:
+		# An online booking its guest never confirmed is gone from the day's list (it stays on the desk, Expired)
+		filters["status"] = ["!=", EXPIRED]
 
 	reservations = scope.stamp(
 		_reservations_of(
@@ -157,6 +207,15 @@ def update_reservation_status(name, status, force=False):
 	doc = frappe.get_doc("Restaurant Reservation", name)
 	old_status = doc.status
 
+	# An online booking whose guest did not confirm it in time has let its tables go: it can be cancelled, not revived
+	# (another booking may hold its tables by now). One whose guest may still confirm it is no no-show of his.
+	if status != "Cancelled" and hold_has_expired(doc):
+		frappe.throw(_("This online reservation expired before the guest confirmed it"))
+	if status == "No Show" and awaits_its_guest(doc):
+		frappe.throw(
+			_("The guest has not confirmed this online reservation: it cannot be marked as a no-show")
+		)
+
 	# Validate transitions
 	valid_transitions = {
 		"Pending": ["Confirmed", "Cancelled"],
@@ -170,6 +229,9 @@ def update_reservation_status(name, status, force=False):
 		)
 
 	doc.status = status
+	if status == "Confirmed" and awaits_its_guest(doc):
+		# The restaurant confirms the booking itself: it is its booking now, which no deadline expires
+		doc.verification_deadline = None
 	doc.save()
 
 	return {"status": "ok", "name": doc.name, "new_status": status}
@@ -207,6 +269,8 @@ def get_reservation_stats(from_date, to_date, restaurant=None):
 		restaurant or scope.current_restaurant(),
 		filters={
 			"reservation_date": ["between", [from_date, to_date]],
+			# A booking its guest never confirmed was never one of the restaurant's: no booking, no no-show
+			"status": ["!=", EXPIRED],
 		},
 		fields=["status", "channel", "no_of_guests", "reservation_date"],
 	)
@@ -270,7 +334,9 @@ def get_available_slots(date, restaurant=None):
 def get_available_tables(date, time, duration=None, no_of_guests=None, restaurant=None):
 	"""Return the restaurant's tables with their availability status for a given slot.
 
-	A visitor names no restaurant on a site with one; the default restaurant answers.
+	A visitor names no restaurant on a site with one; the default restaurant answers. He learns which tables are free
+	for the slot he asks, for the restaurant's own duration, and nothing of the guests who hold the others
+	(VISITOR_TABLE_FIELDS); whoever reads the restaurant's reservations from a desk account sees who holds them.
 	"""
 	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
 	require_neorestau()
@@ -280,7 +346,9 @@ def get_available_tables(date, time, duration=None, no_of_guests=None, restauran
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
-	if not duration:
+	staff = _reads_the_reservations_of(settings.get("name"))
+	if not duration or not staff:
+		# A visitor asks about the slot a booking would take, not about any window he likes
 		duration = settings.default_reservation_duration or 5400
 
 	# Get the restaurant's tables grouped by area
@@ -312,6 +380,8 @@ def get_available_tables(date, time, duration=None, no_of_guests=None, restauran
 		table["conflicts"] = conflicts
 		result.append(table)
 
+	if not staff:
+		result = [{field: table[field] for field in VISITOR_TABLE_FIELDS} for table in result]
 	return {"tables": result}
 
 
@@ -327,8 +397,15 @@ def submit_guest_reservation(
 	notes=None,
 	duration=None,
 	restaurant=None,
+	subject=None,
 ):
-	"""Create a reservation from the public web form, in the restaurant named (the default restaurant otherwise)."""
+	"""Create a reservation from the public web form, in the restaurant named (the default restaurant otherwise).
+
+	The booking waits for its guest to confirm it from the e-mail until the restaurant's deadline, then expires. The
+	form takes one address, a name that is only a name, and so many bookings per visitor, per address and per site
+	(GUEST_LIMITS); `subject` is a field the page hides from people: a booking that fills it is answered like any other,
+	and nothing is written nor mailed. A refused booking writes nothing and mails nothing.
+	"""
 	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
 	require_neorestau()
 
@@ -336,20 +413,30 @@ def submit_guest_reservation(
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
 
+	email = _one_address(email)
+	guest_name = _only_a_name(guest_name)
+	# Whoever asks is counted, a script that fills the hidden field as well
+	_enforce_guest_limits()
+
+	if (subject or "").strip():
+		# Only a script fills a field nobody sees: it is told what a guest is told, and nothing happens
+		return _booking_received()
+
 	if isinstance(tables, str):
 		tables = json.loads(tables)
 
-	# Rate limiting: max 3 active reservations per email
+	# At most 3 bookings to come per address; refused in the words of the limits, so that the answer tells a stranger
+	# nothing about the bookings of an address
 	active_count = frappe.db.count(
 		"Restaurant Reservation",
 		filters={
 			"email": email,
-			"status": ["in", ("Pending", "Confirmed")],
+			"status": ["in", HOLD_STATUSES],
 			"reservation_date": [">=", nowdate()],
 		},
 	)
 	if active_count >= 3:
-		frappe.throw(_("Maximum number of active reservations reached for this email"))
+		_refuse_too_many()
 
 	if not duration:
 		duration = settings.default_reservation_duration or 5400
@@ -367,6 +454,9 @@ def submit_guest_reservation(
 		if conflicts:
 			frappe.throw(_("Selected tables are not available at the requested time"))
 
+	# The mail about to leave is counted against its address and against the site's budget
+	_enforce_guest_limits(email)
+
 	# Determine initial status
 	require_validation = settings.require_reservation_validation
 	initial_status = "Pending" if require_validation else "Confirmed"
@@ -374,9 +464,7 @@ def submit_guest_reservation(
 	# Generate verification token
 	token = secrets.token_urlsafe(32)
 
-	# Find or create customer
-	customer = _find_or_create_customer(guest_name, email, phone)
-
+	# No customer is made for a booking nobody has confirmed yet: the guest's confirmation makes it (verify_reservation)
 	doc = frappe.get_doc({
 		"doctype": "Restaurant Reservation",
 		"restaurant": settings.get("name"),
@@ -388,12 +476,12 @@ def submit_guest_reservation(
 		"guest_name": guest_name,
 		"phone": phone,
 		"email": email,
-		"customer": customer,
 		"channel": "Internet",
 		"notes": notes,
 		"tables": [{"restaurant_table": t} for t in (tables or [])],
 		"verification_token": token,
 		"verified": 0,
+		"verification_deadline": add_to_date(now_datetime(), minutes=_confirmation_minutes(settings)),
 	})
 	doc.insert(ignore_permissions=True)
 
@@ -402,9 +490,13 @@ def submit_guest_reservation(
 
 	frappe.publish_realtime("reservation_update")
 
+	return {**_booking_received(), "name": doc.name}
+
+
+def _booking_received():
+	"""What the public form answers a booking it took: the same words whatever became of it."""
 	return {
 		"status": "ok",
-		"name": doc.name,
 		"requires_verification": True,
 		"message": _("Please check your email to confirm the reservation"),
 	}
@@ -412,22 +504,29 @@ def submit_guest_reservation(
 
 @frappe.whitelist(allow_guest=True)
 def verify_reservation(token):
-	"""Verify a reservation via email token (double opt-in)."""
+	"""Verify a reservation via email token (double opt-in), before the deadline its restaurant gives the guest."""
 	if not token:
 		frappe.throw(_("Invalid verification token"))
 
 	reservations = frappe.get_all(
 		"Restaurant Reservation",
 		filters={"verification_token": token, "verified": 0},
-		fields=["name"],
+		fields=["name", "status", "verified", "verification_deadline"],
 		limit=1,
 	)
 
 	if not reservations:
 		frappe.throw(_("Invalid or expired verification token"))
 
+	# A booking confirmed too late has let its tables go, and another guest may hold them by now: it is not revived
+	if reservations[0].status == EXPIRED or hold_has_expired(reservations[0]):
+		frappe.throw(_("This reservation request has expired. Please book again."))
+
 	doc = frappe.get_doc("Restaurant Reservation", reservations[0].name)
 	doc.verified = 1
+	if not doc.customer:
+		# The guest has shown the address is his: he is a customer now
+		doc.customer = _find_or_create_customer(doc.guest_name, doc.email, doc.phone)
 	doc.save(ignore_permissions=True)
 
 	# Send confirmation emails
@@ -438,6 +537,123 @@ def verify_reservation(token):
 		"name": doc.name,
 		"message": _("Reservation confirmed successfully"),
 	}
+
+
+# ==========================================
+# Guards of the public form
+# ==========================================
+
+
+def _reads_the_reservations_of(restaurant) -> bool:
+	"""Whether the caller may see who holds the tables of a restaurant: a desk account that reads its reservations.
+
+	A visitor and a portal account never do (check_table_availability asks the same of whoever names the guests).
+	"""
+	from pos_next.api.cash_entry import is_desk_account
+
+	if not is_desk_account() or not frappe.has_permission("Restaurant Reservation", "read"):
+		return False
+	return not restaurant or bool(frappe.has_permission("Restaurant", "read", doc=restaurant))
+
+
+def _one_address(email) -> str:
+	"""The one address a booking is mailed to, in lower case: a list, a display name or anything but a plain address
+	is refused, so that one booking never mails two people."""
+	address = (email or "").strip().lower()
+	if (
+		not address
+		or any(character.isspace() or character in ",;<>" for character in address)
+		or validate_email_address(address) != address
+	):
+		frappe.throw(_("Please enter a valid email address"), frappe.InvalidEmailAddressError)
+	return address
+
+
+def _only_a_name(guest_name) -> str:
+	"""The guest's name as the form takes it: words, at most GUEST_NAME_MAX characters, no link, address nor markup."""
+	name = " ".join((guest_name or "").split())
+	if not name or len(name) > GUEST_NAME_MAX or NOT_A_NAME.search(name):
+		frappe.throw(
+			_("Please enter your name only (at most {0} characters, no link)").format(GUEST_NAME_MAX)
+		)
+	return name
+
+
+def _confirmation_minutes(settings) -> int:
+	"""The minutes a guest of this restaurant has to confirm an online booking from the e-mail."""
+	minutes = cint(settings.get("unconfirmed_reservation_expiry"))
+	return minutes if minutes > 0 else DEFAULT_CONFIRMATION_MINUTES
+
+
+def _enforce_guest_limits(address=None) -> None:
+	"""Count a booking asked on the public form, and refuse it past a limit of GUEST_LIMITS.
+
+	Without an address it counts the visitor, for every booking he asks; with one, the mail about to leave, against that
+	address and then against the site's budget. A booking refused at one stage is not counted at the next: a visitor
+	over his own limit, or a script caught by the hidden field, spends nothing of an address's nor of the site's. A call
+	made inside the server (a console, a job, a test) is no visitor and is not counted, as Frappe's own rate limiter lets
+	it through.
+	"""
+	ip = _visitor_ip()
+	if ip is None:
+		return
+	limits = _guest_limits()
+	stages = (("ip", _hashed(ip)),) if address is None else (("address", _hashed(address)), ("site", "*"))
+	for stage, who in stages:
+		counted = [
+			_count(kind, who, window) > allowed
+			for kind, (allowed, window) in limits.items()
+			if kind.startswith(stage + "_")
+		]
+		if any(counted):
+			_refuse_too_many()
+
+
+def _refuse_too_many():
+	"""The one refusal for every limit of the public form: it never says which limit, nor whose."""
+	frappe.throw(
+		_("Too many reservation requests. Please try again later or call the restaurant."),
+		frappe.RateLimitExceededError,
+	)
+
+
+def _visitor_ip() -> str | None:
+	"""The address the visitor calls from (an IPv6 one by its /64 network, which one subscriber holds whole); None for a
+	call made inside the server, which no HTTP request carries."""
+	if getattr(frappe.local, "request", None) is None:
+		return None
+	ip = getattr(frappe.local, "request_ip", None) or ""
+	try:
+		parsed = ipaddress.ip_address(ip)
+	except ValueError:
+		return ip
+	if parsed.version == 6:
+		return str(ipaddress.ip_network(f"{parsed}/64", strict=False).network_address)
+	return str(parsed)
+
+
+def _guest_limits() -> dict:
+	"""GUEST_LIMITS, with the entries the site config (`guest_reservation_limits`) overrides."""
+	limits = dict(GUEST_LIMITS)
+	for kind, pair in (frappe.conf.get("guest_reservation_limits") or {}).items():
+		if kind in limits and len(pair) == 2:
+			limits[kind] = (cint(pair[0]), cint(pair[1]) or limits[kind][1])
+	return limits
+
+
+def _hashed(value) -> str:
+	"""A visitor's address and an e-mail address are counted under a keyed hash, never written as they are."""
+	secret = (frappe.conf.get("encryption_key") or frappe.local.site or "pos_next").encode()
+	return hmac.new(secret, str(value).encode(), hashlib.sha256).hexdigest()[:20]
+
+
+def _count(kind, who, window) -> int:
+	"""Count one more booking in the fixed window it falls in; how many that window holds now."""
+	key = frappe.cache.make_key(f"{LIMIT_KEY}{kind}:{who}:{int(epoch_seconds() // window)}")
+	count = frappe.cache.incr(key)
+	if count == 1:
+		frappe.cache.expire(key, window + 60)
+	return int(count)
 
 
 # ==========================================
@@ -466,10 +682,13 @@ def _send_reminders_of(restaurant):
 			"reservation_date": getdate(reminder_cutoff),
 			"email": ["is", "set"],
 		},
-		fields=["name", "reservation_time", "reservation_date"],
+		fields=["name", "reservation_time", "reservation_date", "verified", "verification_deadline"],
 	)
 
 	for res in reservations:
+		if awaits_its_guest(res):
+			# Nobody has shown this address is theirs: it gets the one mail that asks, never a second
+			continue
 		# Check if reservation is within reminder window
 		res_datetime = datetime.combine(
 			getdate(res.reservation_date),
@@ -501,10 +720,13 @@ def _mark_no_shows_of(restaurant):
 			"status": "Confirmed",
 			"reservation_date": ["<=", nowdate()],
 		},
-		fields=["name", "reservation_time", "reservation_date"],
+		fields=["name", "reservation_time", "reservation_date", "verified", "verification_deadline"],
 	)
 
 	for res in reservations:
+		if awaits_its_guest(res):
+			# A guest who never confirmed his booking did not fail to come: it expires (expire_unconfirmed_reservations)
+			continue
 		res_datetime = datetime.combine(
 			getdate(res.reservation_date),
 			get_time(res.reservation_time),
@@ -516,6 +738,31 @@ def _mark_no_shows_of(restaurant):
 			frappe.publish_realtime("reservation_update")
 
 	frappe.db.commit()
+
+
+def expire_unconfirmed_reservations():
+	"""Scheduled job (every five minutes): an online booking whose guest did not confirm it by its deadline expires.
+
+	It held nothing from its deadline on already (check_overlap); the job writes it down, so that the till's list and the
+	statistics no longer count it. Whatever its restaurant's settings are now: the deadline was set when it was made.
+	"""
+	expired = frappe.get_all(
+		"Restaurant Reservation",
+		filters=[
+			["verified", "=", 0],
+			# Frappe compares `ifnull(verification_deadline, '') <= now`, which no deadline at all satisfies: without
+			# this line every booking taken at the till, or confirmed by a manager, would read as past its deadline
+			["verification_deadline", "is", "set"],
+			["verification_deadline", "<=", now_datetime()],
+			["status", "in", HOLD_STATUSES],
+		],
+		pluck="name",
+	)
+	for name in expired:
+		frappe.db.set_value("Restaurant Reservation", name, "status", EXPIRED)
+	if expired:
+		frappe.db.commit()
+		frappe.publish_realtime("reservation_update")
 
 
 def _reservations_of(restaurant, filters, fields, **options):
@@ -535,7 +782,11 @@ def _reservations_of(restaurant, filters, fields, **options):
 
 
 def _send_verification_email(reservation):
-	"""Send double opt-in verification email to the guest."""
+	"""Send double opt-in verification email to the guest.
+
+	It goes to an address nobody has confirmed yet: it says only what the restaurant says, with the facts of the
+	booking (date, time, number of guests), never a word the visitor typed - his name, his remark, his phone.
+	"""
 	if not reservation.email:
 		return
 
@@ -545,16 +796,21 @@ def _send_verification_email(reservation):
 		f"?token={reservation.verification_token}"
 	)
 
-	subject = _("Confirm your reservation - {0}").format(reservation.guest_name)
-	message = _(
-		"Please confirm your reservation for {0} on {1} at {2} for {3} guests."
-	).format(
-		reservation.guest_name,
-		frappe.format(reservation.reservation_date, {"fieldtype": "Date"}),
-		reservation.reservation_time,
-		reservation.no_of_guests,
+	settings = get_restaurant_settings(restaurant_of(reservation))
+	restaurant_name = settings.get("restaurant_name") or settings.get("name") or ""
+	subject = _("Confirm your reservation at {0}").format(restaurant_name)
+	message = escape_html(
+		_("Please confirm your reservation at {0} on {1} at {2} for {3} guests.").format(
+			restaurant_name,
+			frappe.format(reservation.reservation_date, {"fieldtype": "Date"}),
+			get_time(reservation.reservation_time).strftime("%H:%M"),
+			cint(reservation.no_of_guests),
+		)
 	)
-	message += f"<br><br><a href='{verify_url}'>{_('Click here to confirm')}</a>"
+	message += f"<br><br><a href='{verify_url}'>{escape_html(_('Click here to confirm'))}</a>"
+	message += "<br><br>" + escape_html(
+		_("If you did not ask for this reservation, ignore this email: it expires by itself.")
+	)
 
 	try:
 		frappe.sendmail(

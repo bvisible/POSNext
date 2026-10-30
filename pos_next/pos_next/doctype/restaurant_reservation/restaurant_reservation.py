@@ -5,14 +5,52 @@
 # //// case, not the rare one (ebc3ecc5, 2026-03-29 "restaurant reservation system with POS dialog,
 # //// online booking, and email notifications"; duration parsing hardened for int / float / HH:MM:SS
 # //// by ac07efed, same day). Upstream POSNext has no table service, so nothing to book.
+# //// An online booking holds its tables only until the deadline its guest has to confirm it from the e-mail, then
+# //// it expires: it never blocks a table nor ends as a no-show (NeoRestau lot 1, task 18).
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate, nowdate, get_time, time_diff_in_seconds, add_to_date
+from frappe.utils import (
+	add_to_date,
+	cint,
+	get_datetime,
+	get_time,
+	getdate,
+	now_datetime,
+	nowdate,
+	time_diff_in_seconds,
+)
 from datetime import timedelta
 
 from pos_next.restaurant import scope
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
+
+# The states in which an online booking still waits for its guest to confirm it from the e-mail (Pending when the
+# restaurant validates online bookings itself, Confirmed when it does not). The deadline to confirm it,
+# `verification_deadline`, is set by the public form and cleared when a manager confirms the booking himself.
+HOLD_STATUSES = ("Pending", "Confirmed")
+# What such a booking becomes when its guest has not confirmed it in time: it holds no table, is no no-show, and is
+# not one of the restaurant's bookings any more (NeoRestau lot 1, task 18)
+EXPIRED = "Expired"
+
+
+def awaits_its_guest(reservation) -> bool:
+	"""Whether a booking was made on the public form and its guest has not confirmed it from the e-mail yet.
+
+	A booking taken at the till, one its guest confirmed, and one a manager confirmed himself (the deadline is cleared
+	then) are not: they are the restaurant's bookings.
+	"""
+	return bool(reservation.get("verification_deadline")) and not cint(reservation.get("verified"))
+
+
+def hold_has_expired(reservation, now=None) -> bool:
+	"""Whether a booking that awaits its guest is past its deadline: from that moment it holds nothing, whether the
+	job that marks it Expired has run yet or not."""
+	return (
+		awaits_its_guest(reservation)
+		and reservation.get("status") in HOLD_STATUSES
+		and get_datetime(reservation.get("verification_deadline")) <= (now or now_datetime())
+	)
 
 
 class RestaurantReservation(Document):
@@ -153,7 +191,8 @@ def check_overlap(tables, date, time, duration, exclude=None):
 	"""Check if any of the given tables have overlapping reservations.
 
 	Returns list of conflicts: [{table, table_name, reservation, guest_name, time}], a table being named by its
-	name (`table`) and shown by its label (`table_name`).
+	name (`table`) and shown by its label (`table_name`). An online booking whose guest did not confirm it in time
+	holds nothing (`hold_has_expired`), from its deadline on.
 	"""
 	if not tables:
 		return []
@@ -179,7 +218,10 @@ def check_overlap(tables, date, time, duration, exclude=None):
 	reservations = frappe.get_all(
 		"Restaurant Reservation",
 		filters=filters,
-		fields=["name", "reservation_time", "end_time", "guest_name"],
+		fields=[
+			"name", "reservation_time", "end_time", "guest_name",
+			"status", "verified", "verification_deadline",
+		],
 	)
 
 	if not reservations:
@@ -188,8 +230,11 @@ def check_overlap(tables, date, time, duration, exclude=None):
 	# Get table assignments for these reservations
 	table_set = set(tables)
 	conflicts = []
+	now = now_datetime()
 
 	for res in reservations:
+		if hold_has_expired(res, now):
+			continue
 		res_tables = frappe.get_all(
 			"Restaurant Reservation Table",
 			filters={"parent": res.name, "restaurant_table": ["in", list(table_set)]},

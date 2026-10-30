@@ -385,6 +385,14 @@ scheduler_events = {
 		# //// add support for standalone pricing rules in promotions — 1ed8d44
 		"pos_next.tasks.cleanup_expired_promotions.cleanup_expired_promotions",
 	],
+	# //// Neoffice — an online booking whose guest has not confirmed it from the e-mail by its deadline expires
+	# //// (NeoRestau lot 1, task 18). It frees its tables at the deadline itself; this job writes it down soon after,
+	# //// so that the till's list and the statistics stop counting it.
+	"cron": {
+		"*/5 * * * *": [
+			"pos_next.api.reservations.expire_unconfirmed_reservations",
+		],
+	},
 }
 
 # Testing

@@ -42,6 +42,7 @@
   "column_break_reservations",
   "enable_online_reservations",
   "require_reservation_validation",
+  "unconfirmed_reservation_expiry",
   "restaurant_email",
   "reservation_channels"
  ],
@@ -277,6 +278,15 @@
    "label": "Require Manager Validation for Online"
   },
   {
+   "default": "30",
+   "depends_on": "eval:doc.enable_online_reservations",
+   "description": "An online reservation the guest has not confirmed from the e-mail within this time expires: its tables are free again and it never counts as a no-show",
+   "fieldname": "unconfirmed_reservation_expiry",
+   "fieldtype": "Int",
+   "label": "Unconfirmed Online Reservation Expiry (minutes)",
+   "non_negative": 1
+  },
+  {
    "depends_on": "eval:doc.enable_reservations",
    "fieldname": "restaurant_email",
    "fieldtype": "Data",
@@ -293,7 +303,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 22:30:00.000000",
+ "modified": "2026-10-30 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

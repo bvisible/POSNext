@@ -4,7 +4,8 @@
 	<!-- //// with double opt-in by e-mail, service slots and per-area table choice. -->
 	<!-- //// Upstream POSNext is a retail POS and books nothing (ebc3ecc5, 2026-03-29 -->
 	<!-- //// "restaurant reservation system with POS dialog, online booking, and email -->
-	<!-- //// notifications"). -->
+	<!-- //// notifications"). It tells a refused booking as refused, and carries a field only a -->
+	<!-- //// script fills (NeoRestau lot 1, task 18). -->
 	<div class="flex flex-col min-h-screen bg-gray-50">
 		<!-- Header -->
 		<div class="bg-white border-b px-4 py-4 text-center">
@@ -190,6 +191,12 @@
 						:placeholder="__('Allergies, birthday, high chair...')"
 					/>
 				</div>
+
+				<!-- A field nobody sees, the keyboard skips and no browser fills: only a script fills it, and the server -->
+				<!-- then answers like any booking and keeps nothing (NeoRestau lot 1, task 18) -->
+				<div class="decoy" aria-hidden="true">
+					<input v-model="decoy" type="text" name="subject" tabindex="-1" autocomplete="off" />
+				</div>
 			</div>
 		</div>
 
@@ -230,6 +237,8 @@ const companyLogo = ref("")
 const slots = ref([])
 const availableTables = ref([])
 const selectedTables = ref([])
+// What a script typed into the field people never see (empty for a guest)
+const decoy = ref("")
 
 const today = new Date().toISOString().slice(0, 10)
 // A site that runs several restaurants gives each its own address: /pos/reservation?restaurant=<restaurant>. Without
@@ -281,6 +290,18 @@ const isFormValid = computed(() => {
 		form.email?.trim()
 	)
 })
+
+// What the server said when it refused a call, or null when it did not. A site that hides its tracebacks answers a
+// refusal with an HTTP error and its message, but no `exc`: the status tells the refusal, the message says why.
+function refusalOf(response, data) {
+	if (response.ok && !data?.exc) return null
+	try {
+		const first = data?._server_messages ? JSON.parse(data._server_messages)?.[0] : null
+		return (first && JSON.parse(first)?.message) || __("An error occurred")
+	} catch {
+		return __("An error occurred")
+	}
+}
 
 function toggleTable(table) {
 	if (!table.available) return
@@ -358,19 +379,15 @@ async function submitReservation() {
 					tables: JSON.stringify(selectedTables.value),
 					notes: form.notes,
 					restaurant: restaurant || undefined,
+					subject: decoy.value,
 				}),
 			},
 		)
 
-		const data = await response.json()
-
-		if (data.exc) {
-			const errMsg = data._server_messages
-				? JSON.parse(data._server_messages)?.[0]
-				: null
-			errorMessage.value = errMsg
-				? JSON.parse(errMsg)?.message || __("An error occurred")
-				: __("An error occurred")
+		const data = await response.json().catch(() => ({}))
+		const refusal = refusalOf(response, data)
+		if (refusal) {
+			errorMessage.value = refusal
 			return
 		}
 
@@ -393,11 +410,9 @@ async function checkEnabled() {
 				},
 			},
 		)
-		const data = await response.json()
-		// If we get a successful response, it means reservations are enabled
-		if (!data.exc) {
-			enabled.value = true
-		}
+		const data = await response.json().catch(() => ({}))
+		// The form opens when the restaurant answers the day's slots, and stays closed when it refuses
+		enabled.value = !refusalOf(response, data)
 	} catch {
 		enabled.value = false
 	}
@@ -453,5 +468,14 @@ onMounted(async () => {
 <style scoped>
 .safe-area-bottom {
 	padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Out of sight but not `display: none`, which a script skips */
+.decoy {
+	position: absolute;
+	left: -10000px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
 }
 </style>
