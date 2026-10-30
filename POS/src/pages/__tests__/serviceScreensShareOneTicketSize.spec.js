@@ -44,9 +44,18 @@ const { default: KDSOrderCard } = await import(
 const { default: RunnerOrderCard } = await import(
 	"@/components/invoices/RunnerOrderCard.vue"
 )
-const { TICKET_AREA, TICKET_FRAME, TICKET_GRID } = await import(
-	"@/utils/ticketLayout"
-)
+const {
+	BAND_WAITING_HEIGHT,
+	BAND_PRODUCTION_HEIGHT,
+	TICKET_AREA,
+	TICKET_COLUMN_PRODUCTION,
+	TICKET_COLUMN_WAITING,
+	TICKET_FRAME,
+	TICKET_GRID,
+	TICKET_LANE,
+	TICKET_SPLIT_PRODUCTION,
+	TICKET_SPLIT_WAITING,
+} = await import("@/utils/ticketLayout")
 
 const tokens = (classes) => classes.split(/\s+/).filter(Boolean)
 
@@ -126,6 +135,166 @@ describe("the grid of the tickets", () => {
 	})
 })
 
+/**
+ * The value a responsive utility has at a screen width: the base class, then each breakpoint's, the widest that applies.
+ * `pick` turns a token into what it sets, or null for a token that is not one of this family.
+ */
+function valueAt(width, classes, pick) {
+	const steps = []
+	for (const token of tokens(classes)) {
+		const match = token.match(/^(?:(sm|md|lg|xl)|min-\[(\d+)px\]):(.+)$/)
+		const from = match
+			? match[1]
+				? BREAKPOINTS[match[1]]
+				: Number(match[2])
+			: 0
+		const value = pick(match ? match[3] : token)
+		if (value != null) steps.push({ from, value })
+	}
+	return steps
+		.filter((step) => step.from <= width)
+		.sort((a, b) => b.from - a.from)[0]?.value
+}
+
+describe("the lane of tickets of a band (the bands layout of the kitchen screen)", () => {
+	// auto-cols-[calc((100%-3rem)/4)]  ->  { gaps: 3 rem, columns: 4 }
+	const laneColumn = (token) => {
+		const found = token.match(
+			/^auto-cols-\[(?:calc\(\(100%-(\d+)rem\)\/(\d+)\)|100%)\]$/,
+		)
+		if (!found) return null
+		return { gaps: Number(found[1] || 0), columns: Number(found[2] || 1) }
+	}
+	function laneTicketWidthAt(width) {
+		const { gaps, columns } = valueAt(width, TICKET_LANE, laneColumn)
+		const inner = width - 2 * spacing(TICKET_AREA, "p")
+		return (inner - gaps * 16) / columns
+	}
+
+	it("makes a ticket exactly as wide as a column of the shared grid, at every screen width", () => {
+		for (let width = 320; width <= 2560; width += 1) {
+			expect(laneTicketWidthAt(width), `${width} px`).toBeCloseTo(
+				ticketWidthAt(width),
+				6,
+			)
+		}
+	})
+
+	it("shows as many tickets across as the shared grid has columns, and leaves the gap of the grid between them", () => {
+		for (const width of [768, 800, 1024, 1180, 1280, 1366, 1600, 1920]) {
+			expect(
+				valueAt(width, TICKET_LANE, laneColumn).columns,
+				`${width} px`,
+			).toBe(columnsAt(width))
+			// n columns have n - 1 gaps
+			expect(valueAt(width, TICKET_LANE, laneColumn).gaps).toBe(
+				columnsAt(width) - 1,
+			)
+		}
+		expect(spacing(TICKET_LANE, "gap")).toBe(spacing(TICKET_GRID, "gap"))
+	})
+
+	it("is one row that scrolls sideways, by touch, one ticket at a time, and does not pass any scroll on to the page", () => {
+		const lane = tokens(TICKET_LANE)
+		expect(lane).toEqual(
+			expect.arrayContaining([
+				"grid",
+				"grid-flow-col",
+				"overflow-x-auto",
+				"overflow-y-hidden",
+				// Contained both ways: sideways, the browser would take a swipe from the left edge for "back"; up and down,
+				// the end of a ticket's dishes would hand the swipe on to the page (pull to refresh on an Android tablet)
+				"overscroll-contain",
+				"snap-x",
+				"snap-mandatory",
+			]),
+		)
+		// A single row as tall as the lane: a ticket never grows past its band
+		expect(lane).toContain("grid-rows-[minmax(0,1fr)]")
+	})
+
+	it("uses only the breakpoints this build has", () => {
+		expect(TICKET_LANE).not.toMatch(/\b2xl:/)
+		for (const token of tokens(TICKET_LANE).filter((t) =>
+			/auto-cols/.test(t),
+		)) {
+			expect(token).toMatch(/^(?:(?:sm|md|lg|xl|min-\[\d+px\]):)?auto-cols-\[/)
+		}
+	})
+})
+
+describe("the columns of the kitchen screen, side by side", () => {
+	const spanOf = (token) => {
+		const found = token.match(/^col-span-(\d+)$/)
+		return found ? Number(found[1]) : null
+	}
+	const subColumns = (token) => {
+		const found = token.match(/^grid-cols-(\d+)$/)
+		return found ? Number(found[1]) : null
+	}
+
+	it("split the shared grid: the waiting tickets take ONE column of it, the others take the rest", () => {
+		for (const width of [
+			320, 640, 768, 800, 1024, 1180, 1280, 1366, 1600, 1920,
+		]) {
+			const all = columnsAt(width)
+			const waiting = valueAt(width, TICKET_SPLIT_WAITING, spanOf)
+			const production = valueAt(width, TICKET_SPLIT_PRODUCTION, spanOf)
+			// Under 768 px a grid has one column: the screen does not offer this layout there
+			if (width < BREAKPOINTS.md) continue
+			expect(waiting, `${width} px: waiting`).toBe(1)
+			expect(waiting + production, `${width} px: all`).toBe(all)
+		}
+	})
+
+	it("hold as many ticket columns on the right as the right side spans, so that a ticket has the width of the grid there too", () => {
+		for (let width = BREAKPOINTS.md; width <= 2560; width += 1) {
+			const span = valueAt(width, TICKET_SPLIT_PRODUCTION, spanOf)
+			const inside = valueAt(width, TICKET_COLUMN_PRODUCTION, subColumns)
+			expect(inside, `${width} px`).toBe(span)
+			// The gap is the grid's, so span columns of the grid's width fill the span exactly
+			expect(spacing(TICKET_COLUMN_PRODUCTION, "gap")).toBe(
+				spacing(TICKET_GRID, "gap"),
+			)
+		}
+	})
+
+	it("hold the waiting tickets in a single column of the grid's width", () => {
+		for (let width = BREAKPOINTS.md; width <= 2560; width += 1) {
+			expect(
+				valueAt(width, TICKET_COLUMN_WAITING, subColumns),
+				`${width} px`,
+			).toBe(1)
+		}
+	})
+})
+
+describe("the height shared between the two bands of the bands layout", () => {
+	const share = (classes) => {
+		const found = tokens(classes)
+			.map((token) => token.match(/^flex-\[(\d+)_\d+_0%\]$/))
+			.find(Boolean)
+		return found ? Number(found[1]) : null
+	}
+
+	it("gives each band a share of its own that does not depend on what it holds: the boundary between them never moves", () => {
+		expect(share(BAND_WAITING_HEIGHT)).toBeGreaterThan(0)
+		expect(share(BAND_PRODUCTION_HEIGHT)).toBeGreaterThan(0)
+	})
+
+	it("gives the band where the cooks work more than the one that waits", () => {
+		expect(share(BAND_PRODUCTION_HEIGHT)).toBeGreaterThan(
+			share(BAND_WAITING_HEIGHT),
+		)
+	})
+
+	it("keeps a floor under each band, so that a short screen makes the page scroll instead of crushing one of them", () => {
+		for (const classes of [BAND_WAITING_HEIGHT, BAND_PRODUCTION_HEIGHT]) {
+			expect(tokens(classes).some((t) => /^min-h-\[/.test(t))).toBe(true)
+		}
+	})
+})
+
 describe("the two screens", () => {
 	const orderOfTheKitchen = {
 		name: "SINV-1",
@@ -190,15 +359,18 @@ describe("the two screens", () => {
 		return wrapper
 	}
 
-	it("lay their tickets out on the same grid, in the same scrolling area", async () => {
+	it("lay their tickets out on the same grid, in the same scrolling area: the kitchen with its bands side by side", async () => {
+		// Side by side, the kitchen's two bands ARE the shared grid (the waiting tickets in its first column, the others in the
+		// rest), so its tickets are the runner's, column for column
+		localStorage.setItem("pos_kds_layout", "columns")
 		const kitchen = await open(KDS)
 		const runner = await open(Runner)
 
-		for (const [name, wrapper] of [
-			["kitchen", kitchen],
-			["runner", runner],
+		for (const [name, wrapper, selector] of [
+			["kitchen", kitchen, '[data-test="bands"]'],
+			["runner", runner, '[data-test="ticket-grid"]'],
 		]) {
-			const grid = wrapper.find('[data-test="ticket-grid"]')
+			const grid = wrapper.find(selector)
 			expect(grid.exists(), `${name}: a grid`).toBe(true)
 			expect(grid.classes(), `${name}: the grid`).toEqual(
 				expect.arrayContaining(tokens(TICKET_GRID)),
@@ -209,18 +381,35 @@ describe("the two screens", () => {
 			)
 			expect(area.element.contains(grid.element)).toBe(true)
 		}
-		expect(kitchen.find('[data-test="ticket-grid"]').classes().sort()).toEqual(
-			runner.find('[data-test="ticket-grid"]').classes().sort(),
+		// The runner's grid is the shared one and nothing else
+		expect(runner.find('[data-test="ticket-grid"]').classes().sort()).toEqual(
+			tokens(TICKET_GRID).sort(),
 		)
 	})
 
+	it("lay the kitchen's tickets out as wide as the runner's when its bands are one above the other: lanes of the same ticket width", async () => {
+		localStorage.setItem("pos_kds_layout", "bands")
+		const kitchen = await open(KDS)
+
+		const area = kitchen.find('[data-test="ticket-area"]')
+		expect(area.classes()).toEqual(expect.arrayContaining(tokens(TICKET_AREA)))
+		const lanes = kitchen.findAll('[data-test="ticket-lane"]')
+		expect(lanes.length).toBeGreaterThan(0)
+		for (const lane of lanes) {
+			expect(lane.classes()).toEqual(
+				expect.arrayContaining(tokens(TICKET_LANE)),
+			)
+			expect(area.element.contains(lane.element)).toBe(true)
+		}
+	})
+
 	it("do not keep a grid of their own", () => {
-		const sources = import.meta.glob("/src/pages/{KDS,Runner}.vue", {
-			query: "?raw",
-			import: "default",
-			eager: true,
-		})
+		const sources = import.meta.glob(
+			"/src/{pages/{KDS,Runner}.vue,components/restaurant/KitchenBand.vue}",
+			{ query: "?raw", import: "default", eager: true },
+		)
 		expect(Object.keys(sources).sort()).toEqual([
+			"/src/components/restaurant/KitchenBand.vue",
 			"/src/pages/KDS.vue",
 			"/src/pages/Runner.vue",
 		])

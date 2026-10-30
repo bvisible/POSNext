@@ -221,9 +221,11 @@ describe("the rooms of the kitchen screen", () => {
 			"Kitchen (4)",
 		])
 		const line = wrapper.find('[data-test="filter-line"]')
+		// The switch of the layout (bands or side by side) closes the line, on the line it already has (task 23)
 		expect([...line.element.children].map((el) => el.dataset.test)).toEqual([
 			"rooms",
 			"stations",
+			"filter-end",
 		])
 	})
 })
@@ -404,13 +406,20 @@ describe("choosing a room on the kitchen screen", () => {
 		expect(shown(wrapper)).toEqual(["A1", "A2", "B1", "T1", "TAKE"])
 	})
 
-	it("says there is nothing to cook when the room has no ticket, and keeps the line to leave it", async () => {
+	it("says there is nothing to cook when the room has no ticket: both bands stay, empty, and the line is kept to leave it", async () => {
 		const wrapper = await open()
 
 		await choose(wrapper, "rooms", "Garden")
 
 		expect(shown(wrapper)).toEqual([])
-		expect(wrapper.text()).toContain("No Active Orders")
+		// The screen used to swap its grid for "No Active Orders". Its two bands are always on it now (task 23), each with
+		// its header at zero and one short line, so that nothing moves when a ticket arrives
+		expect(wrapper.find('[data-test="band-waiting"]').text()).toContain(
+			"No pending orders",
+		)
+		expect(wrapper.find('[data-test="band-production"]').text()).toContain(
+			"No orders in preparation",
+		)
 		expect(wrapper.find('[data-test="filter-line"]').exists()).toBe(true)
 		await choose(wrapper, "rooms", "All Areas")
 		expect(shown(wrapper)).toHaveLength(5)

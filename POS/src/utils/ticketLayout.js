@@ -22,6 +22,51 @@ export const TICKET_AREA = "flex-1 overflow-y-auto p-4"
 export const TICKET_GRID =
 	"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[1600px]:grid-cols-5 gap-4"
 
+// ---------------------------------------------------------------------------------------------------------------------
+// The kitchen screen in two bands (NeoRestau lot 1, task 23). The kitchen shows the tickets waiting and the tickets in
+// preparation apart from each other, and it is used on tablets: it can hold thirty tickets in one band and tickets of
+// twenty-five dishes. Neither a long grid that scrolls down a page nor a ticket that grows with its dishes can do that
+// and keep the two bands on the screen, so a ticket is bounded by its band, and the band by its share of the screen.
+// Whichever way the bands are laid out, a ticket is as wide as a column of TICKET_GRID at that screen width: it is the
+// same ticket as on the runner. A test reads the widths back from these classes, at every width from 320 to 2560 px.
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * BANDS layout, one band above the other: a band is ONE row of tickets that scrolls sideways (a swipe), oldest on the left.
+ * Each ticket is exactly one column of TICKET_GRID wide: `(100% - (n - 1) gaps) / n` for the n columns that grid has at
+ * that width, so 4 tickets across on 1280 px, 3 on 1180 and 1024, 2 on 800. The single row is as tall as the lane
+ * (`minmax(0, 1fr)`): a ticket never grows past its band, its dishes scroll inside it (KDSOrderCard). Tickets stop on a
+ * ticket edge after a swipe (`snap`), and the lane hands no scroll on to the page (`overscroll-contain`): sideways, a swipe
+ * from the left edge would be taken for "back" on a tablet; up and down, the end of a ticket's dishes would pass the swipe
+ * on and an Android tablet would pull the page to refresh it. The ticket does not contain its own scroll (see KDSOrderCard):
+ * it is the band that stops it.
+ */
+export const TICKET_LANE =
+	"grid grid-flow-col grid-rows-[minmax(0,1fr)] gap-4 overflow-x-auto overflow-y-hidden overscroll-contain snap-x snap-mandatory auto-cols-[100%] md:auto-cols-[calc((100%-1rem)/2)] lg:auto-cols-[calc((100%-2rem)/3)] xl:auto-cols-[calc((100%-3rem)/4)] min-[1600px]:auto-cols-[calc((100%-4rem)/5)]"
+
+/**
+ * The height each band of the BANDS layout gets, as a share of the screen left under the filter line, and a floor.
+ * The shares are fixed, they do not follow what the bands hold: the boundary between the two never moves when a ticket
+ * arrives or leaves, so that the button a cook is about to touch is not under another ticket's by the time he does. The
+ * band where the cooks work (in preparation) gets more. The floor keeps a short screen from crushing a band: the page
+ * scrolls instead.
+ */
+export const BAND_WAITING_HEIGHT = "flex-[5_1_0%] min-h-[14rem]"
+export const BAND_PRODUCTION_HEIGHT = "flex-[6_1_0%] min-h-[16rem]"
+
+/**
+ * COLUMNS layout, side by side: the page-level split IS TICKET_GRID (same columns, same gap). The waiting tickets take the
+ * first column of it, the tickets in preparation take the others, and inside them the tickets are laid out in as many
+ * columns as the side spans, so a ticket is again one column of the grid wide. Below 768 px the grid has one column and
+ * the layout is not offered (the screen stays in bands).
+ */
+export const TICKET_SPLIT_WAITING = "col-span-1"
+export const TICKET_SPLIT_PRODUCTION =
+	"col-span-1 lg:col-span-2 xl:col-span-3 min-[1600px]:col-span-4"
+export const TICKET_COLUMN_WAITING = "grid grid-cols-1 gap-4"
+export const TICKET_COLUMN_PRODUCTION =
+	"grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4 gap-4"
+
 /**
  * The frame both ticket cards are cut to: the sizes only. Colours, borders and what goes inside the frame stay each
  * screen's own (the runner's "Mark Delivered", the kitchen's status of each dish and its "Delivered").

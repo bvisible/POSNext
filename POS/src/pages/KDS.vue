@@ -37,25 +37,40 @@
 			:all-count="allOrdersOfTheRoom.length"
 			@update:selected-room="selectArea"
 			@update:selected-station="selectedStation = $event"
-		/>
+		>
+			<!-- //// Neoffice — the switch of the layout (bands one above the other, or side by side) ends the filter line, -->
+			<!-- //// on the line it already has (NeoRestau lot 1, task 23). Offered only where two ticket columns fit. -->
+			<template v-if="canSplit" #end>
+				<KitchenLayoutSwitch :layout="layout" @update:layout="chooseLayout" />
+			</template>
+		</RoomStationFilterLine>
 
-		<!-- Orders Grid -->
+		<!-- //// Neoffice — was ONE grid of tickets, oldest first, with "No Active Orders" in place of it when there was none. -->
+		<!-- //// The product owner asked for what is waiting apart from what is in preparation (task 23): two bands, always on -->
+		<!-- //// the screen, an empty one keeping its header and one short line, so that a ticket that arrives or leaves never -->
+		<!-- //// moves the other band. How they are laid out is the cook's choice, kept on the device (useKitchenLayout). -->
 		<main :class="TICKET_AREA" data-test="ticket-area">
 			<div v-if="loading || waitingForRooms" class="flex justify-center items-center h-full">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
 
-			<div v-else-if="ordersOfTheRoom.length === 0" class="flex flex-col justify-center items-center h-full text-gray-500">
-				<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-				<h2 class="text-xl font-medium">{{ __("No Active Orders") }}</h2>
-				<p>{{ __("Kitchen is clear.") }}</p>
-			</div>
-
-			<div v-else :class="TICKET_GRID" data-test="ticket-grid">
-				<KDSOrderCard
-					v-for="order in sortedOrders"
-					:key="order.name"
-					:order="order"
+			<div v-else :class="bandsClass" :data-layout="layout" data-test="bands">
+				<KitchenBand
+					band="waiting"
+					:mode="bandMode"
+					:label="kitchenStatusLabel('Pending')"
+					:empty-text="__('No pending orders')"
+					:orders="bands.waiting"
+					:stations="stations"
+					:show-station-badge="!selectedStation"
+					@status-updated="loadOrders"
+				/>
+				<KitchenBand
+					band="production"
+					:mode="bandMode"
+					:label="kitchenStatusLabel('Preparing')"
+					:empty-text="__('No orders in preparation')"
+					:orders="bands.production"
 					:stations="stations"
 					:show-station-badge="!selectedStation"
 					@status-updated="loadOrders"
@@ -68,8 +83,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from "vue"
 import { Button } from "frappe-ui"
-import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
+//// Neoffice — the two bands, their layouts and their switch (NeoRestau lot 1, task 23); the ticket card is drawn by the band
+import KitchenBand from "@/components/restaurant/KitchenBand.vue"
+import KitchenLayoutSwitch from "@/components/restaurant/KitchenLayoutSwitch.vue"
+import { useKitchenLayout } from "@/composables/useKitchenLayout"
+import { splitIntoBands } from "@/utils/kitchenBands"
+import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
+import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
@@ -123,15 +144,25 @@ const inTheRoom = (order) =>
 const ordersOfTheRoom = computed(() => orders.value.filter(inTheRoom))
 const allOrdersOfTheRoom = computed(() => allOrders.value.filter(inTheRoom))
 
-const sortedOrders = computed(() => {
-	let filtered = ordersOfTheRoom.value
-	if (!showDelivered.value) {
-		filtered = filtered.filter((o) => o.kds_status !== "Delivered")
-	}
-	return [...filtered].sort(
-		(a, b) => new Date(a.creation) - new Date(b.creation),
-	)
-})
+//// Neoffice — was `sortedOrders`: one list, the delivered orders hidden unless asked for, oldest `creation` first. The split
+//// into the two bands, and the order in each, are utils/kitchenBands: a ticket is waiting while no dish has begun, and
+//// it goes by the time it was last SENT (`modified`), not by the time its table was opened (`creation`), which for a table
+//// served in rounds is the time of its starters. The delivered orders still wait for "Show completed".
+const bands = computed(() =>
+	splitIntoBands(ordersOfTheRoom.value, { includeDelivered: showDelivered.value }),
+)
+
+//// Neoffice — how the bands are laid out: the cook's pick, or by the way the tablet is held (task 23)
+const { layout, canSplit, choose: chooseLayout } = useKitchenLayout()
+const bandMode = computed(() => (layout.value === LAYOUT_COLUMNS ? "column" : "lane"))
+// Side by side, the wrapper is the shared grid of tickets with one row as tall as the screen leaves it; one above the other,
+// it is a column of two bands whose heights are shares of the screen (utils/ticketLayout). The floor under it (the two
+// bands' floors, their headers and the gap) makes a short screen scroll the page instead of crushing a band.
+const bandsClass = computed(() =>
+	layout.value === LAYOUT_COLUMNS
+		? `${TICKET_GRID} h-full min-h-[20rem] grid-rows-[minmax(0,1fr)]`
+		: "flex h-full min-h-[34rem] flex-col gap-2",
+)
 
 // Count orders from ALL orders (not filtered by station) of the room chosen that have items for a station
 function getStationOrderCount(stationName) {

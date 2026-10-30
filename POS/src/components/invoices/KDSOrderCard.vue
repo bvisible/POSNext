@@ -14,12 +14,16 @@
 	<!-- //// a5c19a43 status preservation; 7a63644a "Coming Next"; 9eff4ab6 full invoice number; -->
 	<!-- //// 34ee11a8 2026-03-25 runner confirmation; 644ad918 2026-03-26 takeaway; 07d0d493 -->
 	<!-- //// 2026-03-29 batch separation.) -->
-	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 flex flex-col"
-		:class="borderColorClass">
+	<!-- //// Neoffice — a ticket never grows past its band (task 23). The kitchen screen is used on tablets and a ticket can -->
+	<!-- //// hold twenty-five dishes with options and remarks: the ticket is a column bounded by its band (a lane stretches -->
+	<!-- //// it to the lane's height, a column of tickets caps it with --ticket-max-h), its head and its main button keep -->
+	<!-- //// their size, and the dishes in between scroll by touch. -->
+	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 flex flex-1 flex-col min-h-0 max-h-[var(--ticket-max-h,none)]"
+		:class="borderColorClass" data-test="ticket">
 
 		<!-- Header -->
 		<!-- The frame (padding, title, order number, timer, dish lines) is the one the runner ticket has: utils/ticketLayout -->
-		<div class="border-b border-gray-100 dark:border-gray-700" :class="TICKET_FRAME.header" data-test="ticket-header">
+		<div class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="TICKET_FRAME.header" data-test="ticket-header">
 			<div class="flex justify-between items-start">
 				<h3 data-test="ticket-title" :class="[TICKET_FRAME.title, order.is_takeaway ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white']">
 					<template v-if="order.is_takeaway">
@@ -48,7 +52,13 @@
 		</div>
 
 		<!-- Items -->
-		<div class="flex-1" :class="TICKET_FRAME.body" data-test="ticket-body">
+		<!-- //// Neoffice — the dishes are the part of the ticket that scrolls (task 23). `ticket-scroll-area` holds the hint that -->
+		<!-- //// more dishes follow (a fade and "+N lines") over the foot of the scrolling body: the hint cannot sit in the body -->
+		<!-- //// itself, it would scroll away with the dishes. -->
+		<div class="relative flex flex-1 flex-col min-h-0" data-test="ticket-scroll-area">
+		<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="TICKET_FRAME.body" data-test="ticket-body"
+			@scroll.passive="onBodyScroll">
+			<div ref="linesEl">
 			<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
 				<!-- Batch separator (show for 2nd batch onwards) -->
 				<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1">
@@ -59,15 +69,16 @@
 					<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
 				</div>
 				<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
-					class="relative"
+					class="relative" data-ticket-line
 					:class="[
 						{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
 						item.kds_status === 'Delivered' ? 'opacity-40 line-through' : ''
 					]">
 					<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
-					<div class="flex flex-col justify-center py-1.5 cursor-pointer rounded px-1 -mx-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+					<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
+					<div class="flex flex-col justify-center py-1.5 cursor-pointer rounded px-1 -mx-1 active:bg-gray-100 dark:active:bg-gray-700 transition-colors"
 						:class="TICKET_FRAME.line" data-test="ticket-line"
-						@click.stop="toggleItemMenu(item._globalIdx)">
+						@click.stop="toggleItemMenu(item._globalIdx, $event)">
 						<!-- Item line: qty x name + item status badge -->
 						<div class="flex justify-between items-start gap-1">
 							<span class="text-gray-900 dark:text-gray-100">
@@ -97,23 +108,27 @@
 						</span>
 					</div>
 					<!-- Item context menu -->
-					<div v-if="activeItemMenu === item._globalIdx"
-						class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 py-1 min-w-[140px]">
+					<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
+					<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
+					<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
+					<div v-if="activeItemMenu === item._globalIdx" data-test="ticket-line-menu"
+						class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
+						:style="menuStyle">
 						<button v-if="item.kds_status !== 'Preparing'"
 							@click.stop="updateItemStatus(item, 'Preparing')"
-							class="w-full text-left px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2">
+							class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
 							<span class="w-2 h-2 rounded-full bg-blue-400"></span>
 							{{ __("Preparing") }}
 						</button>
 						<button v-if="item.kds_status !== 'Ready'"
 							@click.stop="updateItemStatus(item, 'Ready')"
-							class="w-full text-left px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 flex items-center gap-2">
+							class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
 							<span class="w-2 h-2 rounded-full bg-green-500"></span>
 							{{ __("Ready") }}
 						</button>
 						<button v-if="item.kds_status !== 'Delivered'"
 							@click.stop="updateItemStatus(item, 'Delivered')"
-							class="w-full text-left px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+							class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
 							<span class="w-2 h-2 rounded-full bg-gray-400"></span>
 							{{ __("Delivered") }}
 						</button>
@@ -127,7 +142,7 @@
 					{{ __("Coming Next") }}
 				</h4>
 				<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
-					class="py-1.5 opacity-50"
+					class="py-1.5 opacity-50" data-ticket-line
 					:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
 					<div class="flex justify-between items-start gap-1 px-1 -mx-1">
 						<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
@@ -140,14 +155,24 @@
 					</div>
 				</div>
 			</div>
+			</div>
+		</div>
+		<!-- //// Neoffice — the hint that more dishes follow, over the foot of the dishes: a fade, and how many are out of -->
+		<!-- //// sight (task 23). It takes no touch: the dish under it can still be pressed. -->
+		<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
+			class="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-gray-800 dark:via-gray-800/80"></div>
+		<span v-if="hiddenCount > 0" data-test="ticket-more"
+			class="pointer-events-none absolute bottom-2 right-3 rounded-full bg-gray-800 px-2.5 py-1 text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
+			{{ __("+{0} lines", [hiddenCount]) }}
+		</span>
 		</div>
 
 		<!-- Action Button -->
-		<div class="p-3 border-t border-gray-100 dark:border-gray-700">
+		<div class="flex-shrink-0 p-3 border-t border-gray-100 dark:border-gray-700" data-test="ticket-actions">
 			<Button
 				v-if="order.kds_status === 'Pending'"
 				variant="solid"
-				class="w-full h-10 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white"
+				class="w-full h-10 text-sm font-bold bg-blue-600 active:bg-blue-700 text-white"
 				@click="updateStatus('Preparing')"
 				:loading="loading"
 			>
@@ -157,7 +182,7 @@
 			<Button
 				v-if="order.kds_status === 'Preparing'"
 				variant="solid"
-				class="w-full h-10 text-sm font-bold bg-green-500 hover:bg-green-600 text-white"
+				class="w-full h-10 text-sm font-bold bg-green-500 active:bg-green-600 text-white"
 				@click="updateStatus('Ready')"
 				:loading="loading"
 			>
@@ -167,7 +192,7 @@
 			<Button
 				v-if="order.kds_status === 'Ready' && !showDeliveredConfirm"
 				variant="outline"
-				class="w-full h-10 text-sm font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+				class="w-full h-10 text-sm font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
 				@click="updateStatus('Delivered')"
 				:loading="loading"
 			>
@@ -187,13 +212,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
+//// Neoffice — the long ticket's hint and the status menu's place (task 23)
+import { placeMenu } from "@/utils/menuPlacement"
+import { hiddenLines } from "@/utils/ticketScrollHints"
 
 // Strip HTML tags from a string
 function stripHtml(html) {
@@ -247,9 +275,57 @@ const waitingItems = computed(() =>
 	(props.order.items || []).filter((i) => i.kds_status === "Waiting"),
 )
 
-function toggleItemMenu(idx) {
-	activeItemMenu.value = activeItemMenu.value === idx ? null : idx
+//// Neoffice — the status menu of a dish opens ON THE SCREEN, not inside the ticket (task 23). Upstream of this file's
+//// first version it hung under the dish (`absolute`); the dishes now scroll inside the ticket and the foot of the
+//// scrolling body would cut it. It is 160 px wide (w-40) and at most 140 px high (three 44 px buttons and 8 px of padding).
+const MENU_SIZE = { width: 160, height: 140 }
+const menuPosition = ref({ top: 0, left: 0 })
+const menuStyle = computed(() => ({
+	top: `${menuPosition.value.top}px`,
+	left: `${menuPosition.value.left}px`,
+}))
+
+function toggleItemMenu(idx, event) {
+	if (activeItemMenu.value === idx) {
+		activeItemMenu.value = null
+		return
+	}
+	const anchor = event?.currentTarget?.getBoundingClientRect?.()
+	if (anchor) {
+		menuPosition.value = placeMenu(anchor, MENU_SIZE, {
+			width: window.innerWidth,
+			height: window.innerHeight,
+		})
+	}
+	activeItemMenu.value = idx
 }
+
+// A menu on the screen does not follow its dish: when anything scrolls (the ticket's dishes, the lane of tickets) it closes.
+// A scroll does not bubble, so the listener sits on the window in the capture phase. It is there only while a menu is
+// open: forty-five tickets must not all listen to every scroll of the page.
+const closeMenu = () => {
+	activeItemMenu.value = null
+}
+watch(activeItemMenu, (open) => {
+	if (open !== null)
+		window.addEventListener("scroll", closeMenu, { capture: true, passive: true })
+	else window.removeEventListener("scroll", closeMenu, { capture: true })
+})
+
+//// Neoffice — how many dishes are cut by the foot of the ticket (task 23). Read from the boxes on the screen, so it follows
+//// the scroll, the size of the band the ticket is in (a tablet turned, a layout chosen) and the dishes a refresh brings.
+const bodyEl = ref(null)
+const linesEl = ref(null)
+const hiddenCount = ref(0)
+function measureHidden() {
+	hiddenCount.value = hiddenLines(bodyEl.value)
+}
+function onBodyScroll() {
+	activeItemMenu.value = null
+	measureHidden()
+}
+let sizeObserver = null
+watch(() => props.order, measureHidden, { deep: true, flush: "post" })
 
 // Update individual item KDS status (optimistic UI)
 async function updateItemStatus(item, newStatus) {
@@ -295,11 +371,21 @@ onMounted(() => {
 		now.value = new Date()
 	}, 1000)
 	document.addEventListener("click", handleDocClick)
+	//// Neoffice — measure the foot of the ticket now, and again whenever its body or its dishes change size (task 23)
+	measureHidden()
+	if (typeof ResizeObserver !== "undefined") {
+		sizeObserver = new ResizeObserver(() => measureHidden())
+		if (bodyEl.value) sizeObserver.observe(bodyEl.value)
+		if (linesEl.value) sizeObserver.observe(linesEl.value)
+	}
 })
 
 onUnmounted(() => {
 	if (timerInterval) clearInterval(timerInterval)
 	document.removeEventListener("click", handleDocClick)
+	//// Neoffice — see the watcher of the menu and the size observer above (task 23)
+	window.removeEventListener("scroll", closeMenu, { capture: true })
+	sizeObserver?.disconnect()
 })
 
 // Time since last action (modified)

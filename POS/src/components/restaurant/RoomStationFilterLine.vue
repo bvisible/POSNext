@@ -6,8 +6,11 @@
 	<!-- //// draws the chips and says what was chosen. It does not give a count a meaning: by default a count is plain text -->
 	<!-- //// in parentheses in the tone of its chip, and a screen that counts something with a meaning of its own (the -->
 	<!-- //// runner: the dishes that are READY, in green) draws its counts itself, through the slots. -->
+	<!-- //// Neoffice — an optional `end` slot closes the line (NeoRestau lot 1, task 23): the kitchen screen puts the switch of -->
+	<!-- //// its layout (bands or side by side) there, on the line it already has, instead of on a row of its own that would -->
+	<!-- //// cost a row of tickets. The runner passes nothing, so its line is what it was. -->
 	<div
-		v-if="hasRooms || hasStations"
+		v-if="hasRooms || hasStations || $slots.end"
 		data-test="filter-line"
 		class="bg-white dark:bg-gray-800 border-b px-4 py-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 flex-shrink-0"
 	>
@@ -73,6 +76,16 @@
 				<span v-else-if="station.count != null" data-test="station-count">({{ station.count }})</span>
 			</button>
 		</div>
+
+		<!-- A screen's own control, at the end of the line (the stations keep the right edge, it follows them) -->
+		<div
+			v-if="$slots.end"
+			data-test="filter-end"
+			class="flex items-center gap-2 flex-shrink-0"
+			:class="{ 'ml-auto': !hasStations }"
+		>
+			<slot name="end" />
+		</div>
 	</div>
 </template>
 
@@ -90,6 +103,9 @@ import { computed } from "vue"
  * chip, as the kitchen's station chips always did. A screen draws its counts its own way through the slots
  * `room-count` ({ room, selected }) and `station-count` ({ station, selected }): the runner counts the dishes that are
  * READY and says it with a green pill, a meaning this component must not give to a count of the kitchen's open tickets.
+ *
+ * The `end` slot closes the line with a control of the screen's own, after the stations, on the same row (the kitchen
+ * screen puts the switch of its layout there). A screen that passes nothing gets the two groups it always had.
  *
  * It is controlled: the screen holds the choice (selectedRoom "" is every room, selectedStation null is every station)
  * and hears what was chosen. A station chosen again is taken back, as on the runner.

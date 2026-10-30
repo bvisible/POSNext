@@ -38,6 +38,59 @@ const chips = (wrapper, group) =>
 	wrapper.findAll(`[data-test="${group}"] button`)
 const texts = (list) => list.map((chip) => chip.text().replace(/\s+/g, " "))
 
+describe("the end of the line", () => {
+	// The kitchen screen puts the switch of its layout there (task 23); the runner passes nothing
+	const withEnd = (props = {}) =>
+		mount(RoomStationFilterLine, {
+			props: { rooms: ROOMS, stations: STATIONS, allCount: 5, ...props },
+			slots: { end: '<button data-test="my-switch">Switch</button>' },
+			global: { mocks: { __: globalThis.__ } },
+		})
+
+	it("is not there for a screen that has nothing for it: the runner's line is the two groups it always was", () => {
+		const wrapper = mountLine()
+
+		expect(wrapper.find('[data-test="filter-end"]').exists()).toBe(false)
+		expect(
+			[...wrapper.get('[data-test="filter-line"]').element.children].map(
+				(el) => el.dataset.test,
+			),
+		).toEqual(["rooms", "stations"])
+	})
+
+	it("holds a screen's own control after the stations, on the same line", () => {
+		const wrapper = withEnd()
+
+		const line = wrapper.get('[data-test="filter-line"]')
+		expect([...line.element.children].map((el) => el.dataset.test)).toEqual([
+			"rooms",
+			"stations",
+			"filter-end",
+		])
+		expect(wrapper.findAll('[data-test="filter-line"]')).toHaveLength(1)
+		expect(wrapper.get('[data-test="filter-end"]').text()).toBe("Switch")
+		// The stations still own the right edge: the control follows them
+		expect(wrapper.get('[data-test="stations"]').classes()).toContain("ml-auto")
+	})
+
+	it("is never squeezed by the chips: it keeps its size and wraps with the line, not inside itself", () => {
+		const classes = withEnd().get('[data-test="filter-end"]').classes()
+
+		expect(classes).toEqual(
+			expect.arrayContaining(["flex", "items-center", "flex-shrink-0"]),
+		)
+	})
+
+	it("keeps the line when the screen has a control but no room and no station to choose", () => {
+		const wrapper = withEnd({ rooms: [], stations: [] })
+
+		expect(wrapper.find('[data-test="filter-line"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="rooms"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="stations"]').exists()).toBe(false)
+		expect(wrapper.get('[data-test="my-switch"]').exists()).toBe(true)
+	})
+})
+
 describe("the line of filters", () => {
 	it("puts the rooms and the stations on ONE line, the rooms on the left and the stations on the right", () => {
 		const wrapper = mountLine()
