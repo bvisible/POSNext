@@ -3,7 +3,8 @@
  * //// of the plan, under the chip of its station in the line above (NeoRestau lot 1, Ruling 48). Its start was a guess
  * //// (16 + index x 130 + 65 px) that assumed the chips sat at the left; the line puts them at the right, in one row or
  * //// wrapped, so each chip is measured instead: its centre, from the left edge of the plan, measured again when the
- * //// window or the line is resized and after each render.
+ * //// window or the line is resized and, while an arrow from another room is drawn (the only one that needs the chips), after
+ * //// a render. A render with no such arrow reads nothing from the layout.
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"

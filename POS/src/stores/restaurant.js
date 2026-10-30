@@ -205,6 +205,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	// Sets the status of a table, here and on the server. Never from a payment: the server sends a paid table to Cleaning when
+	// it submits the invoice, and a status sent after it overrides that (the till's own « Empty » after a sale was dead code
+	// for as long as the offline copy threw before this reached the server, and would have skipped Cleaning once it did)
 	async function updateTableStatus(tableName, status) {
 		try {
 			const table = tables.value.find((t) => t.name === tableName)

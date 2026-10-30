@@ -4760,15 +4760,19 @@ async function handlePaymentCompleted(paymentData) {
 				//// Neoffice — stock-refresh timing probe (2584aa58, 2026-03-24).
 				console.time("[Payment] stockRefresh");
 				await stockStore.refresh(soldItemCodes, shiftStore.profileWarehouse);
-				//// Neoffice — the table is released to Empty as soon as the bill is paid, and the floor
-				//// plan re-read from the server: leaving it Occupied blocks the next guests (130a6130,
-				//// 2026-03-24 "release restaurant table to Empty after successful payment"). The second
-				//// screen is told the sale completed (185c3c50, 2026-02-03).
+				//// Neoffice — the second screen is told the sale completed (185c3c50, 2026-02-03).
 				console.timeEnd("[Payment] stockRefresh");
 
-				// Release restaurant table after successful payment
+				//// Neoffice — the floor plan is read again from the server as soon as the bill is paid, so
+				//// that the next guests find the table's new state (130a6130, 2026-03-24 "release restaurant
+				//// table to Empty after successful payment"). The till no longer sets the table to Empty
+				//// itself: since 2026-03-29 (df6270eb) the SERVER sends a paid table to Cleaning when it
+				//// submits the invoice (invoices.py, and on_invoice_update in restaurant.py), the lifecycle
+				//// the Cleaning dialog and « Free the tables being cleaned » rely on, and the till must not
+				//// override it. That call used to fail silently (the offline copy threw before the server
+				//// was told); once the copy was written it would have skipped Cleaning for every table paid
+				//// at the till (NeoRestau lot 1, Ruling 75).
 				if (restaurantTableName) {
-					restaurantStore.updateTableStatus(restaurantTableName, "Empty");
 					restaurantStore.fetchFromNetwork();
 				}
 
