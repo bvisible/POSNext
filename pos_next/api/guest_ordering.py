@@ -1141,8 +1141,11 @@ def confirm_guest_payment(token, amount, tip=0):
 @frappe.whitelist()
 def create_table_token(table, pos_profile):
 	"""
-	Create a Guest Order Token for a restaurant table.
-	Called by the server POS when opening a table with QR ordering enabled.
+	Return the Guest Order Token of a restaurant table: the one it already has, else a new one.
+	Called by the server POS when the QR button of a table is pressed.
+	A table that already has an active token gets THAT token again. A new one would expire the code
+	already placed on the table (shown on a tablet, printed, stuck under a glass), and every phone
+	that scanned it would be told that its session is over.
 	Returns the token value and the guest URL.
 	"""
 	if not frappe.has_permission("Guest Order Token", "create"):
@@ -1151,42 +1154,52 @@ def create_table_token(table, pos_profile):
 	if not frappe.db.exists("Restaurant Table", table):
 		frappe.throw(_("Table {0} not found.").format(table))
 
-	# Find the current open POS opening
-	pos_opening = _get_active_pos_opening(pos_profile)
-
-	# Expire any existing active token for this table
-	existing_tokens = frappe.get_all(
+	# The code the table already has: its newest active token that can still be used (is_valid: not past
+	# its time, its POS opening still open). An active token that cannot be used any more is expired, as it
+	# always was; a usable one is never touched, not even when the table has several.
+	token_doc = None
+	active_tokens = frappe.get_all(
 		"Guest Order Token",
 		filters={"table": table, "status": "Active"},
+		order_by="creation desc",
 		pluck="name",
 	)
-	for t_name in existing_tokens:
+	for t_name in active_tokens:
 		try:
 			t_doc = frappe.get_doc("Guest Order Token", t_name)
+			if t_doc.is_valid():
+				if token_doc is None:
+					token_doc = t_doc
+				continue
 			t_doc.expire()
 		except Exception as e:
-			# Force expire via DB if ORM fails (e.g. validation errors on old tokens)
+			# Force expire via DB if ORM fails (e.g. validation errors on old tokens): a token that cannot be
+			# read or checked is not a code that works
 			frappe.db.set_value("Guest Order Token", t_name, "status", "Expired")
 			frappe.log_error("Token expire fallback", f"Token {t_name}: {str(e)}")
 
-	# Compute expires_at from settings
-	settings = _get_restaurant_settings(pos_profile)
-	expires_at = None
-	if settings.token_expiry_mode == "Timed":
-		days = settings.token_expiry_days or 7
-		expires_at = frappe.utils.add_days(now_datetime(), days)
+	if token_doc is None:
+		# Find the current open POS opening
+		pos_opening = _get_active_pos_opening(pos_profile)
 
-	token_doc = frappe.get_doc({
-		"doctype": "Guest Order Token",
-		"mode": "restaurant",
-		"table": table,
-		"pos_profile": pos_profile,
-		"pos_opening": pos_opening,
-		"expires_at": expires_at,
-	})
-	token_doc.flags.ignore_permissions = True
-	token_doc.flags.ignore_validate = True
-	token_doc.insert()
+		# Compute expires_at from settings
+		settings = _get_restaurant_settings(pos_profile)
+		expires_at = None
+		if settings.token_expiry_mode == "Timed":
+			days = settings.token_expiry_days or 7
+			expires_at = frappe.utils.add_days(now_datetime(), days)
+
+		token_doc = frappe.get_doc({
+			"doctype": "Guest Order Token",
+			"mode": "restaurant",
+			"table": table,
+			"pos_profile": pos_profile,
+			"pos_opening": pos_opening,
+			"expires_at": expires_at,
+		})
+		token_doc.flags.ignore_permissions = True
+		token_doc.flags.ignore_validate = True
+		token_doc.insert()
 
 	# Mark table as Occupied when QR is generated (guests are seated)
 	current_status = frappe.db.get_value("Restaurant Table", table, "status")

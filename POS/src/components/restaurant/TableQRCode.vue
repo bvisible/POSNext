@@ -3,7 +3,8 @@
 	<!-- //// opens /pos/guest/<token> for one table: the entry point of guest self-ordering. -->
 	<!-- //// Upstream POSNext has no guest ordering. (3939a848, 2026-03-28 "QR self-ordering and -->
 	<!-- //// takeaway web ordering"; 28eff1d9 switches to v-show so the canvas is already in the -->
-	<!-- //// DOM when the code is drawn — with v-if it rendered nothing.) -->
+	<!-- //// DOM when the code is drawn — with v-if it rendered nothing.) The QR button of a table shows this -->
+	<!-- //// dialog at once, with no question first, so it says in one line what the code is for (NeoRestau lot 1). -->
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="emit('close')">
 		<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
 			<!-- Header -->
@@ -37,6 +38,9 @@
 				></canvas>
 
 				<p class="mt-3 text-sm font-semibold text-gray-800 text-center">{{ tableName }}</p>
+				<p data-test="table-qr-purpose" class="mt-1 text-sm text-gray-600 text-center max-w-xs">
+					{{ __('Guests scan this code to order from their phone.') }}
+				</p>
 				<p class="mt-1 text-xs text-gray-400 break-all text-center max-w-xs">{{ url }}</p>
 			</div>
 

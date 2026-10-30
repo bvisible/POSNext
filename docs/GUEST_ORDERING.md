@@ -57,14 +57,14 @@ All guest endpoints in `pos_next/api/guest_ordering.py`:
 | `submit_guest_order(token, items)` | Yes | Adds items to the table's Sales Invoice |
 | `get_order_status(token)` | Yes | Returns current items, totals, paid amount |
 | `create_guest_payment(token, amount, payment_items, tip, success_url, failed_url)` | Yes | Creates a Payment Intent on the site's Wallee provider (`payments` app) and returns the hosted payment page URL |
-| `create_table_token(table, pos_profile)` | No (POS User) | Generates token for a table |
+| `create_table_token(table, pos_profile)` | No (POS User) | Returns the table's active token, or generates one when it has none that can still be used |
 | `create_takeaway_token()` | Yes | Generates token for takeaway (rate-limited) |
 | `submit_takeaway_order(token, items, customer)` | Yes | Finalizes takeaway after payment verified |
 
 ### Token Lifecycle
 
 ```
-Server opens table → create_table_token() → Guest Order Token created
+Server presses QR on a table → create_table_token() → the table's active Guest Order Token (created if it has none)
                                            ↓
                                Token: Active, linked to table + POS Opening
                                            ↓
@@ -74,6 +74,8 @@ Server opens table → create_table_token() → Guest Order Token created
                                            ↓
                                POS closes OR token expires → is_valid() = false
 ```
+
+Pressing the QR button again, from the same till or another, shows the same code: a table with an active token never gets a new one, so the code already placed on the table keeps working. A new token is made only when the table has none that can still be used (it was freed, its time ran out, or its POS opening closed). The QR dialog says in one line what the code is for.
 
 Tokens are validated on every API call. A token is invalid if:
 - Status is not "Active"

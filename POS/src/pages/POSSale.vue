@@ -27,6 +27,7 @@
   //// keep success dialog open after Print or Email actions — 39a70d1
   //// Implement Sales Order in Point of Sale (POS) system with cart, invoic… — a046b16
   //// replace JS confirm with proper Dialog for QR confirmation — f3affea + 34751a2 (+6 more)
+  //// Neoffice — the QR button of a table shows its code at once: the confirmation Dialog above is gone, the click path is composables/useTableQR.js
   //// set tip account type to Income Account and French label — d08c57e + 6c59863 (+2 more)
   //// merge all restaurant enhancements - station groups, realtime cards, s… — 34ee11a
   //// use dynamic customer group and territory lookup for customer display — 185c3c5 + 912ef09 (+1 more)
@@ -2162,83 +2163,15 @@
 		<!-- //// Neoffice — the dialog of the personal till code, opened from the user's menu (it cannot live inside the menu). -->
 		<TillCodeDialog />
 
-		<!-- //// Neoffice — ▼▼▼ ~95 lines of QR self-ordering and table-lifecycle dialogs, -->
-		<!-- //// none of them upstream: confirm before opening a table to guest ordering -->
-		<!-- //// and show the QR itself (c5208ba7 2026-03-28 "QR button on table view", -->
-		<!-- //// f3affeaa replaced a raw window.confirm with a real Dialog), then the -->
+		<!-- //// Neoffice — ▼▼▼ the QR self-ordering and table-lifecycle dialogs, none of them upstream: -->
+		<!-- //// the table's QR itself (c5208ba7 2026-03-28 "QR button on table view"), then the -->
 		<!-- //// end-of-service dialog on a table that guests already paid from their -->
 		<!-- //// phones — Paid (blue) and Cleaning (green) are distinct states with -->
 		<!-- //// different exits, and the dialog shows what was actually collected, tips -->
 		<!-- //// included (07d0d493 2026-03-29, 2aad6b2a + 34751a29 + 6bfa3117 2026-03-30, -->
-		<!-- //// ddf510f6 2026-03-31, 3b805c88 2026-03-29). -->
-		<!-- QR Self-Ordering Confirmation Dialog -->
-		<Dialog
-			v-model="showQRConfirmDialog"
-			:options="{ title: __('QR Self-Ordering'), size: 'sm' }"
-		>
-			<template #body-content>
-				<div class="flex flex-col items-center text-center p-4">
-					<div
-						class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4"
-					>
-						<svg
-							class="w-7 h-7 text-emerald-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-							/>
-						</svg>
-					</div>
-					<p class="text-base font-semibold text-gray-900 mb-2">
-						{{ currentQR.tableName }}
-					</p>
-					<p class="text-sm text-gray-600">
-						{{
-							__(
-								"Open this table for QR self-ordering? Customers will be able to scan a QR code and order directly from their phone."
-							)
-						}}
-					</p>
-				</div>
-			</template>
-			<template #actions>
-				<div class="flex gap-2 w-full">
-					<Button class="flex-1" @click="showQRConfirmDialog = false">{{
-						__("Cancel")
-					}}</Button>
-					<Button
-						class="flex-1"
-						variant="solid"
-						theme="green"
-						@click="confirmQRGeneration"
-					>
-						<template #prefix>
-							<svg
-								class="w-4 h-4"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M5 13l4 4L19 7"
-								/>
-							</svg>
-						</template>
-						{{ __("Generate QR") }}
-					</Button>
-				</div>
-			</template>
-		</Dialog>
-
+		<!-- //// ddf510f6 2026-03-31, 3b805c88 2026-03-29). The question that used to stand before the -->
+		<!-- //// QR (a Dialog since f3affeaa, before that a raw window.confirm) is gone: the QR button -->
+		<!-- //// shows the code at once, and the dialog says what it is for (NeoRestau lot 1). -->
 		<!-- QR Code Dialog for Guest Ordering -->
 		<TableQRCode
 			v-if="showQRDialog"
@@ -2433,6 +2366,8 @@ import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 //// its import (NeoRestau lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
+//// Neoffice — the click path of the QR button of a table: ask for its code and show it at once (NeoRestau lot 1).
+import { useTableQR } from "@/composables/useTableQR";
 //// Neoffice — the status badge of the open table is a label under its own context (NeoRestau lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 //// Neoffice — and the permanent card's tab is its label (NeoRestau lot 1, task 9, fix round 1)
@@ -2674,13 +2609,13 @@ const selectedCard = ref(null);
 const selectedCardCategory = ref(null);
 
 // QR Self-Ordering state
-const activeQRTokens = ref(new Map()); // table name → { token, url }
-const showQRDialog = ref(false);
-const showQRConfirmDialog = ref(false);
-const currentQR = ref({ token: "", url: "", tableName: "" });
-//// Neoffice — the table whose code is asked for: the cart's open table, or one pressed on the floor (its card in the
-//// list of tables, a long press on the plan: NeoRestau lot 1, task 26), which the confirmation must not swap for the cart's.
-const qrTable = ref(null);
+//// Neoffice — the QR button of a table shows the table's code at once (NeoRestau lot 1): the cache of the codes shown
+//// (table name → { token, url }, dropped when a table is cleaned or freed), the dialog that shows one and the click
+//// path come from useTableQR. The confirmation dialog that used to come first, and its state, are gone.
+const { activeQRTokens, showQRDialog, currentQR, handleQRButtonClick } = useTableQR({
+	table: () => cartStore.restaurantTable,
+	posProfile: () => settingsStore.settings.pos_profile || settingsStore.posProfile,
+});
 const cardSearchQuery = ref("");
 const cardViewMode = ref("grid");
 const cardCategories = computed(() => {
@@ -3847,58 +3782,9 @@ async function markTableAvailable() {
 	}
 }
 
-//// Neoffice — the table pressed on the floor (task 26), else the cart's open table; kept for the confirmation below.
-async function handleQRButtonClick(pressed = null) {
-	const table = pressed || cartStore.restaurantTable;
-	if (!table) return;
-	//// Neoffice — the confirmation generates the code of this table, not of the cart's (task 26).
-	qrTable.value = table;
-
-	const tableName = table.name || table.table_name;
-	// If we already have a token for this table, show QR directly
-	if (activeQRTokens.value.has(tableName)) {
-		const qr = activeQRTokens.value.get(tableName);
-		currentQR.value = {
-			token: qr.token,
-			url: qr.url,
-			tableName: table.table_name || tableName,
-		};
-		showQRDialog.value = true;
-		return;
-	}
-
-	//// Neoffice — the code is generated AT ONCE (Daniel, 01.11: « il faut que ça génère directement le QR »): the dialog that asked « Open this table for QR self-ordering? » first, with a button to press, is no longer opened (it stays in the template, unreachable, to keep the divergence from upstream small).
-	currentQR.value = { token: "", url: "", tableName: table.table_name || tableName };
-	await confirmQRGeneration();
-}
-
-async function confirmQRGeneration() {
-	showQRConfirmDialog.value = false;
-	//// Neoffice — the table asked for (one pressed on the floor has no cart behind it, task 26), else the cart's.
-	const table = qrTable.value || cartStore.restaurantTable;
-	if (!table) return;
-	const tableName = table.name || table.table_name;
-
-	try {
-		const result = await call("pos_next.api.guest_ordering.create_table_token", {
-			table: tableName,
-			pos_profile: settingsStore.settings.pos_profile || settingsStore.posProfile,
-		});
-		if (result?.token) {
-			const siteUrl = window.location.origin;
-			const url = result.url || `${siteUrl}/pos/guest/${result.token}`;
-			activeQRTokens.value.set(tableName, { token: result.token, url });
-			currentQR.value = {
-				token: result.token,
-				url,
-				tableName: table.table_name || tableName,
-			};
-			showQRDialog.value = true;
-		}
-	} catch (err) {
-		showError(__("Failed to generate QR code: {0}", [err.message || err]));
-	}
-}
+//// Neoffice — the QR button of a table shows the table's code at once, with no question first: its click path
+//// (handleQRButtonClick, and the second step that followed the confirmation dialog) lives in
+//// composables/useTableQR.js, taken above, where a test can reach it (this page is too large to mount in one).
 
 //// Neoffice — a table's QR code asked for from the floor (NeoRestau lot 1, task 26): the list's QR button, a long press on
 //// the plan. It goes through the order view's own entry, for the table pressed. The one line to reconnect at the merge
