@@ -233,8 +233,9 @@
 
 		<!-- Settings -->
 		<!-- //// Neoffice — a till's settings are its managers' (product owner, 30.10.2026): the entry shows to whoever the server lets save them (restaurant_can.manage_till_settings) -->
+		<!-- //// and, on a restaurant till, to the restaurant's manager, for the restaurant's tabs (NeoRestau lot 1, task 13) -->
 		<button
-			v-if="restaurantCan.manage_till_settings"
+			v-if="canOpenSettings"
 			@click="handleMenuClick('settings')"
 			:class="[
 				'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',
@@ -284,6 +285,13 @@ const isTipsEnabled = computed(() => restaurantStore.tipsEnabled);
 //// Neoffice — what the user may manage of the restaurant, as the server told the till (NeoRestau lot 1, task 3): an
 //// entry he may not use is not shown, and the server refuses its writes whatever the till shows.
 const restaurantCan = computed(() => restaurantStore.can || {});
+//// Neoffice — who opens the till's settings: its manager, and on a restaurant till whoever manages the restaurant
+//// (the server shows him the restaurant's tabs only, NeoRestau lot 1, task 13).
+const canOpenSettings = computed(
+	() =>
+		Boolean(restaurantCan.value.manage_till_settings) ||
+		Boolean(isRestaurantMode.value && restaurantCan.value.manage_settings)
+);
 
 function handleMenuClick(menuItem) {
 	activeMenu.value = menuItem;

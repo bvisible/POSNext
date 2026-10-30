@@ -714,9 +714,10 @@ function openDesigner() {
 	showDesigner.value = true
 }
 
+// The opening hours are the till's settings' « Hours and cards » tab (NeoRestau lot 1, task 13)
 function openScheduleSettings() {
 	show.value = false
-	emit("open-settings", "restaurant")
+	emit("open-settings", "hours")
 }
 
 async function duplicateCard() {

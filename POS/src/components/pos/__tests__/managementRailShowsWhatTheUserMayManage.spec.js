@@ -36,8 +36,8 @@ const NO_RIGHT = {
 describe("the management rail shows the till's settings to whoever may save them", () => {
 	let wrapper
 
-	function settingsEntry(can) {
-		Object.assign(restaurantStore, { can, tipsEnabled: false, isEnabled: false })
+	function settingsEntry(can, isEnabled = false) {
+		Object.assign(restaurantStore, { can, tipsEnabled: false, isEnabled })
 		wrapper = mount(ManagementSlider, { global: { mocks: { __: globalThis.__ } } })
 		return wrapper.findAll("button").some((button) => button.attributes("title") === "Settings")
 	}
@@ -56,6 +56,15 @@ describe("the management rail shows the till's settings to whoever may save them
 
 	it("hides it while the server has not said what the user may do", () => {
 		expect(settingsEntry(undefined)).toBe(false)
+	})
+
+	// //// Neoffice — NeoRestau lot 1, task 13: the restaurant's tabs of the settings are the restaurant manager's too
+	it("shows it to the restaurant's manager at a restaurant till, for the restaurant's tabs", () => {
+		expect(settingsEntry({ ...NO_RIGHT, manage_settings: true }, true)).toBe(true)
+	})
+
+	it("hides it from the restaurant's manager at a till that is not a restaurant till", () => {
+		expect(settingsEntry({ ...NO_RIGHT, manage_settings: true }, false)).toBe(false)
 	})
 })
 

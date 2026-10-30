@@ -1,7 +1,8 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The Printing tab lists the preparation stations of the till's
  * //// restaurant with the printer of each (NeoRestau lot 1, task 2). A new station is named by a hash, so the tab
- * //// shows its label, and still saves the printer under the name the printer rows keep.
+ * //// shows its label, and keeps the printer under the name the printer rows keep. Since task 13 the choice goes
+ * //// into the screen's draft, saved with the rest by its one « Save », no longer on each change.
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"
@@ -20,6 +21,7 @@ vi.mock("@/composables/useToast", () => ({
 }))
 
 const { default: CloudPrntTillSettings } = await import("../CloudPrntTillSettings.vue")
+const { useCloudPrntStore } = await import("@/stores/cloudPrnt")
 
 const STATION_NAME = "h4sh0f4stn"
 const PRINTING = {
@@ -34,13 +36,18 @@ const PRINTING = {
 		{ station: "Bar", station_type: "Bar", printer: null },
 	],
 }
+const DRAFT = { receipt_printer: null, auto_print: 0, open_drawer: "Cash payments", stations: {} }
+const DEFINITIONS = {
+	station_printers: { label: "Printer of each station", help: "The printer that prints the tickets" },
+}
 
-async function printingTab() {
+async function stationsPart() {
 	setActivePinia(createPinia())
 	call.mockReset()
 	call.mockResolvedValue(PRINTING)
+	await useCloudPrntStore().load("Till 1")
 	const wrapper = mount(CloudPrntTillSettings, {
-		props: { posProfile: "Till 1" },
+		props: { part: "stations", modelValue: DRAFT, definitions: DEFINITIONS },
 		global: { mocks: { __: globalThis.__ } },
 	})
 	await flushPromises()
@@ -51,7 +58,7 @@ describe("the printing tab lists the stations of the till by label", () => {
 	beforeEach(() => call.mockReset())
 
 	it("shows the label of a station and never its hash name", async () => {
-		const wrapper = await printingTab()
+		const wrapper = await stationsPart()
 
 		const labels = wrapper.findAll("label").map((label) => label.text())
 		expect(labels).toContain("Kitchen")
@@ -59,22 +66,30 @@ describe("the printing tab lists the stations of the till by label", () => {
 	})
 
 	it("shows the name of a station that has no label", async () => {
-		const wrapper = await printingTab()
+		const wrapper = await stationsPart()
 
 		expect(wrapper.findAll("label").map((label) => label.text())).toContain("Bar")
 	})
 
-	it("saves the printer of a station under the name the printer rows keep", async () => {
-		const wrapper = await printingTab()
-		call.mockResolvedValue(PRINTING)
+	it("keeps the printer of a station under the name the printer rows keep, for the screen's Save", async () => {
+		const wrapper = await stationsPart()
+		call.mockClear()
 
 		await wrapper.find(`#cloudprnt-station-${STATION_NAME}`).setValue("PRINTER-1")
 		await flushPromises()
 
-		expect(call).toHaveBeenCalledWith("cloudprnt.till.set_till_printing", {
-			pos_profile: "Till 1",
-			receipt_printer: null,
-			stations: { [STATION_NAME]: "PRINTER-1" },
-		})
+		expect(wrapper.emitted("update:modelValue").at(-1)).toEqual([
+			{ ...DRAFT, stations: { [STATION_NAME]: "PRINTER-1" } },
+		])
+		// Nothing is written on a change any more: the screen's one Save writes it
+		expect(call).not.toHaveBeenCalled()
+	})
+
+	it("gives each station's printer its help behind the lightbulb", async () => {
+		const wrapper = await stationsPart()
+
+		const bulbs = wrapper.findAll("button[aria-label='Help']")
+		expect(bulbs).toHaveLength(PRINTING.stations.length)
+		expect(bulbs[0].attributes("title")).toBe(DEFINITIONS.station_printers.help)
 	})
 })

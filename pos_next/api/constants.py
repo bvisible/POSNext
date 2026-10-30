@@ -78,6 +78,10 @@ POS_SETTINGS_FIELDS = [
 	"loyalty_to_wallet",
 	"cart_lifo",
 	"display_item_code",
+	# //// Neoffice — how many tiles a row of the till's item grids shows ("Automatic" or 3 to 8): a setting of the
+	# //// till's sale screen (NeoRestau lot 1, task 13, product owner 30.10.2026). Missing here, the till would read
+	# //// "Automatic" whatever the manager chose.
+	"tiles_per_row",
 ]
 
 # Default POS Settings values
@@ -146,6 +150,8 @@ DEFAULT_POS_SETTINGS = {
 	"miraaya_installed": 0,
 	"cart_lifo": 0,
 	"display_item_code": 1,
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: today's grids until a manager chooses (NeoRestau lot 1, task 13).
+	"tiles_per_row": "Automatic",
 }
 
 

@@ -17,7 +17,10 @@ const DESK_FORM =
 	"../../../../../pos_next/pos_next/doctype/pos_settings/pos_settings.json"
 
 describe("the till's settings screen", () => {
-	const screen = source("../POSSettings.vue")
+	// The dialog the till opens, and the screen it shows since NeoRestau lot 1, task 13
+	const screen = ["../POSSettings.vue", "../TillSettingsScreen.vue", "../TillSettingField.vue"]
+		.map(source)
+		.join("\n")
 
 	it("offers no tick that makes the till a restaurant till", () => {
 		expect(screen).not.toMatch(/enable_restaurant_mode/)

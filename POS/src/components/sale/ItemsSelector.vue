@@ -513,8 +513,15 @@
 				style="min-height: 0"
 			>
 				<!-- Columns follow the pane's own width (auto-fill), not the viewport -->
-				<div class="pos-item-grid grid gap-2 sm:gap-2.5">
+				<!-- //// Neoffice — or the till's « Tiles per row », a number from 3 to 8 (POS Settings.tiles_per_row, -->
+				<!-- //// NeoRestau lot 1, task 13): « Automatic » leaves the grid exactly as upstream draws it. -->
+				<div
+					class="pos-item-grid grid gap-2 sm:gap-2.5"
+					:class="tileGridClass(settingsStore.settings.tiles_per_row)"
+					:style="tileGridStyle(settingsStore.settings.tiles_per_row)"
+				>
 					<!-- //// Neoffice — [D] Neoffice theme tokens on the class below, not stock Tailwind (87f168fe). -->
+					<!-- //// Neoffice — `tile--text`: in a fixed grid, an item without a picture, its name its face (task 13). -->
 					<div
 						v-for="item in displayedItems"
 						:key="item.item_code"
@@ -533,6 +540,7 @@
 							activeHighlightCode === item.item_code
 								? 'border-pos-action ring-2 ring-pos-action ring-offset-1'
 								: 'border-gray-200',
+							fixedGrid && !item.image ? 'tile--text' : '',
 						]"
 					>
 						<!-- Stock Badge -->
@@ -554,8 +562,10 @@
 						<!-- //// Item's custom_color (or grey) and prints the name over it, which is what -->
 						<!-- //// staff actually recognise at the till (26f5a3f1, 2026-03-25). -->
 						<!-- Item Image / Color / Name -->
+						<!-- //// Neoffice — in a fixed grid, the well of an item without a picture is shorter (task 13). -->
 						<div
 							class="relative aspect-square rounded-neo-sm mb-2 overflow-hidden"
+							:class="fixedGrid && !item.image ? 'tile-well--text' : ''"
 							:style="getCardBackgroundStyle(item)"
 						>
 							<div
@@ -595,9 +605,11 @@
 								<!-- //// Neoffice — [IMG] states 2 and 3: Item custom_color, else grey, with the -->
 								<!-- //// item name over it. No upstream equivalent (26f5a3f1). -->
 								<!-- State 2 & 3: Color bg or gray bg with name -->
+								<!-- //// Neoffice — in a fixed grid the name keeps clear of the stock badge (task 13). -->
 								<div
 									v-else
 									class="w-full h-full flex items-center justify-center p-2"
+									:class="fixedGrid ? 'tile-well-name' : ''"
 								>
 									<span
 										:class="getCardTextClasses(item)"
@@ -620,9 +632,11 @@
 
 						<!-- Item Details -->
 						<div class="min-w-0 flex flex-col flex-1">
+							<!-- //// Neoffice — in a fixed grid the well already shows the name of an item without a picture (task 13). -->
 							<h3
 								dir="auto"
 								class="text-pos-sm font-medium text-pos-ink line-clamp-2 leading-snug min-h-[2.75em]"
+								:class="fixedGrid ? 'tile-name-repeat' : ''"
 								:title="item.item_name"
 							>
 								{{ item.item_name }}
@@ -634,8 +648,9 @@
 							>
 								{{ Object.values(item.attributes).join(" / ") }}
 							</p>
+							<!-- //// Neoffice — in a fixed grid the price always shows whole: a narrow tile drops the info button (task 13). -->
 							<div class="mt-auto pt-1 flex items-center justify-between gap-1 min-h-target">
-								<p class="min-w-0 truncate leading-tight">
+								<p class="min-w-0 truncate leading-tight" :class="fixedGrid ? 'tile-price' : ''">
 									<span class="text-[14px] font-semibold text-pos-ink tabular-nums">{{
 										formatCurrency(item.rate || item.price_list_rate || 0)
 									}}</span>
@@ -644,10 +659,12 @@
 									>
 								</p>
 								<!-- Other warehouses: visible affordance (was a hidden long-press) -->
+								<!-- //// Neoffice — `tile-info`: the button a narrow tile of a fixed grid drops (task 13). -->
 								<button
 									v-if="(item.is_stock_item || item.is_bundle) && !isOutOfStock(item)"
 									type="button"
 									class="flex-shrink-0 flex items-center justify-center min-h-target min-w-target -me-1.5 rounded-md text-gray-500 hover:text-pos-action hover:bg-pos-action-soft pos-focus"
+									:class="fixedGrid ? 'tile-info' : ''"
 									:title="__('Check availability in other warehouses')"
 									:aria-label="__('Check availability in other warehouses')"
 									@touchstart.stop
@@ -1013,6 +1030,8 @@ import {
 } from "@/utils/lowEndOptimizations";
 import { performanceConfig } from "@/utils/performanceConfig";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
+//// Neoffice — the till's « Tiles per row » (NeoRestau lot 1, task 13).
+import { tileGridClass, tileGridStyle, tilesPerRow } from "@/utils/tileGrid";
 
 const props = defineProps({
 	posProfile: String,
@@ -1036,6 +1055,8 @@ const emit = defineEmits(["item-selected"]);
 // Use composables
 const { getItemStockStatus } = useStock();
 const settingsStore = usePOSSettingsStore();
+//// Neoffice — a fixed number of tiles per row (task 13): the tiles then fit their width.
+const fixedGrid = computed(() => tilesPerRow(settingsStore.settings.tiles_per_row) !== null);
 const { showError, showWarning } = useToast();
 const { isAnyDialogOpen } = useDialogState();
 
@@ -1662,6 +1683,72 @@ function handleClickOutside(event) {
 /* Columns come from the product pane's width, not viewport breakpoints */
 .pos-item-grid {
 	grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+}
+
+/* //// Neoffice — a fixed number of tiles per row (POS Settings.tiles_per_row, NeoRestau lot 1, task 13): each
+   //// tile is measured by its own width. An item without a picture shows its name in a well shorter than a
+   //// picture's, clear of the stock badge that overhangs the corner, and not again under it; the price always
+   //// shows whole, a narrow tile dropping the info button for it. Nothing here touches the automatic grid. */
+.tile-grid-fixed > div {
+	container-type: inline-size;
+}
+
+/* The well of an item without a picture holds three lines of its name at least, and takes the height its row
+   leaves: a row of names only is shorter than a row of pictures */
+.tile-grid-fixed .tile-well--text {
+	aspect-ratio: auto;
+	min-height: 4.5rem;
+	flex: 1 0 auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.tile-grid-fixed .tile-well--text > div:first-child {
+	height: auto;
+	flex: 1 1 auto;
+	display: flex;
+}
+
+.tile-grid-fixed .tile--text > div:last-child {
+	flex: 0 0 auto;
+}
+
+/* Out of stock is said under the name, not over it */
+.tile-grid-fixed .tile-well--text > .absolute {
+	position: static;
+}
+
+.tile-grid-fixed .tile-well-name {
+	height: auto;
+	padding: 0.875rem 0.375rem 0.375rem;
+}
+
+/* A long word breaks rather than leaving the tile */
+.tile-grid-fixed .tile-well-name span,
+.tile-grid-fixed .tile-name-repeat {
+	overflow-wrap: anywhere;
+	hyphens: auto;
+}
+
+.tile-grid-fixed .tile--text .tile-name-repeat {
+	display: none;
+}
+
+@container (max-width: 7.5rem) {
+	.tile-info {
+		display: none;
+	}
+
+	/* The price a little smaller, on one line; a dear one breaks after its currency rather than losing figures */
+	.tile-price {
+		overflow: visible;
+		text-overflow: clip;
+		white-space: normal;
+	}
+
+	.tile-price > span:first-child {
+		font-size: 13px;
+	}
 }
 
 /* Performance optimizations for low-end devices */

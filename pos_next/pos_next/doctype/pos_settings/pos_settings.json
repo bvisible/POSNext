@@ -54,6 +54,7 @@
   "section_break_display",
   "default_card_view",
   "display_item_code",
+  "tiles_per_row",
   "show_customer_balance",
   "column_break_display",
   "hide_expected_amount",
@@ -448,6 +449,14 @@
    "fieldname": "display_item_code",
    "fieldtype": "Check",
    "label": "Display Item Code"
+  },
+  {
+   "default": "Automatic",
+   "description": "How many items each row of the grid shows. \u00ab Automatic \u00bb: as many as the width of the screen allows. A number: always that many, from 3 to 8; an item without a picture shows its name instead.",
+   "fieldname": "tiles_per_row",
+   "fieldtype": "Select",
+   "label": "Tiles per row",
+   "options": "Automatic\n3\n4\n5\n6\n7\n8"
   },
   {
    "default": "0",

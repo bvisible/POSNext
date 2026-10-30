@@ -6,85 +6,97 @@
 	<!-- //// with opening hours and time-based card availability"; 102b1208 moves the card -->
 	<!-- //// assignment off Restaurant Card and onto the slots, 9ae00441 the Lunch and Dinner -->
 	<!-- //// slot defaults.) -->
-	<div class="flex flex-col gap-3">
-		<div v-for="day in DAYS" :key="day" class="bg-gray-50 rounded-lg p-3">
-			<div class="flex items-center justify-between mb-2">
-				<span class="text-sm font-semibold text-gray-700 w-24">{{ __(day) }}</span>
-				<button
-					@click="addSlot(day)"
-					class="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1 transition-colors"
-				>
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-					</svg>
-					{{ __("Add slot") }}
-				</button>
-			</div>
+	<!-- //// Neoffice — one line per day since NeoRestau lot 1, task 13: the day, its slots, « Add slot » (mockup v2), -->
+	<!-- //// so that the week fits the till's settings screen at 1366 x 768; the design system's sand and clay. -->
+	<div class="flex flex-col">
+		<div
+			v-for="day in DAYS"
+			:key="day"
+			class="grid grid-cols-[88px_minmax(0,1fr)_auto] items-start gap-2.5 border-b border-[#ECE7DE] py-[5px]"
+			:data-day="day"
+		>
+			<span class="pt-1.5 text-[13.5px] font-bold text-[#141414]">{{ __(day) }}</span>
 
-			<div v-if="getGroupedSlotsForDay(day).length === 0" class="text-xs text-gray-400 italic pl-1">
-				{{ __("Closed") }}
-			</div>
-
-			<div v-for="(group, gIdx) in getGroupedSlotsForDay(day)" :key="gIdx"
-				class="flex items-start gap-2 mb-2 last:mb-0">
-				<!-- Time range -->
-				<input
-					type="time"
-					:value="group.from_time"
-					@input="updateGroupField(day, gIdx, 'from_time', $event.target.value)"
-					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-[106px] focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
-				/>
-				<span class="text-gray-400 text-xs mt-2">→</span>
-				<input
-					type="time"
-					:value="group.to_time"
-					@input="updateGroupField(day, gIdx, 'to_time', $event.target.value)"
-					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-[106px] focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
-				/>
-				<!-- Label -->
-				<input
-					type="text"
-					:value="group.label"
-					@input="updateGroupField(day, gIdx, 'label', $event.target.value)"
-					:placeholder="__('Label')"
-					class="text-sm border border-gray-300 rounded-md px-2 py-1 w-20 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
-				/>
-				<!-- Cards multi-select -->
-				<div class="flex-1 min-w-0">
-					<div class="flex flex-wrap items-center gap-1 border border-gray-300 rounded-md px-2 py-1 min-h-[30px] bg-white">
-						<!-- Selected card chips -->
-						<span v-for="cardName in group.cards" :key="cardName"
-							class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-							{{ getCardLabel(cardName) }}
-							<button @click="removeCardFromGroup(day, gIdx, cardName)"
-								class="text-amber-500 hover:text-amber-700">
-								<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-								</svg>
-							</button>
-						</span>
-						<!-- Add card dropdown -->
-						<select
-							@change="addCardToGroup(day, gIdx, $event.target.value); $event.target.value = ''"
-							class="text-xs border-0 outline-none bg-transparent text-gray-400 cursor-pointer p-0 min-w-[80px]"
-						>
-							<option value="">{{ group.cards.length === 0 ? __('Select cards...') : '+' }}</option>
-							<option v-for="card in availableCardsForGroup(group)" :key="card.name" :value="card.name">
-								{{ card.card_name }}
-							</option>
-						</select>
-					</div>
+			<div class="flex min-w-0 flex-col gap-[5px]">
+				<div v-if="getGroupedSlotsForDay(day).length === 0" class="pt-1.5 text-[13px] italic text-[#968C7C]">
+					{{ __("Closed") }}
 				</div>
-				<!-- Remove slot -->
-				<button
-					@click="removeGroup(day, gIdx)"
-					class="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+
+				<div
+					v-for="(group, gIdx) in getGroupedSlotsForDay(day)"
+					:key="gIdx"
+					class="flex min-w-0 flex-wrap items-center gap-1.5"
 				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-					</svg>
-				</button>
+					<!-- Time range -->
+					<input
+						type="time"
+						:value="group.from_time"
+						@input="updateGroupField(day, gIdx, 'from_time', $event.target.value)"
+						:aria-label="__('From')"
+						class="h-[30px] w-[88px] rounded-lg border border-[#DCD4C7] bg-white px-1.5 text-[13px] tabular-nums focus:border-[#D68A59] focus:outline-none focus:ring-1 focus:ring-[#D68A59]"
+					/>
+					<span class="text-[12px] text-[#968C7C]" aria-hidden="true">→</span>
+					<input
+						type="time"
+						:value="group.to_time"
+						@input="updateGroupField(day, gIdx, 'to_time', $event.target.value)"
+						:aria-label="__('To')"
+						class="h-[30px] w-[88px] rounded-lg border border-[#DCD4C7] bg-white px-1.5 text-[13px] tabular-nums focus:border-[#D68A59] focus:outline-none focus:ring-1 focus:ring-[#D68A59]"
+					/>
+					<!-- Label -->
+					<input
+						type="text"
+						:value="group.label"
+						@input="updateGroupField(day, gIdx, 'label', $event.target.value)"
+						:placeholder="__('Label')"
+						class="h-[30px] w-[72px] rounded-lg border border-[#DCD4C7] bg-white px-2 text-[13px] focus:border-[#D68A59] focus:outline-none focus:ring-1 focus:ring-[#D68A59]"
+					/>
+					<!-- Cards of the slot -->
+					<span
+						v-for="cardName in group.cards"
+						:key="cardName"
+						class="inline-flex max-w-[11rem] items-center gap-1 rounded-xl border border-[#F3DECC] bg-[#FAEFE6] px-2 py-0.5 text-[12px] text-[#7E4523]"
+					>
+						<span class="truncate">{{ getCardLabel(cardName) }}</span>
+						<button
+							type="button"
+							@click="removeCardFromGroup(day, gIdx, cardName)"
+							class="text-[#A15A2E] hover:text-[#7E4523]"
+							:aria-label="__('Remove {0}', [getCardLabel(cardName)])"
+						>
+							×
+						</button>
+					</span>
+					<select
+						v-if="availableCardsForGroup(group).length"
+						@change="addCardToGroup(day, gIdx, $event.target.value); $event.target.value = ''"
+						class="h-[26px] max-w-[9rem] cursor-pointer rounded-xl border border-dashed border-[#DCD4C7] bg-transparent py-0 pl-2 pr-6 text-[12px] text-[#6F665A]"
+						:aria-label="__('Add a card')"
+					>
+						<option value="">{{ group.cards.length === 0 ? __("Select cards...") : __("+ card") }}</option>
+						<option v-for="card in availableCardsForGroup(group)" :key="card.name" :value="card.name">
+							{{ card.card_name }}
+						</option>
+					</select>
+					<!-- Remove slot -->
+					<button
+						type="button"
+						@click="removeGroup(day, gIdx)"
+						class="ms-auto px-1 text-[16px] text-[#968C7C] transition-colors hover:text-[#C1372C]"
+						:aria-label="__('Remove the slot')"
+					>
+						×
+					</button>
+				</div>
 			</div>
+
+			<button
+				type="button"
+				@click="addSlot(day)"
+				class="whitespace-nowrap pt-[7px] text-end text-[12.5px] font-bold text-[#7E4523] hover:underline"
+			>
+				{{ __("+ Slot") }}
+			</button>
 		</div>
 	</div>
 </template>

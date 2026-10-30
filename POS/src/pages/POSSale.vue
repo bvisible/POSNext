@@ -730,149 +730,22 @@
 										style="background-color: var(--neo-bg)"
 									>
 										<!-- Grid view -->
-										<template v-if="cardViewMode === 'grid'">
-											<template
-												v-for="(group, gi) in filteredCardGroups"
-												:key="'g' + gi"
-											>
-												<div
-													v-if="group.category && !selectedCardCategory"
-													class="bg-white border-b border-gray-200 px-3 py-1.5 mt-3 first:mt-0 rounded-t-lg"
-												>
-													<h3
-														class="text-[10px] font-bold text-gray-400 uppercase tracking-wider"
-													>
-														{{ group.category }}
-													</h3>
-												</div>
-												<div
-													class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5"
-													:class="
-														!selectedCardCategory && group.category
-															? 'mt-1'
-															: 'mt-0'
-													"
-												>
-													<div
-														v-for="(ci_item, ii) in group.items"
-														:key="ii"
-														@click="
-															ci_item.item_type === 'Menu'
-																? handleCardMenuClick(ci_item)
-																: handleCardItemClick(ci_item)
-														"
-														:class="[
-															'group relative bg-white border border-gray-200 rounded-neo-md p-1.5 sm:p-2.5 touch-manipulation transition-[border-color,box-shadow] duration-100',
-															isCardItemOutOfStock(ci_item)
-																? 'opacity-50 cursor-not-allowed'
-																: 'cursor-pointer hover:border-blue-400 hover:shadow-neo-md',
-														]"
-													>
-														<!-- Stock Badge -->
-														<div
-															v-if="
-																getCardItemStock(ci_item) !== null
-															"
-															:class="[
-																'absolute -top-1.5 -end-1.5 sm:-top-2 sm:-end-2 rounded-md shadow-lg z-10',
-																'px-2 sm:px-2.5 py-1 sm:py-1 text-[10px] sm:text-xs font-bold',
-																'border-2 border-white select-none',
-																getStockStatus(
-																	getCardItemStock(ci_item)
-																).color,
-																getStockStatus(
-																	getCardItemStock(ci_item)
-																).textColor,
-															]"
-														>
-															{{
-																Math.floor(
-																	getCardItemStock(ci_item)
-																)
-															}}
-														</div>
-														<div
-															class="relative aspect-square rounded-neo-sm mb-1.5 sm:mb-2 overflow-hidden"
-															:style="getCardItemBgStyle(ci_item)"
-														>
-															<img
-																v-if="ci_item.image"
-																:src="ci_item.image"
-																class="w-full h-full object-cover"
-															/>
-															<div
-																v-else
-																class="w-full h-full flex items-center justify-center p-2"
-															>
-																<svg
-																	v-if="
-																		ci_item.item_type ===
-																		'Menu'
-																	"
-																	class="w-8 h-8 text-amber-400"
-																	fill="currentColor"
-																	viewBox="0 0 24 24"
-																>
-																	<path
-																		d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"
-																	/>
-																</svg>
-																<span
-																	v-else
-																	:class="
-																		getCardItemTextClasses(
-																			ci_item
-																		)
-																	"
-																	class="text-center leading-tight"
-																>
-																	{{
-																		ci_item.item_name ||
-																		ci_item.label
-																	}}
-																</span>
-															</div>
-															<span
-																v-if="ci_item.item_type === 'Menu'"
-																class="absolute top-1 right-1 text-[8px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full"
-																>Menu</span
-															>
-														</div>
-														<div class="min-w-0">
-															<p
-																class="text-[10px] sm:text-xs font-semibold text-gray-900 truncate mb-0.5 leading-tight"
-															>
-																{{
-																	ci_item.item_name ||
-																	ci_item.menu_name ||
-																	ci_item.label
-																}}
-															</p>
-															<div
-																class="text-[9px] sm:text-[10px] leading-tight"
-															>
-																<span
-																	class="font-semibold"
-																	:class="
-																		ci_item.item_type ===
-																		'Menu'
-																			? 'text-amber-600'
-																			: 'text-blue-600'
-																	"
-																	>{{
-																		formatCurrency(
-																			ci_item.price ||
-																				ci_item.default_price ||
-																				0
-																		)
-																	}}</span
-																>
-															</div>
-														</div>
-													</div>
-												</div>
-											</template>
-										</template>
+										<!-- //// Neoffice — the card's grid is a component of its own since its number of tiles per row became the -->
+										<!-- //// till's setting (POS Settings.tiles_per_row, NeoRestau lot 1, task 13): same tiles, same clicks. -->
+										<RestaurantCardGrid
+											v-if="cardViewMode === 'grid'"
+											:groups="filteredCardGroups"
+											:show-categories="!selectedCardCategory"
+											:tiles-per-row="posSettingsStore.settings.tiles_per_row"
+											:stock-of="getCardItemStock"
+											:format-price="formatCurrency"
+											@pick="
+												(item) =>
+													item.item_type === 'Menu'
+														? handleCardMenuClick(item)
+														: handleCardItemClick(item)
+											"
+										/>
 
 										<!-- List view -->
 										<template v-else>
@@ -2343,6 +2216,8 @@ import ReturnInvoiceDialog from "@/components/sale/ReturnInvoiceDialog.vue";
 import ExpenseDialog from "@/components/sale/ExpenseDialog.vue";
 import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailabilityDialog.vue";
 import POSSettings from "@/components/settings/POSSettings.vue";
+//// Neoffice — the grid of a restaurant card, drawn by its own component (NeoRestau lot 1, task 13).
+import RestaurantCardGrid from "@/components/restaurant/RestaurantCardGrid.vue";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
 import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
@@ -2491,6 +2366,8 @@ const {
 	onStockPolicyChanged,
 	onSettingsChanged,
 	onSalesOperationsChanged,
+	//// Neoffice — `on`: the till's items are read again when its settings change what it sells (task 13).
+	on: onPOSEvent,
 } = usePOSEvents();
 
 // Initialize toast
@@ -2642,15 +2519,8 @@ function getCardItemBgStyle(item) {
 	if (item.custom_color) return { backgroundColor: item.custom_color };
 	return { backgroundColor: "#F3F4F6" };
 }
-function getCardItemTextClasses(item) {
-	const base = "font-bold line-clamp-3";
-	if (item.custom_color) {
-		return `${base} ${
-			isLightColor(item.custom_color) ? "text-gray-800" : "text-white"
-		} text-sm sm:text-base`;
-	}
-	return `${base} text-gray-500 text-xs sm:text-sm`;
-}
+//// Neoffice — the name of a dish over its well is drawn by RestaurantCardGrid.vue since NeoRestau lot 1, task 13
+//// (the helper that classed it here, getCardItemTextClasses, went with the grid).
 
 function handleCardItemClick(cardItem) {
 	if (isCardItemOutOfStock(cardItem)) return;
@@ -3002,6 +2872,18 @@ onMounted(async () => {
 	onWarehouseChanged(async ({ newWarehouse, oldWarehouse }) => {
 		log.info(`Event: Warehouse changed from ${oldWarehouse} to ${newWarehouse}`);
 		await handleWarehouseChanged(newWarehouse);
+	});
+
+	//// Neoffice — the till's settings changed what it sells (its price list, item groups, brands, the unavailable
+	//// items, the variants, the pricing rules: NeoRestau lot 1, task 13): its items are read again, as for a new
+	//// warehouse. Upstream changed none of these from the till.
+	onPOSEvent("settings:catalogue-changed", async () => {
+		try {
+			itemStore.invalidateCache();
+			if (itemsSelectorRef.value) await itemsSelectorRef.value.loadItems();
+		} catch (error) {
+			log.error("Error reloading the items after a settings change:", error);
+		}
 	});
 
 	// Listen to pricing changes from settings

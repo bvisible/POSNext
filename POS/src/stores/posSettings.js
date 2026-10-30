@@ -2,6 +2,8 @@ import { createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useBootstrapStore } from "./bootstrap";
+//// Neoffice — the bounds of the till's « Tiles per row » (NeoRestau lot 1, task 13).
+import { tilesPerRow as tilesPerRowOf } from "@/utils/tileGrid";
 //// Neoffice — no `call` import (apiWrapper) here any more: it was added for the restaurant-mode toggle
 //// (8aa35c29, 2026-03-20), left unused by 82fcc1bf, and went with the toggle (NeoRestau lot 1, task 4).
 //// Neoffice — the staff of a till stay signed in for the days its settings say, asked once the profile is known (loadSettings).
@@ -109,6 +111,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// cash withdrawal at shift closing with suggested opening balance — 5783eb2
 		// Cash Management
 		closing_withdrawal_template: "",
+		//// Neoffice — how many tiles a row of the catalogue grids shows: "Automatic" (as the grids always were) or a
+		//// number from 3 to 8 (NeoRestau lot 1, task 13). Seeded so that no grid moves before the server says so.
+		tiles_per_row: "Automatic",
 	});
 
 	const isLoading = ref(false);
@@ -272,6 +277,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const closingWithdrawalTemplate = computed(
 		() => settings.value.closing_withdrawal_template || ""
 	);
+	//// Neoffice — the number of tiles a row of the catalogue grids shows, null when automatic (utils/tileGrid.js).
+	const tilesPerRow = computed(() => tilesPerRowOf(settings.value.tiles_per_row));
 
 	// Resource
 	const settingsResource = createResource({
@@ -414,6 +421,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			//// Neoffice — same for the closing-withdrawal template (5783eb27, 2026-03-28).
 			// Cash Management
 			closing_withdrawal_template: "",
+			//// Neoffice — the grids of the next user start automatic too (NeoRestau lot 1, task 13).
+			tiles_per_row: "Automatic",
 		};
 		isLoaded.value = false;
 	}
@@ -585,6 +594,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// Neoffice — export for the closing-withdrawal template (5783eb27, 2026-03-28).
 		// Computed - Cash Management
 		closingWithdrawalTemplate,
+		//// Neoffice — see tilesPerRow above.
+		tilesPerRow,
 
 		// Actions
 		loadSettings,
