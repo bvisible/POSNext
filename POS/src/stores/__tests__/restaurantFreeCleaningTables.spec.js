@@ -10,6 +10,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const call = vi.hoisted(() => vi.fn())
 const cachePut = vi.hoisted(() => vi.fn())
+// What the offline copy holds: IndexedDB structured-clones what it is handed, which a reactive proxy cannot be
+const cached = vi.hoisted(() => ({ rows: [] }))
 
 vi.mock("@/utils/apiWrapper", () => ({ call }))
 vi.mock("@/stores/posSettings", async () => {
@@ -54,7 +56,10 @@ describe("the restaurant store frees the tables being cleaned", () => {
 		setActivePinia(createPinia())
 		call.mockReset()
 		cachePut.mockReset()
-		cachePut.mockResolvedValue(undefined)
+		cached.rows = []
+		cachePut.mockImplementation(async (row) => {
+			cached.rows.push(structuredClone(row))
+		})
 		tillSettings.restaurant = "The Bistro"
 		store = useRestaurantStore()
 		store.tables = THE_FLOOR()
@@ -122,7 +127,8 @@ describe("the restaurant store frees the tables being cleaned", () => {
 
 		await store.freeCleaningTables(ROOM)
 
-		expect(cachePut.mock.calls.map(([row]) => [row.name, row.status])).toEqual([
+		// What reached the copy is a plain row, as IndexedDB clones it: the store's own proxy cannot be cloned
+		expect(cached.rows.map((row) => [row.name, row.status])).toEqual([
 			["c1h4sh", "Empty"],
 			["c2h4sh", "Empty"],
 		])

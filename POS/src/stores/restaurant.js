@@ -9,7 +9,7 @@
 //// 9f4e85df, f2392119, 32f2415d, a750c5e3, 951b53f3, 823cd5d8, a1da8cc0, 34ee11a8,
 //// eabe35e7, 644ad918, 3939a848, 34751a29, 032298a3, 27a85667)
 import { defineStore } from "pinia"
-import { ref, computed } from "vue"
+import { ref, computed, toRaw } from "vue"
 import { usePOSSettingsStore } from "./posSettings"
 import { db } from "../utils/offline/db"
 import { logger } from "../utils/logger"
@@ -106,11 +106,12 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 	let statusInterval = null
 	let statusSeen = false // the first status read sets the slot; only later ones are changes
 
-	// Computed - Occupied counts by area
+	// Computed - Occupied counts by area, keyed by the NAME of the room (what a table's `area` and the plan's tabs say), not by
+	// its label: a room made since the rooms belong to a restaurant is named by a hash, and was never found by its label
 	const occupiedCountByArea = computed(() => {
 		const counts = {}
 		areas.value.forEach((area) => {
-			counts[area.area_name] = tables.value.filter(
+			counts[area.name] = tables.value.filter(
 				(t) => t.area === area.name && t.status === "Occupied",
 			).length
 		})
@@ -157,13 +158,15 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 					db.restaurant_areas,
 					db.restaurant_tables,
 					async () => {
+						// IndexedDB structured-clones its rows, which a reactive proxy cannot be (DataCloneError): it is given
+						// the objects behind the proxies
 						await db.restaurant_areas.clear()
 						if (areas.value.length)
-							await db.restaurant_areas.bulkPut(areas.value)
+							await db.restaurant_areas.bulkPut(toRaw(areas.value))
 
 						await db.restaurant_tables.clear()
 						if (tables.value.length)
-							await db.restaurant_tables.bulkPut(tables.value)
+							await db.restaurant_tables.bulkPut(toRaw(tables.value))
 					},
 				)
 			}
@@ -191,12 +194,23 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	// Writes a table to the offline copy. IndexedDB structured-clones what it is given, and a reactive proxy cannot be cloned
+	// (DataCloneError): the copy was never written, the error was swallowed, so it is given the object behind the proxy. A
+	// copy that cannot be written is logged and never stops what the caller was doing (the server still hears of the change)
+	async function cacheTable(table) {
+		try {
+			await db.restaurant_tables.put(toRaw(table))
+		} catch (error) {
+			log.error(`Failed to cache table ${table.name}:`, error)
+		}
+	}
+
 	async function updateTableStatus(tableName, status) {
 		try {
 			const table = tables.value.find((t) => t.name === tableName)
 			if (table) {
 				table.status = status
-				await db.restaurant_tables.put(table)
+				await cacheTable(table)
 			}
 
 			if (navigator.onLine) {
@@ -224,12 +238,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			const table = tables.value.find((t) => t.name === name)
 			if (!table) continue
 			table.status = "Empty"
-			try {
-				await db.restaurant_tables.put(table)
-			} catch (error) {
-				// The cache is the offline copy: a failure there must not undo a table that is freed on the server
-				log.error(`Failed to cache table ${name} as freed:`, error)
-			}
+			// The copy is the offline one: a failure there must not undo a table that is freed on the server
+			await cacheTable(table)
 		}
 		return freed.length
 	}
@@ -242,7 +252,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 				table.pos_y = pos_y
 				table.width = width
 				table.height = height
-				await db.restaurant_tables.put(table)
+				await cacheTable(table)
 			}
 		} catch (error) {
 			log.error(`Failed to update position for table ${tableName}:`, error)
