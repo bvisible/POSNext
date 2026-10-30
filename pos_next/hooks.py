@@ -487,3 +487,10 @@ update_website_context = ["pos_next.optional_apps.update_pos_page_context"]
 # //// (`frappe.boot.neorestau_active`), which the POS Settings form reads to show its Restaurant section, the tick that makes
 # //// a till a restaurant till included, only where it does (NeoRestau lot 1, task 4). Upstream has no boot hook.
 boot_session = ["pos_next.restaurant.mode.extend_boot"]
+
+# //// Neoffice — NeoRestau, the restaurant as a business application (NeoRestau lot 1, task 6). Two hooks of neoffice_theme,
+# //// not extension points of POS Next, which nothing reads on a site without the theme: it lists NeoRestau with the
+# //// applications of their own and builds its space of tabs from them, the way NeoAuto (the garage) declares itself. The
+# //// application shows only where the site's `neorestau_active` says 1. Upstream has neither hook.
+neoffice_business_apps = ["pos_next.restaurant.neorestau.business_apps"]
+neoffice_workspace_tabs = ["pos_next.restaurant.neorestau.tabs"]

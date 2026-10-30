@@ -803,6 +803,9 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					grant_cashier_permissions=lambda: None,
 				),
 				patch.object(frappe, "clear_cache"),
+				# The migrate also makes NeoRestau's menu entry (task 6, tested in test_neorestau): this hook commits, and
+				# the entry is not what this test builds
+				patch("pos_next.restaurant.neorestau.setup"),
 				patch("pos_next.restaurant.permissions.ensure_restaurant_roles") as roles,
 				patch("pos_next.restaurant.permissions.grant_restaurant_permissions") as rules,
 			):

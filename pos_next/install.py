@@ -85,6 +85,13 @@ def after_migrate():
 		# //// Neoffice — the restaurant's roles and rules (NeoRestau lot 1, task 3): see grant_restaurant_rights.
 		grant_restaurant_rights()
 
+		# //// Neoffice — NeoRestau's page and menu entry, where the site runs it and the theme is there (NeoRestau lot 1,
+		# //// task 6): made once and only made, see pos_next.restaurant.neorestau.setup. A site that does not run NeoRestau,
+		# //// or has no theme, is left as it is. Not at install: a new restaurant client's provisioning calls it itself.
+		from pos_next.restaurant import neorestau
+
+		neorestau.setup()
+
 		# Clear cache
 		frappe.clear_cache()
 		frappe.db.commit()
