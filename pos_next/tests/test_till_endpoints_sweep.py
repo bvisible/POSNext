@@ -33,6 +33,7 @@ from pos_next.api import (
 	customers,
 	email,
 	gift_cards,
+	guest_ordering,
 	invoices,
 	items,
 	menu_pdf,
@@ -63,6 +64,8 @@ OTHER_CASHIER = "tillsweep-other-cashier@yopmail.com"
 MANAGER = "tillsweep-manager@yopmail.com"
 REPORTER = "tillsweep-reporter@yopmail.com"
 COUNTER = "tillsweep-counter@yopmail.com"
+QR_CASHIER = "tillsweep-qr-cashier@yopmail.com"
+QR_CASHIER_ELSEWHERE = "tillsweep-qr-cashier-elsewhere@yopmail.com"
 CASHIER_ROLE = "POSNext Cashier"
 MANAGER_ROLE = "Nexus POS Manager"
 PROFILE = "_PNXT tillsweep till"
@@ -201,6 +204,16 @@ def _set_user(user):
 	form = frappe.local.form_dict
 	frappe.set_user(user)
 	frappe.local.form_dict = form
+
+
+def _where_neorestau_runs(call):
+	"""``call`` made on a site that runs NeoRestau: the restaurant's entry points ask the site's flag first."""
+
+	def run():
+		with patch.dict(frappe.conf, {"neorestau_active": 1}):
+			return call()
+
+	return run
 
 
 def _past_the_gate(call, *errors):
@@ -412,6 +425,19 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			(
 				"open_table",
 				_past_the_gate(lambda: restaurant.open_table(NONE, PROFILE), frappe.ValidationError),
+			),
+		]
+
+	def _qr_calls(self):
+		"""The QR code of a table: refused to a portal account, a visitor and a desk account with no right on the restaurant;
+		answered to a cashier assigned to the till who may make a code (test_the_qr_button_is_a_cashiers_of_the_till). A
+		made-up table is past the gate when it is reported missing."""
+		return [
+			(
+				"create_table_token",
+				_where_neorestau_runs(
+					_past_the_gate(lambda: guest_ordering.create_table_token(NONE, PROFILE), frappe.ValidationError)
+				),
 			),
 		]
 
@@ -703,6 +729,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._item_panel_calls()
 			+ self._till_manager_calls()
 			+ self._tablet_calls()
+			+ self._qr_calls()
 		)
 
 	def test_a_portal_account_is_refused_everywhere(self):
@@ -724,6 +751,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._item_panel_calls()
 			+ self._till_manager_calls()
 			+ self._tablet_calls()
+			+ self._qr_calls()
 		):
 			self._refused(DESK, label, call)
 		for label, call in self._desk_calls():
@@ -894,6 +922,18 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			)
 		finally:
 			frappe.set_user("Administrator")
+
+	def test_the_qr_button_is_a_cashiers_of_the_till(self):
+		# A cashier who makes a code (the doctype's rule names the role POS User) and is assigned to the till is served
+		# as far as the table; the same rights at a till he is not assigned to are not
+		_user(QR_CASHIER, [CASHIER_ROLE, "POS User"], "System User")
+		_user(QR_CASHIER_ELSEWHERE, [CASHIER_ROLE, "POS User"], "System User")
+		profile = frappe.get_doc("POS Profile", PROFILE)
+		profile.append("applicable_for_users", {"user": QR_CASHIER})
+		profile.save(ignore_permissions=True)
+		for label, call in self._qr_calls():
+			self._served(QR_CASHIER, label, call)
+			self._refused(QR_CASHIER_ELSEWHERE, label, call)
 
 	def test_every_gift_card_balance_is_for_a_till_manager(self):
 		for label, call in self._manager_calls():

@@ -46,9 +46,11 @@ ATTACH_PATCH = "pos_next.patches.neorestau.attach_records_to_the_default_restaur
 TOKEN = "_Test unknown token"
 NEXT_WEEK = add_days(nowdate(), 7)
 # What a visitor STARTS through the guest and booking pages (a new order, a new payment, a booking, a look at the free
-# tables), with arguments that reach nothing of their own: the guard of NeoRestau comes before everything the entry point
-# does. None of them sits on the return path of a payment.
+# tables), and what the till starts for them (the code of a table, made by its QR button), with arguments that reach
+# nothing of their own: the guard of NeoRestau comes before everything the entry point does. None of them sits on the
+# return path of a payment.
 STARTS_SOMETHING = (
+	(guest_ordering.create_table_token, (TOKEN, TOKEN)),
 	(guest_ordering.submit_guest_order, (TOKEN, "[]")),
 	(guest_ordering.create_guest_payment, (TOKEN, 10)),
 	(reservations.get_available_slots, (NEXT_WEEK,)),

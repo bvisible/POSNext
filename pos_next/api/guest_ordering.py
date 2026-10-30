@@ -15,7 +15,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
 
-from pos_next.restaurant import scope, tickets
+from pos_next.restaurant import permissions, scope, tickets
 from pos_next.restaurant.mode import require_neorestau
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
@@ -477,6 +477,9 @@ def validate_token(token):
 		"pos_profile": token_doc.pos_profile,
 		"currency": currency,
 		"company_logo": company_logo,
+		# The display name of the restaurant of the session (the token's till, else the default restaurant): the guest
+		# page names its tab with it, and a company may run several restaurants
+		"restaurant_name": settings.get("restaurant_name") or "",
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
 		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
 		# The loyalty programme is a setting of the till the session belongs to (a POS Settings row per POS Profile)
@@ -1146,13 +1149,35 @@ def create_table_token(table, pos_profile):
 	A table that already has an active token gets THAT token again. A new one would expire the code
 	already placed on the table (shown on a tablet, printed, stuck under a glass), and every phone
 	that scanned it would be told that its session is over.
+	A press shows the table's live code, so whoever presses is checked first: a desk account that may
+	read the table, assigned to the till it names (or a till manager), whose till belongs to the
+	restaurant of the table, on a site that runs NeoRestau.
 	Returns the token value and the guest URL.
 	"""
+	# Where the site does not run NeoRestau nothing of the restaurant shows: no code is made for a guest to use
+	require_neorestau()
+	# A visitor and a portal account are refused before anything is looked up, then the table's own rules decide
+	permissions.require("Restaurant Table", "read", table)
+	# The till named is one the caller is assigned to, as the shift dialog requires to open it, or a till manager works
+	# at any. Not cash_entry.require_till_access: it lets in any account that reads sales invoices, whatever the till,
+	# and a cashier of another restaurant could name this one's
+	from pos_next.api.cash_entry import is_till_manager
+
+	if not (isinstance(pos_profile, str) and pos_profile) or not (
+		is_till_manager()
+		or frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": frappe.session.user})
+	):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
 	if not frappe.has_permission("Guest Order Token", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	if not frappe.db.exists("Restaurant Table", table):
 		frappe.throw(_("Table {0} not found.").format(table))
+
+	# The table is on the floor of the restaurant the till belongs to, never another's
+	if scope.restaurant_of_record("Restaurant Table", table) != scope.current_restaurant(pos_profile):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	# The code the table already has: its newest active token that can still be used (is_valid: not past
 	# its time, its POS opening still open). An active token that cannot be used any more is expired, as it
@@ -1172,9 +1197,11 @@ def create_table_token(table, pos_profile):
 					token_doc = t_doc
 				continue
 			t_doc.expire()
-		except Exception as e:
-			# Force expire via DB if ORM fails (e.g. validation errors on old tokens): a token that cannot be
-			# read or checked is not a code that works
+		except (frappe.ValidationError, frappe.DoesNotExistError) as e:
+			# Force expire via DB if ORM refuses (e.g. validation errors on old tokens): a token that cannot be
+			# read or checked is not a code that works. A database error is NOT caught, a deadlock or a timeout
+			# included: InnoDB rolls the transaction back when it picks this request as the victim, and going on
+			# would commit what is left of it
 			frappe.db.set_value("Guest Order Token", t_name, "status", "Expired")
 			frappe.log_error("Token expire fallback", f"Token {t_name}: {str(e)}")
 
@@ -1259,7 +1286,12 @@ def create_takeaway_token():
 	token_doc.flags.ignore_permissions = True
 	token_doc.insert()
 
-	return {"token": token_doc.token, "name": token_doc.name}
+	return {
+		"token": token_doc.token,
+		"name": token_doc.name,
+		# The restaurant a takeaway session belongs to is the default one (it has no till)
+		"restaurant_name": settings.get("restaurant_name") or "",
+	}
 
 
 @frappe.whitelist(allow_guest=True)

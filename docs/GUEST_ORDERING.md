@@ -52,13 +52,13 @@ All guest endpoints in `pos_next/api/guest_ordering.py`:
 
 | Endpoint | Guest? | Description |
 |----------|--------|-------------|
-| `validate_token(token)` | Yes | Validates token, returns table info + settings |
+| `validate_token(token)` | Yes | Validates token, returns table info + settings + `restaurant_name`, the display name of the restaurant of the session (the guest page names its tab with it) |
 | `get_guest_menu(token)` | Yes | Returns categories + items from guest menu card |
 | `submit_guest_order(token, items)` | Yes | Adds items to the table's Sales Invoice |
 | `get_order_status(token)` | Yes | Returns current items, totals, paid amount |
 | `create_guest_payment(token, amount, payment_items, tip, success_url, failed_url)` | Yes | Creates a Payment Intent on the site's Wallee provider (`payments` app) and returns the hosted payment page URL |
-| `create_table_token(table, pos_profile)` | No (POS User) | Returns the table's active token, or generates one when it has none that can still be used |
-| `create_takeaway_token()` | Yes | Generates token for takeaway (rate-limited) |
+| `create_table_token(table, pos_profile)` | No (POS User) | Returns the table's active token, or generates one when it has none that can still be used. Refused to a visitor, a portal account, an account that cannot read the table, one that is not assigned to the till it names (a till manager works at any), a till that belongs to another restaurant than the table, and where the site does not run NeoRestau |
+| `create_takeaway_token()` | Yes | Generates token for takeaway (rate-limited); answers `restaurant_name`, the default restaurant's |
 | `submit_takeaway_order(token, items, customer)` | Yes | Finalizes takeaway after payment verified |
 
 ### Token Lifecycle
@@ -79,7 +79,9 @@ Pressing the QR button again, from the same till or another, shows the same code
 
 The till keeps no copy of the codes it showed: each press asks the server, so a code that expired from another device is never shown (the server then makes a new one).
 
-A table's code expires whenever the table is emptied: freed by hand (`update_table_status` to Empty, `mark_table_available`), the reset of the floor (`reset_all_tables`, which expires every code of the tables that are Empty after it), the cancel of an invoice (`on_invoice_update`), and the floor read that empties an Occupied table holding no open order (`get_tables`). The last three go through one function, `expire_codes_of_emptied_tables`. A table that still holds an open order (a draft invoice linked to it) keeps its codes. The floor read spares one kind of code: a QR press seats a table without any order, so the floor read empties it at once, and the code the press has just placed is waiting for its first order; that code, and a code whose order is a draft still open, stay. A code whose order is gone expires with the table.
+A table's code expires whenever the table is emptied. Freeing a table by hand (`update_table_status` to Empty, `mark_table_available`) expires its codes, whatever the table holds. Three other paths go through one function, `expire_codes_of_emptied_tables`: the reset of the floor (`reset_all_tables`, which expires every code of the tables that are Empty after it), the cancel of an invoice (`on_invoice_update`), and the floor read that empties an Occupied table holding no open order (`get_tables`). In those three, a table that still holds an open order (a draft invoice linked to it) keeps its codes. The cancel and the floor read spare one more kind of code: a QR press seats a table without any order, so the floor read empties it at once, and the code the press has just placed is waiting for its first order; the cancel of an old invoice of the table must not kill the code of the party now seated either. That code, and a code whose order is a draft still open, stay; a code whose order is gone (the cancelled invoice it served) expires with the table. The reset spares nothing: it wipes the floor.
+
+A database error during the expiry (a deadlock, a timeout) is not swallowed: the database has rolled the request back, and it fails with the error rather than commit what is left of it. A refusal of the ORM (a validation error on an old code) is expired through the database all the same.
 
 Tokens are validated on every API call. A token is invalid if:
 - Status is not "Active"

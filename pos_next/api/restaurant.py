@@ -39,10 +39,15 @@ def expire_codes_of_emptied_tables(tables, spare_live_codes=False):
 	`tables` are the names of the tables just emptied. A table that still holds an open order (a draft invoice linked to
 	it) is not empty: its codes serve that order and stay. Of the other tables, every active code expires.
 
-	`spare_live_codes` is for the floor read (`get_tables`) only. A QR press seats a table without any order, so the
-	floor read empties it at once, and the code the press has just placed is waiting for its first order: expiring it
-	there would kill it before the first guest could use it. A live code stays: one that has served no order yet, or
-	whose order is a draft that is still open. A code whose order is gone expires with the table.
+	`spare_live_codes` is for the paths that empty a table on the strength of one invoice or of the floor's state: the
+	floor read (`get_tables`) and the cancel of an invoice. A QR press seats a table without any order, so the floor read
+	empties it at once, and the code the press has just placed is waiting for its first order: expiring it there would
+	kill it before the first guest could use it; the cancel of an old invoice of the table must not kill the code of the
+	party now seated either, while they have no draft yet. A live code stays: one that has served no order yet, or whose
+	order is a draft that is still open. A code whose order is gone (the cancelled invoice it served) expires with the
+	table. The reset of the floor spares nothing: it wipes the floor.
+
+	A database error is never swallowed on the way (see `_expire_code`).
 	"""
 	tables = list(dict.fromkeys(name for name in tables or [] if name))
 	if not tables:
@@ -78,9 +83,11 @@ def _code_is_live(invoice):
 def _expire_code(name):
 	try:
 		frappe.get_doc("Guest Order Token", name).expire()
-	except Exception as e:
-		# Force it through the database when the ORM refuses: a table that is emptied must lose its code, and the
-		# cancel of an invoice must not fail because a code would not expire
+	except (frappe.ValidationError, frappe.DoesNotExistError) as e:
+		# Force it through the database when the ORM refuses (an old token that does not validate, one gone since it was
+		# listed): a table that is emptied must lose its code, and the cancel of an invoice must not fail because of it.
+		# A database error is NOT caught, a deadlock or a timeout included: InnoDB rolls the whole transaction back when
+		# it picks this request as the victim, and going on would commit what is left of a cancel that is partly undone
 		frappe.db.set_value("Guest Order Token", name, "status", "Expired")
 		frappe.log_error("Token expire fallback", f"Token {name}: {e!s}")
 
@@ -94,8 +101,9 @@ def on_invoice_update(doc, method):
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Cleaning")
 		elif doc.docstatus == 2:
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Empty")
-			# The party of the invoice is gone with it, and so is the QR code of its table
-			expire_codes_of_emptied_tables([doc.restaurant_table])
+			# The party of the invoice is gone with it, and so is the QR code that served it: not the code of the party now
+			# seated at the table, whose order is another's or is yet to come (see the helper)
+			expire_codes_of_emptied_tables([doc.restaurant_table], spare_live_codes=True)
 
 
 @frappe.whitelist()

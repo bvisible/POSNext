@@ -45,11 +45,11 @@ const { default: router } = await import("../router")
 const { refreshTabTitle } = await import("@/utils/tabTitle")
 const { useTabTitle } = await import("@/composables/useTabTitle")
 
-// What fr.po says of these words (the product owner's French for the tabs)
+// What fr.po says of these words: every one of them is a msgid the catalogue already has
 const FRENCH = {
 	Kitchen: "Cuisine",
 	Takeaway: "À emporter",
-	"Customer display": "Écran client",
+	"Customer Display": "Affichage client",
 	Order: "Commande",
 	Reservation: "Réservation",
 }
@@ -67,14 +67,14 @@ const SCREENS = [
 	[
 		"the customer display",
 		"/display",
-		"Customer display · Neopos",
-		"Écran client · Neopos",
+		"Customer Display · Neopos",
+		"Affichage client · Neopos",
 	],
 	[
 		"the older customer display",
 		"/cfd",
-		"Customer display · Neopos",
-		"Écran client · Neopos",
+		"Customer Display · Neopos",
+		"Affichage client · Neopos",
 	],
 	[
 		"the page a table's guests order from",
@@ -246,6 +246,18 @@ describe("the rule, in one place", () => {
 		expect(writers).toEqual([path.join("utils", "tabTitle.js")])
 	})
 
+	it("is not written by frappe-ui's page meta either: no component takes its title from it", () => {
+		// main.js installs frappe-ui's pageMetaPlugin, whose usePageMeta writes document.title for a component that has a
+		// `pageMeta` option. None has one, and none may: the title of a tab would then come from two places
+		const users = walk(SRC)
+			.filter((file) =>
+				/\b(usePageMeta|pageMeta)\b/.test(readFileSync(file, "utf8")),
+			)
+			.map((file) => path.relative(SRC, file))
+
+		expect(users).toEqual([])
+	})
+
 	it("has the router write it after each navigation, from the `title` of the route", () => {
 		const routes = read("router.js")
 
@@ -266,8 +278,10 @@ describe("the rule, in one place", () => {
 	it("is handed a name by the screens that learn one", () => {
 		expect(read("pages", "POSSale.vue")).toMatch(/\buseTillTabTitle\(\)/)
 		expect(read("pages", "KDS.vue")).toMatch(/\buseTabTitle\(/)
+		// The restaurant's name, which the session's first call answers: not the company of an order, which exists
+		// only once there is an invoice, and tells restaurants of one company apart no better
 		const guestName =
-			/useTabTitle\(\s*\(\)\s*=>\s*guestStore\.companyName\s*,\s*\{\s*instead:\s*true\s*\}\s*\)/
+			/useTabTitle\(\s*\(\)\s*=>\s*guestStore\.restaurantName\s*,\s*\{\s*instead:\s*true\s*\}\s*\)/
 		expect(read("pages", "GuestOrder.vue")).toMatch(guestName)
 		expect(read("pages", "TakeawayOrder.vue")).toMatch(guestName)
 	})

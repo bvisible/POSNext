@@ -10,10 +10,15 @@ previous party (or anyone who kept a photo of it) could still order onto the tab
 - the floor read (`get_tables`) that empties a table that is Occupied but holds no open order.
 
 One helper, `expire_codes_of_emptied_tables`, is used by the three. A table that still holds an open order (a draft
-invoice linked to it) is not empty, and keeps its codes. The floor read has one more rule: a QR press seats a table
-without any order, so the floor read empties it at once, and the code the press has just placed is waiting for its first
-order; expiring it there would kill it before the first guest could use it. That code stays, as does a code whose order
-is a draft that is still open; a code whose order is gone expires with the table.
+invoice linked to it) is not empty, and keeps its codes. The floor read and the cancel have one more rule: a QR press seats
+a table without any order, so the floor read empties it at once, and the code the press has just placed is waiting for its
+first order; expiring it there would kill it before the first guest could use it, and so would the cancel of an old invoice
+of the table, when the party now seated has no draft yet. That code stays, as does a code whose order is a draft that is
+still open; a code whose order is gone expires with the table. The reset wipes the floor and spares nothing.
+
+A database error (a deadlock, a timeout) is never swallowed on the way: the database has rolled the request back, and it
+must fail with the error rather than commit what is left of a cancel. What the ORM refuses (a validation error) is
+expired through the database all the same.
 
 The suite relies on no patch, no after_migrate and no data of the site: it makes the restaurants, the tables and the
 orders it needs (the `Tills` fixture of the mode suite), and each test rolls back to the savepoint it started from.
@@ -29,6 +34,7 @@ from frappe.tests.utils import FrappeTestCase
 from pos_next.api import guest_ordering, invoices
 from pos_next.api import restaurant as restaurant_api
 from pos_next.pos_next.doctype.guest_order_token.guest_order_token import GuestOrderToken
+from pos_next.tests.test_a_table_with_an_active_code_shows_it_again import make_a_till_of
 from pos_next.tests.test_restaurant_mode_comes_from_the_till import Tills
 from pos_next.tests.test_till_writes_need_the_till import _sale
 
@@ -52,15 +58,16 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 		self.second_table = self.insert("Restaurant Table", area=area, table_name="_Test Emptied T2")
 		# Another restaurant on the same site: what one floor does to its codes, it does not do to the other's
 		other = self.insert("Restaurant", restaurant_name="_Test Emptied Other", company=self.company)
+		make_a_till_of(self.fx.other_profile, other)
 		other_area = self.insert("Restaurant Area", restaurant=other, area_name="_Test Emptied Other Room")
 		self.other_table = self.insert("Restaurant Table", area=other_area, table_name="_Test Emptied T9")
 
 	def insert(self, doctype, **values):
 		return frappe.get_doc({"doctype": doctype, **values}).insert(ignore_permissions=True).name
 
-	def place_a_code(self, table):
+	def place_a_code(self, table, till=None):
 		"""What the QR button does: the table gets a code and is seated (Occupied), with no order yet."""
-		return guest_ordering.create_table_token(table, self.fx.profile)["name"]
+		return guest_ordering.create_table_token(table, till or self.fx.profile)["name"]
 
 	def draft(self, table, **changes):
 		"""An order on the table, saved the way the till saves one (the table goes Occupied)."""
@@ -118,7 +125,7 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 	def test_resetting_the_floor_leaves_the_codes_of_the_tables_it_does_not_empty(self):
 		paid = self.place_a_code(self.second_table)
 		frappe.db.set_value("Restaurant Table", self.second_table, "status", "Paid")
-		elsewhere = self.place_a_code(self.other_table)
+		elsewhere = self.place_a_code(self.other_table, self.fx.other_profile)
 
 		restaurant_api.reset_all_tables(restaurant=self.restaurant)
 
@@ -134,14 +141,6 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 		hooks = frappe.get_hooks("doc_events")["Sales Invoice"]["on_cancel"]
 		self.assertIn("pos_next.api.restaurant.on_invoice_update", hooks)
 
-	def test_cancelling_an_invoice_expires_the_code_of_its_table(self):
-		code = self.place_a_code(self.table)
-
-		restaurant_api.on_invoice_update(self.cancelled(self.table), "on_cancel")
-
-		self.assertEqual(self.table_status(), "Empty")
-		self.assertEqual(self.status_of(code), "Expired")
-
 	def test_cancelling_an_invoice_expires_the_code_that_served_it(self):
 		order = self.draft(self.table)
 		code = self.place_a_code(self.table)
@@ -152,16 +151,29 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 			restaurant_api.on_invoice_update(self.cancelled(self.table, order), "on_cancel")
 
 		# Through the ordinary expiry of a code: the fallback that forces it, and logs, was not needed
+		self.assertEqual(self.table_status(), "Empty")
 		self.assertEqual(self.status_of(code), "Expired")
 		logged.assert_not_called()
 
-	def test_cancelling_an_invoice_leaves_the_codes_of_the_other_tables(self):
+	def test_cancelling_an_old_invoice_spares_the_code_of_a_party_seated_with_no_draft_yet(self):
+		# A QR press seated the table: its code waits for the first order. The cancel of an old invoice of the table is
+		# not that party's: it must not kill the code they are about to scan
 		code = self.place_a_code(self.table)
-		other = self.place_a_code(self.second_table)
 
 		restaurant_api.on_invoice_update(self.cancelled(self.table), "on_cancel")
 
-		self.assertEqual((self.status_of(code), self.status_of(other)), ("Expired", "Active"))
+		self.assertEqual(self.status_of(code), "Active")
+
+	def test_cancelling_an_old_invoice_spares_a_code_whose_order_is_an_open_draft(self):
+		# The party now at the table has an order open that the table does not hold any more (the draft lost its link)
+		current = self.draft(self.table)
+		code = self.place_a_code(self.table)
+		self.serve(code, current)
+		frappe.db.set_value("Sales Invoice", current, "restaurant_table", None)
+
+		restaurant_api.on_invoice_update(self.cancelled(self.table), "on_cancel")
+
+		self.assertEqual(self.status_of(code), "Active")
 
 	def test_cancelling_an_old_invoice_leaves_the_code_of_a_table_with_another_open_order(self):
 		# The party now at the table has an order open: the previous party's cancelled invoice is not theirs
@@ -171,6 +183,37 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 		restaurant_api.on_invoice_update(self.cancelled(self.table), "on_cancel")
 
 		self.assertEqual(self.status_of(code), "Active")
+
+	def test_cancelling_an_invoice_leaves_the_codes_of_the_other_tables(self):
+		order = self.draft(self.table)
+		code = self.place_a_code(self.table)
+		self.serve(code, order)
+		frappe.db.set_value("Sales Invoice", order, "docstatus", 2)
+		other = self.place_a_code(self.second_table)
+
+		restaurant_api.on_invoice_update(self.cancelled(self.table, order), "on_cancel")
+
+		self.assertEqual((self.status_of(code), self.status_of(other)), ("Expired", "Active"))
+
+	def test_a_deadlock_or_a_timeout_in_the_database_does_not_stop_at_the_cancel_hook(self):
+		# InnoDB rolls the whole transaction back when it picks a request as the deadlock victim: the cancel must fail with
+		# the error, not go on and commit what is left of it
+		order = self.draft(self.table)
+		code = self.place_a_code(self.table)
+		self.serve(code, order)
+		frappe.db.set_value("Sales Invoice", order, "docstatus", 2)
+
+		for error in (frappe.QueryDeadlockError, frappe.QueryTimeoutError):
+			with self.subTest(error=error.__name__):
+				with (
+					patch.object(GuestOrderToken, "expire", side_effect=error),
+					patch.object(frappe, "log_error") as logged,
+					self.assertRaises(error),
+				):
+					restaurant_api.on_invoice_update(self.cancelled(self.table, order), "on_cancel")
+				logged.assert_not_called()
+				# Nothing was forced through the database behind the error
+				self.assertEqual(self.status_of(code), "Active")
 
 	def test_cancelling_an_invoice_of_no_table_touches_no_code(self):
 		code = self.place_a_code(self.table)
@@ -279,18 +322,35 @@ class TestTheCodeOfAnEmptiedTable(Tills, FrappeTestCase):
 			("Closed", "Expired", "Expired"),
 		)
 
-	def test_the_helper_never_fails_on_a_code_it_cannot_expire(self):
-		# The cancel of an invoice must not fail because a code would not expire
+	def test_the_helper_expires_through_the_database_a_code_the_orm_refuses_to_expire(self):
+		# The cancel of an invoice must not fail because the ORM would not save an old code
 		code = self.place_a_code(self.table)
 
-		with (
-			patch.object(GuestOrderToken, "expire", side_effect=RuntimeError("no way")),
-			patch.object(frappe, "log_error") as logged,
-		):
-			restaurant_api.expire_codes_of_emptied_tables([self.table])
+		for error in (frappe.ValidationError("no way"), frappe.DoesNotExistError("gone")):
+			with self.subTest(error=type(error).__name__):
+				frappe.db.set_value("Guest Order Token", code, "status", "Active")
+				with (
+					patch.object(GuestOrderToken, "expire", side_effect=error),
+					patch.object(frappe, "log_error") as logged,
+				):
+					restaurant_api.expire_codes_of_emptied_tables([self.table])
 
-		self.assertEqual(self.status_of(code), "Expired")
-		logged.assert_called_once()
-		title, message = logged.call_args.args
-		self.assertLessEqual(len(title), 140)
-		self.assertIn("no way", message)
+				self.assertEqual(self.status_of(code), "Expired")
+				logged.assert_called_once()
+				title, message = logged.call_args.args
+				self.assertLessEqual(len(title), 140)
+				self.assertIn(str(error), message)
+
+	def test_the_helper_does_not_swallow_a_database_error(self):
+		code = self.place_a_code(self.table)
+
+		for error in (frappe.QueryDeadlockError, frappe.QueryTimeoutError):
+			with self.subTest(error=error.__name__):
+				with (
+					patch.object(GuestOrderToken, "expire", side_effect=error),
+					patch.object(frappe, "log_error") as logged,
+					self.assertRaises(error),
+				):
+					restaurant_api.expire_codes_of_emptied_tables([self.table])
+				logged.assert_not_called()
+				self.assertEqual(self.status_of(code), "Active")

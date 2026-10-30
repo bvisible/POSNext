@@ -36,7 +36,7 @@ const routes = [
 		path: "/display",
 		component: () => import("@/pages/CustomerDisplay.vue"),
 		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
-		meta: { allowGuest: true, title: () => __("Customer display") }, // Allow access without session login
+		meta: { allowGuest: true, title: () => __("Customer Display") }, // Allow access without session login
 	},
 	{
 		name: "KDS",
@@ -52,7 +52,7 @@ const routes = [
 		path: "/cfd",
 		component: () => import("@/pages/CFD.vue"),
 		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
-		meta: { allowGuest: true, title: () => __("Customer display") },
+		meta: { allowGuest: true, title: () => __("Customer Display") },
 	},
 	{
 		name: "Runner",

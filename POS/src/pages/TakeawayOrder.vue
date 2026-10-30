@@ -207,8 +207,8 @@ import GuestCart from "@/components/guest/GuestCart.vue"
 import GuestCheckout from "@/components/guest/GuestCheckout.vue"
 
 const guestStore = useGuestOrderStore()
-// The tab says the business's name, in place of "Order", once the page has it (the order's company; utils/tabTitle.js)
-useTabTitle(() => guestStore.companyName, { instead: true })
+// The tab says the restaurant's name, in place of "Order", as the session names it from its first call (utils/tabTitle.js)
+useTabTitle(() => guestStore.restaurantName, { instead: true })
 
 const isInitializing = ref(true)
 const initError = ref(null)

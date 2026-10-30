@@ -50,6 +50,9 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 	const taxAmount = ref(0)
 	const paidTipAmount = ref(0)
 	const companyName = ref("")
+	// The display name of the restaurant of the session, from the validation of the token: the tab of a guest page
+	// carries it, where the company of an order exists only once there is an invoice
+	const restaurantName = ref("")
 	const invoiceName = ref("")
 	const postingDate = ref("")
 
@@ -88,6 +91,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 			}
 			currency.value = result.currency || "CHF"
 			companyLogo.value = result.company_logo || ""
+			restaurantName.value = result.restaurant_name || ""
 			return result
 		} catch (err) {
 			error.value = err.message
@@ -290,6 +294,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		companyLogo.value = ""
 		taxAmount.value = 0
 		companyName.value = ""
+		restaurantName.value = ""
 		invoiceName.value = ""
 		postingDate.value = ""
 		_realtimeSubscribed = false
@@ -314,6 +319,7 @@ export const useGuestOrderStore = defineStore("guestOrder", () => {
 		companyLogo,
 		taxAmount,
 		companyName,
+		restaurantName,
 		invoiceName,
 		postingDate,
 		// Getters
