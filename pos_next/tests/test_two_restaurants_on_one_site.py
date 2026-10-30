@@ -923,6 +923,29 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 		self.assertEqual(orders[self.table_b_order]["area"], self.room_b)
 		self.assertEqual(orders[self.takeaway_b]["area"], "")
 
+	def test_the_kitchen_screen_reads_the_label_and_the_room_of_its_tables_in_one_go(self):
+		# name, table_name and area come from the same rows: one read of the tables, not one per field
+		real_get_all = frappe.get_all
+		reads = []
+
+		def counting(doctype, *args, **kwargs):
+			if doctype == "Restaurant Table":
+				reads.append(list(kwargs.get("fields") or []))
+			return real_get_all(doctype, *args, **kwargs)
+
+		with patch.object(frappe, "get_all", side_effect=counting):
+			orders = {order["name"]: order for order in restaurant_api.get_kds_orders(restaurant=self.a)}
+
+		of_the_label = [fields for fields in reads if "table_name" in fields]
+		self.assertEqual(len(of_the_label), 1, reads)
+		self.assertIn("area", of_the_label[0])
+		self.assertNotIn(["name", "area"], reads)
+		# The same answer as before: the label of the table, its room, and nothing for a takeaway order
+		self.assertEqual(orders[self.table_a_order]["table_display_name"], TABLE)
+		self.assertEqual(orders[self.table_a_order]["area"], self.room_a)
+		self.assertIsNone(orders[self.takeaway_a]["table_display_name"])
+		self.assertEqual(orders[self.takeaway_a]["area"], "")
+
 	def test_the_kitchen_and_the_runner_name_the_room_of_a_table_alike(self):
 		frappe.db.set_value("Sales Invoice Item", {"parent": self.table_a_order}, "kds_status", "Ready")
 		kitchen = next(

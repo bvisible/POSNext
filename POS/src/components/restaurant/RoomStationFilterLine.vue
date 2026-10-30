@@ -2,8 +2,10 @@
 	<!-- //// Neoffice — added file (no upstream equivalent). The one line of filters the runner and the kitchen screen -->
 	<!-- //// share (NeoRestau lot 1, task 9c): the rooms on the left, the preparation stations on the right. They were two -->
 	<!-- //// rows on the runner and the kitchen had no room filter at all; the product owner asked for one line on both -->
-	<!-- //// screens, with the same behaviour. A screen hands over what it counts (the runner the dishes that are ready, -->
-	<!-- //// the kitchen its tickets) and keeps the choice; this component only draws the chips and says what was chosen. -->
+	<!-- //// screens, with the same behaviour. A screen hands over what it counts and keeps the choice; this component only -->
+	<!-- //// draws the chips and says what was chosen. It does not give a count a meaning: by default a count is plain text -->
+	<!-- //// in parentheses in the tone of its chip, and a screen that counts something with a meaning of its own (the -->
+	<!-- //// runner: the dishes that are READY, in green) draws its counts itself, through the slots. -->
 	<div
 		v-if="hasRooms || hasStations"
 		data-test="filter-line"
@@ -32,11 +34,9 @@
 				@click="emit('update:selectedRoom', room.name)"
 			>
 				{{ room.label }}
-				<span
-					v-if="room.count > 0"
-					data-test="room-count"
-					class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-500 rounded-full"
-				>{{ room.count }}</span>
+				<!-- Not a slot fallback: a screen whose count draws nothing (no dish ready) must get nothing, not the default -->
+				<slot v-if="$slots['room-count']" name="room-count" :room="room" :selected="selectedRoom === room.name" />
+				<span v-else-if="room.count != null" data-test="room-count">({{ room.count }})</span>
 			</button>
 		</div>
 
@@ -69,14 +69,8 @@
 					:style="{ backgroundColor: station.color }"
 				></span>
 				{{ station.label }}
-				<span
-					v-if="station.count > 0"
-					data-test="station-count"
-					class="text-xs font-bold px-1.5 py-0.5 rounded"
-					:style="selectedStation === station.name
-						? { backgroundColor: 'rgba(255,255,255,0.3)' }
-						: { backgroundColor: station.color + '20', color: station.color }"
-				>{{ station.countLabel ?? station.count }}</span>
+				<slot v-if="$slots['station-count']" name="station-count" :station="station" :selected="selectedStation === station.name" />
+				<span v-else-if="station.count != null" data-test="station-count">({{ station.count }})</span>
 			</button>
 		</div>
 	</div>
@@ -88,9 +82,14 @@ import { computed } from "vue"
 /**
  * The line of filters of the two service screens.
  *
- * rooms:    [{ name, label, count? }]  count: shown on the chip when above 0 (the runner: dishes ready; the kitchen: tickets)
- * stations: [{ name, label, color, count?, countLabel? }]  countLabel: what the count reads as ("2✓" on the runner)
+ * rooms:    [{ name, label, count? }]
+ * stations: [{ name, label, color, count? }]
  * allCount: the number on the "All" chip of the stations (none: no number)
+ *
+ * A count (a number, 0 included; none: nothing is shown) reads "Label (n)" by default: plain text in the tone of its
+ * chip, as the kitchen's station chips always did. A screen draws its counts its own way through the slots
+ * `room-count` ({ room, selected }) and `station-count` ({ station, selected }): the runner counts the dishes that are
+ * READY and says it with a green pill, a meaning this component must not give to a count of the kitchen's open tickets.
  *
  * It is controlled: the screen holds the choice (selectedRoom "" is every room, selectedStation null is every station)
  * and hears what was chosen. A station chosen again is taken back, as on the runner.

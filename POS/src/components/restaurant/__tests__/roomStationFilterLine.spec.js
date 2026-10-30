@@ -7,6 +7,7 @@
  */
 import { mount } from "@vue/test-utils"
 import { describe, expect, it, vi } from "vitest"
+import { h } from "vue"
 
 vi.hoisted(() => {
 	globalThis.__ = (s) => s
@@ -24,13 +25,7 @@ const ROOMS = [
 // Bar blue and Kitchen clay: the colours the stations carry, never the filter's own
 const STATIONS = [
 	{ name: "s1", label: "Bar", color: "#2C4FA8", count: 3 },
-	{
-		name: "s2",
-		label: "Kitchen",
-		color: "#D68A59",
-		count: 2,
-		countLabel: "2✓",
-	},
+	{ name: "s2", label: "Kitchen", color: "#D68A59", count: 2 },
 	{ name: "s3", label: "Pastry", color: "#6B7280", count: 0 },
 ]
 
@@ -86,28 +81,26 @@ describe("the line of filters", () => {
 		expect(wrapper.find('[data-test="filter-line"]').exists()).toBe(false)
 	})
 
-	it('lists "all rooms" and then each room by its label, with its count when it has one', () => {
+	it('lists "all rooms" and then each room by its label, with its count in parentheses when it has one', () => {
 		const wrapper = mountLine()
 
 		expect(texts(chips(wrapper, "rooms"))).toEqual([
 			"All Areas",
-			"Room 1 2",
-			"Room 2",
+			"Room 1 (2)",
+			// Nothing in the room is a count too: the kitchen shows "(0)" on a station that has no ticket
+			"Room 2 (0)",
 			"Terrace",
 		])
-		const counts = wrapper.findAll('[data-test="room-count"]')
-		expect(texts(counts)).toEqual(["2"])
 	})
 
-	it('lists "all" and then each station, counted as its screen counts it', () => {
+	it('lists "all" and then each station, counted in parentheses like "all"', () => {
 		const wrapper = mountLine()
 
 		expect(texts(chips(wrapper, "stations"))).toEqual([
 			"All (5)",
-			"Bar 3",
-			// The runner counts the dishes that are ready and marks them; the kitchen counts tickets, bare
-			"Kitchen 2✓",
-			"Pastry",
+			"Bar (3)",
+			"Kitchen (2)",
+			"Pastry (0)",
 		])
 	})
 
@@ -136,6 +129,74 @@ describe("the line of filters", () => {
 		for (const chip of all) {
 			expect(chip.classes()).toContain("min-h-[44px]")
 		}
+	})
+})
+
+describe("the count on a chip", () => {
+	it("is plain text in the tone of the chip by default: no pill, no colour of its own, nothing that says ready", () => {
+		const wrapper = mountLine()
+
+		const counts = [
+			...wrapper.findAll('[data-test="room-count"]'),
+			...wrapper.findAll('[data-test="station-count"]'),
+		]
+		expect(counts).toHaveLength(5)
+		// No class at all: the count takes the colour, the size and the weight of its chip, as "Bar (0)" always did
+		for (const count of counts) expect(count.classes()).toEqual([])
+		expect(wrapper.html()).not.toMatch(/bg-green|text-green/)
+	})
+
+	it("reads the same on the chip chosen and on the others", () => {
+		const wrapper = mountLine({ selectedRoom: "r1", selectedStation: "s1" })
+
+		expect(texts(chips(wrapper, "rooms"))[1]).toBe("Room 1 (2)")
+		expect(texts(chips(wrapper, "stations"))[1]).toBe("Bar (3)")
+	})
+
+	it("is drawn by the screen that asks for it, with the room and whether it is chosen", () => {
+		const wrapper = mount(RoomStationFilterLine, {
+			props: {
+				rooms: ROOMS,
+				stations: STATIONS,
+				selectedRoom: "r1",
+				selectedStation: "s2",
+			},
+			slots: {
+				"room-count": ({ room, selected }) =>
+					room.count > 0
+						? h(
+								"b",
+								{ "data-test": "mine", class: "pill" },
+								`${room.count} ready${selected ? " (chosen)" : ""}`,
+							)
+						: null,
+				"station-count": ({ station, selected }) =>
+					h(
+						"i",
+						{ "data-test": "mine-too" },
+						`${station.label}:${station.count}${selected ? "*" : ""}`,
+					),
+			},
+			global: { mocks: { __: globalThis.__ } },
+		})
+
+		// Its own markup replaces the default count, on the rooms and on the stations
+		expect(wrapper.findAll('[data-test="room-count"]')).toHaveLength(0)
+		expect(wrapper.findAll('[data-test="station-count"]')).toHaveLength(0)
+		expect(texts(wrapper.findAll('[data-test="mine"]'))).toEqual([
+			"2 ready (chosen)",
+		])
+		expect(texts(wrapper.findAll('[data-test="mine-too"]'))).toEqual([
+			"Bar:3",
+			"Kitchen:2*",
+			"Pastry:0",
+		])
+		expect(texts(chips(wrapper, "rooms"))).toEqual([
+			"All Areas",
+			"Room 1 2 ready (chosen)",
+			"Room 2",
+			"Terrace",
+		])
 	})
 })
 

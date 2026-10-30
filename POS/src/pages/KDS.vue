@@ -141,13 +141,15 @@ function getStationOrderCount(stationName) {
 	).length
 }
 
-// What the shared line of filters shows: each room with its tickets (the count of EVERY room, whichever room is chosen),
-// each station with the tickets of the room chosen that have a dish for it
+// What the shared line of filters shows, each count as plain text in parentheses: on this screen green means "Ready", and
+// a count of open tickets must not wear it. A room: its tickets in the station filter that is on (the count of EVERY
+// room, whichever room is chosen, so that the line says where the tickets are); a station: the tickets of the room
+// chosen that have a dish for it
 const filterRooms = computed(() =>
 	areas.value.map((area) => ({
 		name: area.name,
 		label: area.area_name,
-		count: allOrders.value.filter((o) => o.area === area.name).length,
+		count: orders.value.filter((o) => o.area === area.name).length,
 	})),
 )
 const filterStations = computed(() =>

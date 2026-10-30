@@ -81,14 +81,15 @@
 						</button>
 					</div>
 					<ul class="divide-y divide-gray-100 dark:divide-gray-700">
-						<li v-for="item in group.items" :key="item.name" class="py-1.5 flex items-center gap-3">
+						<!-- A dish is the same line here as under "By Table" and on the kitchen ticket: the frame's line -->
+						<li v-for="item in group.items" :key="item.name" class="py-2 flex items-center gap-3" :class="TICKET_FRAME.line" data-test="ticket-line">
 							<div class="flex-1 min-w-0">
-								<span class="font-medium text-gray-900 dark:text-gray-100 text-sm">{{ item.item_name }}</span>
+								<span class="font-medium text-gray-900 dark:text-gray-100">{{ item.item_name }}</span>
 								<div v-if="item.posa_special_instructions" class="text-xs text-blue-600 dark:text-blue-400">
 									{{ item.posa_special_instructions }}
 								</div>
 							</div>
-							<div class="font-bold w-7 h-7 text-sm flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+							<div class="font-bold w-8 h-8 text-lg flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0">
 								{{ item.qty }}
 							</div>
 						</li>

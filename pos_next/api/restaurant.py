@@ -522,15 +522,24 @@ def get_kds_orders(station=None, restaurant=None):
 	# Filter purely in Python - include orders with table OR takeaway orders, of this restaurant
 	orders = [o for o in raw_orders if o.get("restaurant_table") or o.get("is_takeaway")]
 	orders = scope.keep_orders_of(orders, restaurant)
-	tables = {o.get("restaurant_table") for o in orders}
-	table_labels = scope.labels_of("Restaurant Table", "table_name", tables)
-	# The room of each table (the link, as the runner's orders carry it in `area`): the kitchen screen filters
-	# its tickets by room as the runner does. A takeaway order sits at no table, so it is of no room (""), and
-	# the screen shows it under "all rooms" only. `labels_of` reads any one field of the named records.
-	table_areas = scope.labels_of("Restaurant Table", "area", tables)
+	table_names = {o.get("restaurant_table") for o in orders if o.get("restaurant_table")}
+	tables = {}
+	if table_names:
+		tables = {
+			table.name: table
+			for table in frappe.get_all(
+				"Restaurant Table",
+				filters={"name": ["in", list(table_names)]},
+				fields=["name", "table_name", "area"],
+			)
+		}
 	for order in orders:
-		order["table_display_name"] = table_labels.get(order.get("restaurant_table")) or order.get("restaurant_table")
-		order["area"] = table_areas.get(order.get("restaurant_table")) or ""
+		table = tables.get(order.get("restaurant_table")) or {}
+		order["table_display_name"] = table.get("table_name") or order.get("restaurant_table")
+		# The room of the table (the link, as the runner's orders carry it in `area`): the kitchen screen
+		# filters its tickets by room as the runner does. A takeaway order sits at no table, so it is of no
+		# room (""), and the screen shows it under "all rooms" only.
+		order["area"] = table.get("area") or ""
 
 	# Fallback safety: Check if the custom field actually exists in the DB to prevent 500 errors
 	# if the user hasn't run `bench migrate` yet.

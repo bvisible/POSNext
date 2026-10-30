@@ -267,6 +267,91 @@ describe("the two screens", () => {
 		}
 	})
 
+	it('cut the runner\'s "By Station" tickets to the same frame too, dish lines included', () => {
+		const kitchen = mount(KDSOrderCard, {
+			props: { order: orderOfTheKitchen },
+			global: { mocks: { __: globalThis.__ } },
+		})
+		// A station's card: its dishes grouped by table, a table holding the dishes of two orders
+		const runner = mount(RunnerOrderCard, {
+			props: {
+				card: {
+					key: "cuisine",
+					title: "Kitchen",
+					subtitle: "3 items",
+					stationColor: "#D68A59",
+					creation: "2026-10-30 12:00:00",
+					modified: "2026-10-30 12:00:00",
+					items: [],
+					tableGroups: [
+						{
+							tableName: "T1",
+							invoiceName: "SINV-1",
+							items: [
+								{
+									name: "l1",
+									item_name: "Soup",
+									qty: 1,
+									_invoiceName: "SINV-1",
+								},
+								{
+									name: "l2",
+									item_name: "Steak",
+									qty: 2,
+									_invoiceName: "SINV-2",
+								},
+							],
+						},
+						{
+							tableName: "T2",
+							invoiceName: "SINV-3",
+							items: [
+								{
+									name: "l3",
+									item_name: "Salad",
+									qty: 1,
+									_invoiceName: "SINV-3",
+								},
+							],
+						},
+					],
+				},
+				viewMode: "station",
+			},
+			global: { mocks: { __: globalThis.__ } },
+		})
+		opened.push(kitchen, runner)
+
+		// The card-level parts are the same in this view
+		for (const part of ["header", "title", "number", "timer", "body"]) {
+			expect(
+				runner.find(`[data-test="ticket-${part}"]`).classes(),
+				`runner by station: the ${part}`,
+			).toEqual(expect.arrayContaining(tokens(TICKET_FRAME[part])))
+		}
+		// Every dish of the card is a line of the frame: the kitchen's line size, not a compact one of its own
+		const lines = runner.findAll('[data-test="ticket-line"]')
+		expect(lines).toHaveLength(3)
+		const kitchenLine = kitchen.find('[data-test="ticket-line"]')
+		for (const line of lines) {
+			expect(line.classes()).toEqual(
+				expect.arrayContaining(tokens(TICKET_FRAME.line)),
+			)
+			expect(line.classes()).toEqual(
+				expect.arrayContaining(
+					tokens(TICKET_FRAME.line).filter((token) =>
+						kitchenLine.classes().includes(token),
+					),
+				),
+			)
+			// What is in the line takes the line's size: no smaller text, no smaller quantity box of its own
+			expect(line.find(".font-medium").classes()).not.toContain("text-sm")
+			expect(line.find(".rounded-lg").classes()).toEqual(
+				expect.arrayContaining(["w-8", "h-8", "text-lg"]),
+			)
+		}
+	})
+
 	it("keep their own content in the frame: the runner its button, the kitchen its statuses", () => {
 		const kitchen = mount(KDSOrderCard, {
 			props: { order: orderOfTheKitchen },

@@ -83,11 +83,13 @@ function resetOrders() {
 }
 
 /** The server as the screen meets it: the rooms, the stations and the orders (cut to one station when it is asked). */
-function serve({ areas = AREAS, rooms = "ok" } = {}) {
+function serve({ areas = AREAS, rooms = "ok", gate = null } = {}) {
 	call.mockReset()
 	call.mockImplementation(async (method, params = {}) => {
 		if (method === STATIONS_READ) return STATIONS
 		if (method === TABLES) {
+			// The orders are there before the rooms when the rooms wait for a gate
+			if (gate) await gate
 			if (rooms === "fails") throw new Error("no rooms")
 			return { areas, tables: [], stations: [] }
 		}
@@ -122,6 +124,15 @@ async function open(search = "") {
 	opened.push(wrapper)
 	await flushPromises()
 	return wrapper
+}
+
+/** A promise that a test releases when it chooses: the rooms answer after the orders. */
+function deferred() {
+	let release
+	const promise = new Promise((resolve) => {
+		release = resolve
+	})
+	return { promise, release: () => release() }
 }
 
 const askedOf = (method) =>
@@ -199,20 +210,116 @@ describe("the rooms of the kitchen screen", () => {
 		expect(wrapper.findAll('[data-test="filter-line"]')).toHaveLength(1)
 		expect(chipTexts(wrapper, "rooms")).toEqual([
 			"All Areas",
-			"Room 1 2",
-			"Room 2 1",
-			"Terrace 1",
-			"Garden",
+			"Room 1 (2)",
+			"Room 2 (1)",
+			"Terrace (1)",
+			"Garden (0)",
 		])
 		expect(chipTexts(wrapper, "stations")).toEqual([
 			"All (5)",
-			"Bar 2",
-			"Kitchen 4",
+			"Bar (2)",
+			"Kitchen (4)",
 		])
 		const line = wrapper.find('[data-test="filter-line"]')
 		expect([...line.element.children].map((el) => el.dataset.test)).toEqual([
 			"rooms",
 			"stations",
+		])
+	})
+})
+
+describe("the counts of the kitchen screen", () => {
+	it("read as plain text in parentheses in the tone of their chip, as the station chips always did: nothing green", async () => {
+		const wrapper = await open()
+
+		const counts = [
+			...wrapper.findAll('[data-test="room-count"]'),
+			...wrapper.findAll('[data-test="station-count"]'),
+		]
+		// 4 rooms and 2 stations, "(0)" included: a room or a station with no ticket says so
+		expect(counts.map((count) => count.text())).toEqual([
+			"(2)",
+			"(1)",
+			"(1)",
+			"(0)",
+			"(2)",
+			"(4)",
+		])
+		// On this screen green means "Ready" (its button, its badges, its border, its timer): a count that is not a
+		// ready count must not wear it. A room's count has no class at all, like a station's: they share the tone of
+		// the chip's own text
+		for (const count of counts) expect(count.classes()).toEqual([])
+		expect(wrapper.find('[data-test="rooms"]').html()).not.toMatch(
+			/green|emerald|pill/,
+		)
+		expect(wrapper.find('[data-test="stations"]').html()).not.toMatch(
+			/green|emerald|pill/,
+		)
+	})
+
+	it("follow the station chosen: the tickets of each room that the station filter leaves", async () => {
+		const wrapper = await open()
+
+		await choose(wrapper, "stations", "Kitchen")
+		// Room 1 has A1 and A2 with a dish for the kitchen, Room 2 has B1, the Terrace's only ticket is for the bar
+		expect(chipTexts(wrapper, "rooms")).toEqual([
+			"All Areas",
+			"Room 1 (2)",
+			"Room 2 (1)",
+			"Terrace (0)",
+			"Garden (0)",
+		])
+
+		await choose(wrapper, "stations", "Bar")
+		expect(chipTexts(wrapper, "rooms")).toEqual([
+			"All Areas",
+			"Room 1 (1)",
+			"Room 2 (0)",
+			"Terrace (1)",
+			"Garden (0)",
+		])
+
+		await choose(wrapper, "stations", "Bar")
+		expect(chipTexts(wrapper, "rooms")).toEqual([
+			"All Areas",
+			"Room 1 (2)",
+			"Room 2 (1)",
+			"Terrace (1)",
+			"Garden (0)",
+		])
+	})
+
+	it("are what the room shows when it is chosen, whatever the station filter", async () => {
+		const wrapper = await open()
+		const countOf = (label) =>
+			Number(
+				chip(wrapper, "rooms", label)
+					.text()
+					.match(/\((\d+)\)/)[1],
+			)
+
+		for (const station of ["Kitchen", "Bar"]) {
+			await choose(wrapper, "stations", station)
+			for (const room of ["Room 1", "Room 2", "Terrace", "Garden"]) {
+				const promised = countOf(room)
+				await choose(wrapper, "rooms", room)
+				expect(shown(wrapper), `${station} in ${room}`).toHaveLength(promised)
+			}
+			await choose(wrapper, "rooms", "All Areas")
+			await choose(wrapper, "stations", station)
+		}
+	})
+
+	it('count the stations of the room chosen and "all" the tickets of that room, the station filter apart', async () => {
+		const wrapper = await open()
+
+		await choose(wrapper, "rooms", "Room 1")
+		await choose(wrapper, "stations", "Bar")
+
+		expect(chipTexts(wrapper, "stations")).toEqual([
+			"All (2)",
+			"Bar (1)",
+			"Kitchen (2)",
 		])
 	})
 })
@@ -254,17 +361,17 @@ describe("choosing a room on the kitchen screen", () => {
 
 		expect(chipTexts(wrapper, "stations")).toEqual([
 			"All (2)",
-			"Bar 1",
-			"Kitchen 2",
+			"Bar (1)",
+			"Kitchen (2)",
 		])
 		expect(wrapper.find("header").text()).toContain("Active Orders: 2")
 		// The counts of the rooms stay those of every room: the line still says where the tickets are
 		expect(chipTexts(wrapper, "rooms")).toEqual([
 			"All Areas",
-			"Room 1 2",
-			"Room 2 1",
-			"Terrace 1",
-			"Garden",
+			"Room 1 (2)",
+			"Room 2 (1)",
+			"Terrace (1)",
+			"Garden (0)",
 		])
 	})
 
@@ -358,10 +465,26 @@ describe("the room remembered by the kitchen screen", () => {
 		// The stations are still there to choose from
 		expect(chipTexts(wrapper, "stations")).toEqual([
 			"All (5)",
-			"Bar 2",
-			"Kitchen 4",
+			"Bar (2)",
+			"Kitchen (4)",
 		])
 		error.mockRestore()
+	})
+
+	it("waits for the rooms rather than flash every room's tickets", async () => {
+		localStorage.setItem("pos_kds_area", "r3")
+		const gate = deferred()
+		serve({ gate: gate.promise })
+
+		const wrapper = await open()
+		// The orders are in, the rooms are not: no ticket of another room shows, a spinner does
+		expect(shown(wrapper)).toEqual([])
+		expect(wrapper.find(".animate-spin").exists()).toBe(true)
+
+		gate.release()
+		await flushPromises()
+		expect(shown(wrapper)).toEqual(["T1"])
+		expect(wrapper.find(".animate-spin").exists()).toBe(false)
 	})
 
 	it("offers no room filter to a restaurant that has no room", async () => {

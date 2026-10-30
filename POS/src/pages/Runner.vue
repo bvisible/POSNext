@@ -63,17 +63,32 @@
 		<!-- The rooms and the stations are ONE line, the same on the kitchen screen. The plan view has no station to choose -->
 		<RoomStationFilterLine
 			:rooms="filterRooms"
-			:selected-room="selectedArea"
+			:selected-room="activeArea"
 			:stations="filterStations"
 			:selected-station="selectedStation"
 			:all-count="filteredByAreaOrders.length"
 			@update:selected-room="selectArea"
 			@update:selected-station="selectedStation = $event"
-		/>
+		>
+			<!-- The runner counts what is READY, and says it in green (the colour of its Ready badges) on a room, and with a
+			     pill of the station's own colour and a tick on a station. Nothing when no dish is ready. The kitchen screen
+			     counts its open tickets, and gives its counts no such meaning -->
+			<template #room-count="{ room }">
+				<span v-if="room.count > 0" data-test="room-count"
+					class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-500 rounded-full">{{ room.count }}</span>
+			</template>
+			<template #station-count="{ station, selected }">
+				<span v-if="station.count > 0" data-test="station-count"
+					class="text-xs font-bold px-1.5 py-0.5 rounded"
+					:style="selected
+						? { backgroundColor: 'rgba(255,255,255,0.3)' }
+						: { backgroundColor: station.color + '20', color: station.color }">{{ station.count }}✓</span>
+			</template>
+		</RoomStationFilterLine>
 
 		<!-- Main content: Cards view -->
 		<main v-if="viewMode !== 'plan'" :class="TICKET_AREA" data-test="ticket-area">
-			<div v-if="loading" class="flex justify-center items-center h-full">
+			<div v-if="loading || waitingForRooms" class="flex justify-center items-center h-full">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
 
@@ -101,7 +116,7 @@
 			:style="{ backgroundColor: '#f8fafc', backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)', backgroundSize: '25px 25px' }">
 
 			<!-- Plan area tabs (if not already filtered by area tabs above) -->
-			<div v-if="!selectedArea && areas.length > 1" class="sticky top-0 z-10 bg-white/90 backdrop-blur px-4 py-2 flex gap-1 border-b">
+			<div v-if="!activeArea && areas.length > 1" class="sticky top-0 z-10 bg-white/90 backdrop-blur px-4 py-2 flex gap-1 border-b">
 				<button v-for="a in areas" :key="'plan-' + a.name"
 					@click="planArea = a.name"
 					class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
@@ -203,6 +218,7 @@ const showDelivered = ref(
 	localStorage.getItem("pos_runner_show_delivered") === "true",
 )
 const areas = ref([])
+const areasRead = ref(false)
 const allTables = ref([])
 const allFloorStations = ref([])
 const loading = ref(true)
@@ -222,11 +238,22 @@ const totalReadyItems = computed(() => {
 	)
 })
 
+// The room that cuts the list: the one remembered, as long as the restaurant still has it. A room that was deleted, or
+// that belongs to another restaurant (the address names one), or rooms that cannot be read, fall back to "all rooms": a
+// pass screen must never show nothing with no chip left to say why.
+const activeArea = computed(() =>
+	areasRead.value && areas.value.some((a) => a.name === selectedArea.value)
+		? selectedArea.value
+		: "",
+)
+// A room is remembered but the restaurant's rooms are not known yet: wait, rather than flash every room's cards
+const waitingForRooms = computed(() => !!selectedArea.value && !areasRead.value)
+
+// The room is cut client side (filteredByAreaOrders): choosing one needs no new read of the orders
 function selectArea(area) {
 	selectedArea.value = area
 	localStorage.setItem("pos_runner_area", area)
 	if (area) planArea.value = area
-	loadOrders()
 }
 
 function getAreaReadyCount(areaName) {
@@ -266,12 +293,7 @@ const filterRooms = computed(() =>
 	})),
 )
 const filterStations = computed(() =>
-	viewMode.value === "plan"
-		? []
-		: orderStations.value.map((station) => ({
-				...station,
-				countLabel: `${station.count}✓`,
-			})),
+	viewMode.value === "plan" ? [] : orderStations.value,
 )
 
 watch(showDelivered, (val) => {
@@ -286,8 +308,8 @@ const filteredByAreaOrders = computed(() => {
 			return !allDelivered
 		})
 	}
-	if (selectedArea.value) {
-		result = result.filter((o) => o.area === selectedArea.value)
+	if (activeArea.value) {
+		result = result.filter((o) => o.area === activeArea.value)
 	}
 	return result
 })
@@ -305,6 +327,13 @@ const filteredOrders = computed(() => {
 			.filter((o) => o.items.length > 0)
 	}
 	return result
+})
+
+// The "new ready dishes" beep compares the dishes on the screen with the number the last read left there: the same scope.
+// Choosing another room or station, or showing the delivered dishes, changes the scope without any new dish, so the count
+// of the new scope is the new baseline, not something the count of the old scope is compared with.
+watch([activeArea, selectedStation, showDelivered], () => {
+	previousCount = totalReadyItems.value
 })
 
 const groupedCards = computed(() => {
@@ -394,7 +423,7 @@ function groupItemsByStation(items) {
 // ─── Plan view ───────────────────────────────────────────────────────────────
 const activePlanArea = computed(
 	() =>
-		selectedArea.value ||
+		activeArea.value ||
 		planArea.value ||
 		(areas.value.length ? areas.value[0].name : ""),
 )
@@ -453,6 +482,8 @@ async function loadAreas() {
 			planArea.value = areas.value[0].name
 	} catch (error) {
 		console.error("Failed to load areas:", error)
+	} finally {
+		areasRead.value = true
 	}
 }
 
