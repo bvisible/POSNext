@@ -77,6 +77,16 @@ const routes = [
 		component: () => import("@/pages/GuestReservation.vue"),
 		meta: { allowGuest: true },
 	},
+	//// Neoffice — the public menu (NeoRestau lot 1, task 17): the page that the one QR code on a restaurant's tables opens.
+	//// Like the other pages a guest opens it is let through with no session (meta.allowGuest); it is not behind
+	//// needsNeoRestau, which would send a guest to the till's login: the page asks the server, and says "This menu is not
+	//// available" politely where the site does not run NeoRestau or the restaurant did not switch its public menu on.
+	{
+		name: "PublicMenu",
+		path: "/menu/:restaurant",
+		component: () => import("@/pages/PublicMenu.vue"),
+		meta: { allowGuest: true },
+	},
 	// Catch-all route
 	{
 		path: "/:pathMatch(.*)*",

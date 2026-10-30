@@ -6,6 +6,9 @@
 /* //// align POS design with Neoffice theme and improve customer display — c9d9c1c + d8904ff */
 /* Neoffice heading font */
 @import url("https://fonts.googleapis.com/css2?family=Forum&display=swap");
+/* //// Neoffice — Karla, the Design System's text face, for the pages a guest reads on their phone (the public menu, NeoRestau
+   //// lot 1, task 17); the till itself keeps Inter. Forum, above, is the face of the titles. */
+@import url("https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&display=swap");
 
 /* CSS Custom Properties for consistent z-index layering */
 :root {
