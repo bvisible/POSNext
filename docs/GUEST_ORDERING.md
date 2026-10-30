@@ -56,7 +56,7 @@ All guest endpoints in `pos_next/api/guest_ordering.py`:
 | `get_guest_menu(token)` | Yes | Returns categories + items from guest menu card |
 | `submit_guest_order(token, items)` | Yes | Adds items to the table's Sales Invoice |
 | `get_order_status(token)` | Yes | Returns current items, totals, paid amount |
-| `create_guest_payment(token, amount, payment_items)` | Yes | Creates Wallee transaction for payment |
+| `create_guest_payment(token, amount, payment_items, tip, success_url, failed_url)` | Yes | Creates a Payment Intent on the site's Wallee provider (`payments` app) and returns the hosted payment page URL |
 | `create_table_token(table, pos_profile)` | No (POS User) | Generates token for a table |
 | `create_takeaway_token()` | Yes | Generates token for takeaway (rate-limited) |
 | `submit_takeaway_order(token, items, customer)` | Yes | Finalizes takeaway after payment verified |
@@ -99,7 +99,7 @@ Tokens are validated on every API call. A token is invalid if:
 |-----------|---------|
 | `GuestMenuView.vue` | Mobile menu browser with category tabs, item cards, modifier selection |
 | `GuestCart.vue` | Cart with quantity controls, total, "Send Order" button |
-| `GuestCheckout.vue` | Split payment (amount/items tabs), account creation, Wallee iframe |
+| `GuestCheckout.vue` | Split payment (amount/items tabs), account creation, redirect to the Wallee payment page |
 | `GuestOrder.vue` | Main page — 3-tab navigation (Menu/Cart/Pay) |
 | `TakeawayOrder.vue` | Takeaway page — mandatory account + payment before order |
 | `TableQRCode.vue` | QR code display with print button |
@@ -115,15 +115,15 @@ Multi-device ordering uses Frappe realtime with room-scoped events:
 
 ### Payment Flow
 
-Guest payments use `wallee_integration.api.transaction.create_transaction()`:
+Guest payments go through the `payments` app (its Payment Provider and Payment Intent layer), since the `wallee_integration` app was merged into it (ADR-005). Nothing here calls `wallee_integration` any more.
 
 1. Guest selects amount (free entry) or items (checkboxes)
-2. Frontend calls `create_guest_payment` → backend creates Wallee transaction
-3. Wallee returns `payment_url` → displayed in iframe
-4. Frontend polls `get_order_status` every 5s to detect payment completion
-5. On payment detected → UI updates, `order-confirmed` emitted
+2. Frontend calls `create_guest_payment`. The backend picks the Wallee provider with `_resolve_wallee_provider()` (the enabled Payment Provider whose driver class is `payments.drivers.wallee.*`, the most recently modified one; none → "No enabled Wallee Payment Provider configured on this instance.") and calls `payments.api.intent.create_intent` on the `wallee_web` channel, the hosted payment page. The amount goes in minor units (rappen for CHF); the intent references the order's Sales Invoice and carries the order and tip lines, the guest token and the success and failure addresses
+3. The intent answers the hosted page's address (`next_action_payload.url`); the endpoint returns it as `payment_url`, with the provider's `transaction_id`, the `intent_name` and the `state`
+4. The checkout leaves for `payment_url` in the same tab; Wallee sends the guest back to the success or failure address it was given, and the page opened on the success address asks `confirm_guest_payment` to record the payment
+5. On confirmation → UI updates, `order-confirmed` emitted
 
-**Takeaway**: Payment is mandatory before order submission. Backend verifies a completed Wallee Transaction exists before `submit_takeaway_order` creates the invoice.
+**Takeaway**: Payment is mandatory before order submission. Backend verifies that a succeeded Payment Intent (`payments` app) references the order's Sales Invoice before `submit_takeaway_order` creates the invoice.
 
 **Restaurant**: Payment is optional/at-end. Split payment supported — multiple partial payments tracked against the same invoice.
 

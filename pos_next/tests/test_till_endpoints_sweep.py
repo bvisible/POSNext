@@ -427,6 +427,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 					lambda: restaurant.create_table("tillsweep table", NONE), frappe.ValidationError
 				),
 			),
+			("update_table", _past_the_gate(lambda: restaurant.update_table(NONE), frappe.ValidationError)),
 			("create_station", lambda: restaurant.create_station("tillsweep station")),
 			("create_area", lambda: restaurant.create_area("tillsweep room")),
 			("rename_area", _past_the_gate(lambda: restaurant.rename_area(NONE, "tillsweep room"))),

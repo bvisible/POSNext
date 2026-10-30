@@ -914,7 +914,7 @@ const cartStore = usePOSCartStore()
 const draftsStore = usePOSDraftsStore()
 const shiftStore = usePOSShiftStore()
 let floorSocket = null
-const { showSuccess, showError } = useToast()
+const { showSuccess, showError, handleError } = useToast()
 
 const canvasRef = ref(null)
 const isEditMode = ref(false)
@@ -1953,9 +1953,10 @@ function openEditTableDialog(table) {
 async function handleEditTable() {
 	if (!editTable.value.name) return
 	try {
-		await call("pos_next.api.restaurant.create_table", {
+		// Edits the table that was opened, in its room (it used to create another table under the new label)
+		await call("pos_next.api.restaurant.update_table", {
+			name: editTable.value.name,
 			table_name: editTable.value.table_name,
-			area: selectedArea.value,
 			capacity: editTable.value.capacity,
 			shape: editTable.value.shape,
 		})
@@ -1965,7 +1966,8 @@ async function handleEditTable() {
 		isDirty.value = true
 		showSuccess(__("Table updated"))
 	} catch (error) {
-		showError(__("Failed to update table"))
+		// The server says why when it can (a label another table of the restaurant already has, a missing right)
+		handleError(error, __("Failed to update table"))
 	}
 }
 

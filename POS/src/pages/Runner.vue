@@ -40,11 +40,12 @@
 						class="px-3 py-1.5 text-sm font-medium transition-colors"
 						:class="viewMode === 'station' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
 					>{{ __("By Station") }}</button>
+					<!-- The plan of the dining room ("Plan de salle" in French), under a context of its own: the bare word "Plan" is shared by the whole site -->
 					<button
 						@click="viewMode = 'plan'"
 						class="px-3 py-1.5 text-sm font-medium transition-colors"
 						:class="viewMode === 'plan' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
-					>{{ __("Plan") }}</button>
+					>{{ __("Plan", null, "Floor plan view") }}</button>
 				</div>
 				<label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
 					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />

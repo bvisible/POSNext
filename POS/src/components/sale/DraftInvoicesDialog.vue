@@ -98,7 +98,8 @@
 												draft.kds_status === 'Ready',
 										}"
 									>
-										KDS: {{ draft.kds_status }}
+										<!-- //// Neoffice — the kitchen status is shown as a label (kitchenStatusLabel), upstream printed the stored English word (NeoRestau lot 1, task 9) -->
+										KDS: {{ kitchenStatusLabel(draft.kds_status) }}
 									</span>
 								</div>
 							</div>
@@ -235,6 +236,8 @@ import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSDraftsStore } from "@/stores/posDrafts";
 //// Neoffice — a draft shows its table by the table's label (NeoRestau lot 1, task 2)
 import { useRestaurantStore } from "@/stores/restaurant";
+//// Neoffice — and the kitchen status of its order by a label, not by the stored English word (NeoRestau lot 1, task 9)
+import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 import { Button, Dialog, FeatherIcon } from "frappe-ui";
 import { onMounted, ref, watch } from "vue";
 

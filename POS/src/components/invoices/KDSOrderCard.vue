@@ -41,7 +41,7 @@
 				<span class="text-xs text-gray-400 font-mono">#{{ order.name }}</span>
 				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
 					:class="statusBadgeClass">
-					{{ __(order.kds_status) }}
+					{{ kitchenStatusLabel(order.kds_status) }}
 				</span>
 			</div>
 		</div>
@@ -72,7 +72,7 @@
 						<span v-if="item.kds_status"
 							class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
 							:class="itemStatusClass(item.kds_status)">
-							{{ __(item.kds_status) }}
+							{{ kitchenStatusLabel(item.kds_status) }}
 						</span>
 					</div>
 					<!-- Item context menu -->
@@ -187,6 +187,7 @@ import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
+import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 
 // Strip HTML tags from a string
 function stripHtml(html) {

@@ -90,6 +90,7 @@ from pos_next.api.restaurant import (
 	update_item_details,
 	update_item_price,
 	update_station,
+	update_table,
 	update_table_status,
 )
 from pos_next.authorization.tests.helpers import make_user
@@ -272,6 +273,7 @@ class RestaurantRights(FrappeTestCase):
 			),
 			(reset_all_tables, {"restaurant": self.restaurant}),
 			(create_table, {"table_name": "_Test Rights T2", "area": self.room}),
+			(update_table, {"name": self.table, "table_name": "_Test Rights renamed", "capacity": 9}),
 			(save_station_positions, {"positions": "[]"}),
 			(save_floor_plan_walls, {"area": self.room, "walls_data": "{}"}),
 			(save_floor_plan_bg, {"area": self.room}),
@@ -381,7 +383,9 @@ class TestTheServerDecides(RestaurantRights):
 		count, value = frappe.db.count, frappe.db.get_value
 		return {
 			"tables": count("Restaurant Table", {"area": self.room}),
-			"table": value("Restaurant Table", self.table, ["pos_x", "pos_y", "status"]),
+			"table": value(
+				"Restaurant Table", self.table, ["table_name", "capacity", "pos_x", "pos_y", "status"]
+			),
 			"stations": count("Preparation Station", {"restaurant": self.restaurant}),
 			"station": value("Preparation Station", self.station, "station_name"),
 			"rooms": count("Restaurant Area", {"restaurant": self.restaurant}),

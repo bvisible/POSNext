@@ -79,7 +79,7 @@
 						</div>
 						<span class="text-xs font-medium px-2 py-0.5 rounded-full"
 							:class="getStatusBadgeClass(order.kds_status)">
-							{{ __(order.kds_status || 'Pending') }}
+							{{ kitchenStatusLabel(order.kds_status || 'Pending') }}
 						</span>
 					</div>
 
@@ -122,6 +122,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { call } from "@/utils/apiWrapper"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
+import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — takeaway amounts in the site's number format (formatCurrency below).
 import { formatCurrencyNumber } from "@/utils/currency"
 

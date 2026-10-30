@@ -96,11 +96,10 @@ declare module 'vue' {
     InvoiceFilters: typeof import('./src/components/invoices/InvoiceFilters.vue')['default']
     InvoiceHistoryDialog: typeof import('./src/components/sale/InvoiceHistoryDialog.vue')['default']
     InvoiceManagement: typeof import('./src/components/invoices/InvoiceManagement.vue')['default']
-    //// Neoffice — restaurant item authoring (badge panel, edit panel, save confirmation)
-    //// and the structured item-modifiers dialog. A dish carries options and a preparation
-    //// badge; a retail article does not (34ee11a8 2026-03-25; 5aa8189f 2026-03-26;
-    //// 4df0caf1 2026-03-21 "Phase 4A - structured item modifiers").
-    ItemBadgePanel: typeof import('./src/components/restaurant/ItemBadgePanel.vue')['default']
+    //// Neoffice — restaurant item authoring (edit panel, save confirmation; the badge panel
+    //// is gone, the edit panel sets the badges) and the structured item-modifiers dialog. A
+    //// dish carries options and a preparation badge; a retail article does not (34ee11a8
+    //// 2026-03-25; 5aa8189f 2026-03-26; 4df0caf1 2026-03-21 "Phase 4A - structured item modifiers").
     ItemEditPanel: typeof import('./src/components/restaurant/ItemEditPanel.vue')['default']
     ItemModifiersDialog: typeof import('./src/components/sale/ItemModifiersDialog.vue')['default']
     ItemSaveConfirmDialog: typeof import('./src/components/restaurant/ItemSaveConfirmDialog.vue')['default']
@@ -182,11 +181,10 @@ declare module 'vue' {
     ShiftHistoryDialog: typeof import('./src/components/sale/ShiftHistoryDialog.vue')['default']
     ShiftOpeningDialog: typeof import('./src/components/ShiftOpeningDialog.vue')['default']
     StatusBadge: typeof import('./src/components/common/StatusBadge.vue')['default']
-    //// Neoffice — per-table QR code for guest self-ordering, the table selector, and the
-    //// tips panel (Swiss service tips are recorded per server). All restaurant-only
-    //// (3e25c3b6 2026-03-28; 458d81a9 2026-03-20; ebc3ecc5 2026-03-29).
+    //// Neoffice — per-table QR code for guest self-ordering and the tips panel (Swiss service
+    //// tips are recorded per server); the table selector, a list never rendered, is gone. All
+    //// restaurant-only (3e25c3b6 2026-03-28; ebc3ecc5 2026-03-29).
     TableQRCode: typeof import('./src/components/restaurant/TableQRCode.vue')['default']
-    TableSelector: typeof import('./src/components/pos/TableSelector.vue')['default']
     TipsPanel: typeof import('./src/components/restaurant/TipsPanel.vue')['default']
     Toast: typeof import('./src/components/common/Toast.vue')['default']
     TranslatedHTML: typeof import('./src/components/common/TranslatedHTML.vue')['default']

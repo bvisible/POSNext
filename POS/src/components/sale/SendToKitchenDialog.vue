@@ -83,7 +83,7 @@
 							class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
 							:class="statusBadgeClass(item.kds_status)"
 						>
-							{{ __(item.kds_status) }}
+							{{ kitchenStatusLabel(item.kds_status) }}
 						</span>
 					</div>
 
@@ -123,6 +123,7 @@ import { Dialog, Button } from "frappe-ui"
 import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { isLightColor } from "@/utils/itemColors"
+import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 
 const emit = defineEmits(["items-sent"])
 

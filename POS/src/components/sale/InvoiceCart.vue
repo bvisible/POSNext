@@ -1452,7 +1452,8 @@
 											name="clock"
 											class="w-2.5 h-2.5 me-0.5"
 										/>
-										{{ __(item.kds_status) }}
+										<!-- //// Neoffice — the kitchen status is a label under its own context (kitchenStatusLabel), not the bare word every app shares (NeoRestau lot 1, task 9) -->
+										{{ kitchenStatusLabel(item.kds_status) }}
 									</span>
 								</div>
 								<!-- Item Modifiers Summary -->
@@ -2037,6 +2038,8 @@ import { useRestaurantStore } from "@/stores/restaurant";
 import { isLightColor } from "@/utils/itemColors";
 //// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
 import { cartRowOf } from "@/utils/cartRow";
+//// Neoffice — the badge of a dish sent to the kitchen shows its status through kitchenStatusLabel (NeoRestau lot 1, task 9)
+import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
 import { useFormatters } from "@/composables/useFormatters";
 import { useCartSort } from "@/composables/useCartSort";

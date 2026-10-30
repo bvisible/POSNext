@@ -9,7 +9,7 @@
 # //// item creation in the root item group).
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from pos_next.restaurant import permissions, scope
 from pos_next.restaurant import settings as restaurant_config
@@ -793,6 +793,45 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 
 
 @frappe.whitelist()
+def update_table(name, table_name=None, capacity=None, shape=None):
+	"""Edit a restaurant table in place: its label, its seats or its shape. What is not passed stays as it is.
+
+	The table is the same record afterwards (the orders, the reservations and the guest tokens link to it by name), and
+	its label only has to be unique within its restaurant: the doctype checks it, as it does on every save. Answers the
+	table as the floor plan reads it.
+	"""
+	# Laying out the floor is for whoever may manage it: a cashier writes a table's status, never its label or its seats
+	permissions.require_right("manage_floor")
+	permissions.require("Restaurant Table", "write", name)
+	if not frappe.db.exists("Restaurant Table", name):
+		frappe.throw(_("Table {0} not found").format(name))
+
+	doc = frappe.get_doc("Restaurant Table", name)
+	if table_name is not None:
+		doc.table_name = table_name
+	# The dialog's empty field arrives as an empty string: no number is no change
+	if capacity not in (None, ""):
+		doc.capacity = cint(capacity)
+	if shape:
+		doc.shape = shape
+	doc.save()
+	return {
+		"name": doc.name,
+		"table_name": doc.table_name,
+		"area": doc.area,
+		"area_name": frappe.db.get_value("Restaurant Area", doc.area, "area_name") or doc.area,
+		"restaurant": doc.restaurant,
+		"capacity": doc.capacity,
+		"status": doc.status,
+		"pos_x": doc.pos_x,
+		"pos_y": doc.pos_y,
+		"width": doc.width,
+		"height": doc.height,
+		"shape": doc.shape,
+	}
+
+
+@frappe.whitelist()
 def delete_table(name):
 	"""Delete a restaurant table if it has no active orders."""
 	# //// Neoffice — its caller is the till (FloorPlanEditor), so only the till's users pass
@@ -848,7 +887,15 @@ def get_station_details(name):
 		"workflow": doc.workflow or "",
 		"use_runner": doc.use_runner,
 		"items": [
-			{"item": r.item, "item_name": r.item_name, "prep_time": r.prep_time or 0, "priority": r.priority or "Normal"}
+			{
+				"item": r.item,
+				"item_name": r.item_name,
+				"prep_time": r.prep_time or 0,
+				"priority": r.priority or "Normal",
+				# The workflow the dish has of its own, set in the desk (none: it follows its station's). The till
+				# sends the rows back as it got them, so the workflow has to travel with them
+				"workflow": r.workflow or "",
+			}
 			for r in doc.get("items", [])
 		],
 		"item_groups": [
@@ -890,12 +937,17 @@ def update_station(name, station_name=None, station_type=None, color=None, workf
 	if items is not None:
 		if isinstance(items, str):
 			items = json.loads(items)
+		# The rows are written again, so each dish's own workflow is carried over: the one its row names (an empty
+		# one clears it), else the one the dish has now (a caller that does not know about workflows leaves them)
+		workflows = {existing.item: existing.workflow for existing in doc.get("items", [])}
 		doc.items = []
 		for row in items:
+			item_workflow = row["workflow"] if "workflow" in row else workflows.get(row.get("item"))
 			doc.append("items", {
 				"item": row.get("item"),
 				"prep_time": cint(row.get("prep_time", 0)),
 				"priority": row.get("priority", "Normal"),
+				"workflow": item_workflow or None,
 			})
 
 	# Update item_groups child table

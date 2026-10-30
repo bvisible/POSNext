@@ -3023,6 +3023,13 @@ msgstr "Livrer"
 msgid "Delivered"
 msgstr "Livré"
 
+# //// Neoffice — the kitchen's sense of a status (kitchenStatusLabel): an order and its dishes go Pending, Preparing,
+# //// Ready, Delivered. Under its own context, so that the bare word above, which the whole site shares, is not changed.
+#: POS/src/utils/kitchenStatus.js:28
+msgctxt "Kitchen order status"
+msgid "Delivered"
+msgstr "Livré"
+
 #. Label of a Section Break field in DocType 'POS Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 msgid "Delivery"
@@ -8066,6 +8073,12 @@ msgstr "Heure de pointe"
 msgid "Pending"
 msgstr "En attente"
 
+# //// Neoffice — the kitchen's sense of "Pending": sent to the kitchen, not started yet (see "Delivered" above).
+#: POS/src/utils/kitchenStatus.js:22
+msgctxt "Kitchen order status"
+msgid "Pending"
+msgstr "En attente"
+
 #. Option for the 'Discount Type' (Select) field in DocType 'POS Coupon'
 #. Option for the 'Discount Type' (Select) field in DocType 'Referral Code'
 #: POS/src/components/sale/CouponManagement.vue:350
@@ -8182,9 +8195,15 @@ msgid "Picked Up"
 msgstr "Récupéré"
 
 #: POS/src/components/restaurant/ReservationForm.vue:98
-#: POS/src/pages/Runner.vue:40
 msgid "Plan"
 msgstr "Plan"
+
+# //// Neoffice — the pass's plan view is the plan of the dining room. The bare word above stays "Plan" for the whole
+# //// site (another app translates it for its own sense, « Planifier »); the pass asks for it under this context.
+#: POS/src/pages/Runner.vue:48
+msgctxt "Floor plan view"
+msgid "Plan"
+msgstr "Plan de salle"
 
 #: POS/src/pages/POSSale.vue:3178
 msgid "Please add items to cart before proceeding to payment"
@@ -8431,6 +8450,12 @@ msgstr ""
 
 #: POS/src/components/guest/GuestCart.vue:165
 #: POS/src/components/invoices/KDSOrderCard.vue:70
+msgid "Preparing"
+msgstr "En préparation"
+
+# //// Neoffice — the kitchen's sense of "Preparing" (see "Delivered" above).
+#: POS/src/utils/kitchenStatus.js:24
+msgctxt "Kitchen order status"
 msgid "Preparing"
 msgstr "En préparation"
 
@@ -8932,6 +8957,12 @@ msgstr "Lecture seule : Modifier dans le Back Office"
 #: POS/src/components/invoices/KDSOrderCard.vue:144
 #: POS/src/components/invoices/RunnerOrderCard.vue:16
 #: POS/src/components/pos/POSHeader.vue:488 POS/src/pages/Takeaway.vue:97
+msgid "Ready"
+msgstr "Prêt"
+
+# //// Neoffice — the kitchen's sense of "Ready": prepared, to be carried to the table (see "Delivered" above).
+#: POS/src/utils/kitchenStatus.js:26
+msgctxt "Kitchen order status"
 msgid "Ready"
 msgstr "Prêt"
 

@@ -567,9 +567,9 @@
 													: 'bg-green-500',
 											]"
 										>
-											<!-- //// Neoffice — the status goes through __() like the kitchen display's (KDSOrderCard): the five values it can take -->
-											<!-- //// (Waiting, Pending, Preparing, Ready, Delivered) have a French msgid; upstream printed the raw English word. -->
-											{{ __(cartStore.kdsStatus) }}
+											<!-- //// Neoffice — the status goes through kitchenStatusLabel() like the kitchen display's (KDSOrderCard): Pending, Preparing, Ready -->
+											<!-- //// and Delivered have a French label under the context "Kitchen order status", any other value keeps its plain word; upstream printed the raw English word. -->
+											{{ kitchenStatusLabel(cartStore.kdsStatus) }}
 										</div>
 									</div>
 									<Button variant="subtle" size="sm" @click="closeTable">
@@ -2391,12 +2391,15 @@ import ItemModifiersDialog from "@/components/sale/ItemModifiersDialog.vue";
 import PriceEntryDialog from "@/components/sale/PriceEntryDialog.vue";
 import MenuSelectionDialog from "@/components/sale/MenuSelectionDialog.vue";
 import ItemsSelector from "@/components/sale/ItemsSelector.vue";
-//// Neoffice — table selection, the floor-plan editor and the per-table QR code: the POS
-//// starts from the room, not the catalogue (0ebfda03 2026-03-20 "Phase 2 - visual floor
-//// plan editor"; c5208ba7 2026-03-28 "QR button on table view").
-import TableSelector from "@/components/pos/TableSelector.vue";
+//// Neoffice — the floor-plan editor and the per-table QR code: the POS starts from the room,
+//// not the catalogue (0ebfda03 2026-03-20 "Phase 2 - visual floor plan editor"; c5208ba7
+//// 2026-03-28 "QR button on table view"). The list of tables this block also imported
+//// (TableSelector.vue) was never rendered: the floor plan selects the table. It is gone, with
+//// its import (NeoRestau lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
+//// Neoffice — the status badge of the open table is a label under its own context (NeoRestau lot 1, task 9)
+import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
@@ -3717,7 +3720,7 @@ async function handleShiftClosed() {
 //// 2026-03-21).
 // Restaurant mode handlers
 function handleTableSelected(table) {
-	// Table selected, cart already configured by TableSelector
+	// Table selected, cart already configured by the floor plan (FloorPlanEditor)
 }
 
 const cleaningTable = ref(null);
