@@ -17454,11 +17454,11 @@ msgstr "Modifier le plan de salle"
 msgid "Free the tables being cleaned"
 msgstr "Libérer les tables en nettoyage"
 
-msgid "{0} tables freed"
-msgstr "{0} tables libérées"
+msgid "{0} tables freed in {1}"
+msgstr "{0} tables libérées dans {1}"
 
-msgid "{0} table freed"
-msgstr "{0} table libérée"
+msgid "{0} table freed in {1}"
+msgstr "{0} table libérée dans {1}"
 
-msgid "No table is being cleaned"
-msgstr "Aucune table n'est en nettoyage"
+msgid "No table is being cleaned in {1}"
+msgstr "Aucune table n'est en nettoyage dans {1}"
