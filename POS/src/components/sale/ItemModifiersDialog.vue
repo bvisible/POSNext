@@ -81,7 +81,7 @@
 				<div v-else></div>
 				<div class="flex gap-2">
 					<Button @click="show = false" variant="subtle">{{ __("Cancel") }}</Button>
-					<Button @click="saveModifiers" variant="solid" theme="blue" :disabled="!isValid">{{ __("Confirm") }}</Button>
+					<Button @click="saveModifiers" variant="solid" :disabled="!isValid">{{ __("Confirm") }}</Button>
 				</div>
 			</div>
 		</template>

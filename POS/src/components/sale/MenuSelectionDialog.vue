@@ -58,7 +58,7 @@
 				</div>
 				<div class="flex gap-2">
 					<Button @click="show = false" variant="subtle">{{ __("Cancel") }}</Button>
-					<Button @click="confirmMenu" variant="solid" theme="blue" :disabled="!allSelected">
+					<Button @click="confirmMenu" variant="solid" :disabled="!allSelected">
 						{{ __("Add Menu") }}
 					</Button>
 				</div>
