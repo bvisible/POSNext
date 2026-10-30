@@ -1775,6 +1775,8 @@ async function openEditStationDialog(station) {
 		// The server says why when it can. The dialog keeps the station as the floor plan knows it, so that it can still
 		// be deleted by its name, and cannot be saved
 		handleError(error, __("Failed to load station details"))
+		// A slower open that fails after a faster one succeeded must not leave Save on over the empty lists below
+		stationLoaded.value = false
 		editStation.value = {
 			name: station.name,
 			station_name: station.station_name,

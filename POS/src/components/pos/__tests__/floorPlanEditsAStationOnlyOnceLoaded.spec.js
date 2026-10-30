@@ -205,6 +205,32 @@ describe("the station dialog saves what it read", () => {
 		expect(toast.showSuccess).toHaveBeenCalledWith("Station updated")
 	})
 
+	it("an open that fails after another one succeeded leaves Save off and sends nothing", async () => {
+		let rejectTheSecond
+		let opens = 0
+		call.mockImplementation(async (method) => {
+			if (method.endsWith("get_station_details")) {
+				opens += 1
+				if (opens === 1) return DETAILS
+				return new Promise((_, reject) => {
+					rejectTheSecond = reject
+				})
+			}
+			return []
+		})
+		const plan = await editor()
+		const first = plan.openEditStationDialog(ON_THE_PLAN)
+		const second = plan.openEditStationDialog(ON_THE_PLAN)
+		await first
+		rejectTheSecond(new Error("late failure"))
+		await second
+		await flushPromises()
+		expect(saveButton().attributes("disabled")).toBeDefined()
+		call.mockClear()
+		await plan.handleSaveStation()
+		expect(callsTo("update_station")).toEqual([])
+	})
+
 	describe("when the details did not load", () => {
 		const refusal = Object.assign(
 			new Error("get_station_details PermissionError"),

@@ -41,7 +41,7 @@ ORDER_FIELDS = ("order_summary", "waiting_items_count")
 # What a number of seats that is not a whole number of at least 1 is told
 SEATS_REFUSED = "whole number of at least 1"
 # What is not a number of seats: below 1, not a whole number, not a number at all
-NOT_SEATS = (0, -3, "0", "-2", "abc", 2.5, "2.5", float("nan"), float("inf"), True, [4], {"seats": 4})
+NOT_SEATS = (0, -3, "0", "-2", "abc", 2.5, "2.5", float("nan"), float("inf"), True, [4], {"seats": 4}, 10**400)
 
 
 @contextmanager

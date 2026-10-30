@@ -784,7 +784,7 @@ def _seats(capacity):
 	if not isinstance(capacity, bool):
 		try:
 			seats = float(capacity)
-		except (TypeError, ValueError):
+		except (TypeError, ValueError, OverflowError):
 			pass
 	if seats is None or not math.isfinite(seats) or seats < 1 or seats != int(seats):
 		frappe.throw(_("Capacity must be a whole number of at least 1"))
