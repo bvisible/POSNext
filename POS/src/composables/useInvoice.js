@@ -1,3 +1,5 @@
+//// Neoffice — removeItem follows a shown copy back to its cart row (utils/cartRow.js).
+import { cartRowOf } from "@/utils/cartRow";
 import { promoApi } from "@/utils/promoApi";
 import { createResource } from "frappe-ui";
 import { computed, ref, toRaw } from "vue";
@@ -433,7 +435,9 @@ export function useInvoice() {
 		//// (findLast), remove deletes only one item (by ref)").
 		if (typeof itemOrCode === "object" && itemOrCode !== null) {
 			// Direct object reference — find exact match by identity
-			itemToRemove = itemOrCode;
+			//// Neoffice — the cart shows copies of its lines (nestFreeRows): follow a copy back to its
+			//// row (utils/cartRow.js), or the line would not be found and stay (osiris, 30.10.2026).
+			itemToRemove = cartRowOf(itemOrCode);
 		} else if (uom) {
 			itemToRemove = invoiceItems.value.find(
 				//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
@@ -444,7 +448,10 @@ export function useInvoice() {
 			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode);
 		}
 
-		if (itemToRemove) {
+		//// Neoffice — a line that is not in the cart changes nothing: the totals' running sums below were
+		//// lowered before the splice looked for the line, so an unknown line took its amount off the totals.
+		const removeAt = itemToRemove ? invoiceItems.value.indexOf(itemToRemove) : -1;
+		if (removeAt >= 0) {
 			//// optimize invoice totals and item catalog loading — 368754f
 			// Update cache incrementally (subtract removed item values)
 			const isManuallyEdited = itemToRemove.is_rate_manually_edited === 1;
@@ -473,10 +480,8 @@ export function useInvoice() {
 			//// Neoffice — splice the one row that was found instead of filtering the array by
 			//// item_code, which wiped every line of the same dish (7e1376a3, 2026-03-31).
 			// Remove only this exact item (by reference, not by item_code)
-			const idx = invoiceItems.value.indexOf(itemToRemove);
-			if (idx >= 0) {
-				invoiceItems.value.splice(idx, 1);
-			}
+			//// Neoffice — the index is looked up once, before the totals move (above).
+			invoiceItems.value.splice(removeAt, 1);
 		}
 	}
 

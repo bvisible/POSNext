@@ -1592,21 +1592,23 @@
 
 									<!-- //// Neoffice — [R] the two per-line restaurant actions: push this line to the -->
 									<!-- //// kitchen on its own (a restaurant sends courses one at a time) and add a note or -->
-									<!-- //// product option (c7f6932c + 87f168fe, 2026-03-20/23; 4df0caf1). -->
+									<!-- //// product option (c7f6932c + 87f168fe, 2026-03-20/23; 4df0caf1). The line shown is a copy -->
+									<!-- //// (nestFreeRows): both hand over the cart row behind it (cartRowOf, osiris 30.10.2026). -->
 									<button
 										v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
 										type="button"
-										@click="$emit('send-item-to-kitchen', item)"
+										@click="$emit('send-item-to-kitchen', cartRowOf(item))"
 										class="ms-auto w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-purple-600 hover:text-purple-800 hover:bg-purple-50 touch-manipulation"
 										:aria-label="__('Send to kitchen')"
 										:title="__('Send to kitchen')"
 									>
 										<FeatherIcon name="zap" class="w-4 h-4" />
 									</button>
+									<!-- //// Neoffice — the options button too hands over the cart row behind the copy shown (cartRowOf). -->
 									<button
+										@click="$emit('open-modifiers', cartRowOf(item))"
 										v-if="cartStore.restaurantTable"
 										type="button"
-										@click="$emit('open-modifiers', item)"
 										:class="[
 											'w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-gray-500 hover:text-blue-700 hover:bg-blue-50 touch-manipulation',
 											item.kds_status === 'Waiting' ? '' : 'ms-auto',
@@ -1618,10 +1620,11 @@
 									</button>
 									<!-- //// Neoffice — [CART] emits the item OBJECT, not (item_code, uom): with product options -->
 									<!-- //// the same item_code sits on several cart lines, and removing by code deleted the wrong -->
-									<!-- //// one (7e1376a3, 2026-03-31 "remove deletes only one item (by ref)"). -->
+									<!-- //// one (7e1376a3, 2026-03-31 "remove deletes only one item (by ref)"). The line shown is -->
+									<!-- //// a copy (nestFreeRows): emit the cart row behind it, or the bin does nothing (30.10.2026). -->
 									<button
 										type="button"
-										@click="$emit('remove-item', item)"
+										@click="$emit('remove-item', cartRowOf(item))"
 										:class="[
 											'w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-gray-500 hover:text-red-700 hover:bg-red-50 touch-manipulation',
 											cartStore.restaurantTable ? '' : 'ms-auto',
@@ -2032,6 +2035,8 @@ import { useCustomerSearchStore } from "@/stores/customerSearch";
 //// Neoffice — feat: Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs (8aa35c29, 2026-03-20).
 import { useRestaurantStore } from "@/stores/restaurant";
 import { isLightColor } from "@/utils/itemColors";
+//// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
+import { cartRowOf } from "@/utils/cartRow";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
 import { useFormatters } from "@/composables/useFormatters";
 import { useCartSort } from "@/composables/useCartSort";

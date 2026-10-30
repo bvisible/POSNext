@@ -8,6 +8,10 @@
  * must go through syncCartFreeItems / processFreeItems.
  */
 
+//// Neoffice — each shown line keeps the way back to its cart row (utils/cartRow.js): the row actions
+//// address a line by identity, and the lines below are copies.
+import { withCartRow } from "@/utils/cartRow"
+
 function findPaidCartItem(items, itemCode, uom) {
 	if (!itemCode) return null;
 	const paid = items.filter((item) => !item.is_free_item && item.item_code === itemCode);
@@ -207,11 +211,16 @@ export function nestFreeRows(items) {
 	const gifts = rows
 		.filter((item) => item.is_free_item)
 		.map((gift) => ({ gift, parent: parentOf(gift) }));
-	const giftRow = (gift, parent) => ({
-		...gift,
-		_isStandaloneFreeRow: true,
-		_giftOf: parent ? `${parent.item_code}-${parent.uom || ""}` : null,
-	});
+	//// Neoffice — the gift copy leads back to its cart row (utils/cartRow.js).
+	const giftRow = (gift, parent) =>
+		withCartRow(
+			{
+				...gift,
+				_isStandaloneFreeRow: true,
+				_giftOf: parent ? `${parent.item_code}-${parent.uom || ""}` : null,
+			},
+			gift
+		);
 
 	return [
 		...paid.flatMap((item) => {
@@ -220,7 +229,8 @@ export function nestFreeRows(items) {
 				own.filter((g) => Number(g.gwp_same_item_row) === 1),
 				item.item_code
 			);
-			return [{ ...item, _bundledFreeQty: bundled }, ...own.map((g) => giftRow(g, item))];
+			//// Neoffice — the paid copy leads back to its cart row (utils/cartRow.js).
+			return [withCartRow({ ...item, _bundledFreeQty: bundled }, item), ...own.map((g) => giftRow(g, item))];
 		}),
 		...gifts.filter((g) => !g.parent).map((g) => giftRow(g.gift, null)),
 	];
