@@ -28,6 +28,63 @@ def get_station_for_item(item_code):
 	return result or None
 
 
+def expire_codes_of_emptied_tables(tables, spare_live_codes=False):
+	"""Expire the QR codes of tables that have just been emptied: a table that is emptied holds no code.
+
+	A code left active after its party has gone lets that party, or anyone who kept a photo of it, order onto the next
+	party's table, and the next QR press would show it again. Freeing a table by hand always expired its codes
+	(`update_table_status`, `mark_table_available`); the reset of the floor, the cancel of an invoice and the floor read
+	that empties an Occupied table with no order do through this one function.
+
+	`tables` are the names of the tables just emptied. A table that still holds an open order (a draft invoice linked to
+	it) is not empty: its codes serve that order and stay. Of the other tables, every active code expires.
+
+	`spare_live_codes` is for the floor read (`get_tables`) only. A QR press seats a table without any order, so the
+	floor read empties it at once, and the code the press has just placed is waiting for its first order: expiring it
+	there would kill it before the first guest could use it. A live code stays: one that has served no order yet, or
+	whose order is a draft that is still open. A code whose order is gone expires with the table.
+	"""
+	tables = list(dict.fromkeys(name for name in tables or [] if name))
+	if not tables:
+		return
+
+	holding_an_order = set(
+		frappe.get_all(
+			"Sales Invoice",
+			filters={"docstatus": 0, "restaurant_table": ["in", tables]},
+			pluck="restaurant_table",
+		)
+	)
+	tables = [name for name in tables if name not in holding_an_order]
+	if not tables:
+		return
+
+	codes = frappe.get_all(
+		"Guest Order Token",
+		filters={"table": ["in", tables], "status": "Active"},
+		fields=["name", "invoice"],
+	)
+	for code in codes:
+		if spare_live_codes and _code_is_live(code.invoice):
+			continue
+		_expire_code(code.name)
+
+
+def _code_is_live(invoice):
+	"""Whether a code has served no order yet, or serves an order that is a draft still open."""
+	return not invoice or frappe.db.get_value("Sales Invoice", invoice, "docstatus") == 0
+
+
+def _expire_code(name):
+	try:
+		frappe.get_doc("Guest Order Token", name).expire()
+	except Exception as e:
+		# Force it through the database when the ORM refuses: a table that is emptied must lose its code, and the
+		# cancel of an invoice must not fail because a code would not expire
+		frappe.db.set_value("Guest Order Token", name, "status", "Expired")
+		frappe.log_error("Token expire fallback", f"Token {name}: {e!s}")
+
+
 def on_invoice_update(doc, method):
 	"""Update table status based on invoice status."""
 	if doc.get("restaurant_table"):
@@ -37,6 +94,8 @@ def on_invoice_update(doc, method):
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Cleaning")
 		elif doc.docstatus == 2:
 			frappe.db.set_value("Restaurant Table", doc.restaurant_table, "status", "Empty")
+			# The party of the invoice is gone with it, and so is the QR code of its table
+			expire_codes_of_emptied_tables([doc.restaurant_table])
 
 
 @frappe.whitelist()
@@ -138,6 +197,8 @@ def get_tables(restaurant=None):
 	if orphaned:
 		for tname in orphaned:
 			frappe.db.set_value("Restaurant Table", tname, "status", "Empty")
+		# A table that is emptied holds no QR code, except the one a QR press has just placed (see the helper)
+		expire_codes_of_emptied_tables(orphaned, spare_live_codes=True)
 		# Refresh table statuses after fix
 		for table in tables:
 			if table.name in orphaned:
@@ -367,7 +428,7 @@ def free_cleaning_tables(area, restaurant=None):
 
 @frappe.whitelist()
 def reset_all_tables(restaurant=None):
-	"""Reset the restaurant's occupied tables to Empty and clear their draft invoices.
+	"""Reset the restaurant's occupied tables to Empty, clear their draft invoices and expire their QR codes.
 
 	The restaurant is the one named, else the till's own; the other restaurants' tables and orders stay as they are.
 	"""
@@ -389,6 +450,10 @@ def reset_all_tables(restaurant=None):
 		frappe.db.sql(
 			"UPDATE `tabRestaurant Table` SET status='Empty' WHERE status='Occupied' AND name IN %(tables)s",
 			{"tables": tuple(tables)},
+		)
+		# The floor is wiped: no table that is Empty now holds a QR code, those of the service that is over included
+		expire_codes_of_emptied_tables(
+			frappe.get_all("Restaurant Table", filters={"name": ["in", tables], "status": "Empty"}, pluck="name")
 		)
 	frappe.db.commit()
 	frappe.publish_realtime("kds_update")

@@ -77,6 +77,10 @@ Server presses QR on a table → create_table_token() → the table's active Gue
 
 Pressing the QR button again, from the same till or another, shows the same code: a table with an active token never gets a new one, so the code already placed on the table keeps working. A new token is made only when the table has none that can still be used (it was freed, its time ran out, or its POS opening closed). The QR dialog says in one line what the code is for.
 
+The till keeps no copy of the codes it showed: each press asks the server, so a code that expired from another device is never shown (the server then makes a new one).
+
+A table's code expires whenever the table is emptied: freed by hand (`update_table_status` to Empty, `mark_table_available`), the reset of the floor (`reset_all_tables`, which expires every code of the tables that are Empty after it), the cancel of an invoice (`on_invoice_update`), and the floor read that empties an Occupied table holding no open order (`get_tables`). The last three go through one function, `expire_codes_of_emptied_tables`. A table that still holds an open order (a draft invoice linked to it) keeps its codes. The floor read spares one kind of code: a QR press seats a table without any order, so the floor read empties it at once, and the code the press has just placed is waiting for its first order; that code, and a code whose order is a draft still open, stay. A code whose order is gone expires with the table.
+
 Tokens are validated on every API call. A token is invalid if:
 - Status is not "Active"
 - The linked POS Opening Entry is no longer "Open"

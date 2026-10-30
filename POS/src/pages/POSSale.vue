@@ -2611,10 +2611,11 @@ const selectedCard = ref(null);
 const selectedCardCategory = ref(null);
 
 // QR Self-Ordering state
-//// Neoffice — the QR button of a table shows the table's code at once (NeoRestau lot 1): the cache of the codes shown
-//// (table name → { token, url }, dropped when a table is cleaned or freed), the dialog that shows one and the click
-//// path come from useTableQR. The confirmation dialog that used to come first, and its state, are gone.
-const { activeQRTokens, showQRDialog, currentQR, handleQRButtonClick } = useTableQR({
+//// Neoffice — the QR button of a table shows the table's code at once (NeoRestau lot 1): the dialog that shows it and the
+//// click path come from useTableQR, which asks the server at every press; the till keeps no copy of the codes it showed
+//// (it kept one per table, which a table freed from another device left stale). The confirmation dialog that used to
+//// come first, and its state, are gone.
+const { showQRDialog, currentQR, handleQRButtonClick } = useTableQR({
 	table: () => cartStore.restaurantTable,
 	posProfile: () => settingsStore.settings.pos_profile || settingsStore.posProfile,
 });
@@ -3766,7 +3767,7 @@ async function confirmTableCleaning() {
 			table_name: cleaningTable.value.name,
 			status: "Cleaning",
 		});
-		activeQRTokens.value.delete(cleaningTable.value.name);
+		//// Neoffice — no copy of the table's QR code is kept here to drop: useTableQR asks the server at every press.
 		showCleaningDialog.value = false;
 		showSuccess(__("Table marked for cleaning"));
 		cleaningTable.value = null;
@@ -3781,7 +3782,7 @@ async function markTableAvailable() {
 		await call("pos_next.api.restaurant.mark_table_available", {
 			table_name: cleaningTable.value.name,
 		});
-		activeQRTokens.value.delete(cleaningTable.value.name);
+		//// Neoffice — no copy of the table's QR code is kept here to drop: useTableQR asks the server at every press.
 		showCleaningDialog.value = false;
 		cleaningTable.value = null;
 	} catch (e) {

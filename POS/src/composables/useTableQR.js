@@ -4,8 +4,9 @@
 //// button (c5208ba7 + f3affeaa, 2026-03-28); the product owner wanted the code itself, with a line that says what it is
 //// (NeoRestau lot 1). The click path lives here, out of POSSale.vue, because that page is too large to mount in a test.
 ////
-//// The cache is the page's, as it was: a table whose code was shown once is not asked again, and the page drops the
-//// table's entry (`activeQRTokens`) when it cleans or frees the table, so that the next guests get a new code.
+//// Every press asks the server, which answers the table's active code and makes one only when the table has none: the
+//// till keeps no copy of the codes it showed, so a code expired from another device is never shown (Ruling 52; the page
+//// used to keep one per table and drop it when it cleaned or freed the table, which no other device could do).
 import { ref } from "vue"
 import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
@@ -17,29 +18,18 @@ import { call } from "@/utils/apiWrapper"
  */
 export function useTableQR({ table, posProfile }) {
 	const { showError } = useToast()
-	// table name → { token, url }
-	const activeQRTokens = ref(new Map())
 	const showQRDialog = ref(false)
 	const currentQR = ref({ token: "", url: "", tableName: "" })
-	// A second press while the code is on its way would ask for it twice
+	// A second press while the answer is on its way asks nothing
 	let asking = false
 
 	async function handleQRButtonClick() {
 		const openTable = table()
-		if (!openTable) return
+		if (!openTable || asking) return
 
 		const tableName = openTable.name || openTable.table_name
 		const label = openTable.table_name || tableName
 
-		// A table whose code was shown once shows it again, without a call
-		const known = activeQRTokens.value.get(tableName)
-		if (known) {
-			currentQR.value = { token: known.token, url: known.url, tableName: label }
-			showQRDialog.value = true
-			return
-		}
-
-		if (asking) return
 		asking = true
 		try {
 			const result = await call(
@@ -52,7 +42,6 @@ export function useTableQR({ table, posProfile }) {
 			if (result?.token) {
 				const url =
 					result.url || `${window.location.origin}/pos/guest/${result.token}`
-				activeQRTokens.value.set(tableName, { token: result.token, url })
 				currentQR.value = { token: result.token, url, tableName: label }
 				showQRDialog.value = true
 			}
@@ -63,5 +52,5 @@ export function useTableQR({ table, posProfile }) {
 		}
 	}
 
-	return { activeQRTokens, showQRDialog, currentQR, handleQRButtonClick }
+	return { showQRDialog, currentQR, handleQRButtonClick }
 }

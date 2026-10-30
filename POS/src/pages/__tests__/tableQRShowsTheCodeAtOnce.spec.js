@@ -3,10 +3,13 @@
  * //// lot 1): it used to ask a question first (a confirmation dialog) and wait for a second click on its "Generate QR"
  * //// button. The product owner: the QR itself, straight away, with a small line that says what it is.
  * ////
+ * //// Every press asks the server, which answers the table's active code and makes one only when the table has none: the
+ * //// till keeps no copy of the codes it showed, so that a code expired from another device is never shown (Ruling 52).
+ * ////
  * //// POSSale.vue is too large to mount here (a dozen stores, the offline workers, sockets), so this covers what the page
  * //// wires: the click path (`useTableQR`, the composable the page takes it from), the dialog that shows the code
- * //// (`TableQRCode`), and, from the source of the page, that the confirmation, its state and its handler are gone and
- * //// that the button, the dialog and the cache the page drops when a table is cleaned are still wired as they were.
+ * //// (`TableQRCode`), and, from the source of the page, that the confirmation, its state, its handler and the copy of
+ * //// the codes are gone and that the button and the dialog are still wired as they were.
  * @vitest-environment jsdom
  */
 import { readFileSync } from "node:fs"
@@ -104,18 +107,17 @@ describe("the QR button of a table", () => {
 		expect(qr.showQRDialog.value).toBe(true)
 	})
 
-	it("has no confirmation left in what the page takes from it", () => {
+	it("takes nothing from the click path but the dialog's state: no confirmation, no copy of the codes", () => {
 		const { qr } = theTill()
 
 		expect(Object.keys(qr).sort()).toEqual([
-			"activeQRTokens",
 			"currentQR",
 			"handleQRButtonClick",
 			"showQRDialog",
 		])
 	})
 
-	it("shows the code of a table again without asking the server", async () => {
+	it("asks the server at every press, for a table whose code it showed before", async () => {
 		call.mockResolvedValue(ANSWER)
 		const { qr } = theTill()
 		await qr.handleQRButtonClick()
@@ -123,35 +125,39 @@ describe("the QR button of a table", () => {
 
 		await qr.handleQRButtonClick()
 
-		expect(call).toHaveBeenCalledTimes(1)
+		expect(call).toHaveBeenCalledTimes(2)
+		expect(call).toHaveBeenLastCalledWith(CREATE, {
+			table: "TBL-0001",
+			pos_profile: "Restaurant till",
+		})
 		expect(qr.showQRDialog.value).toBe(true)
 		expect(qr.currentQR.value.token).toBe("tok-1")
 	})
 
-	it("keeps the code it was given per table, which the page drops when the table is cleaned", async () => {
-		call.mockResolvedValue(ANSWER)
+	it("never shows a code the server has since expired: it shows the one the server answers now", async () => {
 		const { qr } = theTill()
+		call.mockResolvedValueOnce(ANSWER)
 		await qr.handleQRButtonClick()
+		expect(qr.currentQR.value.token).toBe("tok-1")
+		qr.showQRDialog.value = false
 
-		expect(qr.activeQRTokens.value.get("TBL-0001")).toEqual({
-			token: "tok-1",
-			url: "https://shop.example/pos/guest/tok-1",
-		})
-
-		// What confirmTableCleaning and markTableAvailable do: the table's next guests get a new code
-		qr.activeQRTokens.value.delete("TBL-0001")
-		call.mockResolvedValue({
+		// The table was freed from another device: its code is expired and the server makes another
+		call.mockResolvedValueOnce({
 			...ANSWER,
 			token: "tok-2",
 			url: "https://shop.example/pos/guest/tok-2",
 		})
 		await qr.handleQRButtonClick()
 
-		expect(call).toHaveBeenCalledTimes(2)
-		expect(qr.currentQR.value.token).toBe("tok-2")
+		expect(qr.currentQR.value).toEqual({
+			token: "tok-2",
+			url: "https://shop.example/pos/guest/tok-2",
+			tableName: "T1",
+		})
+		expect(qr.showQRDialog.value).toBe(true)
 	})
 
-	it("gives each table its own code", async () => {
+	it("asks for the table that is open at the press", async () => {
 		const { till, qr } = theTill()
 		call.mockResolvedValueOnce(ANSWER)
 		await qr.handleQRButtonClick()
@@ -173,8 +179,13 @@ describe("the QR button of a table", () => {
 		})
 
 		till.table = TABLE
+		call.mockResolvedValueOnce(ANSWER)
 		await qr.handleQRButtonClick()
-		expect(call).toHaveBeenCalledTimes(2)
+		expect(call).toHaveBeenCalledTimes(3)
+		expect(call).toHaveBeenLastCalledWith(CREATE, {
+			table: "TBL-0001",
+			pos_profile: "Restaurant till",
+		})
 		expect(qr.currentQR.value).toMatchObject({
 			token: "tok-1",
 			tableName: "T1",
@@ -207,7 +218,6 @@ describe("the QR button of a table", () => {
 			`Failed to generate QR code: ${refusal.message}`,
 		)
 		expect(qr.showQRDialog.value).toBe(false)
-		expect(qr.activeQRTokens.value.size).toBe(0)
 
 		// Nothing is left waiting on the failed call
 		call.mockResolvedValueOnce(ANSWER)
@@ -311,12 +321,12 @@ describe("the till page", () => {
 		expect(page).not.toMatch(/function handleQRButtonClick/)
 	})
 
-	it("takes its QR click path and its state from the composable", () => {
+	it("takes its QR click path and its dialog's state from the composable, and keeps no copy of the codes", () => {
 		expect(page).toMatch(
-			/const\s*\{[^}]*\bactiveQRTokens\b[^}]*\bshowQRDialog\b[^}]*\bcurrentQR\b[^}]*\bhandleQRButtonClick\b[^}]*\}\s*=\s*useTableQR\(/,
+			/const\s*\{\s*showQRDialog,\s*currentQR,\s*handleQRButtonClick\s*\}\s*=\s*useTableQR\(/,
 		)
-		// The page still drops a table's code when the table is cleaned or freed
-		expect(page.match(/activeQRTokens\.value\.delete\(/g)).toHaveLength(2)
+		// Nothing to drop when a table is cleaned or freed: the server is asked at every press
+		expect(page).not.toContain("activeQRTokens")
 	})
 
 	it("binds the QR button to that click path and the dialog to that state", () => {
