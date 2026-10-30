@@ -210,7 +210,7 @@ describe("a cashier frees the tables being cleaned from the floor plan", () => {
 			{ area: ROOM_1.name, restaurant: "The Bistro" },
 		])
 		expect(cleaningOnScreen()).toBe(0)
-		expect(toast.showSuccess).toHaveBeenCalledWith("2 tables freed")
+		expect(toast.showSuccess).toHaveBeenCalledWith("2 tables freed in Room 1")
 		// The store holds what the server did: the two tables of the room are free, the others are what they were
 		expect(
 			Object.fromEntries(
@@ -238,11 +238,27 @@ describe("a cashier frees the tables being cleaned from the floor plan", () => {
 		expect(server.asked).toEqual([
 			{ area: TERRACE.name, restaurant: "The Bistro" },
 		])
-		expect(toast.showSuccess).toHaveBeenCalledWith("1 table freed")
+		expect(toast.showSuccess).toHaveBeenCalledWith("1 table freed in Terrace")
 		expect(cleaningOnScreen()).toBe(0)
 		// Back in the first room, its two tables are still being cleaned
 		await wrapper.findAll('[data-test="room-tab"]')[0].trigger("click")
 		expect(cleaningOnScreen()).toBe(2)
+	})
+
+	it("shows the red badge of a room that is named by a hash: the occupied tables it holds", async () => {
+		server.tables = [
+			table("o1h4sh", ROOM_1.name, "T1", "Occupied"),
+			table("o2h4sh", ROOM_1.name, "T2", "Occupied"),
+			table("e1h4sh", ROOM_1.name, "T3", "Empty"),
+			table("o3h4sh", TERRACE.name, "T5", "Occupied"),
+		]
+		await floorPlan()
+
+		// The rooms are named by a hash and labelled for the waiter: the badge counts by the name, as the plan reads it
+		expect(ROOM_1.name).not.toBe(ROOM_1.area_name)
+		const [first, second] = wrapper.findAll('[data-test="room-tab"]')
+		expect(first.find("span").text()).toBe("2")
+		expect(second.find("span").text()).toBe("1")
 	})
 
 	it("says so when there is nothing to free, and the plan stays as it is", async () => {
@@ -252,7 +268,9 @@ describe("a cashier frees the tables being cleaned from the floor plan", () => {
 
 		await tapFree()
 
-		expect(toast.showInfo).toHaveBeenCalledWith("No table is being cleaned")
+		expect(toast.showInfo).toHaveBeenCalledWith(
+			"No table is being cleaned in Room 1",
+		)
 		expect(toast.showSuccess).not.toHaveBeenCalled()
 		expect(cleaningOnScreen()).toBe(0)
 	})

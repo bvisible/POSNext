@@ -394,6 +394,7 @@
 			<div
 				v-for="table in filteredTables"
 				:key="table.name"
+				data-test="table"
 				class="absolute flex flex-col items-center justify-center select-none transition-shadow duration-150"
 				:class="[
 					getTableClasses(table),
@@ -1033,14 +1034,16 @@ const menuItems = computed(() =>
 
 // « Free the tables being cleaned »: the tables of the room shown that are being cleaned go back to Empty, in one call, with
 // no question first (the product owner dislikes extra clicks). The server frees them for the till's restaurant; a short
-// toast says how many.
+// toast says how many, and in which room: the one on the screen (Ruling 60), as it was when the item was tapped.
 async function freeCleaningTables() {
 	if (!selectedArea.value) return
+	const room = getAreaName(selectedArea.value)
 	try {
 		const freed = await restaurantStore.freeCleaningTables(selectedArea.value)
-		if (!freed) showInfo(__("No table is being cleaned"))
-		else if (freed === 1) showSuccess(__("{0} table freed", [freed]))
-		else showSuccess(__("{0} tables freed", [freed]))
+		const told = [freed, room]
+		if (!freed) showInfo(__("No table is being cleaned in {1}", told))
+		else if (freed === 1) showSuccess(__("{0} table freed in {1}", told))
+		else showSuccess(__("{0} tables freed in {1}", told))
 	} catch (error) {
 		handleError(error, __("Failed to update table status"))
 	}
@@ -1065,7 +1068,45 @@ async function runMenuItem(item) {
 }
 
 function onMenuPointerDown(event) {
-	if (!menuRoot.value?.contains(event.target)) closeMenu()
+	if (menuRoot.value?.contains(event.target)) return
+	// A tap outside the menu only closes it: it is not a tap on what lies under it (a table would open, a tab would switch
+	// the room), nor is the click that goes with it
+	event.stopPropagation()
+	event.preventDefault()
+	closeMenu()
+	swallowTheTap()
+}
+
+// The click of a tap that dismissed the menu is stopped on its way down as well. Cancelling the pointer does not cancel the
+// click, which a browser makes of the tap all the same, once the pointer is up and right after it. So it is listened for until
+// the pointer is up and the click, if there is one, has passed; a pointer that never comes up is let go of after a while
+const SWALLOW_GRACE_MS = 100
+const SWALLOW_LIMIT_MS = 2000
+let letTheTapGo = null
+
+function swallowTheTap() {
+	letTheTapGo?.()
+	const swallowClick = (event) => {
+		event.stopPropagation()
+		event.preventDefault()
+	}
+	let timer = null
+	const end = () => {
+		clearTimeout(timer)
+		document.removeEventListener("click", swallowClick, true)
+		document.removeEventListener("pointerup", pointerUp, true)
+		document.removeEventListener("pointercancel", pointerUp, true)
+		letTheTapGo = null
+	}
+	const pointerUp = () => {
+		clearTimeout(timer)
+		timer = setTimeout(end, SWALLOW_GRACE_MS)
+	}
+	document.addEventListener("click", swallowClick, true)
+	document.addEventListener("pointerup", pointerUp, true)
+	document.addEventListener("pointercancel", pointerUp, true)
+	timer = setTimeout(end, SWALLOW_LIMIT_MS)
+	letTheTapGo = end
 }
 
 function onMenuKeyDown(event) {
@@ -1341,7 +1382,8 @@ const totalReadyCount = computed(() => {
 // A delivery arrow from a station of another room leaves the top of the plan, right under the chip of its station. The chips
 // are in the line above the plan, where the line puts them (at its right, in one row or wrapped), so their place is measured
 // and not guessed: the centre of each chip, in pixels from the left edge of the plan. It is measured when the plan is shown,
-// after each render (a count that grows widens its chip), and when the window or the line is resized (a wrap included).
+// when the window or the line is resized (a wrap included), and after a render while an arrow from another room is drawn
+// (a count that grows widens its chip): a render that has no such arrow to place measures nothing (see hasCrossRoomArrow).
 const lineRef = ref(null)
 const actionsRef = ref(null)
 const stationChipEls = new Map()
@@ -1381,7 +1423,6 @@ onMounted(() => {
 	}
 	measureStationChips()
 })
-onUpdated(measureStationChips)
 
 const deliveryArrows = computed(() => {
 	if (!showDeliveryArrows.value || !runnerOrders.value.length) return []
@@ -1439,7 +1480,7 @@ const deliveryArrows = computed(() => {
 					stationName: station.station_name,
 					isGhost: false,
 					itemCount,
-					duration: Math.max(3, dist / 60) + "s",
+					duration: arrowDuration(dist),
 				})
 			} else if (station) {
 				// Cross-area: the arrow leaves the top of the plan, right under the chip of its station in the line above.
@@ -1475,13 +1516,28 @@ const deliveryArrows = computed(() => {
 					stationName: station.station_name,
 					isGhost: true,
 					itemCount,
-					duration: Math.max(3, dist / 60) + "s",
+					duration: arrowDuration(dist),
 				})
 			}
 		}
 	}
 	return arrows
 })
+
+// Only an arrow from another room needs to know where a chip is, so a render measures for it and for nothing else: a pan
+// renders at each frame, and has no business reading the layout when there is no such arrow. The measures made on a resize
+// and on a wrap (above) go on, whatever arrows there are, so that an arrow that appears finds the chips measured
+const hasCrossRoomArrow = computed(() => deliveryArrows.value.some((arrow) => arrow.isGhost))
+onUpdated(() => {
+	if (hasCrossRoomArrow.value) measureStationChips()
+})
+
+// How long an arrow takes, from its length, in quarters of a second: the length of an arrow from another room moves with
+// the pan (its start stays under its chip), and a time that followed it pixel by pixel would be rewritten at each frame
+// of a pan, under the animation that is running
+function arrowDuration(length) {
+	return Math.round(Math.max(3, length / 60) * 4) / 4 + "s"
+}
 
 // Compute the point on the edge of a rectangle (center, w, h) facing toward target
 function edgePoint(center, w, h, target) {
@@ -2437,6 +2493,7 @@ onUnmounted(() => {
 	window.removeEventListener("resize", measureStationChips)
 	lineObserver?.disconnect()
 	stopListeningToTheMenu()
+	letTheTapGo?.()
 	if (floorSocket) {
 		floorSocket.off("table_update")
 		floorSocket.off("kds_update")

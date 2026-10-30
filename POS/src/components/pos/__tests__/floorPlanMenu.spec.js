@@ -57,7 +57,12 @@ vi.mock("@/stores/restaurant", async () => {
 	live.store = reactive(restaurantStore)
 	return { useRestaurantStore: () => live.store }
 })
-vi.mock("@/stores/posCart", () => ({ usePOSCartStore: () => ({}) }))
+vi.mock("@/stores/posCart", () => ({
+	usePOSCartStore: () => ({
+		clearCart: vi.fn(async () => {}),
+		setRestaurantTable: vi.fn(),
+	}),
+}))
 vi.mock("@/stores/posDrafts", () => ({ usePOSDraftsStore: () => ({}) }))
 vi.mock("@/stores/posShift", () => ({
 	usePOSShiftStore: () => ({ profileName: "Till" }),
@@ -72,6 +77,19 @@ const STATION = {
 	station_name: "Kitchen",
 	area: ROOM.name,
 	color: "#d68a59",
+}
+// A table of the room, under the menu when it is open
+const TABLE = {
+	name: "t4bl3h4sh0",
+	table_name: "T7",
+	area: ROOM.name,
+	status: "Empty",
+	capacity: 4,
+	shape: "Square",
+	pos_x: 40,
+	pos_y: 40,
+	width: 100,
+	height: 100,
 }
 // The app's own « more-horizontal » glyph (settings/SettingsSection.vue)
 const DOTS = "M5 12h.01M12 12h.01M19 12h.01"
@@ -469,13 +487,44 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			expect(restaurantStore.freeCleaningTables).toHaveBeenCalledWith(
 				TERRACE.name,
 			)
+			// Ruling 60: it frees the room that is on the screen, and the toast says which one
+			expect(toast.showSuccess).toHaveBeenCalledWith("1 table freed in Terrace")
+		})
+
+		it("names the room on the screen in each of the three things it can say", async () => {
+			const says = async (freed) => {
+				toast.showSuccess.mockClear()
+				toast.showInfo.mockClear()
+				await floorPlan(
+					{ manage_floor: false, set_table_status: true },
+					{
+						areas: [ROOM, TERRACE],
+						freeCleaningTables: vi.fn(async () => freed),
+					},
+				)
+				await wrapper.findAll('[data-test="room-tab"]')[1].trigger("click")
+				await more().trigger("click")
+				await freeItem().trigger("click")
+				await flushPromises()
+				const heard = [
+					...toast.showSuccess.mock.calls,
+					...toast.showInfo.mock.calls,
+				]
+				wrapper.unmount()
+				wrapper = null
+				return heard.map(([text]) => text)
+			}
+
+			expect(await says(4)).toEqual(["4 tables freed in Terrace"])
+			expect(await says(1)).toEqual(["1 table freed in Terrace"])
+			expect(await says(0)).toEqual(["No table is being cleaned in Terrace"])
 		})
 
 		it("says how many tables it freed, in a short toast", async () => {
 			await freeing(3)
 
 			expect(toast.showSuccess).toHaveBeenCalledTimes(1)
-			expect(toast.showSuccess).toHaveBeenCalledWith("3 tables freed")
+			expect(toast.showSuccess).toHaveBeenCalledWith("3 tables freed in Room 1")
 			expect(toast.showInfo).not.toHaveBeenCalled()
 			expect(toast.showError).not.toHaveBeenCalled()
 		})
@@ -483,14 +532,16 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 		it("says it in the singular for one table", async () => {
 			await freeing(1)
 
-			expect(toast.showSuccess).toHaveBeenCalledWith("1 table freed")
+			expect(toast.showSuccess).toHaveBeenCalledWith("1 table freed in Room 1")
 		})
 
 		it("says so when no table is being cleaned", async () => {
 			await freeing(0)
 
 			expect(toast.showInfo).toHaveBeenCalledTimes(1)
-			expect(toast.showInfo).toHaveBeenCalledWith("No table is being cleaned")
+			expect(toast.showInfo).toHaveBeenCalledWith(
+				"No table is being cleaned in Room 1",
+			)
 			expect(toast.showSuccess).not.toHaveBeenCalled()
 		})
 
@@ -537,6 +588,172 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 
 			expect(restaurantStore.freeCleaningTables).not.toHaveBeenCalled()
 			expect(toast.showInfo).not.toHaveBeenCalled()
+		})
+	})
+
+	describe("a tap that dismisses the menu only dismisses it", () => {
+		let open
+		const table = () => wrapper.find('[data-test="table"]')
+		const pill = () => wrapper.find('[data-test="runner-pill"]')
+		const pointer = (type, target) => {
+			const event = new MouseEvent(type, { bubbles: true, cancelable: true })
+			target.dispatchEvent(event)
+			return event
+		}
+		// A whole tap, as a finger makes it: down, up, then the click the browser makes of it
+		const tap = async (target) => {
+			const down = pointer("pointerdown", target.element)
+			pointer("pointerup", target.element)
+			await target.trigger("click")
+			return down
+		}
+		const menuOverATable = async () => {
+			await floorPlan(
+				{ manage_floor: true, set_table_status: true },
+				{ areas: [ROOM, TERRACE], tables: [TABLE] },
+			)
+			await more().trigger("click")
+			expect(menu().exists()).toBe(true)
+		}
+
+		beforeEach(() => {
+			open = vi.spyOn(window, "open").mockImplementation(() => null)
+			vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+		})
+		afterEach(() => {
+			open.mockRestore()
+			vi.useRealTimers()
+		})
+
+		it("closes the menu and opens no table: the pointer never reaches what lies under it", async () => {
+			await menuOverATable()
+
+			const down = pointer("pointerdown", table().element)
+			await flushPromises()
+
+			expect(menu().exists()).toBe(false)
+			// A table opens on the pointer going down: it did not
+			expect(wrapper.emitted("table-selected")).toBeUndefined()
+			expect(down.defaultPrevented).toBe(true)
+		})
+
+		it("opens that table with the next tap, the menu being gone", async () => {
+			await menuOverATable()
+			await tap(table())
+			vi.advanceTimersByTime(500)
+			expect(wrapper.emitted("table-selected")).toBeUndefined()
+
+			await tap(table())
+			await flushPromises()
+
+			expect(wrapper.emitted("table-selected")).toHaveLength(1)
+		})
+
+		it("lets nothing else of the page hear the pointer that dismisses it", async () => {
+			await menuOverATable()
+			const heard = vi.fn()
+			document.body.addEventListener("pointerdown", heard)
+
+			// (a table stops its own pointer from rising, a pill does not)
+			pointer("pointerdown", pill().element)
+
+			expect(heard).not.toHaveBeenCalled()
+			document.body.removeEventListener("pointerdown", heard)
+		})
+
+		it("swallows the click that goes with the tap: a pill under it is not pressed", async () => {
+			await menuOverATable()
+
+			await tap(pill())
+
+			expect(menu().exists()).toBe(false)
+			expect(open).not.toHaveBeenCalled()
+		})
+
+		it("swallows that click and no other: the next one goes through", async () => {
+			await menuOverATable()
+			await tap(pill())
+			vi.advanceTimersByTime(500)
+
+			await pill().trigger("click")
+
+			expect(open).toHaveBeenCalledTimes(1)
+		})
+
+		it("does not keep swallowing for a tap that made no click, a drag that ended elsewhere", async () => {
+			await menuOverATable()
+			pointer("pointerdown", pill().element)
+			pointer("pointerup", pill().element)
+			vi.advanceTimersByTime(500)
+
+			await pill().trigger("click")
+
+			expect(open).toHaveBeenCalledTimes(1)
+		})
+
+		it("lets go of a pointer that never comes up, after a while", async () => {
+			await menuOverATable()
+			pointer("pointerdown", pill().element)
+
+			vi.advanceTimersByTime(5000)
+			await pill().trigger("click")
+
+			expect(open).toHaveBeenCalledTimes(1)
+		})
+
+		it("keeps a room tab where it was: the tap that dismisses does not switch the room", async () => {
+			await menuOverATable()
+			expect(wrapper.vm.selectedArea).toBe(ROOM.name)
+
+			await tap(wrapper.findAll('[data-test="room-tab"]')[1])
+
+			expect(wrapper.vm.selectedArea).toBe(ROOM.name)
+			expect(menu().exists()).toBe(false)
+		})
+
+		it("does not swallow a click that is no tap, the keyboard's Enter on a pill", async () => {
+			await menuOverATable()
+
+			await pill().trigger("click")
+
+			expect(open).toHaveBeenCalledTimes(1)
+		})
+
+		it("does not swallow a tap inside the menu: an item is chosen", async () => {
+			await menuOverATable()
+			const item = wrapper.find('[data-test="menu-free-cleaning-tables"]')
+
+			const down = pointer("pointerdown", item.element)
+			await item.trigger("click")
+			await flushPromises()
+
+			expect(down.defaultPrevented).toBe(false)
+			expect(restaurantStore.freeCleaningTables).toHaveBeenCalledTimes(1)
+		})
+
+		it("does not swallow the tap on the « ⋯ » itself, which closes the menu", async () => {
+			await menuOverATable()
+
+			const down = pointer("pointerdown", more().element)
+			await more().trigger("click")
+
+			expect(down.defaultPrevented).toBe(false)
+			expect(menu().exists()).toBe(false)
+		})
+
+		it("leaves nothing listening once the plan is gone", async () => {
+			const removed = vi.spyOn(document, "removeEventListener")
+			await menuOverATable()
+			pointer("pointerdown", pill().element)
+
+			wrapper.unmount()
+			wrapper = null
+
+			expect(removed.mock.calls.map(([type]) => type)).toEqual(
+				expect.arrayContaining(["click", "pointerup", "pointercancel"]),
+			)
+			removed.mockRestore()
+			await vi.runOnlyPendingTimersAsync()
 		})
 	})
 })

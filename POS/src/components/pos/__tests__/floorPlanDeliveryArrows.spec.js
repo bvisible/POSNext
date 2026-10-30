@@ -103,6 +103,17 @@ const TABLE = {
 	width: 100,
 	height: 100,
 }
+// A station of the room that is shown: its arrow is the room's own, not one from another room
+const OWN_STATION = {
+	name: "0wnst4t10n",
+	station_name: "Pass",
+	area: ROOM_2.name,
+	color: "#16A34A",
+	pos_x: 700,
+	pos_y: 300,
+	width: 120,
+	height: 60,
+}
 const READY = [
 	{
 		restaurant_table: TABLE.name,
@@ -164,8 +175,9 @@ describe("a delivery arrow from a station of another room leaves from under its 
 	let wrapper
 	let boundingBox
 
-	async function floorPlan() {
+	async function floorPlan(overrides = {}) {
 		theStore()
+		Object.assign(restaurantStore, overrides)
 		// The table served is in room 2: that is the room shown
 		localStorage.setItem("pos_selected_area", ROOM_2.name)
 		wrapper = mount(FloorPlanEditor, {
@@ -384,6 +396,131 @@ describe("a delivery arrow from a station of another room leaves from under its 
 		await flushPromises()
 
 		expect(boundingBox.mock.calls.length).toBe(settled)
+	})
+
+	describe("the chips are measured for the arrows that need them", () => {
+		// The plan is panned a few pixels at a time, as a finger does: a render for each frame
+		const panFrames = async (frames = 5) => {
+			for (let frame = 1; frame <= frames; frame++) {
+				view.panX.value = frame * 3
+				await flushPromises()
+			}
+		}
+
+		it("reads nothing from the layout after a render while there is no arrow at all", async () => {
+			runnerOrders.list = []
+			await floorPlan()
+			const settled = boundingBox.mock.calls.length
+
+			await panFrames()
+
+			expect(boundingBox.mock.calls.length).toBe(settled)
+		})
+
+		it("reads nothing either while the only arrow is one of the room's own station", async () => {
+			runnerOrders.list = [
+				{
+					restaurant_table: TABLE.name,
+					items: [{ preparation_station: OWN_STATION.name }],
+				},
+			]
+			await floorPlan({ floorStations: [BAR, KITCHEN, OWN_STATION] })
+			expect(wrapper.findAll("svg line")).toHaveLength(1)
+			const settled = boundingBox.mock.calls.length
+
+			await panFrames()
+
+			expect(boundingBox.mock.calls.length).toBe(settled)
+		})
+
+		it("measures after a render while an arrow comes from another room: a chip may have moved", async () => {
+			await floorPlan()
+			const settled = boundingBox.mock.calls.length
+
+			await panFrames()
+
+			expect(boundingBox.mock.calls.length).toBeGreaterThan(settled)
+		})
+
+		it("measures an arrow that appears, at once: it is drawn under its chip", async () => {
+			runnerOrders.list = []
+			await floorPlan()
+			expect(starts()).toEqual([])
+
+			// The dishes are ready: the pass tells the plan
+			wrapper.vm.runnerOrders = READY
+			await flushPromises()
+
+			expect(starts()).toEqual([
+				[500, 0],
+				[610, 0],
+			])
+		})
+
+		it("still measures when the window is resized and the line wraps, with no arrow yet", async () => {
+			runnerOrders.list = []
+			await floorPlan()
+			boxes.chips = {
+				Bar: { left: 300, top: 105, width: 80, height: 32 },
+				Kitchen: { left: 400, top: 105, width: 120, height: 32 },
+			}
+
+			await resized()
+			wrapper.vm.runnerOrders = READY
+			await flushPromises()
+
+			expect(starts()).toEqual([
+				[240, 0],
+				[360, 0],
+			])
+		})
+	})
+
+	describe("the time an arrow takes", () => {
+		const duration = () => wrapper.find("animateMotion").attributes("dur")
+		const quarters = (dur) => Number.parseFloat(dur) * 4
+
+		it("is the same while the plan is panned a few pixels: it is told in quarters of a second, not rewritten at each frame", async () => {
+			await floorPlan()
+			const durations = []
+
+			for (let frame = 0; frame <= 8; frame++) {
+				view.panX.value = frame * 2
+				await flushPromises()
+				durations.push(duration())
+			}
+
+			// The length of the arrow changes with the pan (its start stays under its chip): its time does not follow it pixel by pixel
+			for (const dur of durations)
+				expect(quarters(dur)).toBe(Math.round(quarters(dur)))
+			expect(new Set(durations).size).toBeLessThanOrEqual(2)
+		})
+
+		it("is still longer for a longer arrow, and no shorter than three seconds", async () => {
+			await floorPlan()
+			const near = Number.parseFloat(duration())
+
+			// The plan is zoomed out: the arrow, in the plan's own pixels, is much longer
+			view.zoom.value = 0.5
+			await flushPromises()
+			const far = Number.parseFloat(duration())
+
+			expect(near).toBeGreaterThanOrEqual(3)
+			expect(far).toBeGreaterThan(near)
+		})
+
+		it("is told in quarters of a second for the arrow of a room's own station as well", async () => {
+			runnerOrders.list = [
+				{
+					restaurant_table: TABLE.name,
+					items: [{ preparation_station: OWN_STATION.name }],
+				},
+			]
+			await floorPlan({ floorStations: [BAR, KITCHEN, OWN_STATION] })
+
+			expect(quarters(duration())).toBe(Math.round(quarters(duration())))
+			expect(Number.parseFloat(duration())).toBeGreaterThan(3)
+		})
 	})
 
 	it("stops listening to the window once the plan is gone", async () => {
