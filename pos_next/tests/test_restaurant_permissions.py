@@ -131,6 +131,36 @@ def as_user(user):
 		frappe.set_user("Administrator")
 
 
+@contextmanager
+def a_site_serving(picture: bytes):
+	"""A web server of the test's own on a free local port, standing in for the site's (nothing serves the site while
+	the tests run): a `.png` path answers the picture, any other path an empty page. Yields its URL."""
+	import http.server
+	import threading
+
+	class Answer(http.server.BaseHTTPRequestHandler):
+		def do_GET(self):
+			png = self.path.split("?")[0].endswith(".png")
+			body = picture if png else b""
+			self.send_response(200)
+			self.send_header("Content-Type", "image/png" if png else "text/plain")
+			self.send_header("Content-Length", str(len(body)))
+			self.end_headers()
+			self.wfile.write(body)
+
+		def log_message(self, *args):
+			pass
+
+	server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Answer)
+	thread = threading.Thread(target=server.serve_forever, daemon=True)
+	thread.start()
+	try:
+		yield f"http://127.0.0.1:{server.server_address[1]}"
+	finally:
+		server.shutdown()
+		server.server_close()
+
+
 class RestaurantRights(FrappeTestCase):
 	"""A restaurant of the test's own, with a room, two tables, two stations, an option group, a workflow, a card
 	that lists an item, and the users the rules are about."""
@@ -922,6 +952,30 @@ class TestTheMenuDesigner(RestaurantRights):
 		with as_user(self.manager):
 			save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": bullet}))
 			self.assertIn(bullet, get_menu_preview_html(card_name=self.card))
+
+	def test_the_real_engine_prints_the_cards_picture(self):
+		# The real pdfkit and wkhtmltopdf (the CI installs it, as Frappe's does): without script nor local file access,
+		# a picture given by the site's URL is still printed. The card's picture has a size of its own (37 x 23), so
+		# the image object found in the PDF is the one fetched by URL, not a badge drawn from a data URI
+		from io import BytesIO
+
+		from PIL import Image
+
+		buffer = BytesIO()
+		Image.new("RGB", (37, 23), (214, 138, 89)).save(buffer, "PNG")
+		frappe.db.set_value(
+			"Restaurant Card", self.card, "image", "/files/_test_rights_card.png", update_modified=False
+		)
+		with (
+			a_site_serving(buffer.getvalue()) as site_url,
+			patch("frappe.utils.get_url", return_value=site_url),
+			as_user(self.manager),
+			self.a_response() as response,
+		):
+			generate_menu_pdf(card_name=self.card)
+		self.assertEqual(response.type, "download")
+		self.assertTrue(response.filecontent.startswith(b"%PDF-"))
+		self.assertRegex(response.filecontent, rb"/Subtype\s*/Image\s*/Width 37\s*/Height 23\b")
 
 
 class TestTheFirstSettingsMakeTheDefaultRestaurant(RestaurantRights):
