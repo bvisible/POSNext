@@ -30,7 +30,8 @@ from frappe.query_builder import DocType
 from frappe.query_builder.functions import Coalesce
 from frappe.utils import get_system_timezone
 
-from pos_next.api.constants import DEFAULT_POS_SETTINGS, POS_SETTINGS_FIELDS, merge_pos_settings
+# //// Neoffice — no DEFAULT_POS_SETTINGS here any more: the fallback comes from the restaurant's mode (default_settings).
+from pos_next.api.constants import POS_SETTINGS_FIELDS, merge_pos_settings
 
 
 @frappe.whitelist()
@@ -279,7 +280,11 @@ def _get_pos_settings(pos_profile_doc):
 		return settings
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Get POS Settings Error")
-		return DEFAULT_POS_SETTINGS.copy()
+		# //// Neoffice — the defaults, told whether the site runs NeoRestau like every other answer (NeoRestau lot 1,
+		# //// task 4, fix round 1).
+		from pos_next.restaurant.mode import default_settings
+
+		return default_settings()
 
 
 def _get_payment_methods(pos_profile_name):

@@ -58,6 +58,16 @@ describe("the header of the till", () => {
 		expect(label.text()).toContain(LABEL)
 	})
 
+	it("is drawn in the design system's clay, the till's only vivid hue, never in amber", () => {
+		header({ isRestaurantMode: true })
+		const label = wrapper.find('[data-test="restaurant-till-label"]')
+
+		expect(label.html()).not.toMatch(/amber/)
+		// tailwind.config.js maps blue-N to the clay ramp: 400 is #d68a59, 50 and 700 its tint and its ink
+		expect(label.classes()).toEqual(expect.arrayContaining(["bg-blue-50", "text-blue-700"]))
+		expect(label.find("svg").classes()).toContain("text-blue-400")
+	})
+
 	it("says nothing of the restaurant on a counter till", () => {
 		header({ isRestaurantMode: false })
 

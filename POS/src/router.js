@@ -1,5 +1,7 @@
 import { shiftState } from "@/composables/useShift";
 import { userResource } from "@/data/user";
+//// Neoffice — the restaurant's own screens open only where the site runs NeoRestau (NeoRestau lot 1, task 4, fix round 1).
+import { redirectWhereNeoRestauIsOff } from "@/utils/neorestau";
 import { createRouter, createWebHistory } from "vue-router";
 import { session } from "./data/session";
 
@@ -34,6 +36,8 @@ const routes = [
 		name: "KDS",
 		path: "/kds",
 		component: () => import("@/pages/KDS.vue"),
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
+		meta: { needsNeoRestau: true },
 	},
 	{
 		name: "CFD",
@@ -45,11 +49,15 @@ const routes = [
 		name: "Runner",
 		path: "/runner",
 		component: () => import("@/pages/Runner.vue"),
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
+		meta: { needsNeoRestau: true },
 	},
 	{
 		name: "Takeaway",
 		path: "/takeaway",
 		component: () => import("@/pages/Takeaway.vue"),
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
+		meta: { needsNeoRestau: true },
 	},
 	{
 		name: "GuestOrder",
@@ -88,6 +96,15 @@ router.beforeEach((to, from, next) => {
 	// Only log during development
 	if (import.meta.env.DEV) {
 		console.log(`[Router] ${to.name} (from: ${from.name || "initial"}), auth: ${isLoggedIn}`);
+	}
+
+	//// Neoffice — added guard: the till's own screens of the restaurant (/kds, /runner, /takeaway) open only where the
+	//// site runs NeoRestau; elsewhere the visitor goes back to the till, which sends him to the login if he has no
+	//// session. It comes first: those screens may load with no till profile, and so no setting of the till to read.
+	const elsewhere = redirectWhereNeoRestauIsOff(to);
+	if (elsewhere) {
+		next(elsewhere);
+		return;
 	}
 
 	//// Neoffice — added guard. Upstream's beforeEach sends every visitor without a session

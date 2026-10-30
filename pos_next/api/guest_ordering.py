@@ -16,6 +16,7 @@ from frappe import _
 from frappe.utils import now_datetime, flt
 
 from pos_next.restaurant import scope
+from pos_next.restaurant.mode import require_neorestau
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
 
@@ -432,6 +433,9 @@ def validate_token(token):
 	Validate a guest token and return table + settings info.
 	Used on guest app mount to check session validity.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings(token_doc.pos_profile)
 
@@ -490,6 +494,9 @@ def get_guest_menu(token):
 	Uses time-slot based card selection (same as Opening Hours), falling back to
 	settings.guest_menu or the card flagged as_guest_menu.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings(token_doc.pos_profile)
 
@@ -532,6 +539,9 @@ def submit_guest_order(token, items):
 	Creates a new draft invoice if none exists yet.
 	Respects the qr_order_validation setting (direct or server-approval).
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	token_doc = _require_valid_token(token)
 
 	if isinstance(items, str):
@@ -828,6 +838,9 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	Post-merger: goes through ``payments.api.intent.create_intent`` on the
 	``wallee_web`` channel (hosted payment page) — see ADR-005.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	token_doc = _require_valid_token(token)
 	invoice_doc = _get_or_create_invoice(token_doc)
 
@@ -1200,6 +1213,9 @@ def create_takeaway_token():
 	Called when a visitor starts a takeaway order.
 	Rate-limited: max 10 tokens per IP per hour.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	# Rate limiting: max 10 takeaway tokens per IP per hour
 	client_ip = frappe.local.request_ip
 	one_hour_ago = frappe.utils.add_to_date(now_datetime(), hours=-1)
@@ -1238,6 +1254,9 @@ def submit_takeaway_order(token, items, customer=None):
 	Creates a POS Invoice flagged as takeaway.
 	Payment must be completed before this endpoint will finalize the order.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	token_doc = _require_valid_token(token)
 
 	if token_doc.mode != "takeaway":

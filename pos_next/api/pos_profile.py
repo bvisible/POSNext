@@ -82,10 +82,14 @@ def get_pos_settings(pos_profile):
 	from pos_next.api.cash_entry import require_till_access
 
 	require_till_access(pos_profile, profile_optional=True)
-	from pos_next.api.constants import DEFAULT_POS_SETTINGS, POS_SETTINGS_FIELDS, merge_pos_settings
+	# //// Neoffice — the fallback settings come from the restaurant's mode (default_settings), not from the constant.
+	from pos_next.api.constants import POS_SETTINGS_FIELDS, merge_pos_settings
+	from pos_next.restaurant.mode import default_settings
 
 	if not pos_profile:
-		return DEFAULT_POS_SETTINGS.copy()
+		# //// Neoffice — the defaults a till falls back on (no profile, a read that failed) are told whether the site runs
+		# //// NeoRestau like every other answer of this function (NeoRestau lot 1, task 4, fix round 1).
+		return default_settings()
 
 	try:
 		# Get POS Settings linked to this POS Profile
@@ -100,7 +104,8 @@ def get_pos_settings(pos_profile):
 		return pos_settings
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Get POS Settings Error")
-		return DEFAULT_POS_SETTINGS.copy()
+		# //// Neoffice — the defaults, told whether the site runs NeoRestau (see above).
+		return default_settings()
 
 
 @frappe.whitelist()

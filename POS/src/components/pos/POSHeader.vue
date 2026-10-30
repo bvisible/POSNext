@@ -136,15 +136,17 @@
 					<!-- //// counter till by its own POS Settings (the tick on the desk's POS Settings form), a -->
 					<!-- //// device switch is not wanted. The switch (8aa35c29, 2026-03-20 "Phase 1 restaurant -->
 					<!-- //// module"; 5d4db328, 924e688c, 59599289) stood here; a fixed label stands there now, for -->
-					<!-- //// a restaurant till only (NeoRestau lot 1, task 4). It is not a button. -->
+					<!-- //// a restaurant till only (NeoRestau lot 1, task 4). It is not a button. It is drawn in the -->
+					<!-- //// Design System's clay, the till's only vivid hue: tailwind.config.js maps blue-N to the clay -->
+					<!-- //// ramp (400 is #d68a59, 50 its tint, 700 its ink) and index.css carries it into dark mode. -->
 					<div
 						v-if="isRestaurantMode"
 						data-test="restaurant-till-label"
-						class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-50 text-amber-700 select-none"
+						class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 select-none"
 						:title="__('Restaurant till')"
 					>
 						<svg
-							class="w-3.5 h-3.5 flex-shrink-0 text-amber-600"
+							class="w-3.5 h-3.5 flex-shrink-0 text-blue-400"
 							fill="currentColor"
 							viewBox="0 0 24 24"
 							aria-hidden="true"

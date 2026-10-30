@@ -23,6 +23,7 @@ from pos_next.api import restaurant as restaurant_api
 from pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant import execute
 from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
 from pos_next.restaurant.settings import default_restaurant, get_restaurant_settings
+from pos_next.tests.test_a_site_that_used_the_restaurant import a_site_that_never_used_the_restaurant
 
 NO_ONE = "_Test Restaurant Nowhere"
 A_MONDAY = "2026-10-19"
@@ -395,12 +396,25 @@ class TestTheSingleMovesIntoARestaurant(RestaurantFixtures, FrappeTestCase):
 		self.assertEqual(frappe.db.count("Restaurant"), self.before + 1)
 
 	def test_a_site_that_never_used_the_module_gets_no_restaurant(self):
-		frappe.db.delete("Singles", {"doctype": "Restaurant Settings"})
-		frappe.db.delete("Restaurant Opening Hours", {"parent": "Restaurant Settings"})
-		for doctype in ("Restaurant Area", "Restaurant Card", "Preparation Station"):
-			frappe.db.delete(doctype)
+		# The single holds stored values on every site, a client that never used the module included (a migrate writes
+		# its defaults, and this test's own set-up customised one): they are not use, so no restaurant is made for them
+		a_site_that_never_used_the_restaurant()
+		self.assertTrue(frappe.db.get_singles_dict("Restaurant Settings"))
 		execute()
 		self.assertEqual(frappe.db.count("Restaurant"), self.before)
+
+	def test_a_site_that_used_the_module_through_a_ticked_till_only_gets_its_default_restaurant(self):
+		a_site_that_never_used_the_restaurant()
+		till = frappe.get_doc(
+			{"doctype": "POS Settings", "pos_profile": "_Test Single Till", "enabled": 1, "enable_restaurant_mode": 1}
+		)
+		till.flags.ignore_links = True
+		till.flags.ignore_mandatory = True
+		till.insert(ignore_permissions=True)
+		execute()
+		self.assertEqual(frappe.db.count("Restaurant"), self.before + 1)
+		# What the single held (a customised value among the defaults) is carried over, as for any site that used it
+		self.assertEqual(frappe.get_doc("Restaurant", default_restaurant()).enable_tips, 1)
 
 	def test_the_default_restaurant_is_the_only_one_or_the_oldest_enabled_one(self):
 		self.assertIsNone(default_restaurant())

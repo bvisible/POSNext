@@ -6,17 +6,19 @@
 import frappe
 
 from pos_next.restaurant.settings import SETTINGS_FIELDS, create_default_restaurant
+from pos_next.restaurant.usage import site_used_the_restaurant
 
 SINGLE = "Restaurant Settings"
-USED_BY_THE_MODULE = ("Restaurant Area", "Restaurant Card", "Preparation Station")
 
 
 def execute():
-	"""Create the default restaurant from the single, when the site uses the restaurant module.
+	"""Create the default restaurant from the single, when the site used the restaurant module.
 
+	What counts as use is `site_used_the_restaurant`, which the patch that switches NeoRestau on shares: never the
+	stored values of the single, which a migrate writes on every site, a client that never used the module included.
 	Idempotent: nothing happens once a restaurant exists.
 	"""
-	if frappe.db.count("Restaurant") or not _module_was_used():
+	if frappe.db.count("Restaurant") or not site_used_the_restaurant():
 		return
 
 	single = frappe.get_single(SINGLE)
@@ -49,10 +51,3 @@ def _drop_links_to_deleted_records(values: dict) -> None:
 		df = meta.get_field(field)
 		if value and df.fieldtype == "Link" and not frappe.db.exists(df.options, value):
 			values[field] = None
-
-
-def _module_was_used() -> bool:
-	"""Whether the site has set something up in the restaurant module: settings, a room, a card, a station."""
-	if frappe.db.get_singles_dict(SINGLE) or frappe.db.count("Restaurant Opening Hours", {"parent": SINGLE}):
-		return True
-	return any(frappe.db.count(doctype) for doctype in USED_BY_THE_MODULE)

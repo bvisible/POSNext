@@ -98,6 +98,11 @@ class TwoRestaurants:
 		commit = patch.object(frappe.db, "commit")
 		commit.start()
 		self.addCleanup(commit.stop)
+		# Two restaurants on one site presuppose NeoRestau: the entry points of the guests refuse to start anything where
+		# the site does not run it (task 4), and the site's own flag is not the test's to know
+		neorestau = patch.dict(frappe.conf, {"neorestau_active": 1})
+		neorestau.start()
+		self.addCleanup(neorestau.stop)
 		self.a = self.make_restaurant("_Test Restaurant A", logo="/files/_test_restaurant_a.png")
 		self.b = self.make_restaurant("_Test Restaurant B")
 		self.room_a = self.make_room(self.a)

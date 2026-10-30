@@ -235,4 +235,11 @@ def update_pos_settings(pos_profile, settings):
 		doc.update(settings)
 		doc.insert()
 
-	return doc.as_dict()
+	# //// Neoffice — the answer is the settings as the till reads them, through the same seam as the reads (the effective
+	# //// restaurant mode, whether the site runs NeoRestau, what the user may manage): the dialog merges it back into its
+	# //// own state, and must never be handed the stored tick, which is the desk's (NeoRestau lot 1, task 4).
+	from pos_next.integrations.registry import extend_bootstrap_settings
+
+	answer = doc.as_dict()
+	extend_bootstrap_settings(answer, pos_profile)
+	return answer

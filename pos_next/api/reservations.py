@@ -11,6 +11,7 @@ from frappe import _
 from frappe.utils import getdate, nowdate, now_datetime, get_time, add_to_date
 from pos_next.pos_next.doctype.restaurant_reservation.restaurant_reservation import _parse_duration
 from pos_next.restaurant import permissions, scope
+from pos_next.restaurant.mode import require_neorestau
 from pos_next.restaurant.settings import get_restaurant_settings, restaurant_of
 import json
 import secrets
@@ -241,6 +242,9 @@ def get_available_slots(date, restaurant=None):
 
 	A visitor names no restaurant on a site with one; the default restaurant answers.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))
@@ -268,6 +272,9 @@ def get_available_tables(date, time, duration=None, no_of_guests=None, restauran
 
 	A visitor names no restaurant on a site with one; the default restaurant answers.
 	"""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	restaurant = restaurant or scope.current_restaurant()
 	settings = get_restaurant_settings(restaurant)
 	if not settings.enable_reservations or not settings.enable_online_reservations:
@@ -322,6 +329,9 @@ def submit_guest_reservation(
 	restaurant=None,
 ):
 	"""Create a reservation from the public web form, in the restaurant named (the default restaurant otherwise)."""
+	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	require_neorestau()
+
 	settings = get_restaurant_settings(restaurant or scope.current_restaurant())
 	if not settings.enable_reservations or not settings.enable_online_reservations:
 		frappe.throw(_("Online reservations are not enabled"))

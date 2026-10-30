@@ -1,7 +1,9 @@
 //// Neoffice — added file (no upstream equivalent). A till is a restaurant till or a counter till by
 //// its OWN POS Settings (enable_restaurant_mode), never by a switch on the device: the header switch
 //// and the per-device localStorage override it wrote are gone, so no stored value may win over the
-//// setting, and old devices drop the key.
+//// setting, and old devices drop the key. The mode the store holds is the EFFECTIVE one the server
+//// sent (the tick, counted only where the site runs NeoRestau and for a till that names its restaurant,
+//// NeoRestau lot 1, task 4): the store holds no second copy of it, and knows whether the site runs NeoRestau.
 // @vitest-environment jsdom
 import { createPinia, setActivePinia } from "pinia"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -100,5 +102,45 @@ describe("posSettings: restaurant mode follows the till's own settings", () => {
 		expect(await store.loadSettings("POS-1")).toBe(true)
 
 		expect(store.settings.enable_restaurant_mode).toBe(1)
+	})
+
+	it("holds no second copy of the mode: the settings the server sent are the one source", () => {
+		expect(usePOSSettingsStore().enableRestaurantMode).toBeUndefined()
+	})
+})
+
+describe("posSettings: whether the site runs NeoRestau", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		bootstrap.getPreloadedPOSSettings.mockReset()
+		bootstrap.getPreloadedPOSSettings.mockReturnValue(null)
+		apiSettings = {}
+	})
+
+	it("is off until the server says so", () => {
+		expect(usePOSSettingsStore().settings.neorestau_active).toBe(false)
+	})
+
+	it.each(Object.entries(LOADS))("is carried as the server sent it, %s", async (_name, serve) => {
+		for (const active of [true, false]) {
+			setActivePinia(createPinia())
+			serve({ enabled: 1, neorestau_active: active })
+			const store = usePOSSettingsStore()
+
+			await store.loadSettings("POS-1")
+
+			expect(store.settings.neorestau_active).toBe(active)
+		}
+	})
+
+	it("is forgotten with the rest of the settings when the next user signs in", async () => {
+		LOADS["API fallback"]({ enabled: 1, neorestau_active: true, enable_restaurant_mode: 1 })
+		const store = usePOSSettingsStore()
+		await store.loadSettings("POS-1")
+
+		store.resetSettings()
+
+		expect(store.settings.neorestau_active).toBe(false)
+		expect(store.settings.enable_restaurant_mode).toBe(0)
 	})
 })

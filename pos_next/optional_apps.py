@@ -48,4 +48,10 @@ def update_pos_page_context(context):
 	boot["posnext_app_flags"] = get_pos_ui_app_flags()
 	# Lets the POS allow plain-http login on a developer_mode site (window.posnext_developer_mode)
 	boot["posnext_developer_mode"] = cint(frappe.conf.get("developer_mode"))
+	# //// Neoffice — whether the site runs NeoRestau, as window.posnext_neorestau_active: the till's own screens of the
+	# //// restaurant (/kds, /runner, /takeaway) open only where it does, and they may load with no till profile and no
+	# //// session, so the page says it at once instead of an API call (NeoRestau lot 1, task 4, fix round 1).
+	from pos_next.restaurant.mode import neorestau_active
+
+	boot["posnext_neorestau_active"] = neorestau_active()
 	context.boot = boot
