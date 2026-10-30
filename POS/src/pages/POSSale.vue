@@ -566,58 +566,30 @@
 								/>
 
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
+								<!-- //// Neoffice — the cards on the till are the store's shownCards: those of the hours, and the ones a -->
+								<!-- //// cashier opened by hand (NeoRestau lot 1, task 25). -->
 								<div
 									v-if="
 										restaurantStore.isEnabled &&
-										restaurantStore.activeCards.length > 0 &&
+										restaurantStore.shownCards.length > 0 &&
 										(cartStore.restaurantTable || cartStore.isTakeaway)
 									"
 									class="flex flex-col flex-1 min-h-0 overflow-hidden"
 								>
-									<!-- Card tabs (like category tabs) -->
-									<div
-										class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200"
-									>
-										<div
-											class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory"
-										>
-											<button
-												v-for="card in restaurantStore.activeCards"
-												:key="card.name"
-												@click="
-													selectedCard = card.name;
-													selectedCardCategory = null;
-												"
-												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0"
-												:class="[
-													selectedCard === card.name
-														? card.is_permanent
-															? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-500 shadow-neo'
-															: 'bg-blue-50 text-blue-600 border-2 border-blue-500 shadow-neo'
-														: card.is_permanent
-														? 'bg-indigo-50/50 text-indigo-600 border border-indigo-200 hover:bg-indigo-50 active:bg-indigo-100'
-														: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:bg-gray-100',
-												]"
-											>
-												<svg
-													v-if="card.is_permanent"
-													class="w-3 h-3 flex-shrink-0"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-													/>
-												</svg>
-												<!-- //// Neoffice — the permanent card is shown by its label, not by the English name it is stored under (NeoRestau lot 1, task 9) -->
-												{{ cardLabel(card) }}
-											</button>
-										</div>
-									</div>
+									<!-- //// Neoffice — the row of card buttons is a component since NeoRestau lot 1, task 25: it says when the -->
+									<!-- //// opening hours are over and whose card is still on the till, marks the cards opened by hand and ends with -->
+									<!-- //// the « ⋯ » that fetches another card. -->
+									<RestaurantCardTabs
+										:cards="restaurantStore.shownCards"
+										:selected="selectedCard"
+										:after-hours="restaurantStore.cardService.afterHours"
+										:service-label="restaurantStore.cardService.label"
+										@select="
+											selectedCard = $event;
+											selectedCardCategory = null;
+										"
+										@close-card="restaurantStore.closeCardOpenedByHand($event)"
+									/>
 									<!-- Category sub-filters -->
 									<div
 										v-if="cardCategories.length > 0"
@@ -956,12 +928,13 @@
 								</div>
 
 								<!-- Items Selector (default view, hidden when card is active) -->
+								<!-- //// Neoffice — shownCards, like the row of cards above (NeoRestau lot 1, task 25). -->
 								<ItemsSelector
 									v-if="
 										!showMenus &&
 										!(
 											restaurantStore.isEnabled &&
-											restaurantStore.activeCards.length > 0 &&
+											restaurantStore.shownCards.length > 0 &&
 											(cartStore.restaurantTable || cartStore.isTakeaway)
 										)
 									"
@@ -2118,6 +2091,10 @@
 			</template>
 		</Dialog>
 		<!-- //// Neoffice — ▲▲▲ end of the QR / table-lifecycle dialog region opened above. -->
+
+		<!-- //// Neoffice — fetch another card: the dialog the floor plan's « ⋯ » menu opens (NeoRestau lot 1, task 25). The -->
+		<!-- //// « ⋯ » of the card row, below the floor plan, draws its own list in its menu. -->
+		<CardPickerDialog v-if="restaurantStore.isEnabled" />
 	</div>
 </template>
 
@@ -2189,6 +2166,9 @@ import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 //// (TableSelector.vue) was never rendered: the floor plan selects the table. It is gone, with
 //// its import (NeoRestau lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
+//// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoRestau lot 1, task 25).
+import RestaurantCardTabs from "@/components/restaurant/RestaurantCardTabs.vue";
+import CardPickerDialog from "@/components/restaurant/CardPickerDialog.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 //// Neoffice — the banner of the open table, with its QR button (NeoRestau lot 1): it left this file, and the row of the cards.
 import TableHeaderBar from "@/components/restaurant/TableHeaderBar.vue";
@@ -2198,8 +2178,6 @@ import { useTableQR } from "@/composables/useTableQR";
 import { useTillTabTitle } from "@/composables/useTillTabTitle";
 //// Neoffice — the status badge of the open table is a label under its own context (NeoRestau lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
-//// Neoffice — and the permanent card's tab is its label (NeoRestau lot 1, task 9, fix round 1)
-import { cardLabel } from "@/utils/cardLabel";
 //// Neoffice — the cart line of a card entry or of a menu course item, and the units it carries, are built in one place that a
 //// test can reach (NeoRestau lot 1, task 22).
 import { cardItemToCartItem, menuItemToCartItem, withKnownUnits } from "@/utils/cartLineUnits";
@@ -2500,14 +2478,16 @@ const cardItemGroups = computed(() => {
 	if (current.items.length > 0 || current.category) groups.push(current);
 	return groups;
 });
+//// Neoffice — shownCards, not activeCards: a card opened by hand is a card of the row (NeoRestau lot 1, task 25).
 const selectedCardItems = computed(() => {
 	if (!selectedCard.value) return [];
-	const card = restaurantStore.activeCards.find((c) => c.name === selectedCard.value);
+	const card = restaurantStore.shownCards.find((c) => c.name === selectedCard.value);
 	return card?.items || [];
 });
 
 watch(
-	() => restaurantStore.activeCards,
+	//// Neoffice — shownCards, not activeCards (NeoRestau lot 1, task 25)
+	() => restaurantStore.shownCards,
 	(cards) => {
 		//// Neoffice — a selected card that left the list (its time slot ended, it was deactivated) kept the grid
 		//// empty until the cashier clicked another tab; move to the first card instead (maintenance#1754).
@@ -2517,6 +2497,17 @@ watch(
 		}
 	},
 	{ immediate: true }
+);
+
+//// Neoffice — a card opened by hand, from the « ⋯ » of the row or of the floor plan, is the one the cashier wants next:
+//// it is selected, so that the next table opened shows it (NeoRestau lot 1, task 25).
+watch(
+	() => restaurantStore.lastOpenedCard,
+	(opened) => {
+		if (!opened) return;
+		selectedCard.value = opened.name;
+		selectedCardCategory.value = null;
+	}
 );
 
 // Card item stock helpers

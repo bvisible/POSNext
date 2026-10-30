@@ -6,4 +6,6 @@
 # //// (pos_next.api.cash_entry) registers here, where the registry loads the shipped actions.
 # //// Neoffice — offered_item: « Offer an item » (NeoRestau lot 1, task 24), the opt-in PIN for the lines a cashier
 # //// offers, an action of ours loaded with upstream's.
-from pos_next.authorization.actions import cash_movement, offered_item, pos_expense, sales_invoice
+# //// Neoffice — `card_hours` is ours: the « Open a card outside its hours » action of the restaurant till's « ⋯ »
+# //// (pos_next.api.restaurant.open_card_outside_hours) registers here, where the registry loads the shipped actions.
+from pos_next.authorization.actions import card_hours, cash_movement, offered_item, pos_expense, sales_invoice

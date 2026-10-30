@@ -29,6 +29,12 @@ from pos_next.authorization.actions.cash_movement import (
 )
 from pos_next.authorization.actions.pos_expense import ACTION_VOID_POS_EXPENSE, resolve_void_context
 
+# //// Neoffice — the « Open a card outside its hours » action of the restaurant till (ours); see request_grant.
+from pos_next.authorization.actions.card_hours import (
+	ACTION_OPEN_CARD_OUTSIDE_HOURS,
+	resolve_open_card_context,
+)
+
 
 def _parse_context(context) -> dict:
 	"""Normalise the context a client sends alongside an authorization request."""
@@ -140,6 +146,10 @@ def request_grant(action: str, approver: str, pin: str, context=None) -> dict:
 	# //// its till and amount are read from the movement and its shift, never taken from the client.
 	elif action == ACTION_VOID_CASH_MOVEMENT:
 		context.update(resolve_void_cash_movement_context(context.get("journal_entry"), context))
+	# //// Neoffice — opening a card outside its hours (ours, pos_next.api.restaurant) binds the grant to the card
+	# //// and to the till of the caller's open shift, read here and not taken from the client.
+	elif action == ACTION_OPEN_CARD_OUTSIDE_HOURS:
+		context.update(resolve_open_card_context(context.get("restaurant_card"), context))
 	pos_profile = context.get("pos_profile")
 
 	rule = policy.resolve_rule(action, pos_profile)

@@ -1981,65 +1981,162 @@ def get_or_create_permanent_card(restaurant=None):
 	return {"name": doc.name, "created": True}
 
 
-@frappe.whitelist()
-def get_active_cards(restaurant=None):
-	"""Fetch the active cards of one restaurant, filtered by date and current time slot assignment.
-	The restaurant is the one named, else the till's own: its cards, and its opening hours.
-	A card the opening hours assign to a time slot is shown during its slots only; a card they assign to no
-	slot is shown at every hour (its dates still apply).
-	Permanent cards bypass all date/time filters and appear at the end."""
-	from frappe.utils import today
+# ─── Which cards the opening hours show ──────────────────────────────────────
 
-	permissions.require("Restaurant Card", "read")
-	restaurant = restaurant or scope.current_restaurant()
-	cards = scope.stamp(
-		frappe.get_all(
-			"Restaurant Card",
-			filters={"is_active": 1},
-			or_filters=scope.restaurant_or_filters(restaurant),
-			fields=["name", "card_name", "description", "image", "available_from", "available_to", "is_permanent"]
-		),
-		restaurant,
+# The days of the week as the opening hours name them (the options of the Select), whatever the language of the process
+WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+# How far back the last service is looked for: a slot comes back every week, so a week finds it
+SERVICE_LOOKBACK_DAYS = 7
+# What the till reads of a card: the card editor's other fields stay on the card
+CARD_FIELDS = ["name", "card_name", "description", "image", "available_from", "available_to", "is_permanent"]
+
+
+def _hours_now():
+	"""The day and the time of day the opening hours are read against, as a date and a time.
+
+	One reading for every card function (`frappe.utils.nowdate` and `nowtime`, looked up at each call), so that they
+	agree with one another and a test sets the clock in one place.
+	"""
+	from frappe.utils import get_time, getdate, nowdate, nowtime
+
+	return getdate(nowdate()), get_time(nowtime())
+
+
+def _slot_occurrences(hours, today):
+	"""Each time the opening-hours slots came round, from a week ago to today, as `{start, end, label, card, order}`.
+
+	A slot is a weekday with a start and an end; one that ends before it starts (22:00 to 02:00) ends the next
+	morning. Starts and ends are naive datetimes, `order` is the position of the slot in the hours. A slot with no
+	usable weekday or time is left out. Midnight is a time like any other (a Time field holds it as a zero
+	timedelta, which is falsy).
+	"""
+	from datetime import datetime, timedelta
+
+	from frappe.utils import get_time
+
+	slots = []
+	for order, row in enumerate(hours or []):
+		start, end = row.get("from_time"), row.get("to_time")
+		if row.get("day_of_week") not in WEEKDAYS or start in (None, "") or end in (None, ""):
+			continue
+		try:
+			slots.append((order, row, get_time(start), get_time(end)))
+		except Exception:
+			continue
+
+	occurrences = []
+	for back in range(SERVICE_LOOKBACK_DAYS, -1, -1):
+		day = today - timedelta(days=back)
+		weekday = WEEKDAYS[day.weekday()]
+		for order, row, start, end in slots:
+			if row.get("day_of_week") != weekday:
+				continue
+			occurrences.append(
+				frappe._dict(
+					start=datetime.combine(day, start),
+					end=datetime.combine(day if start <= end else day + timedelta(days=1), end),
+					label=row.get("label") or None,
+					card=row.get("restaurant_card") or None,
+					order=order,
+				)
+			)
+	return occurrences
+
+
+def _card_service(restaurant=None, settings=None):
+	"""Which cards the restaurant's opening hours show at this moment, and which service that is.
+
+	The hours assign cards to service slots. A card they name is shown while one of its slots runs; once no slot
+	runs, the cards of the last service stay until the next service begins (product owner, 31.10.2026): the slot
+	that ended last, among those that began at or before now, a week back at most. A card they name nowhere is
+	shown at every hour, and hours that assign no card at all filter nothing.
+
+	Answers `filtering` (whether the hours filter cards at all), `scheduled` (the cards they name), `shown` (those of
+	them that are shown now), `after_hours` (no slot runs and the cards shown are the last service's), `label` (the
+	label of that service, after hours only), `key` (when the latest service began: it changes when the next one does,
+	and only then) and `today`.
+	"""
+	settings = settings if settings is not None else restaurant_config.get_restaurant_settings(restaurant)
+	hours = settings.get("opening_hours") or []
+	today, time = _hours_now()
+	service = frappe._dict(
+		filtering=False,
+		scheduled={row.get("restaurant_card") for row in hours if row.get("restaurant_card")},
+		shown=set(),
+		after_hours=False,
+		label=None,
+		key=None,
+		today=today,
 	)
+	if not service.scheduled:
+		return service
 
-	current_date = today()
+	from datetime import datetime
 
-	# Get cards assigned to current time slot via opening hours
-	slot_cards = _get_current_slot_cards(restaurant)
-	# Until 20.10.2026 the slot filter applied to every card as soon as one slot named a card: a card the schedule
-	# names nowhere (every card just created in the card editor) never showed at the till (maintenance#1754).
-	scheduled_cards = _get_scheduled_cards(restaurant) if slot_cards is not None else set()
+	service.filtering = True
+	now = datetime.combine(today, time)
+	started = [slot for slot in _slot_occurrences(hours, today) if slot.start <= now]
+	if started:
+		service.key = max(slot.start for slot in started).isoformat()
+	running = [slot for slot in started if now <= slot.end]
+	if running:
+		# The cards of every slot that matches now
+		service.shown = {slot.card for slot in running if slot.card}
+	elif started:
+		# Between two services, or after the last: the card of the slot that ended last stays. When slots overlap, the
+		# one that ended last is the one whose card was on screen in the last minute of the service
+		ended_last = max(slot.end for slot in started)
+		last = sorted(
+			(slot for slot in started if slot.end == ended_last),
+			key=lambda slot: (slot.start, slot.order),
+		)
+		service.shown = {slot.card for slot in last if slot.card}
+		# A last service with no card has none to announce
+		if service.shown:
+			service.after_hours = True
+			labels = dict.fromkeys(slot.label for slot in last if slot.label)
+			service.label = " / ".join(labels) or None
+	return service
 
-	result_normal = []
-	result_permanent = []
-	# The cards shown, each with its entries
+
+def _hidden_by_the_hours(card_name, service):
+	"""Whether the opening hours keep a card off the till right now (the permanent card is never asked about)."""
+	return service.filtering and card_name in service.scheduled and card_name not in service.shown
+
+
+def _card_is_in_its_dates(card, today):
+	"""Whether a card is available on that day: not before its first day, not after its last."""
+	from frappe.utils import getdate
+
+	if card.get("available_from") and getdate(card.get("available_from")) > today:
+		return False
+	if card.get("available_to") and getdate(card.get("available_to")) < today:
+		return False
+	return True
+
+
+def _card_with_items(card):
+	"""A card of the till's list with its items, as the till sells from them (the disabled ones left out)."""
+	return _cards_with_items([card])[0]
+
+
+def _cards_with_items(cards):
+	"""The cards of the till's list with their items, as the till sells from them (the disabled ones left out).
+
+	The dishes of all the cards are read together with their units, two queries for the call (not one per card, not one per
+	dish): the cart line made from an entry has to carry its unit and the item's other units, as a line made from the grid
+	does (task 22). The cards are changed in place and returned.
+	"""
 	shown = []
-
 	for card in cards:
-		is_permanent = card.get("is_permanent")
-
-		# Permanent cards bypass all date/time filters
-		if not is_permanent:
-			# Date filtering
-			if card.get("available_from") and str(card.available_from) > current_date:
-				continue
-			if card.get("available_to") and str(card.available_to) < current_date:
-				continue
-			# Time slot filtering, for a card the schedule names
-			if slot_cards is not None and card.name in scheduled_cards and card.name not in slot_cards:
-				continue
-
 		items = frappe.get_all(
 			"Restaurant Card Item",
 			filters={"parent": card.name},
 			fields=["item_type", "label", "item", "menu", "price", "sort_order", "disabled"],
-			order_by="sort_order asc, idx asc"
+			order_by="sort_order asc, idx asc",
 		)
 		shown.append((card, items))
 
-	# The dishes of all the cards shown are read together with their units, two queries for the call (not one per card, not one
-	# per dish): the cart line made from an entry has to carry its unit and the item's other units, as a line made from the grid
-	# does (task 22)
 	item_codes = [ci.item for _card, items in shown for ci in items if ci.item_type == "Item" and ci.item]
 	item_rows = {}
 	if item_codes:
@@ -2048,13 +2145,21 @@ def get_active_cards(restaurant=None):
 			for row in frappe.get_all(
 				"Item",
 				filters={"name": ["in", item_codes]},
-				fields=["name", "item_name", "image", "custom_color", "item_group", "standard_rate", "is_stock_item", "stock_uom"],
+				fields=[
+					"name",
+					"item_name",
+					"image",
+					"custom_color",
+					"item_group",
+					"standard_rate",
+					"is_stock_item",
+					"stock_uom",
+				],
 			)
 		}
 	units = item_units.units_of(item_codes, {name: row.stock_uom for name, row in item_rows.items()})
 
 	for card, items in shown:
-		is_permanent = card.get("is_permanent")
 		for ci in items:
 			if ci.item_type == "Item" and ci.item:
 				item_data = item_rows.get(ci.item)
@@ -2068,24 +2173,173 @@ def get_active_cards(restaurant=None):
 					ci["stock_uom"] = units[ci.item]["stock_uom"]
 					ci["item_uoms"] = units[ci.item]["item_uoms"]
 			elif ci.item_type == "Menu" and ci.menu:
-				menu_data = frappe.db.get_value("Restaurant Menu", ci.menu,
-					["menu_name", "price", "image"], as_dict=True)
+				menu_data = frappe.db.get_value(
+					"Restaurant Menu", ci.menu, ["menu_name", "price", "image"], as_dict=True
+				)
 				if menu_data:
 					ci["menu_name"] = menu_data.menu_name
 					ci["image"] = menu_data.image
 					ci["default_price"] = menu_data.price or 0
 
 		# Filter out disabled items
-		items = [ci for ci in items if not ci.get("disabled")]
-		card["items"] = items
+		card["items"] = [ci for ci in items if not ci.get("disabled")]
+	return cards
+
+
+@frappe.whitelist()
+def get_active_cards(restaurant=None):
+	"""Fetch the active cards of one restaurant, filtered by date and by the opening hours.
+	The restaurant is the one named, else the till's own: its cards, and its opening hours.
+	A card the opening hours assign to a time slot is shown during its slots, and after them until the next
+	service begins (the card of the last service stays); a card they assign to no slot is shown at every hour.
+	The dates of a card apply throughout. Permanent cards bypass all date/time filters and appear at the end."""
+	permissions.require("Restaurant Card", "read")
+	restaurant = restaurant or scope.current_restaurant()
+	cards = scope.stamp(
+		frappe.get_all(
+			"Restaurant Card",
+			filters={"is_active": 1},
+			or_filters=scope.restaurant_or_filters(restaurant),
+			fields=CARD_FIELDS,
+		),
+		restaurant,
+	)
+
+	# Until 20.10.2026 the slot filter applied to every card as soon as one slot named a card: a card the schedule
+	# names nowhere (every card just created in the card editor) never showed at the till (maintenance#1754).
+	service = _card_service(restaurant)
+
+	result_normal = []
+	result_permanent = []
+	# The cards shown; their entries are read together after the loop
+	shown = []
+
+	for card in cards:
+		is_permanent = card.get("is_permanent")
+
+		# Permanent cards bypass all date/time filters
+		if not is_permanent:
+			if not _card_is_in_its_dates(card, service.today):
+				continue
+			if _hidden_by_the_hours(card.name, service):
+				continue
+
+		shown.append(card)
 
 		if is_permanent:
 			result_permanent.append(card)
 		else:
 			result_normal.append(card)
 
+	# //// Neoffice — the items of all the cards shown are read together (see _cards_with_items), not one card at a time.
+	_cards_with_items(shown)
+
 	# Permanent cards at the end
 	return result_normal + result_permanent
+
+
+def _cards_outside_hours(restaurant, service):
+	"""The active cards of a restaurant that its opening hours keep off the till right now, in the order of their names.
+
+	Those the hours name and do not show, within their dates. A card they name nowhere and the permanent card are
+	always shown; an inactive card, or one outside its dates, is no card to fetch.
+	"""
+	hidden = sorted(service.scheduled - service.shown) if service.filtering else []
+	if not hidden:
+		return []
+	cards = frappe.get_all(
+		"Restaurant Card",
+		filters={"name": ["in", hidden], "is_active": 1, "is_permanent": 0},
+		or_filters=scope.restaurant_or_filters(restaurant),
+		fields=CARD_FIELDS,
+		order_by="card_name asc",
+	)
+	return [card for card in cards if _card_is_in_its_dates(card, service.today)]
+
+
+@frappe.whitelist()
+def get_other_cards(restaurant=None):
+	"""The restaurant's other cards, the ones its opening hours keep off the till right now: what the « ⋯ » of the card
+	row offers (NeoRestau lot 1, task 25). The restaurant is the one named, else the till's own.
+
+	Only the active cards of that restaurant, within their dates, that the hours name and do not show: never an inactive
+	card, a card outside its dates, the permanent card, a card the hours name nowhere, or another restaurant's card.
+	What each card holds is not sent; the till asks for it when a card is picked (`open_card_outside_hours`).
+	"""
+	permissions.require("Restaurant Card", "read")
+	restaurant = restaurant or scope.current_restaurant()
+	# A user kept to another restaurant by a user permission reads none of this one's
+	permissions.require_restaurant(restaurant)
+	cards = _cards_outside_hours(restaurant, _card_service(restaurant))
+	return scope.stamp(
+		[{field: card[field] for field in ("name", "card_name", "description", "image")} for card in cards],
+		restaurant,
+	)
+
+
+def check_card_can_be_opened(card_name, restaurant=None):
+	"""A card of the restaurant's that a till may fetch, as the till lists it (without its items), else a refusal.
+
+	Whoever may sell at a till, for a card of the restaurant of that till (the one named, else the user's own): a caller
+	that is not a desk account with a till, a user kept to another restaurant by a user permission and a card of another
+	restaurant are refused (PermissionError), a card that does not exist is reported so (DoesNotExistError), and a card
+	that is inactive or outside its dates is no card to fetch (ValidationError). Whether the hours show the card
+	at this moment is not asked: the caller decides what that changes.
+	"""
+	from pos_next.api.cash_entry import require_till_user
+
+	# Before anything is looked up: a visitor and a portal account learn nothing, not even which cards exist
+	require_till_user()
+	permissions.require("Restaurant Card", "read")
+	restaurant = restaurant or scope.current_restaurant()
+	permissions.require_restaurant(restaurant)
+	# By its name, and the record's own rules (a user permission on its restaurant)
+	permissions.require("Restaurant Card", "read", card_name)
+	row = (
+		frappe.db.get_value("Restaurant Card", card_name, [*CARD_FIELDS, "is_active"], as_dict=True)
+		if card_name
+		else None
+	)
+	if not row:
+		frappe.throw(_("{0} {1} not found").format(_("Restaurant Card"), card_name), frappe.DoesNotExistError)
+	if scope.restaurant_of_record("Restaurant Card", card_name) != restaurant:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not row.is_active or not _card_is_in_its_dates(row, _hours_now()[0]):
+		frappe.throw(_("This card is not available"))
+	card = frappe._dict({field: row[field] for field in CARD_FIELDS})
+	return scope.stamp([card], restaurant)[0]
+
+
+@frappe.whitelist()
+def open_card_outside_hours(card_name, restaurant=None, authorization_token=None):
+	"""One card of the restaurant's with its items, for the till to open by hand (NeoRestau lot 1, task 25).
+
+	The answer is shaped as the cards of `get_active_cards`. A card the opening hours show is served as it is. A card
+	they keep off the till right now is the one a cashier fetches from the « ⋯ » of the card row, and opening it goes
+	through the authorization gate as « Open a card outside its hours »: opt-in, nothing is asked until a
+	POS Authorization Rule names the action, and then `authorization_token` must carry a manager's grant, bound to
+	the card and to the till of the caller's open shift (read here, never taken from the client).
+	The grant is given back when the card cannot be read after it was spent.
+	"""
+	from pos_next.authorization import grants
+	from pos_next.authorization.actions.card_hours import ACTION_OPEN_CARD_OUTSIDE_HOURS, open_card_context
+	from pos_next.authorization.gate import enforce_context
+
+	restaurant = restaurant or scope.current_restaurant()
+	card = check_card_can_be_opened(card_name, restaurant)
+	service = _card_service(restaurant)
+	if not card.is_permanent and _hidden_by_the_hours(card.name, service):
+		enforce_context(
+			ACTION_OPEN_CARD_OUTSIDE_HOURS,
+			open_card_context(card.name, scope.current_profile()),
+			authorization_token,
+			reference=card.name,
+		)
+	try:
+		return _card_with_items(card)
+	except Exception:
+		grants.release(authorization_token, card.name)
+		raise
 
 
 @frappe.whitelist()
@@ -2303,7 +2557,12 @@ def save_tip_settings(settings, restaurant=None):
 
 @frappe.whitelist()
 def get_restaurant_status(restaurant=None):
-	"""Lightweight endpoint returning restaurant open/closed status and card availability."""
+	"""Lightweight endpoint returning restaurant open/closed status and card availability.
+
+	`service` says which service the cards on the till are of (`_card_service`): `key` changes when the next service
+	begins, `after_hours` and `label` tell that no slot runs and the cards shown are the last service's (NeoRestau
+	lot 1, task 25).
+	"""
 	permissions.require("Restaurant", "read")
 
 	# Get opening hours
@@ -2318,14 +2577,29 @@ def get_restaurant_status(restaurant=None):
 		for r in settings.opening_hours or []
 	]
 
+	card_service = _card_service(settings=settings)
+	service = {"key": card_service.key, "after_hours": card_service.after_hours, "label": card_service.label}
+
 	# No restaurant, or no hours defined: the restaurant is considered always open, no warnings
 	if not hours:
-		return {"is_open": True, "current_slot": None, "has_active_cards": True, "warning": None}
+		return {
+			"is_open": True,
+			"current_slot": None,
+			"has_active_cards": True,
+			"warning": None,
+			"service": service,
+		}
 
 	is_open, current_slot = _check_restaurant_open(hours)
 
 	if not is_open:
-		return {"is_open": False, "current_slot": None, "has_active_cards": False, "warning": None}
+		return {
+			"is_open": False,
+			"current_slot": None,
+			"has_active_cards": False,
+			"warning": None,
+			"service": service,
+		}
 
 	# Check if there are active cards for the current time
 	active_cards = get_active_cards(settings.name)
@@ -2343,6 +2617,7 @@ def get_restaurant_status(restaurant=None):
 		"current_slot": current_slot,
 		"has_active_cards": has_active_cards,
 		"warning": warning,
+		"service": service,
 	}
 
 
@@ -2362,56 +2637,6 @@ def _format_time(val):
 	if len(parts) >= 2:
 		return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
 	return s
-
-
-def _get_scheduled_cards(restaurant=None):
-	"""Names of the cards the restaurant's opening hours assign to at least one time slot."""
-	settings = restaurant_config.get_restaurant_settings(restaurant)
-	return {
-		slot.restaurant_card
-		for slot in settings.opening_hours or []
-		if getattr(slot, "restaurant_card", None)
-	}
-
-
-def _get_current_slot_cards(restaurant=None):
-	"""Return set of card names assigned to the current time slot, or None if no slots have cards."""
-	import calendar
-	from frappe.utils import nowtime, get_time, nowdate, getdate
-
-	settings = restaurant_config.get_restaurant_settings(restaurant)
-
-	if not settings.opening_hours:
-		return None
-
-	today_name = calendar.day_name[getdate(nowdate()).weekday()]
-	now = get_time(nowtime())
-
-	# Check if any slot has a card assigned at all
-	any_card_assigned = any(h.restaurant_card for h in settings.opening_hours if hasattr(h, "restaurant_card"))
-	if not any_card_assigned:
-		return None  # No cards assigned to any slot = no time filtering
-
-	# Find matching slots for current day + time
-	matched_cards = set()
-	for slot in settings.opening_hours:
-		if slot.day_of_week != today_name:
-			continue
-		if not slot.from_time or not slot.to_time:
-			continue
-
-		ft = get_time(str(slot.from_time))
-		tt = get_time(str(slot.to_time))
-		in_range = False
-		if ft <= tt:
-			in_range = ft <= now <= tt
-		else:
-			in_range = now >= ft or now <= tt
-
-		if in_range and getattr(slot, "restaurant_card", None):
-			matched_cards.add(slot.restaurant_card)
-
-	return matched_cards if matched_cards else set()
 
 
 def _check_restaurant_open(hours):

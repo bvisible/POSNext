@@ -72,4 +72,7 @@ class TestRestaurantCardsWithoutASlot(FrappeTestCase):
 
 	def test_a_card_the_schedule_names_follows_its_slots(self):
 		self.assertIn(IN_A_SLOT, self.cards_at("09:30:00"))
-		self.assertNotIn(IN_A_SLOT, self.cards_at("20:00:00"))
+		# After the last service of the day its card stays, until the next service begins (product owner, 31.10.2026):
+		# there is none after this one before the next Monday, so it is still there in the evening. The cards the
+		# schedule names follow their slots in test_restaurant_cards_after_hours.
+		self.assertIn(IN_A_SLOT, self.cards_at("20:00:00"))

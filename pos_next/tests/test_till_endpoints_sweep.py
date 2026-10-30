@@ -404,6 +404,9 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("get_product_options", lambda: restaurant.get_product_options(NONE)),
 			("get_all_product_option_groups", restaurant.get_all_product_option_groups),
 			("get_active_cards", lambda: restaurant.get_active_cards()),
+			# The cards the opening hours hide and the one a cashier fetches from the « ⋯ » (NeoRestau lot 1, task 25)
+			("get_other_cards", lambda: restaurant.get_other_cards()),
+			("open_card_outside_hours", _past_the_gate(lambda: restaurant.open_card_outside_hours(NONE))),
 			("get_active_menus", lambda: restaurant.get_active_menus()),
 			("get_restaurant_status", lambda: restaurant.get_restaurant_status()),
 			("get_preparation_workflows", restaurant.get_preparation_workflows),
