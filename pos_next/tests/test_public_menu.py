@@ -18,6 +18,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+from frappe.handler import execute_cmd
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, cint, nowdate
 
@@ -653,6 +654,29 @@ class TestThePublicMenuIsOpenToEveryone(PublicMenuFixtures, FrappeTestCase):
 
 	def test_its_argument_is_not_escaped_for_a_guest_so_a_name_with_an_ampersand_is_found(self):
 		self.assertIn(public_menu.get_public_menu, frappe.xss_safe_methods)
+
+	def test_a_guest_who_calls_it_as_a_web_request_does_finds_a_name_with_an_ampersand(self):
+		# Through the handler a request goes through: it escapes the arguments of a guest unless the endpoint says they are
+		# safe, and passes the endpoint only the arguments it takes (the command is one it does not)
+		self.make_restaurant(CAFE, enable_public_menu=1)
+		self.addCleanup(frappe.cache().delete_value, f"rl:{COMMAND}:{GUEST_IP}")
+		self.addCleanup(frappe.cache().delete_value, public_menu.cache_key(CAFE))
+		frappe.set_user("Guest")
+
+		with a_request_from(GUEST_IP):
+			frappe.form_dict.update({"restaurant": CAFE})
+			answer = execute_cmd(COMMAND)
+
+		self.assertEqual(answer["restaurant"]["name"], CAFE)
+
+	def test_a_guest_cannot_call_it_to_write(self):
+		frappe.set_user("Guest")
+
+		with a_request_from(GUEST_IP):
+			frappe.local.request.method = "POST"
+			frappe.form_dict.update({"restaurant": self.restaurant})
+			with self.assertRaises(frappe.PermissionError):
+				execute_cmd(COMMAND)
 
 	def test_a_portal_account_and_an_anonymous_visitor_see_the_same(self):
 		if frappe.db.exists("User", PORTAL):
