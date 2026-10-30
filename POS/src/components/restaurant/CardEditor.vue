@@ -144,7 +144,8 @@
 											class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-600">
 											{{ slot }}
 										</span>
-										<button @click="openScheduleSettings"
+										<!-- The schedule lives in the till's settings: the link is for whoever may save them -->
+										<button v-if="restaurantStore.can?.manage_till_settings" @click="openScheduleSettings"
 											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 transition-colors">
 											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -158,7 +159,7 @@
 										<span class="text-[10px] text-gray-500">
 											{{ __("No time slot: this card is shown at all hours.") }}
 										</span>
-										<button @click="openScheduleSettings"
+										<button v-if="restaurantStore.can?.manage_till_settings" @click="openScheduleSettings"
 											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 font-medium transition-colors">
 											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

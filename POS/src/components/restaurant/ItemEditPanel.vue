@@ -61,8 +61,8 @@
 				</button>
 			</div>
 
-			<!-- Global Price -->
-			<div>
+			<!-- Global Price: the ERP's price list, for whoever may change it there (the server checks it again) -->
+			<div v-if="canEditGlobalPrice">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Global Price') }}</label>
 				<input
 					v-model.number="editData.globalPrice"
@@ -107,8 +107,8 @@
 				</p>
 			</div>
 
-			<!-- Description -->
-			<div>
+			<!-- Description, image and colour: the ERP's item sheet, for whoever may edit items there -->
+			<div v-if="can.edit_items">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Description') }}</label>
 				<textarea
 					v-model="editData.description"
@@ -121,7 +121,7 @@
 			</div>
 
 			<!-- Image -->
-			<div>
+			<div v-if="can.edit_items">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Image') }}</label>
 				<div class="mt-1">
 					<div v-if="editData.image" class="relative inline-block">
@@ -158,7 +158,7 @@
 			</div>
 
 			<!-- Color -->
-			<div>
+			<div v-if="can.edit_items">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Display Color') }}</label>
 				<div class="flex flex-wrap gap-1.5 mt-1">
 					<button
@@ -202,8 +202,8 @@
 				</div>
 			</div>
 
-			<!-- Production Options -->
-			<div v-if="originalData.all_option_groups?.length">
+			<!-- Production Options: for whoever manages the option groups -->
+			<div v-if="can.manage_options && originalData.all_option_groups?.length">
 				<label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Product Options') }}</label>
 				<div class="flex flex-wrap gap-1 mt-1">
 					<button
@@ -295,6 +295,7 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useBadges } from "@/composables/useBadges"
 import { usePOSShiftStore } from "@/stores/posShift"
+import { useRestaurantStore } from "@/stores/restaurant"
 import { ITEM_COLOR_PALETTE } from "@/utils/itemColors"
 import ImageSearchDialog from "./ImageSearchDialog.vue"
 import ItemSaveConfirmDialog from "./ItemSaveConfirmDialog.vue"
@@ -324,6 +325,11 @@ const emit = defineEmits(["saved", "close"])
 const { loadMenuBadges, getBadgesByType, getBadgeIconUrl } = useBadges()
 const { showSuccess, showError } = useToast()
 const shiftStore = usePOSShiftStore()
+// What the server lets the user change (NeoRestau lot 1, task 3): the card's price, availability, badges and spice
+// level with the cards; the item sheet and the price list with the ERP's own rights on them
+const restaurantStore = useRestaurantStore()
+const can = computed(() => restaurantStore.can || {})
+const canEditGlobalPrice = computed(() => Boolean(can.value.edit_items && can.value.edit_prices))
 
 const loading = ref(true)
 const saving = ref(false)
@@ -379,6 +385,36 @@ const hasChanges = computed(() => {
 const globalPriceChanged = computed(() => {
 	if (!originalEditSnapshot.value) return false
 	return editData.value.globalPrice !== originalEditSnapshot.value.globalPrice
+})
+
+// The item sheet (the ERP's Item): description, image, colour
+const itemSheetChanged = computed(() => {
+	const snap = originalEditSnapshot.value
+	if (!snap) return false
+	return (
+		editData.value.description !== snap.description ||
+		editData.value.image !== snap.image ||
+		editData.value.color !== snap.color
+	)
+})
+
+// What the card prints of the dish: its badges and spice level
+const badgesChanged = computed(() => {
+	const snap = originalEditSnapshot.value
+	if (!snap) return false
+	return (
+		editData.value.spice_level !== snap.spice_level ||
+		!setsEqual(editData.value.badges, snap.badges)
+	)
+})
+
+const optionGroupsChanged = computed(() => {
+	const snap = originalEditSnapshot.value
+	if (!snap) return false
+	return (
+		JSON.stringify([...editData.value.option_groups].sort()) !==
+		JSON.stringify([...snap.option_groups].sort())
+	)
 })
 
 const activeChanged = computed(() => {
@@ -456,7 +492,7 @@ function handleSave() {
 	pendingConfirmQueue.value = []
 
 	// Check if global price changed → needs confirmation
-	if (globalPriceChanged.value) {
+	if (canEditGlobalPrice.value && globalPriceChanged.value) {
 		pendingConfirmQueue.value.push("price")
 	}
 	// Check if active state changed → needs confirmation
@@ -498,19 +534,37 @@ function onSaveConfirm(result) {
 async function doSave(confirmations) {
 	saving.value = true
 	try {
-		// 1. Save item details (description, image, color, badges, option groups) — always global
-		await call("pos_next.api.restaurant.update_item_details", {
-			item_code: props.itemCode,
-			description: editData.value.description,
-			image: editData.value.image,
-			color: editData.value.color,
-			badges: JSON.stringify(Array.from(editData.value.badges)),
-			spice_level: editData.value.spice_level,
-			option_groups: JSON.stringify(editData.value.option_groups),
-		})
+		// 1. The item sheet (the ERP's Item) and the option groups, only what changed and what the user may change:
+		// a manager without the ERP's item rights still saves the rest of the panel
+		const details = {}
+		if (can.value.edit_items && itemSheetChanged.value) {
+			Object.assign(details, {
+				description: editData.value.description,
+				image: editData.value.image,
+				color: editData.value.color,
+			})
+		}
+		if (can.value.manage_options && optionGroupsChanged.value) {
+			details.option_groups = JSON.stringify(editData.value.option_groups)
+		}
+		if (Object.keys(details).length) {
+			await call("pos_next.api.restaurant.update_item_details", {
+				item_code: props.itemCode,
+				...details,
+			})
+		}
 
-		// 2. Handle global price change
-		if (globalPriceChanged.value) {
+		// 2. The dish's badges and spice level: what its card prints, the cards' data
+		if (badgesChanged.value) {
+			await call("pos_next.api.restaurant.update_item_badges", {
+				item_code: props.itemCode,
+				badges: JSON.stringify(Array.from(editData.value.badges)),
+				spice_level: editData.value.spice_level,
+			})
+		}
+
+		// 3. Handle global price change
+		if (canEditGlobalPrice.value && globalPriceChanged.value) {
 			const priceScope = confirmations.price || "only_global"
 			await call("pos_next.api.restaurant.update_item_price", {
 				item_code: props.itemCode,
@@ -521,7 +575,7 @@ async function doSave(confirmations) {
 			})
 		}
 
-		// 3. Handle card price (local override) — always local, no confirmation needed
+		// 4. Handle card price (local override) — always local, no confirmation needed
 		if (editData.value.cardPrice !== originalEditSnapshot.value.cardPrice) {
 			await call("pos_next.api.restaurant.update_item_price", {
 				item_code: props.itemCode,
@@ -532,7 +586,7 @@ async function doSave(confirmations) {
 			})
 		}
 
-		// 4. Handle active/inactive change
+		// 5. Handle active/inactive change
 		if (activeChanged.value) {
 			const activeScope = confirmations.active || "local"
 			await call("pos_next.api.restaurant.update_item_active", {

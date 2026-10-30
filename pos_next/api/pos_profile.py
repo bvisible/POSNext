@@ -315,6 +315,12 @@ def get_default_customer(pos_profile):
 @frappe.whitelist()
 def update_warehouse(pos_profile, warehouse):
 	"""Update warehouse in POS Profile"""
+	# //// Neoffice — the till's warehouse is one of its settings, which are its managers' (product owner, 30.10.2026):
+	# //// lot 0's till managers only, refused before the try below, which would turn the refusal into "Error updating
+	# //// warehouse" (#1967).
+	from pos_next.api.cash_entry import require_till_manager
+
+	require_till_manager()
 	try:
 		if not pos_profile:
 			frappe.throw(_("POS Profile is required"))

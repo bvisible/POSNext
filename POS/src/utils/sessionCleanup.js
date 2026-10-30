@@ -2,6 +2,10 @@ import { clearAllDrafts } from "@/utils/draftManager";
 import { clearAllOfflineReceiptPayloads } from "@/utils/offline/offlineReceiptCache";
 import { usePOSCartStore } from "@/stores/posCart";
 import { usePOSUIStore } from "@/stores/posUI";
+//// Neoffice — the bootstrap and the till's settings carry what the user may do (restaurant_can, NeoRestau lot 1,
+//// task 3): both are reset at logout, below.
+import { useBootstrapStore } from "@/stores/bootstrap";
+import { usePOSSettingsStore } from "@/stores/posSettings";
 import { useSessionLock } from "@/composables/useSessionLock";
 import { shiftState } from "@/composables/useShift";
 
@@ -45,6 +49,12 @@ export async function cleanupUserSession() {
 	cartStore.posOpeningShift = null;
 	cartStore.posProfile = null;
 	uiStore.resetAllDialogs();
+	//// Neoffice — the page's bootstrap and the till's settings are the user's who leaves: what he could do
+	//// (restaurant_can) would show to whoever signs in next in this tab, since the settings are read from the
+	//// bootstrap first. Both are reset: the next user's settings come from the server, his own (NeoRestau lot 1,
+	//// task 3).
+	useBootstrapStore().reset();
+	usePOSSettingsStore().resetSettings();
 
 	// 3. Reset composable singletons
 	const { clearLock, stopActivityTracking } = useSessionLock();

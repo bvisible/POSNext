@@ -35,6 +35,7 @@ from pos_next.api import (
 	items,
 	menu_pdf,
 	offers,
+	pos_profile,
 	promotions,
 	qz,
 	reservations,
@@ -44,6 +45,7 @@ from pos_next.api import (
 )
 from pos_next.pos_next.doctype.bank_deposits import bank_deposits
 from pos_next.pos_next.doctype.pos_closing_shift import pos_closing_shift
+from pos_next.pos_next.doctype.pos_settings import pos_settings
 from pos_next.pos_next.doctype.wallet import wallet as wallet_doctype
 from pos_next.pos_next.doctype.wallet_transaction import wallet_transaction
 from pos_next.pos_next.report.sales_vs_shifts_report import sales_vs_shifts_report as shifts_report
@@ -346,6 +348,35 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				"update_reservation_status",
 				_past_the_gate(lambda: reservations.update_reservation_status(NONE, "Seated")),
 			),
+			# The service's reads: whoever reads the restaurant's doctypes, as every cashier does (NeoRestau lot 1,
+			# task 3; until then any signed-in account, a portal account included)
+			("get_station_items_map", lambda: restaurant.get_station_items_map()),
+			("get_station_details", _past_the_gate(lambda: restaurant.get_station_details(NONE))),
+			("get_product_options", lambda: restaurant.get_product_options(NONE)),
+			("get_all_product_option_groups", restaurant.get_all_product_option_groups),
+			("get_active_cards", lambda: restaurant.get_active_cards()),
+			("get_active_menus", lambda: restaurant.get_active_menus()),
+			("get_restaurant_status", lambda: restaurant.get_restaurant_status()),
+			("get_preparation_workflows", restaurant.get_preparation_workflows),
+			("get_next_step", lambda: restaurant.get_next_step(NONE, "Pending")),
+			("get_next_takeaway_number", restaurant.get_next_takeaway_number),
+			("get_card_items_extra", _past_the_gate(lambda: restaurant.get_card_items_extra(NONE))),
+			("get_menu_badges", restaurant.get_menu_badges),
+			("get_item_badges", _past_the_gate(lambda: restaurant.get_item_badges(NONE))),
+			(
+				"get_card_items_with_badges",
+				_past_the_gate(lambda: restaurant.get_card_items_with_badges(NONE)),
+			),
+			# A service gesture, no longer any desk account's: whoever reads the preparation stations
+			(
+				"update_takeaway_status",
+				_past_the_gate(lambda: restaurant.update_takeaway_status(NONE, "Ready")),
+			),
+			# A table is opened at a till the caller works at
+			(
+				"open_table",
+				_past_the_gate(lambda: restaurant.open_table(NONE, PROFILE), frappe.ValidationError),
+			),
 		]
 
 	def _restaurant_management_calls(self):
@@ -391,7 +422,9 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			),
 			(
 				"create_table",
-				_past_the_gate(lambda: restaurant.create_table("tillsweep table", NONE), frappe.ValidationError),
+				_past_the_gate(
+					lambda: restaurant.create_table("tillsweep table", NONE), frappe.ValidationError
+				),
 			),
 			("create_station", lambda: restaurant.create_station("tillsweep station")),
 			("create_area", lambda: restaurant.create_area("tillsweep room")),
@@ -400,6 +433,40 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("delete_area", lambda: restaurant.delete_area(NONE)),
 			# The restaurant's settings
 			("save_restaurant_settings", lambda: restaurant.save_restaurant_settings("{}")),
+			# The card editor's reads: the menu designer (maintenance#2002), the item panel, the image search, the option
+			# groups' item search
+			("get_menu_preview_data", _past_the_gate(lambda: menu_pdf.get_menu_preview_data(NONE))),
+			("get_design_templates", menu_pdf.get_design_templates),
+			("get_menu_preview_html", _past_the_gate(lambda: menu_pdf.get_menu_preview_html(card_name=NONE))),
+			("generate_menu_pdf", _past_the_gate(lambda: menu_pdf.generate_menu_pdf(NONE))),
+			(
+				"generate_multi_card_pdf",
+				_past_the_gate(lambda: menu_pdf.generate_multi_card_pdf(json.dumps([NONE]))),
+			),
+			("get_card_items_stock", _past_the_gate(lambda: restaurant.get_card_items_stock(NONE))),
+			# No image provider key on a test site: past the gate, the search says so
+			(
+				"search_food_images",
+				_past_the_gate(lambda: restaurant.search_food_images("tillsweep"), frappe.ValidationError),
+			),
+			("search_items_for_options", lambda: restaurant.search_items_for_options("tillsweep")),
+		]
+
+	def _item_panel_calls(self):
+		"""The item panel's read: whoever manages the cards and reads the item in the ERP. Refused to the till's
+		cashier here; served to a manager who reads items in test_restaurant_permissions (this file's till manager
+		reads none)."""
+		return [("get_item_edit_data", _past_the_gate(lambda: restaurant.get_item_edit_data(NONE, PROFILE)))]
+
+	def _till_manager_calls(self):
+		"""The till's own settings, its managers' (product owner, 30.10.2026): refused to its cashier, answered to a
+		till manager. The warehouse given does not exist: past the gate, the save reports it."""
+		return [
+			("update_pos_settings", lambda: pos_settings.update_pos_settings(PROFILE, json.dumps({}))),
+			(
+				"update_warehouse",
+				_past_the_gate(lambda: pos_profile.update_warehouse(PROFILE, NONE), frappe.ValidationError),
+			),
 		]
 
 	def _manager_calls(self):
@@ -417,7 +484,6 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("get_kds_orders", restaurant.get_kds_orders),
 			("get_runner_orders", restaurant.get_runner_orders),
 			("get_takeaway_orders", restaurant.get_takeaway_orders),
-			("update_takeaway_status", _past_the_gate(lambda: restaurant.update_takeaway_status(NONE, "Ready"))),
 		]
 
 	def _form_calls(self):
@@ -440,6 +506,8 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			("get_daily_trend", lambda: shifts_report.get_daily_trend(today)),
 			("apply_referral_code", self._apply_made_up_referral_code),
 			("get_referral_codes", promotions.get_referral_codes),
+			# The item creation dialog: whoever may create an item
+			("get_item_creation_defaults", restaurant.get_item_creation_defaults),
 		]
 
 	def _apply_made_up_referral_code(self):
@@ -570,6 +638,8 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._desk_calls()
 			+ self._form_calls()
 			+ self._restaurant_management_calls()
+			+ self._item_panel_calls()
+			+ self._till_manager_calls()
 		)
 
 	def test_a_portal_account_is_refused_everywhere(self):
@@ -588,14 +658,49 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._manager_calls()
 			+ self._form_calls()
 			+ self._restaurant_management_calls()
+			+ self._item_panel_calls()
+			+ self._till_manager_calls()
 		):
 			self._refused(DESK, label, call)
 		for label, call in self._desk_calls():
 			self._served(DESK, label, call)
 
+	def test_the_till_settings_are_its_managers(self):
+		settings = frappe.db.get_value("POS Settings", {"pos_profile": PROFILE})
+		before = frappe.db.get_value("POS Settings", settings, ["search_limit", "modified"])
+		changed = json.dumps({"search_limit": 7})
+		for label, call in self._till_manager_calls():
+			self._refused(TILL, label, call)
+		self._refused(TILL, "update_pos_settings", lambda: pos_settings.update_pos_settings(PROFILE, changed))
+		self.assertEqual(frappe.db.get_value("POS Settings", settings, ["search_limit", "modified"]), before)
+		for label, call in self._till_manager_calls():
+			self._served(MANAGER, label, call)
+		self._served(
+			MANAGER, "update_pos_settings", lambda: pos_settings.update_pos_settings(PROFILE, changed)
+		)
+		self.assertEqual(frappe.db.get_value("POS Settings", settings, "search_limit"), 7)
+
+	def test_the_pass_delivers_only_the_lines_of_the_invoice_named(self):
+		own = frappe.db.get_value("Sales Invoice Item", {"parent": self.fx.invoice}, "name")
+		other_invoice = frappe.copy_doc(frappe.get_doc("Sales Invoice", self.fx.invoice)).insert(
+			ignore_permissions=True
+		)
+		other = other_invoice.items[0].name
+		frappe.set_user(TILL)
+		try:
+			with self.assertRaises(frappe.ValidationError):
+				restaurant.mark_items_delivered(self.fx.invoice, json.dumps([own, other]))
+			restaurant.mark_items_delivered(self.fx.invoice, json.dumps([own]))
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("Sales Invoice Item", own, "kds_status"), "Delivered")
+		self.assertNotEqual(frappe.db.get_value("Sales Invoice Item", other, "kds_status"), "Delivered")
+
 	def test_the_restaurant_is_set_up_by_its_managers(self):
 		# The till's cashier may not set the restaurant up; a till manager (who manages the restaurant as well)
 		# may. Each served call is undone before the next, so that none depends on another.
+		for label, call in self._item_panel_calls():
+			self._refused(TILL, label, call)
 		for label, call in self._restaurant_management_calls():
 			self._refused(TILL, label, call)
 			frappe.db.savepoint("tillsweep_restaurant")
@@ -678,9 +783,12 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			return lambda: restaurant.update_takeaway_status(invoice, status)
 
 		frappe.db.set_value("Sales Invoice", invoice, {"is_pos": 1, "is_takeaway": 1}, update_modified=False)
-		self.assertEqual(self._served(DESK, "update_takeaway_status", mark("Ready")), {"status": "success"})
+		# A service gesture: the till's cashier sets it, a desk account that reads no preparation station does not
+		# (NeoRestau lot 1, task 3)
+		self._refused(DESK, "update_takeaway_status", mark("Ready"))
+		self.assertEqual(self._served(TILL, "update_takeaway_status", mark("Ready")), {"status": "success"})
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "kds_status"), "Ready")
-		frappe.set_user(DESK)
+		frappe.set_user(TILL)
 		try:
 			for status in ("Paid", "", None):
 				with self.assertRaises(frappe.ValidationError, msg=repr(status)):
@@ -689,9 +797,9 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			frappe.set_user("Administrator")
 		# Not a takeaway order, or no longer a draft: refused, and the status stays.
 		frappe.db.set_value("Sales Invoice", invoice, "is_takeaway", 0, update_modified=False)
-		self._refused(DESK, "update_takeaway_status", mark("Delivered"))
+		self._refused(TILL, "update_takeaway_status", mark("Delivered"))
 		frappe.db.set_value("Sales Invoice", invoice, {"is_takeaway": 1, "docstatus": 1}, update_modified=False)
-		self._refused(DESK, "update_takeaway_status", mark("Delivered"))
+		self._refused(TILL, "update_takeaway_status", mark("Delivered"))
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice, "kds_status"), "Ready")
 
 	def test_hooks_and_server_helpers_are_not_web_endpoints(self):

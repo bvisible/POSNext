@@ -232,7 +232,9 @@
 		<div class="w-8 border-t border-gray-200 my-2"></div>
 
 		<!-- Settings -->
+		<!-- //// Neoffice — a till's settings are its managers' (product owner, 30.10.2026): the entry shows to whoever the server lets save them (restaurant_can.manage_till_settings) -->
 		<button
+			v-if="restaurantCan.manage_till_settings"
 			@click="handleMenuClick('settings')"
 			:class="[
 				'w-12 h-12 rounded-lg flex items-center justify-center transition-all relative group',

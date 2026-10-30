@@ -176,6 +176,12 @@ def update_pos_settings(pos_profile, settings):
 
 	from frappe import _
 
+	# //// Neoffice — a till's settings are its managers' (product owner, 30.10.2026): upstream let any user assigned to
+	# //// the till, a cashier included, save them. Lot 0's till managers (cash_entry.TILL_MANAGER_ROLES) only; a
+	# //// cashier, a portal account and a visitor get PermissionError before anything is read (#1967).
+	from pos_next.api.cash_entry import require_till_manager
+
+	require_till_manager()
 	if isinstance(settings, str):
 		settings = json.loads(settings)
 

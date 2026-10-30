@@ -2,7 +2,8 @@
  * //// Neoffice — added file (no upstream equivalent). The management rail of a restaurant till shows each restaurant
  * //// entry to whoever the server lets use it (NeoRestau lot 1, task 3; `restaurant_can` of the till's settings):
  * //// the cards, the option groups and the preparation workflows to the restaurant's managers, the tips to whoever
- * //// may read them, the reservations to every user of the till.
+ * //// may read them, the reservations to every user of the till. The till's own settings are its managers'
+ * //// (product owner, 30.10.2026): the Settings entry shows to whoever may save them.
  * @vitest-environment jsdom
  */
 import { mount } from "@vue/test-utils"
@@ -27,7 +28,36 @@ const NO_RIGHT = {
 	manage_workflows: false,
 	manage_settings: false,
 	view_tips: false,
+	edit_items: false,
+	edit_prices: false,
+	manage_till_settings: false,
 }
+
+describe("the management rail shows the till's settings to whoever may save them", () => {
+	let wrapper
+
+	function settingsEntry(can) {
+		Object.assign(restaurantStore, { can, tipsEnabled: false, isEnabled: false })
+		wrapper = mount(ManagementSlider, { global: { mocks: { __: globalThis.__ } } })
+		return wrapper.findAll("button").some((button) => button.attributes("title") === "Settings")
+	}
+
+	afterEach(() => {
+		wrapper?.unmount()
+	})
+
+	it("shows the Settings entry to a till manager", () => {
+		expect(settingsEntry({ ...NO_RIGHT, manage_till_settings: true })).toBe(true)
+	})
+
+	it("hides it from a cashier, whatever the restaurant lets him manage", () => {
+		expect(settingsEntry({ ...NO_RIGHT, view_tips: true, manage_settings: true })).toBe(false)
+	})
+
+	it("hides it while the server has not said what the user may do", () => {
+		expect(settingsEntry(undefined)).toBe(false)
+	})
+})
 
 describe("the management rail shows what the user may manage of the restaurant", () => {
 	let wrapper

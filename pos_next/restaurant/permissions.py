@@ -13,7 +13,13 @@ then saves as that user, so that Frappe checks the same rules once more on the d
 Who holds which right is written in the doctypes' JSON: the restaurant's managers (`Restaurant Manager`, the
 customer's `Admin`, the till manager `Nexus POS Manager`) read, write, create and delete everything; a cashier
 (`POSNext Cashier`) reads it all, takes reservations, records tips and sets the status of a table; the kitchen
-(`Restaurant Kitchen`) reads the preparation stations and workflows.
+(`Restaurant Kitchen`) reads the preparation stations and workflows. That role has no desk access: an account that
+holds it alone is a portal account, which every endpoint refuses, so a kitchen tablet runs on a desk account that also
+holds a till role (a cashier's), until the devices get accounts of their own (NeoRestau lot 4).
+
+The item sheet (description, image, colour) and the till's price list are the ERP's Item and Item Price: whoever
+edits them from the till needs the ERP's own rights on them. The badges and spice level of a dish, and its price and
+availability on a card, are the restaurant's (`manage_cards`).
 """
 
 import frappe
@@ -44,10 +50,11 @@ DOCTYPES = (
 	"Restaurant Tip",
 )
 # The roles whose rules grant_restaurant_permissions() carries over to a site that customized those doctypes
-GRANTED_ROLES = (*MANAGER_ROLES, TILL_MANAGER_ROLE, KITCHEN_ROLE)
+CASHIER_ROLE = "POSNext Cashier"
+GRANTED_ROLES = (*MANAGER_ROLES, TILL_MANAGER_ROLE, KITCHEN_ROLE, CASHIER_ROLE)
 
 # What the till is told the user may do, and the right on a doctype that decides it. The floor plan is the rooms':
-# a cashier may write a table (its status), never a room.
+# a cashier may write a table (its status), never a room. The item sheet and the price list are the ERP's.
 RIGHTS = {
 	"manage_floor": ("Restaurant Area", "write"),
 	"manage_cards": ("Restaurant Card", "write"),
@@ -55,6 +62,8 @@ RIGHTS = {
 	"manage_workflows": ("Preparation Workflow", "write"),
 	"manage_settings": ("Restaurant", "write"),
 	"view_tips": ("Restaurant Tip", "read"),
+	"edit_items": ("Item", "write"),
+	"edit_prices": ("Item Price", "write"),
 }
 
 
@@ -79,18 +88,22 @@ def require_right(right: str) -> None:
 	require(doctype, ptype)
 
 
-def _is_desk_account() -> bool:
-	user = frappe.session.user
-	if user == "Administrator":
-		return True
-	return user != "Guest" and frappe.get_cached_value("User", user, "user_type") == "System User"
+def require_restaurant(restaurant: str | None) -> None:
+	"""Refuse whoever may not read the restaurant whose records an endpoint answers (none named: nothing to check).
+
+	It is where per-restaurant user permissions apply: a user restricted to one restaurant reads no other's.
+	"""
+	if restaurant:
+		require("Restaurant", "read", restaurant)
 
 
 def can(right: str) -> bool:
 	"""Whether the session user may do what the till's `right` stands for (the check `require_right` makes)."""
+	from pos_next.api.cash_entry import is_desk_account
+
 	doctype, ptype = RIGHTS[right]
 	try:
-		return _is_desk_account() and bool(frappe.has_permission(doctype, ptype))
+		return is_desk_account() and bool(frappe.has_permission(doctype, ptype))
 	except frappe.DoesNotExistError:
 		# The code is updated and the site is not migrated yet: the doctype is not there to be managed
 		frappe.clear_last_message()
@@ -98,8 +111,16 @@ def can(right: str) -> bool:
 
 
 def rights_of_the_user() -> dict[str, bool]:
-	"""Every right of RIGHTS, for the session user: what the till shows him."""
-	return {right: can(right) for right in RIGHTS}
+	"""Every right of RIGHTS for the session user, and whether he may save the till's settings: what the till shows him.
+
+	The till's own settings (its POS Settings, its warehouse) are its managers' (product owner, 30.10.2026): lot 0's
+	till managers (cash_entry.TILL_MANAGER_ROLES), whatever the restaurant's rights.
+	"""
+	from pos_next.api.cash_entry import is_till_manager
+
+	rights = {right: can(right) for right in RIGHTS}
+	rights["manage_till_settings"] = is_till_manager()
+	return rights
 
 
 def ensure_restaurant_roles() -> None:
@@ -121,16 +142,18 @@ def ensure_restaurant_roles() -> None:
 			doc.save(ignore_permissions=True)
 
 
-def grant_restaurant_permissions() -> None:
+def grant_restaurant_permissions() -> list[str]:
 	"""Carry the rules the doctypes' JSON gives the restaurant's roles over to the doctypes a site customized.
 
 	Frappe reads a doctype's rules from its JSON until the site customizes it (one Custom DocPerm row), and from then on
 	from the custom rules alone: a rule this app adds to its JSON later never reaches that site. On the fleet every
 	restaurant doctype is customized (the customer's administrator was given read on every doctype), so the rules of
-	GRANTED_ROLES are carried over here, the way the site keeps them: a missing rule is added, and a rule that grants
-	less than the JSON gets the rights the JSON grants (the customer's administrator only read the restaurant, he
-	manages it now). Nothing is ever taken away, and the rules of the other roles are left as the site has them.
-	A doctype the site did not customize reads its JSON: nothing to do.
+	GRANTED_ROLES are carried over here, for a role that has no rule at all on that doctype, as the JSON writes it.
+
+	A rule the site has for a role is the site's, whatever it grants: it is never changed, never widened (a customer
+	may have narrowed it on purpose), never removed. On the fleet that keeps the customer's administrator (`Admin`)
+	reading the restaurant's doctypes only, as the theme granted him: he manages the restaurant through the roles that
+	manage it. A doctype the site did not customize reads its JSON: nothing to do. Returns the doctypes given a rule.
 	"""
 	from frappe.permissions import rights
 
@@ -155,42 +178,25 @@ def grant_restaurant_permissions() -> None:
 			granted = {right: 1 for right in rights if rule.get(right)}
 			if not granted or not frappe.db.exists("Role", rule.role):
 				continue
+			# A role the site already has a rule for, at any level, keeps it as it is
+			if frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": rule.role}):
+				continue
 			try:
-				if _grant(doctype, rule.role, granted, rights):
-					changed.add(doctype)
+				frappe.get_doc(
+					{
+						"doctype": "Custom DocPerm",
+						"parent": doctype,
+						"parenttype": "DocType",
+						"parentfield": "permissions",
+						"role": rule.role,
+						"permlevel": 0,
+						"if_owner": 0,
+						**granted,
+					}
+				).insert(ignore_permissions=True)
+				changed.add(doctype)
 			except Exception:
 				frappe.log_error(f"POS Next: restaurant permission on {doctype}", frappe.get_traceback())
 	for doctype in changed:
 		frappe.clear_cache(doctype=doctype)
-
-
-def _grant(doctype: str, role: str, granted: dict, rights: tuple) -> bool:
-	"""Give `role` at least the `granted` rights on a customized doctype; True when a rule was added or widened."""
-	custom = frappe.get_all(
-		"Custom DocPerm",
-		filters={"parent": doctype, "role": role, "permlevel": 0, "if_owner": 0},
-		fields=["name", *rights],
-		order_by="creation asc",
-	)
-	if not custom:
-		frappe.get_doc(
-			{
-				"doctype": "Custom DocPerm",
-				"parent": doctype,
-				"parenttype": "DocType",
-				"parentfield": "permissions",
-				"role": role,
-				"permlevel": 0,
-				"if_owner": 0,
-				**granted,
-			}
-		).insert(ignore_permissions=True)
-		return True
-	missing = [right for right in granted if not custom[0].get(right)]
-	if not missing:
-		return False
-	doc = frappe.get_doc("Custom DocPerm", custom[0].name)
-	for right in missing:
-		doc.set(right, 1)
-	doc.save(ignore_permissions=True)
-	return True
+	return sorted(changed)

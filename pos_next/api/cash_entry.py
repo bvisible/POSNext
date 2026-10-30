@@ -33,15 +33,23 @@ def require_till_access(pos_profile, profile_optional=False):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-# //// Neoffice — added function (no upstream equivalent). The desk-account half of
-# //// require_till_access, for the till's endpoints that name no POS Profile: a visitor or a portal
-# //// account (Website User) is refused. Administrator is a desk account by construction (frappe
-# //// fixes its user_type), so it is answered without a lookup.
-def require_system_user():
+# //// Neoffice — added function (no upstream equivalent). Whether the session user is a desk account:
+# //// the one rule every gate of the till and of the restaurant reads (require_system_user,
+# //// is_till_manager, pos_next.restaurant.permissions). A visitor or a portal account (Website User) is
+# //// not, whatever roles it was given. Administrator is a desk account by construction (frappe fixes
+# //// its user_type), so it is answered without a lookup.
+def is_desk_account():
 	user = frappe.session.user
 	if user == "Administrator":
-		return
-	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
+		return True
+	return user != "Guest" and frappe.get_cached_value("User", user, "user_type") == "System User"
+
+
+# //// Neoffice — added function (no upstream equivalent). The desk-account half of
+# //// require_till_access, for the till's endpoints that name no POS Profile: a visitor or a portal
+# //// account (Website User) is refused (is_desk_account).
+def require_system_user():
+	if not is_desk_account():
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
@@ -58,7 +66,7 @@ def is_till_manager():
 	user = frappe.session.user
 	if user == "Administrator":
 		return True
-	if user == "Guest" or frappe.get_cached_value("User", user, "user_type") != "System User":
+	if not is_desk_account():
 		return False
 	return bool(set(TILL_MANAGER_ROLES).intersection(frappe.get_roles(user)))
 

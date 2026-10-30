@@ -36,7 +36,7 @@ describe("the restaurant store knows what the user may manage", () => {
 		store = useRestaurantStore()
 	})
 
-	it("knows the six rights the server tells of", () => {
+	it("knows the rights the server tells of: the restaurant's, the ERP's on items and prices, the till's settings", () => {
 		expect(RESTAURANT_RIGHTS).toEqual([
 			"manage_floor",
 			"manage_cards",
@@ -44,6 +44,9 @@ describe("the restaurant store knows what the user may manage", () => {
 			"manage_workflows",
 			"manage_settings",
 			"view_tips",
+			"edit_items",
+			"edit_prices",
+			"manage_till_settings",
 		])
 	})
 

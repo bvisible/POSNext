@@ -21,9 +21,17 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import nowdate
 
 from pos_next import install
+from pos_next.api import menu_pdf
 from pos_next.api import restaurant as restaurant_api
 from pos_next.api.cash_entry import require_till_user
-from pos_next.api.menu_pdf import save_card_design
+from pos_next.api.menu_pdf import (
+	generate_menu_pdf,
+	generate_multi_card_pdf,
+	get_design_templates,
+	get_menu_preview_data,
+	get_menu_preview_html,
+	save_card_design,
+)
 from pos_next.api.reservations import check_table_availability
 from pos_next.api.restaurant import (
 	create_area,
@@ -38,10 +46,27 @@ from pos_next.api.restaurant import (
 	delete_table,
 	download_food_image,
 	duplicate_card,
+	get_active_cards,
+	get_active_menus,
+	get_all_product_option_groups,
+	get_card_items_extra,
+	get_card_items_stock,
+	get_card_items_with_badges,
+	get_item_badges,
+	get_item_creation_defaults,
+	get_item_edit_data,
+	get_menu_badges,
+	get_next_step,
+	get_next_takeaway_number,
 	get_or_create_permanent_card,
 	get_preparation_stations,
+	get_preparation_workflows,
+	get_product_options,
 	get_restaurant_cards,
 	get_restaurant_settings,
+	get_restaurant_status,
+	get_station_details,
+	get_station_items_map,
 	get_station_workflows,
 	get_tips,
 	mark_table_available,
@@ -56,6 +81,8 @@ from pos_next.api.restaurant import (
 	save_station_positions,
 	save_table_positions,
 	save_tip_settings,
+	search_food_images,
+	search_items_for_options,
 	update_item_active,
 	update_item_badges,
 	update_item_details,
@@ -81,7 +108,15 @@ ADMIN = "restaurant-rights-admin@yopmail.com"
 CASHIER_ROLE = "POSNext Cashier"
 RESTAURANT = "_Test Rights Restaurant"
 IMAGE = (b"\xff\xd8\xff", "jpg")
-EVERY_RIGHT = set(permissions.RIGHTS)
+# What the till is told: the restaurant's rights, the ERP's on items and prices, the till's own settings
+EVERY_RIGHT = {*permissions.RIGHTS, "manage_till_settings"}
+# A restaurant's manager without the ERP's item rights, at a till he does not manage
+MANAGER_IS_TOLD = {
+	**dict.fromkeys(EVERY_RIGHT, True),
+	"edit_items": False,
+	"edit_prices": False,
+	"manage_till_settings": False,
+}
 # Every right a manager role holds on a management doctype
 MANAGE = {"read", "write", "create", "delete"}
 
@@ -102,7 +137,10 @@ class RestaurantRights(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
-		# Whatever a test built, and a setUp that stops halfway, is rolled back: cleanups run in both cases
+		# Whatever a test built, and a setUp that stops halfway, is rolled back: cleanups run in both cases. The rules a
+		# grant gave inside the transaction are dropped from the cache once it is rolled back (registered first, run last)
+		self.changed_rules = []
+		self.addCleanup(lambda: [frappe.clear_cache(doctype=doctype) for doctype in self.changed_rules or []])
 		self.addCleanup(frappe.set_user, "Administrator")
 		self.addCleanup(frappe.db.rollback)
 		# A few endpoints commit: nothing of a test may stay
@@ -115,7 +153,7 @@ class RestaurantRights(FrappeTestCase):
 			patcher.start()
 			self.addCleanup(patcher.stop)
 		ensure_restaurant_roles()
-		grant_restaurant_permissions()
+		self.changed_rules = grant_restaurant_permissions()
 		company = frappe.get_all("Company", limit=1, pluck="name")
 		if not company:
 			self.skipTest("The site has no company")
@@ -215,7 +253,8 @@ class RestaurantRights(FrappeTestCase):
 		]
 
 	def reads(self):
-		"""(callable, kwargs): what the till reads of the restaurant, with the endpoints' real signatures."""
+		"""(callable, kwargs): what the till reads of the restaurant during the service, with the endpoints' real
+		signatures. A cashier reads them all; a portal account none."""
 		return [
 			(get_tips, {"restaurant": self.restaurant}),
 			(get_restaurant_settings, {"restaurant": self.restaurant}),
@@ -227,7 +266,57 @@ class RestaurantRights(FrappeTestCase):
 				check_table_availability,
 				{"tables": json.dumps([self.table]), "date": nowdate(), "time": "12:00:00", "duration": 3600},
 			),
+			(get_station_items_map, {"restaurant": self.restaurant}),
+			(get_station_details, {"name": self.station}),
+			(get_product_options, {"item_code": self.item}),
+			(get_all_product_option_groups, {}),
+			(get_active_cards, {"restaurant": self.restaurant}),
+			(get_active_menus, {"restaurant": self.restaurant}),
+			(get_restaurant_status, {"restaurant": self.restaurant}),
+			(get_preparation_workflows, {}),
+			(get_next_step, {"station_name": self.station, "current_step": "Pending"}),
+			(get_next_takeaway_number, {}),
+			(get_card_items_extra, {"card_name": self.card}),
+			(get_menu_badges, {}),
+			(get_item_badges, {"item_code": self.item}),
+			(get_card_items_with_badges, {"card_name": self.card}),
 		]
+
+	def card_editor_reads(self):
+		"""(callable, kwargs): what only the card editor reads (the menu designer, the item panel, the image search, the
+		option groups' item search): whoever manages the cards, or the option groups. A cashier reads none."""
+		return [
+			(get_menu_preview_data, {"card_name": self.card}),
+			(get_design_templates, {}),
+			(get_menu_preview_html, {"card_name": self.card}),
+			(generate_menu_pdf, {"card_name": self.card}),
+			(generate_multi_card_pdf, {"card_names": json.dumps([self.card])}),
+			(get_item_edit_data, {"item_code": self.item}),
+			(get_card_items_stock, {"card_name": self.card}),
+			(search_food_images, {"query": "_test pasta"}),
+			(search_items_for_options, {"query": "_PNXT"}),
+		]
+
+	@contextmanager
+	def a_response(self):
+		"""A response of its own for the endpoints that answer a download; the one before is put back."""
+		saved = frappe.local.response
+		frappe.local.response = frappe._dict()
+		try:
+			yield frappe.local.response
+		finally:
+			frappe.local.response = saved
+
+	@contextmanager
+	def no_pdf_engine_and_no_image_provider(self):
+		"""The PDF engine and the image provider stand in: the test runs no wkhtmltopdf and calls no provider."""
+		answer = frappe._dict(json=lambda: {"photos": [], "total_results": 0}, raise_for_status=lambda: None)
+		with (
+			patch("pdfkit.from_string", return_value=b"%PDF-1.4") as engine,
+			patch.dict(frappe.local.conf, {"pexels_api_key": "_test"}),
+			patch("requests.get", return_value=answer),
+		):
+			yield engine
 
 
 class TestTheServerDecides(RestaurantRights):
@@ -246,6 +335,13 @@ class TestTheServerDecides(RestaurantRights):
 				with self.subTest(fn=fn.__name__, kwargs=kwargs), self.assertRaises(frappe.PermissionError):
 					fn(**kwargs)
 		self.assertEqual(self.snapshot(), before)
+
+	def test_a_cashier_cannot_use_the_card_editor(self):
+		with as_user(self.cashier), self.no_pdf_engine_and_no_image_provider() as engine:
+			for fn, kwargs in [*self.card_editor_reads(), (get_item_creation_defaults, {})]:
+				with self.subTest(fn=fn.__name__, kwargs=kwargs), self.assertRaises(frappe.PermissionError):
+					fn(**kwargs)
+		engine.assert_not_called()
 
 	def snapshot(self):
 		"""What the management calls would change, among the test's own records and what they would make."""
@@ -278,15 +374,20 @@ class TestTheServerDecides(RestaurantRights):
 		self.assertFalse(frappe.db.exists("Restaurant Table", self.spare_table))
 
 	def test_a_restaurant_manager_runs_the_whole_set_up(self):
-		# The item sheet is the ERP's Item: whoever edits it from the till may edit it in the ERP (Item Manager). The
-		# price list is the ERP's too, so the global price is left out here (see the next test).
-		make_user(self.manager, ["Item Manager"])
+		# A manager who holds no right on the ERP's items: the item sheet and the price list are the ERP's (see the
+		# next test), everything else is the restaurant's
 		calls = [
 			(fn, kwargs)
-			for fn, kwargs in self.management_calls()
+			for fn, kwargs in [*self.management_calls(), *self.card_editor_reads()]
 			if not (fn is update_item_price and kwargs.get("scope") == "global")
+			and not (fn is update_item_details and "description" in kwargs)
 		]
-		with as_user(self.manager), patch.object(restaurant_api, "_fetch_food_image", return_value=IMAGE):
+		with (
+			as_user(self.manager),
+			patch.object(restaurant_api, "_fetch_food_image", return_value=IMAGE),
+			self.no_pdf_engine_and_no_image_provider(),
+			self.a_response(),
+		):
 			for fn, kwargs in calls:
 				with self.subTest(fn=fn.__name__, kwargs=kwargs):
 					frappe.db.savepoint("manager_call")
@@ -305,20 +406,40 @@ class TestTheServerDecides(RestaurantRights):
 		with as_user(self.manager):
 			for fn, kwargs in (
 				(update_item_details, {"item_code": self.item, "description": "_Test"}),
-				(update_item_badges, {"item_code": self.item}),
+				(update_item_details, {"item_code": self.item, "color": "#ff0000", "badges": "[]"}),
 				(update_item_price, {"item_code": self.item, "price": 3, "scope": "global"}),
 			):
-				with self.subTest(fn=fn.__name__), self.assertRaises(frappe.PermissionError):
+				with self.subTest(fn=fn.__name__, kwargs=kwargs), self.assertRaises(frappe.PermissionError):
 					fn(**kwargs)
-			# The price on one of the restaurant's cards is the restaurant's
+			# What the item panel saves of a dish for such a manager is the restaurant's: the card's price and
+			# availability, the badges and spice level the card prints, the dish's option groups
 			update_item_price(item_code=self.item, price=3, card_name=self.card)
-		self.assertEqual(frappe.db.get_value("Restaurant Card Item", {"parent": self.card}, "price"), 3)
+			update_item_active(item_code=self.item, disabled=1, card_name=self.card)
+			update_item_badges(item_code=self.item, badges="[]", spice_level=2)
+			update_item_details(item_code=self.item, option_groups=json.dumps([self.option_group]))
+		self.assertEqual(
+			frappe.db.get_value("Restaurant Card Item", {"parent": self.card}, ["price", "disabled"]), (3, 1)
+		)
+		self.assertEqual(frappe.db.get_value("Item", self.item, "custom_spice_level"), 2)
+		self.assertTrue(
+			frappe.db.exists("Product Option Group Item", {"parent": self.option_group, "item": self.item})
+		)
 		self.assertEqual(frappe.db.get_value("Item", self.item, ["description", "standard_rate"]), item)
+		# Given the ERP's right on items, the sheet changes, and what a call does not name stays (the spice level
+		# used to fall back to 0 whenever a call did not name it)
+		make_user(self.manager, ["Item Manager"])
+		with as_user(self.manager):
+			update_item_details(item_code=self.item, description="_Test sheet")
+		# (the description is a text editor field: Frappe wraps it in HTML)
+		description, spice_level = frappe.db.get_value(
+			"Item", self.item, ["description", "custom_spice_level"]
+		)
+		self.assertIn("_Test sheet", description)
+		self.assertEqual(spice_level, 2)
 		# The till's price list wants the ERP's right on prices, checked before anything is written
 		_user(TILL, [CASHIER_ROLE], "System User")
 		_user(OTHER_TILL, ["Blogger"], "System User")
 		till = _till_fixture()
-		make_user(self.manager, ["Item Manager"])
 		with as_user(self.manager), self.assertRaises(frappe.PermissionError):
 			update_item_price(item_code=self.item, price=4, scope="global_only", pos_profile=till.profile)
 		self.assertEqual(frappe.db.get_value("Item", self.item, "standard_rate"), item[1])
@@ -333,27 +454,52 @@ class TestTheServerDecides(RestaurantRights):
 			4,
 		)
 
+	def every_read(self):
+		"""Every read this task gates: the service's, the card editor's, the item creation dialog's, the permanent
+		card's."""
+		return [
+			*self.reads(),
+			*self.card_editor_reads(),
+			(get_item_creation_defaults, {}),
+			(get_or_create_permanent_card, {"restaurant": self.restaurant}),
+		]
+
 	def test_a_website_user_reads_nothing(self):
-		with as_user(self.website_user):
+		with as_user(self.website_user), self.no_pdf_engine_and_no_image_provider():
 			with self.assertRaises(frappe.PermissionError):
 				get_tips()
-			for fn, kwargs in [
-				*self.reads(),
-				(get_or_create_permanent_card, {"restaurant": self.restaurant}),
-			]:
+			for fn, kwargs in self.every_read():
 				with self.subTest(fn=fn.__name__, kwargs=kwargs), self.assertRaises(frappe.PermissionError):
 					fn(**kwargs)
 
 	def test_a_portal_account_is_refused_whatever_roles_it_was_given(self):
 		calls = [
-			*self.reads(),
+			*self.every_read(),
 			*self.management_calls(),
 			(update_table_status, {"table_name": self.table, "status": "Occupied"}),
 		]
-		with as_user(self.portal):
+		with as_user(self.portal), self.no_pdf_engine_and_no_image_provider():
 			for fn, kwargs in calls:
 				with self.subTest(fn=fn.__name__, kwargs=kwargs), self.assertRaises(frappe.PermissionError):
 					fn(**kwargs)
+
+	def test_a_restaurant_the_user_may_not_read_is_refused(self):
+		# A user permission keeps the cashier to another restaurant: he reads that one's settings, tips, stations and
+		# workflows, not this one's
+		other = self.insert(
+			"Restaurant", restaurant_name="_Test Rights Other Restaurant", company=self.company
+		)
+		self.addCleanup(frappe.clear_cache, user=self.cashier)
+		self.addCleanup(frappe.db.rollback)
+		self.insert("User Permission", user=self.cashier, allow="Restaurant", for_value=other)
+		frappe.clear_cache(user=self.cashier)
+		reads = (get_restaurant_settings, get_tips, get_preparation_stations, get_station_workflows)
+		with as_user(self.cashier):
+			for fn in reads:
+				with self.subTest(fn=fn.__name__):
+					with self.assertRaises(frappe.PermissionError):
+						fn(restaurant=self.restaurant)
+					fn(restaurant=other)
 
 	def test_making_the_permanent_card_is_a_managers(self):
 		# None yet: the cashier may not make it, and nothing is made
@@ -429,9 +575,11 @@ class TestTheTillIsToldWhatItsUserMayManage(RestaurantRights):
 			self.told(self.cashier),
 			{right: right == "view_tips" for right in EVERY_RIGHT},
 		)
-		for user in (self.manager, "Administrator"):
-			with self.subTest(user=user):
-				self.assertEqual(self.told(user), dict.fromkeys(EVERY_RIGHT, True))
+		self.assertEqual(self.told(self.manager), MANAGER_IS_TOLD)
+		self.assertEqual(self.told("Administrator"), dict.fromkeys(EVERY_RIGHT, True))
+		# The ERP's rights on items and prices, and the till's settings, are told as the server checks them
+		make_user(self.manager, ["Item Manager", "Sales Master Manager", permissions.TILL_MANAGER_ROLE])
+		self.assertEqual(self.told(self.manager), dict.fromkeys(EVERY_RIGHT, True))
 		# A portal account is told nothing, whatever roles it holds; so is a kitchen account, which has no desk
 		for user in (self.website_user, self.portal, self.kitchen):
 			with self.subTest(user=user):
@@ -446,7 +594,7 @@ class TestTheTillIsToldWhatItsUserMayManage(RestaurantRights):
 			settings = {"restaurant": self.restaurant}
 			registry.extend_bootstrap_settings(settings, None)
 		self.assertEqual(settings["restaurant_name"], RESTAURANT)
-		self.assertEqual(settings["restaurant_can"], dict.fromkeys(EVERY_RIGHT, True))
+		self.assertEqual(settings["restaurant_can"], MANAGER_IS_TOLD)
 
 
 class TestTheRolesAndTheRules(RestaurantRights):
@@ -469,11 +617,9 @@ class TestTheRolesAndTheRules(RestaurantRights):
 		}
 
 	def test_the_rules_of_the_restaurant_doctypes(self):
-		admin = make_user(ADMIN, ["Admin"])
 		for doctype in permissions.DOCTYPES:
 			with self.subTest(doctype=doctype):
-				for user in (self.manager, admin):
-					self.assertTrue(MANAGE <= self.rights_of(user, doctype), user)
+				self.assertTrue(MANAGE <= self.rights_of(self.manager, doctype))
 				self.assertEqual(
 					self.rights_of(self.cashier, doctype),
 					{
@@ -486,63 +632,71 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					self.rights_of(self.kitchen, doctype),
 					{"read"} if doctype in ("Preparation Station", "Preparation Workflow") else set(),
 				)
-		# Every manager role manages every doctype, the till manager of upstream as well
+		# The JSON gives every manager role, the till manager of upstream as well, every right on every doctype. What a
+		# site customized keeps its own rules (see the next test): on the fleet the customer's Admin reads only
 		for role in (*permissions.MANAGER_ROLES, permissions.TILL_MANAGER_ROLE):
-			user = make_user(f"restaurant-rights-{frappe.scrub(role)}@yopmail.com".replace("_", "-"), [role])
 			for doctype in permissions.DOCTYPES:
 				with self.subTest(role=role, doctype=doctype):
-					self.assertTrue(MANAGE <= self.rights_of(user, doctype))
+					rule = frappe.get_all(
+						"DocPerm",
+						filters={"parent": doctype, "parenttype": "DocType", "role": role, "permlevel": 0},
+						fields=list(MANAGE),
+					)
+					self.assertTrue(rule and all(rule[0].values()), rule)
 
 	def test_a_customized_doctype_gets_the_rules_too(self):
 		# A site of the fleet: the doctype's rules were copied when the customer's administrator was given read on
-		# every doctype, before this app's JSON named its managers and its kitchen
+		# every doctype, before this app's JSON named its managers, its kitchen and its cashier
 		doctype = "Preparation Station"
 		self.addCleanup(frappe.clear_cache, doctype=doctype)
 		self.addCleanup(frappe.db.rollback)
 		if not frappe.db.exists("Custom DocPerm", {"parent": doctype}):
 			setup_custom_perms(doctype)
-		roles = (permissions.MANAGER_ROLE, permissions.TILL_MANAGER_ROLE, permissions.KITCHEN_ROLE)
-		frappe.db.delete("Custom DocPerm", {"parent": doctype, "role": ["in", roles]})
-		frappe.db.delete("Custom DocPerm", {"parent": doctype, "role": "Admin"})
-		frappe.get_doc(
-			{
-				"doctype": "Custom DocPerm",
-				"parent": doctype,
-				"parenttype": "DocType",
-				"parentfield": "permissions",
-				"role": "Admin",
-				"read": 1,
-			}
-		).insert(ignore_permissions=True)
-		cashier_rule = frappe.get_all(
-			"Custom DocPerm",
-			filters={"parent": doctype, "role": CASHIER_ROLE},
-			fields=["read", "write", "create"],
+		granted = (
+			permissions.MANAGER_ROLE,
+			permissions.TILL_MANAGER_ROLE,
+			permissions.KITCHEN_ROLE,
+			permissions.CASHIER_ROLE,
 		)
+		frappe.db.delete("Custom DocPerm", {"parent": doctype, "role": ["in", [*granted, "Admin"]]})
+
+		def rule(role, **rights):
+			frappe.get_doc(
+				{
+					"doctype": "Custom DocPerm",
+					"parent": doctype,
+					"parenttype": "DocType",
+					"parentfield": "permissions",
+					"role": role,
+					**rights,
+				}
+			).insert(ignore_permissions=True)
+
+		# The customer's administrator reads only; the till manager's rule was narrowed by the customer
+		rule("Admin", read=1)
+		rule(permissions.TILL_MANAGER_ROLE, read=1)
 		frappe.clear_cache(doctype=doctype)
 		admin = make_user(ADMIN, ["Admin"])
-		self.assertEqual(self.rights_of(admin, doctype), {"read"})
+		till_manager = make_user(
+			"restaurant-rights-till-manager@yopmail.com", [permissions.TILL_MANAGER_ROLE]
+		)
 		self.assertEqual(self.rights_of(self.kitchen, doctype), set())
+		self.assertEqual(self.rights_of(self.cashier, doctype), set())
 
-		grant_restaurant_permissions()
+		self.assertEqual(grant_restaurant_permissions(), [doctype])
 
-		self.assertTrue(MANAGE <= self.rights_of(admin, doctype))
+		# A role with no rule gets the JSON's: the restaurant's manager, the kitchen, the cashier
 		self.assertTrue(MANAGE <= self.rights_of(self.manager, doctype))
 		self.assertEqual(self.rights_of(self.kitchen, doctype), {"read"})
-		# The other roles' rules are the site's, as they were
-		self.assertEqual(
-			frappe.get_all(
-				"Custom DocPerm",
-				filters={"parent": doctype, "role": CASHIER_ROLE},
-				fields=["read", "write", "create"],
-			),
-			cashier_rule,
-		)
+		self.assertEqual(self.rights_of(self.cashier, doctype), {"read"})
+		# A rule the site has is the site's, never widened: the administrator and the till manager still only read
+		self.assertEqual(self.rights_of(admin, doctype), {"read"})
+		self.assertEqual(self.rights_of(till_manager, doctype), {"read"})
 		# Run again, it changes nothing
 		rows = frappe.get_all(
 			"Custom DocPerm", filters={"parent": doctype}, fields=["name", "modified"], order_by="name"
 		)
-		grant_restaurant_permissions()
+		self.assertEqual(grant_restaurant_permissions(), [])
 		self.assertEqual(
 			frappe.get_all(
 				"Custom DocPerm", filters={"parent": doctype}, fields=["name", "modified"], order_by="name"
@@ -568,6 +722,133 @@ class TestTheRolesAndTheRules(RestaurantRights):
 				hook()
 				roles.assert_called_once_with()
 				rules.assert_called_once_with()
+
+
+class TestTheMenuDesigner(RestaurantRights):
+	"""The menu designer is the card editor's (maintenance#2002): whoever manages the cards and reads the card. What it
+	prints is escaped, its design is checked, and the PDF engine runs no script and reads no local file."""
+
+	def designer_calls(self):
+		return [
+			(get_menu_preview_data, {"card_name": self.card}),
+			(get_design_templates, {}),
+			(get_menu_preview_html, {"card_name": self.card}),
+			(generate_menu_pdf, {"card_name": self.card}),
+			(generate_multi_card_pdf, {"card_names": json.dumps([self.card])}),
+			(save_card_design, {"card_name": self.card}),
+		]
+
+	def test_a_portal_account_and_a_cashier_are_refused(self):
+		for user in (self.portal, self.website_user, self.cashier):
+			with as_user(user), self.no_pdf_engine_and_no_image_provider() as engine, self.a_response():
+				for fn, kwargs in self.designer_calls():
+					with self.subTest(user=user, fn=fn.__name__), self.assertRaises(frappe.PermissionError):
+						fn(**kwargs)
+			engine.assert_not_called()
+
+	def test_a_manager_is_served(self):
+		with (
+			as_user(self.manager),
+			self.no_pdf_engine_and_no_image_provider() as engine,
+			self.a_response() as response,
+		):
+			self.assertEqual(
+				get_menu_preview_data(card_name=self.card)["card"]["card_name"], "_Test Rights Card"
+			)
+			self.assertIsInstance(get_design_templates(), list)
+			self.assertIn("_Test Rights Card", get_menu_preview_html(card_name=self.card))
+			generate_menu_pdf(card_name=self.card)
+			self.assertEqual((response.type, response.filecontent), ("download", b"%PDF-1.4"))
+			generate_multi_card_pdf(card_names=json.dumps([self.card, self.card]))
+			save_card_design(card_name=self.card, overrides=json.dumps({"footer_text": "_Test"}))
+		self.assertEqual(engine.call_count, 2)
+
+	def test_the_pdf_engine_runs_no_script_and_reads_no_local_file(self):
+		for paper in ("A4 Portrait", "Custom"):
+			with self.subTest(paper=paper):
+				options = menu_pdf._get_wkhtmltopdf_options({"paper_format": paper})
+				self.assertEqual(
+					(options["disable-javascript"], options["disable-local-file-access"]), ("", "")
+				)
+		with as_user(self.manager), self.no_pdf_engine_and_no_image_provider() as engine, self.a_response():
+			generate_menu_pdf(card_name=self.card)
+		self.assertTrue(
+			{"disable-javascript", "disable-local-file-access"} <= set(engine.call_args.kwargs["options"])
+		)
+
+	def test_an_unknown_override_is_ignored(self):
+		overrides = {"unknown_key": "x", "header_text": "Chef", "style_theme": "../../hooks"}
+		with (
+			as_user(self.manager),
+			patch.object(frappe, "render_template", wraps=frappe.render_template) as render,
+		):
+			get_menu_preview_html(card_name=self.card, overrides=json.dumps(overrides))
+		path, context = render.call_args.args[:2]
+		self.assertNotIn("unknown_key", context["design"])
+		self.assertEqual(str(context["design"]["header_text"]), "Chef")
+		# A theme is one of the design template's, never a path
+		self.assertEqual(path, "pos_next/templates/menu/modern.html")
+		# What a card saves of its design is a design's keys only
+		with as_user(self.manager):
+			save_card_design(
+				card_name=self.card, overrides=json.dumps({"unknown_key": "x", "footer_text": "Bye"})
+			)
+		self.assertEqual(
+			json.loads(frappe.db.get_value("Restaurant Card", self.card, "custom_design_overrides")),
+			{"footer_text": "Bye"},
+		)
+
+	def test_what_the_menu_prints_is_escaped(self):
+		script = "<script>alert(1)</script>"
+		frappe.db.set_value("Restaurant Card", self.card, "description", f"<i>{script}</i>")
+		frappe.db.set_value("Restaurant Card Item", {"parent": self.card}, "label", "<u>Dish</u>")
+		overrides = {
+			"header_text": "<b>Chef</b>",
+			"footer_text": script,
+			"font_body": "x'};</style><script>",
+			"color_primary": "red;}</style>",
+		}
+		with as_user(self.manager):
+			html = get_menu_preview_html(card_name=self.card, overrides=json.dumps(overrides))
+		self.assertNotIn("<script>", html)
+		self.assertNotIn("</style><script>", html)
+		self.assertNotIn("red;}", html)
+		for escaped in (
+			"&lt;b&gt;Chef&lt;/b&gt;",
+			"&lt;u&gt;Dish&lt;/u&gt;",
+			"&lt;script&gt;alert(1)&lt;/script&gt;",
+		):
+			self.assertIn(escaped, html)
+
+	def test_a_css_that_fetches_or_leaves_its_sheet_is_refused(self):
+		fetching = "body { background: url(https://example.invalid/x.png) }"
+		with as_user(self.manager):
+			for css in (fetching, "@import 'x.css';", "</style><script>x</script>", "a { b: u\\72l(x) }"):
+				with self.subTest(css=css), self.assertRaises(frappe.ValidationError):
+					save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": css}))
+		# A design template refuses it on save
+		with self.assertRaises(frappe.ValidationError):
+			self.insert(
+				"Menu Design Template",
+				template_name="_Test Rights Fetching",
+				custom_css="@import url(x.css);",
+			)
+		# One stored before the check prints without it; a CSS that only styles prints as it is
+		template = self.insert(
+			"Menu Design Template",
+			template_name="_Test Rights Plain",
+			style_theme="modern",
+			custom_css="h1 { color: red }",
+		)
+		with as_user(self.manager):
+			self.assertIn(
+				"h1 { color: red }", get_menu_preview_html(card_name=self.card, template_name=template)
+			)
+		frappe.db.set_value("Menu Design Template", template, "custom_css", fetching)
+		with as_user(self.manager):
+			self.assertNotIn(
+				"example.invalid", get_menu_preview_html(card_name=self.card, template_name=template)
+			)
 
 
 class TestTheFirstSettingsMakeTheDefaultRestaurant(RestaurantRights):

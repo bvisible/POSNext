@@ -17,7 +17,8 @@ import { call } from "../utils/apiWrapper"
 
 const log = logger.create("RestaurantStore")
 
-// The rights the server tells the till of (pos_next.restaurant.permissions.RIGHTS)
+// The rights the server tells the till of (pos_next.restaurant.permissions.rights_of_the_user): the restaurant's, the
+// ERP's on the item sheet and on the price list, and the till's own settings
 export const RESTAURANT_RIGHTS = [
 	"manage_floor",
 	"manage_cards",
@@ -25,6 +26,10 @@ export const RESTAURANT_RIGHTS = [
 	"manage_workflows",
 	"manage_settings",
 	"view_tips",
+	"edit_items",
+	"edit_prices",
+	// The till's own settings, its managers' (product owner, 30.10.2026)
+	"manage_till_settings",
 ]
 
 export const useRestaurantStore = defineStore("restaurant", () => {

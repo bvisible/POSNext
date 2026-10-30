@@ -332,11 +332,13 @@ def get_preparation_stations(restaurant=None, station=None):
 	A kitchen screen opened on a station alone (a bookmark made before a site could hold several restaurants) names
 	that station: the restaurant is then the station's, as for `get_kds_orders`.
 	"""
-	# Whoever reads the stations (a cashier, the kitchen, a manager), from a desk account
+	# Whoever reads the stations from a desk account (a cashier, a manager; a kitchen tablet runs on a desk account
+	# that holds a till role), and the restaurant they belong to (per-restaurant user permissions)
 	permissions.require("Preparation Station", "read")
 	if not restaurant and station:
 		restaurant = scope.restaurant_of_record("Preparation Station", station)
 	restaurant = restaurant or scope.current_restaurant()
+	permissions.require_restaurant(restaurant)
 	return scope.stamp(
 		frappe.get_all(
 			"Preparation Station",
@@ -351,6 +353,8 @@ def get_preparation_stations(restaurant=None, station=None):
 @frappe.whitelist()
 def get_station_items_map(restaurant=None):
 	"""Return a mapping of item_code -> station and item_group -> station for the restaurant's active stations."""
+	# The till's service read: whoever reads the stations, from a desk account
+	permissions.require("Preparation Station", "read")
 	restaurant = restaurant or scope.current_restaurant()
 	stations = frappe.get_all(
 		"Preparation Station",
@@ -623,6 +627,7 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 	# And whoever may read the tips (the till's `view_tips`)
 	permissions.require_right("view_tips")
 	restaurant = restaurant or scope.current_restaurant()
+	permissions.require_restaurant(restaurant)
 	filters = {}
 	if from_date:
 		filters["tip_date"] = (">=", from_date)
@@ -831,6 +836,7 @@ def create_station(station_name, station_type="Kitchen", color="#F97316", area=N
 @frappe.whitelist()
 def get_station_details(name):
 	"""Get full preparation station details including items and item groups."""
+	permissions.require("Preparation Station", "read", name)
 	doc = frappe.get_doc("Preparation Station", name)
 	return {
 		"name": doc.name,
@@ -926,6 +932,10 @@ def open_table(table_name, pos_profile, customer=None):
 	"""Open a table by creating a draft Sales Invoice linked to it.
 	Returns the existing draft if one already exists for this table.
 	"""
+	# The till named is one the caller works at (lot 0's rule for a till's endpoint), and he makes invoices there
+	from pos_next.api.cash_entry import require_till_access
+
+	require_till_access(pos_profile)
 	if not frappe.has_permission("Sales Invoice", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -1074,6 +1084,8 @@ def delete_product_option_group(name):
 @frappe.whitelist()
 def search_items_for_options(query=""):
 	"""Search items by name or code for product option group assignment."""
+	# The option groups editor's: whoever manages the option groups (it lists every item of the catalogue)
+	permissions.require_right("manage_options")
 	if not query or len(query) < 2:
 		return []
 	q = f"%{query}%"
@@ -1099,6 +1111,7 @@ def _resolve_option_doctypes():
 def get_product_options(item_code):
 	"""Get all product option groups applicable to an item."""
 	doctype, option_dt, item_dt = _resolve_option_doctypes()
+	permissions.require(doctype, "read")
 	item_group_dt = "Product Option Group Item Group"
 
 	fields = ["name", "group_name", "selection_type", "required", "max_selections"]
@@ -1139,6 +1152,7 @@ get_item_modifiers = get_product_options
 def get_all_product_option_groups():
 	"""Get all product option groups with their options and applicable items for frontend caching."""
 	doctype, option_dt, item_dt = _resolve_option_doctypes()
+	permissions.require(doctype, "read")
 
 	fields = ["name", "group_name", "selection_type", "required", "max_selections"]
 	if frappe.db.has_column(doctype, "apply_to_all_items"):
@@ -1325,6 +1339,7 @@ def get_active_cards(restaurant=None):
 	Permanent cards bypass all date/time filters and appear at the end."""
 	from frappe.utils import today
 
+	permissions.require("Restaurant Card", "read")
 	restaurant = restaurant or scope.current_restaurant()
 	cards = scope.stamp(
 		frappe.get_all(
@@ -1406,6 +1421,7 @@ def get_active_menus(restaurant=None):
 	import json
 	from frappe.utils import today
 
+	permissions.require("Restaurant Menu", "read")
 	restaurant = restaurant or scope.current_restaurant()
 	filters = {"is_active": 1}
 	menus = scope.stamp(
@@ -1459,14 +1475,16 @@ def get_restaurant_settings(restaurant=None):
 	The answer holds what the till's screens read, and nothing else: the settings dialog (hours, tips, QR and
 	takeaway ordering), the restaurant store's flags, the card editor (hours) and the reservation dialog (default
 	duration and channels). Whatever only the server uses — the reminder and no-show rules, online booking, the
-	restaurant's e-mail — stays out. It answers whoever reads the restaurant (a cashier, the kitchen's pass, a
-	manager) from a desk account: a portal account is refused.
+	restaurant's e-mail — stays out. It answers whoever reads the restaurant from a desk account (a cashier, a manager,
+	the pass's tablet when its account holds a till role), and only for a restaurant he may read: a portal account is
+	refused, and per-restaurant user permissions apply.
 	"""
 	permissions.require("Restaurant", "read")
 	settings = restaurant_config.get_restaurant_settings(restaurant)
 	if not settings:
 		# No restaurant yet: nothing is set up, the restaurant features stay off
 		return {"opening_hours": [], "is_open": True, "current_slot": None}
+	permissions.require_restaurant(settings.name)
 
 	hours = []
 	for row in settings.opening_hours or []:
@@ -1597,6 +1615,7 @@ def save_tip_settings(settings, restaurant=None):
 @frappe.whitelist()
 def get_restaurant_status(restaurant=None):
 	"""Lightweight endpoint returning restaurant open/closed status and card availability."""
+	permissions.require("Restaurant", "read")
 
 	# Get opening hours
 	settings = restaurant_config.get_restaurant_settings(restaurant)
@@ -1813,6 +1832,7 @@ def _get_workflow_steps(workflow_name):
 @frappe.whitelist()
 def get_preparation_workflows():
 	"""Fetch all preparation workflows with their steps for the editor."""
+	permissions.require("Preparation Workflow", "read")
 	workflows = frappe.get_all(
 		"Preparation Workflow",
 		fields=["name", "workflow_name", "is_default"],
@@ -1923,9 +1943,11 @@ def delete_preparation_workflow(name):
 @frappe.whitelist()
 def get_station_workflows(restaurant=None):
 	"""Fetch the active stations of the restaurant (the till's own unless one is named) with their resolved workflow steps."""
-	# Whoever reads the stations (a cashier, the kitchen, a manager), from a desk account
+	# Whoever reads the stations from a desk account (a cashier, a manager; a kitchen tablet runs on a desk account
+	# that holds a till role), and the restaurant they belong to (per-restaurant user permissions)
 	permissions.require("Preparation Station", "read")
 	restaurant = restaurant or scope.current_restaurant()
+	permissions.require_restaurant(restaurant)
 	stations = scope.stamp(
 		frappe.get_all(
 			"Preparation Station",
@@ -1964,6 +1986,7 @@ def get_station_workflows(restaurant=None):
 @frappe.whitelist()
 def get_next_step(station_name, current_step, item_code=None):
 	"""Get the next workflow step for a given station/item and current step."""
+	permissions.require("Preparation Workflow", "read")
 	steps = _resolve_workflow(station_name, item_code)
 	step_names = [s["step_name"] for s in steps]
 
@@ -2127,8 +2150,7 @@ def mark_items_delivered(invoice_name, item_names=None):
 	"""Mark specific items (or all ready items) as Delivered."""
 	import json
 
-	if not frappe.has_permission("Sales Invoice", "write"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	permissions.require("Sales Invoice", "write")
 
 	if not frappe.db.exists("Sales Invoice", invoice_name):
 		frappe.throw(_("Invoice {0} not found").format(invoice_name))
@@ -2142,6 +2164,16 @@ def mark_items_delivered(invoice_name, item_names=None):
 	if item_names:
 		if isinstance(item_names, str):
 			item_names = json.loads(item_names)
+		# Only lines of the invoice named: a line of another order is not delivered from this one
+		of_the_invoice = set(
+			frappe.get_all(
+				"Sales Invoice Item",
+				filters={"parent": invoice_name, "parenttype": "Sales Invoice", "name": ["in", list(item_names)]},
+				pluck="name",
+			)
+		)
+		if set(item_names) - of_the_invoice:
+			frappe.throw(_("Some lines are not lines of invoice {0}").format(invoice_name))
 		for row_name in item_names:
 			frappe.db.set_value("Sales Invoice Item", row_name, "kds_status", "Delivered")
 	else:
@@ -2202,6 +2234,8 @@ def get_next_takeaway_number():
 	"""Generate the next takeaway number for today (T-001, T-002...)."""
 	from frappe.utils import today
 
+	# It counts the day's sales invoices: whoever reads them (every cashier), from a desk account
+	permissions.require("Sales Invoice", "read")
 	current_date = today()
 	count = frappe.db.count("Sales Invoice", filters={
 		"is_takeaway": 1,
@@ -2219,6 +2253,8 @@ def update_takeaway_status(invoice_name, status):
 	from pos_next.api.cash_entry import require_system_user
 
 	require_system_user()
+	# A service gesture: whoever reads the preparation stations (a cashier, a manager), not any desk account
+	permissions.require("Preparation Station", "read")
 	statuses = (frappe.get_meta("Sales Invoice").get_options("kds_status") or "").split("\n")
 	if not status or status not in statuses:
 		frappe.throw(_("Invalid status: {0}").format(status))
@@ -2382,6 +2418,8 @@ def create_item(
 @frappe.whitelist()
 def get_item_creation_defaults(pos_profile=None):
 	"""Get default values for the Create Item dialog."""
+	# The dialog creates an item: whoever may create one in the ERP
+	permissions.require("Item", "create")
 	# Item Groups (all, including parent groups)
 	item_groups = frappe.get_all(
 		"Item Group",
@@ -2433,6 +2471,8 @@ def search_food_images(query, per_page=15, page=1):
 	"""Search for food images via Pexels API. API key stored in site_config."""
 	import requests
 
+	# The card editor's (it spends the site's key with the provider): whoever manages the cards
+	permissions.require_right("manage_cards")
 	api_key = frappe.conf.get("pexels_api_key")
 	if not api_key:
 		frappe.throw(_("Pexels API key not configured"))
@@ -2594,6 +2634,9 @@ def duplicate_card(card_name):
 @frappe.whitelist()
 def get_card_items_stock(card_name):
 	"""Get stock quantities for stock-managed items in a card, grouped by warehouse."""
+	# The card editor's: whoever manages the cards (it answers stock in every warehouse)
+	permissions.require_right("manage_cards")
+	permissions.require("Restaurant Card", "read", card_name)
 	card = frappe.get_doc("Restaurant Card", card_name)
 	result = {}
 	for item in card.items:
@@ -2619,6 +2662,12 @@ def get_item_edit_data(item_code, pos_profile=None):
 	"""Fetch all data needed for the item edit panel in CardEditor."""
 	from frappe.utils import flt
 
+	from pos_next.api.cash_entry import require_till_user
+
+	# The card editor's: whoever manages the cards and reads the item, at the till whose price list it answers
+	require_till_user(pos_profile)
+	permissions.require_right("manage_cards")
+	permissions.require("Item", "read", item_code)
 	item = frappe.get_doc("Item", item_code)
 
 	# Get price from price list
@@ -2701,20 +2750,27 @@ def get_item_edit_data(item_code, pos_profile=None):
 
 
 @frappe.whitelist()
-def update_item_details(item_code, description=None, image=None, color=None, option_groups=None, badges=None, spice_level=0):
-	"""Update global Item fields (description, image, color, option groups, badges)."""
+def update_item_details(item_code, description=None, image=None, color=None, option_groups=None, badges=None, spice_level=None):
+	"""Update an item from the card editor: only what is given changes.
+
+	The item sheet (description, image, colour) is the ERP's Item: it is saved as the user, so whoever may not edit
+	items in the ERP does not edit them from the till either. The badges and spice level are the card's data, the
+	option groups the restaurant's (`manage_options`). Until 30.10.2026 the spice level defaulted to 0, so that every
+	call that did not name it reset the dish to "not spicy".
+	"""
 	# //// Neoffice — its caller is the till (ItemEditPanel), so only the till's users pass
 	# //// (cash_entry.require_till_user).
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
-	# And whoever manages the cards (the till's `manage_cards`). The item is the ERP's: it is saved as the user, so
-	# whoever may not edit items in the ERP does not edit them from the till either
+	# And whoever manages the cards (the till's `manage_cards`); each other right is checked before anything is written
 	permissions.require_right("manage_cards")
+	sheet_changes = description is not None or image is not None or color is not None
+	if sheet_changes:
+		permissions.require("Item", "write", item_code)
 	if option_groups is not None:
 		permissions.require("Product Option Group", "write")
 	import json
-	from frappe.utils import cint
 
 	item = frappe.get_doc("Item", item_code)
 
@@ -2725,19 +2781,11 @@ def update_item_details(item_code, description=None, image=None, color=None, opt
 	if color is not None:
 		item.custom_color = color
 
-	# Update badges
-	if badges is not None:
-		if isinstance(badges, str):
-			badges = json.loads(badges)
-		if hasattr(item, "custom_item_badges"):
-			item.custom_item_badges = []
-		for badge_name in (badges or []):
-			item.append("custom_item_badges", {"menu_badge": badge_name})
-
-	if spice_level is not None:
-		item.custom_spice_level = max(0, min(3, cint(spice_level)))
-
-	item.save()
+	if sheet_changes:
+		_set_badges(item, badges, spice_level)
+		item.save()
+	elif badges is not None or spice_level is not None:
+		_save_badges(item, badges, spice_level)
 
 	# Update option groups
 	if option_groups is not None:
@@ -2892,6 +2940,7 @@ def update_item_active(item_code, disabled=0, scope="local", card_name=None):
 @frappe.whitelist()
 def get_card_items_extra(card_name):
 	"""Return description + badges for all items in a card (for list display)."""
+	permissions.require("Restaurant Card", "read", card_name)
 	card = frappe.get_doc("Restaurant Card", card_name)
 	result = {}
 
@@ -2937,6 +2986,7 @@ def get_card_items_extra(card_name):
 @frappe.whitelist()
 def get_menu_badges():
 	"""Return all active Menu Badges."""
+	permissions.require("Menu Badge", "read")
 	return frappe.get_all(
 		"Menu Badge",
 		filters={"is_active": 1},
@@ -2948,6 +2998,8 @@ def get_menu_badges():
 @frappe.whitelist()
 def get_item_badges(item_code):
 	"""Return badges and spice level for a specific item."""
+	permissions.require("Menu Badge", "read")
+	permissions.require("Item", "read", item_code)
 	item = frappe.get_doc("Item", item_code)
 	badges = []
 	if hasattr(item, "custom_item_badges"):
@@ -2971,30 +3023,47 @@ def update_item_badges(item_code, badges=None, spice_level=0):
 	from pos_next.api.cash_entry import require_till_user
 
 	require_till_user()
-	# And whoever manages the cards (the till's `manage_cards`); the item is the ERP's, saved as the user
+	# And whoever manages the cards (the till's `manage_cards`): the badges and the spice level of a dish are what its
+	# card prints, the card's data, not the item sheet (_save_badges)
 	permissions.require_right("manage_cards")
-	import json
-
-	if isinstance(badges, str):
-		badges = json.loads(badges)
-	spice_level = int(spice_level or 0)
-
-	item = frappe.get_doc("Item", item_code)
-	if hasattr(item, "custom_item_badges"):
-		item.custom_item_badges = []
-
-	for badge_name in (badges or []):
-		item.append("custom_item_badges", {"menu_badge": badge_name})
-
-	item.custom_spice_level = max(0, min(3, spice_level))
-	item.save()
+	_save_badges(frappe.get_doc("Item", item_code), badges, spice_level or 0)
 	frappe.db.commit()
 	return {"status": "ok"}
+
+
+def _set_badges(item, badges=None, spice_level=None):
+	"""Put the badges and spice level given (None: unchanged) on an item document."""
+	import json
+
+	from frappe.utils import cint
+
+	if badges is not None:
+		if isinstance(badges, str):
+			badges = json.loads(badges)
+		if hasattr(item, "custom_item_badges"):
+			item.custom_item_badges = []
+		for badge_name in badges or []:
+			item.append("custom_item_badges", {"menu_badge": badge_name})
+	if spice_level is not None:
+		item.custom_spice_level = max(0, min(3, cint(spice_level)))
+
+
+def _save_badges(item, badges=None, spice_level=None):
+	"""Save the badges and spice level of a dish, and nothing else of its item.
+
+	They are the card's data (what the printed card and the guest's menu show), managed with the cards: whoever manages
+	the cards sets them without the ERP's right on the item sheet. The item is loaded as it is stored and only these two
+	fields change, so saving it without the user's Item rights writes nothing else.
+	"""
+	_set_badges(item, badges, spice_level)
+	item.flags.ignore_permissions = True
+	item.save()
 
 
 @frappe.whitelist()
 def get_card_items_with_badges(card_name):
 	"""Return card items enriched with badge info for menu preview/PDF."""
+	permissions.require("Restaurant Card", "read", card_name)
 	card = frappe.get_doc("Restaurant Card", card_name)
 	categories = []
 	current_category = {"label": "", "menu_items": []}
