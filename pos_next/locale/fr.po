@@ -15342,7 +15342,7 @@ msgstr "Plus de papier ou capot ouvert"
 
 #: POS/src/components/settings/CloudPrntTillSettings.vue:105
 msgid "Preparation stations"
-msgstr "Stations de préparation"
+msgstr "Postes de préparation"
 
 #: POS/src/components/settings/CloudPrntTillSettings.vue:43
 msgid "Print the receipt when the sale is validated"
@@ -16990,3 +16990,209 @@ msgstr "Rechercher des articles ({0})"
 
 msgid "Function keys (PC keyboards)"
 msgstr "Touches de fonction (claviers PC)"
+
+# //// Neoffice — NeoRestau lot 1 (2026-10-30): the French of what the lot added - the desk space, the
+# //// restaurant till, the messages of the restaurant API and of its doctypes, the role names. The bare words
+# //// below that other apps of the bench already translate (Admin, Logo, Preparation, Tills, Upcoming,
+# //// sessions open, {0} tickets) carry the very French those apps give them, checked against their
+# //// catalogues: no common word changes for the site.
+#: pos_next/api/menu_pdf.py:353
+msgid "A menu's custom CSS may not load anything (url(), @import, image()) nor contain <"
+msgstr "Le CSS personnalisé d'un menu ne doit rien charger (url(), @import, image()) ni contenir <"
+
+#. Name of a role
+#: pos_next/pos_next/doctype/menu_badge/menu_badge.json:121
+#: pos_next/pos_next/doctype/menu_design_template/menu_design_template.json:248
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:217
+#: pos_next/pos_next/doctype/preparation_workflow/preparation_workflow.json:116
+#: pos_next/pos_next/doctype/product_option_group/product_option_group.json:649
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:335
+#: pos_next/pos_next/doctype/restaurant_area/restaurant_area.json:118
+#: pos_next/pos_next/doctype/restaurant_card/restaurant_card.json:165
+#: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:135
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:245
+#: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:148
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:156
+msgid "Admin"
+msgstr "Administrateur"
+
+#: pos_next/api/restaurant.py:790
+msgid "Capacity must be a whole number of at least 1"
+msgstr "La capacité doit être un nombre entier d'au moins 1"
+
+#: pos_next/restaurant/neorestau.py:152
+msgid "Cards and menus"
+msgstr "Cartes et menus"
+
+#: pos_next/api/menu_pdf.py:381
+msgid "Choose the cards to print"
+msgstr "Choisissez les cartes à imprimer"
+
+# //// Neoffice — the state of a table in NeoRestau's desk lists (Free, Occupied, Cleaning). The bare words are
+# //// shared by the whole site and other apps translate them for their own sense (« Free » is « Gratuit » in
+# //// one app and « Offert » in another), so the table's sense lives under this context and no common word
+# //// changes.
+#: pos_next/restaurant/neorestau.py:236
+msgctxt "Table state"
+msgid "Cleaning"
+msgstr "En nettoyage"
+
+#: POS/src/components/pos/FloorPlanEditor.vue:1777
+#: POS/src/components/pos/FloorPlanEditor.vue:707
+msgid "Failed to load station details"
+msgstr "Échec du chargement des détails du poste"
+
+#: pos_next/restaurant/neorestau.py:140
+msgid "Floor and tables"
+msgstr "Salle et tables"
+
+# //// Neoffice — same context as "Cleaning" above.
+#: pos_next/restaurant/neorestau.py:232
+msgctxt "Table state"
+msgid "Free"
+msgstr "Libre"
+
+#. Label of a Attach Image field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:79
+msgid "Logo"
+msgstr "Logo"
+
+#: pos_next/api/restaurant.py:1626
+msgid "No restaurant is set up yet"
+msgstr "Aucun restaurant n'est encore configuré"
+
+#: pos_next/restaurant/neorestau.py:256
+msgid "No-shows"
+msgstr "Absents"
+
+# //// Neoffice — same context as "Cleaning" above.
+#: pos_next/restaurant/neorestau.py:233
+msgctxt "Table state"
+msgid "Occupied"
+msgstr "Occupée"
+
+#: pos_next/pos_next/doctype/restaurant_table/restaurant_table.py:49
+msgid "Only the status of a table changes without the right to lay out the floor plan"
+msgstr "Sans le droit de modifier le plan de salle, seul l'état d'une table peut changer"
+
+#: pos_next/restaurant/neorestau.py:129
+msgid "Open the restaurant till"
+msgstr "Ouvrir la caisse du restaurant"
+
+#: pos_next/restaurant/neorestau.py:218
+msgid "Preparation"
+msgstr "Préparation"
+
+#. Name of a role
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:235
+#: pos_next/pos_next/doctype/preparation_workflow/preparation_workflow.json:134
+msgid "Restaurant Kitchen"
+msgstr "Cuisine"
+
+#. Name of a role
+#: pos_next/pos_next/doctype/menu_badge/menu_badge.json:109
+#: pos_next/pos_next/doctype/menu_design_template/menu_design_template.json:236
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.json:205
+#: pos_next/pos_next/doctype/preparation_workflow/preparation_workflow.json:104
+#: pos_next/pos_next/doctype/product_option_group/product_option_group.json:637
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:323
+#: pos_next/pos_next/doctype/restaurant_area/restaurant_area.json:106
+#: pos_next/pos_next/doctype/restaurant_card/restaurant_card.json:153
+#: pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json:123
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.json:233
+#: pos_next/pos_next/doctype/restaurant_table/restaurant_table.json:136
+#: pos_next/pos_next/doctype/restaurant_tip/restaurant_tip.json:144
+msgid "Restaurant Manager"
+msgstr "Responsable de salle"
+
+#. Label of a Data field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json:52
+msgid "Restaurant Name"
+msgstr "Nom du restaurant"
+
+#: pos_next/restaurant/mode.py:43
+msgid "Restaurant services are not available"
+msgstr "Les services du restaurant ne sont pas disponibles"
+
+#: POS/src/components/pos/POSHeader.vue:146
+#: POS/src/components/pos/POSHeader.vue:159
+msgid "Restaurant till"
+msgstr "Caisse restaurant"
+
+#: pos_next/restaurant/neorestau.py:215
+msgid "Restaurants"
+msgstr "Restaurants"
+
+#: pos_next/pos_next/doctype/preparation_station/preparation_station.py:33
+#, python-brace-format
+msgid "Room {0} belongs to another restaurant"
+msgstr "La salle {0} appartient à un autre restaurant"
+
+#: pos_next/pos_next/doctype/restaurant_area/restaurant_area.py:34
+#, python-brace-format
+msgid "Room {0} holds tables or stations: it stays in its restaurant"
+msgstr "La salle {0} contient des tables ou des postes : elle reste dans son restaurant"
+
+#: pos_next/api/restaurant.py:2249
+#, python-brace-format
+msgid "Some lines are not lines of invoice {0}"
+msgstr "Certaines lignes n'appartiennent pas à la facture {0}"
+
+#: pos_next/pos_next/doctype/restaurant_reservation/restaurant_reservation.py:33
+#, python-brace-format
+msgid "Table {0} belongs to another restaurant"
+msgstr "La table {0} appartient à un autre restaurant"
+
+#: pos_next/pos_next/doctype/restaurant_table/restaurant_table.py:57
+#, python-brace-format
+msgid "Table {0} stays in its restaurant"
+msgstr "La table {0} reste dans son restaurant"
+
+#. Description of the 'Restaurant' (Link) field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json:179
+msgid "The restaurant this till works for"
+msgstr "Le restaurant auquel cette caisse est rattachée"
+
+#: pos_next/api/restaurant.py:1619
+msgid "These settings belong to a restaurant, and none is named: open the till of a restaurant, or name the restaurant of this till in its POS Settings"
+msgstr "Ces paramètres appartiennent à un restaurant, et aucun n'est indiqué : ouvrez la caisse d'un restaurant, ou indiquez le restaurant de cette caisse dans ses Paramètres POS"
+
+#: pos_next/restaurant/neorestau.py:216
+msgid "Tills"
+msgstr "Caisses"
+
+#: pos_next/api/restaurant.py:1642
+#, python-brace-format
+msgid "Unknown restaurant setting: {0}"
+msgstr "Paramètre de restaurant inconnu : {0}"
+
+#: pos_next/restaurant/neorestau.py:253
+msgid "Upcoming"
+msgstr "À venir"
+
+#: pos_next/restaurant/neorestau.py:334
+msgid "reservations still to come today"
+msgstr "réservations à venir aujourd'hui"
+
+#: pos_next/restaurant/neorestau.py:341
+msgid "sessions open"
+msgstr "sessions ouvertes"
+
+#: pos_next/restaurant/neorestau.py:313
+msgid "tables occupied"
+msgstr "tables occupées"
+
+#: pos_next/restaurant/neorestau.py:325
+#, python-brace-format
+msgid "{0} tickets"
+msgstr "{0} tickets"
+
+#: pos_next/restaurant/scope.py:108
+#, python-brace-format
+msgid "{0} {1} already exists in this restaurant"
+msgstr "{0} {1} existe déjà dans ce restaurant"
+
+#: pos_next/restaurant/neorestau.py:324
+#, python-brace-format
+msgid "{0} · taken today"
+msgstr "{0} · encaissé du jour"
