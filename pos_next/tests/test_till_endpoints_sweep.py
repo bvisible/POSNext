@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import frappe
+import frappe.client
 import frappe.handler
 import requests
 from frappe.api import v2 as api_v2
@@ -673,12 +674,34 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			self._refused(TILL, label, call)
 		self._refused(TILL, "update_pos_settings", lambda: pos_settings.update_pos_settings(PROFILE, changed))
 		self.assertEqual(frappe.db.get_value("POS Settings", settings, ["search_limit", "modified"]), before)
+		# Nor through Frappe's own routes: a cashier holds write on POS Settings, the document refuses him
+		generic = (
+			(
+				"frappe.client.set_value",
+				lambda: frappe.client.set_value("POS Settings", settings, "search_limit", 7),
+			),
+			(
+				"frappe.client.save",
+				lambda: frappe.client.save(
+					dict(frappe.get_doc("POS Settings", settings).as_dict(), search_limit=7)
+				),
+			),
+		)
+		for label, call in generic:
+			self._refused(TILL, label, call)
+		self.assertEqual(frappe.db.get_value("POS Settings", settings, ["search_limit", "modified"]), before)
 		for label, call in self._till_manager_calls():
 			self._served(MANAGER, label, call)
 		self._served(
 			MANAGER, "update_pos_settings", lambda: pos_settings.update_pos_settings(PROFILE, changed)
 		)
 		self.assertEqual(frappe.db.get_value("POS Settings", settings, "search_limit"), 7)
+		self._served(
+			MANAGER,
+			"frappe.client.set_value",
+			lambda: frappe.client.set_value("POS Settings", settings, "search_limit", 9),
+		)
+		self.assertEqual(frappe.db.get_value("POS Settings", settings, "search_limit"), 9)
 
 	def test_the_pass_delivers_only_the_lines_of_the_invoice_named(self):
 		own = frappe.db.get_value("Sales Invoice Item", {"parent": self.fx.invoice}, "name")

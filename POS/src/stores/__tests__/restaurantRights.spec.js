@@ -46,6 +46,7 @@ describe("the restaurant store knows what the user may manage", () => {
 			"view_tips",
 			"edit_items",
 			"edit_prices",
+			"create_items",
 			"manage_till_settings",
 		])
 	})

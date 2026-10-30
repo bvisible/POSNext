@@ -32,7 +32,7 @@ from pos_next.api.menu_pdf import (
 	get_menu_preview_html,
 	save_card_design,
 )
-from pos_next.api.reservations import check_table_availability
+from pos_next.api.reservations import check_table_availability, get_reservation_stats, get_reservations
 from pos_next.api.restaurant import (
 	create_area,
 	create_preparation_workflow,
@@ -115,6 +115,7 @@ MANAGER_IS_TOLD = {
 	**dict.fromkeys(EVERY_RIGHT, True),
 	"edit_items": False,
 	"edit_prices": False,
+	"create_items": False,
 	"manage_till_settings": False,
 }
 # Every right a manager role holds on a management doctype
@@ -462,6 +463,11 @@ class TestTheServerDecides(RestaurantRights):
 			*self.card_editor_reads(),
 			(get_item_creation_defaults, {}),
 			(get_or_create_permanent_card, {"restaurant": self.restaurant}),
+			(get_reservations, {"restaurant": self.restaurant}),
+			(
+				get_reservation_stats,
+				{"from_date": nowdate(), "to_date": nowdate(), "restaurant": self.restaurant},
+			),
 		]
 
 	def test_a_website_user_reads_nothing(self):
@@ -500,6 +506,23 @@ class TestTheServerDecides(RestaurantRights):
 					with self.assertRaises(frappe.PermissionError):
 						fn(restaurant=self.restaurant)
 					fn(restaurant=other)
+
+	def test_a_record_is_named_by_its_name(self):
+		# A JSON body can carry a dict where a name is expected; frappe.get_doc would read it as filters, past the
+		# record's own check: refused, whoever asks
+		with as_user(self.manager):
+			for name in (
+				{"name": self.spare_table},
+				{"table_name": "_Test Rights T9"},
+				["_Test Rights T9"],
+				7,
+			):
+				with self.subTest(name=name):
+					with self.assertRaises(frappe.PermissionError):
+						permissions.require("Restaurant Table", "delete", name)
+					with self.assertRaises(frappe.PermissionError):
+						delete_table(name=name)
+		self.assertTrue(frappe.db.exists("Restaurant Table", self.spare_table))
 
 	def test_making_the_permanent_card_is_a_managers(self):
 		# None yet: the cashier may not make it, and nothing is made
@@ -617,9 +640,11 @@ class TestTheRolesAndTheRules(RestaurantRights):
 		}
 
 	def test_the_rules_of_the_restaurant_doctypes(self):
+		admin = make_user(ADMIN, ["Admin"])
 		for doctype in permissions.DOCTYPES:
 			with self.subTest(doctype=doctype):
-				self.assertTrue(MANAGE <= self.rights_of(self.manager, doctype))
+				for user in (self.manager, admin):
+					self.assertTrue(MANAGE <= self.rights_of(user, doctype), user)
 				self.assertEqual(
 					self.rights_of(self.cashier, doctype),
 					{
@@ -633,7 +658,7 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					{"read"} if doctype in ("Preparation Station", "Preparation Workflow") else set(),
 				)
 		# The JSON gives every manager role, the till manager of upstream as well, every right on every doctype. What a
-		# site customized keeps its own rules (see the next test): on the fleet the customer's Admin reads only
+		# site customized keeps its own rules, the administrator's excepted (see the next test)
 		for role in (*permissions.MANAGER_ROLES, permissions.TILL_MANAGER_ROLE):
 			for doctype in permissions.DOCTYPES:
 				with self.subTest(role=role, doctype=doctype):
@@ -645,9 +670,9 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					self.assertTrue(rule and all(rule[0].values()), rule)
 
 	def test_a_customized_doctype_gets_the_rules_too(self):
-		# A site of the fleet: the doctype's rules were copied when the customer's administrator was given read on
+		# A site of the fleet: the doctype's rules were copied when our theme gave the customer's administrator read on
 		# every doctype, before this app's JSON named its managers, its kitchen and its cashier
-		doctype = "Preparation Station"
+		doctype = "Restaurant Table"
 		self.addCleanup(frappe.clear_cache, doctype=doctype)
 		self.addCleanup(frappe.db.rollback)
 		if not frappe.db.exists("Custom DocPerm", {"parent": doctype}):
@@ -672,7 +697,7 @@ class TestTheRolesAndTheRules(RestaurantRights):
 				}
 			).insert(ignore_permissions=True)
 
-		# The customer's administrator reads only; the till manager's rule was narrowed by the customer
+		# The administrator reads only (our theme's rule); the till manager's rule was narrowed by the customer
 		rule("Admin", read=1)
 		rule(permissions.TILL_MANAGER_ROLE, read=1)
 		frappe.clear_cache(doctype=doctype)
@@ -680,17 +705,17 @@ class TestTheRolesAndTheRules(RestaurantRights):
 		till_manager = make_user(
 			"restaurant-rights-till-manager@yopmail.com", [permissions.TILL_MANAGER_ROLE]
 		)
-		self.assertEqual(self.rights_of(self.kitchen, doctype), set())
+		self.assertEqual(self.rights_of(admin, doctype), {"read"})
 		self.assertEqual(self.rights_of(self.cashier, doctype), set())
 
 		self.assertEqual(grant_restaurant_permissions(), [doctype])
 
-		# A role with no rule gets the JSON's: the restaurant's manager, the kitchen, the cashier
+		# « Patron = Admin : tout »: the administrator's rule is widened to every right the JSON gives him
+		self.assertTrue(MANAGE <= self.rights_of(admin, doctype))
+		# A role with no rule gets the JSON's: the restaurant's manager, the cashier (a table's status)
 		self.assertTrue(MANAGE <= self.rights_of(self.manager, doctype))
-		self.assertEqual(self.rights_of(self.kitchen, doctype), {"read"})
-		self.assertEqual(self.rights_of(self.cashier, doctype), {"read"})
-		# A rule the site has is the site's, never widened: the administrator and the till manager still only read
-		self.assertEqual(self.rights_of(admin, doctype), {"read"})
+		self.assertEqual(self.rights_of(self.cashier, doctype), {"read", "write"})
+		# Any other rule the site has is the site's: the narrowed till manager still only reads
 		self.assertEqual(self.rights_of(till_manager, doctype), {"read"})
 		# Run again, it changes nothing
 		rows = frappe.get_all(
@@ -703,6 +728,19 @@ class TestTheRolesAndTheRules(RestaurantRights):
 			),
 			rows,
 		)
+
+	def test_an_administrator_without_any_rule_gets_one(self):
+		doctype = "Restaurant Area"
+		self.addCleanup(frappe.clear_cache, doctype=doctype)
+		self.addCleanup(frappe.db.rollback)
+		if not frappe.db.exists("Custom DocPerm", {"parent": doctype}):
+			setup_custom_perms(doctype)
+		frappe.db.delete("Custom DocPerm", {"parent": doctype, "role": "Admin"})
+		frappe.clear_cache(doctype=doctype)
+
+		grant_restaurant_permissions()
+
+		self.assertTrue(MANAGE <= self.rights_of(make_user(ADMIN, ["Admin"]), doctype))
 
 	def test_a_migrate_and_an_install_make_the_roles_and_the_rules(self):
 		for hook in (install.after_migrate, install.after_install):
@@ -820,10 +858,39 @@ class TestTheMenuDesigner(RestaurantRights):
 		):
 			self.assertIn(escaped, html)
 
+	def test_a_description_is_text_escaped_once(self):
+		# As the desk's text editor stores it: HTML, its entities encoded
+		frappe.db.set_value(
+			"Item",
+			self.item,
+			"description",
+			'<div class="ql-editor read-mode"><p>Fish &amp; chips&nbsp;fresh</p></div>',
+			update_modified=False,
+		)
+		with as_user(self.manager):
+			html = get_menu_preview_html(card_name=self.card, overrides=json.dumps({"show_descriptions": 1}))
+			extra = get_card_items_extra(card_name=self.card)
+		self.assertIn("Fish &amp; chips\xa0fresh", html)
+		self.assertNotIn("&amp;amp;", html)
+		self.assertNotIn("&amp;nbsp;", html)
+		# The card editor's list and the item panel show text
+		self.assertEqual(extra[self.item]["description"], "Fish & chips\xa0fresh")
+		make_user(self.manager, ["Item Manager"])
+		with as_user(self.manager):
+			self.assertEqual(get_item_edit_data(item_code=self.item)["description"], "Fish & chips\xa0fresh")
+
 	def test_a_css_that_fetches_or_leaves_its_sheet_is_refused(self):
 		fetching = "body { background: url(https://example.invalid/x.png) }"
 		with as_user(self.manager):
-			for css in (fetching, "@import 'x.css';", "</style><script>x</script>", "a { b: u\\72l(x) }"):
+			# Escaped or not, a fetch is a fetch: the escapes are decoded before the check
+			for css in (
+				fetching,
+				"@import 'x.css';",
+				"</style><script>x</script>",
+				"a { b: u\\72l(x) }",
+				"b { c: \\75\\72\\6c(x) }",
+				"@\\69mport 'x.css';",
+			):
 				with self.subTest(css=css), self.assertRaises(frappe.ValidationError):
 					save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": css}))
 		# A design template refuses it on save
@@ -849,6 +916,12 @@ class TestTheMenuDesigner(RestaurantRights):
 			self.assertNotIn(
 				"example.invalid", get_menu_preview_html(card_name=self.card, template_name=template)
 			)
+		# A harmless escape passes: a bullet before each dish, saved on the card (its design then overrides the
+		# template's CSS)
+		bullet = 'li::before { content: "\\2022"; }'
+		with as_user(self.manager):
+			save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": bullet}))
+			self.assertIn(bullet, get_menu_preview_html(card_name=self.card))
 
 
 class TestTheFirstSettingsMakeTheDefaultRestaurant(RestaurantRights):

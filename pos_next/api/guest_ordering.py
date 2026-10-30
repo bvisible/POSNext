@@ -17,6 +17,7 @@ from frappe.utils import now_datetime, flt
 
 from pos_next.restaurant import scope
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
+from pos_next.restaurant.text import plain_text
 
 
 # ==========================================
@@ -167,7 +168,7 @@ def _build_menu_from_card(card_name, warehouse=None):
 		price = ci.price or item_doc.get("standard_rate") or 0
 
 		raw_desc = item_doc.get("description") or ""
-		clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+		clean_desc = plain_text(raw_desc)
 
 		item_data = {
 			"item_code": ci.item,

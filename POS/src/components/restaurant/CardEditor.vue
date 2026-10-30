@@ -365,7 +365,8 @@
 					</div>
 					<div v-if="searchResults.length === 0 && itemSearchQuery && itemSearchQuery.length >= 2" class="text-center py-4">
 						<p class="text-sm text-gray-400 mb-3">{{ __("No items found for '{0}'", [itemSearchQuery]) }}</p>
-						<Button variant="solid" theme="green" size="sm" @click="openCreateItemFromSearch">
+						<!-- Creating an item takes the ERP's right to create items (restaurant_can.create_items) -->
+						<Button v-if="restaurantStore.can?.create_items" variant="solid" theme="green" size="sm" @click="openCreateItemFromSearch">
 							<template #prefix>
 								<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -379,7 +380,7 @@
 		</template>
 		<template #actions>
 			<div class="flex justify-between w-full">
-				<Button variant="subtle" size="sm" @click="openCreateItemFromSearch">
+				<Button v-if="restaurantStore.can?.create_items" variant="subtle" size="sm" @click="openCreateItemFromSearch">
 					<template #prefix>
 						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

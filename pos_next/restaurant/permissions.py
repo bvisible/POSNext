@@ -23,6 +23,7 @@ availability on a card, are the restaurant's (`manage_cards`).
 """
 
 import frappe
+from frappe import _
 
 # The roles that manage a restaurant: its own manager (« responsable de salle »), the customer's administrator, and
 # System Manager. A restaurant screen is never gated on System Manager alone: on the fleet only Administrator holds it.
@@ -51,6 +52,7 @@ DOCTYPES = (
 )
 # The roles whose rules grant_restaurant_permissions() carries over to a site that customized those doctypes
 CASHIER_ROLE = "POSNext Cashier"
+ADMIN_ROLE = "Admin"
 GRANTED_ROLES = (*MANAGER_ROLES, TILL_MANAGER_ROLE, KITCHEN_ROLE, CASHIER_ROLE)
 
 # What the till is told the user may do, and the right on a doctype that decides it. The floor plan is the rooms':
@@ -64,6 +66,7 @@ RIGHTS = {
 	"view_tips": ("Restaurant Tip", "read"),
 	"edit_items": ("Item", "write"),
 	"edit_prices": ("Item Price", "write"),
+	"create_items": ("Item", "create"),
 }
 
 
@@ -77,8 +80,12 @@ def require(doctype: str, ptype: str = "write", name: str | None = None) -> None
 	from pos_next.api.cash_entry import require_system_user
 
 	require_system_user()
+	# A record is named by its name: anything else (a dict from a JSON body, which frappe.get_doc would read as
+	# filters) would skip the record's own check below
+	if name is not None and not isinstance(name, str):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	frappe.has_permission(doctype, ptype, throw=True)
-	if name and isinstance(name, str) and frappe.db.exists(doctype, name):
+	if name and frappe.db.exists(doctype, name):
 		frappe.has_permission(doctype, ptype, doc=name, throw=True)
 
 
@@ -151,9 +158,10 @@ def grant_restaurant_permissions() -> list[str]:
 	GRANTED_ROLES are carried over here, for a role that has no rule at all on that doctype, as the JSON writes it.
 
 	A rule the site has for a role is the site's, whatever it grants: it is never changed, never widened (a customer
-	may have narrowed it on purpose), never removed. On the fleet that keeps the customer's administrator (`Admin`)
-	reading the restaurant's doctypes only, as the theme granted him: he manages the restaurant through the roles that
-	manage it. A doctype the site did not customize reads its JSON: nothing to do. Returns the doctypes given a rule.
+	may have narrowed it on purpose), never removed. One exception, the customer's administrator (`Admin`): « Patron =
+	Admin : tout » (NeoRestau spec, § C). His read-only rule on these doctypes is our theme's, which gives him read on
+	every doctype, not the customer's choice, so it is widened to the rights the JSON grants him (never narrowed). A
+	doctype the site did not customize reads its JSON: nothing to do. Returns the doctypes given or widened a rule.
 	"""
 	from frappe.permissions import rights
 
@@ -178,10 +186,16 @@ def grant_restaurant_permissions() -> list[str]:
 			granted = {right: 1 for right in rights if rule.get(right)}
 			if not granted or not frappe.db.exists("Role", rule.role):
 				continue
-			# A role the site already has a rule for, at any level, keeps it as it is
-			if frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": rule.role}):
-				continue
 			try:
+				if rule.role == ADMIN_ROLE:
+					# The administrator's rule is widened where he has one, added where he has none
+					if _widen(doctype, rule.role, granted):
+						changed.add(doctype)
+					if frappe.db.exists("Custom DocPerm", _level_zero(doctype, rule.role)):
+						continue
+				# Any other role that already has a rule, at any level, keeps it as it is
+				elif frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": rule.role}):
+					continue
 				frappe.get_doc(
 					{
 						"doctype": "Custom DocPerm",
@@ -200,3 +214,28 @@ def grant_restaurant_permissions() -> list[str]:
 	for doctype in changed:
 		frappe.clear_cache(doctype=doctype)
 	return sorted(changed)
+
+
+def _widen(doctype: str, role: str, granted: dict) -> bool:
+	"""Give the role's existing rule (permlevel 0, not owner-only) the rights the JSON grants; True when widened.
+
+	Only rights are added, none is taken away. A role without such a rule is left to the caller (it gets one added).
+	"""
+	custom = frappe.get_all(
+		"Custom DocPerm", filters=_level_zero(doctype, role), pluck="name", order_by="creation asc", limit=1
+	)
+	if not custom:
+		return False
+	doc = frappe.get_doc("Custom DocPerm", custom[0])
+	missing = [right for right in granted if not doc.get(right)]
+	if not missing:
+		return False
+	for right in missing:
+		doc.set(right, 1)
+	doc.save(ignore_permissions=True)
+	return True
+
+
+def _level_zero(doctype: str, role: str) -> dict:
+	"""The filters of a role's main rule on a doctype: permission level 0, not owner-only."""
+	return {"parent": doctype, "role": role, "permlevel": 0, "if_owner": 0}

@@ -197,21 +197,11 @@ async function markDelivered() {
 			})
 		} else {
 			// Station mode: mark all items across all table groups
-			const byInvoice = {}
-			for (const group of props.card.tableGroups) {
-				for (const item of group.items) {
-					const inv = item._invoiceName
-					if (!byInvoice[inv]) byInvoice[inv] = []
-					byInvoice[inv].push(item.name)
-				}
-			}
-			const promises = Object.entries(byInvoice).map(([inv, names]) =>
-				call("pos_next.api.restaurant.mark_items_delivered", {
-					invoice_name: inv,
-					item_names: JSON.stringify(names),
-				}),
+			await deliverPerInvoice(
+				props.card.tableGroups.flatMap((group) =>
+					group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
+				),
 			)
-			await Promise.all(promises)
 		}
 		emit("delivered")
 	} catch (error) {
@@ -222,14 +212,32 @@ async function markDelivered() {
 	}
 }
 
+// A table's group can hold the lines of several orders (two drafts on one table): each order is delivered with its
+// own lines, one call per invoice. The server delivers only lines of the invoice it is given (NeoRestau lot 1, task 3);
+// until then the group went out under its first order's invoice, with every order's lines.
+async function deliverPerInvoice(items) {
+	const byInvoice = {}
+	for (const item of items) {
+		const invoice = item._invoiceName
+		if (!byInvoice[invoice]) byInvoice[invoice] = []
+		byInvoice[invoice].push(item.name)
+	}
+	await Promise.all(
+		Object.entries(byInvoice).map(([invoice, names]) =>
+			call("pos_next.api.restaurant.mark_items_delivered", {
+				invoice_name: invoice,
+				item_names: JSON.stringify(names),
+			}),
+		),
+	)
+}
+
 async function deliverTableGroup(group) {
 	loading.value = true
 	try {
-		const itemNames = group.items.map((i) => i.name)
-		await call("pos_next.api.restaurant.mark_items_delivered", {
-			invoice_name: group.invoiceName,
-			item_names: JSON.stringify(itemNames),
-		})
+		await deliverPerInvoice(
+			group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
+		)
 		emit("delivered")
 	} catch (error) {
 		console.error("Failed to deliver table group:", error)

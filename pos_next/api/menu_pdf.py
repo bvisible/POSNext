@@ -21,7 +21,11 @@ from pos_next.restaurant import permissions, scope
 DESIGN_SELECTS = ("style_theme", "paper_format", "price_alignment")
 DESIGN_CHECKS = ("show_descriptions", "show_allergens", "show_options", "show_images")
 # A number: its lowest, its highest, and what it is when not given
-DESIGN_NUMBERS = {"columns": (1, 3, 1), "custom_width_mm": (50, 1000, 210), "custom_height_mm": (50, 1000, 297)}
+DESIGN_NUMBERS = {
+	"columns": (1, 3, 1),
+	"custom_width_mm": (50, 1000, 210),
+	"custom_height_mm": (50, 1000, 297),
+}
 DESIGN_FONTS = {"font_header": "Montserrat", "font_body": "Inter"}
 DESIGN_COLORS = ("color_primary", "color_secondary", "color_accent")
 DESIGN_TEXTS = ("header_text", "footer_text")
@@ -39,8 +43,12 @@ DESIGN_DEFAULTS = {"paper_format": "A4 Portrait", "price_alignment": "right"}
 # A font is a family name; a colour a hex code or a CSS colour name
 FONT = re.compile(r"[A-Za-z0-9][A-Za-z0-9 \-]{0,59}")
 COLOR = re.compile(r"#[0-9A-Fa-f]{3,8}|[A-Za-z]{1,20}")
-# What would make the PDF engine fetch something, or let a custom CSS leave its style sheet
-FORBIDDEN_CSS = ("url(", "@import", "image(", "image-set(", "expression(", "<", "\\")
+# What would make the PDF engine fetch something, read once the CSS escapes are decoded (an escaped `u\72l(` is a
+# `url(` to the engine); a `<` would let a custom CSS leave its style sheet
+FORBIDDEN_CSS = ("url(", "@import", "image(", "image-set(", "expression(")
+# A CSS escape: a backslash and 1 to 6 hex digits (one following whitespace is part of it), or any other character
+CSS_ESCAPE = re.compile(r"\\(?:([0-9a-fA-F]{1,6})\s?|(.))", re.S)
+CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
 
 
 def _require_cards(*card_names):
@@ -53,9 +61,28 @@ def _require_cards(*card_names):
 		permissions.require("Restaurant Card", "read", card_name)
 
 
+def _decoded_css(css) -> str:
+	"""The CSS as the engine reads it: comments dropped and escapes decoded."""
+
+	def decode(match):
+		digits, other = match.groups()
+		if digits is None:
+			return other
+		code = int(digits, 16)
+		return chr(code) if 0 < code <= 0x10FFFF else "\ufffd"
+
+	return CSS_ESCAPE.sub(decode, CSS_COMMENT.sub("", css))
+
+
 def css_is_safe(css) -> bool:
-	"""Whether a custom CSS only styles the page: no fetch (url, @import, image), no escape out of the style sheet."""
-	folded = re.sub(r"\s+", "", cstr(css)).lower()
+	"""Whether a custom CSS only styles the page: no fetch (url, @import, image), escaped or not, and no `<`.
+
+	A harmless escape passes (`content: "\\2022"`, a bullet); until 30.10.2026 any backslash dropped the whole CSS.
+	"""
+	css = cstr(css)
+	if "<" in css:
+		return False
+	folded = re.sub(r"\s+", "", _decoded_css(css)).lower()
 	return not any(token in folded for token in FORBIDDEN_CSS)
 
 
@@ -189,6 +216,7 @@ def get_menu_preview_data(card_name, template_name=None):
 	chili_uri = ""
 	try:
 		import base64
+
 		chili_path = frappe.get_app_path("pos_next", "public", "icons", "badges", "png", "chili.png")
 		with open(chili_path, "rb") as f:
 			b64 = base64.b64encode(f.read()).decode("ascii")
@@ -315,9 +343,7 @@ def save_card_design(card_name, template_name=None, overrides=None):
 def _refuse_unsafe_css(css):
 	"""Refuse a custom CSS that would make the PDF engine fetch something, or leave its style sheet."""
 	if css and not css_is_safe(css):
-		frappe.throw(
-			_("A menu's custom CSS may not load anything (url(), @import, image()) nor contain < or \\")
-		)
+		frappe.throw(_("A menu's custom CSS may not load anything (url(), @import, image()) nor contain <"))
 
 
 @frappe.whitelist()

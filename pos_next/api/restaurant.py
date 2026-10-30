@@ -13,6 +13,7 @@ from frappe.utils import flt
 
 from pos_next.restaurant import permissions, scope
 from pos_next.restaurant import settings as restaurant_config
+from pos_next.restaurant.text import plain_text
 
 
 def get_station_for_item(item_code):
@@ -2418,8 +2419,8 @@ def create_item(
 @frappe.whitelist()
 def get_item_creation_defaults(pos_profile=None):
 	"""Get default values for the Create Item dialog."""
-	# The dialog creates an item: whoever may create one in the ERP
-	permissions.require("Item", "create")
+	# The dialog creates an item: whoever may create one in the ERP (the till's `create_items`)
+	permissions.require_right("create_items")
 	# Item Groups (all, including parent groups)
 	item_groups = frappe.get_all(
 		"Item Group",
@@ -2726,7 +2727,7 @@ def get_item_edit_data(item_code, pos_profile=None):
 
 	# Strip HTML from description
 	raw_desc = item.get("description") or ""
-	clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+	clean_desc = plain_text(raw_desc)
 
 	# Check if has image search (stored in site_config.json)
 	has_image_search = bool(frappe.conf.get("pexels_api_key"))
@@ -2955,7 +2956,7 @@ def get_card_items_extra(card_name):
 
 		# Clean description
 		raw_desc = item_doc.get("description") or ""
-		clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+		clean_desc = plain_text(raw_desc)
 
 		# Get badges
 		badges = []
@@ -3114,7 +3115,7 @@ def get_card_items_with_badges(card_name):
 
 		# Strip HTML tags from description
 		raw_desc = item_doc.get("description") or ""
-		clean_desc = frappe.utils.strip_html_tags(raw_desc).strip() if raw_desc else ""
+		clean_desc = plain_text(raw_desc)
 
 		item_data = {
 			"item_code": card_item.item,

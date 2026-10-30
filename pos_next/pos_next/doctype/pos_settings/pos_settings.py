@@ -27,6 +27,14 @@ class POSSettings(Document):
 
 	def validate(self):
 		"""Validate POS Settings"""
+		# //// Neoffice — a till's settings are its managers' (product owner, 30.10.2026) whatever the route: the till's
+		# //// save (update_pos_settings), the desk form, frappe.client, the REST API. A cashier holds write on POS Settings,
+		# //// so the rule is checked on the document: lot 0's till managers only. A write our own code makes with
+		# //// ignore_permissions (a patch, after_migrate, a test's set-up) is let through (#1967).
+		if not self.flags.ignore_permissions:
+			from pos_next.api.cash_entry import require_till_manager
+
+			require_till_manager()
 		# //// Neoffice — unchanged here, the till says what the site says (see _site_allows_negative_stock).
 		if self.is_new() or not self.has_value_changed("allow_negative_stock"):
 			self.allow_negative_stock = _site_allows_negative_stock()

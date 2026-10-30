@@ -28,6 +28,7 @@ export const RESTAURANT_RIGHTS = [
 	"view_tips",
 	"edit_items",
 	"edit_prices",
+	"create_items",
 	// The till's own settings, its managers' (product owner, 30.10.2026)
 	"manage_till_settings",
 ]
