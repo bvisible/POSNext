@@ -121,9 +121,14 @@ router.beforeEach((to, from, next) => {
 
 	// Redirect logic
 	if (to.name === "Login" && isLoggedIn) {
-		next({ name: "POSSale" });
+		//// Neoffice — and back: the query string goes with the visitor from the login to the till too (see below).
+		next({ name: "POSSale", query: to.query });
 	} else if (to.name !== "Login" && !isLoggedIn) {
-		next({ name: "Login" });
+		//// Neoffice — upstream dropped the query string here. NeoRestau's entry route is /pos?mode=restaurant, the door that
+		//// offers the restaurant's tills (NeoRestau lot 1, task 5). A visitor who is not signed in goes to the login first,
+		//// and the shift dialog that opens there once he is signed in reads the door from the query of its route: without it
+		//// a restaurant cashier would be offered the usual tills. Remove if upstream keeps the query on this redirect.
+		next({ name: "Login", query: to.query });
 	} else {
 		next();
 	}

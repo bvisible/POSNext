@@ -283,6 +283,9 @@
 import { Button, Dialog, Input } from "frappe-ui";
 import { createResource } from "frappe-ui";
 import { computed, ref, watch } from "vue";
+//// Neoffice — the door the cashier came through is read from the route (NeoRestau lot 1, task 5, see fetchProfiles).
+import { useRoute } from "vue-router";
+import { doorOf } from "@/utils/neorestau";
 import { useShift } from "../composables/useShift";
 import { useFormatters } from "../composables/useFormatters";
 import ShiftClosingDialog from "./ShiftClosingDialog.vue";
@@ -319,6 +322,18 @@ const profilesResource = createResource({
 	url: "pos_next.api.pos_profile.get_pos_profiles",
 	auto: false,
 });
+
+//// Neoffice — upstream offered every till of the user. NeoRestau's button opens /pos?mode=restaurant, the restaurant door,
+//// which offers the restaurant's tills; the usual entry offers the others (NeoRestau lot 1, task 5). This dialog sits on the
+//// login page and on the till, so it reads the door from the route it is in (the router keeps the query string on the way
+//// to the login), each time it asks for the list and not once and for all: the page may move from one door to the other
+//// while the dialog stays mounted. The request has no cache key on purpose, as a key would keep the answer of one door
+//// and serve it at the other. The usual door sends an explicit {}: a bare fetch() replays the params of the last request.
+const route = useRoute();
+function fetchProfiles() {
+	const door = doorOf(route);
+	return profilesResource.fetch(door ? { mode: door } : {});
+}
 
 // Get dialog data (payment methods)
 const dialogDataResource = createResource({
@@ -379,7 +394,8 @@ async function initDialog() {
 
 	try {
 		// Await profile fetch to ensure data is loaded before proceeding
-		await profilesResource.fetch();
+		//// Neoffice — the tills of the door the cashier came through (see fetchProfiles).
+		await fetchProfiles();
 
 		// Check if user already has an open shift
 		const checkResult = await checkOpeningShift.fetch();
@@ -490,7 +506,8 @@ async function handleExistingShiftClosed() {
 	await checkOpeningShift.fetch();
 
 	if (!profilesResource.data || profilesResource.data.length === 0) {
-		await profilesResource.fetch();
+		//// Neoffice — the tills of the door the cashier came through (see fetchProfiles).
+		await fetchProfiles();
 	}
 
 	if (profileToRestore) {

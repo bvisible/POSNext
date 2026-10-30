@@ -9,9 +9,18 @@ from frappe.utils import cint
 from pos_next.api.utilities import _parse_list_parameter, check_user_company
 
 
+# //// Neoffice — the door a shift is opened through (NeoRestau lot 1, task 5): `mode="restaurant"` is the entry NeoRestau
+# //// opens (/pos?mode=restaurant) and offers the restaurant tills, any other value the usual entry and the other tills.
+# //// The rule and its fallbacks live in pos_next.restaurant.door; this function only passes the door on.
 @frappe.whitelist()
-def get_pos_profiles():
-	"""Get all POS Profiles accessible by current user"""
+def get_pos_profiles(mode: str | None = None):
+	"""The POS Profiles (tills) the current user may open a shift at, through the door they came by.
+
+	`mode="restaurant"` is the restaurant door: it offers the user's restaurant tills. Any other `mode` (none, empty,
+	unknown) is the usual door: it offers the user's other tills. A user who has tills is never left with an empty list:
+	where the door has none for them, they get all their tills. Each till says whether it is a restaurant till
+	(`restaurant_mode`) and which restaurant it works for (`restaurant`).
+	"""
 	# //// Neoffice — the caller's own tills, for the till's shift opening, run by desk accounts: a desk
 	# //// account is required, like every till endpoint (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
@@ -30,7 +39,11 @@ def get_pos_profiles():
 		as_dict=1,
 	)
 
-	return pos_profiles
+	# //// Neoffice — only the tills of the door the cashier came through, each told whether it is a restaurant till
+	# //// (pos_next.restaurant.door, NeoRestau lot 1, task 5); upstream answered every till of the user.
+	from pos_next.restaurant.door import offer_at_the_door
+
+	return offer_at_the_door(pos_profiles, mode)
 
 
 @frappe.whitelist()
