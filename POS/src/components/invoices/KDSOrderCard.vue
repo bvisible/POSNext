@@ -18,9 +18,10 @@
 		:class="borderColorClass">
 
 		<!-- Header -->
-		<div class="p-3 border-b border-gray-100 dark:border-gray-700">
+		<!-- The frame (padding, title, order number, timer, dish lines) is the one the runner ticket has: utils/ticketLayout -->
+		<div class="border-b border-gray-100 dark:border-gray-700" :class="TICKET_FRAME.header" data-test="ticket-header">
 			<div class="flex justify-between items-start">
-				<h3 class="font-bold text-lg leading-tight" :class="order.is_takeaway ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'">
+				<h3 data-test="ticket-title" :class="[TICKET_FRAME.title, order.is_takeaway ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white']">
 					<template v-if="order.is_takeaway">
 						<svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -29,7 +30,7 @@
 					<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
 				</h3>
 				<div class="text-right">
-					<span class="font-mono text-base font-bold tabular-nums block" :class="timeColorClass">
+					<span class="block" data-test="ticket-timer" :class="[TICKET_FRAME.timer, timeColorClass]">
 						{{ elapsedTime }}
 					</span>
 					<span class="font-mono text-[10px] text-gray-400 tabular-nums block leading-tight" :title="__('Total time')">
@@ -38,7 +39,7 @@
 				</div>
 			</div>
 			<div class="flex justify-between items-center mt-1">
-				<span class="text-xs text-gray-400 font-mono">#{{ order.name }}</span>
+				<span class="text-gray-400 font-mono" data-test="ticket-number" :class="TICKET_FRAME.number">#{{ order.name }}</span>
 				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
 					:class="statusBadgeClass">
 					{{ kitchenStatusLabel(order.kds_status) }}
@@ -47,7 +48,7 @@
 		</div>
 
 		<!-- Items -->
-		<div class="p-3 flex-1">
+		<div class="flex-1" :class="TICKET_FRAME.body" data-test="ticket-body">
 			<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
 				<!-- Batch separator (show for 2nd batch onwards) -->
 				<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1">
@@ -58,21 +59,41 @@
 					<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
 				</div>
 				<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
-					class="py-1.5 relative"
+					class="relative"
 					:class="[
 						{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
 						item.kds_status === 'Delivered' ? 'opacity-40 line-through' : ''
 					]">
-					<!-- Item line: qty x name + item status badge (clickable) -->
-					<div class="flex justify-between items-start gap-1 cursor-pointer rounded px-1 -mx-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+					<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
+					<div class="flex flex-col justify-center py-1.5 cursor-pointer rounded px-1 -mx-1 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+						:class="TICKET_FRAME.line" data-test="ticket-line"
 						@click.stop="toggleItemMenu(item._globalIdx)">
-						<span class="text-sm text-gray-900 dark:text-gray-100 leading-tight">
-							<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
-						</span>
-						<span v-if="item.kds_status"
-							class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
-							:class="itemStatusClass(item.kds_status)">
-							{{ kitchenStatusLabel(item.kds_status) }}
+						<!-- Item line: qty x name + item status badge -->
+						<div class="flex justify-between items-start gap-1">
+							<span class="text-gray-900 dark:text-gray-100">
+								<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+							</span>
+							<span v-if="item.kds_status"
+								class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
+								:class="itemStatusClass(item.kds_status)">
+								{{ kitchenStatusLabel(item.kds_status) }}
+							</span>
+						</div>
+						<!-- Modifiers -->
+						<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
+							class="text-xs text-gray-400 mt-0.5 pl-4">
+							→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
+						</div>
+						<!-- Special instructions -->
+						<div v-if="item.posa_special_instructions"
+							class="text-xs text-blue-500 mt-0.5 pl-4">
+							ℹ {{ item.posa_special_instructions }}
+						</div>
+						<!-- Station badge -->
+						<span v-if="showStationBadge && item.preparation_station"
+							class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block self-start"
+							:style="{ backgroundColor: getStationColor(item.preparation_station) }">
+							{{ item.station_name || item.preparation_station }}
 						</span>
 					</div>
 					<!-- Item context menu -->
@@ -97,22 +118,6 @@
 							{{ __("Delivered") }}
 						</button>
 					</div>
-					<!-- Modifiers -->
-					<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
-						class="text-xs text-gray-400 mt-0.5 pl-4">
-						→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
-					</div>
-					<!-- Special instructions -->
-					<div v-if="item.posa_special_instructions"
-						class="text-xs text-blue-500 mt-0.5 pl-4">
-						ℹ {{ item.posa_special_instructions }}
-					</div>
-					<!-- Station badge -->
-					<span v-if="showStationBadge && item.preparation_station"
-						class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block"
-						:style="{ backgroundColor: getStationColor(item.preparation_station) }">
-						{{ item.station_name || item.preparation_station }}
-					</span>
 				</div>
 			</template>
 			<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
@@ -188,6 +193,7 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
+import { TICKET_FRAME } from "@/utils/ticketLayout"
 
 // Strip HTML tags from a string
 function stripHtml(html) {

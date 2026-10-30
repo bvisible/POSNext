@@ -60,57 +60,19 @@
 			</div>
 		</header>
 
-		<!-- Area Tabs -->
-		<div v-if="areas.length > 0"
-			class="bg-white dark:bg-gray-800 border-b px-4 py-2 flex items-center gap-2 overflow-x-auto flex-shrink-0">
-			<button
-				@click="selectArea('')"
-				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-				:class="!selectedArea ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
-			>{{ __("All Areas") }}</button>
-			<button
-				v-for="a in areas" :key="a.name"
-				@click="selectArea(a.name)"
-				class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-				:class="selectedArea === a.name ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
-			>
-				{{ a.area_name }}
-				<span v-if="getAreaReadyCount(a.name) > 0"
-					class="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-bold text-white bg-green-500 rounded-full px-1">
-					{{ getAreaReadyCount(a.name) }}
-				</span>
-			</button>
-		</div>
-
-		<!-- Station Bar -->
-		<div v-if="orderStations.length > 0 && viewMode !== 'plan'"
-			class="bg-gray-50/80 dark:bg-gray-850 border-b dark:border-gray-800 px-4 py-1.5 flex items-center gap-2 overflow-x-auto flex-shrink-0">
-			<button
-				@click="selectedStation = null"
-				class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-				:class="!selectedStation ? 'bg-gray-700 text-white dark:bg-gray-200 dark:text-gray-800' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400'"
-			>{{ __("All") }} ({{ filteredByAreaOrders.length }})</button>
-			<button
-				v-for="station in orderStations" :key="station.name"
-				@click="selectedStation = selectedStation === station.name ? null : station.name"
-				class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-				:class="selectedStation === station.name ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
-				:style="selectedStation === station.name ? { backgroundColor: station.color } : {}"
-			>
-				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color }"></span>
-				{{ station.label }}
-				<span v-if="station.count > 0"
-					class="text-[10px] font-bold px-1 py-0.5 rounded"
-					:style="selectedStation === station.name
-						? { backgroundColor: 'rgba(255,255,255,0.3)' }
-						: { backgroundColor: station.color + '20', color: station.color }">
-					{{ station.count }}✓
-				</span>
-			</button>
-		</div>
+		<!-- The rooms and the stations are ONE line, the same on the kitchen screen. The plan view has no station to choose -->
+		<RoomStationFilterLine
+			:rooms="filterRooms"
+			:selected-room="selectedArea"
+			:stations="filterStations"
+			:selected-station="selectedStation"
+			:all-count="filteredByAreaOrders.length"
+			@update:selected-room="selectArea"
+			@update:selected-station="selectedStation = $event"
+		/>
 
 		<!-- Main content: Cards view -->
-		<main v-if="viewMode !== 'plan'" class="flex-1 overflow-y-auto p-6">
+		<main v-if="viewMode !== 'plan'" :class="TICKET_AREA" data-test="ticket-area">
 			<div v-if="loading" class="flex justify-center items-center h-full">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
@@ -123,7 +85,7 @@
 				<p>{{ __("All items are either being prepared or have been delivered.") }}</p>
 			</div>
 
-			<div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+			<div v-else :class="TICKET_GRID" data-test="ticket-grid">
 				<RunnerOrderCard
 					v-for="card in groupedCards"
 					:key="card.key"
@@ -220,6 +182,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
+import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
+import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
@@ -291,6 +255,24 @@ const orderStations = computed(() => {
 	}
 	return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
 })
+
+// What the shared line of filters shows: each room with the dishes that are ready in it (the count of EVERY room, whichever
+// room is chosen), each station with the dishes that are ready at it. The plan view has no station to choose.
+const filterRooms = computed(() =>
+	areas.value.map((area) => ({
+		name: area.name,
+		label: area.area_name,
+		count: getAreaReadyCount(area.name),
+	})),
+)
+const filterStations = computed(() =>
+	viewMode.value === "plan"
+		? []
+		: orderStations.value.map((station) => ({
+				...station,
+				countLabel: `${station.count}✓`,
+			})),
+)
 
 watch(showDelivered, (val) => {
 	localStorage.setItem("pos_runner_show_delivered", val ? "true" : "false")
@@ -476,8 +458,9 @@ async function loadAreas() {
 
 async function loadOrders() {
 	try {
+		// Every ready order of the restaurant, not just the room chosen: the screen cuts the list to the room itself
+		// (filteredByAreaOrders), and the line of filters counts what is ready in EVERY room
 		const params = { _: Date.now(), ...ofTheRestaurant() }
-		if (selectedArea.value) params.area = selectedArea.value
 		const res = await call("pos_next.api.restaurant.get_runner_orders", params)
 		if (res) {
 			orders.value = res

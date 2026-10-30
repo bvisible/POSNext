@@ -163,6 +163,9 @@ declare module 'vue' {
     ReservationList: typeof import('./src/components/restaurant/ReservationList.vue')['default']
     ReservationStats: typeof import('./src/components/restaurant/ReservationStats.vue')['default']
     ReturnInvoiceDialog: typeof import('./src/components/sale/ReturnInvoiceDialog.vue')['default']
+    //// Neoffice — the one line of room and station filters the runner and the kitchen screen
+    //// share (NeoRestau lot 1, task 9c). Upstream has neither screen.
+    RoomStationFilterLine: typeof import('./src/components/restaurant/RoomStationFilterLine.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     //// Neoffice — the runner display card: who carries which prepared course to which

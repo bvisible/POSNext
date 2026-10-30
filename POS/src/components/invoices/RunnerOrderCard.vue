@@ -9,17 +9,18 @@
 	<!-- //// APIs"; fbba3b7a, 2026-03-23, for the modifier names). -->
 	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 border-green-400 overflow-hidden flex flex-col">
 		<!-- Card Header -->
-		<div class="px-4 py-3 border-b flex justify-between items-center"
-			:class="viewMode === 'station'
+		<!-- The frame (padding, title, order number, timer, dish lines) is the one the kitchen ticket has: utils/ticketLayout -->
+		<div class="border-b flex justify-between items-center" data-test="ticket-header"
+			:class="[TICKET_FRAME.header, viewMode === 'station'
 				? ''
-				: 'bg-green-50 dark:bg-green-900/30'"
+				: 'bg-green-50 dark:bg-green-900/30']"
 			:style="viewMode === 'station' ? { backgroundColor: (card.stationColor || '#22C55E') + '15' } : {}">
 			<div>
-				<h3 class="font-bold text-xl leading-tight">{{ card.title }}</h3>
-				<span class="text-xs text-gray-500 font-medium">{{ card.subtitle }}</span>
+				<h3 :class="TICKET_FRAME.title" data-test="ticket-title">{{ card.title }}</h3>
+				<span class="text-gray-500 font-medium" :class="TICKET_FRAME.number" data-test="ticket-number">{{ card.subtitle }}</span>
 			</div>
 			<div class="text-right">
-				<div class="font-mono text-lg font-bold" :class="waitTimeClass">{{ elapsedTime }}</div>
+				<div :class="[TICKET_FRAME.timer, waitTimeClass]" data-test="ticket-timer">{{ elapsedTime }}</div>
 				<span class="text-[10px] uppercase font-bold bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300 px-2 py-0.5 rounded-full">
 					{{ __("Ready") }}
 				</span>
@@ -27,11 +28,11 @@
 		</div>
 
 		<!-- Items list -->
-		<div class="flex-1 p-4">
+		<div class="flex-1" :class="TICKET_FRAME.body" data-test="ticket-body">
 			<!-- Table mode: flat list with station badges -->
 			<template v-if="viewMode === 'table'">
 				<ul class="divide-y divide-gray-100 dark:divide-gray-700">
-					<li v-for="item in card.items" :key="item.name" class="py-2 flex items-center gap-3">
+					<li v-for="item in card.items" :key="item.name" class="py-2 flex items-center gap-3" :class="TICKET_FRAME.line" data-test="ticket-line">
 						<!-- Station badge -->
 						<span v-if="item.preparation_station"
 							class="text-[9px] font-bold uppercase px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0"
@@ -120,6 +121,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
+import { TICKET_FRAME } from "@/utils/ticketLayout"
 
 const props = defineProps({
 	card: {

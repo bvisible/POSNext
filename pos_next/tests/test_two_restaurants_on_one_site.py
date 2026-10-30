@@ -897,6 +897,43 @@ class TestOrdersBelongToTheRestaurantOfTheirTable(TwoRestaurants, FrappeTestCase
 		table_order = next(order for order in orders if order["name"] == self.table_b_order)
 		self.assertEqual(table_order["table_display_name"], TABLE)
 
+	def test_the_kitchen_screen_says_the_room_of_each_table(self):
+		# The kitchen screen filters its tickets by room as the runner does (NeoRestau lot 1, task 9c): each
+		# order says the room of its table, the same `area` the runner's orders carry
+		terrace = self.make_room(self.a, label="Terrace")
+		terrace_table = self.make_table(self.a, terrace, table_name="T2")
+		terrace_order = self.draft(self.fx.profile, restaurant_table=terrace_table)
+
+		mine = {order["name"]: order for order in restaurant_api.get_kds_orders(restaurant=self.a)}
+		self.assertEqual(mine[self.table_a_order]["area"], self.room_a)
+		self.assertEqual(mine[terrace_order]["area"], terrace)
+		# A takeaway order sits at no table, so it is of no room: the screen shows it under "all rooms" only
+		self.assertEqual(mine[self.takeaway_a]["area"], "")
+		# The rooms of the other restaurant never appear in this restaurant's answer
+		self.assertNotIn(self.room_b, {order["area"] for order in mine.values()})
+		theirs = {order["name"]: order for order in restaurant_api.get_kds_orders(restaurant=self.b)}
+		self.assertEqual(theirs[self.table_b_order]["area"], self.room_b)
+		self.assertEqual(theirs[self.takeaway_b]["area"], "")
+
+	def test_a_kitchen_screen_opened_on_a_station_says_the_room_of_each_table_too(self):
+		doc = frappe.get_doc("Preparation Station", self.station_b)
+		doc.append("items", {"item": self.fx.item})
+		doc.save(ignore_permissions=True)
+		orders = {order["name"]: order for order in restaurant_api.get_kds_orders(station=self.station_b)}
+		self.assertEqual(orders[self.table_b_order]["area"], self.room_b)
+		self.assertEqual(orders[self.takeaway_b]["area"], "")
+
+	def test_the_kitchen_and_the_runner_name_the_room_of_a_table_alike(self):
+		frappe.db.set_value("Sales Invoice Item", {"parent": self.table_a_order}, "kds_status", "Ready")
+		kitchen = next(
+			o for o in restaurant_api.get_kds_orders(restaurant=self.a) if o["name"] == self.table_a_order
+		)
+		runner = next(
+			o for o in restaurant_api.get_runner_orders(restaurant=self.a) if o["name"] == self.table_a_order
+		)
+		self.assertEqual(kitchen["area"], runner["area"])
+		self.assertEqual(kitchen["area"], self.room_a)
+
 	def test_the_runner_shows_the_ready_orders_of_its_restaurant(self):
 		for order in (self.table_a_order, self.table_b_order):
 			frappe.db.set_value("Sales Invoice Item", {"parent": order}, "kds_status", "Ready")
