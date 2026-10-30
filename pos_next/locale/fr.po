@@ -17204,3 +17204,245 @@ msgstr "Filtrer par salle"
 #: POS/src/components/restaurant/RoomStationFilterLine.vue
 msgid "Filter by station"
 msgstr "Filtrer par poste"
+
+# //// Neoffice — French for the till's strings that upstream's fr.po left untranslated (the till showed English).
+# //// Kept as one block at the end, so the next merge shows it at once. Drop an entry when upstream translates its msgid.
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:33
+msgid "Action"
+msgstr "Action"
+
+#: POS/src/components/sale/ExpenseDialog.vue:120
+msgid "Add Expense"
+msgstr "Ajouter une dépense"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:51
+msgid "Allow Self Approval"
+msgstr "Autoriser l'auto-approbation"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:170
+msgid "Always"
+msgstr "Toujours"
+
+#: POS/src/components/sale/CouponManagement.vue:571
+msgid "Applies To"
+msgstr "Applicable à"
+
+#: POS/src/components/common/AuthorizationDialog.vue:116
+msgid "Approve"
+msgstr "Approuver"
+
+#: POS/src/components/common/AuthorizationDialog.vue:55
+msgid "Approver"
+msgstr "Approbateur"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:56
+msgid "Approvers"
+msgstr "Approbateurs"
+
+#: POS/src/components/sale/InvoiceCart.vue:1384
+msgid "Batch {0}"
+msgstr "Lot {0}"
+
+#: pos_next/pos_next/doctype/sales_person_brand_commission/sales_person_brand_commission.json:24
+msgid "Commission Rate"
+msgstr "Taux de commission"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_approver/pos_authorization_approver.json:56
+msgid "Condition"
+msgstr "Condition"
+
+#: POS/src/components/sale/InvoiceCart.vue:2942
+msgid "Coupon {0}"
+msgstr "Coupon {0}"
+
+#: POS/src/components/sale/ExpenseDialog.vue:404
+msgid "Discard"
+msgstr "Abandonner"
+
+#: pos_next/api/expenses.py:907
+msgid "Employee {0} does not exist"
+msgstr "L'employé {0} n'existe pas"
+
+#: POS/src/components/sale/ExpenseDialog.vue:346
+msgid "Expense"
+msgstr "Dépense"
+
+#: POS/src/components/ShiftClosingDialog.vue:878
+msgid "Expense Account"
+msgstr "Compte de charges"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:29
+msgid "Export"
+msgstr "Exporter"
+
+#: pos_next/api/expenses.py:526
+msgid "File size exceeded the maximum allowed size of {0} MB"
+msgstr "La taille du fichier dépasse le maximum autorisé de {0} Mo"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:843
+msgid "First Name is required"
+msgstr "Le prénom est requis"
+
+#: POS/src/components/sale/InvoiceCart.vue:1261
+msgid "Free of charge"
+msgstr "Gratuit"
+
+#: POS/src/components/sale/InvoiceCart.vue:1991
+msgid "Hold"
+msgstr "Mettre en attente"
+
+#: POS/src/components/ShiftClosingDialog.vue:873
+msgid "Journal Entry"
+msgstr "Écriture de journal"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:492
+msgid "Last 30 days"
+msgstr "30 derniers jours"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:491
+msgid "Last 7 days"
+msgstr "7 derniers jours"
+
+#: POS/src/components/sale/CreateCustomerDialog.vue:846
+msgid "Last Name is required"
+msgstr "Le nom est requis"
+
+#: POS/src/stores/posCart.js:2880
+msgid "No customer selected"
+msgstr "Aucun client sélectionné"
+
+#: POS/src/components/sale/CouponManagement.vue:613
+msgid "No."
+msgstr "N°"
+
+#: pos_next/pos_next/doctype/offline_expense_sync/offline_expense_sync.json:81
+msgid "Offline Expense Sync"
+msgstr "Synchronisation de dépense hors ligne"
+
+#: POS/src/components/pos/CashDrawerDialog.vue:6
+msgid "Open the cash drawer"
+msgstr "Ouvrir le tiroir-caisse"
+
+#: POS/src/components/common/AuthorizationDialog.vue:75
+msgid "PIN"
+msgstr "PIN"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_approver/pos_authorization_approver.json:65
+msgid "POS Authorization Approver"
+msgstr "Approbateur d'autorisation POS"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:95
+msgid "POS Authorization Log"
+msgstr "Journal d'autorisation POS"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_rule/pos_authorization_rule.json:70
+msgid "POS Authorization Rule"
+msgstr "Règle d'autorisation POS"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_settings/pos_authorization_settings.json:85
+msgid "POS Authorization Settings"
+msgstr "Paramètres d'autorisation POS"
+
+#: pos_next/pos_next/doctype/pos_closing_shift_expense/pos_closing_shift_expense.json:59
+msgid "POS Closing Shift Expense"
+msgstr "Dépense de clôture de caisse"
+
+#: pos_next/pos_next/doctype/pos_district/pos_district.json:43
+msgid "POS District"
+msgstr "District POS"
+
+#: pos_next/pos_next/doctype/pos_expense_cancel_role/pos_expense_cancel_role.json:25
+msgid "POS Expense Cancel Role"
+msgstr "Rôle d'annulation des dépenses POS"
+
+#: pos_next/pos_next/doctype/pos_governorate/pos_governorate.json:30
+msgid "POS Governorate"
+msgstr "Gouvernorat POS"
+
+#: pos_next/pos_next/doctype/pos_profile_expense_account/pos_profile_expense_account.json:27
+msgid "POS Profile Expense Account"
+msgstr "Compte de charges du profil de caisse"
+
+#: POS/src/components/sale/ItemsPagination.vue:4
+msgid "Pagination"
+msgstr "Pagination"
+
+#: POS/src/components/pos/POSHeader.vue:713
+msgid "Paper low"
+msgstr "Papier presque vide"
+
+#: pos_next/api/expenses.py:1063
+msgid "Payment Account"
+msgstr "Compte de paiement"
+
+#: POS/src/components/sale/ExpenseDialog.vue:230
+msgid "Receipt"
+msgstr "Reçu"
+
+#: POS/src/components/sale/ExpenseDialog.vue:430
+msgid "Recorded"
+msgstr "Enregistrée"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:56
+msgid "Requested By"
+msgstr "Demandé par"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:42
+msgid "Result"
+msgstr "Résultat"
+
+#: pos_next/pos_next/doctype/pos_expense_cancel_role/pos_expense_cancel_role.json:14
+msgid "Role"
+msgstr "Rôle"
+
+#: pos_next/pos_next/doctype/sales_person_brand_commission/sales_person_brand_commission.json:34
+msgid "Sales Person Brand Commission"
+msgstr "Commission du vendeur par marque"
+
+#: pos_next/pos_next/doctype/sales_person_item_commission/sales_person_item_commission.json:34
+msgid "Sales Person Item Commission"
+msgstr "Commission du vendeur par article"
+
+#: pos_next/pos_next/doctype/sales_person_item_group_commission/sales_person_item_group_commission.json:34
+msgid "Sales Person Item Group Commission"
+msgstr "Commission du vendeur par groupe d'articles"
+
+#: POS/src/components/sale/ShiftHistoryDialog.vue:149
+msgid "Since {0}"
+msgstr "Depuis {0}"
+
+#: POS/src/components/sale/PromotionManagement.vue:1313
+msgid "Standard"
+msgstr "Standard"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:97
+msgid "Test print"
+msgstr "Impression de test"
+
+#: pos_next/pos_next_auth_gate/doctype/pos_authorization_log/pos_authorization_log.json:24
+msgid "Timestamp"
+msgstr "Horodatage"
+
+#: pos_next/pos_next/utils/sales_person_commission.py:1015
+msgid "Total allocated percentage for sales team should be 100"
+msgstr "Le pourcentage total alloué à l'équipe de vente doit être égal à 100"
+
+#: POS/src/composables/useToast.js:41
+msgid "Warning"
+msgstr "Avertissement"
+
+#: POS/src/pages/POSSale.vue:5466
+msgid "document"
+msgstr "document"
+
+#: POS/src/components/sale/BatchSerialDialog.vue:374
+msgid "in {0} days"
+msgstr "dans {0} jour(s)"
+
+#: POS/src/components/sale/InvoiceCart.vue:2947
+msgid "{0} free"
+msgstr "{0} gratuit(s)"
+
+#: pos_next/api/expenses.py:866
+msgid "{0} is required"
+msgstr "Le champ {0} est requis"
