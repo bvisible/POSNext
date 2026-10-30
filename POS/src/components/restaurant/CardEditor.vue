@@ -99,7 +99,7 @@
 											@blur="finishRename" @keyup.enter="finishRename"
 											class="font-bold text-lg border-b-2 border-amber-400 outline-none bg-transparent w-48" />
 										<h3 v-else class="font-bold text-lg cursor-pointer hover:text-amber-700" @click="startRename">
-											{{ cardDetail.card_name }}
+											{{ cardLabel(cardDetail) }}
 										</h3>
 										<template v-if="isPermanentCard">
 										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">
@@ -301,7 +301,7 @@
 							:item-name="selectedBadgeItem.label || selectedBadgeItem.item_name || selectedBadgeItem.item"
 							:local-price="selectedBadgeItem.price || 0"
 							:card-name="cardDetail.name"
-							:card-display-name="cardDetail.card_name"
+							:card-display-name="cardLabel(cardDetail)"
 							:is-disabled="!!selectedBadgeItem.disabled"
 							@saved="onItemEditSaved"
 							@close="selectedBadgeItemIdx = null; selectedBadgeItem = null"
@@ -410,6 +410,7 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import CreateItemDialog from "@/components/restaurant/CreateItemDialog.vue"
 import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
+import { cardLabel } from "@/utils/cardLabel"
 
 const props = defineProps({ modelValue: Boolean })
 const emit = defineEmits([
@@ -568,6 +569,7 @@ async function loadCardDetail(name) {
 			cardDetail.value = {
 				name: doc.name,
 				card_name: doc.card_name,
+				is_permanent: !!doc.is_permanent,
 				is_active: !!doc.is_active,
 				items: (doc.items || []).map((i) => ({
 					item_type: i.item_type,

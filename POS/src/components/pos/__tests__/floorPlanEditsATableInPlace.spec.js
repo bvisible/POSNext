@@ -85,6 +85,7 @@ function theStore() {
 		restaurantStatus: { warning: null },
 		defaultArea: null,
 		ofTheRestaurant: () => ({ restaurant: "The Bistro" }),
+		addTable: vi.fn(async () => {}),
 		fetchFromNetwork: vi.fn(async () => {}),
 		fetchTakeawayOrders: vi.fn(async () => {}),
 		startStatusPolling: vi.fn(),
@@ -183,6 +184,49 @@ describe("Edit table edits the table that was opened", () => {
 		expect(toast.showSuccess).not.toHaveBeenCalled()
 		expect(editor.showEditTableDialog).toBe(true)
 		expect(restaurantStore.fetchFromNetwork).not.toHaveBeenCalled()
+	})
+
+	it("says why a new table is refused too (a number of seats below one, a label taken)", async () => {
+		await editorOpenOn(TABLE)
+		const refusal = Object.assign(new Error("create_table ValidationError"), {
+			messages: ["Capacity must be a whole number of at least 1"],
+		})
+		restaurantStore.addTable.mockRejectedValueOnce(refusal)
+		wrapper.vm.newTable = { table_name: "T9", capacity: -3, shape: "Round" }
+
+		await wrapper.vm.handleAddTable()
+
+		expect(restaurantStore.addTable).toHaveBeenCalledWith(
+			expect.objectContaining({
+				table_name: "T9",
+				capacity: -3,
+				shape: "Round",
+			}),
+		)
+		expect(toast.handleError).toHaveBeenCalledWith(
+			refusal,
+			"Failed to add table",
+		)
+		expect(toast.showSuccess).not.toHaveBeenCalled()
+		expect(wrapper.vm.showAddTableDialog).toBe(false)
+	})
+
+	it("adds the table with the seats typed, and says so", async () => {
+		await editorOpenOn(TABLE)
+		wrapper.vm.newTable = { table_name: "T9", capacity: 6, shape: "Round" }
+
+		await wrapper.vm.handleAddTable()
+
+		expect(restaurantStore.addTable).toHaveBeenCalledWith(
+			expect.objectContaining({
+				table_name: "T9",
+				capacity: 6,
+				shape: "Round",
+				area: ROOM,
+			}),
+		)
+		expect(toast.showSuccess).toHaveBeenCalledWith("Table added")
+		expect(toast.handleError).not.toHaveBeenCalled()
 	})
 
 	it("calls nothing when no table is open", async () => {

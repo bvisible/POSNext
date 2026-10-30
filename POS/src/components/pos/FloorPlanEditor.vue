@@ -702,8 +702,12 @@
 		<Dialog v-model="showEditStationDialog" :options="{ title: __('Edit Station'), size: 'xl' }">
 			<template #body-content>
 				<div class="space-y-5 p-4 max-h-[70vh] overflow-y-auto">
+					<!-- The details did not load: the form would show, and save, what was never read -->
+					<p v-if="!stationLoaded" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+						{{ __("Failed to load station details") }}
+					</p>
 					<!-- Basic Settings -->
-					<div class="grid grid-cols-2 gap-4">
+					<div v-if="stationLoaded" class="grid grid-cols-2 gap-4">
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Station Name") }}</label>
 							<input v-model="editStation.station_name" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
@@ -732,7 +736,7 @@
 					</div>
 
 					<!-- Toggles -->
-					<div class="flex items-center gap-6 py-2">
+					<div v-if="stationLoaded" class="flex items-center gap-6 py-2">
 						<label class="flex items-center gap-2 cursor-pointer">
 							<input type="checkbox" v-model="editStation.is_active" :true-value="1" :false-value="0"
 								class="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500" />
@@ -746,7 +750,7 @@
 					</div>
 
 					<!-- Items Section -->
-					<div class="border-t pt-4">
+					<div v-if="stationLoaded" class="border-t pt-4">
 						<label class="block text-sm font-semibold text-gray-800 mb-2">{{ __("Items") }}</label>
 						<div class="relative mb-2">
 							<input
@@ -808,7 +812,7 @@
 					</div>
 
 					<!-- Item Groups Section -->
-					<div class="border-t pt-4">
+					<div v-if="stationLoaded" class="border-t pt-4">
 						<label class="block text-sm font-semibold text-gray-800 mb-2">{{ __("Item Groups") }}</label>
 						<p class="text-xs text-gray-500 mb-2">{{ __("All items in these groups will be routed to this station (unless individually assigned to another).") }}</p>
 						<div class="relative mb-2">
@@ -880,7 +884,7 @@
 			<template #actions>
 				<div class="flex gap-2 w-full">
 					<Button class="flex-1" variant="subtle" @click="showEditStationDialog = false">{{ __("Cancel") }}</Button>
-					<Button class="flex-1" variant="solid" @click="handleSaveStation" :disabled="!editStation.station_name">{{ __("Save") }}</Button>
+					<Button class="flex-1" variant="solid" @click="handleSaveStation" :disabled="!stationLoaded || !editStation.station_name">{{ __("Save") }}</Button>
 				</div>
 			</template>
 		</Dialog>
@@ -986,6 +990,10 @@ const showFloorBg = ref(true)
 const wallsRef = ref(null)
 
 const showEditStationDialog = ref(false)
+// Whether the details of the station in the dialog were read from the server. A dialog whose details did not load shows
+// the failure and cannot save: what it would send (the lists, the workflow, the toggles) was never read, and an empty
+// list that was not loaded would wipe the real one
+const stationLoaded = ref(false)
 const editStation = ref({
 	name: "",
 	station_name: "",
@@ -1739,11 +1747,13 @@ async function handleAddTable() {
 		syncLocalTables()
 		showSuccess(__("Table added"))
 	} catch (error) {
-		showError(__("Failed to add table"))
+		// The server says why when it can (a label already taken, a number of seats below one)
+		handleError(error, __("Failed to add table"))
 	}
 }
 
 async function openEditStationDialog(station) {
+	stationLoaded.value = false
 	// Load full station details from server
 	try {
 		const details = await call("pos_next.api.restaurant.get_station_details", {
@@ -1760,8 +1770,11 @@ async function openEditStationDialog(station) {
 			items: details.items || [],
 			item_groups: details.item_groups || [],
 		}
-	} catch {
-		// Fallback to basic floor plan data
+		stationLoaded.value = true
+	} catch (error) {
+		// The server says why when it can. The dialog keeps the station as the floor plan knows it, so that it can still
+		// be deleted by its name, and cannot be saved
+		handleError(error, __("Failed to load station details"))
 		editStation.value = {
 			name: station.name,
 			station_name: station.station_name,
@@ -1790,6 +1803,8 @@ async function openEditStationDialog(station) {
 }
 
 async function handleSaveStation() {
+	// Nothing is sent for a station whose details did not load: the lists it would send were never read
+	if (!stationLoaded.value) return
 	try {
 		await call("pos_next.api.restaurant.update_station", {
 			name: editStation.value.name,

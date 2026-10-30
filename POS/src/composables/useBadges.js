@@ -1,11 +1,13 @@
 //// Neoffice — added file (no upstream equivalent). Upstream POSNext is a retail POS
 //// with no menu: nothing declares that a dish contains gluten or how hot it is. This
-//// reads the Menu Badge catalogue and the per-item badges + spice level from
-//// pos_next.api.restaurant, and backs the printable menu PDF (b6e757dd, 2026-03-26
-//// "add menu PDF generator with badges"). Reads go through utils/apiWrapper `call`,
-//// which retries once after refreshing the CSRF token — window.frappe.call does not,
-//// and a POS left open all day hits a stale token (4f6f8755). saveItemBadges keeps a
-//// raw fetch with an explicit CSRF header, and the PDF is fetched through an iframe
+//// reads the Menu Badge catalogue from pos_next.api.restaurant, for the item sheet that
+//// sets the badges and spice level of a dish, and so for the printable menu PDF (b6e757dd,
+//// 2026-03-26 "add menu PDF generator with badges"). Reads go through utils/apiWrapper
+//// `call`, which retries once after refreshing the CSRF token — window.frappe.call does
+//// not, and a POS left open all day hits a stale token (4f6f8755). The item sheet saves
+//// a dish's badges itself, with update_item_badges. The read and the save of one dish's
+//// badges that this file also held lost their only caller with the badge panel
+//// (NeoRestau lot 1, task 9) and are gone. The PDF is fetched through an iframe
 //// (1b29c36f, 2026-03-26).
 import { ref } from "vue"
 import { call } from "@/utils/apiWrapper"
@@ -30,49 +32,6 @@ export function useBadges() {
 		return menuBadges.value
 	}
 
-	async function loadItemBadges(itemCode) {
-		try {
-			const response = await call("pos_next.api.restaurant.get_item_badges", {
-				item_code: itemCode,
-			})
-			return response || { badges: [], spice_level: 0 }
-		} catch (e) {
-			console.error("Failed to load item badges:", e)
-			return { badges: [], spice_level: 0 }
-		}
-	}
-
-	async function saveItemBadges(itemCode, badgeNames, spiceLevel) {
-		try {
-			console.log("[useBadges] Saving:", itemCode, badgeNames, spiceLevel)
-			const csrfToken =
-				document.cookie.match(/csrf_token=([^;]+)/)?.[1] ||
-				window.csrf_token ||
-				""
-			const response = await fetch(
-				"/api/method/pos_next.api.restaurant.update_item_badges",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						"X-Frappe-CSRF-Token": csrfToken,
-					},
-					body: JSON.stringify({
-						item_code: itemCode,
-						badges: JSON.stringify(badgeNames),
-						spice_level: spiceLevel,
-					}),
-				},
-			)
-			const data = await response.json()
-			console.log("[useBadges] Save result:", data)
-			return data?.message?.status === "ok"
-		} catch (e) {
-			console.error("[useBadges] Failed to save:", e)
-			return false
-		}
-	}
-
 	function getBadgesByType(type) {
 		return menuBadges.value.filter((b) => b.badge_type === type)
 	}
@@ -86,8 +45,6 @@ export function useBadges() {
 		menuBadges,
 		loading,
 		loadMenuBadges,
-		loadItemBadges,
-		saveItemBadges,
 		getBadgesByType,
 		getBadgeIconUrl,
 	}

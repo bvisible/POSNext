@@ -102,7 +102,7 @@
 					:class="{ active: showFloorPlan }"
 					@click="showFloorPlan = !showFloorPlan"
 				>
-					{{ showFloorPlan ? __("List") : __("Plan") }}
+					{{ showFloorPlan ? __("List") : __("Plan", null, "Floor plan view") }}
 				</button>
 			</div>
 

@@ -7,9 +7,11 @@
 # //// formatting" — the same commit that removed upstream's `BrainWise Branding` doctype, its
 # //// API and its monitor tasks — then ~90 commits to 2026-04-24; c26ac28b 2026-04-24 stops
 # //// item creation in the root item group).
+import math
+
 import frappe
 from frappe import _
-from frappe.utils import cint, flt
+from frappe.utils import flt
 
 from pos_next.restaurant import permissions, scope
 from pos_next.restaurant import settings as restaurant_config
@@ -771,6 +773,24 @@ def save_floor_plan_bg(area, file_url=None):
 	frappe.db.commit()
 	return {"status": "success"}
 
+def _seats(capacity):
+	"""The seats of a table as a whole number of at least 1; anything else is refused.
+
+	A table used to take what it was given: a number of seats below 1 was stored, and one that was no number at all
+	became 0 (`cint`) or failed on a bare `int()`.
+	"""
+	seats = None
+	# A boolean is a number to Python and not to the person who typed it
+	if not isinstance(capacity, bool):
+		try:
+			seats = float(capacity)
+		except (TypeError, ValueError):
+			pass
+	if seats is None or not math.isfinite(seats) or seats < 1 or seats != int(seats):
+		frappe.throw(_("Capacity must be a whole number of at least 1"))
+	return int(seats)
+
+
 @frappe.whitelist()
 def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0):
 	"""Create a new restaurant table, in the restaurant of its room."""
@@ -780,7 +800,7 @@ def create_table(table_name, area, capacity=4, shape="Square", pos_x=0, pos_y=0)
 		"doctype": "Restaurant Table",
 		"table_name": table_name,
 		"area": area,
-		"capacity": int(capacity),
+		"capacity": _seats(capacity),
 		"shape": shape,
 		"pos_x": int(pos_x),
 		"pos_y": int(pos_y),
@@ -811,7 +831,7 @@ def update_table(name, table_name=None, capacity=None, shape=None):
 		doc.table_name = table_name
 	# The dialog's empty field arrives as an empty string: no number is no change
 	if capacity not in (None, ""):
-		doc.capacity = cint(capacity)
+		doc.capacity = _seats(capacity)
 	if shape:
 		doc.shape = shape
 	doc.save()

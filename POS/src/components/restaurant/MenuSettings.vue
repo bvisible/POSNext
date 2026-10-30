@@ -137,7 +137,7 @@
 				<div class="space-y-1.5">
 					<label v-for="card in cards" :key="card.name" class="flex items-center gap-2 text-sm cursor-pointer">
 						<input type="checkbox" :value="card.name" v-model="selectedCards" class="rounded" />
-						{{ card.card_name }}
+						{{ cardLabel(card) }}
 					</label>
 				</div>
 			</div>
@@ -182,6 +182,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeMount } from "vue"
+import { cardLabel } from "@/utils/cardLabel"
 
 const fontOptions = [
 	"Inter",

@@ -38,6 +38,10 @@ CASHIER_ROLE = "POSNext Cashier"
 SAVEPOINT = "table_and_station_edits"
 # What the floor plan reads of a table beside the orders it adds to the row (`get_tables`)
 ORDER_FIELDS = ("order_summary", "waiting_items_count")
+# What a number of seats that is not a whole number of at least 1 is told
+SEATS_REFUSED = "whole number of at least 1"
+# What is not a number of seats: below 1, not a whole number, not a number at all
+NOT_SEATS = (0, -3, "0", "-2", "abc", 2.5, "2.5", float("nan"), float("inf"), True, [4], {"seats": 4})
 
 
 @contextmanager
@@ -189,6 +193,37 @@ class TestEditingATable(TheFloorAndItsUsers):
 	def test_the_seats_may_come_as_text(self):
 		restaurant_api.update_table(name=self.a_t1, capacity="6")
 		self.assertEqual(self.table(self.a_t1, "capacity"), (6,))
+		# A whole number written with a decimal point is still a whole number
+		for seats in ("8.0", 7.0):
+			restaurant_api.update_table(name=self.a_t1, capacity=seats)
+			self.assertEqual(self.table(self.a_t1, "capacity"), (int(float(seats)),))
+
+	def test_seats_below_one_or_not_a_number_are_refused_and_nothing_changes(self):
+		before = self.table(self.a_t1, "table_name", "capacity")
+		for seats in NOT_SEATS:
+			with self.subTest(seats=seats):
+				with self.assertRaises(frappe.ValidationError) as refused:
+					restaurant_api.update_table(name=self.a_t1, table_name="Mine", capacity=seats)
+				self.assertIn(SEATS_REFUSED, str(refused.exception))
+		# Nothing of the call was kept, the label it carried included
+		self.assertEqual(self.table(self.a_t1, "table_name", "capacity"), before)
+
+	def test_a_table_is_made_with_the_seats_it_is_given(self):
+		made = restaurant_api.create_table(table_name="T7", area=self.room_a, capacity="6")
+		self.assertEqual(self.table(made["name"], "capacity"), (6,))
+		# None given, the table seats four
+		default = restaurant_api.create_table(table_name="T8", area=self.room_a)
+		self.assertEqual(self.table(default["name"], "capacity"), (4,))
+
+	def test_no_table_is_made_with_seats_below_one_or_not_a_number(self):
+		before = self.tables()
+		# A blank value and none at all are not a number of seats either, whatever they mean to update_table
+		for number, seats in enumerate((*NOT_SEATS, "", None)):
+			with self.subTest(seats=seats):
+				with self.assertRaises(frappe.ValidationError) as refused:
+					restaurant_api.create_table(table_name=f"T7-{number}", area=self.room_a, capacity=seats)
+				self.assertIn(SEATS_REFUSED, str(refused.exception))
+		self.assertEqual(self.tables(), before)
 
 	def test_it_answers_the_table_as_the_floor_plan_reads_it(self):
 		answer = restaurant_api.update_table(name=self.a_t1, table_name="T1 bis", capacity=6, shape="Round")

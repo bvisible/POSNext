@@ -8194,12 +8194,13 @@ msgstr "Photos fournies par Pexels"
 msgid "Picked Up"
 msgstr "Récupéré"
 
-#: POS/src/components/restaurant/ReservationForm.vue:98
 msgid "Plan"
 msgstr "Plan"
 
-# //// Neoffice — the pass's plan view is the plan of the dining room. The bare word above stays "Plan" for the whole
-# //// site (another app translates it for its own sense, « Planifier »); the pass asks for it under this context.
+# //// Neoffice — the plan view is the plan of the dining room, on the pass and on the reservation form. The bare word
+# //// above stays "Plan" for the whole site (another app translates it for its own sense, « Planifier »); the plan
+# //// view asks for it under this context.
+#: POS/src/components/restaurant/ReservationForm.vue:105
 #: POS/src/pages/Runner.vue:48
 msgctxt "Floor plan view"
 msgid "Plan"

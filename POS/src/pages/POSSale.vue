@@ -625,7 +625,8 @@
 														d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
 													/>
 												</svg>
-												{{ card.card_name }}
+												<!-- //// Neoffice — the permanent card is shown by its label, not by the English name it is stored under (NeoRestau lot 1, task 9) -->
+												{{ cardLabel(card) }}
 											</button>
 											<!-- QR Self-Ordering button -->
 											<button
@@ -2400,6 +2401,8 @@ import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 //// Neoffice — the status badge of the open table is a label under its own context (NeoRestau lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
+//// Neoffice — and the permanent card's tab is its label (NeoRestau lot 1, task 9, fix round 1)
+import { cardLabel } from "@/utils/cardLabel";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";

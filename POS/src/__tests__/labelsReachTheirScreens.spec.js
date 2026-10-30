@@ -1,7 +1,8 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The labels NeoRestau lot 1 task 9 corrects reach their screens:
- * //// the pass's "Plan" view reads "Plan de salle", and a kitchen status reads in French wherever one is shown,
- * //// each through a context of its own so that no common word is changed for the whole site.
+ * //// the "Plan" view of the pass and of the reservation form reads "Plan de salle", a kitchen status reads in French
+ * //// wherever one is shown, each through a context of its own so that no common word is changed for the whole site,
+ * //// and the permanent card, which the system names, reads "Articles permanents" wherever its name is displayed.
  * ////
  * //// The French comes from the real catalogue (pos_next/locale/fr.po), keyed the way Frappe keys it (the msgid, or
  * //// "msgid:context"), and goes through the real translate(). The bare words (Plan, Pending, Preparing, Ready,
@@ -15,6 +16,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 const restaurantStore = vi.hoisted(() => ({}))
+const call = vi.hoisted(() => vi.fn(async () => ({})))
 
 vi.hoisted(() => {
 	globalThis.__ = (s) => s
@@ -26,9 +28,16 @@ vi.mock("frappe-ui", () => ({
 		template: "<div><slot name='body-content' /><slot name='actions' /></div>",
 	},
 	FeatherIcon: { template: "<i />" },
+	Input: { template: "<input />" },
 	createResource: vi.fn(),
 }))
-vi.mock("@/utils/apiWrapper", () => ({ call: vi.fn(async () => ({})) }))
+vi.mock("@/utils/apiWrapper", () => ({ call }))
+vi.mock("@/composables/useReservations", () => ({
+	useReservations: () => ({
+		createReservation: vi.fn(),
+		checkAvailability: vi.fn(async () => ({ conflicts: [] })),
+	}),
+}))
 vi.mock("@/utils/offline/translationCache", () => ({ translationCache: {} }))
 vi.mock("@/socket", () => ({ initSocket: () => null }))
 vi.mock("@/composables/useToast", () => ({
@@ -128,14 +137,19 @@ const messages = {
 }
 
 let kitchenStatusLabel
+let cardLabel
 let Runner
 let DraftInvoicesDialog
 let KDSOrderCard
+let ReservationForm
+let CardEditor
+let MenuSettings
 
 beforeAll(async () => {
 	const { translate } = await import("@/utils/translation")
 	globalThis.__ = translate
 	;({ kitchenStatusLabel } = await import("@/utils/kitchenStatus"))
+	;({ cardLabel } = await import("@/utils/cardLabel"))
 	;({ default: Runner } = await import("@/pages/Runner.vue"))
 	;({ default: DraftInvoicesDialog } = await import(
 		"@/components/sale/DraftInvoicesDialog.vue"
@@ -143,13 +157,26 @@ beforeAll(async () => {
 	;({ default: KDSOrderCard } = await import(
 		"@/components/invoices/KDSOrderCard.vue"
 	))
+	;({ default: ReservationForm } = await import(
+		"@/components/restaurant/ReservationForm.vue"
+	))
+	;({ default: CardEditor } = await import(
+		"@/components/restaurant/CardEditor.vue"
+	))
+	;({ default: MenuSettings } = await import(
+		"@/components/restaurant/MenuSettings.vue"
+	))
 })
 
 beforeEach(() => {
 	window.translatedMessages = messages
+	call.mockReset()
+	call.mockImplementation(async () => ({}))
 	Object.assign(restaurantStore, {
 		runnerEnabled: true,
 		isEnabled: true,
+		tillRestaurant: "The Bistro",
+		ofTheRestaurant: () => ({ restaurant: "The Bistro" }),
 		tableLabel: () => "T1",
 		fetchRestaurantSettings: vi.fn(async () => {}),
 	})
@@ -179,8 +206,8 @@ describe("the catalogue", () => {
 	})
 })
 
-describe("the pass's plan view", () => {
-	it("reads Plan de salle and the other two views keep their words", async () => {
+describe("the plan view", () => {
+	it("reads Plan de salle on the pass, and the other two views keep their words", async () => {
 		const wrapper = mountWith(Runner, {
 			global: { stubs: { RunnerOrderCard: true } },
 		})
@@ -193,6 +220,22 @@ describe("the pass's plan view", () => {
 				["Par table", "Par poste", "Plan de salle", "bare Plan"].includes(text),
 			)
 		expect(views).toEqual(["Par table", "Par poste", "Plan de salle"])
+	})
+
+	it("reads Plan de salle on the toggle of the reservation form too, and List stays List", async () => {
+		const tables = [
+			{ name: "t4b1e", table_name: "T1", area: "r00m", pos_x: 10, pos_y: 20 },
+		]
+		const wrapper = mountWith(ReservationForm, {
+			props: { tables },
+			global: { stubs: { ReservationFloorPlan: true } },
+		})
+		await flushPromises()
+
+		const toggle = wrapper.find(".btn-plan-toggle")
+		expect(toggle.text()).toBe("Plan de salle")
+		await toggle.trigger("click")
+		expect(toggle.text()).toBe(messages.List ?? "List")
 	})
 })
 
@@ -263,6 +306,98 @@ describe("a kitchen status", () => {
 	})
 })
 
+describe("the permanent card", () => {
+	// The names the server gives it (get_or_create_permanent_card): the free one, then the restaurant's, then a number
+	const NAMED_BY_THE_SYSTEM = [
+		"Permanent items",
+		"Permanent items - The Bistro",
+		"Permanent items 2",
+		"Permanent items - The Bistro 2",
+	]
+	const PERMANENT = {
+		name: "Permanent items",
+		card_name: "Permanent items",
+		is_active: 1,
+		is_permanent: 1,
+	}
+	const LUNCH = {
+		name: "Lunch",
+		card_name: "Lunch",
+		is_active: 1,
+		is_permanent: 0,
+	}
+
+	it("reads Articles permanents under any name the system gave it", () => {
+		for (const card_name of NAMED_BY_THE_SYSTEM) {
+			expect(cardLabel({ card_name, is_permanent: 1 })).toBe(
+				"Articles permanents",
+			)
+		}
+	})
+
+	it("keeps the name a person gave it, and the name of every other card", () => {
+		expect(cardLabel({ card_name: "Weekend lunch", is_permanent: 1 })).toBe(
+			"Weekend lunch",
+		)
+		expect(
+			cardLabel({ card_name: "Permanent items for lunch", is_permanent: 1 }),
+		).toBe("Permanent items for lunch")
+		// A card that is not the permanent one is never relabelled, whatever it is called
+		expect(cardLabel({ card_name: "Permanent items", is_permanent: 0 })).toBe(
+			"Permanent items",
+		)
+		expect(cardLabel({ card_name: "Lunch", is_permanent: 0 })).toBe("Lunch")
+		expect(cardLabel(null)).toBe("")
+		expect(cardLabel(undefined)).toBe("")
+	})
+
+	it("reads Articles permanents in the heading of the card editor, and the name it is stored under stays", async () => {
+		call.mockImplementation(async (method, params) => {
+			if (method.endsWith("get_restaurant_cards")) return [LUNCH, PERMANENT]
+			if (method === "frappe.client.get")
+				return { ...PERMANENT, name: params.name, items: [] }
+			return null
+		})
+		const wrapper = mountWith(CardEditor, {
+			props: { modelValue: true },
+			global: {
+				stubs: {
+					CreateItemDialog: true,
+					ItemEditPanel: true,
+					MenuDesignerDialog: true,
+				},
+			},
+		})
+		await flushPromises()
+
+		await wrapper
+			.findAll("div")
+			.find((el) => el.text() === "Articles permanents")
+			.trigger("click")
+		await flushPromises()
+
+		const heading = wrapper.find("h3")
+		expect(heading.text()).toBe("Articles permanents")
+		// Renaming starts from the name the card is stored under: the label is only how it is shown
+		await heading.trigger("click")
+		expect(wrapper.find("input.font-bold").element.value).toBe(
+			"Permanent items",
+		)
+		expect(wrapper.vm.cardDetail.card_name).toBe("Permanent items")
+	})
+
+	it("reads Articles permanents among the cards of the menu designer", () => {
+		const wrapper = mountWith(MenuSettings, {
+			props: { cards: [LUNCH, PERMANENT], cardName: "Lunch" },
+		})
+
+		const labels = wrapper.findAll("label").map((label) => label.text())
+		expect(labels).toContain("Lunch")
+		expect(labels).toContain("Articles permanents")
+		expect(labels).not.toContain("Permanent items")
+	})
+})
+
 describe("the sources", () => {
 	const sources = import.meta.glob("/src/**/*.vue", {
 		query: "?raw",
@@ -278,6 +413,28 @@ describe("the sources", () => {
 			.filter(([, source]) => bare.test(source) || raw.test(source))
 			.map(([path]) => path)
 		expect(offenders).toEqual([])
+	})
+
+	it("ask for the plan view under its context, never as the bare word", () => {
+		const bare = /__\(\s*["']Plan["']\s*\)/
+		const offenders = Object.entries(sources)
+			.filter(([, source]) => bare.test(source))
+			.map(([path]) => path)
+		expect(offenders).toEqual([])
+	})
+
+	it("show the permanent card by its label wherever the cards of a restaurant are listed", () => {
+		// The till's card tabs and the designer's list print every card, the permanent one included; the settings lists
+		// ask for the selectable cards only, which leave it out
+		const stored = /\{\{\s*(card|cardDetail)\.card_name\s*\}\}/
+		const printsTheStoredName = (file) => stored.test(sources[`/src/${file}`])
+		expect(printsTheStoredName("pages/POSSale.vue")).toBe(false)
+		expect(printsTheStoredName("components/restaurant/MenuSettings.vue")).toBe(
+			false,
+		)
+		const editor = sources["/src/components/restaurant/CardEditor.vue"]
+		expect(editor).toMatch(/\{\{\s*cardLabel\(cardDetail\)\s*\}\}/)
+		expect(editor).toMatch(/:card-display-name="cardLabel\(cardDetail\)"/)
 	})
 
 	it("ask for the plan view and the statuses under the contexts the catalogue holds", () => {
