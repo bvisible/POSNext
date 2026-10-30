@@ -39,6 +39,7 @@ describe("the restaurant store knows what the user may manage", () => {
 	it("knows the rights the server tells of: the restaurant's, the ERP's on items and prices, the till's settings", () => {
 		expect(RESTAURANT_RIGHTS).toEqual([
 			"manage_floor",
+			"set_table_status",
 			"manage_cards",
 			"manage_options",
 			"manage_workflows",

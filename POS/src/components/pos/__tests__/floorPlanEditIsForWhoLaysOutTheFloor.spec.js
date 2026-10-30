@@ -1,8 +1,10 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). Laying out the floor plan (rooms, tables, stations, walls) is
  * //// for whoever the server lets manage the floor (NeoRestau lot 1, task 3): the till is told so in its settings
- * //// (`restaurant_can.manage_floor`). A cashier sees the plan and serves its tables; the Edit button is not his,
- * //// and the editor does not open for him whatever calls it. The server refuses his writes anyway.
+ * //// (`restaurant_can.manage_floor`). A cashier sees the plan and serves its tables; the way into the editor is not
+ * //// his, and the editor does not open for him whatever calls it. The server refuses his writes anyway. The way in
+ * //// is the « Edit the floor plan » item of the « ⋯ » menu at the end of the plan's line (Ruling 48; it was an Edit
+ * //// button on the line).
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"
@@ -86,24 +88,33 @@ describe("the floor plan's editor is for whoever may lay out the floor", () => {
 		await flushPromises()
 	}
 
+	// The way in: the « ⋯ » at the end of the plan's line, and the item of the menu it opens
+	const more = () => wrapper.find('[data-test="floor-line-more"]')
+	const editItem = () => wrapper.find('[data-test="menu-edit-floor-plan"]')
+	// Nothing on the line is called Edit any more, whoever looks at it
 	const editButton = () => wrapper.findAll("button").find((button) => button.text() === "Edit")
 
 	afterEach(() => {
 		wrapper?.unmount()
 	})
 
-	it("shows the Edit button to whoever may manage the floor, and opens the editor", async () => {
+	it("offers the editor to whoever may manage the floor, in the « ⋯ » menu, and opens it", async () => {
 		await floorPlan({ manage_floor: true })
+		expect(editButton()).toBeUndefined()
 
-		await editButton().trigger("click")
+		await more().trigger("click")
+		await editItem().trigger("click")
 
 		expect(wrapper.vm.isEditMode).toBe(true)
 		expect(wrapper.findAll("button").some((button) => button.text() === "Save")).toBe(true)
 	})
 
-	it("shows no Edit button to a cashier", async () => {
+	it("offers no way into the editor to a cashier: no « ⋯ », no menu, no item", async () => {
 		await floorPlan({ manage_floor: false, view_tips: true })
 
+		expect(more().exists()).toBe(false)
+		expect(wrapper.find('[role="menu"]').exists()).toBe(false)
+		expect(editItem().exists()).toBe(false)
 		expect(editButton()).toBeUndefined()
 	})
 
@@ -115,9 +126,10 @@ describe("the floor plan's editor is for whoever may lay out the floor", () => {
 		expect(wrapper.vm.isEditMode).toBe(false)
 	})
 
-	it("shows no Edit button while the server has not said what the user may manage", async () => {
+	it("offers no way in while the server has not said what the user may manage", async () => {
 		await floorPlan(undefined)
 
+		expect(more().exists()).toBe(false)
 		expect(editButton()).toBeUndefined()
 		await wrapper.vm.toggleEditMode()
 		expect(wrapper.vm.isEditMode).toBe(false)

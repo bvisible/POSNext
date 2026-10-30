@@ -630,9 +630,10 @@ class TestTheTillIsToldWhatItsUserMayManage(RestaurantRights):
 		self.assertTrue(self.told(self.manager)["manage_floor"])
 
 	def test_each_user_is_told_his_own_rights(self):
+		# A cashier reads the tips and writes the status of a table (frees the tables being cleaned), nothing else
 		self.assertEqual(
 			self.told(self.cashier),
-			{right: right == "view_tips" for right in EVERY_RIGHT},
+			{right: right in ("view_tips", "set_table_status") for right in EVERY_RIGHT},
 		)
 		self.assertEqual(self.told(self.manager), MANAGER_IS_TOLD)
 		self.assertEqual(self.told("Administrator"), dict.fromkeys(EVERY_RIGHT, True))

@@ -59,6 +59,9 @@ GRANTED_ROLES = (*MANAGER_ROLES, TILL_MANAGER_ROLE, KITCHEN_ROLE, CASHIER_ROLE)
 # a cashier may write a table (its status), never a room. The item sheet and the price list are the ERP's.
 RIGHTS = {
 	"manage_floor": ("Restaurant Area", "write"),
+	# The service's, not the layout's: a cashier writes a table's status. It is the right of `update_table_status`,
+	# `mark_table_available` and `free_cleaning_tables`, and what the floor plan's menu shows its table items by
+	"set_table_status": ("Restaurant Table", "write"),
 	"manage_cards": ("Restaurant Card", "write"),
 	"manage_options": ("Product Option Group", "write"),
 	"manage_workflows": ("Preparation Workflow", "write"),

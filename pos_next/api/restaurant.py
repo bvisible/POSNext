@@ -236,6 +236,19 @@ def mark_table_available(table_name):
 		label = frappe.db.get_value("Restaurant Table", table_name, "table_name") or table_name
 		frappe.throw(_("Table {0} is not in Paid or Cleaning status").format(label))
 
+	_put_table_back(table_name)
+
+	frappe.publish_realtime("table_update")
+	return {"status": "success"}
+
+
+def _put_table_back(table_name):
+	"""Put a table that has been cleaned back to Empty, ready for the next guests.
+
+	What the floor plan does for one table (`mark_table_available`) and for a whole room (`free_cleaning_tables`): the
+	status goes back to Empty, the guest order tokens of the table expire, and the draft invoices that still name it are
+	unlinked so that the next order starts fresh. Whoever calls it has checked who may, and tells the other tills.
+	"""
 	frappe.db.set_value("Restaurant Table", table_name, "status", "Empty")
 
 	# Expire guest order tokens
@@ -251,8 +264,47 @@ def mark_table_available(table_name):
 	for inv_name in draft_invoices:
 		frappe.db.set_value("Sales Invoice", inv_name, "restaurant_table", None, update_modified=False)
 
-	frappe.publish_realtime("table_update")
-	return {"status": "success"}
+
+@frappe.whitelist()
+def free_cleaning_tables(area, restaurant=None):
+	"""Free every table of a room that is being cleaned: Cleaning goes back to Empty, in one call for the whole room.
+
+	The « Free the tables being cleaned » item of the floor plan's menu (product owner, 30.10.2026): once the room has been
+	cleaned the waiter frees its tables at once, without opening each of them and without a confirmation. Each table is put
+	back as `mark_table_available` puts one back; the room's other tables, and every table of another room, are left as they
+	are. Answers how many tables were freed and which, so that the till shows them free without asking again.
+
+	The room must be one of the restaurant named, else of the till's own: a room of another restaurant is refused.
+	"""
+	# The rule of a table's own status change (`update_table_status`, `mark_table_available`): whoever may write a table, a
+	# cashier included, from a desk account
+	permissions.require("Restaurant Table", "write")
+
+	restaurant = restaurant or scope.current_restaurant()
+	permissions.require_restaurant(restaurant)
+	# A room is named by its name: anything else (a dict from a JSON body, which frappe.db.exists would read as filters)
+	# is no room
+	if not isinstance(area, str) or not area or not frappe.db.exists("Restaurant Area", area):
+		frappe.throw(_("Area not found"))
+	if scope.restaurant_of_record("Restaurant Area", area) != restaurant:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	freed = []
+	for table_name in frappe.get_all(
+		"Restaurant Table",
+		filters={"area": area, "status": "Cleaning"},
+		pluck="name",
+		order_by="table_name asc",
+	):
+		# Another till may have seated the table since it was listed: it is freed only if it is still being cleaned
+		if frappe.db.get_value("Restaurant Table", table_name, "status", for_update=True) != "Cleaning":
+			continue
+		_put_table_back(table_name)
+		freed.append(table_name)
+
+	if freed:
+		frappe.publish_realtime("table_update")
+	return {"status": "success", "freed": len(freed), "tables": freed}
 
 
 @frappe.whitelist()

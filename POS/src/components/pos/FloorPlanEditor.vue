@@ -13,99 +13,217 @@
 	<!-- //// deletion, 32f2415d the closed-hours banner, e4769383 the clay retheme. Run git log -->
 	<!-- //// on this path for the full list.) -->
 	<div class="flex flex-col h-full bg-white dark:bg-gray-900 overflow-hidden">
-		<!-- Header: Area tabs + Edit toggle -->
-		<div class="flex items-center justify-between px-4 py-2 border-b dark:border-gray-800">
-			<!-- Area Tabs -->
-			<div class="flex items-center gap-1 overflow-x-auto" v-if="areas.length > 1">
-				<button
-					v-for="area in areas"
-					:key="area.name"
-					@click="selectedArea = area.name"
-					:draggable="isEditMode"
-					@dragstart="onAreaDragStart($event, area)"
-					@dragover.prevent="onAreaDragOver($event, area)"
-					@drop="onAreaDrop($event, area)"
-					class="relative px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors"
-					:class="[
-						selectedArea === area.name
-							? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-							: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800',
-						isEditMode ? 'cursor-grab' : ''
-					]"
-				>
-					{{ area.area_name }}
-					<span
-						v-if="occupiedCount(area.name) > 0"
-						class="ml-1 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full"
-					>
-						{{ occupiedCount(area.name) }}
-					</span>
-				</button>
-
-				<!-- Area management buttons (edit mode) - outside overflow container -->
-				<template v-if="isEditMode && selectedArea">
+		<!-- One line (NeoRestau lot 1, Ruling 48), with the look of the line the runner and the kitchen screen share
+		     (RoomStationFilterLine, Ruling 44): the rooms on the left; on the right the stations and the Runner and
+		     Takeaway pills, or Save and Cancel while the plan is edited; the « ⋯ » menu at the very end. It was two rows
+		     (49 and 39 px, measured) and an Edit button within every finger's reach. -->
+		<div
+			data-test="floor-line"
+			class="px-4 py-1 border-b dark:border-gray-800 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 flex-shrink-0"
+		>
+			<!-- Rooms: a tap switches the plan (they are not a filter: there is no « all rooms » plan) -->
+			<div data-test="floor-rooms" :class="GROUP">
+				<template v-if="areas.length > 1">
 					<button
-						@click.stop="openRenameAreaDialog(areas.find(a => a.name === selectedArea))"
-						class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors flex-shrink-0"
-						:title="__('Rename area')"
+						v-for="area in areas"
+						:key="area.name"
+						type="button"
+						data-test="room-tab"
+						@click="selectedArea = area.name"
+						:draggable="isEditMode"
+						@dragstart="onAreaDragStart($event, area)"
+						@dragover.prevent="onAreaDragOver($event, area)"
+						@drop="onAreaDrop($event, area)"
+						class="relative"
+						:class="[
+							CHIP,
+							selectedArea === area.name
+								? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+								: 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800',
+							isEditMode ? 'cursor-grab' : ''
+						]"
 					>
-						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-						</svg>
+						{{ area.area_name }}
+						<span
+							v-if="occupiedCount(area.name) > 0"
+							class="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full"
+						>
+							{{ occupiedCount(area.name) }}
+						</span>
 					</button>
+
+					<!-- Area management buttons (edit mode) -->
+					<template v-if="isEditMode && selectedArea">
+						<button
+							@click.stop="openRenameAreaDialog(areas.find(a => a.name === selectedArea))"
+							class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors flex-shrink-0"
+							:title="__('Rename area')"
+						>
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+							</svg>
+						</button>
+						<button
+							@click.stop="openDeleteAreaDialog(areas.find(a => a.name === selectedArea))"
+							class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0"
+							:title="__('Delete area')"
+						>
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+						</button>
+					</template>
+
+					<!-- Add Area Button (edit mode) -->
 					<button
-						@click.stop="openDeleteAreaDialog(areas.find(a => a.name === selectedArea))"
-						class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0"
-						:title="__('Delete area')"
+						v-if="isEditMode"
+						@click="showAddAreaDialog = true"
+						class="w-7 h-7 flex items-center justify-center rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
+						:title="__('Add Area')"
 					>
-						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 						</svg>
 					</button>
 				</template>
-
-				<!-- Add Area Button (edit mode) -->
-				<button
-					v-if="isEditMode"
-					@click="showAddAreaDialog = true"
-					class="w-7 h-7 flex items-center justify-center rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
-					:title="__('Add Area')"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-					</svg>
-				</button>
-			</div>
-			<div v-else class="text-sm font-medium text-gray-700 dark:text-gray-300">
-				{{ __("Floor Plan") }}
+				<div v-else class="inline-flex items-center h-8 text-sm font-medium text-gray-700 dark:text-gray-300">
+					{{ __("Floor Plan") }}
+				</div>
 			</div>
 
-			<div class="flex items-center gap-2">
-				<!-- Edit Mode Toggle: only for whoever may lay out the floor plan (the server checks it again) -->
-				<button
-					v-if="canManageFloor || isEditMode"
-					@click="toggleEditMode"
-					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-					:class="isEditMode
-						? 'bg-green-100 text-green-700 hover:bg-green-200'
-						: 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path v-if="isEditMode" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-						<path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-					</svg>
-					{{ isEditMode ? __("Save") : __("Edit") }}
-				</button>
-				<button
-					v-if="isEditMode"
-					@click="cancelEditMode"
-					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-red-50 text-red-600 hover:bg-red-100"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-					</svg>
-					{{ __("Cancel") }}
-				</button>
+			<!-- Stations and pills (view mode), Save and Cancel (edit mode), the « ⋯ » menu: kept to the right edge -->
+			<div data-test="floor-actions" :class="[GROUP, 'justify-end ml-auto']">
+				<template v-if="!isEditMode && allStations.length > 0">
+					<!-- Preparation stations: a tap opens the kitchen screen of the station -->
+					<div v-for="station in allStations" :key="'sbar-' + station.name"
+						data-test="station-chip"
+						class="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded-lg whitespace-nowrap cursor-pointer transition-all hover:shadow-sm touch-manipulation"
+						:class="station.area === selectedArea
+							? 'border-2'
+							: 'border border-dashed opacity-60 hover:opacity-90'"
+						:style="{
+							borderColor: station.color || '#6B7280',
+							backgroundColor: station.area === selectedArea ? (station.color || '#6B7280') + '15' : 'transparent',
+							color: station.color || '#6B7280'
+						}"
+						@click="openStationKDS(station)">
+						<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#6B7280' }"></span>
+						<span class="font-semibold">{{ station.station_name }}</span>
+						<span v-if="station.area !== selectedArea" class="text-[9px] opacity-50">
+							({{ getAreaName(station.area) }})
+						</span>
+						<span v-if="getStationPreparingCount(station.name) > 0"
+							class="text-[9px] font-bold px-1 py-0.5 rounded"
+							:style="{ backgroundColor: '#d68a5920', color: '#d68a59' }">
+							{{ getStationPreparingCount(station.name) }}p
+						</span>
+						<span v-if="getStationReadyCount(station.name) > 0"
+							class="text-[9px] font-bold px-1 py-0.5 rounded animate-pulse"
+							:style="{ backgroundColor: '#22C55E30', color: '#16A34A' }">
+							{{ getStationReadyCount(station.name) }}✓
+						</span>
+					</div>
+
+					<!-- Runner pill (only when runner is enabled) -->
+					<div v-if="restaurantStore.runnerEnabled"
+						data-test="runner-pill"
+						class="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-bold rounded-lg whitespace-nowrap cursor-pointer transition-all flex-shrink-0 touch-manipulation"
+						:class="totalReadyCount > 0
+							? 'bg-green-500 text-white hover:bg-green-600 shadow-sm'
+							: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
+						@click="openRunnerTab">
+						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+						</svg>
+						{{ __("Runner") }}
+						<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px]"
+							:class="totalReadyCount > 0 ? 'animate-pulse' : ''">
+							{{ totalReadyCount }}
+						</span>
+					</div>
+					<!-- Takeaway pill -->
+					<div v-if="restaurantStore.takeawayEnabled"
+						data-test="takeaway-pill"
+						class="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-bold rounded-lg whitespace-nowrap cursor-pointer transition-all flex-shrink-0 touch-manipulation"
+						:class="takeawayReadyCount > 0
+							? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
+							: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
+						@click="startNewTakeaway">
+						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+						</svg>
+						{{ __("Takeaway") }}
+						<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] cursor-pointer"
+							:class="takeawayReadyCount > 0 ? 'animate-pulse' : ''"
+							@click.stop="openTakeawayTab">
+							{{ takeawayReadyCount }}/{{ takeawayTotalCount }}
+						</span>
+					</div>
+				</template>
+
+				<!-- Edit mode: Save leaves the editor with the plan saved, Cancel without -->
+				<template v-if="isEditMode">
+					<button
+						type="button"
+						data-test="save-floor-plan"
+						@click="toggleEditMode"
+						class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-green-100 text-green-700 hover:bg-green-200"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+						</svg>
+						{{ __("Save") }}
+					</button>
+					<button
+						type="button"
+						@click="cancelEditMode"
+						class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-red-50 text-red-600 hover:bg-red-100"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+						{{ __("Cancel") }}
+					</button>
+				</template>
+
+				<!-- The « ⋯ » menu, the last thing on the line: small and grey on purpose, so that it is not pressed by
+				     accident. It holds the plan's occasional actions (see menuItems) and is shown when one of them is. -->
+				<div v-if="!isEditMode && menuItems.length > 0" ref="menuRoot" data-test="floor-line-menu" class="relative flex-shrink-0">
+					<button
+						type="button"
+						data-test="floor-line-more"
+						class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800 transition-colors touch-manipulation"
+						aria-haspopup="menu"
+						:aria-expanded="menuOpen"
+						:aria-label="__('Actions')"
+						:title="__('Actions')"
+						@click="toggleMenu"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="ICON_MORE" />
+						</svg>
+					</button>
+					<div
+						v-if="menuOpen"
+						role="menu"
+						class="absolute end-0 top-full mt-1 z-30 w-max min-w-[14rem] max-w-xs py-1 rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black/5"
+					>
+						<button
+							v-for="item in menuItems"
+							:key="item.key"
+							type="button"
+							role="menuitem"
+							:data-test="'menu-' + item.key"
+							class="flex items-center gap-2 w-full min-h-target px-4 text-sm text-start text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+							@click="runMenuItem(item)"
+						>
+							<svg class="w-4 h-4 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+							</svg>
+							{{ item.label }}
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -118,74 +236,6 @@
 			<span class="text-xs text-amber-800 font-medium">
 				{{ restaurantStore.restaurantStatus.warning || __('No active card for the current time slot') }}
 			</span>
-		</div>
-
-		<!-- Station Activity Bar -->
-		<div v-if="!isEditMode && allStations.length > 0"
-			class="flex items-center gap-2 px-4 py-1.5 border-b dark:border-gray-800 bg-gray-50/80 dark:bg-gray-850 overflow-x-auto flex-shrink-0">
-			<div v-for="station in allStations" :key="'sbar-' + station.name"
-				class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer transition-all hover:shadow-sm"
-				:class="station.area === selectedArea
-					? 'border-2'
-					: 'border border-dashed opacity-60 hover:opacity-90'"
-				:style="{
-					borderColor: station.color || '#6B7280',
-					backgroundColor: station.area === selectedArea ? (station.color || '#6B7280') + '15' : 'transparent',
-					color: station.color || '#6B7280'
-				}"
-				@click="openStationKDS(station)">
-				<span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: station.color || '#6B7280' }"></span>
-				<span class="font-semibold">{{ station.station_name }}</span>
-				<span v-if="station.area !== selectedArea" class="text-[9px] opacity-50">
-					({{ getAreaName(station.area) }})
-				</span>
-				<span v-if="getStationPreparingCount(station.name) > 0"
-					class="text-[9px] font-bold px-1 py-0.5 rounded"
-					:style="{ backgroundColor: '#d68a5920', color: '#d68a59' }">
-					{{ getStationPreparingCount(station.name) }}p
-				</span>
-				<span v-if="getStationReadyCount(station.name) > 0"
-					class="text-[9px] font-bold px-1 py-0.5 rounded animate-pulse"
-					:style="{ backgroundColor: '#22C55E30', color: '#16A34A' }">
-					{{ getStationReadyCount(station.name) }}✓
-				</span>
-			</div>
-
-			<!-- Spacer + Runner pill (only when runner is enabled) -->
-			<div class="flex-grow"></div>
-			<!-- Runner pill -->
-			<div v-if="restaurantStore.runnerEnabled"
-				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
-				:class="totalReadyCount > 0
-					? 'bg-green-500 text-white hover:bg-green-600 shadow-sm'
-					: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
-				@click="openRunnerTab">
-				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-				</svg>
-				{{ __("Runner") }}
-				<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px]"
-					:class="totalReadyCount > 0 ? 'animate-pulse' : ''">
-					{{ totalReadyCount }}
-				</span>
-			</div>
-			<!-- Takeaway pill -->
-			<div v-if="restaurantStore.takeawayEnabled"
-				class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex-shrink-0"
-				:class="takeawayReadyCount > 0
-					? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm'
-					: 'border border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500'"
-				@click="startNewTakeaway">
-				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-				</svg>
-				{{ __("Takeaway") }}
-				<span class="bg-white/30 px-1.5 py-0.5 rounded text-[10px] cursor-pointer"
-					:class="takeawayReadyCount > 0 ? 'animate-pulse' : ''"
-					@click.stop="openTakeawayTab">
-					{{ takeawayReadyCount }}/{{ takeawayTotalCount }}
-				</span>
-			</div>
 		</div>
 
 		<!-- Wall Drawing Toolbar (edit mode only) -->
@@ -918,7 +968,7 @@ const cartStore = usePOSCartStore()
 const draftsStore = usePOSDraftsStore()
 const shiftStore = usePOSShiftStore()
 let floorSocket = null
-const { showSuccess, showError, handleError } = useToast()
+const { showSuccess, showError, showInfo, handleError } = useToast()
 
 const canvasRef = ref(null)
 const isEditMode = ref(false)
@@ -926,6 +976,119 @@ const isDirty = ref(false)
 // Laying out the floor (rooms, tables, stations, walls) is for whoever the server lets manage the floor (NeoRestau lot
 // 1, task 3): a cashier sees the plan and serves its tables, the Edit button is not his
 const canManageFloor = computed(() => Boolean(restaurantStore.can?.manage_floor))
+// Setting the status of a table is the service's, not the layout's: a cashier may (the server checks it again)
+const canSetTableStatus = computed(() => Boolean(restaurantStore.can?.set_table_status))
+
+// ─── The line at the top ─────────────────────────────────────────────────────
+// The look of the line is the one of RoomStationFilterLine, the runner's and the kitchen's (Ruling 44, then 48): chips
+// 32 px high in text-sm, 8 px between chips, a line of 41 px (32 + 2 x 4 + its border). It is repeated here instead of
+// shared: the rooms of the plan switch the plan, they are not a filter, so the component would have to be bent.
+// floorPlanOneLine.spec.js mounts both and fails when the two drift apart. The one difference is the side padding, 12 px
+// (the tabs and the pills had it before) where the shared line has 16: the plan gets 852 px at 1366, and three rooms, two
+// stations and both pills take 833 px of it in French, 873 px with the wider padding, which would wrap.
+const CHIP =
+	"inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors whitespace-nowrap touch-manipulation"
+const GROUP = "flex flex-wrap items-center gap-x-2 gap-y-1"
+
+// The glyphs of the app (24 px, 2 px stroke): « more-horizontal » as settings/SettingsSection.vue draws it, and the pencil
+// of the Edit button that the menu replaces
+const ICON_MORE =
+	"M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+const ICON_PENCIL =
+	"M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+// The tick of Save and of a paid table
+const ICON_CHECK = "M5 13l4 4L19 7"
+
+// ─── The « ⋯ » menu, at the very end of the line ─────────────────────────────
+// Product owner, 30.10.2026: the Edit button was too easy to hit on the line, so it went to a quiet « ⋯ » that opens a
+// menu. The menu is a list of items; each says who sees it (`visible`) and what it does (`run`). It is drawn from the items
+// that are shown, and the « ⋯ » is shown when at least one is. A new action of the plan is one more entry of this list.
+const menuOpen = ref(false)
+const menuRoot = ref(null)
+const menuItems = computed(() =>
+	[
+		{
+			key: "edit-floor-plan",
+			label: __("Edit the floor plan"),
+			icon: ICON_PENCIL,
+			// Laying out the floor is for whoever the server lets manage it (the server checks it again)
+			visible: canManageFloor.value,
+			run: toggleEditMode,
+		},
+		{
+			key: "free-cleaning-tables",
+			label: __("Free the tables being cleaned"),
+			icon: ICON_CHECK,
+			// A cashier may set the status of a table without laying out the floor (the server checks it again)
+			visible: canSetTableStatus.value,
+			run: freeCleaningTables,
+		},
+	].filter((item) => item.visible),
+)
+
+// « Free the tables being cleaned »: the tables of the room shown that are being cleaned go back to Empty, in one call, with
+// no question first (the product owner dislikes extra clicks). The server frees them for the till's restaurant; a short
+// toast says how many.
+async function freeCleaningTables() {
+	if (!selectedArea.value) return
+	try {
+		const freed = await restaurantStore.freeCleaningTables(selectedArea.value)
+		if (!freed) showInfo(__("No table is being cleaned"))
+		else if (freed === 1) showSuccess(__("{0} table freed", [freed]))
+		else showSuccess(__("{0} tables freed", [freed]))
+	} catch (error) {
+		handleError(error, __("Failed to update table status"))
+	}
+}
+
+function toggleMenu() {
+	if (menuOpen.value) closeMenu()
+	else menuOpen.value = true
+}
+
+// The focus goes back to the « ⋯ » when the menu is closed from the keyboard
+function closeMenu({ restoreFocus = false } = {}) {
+	if (!menuOpen.value) return
+	menuOpen.value = false
+	if (restoreFocus) nextTick(() => menuRoot.value?.querySelector("button")?.focus())
+}
+
+// The menu closes before the action runs: an action that opens a dialog or the editor leaves nothing hanging over it
+async function runMenuItem(item) {
+	closeMenu()
+	await item.run()
+}
+
+function onMenuPointerDown(event) {
+	if (!menuRoot.value?.contains(event.target)) closeMenu()
+}
+
+function onMenuKeyDown(event) {
+	if (event.key === "Escape") closeMenu({ restoreFocus: true })
+}
+
+function stopListeningToTheMenu() {
+	document.removeEventListener("pointerdown", onMenuPointerDown, true)
+	document.removeEventListener("keydown", onMenuKeyDown)
+}
+
+// Heard on the whole page while it is open and not a moment longer. The pointer is heard on the way down (capture): a table
+// stops its pointer from rising, and a tap on the canvas has to close the menu all the same.
+watch(menuOpen, async (open) => {
+	if (!open) return stopListeningToTheMenu()
+	document.addEventListener("pointerdown", onMenuPointerDown, true)
+	document.addEventListener("keydown", onMenuKeyDown)
+	await nextTick()
+	menuRoot.value?.querySelector('[role="menuitem"]')?.focus()
+})
+// No menu once the editor is open, nor once its last item is gone (the user's rights changed under it)
+watch(isEditMode, () => closeMenu())
+watch(
+	() => menuItems.value.length,
+	(shown) => {
+		if (!shown) closeMenu()
+	},
+)
 const ZOOM_STORAGE_KEY = "pos_next_floor_zoom"
 const savedZoom = Number.parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY)) || 1
 
@@ -2211,6 +2374,7 @@ window.addEventListener("beforeunload", onBeforeUnload)
 
 onUnmounted(() => {
 	window.removeEventListener("beforeunload", onBeforeUnload)
+	stopListeningToTheMenu()
 	if (floorSocket) {
 		floorSocket.off("table_update")
 		floorSocket.off("kds_update")

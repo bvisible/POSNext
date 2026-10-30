@@ -339,6 +339,10 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				"mark_table_available",
 				_past_the_gate(lambda: restaurant.mark_table_available(NONE), frappe.ValidationError),
 			),
+			(
+				"free_cleaning_tables",
+				_past_the_gate(lambda: restaurant.free_cleaning_tables(NONE), frappe.ValidationError),
+			),
 			("get_reservations", lambda: reservations.get_reservations()),
 			("get_reservation_stats", lambda: reservations.get_reservation_stats(nowdate(), nowdate())),
 			(

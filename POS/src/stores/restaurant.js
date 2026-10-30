@@ -21,6 +21,8 @@ const log = logger.create("RestaurantStore")
 // ERP's on the item sheet and on the price list, and the till's own settings
 export const RESTAURANT_RIGHTS = [
 	"manage_floor",
+	// The service's: a cashier sets the status of a table (frees the tables being cleaned) without laying out the floor
+	"set_table_status",
 	"manage_cards",
 	"manage_options",
 	"manage_workflows",
@@ -206,6 +208,30 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		} catch (error) {
 			log.error(`Failed to update status for table ${tableName}:`, error)
 		}
+	}
+
+	// Frees every table of a room that is being cleaned, in one call (the « Free the tables being cleaned » item of the
+	// floor plan's menu). The server puts them back as it puts one table back, for the till's restaurant, and refuses a room
+	// of another one. The tables it answers are shown Empty at once, here and in the offline cache, without waiting for the
+	// realtime update. Answers how many were freed.
+	async function freeCleaningTables(areaName) {
+		const answer = await call("pos_next.api.restaurant.free_cleaning_tables", {
+			area: areaName,
+			...ofTheRestaurant(),
+		})
+		const freed = answer?.tables || []
+		for (const name of freed) {
+			const table = tables.value.find((t) => t.name === name)
+			if (!table) continue
+			table.status = "Empty"
+			try {
+				await db.restaurant_tables.put(table)
+			} catch (error) {
+				// The cache is the offline copy: a failure there must not undo a table that is freed on the server
+				log.error(`Failed to cache table ${name} as freed:`, error)
+			}
+		}
+		return freed.length
 	}
 
 	async function updateTablePosition(tableName, pos_x, pos_y, width, height) {
@@ -692,6 +718,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		loadTablesAndAreas,
 		fetchFromNetwork,
 		updateTableStatus,
+		freeCleaningTables,
 		updateTablePosition,
 		saveAllPositions,
 		addTable,
