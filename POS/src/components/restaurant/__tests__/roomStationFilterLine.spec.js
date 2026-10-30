@@ -121,13 +121,43 @@ describe("the line of filters", () => {
 		])
 	})
 
-	it("is a touch surface: every chip is at least 44 px high", () => {
+	it("is short, to leave the room to the tickets: chips 32 px high and one row 41 px with its padding and border (it was 61)", () => {
+		// Ruling 44: the product owner prefers ticket space to the 44 px touch guideline of the design system for these chips
 		const wrapper = mountLine()
 
 		const all = [...chips(wrapper, "rooms"), ...chips(wrapper, "stations")]
 		expect(all).toHaveLength(8)
 		for (const chip of all) {
-			expect(chip.classes()).toContain("min-h-[44px]")
+			// A fixed height of 32 px (h-8) with the text size it had (text-sm): a chip does not grow with its content
+			expect(chip.classes()).toEqual(expect.arrayContaining(["h-8", "text-sm"]))
+			expect(chip.classes()).not.toContain("min-h-[44px]")
+		}
+
+		// The line adds 4 px above and below its chips and one border: 32 + 2 x 4 + 1
+		const line = wrapper.find('[data-test="filter-line"]').classes()
+		expect(line).toEqual(expect.arrayContaining(["py-1", "border-b"]))
+		expect(line).not.toContain("py-2")
+		const px = (classes, prefix) =>
+			classes
+				.filter((token) => new RegExp(`^${prefix}-\\d+$`).test(token))
+				.map((token) => Number(token.split("-")[1]) * 4)[0]
+		expect(px(all[0].classes(), "h") + 2 * px(line, "py") + 1).toBe(41)
+	})
+
+	it("keeps its chips as apart as before on a row, and wraps its rows close together", () => {
+		const wrapper = mountLine()
+
+		const line = wrapper.find('[data-test="filter-line"]').classes()
+		expect(line).toEqual(expect.arrayContaining(["gap-x-6", "gap-y-1", "px-4"]))
+		for (const group of ["rooms", "stations"]) {
+			const classes = wrapper.find(`[data-test="${group}"]`).classes()
+			expect(classes).toEqual(expect.arrayContaining(["gap-x-2", "gap-y-1"]))
+		}
+		// The room between two chips on a row is untouched, so is the room inside a chip
+		for (const chip of chips(wrapper, "rooms")) {
+			expect(chip.classes()).toEqual(
+				expect.arrayContaining(["px-4", "gap-1.5"]),
+			)
 		}
 	})
 })

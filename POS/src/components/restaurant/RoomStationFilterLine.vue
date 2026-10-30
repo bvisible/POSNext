@@ -9,7 +9,7 @@
 	<div
 		v-if="hasRooms || hasStations"
 		data-test="filter-line"
-		class="bg-white dark:bg-gray-800 border-b px-4 py-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 flex-shrink-0"
+		class="bg-white dark:bg-gray-800 border-b px-4 py-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 flex-shrink-0"
 	>
 		<!-- Rooms, on the left -->
 		<div
@@ -17,7 +17,7 @@
 			data-test="rooms"
 			role="group"
 			:aria-label="__('Filter by room')"
-			class="flex flex-wrap items-center gap-2"
+			class="flex flex-wrap items-center gap-x-2 gap-y-1"
 		>
 			<button
 				type="button"
@@ -46,7 +46,7 @@
 			data-test="stations"
 			role="group"
 			:aria-label="__('Filter by station')"
-			class="flex flex-wrap items-center justify-end gap-2 ml-auto"
+			class="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 ml-auto"
 		>
 			<button
 				type="button"
@@ -93,6 +93,9 @@ import { computed } from "vue"
  *
  * It is controlled: the screen holds the choice (selectedRoom "" is every room, selectedStation null is every station)
  * and hears what was chosen. A station chosen again is taken back, as on the runner.
+ *
+ * It is as short as it can be (chips 32 px high, 4 px of padding: Ruling 44, see CHIP below): every pixel it saves is a
+ * pixel of tickets on a 768 px high screen.
  */
 const props = defineProps({
 	rooms: { type: Array, default: () => [] },
@@ -111,9 +114,12 @@ const allLabel = computed(() =>
 		: `${__("All")} (${props.allCount})`,
 )
 
-// A touch surface: a chip is at least 44 px high (NeoPOS, design system §7). The colours are the screens' own.
+// Ruling 44: a chip is 32 px high (h-8, text-sm) and the line pads 4 px above and below it, so that the line is 41 px
+// with its border and the tickets get the rest of the screen. The product owner prefers ticket space to the 44 px touch
+// guideline of the design system (NeoPOS, section 7) for THESE chips: the guideline stays for the rest of the till. The
+// chips keep their width (px-4) and the room between them, so they stay easy to hit. The colours are the screens' own.
 const CHIP =
-	"inline-flex items-center gap-1.5 min-h-[44px] px-4 text-sm font-medium rounded-lg transition-colors whitespace-nowrap touch-manipulation"
+	"inline-flex items-center gap-1.5 h-8 px-4 text-sm font-medium rounded-lg transition-colors whitespace-nowrap touch-manipulation"
 const ACTIVE = "bg-gray-800 text-white dark:bg-white dark:text-gray-800"
 const IDLE =
 	"bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
