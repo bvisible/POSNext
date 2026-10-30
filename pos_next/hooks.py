@@ -258,6 +258,9 @@ doc_events = {
 		],
 	},
 	"Sales Invoice": {
+		# //// Neoffice — a takeaway sale at a restaurant till takes the restaurant's takeaway tax category, and each item
+		# //// its takeaway template, before ERPNext's validate computes the taxes from them (NeoRestau lot 1, task 10).
+		"before_validate": "pos_next.restaurant.takeaway_tax.apply_takeaway_tax_category",
 		"validate": [
 			"pos_next.api.sales_invoice_hooks.validate",
 			# //// Neoffice — coupon validation hangs off the invoice's native ERPNext `coupon_code` link

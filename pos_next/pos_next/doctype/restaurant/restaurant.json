@@ -12,6 +12,8 @@
   "column_break_identity",
   "logo",
   "address",
+  "section_taxes",
+  "takeaway_tax_category",
   "section_runner",
   "enable_runner",
   "section_hours",
@@ -85,6 +87,18 @@
    "fieldtype": "Link",
    "label": "Address",
    "options": "Address"
+  },
+  {
+   "fieldname": "section_taxes",
+   "fieldtype": "Section Break",
+   "label": "Taxes"
+  },
+  {
+   "description": "Takeaway sales take this tax category: each item gets its takeaway rate, set on the item or on its item group; an item without one keeps its usual rate.",
+   "fieldname": "takeaway_tax_category",
+   "fieldtype": "Link",
+   "label": "Takeaway tax category",
+   "options": "Tax Category"
   },
   {
    "fieldname": "section_runner",
