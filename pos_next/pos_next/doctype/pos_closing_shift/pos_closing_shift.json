@@ -24,6 +24,8 @@
   "section_break_pos_expenses",
   "pos_expenses",
   "total_pos_expenses",
+  "section_break_cash_movements",
+  "cash_movements",
   "section_break_if3m1",
   "payment_reconciliation_details",
   "section_break_11",
@@ -263,13 +265,25 @@
    "read_only": 1
   },
   {
+   "fieldname": "section_break_cash_movements",
+   "fieldtype": "Section Break",
+   "label": "Cash Movements"
+  },
+  {
+   "fieldname": "cash_movements",
+   "fieldtype": "Table",
+   "label": "Cash Movements",
+   "options": "POS Closing Shift Cash Movement",
+   "read_only": 1
+  },
+  {
    "fieldname": "section_break_if3m1",
    "fieldtype": "Section Break"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-06 00:00:00.000000",
+ "modified": "2026-10-30 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Closing Shift",

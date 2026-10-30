@@ -68,6 +68,16 @@ class POSClosingShift(Document):
 				title=_("Invalid Opening Entry"),
 			)
 		self.update_payment_reconciliation()
+		# //// Neoffice — the drawer movements of the shift (ours, pos_next.cash_movement) are stored on the
+		# //// closing as the ledger has them, whatever the payload carried: the till's closing and a closing
+		# //// made at the desk keep the same list (NeoRestau lot 1, task 15). The shift's row is locked first,
+		# //// as a movement locks it (cash_entry._lock_shift): one recorded meanwhile waits, then finds it closed.
+		from pos_next import cash_movement
+
+		frappe.db.sql(
+			"select name from `tabPOS Opening Shift` where name = %s for update", self.pos_opening_shift
+		)
+		self.set("cash_movements", cash_movement.closing_rows(self.pos_opening_shift))
 
 	def update_payment_reconciliation(self):
 		# update the difference values in Payment Reconciliation child table
@@ -206,66 +216,35 @@ class POSClosingShift(Document):
 		if not template_name:
 			return
 
-		from pos_next.api.cash_entry import _get_cash_mode, _get_cash_account
+		# //// Neoffice — the withdrawal goes through the one writer of the drawer's movements
+		# //// (pos_next.cash_movement, NeoRestau lot 1 task 15): booked as its template declares, refused when
+		# //// the template does not take money out of the till's cash account, tagged with this closing.
+		from pos_next import cash_movement
 
-		template = frappe.get_doc("Journal Entry Template", template_name)
-		cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
-		cash_mode = _get_cash_mode(self.pos_profile)
-		cash_account = _get_cash_account(cash_mode, self.company)
-
-		# Resolve accounts from template (same pattern as cash_entry.py)
-		totalization_accounts = template.get("accounting_entry_totalization", [])
-		counterparty_accounts = template.get("accounting_entry_counterparty", [])
-
-		if totalization_accounts and counterparty_accounts:
-			source_account = totalization_accounts[0].account
-			dest_account = counterparty_accounts[0].account
-		elif template.accounts:
-			source_account = cash_account
-			dest_account = template.accounts[0].account
-		else:
-			frappe.throw(_("Withdrawal template has no accounts configured"))
-
-		template_label = template.template_title or template.name
-		user_remark = f"POS Cash Withdrawal|{self.name}|{withdrawal}|{template_label}"
-
-		jv = frappe.get_doc(
-			{
-				"doctype": "Journal Entry",
-				"voucher_type": template.voucher_type or "Journal Entry",
-				"posting_date": self.posting_date,
-				"company": self.company,
-				"user_remark": user_remark,
-			}
+		problem = cash_movement.withdrawal_problem(template_name, self.pos_profile, self.company)
+		if problem:
+			frappe.throw(problem, title=_("Cash Withdrawal"))
+		cash_movement.book(
+			cash_movement.template_definition(template_name),
+			cash_movement.till_cash_account(self.pos_profile, self.company),
+			self.company,
+			withdrawal,
+			posting_date=self.posting_date,
+			cost_center=frappe.db.get_value("POS Profile", self.pos_profile, "cost_center")
+			or frappe.get_cached_value("Company", self.company, "cost_center"),
+			reference=self.name,
+			closing=self.name,
 		)
-
-		# Debit transit (dest), credit cash (source)
-		jv.append(
-			"accounts",
-			{
-				"account": dest_account,
-				"debit_in_account_currency": withdrawal,
-				"credit_in_account_currency": 0,
-				"cost_center": cost_center,
-			},
-		)
-		jv.append(
-			"accounts",
-			{
-				"account": source_account,
-				"debit_in_account_currency": 0,
-				"credit_in_account_currency": withdrawal,
-				"cost_center": cost_center,
-			},
-		)
-
-		jv.flags.ignore_permissions = True
-		jv.save()
-		jv.submit()
 
 	def _cancel_withdrawal_journal_entry(self):
 		"""Cancel the withdrawal Journal Entry created at shift closing."""
+		# //// Neoffice — found by its link to this closing (posa_cash_movement_closing), and by the remark
+		# //// the writer of before NeoRestau lot 1 used, for a withdrawal the tagging patch could not reach.
 		entries = frappe.get_all(
+			"Journal Entry",
+			filters={"docstatus": 1, "posa_cash_movement_closing": self.name},
+			pluck="name",
+		) + frappe.get_all(
 			"Journal Entry",
 			filters={
 				"docstatus": 1,
@@ -273,7 +252,8 @@ class POSClosingShift(Document):
 			},
 			pluck="name",
 		)
-		for entry_name in entries:
+		# //// Neoffice — an entry found both ways is cancelled once.
+		for entry_name in dict.fromkeys(entries):
 			jv = frappe.get_doc("Journal Entry", entry_name)
 			jv.flags.ignore_permissions = True
 			jv.cancel()
@@ -828,18 +808,25 @@ def make_closing_shift_from_opening(opening_shift):
 	# //// in/out from POS using Journal Entry Templates").
 	# //// cash in/out from POS using Journal Entry Templates — 6c59863 + 5783eb2 (+2 more)
 	# Process cash in/out entries
-	from pos_next.api.cash_entry import get_cash_entries
+	# //// Neoffice — read from the movements' link fields and the till's cash account rows
+	# //// (pos_next.cash_movement, NeoRestau lot 1 task 15), not from the remark, and stored on the closing.
+	from pos_next import cash_movement
+	from pos_next.api.cash_entry import _movement_payload
 
-	cash_entries = get_cash_entries(opening_shift.get("name"))
+	# //// Neoffice — the movements as the closing reads them (see the marker above).
+	movements = cash_movement.shift_movements(opening_shift.get("name"))
+	cash_entries = [_movement_payload(row) for row in movements]
 	cash_in_total = 0
 	cash_out_total = 0
-	for entry in cash_entries:
-		if entry["direction"] == "in":
-			_aggregate_payment(payments, cash_mode, flt(entry["amount"]))
-			cash_in_total += flt(entry["amount"])
-		elif entry["direction"] == "out":
-			_aggregate_payment(payments, cash_mode, -flt(entry["amount"]))
-			cash_out_total += flt(entry["amount"])
+	# //// Neoffice — each one moves the expected cash of the till's cash mode (see the marker above).
+	for row in movements:
+		if row.direction == cash_movement.IN:
+			_aggregate_payment(payments, cash_mode, flt(row.amount))
+			cash_in_total += flt(row.amount)
+		else:
+			_aggregate_payment(payments, cash_mode, -flt(row.amount))
+			cash_out_total += flt(row.amount)
+	closing_shift.set("cash_movements", cash_movement.closing_rows(opening_shift.get("name")))
 
 	# Process POS Expenses — reduce expected cash per payment mode
 	from pos_next.api.expenses import get_pos_expenses
@@ -932,6 +919,17 @@ def make_closing_shift_from_opening(opening_shift):
 		)
 		or ""
 	)
+	# //// Neoffice — a withdrawal template the till cannot book (it does not take money out of the till's
+	# //// cash account) is not offered: the closing would refuse it at submit (NeoRestau lot 1, task 15).
+	closing_withdrawal_problem = (
+		cash_movement.withdrawal_problem(
+			closing_withdrawal_template, opening_shift.get("pos_profile"), opening_shift.get("company")
+		)
+		if closing_withdrawal_template
+		else None
+	)
+	if closing_withdrawal_problem:
+		closing_withdrawal_template = ""
 
 	# //// Neoffice — keys added to the closing payload that upstream does not return:
 	# //// external_payments (invoices collected at the counter, 34ee11a8), sales_by_payment (sales
@@ -957,6 +955,8 @@ def make_closing_shift_from_opening(opening_shift):
 			"cash_out_total": cash_out_total,
 			"cash_mode_of_payment": cash_mode,
 			"closing_withdrawal_template": closing_withdrawal_template,
+			# //// Neoffice — why the withdrawal is not offered, for the closing dialog (see above).
+			"closing_withdrawal_problem": closing_withdrawal_problem,
 		}
 	)
 

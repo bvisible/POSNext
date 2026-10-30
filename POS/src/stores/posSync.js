@@ -40,6 +40,13 @@ import {
 	cacheUnpaidSummary,
 } from "@/utils/offline";
 import { call } from "@/utils/apiWrapper";
+//// Neoffice — the till's drawer movements made offline (ours, utils/offline/cashMovements.js) are counted,
+//// sent and preloaded with the sales and the expenses (NeoRestau lot 1, task 15).
+import {
+	getPendingCashMovementCount,
+	preloadCashMovementDialogData,
+	syncOfflineCashMovements,
+} from "@/utils/offline/cashMovements";
 import { logger } from "@/utils/logger";
 import { offlineState } from "@/utils/offline/offlineState";
 import { offlineWorker } from "@/utils/offline/workerClient";
@@ -67,6 +74,9 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 
 	/** Number of expenses pending sync */
 	const pendingExpensesCount = ref(0);
+
+	//// Neoffice — the drawer movements (and receipts) still in their offline queue.
+	const pendingCashMovementsCount = ref(0);
 
 	/** Whether a sync operation is in progress */
 	const isSyncing = ref(false);
@@ -125,10 +135,14 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 
 	/** Combined pending invoices + expenses for header badge */
 	const totalPendingCount = computed(
-		() => pendingInvoicesCount.value + pendingExpensesCount.value,
+		//// Neoffice — the queued drawer movements count in the header badge too.
+		() => pendingInvoicesCount.value + pendingExpensesCount.value + pendingCashMovementsCount.value,
 	);
 
 	const hasPendingExpenses = computed(() => pendingExpensesCount.value > 0);
+
+	//// Neoffice — the shift cannot close while one is queued (cashMovements.canCloseShiftWithPendingCashMovements).
+	const hasPendingCashMovements = computed(() => pendingCashMovementsCount.value > 0);
 
 	// =========================================================================
 	// INTERNAL HELPERS
@@ -139,12 +153,17 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 	 */
 	async function updatePendingCount() {
 		try {
-			const [invoiceCount, expenseCount] = await Promise.all([
+			//// Neoffice — the drawer movements' queue is counted with the others.
+			const [invoiceCount, expenseCount, cashMovementCount] = await Promise.all([
 				offlineWorker.getOfflineInvoiceCount(),
 				getPendingExpenseCount(),
+				//// Neoffice — the drawer movements' queue (see above).
+				getPendingCashMovementCount(),
 			]);
 			pendingInvoicesCount.value = invoiceCount;
 			pendingExpensesCount.value = expenseCount;
+			//// Neoffice — the drawer movements' queue (see above).
+			pendingCashMovementsCount.value = cashMovementCount;
 		} catch (error) {
 			log.error("Failed to get pending sync counts", error);
 		}
@@ -161,18 +180,35 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 
 		isSyncing.value = true;
 		try {
-			const [invoiceResult, expenseResult] = await Promise.all([
+			//// Neoffice — the drawer movements' queue is sent with the others (its own order kept inside it).
+			const [invoiceResult, expenseResult, cashMovementResult] = await Promise.all([
 				syncOfflineInvoices(),
 				syncOfflineExpenses(),
+				//// Neoffice — the drawer movements' queue (see above).
+				syncOfflineCashMovements(),
 			]);
 			await updatePendingCount();
+			//// Neoffice — the drawer movements' results are added to the others'.
 			return {
-				success: (invoiceResult?.success || 0) + (expenseResult?.success || 0),
-				failed: (invoiceResult?.failed || 0) + (expenseResult?.failed || 0),
-				skipped: (invoiceResult?.skipped || 0) + (expenseResult?.skipped || 0),
-				errors: [...(invoiceResult?.errors || []), ...(expenseResult?.errors || [])],
+				success:
+					(invoiceResult?.success || 0) +
+					(expenseResult?.success || 0) +
+					(cashMovementResult?.success || 0),
+				failed:
+					(invoiceResult?.failed || 0) + (expenseResult?.failed || 0) + (cashMovementResult?.failed || 0),
+				skipped:
+					(invoiceResult?.skipped || 0) +
+					(expenseResult?.skipped || 0) +
+					(cashMovementResult?.skipped || 0),
+				errors: [
+					...(invoiceResult?.errors || []),
+					...(expenseResult?.errors || []),
+					...(cashMovementResult?.errors || []),
+				],
 				invoices: invoiceResult,
 				expenses: expenseResult,
+				//// Neoffice — the drawer movements' own result.
+				cashMovements: cashMovementResult,
 			};
 		} catch (error) {
 			log.error("Failed to sync pending offline documents", error);
@@ -469,6 +505,11 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 				}
 			}
 
+			//// Neoffice — the drawer movements' dialog data, kept for a movement made offline (never throws).
+			if (posOpeningShift) {
+				await preloadCashMovementDialogData(currentProfile.name, posOpeningShift);
+			}
+
 			// Load customers if cache needs refresh
 			if (!cacheReady || needsRefresh) {
 				showSuccess(__("Loading customers for offline use..."));
@@ -592,12 +633,16 @@ export const usePOSSyncStore = defineStore("posSync", () => {
 		isOffline,
 		pendingInvoicesCount,
 		pendingExpensesCount,
+		//// Neoffice — the drawer movements' queue (see pendingCashMovementsCount).
+		pendingCashMovementsCount,
 		isSyncing,
 		pendingInvoicesList,
 
 		// Computed
 		hasPendingInvoices,
 		hasPendingExpenses,
+		//// Neoffice — see hasPendingCashMovements above.
+		hasPendingCashMovements,
 		totalPendingCount,
 
 		// Actions

@@ -1319,6 +1319,13 @@
 					<!-- //// stores the remainder on POS Closing Shift, which the next opening dialog offers as -->
 					<!-- //// opening balance. Only rendered when that template is configured (5783eb27, -->
 					<!-- //// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance"). -->
+					<!-- //// Neoffice — a template the till cannot book is not offered: the server says why (NeoRestau lot 1, task 15). -->
+					<div
+						v-if="closingData.closing_withdrawal_problem && !showSuccessReport"
+						class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"
+					>
+						{{ __("No cash withdrawal at this closing: {0}", [closingData.closing_withdrawal_problem]) }}
+					</div>
 					<!-- Cash Withdrawal Section -->
 					<div
 						v-if="closingData.closing_withdrawal_template && !showSuccessReport"

@@ -1,4 +1,6 @@
 import { syncOfflineExpenses, syncOfflineInvoices } from "@/utils/offline";
+//// Neoffice — the till's drawer movements made offline (ours) are sent with the sales and the expenses.
+import { syncOfflineCashMovements } from "@/utils/offline/cashMovements";
 import { offlineState } from "@/utils/offline/offlineState";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
@@ -49,18 +51,35 @@ export function useOffline() {
 
 		isSyncing.value = true;
 		try {
-			const [invoiceResult, expenseResult] = await Promise.all([
+			//// Neoffice — the drawer movements' queue is sent with the others, as in stores/posSync.js.
+			const [invoiceResult, expenseResult, cashMovementResult] = await Promise.all([
 				syncOfflineInvoices(),
 				syncOfflineExpenses(),
+				//// Neoffice — the drawer movements' queue (see above).
+				syncOfflineCashMovements(),
 			]);
 			await updatePendingCount();
+			//// Neoffice — the drawer movements' results are added to the others'.
 			return {
-				success: (invoiceResult?.success || 0) + (expenseResult?.success || 0),
-				failed: (invoiceResult?.failed || 0) + (expenseResult?.failed || 0),
-				skipped: (invoiceResult?.skipped || 0) + (expenseResult?.skipped || 0),
-				errors: [...(invoiceResult?.errors || []), ...(expenseResult?.errors || [])],
+				success:
+					(invoiceResult?.success || 0) +
+					(expenseResult?.success || 0) +
+					(cashMovementResult?.success || 0),
+				failed:
+					(invoiceResult?.failed || 0) + (expenseResult?.failed || 0) + (cashMovementResult?.failed || 0),
+				skipped:
+					(invoiceResult?.skipped || 0) +
+					(expenseResult?.skipped || 0) +
+					(cashMovementResult?.skipped || 0),
+				errors: [
+					...(invoiceResult?.errors || []),
+					...(expenseResult?.errors || []),
+					...(cashMovementResult?.errors || []),
+				],
 				invoices: invoiceResult,
 				expenses: expenseResult,
+				//// Neoffice — the drawer movements' own result.
+				cashMovements: cashMovementResult,
 			};
 		} catch (error) {
 			console.error("[useOffline] Error syncing offline documents:", error);

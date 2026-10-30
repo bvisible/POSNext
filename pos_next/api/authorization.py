@@ -19,6 +19,14 @@ from frappe.utils import flt
 
 from pos_next.authorization import gate, grants, log, policy, registry
 from pos_next.authorization import pin as pin_store
+
+# //// Neoffice — the « Void Cash Movement » action of the till's drawer movements (ours); see request_grant.
+from pos_next.authorization.actions.cash_movement import (
+	ACTION_VOID_CASH_MOVEMENT,
+)
+from pos_next.authorization.actions.cash_movement import (
+	resolve_void_context as resolve_void_cash_movement_context,
+)
 from pos_next.authorization.actions.pos_expense import ACTION_VOID_POS_EXPENSE, resolve_void_context
 
 
@@ -128,6 +136,10 @@ def request_grant(action: str, approver: str, pin: str, context=None) -> dict:
 	if action == ACTION_VOID_POS_EXPENSE:
 		# Profile and amount are derived from the Journal Entry/shift, never the client.
 		context.update(resolve_void_context(context.get("journal_entry"), context))
+	# //// Neoffice — the void of a till's drawer movement (ours, pos_next.api.cash_entry) binds the same way:
+	# //// its till and amount are read from the movement and its shift, never taken from the client.
+	elif action == ACTION_VOID_CASH_MOVEMENT:
+		context.update(resolve_void_cash_movement_context(context.get("journal_entry"), context))
 	pos_profile = context.get("pos_profile")
 
 	rule = policy.resolve_rule(action, pos_profile)

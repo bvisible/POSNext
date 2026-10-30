@@ -46,6 +46,11 @@ const CURRENT_SCHEMA = {
 	// Expense queue for offline POS expense submissions (with optional Blob attachments)
 	expense_queue: "++id, &offline_id, timestamp, synced",
 
+	//// Neoffice — the queue of the till's drawer movements made offline (« Entrées/Sorties de caisse »,
+	//// ours: utils/offline/cashMovements.js), with the receipt's photo as a Blob. Same shape as the two
+	//// queues above; adding the key bumps the schema hash, which upgrades every browser database by itself.
+	cash_movement_queue: "++id, &offline_id, timestamp, synced",
+
 	// Items cache with searchable fields
 	// variant_of index allows querying variants by their template item
 	// brand index allows efficient brand-based filtering in offline mode
@@ -345,6 +350,8 @@ export const clearCachedData = async (options = {}) => {
 			results.invoices = await db.invoice_queue.clear();
 			results.payments = await db.payment_queue.clear();
 			results.expenses = await db.expense_queue.clear();
+			//// Neoffice — the drawer movements' queue goes with the other queues (see CURRENT_SCHEMA).
+			results.cash_movements = await db.cash_movement_queue.clear();
 		}
 
 		// Conditionally clear drafts

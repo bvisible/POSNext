@@ -209,18 +209,22 @@ def get_invoice_collections(filters, group_by_field):
 
 
 def get_cash_in_out(filters, group_by_field):
-	"""Fetch Cash In/Out Journal Entries from POS.
+	"""Fetch the till's drawer movements (Journal Entries tagged with their shift).
 
-	Format: user_remark = 'POS Cash Entry|{opening_shift}|{in/out}|{template}|{label}'
-	"""
+	Each entry's amount and direction are what it did to the till's cash account (posa_cash_movement_account),
+	as the closing reads them (pos_next.cash_movement, NeoRestau lot 1 task 15); the remark the register
+	parsed before was free text, and its total_debit counted the VAT line of a split entry."""
 	conditions = ["je.docstatus = 1"]
 	conditions.append("je.posting_date >= %(from_date)s")
 	conditions.append("je.posting_date <= %(to_date)s")
 	conditions.append("je.company = %(company)s")
-	conditions.append("je.user_remark LIKE 'POS Cash Entry|%%'")
+	conditions.append("ifnull(je.posa_cash_movement_shift, '') != ''")
 
 	if filters.get("cashier"):
 		conditions.append("je.owner = %(cashier)s")
+
+	if filters.get("pos_profile"):
+		conditions.append("pos.pos_profile = %(pos_profile)s")
 
 	where = " AND ".join(conditions)
 
@@ -229,16 +233,26 @@ def get_cash_in_out(filters, group_by_field):
 		SELECT
 			je.posting_date,
 			je.name as reference,
-			je.total_debit as amount,
-			je.user_remark,
 			je.company,
-			je.owner
+			je.owner,
+			je.posa_cash_movement_note as note,
+			pos.pos_profile,
+			jet.template_title,
+			je.posa_cash_entry_template as template,
+			(
+				SELECT SUM(jea.debit_in_account_currency - jea.credit_in_account_currency)
+				FROM `tabJournal Entry Account` jea
+				WHERE jea.parent = je.name AND jea.parenttype = 'Journal Entry'
+				AND jea.account = je.posa_cash_movement_account
+			) as delta
 		FROM
 			`tabJournal Entry` je
+		LEFT JOIN `tabPOS Opening Shift` pos ON pos.name = je.posa_cash_movement_shift
+		LEFT JOIN `tabJournal Entry Template` jet ON jet.name = je.posa_cash_entry_template
 		WHERE
 			{where}
 		ORDER BY
-			je.posting_date
+			je.posting_date, je.creation
 		""".format(where=where),
 		filters,
 		as_dict=1,
@@ -249,32 +263,12 @@ def get_cash_in_out(filters, group_by_field):
 
 	result = []
 	for e in entries:
-		parts = (e.get("user_remark") or "").split("|")
-		if len(parts) < 4:
+		amount = flt(e.get("delta"))
+		if not amount:
 			continue
-
-		shift_name = parts[1]
-		direction = parts[2]
-		template = parts[3] if len(parts) > 3 else ""
-		label = parts[4] if len(parts) > 4 else template
-
-		amount = flt(e["amount"])
-		if direction == "out":
-			amount = -amount
-
-		pos_profile = ""
-		if shift_name:
-			pos_profile = frappe.db.get_value("POS Opening Shift", shift_name, "pos_profile") or ""
-
-		if filters.get("pos_profile") and pos_profile != filters["pos_profile"]:
-			continue
-
-		if direction == "in":
-			txn_type = _("Cash In")
-		else:
-			txn_type = _("Cash Out")
-
-		description = label if label and label != template else template
+		pos_profile = e.get("pos_profile") or ""
+		title = e.get("template_title") or e.get("template") or ""
+		description = f"{title} — {e.note}" if e.get("note") else title
 
 		# Get the actual cash mode of payment name for this POS profile
 		if pos_profile not in cash_mode_cache:
@@ -293,15 +287,11 @@ def get_cash_in_out(filters, group_by_field):
 			"grand_total": amount,
 			"paid_amount": amount,
 			"mode_of_payment": cash_mode,
-			"transaction_type": txn_type,
+			"transaction_type": _("Cash In") if amount > 0 else _("Cash Out"),
 		})
 
 	return result
 
-
-# ============================================================
-# Helpers
-# ============================================================
 
 def concat_mode_of_payments(pos_entries):
 	"""Add a comma-separated list of payment methods to entries that need it."""

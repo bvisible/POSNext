@@ -4,13 +4,17 @@
 # //// Entries built from Journal Entry Templates, following the erpnextswiss template
 # //// structure (totalization / counterparty accounts) and restricted to the templates the
 # //// POS Profile allows (6c598630 2026-03-28 "feat: cash in/out from POS using Journal Entry
-# //// Templates"; 9cb47184, ee6587a0, 2e2ef1a0, 82b2493a the same day).
+# //// Templates"; 9cb47184, ee6587a0, 2e2ef1a0, 82b2493a the same day). Rebuilt by NeoRestau lot 1,
+# //// task 15: booked as each template declares, the till's list enforced, the closing's rule for who
+# //// records, link fields instead of the remark, cancel, cap, receipt photo and offline queue.
 # Copyright (c) 2024, POS Next and contributors
 # For license information, please see license.txt
 
 import frappe
 from frappe import _
-from frappe.utils import flt, today
+from frappe.utils import cint, cstr, flt
+
+from pos_next import cash_movement
 
 
 # //// Neoffice — added function (no upstream equivalent). Whoever may work at the named till: a desk
@@ -109,186 +113,450 @@ def require_document_till(doctype, name):
 	require_till_user(pos_profile)
 
 
+# //// Neoffice — added (no upstream equivalent). The till's drawer movements (« Entrées/Sorties de
+# //// caisse ») were rebuilt to the standard of upstream's POS expense (NeoRestau lot 1, task 15; study
+# //// cash-movements-study.md, option A). The journal entry is written by pos_next.cash_movement, which
+# //// books exactly what the template declares; the endpoints below decide who may record, cancel and
+# //// attach, and keep the till's list of operations a control the server checks on every write.
+# The receipt the cashier attaches: upstream's POS expense checks, copied (attach_pos_expense_file).
+ATTACHMENT_EXTENSIONS = (
+	".jpg",
+	".jpeg",
+	".png",
+	".gif",
+	".pdf",
+	".txt",
+	".csv",
+	".doc",
+	".docx",
+	".xls",
+	".xlsx",
+	".odt",
+	".ods",
+)
+
+NOTE_MAX_LENGTH = 500
+
+
+# //// Neoffice — added (no upstream equivalent). Who records, cancels or reads a till's drawer movements:
+# //// the rule of the closing (require_shift_access), that is the shift's own cashier at a till they may use,
+# //// or a till manager (TILL_MANAGER_ROLES) on any till's shift (defect D3). NeoRestau's purse model (lot 4:
+# //// one cash fund, several sommeliers) will change who records; this is the one function to change.
+def require_cash_movement_access(pos_opening_shift):
+	"""Refuse unless the caller may work on this shift's drawer; return the shift's stored values, its name
+	included (require_shift_access reads the values only)."""
+	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import require_shift_access
+
+	return frappe._dict(require_shift_access(pos_opening_shift), name=pos_opening_shift)
+
+
+def _shift_is_open(opening):
+	return cint(opening.docstatus) == 1 and opening.status == "Open" and not opening.pos_closing_shift
+
+
+def _lock_shift(opening):
+	"""Lock the shift's row and read its state again. A closing being saved locks it too
+	(POSClosingShift.validate): a movement waits for it, then finds the shift closed; and two movements
+	of one shift go one after the other, so the offline id and the cap read what the previous one wrote."""
+	row = frappe.db.sql(
+		"select docstatus, status, pos_closing_shift from `tabPOS Opening Shift` where name = %s for update",
+		opening.name,
+		as_dict=True,
+	)
+	if row:
+		opening.update(row[0])
+	return opening
+
+
+def _out_limit(pos_profile):
+	"""The till's cap on money taken out during one shift; 0 when none is set."""
+	if not pos_profile or not frappe.db.has_column("POS Profile", "posa_cash_movement_out_limit"):
+		return 0
+	return flt(frappe.db.get_value("POS Profile", pos_profile, "posa_cash_movement_out_limit"))
+
+
+def _currency(company):
+	return frappe.get_cached_value("Company", company, "default_currency")
+
+
+def _format_amount(amount, company):
+	return frappe.format_value(flt(amount), {"fieldtype": "Currency", "options": _currency(company)})
+
+
+def _till_operations(pos_profile, company, cash_account):
+	"""The till's operations: those it can book (with the drawer direction the server reads from the
+	template, so the screen never guesses it) and those it cannot, with the reason."""
+	usable, unusable = [], []
+	for name in cash_movement.till_template_names(pos_profile):
+		if not frappe.db.exists("Journal Entry Template", name):
+			unusable.append(
+				{"name": name, "template_title": name, "reason": _("{0} no longer exists.").format(name)}
+			)
+			continue
+		definition = cash_movement.template_definition(name)
+		problem = cash_movement.definition_problem(definition, cash_account, company)
+		if problem:
+			unusable.append({"name": name, "template_title": definition.title, "reason": problem})
+			continue
+		usable.append(
+			{
+				"name": name,
+				"template_title": definition.title,
+				"voucher_type": definition.voucher_type,
+				"direction": cash_movement.drawer_direction(definition, cash_account).lower(),
+				"account": cash_movement.other_account(definition, cash_account),
+				"vat_applies": cash_movement.vat_applies(definition, cash_account, company),
+				# The two account lists a till built before the direction came from the server reads.
+				"totalization": [{"account": definition.totalization}],
+				"counterparty": [{"account": definition.counterparty}],
+			}
+		)
+	return usable, unusable
+
+
 @frappe.whitelist()
 def get_cash_entry_templates(company, pos_profile=None):
-	"""Fetch Journal Entry Templates available for cash in/out operations."""
+	"""The operations the till may record, with their drawer direction. ``company`` is kept for the
+	callers that send it; the till's own company is the one that counts."""
 	# //// Neoffice — the till's own endpoint: it reads the company's templates and accounts, so only the
 	# //// till's users may call it (require_till_user).
 	require_till_user(pos_profile)
-	# Check if POS Profile has specific templates configured
-	allowed_templates = []
-	if pos_profile:
-		allowed_templates = frappe.get_all(
-			"POS Cash Entry Template",
-			filters={"parent": pos_profile, "parenttype": "POS Profile"},
-			pluck="journal_entry_template",
-		)
-
-	filters = {"company": company}
-	if allowed_templates:
-		filters["name"] = ["in", allowed_templates]
-
-	templates = frappe.get_all(
-		"Journal Entry Template",
-		filters=filters,
-		fields=["name", "template_title", "voucher_type"],
-	)
-
-	for t in templates:
-		# Get totalization accounts (source side, typically cash)
-		t["totalization"] = frappe.get_all(
-			"Accounting Entry Totalization",
-			filters={"parent": t["name"]},
-			fields=["account"],
-			order_by="idx asc",
-		)
-		# Get counterparty accounts (destination side)
-		t["counterparty"] = frappe.get_all(
-			"Accounting Entry Counterparty",
-			filters={"parent": t["name"]},
-			fields=["account"],
-			order_by="idx asc",
-		)
-
-	return templates
+	if not pos_profile or not cash_movement.till_template_names(pos_profile):
+		return []
+	till_company = frappe.db.get_value("POS Profile", pos_profile, "company")
+	cash_account = cash_movement.till_cash_account(pos_profile, till_company)
+	return _till_operations(pos_profile, till_company, cash_account)[0]
 
 
-@frappe.whitelist()
-def create_cash_entry(pos_opening_shift, template_name, amount, remark=None):
-	"""Create a Journal Entry for a cash in/out operation from the POS."""
-	amount = flt(amount)
-	if amount <= 0:
-		frappe.throw(_("Amount must be greater than zero"))
-
-	# Validate shift is open
-	shift = frappe.get_doc("POS Opening Shift", pos_opening_shift)
-	# //// Neoffice — only an account that may work at this shift's till (require_till_access).
-	require_till_access(shift.pos_profile)
-	if shift.status != "Open" or shift.pos_closing_shift:
-		frappe.throw(_("Shift is not open"))
-
-	# Get template
-	template = frappe.get_doc("Journal Entry Template", template_name)
-	company = shift.company
-	cost_center = frappe.get_cached_value("Company", company, "cost_center")
-
-	# Get POS cash account
-	cash_mode = _get_cash_mode(shift.pos_profile)
-	cash_account = _get_cash_account(cash_mode, company)
-
-	# Determine accounts from template structure
-	# totalization = source account (typically cash), counterparty = destination
-	totalization_accounts = template.get("accounting_entry_totalization", [])
-	counterparty_accounts = template.get("accounting_entry_counterparty", [])
-
-	if totalization_accounts and counterparty_accounts:
-		# Custom template structure (ERPNext Swiss)
-		source_account = totalization_accounts[0].account
-		dest_account = counterparty_accounts[0].account
-	elif template.accounts:
-		# Standard template structure (fallback)
-		source_account = cash_account
-		dest_account = template.accounts[0].account
-	else:
-		frappe.throw(_("Template has no accounts configured"))
-
-	# Determine direction: if source is the cash account, money leaves → Cash Out
-	# If destination is the cash account, money enters → Cash In
-	is_cash_out = _is_cash_account(source_account, cash_account)
-	direction = "out" if is_cash_out else "in"
-
-	# Sanitize remark (remove pipe chars)
-	if remark:
-		remark = remark.replace("|", " ")
-
-	# Build structured user_remark for shift tracking
-	template_label = template.template_title or template.name
-	user_remark = f"POS Cash Entry|{pos_opening_shift}|{direction}|{template_label}"
-	if remark:
-		user_remark += f"|{remark}"
-
-	# Build Journal Entry
-	jv = frappe.get_doc({
-		"doctype": "Journal Entry",
-		"voucher_type": template.voucher_type or "Journal Entry",
-		"posting_date": today(),
-		"company": company,
-		"user_remark": user_remark,
-	})
-
-	# Debit the destination, credit the source (for Cash Out)
-	# For Cash In, reverse: debit source, credit destination
-	jv.append("accounts", {
-		"account": dest_account,
-		"debit_in_account_currency": amount if is_cash_out else 0,
-		"credit_in_account_currency": 0 if is_cash_out else amount,
-		"cost_center": cost_center,
-	})
-
-	jv.append("accounts", {
-		"account": source_account,
-		"debit_in_account_currency": 0 if is_cash_out else amount,
-		"credit_in_account_currency": amount if is_cash_out else 0,
-		"cost_center": cost_center,
-	})
-
-	jv.flags.ignore_permissions = True
-	jv.save()
-	jv.submit()
-
-	return {
-		"name": jv.name,
-		"direction": direction,
-		"amount": amount,
-		"template": template_label,
-		"account": dest_account if is_cash_out else source_account,
+def _movement_payload(row, opening=None):
+	"""One movement as the till shows it."""
+	payload = {
+		"name": row.journal_entry,
+		"journal_entry": row.journal_entry,
+		"posting_date": str(row.posting_date),
+		"amount": flt(row.amount),
+		"direction": row.direction.lower(),
+		"template": row.title,
+		"note": row.note,
+		"no_vat": cint(row.no_vat),
+		"owner": row.owner,
+		"creation": str(row.creation),
 	}
-
-
-def _is_cash_account(account, pos_cash_account):
-	"""Check if an account is a cash-type account or matches the POS cash account."""
-	if account == pos_cash_account:
-		return True
-	account_type = frappe.get_cached_value("Account", account, "account_type")
-	return account_type == "Cash"
+	if opening is not None:
+		payload["can_cancel"] = _shift_is_open(opening) and (
+			is_till_manager() or row.owner == frappe.session.user
+		)
+	return payload
 
 
 @frappe.whitelist()
 def get_cash_entries(pos_opening_shift):
-	"""Get all cash in/out entries for a shift."""
+	"""The drawer movements recorded during a shift, oldest first."""
 	# //// Neoffice — a shift's entries follow the shift's rule (its cashier at a till they may use, or a
 	# //// till manager), as its closing data does (require_shift_access).
-	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import require_shift_access
+	opening = require_cash_movement_access(pos_opening_shift)
+	return [_movement_payload(row, opening) for row in cash_movement.shift_movements(pos_opening_shift)]
 
-	require_shift_access(pos_opening_shift)
-	entries = frappe.get_all(
-		"Journal Entry",
-		filters={
-			"docstatus": 1,
-			"user_remark": ["like", f"POS Cash Entry|{pos_opening_shift}|%"],
-		},
-		fields=["name", "posting_date", "total_debit", "user_remark", "creation"],
-		order_by="creation asc",
+
+@frappe.whitelist()
+def get_cash_movement_dialog_data(pos_opening_shift):
+	"""Everything the till's « Cash In/Out » dialog shows, in one call: the dialog keeps it for offline use."""
+	opening = require_cash_movement_access(pos_opening_shift)
+	pos_profile, company = opening.pos_profile, opening.company
+	templates, unusable, setup_problem = [], [], None
+	if cash_movement.till_template_names(pos_profile):
+		cash_account = cash_movement.till_cash_account(pos_profile, company, required=False)
+		if cash_account:
+			templates, unusable = _till_operations(pos_profile, company, cash_account)
+		else:
+			setup_problem = _("The till's cash mode of payment has no account for {0}.").format(company)
+	movements = [_movement_payload(row, opening) for row in cash_movement.shift_movements(pos_opening_shift)]
+	out_limit = _out_limit(pos_profile)
+	out_total = flt(sum(row["amount"] for row in movements if row["direction"] == "out"), 2)
+	from frappe.core.api.file import get_max_file_size
+
+	return {
+		"pos_profile": pos_profile,
+		"pos_opening_shift": opening.name,
+		"company": company,
+		"currency": _currency(company),
+		"templates": templates,
+		"unusable": unusable,
+		"setup_problem": setup_problem,
+		"movements": movements,
+		"out_limit": out_limit,
+		"out_total": out_total,
+		"remaining": max(0, flt(out_limit - out_total, 2)) if out_limit > 0 else None,
+		"shift_open": _shift_is_open(opening),
+		"max_file_size": get_max_file_size(),
+		"attachment_extensions": list(ATTACHMENT_EXTENSIONS),
+	}
+
+
+def _entry_of_offline_id(offline_id):
+	"""The entry an offline id already produced, read with a lock so a resend waiting behind the first
+	sees it once the first commits."""
+	rows = frappe.db.sql(
+		"""select name, docstatus, posa_cash_movement_shift as shift
+		from `tabJournal Entry`
+		where posa_cash_movement_offline_id = %s
+		order by creation asc limit 1 for update""",
+		offline_id,
+		as_dict=True,
+	)
+	return rows[0] if rows else None
+
+
+def _created_payload(journal_entry, offline_id=None, **extra):
+	row = cash_movement.movement(journal_entry)
+	payload = {
+		"name": journal_entry,
+		"journal_entry": journal_entry,
+		"direction": row.direction.lower() if row else None,
+		"amount": flt(row.amount) if row else 0,
+		"template": row.title if row else "",
+		"offline_id": offline_id,
+	}
+	payload.update(extra)
+	return payload
+
+
+def _check_out_limit(opening, amount):
+	"""The till's optional cap on the money its movements take out during one shift. The shift's row is
+	locked by the caller, so two movements recorded at once cannot both pass on the same total."""
+	limit = _out_limit(opening.pos_profile)
+	if limit <= 0:
+		return
+	taken = cash_movement.shift_out_total(opening.name)
+	if flt(taken + flt(amount), 2) > flt(limit, 2):
+		frappe.throw(
+			_(
+				"This cash out would exceed the till's limit of {0} per shift. Already taken out: {1}. Still allowed: {2}."
+			).format(
+				_format_amount(limit, opening.company),
+				_format_amount(taken, opening.company),
+				_format_amount(max(0, limit - taken), opening.company),
+			),
+			title=_("Cash Out Limit"),
+		)
+
+
+@frappe.whitelist(methods=["POST"])
+def create_cash_entry(pos_opening_shift, template_name, amount, remark=None, no_vat=0, offline_id=None):
+	"""Record one drawer movement of an open shift, as the till's operation ``template_name`` declares it.
+
+	``remark`` is the cashier's note. ``no_vat`` books the gross amount with no VAT split (a purchase
+	from someone outside VAT). ``offline_id`` makes a resend from the till's offline queue harmless: the
+	entry it already produced is returned, never a second one."""
+	# //// Neoffice — only the shift's cashier or a till manager records (require_cash_movement_access).
+	opening = require_cash_movement_access(pos_opening_shift)
+	amount = flt(amount)
+	if amount <= 0:
+		frappe.throw(_("Amount must be greater than zero"))
+	offline_id = cstr(offline_id).strip() or None
+	if offline_id and len(offline_id) > 140:
+		frappe.throw(_("Invalid offline id"))
+	note = cstr(remark).strip()[:NOTE_MAX_LENGTH]
+
+	_lock_shift(opening)
+	if offline_id:
+		existing = _entry_of_offline_id(offline_id)
+		if existing:
+			if existing.shift != opening.name:
+				frappe.throw(_("This offline id belongs to another movement."))
+			return _created_payload(
+				existing.name,
+				offline_id,
+				duplicate_prevented=True,
+				cancelled=cint(existing.docstatus) == 2,
+			)
+
+	if not _shift_is_open(opening):
+		frappe.throw(_("Shift is not open"))
+	if template_name not in cash_movement.till_template_names(opening.pos_profile):
+		frappe.throw(_("{0} is not an operation of this till.").format(template_name), frappe.PermissionError)
+
+	company = opening.company
+	cash_account = cash_movement.till_cash_account(opening.pos_profile, company)
+	definition = cash_movement.template_definition(template_name)
+	problem = cash_movement.definition_problem(definition, cash_account, company)
+	if problem:
+		frappe.throw(problem, title=_("Operation not allowed"))
+	if cash_movement.drawer_direction(definition, cash_account) == cash_movement.OUT:
+		_check_out_limit(opening, amount)
+
+	period_start = frappe.db.get_value("POS Opening Shift", opening.name, "period_start_date")
+	cost_center = frappe.db.get_value(
+		"POS Profile", opening.pos_profile, "cost_center"
+	) or frappe.get_cached_value("Company", company, "cost_center")
+	entry = cash_movement.book(
+		definition,
+		cash_account,
+		company,
+		amount,
+		posting_date=cash_movement.business_day(period_start),
+		cost_center=cost_center,
+		reference=opening.name,
+		note=note,
+		no_vat=cint(no_vat),
+		shift=opening.name,
+		offline_id=offline_id,
+	)
+	return _created_payload(
+		entry.name, offline_id, account=cash_movement.other_account(definition, cash_account)
 	)
 
-	result = []
-	for e in entries:
-		parts = (e.user_remark or "").split("|")
-		direction = parts[2] if len(parts) > 2 else "unknown"
-		template = parts[3] if len(parts) > 3 else ""
-		note = parts[4] if len(parts) > 4 else ""
 
-		result.append({
-			"name": e.name,
-			"posting_date": str(e.posting_date),
-			"amount": flt(e.total_debit),
-			"direction": direction,
-			"template": template,
-			"note": note,
-			"creation": str(e.creation),
-		})
+def _tagged_movement(journal_entry):
+	"""A drawer movement's entry (not a closing's withdrawal), or a refusal."""
+	if not journal_entry or not isinstance(journal_entry, str):
+		frappe.throw(_("Journal Entry is required"))
+	values = frappe.db.get_value(
+		"Journal Entry",
+		journal_entry,
+		["name", "docstatus", "owner", "posa_cash_movement_shift"],
+		as_dict=True,
+	)
+	if not values or not values.posa_cash_movement_shift:
+		frappe.throw(_("{0} is not a cash movement of a till.").format(journal_entry))
+	return values
 
-	return result
+
+def require_movement_author_or_manager(journal_entry):
+	"""Who may cancel a movement or attach its receipt: someone the shift's rule admits who recorded it,
+	or a till manager; the shift still open. Returns (entry values, shift values)."""
+	require_system_user()
+	values = _tagged_movement(journal_entry)
+	opening = _lock_shift(require_cash_movement_access(values.posa_cash_movement_shift))
+	if not is_till_manager() and values.owner != frappe.session.user:
+		frappe.throw(
+			_("Only the cashier who recorded it or a till manager may change this movement."),
+			frappe.PermissionError,
+		)
+	if not _shift_is_open(opening):
+		frappe.throw(_("The shift is closed: this movement can only be changed at the desk."))
+	return values, opening
+
+
+@frappe.whitelist(methods=["POST"])
+def cancel_cash_entry(journal_entry, authorization_token=None):
+	"""Cancel a movement while its shift is open, by its author or a till manager. When a « Void Cash
+	Movement » authorization rule applies, ``authorization_token`` must carry a manager's grant; with no
+	rule the cancel proceeds (the gate is opt-in)."""
+	from pos_next.authorization import grants
+	from pos_next.authorization.actions.cash_movement import ACTION_VOID_CASH_MOVEMENT, void_context
+	from pos_next.authorization.gate import enforce_context
+
+	values, opening = require_movement_author_or_manager(journal_entry)
+	if cint(values.docstatus) == 2:
+		return {
+			"name": values.name,
+			"journal_entry": values.name,
+			"cancelled": True,
+			"already_cancelled": True,
+		}
+	if cint(values.docstatus) != 1:
+		frappe.throw(_("{0} is not submitted.").format(values.name))
+
+	enforce_context(
+		ACTION_VOID_CASH_MOVEMENT,
+		void_context(values.name, opening),
+		authorization_token,
+		reference=values.name,
+	)
+	entry = frappe.get_doc("Journal Entry", values.name)
+	entry.flags.ignore_permissions = True
+	try:
+		entry.cancel()
+	except Exception:
+		# The grant was pinned to this entry when the gate passed: free it, so a failed cancel does not
+		# spend the manager's approval.
+		grants.release(authorization_token, values.name)
+		raise
+	return {"name": entry.name, "journal_entry": entry.name, "cancelled": True}
+
+
+def _attachment_name_problem(filename):
+	lower = (filename or "").lower()
+	if not any(lower.endswith(extension) for extension in ATTACHMENT_EXTENSIONS):
+		return _("File type not allowed. Use JPG, PNG, GIF, PDF, TXT, CSV, or Office documents.")
+	return None
+
+
+def _read_capped(stream, chunk_size=1024 * 1024):
+	"""The upload, refused before it is all read when it exceeds the site's maximum file size."""
+	from frappe.core.api.file import get_max_file_size
+
+	max_size = get_max_file_size()
+	too_large = _("File size exceeded the maximum allowed size of {0} MB").format(flt(max_size / 1048576, 1))
+	content_length = frappe.get_request_header("Content-Length")
+	if content_length and cint(content_length) > max_size:
+		frappe.throw(too_large, title=_("File Too Large"))
+	chunks, total = [], 0
+	while True:
+		chunk = stream.read(chunk_size)
+		if not chunk:
+			break
+		total += len(chunk)
+		if total > max_size:
+			frappe.throw(too_large, title=_("File Too Large"))
+		chunks.append(chunk)
+	return b"".join(chunks)
+
+
+@frappe.whitelist(methods=["POST"])
+def attach_cash_entry_file(journal_entry):
+	"""Attach the multipart ``file`` of the request (the receipt's photo) to a movement, while its shift is
+	open, for its author or a till manager. Sending the same file again (same name and size) attaches it
+	once: the offline queue may resend after a lost answer."""
+	values, _opening = require_movement_author_or_manager(journal_entry)
+	if cint(values.docstatus) != 1:
+		frappe.throw(_("{0} is not submitted.").format(values.name))
+	files = getattr(getattr(frappe.local, "request", None), "files", None) or {}
+	uploaded = files.get("file") if hasattr(files, "get") else None
+	filename = cstr(getattr(uploaded, "filename", None)).strip()
+	if not uploaded or not filename or not hasattr(uploaded, "stream"):
+		frappe.throw(_("File is required"))
+	problem = _attachment_name_problem(filename)
+	if problem:
+		frappe.throw(problem, title=_("Invalid Attachment"))
+	content = _read_capped(uploaded.stream)
+	if not content:
+		frappe.throw(_("File is required"))
+
+	existing = frappe.db.get_value(
+		"File",
+		{"attached_to_doctype": "Journal Entry", "attached_to_name": values.name, "file_name": filename},
+		["name", "file_url", "file_size"],
+		as_dict=True,
+	)
+	if existing and cint(existing.file_size) == len(content):
+		return {
+			"name": existing.name,
+			"file_url": existing.file_url,
+			"file_name": filename,
+			"journal_entry": values.name,
+			"already_attached": True,
+		}
+	file_doc = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": filename,
+			"is_private": 1,
+			"folder": "Home/Attachments",
+			"attached_to_doctype": "Journal Entry",
+			"attached_to_name": values.name,
+			"content": content,
+		}
+	)
+	file_doc.flags.ignore_permissions = True
+	file_doc.insert()
+	return {
+		"name": file_doc.name,
+		"file_url": file_doc.file_url,
+		"file_name": file_doc.file_name,
+		"journal_entry": values.name,
+	}
 
 
 def _get_cash_mode(pos_profile):
@@ -296,24 +564,5 @@ def _get_cash_mode(pos_profile):
 	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import (
 		_get_cash_mode_of_payment,
 	)
+
 	return _get_cash_mode_of_payment(pos_profile)
-
-
-def _get_cash_account(mode_of_payment, company):
-	"""Get cash GL account for the mode of payment."""
-	from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
-		get_bank_cash_account,
-	)
-
-	account_info = get_bank_cash_account(mode_of_payment, company)
-	if account_info and account_info.get("account"):
-		return account_info["account"]
-
-	# Fallback to company default cash account
-	account = frappe.get_cached_value("Company", company, "default_cash_account")
-	if account:
-		return account
-
-	frappe.throw(
-		_("Could not determine cash account for {0}").format(mode_of_payment)
-	)

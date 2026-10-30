@@ -11,6 +11,13 @@ vi.mock("@/utils/apiWrapper", () => ({ call }))
 vi.mock("@/stores/restaurant", () => ({
 	useRestaurantStore: () => ({ isEnabled: false, fetchFromNetwork: vi.fn() }),
 }))
+//// Neoffice — posSync also counts, sends and preloads the till's drawer movements (NeoRestau lot 1, task 15)
+//// through a module of ours that opens the offline database; this spec runs without one.
+vi.mock("@/utils/offline/cashMovements", () => ({
+	getPendingCashMovementCount: vi.fn(async () => 0),
+	syncOfflineCashMovements: vi.fn(async () => ({ success: 0, failed: 0, skipped: 0, errors: [] })),
+	preloadCashMovementDialogData: vi.fn(async () => true),
+}))
 vi.mock("@/composables/useToast", () => ({
 	useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn() }),
 }))

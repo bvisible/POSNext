@@ -337,8 +337,8 @@ def _get_bank_deposit_data(data):
 
 # //// Neoffice — added helpers. _get_invoice_collections sums the POS Payment Entry Reference rows
 # //// of each closing shift; _get_cash_in_out sums the Journal Entries our cash in/out feature
-# //// writes, matched on their `POS Cash Entry|<opening shift>|…` user_remark because a Journal
-# //// Entry carries no link back to a shift (024d87bb, 2026-04-12).
+# //// writes, found by their link to the opening shift (024d87bb, 2026-04-12; the link fields came with
+# //// NeoRestau lot 1, task 15, before which the remark was matched).
 def _get_invoice_collections(data):
 	"""Batch-fetch total invoice collection amounts per closing shift."""
 	shift_names = list({row.shift for row in data})
@@ -364,46 +364,12 @@ def _get_invoice_collections(data):
 
 
 def _get_cash_in_out(data):
-	"""Batch-fetch cash in/out totals per opening shift.
-
-	Cash entries are linked to Opening Shift via user_remark:
-	POS Cash Entry|{opening_shift}|{in/out}|{template}|{label}
-	"""
-	opening_shifts = list({row.get("pos_opening_shift") for row in data if row.get("pos_opening_shift")})
-	if not opening_shifts:
-		return {}
-
-	placeholders = ", ".join(["%s"] * len(opening_shifts))
-
-	rows = frappe.db.sql(
-		"""
-		SELECT
-			je.user_remark,
-			je.total_debit as amount
-		FROM `tabJournal Entry` je
-		WHERE je.docstatus = 1
-		AND je.user_remark LIKE 'POS Cash Entry|%%'
-		AND SUBSTRING_INDEX(SUBSTRING_INDEX(je.user_remark, '|', 2), '|', -1) IN ({placeholders})
-	""".format(placeholders=placeholders),
-		opening_shifts,
-		as_dict=1,
-	)
-
-	result = {}
-	for r in rows:
-		parts = (r.user_remark or "").split("|")
-		if len(parts) < 3:
-			continue
-		opening_shift = parts[1]
-		direction = parts[2]
-		if opening_shift not in result:
-			result[opening_shift] = {"in": 0, "out": 0}
-		if direction == "in":
-			result[opening_shift]["in"] += flt(r.amount)
-		elif direction == "out":
-			result[opening_shift]["out"] += flt(r.amount)
-
-	return result
+	"""Batch-fetch cash in/out totals per opening shift."""
+	# //// Neoffice — the movements' link fields and their rows on the till's cash account, read the way the
+	# //// closing reads them (pos_next.cash_movement.shift_totals, NeoRestau lot 1 task 15): the remark matched
+	# //// before was free text, and its total_debit counted a VAT line and a template booked the wrong way.
+	from pos_next import cash_movement
+	return cash_movement.shift_totals({row.get("pos_opening_shift") for row in data if row.get("pos_opening_shift")})
 
 
 def get_conditions(filters):

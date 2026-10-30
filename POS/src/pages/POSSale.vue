@@ -2509,6 +2509,8 @@ import { usePOSUIStore } from "@/stores/posUI";
 import { useBootstrapStore } from "@/stores/bootstrap";
 import { logger } from "@/utils/logger";
 import { canCloseShiftWithPendingExpenses } from "@/utils/shiftGuards";
+//// Neoffice — a drawer movement still in the offline queue keeps the shift open, like an expense (task 15).
+import { canCloseShiftWithPendingCashMovements } from "@/utils/offline/cashMovements";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
 
 // Initialize stores
@@ -5078,6 +5080,16 @@ function handleCloseShift() {
 		return;
 	}
 
+	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15).
+	if (!canCloseShiftWithPendingCashMovements(offlineStore.pendingCashMovementsCount)) {
+		showError(
+			__(
+				"Sync or delete the cash movements waiting to be sent before closing this shift: the closing would not count them.",
+			),
+		);
+		return;
+	}
+
 	uiStore.showCloseShiftDialog = true;
 }
 
@@ -5143,6 +5155,17 @@ function logoutWithCloseShift() {
 		showError(
 			__(
 				"Sync or delete pending offline expenses before closing this shift. Unsynced cash expenses cannot be booked after the shift is closed.",
+			),
+		);
+		return;
+	}
+
+	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15).
+	if (!canCloseShiftWithPendingCashMovements(offlineStore.pendingCashMovementsCount)) {
+		uiStore.showLogoutDialog = false;
+		showError(
+			__(
+				"Sync or delete the cash movements waiting to be sent before closing this shift: the closing would not count them.",
 			),
 		);
 		return;
@@ -5472,7 +5495,8 @@ async function handleSyncClick() {
 		return;
 	}
 
-	if (offlineStore.hasPendingExpenses) {
+	//// Neoffice — the drawer movements' queue is sent the same way (NeoRestau lot 1, task 15).
+	if (offlineStore.hasPendingExpenses || offlineStore.hasPendingCashMovements) {
 		await handleSyncAll();
 		return;
 	}
