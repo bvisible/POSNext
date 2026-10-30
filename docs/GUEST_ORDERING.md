@@ -77,6 +77,8 @@ Server presses QR on a table → create_table_token() → the table's active Gue
 
 Pressing the QR button again, from the same till or another, shows the same code: a table with an active token never gets a new one, so the code already placed on the table keeps working. A new token is made only when the table has none that can still be used (it was freed, its time ran out, or its POS opening closed). The QR dialog says in one line what the code is for.
 
+The QR button sits in the header bar of the open table (`TableHeaderBar.vue`), beside "Back": always in view, a 44 px touch target with the QR icon and the word, at every width (it used to be the last button of the row of the restaurant's cards, where a few cards pushed it off a phone's screen). The waiter shows the table's code on his phone to the guests, who scan it: below 640 px the dialog is the whole screen (`TableQRCode.vue`), the code as large as the width allows and never under 300 px, in ink on white with its quiet zone, the table's name large above it, the line that says what the code is for, and a "Close" button in ink at the bottom, within thumb reach. A phone prints nothing, so "Print" is not offered there. The screen is kept awake while the code is shown (Screen Wake Lock API, released when the dialog closes, and skipped without a word where the browser has none or refuses). On a tablet and a desktop the dialog keeps its size, with "Print" and "Close", the primary button in ink.
+
 The till keeps no copy of the codes it showed: each press asks the server, so a code that expired from another device is never shown (the server then makes a new one).
 
 A table's code expires whenever the table is emptied. Freeing a table by hand (`update_table_status` to Empty, `mark_table_available`) expires its codes, whatever the table holds. Three other paths go through one function, `expire_codes_of_emptied_tables`: the reset of the floor (`reset_all_tables`, which expires every code of the tables that are Empty after it), the cancel of an invoice (`on_invoice_update`), and the floor read that empties an Occupied table holding no open order (`get_tables`). In those three, a table that still holds an open order (a draft invoice linked to it) keeps its codes. The cancel and the floor read spare one more kind of code: a QR press seats a table without any order, so the floor read empties it at once, and the code the press has just placed is waiting for its first order; the cancel of an old invoice of the table must not kill the code of the party now seated either. That code, and a code whose order is a draft still open, stay; a code whose order is gone (the cancelled invoice it served) expires with the table. The reset spares nothing: it wipes the floor.
@@ -110,7 +112,8 @@ Tokens are validated on every API call. A token is invalid if:
 | `GuestCheckout.vue` | Split payment (amount/items tabs), account creation, redirect to the Wallee payment page |
 | `GuestOrder.vue` | Main page — 3-tab navigation (Menu/Cart/Pay) |
 | `TakeawayOrder.vue` | Takeaway page — mandatory account + payment before order |
-| `TableQRCode.vue` | QR code display with print button |
+| `TableQRCode.vue` | QR code display: a card with a print button on a tablet and a desktop, the whole screen on a phone (large code, "Close" in ink, no print, screen kept awake) |
+| `TableHeaderBar.vue` | Header bar of the open table or takeaway ticket: its name, lines, kitchen status, the QR button and "Back" |
 | `guestOrder.js` | Pinia store — cart, API calls via fetch(), realtime subscription |
 
 ### Realtime Sync

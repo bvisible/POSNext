@@ -9,7 +9,9 @@
  * //// POSSale.vue is too large to mount here (a dozen stores, the offline workers, sockets), so this covers what the page
  * //// wires: the click path (`useTableQR`, the composable the page takes it from), the dialog that shows the code
  * //// (`TableQRCode`), and, from the source of the page, that the confirmation, its state, its handler and the copy of
- * //// the codes are gone and that the button and the dialog are still wired as they were.
+ * //// the codes are gone, that the button now sits in the header bar of the open table (`TableHeaderBar`, beside "Back")
+ * //// and no longer in the row of the restaurant's cards, and that the bar and the dialog are wired to the click path.
+ * //// What the bar and the dialog do at each width is in components/restaurant/__tests__.
  * @vitest-environment jsdom
  */
 import { readFileSync } from "node:fs"
@@ -287,7 +289,8 @@ describe("the dialog that shows the code", () => {
 		)
 	})
 
-	it("keeps the table, its address and its two actions: print and close", async () => {
+	it("keeps the table, its address and its two actions on a desktop: print and close", async () => {
+		window.innerWidth = 1024
 		dialog()
 
 		expect(wrapper.text()).toContain("QR Code")
@@ -329,13 +332,55 @@ describe("the till page", () => {
 		expect(page).not.toContain("activeQRTokens")
 	})
 
-	it("binds the QR button to that click path and the dialog to that state", () => {
-		expect(page).toMatch(/<button[^>]*@click="handleQRButtonClick"/)
-		expect(page).toContain(
-			":title=\"__('Generate QR code for guest ordering')\"",
-		)
+	it("binds the header bar of the table to that click path and the dialog to that state", () => {
+		expect(page).toMatch(/<TableHeaderBar\b[^>]*?@qr="handleQRButtonClick"/s)
 		expect(page).toMatch(
 			/<TableQRCode\s+v-if="showQRDialog"\s+:token="currentQR\.token"\s+:url="currentQR\.url"\s+:tableName="currentQR\.tableName"\s+@close="showQRDialog = false"\s*\/>/,
 		)
+		// "Back" is the bar's too, and it closes the table as it always did
+		expect(page).toMatch(/<TableHeaderBar\b[^>]*?@back="closeTable"/s)
+		expect(page).toMatch(
+			/import TableHeaderBar from "@\/components\/restaurant\/TableHeaderBar\.vue"/,
+		)
+	})
+
+	it("offers the QR button when the restaurant has QR ordering on and a table (not a ticket) is open", () => {
+		const bar = page.match(/<TableHeaderBar\b[\s\S]*?\/>/)[0]
+		expect(bar).toMatch(
+			/:show-qr="[^"]*enable_qr_ordering[^"]*restaurantTable[^"]*"/s,
+		)
+		// The bar replaces the banner of the open table or takeaway ticket: same condition, same data
+		expect(bar).toMatch(
+			/v-if="\s*restaurantStore\.isEnabled &&\s*\(cartStore\.restaurantTable \|\| cartStore\.isTakeaway\)\s*"/,
+		)
+		expect(bar).toContain(':item-count="cartStore.invoiceItems.length"')
+		expect(bar).toContain(':kds-status="cartStore.kdsStatus"')
+		expect(bar).toContain(
+			':kds-status-label="kitchenStatusLabel(cartStore.kdsStatus)"',
+		)
+	})
+
+	it("sets the bar above the row of the cards, and keeps the QR button out of that row", () => {
+		const bar = page.indexOf("<TableHeaderBar")
+		const cards = page.indexOf("<!-- Restaurant Card Display")
+		const subFilters = page.indexOf("<!-- Category sub-filters -->")
+		expect(bar).toBeGreaterThan(-1)
+		expect(cards).toBeGreaterThan(bar)
+		expect(subFilters).toBeGreaterThan(cards)
+
+		// The row of the cards, where a few cards pushed the button off a phone's screen, holds cards and nothing else
+		const row = page.slice(cards, subFilters)
+		expect(row).not.toContain("handleQRButtonClick")
+		expect(row).not.toContain("Generate QR code for guest ordering")
+		expect(row).not.toMatch(/>\s*QR\s*</)
+		expect(row).not.toContain("ml-auto")
+		expect(row).not.toMatch(/emerald/)
+	})
+
+	it("has exactly one QR button, in the bar, and the page keeps no copy of its markup", () => {
+		// The click path is bound once in the template (the other mentions are its taking and the notes about it)
+		expect(page.match(/="handleQRButtonClick"/g)).toHaveLength(1)
+		expect(page).not.toContain("Generate QR code for guest ordering")
+		expect(page).not.toContain("QR Self-Ordering button")
 	})
 })

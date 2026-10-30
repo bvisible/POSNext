@@ -510,8 +510,9 @@
 							<!-- //// colours and images (f2392119 2026-03-22 "restaurant card system", -->
 							<!-- //// c56eed4f + e172bdba + bd1794bb + 8357bf87 + af6d76d2 2026-03-22, 6a4ff7b3 -->
 							<!-- //// 2026-03-25, d526332f 2026-03-27 permanent card, 9f4e85df 2026-03-21 -->
-							<!-- //// menus), plus the QR self-ordering button (c5208ba7 2026-03-28) and the -->
-							<!-- //// guest-paid state (02f74451 2026-03-31). Returning to an occupied table -->
+							<!-- //// menus), plus the QR self-ordering button (c5208ba7 2026-03-28, now in the -->
+							<!-- //// banner of the table) and the guest-paid state (02f74451 2026-03-31). -->
+							<!-- //// Returning to an occupied table -->
 							<!-- //// reloads the SERVER draft, not a local one (c8f9a36c 2026-03-21). -->
 							<!-- Restaurant Mode: Table Selector -->
 							<template
@@ -536,60 +537,33 @@
 
 							<!-- Normal Mode or Table Selected: Items Selector -->
 							<template v-else>
+								<!-- //// Neoffice — the banner of the open table is TableHeaderBar: the name, the lines, the kitchen status and, on the right, -->
+								<!-- //// the QR button of the table beside "Back" — always in view, a 44 px target, at every width. The QR button used to sit -->
+								<!-- //// at the right end of the row of the cards below, where a few cards pushed it off a phone's screen (NeoRestau lot 1). -->
 								<!-- Restaurant table / takeaway banner -->
-								<div
+								<TableHeaderBar
 									v-if="
 										restaurantStore.isEnabled &&
 										(cartStore.restaurantTable || cartStore.isTakeaway)
 									"
-									class="flex items-center justify-between px-4 py-3 border-b-2"
-									:class="
+									:title="
 										cartStore.isTakeaway
-											? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300'
-											: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+											? cartStore.takeawayNumber
+											: cartStore.restaurantTable?.table_name
 									"
-								>
-									<div class="flex items-center gap-3">
-										<FeatherIcon
-											:name="
-												cartStore.isTakeaway ? 'shopping-bag' : 'coffee'
-											"
-											class="w-5 h-5 text-blue-600"
-										/>
-										<div>
-											<span class="text-lg font-bold text-blue-900">
-												{{
-													cartStore.isTakeaway
-														? cartStore.takeawayNumber
-														: cartStore.restaurantTable?.table_name
-												}}
-											</span>
-											<!-- //// Neoffice — msgid was French, now English (house rule); the French screen is unchanged, served by the translation catalogue. -->
-											<span class="text-xs text-blue-700 ms-2">
-												{{ cartStore.invoiceItems.length }}
-												{{ __("items") }}
-											</span>
-										</div>
-										<!-- KDS Status Badge -->
-										<div
-											:class="[
-												'ms-3 px-2.5 py-1 rounded-full text-xs font-semibold text-white',
-												cartStore.kdsStatus === 'Pending'
-													? 'bg-yellow-500'
-													: cartStore.kdsStatus === 'Preparing'
-													? 'bg-blue-500'
-													: 'bg-green-500',
-											]"
-										>
-											<!-- //// Neoffice — the status goes through kitchenStatusLabel() like the kitchen display's (KDSOrderCard): Pending, Preparing, Ready -->
-											<!-- //// and Delivered have a French label under the context "Kitchen order status", any other value keeps its plain word; upstream printed the raw English word. -->
-											{{ kitchenStatusLabel(cartStore.kdsStatus) }}
-										</div>
-									</div>
-									<Button variant="subtle" size="sm" @click="closeTable">
-										{{ __("Back") }}
-									</Button>
-								</div>
+									:is-takeaway="cartStore.isTakeaway"
+									:item-count="cartStore.invoiceItems.length"
+									:kds-status="cartStore.kdsStatus"
+									:kds-status-label="kitchenStatusLabel(cartStore.kdsStatus)"
+									:show-qr="
+										Boolean(
+											restaurantStore.restaurantSettings.enable_qr_ordering &&
+												cartStore.restaurantTable
+										)
+									"
+									@qr="handleQRButtonClick"
+									@back="closeTable"
+								/>
 
 								<!-- Restaurant Card Display (replaces items grid when cards are active) -->
 								<div
@@ -641,33 +615,6 @@
 												</svg>
 												<!-- //// Neoffice — the permanent card is shown by its label, not by the English name it is stored under (NeoRestau lot 1, task 9) -->
 												{{ cardLabel(card) }}
-											</button>
-											<!-- QR Self-Ordering button -->
-											<!-- //// Neoffice — called with no argument: handleQRButtonClick takes a table pressed on the floor (task 26), and the click event is no table -->
-											<button
-												v-if="
-													restaurantStore.restaurantSettings
-														.enable_qr_ordering &&
-													cartStore.restaurantTable
-												"
-												@click="handleQRButtonClick()"
-												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0 ml-auto bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 active:bg-emerald-200"
-												:title="__('Generate QR code for guest ordering')"
-											>
-												<svg
-													class="w-3.5 h-3.5 flex-shrink-0"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-													/>
-												</svg>
-												QR
 											</button>
 										</div>
 									</div>
@@ -2366,6 +2313,8 @@ import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 //// its import (NeoRestau lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
+//// Neoffice — the banner of the open table, with its QR button (NeoRestau lot 1): it left this file, and the row of the cards.
+import TableHeaderBar from "@/components/restaurant/TableHeaderBar.vue";
 //// Neoffice — the click path of the QR button of a table: ask for its code and show it at once (NeoRestau lot 1).
 import { useTableQR } from "@/composables/useTableQR";
 //// Neoffice — the tab of the till carries the till's name once a shift is open (NeoRestau lot 1; utils/tabTitle.js).
