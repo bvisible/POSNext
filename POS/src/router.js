@@ -4,6 +4,9 @@ import { userResource } from "@/data/user";
 import { redirectWhereNeoRestauIsOff } from "@/utils/neorestau";
 //// Neoffice — where a paired tablet goes when the installed app starts at the till's address (NeoRestau lot 1, task 48).
 import { whereTheTabletStarts } from "@/utils/tabletStart";
+//// Neoffice — each screen names its tab (NeoRestau lot 1): the router writes it after every navigation, from the `title` of
+//// the route; utils/tabTitle.js is the one place that writes the title of the tab.
+import { showScreen } from "@/utils/tabTitle";
 import { createRouter, createWebHistory } from "vue-router";
 import { session } from "./data/session";
 
@@ -32,7 +35,8 @@ const routes = [
 		name: "CustomerDisplay",
 		path: "/display",
 		component: () => import("@/pages/CustomerDisplay.vue"),
-		meta: { allowGuest: true }, // Allow access without session login
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { allowGuest: true, title: () => __("Customer display") }, // Allow access without session login
 	},
 	{
 		name: "KDS",
@@ -40,13 +44,15 @@ const routes = [
 		component: () => import("@/pages/KDS.vue"),
 		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js); a tablet
 		//// signs in to it with a QR code (pairable: signed out, it is sent to the pairing page, not to a password).
-		meta: { needsNeoRestau: true, pairable: true },
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { needsNeoRestau: true, pairable: true, title: () => __("Kitchen") },
 	},
 	{
 		name: "CFD",
 		path: "/cfd",
 		component: () => import("@/pages/CFD.vue"),
-		meta: { allowGuest: true },
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { allowGuest: true, title: () => __("Customer display") },
 	},
 	{
 		name: "Runner",
@@ -54,7 +60,7 @@ const routes = [
 		component: () => import("@/pages/Runner.vue"),
 		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js); a tablet
 		//// signs in to it with a QR code (pairable: signed out, it is sent to the pairing page, not to a password).
-		meta: { needsNeoRestau: true, pairable: true },
+		meta: { needsNeoRestau: true, pairable: true, title: () => __("Runner") },
 	},
 	//// Neoffice — the page a kitchen's or a runner's tablet opens by scanning the QR code a manager shows at the till
 	//// (NeoRestau lot 1, task 16): open to a visitor (the tablet has no session yet), only where the site runs
@@ -70,25 +76,29 @@ const routes = [
 		path: "/takeaway",
 		component: () => import("@/pages/Takeaway.vue"),
 		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
-		meta: { needsNeoRestau: true },
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { needsNeoRestau: true, title: () => __("Takeaway") },
 	},
 	{
 		name: "GuestOrder",
 		path: "/guest/:token",
 		component: () => import("@/pages/GuestOrder.vue"),
-		meta: { allowGuest: true },
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { allowGuest: true, title: () => __("Order") },
 	},
 	{
 		name: "TakeawayOrder",
 		path: "/order",
 		component: () => import("@/pages/TakeawayOrder.vue"),
-		meta: { allowGuest: true },
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { allowGuest: true, title: () => __("Order") },
 	},
 	{
 		name: "GuestReservation",
 		path: "/reservation",
 		component: () => import("@/pages/GuestReservation.vue"),
-		meta: { allowGuest: true },
+		//// Neoffice — `title` is the name of this screen's tab, translated when written (utils/tabTitle.js).
+		meta: { allowGuest: true, title: () => __("Reservation") },
 	},
 	//// Neoffice — the public menu (NeoRestau lot 1, task 17): the page that the one QR code on a restaurant's tables opens.
 	//// Like the other pages a guest opens it is let through with no session (meta.allowGuest); it is not behind
@@ -181,6 +191,13 @@ router.beforeEach((to, from, next) => {
 	} else {
 		next();
 	}
+});
+
+//// Neoffice — the one place that names the tab of every screen (NeoRestau lot 1): once a navigation is done, the `title` of
+//// its route is written, "<screen> · Neopos"; a route with none is plain "Neopos". A navigation that failed changed
+//// nothing. A screen that learns a name later (the till, the kitchen, the guest pages) hands it to utils/tabTitle.js itself.
+router.afterEach((to, from, failure) => {
+	if (!failure) showScreen(to);
 });
 
 export default router;

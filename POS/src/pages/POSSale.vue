@@ -2368,6 +2368,8 @@ import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
 import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 //// Neoffice — the click path of the QR button of a table: ask for its code and show it at once (NeoRestau lot 1).
 import { useTableQR } from "@/composables/useTableQR";
+//// Neoffice — the tab of the till carries the till's name once a shift is open (NeoRestau lot 1; utils/tabTitle.js).
+import { useTillTabTitle } from "@/composables/useTillTabTitle";
 //// Neoffice — the status badge of the open table is a label under its own context (NeoRestau lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 //// Neoffice — and the permanent card's tab is its label (NeoRestau lot 1, task 9, fix round 1)
@@ -2827,6 +2829,11 @@ watch(
 	{ immediate: true }
 );
 onUnmounted(() => cloudPrntStore.stop());
+
+//// Neoffice — the tab of the till says which till it is once a shift is open, "Restaurant till · Neopos", so that the till,
+//// the runner and the kitchen open side by side can be told apart (NeoRestau lot 1). It is the same name the CloudPRNT watcher
+//// above follows; utils/tabTitle.js is the one place that writes the title.
+useTillTabTitle();
 
 //// Neoffice — open state of the keyboard shortcuts help (user menu entry), see the import above.
 const { isOpen: showShortcutsDialog } = useDialog("shortcuts");

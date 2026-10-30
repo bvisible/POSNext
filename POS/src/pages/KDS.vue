@@ -200,6 +200,7 @@ import { TICKET_AREA, TICKET_COLUMNS, TICKET_GRID } from "@/utils/ticketLayout"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
+import { useTabTitle } from "@/composables/useTabTitle"
 import { initSocket } from "@/socket"
 import { isDeskSession, leaveWhenSignedOut } from "@/utils/tabletSession"
 
@@ -223,6 +224,13 @@ const loading = ref(true)
 const stations = ref([])
 const stationsRead = ref(false)
 const selectedStation = ref(null)
+// The tab says which station this screen shows, in front of "Kitchen": the one chosen on the screen or named in the bookmark,
+// once the stations have answered (utils/tabTitle.js writes the title)
+useTabTitle(
+	() =>
+		stations.value.find((station) => station.name === selectedStation.value)
+			?.station_name,
+)
 const allOrders = ref([]) // Unfiltered orders for counting
 const showDelivered = ref(
 	localStorage.getItem("pos_kds_show_delivered") === "true",

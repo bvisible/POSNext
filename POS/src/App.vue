@@ -30,4 +30,9 @@ import Toast from "@/components/common/Toast.vue";
 //// "integrate nora-learn-react via React Island bridge").
 import NoraLearnBridge from "@/components/common/NoraLearnBridge.vue";
 import { translationVersion } from "@/utils/translation";
+//// Neoffice — the words of a tab's title are translated when it is written, and the catalogue of translations may arrive
+//// after the first navigation: the title is written again whenever it changes, as the page is (the key of the router-view).
+import { watch } from "vue";
+import { refreshTabTitle } from "@/utils/tabTitle";
+watch(translationVersion, refreshTabTitle);
 </script>
