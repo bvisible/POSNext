@@ -17446,3 +17446,19 @@ msgstr "{0} gratuit(s)"
 #: pos_next/api/expenses.py:866
 msgid "{0} is required"
 msgstr "Le champ {0} est requis"
+
+# //// Neoffice — floor plan menu (lot 1, task 9f)
+msgid "Edit the floor plan"
+msgstr "Modifier le plan de salle"
+
+msgid "Free the tables being cleaned"
+msgstr "Libérer les tables en nettoyage"
+
+msgid "{0} tables freed"
+msgstr "{0} tables libérées"
+
+msgid "{0} table freed"
+msgstr "{0} table libérée"
+
+msgid "No table is being cleaned"
+msgstr "Aucune table n'est en nettoyage"
