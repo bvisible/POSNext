@@ -6,6 +6,7 @@
 import frappe
 
 from pos_next.restaurant.mode import effective_restaurant_mode, neorestau_active
+from pos_next.restaurant.settings import pos_settings_of_profiles
 
 # The `mode` the entry route NeoRestau opens passes (`/pos?mode=restaurant`): the restaurant door. Any other value, or none,
 # is the usual door.
@@ -16,24 +17,20 @@ def restaurants_of_the_restaurant_tills(profiles: list[str]) -> dict[str, str]:
 	"""{POS Profile: its restaurant} for those of the given tills that work as restaurant tills, read in ONE query.
 
 	A till is a restaurant till by its own setting and only where the site runs NeoRestau: `mode.effective_restaurant_mode`,
-	the very rule the till reads its mode by, and on the rows the till itself reads (its enabled POS Settings). Where the
-	site does not run NeoRestau no till is one, and nothing is read.
+	the very rule the till reads its mode by, on the row the till itself reads (`settings.pos_settings_of_profiles`, which
+	says which row that is). Where the site does not run NeoRestau no till is one, and nothing is read.
 	"""
 	if not profiles or not neorestau_active():
 		return {}
 	try:
-		rows = frappe.get_all(
-			"POS Settings",
-			filters={"pos_profile": ["in", profiles], "enabled": 1},
-			fields=["pos_profile", "enable_restaurant_mode", "restaurant"],
-		)
+		rows = pos_settings_of_profiles(profiles, ["enable_restaurant_mode", "restaurant"])
 	except Exception as error:
 		if frappe.db.is_missing_column(error):
 			# The code is updated and the site is not migrated yet: no till can name a restaurant, and a cashier must not be
 			# left at a dead end for it
 			return {}
 		raise
-	return {row.pos_profile: row.restaurant for row in rows if effective_restaurant_mode(row)}
+	return {profile: row.restaurant for profile, row in rows.items() if effective_restaurant_mode(row)}
 
 
 def offer_at_the_door(tills: list, mode: str | None = None) -> list:

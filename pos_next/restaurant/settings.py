@@ -49,18 +49,43 @@ def default_restaurant() -> str | None:
 	return None
 
 
+def _settings_row_that_counts(pos_profile) -> dict:
+	"""The filters that pick the POS Settings row that is a till's settings, for one POS Profile or (as `["in", [...]]`)
+	for several: the one place that says which row counts.
+
+	`pos_profile` is unique in POS Settings, so a till has at most one row, and it counts when it is enabled: a disabled
+	row is no settings at all, the till then runs on the defaults (the bootstrap reads `enabled = 1` rows only).
+	"""
+	return {"pos_profile": pos_profile, "enabled": 1}
+
+
 def pos_settings_of(pos_profile: str | None, fields: list[str]) -> frappe._dict | None:
 	"""Some fields of the POS Settings row of a till, as the till itself reads it; None for a till without one.
 
-	The row of a POS Profile counts when it is enabled: a disabled row is no settings at all, the till then runs on
-	the defaults (the bootstrap reads `enabled = 1` rows only). Whatever the server asks of "the till's settings"
-	- the restaurant it works for, its takeaway lane - is read here, so that it is always the same row.
+	Whatever the server asks of "the till's settings" - the restaurant it works for, its takeaway lane - is read here
+	(or, for several tills at once, by `pos_settings_of_profiles`), so that it is always the same row.
 	"""
 	if not pos_profile:
 		return None
-	return frappe.db.get_value(
-		"POS Settings", {"pos_profile": pos_profile, "enabled": 1}, fields, as_dict=True
+	return frappe.db.get_value("POS Settings", _settings_row_that_counts(pos_profile), fields, as_dict=True)
+
+
+def pos_settings_of_profiles(pos_profiles: list[str | None], fields: list[str]) -> dict[str, frappe._dict]:
+	"""`pos_settings_of` for several tills at once, in ONE query: {POS Profile: the fields of its row}.
+
+	The very row `pos_settings_of` reads for one till, in the same shape: a till that has none (no row, or a disabled one)
+	has no entry. For the code that works out something for all the tills of a user (the tills a shift can be opened at)
+	and must not read the table once per till.
+	"""
+	pos_profiles = [name for name in pos_profiles if name]
+	if not pos_profiles:
+		return {}
+	# The row is keyed by its POS Profile, which is asked for even if the caller does not
+	columns = list(dict.fromkeys(["pos_profile", *fields]))
+	rows = frappe.get_all(
+		"POS Settings", filters=_settings_row_that_counts(["in", pos_profiles]), fields=columns
 	)
+	return {row.pos_profile: frappe._dict({field: row[field] for field in fields}) for row in rows}
 
 
 def restaurant_for_profile(pos_profile: str | None) -> str | None:

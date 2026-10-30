@@ -135,7 +135,8 @@
 <script setup>
 import { FeatherIcon } from "frappe-ui";
 import { onMounted, reactive, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+//// Neoffice — useRoute: the pushes to the till below carry the query string of this page on (see `route`).
+import { useRoute, useRouter } from "vue-router";
 import { canLogin, currentLoginEnv } from "@/utils/secureLogin";
 import ShiftOpeningDialog from "../components/ShiftOpeningDialog.vue";
 import { session } from "../data/session";
@@ -148,6 +149,13 @@ import { logger } from "@/utils/logger";
 const log = logger.create("Login");
 
 const router = useRouter();
+//// Neoffice — the door follows the entry (NeoRestau lot 1, task 5). NeoRestau's entry route is /pos?mode=restaurant, and the
+//// router carries its query string to this page when the visitor is not signed in. The shift dialog here reads the door from
+//// this route, and so does the one the till opens later (after a shift closing, from its shift buttons, "Close & Open New"):
+//// upstream pushed the till with no query, which dropped the door at the first sign-in and left the restaurant cashier at
+//// the usual door for the rest of the session. The three pushes below carry this route's query to the till. Remove them
+//// if upstream keeps the query on its pushes.
+const route = useRoute();
 // Login needs HTTPS (or localhost) unless frontend or backend dev mode is on
 const loginAllowed = canLogin(currentLoginEnv());
 const { cachePasswordHashFromLogin } = useSessionLock();
@@ -223,13 +231,15 @@ watch(
 watch(showShiftDialog, (isOpen, wasOpen) => {
 	// Only navigate if dialog was open and is now closed, and user is logged in
 	if (wasOpen === true && isOpen === false && session.isLoggedIn) {
-		router.push({ name: "POSSale" });
+		//// Neoffice — the door goes on to the till (see `route` above).
+		router.push({ name: "POSSale", query: route.query });
 	}
 });
 
 function handleShiftOpened() {
 	// Navigate to POS sale after shift is opened
-	router.push({ name: "POSSale" });
+	//// Neoffice — the door goes on to the till (see `route` above).
+	router.push({ name: "POSSale", query: route.query });
 }
 
 function handleDialogClosed({ reason }) {
@@ -238,7 +248,8 @@ function handleDialogClosed({ reason }) {
 	// "resumed" means user chose to resume existing shift
 	// In both cases, navigate to POSSale (existing shift will be active)
 	if (reason === "cancelled" || reason === "resumed") {
-		router.push({ name: "POSSale" });
+		//// Neoffice — the door goes on to the till (see `route` above).
+		router.push({ name: "POSSale", query: route.query });
 	}
 }
 

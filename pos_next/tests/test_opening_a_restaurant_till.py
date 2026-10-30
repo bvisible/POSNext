@@ -22,6 +22,7 @@ from pymysql.err import OperationalError
 
 from pos_next.api.pos_profile import get_pos_profiles
 from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
+from pos_next.restaurant import settings as restaurant_settings
 from pos_next.tests.test_restaurant_mode_comes_from_the_till import ABSENT, a_site_where_neorestau_is
 from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, OTHER_TILL, TILL, _till_fixture, _user
 
@@ -336,6 +337,49 @@ class TestOpeningARestaurantTill(Tills, FrappeTestCase):
 			self.assertIn(field, answer[0])
 		# The rows stay dicts that can be read by attribute, as the callers of the endpoint read them
 		self.assertEqual(answer[0].name, self.grocery_till)
+
+	def test_the_door_goes_by_the_row_the_settings_reader_gives(self):
+		# The row of a till (the enabled POS Settings the till itself reads) is defined once, in the module of the settings: the
+		# door asks it for all the tills at once and goes by what it answers, whatever the table says
+		row = frappe._dict(enable_restaurant_mode=1, restaurant=self.restaurant)
+		with patch(
+			"pos_next.restaurant.door.pos_settings_of_profiles", return_value={self.grocery_till: row}
+		) as reader:
+			answer = self.offered(MIXED, mode="restaurant")
+		reader.assert_called_once()
+		self.assertCountEqual(reader.call_args.args[0], self.tills)
+		self.assertEqual([till["name"] for till in answer], [self.grocery_till])
+		self.assertIs(answer[0]["restaurant_mode"], True)
+		self.assertEqual(answer[0]["restaurant"], self.restaurant)
+
+	def test_the_settings_of_several_tills_are_the_rows_the_settings_of_one_till_are(self):
+		# One till without a row, one with an enabled row, one with a disabled row: several at once give what one at a time give
+		self.change_settings(self.second_restaurant_till, enabled=0)
+		for fields in (
+			["enable_restaurant_mode", "restaurant"],
+			["restaurant"],
+			["pos_profile", "restaurant"],
+		):
+			with self.subTest(fields=fields):
+				several = restaurant_settings.pos_settings_of_profiles(list(self.tills), fields)
+				for profile in self.tills:
+					one = restaurant_settings.pos_settings_of(profile, fields)
+					if one is None:
+						self.assertNotIn(profile, several)
+					else:
+						self.assertEqual(several[profile], one)
+				self.assertEqual(set(several), {self.restaurant_till})
+
+	def test_the_settings_of_several_tills_are_read_in_one_statement(self):
+		with the_statements_run() as statements:
+			restaurant_settings.pos_settings_of_profiles(list(self.tills), ["restaurant"])
+		self.assertEqual(len(the_reads_of_the_settings(statements)), 1, statements)
+
+	def test_no_till_to_ask_about_is_no_statement(self):
+		with the_statements_run() as statements:
+			self.assertEqual(restaurant_settings.pos_settings_of_profiles([], ["restaurant"]), {})
+			self.assertEqual(restaurant_settings.pos_settings_of_profiles([None, ""], ["restaurant"]), {})
+		self.assertEqual(the_reads_of_the_settings(statements), [])
 
 	def test_a_visitor_is_refused_at_the_restaurant_door_too(self):
 		frappe.set_user("Guest")

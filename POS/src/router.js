@@ -121,7 +121,9 @@ router.beforeEach((to, from, next) => {
 
 	// Redirect logic
 	if (to.name === "Login" && isLoggedIn) {
-		//// Neoffice — and back: the query string goes with the visitor from the login to the till too (see below).
+		//// Neoffice — and back: the door (the ?mode= query of NeoRestau's entry route, NeoRestau lot 1, task 5) must survive
+		//// the redirect to the login page AND the redirect back from it, or a signed-in visitor who lands on the login page
+		//// (the back button, a bookmark) would reach the till at the usual door. See the redirect to the login below.
 		next({ name: "POSSale", query: to.query });
 	} else if (to.name !== "Login" && !isLoggedIn) {
 		//// Neoffice — upstream dropped the query string here. NeoRestau's entry route is /pos?mode=restaurant, the door that
