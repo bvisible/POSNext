@@ -65,7 +65,6 @@ describe("posSettings: restaurant mode follows the till's own settings", () => {
 			expect(await store.loadSettings("POS-1")).toBe(true)
 
 			expect(store.settings.enable_restaurant_mode).toBe(setting)
-			expect(store.enableRestaurantMode).toBe(Boolean(setting))
 			expect(localStorage.getItem(KEY)).toBeNull()
 		})
 	})
@@ -74,14 +73,14 @@ describe("posSettings: restaurant mode follows the till's own settings", () => {
 		LOADS["API fallback"]({ enabled: 1, enable_restaurant_mode: 0 })
 		const store = usePOSSettingsStore()
 		await store.loadSettings("POS-1")
-		expect(store.enableRestaurantMode).toBe(false)
+		expect(store.settings.enable_restaurant_mode).toBe(0)
 
 		// A stale value from an older version, and the setting turned on by the back-office meanwhile.
 		localStorage.setItem(KEY, "0")
 		apiSettings = { enabled: 1, enable_restaurant_mode: 1 }
 		await store.reloadSettings()
 
-		expect(store.enableRestaurantMode).toBe(true)
+		expect(store.settings.enable_restaurant_mode).toBe(1)
 		expect(localStorage.getItem(KEY)).toBeNull()
 	})
 
@@ -100,6 +99,6 @@ describe("posSettings: restaurant mode follows the till's own settings", () => {
 
 		expect(await store.loadSettings("POS-1")).toBe(true)
 
-		expect(store.enableRestaurantMode).toBe(true)
+		expect(store.settings.enable_restaurant_mode).toBe(1)
 	})
 })

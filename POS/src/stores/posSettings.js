@@ -2,12 +2,8 @@ import { createResource } from "frappe-ui";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useBootstrapStore } from "./bootstrap";
-//// Neoffice — added import, for the restaurant-mode toggle that first persisted through the
-//// API (8aa35c29, 2026-03-20 "Phase 1 restaurant module"). 82fcc1bf (2026-03-20) then made the
-//// toggle a localStorage write so it switches instantly and stays per-terminal, which left
-//// this import UNUSED — the next upstream merge can simply drop it.
-//// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2 + 82fcc1b
-import { call } from "@/utils/apiWrapper";
+//// Neoffice — no `call` import (apiWrapper) here any more: it was added for the restaurant-mode toggle
+//// (8aa35c29, 2026-03-20), left unused by 82fcc1bf, and went with the toggle (NeoRestau lot 1, task 4).
 
 export const usePOSSettingsStore = defineStore("posSettings", () => {
 	// State
@@ -94,6 +90,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// Neoffice — what the user may manage of that restaurant, sent with the settings (NeoRestau lot 1, task 3):
 		//// nothing until the server says so.
 		restaurant_can: {},
+		//// Neoffice — whether the site runs NeoRestau, sent with the settings (NeoRestau lot 1, task 4): off until the
+		//// server says so. enable_restaurant_mode above is already the EFFECTIVE mode (the till's own tick, counted only
+		//// where NeoRestau runs and for a till that names its restaurant), so nothing here works it out again.
+		neorestau_active: false,
 		default_restaurant_area: "",
 		// Security
 		enable_session_lock: 0,
@@ -220,14 +220,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const salesPersonsMode = computed(() => settings.value.enable_sales_persons || "Disabled");
 	//// Neoffice — Biome re-wrap of upstream's sales-person computeds, immediately followed by
 	//// our restaurant block: upstream POSNext is a retail POS with no table service, so
-	//// enableRestaurantMode has no upstream equivalent (458d81a9 / 8aa35c29, 2026-03-20).
+	//// the restaurant computeds have no upstream equivalent (458d81a9 / 8aa35c29, 2026-03-20).
 	const isSingleSalesPerson = computed(() => settings.value.enable_sales_persons === "Single");
 	const isMultipleSalesPersons = computed(
 		() => settings.value.enable_sales_persons === "Multiple"
 	);
 
-	// Computed - Restaurant Settings
-	const enableRestaurantMode = computed(() => Boolean(settings.value.enable_restaurant_mode));
+	//// Neoffice — no enableRestaurantMode computed here any more: nothing read it. The restaurant store reads
+	//// settings.enable_restaurant_mode itself, the effective mode the server sends (NeoRestau lot 1, task 4).
 	//// Neoffice — end of the Biome re-wrap, then two blocks upstream does not have: the default
 	//// restaurant area (8aa35c29, 2026-03-20 "Phase 1 restaurant module") and the
 	//// customer-facing display flags — enable, let the customer create their own account, and
@@ -392,6 +392,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			restaurant: "",
 			restaurant_name: "",
 			restaurant_can: {},
+			//// Neoffice — and whether the site runs NeoRestau (NeoRestau lot 1, task 4), told again to the next user.
+			neorestau_active: false,
 			default_restaurant_area: "",
 			// Security
 			enable_session_lock: 0,
@@ -554,7 +556,6 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// Neoffice — exports for the restaurant and customer-display blocks above; no upstream
 		//// equivalent (8aa35c29 2026-03-20; 8bffb770 2026-02-04).
 		// Computed - Restaurant Settings
-		enableRestaurantMode,
 		defaultRestaurantArea,
 
 		// Computed - Customer Display Settings

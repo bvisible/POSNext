@@ -4,7 +4,7 @@
   Grep the sha7 to find the originating commit via `git log`.
   //// align POS design with Neoffice theme and improve customer display — 87f168f + 3e25c3b
   //// remove horizontal padding from POS header container — 82265c4
-  //// Neoffice — the restaurant switch this header carried (5d4db32, 8aa35c2, e8cecbc, 5959928) is gone: the till's own POS Settings decide restaurant or counter
+  //// Neoffice — the restaurant switch this header carried (5d4db32, 8aa35c2, e8cecbc, 5959928) is gone: the till's own POS Settings decide restaurant or counter, and a fixed label says so on a restaurant till
   //// move language switcher to user menu on mobile for compact header — c3ac72b
   //// Phase 1 restaurant module - header toggle, UI cleanup, multi-room tabs — 8aa35c2
 -->
@@ -133,9 +133,30 @@
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
 					<!-- //// Neoffice — no restaurant-mode switch in the header: a till is a restaurant till or a -->
-					<!-- //// counter till by its own POS Settings (Default Restaurant Mode on its POS Profile), a -->
+					<!-- //// counter till by its own POS Settings (the tick on the desk's POS Settings form), a -->
 					<!-- //// device switch is not wanted. The switch (8aa35c29, 2026-03-20 "Phase 1 restaurant -->
-					<!-- //// module"; 5d4db328, 924e688c, 59599289) stood here. -->
+					<!-- //// module"; 5d4db328, 924e688c, 59599289) stood here; a fixed label stands there now, for -->
+					<!-- //// a restaurant till only (NeoRestau lot 1, task 4). It is not a button. -->
+					<div
+						v-if="isRestaurantMode"
+						data-test="restaurant-till-label"
+						class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-50 text-amber-700 select-none"
+						:title="__('Restaurant till')"
+					>
+						<svg
+							class="w-3.5 h-3.5 flex-shrink-0 text-amber-600"
+							fill="currentColor"
+							viewBox="0 0 24 24"
+							aria-hidden="true"
+						>
+							<path
+								d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"
+							/>
+						</svg>
+						<span class="text-xs font-semibold whitespace-nowrap sr-only sm:not-sr-only">{{
+							__("Restaurant till")
+						}}</span>
+					</div>
 
 					<!-- WiFi/Offline Status -->
 					<!-- //// Neoffice — Neoffice theme tokens on the sync button below: upstream uses rounded-lg -->
@@ -515,11 +536,10 @@ import { computed, ref } from "vue";
 import { version } from "../../../package.json";
 //// Neoffice — posShift is what pins the customer display to THIS cashier's opening entry
 //// (9a807f74, 2026-06-01 "customer display follows the launching POS's exact shift").
-//// The posSettings and restaurant imports are dead code: e8cecbcf (2026-03-20) had the
-//// header toggle the store itself, 59599289 (2026-03-21) put that decision back in
-//// POSSale and left the two imports behind.
-import { usePOSSettingsStore } from "@/stores/posSettings";
-import { useRestaurantStore } from "@/stores/restaurant";
+//// The posSettings and restaurant store imports that stood beside it were dead code (e8cecbcf,
+//// 2026-03-20 had the header toggle the store itself, 59599289, 2026-03-21 put that decision back
+//// in POSSale and left them behind): removed with the restaurant switch (NeoRestau lot 1, task 4).
+//// The header stays presentational: POSSale hands it the restaurant mode as a prop.
 import { usePOSShiftStore } from "@/stores/posShift";
 
 //// Neoffice — needed by openCustomerDisplay(): given no opening entry, the display resolves
@@ -660,8 +680,13 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
-	//// Neoffice — no isRestaurantMode / canToggleRestaurant props: they fed the restaurant switch,
-	//// which is gone (the till's own POS Settings decide restaurant or counter).
+	//// Neoffice — whether this is a restaurant till, for the fixed label that replaced the restaurant switch
+	//// (NeoRestau lot 1, task 4). POSSale hands it the restaurant store's mode, which is the effective one the
+	//// server sent; the header neither decides it nor lets anyone flip it, and has no canToggleRestaurant prop.
+	isRestaurantMode: {
+		type: Boolean,
+		default: false,
+	},
 	//// Neoffice — the till's CloudPRNT printer, from the cloudPrnt store: its label, its state
 	//// (ready, warning, error, offline; empty without such a printer) and whether a drawer can be
 	//// opened through it (maintenance#1935).

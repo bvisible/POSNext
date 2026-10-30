@@ -196,6 +196,14 @@ def update_pos_settings(pos_profile, settings):
 	require_till_manager()
 	if isinstance(settings, str):
 		settings = json.loads(settings)
+	# //// Neoffice — the tick that makes a till a restaurant till, and the restaurant it works for, are ticked and chosen
+	# //// on the desk's POS Settings form and nowhere else (product owner, 30.10.2026; NeoRestau lot 1, task 4). The till
+	# //// reads its settings as they EFFECTIVELY are (pos_next.restaurant.mode: where the site does not run NeoRestau a
+	# //// ticked till reads as a counter till) and sends them back whole when one setting changes: writing the tick back
+	# //// would switch it off at the first unrelated save. Upstream never had such a tick.
+	from pos_next.restaurant.mode import DESK_ONLY_FIELDS
+
+	settings = {key: value for key, value in settings.items() if key not in DESK_ONLY_FIELDS}
 
 	# Check if user has access to this POS Profile
 	has_access = frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": frappe.session.user})

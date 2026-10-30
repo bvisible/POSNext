@@ -459,13 +459,21 @@ permission_query_conditions = {
 pos_next_loyalty_provider = []
 pos_next_bootstrap_settings = []
 # //// Neoffice — the restaurant rides the seam upstream gave satellite apps: the bootstrap, the settings dialog and the
-# //// profile data all call it after they read the till's POS Settings. One function tells every screen which restaurant
-# //// (`restaurant`, `restaurant_name`) the till works for (NeoRestau lot 1, task 2), the other what its user may manage
-# //// there (`restaurant_can`, task 3). Added to upstream's empty list, which stays as upstream ships it.
+# //// profile data all call it after they read the till's POS Settings. One function tells every screen whether the till
+# //// is a restaurant till (`enable_restaurant_mode`, effective only where the site runs NeoRestau) and whether the site
+# //// does (`neorestau_active`, NeoRestau lot 1, task 4): it comes first, so that no other hook failing can leave the
+# //// stored tick in its place. The next tells which restaurant (`restaurant`, `restaurant_name`) the till works for
+# //// (task 2), the last what its user may manage there (`restaurant_can`, task 3). Added to upstream's empty list, which
+# //// stays as upstream ships it.
 pos_next_bootstrap_settings += [
+	"pos_next.restaurant.mode.extend_bootstrap_settings",
 	"pos_next.restaurant.scope.extend_bootstrap_settings",
 	"pos_next.restaurant.bootstrap.extend_bootstrap_settings",
 ]
+# //// Neoffice — the desk is told whether the site runs NeoRestau (`frappe.boot.neorestau_active`): the POS Settings form
+# //// shows its Restaurant section, with the tick that makes a till a restaurant till, only where it does (NeoRestau lot 1,
+# //// task 4). Upstream has no boot hook.
+boot_session = ["pos_next.restaurant.mode.extend_boot"]
 pos_next_customer_validators = []
 pos_next_customer_prepare = []
 pos_next_customer_after_insert = []

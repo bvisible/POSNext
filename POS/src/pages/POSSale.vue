@@ -94,9 +94,11 @@
 		<!-- Main App -->
 		<template v-else>
 			<!-- Header -->
-			<!-- //// Neoffice — the header takes no restaurant props and emits no restaurant event: it has -->
-			<!-- //// no restaurant switch any more. A till is a restaurant till or a counter till by its own -->
-			<!-- //// POS Settings (Default Restaurant Mode on its POS Profile), a device switch is not wanted. -->
+			<!-- //// Neoffice — the header emits no restaurant event and takes no toggle prop: it has no -->
+			<!-- //// restaurant switch any more. A till is a restaurant till or a counter till by its own POS -->
+			<!-- //// Settings (the tick on the desk's POS Settings form, counted only where the site runs -->
+			<!-- //// NeoRestau: the mode the server sends is the effective one), a device switch is not wanted. -->
+			<!-- //// The header only labels a restaurant till, from that mode (NeoRestau lot 1, task 4). -->
 			<!-- //// Neoffice — the till's CloudPRNT printer (its state on the printer button) and its cash -->
 			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). -->
 			<POSHeader
@@ -116,6 +118,7 @@
 				:is-refreshing="stockStore.refreshing"
 				:silent-print-enabled="posSettingsStore.silentPrint"
 				:qz-connected="qzConnected"
+				:is-restaurant-mode="Boolean(restaurantStore.isEnabled)"
 				:cloud-printer-label="cloudPrntStore.receiptPrinter?.label || ''"
 				:cloud-printer-status="cloudPrntStore.printerStatus || ''"
 				:drawer-available="cloudPrntStore.drawerAvailable"

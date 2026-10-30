@@ -31,3 +31,8 @@ pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant
 # //// after the entry above, which is what makes that restaurant, and makes one itself for a till in restaurant mode
 # //// on a site that never used the module.
 pos_next.patches.neorestau.attach_records_to_the_default_restaurant
+# //// Neoffice — NeoRestau: a site whose tills already run in restaurant mode keeps it. Restaurant mode shows at a
+# //// till only where the site flag `neorestau_active` is on (lot 1, task 4): this switches it on, once, where a till
+# //// is in restaurant mode, and never off. It runs after the entry above, which makes sure each of those tills names
+# //// the restaurant it works for.
+pos_next.patches.neorestau.switch_neorestau_on_where_restaurant_mode_runs

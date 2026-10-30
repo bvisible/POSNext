@@ -162,6 +162,7 @@
    "description": "Show address fields in the customer creation form (both on display and in POS)"
   },
   {
+   "depends_on": "eval:frappe.boot.neorestau_active",
    "fieldname": "section_break_restaurant",
    "fieldtype": "Section Break",
    "label": "Restaurant"
@@ -739,7 +740,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 21:30:00.000000",
+ "modified": "2026-10-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

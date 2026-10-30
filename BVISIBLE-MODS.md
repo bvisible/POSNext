@@ -130,7 +130,7 @@ manually if the script does not yet support the file format.
 | `enable_customer_display_account_creation` | Check | Allow Account Creation | `default`=0; `depends_on`=enable_customer_display |
 | `column_break_customer_display` | Column Break |  | — |
 | `customer_display_show_address_fields` | Check | Show Address Fields | `default`=0; `depends_on`=enable_customer_display_account_creation |
-| `section_break_restaurant` | Section Break | Restaurant | — |
+| `section_break_restaurant` | Section Break | Restaurant | `depends_on`=eval:frappe.boot.neorestau_active |
 | `enable_restaurant_mode` | Check | Default Restaurant Mode | `default`=0 |
 | `restaurant` | Link | Restaurant | `options`=Restaurant; `depends_on`=enable_restaurant_mode; `mandatory_depends_on`=enable_restaurant_mode |
 | `default_restaurant_area` | Link | Default Restaurant Area | `options`=Restaurant Area; `depends_on`=enable_restaurant_mode |
