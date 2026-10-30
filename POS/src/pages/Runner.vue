@@ -13,7 +13,8 @@
 		</svg>
 		<h2 class="text-xl font-medium text-gray-500">{{ __("Runner is disabled") }}</h2>
 		<p class="text-sm text-gray-400 mt-1">{{ __("Enable it in Restaurant Settings to use the Runner display.") }}</p>
-		<button @click="$router.push('/')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-300">
+		<!-- A tablet signed in with its own account has no till to go back to -->
+		<button v-if="deskSession" @click="$router.push('/')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-300">
 			{{ __("Back to POS") }}
 		</button>
 	</div>
@@ -54,7 +55,7 @@
 				<Button @click="loadOrders" icon="refresh-cw">
 					{{ __("Refresh") }}
 				</Button>
-				<Button @click="$router.push('/')" variant="subtle">
+				<Button v-if="deskSession" @click="$router.push('/')" variant="subtle">
 					{{ __("Back to POS") }}
 				</Button>
 			</div>
@@ -203,9 +204,12 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
+import { isDeskSession, leaveWhenSignedOut } from "@/utils/tabletSession"
 
 const restaurantStore = useRestaurantStore()
 const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
+// A runner tablet runs on an account of its own (paired by a QR code at the till), with no till behind it
+const deskSession = isDeskSession()
 // The restaurant whose orders this screen shows: the one in the address (a pass tablet has no till of its own), else
 // the till's restaurant, else the server picks the user's open till, else the default restaurant.
 const urlRestaurant = new URLSearchParams(window.location.search).get("restaurant")
@@ -500,6 +504,8 @@ async function loadOrders() {
 			previousCount = newCount
 		}
 	} catch (error) {
+		// A tablet disconnected at the till, or whose session ended: it is shown how to pair it again
+		if (leaveWhenSignedOut()) return
 		console.error("Failed to load runner orders:", error)
 		showError(__("Failed to load orders."))
 	} finally {

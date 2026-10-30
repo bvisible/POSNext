@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-30 22:30:00.000000",
+ "description": "A one-time code that pairs a tablet with the kitchen or runner screen of a restaurant. Only the code's SHA-256 hash is kept.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "code_hash",
+  "restaurant",
+  "screen",
+  "station",
+  "device_name",
+  "column_break_use",
+  "expires_at",
+  "used_at",
+  "device"
+ ],
+ "fields": [
+  {
+   "fieldname": "code_hash",
+   "fieldtype": "Data",
+   "label": "Code Hash",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Restaurant",
+   "options": "Restaurant",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "screen",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Screen",
+   "options": "Kitchen\nRunner",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Preparation Station",
+   "options": "Preparation Station",
+   "read_only": 1
+  },
+  {
+   "fieldname": "device_name",
+   "fieldtype": "Data",
+   "label": "Device Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_use",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expires_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Expires At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "used_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Used At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "device",
+   "fieldtype": "Link",
+   "label": "Device",
+   "options": "Restaurant Device",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-30 22:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Device Pairing",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

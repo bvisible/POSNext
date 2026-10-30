@@ -190,6 +190,10 @@
 					</button>
 				</template>
 
+				<!-- Open a tablet as the kitchen's or the runner's screen, by a QR code (its own component: an entry of the
+				     floor plan's menu) -->
+				<OpenTabletButton v-if="!isEditMode" />
+
 				<!-- The « ⋯ » menu, the last thing on the line: small and grey on purpose, so that it is not pressed by
 				     accident. It holds the plan's occasional actions (see menuItems) and is shown when one of them is. -->
 				<div v-if="!isEditMode && menuItems.length > 0" ref="menuRoot" data-test="floor-line-menu" class="relative flex-shrink-0">
@@ -960,6 +964,7 @@ import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
+import OpenTabletButton from "@/components/restaurant/OpenTabletButton.vue"
 
 const emit = defineEmits([
 	"table-selected",

@@ -398,6 +398,10 @@ scheduler_events = {
 # -----------------------------------------------------------
 
 # ignore_links_on_delete = ["Communication", "ToDo"]
+# //// Neoffice — a restaurant's tablet and its spent pairing codes (NeoRestau lot 1, task 16) never keep a
+# //// station, a restaurant or an account from being deleted: they are bindings and history, and a tablet whose
+# //// station or restaurant is gone shows nothing (pos_next.restaurant.devices). Upstream ignores none.
+ignore_links_on_delete = ["Restaurant Device", "Restaurant Device Pairing"]
 
 # Request Events
 # ----------------

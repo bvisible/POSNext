@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-10-30 22:30:00.000000",
+ "description": "A tablet that opens the kitchen screen or the runner screen of a restaurant with an account of its own, paired by a QR code shown at the till.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "device_name",
+  "restaurant",
+  "screen",
+  "station",
+  "column_break_account",
+  "user",
+  "paired_by",
+  "paired_at",
+  "last_seen",
+  "disconnected"
+ ],
+ "fields": [
+  {
+   "bold": 1,
+   "fieldname": "device_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Device Name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "restaurant",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Restaurant",
+   "options": "Restaurant",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "screen",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Screen",
+   "options": "Kitchen\nRunner",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The station the kitchen screen shows. Empty: every station.",
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Preparation Station",
+   "options": "Preparation Station",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_account",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "A portal account with no role and no password, used by this tablet only.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "Device Account",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "paired_by",
+   "fieldtype": "Link",
+   "label": "Paired By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paired_at",
+   "fieldtype": "Datetime",
+   "label": "Paired At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_seen",
+   "fieldtype": "Datetime",
+   "label": "Last Seen",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "A disconnected tablet is refused everywhere until it scans a new code.",
+   "fieldname": "disconnected",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Disconnected",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-30 22:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "POS Next",
+ "name": "Restaurant Device",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  },
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Restaurant Manager"
+  },
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Admin"
+  },
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nexus POS Manager"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "device_name",
+ "track_changes": 1
+}

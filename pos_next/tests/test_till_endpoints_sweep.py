@@ -1,7 +1,8 @@
 # //// Neoffice — added file (no upstream equivalent).
 """Every till endpoint checks who calls it.
 
-The till's reads and writes answer the till's users; the kitchen's screens answer desk accounts; desk
+The till's reads and writes answer the till's users; the kitchen's screens answer desk accounts, and a
+restaurant's own tablets on their screen only (a portal account bound to that screen, refused everywhere else); desk
 forms, search queries, a report and the promotion module follow their own rights; the customer display
 takes writes from its own open shift; an endpoint that reads across every till answers a till manager;
 document hooks and server helpers are not web endpoints, and still run in-process as whoever caused
@@ -41,12 +42,14 @@ from pos_next.api import (
 	qz,
 	reservations,
 	restaurant,
+	restaurant_devices,
 	shifts,
 	wallet,
 )
 from pos_next.pos_next.doctype.bank_deposits import bank_deposits
 from pos_next.pos_next.doctype.pos_closing_shift import pos_closing_shift
 from pos_next.pos_next.doctype.pos_settings import pos_settings
+from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
 from pos_next.pos_next.doctype.wallet import wallet as wallet_doctype
 from pos_next.pos_next.doctype.wallet_transaction import wallet_transaction
 from pos_next.pos_next.report.sales_vs_shifts_report import sales_vs_shifts_report as shifts_report
@@ -65,6 +68,13 @@ MANAGER_ROLE = "Nexus POS Manager"
 PROFILE = "_PNXT tillsweep till"
 OTHER_PROFILE = "_PNXT tillsweep other till"
 NONE = "tillsweep-no-such-name"
+# The kitchen's and the runner's tablets (NeoRestau lot 1, task 16): the calls of the sweep each one's device account is
+# answered, for its own restaurant (none is named); every other call refuses it, as it refuses any portal account. The
+# preparation stations are asked for a made-up station, which is no station of a tablet's restaurant: refused as well.
+TABLET_SCREENS = {
+	"Kitchen": {"get_tables", "get_kds_orders"},
+	"Runner": {"get_tables", "get_runner_orders", "get_restaurant_settings"},
+}
 
 # Document hooks and server helpers: they run in-process, as whoever caused them, and no web client
 # calls them, so none of them is whitelisted.
@@ -157,6 +167,25 @@ def _no_request():
 	finally:
 		if had_request:
 			frappe.local.request = saved_request
+
+
+def _tablet(restaurant_name, screen):
+	"""The device account of a restaurant's screen, as a pairing leaves it: a portal account with no role, bound to that
+	screen by a Restaurant Device row."""
+	user = f"tillsweep-{screen.lower()}-tablet@devices.invalid"
+	_user(user, [], "Website User")
+	frappe.db.delete("Has Role", {"parent": user, "parenttype": "User"})
+	frappe.clear_cache(user=user)
+	frappe.get_doc(
+		{
+			"doctype": "Restaurant Device",
+			"device_name": f"tillsweep {screen}",
+			"restaurant": restaurant_name,
+			"screen": screen,
+			"user": user,
+		}
+	).insert(ignore_permissions=True)
+	return user
 
 
 def _in_process(call):
@@ -456,6 +485,20 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				_past_the_gate(lambda: restaurant.search_food_images("tillsweep"), frappe.ValidationError),
 			),
 			("search_items_for_options", lambda: restaurant.search_items_for_options("tillsweep")),
+			# The restaurant's tablets (NeoRestau lot 1, task 16): a made-up restaurant, or tablet, is past the gate when
+			# it is reported missing
+			(
+				"create_pairing_code",
+				_past_the_gate(
+					lambda: restaurant_devices.create_pairing_code("Kitchen", restaurant=NONE),
+					frappe.ValidationError,
+				),
+			),
+			(
+				"get_devices",
+				_past_the_gate(lambda: restaurant_devices.get_devices(restaurant=NONE), frappe.ValidationError),
+			),
+			("disconnect_device", _past_the_gate(lambda: restaurant_devices.disconnect_device(NONE))),
 		]
 
 	def _item_panel_calls(self):
@@ -670,6 +713,36 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			self._refused(DESK, label, call)
 		for label, call in self._desk_calls():
 			self._served(DESK, label, call)
+
+	def test_a_tablet_is_refused_everywhere_but_on_its_screen(self):
+		# A device account is a portal account bound to one screen of one restaurant (NeoRestau lot 1, task 16): the calls
+		# of its screen answer it, every other call refuses it, and a refused call writes nothing
+		with (
+			patch.dict(frappe.conf, {"neorestau_active": 1}),
+			patch.object(Restaurant, "_ensure_tip_account"),
+			patch.object(Restaurant, "_ensure_tip_item"),
+		):
+			restaurant_name = (
+				frappe.get_doc(
+					{
+						"doctype": "Restaurant",
+						"restaurant_name": "_Test Tillsweep Restaurant",
+						"company": self.fx.company,
+					}
+				)
+				.insert(ignore_permissions=True)
+				.name
+			)
+			before = self._written()
+			for screen, served in TABLET_SCREENS.items():
+				tablet = _tablet(restaurant_name, screen)
+				for label, call in self._every_call():
+					with self.subTest(screen=screen, label=label):
+						if label in served:
+							self._served(tablet, label, call)
+						else:
+							self._refused(tablet, label, call)
+			self.assertEqual(self._written(), before)
 
 	def test_the_till_settings_are_its_managers(self):
 		settings = frappe.db.get_value("POS Settings", {"pos_profile": PROFILE})

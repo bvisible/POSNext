@@ -14,8 +14,9 @@ Who holds which right is written in the doctypes' JSON: the restaurant's manager
 customer's `Admin`, the till manager `Nexus POS Manager`) read, write, create and delete everything; a cashier
 (`POSNext Cashier`) reads it all, takes reservations, records tips and sets the status of a table; the kitchen
 (`Restaurant Kitchen`) reads the preparation stations and workflows. That role has no desk access: an account that
-holds it alone is a portal account, which every endpoint refuses, so a kitchen tablet runs on a desk account that also
-holds a till role (a cashier's), until the devices get accounts of their own (NeoRestau lot 4).
+holds it alone is a portal account, which every endpoint refuses. A kitchen's or a runner's tablet has an account of its
+own, paired by a QR code shown at the till: a portal account with no role, which the kitchen's and the runner's
+endpoints accept by its binding to one restaurant and one screen, and nothing else (pos_next.restaurant.devices).
 
 The item sheet (description, image, colour) and the till's price list are the ERP's Item and Item Price: whoever
 edits them from the till needs the ERP's own rights on them. The badges and spice level of a dish, and its price and

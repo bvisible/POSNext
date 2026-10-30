@@ -26,7 +26,8 @@
 				<Button @click="loadOrders" icon="refresh-cw">
 					{{ __("Refresh") }}
 				</Button>
-				<Button @click="$router.push('/')" variant="subtle">
+				<!-- A tablet signed in with its own account has no till to go back to -->
+				<Button v-if="deskSession" @click="$router.push('/')" variant="subtle">
 					{{ __("Back to POS") }}
 				</Button>
 			</div>
@@ -102,9 +103,12 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
+import { isDeskSession, leaveWhenSignedOut } from "@/utils/tabletSession"
 
 const { showError } = useToast()
 const restaurantStore = useRestaurantStore()
+// A kitchen tablet runs on an account of its own (paired by a QR code at the till), with no till behind it
+const deskSession = isDeskSession()
 // The restaurant whose orders this screen shows: the one in the address (a kitchen tablet has no till of its own),
 // else the one of the station in the address (a bookmark made before a site could hold several restaurants names a
 // station alone), else the till's restaurant. With none of them the server picks the user's open till, else the default.
@@ -238,6 +242,8 @@ async function loadOrders() {
 			orders.value = allOrders.value
 		}
 	} catch (error) {
+		// A tablet disconnected at the till, or whose session ended: it is shown how to pair it again
+		if (leaveWhenSignedOut()) return
 		console.error("Failed to load KDS orders:", error)
 		showError(__("Failed to load orders from server."))
 	} finally {

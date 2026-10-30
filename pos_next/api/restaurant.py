@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import permissions, scope
+from pos_next.restaurant import devices, permissions, scope
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -50,7 +50,12 @@ def get_tables(restaurant=None):
 	# //// desk account is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
 
-	require_system_user()
+	# Or the kitchen's or the runner's tablet, its own restaurant only (pos_next.restaurant.devices)
+	device = devices.screen_device(devices.KITCHEN, devices.RUNNER)
+	if device:
+		restaurant, _station = devices.cut_to_device(device, restaurant)
+	else:
+		require_system_user()
 	restaurant = restaurant or scope.current_restaurant()
 	of_the_restaurant = scope.restaurant_or_filters(restaurant)
 	areas = scope.stamp(
@@ -385,8 +390,14 @@ def update_kds_status(invoice_name, status, station=None):
 	Ready only when every dish is Ready, Delivered when every dish is Delivered, Preparing as soon as one has
 	been begun. An order is cooked at several stations: the Bar's "Ready" must not tell the runner that the
 	Kitchen's plates are.
+
+	The kitchen's tablet sets it on an open order of its restaurant (pos_next.restaurant.devices); on a tablet of one
+	station, as on a kitchen screen filtered by station, the order's buttons act on the whole order.
 	"""
-	if not frappe.has_permission("Sales Invoice", "write"):
+	device = devices.screen_device(devices.KITCHEN)
+	if device:
+		devices.require_order_of_device(device, invoice_name)
+	elif not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	if not frappe.db.exists("Sales Invoice", invoice_name):
@@ -434,17 +445,26 @@ def get_preparation_stations(restaurant=None, station=None):
 	A kitchen screen opened on a station alone (a bookmark made before a site could hold several restaurants) names
 	that station: the restaurant is then the station's, as for `get_kds_orders`.
 	"""
-	# Whoever reads the stations from a desk account (a cashier, a manager; a kitchen tablet runs on a desk account
-	# that holds a till role), and the restaurant they belong to (per-restaurant user permissions)
-	permissions.require("Preparation Station", "read")
+	# Whoever reads the stations from a desk account (a cashier, a manager), and the restaurant they belong to
+	# (per-restaurant user permissions); or the kitchen's tablet, its own restaurant and station only
+	# (pos_next.restaurant.devices)
+	device = devices.screen_device(devices.KITCHEN)
+	if device:
+		restaurant, station = devices.cut_to_device(device, restaurant, station)
+	else:
+		permissions.require("Preparation Station", "read")
 	if not restaurant and station:
 		restaurant = scope.restaurant_of_record("Preparation Station", station)
 	restaurant = restaurant or scope.current_restaurant()
-	permissions.require_restaurant(restaurant)
+	if not device:
+		permissions.require_restaurant(restaurant)
+	filters = {"is_active": 1}
+	if device and device.station:
+		filters["name"] = device.station
 	return scope.stamp(
 		frappe.get_all(
 			"Preparation Station",
-			filters={"is_active": 1},
+			filters=filters,
 			or_filters=scope.restaurant_or_filters(restaurant),
 			fields=["name", "station_name", "station_type", "color"],
 			order_by="station_name",
@@ -599,7 +619,12 @@ def get_kds_orders(station=None, restaurant=None):
 	# //// account is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
 
-	require_system_user()
+	# Or the kitchen's tablet: the orders of its restaurant, at its station (pos_next.restaurant.devices)
+	device = devices.screen_device(devices.KITCHEN)
+	if device:
+		restaurant, station = devices.cut_to_device(device, restaurant, station)
+	else:
+		require_system_user()
 	if not restaurant and station:
 		restaurant = scope.restaurant_of_record("Preparation Station", station)
 	restaurant = restaurant or scope.current_restaurant()
@@ -784,15 +809,27 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 
 @frappe.whitelist()
 def update_item_kds_status(invoice_name, item_code, status):
-	"""Update the KDS status of a specific item in a sales invoice."""
-	if not frappe.has_permission("Sales Invoice", "write"):
+	"""Update the KDS status of a specific item in a sales invoice.
+
+	The kitchen's tablet sets it on an open order of its restaurant, and a tablet of one station on the lines of its
+	station only (pos_next.restaurant.devices).
+	"""
+	device = devices.screen_device(devices.KITCHEN)
+	if device:
+		devices.require_order_of_device(device, invoice_name)
+	elif not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+	filters = {"parent": invoice_name, "item_code": item_code}
+	if device and device.station:
+		filters["preparation_station"] = device.station
 	items = frappe.get_all(
 		"Sales Invoice Item",
-		filters={"parent": invoice_name, "item_code": item_code},
+		filters=filters,
 		fields=["name"]
 	)
+	if device and not items:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	for item in items:
 		frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status)
@@ -1663,10 +1700,14 @@ def get_restaurant_settings(restaurant=None):
 	The answer holds what the till's screens read, and nothing else: the settings dialog (hours, tips, QR and
 	takeaway ordering), the restaurant store's flags, the card editor (hours) and the reservation dialog (default
 	duration and channels). Whatever only the server uses — the reminder and no-show rules, online booking, the
-	restaurant's e-mail — stays out. It answers whoever reads the restaurant from a desk account (a cashier, a manager,
-	the pass's tablet when its account holds a till role), and only for a restaurant he may read: a portal account is
-	refused, and per-restaurant user permissions apply.
+	restaurant's e-mail — stays out. It answers whoever reads the restaurant from a desk account (a cashier, a manager),
+	and only for a restaurant he may read: a portal account is refused, and per-restaurant user permissions apply. The
+	runner's tablet reads whether its restaurant's runner step is on, and nothing else (pos_next.restaurant.devices).
 	"""
+	device = devices.screen_device(devices.RUNNER)
+	if device:
+		restaurant, _station = devices.cut_to_device(device, restaurant)
+		return devices.screen_settings(restaurant)
 	permissions.require("Restaurant", "read")
 	settings = restaurant_config.get_restaurant_settings(restaurant)
 	if not settings:
@@ -2209,7 +2250,12 @@ def get_runner_orders(area=None, restaurant=None):
 	# //// account is required (cash_entry.require_system_user).
 	from pos_next.api.cash_entry import require_system_user
 
-	require_system_user()
+	# Or the runner's tablet: the orders of its restaurant (pos_next.restaurant.devices)
+	device = devices.screen_device(devices.RUNNER)
+	if device:
+		restaurant, _station = devices.cut_to_device(device, restaurant)
+	else:
+		require_system_user()
 	restaurant = restaurant or scope.current_restaurant()
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
@@ -2341,10 +2387,14 @@ def get_runner_orders(area=None, restaurant=None):
 
 @frappe.whitelist()
 def mark_items_delivered(invoice_name, item_names=None):
-	"""Mark specific items (or all ready items) as Delivered."""
+	"""Mark specific items (or all ready items) as Delivered (the runner's tablet: on an open order of its restaurant)."""
 	import json
 
-	permissions.require("Sales Invoice", "write")
+	device = devices.screen_device(devices.RUNNER)
+	if device:
+		devices.require_order_of_device(device, invoice_name)
+	else:
+		permissions.require("Sales Invoice", "write")
 
 	if not frappe.db.exists("Sales Invoice", invoice_name):
 		frappe.throw(_("Invoice {0} not found").format(invoice_name))

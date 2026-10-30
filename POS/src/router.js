@@ -36,8 +36,9 @@ const routes = [
 		name: "KDS",
 		path: "/kds",
 		component: () => import("@/pages/KDS.vue"),
-		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
-		meta: { needsNeoRestau: true },
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js); a tablet
+		//// signs in to it with a QR code (pairable: signed out, it is sent to the pairing page, not to a password).
+		meta: { needsNeoRestau: true, pairable: true },
 	},
 	{
 		name: "CFD",
@@ -49,8 +50,18 @@ const routes = [
 		name: "Runner",
 		path: "/runner",
 		component: () => import("@/pages/Runner.vue"),
-		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js).
-		meta: { needsNeoRestau: true },
+		//// Neoffice — a screen of the restaurant: opens only where the site runs NeoRestau (utils/neorestau.js); a tablet
+		//// signs in to it with a QR code (pairable: signed out, it is sent to the pairing page, not to a password).
+		meta: { needsNeoRestau: true, pairable: true },
+	},
+	//// Neoffice — the page a kitchen's or a runner's tablet opens by scanning the QR code a manager shows at the till
+	//// (NeoRestau lot 1, task 16): open to a visitor (the tablet has no session yet), only where the site runs
+	//// NeoRestau. The code rides in the fragment of the address (/pos/pair#<code>), which no request carries.
+	{
+		name: "PairDevice",
+		path: "/pair",
+		component: () => import("@/pages/PairDevice.vue"),
+		meta: { allowGuest: true, needsNeoRestau: true },
 	},
 	{
 		name: "Takeaway",
@@ -140,7 +151,9 @@ router.beforeEach((to, from, next) => {
 		//// offers the restaurant's tills (NeoRestau lot 1, task 5). A visitor who is not signed in goes to the login first,
 		//// and the shift dialog that opens there once he is signed in reads the door from the query of its route: without it
 		//// a restaurant cashier would be offered the usual tills. Remove if upstream keeps the query on this redirect.
-		next({ name: "Login", query: to.query });
+		//// Neoffice — a kitchen's or runner's screen whose tablet is signed out goes to the pairing page instead, which says
+		//// how to get a new code (and links to the login): a tablet has no password to type (NeoRestau lot 1, task 16).
+		next(to.meta?.pairable ? { name: "PairDevice" } : { name: "Login", query: to.query });
 	} else {
 		next();
 	}
