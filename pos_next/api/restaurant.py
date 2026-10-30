@@ -146,8 +146,9 @@ def get_tables(restaurant=None):
 @frappe.whitelist()
 def update_table_status(table_name, status):
 	"""Update the status of a specific table."""
-	# A table's status is the service's: whoever may write a table (a cashier) sets it, from a desk account
-	permissions.require("Restaurant Table", "write")
+	# A table's status is the service's: whoever may write a table (a cashier) sets it, from a desk account. It is the
+	# right the till is told of (`set_table_status`), so that the till and the server cannot drift apart
+	permissions.require_right("set_table_status")
 
 	if not frappe.db.exists("Restaurant Table", table_name):
 		frappe.throw(_("Table {0} not found").format(table_name))
@@ -225,7 +226,7 @@ def get_table_payment_summary(table_name):
 @frappe.whitelist()
 def mark_table_available(table_name):
 	"""Mark a Cleaning table as Empty and expire its guest tokens."""
-	permissions.require("Restaurant Table", "write")
+	permissions.require_right("set_table_status")
 
 	if not frappe.db.exists("Restaurant Table", table_name):
 		frappe.throw(_("Table {0} not found").format(table_name))
@@ -276,9 +277,9 @@ def free_cleaning_tables(area, restaurant=None):
 
 	The room must be one of the restaurant named, else of the till's own: a room of another restaurant is refused.
 	"""
-	# The rule of a table's own status change (`update_table_status`, `mark_table_available`): whoever may write a table, a
-	# cashier included, from a desk account
-	permissions.require("Restaurant Table", "write")
+	# The rule of a table's own status change (`update_table_status`, `mark_table_available`), and the right the till shows
+	# this item by: whoever may set the status of a table, a cashier included, from a desk account
+	permissions.require_right("set_table_status")
 
 	restaurant = restaurant or scope.current_restaurant()
 	permissions.require_restaurant(restaurant)

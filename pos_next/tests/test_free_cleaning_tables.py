@@ -239,6 +239,36 @@ class TestFreeingTheCleaningTables(TheFloorAndItsUsers):
 
 		self.assertEqual(self.statuses(self.b_cleaning), {self.b_cleaning: CLEANING})
 
+	def test_the_gate_is_the_right_the_till_is_told_so_that_the_two_cannot_drift(self):
+		"""The endpoint checks `set_table_status`, the right the till shows its item by, not a copy of it: when the right
+		is moved to another doctype the gate moves with it. A table's own status change follows the same right."""
+		calls = {
+			"free_cleaning_tables": lambda: restaurant_api.free_cleaning_tables(area=self.room, restaurant=self.a),
+			"update_table_status": lambda: restaurant_api.update_table_status(self.cleaning_1, "Empty"),
+			"mark_table_available": lambda: restaurant_api.mark_table_available(self.cleaning_2),
+		}
+
+		def attempt(user, call):
+			"""One call, as one user, undone afterwards: the calls of this test do not depend on one another."""
+			frappe.db.savepoint("one_call")
+			try:
+				with as_user(user):
+					return call()
+			finally:
+				frappe.db.rollback(save_point="one_call")
+
+		# The right moved to the rooms' write: a manager holds it, a cashier does not
+		with patch.dict(permissions.RIGHTS, {"set_table_status": ("Restaurant Area", "write")}):
+			for endpoint, call in calls.items():
+				with self.subTest(endpoint=endpoint, user="cashier"), self.assertRaises(frappe.PermissionError):
+					attempt(self.cashier, call)
+			for endpoint, call in calls.items():
+				with self.subTest(endpoint=endpoint, user="manager"):
+					attempt(self.manager, call)
+		# And once it is back where it was, the cashier is served again
+		self.assertEqual(permissions.RIGHTS["set_table_status"], ("Restaurant Table", "write"))
+		self.assertEqual(attempt(self.cashier, calls["free_cleaning_tables"])["freed"], 2)
+
 	def test_the_till_is_told_what_the_server_checks(self):
 		# The rule the item is shown by is the rule of the endpoint: a table's status, which a cashier writes
 		self.assertEqual(permissions.RIGHTS["set_table_status"], ("Restaurant Table", "write"))
