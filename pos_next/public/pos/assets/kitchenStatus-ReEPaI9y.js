@@ -1,0 +1,1 @@
+function r(e){switch(e){case"Pending":return __("Pending",null,"Kitchen order status");case"Preparing":return __("Preparing",null,"Kitchen order status");case"Ready":return __("Ready",null,"Kitchen order status");case"Delivered":return __("Delivered",null,"Kitchen order status");default:return e?__(e):""}}export{r as k};
