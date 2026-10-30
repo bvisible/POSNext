@@ -18,6 +18,7 @@
 		     Takeaway pills, or Save and Cancel while the plan is edited; the « ⋯ » menu at the very end. It was two rows
 		     (49 and 39 px, measured) and an Edit button within every finger's reach. -->
 		<div
+			ref="lineRef"
 			data-test="floor-line"
 			class="px-4 py-1 border-b dark:border-gray-800 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 flex-shrink-0"
 		>
@@ -73,29 +74,32 @@
 							</svg>
 						</button>
 					</template>
-
-					<!-- Add Area Button (edit mode) -->
-					<button
-						v-if="isEditMode"
-						@click="showAddAreaDialog = true"
-						class="w-7 h-7 flex items-center justify-center rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
-						:title="__('Add Area')"
-					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-						</svg>
-					</button>
 				</template>
 				<div v-else class="inline-flex items-center h-8 text-sm font-medium text-gray-700 dark:text-gray-300">
 					{{ __("Floor Plan") }}
 				</div>
+
+				<!-- Add Area Button (edit mode): whatever the number of rooms, a plan with one room or none can add the next -->
+				<button
+					v-if="isEditMode"
+					type="button"
+					data-test="add-room"
+					@click="showAddAreaDialog = true"
+					class="w-7 h-7 flex items-center justify-center rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
+					:title="__('Add Area')"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					</svg>
+				</button>
 			</div>
 
 			<!-- Stations and pills (view mode), Save and Cancel (edit mode), the « ⋯ » menu: kept to the right edge -->
-			<div data-test="floor-actions" :class="[GROUP, 'justify-end ml-auto']">
+			<div ref="actionsRef" data-test="floor-actions" :class="[GROUP, 'justify-end ml-auto']">
 				<template v-if="!isEditMode && allStations.length > 0">
 					<!-- Preparation stations: a tap opens the kitchen screen of the station -->
 					<div v-for="station in allStations" :key="'sbar-' + station.name"
+						:ref="(el) => setStationChip(station.name, el)"
 						data-test="station-chip"
 						class="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded-lg whitespace-nowrap cursor-pointer transition-all hover:shadow-sm touch-manipulation"
 						:class="station.area === selectedArea
@@ -284,6 +288,7 @@
 		<!-- Canvas -->
 		<div
 			ref="canvasRef"
+			data-test="floor-canvas"
 			class="flex-1 relative overflow-hidden"
 			style="touch-action: none;"
 			:style="canvasBackgroundStyle"
@@ -942,7 +947,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue"
+import { ref, computed, nextTick, onMounted, onUnmounted, onUpdated, watch } from "vue"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSDraftsStore } from "@/stores/posDrafts"
@@ -1332,6 +1337,52 @@ const totalReadyCount = computed(() => {
 	return count
 })
 
+// ─── Where the station chips are ─────────────────────────────────────────────
+// A delivery arrow from a station of another room leaves the top of the plan, right under the chip of its station. The chips
+// are in the line above the plan, where the line puts them (at its right, in one row or wrapped), so their place is measured
+// and not guessed: the centre of each chip, in pixels from the left edge of the plan. It is measured when the plan is shown,
+// after each render (a count that grows widens its chip), and when the window or the line is resized (a wrap included).
+const lineRef = ref(null)
+const actionsRef = ref(null)
+const stationChipEls = new Map()
+const stationChipCentres = ref({})
+let lineObserver = null
+
+// Each chip hands over its element when it is drawn, and takes it back when it goes
+function setStationChip(name, el) {
+	if (el) stationChipEls.set(name, el)
+	else stationChipEls.delete(name)
+}
+
+function measureStationChips() {
+	const canvas = canvasRef.value
+	if (!canvas) return
+	const known = stationChipCentres.value
+	// No chip and none known (the editor, which renders at each frame of a drag): there is nothing to read from the layout
+	if (!stationChipEls.size && !Object.keys(known).length) return
+	const origin = canvas.getBoundingClientRect().left
+	const centres = {}
+	for (const [name, el] of stationChipEls) {
+		const box = el.getBoundingClientRect()
+		// A chip with no width is not laid out (hidden): it has no place to measure
+		if (box.width > 0) centres[name] = Math.round(box.left + box.width / 2 - origin)
+	}
+	// Only a chip that moved is news: a measure that finds the same places draws nothing again
+	const names = Object.keys(centres)
+	if (names.length === Object.keys(known).length && names.every((name) => known[name] === centres[name])) return
+	stationChipCentres.value = centres
+}
+
+onMounted(() => {
+	window.addEventListener("resize", measureStationChips)
+	if (typeof ResizeObserver !== "undefined") {
+		lineObserver = new ResizeObserver(measureStationChips)
+		for (const el of [lineRef.value, actionsRef.value]) if (el) lineObserver.observe(el)
+	}
+	measureStationChips()
+})
+onUpdated(measureStationChips)
+
 const deliveryArrows = computed(() => {
 	if (!showDeliveryArrows.value || !runnerOrders.value.length) return []
 
@@ -1391,13 +1442,19 @@ const deliveryArrows = computed(() => {
 					duration: Math.max(3, dist / 60) + "s",
 				})
 			} else if (station) {
-				// Cross-area: arrow starts from top of canvas (below station bar tab)
-				// Calculate x position based on station's index in allStations
+				// Cross-area: the arrow leaves the top of the plan, right under the chip of its station in the line above.
+				// That is a place on the screen (measured, see stationChipCentres); the plan is drawn translate(pan)
+				// scale(zoom), so the start is worked out in the plan's own pixels, and the arrow stays under its chip
+				// whatever the view. Where there is no chip to measure (the editor hides them), the old guess stands in.
 				const stationIdx = allStations.value.findIndex(
 					(s) => s.name === stationId,
 				)
-				const tabX = 16 + (stationIdx >= 0 ? stationIdx : ghostIndex) * 130 + 65
+				const chipX =
+					stationChipCentres.value[stationId] ??
+					16 + (stationIdx >= 0 ? stationIdx : ghostIndex) * 130 + 65
 				ghostIndex++
+				const startX = (chipX - panX.value) / zoomLevel.value
+				const startY = (0 - panY.value) / zoomLevel.value
 				const te = edgePoint(
 					{
 						x: (table.pos_x || 0) + (table.width || 100) / 2,
@@ -1405,14 +1462,13 @@ const deliveryArrows = computed(() => {
 					},
 					table.width || 100,
 					table.height || 100,
-					{ x: tabX / zoomLevel.value, y: 0 },
+					{ x: startX, y: startY },
 				)
-				const startX = tabX / zoomLevel.value
-				const dist = Math.sqrt((te.x - startX) ** 2 + te.y ** 2)
+				const dist = Math.sqrt((te.x - startX) ** 2 + (te.y - startY) ** 2)
 				arrows.push({
 					key: pairKey,
 					x1: startX,
-					y1: 0,
+					y1: startY,
 					x2: te.x,
 					y2: te.y,
 					color: station.color || "#22C55E",
@@ -2171,9 +2227,11 @@ async function handleAddArea() {
 	if (!newAreaName.value.trim()) return
 
 	try {
-		await restaurantStore.createArea(newAreaName.value.trim())
+		const created = await restaurantStore.createArea(newAreaName.value.trim())
 		syncLocalTables()
 		syncLocalStations()
+		// The first room of a plan that had none is the room shown: its tables and its walls need one to go to
+		if (!selectedArea.value && created?.name) selectedArea.value = created.name
 		showSuccess(__("Area created"))
 		showAddAreaDialog.value = false
 		newAreaName.value = ""
@@ -2208,6 +2266,8 @@ async function handleRenameArea() {
 }
 
 function openDeleteAreaDialog(area) {
+	// The last room of the plan stays: with one room there is no button for it, and nothing else may open the dialog
+	if (areas.value.length <= 1) return
 	areaToDelete.value = area
 	showDeleteAreaDialog.value = true
 }
@@ -2374,6 +2434,8 @@ window.addEventListener("beforeunload", onBeforeUnload)
 
 onUnmounted(() => {
 	window.removeEventListener("beforeunload", onBeforeUnload)
+	window.removeEventListener("resize", measureStationChips)
+	lineObserver?.disconnect()
 	stopListeningToTheMenu()
 	if (floorSocket) {
 		floorSocket.off("table_update")
