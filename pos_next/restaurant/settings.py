@@ -32,6 +32,14 @@ SETTINGS_FIELDS = (
 )
 
 
+# What a Restaurant has that the former single `Restaurant Settings` never held: the till may read and save it, but the patch
+# that moved the single into a default restaurant has nothing to copy for it. Off unless the restaurant ticks it.
+RESTAURANT_ONLY_SETTINGS = (
+	# The public menu: the guest card on a page that one QR code on the tables opens (pos_next.api.public_menu)
+	"enable_public_menu",
+)
+
+
 def default_restaurant() -> str | None:
 	"""The only restaurant if there is one, else the oldest enabled one (None when the site has none)."""
 	try:

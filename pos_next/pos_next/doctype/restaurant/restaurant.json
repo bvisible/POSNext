@@ -24,6 +24,7 @@
   "tip_account",
   "section_qr_ordering",
   "enable_qr_ordering",
+  "enable_public_menu",
   "guest_menu",
   "qr_order_validation",
   "guest_account_mode",
@@ -158,7 +159,14 @@
    "label": "Enable QR Self-Ordering"
   },
   {
-   "depends_on": "eval:doc.enable_qr_ordering",
+   "default": "0",
+   "description": "Shows the Guest Menu card, to read only, on a page that a QR code on the tables opens. Guests cannot order from it. Off: nothing is public.",
+   "fieldname": "enable_public_menu",
+   "fieldtype": "Check",
+   "label": "Public menu (QR)"
+  },
+  {
+   "depends_on": "eval:doc.enable_qr_ordering || doc.enable_public_menu",
    "fieldname": "guest_menu",
    "fieldtype": "Link",
    "label": "Guest Menu",
@@ -285,7 +293,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 23:00:00.000000",
+ "modified": "2026-10-30 22:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

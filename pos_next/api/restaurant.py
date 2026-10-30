@@ -1705,6 +1705,8 @@ def get_restaurant_settings(restaurant=None):
 		"tip_account": settings.tip_account,
 		"enable_qr_ordering": bool(settings.enable_qr_ordering),
 		"guest_menu": settings.guest_menu,
+		# The entry that prints the QR of the public menu shows only where the restaurant switched it on
+		"enable_public_menu": bool(settings.enable_public_menu),
 		"qr_order_validation": settings.qr_order_validation or "Direct to Kitchen",
 		"guest_account_mode": settings.guest_account_mode or "Not Proposed",
 		"token_expiry_mode": settings.token_expiry_mode or "On Table Close",
@@ -1781,7 +1783,11 @@ def save_restaurant_settings(settings, restaurant=None):
 
 	`settings` maps field names to values, the opening hours being a list of rows; only the fields it names change.
 	"""
-	_save_settings(settings, restaurant, (*restaurant_config.SETTINGS_FIELDS, "opening_hours"))
+	_save_settings(
+		settings,
+		restaurant,
+		(*restaurant_config.SETTINGS_FIELDS, *restaurant_config.RESTAURANT_ONLY_SETTINGS, "opening_hours"),
+	)
 	return {"status": "success"}
 
 

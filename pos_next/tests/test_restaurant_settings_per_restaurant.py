@@ -46,6 +46,7 @@ READ_BY_THE_TILL = {
 	"tip_account",
 	"enable_qr_ordering",
 	"guest_menu",
+	"enable_public_menu",
 	"qr_order_validation",
 	"guest_account_mode",
 	"token_expiry_mode",
