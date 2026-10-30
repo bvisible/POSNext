@@ -85,12 +85,9 @@ def after_migrate():
 		# //// Neoffice — the restaurant's roles and rules (NeoRestau lot 1, task 3): see grant_restaurant_rights.
 		grant_restaurant_rights()
 
-		# //// Neoffice — NeoRestau's page and menu entry, where the site runs it and the theme is there (NeoRestau lot 1,
-		# //// task 6): made once and only made, see pos_next.restaurant.neorestau.setup. A site that does not run NeoRestau,
-		# //// or has no theme, is left as it is. Not at install: a new restaurant client's provisioning calls it itself.
-		from pos_next.restaurant import neorestau
-
-		neorestau.setup()
+		# //// Neoffice — NeoRestau's page and menu entry (NeoRestau lot 1, task 6): see make_neorestau_menu_entry, which never
+		# //// fails the migrate. Not at install: a new restaurant client's provisioning calls neorestau.setup itself.
+		make_neorestau_menu_entry()
 
 		# Clear cache
 		frappe.clear_cache()
@@ -253,6 +250,28 @@ def grant_restaurant_rights():
 
 	ensure_restaurant_roles()
 	grant_restaurant_permissions()
+
+
+# //// Neoffice — added function (no upstream equivalent). NeoRestau's page and menu entry (NeoRestau lot 1, task 6,
+# //// pos_next.restaurant.neorestau.setup) are made at every migrate where the site runs NeoRestau and has the theme, and a
+# //// menu entry is never a reason to fail a migrate: whatever a migrate seeds must not raise, since an exception in this
+# //// hook rolls the whole migrate back and exits it non-zero, and a fleet update stops on it. setup() itself stays loud (the
+# //// provisioning of a restaurant client runs it with `bench execute` and wants to see a failure), so the guard is here, at
+# //// its call: a savepoint, so that what a failed setup() half made (the page without its entry) is undone and never
+# //// committed, and the next migrate makes both ("made once" repairs it), and an Error Log row that says why.
+def make_neorestau_menu_entry():
+	"""Make NeoRestau's page and menu entry where the site runs it, and never fail the migrate for it."""
+	save_point = "neorestau_menu_entry"
+	frappe.db.savepoint(save_point)
+	try:
+		from pos_next.restaurant import neorestau
+
+		neorestau.setup()
+	except Exception:
+		# Undone before the Error Log row is written: a row written first would go with the rest
+		frappe.db.rollback(save_point=save_point)
+		frappe.log_error("POS Next: NeoRestau menu entry", frappe.get_traceback())
+		log_message("POS Next: NeoRestau menu entry not made, see the Error Log", level="warning")
 
 
 def log_message(message, level="info", indent=0):

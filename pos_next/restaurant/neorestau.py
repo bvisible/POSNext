@@ -21,13 +21,15 @@ NeoRestau is the view of it made for a restaurant, at the top of the menu:
 """
 
 from contextlib import contextmanager
+from functools import cache
 
 import frappe
 from frappe import _
 
-from pos_next.restaurant.mode import effective_restaurant_mode, neorestau_active
+from pos_next.restaurant.door import restaurants_of_the_restaurant_tills
+from pos_next.restaurant.mode import neorestau_active
 from pos_next.restaurant.scope import current_restaurant, restaurant_or_filters
-from pos_next.restaurant.settings import pos_settings_of_profiles
+from pos_next.restaurant.settings import default_restaurant
 
 # The application, its page and its space, as the theme names them: one name, three uses
 APP = "neorestau"
@@ -283,42 +285,57 @@ def overview_figures(today):
 	"""What the dining room and the tills hold now: the tables with guests, what the restaurant tills took today, the
 	bookings still to come today, the sessions open at those tills.
 
-	Counted for the restaurant the reader works for (scope.current_restaurant: his open till's, else the default
-	restaurant), as the lists the till reads are (scope.restaurant_or_filters): a table or a booking is counted where it
-	belongs, a sale or a session where its till is a restaurant till of that restaurant (restaurant_tills). Each figure is
-	there only for a reader of its documents, and counts what he may read (neoffice_theme.permitted)."""
+	Counted for the restaurant the reader works for, as the lists the till reads are (scope.restaurant_or_filters): the one
+	of his open restaurant till (scope.current_restaurant), else the default restaurant, since the desk is not a till - a
+	manager whose open shift is on the shop's counter till still reads his restaurant, not a blank overview. A table or a
+	booking is counted where it belongs, a sale or a session where its till is a restaurant till of that restaurant
+	(restaurant_tills). Each figure is there only for a reader of its documents, and counts what he may read
+	(neoffice_theme.permitted); what a figure needs is worked out when it is drawn, once, and for no other (a reader of the
+	tables alone costs no look at the tills)."""
 	from neoffice_theme import permitted
 	from neoffice_theme.workspace_spaces.common import company_currency, counted, money
 
-	restaurant = current_restaurant()
-	of_the_restaurant = restaurant_or_filters(restaurant)
-	tills = restaurant_tills(restaurant)
+	@cache
+	def restaurant():
+		return current_restaurant() or default_restaurant()
+
+	@cache
+	def of_the_restaurant():
+		return restaurant_or_filters(restaurant())
+
+	@cache
+	def tills():
+		return restaurant_tills(restaurant())
+
 	figures = []
 	if permitted.readable("Restaurant Table"):
-		occupied = permitted.count("Restaurant Table", OCCUPIED, or_filters=of_the_restaurant)
+		occupied = permitted.count("Restaurant Table", OCCUPIED, or_filters=of_the_restaurant())
 		figures.append({"value": counted(occupied), "label": _("tables occupied")})
 	if permitted.readable("Sales Invoice"):
-		day = [*SOLD, ["posting_date", "=", today], ["pos_profile", "in", tills]]
+		day = [*SOLD, ["posting_date", "=", today], ["pos_profile", "in", tills()]]
+		taken, tickets = (
+			(permitted.total("Sales Invoice", "base_grand_total", day), permitted.count("Sales Invoice", day))
+			if tills()
+			else (0, 0)
+		)
 		figures.append(
 			{
-				"value": money(permitted.total("Sales Invoice", "base_grand_total", day) if tills else 0),
+				"value": money(taken),
 				"label": _("{0} · taken today").format(company_currency()),
-				"context": _("{0} tickets").format(
-					counted(permitted.count("Sales Invoice", day) if tills else 0)
-				),
+				"context": _("{0} tickets").format(counted(tickets)),
 			}
 		)
 	if permitted.readable("Restaurant Reservation"):
 		coming = permitted.count(
 			"Restaurant Reservation",
 			[["reservation_date", "=", today], *TO_COME],
-			or_filters=of_the_restaurant,
+			or_filters=of_the_restaurant(),
 		)
 		figures.append({"value": counted(coming), "label": _("reservations still to come today")})
 	if permitted.readable("POS Opening Shift"):
 		sessions = (
-			permitted.count("POS Opening Shift", [*OPEN_SESSION, ["pos_profile", "in", tills]])
-			if tills
+			permitted.count("POS Opening Shift", [*OPEN_SESSION, ["pos_profile", "in", tills()]])
+			if tills()
 			else 0
 		)
 		figures.append({"value": counted(sessions), "label": _("sessions open")})
@@ -328,25 +345,14 @@ def overview_figures(today):
 def restaurant_tills(restaurant):
 	"""The tills (POS Profiles) that work for `restaurant` as restaurant tills, by name.
 
-	A till is one by its own POS Settings, for the restaurant they name, and only where the site runs NeoRestau: the one
-	answer the till itself reads (mode.effective_restaurant_mode) over the one row that counts (settings.
-	pos_settings_of_profiles). A disabled till counts: what it took today is still today's takings."""
+	Which tills are restaurant tills is the door's answer (door.restaurants_of_the_restaurant_tills, task 5: the tick of a
+	till's own settings, the restaurant it names, the site running NeoRestau, over the one row that counts), asked for
+	every till of the site and kept for this restaurant. A disabled till counts: what it took today is still today's
+	takings."""
 	if not restaurant:
 		return []
-	try:
-		settings = pos_settings_of_profiles(
-			frappe.get_all("POS Profile", pluck="name"), ["enable_restaurant_mode", "restaurant"]
-		)
-	except Exception as error:
-		if frappe.db.is_missing_column(error):
-			# The code is updated and the site is not migrated yet: no till can name a restaurant
-			return []
-		raise
-	return sorted(
-		till
-		for till, row in settings.items()
-		if row.restaurant == restaurant and effective_restaurant_mode(row)
-	)
+	owners = restaurants_of_the_restaurant_tills(frappe.get_all("POS Profile", pluck="name"))
+	return sorted(till for till, owner in owners.items() if owner == restaurant)
 
 
 # ─────────────────────────── the menu entry ───────────────────────────
