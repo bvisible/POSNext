@@ -12,6 +12,8 @@ the rules over itself, builds a restaurant of its own with what each endpoint to
 """
 
 import json
+import shutil
+import unittest
 from contextlib import contextmanager
 from unittest.mock import patch
 
@@ -699,10 +701,11 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					)
 					self.assertTrue(rule and all(rule[0].values()), rule)
 
-	def test_a_customized_doctype_gets_the_rules_too(self):
-		# A site of the fleet: the doctype's rules were copied when our theme gave the customer's administrator read on
-		# every doctype, before this app's JSON named its managers, its kitchen and its cashier
-		doctype = "Restaurant Table"
+	def customized_like_the_fleet(self, doctype):
+		"""The doctype's rules as a site of the fleet has them before the grant: copied when our theme gave the
+		customer's administrator read on every doctype, before this app's JSON named its managers, its kitchen and its
+		cashier. The administrator reads only, the till manager's rule was narrowed to read by the customer, and the
+		restaurant's manager, kitchen and cashier have no rule."""
 		self.addCleanup(frappe.clear_cache, doctype=doctype)
 		self.addCleanup(frappe.db.rollback)
 		if not frappe.db.exists("Custom DocPerm", {"parent": doctype}):
@@ -714,8 +717,7 @@ class TestTheRolesAndTheRules(RestaurantRights):
 			permissions.CASHIER_ROLE,
 		)
 		frappe.db.delete("Custom DocPerm", {"parent": doctype, "role": ["in", [*granted, "Admin"]]})
-
-		def rule(role, **rights):
+		for role in ("Admin", permissions.TILL_MANAGER_ROLE):
 			frappe.get_doc(
 				{
 					"doctype": "Custom DocPerm",
@@ -723,41 +725,58 @@ class TestTheRolesAndTheRules(RestaurantRights):
 					"parenttype": "DocType",
 					"parentfield": "permissions",
 					"role": role,
-					**rights,
+					"read": 1,
 				}
 			).insert(ignore_permissions=True)
-
-		# The administrator reads only (our theme's rule); the till manager's rule was narrowed by the customer
-		rule("Admin", read=1)
-		rule(permissions.TILL_MANAGER_ROLE, read=1)
 		frappe.clear_cache(doctype=doctype)
+
+	def test_a_customized_doctype_gets_the_rules_too(self):
 		admin = make_user(ADMIN, ["Admin"])
 		till_manager = make_user(
 			"restaurant-rights-till-manager@yopmail.com", [permissions.TILL_MANAGER_ROLE]
 		)
-		self.assertEqual(self.rights_of(admin, doctype), {"read"})
-		self.assertEqual(self.rights_of(self.cashier, doctype), set())
+		# What the cashier and the kitchen get: a table's status for the cashier; the kitchen reads the preparation
+		# stations and workflows
+		cashier_and_kitchen = {
+			"Restaurant Table": ({"read", "write"}, set()),
+			"Preparation Station": ({"read"}, {"read"}),
+			"Preparation Workflow": ({"read"}, {"read"}),
+		}
+		for doctype, (cashier_rights, kitchen_rights) in cashier_and_kitchen.items():
+			with self.subTest(doctype=doctype):
+				self.customized_like_the_fleet(doctype)
+				self.assertEqual(self.rights_of(admin, doctype), {"read"})
+				self.assertEqual(self.rights_of(self.cashier, doctype), set())
+				self.assertEqual(self.rights_of(self.kitchen, doctype), set())
 
-		self.assertEqual(grant_restaurant_permissions(), [doctype])
+				self.assertEqual(grant_restaurant_permissions(), [doctype])
 
-		# « Patron = Admin : tout »: the administrator's rule is widened to every right the JSON gives him
-		self.assertTrue(MANAGE <= self.rights_of(admin, doctype))
-		# A role with no rule gets the JSON's: the restaurant's manager, the cashier (a table's status)
-		self.assertTrue(MANAGE <= self.rights_of(self.manager, doctype))
-		self.assertEqual(self.rights_of(self.cashier, doctype), {"read", "write"})
-		# Any other rule the site has is the site's: the narrowed till manager still only reads
-		self.assertEqual(self.rights_of(till_manager, doctype), {"read"})
-		# Run again, it changes nothing
-		rows = frappe.get_all(
-			"Custom DocPerm", filters={"parent": doctype}, fields=["name", "modified"], order_by="name"
-		)
-		self.assertEqual(grant_restaurant_permissions(), [])
-		self.assertEqual(
-			frappe.get_all(
-				"Custom DocPerm", filters={"parent": doctype}, fields=["name", "modified"], order_by="name"
-			),
-			rows,
-		)
+				# The customer's administrator manages everything: his rule is widened to every right the JSON
+				# gives him
+				self.assertTrue(MANAGE <= self.rights_of(admin, doctype))
+				# A role with no rule gets the JSON's: the restaurant's manager, the cashier, the kitchen
+				self.assertTrue(MANAGE <= self.rights_of(self.manager, doctype))
+				self.assertEqual(self.rights_of(self.cashier, doctype), cashier_rights)
+				self.assertEqual(self.rights_of(self.kitchen, doctype), kitchen_rights)
+				# Any other rule the site has is the site's: the narrowed till manager still only reads
+				self.assertEqual(self.rights_of(till_manager, doctype), {"read"})
+				# Run again, it changes nothing
+				rows = frappe.get_all(
+					"Custom DocPerm",
+					filters={"parent": doctype},
+					fields=["name", "modified"],
+					order_by="name",
+				)
+				self.assertEqual(grant_restaurant_permissions(), [])
+				self.assertEqual(
+					frappe.get_all(
+						"Custom DocPerm",
+						filters={"parent": doctype},
+						fields=["name", "modified"],
+						order_by="name",
+					),
+					rows,
+				)
 
 	def test_an_administrator_without_any_rule_gets_one(self):
 		doctype = "Restaurant Area"
@@ -911,8 +930,14 @@ class TestTheMenuDesigner(RestaurantRights):
 
 	def test_a_css_that_fetches_or_leaves_its_sheet_is_refused(self):
 		fetching = "body { background: url(https://example.invalid/x.png) }"
+		# A comment opened inside a string: whatever drops comments before the check hides the fetch that follows,
+		# up to the real end of a comment
+		behind_a_comment = (
+			'a { content: "/*"; background: url(https://example.invalid/x.png); } /* */',
+			'a { content: "/*"; } @import "https://example.invalid/x.css"; /* */',
+		)
 		with as_user(self.manager):
-			# Escaped or not, a fetch is a fetch: the escapes are decoded before the check
+			# Escaped, or behind a comment, a fetch is a fetch: the whole CSS is read, its escapes decoded
 			for css in (
 				fetching,
 				"@import 'x.css';",
@@ -920,16 +945,18 @@ class TestTheMenuDesigner(RestaurantRights):
 				"a { b: u\\72l(x) }",
 				"b { c: \\75\\72\\6c(x) }",
 				"@\\69mport 'x.css';",
+				*behind_a_comment,
 			):
-				with self.subTest(css=css), self.assertRaises(frappe.ValidationError):
+				with self.subTest(card_css=css), self.assertRaises(frappe.ValidationError):
 					save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": css}))
 		# A design template refuses it on save
-		with self.assertRaises(frappe.ValidationError):
-			self.insert(
-				"Menu Design Template",
-				template_name="_Test Rights Fetching",
-				custom_css="@import url(x.css);",
-			)
+		for number, css in enumerate(("@import url(x.css);", *behind_a_comment)):
+			with self.subTest(template_css=css), self.assertRaises(frappe.ValidationError):
+				self.insert(
+					"Menu Design Template",
+					template_name=f"_Test Rights Fetching {number}",
+					custom_css=css,
+				)
 		# One stored before the check prints without it; a CSS that only styles prints as it is
 		template = self.insert(
 			"Menu Design Template",
@@ -941,24 +968,30 @@ class TestTheMenuDesigner(RestaurantRights):
 			self.assertIn(
 				"h1 { color: red }", get_menu_preview_html(card_name=self.card, template_name=template)
 			)
-		frappe.db.set_value("Menu Design Template", template, "custom_css", fetching)
-		with as_user(self.manager):
-			self.assertNotIn(
-				"example.invalid", get_menu_preview_html(card_name=self.card, template_name=template)
-			)
-		# A harmless escape passes: a bullet before each dish, saved on the card (its design then overrides the
-		# template's CSS)
-		bullet = 'li::before { content: "\\2022"; }'
-		with as_user(self.manager):
-			save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": bullet}))
-			self.assertIn(bullet, get_menu_preview_html(card_name=self.card))
+		for css in (fetching, *behind_a_comment):
+			frappe.db.set_value("Menu Design Template", template, "custom_css", css)
+			with self.subTest(stored_css=css), as_user(self.manager):
+				self.assertNotIn(
+					"example.invalid", get_menu_preview_html(card_name=self.card, template_name=template)
+				)
+		# A harmless escape (a bullet before each dish) and an ordinary comment pass, saved on the card (its design
+		# then overrides the template's CSS)
+		for css in ('li::before { content: "\\2022"; }', "/* the dishes */ h1 { color: red }"):
+			with self.subTest(harmless_css=css), as_user(self.manager):
+				save_card_design(card_name=self.card, overrides=json.dumps({"custom_css": css}))
+				self.assertIn(css, get_menu_preview_html(card_name=self.card))
 
+	@unittest.skipUnless(shutil.which("wkhtmltopdf"), "no PDF engine (wkhtmltopdf) on this machine")
 	def test_the_real_engine_prints_the_cards_picture(self):
 		# The real pdfkit and wkhtmltopdf (the CI installs it, as Frappe's does): without script nor local file access,
 		# a picture given by the site's URL is still printed. The card's picture has a size of its own (37 x 23), so
-		# the image object found in the PDF is the one fetched by URL, not a badge drawn from a data URI
+		# the image object found in the PDF is the one fetched by URL, not a badge drawn from a data URI. The test
+		# needs no network: a server of its own answers the site's URL, and stands in for the web fonts' host; then
+		# the fonts' host is one that does not exist, which must not cost the print (it is printed again without the
+		# web fonts, in the fallback fonts)
 		from io import BytesIO
 
+		import pdfkit
 		from PIL import Image
 
 		buffer = BytesIO()
@@ -966,16 +999,26 @@ class TestTheMenuDesigner(RestaurantRights):
 		frappe.db.set_value(
 			"Restaurant Card", self.card, "image", "/files/_test_rights_card.png", update_modified=False
 		)
-		with (
-			a_site_serving(buffer.getvalue()) as site_url,
-			patch("frappe.utils.get_url", return_value=site_url),
-			as_user(self.manager),
-			self.a_response() as response,
-		):
-			generate_menu_pdf(card_name=self.card)
-		self.assertEqual(response.type, "download")
-		self.assertTrue(response.filecontent.startswith(b"%PDF-"))
-		self.assertRegex(response.filecontent, rb"/Subtype\s*/Image\s*/Width 37\s*/Height 23\b")
+		real = pdfkit.from_string
+		with a_site_serving(buffer.getvalue()) as site_url:
+			for fonts_host, renders in ((f"{site_url}/", 1), ("https://fonts.invalid/", 2)):
+				with (
+					self.subTest(fonts_host=fonts_host),
+					patch("frappe.utils.get_url", return_value=site_url),
+					patch(
+						"pdfkit.from_string",
+						side_effect=lambda html, *args, host=fonts_host, **kwargs: real(
+							html.replace("https://fonts.googleapis.com/", host), *args, **kwargs
+						),
+					) as engine,
+					as_user(self.manager),
+					self.a_response() as response,
+				):
+					generate_menu_pdf(card_name=self.card)
+					self.assertEqual(engine.call_count, renders)
+					self.assertEqual(response.type, "download")
+					self.assertTrue(response.filecontent.startswith(b"%PDF-"))
+					self.assertRegex(response.filecontent, rb"/Subtype\s*/Image\s*/Width 37\s*/Height 23\b")
 
 
 class TestTheFirstSettingsMakeTheDefaultRestaurant(RestaurantRights):

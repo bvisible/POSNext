@@ -48,7 +48,8 @@ COLOR = re.compile(r"#[0-9A-Fa-f]{3,8}|[A-Za-z]{1,20}")
 FORBIDDEN_CSS = ("url(", "@import", "image(", "image-set(", "expression(")
 # A CSS escape: a backslash and 1 to 6 hex digits (one following whitespace is part of it), or any other character
 CSS_ESCAPE = re.compile(r"\\(?:([0-9a-fA-F]{1,6})\s?|(.))", re.S)
-CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+# The web fonts the menu links (templates/menu/base.html), fetched from Google's host when the page is printed
+WEB_FONTS = re.compile(r"<link\b[^>]*\bhref=\"https://fonts\.googleapis\.com/[^\"]*\"[^>]*>")
 
 
 def _require_cards(*card_names):
@@ -62,7 +63,11 @@ def _require_cards(*card_names):
 
 
 def _decoded_css(css) -> str:
-	"""The CSS as the engine reads it: comments dropped and escapes decoded."""
+	"""The CSS with its escapes decoded, as the engine reads its words; nothing else is taken out of it.
+
+	Its comments stay: a comment cannot make a word of the CSS, it only separates them, so the check may read
+	through it. Taking comments out first hid what followed a `/*` written inside a string, up to the next `*/`.
+	"""
 
 	def decode(match):
 		digits, other = match.groups()
@@ -71,13 +76,15 @@ def _decoded_css(css) -> str:
 		code = int(digits, 16)
 		return chr(code) if 0 < code <= 0x10FFFF else "\ufffd"
 
-	return CSS_ESCAPE.sub(decode, CSS_COMMENT.sub("", css))
+	return CSS_ESCAPE.sub(decode, css)
 
 
 def css_is_safe(css) -> bool:
 	"""Whether a custom CSS only styles the page: no fetch (url, @import, image), escaped or not, and no `<`.
 
-	A harmless escape passes (`content: "\\2022"`, a bullet); until 30.10.2026 any backslash dropped the whole CSS.
+	The whole text is read, comments and strings included: a fetch named only inside a comment is refused as well,
+	which costs nothing to a menu. A harmless escape passes (`content: "\\2022"`, a bullet); until 30.10.2026 any
+	backslash dropped the whole CSS. The card's save, the design template's save and the render use this one check.
 	"""
 	css = cstr(css)
 	if "<" in css:
@@ -395,7 +402,18 @@ def _html_to_pdf(html_content, template):
 	options = _get_wkhtmltopdf_options(template)
 
 	# pdfkit expects string values and '--' prefix is handled internally
-	return pdfkit.from_string(html_content, False, options=options)
+	try:
+		return pdfkit.from_string(html_content, False, options=dict(options))
+	except OSError:
+		# Web fonts whose host cannot be found (a server without outbound DNS) end the engine on a network error even
+		# though the page was printed: wkhtmltopdf lets a failed file (`.css`, `.png`) go, not an address such as the
+		# fonts' `/css2?family=…`, and load-error-handling / load-media-error-handling do not change that (measured
+		# with 0.12.6, patched Qt). A missing web font must not cost the menu: it is printed again without its web
+		# fonts, in the fallback fonts. Anything else fails the second time too, and is raised.
+		without_web_fonts = WEB_FONTS.sub("", html_content)
+		if without_web_fonts == html_content:
+			raise
+		return pdfkit.from_string(without_web_fonts, False, options=dict(options))
 
 
 def _build_page_css(template):

@@ -25,7 +25,7 @@ availability on a card, are the restaurant's (`manage_cards`).
 import frappe
 from frappe import _
 
-# The roles that manage a restaurant: its own manager (« responsable de salle »), the customer's administrator, and
+# The roles that manage a restaurant: its own manager (who runs the dining room), the customer's administrator, and
 # System Manager. A restaurant screen is never gated on System Manager alone: on the fleet only Administrator holds it.
 MANAGER_ROLES = ("Restaurant Manager", "Admin", "System Manager")
 MANAGER_ROLE = "Restaurant Manager"
@@ -158,8 +158,8 @@ def grant_restaurant_permissions() -> list[str]:
 	GRANTED_ROLES are carried over here, for a role that has no rule at all on that doctype, as the JSON writes it.
 
 	A rule the site has for a role is the site's, whatever it grants: it is never changed, never widened (a customer
-	may have narrowed it on purpose), never removed. One exception, the customer's administrator (`Admin`): « Patron =
-	Admin : tout » (NeoRestau spec, § C). His read-only rule on these doctypes is our theme's, which gives him read on
+	may have narrowed it on purpose), never removed. One exception, the customer's administrator (`Admin`), who manages
+	everything (NeoRestau spec, § C). His read-only rule on these doctypes is our theme's, which gives him read on
 	every doctype, not the customer's choice, so it is widened to the rights the JSON grants him (never narrowed). A
 	doctype the site did not customize reads its JSON: nothing to do. Returns the doctypes given or widened a rule.
 	"""

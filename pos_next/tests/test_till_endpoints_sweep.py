@@ -703,6 +703,27 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		)
 		self.assertEqual(frappe.db.get_value("POS Settings", settings, "search_limit"), 9)
 
+	def test_a_till_without_settings_is_given_its_default_row(self):
+		# The row a till gets the first time it is opened holds the defaults, chosen by nobody: the server makes it
+		# for whoever opens the till, a cashier as well as a Sales Manager who is no till manager. Saving the settings
+		# stays the till managers'
+		changed = json.dumps({"search_limit": 7})
+		for user in (TILL, REPORTER):
+			with self.subTest(user=user):
+				frappe.db.delete("POS Settings", {"pos_profile": PROFILE})
+				self._served(user, "get_pos_settings", lambda: pos_settings.get_pos_settings(PROFILE))
+				settings = frappe.db.get_value("POS Settings", {"pos_profile": PROFILE})
+				self.assertTrue(settings)
+				self._refused(
+					user, "update_pos_settings", lambda: pos_settings.update_pos_settings(PROFILE, changed)
+				)
+				self._refused(
+					user,
+					"frappe.client.set_value",
+					lambda: frappe.client.set_value("POS Settings", settings, "search_limit", 7),
+				)
+				self.assertNotEqual(frappe.db.get_value("POS Settings", settings, "search_limit"), 7)
+
 	def test_the_pass_delivers_only_the_lines_of_the_invoice_named(self):
 		own = frappe.db.get_value("Sales Invoice Item", {"parent": self.fx.invoice}, "name")
 		other_invoice = frappe.copy_doc(frappe.get_doc("Sales Invoice", self.fx.invoice)).insert(

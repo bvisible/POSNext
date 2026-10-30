@@ -172,7 +172,11 @@ def create_default_settings(pos_profile):
 	doc = frappe.new_doc("POS Settings")
 	doc.pos_profile = pos_profile
 	doc.enabled = 1
-	doc.insert()
+	# //// Neoffice — the default row a till gets the first time it is opened (get_pos_settings) holds the defaults,
+	# //// chosen by nobody: the server writes it, whoever opens the till. Inserted as the user, it failed for a cashier
+	# //// (no create right on POS Settings) and, once validate() kept the settings to the till managers, for a Sales
+	# //// Manager as well. Saving settings stays the till managers' (validate) (#1967).
+	doc.insert(ignore_permissions=True)
 
 	return doc.as_dict()
 
