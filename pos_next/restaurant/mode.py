@@ -2,7 +2,7 @@
 # //// by its own POS Settings, and only where the site runs NeoRestau. The restaurant switch of the till's header, and
 # //// the per-device memory behind it, are gone (lot 0): the answer the till reads is worked out here, once, for every
 # //// way it reads its settings (the bootstrap, the profile's data, the settings dialog), for the desk's form, and for
-# //// the entry points of the visitors, which refuse where the site does not run NeoRestau.
+# //// the entry points of the visitors that start something, which refuse where the site does not run NeoRestau.
 """A till is a restaurant till by its own setting, and only where NeoRestau runs."""
 
 import frappe
@@ -23,12 +23,21 @@ def neorestau_active() -> bool:
 
 
 def require_neorestau() -> None:
-	"""Refuse, with a short message, a call that belongs to the restaurant where the site does not run NeoRestau.
+	"""Refuse, with a short message, a call that starts something new of the restaurant where the site does not run
+	NeoRestau.
 
-	The guard of the entry points a visitor starts something with (the QR menu, the web takeaway, the booking form):
-	nothing of the restaurant shows where NeoRestau is off. It stands in front of what starts an order, a payment, a
-	booking; never in front of what finishes or reads back something already started, so that a payment in flight is
-	never lost.
+	It stands in front of what a visitor STARTS: a new order (`submit_guest_order`), a new payment
+	(`create_guest_payment`), a booking and the look at the free tables that leads to it (`get_available_slots`,
+	`get_available_tables`, `submit_guest_reservation`): nothing of the restaurant shows where NeoRestau is off.
+
+	It never stands in front of anything a payment's return goes through, whatever the flag says: a payment started
+	before NeoRestau went off must stay recordable. The page the payment provider sends the diner back to calls
+	`validate_token` and `get_guest_menu` before it can mount the checkout that calls `confirm_guest_payment`: a refusal
+	there shows the token error, the checkout never mounts, the payment is never written on the invoice and nothing
+	reports it. The takeaway page asks `create_takeaway_token` for a token on every mount, the return included (the
+	restaurant's own `enable_web_takeaway` setting closes it), and `submit_takeaway_order` finishes an order that a
+	payment already paid. What reads back or confirms something already started (`confirm_guest_payment`,
+	`get_order_status`, `get_guest_receipt_pdf`, `verify_reservation`) is open as well.
 	"""
 	if not neorestau_active():
 		frappe.throw(_("Restaurant services are not available"))

@@ -26,6 +26,7 @@ from pos_next.patches.neorestau.attach_records_to_the_default_restaurant import 
 from pos_next.pos_next.doctype.pos_settings.pos_settings import get_pos_settings
 from pos_next.pos_next.doctype.restaurant.restaurant import Restaurant
 from pos_next.restaurant import scope, settings
+from pos_next.tests.test_a_site_that_used_the_restaurant import a_site_that_never_used_the_restaurant
 from pos_next.tests.test_till_writes_need_the_till import (
 	CASHIER_ROLE,
 	OTHER_TILL,
@@ -1124,14 +1125,40 @@ class TestExistingRecordsJoinTheDefaultRestaurant(FrappeTestCase):
 		doc.save(ignore_permissions=True)
 
 	def test_a_till_that_is_not_in_restaurant_mode_is_left_alone(self):
-		for key, doctype in LEGACY_DOCTYPES.items():
-			frappe.delete_doc(doctype, self.legacy[key], force=True, ignore_permissions=True)
+		# A site that never used the restaurant, by the one criterion the three patches share: nothing to attach, and no
+		# restaurant made for a counter till
+		a_site_that_never_used_the_restaurant(self)
 		doc = frappe.get_doc({"doctype": "POS Settings", "pos_profile": "_Test Counter Till", "enabled": 1})
 		doc.flags.ignore_links = True
 		till = doc.insert(ignore_permissions=True).name
 		execute()
 		self.assertFalse(frappe.db.get_value("POS Settings", till, "restaurant"))
 		self.assertFalse(frappe.db.count("Restaurant"))
+
+	def test_a_menu_alone_is_use_and_joins_the_default_restaurant(self):
+		# The menus a restaurant sells at a fixed price are among the records the patches count and attach
+		a_site_that_never_used_the_restaurant(self)
+		menu = self.insert("Restaurant Menu", menu_name="_Test Legacy Menu Alone", price=20)
+		self.assertFalse(frappe.db.get_value("Restaurant Menu", menu, "restaurant"))
+		execute()
+		self.assertEqual(frappe.db.count("Restaurant"), 1)
+		self.assertEqual(frappe.db.get_value("Restaurant Menu", menu, "restaurant"), settings.default_restaurant())
+
+	def test_the_patch_acts_wherever_the_other_two_do(self):
+		# One criterion for the three patches: a site whose only sign of use is its opening hours gets its restaurant
+		# from this one too, whichever of them runs first
+		a_site_that_never_used_the_restaurant(self)
+		single = frappe.get_single("Restaurant Settings")
+		single.flags.ignore_validate = True
+		single.flags.ignore_links = True
+		single.set("opening_hours", [])
+		single.append(
+			"opening_hours",
+			{"day_of_week": "Monday", "from_time": "09:00:00", "to_time": "14:00:00", "label": "Lunch"},
+		)
+		single.save(ignore_permissions=True)
+		execute()
+		self.assertEqual(frappe.db.count("Restaurant"), 1)
 
 	def test_the_patch_gives_the_records_the_restaurant_a_site_already_has(self):
 		existing = frappe.get_doc(

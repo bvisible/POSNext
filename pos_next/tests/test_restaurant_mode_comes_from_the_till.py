@@ -5,7 +5,8 @@ The restaurant switch of the till's header, and the per-device memory behind it,
 restaurant till is its POS Settings (`enable_restaurant_mode`, one row per POS Profile, ticked at the desk). It counts
 only where the site runs NeoRestau (the site flag `neorestau_active`, off unless the site switches it on), and only for
 a till that names its restaurant. Every way the till reads its settings answers that effective mode, so that with
-NeoRestau off nothing of the restaurant shows at the till: the entry points of the guests refuse as well.
+NeoRestau off nothing of the restaurant shows at the till: the entry points of the guests that START something refuse as
+well, and what a payment started before NeoRestau went off goes through stays open, so that the payment can be recorded.
 
 The suite relies on neither the patches nor any POS Settings row: a fresh CI site runs no patch, while the clone of a
 working site holds a real restaurant till. Every test builds the rows it needs and nothing here commits. The site's
@@ -44,14 +45,11 @@ ATTACH_PATCH = "pos_next.patches.neorestau.attach_records_to_the_default_restaur
 
 TOKEN = "_Test unknown token"
 NEXT_WEEK = add_days(nowdate(), 7)
-# What a visitor can start through the guest and booking pages, with arguments that reach nothing of their own: the guard
-# of NeoRestau comes before everything the entry point does
+# What a visitor STARTS through the guest and booking pages (a new order, a new payment, a booking, a look at the free
+# tables), with arguments that reach nothing of their own: the guard of NeoRestau comes before everything the entry point
+# does. None of them sits on the return path of a payment.
 STARTS_SOMETHING = (
-	(guest_ordering.validate_token, (TOKEN,)),
-	(guest_ordering.get_guest_menu, (TOKEN,)),
-	(guest_ordering.create_takeaway_token, ()),
 	(guest_ordering.submit_guest_order, (TOKEN, "[]")),
-	(guest_ordering.submit_takeaway_order, (TOKEN, "[]")),
 	(guest_ordering.create_guest_payment, (TOKEN, 10)),
 	(reservations.get_available_slots, (NEXT_WEEK,)),
 	(reservations.get_available_tables, (NEXT_WEEK, "20:00:00")),
@@ -60,8 +58,15 @@ STARTS_SOMETHING = (
 		(NEXT_WEEK, "20:00:00", 2, "_Test Guest", "0790000000", "mode-guest@yopmail.com"),
 	),
 )
-# What finishes, or reads back, something a visitor already started: a payment in flight is never lost
-FINISHES_SOMETHING = (
+# What a payment started before NeoRestau went off goes through, whatever the flag says: the page the provider sends the
+# diner back to loads through validate_token and get_guest_menu before it can call confirm_guest_payment; the takeaway page
+# asks for its token again on every mount, the return included, and submit_takeaway_order finishes the order that a
+# succeeded payment paid. Also open: what reads back or confirms something already started.
+STAYS_OPEN = (
+	(guest_ordering.validate_token, (TOKEN,)),
+	(guest_ordering.get_guest_menu, (TOKEN,)),
+	(guest_ordering.create_takeaway_token, ()),
+	(guest_ordering.submit_takeaway_order, (TOKEN, "[]")),
 	(guest_ordering.confirm_guest_payment, (TOKEN, 10)),
 	(guest_ordering.get_order_status, (TOKEN,)),
 	(guest_ordering.get_guest_receipt_pdf, (TOKEN,)),
@@ -71,6 +76,31 @@ FINISHES_SOMETHING = (
 
 class TheGuardWasAsked(Exception):
 	"""What an entry point raises when its guard is replaced by a mock that raises it."""
+
+
+@contextmanager
+def a_request_from(ip):
+	"""frappe.local.request_ip as a web request sets it: restored as it was (it may not be set at all) afterwards."""
+	missing = object()
+	before = getattr(frappe.local, "request_ip", missing)
+	frappe.local.request_ip = ip
+	try:
+		yield
+	finally:
+		if before is missing:
+			del frappe.local.request_ip
+		else:
+			frappe.local.request_ip = before
+
+
+def the_refusal():
+	"""What the guard of NeoRestau says where the site does not run it, read from the guard itself."""
+	with a_site_where_neorestau_is(0):
+		try:
+			mode.require_neorestau()
+		except frappe.ValidationError as refused:
+			return str(refused)
+	raise AssertionError("the guard let a site that does not run NeoRestau through")
 
 
 @contextmanager
@@ -323,8 +353,9 @@ class TestTheTillReadsItsEffectiveMode(Tills, FrappeTestCase):
 
 class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 	"""Where the site does not run NeoRestau nothing of the restaurant shows: the pages a diner opens on a phone (the QR
-	menu, the web takeaway, the booking form) are refused, with a short message, at every entry point that starts
-	something. What finishes, or reads back, something already started stays open: a payment in flight is never lost."""
+	menu, the web takeaway, the booking form) cannot start anything, with a short message, at the entry points that start
+	something new (an order, a payment, a booking). What a payment started before NeoRestau went off goes through stays
+	open (see STAYS_OPEN): it must be recordable whatever the flag says."""
 
 	def setUp(self):
 		super().setUp()
@@ -334,10 +365,7 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 		commit.start()
 		self.addCleanup(commit.stop)
 		frappe.set_user("Guest")
-		# What the guard says, read from the guard itself
-		with a_site_where_neorestau_is(0), self.assertRaises(frappe.ValidationError) as refused:
-			mode.require_neorestau()
-		self.refusal = str(refused.exception)
+		self.refusal = the_refusal()
 
 	def test_the_guard_refuses_only_where_neorestau_is_off(self):
 		self.assertTrue(self.refusal)
@@ -349,7 +377,7 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 				with self.assertRaises(frappe.ValidationError):
 					mode.require_neorestau()
 
-	def test_a_visitor_is_refused_where_neorestau_is_off(self):
+	def test_a_visitor_cannot_start_anything_where_neorestau_is_off(self):
 		for value in (0, ABSENT):
 			for entry_point, arguments in STARTS_SOMETHING:
 				with self.subTest(neorestau=value, entry_point=entry_point.__name__):
@@ -370,31 +398,116 @@ class TestTheGuestEntryPointsNeedNeoRestau(FrappeTestCase):
 					with self.assertRaises(TheGuardWasAsked):
 						entry_point(*arguments)
 
-	def test_what_finishes_or_reads_back_something_started_is_not_refused(self):
-		for value in (0, ABSENT):
-			with a_site_where_neorestau_is(value):
-				for entry_point, arguments in FINISHES_SOMETHING:
-					with self.subTest(neorestau=value, entry_point=entry_point.__name__):
-						with self.assertRaises(Exception) as answered:
-							entry_point(*arguments)
-						# The unknown token is refused as it always was: not by the guard of NeoRestau
-						self.assertNotEqual(str(answered.exception), self.refusal)
-
-	def test_no_entry_point_that_finishes_something_asks_the_guard(self):
+	def test_no_other_entry_point_asks_the_guard(self):
 		with (
 			patch.object(guest_ordering, "require_neorestau", side_effect=TheGuardWasAsked),
 			patch.object(reservations, "require_neorestau", side_effect=TheGuardWasAsked),
 		):
-			for entry_point, arguments in FINISHES_SOMETHING:
+			for entry_point, arguments in STAYS_OPEN:
 				with self.subTest(entry_point=entry_point.__name__):
 					try:
 						entry_point(*arguments)
 					except TheGuardWasAsked:
 						self.fail(
-							"the guard of NeoRestau stands in front of a call that finishes what was started"
+							"the guard of NeoRestau stands in front of a call a payment's return goes through"
 						)
 					except Exception:
 						pass  # the unknown token is refused, as it always was
+
+	def test_what_stays_open_is_not_refused_where_neorestau_is_off(self):
+		for value in (0, ABSENT):
+			for entry_point, arguments in STAYS_OPEN:
+				with self.subTest(neorestau=value, entry_point=entry_point.__name__):
+					with a_site_where_neorestau_is(value):
+						try:
+							entry_point(*arguments)
+						except Exception as answered:
+							# The unknown token is refused as it always was: not by the guard of NeoRestau
+							self.assertNotEqual(str(answered), self.refusal)
+
+
+class TestAPaymentStartedBeforeNeoRestauWentOffCanBeRecorded(Tills, FrappeTestCase):
+	"""A diner pays by card on his phone; the payment page sends him back; NeoRestau was switched off meanwhile (the site's
+	own decision). The page he returns to loads through validate_token and get_guest_menu before it can mount the
+	checkout that calls confirm_guest_payment: a refusal there would lose the payment, and nothing would report it. With
+	a valid table token, on a site where NeoRestau is off, those answer; a new order and a new payment are refused."""
+
+	def setUp(self):
+		super().setUp()
+		self.make_till(enable_restaurant_mode=1, restaurant=self.restaurant)
+		area = self.insert("Restaurant Area", restaurant=self.restaurant, area_name="_Test Mode Room").name
+		self.table = self.insert(
+			"Restaurant Table", restaurant=self.restaurant, area=area, table_name="_Test Mode T1"
+		).name
+		self.card = self.insert(
+			"Restaurant Card",
+			restaurant=self.restaurant,
+			card_name="_Test Mode Guest Card",
+			is_active=1,
+			is_guest_menu=1,
+			items=[{"item_type": "Item", "item": self.fx.item, "price": 12}],
+		)
+		self.token = self.insert(
+			"Guest Order Token", mode="restaurant", table=self.table, pos_profile=self.fx.profile
+		).token
+		self.takeaway_token = self.insert("Guest Order Token", mode="takeaway").token
+		self.refusal = the_refusal()
+		neorestau_off = patch.dict(frappe.conf)
+		neorestau_off.start()
+		self.addCleanup(neorestau_off.stop)
+		frappe.conf.pop(SITE_FLAG, None)
+		frappe.set_user("Guest")
+
+	def insert(self, doctype, **values):
+		return frappe.get_doc({"doctype": doctype, **values}).insert(ignore_permissions=True)
+
+	def test_the_page_a_payment_returns_to_still_loads(self):
+		answer = guest_ordering.validate_token(self.token)
+		self.assertTrue(answer["valid"])
+		self.assertEqual(answer["table"]["name"], self.table)
+		menu = guest_ordering.get_guest_menu(self.token)
+		items = [item["item_code"] for category in menu["categories"] for item in category["menu_items"]]
+		self.assertEqual(items, [self.fx.item])
+
+	def test_the_payment_can_be_recorded_and_read_back(self):
+		# Nothing was ordered on the table: the call is answered as it always was, not refused by the guard
+		with self.assertRaises(frappe.ValidationError) as answered:
+			guest_ordering.confirm_guest_payment(self.token, 10)
+		self.assertNotEqual(str(answered.exception), self.refusal)
+		self.assertIn("order", str(answered.exception).lower())
+		self.assertTrue(guest_ordering.get_order_status(self.token))
+
+	def test_an_order_paid_before_it_went_off_can_be_finished(self):
+		with self.assertRaises(frappe.ValidationError) as answered:
+			guest_ordering.submit_takeaway_order(self.takeaway_token, "[]")
+		self.assertNotEqual(str(answered.exception), self.refusal)
+
+	def test_the_takeaway_page_still_gets_its_token_where_the_restaurant_takes_web_orders(self):
+		# It asks for it on every mount, the return from the payment page included. The restaurant's own switch still
+		# closes it
+		for enabled in (1, 0):
+			with self.subTest(enable_web_takeaway=enabled):
+				settings = frappe._dict(enable_web_takeaway=enabled, token_expiry_mode="On Table Close")
+				with (
+					patch.object(guest_ordering, "_get_restaurant_settings", return_value=settings),
+					a_request_from("203.0.113.9"),
+				):
+					if enabled:
+						self.assertTrue(guest_ordering.create_takeaway_token()["token"])
+					else:
+						with self.assertRaises(frappe.ValidationError) as answered:
+							guest_ordering.create_takeaway_token()
+						self.assertNotEqual(str(answered.exception), self.refusal)
+
+	def test_a_new_order_or_a_new_payment_is_refused_whatever_the_token(self):
+		for entry_point, arguments in (
+			(guest_ordering.submit_guest_order, (self.token, "[]")),
+			(guest_ordering.create_guest_payment, (self.token, 10)),
+		):
+			with self.subTest(entry_point=entry_point.__name__):
+				with self.assertRaises(frappe.ValidationError) as refused:
+					entry_point(*arguments)
+				self.assertEqual(str(refused.exception), self.refusal)
 
 
 class TestTheSwitchOnPatch(FrappeTestCase):
@@ -415,7 +528,7 @@ class TestTheSwitchOnPatch(FrappeTestCase):
 		self.addCleanup(self.assert_the_flag_on_disk_is_unchanged)
 		# The clone of a working site holds a real restaurant, its till and its records: start from a client that
 		# never used it, inside the transaction (its single keeps the defaults a migrate wrote)
-		a_site_that_never_used_the_restaurant()
+		a_site_that_never_used_the_restaurant(self)
 
 	def assert_the_flag_on_disk_is_unchanged(self):
 		self.assertEqual(frappe.get_site_config().get(SITE_FLAG, ABSENT), self.flag_on_disk)

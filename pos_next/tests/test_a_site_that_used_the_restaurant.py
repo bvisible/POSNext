@@ -1,16 +1,21 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""Whether a site used the restaurant (NeoRestau lot 1, task 4, fix round 1).
+"""Whether a site used the restaurant (NeoRestau lot 1, task 4, fix rounds 1 and 2).
 
-Two patches act only on a site that used the restaurant module: the one that makes the default restaurant out of the
-single `Restaurant Settings`, and the one that switches NeoRestau on. They share one criterion, `site_used_the_restaurant`:
-a ticked till, a record that only a person makes (a room, a table, a card, a station, a reservation, a tip), opening hours,
-an order on a table. Never the stored values of the single: a migrate writes its defaults on every site, those of a client
-that never used the module included, and a default cannot be told from a choice.
+Three patches act only on a site that used the restaurant module: the one that makes the default restaurant out of the
+single `Restaurant Settings`, the one that attaches what a site made before the restaurants to the default restaurant,
+and the one that switches NeoRestau on. They share one criterion, `site_used_the_restaurant`: a ticked till, a record
+that only a person makes (a room, a table, a card, a menu, a station, a reservation, a tip), opening hours, an order on
+a table. Never the stored values of the single: a migrate writes its defaults on every site, those of a client that never
+used the module included, and a default cannot be told from a choice.
 
-The suite builds what it needs and removes what a working site (the clone) holds, inside the test transaction: nothing here
-commits, and the end of each class rolls everything back.
+The suite builds what it needs and removes what a working site (the clone) holds, inside the test transaction: nothing
+here commits, and the end of each class rolls everything back. It never writes to the orders of the clone (no index
+covers `restaurant_table`: an UPDATE would hold a lock on every invoice of the shared clone until the class ends): the
+probe that looks for an order on a table is replaced for the tests that are not about it, and the tests that are about
+it look at an invoice of their own.
 """
 
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import frappe
@@ -26,6 +31,7 @@ RECORDS = {
 	"Restaurant Area": {"area_name": "_Test Usage Room"},
 	"Restaurant Table": {"table_name": "_Test Usage T1"},
 	"Restaurant Card": {"card_name": "_Test Usage Card", "is_active": 1},
+	"Restaurant Menu": {"menu_name": "_Test Usage Menu", "price": 20, "is_active": 1},
 	"Preparation Station": {"station_name": "_Test Usage Kitchen"},
 	"Restaurant Reservation": {
 		"status": "Confirmed",
@@ -48,22 +54,30 @@ DEFAULTS_OF_THE_SINGLE = {
 	"token_expiry_days": 7,
 	"enable_tips": 1,
 }
+PROBE = "pos_next.restaurant.usage.an_order_names_a_table"
 
 
-def a_site_that_never_used_the_restaurant():
-	"""Make the site what a client that never used the restaurant is, inside the test transaction: no ticked till, no
-	record, no opening hours, no order on a table. The single keeps its stored values: they are the defaults every site
-	holds, and they are not use."""
-	frappe.db.sql("UPDATE `tabPOS Settings` SET enable_restaurant_mode = 0 WHERE enable_restaurant_mode = 1")
+def clear_the_signs_of_use():
+	"""Remove, inside the test transaction, what a working site holds that says the restaurant was used: the ticks of
+	its tills, its records, its opening hours. The single keeps its stored values: they are the defaults every site
+	holds, and they are not use. The orders are not touched (see the module's docstring)."""
+	ticked = frappe.get_all("POS Settings", filters={"enable_restaurant_mode": 1}, pluck="name")
+	if ticked:
+		frappe.db.sql("UPDATE `tabPOS Settings` SET enable_restaurant_mode = 0 WHERE name IN %s", (ticked,))
 	for doctype in RECORDS:
 		frappe.db.delete(doctype)
 	frappe.db.delete("Restaurant Opening Hours")
-	if frappe.db.has_column("Sales Invoice", "restaurant_table"):
-		frappe.db.sql(
-			"UPDATE `tabSales Invoice` SET restaurant_table = NULL WHERE IFNULL(restaurant_table, '') != ''"
-		)
 	for fieldname, value in DEFAULTS_OF_THE_SINGLE.items():
 		frappe.db.set_single_value("Restaurant Settings", fieldname, value)
+
+
+def a_site_that_never_used_the_restaurant(test):
+	"""Make the site what a client that never used the restaurant is, for one test: no ticked till, no record, no opening
+	hours, and no order on a table (the probe that looks for one answers no, instead of the orders being written to)."""
+	clear_the_signs_of_use()
+	probe = patch(PROBE, return_value=False)
+	probe.start()
+	test.addCleanup(probe.stop)
 
 
 class TestASiteThatUsedTheRestaurant(FrappeTestCase):
@@ -77,7 +91,7 @@ class TestASiteThatUsedTheRestaurant(FrappeTestCase):
 			patcher = patch.object(Restaurant, method)
 			patcher.start()
 			self.addCleanup(patcher.stop)
-		a_site_that_never_used_the_restaurant()
+		a_site_that_never_used_the_restaurant(self)
 
 	def a_till(self, enabled):
 		doc = frappe.get_doc(
@@ -122,6 +136,13 @@ class TestASiteThatUsedTheRestaurant(FrappeTestCase):
 				frappe.delete_doc(doctype, record.name, force=True, ignore_permissions=True)
 				self.assertFalse(site_used_the_restaurant())
 
+	def test_a_menu_is_use(self):
+		# The menus a restaurant sells at a fixed price: a record the attach patch moves like the others
+		menu = frappe.get_doc({"doctype": "Restaurant Menu", **RECORDS["Restaurant Menu"]})
+		menu.flags.ignore_validate = True
+		menu.insert(ignore_permissions=True)
+		self.assertTrue(site_used_the_restaurant())
+
 	def test_opening_hours_are_use_on_the_single_and_on_a_restaurant(self):
 		single = frappe.get_single("Restaurant Settings")
 		single.flags.ignore_validate = True
@@ -146,25 +167,18 @@ class TestASiteThatUsedTheRestaurant(FrappeTestCase):
 		).insert(ignore_permissions=True)
 		self.assertTrue(site_used_the_restaurant())
 
-	def test_a_site_without_the_column_of_the_table_asks_no_invoice(self):
-		# The column is a custom field the restaurant adds: a site that has not got it holds no order on a table
-		asked = []
-		exists = frappe.db.exists
-
-		def spy(doctype, *args, **kwargs):
-			asked.append(doctype)
-			return exists(doctype, *args, **kwargs)
-
-		with (
-			patch.object(frappe.db, "has_column", return_value=False),
-			patch.object(frappe.db, "exists", side_effect=spy),
-		):
-			self.assertFalse(site_used_the_restaurant())
-		self.assertNotIn("Sales Invoice", asked)
+	def test_the_probe_of_the_orders_is_asked_last(self):
+		# The one query that may read a big table: nothing asks it where a cheaper sign already answers
+		with patch(PROBE) as probe:
+			self.a_till(1)
+			self.assertTrue(site_used_the_restaurant())
+		probe.assert_not_called()
 
 
 class TestAnOrderOnATableIsUse(FrappeTestCase):
-	"""The proof a site leaves when it served tables through the till and ticked nothing."""
+	"""The proof a site leaves when it served tables through the till and ticked nothing. A working site holds orders on
+	tables of its own, which must not answer for these tests: the probe is made to see the invoice of the test only, and
+	nothing is written to the orders that are there."""
 
 	@classmethod
 	def setUpClass(cls):
@@ -184,7 +198,7 @@ class TestAnOrderOnATableIsUse(FrappeTestCase):
 		super().setUp()
 		frappe.db.savepoint("usage_test")
 		self.addCleanup(frappe.db.rollback, save_point="usage_test")
-		a_site_that_never_used_the_restaurant()
+		clear_the_signs_of_use()
 
 	def an_order(self):
 		"""A draft order of the till's customer, on no table."""
@@ -204,14 +218,46 @@ class TestAnOrderOnATableIsUse(FrappeTestCase):
 			.name
 		)
 
+	@contextmanager
+	def seeing_only(self, order):
+		"""The probe sees this invoice and no other."""
+		exists = frappe.db.exists
+
+		def restricted(doctype, filters=None, *args, **kwargs):
+			if doctype == "Sales Invoice" and isinstance(filters, dict):
+				filters = {**filters, "name": order}
+			return exists(doctype, filters, *args, **kwargs)
+
+		with patch.object(frappe.db, "exists", side_effect=restricted):
+			yield
+
 	def test_an_order_that_names_no_table_is_no_use(self):
-		self.an_order()
-		self.assertFalse(site_used_the_restaurant())
+		order = self.an_order()
+		with self.seeing_only(order):
+			self.assertFalse(site_used_the_restaurant())
 
 	def test_a_draft_order_on_a_table_is_use(self):
 		order = self.an_order()
 		# The table itself may be gone (deleted by force, or lost in a restore): the order alone says tables were served
 		frappe.db.set_value("Sales Invoice", order, "restaurant_table", "_Test Usage T9")
-		self.assertTrue(site_used_the_restaurant())
+		with self.seeing_only(order):
+			self.assertTrue(site_used_the_restaurant())
 		frappe.db.set_value("Sales Invoice", order, "restaurant_table", None)
-		self.assertFalse(site_used_the_restaurant())
+		with self.seeing_only(order):
+			self.assertFalse(site_used_the_restaurant())
+
+	def test_a_site_without_the_column_of_the_table_asks_no_invoice(self):
+		# The column is a custom field the restaurant adds: a site that has not got it holds no order on a table
+		asked = []
+		exists = frappe.db.exists
+
+		def spy(doctype, *args, **kwargs):
+			asked.append(doctype)
+			return exists(doctype, *args, **kwargs)
+
+		with (
+			patch.object(frappe.db, "has_column", return_value=False),
+			patch.object(frappe.db, "exists", side_effect=spy),
+		):
+			self.assertFalse(site_used_the_restaurant())
+		self.assertNotIn("Sales Invoice", asked)

@@ -2,9 +2,12 @@
 # //// reservations and tips, and a till works for one restaurant (NeoRestau lot 1, task 2). The records a site made
 # //// before the restaurants existed name none: this patch attaches them to the default restaurant, and every till
 # //// in restaurant mode to that restaurant too, since the till's `restaurant` link is mandatory once the mode is on.
+# //// A site that never used the restaurant is left as it is: what counts as use is `site_used_the_restaurant`, the one
+# //// criterion of the three patches (NeoRestau lot 1, task 4, fix round 2).
 import frappe
 
 from pos_next.restaurant.settings import create_default_restaurant, default_restaurant
+from pos_next.restaurant.usage import site_used_the_restaurant
 
 # The doctypes that carry their own `restaurant` link; a table takes the restaurant of its room
 OWN_LINK = (
@@ -15,20 +18,16 @@ OWN_LINK = (
 	"Restaurant Reservation",
 	"Restaurant Tip",
 )
-NO_RESTAURANT = {"restaurant": ["is", "not set"]}
 
 
 def execute():
 	"""Attach what names no restaurant to the default restaurant, and make it first when only this needs one.
 
-	Idempotent: once everything names a restaurant there is nothing left to attach.
+	A site that never used the restaurant is left as it is (`site_used_the_restaurant`: a ticked till, a record, hours, an
+	order on a table; never the stored values of the single). Idempotent: once everything names a restaurant there is
+	nothing left to attach.
 	"""
-	tills = frappe.get_all(
-		"POS Settings", filters={**NO_RESTAURANT, "enable_restaurant_mode": 1}, pluck="name"
-	)
-	if not tills and not any(
-		frappe.db.count(doctype, NO_RESTAURANT) for doctype in (*OWN_LINK, "Restaurant Table")
-	):
+	if not site_used_the_restaurant():
 		return
 
 	restaurant = _the_default_restaurant()

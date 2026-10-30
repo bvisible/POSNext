@@ -432,10 +432,9 @@ def validate_token(token):
 	"""
 	Validate a guest token and return table + settings info.
 	Used on guest app mount to check session validity.
+	Not behind the guard of NeoRestau (mode.require_neorestau): the page a payment sends the diner back to calls it
+	first, and the payment must be recordable whatever the flag says.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
-
 	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings(token_doc.pos_profile)
 
@@ -493,10 +492,9 @@ def get_guest_menu(token):
 	Return the guest menu (categories + items) for a valid token.
 	Uses time-slot based card selection (same as Opening Hours), falling back to
 	settings.guest_menu or the card flagged as_guest_menu.
+	Not behind the guard of NeoRestau (mode.require_neorestau): the page a payment sends the diner back to calls it
+	right after validate_token, before it can mount the checkout that records the payment.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
-
 	token_doc = _require_valid_token(token)
 	settings = _get_restaurant_settings(token_doc.pos_profile)
 
@@ -539,7 +537,8 @@ def submit_guest_order(token, items):
 	Creates a new draft invoice if none exists yet.
 	Respects the qr_order_validation setting (direct or server-approval).
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	# A new order starts something: nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1,
+	# task 4). What a payment's return goes through has no guard (see validate_token).
 	require_neorestau()
 
 	token_doc = _require_valid_token(token)
@@ -838,7 +837,8 @@ def create_guest_payment(token, amount, payment_items=None, tip=0, success_url=N
 	Post-merger: goes through ``payments.api.intent.create_intent`` on the
 	``wallee_web`` channel (hosted payment page) — see ADR-005.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
+	# A new order starts something: nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1,
+	# task 4). What a payment's return goes through has no guard (see validate_token).
 	require_neorestau()
 
 	token_doc = _require_valid_token(token)
@@ -1212,10 +1212,9 @@ def create_takeaway_token():
 	Create a Guest Order Token for a takeaway web order (no table binding).
 	Called when a visitor starts a takeaway order.
 	Rate-limited: max 10 tokens per IP per hour.
+	Not behind the guard of NeoRestau (mode.require_neorestau): the takeaway page asks for its token on every mount, the
+	return from a payment included. The restaurant's own web-takeaway setting closes it.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
-
 	# Rate limiting: max 10 takeaway tokens per IP per hour
 	client_ip = frappe.local.request_ip
 	one_hour_ago = frappe.utils.add_to_date(now_datetime(), hours=-1)
@@ -1253,10 +1252,8 @@ def submit_takeaway_order(token, items, customer=None):
 	Finalize a takeaway order after payment.
 	Creates a POS Invoice flagged as takeaway.
 	Payment must be completed before this endpoint will finalize the order.
+	Not behind the guard of NeoRestau (mode.require_neorestau): it finishes an order that a payment already paid.
 	"""
-	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
-	require_neorestau()
-
 	token_doc = _require_valid_token(token)
 
 	if token_doc.mode != "takeaway":

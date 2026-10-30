@@ -398,13 +398,13 @@ class TestTheSingleMovesIntoARestaurant(RestaurantFixtures, FrappeTestCase):
 	def test_a_site_that_never_used_the_module_gets_no_restaurant(self):
 		# The single holds stored values on every site, a client that never used the module included (a migrate writes
 		# its defaults, and this test's own set-up customised one): they are not use, so no restaurant is made for them
-		a_site_that_never_used_the_restaurant()
+		a_site_that_never_used_the_restaurant(self)
 		self.assertTrue(frappe.db.get_singles_dict("Restaurant Settings"))
 		execute()
 		self.assertEqual(frappe.db.count("Restaurant"), self.before)
 
 	def test_a_site_that_used_the_module_through_a_ticked_till_only_gets_its_default_restaurant(self):
-		a_site_that_never_used_the_restaurant()
+		a_site_that_never_used_the_restaurant(self)
 		till = frappe.get_doc(
 			{"doctype": "POS Settings", "pos_profile": "_Test Single Till", "enabled": 1, "enable_restaurant_mode": 1}
 		)

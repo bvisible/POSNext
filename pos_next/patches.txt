@@ -28,11 +28,13 @@ pos_next.patches.v2_4_0.rename_locations_doctypes
 pos_next.patches.neorestau.move_restaurant_settings_to_a_restaurant
 # //// Neoffice — NeoRestau: the records a site made before the restaurants (rooms, tables, stations, cards, menus,
 # //// reservations, tips) and every till in restaurant mode join the default restaurant (lot 1, task 2). It runs
-# //// after the entry above, which is what makes that restaurant, and makes one itself for a till in restaurant mode
-# //// on a site that never used the module.
+# //// after the entry above, which is what makes that restaurant. The three entries of NeoRestau count the same signs of
+# //// use (pos_next.restaurant.usage: a ticked till, a record, opening hours, an order on a table): a site that never
+# //// used the restaurant is left as it is by all of them.
 pos_next.patches.neorestau.attach_records_to_the_default_restaurant
-# //// Neoffice — NeoRestau: a site whose tills already run in restaurant mode keeps it. Restaurant mode shows at a
-# //// till only where the site flag `neorestau_active` is on (lot 1, task 4): this switches it on, once, where a till
-# //// is in restaurant mode, and never off. It runs after the entry above, which makes sure each of those tills names
-# //// the restaurant it works for.
+# //// Neoffice — NeoRestau: a site that used the restaurant keeps it. Restaurant mode shows at a till only where the
+# //// site flag `neorestau_active` is on (lot 1, task 4): this switches it on, once, where the site used the restaurant
+# //// (the criterion the two entries above share: a ticked till, a record, opening hours, an order on a table), leaves
+# //// alone a site whose configuration already names the flag, on or off, and never switches it off. It runs after
+# //// them: they make the restaurant and give every till its own.
 pos_next.patches.neorestau.switch_neorestau_on_where_restaurant_mode_runs
