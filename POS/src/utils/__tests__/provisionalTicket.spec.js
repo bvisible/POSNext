@@ -277,6 +277,23 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 		]);
 	});
 
+	it("a second tap while the first is on its way saves the order once and asks for one ticket", async () => {
+		// A takeaway order the server does not hold yet: two saves would make two orders
+		cart.$patch({ currentDraftId: null });
+
+		const [first, second] = await Promise.all([print(), print()]);
+
+		expect(first).toBe("cloudprnt");
+		expect(second).toBe("cloudprnt");
+		expect(server.calls.map((call) => call.name)).toEqual([
+			"update_invoice",
+			"print_provisional_ticket",
+		]);
+		// Once it is done, the next tap prints again
+		await print();
+		expect(named("print_provisional_ticket")).toHaveLength(2);
+	});
+
 	it("the order it saves is the cart's own payload, with the till's shift and draft", () => {
 		cart.setPosOpeningShift("POS-OPEN-0001");
 		const order = orderAsShown(cart, PROFILE);

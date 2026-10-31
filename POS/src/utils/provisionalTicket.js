@@ -93,7 +93,21 @@ function reasonOf(error) {
  * through the server, when it has one; else, or when that fails, from the browser (`printInBrowser`, printInvoice.js
  * printProvisionalTicket). Never throws. Returns how it was printed: "cloudprnt", "browser" or "none".
  */
-export async function printProvisionalTicketFromTill({
+export function printProvisionalTicketFromTill(till) {
+	// A second tap while the first one is on its way gets the same answer: a never-saved order saved twice would make
+	// two orders on the server, and the table would get two tickets
+	if (!printing) {
+		printing = printProvisionalTicketOnce(till).finally(() => {
+			printing = null;
+		});
+	}
+	return printing;
+}
+
+/** The print on its way, while there is one (printProvisionalTicketFromTill). */
+let printing = null;
+
+async function printProvisionalTicketOnce({
 	cartStore,
 	cloudPrntStore,
 	shiftStore,
