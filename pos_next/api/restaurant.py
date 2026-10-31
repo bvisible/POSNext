@@ -338,29 +338,75 @@ def reset_all_tables(restaurant=None):
 	frappe.publish_realtime("table_update")
 	return {"status": "success"}
 
+# The statuses a dish goes through, in the order it goes through them
+_KDS_RANK = {"Pending": 0, "Preparing": 1, "Ready": 2, "Delivered": 3}
+
+
+def _order_status_of(dish_statuses):
+	"""The status an order shows when its dishes are at these statuses.
+
+	Delivered when every dish is. Ready when every dish is Ready or Delivered (a dish held back, Waiting, is not
+	ready, so the order is not either). Preparing as soon as a dish has been begun. Pending otherwise: a second
+	round whose first dishes are delivered and whose new dishes are only sent is Pending.
+	"""
+	statuses = [status or "" for status in dish_statuses]
+	if statuses and all(status == "Delivered" for status in statuses):
+		return "Delivered"
+	if statuses and all(status in ("Ready", "Delivered") for status in statuses):
+		return "Ready"
+	if any(status in ("Preparing", "Ready") for status in statuses):
+		return "Preparing"
+	return "Pending"
+
+
+def _advance_dishes(invoice_name, status, station=None):
+	"""Move the dishes of an invoice (those of one station, when it is named) up to a status, never backward.
+
+	A dish held back (Waiting) is not the cook's to advance: it is left as it is.
+	"""
+	new_rank = _KDS_RANK.get(status, 0)
+	filters = {"parent": invoice_name}
+	if station:
+		filters["preparation_station"] = station
+	for dish in frappe.get_all("Sales Invoice Item", filters=filters, fields=["name", "kds_status"]):
+		current_rank = _KDS_RANK.get(dish.kds_status, 0)
+		# Skip Waiting items, only advance items forward, never backward
+		if dish.kds_status not in ["", "Waiting"] and current_rank < new_rank:
+			frappe.db.set_value("Sales Invoice Item", dish.name, "kds_status", status, update_modified=False)
+
+
 @frappe.whitelist()
-def update_kds_status(invoice_name, status):
-	"""Update the KDS status of a sales invoice and all its items."""
+def update_kds_status(invoice_name, status, station=None):
+	"""Update the KDS status of a sales invoice and of its dishes.
+
+	Without a station, the order takes the status and so does every dish that is not already further along, as
+	it always did. With a station (the kitchen screen is opened on one: a tablet at the bar, or the station
+	chosen on the screen), only the dishes of that station move, and the order's own status follows its dishes:
+	Ready only when every dish is Ready, Delivered when every dish is Delivered, Preparing as soon as one has
+	been begun. An order is cooked at several stations: the Bar's "Ready" must not tell the runner that the
+	Kitchen's plates are.
+	"""
 	if not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	if not frappe.db.exists("Sales Invoice", invoice_name):
 		frappe.throw(_("Invoice {0} not found").format(invoice_name))
 
-	frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status)
+	if station and not frappe.db.exists("Preparation Station", station):
+		frappe.throw(_("Station {0} not found").format(station))
 
-	# Also update all items that are not already in a later status
-	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
-		status_order = {"Pending": 0, "Preparing": 1, "Ready": 2, "Delivered": 3}
-		new_rank = status_order.get(status, 0)
-		items = frappe.get_all("Sales Invoice Item",
-			filters={"parent": invoice_name},
-			fields=["name", "kds_status"])
-		for item in items:
-			current_rank = status_order.get(item.kds_status, 0)
-			# Skip Waiting items, only advance items forward, never backward
-			if item.kds_status not in ["", "Waiting"] and current_rank < new_rank:
-				frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status, update_modified=False)
+	has_dish_status = frappe.db.has_column("Sales Invoice Item", "kds_status")
+	if station and has_dish_status:
+		_advance_dishes(invoice_name, status, station)
+		dish_statuses = frappe.get_all(
+			"Sales Invoice Item", filters={"parent": invoice_name}, pluck="kds_status"
+		)
+		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", _order_status_of(dish_statuses))
+	else:
+		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status)
+		# Also update all items that are not already in a later status
+		if has_dish_status:
+			_advance_dishes(invoice_name, status)
 
 	frappe.db.commit()
 	frappe.publish_realtime("kds_update")

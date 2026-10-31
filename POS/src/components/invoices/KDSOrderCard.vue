@@ -44,9 +44,10 @@
 			</div>
 			<div class="flex justify-between items-center mt-1">
 				<span class="text-gray-400 font-mono" data-test="ticket-number" :class="TICKET_FRAME.number">#{{ order.name }}</span>
+				<!-- //// Neoffice — the badge, the border and the main button follow the dishes the screen shows (fix round 1), see `status` -->
 				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
-					:class="statusBadgeClass">
-					{{ kitchenStatusLabel(order.kds_status) }}
+					data-test="ticket-status" :class="statusBadgeClass">
+					{{ kitchenStatusLabel(status) }}
 				</span>
 			</div>
 		</div>
@@ -56,123 +57,128 @@
 		<!-- //// more dishes follow (a fade and "+N lines") over the foot of the scrolling body: the hint cannot sit in the body -->
 		<!-- //// itself, it would scroll away with the dishes. -->
 		<div class="relative flex flex-1 flex-col min-h-0" data-test="ticket-scroll-area">
-		<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="TICKET_FRAME.body" data-test="ticket-body"
-			@scroll.passive="onBodyScroll">
-			<div ref="linesEl">
-			<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
-				<!-- Batch separator (show for 2nd batch onwards) -->
-				<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1">
-					<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
-					<span class="text-[9px] font-bold text-orange-500 uppercase tracking-wider whitespace-nowrap">
-						{{ __('Send') }} {{ batchIdx + 1 }}
-					</span>
-					<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
-				</div>
-				<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
-					class="relative" data-ticket-line
-					:class="[
-						{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
-						item.kds_status === 'Delivered' ? 'opacity-40 line-through' : ''
-					]">
-					<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
-					<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
-					<div class="flex flex-col justify-center py-1.5 cursor-pointer rounded px-1 -mx-1 active:bg-gray-100 dark:active:bg-gray-700 transition-colors"
-						:class="TICKET_FRAME.line" data-test="ticket-line"
-						@click.stop="toggleItemMenu(item._globalIdx, $event)">
-						<!-- Item line: qty x name + item status badge -->
-						<div class="flex justify-between items-start gap-1">
-							<span class="text-gray-900 dark:text-gray-100">
-								<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+			<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="TICKET_FRAME.body" data-test="ticket-body"
+				@scroll.passive="onBodyScroll">
+				<div ref="linesEl">
+					<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
+						<!-- Batch separator (show for 2nd batch onwards) -->
+						<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1">
+							<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
+							<span class="text-[9px] font-bold text-orange-500 uppercase tracking-wider whitespace-nowrap">
+								{{ __('Send') }} {{ batchIdx + 1 }}
 							</span>
-							<span v-if="item.kds_status"
-								class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
-								:class="itemStatusClass(item.kds_status)">
-								{{ kitchenStatusLabel(item.kds_status) }}
-							</span>
+							<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
 						</div>
-						<!-- Modifiers -->
-						<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
-							class="text-xs text-gray-400 mt-0.5 pl-4">
-							→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
+						<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
+							class="relative" data-ticket-line
+							:class="[
+								{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
+								item.kds_status === 'Delivered' ? 'opacity-40 line-through' : ''
+							]">
+							<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
+							<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
+							<div class="flex flex-col justify-center py-1.5 cursor-pointer rounded px-1 -mx-1 active:bg-gray-100 dark:active:bg-gray-700 transition-colors"
+								:class="TICKET_FRAME.line" data-test="ticket-line"
+								@click.stop="toggleItemMenu(item, $event)">
+								<!-- Item line: qty x name + item status badge -->
+								<div class="flex justify-between items-start gap-1">
+									<span class="text-gray-900 dark:text-gray-100">
+										<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+									</span>
+									<span v-if="item.kds_status"
+										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
+										:class="itemStatusClass(item.kds_status)">
+										{{ kitchenStatusLabel(item.kds_status) }}
+									</span>
+								</div>
+								<!-- Modifiers -->
+								<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
+									class="text-xs text-gray-400 mt-0.5 pl-4">
+									→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
+								</div>
+								<!-- Special instructions -->
+								<div v-if="item.posa_special_instructions"
+									class="text-xs text-blue-500 mt-0.5 pl-4">
+									ℹ {{ item.posa_special_instructions }}
+								</div>
+								<!-- Station badge -->
+								<span v-if="showStationBadge && item.preparation_station"
+									class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block self-start"
+									:style="{ backgroundColor: getStationColor(item.preparation_station) }">
+									{{ item.station_name || item.preparation_station }}
+								</span>
+							</div>
+							<!-- Item context menu -->
+							<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
+							<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
+							<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
+							<div v-if="activeItemMenu === item._globalIdx" data-test="ticket-line-menu"
+								class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
+								:style="menuStyle">
+								<button v-if="item.kds_status !== 'Preparing'"
+									@click.stop="updateItemStatus(item, 'Preparing')"
+									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
+									<span class="w-2 h-2 rounded-full bg-blue-400"></span>
+									{{ __("Preparing") }}
+								</button>
+								<button v-if="item.kds_status !== 'Ready'"
+									@click.stop="updateItemStatus(item, 'Ready')"
+									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
+									<span class="w-2 h-2 rounded-full bg-green-500"></span>
+									{{ __("Ready") }}
+								</button>
+								<button v-if="item.kds_status !== 'Delivered'"
+									@click.stop="updateItemStatus(item, 'Delivered')"
+									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
+									<span class="w-2 h-2 rounded-full bg-gray-400"></span>
+									{{ __("Delivered") }}
+								</button>
+							</div>
 						</div>
-						<!-- Special instructions -->
-						<div v-if="item.posa_special_instructions"
-							class="text-xs text-blue-500 mt-0.5 pl-4">
-							ℹ {{ item.posa_special_instructions }}
+					</template>
+					<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
+					<div v-if="waitingItems.length > 0" class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
+						<h4 class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2 tracking-wider flex items-center gap-1">
+							<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+							{{ __("Coming Next") }}
+						</h4>
+						<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
+							class="py-1.5 opacity-50" data-ticket-line
+							:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+							<div class="flex justify-between items-start gap-1 px-1 -mx-1">
+								<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
+									<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+								</span>
+							</div>
+							<div v-if="item.posa_special_instructions"
+								class="text-xs text-blue-400 mt-0.5 pl-4">
+								{{ item.posa_special_instructions }}
+							</div>
 						</div>
-						<!-- Station badge -->
-						<span v-if="showStationBadge && item.preparation_station"
-							class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block self-start"
-							:style="{ backgroundColor: getStationColor(item.preparation_station) }">
-							{{ item.station_name || item.preparation_station }}
-						</span>
-					</div>
-					<!-- Item context menu -->
-					<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
-					<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
-					<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
-					<div v-if="activeItemMenu === item._globalIdx" data-test="ticket-line-menu"
-						class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
-						:style="menuStyle">
-						<button v-if="item.kds_status !== 'Preparing'"
-							@click.stop="updateItemStatus(item, 'Preparing')"
-							class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
-							<span class="w-2 h-2 rounded-full bg-blue-400"></span>
-							{{ __("Preparing") }}
-						</button>
-						<button v-if="item.kds_status !== 'Ready'"
-							@click.stop="updateItemStatus(item, 'Ready')"
-							class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
-							<span class="w-2 h-2 rounded-full bg-green-500"></span>
-							{{ __("Ready") }}
-						</button>
-						<button v-if="item.kds_status !== 'Delivered'"
-							@click.stop="updateItemStatus(item, 'Delivered')"
-							class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
-							<span class="w-2 h-2 rounded-full bg-gray-400"></span>
-							{{ __("Delivered") }}
-						</button>
-					</div>
-				</div>
-			</template>
-			<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
-			<div v-if="waitingItems.length > 0" class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
-				<h4 class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2 tracking-wider flex items-center gap-1">
-					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-					{{ __("Coming Next") }}
-				</h4>
-				<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
-					class="py-1.5 opacity-50" data-ticket-line
-					:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
-					<div class="flex justify-between items-start gap-1 px-1 -mx-1">
-						<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
-							<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
-						</span>
-					</div>
-					<div v-if="item.posa_special_instructions"
-						class="text-xs text-blue-400 mt-0.5 pl-4">
-						{{ item.posa_special_instructions }}
 					</div>
 				</div>
 			</div>
-			</div>
-		</div>
-		<!-- //// Neoffice — the hint that more dishes follow, over the foot of the dishes: a fade, and how many are out of -->
-		<!-- //// sight (task 23). It takes no touch: the dish under it can still be pressed. -->
-		<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
-			class="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-gray-800 dark:via-gray-800/80"></div>
-		<span v-if="hiddenCount > 0" data-test="ticket-more"
-			class="pointer-events-none absolute bottom-2 right-3 rounded-full bg-gray-800 px-2.5 py-1 text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
-			{{ __("+{0} lines", [hiddenCount]) }}
-		</span>
+			<!-- //// Neoffice — the hint that more dishes follow: a short fade over the foot of the dishes, and how many are out of -->
+			<!-- //// sight (task 23). The pill is wholly UNDER the line below the dishes, in room the foot keeps for it (8 px, only while -->
+			<!-- //// it shows): it used to cover the lower right of the dishes, where each dish carries its status, and straddling -->
+			<!-- //// the line still covered 8 badges out of 97 (fix round 1). It takes no touch. One line, or more: two words. -->
+			<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
+				class="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white to-transparent dark:from-gray-800"></div>
+			<span v-if="hiddenCount > 0" data-test="ticket-more"
+				class="pointer-events-none absolute top-full right-3 rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
+				{{ hiddenCount === 1 ? __("+{0} line", [1]) : __("+{0} lines", [hiddenCount]) }}
+			</span>
 		</div>
 
 		<!-- Action Button -->
-		<div class="flex-shrink-0 p-3 border-t border-gray-100 dark:border-gray-700" data-test="ticket-actions">
+		<!-- //// Neoffice — the main buttons are 40 px high on every width (fix round 1): `size="lg"` is the Button's own 40 px. The card -->
+		<!-- //// used to ask for `h-10` beside the Button's default `h-7`, and the later of the two in the stylesheet won: 28 px. -->
+		<div class="flex-shrink-0 p-3 border-t border-gray-100 dark:border-gray-700" :class="{ 'pt-5': hiddenCount > 0 }" data-test="ticket-actions">
 			<Button
-				v-if="order.kds_status === 'Pending'"
+				v-if="status === 'Pending'"
 				variant="solid"
-				class="w-full h-10 text-sm font-bold bg-blue-600 active:bg-blue-700 text-white"
+				size="lg"
+				class="w-full font-bold bg-blue-600 active:bg-blue-700 text-white"
 				@click="updateStatus('Preparing')"
 				:loading="loading"
 			>
@@ -180,9 +186,10 @@
 			</Button>
 
 			<Button
-				v-if="order.kds_status === 'Preparing'"
+				v-if="status === 'Preparing'"
 				variant="solid"
-				class="w-full h-10 text-sm font-bold bg-green-500 active:bg-green-600 text-white"
+				size="lg"
+				class="w-full font-bold bg-green-500 active:bg-green-600 text-white"
 				@click="updateStatus('Ready')"
 				:loading="loading"
 			>
@@ -190,9 +197,10 @@
 			</Button>
 
 			<Button
-				v-if="order.kds_status === 'Ready' && !showDeliveredConfirm"
+				v-if="status === 'Ready' && !showDeliveredConfirm"
 				variant="outline"
-				class="w-full h-10 text-sm font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
+				size="lg"
+				class="w-full font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
 				@click="updateStatus('Delivered')"
 				:loading="loading"
 			>
@@ -217,6 +225,7 @@ import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
+import { kitchenStatusOf } from "@/utils/kitchenBands"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
@@ -241,6 +250,20 @@ const props = defineProps({
 	showStationBadge: {
 		type: Boolean,
 		default: true,
+	},
+	//// Neoffice — the station the screen is opened on (a tablet at the bar, or the station chosen on the screen), none for
+	//// "all". The main button then acts on THAT station's dishes only: the server moves those and no others (task 23, fix
+	//// round 1, ruling 79). The dishes this card is given are that station's own, the server sends no others.
+	station: {
+		type: String,
+		default: null,
+	},
+	//// Neoffice — what to call once the server has answered (fix round 1). A press that moves the ticket to the other band
+	//// unmounts this card before the answer, and Vue drops the events of a component that is gone: the band hands over a
+	//// function, which still runs, and the screen reads the orders again at once instead of waiting for its 15 s poll.
+	refresh: {
+		type: Function,
+		default: null,
 	},
 })
 
@@ -275,27 +298,54 @@ const waitingItems = computed(() =>
 	(props.order.items || []).filter((i) => i.kds_status === "Waiting"),
 )
 
+//// Neoffice — the status the ticket shows, from the DISHES it shows (fix round 1, ruling 78). The order's own status is not
+//// it: `update_item_kds_status` leaves it alone until every dish is ready, so an order whose dishes are being cooked says
+//// "Pending" (with several stations, every day) and the ticket kept its yellow border, its PENDING badge and its Start
+//// button in the "in preparation" band. The same rule as the band's (utils/kitchenBands): none begun, Pending and Start;
+//// one begun, Preparing and Ready; all ready, Ready and Delivered.
+const status = computed(() => kitchenStatusOf(props.order))
+
+//// Neoffice — what to do once the server has answered (fix round 1): see the `refresh` prop
+function changed() {
+	if (props.refresh) props.refresh()
+	else emit("status-updated")
+}
+
 //// Neoffice — the status menu of a dish opens ON THE SCREEN, not inside the ticket (task 23). Upstream of this file's
 //// first version it hung under the dish (`absolute`); the dishes now scroll inside the ticket and the foot of the
-//// scrolling body would cut it. It is 160 px wide (w-40) and at most 140 px high (three 44 px buttons and 8 px of padding).
-const MENU_SIZE = { width: 160, height: 140 }
-const menuPosition = ref({ top: 0, left: 0 })
-const menuStyle = computed(() => ({
-	top: `${menuPosition.value.top}px`,
-	left: `${menuPosition.value.left}px`,
-}))
+//// scrolling body would cut it. It is 160 px wide (w-40); each button is 44 px high, and the menu has a button for every
+//// status the dish is not at (a dish being prepared has two, a dish waiting three), 10 px of padding and borders besides:
+//// the room it needs, and where it hangs from when it opens upward, are those of the menu it really is (fix round 1).
+const MENU_WIDTH = 160
+const MENU_BUTTON_HEIGHT = 44
+const MENU_FRAME_HEIGHT = 10
+const MENU_STATUSES = ["Preparing", "Ready", "Delivered"]
+const menuPosition = ref({ left: 0, top: 0 })
+const menuStyle = computed(() => {
+	const { left, top, bottom } = menuPosition.value
+	return {
+		left: `${left}px`,
+		...(top !== undefined ? { top: `${top}px` } : { bottom: `${bottom}px` }),
+	}
+})
 
-function toggleItemMenu(idx, event) {
+function toggleItemMenu(item, event) {
+	const idx = item._globalIdx
 	if (activeItemMenu.value === idx) {
 		activeItemMenu.value = null
 		return
 	}
 	const anchor = event?.currentTarget?.getBoundingClientRect?.()
 	if (anchor) {
-		menuPosition.value = placeMenu(anchor, MENU_SIZE, {
-			width: window.innerWidth,
-			height: window.innerHeight,
-		})
+		const buttons = MENU_STATUSES.filter((s) => s !== item.kds_status).length
+		menuPosition.value = placeMenu(
+			anchor,
+			{
+				width: MENU_WIDTH,
+				height: buttons * MENU_BUTTON_HEIGHT + MENU_FRAME_HEIGHT,
+			},
+			{ width: window.innerWidth, height: window.innerHeight },
+		)
 	}
 	activeItemMenu.value = idx
 }
@@ -344,7 +394,7 @@ async function updateItemStatus(item, newStatus) {
 			item_code: item.item_code,
 			status: newStatus,
 		})
-		emit("status-updated")
+		changed()
 	} catch (error) {
 		// Rollback on error
 		let idx = 0
@@ -419,7 +469,7 @@ const elapsedMinutes = lastActionMinutes
 
 // Timer color: red+pulse >15min, orange >10min, green if ready
 const timeColorClass = computed(() => {
-	if (props.order.kds_status === "Ready") return "text-green-600"
+	if (status.value === "Ready") return "text-green-600"
 	if (elapsedMinutes.value > 15) return "text-red-600 animate-pulse"
 	if (elapsedMinutes.value > 10) return "text-orange-500"
 	return "text-gray-800 dark:text-gray-200"
@@ -427,7 +477,7 @@ const timeColorClass = computed(() => {
 
 // Left border color based on order status
 const borderColorClass = computed(() => {
-	switch (props.order.kds_status) {
+	switch (status.value) {
 		case "Pending":
 			return "border-yellow-400"
 		case "Preparing":
@@ -441,7 +491,7 @@ const borderColorClass = computed(() => {
 
 // Status badge styling for the order header
 const statusBadgeClass = computed(() => {
-	switch (props.order.kds_status) {
+	switch (status.value) {
 		case "Pending":
 			return "bg-yellow-200 text-yellow-800"
 		case "Preparing":
@@ -501,20 +551,48 @@ async function confirmDelivered() {
 	await doUpdateStatus("Delivered")
 }
 
+//// Neoffice — the statuses a dish goes through, in order (as the server ranks them)
+const RANK = { Pending: 0, Preparing: 1, Ready: 2, Delivered: 3 }
+
+//// Neoffice — what the server does to the dishes when a status is pressed, done here at once (fix round 1): never backward,
+//// and a dish held back (Waiting) is not the cook's to advance. The ticket's look follows its dishes, so this is what
+//// turns Start into Ready under the finger; and it moves the ticket to the other band without waiting for a round trip.
+function advanceDishes(newStatus) {
+	const rank = RANK[newStatus] ?? 0
+	for (const dish of props.order.items || []) {
+		if (
+			dish.kds_status &&
+			dish.kds_status !== "Waiting" &&
+			(RANK[dish.kds_status] ?? 0) < rank
+		)
+			dish.kds_status = newStatus
+	}
+}
+
 async function doUpdateStatus(newStatus) {
 	loading.value = true
-	const oldStatus = props.order.kds_status
-	// Optimistic: update instantly
-	props.order.kds_status = newStatus
+	// Optimistic: update instantly, and put back what was there if the server refuses
+	const before = {
+		order: props.order.kds_status,
+		dishes: (props.order.items || []).map((dish) => dish.kds_status),
+	}
+	advanceDishes(newStatus)
+	// With every station the server gives the order the status asked. With a station it makes the order follow its dishes,
+	// those of every station, which this screen does not see: the order is left to the server, the look follows the dishes
+	if (!props.station) props.order.kds_status = newStatus
 	try {
 		await call("pos_next.api.restaurant.update_kds_status", {
 			invoice_name: props.order.name,
 			status: newStatus,
+			...(props.station ? { station: props.station } : {}),
 		})
-		emit("status-updated")
+		changed()
 	} catch (error) {
 		// Rollback on error
-		props.order.kds_status = oldStatus
+		;(props.order.items || []).forEach((dish, index) => {
+			dish.kds_status = before.dishes[index]
+		})
+		props.order.kds_status = before.order
 		showError(__("Failed to update KDS order status."))
 	} finally {
 		loading.value = false

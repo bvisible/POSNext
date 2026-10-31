@@ -8,6 +8,8 @@ export const BAND_PRODUCTION = "production"
 
 // A dish a cook has begun on and that has not left the kitchen: it makes its ticket "in preparation".
 const BEGUN = new Set(["Preparing", "Ready"])
+// A dish sent to the kitchen and not yet delivered: the dishes the ticket is about
+const LIVE = new Set(["Pending", "Preparing", "Ready"])
 
 const DATETIME =
 	/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/
@@ -68,31 +70,63 @@ export function arrivalOf(order) {
 }
 
 /**
- * The band an order belongs to, null when it is gone from the screen (delivered).
+ * The status a ticket shows: Pending, Preparing, Ready or Delivered, from the DISHES the screen shows.
  *
- * - WAITING: no dish has begun. Every dish sent is still Pending (or held back, Waiting).
- * - PRODUCTION: at least one dish is Preparing or Ready and the order is not delivered yet. An order whose dishes are all
- *   Ready stays here, with its ready look, until it is delivered.
- * - null: delivered, the order says so or all of its dishes do.
+ * The order's own status cannot be the one: `update_item_kds_status` leaves it alone until every dish is ready, so an
+ * order whose dishes are being cooked says "Pending" (with several stations, every day). The look of a ticket (its border,
+ * its badge, its main button) and the band it is drawn in follow its dishes, and with a station chosen the dishes shown are
+ * that station's own (the server sends no others). One rule, here, for both:
+ *
+ * - Pending: no dish is begun. Every dish sent is still Pending (a dish held back, Waiting, is not on the ticket to cook).
+ * - Preparing: at least one dish is Preparing or Ready, and not all are Ready.
+ * - Ready: every dish sent is Ready.
+ * - Delivered: the order says so, or every dish does.
  *
  * A Delivered dish is finished business and says nothing about the dishes still to cook: a table whose starters are
- * delivered and whose mains have just been sent is WAITING, not in preparation. (The tickets keep the delivered dishes,
+ * delivered and whose mains have just been sent is Pending, not in preparation. (The tickets keep the delivered dishes,
  * struck through, for the whole meal.)
  *
- * What the server sent and says nothing about (no dish, a dish with no status) stays WAITING: the screen never hides a
+ * What the server sent and says nothing about (no dish, a dish with no status) is Pending: the screen never hides a
  * ticket it was given without a reason.
+ *
+ * @param {object} order - An order of `get_kds_orders`
+ * @returns {"Pending"|"Preparing"|"Ready"|"Delivered"}
+ */
+export function kitchenStatusOf(order) {
+	if (order?.kds_status === "Delivered") return "Delivered"
+	const lines = order?.items || []
+	const live = lines.filter((line) => LIVE.has(line?.kds_status))
+	if (!live.length)
+		return lines.some((line) => line?.kds_status === "Delivered")
+			? "Delivered"
+			: "Pending"
+	if (!live.some((line) => BEGUN.has(line.kds_status))) return "Pending"
+	return live.every((line) => line.kds_status === "Ready")
+		? "Ready"
+		: "Preparing"
+}
+
+/**
+ * The band an order belongs to, null when it is gone from the screen (delivered): the band of the status it shows.
+ *
+ * - WAITING: Pending, no dish has begun.
+ * - PRODUCTION: Preparing or Ready. An order whose dishes are all Ready stays here, with its ready look, until it is
+ *   delivered.
+ * - null: Delivered.
  *
  * @param {object} order - An order of `get_kds_orders`
  * @returns {"waiting"|"production"|null}
  */
 export function bandOf(order) {
-	if (order?.kds_status === "Delivered") return null
-	const lines = order?.items || []
-	if (lines.some((line) => BEGUN.has(line?.kds_status))) return BAND_PRODUCTION
-	const delivered = lines.some((line) => line?.kds_status === "Delivered")
-	const sent = lines.some((line) => line?.kds_status === "Pending")
-	if (delivered && !sent) return null
-	return BAND_WAITING
+	switch (kitchenStatusOf(order)) {
+		case "Pending":
+			return BAND_WAITING
+		case "Preparing":
+		case "Ready":
+			return BAND_PRODUCTION
+		default:
+			return null
+	}
 }
 
 function byArrival(a, b) {
@@ -113,19 +147,22 @@ function byArrival(a, b) {
  * a status pressed) and the screen has to see it.
  *
  * @param {object[]} orders
- * @param {{ includeDelivered?: boolean }} [options] - Bring the delivered orders back, in the band of what was started
+ * @param {{ includeDelivered?: boolean }} [options] - Bring the delivered orders back, at the end of the production band,
+ *   after the ones in hand (they are not part of the work: the screen dims them and does not count them)
  * @returns {{ waiting: object[], production: object[] }}
  */
 export function splitIntoBands(orders, { includeDelivered = false } = {}) {
 	const waiting = []
 	const production = []
+	const delivered = []
 	for (const order of orders || []) {
-		const band = bandOf(order) ?? (includeDelivered ? BAND_PRODUCTION : null)
+		const band = bandOf(order)
 		if (band === BAND_WAITING) waiting.push(order)
 		else if (band === BAND_PRODUCTION) production.push(order)
+		else if (includeDelivered) delivered.push(order)
 	}
 	return {
 		waiting: waiting.sort(byArrival),
-		production: production.sort(byArrival),
+		production: [...production.sort(byArrival), ...delivered.sort(byArrival)],
 	}
 }

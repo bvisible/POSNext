@@ -16,7 +16,7 @@
 		<header class="flex flex-shrink-0 items-center justify-between gap-2 px-1 pb-1">
 			<h2 :id="headerId" data-test="band-header" class="text-lg font-bold text-gray-900 dark:text-white">
 				{{ label }}
-				<span data-test="band-count" class="font-medium text-gray-500 dark:text-gray-400">({{ orders.length }})</span>
+				<span data-test="band-count" class="font-medium text-gray-500 dark:text-gray-400">({{ aliveCount }})</span>
 			</h2>
 			<!-- The tickets scrolled past are counted here, in the header, in either layout: a cook who has swiped away from the -->
 			<!-- oldest tickets must be told so. A lane scrolls sideways, so the ones still to come are counted here too, at its -->
@@ -46,13 +46,16 @@
 					v-for="order in orders"
 					:key="order.name"
 					data-test="ticket-cell"
-					:class="cellClass"
+					:class="[cellClass, isDelivered(order) ? 'opacity-60' : '']"
 				>
+					<!-- //// Neoffice — the card gets a function, not an event to emit: a press that moves its ticket to the other band
+					     //// unmounts it before the server answers, and Vue drops the events of a component that is gone (fix round 1) -->
 					<KDSOrderCard
 						:order="order"
 						:stations="stations"
 						:show-station-badge="showStationBadge"
-						@status-updated="emit('status-updated')"
+						:station="station"
+						:refresh="refresh"
 					/>
 				</div>
 			</div>
@@ -74,6 +77,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
+import { kitchenStatusOf } from "@/utils/kitchenBands"
 import {
 	BAND_PRODUCTION_HEIGHT,
 	BAND_WAITING_HEIGHT,
@@ -102,8 +106,19 @@ const props = defineProps({
 	orders: { type: Array, default: () => [] },
 	stations: { type: Array, default: () => [] },
 	showStationBadge: { type: Boolean, default: true },
+	// The station the screen is opened on, none for all of them: the main button of a ticket then acts on that station's dishes
+	station: { type: String, default: null },
 })
 const emit = defineEmits(["status-updated"])
+
+// What each card calls once the server has answered (a function of the band, which is still there when the card is not)
+const refresh = () => emit("status-updated")
+
+// The delivered tickets "Show completed" brings in come after the ones in hand: they are shown dimmed and are not counted
+const isDelivered = (order) => kitchenStatusOf(order) === "Delivered"
+const aliveCount = computed(
+	() => props.orders.filter((order) => !isDelivered(order)).length,
+)
 
 const headerId = computed(() => `band-${props.band}-title`)
 const isWaiting = computed(() => props.band === "waiting")

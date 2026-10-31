@@ -9,6 +9,7 @@ import {
 	BAND_WAITING,
 	arrivalOf,
 	bandOf,
+	kitchenStatusOf,
 	splitIntoBands,
 } from "../kitchenBands"
 
@@ -31,6 +32,88 @@ function order(lines, extra = {}) {
 		...extra,
 	}
 }
+
+describe("the status a ticket shows, from the dishes it shows (fix round 1, ruling 78)", () => {
+	// `update_item_kds_status` leaves the order's own status alone until EVERY dish is ready: with several stations that is
+	// the everyday state of an order whose dishes are being cooked, so the order's status says "Pending" while a dish is
+	// "Preparing". The look of a ticket (its border, its badge, its main button) follows the dishes the screen shows.
+
+	it("is Pending while no dish shown is begun, whatever the order says", () => {
+		expect(kitchenStatusOf(order(["Pending", "Pending"]))).toBe("Pending")
+		expect(
+			kitchenStatusOf(
+				order(["Pending", "Pending"], { kds_status: "Preparing" }),
+			),
+		).toBe("Pending")
+		expect(kitchenStatusOf(order(["Waiting", "Pending"]))).toBe("Pending")
+	})
+
+	it("is Preparing as soon as a dish is begun, the order's own status still Pending: the data as the server leaves it", () => {
+		const real = order(["Preparing", "Pending"], { kds_status: "Pending" })
+		expect(kitchenStatusOf(real)).toBe("Preparing")
+		expect(kitchenStatusOf(order(["Ready", "Pending"]))).toBe("Preparing")
+		expect(kitchenStatusOf(order(["Ready", "Preparing"]))).toBe("Preparing")
+	})
+
+	it("is Ready when every dish shown is ready, the order's own status still Preparing", () => {
+		expect(
+			kitchenStatusOf(order(["Ready", "Ready"], { kds_status: "Preparing" })),
+		).toBe("Ready")
+		// A dish held back is not on the ticket to cook: it does not keep the others from being ready
+		expect(kitchenStatusOf(order(["Ready", "Waiting"]))).toBe("Ready")
+	})
+
+	it("ignores a delivered dish, as the band does: a second round is Pending, a ready one among delivered is Ready", () => {
+		expect(kitchenStatusOf(order(["Delivered", "Pending"]))).toBe("Pending")
+		expect(kitchenStatusOf(order(["Delivered", "Preparing"]))).toBe("Preparing")
+		expect(kitchenStatusOf(order(["Delivered", "Ready"]))).toBe("Ready")
+	})
+
+	it("is Delivered when the order says so or every dish does", () => {
+		expect(
+			kitchenStatusOf(order(["Pending"], { kds_status: "Delivered" })),
+		).toBe("Delivered")
+		expect(kitchenStatusOf(order(["Delivered", "Delivered"]))).toBe("Delivered")
+		expect(kitchenStatusOf(order(["Delivered", "Waiting"]))).toBe("Delivered")
+	})
+
+	it("is Pending for what says nothing: no dish, or dishes with no status", () => {
+		expect(kitchenStatusOf(order([]))).toBe("Pending")
+		expect(kitchenStatusOf(order([undefined, null, ""]))).toBe("Pending")
+		expect(kitchenStatusOf({ name: "X" })).toBe("Pending")
+	})
+
+	it("is the rule of the band, whatever the dishes: waiting, in preparation or gone", () => {
+		const STATUSES = [
+			"Waiting",
+			"Pending",
+			"Preparing",
+			"Ready",
+			"Delivered",
+			"",
+		]
+		const bandOfStatus = {
+			Pending: BAND_WAITING,
+			Preparing: BAND_PRODUCTION,
+			Ready: BAND_PRODUCTION,
+			Delivered: null,
+		}
+		let checked = 0
+		for (const a of STATUSES) {
+			for (const b of STATUSES) {
+				for (const c of [...STATUSES, undefined]) {
+					const lines = c === undefined ? [a, b] : [a, b, c]
+					const ticket = order(lines)
+					expect(bandOf(ticket), lines.join("/")).toBe(
+						bandOfStatus[kitchenStatusOf(ticket)],
+					)
+					checked += 1
+				}
+			}
+		}
+		expect(checked).toBe(6 * 6 * 7)
+	})
+})
 
 describe("the band of a ticket", () => {
 	it("is WAITING when no line has started: every line is sent and none is begun", () => {
@@ -199,25 +282,32 @@ describe("splitting the tickets into the two bands", () => {
 		expect(names([earlyA, late, earlyB])).toEqual(["A", "B", "C"])
 	})
 
-	it("drops the delivered tickets, and brings them back in the band of what was started when asked to", () => {
+	it("drops the delivered tickets, and brings them back AFTER the ones in preparation when asked to, apart from them", () => {
+		// The delivered ones are older than the live one: by arrival they would come first. They are not part of the work
+		// in hand, so they come after it, oldest first among themselves
 		const done = order(["Delivered"], {
 			name: "DONE",
 			kds_status: "Delivered",
-			modified: "2026-10-30 12:30:00",
+			modified: "2026-10-30 11:00:00",
+		})
+		const doneToo = order(["Delivered"], {
+			name: "DONE-TOO",
+			kds_status: "Delivered",
+			modified: "2026-10-30 11:30:00",
 		})
 		const live = order(["Preparing"], {
 			name: "LIVE",
 			modified: "2026-10-30 12:00:00",
 		})
 
-		expect(splitIntoBands([done, live]).production.map((o) => o.name)).toEqual([
-			"LIVE",
-		])
 		expect(
-			splitIntoBands([done, live], { includeDelivered: true }).production.map(
-				(o) => o.name,
-			),
-		).toEqual(["LIVE", "DONE"])
+			splitIntoBands([doneToo, done, live]).production.map((o) => o.name),
+		).toEqual(["LIVE"])
+		expect(
+			splitIntoBands([doneToo, done, live], {
+				includeDelivered: true,
+			}).production.map((o) => o.name),
+		).toEqual(["LIVE", "DONE", "DONE-TOO"])
 	})
 
 	it("returns the very orders it was given, not copies: the ticket's own optimistic updates stay seen by the screen", () => {

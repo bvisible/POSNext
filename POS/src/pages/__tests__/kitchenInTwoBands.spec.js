@@ -155,16 +155,19 @@ function installScreen({ portrait = false, wide = true } = {}) {
 }
 
 const Ticket = {
-	props: ["order"],
+	props: ["order", "station"],
 	template:
-		'<div class="ticket" :data-name="order.name">{{ order.name }}</div>',
+		'<div class="ticket" :data-name="order.name" :data-station="station || \'\'">{{ order.name }}</div>',
 }
 
 let opened = []
-async function open(search = "") {
+async function open(search = "", { realCards = false } = {}) {
 	window.history.replaceState({}, "", `/pos/kds${search}`)
 	const wrapper = mount(KDS, {
-		global: { stubs: { KDSOrderCard: Ticket }, mocks: { __: globalThis.__ } },
+		global: {
+			stubs: realCards ? {} : { KDSOrderCard: Ticket },
+			mocks: { __: globalThis.__ },
+		},
 	})
 	opened.push(wrapper)
 	await flushPromises()
@@ -309,9 +312,9 @@ describe("the two bands of the kitchen screen", () => {
 		expect(headerOf(wrapper, "production")).toMatch(/^Preparing/)
 	})
 
-	it("show the ticket of a delivered order, in the band of what was begun, only when asked to show what is completed", async () => {
+	it("show the delivered tickets only when asked to show what is completed, after the ones in preparation, dimmed, and not counted", async () => {
 		ORDERS = [
-			order("LIVE", { lines: ["Preparing"], at: 1 }),
+			order("LIVE", { lines: ["Preparing"], at: 10 }),
 			order("DONE", { lines: ["Delivered"], at: 2, kds_status: "Delivered" }),
 		]
 		const wrapper = await open()
@@ -319,8 +322,28 @@ describe("the two bands of the kitchen screen", () => {
 
 		await wrapper.get('input[type="checkbox"]').setValue(true)
 
+		// DONE is the older of the two: it still comes after the ticket in hand
 		expect(namesIn(wrapper, "production")).toEqual(["LIVE", "DONE"])
-		expect(headerOf(wrapper, "production")).toBe("Preparing (2)")
+		expect(headerOf(wrapper, "production")).toBe("Preparing (1)")
+		const done = wrapper.get('[data-test="band-production"] [data-name="DONE"]')
+		expect(
+			done.element.closest('[data-test="ticket-cell"]').classList,
+		).toContain("opacity-60")
+	})
+})
+
+describe("the screen's height", () => {
+	it("is the dynamic viewport height, the plain one standing by for a browser that does not know it: the foot never sits under a toolbar", async () => {
+		const wrapper = await open()
+
+		// The page's root is preceded by the file's own header comments: the first element is the root
+		const classes = wrapper.find("div").classes()
+		expect(classes).toContain("h-screen")
+		// Not a bare `h-dvh` beside `h-screen`: Tailwind writes `.h-dvh` BEFORE `.h-screen` in the stylesheet (measured in a
+		// browser), so `h-screen` would win everywhere and dvh would never apply. A variant is written after the plain
+		// utilities, and only where the browser knows the unit
+		expect(classes).toContain("supports-[height:100dvh]:h-dvh")
+		expect(classes).not.toContain("h-dvh")
 	})
 })
 
@@ -390,6 +413,22 @@ describe("the filters on the two bands", () => {
 		).toBe("No orders in preparation")
 	})
 
+	it("hand the station chosen to every ticket, none with every station: the main button then acts on that station's dishes", async () => {
+		const wrapper = await open()
+		const stationsOf = () => [
+			...new Set(
+				wrapper.findAll(".ticket").map((el) => el.attributes("data-station")),
+			),
+		]
+		expect(stationsOf()).toEqual([""])
+
+		await choose(wrapper, "stations", "Bar")
+		expect(stationsOf()).toEqual(["bar"])
+
+		await choose(wrapper, "stations", "Bar")
+		expect(stationsOf()).toEqual([""])
+	})
+
 	it("count the active orders of the room in the page header, the two bands together", async () => {
 		const wrapper = await open()
 		await choose(wrapper, "rooms", "Room 1")
@@ -446,6 +485,68 @@ describe("a ticket on its way from one band to the other", () => {
 		expect(namesIn(wrapper, "waiting")).toEqual([])
 		expect(namesIn(wrapper, "production")).toEqual(["T1"])
 		window.frappe = undefined
+	})
+})
+
+describe("a ticket on its way from one band to the other, with the real cards (fix round 1)", () => {
+	const reads = () => call.mock.calls.filter(([m]) => m === KDS_ORDERS).length
+	const titlesIn = (wrapper, band) =>
+		wrapper
+			.findAll(`[data-test="band-${band}"] [data-test="ticket-title"]`)
+			.map((title) => title.text())
+
+	it("reads the orders again as soon as the server has answered a press that moved the ticket: it does not wait for the 15 s poll", async () => {
+		// Pressing Start turns every dish of the ticket into "Preparing", so the ticket is drawn in the other band at once and
+		// its card is unmounted before the answer: the events of a component that is gone are dropped, and the screen waited
+		// for its poll
+		ORDERS = [order("T1", { at: 1 }), order("T2", { at: 2 })]
+		const wrapper = await open("", { realCards: true })
+		expect(titlesIn(wrapper, "waiting")).toEqual(["T-T1", "T-T2"])
+		const before = reads()
+		const serveAsBefore = call.getMockImplementation()
+		call.mockImplementation(async (method, params = {}) => {
+			if (method === "pos_next.api.restaurant.update_kds_status") {
+				// The server: the dishes of the order are being prepared
+				ORDERS = [
+					order("T1", { at: 1, lines: ["Preparing"] }),
+					order("T2", { at: 2 }),
+				]
+				return { status: "success" }
+			}
+			return serveAsBefore(method, params)
+		})
+
+		await wrapper
+			.get('[data-test="band-waiting"] [data-test="ticket-actions"] button')
+			.trigger("click")
+		await flushPromises()
+
+		expect(titlesIn(wrapper, "waiting")).toEqual(["T-T2"])
+		expect(titlesIn(wrapper, "production")).toEqual(["T-T1"])
+		expect(reads()).toBeGreaterThan(before)
+	})
+
+	it("shows the ticket that moved with the look of its new band at once: the preparation badge and Ready, not the yellow border and Start", async () => {
+		ORDERS = [order("T1", { at: 1 })]
+		const wrapper = await open("", { realCards: true })
+		// The server never answers: what is seen is what the screen drew by itself
+		call.mockImplementation((method) =>
+			method === "pos_next.api.restaurant.update_kds_status"
+				? new Promise(() => {})
+				: Promise.resolve([]),
+		)
+
+		await wrapper
+			.get('[data-test="band-waiting"] [data-test="ticket-actions"] button')
+			.trigger("click")
+
+		const card = wrapper.get(
+			'[data-test="band-production"] [data-test="ticket"]',
+		)
+		expect(card.classes()).toContain("border-blue-400")
+		expect(card.classes()).not.toContain("border-yellow-400")
+		expect(card.get('[data-test="ticket-status"]').text()).toBe("Preparing")
+		expect(card.get('[data-test="ticket-actions"] button').text()).toBe("Ready")
 	})
 })
 

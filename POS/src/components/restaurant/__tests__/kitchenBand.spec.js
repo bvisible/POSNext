@@ -39,11 +39,11 @@ const {
 
 const tokens = (classes) => classes.split(/\s+/).filter(Boolean)
 
+// A card, as the band sees it: what it is handed, and the function it calls once the server has answered
 const Ticket = {
-	props: ["order", "stations", "showStationBadge"],
-	emits: ["status-updated"],
+	props: ["order", "stations", "showStationBadge", "station", "refresh"],
 	template:
-		'<div class="ticket" :data-name="order.name" @click="$emit(\'status-updated\')">{{ order.name }}</div>',
+		'<div class="ticket" :data-name="order.name" @click="refresh && refresh()">{{ order.name }}</div>',
 }
 
 const orders = (count, prefix = "SINV") =>
@@ -241,6 +241,48 @@ describe("a band as a lane (bands one above the other)", () => {
 
 		await cards[1].trigger("click")
 		expect(wrapper.emitted("status-updated")).toHaveLength(1)
+	})
+
+	it("hands each card a function to call once the server has answered, one that still works when the card is gone", async () => {
+		// A press that moves a ticket to the other band unmounts its card before the answer comes; the band stays. The
+		// card cannot emit then (Vue drops the events of a component that is gone): it calls what the band gave it
+		const wrapper = show({ mode: "lane", orders: orders(2) })
+		const [first] = wrapper.findAllComponents(Ticket)
+		const refresh = first.props("refresh")
+		expect(typeof refresh).toBe("function")
+
+		await wrapper.setProps({ orders: orders(2).slice(1) })
+		refresh()
+
+		expect(wrapper.emitted("status-updated")).toHaveLength(1)
+	})
+
+	it("hands each card the station chosen, none with every station", () => {
+		const every = show({ mode: "lane", orders: orders(1) })
+		expect(every.findComponent(Ticket).props("station")).toBe(null)
+
+		const bar = show({ mode: "lane", orders: orders(1), station: "bar" })
+		expect(bar.findComponent(Ticket).props("station")).toBe("bar")
+	})
+
+	it("counts only the tickets that are alive in its header, and shows the delivered ones after them, dimmed", () => {
+		// "Show completed" brings the delivered tickets in: they are not work in hand, the count does not say they are
+		const live = orders(2, "LIVE")
+		const done = [
+			{ name: "DONE-1", kds_status: "Delivered", items: [] },
+			{ name: "DONE-2", kds_status: "Delivered", items: [] },
+		]
+		const wrapper = show({ band: "production", orders: [...live, ...done] })
+
+		expect(text(wrapper, '[data-test="band-count"]')).toBe("(2)")
+		expect(shown(wrapper)).toEqual(["LIVE-1", "LIVE-2", "DONE-1", "DONE-2"])
+		const cells = wrapper.findAll('[data-test="ticket-cell"]')
+		expect(cells.map((c) => c.classes().includes("opacity-60"))).toEqual([
+			false,
+			false,
+			true,
+			true,
+		])
 	})
 
 	describe("the tickets out of sight", () => {

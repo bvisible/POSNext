@@ -7,7 +7,11 @@
 	<!-- //// 2026-03-22 made it a grid; f3e620c2 / db5f4ead / 97cf5339 2026-03-22 fixed -->
 	<!-- //// the per-item status and the socket — it rides window.frappe.realtime rather -->
 	<!-- //// than opening its own namespace, which failed with "Invalid namespace"). -->
-	<div class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
+	<!-- //// Neoffice — the dynamic viewport height, the height the browser really leaves, so that the foot of the screen never -->
+	<!-- //// sits under a tablet browser's toolbar (fix round 1, ruling 72). `h-screen` is the fallback of a browser that does not -->
+	<!-- //// know the unit. Not a bare `h-dvh` beside it: Tailwind writes `.h-dvh` BEFORE `.h-screen` in the stylesheet (measured -->
+	<!-- //// in a browser), so `h-screen` would win everywhere; a `supports-` variant is written after the plain utilities. -->
+	<div class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900">
 		<!-- Header -->
 		<header class="bg-white dark:bg-gray-800 shadow-sm z-10 p-4 flex justify-between items-center">
 			<div>
@@ -63,6 +67,7 @@
 					:orders="bands.waiting"
 					:stations="stations"
 					:show-station-badge="!selectedStation"
+					:station="selectedStation"
 					@status-updated="loadOrders"
 				/>
 				<KitchenBand
@@ -73,6 +78,7 @@
 					:orders="bands.production"
 					:stations="stations"
 					:show-station-badge="!selectedStation"
+					:station="selectedStation"
 					@status-updated="loadOrders"
 				/>
 			</div>
