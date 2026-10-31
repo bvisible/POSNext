@@ -77,8 +77,11 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
   default restaurant. The cards and menus keep their names (`field:card_name`, `field:menu_name`), so a card name is
   still unique on the whole site. Since NeoRestau lot 1, task 16: `restaurant_device` (a kitchen's or runner's
   tablet: the binding of its own device account, a portal account with no role, to one restaurant and one screen)
-  and `restaurant_device_pairing` (the one-time codes that pair a tablet by a QR code shown at the till, kept as
-  their SHA-256 hash only); `hooks.py` lists both in `ignore_links_on_delete` (see `pos_next.restaurant.devices`).
+  and `restaurant_device_pairing` (the one-time tokens that pair a tablet by a QR code shown at the till, kept as
+  their SHA-256 hash only); `hooks.py` lists both in `ignore_links_on_delete`, removes a deleted restaurant's tablets
+  (`Restaurant` `after_delete`), guards the User and OAuth Bearer Token of a tablet's account, refuses its sign-in by
+  any other path (`on_login`) and confines its session to its screens (`auth_hooks`) (see
+  `pos_next.restaurant.devices`).
 - **Preparation / KDS** (`831857f`, `4df0caf` and follow-ups): `preparation_station`,
   `preparation_station_item`, `preparation_station_item_group`, `preparation_workflow`,
   `preparation_workflow_item`, `preparation_workflow_step`.
@@ -274,8 +277,8 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/restaurant_area/restaurant_area.json` | 7: `restaurant`, `area_name`, `description`, `sort_order`, `floor_plan_section`, `floor_plan_walls`, `floor_plan_bg` |
 | `pos_next/pos_next/doctype/restaurant_card/restaurant_card.json` | 15: `section_break_details`, `restaurant`, `card_name`, `description`, `column_break_2`, `image`, `is_active`, `is_permanent`, `is_guest_menu`, `section_break_dates`, `available_from`, `column_break_3`, `available_to`, `section_break_items`, `items` |
 | `pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json` | 7: `item_type`, `label`, `item`, `menu`, `price`, `sort_order`, `disabled` |
-| `pos_next/pos_next/doctype/restaurant_device/restaurant_device.json` | 10: `device_name`, `restaurant`, `screen`, `station`, `column_break_account`, `user`, `paired_by`, `paired_at`, `last_seen`, `disconnected` |
-| `pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json` | 9: `code_hash`, `restaurant`, `screen`, `station`, `device_name`, `column_break_use`, `expires_at`, `used_at`, `device` |
+| `pos_next/pos_next/doctype/restaurant_device/restaurant_device.json` | 12: `device_name`, `restaurant`, `screen`, `station`, `device_key`, `column_break_account`, `user`, `paired_by`, `paired_at`, `last_seen`, `disconnected`, `disconnected_at` |
+| `pos_next/pos_next/doctype/restaurant_device_pairing/restaurant_device_pairing.json` | 9: `token_hash`, `restaurant`, `screen`, `station`, `device_name`, `column_break_use`, `expires_at`, `used_at`, `device` |
 | `pos_next/pos_next/doctype/restaurant_menu/restaurant_menu.json` | 10: `restaurant`, `menu_name`, `price`, `description`, `image`, `is_active`, `available_from`, `available_to`, `section_break_courses`, `courses` |
 | `pos_next/pos_next/doctype/restaurant_menu_course/restaurant_menu_course.json` | 4: `course_name`, `item`, `item_name`, `sort_order` |
 | `pos_next/pos_next/doctype/restaurant_opening_hours/restaurant_opening_hours.json` | 5: `day_of_week`, `from_time`, `to_time`, `label`, `restaurant_card` |

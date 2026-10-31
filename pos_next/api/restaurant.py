@@ -391,12 +391,14 @@ def update_kds_status(invoice_name, status, station=None):
 	been begun. An order is cooked at several stations: the Bar's "Ready" must not tell the runner that the
 	Kitchen's plates are.
 
-	The kitchen's tablet sets it on an open order of its restaurant (pos_next.restaurant.devices); on a tablet of one
-	station, as on a kitchen screen filtered by station, the order's buttons act on the whole order.
+	The kitchen's tablet sets one of the kitchen's states (devices.KDS_STATES) on an open order of its restaurant
+	(pos_next.restaurant.devices); on a tablet of one station, as on a kitchen screen filtered by station, the order's
+	buttons act on the whole order.
 	"""
 	device = devices.screen_device(devices.KITCHEN)
 	if device:
 		devices.require_order_of_device(device, invoice_name)
+		devices.require_kds_state(status)
 	elif not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -811,12 +813,13 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 def update_item_kds_status(invoice_name, item_code, status):
 	"""Update the KDS status of a specific item in a sales invoice.
 
-	The kitchen's tablet sets it on an open order of its restaurant, and a tablet of one station on the lines of its
-	station only (pos_next.restaurant.devices).
+	The kitchen's tablet sets one of the kitchen's states (devices.KDS_STATES) on an open order of its restaurant, and a
+	tablet of one station on the lines of its station only (pos_next.restaurant.devices).
 	"""
 	device = devices.screen_device(devices.KITCHEN)
 	if device:
 		devices.require_order_of_device(device, invoice_name)
+		devices.require_kds_state(status)
 	elif not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 

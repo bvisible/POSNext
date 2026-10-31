@@ -17,7 +17,7 @@ vi.mock("@/utils/tabletSession", () => ({ openPage }))
 const { default: PairDevice } = await import("../PairDevice.vue")
 
 const REDEEM = "/api/method/pos_next.api.restaurant_devices.redeem_pairing_code"
-const CODE = `Zx3_kQ-9${"a".repeat(35)}`
+const TOKEN = `Zx3_kQ-9${"a".repeat(35)}`
 const SCREEN = "/pos/kds?restaurant=The+Bistro&station=st-1"
 
 function answer(status, body) {
@@ -61,35 +61,36 @@ afterEach(() => {
 })
 
 describe("the page a tablet opens by scanning the code", () => {
-	it("posts the code and goes to the tablet's screen", async () => {
+	it("posts the token and goes to the tablet's screen", async () => {
 		fetchMock.mockResolvedValue(answer(200, { message: { redirect: SCREEN } }))
 
-		visit(`/pos/pair#${CODE}`)
+		visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 		const [url, request] = fetchMock.mock.calls[0]
 		expect(url).toBe(REDEEM)
 		expect(request.method).toBe("POST")
-		expect(JSON.parse(request.body)).toEqual({ code: CODE })
+		// The server names it `token` wherever it holds it, which its error snapshots redact
+		expect(JSON.parse(request.body)).toEqual({ token: TOKEN })
 		// Loaded anew, with the session the tablet now holds
 		expect(openPage).toHaveBeenCalledWith(SCREEN)
 	})
 
-	it("takes the code out of the address at once, so that a reload never tries it again", async () => {
+	it("takes the token out of the address at once, so that a reload never tries it again", async () => {
 		fetchMock.mockResolvedValue(answer(200, { message: { redirect: SCREEN } }))
 
-		visit(`/pos/pair#${CODE}`)
+		visit(`/pos/pair#${TOKEN}`)
 
 		expect(window.location.hash).toBe("")
-		expect(window.location.href).not.toContain(CODE)
+		expect(window.location.href).not.toContain(TOKEN)
 	})
 
 	it("sends the CSRF token of a browser that is already signed in", async () => {
 		window.csrf_token = "token-of-the-session"
 		fetchMock.mockResolvedValue(answer(200, { message: { redirect: SCREEN } }))
 
-		visit(`/pos/pair#${CODE}`)
+		visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(fetchMock.mock.calls[0][1].headers["X-Frappe-CSRF-Token"]).toBe("token-of-the-session")
@@ -99,7 +100,7 @@ describe("the page a tablet opens by scanning the code", () => {
 		const words = "This code has expired or was already used. Ask for a new one at the till."
 		fetchMock.mockResolvedValue(refusal(417, "PairingCodeError", words))
 
-		const wrapper = visit(`/pos/pair#${CODE}`)
+		const wrapper = visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(openPage).not.toHaveBeenCalled()
@@ -110,7 +111,7 @@ describe("the page a tablet opens by scanning the code", () => {
 	it("says the same with its own words when the server gave none", async () => {
 		fetchMock.mockResolvedValue(answer(417, { exc_type: "PairingCodeError" }))
 
-		const wrapper = visit(`/pos/pair#${CODE}`)
+		const wrapper = visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(text(wrapper, "pair-title")).toBe("This code no longer opens a screen")
@@ -120,7 +121,7 @@ describe("the page a tablet opens by scanning the code", () => {
 	it("asks to wait when the address tried too often", async () => {
 		fetchMock.mockResolvedValue(refusal(429, "RateLimitExceededError", "You hit the rate limit"))
 
-		const wrapper = visit(`/pos/pair#${CODE}`)
+		const wrapper = visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(text(wrapper, "pair-title")).toBe("Too many attempts")
@@ -130,7 +131,7 @@ describe("the page a tablet opens by scanning the code", () => {
 	it("asks to check the connection when the server cannot be reached", async () => {
 		fetchMock.mockRejectedValue(new TypeError("Failed to fetch"))
 
-		const wrapper = visit(`/pos/pair#${CODE}`)
+		const wrapper = visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(text(wrapper, "pair-title")).toBe("The screen could not be opened")
@@ -140,7 +141,7 @@ describe("the page a tablet opens by scanning the code", () => {
 	it("never follows an answer that leads out of the till", async () => {
 		fetchMock.mockResolvedValue(answer(200, { message: { redirect: "https://elsewhere.example/" } }))
 
-		const wrapper = visit(`/pos/pair#${CODE}`)
+		const wrapper = visit(`/pos/pair#${TOKEN}`)
 		await flushPromises()
 
 		expect(openPage).not.toHaveBeenCalled()

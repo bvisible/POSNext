@@ -49,6 +49,7 @@ const TABLETS = [
 		paired_at: "2026-10-30 18:00:00",
 		last_seen: "2026-10-29 21:05:00",
 		disconnected: false,
+		sessions: 2,
 	},
 	{
 		name: "dev-2",
@@ -60,6 +61,7 @@ const TABLETS = [
 		paired_at: "2026-10-28 18:00:00",
 		last_seen: null,
 		disconnected: true,
+		sessions: 0,
 	},
 ]
 
@@ -73,6 +75,7 @@ function answer(method, params) {
 		return { url: URL_OF_THE_CODE, expires_in: 300, screen: params.screen, station: params.station }
 	}
 	if (method === `${API}.disconnect_device`) return { ended_sessions: 1 }
+	if (method === `${API}.retire_pairing_codes`) return { retired: true }
 	return null
 }
 
@@ -171,11 +174,51 @@ describe("opening a tablet at the till", () => {
 		expect(grill).toContain("Paired by Anne Martin")
 		expect(grill).toContain("Last seen: date of 2026-10-29 21:05:00")
 		expect(wrapper.find("[data-test=disconnect-dev-1]").exists()).toBe(true)
+		// A row is a screen: it says on how many tablets it is open
+		expect(wrapper.get("[data-test=open-on-dev-1]").text()).toBe("Open on 2 tablets")
 		const runner = wrapper.get("[data-test=tablet-dev-2]").text()
 		expect(runner).toContain("Runner")
 		expect(runner).toContain("Not seen yet")
 		expect(runner).toContain("Disconnected")
 		expect(wrapper.find("[data-test=disconnect-dev-2]").exists()).toBe(false)
+		expect(wrapper.find("[data-test=open-on-dev-2]").exists()).toBe(false)
+	})
+
+	it("says a screen open on one tablet, or on none", async () => {
+		tablets[0] = { ...tablets[0], sessions: 1 }
+		tablets[1] = { ...tablets[1], disconnected: false, sessions: 0 }
+		const wrapper = open()
+		await flushPromises()
+
+		expect(wrapper.get("[data-test=open-on-dev-1]").text()).toBe("Open on 1 tablet")
+		expect(wrapper.get("[data-test=open-on-dev-2]").text()).toBe("Open on no tablet")
+	})
+
+	it("retires the tokens it made, and nobody used, when it closes", async () => {
+		vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] })
+		const wrapper = open()
+		await flushPromises()
+		await wrapper.get("[data-test=screen-kitchen-st-grill]").trigger("click")
+		await flushPromises()
+		expect(asked(`${API}.retire_pairing_codes`)).toEqual([])
+
+		await wrapper.setProps({ modelValue: false })
+		await flushPromises()
+		expect(asked(`${API}.retire_pairing_codes`)).toEqual([{ restaurant: "The Bistro" }])
+
+		// Closed for good: nothing more to retire
+		wrapper.unmount()
+		opened = opened.filter((one) => one !== wrapper)
+		expect(asked(`${API}.retire_pairing_codes`)).toHaveLength(1)
+	})
+
+	it("asks nothing to be retired when it made no token", async () => {
+		const wrapper = open()
+		await flushPromises()
+
+		wrapper.unmount()
+		opened = opened.filter((one) => one !== wrapper)
+		expect(asked(`${API}.retire_pairing_codes`)).toEqual([])
 	})
 
 	it("disconnects a tablet once the manager confirms", async () => {

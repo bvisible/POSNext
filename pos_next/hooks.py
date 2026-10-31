@@ -338,6 +338,22 @@ doc_events = {
 	# //// onto each Restaurant (NeoRestau lot 1, task 1): a restaurant's save is what tells the tills now.
 	"Restaurant": {
 		"on_update": "pos_next.realtime_events.emit_restaurant_settings_updated_event",
+		# //// Neoffice — a deleted restaurant takes its tablets with it (sessions ended, accounts disabled): a restaurant
+		# //// made again under the same name inherits none (NeoRestau lot 1, task 16). After the delete, not on_trash:
+		# //// on_trash runs before the link check, and ending a session commits, so a restaurant whose delete its links
+		# //// refuse would have lost its tablets all the same.
+		"after_delete": "pos_next.restaurant.devices.forget_the_tablets_of",
+	},
+	# //// Neoffice — a restaurant tablet's account stays a portal account with no role, no password, no API key, no other
+	# //// name and no OAuth token, whoever saves it; only the pairing writes it (pos_next.restaurant.devices, NeoRestau
+	# //// lot 1, task 16). Upstream has no User hook here.
+	"User": {
+		"before_validate": "pos_next.restaurant.devices.guard_device_account_before_validate",
+		"validate": "pos_next.restaurant.devices.guard_device_account",
+		"before_rename": "pos_next.restaurant.devices.guard_device_rename",
+	},
+	"OAuth Bearer Token": {
+		"validate": "pos_next.restaurant.devices.guard_oauth_token",
 	},
 }
 
@@ -449,6 +465,13 @@ permission_query_conditions = {
 # auth_hooks = [
 # 	"pos_next.auth.validate"
 # ]
+# //// Neoffice — a restaurant's tablet signs in with an account of its own (NeoRestau lot 1, task 16). Its session
+# //// reaches the page and the calls of its screens and nothing else, whatever other app serves signed-in users: an
+# //// auth hook runs for every request once the caller is known, by cookie, token or key. Upstream has none.
+auth_hooks = ["pos_next.restaurant.devices.confine_tablet_session"]
+# //// Neoffice — and it signs in by its pairing only: a password, a link, impersonation or `bench browse` are refused
+# //// before any session is made (pos_next.restaurant.devices.guard_device_login). Upstream has no on_login hook.
+on_login = ["pos_next.restaurant.devices.guard_device_login"]
 
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True

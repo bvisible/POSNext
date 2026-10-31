@@ -11,12 +11,14 @@
   "restaurant",
   "screen",
   "station",
+  "device_key",
   "column_break_account",
   "user",
   "paired_by",
   "paired_at",
   "last_seen",
-  "disconnected"
+  "disconnected",
+  "disconnected_at"
  ],
  "fields": [
   {
@@ -54,6 +56,15 @@
    "label": "Preparation Station",
    "options": "Preparation Station",
    "read_only": 1
+  },
+  {
+   "description": "One row per screen of a restaurant: two tablets pairing the same screen at the same instant make one row.",
+   "fieldname": "device_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Device Key",
+   "read_only": 1,
+   "unique": 1
   },
   {
    "fieldname": "column_break_account",
@@ -96,12 +107,19 @@
    "in_list_view": 1,
    "label": "Disconnected",
    "read_only": 1
+  },
+  {
+   "description": "A session opened before this moment is refused, even after the tablet is paired again.",
+   "fieldname": "disconnected_at",
+   "fieldtype": "Datetime",
+   "label": "Disconnected At",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 22:30:00.000000",
+ "modified": "2026-10-31 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Device",

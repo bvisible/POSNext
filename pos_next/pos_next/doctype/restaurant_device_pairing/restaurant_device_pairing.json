@@ -3,11 +3,11 @@
  "allow_rename": 0,
  "autoname": "hash",
  "creation": "2026-10-30 22:30:00.000000",
- "description": "A one-time code that pairs a tablet with the kitchen or runner screen of a restaurant. Only the code's SHA-256 hash is kept.",
+ "description": "A one-time token that pairs a tablet with the kitchen or runner screen of a restaurant. Only the token's SHA-256 hash is kept.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "code_hash",
+  "token_hash",
   "restaurant",
   "screen",
   "station",
@@ -19,9 +19,9 @@
  ],
  "fields": [
   {
-   "fieldname": "code_hash",
+   "fieldname": "token_hash",
    "fieldtype": "Data",
-   "label": "Code Hash",
+   "label": "Token Hash",
    "read_only": 1,
    "reqd": 1,
    "unique": 1
@@ -87,7 +87,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 22:30:00.000000",
+ "modified": "2026-10-31 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Device Pairing",

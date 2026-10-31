@@ -14,11 +14,13 @@ class RestaurantDevice(Document):
 			frappe.throw(_("The account of a tablet cannot be changed"), frappe.PermissionError)
 
 	def on_trash(self):
-		"""A tablet removed for good: its sessions end, its account is disabled, its spent codes go with it."""
+		"""A tablet removed for good: its sessions end, its OAuth tokens and its spent tokens go, its account is
+		disabled."""
 		from pos_next.restaurant import devices
 
 		if self.user and frappe.db.exists("User", self.user):
 			devices.end_sessions(self.user, _("Tablet removed"))
+			frappe.db.delete("OAuth Bearer Token", {"user": self.user})
 			frappe.db.set_value("User", self.user, "enabled", 0, update_modified=False)
 			frappe.clear_cache(user=self.user)
 		frappe.db.delete(devices.PAIRING, {"device": self.name})

@@ -170,12 +170,12 @@ def _no_request():
 
 
 def _tablet(restaurant_name, screen):
-	"""The device account of a restaurant's screen, as a pairing leaves it: a portal account with no role, bound to that
-	screen by a Restaurant Device row."""
-	user = f"tillsweep-{screen.lower()}-tablet@devices.invalid"
-	_user(user, [], "Website User")
-	frappe.db.delete("Has Role", {"parent": user, "parenttype": "User"})
-	frappe.clear_cache(user=user)
+	"""The device account of a restaurant's screen, as a pairing leaves it: a portal account with no role, at an address
+	minted by pos_next.restaurant.devices, bound to that screen by a Restaurant Device row."""
+	from pos_next.restaurant import devices
+
+	user = devices.make_account(f"tillsweep {screen}", restaurant_name)
+	devices.keep_a_device_account(user)
 	frappe.get_doc(
 		{
 			"doctype": "Restaurant Device",
@@ -499,6 +499,12 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				_past_the_gate(lambda: restaurant_devices.get_devices(restaurant=NONE), frappe.ValidationError),
 			),
 			("disconnect_device", _past_the_gate(lambda: restaurant_devices.disconnect_device(NONE))),
+			(
+				"retire_pairing_codes",
+				_past_the_gate(
+					lambda: restaurant_devices.retire_pairing_codes(restaurant=NONE), frappe.ValidationError
+				),
+			),
 		]
 
 	def _item_panel_calls(self):

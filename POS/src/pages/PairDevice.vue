@@ -1,6 +1,6 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The page a kitchen's or a runner's tablet opens by -->
-	<!-- //// scanning the QR code a manager shows at the till (NeoRestau lot 1, task 16): it hands the code over -->
+	<!-- //// scanning the QR code a manager shows at the till (NeoRestau lot 1, task 16): it hands the token over -->
 	<!-- //// by a POST, and the tablet, signed in with its own account, goes to its screen. No password is typed. -->
 	<!-- //// With no code, or once its session has ended, it says how to get a code. A visitor's page: no store, -->
 	<!-- //// no offline worker, plain fetch (see the guest pages). -->
@@ -82,18 +82,21 @@ const TONE = {
 	failed: "bg-red-50 text-red-600",
 }
 
-// waiting (no code: how to get one), pairing, refused (the code opens nothing), busy (too many attempts), failed
+// waiting (no token: how to get one), pairing, refused (the token opens nothing), busy (too many attempts), failed
 const state = ref("waiting")
 const message = ref("")
 
-/** The code the QR code carries, in the fragment of the address; it leaves the address bar and the history at once. */
-function takeTheCode() {
-	// A code is URL-safe as it is: nothing to decode
-	const code = (window.location.hash || "").replace(/^#/, "")
-	if (code) {
+/**
+ * The token the QR code carries, in the fragment of the address; it leaves the address bar and the history at once.
+ * The server names it `token` wherever it holds it (its error snapshots redact that name).
+ */
+function takeTheToken() {
+	// A token is URL-safe as it is: nothing to decode
+	const token = (window.location.hash || "").replace(/^#/, "")
+	if (token) {
 		window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`)
 	}
-	return code
+	return token
 }
 
 /** The message the server gave with its refusal, in the site's language. */
@@ -108,7 +111,7 @@ function serverMessage(body) {
 	}
 }
 
-async function redeem(code) {
+async function redeem(token) {
 	state.value = "pairing"
 	const headers = { Accept: "application/json", "Content-Type": "application/json" }
 	if (typeof window.csrf_token === "string" && window.csrf_token && window.csrf_token !== CSRF_PLACEHOLDER) {
@@ -119,7 +122,7 @@ async function redeem(code) {
 			method: "POST",
 			credentials: "same-origin",
 			headers,
-			body: JSON.stringify({ code }),
+			body: JSON.stringify({ token }),
 		})
 		const body = await response.json().catch(() => ({}))
 		const screen = body?.message?.redirect
@@ -140,7 +143,7 @@ async function redeem(code) {
 }
 
 onMounted(() => {
-	const code = takeTheCode()
-	if (code) redeem(code)
+	const token = takeTheToken()
+	if (token) redeem(token)
 })
 </script>

@@ -2,8 +2,9 @@
 	<!-- //// Neoffice — added file (no upstream equivalent). Opening a tablet as the kitchen's or the runner's screen -->
 	<!-- //// (NeoRestau lot 1, task 16): the manager chooses the screen, the till shows a one-time QR code with the -->
 	<!-- //// time it stays valid, the tablet scans it and opens with an account of its own, no password typed. Beside -->
-	<!-- //// it, the restaurant's tablets, each with who paired it, when it was last seen, and « Disconnect ». The -->
-	<!-- //// server decides who may do any of it (pos_next.api.restaurant_devices). -->
+	<!-- //// it, the restaurant's tablets, each with who paired it, when it was last seen, on how many tablets it is -->
+	<!-- //// open, and « Disconnect ». Closing it retires the tokens it made that no tablet used. The server decides -->
+	<!-- //// who may do any of it (pos_next.api.restaurant_devices). -->
 	<Dialog v-model="show" :options="{ title: __('Open a tablet'), size: '3xl' }">
 		<template #body-content>
 			<div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-test="open-tablet">
@@ -84,6 +85,10 @@
 										<span v-if="tablet.paired_by_name">{{ __("Paired by {0}", [tablet.paired_by_name]) }} · </span>
 										<span>{{ tablet.last_seen ? __("Last seen: {0}", [seenAt(tablet.last_seen)]) : __("Not seen yet") }}</span>
 									</p>
+									<!-- A row is a screen: the tablets signed in with it are its open sessions -->
+									<p v-if="!tablet.disconnected" class="mt-0.5 text-xs font-medium text-gray-700" :data-test="`open-on-${tablet.name}`">
+										{{ openOn(tablet.sessions) }}
+									</p>
 								</div>
 								<span
 									v-if="tablet.disconnected"
@@ -127,7 +132,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { Dialog } from "frappe-ui"
 import QRCode from "qrcode"
 import { call } from "@/utils/apiWrapper"
@@ -160,6 +165,8 @@ const opened = ref(false)
 const confirming = ref(null)
 let countdown = null
 let watcher = null
+// Whether this dialog made a token since it opened (retired when it closes)
+let madeOne = false
 // When each tablet of the chosen screen was paired, as the list said when the code was made
 let pairedBefore = null
 
@@ -186,6 +193,14 @@ const timeLeft = computed(() => {
 function labelOf(tablet) {
 	if (tablet.screen === "Runner") return __("Runner")
 	return tablet.station ? __("Kitchen — {0}", [tablet.station_name || tablet.station]) : __("Kitchen, all stations")
+}
+
+/** On how many tablets a screen is open: the sessions of its account. */
+function openOn(sessions) {
+	const count = Number(sessions) || 0
+	if (count === 0) return __("Open on no tablet")
+	if (count === 1) return __("Open on 1 tablet")
+	return __("Open on {0} tablets", [count])
 }
 
 /** Today's visits by their time, older ones by their date and time. */
@@ -244,6 +259,7 @@ async function choose(choice) {
 			color: { dark: "#141414", light: "#FFFFFF" },
 		})
 		code.value = { svg, screen: choice.screen, station: choice.station }
+		madeOne = true
 		secondsLeft.value = made.expires_in
 		countdown = setInterval(() => {
 			secondsLeft.value -= 1
@@ -282,9 +298,26 @@ async function disconnect(tablet) {
 	await loadTablets()
 }
 
+/**
+ * The tokens this dialog made and no tablet used stop opening anything once it closes: a QR code photographed or left
+ * on a screen must not open a tablet later. The server retires its maker's unused tokens of the restaurant.
+ */
+function retireTheTokens() {
+	stopTimers()
+	if (!madeOne) return
+	madeOne = false
+	call(`${API}.retire_pairing_codes`, ofTheRestaurant()).catch((error) => {
+		console.error("Failed to retire the pairing codes:", error)
+	})
+}
+
+watch(show, (open) => {
+	if (!open) retireTheTokens()
+})
+
 onMounted(() => {
 	loadStations()
 	loadTablets()
 })
-onUnmounted(stopTimers)
+onUnmounted(retireTheTokens)
 </script>
