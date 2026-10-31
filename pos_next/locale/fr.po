@@ -17556,3 +17556,27 @@ msgstr "Rappeler en préparation"
 #: POS/src/pages/KDS.vue:97
 msgid "No dishes to deliver"
 msgstr "Aucun plat à livrer"
+
+#: POS/src/pages/KDS.vue:50
+msgctxt "Kitchen text size"
+msgid "Compact"
+msgstr "Compact"
+
+#: POS/src/pages/KDS.vue:51
+msgctxt "Kitchen text size"
+msgid "Normal"
+msgstr "Normal"
+
+#: POS/src/pages/KDS.vue:52
+msgctxt "Kitchen text size"
+msgid "Large"
+msgstr "Grand"
+
+#: POS/src/pages/KDS.vue:53
+msgctxt "Kitchen text size"
+msgid "Extra large"
+msgstr "Très grand"
+
+#: POS/src/pages/KDS.vue:54
+msgid "Text size: {0}"
+msgstr "Taille du texte : {0}"

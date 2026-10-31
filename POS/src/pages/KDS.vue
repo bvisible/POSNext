@@ -11,7 +11,8 @@
 	<!-- //// sits under a tablet browser's toolbar (fix round 1, ruling 72). `h-screen` is the fallback of a browser that does not -->
 	<!-- //// know the unit. Not a bare `h-dvh` beside it: Tailwind writes `.h-dvh` BEFORE `.h-screen` in the stylesheet (measured -->
 	<!-- //// in a browser), so `h-screen` would win everywhere; a `supports-` variant is written after the plain utilities. -->
-	<div class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900">
+	<!-- //// Neoffice — the text size is a set of CSS variables on the root (task 38a-1, ruling 109): the cards read them, whatever the band they are in -->
+	<div class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900" :style="textSizeStyle" :data-text-size="textSize" data-test="kitchen-screen">
 		<!-- Header -->
 		<header class="bg-white dark:bg-gray-800 shadow-sm z-10 p-4 flex justify-between items-center">
 			<div>
@@ -24,6 +25,20 @@
 					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:[&:not(:checked)]:bg-transparent dark:[&:not(:checked)]:ring-1 dark:[&:not(:checked)]:ring-inset dark:[&:not(:checked)]:ring-ds-sand-400" />
 					{{ __("Show completed") }}
 				</label>
+				<!-- //// Neoffice — the text size, one tap, kept on the device (task 38a-1, ruling 109). The shipped size is the dense one. Task 38a-2 moves it into the one-line header. -->
+				<Button
+					variant="subtle"
+					data-test="text-size"
+					:aria-label="__('Text size: {0}', [textSizeLabel])"
+					:title="__('Text size: {0}', [textSizeLabel])"
+					@click="cycleTextSize"
+				>
+					<span class="text-base font-bold leading-none">Aa</span>
+					<span class="ml-1.5 inline-flex gap-0.5" aria-hidden="true">
+						<i v-for="(name, index) in TEXT_SIZES" :key="name" data-test="text-size-pip" class="block h-[3px] w-[5px] rounded-sm"
+							:class="index <= TEXT_SIZES.indexOf(textSize) ? 'bg-blue-400' : 'bg-gray-300'"></i>
+					</span>
+				</Button>
 				<Button @click="loadOrders" icon="refresh-cw">
 					{{ __("Refresh") }}
 				</Button>
@@ -139,6 +154,8 @@ import KitchenBand from "@/components/restaurant/KitchenBand.vue"
 import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import KitchenLayoutSwitch from "@/components/restaurant/KitchenLayoutSwitch.vue"
 import { useKitchenLayout } from "@/composables/useKitchenLayout"
+import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
+import { TEXT_SIZES } from "@/utils/kitchenTextSize"
 import { splitIntoBands } from "@/utils/kitchenBands"
 //// Neoffice — the kitchen's last action follows the station's runner setting (task 38a-1, ruling 112)
 import {
@@ -241,6 +258,22 @@ const roomNameOf = (order) =>
 const bands = computed(() =>
 	splitIntoBands(kitchenOrders.value, { includeDelivered: showDelivered.value }),
 )
+
+//// Neoffice — the size of the text, the cook's pick kept on the device; Compact until he asks for more (task 38a-1, ruling 109)
+const { size: textSize, style: textSizeStyle, cycle: cycleTextSize } = useKitchenTextSize()
+// One literal `__()` per word: the catalogue extraction reads it from the source
+const textSizeLabel = computed(() => {
+	switch (textSize.value) {
+		case "normal":
+			return __("Normal", null, "Kitchen text size")
+		case "large":
+			return __("Large", null, "Kitchen text size")
+		case "xl":
+			return __("Extra large", null, "Kitchen text size")
+		default:
+			return __("Compact", null, "Kitchen text size")
+	}
+})
 
 //// Neoffice — how the bands are laid out: the cook's pick, or by the way the tablet is held (task 23)
 const { layout, canSplit, choose: chooseLayout } = useKitchenLayout()

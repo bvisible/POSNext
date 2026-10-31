@@ -29,18 +29,18 @@
 		<!-- //// carries one (the server fills it in with the ticket counter), and for a takeaway the counter it has had until then. The state is NOT -->
 		<!-- //// written here: the left border and the band the card stands in carry it. `showState` writes it beside the timer for a screen that mixes -->
 		<!-- //// the states (placement A of ruling 126). The second timer, the table's total time, shows only in the large sizes. -->
-		<div class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="TICKET_FRAME.header" data-test="ticket-header">
+		<div class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header]" data-test="ticket-header">
 			<div class="flex items-center justify-between gap-x-1.5">
 				<div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-test="ticket-ref">
 					<span v-if="roomChip" data-test="ticket-room"
 						class="rounded-md bg-gray-100 px-1.5 text-[length:var(--kds-fs-ref,11px)] font-semibold leading-snug tracking-wide text-gray-600 dark:bg-gray-700">
 						{{ roomChip }}
 					</span>
-					<h3 data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="TICKET_FRAME.title">
+					<h3 data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="[TICKET_FRAME.title, KITCHEN_FRAME.title]">
 						<template v-if="order.is_takeaway">{{ __("Takeaway") }}</template>
 						<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
 					</h3>
-					<span v-if="ticketNumber" data-test="ticket-number" class="text-gray-500 font-medium tabular-nums" :class="TICKET_FRAME.number">
+					<span v-if="ticketNumber" data-test="ticket-number" class="text-gray-500 font-medium tabular-nums" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
 						{{ order.is_takeaway ? "· " : "" }}{{ ticketNumber }}
 					</span>
 				</div>
@@ -54,7 +54,7 @@
 						data-test="ticket-total-time" :title="__('Total time')">
 						{{ totalTime }}
 					</span>
-					<span class="whitespace-nowrap" data-test="ticket-timer" :class="[TICKET_FRAME.timer, timeColorClass]">
+					<span class="whitespace-nowrap" data-test="ticket-timer" :class="[TICKET_FRAME.timer, KITCHEN_FRAME.timer, timeColorClass]">
 						{{ elapsedTime }}
 					</span>
 				</div>
@@ -121,7 +121,7 @@
 		<!-- //// itself, it would scroll away with the dishes. -->
 		<div class="flex flex-1 flex-col min-h-0" data-test="ticket-scroll-area">
 			<div class="relative flex flex-1 flex-col min-h-0">
-				<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="TICKET_FRAME.body" data-test="ticket-body"
+				<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="[TICKET_FRAME.body, KITCHEN_FRAME.body]" data-test="ticket-body"
 					@scroll.passive="onBodyScroll">
 					<div ref="linesEl">
 						<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
@@ -142,9 +142,10 @@
 								<!-- //// state, no menu). Its fade and its strike-through sit HERE, on the content of the dish, never on the wrapper above: the -->
 								<!-- //// wrapper holds the status menu of a dish that has one, and an `opacity` makes a stacking context of its own, which -->
 								<!-- //// trapped the menu's z-index, faded the menu to 40 % and painted it under the dishes after it. -->
-								<div class="flex flex-col justify-center py-1.5 rounded px-1 -mx-1"
+								<div class="flex flex-col justify-center py-[var(--kds-py,3px)] rounded px-1 -mx-1"
 									:class="[
 										TICKET_FRAME.line,
+										KITCHEN_FRAME.line,
 										isDelivered(item)
 											? 'cursor-default opacity-40 line-through'
 											: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
@@ -280,7 +281,7 @@ import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { roomCode } from "@/utils/kitchenRoomCode"
 //// Neoffice — the three kinds of text of a dish: options, remark, allergy (task 38a-1, ruling 123)
 import { allergyWordsOf, isAllergy } from "@/utils/kitchenTextKinds"
-import { TICKET_FRAME } from "@/utils/ticketLayout"
+import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)

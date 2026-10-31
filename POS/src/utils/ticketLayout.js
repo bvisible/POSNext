@@ -86,3 +86,19 @@ export const TICKET_FRAME = {
 	body: "p-4",
 	line: "min-h-[48px] text-lg leading-tight",
 }
+
+/**
+ * The sizes of the KITCHEN card (NeoRestau lot 1, task 38a-1, ruling 109), laid over the shared frame above, for the parts the size chosen
+ * changes: paddings, text, dish line. Each reads a CSS variable the screen's root sets (utils/kitchenTextSize) with the Compact value as its
+ * fallback, so that a card drawn outside the page is dense too. They are `!important`: the frame's `text-xl`, `px-4`... are in the same
+ * stylesheet at the same weight and the later one wins, and they also carry a letter-spacing and a weight of their own that the kitchen's
+ * text does not want. The runner's card has none of this until its own task (38a-2): it keeps the frame as it was.
+ */
+export const KITCHEN_FRAME = {
+	header: "!px-[var(--kds-pad-x,8px)] !py-[var(--kds-head-py,5px)]",
+	title: "!text-[length:var(--kds-fs-table,15px)]",
+	number: "!text-[length:var(--kds-fs-num,12px)]",
+	timer: "!text-[length:var(--kds-fs-timer,13px)]",
+	body: "!px-[var(--kds-pad-x,8px)] !py-[var(--kds-body-py,0px)]",
+	line: "!min-h-0 !text-[length:var(--kds-fs,13px)]",
+}

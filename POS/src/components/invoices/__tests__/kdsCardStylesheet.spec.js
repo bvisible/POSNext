@@ -162,3 +162,36 @@ describe("the three kinds of text of a dish compile and read (task 38a-1)", () =
 		expect(contrast(hex("#f1f3f5"), DARK_CARD)).toBeGreaterThanOrEqual(4.5)
 	})
 })
+
+// ---- the kitchen's own sizes laid over the shared frame (task 38a-1, ruling 109) --------------------------------------------------
+
+describe("the kitchen frame's classes compile, and win over the shared frame's", () => {
+	it("compile as `!important` rules reading the variables of the size, with the dense value as the fallback", () => {
+		for (const [prop, value] of [
+			["font-size", "var(--kds-fs-table,15px)"],
+			["font-size", "var(--kds-fs-num,12px)"],
+			["font-size", "var(--kds-fs-timer,13px)"],
+			["font-size", "var(--kds-fs,13px)"],
+			["padding-left", "var(--kds-pad-x,8px)"],
+			["padding-top", "var(--kds-head-py,5px)"],
+			["padding-top", "var(--kds-body-py,0px)"],
+			["padding-top", "var(--kds-py,3px)"],
+		]) {
+			const rules = rulesDeclaring(prop, value)
+			expect(rules.length, `${prop}: ${value}`).toBeGreaterThan(0)
+		}
+		// The ones that fight the frame's own `text-xl`, `px-4`, `min-h-[48px]` are `!important`
+		for (const [prop, value] of [
+			["font-size", "var(--kds-fs-table,15px)"],
+			["font-size", "var(--kds-fs,13px)"],
+			["padding-left", "var(--kds-pad-x,8px)"],
+		])
+			expect(
+				rulesDeclaring(prop, value).some((rule) => rule.important),
+				`${prop}: ${value}`,
+			).toBe(true)
+		expect(
+			rulesDeclaring("min-height", "0px").some((rule) => rule.important),
+		).toBe(true)
+	})
+})
