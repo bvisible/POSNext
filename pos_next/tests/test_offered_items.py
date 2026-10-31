@@ -60,6 +60,12 @@ def _fresh(doctype, name):
 def _company():
 	"""A company of the test's own, in CHF, perpetual inventory on: its chart, warehouses and cost centre are ERPNext's."""
 	if not frappe.db.exists("Company", COMPANY):
+		# ERPNext wires Cash to the new company by saving it, and a disabled Cash still listed by some POS Profile
+		# refuses that save (a site with the theme disables Cash on save): Cash is enabled first, rolled back with
+		# the class
+		if frappe.db.exists("Mode of Payment", "Cash"):
+			frappe.db.set_value("Mode of Payment", "Cash", "enabled", 1)
+			frappe.clear_document_cache("Mode of Payment", "Cash")
 		frappe.get_doc(
 			{
 				"doctype": "Company",
@@ -324,6 +330,10 @@ class OfferedTill:
 		)
 		row.default_account = cls.cash_account
 		mode.save(ignore_permissions=True)
+		# A site with the theme disables, on save, every Mode of Payment without a bank account (neoffice_theme's
+		# handle_mode_of_payment), Cash included: enabled again behind it, its cached copy dropped
+		frappe.db.set_value("Mode of Payment", mode.name, "enabled", 1)
+		frappe.clear_document_cache("Mode of Payment", mode.name)
 		return mode.name
 
 	@classmethod
@@ -357,22 +367,22 @@ class OfferedTill:
 	# -- what the till sends ---------------------------------------------------------------------------------------
 
 	@staticmethod
-	def line(item, qty, rate, offered=False, **extra):
+	def line(item, qty, price, offered=False, **extra):
 		"""A line as the till sends it (useInvoice.formatItemsForSubmission): an offered one at rate 0, its list
-		price kept, 100 % off, flagged."""
+		price kept, 100 % off, flagged. `extra` overrides any field, the rate included (a tampered payload)."""
 		if offered:
 			row = {
 				"rate": 0,
 				"discount_percentage": 100,
-				"discount_amount": flt(qty * rate, 2),
+				"discount_amount": flt(qty * price, 2),
 				OFFERED: 1,
 			}
 		else:
-			row = {"rate": rate, "discount_percentage": 0, "discount_amount": 0, OFFERED: 0}
+			row = {"rate": price, "discount_percentage": 0, "discount_amount": 0, OFFERED: 0}
 		return {
 			"item_code": item,
 			"qty": qty,
-			"price_list_rate": rate,
+			"price_list_rate": price,
 			"uom": "Nos",
 			"conversion_factor": 1,
 			**row,
@@ -470,7 +480,7 @@ class TestAnOfferedRowOnTheInvoice(OfferedTill, FrappeTestCase):
 		self.assertEqual(gl.get(paid.income_account), -20.0)
 		self.assertEqual(gl.get(self.vat_account), -1.62)
 		self.assertEqual(gl.get(paid.expense_account), 9.0)
-		self.assertEqual(sum(gl.values()), 0)
+		self.assertEqual(flt(sum(gl.values()), 2), 0)
 		# The stock: the offered tiramisu went out like the two sold
 		moved = frappe.get_all(
 			"Stock Ledger Entry",
@@ -866,9 +876,10 @@ class TestTheReceipt(OfferedTill, FrappeTestCase):
 		self.assertEqual(len(sections), 2)
 		offered_index = next(i for i, row in enumerate(inv.items) if row.get(OFFERED))
 		offered, paid = sections[offered_index], sections[1 - offered_index]
-		word = frappe._("Offered", context="Given for free")
-		self.assertIn(word, offered)
+		# The mark printed under the line, in bold (the test's item names hold the bare word too)
+		mark = "<b>{}</b>".format(frappe._("Offered", context="Given for free"))
+		self.assertIn(mark, offered)
 		self.assertIn("0.00", offered)
 		self.assertNotIn("Discount", offered)
-		self.assertNotIn(word, paid)
+		self.assertNotIn(mark, paid)
 		self.assertIn("21.62", paid)
