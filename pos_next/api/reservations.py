@@ -69,6 +69,8 @@ DEFAULT_CONFIRMATION_MINUTES = 30
 # The longest name the public form takes, and what a name never holds: a link, an address, markup
 GUEST_NAME_MAX = 80
 NOT_A_NAME = re.compile(r"https?:|://|www\.|@|<|>", re.IGNORECASE)
+# The most tables one online booking may name
+GUEST_TABLES_MAX = 20
 # The step of the times the booking page offers, from the start of each opening window (GuestReservation.vue,
 # `timeOptions`): a visitor asks about those times only
 OFFERED_STEP_MINUTES = 30
@@ -421,7 +423,7 @@ def get_available_tables(
 def submit_guest_reservation(
 	reservation_date: str,
 	reservation_time: str,
-	no_of_guests: int | str,
+	no_of_guests: int,
 	guest_name: str,
 	phone: str,
 	email: str,
@@ -433,10 +435,12 @@ def submit_guest_reservation(
 	"""Create a reservation from the public web form, in the restaurant named (the default restaurant otherwise).
 
 	The booking waits for its guest to confirm it from the e-mail until the restaurant's deadline, then expires. It
-	lasts the restaurant's duration (a visitor does not choose how long he keeps a table). The form takes strings only,
-	one address, a name that is only a name, and so many bookings per visitor, per mailbox and per site (GUEST_LIMITS);
-	`subject` is a field the page hides from people: a booking that fills it is answered like any other, and nothing is
-	written nor mailed. A refused booking writes nothing and mails nothing. The answer never names the booking.
+	lasts the restaurant's duration (a visitor does not choose how long he keeps a table) and is asked at a time the
+	page offers. The form takes strings where it expects them and a number of guests (Frappe casts "2" and refuses the
+	rest), a JSON list of table names, one address, a name that is only a name, and so many bookings per visitor, per
+	mailbox and per site (GUEST_LIMITS); `subject` is a field the page hides from people: a booking that fills it is
+	answered like any other, and nothing is written nor mailed. A refused booking writes nothing, mails nothing and
+	tells no till. The answer never names the booking.
 	"""
 	# Nothing of the restaurant shows where the site does not run NeoRestau (NeoRestau lot 1, task 4)
 	require_neorestau()
@@ -454,8 +458,7 @@ def submit_guest_reservation(
 		# Only a script fills a field nobody sees: it is told what a guest is told, and nothing happens
 		return _booking_received()
 
-	if isinstance(tables, str):
-		tables = json.loads(tables)
+	tables = _the_tables(tables)
 
 	# At most 3 bookings to come per address; refused in the words of the limits, so that the answer tells a stranger
 	# nothing about the bookings of an address
@@ -472,6 +475,11 @@ def submit_guest_reservation(
 
 	# The restaurant's duration: a visitor who chose his own could keep every table from the opening to midnight
 	duration = _parse_duration(settings.default_reservation_duration or 5400)
+
+	if not _reads_the_reservations_of(settings.get("name")):
+		# At a time the page offers, before the tables are looked at: « not available » answered at any second would
+		# draw the other guests' bookings (a staff account testing the page books at any time, as at the till)
+		_require_an_offered_time(settings, reservation_date, reservation_time)
 
 	# Strict overlap check for web (no force override)
 	if tables:
@@ -524,7 +532,8 @@ def submit_guest_reservation(
 	# Send verification email
 	_send_verification_email(doc)
 
-	frappe.publish_realtime("reservation_update")
+	# The tills hear of the booking once it is committed: never of one the request ends up rolling back
+	frappe.publish_realtime("reservation_update", after_commit=True)
 
 	# The answer never names the booking: a number that counts the restaurant's bookings, and one a script caught by the
 	# hidden field would not get
@@ -630,6 +639,28 @@ def _only_a_name(guest_name) -> str:
 			_("Please enter your name only (at most {0} characters, no link)").format(GUEST_NAME_MAX)
 		)
 	return name
+
+
+def _the_tables(tables) -> list:
+	"""The tables a visitor names, from the JSON list of table names the page sends: none when it sends none.
+
+	A JSON string decodes into whatever it holds: an element that is not a name would reach the child rows, where
+	Frappe's link validation reads a dict as filters, or the overlap check, where a list or a dict cannot be hashed.
+	Anything but a list of at most GUEST_TABLES_MAX non-empty strings is refused, and so is a string that is no JSON.
+	"""
+	if tables is None or tables == "":
+		return []
+	try:
+		names = json.loads(tables) if isinstance(tables, str) else tables
+	except ValueError:
+		names = None
+	if (
+		not isinstance(names, list)
+		or len(names) > GUEST_TABLES_MAX
+		or not all(isinstance(name, str) and name.strip() for name in names)
+	):
+		frappe.throw(_("Please choose your tables among those offered"))
+	return list(dict.fromkeys(name.strip() for name in names))
 
 
 def _require_an_offered_time(settings, date, time) -> None:

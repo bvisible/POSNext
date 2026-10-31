@@ -76,23 +76,27 @@
 					</span>
 				</div>
 				<div class="row-actions" @click.stop>
+					<!-- The two ✓ actions say what they do in words: a title is never seen on a touch screen, and a -->
+					<!-- Confirmed booking that waits for its guest carries both (NeoRestau lot 1, task 18) -->
 					<button
 						v-if="res.status === 'Confirmed'"
-						class="action-btn seat-btn"
+						class="action-btn labelled-btn seat-btn"
 						:title="__('Check-in')"
 						@click="$emit('check-in', res)"
 					>
-						✓
+						<span aria-hidden="true">✓</span>
+						<span>{{ __("Arrived") }}</span>
 					</button>
 					<!-- An online booking whose guest has not confirmed it from the e-mail can be confirmed for him (he -->
 					<!-- phoned), Pending or already Confirmed: it then never expires (NeoRestau lot 1, task 18) -->
 					<button
 						v-if="res.status === 'Pending' || res.awaits_guest"
-						class="action-btn confirm-btn"
+						class="action-btn labelled-btn confirm-btn"
 						:title="__('Confirm')"
 						@click="$emit('confirm', res)"
 					>
-						✓
+						<span aria-hidden="true">✓</span>
+						<span>{{ res.status === "Pending" ? __("Confirm") : __("Confirmed by phone") }}</span>
 					</button>
 					<button
 						v-if="['Pending', 'Confirmed'].includes(res.status)"
@@ -270,13 +274,14 @@ const filteredReservations = computed(() => {
 
 .row-actions {
 	display: flex;
-	gap: 4px;
+	gap: 8px;
 	flex-shrink: 0;
 }
 
+/* 44px: the till is a touch screen (design system, NeoPOS hit targets) */
 .action-btn {
-	width: 28px;
-	height: 28px;
+	min-width: 44px;
+	height: 44px;
 	border-radius: 6px;
 	border: 1px solid var(--border-color, #d1d5db);
 	background: var(--control-bg, #fff);
@@ -286,6 +291,13 @@ const filteredReservations = computed(() => {
 	justify-content: center;
 	font-size: 13px;
 	transition: all 0.15s;
+}
+
+/* An action that says what it does: its glyph and its word side by side */
+.labelled-btn {
+	gap: 6px;
+	padding: 0 12px;
+	white-space: nowrap;
 }
 
 .seat-btn:hover,

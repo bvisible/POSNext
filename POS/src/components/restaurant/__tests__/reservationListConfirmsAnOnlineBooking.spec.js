@@ -62,3 +62,30 @@ describe("the day's list of the till confirms an online booking for its guest", 
 		expect(wrapper.emitted("confirm")).toEqual([[booking]])
 	})
 })
+
+// What the two ✓ actions of a row (the guest's arrival, the confirmation) say on screen: a title is never seen on a
+// touch screen
+const wordsOf = (wrapper, name) =>
+	wrapper
+		.findAll(".reservation-row")
+		.find((rowElement) => rowElement.text().includes(`Guest ${name}`))
+		.findAll(".seat-btn, .confirm-btn")
+		.map((button) => button.text().replace("✓", "").trim())
+
+describe("the two actions of a booking say what they do", () => {
+	it("names the guest's arrival and the confirmation by phone apart on a booking that waits for its guest", () => {
+		const wrapper = open([row("RES-1", { awaits_guest: true })])
+
+		expect(wordsOf(wrapper, "RES-1")).toEqual(["Arrived", "Confirmed by phone"])
+	})
+
+	it("names the arrival alone on a Confirmed booking, and the confirmation alone on a Pending one", () => {
+		const wrapper = open([
+			row("RES-2", { awaits_guest: false }),
+			row("RES-3", { status: "Pending", awaits_guest: false }),
+		])
+
+		expect(wordsOf(wrapper, "RES-2")).toEqual(["Arrived"])
+		expect(wordsOf(wrapper, "RES-3")).toEqual(["Confirm"])
+	})
+})

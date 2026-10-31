@@ -36,6 +36,7 @@ from unittest.mock import patch
 
 import frappe
 import frappe.api
+import frappe.realtime
 from frappe.app import handle_exception, make_form_dict
 from frappe.auth import HTTPRequest
 from frappe.tests.utils import FrappeTestCase
@@ -433,6 +434,26 @@ class TestAVisitorLearnsWhichTablesAreFreeAndNothingElse(OnlineBooking, FrappeTe
 				status, answer = self.web("GET", TABLES, query=query)
 				self.assertEqual(status == 200, offered, answer)
 
+	def test_a_booking_at_a_time_the_page_does_not_offer_tells_nothing_of_the_tables(self):
+		# The other guest holds the first table from 19:30: a booking asked a second at a time would draw his booking
+		offered_only = [frappe._("Please choose one of the times offered for this day")]
+		for at in ("19:31:00", "19:59:59"):
+			with self.subTest(time=at):
+				refused = self.refused_booking(reservation_time=at, tables=json.dumps([self.table]))
+				self.assertEqual(refused[2], offered_only)
+		# Nor is a booking without any table taken at such a time
+		self.assertEqual(self.refused_booking(reservation_time="20:15:00")[2], offered_only)
+		# A time the page offers is a booking
+		self.book(reservation_time="20:30:00", tables=json.dumps([self.other_table]))
+
+	def test_a_desk_account_that_tries_the_page_books_at_any_time_as_it_asks_at_any_time(self):
+		# Guard (green before and after): the grid holds a visitor, not the restaurant's own staff
+		status, answer = self.web(
+			"POST", SUBMIT, body=self.booking(reservation_time="20:15:00"), user="Administrator"
+		)
+		self.assertEqual(status, 200, answer)
+		self.assertEqual(str(self.reservation(self.booking_of()).reservation_time), "20:15:00")
+
 
 class TestAGuestCallTakesStringsNotFilters(OnlineBooking, FrappeTestCase):
 	"""A JSON body keeps its types, and Frappe reads a list or a dict given as a filter value as an operator and a value:
@@ -496,6 +517,38 @@ class TestAGuestCallTakesStringsNotFilters(OnlineBooking, FrappeTestCase):
 		self.assertEqual(self.bookings(), before)
 		self.assertEqual(self.mailed_to(OTHER_ADDRESS), [])
 
+	def test_the_tables_are_a_list_of_table_names_and_nothing_else(self):
+		# `tables` is a JSON string, decoded into whatever it holds: an element Frappe's link validation would read as
+		# filters, an element that cannot be hashed, a number, a list too long, or no JSON at all
+		before = self.bookings()
+		for tables in (
+			json.dumps([{"name": ["like", "%"]}]),
+			json.dumps([["like", "%"]]),
+			json.dumps([5]),
+			json.dumps([""]),
+			json.dumps({"name": self.table}),
+			json.dumps([f"_Test table {n}" for n in range(21)]),
+			"[not json",
+		):
+			with self.subTest(tables=tables[:40]):
+				status, answer = self.web(
+					"POST", SUBMIT, body=self.booking(email=OTHER_ADDRESS, tables=tables)
+				)
+				self.assertEqual(status, 417, answer)
+		self.assertEqual(self.bookings(), before)
+		self.assertEqual(self.mailed_to(OTHER_ADDRESS), [])
+		# A list of the restaurant's own tables is a booking
+		self.book(email=OTHER_ADDRESS, tables=json.dumps([self.table, self.other_table]))
+		taken = self.reservation(self.booking_of(OTHER_ADDRESS))
+		self.assertEqual([row.restaurant_table for row in taken.tables], [self.table, self.other_table])
+
+	def test_the_number_of_guests_is_a_number(self):
+		for typed in ("abc", "2.5", ""):
+			with self.subTest(no_of_guests=typed):
+				self.assertEqual(self.refused_booking(email=OTHER_ADDRESS, no_of_guests=typed)[0], 417)
+		self.book(email=OTHER_ADDRESS, no_of_guests="3")
+		self.assertEqual(self.reservation(self.booking_of(OTHER_ADDRESS)).no_of_guests, 3)
+
 
 class TestTheVisitorIsTheConnectionNginxAccepted(OnlineBooking, FrappeTestCase):
 	"""Bench's own vhost overwrites X-Forwarded-For with the peer; the vhost of a customer's website domain appends the
@@ -526,6 +579,21 @@ class TestTheBookingFormIsNoMailRelay(OnlineBooking, FrappeTestCase):
 		self.book()
 		self.assertEqual(len(self.mailed_to(ADDRESS)), 1)
 		self.assertEqual(self.sendmail.call_count, 1)
+
+	def test_a_booking_refused_after_it_was_written_pings_no_till(self):
+		# The site's budget is spent: the booking is written, refused, and rolled back
+		self.limit(site_hour=[0, 86400])
+		with patch.object(frappe.realtime, "emit_via_redis") as emitted:
+			self.assertEqual(self.refused_booking()[0], 429)
+		self.assertNotIn("reservation_update", [call.args[0] for call in emitted.call_args_list])
+
+	def test_a_written_booking_tells_the_tills_once_it_is_committed(self):
+		with patch.object(frappe.realtime, "emit_via_redis") as emitted:
+			self.book()
+		self.assertNotIn("reservation_update", [call.args[0] for call in emitted.call_args_list])
+		# Frappe sends what waits for the commit when the request commits, and drops it when it rolls back
+		queued = [entry[0] for entry in getattr(frappe.local, "_realtime_log", [])]
+		self.assertIn("reservation_update", queued)
 
 	def test_a_visitor_past_his_limit_is_refused_and_nothing_is_written_nor_mailed(self):
 		self.limit(ip_minute=[2, 86400])

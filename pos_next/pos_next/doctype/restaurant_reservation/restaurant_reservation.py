@@ -77,7 +77,9 @@ class RestaurantReservation(Document):
 		if self.has_value_changed("status"):
 			if self.status == "Seated":
 				self._seat_tables()
-			frappe.publish_realtime("reservation_update")
+			# The tills hear of it once it is committed: a booking the request rolls back (an online one refused on the
+			# site's mail budget after it was written, say) never reaches them
+			frappe.publish_realtime("reservation_update", after_commit=True)
 
 	def _validate_date(self):
 		"""Reject reservations in the past."""
