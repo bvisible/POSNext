@@ -36,8 +36,9 @@ WEBSITE_USER = "table-edits-website@yopmail.com"
 PORTAL = "table-edits-portal@yopmail.com"
 CASHIER_ROLE = "POSNext Cashier"
 SAVEPOINT = "table_and_station_edits"
-# What the floor plan reads of a table beside the orders it adds to the row (`get_tables`)
-ORDER_FIELDS = ("order_summary", "waiting_items_count")
+# What the floor plan reads of a table beside the orders it adds to the row (`get_tables`): the open order's summary,
+# its lines on hold, and those of a guest's QR order waiting for the waiter (the list of tables, NeoRestau lot 1, task 26)
+ORDER_FIELDS = ("order_summary", "waiting_items_count", "qr_waiting_count")
 # What a number of seats that is not a whole number of at least 1 is told
 SEATS_REFUSED = "whole number of at least 1"
 # What is not a number of seats: below 1, not a whole number, not a number at all
