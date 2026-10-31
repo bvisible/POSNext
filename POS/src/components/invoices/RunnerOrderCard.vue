@@ -13,8 +13,12 @@
 	<!-- //// then); (3) the DISHES, which scroll inside the card with the « +N lines » strip when they are too many, the card never growing past the screen; nothing at the bottom. The -->
 	<!-- //// button was at the foot of the card, hidden under the dishes of a long ticket, which is the one a runner needs to reach. The quantity stands BEFORE the name, as on the -->
 	<!-- //// kitchen ticket, and the station is a small colour dot before the dish (its three letters too in the large sizes), nothing in a view filtered on one station. -->
-	<div class="flex min-h-0 flex-col rounded-xl border-l-4 border-green-500 bg-white shadow-sm dark:bg-gray-800"
-		data-test="runner-ticket">
+	<!-- //// Neoffice — the card has TWO forms, as the kitchen's (task 38a-3, ruling 107 layer 3): the card of the board, and the same ticket opened FULL SCREEN over it (`fullscreen`), which the board's card draws by rendering itself -->
+	<!-- //// inside TicketFullScreen: the dishes, the buttons and the calls are written once. The panel is bigger (its own CSS variables, `fullScreenVariables`), has an × beside its buttons and lays its dishes out in columns side by side. -->
+	<div class="flex min-h-0 flex-col border-green-500 bg-white dark:bg-gray-800"
+		:class="fullscreen ? 'flex-1 overflow-hidden rounded-2xl border-l-[6px] shadow-xl' : 'rounded-xl border-l-4 shadow-sm'"
+		:style="fullscreen ? fullVariables : undefined"
+		:data-test="fullscreen ? 'ticket-panel' : 'runner-ticket'">
 		<!-- Header and action row: the top of the card, tinted -->
 		<div class="flex-shrink-0 rounded-tr-xl"
 			:class="viewMode === 'station' ? '' : 'bg-green-50 dark:bg-green-900/30'"
@@ -36,6 +40,10 @@
 						<span v-if="numberText" data-test="ticket-number" class="font-medium tabular-nums text-gray-500 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
 							{{ numberText }}
 						</span>
+						<!-- //// Neoffice — the panel says in words where the ticket stands and how long it is, as the kitchen's does: the card has its green border for the state (task 38a-3) -->
+						<span v-if="fullscreen" data-test="ticket-fs-state" class="font-semibold text-green-700 text-[length:var(--kds-fs-ref,11px)] dark:text-ds-success">
+							{{ kitchenStatusLabel("Ready", { takeaway: !!card.takeaway }) }} · {{ lineCountLabel }}
+						</span>
 					</div>
 					<span class="flex-none whitespace-nowrap" data-test="ticket-timer" :class="[TICKET_FRAME.timer, KITCHEN_FRAME.timer, waitTimeClass]">{{ elapsedTime }}</span>
 				</div>
@@ -43,12 +51,13 @@
 
 			<!-- Action row: sticky, never in the scroll -->
 			<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and `text-white` was forced on it: a blank bar. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled. Light mode is untouched. -->
-			<div class="flex items-stretch gap-1.5 px-2 pb-2 pt-0.5" data-test="ticket-actions">
+			<div class="flex items-stretch" :class="fullscreen ? FULLSCREEN_FRAME.actions : 'gap-1.5 px-2 pb-2 pt-0.5'" data-test="ticket-actions">
 				<Button
 					variant="solid"
 					size="lg"
 					data-test="ticket-main"
 					class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
+					:class="fullscreen ? 'max-w-[520px]' : ''"
 					@click="markDelivered"
 					:loading="loading"
 				>
@@ -63,21 +72,32 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 9V3h12v6M6 14h12v8H6z" />
 					</svg>
 				</button>
+
+				<!-- //// Neoffice — the way out of the panel, at the right of the buttons, 56 px square (task 38a-3, ruling 107): a tap outside the panel and Escape close it too (TicketFullScreen) -->
+				<button v-if="fullscreen" type="button" data-test="ticket-close"
+					class="ml-auto flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"
+					:aria-label="__('Close')" :title="__('Close')"
+					@click="emit('close')">
+					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" />
+					</svg>
+				</button>
 			</div>
 		</div>
 
 		<!-- Dishes: the part of the card that scrolls, with the hint that more follow -->
 		<div class="flex min-h-0 flex-1 flex-col" data-test="ticket-scroll-area">
 			<div class="relative flex min-h-0 flex-1 flex-col">
-				<div ref="bodyEl" class="min-h-0 flex-1 overflow-y-auto" :class="[TICKET_FRAME.body, KITCHEN_FRAME.body]" data-test="ticket-body"
+				<!-- //// Neoffice — in the panel the dishes flow in COLUMNS side by side and the body scrolls sideways (task 38a-3, ruling 107); `contents` takes the list's wrapper out of the box tree so that the dishes are the columns' own children -->
+				<div ref="bodyEl" class="min-h-0 flex-1" :class="[fullscreen ? FULLSCREEN_FRAME.body : 'overflow-y-auto', TICKET_FRAME.body, KITCHEN_FRAME.body]" data-test="ticket-body"
 					@scroll.passive="measureHidden">
-					<div ref="linesEl">
+					<div ref="linesEl" :class="fullscreen ? 'contents' : undefined">
 						<!-- Table mode: one flat list of dishes, each with the dot of its station -->
 						<template v-if="viewMode === 'table'">
 							<div v-for="(item, idx) in card.items" :key="item.name" data-ticket-line class="relative"
-								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0, 'break-inside-avoid': fullscreen }">
 								<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
-									:class="[TICKET_FRAME.line, KITCHEN_FRAME.line]" data-test="ticket-line">
+									:class="[TICKET_FRAME.line, fullscreen ? FULLSCREEN_FRAME.line : KITCHEN_FRAME.line]" data-test="ticket-line">
 									<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
 										:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
 									<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name">
@@ -112,7 +132,7 @@
 								</div>
 								<!-- A dish is the same line here as under "By Table" and on the kitchen ticket: the frame's line -->
 								<div v-for="(item, idx) in group.items" :key="item.name" data-ticket-line class="relative"
-									:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+									:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0, 'break-inside-avoid': fullscreen }">
 									<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
 										:class="[TICKET_FRAME.line, KITCHEN_FRAME.line]" data-test="ticket-line">
 										<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
@@ -125,26 +145,39 @@
 						</template>
 					</div>
 				</div>
-				<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
+				<div v-if="!fullscreen && hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
 					class="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white to-transparent dark:from-gray-800"></div>
+				<!-- //// Neoffice — « More → » says that the columns of the panel go on past its right edge (task 38a-3, ruling 107), as on the kitchen's panel: 44 px high, a tap brings the next columns in, it goes when the last one is in view -->
+				<button v-if="fullscreen && moreRight" type="button" data-test="ticket-fs-more"
+					class="absolute bottom-4 right-4 inline-flex min-h-[44px] touch-manipulation items-center rounded-full bg-gray-800 px-4 text-sm font-semibold text-white shadow-md dark:bg-white dark:text-gray-800"
+					@click="showMoreColumns">
+					{{ __("More →") }}
+				</button>
 			</div>
-			<div v-if="hiddenCount > 0" data-test="ticket-more-strip"
-				class="flex h-6 flex-shrink-0 items-center justify-end border-t border-gray-100 px-3 dark:border-gray-700">
+			<!-- //// Neoffice — the strip is the way into the full-screen ticket (task 38a-3, ruling 107 layer 3): a tap on « +N lines » opens the ticket over the board. It is a button now; a dish has no tap of its own here. -->
+			<button v-if="!fullscreen && hiddenCount > 0" type="button" data-test="ticket-more-strip"
+				class="flex h-6 w-full flex-shrink-0 touch-manipulation items-center justify-end border-t border-gray-100 px-3 active:bg-gray-100 dark:border-gray-700 dark:active:bg-gray-700"
+				@click="openFull">
 				<span data-test="ticket-more"
 					class="pointer-events-none rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
 					{{ hiddenCount === 1 ? __("+{0} line", [1]) : __("+{0} lines", [hiddenCount]) }}
 				</span>
-			</div>
+			</button>
 		</div>
+
+		<!-- //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): THIS card again, in its full-screen form, inside the shell that takes the screen. It is fed the same card object, so the board behind and the panel never differ; when the card leaves the board it goes with it and the panel closes. -->
+		<TicketFullScreen v-if="fullOpen && !fullscreen" :label="card.takeaway ? __('Takeaway') : card.title" @close="closeFull">
+			<RunnerOrderCard v-bind="$props" fullscreen @close="closeFull" @print="emit('print', $event)" @delivered="emit('delivered')" />
+		</TicketFullScreen>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue"
+import { ref, computed, inject, nextTick, onMounted, onUnmounted, watch } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
-import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
+import { FULLSCREEN_FRAME, KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — a station's colour lightened for a dark card (task 46)
 import { onDark } from "@/utils/stationColors"
 //// Neoffice — the card is the kitchen's anatomy (task 38a-2, ruling 130): the room's short code, the button's words, the dish's texts, the « +N lines » hint
@@ -156,6 +189,10 @@ import { dishesToPutBack, putBack } from "@/utils/kitchenUndo"
 import { DEFAULT_ALLERGY_WORDS } from "@/utils/kitchenTextKinds"
 import { hiddenLines } from "@/utils/ticketScrollHints"
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
+//// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
+import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
+import { DEFAULT_TEXT_SIZE, fullScreenVariables, TEXT_SIZE_KEY } from "@/utils/kitchenTextSize"
+import { runnerLineCount } from "@/utils/wideTicket"
 
 const props = defineProps({
 	card: {
@@ -182,11 +219,32 @@ const props = defineProps({
 		type: Array,
 		default: () => DEFAULT_ALLERGY_WORDS,
 	},
+	//// Neoffice — THIS card is the ticket opened full screen over the board, not a card of the board (task 38a-3, ruling 107 layer 3): the board's card renders itself, with this set, inside the shell that
+	//// takes the screen. It is bigger, has an × and lays its dishes out in columns; it has no « +N lines » strip, since nothing is cut.
+	fullscreen: {
+		type: Boolean,
+		default: false,
+	},
 })
 
-const emit = defineEmits(["delivered", "print"])
+const emit = defineEmits(["delivered", "print", "close"])
 const { showError } = useToast()
 const loading = ref(false)
+//// Neoffice — the ticket opened full screen (task 38a-3, ruling 107 layer 3), as on the kitchen's card: open for as long as this card is on the board, fed the card the screen refreshes, closed with it when the
+//// ticket leaves. The size of the text is the screen's, handed down (TEXT_SIZE_KEY); the panel is teleported out of the screen's root, so it carries its own, one step bigger (utils/kitchenTextSize).
+const fullOpen = ref(false)
+const openFull = () => {
+	fullOpen.value = true
+}
+const closeFull = () => {
+	fullOpen.value = false
+}
+const textSize = inject(TEXT_SIZE_KEY, ref(DEFAULT_TEXT_SIZE))
+const fullVariables = computed(() => fullScreenVariables(textSize.value))
+const lineCount = computed(() => runnerLineCount(props.card))
+const lineCountLabel = computed(() =>
+	lineCount.value === 1 ? __("{0} line", [1]) : __("{0} lines", [lineCount.value]),
+)
 
 const now = ref(new Date())
 let timerInterval = null
@@ -241,7 +299,17 @@ const stationCode = (item) => roomCode(item.station_name || item.preparation_sta
 const bodyEl = ref(null)
 const linesEl = ref(null)
 const hiddenCount = ref(0)
+//// Neoffice — in the panel nothing is cut at the foot, the columns go on past the right edge: `moreRight` says whether some are out of sight there, and a tap on « More → » brings them in
+const moreRight = ref(false)
+function measureRight() {
+	const body = bodyEl.value
+	moreRight.value = !!body && body.scrollWidth - body.clientWidth - body.scrollLeft > 2
+}
+function showMoreColumns() {
+	bodyEl.value?.scrollBy?.({ left: bodyEl.value.clientWidth * 0.8, behavior: "smooth" })
+}
 function measureHidden() {
+	if (props.fullscreen) return measureRight()
 	hiddenCount.value = hiddenLines(bodyEl.value)
 }
 let sizeObserver = null
@@ -315,6 +383,8 @@ async function markDelivered() {
 		}
 		offerBack(props.card.takeaway ? __("Takeaway") : props.card.title, delivered)
 		emit("delivered")
+		//// Neoffice — « Deliver » pressed in the panel is the runner's last word on the ticket: the panel closes (task 38a-3)
+		if (props.fullscreen) emit("close")
 	} catch (error) {
 		console.error("Failed to mark delivered:", error)
 		showError(__("Failed to mark items as delivered."))

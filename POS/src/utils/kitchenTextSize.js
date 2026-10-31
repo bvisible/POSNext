@@ -88,6 +88,52 @@ const TABLE = {
 }
 
 /**
+ * The size a ticket opened FULL SCREEN draws its dishes in (task 38a-3, ruling 107 layer 3): one step above the screen's, and never below Large, since a ticket is opened to be
+ * read at a glance from where the cook stands. Extra large stays Extra large. A size nobody knows is the default's.
+ *
+ * @param {string} size - The size the screen shows
+ * @returns {string} One of TEXT_SIZES
+ */
+export function fullScreenTextSize(size) {
+	const known = TEXT_SIZES.indexOf(size)
+	const from = known < 0 ? TEXT_SIZES.indexOf(DEFAULT_TEXT_SIZE) : known
+	const floor = TEXT_SIZES.indexOf("large")
+	return TEXT_SIZES[Math.min(Math.max(from + 1, floor), TEXT_SIZES.length - 1)]
+}
+
+// A head that is read from further away than a card's: the mockup's (task 38): the table at 34 px, the timer at 26 px, the number and the room's chip a little bigger,
+// a main button 56 px high with 20 px words, and the paddings of a panel rather than a card. Each is a FLOOR: a size that is already bigger keeps its own.
+const FULL_SCREEN_FLOORS = {
+	"--kds-fs-table": 34,
+	"--kds-fs-ref": 15,
+	"--kds-fs-num": 17,
+	"--kds-fs-timer": 26,
+	"--kds-fs-tt": 15,
+	"--kds-btn-h": 56,
+	"--kds-fs-btn": 20,
+}
+
+/**
+ * The CSS variables of a ticket opened full screen: the table of the size it is drawn in (fullScreenTextSize), with the head, the buttons and the paddings of a panel.
+ * The panel is teleported out of the screen's root, where the screen's own variables do not reach, so it carries them itself.
+ *
+ * @param {string} size - The size the SCREEN shows (not the panel's: the step is taken here)
+ * @returns {Record<string, string>}
+ */
+export function fullScreenVariables(size) {
+	const variables = textSizeVariables(fullScreenTextSize(size))
+	for (const [name, floor] of Object.entries(FULL_SCREEN_FLOORS))
+		variables[name] = `${Math.max(Number.parseFloat(variables[name]), floor)}px`
+	return {
+		...variables,
+		"--kds-pad-x": "16px",
+		"--kds-head-py": "10px",
+		"--kds-body-py": "4px",
+		"--kds-tt-d": "inline",
+	}
+}
+
+/**
  * The CSS variables of a size, to set on the screen's root.
  *
  * @param {string} size - One of TEXT_SIZES (anything else is the default)

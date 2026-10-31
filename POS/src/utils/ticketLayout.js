@@ -146,3 +146,20 @@ export const TICKET_CELL_WIDE = "col-span-2"
 /** A card of the runner's flow that is wide: two ticket widths and the gap between them (`gap-2`, 0.5rem), never wider than the flow, never taller than it. */
 export const TICKET_CARD_WIDE =
 	"w-[calc(var(--kds-card-w,250px)*2+0.5rem)] max-w-full max-h-full flex-none"
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The FULL-SCREEN ticket (NeoRestau lot 1, task 38a-3, ruling 107 layer 3). The card opened over the board: its dishes in as many columns as the height of the panel needs, side by side
+// (a 24-dish ticket does not fit one screen even in large text), the panel scrolling sideways when it still overflows. The sizes are the variables of the size the panel is drawn in
+// (utils/kitchenTextSize fullScreenVariables); these are the classes that change with the form, and they stay whole literals for Tailwind's scan of `src/**/*.js`.
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * What the full-screen form of a card changes. `body`: the dishes flow down a column and on to the next, each column as wide as the size says less a margin (the mockup's 300 px in Large), a
+ * dish is never cut between two columns, and the body scrolls sideways by touch, handing no scroll on to the page. `line`: a dish is a touch target of at least 44 px, as in the mockup.
+ * `actions`: the row under the head, with the room of a panel.
+ */
+export const FULLSCREEN_FRAME = {
+	body: "overflow-x-auto overflow-y-hidden overscroll-contain [column-fill:auto] [column-gap:24px] [columns:calc(var(--kds-card-w,330px)_-_30px)]",
+	line: "!min-h-[44px] !text-[length:var(--kds-fs,13px)]",
+	actions: "gap-2 px-[var(--kds-pad-x,16px)] pb-3 pt-1",
+}

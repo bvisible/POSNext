@@ -17745,3 +17745,15 @@ msgstr "Dernier numéro"
 #: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
 msgid "The last ticket number given. It only goes up: the number of a deleted order is not given again."
 msgstr "Dernier numéro de ticket attribué. Il ne fait que monter : le numéro d'une commande supprimée n'est jamais attribué à nouveau."
+
+#: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
+msgid "{0} line"
+msgstr "{0} ligne"
+
+#: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
+msgid "{0} lines"
+msgstr "{0} lignes"
+
+#: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
+msgid "More →"
+msgstr "Suite →"
