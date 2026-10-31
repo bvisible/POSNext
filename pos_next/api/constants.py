@@ -82,6 +82,9 @@ POS_SETTINGS_FIELDS = [
 	# //// till's sale screen (NeoRestau lot 1, task 13, product owner 30.10.2026). Missing here, the till would read
 	# //// "Automatic" whatever the manager chose.
 	"tiles_per_row",
+	# //// Neoffice — whether a phone shows the pictures on the restaurant card's buttons (NeoRestau lot 1, task 27):
+	# //// missing here, a phone would show none whatever the manager chose.
+	"phone_card_pictures",
 ]
 
 # Default POS Settings values
@@ -152,6 +155,8 @@ DEFAULT_POS_SETTINGS = {
 	"display_item_code": 1,
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: today's grids until a manager chooses (NeoRestau lot 1, task 13).
 	"tiles_per_row": "Automatic",
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: no pictures on a phone's card until a manager asks (task 27).
+	"phone_card_pictures": 0,
 }
 
 

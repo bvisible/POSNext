@@ -1094,6 +1094,32 @@
 
 					<!-- PWA Install Badge (Mobile Only) -->
 					<InstallAppBadge />
+
+					<!-- //// Neoffice — on a phone (below 768 px) the order of an open table is taken on a screen of its -->
+					<!-- //// own, as the waiter mockup draws it: the card as coloured buttons, a touch adding through the -->
+					<!-- //// card grid's own path, a long press opening the options sheet, the order one tap away (NeoRestau -->
+					<!-- //// lot 1, task 27). Teleported over the till; a tablet and a computer keep the screen above. -->
+					<PhoneOrderScreen
+						v-if="phoneOrderShown"
+						v-model:selected-card="selectedCard"
+						:cards="restaurantStore.activeCards"
+						:stock-of="getCardItemStock"
+						@pick="
+							(item) =>
+								item.item_type === 'Menu'
+									? handleCardMenuClick(item)
+									: handleCardItemClick(item)
+						"
+						@options="
+							(item) =>
+								item.item_type === 'Menu'
+									? handleCardMenuClick(item)
+									: itemModifiersRef?.openForCardItem(item)
+						"
+						@back="closeTable"
+						@qr="handleQRButtonClick"
+						@open-order="handleTabSwitch('cart')"
+					/>
 				</div>
 			</div>
 
@@ -1317,7 +1343,10 @@
 			<!-- //// 2026-03-27), and course-by-course menu selection (9f4e85df, 2026-03-21 -->
 			<!-- //// "Phase 4B - restaurant menus with course selection dialog"). -->
 			<!-- Item Modifiers Dialog -->
-			<ItemModifiersDialog ref="itemModifiersRef" @saved="handleModifiersSaved" />
+			<!-- //// Neoffice — on a phone the options open in a sheet from the bottom instead of this dialog, under the -->
+			<!-- //// same handle, so every path that opens the dialog opens the sheet there (NeoRestau lot 1, task 27). -->
+			<PhoneOptionsSheet v-if="phoneLayout" ref="itemModifiersRef" @saved="handleModifiersSaved" />
+			<ItemModifiersDialog v-else ref="itemModifiersRef" @saved="handleModifiersSaved" />
 			<PriceEntryDialog ref="priceEntryRef" @price-confirmed="handlePriceConfirmed" />
 
 			<!-- Menu Selection Dialog -->
@@ -2197,6 +2226,11 @@ import WarehouseAvailabilityDialog from "@/components/sale/WarehouseAvailability
 import POSSettings from "@/components/settings/POSSettings.vue";
 //// Neoffice — the grid of a restaurant card, drawn by its own component (NeoRestau lot 1, task 13).
 import RestaurantCardGrid from "@/components/restaurant/RestaurantCardGrid.vue";
+//// Neoffice — on a phone, the order of an open table on a screen of its own and the options of a dish in a sheet
+//// from the bottom, as the waiter mockup draws them (NeoRestau lot 1, task 27).
+import PhoneOrderScreen from "@/components/restaurant/phone/PhoneOrderScreen.vue";
+import PhoneOptionsSheet from "@/components/restaurant/phone/PhoneOptionsSheet.vue";
+import { PHONE_MAX_WIDTH, phoneOrderShown as tillShowsPhoneOrder } from "@/utils/phoneCard";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
 import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
@@ -2795,6 +2829,23 @@ let bodyStyleSnapshot = null;
 
 //// Neoffice — no toggle handlers and no purge dialog: they cleared the cart and called
 //// reset_all_tables (every table Empty) to flip the mode from the header, which is gone.
+
+//// Neoffice — the phone's layout (below 768 px) and its order screen (NeoRestau lot 1, task 27): on the order tab of
+//// an open table or takeaway order of a restaurant till with cards, a phone shows PhoneOrderScreen where a tablet
+//// shows the card grid; it steps aside while the table's QR code shows, which TableQRCode draws under it.
+const phoneLayout = computed(() => uiStore.windowWidth < PHONE_MAX_WIDTH);
+const phoneOrderShown = computed(() =>
+	tillShowsPhoneOrder({
+		width: uiStore.windowWidth,
+		hasOpenShift: shiftStore.hasOpenShift,
+		restaurant: Boolean(restaurantStore.isEnabled),
+		cards: restaurantStore.activeCards.length,
+		table: cartStore.restaurantTable,
+		takeaway: cartStore.isTakeaway,
+		tab: uiStore.mobileActiveTab,
+		qrShown: showQRDialog.value,
+	})
+);
 
 // Window resize listener (passive for better performance)
 function handleWindowResize() {

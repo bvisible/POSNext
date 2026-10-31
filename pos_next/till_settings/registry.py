@@ -766,6 +766,20 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		options=TILES_PER_ROW,
 	),
+	# A phone shows the restaurant card as buttons without pictures unless the till asks for them
+	# (NeoRestau lot 1, task 27; design § G: « no pictures by default, a setting with or without »)
+	Setting(
+		"phone_card_pictures",
+		"items",
+		_lt("Pictures on a phone"),
+		_lt(
+			"On a phone, each button of the restaurant's card shows the item's picture above its name. Off: the name"
+			" and the price only, so that more buttons fit on the screen."
+		),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
 	Setting(
 		"display_item_code",
 		"items",
