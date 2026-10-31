@@ -64,8 +64,8 @@ describe("the pass delivers each order with its own lines", () => {
 			props: { card: STATION_CARD, viewMode: "station" },
 			global: { mocks: { __: globalThis.__ } },
 		})
-		// The first "Deliver" of the card is table T1's
-		await wrapper.findAll("button").find((button) => button.text() === "Deliver").trigger("click")
+		// The first table group's own "Deliver" (since task 38a-2 the card's main "Deliver" is the first button of the card, in the action row at the top)
+		await wrapper.get('[data-test="group-deliver"]').trigger("click")
 		await flushPromises()
 
 		expect(delivered()).toEqual([

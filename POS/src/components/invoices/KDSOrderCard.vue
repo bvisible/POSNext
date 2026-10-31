@@ -171,27 +171,8 @@
 											:class="itemStatusClass(item.kds_status)">{{ stateWord(item) }}</span>
 										<svg v-if="isDelivered(item)" data-test="ticket-line-done" data-icon="check" class="mr-1 inline-block h-[1em] w-[1em] align-[-0.14em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>{{ item.item_name }}
 									</span>
-									<!-- //// Neoffice — THREE KINDS of text, one look each, all the size of the dish's own text (task 38a-1, ruling 123: the information is as important -->
-									<!-- //// as the dish, and it was pale grey and small). The OPTIONS are ink with an arrow; a REMARK or instruction is the accent, medium, with the "i"; -->
-									<!-- //// an ALLERGY is the one red, bold, in a tinted strip of its own with a warning mark, so that it cannot be taken for a remark. Red is kept for -->
-									<!-- //// allergies (it was any annotation). A remark is an allergy when it holds a word of the list (utils/kitchenTextKinds). Options and a plain remark -->
-									<!-- //// share a line while they fit. -->
-									<div v-if="optionsOf(item).length || (remarkOf(item) && !isAllergyRemark(item))" data-test="ticket-sub"
-										class="col-start-2 mt-0.5 leading-tight text-[length:var(--kds-fs-sub,12px)]">
-										<span v-if="optionsOf(item).length" data-test="ticket-options" class="font-normal text-gray-900 dark:text-gray-100">
-											<span aria-hidden="true">→</span> {{ optionsOf(item).join(', ') }}
-										</span>
-										<span v-if="remarkOf(item) && !isAllergyRemark(item)" data-test="ticket-remark" class="font-medium text-blue-700"
-											:class="{ 'ml-2': optionsOf(item).length }">
-											<svg data-icon="info" class="inline-block h-[1em] w-[1em] align-[-0.14em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
-											{{ remarkOf(item) }}
-										</span>
-									</div>
-									<div v-if="remarkOf(item) && isAllergyRemark(item)" data-test="ticket-allergy"
-										class="col-span-full mt-0.5 flex items-start gap-1 rounded-md border-l-4 border-red-500 bg-red-50 px-1.5 py-0.5 font-bold leading-tight text-red-700 text-[length:var(--kds-fs-sub,12px)] dark:text-ds-danger-soft">
-										<svg data-icon="warning" class="mt-[0.15em] h-[1em] w-[1em] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4M12 17h.01" /></svg>
-										<span>{{ remarkOf(item) }}</span>
-									</div>
+									<!-- //// Neoffice — THREE KINDS of text, one look each, all the size of the dish's own text (task 38a-1, ruling 123): the options, a remark, an allergy. They are drawn by TicketDishNotes since the runner's card draws the same three (task 38a-2, ruling 130). -->
+									<TicketDishNotes :item="item" :allergy-words="allergyWords" />
 								</div>
 								<!-- Item context menu -->
 								<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
@@ -280,8 +261,10 @@ import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — the room's short code on the header's line (task 38a-1)
 import { roomCode } from "@/utils/kitchenRoomCode"
 //// Neoffice — the three kinds of text of a dish: options, remark, allergy (task 38a-1, ruling 123)
-import { allergyWordsOf, isAllergy } from "@/utils/kitchenTextKinds"
+import { allergyWordsOf } from "@/utils/kitchenTextKinds"
 import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
+//// Neoffice — what a ticket says under a dish, written once for the kitchen and the runner (task 38a-2, ruling 130)
+import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
@@ -746,25 +729,11 @@ function stateWord(item) {
 	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value })
 }
 
-//// Neoffice — the remark of a dish, trimmed, and whether it is an allergy: the restaurant's own list of words when its settings carry one
-//// (`allergy_words`), else the default (task 38a-1, ruling 123)
+//// Neoffice — the restaurant's own list of allergy words when its settings carry one (`allergy_words`), else the default (task 38a-1, ruling 123);
+//// the dish's options, remark and allergy are drawn by TicketDishNotes (task 38a-2)
 const allergyWords = computed(() =>
 	allergyWordsOf(restaurantStore.restaurantSettings),
 )
-const remarkOf = (item) => String(item.posa_special_instructions || "").trim()
-const isAllergyRemark = (item) => isAllergy(remarkOf(item), allergyWords.value)
-const optionsOf = (item) =>
-	item.posa_item_modifiers ? parseModifiers(item.posa_item_modifiers) : []
-
-// Parse modifier JSON into a flat list of modifier option names
-function parseModifiers(json) {
-	try {
-		const mods = JSON.parse(json)
-		return mods.flatMap((m) => m.options.map((o) => o.name))
-	} catch {
-		return []
-	}
-}
 
 // Update order KDS status via API
 // Update order-level KDS status (optimistic UI)

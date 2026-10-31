@@ -90,7 +90,8 @@
 		</ServiceTopBar>
 
 		<!-- Main content: Cards view -->
-		<main v-if="viewMode !== 'plan'" :class="TICKET_AREA" data-test="ticket-area">
+		<!-- //// Neoffice — the tickets are STACKED (task 38a-2, ruling 130): a short ticket stands under the one before it in the same column, a long one keeps a column, oldest first, top to bottom and on to the next column; the area scrolls sideways. Each card is as wide as the text size says. The setting « stack short tickets » (on by default) turns it back into one ticket per column. -->
+		<main v-if="viewMode !== 'plan'" :class="RUNNER_AREA" data-test="ticket-area">
 			<div v-if="loading || waitingForRooms" class="flex justify-center items-center h-full">
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
@@ -104,12 +105,15 @@
 				<p>{{ __("All items are either being prepared or have been delivered.") }}</p>
 			</div>
 
-			<div v-else :class="TICKET_GRID" data-test="ticket-grid">
+			<div v-else :class="stackShortTickets ? TICKET_STACK : TICKET_ROW" :data-stacked="stackShortTickets ? 'true' : 'false'" data-test="ticket-flow">
 				<RunnerOrderCard
 					v-for="card in groupedCards"
 					:key="card.key"
+					:class="TICKET_CARD"
 					:card="card"
 					:view-mode="viewMode"
+					:show-station="!selectedStation"
+					:allergy-words="allergyWords"
 					@delivered="loadOrders"
 				/>
 			</div>
@@ -216,7 +220,9 @@ import { SCREEN_RUNNER } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import { countDishes } from "@/utils/kitchenRunner"
-import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
+import { RUNNER_AREA, TICKET_CARD, TICKET_ROW, TICKET_STACK } from "@/utils/ticketLayout"
+import { useStackShortTickets } from "@/composables/useStackShortTickets"
+import { allergyWordsOf } from "@/utils/kitchenTextKinds"
 //// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
 import { inkOn, onDark } from "@/utils/stationColors"
 import { call } from "@/utils/apiWrapper"
@@ -249,6 +255,10 @@ const allTables = ref([])
 const allFloorStations = ref([])
 const loading = ref(true)
 const deliverLoading = ref(false)
+//// Neoffice — the setting « stack short tickets » of the runner (task 38a-2, ruling 130), on by default, kept on the device
+const { stack: stackShortTickets } = useStackShortTickets()
+//// Neoffice — the restaurant's own list of allergy words, else the default (task 38a-1, ruling 123): a ticket's remark is an allergy when it holds one
+const allergyWords = computed(() => allergyWordsOf(restaurantStore.restaurantSettings))
 const viewMode = ref("table")
 const viewModes = computed(() => [
 	{ id: "table", label: __("By Table") },
@@ -424,6 +434,11 @@ function groupByTable() {
 			modified: order.modified,
 			items: order.items || [],
 			stationGroups: groupItemsByStation(order.items || []),
+			//// Neoffice — what the header's one line shows beside the table (task 38a-2, ruling 130): the room's name (the card derives its short code), the ticket's number
+			//// when the order carries one, and whether it is a takeaway (handed over, not delivered to a table)
+			roomName: areas.value.find((area) => area.name === order.area)?.area_name || "",
+			ticketNo: order.ticket_no || "",
+			takeaway: !!order.is_takeaway,
 		}))
 		.sort((a, b) => new Date(a.modified) - new Date(b.modified))
 }

@@ -45,6 +45,9 @@ const { default: RunnerOrderCard } = await import(
 	"@/components/invoices/RunnerOrderCard.vue"
 )
 const {
+	RUNNER_AREA,
+	TICKET_CARD,
+	TICKET_STACK,
 	BAND_WAITING_HEIGHT,
 	BAND_PRODUCTION_HEIGHT,
 	TICKET_AREA,
@@ -361,32 +364,38 @@ describe("the two screens", () => {
 		return wrapper
 	}
 
-	it("lay their tickets out on the same grid, in the same scrolling area: the kitchen with its bands side by side", async () => {
-		// Side by side, the kitchen's two bands ARE the shared grid (the waiting tickets in its first column, the others in the
-		// rest), so its tickets are the runner's, column for column
+	// Task 38a-2, ruling 130: the runner's tickets no longer stand on the shared grid, in the shared scrolling area. They are STACKED: short tickets
+	// flow in columns (top to bottom, then the next column) as tall as the screen leaves them, in an area that scrolls sideways. What stays shared is the
+	// WIDTH of a ticket (one size per text size, `--kds-card-w`) and the frame of the card.
+	it("lay their tickets out in their own ways: the kitchen with its bands side by side on the shared grid, the runner's stacked in columns", async () => {
 		localStorage.setItem("pos_kds_layout", "columns")
 		const kitchen = await open(KDS)
 		const runner = await open(Runner)
 
-		for (const [name, wrapper, selector] of [
-			["kitchen", kitchen, '[data-test="bands"]'],
-			["runner", runner, '[data-test="ticket-grid"]'],
-		]) {
-			const grid = wrapper.find(selector)
-			expect(grid.exists(), `${name}: a grid`).toBe(true)
-			expect(grid.classes(), `${name}: the grid`).toEqual(
-				expect.arrayContaining(tokens(TICKET_GRID)),
-			)
-			const area = wrapper.find('[data-test="ticket-area"]')
-			expect(area.classes(), `${name}: the area`).toEqual(
-				expect.arrayContaining(tokens(TICKET_AREA)),
-			)
-			expect(area.element.contains(grid.element)).toBe(true)
-		}
-		// The runner's grid is the shared one and nothing else
-		expect(runner.find('[data-test="ticket-grid"]').classes().sort()).toEqual(
-			tokens(TICKET_GRID).sort(),
+		const grid = kitchen.find('[data-test="bands"]')
+		expect(grid.exists(), "kitchen: a grid").toBe(true)
+		expect(grid.classes(), "kitchen: the grid").toEqual(
+			expect.arrayContaining(tokens(TICKET_GRID)),
 		)
+		const kitchenArea = kitchen.find('[data-test="ticket-area"]')
+		expect(kitchenArea.classes()).toEqual(
+			expect.arrayContaining(tokens(TICKET_AREA)),
+		)
+		expect(kitchenArea.element.contains(grid.element)).toBe(true)
+
+		const flow = runner.find('[data-test="ticket-flow"]')
+		expect(flow.exists(), "runner: a flow of tickets").toBe(true)
+		expect(flow.classes().sort()).toEqual(tokens(TICKET_STACK).sort())
+		const runnerArea = runner.find('[data-test="ticket-area"]')
+		expect(runnerArea.classes()).toEqual(
+			expect.arrayContaining(tokens(RUNNER_AREA)),
+		)
+		expect(runnerArea.element.contains(flow.element)).toBe(true)
+		// Its cards are the width of the text size and never taller than the flow
+		const cards = runner.findAll('[data-test="ticket-flow"] > *')
+		expect(cards.length).toBeGreaterThan(0)
+		for (const card of cards)
+			expect(card.classes()).toEqual(expect.arrayContaining(tokens(TICKET_CARD)))
 	})
 
 	it("lay the kitchen's tickets out as wide as the runner's when its bands are one above the other: lanes of the same ticket width", async () => {
@@ -432,6 +441,8 @@ describe("the two screens", () => {
 					key: "SINV-1",
 					title: "T1",
 					subtitle: "#SINV-1",
+					// The header's number is the ticket's, as on the kitchen's (task 38a-2, ruling 130): never the invoice's name, and none when there is none
+					ticketNo: "0001",
 					invoiceName: "SINV-1",
 					creation: "2026-10-30 12:00:00",
 					modified: "2026-10-30 12:00:00",
@@ -535,11 +546,11 @@ describe("the two screens", () => {
 					),
 				),
 			)
-			// What is in the line takes the line's size: no smaller text, no smaller quantity box of its own
+			// What is in the line takes the line's size: no smaller text, and (task 38a-2, ruling 130) no box of its own for the quantity, which stands
+			// BEFORE the name as « 2x », like the kitchen ticket's
 			expect(line.find(".font-medium").classes()).not.toContain("text-sm")
-			expect(line.find(".rounded-lg").classes()).toEqual(
-				expect.arrayContaining(["w-8", "h-8", "text-lg"]),
-			)
+			expect(line.get('[data-test="ticket-qty"]').text()).toMatch(/^\d+×$/)
+			expect(line.find(".w-8").exists()).toBe(false)
 		}
 	})
 
@@ -566,8 +577,10 @@ describe("the two screens", () => {
 		})
 		opened.push(kitchen, runner)
 
-		expect(runner.text()).toContain("Mark Delivered")
-		expect(kitchen.text()).not.toContain("Mark Delivered")
+		// The runner's button is « Deliver » (the kitchen's own word for it, task 38a-1, ruling 113), in the action row under the header (task 38a-2, ruling 130)
+		expect(runner.get('[data-test="ticket-main"]').text()).toBe("Deliver")
+		expect(runner.text()).not.toContain("Mark Delivered")
+		expect(kitchen.text()).not.toContain("Deliver")
 		// The kitchen's ticket says where the order is (Pending: on its root, and by its button, the header does not write it any more,
 		// task 38a-1), the runner's item line has no status to set
 		expect(

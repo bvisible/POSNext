@@ -113,11 +113,17 @@ describe("the runner's cards show labels", () => {
 			],
 		}
 
-		const text = show(RunnerOrderCard, { card, viewMode: "table" }).text()
+		const wrapper = show(RunnerOrderCard, { card, viewMode: "table" })
+		const text = wrapper.text()
 
 		expect(text).toContain("T1")
-		expect(text).toContain("Kitchen")
+		// Task 38a-2, ruling 130: the station is a small dot of its colour before the dish, its label is the dot's title, and its first three letters stand
+		// beside it (shown in the large sizes only), so the whole label is no longer written on the line
+		const dot = wrapper.get('[data-test="ticket-station-dot"]')
+		expect(dot.attributes("title")).toBe("Kitchen")
+		expect(wrapper.get('[data-test="ticket-station-code"]').text()).toBe("KIT")
 		expect(text).not.toContain(STATION_NAME)
+		expect(wrapper.html()).not.toContain(STATION_NAME)
 	})
 })
 

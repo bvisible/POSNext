@@ -19,6 +19,11 @@ const POS = path.resolve(here, "../../../..")
 const SOURCES = [
 	"src/components/invoices/KDSOrderCard.vue",
 	"src/components/invoices/RunnerOrderCard.vue",
+	// Task 38a-2: the allergy strip moved out of the kitchen card into the piece both cards draw, and the screens have a bar of their own
+	"src/components/invoices/TicketDishNotes.vue",
+	"src/components/restaurant/ServiceTopBar.vue",
+	"src/components/restaurant/SegmentedControl.vue",
+	"src/components/restaurant/ThemeButton.vue",
 	"src/components/restaurant/KitchenBand.vue",
 	"src/components/restaurant/RoomStationFilterLine.vue",
 	"src/pages/KDS.vue",

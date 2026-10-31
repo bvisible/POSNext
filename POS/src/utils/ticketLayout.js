@@ -102,3 +102,28 @@ export const KITCHEN_FRAME = {
 	body: "!px-[var(--kds-pad-x,8px)] !py-[var(--kds-body-py,0px)]",
 	line: "!min-h-0 !text-[length:var(--kds-fs,13px)]",
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The runner screen's tickets, STACKED (NeoRestau lot 1, task 38a-2, ruling 130). The runner's cards stood in one row of full-height columns, so a ticket of two
+// dishes left most of its column empty while the next ticket sat off the screen. A short ticket now stacks under the one before it in the same column, and a
+// long ticket keeps a column for itself: the cards FLOW, oldest first, from the top of a column to its foot and on to the next column (a column-wrapping flex
+// box as tall as the screen leaves it), each as wide as the size of the text says (`--kds-card-w`, utils/kitchenTextSize) and never taller than the screen
+// (`max-h-full`: its dishes scroll inside it). The area scrolls sideways, by touch, and hands no scroll on to the page.
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * The scrolling area of the runner's tickets: sideways only. A column of tickets is as tall as the screen leaves it, so nothing scrolls up and down; a swipe
+ * from the left edge would be taken for "back" on a tablet, and the area keeps the scroll to itself (`overscroll-contain`).
+ */
+export const RUNNER_AREA =
+	"flex-1 min-h-0 overflow-x-auto overflow-y-hidden overscroll-contain px-3 pt-2 pb-2"
+
+/** The cards flowing in columns: top to bottom, then the next column. The setting « stack short tickets » (on by default). */
+export const TICKET_STACK =
+	"flex h-full min-h-[14rem] flex-col flex-wrap content-start items-start gap-2"
+
+/** The same cards with one ticket per column, as full-height columns side by side: the setting turned off. */
+export const TICKET_ROW = "flex h-full min-h-[14rem] flex-row items-stretch gap-2"
+
+/** A card of the runner's flow: as wide as the text size says, never taller than the flow. */
+export const TICKET_CARD = "w-[var(--kds-card-w,250px)] max-h-full flex-none"

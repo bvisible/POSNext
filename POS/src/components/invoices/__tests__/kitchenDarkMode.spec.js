@@ -331,6 +331,8 @@ describe("the runner card in dark mode (task 46)", () => {
 		key: "SINV-DARK",
 		title: "T1",
 		subtitle: "#SINV-DARK",
+		// Task 38a-2, ruling 130: the header's number is the ticket's, never the invoice's name; a card with none shows none
+		ticketNo: "0001",
 		invoiceName: "SINV-DARK",
 		creation: modified,
 		modified,
@@ -356,7 +358,7 @@ describe("the runner card in dark mode (task 46)", () => {
 		return wrapper
 	}
 
-	it("Mark Delivered gives its text colour back to the Button in dark, and keeps the white it had in light", () => {
+	it("Deliver (the main button, once Mark Delivered) gives its text colour back to the Button in dark, and keeps the white it had in light", () => {
 		const button = runner([dish()]).get("button")
 
 		expect(button.classes()).toEqual(
@@ -398,22 +400,21 @@ describe("the runner card in dark mode (task 46)", () => {
 		expect(number.classes()).toContain("dark:[&&]:!text-gray-300")
 	})
 
-	it("a station's pill in table mode: its colour moves from the inline style to a variable the class reads, and dark takes the same colour lightened", () => {
+	// Task 38a-2, ruling 130: the station's PILL before each dish became a small dot of its colour (the pill took a column of width); the colour still moves
+	// from the inline style to a variable the class reads, and dark takes the same colour lightened
+	it("a station's dot in table mode: its colour is a variable the class reads, and dark takes the same colour lightened", () => {
 		const wrapper = runner([dish()])
 
-		const pill = wrapper.findAll("li span.rounded-full")[0]
-		const style = pill.element.style
-		expect(pill.classes()).toContain("text-[color:var(--station-color)]")
-		expect(pill.classes()).toContain("dark:text-[color:var(--station-on-dark)]")
-		expect(style.getPropertyValue("--station-color")).toBe("#2C4FA8")
+		const dot = wrapper.get('[data-test="ticket-station-dot"]')
+		const style = dot.element.style
+		expect(dot.classes()).toContain("bg-[color:var(--dot-color)]")
+		expect(dot.classes()).toContain("dark:bg-[color:var(--dot-on-dark)]")
+		expect(style.getPropertyValue("--dot-color")).toBe("#2C4FA8")
 		// Lightened: not the dark blue itself, and written as a colour
-		expect(style.getPropertyValue("--station-on-dark")).toMatch(
-			/^#[0-9A-F]{6}$/,
-		)
-		expect(style.getPropertyValue("--station-on-dark")).not.toBe("#2C4FA8")
-		// The inline style no longer holds a colour of its own (a class cannot beat it), the tint and the border are as they were
+		expect(style.getPropertyValue("--dot-on-dark")).toMatch(/^#[0-9A-F]{6}$/)
+		expect(style.getPropertyValue("--dot-on-dark")).not.toBe("#2C4FA8")
+		// The inline style holds no colour of its own (a class cannot beat it)
+		expect(style.backgroundColor).toBe("")
 		expect(style.color).toBe("")
-		expect(style.backgroundColor).toBe("rgba(44, 79, 168, 0.125)")
-		expect(style.border).toContain("1px solid")
 	})
 })

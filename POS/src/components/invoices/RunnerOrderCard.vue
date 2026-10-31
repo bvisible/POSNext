@@ -7,129 +7,152 @@
 	<!-- //// pass. Modifiers arrive as JSON groups and are flattened to readable names before -->
 	<!-- //// display (d59036f1, 2026-03-23 "preparation workflows, runner display, and workflow -->
 	<!-- //// APIs"; fbba3b7a, 2026-03-23, for the modifier names). -->
-	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 border-green-400 overflow-hidden flex flex-col">
-		<!-- Card Header -->
-		<!-- The frame (padding, title, order number, timer, dish lines) is the one the kitchen ticket has: utils/ticketLayout -->
-		<div class="border-b flex justify-between items-center" data-test="ticket-header"
-			:class="[TICKET_FRAME.header, viewMode === 'station'
-				? ''
-				: 'bg-green-50 dark:bg-green-900/30']"
-			:style="viewMode === 'station' ? { backgroundColor: (card.stationColor || '#22C55E') + '15' } : {}">
-			<div>
-				<h3 :class="TICKET_FRAME.title" data-test="ticket-title">{{ card.title }}</h3>
-				<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css), so no plain `dark:` colour reaches it; it read 3.8:1 on the green-tinted header. `[&&]` doubles the selector so that this variant outranks it. -->
-				<span class="text-gray-500 dark:[&&]:!text-gray-300 font-medium" :class="TICKET_FRAME.number" data-test="ticket-number">{{ card.subtitle }}</span>
+	<!-- //// Neoffice — the card has the anatomy of the kitchen's, top to bottom (task 38a-2, ruling 130): (1) a HEADER of one line, the room's code as a small chip, the table big and -->
+	<!-- //// bold, the ticket's number, the timer at the right: no invoice name (ruling 122), no « Ready » pill (every card of this screen is ready, the green border says it); (2) the -->
+	<!-- //// ACTION ROW directly under it, which never scrolls: « Deliver » (« Hand over » for a takeaway) taking the width, and the slot of the print button (task 44; `canPrint` is false until -->
+	<!-- //// then); (3) the DISHES, which scroll inside the card with the « +N lines » strip when they are too many, the card never growing past the screen; nothing at the bottom. The -->
+	<!-- //// button was at the foot of the card, hidden under the dishes of a long ticket, which is the one a runner needs to reach. The quantity stands BEFORE the name, as on the -->
+	<!-- //// kitchen ticket, and the station is a small colour dot before the dish (its three letters too in the large sizes), nothing in a view filtered on one station. -->
+	<div class="flex min-h-0 flex-col rounded-xl border-l-4 border-green-500 bg-white shadow-sm dark:bg-gray-800"
+		data-test="runner-ticket">
+		<!-- Header and action row: the top of the card, tinted -->
+		<div class="flex-shrink-0 rounded-tr-xl"
+			:class="viewMode === 'station' ? '' : 'bg-green-50 dark:bg-green-900/30'"
+			:style="viewMode === 'station' ? { backgroundColor: (card.stationColor || '#22C55E') + '15' } : {}"
+			data-test="ticket-top">
+			<!-- The frame (padding, title, order number, timer, dish lines) is the one the kitchen ticket has: utils/ticketLayout -->
+			<div class="border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header]" data-test="ticket-header">
+				<div class="flex items-center justify-between gap-x-1.5">
+					<div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-test="ticket-ref">
+						<span v-if="roomChip" data-test="ticket-room"
+							class="rounded-md bg-gray-100 px-1.5 text-[length:var(--kds-fs-ref,11px)] font-semibold leading-snug tracking-wide text-gray-600 dark:bg-gray-700">
+							{{ roomChip }}
+						</span>
+						<h3 data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="[TICKET_FRAME.title, KITCHEN_FRAME.title]">
+							<template v-if="card.takeaway">{{ __("Takeaway") }}</template>
+							<template v-else>{{ card.title }}</template>
+						</h3>
+						<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css), so no plain `dark:` colour reaches it; `[&&]` doubles the selector so that this variant outranks it. -->
+						<span v-if="numberText" data-test="ticket-number" class="font-medium tabular-nums text-gray-500 dark:[&&]:!text-gray-300" :class="[TICKET_FRAME.number, KITCHEN_FRAME.number]">
+							{{ numberText }}
+						</span>
+					</div>
+					<span class="flex-none whitespace-nowrap" data-test="ticket-timer" :class="[TICKET_FRAME.timer, KITCHEN_FRAME.timer, waitTimeClass]">{{ elapsedTime }}</span>
+				</div>
 			</div>
-			<div class="text-right">
-				<div :class="[TICKET_FRAME.timer, waitTimeClass]" data-test="ticket-timer">{{ elapsedTime }}</div>
-				<span class="text-[10px] uppercase font-bold bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300 px-2 py-0.5 rounded-full">
-					{{ __("Ready") }}
-				</span>
+
+			<!-- Action row: sticky, never in the scroll -->
+			<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and `text-white` was forced on it: a blank bar. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled. Light mode is untouched. -->
+			<div class="flex items-stretch gap-1.5 px-2 pb-2 pt-0.5" data-test="ticket-actions">
+				<Button
+					variant="solid"
+					size="lg"
+					data-test="ticket-main"
+					class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
+					@click="markDelivered"
+					:loading="loading"
+				>
+					{{ mainLabel }}
+				</Button>
+				<!-- //// Neoffice — the slot of the print button (task 38a-2, ruling 130): a 44 px square at the right of the main button, drawn only when the screen can print a copy of the ticket (task 44 wires it; no printing happens here) -->
+				<button v-if="canPrint" type="button" data-test="ticket-print"
+					class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"
+					:aria-label="__('Print a copy of this ticket')" :title="__('Print a copy of this ticket')"
+					@click.stop="emit('print', card)">
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 9V3h12v6M6 14h12v8H6z" />
+					</svg>
+				</button>
 			</div>
 		</div>
 
-		<!-- Items list -->
-		<div class="flex-1" :class="TICKET_FRAME.body" data-test="ticket-body">
-			<!-- Table mode: flat list with station badges -->
-			<template v-if="viewMode === 'table'">
-				<ul class="divide-y divide-gray-100 dark:divide-gray-700">
-					<li v-for="item in card.items" :key="item.name" class="py-2 flex items-center gap-3" :class="TICKET_FRAME.line" data-test="ticket-line">
-						<!-- Station badge -->
-						<!-- //// Neoffice — dark mode (task 46): the station's name is written in the station's own colour on a tint of it, which reads on a light card and not on a dark one (a blue station 2.0:1). The colour moves from the inline style to a variable the class reads, so that in dark the class can take the same colour lightened (`onDark`). Light mode draws the same colour as before. -->
-						<span v-if="item.preparation_station"
-							class="text-[9px] font-bold uppercase px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]"
-							:style="{
-								backgroundColor: (item.station_color || '#6B7280') + '20',
-								'--station-color': item.station_color || '#6B7280',
-								'--station-on-dark': onDark(item.station_color || '#6B7280'),
-								border: '1px solid ' + (item.station_color || '#6B7280') + '40'
-							}">
-							{{ item.station_name || item.preparation_station }}
-						</span>
-
-						<!-- Item info -->
-						<div class="flex-1 min-w-0">
-							<span class="font-medium text-gray-900 dark:text-gray-100">{{ item.item_name }}</span>
-							<div v-if="item.posa_special_instructions" class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-								{{ item.posa_special_instructions }}
-							</div>
-							<!-- Modifiers -->
-							<div v-if="parsedModifiers(item)" class="mt-0.5 flex flex-wrap gap-1">
-								<span v-for="mod in parsedModifiers(item)" :key="mod"
-									class="text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-									{{ mod }}
-								</span>
-							</div>
-						</div>
-
-						<!-- Quantity -->
-						<div class="font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-							{{ item.qty }}
-						</div>
-					</li>
-				</ul>
-			</template>
-
-			<!-- Station mode: items grouped by table -->
-			<template v-else>
-				<div v-for="group in card.tableGroups" :key="group.tableName" class="mb-3 last:mb-0">
-					<div class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 flex justify-between items-center">
-						<span>{{ group.tableName }}</span>
-						<!-- //// Neoffice — dark mode (task 46): this build's palette has no `emerald`, so `text-emerald-700` and `dark:text-emerald-300` compile to nothing and the button took the grey of its row (3.1:1 on the green tint the till's dark remap gives it); the pale mint of the dark ramp reads. -->
-						<button
-							@click="deliverTableGroup(group)"
-							class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 dark:text-ds-success-soft hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors"
-							:disabled="loading"
-						>
-							{{ __("Deliver") }}
-						</button>
-					</div>
-					<ul class="divide-y divide-gray-100 dark:divide-gray-700">
-						<!-- A dish is the same line here as under "By Table" and on the kitchen ticket: the frame's line -->
-						<li v-for="item in group.items" :key="item.name" class="py-2 flex items-center gap-3" :class="TICKET_FRAME.line" data-test="ticket-line">
-							<div class="flex-1 min-w-0">
-								<span class="font-medium text-gray-900 dark:text-gray-100">{{ item.item_name }}</span>
-								<div v-if="item.posa_special_instructions" class="text-xs text-blue-600 dark:text-blue-400">
-									{{ item.posa_special_instructions }}
+		<!-- Dishes: the part of the card that scrolls, with the hint that more follow -->
+		<div class="flex min-h-0 flex-1 flex-col" data-test="ticket-scroll-area">
+			<div class="relative flex min-h-0 flex-1 flex-col">
+				<div ref="bodyEl" class="min-h-0 flex-1 overflow-y-auto" :class="[TICKET_FRAME.body, KITCHEN_FRAME.body]" data-test="ticket-body"
+					@scroll.passive="measureHidden">
+					<div ref="linesEl">
+						<!-- Table mode: one flat list of dishes, each with the dot of its station -->
+						<template v-if="viewMode === 'table'">
+							<div v-for="(item, idx) in card.items" :key="item.name" data-ticket-line class="relative"
+								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+								<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
+									:class="[TICKET_FRAME.line, KITCHEN_FRAME.line]" data-test="ticket-line">
+									<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
+										:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
+									<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name">
+										<!-- //// Neoffice — the station is a small dot of its colour before the dish (the chips at the top carry the same dots), and its three letters too in the large sizes (`--kds-tt-d`). Not drawn in a view filtered on one station: the station is then known. -->
+										<template v-if="showStation && item.preparation_station">
+											<span data-test="ticket-station-dot" :title="item.station_name || item.preparation_station"
+												class="mr-1 inline-block h-[0.55em] w-[0.55em] rounded-full align-[0.05em] bg-[color:var(--dot-color)] dark:bg-[color:var(--dot-on-dark)]"
+												:style="{ '--dot-color': dotColor(item), '--dot-on-dark': onDark(dotColor(item)) }"></span>
+											<span data-test="ticket-station-code"
+												class="mr-1 -ml-0.5 text-[length:var(--kds-fs-ref,11px)] font-bold tracking-wide text-gray-500 [display:var(--kds-tt-d,none)] dark:[&&]:!text-gray-400">{{ stationCode(item) }}</span>
+										</template>{{ item.item_name }}
+									</span>
+									<TicketDishNotes :item="item" :allergy-words="allergyWords" />
 								</div>
 							</div>
-							<div class="font-bold w-8 h-8 text-lg flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-								{{ item.qty }}
-							</div>
-						</li>
-					</ul>
-				</div>
-			</template>
-		</div>
+						</template>
 
-		<!-- Action: Mark Delivered -->
-		<div class="p-3 border-t bg-gray-50 dark:bg-gray-800/80">
-			<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and `text-white` was forced on it: a blank bar. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled. Light mode is untouched. -->
-			<Button
-				variant="solid"
-				class="w-full h-14 text-lg font-bold bg-emerald-500 hover:bg-emerald-600 text-white dark:enabled:text-ink-white shadow-md"
-				@click="markDelivered"
-				:loading="loading"
-			>
-				<template #prefix>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-					</svg>
-				</template>
-				{{ __("Mark Delivered") }}
-			</Button>
+						<!-- Station mode: the dishes of the station, grouped by table, each table with its own « Deliver » -->
+						<template v-else>
+							<div v-for="group in card.tableGroups" :key="group.tableName" class="mb-2 last:mb-0" data-test="ticket-group">
+								<div class="mb-0.5 flex items-center justify-between text-[length:var(--kds-fs-ref,11px)] font-bold uppercase tracking-wider text-gray-500 dark:[&&]:!text-gray-400">
+									<span>{{ group.tableName }}</span>
+									<!-- //// Neoffice — dark mode (task 46): this build's palette has no `emerald`, so `text-emerald-700` and `dark:text-emerald-300` compile to nothing and the button took the grey of its row (3.1:1 on the green tint the till's dark remap gives it); the pale mint of the dark ramp reads. -->
+									<button
+										data-test="group-deliver"
+										@click="deliverTableGroup(group)"
+										class="rounded bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700 transition-colors hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:text-ds-success-soft dark:hover:bg-emerald-900/60"
+										:disabled="loading"
+									>
+										{{ __("Deliver") }}
+									</button>
+								</div>
+								<!-- A dish is the same line here as under "By Table" and on the kitchen ticket: the frame's line -->
+								<div v-for="(item, idx) in group.items" :key="item.name" data-ticket-line class="relative"
+									:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+									<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
+										:class="[TICKET_FRAME.line, KITCHEN_FRAME.line]" data-test="ticket-line">
+										<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
+											:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
+										<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name">{{ item.item_name }}</span>
+										<TicketDishNotes :item="item" :allergy-words="allergyWords" />
+									</div>
+								</div>
+							</div>
+						</template>
+					</div>
+				</div>
+				<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
+					class="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white to-transparent dark:from-gray-800"></div>
+			</div>
+			<div v-if="hiddenCount > 0" data-test="ticket-more-strip"
+				class="flex h-6 flex-shrink-0 items-center justify-end border-t border-gray-100 px-3 dark:border-gray-700">
+				<span data-test="ticket-more"
+					class="pointer-events-none rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
+					{{ hiddenCount === 1 ? __("+{0} line", [1]) : __("+{0} lines", [hiddenCount]) }}
+				</span>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
-import { TICKET_FRAME } from "@/utils/ticketLayout"
+import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — a station's colour lightened for a dark card (task 46)
 import { onDark } from "@/utils/stationColors"
+//// Neoffice — the card is the kitchen's anatomy (task 38a-2, ruling 130): the room's short code, the button's words, the dish's texts, the « +N lines » hint
+import { roomCode } from "@/utils/kitchenRoomCode"
+import { kitchenActionLabel } from "@/utils/kitchenStatus"
+import { DEFAULT_ALLERGY_WORDS } from "@/utils/kitchenTextKinds"
+import { hiddenLines } from "@/utils/ticketScrollHints"
+import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
 
 const props = defineProps({
 	card: {
@@ -140,24 +163,30 @@ const props = defineProps({
 		type: String,
 		default: "table",
 	},
+	//// Neoffice — show the dot of the station before each dish (task 38a-2, ruling 130): the runner collects at the bar AND the kitchen, so it helps; the page turns it
+	//// off in a view filtered on one station, where it says nothing
+	showStation: {
+		type: Boolean,
+		default: true,
+	},
+	//// Neoffice — the screen can print a copy of the ticket (task 44, ruling 130): the 44 px print button stands at the right of the main button. False until that task wires it.
+	canPrint: {
+		type: Boolean,
+		default: false,
+	},
+	//// Neoffice — the words that make a remark an allergy: the restaurant's own list, or the default (task 38a-1, ruling 123)
+	allergyWords: {
+		type: Array,
+		default: () => DEFAULT_ALLERGY_WORDS,
+	},
 })
 
-const emit = defineEmits(["delivered"])
+const emit = defineEmits(["delivered", "print"])
 const { showError } = useToast()
 const loading = ref(false)
 
 const now = ref(new Date())
 let timerInterval = null
-
-onMounted(() => {
-	timerInterval = setInterval(() => {
-		now.value = new Date()
-	}, 1000)
-})
-
-onUnmounted(() => {
-	if (timerInterval) clearInterval(timerInterval)
-})
 
 const cardTime = computed(
 	() => new Date(props.card.modified || props.card.creation),
@@ -183,20 +212,54 @@ const waitTimeClass = computed(() => {
 	return "text-green-600"
 })
 
-function parsedModifiers(item) {
-	if (!item.posa_item_modifiers) return null
-	try {
-		const mods = JSON.parse(item.posa_item_modifiers)
-		if (!Array.isArray(mods) || !mods.length) return null
-		// Flatten modifier groups into readable names
-		const names = mods.flatMap((m) =>
-			(m.options || []).map((o) => o.name || o.option_name || String(o)),
-		)
-		return names.length ? names : null
-	} catch {
-		return null
-	}
+//// Neoffice — what the header's line shows besides the table (task 38a-2, ruling 130; rulings 122, 125, 126 for the kitchen's): the room's code, and the ticket's number when
+//// the order carries one. The Sales Invoice's own name is NEVER a ticket number. A station's card has no table: its count of dishes stands where the number does.
+const roomChip = computed(() =>
+	props.card.takeaway || props.viewMode === "station"
+		? ""
+		: roomCode(props.card.roomName),
+)
+const numberText = computed(() => {
+	if (props.viewMode === "station") return props.card.subtitle || ""
+	const number = String(props.card.ticketNo || "")
+	if (!number) return ""
+	return props.card.takeaway ? `· ${number}` : number
+})
+//// Neoffice — the main button's words are the kitchen's (task 38a-1, ruling 113): « Deliver », and « Hand over » for a takeaway
+const mainLabel = computed(() =>
+	kitchenActionLabel("deliver", { takeaway: !!props.card.takeaway }),
+)
+
+//// Neoffice — the colour of a dish's station, and its three letters (task 38a-2, ruling 130): the same tag the kitchen ticket writes in the view of all the stations
+const dotColor = (item) => item.station_color || "#6B7280"
+const stationCode = (item) => roomCode(item.station_name || item.preparation_station)
+
+//// Neoffice — how many dishes are cut by the foot of the card (the kitchen ticket's hint), read from the boxes on the screen so that it follows the scroll and the size
+const bodyEl = ref(null)
+const linesEl = ref(null)
+const hiddenCount = ref(0)
+function measureHidden() {
+	hiddenCount.value = hiddenLines(bodyEl.value)
 }
+let sizeObserver = null
+watch(() => props.card, () => nextTick(measureHidden), { deep: true, flush: "post" })
+
+onMounted(() => {
+	timerInterval = setInterval(() => {
+		now.value = new Date()
+	}, 1000)
+	measureHidden()
+	if (typeof ResizeObserver !== "undefined") {
+		sizeObserver = new ResizeObserver(() => measureHidden())
+		if (bodyEl.value) sizeObserver.observe(bodyEl.value)
+		if (linesEl.value) sizeObserver.observe(linesEl.value)
+	}
+})
+
+onUnmounted(() => {
+	if (timerInterval) clearInterval(timerInterval)
+	sizeObserver?.disconnect()
+})
 
 async function markDelivered() {
 	loading.value = true
