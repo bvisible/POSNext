@@ -279,6 +279,20 @@ describe.each([
 		expect(toggle.text()).toContain("Show completed")
 	})
 
+	it("has the theme button, a 44 px button between the size of the text and the refresh", async () => {
+		const wrapper = await openIt()
+
+		const buttons = [
+			...rowOne(wrapper).element.querySelectorAll("button, label"),
+		].map((el) => el.dataset.test)
+		const at = (part) => buttons.indexOf(part)
+		expect(at("theme-button")).toBeGreaterThan(at("text-size"))
+		expect(at("theme-button")).toBeLessThan(at("refresh"))
+		expect(wrapper.get('[data-test="theme-button"]').classes()).toEqual(
+			expect.arrayContaining(["h-11", "w-11"]),
+		)
+	})
+
 	it("has the way back to the till for a desk session, and none for a tablet's own account", async () => {
 		const desk = await openIt()
 		expect(desk.find('[data-test="back-to-pos"]').exists()).toBe(true)

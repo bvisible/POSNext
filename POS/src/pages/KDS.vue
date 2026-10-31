@@ -39,6 +39,10 @@
 					:filters="{ restaurant: screenRestaurant, station: selectedStation, room: activeArea }"
 				/>
 			</template>
+			<!-- //// Neoffice — the theme button of the screen (task 38a-2, ruling 131): these screens have no user menu to change the colour mode from. A desk user's choice is kept on the account too, as the till's menu keeps it; a tablet's stays on the device -->
+			<template #theme>
+				<ThemeButton :persist-desk-theme="deskSession" />
+			</template>
 			<template #chip>
 				<!-- The switch of the layout moves up to row 1 when row 2 has no chip left to hold it: a screen bound to its station must not pay a row for it -->
 				<KitchenLayoutSwitch v-if="canSplit && !filtersShown" :layout="layout" @update:layout="chooseLayout" />
@@ -145,6 +149,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from "vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 //// Neoffice — the one top bar of the service screens, and the tab's title (task 38a-2, rulings 128 and 129)
 import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
+import ThemeButton from "@/components/restaurant/ThemeButton.vue"
 import RestaurantScreenSwitch from "@/components/restaurant/RestaurantScreenSwitch.vue"
 import { SCREEN_PREPARATION } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"

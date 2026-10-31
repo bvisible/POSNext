@@ -230,6 +230,8 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, ref, watch } from "vue";
 import { useLocale } from "@/composables/useLocale";
+//// Neoffice — the shared colour mode (task 38a-2, ruling 131)
+import { applyColorMode as sharedApplyColorMode, readColorMode } from "@/utils/colorMode";
 
 // Avatar Sub-component
 const Avatar = (props) => {
@@ -315,58 +317,11 @@ const colorModes = [
 	},
 ];
 const colorMode = ref("system");
+//// Neoffice — the body moved to utils/colorMode.js (NeoRestau lot 1, task 38a-2, ruling 131): the theme button of the kitchen and runner screens and
+//// main.js use the same function, so that the three cannot drift. The user menu still persists the desk theme (`User.desk_theme`) as it always did.
 function applyColorMode(mode) {
 	colorMode.value = mode;
-	try {
-		localStorage.setItem("neocockpit-colormode", mode);
-	} catch (e) {
-		/* noop */
-	}
-	const sysDark =
-		typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
-	const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode;
-	document.documentElement.setAttribute("data-theme", theme);
-	document.documentElement.classList.toggle("dark", theme === "dark");
-	// parity with the NeoCockpit toggle: also publish the resolved theme so other
-	// open surfaces (desk, Insights) pick it up live via the storage event
-	try {
-		localStorage.setItem("theme_active", theme);
-	} catch (e) {
-		/* noop */
-	}
-	// Persist Frappe's native User.desk_theme too: the desk cockpit reads it via
-	// boot as the AUTHORITATIVE source on a fresh load (it deliberately never
-	// fights the server), so without this a reloaded desk would ignore a change
-	// made here. Use the ORM (frappe.client.set_value), NOT switch_theme: the
-	// latter writes the DB directly and leaves the desk's boot CACHE stale, so the
-	// change wouldn't survive a reload. set_value triggers User.on_update which
-	// invalidates the boot cache. Mirrors the cockpit toggle. Best-effort. //// neoffice
-	(async () => {
-		try {
-			const deskTheme =
-				mode === "system" ? "Automatic" : mode.charAt(0).toUpperCase() + mode.slice(1);
-			const csrf = window.csrf_token || "";
-			const user = await fetch("/api/method/frappe.auth.get_logged_user", {
-				headers: { "X-Frappe-CSRF-Token": csrf },
-			})
-				.then((r) => r.json())
-				.then((d) => d.message)
-				.catch(() => null);
-			if (!user || user === "Guest") return;
-			await fetch("/api/method/frappe.client.set_value", {
-				method: "POST",
-				headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrf },
-				body: JSON.stringify({
-					doctype: "User",
-					name: user,
-					fieldname: "desk_theme",
-					value: deskTheme,
-				}),
-			});
-		} catch (e) {
-			/* noop */
-		}
-	})();
+	sharedApplyColorMode(mode, { persistDeskTheme: true });
 }
 
 const userInitials = computed(() => {
@@ -418,11 +373,8 @@ onMounted(() => {
 	//// (System/Light/Dark) switch in the user menu"; c83a22ce persists User.desk_theme so a
 	//// fresh desk load matches what the cashier chose.)
 	// adopt the saved colour mode on startup so the till follows the product theme
-	try {
-		colorMode.value = localStorage.getItem("neocockpit-colormode") || "system";
-	} catch (e) {
-		/* noop */
-	}
+	//// Neoffice — read through the shared helper (task 38a-2, ruling 131)
+	colorMode.value = readColorMode();
 	applyColorMode(colorMode.value);
 	document.addEventListener("click", handleClickOutside);
 });

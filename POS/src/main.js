@@ -23,6 +23,8 @@ import {
 	getCSRFTokenFromCookie,
 	onCSRFTokenRefresh,
 } from "./utils/csrf";
+//// Neoffice — the colour mode lives in one place now (task 38a-2, ruling 131); see syncColorMode() below
+import { syncColorMode } from "./utils/colorMode";
 import { logger } from "./utils/logger";
 import { offlineWorker } from "./utils/offline/workerClient";
 import translationPlugin from "./utils/translation";
@@ -60,37 +62,14 @@ import "./index.css";
 //// on the storage event so a toggle made in another tab lands here too (cfc64c9c,
 //// 2026-06-15 "fix(pos-dark): live theme sync with Frappe"). The dark rules it switches
 //// on live in POS/src/index.css.
+//// Neoffice — the body of this block moved to utils/colorMode.js (NeoRestau lot 1, task 38a-2, ruling 131): the user menu and the theme button of the
+//// kitchen and runner screens read and write the same mode, and three copies of the logic drifted. Same behaviour, one place.
 // Adopt the shared cockpit colour mode (neocockpit-colormode) BEFORE Vue mounts,
 // so the till opens in the right theme with no flash AND follows live changes
 // made elsewhere (the Frappe desk NeoCockpit toggle writes the same key). POS
 // runs without the NeoCockpit chrome, so it must drive data-theme itself and
 // listen for cross-tab changes via the storage event. //// neoffice
-(function syncNeoColorMode() {
-	const apply = () => {
-		let mode = "system";
-		try {
-			mode = localStorage.getItem("neocockpit-colormode") || "system";
-		} catch (e) {
-			/* noop */
-		}
-		const sysDark =
-			typeof matchMedia !== "undefined" &&
-			matchMedia("(prefers-color-scheme: dark)").matches;
-		const theme = mode === "system" ? (sysDark ? "dark" : "light") : mode;
-		document.documentElement.setAttribute("data-theme", theme);
-		document.documentElement.classList.toggle("dark", theme === "dark");
-	};
-	apply();
-	try {
-		matchMedia("(prefers-color-scheme: dark)").addEventListener("change", apply);
-	} catch (e) {
-		/* noop */
-	}
-	// live cross-tab sync: react when the desk cockpit (or another tab) toggles
-	window.addEventListener("storage", (e) => {
-		if (e.key === "neocockpit-colormode" || e.key === "theme_active") apply();
-	});
-})();
+syncColorMode();
 
 const log = logger.create("Main");
 

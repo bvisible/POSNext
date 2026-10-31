@@ -46,6 +46,10 @@
 					:filters="{ restaurant: urlRestaurant, station: selectedStation, room: activeArea }"
 				/>
 			</template>
+			<!-- //// Neoffice — the theme button of the screen (task 38a-2, ruling 131): these screens have no user menu to change the colour mode from. A desk user's choice is kept on the account too, as the till's menu keeps it; a tablet's stays on the device -->
+			<template #theme>
+				<ThemeButton :persist-desk-theme="deskSession" />
+			</template>
 			<template #view>
 				<!-- //// Neoffice — the display modes of THIS screen, named as such (task 38a-2, ruling 132): « By table », « By station », « On the plan ». The last one was « Plan de salle »,
 				     the very word of a destination, next to a switch that now has a real « Plan de salle ». -->
@@ -205,6 +209,7 @@ import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 //// Neoffice — the one top bar of the service screens, the tab's title and the size of the text (task 38a-2, rulings 109, 128, 129)
 import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
+import ThemeButton from "@/components/restaurant/ThemeButton.vue"
 import RestaurantScreenSwitch from "@/components/restaurant/RestaurantScreenSwitch.vue"
 import SegmentedControl from "@/components/restaurant/SegmentedControl.vue"
 import { SCREEN_RUNNER } from "@/utils/restaurantScreens"

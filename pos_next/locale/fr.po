@@ -17630,3 +17630,23 @@ msgstr "Affichage"
 #: POS/src/pages/Runner.vue:251
 msgid "On the plan"
 msgstr "Sur le plan"
+
+# //// Neoffice — French for the theme button of the kitchen and runner screens (lot 1, task 38a-2, ruling 131). The three modes are asked under the context « Colour mode »: « Light » and « Dark » are bare words the whole site shares.
+#: POS/src/components/restaurant/ThemeButton.vue:78
+msgid "Theme: {0}"
+msgstr "Thème : {0}"
+
+#: POS/src/components/restaurant/ThemeButton.vue:67
+msgctxt "Colour mode"
+msgid "Auto"
+msgstr "Auto"
+
+#: POS/src/components/restaurant/ThemeButton.vue:63
+msgctxt "Colour mode"
+msgid "Light"
+msgstr "Clair"
+
+#: POS/src/components/restaurant/ThemeButton.vue:65
+msgctxt "Colour mode"
+msgid "Dark"
+msgstr "Sombre"
