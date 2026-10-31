@@ -39,24 +39,64 @@ export function orderAsShown(cartStore, profile) {
 	return order;
 }
 
+const cents = (value) => Math.round((Number(value) || 0) * 100);
+const text = (value) => String(value ?? "").trim();
+const lineKey = (line, amountInCents) =>
+	JSON.stringify([
+		line.item_code || "",
+		line.uom || "",
+		Math.round((Number(line.qty) || 0) * 1000),
+		amountInCents,
+		text(line.posa_item_modifiers),
+		text(line.posa_special_instructions),
+	]);
+
 /**
- * Whether the server may not hold the order as the cart shows it: it holds none yet, a line was never saved, or the
- * cart changed something since it was last sent. An order that needs nothing is not saved again: a save re-reads the
- * kitchen state of every line, which only « Validate » should do.
+ * Whether the server's copy of the order (`held`, the draft Sales Invoice) differs from what the screen shows (`shown`,
+ * orderAsShown): a line's item, unit, quantity, amount after its discount, options or remarks, the order's discount,
+ * or its customer. The lines themselves are compared, not the cart's « changed » flag, which no removal, discount or
+ * line edit sets. The line of the guest's tip (`tipItem`), which the till keeps out of its cart, is no change.
+ * The kitchen state of a line is not compared: the ticket does not print it.
  */
-export function orderNeedsSaving(cartStore) {
+export function orderDiffersFromServer(shown, held, tipItem) {
+	// The cart's amount of a line, as the cart works it out (useInvoice.recalculateItem): its quantity at its unit price,
+	// less the line's discount (the cart keeps the discount of the whole line, ERPNext the rate after it)
+	const ours = (shown.items || [])
+		.map((line) =>
+			lineKey(
+				line,
+				Math.round((Number(line.qty) || 0) * cents(line.rate)) -
+					cents(line.discount_amount),
+			),
+		)
+		.sort();
+	const theirs = (held.items || [])
+		.filter((line) => !tipItem || line.item_code !== tipItem)
+		.map((line) => lineKey(line, cents(line.amount)))
+		.sort();
 	return (
-		!cartStore.currentDraftId ||
-		cartStore.hasUnsentChanges ||
-		cartStore.invoiceItems.some((line) => !line.kds_status)
+		JSON.stringify(ours) !== JSON.stringify(theirs) ||
+		cents(shown.discount_amount) !== cents(held.discount_amount) ||
+		text(shown.customer) !== text(held.customer)
 	);
 }
 
-/** The name of the draft Sales Invoice that holds the cart's order as shown, saving it first when it needs it. */
-export async function saveOrderAsShown(cartStore, profile) {
-	if (!orderNeedsSaving(cartStore)) return cartStore.currentDraftId;
+/**
+ * The name of the draft Sales Invoice that holds the cart's order as the screen shows it. An order the server already
+ * holds is read and compared (orderDiffersFromServer); it is saved only when it differs, or when the server holds no
+ * order yet: a save rewrites every line, and only a real change should.
+ */
+export async function saveOrderAsShown(cartStore, profile, tipItem = null) {
+	const order = orderAsShown(cartStore, profile);
+	if (cartStore.currentDraftId) {
+		const held = await call("pos_next.api.invoices.get_invoice", {
+			invoice_name: cartStore.currentDraftId,
+		});
+		if (!orderDiffersFromServer(order, held, tipItem))
+			return cartStore.currentDraftId;
+	}
 	const saved = await call("pos_next.api.invoices.update_invoice", {
-		data: JSON.stringify(orderAsShown(cartStore, profile)),
+		data: JSON.stringify(order),
 	});
 	if (!saved?.name) throw new Error("The order was not saved");
 	cartStore.$patch({ currentDraftId: saved.name });
@@ -91,7 +131,8 @@ function reasonOf(error) {
 /**
  * Print the provisional ticket of the cart's table or takeaway order: on the till's CloudPRNT receipt printer,
  * through the server, when it has one; else, or when that fails, from the browser (`printInBrowser`, printInvoice.js
- * printProvisionalTicket). Never throws. Returns how it was printed: "cloudprnt", "browser" or "none".
+ * printProvisionalTicket). `tipItem` is the restaurant's tip item (restaurantStore.tipItem), which the cart does not
+ * show. Never throws. Returns how it was printed: "cloudprnt", "browser" or "none".
  */
 export function printProvisionalTicketFromTill(till) {
 	// A second tap while the first one is on its way gets the same answer: a never-saved order saved twice would make
@@ -111,6 +152,7 @@ async function printProvisionalTicketOnce({
 	cartStore,
 	cloudPrntStore,
 	shiftStore,
+	tipItem = null,
 	printInBrowser,
 }) {
 	const toast = useToast();
@@ -120,6 +162,7 @@ async function printProvisionalTicketOnce({
 			const invoice = await saveOrderAsShown(
 				cartStore,
 				shiftStore.currentProfile,
+				tipItem,
 			);
 			const answer = await cloudPrntStore.printProvisionalTicket(
 				invoice,

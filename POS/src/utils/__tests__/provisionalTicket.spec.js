@@ -16,15 +16,50 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const server = vi.hoisted(() => {
 	globalThis.__ = (text, args) =>
 		args ? text.replace(/\{(\d+)\}/g, (_, i) => String(args[i])) : text;
-	return { calls: [], fail: {} };
+	return { calls: [], fail: {}, invoice: null };
 });
 const toasts = vi.hoisted(() => []);
+
+// What the server keeps of a saved line, as ERPNext does: the rate after the line's discount, the amount at that rate
+function heldLine(line) {
+	const rate =
+		Math.round(
+			(line.price_list_rate ?? line.rate) *
+				(100 - (line.discount_percentage || 0)),
+		) / 100;
+	return {
+		item_code: line.item_code,
+		item_name: line.item_name,
+		uom: line.uom,
+		qty: line.qty,
+		rate,
+		amount: Math.round(rate * line.qty * 100) / 100,
+		kds_status: line.kds_status,
+		posa_item_modifiers: line.posa_item_modifiers || "",
+		posa_special_instructions: line.posa_special_instructions || "",
+	};
+}
 
 function answer(method, args) {
 	const name = method.split(".").pop();
 	server.calls.push({ name, args });
 	if (server.fail[name]) throw server.fail[name];
-	if (name === "update_invoice") return { name: "SINV-TABLE-0001" };
+	if (name === "get_invoice") {
+		if (server.invoice?.name !== args.invoice_name)
+			throw new Error("not found");
+		return structuredClone(server.invoice);
+	}
+	if (name === "update_invoice") {
+		const order = JSON.parse(args.data);
+		server.invoice = {
+			name: order.name || "SINV-TABLE-0001",
+			docstatus: 0,
+			customer: order.customer,
+			discount_amount: order.discount_amount || 0,
+			items: order.items.map(heldLine),
+		};
+		return { name: server.invoice.name };
+	}
 	if (name === "print_provisional_ticket")
 		return {
 			success: true,
@@ -74,9 +109,8 @@ vi.mock("@/utils/logger", () => ({
 const { usePOSCartStore } = await import("@/stores/posCart");
 const { useCloudPrntStore } = await import("@/stores/cloudPrnt");
 const { printProvisionalTicket } = await import("@/utils/printInvoice");
-const { orderAsShown, printProvisionalTicketFromTill } = await import(
-	"@/utils/provisionalTicket"
-);
+const { orderAsShown, orderDiffersFromServer, printProvisionalTicketFromTill } =
+	await import("@/utils/provisionalTicket");
 
 const PROFILE = {
 	name: "Restaurant till",
@@ -129,6 +163,23 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 		cart.invoiceItems[0].kds_status = "Delivered";
 		cart.$patch({ currentDraftId: "SINV-TABLE-0001" });
 		cart.setKdsStatus("Delivered");
+		// The server holds the table's order as it was before the coffee: the steak only
+		server.invoice = {
+			name: "SINV-TABLE-0001",
+			docstatus: 0,
+			customer: "Walk-in",
+			discount_amount: 0,
+			items: [
+				heldLine({
+					item_code: "STEAK",
+					item_name: "STEAK",
+					uom: "Nos",
+					qty: 2,
+					price_list_rate: 38.5,
+					kds_status: "Delivered",
+				}),
+			],
+		};
 
 		cloudPrnt = useCloudPrntStore();
 		cloudPrnt.config = {
@@ -146,13 +197,16 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 			cartStore: cart,
 			cloudPrntStore: cloudPrnt,
 			shiftStore,
+			tipItem: "TIP",
 			printInBrowser: printProvisionalTicket,
 		});
 
 	it("with a CloudPRNT printer: saves the order as shown, then has the server print it, and opens no window", async () => {
 		await print();
 
+		// It reads what the server holds, finds the coffee missing, saves, then prints
 		expect(server.calls.map((call) => call.name)).toEqual([
+			"get_invoice",
 			"update_invoice",
 			"print_provisional_ticket",
 		]);
@@ -205,18 +259,6 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 		expect(named("print_provisional_ticket")[0].args.invoice).toBe(
 			"SINV-TABLE-0001",
 		);
-	});
-
-	it("an order the server already holds as shown is printed without saving it again", async () => {
-		cart.invoiceItems[1].kds_status = "Pending";
-		cart.markChangesSent();
-
-		await print();
-
-		expect(server.calls.map((call) => call.name)).toEqual([
-			"print_provisional_ticket",
-		]);
-		expect(window.open).not.toHaveBeenCalled();
 	});
 
 	it("without a CloudPRNT printer: prints from the browser, as before, and says why", async () => {
@@ -317,6 +359,200 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 		const handler = source.slice(start, source.indexOf("\n}\n", start));
 		expect(handler).toContain("printProvisionalTicketFromTill(");
 		expect(handler).toContain("printInBrowser: printProvisionalTicket");
+		expect(handler).toContain("tipItem: restaurantStore.tipItem");
 		expect(handler).not.toContain("window.open");
+	});
+
+	describe("the ticket always shows the screen, not what the server held before", () => {
+		// Everything on the screen was sent and the server holds it, as when the waiter opens a table
+		beforeEach(() => {
+			cart.invoiceItems[1].kds_status = "Pending";
+			server.invoice.items.push(
+				heldLine({
+					item_code: "COFFEE",
+					item_name: "COFFEE",
+					uom: "Nos",
+					qty: 1,
+					price_list_rate: 4.5,
+					kds_status: "Pending",
+				}),
+			);
+			cart.markChangesSent();
+		});
+		// What each change says on the cart's own toast is not this test's concern
+		const printAfterTheChange = () => {
+			toasts.length = 0;
+			return print();
+		};
+		const callsMade = () => server.calls.map((call) => call.name);
+
+		it("nothing changed: it prints without saving the order again", async () => {
+			await printAfterTheChange();
+
+			expect(callsMade()).toEqual(["get_invoice", "print_provisional_ticket"]);
+			expect(toasts).toEqual([
+				{ type: "success", message: "Provisional ticket sent to Star Bar" },
+			]);
+		});
+
+		it("a dish already sent and then removed: the order is saved without it before the server prints", async () => {
+			cart.removeItem(cart.invoiceItems[1]);
+
+			await printAfterTheChange();
+
+			expect(callsMade()).toEqual([
+				"get_invoice",
+				"update_invoice",
+				"print_provisional_ticket",
+			]);
+			expect(sentOrder().items.map((line) => line.item_code)).toEqual([
+				"STEAK",
+			]);
+			// The removed coffee is not saved anywhere as held either: it is simply gone
+			expect(server.invoice.items.map((line) => line.item_code)).toEqual([
+				"STEAK",
+			]);
+		});
+
+		it("the quantity of a dish already sent lowered: the order is saved with it before the server prints", async () => {
+			cart.updateItemQuantity("STEAK", 1, "Nos");
+
+			await printAfterTheChange();
+
+			expect(callsMade()).toEqual([
+				"get_invoice",
+				"update_invoice",
+				"print_provisional_ticket",
+			]);
+			expect(
+				sentOrder().items.find((line) => line.item_code === "STEAK").qty,
+			).toBe(1);
+			// Lowered, it is not sent to the kitchen again: the served steak keeps its state
+			expect(
+				sentOrder().items.find((line) => line.item_code === "STEAK").kds_status,
+			).toBe("Delivered");
+		});
+
+		it("a discount given on a dish already sent: the order is saved with it before the server prints", async () => {
+			await cart.updateItemDetails("STEAK", { discount_percentage: 10 }, "Nos");
+
+			await printAfterTheChange();
+
+			expect(callsMade()).toEqual([
+				"get_invoice",
+				"update_invoice",
+				"print_provisional_ticket",
+			]);
+			const steak = sentOrder().items.find(
+				(line) => line.item_code === "STEAK",
+			);
+			expect(steak.discount_percentage).toBe(10);
+			// What the server then holds is the screen's: 2 x 38.50 less 10 %
+			expect(
+				server.invoice.items.find((line) => line.item_code === "STEAK").amount,
+			).toBe(69.3);
+		});
+
+		it("a second print after the save reads the server again and does not save twice", async () => {
+			await cart.updateItemDetails("STEAK", { discount_percentage: 10 }, "Nos");
+			cart.removeItem(cart.invoiceItems[1]);
+
+			await printAfterTheChange();
+			await print();
+
+			expect(named("update_invoice")).toHaveLength(1);
+			expect(named("print_provisional_ticket")).toHaveLength(2);
+		});
+
+		it("the guest's tip the server keeps out of the cart is no change", async () => {
+			server.invoice.items.push({
+				item_code: "TIP",
+				item_name: "Tip",
+				uom: "Nos",
+				qty: 1,
+				rate: 5,
+				amount: 5,
+			});
+
+			await printAfterTheChange();
+
+			expect(callsMade()).toEqual(["get_invoice", "print_provisional_ticket"]);
+		});
+
+		it("when the server's copy cannot be read: prints from the browser, and asks the server for no ticket", async () => {
+			server.fail.get_invoice = new TypeError("Failed to fetch");
+
+			await printAfterTheChange();
+
+			expect(callsMade()).toEqual(["get_invoice"]);
+			expect(window.open).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe("what counts as a change", () => {
+		const line = (changes = {}) => ({
+			item_code: "STEAK",
+			uom: "Nos",
+			qty: 2,
+			rate: 38.5,
+			discount_amount: 0,
+			posa_item_modifiers:
+				'[{"group":"Cooking","options":[{"name":"Medium"}]}]',
+			posa_special_instructions: "No salt",
+			...changes,
+		});
+		const shown = (lineChanges = {}, changes = {}) => ({
+			customer: "Walk-in",
+			discount_amount: 0,
+			items: [line(lineChanges)],
+			...changes,
+		});
+		const held = {
+			customer: "Walk-in",
+			discount_amount: 0,
+			items: [
+				{
+					item_code: "STEAK",
+					uom: "Nos",
+					qty: 2,
+					rate: 38.5,
+					amount: 77,
+					posa_item_modifiers:
+						'[{"group":"Cooking","options":[{"name":"Medium"}]}]',
+					posa_special_instructions: "No salt",
+				},
+			],
+		};
+
+		it("the same lines in the same state are no change", () => {
+			expect(orderDiffersFromServer(shown(), held, null)).toBe(false);
+		});
+
+		it("an option, a remark, a unit, a price or a discount of a line is a change", () => {
+			for (const changes of [
+				{
+					posa_item_modifiers:
+						'[{"group":"Cooking","options":[{"name":"Rare"}]}]',
+				},
+				{ posa_special_instructions: "Extra salt" },
+				{ uom: "Box" },
+				{ rate: 40 },
+				{ discount_amount: 7.7 },
+			]) {
+				expect(
+					orderDiffersFromServer(shown(changes), held, null),
+					JSON.stringify(changes),
+				).toBe(true);
+			}
+		});
+
+		it("a discount on the whole order, or another customer, is a change", () => {
+			expect(
+				orderDiffersFromServer(shown({}, { discount_amount: 5 }), held, null),
+			).toBe(true);
+			expect(
+				orderDiffersFromServer(shown({}, { customer: "Someone" }), held, null),
+			).toBe(true);
+		});
 	});
 });
