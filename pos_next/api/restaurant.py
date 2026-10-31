@@ -646,7 +646,9 @@ def get_table_order(table_name):
 	order["paid_amount"] = flt(order.get("paid_amount", 0)) - tip_total
 
 	# The item's other units, read together for the order: the till makes its lines of these rows (task 22)
-	item_units.stamp(order["items"], "item_code", item_units.units_of(i.item_code for i in order["items"]))
+	units = item_units.units_of([i.item_code for i in order["items"]])
+	for item in order["items"]:
+		item_units.stamp(item, units.get(item.item_code))
 
 	# Enrich items with image from Item master
 	item_codes = list({i.item_code for i in order["items"] if i.get("item_code")})
@@ -1254,11 +1256,19 @@ def open_table(table_name, pos_profile, customer=None):
 				order_items.append(item)
 
 		# The item's other units, read together for the order (task 22)
-		item_units.stamp(order_items, "item_code", item_units.units_of(item.item_code for item in order_items))
-
-		# Enrich with images
+		units = item_units.units_of([item.item_code for item in order_items])
 		for item in order_items:
-			item["image"] = frappe.db.get_value("Item", item.item_code, "image") or ""
+			item_units.stamp(item, units.get(item.item_code))
+
+		# Enrich with images, all the items of the order in one read (it was one read per line)
+		images = {}
+		if order_items:
+			item_rows = frappe.get_all(
+				"Item", filters={"name": ["in", [item.item_code for item in order_items]]}, fields=["name", "image"]
+			)
+			images = {row.name: row.image for row in item_rows}
+		for item in order_items:
+			item["image"] = images.get(item.item_code) or ""
 
 		return {
 			"name": order.name,
@@ -1646,6 +1656,8 @@ def get_active_cards(restaurant=None):
 
 	result_normal = []
 	result_permanent = []
+	# The cards shown, each with its entries
+	shown = []
 
 	for card in cards:
 		is_permanent = card.get("is_permanent")
@@ -1667,22 +1679,26 @@ def get_active_cards(restaurant=None):
 			fields=["item_type", "label", "item", "menu", "price", "sort_order", "disabled"],
 			order_by="sort_order asc, idx asc"
 		)
+		shown.append((card, items))
 
-		# The items of the card are read together with their units (two queries, not one per item): the cart line made from
-		# an entry has to carry its unit and the item's other units, as a line made from the grid does (task 22)
-		item_codes = [ci.item for ci in items if ci.item_type == "Item" and ci.item]
-		item_rows = {}
-		if item_codes:
-			item_rows = {
-				row.name: row
-				for row in frappe.get_all(
-					"Item",
-					filters={"name": ["in", item_codes]},
-					fields=["name", "item_name", "image", "custom_color", "item_group", "standard_rate", "is_stock_item", "stock_uom"],
-				)
-			}
-		units = item_units.units_of(item_codes, {name: row.stock_uom for name, row in item_rows.items()})
+	# The dishes of all the cards shown are read together with their units, two queries for the call (not one per card, not one
+	# per dish): the cart line made from an entry has to carry its unit and the item's other units, as a line made from the grid
+	# does (task 22)
+	item_codes = [ci.item for _card, items in shown for ci in items if ci.item_type == "Item" and ci.item]
+	item_rows = {}
+	if item_codes:
+		item_rows = {
+			row.name: row
+			for row in frappe.get_all(
+				"Item",
+				filters={"name": ["in", item_codes]},
+				fields=["name", "item_name", "image", "custom_color", "item_group", "standard_rate", "is_stock_item", "stock_uom"],
+			)
+		}
+	units = item_units.units_of(item_codes, {name: row.stock_uom for name, row in item_rows.items()})
 
+	for card, items in shown:
+		is_permanent = card.get("is_permanent")
 		for ci in items:
 			if ci.item_type == "Item" and ci.item:
 				item_data = item_rows.get(ci.item)
@@ -1736,7 +1752,8 @@ def get_active_menus(restaurant=None):
 	)
 
 	current_date = today()
-	result = []
+	# The menus shown, each with the courses it has
+	shown = []
 	for menu in menus:
 		# Check date range if set
 		if menu.get("available_from") and str(menu.available_from) > current_date:
@@ -1751,20 +1768,22 @@ def get_active_menus(restaurant=None):
 			fields=["course_name", "item", "item_name", "sort_order"],
 			order_by="sort_order, idx"
 		)
+		shown.append((menu, courses))
 
-		# The units of the menu's items, read together: a line made from a course item is in the unit of its item (task 22)
-		units = item_units.units_of([course.get("item") for course in courses])
+	# The units of the items of all the menus shown, read together (two queries for the call, not one per menu): a line made
+	# from a course item is in the unit of its item (task 22)
+	units = item_units.units_of([course.get("item") for _menu, courses in shown for course in courses])
 
+	result = []
+	for menu, courses in shown:
 		# Group by course_name
 		grouped = {}
 		for course in courses:
 			cn = course.get("course_name")
 			if cn not in grouped:
 				grouped[cn] = {"course_name": cn, "sort_order": course.get("sort_order", 0), "items": []}
-			grouped[cn]["items"].append(item_units.stamp([{
-				"item": course.get("item"),
-				"item_name": course.get("item_name")
-			}], "item", units)[0])
+			entry = {"item": course.get("item"), "item_name": course.get("item_name")}
+			grouped[cn]["items"].append(item_units.stamp(entry, units.get(entry["item"])))
 
 		menu["courses"] = sorted(grouped.values(), key=lambda x: x["sort_order"])
 		result.append(menu)

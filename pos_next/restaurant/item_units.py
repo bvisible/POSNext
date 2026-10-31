@@ -45,14 +45,10 @@ def units_of(item_codes, stock_uoms=None):
 	return {code: {"stock_uom": stock_uoms[code], "item_uoms": units} for code, units in others.items()}
 
 
-def stamp(rows, item_key, units):
-	"""Put the units of each row's item on the row (`stock_uom` and `item_uoms`); a row whose item is unknown is left as it is.
-
-	`units` is what `units_of` answered. A row that already says its own stock unit (an invoice line) keeps it.
-	"""
-	for row in rows:
-		known = units.get(row.get(item_key))
-		if known:
-			row["stock_uom"] = row.get("stock_uom") or known["stock_uom"]
-			row["item_uoms"] = known["item_uoms"]
-	return rows
+def stamp(row, known):
+	"""Put the units of a row's item on the row: `known` is what `units_of` answered for that item (None when the site no
+	longer has it, and the row is left as it is). A row that already says its own stock unit (an invoice line) keeps it."""
+	if known:
+		row["stock_uom"] = row.get("stock_uom") or known["stock_uom"]
+		row["item_uoms"] = known["item_uoms"]
+	return row

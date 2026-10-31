@@ -29,6 +29,8 @@ WINE, WATER, BREAD = "_Test Dish Wine 22", "_Test Dish Water 22", "_Test Dish Br
 RESTAURANT = "_Test Restaurant Units 22"
 CARD = "_Test Card Units 22"
 MENU = "_Test Menu Units 22"
+SECOND_CARD = "_Test Second Card Units 22"
+SECOND_MENU = "_Test Second Menu Units 22"
 TABLE = "_Test Table Units 22"
 TILL = "_Test Till Units 22"
 
@@ -191,6 +193,28 @@ class TestRestaurantLinesCarryTheirUnits(FrappeTestCase):
 		# One card with two dishes: one read of the items, one of their units. A read per item would make four
 		self.assertEqual(reads, {"Item": 1, "UOM Conversion Detail": 1})
 
+	def test_the_units_of_all_the_cards_are_read_together_not_one_card_at_a_time(self):
+		# A second card with a dish of its own: the call reads the items of both cards once, with their units
+		self.insert(
+			"Restaurant Card",
+			restaurant=self.restaurant,
+			card_name=SECOND_CARD,
+			is_active=1,
+			items=[{"item_type": "Item", "item": self.bread, "price": 6}],
+		)
+
+		with counting_reads("Item", "UOM Conversion Detail") as reads:
+			cards = restaurant.get_active_cards(self.restaurant)
+
+		self.assertEqual(reads, {"Item": 1, "UOM Conversion Detail": 1})
+		# Each card keeps its own dishes, with their units
+		by_card = {
+			card["name"]: {entry["item"]: entry for entry in card["items"] if entry.get("item")}
+			for card in cards
+		}
+		self.assertEqual(by_card[SECOND_CARD][self.bread]["stock_uom"], GLASS)
+		self.assertEqual(by_card[self.card][self.water]["stock_uom"], BOTTLE)
+
 	# --- the menus ---
 
 	def test_a_course_item_of_a_menu_carries_its_units(self):
@@ -212,6 +236,23 @@ class TestRestaurantLinesCarryTheirUnits(FrappeTestCase):
 			restaurant.get_active_menus(self.restaurant)
 
 		self.assertEqual(reads, {"Item": 1, "UOM Conversion Detail": 1})
+
+	def test_the_units_of_all_the_menus_are_read_together_not_one_menu_at_a_time(self):
+		self.insert(
+			"Restaurant Menu",
+			restaurant=self.restaurant,
+			menu_name=SECOND_MENU,
+			price=30,
+			is_active=1,
+			courses=[{"course_name": "Main", "item": self.bread, "item_name": BREAD}],
+		)
+
+		with counting_reads("Item", "UOM Conversion Detail") as reads:
+			menus = restaurant.get_active_menus(self.restaurant)
+
+		self.assertEqual(reads, {"Item": 1, "UOM Conversion Detail": 1})
+		second = next(menu for menu in menus if menu["name"] == SECOND_MENU)
+		self.assertEqual(second["courses"][0]["items"][0]["stock_uom"], GLASS)
 
 	# --- an order on a table ---
 
@@ -305,6 +346,27 @@ class TestRestaurantLinesCarryTheirUnits(FrappeTestCase):
 			[(unit["uom"], flt(unit["conversion_factor"])) for unit in lines[self.water]["item_uoms"]],
 			[(CASE_OF_SIX, 6)],
 		)
+
+	def test_a_table_opened_from_the_floor_plan_reads_its_items_together(self):
+		table = self.a_table()
+		self.a_draft_order_on_the_table(table)
+
+		with (
+			patch("pos_next.api.cash_entry.require_till_access"),
+			patch.object(
+				restaurant.restaurant_config, "get_restaurant_settings_for_profile", return_value={}
+			),
+			counting_reads("Item", "UOM Conversion Detail") as reads,
+		):
+			opened = restaurant.open_table(table, TILL)
+
+		# One read of the items' stock units and one of their images, whatever the number of lines (it was one per line)
+		self.assertLessEqual(reads["Item"], 2)
+		self.assertEqual(reads["UOM Conversion Detail"], 1)
+		self.assertEqual(len(opened["items"]), 2)
+		# The images are still there
+		for line in opened["items"]:
+			self.assertIn("image", line)
 
 	def test_the_units_of_an_order_are_read_together_too(self):
 		table = self.a_table()
