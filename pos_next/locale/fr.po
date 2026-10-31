@@ -17650,3 +17650,8 @@ msgstr "Clair"
 msgctxt "Colour mode"
 msgid "Dark"
 msgstr "Sombre"
+
+# //// Neoffice — French for the five seconds in which a « Ready » or a « Deliver » can be taken back (lot 1, task 38a-2, ruling 112): the button of the small toast.
+#: POS/src/components/restaurant/UndoToast.vue:14
+msgid "Undo"
+msgstr "Annuler"

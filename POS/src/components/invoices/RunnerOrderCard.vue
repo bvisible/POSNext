@@ -149,7 +149,10 @@ import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
 import { onDark } from "@/utils/stationColors"
 //// Neoffice — the card is the kitchen's anatomy (task 38a-2, ruling 130): the room's short code, the button's words, the dish's texts, the « +N lines » hint
 import { roomCode } from "@/utils/kitchenRoomCode"
-import { kitchenActionLabel } from "@/utils/kitchenStatus"
+import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
+//// Neoffice — five seconds to take back a « Deliver » (task 38a-2, ruling 112)
+import { offerUndo } from "@/composables/useUndoToast"
+import { dishesToPutBack, putBack } from "@/utils/kitchenUndo"
 import { DEFAULT_ALLERGY_WORDS } from "@/utils/kitchenTextKinds"
 import { hiddenLines } from "@/utils/ticketScrollHints"
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
@@ -261,9 +264,38 @@ onUnmounted(() => {
 	sizeObserver?.disconnect()
 })
 
+//// Neoffice — the toast that offers to take a delivery back for five seconds (task 38a-2, ruling 112): each dish goes back in the state it had (the card
+//// does not change them itself, so they are as they were when it was pressed), one call per item. The toast is the page's: the card is gone by then.
+function offerBack(message, items) {
+	const entries = dishesToPutBack(
+		[...new Set(items.map((item) => item._invoiceName))].map((invoice) => {
+			const ofTheInvoice = items.filter((item) => item._invoiceName === invoice)
+			return {
+				invoice,
+				dishes: ofTheInvoice.map((item) => ({ item_code: item.item_code, kds_status: "Delivered" })),
+				before: ofTheInvoice.map((item) => item.kds_status),
+			}
+		}),
+	)
+	if (!entries.length) return
+	offerUndo({
+		message: `${message} · ${kitchenStatusLabel("Delivered")}`,
+		undo: async () => {
+			try {
+				await putBack(call, entries)
+				return true
+			} catch (error) {
+				showError(__("Failed to update item status"))
+				return false
+			}
+		},
+	})
+}
+
 async function markDelivered() {
 	loading.value = true
 	try {
+		let delivered
 		if (props.viewMode === "table") {
 			// Table mode: mark all items in this order as delivered
 			const itemNames = props.card.items.map((i) => i.name)
@@ -271,14 +303,15 @@ async function markDelivered() {
 				invoice_name: props.card.invoiceName,
 				item_names: JSON.stringify(itemNames),
 			})
+			delivered = props.card.items.map((item) => ({ ...item, _invoiceName: props.card.invoiceName }))
 		} else {
 			// Station mode: mark all items across all table groups
-			await deliverPerInvoice(
-				props.card.tableGroups.flatMap((group) =>
-					group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
-				),
+			delivered = props.card.tableGroups.flatMap((group) =>
+				group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
 			)
+			await deliverPerInvoice(delivered)
 		}
+		offerBack(props.card.takeaway ? __("Takeaway") : props.card.title, delivered)
 		emit("delivered")
 	} catch (error) {
 		console.error("Failed to mark delivered:", error)
@@ -311,9 +344,9 @@ async function deliverPerInvoice(items) {
 async function deliverTableGroup(group) {
 	loading.value = true
 	try {
-		await deliverPerInvoice(
-			group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
-		)
+		const delivered = group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName }))
+		await deliverPerInvoice(delivered)
+		offerBack(group.tableName, delivered)
 		emit("delivered")
 	} catch (error) {
 		console.error("Failed to deliver table group:", error)

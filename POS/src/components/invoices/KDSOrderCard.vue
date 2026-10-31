@@ -265,6 +265,9 @@ import { allergyWordsOf } from "@/utils/kitchenTextKinds"
 import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — what a ticket says under a dish, written once for the kitchen and the runner (task 38a-2, ruling 130)
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
+//// Neoffice — five seconds to take back a « Ready » or a « Deliver » (task 38a-2, ruling 112)
+import { offerUndo } from "@/composables/useUndoToast"
+import { dishesToPutBack, putBack, UNDOABLE_STATUSES } from "@/utils/kitchenUndo"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
@@ -345,6 +348,28 @@ const showDeliveredConfirm = ref(false)
 const activeItemMenu = ref(null)
 //// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
 const isTakeaway = computed(() => !!props.order.is_takeaway)
+
+//// Neoffice — the toast that offers to take a move back for five seconds (task 38a-2, ruling 112). What it says is the table (or the takeaway) and the
+//// state the ticket came to; what it does is put each dish back in the state it had, one call per item, and tell the user when the server refuses.
+const tableLabel = computed(() =>
+	isTakeaway.value
+		? __("Takeaway")
+		: props.order.table_display_name || props.order.restaurant_table || "",
+)
+function offerBack(message, entries) {
+	offerUndo({
+		message,
+		undo: async () => {
+			try {
+				await putBack(call, entries)
+				return true
+			} catch (error) {
+				showError(__("Failed to update item status"))
+				return false
+			}
+		},
+	})
+}
 
 //// Neoffice — the action of the main button (task 38a-1, ruling 112). It follows the dishes the ticket shows and their station: Start; on a
 //// ticket being cooked, Ready when a runner carries the dishes on, Deliver when the cook does; Deliver on a ticket that is ready; from
@@ -571,6 +596,12 @@ async function updateItemStatus(item, newStatus) {
 			item_code: item.item_code,
 			status: newStatus,
 		})
+		//// Neoffice — a dish made ready or delivered by a tap can be taken back for five seconds (task 38a-2, ruling 112)
+		if (UNDOABLE_STATUSES.includes(newStatus) && oldStatuses[0] && oldStatuses[0] !== newStatus)
+			offerBack(
+				`${tableLabel.value} · ${item.item_name} · ${kitchenStatusLabel(newStatus, { takeaway: isTakeaway.value })}`,
+				[{ invoice: props.order.name, item_code: item.item_code, status: oldStatuses[0] }],
+			)
 		changed()
 	} catch (error) {
 		// Rollback on error
@@ -820,6 +851,10 @@ async function doUpdateStatus(newStatus) {
 		dishes: (props.order.items || []).map((dish) => dish.kds_status),
 	}
 	advanceDishes(newStatus)
+	//// Neoffice — what to put back if the cook takes the move back (task 38a-2, ruling 112): each dish that moved, in the state it had
+	const toPutBack = dishesToPutBack([
+		{ invoice: props.order.name, dishes: props.order.items || [], before: before.dishes },
+	])
 	// With every station the server gives the order the status asked. With a station it makes the order follow its dishes,
 	// those of every station, which this screen does not see: the order is left to the server, the look follows the dishes
 	if (!props.station) props.order.kds_status = newStatus
@@ -829,6 +864,11 @@ async function doUpdateStatus(newStatus) {
 			status: newStatus,
 			...(props.station ? { station: props.station } : {}),
 		})
+		if (UNDOABLE_STATUSES.includes(newStatus) && toPutBack.length)
+			offerBack(
+				`${tableLabel.value} · ${kitchenStatusLabel(newStatus, { takeaway: isTakeaway.value })}`,
+				toPutBack,
+			)
 		changed()
 	} catch (error) {
 		// Rollback on error

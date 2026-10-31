@@ -203,6 +203,9 @@
 				</div>
 			</div>
 		</main>
+
+		<!-- //// Neoffice — five seconds to take back a « Deliver » (task 38a-2, ruling 112): the toast is the page's, the ticket's card is gone when it is pressed. Undone, the page reads its tickets again. -->
+		<UndoToast @undone="loadOrders" />
 	</div>
 </template>
 
@@ -214,6 +217,7 @@ import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine
 //// Neoffice — the one top bar of the service screens, the tab's title and the size of the text (task 38a-2, rulings 109, 128, 129)
 import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
 import ThemeButton from "@/components/restaurant/ThemeButton.vue"
+import UndoToast from "@/components/restaurant/UndoToast.vue"
 import RestaurantScreenSwitch from "@/components/restaurant/RestaurantScreenSwitch.vue"
 import SegmentedControl from "@/components/restaurant/SegmentedControl.vue"
 import { SCREEN_RUNNER } from "@/utils/restaurantScreens"
