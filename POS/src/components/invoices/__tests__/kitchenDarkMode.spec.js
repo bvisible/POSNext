@@ -190,12 +190,13 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 	it("gives a dish's 'Ready' badge pale text in dark: the till's remap tints its background dark green and the text stayed dark green", () => {
 		const wrapper = show(ticket(["Ready", "Preparing", "Pending", "Delivered"]))
 
-		const pills = wrapper
-			.findAll('[data-test="ticket-line"] span.rounded-full')
-			.filter((p) => /^[A-Z]/.test(p.text()))
+		// A dish writes its state on its line only when it is NOT the ticket's (task 38a-1): this ticket is in preparation, so the dish being
+		// prepared says nothing and the delivered one carries a check mark; the Ready and the Pending ones say where they are
+		const pills = wrapper.findAll('[data-test="ticket-line-state"]')
 		const byLabel = Object.fromEntries(
 			pills.map((p) => [p.text(), classesOf(p)]),
 		)
+		expect(Object.keys(byLabel).sort()).toEqual(["Pending", "Ready"])
 		expect(byLabel.Ready).toEqual(
 			expect.arrayContaining([
 				"bg-green-100",
@@ -203,21 +204,14 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 				"dark:text-ds-success-soft",
 			]),
 		)
-		// The others read in dark already, and stay what they were
-		expect(byLabel.Preparing).toEqual(
-			expect.arrayContaining(["bg-blue-100", "text-blue-800"]),
-		)
+		// The one that reads in dark already stays what it was
 		expect(byLabel.Pending).toEqual(
 			expect.arrayContaining(["bg-yellow-100", "text-yellow-800"]),
 		)
-		expect(byLabel.Delivered).toEqual(
-			expect.arrayContaining(["bg-gray-100", "text-gray-800"]),
-		)
-		for (const label of ["Preparing", "Pending", "Delivered"])
-			expect(
-				byLabel[label].filter((name) => name.startsWith("dark:")),
-				label,
-			).toEqual([])
+		expect(
+			byLabel.Pending.filter((name) => name.startsWith("dark:")),
+		).toEqual([])
+		expect(wrapper.findAll('[data-test="ticket-line-done"]')).toHaveLength(1)
 	})
 
 	it("writes a dish's 'Ready' choice in the dark ramp's green in the status menu", async () => {

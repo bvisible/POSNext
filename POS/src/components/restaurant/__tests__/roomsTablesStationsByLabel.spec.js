@@ -65,10 +65,14 @@ describe("the kitchen screen shows labels", () => {
 	})
 
 	it("names the station of a line by its label", () => {
-		const text = show(KDSOrderCard, { order, stations, showStationBadge: true }).text()
+		const wrapper = show(KDSOrderCard, { order, stations, showStationBadge: true })
 
-		expect(text).toContain("Kitchen")
-		expect(text).not.toContain(STATION_NAME)
+		// The tag on the line is the first three letters of the label (task 38a-1, ruling 110: zero extra height), the whole label is its title
+		const tag = wrapper.get('[data-test="ticket-station-tag"]')
+		expect(tag.attributes("title")).toBe("Kitchen")
+		expect(tag.text()).toBe("KIT")
+		expect(wrapper.text()).not.toContain(STATION_NAME)
+		expect(tag.attributes("title")).not.toContain(STATION_NAME)
 	})
 
 	it("still names a table and a station of an older record by the only name they have", () => {
@@ -79,10 +83,13 @@ describe("the kitchen screen shows labels", () => {
 			items: [{ ...order.items[0], preparation_station: "Bar", station_name: undefined }],
 		}
 
-		const text = show(KDSOrderCard, { order: legacy, stations }).text()
+		const wrapper = show(KDSOrderCard, { order: legacy, stations })
 
-		expect(text).toContain("Table 5")
-		expect(text).toContain("Bar")
+		expect(wrapper.text()).toContain("Table 5")
+		// The tag's text is its code (task 38a-1), its title the only name the record has
+		const tag = wrapper.get('[data-test="ticket-station-tag"]')
+		expect(tag.attributes("title")).toBe("Bar")
+		expect(tag.text()).toBe("BAR")
 	})
 })
 

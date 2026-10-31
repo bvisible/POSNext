@@ -142,7 +142,7 @@
 								<!-- //// state, no menu). Its fade and its strike-through sit HERE, on the content of the dish, never on the wrapper above: the -->
 								<!-- //// wrapper holds the status menu of a dish that has one, and an `opacity` makes a stacking context of its own, which -->
 								<!-- //// trapped the menu's z-index, faded the menu to 40 % and painted it under the dishes after it. -->
-								<div class="flex flex-col justify-center py-[var(--kds-py,3px)] rounded px-1 -mx-1"
+								<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
 									:class="[
 										TICKET_FRAME.line,
 										KITCHEN_FRAME.line,
@@ -152,25 +152,32 @@
 									]"
 									data-test="ticket-line"
 									@click="onLineTap(item, $event)">
-									<!-- Item line: qty x name + item status badge -->
-									<div class="flex justify-between items-start gap-1">
-										<span class="text-gray-900 dark:text-gray-100">
-											<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
-										</span>
+									<!-- //// Neoffice — ONE row for the dish, nothing under it but its options, remark and allergy (task 38a-1, ruling 110 and the mockup): the quantity in its own -->
+									<!-- //// column (a tint when there are several, so that « 3x » is seen from across the pass), then the name, preceded by the station's tag (in the view of ALL -->
+									<!-- //// the stations only: the page hands `showStationBadge`) and by the dish's state WHEN IT IS NOT THE TICKET'S. The tag and the state used to take a line -->
+									<!-- //// each under the dish, and a wide state pill beside the name made a long dish wrap onto a second line. A delivered dish carries a check mark. -->
+									<span class="font-bold whitespace-nowrap self-start text-gray-900 dark:text-gray-100" data-test="ticket-qty"
+										:class="Number(item.qty) > 1 && !isDelivered(item) ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
+									<span class="font-medium text-gray-900 dark:text-gray-100 [overflow-wrap:anywhere]" data-test="ticket-dish-name">
+										<!-- Station tag -->
+										<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
+										<span v-if="showStationBadge && item.preparation_station" data-test="ticket-station-tag"
+											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] tracking-wide text-white dark:text-[color:var(--station-ink)]"
+											:title="item.station_name || item.preparation_station"
+											:style="{ backgroundColor: getStationColor(item.preparation_station), '--station-ink': inkOn(getStationColor(item.preparation_station)) }">{{ stationCode(item) }}</span>
 										<!-- //// Neoffice — no `cursor-pointer` of its own (task 42): the pill takes the dish's cursor, so a delivered dish's has none -->
-										<span v-if="item.kds_status"
-											class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
-											:class="itemStatusClass(item.kds_status)">
-											{{ kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway }) }}
-										</span>
-									</div>
+										<span v-if="stateWord(item)" data-test="ticket-line-state"
+											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap"
+											:class="itemStatusClass(item.kds_status)">{{ stateWord(item) }}</span>
+										<svg v-if="isDelivered(item)" data-test="ticket-line-done" data-icon="check" class="mr-1 inline-block h-[1em] w-[1em] align-[-0.14em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>{{ item.item_name }}
+									</span>
 									<!-- //// Neoffice — THREE KINDS of text, one look each, all the size of the dish's own text (task 38a-1, ruling 123: the information is as important -->
 									<!-- //// as the dish, and it was pale grey and small). The OPTIONS are ink with an arrow; a REMARK or instruction is the accent, medium, with the "i"; -->
 									<!-- //// an ALLERGY is the one red, bold, in a tinted strip of its own with a warning mark, so that it cannot be taken for a remark. Red is kept for -->
 									<!-- //// allergies (it was any annotation). A remark is an allergy when it holds a word of the list (utils/kitchenTextKinds). Options and a plain remark -->
 									<!-- //// share a line while they fit. -->
 									<div v-if="optionsOf(item).length || (remarkOf(item) && !isAllergyRemark(item))" data-test="ticket-sub"
-										class="mt-0.5 pl-4 leading-snug text-[length:var(--kds-fs-sub,12px)]">
+										class="col-start-2 mt-0.5 leading-tight text-[length:var(--kds-fs-sub,12px)]">
 										<span v-if="optionsOf(item).length" data-test="ticket-options" class="font-normal text-gray-900 dark:text-gray-100">
 											<span aria-hidden="true">→</span> {{ optionsOf(item).join(', ') }}
 										</span>
@@ -181,17 +188,10 @@
 										</span>
 									</div>
 									<div v-if="remarkOf(item) && isAllergyRemark(item)" data-test="ticket-allergy"
-										class="mt-0.5 ml-4 flex items-start gap-1 rounded-md border-l-4 border-red-500 bg-red-50 px-1.5 py-0.5 font-bold leading-snug text-red-700 text-[length:var(--kds-fs-sub,12px)] dark:text-ds-danger-soft">
+										class="col-span-full mt-0.5 flex items-start gap-1 rounded-md border-l-4 border-red-500 bg-red-50 px-1.5 py-0.5 font-bold leading-tight text-red-700 text-[length:var(--kds-fs-sub,12px)] dark:text-ds-danger-soft">
 										<svg data-icon="warning" class="mt-[0.15em] h-[1em] w-[1em] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4M12 17h.01" /></svg>
 										<span>{{ remarkOf(item) }}</span>
 									</div>
-									<!-- Station badge -->
-									<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
-									<span v-if="showStationBadge && item.preparation_station"
-										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white dark:text-[color:var(--station-ink)] mt-0.5 ml-4 inline-block self-start"
-										:style="{ backgroundColor: getStationColor(item.preparation_station), '--station-ink': inkOn(getStationColor(item.preparation_station)) }">
-										{{ item.station_name || item.preparation_station }}
-									</span>
 								</div>
 								<!-- Item context menu -->
 								<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
@@ -706,6 +706,18 @@ function itemStatusClass(status) {
 function getStationColor(stationName) {
 	const station = props.stations.find((s) => s.name === stationName)
 	return station?.color || "#6B7280"
+}
+
+//// Neoffice — the station tag is the first three letters of the station's name in capitals (« Cuisine » CUI, « Bar » BAR): the colour tells the stations apart,
+//// and a tag is zero extra height only if it is short (task 38a-1, ruling 110). The whole name is the tag's title.
+const stationCode = (item) => roomCode(item.station_name || item.preparation_station)
+
+//// Neoffice — a dish's own state is written on its line only when it is NOT the ticket's: a dish being prepared on a ticket in preparation says
+//// nothing, one still to start, or already at the pass, says so. A delivered dish says it with a check mark and its strike-through instead.
+function stateWord(item) {
+	if (!item.kds_status || isDelivered(item) || item.kds_status === status.value)
+		return ""
+	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value })
 }
 
 //// Neoffice — the remark of a dish, trimmed, and whether it is an allergy: the restaurant's own list of words when its settings carry one

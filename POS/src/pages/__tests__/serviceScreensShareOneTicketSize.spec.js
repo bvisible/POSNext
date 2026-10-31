@@ -568,8 +568,11 @@ describe("the two screens", () => {
 
 		expect(runner.text()).toContain("Mark Delivered")
 		expect(kitchen.text()).not.toContain("Mark Delivered")
-		// The kitchen's ticket says where the order is (Pending), the runner's item line has no status to set
-		expect(kitchen.text()).toContain("Pending")
+		// The kitchen's ticket says where the order is (Pending: on its root, and by its button, the header does not write it any more,
+		// task 38a-1), the runner's item line has no status to set
+		expect(
+			kitchen.get('[data-test="ticket"]').attributes("data-state"),
+		).toBe("Pending")
 		expect(kitchen.text()).toContain("Start")
 	})
 })

@@ -130,9 +130,7 @@ function show(order, props = {}) {
 const mainButton = (wrapper) =>
 	wrapper.get('[data-test="ticket-actions"] button').text()
 const pills = (wrapper) =>
-	wrapper
-		.findAll('[data-test="ticket-line"] span.rounded-full')
-		.map((pill) => pill.text())
+	wrapper.findAll('[data-test="ticket-line-state"]').map((pill) => pill.text())
 
 describe("the main button of a kitchen card says the action", () => {
 	it("is Commencer on a ticket to start, C'est prêt on a ticket being cooked, and Livrer on a ticket that is ready", () => {
@@ -152,20 +150,26 @@ describe("the main button of a kitchen card says the action", () => {
 })
 
 describe("the badges of a kitchen card say the state", () => {
-	it("read En attente, En préparation and À livrer on the dishes, and À remettre on a takeaway's", () => {
+	it("read En attente and À livrer on the dishes that are not at the ticket's own state, and À remettre on a takeaway's", () => {
+		// The ticket is in preparation: a dish being prepared says nothing, the others say where they are (task 38a-1)
 		expect(pills(show(ticket(["Pending", "Preparing", "Ready"])))).toEqual([
 			"En attente",
-			"En préparation",
 			"À livrer",
 		])
-		expect(pills(show(ticket(["Ready"], { is_takeaway: 1 })))).toEqual([
-			"À remettre",
-		])
+		// A takeaway that is ready says so where the states mix (placement A), and a dish at the pass of a takeaway in preparation reads À remettre
+		expect(
+			show(ticket(["Ready"], { is_takeaway: 1 }), { showState: true })
+				.get('[data-test="ticket-status"]')
+				.text(),
+		).toBe("À remettre")
+		expect(
+			pills(show(ticket(["Preparing", "Ready"], { is_takeaway: 1 }))),
+		).toEqual(["À remettre"])
 	})
 
 	it("never put the word of a button on a badge: C'est prêt and Livrer are not states", () => {
 		const text = show(ticket(["Pending", "Preparing", "Ready"]))
-			.findAll("span.rounded-full")
+			.findAll('[data-test="ticket-line-state"]')
 			.map((pill) => pill.text())
 			.join(" ")
 		expect(text).not.toMatch(/C'est prêt|Livrer|Commencer/)
