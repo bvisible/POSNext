@@ -71,16 +71,21 @@ export async function menuQrSheetHtml({ restaurantName, url }) {
 
 const FONTS_WAIT_MS = 2000
 const FRAME_KEPT_MS = 60_000
+// What the frame may do: print (a modal), and be read by the page that holds it (its fonts, its window), which is what a
+// frame of the same site is. Not scripts: the sheet is text and a drawing, and if a mistake of escaping ever let a tag
+// of a restaurant's through, it would still be inert.
+const FRAME_SANDBOX = "allow-same-origin allow-modals"
 
 /**
- * Print an HTML page through the browser's own dialog, from a hidden frame: no pop-up to be blocked, and nothing of the
- * page under it on the paper. Waits for the faces of the sheet (a moment at most) so that the paper is not set in the
- * fallback; the frame is removed after the dialog, or a minute at the latest.
+ * Print an HTML page through the browser's own dialog, from a hidden, sandboxed frame: no pop-up to be blocked, nothing of
+ * the page under it on the paper, nothing in it that can run. Waits for the faces of the sheet (a moment at most) so that
+ * the paper is not set in the fallback; the frame is removed after the dialog, or a minute at the latest.
  */
 export function printHtml(html) {
 	return new Promise((resolve, reject) => {
 		const frame = document.createElement("iframe")
 		frame.setAttribute("aria-hidden", "true")
+		frame.setAttribute("sandbox", FRAME_SANDBOX)
 		frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;"
 		frame.onload = async () => {
 			try {

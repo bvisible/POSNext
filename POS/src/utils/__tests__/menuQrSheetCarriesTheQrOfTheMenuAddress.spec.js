@@ -145,6 +145,19 @@ describe("the sheet of the menu's QR code", () => {
 			expect(window_.print).toHaveBeenCalledTimes(1)
 		})
 
+		it("sandboxes the frame: the sheet may print, nothing in it may run", async () => {
+			const printing = printHtml("<p>sheet</p>")
+			loaded(frames[0])
+			await frames[0].onload()
+			await printing
+
+			// Printing is a modal and reading the frame's fonts is the page's own business: nothing else is allowed, and above
+			// all not scripts, so that a mistake of escaping in the sheet someday cannot become one
+			const allowed = frames[0].getAttribute("sandbox").split(" ")
+			expect(allowed.sort()).toEqual(["allow-modals", "allow-same-origin"])
+			expect(allowed).not.toContain("allow-scripts")
+		})
+
 		it("waits for the faces of the sheet, but not for ever", async () => {
 			const printing = printHtml("<p>sheet</p>")
 			const window_ = loaded(frames[0], { fonts: { ready: new Promise(() => {}) } })

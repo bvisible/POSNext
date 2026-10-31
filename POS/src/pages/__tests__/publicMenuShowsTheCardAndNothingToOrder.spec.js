@@ -8,9 +8,12 @@ import { flushPromises, mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.hoisted(() => {
-	// The app's translation function: a sentence, and its {0} placeholders
-	globalThis.__ = (text, replace) =>
-		replace ? text.replace(/\{(\d+)\}/g, (_, index) => replace[index]) : text
+	// The app's translation function (utils/translation.ts): the sentence, or its translation once the loader has put the
+	// catalogue in `window.translatedMessages`, and its {0} placeholders
+	globalThis.__ = (text, replace) => {
+		const translated = globalThis.translatedMessages?.[text] || text
+		return replace ? translated.replace(/\{(\d+)\}/g, (_, index) => replace[index]) : translated
+	}
 })
 
 const route = vi.hoisted(() => ({ params: { restaurant: "The Bistro" } }))
@@ -91,6 +94,7 @@ describe("the public menu page", () => {
 	afterEach(() => {
 		wrapper?.unmount()
 		wrapper = null
+		delete globalThis.translatedMessages
 		vi.unstubAllGlobals()
 	})
 
@@ -300,6 +304,62 @@ describe("the public menu page", () => {
 
 			expect(read).toHaveBeenCalledTimes(1)
 			expect(wrapper.find("h1").text()).toBe("The Bistro")
+		})
+	})
+
+	describe("in the language of the guest", () => {
+		// What the app's loader puts in `window.translatedMessages` once it has the catalogue
+		const FRENCH = {
+			"Loading menu...": "Chargement de la carte...",
+			"This menu is not available": "Cette carte n'est pas disponible",
+			"Please ask a member of our team.": "Adressez-vous à un membre de notre équipe.",
+			"This restaurant has not published its menu yet.": "Ce restaurant n'a pas encore publié sa carte.",
+			"Spice level {0}": "Piment : niveau {0}",
+		}
+
+		it("writes its sentences through the app's translation function, as the other guest pages do", async () => {
+			globalThis.translatedMessages = FRENCH
+
+			await open(refuses(404))
+
+			expect(wrapper.find("h1").text()).toBe("Cette carte n'est pas disponible")
+			expect(wrapper.text()).toContain("Adressez-vous à un membre de notre équipe.")
+			expect(document.title).toBe("Cette carte n'est pas disponible")
+		})
+
+		it("reads the spice level and the restaurant that has no card in that language too", async () => {
+			globalThis.translatedMessages = FRENCH
+			await open(answers(MENU))
+			expect(dish("Chili").find(".dish__spice").attributes("aria-label")).toBe("Piment : niveau 2")
+
+			wrapper.unmount()
+			forgetPublicMenu()
+			await open(answers({ ...MENU, card: null, sections: [] }))
+			expect(wrapper.text()).toContain("Ce restaurant n'a pas encore publié sa carte.")
+		})
+
+		it("is built again when the catalogue arrives, as the app does to every page, and shows it at once without reading the menu again", async () => {
+			const read = answers(MENU)
+			await open(read)
+			expect(dish("Chili").find(".dish__spice").attributes("aria-label")).toBe("Spice level 2")
+			wrapper.unmount()
+			globalThis.translatedMessages = FRENCH
+
+			wrapper = mount(PublicMenu, { global: { mocks: { __: globalThis.__ } } })
+
+			expect(dish("Chili").find(".dish__spice").attributes("aria-label")).toBe("Piment : niveau 2")
+			await flushPromises()
+			expect(read).toHaveBeenCalledTimes(1)
+		})
+
+		it("asks for nothing but the menu: the catalogue is the app's to load, not the page's", async () => {
+			const read = answers(MENU)
+
+			await open(read)
+
+			expect(read.mock.calls.map(([url]) => url)).toEqual([
+				"/api/method/pos_next.api.public_menu.get_public_menu?restaurant=The%20Bistro",
+			])
 		})
 	})
 

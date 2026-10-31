@@ -17,7 +17,11 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
+from babel.messages.extract import extract
+from frappe.core.doctype.translation.translation import clear_user_translation_cache
 from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+from frappe.gettext.extractors.python import extract as python_extractor
+from frappe.gettext.translate import PYTHON_KEYWORDS
 from frappe.handler import execute_cmd
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, cint, nowdate
@@ -30,9 +34,12 @@ from pos_next.restaurant.mode import SITE_FLAG
 PREFIX = "_Test Public Menu"
 BISTRO = f"{PREFIX} Bistro"
 BRASSERIE = f"{PREFIX} Brasserie"
-# An ampersand and an accent: Frappe escapes the arguments of a guest's call unless the endpoint says they are safe, and
-# an escaped name finds no restaurant
+# A name with an ampersand and an accent, and one with an apostrophe: plain text, which Frappe leaves as it is in the
+# arguments of a guest's call (it rewrites only a string that holds an HTML tag)
 CAFE = f"{PREFIX} Café & Bar"
+APOSTROPHE = f"{PREFIX} Joe's Grill"
+# The languages a card is kept in (a badge's name is read in the guest's)
+LANGUAGES = ("en", "fr")
 NOT_AVAILABLE = "This menu is not available"
 SAVEPOINT = "public_menu_test"
 GUEST_IP = "198.51.100.23"
@@ -126,8 +133,9 @@ class PublicMenuFixtures:
 		self.restaurant = self.make_restaurant(BISTRO, enable_public_menu=1)
 
 	def forget_the_cards(self):
-		for name in (BISTRO, BRASSERIE, CAFE, *self.restaurants):
-			frappe.cache().delete_value(public_menu.cache_key(name))
+		for name in (BISTRO, BRASSERIE, CAFE, APOSTROPHE, *self.restaurants):
+			for lang in (*LANGUAGES, frappe.local.lang):
+				frappe.cache().delete_value(public_menu.cache_key(name, lang))
 			# A rolled-back restaurant must not be read again from the cache of documents
 			frappe.clear_document_cache("Restaurant", name)
 
@@ -504,6 +512,7 @@ class TestWhatThePublicMenuSays(PublicMenuFixtures, FrappeTestCase):
 			"/assets/pos_next/a.png": "/assets/pos_next/a.png",
 			"https://cdn.example.test/a.jpg": "https://cdn.example.test/a.jpg",
 			"/private/files/a.jpg": "",
+			"/files/%2e%2e/private/files/a.jpg": "",
 			"javascript:alert(1)": "",
 			"//elsewhere.example.test/a.jpg": "",
 			"": "",
@@ -651,23 +660,40 @@ class TestThePublicMenuIsOpenToEveryone(PublicMenuFixtures, FrappeTestCase):
 		self.assertIn(endpoint, frappe.whitelisted)
 		self.assertIn(endpoint, frappe.guest_methods)
 		self.assertEqual(frappe.allowed_http_methods_for_whitelisted_func[endpoint], ("GET",))
+		# It does not ask Frappe to leave its argument as it is: Frappe rewrites a guest's string only when it holds an HTML
+		# tag, which no restaurant's name can (see below), so there is nothing to ask
+		self.assertNotIn(endpoint, frappe.xss_safe_methods)
 
-	def test_its_argument_is_not_escaped_for_a_guest_so_a_name_with_an_ampersand_is_found(self):
-		self.assertIn(public_menu.get_public_menu, frappe.xss_safe_methods)
-
-	def test_a_guest_who_calls_it_as_a_web_request_does_finds_a_name_with_an_ampersand(self):
-		# Through the handler a request goes through: it escapes the arguments of a guest unless the endpoint says they are
-		# safe, and passes the endpoint only the arguments it takes (the command is one it does not)
-		self.make_restaurant(CAFE, enable_public_menu=1)
+	def test_a_guest_finds_a_restaurant_whose_name_has_an_ampersand_an_accent_or_an_apostrophe(self):
+		# Through the handler a web request goes through, which rewrites a guest's string only when it holds an HTML tag: a
+		# plain name arrives as it was typed. It passes the endpoint only the arguments it takes (the command is one it does not)
 		self.addCleanup(frappe.cache().delete_value, f"rl:{COMMAND}:{GUEST_IP}")
-		self.addCleanup(frappe.cache().delete_value, public_menu.cache_key(CAFE))
+		for name in (CAFE, APOSTROPHE):
+			self.make_restaurant(name, enable_public_menu=1)
 		frappe.set_user("Guest")
 
-		with a_request_from(GUEST_IP):
-			frappe.form_dict.update({"restaurant": CAFE})
-			answer = execute_cmd(COMMAND)
+		for name in (CAFE, APOSTROPHE):
+			with self.subTest(name=name), a_request_from(GUEST_IP):
+				frappe.form_dict.update({"restaurant": name})
+				answer = execute_cmd(COMMAND)
 
-		self.assertEqual(answer["restaurant"]["name"], CAFE)
+				self.assertEqual(answer["restaurant"]["name"], name)
+
+	def test_a_name_that_holds_a_tag_is_rewritten_by_frappe_and_finds_nothing(self):
+		frappe.set_user("Guest")
+		self.addCleanup(frappe.cache().delete_value, f"rl:{COMMAND}:{GUEST_IP}")
+
+		for name in (f"<script>alert(1)</script>{self.restaurant}", f"<b>{self.restaurant}</b>"):
+			with self.subTest(name=name), a_request_from(GUEST_IP):
+				frappe.form_dict.update({"restaurant": name})
+				with self.assertRaises(frappe.DoesNotExistError) as refused:
+					execute_cmd(COMMAND)
+
+				self.assertEqual(str(refused.exception), NOT_AVAILABLE)
+
+	def test_no_restaurant_can_be_named_with_a_tag_so_none_is_lost_to_that_rewriting(self):
+		with self.assertRaises(frappe.NameError):
+			self.make_restaurant(f"{PREFIX} <b>Bar</b>")
 
 	def test_a_guest_cannot_call_it_to_write(self):
 		frappe.set_user("Guest")
@@ -693,6 +719,284 @@ class TestThePublicMenuIsOpenToEveryone(PublicMenuFixtures, FrappeTestCase):
 		self.assertTrue(answers["Guest"]["sections"])
 		self.assertEqual(answers["Guest"], answers[PORTAL])
 		self.assertEqual(answers["Guest"], answers["Administrator"])
+
+
+class TestThePublicMenuInProcess(PublicMenuFixtures, FrappeTestCase):
+	"""What the website's menu block (task 19) calls: the rules of the endpoint, in process.
+
+	`public_menu()` is the gate, the kept card and the build, and answers None for a menu that is not public; the endpoint
+	wraps it for the 404 and for the limit per address.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		self.a_card_with(
+			[{"item_type": "Item", "item": self.make_item("Soup", "Tomato soup", standard_rate=9)}]
+		)
+		self.addCleanup(frappe.cache().delete_value, f"rl:{COMMAND}:{GUEST_IP}")
+
+	def test_it_is_the_answer_of_the_endpoint(self):
+		self.forget_the_cards()
+		in_process = public_menu.public_menu(self.restaurant)
+		self.forget_the_cards()
+		through_the_endpoint = public_menu.get_public_menu(self.restaurant)
+
+		self.assertEqual(in_process, through_the_endpoint)
+		self.assertEqual([dish["name"] for dish in self.dishes(in_process)], ["Tomato soup"])
+
+	def test_it_is_none_where_the_option_is_off(self):
+		frappe.db.set_value("Restaurant", self.restaurant, "enable_public_menu", 0)
+
+		self.assertIsNone(public_menu.public_menu(self.restaurant))
+
+	def test_it_is_none_where_neorestau_is_off_even_when_the_card_is_kept(self):
+		self.assertTrue(public_menu.public_menu(self.restaurant))
+
+		for value in (0, "0", None):
+			with self.subTest(neorestau=value), a_site_where_neorestau_is(value):
+				self.assertIsNone(public_menu.public_menu(self.restaurant))
+
+	def test_it_is_none_for_a_disabled_restaurant_and_for_a_name_that_is_not_one(self):
+		frappe.db.set_value("Restaurant", self.restaurant, "enabled", 0)
+		self.assertIsNone(public_menu.public_menu(self.restaurant))
+
+		for name in ("", "   ", None, f"{PREFIX} Nowhere", "x" * 300, 5, ["a"], {"a": 1}):
+			with self.subTest(name=name):
+				self.assertIsNone(public_menu.public_menu(name))
+
+	def test_it_is_built_once_and_kept_for_the_endpoint_too(self):
+		self.forget_the_cards()
+		with patch.object(public_menu, "_build", wraps=public_menu._build) as build:
+			public_menu.public_menu(self.restaurant)
+			public_menu.get_public_menu(self.restaurant)
+			public_menu.public_menu(self.restaurant)
+
+		self.assertEqual(build.call_count, 1)
+
+	def test_the_endpoint_does_nothing_but_wrap_it(self):
+		the_menu = {"restaurant": {"name": "A", "logo": ""}, "currency": "CHF", "card": None, "sections": []}
+
+		with patch.object(public_menu, "public_menu", return_value=the_menu) as inner:
+			self.assertIs(public_menu.get_public_menu("Whatever"), the_menu)
+		inner.assert_called_once_with("Whatever")
+
+		with patch.object(public_menu, "public_menu", return_value=None):
+			with self.assertRaises(frappe.DoesNotExistError) as refused:
+				public_menu.get_public_menu(self.restaurant)
+		self.assertEqual(str(refused.exception), NOT_AVAILABLE)
+
+	def test_only_the_endpoint_is_limited_per_address(self):
+		with a_request_from(GUEST_IP), patch.object(public_menu, "RATE_LIMIT", 1):
+			for _ in range(3):
+				self.assertTrue(public_menu.public_menu(self.restaurant))
+
+			self.assertTrue(public_menu.get_public_menu(self.restaurant))
+			with self.assertRaises(frappe.RateLimitExceededError):
+				public_menu.get_public_menu(self.restaurant)
+
+
+class TestAPictureIsServedOnlyWhereAGuestCanOpenIt(FrappeTestCase):
+	"""The address of a picture goes to a guest's browser, which reads it as a URL and not as the text the desk stored.
+
+	A browser reads `%2e` as a dot and `\\` as a slash, a server decodes what it is given, so a climb out of a public folder
+	into a private one is looked for in the path as they read it.
+	"""
+
+	SERVED = (
+		"/files/a.jpg",
+		"/files/my photo.jpg",
+		"/files/caf%C3%A9.jpg",
+		# Two dots inside a name climb nowhere
+		"/files/a..b.jpg",
+		"/files/sub/dir/x.png",
+		"/files/a.jpg?v=2",
+		"/assets/pos_next/a.png",
+		"https://cdn.example.test/a.jpg",
+		"http://cdn.example.test/a.jpg",
+	)
+	REFUSED = (
+		"",
+		None,
+		"a.jpg",
+		"files/a.jpg",
+		# A folder is no picture
+		"/files/",
+		"/files/.",
+		"javascript:alert(1)",
+		"data:image/png;base64,AAAA",
+		"//elsewhere.example.test/a.jpg",
+		"/private/files/a.jpg",
+		# The site's own host does not make its private folder public
+		"https://bistro.example.test/private/files/a.jpg",
+		"https://bistro.example.test/files/./../private/files/a.jpg",
+		# A climb, spelt every way a browser or a server reads it
+		"/files/../private/files/a.jpg",
+		"/files/%2e%2e/private/files/a.jpg",
+		"/files/%2E%2E/private/files/a.jpg",
+		"/files/.%2e/private/files/a.jpg",
+		"/files/%2e./private/files/a.jpg",
+		"/files/..%2fprivate%2ffiles%2fa.jpg",
+		"/files/%2e%2e%2fprivate/files/a.jpg",
+		"/files/..%5cprivate%5cfiles%5ca.jpg",
+		"/files/..\\private\\files\\a.jpg",
+		"/files/%252e%252e/private/files/a.jpg",
+		"/assets/%2e%2e/private/files/a.jpg",
+		"https://cdn.example.test/%2e%2e/a.jpg",
+		# What has no place in an address
+		"/files/a\\b.jpg",
+		"/files/a%00.jpg",
+		"/files/a\x00.jpg",
+		"/files/a\r\nX-Header: 1.jpg",
+		"/files/a%0d%0ab.jpg",
+		"http://[::1/a.jpg",
+	)
+
+	def test_what_a_guest_can_open_is_served_as_it_is(self):
+		for url in self.SERVED:
+			with self.subTest(url=url):
+				self.assertEqual(public_menu._public_file(url), url)
+
+	def test_everything_else_is_left_out(self):
+		for url in self.REFUSED:
+			with self.subTest(url=url):
+				self.assertEqual(public_menu._public_file(url), "")
+
+
+class TestBadgeNamesReadInTheLanguageOfTheGuest(PublicMenuFixtures, FrappeTestCase):
+	"""An allergen is something a guest must be able to read.
+
+	The seeded badges are English data (`Tree Nuts`, `Sulfites`): their names are translated when the card is built, in the
+	language of the request (`frappe.local.lang`, which follows a guest's Accept-Language), and a card is kept once per
+	language.
+	"""
+
+	def setUp(self):
+		# Registered before the fixtures' rollback, so that it runs after it: what a test translated is in Redis, which a
+		# rollback does not empty
+		self.addCleanup(clear_user_translation_cache, "fr")
+		super().setUp()
+		self.nuts = self.make_badge("Tree Nuts", "Allergen", "tree_nuts.svg", "#78350F")
+		# A badge the restaurant made itself: no catalogue knows it, so it reads as it was written
+		self.pick = self.make_badge("Chef's Pick", "Quality", "homemade.svg", "#EA580C")
+		code = self.make_item("Soup", "Tomato soup", badges=[self.nuts, self.pick])
+		self.a_card_with([{"item_type": "Item", "item": code}])
+		self.translate_to_french(self.nuts, "Fruits à coque d'essai", context=public_menu.BADGE_CONTEXT)
+
+	def translate_to_french(self, source, translated, context=None):
+		values = {"language": "fr", "source_text": source, "translated_text": translated}
+		self.insert("Translation", **values, **({"context": context} if context else {}))
+
+	def asked_in(self, lang):
+		"""The answer to a request in a language: its `frappe.local.lang`, as the request sets it from Accept-Language."""
+		before = frappe.local.lang
+		frappe.local.lang = lang
+		try:
+			return public_menu.get_public_menu(self.restaurant)
+		finally:
+			frappe.local.lang = before
+
+	def names(self, answer):
+		return [badge["name"] for badge in self.dishes(answer)[0]["badges"]]
+
+	def test_a_french_request_reads_the_allergens_in_french_and_an_english_one_in_english(self):
+		french = self.asked_in("fr")
+		english = self.asked_in("en")
+
+		self.assertEqual(self.names(french), ["Fruits à coque d'essai", self.pick])
+		self.assertEqual(self.names(english), [self.nuts, self.pick])
+
+	def test_only_the_name_is_translated(self):
+		badge = self.dishes(self.asked_in("fr"))[0]["badges"][0]
+
+		self.assertEqual(set(badge), BADGE_KEYS)
+		self.assertEqual(
+			(badge["type"], badge["icon"], badge["color"]), ("Allergen", "tree_nuts.svg", "#78350F")
+		)
+
+	def test_each_language_is_kept_apart_and_answers_in_its_own(self):
+		with patch.object(public_menu, "_build", wraps=public_menu._build) as build:
+			first_french = self.asked_in("fr")
+			english = self.asked_in("en")
+			second_french = self.asked_in("fr")
+			second_english = self.asked_in("en")
+
+		self.assertEqual(build.call_count, 2)
+		self.assertEqual(first_french, second_french)
+		self.assertEqual(english, second_english)
+		self.assertNotEqual(first_french, english)
+		french_key = public_menu.cache_key(self.restaurant, "fr")
+		english_key = public_menu.cache_key(self.restaurant, "en")
+		self.assertNotEqual(french_key, english_key)
+		self.assertEqual(frappe.cache().get_value(french_key, expires=True), first_french)
+		self.assertEqual(frappe.cache().get_value(english_key, expires=True), english)
+
+	def test_a_language_with_no_translation_reads_the_english(self):
+		self.assertEqual(self.names(self.asked_in("de")), [self.nuts, self.pick])
+
+	def test_a_translation_with_no_context_serves_a_badge_the_catalogue_already_knows(self):
+		# `_()` looks the contextual entry up first and falls back on the bare text: a word the catalogue already translates
+		# (as the other apps' do for `Milk` or `Fish`) needs nothing of ours
+		self.translate_to_french(self.pick, "Choix du chef (catalogue)")
+
+		self.assertEqual(self.names(self.asked_in("fr"))[1], "Choix du chef (catalogue)")
+
+	def test_the_cache_key_names_the_language_of_the_request_unless_told_another(self):
+		before = frappe.local.lang
+		frappe.local.lang = "fr"
+		try:
+			self.assertEqual(
+				public_menu.cache_key(self.restaurant), public_menu.cache_key(self.restaurant, "fr")
+			)
+			self.assertNotEqual(
+				public_menu.cache_key(self.restaurant), public_menu.cache_key(self.restaurant, "en")
+			)
+		finally:
+			frappe.local.lang = before
+
+
+class TestTheSeededBadgesAreAnchoredForTheTranslators(FrappeTestCase):
+	"""A badge's name is data, read out of the database: the extractor of the translators never sees it in the code.
+
+	`i18n_anchors.py` mentions each seeded name, with the context the menu translates it in, so that the next
+	`bench generate-pot-file` keeps it. The check is made with the extractor itself.
+	"""
+
+	def test_every_seeded_badge_is_anchored_with_the_context_the_menu_translates_it_in(self):
+		with open(frappe.get_app_path("pos_next", "fixtures", "menu_badge.json")) as seeded_file:
+			seeded = {badge["badge_name"] for badge in json.load(seeded_file)}
+		with open(frappe.get_app_path("pos_next", "i18n_anchors.py"), "rb") as anchors_file:
+			extracted = {
+				(message, context)
+				for _line, message, _comments, context in extract(
+					python_extractor, anchors_file, keywords=PYTHON_KEYWORDS
+				)
+			}
+
+		self.assertTrue(seeded)
+		self.assertEqual(
+			sorted(
+				seeded - {message for message, context in extracted if context == public_menu.BADGE_CONTEXT}
+			),
+			[],
+		)
+
+	def test_the_menu_itself_feeds_no_badge_name_to_the_pot_by_chance(self):
+		# Its `_()` takes the name from a variable: the names are the anchors' business, and a literal here would be a
+		# second home for one
+		with open(frappe.get_app_path("pos_next", "api", "public_menu.py"), "rb") as source:
+			extracted = [
+				message
+				for _line, message, _comments, _context in extract(
+					python_extractor, source, keywords=PYTHON_KEYWORDS
+				)
+			]
+
+		self.assertEqual(extracted, ["This menu is not available"])
+
+	def test_this_file_feeds_nothing_to_the_pot(self):
+		# The generator reads every .py of the app, tests included
+		with open(__file__, "rb") as source:
+			self.assertEqual(list(extract(python_extractor, source, keywords=PYTHON_KEYWORDS)), [])
 
 
 class TestThePublicMenuIsKeptAndLimited(PublicMenuFixtures, FrappeTestCase):

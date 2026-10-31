@@ -13,9 +13,19 @@ price list is ever read, so nothing of it can leave by mistake.
 It publishes only where the restaurant switched it on (`Restaurant.enable_public_menu`) and the site runs NeoRestau, and
 only a card that is the restaurant's own guest card, active and in its dates. Every refusal is the same sentence, so that
 it does not tell whether a restaurant exists, runs NeoRestau or chose to publish.
+
+Two ways in, one set of rules: `public_menu()` is the rules in process (the gate, the kept card, the build; None for a menu
+that is not public), which the website's menu block calls; `get_public_menu()` is the endpoint, which wraps it for the 404
+and the limit per address.
+
+What the restaurant wrote (a dish, a section, its own badges) is shown as written. What this app seeds is not: the names of
+the badges (`Tree Nuts`, `Sulfites`) are English data, and an allergen must read in the guest's language, so they are
+translated when the card is built, in the language of the request, and a card is kept once per language.
 """
 
+import posixpath
 import re
+from urllib.parse import unquote, urlsplit
 
 import frappe
 from frappe import _
@@ -38,40 +48,62 @@ RATE_WINDOW = 60
 # What a guest's browser may be told to open: a public file of the site, one of its assets, an address on the web. Never
 # a private file (it needs a session a guest does not have, and its path says what the site keeps), nor a path that climbs.
 PUBLIC_FILE_PREFIXES = ("/files/", "/assets/", "https://", "http://")
+# The folders of the site a relative address may be in, and the one no address may be in, whoever's host it names
+SITE_FOLDERS = ("/files/", "/assets/")
+PRIVATE_FOLDER = "/private/"
+# An address escaped more often than this is not one a restaurant typed
+MAX_DECODINGS = 3
+# The context the seeded badges' names are translated in (`i18n_anchors.py` mentions each of them, for the translators)
+BADGE_CONTEXT = "Menu Badge"
 # A badge's icon is the name of a file of the app's own icons; its colour a hex code or a colour name
 BADGE_ICON = re.compile(r"[\w\-]+\.(?:svg|png)")
 BADGE_COLOR = re.compile(r"#[0-9A-Fa-f]{3,8}|[A-Za-z]{1,20}")
 MAX_SPICE_LEVEL = 3
 
 
-def cache_key(restaurant: str) -> str:
-	"""The key a restaurant's built card is kept under."""
-	return f"{CACHE_PREFIX}:{restaurant}"
+def cache_key(restaurant: str, lang: str | None = None) -> str:
+	"""The key a restaurant's built card is kept under: one per language, the badges' names being read in the guest's."""
+	return f"{CACHE_PREFIX}:{restaurant}:{lang or frappe.local.lang or 'en'}"
 
 
-@frappe.whitelist(allow_guest=True, xss_safe=True, methods=["GET"])
+def public_menu(restaurant) -> dict | None:
+	"""A restaurant's public menu, or None when it is not public: the rules, for whoever calls in process.
+
+	The website's menu block calls this, the endpoint wraps it. The gate (the site runs NeoRestau, the restaurant exists,
+	is enabled and switched its public menu on) is read on every call, before the kept card, so that it takes effect at
+	once; the card itself is kept for a minute per restaurant and per language. The answer is `{restaurant: {name, logo},
+	currency, card: {name, description} | None, sections: [{label, items: [{name, description, price, price_text, image,
+	spice_level, badges: [{name, type, icon, color}]}]}]}`. A restaurant that publishes no card (none chosen, or not
+	active, not in its dates, or another restaurant's) answers `card: None` and no sections: it is public, with nothing
+	to show yet.
+	"""
+	published = _published(restaurant)
+	if not published:
+		return None
+
+	lang = frappe.local.lang or "en"
+	key = cache_key(published.name, lang)
+	menu = frappe.cache().get_value(key, expires=True)
+	if menu is None:
+		menu = _build(published, lang)
+		frappe.cache().set_value(key, menu, expires_in_sec=CACHE_SECONDS)
+	return menu
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
 @rate_limit(limit=lambda: RATE_LIMIT, seconds=RATE_WINDOW)
 def get_public_menu(restaurant=None):
 	"""A restaurant's guest card, read only, for the page its QR code opens (`/pos/menu/<restaurant>`).
 
-	Open to guests, for reading, and limited per address (Frappe's rate limiter). `xss_safe`: Frappe escapes the text of a
-	guest's arguments unless told they are safe, and an escaped name (`Café &amp; Bar`) finds no restaurant; this one is
-	only ever looked up, never written into a page.
+	Open to guests, for reading, and limited per address (Frappe's rate limiter). It answers what `public_menu()` does, and
+	refuses with one sentence, a 404, whatever the reason the menu is not public.
 
-	The answer is `{restaurant: {name, logo}, currency, card: {name, description} | None, sections: [{label, items:
-	[{name, description, price, price_text, image, spice_level, badges: [{name, type, icon, color}]}]}]}`. A restaurant
-	that publishes no card (none chosen, or not active, not in its dates, or another restaurant's) answers `card: None` and
-	no sections: the page says so politely. A restaurant that does not publish at all is refused, whatever the reason.
+	Frappe rewrites a guest's string argument only when it holds an HTML tag, and no restaurant can be named with `<` or
+	`>`: a plain name (`Café & Bar`, `L'Auberge`) reaches this as it was typed, and nothing needs saying about it.
 	"""
-	published = _published(restaurant)
-	if not published:
-		frappe.throw(_("This menu is not available"), frappe.DoesNotExistError)
-
-	key = cache_key(published.name)
-	menu = frappe.cache().get_value(key, expires=True)
+	menu = public_menu(restaurant)
 	if menu is None:
-		menu = _build(published)
-		frappe.cache().set_value(key, menu, expires_in_sec=CACHE_SECONDS)
+		frappe.throw(_("This menu is not available"), frappe.DoesNotExistError)
 	return menu
 
 
@@ -91,8 +123,8 @@ def _published(restaurant) -> frappe._dict | None:
 	return row
 
 
-def _build(restaurant) -> dict:
-	"""The answer for a restaurant that publishes its menu."""
+def _build(restaurant, lang: str) -> dict:
+	"""The answer for a restaurant that publishes its menu, its badges' names read in a language."""
 	company = (
 		frappe.db.get_value("Company", restaurant.company, ["default_currency", "company_logo"], as_dict=True)
 		or frappe._dict()
@@ -106,7 +138,7 @@ def _build(restaurant) -> dict:
 		},
 		"currency": company.default_currency or "CHF",
 		"card": {"name": card.card_name, "description": plain_text(card.description)} if card else None,
-		"sections": _sections(card) if card else [],
+		"sections": _sections(card, lang) if card else [],
 	}
 
 
@@ -143,7 +175,7 @@ def _published_card(restaurant) -> frappe._dict | None:
 	return card
 
 
-def _sections(card) -> list[dict]:
+def _sections(card, lang: str) -> list[dict]:
 	"""The card's rows as sections of dishes, in the order the card keeps them, as its menu for guests builds them.
 
 	A category row opens a section; what comes before the first one is a section of no label. A section with no dish left
@@ -165,7 +197,7 @@ def _sections(card) -> list[dict]:
 		)
 	)
 	items = _items(codes)
-	badges = _badges(codes)
+	badges = _badges(codes, lang)
 
 	sections = []
 	section = {"label": "", "items": []}
@@ -204,8 +236,12 @@ def _is_for_sale(item) -> bool:
 	)
 
 
-def _badges(codes: list[str]) -> dict[str, list[dict]]:
-	"""The badges (allergens, diets, qualities) of each item named, in the order the item lists them."""
+def _badges(codes: list[str], lang: str) -> dict[str, list[dict]]:
+	"""The badges (allergens, diets, qualities) of each item named, in the order the item lists them.
+
+	A badge's name is read in the language asked for: the seeded ones are English data, and a name the catalogue does not
+	know (a badge the restaurant made, in the language it writes in) is shown as it is.
+	"""
 	if not codes or not frappe.get_meta("Item").has_field("custom_item_badges"):
 		return {}
 	links = frappe.get_all(
@@ -231,7 +267,7 @@ def _badges(codes: list[str]) -> dict[str, list[dict]]:
 		if badge:
 			badges.setdefault(link.parent, []).append(
 				{
-					"name": badge.badge_name,
+					"name": _(badge.badge_name, lang=lang, context=BADGE_CONTEXT),
 					"type": badge.badge_type,
 					"icon": badge.icon if BADGE_ICON.fullmatch(cstr(badge.icon)) else "",
 					"color": badge.color if BADGE_COLOR.fullmatch(cstr(badge.color)) else "",
@@ -260,8 +296,36 @@ def _dish(row, item, badges: list[dict]) -> dict:
 
 
 def _public_file(url) -> str:
-	"""The URL of a picture if a guest can open it, else an empty string."""
+	"""The URL of a picture if a guest can open it, else an empty string.
+
+	A public file of the site, one of its assets, or an address on the web; never a private file, and never a path that
+	climbs out of the folder it starts in. A climb is looked for in the path as a browser and a server read it, not as it
+	was typed: `%2e` is a dot, `\\` is a slash, and an address escaped twice is read by a server that decodes twice.
+	"""
 	url = cstr(url).strip()
-	if url.startswith(PUBLIC_FILE_PREFIXES) and ".." not in url:
-		return url
-	return ""
+	if not url.startswith(PUBLIC_FILE_PREFIXES) or any(_not_in_an_address(char) for char in url):
+		return ""
+	try:
+		path = urlsplit(url).path
+	except ValueError:
+		return ""
+	for _decoding in range(MAX_DECODINGS + 1):
+		if any(_not_in_an_address(char) for char in path) or ".." in path.split("/"):
+			return ""
+		decoded = unquote(path)
+		if decoded == path:
+			break
+		path = decoded
+	else:
+		return ""
+	# Once what the browser reads of it is folded, an address is not in the private folder (that of the site's own host
+	# included), and a relative one stays in the folders it names
+	folded = posixpath.normpath(path)
+	if folded.startswith(PRIVATE_FOLDER) or (url.startswith("/") and not folded.startswith(SITE_FOLDERS)):
+		return ""
+	return url
+
+
+def _not_in_an_address(char: str) -> bool:
+	"""A control character, or a backslash: a browser reads the second as a slash, and neither belongs in a file's address."""
+	return char == "\\" or ord(char) < 32 or ord(char) == 127
