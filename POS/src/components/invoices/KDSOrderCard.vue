@@ -386,6 +386,20 @@ watch(activeItemMenu, (open) => {
 	else window.removeEventListener("scroll", closeMenu, { capture: true })
 })
 
+//// Neoffice — a refresh that delivers the dish whose menu is open closes that menu for good (task 42). The template already
+//// hides the menu of a delivered dish, but `activeItemMenu` kept the dish's index: if a later refresh brought the dish back
+//// to a live status, the menu would reappear with nobody having touched the screen. Forgetting it here closes it the way
+//// every other close does (and takes the page-scroll listener off with it).
+watch(
+	() => {
+		const open = activeItemMenu.value
+		return open !== null && activeItems.value[open]?.kds_status === "Delivered"
+	},
+	(delivered) => {
+		if (delivered) closeMenu()
+	},
+)
+
 //// Neoffice — how many dishes are cut by the foot of the ticket (task 23). Read from the boxes on the screen, so it follows
 //// the scroll, the size of the band the ticket is in (a tablet turned, a layout chosen) and the dishes a refresh brings.
 const bodyEl = ref(null)

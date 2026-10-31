@@ -111,7 +111,8 @@ function chain(wrapper, element) {
 const classesOfElement = (element) =>
 	(element.getAttribute("class") || "").split(/\s+/).filter(Boolean)
 /** A class that fades what it is on: opacity-0 to opacity-95 (opacity-100 is no fade). */
-const fades = (name) => /^opacity-(?!100$)\d+$/.test(name) || /\bopacity-\[/.test(name)
+const fades = (name) =>
+	/^opacity-(?!100$)\d+$/.test(name) || /\bopacity-\[/.test(name)
 /** A class that makes a stacking context of its own, which would trap a menu's z-index. */
 const traps = (name) =>
 	fades(name) ||
@@ -181,7 +182,9 @@ describe("a delivered dish is inert (task 42)", () => {
 		expect(delivered.attributes("role")).toBeUndefined()
 		expect(delivered.attributes("tabindex")).toBeUndefined()
 		// Nothing inside it is a button or a link, and its status pill does not ask for a pointer either
-		expect(delivered.findAll("button, a, [role=button], [tabindex]")).toHaveLength(0)
+		expect(
+			delivered.findAll("button, a, [role=button], [tabindex]"),
+		).toHaveLength(0)
 		for (const element of delivered.element.querySelectorAll("*"))
 			expect(classesOfElement(element)).not.toContain("cursor-pointer")
 	})
@@ -221,6 +224,24 @@ describe("a delivered dish is inert (task 42)", () => {
 
 		expect(menuOf(wrapper).exists()).toBe(false)
 	})
+
+	it("does not get the menu back if the dish returns to a live status later with no tap in between: the open menu is forgotten, not just hidden", async () => {
+		const order = reactive(middle())
+		const wrapper = show(order)
+		await lines(wrapper)[2].trigger("click")
+		expect(menuOf(wrapper).exists()).toBe(true)
+
+		// A refresh delivers the dish while its menu is open ...
+		order.items[2].kds_status = "Delivered"
+		await nextTick()
+		expect(menuOf(wrapper).exists()).toBe(false)
+
+		// ... and a later refresh brings it back to a live status: nobody touched the screen, so no menu may show
+		order.items[2].kds_status = "Preparing"
+		await nextTick()
+
+		expect(menuOf(wrapper).exists()).toBe(false)
+	})
 })
 
 describe("what is faded holds nothing that can be touched (task 42)", () => {
@@ -239,7 +260,10 @@ describe("what is faded holds nothing that can be touched (task 42)", () => {
 		expect(classesOfElement(wrapperOfLine)).not.toContain("line-through")
 		// Nor anything higher up, to the ticket's own frame
 		for (const element of chain(wrapper, wrapperOfLine.parentElement)) {
-			expect(classesOfElement(element).some(fades), element.outerHTML.slice(0, 80)).toBe(false)
+			expect(
+				classesOfElement(element).some(fades),
+				element.outerHTML.slice(0, 80),
+			).toBe(false)
 			expect(classesOfElement(element)).not.toContain("line-through")
 		}
 	})
@@ -297,13 +321,18 @@ describe("the menu of a dish is above the ticket (task 42)", () => {
 		const menu = menuOf(wrapper)
 		expect(menu.classes()).toContain("fixed")
 		const z = (element) => {
-			const found = classesOfElement(element).find((name) => /^z-\d+$/.test(name))
+			const found = classesOfElement(element).find((name) =>
+				/^z-\d+$/.test(name),
+			)
 			return found ? Number(found.slice(2)) : 0
 		}
 		const above = Math.max(
 			0,
 			...[...wrapper.get('[data-test="ticket"]').element.querySelectorAll("*")]
-				.filter((element) => element !== menu.element && !menu.element.contains(element))
+				.filter(
+					(element) =>
+						element !== menu.element && !menu.element.contains(element),
+				)
 				.map(z),
 		)
 		expect(z(menu.element)).toBeGreaterThan(above)
@@ -316,7 +345,10 @@ describe("the menu of a dish is above the ticket (task 42)", () => {
 		await lines(wrapper)[0].trigger("click")
 
 		const buttons = menuOf(wrapper).findAll("button")
-		expect(buttons.map((button) => button.text())).toEqual(["Ready", "Delivered"])
+		expect(buttons.map((button) => button.text())).toEqual([
+			"Ready",
+			"Delivered",
+		])
 		await buttons[0].trigger("click")
 
 		expect(call).toHaveBeenCalledWith(
