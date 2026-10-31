@@ -241,12 +241,13 @@ def table_views(today):
 
 
 def reservation_views(today):
-	"""Today's bookings (the cancelled ones apart), those to come, and those who did not show up."""
+	"""Today's bookings (the cancelled ones apart, and the online ones their guest never confirmed, which expired: they
+	were never the restaurant's, task 18), those to come, and those who did not show up."""
 	return [
 		{
 			"key": "today",
 			"label": _("Today"),
-			"filters": [["reservation_date", "=", today], ["status", "!=", "Cancelled"]],
+			"filters": [["reservation_date", "=", today], ["status", "not in", ["Cancelled", "Expired"]]],
 		},
 		{
 			"key": "upcoming",

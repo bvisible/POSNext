@@ -84,8 +84,10 @@
 					>
 						✓
 					</button>
+					<!-- An online booking whose guest has not confirmed it from the e-mail can be confirmed for him (he -->
+					<!-- phoned), Pending or already Confirmed: it then never expires (NeoRestau lot 1, task 18) -->
 					<button
-						v-if="res.status === 'Pending'"
+						v-if="res.status === 'Pending' || res.awaits_guest"
 						class="action-btn confirm-btn"
 						:title="__('Confirm')"
 						@click="$emit('confirm', res)"

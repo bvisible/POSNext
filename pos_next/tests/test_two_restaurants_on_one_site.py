@@ -637,7 +637,8 @@ class TestReservationsAreScoped(TwoRestaurants, FrappeTestCase):
 	def test_the_online_booking_form_books_a_table_of_the_restaurant_asked(self):
 		answer = self.book_online(self.table_a, self.a)
 		self.assertEqual(answer["status"], "ok")
-		reservation = frappe.get_doc("Restaurant Reservation", answer["name"])
+		# The public answer does not name the booking (task 18): it is found by the address it was made for
+		reservation = frappe.get_doc("Restaurant Reservation", {"email": "test-two-restaurants@yopmail.com"})
 		self.assertEqual(reservation.restaurant, self.a)
 		self.assertEqual([row.restaurant_table for row in reservation.tables], [self.table_a])
 
