@@ -67,37 +67,31 @@
 		<!-- //// print (task 44 fills it in; `canPrint` is false until then). The buttons are as high as the size chosen says (`--kds-btn-h`), never less than 44 px. -->
 		<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and these buttons forced `text-white` on it: white on near-white, a blank square. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled (a loading button is greyed and keeps the white). Light mode is untouched. -->
 		<div class="flex flex-shrink-0 items-stretch gap-1.5 border-b border-gray-100 px-2 pb-2 pt-0.5 dark:border-gray-700" data-test="ticket-actions">
+			<!-- //// Neoffice — ONE main button, whose action follows the ticket and its station (task 38a-1, ruling 112): Start on a ticket to start; on a ticket being -->
+			<!-- //// cooked, "Ready" when a runner carries the dishes on and "Deliver" when the cook does (one gesture, no "Ready" between); "Deliver" on a ticket that is -->
+			<!-- //// ready; from the list of what waits at the pass, a call-back to preparation. The first three are the ink button, the others its outline. -->
 			<Button
-				v-if="status === 'Pending'"
+				v-if="inkAction"
 				variant="solid"
 				size="lg"
+				data-test="ticket-main"
 				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
-				@click="updateStatus('Preparing')"
+				@click="onMainPress"
 				:loading="loading"
 			>
-				{{ kitchenActionLabel("start", { takeaway: isTakeaway }) }}
+				{{ mainLabel }}
 			</Button>
 
 			<Button
-				v-if="status === 'Preparing'"
-				variant="solid"
-				size="lg"
-				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
-				@click="updateStatus('Ready')"
-				:loading="loading"
-			>
-				{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
-			</Button>
-
-			<Button
-				v-if="status === 'Ready' && !showDeliveredConfirm"
+				v-if="outlineAction && !showDeliveredConfirm"
 				variant="outline"
 				size="lg"
+				data-test="ticket-main"
 				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
-				@click="updateStatus('Delivered')"
+				@click="onMainPress"
 				:loading="loading"
 			>
-				{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
+				{{ mainLabel }}
 			</Button>
 
 			<!-- Confirmation when Runner is active -->
@@ -193,22 +187,25 @@
 								<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
 								<!-- //// Neoffice — the "Ready" entry takes the dark ramp's green in dark mode (task 46): `text-green-700` on the dark menu was 3.0:1 -->
 								<!-- //// Neoffice — never for a delivered dish (task 42), even if a refresh delivers it while its menu is open -->
+							<!-- //// Neoffice — the menu offers the statuses the station's last action allows (task 38a-1, ruling 112): with a runner the cook goes as far as -->
+							<!-- //// "ready" and has no "deliver"; with none "ready" and "deliver" are one gesture, so the menu has "deliver" and no "ready"; from the list of -->
+							<!-- //// what waits at the pass a dish can only be called back to preparation. -->
 								<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
 									class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
 									:style="menuStyle">
-									<button v-if="item.kds_status !== 'Preparing'"
+									<button v-if="offers(item, 'Preparing')"
 										@click.stop="updateItemStatus(item, 'Preparing')"
 										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
 										<span class="w-2 h-2 rounded-full bg-blue-400"></span>
 										{{ kitchenStatusLabel("Preparing") }}
 									</button>
-									<button v-if="item.kds_status !== 'Ready'"
+									<button v-if="offers(item, 'Ready')"
 										@click.stop="updateItemStatus(item, 'Ready')"
 										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 dark:text-ds-success active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
 										<span class="w-2 h-2 rounded-full bg-green-500"></span>
 										{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
 									</button>
-									<button v-if="item.kds_status !== 'Delivered'"
+									<button v-if="offers(item, 'Delivered')"
 										@click.stop="updateItemStatus(item, 'Delivered')"
 										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
 										<span class="w-2 h-2 rounded-full bg-gray-400"></span>
@@ -322,6 +319,19 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	//// Neoffice — the dishes of this ticket go through a runner (ruling 112, task 38a-1; the page works it out from the stations, see utils/kitchenRunner).
+	//// True (the default, as the station setting is): the cook's last action is "Ready", a runner delivers. False: the cook delivers, and
+	//// "Ready" then "Delivered" are ONE gesture, a button "Deliver" on a dish that is being prepared.
+	useRunner: {
+		type: Boolean,
+		default: true,
+	},
+	//// Neoffice — "kitchen" (the default), or "ready-list" for the list of what waits at the pass: the card then holds the ready dishes only, its
+	//// main button calls them back to preparation, and a dish's menu offers nothing else (task 38a-1, ruling 112)
+	mode: {
+		type: String,
+		default: "kitchen",
+	},
 	//// Neoffice — the screen can print a copy of the ticket (task 44, ruling 127): the 44 px print button stands at the right of the
 	//// main button. False until that task wires it, so nothing is drawn.
 	canPrint: {
@@ -338,6 +348,38 @@ const showDeliveredConfirm = ref(false)
 const activeItemMenu = ref(null)
 //// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
 const isTakeaway = computed(() => !!props.order.is_takeaway)
+
+//// Neoffice — the action of the main button (task 38a-1, ruling 112). It follows the dishes the ticket shows and their station: Start; on a
+//// ticket being cooked, Ready when a runner carries the dishes on, Deliver when the cook does; Deliver on a ticket that is ready; from
+//// the list of what waits at the pass, a call-back to preparation. A delivered ticket has no button.
+const mainAction = computed(() => {
+	if (props.mode === "ready-list") return "recall"
+	switch (status.value) {
+		case "Pending":
+			return "start"
+		case "Preparing":
+			return props.useRunner ? "ready" : "deliver"
+		case "Ready":
+			return "deliver"
+		default:
+			return null
+	}
+})
+// The three actions that move the cook along are the ink button; delivering a ticket already ready, and the call-back, are its outline
+const inkAction = computed(
+	() =>
+		mainAction.value === "start" ||
+		mainAction.value === "ready" ||
+		(mainAction.value === "deliver" && status.value === "Preparing"),
+)
+const outlineAction = computed(
+	() =>
+		mainAction.value === "recall" ||
+		(mainAction.value === "deliver" && status.value !== "Preparing"),
+)
+const mainLabel = computed(() =>
+	kitchenActionLabel(mainAction.value, { takeaway: isTakeaway.value }),
+)
 
 //// Neoffice — what the header's line shows besides the table (task 38a-1, rulings 122, 125, 126). The room's code is derived here for now
 //// (utils/kitchenRoomCode; the server will send its own, task 38b); a takeaway has no room, its label says it. The number is the ticket's
@@ -409,6 +451,17 @@ const menuStyle = computed(() => {
 	}
 })
 
+//// Neoffice — which statuses a dish's menu offers (task 38a-1, ruling 112). Never the one it is at.
+function offers(item, status) {
+	if (item.kds_status === status) return false
+	if (props.mode === "ready-list") return status === "Preparing"
+	// A dish that is Ready already, or one the cook delivers himself, has no "ready" to press for a station without a runner
+	if (status === "Ready") return props.useRunner
+	// With a runner the cook has no "deliver": the runner delivers
+	if (status === "Delivered") return !props.useRunner
+	return true
+}
+
 //// Neoffice — a delivered dish is done (task 42): its tap does nothing, no menu, no call, and nothing to put it back
 //// (coming back is a separate, deliberate act, not a tap on a struck-through line)
 function isDelivered(item) {
@@ -432,7 +485,7 @@ function toggleItemMenu(item, event) {
 	}
 	const anchor = event?.currentTarget?.getBoundingClientRect?.()
 	if (anchor) {
-		const buttons = MENU_STATUSES.filter((s) => s !== item.kds_status).length
+		const buttons = MENU_STATUSES.filter((s) => offers(item, s)).length
 		menuPosition.value = placeMenu(
 			anchor,
 			{
@@ -655,7 +708,8 @@ function parseModifiers(json) {
 // Update order-level KDS status (optimistic UI)
 async function updateStatus(newStatus) {
 	// Confirmation when marking as Delivered with Runner active
-	if (newStatus === "Delivered" && restaurantStore.runnerEnabled) {
+	//// Neoffice — only for a station that HAS a runner (task 38a-1, ruling 112): a station without one is delivered by the cook, by design
+	if (newStatus === "Delivered" && restaurantStore.runnerEnabled && props.useRunner) {
 		showDeliveredConfirm.value = true
 		return
 	}
@@ -665,6 +719,48 @@ async function updateStatus(newStatus) {
 async function confirmDelivered() {
 	showDeliveredConfirm.value = false
 	await doUpdateStatus("Delivered")
+}
+
+function onMainPress() {
+	switch (mainAction.value) {
+		case "start":
+			return updateStatus("Preparing")
+		case "ready":
+			return updateStatus("Ready")
+		case "deliver":
+			return updateStatus("Delivered")
+		case "recall":
+			return recall()
+	}
+}
+
+//// Neoffice — the call-back to preparation, from the list of what waits at the pass (task 38a-1, ruling 112): every dish of the card, one
+//// call each (the server moves the lines of one item at a time, and moves them back as well as forward), at once on screen, put back
+//// if the server refuses
+async function recall() {
+	loading.value = true
+	const dishes = (props.order.items || []).filter(
+		(dish) => dish.kds_status === "Ready",
+	)
+	const before = dishes.map((dish) => dish.kds_status)
+	for (const dish of dishes) dish.kds_status = "Preparing"
+	try {
+		for (const code of new Set(dishes.map((dish) => dish.item_code))) {
+			await call("pos_next.api.restaurant.update_item_kds_status", {
+				invoice_name: props.order.name,
+				item_code: code,
+				status: "Preparing",
+			})
+		}
+		changed()
+	} catch (error) {
+		dishes.forEach((dish, index) => {
+			dish.kds_status = before[index]
+		})
+		showError(__("Failed to update item status"))
+	} finally {
+		loading.value = false
+	}
 }
 
 //// Neoffice — the statuses a dish goes through, in order (as the server ranks them)

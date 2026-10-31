@@ -452,9 +452,9 @@ describe("the status menu of a dish", () => {
 		expect(menu.element.style.top).toBe("")
 	})
 
-	it("touches the dish when it opens upward from a dish being prepared: two buttons, not a gap of 44 px", async () => {
-		// Dish 2 is Preparing: its menu offers Ready and Delivered, 98 px, where a waiting dish's offers three, 142 px. The
-		// menu was placed with the height of the larger one and floated 44 px over the smaller
+	it("touches the dish when it opens upward from a dish being prepared: one button, not a gap of 44 px", async () => {
+		// Dish 2 is Preparing: with a runner its menu offers "Mark ready" alone (the runner delivers, task 38a-1), 54 px, where a
+		// waiting dish's offers two, 98 px. The menu was placed with the height of the larger one and floated 44 px over the smaller
 		layout({ viewport: 150 })
 		window.innerHeight = 600
 		const wrapper = show(longOrder(25))
@@ -465,14 +465,14 @@ describe("the status menu of a dish", () => {
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
 		expect(
 			menu.findAll("button").map((b) => b.text().replace(/\s+/g, " ").trim()),
-		).toEqual(["Mark ready", "Deliver"])
+		).toEqual(["Mark ready"])
 		expect(menu.element.style.bottom).toBe("104px")
 	})
 
-	it("counts the room the menu really needs: where two buttons fit under the dish and three do not", async () => {
-		// The dish ends at 548: with a window 660 px high there are 100 px under it, 98 of them are needed for two buttons
+	it("counts the room the menu really needs: where one button fits under the dish and two do not", async () => {
+		// The dish ends at 548: with a window 640 px high there are 80 px under it, 54 of them are needed for one button
 		layout({ viewport: 150 })
-		window.innerHeight = 660
+		window.innerHeight = 640
 		const wrapper = show(longOrder(25))
 		await nextTick()
 
@@ -484,12 +484,13 @@ describe("the status menu of a dish", () => {
 
 		await openMenu(wrapper, 0)
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
-		expect(menu.element.style.bottom).toBe("164px")
+		expect(menu.element.style.bottom).toBe("144px")
 		expect(menu.element.style.top).toBe("")
 	})
 
-	it("offers the three statuses as buttons a finger can hit: 44 px high at least", async () => {
+	it("offers the statuses of the station's last action as buttons a finger can hit: 44 px high at least", async () => {
 		layout()
+		// With a runner a dish goes as far as ready: there is no "Deliver" in the cook's menu (task 38a-1, ruling 112)
 		const wrapper = show(longOrder(25))
 		await openMenu(wrapper, 0)
 
@@ -499,6 +500,22 @@ describe("the status menu of a dish", () => {
 		expect(buttons.map((b) => b.text().replace(/\s+/g, " ").trim())).toEqual([
 			"Preparing",
 			"Mark ready",
+		])
+		for (const button of buttons) {
+			expect(button.classes()).toContain("min-h-[44px]")
+		}
+	})
+
+	it("offers Preparing and Deliver when the cook delivers himself: ready and delivered are one gesture", async () => {
+		layout()
+		const wrapper = show(longOrder(25), { useRunner: false })
+		await openMenu(wrapper, 0)
+
+		const buttons = wrapper
+			.get('[data-test="ticket-line-menu"]')
+			.findAll("button")
+		expect(buttons.map((b) => b.text().replace(/\s+/g, " ").trim())).toEqual([
+			"Preparing",
 			"Deliver",
 		])
 		for (const button of buttons) {

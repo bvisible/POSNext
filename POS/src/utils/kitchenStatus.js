@@ -49,8 +49,9 @@ export function kitchenStatusLabel(status, { takeaway = false } = {}) {
  * - `start`: begin cooking (a ticket whose dishes are all Pending)
  * - `ready`: the dish is done and goes to the pass (the last action of a kitchen with a runner)
  * - `deliver`: the plate leaves for the table (the last action of a kitchen with no runner; « Remettre » for a takeaway)
+ * - `recall`: a dish that waits at the pass goes back to preparation (the list of what waits for the runner)
  *
- * @param {"start"|"ready"|"deliver"} action
+ * @param {"start"|"ready"|"deliver"|"recall"} action
  * @param {{ takeaway?: boolean }} [options]
  * @returns {string} The label to show ("" for an action this file does not know)
  */
@@ -64,6 +65,8 @@ export function kitchenActionLabel(action, { takeaway = false } = {}) {
 			return takeaway
 				? __("Hand over", null, "Kitchen action")
 				: __("Deliver", null, "Kitchen action")
+		case "recall":
+			return __("Recall to preparation", null, "Kitchen action")
 		default:
 			return ""
 	}

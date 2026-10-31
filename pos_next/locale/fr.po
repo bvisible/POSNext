@@ -17547,3 +17547,12 @@ msgstr "Remettre"
 #: POS/src/components/invoices/KDSOrderCard.vue:106
 msgid "Print a copy of this ticket"
 msgstr "Imprimer une copie de ce ticket"
+
+#: POS/src/utils/kitchenStatus.js:72
+msgctxt "Kitchen action"
+msgid "Recall to preparation"
+msgstr "Rappeler en préparation"
+
+#: POS/src/pages/KDS.vue:97
+msgid "No dishes to deliver"
+msgstr "Aucun plat à livrer"

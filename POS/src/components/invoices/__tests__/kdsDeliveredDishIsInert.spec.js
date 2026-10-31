@@ -345,11 +345,9 @@ describe("the menu of a dish is above the ticket (task 42)", () => {
 		await lines(wrapper)[0].trigger("click")
 
 		const buttons = menuOf(wrapper).findAll("button")
-		// The menu's buttons say the action (task 38a-1): « Mark ready », « Deliver »
-		expect(buttons.map((button) => button.text())).toEqual([
-			"Mark ready",
-			"Deliver",
-		])
+		// The menu's buttons say the action (task 38a-1), and with a runner a dish being prepared goes as far as « Mark ready »: the
+		// runner delivers it (ruling 112), so there is no « Deliver » in the cook's menu
+		expect(buttons.map((button) => button.text())).toEqual(["Mark ready"])
 		await buttons[0].trigger("click")
 
 		expect(call).toHaveBeenCalledWith(

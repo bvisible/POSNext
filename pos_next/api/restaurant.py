@@ -515,7 +515,9 @@ def get_preparation_stations(restaurant=None, station=None):
 			"Preparation Station",
 			filters=filters,
 			or_filters=scope.restaurant_or_filters(restaurant),
-			fields=["name", "station_name", "station_type", "color"],
+			# `use_runner`: the kitchen screen's last button follows it (task 38a-1): with a runner the cook stops at "Ready",
+			# without one the cook delivers
+			fields=["name", "station_name", "station_type", "color", "use_runner"],
 			order_by="station_name",
 		),
 		restaurant,

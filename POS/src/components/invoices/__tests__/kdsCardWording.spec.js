@@ -118,9 +118,9 @@ function ticket(statuses, extra = {}) {
 		...extra,
 	}
 }
-function show(order) {
+function show(order, props = {}) {
 	const wrapper = mount(KDSOrderCard, {
-		props: { order, showStationBadge: false },
+		props: { order, showStationBadge: false, ...props },
 		attachTo: document.body,
 		global: { mocks: { __: globalThis.__ } },
 	})
@@ -173,23 +173,27 @@ describe("the badges of a kitchen card say the state", () => {
 })
 
 describe("the menu of a dish says where the dish goes", () => {
-	it("offers En préparation, C'est prêt and Livrer to a dish still to start, and Remettre on a takeaway", async () => {
-		const wrapper = show(ticket(["Pending"]))
+	const menuOf = async (wrapper) => {
 		await wrapper.get('[data-test="ticket-line"]').trigger("click")
-		expect(
-			wrapper
-				.get('[data-test="ticket-line-menu"]')
-				.findAll("button")
-				.map((button) => button.text()),
-		).toEqual(["En préparation", "C'est prêt", "Livrer"])
+		return wrapper
+			.get('[data-test="ticket-line-menu"]')
+			.findAll("button")
+			.map((button) => button.text())
+	}
 
-		const takeaway = show(ticket(["Pending"], { is_takeaway: 1 }))
-		await takeaway.get('[data-test="ticket-line"]').trigger("click")
+	it("offers En préparation and C'est prêt to a dish still to start when a runner carries the dishes on", async () => {
+		expect(await menuOf(show(ticket(["Pending"])))).toEqual([
+			"En préparation",
+			"C'est prêt",
+		])
+	})
+
+	it("offers En préparation and Livrer when the cook delivers, and Remettre on a takeaway", async () => {
+		expect(await menuOf(show(ticket(["Pending"]), { useRunner: false }))).toEqual(
+			["En préparation", "Livrer"],
+		)
 		expect(
-			takeaway
-				.get('[data-test="ticket-line-menu"]')
-				.findAll("button")
-				.map((button) => button.text()),
-		).toEqual(["En préparation", "C'est prêt", "Remettre"])
+			await menuOf(show(ticket(["Pending"], { is_takeaway: 1 }), { useRunner: false })),
+		).toEqual(["En préparation", "Remettre"])
 	})
 })

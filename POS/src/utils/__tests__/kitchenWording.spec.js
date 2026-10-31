@@ -116,6 +116,10 @@ describe("the actions, which buttons show", () => {
 		expect(kitchenActionLabel("deliver")).toBe("Livrer")
 	})
 
+	it("is Rappeler en préparation to call a dish back from what waits at the pass", () => {
+		expect(kitchenActionLabel("recall")).toBe("Rappeler en préparation")
+	})
+
 	it("read Remettre for a takeaway, and only the last action changes", () => {
 		expect(kitchenActionLabel("deliver", { takeaway: true })).toBe("Remettre")
 		expect(kitchenActionLabel("start", { takeaway: true })).toBe("Commencer")
@@ -156,7 +160,12 @@ describe("a badge and a button never share a message id", () => {
 			"Ready",
 			"Delivered",
 		])
-		const buttons = asked(kitchenActionLabel, ["start", "ready", "deliver"])
+		const buttons = asked(kitchenActionLabel, [
+			"start",
+			"ready",
+			"deliver",
+			"recall",
+		])
 		for (const pair of buttons) expect(badges.has(pair)).toBe(false)
 		// Not even the same word under another context: « Deliver » (an action) is not « Delivered » (a state)
 		const words = (set) => new Set([...set].map((pair) => pair.split(":")[0]))
@@ -165,7 +174,13 @@ describe("a badge and a button never share a message id", () => {
 	})
 
 	it("keeps the buttons under the context « Kitchen action » and the badges under « Kitchen order status »", () => {
-		for (const key of ["Start cooking", "Mark ready", "Deliver", "Hand over"]) {
+		for (const key of [
+			"Start cooking",
+			"Mark ready",
+			"Deliver",
+			"Hand over",
+			"Recall to preparation",
+		]) {
 			expect(catalogue[`${key}:${ACTION}`], key).toBeTruthy()
 		}
 		for (const key of [

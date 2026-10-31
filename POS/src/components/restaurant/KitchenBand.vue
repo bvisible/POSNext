@@ -59,6 +59,7 @@
 						:station="station"
 						:refresh="refresh"
 						:room-name="roomNameOf(order)"
+						:use-runner="orderUsesRunner(order, stations, runnerEnabled)"
 					/>
 				</div>
 			</div>
@@ -81,6 +82,8 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import { kitchenStatusOf } from "@/utils/kitchenBands"
+//// Neoffice — whether a ticket's dishes go through a runner: its main button follows (task 38a-1, ruling 112)
+import { orderUsesRunner } from "@/utils/kitchenRunner"
 import {
 	BAND_PRODUCTION_HEIGHT,
 	BAND_WAITING_HEIGHT,
@@ -114,6 +117,8 @@ const props = defineProps({
 	//// Neoffice — the rooms of the restaurant, `{ name, area_name }` (task 38a-1, ruling 126): an order carries the link to its room (`area`),
 	//// the header of its card shows the room's short code, which comes from the room's name
 	rooms: { type: Array, default: () => [] },
+	//// Neoffice — the restaurant's own runner switch: with no runner at all the kitchen delivers whatever a station says (task 38a-1)
+	runnerEnabled: { type: Boolean, default: true },
 })
 const emit = defineEmits(["status-updated"])
 

@@ -62,9 +62,12 @@ const AREAS = [
 	{ name: "r1", area_name: "Room 1" },
 	{ name: "r2", area_name: "Room 2" },
 ]
+// No runner at these stations (task 38a-1, ruling 112): the cook delivers, so a ticket whose dishes are all Ready stays in the
+// production band until it is delivered, which is what the sorting rules below were written for. With a runner a Ready dish LEAVES
+// this screen: that is pinned in kitchenRunnerSetting.spec.js.
 const STATIONS = [
-	{ name: "bar", station_name: "Bar", color: "#2C4FA8" },
-	{ name: "kit", station_name: "Kitchen", color: "#D68A59" },
+	{ name: "bar", station_name: "Bar", color: "#2C4FA8", use_runner: 0 },
+	{ name: "kit", station_name: "Kitchen", color: "#D68A59", use_runner: 0 },
 ]
 
 const tokens = (classes) => classes.split(/\s+/).filter(Boolean)
@@ -548,8 +551,10 @@ describe("a ticket on its way from one band to the other, with the real cards (f
 		// The state is not written in a band's header any more (task 38a-1): the card names it on its root, the band's title says it
 		expect(card.attributes("data-state")).toBe("Preparing")
 		expect(card.find('[data-test="ticket-status"]').exists()).toBe(false)
+		// These stations have no runner (see STATIONS): the cook delivers, so a ticket being prepared offers « Deliver » in
+		// one gesture and no « Mark ready » (task 38a-1, ruling 112; the runner's case is in kitchenRunnerSetting.spec.js)
 		expect(card.get('[data-test="ticket-actions"] button').text()).toBe(
-			"Mark ready",
+			"Deliver",
 		)
 	})
 })

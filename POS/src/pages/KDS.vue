@@ -46,8 +46,23 @@
 		>
 			<!-- //// Neoffice — the switch of the layout (bands one above the other, or side by side) ends the filter line, -->
 			<!-- //// on the line it already has (NeoRestau lot 1, task 23). Offered only where two ticket columns fit. -->
-			<template v-if="canSplit" #end>
-				<KitchenLayoutSwitch :layout="layout" @update:layout="chooseLayout" />
+			<!-- //// Neoffice — and, before it, the chip "to deliver (N)" of what waits at the pass (task 38a-1, ruling 112): a dish that is ready leaves the -->
+			<!-- //// kitchen screen when its station has a runner, and the chip keeps its count in view. It opens the list of those dishes. Task 38a-2 moves it -->
+			<!-- //// into the page's one-line header. -->
+			<template v-if="canSplit || hasRunnerStation" #end>
+				<button
+					v-if="hasRunnerStation"
+					type="button"
+					data-test="ready-chip"
+					:aria-pressed="readyListShown"
+					class="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg border border-green-500 whitespace-nowrap touch-manipulation transition-colors"
+					:class="readyListShown ? 'bg-gray-800 text-white dark:bg-white dark:text-gray-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'"
+					@click="showReady = !showReady"
+				>
+					{{ kitchenStatusLabel("Ready") }}
+					<span data-test="ready-count" class="rounded-full bg-green-500 px-2 text-xs font-bold leading-5 text-gray-900">{{ readyCount }}</span>
+				</button>
+				<KitchenLayoutSwitch v-if="canSplit" :layout="layout" @update:layout="chooseLayout" />
 			</template>
 		</RoomStationFilterLine>
 
@@ -60,6 +75,29 @@
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
 
+			<!-- //// Neoffice — what waits at the pass (task 38a-1, ruling 112): the ready dishes of the stations that have a runner, ticket by ticket, -->
+			<!-- //// with a call-back to preparation. It replaces the bands while the chip is pressed. -->
+			<section v-else-if="readyListShown" data-test="ready-list" aria-labelledby="ready-list-title">
+				<h2 id="ready-list-title" class="px-1 pb-1 text-lg font-bold text-gray-900 dark:text-white">
+					{{ kitchenStatusLabel("Ready") }}
+					<span data-test="ready-list-count" class="font-medium text-gray-500 dark:[&&]:!text-gray-400">({{ readyCount }})</span>
+				</h2>
+				<p v-if="!readyOrders.length" data-test="ready-list-empty" class="px-1 py-1 text-base text-gray-500 dark:[&&]:!text-gray-400">{{ __("No dishes to deliver") }}</p>
+				<div v-else :class="[TICKET_GRID, 'content-start']">
+					<div v-for="order in readyOrders" :key="order.name" data-test="ready-cell" class="flex min-w-0 flex-col">
+						<KDSOrderCard
+							:order="order"
+							:stations="stations"
+							:show-station-badge="!selectedStation"
+							:station="selectedStation"
+							:refresh="loadOrders"
+							:room-name="roomNameOf(order)"
+							mode="ready-list"
+						/>
+					</div>
+				</div>
+			</section>
+
 			<div v-else :class="bandsClass" :data-layout="layout" data-test="bands">
 				<KitchenBand
 					band="waiting"
@@ -71,6 +109,7 @@
 					:show-station-badge="!selectedStation"
 					:station="selectedStation"
 					:rooms="areas"
+					:runner-enabled="runnerOn"
 					@status-updated="loadOrders"
 				/>
 				<KitchenBand
@@ -83,6 +122,7 @@
 					:show-station-badge="!selectedStation"
 					:station="selectedStation"
 					:rooms="areas"
+					:runner-enabled="runnerOn"
 					@status-updated="loadOrders"
 				/>
 			</div>
@@ -96,9 +136,17 @@ import { Button } from "frappe-ui"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 //// Neoffice — the two bands, their layouts and their switch (NeoRestau lot 1, task 23); the ticket card is drawn by the band
 import KitchenBand from "@/components/restaurant/KitchenBand.vue"
+import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import KitchenLayoutSwitch from "@/components/restaurant/KitchenLayoutSwitch.vue"
 import { useKitchenLayout } from "@/composables/useKitchenLayout"
 import { splitIntoBands } from "@/utils/kitchenBands"
+//// Neoffice — the kitchen's last action follows the station's runner setting (task 38a-1, ruling 112)
+import {
+	countDishes,
+	kitchenView,
+	readyForTheRunner,
+	stationUsesRunner,
+} from "@/utils/kitchenRunner"
 import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
@@ -161,8 +209,37 @@ const allOrdersOfTheRoom = computed(() => allOrders.value.filter(inTheRoom))
 //// into the two bands, and the order in each, are utils/kitchenBands: a ticket is waiting while no dish has begun, and
 //// it goes by the time it was last SENT (`modified`), not by the time its table was opened (`creation`), which for a table
 //// served in rounds is the time of its starters. The delivered orders still wait for "Show completed".
+//// Neoffice — the dishes a runner carries are not the kitchen's any more (task 38a-1, ruling 112): a dish that is Ready at a station with a
+//// runner leaves the tickets of this screen and waits in the list behind the chip "to deliver"; a station without a runner keeps its dishes
+//// here until the cook delivers them. The restaurant's own runner switch overrides the stations: with no runner at all the kitchen delivers.
+const runnerOn = computed(() => restaurantStore.runnerEnabled !== false)
+const kitchenOrders = computed(() =>
+	kitchenView(ordersOfTheRoom.value, {
+		stations: stations.value,
+		runnerEnabled: runnerOn.value,
+	}),
+)
+const readyOrders = computed(() =>
+	readyForTheRunner(ordersOfTheRoom.value, {
+		stations: stations.value,
+		runnerEnabled: runnerOn.value,
+	}),
+)
+const readyCount = computed(() => countDishes(readyOrders.value))
+// The chip exists where some station hands its dishes to a runner; none of them, nothing waits at a pass
+const hasRunnerStation = computed(
+	() =>
+		runnerOn.value &&
+		(stations.value.length === 0 || stations.value.some(stationUsesRunner)),
+)
+const showReady = ref(false)
+const readyListShown = computed(() => showReady.value && hasRunnerStation.value)
+// The room of an order as its card shows it (the short code of its name): the order carries the link, the screen knows the rooms
+const roomNameOf = (order) =>
+	areas.value.find((area) => area.name === order.area)?.area_name || ""
+
 const bands = computed(() =>
-	splitIntoBands(ordersOfTheRoom.value, { includeDelivered: showDelivered.value }),
+	splitIntoBands(kitchenOrders.value, { includeDelivered: showDelivered.value }),
 )
 
 //// Neoffice — how the bands are laid out: the cook's pick, or by the way the tablet is held (task 23)

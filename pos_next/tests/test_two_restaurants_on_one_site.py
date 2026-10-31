@@ -351,6 +351,20 @@ class TestEachTillSeesItsOwnRestaurant(TwoRestaurants, FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_a, "status"), "Empty")
 		self.assertEqual(frappe.db.get_value("Restaurant Table", self.table_b, "status"), "Occupied")
 
+	def test_a_station_says_whether_its_dishes_go_through_a_runner(self):
+		"""The kitchen screen's last button follows its station (NeoRestau lot 1, task 38a-1, ruling 112).
+
+		With a runner the cook stops at "Ready" and the dish leaves the screen; with none the cook delivers. The screen
+		reads which it is from the stations it is given, so the answer carries the flag, as the doctype stores it.
+		"""
+		frappe.db.set_value("Preparation Station", self.station_a, "use_runner", 0)
+		with_a_runner = self.make_station(self.a, "_Test Pass", use_runner=1)
+
+		stations = {s["name"]: s for s in restaurant_api.get_preparation_stations(restaurant=self.a)}
+
+		self.assertEqual(stations[self.station_a]["use_runner"], 0)
+		self.assertEqual(stations[with_a_runner]["use_runner"], 1)
+
 	def test_the_stations_and_their_map_are_the_restaurants(self):
 		self.assertEqual(
 			[s["name"] for s in restaurant_api.get_preparation_stations(restaurant=self.a)], [self.station_a]
