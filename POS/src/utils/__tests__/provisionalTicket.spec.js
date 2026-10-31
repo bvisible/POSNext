@@ -209,15 +209,16 @@ describe("the provisional ticket prints where the till prints its receipts, and 
 		expect(order.items).toEqual(
 			cart.formatItemsForSubmission(cart.invoiceItems),
 		);
-		// 3 x 12.35 at 10 %: the cart takes 3.70 off the line (37.05 x 10 % is 3.70499... in floating point) and the
-		// payment sends 11.12 a unit, its rate after the discount rounded per unit (what ERPNext then charges: 33.36)
+		// 3 x 12.35 at 10 %: the payment sends 11.12 a unit, its rate after the discount rounded per unit (what ERPNext then
+		// charges: 33.36). The cart takes 3.69 off the line to come to it (01fab002: the till's totals are ERPNext's, to the
+		// cent); before it took 3.70 off (37.05 x 10 % is 3.70499... in floating point) and showed 33.35
 		const steak = order.items.find((line) => line.item_code === "STEAK");
 		expect(steak).toMatchObject({
 			qty: 3,
 			rate: 11.12,
 			price_list_rate: 12.35,
 			discount_percentage: 10,
-			discount_amount: 3.7,
+			discount_amount: 3.69,
 		});
 		expect(order.items.map((line) => line.item_code)).toEqual([
 			"STEAK",
