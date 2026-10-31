@@ -224,6 +224,7 @@ import { SCREEN_RUNNER } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import { countDishes } from "@/utils/kitchenRunner"
+import { formatTicketNo } from "@/utils/ticketNumber"
 import { RUNNER_AREA, TICKET_CARD, TICKET_ROW, TICKET_STACK } from "@/utils/ticketLayout"
 import { useStackShortTickets } from "@/composables/useStackShortTickets"
 import { allergyWordsOf } from "@/utils/kitchenTextKinds"
@@ -441,7 +442,8 @@ function groupByTable() {
 			//// Neoffice — what the header's one line shows beside the table (task 38a-2, ruling 130): the room's name (the card derives its short code), the ticket's number
 			//// when the order carries one, and whether it is a takeaway (handed over, not delivered to a table)
 			roomName: areas.value.find((area) => area.name === order.area)?.area_name || "",
-			ticketNo: order.ticket_no || "",
+			//// Neoffice — the whole number and the digits the server tells, written (0007) by `formatTicketNo` (task 38b)
+			ticketNo: formatTicketNo(order.ticket_no, order.ticket_digits),
 			takeaway: !!order.is_takeaway,
 		}))
 		.sort((a, b) => new Date(a.modified) - new Date(b.modified))

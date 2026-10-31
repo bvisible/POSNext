@@ -165,6 +165,10 @@ _custom_field_names = [
 	"Coupon Code-referral_code",
 	"Sales Invoice-restaurant_table",
 	"Sales Invoice-kds_status",
+	# //// Neoffice — the ticket number of a restaurant order and the business day it was counted in (NeoRestau lot 1,
+	# //// task 38b, rulings 122 and 124): the kitchen shows it instead of the draft's Sales Invoice number.
+	"Sales Invoice-posa_ticket_no",
+	"Sales Invoice-posa_ticket_day",
 	"Sales Invoice Item-posa_special_instructions",
 	"Sales Invoice Item-preparation_station",
 	"Sales Invoice Item-kds_status",

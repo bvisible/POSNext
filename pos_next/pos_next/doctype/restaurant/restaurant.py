@@ -15,13 +15,35 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
+
+# The hour a restaurant's business day starts at, unless it says otherwise (a restaurant closes after midnight)
+DEFAULT_BUSINESS_DAY_START = "05:00:00"
 
 
 class Restaurant(Document):
+	def _set_defaults(self):
+		"""Frappe gives a new document the CURRENT TIME in every Time field it was not given, whatever the field's own default
+		says (`create_new.set_dynamic_default_values`): a restaurant made by the server (the first settings saved at the
+		till, a provisioning, a patch) would open its business day at the minute it was made. The day starts at the default
+		(05:00) unless the caller named a time."""
+		named = self.get("business_day_start")
+		super()._set_defaults()
+		if named in (None, ""):
+			self.business_day_start = DEFAULT_BUSINESS_DAY_START
+
 	def validate(self):
+		self._check_ticket_number_digits()
 		if self.enable_tips:
 			self._ensure_tip_account()
 			self._ensure_tip_item()
+
+	def _check_ticket_number_digits(self):
+		"""The ticket number is written with 1 to 9 digits (task 38b); a restaurant that left it empty keeps the default."""
+		if self.get("ticket_number_digits") in (None, ""):
+			return
+		if not 1 <= cint(self.ticket_number_digits) <= 9:
+			frappe.throw(_("The ticket number must have between 1 and 9 digits"))
 
 	def _ensure_tip_account(self):
 		"""Create the tip transit account (2211) in the restaurant's company if it doesn't exist."""

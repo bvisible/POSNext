@@ -74,7 +74,8 @@
 					<div class="px-4 py-3 flex items-center justify-between"
 						:class="getStatusHeaderClass(order.kds_status)">
 						<div>
-							<span class="font-bold text-sm">{{ order.takeaway_number || order.name }}</span>
+							<!-- //// Neoffice — the ticket number the restaurant gave the order (task 38b, ruling 122), then the takeaway number it has had until now; never the invoice's name: a draft takes it in an order nobody chose -->
+							<span class="font-bold text-sm">{{ ticketLabel(order) }}</span>
 							<span v-if="order.customer_name" class="ml-2 text-xs opacity-75">{{ order.customer_name }}</span>
 						</div>
 						<span class="text-xs font-medium px-2 py-0.5 rounded-full"
@@ -123,6 +124,7 @@ import { call } from "@/utils/apiWrapper"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
+import { formatTicketNo } from "@/utils/ticketNumber"
 //// Neoffice — takeaway amounts in the site's number format (formatCurrency below).
 import { formatCurrencyNumber } from "@/utils/currency"
 
@@ -207,6 +209,16 @@ async function markDelivered(order) {
 		status: "Delivered",
 	})
 	loadOrders()
+}
+
+//// Neoffice — what the header of an order reads (task 38b, ruling 122): the ticket number the restaurant gave it, else the takeaway
+//// number it has had until now, else the word. The invoice's own name is never read aloud.
+function ticketLabel(order) {
+	return (
+		formatTicketNo(order.ticket_no, order.ticket_digits) ||
+		order.takeaway_number ||
+		__("Takeaway")
+	)
 }
 
 function getStatusHeaderClass(status) {

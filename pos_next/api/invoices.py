@@ -286,6 +286,10 @@ def _strip_server_managed_fields(payload):
 	# Packed Items are regenerated from Product Bundle definitions during save.
 	# Accepting client-side packed rows can reintroduce duplicates on re-save.
 	cleaned.pop("packed_items", None)
+	# //// Neoffice — the ticket number of a restaurant order is the server's: counted by the restaurant at the order's
+	# //// first save (pos_next.restaurant.tickets), never taken from a till (NeoRestau lot 1, task 38b, rulings 122, 124).
+	cleaned.pop("posa_ticket_no", None)
+	cleaned.pop("posa_ticket_day", None)
 	return cleaned
 
 
@@ -1658,6 +1662,15 @@ def update_invoice(data):
 				update_data["takeaway_number"] = data.get("takeaway_number")
 
 			frappe.db.set_value(invoice_doc.doctype, invoice_doc.name, update_data, update_modified=False)
+
+		# //// Neoffice — an order of a table, or a takeaway order of a restaurant till, takes its TICKET number at its first
+		# //// save (a counter per restaurant and business day, locked in this transaction; none for a plain counter sale). The
+		# //// draft's own FA number is not what the kitchen reads: it comes in an order nobody chose and leaves a gap for each
+		# //// draft deleted. Before the reload below, so that the answer carries it (NeoRestau lot 1, task 38b, rulings 122, 124).
+		if doctype == "Sales Invoice":
+			from pos_next.restaurant import tickets
+
+			tickets.give_ticket_number(invoice_doc.name)
 
 		# Restore item kds_status via direct DB write (Frappe save may strip custom fields)
 		if has_kds_field:

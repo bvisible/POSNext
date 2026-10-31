@@ -260,6 +260,7 @@ import { kitchenStatusOf } from "@/utils/kitchenBands"
 import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — the room's short code on the header's line (task 38a-1)
 import { roomCode } from "@/utils/kitchenRoomCode"
+import { formatTicketNo } from "@/utils/ticketNumber"
 //// Neoffice — the three kinds of text of a dish: options, remark, allergy (task 38a-1, ruling 123)
 import { allergyWordsOf } from "@/utils/kitchenTextKinds"
 import { KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLayout"
@@ -410,9 +411,10 @@ const mainLabel = computed(() =>
 const roomChip = computed(() =>
 	isTakeaway.value ? "" : roomCode(props.roomName),
 )
+//// Neoffice — the server tells the whole number and the digits (`ticket_digits`, task 38b); `formatTicketNo` writes it (0007)
 const ticketNumber = computed(() =>
 	String(
-		props.order.ticket_no ||
+		formatTicketNo(props.order.ticket_no, props.order.ticket_digits) ||
 			(isTakeaway.value ? props.order.takeaway_number : "") ||
 			"",
 	),

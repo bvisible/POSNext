@@ -15,7 +15,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
 
-from pos_next.restaurant import scope
+from pos_next.restaurant import scope, tickets
 from pos_next.restaurant.mode import require_neorestau
 from pos_next.restaurant.settings import get_restaurant_settings_for_profile
 from pos_next.restaurant.text import plain_text
@@ -641,6 +641,9 @@ def submit_guest_order(token, items):
 	invoice_doc.flags.ignore_permissions = True
 	if is_new_invoice:
 		invoice_doc.insert()
+		# A guest's order of a table is an order like the waiter's: it takes its ticket number at its first save
+		# (NeoRestau lot 1, task 38b), so that the kitchen reads a number and never the draft's invoice number
+		tickets.give_ticket_number(invoice_doc.name)
 		# Link invoice to token
 		token_doc.invoice = invoice_doc.name
 		token_doc.flags.ignore_version = True
@@ -1340,6 +1343,8 @@ def submit_takeaway_order(token, items, customer=None):
 
 	invoice_doc.flags.ignore_permissions = True
 	invoice_doc.insert()
+	# A web takeaway order takes its ticket number like the till's (NeoRestau lot 1, task 38b)
+	tickets.give_ticket_number(invoice_doc.name)
 
 	token_doc.invoice = invoice_doc.name
 	token_doc.flags.ignore_version = True

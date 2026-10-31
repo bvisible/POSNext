@@ -16,6 +16,11 @@
   "takeaway_tax_category",
   "section_runner",
   "enable_runner",
+  "section_tickets",
+  "ticket_number_digits",
+  "ticket_number_reset",
+  "column_break_tickets",
+  "business_day_start",
   "section_hours",
   "opening_hours",
   "section_tips",
@@ -111,6 +116,37 @@
    "fieldname": "enable_runner",
    "fieldtype": "Check",
    "label": "Enable Runner"
+  },
+  {
+   "fieldname": "section_tickets",
+   "fieldtype": "Section Break",
+   "label": "Ticket Numbers"
+  },
+  {
+   "default": "4",
+   "description": "How many digits a ticket number is written with (0007 has four)",
+   "fieldname": "ticket_number_digits",
+   "fieldtype": "Int",
+   "label": "Digits of the Ticket Number"
+  },
+  {
+   "default": "Business day",
+   "description": "When the ticket numbers start again at 1",
+   "fieldname": "ticket_number_reset",
+   "fieldtype": "Select",
+   "label": "Ticket Numbers Start Again",
+   "options": "Business day\nNever\nEach shift"
+  },
+  {
+   "fieldname": "column_break_tickets",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "05:00:00",
+   "description": "A restaurant closes after midnight: its day runs from this time to the same time the next morning, on the site's clock",
+   "fieldname": "business_day_start",
+   "fieldtype": "Time",
+   "label": "Business Day Starts At"
   },
   {
    "fieldname": "section_hours",
@@ -317,7 +353,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-31 09:00:00.000000",
+ "modified": "2026-10-31 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import devices, item_units, permissions, scope
+from pos_next.restaurant import devices, item_units, permissions, scope, tickets
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -107,6 +107,8 @@ def get_tables(restaurant=None):
 			fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total"],
 			order_by="modified desc"
 		)
+		# The ticket number of each order (NeoRestau lot 1, task 38b): what the floor plan and the list of tables read aloud
+		tickets.stamp(orders, restaurant)
 		for order in orders:
 			tbl = order.restaurant_table
 			if tbl in order_map:
@@ -120,6 +122,8 @@ def get_tables(restaurant=None):
 				"opened_at": str(order.creation),
 				"opened_by": initials,
 				"kds_status": order.kds_status or "Pending",
+				"ticket_no": order.ticket_no,
+				"ticket_digits": order.ticket_digits,
 			}
 			if tell_totals:
 				order_map[tbl]["grand_total"] = flt(order.grand_total)
@@ -614,6 +618,8 @@ def get_table_order(table_name):
 		return None
 
 	order = orders[0]
+	# The ticket number of the order (NeoRestau lot 1, task 38b): what the till's order screen reads; the name stays for its calls
+	tickets.stamp([order], scope.restaurant_of_record("Restaurant Table", table_name))
 
 	# Fetch items
 	# stock_uom and conversion_factor: the unit the line is in and what it is worth in stock units (task 22)
@@ -703,6 +709,8 @@ def get_kds_orders(station=None, restaurant=None):
 	# Filter purely in Python - include orders with table OR takeaway orders, of this restaurant
 	orders = [o for o in raw_orders if o.get("restaurant_table") or o.get("is_takeaway")]
 	orders = scope.keep_orders_of(orders, restaurant)
+	# The ticket number of each order (NeoRestau lot 1, task 38b): what the kitchen's card reads aloud, never the invoice's name
+	tickets.stamp(orders, restaurant)
 	table_names = {o.get("restaurant_table") for o in orders if o.get("restaurant_table")}
 	tables = {}
 	if table_names:
@@ -1232,7 +1240,7 @@ def open_table(table_name, pos_profile, customer=None):
 	existing = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0, "restaurant_table": table_name},
-		fields=["name", "customer", "kds_status", "paid_amount"],
+		fields=["name", "customer", "kds_status", "paid_amount", *tickets.order_fields()],
 		order_by="modified desc",
 		limit=1
 	)
@@ -1280,6 +1288,10 @@ def open_table(table_name, pos_profile, customer=None):
 			"paid_amount": flt(order.paid_amount) - tip_total,
 			"tip_total": tip_total,
 			"is_new": False,
+			# The ticket number of the order (NeoRestau lot 1, task 38b); the name stays for the till's calls
+			**tickets.told(
+				order.get("posa_ticket_no"), tickets.ticket_settings(scope.restaurant_of_record("Restaurant Table", table_name)).digits
+			),
 		}
 
 	# No existing draft — return empty result, the draft will be created when the cashier first validates the order
@@ -2568,8 +2580,12 @@ def get_takeaway_orders(restaurant=None):
 		order_by="creation asc",
 	)
 
+	restaurant = restaurant or scope.current_restaurant()
 	result = []
-	for order in scope.keep_orders_of(raw_orders, restaurant or scope.current_restaurant()):
+	kept = scope.keep_orders_of(raw_orders, restaurant)
+	# The ticket number of each order (NeoRestau lot 1, task 38b), beside the takeaway number it has had until now
+	tickets.stamp(kept, restaurant)
+	for order in kept:
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},

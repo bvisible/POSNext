@@ -161,6 +161,15 @@ describe("the ticket's number", () => {
 		expect(part(wrapper, "ticket-number").text()).toBe("T0042")
 	})
 
+	it("is written with the digits the server tells (task 38b): the whole number 7 and 4 digits read 0007", () => {
+		const wrapper = show({ order: order({ ticket_no: 7, ticket_digits: 4 }) })
+
+		expect(part(wrapper, "ticket-number").text()).toBe("0007")
+		expect(
+			part(show({ order: order({ ticket_no: 12, ticket_digits: 2 }) }), "ticket-number").text(),
+		).toBe("12")
+	})
+
 	it("is NEVER the Sales Invoice's name: an order with no ticket number shows none at all", () => {
 		const wrapper = show({ roomName: "Salle 1" })
 
