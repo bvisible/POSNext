@@ -38,10 +38,16 @@ function siteNumberFormat(format) {
 	return NUMBER_FORMATS[candidate] ? candidate : SWISS_NUMBER_FORMAT;
 }
 
+//// Neoffice — the site's rounding method when System Settings names none is Frappe's own default, « Banker's Rounding
+//// (legacy) » (frappe.utils.data.rounded): upstream defaulted to « Banker's Rounding », so a till of such a site (the
+//// fleet's) rounded an exact half-cent to even where the invoice rounds it up (NeoRestau lot 1, Ruling 70).
+const DEFAULT_ROUNDING_METHOD = "Banker's Rounding (legacy)";
+
 let settings = {
 	currency: 2,
 	float: 3,
-	rounding_method: "Banker's Rounding",
+	//// Neoffice — Frappe's default method, see DEFAULT_ROUNDING_METHOD above.
+	rounding_method: DEFAULT_ROUNDING_METHOD,
 	//// Neoffice — the site's format, see SWISS_NUMBER_FORMAT above (upstream: "#,###.##").
 	number_format: siteNumberFormat(),
 	//// Neoffice — added default. Upstream's precision settings stop at ERPNext's decimal
@@ -51,6 +57,9 @@ let settings = {
 	//// cash quick amounts"); initPrecision() below fills it from the bootstrap payload.
 	//// rounding total, tips visibility, cash quick amounts — 4fdb5df
 	smallest_currency_fraction: 0,
+	//// Neoffice — Accounts Settings round_row_wise_tax: the invoice rounds each line's tax before adding it up
+	//// (calculate_taxes) where it is set; the till computes the same (utils/invoiceTaxes.js; Ruling 70).
+	round_row_wise_tax: false,
 };
 
 /** Initialize settings from bootstrap data */
@@ -59,7 +68,8 @@ export function initPrecision(data) {
 	settings = {
 		currency: data.currency ?? 2,
 		float: data.float ?? 3,
-		rounding_method: data.rounding_method || "Banker's Rounding",
+		//// Neoffice — Frappe's default method when the site names none (DEFAULT_ROUNDING_METHOD above).
+		rounding_method: data.rounding_method || DEFAULT_ROUNDING_METHOD,
 		//// Neoffice — the site's format, see SWISS_NUMBER_FORMAT above (upstream: "#,###.##").
 		number_format: siteNumberFormat(data.number_format),
 		//// Neoffice — Swiss cash has no coin under 0.05, so a grand total of CHF 12.37 cannot be
@@ -69,6 +79,8 @@ export function initPrecision(data) {
 		//// the 0.05 step (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick
 		//// amounts").
 		smallest_currency_fraction: data.smallest_currency_fraction || 0,
+		//// Neoffice — how the invoice rounds its tax rows (see the default above; bootstrap's precision settings).
+		round_row_wise_tax: Boolean(Number(data.round_row_wise_tax)),
 	};
 	_formatterCache.clear();
 }
@@ -271,6 +283,25 @@ function bankersRound(num, precision) {
 	return shifted / multiplier;
 }
 
+//// Neoffice — added function: Frappe's « Banker's Rounding (legacy) », its default method (_bankers_rounding_legacy):
+//// at a precision, an exact half rounds UP (only at precision 0 does it go to the even number). Upstream had no such
+//// method and rounded these sites' half-cents to even, a cent away from the invoice (Ruling 70).
+function bankersRoundLegacy(num, precision) {
+	const multiplier = 10 ** precision;
+	// As Python's round(num * multiplier, 8): the float noise of the multiplication goes, a true half stays
+	let shifted = Number((precision ? num * multiplier : num).toFixed(8));
+	const floor = Math.floor(shifted);
+	const decimal = shifted - floor;
+	if (!precision && decimal === 0.5) {
+		shifted = floor % 2 === 0 ? floor : floor + 1;
+	} else if (decimal === 0.5) {
+		shifted = floor + 1;
+	} else {
+		shifted = Math.round(shifted);
+	}
+	return precision ? shifted / multiplier : shifted;
+}
+
 /**
  * Commercial Rounding - .5 rounds away from zero
  * Matches frappe _round_away_from_zero()
@@ -303,6 +334,10 @@ function round(value, precision) {
 	// Apply rounding based on system setting
 	if (settings.rounding_method === "Commercial Rounding") {
 		return commercialRound(value, precision);
+	}
+	//// Neoffice — Frappe's legacy method, its default (bankersRoundLegacy above).
+	if (settings.rounding_method === "Banker's Rounding (legacy)") {
+		return bankersRoundLegacy(value, precision);
 	}
 	return bankersRound(value, precision);
 }

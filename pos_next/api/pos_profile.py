@@ -255,6 +255,11 @@ def get_taxes(pos_profile):
 					"description": tax_row.description,
 					"included_in_print_rate": getattr(tax_row, "included_in_print_rate", 0),
 					"idx": tax_row.idx,
+					# //// Neoffice — what ERPNext also reads of a row to compute it: the row a « previous row » charge
+					# //// stands on, and the amount of an « Actual » one. The till computes the invoice's taxes the way
+					# //// ERPNext does, to the cent (NeoRestau lot 1, Ruling 70; POS utils/invoiceTaxes.js).
+					"row_id": tax_row.get("row_id"),
+					"tax_amount": tax_row.get("tax_amount") or 0,
 				}
 			)
 

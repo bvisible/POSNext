@@ -1,0 +1,370 @@
+{
+ "cases": [
+  {
+   "name": "a coffee at 4.20 on site",
+   "inclusive": true,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 4.2,
+     "price_list_rate": 4.2,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 0.32,
+    "grand_total": 4.2,
+    "rounded_total": 4.2,
+    "accounts": {
+     "VAT 8.1": 0.32,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     4.2
+    ]
+   }
+  },
+  {
+   "name": "a takeaway order: two dishes at 6.50 and a beer at 4.20",
+   "inclusive": true,
+   "takeaway": true,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 2,
+     "rate": 6.5,
+     "price_list_rate": 6.5,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    },
+    {
+     "item": "alcohol",
+     "qty": 1,
+     "rate": 4.2,
+     "price_list_rate": 4.2,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 0.65,
+    "grand_total": 17.2,
+    "rounded_total": 17.2,
+    "accounts": {
+     "VAT 8.1": 0.32,
+     "VAT 2.6": 0.33
+    },
+    "lines": [
+     13,
+     4.2
+    ]
+   }
+  },
+  {
+   "name": "prices without tax: 1.30 and 1.31",
+   "inclusive": false,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 1.3,
+     "price_list_rate": 1.3,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    },
+    {
+     "item": "alcohol",
+     "qty": 1,
+     "rate": 1.31,
+     "price_list_rate": 1.31,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 0.21,
+    "grand_total": 2.82,
+    "rounded_total": 2.8,
+    "accounts": {
+     "VAT 8.1": 0.21,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     1.3,
+     1.31
+    ]
+   }
+  },
+  {
+   "name": "5.00 off a dish at 20.00",
+   "inclusive": true,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 5,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 20,
+     "price_list_rate": 20,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 1.12,
+    "grand_total": 15,
+    "rounded_total": 15,
+    "accounts": {
+     "VAT 8.1": 1.12,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     20
+    ]
+   }
+  },
+  {
+   "name": "10.00 off 100.00 without tax",
+   "inclusive": false,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 10,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 100,
+     "price_list_rate": 100,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 7.35,
+    "grand_total": 98.1,
+    "rounded_total": 98.1,
+    "accounts": {
+     "VAT 8.1": 7.35,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     100
+    ]
+   }
+  },
+  {
+   "name": "7 % off three dishes at 10.81",
+   "inclusive": true,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 3,
+     "rate": 10.05,
+     "price_list_rate": 10.81,
+     "discount_percentage": 7,
+     "discount_amount": 2.28,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 2.26,
+    "grand_total": 30.15,
+    "rounded_total": 30.15,
+    "accounts": {
+     "VAT 8.1": 2.26,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     30.15
+    ]
+   }
+  },
+  {
+   "name": "1.00 off three dishes at 10.81",
+   "inclusive": true,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 3,
+     "rate": 10.48,
+     "price_list_rate": 10.81,
+     "discount_percentage": 3.08,
+     "discount_amount": 0.99,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 2.36,
+    "grand_total": 31.44,
+    "rounded_total": 31.45,
+    "accounts": {
+     "VAT 8.1": 2.36,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     31.44
+    ]
+   }
+  },
+  {
+   "name": "a dish to take away at 6.50 and a dessert at 6.50, each line's VAT rounded first",
+   "inclusive": true,
+   "takeaway": true,
+   "round_row_wise_tax": true,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 6.5,
+     "price_list_rate": 6.5,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    },
+    {
+     "item": "dessert",
+     "qty": 1,
+     "rate": 6.5,
+     "price_list_rate": 6.5,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 0.32,
+    "grand_total": 13,
+    "rounded_total": 13,
+    "accounts": {
+     "VAT 8.1": 0,
+     "VAT 2.6": 0.32
+    },
+    "lines": [
+     6.5,
+     6.5
+    ]
+   }
+  },
+  {
+   "name": "a dish at 12.50 without tax to take away: half a cent of VAT",
+   "inclusive": false,
+   "takeaway": true,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 12.5,
+     "price_list_rate": 12.5,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 0,
+     "original_rate": null
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 0.33,
+    "grand_total": 12.83,
+    "rounded_total": 12.85,
+    "accounts": {
+     "VAT 8.1": 0,
+     "VAT 2.6": 0.33
+    },
+    "lines": [
+     12.5
+    ]
+   }
+  },
+  {
+   "name": "a price edited by the cashier, 10.81 sold at 9.50",
+   "inclusive": true,
+   "takeaway": false,
+   "round_row_wise_tax": false,
+   "discount_amount": 0,
+   "apply_discount_on": "Grand Total",
+   "items": [
+    {
+     "item": "food",
+     "qty": 1,
+     "rate": 9.5,
+     "price_list_rate": 10.81,
+     "discount_percentage": 0,
+     "discount_amount": 0,
+     "pricing_rules": "",
+     "is_rate_manually_edited": 1,
+     "original_rate": 10.81
+    }
+   ],
+   "till": {
+    "total_taxes_and_charges": 0.71,
+    "grand_total": 9.5,
+    "rounded_total": 9.5,
+    "accounts": {
+     "VAT 8.1": 0.71,
+     "VAT 2.6": 0
+    },
+    "lines": [
+     9.5
+    ]
+   }
+  }
+ ]
+}

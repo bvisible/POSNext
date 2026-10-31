@@ -185,6 +185,10 @@ def _get_precision_settings():
 		"float": int(settings.float_precision) if settings.float_precision else 3,
 		"rounding_method": settings.rounding_method,
 		"number_format": settings.number_format,
+		# //// Neoffice — how ERPNext rounds an invoice's tax rows (each line's share first, where it is set): the till
+		# //// computes its taxes the way the invoice does, to the cent (NeoRestau lot 1, Ruling 70; POS
+		# //// utils/invoiceTaxes.js).
+		"round_row_wise_tax": frappe.db.get_single_value("Accounts Settings", "round_row_wise_tax") or 0,
 	}
 
 

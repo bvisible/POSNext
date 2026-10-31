@@ -35,6 +35,8 @@
 //// `biome check --write`, then re-apply that one search change.
 import { logger } from "../utils/logger";
 import { generateOfflineId } from "../utils/offline/uuid";
+//// Neoffice — the VAT maps are kept by till (utils/offline/vatMaps.js; NeoRestau lot 1, task 11).
+import { withVatMapsByTill } from "../utils/offline/vatMaps";
 
 const log = logger.create("OfflineWorker");
 
@@ -951,6 +953,8 @@ async function cacheItemsFromServer(items, batchSize) {
 					batch_no_data: existing[index]?.batch_no_data,
 					serial_no_data: existing[index]?.serial_no_data,
 					...item,
+					//// Neoffice — every till's VAT maps for the item, this till's added (utils/offline/vatMaps.js).
+					...withVatMapsByTill(item, existing[index]),
 					barcodes: extractBarcodes(item),
 				}));
 

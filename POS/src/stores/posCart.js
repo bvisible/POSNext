@@ -176,6 +176,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		takeawayNumber,
 		taxesByAccount,
 		takeawaySaleFields,
+		//// Neoffice — the discount basis the till computes with, which the offline payment sends too (Ruling 70).
+		applyDiscountOn,
 		loadTaxRules,
 		setTaxInclusive,
 		setDefaultCustomer,
@@ -3029,6 +3031,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		//// task 11; POSSale.vue's offline payment).
 		taxesByAccount,
 		takeawaySaleFields,
+		//// Neoffice — the discount basis of the cart's totals, for the offline payment (Ruling 70).
+		applyDiscountOn,
 		kdsStatus,
 		hasUnsentChanges,
 		guestPaidAmount,

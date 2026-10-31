@@ -4544,7 +4544,9 @@ async function handlePaymentCompleted(paymentData) {
 				// (effectiveHeaderDiscount merges them). Gift-card field stays the
 				// coupon/manual amount so a rule discount never inflates it.
 				discount_amount: cartStore.effectiveHeaderDiscount || 0,
-				apply_discount_on: cartStore.effectiveHeaderDiscount > 0 ? "Grand Total" : null,
+				//// Neoffice — the basis the till computed the totals on (the POS Profile's, else ERPNext's default), not
+				//// « Grand Total » whatever the profile says: the synced invoice then holds what the receipt printed.
+				apply_discount_on: cartStore.effectiveHeaderDiscount > 0 ? cartStore.applyDiscountOn : null,
 				coupon_code: cartStore.couponCode || null,
 				posa_coupon_code: cartStore.couponCode ? cartStore.couponCode.toUpperCase() : null,
 				posa_gift_card_amount_used: cartStore.additionalDiscount || 0,

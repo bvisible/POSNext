@@ -2598,16 +2598,12 @@ const displaySubtotal = computed(() => {
  * @returns {Number} Grand total amount to display
  */
 const displayGrandTotal = computed(() => {
-	// Always: displaySubtotal + tax - discount + rounding
-	// This makes the display consistent and intuitive
-	//// Neoffice — [CHF] the displayed grand total carries the Swiss 0.05 rounding, so
-	//// the figure on screen equals the one that will be charged and printed (4fdb5df4).
-	return (
-		displaySubtotal.value +
-		props.taxAmount -
-		displayDiscountAmount.value +
-		(props.roundingAdjustment || 0)
-	);
+	//// Neoffice — the grand total shown is the invoice's: props.grandTotal, the store's own computation by ERPNext's
+	//// rules with the Swiss 0.05 rounding (4fdb5df4; NeoRestau lot 1, Ruling 70). Upstream added up the lines shown above
+	//// (subtotal + tax − discount + rounding), which is not the invoice's total when a header discount meets prices
+	//// without tax: ERPNext takes the discount off the total and computes the tax after it (100.00 + 8.1 % with 10.00
+	//// off is 98.10, the lines above say 100.00 + 7.35 − 10.00). On a till whose prices include the tax they agree.
+	return props.grandTotal;
 });
 
 /**

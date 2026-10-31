@@ -12,6 +12,10 @@ import { CoalescingMutex } from "@/utils/mutex";
 import { logger } from "@/utils/logger";
 import { roundCurrency } from "@/utils/currency";
 import { preCouponLineDiscount } from "@/utils/couponLines";
+//// Neoffice — ERPNext's own computation of the invoice's taxes and totals, which the cart shows (Ruling 70).
+import { getPrecision } from "@/utils/currency";
+import { calculateTaxesAndTotals } from "@/utils/invoiceTaxes";
+import { vatMapsFor } from "@/utils/offline/vatMaps";
 
 const log = logger.create("Invoice");
 
@@ -226,7 +230,10 @@ export function useInvoice() {
 	// ========================================================================
 	// Use roundCurrency for monetary totals to match ERPNext's currency precision (from System Settings)
 	const subtotal = computed(() => roundCurrency(_cachedSubtotal.value));
-	const totalTax = computed(() => roundCurrency(_cachedTotalTax.value));
+	//// Neoffice — the VAT and the grand total are the invoice's, computed by ERPNext's own rules (invoiceTotals below,
+	//// Ruling 70): upstream added up a tax rounded line by line and taxed the lines before the header discount, so the
+	//// screen could say 0.31 of VAT where the invoice says 0.32, and a till pricing without tax charged a cent more.
+	const totalTax = computed(() => invoiceTotals.value.total_taxes_and_charges);
 	//// Neoffice — upstream POSNext knows one document-level discount: the manual/coupon
 	//// amount. Neoffice also receives a header discount from an ERPNext apply_on=Transaction
 	//// pricing rule, and the cashier may override it for one ticket. ruleHeaderDiscount and
@@ -259,21 +266,10 @@ export function useInvoice() {
 	const netTotalBeforeAdditionalDiscount = computed(
 		() => _cachedSubtotal.value - _cachedTotalDiscount.value
 	);
-	const grandTotal = computed(() => {
-		//// Neoffice — grandTotal nets the effective header discount (rule, or coupon/manual),
-		//// not additionalDiscount alone (44ea4e9a, 2026-07-09).
-		const discount = _cachedTotalDiscount.value + effectiveHeaderDiscount.value;
-
-		if (taxInclusive.value) {
-			// Tax inclusive: Subtotal already includes tax, so don't add it again
-			// Use roundCurrency to match ERPNext's currency precision (from System Settings)
-			return roundCurrency(_cachedSubtotal.value - discount);
-		} else {
-			// Tax exclusive: Add tax on top of subtotal
-			// Use roundCurrency to match ERPNext's currency precision (from System Settings)
-			return roundCurrency(_cachedSubtotal.value + _cachedTotalTax.value - discount);
-		}
-	});
+	//// Neoffice — the invoice's grand total, ERPNext's own (invoiceTotals below, Ruling 70): its effective header discount
+	//// (rule, or coupon/manual, 44ea4e9a) is spread over the lines' nets before the tax, and a till pricing without tax
+	//// adds the VAT rounded once per account, as the invoice does. Upstream added the line by line VAT to the subtotal.
+	const grandTotal = computed(() => invoiceTotals.value.grand_total);
 	const totalPaid = computed(() => _cachedTotalPaid.value);
 
 	const remainingAmount = computed(() => {
@@ -401,10 +397,11 @@ export function useInvoice() {
 				// Optional item-level Sales Person (commission attribution)
 				sales_person: item.sales_person || null,
 				sales_person_name: item.sales_person_name || null,
-				//// Neoffice — the item's VAT maps as the server sends them (pos_next.api.items): for the till's own
-				//// tax category, and for a takeaway order (null where the till has no takeaway rule). See itemTaxRows.
-				item_tax_rate: item.item_tax_rate,
-				takeaway_item_tax_rate: item.takeaway_item_tax_rate,
+				//// Neoffice — the item's VAT maps for this till as the server sends them (pos_next.api.items): for the
+				//// till's own tax category, and for a takeaway order (null where the till has no takeaway rule). An item
+				//// read from the offline cache may carry another till's: only this till's are taken (vatMapsFor).
+				item_tax_rate: vatMapsFor(item, posProfile.value)?.item_tax_rate,
+				takeaway_item_tax_rate: vatMapsFor(item, posProfile.value)?.takeaway_item_tax_rate,
 			};
 			invoiceItems.value.push(newItem);
 			// Recalculate the newly added item to apply taxes
@@ -724,93 +721,91 @@ export function useInvoice() {
 		rebuildIncrementalCache();
 	}
 
-	//// Neoffice — an item's VAT is its own (NeoRestau lot 1, task 11). Upstream added up the rates of the till's tax rows
-	//// and taxed every line at that one rate (calculateTotalTaxRate, removed here): no item's own rate was ever read, so a
-	//// Swiss till laid out item by item (its rows at 0, each item's template giving 8.1 % or 2.6 %) showed no VAT at all,
-	//// and a dish to take away showed 8.1 % where the invoice says 2.6 %. An item's rate on each of the till's rows is now
-	//// ERPNext's (taxes_and_totals._get_tax_rate): the item's own rate for the row's account when its VAT map names that
-	//// account, else the row's rate. The map is the one the server sends with each item, for the till's own tax category
-	//// (item_tax_rate) or, while the cart is a takeaway order, for the restaurant's takeaway category
-	//// (takeaway_item_tax_rate, null where the till has no takeaway rule). The rows that count are upstream's.
-	const isTaxRateRow = (row) =>
-		row.charge_type === "On Net Total" || row.charge_type === "On Previous Row Total";
-	// A map is a JSON string, the same few for a whole catalogue: each is read once
-	const parsedTaxMaps = new Map();
+	//// Neoffice — the invoice's taxes and totals, as ERPNext computes them (NeoRestau lot 1, tasks 10-11, Ruling 70: the
+	//// screen, the provisional ticket and the receipt printed offline equal the submitted invoice, to the cent). Upstream
+	//// added up the rates of the till's tax rows and taxed every line at that one rate (calculateTotalTaxRate, removed
+	//// here), each line rounded on its own and before the header discount: no item's own rate was ever read, a Swiss till
+	//// laid out item by item (its rows at 0, each item's template giving 8.1 % or 2.6 %) showed no VAT at all, and the
+	//// sum of rounded lines could be a cent or two away from the invoice. invoiceTotals runs ERPNext's own computation
+	//// (utils/invoiceTaxes.js) on the rows the till sends: each row's rate replaced by the item's own rate for its account
+	//// (its VAT map, the takeaway one while the cart is a takeaway order), each line's net rounded, each tax row rounded
+	//// once over the cart, the header discount spread over the nets, an inclusive price kept as it is.
 
-	function parseTaxMap(raw) {
-		if (raw == null || raw === "") return null;
-		if (typeof raw === "object") return raw;
-		if (!parsedTaxMaps.has(raw)) {
-			let map = null;
-			try {
-				const parsed = JSON.parse(raw);
-				map = parsed && typeof parsed === "object" ? parsed : null;
-			} catch {
-				map = null;
-			}
-			parsedTaxMaps.set(raw, map);
-		}
-		return parsedTaxMaps.get(raw);
+	//// Neoffice — the line's VAT map in effect: its takeaway map while the cart is a takeaway order (null where the till
+	//// has no takeaway rule), else its own; none (null) leaves the till's rows at their rates, as ERPNext does.
+	function itemTaxRateOf(item) {
+		const takeaway = isTakeaway.value ? item.takeaway_item_tax_rate : null;
+		return takeaway != null ? takeaway : (item.item_tax_rate ?? null);
 	}
 
-	//// Neoffice — the line's VAT map: its takeaway one while the cart is a takeaway order (task 11).
-	function itemTaxMap(item) {
-		const takeawayMap = isTakeaway.value ? item.takeaway_item_tax_rate : null;
-		return parseTaxMap(takeawayMap != null ? takeawayMap : item.item_tax_rate);
+	//// Neoffice — the tax rows as the invoice holds them: POS Settings' tax_inclusive puts every row but an « Actual » one
+	//// inside the price, whatever the template says (sales_invoice_hooks.apply_tax_inclusive).
+	const invoiceTaxRows = computed(() =>
+		(taxRules.value || []).map((row) => ({
+			...row,
+			included_in_print_rate: taxInclusive.value && row.charge_type !== "Actual" ? 1 : 0,
+		}))
+	);
+
+	//// Neoffice — what the header discount applies to: the POS Profile's choice, which ERPNext gives the invoice
+	//// (set_pos_fields), else its own default. The payloads carry it, so that the server computes what the till shows.
+	const applyDiscountOn = computed(
+		() => shiftState.value?.pos_profile?.apply_discount_on || "Grand Total"
+	);
+
+	//// Neoffice — a cart line as the till sends it (formatItemsForSubmission), with its VAT map in effect.
+	function invoiceRowOf(item) {
+		return {
+			rate: item.is_free_item ? 0 : computeBackendRate(item),
+			price_list_rate: item.is_free_item ? 0 : roundCurrency(item.price_list_rate || item.rate),
+			discount_percentage: roundCurrency(item.discount_percentage || 0),
+			discount_amount: roundCurrency(item.discount_amount || 0),
+			pricing_rules: stringifyPricingRules(item.pricing_rules),
+			qty: item.quantity || item.qty || 1,
+			item_tax_rate: itemTaxRateOf(item),
+		};
 	}
 
-	//// Neoffice — ERPNext marks a tax that does not apply to an item "N/A" in its map (NOT_APPLICABLE_TAX): no tax there.
-	const mapRate = (value) => (value === "N/A" ? 0 : Number.parseFloat(value) || 0);
+	//// Neoffice — the invoice the cart will be: ERPNext's taxes and totals of the rows the till sends.
+	const invoiceTotals = computed(() =>
+		calculateTaxesAndTotals({
+			items: invoiceItems.value.map(invoiceRowOf),
+			taxes: invoiceTaxRows.value,
+			discountAmount: effectiveHeaderDiscount.value || 0,
+			applyDiscountOn: applyDiscountOn.value,
+			roundRowWiseTax: getPrecision().round_row_wise_tax,
+		})
+	);
 
-	//// Neoffice — the till's tax rows as they tax one line: [{account_head, rate}], its own rate on each account.
-	function itemTaxRows(item) {
-		const map = itemTaxMap(item);
-		return (taxRules.value || []).filter(isTaxRateRow).map((row) => ({
-			account_head: row.account_head,
-			rate:
-				map && Object.prototype.hasOwnProperty.call(map, row.account_head)
-					? mapRate(map[row.account_head])
-					: row.rate || 0,
-		}));
-	}
-
-	//// Neoffice — what of a line's tax goes to each account: in proportion to the accounts' rates, the last account
-	//// taking what the rounding left, so that the accounts add up to the line's tax to the cent.
-	function taxByAccount(rows, taxAmount, totalRate) {
-		const shares = {};
-		const taxed = rows.filter((row) => row.rate);
-		let left = taxAmount;
-		taxed.forEach((row, index) => {
-			const share =
-				index === taxed.length - 1
-					? roundCurrency(left)
-					: roundCurrency((taxAmount * row.rate) / totalRate);
-			shares[row.account_head] = roundCurrency((shares[row.account_head] || 0) + share);
-			left -= share;
+	//// Neoffice — one line alone through the same computation: its amount, net and VAT, which the line shows. The cart's
+	//// totals are invoiceTotals', where the header discount is spread and each tax row rounded once.
+	function lineTotals(item) {
+		const alone = calculateTaxesAndTotals({
+			items: [invoiceRowOf(item)],
+			taxes: invoiceTaxRows.value,
+			roundRowWiseTax: getPrecision().round_row_wise_tax,
 		});
-		return shares;
+		const [line] = alone.items;
+		return { amount: line.amount, net_amount: line.net_amount, tax_amount: alone.total_taxes_and_charges };
 	}
 
-	//// Neoffice — the cart's VAT per account, as the invoice's tax rows will hold it: each line's share of each account
-	//// (tax_by_account, written by recalculateItem) added up, in the order of the till's rows.
+	//// Neoffice — the cart's VAT per account, as the invoice's tax rows hold it after the header discount.
 	const taxesByAccount = computed(() => {
-		const amounts = new Map();
-		for (const item of invoiceItems.value) {
-			for (const [account, amount] of Object.entries(item.tax_by_account || {})) {
-				amounts.set(account, (amounts.get(account) || 0) + amount);
+		const accounts = [];
+		for (const tax of invoiceTotals.value.taxes) {
+			const seen = accounts.find((row) => row.account_head === tax.account_head);
+			if (seen) {
+				seen.tax_amount = roundCurrency(seen.tax_amount + tax.tax_amount_after_discount_amount);
+			} else {
+				accounts.push({
+					account_head: tax.account_head,
+					description: tax.description,
+					tax_amount: tax.tax_amount_after_discount_amount,
+				});
 			}
 		}
-		//// Neoffice — one row per account, as the till's rows name them.
-		const rows = [];
-		for (const row of (taxRules.value || []).filter(isTaxRateRow)) {
-			if (rows.some((seen) => seen.account_head === row.account_head)) continue;
-			rows.push({
-				account_head: row.account_head,
-				description: row.description,
-				tax_amount: roundCurrency(amounts.get(row.account_head) || 0),
-			});
-		}
-		return rows;
+		//// Neoffice — in the order of the till's tax rows, the invoice's.
+		return accounts;
 	});
 
 	//// Neoffice — tax every line again: the order turned to take away, or back.
@@ -823,8 +818,9 @@ export function useInvoice() {
 	watch(isTakeaway, retaxAllItems, { flush: "sync" });
 
 	//// Neoffice — a line that comes without its VAT maps (a dish of the restaurant's card, a guest's order reloaded from
-	//// the server) reads them from the item cache, where the catalogue the till caches keeps both, and is taxed again.
-	//// Until then, and for an item the cache does not hold, it keeps the till's own rates.
+	//// the server) reads them from the item cache, where the catalogue the till caches keeps them by till
+	//// (utils/offline/vatMaps.js), and is taxed again. Until then, and for an item the cache does not hold for this till,
+	//// it keeps the till's own rates.
 	async function takeTaxMapsFromCache(line) {
 		let cached = null;
 		try {
@@ -832,12 +828,13 @@ export function useInvoice() {
 		} catch {
 			return;
 		}
-		if (!cached || cached.item_tax_rate == null) return;
+		const maps = cached ? vatMapsFor(cached, posProfile.value) : null;
+		if (!maps) return;
 		// The line as the cart holds it (reactive), if it is still there and still without its maps
 		const row = invoiceItems.value.find((item) => toRaw(item) === toRaw(line));
 		if (!row || row.item_tax_rate != null) return;
-		row.item_tax_rate = cached.item_tax_rate;
-		row.takeaway_item_tax_rate = cached.takeaway_item_tax_rate ?? null;
+		row.item_tax_rate = maps.item_tax_rate;
+		row.takeaway_item_tax_rate = maps.takeaway_item_tax_rate;
 		recalculateItem(row);
 		rebuildIncrementalCache();
 	}
@@ -916,46 +913,68 @@ export function useInvoice() {
 		if (!amountMode && item.discount_percentage > 0) {
 			discountAmount = roundCurrency((baseAmount * item.discount_percentage) / 100);
 			item.discount_mode = "percentage";
+			//// Neoffice — no amount was asked for: a percentage is (see the requested amount below).
+			item._requested_discount_amount = undefined;
 		} else if (item.discount_amount > 0) {
-			discountAmount = roundCurrency(item.discount_amount);
+			//// Neoffice — the amount the cashier asked for. The line shows the one the invoice can hold (below), which
+			//// the next recalculation must not take for a new request, or a quantity changed back and forth would move
+			//// it a cent at a time.
+			const requested =
+				item.discount_amount === item._invoice_discount_amount && item._requested_discount_amount > 0
+					? item._requested_discount_amount
+					: item.discount_amount;
+			discountAmount = roundCurrency(requested);
+			item._requested_discount_amount = discountAmount;
 			// Sync percentage when amount is provided directly
+			//// Neoffice — from the amount asked for, as upstream: it is what the payload carries, and the percentage
+			//// ERPNext recomputes the rate of a line with pricing rules from (invoiceTaxes.invoiceLine), so the line
+			//// below is computed with it.
 			item.discount_percentage = baseAmount > 0 ? (discountAmount / baseAmount) * 100 : 0;
 			item.discount_mode = "amount";
 			item._derived_discount_percentage = item.discount_percentage;
 		} else {
 			item.discount_mode = null;
+			//// Neoffice — no discount: nothing asked for either.
+			item._requested_discount_amount = undefined;
 		}
-		item.discount_amount = discountAmount;
 
-		// Calculate tax based on inclusive/exclusive mode
-		// Use currency precision for all monetary calculations to match ERPNext
-		//// Neoffice — the line's own rate (itemTaxRows), the takeaway one in a takeaway order, not the till's sum.
-		const taxRows = itemTaxRows(item);
-		const totalTaxRate = taxRows.reduce((sum, row) => sum + row.rate, 0);
-		let netAmount = 0;
-		let taxAmount = 0;
-
-		if (taxInclusive.value && totalTaxRate > 0) {
-			// Tax-inclusive: Work backwards from gross to extract net and tax
-			const grossAmount = roundCurrency(baseAmount - discountAmount);
-			netAmount = roundCurrency(grossAmount / (1 + totalTaxRate / 100));
-			taxAmount = roundCurrency(grossAmount - netAmount);
-		} else {
-			// Tax-exclusive: Calculate tax on top of net amount
-			netAmount = roundCurrency(baseAmount - discountAmount);
-			taxAmount = roundCurrency((netAmount * totalTaxRate) / 100);
-		}
+		//// Neoffice — the line as the invoice holds it (NeoRestau lot 1, Ruling 70). The till sends a unit rate at the cent,
+		//// as ERPNext's rate field holds it (invoiceUnitRate), and ERPNext makes the line of it: amount = rate × quantity,
+		//// rounded. Upstream showed its own line (the list price less a rounded discount) and sent a rate rounded apart, a
+		//// cent away from it (7 % off 3 × 10.81: 30.16 shown, 30.15 invoiced), and an inclusive till sent the list price
+		//// for a rate the cashier had edited. The discount a line shows is now the one its invoice line holds, and the
+		//// amount ERPNext's (the price the customer pays on a till whose prices include the tax, as the receipt prints
+		//// it; upstream put the net there, which a line now keeps in net_amount). Its VAT is its own (lineTotals); the
+		//// cart's VAT and grand total are invoiceTotals'.
+		item._invoice_rate = invoiceUnitRate(item, roundedRate, discountAmount);
+		const line = lineTotals(item);
+		const invoiceDiscount = roundCurrency(baseAmount - line.amount);
+		item.discount_amount = invoiceDiscount;
+		item._invoice_discount_amount = invoiceDiscount;
 
 		// Update item fields with rounded values
-		item.tax_amount = taxAmount;
-		//// Neoffice — and what of it goes to each VAT account (taxesByAccount adds the lines up).
-		item.tax_by_account = taxByAccount(taxRows, taxAmount, totalTaxRate);
+		//// Neoffice — the line's VAT and net as the invoice computes them (lineTotals above).
+		item.tax_amount = line.tax_amount;
+		item.net_amount = line.net_amount;
 		// For manually edited rates, preserve the edited rate; otherwise use price_list_rate
 		if (!isManuallyEdited) {
 			item.rate = effectiveRate; // Preserve original price for display
 		}
 		// If manually edited, item.rate is already set to the edited value
-		item.amount = netAmount; // Net amount for backend calculations
+		item.amount = line.amount;
+	}
+
+	//// Neoffice — added function (NeoRestau lot 1, Ruling 70): the unit rate the till sends for a line, at the cent like
+	//// ERPNext's rate field. A percentage takes ERPNext's own formula (calculate_item_values: list price × (1 − %)), an
+	//// amount is spread over the units; a free line is sold at 0.
+	function invoiceUnitRate(item, unitPrice, discountAmount) {
+		if (item.is_free_item) return 0;
+		const qty = item.quantity || item.qty || 1;
+		if (item.discount_mode === "percentage" && item.discount_percentage > 0) {
+			return roundCurrency(unitPrice * (1 - item.discount_percentage / 100));
+		}
+		if (discountAmount > 0) return roundCurrency(unitPrice - discountAmount / qty);
+		return unitPrice;
 	}
 
 	/**
@@ -964,6 +983,10 @@ export function useInvoice() {
 	 * - Tax-exclusive: net rate (amount / qty, after discount)
 	 */
 	function computeBackendRate(item) {
+		//// Neoffice — the unit rate recalculateItem worked out for the invoice (invoiceUnitRate), which the line and the
+		//// cart's totals are computed from (Ruling 70). Upstream rounded a rate of its own here (list price less the
+		//// discount per unit; on a till without tax, the net per unit), a cent away from the line it showed.
+		if (item._invoice_rate !== undefined) return item._invoice_rate;
 		const qty = item.quantity || item.qty || 1;
 		const priceListRate = item.price_list_rate || item.rate || 0;
 		const discountAmount = item.discount_amount || 0;
@@ -1241,6 +1264,8 @@ export function useInvoice() {
 			//// "persist gift card amount used for reliable balance tracking").
 			posa_coupon_code: couponCode.value ? couponCode.value.toUpperCase() : null,
 			posa_gift_card_amount_used: additionalDiscount.value || 0,
+			//// Neoffice — what the discount applies to, the basis the till computed the totals on (Ruling 70).
+			apply_discount_on: applyDiscountOn.value,
 			is_pos: 1,
 			update_stock: 1,
 		};
@@ -1333,6 +1358,8 @@ export function useInvoice() {
 					//// draft payload above (56877dce, 2026-01-14).
 					posa_coupon_code: couponCode.value ? couponCode.value.toUpperCase() : null,
 					posa_gift_card_amount_used: additionalDiscount.value || 0,
+					//// Neoffice — what the discount applies to, the basis the till computed the totals on (Ruling 70).
+					apply_discount_on: applyDiscountOn.value,
 					is_pos: 1,
 					update_stock: 1, // Critical: Ensures stock is updated
 				};
@@ -1666,9 +1693,9 @@ export function useInvoice() {
 				tax_amount: 0,
 				discount_percentage: 0,
 				discount_amount: 0,
-				//// Neoffice — the line's VAT maps when the server sends them (NeoRestau lot 1, task 11).
-				item_tax_rate: item.item_tax_rate,
-				takeaway_item_tax_rate: item.takeaway_item_tax_rate,
+				//// Neoffice — the line's VAT maps for this till when the server sends them (NeoRestau lot 1, task 11).
+				item_tax_rate: vatMapsFor(item, posProfile.value)?.item_tax_rate,
+				takeaway_item_tax_rate: vatMapsFor(item, posProfile.value)?.takeaway_item_tax_rate,
 			};
 			recalculateItem(newItem);
 			return newItem;
@@ -1706,6 +1733,9 @@ export function useInvoice() {
 		takeawayNumber,
 		taxesByAccount,
 		takeawaySaleFields,
+		//// Neoffice — the invoice the cart will be (ERPNext's computation) and its discount basis (Ruling 70).
+		invoiceTotals,
+		applyDiscountOn,
 		isSubmitting,
 
 		// Computed

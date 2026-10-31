@@ -35,8 +35,11 @@ describe("useInvoice line discount mode", () => {
 
 		inv.updateItemQuantity("A", 3)
 		const after3 = inv.invoiceItems.value[0]
-		expect(after3.discount_amount).toBe(20)
-		expect(after3.amount).toBe(730)
+		//// Neoffice — the line shows what its invoice line holds (NeoRestau lot 1, Ruling 70): 20.00 spread over three
+		//// units is a rate of 243.33, so ERPNext's line is 729.99 and its discount 20.01. The 20.00 asked for is kept,
+		//// and comes back whole at two units (below): it does not drift.
+		expect(after3.discount_amount).toBe(20.01)
+		expect(after3.amount).toBe(729.99)
 
 		inv.updateItemQuantity("A", 2)
 		const back = inv.invoiceItems.value[0]

@@ -105,6 +105,7 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
 | `pos_next/fixtures/menu_badge.json` | The allergen / diet badge catalogue shipped with the PDF menu generator (`b6e757dd`, `083f043e`, 2026-03-26). |
 | `pos_next/fixtures/menu_design_template.json` | The five menu layouts (ardoise, bistrot, elegant, modern, base) plus the 15-font selector; *Moderne* is the default (`b6e757dd`, `0d7b3d06`). |
 | `pos_next/fixtures/print_format.json` | Card-payment mentions on the till receipt, printed in the merchant's language and inside the paper width (`10047bb0`, `a026e629`, 2026-08-22). The footer's "Powered by Neopos" now goes through `_("Powered by {0}")` too (2026-10-04): it was the last bare English label on the receipt. |
+| `pos_next/tests/fixtures/till_invoice_parity.json` | **Test data, not an app fixture** (it lies outside `pos_next/fixtures/`, so no migrate imports it). NeoRestau lot 1, Ruling 70: the till's VAT and totals equal the submitted invoice's, to the cent. The carts that `POS/src/composables/__tests__/useInvoice.invoiceParity.spec.js` rings through the till's own code, with the rows the till sends and the figures it shows; `pos_next/tests/test_till_totals_match_the_invoice.py` submits each as a real invoice and compares. Written by the spec (`UPDATE_PARITY_FIXTURE=1`), never by hand; the spec fails when the table and the till disagree. |
 
 ### Upstream customisations we neutralise
 
@@ -300,6 +301,7 @@ detail is in the sections above.
 | `pos_next/fixtures/menu_badge.json` |
 | `pos_next/fixtures/menu_design_template.json` |
 | `pos_next/fixtures/print_format.json` |
+| `pos_next/tests/fixtures/till_invoice_parity.json` |
 | `pos_next/pos_next/custom/customer.json` |
 | `pos_next/pos_next/custom/pos_profile.json` |
 | `pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json` |

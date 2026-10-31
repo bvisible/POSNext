@@ -1,4 +1,6 @@
 import { db, getSetting, setSetting } from "./db";
+//// Neoffice — the VAT maps are kept by till (vatMaps.js; NeoRestau lot 1, task 11).
+import { withVatMapsByTill } from "./vatMaps";
 
 // Cache items in IndexedDB
 export const cacheItems = async (items, priceList = null) => {
@@ -14,6 +16,8 @@ export const cacheItems = async (items, priceList = null) => {
 				batch_no_data: existing[index]?.batch_no_data,
 				serial_no_data: existing[index]?.serial_no_data,
 				...item,
+				//// Neoffice — every till's VAT maps for the item, this till's added (vatMaps.js).
+				...withVatMapsByTill(item, existing[index]),
 				barcodes: item.item_barcode
 					? Array.isArray(item.item_barcode)
 						? item.item_barcode.map((b) => b.barcode).filter(Boolean)
