@@ -98,12 +98,27 @@ const { LONG_PRESS_MS } = await import("@/composables/useTablePress")
 
 const ROOM = { name: "r0o1m2h3a4", area_name: "Room 1" }
 const TERRACE = { name: "t3rr4c3h4s", area_name: "Terrace" }
-// The service's clock: 19:58
-const NOW = new Date(2026, 9, 31, 19, 58, 0)
+// The service's clock: 19:58 at the site, in Zurich (UTC+1 since the clocks went back on 25 October), i.e. 18:58 UTC.
+// The instant and the site's zone are both fixed, and the site's wall clock is written with Intl for that zone, never with
+// the machine's fields: no spec here depends on the zone of the machine that runs it.
+const SITE_ZONE = "Europe/Zurich"
+const NOW = new Date(Date.UTC(2026, 9, 31, 18, 58, 0))
 function seatedAgo(minutes) {
 	const at = new Date(NOW.getTime() - minutes * 60000)
-	const pad = (n) => String(n).padStart(2, "0")
-	return `2026-10-31 ${pad(at.getHours())}:${pad(at.getMinutes())}:00.000000`
+	const wall = Object.fromEntries(
+		new Intl.DateTimeFormat("en-GB", {
+			timeZone: SITE_ZONE,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			hourCycle: "h23",
+		})
+			.formatToParts(at)
+			.map((part) => [part.type, part.value]),
+	)
+	return `${wall.year}-${wall.month}-${wall.day} ${wall.hour}:${wall.minute}:00.000000`
 }
 function aTable(name, label, status = "Empty", extra = {}) {
 	return {
@@ -182,7 +197,7 @@ let wrapper
 async function floorPlan({
 	width = 390,
 	userName = "Lea Martin",
-	siteTimezone = "",
+	siteTimezone = SITE_ZONE,
 	store = {},
 } = {}) {
 	withWidth(width)
@@ -679,6 +694,35 @@ describe("the runner on a phone (fix round 1, ruling 98)", () => {
 
 		await wrapper.find('[data-test="view-plan"]').trigger("click")
 		expect(runner().exists()).toBe(true)
+	})
+
+	// The count is the dishes waiting at the pass (the lines of every order), as the tablet's pill counts them: not the
+	// number of orders that hold them
+	const waiting = (orders) =>
+		orders.map(([name, lines]) => ({
+			name,
+			restaurant_table: T2.name,
+			items: Array.from({ length: lines }, (_, at) => ({
+				name: `${name}-l${at}`,
+				station_type: "Kitchen",
+			})),
+		}))
+
+	it("counts the dishes, not the orders: one order of two dishes reads 2", async () => {
+		server.runnerOrders = waiting([["SINV-2", 2]])
+		await floorPlan()
+
+		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 2")
+	})
+
+	it("counts the dishes, not the orders: two orders of one dish each read 2", async () => {
+		server.runnerOrders = waiting([
+			["SINV-2", 1],
+			["SINV-5", 1],
+		])
+		await floorPlan()
+
+		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 2")
 	})
 
 	it("opens the till's runner screen, for the till's restaurant, as the tablet's pill does", async () => {
