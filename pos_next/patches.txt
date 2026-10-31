@@ -41,3 +41,6 @@ pos_next.patches.neorestau.switch_neorestau_on_where_restaurant_mode_runs
 # //// Neoffice — the till's drawer movements and the closing's withdrawals are found by link fields of ours since
 # //// NeoRestau lot 1 (task 15): the entries written before carry their remark only, and are tagged from it, once.
 pos_next.patches.neorestau.tag_the_tills_cash_movements
+# //// Neoffice — no till loses its cash operations: an empty list offered every operation of the till's company before
+# //// task 15 made the list a control; each empty list is filled once with what the till offered, less what the new rule refuses.
+pos_next.patches.neorestau.keep_the_tills_cash_operations

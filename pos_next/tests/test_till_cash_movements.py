@@ -18,6 +18,9 @@ logic are skipped.
 """
 
 import json
+import os
+import sys
+import unittest
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -89,8 +92,18 @@ def _fixture_fields():
 		)
 
 
+def _rehearsing_without_theme():
+	"""The fleet's CI site has no neoffice_theme (it installs frappe, erpnext, payments and pos_next only). Run
+	the module with POS_NEXT_TEST_WITHOUT_THEME=1 on a site that has the theme to rehearse that case: the
+	theme's template structure is not used, and its VAT logic is hidden behind the guard's own test (no
+	`App Customization` doctype)."""
+	return bool(os.environ.get("POS_NEXT_TEST_WITHOUT_THEME"))
+
+
 def _theme_templates():
 	"""Whether the site has neoffice_theme's Journal Entry Template structure."""
+	if _rehearsing_without_theme():
+		return False
 	return bool(
 		frappe.db.exists("DocType", "Accounting Entry Totalization")
 		and frappe.db.exists("DocType", "Accounting Entry Counterparty")
@@ -111,13 +124,30 @@ def _as(user):
 		frappe.set_user("Administrator")
 
 
-class TestTillCashMovements(FrappeTestCase):
+@contextmanager
+def _without_the_theme():
+	"""The site as the guard sees it without neoffice_theme: no `App Customization` doctype."""
+	real_exists = frappe.db.exists
+
+	def exists(*args, **kwargs):
+		if args[:2] == ("DocType", "App Customization"):
+			return None
+		return real_exists(*args, **kwargs)
+
+	with patch.object(frappe.local.db, "exists", side_effect=exists):
+		yield
+
+
+class CashMovementFixture(FrappeTestCase):
+	"""What every test of the module starts from: nothing it writes outlives it, and on a site without the
+	theme's template structure the template reader is given the definitions the test declares."""
+
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
 		_fixture_fields()
 
-	def setUp(self):
+	def _isolate(self):
 		frappe.set_user("Administrator")
 		# Nothing may outlive the test: the code under test commits nothing, and the real rollback, bound
 		# before the patches start, runs last.
@@ -143,17 +173,14 @@ class TestTillCashMovements(FrappeTestCase):
 			)
 			patcher.start()
 			self.addCleanup(patcher.stop)
+		if _rehearsing_without_theme():
+			hidden = _without_the_theme()
+			hidden.__enter__()
+			self.addCleanup(hidden.__exit__, None, None, None)
 		self.files = []
 		self.addCleanup(self._delete_files)
 		self.cached_accounts = []
 		self.addCleanup(self._forget_accounts)
-
-		_user(CASHIER, [CASHIER_ROLE], "System User")
-		_user(OTHER_CASHIER, [CASHIER_ROLE], "System User")
-		_user(MANAGER, [MANAGER_ROLE], "System User")
-		_user(DESK, ["Blogger"], "System User")
-		_user(PORTAL, ["Customer", CASHIER_ROLE, MANAGER_ROLE], "Website User")
-		self._build()
 
 	# --- fixture --------------------------------------------------------------------------------------
 
@@ -245,6 +272,23 @@ class TestTillCashMovements(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 		return title
+
+	def _use_company(self, company):
+		"""The company the account and template helpers build for."""
+		self.company = company
+		self.abbr = frappe.get_cached_value("Company", company, "abbr")
+		self.currency = frappe.get_cached_value("Company", company, "default_currency")
+
+
+class TestTillCashMovements(CashMovementFixture):
+	def setUp(self):
+		self._isolate()
+		_user(CASHIER, [CASHIER_ROLE], "System User")
+		_user(OTHER_CASHIER, [CASHIER_ROLE], "System User")
+		_user(MANAGER, [MANAGER_ROLE], "System User")
+		_user(DESK, ["Blogger"], "System User")
+		_user(PORTAL, ["Customer", CASHIER_ROLE, MANAGER_ROLE], "Website User")
+		self._build()
 
 	def _build(self):
 		self.company = _company()
@@ -553,6 +597,31 @@ class TestTillCashMovements(FrappeTestCase):
 			result = self._record(self.goods_purchase, 108.10)
 		self.assertEqual(self._rows(result["name"]), {self.goods: (108.10, 0), self.cash: (0, 108.10)})
 
+	# --- a site without neoffice_theme (the fleet's CI) -------------------------------------------------
+
+	def test_without_neoffice_theme_a_movement_books_the_whole_amount(self):
+		# The CI site has no `App Customization` doctype: the guard hands back no VAT logic, nothing of the
+		# theme is imported, and the movement books gross, whatever rate its account carries.
+		with _without_the_theme():
+			self.assertIsNone(cash_movement._desk_vat_logic())
+			with _as(CASHIER):
+				data = cash_entry.get_cash_movement_dialog_data(self.shift)
+			result = self._record(self.goods_purchase, 108.10)
+		self.assertFalse({row["name"]: row["vat_applies"] for row in data["templates"]}[self.goods_purchase])
+		self.assertEqual(self._rows(result["name"]), {self.goods: (108.10, 0), self.cash: (0, 108.10)})
+
+	def test_with_the_theme_doctypes_but_not_its_module_a_movement_books_the_whole_amount(self):
+		# The doctypes are there but `neoffice_theme.vat_utils` cannot be imported: the same, not a crash.
+		with patch.dict(sys.modules, {"neoffice_theme.vat_utils": None}):
+			self.assertIsNone(cash_movement._desk_vat_logic())
+			result = self._record(self.goods_purchase, 108.10)
+		self.assertEqual(self._rows(result["name"]), {self.goods: (108.10, 0), self.cash: (0, 108.10)})
+
+	def test_the_tests_that_need_the_theme_skip_with_a_reason_without_it(self):
+		with _without_the_theme(), self.assertRaises(unittest.SkipTest) as skipped:
+			self._vat_company()
+		self.assertIn("neoffice_theme", str(skipped.exception))
+
 	# --- the day it is booked on -----------------------------------------------------------------------
 
 	def test_a_movement_in_the_small_hours_stays_on_the_shifts_day(self):
@@ -684,6 +753,15 @@ class TestTillCashMovements(FrappeTestCase):
 			[(row.direction, row.operation, flt(row.amount), row.note or "") for row in stored],
 			[("Out", self.supplier, 30, "Wine merchant"), ("In", self.pay_in, 200, "")],
 		)
+		# The record holds what the last migrate imported: on a site shared by several branches, another
+		# branch's version of the print. The test prints with the template this app ships (rolled back).
+		with open(
+			frappe.get_app_path(
+				"pos_next", "pos_next", "print_format", "pos_next_eod_report", "pos_next_eod_report.json"
+			),
+			encoding="utf-8",
+		) as shipped:
+			frappe.db.set_value("Print Format", "POS Next EOD Report", "html", json.load(shipped)["html"])
 		html = frappe.get_print("POS Closing Shift", closing, print_format="POS Next EOD Report")
 		self.assertIn(self.supplier, html)
 		self.assertIn("Wine merchant", html)
@@ -856,3 +934,181 @@ class TestTillCashMovements(FrappeTestCase):
 			],
 			[(out, "Out", 30), (backwards, "Out", 200)],
 		)
+
+
+NO_ACCOUNT_MODE = f"{PREFIX} Cash without account"
+
+
+def _the_patch():
+	from pos_next.patches.neorestau import keep_the_tills_cash_operations
+
+	return keep_the_tills_cash_operations
+
+
+class TestTheTillsKeepTheirOperations(CashMovementFixture):
+	"""Before the till's list became a control, an empty list offered every operation of the till's company.
+	The patch keep_the_tills_cash_operations fills each empty list once with what the till offered, less what
+	the new rule refuses for that till (an operation that does not move the till's cash account, or whose
+	direction cannot be read), and says on the till what it kept and what it left out. A list that is not
+	empty is never touched, and a second run changes nothing. The test builds two companies of its own, so
+	that no operation of the site's real companies is counted."""
+
+	def setUp(self):
+		self._isolate()
+		self.company_a = self._new_company("A")
+		self.company_b = self._new_company("B")
+		self.cash_a, self.valid_a, self.refused_a = self._operations(self.company_a, "A")
+		self.cash_b, self.valid_b, self.refused_b = self._operations(self.company_b, "B")
+		for mode, accounts in (
+			(MODE, [(self.company_a, self.cash_a), (self.company_b, self.cash_b)]),
+			(NO_ACCOUNT_MODE, []),
+		):
+			if frappe.db.exists("Mode of Payment", mode):
+				frappe.delete_doc("Mode of Payment", mode, ignore_permissions=True, force=True)
+			frappe.get_doc(
+				{
+					"doctype": "Mode of Payment",
+					"mode_of_payment": mode,
+					"type": "Cash",
+					"enabled": 1,
+					"accounts": [
+						{"company": company, "default_account": account} for company, account in accounts
+					],
+				}
+			).insert(ignore_permissions=True)
+		self.empty_a = self._till("A empty", self.company_a, MODE)
+		self.listed_a = self._till("A listed", self.company_a, MODE, [self.refused_a[0]])
+		self.empty_b = self._till("B empty", self.company_b, MODE)
+		self.without_cash_account = self._till("A without cash account", self.company_a, NO_ACCOUNT_MODE)
+
+	def _new_company(self, letter):
+		"""A company of the test's own, with the root accounts the helpers build under and nothing else: no
+		chart, and none of the shared records ERPNext edits when it makes one (it saves the « Cash » mode of
+		payment, which a site may refuse for reasons of its own)."""
+		name = f"{PREFIX} company {letter}"
+		if not frappe.db.exists("Company", name):
+			with patch.dict(frappe.local.flags, {"ignore_chart_of_accounts": True}):
+				frappe.get_doc(
+					{
+						"doctype": "Company",
+						"company_name": name,
+						"abbr": f"_PCM{letter}",
+						"default_currency": "CHF",
+						"country": "Switzerland",
+					}
+				).insert(ignore_permissions=True)
+			for root_type in ("Asset", "Liability", "Income", "Expense"):
+				# A root has no parent: ERPNext's own chart importer inserts it with ignore_mandatory.
+				root = frappe.get_doc(
+					{
+						"doctype": "Account",
+						"account_name": f"{PREFIX} {root_type}",
+						"company": name,
+						"is_group": 1,
+						"root_type": root_type,
+						"report_type": "Balance Sheet"
+						if root_type in ("Asset", "Liability")
+						else "Profit and Loss",
+						"account_currency": "CHF",
+					}
+				)
+				root.flags.ignore_mandatory = True
+				root.insert(ignore_permissions=True)
+		self.addCleanup(frappe.clear_document_cache, "Company", name)
+		return name
+
+	def _operations(self, company, letter):
+		"""(the till's cash account, the operations it can book, those it cannot) of one company."""
+		self._use_company(company)
+		cash = self._account("Till Cash", "Asset", "Cash")
+		safe = self._account("Safe", "Asset", "Cash")
+		bank = self._account("Bank", "Asset", "Bank")
+		transit = self._account("Transit", "Asset")
+		supplies = self._account("Supplies", "Expense")
+		fees = self._account("Bank Fees", "Expense")
+		income = self._account("Other Income", "Income")
+		valid = [
+			self._template(f"{letter} Supplier payment", cash, supplies, "Credit"),
+			self._template(f"{letter} Pay-in", bank, cash, "Credit"),
+			self._template(f"{letter} Other income", cash, income, "Debit"),
+		]
+		refused = [
+			self._template(f"{letter} Bank fees", bank, fees, "Credit"),
+			self._template(f"{letter} Safe drop", safe, transit, "Credit"),
+			self._plain_template(f"{letter} Plain", cash, supplies),
+		]
+		return cash, sorted(valid), refused
+
+	def _till(self, label, company, mode, operations=()):
+		name = f"{PREFIX} {label}"
+		if frappe.db.exists("POS Profile", name):
+			frappe.delete_doc("POS Profile", name, ignore_permissions=True, force=True)
+		profile = frappe.get_doc(
+			{
+				"doctype": "POS Profile",
+				"name": name,
+				"company": company,
+				"currency": "CHF",
+				"posa_cash_mode_of_payment": mode,
+				"posa_cash_entry_templates": [
+					{"journal_entry_template": operation} for operation in operations
+				],
+			}
+		)
+		# Only what the patch reads matters here: the till's company, its cash mode and its list.
+		profile.flags.ignore_validate = True
+		profile.flags.ignore_mandatory = True
+		profile.insert(ignore_permissions=True)
+		return name
+
+	def _list(self, profile):
+		return frappe.get_all(
+			"POS Cash Entry Template",
+			filters={
+				"parent": profile,
+				"parenttype": "POS Profile",
+				"parentfield": "posa_cash_entry_templates",
+			},
+			pluck="journal_entry_template",
+			order_by="idx asc",
+		)
+
+	def _notes(self, profile):
+		return frappe.get_all(
+			"Comment",
+			filters={
+				"reference_doctype": "POS Profile",
+				"reference_name": profile,
+				"subject": _the_patch().MARK,
+			},
+			pluck="content",
+		)
+
+	def test_an_empty_list_gets_the_companys_operations_the_till_can_book(self):
+		_the_patch().execute()
+		self.assertEqual(self._list(self.empty_a), self.valid_a)
+		[note] = self._notes(self.empty_a)
+		for operation in self.valid_a + self.refused_a:
+			self.assertIn(operation, note)
+		# Why the bank fees and the safe drop are left out: they do not move the till's cash account.
+		self.assertIn(self.cash_a, note)
+
+	def test_a_list_that_is_not_empty_is_untouched(self):
+		_the_patch().execute()
+		self.assertEqual(self._list(self.listed_a), [self.refused_a[0]])
+		self.assertEqual(self._notes(self.listed_a), [])
+
+	def test_a_second_run_changes_nothing(self):
+		tills = (self.empty_a, self.listed_a, self.empty_b, self.without_cash_account)
+		_the_patch().execute()
+		first = {till: (self._list(till), self._notes(till)) for till in tills}
+		_the_patch().execute()
+		self.assertEqual({till: (self._list(till), self._notes(till)) for till in tills}, first)
+		# A till whose cash mode has no account keeps an empty list, said once.
+		self.assertEqual(self._list(self.without_cash_account), [])
+		self.assertEqual(len(self._notes(self.without_cash_account)), 1)
+
+	def test_a_till_of_another_company_gets_its_own_companys_operations_only(self):
+		_the_patch().execute()
+		self.assertEqual(self._list(self.empty_b), self.valid_b)
+		self.assertFalse(set(self._list(self.empty_b)) & set(self.valid_a + self.refused_a))
