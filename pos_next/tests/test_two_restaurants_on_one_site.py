@@ -626,10 +626,13 @@ class TestReservationsAreScoped(TwoRestaurants, FrappeTestCase):
 			)
 
 	def test_the_online_booking_form_refuses_the_table_of_another_restaurant(self):
-		# The refusal is the table's: the form got as far as saving the reservation (the customer is made before)
+		# The refusal is the form's own, before anything is saved, in the words of the page: it no longer names the label
+		# of the other restaurant's table to a visitor (task 18). The reservation's own guard against a table of another
+		# restaurant, which a till reaches, is the test above
 		with self.assertRaises(frappe.ValidationError) as refused:
 			self.book_online(self.table_b, self.a)
-		self.assertIn(f"Table {TABLE} belongs to another restaurant", str(refused.exception))
+		self.assertIn("Please choose your tables among those offered", str(refused.exception))
+		self.assertNotIn(TABLE, str(refused.exception))
 		self.assertFalse(
 			frappe.db.exists("Restaurant Reservation", {"email": "test-two-restaurants@yopmail.com"})
 		)

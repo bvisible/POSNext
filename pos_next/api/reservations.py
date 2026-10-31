@@ -74,6 +74,8 @@ GUEST_TABLES_MAX = 20
 # The step of the times the booking page offers, from the start of each opening window (GuestReservation.vue,
 # `timeOptions`): a visitor asks about those times only
 OFFERED_STEP_MINUTES = 30
+# The one form of a date the booking page writes, ASCII digits only (a date input's value)
+PAGE_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
 # ==========================================
@@ -435,10 +437,11 @@ def submit_guest_reservation(
 	"""Create a reservation from the public web form, in the restaurant named (the default restaurant otherwise).
 
 	The booking waits for its guest to confirm it from the e-mail until the restaurant's deadline, then expires. It
-	lasts the restaurant's duration (a visitor does not choose how long he keeps a table) and is asked at a time the
-	page offers. The form takes strings where it expects them and a number of guests (Frappe casts "2" and refuses the
-	rest), a JSON list of table names, one address, a name that is only a name, and so many bookings per visitor, per
-	mailbox and per site (GUEST_LIMITS); `subject` is a field the page hides from people: a booking that fills it is
+	lasts the restaurant's duration (a visitor does not choose how long he keeps a table) and is asked at a date and a
+	time the page offers, written as the page writes them. The form takes strings where it expects them, a number of
+	guests (Frappe casts "2" and 2.0 and refuses text; this refuses fewer than one), a JSON list of the restaurant's own
+	table names, one address, a name that is only a name, and so many bookings per visitor, per mailbox and per site
+	(GUEST_LIMITS); `subject` is a field the page hides from people: a booking that fills it is
 	answered like any other, and nothing is written nor mailed. A refused booking writes nothing, mails nothing and
 	tells no till. The answer never names the booking.
 	"""
@@ -458,7 +461,10 @@ def submit_guest_reservation(
 		# Only a script fills a field nobody sees: it is told what a guest is told, and nothing happens
 		return _booking_received()
 
-	tables = _the_tables(tables)
+	tables = _the_tables(tables, settings.get("name"))
+	if cint(no_of_guests) < 1:
+		# The statistics add the guests up: a booking for nobody, or for fewer than nobody, is no booking
+		frappe.throw(_("Please enter the number of guests"))
 
 	# At most 3 bookings to come per address; refused in the words of the limits, so that the answer tells a stranger
 	# nothing about the bookings of an address
@@ -641,36 +647,60 @@ def _only_a_name(guest_name) -> str:
 	return name
 
 
-def _the_tables(tables) -> list:
+def _the_tables(tables, restaurant) -> list:
 	"""The tables a visitor names, from the JSON list of table names the page sends: none when it sends none.
 
 	A JSON string decodes into whatever it holds: an element that is not a name would reach the child rows, where
 	Frappe's link validation reads a dict as filters, or the overlap check, where a list or a dict cannot be hashed.
-	Anything but a list of at most GUEST_TABLES_MAX non-empty strings is refused, and so is a string that is no JSON.
+	Anything but a list of at most GUEST_TABLES_MAX non-empty strings is refused, and so is a string that is no JSON
+	(brackets nested so deep that the parser gives up, a RecursionError, included: a guest never gets this far with
+	those, Frappe's own sanitiser fails on them first, but a signed-in account does). So is a name that is not a table
+	of this restaurant, written as it is: a table that is gone, one that never was, one of another restaurant of the
+	site. The answer is the one sentence, never a permission error nor the label of another restaurant's table.
 	"""
 	if tables is None or tables == "":
 		return []
 	try:
 		names = json.loads(tables) if isinstance(tables, str) else tables
-	except ValueError:
+	except (ValueError, RecursionError):
 		names = None
 	if (
 		not isinstance(names, list)
 		or len(names) > GUEST_TABLES_MAX
 		or not all(isinstance(name, str) and name.strip() for name in names)
 	):
-		frappe.throw(_("Please choose your tables among those offered"))
-	return list(dict.fromkeys(name.strip() for name in names))
+		_refuse_the_tables()
+	names = list(dict.fromkeys(name.strip() for name in names))
+	if names:
+		of_this_restaurant = frappe.get_all(
+			"Restaurant Table",
+			filters={"name": ["in", names]},
+			or_filters=scope.restaurant_or_filters(restaurant),
+			pluck="name",
+		)
+		if set(of_this_restaurant) != set(names):
+			_refuse_the_tables()
+	return names
+
+
+def _refuse_the_tables():
+	frappe.throw(_("Please choose your tables among those offered"))
 
 
 def _require_an_offered_time(settings, date, time) -> None:
-	"""Refuse a visitor's time that the booking page does not offer on that day (_offered_times)."""
+	"""Refuse a visitor's date and time that the booking page does not offer on that day (_offered_times).
+
+	The date and the time are read exactly as the page writes them, `YYYY-MM-DD` and `HH:MM:SS`, and not otherwise: a
+	lenient reading ("8:30 PM", "20:30", a time zone, "11/07/2026" for the 7th of November) would pass this check and
+	then reach the strict parsing of the reservation, where it fails as a server error, or book a day or an hour the
+	visitor did not mean. A date that is no day of the calendar ("0000-00-00") is refused the same way.
+	"""
 	try:
-		offered = _offered_times(settings, getdate(date))
-		asked = get_time(time).strftime("%H:%M:%S")
+		day = datetime.strptime(date, "%Y-%m-%d") if PAGE_DATE.fullmatch(date) else None
+		offered = _offered_times(settings, day) if day else set()
 	except (TypeError, ValueError, frappe.ValidationError):
-		offered, asked = set(), None
-	if asked not in offered:
+		offered = set()
+	if not isinstance(time, str) or time not in offered:
 		frappe.throw(_("Please choose one of the times offered for this day"))
 
 
