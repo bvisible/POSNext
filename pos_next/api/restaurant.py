@@ -99,7 +99,8 @@ def get_tables(restaurant=None):
 		orders = frappe.get_all(
 			"Sales Invoice",
 			filters={"docstatus": 0, "restaurant_table": ["in", occupied_names]},
-			fields=["name", "restaurant_table", "owner", "creation", "kds_status"],
+			# The total of the open order: the list of tables says it under each table (NeoRestau lot 1, task 26)
+			fields=["name", "restaurant_table", "owner", "creation", "kds_status", "grand_total"],
 			order_by="modified desc"
 		)
 		for order in orders:
@@ -115,6 +116,7 @@ def get_tables(restaurant=None):
 				"opened_at": str(order.creation),
 				"opened_by": initials,
 				"kds_status": order.kds_status or "Pending",
+				"grand_total": flt(order.grand_total),
 			}
 
 	# Auto-fix orphaned "Occupied" tables with no active draft
@@ -146,7 +148,43 @@ def get_tables(restaurant=None):
 		for table in tables:
 			table["waiting_items_count"] = waiting_map.get(table["name"], 0)
 
+	_count_qr_lines_to_accept(tables, has_item_kds)
+
 	return {"areas": areas, "tables": tables, "stations": stations}
+
+
+def _count_qr_lines_to_accept(tables, has_item_kds):
+	"""Say on each table how many lines of a guest's QR order wait for the waiter to accept them (`qr_waiting_count`).
+
+	The list of tables puts such a table near the top, « QR · N items to accept » (NeoRestau lot 1, task 26). A guest's
+	order, where the restaurant has its QR orders approved, puts its lines on hold (`kds_status` Waiting) in a kitchen
+	batch of their own (`submit_guest_order`). A line the till holds back is on hold too, but in no batch: the till
+	numbers a batch only when it sends lines to the kitchen. And once the till has saved the table, its lines are written
+	again without their batches: the waiter opened the table, saw the guest's lines and kept them on hold, they are his.
+	"""
+	for table in tables:
+		table["qr_waiting_count"] = 0
+	names = [table["name"] for table in tables]
+	if not names or not has_item_kds or not frappe.db.has_column("Sales Invoice Item", "kds_batch"):
+		return
+	counts = frappe.db.sql(
+		"""
+		SELECT si.restaurant_table, COUNT(*) AS qr_count
+		FROM `tabSales Invoice Item` sii
+		JOIN `tabSales Invoice` si ON sii.parent = si.name
+		WHERE si.docstatus = 0
+			AND si.restaurant_table IN %(tables)s
+			AND sii.kds_status = 'Waiting'
+			AND IFNULL(sii.kds_batch, 0) > 0
+		GROUP BY si.restaurant_table
+		""",
+		{"tables": tuple(names)},
+		as_dict=True,
+	)
+	by_table = {row.restaurant_table: row.qr_count for row in counts}
+	for table in tables:
+		table["qr_waiting_count"] = by_table.get(table["name"], 0)
+
 
 @frappe.whitelist()
 def update_table_status(table_name, status):
@@ -2303,9 +2341,12 @@ def get_runner_orders(area=None, restaurant=None):
 		"Preparation Station",
 		filters={"is_active": 1},
 		or_filters=scope.restaurant_or_filters(restaurant),
-		fields=["name", "station_name", "color"],
+		fields=["name", "station_name", "color", "station_type"],
 	)
 	station_labels = {st.name: st.station_name for st in all_stations}
+	# The type of each line's station (Kitchen, Bar, Other): the list of tables says « dishes ready » only when a dish is,
+	# a line of a kitchen (NeoRestau lot 1, task 26)
+	station_types = {st.name: st.station_type for st in all_stations}
 	for st in all_stations:
 		station_info = {"station_name": st.station_name, "station_color": st.color, "station_id": st.name}
 		st_items = frappe.get_all("Preparation Station Item", filters={"parent": st.name}, fields=["item"])
@@ -2370,10 +2411,13 @@ def get_runner_orders(area=None, restaurant=None):
 				shown_station = item.get("preparation_station") or station_id
 				if shown_station:
 					if shown_station not in station_labels:
-						station_labels[shown_station] = (
-							frappe.db.get_value("Preparation Station", shown_station, "station_name") or shown_station
-						)
+						found = frappe.db.get_value(
+							"Preparation Station", shown_station, ["station_name", "station_type"], as_dict=True
+						) or {}
+						station_labels[shown_station] = found.get("station_name") or shown_station
+						station_types[shown_station] = found.get("station_type")
 					item["station_name"] = station_labels[shown_station]
+					item["station_type"] = station_types.get(shown_station)
 
 				ready_items.append(item)
 

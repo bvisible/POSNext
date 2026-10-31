@@ -511,12 +511,15 @@
 									!cartStore.isTakeaway
 								"
 							>
+								<!-- //// Neoffice — a phone's tables open on their list, whose top names the user, and a table's QR code is asked for from the floor (NeoRestau lot 1, task 26): handleShowTableQR -->
 								<FloorPlanEditor
+									:user-name="userName"
 									@table-selected="handleTableSelected"
 									@load-table-draft="handleLoadTableDraft"
 									@load-server-draft="handleLoadServerDraft"
 									@start-takeaway="handleStartTakeaway"
 									@cleaning-table-clicked="handleCleaningTableClicked"
+									@show-table-qr="handleShowTableQR"
 								/>
 							</template>
 
@@ -629,13 +632,14 @@
 												{{ cardLabel(card) }}
 											</button>
 											<!-- QR Self-Ordering button -->
+											<!-- //// Neoffice — called with no argument: handleQRButtonClick takes a table pressed on the floor (task 26), and the click event is no table -->
 											<button
 												v-if="
 													restaurantStore.restaurantSettings
 														.enable_qr_ordering &&
 													cartStore.restaurantTable
 												"
-												@click="handleQRButtonClick"
+												@click="handleQRButtonClick()"
 												class="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-neo-sm text-[10px] sm:text-xs font-medium whitespace-nowrap transition-[background-color,border-color] duration-75 touch-manipulation snap-start flex-shrink-0 ml-auto bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 active:bg-emerald-200"
 												:title="__('Generate QR code for guest ordering')"
 											>
@@ -2617,6 +2621,9 @@ const activeQRTokens = ref(new Map()); // table name → { token, url }
 const showQRDialog = ref(false);
 const showQRConfirmDialog = ref(false);
 const currentQR = ref({ token: "", url: "", tableName: "" });
+//// Neoffice — the table whose code is asked for: the cart's open table, or one pressed on the floor (its card in the
+//// list of tables, a long press on the plan: NeoRestau lot 1, task 26), which the confirmation must not swap for the cart's.
+const qrTable = ref(null);
 const cardSearchQuery = ref("");
 const cardViewMode = ref("grid");
 const cardCategories = computed(() => {
@@ -3783,9 +3790,12 @@ async function markTableAvailable() {
 	}
 }
 
-async function handleQRButtonClick() {
-	const table = cartStore.restaurantTable;
+//// Neoffice — the table pressed on the floor (task 26), else the cart's open table; kept for the confirmation below.
+async function handleQRButtonClick(pressed = null) {
+	const table = pressed || cartStore.restaurantTable;
 	if (!table) return;
+	//// Neoffice — the confirmation generates the code of this table, not of the cart's (task 26).
+	qrTable.value = table;
 
 	const tableName = table.name || table.table_name;
 	// If we already have a token for this table, show QR directly
@@ -3807,7 +3817,8 @@ async function handleQRButtonClick() {
 
 async function confirmQRGeneration() {
 	showQRConfirmDialog.value = false;
-	const table = cartStore.restaurantTable;
+	//// Neoffice — the table asked for (one pressed on the floor has no cart behind it, task 26), else the cart's.
+	const table = qrTable.value || cartStore.restaurantTable;
 	if (!table) return;
 	const tableName = table.name || table.table_name;
 
@@ -3830,6 +3841,13 @@ async function confirmQRGeneration() {
 	} catch (err) {
 		showError(__("Failed to generate QR code: {0}", [err.message || err]));
 	}
+}
+
+//// Neoffice — a table's QR code asked for from the floor (NeoRestau lot 1, task 26): the list's QR button, a long press on
+//// the plan. It goes through the order view's own entry, for the table pressed. The one line to reconnect at the merge
+//// with useTableQR (Task 9d+9e): its click path takes the table it is handed, and this calls it with that table.
+function handleShowTableQR(table) {
+	return handleQRButtonClick(table);
 }
 
 async function handleStartTakeaway() {

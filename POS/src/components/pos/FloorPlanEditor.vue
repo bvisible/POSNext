@@ -13,17 +13,30 @@
 	<!-- //// deletion, 32f2415d the closed-hours banner, e4769383 the clay retheme. Run git log -->
 	<!-- //// on this path for the full list.) -->
 	<div class="flex flex-col h-full bg-white dark:bg-gray-900 overflow-hidden">
+		<!-- On a phone the tables open on their list (NeoRestau lot 1, task 26), under the waiter mockup's top: « Tables »
+		     on the ink bar, the user and the time, the switch « List | Floor plan ». Not while the plan is edited: the
+		     editor is the line's. -->
+		<TablesPhoneTop
+			v-if="isPhone && !isEditMode"
+			:view="shownView"
+			:user-name="userName"
+			:time="clockText"
+			@update:view="setView"
+		/>
 		<!-- One line (NeoRestau lot 1, Ruling 48), with the look of the line the runner and the kitchen screen share
 		     (RoomStationFilterLine, Ruling 44): the rooms on the left; on the right the stations and the Runner and
 		     Takeaway pills, or Save and Cancel while the plan is edited; the « ⋯ » menu at the very end. It was two rows
-		     (49 and 39 px, measured) and an Edit button within every finger's reach. -->
+		     (49 and 39 px, measured) and an Edit button within every finger's reach. A phone's list has its own filters
+		     and bar instead (task 26); a phone's plan keeps the rooms and the « ⋯ » of this line, as the mockup. -->
 		<div
+			v-show="!(isPhone && shownView === 'list')"
 			ref="lineRef"
 			data-test="floor-line"
 			class="px-4 py-1 border-b dark:border-gray-800 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 flex-shrink-0"
 		>
-			<!-- Rooms: a tap switches the plan (they are not a filter: there is no « all rooms » plan) -->
-			<div data-test="floor-rooms" :class="GROUP">
+			<!-- Rooms: a tap switches the plan (they are not a filter: there is no « all rooms » plan). Over the list they
+			     are put away: the list has its own filters, which a room of the plan would only repeat -->
+			<div v-show="shownView === 'plan'" data-test="floor-rooms" :class="GROUP">
 				<template v-if="areas.length > 1">
 					<button
 						v-for="area in areas"
@@ -96,7 +109,8 @@
 
 			<!-- Stations and pills (view mode), Save and Cancel (edit mode), the « ⋯ » menu: kept to the right edge -->
 			<div ref="actionsRef" data-test="floor-actions" :class="[GROUP, 'justify-end ml-auto']">
-				<template v-if="!isEditMode && allStations.length > 0">
+				<!-- A phone's plan has the mockup's rooms only: its takeaway is in the list's bar (task 26) -->
+				<template v-if="!isEditMode && !isPhone && allStations.length > 0">
 					<!-- Preparation stations: a tap opens the kitchen screen of the station -->
 					<div v-for="station in allStations" :key="'sbar-' + station.name"
 						:ref="(el) => setStationChip(station.name, el)"
@@ -164,6 +178,10 @@
 						</span>
 					</div>
 				</template>
+
+				<!-- The tables as the plan or as their list, on a tablet and a PC (task 26): 32 px, the line's chips, right
+				     before the « ⋯ ». A phone has the switch of its top instead -->
+				<TablesViewSwitch v-if="!isEditMode && !isPhone" size="line" :view="shownView" @update:view="setView" />
 
 				<!-- Edit mode: Save leaves the editor with the plan saved, Cancel without -->
 				<template v-if="isEditMode">
@@ -285,13 +303,21 @@
 			</label>
 		</div>
 
-		<!-- Canvas -->
+		<!-- Canvas. Put away, not removed, while the list is shown: its gestures are bound to it once, when it mounts.
+		     It hears the pointer of a pressed table to its end (task 26): a tap opens the table when the finger lifts, a
+		     long press shows its QR code, a press that moves pans the plan, a second finger pinches it (useTablePress) -->
 		<div
+			v-show="shownView === 'plan'"
 			ref="canvasRef"
 			data-test="floor-canvas"
 			class="flex-1 relative overflow-hidden"
 			style="touch-action: none;"
 			:style="canvasBackgroundStyle"
+			@pointerdown="tablePress.otherPointer"
+			@pointermove="tablePress.move"
+			@pointerup="tablePress.up"
+			@pointercancel="tablePress.cancel()"
+			@pointerleave="tablePress.cancel()"
 		>
 			<!-- Zoom controls -->
 			<div class="absolute bottom-3 right-3 flex flex-col gap-1 z-20" data-gesture-ignore>
@@ -395,13 +421,14 @@
 				v-for="table in filteredTables"
 				:key="table.name"
 				data-test="table"
-				class="absolute flex flex-col items-center justify-center select-none transition-shadow duration-150"
+				class="absolute flex flex-col items-center justify-center select-none [-webkit-touch-callout:none] transition-shadow duration-150"
 				:class="[
 					getTableClasses(table),
 					isEditMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:shadow-lg',
 				]"
 				:style="getTableStyle(table)"
 				@pointerdown="onTablePointerDown($event, table)"
+				@contextmenu.prevent
 			>
 				<!-- Seats around table -->
 				<div
@@ -596,6 +623,30 @@
 			v-if="canSetUpTheRestaurant && tabletDialogOpen"
 			v-model="tabletDialogOpen"
 			:restaurant="restaurantStore.tillRestaurant"
+		/>
+
+		<!-- A phone's plan ends with the mockup's line: what a tap does, and a long press (task 26) -->
+		<p
+			v-if="isPhone && shownView === 'plan' && !isEditMode"
+			data-test="plan-hint"
+			class="px-4 pt-2.5 pb-[max(14px,env(safe-area-inset-bottom))] text-center text-[13px] text-[#6F665A] bg-[#FAF3EA] flex-shrink-0"
+		>
+			{{ qrEnabled ? __("Tap a table to open its order · long press: its QR code") : __("Tap a table to open its order") }}
+		</p>
+
+		<!-- The list of the tables (NeoRestau lot 1, task 26): what the plan shows, sorted by what needs the waiter first.
+		     It reads the plan's data (the floor, the pass's orders) and its events, and opens a table as the plan does -->
+		<TablesList
+			v-if="shownView === 'list'"
+			:model="tablesModel"
+			:qr-enabled="qrEnabled"
+			:currency="listCurrency"
+			:phone="isPhone"
+			:takeaway-enabled="Boolean(restaurantStore.takeawayEnabled)"
+			@open-table="selectTable"
+			@show-qr="showTableQR"
+			@start-takeaway="startNewTakeaway"
+			@select-room="(room) => (listRoom = room)"
 		/>
 
 		<!-- Add Table Dialog -->
@@ -968,6 +1019,18 @@ import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
+import TablesList from "@/components/restaurant/TablesList.vue"
+import TablesPhoneTop from "@/components/restaurant/TablesPhoneTop.vue"
+import TablesViewSwitch from "@/components/restaurant/TablesViewSwitch.vue"
+import { useTablePress } from "@/composables/useTablePress"
+import { useTablesView } from "@/composables/useTablesView"
+import { formatTime as formatClockTime } from "@/utils/currency"
+import { ALL_ROOMS, localDate, tablesOfTheService } from "@/utils/tablesOfTheService"
+
+defineProps({
+	// The till user's name, as the till's header shows it: a phone's top says the first name (task 26)
+	userName: { type: String, default: "" },
+})
 
 const emit = defineEmits([
 	"table-selected",
@@ -975,6 +1038,9 @@ const emit = defineEmits([
 	"load-server-draft",
 	"start-takeaway",
 	"cleaning-table-clicked",
+	// A table's QR code is asked for (its card in the list, a long press on the plan): the page shows it through the
+	// one entry of the order view (task 26)
+	"show-table-qr",
 ])
 
 const restaurantStore = useRestaurantStore()
@@ -996,6 +1062,71 @@ const canSetTableStatus = computed(() => Boolean(restaurantStore.can?.set_table_
 // task 16; the server checks it again)
 const canSetUpTheRestaurant = computed(() => Boolean(restaurantStore.can?.manage_settings))
 const tabletDialogOpen = ref(false)
+
+// ─── The tables as the plan or as their list (NeoRestau lot 1, task 26) ──────
+// Product owner, 31.10.2026: « on the phone, show the list of the tables by default rather than the plan »,
+// « on phones the table's QR code must be easy to reach ». A phone opens on the list, a tablet and a PC
+// on the plan; the choice is kept on the device (useTablesView). The editor always shows the plan, without touching the
+// choice. The list reads what the plan reads: the floor (the store's tables and rooms), the pass's orders (runnerOrders,
+// below) and, for « Soon », the day's reservations; its own events are the plan's.
+const { view, isPhone, setView } = useTablesView()
+const shownView = computed(() => (isEditMode.value ? "plan" : view.value))
+// The restaurant takes QR orders: a table's code is one tap from its card, and a long press away on the plan
+const qrEnabled = computed(() => Boolean(restaurantStore.qrOrderingEnabled))
+// The states whose table may have a QR code: a table in service or free (as the list's cards say, utils/tablesOfTheService)
+const QR_STATES = ["Occupied", "Empty"]
+const listRoom = ref(ALL_ROOMS)
+const reservations = ref([])
+const listCurrency = computed(() => shiftStore.profileCurrency || "CHF")
+// The till's clock, for the minutes since a table was seated and the phone's top. It moves only what is on the screen:
+// nothing is asked of the server at its tick
+const now = ref(new Date())
+const CLOCK_TICK_MS = 30 * 1000
+let clockTimer = null
+const clockText = computed(() => formatClockTime(now.value))
+
+const tablesModel = computed(() =>
+	tablesOfTheService({
+		tables: restaurantStore.tables || [],
+		areas: areas.value || [],
+		runnerOrders: runnerOrders.value,
+		reservations: reservations.value,
+		now: now.value,
+		room: listRoom.value,
+	}),
+)
+
+// The one way to a table's QR code from the floor: the page shows it through the order view's own entry
+function showTableQR(table) {
+	emit("show-table-qr", table)
+}
+
+// A finger on a table of the plan, in the service: a tap opens the table, a long press shows its QR code
+const tablePress = useTablePress({
+	onTap: (table) => selectTable(table),
+	onLongPress: (table) => showTableQR(table),
+	canLongPress: (table) => qrEnabled.value && QR_STATES.includes(table.status),
+})
+
+// « Soon »: the reservations of today, of the till's restaurant, read as the reservations list reads them, and only while
+// the list is shown. One that cannot be read (a user who may not read the reservations) leaves « Soon » empty
+async function loadReservations() {
+	if (shownView.value !== "list") return
+	try {
+		const answer = await call("pos_next.api.reservations.get_reservations", {
+			date: localDate(new Date()),
+			status: JSON.stringify(["Pending", "Confirmed"]),
+			...restaurantStore.ofTheRestaurant(),
+		})
+		reservations.value = Array.isArray(answer) ? answer : []
+	} catch {
+		reservations.value = []
+	}
+}
+watch(shownView, (shown) => {
+	if (shown === "list") loadReservations()
+})
+const onReservationUpdate = () => loadReservations()
 
 // ─── The line at the top ─────────────────────────────────────────────────────
 // The look of the line is the one of RoomStationFilterLine, the runner's and the kitchen's (Ruling 44, then 48): chips
@@ -1039,8 +1170,9 @@ const menuItems = computed(() =>
 			key: "free-cleaning-tables",
 			label: __("Free the tables being cleaned"),
 			icon: ICON_CHECK,
-			// A cashier may set the status of a table without laying out the floor (the server checks it again)
-			visible: canSetTableStatus.value,
+			// A cashier may set the status of a table without laying out the floor (the server checks it again). It frees
+			// the room on the screen (Ruling 60): over the list there is none, so it is the plan's only (task 26)
+			visible: canSetTableStatus.value && shownView.value === "plan",
 			run: freeCleaningTables,
 		},
 		{
@@ -1767,12 +1899,15 @@ function getTableClasses(table) {
 }
 
 function onTablePointerDown(event, table) {
-	// Always stop propagation to prevent useCanvasGestures from starting a pan
-	event.stopPropagation()
 	if (isEditMode.value) {
+		// The editor: a press drags the table, and the plan must not pan under it (useCanvasGestures)
+		event.stopPropagation()
 		handleDragStart(event, table)
 	} else {
-		selectTable(table)
+		// The service: the table opened as soon as the pointer went down; it now opens when the finger lifts, so that a
+		// long press can show its QR code and a press that moves can pan the plan (the pointer goes on to the canvas,
+		// whose gestures pan it). The canvas hears the rest of the press (task 26, useTablePress)
+		tablePress.down(event, table)
 	}
 }
 
@@ -2466,7 +2601,15 @@ onMounted(async () => {
 		floorSocket.on("takeaway_update", () => {
 			if (restaurantStore.takeawayEnabled) restaurantStore.fetchTakeawayOrders()
 		})
+		// A reservation taken, seated or cancelled elsewhere: « Soon » of the list (task 26)
+		floorSocket.on("reservation_update", onReservationUpdate)
 	}
+
+	// The list of the tables: its reservations, and the clock of its minutes (task 26)
+	loadReservations()
+	clockTimer = setInterval(() => {
+		now.value = new Date()
+	}, CLOCK_TICK_MS)
 })
 
 // Re-layout when switching areas
@@ -2521,7 +2664,9 @@ onUnmounted(() => {
 	if (floorSocket) {
 		floorSocket.off("table_update")
 		floorSocket.off("kds_update")
+		floorSocket.off("reservation_update", onReservationUpdate)
 	}
+	clearInterval(clockTimer)
 	destroy()
 	cleanupGestures()
 	document.removeEventListener("keydown", onWallKeyDown)
