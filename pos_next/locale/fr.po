@@ -17543,3 +17543,7 @@ msgstr "Livrer"
 msgctxt "Kitchen action"
 msgid "Hand over"
 msgstr "Remettre"
+
+#: POS/src/components/invoices/KDSOrderCard.vue:106
+msgid "Print a copy of this ticket"
+msgstr "Imprimer une copie de ce ticket"

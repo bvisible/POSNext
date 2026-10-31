@@ -163,7 +163,7 @@ describe("the kitchen ticket's main buttons in dark mode (task 46)", () => {
 
 describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 	it("tints the 'In preparation' header badge in dark: it was one patch of clay with its text lost in it", () => {
-		const names = classesOf(pillOf(show(ticket(["Preparing", "Pending"]))))
+		const names = classesOf(pillOf(show(ticket(["Preparing", "Pending"]), { showState: true })))
 
 		expect(names).toContain("bg-blue-200")
 		expect(names).toContain("text-blue-800")
@@ -171,12 +171,14 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 	})
 
 	it("leaves the badges that already read in dark as they were", () => {
-		expect(classesOf(pillOf(show(ticket(["Pending"]))))).toEqual(
+		expect(classesOf(pillOf(show(ticket(["Pending"]), { showState: true })))).toEqual(
 			expect.arrayContaining(["bg-yellow-200", "text-yellow-800"]),
 		)
 		const ready = classesOf(
 			pillOf(
-				show(ticket(["Ready", "Ready"], { extra: { kds_status: "Ready" } })),
+				show(ticket(["Ready", "Ready"], { extra: { kds_status: "Ready" } }), {
+					showState: true,
+				}),
 			),
 		)
 		expect(ready).toEqual(

@@ -256,36 +256,36 @@ describe("the hint that more dishes follow", () => {
 		expect(two.get('[data-test="ticket-more"]').text()).toBe("+2 lines")
 	})
 
-	it("keeps the status of the last dish readable: the pill sits UNDER the line below the dishes, in room kept for it, and the fade is short", async () => {
+	it("keeps the status of the last dish readable: the pill sits in a thin strip UNDER the dishes, never over them, and the fade is short", async () => {
 		// The pill used to cover the lower right of the dishes, where each dish carries its status; the fade, 56 px high,
-		// greyed it. Straddling the line below the dishes still covered 8 badges out of 97 (measured). The pill is now wholly
-		// under the line, in the top of the foot, which gives it the room (8 px more, only while the hint shows)
+		// greyed it. It then hung under the dishes in room kept in the main button's padding. The main button is at the TOP of
+		// the card now (task 38a-1), so the pill has a strip of its own at the foot of the dishes, which exists only while
+		// dishes are hidden
 		layout({ viewport: 150 })
 		const wrapper = show(longOrder(25))
 		await nextTick()
 
 		const pill = wrapper.get('[data-test="ticket-more"]')
-		expect(pill.classes()).toEqual(
-			expect.arrayContaining(["absolute", "top-full"]),
-		)
+		expect(pill.classes()).not.toContain("absolute")
 		expect(pill.classes()).not.toContain("bottom-0")
-		expect(wrapper.get('[data-test="ticket-actions"]').classes()).toContain(
-			"pt-5",
-		)
+		const strip = wrapper.get('[data-test="ticket-more-strip"]')
+		expect(strip.element.contains(pill.element)).toBe(true)
+		expect(strip.classes()).toContain("flex-shrink-0")
+		// The strip is under the scrolling body, not inside it
+		const body = wrapper.get('[data-test="ticket-body"]').element
+		expect(body.contains(strip.element)).toBe(false)
 		const fade = wrapper.get('[data-test="ticket-more-fade"]')
 		expect(fade.classes()).toContain("h-3")
 		expect(fade.classes()).not.toContain("h-14")
 	})
 
-	it("gives the foot its usual room when nothing follows: the extra room is for the pill only", async () => {
+	it("has no strip when nothing follows: the card ends with its dishes", async () => {
 		layout({ viewport: 400 })
 		const wrapper = show(longOrder(3))
 		await nextTick()
 
 		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
-		expect(wrapper.get('[data-test="ticket-actions"]').classes()).not.toContain(
-			"pt-5",
-		)
+		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(false)
 	})
 
 	it("sits over the dishes without taking a touch from them: the dish under the fade can still be pressed", async () => {
@@ -293,6 +293,7 @@ describe("the hint that more dishes follow", () => {
 		const wrapper = show(longOrder(25))
 		await nextTick()
 
+		// The fade is the only part over the dishes now; the pill is in its own strip and takes no touch either
 		for (const part of ["ticket-more", "ticket-more-fade"]) {
 			expect(wrapper.get(`[data-test="${part}"]`).classes(), part).toContain(
 				"pointer-events-none",
@@ -300,7 +301,7 @@ describe("the hint that more dishes follow", () => {
 		}
 	})
 
-	it("stays out of the way of the dishes: it is inside the area of the dishes, not in the head or the foot", async () => {
+	it("stays out of the way of the dishes: it is inside the area of the dishes, not in the head or the actions", async () => {
 		layout({ viewport: 150 })
 		const wrapper = show(longOrder(25))
 		await nextTick()
@@ -583,7 +584,9 @@ describe("the status menu of a dish", () => {
 })
 
 describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () => {
-	const badge = (wrapper) => wrapper.get('[data-test="ticket-status"]').text()
+	// The state is no longer written in the header (task 38a-1, ruling 125: the left border and the band carry it): the card names it on its root
+	const badge = (wrapper) =>
+		wrapper.get('[data-test="ticket"]').attributes("data-state")
 	const button = (wrapper) =>
 		wrapper.get('[data-test="ticket-actions"] button').text()
 	const classesOf = (wrapper) => wrapper.get('[data-test="ticket"]').classes()
@@ -752,7 +755,9 @@ describe("the main button acts on the station chosen (fix round 1, ruling 79)", 
 		expect(order.items[0].kds_status).toBe("Preparing")
 		expect(order.kds_status).toBe("Pending")
 		// Its look is that of its dishes all the same
-		expect(wrapper.get('[data-test="ticket-status"]').text()).toBe("Preparing")
+		expect(wrapper.get('[data-test="ticket"]').attributes("data-state")).toBe(
+			"Preparing",
+		)
 	})
 
 	it("takes the order to the status asked with every station, as it always did", async () => {

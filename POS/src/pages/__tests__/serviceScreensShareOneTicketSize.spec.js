@@ -302,6 +302,8 @@ describe("the two screens", () => {
 		restaurant_table: "t1",
 		table_display_name: "T1",
 		kds_status: "Pending",
+		// The ticket's number: the kitchen ticket shows it where it shows the order's number, and shows none for an order with none (task 38a-1)
+		ticket_no: "0001",
 		creation: "2026-10-30 12:00:00",
 		modified: "2026-10-30 12:00:00",
 		items: [

@@ -19,179 +19,59 @@
 	<!-- //// it to the lane's height, a column of tickets caps it with --ticket-max-h), its head and its main button keep -->
 	<!-- //// their size, and the dishes in between scroll by touch. -->
 	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-l-4 flex flex-1 flex-col min-h-0 max-h-[var(--ticket-max-h,none)]"
-		:class="borderColorClass" data-test="ticket">
+		:class="borderColorClass" data-test="ticket" :data-state="status">
 
 		<!-- Header -->
 		<!-- The frame (padding, title, order number, timer, dish lines) is the one the runner ticket has: utils/ticketLayout -->
+		<!-- //// Neoffice — the header is ONE line (task 38a-1, rulings 125 and 126): the room's code as a small chip, the TABLE big and bold, the ticket's -->
+		<!-- //// number, the timer at the right. The invoice's own name is never shown here (ruling 122: a draft takes its Sales Invoice number at the -->
+		<!-- //// first save, so it is no ticket number: it is shown only once the sale is validated). The ticket number is `ticket_no` when the order -->
+		<!-- //// carries one (the server fills it in with the ticket counter), and for a takeaway the counter it has had until then. The state is NOT -->
+		<!-- //// written here: the left border and the band the card stands in carry it. `showState` writes it beside the timer for a screen that mixes -->
+		<!-- //// the states (placement A of ruling 126). The second timer, the table's total time, shows only in the large sizes. -->
 		<div class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="TICKET_FRAME.header" data-test="ticket-header">
-			<div class="flex justify-between items-start">
-				<h3 data-test="ticket-title" :class="[TICKET_FRAME.title, order.is_takeaway ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white']">
-					<template v-if="order.is_takeaway">
-						<svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-						</svg>{{ order.takeaway_number || __("Takeaway") }}
-					</template>
-					<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
-				</h3>
-				<div class="text-right">
-					<span class="block" data-test="ticket-timer" :class="[TICKET_FRAME.timer, timeColorClass]">
-						{{ elapsedTime }}
+			<div class="flex items-center justify-between gap-x-1.5">
+				<div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-test="ticket-ref">
+					<span v-if="roomChip" data-test="ticket-room"
+						class="rounded-md bg-gray-100 px-1.5 text-[length:var(--kds-fs-ref,11px)] font-semibold leading-snug tracking-wide text-gray-600 dark:bg-gray-700">
+						{{ roomChip }}
 					</span>
-					<span class="font-mono text-[10px] text-gray-400 tabular-nums block leading-tight" :title="__('Total time')">
+					<h3 data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="TICKET_FRAME.title">
+						<template v-if="order.is_takeaway">{{ __("Takeaway") }}</template>
+						<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
+					</h3>
+					<span v-if="ticketNumber" data-test="ticket-number" class="text-gray-500 font-medium tabular-nums" :class="TICKET_FRAME.number">
+						{{ order.is_takeaway ? "· " : "" }}{{ ticketNumber }}
+					</span>
+				</div>
+				<div class="flex flex-none items-baseline gap-1.5">
+					<!-- //// Neoffice — the badge keeps the classes the dark mode gave it (task 46); it is drawn only where states mix -->
+					<span v-if="showState" class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5 self-center"
+						data-test="ticket-status" :class="statusBadgeClass">
+						{{ kitchenStatusLabel(status, { takeaway: isTakeaway }) }}
+					</span>
+					<span class="font-mono tabular-nums text-gray-400 whitespace-nowrap [display:var(--kds-tt-d,none)] text-[length:var(--kds-fs-tt,10px)]"
+						data-test="ticket-total-time" :title="__('Total time')">
 						{{ totalTime }}
 					</span>
+					<span class="whitespace-nowrap" data-test="ticket-timer" :class="[TICKET_FRAME.timer, timeColorClass]">
+						{{ elapsedTime }}
+					</span>
 				</div>
-			</div>
-			<div class="flex justify-between items-center mt-1">
-				<span class="text-gray-400 font-mono" data-test="ticket-number" :class="TICKET_FRAME.number">#{{ order.name }}</span>
-				<!-- //// Neoffice — the badge, the border and the main button follow the dishes the screen shows (fix round 1), see `status` -->
-				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
-					data-test="ticket-status" :class="statusBadgeClass">
-					{{ kitchenStatusLabel(status, { takeaway: isTakeaway }) }}
-				</span>
 			</div>
 		</div>
 
-		<!-- Items -->
-		<!-- //// Neoffice — the dishes are the part of the ticket that scrolls (task 23). `ticket-scroll-area` holds the hint that -->
-		<!-- //// more dishes follow (a fade and "+N lines") over the foot of the scrolling body: the hint cannot sit in the body -->
-		<!-- //// itself, it would scroll away with the dishes. -->
-		<div class="relative flex flex-1 flex-col min-h-0" data-test="ticket-scroll-area">
-			<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="TICKET_FRAME.body" data-test="ticket-body"
-				@scroll.passive="onBodyScroll">
-				<div ref="linesEl">
-					<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
-						<!-- Batch separator (show for 2nd batch onwards) -->
-						<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1">
-							<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
-							<span class="text-[9px] font-bold text-orange-500 uppercase tracking-wider whitespace-nowrap">
-								{{ __('Send') }} {{ batchIdx + 1 }}
-							</span>
-							<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
-						</div>
-						<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
-							class="relative" data-ticket-line
-							:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
-							<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
-							<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
-							<!-- //// Neoffice — a DELIVERED dish is inert (task 42): what is done is done, so it is no touch target (no pointer, no pressed -->
-							<!-- //// state, no menu). Its fade and its strike-through sit HERE, on the content of the dish, never on the wrapper above: the -->
-							<!-- //// wrapper holds the status menu of a dish that has one, and an `opacity` makes a stacking context of its own, which -->
-							<!-- //// trapped the menu's z-index, faded the menu to 40 % and painted it under the dishes after it. -->
-							<div class="flex flex-col justify-center py-1.5 rounded px-1 -mx-1"
-								:class="[
-									TICKET_FRAME.line,
-									isDelivered(item)
-										? 'cursor-default opacity-40 line-through'
-										: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
-								]"
-								data-test="ticket-line"
-								@click="onLineTap(item, $event)">
-								<!-- Item line: qty x name + item status badge -->
-								<div class="flex justify-between items-start gap-1">
-									<span class="text-gray-900 dark:text-gray-100">
-										<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
-									</span>
-									<!-- //// Neoffice — no `cursor-pointer` of its own (task 42): the pill takes the dish's cursor, so a delivered dish's has none -->
-									<span v-if="item.kds_status"
-										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
-										:class="itemStatusClass(item.kds_status)">
-										{{ kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway }) }}
-									</span>
-								</div>
-								<!-- Modifiers -->
-								<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
-									class="text-xs text-gray-400 mt-0.5 pl-4">
-									→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
-								</div>
-								<!-- Special instructions -->
-								<div v-if="item.posa_special_instructions"
-									class="text-xs text-blue-500 mt-0.5 pl-4">
-									ℹ {{ item.posa_special_instructions }}
-								</div>
-								<!-- Station badge -->
-								<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
-								<span v-if="showStationBadge && item.preparation_station"
-									class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white dark:text-[color:var(--station-ink)] mt-0.5 ml-4 inline-block self-start"
-									:style="{ backgroundColor: getStationColor(item.preparation_station), '--station-ink': inkOn(getStationColor(item.preparation_station)) }">
-									{{ item.station_name || item.preparation_station }}
-								</span>
-							</div>
-							<!-- Item context menu -->
-							<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
-							<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
-							<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
-							<!-- //// Neoffice — the "Ready" entry takes the dark ramp's green in dark mode (task 46): `text-green-700` on the dark menu was 3.0:1 -->
-							<!-- //// Neoffice — never for a delivered dish (task 42), even if a refresh delivers it while its menu is open -->
-							<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
-								class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
-								:style="menuStyle">
-								<button v-if="item.kds_status !== 'Preparing'"
-									@click.stop="updateItemStatus(item, 'Preparing')"
-									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
-									<span class="w-2 h-2 rounded-full bg-blue-400"></span>
-									{{ kitchenStatusLabel("Preparing") }}
-								</button>
-								<button v-if="item.kds_status !== 'Ready'"
-									@click.stop="updateItemStatus(item, 'Ready')"
-									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 dark:text-ds-success active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
-									<span class="w-2 h-2 rounded-full bg-green-500"></span>
-									{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
-								</button>
-								<button v-if="item.kds_status !== 'Delivered'"
-									@click.stop="updateItemStatus(item, 'Delivered')"
-									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
-									<span class="w-2 h-2 rounded-full bg-gray-400"></span>
-									{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
-								</button>
-							</div>
-						</div>
-					</template>
-					<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
-					<!-- //// Neoffice — dark mode (task 46): the preview of dishes not sent yet is dimmed to 50 %, which on a dark card left it at 2.2:1; 75 % keeps it dimmer than a live dish and at 3:1 or more -->
-					<div v-if="waitingItems.length > 0" class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
-						<h4 class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2 tracking-wider flex items-center gap-1">
-							<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-							{{ __("Coming Next") }}
-						</h4>
-						<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
-							class="py-1.5 opacity-50 dark:opacity-75" data-ticket-line
-							:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
-							<div class="flex justify-between items-start gap-1 px-1 -mx-1">
-								<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
-									<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
-								</span>
-							</div>
-							<div v-if="item.posa_special_instructions"
-								class="text-xs text-blue-400 mt-0.5 pl-4">
-								{{ item.posa_special_instructions }}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- //// Neoffice — the hint that more dishes follow: a short fade over the foot of the dishes, and how many are out of -->
-			<!-- //// sight (task 23). The pill is wholly UNDER the line below the dishes, in room the foot keeps for it (8 px, only while -->
-			<!-- //// it shows): it used to cover the lower right of the dishes, where each dish carries its status, and straddling -->
-			<!-- //// the line still covered 8 badges out of 97 (fix round 1). It takes no touch. One line, or more: two words. -->
-			<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
-				class="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white to-transparent dark:from-gray-800"></div>
-			<span v-if="hiddenCount > 0" data-test="ticket-more"
-				class="pointer-events-none absolute top-full right-3 rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
-				{{ hiddenCount === 1 ? __("+{0} line", [1]) : __("+{0} lines", [hiddenCount]) }}
-			</span>
-		</div>
-
-		<!-- Action Button -->
-		<!-- //// Neoffice — the main buttons are 40 px high on every width (fix round 1): `size="lg"` is the Button's own 40 px. The card -->
-		<!-- //// used to ask for `h-10` beside the Button's default `h-7`, and the later of the two in the stylesheet won: 28 px. -->
-		<div class="flex-shrink-0 p-3 border-t border-gray-100 dark:border-gray-700" :class="{ 'pt-5': hiddenCount > 0 }" data-test="ticket-actions">
-			<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and these buttons forced `text-white` on it: white on near-white, a blank square. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled (a loading button is greyed and keeps the white). Light mode is untouched. -->
+		<!-- Actions -->
+		<!-- //// Neoffice — the main button sits DIRECTLY UNDER the header and never scrolls (task 38a-1, ruling 107): it was at the foot of the card, below the -->
+		<!-- //// dishes, and a long ticket pushed it out of sight. It takes the width, and the 44 px icon of the print button stands at its right when the screen can -->
+		<!-- //// print (task 44 fills it in; `canPrint` is false until then). The buttons are as high as the size chosen says (`--kds-btn-h`), never less than 44 px. -->
+		<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and these buttons forced `text-white` on it: white on near-white, a blank square. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled (a loading button is greyed and keeps the white). Light mode is untouched. -->
+		<div class="flex flex-shrink-0 items-stretch gap-1.5 border-b border-gray-100 px-2 pb-2 pt-0.5 dark:border-gray-700" data-test="ticket-actions">
 			<Button
 				v-if="status === 'Pending'"
 				variant="solid"
 				size="lg"
-				class="w-full font-bold bg-blue-600 active:bg-blue-700 text-white dark:enabled:text-ink-white"
+				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
 				@click="updateStatus('Preparing')"
 				:loading="loading"
 			>
@@ -202,7 +82,7 @@
 				v-if="status === 'Preparing'"
 				variant="solid"
 				size="lg"
-				class="w-full font-bold bg-green-500 active:bg-green-600 text-white dark:enabled:text-ink-white"
+				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold text-white dark:enabled:text-ink-white"
 				@click="updateStatus('Ready')"
 				:loading="loading"
 			>
@@ -213,7 +93,7 @@
 				v-if="status === 'Ready' && !showDeliveredConfirm"
 				variant="outline"
 				size="lg"
-				class="w-full font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
+				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
 				@click="updateStatus('Delivered')"
 				:loading="loading"
 			>
@@ -229,7 +109,153 @@
 					<Button size="sm" variant="solid" @click="confirmDelivered" class="flex-1">{{ __("Confirm") }}</Button>
 				</div>
 			</div>
+
+			<!-- //// Neoffice — the slot of the print button (task 38a-1, ruling 127): a 44 px square that stands at the right of the main button, drawn only when the screen can print a copy of the ticket (task 44 will wire it; no printing happens here) -->
+			<button v-if="canPrint && !showDeliveredConfirm" type="button" data-test="ticket-print"
+				class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"
+				:aria-label="__('Print a copy of this ticket')" :title="__('Print a copy of this ticket')"
+				@click.stop="emit('print', order)">
+				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 9V3h12v6M6 14h12v8H6z" />
+				</svg>
+			</button>
 		</div>
+
+		<!-- Items -->
+		<!-- //// Neoffice — the dishes are the part of the ticket that scrolls (task 23). `ticket-scroll-area` holds the hint that -->
+		<!-- //// more dishes follow (a fade and "+N lines") over the foot of the scrolling body: the hint cannot sit in the body -->
+		<!-- //// itself, it would scroll away with the dishes. -->
+		<div class="flex flex-1 flex-col min-h-0" data-test="ticket-scroll-area">
+			<div class="relative flex flex-1 flex-col min-h-0">
+				<div ref="bodyEl" class="flex-1 min-h-0 overflow-y-auto" :class="TICKET_FRAME.body" data-test="ticket-body"
+					@scroll.passive="onBodyScroll">
+					<div ref="linesEl">
+						<template v-for="(batch, batchIdx) in groupedActiveItems" :key="'batch-' + batchIdx">
+							<!-- Batch separator (show for 2nd batch onwards) -->
+							<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1">
+								<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
+								<span class="text-[9px] font-bold text-orange-500 uppercase tracking-wider whitespace-nowrap">
+									{{ __('Send') }} {{ batchIdx + 1 }}
+								</span>
+								<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
+							</div>
+							<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
+								class="relative" data-ticket-line
+								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+								<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
+								<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
+								<!-- //// Neoffice — a DELIVERED dish is inert (task 42): what is done is done, so it is no touch target (no pointer, no pressed -->
+								<!-- //// state, no menu). Its fade and its strike-through sit HERE, on the content of the dish, never on the wrapper above: the -->
+								<!-- //// wrapper holds the status menu of a dish that has one, and an `opacity` makes a stacking context of its own, which -->
+								<!-- //// trapped the menu's z-index, faded the menu to 40 % and painted it under the dishes after it. -->
+								<div class="flex flex-col justify-center py-1.5 rounded px-1 -mx-1"
+									:class="[
+										TICKET_FRAME.line,
+										isDelivered(item)
+											? 'cursor-default opacity-40 line-through'
+											: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
+									]"
+									data-test="ticket-line"
+									@click="onLineTap(item, $event)">
+									<!-- Item line: qty x name + item status badge -->
+									<div class="flex justify-between items-start gap-1">
+										<span class="text-gray-900 dark:text-gray-100">
+											<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+										</span>
+										<!-- //// Neoffice — no `cursor-pointer` of its own (task 42): the pill takes the dish's cursor, so a delivered dish's has none -->
+										<span v-if="item.kds_status"
+											class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+											:class="itemStatusClass(item.kds_status)">
+											{{ kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway }) }}
+										</span>
+									</div>
+									<!-- Modifiers -->
+									<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
+										class="text-xs text-gray-400 mt-0.5 pl-4">
+										→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
+									</div>
+									<!-- Special instructions -->
+									<div v-if="item.posa_special_instructions"
+										class="text-xs text-blue-500 mt-0.5 pl-4">
+										ℹ {{ item.posa_special_instructions }}
+									</div>
+									<!-- Station badge -->
+									<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
+									<span v-if="showStationBadge && item.preparation_station"
+										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white dark:text-[color:var(--station-ink)] mt-0.5 ml-4 inline-block self-start"
+										:style="{ backgroundColor: getStationColor(item.preparation_station), '--station-ink': inkOn(getStationColor(item.preparation_station)) }">
+										{{ item.station_name || item.preparation_station }}
+									</span>
+								</div>
+								<!-- Item context menu -->
+								<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
+								<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
+								<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
+								<!-- //// Neoffice — the "Ready" entry takes the dark ramp's green in dark mode (task 46): `text-green-700` on the dark menu was 3.0:1 -->
+								<!-- //// Neoffice — never for a delivered dish (task 42), even if a refresh delivers it while its menu is open -->
+								<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
+									class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
+									:style="menuStyle">
+									<button v-if="item.kds_status !== 'Preparing'"
+										@click.stop="updateItemStatus(item, 'Preparing')"
+										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-blue-400"></span>
+										{{ kitchenStatusLabel("Preparing") }}
+									</button>
+									<button v-if="item.kds_status !== 'Ready'"
+										@click.stop="updateItemStatus(item, 'Ready')"
+										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 dark:text-ds-success active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-green-500"></span>
+										{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
+									</button>
+									<button v-if="item.kds_status !== 'Delivered'"
+										@click.stop="updateItemStatus(item, 'Delivered')"
+										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
+										<span class="w-2 h-2 rounded-full bg-gray-400"></span>
+										{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
+									</button>
+								</div>
+							</div>
+						</template>
+						<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
+						<!-- //// Neoffice — dark mode (task 46): the preview of dishes not sent yet is dimmed to 50 %, which on a dark card left it at 2.2:1; 75 % keeps it dimmer than a live dish and at 3:1 or more -->
+						<div v-if="waitingItems.length > 0" class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
+							<h4 class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2 tracking-wider flex items-center gap-1">
+								<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+								{{ __("Coming Next") }}
+							</h4>
+							<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
+								class="py-1.5 opacity-50 dark:opacity-75" data-ticket-line
+								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
+								<div class="flex justify-between items-start gap-1 px-1 -mx-1">
+									<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
+										<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+									</span>
+								</div>
+								<div v-if="item.posa_special_instructions"
+									class="text-xs text-blue-400 mt-0.5 pl-4">
+									{{ item.posa_special_instructions }}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- //// Neoffice — the hint that more dishes follow (task 23, redone in task 38a-1): a short fade over the foot of the dishes, which takes no touch, -->
+				<!-- //// and below the dishes a thin strip that says how many are out of sight. The strip moved from the foot of the card, where it sat under the main -->
+				<!-- //// button, to its own line under the dishes: the button is at the top now (ruling 107), so nothing else is at the bottom of the card, and the -->
+				<!-- //// strip exists only while dishes are hidden. It is no longer drawn over the dishes at all (it once covered the status of the last one). -->
+				<div v-if="hiddenCount > 0" aria-hidden="true" data-test="ticket-more-fade"
+					class="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white to-transparent dark:from-gray-800"></div>
+			</div>
+			<div v-if="hiddenCount > 0" data-test="ticket-more-strip"
+				class="flex h-6 flex-shrink-0 items-center justify-end border-t border-gray-100 px-3 dark:border-gray-700">
+				<span data-test="ticket-more"
+					class="pointer-events-none rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
+					{{ hiddenCount === 1 ? __("+{0} line", [1]) : __("+{0} lines", [hiddenCount]) }}
+				</span>
+			</div>
+		</div>
+
 	</div>
 </template>
 
@@ -242,6 +268,8 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusOf } from "@/utils/kitchenBands"
 //// Neoffice — a badge says the state, a button says the action (task 38a-1, ruling 113)
 import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
+//// Neoffice — the room's short code on the header's line (task 38a-1)
+import { roomCode } from "@/utils/kitchenRoomCode"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
@@ -282,9 +310,27 @@ const props = defineProps({
 		type: Function,
 		default: null,
 	},
+	//// Neoffice — the room of the table, as the restaurant names it (« Salle 1 »): the header shows its short code (task 38a-1,
+	//// ruling 126). The screen knows the rooms, the order only carries the link; none, no chip.
+	roomName: {
+		type: String,
+		default: "",
+	},
+	//// Neoffice — write the ticket's state beside its timer (placement A of ruling 126), for a screen that MIXES states. A band that
+	//// names its state does not: the left border and the band's title carry it, and the header gains a line's worth of room.
+	showState: {
+		type: Boolean,
+		default: false,
+	},
+	//// Neoffice — the screen can print a copy of the ticket (task 44, ruling 127): the 44 px print button stands at the right of the
+	//// main button. False until that task wires it, so nothing is drawn.
+	canPrint: {
+		type: Boolean,
+		default: false,
+	},
 })
 
-const emit = defineEmits(["status-updated"])
+const emit = defineEmits(["status-updated", "print"])
 const { showError } = useToast()
 const restaurantStore = useRestaurantStore()
 const loading = ref(false)
@@ -292,6 +338,21 @@ const showDeliveredConfirm = ref(false)
 const activeItemMenu = ref(null)
 //// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
 const isTakeaway = computed(() => !!props.order.is_takeaway)
+
+//// Neoffice — what the header's line shows besides the table (task 38a-1, rulings 122, 125, 126). The room's code is derived here for now
+//// (utils/kitchenRoomCode; the server will send its own, task 38b); a takeaway has no room, its label says it. The number is the ticket's
+//// `ticket_no` when the order carries one, for a takeaway the counter it has had until then; the Sales Invoice's own name is NEVER a
+//// ticket number (a draft gets it at its first save, in an order nobody asked for), so an order with none shows no number at all.
+const roomChip = computed(() =>
+	isTakeaway.value ? "" : roomCode(props.roomName),
+)
+const ticketNumber = computed(() =>
+	String(
+		props.order.ticket_no ||
+			(isTakeaway.value ? props.order.takeaway_number : "") ||
+			"",
+	),
+)
 
 // Separate items into active (sent to kitchen) vs waiting (not yet sent)
 const activeItems = computed(() =>

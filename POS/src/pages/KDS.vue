@@ -70,6 +70,7 @@
 					:stations="stations"
 					:show-station-badge="!selectedStation"
 					:station="selectedStation"
+					:rooms="areas"
 					@status-updated="loadOrders"
 				/>
 				<KitchenBand
@@ -81,6 +82,7 @@
 					:stations="stations"
 					:show-station-badge="!selectedStation"
 					:station="selectedStation"
+					:rooms="areas"
 					@status-updated="loadOrders"
 				/>
 			</div>

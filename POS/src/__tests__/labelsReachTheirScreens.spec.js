@@ -299,7 +299,10 @@ describe("a kitchen status", () => {
 				},
 			],
 		}
-		const wrapper = mountWith(KDSOrderCard, { props: { order } })
+		// `showState`: a card in a band does not write its state in its header (task 38a-1), a screen that mixes states does
+		const wrapper = mountWith(KDSOrderCard, {
+			props: { order, showState: true },
+		})
 		await flushPromises()
 
 		const text = wrapper.text()

@@ -58,6 +58,7 @@
 						:show-station-badge="showStationBadge"
 						:station="station"
 						:refresh="refresh"
+						:room-name="roomNameOf(order)"
 					/>
 				</div>
 			</div>
@@ -110,8 +111,15 @@ const props = defineProps({
 	showStationBadge: { type: Boolean, default: true },
 	// The station the screen is opened on, none for all of them: the main button of a ticket then acts on that station's dishes
 	station: { type: String, default: null },
+	//// Neoffice — the rooms of the restaurant, `{ name, area_name }` (task 38a-1, ruling 126): an order carries the link to its room (`area`),
+	//// the header of its card shows the room's short code, which comes from the room's name
+	rooms: { type: Array, default: () => [] },
 })
 const emit = defineEmits(["status-updated"])
+
+//// Neoffice — the name of the room an order sits in, "" for a takeaway or a room the screen does not know (the card then draws no chip)
+const roomNameOf = (order) =>
+	props.rooms.find((room) => room.name === order.area)?.area_name || ""
 
 // What each card calls once the server has answered (a function of the band, which is still there when the card is not)
 const refresh = () => emit("status-updated")

@@ -545,7 +545,9 @@ describe("a ticket on its way from one band to the other, with the real cards (f
 		)
 		expect(card.classes()).toContain("border-blue-400")
 		expect(card.classes()).not.toContain("border-yellow-400")
-		expect(card.get('[data-test="ticket-status"]').text()).toBe("Preparing")
+		// The state is not written in a band's header any more (task 38a-1): the card names it on its root, the band's title says it
+		expect(card.attributes("data-state")).toBe("Preparing")
+		expect(card.find('[data-test="ticket-status"]').exists()).toBe(false)
 		expect(card.get('[data-test="ticket-actions"] button').text()).toBe(
 			"Mark ready",
 		)
