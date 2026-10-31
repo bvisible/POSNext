@@ -29,14 +29,14 @@
 		<!-- //// carries one (the server fills it in with the ticket counter), and for a takeaway the counter it has had until then. The state is NOT -->
 		<!-- //// written here: the left border and the band the card stands in carry it. `showState` writes it beside the timer for a screen that mixes -->
 		<!-- //// the states (placement A of ruling 126). The second timer, the table's total time, shows only in the large sizes. -->
-		<div class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header]" data-test="ticket-header">
+		<div ref="headerEl" class="flex-shrink-0 border-b border-gray-100 dark:border-gray-700" :class="[TICKET_FRAME.header, KITCHEN_FRAME.header]" data-test="ticket-header">
 			<div class="flex items-center justify-between gap-x-1.5">
-				<div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-test="ticket-ref">
+				<div ref="refEl" class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-test="ticket-ref">
 					<span v-if="roomChip" data-test="ticket-room"
 						class="rounded-md bg-gray-100 px-1.5 text-[length:var(--kds-fs-ref,11px)] font-semibold leading-snug tracking-wide text-gray-600 dark:bg-gray-700">
 						{{ roomChip }}
 					</span>
-					<h3 data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="[TICKET_FRAME.title, KITCHEN_FRAME.title]">
+					<h3 ref="titleEl" data-test="ticket-title" class="whitespace-nowrap text-gray-900 dark:text-white" :class="[TICKET_FRAME.title, KITCHEN_FRAME.title]">
 						<template v-if="order.is_takeaway">{{ __("Takeaway") }}</template>
 						<template v-else>{{ order.table_display_name || order.restaurant_table }}</template>
 					</h3>
@@ -50,7 +50,7 @@
 						data-test="ticket-status" :class="statusBadgeClass">
 						{{ kitchenStatusLabel(status, { takeaway: isTakeaway }) }}
 					</span>
-					<span class="font-mono tabular-nums text-gray-400 whitespace-nowrap [display:var(--kds-tt-d,none)] text-[length:var(--kds-fs-tt,10px)]"
+					<span v-show="!totalGivesWay" class="font-mono tabular-nums text-gray-400 whitespace-nowrap [display:var(--kds-tt-d,none)] text-[length:var(--kds-fs-tt,10px)]"
 						data-test="ticket-total-time" :title="__('Total time')">
 						{{ totalTime }}
 					</span>
@@ -269,7 +269,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
@@ -550,6 +550,24 @@ function onBodyScroll() {
 	activeItemMenu.value = null
 	measureHidden()
 }
+//// Neoffice — the second timer gives way before the number drops to a second line (task 38a-1, ruling 125 and the mockup): on a narrow card, or in a big
+//// size, the header's one line is the room's code, the table, the number, then the two timers; when they do not all fit, the table's total time (the one that
+//// is not needed to cook) is the first to go, so that the number stays beside the table. It is measured on the screen whenever the header's size changes.
+const headerEl = ref(null)
+const refEl = ref(null)
+const titleEl = ref(null)
+const totalGivesWay = ref(false)
+// Each run shows the second timer, measures with a forced layout, and hides it if the line wrapped: the DOM is patched in microtasks, so the browser
+// only ever paints the final state, and the observer sees the same size as before and does not call again
+async function fitHeader() {
+	if (!headerEl.value || !refEl.value || !titleEl.value) return
+	totalGivesWay.value = false
+	await nextTick()
+	const line = titleEl.value?.offsetHeight || 0
+	if (line > 0 && refEl.value && refEl.value.offsetHeight > line * 1.5)
+		totalGivesWay.value = true
+}
+
 let sizeObserver = null
 watch(() => props.order, measureHidden, { deep: true, flush: "post" })
 
@@ -600,10 +618,18 @@ onMounted(() => {
 	//// Neoffice — measure the foot of the ticket now, and again whenever its body or its dishes change size (task 23)
 	measureHidden()
 	if (typeof ResizeObserver !== "undefined") {
-		sizeObserver = new ResizeObserver(() => measureHidden())
+		//// Neoffice — the header is fitted again whenever its width or the text size changes (task 38a-1): the same observer, one for the card
+		sizeObserver = new ResizeObserver(() => {
+			measureHidden()
+			fitHeader()
+		})
 		if (bodyEl.value) sizeObserver.observe(bodyEl.value)
 		if (linesEl.value) sizeObserver.observe(linesEl.value)
+		if (headerEl.value) sizeObserver.observe(headerEl.value)
 	}
+	fitHeader()
+	//// Neoffice — the fonts arrive after the first layout: the widths change with them (task 38a-1)
+	document.fonts?.ready?.then(() => fitHeader())
 })
 
 onUnmounted(() => {

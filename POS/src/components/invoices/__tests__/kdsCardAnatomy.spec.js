@@ -8,6 +8,7 @@
  */
 import { mount } from "@vue/test-utils"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { nextTick } from "vue"
 
 const call = vi.hoisted(() => vi.fn(async () => ({ status: "success" })))
 const restaurantStore = vi.hoisted(() => ({ runnerEnabled: false }))
@@ -33,6 +34,7 @@ let opened = []
 afterEach(() => {
 	opened.forEach((wrapper) => wrapper.unmount())
 	opened = []
+	vi.restoreAllMocks()
 })
 
 function order(extra = {}, statuses = ["Preparing", "Pending"]) {
@@ -286,5 +288,46 @@ describe("the bottom of the card", () => {
 		const last = root.lastElementChild
 		expect(last.getAttribute("data-test")).toBe("ticket-scroll-area")
 		expect(last.querySelector("button")).toBeNull()
+	})
+})
+
+describe("the second timer gives way before the number drops to a second line", () => {
+	/** jsdom has no layout: the boxes of the header's parts are given by hand. */
+	function boxes({ line = 24, ref = 24 } = {}) {
+		vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(
+			function height() {
+				const name = this.getAttribute?.("data-test")
+				if (name === "ticket-title") return line
+				if (name === "ticket-ref") return ref
+				return 0
+			},
+		)
+		vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(320)
+	}
+
+	it("is hidden when the room, the table and the number need a second line, so that the number stays beside the table", async () => {
+		boxes({ line: 24, ref: 48 })
+		const wrapper = show({
+			roomName: "Salle 1",
+			order: order({ ticket_no: "0007" }),
+		})
+		await nextTick()
+		await nextTick()
+
+		expect(part(wrapper, "ticket-total-time").element.style.display).toBe(
+			"none",
+		)
+	})
+
+	it("stays when the line fits: nothing is hidden that has room", async () => {
+		boxes({ line: 24, ref: 24 })
+		const wrapper = show({
+			roomName: "Salle 1",
+			order: order({ ticket_no: "0007" }),
+		})
+		await nextTick()
+		await nextTick()
+
+		expect(part(wrapper, "ticket-total-time").element.style.display).toBe("")
 	})
 })
