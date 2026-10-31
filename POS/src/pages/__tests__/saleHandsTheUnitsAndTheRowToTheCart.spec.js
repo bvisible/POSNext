@@ -111,6 +111,59 @@ describe("the sale page's template binds the cart's events to the store, row inc
 	})
 })
 
+// A quantity typed in the field of a sent line is applied when the field is left. What pays, validates, prints or sends from the cart
+// commits it first, and the page's shortcuts run from the focused field (round 3). The cart's own buttons are specified by
+// mounting it; here the page's side, which is too big to mount.
+describe("the sale page commits the quantity typed in a field before it leaves the cart", () => {
+	const firstStatement = (body, name) => {
+		const open = body.indexOf("{", body.indexOf(")"))
+		const code = body
+			.slice(open + 1)
+			.replace(/\/\/.*$/gm, "")
+			.trim()
+		expect(code.startsWith("commitTypedQuantity();"), `${name} starts by committing`).toBe(true)
+	}
+
+	it("reaches the cart through its handle", () => {
+		expect(bodyOf(page, "commitTypedQuantity")).toMatch(
+			/invoiceCartRef\.value\?\.commitTypedQuantity\?\.\(\)/,
+		)
+		expect(cart).toMatch(/commitTypedQuantity, \/\/\/\/ Neoffice/)
+	})
+
+	it("starts the payment by committing it", () => {
+		firstStatement(bodyOf(page, "handleProceedToPayment"), "handleProceedToPayment")
+	})
+
+	it("has F9 and Ctrl/Cmd+Enter run that payment handler", () => {
+		expect(page).toMatch(/F9: \(\) => handleProceedToPayment\(\)/)
+		expect(page).toMatch(/"Mod\+Enter": \(\) => handleProceedToPayment\(\)/)
+	})
+
+	it("starts the provisional ticket by committing it", () => {
+		firstStatement(bodyOf(page, "handlePrintProvisionalTicket"), "handlePrintProvisionalTicket")
+	})
+
+	it("starts the send of a single line by committing it", () => {
+		firstStatement(bodyOf(page, "handleSendSingleItem"), "handleSendSingleItem")
+	})
+
+	it("opens the kitchen dialog only through the cart's button, which commits first", () => {
+		expect(page).toMatch(/@open-kitchen-dialog="kitchenDialogRef\?\.open\(\)"/)
+		for (const name of [
+			"openKitchenDialog",
+			"printProvisionalTicket",
+			"handleProceedToPayment",
+		]) {
+			expect(bodyOf(cart, name), name).toMatch(/commitTypedQuantity\(\)/)
+		}
+		// The send button of a single line commits in its template, before it hands over the row
+		expect(cart).toMatch(
+			/commitTypedQuantity\(\);\s*\$emit\('send-item-to-kitchen', cartRowOf\(item\)\)/,
+		)
+	})
+})
+
 describe("the cart hands the line it means to the store", () => {
 	it("asks for a quantity by row: the stepper, the typed quantity and the rounding", () => {
 		expect(bodyOf(cart, "setQuantityOf")).toMatch(
@@ -126,7 +179,7 @@ describe("the cart hands the line it means to the store", () => {
 			expect(bodyOf(cart, name), name).toMatch(/setQuantityOf\(item, /)
 		}
 		expect(bodyOf(cart, "updateQuantity")).toMatch(/applyTypedQuantity\(item, value\)/)
-		expect(bodyOf(cart, "handleQuantityBlur")).toMatch(/applyTypedQuantity\(item, typed\)/)
+		expect(bodyOf(cart, "handleQuantityBlur")).toMatch(/applyTypedQuantity\(item, typed\.text\)/)
 	})
 
 	it("asks for a removal by row, wherever a quantity drops to nothing", () => {

@@ -2578,6 +2578,12 @@ const { isRTL } = useLocale();
 // Component refs
 const itemsSelectorRef = ref(null);
 const invoiceCartRef = ref(null);
+//// Neoffice — the quantity typed in a field of the cart that is still focused is not in the cart yet (it is applied when the field is left):
+//// everything that pays, sends or prints from the cart commits it first. F9 and Ctrl/Cmd+Enter run from that field, and a tap on a
+//// phone does not always leave it (NeoRestau lot 1, task 22, fix round 3).
+function commitTypedQuantity() {
+	invoiceCartRef.value?.commitTypedQuantity?.();
+}
 const offersDialogRef = ref(null);
 //// Neoffice — handles the page needs on children that upstream does not have: the
 //// send-to-kitchen dialog (c7f6932c), the modifiers dialog (4df0caf1), the price numpad
@@ -3970,6 +3976,8 @@ async function handleItemsSentToKitchen() {
 }
 
 async function handleSendSingleItem(item) {
+	//// Neoffice — see commitTypedQuantity (fix round 3).
+	commitTypedQuantity();
 	// Quick-send a single Waiting item to the kitchen
 	//// Neoffice — was a lookup by item_code + UOM, which addressed the FIRST line carrying
 	//// them. The row arrives here straight out of the cart list (useCartSort.sortedItems only
@@ -4354,6 +4362,8 @@ function handleEditCustomer(customer) {
 }
 
 function handleProceedToPayment() {
+	//// Neoffice — the cart as the cashier sees it, see commitTypedQuantity (fix round 3). F9 and Ctrl/Cmd+Enter come here.
+	commitTypedQuantity();
 	if (cartStore.isEmpty) {
 		showWarning(__("Please add items to cart before proceeding to payment"));
 		return;
@@ -5792,6 +5802,8 @@ async function handlePrintInvoice(invoiceData) {
 //// final invoice (71050faf, 2026-03-25 "add provisional ticket print button in
 //// restaurant table view"); total is the CHF-rounded one (4fdb5df4, 2026-04-04).
 function handlePrintProvisionalTicket() {
+	//// Neoffice — the ticket shows the quantity typed in a field still focused, see commitTypedQuantity (fix round 3).
+	commitTypedQuantity();
 	try {
 		printProvisionalTicket({
 			tableName: cartStore.restaurantTable?.table_name || cartStore.restaurantTable?.name,

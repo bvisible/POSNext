@@ -82,6 +82,7 @@ describe("a line that has left for the kitchen never absorbs a new unit", () => 
 	beforeEach(() => {
 		till.enforcesStock = false
 		toast.showError.mockClear()
+		toast.showWarning.mockClear()
 		setActivePinia(createPinia())
 		cart = usePOSCartStore()
 		cart.addItem({ ...SENT_WINE }, 4)
@@ -663,6 +664,134 @@ describe("a line that has left for the kitchen never absorbs a new unit", () => 
 			cart.updateItemQuantity("wine", 2, "Unit", line)
 
 			expect(line.quantity).toBe(1)
+		})
+	})
+
+	// ------------------------------------------------------------------------------------------------------------------
+	// Fix round 3
+	// ------------------------------------------------------------------------------------------------------------------
+
+	describe("a row that the cart no longer holds says so (fix round 3)", () => {
+		const STALE = /no longer in the cart/
+
+		// The guest-order refresh replaces the cart while the details dialog is open: the row it was opened on is gone
+		const goneRow = () => {
+			const row = cart.invoiceItems[0]
+			cart.invoiceItems.splice(0)
+			cart.addItem({ ...SENT_WINE }, 4)
+			return row
+		}
+
+		it("the update of the details dialog tells the cashier, once, although the cart and its parent both apply it", async () => {
+			const row = goneRow()
+			const update = { ...row, quantity: 5 }
+
+			const first = await cart.updateItemDetails("wine", update, "Unit", row)
+			const second = await cart.updateItemDetails("wine", update, null, row)
+
+			expect([first, second]).toEqual([false, false])
+			expect(toast.showWarning).toHaveBeenCalledTimes(1)
+			expect(toast.showWarning.mock.calls[0][0]).toMatch(STALE)
+			expect(toast.showError).not.toHaveBeenCalled()
+			expect(quantities(cart)).toEqual([4])
+		})
+
+		it("a later update, made with a new object, is told again", async () => {
+			const row = goneRow()
+
+			await cart.updateItemDetails("wine", { ...row, quantity: 5 }, "Unit", row)
+			await cart.updateItemDetails("wine", { ...row, quantity: 6 }, "Unit", row)
+
+			expect(toast.showWarning).toHaveBeenCalledTimes(2)
+		})
+
+		it("a change that was applied and merged its row away is not reported by its second pass", async () => {
+			cart.invoiceItems.splice(0)
+			const by = (uom, quantity, kds_status) => ({
+				...WINE_IN_THE_GRID,
+				uom,
+				conversion_factor: uom === "Case" ? 6 : 1,
+				item_uoms: [{ uom: "Case", conversion_factor: 6 }],
+				kds_status,
+				quantity,
+			})
+			cart.addItem(by("Unit", 1, ""), 1)
+			cart.addItem(by("Case", 1, ""), 1)
+			const [waiting] = cart.invoiceItems
+			const update = { ...waiting, uom: "Case" }
+
+			await cart.updateItemDetails("wine", update, "Unit", waiting)
+			await cart.updateItemDetails("wine", update, null, waiting)
+
+			expect(toast.showWarning).not.toHaveBeenCalled()
+		})
+
+		it("a quantity asked for a row that is gone goes to no other line, and says so", () => {
+			const row = goneRow()
+
+			cart.updateItemQuantity("wine", 9, "Unit", row)
+
+			expect(quantities(cart)).toEqual([4])
+			expect(toast.showWarning).toHaveBeenCalledTimes(1)
+			expect(toast.showWarning.mock.calls[0][0]).toMatch(STALE)
+		})
+
+		it("a quantity asked with no row still finds its line by item and unit, silently", () => {
+			cart.updateItemQuantity("wine", 3, "Unit")
+
+			expect(quantities(cart)).toEqual([3])
+			expect(toast.showWarning).not.toHaveBeenCalled()
+		})
+	})
+
+	describe("a recalled draft keeps the price set by hand (fix round 3)", () => {
+		// A draft, a held ticket and an offline invoice come back through addItem with the flag their line was saved with
+		const recalled = (extra = {}) => ({
+			...WINE_IN_THE_GRID,
+			rate: 25,
+			price_list_rate: 29,
+			is_rate_manually_edited: 1,
+			original_rate: 29,
+			...extra,
+		})
+
+		beforeEach(() => {
+			cart.invoiceItems.splice(0)
+		})
+
+		it("bills the price set by hand, not the list price", () => {
+			cart.addItem(recalled(), 2)
+
+			expect(cart.invoiceItems[0]).toMatchObject({
+				rate: 25,
+				price_list_rate: 29,
+				is_rate_manually_edited: 1,
+				original_rate: 29,
+				amount: 50,
+			})
+		})
+
+		it("keeps the discount in percent the line was saved with", () => {
+			cart.addItem(recalled({ discount_percentage: 10 }), 2)
+
+			expect(cart.invoiceItems[0]).toMatchObject({ discount_percentage: 10, amount: 45 })
+		})
+
+		it("does not merge two recalled lines that were priced differently", () => {
+			cart.addItem(recalled(), 1)
+			cart.addItem(recalled({ rate: 27 }), 1)
+
+			expect(cart.invoiceItems.map((line) => [line.rate, line.quantity])).toEqual([
+				[25, 1],
+				[27, 1],
+			])
+		})
+
+		it("leaves a line saved without a hand-set price at the list price", () => {
+			cart.addItem({ ...WINE_IN_THE_GRID, rate: 25, price_list_rate: 29 }, 1)
+
+			expect(cart.invoiceItems[0]).toMatchObject({ rate: 29, amount: 29 })
+			expect(cart.invoiceItems[0].is_rate_manually_edited).toBeUndefined()
 		})
 	})
 })

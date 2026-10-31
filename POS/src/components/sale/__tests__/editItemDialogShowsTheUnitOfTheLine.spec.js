@@ -351,3 +351,58 @@ describe("« Edit Item Details » for a line that knows no unit at all", () => {
 		expect(line.uom).toBeFalsy()
 	})
 })
+
+// Fix round 3: a double tap on « Update Item » (the leave animation of the dialog leaves the button there for a moment) sent the same
+// change twice, each time as a new object, and a raise of a sent line added its units twice.
+describe("« Update Item » is confirmed once per opening (task 22, fix round 3)", () => {
+	const updateButton = (wrapper) =>
+		wrapper.findAll("button").find((button) => button.text() === "Update Item")
+
+	it("a second tap on the button sends nothing more", async () => {
+		const dialog = await open(lineFromCard(WINE))
+		const update = updateButton(dialog.wrapper)
+
+		await update.trigger("click")
+		await update.trigger("click")
+
+		expect(dialog.wrapper.emitted("update-item")).toHaveLength(1)
+	})
+
+	it("nor does a confirmation that does not come from the button (the keyboard)", async () => {
+		const dialog = await open(lineFromCard(WINE))
+
+		dialog.wrapper.vm.updateItem()
+		dialog.wrapper.vm.updateItem()
+
+		expect(dialog.wrapper.emitted("update-item")).toHaveLength(1)
+	})
+
+	it("the button is disabled once it has been tapped", async () => {
+		const dialog = await open(lineFromCard(WINE))
+		const update = updateButton(dialog.wrapper)
+
+		await update.trigger("click")
+
+		expect(update.attributes("disabled")).toBeDefined()
+	})
+
+	it("the dialog opened again on a line confirms again", async () => {
+		const dialog = await open(lineFromCard(WINE))
+		await updateButton(dialog.wrapper).trigger("click")
+
+		await dialog.wrapper.setProps({ item: { ...cart.invoiceItems.at(-1) } })
+		await flushPromises()
+		await updateButton(dialog.wrapper).trigger("click")
+
+		expect(dialog.wrapper.emitted("update-item")).toHaveLength(2)
+	})
+
+	it("a change refused for a missing price does not use up the confirmation", async () => {
+		const line = lineFromCard({ ...WINE, price: 0, default_price: 0 })
+		const dialog = await open(line)
+
+		await updateButton(dialog.wrapper).trigger("click")
+		expect(dialog.wrapper.emitted("update-item")).toBeUndefined()
+		expect(updateButton(dialog.wrapper).attributes("disabled")).toBeUndefined()
+	})
+})

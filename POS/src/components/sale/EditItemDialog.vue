@@ -540,11 +540,12 @@
 									<Button variant="subtle" @click="cancel">{{
 										__("Cancel")
 									}}</Button>
+									<!-- //// Neoffice — one confirmation per opening: a double tap sent the change twice (NeoRestau lot 1, task 22, fix round 3) -->
 									<Button
 										variant="solid"
 										@click="updateItem"
 										:disabled="
-											isLockedFreeItem || !hasStock || isCheckingStock
+											isLockedFreeItem || !hasStock || isCheckingStock || alreadyConfirmed
 										"
 									>
 										<span v-if="isLockedFreeItem">{{
@@ -850,11 +851,17 @@ async function loadSalesPersons() {
 	salesPersons.value = await loadSalesPersonsForProfile(settingsStore.settings?.pos_profile);
 }
 
+//// Neoffice — the change of this opening has been sent (NeoRestau lot 1, task 22, fix round 3). The dialog fades out after the first tap
+//// and its button stays for a moment: a second tap sent the same change again, as a new object, and a raise of a sent line added its
+//// units twice. Set when the change is emitted, cleared when the dialog is given a line.
+const alreadyConfirmed = ref(false);
+
 // Initialize local state when item changes
 watch(
 	() => props.item,
 	(newItem) => {
 		if (newItem) {
+			alreadyConfirmed.value = false; //// Neoffice — a line is given: one confirmation again (fix round 3).
 			isInitializingItem.value = true;
 			//// Neoffice — whatever added the line, it is read with the units it can be derived to have, and the select
 			//// starts on the unit the line is in: upstream fell back to « Nos », a unit the item may not have, and
@@ -1227,6 +1234,8 @@ function formatCurrency(amount) {
 }
 
 function updateItem() {
+	//// Neoffice — one confirmation per opening, see alreadyConfirmed (NeoRestau lot 1, task 22, fix round 3).
+	if (alreadyConfirmed.value) return;
 	if (isLockedFreeItem.value) {
 		showError(__("Free promotional items cannot be edited"));
 		return;
@@ -1355,6 +1364,8 @@ function updateItem() {
 		}
 	}
 
+	//// Neoffice — the change of this opening is sent now, see alreadyConfirmed (fix round 3).
+	alreadyConfirmed.value = true;
 	emit("update-item", updatedItem);
 	show.value = false;
 }

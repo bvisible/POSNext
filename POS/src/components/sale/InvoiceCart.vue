@@ -1218,13 +1218,18 @@
 			</div>
 
 			<div v-else ref="cartListRef" class="flex flex-col gap-1">
+				<!-- //// Neoffice — the key names the ROW too: the same dish and unit can sit on two lines (the one the kitchen has, the -->
+				<!-- //// one that waits), and a key they shared let a field's focus and the quantity typed into it land on the other -->
+				<!-- //// row (NeoRestau lot 1, task 22, fix round 3). -->
 				<template
 					v-for="item in displayCartItems"
 					:key="
 						item.item_code +
 						'-' +
 						(item.uom || '') +
-						(item.is_free_item ? '-free' : '')
+						(item.is_free_item ? '-free' : '') +
+						'-' +
+						rowKeyOf(item)
 					"
 				>
 					<!-- Free gift: its own mini line under the line that earned it, no quantity controls -->
@@ -1510,12 +1515,13 @@
 										>
 											<FeatherIcon name="minus" class="w-4 h-4" />
 										</button>
-										<!-- //// Neoffice — @blur hands over its event: a sent line shows its quantity again when the field is left unreadable (NeoRestau lot 1, task 22, fix round 2) -->
+										<!-- //// Neoffice — @blur hands over its event: a sent line shows its quantity again when the field is left unreadable (NeoRestau lot 1, task 22, fix round 2); Escape drops what was typed (fix round 3) -->
 										<input
 											:value="formatQuantity(getDisplayQuantity(item))"
 											@input="updateQuantity(item, $event.target.value)"
 											@blur="handleQuantityBlur(item, $event)"
 											@keydown.enter="$event.target.blur()"
+											@keydown.esc="cancelTypedQuantity(item, $event)"
 											type="text"
 											inputmode="decimal"
 											dir="ltr"
@@ -1599,7 +1605,10 @@
 									<button
 										v-if="cartStore.restaurantTable && item.kds_status === 'Waiting'"
 										type="button"
-										@click="$emit('send-item-to-kitchen', cartRowOf(item))"
+										@click="
+											commitTypedQuantity();
+											$emit('send-item-to-kitchen', cartRowOf(item));
+										"
 										class="ms-auto w-10 h-10 max-[1100px]:w-11 max-[1100px]:h-11 flex items-center justify-center rounded-md text-purple-600 hover:text-purple-800 hover:bg-purple-50 touch-manipulation"
 										:aria-label="__('Send to kitchen')"
 										:title="__('Send to kitchen')"
@@ -1833,9 +1842,10 @@
 				class="flex gap-1.5"
 			>
 				<!-- Send to Kitchen Button (Primary - green) -->
+				<!-- //// Neoffice — the quantity typed in a field that is still focused is committed first (fix round 3). -->
 				<button
 					type="button"
-					@click="$emit('open-kitchen-dialog')"
+					@click="openKitchenDialog"
 					:disabled="!hasSendableItems"
 					:class="[
 						'flex-1 py-2.5 px-3 rounded-neo-md font-bold text-xs text-white transition-all flex items-center justify-center touch-manipulation',
@@ -1898,9 +1908,10 @@
 				</button>
 
 				<!-- Print Provisional Ticket Button (compact - gray) -->
+				<!-- //// Neoffice — the ticket shows the quantity typed in a field that is still focused (fix round 3). -->
 				<button
 					type="button"
-					@click="$emit('print-provisional-ticket')"
+					@click="printProvisionalTicket"
 					:disabled="items.length === 0"
 					:class="[
 						'w-10 py-2.5 rounded-neo-md text-white transition-all flex items-center justify-center touch-manipulation',
@@ -2038,7 +2049,7 @@ import { useCustomerSearchStore } from "@/stores/customerSearch";
 import { useRestaurantStore } from "@/stores/restaurant";
 import { isLightColor } from "@/utils/itemColors";
 //// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
-import { cartRowOf } from "@/utils/cartRow";
+import { cartRowOf, rowKeyOf } from "@/utils/cartRow";
 //// Neoffice — which lines have left for the kitchen: their typed quantity waits for the end of the typing (NeoRestau lot 1, task 22, fix round 2)
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
 //// Neoffice — the badge of a dish sent to the kitchen shows its status through kitchenStatusLabel (NeoRestau lot 1, task 9)
@@ -2079,6 +2090,9 @@ const restaurantStore = useRestaurantStore(); // Pinia store for restaurant feat
 const { formatQuantity, formatDate } = useFormatters(); // Quantity and date formatting utilities
 
 function handleProceedToPayment() {
+	//// Neoffice — the payment is made on the cart as the cashier sees it: the quantity typed in a field that is still focused is
+	//// committed first (NeoRestau lot 1, task 22, fix round 3).
+	commitTypedQuantity();
 	//// Neoffice — [R] added: helpers the restaurant cart needs and upstream has no use
 	//// for. formatModifiers renders the JSON stored on the invoice line by the modifier
 	//// dialog, and the two station helpers resolve a station name to its display name
@@ -3138,15 +3152,45 @@ function updateQuantity(item, value) {
 	const row = cartRowOf(item);
 	if (hasLeftForTheKitchen(row)) {
 		if (Number.isNaN(Number.parseFloat(value))) typedOnSentLine.delete(row);
-		else typedOnSentLine.set(row, value);
+		else typedOnSentLine.set(row, { item, text: value });
 		return;
 	}
 
 	applyTypedQuantity(item, value);
 }
 
-//// Neoffice — the text typed in the quantity field of a line that has left for the kitchen, by cart row, until the field is left.
-const typedOnSentLine = new WeakMap();
+//// Neoffice — the text typed in the quantity field of a line that has left for the kitchen, by cart row, until the field is left, its
+//// Enter pressed, or a way out of the cart (payment, Validate, ticket) asks for it (a Map, so that all of them can be committed).
+const typedOnSentLine = new Map();
+
+//// Neoffice — commits every quantity typed and not yet applied, each once. A button tap does not always blur the field it was typed in
+//// (a phone), and a keyboard shortcut (F9, Ctrl/Cmd+Enter) runs from it: the payment then opened on the cart without the quantity,
+//// and the kitchen dialog offered a cart that lacked the units it was about to bill (NeoRestau lot 1, task 22, fix round 3).
+function commitTypedQuantity() {
+	for (const [row, typed] of [...typedOnSentLine]) {
+		typedOnSentLine.delete(row);
+		applyTypedQuantity(typed.item, typed.text);
+	}
+}
+
+//// Neoffice — Escape in the field of a sent line drops what was typed and shows its quantity again (fix round 3).
+function cancelTypedQuantity(item, event) {
+	const row = cartRowOf(item);
+	if (!hasLeftForTheKitchen(row)) return;
+	typedOnSentLine.delete(row);
+	if (event?.target) event.target.value = formatQuantity(getDisplayQuantity(item));
+}
+
+//// Neoffice — the buttons that leave the cart for the payment, the kitchen or the printer commit first (fix round 3).
+function openKitchenDialog() {
+	commitTypedQuantity();
+	emit("open-kitchen-dialog");
+}
+
+function printProvisionalTicket() {
+	commitTypedQuantity();
+	emit("print-provisional-ticket");
+}
 
 //// Neoffice — what updateQuantity did with each value typed, now also what a sent line does once with the whole of it (fix round 2).
 function applyTypedQuantity(item, value) {
@@ -3183,7 +3227,7 @@ function handleQuantityBlur(item, event = null) {
 	if (typedOnSentLine.has(row)) {
 		const typed = typedOnSentLine.get(row);
 		typedOnSentLine.delete(row);
-		applyTypedQuantity(item, typed);
+		applyTypedQuantity(item, typed.text);
 		return;
 	}
 	if (event?.target && hasLeftForTheKitchen(row)) {
@@ -3380,6 +3424,7 @@ onBeforeUnmount(() => {
  */
 defineExpose({
 	openEditDialog, //// Neoffice — the page opens a zero-price line (gift card) for editing (5dddc528).
+	commitTypedQuantity, //// Neoffice — the page commits the quantity typed in a field before it pays, validates or prints (task 22, fix round 3).
 	focusCustomerSearch() {
 		if (props.customer) {
 			// Show the search over the assigned customer; it stays until another is picked

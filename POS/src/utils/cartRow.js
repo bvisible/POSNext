@@ -4,6 +4,8 @@
 // //// code lookup would act on the wrong one (7e1376a3). A copy is not in the cart, so the remove button did
 // //// nothing (osiris, 30.10.2026). Each shown line keeps the way back to the row it was copied from.
 
+import { toRaw } from "vue"
+
 // A symbol, set non-enumerable: a spread, Object.keys and JSON never carry it into a payload
 const CART_ROW = Symbol("cartRow")
 
@@ -40,4 +42,22 @@ export function cartLineOf(cartItems, item) {
 	const row = cartRowOf(item)
 	const index = row ? cartItems.indexOf(row) : -1
 	return index >= 0 ? cartItems[index] : null
+}
+
+// The key of a cart row, handed out the first time it is asked for and kept as long as the row is in the cart
+const ROW_KEYS = new WeakMap()
+let lastRowKey = 0
+
+/**
+ * A key that tells a cart row from every other, shown copy or not: the same dish and unit can sit on two lines (the one the
+ * kitchen has, the one that waits), so the item and its unit do not name a row. The list of the cart keys its lines with it, so a
+ * field's focus and what was typed into it stay with its own row (NeoRestau lot 1, task 22, fix round 3).
+ * @param {Object|null|undefined} line - A cart row or a shown copy of one
+ * @returns {string}
+ */
+export function rowKeyOf(line) {
+	const row = toRaw(cartRowOf(line))
+	if (!row || typeof row !== "object") return ""
+	if (!ROW_KEYS.has(row)) ROW_KEYS.set(row, ++lastRowKey)
+	return String(ROW_KEYS.get(row))
 }

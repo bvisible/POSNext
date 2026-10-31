@@ -352,6 +352,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	//// made with a new object adds its own units (NeoRestau lot 1, task 22).
 	const appliedRaises = new WeakSet();
 
+	//// Neoffice — fix round 3: the changes of the details dialog already dealt with, applied or reported. A row handed over that the cart
+	//// no longer holds is either one the first pass of the same change merged away (nothing to say) or one a refresh of the cart
+	//// replaced while the dialog was open (the cashier must hear that nothing was changed, once, not once per pass).
+	const settledChanges = new WeakSet();
+
+	function warnRowGone() {
+		showWarning(__("This line is no longer in the cart (the cart was refreshed). Please try again."));
+	}
+
 	//// Neoffice — units added to a line that has left for the kitchen: they go on a line of their own, as a plain add of the same
 	//// dish, never on the line the kitchen has; the new line has no status, so the kitchen dialog offers it (NeoRestau lot 1,
 	//// task 22, fix round 1). Fix round 2: the unit is billed as the line it comes from (its rate set by hand, its discount),
@@ -434,11 +443,17 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * (gwp_same_item_row === 1, from older drafts) are folded back in here.
 	 */
 	function updateItemQuantity(itemCode, quantity, uom = null, row = null) {
+		//// Neoffice — fix round 3: a row handed over that the cart no longer holds (a refresh replaced the cart) is no reason to
+		//// change another line of that item and unit: nothing is changed, and the cashier is told.
+		if (row && invoiceItems.value.indexOf(row) < 0) {
+			warnRowGone();
+			return;
+		}
 		const item =
 			//// Neoffice — the row the cart means, when it hands it over: the same dish can sit twice in a table's cart (the
 			//// line the kitchen has, the line that waits), and the first line of that item and unit is not always the one
 			//// whose stepper was pressed. A caller with no row keeps the lookup (NeoRestau lot 1, task 22, fix round 1).
-			row && invoiceItems.value.indexOf(row) >= 0
+			row
 				? row
 				: uom
 					? invoiceItems.value.find(
@@ -2333,8 +2348,15 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			const cartItem = findCartItem(itemCode, currentUom, updates?.is_free_item, row);
 			if (!cartItem) {
 				//// Neoffice — a row that was handed over and is gone: the first application of this change merged it into another
-				//// line, and the second has nothing to do (fix round 2). Not an error for the cashier.
-				if (row) return false;
+				//// line and the second has nothing to do (fix round 2), or a refresh of the cart replaced it while the dialog was open
+				//// and nothing was changed, which the cashier is told once (fix round 3).
+				if (row) {
+					if (!settledChanges.has(toRaw(updates))) {
+						settledChanges.add(toRaw(updates));
+						warnRowGone();
+					}
+					return false;
+				}
 				throw new Error("Item not found in cart");
 			}
 
@@ -2352,6 +2374,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					const totalQty = mergeItems(cartItem, existingItem, qtyToMerge);
 					//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 					showSuccess(__("Merged into {0} (Total: {1})", [updates.uom, totalQty]));
+					settledChanges.add(toRaw(updates));
 					return true;
 				}
 
@@ -2450,6 +2473,7 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			rebuildIncrementalCache();
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			showSuccess(__("{0} updated", [cartItem.item_name]));
+			settledChanges.add(toRaw(updates));
 			return true;
 		} catch (error) {
 			console.error("Error updating item:", error);
