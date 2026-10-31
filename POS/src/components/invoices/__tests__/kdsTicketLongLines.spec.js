@@ -208,7 +208,7 @@ describe("a long ticket stays inside its band", () => {
 		).toBe(false)
 		// The main button is there for a long ticket, as for a short one
 		expect(wrapper.get('[data-test="ticket-actions"]').text()).toContain(
-			"Ready",
+			"Mark ready",
 		)
 	})
 
@@ -464,7 +464,7 @@ describe("the status menu of a dish", () => {
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
 		expect(
 			menu.findAll("button").map((b) => b.text().replace(/\s+/g, " ").trim()),
-		).toEqual(["Ready", "Delivered"])
+		).toEqual(["Mark ready", "Deliver"])
 		expect(menu.element.style.bottom).toBe("104px")
 	})
 
@@ -497,8 +497,8 @@ describe("the status menu of a dish", () => {
 			.findAll("button")
 		expect(buttons.map((b) => b.text().replace(/\s+/g, " ").trim())).toEqual([
 			"Preparing",
-			"Ready",
-			"Delivered",
+			"Mark ready",
+			"Deliver",
 		])
 		for (const button of buttons) {
 			expect(button.classes()).toContain("min-h-[44px]")
@@ -593,7 +593,7 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 
 		expect(badge(wrapper)).toBe("Pending")
 		expect(classesOf(wrapper)).toContain("border-yellow-400")
-		expect(button(wrapper)).toBe("Start")
+		expect(button(wrapper)).toBe("Start cooking")
 	})
 
 	it("takes the preparation look and Ready as soon as a dish is begun, the order's own status still Pending", () => {
@@ -604,7 +604,7 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 		expect(badge(wrapper)).toBe("Preparing")
 		expect(classesOf(wrapper)).toContain("border-blue-400")
 		expect(classesOf(wrapper)).not.toContain("border-yellow-400")
-		expect(button(wrapper)).toBe("Ready")
+		expect(button(wrapper)).toBe("Mark ready")
 	})
 
 	it("takes the ready look and Delivered when every dish shown is ready, the order's own status still Preparing", () => {
@@ -612,7 +612,7 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 
 		expect(badge(wrapper)).toBe("Ready")
 		expect(classesOf(wrapper)).toContain("border-green-500")
-		expect(button(wrapper)).toBe("Delivered")
+		expect(button(wrapper)).toBe("Deliver")
 		expect(wrapper.get('[data-test="ticket-timer"]').classes()).toContain(
 			"text-green-600",
 		)
@@ -625,14 +625,14 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 		)
 
 		expect(badge(wrapper)).toBe("Ready")
-		expect(button(wrapper)).toBe("Delivered")
+		expect(button(wrapper)).toBe("Deliver")
 	})
 
 	it("is waiting again for a second round: the first one delivered, the new dishes only sent", () => {
 		const wrapper = show(ticket(["Delivered", "Delivered", "Pending"]))
 
 		expect(badge(wrapper)).toBe("Pending")
-		expect(button(wrapper)).toBe("Start")
+		expect(button(wrapper)).toBe("Start cooking")
 	})
 
 	it("shows a delivered order with no main button", () => {
@@ -660,7 +660,7 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 		await wrapper.get('[data-test="ticket-actions"] button').trigger("click")
 
 		expect(badge(wrapper)).toBe("Preparing")
-		expect(button(wrapper)).toBe("Ready")
+		expect(button(wrapper)).toBe("Mark ready")
 		expect(order.items.map((i) => i.kds_status)).toEqual([
 			"Preparing",
 			"Preparing",
@@ -694,7 +694,7 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 			ticket(["Pending", "Preparing"], { order: "Pending" }),
 		)
 		const wrapper = show(order)
-		expect(button(wrapper)).toBe("Ready")
+		expect(button(wrapper)).toBe("Mark ready")
 
 		await wrapper.get('[data-test="ticket-actions"] button').trigger("click")
 		await flushPromises()
@@ -705,7 +705,7 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 		])
 		expect(order.kds_status).toBe("Pending")
 		expect(badge(wrapper)).toBe("Preparing")
-		expect(button(wrapper)).toBe("Ready")
+		expect(button(wrapper)).toBe("Mark ready")
 	})
 })
 

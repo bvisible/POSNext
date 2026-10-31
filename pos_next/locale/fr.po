@@ -8962,10 +8962,12 @@ msgid "Ready"
 msgstr "Prêt"
 
 # //// Neoffice — the kitchen's sense of "Ready": prepared, to be carried to the table (see "Delivered" above).
-#: POS/src/utils/kitchenStatus.js:26
+# //// Neoffice — it reads « À livrer » now, not « Prêt » (task 38a-1, ruling 113): the state says what is left to do, and the
+# //// button that gets a dish there says « C'est prêt » (context « Kitchen action », in the block at the end of this file).
+#: POS/src/utils/kitchenStatus.js:40
 msgctxt "Kitchen order status"
 msgid "Ready"
-msgstr "Prêt"
+msgstr "À livrer"
 
 #: POS/src/pages/Runner.vue:20
 msgid "Ready Items"
@@ -17510,3 +17512,34 @@ msgstr "+{0} article"
 #: POS/src/components/sale/InvoiceTicketPreview.vue:70
 msgid "+{0} items"
 msgstr "+{0} articles"
+
+# //// Neoffice — the kitchen's wording (lot 1, task 38a-1, ruling 113): a BADGE says the state a dish is in, a BUTTON says the action the cook does, and the two never share a word. The states are in the context « Kitchen order status », the actions in « Kitchen action ». « Ready » of the states reads « À livrer » (its own entry, above). Kept as one block at the end, like the earlier passes. Drop an entry when upstream translates its msgid.
+#: POS/src/utils/kitchenStatus.js:35
+msgctxt "Kitchen order status"
+msgid "Waiting"
+msgstr "Retenu"
+
+#: POS/src/utils/kitchenStatus.js:41
+msgctxt "Kitchen order status"
+msgid "To hand over"
+msgstr "À remettre"
+
+#: POS/src/utils/kitchenStatus.js:68
+msgctxt "Kitchen action"
+msgid "Start cooking"
+msgstr "Commencer"
+
+#: POS/src/utils/kitchenStatus.js:70
+msgctxt "Kitchen action"
+msgid "Mark ready"
+msgstr "C'est prêt"
+
+#: POS/src/utils/kitchenStatus.js:74
+msgctxt "Kitchen action"
+msgid "Deliver"
+msgstr "Livrer"
+
+#: POS/src/utils/kitchenStatus.js:73
+msgctxt "Kitchen action"
+msgid "Hand over"
+msgstr "Remettre"

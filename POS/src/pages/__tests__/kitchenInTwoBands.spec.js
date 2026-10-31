@@ -546,7 +546,9 @@ describe("a ticket on its way from one band to the other, with the real cards (f
 		expect(card.classes()).toContain("border-blue-400")
 		expect(card.classes()).not.toContain("border-yellow-400")
 		expect(card.get('[data-test="ticket-status"]').text()).toBe("Preparing")
-		expect(card.get('[data-test="ticket-actions"] button').text()).toBe("Ready")
+		expect(card.get('[data-test="ticket-actions"] button').text()).toBe(
+			"Mark ready",
+		)
 	})
 })
 

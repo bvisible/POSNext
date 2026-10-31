@@ -114,7 +114,7 @@ describe("the kitchen ticket's main buttons in dark mode (task 46)", () => {
 	it("Ready (a ticket being prepared) does the same", () => {
 		const button = mainButton(show(ticket(["Preparing", "Pending"])))
 
-		expect(button.text()).toBe("Ready")
+		expect(button.text()).toBe("Mark ready")
 		expect(classesOf(button)).toContain("text-white")
 		expect(classesOf(button)).toContain("dark:enabled:text-ink-white")
 	})
@@ -140,7 +140,7 @@ describe("the kitchen ticket's main buttons in dark mode (task 46)", () => {
 		)
 
 		const button = mainButton(wrapper)
-		expect(button.text()).toBe("Delivered")
+		expect(button.text()).toBe("Deliver")
 		expect(classesOf(button)).toContain("dark:text-gray-300")
 		expect(
 			classesOf(button).filter((name) => name.startsWith("dark:enabled:")),
@@ -225,7 +225,7 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 
 		const ready = wrapper
 			.findAll('[data-test="ticket-line-menu"] button')
-			.find((b) => b.text() === "Ready")
+			.find((b) => b.text() === "Mark ready")
 		expect(classesOf(ready)).toEqual(
 			expect.arrayContaining(["text-green-700", "dark:text-ds-success"]),
 		)

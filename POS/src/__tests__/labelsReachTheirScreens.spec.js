@@ -86,7 +86,9 @@ const KITCHEN = "Kitchen order status"
 const STATUSES = {
 	Pending: "En attente",
 	Preparing: "En préparation",
-	Ready: "Prêt",
+	// Task 38a-1, ruling 113: the state of a dish ready at the pass reads « À livrer » (what is left to do); « Prêt » is the
+	// bare word the rest of the site shares, and it stays that (see "does not touch the bare words")
+	Ready: "À livrer",
 	Delivered: "Livré",
 }
 
@@ -247,7 +249,9 @@ describe("a kitchen status", () => {
 	})
 
 	it("leaves another status to its own word, and shows nothing for none", () => {
-		expect(kitchenStatusLabel("Waiting")).toBe(catalogue.Waiting)
+		// « Retenu » since task 38a-1 (ruling 113): « En attente » was the French of two different states, held back and to start
+		expect(kitchenStatusLabel("Waiting")).toBe("Retenu")
+		expect(kitchenStatusLabel("Cleaning")).toBe(catalogue.Cleaning)
 		expect(kitchenStatusLabel(undefined)).toBe("")
 		expect(kitchenStatusLabel(null)).toBe("")
 		expect(kitchenStatusLabel("")).toBe("")
@@ -265,7 +269,7 @@ describe("a kitchen status", () => {
 		expect(badges.map((badge) => badge.text())).toEqual([
 			"KDS: En attente",
 			"KDS: En préparation",
-			"KDS: Prêt",
+			"KDS: À livrer",
 			"KDS: Livré",
 		])
 	})
@@ -300,7 +304,9 @@ describe("a kitchen status", () => {
 
 		const text = wrapper.text()
 		expect(text).toContain("En préparation")
-		expect(text).toContain("Prêt")
+		// The state of the ready dish is « À livrer »; « Prêt » is the wording of the button now, « C'est prêt »
+		expect(text).toContain("À livrer")
+		expect(text).toContain("C'est prêt")
 		expect(text).toContain("En attente")
 		expect(text).not.toMatch(/Preparing|Pending/)
 	})

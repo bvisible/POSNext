@@ -345,9 +345,10 @@ describe("the menu of a dish is above the ticket (task 42)", () => {
 		await lines(wrapper)[0].trigger("click")
 
 		const buttons = menuOf(wrapper).findAll("button")
+		// The menu's buttons say the action (task 38a-1): « Mark ready », « Deliver »
 		expect(buttons.map((button) => button.text())).toEqual([
-			"Ready",
-			"Delivered",
+			"Mark ready",
+			"Deliver",
 		])
 		await buttons[0].trigger("click")
 

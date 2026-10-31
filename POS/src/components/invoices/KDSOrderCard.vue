@@ -47,7 +47,7 @@
 				<!-- //// Neoffice — the badge, the border and the main button follow the dishes the screen shows (fix round 1), see `status` -->
 				<span class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5"
 					data-test="ticket-status" :class="statusBadgeClass">
-					{{ kitchenStatusLabel(status) }}
+					{{ kitchenStatusLabel(status, { takeaway: isTakeaway }) }}
 				</span>
 			</div>
 		</div>
@@ -96,7 +96,7 @@
 									<span v-if="item.kds_status"
 										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
 										:class="itemStatusClass(item.kds_status)">
-										{{ kitchenStatusLabel(item.kds_status) }}
+										{{ kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway }) }}
 									</span>
 								</div>
 								<!-- Modifiers -->
@@ -130,19 +130,19 @@
 									@click.stop="updateItemStatus(item, 'Preparing')"
 									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
 									<span class="w-2 h-2 rounded-full bg-blue-400"></span>
-									{{ __("Preparing") }}
+									{{ kitchenStatusLabel("Preparing") }}
 								</button>
 								<button v-if="item.kds_status !== 'Ready'"
 									@click.stop="updateItemStatus(item, 'Ready')"
 									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 dark:text-ds-success active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
 									<span class="w-2 h-2 rounded-full bg-green-500"></span>
-									{{ __("Ready") }}
+									{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
 								</button>
 								<button v-if="item.kds_status !== 'Delivered'"
 									@click.stop="updateItemStatus(item, 'Delivered')"
 									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
 									<span class="w-2 h-2 rounded-full bg-gray-400"></span>
-									{{ __("Delivered") }}
+									{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
 								</button>
 							</div>
 						</div>
@@ -195,7 +195,7 @@
 				@click="updateStatus('Preparing')"
 				:loading="loading"
 			>
-				{{ __("Start") }}
+				{{ kitchenActionLabel("start", { takeaway: isTakeaway }) }}
 			</Button>
 
 			<Button
@@ -206,7 +206,7 @@
 				@click="updateStatus('Ready')"
 				:loading="loading"
 			>
-				{{ __("Ready") }}
+				{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
 			</Button>
 
 			<Button
@@ -217,7 +217,7 @@
 				@click="updateStatus('Delivered')"
 				:loading="loading"
 			>
-				{{ __("Delivered") }}
+				{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
 			</Button>
 
 			<!-- Confirmation when Runner is active -->
@@ -240,7 +240,8 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusOf } from "@/utils/kitchenBands"
-import { kitchenStatusLabel } from "@/utils/kitchenStatus"
+//// Neoffice — a badge says the state, a button says the action (task 38a-1, ruling 113)
+import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
@@ -289,6 +290,8 @@ const restaurantStore = useRestaurantStore()
 const loading = ref(false)
 const showDeliveredConfirm = ref(false)
 const activeItemMenu = ref(null)
+//// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
+const isTakeaway = computed(() => !!props.order.is_takeaway)
 
 // Separate items into active (sent to kitchen) vs waiting (not yet sent)
 const activeItems = computed(() =>
