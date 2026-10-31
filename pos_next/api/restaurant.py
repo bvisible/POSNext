@@ -380,7 +380,10 @@ def _advance_dishes(invoice_name, status, station=None):
 			frappe.db.set_value("Sales Invoice Item", dish.name, "kds_status", status, update_modified=False)
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only, a write of the kitchen's screen (NeoRestau lot 1, task 16, at its merge with task 23):
+# //// a tablet's session holds no CSRF token, and a top-level GET (a link opened on it) carries its cookie; the
+# //// kitchen card calls it by POST (frappe-ui `call`).
+@frappe.whitelist(methods=["POST"])
 def update_kds_status(invoice_name, status, station=None):
 	"""Update the KDS status of a sales invoice and of its dishes.
 
@@ -392,13 +395,14 @@ def update_kds_status(invoice_name, status, station=None):
 	Kitchen's plates are.
 
 	The kitchen's tablet sets one of the kitchen's states (devices.KDS_STATES) on an open order of its restaurant
-	(pos_next.restaurant.devices); on a tablet of one station, as on a kitchen screen filtered by station, the order's
-	buttons act on the whole order.
+	(pos_next.restaurant.devices). A tablet of one station moves the dishes of its station only, named or not (another
+	station is refused); a tablet of every station moves the whole order, or the station of its restaurant it names.
 	"""
 	device = devices.screen_device(devices.KITCHEN)
 	if device:
 		devices.require_order_of_device(device, invoice_name)
 		devices.require_kds_state(status)
+		_restaurant, station = devices.cut_to_device(device, None, station)
 	elif not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 

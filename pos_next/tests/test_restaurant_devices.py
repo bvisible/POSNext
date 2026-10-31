@@ -995,11 +995,34 @@ class TestWhatATabletReaches(Tablets):
 		frappe.db.set_value("Sales Invoice", self.order, "docstatus", 1, update_modified=False)
 		self.assert_refused(grill, "update_kds_status", restaurant.update_kds_status, self.order, "Ready")
 		frappe.db.set_value("Sales Invoice", self.order, "docstatus", 0, update_modified=False)
-		# The order's buttons act on the whole order, as on a kitchen screen filtered by station
+		# The order's buttons move the dishes of its station only, the station named or not: the pastry's dish is not the
+		# grill's to call ready, and the order follows its dishes (one begun, not all ready)
 		with as_user(grill):
 			restaurant.update_kds_status(self.order, "Ready")
-		self.assertEqual(frappe.db.get_value("Sales Invoice", self.order, "kds_status"), "Ready")
+		self.assertEqual(self.dishes_of(self.order), {self.grill: "Ready", self.pastry: "Pending"})
+		self.assertEqual(frappe.db.get_value("Sales Invoice", self.order, "kds_status"), "Preparing")
 		self.assertNotEqual(frappe.db.get_value("Sales Invoice", self.bar_order, "kds_status"), "Ready")
+		self.assert_refused(
+			grill, "update_kds_status", restaurant.update_kds_status, self.order, "Ready", station=self.pastry
+		)
+		self.assertEqual(self.dishes_of(self.order), {self.grill: "Ready", self.pastry: "Pending"})
+		# A tablet of every station moves the station of its restaurant it names, or the whole order
+		kitchen = self.tablet(self.bistro, KITCHEN)
+		self.assert_refused(
+			kitchen,
+			"update_kds_status",
+			restaurant.update_kds_status,
+			self.order,
+			"Ready",
+			station=self.bar_grill,
+		)
+		with as_user(kitchen):
+			restaurant.update_kds_status(self.order, "Ready", station=self.pastry)
+		self.assertEqual(self.dishes_of(self.order), {self.grill: "Ready", self.pastry: "Ready"})
+		self.assertEqual(frappe.db.get_value("Sales Invoice", self.order, "kds_status"), "Ready")
+		with as_user(kitchen):
+			restaurant.update_kds_status(self.order, "Delivered")
+		self.assertEqual(self.dishes_of(self.order), {self.grill: "Delivered", self.pastry: "Delivered"})
 		# A line of another station: nothing of its own to move
 		pastry_only = self.make_order(self.table, [self.pastry])
 		self.assert_refused(
@@ -1009,6 +1032,17 @@ class TestWhatATabletReaches(Tablets):
 			pastry_only,
 			self.item,
 			"Ready",
+		)
+
+	def dishes_of(self, order):
+		"""The status of each dish of an order, by station (one dish per station)."""
+		return dict(
+			frappe.get_all(
+				"Sales Invoice Item",
+				filters={"parent": order},
+				fields=["preparation_station", "kds_status"],
+				as_list=True,
+			)
 		)
 
 	def test_a_kitchen_tablet_sets_only_the_kitchens_states(self):
@@ -1031,6 +1065,7 @@ class TestWhatATabletReaches(Tablets):
 		# writes of its screens refuse a GET before anything is written (the screens and the till call them by POST)
 		for dotted in (
 			"pos_next.api.restaurant.update_item_kds_status",
+			"pos_next.api.restaurant.update_kds_status",
 			"pos_next.api.restaurant.mark_items_delivered",
 		):
 			with self.subTest(method=dotted):
@@ -1045,6 +1080,11 @@ class TestWhatATabletReaches(Tablets):
 				kitchen,
 				"pos_next.api.restaurant.update_item_kds_status",
 				{"invoice_name": self.order, "item_code": self.item, "status": "Preparing"},
+			),
+			(
+				kitchen,
+				"pos_next.api.restaurant.update_kds_status",
+				{"invoice_name": self.order, "status": "Delivered"},
 			),
 			(runner, "pos_next.api.restaurant.mark_items_delivered", {"invoice_name": self.order}),
 		):
