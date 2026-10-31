@@ -98,7 +98,7 @@ export const TICKET_FRAME = {
  * changes: paddings, text, dish line. Each reads a CSS variable the screen's root sets (utils/kitchenTextSize) with the Compact value as its
  * fallback, so that a card drawn outside the page is dense too. They are `!important`: the frame's `text-xl`, `px-4`... are in the same
  * stylesheet at the same weight and the later one wins, and they also carry a letter-spacing and a weight of their own that the kitchen's
- * text does not want. The runner's card has none of this until its own task (38a-2): it keeps the frame as it was.
+ * text does not want. The runner's card reads them too since task 38a-2 (ruling 130: one card anatomy for both screens).
  */
 export const KITCHEN_FRAME = {
 	header: "!px-[var(--kds-pad-x,8px)] !py-[var(--kds-head-py,5px)]",

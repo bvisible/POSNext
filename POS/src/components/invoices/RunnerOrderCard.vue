@@ -295,7 +295,13 @@ function offerBack(message, items) {
 async function markDelivered() {
 	loading.value = true
 	try {
-		let delivered
+		// The dishes as they are NOW, copied before the call: what is put back if the delivery is taken back is the state they had when it was pressed
+		const delivered =
+			props.viewMode === "table"
+				? props.card.items.map((item) => ({ ...item, _invoiceName: props.card.invoiceName }))
+				: props.card.tableGroups.flatMap((group) =>
+						group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
+					)
 		if (props.viewMode === "table") {
 			// Table mode: mark all items in this order as delivered
 			const itemNames = props.card.items.map((i) => i.name)
@@ -303,12 +309,8 @@ async function markDelivered() {
 				invoice_name: props.card.invoiceName,
 				item_names: JSON.stringify(itemNames),
 			})
-			delivered = props.card.items.map((item) => ({ ...item, _invoiceName: props.card.invoiceName }))
 		} else {
 			// Station mode: mark all items across all table groups
-			delivered = props.card.tableGroups.flatMap((group) =>
-				group.items.map((item) => ({ ...item, _invoiceName: item._invoiceName || group.invoiceName })),
-			)
 			await deliverPerInvoice(delivered)
 		}
 		offerBack(props.card.takeaway ? __("Takeaway") : props.card.title, delivered)

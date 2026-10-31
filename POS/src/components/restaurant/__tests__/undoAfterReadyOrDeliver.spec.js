@@ -305,6 +305,43 @@ describe("after « Deliver »", () => {
 		expect(undone).toHaveBeenCalledTimes(1)
 	})
 
+	it("on the runner's card: puts back the state the dishes had when it was pressed, even when the objects the card holds change before the answer comes", async () => {
+		// The card holds the very objects the page read; a screen that updates them while the call is on its way (a refresh, an optimistic update) must not
+		// make the dishes look as if they had always been delivered
+		const card = {
+			key: "SINV-8",
+			title: "Table 8",
+			subtitle: "#SINV-8",
+			invoiceName: "SINV-8",
+			creation: "2026-10-30 12:00:00",
+			modified: "2026-10-30 12:00:00",
+			items: [
+				{
+					name: "row-1",
+					item_code: "SOUP",
+					item_name: "Soup",
+					qty: 1,
+					kds_status: "Ready",
+				},
+			],
+			stationGroups: [],
+		}
+		call.mockImplementation(async () => {
+			for (const item of card.items) item.kds_status = "Delivered"
+			return { status: "success" }
+		})
+		const wrapper = screen(RunnerOrderCard, { card, viewMode: "table" })
+
+		await press(wrapper, '[data-test="ticket-main"]')
+		expect(wrapper.find('[data-test="undo-toast"]').exists()).toBe(true)
+		call.mockClear()
+		await press(wrapper, '[data-test="undo-button"]')
+
+		expect(call.mock.calls).toEqual([
+			[UPDATE, { invoice_name: "SINV-8", item_code: "SOUP", status: "Ready" }],
+		])
+	})
+
 	it("on a station's card, a table's group: each order's dishes go back under their own invoice", async () => {
 		const card = {
 			key: "kit",
