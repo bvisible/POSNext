@@ -7,6 +7,7 @@
  "field_order": [
   "restaurant",
   "area_name",
+  "short_code",
   "description",
   "sort_order",
   "floor_plan_section",
@@ -28,6 +29,13 @@
    "in_list_view": 1,
    "label": "Area Name",
    "reqd": 1
+  },
+  {
+   "description": "At most 6 characters, shown on the kitchen's and the runner's tickets before the table (S01). Left empty, it is made from the room's name: Salle 1 gives S01.",
+   "fieldname": "short_code",
+   "fieldtype": "Data",
+   "label": "Short Code",
+   "length": 6
   },
   {
    "fieldname": "description",
@@ -60,7 +68,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 23:00:00.000000",
+ "modified": "2026-10-31 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant Area",

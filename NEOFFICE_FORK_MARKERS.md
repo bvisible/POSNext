@@ -109,6 +109,7 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
 | `pos_next/fixtures/menu_design_template.json` | The five menu layouts (ardoise, bistrot, elegant, modern, base) plus the 15-font selector; *Moderne* is the default (`b6e757dd`, `0d7b3d06`). |
 | `pos_next/fixtures/print_format.json` | Card-payment mentions on the till receipt, printed in the merchant's language and inside the paper width (`10047bb0`, `a026e629`, 2026-08-22). The footer's "Powered by Neopos" now goes through `_("Powered by {0}")` too (2026-10-04): it was the last bare English label on the receipt. |
 | `pos_next/tests/fixtures/till_invoice_parity.json` | **Test data, not an app fixture** (it lies outside `pos_next/fixtures/`, so no migrate imports it). NeoRestau lot 1, Ruling 70: the till's VAT and totals equal the submitted invoice's, to the cent. The carts that `POS/src/composables/__tests__/useInvoice.invoiceParity.spec.js` rings through the till's own code, with the rows the till sends and the figures it shows; `pos_next/tests/test_till_totals_match_the_invoice.py` submits each as a real invoice and compares. Written by the spec (`UPDATE_PARITY_FIXTURE=1`), never by hand; the spec fails when the table and the till disagree. |
+| `pos_next/tests/room_code_cases.json` | **Test data, not an app fixture.** NeoRestau lot 1, task 38b: the table of examples of a room's short code (Salle 1 is S01, Terrasse is TER, a takeaway is EMP). The client's `kitchenRoomCode.js` (`kitchenRoomCode.spec.js`) and the server's `restaurant/room_code.py` (`test_room_code.py`) are each tested against this one file, so that the two derivations cannot drift apart. |
 
 ### Upstream customisations we neutralise
 
@@ -278,7 +279,7 @@ detail is in the sections above.
 | `pos_next/pos_next/doctype/product_option_group_item/product_option_group_item.json` | 2: `item`, `item_name` |
 | `pos_next/pos_next/doctype/product_option_group_item_group/product_option_group_item_group.json` | 1: `item_group` |
 | `pos_next/pos_next/doctype/restaurant/restaurant.json` | 45: `restaurant_name`, `company`, `enabled`, `column_break_identity`, `logo`, `address`, `section_taxes`, `takeaway_tax_category`, `section_runner`, `enable_runner`, `section_hours`, `opening_hours`, `section_tips`, `enable_tips` … |
-| `pos_next/pos_next/doctype/restaurant_area/restaurant_area.json` | 7: `restaurant`, `area_name`, `description`, `sort_order`, `floor_plan_section`, `floor_plan_walls`, `floor_plan_bg` |
+| `pos_next/pos_next/doctype/restaurant_area/restaurant_area.json` | 8: `restaurant`, `area_name`, `short_code`, `description`, `sort_order`, `floor_plan_section`, `floor_plan_walls`, `floor_plan_bg` |
 | `pos_next/pos_next/doctype/restaurant_card/restaurant_card.json` | 15: `section_break_details`, `restaurant`, `card_name`, `description`, `column_break_2`, `image`, `is_active`, `is_permanent`, `is_guest_menu`, `section_break_dates`, `available_from`, `column_break_3`, `available_to`, `section_break_items`, `items` |
 | `pos_next/pos_next/doctype/restaurant_card_item/restaurant_card_item.json` | 7: `item_type`, `label`, `item`, `menu`, `price`, `sort_order`, `disabled` |
 | `pos_next/pos_next/doctype/restaurant_device/restaurant_device.json` | 12: `device_name`, `restaurant`, `screen`, `station`, `device_key`, `column_break_account`, `user`, `paired_by`, `paired_at`, `last_seen`, `disconnected`, `disconnected_at` |
@@ -306,6 +307,7 @@ detail is in the sections above.
 | `pos_next/fixtures/menu_design_template.json` |
 | `pos_next/fixtures/print_format.json` |
 | `pos_next/tests/fixtures/till_invoice_parity.json` |
+| `pos_next/tests/room_code_cases.json` |
 | `pos_next/pos_next/custom/customer.json` |
 | `pos_next/pos_next/custom/pos_profile.json` |
 | `pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json` |

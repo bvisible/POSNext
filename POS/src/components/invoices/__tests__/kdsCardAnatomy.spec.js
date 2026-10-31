@@ -154,6 +154,31 @@ describe("the room's code", () => {
 	})
 })
 
+describe("the room's chip takes the code the server tells (task 38b)", () => {
+	it("is the order's area_code, the one typed on the room, before the one made from the room's name", () => {
+		const wrapper = show({
+			roomName: "Salle 1",
+			order: order({ area_code: "RDC" }),
+		})
+
+		expect(part(wrapper, "ticket-room").text()).toBe("RDC")
+	})
+
+	it("is made from the room's name when the server told none", () => {
+		const wrapper = show({ roomName: "Salle 2", order: order({ area_code: "" }) })
+
+		expect(part(wrapper, "ticket-room").text()).toBe("S02")
+	})
+
+	it("is not drawn for a takeaway, whose title says it, even though the server tells EMP", () => {
+		const wrapper = show({
+			order: order({ is_takeaway: 1, area_code: "EMP", restaurant_table: null }),
+		})
+
+		expect(wrapper.find('[data-test="ticket-room"]').exists()).toBe(false)
+	})
+})
+
 describe("the ticket's number", () => {
 	it("is the order's ticket_no when it has one", () => {
 		const wrapper = show({ order: order({ ticket_no: "T0042" }) })

@@ -2,8 +2,9 @@
 //// 38a-1, ruling 126). A kitchen can feed several rooms, so the line of a ticket opens with the room as a small chip, then
 //// the table, which is the big word. The default code is « the letters of the name and the number in it on two digits »:
 //// « Salle 1 » is S01, « Salle 2 » is S02. A room with no number takes its first three letters (« Terrasse » is TER) and a
-//// takeaway is EMP. The client derives it for now; the server will send its own field with the room (task 38b), editable on
-//// the room, and this file stays only as the fallback for a room that has none.
+//// takeaway is EMP. The server tells the code of each room (`area_code`, task 38b: the one typed on the room, else the same derivation
+//// in Python), so this file is the fallback for a room the server did not name and the placeholder of the room dialog; the table of
+//// examples `pos_next/tests/room_code_cases.json` is the one both are tested against.
 
 const NUMBER = /\d+/
 // A letter of any language, accents and ligatures included: what is left of a name once the digits and the signs are gone

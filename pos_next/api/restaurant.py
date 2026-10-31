@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import devices, item_units, permissions, scope, tickets
+from pos_next.restaurant import devices, item_units, permissions, room_code, scope, tickets
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -62,11 +62,14 @@ def get_tables(restaurant=None):
 		frappe.get_all(
 			"Restaurant Area",
 			or_filters=of_the_restaurant,
-			fields=["name", "area_name", "description", "sort_order", "floor_plan_walls", "floor_plan_bg"],
+			fields=[*room_code.area_fields(), "description", "sort_order", "floor_plan_walls", "floor_plan_bg"],
 			order_by="sort_order asc, area_name asc",
 		),
 		restaurant,
 	)
+	# The short code of each room, typed or made from its name (NeoRestau lot 1, task 38b): the chip of a ticket
+	for area in areas:
+		area["area_code"] = room_code.room_code(area.get("short_code"), area.area_name)
 	tables = scope.stamp(
 		frappe.get_all(
 			"Restaurant Table",
@@ -76,8 +79,10 @@ def get_tables(restaurant=None):
 		restaurant,
 	)
 	area_labels = {area.name: area.area_name for area in areas}
+	area_codes = {area.name: area.area_code for area in areas}
 	for table in tables:
 		table["area_name"] = area_labels.get(table.area) or table.area
+		table["area_code"] = area_codes.get(table.area) or ""
 
 	# Fetch stations that should appear on floor plan
 	stations = []
@@ -722,6 +727,7 @@ def get_kds_orders(station=None, restaurant=None):
 				fields=["name", "table_name", "area"],
 			)
 		}
+	area_codes = room_code.codes_of_areas(table.get("area") for table in tables.values())
 	for order in orders:
 		table = tables.get(order.get("restaurant_table")) or {}
 		order["table_display_name"] = table.get("table_name") or order.get("restaurant_table")
@@ -729,6 +735,12 @@ def get_kds_orders(station=None, restaurant=None):
 		# filters its tickets by room as the runner does. A takeaway order sits at no table, so it is of no
 		# room (""), and the screen shows it under "all rooms" only.
 		order["area"] = table.get("area") or ""
+		# The code of that room, which the ticket's header opens with (NeoRestau lot 1, task 38b); a takeaway order has EMP
+		order["area_code"] = (
+			room_code.TAKEAWAY_CODE
+			if not order["area"] and order.get("is_takeaway")
+			else area_codes.get(order["area"], "")
+		)
 
 	# Fallback safety: Check if the custom field actually exists in the DB to prevent 500 errors
 	# if the user hasn't run `bench migrate` yet.
@@ -1061,6 +1073,8 @@ def update_table(name, table_name=None, capacity=None, shape=None):
 		"table_name": doc.table_name,
 		"area": doc.area,
 		"area_name": frappe.db.get_value("Restaurant Area", doc.area, "area_name") or doc.area,
+		# The room's code, as the floor plan reads the table (NeoRestau lot 1, task 38b)
+		"area_code": room_code.codes_of_areas([doc.area]).get(doc.area) or "",
 		"restaurant": doc.restaurant,
 		"capacity": doc.capacity,
 		"status": doc.status,
@@ -1533,11 +1547,18 @@ def create_area(area_name, restaurant=None):
 	return doc.as_dict()
 
 @frappe.whitelist()
-def rename_area(name, new_name):
-	"""Rename a restaurant area: change its label. Its name stays what it is, which is what the records link to."""
+def rename_area(name, new_name, short_code=None):
+	"""Rename a restaurant area: change its label. Its name stays what it is, which is what the records link to.
+
+	With `short_code` it also sets the room's short code (at most 6 characters, the chip of a kitchen ticket); an empty
+	one gives the code back to the room's name (Salle 1 is S01). Without it the code is left as it is.
+	"""
 	permissions.require("Restaurant Area", "write", name)
 	doc = frappe.get_doc("Restaurant Area", name)
 	doc.area_name = new_name
+	# //// Neoffice — the room's short code is edited with its name, from the floor plan's room dialog (NeoRestau lot 1, task 38b)
+	if short_code is not None:
+		doc.short_code = short_code
 	doc.save()
 	return {"status": "success"}
 
@@ -2586,6 +2607,8 @@ def get_takeaway_orders(restaurant=None):
 	# The ticket number of each order (NeoRestau lot 1, task 38b), beside the takeaway number it has had until now
 	tickets.stamp(kept, restaurant)
 	for order in kept:
+		# A takeaway order sits in no room: its code is EMP (NeoRestau lot 1, task 38b)
+		order["area_code"] = room_code.TAKEAWAY_CODE
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},

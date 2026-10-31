@@ -18,6 +18,8 @@ from pos_next.restaurant.settings import default_restaurant
 
 class RestaurantArea(Document):
 	def validate(self):
+		# //// Neoffice — the short code of the room is written in capitals, without the spaces round it (NeoRestau lot 1, task 38b).
+		self.short_code = (self.get("short_code") or "").strip().upper()
 		scope.attach_to_restaurant(self)
 		scope.validate_label_unique_in_restaurant(self, "area_name")
 		self._keep_its_restaurant_once_it_holds_tables()

@@ -1,0 +1,30 @@
+{
+ "about": "The table of examples of a room's short code. The client util (POS/src/utils/kitchenRoomCode.js) and the server function (pos_next/restaurant/room_code.py) are each tested against THIS file, so that the two derivations cannot drift apart. `name` null means no name; `takeaway` true is a takeaway order (its room is whatever it says).",
+ "cases": [
+  {"name": "Salle 1", "code": "S01"},
+  {"name": "Salle 2", "code": "S02"},
+  {"name": "Salle 12", "code": "S12"},
+  {"name": "Salle 100", "code": "S100"},
+  {"name": "Étage 1", "code": "E01"},
+  {"name": "Terrasse 2", "code": "T02"},
+  {"name": "Salle 3 - côté jardin 2", "code": "S03"},
+  {"name": "Salle 007", "code": "S07"},
+  {"name": "Salle 0", "code": "S00"},
+  {"name": "Terrasse", "code": "TER"},
+  {"name": "Bar", "code": "BAR"},
+  {"name": "Étage", "code": "ETA"},
+  {"name": "Salle des fêtes", "code": "SAL"},
+  {"name": "Cœur", "code": "COE"},
+  {"name": "Æther", "code": "AET"},
+  {"name": "Ba", "code": "BA"},
+  {"name": "Salle", "code": "SAL"},
+  {"name": "3", "code": "03"},
+  {"name": "", "takeaway": true, "code": "EMP"},
+  {"name": "Salle 1", "takeaway": true, "code": "EMP"},
+  {"name": null, "takeaway": true, "code": "EMP"},
+  {"name": "", "code": ""},
+  {"name": null, "code": ""},
+  {"name": "   ", "code": ""},
+  {"name": "---", "code": ""}
+ ]
+}

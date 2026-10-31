@@ -106,6 +106,74 @@ function theStore(areas) {
 	})
 }
 
+describe("the room dialog edits the short code (task 38b)", () => {
+	let wrapper
+	const ROOM = { ...ROOM_1, short_code: "RDC" }
+
+	async function floorPlan(areas) {
+		theStore(areas)
+		restaurantStore.renameArea = vi.fn(async () => {})
+		wrapper = mount(FloorPlanEditor, {
+			attachTo: document.body,
+			global: { stubs: { FloorPlanWalls: true }, mocks: { __: globalThis.__ } },
+		})
+		await flushPromises()
+		await wrapper.vm.toggleEditMode()
+		await flushPromises()
+	}
+
+	beforeEach(() => {
+		localStorage.clear()
+		for (const notice of Object.values(toast)) notice.mockClear()
+	})
+	afterEach(() => {
+		wrapper?.unmount()
+	})
+
+	it("opens on the code typed on the room, empty for a room that has none", async () => {
+		await floorPlan([ROOM, ROOM_2])
+
+		wrapper.vm.openRenameAreaDialog(ROOM)
+		expect(wrapper.vm.editAreaCode).toBe("RDC")
+		wrapper.vm.openRenameAreaDialog(ROOM_2)
+		expect(wrapper.vm.editAreaCode).toBe("")
+	})
+
+	it("shows the code the name gives as the placeholder, and follows the name typed", async () => {
+		await floorPlan([ROOM, ROOM_2])
+		wrapper.vm.openRenameAreaDialog(ROOM_2)
+
+		expect(wrapper.vm.derivedAreaCode).toBe("R02")
+		wrapper.vm.editAreaName = "Terrasse"
+		expect(wrapper.vm.derivedAreaCode).toBe("TER")
+	})
+
+	it("saves the code, in capitals, with the name", async () => {
+		await floorPlan([ROOM, ROOM_2])
+		wrapper.vm.openRenameAreaDialog(ROOM_2)
+		wrapper.vm.editAreaName = "Garden"
+		wrapper.vm.editAreaCode = " gar "
+
+		await wrapper.vm.handleRenameArea()
+		await flushPromises()
+
+		expect(restaurantStore.renameArea).toHaveBeenCalledWith(ROOM_2.name, "Garden", "GAR")
+		expect(wrapper.vm.showRenameAreaDialog).toBe(false)
+		expect(wrapper.vm.editAreaCode).toBe("")
+	})
+
+	it("saves an empty code as empty: the room goes back to the code its name gives", async () => {
+		await floorPlan([ROOM, ROOM_2])
+		wrapper.vm.openRenameAreaDialog(ROOM)
+		wrapper.vm.editAreaCode = ""
+
+		await wrapper.vm.handleRenameArea()
+		await flushPromises()
+
+		expect(restaurantStore.renameArea).toHaveBeenCalledWith(ROOM.name, "Room 1", "")
+	})
+})
+
 describe("the editor's add-room action", () => {
 	let wrapper
 

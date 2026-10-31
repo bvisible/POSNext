@@ -447,10 +447,12 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		return res
 	}
 
-	async function renameArea(name, newName) {
+	//// Neoffice — the room's short code is saved with its name (task 38b); left out, the server leaves the code as it is
+	async function renameArea(name, newName, shortCode) {
 		await call("pos_next.api.restaurant.rename_area", {
 			name,
 			new_name: newName,
+			...(shortCode === undefined ? {} : { short_code: shortCode }),
 		})
 		await fetchFromNetwork()
 	}

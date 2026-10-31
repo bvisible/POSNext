@@ -408,8 +408,9 @@ const mainLabel = computed(() =>
 //// (utils/kitchenRoomCode; the server will send its own, task 38b); a takeaway has no room, its label says it. The number is the ticket's
 //// `ticket_no` when the order carries one, for a takeaway the counter it has had until then; the Sales Invoice's own name is NEVER a
 //// ticket number (a draft gets it at its first save, in an order nobody asked for), so an order with none shows no number at all.
+//// Neoffice — the code the server tells (`area_code`: the one typed on the room, else made from its name, task 38b) wins over the one derived here
 const roomChip = computed(() =>
-	isTakeaway.value ? "" : roomCode(props.roomName),
+	isTakeaway.value ? "" : props.order.area_code || roomCode(props.roomName),
 )
 //// Neoffice — the server tells the whole number and the digits (`ticket_digits`, task 38b); `formatTicketNo` writes it (0007)
 const ticketNumber = computed(() =>

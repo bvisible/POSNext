@@ -106,6 +106,22 @@ describe("the restaurant store asks for the restaurant of the till", () => {
 		})
 	})
 
+	it("renames a room with its short code, or leaves the code alone when none is given", async () => {
+		await store.renameArea("room1", "Garden", "GAR")
+		expect(call).toHaveBeenCalledWith("pos_next.api.restaurant.rename_area", {
+			name: "room1",
+			new_name: "Garden",
+			short_code: "GAR",
+		})
+
+		call.mockClear()
+		await store.renameArea("room1", "Garden")
+		expect(call).toHaveBeenCalledWith("pos_next.api.restaurant.rename_area", {
+			name: "room1",
+			new_name: "Garden",
+		})
+	})
+
 	it("reads the status and the takeaway orders of the till's restaurant", async () => {
 		tillSettings.restaurant = "The Bistro"
 

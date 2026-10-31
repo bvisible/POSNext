@@ -758,6 +758,12 @@
 						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Area Name") }}</label>
 						<input v-model="editAreaName" type="text" class="w-full px-3 py-2 border rounded-lg text-sm" />
 					</div>
+					<!-- //// Neoffice — the room's short code, the chip a kitchen ticket opens with (task 38b, ruling 126): left empty, it follows the name -->
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">{{ __("Short Code") }}</label>
+						<input v-model="editAreaCode" type="text" maxlength="6" data-test="area-short-code" class="w-full px-3 py-2 border rounded-lg text-sm uppercase" :placeholder="derivedAreaCode" />
+						<p class="mt-1 text-xs text-gray-500">{{ __("At most 6 characters, shown on the kitchen tickets before the table. Left empty, it follows the name.") }}</p>
+					</div>
 				</div>
 			</template>
 			<template #actions>
@@ -1018,6 +1024,7 @@ import { useDraggable } from "@/composables/useDraggable"
 import { useCanvasGestures } from "@/composables/useCanvasGestures"
 import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
+import { roomCode } from "@/utils/kitchenRoomCode"
 import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
@@ -1419,6 +1426,9 @@ const showRenameAreaDialog = ref(false)
 const showDeleteAreaDialog = ref(false)
 const newAreaName = ref("")
 const editAreaName = ref("")
+//// Neoffice — the short code typed in the room dialog (task 38b); empty gives the code back to the name
+const editAreaCode = ref("")
+const derivedAreaCode = computed(() => roomCode(editAreaName.value))
 const areaToRename = ref(null)
 const areaToDelete = ref(null)
 const draggedArea = ref(null)
@@ -2495,6 +2505,7 @@ async function handleAddArea() {
 function openRenameAreaDialog(area) {
 	areaToRename.value = area
 	editAreaName.value = area.area_name
+	editAreaCode.value = area.short_code || ""
 	showRenameAreaDialog.value = true
 }
 
@@ -2505,6 +2516,7 @@ async function handleRenameArea() {
 		await restaurantStore.renameArea(
 			areaToRename.value.name,
 			editAreaName.value.trim(),
+			editAreaCode.value.trim().toUpperCase(),
 		)
 		syncLocalTables()
 		syncLocalStations()
@@ -2512,6 +2524,7 @@ async function handleRenameArea() {
 		showRenameAreaDialog.value = false
 		areaToRename.value = null
 		editAreaName.value = ""
+		editAreaCode.value = ""
 	} catch (e) {
 		showError(__("Failed to rename area"))
 	}

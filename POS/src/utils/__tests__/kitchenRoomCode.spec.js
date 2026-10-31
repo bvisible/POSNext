@@ -5,8 +5,17 @@
  * //// S02; a room with no number takes its first three letters (« Terrasse » is TER); a takeaway is EMP. The client derives it
  * //// for now; the server will send its own field (task 38b), and then this file is only the fallback.
  */
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import { roomCode } from "../kitchenRoomCode"
+
+// The table of examples the SERVER's derivation (pos_next/restaurant/room_code.py) is tested against too: the two cannot drift apart
+const SHARED_CASES = JSON.parse(
+	readFileSync(
+		new URL("../../../../pos_next/tests/room_code_cases.json", import.meta.url),
+		"utf8",
+	),
+).cases
 
 describe("the code of a room with a number in its name", () => {
 	it("is the first letter and the number on two digits: Salle 1 is S01, Salle 2 is S02", () => {
@@ -66,5 +75,17 @@ describe("the code of a room nobody named", () => {
 
 	it("never grows past the room's own letters: a number of its own is never invented", () => {
 		expect(roomCode("Salle")).toBe("SAL")
+	})
+})
+
+describe("the table of examples the server's derivation shares (task 38b)", () => {
+	it("holds the examples of this spec and gives each its code", () => {
+		expect(SHARED_CASES.length).toBeGreaterThanOrEqual(20)
+		for (const { name, takeaway = false, code } of SHARED_CASES) {
+			expect(
+				roomCode(name, { takeaway }),
+				`${JSON.stringify(name)}${takeaway ? " (takeaway)" : ""}`,
+			).toBe(code)
+		}
 	})
 })
