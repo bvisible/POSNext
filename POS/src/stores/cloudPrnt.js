@@ -75,6 +75,15 @@ export const useCloudPrntStore = defineStore("cloudPrnt", () => {
 		});
 	}
 
+	// The provisional ticket of table or takeaway order `invoiceName` (its draft Sales Invoice), built on the server
+	// and queued for `printer`, this till's receipt printer: it never opens the cash drawer (NeoRestau task 28a).
+	function printProvisionalTicket(invoiceName, printer = null) {
+		return call("cloudprnt.provisional_ticket.print_provisional_ticket", {
+			invoice: invoiceName,
+			...(printer ? { printer } : {}),
+		});
+	}
+
 	function testPrint(printer) {
 		return call(
 			"cloudprnt.cloudprnt.doctype.cloudprnt_settings.cloudprnt_settings.test_print",
@@ -95,6 +104,7 @@ export const useCloudPrntStore = defineStore("cloudPrnt", () => {
 		stop,
 		save,
 		printReceipt,
+		printProvisionalTicket,
 		testPrint,
 	};
 });
