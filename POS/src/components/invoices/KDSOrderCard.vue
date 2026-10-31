@@ -71,22 +71,30 @@
 						</div>
 						<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
 							class="relative" data-ticket-line
-							:class="[
-								{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 },
-								item.kds_status === 'Delivered' ? 'opacity-40 line-through' : ''
-							]">
+							:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
 							<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
 							<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
-							<div class="flex flex-col justify-center py-1.5 cursor-pointer rounded px-1 -mx-1 active:bg-gray-100 dark:active:bg-gray-700 transition-colors"
-								:class="TICKET_FRAME.line" data-test="ticket-line"
-								@click.stop="toggleItemMenu(item, $event)">
+							<!-- //// Neoffice — a DELIVERED dish is inert (task 42): what is done is done, so it is no touch target (no pointer, no pressed -->
+							<!-- //// state, no menu). Its fade and its strike-through sit HERE, on the content of the dish, never on the wrapper above: the -->
+							<!-- //// wrapper holds the status menu of a dish that has one, and an `opacity` makes a stacking context of its own, which -->
+							<!-- //// trapped the menu's z-index, faded the menu to 40 % and painted it under the dishes after it. -->
+							<div class="flex flex-col justify-center py-1.5 rounded px-1 -mx-1"
+								:class="[
+									TICKET_FRAME.line,
+									isDelivered(item)
+										? 'cursor-default opacity-40 line-through'
+										: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
+								]"
+								data-test="ticket-line"
+								@click="onLineTap(item, $event)">
 								<!-- Item line: qty x name + item status badge -->
 								<div class="flex justify-between items-start gap-1">
 									<span class="text-gray-900 dark:text-gray-100">
 										<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
 									</span>
+									<!-- //// Neoffice — no `cursor-pointer` of its own (task 42): the pill takes the dish's cursor, so a delivered dish's has none -->
 									<span v-if="item.kds_status"
-										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 cursor-pointer"
+										class="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
 										:class="itemStatusClass(item.kds_status)">
 										{{ kitchenStatusLabel(item.kds_status) }}
 									</span>
@@ -112,7 +120,8 @@
 							<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
 							<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
 							<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
-							<div v-if="activeItemMenu === item._globalIdx" data-test="ticket-line-menu"
+							<!-- //// Neoffice — never for a delivered dish (task 42), even if a refresh delivers it while its menu is open -->
+							<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
 								class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
 								:style="menuStyle">
 								<button v-if="item.kds_status !== 'Preparing'"
@@ -329,7 +338,22 @@ const menuStyle = computed(() => {
 	}
 })
 
+//// Neoffice — a delivered dish is done (task 42): its tap does nothing, no menu, no call, and nothing to put it back
+//// (coming back is a separate, deliberate act, not a tap on a struck-through line)
+function isDelivered(item) {
+	return item.kds_status === "Delivered"
+}
+
+//// Neoffice — the tap on a dish (task 42). The tap of a dish that has a menu stops here (the click on the page would close the
+//// menu it has just opened). The tap of a delivered dish is not taken: it goes on to the page, which closes a menu left open.
+function onLineTap(item, event) {
+	if (isDelivered(item)) return
+	event.stopPropagation()
+	toggleItemMenu(item, event)
+}
+
 function toggleItemMenu(item, event) {
+	if (isDelivered(item)) return
 	const idx = item._globalIdx
 	if (activeItemMenu.value === idx) {
 		activeItemMenu.value = null
