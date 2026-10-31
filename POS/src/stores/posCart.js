@@ -439,16 +439,16 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (item) {
 			item.posa_item_modifiers = modifiersJson;
 			item.posa_special_instructions = instructions;
-			// Adjust rate with modifier price
-			if (priceAdjustment > 0 && !item._modifiers_applied) {
-				item.rate = (item.rate || 0) + priceAdjustment;
+			//// Neoffice — the adjustment the line carries is replaced by the new one, either way: a lowering (« no
+			//// side − 1.50 ») was applied only when it replaced an earlier adjustment, never as the first one
+			//// nor after the options went back to zero, so the dish kept its full price (NeoRestau lot 1, task 27).
+			const applied = Number(item._modifiers_applied) || 0;
+			const adjustment = Number(priceAdjustment) || 0;
+			if (adjustment !== applied) {
+				item.rate = (item.rate || 0) - applied + adjustment;
 				item.price_list_rate = item.rate;
-				item._modifiers_applied = priceAdjustment;
-			} else if (item._modifiers_applied) {
-				// Remove old adjustment and apply new one
-				item.rate = (item.rate || 0) - item._modifiers_applied + priceAdjustment;
-				item.price_list_rate = item.rate;
-				item._modifiers_applied = priceAdjustment;
+				//// Neoffice — the adjustment the line now carries, whichever way it went (see above).
+				item._modifiers_applied = adjustment;
 			}
 			// Apply quantity from option if set
 			if (quantityValue > 0) {
