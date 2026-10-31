@@ -429,9 +429,9 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		]
 
 	def _qr_calls(self):
-		"""The QR code of a table: refused to a portal account, a visitor and a desk account with no right on the restaurant;
-		answered to a cashier assigned to the till who may make a code (test_the_qr_button_is_a_cashiers_of_the_till). A
-		made-up table is past the gate when it is reported missing."""
+		"""The QR code of a table: refused to a portal account and a visitor, answered to whoever the floor is shown to, a
+		desk account (test_the_qr_button_is_shown_to_whoever_the_floor_is). A made-up table is past the gate when it is
+		reported missing."""
 		return [
 			(
 				"create_table_token",
@@ -754,7 +754,8 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._qr_calls()
 		):
 			self._refused(DESK, label, call)
-		for label, call in self._desk_calls():
+		# What the floor read serves a desk account is served to him, and the QR button of a table asks the floor's own rule
+		for label, call in self._desk_calls() + self._qr_calls():
 			self._served(DESK, label, call)
 
 	def test_a_tablet_is_refused_everywhere_but_on_its_screen(self):
@@ -923,17 +924,18 @@ class TestTillEndpointsSweep(FrappeTestCase):
 		finally:
 			frappe.set_user("Administrator")
 
-	def test_the_qr_button_is_a_cashiers_of_the_till(self):
-		# A cashier who makes a code (the doctype's rule names the role POS User) and is assigned to the till is served
-		# as far as the table; the same rights at a till he is not assigned to are not
+	def test_the_qr_button_is_shown_to_whoever_the_floor_is(self):
+		# The press asks the rule of the floor read (`get_tables`): a desk account, whatever its roles and the till it is
+		# assigned to. A cashier of the till is served as far as the table, and so is a desk account the till does not know,
+		# with or without the role the doctype's create right names (the press makes the code with its own authority)
 		_user(QR_CASHIER, [CASHIER_ROLE, "POS User"], "System User")
-		_user(QR_CASHIER_ELSEWHERE, [CASHIER_ROLE, "POS User"], "System User")
+		_user(QR_CASHIER_ELSEWHERE, [CASHIER_ROLE], "System User")
 		profile = frappe.get_doc("POS Profile", PROFILE)
 		profile.append("applicable_for_users", {"user": QR_CASHIER})
 		profile.save(ignore_permissions=True)
 		for label, call in self._qr_calls():
 			self._served(QR_CASHIER, label, call)
-			self._refused(QR_CASHIER_ELSEWHERE, label, call)
+			self._served(QR_CASHIER_ELSEWHERE, label, call)
 
 	def test_every_gift_card_balance_is_for_a_till_manager(self):
 		for label, call in self._manager_calls():

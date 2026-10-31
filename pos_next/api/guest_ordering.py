@@ -1149,27 +1149,20 @@ def create_table_token(table, pos_profile):
 	A table that already has an active token gets THAT token again. A new one would expire the code
 	already placed on the table (shown on a tablet, printed, stuck under a glass), and every phone
 	that scanned it would be told that its session is over.
-	A press shows the table's live code, so whoever presses is checked first: a desk account that may
-	read the table, assigned to the till it names (or a till manager), whose till belongs to the
-	restaurant of the table, on a site that runs NeoRestau.
+	A press shows the table's live code, so whoever presses is checked first, by the rule of the floor read (`get_tables`):
+	whoever the till shows the floor to may press QR for a table of that till's restaurant, no wider and no narrower. That is
+	a desk account (`permissions.require_floor_access`), whatever its roles and the till it is assigned to, on a site that
+	runs NeoRestau, for a table that is on the floor of the till the call names. The code is made with the authority of that
+	check: the right to create a Guest Order Token is not asked on top, nor the right to read the table.
 	Returns the token value and the guest URL.
 	"""
 	# Where the site does not run NeoRestau nothing of the restaurant shows: no code is made for a guest to use
 	require_neorestau()
-	# A visitor and a portal account are refused before anything is looked up, then the table's own rules decide
-	permissions.require("Restaurant Table", "read", table)
-	# The till named is one the caller is assigned to, as the shift dialog requires to open it, or a till manager works
-	# at any. Not cash_entry.require_till_access: it lets in any account that reads sales invoices, whatever the till,
-	# and a cashier of another restaurant could name this one's
-	from pos_next.api.cash_entry import is_till_manager
-
-	if not (isinstance(pos_profile, str) and pos_profile) or not (
-		is_till_manager()
-		or frappe.db.exists("POS Profile User", {"parent": pos_profile, "user": frappe.session.user})
-	):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-
-	if not frappe.has_permission("Guest Order Token", "create"):
+	# The rule of the floor read, the one function both ask: a visitor and a portal account are refused before anything is
+	# looked up
+	permissions.require_floor_access()
+	# A name is a string: a dict from a JSON body would be read as filters by the lookups below
+	if not (isinstance(table, str) and table and isinstance(pos_profile, str) and pos_profile):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	if not frappe.db.exists("Restaurant Table", table):

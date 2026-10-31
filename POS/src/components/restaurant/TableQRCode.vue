@@ -9,8 +9,12 @@
 	<!-- //// whole screen, the code as large as the width allows (never under 300 px), the table's name large, a "Close" -->
 	<!-- //// button in ink within thumb reach, no "Print", and the screen kept awake while the code is shown. On a tablet -->
 	<!-- //// and a desktop it keeps its size; its primary button is ink there too, never blue (design system, README 7). -->
+	<!-- //// It is the till's overlay, so it sits at z-300 like the others (index.css: dialogs clear the sticky mobile navigation): at -->
+	<!-- //// z-50 the sticky header (z-200) and the phone's Items | Cart strip (z-100), in the same stacking context, painted over -->
+	<!-- //// the top of the screen and stayed tappable, and a guest's stray touch could leave the till mid-scan. The Back of a phone -->
+	<!-- //// closes it instead of leaving the till (composables/useBackClosesDialog). -->
 	<div
-		class="fixed inset-0 z-50"
+		class="fixed inset-0 z-[300]"
 		:class="isPhone ? 'flex flex-col bg-white' : 'flex items-center justify-center bg-black/60 p-4'"
 		data-test="table-qr-dialog"
 		:data-layout="isPhone ? 'phone' : 'card'"
@@ -115,6 +119,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import QRCode from "qrcode"
+import { useBackClosesDialog } from "@/composables/useBackClosesDialog"
 
 const props = defineProps({
 	token: { type: String, required: true },
@@ -131,6 +136,8 @@ const isGenerating = ref(true)
 const PHONE_BELOW = 640
 const viewportWidth = ref(window.innerWidth)
 const isPhone = computed(() => viewportWidth.value < PHONE_BELOW)
+// The Back of a phone (the Android button, the iOS edge swipe) closes the dialog instead of leaving the till
+useBackClosesDialog(isPhone, () => emit("close"))
 // The code as large as the width allows, never under 300 px (it is scanned from an arm's length); a tablet and a desktop
 // keep the 224 px they always had
 const qrSize = computed(() =>
@@ -170,10 +177,15 @@ async function generateQR() {
 // nothing happens (the lock is released by the browser when the page is hidden, and taken again when it is shown)
 let wakeLock = null
 let closed = false
+// A request the browser has not answered yet: the page shown again meanwhile must not ask a second time, or the second lock
+// would overwrite the first, which would then outlive the dialog
+let asking = false
 
 async function keepAwake() {
+	if (asking || wakeLock || closed) return
 	try {
 		if (!navigator.wakeLock?.request) return
+		asking = true
 		const lock = await navigator.wakeLock.request("screen")
 		if (closed) {
 			// The dialog was closed while the browser was granting it
@@ -187,6 +199,8 @@ async function keepAwake() {
 		})
 	} catch {
 		wakeLock = null
+	} finally {
+		asking = false
 	}
 }
 
@@ -199,7 +213,7 @@ function releaseLock(lock) {
 }
 
 function onVisibilityChange() {
-	if (document.visibilityState === "visible" && !wakeLock && !closed) keepAwake()
+	if (document.visibilityState === "visible") keepAwake()
 }
 
 onMounted(() => {

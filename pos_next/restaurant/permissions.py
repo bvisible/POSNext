@@ -93,6 +93,23 @@ def require(doctype: str, ptype: str = "write", name: str | None = None) -> None
 		frappe.has_permission(doctype, ptype, doc=name, throw=True)
 
 
+def require_floor_access() -> None:
+	"""Refuse whoever the floor is not shown to: the one rule of the floor, asked by the read of it (`get_tables`) and by the
+	QR button of a table (`create_table_token`), so that whoever sees the floor may press QR for a table of it, no wider and
+	no narrower.
+
+	The floor is shown to a desk account (a visitor and a portal account never are, whatever roles they were given), and to
+	it whatever its roles, the till it is assigned to and its User Permissions: the cashiers, the managers and the devices
+	that run a till are not told apart by a role of the restaurant's. Which restaurant's floor it is, is the endpoint's own
+	question (the till's, else the one named): `get_tables` answers that restaurant's rows, the press refuses a table that is
+	not of the restaurant of the till it names. A tighter rule for the floor (a role, an assignment to the till) is one
+	change, here, for both.
+	"""
+	from pos_next.api.cash_entry import require_system_user
+
+	require_system_user()
+
+
 def require_right(right: str) -> None:
 	"""Refuse whoever may not do what the till's `right` (a key of RIGHTS) stands for."""
 	doctype, ptype = RIGHTS[right]

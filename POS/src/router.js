@@ -197,7 +197,13 @@ router.beforeEach((to, from, next) => {
 //// its route is written, "<screen> · Neopos"; a route with none is plain "Neopos". A navigation that failed changed
 //// nothing. A screen that learns a name later (the till, the kitchen, the guest pages) hands it to utils/tabTitle.js itself.
 router.afterEach((to, from, failure) => {
-	if (!failure) showScreen(to);
+	if (failure) return;
+	//// Neoffice — a pop onto the location already on screen changes no screen: it is the Back that closed a dialog which had taken
+	//// an entry of the history (composables/useBackClosesDialog.js), and the router answers it with a navigation to where it is.
+	//// Renaming the tab for it would drop the name the page handed over (the till's, once its shift is open), and the till, which
+	//// stays mounted, would not hand it over again.
+	if (from.name && to.fullPath === from.fullPath) return;
+	showScreen(to);
 });
 
 export default router;
