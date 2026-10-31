@@ -1954,6 +1954,7 @@
 						>
 							<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5m0 3.5v.01M12 3l9.5 17h-19L12 3z" />
 						</svg>
+					<!-- //// Neoffice — upstream's printer icon, now shown only when no ticket is on its way (task 28a). -->
 					<svg
 						v-else
 						class="w-4 h-4"
@@ -1968,6 +1969,7 @@
 							d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"
 						/>
 					</svg>
+						<!-- //// Neoffice — what the ticket's state means, in words, above the button (ruling 97, task 28a). -->
 						<span
 							v-if="ticketState.phase !== 'idle'"
 							role="status"
