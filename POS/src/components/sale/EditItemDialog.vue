@@ -509,6 +509,94 @@
 												{{ __("SKU promotion applied — discount is locked") }}
 											</div>
 
+											<!-- //// Neoffice — « Offert » (NeoRestau lot 1, task 24): offer some or all of the line, at zero. The -->
+											<!-- //// quantity offered goes from 1 to the line's, « Tout » offers the whole line; Confirm is then the -->
+											<!-- //// footer's one primary action (ink, Neoffice design system). Shown where the cart allows it (canOffer). -->
+											<div
+												v-if="canOffer && localItem"
+												class="border-t border-gray-200 pt-4"
+											>
+												<button
+													v-if="!offering"
+													type="button"
+													data-test="offer-start"
+													class="w-full h-11 flex items-center justify-center gap-2 rounded-lg border border-[#E9C5A4] bg-white text-sm font-semibold text-[#A15A2E] hover:bg-[#FAEFE6] transition-colors"
+													@click="startOffer"
+												>
+													<FeatherIcon name="gift" class="w-4 h-4" />
+													{{ __("Offer", null, OFFER_CONTEXT) }}
+												</button>
+												<div v-else data-test="offer-panel" class="flex flex-col gap-3">
+													<label
+														for="offer-quantity"
+														class="block text-sm font-medium text-gray-700 text-start"
+														>{{ __("Quantity offered") }}</label
+													>
+													<div class="flex items-center gap-2">
+														<div
+															class="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white"
+														>
+															<button
+																type="button"
+																data-test="offer-minus"
+																class="w-11 h-11 flex items-center justify-center text-gray-700 text-lg font-bold hover:bg-gray-100 disabled:text-gray-300"
+																:disabled="offerQuantity <= offerLimits.min"
+																:aria-label="__('Decrease quantity')"
+																@click="stepOffer(-1)"
+															>
+																−
+															</button>
+															<input
+																id="offer-quantity"
+																v-model.number="offerQuantity"
+																data-test="offer-qty"
+																type="number"
+																step="any"
+																inputmode="decimal"
+																:min="offerLimits.min"
+																:max="offerLimits.max"
+																class="w-16 h-11 text-center border-x border-gray-300 text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#D68A59]"
+																@blur="settleOfferQuantity"
+																@keydown.enter="$event.target.blur()"
+															/>
+															<button
+																type="button"
+																data-test="offer-plus"
+																class="w-11 h-11 flex items-center justify-center text-gray-700 text-lg font-bold hover:bg-gray-100 disabled:text-gray-300"
+																:disabled="offerQuantity >= offerLimits.max"
+																:aria-label="__('Increase quantity')"
+																@click="stepOffer(1)"
+															>
+																+
+															</button>
+														</div>
+														<button
+															type="button"
+															data-test="offer-all"
+															:class="[
+																'h-11 px-4 rounded-lg border text-sm font-semibold transition-colors',
+																isWholeOffer
+																	? 'border-[#D68A59] bg-[#FAEFE6] text-[#A15A2E]'
+																	: 'border-gray-300 bg-white text-gray-700 hover:border-[#DDA479]',
+															]"
+															:aria-pressed="isWholeOffer"
+															@click="offerAll"
+														>
+															{{ __("All") }}
+														</button>
+													</div>
+													<div
+														data-test="offer-value"
+														class="flex items-center justify-between rounded-lg bg-[#FAEFE6] px-3 py-2 text-sm text-[#A15A2E]"
+													>
+														<span>{{ __("Value offered") }}</span>
+														<span class="font-semibold tabular-nums">{{
+															formatCurrency(offerValue)
+														}}</span>
+													</div>
+												</div>
+											</div>
+
 											<!-- Totals -->
 											<div
 												class="bg-gray-50 rounded-lg p-4 flex flex-col gap-2"
@@ -556,7 +644,17 @@
 
 							<!-- Actions - matching frappe-ui Dialog style -->
 							<div class="px-4 pb-7 pt-4 sm:px-6">
-								<div class="flex items-center justify-end gap-2">
+								<!-- //// Neoffice — while « Offert » is open (task 24) its Cancel and Confirm replace the two buttons below. -->
+								<div v-if="offering" class="flex items-center justify-end gap-2">
+									<Button variant="subtle" data-test="offer-cancel" @click="stopOffer">{{
+										__("Cancel")
+									}}</Button>
+									<Button variant="solid" data-test="offer-confirm" @click="confirmOffer">{{
+										__("Confirm")
+									}}</Button>
+								</div>
+								<!-- //// Neoffice — v-else: upstream's two buttons, unchanged, while « Offert » is closed (task 24). -->
+								<div v-else class="flex items-center justify-end gap-2">
 									<Button variant="subtle" @click="cancel">{{
 										__("Cancel")
 									}}</Button>
@@ -619,6 +717,8 @@ import SelectInput from "@/components/common/SelectInput.vue";
 import { usePOSCartStore } from "@/stores/posCart";
 import { canChangeFamily, hasServiceFamilies, serviceLabel } from "@/utils/serviceFamilies";
 import ServiceFamilyChoice from "./ServiceFamilyChoice.vue";
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the bounds of the quantity offered and its value.
+import { OFFER_CONTEXT, clampOfferQuantity, listPrice, offerBounds } from "@/utils/offeredRows";
 
 const { showSuccess, showError, showWarning } = useToast();
 const settingsStore = usePOSSettingsStore();
@@ -678,9 +778,16 @@ const props = defineProps({
 		type: String,
 		default: "EGP",
 	},
+	//// Neoffice — whether the line may be offered (« Offert », task 24): the cart decides (the till's discount right, a
+	//// sold line of an invoice).
+	canOffer: {
+		type: Boolean,
+		default: false,
+	},
 });
 
-const emit = defineEmits(["update:modelValue", "update-item"]);
+//// Neoffice — offer-item ({ quantity }): « Offert » confirmed (task 24).
+const emit = defineEmits(["update:modelValue", "update-item", "offer-item"]);
 
 // Local state
 const localItem = ref(null);
@@ -1414,6 +1521,50 @@ function updateItem() {
 }
 
 function cancel() {
+	show.value = false;
+}
+
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the quantity offered of the line as the cart holds it (its edits in
+//// this dialog are not part of the offer), within its bounds, and its value at list price. Confirm hands the quantity to
+//// the cart (offer-item), which splits the line; Cancel goes back to the line's editing.
+const offering = ref(false);
+const offerQuantity = ref(1);
+const offerLimits = computed(() => offerBounds(props.item));
+const isWholeOffer = computed(() => offerQuantity.value >= offerLimits.value.max);
+const offerValue = computed(() => roundCurrency(offerQuantity.value * listPrice(props.item)));
+
+watch(
+	() => props.item,
+	() => {
+		offering.value = false;
+	}
+);
+
+function startOffer() {
+	offerQuantity.value = offerLimits.value.min;
+	offering.value = true;
+}
+
+function stopOffer() {
+	offering.value = false;
+}
+
+function stepOffer(direction) {
+	offerQuantity.value = clampOfferQuantity(props.item, (Number(offerQuantity.value) || 0) + direction);
+}
+
+function offerAll() {
+	offerQuantity.value = offerLimits.value.max;
+}
+
+function settleOfferQuantity() {
+	offerQuantity.value = clampOfferQuantity(props.item, offerQuantity.value);
+}
+
+function confirmOffer() {
+	const quantity = clampOfferQuantity(props.item, offerQuantity.value);
+	offering.value = false;
+	emit("offer-item", { quantity });
 	show.value = false;
 }
 </script>

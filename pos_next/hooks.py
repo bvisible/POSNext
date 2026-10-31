@@ -132,6 +132,8 @@ doctype_list_js = {"Coupon Code": "public/js/coupon_code_list.js"}
 jinja = {
 	"methods": [
 		"pos_next.pos_next.utils.pos_closing_print.get_items_sold",
+		# //// Neoffice — the end-of-day print's line of what was offered (« Offert », NeoRestau lot 1, task 24).
+		"pos_next.offered.get_offered_line",
 	]
 }
 
@@ -279,6 +281,9 @@ doc_events = {
 			# //// (9bc096de 2026-02-05, restored by f0c960ff 2026-03-21).
 			"pos_next.api.sales_invoice_hooks.validate_coupon_on_invoice",
 			"pos_next.api.wallet.validate_wallet_payment",
+			# //// Neoffice — an offered row (« Offert », NeoRestau lot 1, task 24) stays at 100 %, never a promotion's free
+			# //// row, and only on a till that lets its cashiers change a discount, whatever path saves it.
+			"pos_next.offered.validate_offered_rows",
 		],
 		"before_submit": "pos_next.authorization.gate.enforce_document",
 		"before_cancel": "pos_next.api.sales_invoice_hooks.before_cancel",

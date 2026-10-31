@@ -976,6 +976,11 @@ def make_closing_shift_from_opening(opening_shift):
 			"closing_withdrawal_problem": closing_withdrawal_problem,
 		}
 	)
+	# //// Neoffice — what the shift offered (« Offert », NeoRestau lot 1, task 24): the units and their value at list
+	# //// price, offered_count and offered_value, for the closing's line « Offerts : n articles, valeur CHF x ».
+	from pos_next.offered import offered_summary
+
+	result.update(offered_summary(invoices))
 
 	return result
 

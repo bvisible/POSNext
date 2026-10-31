@@ -773,6 +773,14 @@ def get_station_items_map(restaurant=None):
 	return {"items": items_map, "groups": groups_map}
 
 
+def _offered_fields():
+	"""The fields of an offered row (« Offert », NeoRestau lot 1, task 24) a table's draft hands back to the till: its
+	list price, and its flag where the site has the field (pos_next.offered.ensure_offered_field)."""
+	from pos_next.offered import FIELD
+
+	return ["price_list_rate", FIELD] if frappe.db.has_column("Sales Invoice Item", FIELD) else ["price_list_rate"]
+
+
 @frappe.whitelist()
 def get_table_order(table_name):
 	"""Get the active invoice for a specific table (draft or recently submitted)."""
@@ -816,6 +824,8 @@ def get_table_order(table_name):
 	# Fetch items
 	# stock_uom and conversion_factor: the unit the line is in and what it is worth in stock units (task 22)
 	item_fields = ["item_code", "item_name", "qty", "rate", "amount", "uom", "stock_uom", "conversion_factor", "image"]
+	# An offered row (« Offert », NeoRestau lot 1, task 24) comes back offered: its flag and its list price
+	item_fields += _offered_fields()
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
 	if frappe.db.has_column("Sales Invoice Item", "preparation_station"):
@@ -1577,7 +1587,7 @@ def open_table(table_name, pos_profile, customer=None):
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
-			fields=draft_fields,
+			fields=[*draft_fields, *_offered_fields()],
 		)
 
 		# Exclude TIP items (same filter as get_table_order), the tip item being the profile's restaurant's

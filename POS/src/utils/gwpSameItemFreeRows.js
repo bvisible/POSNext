@@ -11,10 +11,13 @@
 //// Neoffice — each shown line keeps the way back to its cart row (utils/cartRow.js): the row actions
 //// address a line by identity, and the lines below are copies.
 import { withCartRow } from "@/utils/cartRow"
+//// Neoffice — an offered row (NeoRestau lot 1, task 24) is no paid line: see findPaidCartItem.
+import { isOfferedRow } from "@/utils/offeredRows"
 
 function findPaidCartItem(items, itemCode, uom) {
 	if (!itemCode) return null;
-	const paid = items.filter((item) => !item.is_free_item && item.item_code === itemCode);
+	//// Neoffice — an offered row is never the paid line a gift nests under nor gets carved units back (task 24).
+	const paid = items.filter((item) => !item.is_free_item && !isOfferedRow(item) && item.item_code === itemCode);
 	if (!paid.length) return null;
 	if (uom) {
 		const matchedUom = paid.find((item) => (item.uom || item.stock_uom) === uom);

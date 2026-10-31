@@ -23,6 +23,9 @@ import frappe
 # //// remove coupon_code from JSON, create programmatically for v15 — 3571c41
 from pos_next.hooks import _has_native_coupon_code_field
 
+# //// Neoffice — the field of an offered row (« Offert », NeoRestau lot 1, task 24), made at install and at each migrate.
+from pos_next.offered import ensure_offered_field
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,9 @@ def after_install():
 		# //// programmatically for v15").
 		# Ensure coupon_code custom field exists on v15 (native on v16+)
 		ensure_coupon_code_field()
+
+		# //// Neoffice — the field that flags an offered row (« Offert », NeoRestau lot 1, task 24).
+		ensure_offered_field()
 
 		# Setup default print format for POS Profiles
 		setup_default_print_format()
@@ -75,6 +81,9 @@ def after_migrate():
 		# //// 2026-02-18). after_migrate puts it back if a migrate dropped it.
 		# Ensure coupon_code custom field exists on v15 (native on v16+)
 		ensure_coupon_code_field(quiet=True)
+
+		# //// Neoffice — the field that flags an offered row, put back if a migrate dropped it (task 24).
+		ensure_offered_field()
 
 		# Setup default print format
 		setup_default_print_format(quiet=True)

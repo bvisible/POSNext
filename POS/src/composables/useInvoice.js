@@ -22,6 +22,10 @@ import { unitsOf } from "@/utils/cartLineUnits";
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
 //// Neoffice — the price terms a new unit carries from the line it extends (NeoRestau lot 1, task 22, fix round 2).
 import { carriedPriceTerms, samePriceTerms } from "@/utils/linePriceTerms";
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered row is a row of its own, flagged, 100 % off
+//// (utils/offeredRows.js); the payment carries the manager's approval when a rule asks for one (utils/offerApproval.js).
+import { isOfferedRow, offeredLineFields, withoutOfferedRows } from "@/utils/offeredRows";
+import { authorizationFieldsFor } from "@/utils/offerApproval";
 
 const log = logger.create("Invoice");
 
@@ -131,7 +135,9 @@ export function useInvoice() {
 		url: promoApi.applyOffers(),
 		makeParams({ invoice_data, selected_offers }) {
 			const params = {
-				invoice_data: JSON.stringify(invoice_data),
+				//// Neoffice — the offers engine never sees an offered row (task 24): it neither prices nor counts it;
+				//// posCart.applyDiscountsFromServer reads the answer against the other rows.
+				invoice_data: JSON.stringify(withoutOfferedRows(invoice_data)),
 			};
 
 			if (selected_offers && selected_offers.length) {
@@ -311,11 +317,15 @@ export function useInvoice() {
 		const hasModifiers = item.posa_item_modifiers || item.posa_special_instructions;
 		//// Neoffice — a line that has been sent merges into nothing either: an incoming row read back from the server with its
 		//// status joined an earlier line that waits, and Pending 3 became an unsent 5 (fix round 2).
-		const existingItem = (hasModifiers || hasLeftForTheKitchen(item))
+		//// Neoffice — an offered line (task 24) never merges, and nothing merges into an offered row: a unit added
+		//// to the cart is a paid one.
+		const existingItem = (hasModifiers || hasLeftForTheKitchen(item) || isOfferedRow(item))
 			? null
 			: invoiceItems.value.find(
 					(i) =>
 						!i.is_free_item &&
+						//// Neoffice — never an offered row (task 24).
+						!isOfferedRow(i) &&
 						i.item_code === item.item_code &&
 						i.uom === itemUom &&
 						!i.posa_item_modifiers &&
@@ -437,6 +447,9 @@ export function useInvoice() {
 				takeaway_item_tax_rate: vatMapsFor(item, posProfile.value)?.takeaway_item_tax_rate,
 			};
 			invoiceItems.value.push(newItem);
+			//// Neoffice — a line that comes offered (a table's draft, a held cart) stays offered: its flag, its list
+			//// price, 100 % off (task 24). Nothing for a paid line.
+			Object.assign(newItem, offeredLineFields(item));
 			// Recalculate the newly added item to apply taxes
 			recalculateItem(newItem);
 
@@ -483,12 +496,13 @@ export function useInvoice() {
 			itemToRemove = cartRowOf(itemOrCode);
 		} else if (uom) {
 			itemToRemove = invoiceItems.value.find(
-				//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
-				(i) => i.item_code === itemOrCode && i.uom === uom
+				//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode. And a code names the
+				//// paid line, never an offered row (task 24): the stepper going down to 0 removes the line it shows.
+				(i) => i.item_code === itemOrCode && i.uom === uom && !isOfferedRow(i)
 			);
 		} else {
-			//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode.
-			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode);
+			//// Neoffice — same rewrite (7e1376a3): the parameter is itemOrCode now, not itemCode; never an offered row (task 24).
+			itemToRemove = invoiceItems.value.find((i) => i.item_code === itemOrCode && !isOfferedRow(i));
 		}
 
 		//// Neoffice — a line that is not in the cart changes nothing: the totals' running sums below were
@@ -545,11 +559,13 @@ export function useInvoice() {
 		if (row && invoiceItems.value.indexOf(row) >= 0) {
 			item = row;
 		} else if (uom) {
+			//// Neoffice — the stepper's quantity is the paid line's, never an offered row's (task 24).
 			item = invoiceItems.value.find(
-				(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item
+				(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item && !isOfferedRow(i)
 			);
 		} else {
-			item = invoiceItems.value.find((i) => i.item_code === itemCode && !i.is_free_item);
+			//// Neoffice — the paid line's, never an offered row's (task 24).
+			item = invoiceItems.value.find((i) => i.item_code === itemCode && !i.is_free_item && !isOfferedRow(i));
 		}
 
 		if (item) {
@@ -1084,6 +1100,8 @@ export function useInvoice() {
 			is_rate_manually_edited: item.is_rate_manually_edited || 0,
 			original_rate: item.original_rate || null,
 			is_free_item: item.is_free_item || 0,
+			//// Neoffice — an offered row reaches the server flagged (task 24): rate 0, its list price kept, 100 % off.
+			posa_is_offered: isOfferedRow(item) ? 1 : 0,
 			//// Neoffice — restaurant fields carried into the submission payload. Upstream has no
 			//// table service, so a submitted line lost its modifiers, its free-text instruction, the
 			//// station that has to cook it and the KDS state it had already reached — re-validating
@@ -1462,6 +1480,9 @@ export function useInvoice() {
 					submitData.redeemed_customer_credit = redeemedCustomerCredit;
 					submitData.customer_credit_dict = customerCreditDict;
 				}
+				//// Neoffice — the manager's approval of the offered rows rides with the payment, where a rule asks for one
+				//// (task 24): the server's gate spends it on this invoice (before_submit).
+				Object.assign(submitData, authorizationFieldsFor(rawItems));
 				if (isCreditSale && invoicePayments.length === 0) {
 					submitData.is_credit_sale = 1;
 				}
@@ -1741,6 +1762,8 @@ export function useInvoice() {
 				item_tax_rate: vatMapsFor(item, posProfile.value)?.item_tax_rate,
 				takeaway_item_tax_rate: vatMapsFor(item, posProfile.value)?.takeaway_item_tax_rate,
 			};
+			//// Neoffice — an offered row of the order comes back offered: its flag, its list price, 100 % off (task 24).
+			Object.assign(newItem, offeredLineFields(item));
 			recalculateItem(newItem);
 			return newItem;
 		});

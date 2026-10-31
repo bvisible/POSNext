@@ -32,6 +32,8 @@ import {
 	withCarvedQtyRestored,
 } from "@/utils/gwpSameItemFreeRows";
 import { offlineState } from "@/utils/offline/offlineState";
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered row is never a paid line the cart addresses by item code.
+import { isOfferedRow } from "@/utils/offeredRows";
 //// Neoffice — added import. CHF has no coin below 0.05, so the cart computes a rounded grand
 //// total plus the rounding-adjustment line shown beside it; upstream charges the raw total
 //// (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash quick amounts"). roundCurrency
@@ -255,7 +257,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 */
 	function offerCartSignature() {
 		const paid = withCarvedQtyRestored(invoiceItems.value)
-			.filter((i) => !i.is_free_item)
+			//// Neoffice — an offered row decides no offer (task 24).
+			.filter((i) => !i.is_free_item && !isOfferedRow(i))
 			.map((i) => `${i.item_code}:${i.quantity}:${i.uom || ""}:${i.price_list_rate || i.rate || 0}`)
 			.join("|");
 		return `${paid}::${customer.value?.name || customer.value || "none"}`;
@@ -481,9 +484,11 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				? row
 				: uom
 					? invoiceItems.value.find(
-							(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item
+							//// Neoffice — the stepper's quantity is the paid line's, never an offered row's (task 24).
+							(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item && !isOfferedRow(i)
 						)
-					: invoiceItems.value.find((i) => i.item_code === itemCode && !i.is_free_item);
+					: //// Neoffice — the paid line's, never an offered row's (task 24).
+						invoiceItems.value.find((i) => i.item_code === itemCode && !i.is_free_item && !isOfferedRow(i));
 
 		if (!item) return;
 
@@ -881,7 +886,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		for (const update of lineUpdates || []) {
 			const item = invoiceItems.value[update.line_key];
 			// Cart changed while the request was in flight; the revalidation watcher catches up.
-			if (!item || item.item_code !== update.item_code) continue;
+			//// Neoffice — a coupon never lands on an offered row: it stays at 100 % (task 24).
+			if (!item || item.item_code !== update.item_code || isOfferedRow(item)) continue;
 			const percentage = Number.parseFloat(update.discount_percentage) || 0;
 			const fixedAmount = percentage > 0 ? 0 : Number.parseFloat(update.discount_amount) || 0;
 			// A stacked line's discount includes what it already had, so the coupon % is no cap for it.
@@ -1086,6 +1092,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					brand: item.brand,
 					amount: item.amount,
 					is_free_item: item.is_free_item || 0,
+					//// Neoffice — the table's draft saved from this payload (Valider) keeps its offered rows flagged (task 24).
+					posa_is_offered: isOfferedRow(item) ? 1 : 0,
 				};
 			}),
 		};
@@ -1161,7 +1169,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 		let hasDiscounts = false;
 
-		invoiceItems.value.forEach((item, index) => {
+		//// Neoffice — the server was asked without the offered rows (useInvoice's applyOffersResource, task 24): its
+		//// answer, in the same order, is read against the other rows, and an offered row keeps its 100 %.
+		invoiceItems.value.filter((item) => !isOfferedRow(item)).forEach((item, index) => {
 			const serverItem = serverItems[index] || {};
 			const discountPct = Number.parseFloat(serverItem.discount_percentage) || 0;
 			const discountAmt = Number.parseFloat(serverItem.discount_amount) || 0;
@@ -1818,6 +1828,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					// Transaction-level discount applies to all items
 					eligibleItems = invoiceItems.value;
 				}
+				//// Neoffice — an offered row is never discounted nor counted by an offer (task 24).
+				eligibleItems = eligibleItems.filter((item) => !isOfferedRow(item));
 
 				if (eligibleItems.length === 0) continue;
 
@@ -2133,7 +2145,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * Paid lines only — free gifts must not inflate min_qty/max_qty/min_amt checks.
 	 */
 	function buildCartSnapshot() {
-		const items = withCarvedQtyRestored(invoiceItems.value).filter((item) => !item.is_free_item);
+		//// Neoffice — nor offered rows: they qualify for no offer (task 24).
+		const items = withCarvedQtyRestored(invoiceItems.value).filter((item) => !item.is_free_item && !isOfferedRow(item));
 		const totalQty = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		const itemCodes = items.map((item) => item.item_code);
@@ -2212,6 +2225,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (row) return invoiceItems.value.indexOf(row) >= 0 ? row : undefined;
 		return invoiceItems.value.find((item) => {
 			if (item.item_code !== itemCode) return false;
+			//// Neoffice — an offered row is never the line an item code names (task 24).
+			if (isOfferedRow(item)) return false;
 			if (uom && item.uom !== uom) return false;
 			// When same SKU has paid + free rows, match the intended line.
 			if (
@@ -2246,7 +2261,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				!item.is_free_item &&
 				!excludeItem?.is_free_item &&
 				//// Neoffice — a sent line is no merge target either (see the note above, fix round 1).
-				!hasLeftForTheKitchen(item)
+				!hasLeftForTheKitchen(item) &&
+				//// Neoffice — nor into an offered row (task 24).
+				!isOfferedRow(item)
 		);
 	}
 
@@ -2531,7 +2548,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		if (subtotal.value !== undefined && invoiceItems.value) {
 			// Paid lines only — free gifts must not inflate min_qty/max_qty checks
 			const paidItems = withCarvedQtyRestored(invoiceItems.value).filter(
-				(item) => !item.is_free_item
+				//// Neoffice — nor offered rows (task 24).
+				(item) => !item.is_free_item && !isOfferedRow(item)
 			);
 
 			// Create hash for paid item codes and quantities to detect actual changes.
@@ -3006,7 +3024,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 	// An emptied cart drops its whole-cart coupon, which would otherwise push the total below zero
 	watch(
-		() => invoiceItems.value.some((item) => !item.is_free_item),
+		//// Neoffice — a cart left with offered rows only has nothing paid either (task 24).
+		() => invoiceItems.value.some((item) => !item.is_free_item && !isOfferedRow(item)),
 		(hasPaidItems) => {
 			if (hasPaidItems || !appliedCoupon.value || isLineLevelCoupon(appliedCoupon.value)) return;
 			removeDiscount();

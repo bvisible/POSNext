@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, toRaw } from "vue"
 import { Dialog, Button } from "frappe-ui"
 import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
@@ -139,6 +139,8 @@ import {
 	isTableService,
 	planKitchenSend,
 } from "@/utils/serviceFamilies"
+// An offered row (« Offert », NeoRestau lot 1, task 24) is part of a dish: it goes to the kitchen with its paid line
+import { followsItsPaidLine, isOfferedRow, kitchenFollowers } from "@/utils/offeredRows"
 
 const emit = defineEmits(["items-sent"])
 
@@ -200,7 +202,10 @@ function shouldDefaultCheck(item) {
 }
 
 function open() {
-	const lines = cartStore.invoiceItems.filter((item) => !item.is_free_item)
+	// An offered row (« Offert », task 24) is listed through its paid line, sent with it, held back with it; a whole line offered
+	// (no paid line of its dish) is listed on its own, like any dish
+	const rows = cartStore.invoiceItems
+	const lines = rows.filter((item) => !item.is_free_item && !followsItsPaidLine(rows, item))
 	// The boxes of the lines not sent yet are ticked by the rhythm of the meal: at a table the drinks and the first food family
 	// present go, the rest is held back; at the counter and on a takeaway everything goes (service families, NeoRestau lot 1)
 	const plan = planKitchenSend(
@@ -233,9 +238,15 @@ function deselectAll() {
 
 // The cart line a dialog line stands for: the row itself, found again by the item and its unit only for a line that has none
 function cartLineOf(dialogItem) {
-	if (dialogItem._row && cartStore.invoiceItems.includes(dialogItem._row)) return dialogItem._row
+	//// Neoffice — compared as raw objects: the dialog's copy holds the row through a reactive proxy, which a plain list of rows
+	//// does not recognise, and a whole line offered (no paid line of its code and unit) has no other way back (task 24).
+	const row = dialogItem._row ? toRaw(dialogItem._row) : null
+	const own = row ? cartStore.invoiceItems.find((ci) => toRaw(ci) === row) : null
+	if (own) return own
+	// An offered row shares its paid line's code and unit: the line looked up by them is the paid one (task 24)
 	return cartStore.invoiceItems.find(
 		(ci) =>
+			!isOfferedRow(ci) &&
 			ci.item_code === dialogItem.item_code &&
 			(ci.uom || "") === (dialogItem.uom || ""),
 	)
@@ -252,6 +263,10 @@ function sendSelected() {
 		const cartItem = cartLineOf(di)
 		if (cartItem) {
 			cartItem.kds_status = "Pending"
+			// Its offered rows not sent yet go in the same send: never a ticket of their own
+			for (const follower of kitchenFollowers(cartStore.invoiceItems, cartItem)) {
+				follower.kds_status = "Pending"
+			}
 			// Ensure preparation_station is set (individual item > item group fallback)
 			if (!cartItem.preparation_station) {
 				const stationInfo = restaurantStore.getStationForItem(
@@ -269,6 +284,10 @@ function sendSelected() {
 		const cartItem = cartLineOf(di)
 		if (cartItem && !cartItem.kds_status) {
 			cartItem.kds_status = "Waiting"
+		}
+		// Held back with its dish
+		for (const follower of cartItem ? kitchenFollowers(cartStore.invoiceItems, cartItem) : []) {
+			if (!follower.kds_status) follower.kds_status = "Waiting"
 		}
 	}
 

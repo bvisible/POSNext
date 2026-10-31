@@ -2323,6 +2323,10 @@ import {
 	countCashMovementsKeepingTheShiftOpen,
 } from "@/utils/offline/cashMovements";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the offered rows of a ticket, their approval before the payment, the
+//// draft loaders keeping them offered, and the kitchen taking them with their dish.
+import { useOfferedItemsStore } from "@/stores/offeredItems";
+import { kitchenFollowers, offeredSourceFields } from "@/utils/offeredRows";
 
 // Initialize stores
 const cartStore = usePOSCartStore();
@@ -2340,6 +2344,8 @@ const customerSearchStore = useCustomerSearchStore();
 //// Neoffice — restaurant store instance for this page (87f168fe, 2026-03-20).
 const restaurantStore = useRestaurantStore();
 const bootstrapStore = useBootstrapStore();
+//// Neoffice — the ticket's offered rows (« Offert », task 24).
+const offeredItems = useOfferedItemsStore();
 // Note: settingsStore is an alias to posSettingsStore (same Pinia store singleton)
 const settingsStore = posSettingsStore;
 
@@ -3697,6 +3703,8 @@ function handleLoadServerDraft(order) {
 					posa_special_instructions: item.posa_special_instructions,
 					posa_item_modifiers: item.posa_item_modifiers,
 					_modifiers_applied: modifierPriceAdjustment || 0,
+					//// Neoffice — an offered row of the draft comes back offered: its flag and list price (task 24).
+					...offeredSourceFields(item),
 				},
 				item.qty || 1
 			);
@@ -3755,6 +3763,8 @@ async function handleSendSingleItem(item) {
 		  );
 	if (cartItem) {
 		cartItem.kds_status = "Pending";
+		//// Neoffice — the dish's offered rows not sent yet go in the same send: never a ticket of their own (task 24).
+		for (const follower of kitchenFollowers(cartStore.invoiceItems, cartItem)) follower.kds_status = "Pending";
 		const activeStatuses = cartStore.invoiceItems
 			.map((i) => i.kds_status)
 			.filter((s) => s && s !== "Waiting");
@@ -4191,6 +4201,15 @@ function handleProceedToPayment() {
 		return;
 	}
 
+	//// Neoffice — the offered rows go through their checks first (« Offert », task 24): sold on an invoice, by a till that
+	//// lets its cashiers change a discount, and approved by a manager where a rule asks for it.
+	if (offeredItems.needsCheckBeforePayment()) {
+		offeredItems.checkBeforePayment().then((go) => {
+			if (go) uiStore.showPaymentDialog = true;
+		});
+		return;
+	}
+
 	uiStore.showPaymentDialog = true;
 }
 
@@ -4322,6 +4341,8 @@ async function handlePaymentCompleted(paymentData) {
 				//// Neoffice — a takeaway sale made offline carries its flag and number, so that once synced its invoice
 				//// takes the takeaway tax category its cart and receipt were taxed with (NeoRestau lot 1, task 11).
 				...cartStore.takeawaySaleFields(),
+				//// Neoffice — and the manager's approval of its offered rows, where a rule asks for one (task 24).
+				...offeredItems.authorizationFields(cartStore.invoiceItems),
 				//// Neoffice — the offline invoice is built with the CHF-rounded total and carries the
 				//// rounding adjustment, so an invoice synced later matches the receipt the customer
 				//// already has in hand (4fdb5df4, 2026-04-04 "rounding total, tips visibility, cash

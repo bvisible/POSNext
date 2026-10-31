@@ -6,6 +6,8 @@ import { getOfflineReceiptPayload } from "@/utils/offline/offlineReceiptCache";
 import { getOfflineInvoiceByOfflineId } from "@/utils/offline/sync";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { printHTML as qzPrintHTML } from "@/utils/qzTray";
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered line prints 0.00 and « Offert » under it.
+import { OFFER_CONTEXT, isOfferedRow } from "@/utils/offeredRows";
 
 //// use frappe-ui call instead of window.frappe.call in payment driver — cb23e1a8
 const log = logger.create("PrintInvoice");
@@ -180,13 +182,17 @@ export function buildReceiptHTML(invoiceData) {
 	const salesPersonNames = getSalesPersonNames(invoiceData);
 	const itemsHtml = items
 		.map((item) => {
+			//// Neoffice — an offered row (« Offert », task 24) is no discount: 0.00 charged, « Offert » printed under it.
+			const offered = isOfferedRow(item);
 			const hasDiscount =
-				(item.discount_percentage && Number.parseFloat(item.discount_percentage) > 0) ||
-				(item.discount_amount && Number.parseFloat(item.discount_amount) > 0);
+				!offered &&
+				((item.discount_percentage && Number.parseFloat(item.discount_percentage) > 0) ||
+					(item.discount_amount && Number.parseFloat(item.discount_amount) > 0));
 			const isFree = item.is_free_item;
 			const qty = item.quantity || item.qty || 0;
 			const displayRate = item.price_list_rate || item.rate || 0;
-			const subtotal = qty * displayRate;
+			//// Neoffice — an offered row charges nothing (task 24).
+			const subtotal = offered ? 0 : qty * displayRate;
 			return `
 						<div class="item-row">
 							<div class="item-name">${item.item_name || item.item_code} ${isFree ? __("(FREE)") : ""}</div>
@@ -207,6 +213,7 @@ export function buildReceiptHTML(invoiceData) {
 									  )}</span></div>`
 									: ""
 							}
+							${offered ? `<div class="item-discount"><span>${__("Offered", null, OFFER_CONTEXT)}</span><span></span></div>` : "" /* //// Neoffice — « Offert » under an offered line (task 24) */}
 							${
 								item.serial_no
 									? `<div class="item-serials"><div class="item-serials-label">${__(
@@ -752,15 +759,20 @@ export function printProvisionalTicket(ticketData) {
 				<div class="items-table">
 					${ticketData.items
 						.map((item) => {
+							//// Neoffice — an offered row (« Offert », task 24) is no discount: 0.00, « Offert » under it.
+							const offered = isOfferedRow(item);
 							const hasDiscount =
-								(item.discount_percentage &&
+								!offered &&
+								((item.discount_percentage &&
 									Number.parseFloat(item.discount_percentage) > 0) ||
-								(item.discount_amount &&
-									Number.parseFloat(item.discount_amount) > 0);
+									//// Neoffice — the same test, under « !offered » (task 24).
+									(item.discount_amount &&
+										Number.parseFloat(item.discount_amount) > 0));
 							const isFree = item.is_free_item;
 							const qty = item.quantity || item.qty;
 							const displayRate = item.price_list_rate || item.rate;
-							const subtotal = qty * displayRate;
+							//// Neoffice — an offered row charges nothing (task 24).
+							const subtotal = offered ? 0 : qty * displayRate;
 							return `
 						<div class="item-row">
 							<div class="item-name">${item.item_name || item.item_code} ${isFree ? __("(FREE)") : ""}</div>
@@ -781,6 +793,7 @@ export function printProvisionalTicket(ticketData) {
 									  )}</span></div>`
 									: ""
 							}
+							${offered ? `<div class="item-discount"><span>${__("Offered", null, OFFER_CONTEXT)}</span><span></span></div>` : "" /* //// Neoffice — « Offert » under an offered line (task 24) */}
 						</div>`;
 						})
 						.join("")}

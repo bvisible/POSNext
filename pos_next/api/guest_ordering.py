@@ -722,6 +722,12 @@ def get_order_status(token):
 		item_fields.append("kds_batch")
 	if frappe.db.has_column("Sales Invoice Item", "posa_special_instructions"):
 		item_fields.append("posa_special_instructions")
+	# An offered row (« Offert », NeoRestau lot 1, task 24): the guest's page reads it as such
+	from pos_next.offered import FIELD as OFFERED
+	from pos_next.offered import offered_label
+
+	if frappe.db.has_column("Sales Invoice Item", OFFERED):
+		item_fields.append(OFFERED)
 
 	all_items = frappe.get_all(
 		"Sales Invoice Item",
@@ -744,6 +750,10 @@ def get_order_status(token):
 
 	# Apply pricing rules so guest sees discounted prices
 	order_items = _apply_pricing_rules_to_items(invoice_doc, order_items)
+	# « Offert » in the guest's language (the request's): the till's translations are not open to a guest
+	for item in order_items:
+		if item.get(OFFERED):
+			item["offered_label"] = offered_label()
 
 	# Calculate total discount from pricing rules and subtract from invoice grand_total
 	# (taxes may be included in item rates, so we can't just sum items + taxes)

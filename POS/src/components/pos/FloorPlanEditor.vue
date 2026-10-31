@@ -1037,6 +1037,8 @@ import { roomCode } from "@/utils/kitchenRoomCode"
 //// Neoffice — a station's colour lightened for a dark canvas (smoke-test fix; task 46's helper, as the runner's plan uses it)
 import { onDark } from "@/utils/stationColors"
 import { initSocket } from "@/socket"
+// « Offert » (NeoRestau lot 1, task 24): what an offered row of a table's draft keeps when the table is opened
+import { offeredSourceFields } from "@/utils/offeredRows"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
@@ -2130,6 +2132,9 @@ async function selectTable(table) {
 							//// had lines with no course, no course was held, and « Order the next course » never showed (Daniel, 01.11; NeoRestau lot 1, service families).
 							service_family: item.service_family || "",
 							_modifiers_applied: modifierPriceAdjustment || 0,
+							// An offered row of the table (« Offert », NeoRestau lot 1, task 24) comes back offered:
+							// its flag and its list price
+							...offeredSourceFields(item),
 						},
 						item.qty || 1,
 					)

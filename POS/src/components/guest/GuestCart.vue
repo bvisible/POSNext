@@ -37,6 +37,7 @@
 					<div
 						v-for="(oItem, idx) in orderItems"
 						:key="'o-' + idx"
+						data-test="guest-ordered-line"
 						class="bg-white rounded-xl border border-gray-100 p-3 opacity-80"
 					>
 						<div class="flex items-center gap-3">
@@ -49,7 +50,9 @@
 								</p>
 							</div>
 							<div class="flex items-center gap-2 flex-shrink-0">
-								<span class="text-xs text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
+								<!-- An offered line (NeoRestau lot 1, task 24) reads « Offert », in the guest's language (the server's word) -->
+								<span v-if="oItem.posa_is_offered" class="text-xs font-semibold text-[#A15A2E]">{{ oItem.offered_label }}</span>
+								<span v-else class="text-xs text-gray-500">{{ formatPrice(oItem.amount ?? oItem.qty * oItem.rate) }}</span>
 								<!-- KDS Status Badge -->
 								<span
 									class="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"

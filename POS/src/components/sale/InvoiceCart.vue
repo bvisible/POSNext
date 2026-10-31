@@ -1223,8 +1223,9 @@
 				<!-- //// Neoffice — the key names the ROW too: the same dish and unit can sit on two lines (the one the kitchen has, the -->
 				<!-- //// one that waits), and a key they shared let a field's focus and the quantity typed into it land on the other -->
 				<!-- //// row (NeoRestau lot 1, task 22, fix round 3). -->
+				<!-- //// Neoffice — an offered row (task 24) shares its paid line's code and unit: it is a row of its own, so its row key tells it from the paid line. -->
 				<template
-					v-for="item in displayCartItems"
+					v-for="(item, lineIndex) in displayCartItems"
 					:key="
 						item.item_code +
 						'-' +
@@ -1273,6 +1274,60 @@
 								<bdi>{{ formatQuantity(item.quantity) }}</bdi><span aria-hidden="true">×</span>
 							</div>
 						</div>
+					</div>
+
+					<!-- //// Neoffice — « Offert » (NeoRestau lot 1, task 24): an offered row, under its paid line (nestOfferedRows), -->
+					<!-- //// or on its own when the whole line is offered: « Offert », 0.00 charged, its value struck through. -->
+					<!-- //// « Annuler l'offert » hands the cart row behind the copy shown back to the cart (cartRowOf). -->
+					<div
+						v-else-if="isOfferedRow(item)"
+						data-test="offered-line"
+						:class="[
+							'flex items-center gap-2 rounded-md border border-[#E9C5A4] bg-[#FAEFE6] p-2',
+							item._offeredOf ? 'ms-6 -mt-0.5' : '',
+							item.kds_status === 'Delivered' ? 'opacity-70' : '',
+						]"
+					>
+						<div
+							class="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-[#E9C5A4] flex items-center justify-center"
+						>
+							<img
+								v-if="item.image"
+								:src="item.image"
+								:alt="item.item_name"
+								loading="lazy"
+								class="w-full h-full object-cover"
+							/>
+							<FeatherIcon v-else name="gift" class="w-5 h-5 text-[#A15A2E]" />
+						</div>
+						<div class="flex-1 min-w-0">
+							<span
+								class="inline-flex items-center gap-1 rounded-full bg-[#A15A2E] px-2 py-0.5 text-[11px] font-bold text-white"
+							>
+								<FeatherIcon name="gift" class="w-3 h-3" />{{ __("Offered", null, OFFER_CONTEXT) }}
+							</span>
+							<div dir="auto" class="mt-0.5 text-sm font-semibold text-[#1d2433] leading-snug line-clamp-2">
+								{{ item.item_name }}
+							</div>
+						</div>
+						<div class="flex-shrink-0 text-end tabular-nums">
+							<div class="text-sm font-bold text-[#A15A2E]">{{ formatCurrency(0) }}</div>
+							<div class="text-xs text-gray-500 line-through">
+								<bdi>{{ formatCurrency(offeredLineValue(item)) }}</bdi>
+							</div>
+							<div class="text-xs text-gray-600 inline-flex items-center gap-1">
+								<bdi>{{ formatQuantity(item.quantity) }}</bdi><span aria-hidden="true">×</span>
+							</div>
+						</div>
+						<button
+							type="button"
+							data-test="cancel-offer"
+							class="flex-shrink-0 h-11 px-3 rounded-md border border-[#E9C5A4] bg-white text-xs font-semibold text-[#A15A2E] hover:bg-[#FAEFE6] touch-manipulation"
+							:aria-label="__('Cancel the offer of {0}', [item.item_name])"
+							@click.stop="offeredItems.cancelOffer(cartRowOf(item))"
+						>
+							{{ __("Cancel the offer") }}
+						</button>
 					</div>
 
 					<!-- Paid line -->
@@ -2122,12 +2177,15 @@
 		</div>
 
 		<!-- Edit Item Dialog -->
+		<!-- //// Neoffice — « Offert » (task 24): whether the line may be offered, and the offer confirmed in the dialog. -->
 		<EditItemDialog
 			v-model="showEditDialog"
 			:item="selectedItem"
 			:warehouses="warehouses"
 			:currency="currency"
+			:can-offer="canOfferSelected"
 			@update-item="handleUpdateItem"
+			@offer-item="handleOfferItem"
 		/>
 	</div>
 </template>
@@ -2160,6 +2218,9 @@ import { useFormatters } from "@/composables/useFormatters";
 import { useCartSort } from "@/composables/useCartSort";
 import { isOffline } from "@/utils/offline";
 import { nestFreeRows } from "@/utils/gwpSameItemFreeRows";
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): offered rows nested under their paid line, the cart's offer actions.
+import { OFFER_CONTEXT, canOfferRow, isOfferedRow, listPrice, nestOfferedRows } from "@/utils/offeredRows";
+import { useOfferedItemsStore } from "@/stores/offeredItems";
 import { useItemSearchStore } from "@/stores/itemSearch";
 import { offlineWorker } from "@/utils/offline/workerClient";
 import { logger } from "@/utils/logger";
@@ -2372,7 +2433,8 @@ const {
  * Same-SKU GWP gifts carved out of a line (buy 2 get 1 free → 2 paid + 1 free
  * after 3 scans) count in that line's `_bundledFreeQty`.
  */
-const displayCartItems = computed(() => nestFreeRows(sortedItems.value));
+//// Neoffice — and each offered row under its paid line (task 24).
+const displayCartItems = computed(() => nestOfferedRows(nestFreeRows(sortedItems.value)));
 
 // Last-touched line: highlighted for 600ms and scrolled into view
 const cartListRef = ref(null);
@@ -3457,10 +3519,27 @@ function openEditDialog(item) {
 	// Free / GWP / promo gift rows are promotion-owned — cashier must not
 	// change qty or rate (would oversell free stock beyond the offer).
 	if (isLockedFreeRow(item)) return;
+	//// Neoffice — the cart row behind the line shown, for « Offert » (task 24): the dialog edits a copy.
+	selectedCartRow.value = cartRowOf(item);
 	selectedItem.value = { ...item };
 	//// Neoffice — the row the dialog edits, kept to hand it back with the update (NeoRestau lot 1, task 22, fix round 1).
 	editedRow = cartRowOf(item);
 	showEditDialog.value = true;
+}
+
+//// Neoffice — « Offert » (NeoRestau lot 1, task 24): the dialog's line may be offered where the till lets its cashiers
+//// change a discount, on an invoice, for a sold line; the offer confirmed there splits the cart row (offeredItems).
+const offeredItems = useOfferedItemsStore();
+const selectedCartRow = ref(null);
+const canOfferSelected = computed(() => offeredItems.canOffer && canOfferRow(selectedCartRow.value));
+
+async function handleOfferItem({ quantity }) {
+	if (selectedCartRow.value) await offeredItems.offer(selectedCartRow.value, quantity);
+}
+
+/** What an offered row is worth, at list price. */
+function offeredLineValue(item) {
+	return (Number.parseFloat(item?.quantity) || 0) * listPrice(item);
 }
 
 /**

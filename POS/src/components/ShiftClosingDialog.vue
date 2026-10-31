@@ -243,6 +243,15 @@
 								<div class="text-gray-600 text-xs">{{ __("Net tax") }}</div>
 							</div>
 						</div>
+						<!-- //// Neoffice — « Offert » (NeoRestau lot 1, task 24): the units offered during the shift and their value at -->
+						<!-- //// list price, one line, « Offerts : n articles, valeur CHF x » (closing data: offered_count, offered_value). -->
+						<p
+							v-if="offeredLine"
+							data-test="closing-offered"
+							class="mt-2 md:mt-3 text-start text-sm font-medium text-[#A15A2E]"
+						>
+							{{ offeredLine }}
+						</p>
 					</div>
 
 					<!-- No Sales Warning (hidden in entry mode when hideExpectedAmount is enabled) -->
@@ -1677,6 +1686,8 @@ import { usePOSSettingsStore } from "../stores/posSettings";
 import { usePOSShiftStore } from "../stores/posShift";
 //// Neoffice — the end-of-day report is printed through EodPrintDialog (printer choice, or later).
 import EodPrintDialog from "./EodPrintDialog.vue";
+//// Neoffice — the closing's line of what was offered (« Offert », task 24).
+import { offeredClosingLine } from "@/utils/offeredRows";
 //// Neoffice — the session's cash drawer openings (maintenance#1935).
 import CashDrawerSummary from "./pos/CashDrawerSummary.vue";
 //// Neoffice — the drawer movements the server refused on this device (NeoRestau lot 1, task 15).
@@ -1713,6 +1724,8 @@ const shiftStore = usePOSShiftStore();
 
 const closingData = ref(null);
 const closingDataResource = getClosingShiftData;
+//// Neoffice — « Offerts : n articles, valeur CHF x », from the closing data (task 24).
+const offeredLine = computed(() => offeredClosingLine(closingData.value, formatCurrency));
 const submitResource = submitClosingShift;
 const showInvoiceDetails = ref(false);
 const showSuccessReport = ref(false); // Track if shift is closed and showing report

@@ -124,6 +124,31 @@ class CustomSalesInvoice(SalesInvoice):
 		if parent:
 			parent(sales_team)
 
+	# //// Neoffice — an offered row (« Offert », NeoRestau lot 1, task 24) is a gift at 100 %, not a discount, and by
+	# //// design a second row of its item: ERPNext's three checks below concern the rows sold, so each runs ERPNext's own
+	# //// code with the offered rows set aside (pos_next.offered.without_offered_rows). The item's max discount caps a
+	# //// discount, not an offer (a manager's PIN, opt-in, guards the offer); the selling price check finds no sale below
+	# //// cost in a row that sells nothing; and the duplicate item check keeps refusing two rows of an item sold.
+	def validate_max_discount(self):
+		from pos_next.offered import without_offered_rows
+
+		with without_offered_rows(self):
+			super().validate_max_discount()
+
+	# //// Neoffice — see validate_max_discount above (task 24).
+	def validate_selling_price(self):
+		from pos_next.offered import without_offered_rows
+
+		with without_offered_rows(self):
+			super().validate_selling_price()
+
+	# //// Neoffice — see validate_max_discount above (task 24).
+	def validate_for_duplicate_items(self):
+		from pos_next.offered import without_offered_rows
+
+		with without_offered_rows(self):
+			super().validate_for_duplicate_items()
+
 	def on_submit(self):
 		# Re-align after fetch_from so ERPNext's loyalty branch does not run on a
 		# credit note whose original invoice has no loyalty_program.
