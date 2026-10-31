@@ -237,12 +237,12 @@
 								class="py-1.5 opacity-50 dark:opacity-75" data-ticket-line
 								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
 								<div class="flex justify-between items-start gap-1 px-1 -mx-1">
-									<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
-										<span class="font-bold">{{ item.qty }}x</span> {{ item.item_name }}
+									<span class="text-[length:var(--kds-fs,13px)] text-gray-500 dark:text-gray-400 leading-tight">
+										<span class="font-bold">{{ item.qty }}×</span> {{ item.item_name }}
 									</span>
 								</div>
 								<div v-if="item.posa_special_instructions"
-									class="text-xs text-blue-400 mt-0.5 pl-4">
+									class="text-[length:var(--kds-fs-sub,12px)] text-blue-400 mt-0.5 pl-4">
 									{{ item.posa_special_instructions }}
 								</div>
 							</div>
