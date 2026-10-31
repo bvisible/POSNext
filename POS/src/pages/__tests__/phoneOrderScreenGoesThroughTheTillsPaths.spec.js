@@ -94,6 +94,31 @@ describe("a long press adds the line a touch would add", () => {
 	})
 })
 
+describe("under the phone's order screen", () => {
+	it("the till's own card is not drawn, so its pictures are not loaded", () => {
+		// The block that holds the card's grid and its list view
+		const grid = SOURCE.indexOf("<RestaurantCardGrid")
+		const block = SOURCE.slice(SOURCE.lastIndexOf("<div", grid), grid)
+		const opening = block.slice(0, block.indexOf(">") + 1)
+
+		expect(opening).toContain('v-if="!phoneOrderShown"')
+		// Nothing else opens between that block and the grid: the list view, its sibling, goes with it
+		expect(block.slice(opening.length)).not.toMatch(/<div|<template/)
+	})
+})
+
+describe("a dish whose price is typed at the till, added by a long press", () => {
+	it("is taken back when its price is cancelled", () => {
+		const start = SOURCE.indexOf("function handleModifiersSaved(")
+		const body = SOURCE.slice(start, SOURCE.indexOf("\n}\n", start))
+
+		expect(body).toMatch(/function handleModifiersSaved\(cartItem, how\)/)
+		expect(body).toContain("how?.added")
+		expect(body).toContain("onCancel")
+		expect(body).toContain("cartStore.removeItem(cartItem)")
+	})
+})
+
 describe("the options of a dish on a phone", () => {
 	it("open in the sheet, through the handle every path of the till opens the options dialog with", () => {
 		const sheet = tag("PhoneOptionsSheet")

@@ -44,9 +44,15 @@
 			<span v-else data-button-price class="card-button__price"
 				>{{ button.price }}<template v-if="button.detail"> · {{ button.detail }}</template></span
 			>
-			<span v-if="button.count > 0" data-button-count class="card-button__count">{{
-				formatCount(button.count)
-			}}</span>
+			<!-- Read out as a count, not as a bare number after the price -->
+			<span
+				v-if="button.count > 0"
+				data-button-count
+				role="img"
+				:aria-label="__('{0} in this order', [formatCount(button.count)])"
+				class="card-button__count"
+				>{{ formatCount(button.count) }}</span
+			>
 		</button>
 	</div>
 </template>

@@ -694,7 +694,10 @@
 										</div>
 									</div>
 									<!-- Items display -->
+									<!-- //// Neoffice — not drawn while the phone's order screen covers it (NeoRestau lot 1, task 27, -->
+									<!-- //// fix round 1): mounted underneath, the card loaded every picture for nobody to see. -->
 									<div
+										v-if="!phoneOrderShown"
 										class="flex-1 overflow-y-auto p-1.5 sm:p-3"
 										style="background-color: var(--neo-bg)"
 									>
@@ -4129,11 +4132,17 @@ function handlePriceConfirmed({ item, price }) {
 	}
 }
 
-function handleModifiersSaved(cartItem) {
+//// Neoffice — `how` says the phone's options sheet added this dish by a long press (NeoRestau lot 1, task 27, fix
+//// round 1): a price cancelled for it takes the dish back, as a touch on an open-price dish never leaves one at 0.00.
+function handleModifiersSaved(cartItem, how) {
 	// After modifiers are saved, if the item's rate is still 0, open price entry
 	if (cartItem && (cartItem.rate || 0) === 0 && priceEntryRef.value) {
 		nextTick(() => {
-			priceEntryRef.value.open(cartItem);
+			//// Neoffice — the line the sheet added goes when its price is cancelled (see above).
+			priceEntryRef.value.open(
+				cartItem,
+				how?.added ? { onCancel: () => cartStore.removeItem(cartItem) } : undefined
+			);
 		});
 	}
 }

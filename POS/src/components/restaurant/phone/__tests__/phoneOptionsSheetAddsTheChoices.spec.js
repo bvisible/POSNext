@@ -7,7 +7,7 @@
  * //// till opens it on a line, as the options dialog it replaces on a phone does.
  * @vitest-environment jsdom
  */
-import { mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 import { createPinia, setActivePinia } from "pinia"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { nextTick } from "vue"
@@ -225,7 +225,7 @@ describe("the options sheet of a dish", () => {
 			{ group: "Side", options: [{ name: "Fries", price_adjustment: 0 }] },
 			{ group: "Sauce", options: [{ name: "Pepper", price_adjustment: 2 }] },
 		])
-		expect(wrapper.emitted("saved")).toEqual([[line]])
+		expect(wrapper.emitted("saved")).toEqual([[line, { added: true }]])
 		expect(wrapper.find("[data-options-sheet]").exists()).toBe(false)
 		expect(call).not.toHaveBeenCalled()
 	})
@@ -301,6 +301,107 @@ describe("the remark's microphone", () => {
 		recognition.hear("no butter")
 		await nextTick()
 		expect(wrapper.find("[data-remark]").element.value).toBe("no ice no butter")
+	})
+
+	it("still open when « Add » is pressed, gives its last words before the dish is added", async () => {
+		window.SpeechRecognition = FakeRecognition
+		await openFor(STEAK)
+		await option("Rare").trigger("click")
+		await wrapper.find("[data-dictate]").trigger("click")
+		const [recognition] = FakeRecognition.made
+
+		await confirm().trigger("click")
+		expect(recognition.stop).toHaveBeenCalled()
+		expect(cart.invoiceItems).toHaveLength(0)
+		expect(confirm().attributes("disabled")).toBeDefined()
+
+		recognition.hear("extra lemon")
+		await flushPromises()
+		expect(cart.invoiceItems).toHaveLength(1)
+		expect(cart.invoiceItems[0].posa_special_instructions).toBe("extra lemon")
+	})
+
+	it("whose last words never come does not hold the dish back for long", async () => {
+		vi.useFakeTimers()
+		try {
+			window.SpeechRecognition = FakeRecognition
+			await openFor(STEAK)
+			await option("Rare").trigger("click")
+			await wrapper.find("[data-remark]").setValue("no ice")
+			await wrapper.find("[data-dictate]").trigger("click")
+
+			await confirm().trigger("click")
+			vi.advanceTimersByTime(2000)
+			await flushPromises()
+
+			expect(cart.invoiceItems).toHaveLength(1)
+			expect(cart.invoiceItems[0].posa_special_instructions).toBe("no ice")
+			expect(FakeRecognition.made[0].abort).toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it("refused on one dish is offered again on the next one", async () => {
+		window.SpeechRecognition = FakeRecognition
+		await openFor(STEAK)
+		await wrapper.find("[data-dictate]").trigger("click")
+		FakeRecognition.made[0].onerror?.({ error: "not-allowed" })
+		await nextTick()
+		expect(wrapper.find("[data-dictation-denied]").exists()).toBe(true)
+
+		await wrapper.find("[data-sheet-backdrop]").trigger("pointerdown")
+		await wrapper.find("[data-sheet-backdrop]").trigger("click")
+		wrapper.vm.openForCardItem(WATER)
+		await nextTick()
+
+		expect(wrapper.find("[data-dictation-denied]").exists()).toBe(false)
+	})
+})
+
+describe("a dish whose price is typed at the till", () => {
+	const SOUP = { item_type: "Item", item: "SOUP", item_name: "Soup of the day", item_group: "Starters", price: 0 }
+
+	it("gets a line of its own, and says it was added by this sheet so a cancelled price takes it back", async () => {
+		cart.addItem({ item_code: "SOUP", item_name: "Soup of the day", rate: 0 }, 1)
+		await openFor(SOUP)
+		await wrapper.find("[data-more]").trigger("click")
+
+		await confirm().trigger("click")
+
+		expect(cart.invoiceItems).toHaveLength(2)
+		const added = cart.invoiceItems[1]
+		expect(added).toMatchObject({ item_code: "SOUP", quantity: 2, rate: 0 })
+		expect(wrapper.emitted("saved")).toEqual([[added, { added: true }]])
+	})
+})
+
+describe("on a line reloaded from the server", () => {
+	it("shows the dish's own price and saves the same choice at the same price", async () => {
+		cart.replaceAllItems([
+			{
+				item_code: "STEAK",
+				item_name: "Rib steak",
+				rate: 44,
+				qty: 1,
+				uom: "Nos",
+				kds_status: "Pending",
+				posa_item_modifiers: JSON.stringify([
+					{ group: "Cooking", options: [{ name: "Rare", price_adjustment: 0 }] },
+					{ group: "Sauce", options: [{ name: "Pepper", price_adjustment: 2 }] },
+				]),
+			},
+		])
+		await sheet()
+		wrapper.vm.open(cart.invoiceItems[0])
+		await nextTick()
+
+		expect(wrapper.find("[data-sheet-price]").text()).toBe("42.00")
+		expect(confirm().text()).toBe("Save · 44.00")
+		await wrapper.find("[data-remark]").setValue("no butter")
+		await confirm().trigger("click")
+
+		expect(cart.invoiceItems[0].rate).toBe(44)
 	})
 })
 

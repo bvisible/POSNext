@@ -114,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { Dialog } from "frappe-ui"
 import { usePaymentNumpad } from "@/composables/usePaymentNumpad"
 import { usePOSShiftStore } from "@/stores/posShift"
@@ -143,14 +143,27 @@ const {
 	onEnter: confirmPrice,
 })
 
-function open(item) {
+// Whoever opened the dialog for a dish waiting at 0.00 is told when it closes without a price (NeoRestau lot 1, task 27,
+// fix round 1: the phone's long press takes that dish back)
+let onCancel = null
+
+watch(show, (shown) => {
+	if (shown || !onCancel) return
+	const cancelled = onCancel
+	onCancel = null
+	cancelled()
+})
+
+function open(item, { onCancel: whenCancelled } = {}) {
 	currentItem.value = item
+	onCancel = typeof whenCancelled === "function" ? whenCancelled : null
 	numpadClear()
 	show.value = true
 }
 
 function confirmPrice() {
 	if (numpadValue.value <= 0) return
+	onCancel = null
 	emit("price-confirmed", { item: currentItem.value, price: numpadValue.value })
 	show.value = false
 }

@@ -138,6 +138,68 @@ describe("dictation", () => {
 		expect(dictation.listening.value).toBe(false)
 	})
 
+	it("finishing waits for the last words, then hands them over", async () => {
+		window.SpeechRecognition = FakeRecognition
+		const onText = vi.fn()
+		const dictation = useDictation({ onText })
+		dictation.toggle()
+		const [recognition] = FakeRecognition.made
+		let done = false
+
+		const finished = dictation.finish().then(() => {
+			done = true
+		})
+		expect(recognition.stop).toHaveBeenCalled()
+		await Promise.resolve()
+		expect(done).toBe(false)
+
+		recognition.hear("extra lemon")
+		recognition.onend?.()
+		await finished
+		expect(onText).toHaveBeenCalledWith("extra lemon")
+		expect(dictation.listening.value).toBe(false)
+	})
+
+	it("finishing gives up after a short while, and drops what comes later", async () => {
+		vi.useFakeTimers()
+		try {
+			window.SpeechRecognition = FakeRecognition
+			const onText = vi.fn()
+			const dictation = useDictation({ onText })
+			dictation.toggle()
+			const [recognition] = FakeRecognition.made
+
+			const finished = dictation.finish()
+			vi.advanceTimersByTime(2000)
+			await finished
+
+			expect(recognition.abort).toHaveBeenCalled()
+			expect(dictation.listening.value).toBe(false)
+			recognition.hear("too late")
+			expect(onText).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it("finishing with nothing open is done at once", async () => {
+		const dictation = useDictation({ onText: vi.fn() })
+
+		await expect(dictation.finish()).resolves.toBeUndefined()
+	})
+
+	it("reset forgets a refused microphone", () => {
+		window.SpeechRecognition = FakeRecognition
+		const dictation = useDictation({ onText: vi.fn() })
+		dictation.toggle()
+		FakeRecognition.made[0].onerror?.({ error: "not-allowed" })
+
+		dictation.reset()
+
+		expect(dictation.denied.value).toBe(false)
+		expect(dictation.listening.value).toBe(false)
+	})
+
 	it("is cut when the sheet closes", () => {
 		window.SpeechRecognition = FakeRecognition
 		const dictation = useDictation({ onText: vi.fn() })

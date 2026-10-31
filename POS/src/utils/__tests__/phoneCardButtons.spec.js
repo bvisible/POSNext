@@ -31,19 +31,33 @@ describe("the colour of a card button", () => {
 		for (const none of ["", null, undefined, "red", "#12345", "rgb(1, 2, 3)"]) expect(cardColor(none)).toBeNull()
 	})
 
-	it("softens a colour into the design system's light tint of its hue, for the button's background", () => {
-		const channels = (hex) => [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16))
-		// The waiter mockup's pairs: a type's colour and the « 50 » tint of the design system it paints the button with
+	it("paints a colour of the design system on its ramp's soft tint, as the waiter mockup pairs them", () => {
+		// The mockup's six types: cold, hot, wines, starters, mains, desserts. Mains and desserts share the clay ramp:
+		// the darker clay of the desserts takes the deeper tint, so the two stay apart
 		for (const [color, tint] of [
 			["#4A6B8F", "#EEF2F6"],
 			["#BC7D0B", "#FCF2DD"],
 			["#9C2920", "#FBEBE7"],
 			["#178347", "#E9F7EE"],
 			["#C2723F", "#FAEFE6"],
+			["#A15A2E", "#F3DECC"],
 		]) {
-			const found = channels(softTint(color))
-			channels(tint).forEach((channel, at) => expect(Math.abs(found[at] - channel), `${color} → ${softTint(color)}`).toBeLessThanOrEqual(7))
+			expect(softTint(color), color).toBe(tint)
+			expect(softTint(color.toLowerCase()), color).toBe(tint)
 		}
+	})
+
+	it("softens any other colour into a light tint of its hue, for the button's background", () => {
+		const lightness = (hex) => {
+			const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16) / 255)
+			return (Math.max(r, g, b) + Math.min(r, g, b)) / 2
+		}
+		// A purple no ramp of the design system holds: its hue, at the lightness of the « 50 » tints
+		const purple = softTint("#7A3E9D")
+		expect(lightness(purple)).toBeCloseTo(0.94, 1)
+		const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(purple.slice(at, at + 2), 16))
+		expect(b).toBeGreaterThan(g)
+		expect(r).toBeGreaterThan(g)
 		// No hue: a light grey
 		expect(softTint("#000000")).toBe("#F0F0F0")
 	})
@@ -215,6 +229,13 @@ describe("the options of a dish", () => {
 
 	it("takes an option that lowers the price", () => {
 		expect(pricedChoice(42, [sauce], { Sauce: ["None"] }, 1).total).toBe(40.5)
+	})
+
+	it("never prices a portion below zero, as the cart never does", () => {
+		const choice = pricedChoice(1, [sauce], { Sauce: ["None"] }, 2)
+
+		expect(choice.unit).toBe(0)
+		expect(choice.total).toBe(0)
 	})
 
 	it("counts an option that sets the quantity once per portion", () => {

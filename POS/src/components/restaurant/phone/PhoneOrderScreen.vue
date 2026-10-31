@@ -19,7 +19,7 @@
 						type="button"
 						data-back
 						class="min-h-[44px] -ms-1 ps-1 pe-2 flex items-center text-[15px] text-[#FFFDF8] rounded-[10px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFFDF8]"
-						@click="emit('back')"
+						@click="askToLeave"
 					>
 						‹ {{ __("Tables") }}
 					</button>
@@ -67,23 +67,27 @@
 				<!-- The card row: the restaurant's cards when it serves several; another card fetched by hand ends it -->
 				<div
 					v-if="cards.length > 1 || $slots['card-row-end']"
-					class="flex items-center gap-1.5 px-3 pb-2.5 overflow-x-auto phone-order__strip"
+					class="flex items-center gap-1.5 px-3 pb-1 overflow-x-auto phone-order__strip"
 				>
+					<!-- A finger's target is 44 px high; the pill is drawn inside it -->
 					<button
 						v-for="one in cards"
 						:key="one.name"
 						type="button"
 						data-card-pill
 						:aria-pressed="String(one.name === card?.name)"
-						:class="[
-							'h-8 shrink-0 px-3 rounded-full text-[13px] whitespace-nowrap border transition-colors duration-100',
-							one.name === card?.name
-								? 'bg-[#FFFDF8] border-[#FFFDF8] text-[#141414] font-bold'
-								: 'bg-transparent border-[#FFFDF8]/35 text-[#FFFDF8]',
-						]"
+						class="min-h-[44px] shrink-0 flex items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFFDF8]"
 						@click="emit('update:selectedCard', one.name)"
 					>
-						{{ cardLabel(one) }}
+						<span
+							:class="[
+								'h-8 px-3 flex items-center rounded-full text-[13px] whitespace-nowrap border transition-colors duration-100',
+								one.name === card?.name
+									? 'bg-[#FFFDF8] border-[#FFFDF8] text-[#141414] font-bold'
+									: 'bg-transparent border-[#FFFDF8]/35 text-[#FFFDF8]',
+							]"
+							>{{ cardLabel(one) }}</span
+						>
 					</button>
 					<slot name="card-row-end" />
 				</div>
@@ -146,19 +150,55 @@
 					{{ __("Tap: +1 · long press: options and remark") }}
 				</p>
 			</footer>
+
+			<!-- Leaving clears the order on this phone: with lines not sent to the kitchen yet, « ‹ Tables » asks first, and -->
+			<!-- staying is the default (Ruling 90). Nothing is asked when every line was sent. -->
+			<div
+				v-if="leaveAsk"
+				data-leave-ask
+				role="alertdialog"
+				aria-modal="true"
+				:aria-label="leaveQuestion"
+				class="phone-order__overlay absolute inset-0 z-10 flex items-end justify-center px-3 pb-[max(16px,env(safe-area-inset-bottom))]"
+				@click.self="stay"
+				@keydown.esc.stop="stay"
+			>
+				<div class="w-full max-w-[420px] rounded-[16px] bg-[#FFFDF8] p-4">
+					<p data-leave-question class="m-0 text-[16px] font-bold leading-snug text-[#141414]">{{ leaveQuestion }}</p>
+					<div class="mt-4 flex gap-2.5">
+						<button
+							type="button"
+							data-leave-go
+							class="flex-1 min-h-[44px] rounded-[12px] border border-[#DCD4C7] bg-[#FFFDF8] text-[#141414] font-bold text-[16px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414]"
+							@click="leave"
+						>
+							{{ __("Leave") }}
+						</button>
+						<button
+							ref="stayButton"
+							type="button"
+							data-leave-stay
+							class="flex-1 min-h-[44px] rounded-[12px] bg-[#141414] text-[#FFFDF8] font-bold text-[16px] active:bg-[#000000] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414]"
+							@click="stay"
+						>
+							{{ __("Stay") }}
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
 	</Teleport>
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import { usePOSCartStore } from "@/stores/posCart"
 import { usePOSSettingsStore } from "@/stores/posSettings"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { cardLabel } from "@/utils/cardLabel"
 import { formatCurrency, formatCurrencyNumber } from "@/utils/currency"
-import { articleCount, cardSections, formatCount, orderedByItem, softTint } from "@/utils/phoneCard"
+import { articleCount, cardSections, formatCount, orderedByItem, softTint, unsentLines } from "@/utils/phoneCard"
 import CardButtonGrid from "./CardButtonGrid.vue"
 
 const props = defineProps({
@@ -247,6 +287,41 @@ const orderTotal = computed(
 	() => `${formatCurrency(Number(cartStore.roundedGrandTotal) || 0, shiftStore.profileCurrency)} ›`,
 )
 
+// « ‹ Tables »: the till's closeTable clears the order, so lines not sent to the kitchen yet would be lost in one tap.
+// This screen asks first (Ruling 90; the tablet's way back and closeTable itself are left as they are)
+const leaveAsk = ref(false)
+const stayButton = ref(null)
+const unsentCount = computed(() => unsentLines(cartStore.invoiceItems).length)
+const leaveQuestion = computed(() => {
+	const count = unsentCount.value
+	if (cartStore.isTakeaway) {
+		return count === 1
+			? __("Leave this order? 1 line not sent will be lost.")
+			: __("Leave this order? {0} lines not sent will be lost.", [count])
+	}
+	return count === 1
+		? __("Leave this table? 1 line not sent will be lost.")
+		: __("Leave this table? {0} lines not sent will be lost.", [count])
+})
+
+function askToLeave() {
+	if (unsentCount.value === 0) {
+		emit("back")
+		return
+	}
+	leaveAsk.value = true
+	nextTick(() => stayButton.value?.focus?.())
+}
+
+function stay() {
+	leaveAsk.value = false
+}
+
+function leave() {
+	leaveAsk.value = false
+	emit("back")
+}
+
 function chipClasses(active) {
 	return [
 		"min-h-[36px] shrink-0 px-2.5 rounded-[8px] border-b-[3px] text-[13px] leading-none transition-colors duration-100",
@@ -273,5 +348,10 @@ function chipStyle(one, active) {
 
 .phone-order__strip::-webkit-scrollbar {
 	display: none;
+}
+
+/* The design system's overlay (--surface-overlay); the till does not load the tokens yet, so its value backs it */
+.phone-order__overlay {
+	background: var(--surface-overlay, rgba(24, 20, 16, 0.55));
 }
 </style>

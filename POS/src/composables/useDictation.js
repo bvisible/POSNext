@@ -10,6 +10,8 @@ import { ref } from "vue"
 // The Swiss forms of the till's languages; Swiss French for any other, the language of the kitchen tickets
 const SWISS_FORMS = { fr: "fr-CH", de: "de-CH", it: "it-CH" }
 const DEFAULT_LANGUAGE = "fr-CH"
+// How long « Add » waits for the last words of a dictation still open
+export const FINISH_TIMEOUT_MS = 1500
 
 /**
  * The language a remark is dictated in: the Swiss form of the till's language, Swiss French otherwise.
@@ -113,5 +115,43 @@ export function useDictation({ onText, language = pageLanguage }) {
 		listening.value = false
 	}
 
-	return { supported: Boolean(Recognition), listening, denied, toggle, abort }
+	// « Add » pressed while the microphone is open: stop listening and wait for the last words the browser still has to
+	// hand over (they come with the end of the dictation), for a short while at most; then nothing more is heard
+	function finish(timeout = FINISH_TIMEOUT_MS) {
+		const current = recognition
+		if (!current || !listening.value) return Promise.resolve()
+		return new Promise((resolve) => {
+			let settled = false
+			const settle = () => {
+				if (settled) return
+				settled = true
+				clearTimeout(timer)
+				resolve()
+			}
+			const timer = setTimeout(() => {
+				if (recognition === current) abort()
+				settle()
+			}, timeout)
+			const ended = current.onend
+			current.onend = (event) => {
+				ended?.(event)
+				settle()
+			}
+			try {
+				current.stop()
+			} catch {
+				// Already stopped: what it heard has been handed over
+				abort()
+				settle()
+			}
+		})
+	}
+
+	// Another sheet opens: no dictation under way, and a microphone refused before is offered again
+	function reset() {
+		abort()
+		denied.value = false
+	}
+
+	return { supported: Boolean(Recognition), listening, denied, toggle, abort, finish, reset }
 }

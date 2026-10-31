@@ -191,6 +191,11 @@ describe("the buttons of the card", () => {
 		await nextTick()
 		expect(button("Water 1 l").find("[data-button-count]").text()).toBe("2")
 		expect(button("Rib steak").find("[data-button-count]").text()).toBe("1")
+		// Read out as a count, not as a bare number next to the price
+		expect(button("Water 1 l").find("[data-button-count]").attributes()).toMatchObject({
+			role: "img",
+			"aria-label": "2 in this order",
+		})
 
 		state.cart.invoiceItems[0].quantity = 3
 		state.cart.invoiceItems.push({ item_code: "STEAK", quantity: 1 })
@@ -320,6 +325,8 @@ describe("the header", () => {
 		const pills = wrapper.findAll("[data-card-pill]")
 
 		expect(pills.map((pill) => pill.text())).toEqual(["Lunch", "Permanent items"])
+		// A finger's target: 44 px high, the pill drawn inside it
+		for (const pill of pills) expect(pill.classes()).toContain("min-h-[44px]")
 		expect(pills[0].attributes("aria-pressed")).toBe("true")
 		await pills[1].trigger("click")
 		expect(wrapper.emitted("update:selectedCard")).toEqual([["CARD-PERMANENT"]])
@@ -340,6 +347,71 @@ describe("the header", () => {
 		await wrapper.setProps({ selectedCard: "CARD-LUNCH" })
 		expect(chips()[0].attributes("aria-pressed")).toBe("true")
 		expect(buttons()).toHaveLength(5)
+	})
+})
+
+describe("leaving the table with « ‹ Tables »", () => {
+	const ask = () => wrapper.find("[data-leave-ask]")
+
+	it("asks first when lines were not sent to the kitchen, and stays unless told to leave", async () => {
+		state.cart.invoiceItems.push(
+			{ item_code: "WATER", quantity: 2 },
+			{ item_code: "STEAK", quantity: 1, kds_status: "Waiting" },
+			{ item_code: "BREAD", quantity: 1, kds_status: "Pending" },
+		)
+		screen()
+
+		await wrapper.find("[data-back]").trigger("click")
+		expect(wrapper.emitted("back")).toBeUndefined()
+		expect(ask().attributes("role")).toBe("alertdialog")
+		expect(ask().find("[data-leave-question]").text()).toBe("Leave this table? 2 lines not sent will be lost.")
+		const stay = ask().find("[data-leave-stay]")
+		const leave = ask().find("[data-leave-go]")
+		expect(stay.text()).toBe("Stay")
+		expect(leave.text()).toBe("Leave")
+		// Staying is the ink button; both are a finger's target
+		expect(stay.classes()).toContain("bg-[#141414]")
+		for (const target of [stay, leave]) expect(target.classes()).toContain("min-h-[44px]")
+
+		await stay.trigger("click")
+		expect(ask().exists()).toBe(false)
+		expect(wrapper.emitted("back")).toBeUndefined()
+
+		await wrapper.find("[data-back]").trigger("click")
+		await ask().find("[data-leave-go]").trigger("click")
+		expect(wrapper.emitted("back")).toHaveLength(1)
+		expect(ask().exists()).toBe(false)
+	})
+
+	it("stays on Escape", async () => {
+		state.cart.invoiceItems.push({ item_code: "WATER", quantity: 1 })
+		screen()
+		await wrapper.find("[data-back]").trigger("click")
+
+		await ask().trigger("keydown", { key: "Escape" })
+
+		expect(ask().exists()).toBe(false)
+		expect(wrapper.emitted("back")).toBeUndefined()
+	})
+
+	it("says one line in the singular, and « order » for a takeaway", async () => {
+		Object.assign(state.cart, { restaurantTable: null, isTakeaway: true, takeawayNumber: "T-007" })
+		state.cart.invoiceItems.push({ item_code: "WATER", quantity: 3 }, { item_code: "GIFT", quantity: 1, is_free_item: 1 })
+		screen()
+
+		await wrapper.find("[data-back]").trigger("click")
+
+		expect(ask().find("[data-leave-question]").text()).toBe("Leave this order? 1 line not sent will be lost.")
+	})
+
+	it("leaves at once when every line was sent", async () => {
+		state.cart.invoiceItems.push({ item_code: "WATER", quantity: 2, kds_status: "Pending" }, { item_code: "STEAK", quantity: 1, kds_status: "Ready" })
+		screen()
+
+		await wrapper.find("[data-back]").trigger("click")
+
+		expect(ask().exists()).toBe(false)
+		expect(wrapper.emitted("back")).toHaveLength(1)
 	})
 })
 

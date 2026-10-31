@@ -17,7 +17,7 @@
 			>
 				<div
 					data-sheet-backdrop
-					class="phone-sheet__backdrop absolute inset-0 bg-[#141414]/55"
+					class="phone-sheet__backdrop absolute inset-0"
 					@pointerdown="backdropPressed = true"
 					@click="closeFromBackdrop"
 				/>
@@ -151,7 +151,7 @@
 						<button
 							type="button"
 							data-confirm
-							:disabled="!complete"
+							:disabled="!complete || finishing"
 							class="flex-1 min-h-[54px] rounded-[12px] bg-[#141414] text-[#FFFDF8] font-bold text-[16px] tabular-nums disabled:bg-[#BFB5A4] disabled:text-[#FFFDF8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414]"
 							@click="confirm"
 						>
@@ -285,6 +285,9 @@ function closeFromBackdrop() {
 
 function openSheet() {
 	backdropPressed = false
+	finishing.value = false
+	// A microphone refused on the last dish is offered again
+	dictation.reset()
 	show.value = true
 	nextTick(() => panel.value?.focus?.())
 }
@@ -340,12 +343,30 @@ function close() {
 	show.value = false
 }
 
+// « Add » pressed while the microphone is still open: the last words come with the end of the dictation, so the dish
+// waits for them (a moment at most) rather than reaching the kitchen without them
+const finishing = ref(false)
+
 function confirm() {
-	if (!complete.value) return
+	if (!complete.value || finishing.value) return
+	if (dictation.listening.value) {
+		finishing.value = true
+		dictation.finish().then(() => {
+			finishing.value = false
+			if (show.value) commit()
+		})
+		return
+	}
+	commit()
+}
+
+function commit() {
 	const priced = choice.value
 	const modifiers = JSON.stringify(priced.modifiers)
 	const text = remark.value.trim()
 	let saved = null
+	// A dish added here (a long press), not a line opened from the order
+	let added = false
 	if (editing.value) {
 		const row = line.value
 		const index = cartStore.invoiceItems.indexOf(row)
@@ -363,8 +384,11 @@ function confirm() {
 		)
 		saved = index >= 0 ? cartStore.invoiceItems[index] : row
 	} else {
+		added = true
 		const dish = cardItemLine(entry.value, restaurantStore.getStationForItem)
-		if (priced.modifiers.length === 0 && !text) {
+		// A dish whose price is typed at the till (0.00 here) gets a line of its own, so that a cancelled price takes
+		// back this line and nothing else
+		if (priced.modifiers.length === 0 && !text && priced.unit > 0) {
 			// Nothing chosen: the dish joins its plain line, as a touch would
 			cartStore.addItem(dish, priced.quantity)
 			saved = cartStore.invoiceItems.findLast(
@@ -396,7 +420,9 @@ function confirm() {
 		}
 	}
 	close()
-	if (saved) emit("saved", saved)
+	// The till opens the price of a dish left at 0.00; told it was added here, it takes the dish back if that price is
+	// cancelled (POSSale.vue, handleModifiersSaved)
+	if (saved) emit("saved", ...(added ? [saved, { added: true }] : [saved]))
 }
 
 // The grip: a sheet pulled down far enough closes
@@ -448,6 +474,11 @@ defineExpose({ open, openForCardItem, close })
 }
 
 /* The sheet never hides the whole screen; the dynamic height leaves out a phone browser's address bar */
+/* The design system's overlay (--surface-overlay); the till does not load the tokens yet, so its value backs it */
+.phone-sheet__backdrop {
+	background: var(--surface-overlay, rgba(24, 20, 16, 0.55));
+}
+
 .phone-sheet__panel {
 	max-height: 92vh;
 	max-height: 92dvh;

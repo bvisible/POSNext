@@ -11,10 +11,37 @@ export const PHONE_MAX_WIDTH = 768
 export const NEUTRAL_EDGE = "#BFB5A4"
 export const NEUTRAL_FACE = "#FFFDF8"
 
-// A button's background is its colour's hue, kept as saturated (85 % at most), at the lightness of the design system's
-// « 50 » tints: the waiter mockup's pairs (#4A6B8F on #EEF2F6, #9C2920 on #FBEBE7...) come out within a few units
+// The background of a button of any other colour: its hue, kept as saturated (85 % at most), at the lightness of the
+// design system's « 50 » tints
 const TINT_LIGHTNESS = 0.94
 const TINT_MAX_SATURATION = 0.85
+
+// A colour of the design system's ramps (tokens/colors.css) is painted on its ramp's soft tint, as the waiter mockup
+// pairs them: each ramp's « 50 ». The clay ramp holds two of the mockup's types, mains (clay-500) and desserts
+// (clay-600): its darker steps take clay-100, one step deeper, so the two stay apart. Any other colour: the formula below
+const RAMP_TINTS = {
+	// blue-500, -600, -700 → blue-50
+	"#4A6B8F": "#EEF2F6",
+	"#3A5572": "#EEF2F6",
+	"#2C4156": "#EEF2F6",
+	// clay-400, -500 → clay-50; clay-600, -700 → clay-100
+	"#D68A59": "#FAEFE6",
+	"#C2723F": "#FAEFE6",
+	"#A15A2E": "#F3DECC",
+	"#7E4523": "#F3DECC",
+	// amber-500, -600, -700 → amber-50
+	"#E0980F": "#FCF2DD",
+	"#BC7D0B": "#FCF2DD",
+	"#92610C": "#FCF2DD",
+	// red-500, -600, -700 → red-50
+	"#DC4A3D": "#FBEBE7",
+	"#C1372C": "#FBEBE7",
+	"#9C2920": "#FBEBE7",
+	// green-500, -600, -700 → green-50
+	"#1F9D57": "#E9F7EE",
+	"#178347": "#E9F7EE",
+	"#11663A": "#E9F7EE",
+}
 
 const HEX_COLOUR = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i
 
@@ -31,14 +58,15 @@ export function cardColor(value) {
 }
 
 /**
- * The soft background of a colour: the light tint of its hue, as the design system draws its « 50 » tints, light
- * enough for ink to read on it.
+ * The soft background of a colour: its ramp's soft tint for a colour of the design system (RAMP_TINTS), else the light
+ * tint of its hue, as the design system draws its « 50 » tints; light enough for ink to read on it either way.
  * @param {string} color - "#RRGGBB"
  * @returns {string} "#RRGGBB"
  */
 export function softTint(color) {
 	const hex = cardColor(color)
 	if (!hex) return NEUTRAL_FACE
+	if (RAMP_TINTS[hex]) return RAMP_TINTS[hex]
 	const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16) / 255)
 	const max = Math.max(r, g, b)
 	const min = Math.min(r, g, b)
@@ -148,6 +176,16 @@ export function orderedByItem(lines) {
 }
 
 /**
+ * The lines of an order not sent to the kitchen yet, by the till's own rule (SendToKitchenDialog.vue, isSendable): no
+ * kitchen status, or held back (« Waiting »). A gift row of an offer follows its dish and is not counted.
+ * @param {Array<Object>} lines - The cart's lines
+ * @returns {Array<Object>}
+ */
+export function unsentLines(lines) {
+	return (lines || []).filter((line) => ordered(line) && (!line.kds_status || line.kds_status === "Waiting"))
+}
+
+/**
  * The number of articles of an order.
  * @param {Array<Object>} lines - The cart's lines
  * @returns {number}
@@ -210,7 +248,8 @@ export function pricedChoice(price, groups, selections, portions) {
 		}
 		modifiers.push({ group: group.group_name, options })
 	}
-	const unit = round((Number(price) || 0) + adjustment)
+	// Never below zero, as the cart never prices a line below zero (posCart.updateItemModifiers)
+	const unit = Math.max(0, round((Number(price) || 0) + adjustment))
 	const quantity = (quantityValue || 1) * Math.max(1, portions || 1)
 	return { adjustment: round(adjustment), quantityValue, quantity, unit, total: round(unit * quantity), modifiers }
 }
