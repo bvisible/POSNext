@@ -399,21 +399,46 @@ def reset_all_tables(restaurant=None):
 _KDS_RANK = {"Pending": 0, "Preparing": 1, "Ready": 2, "Delivered": 3}
 
 
-def _order_status_of(dish_statuses):
-	"""The status an order shows when its dishes are at these statuses.
+# A dish sent to the kitchen and not delivered yet: the dishes the status of an order is about
+_KDS_LIVE = ("Pending", "Preparing", "Ready")
 
-	Delivered when every dish is. Ready when every dish is Ready or Delivered (a dish held back, Waiting, is not
-	ready, so the order is not either). Preparing as soon as a dish has been begun. Pending otherwise: a second
-	round whose first dishes are delivered and whose new dishes are only sent is Pending.
+
+def _order_status_of(dish_statuses):
+	"""The status an order shows when its dishes are at these statuses: the rule of the kitchen screen.
+
+	It is the rule of `kitchenStatusOf` (POS/src/utils/kitchenBands.js), written once more on the server so that the status the
+	order is given and the one the screen works out can never disagree; both are tested against one table of examples
+	(pos_next/tests/kitchen_status_cases.json). Only the dishes that are at the kitchen and not delivered count (Pending,
+	Preparing, Ready): a dish held back (Waiting) is not on the ticket to cook and keeps nobody waiting, and a delivered dish is
+	finished business.
+
+	- Pending: none of those dishes is begun (a second round, whose first dishes are delivered and whose new dishes are only
+	  sent, is Pending)
+	- Preparing: one is Preparing or Ready, and not all of them are Ready
+	- Ready: every one of them is Ready
+	- Delivered: none is left and one was delivered (a dish with no status says nothing)
+	- Pending for what says nothing at all: no dish, or dishes with no status
 	"""
 	statuses = [status or "" for status in dish_statuses]
-	if statuses and all(status == "Delivered" for status in statuses):
-		return "Delivered"
-	if statuses and all(status in ("Ready", "Delivered") for status in statuses):
-		return "Ready"
-	if any(status in ("Preparing", "Ready") for status in statuses):
-		return "Preparing"
-	return "Pending"
+	live = [status for status in statuses if status in _KDS_LIVE]
+	if not live:
+		return "Delivered" if "Delivered" in statuses else "Pending"
+	if not any(status in ("Preparing", "Ready") for status in live):
+		return "Pending"
+	return "Ready" if all(status == "Ready" for status in live) else "Preparing"
+
+
+def _follow_the_dishes(invoice_name):
+	"""Give the order the status ALL its dishes give it, whichever way a dish just moved (forward, or back by an undo).
+
+	The order used to be raised to Ready when every dish was, and never lowered: a delivery taken back left the order
+	Delivered, which the kitchen screen reads first, so the ticket stayed gone. The write keeps the order's `modified`, the
+	time its ticket counts from: a dish that moves is no new action on the whole ticket, as it was not before.
+	"""
+	statuses = frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, pluck="kds_status")
+	status = _order_status_of(statuses)
+	if frappe.db.get_value("Sales Invoice", invoice_name, "kds_status") != status:
+		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status, update_modified=False)
 
 
 def _advance_dishes(invoice_name, status, station=None):
@@ -915,15 +940,9 @@ def update_item_kds_status(invoice_name, item_code, status):
 	for item in items:
 		frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status)
 
-	# Check if all items are ready/delivered — update parent status
-	all_items = frappe.get_all(
-		"Sales Invoice Item",
-		filters={"parent": invoice_name},
-		fields=["kds_status"]
-	)
-	all_ready = all(i.get("kds_status") in ["Ready", "Delivered"] for i in all_items)
-	if all_ready:
-		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", "Ready")
+	# //// Neoffice — the order follows ALL its dishes, forward and back: it was only raised to Ready when every dish was, so a
+	# //// delivery taken back left it Delivered and the ticket off the kitchen screen (NeoRestau lot 1, task 38b, rulings 78, 79).
+	_follow_the_dishes(invoice_name)
 
 	frappe.publish_realtime("kds_update")
 	return {"status": "success"}
@@ -2578,11 +2597,8 @@ def mark_items_delivered(invoice_name, item_names=None):
 			WHERE parent = %s AND IFNULL(kds_status, '') != 'Delivered'
 		""", invoice_name)
 
-	# Sync order-level status
-	all_items = frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, fields=["kds_status"])
-	statuses = [i.kds_status for i in all_items if i.kds_status]
-	if statuses and all(s == "Delivered" for s in statuses):
-		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", "Delivered")
+	# //// Neoffice — the order follows ALL its dishes, as when a dish is moved by the kitchen (task 38b): delivered when none is left to deliver
+	_follow_the_dishes(invoice_name)
 
 	frappe.publish_realtime("kds_update")
 	return {"status": "success"}

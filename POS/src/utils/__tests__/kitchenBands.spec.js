@@ -3,6 +3,7 @@
  * //// the ones in preparation, each in order of arrival (NeoRestau lot 1, task 23). The split and the order live in a
  * //// helper of their own so that they are read, and tested, apart from the screen that draws them.
  */
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import {
 	BAND_PRODUCTION,
@@ -112,6 +113,27 @@ describe("the status a ticket shows, from the dishes it shows (fix round 1, ruli
 			}
 		}
 		expect(checked).toBe(6 * 6 * 7)
+	})
+})
+
+describe("the status a ticket shows, against the table the server's rule shares (task 38b)", () => {
+	// The server writes on the order the status its dishes give it (`_order_status_of`, pos_next/api/restaurant.py), by this rule: both
+	// are tested against the one table of examples, so that the status stored and the status the screen works out cannot disagree
+	const { cases } = JSON.parse(
+		readFileSync(
+			new URL("../../../../pos_next/tests/kitchen_status_cases.json", import.meta.url),
+			"utf8",
+		),
+	)
+
+	it("gives each example of the table its status, the order's own status being anything but Delivered", () => {
+		expect(cases.length).toBeGreaterThanOrEqual(15)
+		for (const { dishes, status } of cases) {
+			expect(
+				kitchenStatusOf(order(dishes.map((dish) => dish ?? undefined))),
+				JSON.stringify(dishes),
+			).toBe(status)
+		}
 	})
 })
 

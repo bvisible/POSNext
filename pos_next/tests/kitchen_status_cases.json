@@ -1,0 +1,24 @@
+{
+ "about": "The table of examples of the status an order shows from its dishes. The client (POS/src/utils/kitchenBands.js, kitchenStatusOf) and the server (pos_next/api/restaurant.py, _order_status_of) are each tested against THIS file, so that the status the server writes on the order and the one the screen works out cannot drift apart. `dishes` are the kds_status of the order's lines (null: none), `status` what the order shows while its own status is not Delivered.",
+ "cases": [
+  {"dishes": ["Pending", "Pending"], "status": "Pending"},
+  {"dishes": ["Waiting", "Pending"], "status": "Pending"},
+  {"dishes": ["Waiting"], "status": "Pending"},
+  {"dishes": ["Waiting", "Waiting"], "status": "Pending"},
+  {"dishes": ["Preparing", "Pending"], "status": "Preparing"},
+  {"dishes": ["Ready", "Pending"], "status": "Preparing"},
+  {"dishes": ["Ready", "Preparing"], "status": "Preparing"},
+  {"dishes": ["Ready", "Ready"], "status": "Ready"},
+  {"dishes": ["Ready", "Waiting"], "status": "Ready"},
+  {"dishes": ["Delivered", "Pending"], "status": "Pending"},
+  {"dishes": ["Delivered", "Preparing"], "status": "Preparing"},
+  {"dishes": ["Delivered", "Ready"], "status": "Ready"},
+  {"dishes": ["Delivered", "Ready", "Pending"], "status": "Preparing"},
+  {"dishes": ["Delivered", "Delivered"], "status": "Delivered"},
+  {"dishes": ["Delivered", "Waiting"], "status": "Delivered"},
+  {"dishes": [], "status": "Pending"},
+  {"dishes": [null, "", null], "status": "Pending"},
+  {"dishes": ["Ready", ""], "status": "Ready"},
+  {"dishes": ["Delivered", ""], "status": "Delivered"}
+ ]
+}

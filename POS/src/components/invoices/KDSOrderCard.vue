@@ -446,9 +446,10 @@ const waitingItems = computed(() =>
 )
 
 //// Neoffice — the status the ticket shows, from the DISHES it shows (fix round 1, ruling 78). The order's own status is not
-//// it: `update_item_kds_status` leaves it alone until every dish is ready, so an order whose dishes are being cooked says
-//// "Pending" (with several stations, every day) and the ticket kept its yellow border, its PENDING badge and its Start
-//// button in the "in preparation" band. The same rule as the band's (utils/kitchenBands): none begun, Pending and Start;
+//// it on its own: until task 38b `update_item_kds_status` left it alone until every dish was ready, so an order whose dishes were
+//// being cooked said "Pending" (with several stations, every day) and the ticket kept its yellow border, its PENDING badge and its
+//// Start button in the "in preparation" band; the server now follows all the dishes by the same rule, but a station's screen sees
+//// only its own dishes. The same rule as the band's (utils/kitchenBands): none begun, Pending and Start;
 //// one begun, Preparing and Ready; all ready, Ready and Delivered.
 const status = computed(() => kitchenStatusOf(props.order))
 

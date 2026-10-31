@@ -72,8 +72,10 @@ export function arrivalOf(order) {
 /**
  * The status a ticket shows: Pending, Preparing, Ready or Delivered, from the DISHES the screen shows.
  *
- * The order's own status cannot be the one: `update_item_kds_status` leaves it alone until every dish is ready, so an
- * order whose dishes are being cooked says "Pending" (with several stations, every day). The look of a ticket (its border,
+ * The order's own status cannot be the one on its own: with a station chosen the screen sees only that station's dishes, and the
+ * order's status can lag behind what it shows (it said "Pending" while a dish was cooking until task 38b, when the server began to
+ * write on the order the status ALL its dishes give it, by this very rule: `_order_status_of`, tested against the same table of
+ * examples, pos_next/tests/kitchen_status_cases.json). The look of a ticket (its border,
  * its badge, its main button) and the band it is drawn in follow its dishes, and with a station chosen the dishes shown are
  * that station's own (the server sends no others). One rule, here, for both:
  *

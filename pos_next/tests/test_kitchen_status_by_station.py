@@ -194,13 +194,14 @@ class TestTheMainButtonActsOnTheStationChosen(TwoRestaurants, FrappeTestCase):
 		self.assertEqual(result, {"status": "success"})
 		self.assertEqual(self.seen(order), ("Ready", "Ready", "Ready"))
 
-	def test_a_dish_started_on_its_own_leaves_the_status_of_the_order_alone(self):
-		# The state the kitchen screen reads every day: the order still says Pending while a dish is Preparing. The screen
-		# therefore reads the dishes it shows, not the order's status (task 23, ruling 78)
+	def test_a_dish_started_on_its_own_moves_the_order_with_it(self):
+		# Task 38b: the order's status follows ALL its dishes whenever one moves, forward and back (it used to be raised to Ready
+		# when every dish was, and nothing else), so that a delivery taken back brings the ticket back to the kitchen screen. The
+		# screen still reads the dishes it shows (task 23, ruling 78), which a station's tablet sees only a part of.
 		order = self.an_order()
 
 		restaurant_api.update_item_kds_status(order, self.fx.item, "Preparing")
 
 		order_status, kitchen, bar = self.seen(order)
-		self.assertEqual(order_status, "Pending")
+		self.assertEqual(order_status, "Preparing")
 		self.assertEqual({kitchen, bar}, {"Preparing"})

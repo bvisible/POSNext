@@ -110,6 +110,7 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
 | `pos_next/fixtures/print_format.json` | Card-payment mentions on the till receipt, printed in the merchant's language and inside the paper width (`10047bb0`, `a026e629`, 2026-08-22). The footer's "Powered by Neopos" now goes through `_("Powered by {0}")` too (2026-10-04): it was the last bare English label on the receipt. |
 | `pos_next/tests/fixtures/till_invoice_parity.json` | **Test data, not an app fixture** (it lies outside `pos_next/fixtures/`, so no migrate imports it). NeoRestau lot 1, Ruling 70: the till's VAT and totals equal the submitted invoice's, to the cent. The carts that `POS/src/composables/__tests__/useInvoice.invoiceParity.spec.js` rings through the till's own code, with the rows the till sends and the figures it shows; `pos_next/tests/test_till_totals_match_the_invoice.py` submits each as a real invoice and compares. Written by the spec (`UPDATE_PARITY_FIXTURE=1`), never by hand; the spec fails when the table and the till disagree. |
 | `pos_next/tests/room_code_cases.json` | **Test data, not an app fixture.** NeoRestau lot 1, task 38b: the table of examples of a room's short code (Salle 1 is S01, Terrasse is TER, a takeaway is EMP). The client's `kitchenRoomCode.js` (`kitchenRoomCode.spec.js`) and the server's `restaurant/room_code.py` (`test_room_code.py`) are each tested against this one file, so that the two derivations cannot drift apart. |
+| `pos_next/tests/kitchen_status_cases.json` | **Test data, not an app fixture.** NeoRestau lot 1, task 38b: the table of examples of the status an order shows from the statuses of its dishes (Ready and a held-back dish is Ready; a delivered dish and a Pending one is Pending). The client's `kitchenStatusOf` (`kitchenBands.spec.js`) and the server's `_order_status_of` (`test_kitchen_order_status_follows_its_dishes.py`) are each tested against this one file, so that the status written on the order and the one the screen works out cannot disagree. |
 
 ### Upstream customisations we neutralise
 
@@ -308,6 +309,7 @@ detail is in the sections above.
 | `pos_next/fixtures/print_format.json` |
 | `pos_next/tests/fixtures/till_invoice_parity.json` |
 | `pos_next/tests/room_code_cases.json` |
+| `pos_next/tests/kitchen_status_cases.json` |
 | `pos_next/pos_next/custom/customer.json` |
 | `pos_next/pos_next/custom/pos_profile.json` |
 | `pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json` |
