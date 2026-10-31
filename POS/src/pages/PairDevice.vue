@@ -85,7 +85,7 @@ export function forgetThePairing() {
 
 <script setup>
 import { onMounted, onUnmounted } from "vue"
-import { openPage } from "@/utils/tabletSession"
+import { openPage, rememberScreen } from "@/utils/tabletSession"
 
 const REDEEM = "/api/method/pos_next.api.restaurant_devices.redeem_pairing_code"
 const CSRF_PLACEHOLDER = "{{ csrf_token }}"
@@ -144,6 +144,9 @@ async function redeem(token) {
 		const body = await response.json().catch(() => ({}))
 		const screen = body?.message?.redirect
 		if (response.ok && typeof screen === "string" && screen.startsWith("/pos/")) {
+			// Kept, so that the app installed on this tablet finds its screen again when it starts at the till's address
+			// with no network (task 48)
+			rememberScreen(screen)
 			// Loaded anew: the app starts again with the session the tablet now holds
 			openPage(screen)
 			return

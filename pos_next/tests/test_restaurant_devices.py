@@ -46,6 +46,7 @@ REDEEM = f"{API}.redeem_pairing_code"
 DEVICES = f"{API}.get_devices"
 DISCONNECT = f"{API}.disconnect_device"
 RETIRE = f"{API}.retire_pairing_codes"
+MY_SCREEN = f"{API}.my_screen"
 DEVICE = "Restaurant Device"
 PAIRING = "Restaurant Device Pairing"
 KITCHEN = "Kitchen"
@@ -882,6 +883,9 @@ class TestWhatATabletReaches(Tablets):
 			("/api/method/pos_next.api.localization.get_app_translations", {}),
 			("/api/method/frappe.auth.get_logged_user", {}),
 			("/api/method/frappe.realtime.get_user_info", {}),
+			# Where a tablet started from its home-screen icon finds its own screen (task 48)
+			("/api/method/pos_next.api.restaurant_devices.my_screen", {}),
+			("/api/v2/method/pos_next.api.restaurant_devices.my_screen", {}),
 			("/api/method/logout", {}),
 		)
 		refused = (
@@ -1489,3 +1493,81 @@ class TestTheTabletsOfARestaurant(Tablets):
 		device.user = PORTAL
 		with self.assertRaises(frappe.PermissionError):
 			device.save(ignore_permissions=True)
+
+
+class TestATabletStartedFromItsIconFindsItsScreen(Tablets):
+	"""The app installed on a tablet starts at the till's address (the manifest's start_url is /pos), not at the screen
+	the pairing opened: the tablet asks which screen it was paired for (NeoRestau lot 1, task 48)."""
+
+	def test_a_tablet_is_answered_the_address_its_pairing_gave(self):
+		# One source: the pairing's answer and this one are the same string, for every screen a tablet can be paired for
+		for screen, station in ((KITCHEN, None), (KITCHEN, self.grill), (RUNNER, None)):
+			with self.subTest(screen=screen, station=station):
+				with self.browser():
+					given = self.redeem(self.token(screen=screen, station=station))["redirect"]
+					tablet = frappe.session.user
+				with as_user(tablet):
+					self.assertEqual(call(MY_SCREEN), {"redirect": given})
+		# A kitchen's tablet of one station names the station; the runner's names the restaurant only
+		with as_user(self.tablet(self.bar, KITCHEN, self.bar_grill)):
+			self.assertEqual(
+				call(MY_SCREEN),
+				{"redirect": f"/pos/kds?restaurant={self.bar.replace(' ', '+')}&station={self.bar_grill}"},
+			)
+
+	def test_only_a_tablet_is_answered(self):
+		self.tablet(self.bistro, KITCHEN)
+		tablet_of_no_row = devices.make_account("_Test tablet with no row", self.bistro)
+		for user in (MANAGER, ADMIN, CASHIER, PORTAL, "Guest", "Administrator", tablet_of_no_row, FORGED):
+			with self.subTest(user=user):
+				self.assert_refused(user, "my_screen", call, MY_SCREEN)
+
+	def test_a_tablet_that_was_disconnected_is_refused(self):
+		tablet, _sid = self.paired(self.token(station=self.grill))
+		with as_user(tablet):
+			self.assertTrue(call(MY_SCREEN)["redirect"].startswith("/pos/kds?"))
+		with as_user(MANAGER):
+			call(DISCONNECT, device=frappe.db.get_value(DEVICE, {"user": tablet}))
+		self.assert_refused(tablet, "my_screen", call, MY_SCREEN)
+
+	def test_a_session_older_than_the_last_disconnection_is_refused(self):
+		token = self.token(station=self.grill)
+		with self.browser():
+			self.redeem(token)
+			tablet = frappe.session.user
+			old_session = frappe._dict(frappe.local.session)
+			old_session.data = frappe._dict(frappe.local.session.data)
+		with as_user(MANAGER):
+			call(DISCONNECT, device=frappe.db.get_value(DEVICE, {"user": tablet}))
+		# Paired again: the tablet is no longer disconnected, but the session it had before is older than the disconnection
+		self.paired(self.token(station=self.grill))
+		frappe.local.session = old_session
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				call(MY_SCREEN)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_a_tablet_whose_account_became_something_else_is_signed_out_not_answered(self):
+		tablet, _sid = self.paired(self.token(station=self.grill))
+		frappe.db.set_value("User", tablet, "enabled", 0)
+		self.assert_refused(tablet, "my_screen", call, MY_SCREEN)
+		self.assertEqual(self.sessions_of(tablet), [])
+
+	def test_where_neorestau_is_off_a_tablet_is_not_answered(self):
+		tablet = self.tablet(self.bistro, KITCHEN)
+		with patch.dict(frappe.conf, {"neorestau_active": 0}):
+			self.assert_refused(tablet, "my_screen", call, MY_SCREEN)
+
+	def test_the_endpoint_is_in_the_tablet_confinement_and_is_a_read(self):
+		self.assertIn(MY_SCREEN, devices.TABLET_METHODS)
+		self.assertEqual(
+			tuple(frappe.allowed_http_methods_for_whitelisted_func[frappe.get_attr(MY_SCREEN)]), ("GET",)
+		)
+		# Not a way for a tablet to reach the same answer through a `cmd` of another method
+		tablet = self.tablet(self.bistro, KITCHEN)
+		with self.browser(method="GET", path=f"/api/method/{MY_SCREEN}"):
+			frappe.set_user(tablet)
+			frappe.local.form_dict = frappe._dict(cmd="frappe.client.get_list")
+			with self.assertRaises(frappe.PermissionError):
+				devices.confine_tablet_session()

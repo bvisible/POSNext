@@ -9,10 +9,11 @@ import { flushPromises, mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const openPage = vi.hoisted(() => vi.fn())
+const rememberScreen = vi.hoisted(() => vi.fn())
 vi.hoisted(() => {
 	globalThis.__ = (text, args) => (args ? text.replace(/\{(\d+)\}/g, (_, index) => args[index]) : text)
 })
-vi.mock("@/utils/tabletSession", () => ({ openPage }))
+vi.mock("@/utils/tabletSession", () => ({ openPage, rememberScreen }))
 
 // The page keeps what it found for the whole page load (a second mount shows it); each case is a page load of its own
 const { default: PairDevice, forgetThePairing } = await import("../PairDevice.vue")
@@ -53,6 +54,7 @@ beforeEach(() => {
 	fetchMock = vi.fn()
 	vi.stubGlobal("fetch", fetchMock)
 	openPage.mockReset()
+	rememberScreen.mockReset()
 	window.csrf_token = undefined
 	opened = []
 	forgetThePairing?.()
@@ -77,6 +79,25 @@ describe("the page a tablet opens by scanning the code", () => {
 		expect(JSON.parse(request.body)).toEqual({ token: TOKEN })
 		// Loaded anew, with the session the tablet now holds
 		expect(openPage).toHaveBeenCalledWith(SCREEN)
+	})
+
+	it("keeps the screen it opened, for the next start from the home-screen icon (task 48)", async () => {
+		fetchMock.mockResolvedValue(answer(200, { message: { redirect: SCREEN } }))
+
+		visit(`/pos/pair#${TOKEN}`)
+		await flushPromises()
+
+		expect(rememberScreen).toHaveBeenCalledWith(SCREEN)
+		expect(rememberScreen.mock.invocationCallOrder[0]).toBeLessThan(openPage.mock.invocationCallOrder[0])
+	})
+
+	it("keeps nothing when the code opened nothing", async () => {
+		fetchMock.mockResolvedValue(refusal(417, "PairingCodeError", "This code opens no screen."))
+
+		visit(`/pos/pair#${TOKEN}`)
+		await flushPromises()
+
+		expect(rememberScreen).not.toHaveBeenCalled()
 	})
 
 	it("takes the token out of the address at once, so that a reload never tries it again", async () => {

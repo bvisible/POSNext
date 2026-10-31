@@ -9,6 +9,7 @@ Making a token, listing the tablets, disconnecting one and retiring tokens are t
 right to set the restaurant up (pos_next.restaurant.permissions, `manage_settings`: write on the Restaurant, checked on
 the restaurant named, where per-restaurant user permissions apply). A visitor, a portal account, a device account and a
 cashier are refused. Redeeming a token is a visitor's: the tablet has no session yet; the token is all it brings.
+Asking where a tablet's own screen is (`my_screen`) is the tablet's: its session is the whole right, and nobody else has it.
 """
 
 import frappe
@@ -114,6 +115,17 @@ def redeem_pairing_code(token=None):
 		raise
 	devices.log_pairing(device, pairing.owner)
 	return {"redirect": devices.screen_path(device)}
+
+
+@frappe.whitelist(methods=["GET"])
+def my_screen():
+	"""Where the tablet signed in right now has its screen: the address its pairing answered, asked again.
+
+	The app installed on a tablet starts at the till's address, whatever screen the tablet was paired for: it asks here,
+	and goes to the screen it is told. Answered to a tablet's session only (pos_next.restaurant.devices.own_screen_path
+	holds the gate); every other caller gets the refusal any endpoint of the tablets gives. A read: a GET.
+	"""
+	return {"redirect": devices.own_screen_path()}
 
 
 @frappe.whitelist()

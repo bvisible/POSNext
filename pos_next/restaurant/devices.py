@@ -88,6 +88,8 @@ TABLET_METHODS = frozenset(
 		"pos_next.api.restaurant.mark_items_delivered",
 		"pos_next.api.restaurant.get_restaurant_settings",
 		"pos_next.api.restaurant_devices.redeem_pairing_code",
+		# Where its own screen is: asked by a tablet started from its home-screen icon (task 48)
+		"pos_next.api.restaurant_devices.my_screen",
 		"frappe.auth.get_logged_user",
 		"pos_next.api.localization.get_app_translations",
 		"pos_next.api.localization.get_user_language",
@@ -624,6 +626,21 @@ def screen_path(device: frappe._dict) -> str:
 	if device.station:
 		query["station"] = device.station
 	return f"/pos/kds?{urlencode(query)}"
+
+
+def own_screen_path() -> str:
+	"""The address of the screen the tablet signed in right now was paired for: what its pairing answered, asked again.
+
+	A tablet installed as an app starts at the till's address (the manifest's start_url), not at the screen its pairing
+	opened: it asks which screen is its own. Only a tablet has one. `screen_device` holds the whole gate (a clean device
+	account made here, a tablet that is not disconnected, a session newer than its last disconnection, a site that runs
+	NeoRestau); anyone else, a manager and the administrator included, is refused, never answered with a screen. The address
+	is `screen_path`'s, the one the pairing answers with.
+	"""
+	device = screen_device(KITCHEN, RUNNER)
+	if not device:
+		_refuse()
+	return screen_path(device)
 
 
 def pair(pairing: frappe._dict) -> tuple[frappe._dict, frappe._dict | None]:

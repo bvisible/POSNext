@@ -71,9 +71,11 @@ NONE = "tillsweep-no-such-name"
 # The kitchen's and the runner's tablets (NeoRestau lot 1, task 16): the calls of the sweep each one's device account is
 # answered, for its own restaurant (none is named); every other call refuses it, as it refuses any portal account. The
 # preparation stations are asked for a made-up station, which is no station of a tablet's restaurant: refused as well.
+# `my_screen` answers a tablet whichever screen it was paired for (task 48: a tablet started from its home-screen icon asks
+# where its screen is) and nobody else.
 TABLET_SCREENS = {
-	"Kitchen": {"get_tables", "get_kds_orders"},
-	"Runner": {"get_tables", "get_runner_orders", "get_restaurant_settings"},
+	"Kitchen": {"get_tables", "get_kds_orders", "my_screen"},
+	"Runner": {"get_tables", "get_runner_orders", "get_restaurant_settings", "my_screen"},
 }
 
 # Document hooks and server helpers: they run in-process, as whoever caused them, and no web client
@@ -507,6 +509,11 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			),
 		]
 
+	def _tablet_calls(self):
+		"""What only a restaurant's tablet asks: where its screen is (NeoRestau lot 1, task 48). Refused to everyone else,
+		the restaurant's managers included: it answers the session of a device account, not a right."""
+		return [("my_screen", restaurant_devices.my_screen)]
+
 	def _item_panel_calls(self):
 		"""The item panel's read: whoever manages the cards and reads the item in the ERP. Refused to the till's
 		cashier here; served to a manager who reads items in test_restaurant_permissions (this file's till manager
@@ -695,6 +702,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._restaurant_management_calls()
 			+ self._item_panel_calls()
 			+ self._till_manager_calls()
+			+ self._tablet_calls()
 		)
 
 	def test_a_portal_account_is_refused_everywhere(self):
@@ -715,6 +723,7 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			+ self._restaurant_management_calls()
 			+ self._item_panel_calls()
 			+ self._till_manager_calls()
+			+ self._tablet_calls()
 		):
 			self._refused(DESK, label, call)
 		for label, call in self._desk_calls():
@@ -749,6 +758,23 @@ class TestTillEndpointsSweep(FrappeTestCase):
 						else:
 							self._refused(tablet, label, call)
 			self.assertEqual(self._written(), before)
+
+	def test_a_tablets_screen_is_asked_of_its_session_only(self):
+		# Neither the till's cashier nor its manager nor the administrator is a tablet: the answer is the session's, not a right
+		for label, call in self._tablet_calls():
+			for user in (
+				TILL,
+				OTHER_CASHIER,
+				MANAGER,
+				REPORTER,
+				COUNTER,
+				DESK,
+				PORTAL,
+				"Guest",
+				"Administrator",
+			):
+				with self.subTest(label=label, user=user):
+					self._refused(user, label, call)
 
 	def test_the_till_settings_are_its_managers(self):
 		settings = frappe.db.get_value("POS Settings", {"pos_profile": PROFILE})

@@ -2,6 +2,8 @@ import { shiftState } from "@/composables/useShift";
 import { userResource } from "@/data/user";
 //// Neoffice — the restaurant's own screens open only where the site runs NeoRestau (NeoRestau lot 1, task 4, fix round 1).
 import { redirectWhereNeoRestauIsOff } from "@/utils/neorestau";
+//// Neoffice — where a paired tablet goes when the installed app starts at the till's address (NeoRestau lot 1, task 48).
+import { whereTheTabletStarts } from "@/utils/tabletStart";
 import { createRouter, createWebHistory } from "vue-router";
 import { session } from "./data/session";
 
@@ -108,6 +110,28 @@ const routes = [
 const router = createRouter({
 	history: createWebHistory("/pos"),
 	routes,
+});
+
+//// Neoffice — added guard, first in line (NeoRestau lot 1, task 48). A kitchen's or runner's tablet is installed as an
+//// app and every launch from its icon starts at /pos, the manifest's start_url: the route "/" is the till, whose shift
+//// dialog asks for profiles a tablet's account may not read ("Aucun profil POS disponible ... PermissionError"). Such a
+//// session is sent straight to ITS OWN screen (asked of the server, else the one it remembers), replacing the till's
+//// address, before the till's page is even loaded: no dialog, no error, no flash of the till. It speaks only for a
+//// session of the tablets' own accounts on a site that runs NeoRestau; a desk user, a visitor and a portal customer
+//// pass through untouched (upstream's guard below runs as it always did). A tablet the server refuses, or that can
+//// reach nothing and remembers nothing, goes to the pairing page, as a signed-out one does.
+//// Neoffice — a failure here (a browser that refuses its cookies) must never stop a navigation: it passes on to the way it was going.
+router.beforeEach(async (to) => {
+	try {
+		const start = await whereTheTabletStarts(to);
+		if (!start) return true;
+		if (start.pair) return { name: "PairDevice", replace: true };
+		const { path, query, hash } = router.resolve(start.screen);
+		return { path, query, hash, replace: true };
+	} catch (error) {
+		console.warn("[Router] the tablet's start could not be worked out", error);
+		return true;
+	}
 });
 
 router.beforeEach((to, from, next) => {
