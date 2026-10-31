@@ -2408,9 +2408,9 @@ import TableQRCode from "@/components/restaurant/TableQRCode.vue";
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 //// Neoffice — and the permanent card's tab is its label (NeoRestau lot 1, task 9, fix round 1)
 import { cardLabel } from "@/utils/cardLabel";
-//// Neoffice — the cart line a card entry becomes, and the units it carries, are built in one place that a test can reach
-//// (NeoRestau lot 1, task 22).
-import { cardItemToCartItem, unitsOf, withKnownUnits } from "@/utils/cartLineUnits";
+//// Neoffice — the cart line of a card entry or of a menu course item, and the units it carries, are built in one place that a
+//// test can reach (NeoRestau lot 1, task 22).
+import { cardItemToCartItem, menuItemToCartItem, withKnownUnits } from "@/utils/cartLineUnits";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
@@ -3924,11 +3924,6 @@ function handleLoadServerDraft(order) {
 					item_name: item.item_name,
 					rate: item.rate,
 					uom: item.uom,
-					//// Neoffice — the order row names the item's stock unit, the factor of the line and the item's other units
-					//// (get_table_order): the line carries them, or its unit select could not list them (task 22).
-					stock_uom: item.stock_uom,
-					conversion_factor: item.conversion_factor,
-					item_uoms: item.item_uoms,
 					preparation_station: item.preparation_station,
 					posa_special_instructions: item.posa_special_instructions,
 					posa_item_modifiers: item.posa_item_modifiers,
@@ -4234,8 +4229,9 @@ function handleItemSelected(item, autoAdd = false) {
 	}
 }
 
-async function handleEditItem(updatedItem) {
-	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem);
+//// Neoffice — the cart hands over the row it edited: the update is applied to THAT line (NeoRestau lot 1, task 22, fix round 1).
+async function handleEditItem(updatedItem, row = null) {
+	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem, null, row);
 }
 
 //// Neoffice — the numpad's answer. Two paths on purpose: in restaurant mode the line is
@@ -4312,18 +4308,9 @@ function handleOpenModifiers(item) {
 
 function handleMenuConfirmed(menuItems) {
 	for (const menuItem of menuItems) {
-		const fullItem = {
-			item_code: menuItem.item_code,
-			item_name: menuItem.item_name,
-			rate: menuItem.price_override,
-			is_menu_item: true,
-			menu_name: menuItem.menu_name,
-			posa_special_instructions: `[${menuItem.menu_name}] ${menuItem.course_name}`,
-			//// Neoffice — the course item carries the item's units (get_active_menus), so the line is in a unit the invoice
-			//// and the edit dialog agree on (task 22).
-			...unitsOf(menuItem),
-		};
-		cartStore.addItem(fullItem, 1);
+		//// Neoffice — the line of a course item is made in cartLineUnits, with the item's units (get_active_menus), so the
+		//// invoice and the edit dialog agree on its unit (NeoRestau lot 1, task 22).
+		cartStore.addItem(menuItemToCartItem(menuItem), 1);
 	}
 }
 

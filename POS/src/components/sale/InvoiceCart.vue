@@ -2180,8 +2180,10 @@ const props = defineProps({
  * Events emitted to parent component for cart operations
  */
 const emit = defineEmits([
-	"update-quantity", // (itemCode, newQty, uom?) - Update item quantity
-	"remove-item", // (itemCode, uom?) - Remove item from cart
+	//// Neoffice — the row of the line (cartRowOf) rides last on update-quantity, update-uom and edit-item, and replaces the
+	//// item code on remove-item: see setQuantityOf, removeRowOf, selectUom and handleUpdateItem.
+	"update-quantity", // (itemCode, newQty, uom?, row?) - Update item quantity
+	"remove-item", // (itemCode | row, uom?) - Remove item from cart
 	"select-customer", // (customer) - Select/change customer
 	"edit-customer", // (customer) - Open edit customer dialog
 	"create-customer", // (searchText) - Open create customer dialog
@@ -2198,8 +2200,9 @@ const emit = defineEmits([
 	"show-coupons", // () - Show available coupons
 	"show-offers", // () - Show available offers dialog
 	"remove-offer", // (offerId) - Remove applied offer
-	"update-uom", // (itemCode, newUom) - Change item's unit of measure
-	"edit-item", // (item) - Open item edit dialog
+	//// Neoffice — the row of the line rides last on these two events too (see the note at the top of this list, fix round 1).
+	"update-uom", // (itemCode, newUom, currentUom?, row?) - Change item's unit of measure
+	"edit-item", // (item, row?) - Open item edit dialog
 	//// Neoffice — [R] added events: per-line note/modifier dialog and the provisional
 	//// pre-payment ticket the waiter drops on the table (87f168fe, 71050faf).
 	"open-modifiers", // (item) - Open special instructions dialog (restaurant mode)
@@ -2308,6 +2311,9 @@ const changingCustomer = ref(false); // Search shown over the selected customer
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 const showEditDialog = ref(false); // Controls edit dialog visibility
 const selectedItem = ref(null); // Item being edited
+//// Neoffice — the cart row behind the copy being edited: the update must reach THAT line, not the first line of the same item and
+//// unit (the dish can sit twice in a table's cart, one line sent and one that waits). NeoRestau lot 1, task 22, fix round 1.
+let editedRow = null;
 
 // UOM dropdown state - tracks which item's UOM dropdown is open (by item_code)
 //// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
@@ -3060,6 +3066,18 @@ function getSmartStep(quantity) {
 	return 0.01;
 }
 
+//// Neoffice — the quantity of a line, or its removal, is asked for BY ROW: with the item and its unit alone the parent found the
+//// first line carrying them, and a table's cart now holds the same dish twice (the line the kitchen has, the line that waits): the
+//// stepper of the second one lowered or removed the first. The row also tells the store which line must not take a new unit
+//// (NeoRestau lot 1, task 22, fix round 1).
+function setQuantityOf(item, quantity) {
+	emit("update-quantity", item.item_code, quantity, item.uom, cartRowOf(item));
+}
+
+function removeRowOf(item) {
+	emit("remove-item", cartRowOf(item));
+}
+
 /**
  * Increment item quantity using smart step.
  * Uses getSmartStep to determine appropriate increment value.
@@ -3071,7 +3089,8 @@ function incrementQuantity(item) {
 
 	const step = getSmartStep(getDisplayQuantity(item));
 	const newPaidQty = Math.round((getDisplayQuantity(item) + step) * 10000) / 10000;
-	emit("update-quantity", item.item_code, newPaidQty, item.uom);
+	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+	setQuantityOf(item, newPaidQty);
 }
 
 /**
@@ -3089,9 +3108,11 @@ function decrementQuantity(item) {
 	if (newPaidQty <= 0) {
 		// If quantity would be 0 or negative, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		emit("remove-item", item.item_code, item.uom);
+		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+		removeRowOf(item);
 	} else {
-		emit("update-quantity", item.item_code, newPaidQty, item.uom);
+		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+		setQuantityOf(item, newPaidQty);
 	}
 }
 
@@ -3115,10 +3136,12 @@ function updateQuantity(item, value) {
 	const paidQty = resolvePaidQuantityFromDisplay(item, displayQty);
 
 	// If quantity is zero or negative, remove the item from the cart
-	if (paidQty <= 0) return emit("remove-item", item.item_code, item.uom);
+	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+	if (paidQty <= 0) return removeRowOf(item);
 
 	// For positive numbers, update paid quantity (free row stays separate in data)
-	emit("update-quantity", item.item_code, paidQty, item.uom);
+	//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+	setQuantityOf(item, paidQty);
 }
 
 /**
@@ -3135,12 +3158,14 @@ function handleQuantityBlur(item) {
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item
 		//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-		emit("remove-item", item.item_code, item.uom);
+		//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+		removeRowOf(item);
 	} else {
 		// Round to 4 decimal places for consistency
 		const roundedQty = Math.round(getDisplayQuantity(item) * 10000) / 10000;
 		if (roundedQty !== getDisplayQuantity(item)) {
-			emit("update-quantity", item.item_code, roundedQty, item.uom);
+			//// Neoffice — by row, see setQuantityOf / removeRowOf (NeoRestau lot 1, task 22, fix round 1).
+			setQuantityOf(item, roundedQty);
 		}
 	}
 }
@@ -3177,9 +3202,11 @@ async function selectUom(item, newUom) {
 
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
 	const currentUom = item.uom || item.stock_uom;
-	await cartStore.changeItemUOM(item.item_code, newUom, currentUom);
+	//// Neoffice — by row (NeoRestau lot 1, task 22, fix round 1): the dish can sit twice in a table's cart, one line sent and one that
+	//// waits, and the unit asked for is the one of the line whose dropdown was opened; the parent's second call gets the same row.
+	await cartStore.changeItemUOM(item.item_code, newUom, currentUom, cartRowOf(item));
 	openUomDropdown.value = null;
-	emit("update-uom", item.item_code, newUom);
+	emit("update-uom", item.item_code, newUom, currentUom, cartRowOf(item));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3198,6 +3225,8 @@ function openEditDialog(item) {
 	// change qty or rate (would oversell free stock beyond the offer).
 	if (isLockedFreeRow(item)) return;
 	selectedItem.value = { ...item };
+	//// Neoffice — the row the dialog edits, kept to hand it back with the update (NeoRestau lot 1, task 22, fix round 1).
+	editedRow = cartRowOf(item);
 	showEditDialog.value = true;
 }
 
@@ -3213,10 +3242,12 @@ async function handleUpdateItem(updatedItem) {
 	const originalUom = selectedItem.value?.uom || selectedItem.value?.stock_uom;
 	// Use store method to update item, passing original UOM to identify correct item
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem, originalUom);
+	//// Neoffice — by row, see editedRow.
+	await cartStore.updateItemDetails(updatedItem.item_code, updatedItem, originalUom, editedRow);
 	// Also emit for parent component compatibility
 	//// Neoffice — [F] Biome reformat only, no behaviour change (87f168fe); see file map.
-	emit("edit-item", updatedItem);
+	//// Neoffice — by row, see editedRow: the parent applies the update a second time, to the same line.
+	emit("edit-item", updatedItem, editedRow);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

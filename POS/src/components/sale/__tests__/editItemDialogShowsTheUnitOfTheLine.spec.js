@@ -79,23 +79,23 @@ const { cardItemToCartItem } = await import("@/utils/cartLineUnits")
 // Item entries of a card, as get_active_cards answers them
 const WINE = {
 	item_type: "Item",
-	item: "vin",
-	item_name: "Vin",
+	item: "wine",
+	item_name: "Wine",
 	item_group: "Drinks",
 	price: 29,
 	default_price: 29,
-	stock_uom: "Unité",
+	stock_uom: "Unit",
 	item_uoms: [],
 }
 const WATER = {
 	item_type: "Item",
-	item: "eau",
-	item_name: "Eau",
+	item: "water",
+	item_name: "Water",
 	item_group: "Drinks",
 	price: 4.5,
 	default_price: 4.5,
-	stock_uom: "Bouteille",
-	item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+	stock_uom: "Bottle",
+	item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 }
 
 let cart
@@ -140,18 +140,19 @@ describe("« Edit Item Details » shows the unit of a line added from a restaura
 	it("the unit select shows the unit of the item, and the header names the same unit", async () => {
 		const dialog = await open(lineFromCard(WINE))
 
-		expect(dialog.shown()).toBe("Unité")
-		expect(dialog.header()).toContain("/ Unité")
+		expect(dialog.shown()).toBe("Unit")
+		expect(dialog.header()).toContain("/ Unit")
 		expect(dialog.header()).not.toContain("Nos")
+		expect(dialog.unitSelect.props("disabled")).toBe(false)
 	})
 
 	it("lists the other units of the item, the unit of the line selected", async () => {
 		const dialog = await open(lineFromCard(WATER))
 
-		expect(dialog.shown()).toBe("Bouteille")
+		expect(dialog.shown()).toBe("Bottle")
 		expect(dialog.options().map((option) => option.value)).toEqual([
-			"Bouteille",
-			"Caisse",
+			"Bottle",
+			"Case",
 		])
 	})
 
@@ -159,7 +160,7 @@ describe("« Edit Item Details » shows the unit of a line added from a restaura
 		mocks.submit.mockResolvedValue({ price_list_rate: 27 })
 		const dialog = await open(lineFromCard(WATER))
 
-		dialog.unitSelect.vm.$emit("update:modelValue", "Caisse")
+		dialog.unitSelect.vm.$emit("update:modelValue", "Case")
 		await flushPromises()
 		const update = dialog.wrapper
 			.findAll("button")
@@ -168,13 +169,13 @@ describe("« Edit Item Details » shows the unit of a line added from a restaura
 
 		const [line] = dialog.wrapper.emitted("update-item")[0]
 		expect(line).toMatchObject({
-			uom: "Caisse",
+			uom: "Case",
 			conversion_factor: 6,
 			rate: 27,
-			stock_uom: "Bouteille",
+			stock_uom: "Bottle",
 		})
 		expect(mocks.submit).toHaveBeenCalledWith(
-			expect.objectContaining({ item_code: "eau", uom: "Caisse" }),
+			expect.objectContaining({ item_code: "water", uom: "Case" }),
 		)
 	})
 
@@ -187,7 +188,83 @@ describe("« Edit Item Details » shows the unit of a line added from a restaura
 		await update.trigger("click")
 
 		const [line] = dialog.wrapper.emitted("update-item")[0]
-		expect(line.uom).toBe("Unité")
+		expect(line.uom).toBe("Unit")
+	})
+})
+
+describe("« Edit Item Details » changes the unit of an item the price list has no price for", () => {
+	// The card says 4.50 for a kilo; nobody priced the box of ten kilos in the price list
+	const TOMATO = {
+		item_type: "Item",
+		item: "tomato",
+		item_name: "Tomato",
+		item_group: "Vegetables",
+		price: 4.5,
+		default_price: 4.5,
+		stock_uom: "Kg",
+		item_uoms: [{ uom: "Box", conversion_factor: 10 }],
+	}
+
+	async function changeUnit(dialog, unit) {
+		dialog.unitSelect.vm.$emit("update:modelValue", unit)
+		await flushPromises()
+		const update = dialog.wrapper
+			.findAll("button")
+			.find((button) => button.text() === "Update Item")
+		await update.trigger("click")
+		const updates = dialog.wrapper.emitted("update-item")
+		return updates.at(-1)[0]
+	}
+
+	it("scales the rate by the factors of the two units when the lookup answers 0", async () => {
+		mocks.submit.mockResolvedValue({ price_list_rate: 0, rate: 0 })
+		const dialog = await open(lineFromCard(TOMATO))
+
+		const line = await changeUnit(dialog, "Box")
+
+		expect(line).toMatchObject({
+			uom: "Box",
+			conversion_factor: 10,
+			rate: 45,
+			price_list_rate: 45,
+		})
+	})
+
+	it("does the same when the lookup fails (the till is offline)", async () => {
+		mocks.submit.mockRejectedValue(new Error("offline"))
+		const dialog = await open(lineFromCard(TOMATO))
+
+		const line = await changeUnit(dialog, "Box")
+
+		expect(line).toMatchObject({ uom: "Box", rate: 45, price_list_rate: 45 })
+	})
+
+	it("scales back when the unit goes back to the first", async () => {
+		mocks.submit.mockResolvedValue({ price_list_rate: 0 })
+		cart.addItem(
+			{
+				...cardItemToCartItem(TOMATO),
+				uom: "Box",
+				conversion_factor: 10,
+				rate: 45,
+				price_list_rate: 45,
+			},
+			1,
+		)
+		const dialog = await open(cart.invoiceItems.at(-1))
+
+		const line = await changeUnit(dialog, "Kg")
+
+		expect(line).toMatchObject({ uom: "Kg", conversion_factor: 1, rate: 4.5 })
+	})
+
+	it("takes the price of the price list when it has one for the unit", async () => {
+		mocks.submit.mockResolvedValue({ price_list_rate: 40 })
+		const dialog = await open(lineFromCard(TOMATO))
+
+		const line = await changeUnit(dialog, "Box")
+
+		expect(line).toMatchObject({ uom: "Box", rate: 40 })
 	})
 })
 
@@ -195,33 +272,33 @@ describe("« Edit Item Details » shows the unit of a line however it was added"
 	// What each path hands to the cart for the same item: a table's order read back from the server carries the unit
 	// the line is in (the invoice row's) and nothing about the item's other units
 	const ORDER_ROW = {
-		item_code: "vin",
-		item_name: "Vin",
+		item_code: "wine",
+		item_name: "Wine",
 		rate: 29,
-		uom: "Unité",
+		uom: "Unit",
 		conversion_factor: 1,
 	}
 	// A menu course item, as get_active_menus answers it
 	const MENU_ITEM = {
-		item_code: "vin",
-		item_name: "Vin",
-		stock_uom: "Unité",
+		item_code: "wine",
+		item_name: "Wine",
+		stock_uom: "Unit",
 		item_uoms: [],
 	}
 	// A grid item (a shop), as get_items answers it
 	const GRID_ITEM = {
-		item_code: "eau",
-		item_name: "Eau",
+		item_code: "water",
+		item_name: "Water",
 		rate: 4.5,
-		uom: "Bouteille",
-		stock_uom: "Bouteille",
-		item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+		uom: "Bottle",
+		stock_uom: "Bottle",
+		item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 	}
 
 	it.each([
-		["a table's order read back from the server", ORDER_ROW, "Unité"],
-		["a menu course item", MENU_ITEM, "Unité"],
-		["a grid item", GRID_ITEM, "Bouteille"],
+		["a table's order read back from the server", ORDER_ROW, "Unit"],
+		["a menu course item", MENU_ITEM, "Unit"],
+		["a grid item", GRID_ITEM, "Bottle"],
 	])("%s", async (_path, source, unit) => {
 		cart.addItem({ ...source }, 1)
 		const dialog = await open(cart.invoiceItems.at(-1))
@@ -249,7 +326,12 @@ describe("« Edit Item Details » shows the unit of a line however it was added"
 
 describe("« Edit Item Details » for a line that knows no unit at all", () => {
 	// A held ticket from before units travelled with the line: nobody can tell the unit, so the dialog says none
-	const NO_UNIT = { item_code: "vin", item_name: "Vin", rate: 29, quantity: 1 }
+	const NO_UNIT = {
+		item_code: "wine",
+		item_name: "Wine",
+		rate: 29,
+		quantity: 1,
+	}
 
 	it("never invents « Nos »: no unit in the header, an empty select with nothing to choose, nothing written on the line", async () => {
 		cart.addItem({ ...NO_UNIT }, 1)
@@ -258,6 +340,8 @@ describe("« Edit Item Details » for a line that knows no unit at all", () => {
 		expect(dialog.shown()).toBe("")
 		expect(dialog.header()).toBe("CHF 29.00")
 		expect(dialog.options()).toEqual([])
+		// Nothing to choose from: the select does not open on « No results found »
+		expect(dialog.unitSelect.props("disabled")).toBe(true)
 
 		const update = dialog.wrapper
 			.findAll("button")

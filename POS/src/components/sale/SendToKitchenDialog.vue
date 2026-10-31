@@ -189,6 +189,8 @@ function open() {
 		.filter((item) => !item.is_free_item)
 		.map((item) => ({
 			...item,
+			// The cart row this line is a copy of: the dish can sit twice (the line the kitchen has, the line that waits)
+			_row: item,
 			selected: isSendable(item) ? shouldDefaultCheck(item) : false,
 		}))
 	show.value = true
@@ -206,6 +208,16 @@ function deselectAll() {
 	})
 }
 
+// The cart line a dialog line stands for: the row itself, found again by the item and its unit only for a line that has none
+function cartLineOf(dialogItem) {
+	if (dialogItem._row && cartStore.invoiceItems.includes(dialogItem._row)) return dialogItem._row
+	return cartStore.invoiceItems.find(
+		(ci) =>
+			ci.item_code === dialogItem.item_code &&
+			(ci.uom || "") === (dialogItem.uom || ""),
+	)
+}
+
 function sendSelected() {
 	const selectedItems = dialogItems.value.filter((i) => i.selected)
 	const waitingItems = dialogItems.value.filter(
@@ -214,10 +226,7 @@ function sendSelected() {
 
 	// Update statuses and resolve stations in cart store
 	for (const di of selectedItems) {
-		const cartItem = cartStore.invoiceItems.find(
-			(ci) =>
-				ci.item_code === di.item_code && (ci.uom || "") === (di.uom || ""),
-		)
+		const cartItem = cartLineOf(di)
 		if (cartItem) {
 			cartItem.kds_status = "Pending"
 			// Ensure preparation_station is set (individual item > item group fallback)
@@ -234,10 +243,7 @@ function sendSelected() {
 	}
 
 	for (const di of waitingItems) {
-		const cartItem = cartStore.invoiceItems.find(
-			(ci) =>
-				ci.item_code === di.item_code && (ci.uom || "") === (di.uom || ""),
-		)
+		const cartItem = cartLineOf(di)
 		if (cartItem && !cartItem.kds_status) {
 			cartItem.kds_status = "Waiting"
 		}

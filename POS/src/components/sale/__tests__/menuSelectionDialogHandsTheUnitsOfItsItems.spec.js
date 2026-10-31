@@ -41,24 +41,24 @@ describe("the menu dialog hands the units of the items to the cart", () => {
 					course_name: "Drink",
 					items: [
 						{
-							item: "eau",
-							item_name: "Eau",
-							stock_uom: "Bouteille",
-							item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+							item: "water",
+							item_name: "Water",
+							stock_uom: "Bottle",
+							item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 						},
 					],
 				},
 			],
 		})
 		await flushPromises()
-		await click(wrapper, "Eau")
+		await click(wrapper, "Water")
 		await click(wrapper, "Add Menu")
 
 		const [items] = wrapper.emitted("menu-confirmed")[0]
 		expect(items[0]).toMatchObject({
-			item_code: "eau",
-			stock_uom: "Bouteille",
-			item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+			item_code: "water",
+			stock_uom: "Bottle",
+			item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 		})
 	})
 })

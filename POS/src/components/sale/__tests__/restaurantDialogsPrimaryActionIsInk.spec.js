@@ -14,22 +14,20 @@ vi.hoisted(() => {
 		args ? s.replace(/{(\d+)}/g, (_, n) => args[n] ?? _) : s
 })
 
-// The frappe-ui Button, as far as its colour goes: `theme` defaults to "gray", which is ink when it is solid. The
-// dialog shows its colour by the theme it asks for, so the stub puts the theme and the variant where a test can read them
-vi.mock("frappe-ui", () => ({
-	Button: {
-		props: {
-			variant: { type: String, default: "subtle" },
-			theme: { type: String, default: "gray" },
-			disabled: Boolean,
+// The Button the till really renders, from the installed frappe-ui (its package exports do not name the file, so it is
+// loaded by path), and a Dialog that only lays its slots out: the colour of a button is what its classes say
+vi.mock("frappe-ui", async () => {
+	const { default: Button } = await import(
+		"../../../../node_modules/frappe-ui/src/components/Button/Button.vue"
+	)
+	return {
+		Button,
+		Dialog: {
+			template:
+				"<div><slot name='body-content' /><slot name='actions' /></div>",
 		},
-		template:
-			'<button :data-variant="variant" :data-theme="theme" :disabled="disabled"><slot /></button>',
-	},
-	Dialog: {
-		template: "<div><slot name='body-content' /><slot name='actions' /></div>",
-	},
-}))
+	}
+})
 
 const store = reactive({
 	groups: [],
@@ -50,8 +48,17 @@ const { default: MenuSelectionDialog } = await import(
 	"../MenuSelectionDialog.vue"
 )
 
+// What the solid button of the default theme renders: the ink of « Update Item » (text-ink-white on the surface-gray-7 of
+// frappe-ui, near-black in the light mode). It is asked for by exactly these classes
+const INK = expect.arrayContaining(["bg-surface-gray-7", "text-ink-white"])
+
 const buttonNamed = (wrapper, text) =>
 	wrapper.findAll("button").find((button) => button.text() === text)
+const choose = (wrapper, option) =>
+	wrapper
+		.findAll("button")
+		.find((button) => button.text().startsWith(option))
+		.trigger("click")
 
 beforeEach(() => {
 	store.invoiceItems = []
@@ -60,23 +67,23 @@ beforeEach(() => {
 
 describe("the options dialog of a dish", () => {
 	const glass = {
-		item_code: "verre-de-vin",
-		item_name: "Verre de vin",
+		item_code: "glass-of-wine",
+		item_name: "Glass of wine",
 		item_group: "Drinks",
-		uom: "Décilitre",
+		uom: "Deciliter",
 		quantity: 1,
 	}
 	const mountOpen = async () => {
 		store.groups = [
 			{
 				name: "g1",
-				group_name: "Verre",
+				group_name: "Size",
 				required: 1,
 				selection_type: "Single",
 				options: [
-					{ option_name: "1 dl", quantity_value: 1 },
-					{ option_name: "3 dl", quantity_value: 3 },
-					{ option_name: "5 dl", quantity_value: 5 },
+					{ option_name: "Small", quantity_value: 1 },
+					{ option_name: "Medium", quantity_value: 3 },
+					{ option_name: "Large", quantity_value: 5 },
 				],
 			},
 		]
@@ -90,17 +97,28 @@ describe("the options dialog of a dish", () => {
 	}
 
 	it("confirms in ink: a solid button of the default theme, not the blue one this till paints in clay", async () => {
+		const wrapper = await mountOpen()
+		await choose(wrapper, "Medium")
+
+		const confirm = buttonNamed(wrapper, "Confirm")
+		expect(confirm.attributes("disabled")).toBeUndefined()
+		expect(confirm.classes()).toEqual(INK)
+		expect(confirm.classes()).not.toContain("bg-blue-500")
+	})
+
+	it("is flat grey, not the pale clay of a disabled blue button, while the required choice is missing", async () => {
 		const confirm = buttonNamed(await mountOpen(), "Confirm")
 
-		expect(confirm.attributes("data-variant")).toBe("solid")
-		expect(confirm.attributes("data-theme")).toBe("gray")
+		expect(confirm.attributes("disabled")).toBeDefined()
+		expect(confirm.classes()).toContain("bg-surface-gray-2")
+		expect(confirm.classes()).not.toContain("bg-blue-300")
 	})
 
 	it("cancels with the quiet button", async () => {
 		const cancel = buttonNamed(await mountOpen(), "Cancel")
 
-		expect(cancel.attributes("data-variant")).toBe("subtle")
-		expect(cancel.attributes("data-theme")).toBe("gray")
+		expect(cancel.classes()).toContain("bg-surface-gray-2")
+		expect(cancel.classes()).not.toContain("bg-surface-gray-7")
 	})
 
 	it("still waits for the required choice before it confirms", async () => {
@@ -108,10 +126,7 @@ describe("the options dialog of a dish", () => {
 		const confirm = buttonNamed(wrapper, "Confirm")
 		expect(confirm.attributes("disabled")).toBeDefined()
 
-		await wrapper
-			.findAll("button")
-			.find((button) => button.text().startsWith("3 dl"))
-			.trigger("click")
+		await choose(wrapper, "Medium")
 		expect(
 			buttonNamed(wrapper, "Confirm").attributes("disabled"),
 		).toBeUndefined()
@@ -134,9 +149,11 @@ describe("the menu dialog", () => {
 			],
 		})
 		await flushPromises()
+		await choose(wrapper, "Soup")
 
 		const add = buttonNamed(wrapper, "Add Menu")
-		expect(add.attributes("data-variant")).toBe("solid")
-		expect(add.attributes("data-theme")).toBe("gray")
+		expect(add.attributes("disabled")).toBeUndefined()
+		expect(add.classes()).toEqual(INK)
+		expect(add.classes()).not.toContain("bg-blue-500")
 	})
 })

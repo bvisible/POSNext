@@ -271,10 +271,12 @@
 																>{{ localUom }}</span
 															>
 														</div>
+														<!-- //// Neoffice — a line that knows no unit has nothing to choose from: the select is disabled instead of opening on « No results found » (NeoRestau lot 1, task 22, fix round 1). -->
 														<SelectInput
 															v-else
 															v-model="localUom"
 															:options="uomOptions"
+															:disabled="!uomOptions.length"
 														/>
 													</div>
 
@@ -1047,8 +1049,10 @@ async function getRateForUom(uom) {
 		return Number(localItem.value.uom_prices[uom]) || 0;
 	}
 
-	// Final fallback: keep current known item rate (no conversion-based pricing).
-	return Number(localItem.value.price_list_rate || localItem.value.rate || localRate.value || 0);
+	//// Neoffice — nobody priced this unit (a dish priced by its card, not by the price list): that is an answer of its own,
+	//// null, not the rate of the first unit. Upstream kept the rate of the first unit here while the factor, and the stock taken,
+	//// grew with the new one; handleUomChange scales it instead (NeoRestau lot 1, task 22, fix round 1).
+	return null;
 }
 
 async function handleUomChange(newUom) {
@@ -1095,15 +1099,27 @@ async function handleUomChange(newUom) {
 	// Ignore stale responses if user changes UOM repeatedly.
 	if (requestId !== uomRateRequestId.value) return;
 
-	const newRate = roundCurrency(fetchedRate);
+	//// Neoffice — no price for this unit anywhere: the rate of the line and the price it started from are scaled by the factors
+	//// of the two units, as the locked branch above does for a rate that must be kept (NeoRestau lot 1, task 22, fix round 1).
+	const priced = fetchedRate !== null;
+	const newRate = priced
+		? roundCurrency(fetchedRate)
+		: roundCurrency(scaleRateForUomChange(localRate.value, oldConversion, newConversionFactor));
+	const newListRate = priced
+		? newRate
+		: roundCurrency(
+			scaleRateForUomChange(originalPriceListRate.value, oldConversion, newConversionFactor)
+		);
 
 	// Keep local state consistent so update payload has correct UOM pricing metadata.
 	localRate.value = newRate;
-	originalPriceListRate.value = newRate;
+	//// Neoffice — the price the line started from is the new list price: the one the server gave, else the old one scaled (fix round 1).
+	originalPriceListRate.value = newListRate;
 	localItem.value.uom = selectedUom;
 	localItem.value.conversion_factor = newConversionFactor;
 	localItem.value.rate = newRate;
-	localItem.value.price_list_rate = newRate;
+	//// Neoffice — same list price as above (fix round 1).
+	localItem.value.price_list_rate = newListRate;
 
 	calculateTotals();
 }

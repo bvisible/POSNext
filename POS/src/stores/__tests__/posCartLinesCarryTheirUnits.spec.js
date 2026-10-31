@@ -36,30 +36,30 @@ const { cardItemToCartItem } = await import("@/utils/cartLineUnits")
 
 const WINE_ENTRY = {
 	item_type: "Item",
-	item: "vin",
-	item_name: "Vin",
+	item: "wine",
+	item_name: "Wine",
 	price: 29,
-	stock_uom: "Unité",
+	stock_uom: "Unit",
 	item_uoms: [],
 }
 // The same wine, as the grid (get_items) hands it over
 const WINE_IN_THE_GRID = {
-	item_code: "vin",
-	item_name: "Vin",
+	item_code: "wine",
+	item_name: "Wine",
 	rate: 29,
 	price_list_rate: 29,
-	uom: "Unité",
-	stock_uom: "Unité",
+	uom: "Unit",
+	stock_uom: "Unit",
 	conversion_factor: 1,
 	item_uoms: [],
 }
 const WATER_ENTRY = {
 	item_type: "Item",
-	item: "eau",
-	item_name: "Eau",
+	item: "water",
+	item_name: "Water",
 	price: 4.5,
-	stock_uom: "Bouteille",
-	item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+	stock_uom: "Bottle",
+	item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 }
 
 describe("a cart line carries its real units, whatever added it", () => {
@@ -74,11 +74,11 @@ describe("a cart line carries its real units, whatever added it", () => {
 
 		expect(cart.invoiceItems).toHaveLength(1)
 		expect(cart.invoiceItems[0]).toMatchObject({
-			item_code: "eau",
-			uom: "Bouteille",
-			stock_uom: "Bouteille",
+			item_code: "water",
+			uom: "Bottle",
+			stock_uom: "Bottle",
 			conversion_factor: 1,
-			item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+			item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 		})
 	})
 
@@ -95,58 +95,58 @@ describe("a cart line carries its real units, whatever added it", () => {
 
 		const [row] = cart.formatItemsForSubmission(cart.invoiceItems)
 		expect(row).toMatchObject({
-			item_code: "eau",
-			uom: "Bouteille",
+			item_code: "water",
+			uom: "Bottle",
 			conversion_factor: 1,
 		})
 	})
 
 	it("a line read back from a table's order keeps the unit its row names", () => {
 		cart.addItem(
-			{ item_code: "vin", item_name: "Vin", rate: 29, uom: "Unité" },
+			{ item_code: "wine", item_name: "Wine", rate: 29, uom: "Unit" },
 			2,
 		)
 
 		expect(cart.invoiceItems[0]).toMatchObject({
-			uom: "Unité",
-			stock_uom: "Unité",
+			uom: "Unit",
+			stock_uom: "Unit",
 		})
 	})
 
 	it("the lines reloaded from the server keep their units, and none is given « Nos »", () => {
 		cart.replaceAllItems([
 			{
-				item_code: "vin",
-				item_name: "Vin",
+				item_code: "wine",
+				item_name: "Wine",
 				qty: 2,
 				rate: 29,
-				uom: "Unité",
-				stock_uom: "Unité",
+				uom: "Unit",
+				stock_uom: "Unit",
 				conversion_factor: 1,
 				item_uoms: [],
 			},
 			{
-				item_code: "eau",
-				item_name: "Eau",
+				item_code: "water",
+				item_name: "Water",
 				qty: 1,
 				rate: 4.5,
-				uom: "Caisse",
-				stock_uom: "Bouteille",
+				uom: "Case",
+				stock_uom: "Bottle",
 				conversion_factor: 6,
-				item_uoms: [{ uom: "Caisse", conversion_factor: 6 }],
+				item_uoms: [{ uom: "Case", conversion_factor: 6 }],
 			},
 			// A row that names no unit at all
-			{ item_code: "pain", item_name: "Pain", qty: 1, rate: 3 },
+			{ item_code: "bread", item_name: "Bread", qty: 1, rate: 3 },
 		])
 
 		const [wine, water, bread] = cart.invoiceItems
-		expect(wine).toMatchObject({ uom: "Unité", stock_uom: "Unité" })
+		expect(wine).toMatchObject({ uom: "Unit", stock_uom: "Unit" })
 		expect(water).toMatchObject({
-			uom: "Caisse",
-			stock_uom: "Bouteille",
+			uom: "Case",
+			stock_uom: "Bottle",
 			conversion_factor: 6,
 		})
-		expect(water.item_uoms).toEqual([{ uom: "Caisse", conversion_factor: 6 }])
+		expect(water.item_uoms).toEqual([{ uom: "Case", conversion_factor: 6 }])
 		expect(bread.uom).toBeUndefined()
 		expect(cart.invoiceItems.map((line) => line.uom)).not.toContain("Nos")
 	})

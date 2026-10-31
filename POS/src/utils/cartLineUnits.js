@@ -70,6 +70,25 @@ export function cardItemToCartItem(cardItem) {
 }
 
 /**
+ * The cart line a course item of a chosen menu becomes. The first item carries the whole price of the menu and the others
+ * go in at 0 (`price_override`), each tagged with its menu and its course so the kitchen ticket reads right.
+ *
+ * @param {Object} menuItem - A chosen course item, as the menu dialog confirms it
+ * @returns {Object} The item handed to `cartStore.addItem`
+ */
+export function menuItemToCartItem(menuItem) {
+	return {
+		item_code: menuItem.item_code,
+		item_name: menuItem.item_name,
+		rate: menuItem.price_override,
+		is_menu_item: true,
+		menu_name: menuItem.menu_name,
+		posa_special_instructions: `[${menuItem.menu_name}] ${menuItem.course_name}`,
+		...unitsOf(menuItem),
+	}
+}
+
+/**
  * Rows of a stored invoice (an offline invoice's items) given the units the till keeps for their items. A stored row
  * is in the invoice's format: it names the unit it is in and its factor, not the item's other units, so a line made
  * from it could not be changed to another unit.

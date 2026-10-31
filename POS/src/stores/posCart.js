@@ -44,6 +44,8 @@ import {
 	scaleRateForUomChange,
 	shouldPreserveRateOnUomChange,
 } from "@/utils/uomPricingLock";
+//// Neoffice — a line that has left for the kitchen takes no new unit and is no line to merge into (task 22, fix round 1).
+import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
 import { useToast } from "@/composables/useToast";
 import { call } from "frappe-ui";
 import { defineStore } from "pinia";
@@ -344,6 +346,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		hasUnsentChanges.value = true;
 	}
 
+	//// Neoffice — units added to a line that has left for the kitchen: they go on a line of their own, as a plain add of the same
+	//// dish (addItem merges them into the line that waits when there is one), never on the line the kitchen has; the new line
+	//// has no status, so the kitchen dialog offers it (NeoRestau lot 1, task 22, fix round 1).
+	function addUnitsOnANewLine(line, quantity) {
+		addItem({ ...line, kds_status: "" }, Math.round(quantity * 10000) / 10000);
+	}
+
 	/**
 	 * Update special instructions on an item (restaurant mode).
 	 */
@@ -411,12 +420,18 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * separate free row (never carved); only legacy carved rows
 	 * (gwp_same_item_row === 1, from older drafts) are folded back in here.
 	 */
-	function updateItemQuantity(itemCode, quantity, uom = null) {
-		const item = uom
-			? invoiceItems.value.find(
-					(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item
-				)
-			: invoiceItems.value.find((i) => i.item_code === itemCode && !i.is_free_item);
+	function updateItemQuantity(itemCode, quantity, uom = null, row = null) {
+		const item =
+			//// Neoffice — the row the cart means, when it hands it over: the same dish can sit twice in a table's cart (the
+			//// line the kitchen has, the line that waits), and the first line of that item and unit is not always the one
+			//// whose stepper was pressed. A caller with no row keeps the lookup (NeoRestau lot 1, task 22, fix round 1).
+			row && invoiceItems.value.indexOf(row) >= 0
+				? row
+				: uom
+					? invoiceItems.value.find(
+							(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item
+						)
+					: invoiceItems.value.find((i) => i.item_code === itemCode && !i.is_free_item);
 
 		if (!item) return;
 
@@ -449,11 +464,21 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 		}
 
+		//// Neoffice — a line that has left for the kitchen never takes a new unit: raised from 4 to 5, the 5th was billed on a
+		//// line the kitchen had already, and never sent. The difference goes on a line of its own (addItem merges it into the
+		//// line that waits when there is one), which the kitchen dialog offers; the sent line stays at what the kitchen has
+		//// (NeoRestau lot 1, task 22, fix round 1).
+		if (hasLeftForTheKitchen(item) && newQty > item.quantity) {
+			addUnitsOnANewLine(item, newQty - item.quantity);
+			return;
+		}
+
 		// Typed qty replaces a legacy carved split; the next offer pass adds the gift on top
 		if (carved.length) {
 			invoiceItems.value = invoiceItems.value.filter((i) => !carved.includes(i));
 		}
-		baseUpdateItemQuantity(itemCode, quantity, uom);
+		//// Neoffice — the line is handed over, so the base update changes THAT line (NeoRestau lot 1, task 22, fix round 1).
+		baseUpdateItemQuantity(itemCode, quantity, uom, item);
 		hasUnsentChanges.value = true;
 	}
 
@@ -2123,7 +2148,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string|null} uom - Optional UOM to match
 	 * @returns {Object|undefined} Cart item or undefined
 	 */
-	function findCartItem(itemCode, uom = null, isFreeItem = undefined) {
+	function findCartItem(itemCode, uom = null, isFreeItem = undefined, row = null) {
+		//// Neoffice — the row the caller means, when it hands it over (the dish can sit twice in a table's cart); a caller with
+		//// no row keeps the lookup by item and unit (NeoRestau lot 1, task 22, fix round 1).
+		if (row && invoiceItems.value.indexOf(row) >= 0) return row;
 		return invoiceItems.value.find((item) => {
 			if (item.item_code !== itemCode) return false;
 			if (uom && item.uom !== uom) return false;
@@ -2146,6 +2174,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @returns {Object|undefined} Existing item or undefined
 	 */
 	function findItemWithUom(itemCode, targetUom, excludeItem = null) {
+		//// Neoffice — a line that has left for the kitchen is no line to merge into, nor one to merge away: its units are
+		//// the kitchen's, a merge would move them onto a line that is sent again or hide new ones in a sent line
+		//// (NeoRestau lot 1, task 22, fix round 1).
+		if (hasLeftForTheKitchen(excludeItem)) return undefined;
 		//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 		return invoiceItems.value.find(
 			(item) =>
@@ -2154,7 +2186,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				item !== excludeItem &&
 				// Never merge a paid line into (or from) a free promo row
 				!item.is_free_item &&
-				!excludeItem?.is_free_item
+				!excludeItem?.is_free_item &&
+				//// Neoffice — a sent line is no merge target either (see the note above, fix round 1).
+				!hasLeftForTheKitchen(item)
 		);
 	}
 
@@ -2214,7 +2248,21 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			return;
 		}
 
-		const pricing = await resolveUomPricing(cartItem, newUom, conversionFactor, qty);
+		//// Neoffice — the factor the line had is handed over: it was already overwritten above, and the offline answer for an item the
+		//// till keeps no copy of divided by the NEW factor and multiplied by it again (NeoRestau lot 1, task 22, fix round 1).
+		const pricing = await resolveUomPricing(cartItem, newUom, conversionFactor, qty, oldConversion);
+		//// Neoffice — a unit nobody priced answers 0, which is no price: a dish priced by its card (not by the price list) took 0 for
+		//// the new rate, or kept the rate of the first unit while the factor, and the stock taken, grew with the new one. The rate is
+		//// scaled by the two factors, as a rate that must be kept is just above (NeoRestau lot 1, task 22, fix round 1).
+		if (!(Number(pricing?.rate) > 0)) {
+			cartItem.rate = scaleRateForUomChange(cartItem.rate, oldConversion, conversionFactor);
+			cartItem.price_list_rate = scaleRateForUomChange(
+				cartItem.price_list_rate,
+				oldConversion,
+				conversionFactor
+			);
+			return;
+		}
 		cartItem.rate = pricing.rate;
 		cartItem.price_list_rate = pricing.price_list_rate;
 	}
@@ -2224,10 +2272,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {string} newUom - New UOM to change to
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
+	 * @param {Object|null} [row] - //// Neoffice — the cart line to change, when the caller has it: a table's cart can hold the same dish twice (NeoRestau lot 1, task 22, fix round 1)
 	 */
-	async function changeItemUOM(itemCode, newUom, currentUom = null) {
+	async function changeItemUOM(itemCode, newUom, currentUom = null, row = null) {
 		try {
-			const cartItem = findCartItem(itemCode, currentUom, false);
+			//// Neoffice — the line of that row first, see the note on updateItemQuantity (fix round 1).
+			const cartItem = findCartItem(itemCode, currentUom, false, row);
 			if (!cartItem || cartItem.uom === newUom) return;
 			if (isFreePromoRow(cartItem)) {
 				showError(__("Free promotional items cannot be edited"));
@@ -2260,10 +2310,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	 * @param {string} itemCode - Item code
 	 * @param {Object} updates - Updated details
 	 * @param {string|null} currentUom - Current UOM (required when same item has multiple UOMs)
+	 * @param {Object|null} [row] - //// Neoffice — the cart line to update, when the caller has it: a table's cart can hold the same dish twice (NeoRestau lot 1, task 22, fix round 1)
 	 */
-	async function updateItemDetails(itemCode, updates, currentUom = null) {
+	async function updateItemDetails(itemCode, updates, currentUom = null, row = null) {
 		try {
-			const cartItem = findCartItem(itemCode, currentUom, updates?.is_free_item);
+			//// Neoffice — the line of that row first, see the note on updateItemQuantity (fix round 1).
+			const cartItem = findCartItem(itemCode, currentUom, updates?.is_free_item, row);
 			if (!cartItem) {
 				throw new Error("Item not found in cart");
 			}
@@ -2317,8 +2369,17 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				}
 			}
 
+			//// Neoffice — a quantity raised on a line that has left for the kitchen is not written on that line: the difference goes on
+			//// a line of its own below, and the sent line keeps what the kitchen has (NeoRestau lot 1, task 22, fix round 1).
+			const unitsAdded =
+				updates.quantity !== undefined &&
+				hasLeftForTheKitchen(cartItem) &&
+				updates.quantity > cartItem.quantity
+					? updates.quantity - cartItem.quantity
+					: 0;
 			// Apply other updates
-			if (updates.quantity !== undefined) cartItem.quantity = updates.quantity;
+			//// Neoffice — a sent line keeps its quantity: the units it was asked to gain go on a new line below (fix round 1).
+			if (updates.quantity !== undefined && !unitsAdded) cartItem.quantity = updates.quantity;
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (updates.warehouse !== undefined) cartItem.warehouse = updates.warehouse;
 			if (updates.discount_percentage !== undefined)
@@ -2357,6 +2418,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 
 			recalculateItem(cartItem);
+			//// Neoffice — the units raised on a sent line go on a line of its own (see unitsAdded above, fix round 1).
+			if (unitsAdded) addUnitsOnANewLine(cartItem, unitsAdded);
 			rebuildIncrementalCache();
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			showSuccess(__("{0} updated", [cartItem.item_name]));

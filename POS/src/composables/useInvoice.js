@@ -18,6 +18,8 @@ import { calculateTaxesAndTotals } from "@/utils/invoiceTaxes";
 import { vatMapsFor } from "@/utils/offline/vatMaps";
 //// Neoffice — a cart line carries its real units, completed from what its source knows (NeoRestau lot 1, task 22).
 import { unitsOf } from "@/utils/cartLineUnits";
+//// Neoffice — a line that has left for the kitchen takes no new unit (task 22, fix round 1).
+import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
 
 const log = logger.create("Invoice");
 
@@ -152,9 +154,10 @@ export function useInvoice() {
 	 * @param {string} uom - Target UOM
 	 * @param {number} conversionFactor - UOM conversion factor
 	 * @param {number} qty - Quantity for pricing
+	 * @param {number|null} [fromConversion] - //// Neoffice — the factor the line had before the unit changed (NeoRestau lot 1, task 22, fix round 1)
 	 * @returns {Promise<{rate: number, price_list_rate: number}>}
 	 */
-	async function resolveUomPricing(item, uom, conversionFactor, qty) {
+	async function resolveUomPricing(item, uom, conversionFactor, qty, fromConversion = null) {
 		// When online, fetch server pricing for customer-specific rates
 		if (!isOffline()) {
 			try {
@@ -188,7 +191,10 @@ export function useInvoice() {
 			rate = source.uom_prices[uom];
 		} else {
 			const baseRate = source.price_list_rate || source.rate || 0;
-			const currentConversion = source.conversion_factor || 1;
+			//// Neoffice — the rate of a cart line is per the unit it was in: when the line itself is the source (the till keeps no copy
+			//// of the item) its factor is the one it had, handed over by the caller, not the new one it was just given
+			//// (NeoRestau lot 1, task 22, fix round 1).
+			const currentConversion = (cachedItem ? source.conversion_factor : fromConversion ?? source.conversion_factor) || 1;
 			rate = (baseRate / currentConversion) * conversionFactor;
 		}
 
@@ -304,7 +310,12 @@ export function useInvoice() {
 						i.item_code === item.item_code &&
 						i.uom === itemUom &&
 						!i.posa_item_modifiers &&
-						!i.posa_special_instructions
+						!i.posa_special_instructions &&
+						//// Neoffice — a line that has left for the kitchen never absorbs a new unit: a second round of the same
+						//// drink became « x5 » on a line already Pending, billed and never sent to the bar. The new unit is a line
+						//// of its own, which the kitchen dialog offers; a line not sent yet (no status, or Waiting) still merges
+						//// (NeoRestau lot 1, task 22, fix round 1).
+						!hasLeftForTheKitchen(i)
 			  );
 
 		if (existingItem) {
@@ -507,10 +518,16 @@ export function useInvoice() {
 	 * @param {string|null} uom - Optional UOM to match when same item exists with different UOMs.
 	 *                            If provided, only updates the item with matching item_code AND uom.
 	 *                            If null, updates the first item matching item_code.
+	 * @param {Object|null} [row] - //// Neoffice — the exact line to update, when the caller has it (NeoRestau lot 1, task 22, fix round 1)
 	 */
-	function updateItemQuantity(itemCode, quantity, uom = null) {
+	function updateItemQuantity(itemCode, quantity, uom = null, row = null) {
 		let item;
-		if (uom) {
+		//// Neoffice — the row the caller means, when it hands it over: the same dish can sit twice in a table's
+		//// cart (the line the kitchen has and the line that waits), and the first of them is not always the one
+		//// whose stepper was pressed (NeoRestau lot 1, task 22, fix round 1).
+		if (row && invoiceItems.value.indexOf(row) >= 0) {
+			item = row;
+		} else if (uom) {
 			item = invoiceItems.value.find(
 				(i) => i.item_code === itemCode && i.uom === uom && !i.is_free_item
 			);
