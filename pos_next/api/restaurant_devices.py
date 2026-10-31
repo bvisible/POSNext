@@ -74,19 +74,20 @@ def create_pairing_code(screen, station=None, restaurant=None):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def redeem_pairing_code(token):
+def redeem_pairing_code(token=None):
 	"""Open the tablet a token was made for: sign this browser in with its device account, and say where its screen is.
 
 	The token is hashed and dropped at once (it is named `token`, which Frappe's error snapshots redact, and is held
 	nowhere after). It is spent here, once: its row is read with a lock, so that two tablets scanning the same token
-	cannot both pass, and marked used before anything else. An unknown, used or expired token is refused with the same
-	message. A sign-in another app refuses once the session is made is undone, token included, so that the till and the
+	cannot both pass, and marked used before anything else. An unknown (or missing), used or expired token is refused,
+	saying which, and the refusal is counted against the address: one that was refused too often is held back, good token
+	or not. A sign-in another app refuses once the session is made is undone, token included, so that the till and the
 	tablet agree that nothing opened.
 	"""
 	# Hashed and dropped before anything else runs: no frame of this request holds the token after this line
 	hashed = devices.token_hash(token) if devices.well_formed(token) else None
 	del token
-	devices.count_redeem()
+	devices.hold_back_a_guessing_address()
 	require_neorestau()
 	if not hashed:
 		devices.refuse_token()
@@ -96,8 +97,12 @@ def redeem_pairing_code(token):
 		hashed,
 		as_dict=True,
 	)
-	if not found or found[0].used_at or get_datetime(found[0].expires_at) <= now_datetime():
+	if not found:
 		devices.refuse_token()
+	if found[0].used_at:
+		devices.refuse_token("used")
+	if get_datetime(found[0].expires_at) <= now_datetime():
+		devices.refuse_token("expired")
 	pairing = found[0]
 	frappe.db.set_value(devices.PAIRING, pairing.name, "used_at", now_datetime(), update_modified=False)
 	device, before = devices.pair(pairing)

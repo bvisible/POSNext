@@ -8,8 +8,10 @@
 A DEVICE ACCOUNT is a portal account (a Website User) with no role, no password and no API key. Its address is minted
 here, `tablet-<nonce>-<mark>@devices.invalid`, the mark being an HMAC of the nonce under the site's encryption key: no
 account can pass for one without that key (`minted_here`). It is opened only by this module's pairing, which raises
-PAIRING_FLAG around its own writes and its `login_as`; the guards of the User doctype refuse everyone else a role, a
-password, an API key, another user type or a new name for it, and its sign-in by any other path (`guard_*`).
+PAIRING_FLAG around its own writes of the account and SIGN_IN_FLAG for its one sign-in; the guards of the User doctype
+refuse everyone else a role, a password, an API key, another user type or a new name for it (or its address), and its
+sign-in by any other path (`guard_*`). Disconnecting, removing a tablet or its restaurant touches an account only when it
+was minted here: a row that names any other account leaves that account alone.
 
 Its BINDING is a `Restaurant Device` row: its restaurant, its screen (the kitchen or the runner) and, for the kitchen,
 the station it shows (none: every station). A pairing reuses the row's account only when it is a device account made
@@ -66,8 +68,10 @@ SEEN_EVERY = 60
 # The redeems one address may try: a restaurant pairs a few tablets at a time, from the same address
 REDEEM_LIMIT = 10
 REDEEM_WINDOW = 10 * 60
-# Raised by this module around its own writes of a device account and its sign-in: the guards let nothing else do either
+# Raised by this module around its own writes of a device account (not its sign-in): the guards let nothing else write it
 PAIRING_FLAG = "pos_next_pairing_a_tablet"
+# Names the one device account the pairing signs in, and is taken by the first on_login that sees it
+SIGN_IN_FLAG = "pos_next_signing_a_tablet_in"
 _FRESH_DEVICE = "pos_next_fresh_device"
 
 # What a tablet's session may call: the calls of its screens, pairing again, what the app reads as it starts (who is
@@ -104,7 +108,7 @@ _API_METHOD_PREFIXES = ("/api/method/", "/api/v1/method/", "/api/v2/method/")
 
 
 class PairingCodeError(frappe.ValidationError):
-	"""A token that opens nothing: unknown, already used or expired (the three are told apart to nobody)."""
+	"""A token that opens nothing: unknown, already used or expired (its message says which: refuse_token)."""
 
 
 # --- tokens -----------------------------------------------------------------------------------------------------
@@ -123,10 +127,20 @@ def well_formed(token) -> bool:
 	return isinstance(token, str) and bool(_TOKEN_SHAPE.match(token))
 
 
-def refuse_token() -> None:
-	frappe.throw(
-		_("This code has expired or was already used. Ask for a new one at the till."), PairingCodeError
-	)
+def refuse_token(reason: str = "unknown") -> None:
+	"""Refuse a token that opens nothing, saying why (`used`, `expired`, anything else: unknown), and count the refusal
+	against the address that tried it (count_a_refusal). A token is 256 random bits: telling a used one from an unknown
+	one tells a guesser nothing he could use, and tells the person who scanned it what to do."""
+	count_a_refusal()
+	if reason == "used":
+		message = _(
+			"This code was already used: a code opens one screen, once. Ask for a new one at the till."
+		)
+	elif reason == "expired":
+		message = _("This code has expired: a code is valid for five minutes. Ask for a new one at the till.")
+	else:
+		message = _("This code opens no screen. Ask for a new one at the till.")
+	frappe.throw(message, PairingCodeError)
 
 
 def _refuse() -> None:
@@ -177,23 +191,38 @@ def request_peer_ip() -> str:
 	return (getattr(frappe.local, "request_ip", None) or "").strip()
 
 
-def count_redeem() -> None:
-	"""Refuse an address that tried to redeem too often (REDEEM_LIMIT within REDEEM_WINDOW).
+def _refusals_key() -> str | None:
+	"""Where the refused redeems of the caller's address are counted; None for an in-process call (no web client).
 
 	Frappe's rate limiter counts per `rl:<form_dict.cmd>:<request_ip>`: the v2 route never sets `cmd`, so a caller who
 	sends a `cmd` of his own starts a new count at will, and `request_ip` is the entry of X-Forwarded-For a caller writes.
-	This count is the redeem's own, per address nginx accepted the connection from. An in-process call (no request) is
-	not a web client: it is not counted.
+	This count is the redeem's own, per address nginx accepted the connection from.
 	"""
 	if not getattr(frappe.local, "request", None):
-		return
-	key = frappe.cache.make_key(f"pos_next:tablet-redeem:{request_peer_ip() or 'unknown'}")
-	frappe.cache.set(key, 0, ex=REDEEM_WINDOW, nx=True)
-	if frappe.cache.incrby(key, 1) > REDEEM_LIMIT:
+		return None
+	return frappe.cache.make_key(f"pos_next:tablet-redeem:{request_peer_ip() or 'unknown'}")
+
+
+def hold_back_a_guessing_address() -> None:
+	"""Refuse an address whose redeems were refused REDEEM_LIMIT times within REDEEM_WINDOW, good token or not.
+
+	Only refusals count: a restaurant pairs its stations and its runner from one public address, and a camera
+	application may open a link twice; a guesser is refused every time.
+	"""
+	key = _refusals_key()
+	if key and int(frappe.cache.get(key) or 0) >= REDEEM_LIMIT:
 		frappe.throw(
 			_("You hit the rate limit because of too many requests. Please try after sometime."),
 			frappe.RateLimitExceededError,
 		)
+
+
+def count_a_refusal() -> None:
+	"""One more refused redeem for the caller's address (the window starts at its first refusal)."""
+	key = _refusals_key()
+	if key:
+		frappe.cache.set(key, 0, ex=REDEEM_WINDOW, nx=True)
+		frappe.cache.incrby(key, 1)
 
 
 # --- device accounts ----------------------------------------------------------------------------------------------
@@ -315,7 +344,9 @@ def end_sessions(user: str, reason: str) -> int:
 
 
 def open_sessions(users: list[str]) -> dict[str, int]:
-	"""How many sessions each account has open: one per tablet signed in with it."""
+	"""How many sessions each device account has open: one per tablet signed in with it (any other account a row names
+	counts none: its sessions are not a tablet's)."""
+	users = [user for user in users if minted_here(user)]
 	if not users:
 		return {}
 	return dict(
@@ -367,19 +398,30 @@ def guard_device_account(doc, method=None):
 
 
 def guard_device_rename(doc, method=None, *args, **kwargs):
-	"""User ``before_rename``: a tablet's account keeps the address its mark was made for."""
+	"""User ``before_rename`` (args: old name, new name, merge): a tablet's account keeps the address its mark was made
+	for, and no account takes an address of the tablets (a merge moves the merged account's roles and password onto the
+	address it is merged into)."""
 	if minted_here(doc.name):
 		frappe.throw(_("A tablet's account cannot be renamed."), frappe.PermissionError)
+	new = args[1] if len(args) > 1 else kwargs.get("new")
+	if isinstance(new, str) and new.endswith(f"@{ACCOUNT_DOMAIN}"):
+		frappe.throw(_("No account takes the address of a tablet."), frappe.PermissionError)
 
 
 def guard_device_login(login_manager):
-	"""``on_login``: a tablet's account signs in by its pairing and nothing else.
+	"""``on_login``: a tablet's account signs in by its pairing and nothing else, once.
 
 	A password, a reset or e-mail link, impersonation and ``bench browse`` all end in LoginManager.post_login, which runs
-	this hook before the session is made: refusing here leaves no session.
+	this hook before the session is made: refusing here leaves no session. The pairing's own sign-in is let through by
+	SIGN_IN_FLAG, which names the account and is taken here: a second sign-in in the same request is refused, and the
+	other apps' login hooks never run with the guards of the account off.
 	"""
-	if minted_here(getattr(login_manager, "user", None)) and not _pairing():
-		frappe.throw(_("A tablet signs in by scanning a code shown at the till."), frappe.PermissionError)
+	user = getattr(login_manager, "user", None)
+	if not minted_here(user):
+		return
+	if frappe.local.flags.pop(SIGN_IN_FLAG, None) == user:
+		return
+	frappe.throw(_("A tablet signs in by scanning a code shown at the till."), frappe.PermissionError)
 
 
 def guard_oauth_token(doc, method=None):
@@ -657,8 +699,12 @@ def sign_in(device: frappe._dict, paired_by: str) -> None:
 		)
 	# A tablet paired again brings the session it had: ended once the new one is open, so that it counts no more
 	earlier = frappe.session.sid if minted_here(frappe.session.user) else None
-	with pairing_writes():
+	# Lets this one sign-in through guard_device_login, which takes it: the guards of the account stay on meanwhile
+	frappe.local.flags[SIGN_IN_FLAG] = device.user
+	try:
 		frappe.local.login_manager.login_as(device.user, audit_user=paired_by)
+	finally:
+		frappe.local.flags.pop(SIGN_IN_FLAG, None)
 	if earlier and earlier != frappe.session.sid:
 		from frappe.sessions import delete_session
 
@@ -724,16 +770,20 @@ def log_pairing(device: frappe._dict, paired_by: str) -> None:
 
 def disconnect(device: str, user: str, reason: str) -> int:
 	"""Disconnect a tablet: refused until it scans a new token, its OAuth tokens dropped, its sessions ended (their
-	number). A session made before this moment is refused even if it survived (disconnected_at)."""
+	number). A session made before this moment is refused even if it survived (disconnected_at). The account is touched
+	only when it was minted here: a row that names any other account (an administrator, a cashier) is disconnected and
+	that account left alone."""
 	frappe.db.set_value(DEVICE, device, {"disconnected": 1, "disconnected_at": now_datetime()})
-	if user:
-		frappe.db.delete("OAuth Bearer Token", {"user": user})
-	return end_sessions(user, reason) if user else 0
+	if not minted_here(user):
+		return 0
+	frappe.db.delete("OAuth Bearer Token", {"user": user})
+	return end_sessions(user, reason)
 
 
 def forget_the_tablets_of(doc, method=None):
-	"""Restaurant ``after_delete``: its tablets go with it (sessions ended, accounts disabled, tokens deleted), so that a
-	restaurant made again under the same name inherits none of them.
+	"""Restaurant ``after_delete``: its tablets go with it (sessions ended, accounts disabled, tokens deleted, each by
+	RestaurantDevice.on_trash, which touches an account only when it was minted here), so that a restaurant made again
+	under the same name inherits none of them.
 
 	After the delete, once its links were checked: ending a session commits, so a restaurant whose delete is refused
 	(its rooms, tables or orders still link to it) keeps its tablets as they were.

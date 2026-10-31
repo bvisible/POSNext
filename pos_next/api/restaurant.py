@@ -809,7 +809,10 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 	return {"tips": tips, "total": total, "count": len(tips)}
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoRestau lot 1, task 16,
+# //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
+# //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
+@frappe.whitelist(methods=["POST"])
 def update_item_kds_status(invoice_name, item_code, status):
 	"""Update the KDS status of a specific item in a sales invoice.
 
@@ -2388,7 +2391,10 @@ def get_runner_orders(area=None, restaurant=None):
 	return result
 
 
-@frappe.whitelist()
+# //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoRestau lot 1, task 16,
+# //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
+# //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
+@frappe.whitelist(methods=["POST"])
 def mark_items_delivered(invoice_name, item_names=None):
 	"""Mark specific items (or all ready items) as Delivered (the runner's tablet: on an open order of its restaurant)."""
 	import json

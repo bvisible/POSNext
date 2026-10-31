@@ -274,6 +274,30 @@ class Tablets(FrappeTestCase):
 	def sessions_of(self, user):
 		return frappe.db.sql("select sid from `tabSessions` where user = %s", user, pluck=True)
 
+	def a_session_of(self, user):
+		"""A session of `user`, as a sign-in leaves its row (rolled back with the test)."""
+		sid = frappe.generate_hash()
+		frappe.db.sql(
+			"""insert into `tabSessions` (sid, user, sessiondata, lastupdate, status, device)
+			values (%s, %s, '{}', now(), 'Active', 'desktop')""",
+			(sid, user),
+		)
+		return sid
+
+	def an_oauth_token_of(self, user):
+		"""An OAuth bearer token of `user`, written straight to the database (rolled back with the test)."""
+		token = frappe.get_doc(
+			{
+				"doctype": "OAuth Bearer Token",
+				"access_token": frappe.generate_hash(length=20),
+				"user": user,
+				"scopes": "all",
+				"expires_in": 3600,
+			}
+		)
+		token.db_insert()
+		return token.access_token
+
 	def has_roles(self, user):
 		return frappe.db.count("Has Role", {"parent": user, "parenttype": "User"})
 
@@ -620,6 +644,94 @@ class TestRedeemingAToken(Tablets):
 		tablet, _sid = self.paired(token)
 		self.assertRegex(tablet, MINTED)
 
+	def test_a_refusal_says_why_the_code_opens_nothing(self):
+		# The person who scanned it knows what to do: a used code and an expired one are not a code the till never made
+		used, expired = self.token(station=self.grill), self.token(RUNNER)
+		self.paired(used)
+		frappe.db.set_value(
+			PAIRING, self.pairing_of(expired), "expires_at", add_to_date(now_datetime(), seconds=-1)
+		)
+		said = {
+			"used": frappe._(
+				"This code was already used: a code opens one screen, once. Ask for a new one at the till."
+			),
+			"expired": frappe._(
+				"This code has expired: a code is valid for five minutes. Ask for a new one at the till."
+			),
+			"unknown": frappe._("This code opens no screen. Ask for a new one at the till."),
+		}
+		with self.browser():
+			for label, token, reason in (
+				("used", used, "used"),
+				("expired", expired, "expired"),
+				("unknown", UNKNOWN, "unknown"),
+				("malformed", "short", "unknown"),
+			):
+				with self.subTest(code=label):
+					with self.assertRaises(frappe.ValidationError) as caught:
+						self.redeem(token)
+					self.assertEqual(type(caught.exception).__name__, "PairingCodeError")
+					self.assertEqual(str(caught.exception), said[reason])
+
+	def test_a_redeem_with_no_token_gets_the_refusal_and_is_counted(self):
+		# Not a server error (a 5xx writes an Error Log row and is counted nowhere): the refusal of any code that opens
+		# nothing, counted against its address
+		address = "198.51.100.61"
+		with self.browser(address=address):
+			frappe.local.form_dict = frappe._dict(cmd=REDEEM)
+			with self.assertRaises(frappe.ValidationError) as caught:
+				frappe.handler.execute_cmd(REDEEM)
+			self.assertEqual(type(caught.exception).__name__, "PairingCodeError")
+			self.assertLess(caught.exception.http_status_code, 500)
+		counted = frappe.cache.get(frappe.cache.make_key(f"pos_next:tablet-redeem:{address}"))
+		self.assertEqual(int(counted or 0), 1)
+
+	def test_a_restaurant_pairing_many_tablets_from_one_address_is_not_held_back(self):
+		# The rate limit counts the refusals: a restaurant pairs its stations and its runner behind one public address,
+		# and a camera application may open the link twice
+		address = "198.51.100.62"
+		for attempt in range(REDEEM_LIMIT + 2):
+			token = self.token(station=self.grill)
+			with self.subTest(pairing=attempt + 1):
+				with self.browser(address=address):
+					self.assertIn("redirect", self.redeem(token))
+				# The first three links are opened a second time: refused, and counted
+				if attempt < 3:
+					with self.browser(address=address):
+						self.assert_refused_token(token)
+
+	def test_the_sign_in_of_a_tablet_lets_one_login_through_and_nothing_after_it(self):
+		# The pairing lets its own sign-in through once: another app's login hook, run in the same request, writes the
+		# device account with the guards on, and a second sign-in of the same account is refused
+		token = self.token(station=self.grill)
+		seen = {}
+		original = LoginManager.run_trigger
+
+		def and_another_apps_hook(manager, event="on_login"):
+			result = original(manager, event)
+			if event == "on_login" and "@devices.invalid" in (manager.user or ""):
+				seen["pairing"] = bool(frappe.local.flags.get(devices.PAIRING_FLAG))
+				account = frappe.get_doc("User", manager.user)
+				account.append("roles", {"role": "Customer"})
+				try:
+					account.save(ignore_permissions=True)
+					seen["role"] = "written"
+				except frappe.PermissionError:
+					seen["role"] = "refused"
+				try:
+					devices.guard_device_login(manager)
+					seen["second sign-in"] = "let through"
+				except frappe.PermissionError:
+					seen["second sign-in"] = "refused"
+			return result
+
+		with self.browser(), patch.object(LoginManager, "run_trigger", and_another_apps_hook):
+			self.redeem(token)
+			tablet = frappe.session.user
+		self.assertEqual(seen, {"pairing": False, "role": "refused", "second sign-in": "refused"})
+		self.assertEqual(self.has_roles(tablet), 0)
+		self.assertRegex(tablet, MINTED)
+
 
 class TestTheAccountOfATablet(Tablets):
 	def test_a_binding_to_another_account_never_signs_it_in(self):
@@ -704,6 +816,19 @@ class TestTheAccountOfATablet(Tablets):
 				frappe.local.login_manager.login_as(tablet)
 			self.assertEqual(frappe.session.user, "Guest")
 		self.assertEqual(self.sessions_of(tablet), [])
+
+	def test_no_account_takes_the_address_of_a_tablet(self):
+		# A merge moves the merged account's roles and password onto the address it is merged into: no account is merged
+		# into a tablet's, or renamed to an address of the tablets
+		tablet = self.tablet(self.bistro, KITCHEN)
+		for label, new, merge in (
+			("merged into a tablet's account", tablet, True),
+			("renamed to a tablet's address", tablet_address(), False),
+		):
+			with self.subTest(attempt=label), self.assertRaises(frappe.PermissionError):
+				rename_doc("User", MANAGER, new, force=True, merge=merge, ignore_permissions=True)
+		self.assertTrue(frappe.db.exists("User", MANAGER))
+		self.assertEqual(self.has_roles(tablet), 0)
 
 	def test_a_migration_that_gives_every_account_a_role_leaves_the_tablet_alone(self):
 		tablet = self.tablet(self.bistro, KITCHEN)
@@ -901,6 +1026,38 @@ class TestWhatATabletReaches(Tablets):
 		)
 		self.assertNotIn(frappe.db.get_value("Sales Invoice", self.order, "kds_status"), ("Waiting", "Paid"))
 
+	def test_the_screens_writes_take_a_post_only(self):
+		# A tablet's session holds no CSRF token, and a top-level GET (a link opened on the tablet) carries its cookie: the
+		# writes of its screens refuse a GET before anything is written (the screens and the till call them by POST)
+		for dotted in (
+			"pos_next.api.restaurant.update_item_kds_status",
+			"pos_next.api.restaurant.mark_items_delivered",
+		):
+			with self.subTest(method=dotted):
+				self.assertEqual(
+					tuple(frappe.allowed_http_methods_for_whitelisted_func[frappe.get_attr(dotted)]),
+					("POST",),
+				)
+		frappe.db.set_value("Sales Invoice Item", {"parent": self.order}, "kds_status", "Ready")
+		kitchen, runner = self.tablet(self.bistro, KITCHEN), self.tablet(self.bistro, RUNNER)
+		for user, dotted, form in (
+			(
+				kitchen,
+				"pos_next.api.restaurant.update_item_kds_status",
+				{"invoice_name": self.order, "item_code": self.item, "status": "Preparing"},
+			),
+			(runner, "pos_next.api.restaurant.mark_items_delivered", {"invoice_name": self.order}),
+		):
+			with self.subTest(get=dotted), self.browser(method="GET", path=f"/api/method/{dotted}"):
+				frappe.set_user(user)
+				frappe.local.form_dict = frappe._dict(cmd=dotted, **form)
+				with self.assertRaises(frappe.PermissionError):
+					frappe.handler.execute_cmd(dotted)
+		self.assertEqual(
+			set(frappe.get_all("Sales Invoice Item", filters={"parent": self.order}, pluck="kds_status")),
+			{"Ready"},
+		)
+
 	def test_a_runner_tablet_reads_and_delivers_the_orders_of_its_restaurant(self):
 		frappe.db.set_value(
 			"Sales Invoice Item", {"parent": ["in", [self.order, self.bar_order]]}, "kds_status", "Ready"
@@ -1047,7 +1204,10 @@ class TestATabletSessionThroughTheRequestHandler(FrappeTestCase):
 			frappe.local.request_ip = "203.0.113.7"
 			frappe.local.cookie_manager = CookieManager()
 			frappe.local.login_manager = LoginManager()
-			# The code before this round guarded no sign-in of a tablet's account
+			# As the pairing lets its own sign-in through: a flag the first on_login takes (before fix round 2: a flag
+			# raised around the whole sign-in; before fix round 1: none)
+			if hasattr(devices, "SIGN_IN_FLAG"):
+				frappe.local.flags[devices.SIGN_IN_FLAG] = user
 			with getattr(devices, "pairing_writes", nullcontext)():
 				frappe.local.login_manager.login_as(user)
 			return frappe.session.sid
@@ -1221,6 +1381,41 @@ class TestTheTabletsOfARestaurant(Tablets):
 		)
 		self.assertEqual(frappe.db.get_value("User", tablet, "enabled"), 1)
 		self.assertEqual(self.sessions_of(tablet), [sid])
+
+	def test_a_row_naming_another_account_never_touches_that_account(self):
+		# A row may name any account (a System Manager's script, a customised permission): disconnecting it, removing it
+		# or removing its restaurant ends no session of that account, drops none of its tokens and never disables it
+		def a_row_of(restaurant, stranger):
+			device = frappe.db.get_value(DEVICE, {"user": self.tablet(restaurant, RUNNER)})
+			frappe.db.set_value(DEVICE, device, "user", stranger)
+			return device
+
+		for number, stranger in enumerate(("Administrator", MANAGER, PORTAL), start=1):
+			sid, access_token = self.a_session_of(stranger), self.an_oauth_token_of(stranger)
+			enabled = frappe.db.get_value("User", stranger, "enabled")
+			# Disconnected at the till, then removed from the desk
+			device = a_row_of(self.bistro, stranger)
+			with as_user(MANAGER):
+				listed = {row["name"]: row for row in call(DEVICES, restaurant=self.bistro)}
+				ended = call(DISCONNECT, device=device)
+			frappe.delete_doc(DEVICE, device, ignore_permissions=True)
+			# Its restaurant removed (a restaurant of its own, with no room, table or order)
+			cafe = self.insert(
+				"Restaurant", restaurant_name=f"_Test Tablets Cafe {number}", company=self.company
+			)
+			a_row_of(cafe, stranger)
+			frappe.delete_doc("Restaurant", cafe, ignore_permissions=True)
+			# What would hurt first: the account's session, its token, its being enabled; then what the till was told
+			with self.subTest(account=stranger, kept="its session"):
+				self.assertIn(sid, self.sessions_of(stranger))
+			with self.subTest(account=stranger, kept="its OAuth token"):
+				self.assertTrue(frappe.db.exists("OAuth Bearer Token", {"access_token": access_token}))
+			with self.subTest(account=stranger, kept="enabled"):
+				self.assertEqual(frappe.db.get_value("User", stranger, "enabled"), enabled)
+			with self.subTest(account=stranger, told="the till"):
+				self.assertEqual(ended, {"ended_sessions": 0})
+				self.assertEqual(listed[device]["sessions"], 0)
+				self.assertFalse(frappe.db.exists(DEVICE, {"restaurant": cafe}))
 
 	def test_only_who_sets_up_the_restaurant_lists_and_disconnects_its_tablets(self):
 		device = frappe.db.get_value(DEVICE, {"user": self.tablet(self.bistro, KITCHEN)})

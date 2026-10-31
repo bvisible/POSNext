@@ -15,10 +15,11 @@ class RestaurantDevice(Document):
 
 	def on_trash(self):
 		"""A tablet removed for good: its sessions end, its OAuth tokens and its spent tokens go, its account is
-		disabled."""
+		disabled. Only an account minted here is touched: a row that names any other account (an administrator, a
+		cashier) leaves that account as it was."""
 		from pos_next.restaurant import devices
 
-		if self.user and frappe.db.exists("User", self.user):
+		if devices.minted_here(self.user) and frappe.db.exists("User", self.user):
 			devices.end_sessions(self.user, _("Tablet removed"))
 			frappe.db.delete("OAuth Bearer Token", {"user": self.user})
 			frappe.db.set_value("User", self.user, "enabled", 0, update_modified=False)

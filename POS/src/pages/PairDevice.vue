@@ -66,8 +66,25 @@
 	</div>
 </template>
 
+<script>
+import { ref } from "vue"
+
+// What the page found belongs to the page load, not to one mount (task 16, fix round 2): the app may mount the page a
+// second time once the token has left the address, and that mount must show the first one's answer, not ask for a code
+// the person just scanned. One state for the whole load, then.
+// waiting (no token: how to get one), pairing, refused (the token opens nothing), busy (too many attempts), failed
+const pageState = ref("waiting")
+const pageMessage = ref("")
+
+/** A new page load (the specs mount the page once per case). */
+export function forgetThePairing() {
+	pageState.value = "waiting"
+	pageMessage.value = ""
+}
+</script>
+
 <script setup>
-import { onMounted, ref } from "vue"
+import { onMounted, onUnmounted } from "vue"
 import { openPage } from "@/utils/tabletSession"
 
 const REDEEM = "/api/method/pos_next.api.restaurant_devices.redeem_pairing_code"
@@ -82,9 +99,8 @@ const TONE = {
 	failed: "bg-red-50 text-red-600",
 }
 
-// waiting (no token: how to get one), pairing, refused (the token opens nothing), busy (too many attempts), failed
-const state = ref("waiting")
-const message = ref("")
+const state = pageState
+const message = pageMessage
 
 /**
  * The token the QR code carries, in the fragment of the address; it leaves the address bar and the history at once.
@@ -113,6 +129,7 @@ function serverMessage(body) {
 
 async function redeem(token) {
 	state.value = "pairing"
+	message.value = ""
 	const headers = { Accept: "application/json", "Content-Type": "application/json" }
 	if (typeof window.csrf_token === "string" && window.csrf_token && window.csrf_token !== CSRF_PLACEHOLDER) {
 		headers["X-Frappe-CSRF-Token"] = window.csrf_token
@@ -142,8 +159,19 @@ async function redeem(token) {
 	}
 }
 
-onMounted(() => {
+/**
+ * A token in the address is redeemed, once: taking it empties the address, so a second mount finds none and shows
+ * what the first one found. A camera application may open the next code in the same tab: only the fragment changes,
+ * nothing is loaded or mounted again, and the hashchange brings that token here.
+ */
+function redeemTheTokenInTheAddress() {
 	const token = takeTheToken()
 	if (token) redeem(token)
+}
+
+onMounted(() => {
+	window.addEventListener("hashchange", redeemTheTokenInTheAddress)
+	redeemTheTokenInTheAddress()
 })
+onUnmounted(() => window.removeEventListener("hashchange", redeemTheTokenInTheAddress))
 </script>

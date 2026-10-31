@@ -14,7 +14,8 @@ vi.hoisted(() => {
 })
 vi.mock("@/utils/tabletSession", () => ({ openPage }))
 
-const { default: PairDevice } = await import("../PairDevice.vue")
+// The page keeps what it found for the whole page load (a second mount shows it); each case is a page load of its own
+const { default: PairDevice, forgetThePairing } = await import("../PairDevice.vue")
 
 const REDEEM = "/api/method/pos_next.api.restaurant_devices.redeem_pairing_code"
 const TOKEN = `Zx3_kQ-9${"a".repeat(35)}`
@@ -54,6 +55,7 @@ beforeEach(() => {
 	openPage.mockReset()
 	window.csrf_token = undefined
 	opened = []
+	forgetThePairing?.()
 })
 afterEach(() => {
 	opened.forEach((wrapper) => wrapper.unmount())
@@ -146,6 +148,50 @@ describe("the page a tablet opens by scanning the code", () => {
 
 		expect(openPage).not.toHaveBeenCalled()
 		expect(text(wrapper, "pair-title")).toBe("The screen could not be opened")
+	})
+
+	it("shows its refusal again when it is mounted a second time, and asks the server nothing more", async () => {
+		const words = "This code was already used: a code opens one screen, once. Ask for a new one at the till."
+		fetchMock.mockResolvedValue(refusal(417, "PairingCodeError", words))
+
+		const first = visit(`/pos/pair#${TOKEN}`)
+		await flushPromises()
+		first.unmount()
+		opened = opened.filter((one) => one !== first)
+		// The app mounts the page again on the same load: the address no longer holds the code
+		const second = mount(PairDevice, {
+			global: {
+				mocks: { __: globalThis.__ },
+				stubs: { RouterLink: { props: ["to"], template: "<a data-test='sign-in'><slot /></a>" } },
+			},
+		})
+		opened.push(second)
+		await flushPromises()
+
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+		expect(text(second, "pair-title")).toBe("This code no longer opens a screen")
+		expect(text(second, "pair-message")).toBe(words)
+	})
+
+	it("redeems the new code a camera opens in the same tab", async () => {
+		const NEW_TOKEN = `Nw4_pR-2${"b".repeat(35)}`
+		fetchMock
+			.mockResolvedValueOnce(refusal(417, "PairingCodeError", "This code has expired."))
+			.mockResolvedValueOnce(answer(200, { message: { redirect: SCREEN } }))
+
+		const wrapper = visit(`/pos/pair#${TOKEN}`)
+		await flushPromises()
+		expect(text(wrapper, "pair-title")).toBe("This code no longer opens a screen")
+
+		// The same document, another fragment: no page load, no mount, only a hashchange
+		window.history.replaceState({}, "", `/pos/pair#${NEW_TOKEN}`)
+		window.dispatchEvent(new HashChangeEvent("hashchange"))
+		await flushPromises()
+
+		expect(fetchMock).toHaveBeenCalledTimes(2)
+		expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ token: NEW_TOKEN })
+		expect(window.location.hash).toBe("")
+		expect(openPage).toHaveBeenCalledWith(SCREEN)
 	})
 
 	it("with no code, says how to get one and asks the server nothing", async () => {
