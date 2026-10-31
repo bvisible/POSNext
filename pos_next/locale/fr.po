@@ -17655,3 +17655,97 @@ msgstr "Sombre"
 #: POS/src/components/restaurant/UndoToast.vue:14
 msgid "Undo"
 msgstr "Annuler"
+
+# //// Neoffice — French for the ticket number, the room code and the kitchen status rules (lot 1, task 38b).
+#: POS/src/components/pos/FloorPlanEditor.vue:763
+#: pos_next/pos_next/doctype/restaurant_area/restaurant_area.json
+msgid "Short Code"
+msgstr "Code court"
+
+#: POS/src/components/pos/FloorPlanEditor.vue:765
+msgid "At most 6 characters, shown on the kitchen tickets before the table. Left empty, it follows the name."
+msgstr "6 caractères au maximum, affichés sur les tickets de cuisine avant la table. Laissé vide, il reprend le nom."
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.py:46
+msgid "The ticket number must have between 1 and 9 digits"
+msgstr "Le numéro de ticket doit comporter entre 1 et 9 chiffres"
+
+#: pos_next/fixtures/custom_field.json
+msgid "Ticket Number"
+msgstr "Numéro de ticket"
+
+#: pos_next/fixtures/custom_field.json
+msgid "The ticket number the restaurant gave this order at its first save (see Restaurant Ticket Counter). Never the invoice number: that one comes at validation."
+msgstr "Le numéro de ticket que le restaurant attribue à cette commande lors de son premier enregistrement (voir Compteur de tickets du restaurant). Ce n'est jamais le numéro de facture : celui-ci est attribué à la validation."
+
+#: pos_next/fixtures/custom_field.json
+msgid "Ticket Day"
+msgstr "Jour du ticket"
+
+#: pos_next/fixtures/custom_field.json
+msgid "The business day the ticket number was counted in"
+msgstr "La journée d'exploitation dans laquelle le numéro de ticket a été compté"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Ticket Numbers"
+msgstr "Numéros de ticket"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Digits of the Ticket Number"
+msgstr "Nombre de chiffres du numéro de ticket"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "How many digits a ticket number is written with (0007 has four)"
+msgstr "Avec combien de chiffres s'écrit un numéro de ticket (0007 en a quatre)"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Ticket Numbers Start Again"
+msgstr "Redémarrage de la numérotation des tickets"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "When the ticket numbers start again at 1"
+msgstr "Quand la numérotation des tickets repart de 1"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Business day"
+msgstr "Journée d'exploitation"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Each shift"
+msgstr "Chaque service"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Business Day Starts At"
+msgstr "Début de la journée d'exploitation"
+
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "A restaurant closes after midnight: its day runs from this time to the same time the next morning, on the site's clock"
+msgstr "Un restaurant qui ferme après minuit : sa journée va de cette heure à la même heure le lendemain matin, à l'heure du site"
+
+#: pos_next/pos_next/doctype/restaurant_area/restaurant_area.json
+msgid "At most 6 characters, shown on the kitchen's and the runner's tickets before the table (S01). Left empty, it is made from the room's name: Salle 1 gives S01."
+msgstr "6 caractères au maximum, affichés sur les tickets de la cuisine et du Runner avant la table (S01). Laissé vide, il est tiré du nom de la salle : Salle 1 donne S01."
+
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
+msgid "Names the counting period: the restaurant and its business day, or \"never\", or its shift"
+msgstr "Désigne la période de comptage : le restaurant et sa journée d'exploitation, ou « jamais », ou son service"
+
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
+msgid "Counter"
+msgstr "Compteur"
+
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
+msgid "Business Day"
+msgstr "Journée d'exploitation"
+
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
+msgid "The business day the counter was opened for"
+msgstr "La journée d'exploitation pour laquelle le compteur a été ouvert"
+
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
+msgid "Last Number"
+msgstr "Dernier numéro"
+
+#: pos_next/pos_next/doctype/restaurant_ticket_counter/restaurant_ticket_counter.json
+msgid "The last ticket number given. It only goes up: the number of a deleted order is not given again."
+msgstr "Dernier numéro de ticket attribué. Il ne fait que monter : le numéro d'une commande supprimée n'est jamais attribué à nouveau."
