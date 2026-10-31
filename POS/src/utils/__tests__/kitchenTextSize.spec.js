@@ -175,3 +175,17 @@ describe("the size kept on the device", () => {
 		expect(saveTextSize("large", null)).toBe(false)
 	})
 })
+
+describe("the width of a ticket (task 38a-2)", () => {
+	// Ruling 109 and the approved mockup: a dense ticket is a narrow one, so that more of them fit across the screen. The width is a variable like the rest
+	// of the size, read by the grids and the lanes of utils/ticketLayout, on the kitchen screen and on the runner's.
+	it("is part of every size, and grows with it: 250, 280, 330 and 390 px", () => {
+		const widths = TEXT_SIZES.map((size) => textSizeVariables(size)["--kds-card-w"])
+
+		expect(widths).toEqual(["250px", "280px", "330px", "390px"])
+	})
+
+	it("is the dense size's for a size nobody knows", () => {
+		expect(textSizeVariables("gigantic")["--kds-card-w"]).toBe("250px")
+	})
+})

@@ -219,3 +219,29 @@ describe("the setting « stack short tickets »", () => {
 		vi.restoreAllMocks()
 	})
 })
+
+describe("the width of the runner's tickets", () => {
+	it("follows the text size the cook chose with the Aa button, as the kitchen's do: the root of the screen carries it", async () => {
+		const wrapper = await open()
+		const root = wrapper.get('[data-test="runner-screen"]')
+		expect(root.element.style.getPropertyValue("--kds-card-w")).toBe("250px")
+		expect(root.attributes("data-text-size")).toBe("compact")
+
+		await wrapper.get('[data-test="text-size"]').trigger("click")
+		expect(root.element.style.getPropertyValue("--kds-card-w")).toBe("280px")
+		await wrapper.get('[data-test="text-size"]').trigger("click")
+		expect(root.element.style.getPropertyValue("--kds-card-w")).toBe("330px")
+		expect(localStorage.getItem("pos_kds_text_size")).toBe("large")
+	})
+
+	it("opens at the size kept on the device, the same one as the kitchen's", async () => {
+		localStorage.setItem("pos_kds_text_size", "xl")
+		const wrapper = await open()
+
+		expect(
+			wrapper
+				.get('[data-test="runner-screen"]')
+				.element.style.getPropertyValue("--kds-card-w"),
+		).toBe("390px")
+	})
+})

@@ -38,7 +38,7 @@ const {
 	TICKET_AREA,
 	TICKET_COLUMN_PRODUCTION,
 	TICKET_COLUMN_WAITING,
-	TICKET_GRID,
+	TICKET_COLUMNS,
 	TICKET_LANE,
 	TICKET_SPLIT_PRODUCTION,
 	TICKET_SPLIT_WAITING,
@@ -630,18 +630,18 @@ describe("the layout of the bands", () => {
 		expect(bands.classes()).not.toContain("grid")
 	})
 
-	it("lays the bands side by side as COLUMNS on the shared grid itself: the waiting tickets in its first column, the others in the rest", async () => {
+	// Task 38a-2: the width of a ticket is the text size's, so the bands side by side are a ROW (the column of waiting tickets one ticket wide, the tickets in
+	// preparation taking the rest), no longer the page's grid split by column spans
+	it("lays the bands side by side as COLUMNS in a row: the waiting tickets in a column of one ticket's width, the others in the rest", async () => {
 		ORDERS = [order("W1"), order("P1", { lines: ["Preparing"] })]
 		const wrapper = await open()
 		await switchTo(wrapper, LAYOUT_COLUMNS)
 
-		// The wrapper of the two bands IS the shared grid, with a row as tall as the screen leaves it
+		// The wrapper of the two bands is a row as tall as the screen leaves it
 		const grid = wrapper.get('[data-test="bands"]')
 		expect(grid.attributes("data-layout")).toBe("columns")
-		expect(grid.classes()).toEqual(expect.arrayContaining(tokens(TICKET_GRID)))
-		expect(grid.classes()).toEqual(
-			expect.arrayContaining(["h-full", "grid-rows-[minmax(0,1fr)]"]),
-		)
+		expect(grid.classes()).toEqual(expect.arrayContaining(tokens(TICKET_COLUMNS)))
+		expect(grid.classes()).toEqual(expect.arrayContaining(["flex", "h-full"]))
 		expect(wrapper.get('[data-test="band-waiting"]').classes()).toEqual(
 			expect.arrayContaining(tokens(TICKET_SPLIT_WAITING)),
 		)

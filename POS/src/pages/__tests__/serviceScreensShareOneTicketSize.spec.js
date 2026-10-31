@@ -44,9 +44,11 @@ const { default: KDSOrderCard } = await import(
 const { default: RunnerOrderCard } = await import(
 	"@/components/invoices/RunnerOrderCard.vue"
 )
+const { TEXT_SIZES, textSizeVariables } = await import("@/utils/kitchenTextSize")
 const {
 	RUNNER_AREA,
 	TICKET_CARD,
+	TICKET_COLUMNS,
 	TICKET_STACK,
 	BAND_WAITING_HEIGHT,
 	BAND_PRODUCTION_HEIGHT,
@@ -62,138 +64,94 @@ const {
 
 const tokens = (classes) => classes.split(/\s+/).filter(Boolean)
 
-// What this build's Tailwind knows (frappe-ui's preset): there is no 2xl
-const BREAKPOINTS = { sm: 640, md: 768, lg: 1024, xl: 1280 }
+// Task 38a-2 (ruling 109 and the approved mockup): the WIDTH of a ticket is the text size's, `--kds-card-w`, no longer a share of a grid of one to five
+// columns that the width of the screen decided (about 320 px at 1366 px wide, whatever the size of the text). The grids, the lanes and the split below
+// are as many tickets of that width as the screen holds, and these tests read it back from the classes: jsdom has no layout engine. WHAT CHANGED BY
+// DESIGN in this file: the tests that pinned the breakpoints (4 columns at 1366 px, 5 at 1920 px, `lg:grid-cols-3`, `auto-cols-[calc((100%-3rem)/4)]`,
+// `col-span-3`), the 16 px gap and the 16 px margin, and the split of the page's grid in columns; the runner's tickets also left the shared grid to stack
+// (see "the two screens").
+const SIZE_VARIABLE = "--kds-card-w"
+const cardWidth = (size) =>
+	Number.parseFloat(textSizeVariables(size)[SIZE_VARIABLE])
+const WIDTHS = Object.fromEntries(TEXT_SIZES.map((size) => [size, cardWidth(size)]))
 
-/** The columns the grid has at a screen width: the base count, then each breakpoint's, the widest that applies. */
-function columnsAt(width, grid = TICKET_GRID) {
-	const steps = []
-	for (const token of tokens(grid)) {
-		const match = token.match(
-			/^(?:(sm|md|lg|xl)|min-\[(\d+)px\]):grid-cols-(\d+)$/,
-		)
-		const base = token.match(/^grid-cols-(\d+)$/)
-		if (base) steps.push({ from: 0, columns: Number(base[1]) })
-		else if (match)
-			steps.push({
-				from: match[1] ? BREAKPOINTS[match[1]] : Number(match[2]),
-				columns: Number(match[3]),
-			})
-		else if (/grid-cols-/.test(token))
-			throw new Error(`${token} is not a breakpoint this build has`)
-	}
-	return steps
-		.filter((step) => step.from <= width)
-		.sort((a, b) => b.from - a.from)[0].columns
-}
 const spacing = (classes, prefix) => {
 	const found = tokens(classes).find((token) =>
 		new RegExp(`^${prefix}-\\d+$`).test(token),
 	)
 	return Number(found.split("-")[1]) * 4
 }
-/** The width of one ticket on a screen of that width: the area's padding on both sides, the gap between the columns. */
-function ticketWidthAt(width) {
-	const columns = columnsAt(width)
-	const padding = spacing(TICKET_AREA, "p")
-	const gap = spacing(TICKET_GRID, "gap")
-	return (width - 2 * padding - (columns - 1) * gap) / columns
+// The width a token asks for, with its fallback: `var(--kds-card-w,250px)` -> { variable: "--kds-card-w", fallback: 250 }
+const variableOf = (text) => {
+	const found = text.match(/var\((--[a-z-]+),(\d+)px\)/)
+	return found ? { variable: found[1], fallback: Number(found[2]) } : null
+}
+/** The columns the grid has at a screen width, for a size: as many of the size's width, with the gap between them, as the area holds. */
+function columnsAt(width, size, grid = TICKET_GRID) {
+	const gap = spacing(grid, "gap")
+	const inner = width - 2 * spacing(TICKET_AREA, "p")
+	return Math.max(1, Math.floor((inner + gap) / (WIDTHS[size] + gap)))
 }
 
-describe("the grid of the tickets", () => {
-	it("has 4 columns at 1366 px and 5 at 1920 px, tickets of the same width on both screens", () => {
-		expect(columnsAt(1366)).toBe(4)
-		expect(columnsAt(1920)).toBe(5)
-		// (1366 - 2 x 16 - 3 x 16) / 4 and (1920 - 2 x 16 - 4 x 16) / 5
-		expect(ticketWidthAt(1366)).toBeCloseTo(321.5, 1)
-		expect(ticketWidthAt(1920)).toBeCloseTo(364.8, 1)
+describe("the width of a ticket", () => {
+	it("follows the text size: Compact is the narrowest, and each size is wider than the one before", () => {
+		expect(WIDTHS).toEqual({ compact: 250, normal: 280, large: 330, xl: 390 })
+		const widths = TEXT_SIZES.map((size) => WIDTHS[size])
+		expect([...widths].sort((a, b) => a - b)).toEqual(widths)
 	})
 
-	it("uses only the breakpoints this build has", () => {
-		for (const token of tokens(TICKET_GRID)) {
-			if (!/grid-cols-/.test(token)) continue
-			expect(token).toMatch(
-				/^(?:(?:sm|md|lg|xl|min-\[\d+px\]):)?grid-cols-\d+$/,
-			)
+	it("is the variable the root of the screen sets, and a card drawn outside the page falls back to the width of the dense size", () => {
+		for (const classes of [
+			TICKET_GRID,
+			TICKET_LANE,
+			TICKET_COLUMN_PRODUCTION,
+			TICKET_COLUMN_WAITING,
+			TICKET_SPLIT_WAITING,
+			TICKET_CARD,
+		]) {
+			const found = variableOf(classes)
+			expect(found, classes).toEqual({ variable: SIZE_VARIABLE, fallback: WIDTHS.compact })
 		}
-		expect(TICKET_GRID).not.toMatch(/\b2xl:/)
+	})
+})
+
+describe("the grid of the tickets", () => {
+	it("holds, at 1366 px, five Compact tickets across, four Normal, three Large and two Extra large (they were four of 320 px whatever the size)", () => {
+		expect(TEXT_SIZES.map((size) => columnsAt(1366, size))).toEqual([5, 4, 3, 3])
+		// ...and more of them on a wider screen: 1920 px
+		expect(TEXT_SIZES.map((size) => columnsAt(1920, size))).toEqual([7, 6, 5, 4])
 	})
 
-	it("never loses a column as the screen widens, and keeps a ticket from 300 to 380 px on a kitchen screen", () => {
-		let before = 0
-		for (let width = 320; width <= 2560; width += 1) {
-			const columns = columnsAt(width)
-			expect(columns).toBeGreaterThanOrEqual(before)
-			before = columns
-			if (width >= 1280 && width <= 1920) {
-				expect(ticketWidthAt(width)).toBeGreaterThanOrEqual(300)
-				expect(ticketWidthAt(width)).toBeLessThanOrEqual(380)
+	it("counts its columns by the width of a ticket, and a screen narrower than one gets a column that gives way instead of overflowing", () => {
+		expect(TICKET_GRID).toContain("grid-cols-[repeat(auto-fill,minmax(0,var(--kds-card-w,250px)))]")
+		expect(TICKET_GRID).not.toMatch(/\b(?:sm|md|lg|xl|2xl|min-\[\d+px\]):grid-cols-/)
+		expect(columnsAt(240, "compact")).toBe(1)
+	})
+
+	it("never loses a column as the screen widens, whatever the size", () => {
+		for (const size of TEXT_SIZES) {
+			let before = 0
+			for (let width = 320; width <= 2560; width += 1) {
+				const columns = columnsAt(width, size)
+				expect(columns, `${size} at ${width} px`).toBeGreaterThanOrEqual(before)
+				before = columns
 			}
 		}
 	})
 
-	it("leaves a 16 px gap and a 16 px margin, the same in the two directions", () => {
-		expect(spacing(TICKET_GRID, "gap")).toBe(16)
-		expect(spacing(TICKET_AREA, "p")).toBe(16)
+	it("leaves an 8 px gap and a 12 px margin (they were 16 px: the room is for tickets)", () => {
+		expect(spacing(TICKET_GRID, "gap")).toBe(8)
+		expect(spacing(TICKET_AREA, "p")).toBe(12)
 	})
 })
 
-/**
- * The value a responsive utility has at a screen width: the base class, then each breakpoint's, the widest that applies.
- * `pick` turns a token into what it sets, or null for a token that is not one of this family.
- */
-function valueAt(width, classes, pick) {
-	const steps = []
-	for (const token of tokens(classes)) {
-		const match = token.match(/^(?:(sm|md|lg|xl)|min-\[(\d+)px\]):(.+)$/)
-		const from = match
-			? match[1]
-				? BREAKPOINTS[match[1]]
-				: Number(match[2])
-			: 0
-		const value = pick(match ? match[3] : token)
-		if (value != null) steps.push({ from, value })
-	}
-	return steps
-		.filter((step) => step.from <= width)
-		.sort((a, b) => b.from - a.from)[0]?.value
-}
-
 describe("the lane of tickets of a band (the bands layout of the kitchen screen)", () => {
-	// auto-cols-[calc((100%-3rem)/4)]  ->  { gaps: 3 rem, columns: 4 }
-	const laneColumn = (token) => {
-		const found = token.match(
-			/^auto-cols-\[(?:calc\(\(100%-(\d+)rem\)\/(\d+)\)|100%)\]$/,
-		)
-		if (!found) return null
-		return { gaps: Number(found[1] || 0), columns: Number(found[2] || 1) }
-	}
-	function laneTicketWidthAt(width) {
-		const { gaps, columns } = valueAt(width, TICKET_LANE, laneColumn)
-		const inner = width - 2 * spacing(TICKET_AREA, "p")
-		return (inner - gaps * 16) / columns
-	}
-
-	it("makes a ticket exactly as wide as a column of the shared grid, at every screen width", () => {
-		for (let width = 320; width <= 2560; width += 1) {
-			expect(laneTicketWidthAt(width), `${width} px`).toBeCloseTo(
-				ticketWidthAt(width),
-				6,
-			)
-		}
+	it("makes a ticket exactly as wide as the text size says, whatever the screen's width: the same ticket as the runner's", () => {
+		expect(tokens(TICKET_LANE)).toContain("auto-cols-[var(--kds-card-w,250px)]")
+		expect(tokens(TICKET_CARD)).toContain("w-[var(--kds-card-w,250px)]")
 	})
 
-	it("shows as many tickets across as the shared grid has columns, and leaves the gap of the grid between them", () => {
-		for (const width of [768, 800, 1024, 1180, 1280, 1366, 1600, 1920]) {
-			expect(
-				valueAt(width, TICKET_LANE, laneColumn).columns,
-				`${width} px`,
-			).toBe(columnsAt(width))
-			// n columns have n - 1 gaps
-			expect(valueAt(width, TICKET_LANE, laneColumn).gaps).toBe(
-				columnsAt(width) - 1,
-			)
-		}
+	it("leaves the gap of the grid between two tickets", () => {
 		expect(spacing(TICKET_LANE, "gap")).toBe(spacing(TICKET_GRID, "gap"))
 	})
 
@@ -218,57 +176,27 @@ describe("the lane of tickets of a band (the bands layout of the kitchen screen)
 
 	it("uses only the breakpoints this build has", () => {
 		expect(TICKET_LANE).not.toMatch(/\b2xl:/)
-		for (const token of tokens(TICKET_LANE).filter((t) =>
-			/auto-cols/.test(t),
-		)) {
-			expect(token).toMatch(/^(?:(?:sm|md|lg|xl|min-\[\d+px\]):)?auto-cols-\[/)
-		}
 	})
 })
 
 describe("the columns of the kitchen screen, side by side", () => {
-	const spanOf = (token) => {
-		const found = token.match(/^col-span-(\d+)$/)
-		return found ? Number(found[1]) : null
-	}
-	const subColumns = (token) => {
-		const found = token.match(/^grid-cols-(\d+)$/)
-		return found ? Number(found[1]) : null
-	}
-
-	it("split the shared grid: the waiting tickets take ONE column of it, the others take the rest", () => {
-		for (const width of [
-			320, 640, 768, 800, 1024, 1180, 1280, 1366, 1600, 1920,
-		]) {
-			const all = columnsAt(width)
-			const waiting = valueAt(width, TICKET_SPLIT_WAITING, spanOf)
-			const production = valueAt(width, TICKET_SPLIT_PRODUCTION, spanOf)
-			// Under 768 px a grid has one column: the screen does not offer this layout there
-			if (width < BREAKPOINTS.md) continue
-			expect(waiting, `${width} px: waiting`).toBe(1)
-			expect(waiting + production, `${width} px: all`).toBe(all)
-		}
+	it("are a row: the waiting tickets in a column one ticket wide (and a little more, for a scrollbar), the tickets in preparation taking the rest", () => {
+		expect(tokens(TICKET_COLUMNS)).toEqual(expect.arrayContaining(["flex", "h-full"]))
+		expect(tokens(TICKET_COLUMNS)).not.toContain("grid")
+		// The column of waiting tickets does not grow or shrink: its width is a ticket's plus 12 px
+		expect(tokens(TICKET_SPLIT_WAITING)).toEqual(
+			expect.arrayContaining(["flex-none", "w-[calc(var(--kds-card-w,250px)+12px)]"]),
+		)
+		expect(tokens(TICKET_SPLIT_PRODUCTION)).toEqual(expect.arrayContaining(["flex-1", "min-w-0"]))
 	})
 
-	it("hold as many ticket columns on the right as the right side spans, so that a ticket has the width of the grid there too", () => {
-		for (let width = BREAKPOINTS.md; width <= 2560; width += 1) {
-			const span = valueAt(width, TICKET_SPLIT_PRODUCTION, spanOf)
-			const inside = valueAt(width, TICKET_COLUMN_PRODUCTION, subColumns)
-			expect(inside, `${width} px`).toBe(span)
-			// The gap is the grid's, so span columns of the grid's width fill the span exactly
-			expect(spacing(TICKET_COLUMN_PRODUCTION, "gap")).toBe(
-				spacing(TICKET_GRID, "gap"),
-			)
-		}
+	it("hold the waiting tickets in a single column of a ticket's width", () => {
+		expect(tokens(TICKET_COLUMN_WAITING)).toContain("grid-cols-[var(--kds-card-w,250px)]")
 	})
 
-	it("hold the waiting tickets in a single column of the grid's width", () => {
-		for (let width = BREAKPOINTS.md; width <= 2560; width += 1) {
-			expect(
-				valueAt(width, TICKET_COLUMN_WAITING, subColumns),
-				`${width} px`,
-			).toBe(1)
-		}
+	it("hold, on the right, as many ticket columns of the text size's width as the side holds, with the gap of the grid", () => {
+		expect(TICKET_COLUMN_PRODUCTION).toContain("grid-cols-[repeat(auto-fill,minmax(0,var(--kds-card-w,250px)))]")
+		expect(spacing(TICKET_COLUMN_PRODUCTION, "gap")).toBe(spacing(TICKET_GRID, "gap"))
 	})
 })
 
@@ -367,15 +295,15 @@ describe("the two screens", () => {
 	// Task 38a-2, ruling 130: the runner's tickets no longer stand on the shared grid, in the shared scrolling area. They are STACKED: short tickets
 	// flow in columns (top to bottom, then the next column) as tall as the screen leaves them, in an area that scrolls sideways. What stays shared is the
 	// WIDTH of a ticket (one size per text size, `--kds-card-w`) and the frame of the card.
-	it("lay their tickets out in their own ways: the kitchen with its bands side by side on the shared grid, the runner's stacked in columns", async () => {
+	it("lay their tickets out in their own ways: the kitchen with its bands side by side as a row of columns, the runner's stacked in columns", async () => {
 		localStorage.setItem("pos_kds_layout", "columns")
 		const kitchen = await open(KDS)
 		const runner = await open(Runner)
 
 		const grid = kitchen.find('[data-test="bands"]')
-		expect(grid.exists(), "kitchen: a grid").toBe(true)
-		expect(grid.classes(), "kitchen: the grid").toEqual(
-			expect.arrayContaining(tokens(TICKET_GRID)),
+		expect(grid.exists(), "kitchen: a row of columns").toBe(true)
+		expect(grid.classes(), "kitchen: the row").toEqual(
+			expect.arrayContaining(tokens(TICKET_COLUMNS)),
 		)
 		const kitchenArea = kitchen.find('[data-test="ticket-area"]')
 		expect(kitchenArea.classes()).toEqual(

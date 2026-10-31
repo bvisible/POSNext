@@ -5,36 +5,42 @@
 //// are written ONCE, here: both pages and both ticket cards take them from here, so a size changed in this file changes
 //// both screens, and a test reads them back from both.
 ////
+//// Task 38a-2 (ruling 109 and the approved mockup): the WIDTH of a ticket follows the text size. It used to be the share of a
+//// grid of 1 to 5 columns that the width of the screen decided (about 320 px at 1366 px wide, whatever the text), so a cook
+//// who chose the dense size still saw tickets as wide as the large ones, four across. It is now `--kds-card-w`, a variable the
+//// screen's root sets with the size (utils/kitchenTextSize: 250, 280, 330, 390 px), and the grids and the lanes below are as many
+//// tickets of that width as the screen holds: Compact is narrower, more tickets fit across. The gap between two is 8 px and the
+//// margin of the area 12 px (they were 16), the mockup's.
+////
 //// The classes are whole literals so that Tailwind's scan of `src/**/*.js` finds them. This build's Tailwind scale is
-//// frappe-ui's, not the stock one (text-base is 14 px, text-lg 16 px, text-xl 18 px), and its screens are sm, md, lg and
-//// xl only: there is no `2xl:`, so the fifth column comes in at an arbitrary `min-[1600px]:` step instead.
+//// frappe-ui's, not the stock one (text-base is 14 px, text-lg 16 px, text-xl 18 px).
 
 /**
  * The scrolling area that holds the tickets. Its margin takes part in the width of a ticket (the screen minus the margin
  * on both sides, shared among the columns), so it is shared like the grid.
  */
-export const TICKET_AREA = "flex-1 overflow-y-auto p-4"
+export const TICKET_AREA = "flex-1 overflow-y-auto p-3"
 
 /**
- * The grid of the tickets: the same columns and the same gap at every width, on both screens. 4 columns of about 320 px
- * on a 1366 px wide screen, 5 of about 365 px on a 1920 px wide one.
+ * The grid of the tickets: as many columns of the text size's width (`--kds-card-w`) as the screen holds, from the left, the same gap on both screens.
+ * `minmax(0, width)` and not the width alone: the number of columns is counted by the width, and a screen narrower than one ticket still gets a column
+ * that gives way instead of one that overflows.
  */
 export const TICKET_GRID =
-	"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[1600px]:grid-cols-5 gap-4"
+	"grid grid-cols-[repeat(auto-fill,minmax(0,var(--kds-card-w,250px)))] justify-start gap-2"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // The kitchen screen in two bands (NeoRestau lot 1, task 23). The kitchen shows the tickets waiting and the tickets in
 // preparation apart from each other, and it is used on tablets: it can hold thirty tickets in one band and tickets of
 // twenty-five dishes. Neither a long grid that scrolls down a page nor a ticket that grows with its dishes can do that
 // and keep the two bands on the screen, so a ticket is bounded by its band, and the band by its share of the screen.
-// Whichever way the bands are laid out, a ticket is as wide as a column of TICKET_GRID at that screen width: it is the
-// same ticket as on the runner. A test reads the widths back from these classes, at every width from 320 to 2560 px.
+// Whichever way the bands are laid out, a ticket is as wide as the text size says (`--kds-card-w`): it is the same ticket as on the runner. A test reads
+// the widths back from these classes, at every width from 320 to 2560 px.
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
  * BANDS layout, one band above the other: a band is ONE row of tickets that scrolls sideways (a swipe), oldest on the left.
- * Each ticket is exactly one column of TICKET_GRID wide: `(100% - (n - 1) gaps) / n` for the n columns that grid has at
- * that width, so 4 tickets across on 1280 px, 3 on 1180 and 1024, 2 on 800. The single row is as tall as the lane
+ * Each ticket is exactly `--kds-card-w` wide, so as many tickets across as the screen holds at that size. The single row is as tall as the lane
  * (`minmax(0, 1fr)`): a ticket never grows past its band, its dishes scroll inside it (KDSOrderCard). Tickets stop on a
  * ticket edge after a swipe (`snap`), and the lane hands no scroll on to the page (`overscroll-contain`): sideways, a swipe
  * from the left edge would be taken for "back" on a tablet; up and down, the end of a ticket's dishes would pass the swipe
@@ -42,7 +48,7 @@ export const TICKET_GRID =
  * it is the band that stops it.
  */
 export const TICKET_LANE =
-	"grid grid-flow-col grid-rows-[minmax(0,1fr)] gap-4 overflow-x-auto overflow-y-hidden overscroll-contain snap-x snap-mandatory auto-cols-[100%] md:auto-cols-[calc((100%-1rem)/2)] lg:auto-cols-[calc((100%-2rem)/3)] xl:auto-cols-[calc((100%-3rem)/4)] min-[1600px]:auto-cols-[calc((100%-4rem)/5)]"
+	"grid grid-flow-col grid-rows-[minmax(0,1fr)] gap-2 overflow-x-auto overflow-y-hidden overscroll-contain snap-x snap-mandatory auto-cols-[var(--kds-card-w,250px)]"
 
 /**
  * The height each band of the BANDS layout gets, as a share of the screen left under the filter line, and a floor.
@@ -55,17 +61,17 @@ export const BAND_WAITING_HEIGHT = "flex-[5_1_0%] min-h-[14rem]"
 export const BAND_PRODUCTION_HEIGHT = "flex-[6_1_0%] min-h-[16rem]"
 
 /**
- * COLUMNS layout, side by side: the page-level split IS TICKET_GRID (same columns, same gap). The waiting tickets take the
- * first column of it, the tickets in preparation take the others, and inside them the tickets are laid out in as many
- * columns as the side spans, so a ticket is again one column of the grid wide. Below 768 px the grid has one column and
- * the layout is not offered (the screen stays in bands).
+ * COLUMNS layout, side by side: a row as tall as the screen leaves it, the waiting tickets in a column of ONE ticket's width (a little more, for the
+ * scrollbar of a screen that draws one), the tickets in preparation taking the rest of the width, laid out in as many columns of the text size's
+ * width as it holds. Below 768 px the layout is not offered (the screen stays in bands).
  */
-export const TICKET_SPLIT_WAITING = "col-span-1"
-export const TICKET_SPLIT_PRODUCTION =
-	"col-span-1 lg:col-span-2 xl:col-span-3 min-[1600px]:col-span-4"
-export const TICKET_COLUMN_WAITING = "grid grid-cols-1 gap-4"
+export const TICKET_COLUMNS = "flex h-full min-h-[20rem] gap-3"
+export const TICKET_SPLIT_WAITING = "flex-none w-[calc(var(--kds-card-w,250px)+12px)]"
+export const TICKET_SPLIT_PRODUCTION = "min-w-0 flex-1"
+export const TICKET_COLUMN_WAITING =
+	"grid grid-cols-[var(--kds-card-w,250px)] gap-2"
 export const TICKET_COLUMN_PRODUCTION =
-	"grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-4 gap-4"
+	"grid grid-cols-[repeat(auto-fill,minmax(0,var(--kds-card-w,250px)))] justify-start gap-2"
 
 /**
  * The frame both ticket cards are cut to: the sizes only. Colours, borders and what goes inside the frame stay each

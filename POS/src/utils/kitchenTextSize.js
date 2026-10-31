@@ -4,8 +4,9 @@
 ////
 //// A size is a table of CSS variables set on the page's root (the font sizes, the paddings of a dish, the height of the buttons); the card
 //// and its parts read them with a fallback that is Compact, so that a card drawn outside the page is dense too. The values are the scale of
-//// the mockup that was approved (task 38): Compact 13 px dishes, Normal 15, Large 18, Extra large 22. The width of a ticket is the shared
-//// grid's, not a size's (utils/ticketLayout).
+//// the mockup that was approved (task 38): Compact 13 px dishes, Normal 15, Large 18, Extra large 22. The WIDTH of a ticket is a size's too since
+//// task 38a-2 (`--kds-card-w`: 250, 280, 330, 390 px): a dense ticket is a narrow one, and more of them fit across the screen; the grids and lanes of
+//// utils/ticketLayout are as wide as this variable says, on the kitchen screen and on the runner's.
 
 export const TEXT_SIZES = ["compact", "normal", "large", "xl"]
 export const DEFAULT_TEXT_SIZE = "compact"
@@ -24,6 +25,7 @@ const COMMON = {
 
 const TABLE = {
 	compact: {
+		"--kds-card-w": "250px",
 		"--kds-fs": "13px",
 		"--kds-fs-sub": "12px",
 		"--kds-py": "3px",
@@ -37,6 +39,7 @@ const TABLE = {
 		"--kds-tt-d": "none",
 	},
 	normal: {
+		"--kds-card-w": "280px",
 		"--kds-fs": "15px",
 		"--kds-fs-sub": "15px",
 		"--kds-py": "5px",
@@ -50,6 +53,7 @@ const TABLE = {
 		"--kds-tt-d": "none",
 	},
 	large: {
+		"--kds-card-w": "330px",
 		"--kds-fs": "18px",
 		"--kds-fs-sub": "18px",
 		"--kds-py": "7px",
@@ -63,6 +67,7 @@ const TABLE = {
 		"--kds-tt-d": "inline",
 	},
 	xl: {
+		"--kds-card-w": "390px",
 		"--kds-fs": "22px",
 		"--kds-fs-sub": "22px",
 		"--kds-py": "9px",

@@ -170,7 +170,7 @@ import {
 } from "@/utils/kitchenRunner"
 import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
-import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
+import { TICKET_AREA, TICKET_COLUMNS, TICKET_GRID } from "@/utils/ticketLayout"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
@@ -318,9 +318,11 @@ const bandMode = computed(() => (layout.value === LAYOUT_COLUMNS ? "column" : "l
 // Side by side, the wrapper is the shared grid of tickets with one row as tall as the screen leaves it; one above the other,
 // it is a column of two bands whose heights are shares of the screen (utils/ticketLayout). The floor under it (the two
 // bands' floors, their headers and the gap) makes a short screen scroll the page instead of crushing a band.
+//// Neoffice — side by side, the wrapper is a row: the column of waiting tickets one ticket wide, the tickets in preparation taking the rest (task 38a-2: the
+//// width of a ticket is the text size's, no longer a share of a grid of columns that the width of the screen decided)
 const bandsClass = computed(() =>
 	layout.value === LAYOUT_COLUMNS
-		? `${TICKET_GRID} h-full min-h-[20rem] grid-rows-[minmax(0,1fr)]`
+		? TICKET_COLUMNS
 		: "flex h-full min-h-[34rem] flex-col gap-2",
 )
 
