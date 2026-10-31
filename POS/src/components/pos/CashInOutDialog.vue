@@ -263,11 +263,11 @@
 
 					<!-- Refused by the server: never sent again; kept for the manager or discarded with a reason -->
 					<div v-if="refused.length" class="space-y-2">
-						<h4 class="text-xs font-semibold text-red-700">{{ __("Refused by the server: not in the books") }}</h4>
+						<h4 class="text-xs font-semibold text-pos-danger">{{ __("Refused by the server: not in the books") }}</h4>
 						<div
 							v-for="row in refused"
 							:key="`refused-${row.id}`"
-							class="space-y-2 rounded-lg border border-red-300 bg-red-50 p-3"
+							class="space-y-2 rounded-lg border border-pos-danger bg-red-50 p-3"
 						>
 							<div class="flex items-center gap-3">
 								<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
@@ -275,20 +275,23 @@
 								</div>
 								<div class="min-w-0 flex-1">
 									<div class="truncate text-sm font-medium text-gray-900">{{ row.data.template_title }}</div>
-									<div class="text-xs text-red-700">{{ __("Refused: {0}", [row.error || ""]) }}</div>
+									<div class="text-xs text-pos-danger">{{ __("Refused: {0}", [row.error || ""]) }}</div>
 									<div v-if="refusedOrigin(row)" class="truncate text-xs text-gray-600">{{ refusedOrigin(row) }}</div>
 									<div v-if="row.kept_for_manager" class="text-xs text-gray-600">{{ __("Kept for the manager") }}</div>
 								</div>
-								<div class="flex-shrink-0 text-sm font-semibold" :class="row.data.direction === 'out' ? 'text-red-700' : 'text-green-700'">
+								<div class="flex-shrink-0 text-sm font-semibold" :class="row.data.direction === 'out' ? 'text-pos-danger' : 'text-pos-saving'">
 									{{ row.data.direction === "out" ? "-" : "+" }}{{ formatAmount(row.data.amount) }}
 								</div>
 							</div>
-							<div class="flex justify-end gap-2">
-								<Button v-if="!row.kept_for_manager" size="sm" @click="keepForManager(row)">
+							<div class="flex flex-wrap justify-end gap-2">
+								<Button class="min-h-[44px]" :disabled="isOffline" @click="sendAgain(row)">
+									{{ __("Send again") }}
+								</Button>
+								<Button v-if="!row.kept_for_manager" class="min-h-[44px]" @click="keepForManager(row)">
 									{{ __("Keep for the manager") }}
 								</Button>
-								<Button size="sm" theme="red" :disabled="isOffline" @click="askSetAside(row)">
-									{{ __("Discard") }}
+								<Button class="min-h-[44px]" theme="red" :disabled="isOffline" @click="askSetAside(row)">
+									{{ __("Discard", null, "Set aside a refused cash movement") }}
 								</Button>
 							</div>
 						</div>
@@ -421,7 +424,7 @@
 					:disabled="!setAsideReason.trim() || isOffline"
 					@click="setAsideConfirmed"
 				>
-					{{ __("Discard") }}
+					{{ __("Discard", null, "Set aside a refused cash movement") }}
 				</Button>
 			</div>
 		</template>
@@ -447,10 +450,12 @@ import {
 	getRefusedCashMovements,
 	isTransientError,
 	keepRefusedCashMovementForManager,
+	resendRefusedCashMovement,
 	pendingCashTotals,
 	recordCashMovement,
 	sessionUserId,
 	setAsideRefusedCashMovement,
+	syncOfflineCashMovements,
 } from "@/utils/offline/cashMovements";
 
 const VOID_ACTION = "Void Cash Movement";
@@ -698,6 +703,15 @@ async function submitEntry() {
 	} finally {
 		submitting.value = false;
 	}
+}
+
+// « Send again »: back in the sending loop, then sent at once when it is this cashier's (another cashier's
+// movement waits for their session).
+async function sendAgain(row) {
+	await resendRefusedCashMovement(row.id);
+	if (!isOffline.value) await syncOfflineCashMovements();
+	await syncStore.updatePendingCount();
+	await loadData();
 }
 
 async function keepForManager(row) {

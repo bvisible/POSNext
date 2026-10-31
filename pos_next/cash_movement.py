@@ -44,6 +44,10 @@ VOUCHER_TYPES = ("Journal Entry", "Cash Entry", "Bank Entry", "Contra Entry")
 # so a shift left open for days never books into a past period.
 BUSINESS_DAY_CUTOFF_HOURS = 6
 
+# How long after the till recorded a movement offline the server still books it on the till's moment: the
+# default of POS Profile.posa_cash_movement_offline_hours (see booking_moment).
+OFFLINE_WINDOW_HOURS = 24
+
 # The accounts a party must come with: a till movement names none, so ERPNext would refuse the entry.
 PARTY_ACCOUNT_TYPES = ("Receivable", "Payable")
 
@@ -58,9 +62,23 @@ class VatEngineUnavailable(frappe.ValidationError):
 	carries a VAT rate is refused rather than booked gross, which would drop its VAT without a word."""
 
 
+class CashMovementsChanged(frappe.ValidationError):
+	"""The shift's movements in the ledger are not those the closing's figures were computed from: the closing
+	is refused, and opened again it counts them (the till's closing dialog reloads its figures)."""
+
+
 def _precision():
 	"""The precision of a journal entry row's amount: the currency's, as the entry itself rounds it."""
 	return frappe.get_precision("Journal Entry Account", "debit_in_account_currency") or 2
+
+
+def currency_precision(company):
+	"""The precision of an amount in the company's currency (the site's currency precision when it is set)."""
+	from frappe.model.meta import get_field_precision
+
+	field = frappe.get_meta("Journal Entry Account").get_field("debit_in_account_currency")
+	currency = frappe.get_cached_value("Company", company, "default_currency")
+	return cint(get_field_precision(field, currency=currency)) if field else 2
 
 
 def till_cash_account(pos_profile, company, required=True):
@@ -310,35 +328,50 @@ def business_day(period_start_date, moment=None):
 	return max(getdate(period_start_date), moved)
 
 
-def moved_at(period_start, moment=None):
-	"""When the money moved, as the till says (an offline movement is sent later than it was made), kept
-	between the shift's start and now: a device clock that runs ahead or behind never books a movement
-	before its shift or in the future. ``moment`` is milliseconds since the epoch (the offline queue's
-	timestamp) or a datetime in the site's time zone; anything else means now."""
+def device_datetime(moment):
+	"""The till's moment as a datetime of the site's time zone: ``moment`` is milliseconds since the epoch
+	(the offline queue's timestamp) or a datetime; None when it is neither."""
 	from datetime import datetime, timezone
 
-	from frappe.utils import convert_utc_to_system_timezone, get_datetime
+	from frappe.utils import convert_utc_to_system_timezone
+
+	if isinstance(moment, datetime):
+		return moment
+	if moment in (None, ""):
+		return None
+	try:
+		milliseconds = float(moment)
+	except (TypeError, ValueError):
+		return None
+	if not milliseconds or milliseconds <= 0:
+		return None
+	try:
+		utc = datetime.fromtimestamp(milliseconds / 1000, tz=timezone.utc)
+		return convert_utc_to_system_timezone(utc).replace(tzinfo=None)
+	except (OverflowError, OSError, ValueError):
+		return None
+
+
+def booking_moment(period_start, moment=None, window_hours=OFFLINE_WINDOW_HOURS):
+	"""When to book a movement, and the till's moment when it was not used.
+
+	The till says when the money moved only for a movement its offline queue sends later (``moment``, see
+	device_datetime); an online movement sends nothing and is booked now. The till's moment is believed only
+	when it is plausible: not before the shift's start, not in the future, and at most ``window_hours`` before
+	now (POS Profile.posa_cash_movement_offline_hours; 0 never believes it). Otherwise the device's clock is
+	wrong, or the movement waited too long: it is booked now and the caller notes the till's moment on it, so
+	a clock set back can never book into a past, closed VAT period. Returns (moment to book, device moment
+	not used or None)."""
+	from frappe.utils import get_datetime
 
 	now = now_datetime()
-	when = None
-	if isinstance(moment, datetime):
-		when = moment
-	elif moment not in (None, ""):
-		try:
-			milliseconds = float(moment)
-		except (TypeError, ValueError):
-			milliseconds = None
-		if milliseconds and milliseconds > 0:
-			try:
-				utc = datetime.fromtimestamp(milliseconds / 1000, tz=timezone.utc)
-				when = convert_utc_to_system_timezone(utc).replace(tzinfo=None)
-			except (OverflowError, OSError, ValueError):
-				when = None
-	if when is None or when > now:
-		when = now
-	if period_start and when < get_datetime(period_start):
-		when = get_datetime(period_start)
-	return when
+	device = device_datetime(moment)
+	if device is None:
+		return now, None
+	earliest = now - timedelta(hours=max(0, cint(window_hours)))
+	if device > now or device < earliest or (period_start and device < get_datetime(period_start)):
+		return now, device
+	return device, None
 
 
 def _account_row(account, amount, debit, cost_center):
@@ -380,7 +413,8 @@ def book(
 		frappe.throw(
 			_("{0} does not move the till's cash account {1}.").format(definition.title, cash_account)
 		)
-	amount = flt(amount, _precision())
+	precision = currency_precision(company)
+	amount = flt(amount, precision)
 	if amount <= 0:
 		frappe.throw(_("Amount must be greater than zero"))
 
@@ -388,7 +422,7 @@ def book(
 	counterparty_lines = [frappe._dict(account=definition.counterparty, amount=amount)]
 	if not no_vat and not definition.disable_calculation and definition.counterparty != cash_account:
 		counterparty_lines = split_vat(company, definition.counterparty, amount, cost_center)
-	total = flt(sum(flt(line.amount) for line in counterparty_lines), _precision())
+	total = flt(sum(flt(line.amount) for line in counterparty_lines), precision)
 
 	note = cstr(note).strip()
 	voucher_type = definition.voucher_type if definition.voucher_type in VOUCHER_TYPES else "Journal Entry"
@@ -544,20 +578,27 @@ def shift_out_total(shift):
 	)
 
 
-def closing_rows_under_lock(shift):
+def closing_rows_under_lock(shift, figured=None):
 	"""The shift's movements as its closing stores them, read once the closing holds the shift's row lock.
 
-	A movement another request committed (or cancelled) after this one began but before it got the lock is
-	in the ledger (the locking read) and not in this request's snapshot, which the closing's expected cash was
-	computed from and Frappe's own link checks read: such a closing is refused, and opened again it counts the
-	movement. Never a closing that leaves a movement booked against its shift out of its figures."""
+	The closing is refused (CashMovementsChanged) when the ledger's movements are not those its figures counted:
+	- ``figured``: the journal entries the till's closing data listed when its dialog opened, the movements its
+	  expected cash counts (None for a closing that names none, made at the desk). A movement recorded or
+	  cancelled while the dialog was open would be stored without being in the expected cash: a drawer counted
+	  right would show a false difference;
+	- this request's snapshot: a movement committed or cancelled after this request began but before it got
+	  the lock is in the ledger (the locking read) and not in the snapshot, which Frappe's own link checks read.
+	Opened again, the closing counts it. Never a closing that leaves a movement booked against its shift out of
+	its figures."""
 	rows = closing_rows(shift, lock=True)
+	ledger = {row["journal_entry"] for row in rows}
 	seen = {row.journal_entry for row in shift_movements(shift)}
-	if {row["journal_entry"] for row in rows} != seen:
+	if ledger != seen or (figured is not None and ledger != set(figured)):
 		frappe.throw(
 			_(
 				"A cash movement was recorded or cancelled while this shift was being closed. Open the closing again: it will count it."
 			),
+			exc=CashMovementsChanged,
 			title=_("Cash Movement Recorded Meanwhile"),
 		)
 	return rows

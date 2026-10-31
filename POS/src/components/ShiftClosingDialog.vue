@@ -1947,11 +1947,37 @@ async function submitClosing() {
 		finishClosing();
 	} catch (error) {
 		console.error("Error submitting closing shift:", error);
+		//// Neoffice — a drawer movement was recorded or cancelled since this dialog opened: the server refused
+		//// the closing (its expected cash missed it). The figures are read again, the amounts counted so far kept,
+		//// and the server's reason shown (NeoRestau lot 1, task 15).
+		if (error?.exc_type === "CashMovementsChanged") {
+			await reloadClosingDataKeepingCounts();
+			errorMessage.value = error.messages?.[0] || "";
+			return;
+		}
 		//// Neoffice — bare English literal upstream; wrapped in __() for the French till
 		//// (7d2771d4, 2026-07-09).
 		errorMessage.value = __("Failed to close shift. Please verify all amounts and try again.");
 	} finally {
 		isClosing.value = false;
+	}
+}
+
+//// Neoffice — added (NeoRestau lot 1, task 15): the closing data read again after the server refused the
+//// closing because a drawer movement changed meanwhile; what the cashier counted per payment method stays.
+async function reloadClosingDataKeepingCounts() {
+	const counted = new Map(
+		(closingData.value?.payment_reconciliation || [])
+			// Typed by the cashier: a method that expected nothing was pre-filled with 0, not counted.
+			.filter((payment) => payment._touched && (Number.parseFloat(payment.expected_amount) || 0) !== 0)
+			.map((payment) => [payment.mode_of_payment, payment.closing_amount]),
+	);
+	await loadClosingData();
+	for (const payment of closingData.value?.payment_reconciliation || []) {
+		if (!counted.has(payment.mode_of_payment)) continue;
+		payment.closing_amount = counted.get(payment.mode_of_payment);
+		payment._touched = true;
+		calculateDifference(payment);
 	}
 }
 

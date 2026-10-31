@@ -177,6 +177,29 @@ def _out_limit(pos_profile):
 	return flt(frappe.db.get_value("POS Profile", pos_profile, "posa_cash_movement_out_limit"))
 
 
+def _offline_window_hours(pos_profile):
+	"""How many hours after the till recorded a movement offline the server still books it on the till's
+	moment (POS Profile.posa_cash_movement_offline_hours; cash_movement.OFFLINE_WINDOW_HOURS where the field is
+	not there yet or empty; 0 never believes the till's clock)."""
+	if not pos_profile or not frappe.db.has_column("POS Profile", "posa_cash_movement_offline_hours"):
+		return cash_movement.OFFLINE_WINDOW_HOURS
+	hours = frappe.db.get_value("POS Profile", pos_profile, "posa_cash_movement_offline_hours")
+	return cash_movement.OFFLINE_WINDOW_HOURS if hours in (None, "") else cint(hours)
+
+
+def _with_clock_note(note, device_moment):
+	"""The cashier's note, followed by why the movement is booked on the day it reached the server."""
+	from frappe.utils import format_datetime
+
+	clock = _("Booked on the day it reached the server: the till's clock said {0}.").format(
+		format_datetime(device_moment)
+	)
+	if not note:
+		return clock[:NOTE_MAX_LENGTH]
+	room = NOTE_MAX_LENGTH - len(clock) - 3
+	return f"{note[: max(0, room)]} — {clock}"[:NOTE_MAX_LENGTH]
+
+
 def _currency(company):
 	return frappe.get_cached_value("Company", company, "default_currency")
 
@@ -344,7 +367,8 @@ def _check_out_limit(opening, amount):
 	if limit <= 0:
 		return
 	taken = cash_movement.shift_out_total(opening.name)
-	if flt(taken + flt(amount), 2) > flt(limit, 2):
+	precision = cash_movement.currency_precision(opening.company)
+	if flt(taken + flt(amount), precision) > flt(limit, precision):
 		frappe.throw(
 			_(
 				"This cash out would exceed the till's limit of {0} per shift. Already taken out: {1}. Still allowed: {2}."
@@ -366,8 +390,9 @@ def create_cash_entry(
 	``remark`` is the cashier's note. ``no_vat`` books the gross amount with no VAT split (a purchase
 	from a supplier outside VAT; refused where the operation is not such a purchase). ``offline_id`` makes a
 	resend from the till's offline queue harmless: the entry it already produced is returned, never a second
-	one. ``moved_at`` is when the money moved (milliseconds since the epoch): a movement sent by the offline
-	queue is booked on the business day it was made, not the day it reached the server."""
+	one. ``moved_at`` is when the till's offline queue recorded the movement (milliseconds since the epoch;
+	an online movement sends none): believed within the till's window, it books the movement on the business
+	day it was made; otherwise the movement is booked now and its note says so (cash_movement.booking_moment)."""
 	# //// Neoffice — only the shift's cashier or a till manager records (require_cash_movement_access).
 	opening = require_cash_movement_access(pos_opening_shift)
 	amount = flt(amount)
@@ -413,6 +438,11 @@ def create_cash_entry(
 		_check_out_limit(opening, amount)
 
 	period_start = frappe.db.get_value("POS Opening Shift", opening.name, "period_start_date")
+	moment, unused_device_moment = cash_movement.booking_moment(
+		period_start, moved_at, _offline_window_hours(opening.pos_profile)
+	)
+	if unused_device_moment:
+		note = _with_clock_note(note, unused_device_moment)
 	cost_center = frappe.db.get_value(
 		"POS Profile", opening.pos_profile, "cost_center"
 	) or frappe.get_cached_value("Company", company, "cost_center")
@@ -421,7 +451,7 @@ def create_cash_entry(
 		cash_account,
 		company,
 		amount,
-		posting_date=cash_movement.business_day(period_start, cash_movement.moved_at(period_start, moved_at)),
+		posting_date=cash_movement.business_day(period_start, moment),
 		cost_center=cost_center,
 		reference=opening.name,
 		note=note,
@@ -508,8 +538,8 @@ def cancel_cash_entry(journal_entry, authorization_token=None):
 	return {"name": entry.name, "journal_entry": entry.name, "cancelled": True}
 
 
-# The subject of the Comment that keeps a refused offline movement the till set aside: the money moved, no
-# ledger took it, and this Comment on its shift is where the books find it.
+# The subject of the Comment that keeps a refused offline movement the till set aside, followed by its offline
+# id: the money moved, no ledger took it, and this Comment on its shift is where the books find it.
 SET_ASIDE_MARK = "pos_next: refused cash movement set aside"
 
 
@@ -528,9 +558,10 @@ def set_aside_refused_cash_movement(
 ):
 	"""Set aside a movement the till's offline queue could not book: the server refused it (its shift was
 	closed meanwhile, the cap, a right) and it must not be sent again and again. The money moved but no ledger
-	has it: a Comment on its shift says what the till recorded, why the server refused it, who set it aside and
-	why, so the books can trace it. The till then forgets it. Answered once per offline id; a movement the
-	server did book under that id is never set aside (``booked`` names its entry)."""
+	has it: a Comment on its shift says who set it aside and why, then what the till reported of it (marked as
+	such: only the till knows it), so the books can trace it. The Comment is Administrator's, so neither the
+	cashier nor anyone but Administrator can rewrite it. The till then forgets the movement. Answered once per
+	offline id and shift; a movement this shift did book under that id is never set aside (``booked``)."""
 	opening = require_cash_movement_access(pos_opening_shift)
 	offline_id = cstr(offline_id).strip()
 	if not offline_id or len(offline_id) > 140:
@@ -538,17 +569,17 @@ def set_aside_refused_cash_movement(
 	reason = cstr(reason).strip()[:NOTE_MAX_LENGTH]
 	if not reason:
 		frappe.throw(_("Say why this movement is set aside: the reason stays on its shift."))
-	booked = frappe.db.get_value("Journal Entry", {"posa_cash_movement_offline_id": offline_id}, "name")
+	booked = frappe.db.get_value(
+		"Journal Entry",
+		{"posa_cash_movement_offline_id": offline_id, "posa_cash_movement_shift": opening.name},
+		"name",
+	)
 	if booked:
 		return {"booked": booked}
+	subject = f"{SET_ASIDE_MARK}: {offline_id}"
 	existing = frappe.db.get_value(
 		"Comment",
-		{
-			"reference_doctype": "POS Opening Shift",
-			"reference_name": opening.name,
-			"subject": SET_ASIDE_MARK,
-			"content": ["like", f"%{offline_id}%"],
-		},
+		{"reference_doctype": "POS Opening Shift", "reference_name": opening.name, "subject": subject},
 		"name",
 	)
 	if existing:
@@ -556,34 +587,42 @@ def set_aside_refused_cash_movement(
 
 	from frappe.utils import escape_html, format_datetime
 
-	moment = cash_movement.moved_at(None, moved_at) if moved_at else None
-	lines = [
-		_("Cash movement made at the till and never booked, set aside: {0}, {1} {2}.").format(
+	moment = cash_movement.device_datetime(moved_at)
+	reported = [
+		_("{0}, {1} {2}").format(
 			cstr(template_title).strip()[:140] or _("Unknown operation"),
 			_("into the drawer") if cstr(direction) == "in" else _("out of the drawer"),
 			_format_amount(abs(flt(amount)), opening.company),
 		),
-		_("Recorded by {0} on {1}").format(
+		_("recorded by {0} on {1}").format(
 			cstr(recorded_by).strip()[:140] or _("an unknown cashier"),
 			format_datetime(moment) if moment else _("an unknown date"),
 		),
 	]
 	if cstr(remark).strip():
-		lines.append(_("Note: {0}").format(cstr(remark).strip()[:NOTE_MAX_LENGTH]))
-	lines.append(_("Refused by the server: {0}").format(cstr(refusal).strip()[:NOTE_MAX_LENGTH] or "-"))
-	lines.append(_("Set aside by {0}: {1}").format(frappe.session.user, reason))
-	lines.append(_("Offline id: {0}").format(offline_id))
+		reported.append(_("note: {0}").format(cstr(remark).strip()[:NOTE_MAX_LENGTH]))
+	reported.append(_("refused by the server: {0}").format(cstr(refusal).strip()[:NOTE_MAX_LENGTH] or "-"))
+	lines = [
+		_("Cash movement made at the till and never booked, set aside by {0}: {1}").format(
+			frappe.session.user, reason
+		),
+		_("As reported by the till: {0}").format("; ".join(reported)),
+		_("Offline id: {0}").format(offline_id),
+	]
 	comment = frappe.get_doc(
 		{
 			"doctype": "Comment",
 			"comment_type": "Comment",
 			"reference_doctype": "POS Opening Shift",
 			"reference_name": opening.name,
-			"subject": SET_ASIDE_MARK,
+			"subject": subject,
 			"content": "<br>".join(escape_html(line) for line in lines),
 		}
 	)
 	comment.insert(ignore_permissions=True)
+	# Frappe makes the session user its owner, who may then edit it (frappe.desk.form.utils.update_comment):
+	# the trace of money that left no entry belongs to Administrator.
+	frappe.db.set_value("Comment", comment.name, "owner", "Administrator", update_modified=False)
 	return {"comment": comment.name}
 
 

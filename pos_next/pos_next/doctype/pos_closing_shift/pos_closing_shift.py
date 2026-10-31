@@ -87,7 +87,14 @@ class POSClosingShift(Document):
 				_("Selected POS Opening Shift should be open."),
 				title=_("Invalid Opening Entry"),
 			)
-		self.set("cash_movements", cash_movement.closing_rows_under_lock(self.pos_opening_shift))
+		# //// Neoffice — and against the movements the till's closing data listed (submit_closing_shift): the
+		# //// expected cash counts those; a closing whose figures miss one is refused, opened again it counts it.
+		self.set(
+			"cash_movements",
+			cash_movement.closing_rows_under_lock(
+				self.pos_opening_shift, figured=self.flags.get("till_cash_movements")
+			),
+		)
 
 	def update_payment_reconciliation(self):
 		# update the difference values in Payment Reconciliation child table
@@ -1066,6 +1073,14 @@ def submit_closing_shift(closing_shift):
 	# //// (require_caller_may_close, above) before anything is built.
 	require_caller_may_close(closing_shift)
 	closing_shift_doc = frappe.get_doc(closing_shift)
+	# //// Neoffice — the till's closing data lists the drawer movements its expected cash counts; validate
+	# //// compares them with the ledger under the shift's lock (NeoRestau lot 1, task 15).
+	if "cash_movements" in closing_shift:
+		closing_shift_doc.flags.till_cash_movements = [
+			row.get("journal_entry")
+			for row in closing_shift.get("cash_movements") or []
+			if row.get("journal_entry")
+		]
 	closing_shift_doc.flags.ignore_permissions = True
 	closing_shift_doc.save()
 	closing_shift_doc.submit()

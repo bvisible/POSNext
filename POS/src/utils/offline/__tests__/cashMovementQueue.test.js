@@ -76,6 +76,7 @@ const {
 	saveOfflineCashMovement,
 	sessionUserId,
 	setAsideRefusedCashMovement,
+	resendRefusedCashMovement,
 	syncOfflineCashMovements,
 } = await import("@/utils/offline/cashMovements");
 
@@ -100,7 +101,8 @@ const movement = (overrides = {}) => ({
 	...overrides,
 });
 
-const httpError = (status, message = "Refused") => Object.assign(new Error(message), { status, messages: [message] });
+const httpError = (status, message = "Refused", excType = undefined) =>
+	Object.assign(new Error(message), { status, messages: [message], exc_type: excType });
 const networkError = () => new TypeError("Failed to fetch");
 const okUpload = () => ({ ok: true, status: 200, json: async () => ({ message: { name: "FILE-1" } }) });
 const receipt = () => ({ name: "receipt.jpg", type: "image/jpeg", size: 5, blob: new Blob(["photo"], { type: "image/jpeg" }) });
@@ -112,7 +114,8 @@ beforeEach(() => {
 	offline.isOffline = false;
 	call.mockReset();
 	fetchMock.mockReset();
-	signIn(null);
+	// A till is used signed in: no pass runs without a cashier (see « an expired session »).
+	signIn("anna@example.com");
 	vi.useRealTimers();
 });
 
@@ -408,5 +411,76 @@ describe("each cashier's rows, and the rows the server refused", () => {
 		await syncOfflineCashMovements();
 		expect(call.mock.calls.filter(([method]) => method === DIALOG)).toEqual([[DIALOG, { pos_opening_shift: SHIFT }]]);
 		expect(settings.get(cashMovementDialogCacheKey(PROFILE, SHIFT))).toMatchObject({ out_total: 30 });
+	});
+});
+
+describe("an expired session, a deadlock, « send again », the device's clock", () => {
+	it("refuses nothing when the session expired: the pass stops, and the rows go out after signing in again", async () => {
+		const rows3 = [];
+		for (const amount of [10, 20, 30]) rows3.push(await saveOfflineCashMovement(movement({ amount })));
+		// Offline for hours, the session expired: Frappe answers as a visitor (403) and clears the cookies.
+		call.mockImplementationOnce(async () => {
+			signIn(null);
+			throw httpError(403, "Not permitted");
+		});
+		const result = await syncOfflineCashMovements({ user: "anna@example.com" });
+		expect(result.stopped).toBe("session");
+		expect(creates()).toHaveLength(1);
+		for (const saved of rows3) expect(rows.get(saved.id)).toMatchObject({ synced: false, refused: false });
+		// No pass at all while nobody is signed in.
+		await syncOfflineCashMovements();
+		expect(creates()).toHaveLength(1);
+
+		signIn("anna@example.com");
+		call.mockImplementation(async (method, args) => (method === CREATE ? { name: `JE-${args.amount}` } : null));
+		await syncOfflineCashMovements();
+		expect(creates().slice(1).map(([, args]) => args.amount)).toEqual([10, 20, 30]);
+		for (const saved of rows3) expect(rows.get(saved.id).synced).toBe(true);
+	});
+
+	it("keeps a row queued without a cashier when another cashier is not permitted to send it", async () => {
+		signIn(null);
+		const ownerless = await saveOfflineCashMovement(movement());
+		expect(rows.get(ownerless.id).user).toBeNull();
+		signIn("ben@example.com");
+		call.mockRejectedValueOnce(httpError(403, "Not permitted"));
+		await syncOfflineCashMovements();
+		expect(rows.get(ownerless.id)).toMatchObject({ refused: false, synced: false });
+		expect(await getPendingCashMovements(SHIFT)).toHaveLength(1);
+	});
+
+	it("puts a refused row back in the sending loop on « send again »", async () => {
+		const saved = await saveOfflineCashMovement(movement({ amount: 60 }));
+		call.mockRejectedValueOnce(httpError(417, "Cash Out Limit"));
+		await syncOfflineCashMovements();
+		expect(rows.get(saved.id).refused).toBe(true);
+		expect(await resendRefusedCashMovement(saved.id)).toBe(true);
+		expect(rows.get(saved.id)).toMatchObject({ refused: false, retry_count: 0, error: null });
+		call.mockImplementation(async (method) => (method === CREATE ? { name: "JE-60" } : null));
+		await syncOfflineCashMovements();
+		expect(creates()).toHaveLength(2);
+		expect(rows.get(saved.id).synced).toBe(true);
+	});
+
+	it("treats a database deadlock as a server to try again, never as a refusal", async () => {
+		const first = await saveOfflineCashMovement(movement({ amount: 10 }));
+		const second = await saveOfflineCashMovement(movement({ amount: 20 }));
+		call.mockRejectedValueOnce(httpError(500, "Deadlock found", "QueryDeadlockError"));
+		const result = await syncOfflineCashMovements();
+		expect(result).toMatchObject({ failed: 0, refused: 0 });
+		expect(creates()).toHaveLength(1);
+		expect(rows.get(first.id)).toMatchObject({ refused: false, retry_count: 0 });
+		expect(rows.get(second.id).synced).toBe(false);
+		// Recorded online at that moment, it is queued with its offline id instead of being lost.
+		call.mockRejectedValueOnce(httpError(500, "Lock wait timeout", "QueryTimeoutError"));
+		await expect(recordCashMovement({ movement: movement() })).resolves.toMatchObject({ queued: true });
+	});
+
+	it("sends no time with an online movement: the server books it at its own time", async () => {
+		call.mockResolvedValueOnce({ name: "JE-1", journal_entry: "JE-1" });
+		await recordCashMovement({ movement: movement() });
+		expect(creates()[0][1]).not.toHaveProperty("moved_at");
+		const queued = await recordCashMovement({ movement: movement(), offline: true });
+		expect(rows.get(queued.id).data.moved_at).toBeGreaterThan(0);
 	});
 });

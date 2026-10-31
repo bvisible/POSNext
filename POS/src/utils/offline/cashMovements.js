@@ -90,6 +90,9 @@ export const DEFAULT_CASH_MOVEMENT_MAX_FILE_SIZE = 10 * 1024 * 1024;
 /** A movement's id in the offline queue, the one the server dedups on. */
 export const generateOfflineCashMovementId = () => `pos_cash_${generateUUID()}`;
 
+/** The database's own failures that a second try clears (MariaDB 1213 deadlock, 1205 lock wait). */
+const TRANSIENT_EXCEPTIONS = new Set(["QueryDeadlockError", "QueryTimeoutError"]);
+
 /**
  * Whether a failed call never got an answer from the server (no network, a gateway down): such a movement
  * is kept in the queue and sent again; any other failure is the server's refusal, shown as it is.
@@ -98,7 +101,22 @@ export const generateOfflineCashMovementId = () => `pos_cash_${generateUUID()}`;
  */
 export const isTransientError = (error) => {
 	const status = Number(error?.status) || 0;
-	return status === 0 || status === 502 || status === 503 || status === 504;
+	if (status === 0 || status === 502 || status === 503 || status === 504) return true;
+	// Two capped tills taking money out at the same moment can deadlock in the database, or wait too long
+	// for a lock: Frappe answers 500 with these types. The movement was not booked; sending it again is safe.
+	return TRANSIENT_EXCEPTIONS.has(error?.exc_type);
+};
+
+/**
+ * Whether a refusal means the till's session is over (it expired while the till was offline): Frappe then
+ * answers the request as a visitor (401, or 403 « Not permitted ») and clears the session cookies. The
+ * movement was not refused; it waits for the cashier to sign in again.
+ * @param {Error} error
+ * @returns {boolean}
+ */
+export const isSessionEnded = (error) => {
+	const status = Number(error?.status) || 0;
+	return status === 401 || (status === 403 && !sessionUserId());
 };
 
 /**
@@ -369,6 +387,27 @@ export const keepRefusedCashMovementForManager = async (id) => {
 };
 
 /**
+ * Put a refused movement back in the sending loop (« Send again »), when what refused it may have changed (a
+ * manager raised the cap, a right was given). Shown, like « Discard », to its cashier and to a till manager;
+ * it is then sent under its own cashier's session, through every check of create_cash_entry.
+ * @param {number} id
+ * @returns {Promise<boolean>}
+ */
+export const resendRefusedCashMovement = async (id) => {
+	const row = await db.cash_movement_queue.get(id);
+	if (!row || !isRefused(row)) return false;
+	await db.cash_movement_queue.update(id, {
+		refused: false,
+		refused_at: null,
+		sync_failed: false,
+		error: null,
+		retry_count: 0,
+		resent_at: Date.now(),
+	});
+	return true;
+};
+
+/**
  * Set a refused movement aside: the server writes what it was and why on its shift (a Comment), then the
  * device forgets it. A reason is required. When the server answers that it booked that offline id after all,
  * the row is marked as booked instead.
@@ -481,7 +520,7 @@ const syncOne = async (row) => {
 		try {
 			await uploadCashMovementAttachment(row.attachment, journalEntry);
 		} catch (error) {
-			if (isTransientError(error)) throw error;
+			if (isTransientError(error) || isSessionEnded(error)) throw error;
 			// Refused for good (the shift closed meanwhile, a file the server will not take): the movement
 			// stands, the receipt is dropped and the reason kept for the dialog.
 			await markSynced(row.id, journalEntry, { attachment_error: messageOf(error) });
@@ -497,7 +536,9 @@ const syncOne = async (row) => {
  * for their own session. The server books each offline id once. When the server cannot be reached the pass
  * stops, so the movements left reach it later in the order they were made. A movement the server refuses
  * leaves the loop as refused, with its reason (never sent again); another error is tried again on the next
- * passes, then treated as refused after MAX_CASH_MOVEMENT_SERVER_ERRORS tries. The dialog's offline data of
+ * passes, then treated as refused after MAX_CASH_MOVEMENT_SERVER_ERRORS tries. No pass runs without a signed-in
+ * cashier, and one stops when the session ends on the way (isSessionEnded): an expired session refuses
+ * nothing. A database deadlock or lock wait is treated like an unreachable server. The dialog's offline data of
  * every shift that had a movement booked is read again, so its totals and the cap's allowance stay true
  * while the dialog is closed.
  * @param {{user?: string|null}} [options]
@@ -506,6 +547,8 @@ const syncOne = async (row) => {
 export const syncOfflineCashMovements = async ({ user = sessionUserId() } = {}) => {
 	const empty = { success: 0, failed: 0, refused: 0, skipped: 0, errors: [] };
 	if (offlineState.isOffline) return empty;
+	// No cashier signed in (the session expired): nothing is sent, so nothing can be refused for it.
+	if (!user) return { ...empty, stopped: "session" };
 	return await syncMutex.withLock(async () => {
 		const pending = await getPendingCashMovements(null, { user });
 		const result = { ...empty, errors: [] };
@@ -525,8 +568,17 @@ export const syncOfflineCashMovements = async ({ user = sessionUserId() } = {}) 
 					log.warn("Server unreachable: the cash movement queue waits", { id: row.id });
 					break;
 				}
-				const tries = (row.retry_count || 0) + 1;
-				const refused = isRefusal(error) || tries >= MAX_CASH_MOVEMENT_SERVER_ERRORS;
+				if (isSessionEnded(error)) {
+					log.warn("The session ended: the cash movement queue waits for a sign-in", { id: row.id });
+					result.stopped = "session";
+					break;
+				}
+				// A row queued before rows named their cashier is sent by whoever is signed in: refused as « not
+				// permitted », it is somebody else's and waits for them, never refused for good.
+				const notThisCashiers = !row.user && Number(error?.status) === 403;
+				const tries = notThisCashiers ? row.retry_count || 0 : (row.retry_count || 0) + 1;
+				const refused =
+					!notThisCashiers && (isRefusal(error) || tries >= MAX_CASH_MOVEMENT_SERVER_ERRORS);
 				log.error(refused ? "Cash movement refused by the server" : "Cash movement not booked yet", {
 					id: row.id,
 					error,
@@ -564,6 +616,8 @@ export const recordCashMovement = async ({ movement, attachment = null, limits =
 		...movement,
 		offline_id: movement.offline_id || generateOfflineCashMovementId(),
 		user: movement.user || sessionUserId(),
+		// Kept only for a movement that ends up in the queue: an online call sends none, and the server books
+		// it at its own time, whatever this device's clock says.
 		moved_at: Number(movement.moved_at) > 0 ? Number(movement.moved_at) : Date.now(),
 	};
 	if (offline) {
@@ -579,7 +633,6 @@ export const recordCashMovement = async ({ movement, attachment = null, limits =
 			remark: queued.remark || undefined,
 			no_vat: queued.no_vat ? 1 : 0,
 			offline_id: queued.offline_id,
-			moved_at: queued.moved_at,
 		});
 	} catch (error) {
 		if (!isTransientError(error)) throw error;

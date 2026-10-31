@@ -239,7 +239,9 @@ def get_closing_shift_data(opening_shift):
 @frappe.whitelist()
 def submit_closing_shift(closing_shift):
 	"""Submit closing shift"""
-	# //// Neoffice — the closing gate called below, imported next to the function it guards.
+	# //// Neoffice — the closing gate called below, imported next to the function it guards; and the
+	# //// refusal of a closing whose figures miss a drawer movement, let through below (task 15).
+	from pos_next.cash_movement import CashMovementsChanged
 	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import require_caller_may_close
 	from pos_next.pos_next.doctype.pos_closing_shift.pos_closing_shift import (
 		submit_closing_shift as submit_shift,
@@ -259,6 +261,10 @@ def submit_closing_shift(closing_shift):
 
 		result = submit_shift(closing_shift)
 		return {"name": result, "status": "success"}
+	# //// Neoffice — a closing whose figures miss a drawer movement recorded meanwhile is refused as it is:
+	# //// the till's closing dialog recognises it and reloads its figures (NeoRestau lot 1, task 15).
+	except CashMovementsChanged:
+		raise
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "Submit Closing Shift Error")
 		frappe.throw(_("Error submitting closing shift: {0}").format(str(e)))

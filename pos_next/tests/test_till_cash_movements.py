@@ -72,7 +72,12 @@ JE_FIELDS = (
 	"posa_cash_movement_note",
 	"posa_cash_movement_offline_id",
 )
-PROFILE_FIELDS = ("posa_cash_mode_of_payment", "posa_cash_entry_templates", "posa_cash_movement_out_limit")
+PROFILE_FIELDS = (
+	"posa_cash_mode_of_payment",
+	"posa_cash_entry_templates",
+	"posa_cash_movement_out_limit",
+	"posa_cash_movement_offline_hours",
+)
 
 
 def _fixture_fields():
@@ -427,24 +432,28 @@ class TestTillCashMovements(CashMovementFixture):
 		profile.set("posa_cash_entry_templates", [{"journal_entry_template": name} for name in templates])
 		profile.save(ignore_permissions=True)
 
+	def _closing_payload(self, data, withdrawal=0):
+		"""What the till's closing dialog submits: the closing data it read, each method counted as expected."""
+		for row in data["payment_reconciliation"]:
+			row["closing_amount"] = row["expected_amount"]
+		data["cash_withdrawal_amount"] = withdrawal
+		payload = {
+			key: value
+			for key, value in data.items()
+			if key in frappe.get_meta("POS Closing Shift").get_valid_columns()
+			or key
+			in ("payment_reconciliation", "taxes", "pos_transactions", "pos_payments", "cash_movements")
+		}
+		payload["doctype"] = "POS Closing Shift"
+		payload.pop("name", None)
+		payload["pos_transactions"] = []
+		return json.dumps(payload, default=str)
+
 	def _close(self, withdrawal=0):
 		"""Close the shift as the till does: the closing data, then the submit of that payload."""
 		with _as(CASHIER):
 			data = shifts.get_closing_shift_data(self.shift)
-			for row in data["payment_reconciliation"]:
-				row["closing_amount"] = row["expected_amount"]
-			data["cash_withdrawal_amount"] = withdrawal
-			payload = {
-				key: value
-				for key, value in data.items()
-				if key in frappe.get_meta("POS Closing Shift").get_valid_columns()
-				or key
-				in ("payment_reconciliation", "taxes", "pos_transactions", "pos_payments", "cash_movements")
-			}
-			payload["doctype"] = "POS Closing Shift"
-			payload.pop("name", None)
-			payload["pos_transactions"] = []
-			name = pos_closing_shift.submit_closing_shift(json.dumps(payload, default=str))
+			name = pos_closing_shift.submit_closing_shift(self._closing_payload(data, withdrawal))
 		return data, name
 
 	# --- booked as declared (defect D1) -----------------------------------------------------------------
@@ -783,22 +792,72 @@ class TestTillCashMovements(CashMovementFixture):
 			getdate("2026-10-30"),
 		)
 
+	def _posting(self, name):
+		"""(posting date, note) of a movement's entry."""
+		values = frappe.db.get_value(
+			"Journal Entry", name, ["posting_date", "posa_cash_movement_note"], as_dict=True
+		)
+		return getdate(values.posting_date), values.posa_cash_movement_note or ""
+
 	def test_an_offline_movement_is_booked_on_the_day_the_money_moved_not_the_day_it_synced(self):
-		# Recorded offline at 23:00 two days ago, on a shift opened that morning, sent by the queue today: the
-		# day the money moved is the VAT period it belongs to.
+		# Recorded offline at 23:00 two days ago, on a shift opened that morning, sent by the queue today within
+		# the till's window (here 72 h): the day the money moved is the VAT period it belongs to, and no note.
+		frappe.db.set_value("POS Profile", PROFILE, "posa_cash_movement_offline_hours", 72)
 		opened = datetime.combine(add_days(getdate(), -2), time(8, 0))
 		frappe.db.set_value("POS Opening Shift", self.shift, "period_start_date", opened)
 		late = opened.replace(hour=23)
-		result = self._record(self.supplier, 30, offline_id="pos_cash_test-day", moved_at=_epoch_ms(late))
-		posting_date = lambda name: getdate(frappe.db.get_value("Journal Entry", name, "posting_date"))  # noqa: E731
-		self.assertEqual(posting_date(result["name"]), getdate(late))
-		# A device clock behind the shift's start books on its start; one ahead of the server, or a value
-		# that is not a time, books now.
-		early = self._record(self.supplier, 5, moved_at=_epoch_ms(opened - timedelta(days=30)))
-		self.assertEqual(posting_date(early["name"]), getdate(opened))
+		result = self._record(
+			self.supplier, 30, offline_id="pos_cash_test-day", moved_at=_epoch_ms(late), remark="Wine"
+		)
+		self.assertEqual(self._posting(result["name"]), (getdate(late), "Wine"))
+		# The same moment past the window (the default 24 h, then 0: the till's clock is never believed).
 		today = cash_movement.business_day(opened, now_datetime())
-		for moment in (_epoch_ms(now_datetime() + timedelta(days=30)), "soon", None):
-			self.assertEqual(posting_date(self._record(self.supplier, 1, moved_at=moment)["name"]), today)
+		for hours in (24, 0):
+			frappe.db.set_value("POS Profile", PROFILE, "posa_cash_movement_offline_hours", hours)
+			date, note = self._posting(self._record(self.supplier, 1, moved_at=_epoch_ms(late))["name"])
+			self.assertEqual(date, today)
+			self.assertIn("Booked on the day it reached the server", note)
+
+	def test_a_till_clock_that_cannot_be_right_books_on_the_day_it_arrives_with_a_note(self):
+		# A shift open for 60 days: a clock set back must never book into a past, closed VAT period.
+		opened = datetime.combine(add_days(getdate(), -60), time(8, 0))
+		frappe.db.set_value("POS Opening Shift", self.shift, "period_start_date", opened)
+		today = cash_movement.business_day(opened, now_datetime())
+		clocks = {
+			"30 days behind": now_datetime() - timedelta(days=30),
+			"in 2000": datetime(2000, 1, 1, 12, 0),
+			"in the future": now_datetime() + timedelta(days=30),
+		}
+		for label, clock in clocks.items():
+			with self.subTest(label):
+				name = self._record(self.supplier, 1, remark="Receipt", moved_at=_epoch_ms(clock))["name"]
+				date, note = self._posting(name)
+				self.assertEqual(date, today)
+				self.assertTrue(note.startswith("Receipt — "), note)
+				self.assertIn("Booked on the day it reached the server", note)
+		# An online movement sends no time, nor anything that is not one: booked now, without a note.
+		for moment in (None, "soon"):
+			self.assertEqual(
+				self._posting(self._record(self.supplier, 1, moved_at=moment)["name"]), (today, "")
+			)
+		# The window was the default one (the till's field left as it came).
+		self.assertEqual(
+			frappe.db.get_value("POS Profile", PROFILE, "posa_cash_movement_offline_hours"),
+			cash_movement.OFFLINE_WINDOW_HOURS,
+		)
+
+	def test_a_till_moment_before_the_shift_started_is_not_believed(self):
+		# Within the window, but before the shift existed (the till's clock is behind): believed, it would book
+		# on the shift's opening day, two days back; it is booked on the day it arrives, with a note.
+		frappe.db.set_value("POS Profile", PROFILE, "posa_cash_movement_offline_hours", 72)
+		opened = datetime.combine(add_days(getdate(), -2), time(20, 0))
+		frappe.db.set_value("POS Opening Shift", self.shift, "period_start_date", opened)
+		date, note = self._posting(
+			self._record(self.supplier, 1, moved_at=_epoch_ms(opened.replace(hour=15)))["name"]
+		)
+		self.assertEqual(date, cash_movement.business_day(opened, now_datetime()))
+		self.assertNotEqual(date, getdate(opened))
+		self.assertIn("Booked on the day it reached the server", note)
 
 	# --- cancel at the till ------------------------------------------------------------------------------
 
@@ -819,6 +878,22 @@ class TestTillCashMovements(CashMovementFixture):
 		with _as(MANAGER):
 			cash_entry.cancel_cash_entry(by_cashier["name"])
 		self.assertEqual(frappe.db.get_value("Journal Entry", by_cashier["name"], "docstatus"), 2)
+
+	def test_a_cancel_that_read_the_movement_before_another_cancel_answers_already_cancelled(self):
+		# Two cancels of one movement: the second read the entry (submitted) before the first committed, then
+		# waited for the shift's lock. Under the lock it reads the entry's state again: « already cancelled »,
+		# never a second cancel of a cancelled entry. The stale first read is simulated (_tagged_movement): this
+		# test's own connection cannot hold a snapshot older than its own writes.
+		result = self._record(self.supplier, 30)
+		with _as(CASHIER):
+			cash_entry.cancel_cash_entry(result["name"])
+		stale = frappe._dict(
+			name=result["name"], docstatus=1, owner=CASHIER, posa_cash_movement_shift=self.shift
+		)
+		with patch.object(cash_entry, "_tagged_movement", return_value=stale), _as(CASHIER):
+			answer = cash_entry.cancel_cash_entry(result["name"])
+		self.assertTrue(answer.get("already_cancelled"), answer)
+		self.assertEqual(frappe.db.get_value("Journal Entry", result["name"], "docstatus"), 2)
 
 	def test_a_movement_of_a_closed_shift_is_not_cancelled_at_the_till(self):
 		result = self._record(self.supplier, 30)
@@ -871,6 +946,20 @@ class TestTillCashMovements(CashMovementFixture):
 		with _as(CASHIER):
 			data = cash_entry.get_cash_movement_dialog_data(self.shift)
 		self.assertEqual((data["out_limit"], data["out_total"], data["remaining"]), (100, 100, 0))
+
+	def test_the_cap_compares_in_the_currencys_precision(self):
+		# A currency without cents: 60 out, then 40.40 rounds to 100, within a cap of 100; with two decimals the
+		# same 40.40 makes 100.40 and is refused.
+		frappe.db.set_value("POS Profile", PROFILE, "posa_cash_movement_out_limit", 100)
+		self._record(self.supplier, 60)
+		opening = frappe._dict(name=self.shift, pos_profile=PROFILE, company=self.company)
+		with patch.object(cash_movement, "currency_precision", return_value=0):
+			cash_entry._check_out_limit(opening, 40.4)
+		with (
+			patch.object(cash_movement, "currency_precision", return_value=2),
+			self.assertRaises(frappe.ValidationError),
+		):
+			cash_entry._check_out_limit(opening, 40.4)
 
 	# --- the shift's lock gives a fresh view of the ledger ------------------------------------------------
 
@@ -956,6 +1045,37 @@ class TestTillCashMovements(CashMovementFixture):
 			[row["journal_entry"] for row in cash_movement.closing_rows(self.shift, lock=True)], [elsewhere]
 		)
 
+	def test_a_closing_whose_figures_miss_a_movement_recorded_since_its_dialog_opened_is_refused(self):
+		# The closing dialog read its figures (5 out), then another login took 20 out, then the dialog's payload
+		# was submitted: stored, it would list both movements with an expected cash that counts only the first,
+		# and a drawer counted right (25) would show a false shortfall of 20. Refused through the till's endpoint
+		# as such (the dialog recognises it and reads its figures again); opened again, it counts the 20.
+		# (One connection is enough here: the 20 is committed before the submit, as in production; the second
+		# connection of the race tests would hide it from the test's own snapshot.)
+		self._record(self.supplier, 5)
+		with _as(CASHIER):
+			data = shifts.get_closing_shift_data(self.shift)
+		self._record(self.supplier, 20, user=MANAGER)
+		with _as(CASHIER), self.assertRaises(frappe.ValidationError) as refused:
+			shifts.submit_closing_shift(self._closing_payload(data))
+		# As such, not reworded by the endpoint: the dialog recognises it by its type.
+		self.assertEqual(type(refused.exception).__name__, "CashMovementsChanged")
+		self.assertEqual(frappe.db.get_value("POS Opening Shift", self.shift, "status"), "Open")
+		data, closing = self._close()
+		expected = {
+			row["mode_of_payment"]: flt(row["expected_amount"]) for row in data["payment_reconciliation"]
+		}
+		self.assertEqual(expected[MODE], 50 - 5 - 20)
+		self.assertEqual(
+			sorted(
+				flt(amount)
+				for amount in frappe.get_all(
+					"POS Closing Shift Cash Movement", filters={"parent": closing}, pluck="amount"
+				)
+			),
+			[5, 20],
+		)
+
 	# --- offline: the queued id is booked once ---------------------------------------------------------
 
 	def test_a_queued_movement_is_booked_once(self):
@@ -1015,6 +1135,7 @@ class TestTillCashMovements(CashMovementFixture):
 			"Paid back to the supplier",
 			"pos_cash_test-refused",
 			CASHIER,
+			"As reported by the till",
 		):
 			self.assertIn(part, comment.content)
 		# A till manager sets aside any cashier's movement; the dialog tells the till who reads it.
@@ -1024,6 +1145,53 @@ class TestTillCashMovements(CashMovementFixture):
 				reason="Checked with the cashier", **{**refused, "offline_id": "pos_cash_test-other"}
 			)
 		self.assertEqual((data["user"], data["is_till_manager"]), (MANAGER, True))
+
+	def _refused_after_closing(self):
+		"""A movement booked under an offline id, the shift closed, and the payload of a refused one."""
+		booked = self._record(self.supplier, 10, offline_id="pos_cash_test-booked")
+		self._close()
+		return booked, {
+			"pos_opening_shift": self.shift,
+			"offline_id": "pos_cash_test-refused",
+			"template_title": self.supplier,
+			"direction": "out",
+			"amount": 30,
+			"refusal": "Shift is not open",
+			"recorded_by": CASHIER,
+		}
+
+	def test_the_set_aside_trace_is_administrators_and_its_cashier_cannot_rewrite_it(self):
+		from frappe.desk.form.utils import update_comment
+
+		_booked, refused = self._refused_after_closing()
+		with _as(CASHIER):
+			first = cash_entry.set_aside_refused_cash_movement(reason="Paid back to the supplier", **refused)
+		self._refused(CASHIER, lambda: update_comment(first["comment"], "Nothing happened"))
+		self.assertEqual(frappe.db.get_value("Comment", first["comment"], "owner"), "Administrator")
+
+	def test_another_offline_id_is_another_movement_even_one_a_like_pattern_matches(self):
+		# « _ » and « % » are wildcards of a LIKE: « pos_cash_test-refuse_ » would match « …-refused ».
+		_booked, refused = self._refused_after_closing()
+		with _as(CASHIER):
+			first = cash_entry.set_aside_refused_cash_movement(reason="First", **refused)
+			lookalike = cash_entry.set_aside_refused_cash_movement(
+				reason="Second", **{**refused, "offline_id": "pos_cash_test-refuse_"}
+			)
+		self.assertFalse(lookalike.get("already_recorded"), lookalike)
+		self.assertNotEqual(lookalike["comment"], first["comment"])
+
+	def test_booked_means_booked_on_this_shift(self):
+		# An entry of another shift under that offline id does not hide this shift's refused movement.
+		booked, refused = self._refused_after_closing()
+		frappe.db.set_value(
+			"Journal Entry", booked["name"], "posa_cash_movement_shift", f"{PREFIX} another shift"
+		)
+		with _as(CASHIER):
+			answer = cash_entry.set_aside_refused_cash_movement(
+				reason="Not this shift's", **{**refused, "offline_id": "pos_cash_test-booked"}
+			)
+		self.assertNotIn("booked", answer)
+		self.assertTrue(answer.get("comment"), answer)
 
 	def test_a_cancelled_queued_movement_is_not_booked_again(self):
 		first = self._record(self.supplier, 30, offline_id="pos_cash_test-2")
