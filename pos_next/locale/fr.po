@@ -17602,3 +17602,31 @@ msgstr "{0} article prêt"
 #: POS/src/pages/Runner.vue:359
 msgid "{0} items ready"
 msgstr "{0} articles prêts"
+
+# //// Neoffice — French for the switch between the restaurant's screens and the display modes of the runner (lot 1, task 38a-2, ruling 132). The three screens are asked under the context « Restaurant screen »: the bare words are shared by the whole site. The runner's third display mode is no longer the dining room's plan (that is a screen now) but « on the plan ».
+#: POS/src/components/restaurant/RestaurantScreenSwitch.vue:12
+msgid "Screen"
+msgstr "Écran"
+
+#: POS/src/components/restaurant/RestaurantScreenSwitch.vue:38
+msgctxt "Restaurant screen"
+msgid "Preparation"
+msgstr "Préparation"
+
+#: POS/src/components/restaurant/RestaurantScreenSwitch.vue:39
+msgctxt "Restaurant screen"
+msgid "Runner"
+msgstr "Runner"
+
+#: POS/src/components/restaurant/RestaurantScreenSwitch.vue:40
+msgctxt "Restaurant screen"
+msgid "Floor plan"
+msgstr "Plan de salle"
+
+#: POS/src/pages/Runner.vue:52
+msgid "Display"
+msgstr "Affichage"
+
+#: POS/src/pages/Runner.vue:251
+msgid "On the plan"
+msgstr "Sur le plan"

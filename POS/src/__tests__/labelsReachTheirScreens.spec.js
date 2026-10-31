@@ -209,7 +209,9 @@ describe("the catalogue", () => {
 })
 
 describe("the plan view", () => {
-	it("reads Plan de salle on the pass, and the other two views keep their words", async () => {
+	// Task 38a-2, ruling 132: « Plan de salle » is a SCREEN now (the switch between the restaurant's screens), so the pass's third
+	// display mode, which was named after it, reads « Sur le plan »: a mode of the same screen, never a destination
+	it("reads Sur le plan on the pass, and the other two views keep their words; Plan de salle is the screen switch's", async () => {
 		const wrapper = mountWith(Runner, {
 			global: { stubs: { RunnerOrderCard: true } },
 		})
@@ -219,9 +221,14 @@ describe("the plan view", () => {
 			.findAll("button")
 			.map((button) => button.text())
 			.filter((text) =>
-				["Par table", "Par poste", "Plan de salle", "bare Plan"].includes(text),
+				["Par table", "Par poste", "Sur le plan", "bare Plan"].includes(text),
 			)
-		expect(views).toEqual(["Par table", "Par poste", "Plan de salle"])
+		expect(views).toEqual(["Par table", "Par poste", "Sur le plan"])
+		const screens = wrapper
+			.get('[data-test="screen-switch"], [aria-label="Écran"]')
+			.findAll("button")
+			.map((button) => button.text())
+		expect(screens).toEqual(["Préparation", "Runner", "Plan de salle"])
 	})
 
 	it("reads Plan de salle on the toggle of the reservation form too, and List stays List", async () => {

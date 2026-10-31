@@ -38,26 +38,18 @@
 			@refresh="loadOrders"
 			@back="$router.push('/')"
 		>
+			<!-- //// Neoffice — the switch between the restaurant's screens (task 38a-2, ruling 132), with the filters that are on: the restaurant of the address, the station, the room -->
+			<template #switch>
+				<RestaurantScreenSwitch
+					:current="SCREEN_RUNNER"
+					:desk-session="deskSession"
+					:filters="{ restaurant: urlRestaurant, station: selectedStation, room: activeArea }"
+				/>
+			</template>
 			<template #view>
-				<!-- View mode toggle (3 modes) -->
-				<div class="flex flex-none rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-					<button
-						@click="viewMode = 'table'"
-						class="px-3 py-1.5 text-sm font-medium transition-colors"
-						:class="viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
-					>{{ __("By Table") }}</button>
-					<button
-						@click="viewMode = 'station'"
-						class="px-3 py-1.5 text-sm font-medium transition-colors"
-						:class="viewMode === 'station' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
-					>{{ __("By Station") }}</button>
-					<!-- The plan of the dining room ("Plan de salle" in French), under a context of its own: the bare word "Plan" is shared by the whole site -->
-					<button
-						@click="viewMode = 'plan'"
-						class="px-3 py-1.5 text-sm font-medium transition-colors"
-						:class="viewMode === 'plan' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
-					>{{ __("Plan", null, "Floor plan view") }}</button>
-				</div>
+				<!-- //// Neoffice — the display modes of THIS screen, named as such (task 38a-2, ruling 132): « By table », « By station », « On the plan ». The last one was « Plan de salle »,
+				     the very word of a destination, next to a switch that now has a real « Plan de salle ». -->
+				<SegmentedControl v-model="viewMode" small name="view" :label="__('Display')" :options="viewModes" />
 			</template>
 			<template #filters>
 				<!-- The rooms and the stations are ONE line, the same on the kitchen screen. The plan view has no station to choose -->
@@ -213,6 +205,9 @@ import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 //// Neoffice — the one top bar of the service screens, the tab's title and the size of the text (task 38a-2, rulings 109, 128, 129)
 import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
+import RestaurantScreenSwitch from "@/components/restaurant/RestaurantScreenSwitch.vue"
+import SegmentedControl from "@/components/restaurant/SegmentedControl.vue"
+import { SCREEN_RUNNER } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import { countDishes } from "@/utils/kitchenRunner"
@@ -250,7 +245,14 @@ const allFloorStations = ref([])
 const loading = ref(true)
 const deliverLoading = ref(false)
 const viewMode = ref("table")
-const selectedArea = ref(localStorage.getItem("pos_runner_area") || "")
+const viewModes = computed(() => [
+	{ id: "table", label: __("By Table") },
+	{ id: "station", label: __("By Station") },
+	{ id: "plan", label: __("On the plan") },
+])
+//// Neoffice — the room in the address wins over the one the device remembers (task 38a-2, ruling 132): a switch from another screen carries it
+const urlRoom = urlParams.get("room")
+const selectedArea = ref(urlRoom || localStorage.getItem("pos_runner_area") || "")
 const selectedStation = ref(urlStation || null)
 const planArea = ref("")
 const selectedPlanTable = ref(null)

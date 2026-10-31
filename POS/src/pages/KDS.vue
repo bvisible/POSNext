@@ -30,6 +30,15 @@
 			@refresh="loadOrders"
 			@back="$router.push('/')"
 		>
+			<!-- //// Neoffice — the switch between the restaurant's screens (task 38a-2, ruling 132), with the filters that are on: the restaurant of the address, the station, the room -->
+			<template #switch>
+				<RestaurantScreenSwitch
+					:current="SCREEN_PREPARATION"
+					:desk-session="deskSession"
+					:runner-enabled="runnerOn"
+					:filters="{ restaurant: screenRestaurant, station: selectedStation, room: activeArea }"
+				/>
+			</template>
 			<template #chip>
 				<!-- The switch of the layout moves up to row 1 when row 2 has no chip left to hold it: a screen bound to its station must not pay a row for it -->
 				<KitchenLayoutSwitch v-if="canSplit && !filtersShown" :layout="layout" @update:layout="chooseLayout" />
@@ -136,6 +145,8 @@ import { ref, onMounted, onUnmounted, computed, watch } from "vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 //// Neoffice — the one top bar of the service screens, and the tab's title (task 38a-2, rulings 128 and 129)
 import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
+import RestaurantScreenSwitch from "@/components/restaurant/RestaurantScreenSwitch.vue"
+import { SCREEN_PREPARATION } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { onDark } from "@/utils/stationColors"
 //// Neoffice — the two bands, their layouts and their switch (NeoRestau lot 1, task 23); the ticket card is drawn by the band
@@ -189,7 +200,9 @@ const showDelivered = ref(
 // room of its table (`area`); a takeaway order sits at no table, so it has none and shows under "all rooms" only.
 const areas = ref([])
 const areasRead = ref(false)
-const selectedArea = ref(localStorage.getItem("pos_kds_area") || "")
+//// Neoffice — the room in the address wins over the one the device remembers (task 38a-2, ruling 132): a switch from another screen carries it
+const urlRoom = urlParams.get("room")
+const selectedArea = ref(urlRoom || localStorage.getItem("pos_kds_area") || "")
 let socket = null
 let autoRefreshInterval = null
 

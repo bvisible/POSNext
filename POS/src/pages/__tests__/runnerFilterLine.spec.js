@@ -482,7 +482,7 @@ describe("the room remembered by the runner", () => {
 
 		await wrapper
 			.findAll("button")
-			.find((button) => button.text() === "Plan")
+			.find((button) => button.text() === "On the plan")
 			.trigger("click")
 		await flushPromises()
 
@@ -497,7 +497,7 @@ describe("the plan view of the runner", () => {
 		const wrapper = await open()
 		const plan = wrapper
 			.findAll("button")
-			.find((button) => button.text() === "Plan")
+			.find((button) => button.text() === "On the plan")
 
 		await plan.trigger("click")
 		await flushPromises()

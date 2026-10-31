@@ -302,7 +302,7 @@ describe("the floor plan in dark mode (task 46)", () => {
 		const wrapper = await runner()
 		await wrapper
 			.findAll("button")
-			.find((b) => b.text() === "Plan")
+			.find((b) => b.text() === "On the plan")
 			.trigger("click")
 		await flushPromises()
 		return wrapper
