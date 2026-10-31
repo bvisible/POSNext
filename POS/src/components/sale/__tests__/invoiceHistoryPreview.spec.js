@@ -2,8 +2,8 @@
 /**
  * Each row of « Historique des factures » says what its ticket holds (NeoRestau lot 1, task 29).
  *
- * The row shows the first three lines of the ticket ("2× Pizza Margherita · 1× Coca-Cola 33 cl · …"), then
- * "+n articles" when there are more, so that one sees at a glance what a sale or a table's order was; the eye
+ * The row shows the first three dishes of the ticket ("2× Pizza Margherita · 1× Coca-Cola 33 cl · …"), then
+ * "+n items" when there are more, so that one sees at a glance what a sale or a table's order was; the eye
  * icon stays the way to see everything.
  * @vitest-environment jsdom
  */
@@ -63,6 +63,9 @@ async function show(rows) {
 }
 
 const previews = (wrapper) => wrapper.findAll("[data-testid='invoice-preview']");
+// The dishes of a preview, one per line (stacked: no separator, and jsdom has no matchMedia so it is the wide layout)
+const dishes = (preview) => preview.findAll("[data-testid='invoice-preview-line']").map((dish) => dish.text());
+const more = (preview) => preview.find("[data-testid='invoice-preview-more']");
 
 describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 	beforeEach(() => {
@@ -77,11 +80,11 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 			}),
 		]);
 		const [preview] = previews(wrapper);
-		expect(preview.text()).toContain("2× Pizza Margherita · 1× Coca-Cola 33 cl · 1× Tiramisu");
-		expect(preview.text()).toContain("+2 articles");
+		expect(dishes(preview)).toEqual(["2× Pizza Margherita", "1× Coca-Cola 33 cl", "1× Tiramisu"]);
+		expect(more(preview).text()).toBe("+2 items");
 	});
 
-	it("says « +1 article » for a single line left over", async () => {
+	it("says « +1 item » for a single line left over", async () => {
 		const wrapper = await show([
 			invoice("FA-1", {
 				items_preview: [line("A", 1), line("B", 1), line("C", 1)],
@@ -89,8 +92,8 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 			}),
 		]);
 		const text = previews(wrapper)[0].text();
-		expect(text).toContain("+1 article");
-		expect(text).not.toContain("+1 articles");
+		expect(text).toContain("+1 item");
+		expect(text).not.toContain("+1 items");
 	});
 
 	it("shows no count when the ticket fits the preview", async () => {
@@ -102,9 +105,10 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 				items_count: 2,
 			}),
 		]);
-		const text = previews(wrapper)[0].text();
-		expect(text).toBe("2× Burger · 1× Fries");
-		expect(text).not.toContain("+");
+		const [preview] = previews(wrapper);
+		expect(dishes(preview)).toEqual(["2× Burger", "1× Fries"]);
+		expect(more(preview).exists()).toBe(false);
+		expect(preview.text()).not.toContain("+");
 	});
 
 	it("keeps a weighed quantity and names an unusual unit", async () => {
@@ -114,7 +118,7 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 				items_count: 2,
 			}),
 		]);
-		expect(previews(wrapper)[0].text()).toBe("0.35× Salmon fillet · 0.75 Litre Wine");
+		expect(dishes(previews(wrapper)[0])).toEqual(["0.35× Salmon fillet", "0.75 Litre Wine"]);
 	});
 
 	it("truncates a long dish name with an ellipsis, the whole name staying in the tooltip", async () => {
@@ -128,11 +132,75 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 		expect(preview.attributes("title")).toContain(long);
 	});
 
-	it("limits the preview to two lines of text, whatever the lines", async () => {
+	it("puts the preview in the middle of the row, between the left block and the amount", async () => {
 		const wrapper = await show([
-			invoice("FA-5", { items_preview: [line("Pizza", 1)], items_count: 1 }),
+			invoice("FA-5", { items_preview: [line("Pizza", 1), line("Cola", 1)], items_count: 2 }),
 		]);
-		expect(wrapper.find("[data-testid='invoice-preview'] p").classes()).toContain("line-clamp-2");
+		const preview = wrapper.find("[data-testid='invoice-preview']");
+		const grid = preview.element.parentElement;
+		// Three tracks from 768 px up: a fixed left, the flexible middle, a fixed right, so that the middle starts at the
+		// same place on every row; below, two tracks and the preview under the left block
+		expect(grid.className).toContain("grid-cols-[minmax(0,1fr)_auto]");
+		expect(grid.className).toContain("md:grid-cols-[17rem_minmax(0,1fr)_7rem]");
+		// No gap between rows: a row with no preview has no second row to pay for
+		expect(grid.className).not.toContain("gap-y");
+		const [left, middle, right] = Array.from(grid.children);
+		expect(left.textContent).toContain("FA-5");
+		expect(middle).toBe(preview.element);
+		expect(right.querySelector("[title='View Details']")).not.toBeNull();
+		expect(middle.className).toContain("md:col-start-2");
+		expect(right.className).toContain("md:col-start-3");
+		// A row with a preview and one without keep the same tracks
+		expect(left.className).toContain("col-start-1");
+	});
+
+	it("leaves the middle empty and the amount where it was for a ticket with no line", async () => {
+		const wrapper = await show([invoice("FA-5b", { items_preview: [], items_count: 0 })]);
+		const grid = wrapper.find("[title='View Details']").element.closest(".grid");
+		const [left, right] = Array.from(grid.children);
+		expect(left.textContent).toContain("FA-5b");
+		expect(right.className).toContain("md:col-start-3");
+	});
+
+	it("keeps the list's height: the row does not grow, so the list stays max-h-96", async () => {
+		const wrapper = await show([
+			invoice("FA-5c", { items_preview: [line("Pizza", 1)], items_count: 1 }),
+		]);
+		expect(wrapper.find(".overflow-y-auto").classes()).toContain("max-h-96");
+		expect(wrapper.find(".overflow-y-auto").classes()).not.toContain("max-h-[28rem]");
+	});
+
+	it("stacks the dishes of a row, one per line", async () => {
+		const wrapper = await show([
+			invoice("FA-5d", {
+				items_preview: [line("Pizza", 2), line("Cola", 1), line("Tiramisu", 1)],
+				items_count: 3,
+			}),
+		]);
+		const dishes = wrapper.findAll("[data-testid='invoice-preview-line']");
+		expect(dishes.map((dish) => dish.find(".truncate").text())).toEqual([
+			"2× Pizza",
+			"1× Cola",
+			"1× Tiramisu",
+		]);
+	});
+
+	it("keeps each page's previews when the next page is loaded", async () => {
+		const first = Array.from({ length: 20 }, (_, i) =>
+			invoice(`FA-P1-${i}`, { items_preview: [line(`Dish ${i}`, 1)], items_count: 1 }),
+		);
+		const wrapper = await show(first);
+		const more = wrapper.findAll("button").find((button) => button.text() === "Load More");
+		await more.trigger("click");
+		state.options.onSuccess([
+			invoice("FA-P2-0", { items_preview: [line("Second page dish", 2)], items_count: 1 }),
+		]);
+		await flushPromises();
+		const texts = previews(wrapper).map((p) => p.text());
+		expect(texts).toHaveLength(21);
+		expect(texts[0]).toBe("1× Dish 0");
+		expect(texts[19]).toBe("1× Dish 19");
+		expect(texts[20]).toBe("2× Second page dish");
 	});
 
 	it("shows nothing, not even an empty line, for a ticket with no line", async () => {
@@ -162,7 +230,7 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 				items_count: 12,
 			}),
 		]);
-		expect(previews(wrapper)[0].text()).toContain("+9 articles");
+		expect(previews(wrapper)[0].text()).toContain("+9 items");
 	});
 
 	it("gives a sale still held on the device the same preview, from its own lines", async () => {
@@ -177,9 +245,9 @@ describe("InvoiceHistoryDialog — the preview of a ticket", () => {
 				],
 			}),
 		]);
-		const text = previews(wrapper)[0].text();
-		expect(text).toContain("2× Burger · 1× Fries · 1× Cola");
-		expect(text).toContain("+1 article");
+		const [preview] = previews(wrapper);
+		expect(dishes(preview)).toEqual(["2× Burger", "1× Fries", "1× Cola"]);
+		expect(more(preview).text()).toBe("+1 item");
 	});
 
 	it("leaves the row's other lines and its three icons as they were", async () => {

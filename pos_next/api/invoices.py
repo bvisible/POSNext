@@ -2970,28 +2970,33 @@ def _readable_invoice_names(invoice_names):
 
 # //// Neoffice — added function (no upstream equivalent). The lines of every invoice of the page in ONE query,
 # //// by invoice, in the order of the ticket. Upstream read them one query per row (20 for the history dialog,
-# //// 100 for the offline preload).
+# //// 100 for the offline preload). Each line says whether its item is internal (Item.is_internal_item, a Custom
+# //// Field of neoffice_theme: a site without it has no internal item): the preview leaves those out.
 def _ticket_lines(invoice_names):
 	if not invoice_names:
 		return {}
+	internal = "IFNULL(itm.is_internal_item, 0)" if frappe.db.has_column("Item", "is_internal_item") else "0"
 	lines = frappe.db.sql(
-		"""
+		f"""
 		SELECT
-			parent,
-			item_code,
-			item_name,
-			qty,
-			rate,
-			amount,
-			uom,
-			stock_uom
+			sii.parent,
+			sii.item_code,
+			sii.item_name,
+			sii.qty,
+			sii.rate,
+			sii.amount,
+			sii.uom,
+			sii.stock_uom,
+			{internal} AS is_internal_item
 		FROM
-			`tabSales Invoice Item`
+			`tabSales Invoice Item` sii
+		LEFT JOIN
+			`tabItem` itm ON itm.name = sii.item_code
 		WHERE
-			parent IN %(invoice_names)s
+			sii.parent IN %(invoice_names)s
 		ORDER BY
-			parent,
-			idx
+			sii.parent,
+			sii.idx
 	""",
 		{"invoice_names": tuple(invoice_names)},
 		as_dict=True,
@@ -3000,6 +3005,20 @@ def _ticket_lines(invoice_names):
 	for line in lines:
 		by_invoice.setdefault(line.parent, []).append(line)
 	return by_invoice
+
+
+# //// Neoffice — added function (no upstream equivalent). The item the restaurant of a till adds its tips as
+# //// (the tip line goes after the dishes: update_invoice appends it), None when the till has no restaurant.
+def _tip_item_of(pos_profile):
+	from pos_next.restaurant.settings import get_restaurant_settings_for_profile
+
+	return get_restaurant_settings_for_profile(pos_profile).get("tip_item")
+
+
+# //// Neoffice — added function (no upstream equivalent). A line of a ticket the preview names: a dish, not the
+# //// tip line nor an internal item (three dishes and a tip must not read « +1 article »).
+def _is_a_dish(line, tip_item):
+	return not line.is_internal_item and not (tip_item and line.item_code == tip_item)
 
 
 @frappe.whitelist()
@@ -3021,9 +3040,10 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 		List of invoice dicts with basic fields (no per-invoice item loading)
 		//// Neoffice — the line above was never true: each row has always carried its payments and its lines
 		(``items``). The lines now come for the whole page in one query, and each row also carries
-		``items_count`` (the number of lines of the ticket) and ``items_preview`` (its first three lines,
-		``{item_name, qty, uom}``, ``uom`` being the line's unit only when it is not the item's own), for the
-		till's invoice history. A user who may not read an invoice gets no line of it.
+		``items_count`` (the number of dishes of the ticket: its lines but the restaurant's tip line and the
+		internal items) and ``items_preview`` (its first three dishes, ``{item_name, qty, uom}``, ``uom`` being the
+		line's unit only when it is not the item's own), for the till's invoice history. A user who may not read
+		an invoice gets no line of it.
 	"""
 	if not pos_profile:
 		frappe.throw(_("POS Profile is required"))
@@ -3136,8 +3156,9 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 	# //// Neoffice — upstream read the lines of each invoice in a query of its own (one query per row: 20 for
 	# //// the history dialog, 100 for the offline preload) and handed them to whoever could list the invoice.
 	# //// The lines of the whole page now come in ONE query, only for the invoices the user may read, and each row
-	# //// also says how many lines its ticket has and shows the first three, for the invoice history dialog.
+	# //// also says how many dishes its ticket has and shows the first three, for the invoice history dialog.
 	lines_by_invoice = _ticket_lines(_readable_invoice_names(invoice_names))
+	tip_item = _tip_item_of(pos_profile) if lines_by_invoice else None
 	for invoice in invoices:
 		invoice.payments = payments_by_invoice.get(invoice.name, [])
 		# //// Neoffice — this invoice's lines, taken from the page's one query above (none when unreadable).
@@ -3146,7 +3167,9 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 		invoice.items = [
 			{key: line[key] for key in ("item_code", "item_name", "qty", "rate", "amount")} for line in lines
 		]
-		invoice.items_count = len(lines)
+		# The preview and its count speak of the dishes only; `items` above keeps every line
+		dishes = [line for line in lines if _is_a_dish(line, tip_item)]
+		invoice.items_count = len(dishes)
 		invoice.items_preview = [
 			{
 				"item_name": line.item_name or line.item_code,
@@ -3154,7 +3177,7 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 				# The unit only when it is not the item's own, as the cart says it
 				"uom": line.uom if line.uom and line.uom != line.stock_uom else None,
 			}
-			for line in lines[:INVOICE_PREVIEW_LINES]
+			for line in dishes[:INVOICE_PREVIEW_LINES]
 		]
 
 	return invoices

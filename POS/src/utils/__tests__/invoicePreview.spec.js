@@ -6,7 +6,7 @@
  * held on the device (an offline sale) carries its lines itself and gets the same preview.
  */
 import { describe, expect, it } from "vitest";
-import { PREVIEW_NAME_MAX, invoicePreview, truncateName } from "@/utils/invoicePreview";
+import { PREVIEW_NAME_MAX, fittingLines, invoicePreview, truncateName } from "@/utils/invoicePreview";
 
 const line = (item_name, qty, uom = null) => ({ item_name, qty, uom });
 
@@ -22,6 +22,12 @@ describe("invoicePreview", () => {
 		});
 		expect(preview.text).toBe("2× Pizza Margherita · 1× Coca-Cola 33 cl · 1× Tiramisu");
 		expect(preview.hidden).toBe(2);
+		// Each dish on its own, for the row to draw
+		expect(preview.lines.map((dish) => dish.text)).toEqual([
+			"2× Pizza Margherita",
+			"1× Coca-Cola 33 cl",
+			"1× Tiramisu",
+		]);
 	});
 
 	it("has nothing left over when the ticket has three lines or fewer", () => {
@@ -75,6 +81,7 @@ describe("invoicePreview", () => {
 
 	it("shows nothing for a ticket with no line", () => {
 		expect(invoicePreview({ items_preview: [], items_count: 0 }).text).toBe("");
+		expect(invoicePreview({ items_preview: [], items_count: 0 }).lines).toEqual([]);
 		expect(invoicePreview({ items_preview: [], items_count: 0 }).hidden).toBe(0);
 		expect(invoicePreview({}).text).toBe("");
 		expect(invoicePreview({ items: [] }).text).toBe("");
@@ -135,8 +142,57 @@ describe("truncateName", () => {
 		expect(cut.endsWith(" …")).toBe(false);
 	});
 
+	it("never cuts through a surrogate pair: an emoji at the boundary stays whole", () => {
+		// The emoji's first UTF-16 unit is the last one a cut by units (slice(0, max - 1)) keeps: a lone surrogate
+		const text = `${"a".repeat(PREVIEW_NAME_MAX - 2)}😀${"b".repeat(10)}`;
+		const cut = truncateName(text, PREVIEW_NAME_MAX);
+		expect(cut).toBe(`${"a".repeat(PREVIEW_NAME_MAX - 2)}😀…`);
+		expect(cut).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+	});
+
+	it("keeps a joined sequence (a family of emoji) whole, or leaves it out, never half", () => {
+		const family = "👨‍👩‍👧";
+		const cut = truncateName(`${"a".repeat(PREVIEW_NAME_MAX - 2)}${family}${"b".repeat(10)}`, PREVIEW_NAME_MAX);
+		expect(cut).toBe(`${"a".repeat(PREVIEW_NAME_MAX - 2)}${family}…`);
+		const early = truncateName(`${"a".repeat(PREVIEW_NAME_MAX - 1)}${family}${"b".repeat(10)}`, PREVIEW_NAME_MAX);
+		expect(early).toBe(`${"a".repeat(PREVIEW_NAME_MAX - 1)}…`);
+	});
+
+	it("counts an emoji as one character: a name made of them that fits the limit is not cut", () => {
+		const text = "🍕".repeat(PREVIEW_NAME_MAX - 5);
+		expect(text.length).toBeGreaterThan(PREVIEW_NAME_MAX);
+		expect(truncateName(text, PREVIEW_NAME_MAX)).toBe(text);
+	});
+
 	it("tolerates a missing name", () => {
 		expect(truncateName(undefined)).toBe("");
 		expect(truncateName(null)).toBe("");
+	});
+});
+
+describe("fittingLines", () => {
+	it("holds every dish when they all sit on the first two lines", () => {
+		expect(fittingLines([0, 0, 0])).toBe(3);
+		expect(fittingLines([0, 0, 16])).toBe(3);
+		expect(fittingLines([0, 16, 16])).toBe(3);
+	});
+
+	it("leaves out the dishes that fell under the second line, and every one after it", () => {
+		expect(fittingLines([0, 16, 32])).toBe(2);
+		expect(fittingLines([0, 16, 32, 32])).toBe(2);
+		expect(fittingLines([0, 16, 32, 48, 48])).toBe(2);
+	});
+
+	it("takes two tops a pixel apart for one line", () => {
+		expect(fittingLines([0, 1, 16, 17.5])).toBe(4);
+	});
+
+	it("is about the room asked for", () => {
+		expect(fittingLines([0, 16, 32], 3)).toBe(3);
+		expect(fittingLines([0, 0, 16], 1)).toBe(2);
+	});
+
+	it("tolerates no dish at all", () => {
+		expect(fittingLines([])).toBe(0);
 	});
 });

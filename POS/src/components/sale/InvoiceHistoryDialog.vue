@@ -51,9 +51,13 @@
 						:key="invoice.name + invoice.posting_date"
 						class="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all"
 					>
-						<div class="flex items-start justify-between gap-3">
+						<!-- //// Neoffice — the row is a grid so that the ticket's preview sits in the MIDDLE, as a column of its own, and the row -->
+						<!-- //// keeps its height (a line under the left block made every row taller). From 768 px: a fixed left track (number, -->
+						<!-- //// customer, date, payment), the flexible middle, a fixed right track (amount, icons), the same x on every row. -->
+						<!-- //// Below: two tracks, as the flex row was, and the preview under the left block (task 29, 2026-10-31). -->
+						<div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 md:grid-cols-[17rem_minmax(0,1fr)_7rem]">
 							<!-- Invoice Info (Start Side) -->
-							<div class="flex-1 min-w-0">
+							<div class="col-start-1 row-start-1 min-w-0">
 								<div class="flex items-center gap-2 mb-1 flex-wrap">
 									<h4 class="text-sm font-semibold text-gray-900">
 										{{ invoice.name }}
@@ -87,29 +91,19 @@
 								<p class="text-xs text-gray-500 text-start">
 									{{ formatPaymentModes(invoice) }}
 								</p>
-								<!-- //// Neoffice — what the ticket holds, at a glance: its first three lines, then « +n articles »; -->
-								<!-- //// the eye icon stays the way to see everything. Nothing for a ticket with no line. Upstream's row -->
-								<!-- //// said only the number, the customer, the date, the payment and the amount (task 29, 2026-10-31). -->
-								<div
-									v-if="invoice.preview.text"
-									data-testid="invoice-preview"
-									class="mt-1.5 flex items-start gap-1.5 text-xs text-gray-500 text-start"
-									:title="invoice.preview.title"
-								>
-									<p dir="auto" class="min-w-0 line-clamp-2 break-words">
-										{{ invoice.preview.text }}
-									</p>
-									<span
-										v-if="invoice.preview.hidden"
-										class="flex-none whitespace-nowrap font-medium text-gray-600"
-									>
-										{{ moreItemsLabel(invoice.preview.hidden) }}
-									</span>
-								</div>
 							</div>
 
+							<!-- //// Neoffice — what the ticket holds, at a glance: its first three dishes, one per line, then « +n items »; the eye icon -->
+							<!-- //// stays the way to see everything. Nothing for a ticket with no dish. Under the left block below 768 px. -->
+							<InvoiceTicketPreview
+								v-if="invoice.preview.lines.length"
+								:preview="invoice.preview"
+								class="col-start-1 row-start-2 md:col-start-2 md:row-start-1"
+							/>
+
 							<!-- Amount & Actions (End Side) -->
-							<div class="flex-shrink-0 flex flex-col items-end">
+							<!-- //// Neoffice — its place in the grid: the right track from 768 px up, else beside the left block (and the preview). -->
+							<div class="col-start-2 row-start-1 row-span-2 flex-shrink-0 flex flex-col items-end md:col-start-3 md:row-span-1">
 								<p class="text-sm font-bold text-gray-900 text-end">
 									{{ formatCurrency(invoice.grand_total) }}
 								</p>
@@ -186,8 +180,9 @@ import { useFormatters } from "@/composables/useFormatters"
 import { useToast } from "@/composables/useToast"
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE, formatCurrency as formatCurrencyUtil } from "@/utils/currency"
 import { getInvoiceStatusColor } from "@/utils/invoice"
-//// Neoffice — the row's preview of its ticket (utils/invoicePreview.js, added file).
+//// Neoffice — the row's preview of its ticket (utils/invoicePreview.js and InvoiceTicketPreview.vue, added files).
 import { invoicePreview } from "@/utils/invoicePreview"
+import InvoiceTicketPreview from "./InvoiceTicketPreview.vue"
 import { Button, Dialog, Input, createResource } from "frappe-ui"
 import { computed, ref, watch } from "vue"
 import ReturnInvoiceDialog from "./ReturnInvoiceDialog.vue"
@@ -376,11 +371,6 @@ function formatDateTime(date, time) {
 	const dateStr = formatDate(date);
 	const timeStr = formatTime(time);
 	return [dateStr, timeStr].filter(Boolean).join(" ");
-}
-
-//// Neoffice — « +1 article » / « +n articles »: two msgids, the till's way of a plural (`n === 1 ? __("item") : __("items")`).
-function moreItemsLabel(count) {
-	return count === 1 ? __("+{0} article", [count]) : __("+{0} articles", [count])
 }
 
 function formatPaymentModes(invoice) {
