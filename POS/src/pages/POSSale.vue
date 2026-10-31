@@ -2411,6 +2411,7 @@ import { cardLabel } from "@/utils/cardLabel";
 //// Neoffice — the cart line of a card entry or of a menu course item, and the units it carries, are built in one place that a
 //// test can reach (NeoRestau lot 1, task 22).
 import { cardItemToCartItem, menuItemToCartItem, withKnownUnits } from "@/utils/cartLineUnits";
+import { storedRowTerms } from "@/utils/linePriceTerms";
 //// Neoffice — the cart line an item stands for, for the price dialog (NeoRestau lot 1, task 22, fix round 2).
 import { cartLineOf } from "@/utils/cartRow";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
@@ -5465,8 +5466,10 @@ async function handleEditOfflineInvoice(invoice) {
 			for (const item of rows) {
 				// Use autoAdd=true to skip stock validation when loading saved invoices
 				// Check both quantity and qty fields since items are stored with 'quantity'
+				//// Neoffice — the rate of a queued row is net of its discount: put back with the percentage too, a rate set by hand
+				//// was discounted a second time (NeoRestau lot 1, task 15, money review of 01.11).
 				cartStore.addItem(
-					item,
+					storedRowTerms(item),
 					item.quantity || item.qty || 1,
 					true,
 					shiftStore.currentProfile

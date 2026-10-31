@@ -55,3 +55,16 @@ export function carriedPriceTerms(source) {
 	}
 	return carried
 }
+
+/**
+ * A row of a stored (queued) invoice as the cart takes it back. The rate of such a row is already net of the discount, and
+ * the row carries the percentage as well, so a line that takes both bills the discount twice: a hand-set 8.00 given 10 % off
+ * was queued at 7.20 and came back at 6.48. The discount stays in the rate and not in the percentage; every other term of
+ * the row (the rate set by hand and its original) is kept. The row it is given is not changed.
+ *
+ * @param {Object} row - A row of a stored invoice
+ * @returns {Object} The row, without a discount percentage
+ */
+export function storedRowTerms(row) {
+	return { ...row, discount_percentage: 0 }
+}

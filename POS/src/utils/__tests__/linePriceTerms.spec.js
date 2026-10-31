@@ -8,6 +8,7 @@ import {
 	carriedPriceTerms,
 	priceTermsOf,
 	samePriceTerms,
+	storedRowTerms,
 } from "../linePriceTerms"
 
 const plain = { rate: 29, price_list_rate: 29 }
@@ -73,5 +74,20 @@ describe("carriedPriceTerms", () => {
 
 	it("carries no rate set by hand for a line that has none", () => {
 		expect(carriedPriceTerms(plain)).toEqual({ discount_percentage: 0 })
+	})
+})
+
+describe("storedRowTerms", () => {
+	it("takes the discount out of a stored row, whose rate is already net of it", () => {
+		const row = { ...byHand, rate: 7.2, discount_percentage: 10, discount_amount: 0 }
+		expect(storedRowTerms(row).discount_percentage).toBe(0)
+	})
+
+	it("keeps the rest of the row, the rate set by hand included, and does not change the row it is given", () => {
+		const row = { ...byHand, rate: 7.2, discount_percentage: 10, qty: 2 }
+		const line = storedRowTerms(row)
+
+		expect(line).toEqual({ ...row, discount_percentage: 0 })
+		expect(row.discount_percentage).toBe(10)
 	})
 })

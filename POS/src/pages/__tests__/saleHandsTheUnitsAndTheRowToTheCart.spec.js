@@ -60,6 +60,12 @@ describe("the sale page hands the units to the cart", () => {
 		expect(body).toMatch(/for \(const item of rows\)/)
 	})
 
+	it("puts a queued row back without the discount its rate already carries", () => {
+		const body = bodyOf(page, "handleEditOfflineInvoice")
+
+		expect(body).toMatch(/cartStore\.addItem\(\s*storedRowTerms\(item\)/)
+	})
+
 	it("hands the row the cart edited to the store, a second time too", () => {
 		expect(bodyOf(page, "handleEditItem")).toMatch(
 			/updateItemDetails\(updatedItem\.item_code, updatedItem, null, row\)/,
