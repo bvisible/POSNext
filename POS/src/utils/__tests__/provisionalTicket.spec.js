@@ -1,11 +1,13 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The provisional ticket prints where the till prints its receipts
  * //// (NeoRestau lot 1, task 28a). On the restaurant till of a site, the printer button of the cart opened the browser's
- * //// print window although the till had a CloudPRNT receipt printer: printProvisionalTicket (March) always called
- * //// window.open. A till with a CloudPRNT printer now saves the order as its screen shows it (nothing sent to the kitchen)
- * //// and has the server print it; a till without one, or a failure on the way, prints it from the browser as before,
- * //// with a toast saying why. The real cart store and the real CloudPRNT store run against a fake server; window.print
- * //// is stubbed, so nothing reaches a printer or the operating system.
+ * //// print window although the till had a CloudPRNT receipt printer. Round 2 (ruling 93): one tap sends the order as
+ * //// the screen shows it, shaped as the PAYMENT sends it, to the server, which prices and prints it WITHOUT saving
+ * //// anything; the till never saves the order to print it. Ruling 97: the button shows where the ticket stands
+ * //// (sending, printing, printed, printer offline, not printed). The browser prints it only when the till has no
+ * //// ticket printer or the server cannot be reached; a refusal of the server is shown, never printed. The real cart
+ * //// store and the real CloudPRNT store run against a fake server that only answers (it works no amount out: the
+ * //// amounts are ERPNext's, tested on the server); window.print is stubbed, so nothing reaches a printer.
  * @vitest-environment jsdom
  */
 import { readFileSync } from "node:fs";
@@ -16,56 +18,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const server = vi.hoisted(() => {
 	globalThis.__ = (text, args) =>
 		args ? text.replace(/\{(\d+)\}/g, (_, i) => String(args[i])) : text;
-	return { calls: [], fail: {}, invoice: null };
+	return { calls: [], fail: {}, answers: {}, statuses: [] };
 });
 const toasts = vi.hoisted(() => []);
-
-// What the server keeps of a saved line, as ERPNext does: the rate after the line's discount, the amount at that rate
-function heldLine(line) {
-	const rate =
-		Math.round(
-			(line.price_list_rate ?? line.rate) *
-				(100 - (line.discount_percentage || 0)),
-		) / 100;
-	return {
-		item_code: line.item_code,
-		item_name: line.item_name,
-		uom: line.uom,
-		qty: line.qty,
-		rate,
-		amount: Math.round(rate * line.qty * 100) / 100,
-		kds_status: line.kds_status,
-		posa_item_modifiers: line.posa_item_modifiers || "",
-		posa_special_instructions: line.posa_special_instructions || "",
-	};
-}
 
 function answer(method, args) {
 	const name = method.split(".").pop();
 	server.calls.push({ name, args });
 	if (server.fail[name]) throw server.fail[name];
-	if (name === "get_invoice") {
-		if (server.invoice?.name !== args.invoice_name)
-			throw new Error("not found");
-		return structuredClone(server.invoice);
-	}
-	if (name === "update_invoice") {
-		const order = JSON.parse(args.data);
-		server.invoice = {
-			name: order.name || "SINV-TABLE-0001",
-			docstatus: 0,
-			customer: order.customer,
-			discount_amount: order.discount_amount || 0,
-			items: order.items.map(heldLine),
-		};
-		return { name: server.invoice.name };
-	}
 	if (name === "print_provisional_ticket")
 		return {
 			success: true,
 			message: "Provisional ticket sent to Star Bar",
 			printer: "Star Bar",
+			printer_online: true,
+			valid_minutes: 15,
+			job_token: "job-1",
+			...server.answers.print,
 		};
+	if (name === "ticket_status")
+		return (
+			server.statuses.shift() || {
+				status: "Pending",
+				printer_online: true,
+				reason: "",
+			}
+		);
+	if (name === "get_till_printing") {
+		if (server.fail.config) throw server.fail.config;
+		return server.answers.config;
+	}
 	return { valid: true };
 }
 
@@ -109,8 +91,13 @@ vi.mock("@/utils/logger", () => ({
 const { usePOSCartStore } = await import("@/stores/posCart");
 const { useCloudPrntStore } = await import("@/stores/cloudPrnt");
 const { printProvisionalTicket } = await import("@/utils/printInvoice");
-const { orderAsShown, orderDiffersFromServer, printProvisionalTicketFromTill } =
-	await import("@/utils/provisionalTicket");
+const {
+	POLL_MS,
+	SHOWN_MS,
+	orderToPrint,
+	printProvisionalTicketFromTill,
+	ticketState,
+} = await import("@/utils/provisionalTicket");
 
 const PROFILE = {
 	name: "Restaurant till",
@@ -130,17 +117,29 @@ const dish = (code, rate) => ({
 	conversion_factor: 1,
 });
 const named = (name) => server.calls.filter((call) => call.name === name);
-const sentOrder = () => JSON.parse(named("update_invoice").at(-1).args.data);
+const sentOrder = () =>
+	JSON.parse(named("print_provisional_ticket").at(-1).args.order);
+const saves = () =>
+	server.calls.filter((call) =>
+		["update_invoice", "submit_invoice", "save_draft"].includes(call.name),
+	);
+const refusal = (excType, message) =>
+	Object.assign(new Error(`print_provisional_ticket ${excType}`), {
+		exc_type: excType,
+		messages: [message],
+	});
 
-describe("the provisional ticket prints where the till prints its receipts", () => {
+describe("the provisional ticket prints where the till prints its receipts, and saves nothing", () => {
 	let cart;
 	let cloudPrnt;
 	let printWindow;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		setActivePinia(createPinia());
 		server.calls = [];
 		server.fail = {};
+		server.answers = {};
+		server.statuses = [];
 		toasts.length = 0;
 		// A print must never reach the operating system, whichever path runs
 		window.print = () => {
@@ -155,40 +154,28 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 
 		cart = usePOSCartStore();
 		cart.setPosProfile(PROFILE.name);
+		cart.setTaxInclusive(true);
 		cart.setRestaurantTable({ name: "t5h4sh", table_name: "Table 5" });
 		cart.customer = "Walk-in";
-		// A dish the kitchen has already served, and a coffee added since, not sent to the kitchen yet
-		cart.addItem(dish("STEAK", 38.5), 2);
+		// A steak served (sent earlier) and a coffee added since, not sent to the kitchen yet
+		cart.addItem(dish("STEAK", 12.35), 3);
 		cart.addItem(dish("COFFEE", 4.5), 1);
 		cart.invoiceItems[0].kds_status = "Delivered";
+		await cart.updateItemDetails("STEAK", { discount_percentage: 10 }, "Nos");
 		cart.$patch({ currentDraftId: "SINV-TABLE-0001" });
-		cart.setKdsStatus("Delivered");
-		// The server holds the table's order as it was before the coffee: the steak only
-		server.invoice = {
-			name: "SINV-TABLE-0001",
-			docstatus: 0,
-			customer: "Walk-in",
-			discount_amount: 0,
-			items: [
-				heldLine({
-					item_code: "STEAK",
-					item_name: "STEAK",
-					uom: "Nos",
-					qty: 2,
-					price_list_rate: 38.5,
-					kds_status: "Delivered",
-				}),
-			],
-		};
+		toasts.length = 0;
 
 		cloudPrnt = useCloudPrntStore();
 		cloudPrnt.config = {
 			receipt_printer: "p1r2n3t4r5",
 			printers: [{ name: "p1r2n3t4r5", label: "Star Bar", online: 1 }],
 		};
+		ticketState.phase = "idle";
+		ticketState.text = "";
 	});
 
 	afterEach(() => {
+		vi.useRealTimers();
 		vi.restoreAllMocks();
 	});
 
@@ -197,119 +184,185 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 			cartStore: cart,
 			cloudPrntStore: cloudPrnt,
 			shiftStore,
-			tipItem: "TIP",
 			printInBrowser: printProvisionalTicket,
 		});
 
-	it("with a CloudPRNT printer: saves the order as shown, then has the server print it, and opens no window", async () => {
-		await print();
+	it("sends the order shaped as the payment sends it, saves nothing, and opens no window", async () => {
+		const how = await print();
 
-		// It reads what the server holds, finds the coffee missing, saves, then prints
+		expect(how).toBe("cloudprnt");
+		expect(saves()).toEqual([]);
 		expect(server.calls.map((call) => call.name)).toEqual([
-			"get_invoice",
-			"update_invoice",
 			"print_provisional_ticket",
 		]);
 		const order = sentOrder();
-		expect(order.name).toBe("SINV-TABLE-0001");
-		expect(order.restaurant_table).toBe("t5h4sh");
-		expect(order.items.map((line) => [line.item_code, line.qty])).toEqual([
-			["STEAK", 2],
-			["COFFEE", 1],
-		]);
-		expect(named("print_provisional_ticket")[0].args).toEqual({
-			invoice: "SINV-TABLE-0001",
-			printer: "p1r2n3t4r5",
+		expect(order).toMatchObject({
+			pos_profile: PROFILE.name,
+			customer: "Walk-in",
+			restaurant_table: "t5h4sh",
+			is_takeaway: 0,
+			draft: "SINV-TABLE-0001",
+			discount_amount: 0,
 		});
+		// The lines are the payment's own (formatItemsForSubmission): the discounted line at its rate after the
+		// discount, never at its price before it (C1); the coffee not sent yet is on the bill as it is
+		expect(order.items).toEqual(
+			cart.formatItemsForSubmission(cart.invoiceItems),
+		);
+		// 3 x 12.35 at 10 %: the cart takes 3.70 off the line (37.05 x 10 % is 3.70499... in floating point) and the
+		// payment sends 11.12 a unit, its rate after the discount rounded per unit (what ERPNext then charges: 33.36)
+		const steak = order.items.find((line) => line.item_code === "STEAK");
+		expect(steak).toMatchObject({
+			qty: 3,
+			rate: 11.12,
+			price_list_rate: 12.35,
+			discount_percentage: 10,
+			discount_amount: 3.7,
+		});
+		expect(order.items.map((line) => line.item_code)).toEqual([
+			"STEAK",
+			"COFFEE",
+		]);
 		expect(window.open).not.toHaveBeenCalled();
 		expect(window.__printed).toBeUndefined();
-		expect(toasts).toEqual([
-			{ type: "success", message: "Provisional ticket sent to Star Bar" },
-		]);
-	});
-
-	it("sends nothing to the kitchen: a line not sent yet is saved held, a served one keeps its state", async () => {
-		await print();
-
-		const [steak, coffee] = sentOrder().items;
-		expect(steak.kds_status).toBe("Delivered");
-		expect(coffee.kds_status).toBe("Waiting");
-		// The cart is untouched: Validate still offers the coffee to the kitchen
+		// The cart is untouched: the coffee waits for « Validate »
 		expect(cart.invoiceItems.map((line) => line.kds_status || "")).toEqual([
 			"Delivered",
 			"",
 		]);
 	});
 
-	it("a table never sent to the kitchen is saved held, the order as a whole too", async () => {
-		cart.invoiceItems[0].kds_status = "";
-		cart.$patch({ currentDraftId: null });
-		cart.setKdsStatus("Pending");
+	it("sends the order's discount as the payment applies it, a whole-cart coupon included", async () => {
+		cart.applyDiscountToCart({ name: "Ten off", code: "TENOFF", amount: 10 });
 
 		await print();
 
-		const order = sentOrder();
-		expect(order.name).toBeUndefined();
-		expect(order.kds_status).toBe("Waiting");
-		expect(order.items.every((line) => line.kds_status === "Waiting")).toBe(
-			true,
-		);
-		// The table's order now exists on the server, and the till knows its name
-		expect(cart.currentDraftId).toBe("SINV-TABLE-0001");
-		expect(named("print_provisional_ticket")[0].args.invoice).toBe(
-			"SINV-TABLE-0001",
-		);
+		expect(sentOrder().discount_amount).toBe(10);
+		expect(sentOrder().discount_amount).toBe(cart.effectiveHeaderDiscount);
 	});
 
-	it("without a CloudPRNT printer: prints from the browser, as before, and says why", async () => {
-		cloudPrnt.config = { receipt_printer: null, printers: [] };
+	it("a dish removed from the screen is simply not on the bill: nothing is saved for it", async () => {
+		cart.removeItem(cart.invoiceItems[1]);
 
 		await print();
 
-		expect(server.calls).toEqual([]);
+		expect(sentOrder().items.map((line) => line.item_code)).toEqual(["STEAK"]);
+		expect(saves()).toEqual([]);
+	});
+
+	it("a takeaway order is sent with its number", async () => {
+		cart.setRestaurantTable(null);
+		cart.$patch({
+			isTakeaway: true,
+			takeawayNumber: "T-012",
+			currentDraftId: null,
+		});
+
+		await print();
+
+		expect(sentOrder()).toMatchObject({
+			restaurant_table: null,
+			is_takeaway: 1,
+			takeaway_number: "T-012",
+			draft: null,
+		});
+	});
+
+	it("the button follows the ticket: sending, printing, then printed", async () => {
+		vi.useFakeTimers();
+		server.statuses = [
+			{ status: "Pending", printer_online: true },
+			{ status: "Fetched", printer_online: true },
+			{ status: "Printed", printer_online: true },
+		];
+		const printing = print();
+		expect(ticketState).toMatchObject({ phase: "sending", text: "Sending…" });
+		await printing;
+		expect(ticketState).toMatchObject({ phase: "printing", text: "Printing…" });
+		await vi.advanceTimersByTimeAsync(POLL_MS * 2);
+		expect(ticketState.phase).toBe("printing");
+		await vi.advanceTimersByTimeAsync(POLL_MS);
+		expect(ticketState).toMatchObject({ phase: "printed", text: "Printed" });
+		expect(named("ticket_status").map((call) => call.args)).toEqual([
+			{ job: "job-1" },
+			{ job: "job-1" },
+			{ job: "job-1" },
+		]);
+		await vi.advanceTimersByTimeAsync(SHOWN_MS);
+		expect(ticketState.phase).toBe("idle");
+		expect(toasts).toEqual([]);
+	});
+
+	it("the button says when the printer is offline: the ticket comes out when it is back", async () => {
+		vi.useFakeTimers();
+		server.answers.print = { printer_online: false };
+		server.statuses = [{ status: "Pending", printer_online: false }];
+
+		await print();
+
+		expect(ticketState).toMatchObject({
+			phase: "offline",
+			text: "Printer offline: the ticket will come out when it is back (15 min)",
+		});
+		await vi.advanceTimersByTimeAsync(POLL_MS);
+		expect(ticketState.phase).toBe("offline");
+		expect(window.open).not.toHaveBeenCalled();
+	});
+
+	it("the button says when the printer did not print it, and why", async () => {
+		vi.useFakeTimers();
+		server.statuses = [
+			{ status: "Failed", printer_online: true, reason: "Paper out" },
+		];
+
+		await print();
+		await vi.advanceTimersByTimeAsync(POLL_MS);
+
+		expect(ticketState).toMatchObject({
+			phase: "failed",
+			text: "Not printed: Paper out",
+		});
+		expect(toasts).toEqual([
+			{ type: "error", message: "Not printed: Paper out" },
+		]);
+	});
+
+	it("a refusal of the server is shown, and the browser prints nothing (M3)", async () => {
+		server.fail.print_provisional_ticket = refusal(
+			"ValidationError",
+			"<b>SINV-TABLE-0001</b> is no longer an open order",
+		);
+
+		const how = await print();
+
+		expect(how).toBe("refused");
+		expect(window.open).not.toHaveBeenCalled();
+		expect(ticketState).toMatchObject({
+			phase: "failed",
+			text: "Not printed: SINV-TABLE-0001 is no longer an open order",
+		});
+		expect(toasts).toEqual([
+			{
+				type: "error",
+				message: "Not printed: SINV-TABLE-0001 is no longer an open order",
+			},
+		]);
+		for (const excType of ["PermissionError", "DoesNotExistError"]) {
+			server.fail.print_provisional_ticket = refusal(excType, "Not permitted");
+			expect(await print()).toBe("refused");
+		}
+		expect(window.open).not.toHaveBeenCalled();
+	});
+
+	it("when the server cannot be reached, the browser prints it, and says why", async () => {
+		server.fail.print_provisional_ticket = new TypeError("Failed to fetch");
+
+		const how = await print();
+
+		expect(how).toBe("browser");
 		expect(window.open).toHaveBeenCalledTimes(1);
-		expect(window.open.mock.calls[0][1]).toBe("_blank");
 		expect(printWindow.document.write.mock.calls[0][0]).toContain("Table 5");
-		expect(toasts).toEqual([
-			{
-				type: "info",
-				message:
-					"This till has no ticket printer: the provisional ticket prints from the browser",
-			},
-		]);
-	});
-
-	it("when the server refuses: prints from the browser, with the server's reason", async () => {
-		server.fail.print_provisional_ticket = Object.assign(
-			new Error("print_provisional_ticket ValidationError"),
-			{
-				exc_type: "ValidationError",
-				messages: [
-					"No CloudPRNT printer prints the receipts of the till <b>Restaurant till</b>",
-				],
-			},
-		);
-
-		await print();
-
-		expect(named("print_provisional_ticket")).toHaveLength(1);
-		expect(window.open).toHaveBeenCalledTimes(1);
-		expect(toasts).toEqual([
-			{
-				type: "warning",
-				message:
-					"The ticket printer could not print the provisional ticket (No CloudPRNT printer prints the receipts of the till Restaurant till): it prints from the browser",
-			},
-		]);
-	});
-
-	it("when the order cannot be saved (offline): prints from the browser, and asks the server for no ticket", async () => {
-		server.fail.update_invoice = new TypeError("Failed to fetch");
-
-		await print();
-
-		expect(named("print_provisional_ticket")).toHaveLength(0);
-		expect(window.open).toHaveBeenCalledTimes(1);
+		expect(ticketState.phase).toBe("idle");
 		expect(toasts).toEqual([
 			{
 				type: "warning",
@@ -319,37 +372,58 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 		]);
 	});
 
-	it("a second tap while the first is on its way saves the order once and asks for one ticket", async () => {
-		// A takeaway order the server does not hold yet: two saves would make two orders
-		cart.$patch({ currentDraftId: null });
+	it("when the server finds no ticket printer for the till, the browser prints it", async () => {
+		server.fail.print_provisional_ticket = refusal(
+			"NoTicketPrinter",
+			"No CloudPRNT printer prints the receipts of the till Restaurant till",
+		);
 
+		expect(await print()).toBe("browser");
+		expect(window.open).toHaveBeenCalledTimes(1);
+	});
+
+	it("without a CloudPRNT printer: prints from the browser, as before, and says why", async () => {
+		cloudPrnt.config = { receipt_printer: null, printers: [] };
+
+		expect(await print()).toBe("browser");
+
+		expect(server.calls).toEqual([]);
+		expect(window.open).toHaveBeenCalledTimes(1);
+		expect(window.open.mock.calls[0][1]).toBe("_blank");
+		expect(toasts).toEqual([
+			{
+				type: "info",
+				message:
+					"This till has no ticket printer: the provisional ticket prints from the browser",
+			},
+		]);
+	});
+
+	it("a second tap while the first is on its way asks for one ticket", async () => {
 		const [first, second] = await Promise.all([print(), print()]);
 
 		expect(first).toBe("cloudprnt");
 		expect(second).toBe("cloudprnt");
-		expect(server.calls.map((call) => call.name)).toEqual([
-			"update_invoice",
-			"print_provisional_ticket",
-		]);
+		expect(named("print_provisional_ticket")).toHaveLength(1);
 		// Once it is done, the next tap prints again
 		await print();
 		expect(named("print_provisional_ticket")).toHaveLength(2);
 	});
 
-	it("the order it saves is the cart's own payload, with the till's shift and draft", () => {
-		cart.setPosOpeningShift("POS-OPEN-0001");
-		const order = orderAsShown(cart, PROFILE);
-		expect(order).toMatchObject({
-			doctype: "Sales Invoice",
+	it("the order it sends is the cart's, and only the cart's", () => {
+		expect(orderToPrint(cart, PROFILE)).toEqual({
 			pos_profile: PROFILE.name,
-			is_pos: 1,
-			docstatus: 0,
-			posa_pos_opening_shift: "POS-OPEN-0001",
-			name: "SINV-TABLE-0001",
+			customer: "Walk-in",
+			restaurant_table: "t5h4sh",
+			is_takeaway: 0,
+			takeaway_number: "",
+			draft: "SINV-TABLE-0001",
+			discount_amount: 0,
+			items: cart.formatItemsForSubmission(cart.invoiceItems),
 		});
 	});
 
-	it("is the till's printer button: POSSale.vue hands the provisional ticket to it", () => {
+	it("is the till's printer button: POSSale.vue hands the ticket to it, and the button shows its state", () => {
 		const source = readFileSync(
 			path.resolve(__dirname, "../../pages/POSSale.vue"),
 			"utf8",
@@ -359,200 +433,49 @@ describe("the provisional ticket prints where the till prints its receipts", () 
 		const handler = source.slice(start, source.indexOf("\n}\n", start));
 		expect(handler).toContain("printProvisionalTicketFromTill(");
 		expect(handler).toContain("printInBrowser: printProvisionalTicket");
-		expect(handler).toContain("tipItem: restaurantStore.tipItem");
-		expect(handler).not.toContain("window.open");
+		expect(handler).not.toMatch(/update_invoice|window\.open/);
+		const cartSource = readFileSync(
+			path.resolve(__dirname, "../../components/sale/InvoiceCart.vue"),
+			"utf8",
+		);
+		expect(cartSource).toContain(
+			'import { ticketState } from "@/utils/provisionalTicket"',
+		);
+		expect(cartSource).toContain("{{ ticketState.text }}");
+	});
+});
+
+describe("the till keeps knowing its printer when a refresh fails (M4)", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		server.calls = [];
+		server.fail = {};
+		server.answers = {
+			config: {
+				receipt_printer: "p1r2n3t4r5",
+				printers: [{ name: "p1r2n3t4r5", label: "Star Bar", online: 1 }],
+			},
+		};
 	});
 
-	describe("the ticket always shows the screen, not what the server held before", () => {
-		// Everything on the screen was sent and the server holds it, as when the waiter opens a table
-		beforeEach(() => {
-			cart.invoiceItems[1].kds_status = "Pending";
-			server.invoice.items.push(
-				heldLine({
-					item_code: "COFFEE",
-					item_name: "COFFEE",
-					uom: "Nos",
-					qty: 1,
-					price_list_rate: 4.5,
-					kds_status: "Pending",
-				}),
-			);
-			cart.markChangesSent();
-		});
-		// What each change says on the cart's own toast is not this test's concern
-		const printAfterTheChange = () => {
-			toasts.length = 0;
-			return print();
-		};
-		const callsMade = () => server.calls.map((call) => call.name);
+	it("a refresh that fails keeps what was read for the same till", async () => {
+		const store = useCloudPrntStore();
+		await store.load("Restaurant till");
+		expect(store.receiptPrinter?.label).toBe("Star Bar");
 
-		it("nothing changed: it prints without saving the order again", async () => {
-			await printAfterTheChange();
+		server.fail.config = new TypeError("Failed to fetch");
+		await store.load("Restaurant till");
 
-			expect(callsMade()).toEqual(["get_invoice", "print_provisional_ticket"]);
-			expect(toasts).toEqual([
-				{ type: "success", message: "Provisional ticket sent to Star Bar" },
-			]);
-		});
-
-		it("a dish already sent and then removed: the order is saved without it before the server prints", async () => {
-			cart.removeItem(cart.invoiceItems[1]);
-
-			await printAfterTheChange();
-
-			expect(callsMade()).toEqual([
-				"get_invoice",
-				"update_invoice",
-				"print_provisional_ticket",
-			]);
-			expect(sentOrder().items.map((line) => line.item_code)).toEqual([
-				"STEAK",
-			]);
-			// The removed coffee is not saved anywhere as held either: it is simply gone
-			expect(server.invoice.items.map((line) => line.item_code)).toEqual([
-				"STEAK",
-			]);
-		});
-
-		it("the quantity of a dish already sent lowered: the order is saved with it before the server prints", async () => {
-			cart.updateItemQuantity("STEAK", 1, "Nos");
-
-			await printAfterTheChange();
-
-			expect(callsMade()).toEqual([
-				"get_invoice",
-				"update_invoice",
-				"print_provisional_ticket",
-			]);
-			expect(
-				sentOrder().items.find((line) => line.item_code === "STEAK").qty,
-			).toBe(1);
-			// Lowered, it is not sent to the kitchen again: the served steak keeps its state
-			expect(
-				sentOrder().items.find((line) => line.item_code === "STEAK").kds_status,
-			).toBe("Delivered");
-		});
-
-		it("a discount given on a dish already sent: the order is saved with it before the server prints", async () => {
-			await cart.updateItemDetails("STEAK", { discount_percentage: 10 }, "Nos");
-
-			await printAfterTheChange();
-
-			expect(callsMade()).toEqual([
-				"get_invoice",
-				"update_invoice",
-				"print_provisional_ticket",
-			]);
-			const steak = sentOrder().items.find(
-				(line) => line.item_code === "STEAK",
-			);
-			expect(steak.discount_percentage).toBe(10);
-			// What the server then holds is the screen's: 2 x 38.50 less 10 %
-			expect(
-				server.invoice.items.find((line) => line.item_code === "STEAK").amount,
-			).toBe(69.3);
-		});
-
-		it("a second print after the save reads the server again and does not save twice", async () => {
-			await cart.updateItemDetails("STEAK", { discount_percentage: 10 }, "Nos");
-			cart.removeItem(cart.invoiceItems[1]);
-
-			await printAfterTheChange();
-			await print();
-
-			expect(named("update_invoice")).toHaveLength(1);
-			expect(named("print_provisional_ticket")).toHaveLength(2);
-		});
-
-		it("the guest's tip the server keeps out of the cart is no change", async () => {
-			server.invoice.items.push({
-				item_code: "TIP",
-				item_name: "Tip",
-				uom: "Nos",
-				qty: 1,
-				rate: 5,
-				amount: 5,
-			});
-
-			await printAfterTheChange();
-
-			expect(callsMade()).toEqual(["get_invoice", "print_provisional_ticket"]);
-		});
-
-		it("when the server's copy cannot be read: prints from the browser, and asks the server for no ticket", async () => {
-			server.fail.get_invoice = new TypeError("Failed to fetch");
-
-			await printAfterTheChange();
-
-			expect(callsMade()).toEqual(["get_invoice"]);
-			expect(window.open).toHaveBeenCalledTimes(1);
-		});
+		expect(store.receiptPrinter?.label).toBe("Star Bar");
 	});
 
-	describe("what counts as a change", () => {
-		const line = (changes = {}) => ({
-			item_code: "STEAK",
-			uom: "Nos",
-			qty: 2,
-			rate: 38.5,
-			discount_amount: 0,
-			posa_item_modifiers:
-				'[{"group":"Cooking","options":[{"name":"Medium"}]}]',
-			posa_special_instructions: "No salt",
-			...changes,
-		});
-		const shown = (lineChanges = {}, changes = {}) => ({
-			customer: "Walk-in",
-			discount_amount: 0,
-			items: [line(lineChanges)],
-			...changes,
-		});
-		const held = {
-			customer: "Walk-in",
-			discount_amount: 0,
-			items: [
-				{
-					item_code: "STEAK",
-					uom: "Nos",
-					qty: 2,
-					rate: 38.5,
-					amount: 77,
-					posa_item_modifiers:
-						'[{"group":"Cooking","options":[{"name":"Medium"}]}]',
-					posa_special_instructions: "No salt",
-				},
-			],
-		};
+	it("another till's printer is not kept", async () => {
+		const store = useCloudPrntStore();
+		await store.load("Restaurant till");
+		server.fail.config = new TypeError("Failed to fetch");
 
-		it("the same lines in the same state are no change", () => {
-			expect(orderDiffersFromServer(shown(), held, null)).toBe(false);
-		});
+		await store.load("Bar till");
 
-		it("an option, a remark, a unit, a price or a discount of a line is a change", () => {
-			for (const changes of [
-				{
-					posa_item_modifiers:
-						'[{"group":"Cooking","options":[{"name":"Rare"}]}]',
-				},
-				{ posa_special_instructions: "Extra salt" },
-				{ uom: "Box" },
-				{ rate: 40 },
-				{ discount_amount: 7.7 },
-			]) {
-				expect(
-					orderDiffersFromServer(shown(changes), held, null),
-					JSON.stringify(changes),
-				).toBe(true);
-			}
-		});
-
-		it("a discount on the whole order, or another customer, is a change", () => {
-			expect(
-				orderDiffersFromServer(shown({}, { discount_amount: 5 }), held, null),
-			).toBe(true);
-			expect(
-				orderDiffersFromServer(shown({}, { customer: "Someone" }), held, null),
-			).toBe(true);
-		});
+		expect(store.receiptPrinter).toBeNull();
 	});
 });

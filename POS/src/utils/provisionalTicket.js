@@ -2,105 +2,76 @@
 //// summary a restaurant hands the table before cashing in, marked "THIS IS NOT A RECEIPT") prints where the till
 //// prints its receipts (NeoRestau lot 1, task 28a). The printer button of the cart called printProvisionalTicket
 //// (printInvoice.js, March), which always opened the browser's print window, also on a till with a CloudPRNT receipt
-//// printer. Now a till with one saves the order as its screen shows it and has the server print it (cloudprnt app,
-//// provisional_ticket.print_provisional_ticket): the VAT of each rate and the rounded total are then the invoice's
-//// own, and the ticket never opens the cash drawer. A till without one, or a failure on the way (offline, a refusal of
-//// the server), prints it from the browser as before, with a toast saying why.
+//// printer. Now one tap sends the order AS THE SCREEN SHOWS IT, shaped as the till's payment sends it, to the server
+//// (cloudprnt app, provisional_ticket.print_provisional_ticket), which prices it with ERPNext without saving anything
+//// and prints it on this till's receipt printer: the VAT of each rate and the rounded total are the payment's own.
+//// Printing saves nothing and sends nothing to the kitchen (ruling 93). The button then shows where the ticket stands
+//// (ticketState: sending, printing, printed, printer offline, not printed: ruling 97). The browser prints it only when
+//// the till has no ticket printer or the server cannot be reached; a refusal of the server is shown, never printed.
+import { reactive, toRaw } from "vue";
 import { useToast } from "@/composables/useToast";
-import { call } from "@/utils/apiWrapper";
 import { logger } from "@/utils/logger";
 
 const log = logger.create("ProvisionalTicket");
 
-/**
- * The kitchen state of a line the ticket saves before it was sent to the kitchen: held, as the send dialog holds a
- * line. The kitchen screen shows no order whose lines are all held, and no kitchen ticket prints for one.
- */
-export const HELD = "Waiting";
+/** How often, and how long, the button follows a ticket the server queued (the drawer dialog follows the same way). */
+export const POLL_MS = 1500;
+export const POLL_TRIES = 40;
+/** How long a final state stays on the button before it goes back to the printer icon. */
+export const SHOWN_MS = 6000;
 
-const notSent = (line) => !line.kds_status || line.kds_status === HELD;
+/** The server's refusals (the order is paid, the user may not, another restaurant's table): shown, not printed. */
+const REFUSALS = new Set([
+	"PermissionError",
+	"ValidationError",
+	"DoesNotExistError",
+]);
+/** The server says the till has no ticket printer after all: the browser prints it, as without one. */
+const NO_PRINTER = "NoTicketPrinter";
 
 /**
- * The order the cart shows, as pos_next.api.invoices.update_invoice takes it: the cart's own payload (the one
- * « Validate » sends), except that a line not sent to the kitchen yet is saved held instead of being sent. The cart's
- * lines are left as they are, so « Validate » still offers them to the kitchen.
+ * What the printer button of the cart shows (InvoiceCart.vue): `phase` is idle, sending, printing, printed, offline or
+ * failed, `text` what the waiter reads.
  */
-export function orderAsShown(cartStore, profile) {
-	const order = cartStore.buildOfferEvaluationPayload(profile);
-	// The payload has one line per cart line, in the cart's order
-	order.items.forEach((line, index) => {
-		if (!cartStore.invoiceItems[index]?.kds_status) line.kds_status = HELD;
-	});
-	if (cartStore.invoiceItems.every(notSent)) order.kds_status = HELD;
-	order.is_pos = 1;
-	order.docstatus = 0;
-	order.posa_pos_opening_shift = cartStore.posOpeningShift;
-	if (cartStore.currentDraftId) order.name = cartStore.currentDraftId;
-	return order;
+export const ticketState = reactive({ phase: "idle", text: "" });
+
+let clearTimer = null;
+let following = 0;
+
+function show(phase, text = "") {
+	clearTimeout(clearTimer);
+	ticketState.phase = phase;
+	ticketState.text = text;
 }
 
-const cents = (value) => Math.round((Number(value) || 0) * 100);
-const text = (value) => String(value ?? "").trim();
-const lineKey = (line, amountInCents) =>
-	JSON.stringify([
-		line.item_code || "",
-		line.uom || "",
-		Math.round((Number(line.qty) || 0) * 1000),
-		amountInCents,
-		text(line.posa_item_modifiers),
-		text(line.posa_special_instructions),
-	]);
-
-/**
- * Whether the server's copy of the order (`held`, the draft Sales Invoice) differs from what the screen shows (`shown`,
- * orderAsShown): a line's item, unit, quantity, amount after its discount, options or remarks, the order's discount,
- * or its customer. The lines themselves are compared, not the cart's « changed » flag, which no removal, discount or
- * line edit sets. The line of the guest's tip (`tipItem`), which the till keeps out of its cart, is no change.
- * The kitchen state of a line is not compared: the ticket does not print it.
- */
-export function orderDiffersFromServer(shown, held, tipItem) {
-	// The cart's amount of a line, as the cart works it out (useInvoice.recalculateItem): its quantity at its unit price,
-	// less the line's discount (the cart keeps the discount of the whole line, ERPNext the rate after it)
-	const ours = (shown.items || [])
-		.map((line) =>
-			lineKey(
-				line,
-				Math.round((Number(line.qty) || 0) * cents(line.rate)) -
-					cents(line.discount_amount),
-			),
-		)
-		.sort();
-	const theirs = (held.items || [])
-		.filter((line) => !tipItem || line.item_code !== tipItem)
-		.map((line) => lineKey(line, cents(line.amount)))
-		.sort();
-	return (
-		JSON.stringify(ours) !== JSON.stringify(theirs) ||
-		cents(shown.discount_amount) !== cents(held.discount_amount) ||
-		text(shown.customer) !== text(held.customer)
-	);
+function showFor(phase, text) {
+	show(phase, text);
+	clearTimer = setTimeout(() => show("idle"), SHOWN_MS);
 }
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
- * The name of the draft Sales Invoice that holds the cart's order as the screen shows it. An order the server already
- * holds is read and compared (orderDiffersFromServer); it is saved only when it differs, or when the server holds no
- * order yet: a save rewrites every line, and only a real change should.
+ * The order the cart shows, as the till's payment sends it (useInvoice.submitInvoice): each line at its rate after its
+ * discount (formatItemsForSubmission), the order's discount as the payment applies it (effectiveHeaderDiscount, a
+ * whole-cart coupon included), the customer, the till, the table or the takeaway order. `draft` names the open order
+ * the server holds, which it only reads (what a guest already paid).
  */
-export async function saveOrderAsShown(cartStore, profile, tipItem = null) {
-	const order = orderAsShown(cartStore, profile);
-	if (cartStore.currentDraftId) {
-		const held = await call("pos_next.api.invoices.get_invoice", {
-			invoice_name: cartStore.currentDraftId,
-		});
-		if (!orderDiffersFromServer(order, held, tipItem))
-			return cartStore.currentDraftId;
-	}
-	const saved = await call("pos_next.api.invoices.update_invoice", {
-		data: JSON.stringify(order),
-	});
-	if (!saved?.name) throw new Error("The order was not saved");
-	cartStore.$patch({ currentDraftId: saved.name });
-	return saved.name;
+export function orderToPrint(cartStore, profile) {
+	return {
+		pos_profile: cartStore.posProfile || profile?.name || null,
+		customer:
+			cartStore.customer?.name ||
+			cartStore.customer ||
+			profile?.customer ||
+			null,
+		restaurant_table: cartStore.restaurantTable?.name || null,
+		is_takeaway: cartStore.isTakeaway ? 1 : 0,
+		takeaway_number: cartStore.takeawayNumber || "",
+		draft: cartStore.currentDraftId || null,
+		discount_amount: cartStore.effectiveHeaderDiscount || 0,
+		items: cartStore.formatItemsForSubmission(toRaw(cartStore.invoiceItems)),
+	};
 }
 
 /** What the browser's ticket prints: the cart as it stands (the March layout of printInvoice.js). */
@@ -129,14 +100,12 @@ function reasonOf(error) {
 }
 
 /**
- * Print the provisional ticket of the cart's table or takeaway order: on the till's CloudPRNT receipt printer,
- * through the server, when it has one; else, or when that fails, from the browser (`printInBrowser`, printInvoice.js
- * printProvisionalTicket). `tipItem` is the restaurant's tip item (restaurantStore.tipItem), which the cart does not
- * show. Never throws. Returns how it was printed: "cloudprnt", "browser" or "none".
+ * Print the provisional ticket of the cart's table or takeaway order: through the server on the till's CloudPRNT
+ * receipt printer when it has one; from the browser (`printInBrowser`, printInvoice.js printProvisionalTicket) when it
+ * has none, or the server cannot be reached. Never throws. Returns "cloudprnt", "refused", "browser" or "none".
  */
 export function printProvisionalTicketFromTill(till) {
-	// A second tap while the first one is on its way gets the same answer: a never-saved order saved twice would make
-	// two orders on the server, and the table would get two tickets
+	// A second tap while the first one is on its way gets the same answer: the table gets one ticket
 	if (!printing) {
 		printing = printProvisionalTicketOnce(till).finally(() => {
 			printing = null;
@@ -152,57 +121,107 @@ async function printProvisionalTicketOnce({
 	cartStore,
 	cloudPrntStore,
 	shiftStore,
-	tipItem = null,
 	printInBrowser,
 }) {
 	const toast = useToast();
 	const printer = cloudPrntStore.receiptPrinter;
-	if (printer) {
-		try {
-			const invoice = await saveOrderAsShown(
-				cartStore,
-				shiftStore.currentProfile,
-				tipItem,
-			);
-			const answer = await cloudPrntStore.printProvisionalTicket(
-				invoice,
-				printer.name,
-			);
-			toast.showSuccess(
-				answer?.message ||
-					__("Provisional ticket sent to {0}", [printer.label]),
-			);
-			return "cloudprnt";
-		} catch (error) {
-			log.warn(
-				"CloudPRNT provisional ticket failed, printing it from the browser:",
-				error,
-			);
-			const reason = reasonOf(error);
-			toast.showWarning(
-				reason
-					? __(
-							"The ticket printer could not print the provisional ticket ({0}): it prints from the browser",
-							[reason],
-						)
-					: __(
-							"The ticket printer could not be reached: the provisional ticket prints from the browser",
-						),
-			);
-		}
-	} else {
+	if (!printer) {
 		toast.showInfo(
 			__(
 				"This till has no ticket printer: the provisional ticket prints from the browser",
 			),
 		);
+		return printFromTheBrowser(cartStore, shiftStore, printInBrowser);
 	}
+	following += 1;
+	show("sending", __("Sending…"));
+	let answer;
+	try {
+		answer = await cloudPrntStore.printProvisionalTicket(
+			orderToPrint(cartStore, shiftStore.currentProfile),
+		);
+	} catch (error) {
+		const reason = reasonOf(error);
+		if (REFUSALS.has(error?.exc_type)) {
+			// The server said no (the order is paid, the user may not, another restaurant's table): no ticket at all
+			const text = __("Not printed: {0}", [reason || error.exc_type]);
+			showFor("failed", text);
+			toast.showError(text);
+			return "refused";
+		}
+		log.warn(
+			"CloudPRNT provisional ticket failed, printing it from the browser:",
+			error,
+		);
+		show("idle");
+		toast.showWarning(
+			error?.exc_type === NO_PRINTER
+				? __(
+						"This till has no ticket printer: the provisional ticket prints from the browser",
+					)
+				: __(
+						"The ticket printer could not be reached: the provisional ticket prints from the browser",
+					),
+		);
+		return printFromTheBrowser(cartStore, shiftStore, printInBrowser);
+	}
+	const minutes = answer?.valid_minutes || 15;
+	if (answer?.printer_online === false) {
+		show("offline", offlineText(minutes));
+	} else {
+		show("printing", __("Printing…"));
+	}
+	if (answer?.job_token) follow(answer.job_token, cloudPrntStore, minutes);
+	return "cloudprnt";
+}
+
+function offlineText(minutes) {
+	return __(
+		"Printer offline: the ticket will come out when it is back ({0} min)",
+		[minutes],
+	);
+}
+
+/**
+ * Follow the ticket `job` until the printer confirms it or it fails, as the drawer dialog follows an opening: Printed,
+ * Not printed (its reason), or still waiting for a printer that is offline. A newer print takes the button over.
+ */
+async function follow(job, cloudPrntStore, minutes) {
+	const mine = following;
+	for (let attempt = 0; attempt < POLL_TRIES; attempt++) {
+		await wait(POLL_MS);
+		if (mine !== following) return;
+		let status;
+		try {
+			status = await cloudPrntStore.ticketStatus(job);
+		} catch (error) {
+			log.warn("The provisional ticket's status could not be read:", error);
+			break;
+		}
+		if (mine !== following) return;
+		if (status?.status === "Printed") {
+			showFor("printed", __("Printed"));
+			return;
+		}
+		if (status?.status === "Failed" || status?.status === "Expired") {
+			const text = __("Not printed: {0}", [status.reason || status.status]);
+			showFor("failed", text);
+			useToast().showError(text);
+			return;
+		}
+		if (status?.printer_online === false) show("offline", offlineText(minutes));
+		else show("printing", __("Printing…"));
+	}
+	if (mine === following) showFor(ticketState.phase, ticketState.text);
+}
+
+function printFromTheBrowser(cartStore, shiftStore, printInBrowser) {
 	try {
 		printInBrowser(browserTicket(cartStore, shiftStore));
 		return "browser";
 	} catch (error) {
 		log.error("Error printing provisional ticket:", error);
-		toast.showError(__("Failed to print provisional ticket"));
+		useToast().showError(__("Failed to print provisional ticket"));
 		return "none";
 	}
 }

@@ -1921,7 +1921,41 @@
 					]"
 					:aria-label="__('Print provisional ticket')"
 				>
+					<!-- //// Neoffice — the ticket's state on the button (ruling 97, NeoRestau task 28a): a spinner while -->
+					<!-- //// it is sent and printed, a tick once printed, a warning when the printer is offline or it did -->
+					<!-- //// not print, and what it means in words above the button (utils/provisionalTicket.js). -->
+					<span class="relative flex items-center justify-center">
+						<svg
+							v-if="ticketState.phase === 'sending' || ticketState.phase === 'printing'"
+							class="w-4 h-4 animate-spin"
+							fill="none"
+							viewBox="0 0 24 24"
+						>
+							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+						</svg>
+						<svg
+							v-else-if="ticketState.phase === 'printed'"
+							class="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="3"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+						</svg>
+						<svg
+							v-else-if="ticketState.phase === 'offline' || ticketState.phase === 'failed'"
+							class="w-4 h-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							stroke-width="2.5"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5m0 3.5v.01M12 3l9.5 17h-19L12 3z" />
+						</svg>
 					<svg
+						v-else
 						class="w-4 h-4"
 						fill="none"
 						stroke="currentColor"
@@ -1934,6 +1968,19 @@
 							d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"
 						/>
 					</svg>
+						<span
+							v-if="ticketState.phase !== 'idle'"
+							role="status"
+							aria-live="polite"
+							data-provisional-ticket-state
+							:class="[
+								'absolute bottom-full right-0 mb-3 w-max max-w-[16rem] rounded-neo-md px-2 py-1 text-right text-[11px] font-semibold leading-tight shadow-neo-md',
+								ticketStateClass,
+							]"
+						>
+							{{ ticketState.text }}
+						</span>
+					</span>
 				</button>
 
 				<!-- Hold Order Button (Secondary - orange) - hidden in restaurant mode -->
@@ -2649,6 +2696,18 @@ const displayDiscountAmount = computed(() => {
  * FUNCTIONS
  * ============================================================================
  */
+
+//// Neoffice — the provisional ticket's state, shown on the printer button of the action bar (ruling 97, task 28a).
+import { ticketState } from "@/utils/provisionalTicket";
+
+const ticketStateClass = computed(
+	() =>
+		({
+			printed: "bg-green-600 text-white",
+			offline: "bg-amber-500 text-white",
+			failed: "bg-red-600 text-white",
+		})[ticketState.phase] || "bg-gray-800 text-white"
+);
 
 //// Neoffice — [R] added: what the restaurant action bar needs. hasSendableItems
 //// gates the Validate button on there being a line not yet sent (it must also count

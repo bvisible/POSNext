@@ -5839,10 +5839,9 @@ async function handlePrintInvoice(invoiceData) {
 //// before cashing in, printed with "THIS IS NOT A RECEIPT". Upstream prints only the
 //// final invoice (71050faf, 2026-03-25 "add provisional ticket print button in
 //// restaurant table view"); total is the CHF-rounded one (4fdb5df4, 2026-04-04).
-//// Neoffice — it prints where the till's receipts print: a till with a CloudPRNT printer saves the order
-//// as shown and the server prints it, the browser only without one or on a failure, with a toast saying
-//// why (utils/provisionalTicket.js, NeoRestau lot 1 task 28a; it always opened the browser before).
-//// The tip item is passed so the guest's tip, kept out of the cart, does not read as a change.
+//// Neoffice — it prints where the till's receipts print: a till with a CloudPRNT printer has the server
+//// print the order as shown, without saving it; the browser only without a printer or when the server
+//// cannot be reached (utils/provisionalTicket.js, NeoRestau lot 1 task 28a; it always opened the browser).
 function handlePrintProvisionalTicket() {
 	//// Neoffice — the ticket shows the quantity typed in a field still focused, see commitTypedQuantity (fix round 3).
 	commitTypedQuantity();
@@ -5850,7 +5849,6 @@ function handlePrintProvisionalTicket() {
 		cartStore,
 		cloudPrntStore,
 		shiftStore,
-		tipItem: restaurantStore.tipItem,
 		printInBrowser: printProvisionalTicket,
 	});
 }

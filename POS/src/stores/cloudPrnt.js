@@ -33,14 +33,19 @@ export const useCloudPrntStore = defineStore("cloudPrnt", () => {
 		return "ready";
 	});
 
+	// The till the config was read for: a refresh that fails (the till is offline for a moment) keeps what was read
+	// for the same till, so the till does not suddenly believe it has no printer; another till's config is dropped.
+	let loadedFor = null;
+
 	async function load(posProfile) {
 		profile.value = posProfile;
 		try {
 			config.value = await call("cloudprnt.till.get_till_printing", {
 				pos_profile: posProfile,
 			});
+			loadedFor = posProfile;
 		} catch {
-			config.value = null;
+			if (loadedFor !== posProfile) config.value = null;
 		}
 		return config.value;
 	}
@@ -75,13 +80,18 @@ export const useCloudPrntStore = defineStore("cloudPrnt", () => {
 		});
 	}
 
-	// The provisional ticket of table or takeaway order `invoiceName` (its draft Sales Invoice), built on the server
-	// and queued for `printer`, this till's receipt printer: it never opens the cash drawer (NeoRestau task 28a).
-	function printProvisionalTicket(invoiceName, printer = null) {
+	// The provisional ticket of `order`, the order the till shows (utils/provisionalTicket.js orderToPrint): priced by
+	// the server without saving anything and queued for the receipt printer of the till it names. It never opens the
+	// cash drawer, and the caller cannot choose the printer (NeoRestau task 28a).
+	function printProvisionalTicket(order) {
 		return call("cloudprnt.provisional_ticket.print_provisional_ticket", {
-			invoice: invoiceName,
-			...(printer ? { printer } : {}),
+			order: JSON.stringify(order),
 		});
+	}
+
+	// Where a provisional ticket the server queued stands: Pending, Fetched, Printed, Failed or Expired.
+	function ticketStatus(job) {
+		return call("cloudprnt.provisional_ticket.ticket_status", { job });
 	}
 
 	function testPrint(printer) {
@@ -105,6 +115,7 @@ export const useCloudPrntStore = defineStore("cloudPrnt", () => {
 		save,
 		printReceipt,
 		printProvisionalTicket,
+		ticketStatus,
 		testPrint,
 	};
 });
