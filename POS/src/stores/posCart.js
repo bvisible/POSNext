@@ -445,10 +445,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			const applied = Number(item._modifiers_applied) || 0;
 			const adjustment = Number(priceAdjustment) || 0;
 			if (adjustment !== applied) {
-				item.rate = (item.rate || 0) - applied + adjustment;
+				//// Neoffice — never below zero (task 27, fix round 1): the line keeps what its options really took
+				//// off, so taking the option back gives the dish its own price again.
+				const own = (item.rate || 0) - applied;
+				item.rate = Math.max(0, own + adjustment);
 				item.price_list_rate = item.rate;
 				//// Neoffice — the adjustment the line now carries, whichever way it went (see above).
-				item._modifiers_applied = adjustment;
+				item._modifiers_applied = Math.round((item.rate - own) * 1e6) / 1e6;
 			}
 			// Apply quantity from option if set
 			if (quantityValue > 0) {

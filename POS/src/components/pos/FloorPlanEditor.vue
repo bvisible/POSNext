@@ -1056,6 +1056,9 @@ import {
 	tablesOfTheService,
 } from "@/utils/tablesOfTheService"
 
+//// Neoffice — what the options of a line loaded from the table's draft add to its price (NeoRestau lot 1, task 27).
+import { modifiersPriceAdjustment } from "@/utils/modifiersPrice"
+
 const props = defineProps({
 	// The till user's name, as the till's header shows it: a phone's top says the first name (task 26)
 	userName: { type: String, default: "" },
@@ -2097,20 +2100,9 @@ async function selectTable(table) {
 			if (res.items && res.items.length > 0) {
 				for (const item of res.items) {
 					// Calculate modifier price adjustment from saved JSON
-					let modifierPriceAdjustment = 0
-					if (item.posa_item_modifiers) {
-						try {
-							const mods = JSON.parse(item.posa_item_modifiers)
-							for (const mod of mods) {
-								for (const opt of mod.options || []) {
-									modifierPriceAdjustment +=
-										opt.price_adjustment || opt.price || 0
-								}
-							}
-						} catch {
-							/* ignore parse errors */
-						}
-					}
+					//// Neoffice — read by the one helper every path that loads a line uses (utils/modifiersPrice.js;
+					//// NeoRestau lot 1, task 27, fix round 1): same sum as the loop it replaces.
+					const modifierPriceAdjustment = modifiersPriceAdjustment(item.posa_item_modifiers)
 
 					cartStore.addItem(
 						{

@@ -2231,6 +2231,8 @@ import RestaurantCardGrid from "@/components/restaurant/RestaurantCardGrid.vue";
 import PhoneOrderScreen from "@/components/restaurant/phone/PhoneOrderScreen.vue";
 import PhoneOptionsSheet from "@/components/restaurant/phone/PhoneOptionsSheet.vue";
 import { PHONE_MAX_WIDTH, phoneOrderShown as tillShowsPhoneOrder } from "@/utils/phoneCard";
+//// Neoffice — what the options of a line loaded from a server draft add to its price (task 27, fix round 1).
+import { modifiersPriceAdjustment } from "@/utils/modifiersPrice";
 import InvoiceManagement from "@/components/invoices/InvoiceManagement.vue";
 import InvoiceDetailDialog from "@/components/invoices/InvoiceDetailDialog.vue";
 import { useRealtimeStock } from "@/composables/useRealtimeStock";
@@ -3727,19 +3729,9 @@ function handleLoadServerDraft(order) {
 	if (order.items && order.items.length > 0) {
 		for (const item of order.items) {
 			// Calculate modifier price adjustment from saved JSON
-			let modifierPriceAdjustment = 0;
-			if (item.posa_item_modifiers) {
-				try {
-					const mods = JSON.parse(item.posa_item_modifiers);
-					for (const mod of mods) {
-						for (const opt of mod.options || []) {
-							modifierPriceAdjustment += opt.price_adjustment || opt.price || 0;
-						}
-					}
-				} catch {
-					/* ignore parse errors */
-				}
-			}
+			//// Neoffice — read by the one helper every path that loads a line uses (utils/modifiersPrice.js;
+			//// NeoRestau lot 1, task 27, fix round 1): same sum as the loop it replaces.
+			const modifierPriceAdjustment = modifiersPriceAdjustment(item.posa_item_modifiers);
 			cartStore.addItem(
 				{
 					item_code: item.item_code,

@@ -1,5 +1,7 @@
 //// Neoffice — removeItem follows a shown copy back to its cart row (utils/cartRow.js).
 import { cartRowOf } from "@/utils/cartRow";
+//// Neoffice — what the options of a reloaded line add to its price (replaceAllItems; NeoRestau lot 1, task 27).
+import { modifiersPriceAdjustment } from "@/utils/modifiersPrice";
 import { promoApi } from "@/utils/promoApi";
 import { createResource } from "frappe-ui";
 //// Neoffice — watch: the lines of an order that turns to take away are taxed again (NeoRestau lot 1, task 11).
@@ -1753,7 +1755,10 @@ export function useInvoice() {
 				preparation_station: item.preparation_station || "",
 				//// Neoffice — the course the line was ordered under, as the server holds it (NeoRestau lot 1, service families).
 				service_family: item.service_family || "",
-				_modifiers_applied: 0,
+				//// Neoffice — the server's rate already holds the options: the line knows how much of it they make, so
+				//// saving them again moves the price by the change only (was 0: a « no side −1.50 » re-saved with a remark
+				//// took the 1.50 off a second time; NeoRestau lot 1, task 27, fix round 1).
+				_modifiers_applied: modifiersPriceAdjustment(item.posa_item_modifiers),
 				tax_rate: 0,
 				tax_amount: 0,
 				discount_percentage: 0,

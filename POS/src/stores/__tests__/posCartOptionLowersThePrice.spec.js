@@ -44,6 +44,20 @@ describe("an option that changes the price of a dish", () => {
 		expect(cart.invoiceItems[0].amount).toBe(40.5)
 	})
 
+	it("never takes it below zero, and gives the dish its price back when the option goes", () => {
+		cart.invoiceItems[0].rate = 1
+		cart.invoiceItems[0].price_list_rate = 1
+
+		choose(-1.5)
+		expect(cart.invoiceItems[0].rate).toBe(0)
+		expect(cart.invoiceItems[0].amount).toBe(0)
+
+		choose(-1.5)
+		expect(cart.invoiceItems[0].rate).toBe(0)
+		choose(0)
+		expect(cart.invoiceItems[0].rate).toBe(1)
+	})
+
 	it("raises it, takes it back, and lowers it again", () => {
 		choose(2)
 		expect(cart.invoiceItems[0].rate).toBe(44)
