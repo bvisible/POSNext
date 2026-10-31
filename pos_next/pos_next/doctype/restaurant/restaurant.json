@@ -94,7 +94,7 @@
    "label": "Taxes"
   },
   {
-   "description": "Takeaway sales take this tax category: each item gets its takeaway rate, set on the item or on its item group; an item without one keeps its usual rate.",
+   "description": "Takeaway sales take this tax category. Each item takes the takeaway rate of its own row for this category, else the one of its item group or of a parent group; an item with none keeps its usual rate. An item without a row of its own inherits its group's: alcohol filed under a group with a takeaway rate takes that rate, unless it has its own row for this category at its usual rate.",
    "fieldname": "takeaway_tax_category",
    "fieldtype": "Link",
    "label": "Takeaway tax category",
@@ -317,7 +317,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 23:30:00.000000",
+ "modified": "2026-10-31 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "Restaurant",

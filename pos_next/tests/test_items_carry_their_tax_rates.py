@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import flt
+from frappe.utils import flt, nowdate
 
 from pos_next.api import items
 from pos_next.restaurant import takeaway_tax
@@ -79,16 +79,58 @@ class TestItemsCarryTheirTaxRates(TakeawayTill, FrappeTestCase):
 					self.assertEqual(till_rate, self.vat_rate(invoice, code))
 			self.assertEqual(invoice.grand_total, flt(3 * PRICE, 2))
 
+	def forget_logged_items(self):
+		"""The once-a-day marks of the fixture's items: kept in Redis, outside the transaction a test rolls back."""
+		for code in (self.food, self.alcohol, self.dessert):
+			frappe.cache().delete_value(f"pos_next:item_vat_unreadable:{nowdate()}:{code}")
+
+	def test_each_item_says_which_till_its_rates_are_for(self):
+		# The offline cache keeps the maps by till (POS utils/offline/vatMaps.js)
+		self.assertEqual(self.loaded(self.food)["vat_maps_pos_profile"], self.till)
+
+	def test_the_rates_come_from_erpnexts_public_lookup(self):
+		from erpnext.stock import get_item_details
+
+		with patch.object(
+			get_item_details, "get_item_tax_template", wraps=get_item_details.get_item_tax_template
+		) as lookup:
+			item = self.loaded(self.dessert)
+		self.assertTrue(lookup.called)
+		self.assertEqual(json.loads(item["takeaway_item_tax_rate"])[self.vat_26], 2.6)
+
+	def test_an_unreadable_item_is_logged_once_a_day(self):
+		read = takeaway_tax.item_tax_template
+
+		def unreadable_desserts(args, taxes, group, memo=None):
+			if group == self.desserts:
+				raise frappe.DoesNotExistError("an unreadable tax row")
+			return read(args, taxes, group, memo)
+
+		self.forget_logged_items()
+		self.addCleanup(self.forget_logged_items)
+		with (
+			patch.object(takeaway_tax, "item_tax_template", side_effect=unreadable_desserts),
+			patch.object(frappe, "log_error") as logged,
+		):
+			for _search in range(3):
+				items.get_items_bulk(
+					pos_profile=self.till, item_groups=json.dumps([self.dishes, self.desserts])
+				)
+		logged.assert_called_once()
+		self.assertIn(self.dessert, logged.call_args.args[1])
+
 	def test_an_item_whose_rates_cannot_be_read_does_not_stop_the_catalogue(self):
 		# The till would load no item at all if one item's tax rows failed the whole catalogue: that item goes without
 		# its maps (the till taxes it at its own rows' rates, as before), the others keep theirs, and it is logged
 		read = takeaway_tax.item_tax_template
 
-		def unreadable_desserts(args, taxes, group, chains=None):
+		def unreadable_desserts(args, taxes, group, memo=None):
 			if group == self.desserts:
 				raise frappe.DoesNotExistError("an unreadable tax row")
-			return read(args, taxes, group, chains)
+			return read(args, taxes, group, memo)
 
+		self.forget_logged_items()
+		self.addCleanup(self.forget_logged_items)
 		with (
 			patch.object(takeaway_tax, "item_tax_template", side_effect=unreadable_desserts),
 			patch.object(frappe, "log_error") as logged,

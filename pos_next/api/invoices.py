@@ -2252,9 +2252,11 @@ def submit_invoice(invoice=None, data=None):
 
 			# If loyalty covers entire amount and no payments, clear payment entries
 			# to avoid validation errors from empty/default payment modes (Sales Invoice only)
-			if doctype == "Sales Invoice" and flt(loyalty_data.get("loyalty_amount")) >= flt(
-				invoice_doc.grand_total or 0
-			):
+			# //// Neoffice — measured against the total the invoice will hold (_grand_total_as_saved): a takeaway sale
+			# //// takes its takeaway VAT only at the save below (NeoRestau lot 1, task 10).
+			if doctype == "Sales Invoice" and flt(
+				loyalty_data.get("loyalty_amount")
+			) >= _grand_total_as_saved(invoice_doc):
 				invoice_doc.payments = []
 
 		# Handle tip amount — add TIP line item if tip > 0
@@ -2567,6 +2569,25 @@ def submit_invoice(invoice=None, data=None):
 # Whether a payment line is a PSP (vs cash) is decided by the POS Payment Driver
 # Mapping for (pos_profile, mode_of_payment): a mapping ⇒ refund via PSP, no
 # mapping (cash) ⇒ accounting credit note only, cashier hands the money back.
+
+
+# //// Neoffice — added function (no upstream equivalent), NeoRestau lot 1, task 10. The grand total the invoice will
+# //// hold once saved, read before the save: a takeaway sale at a restaurant till takes the restaurant's takeaway tax
+# //// category in before_validate (pos_next.restaurant.takeaway_tax), and on a till pricing without tax its VAT moves the
+# //// total. The draft the till saved first was computed on site; submit_invoice read that total for the « loyalty
+# //// points cover the whole sale » check. Any other sale reads its total as it stands, as upstream did.
+def _grand_total_as_saved(invoice_doc):
+	from pos_next.restaurant.takeaway_tax import apply_takeaway_tax_category, takeaway_tax_category
+
+	is_takeaway_sale = (
+		cint(invoice_doc.get("is_pos"))
+		and cint(invoice_doc.get("is_takeaway"))
+		and not cint(invoice_doc.get("is_return"))
+	)
+	if is_takeaway_sale and takeaway_tax_category(invoice_doc.get("pos_profile")):
+		apply_takeaway_tax_category(invoice_doc)
+		invoice_doc.calculate_taxes_and_totals()
+	return flt(invoice_doc.grand_total or 0)
 
 
 def _resolve_psp_for_mode(pos_profile, mode_of_payment):

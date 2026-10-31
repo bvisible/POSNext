@@ -433,6 +433,90 @@ class TestTakeawayTaxCategory(TakeawayTill, FrappeTestCase):
 		self.pos_invoice(is_takeaway=1, items=[self.food])
 		self.assertEqual(int(get_next_takeaway_number()[2:]), int(following[2:]) + 1)
 
+	def test_a_takeaway_sale_is_returned_at_its_takeaway_rates(self):
+		# The sale: a dish (its own takeaway row) and a dessert (its item group's), paid at the till as a takeaway order
+		sale = self.sale([self.food, self.dessert])
+		frappe.set_user(TILL)
+		try:
+			draft = invoices.update_invoice(json.dumps(sale))
+			paid = {**sale, "name": draft["name"], "is_takeaway": 1, "takeaway_number": "T-904"}
+			invoices.submit_invoice(invoice=json.dumps(paid), data="{}")
+		finally:
+			frappe.set_user("Administrator")
+		sold = frappe.get_doc("Sales Invoice", draft["name"])
+		self.assertEqual(sold.total_taxes_and_charges, 0.55)
+		# The return, as the till's return dialog builds it (ReturnInvoiceDialog.vue): no tax category, no template
+		returned = {
+			"doctype": "Sales Invoice",
+			"pos_profile": self.till,
+			"customer": sold.customer,
+			"company": sold.company,
+			"is_return": 1,
+			"return_against": sold.name,
+			"update_outstanding_for_self": 0,
+			"is_pos": 1,
+			"update_stock": 1,
+			"items": [
+				{
+					"item_code": row.item_code,
+					"item_name": row.item_name,
+					"qty": -1,
+					"rate": row.rate,
+					"warehouse": row.warehouse,
+					"uom": row.uom,
+					"conversion_factor": 1,
+					"sales_invoice_item": row.name,
+				}
+				for row in sold.items
+			],
+			"payments": [{"mode_of_payment": self.fx.mode, "amount": -sold.grand_total}],
+		}
+		frappe.set_user(TILL)
+		try:
+			done = invoices.submit_invoice(invoice=json.dumps(returned), data="{}")
+		finally:
+			frappe.set_user("Administrator")
+		credit = frappe.get_doc("Sales Invoice", done["name"])
+		# The VAT credited is the VAT charged, at the same rates
+		self.assertEqual((credit.docstatus, credit.total_taxes_and_charges), (1, -0.55))
+		self.assertEqual((self.vat_rate(credit, self.food), self.vat_rate(credit, self.dessert)), (2.6, 2.6))
+		self.assertEqual(credit.grand_total, -sold.grand_total)
+		self.assertEqual(credit.tax_category, self.category)
+		self.assertEqual([row.item_tax_template for row in credit.items], [self.reduced_template] * 2)
+
+		def booked(voucher, account):
+			row = frappe.get_all(
+				"GL Entry",
+				filters={"voucher_no": voucher, "account": account, "is_cancelled": 0},
+				fields=["sum(debit) as debit", "sum(credit) as credit"],
+			)[0]
+			return flt(row.debit), flt(row.credit)
+
+		# The 2.6 % account gets back what the sale put on it; the 8.1 % account is not touched
+		self.assertEqual(booked(sold.name, self.vat_26), (0, 0.55))
+		self.assertEqual(booked(credit.name, self.vat_26), (0.55, 0))
+		self.assertEqual(booked(credit.name, self.vat_81), (0, 0))
+
+	def test_the_loyalty_check_reads_the_total_a_takeaway_invoice_will_hold(self):
+		# A till pricing without tax: a dish at 10.00 is 10.81 on site, 10.26 to take away
+		self.make_till(enable_restaurant_mode=1, tax_inclusive=0)
+		sale = self.sale([])
+		sale["items"] = [{"item_code": self.food, "qty": 1, "rate": 10, "price_list_rate": 10}]
+		frappe.set_user(TILL)
+		try:
+			draft = invoices.update_invoice(json.dumps(sale))
+		finally:
+			frappe.set_user("Administrator")
+		doc = frappe.get_doc("Sales Invoice", draft["name"])
+		# The till's draft is saved on site; the payment brings the takeaway flag (submit_invoice's update)
+		self.assertEqual(doc.grand_total, 10.81)
+		doc.is_takeaway = 1
+		self.assertEqual(invoices._grand_total_as_saved(doc), 10.26)
+		# A sale on site reads its total as it stands
+		doc.is_takeaway = 0
+		doc.grand_total = 10.81
+		self.assertEqual(invoices._grand_total_as_saved(doc), 10.81)
+
 	def test_a_return_and_an_invoice_made_outside_a_till_are_left_as_they_come(self):
 		def takeaway(**values):
 			doc = frappe.get_doc(
@@ -450,7 +534,8 @@ class TestTakeawayTaxCategory(TakeawayTill, FrappeTestCase):
 
 		for label, values in (
 			("an invoice made outside a till", {"is_pos": 0}),
-			("a return of a takeaway sale", {"is_pos": 1, "is_return": 1}),
+			# A return that names its sale takes the sale's taxes (test_a_takeaway_sale_is_returned_at_its_takeaway_rates)
+			("a return that names no sale", {"is_pos": 1, "is_return": 1}),
 		):
 			with self.subTest(label):
 				doc = takeaway(**values)
