@@ -17462,3 +17462,41 @@ msgstr "{0} table libérée dans {1}"
 
 msgid "No table is being cleaned in {1}"
 msgstr "Aucune table n'est en nettoyage dans {1}"
+
+# //// Neoffice — French for the kitchen screen's lanes, columns and station buttons (lot 1, task 23).
+# //// Kept as one block at the end, like the earlier passes. Drop an entry when upstream translates its msgid.
+#: POS/src/components/restaurant/KitchenBand.vue:26 POS/src/components/restaurant/KitchenBand.vue:27 POS/src/components/restaurant/KitchenBand.vue:71
+msgid "+{0}"
+msgstr "+{0}"
+
+#: POS/src/components/invoices/KDSOrderCard.vue:169
+msgid "+{0} line"
+msgstr "+{0} ligne"
+
+#: POS/src/components/invoices/KDSOrderCard.vue:169
+msgid "+{0} lines"
+msgstr "+{0} lignes"
+
+#: POS/src/components/restaurant/KitchenLayoutSwitch.vue:23
+msgid "Bands"
+msgstr "Bandes"
+
+#: POS/src/components/restaurant/KitchenLayoutSwitch.vue:19
+msgid "Waiting orders above, orders in preparation below"
+msgstr "Commandes en attente au-dessus, commandes en préparation en dessous"
+
+#: POS/src/components/restaurant/KitchenLayoutSwitch.vue:30
+msgid "Waiting orders on the left, orders in preparation on the right"
+msgstr "Commandes en attente à gauche, commandes en préparation à droite"
+
+#: POS/src/pages/KDS.vue:66
+msgid "No pending orders"
+msgstr "Aucune commande en attente"
+
+#: POS/src/pages/KDS.vue:77
+msgid "No orders in preparation"
+msgstr "Aucune commande en préparation"
+
+#: pos_next/api/restaurant.py:343
+msgid "Station {0} not found"
+msgstr "Poste {0} introuvable"
