@@ -1,8 +1,8 @@
 //// Neoffice — added file (no upstream equivalent). The piece the two « ⋯ » of the restaurant till share to open a card
 //// the opening hours keep off the till (NeoRestau lot 1, task 25): the « ⋯ » at the end of the order screen's card
 //// row, and the entry of the floor plan's own « ⋯ » menu. Both list the same cards (the store's `pickableCards`), pick
-//// through the same gesture, and the card picked joins the row of THIS till until the next service begins or until it
-//// is closed, so that the next table opened shows it.
+//// through the same gesture, and the card picked joins the row of THIS till until it is closed or the shift is, so that
+//// the next table opened shows it.
 ////
 //// Picking goes through the authorization gate as « Open a card outside its hours »: opt-in, nothing is asked until a
 //// POS Authorization Rule names the action, and then a manager's PIN. The server enforces it as well.

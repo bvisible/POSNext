@@ -1,7 +1,8 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). The row of card buttons of the order screen (NeoRestau lot 1,
- * //// task 25): one button per card; one short muted line above them says that the hours are over and whose card is
- * //// still there; a card opened by hand carries a mark and a « × »; the « ⋯ » that fetches another card ends the row.
+ * //// task 25): one button per card; a card opened by hand carries a mark and a « × »; the « ⋯ » that fetches a card the
+ * //// opening hours keep off the till ends the row. Nothing above the buttons says anything about the hours: between
+ * //// two services the afternoon has no card of its own, and the « ⋯ » is the way back.
  * @vitest-environment jsdom
  */
 import { mount } from "@vue/test-utils"
@@ -46,48 +47,17 @@ function theRow(props = {}, slots = {}) {
 	return wrapper
 }
 const tabs = () => wrapper.findAll('[data-test="card-tab"]')
-const line = () => wrapper.find('[data-test="after-hours-line"]')
 
 afterEach(() => wrapper?.unmount())
 
-describe("the line above the card buttons", () => {
-	it("is not there during the hours", () => {
-		theRow({ afterHours: false, serviceLabel: "Lunch" })
-
-		expect(line().exists()).toBe(false)
-	})
-
-	it("says that the hours are over and whose card is still there, outside the hours", () => {
+describe("the row has no line about the opening hours", () => {
+	it("carries nothing but the buttons and the « ⋯ », whatever the props it is given", () => {
+		// What the first version of the task passed (the hours' last service): no longer a thing the row knows
 		theRow({ afterHours: true, serviceLabel: "Lunch" })
 
-		expect(line().text()).toBe(
-			"Outside opening hours · card of the Lunch service",
-		)
-	})
-
-	it("shows the label of the slot as it was typed", () => {
-		theRow({ afterHours: true, serviceLabel: "Dîner d'été  (terrasse)" })
-
-		expect(line().text()).toContain("Dîner d'été  (terrasse)")
-	})
-
-	it("does not name a service that has no label", () => {
-		theRow({ afterHours: true, serviceLabel: null })
-
-		expect(line().text()).toBe(
-			"Outside opening hours · card of the last service",
-		)
-	})
-
-	it("is one short muted line, above the buttons", () => {
-		theRow({ afterHours: true, serviceLabel: "Lunch" })
-
-		const html = wrapper.html()
-		expect(html.indexOf('data-test="after-hours-line"')).toBeLessThan(
-			html.indexOf('data-test="card-tab"'),
-		)
-		expect(line().classes()).toContain("text-gray-500")
-		expect(wrapper.findAll('[data-test="after-hours-line"]')).toHaveLength(1)
+		expect(wrapper.find('[data-test="after-hours-line"]').exists()).toBe(false)
+		expect(wrapper.text()).not.toContain("Outside opening hours")
+		expect(wrapper.find("p").exists()).toBe(false)
 	})
 })
 

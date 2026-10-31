@@ -2,8 +2,8 @@
 	<!-- //// Neoffice — added file (no upstream equivalent). The « ⋯ » at the end of the order screen's row of card buttons -->
 	<!-- //// (NeoRestau lot 1, task 25): small and grey, like the floor plan's, so that it is not pressed by accident. It lists -->
 	<!-- //// the restaurant's other active cards that the opening hours keep off the till right now; picking one opens it on -->
-	<!-- //// this till (through the authorization gate where a rule asks a manager's PIN) until the next service begins. A tap -->
-	<!-- //// outside only closes it, as on the floor plan. -->
+	<!-- //// this till (through the authorization gate where a rule asks a manager's PIN) until it is closed or the shift is. -->
+	<!-- //// A tap outside only closes it, as on the floor plan. -->
 	<div v-if="available" ref="root" data-test="card-more-menu" class="relative flex-shrink-0">
 		<button
 			type="button"

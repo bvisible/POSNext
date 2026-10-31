@@ -1,13 +1,14 @@
 /**
- * //// Neoffice — added file (no upstream equivalent). After the last service its card stays on the till, and any
- * //// other card is fetched from a « ⋯ » (NeoRestau lot 1, task 25). The server keeps the last service's card on the
- * //// till and says which service it is; the store keeps what the cashier opened by hand: it joins the row marked as
- * //// such, stays on THIS till until the next service begins or until it is closed, and is fetched from the server one
- * //// card at a time (the till does not hold a copy of every card).
+ * //// Neoffice — added file (no upstream equivalent). A card the opening hours keep off the till can be fetched from a
+ * //// « ⋯ » (NeoRestau lot 1, task 25, as the product owner amended it on 31.10.2026): the hours show a card during its
+ * //// slots only, and between the services nothing of it shows by itself. The store keeps what the cashier opened by
+ * //// hand: it joins the row marked as such and stays on THIS till, through a reload, until it is closed or the shift
+ * //// closes; it is fetched from the server one card at a time (the till does not hold a copy of every card).
  * @vitest-environment jsdom
  */
 import { createPinia, setActivePinia } from "pinia"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { nextTick } from "vue"
 
 const call = vi.hoisted(() => vi.fn())
 
@@ -45,15 +46,13 @@ const { tillSettings } = await import("@/stores/posSettings")
 const { useRestaurantStore } = await import("../restaurant")
 
 const API = "pos_next.api.restaurant."
-const FRIDAYS_SERVICE = {
-	key: "2026-10-23T09:00:00",
-	after_hours: true,
-	label: "Lunch",
-}
-const SATURDAYS_SERVICE = {
-	key: "2026-10-24T09:00:00",
-	after_hours: false,
-	label: null,
+const THE_SHIFT = "POS-OPE-2026-00001"
+const ANOTHER_SHIFT = "POS-OPE-2026-00002"
+
+// The shift the till works in, as POSSale.vue tells the store of it (null: it closes)
+async function tellTheShift(store, name) {
+	store.setTillShift(name)
+	await nextTick()
 }
 
 const LUNCH = {
@@ -62,6 +61,12 @@ const LUNCH = {
 	is_permanent: 0,
 	restaurant: "The Bistro",
 	items: [],
+}
+const LUNCH_PICK = {
+	name: "Lunch",
+	card_name: "Lunch",
+	description: null,
+	image: null,
 }
 const PERMANENT = {
 	name: "Permanent items",
@@ -89,6 +94,13 @@ const SATURDAY_WITH_ITEMS = {
 	restaurant: "The Bistro",
 	items: [{ item_type: "Item", item: "ITEM-1", item_name: "Pasta", price: 18 }],
 }
+const SUNDAY_WITH_ITEMS = {
+	name: "Sunday",
+	card_name: "Sunday",
+	is_permanent: 0,
+	restaurant: "The Bistro",
+	items: [],
+}
 
 // What the server answers; each test overrides what it is about
 let answers
@@ -97,7 +109,6 @@ function answerWith(overrides = {}) {
 		get_restaurant_status: {
 			is_open: false,
 			current_slot: null,
-			service: FRIDAYS_SERVICE,
 		},
 		get_active_cards: [LUNCH, PERMANENT],
 		get_other_cards: [SATURDAY, SUNDAY],
@@ -120,99 +131,102 @@ const calls = (name) =>
 		.filter(([method]) => method === `${API}${name}`)
 		.map(([, params]) => params)
 
-async function aTillAtTheEndOfFridaysService() {
+async function aTillBetweenTwoServices() {
 	const store = useRestaurantStore()
+	await tellTheShift(store, THE_SHIFT)
 	await store.fetchRestaurantStatus()
 	await store.fetchActiveCards()
 	return store
 }
 
-describe("the store knows which service the cards on the till are of", () => {
+describe("the cards on the till follow the hours", () => {
 	let store
-	beforeEach(() => {
+	beforeEach(async () => {
 		localStorage.clear()
 		setActivePinia(createPinia())
 		call.mockReset()
 		answerWith()
 		tillSettings.restaurant = "The Bistro"
 		store = useRestaurantStore()
+		await tellTheShift(store, THE_SHIFT)
 	})
 
-	it("keeps the service the status tells, as the key, the after-hours flag and the label", async () => {
-		await store.fetchRestaurantStatus()
-
-		expect(store.cardService).toEqual({
-			key: "2026-10-23T09:00:00",
-			afterHours: true,
-			label: "Lunch",
+	it("refreshes the cards when the slot that ends takes its card with it", async () => {
+		answerWith({
+			get_restaurant_status: { is_open: true, current_slot: "Lunch" },
+			get_active_cards: [LUNCH, PERMANENT],
 		})
-	})
-
-	it("has no service while the status is silent about it, and does not fail", async () => {
-		answerWith({ get_restaurant_status: { is_open: true, current_slot: null } })
-
 		await store.fetchRestaurantStatus()
+		await store.fetchActiveCards()
+		expect(store.shownCards.map((card) => card.name)).toEqual([
+			"Lunch",
+			"Permanent items",
+		])
+		calls("get_active_cards").length = 0
 
-		expect(store.cardService).toEqual({
-			key: null,
-			afterHours: false,
-			label: null,
+		// 14:01: the lunch slot is over, nothing of the hours shows by itself
+		answerWith({
+			get_restaurant_status: { is_open: false, current_slot: null },
+			get_active_cards: [PERMANENT],
+			get_other_cards: [LUNCH],
 		})
+		const before = calls("get_active_cards").length
+		await store.fetchRestaurantStatus()
+
+		expect(calls("get_active_cards").length).toBe(before + 1)
+		expect(store.shownCards.map((card) => card.name)).toEqual([
+			"Permanent items",
+		])
+		expect(store.pickableCards.map((card) => card.name)).toEqual(["Lunch"])
 	})
 
-	it("refreshes the cards when the next service begins, and not before", async () => {
+	it("refreshes the cards when the next slot begins, and not while the slot is the same", async () => {
+		answerWith({
+			get_restaurant_status: { is_open: false, current_slot: null },
+			get_active_cards: [PERMANENT],
+		})
 		await store.fetchRestaurantStatus()
-		expect(calls("get_active_cards")).toHaveLength(0)
-
 		await store.fetchRestaurantStatus()
 		expect(calls("get_active_cards")).toHaveLength(0)
 
 		answerWith({
-			get_restaurant_status: {
-				is_open: true,
-				current_slot: "Saturday",
-				service: SATURDAYS_SERVICE,
-			},
+			get_restaurant_status: { is_open: true, current_slot: "Dinner" },
+			get_active_cards: [SATURDAY_WITH_ITEMS, PERMANENT],
 		})
+		await store.fetchRestaurantStatus()
+		expect(calls("get_active_cards")).toHaveLength(1)
 		await store.fetchRestaurantStatus()
 		expect(calls("get_active_cards")).toHaveLength(1)
 	})
 
-	it("refreshes the cards when the next service begins even if the slot carries the same label", async () => {
-		const dinner = (key) => ({
-			get_restaurant_status: {
-				is_open: true,
-				current_slot: "Dinner",
-				service: { key, after_hours: false, label: null },
-			},
-		})
-		answerWith(dinner("2026-10-23T18:00:00"))
-		await store.fetchRestaurantStatus()
-		answerWith(dinner("2026-10-24T18:00:00"))
+	it("shows the permanent card whatever the hours say, last", async () => {
+		answerWith({ get_active_cards: [PERMANENT] })
+		await store.fetchActiveCards()
+		expect(store.shownCards.map((card) => card.name)).toEqual([
+			"Permanent items",
+		])
 
-		await store.fetchRestaurantStatus()
-
-		expect(calls("get_active_cards")).toHaveLength(1)
+		answerWith({ get_active_cards: [PERMANENT, LUNCH] })
+		await store.fetchActiveCards()
+		expect(store.shownCards.map((card) => card.name)).toEqual([
+			"Lunch",
+			"Permanent items",
+		])
 	})
 
-	it("refreshes the cards when the last slot of the service ends, as the line above the cards comes up", async () => {
+	it("ignores a status that still carries a service, and does not fail", async () => {
 		answerWith({
 			get_restaurant_status: {
 				is_open: true,
-				current_slot: "Lunch",
-				service: {
-					key: "2026-10-23T09:00:00",
-					after_hours: false,
-					label: null,
-				},
+				current_slot: null,
+				service: { key: "x", after_hours: true, label: "Lunch" },
 			},
 		})
-		await store.fetchRestaurantStatus()
-		answerWith()
+
 		await store.fetchRestaurantStatus()
 
-		expect(calls("get_active_cards")).toHaveLength(1)
-		expect(store.cardService.afterHours).toBe(true)
+		expect(store.cardService).toBeUndefined()
+		expect(store.restaurantStatus.isOpen).toBe(true)
 	})
 })
 
@@ -275,7 +289,7 @@ describe("a card opened by hand", () => {
 		call.mockReset()
 		answerWith()
 		tillSettings.restaurant = "The Bistro"
-		store = await aTillAtTheEndOfFridaysService()
+		store = await aTillBetweenTwoServices()
 	})
 	afterEach(() => localStorage.clear())
 
@@ -345,6 +359,7 @@ describe("a card opened by hand", () => {
 			"Saturday",
 			"Sunday",
 		])
+		expect(localStorage.getItem("pos_next_opened_cards")).toBeNull()
 	})
 
 	it("is opened once, whatever the number of times it is picked", async () => {
@@ -370,7 +385,29 @@ describe("a card opened by hand", () => {
 		).toBeFalsy()
 	})
 
-	it("stays when the cards are fetched again within the same service", async () => {
+	it("survives the minute poll, even when the poll finds the slot has changed", async () => {
+		await store.openCardByHand(SATURDAY, null)
+
+		// The poll, once as before, then with a new slot that has the cards refreshed
+		await store.fetchRestaurantStatus()
+		answerWith({
+			get_restaurant_status: { is_open: true, current_slot: "Dinner" },
+			get_active_cards: [SUNDAY_WITH_ITEMS, PERMANENT],
+			get_other_cards: [LUNCH_PICK, SATURDAY],
+		})
+		await store.fetchRestaurantStatus()
+
+		expect(store.shownCards.map((card) => card.name)).toEqual([
+			"Sunday",
+			"Saturday",
+			"Permanent items",
+		])
+		expect(
+			store.shownCards.find((card) => card.name === "Saturday").opened_by_hand,
+		).toBe(true)
+	})
+
+	it("stays when the cards are fetched again, by the poll or by an update of a card", async () => {
 		await store.openCardByHand(SATURDAY, null)
 
 		await store.fetchActiveCards()
@@ -383,27 +420,32 @@ describe("a card opened by hand", () => {
 		])
 	})
 
-	it("drops when the next service begins, and the hours decide again", async () => {
+	it("goes when the shift closes, and the hours decide again", async () => {
 		await store.openCardByHand(SATURDAY, null)
+		expect(localStorage.getItem("pos_next_opened_cards")).not.toBeNull()
 
-		answerWith({
-			get_restaurant_status: {
-				is_open: true,
-				current_slot: "Saturday",
-				service: SATURDAYS_SERVICE,
-			},
-			get_active_cards: [SATURDAY_WITH_ITEMS, PERMANENT],
-			get_other_cards: [LUNCH],
-		})
-		await store.fetchRestaurantStatus()
+		await tellTheShift(store, null)
 
 		expect(store.openedCards).toEqual([])
-		expect(store.shownCards.map((card) => card.name)).toEqual([
-			"Saturday",
-			"Permanent items",
-		])
 		expect(store.shownCards.some((card) => card.opened_by_hand)).toBe(false)
 		expect(localStorage.getItem("pos_next_opened_cards")).toBeNull()
+	})
+
+	it("goes when another shift is opened on this till", async () => {
+		await store.openCardByHand(SATURDAY, null)
+
+		await tellTheShift(store, ANOTHER_SHIFT)
+
+		expect(store.openedCards).toEqual([])
+		expect(localStorage.getItem("pos_next_opened_cards")).toBeNull()
+	})
+
+	it("is kept while the shift is read again and is the same", async () => {
+		await store.openCardByHand(SATURDAY, null)
+
+		await tellTheShift(store, THE_SHIFT)
+
+		expect(store.openedCards.map((card) => card.name)).toEqual(["Saturday"])
 	})
 
 	it("is not shown for another restaurant than the one of the till", async () => {
@@ -442,17 +484,21 @@ describe("a card opened by hand stays on THIS till", () => {
 	})
 	afterEach(() => localStorage.clear())
 
-	it("through a reload of the page, while the same service lasts", async () => {
-		const store = await aTillAtTheEndOfFridaysService()
+	it("through a reload of the page, while the shift lasts", async () => {
+		const store = await aTillBetweenTwoServices()
 		await store.openCardByHand(SATURDAY, null)
 
-		// The page is loaded again: a new store, the status not yet read
+		// The page is loaded again: the old store is gone, a new one, the shift read again from the server
+		store.$dispose()
 		setActivePinia(createPinia())
 		const reloaded = useRestaurantStore()
+		// Until the till knows its shift, nothing is shown and nothing is dropped
 		expect(reloaded.shownCards.some((card) => card.name === "Saturday")).toBe(
 			false,
 		)
+		expect(localStorage.getItem("pos_next_opened_cards")).not.toBeNull()
 
+		await tellTheShift(reloaded, THE_SHIFT)
 		await reloaded.fetchRestaurantStatus()
 		await reloaded.fetchActiveCards()
 
@@ -467,32 +513,40 @@ describe("a card opened by hand stays on THIS till", () => {
 		).toBe(true)
 	})
 
-	it("but not into the next service", async () => {
-		const store = await aTillAtTheEndOfFridaysService()
+	it("and a reload that finds the shift still open shows it as soon as the till has said which", async () => {
+		const store = await aTillBetweenTwoServices()
 		await store.openCardByHand(SATURDAY, null)
 
+		store.$dispose()
 		setActivePinia(createPinia())
-		answerWith({
-			get_restaurant_status: {
-				is_open: true,
-				current_slot: "Saturday",
-				service: SATURDAYS_SERVICE,
-			},
-			get_active_cards: [SATURDAY_WITH_ITEMS, PERMANENT],
-		})
 		const reloaded = useRestaurantStore()
+		await tellTheShift(reloaded, THE_SHIFT)
+
+		expect(reloaded.shownCards.map((card) => card.name)).toEqual(["Saturday"])
+	})
+
+	it("but not into another shift", async () => {
+		const store = await aTillBetweenTwoServices()
+		await store.openCardByHand(SATURDAY, null)
+
+		// The shift closed, from another window, and another was opened before this page was loaded again
+		store.$dispose()
+		setActivePinia(createPinia())
+		const reloaded = useRestaurantStore()
+		await tellTheShift(reloaded, ANOTHER_SHIFT)
 		await reloaded.fetchRestaurantStatus()
 		await reloaded.fetchActiveCards()
 
 		expect(reloaded.openedCards).toEqual([])
 		expect(reloaded.shownCards.map((card) => card.name)).toEqual([
-			"Saturday",
+			"Lunch",
 			"Permanent items",
 		])
+		expect(localStorage.getItem("pos_next_opened_cards")).toBeNull()
 	})
 
 	it("and a browser that refuses its storage changes nothing", async () => {
-		const store = await aTillAtTheEndOfFridaysService()
+		const store = await aTillBetweenTwoServices()
 		const blocked = vi
 			.spyOn(Storage.prototype, "setItem")
 			.mockImplementation(() => {

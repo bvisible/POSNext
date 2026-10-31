@@ -1,8 +1,8 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The dialog the floor plan's « ⋯ » menu opens with its entry -->
 	<!-- //// « Open another card » (NeoRestau lot 1, task 25): the same list as the « ⋯ » of the order screen's card row, -->
-	<!-- //// the same pick, through the same authorization gate. The card picked joins the row of this till until the next -->
-	<!-- //// service begins, so that the next table opened shows it. -->
+	<!-- //// the same pick, through the same authorization gate. The card picked joins the row of this till until it is -->
+	<!-- //// closed or the shift is, so that the next table opened shows it. -->
 	<div
 		v-if="picker.state.open"
 		data-test="card-picker-dialog"
@@ -22,7 +22,7 @@
 					{{ __("Open another card") }}
 				</h3>
 				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-					{{ __("A card opened here stays on this till until the next service begins.") }}
+					{{ __("A card opened here stays on this till until you close it or the shift ends.") }}
 				</p>
 			</div>
 			<div class="max-h-[60vh] overflow-y-auto">

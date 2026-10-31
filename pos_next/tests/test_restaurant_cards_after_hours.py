@@ -1,17 +1,25 @@
 # //// Neoffice — added file (no upstream equivalent).
-"""After the last service its card stays on the till, and any other card can be fetched (NeoRestau lot 1, task 25).
+"""A card the opening hours keep off the till can be fetched from a « ⋯ » (NeoRestau lot 1, task 25).
 
-The restaurant's opening hours assign cards to service slots. Until now a card the hours name was shown during its
-slots only, so after the last slot of the day (a Friday 09:00 to 23:00 lunch, say) every scheduled card was hidden
-and a till rung at 23:12 held nothing but the permanent card. The product owner decided (30.10.2026): the card of the
-last service stays until the next service begins, and any other card can be fetched from a « ⋯ ».
+The restaurant's opening hours assign cards to service slots. A card they name is shown during its slots only, and
+between the services nothing of it shows by itself: the afternoon between a lunch and an evening service has no card
+of its own (product owner, 31.10.2026, who first wanted the last service's card to stay until the next one began and
+then took that back). What a cashier still needs of a card the hours have hidden, with people still at a table at 14:00,
+he fetches from the « ⋯ »: `get_other_cards` lists the cards, `open_card_outside_hours` serves one, through the
+authorization gate as « Open a card outside its hours » (opt-in manager PIN, off by default).
+
+What is already typed stays workable: a table opened at 13:00 is edited, sent to the kitchen, paid and replayed offline
+at 14:30, whatever the hours did to the card its lines came from.
 
 The suite relies on neither the patches nor any restaurant of the clone: it builds two restaurants of its own with
 their cards and slots, sets the clock with the `frappe.utils` patches the other restaurant tests use, and rolls
 everything back.
 """
 
+import ast
 import json
+import os
+import re
 from contextlib import contextmanager
 from itertools import count
 from unittest.mock import patch
@@ -19,11 +27,11 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from pos_next.api import authorization
+from pos_next.api import authorization, invoices
 from pos_next.api import restaurant as restaurant_api
 from pos_next.authorization import pin as pin_store
 from pos_next.authorization.tests.helpers import GOOD_PIN, MANAGER, ROLE, make_role, make_user
-from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, _item, _user
+from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, TILL, _item, _sale, _user
 from pos_next.tests.test_two_restaurants_on_one_site import TwoRestaurants, a_request_from
 
 # The action the till asks a manager's PIN for, written as the product owner named it
@@ -46,6 +54,7 @@ CASHIER_OF_A = "cards-after-hours-cashier-a@yopmail.com"
 CASHIER_OF_B = "cards-after-hours-cashier-b@yopmail.com"
 PORTAL = "cards-after-hours-portal@yopmail.com"
 TILL_A = "_Test Till Cards A"
+OFFLINE_SALE = "cards-after-hours-offline-sale"
 
 _ip = count(1)
 
@@ -143,132 +152,87 @@ class TheHours(TwoRestaurants):
 		with at(date, time):
 			return [card["name"] for card in restaurant_api.get_other_cards(restaurant or self.a)]
 
-	def service(self, date, time, restaurant=None):
-		with at(date, time):
-			return restaurant_api.get_restaurant_status(restaurant or self.a)["service"]
 
-
-class TestTheLastServicesCardStays(TheHours, FrappeTestCase):
-	def test_a_card_shows_during_its_slot_and_stays_after_it(self):
-		for time in ("09:00:00", "12:30:00", "22:59:00", "23:12:00", "23:59:59"):
-			with self.subTest(time=time):
-				self.assertIn(self.lunch, self.shown(FRIDAY, time))
-		# The cards of the other days' services were never there on a Friday
-		for time in ("22:59:00", "23:12:00"):
-			self.assertNotIn(self.saturday, self.shown(FRIDAY, time))
-
-	def test_it_stays_through_the_night_until_the_next_service_begins(self):
-		for time in ("00:00:00", "03:00:00", "08:00:00", "08:59:59"):
-			with self.subTest(time=time):
-				shown = self.shown(SATURDAY, time)
-				self.assertIn(self.lunch, shown)
-				self.assertNotIn(self.saturday, shown)
-		# The service begins: its card replaces the last service's
-		for time in ("09:00:00", "09:30:00", "23:30:00"):
-			with self.subTest(time=time):
-				shown = self.shown(SATURDAY, time)
-				self.assertIn(self.saturday, shown)
-				self.assertNotIn(self.lunch, shown)
-
-	def test_between_two_services_of_a_day_the_first_card_stays(self):
-		midday, evening = self.lunch, self.saturday
+class TestACardTiedToHoursShowsInItsSlotsOnly(TheHours, FrappeTestCase):
+	def setUp(self):
+		super().setUp()
+		# A noon service and an evening service on Fridays, each with its card
+		self.noon, self.evening = self.lunch, self.saturday
 		self.set_hours(
 			self.a,
-			("Friday", "11:00:00", "14:00:00", "Midday", midday),
-			("Friday", "18:00:00", "23:00:00", "Evening", evening),
+			("Friday", "12:00:00", "14:00:00", "Noon", self.noon),
+			("Friday", "18:00:00", "23:00:00", "Evening", self.evening),
 		)
-		for time in ("11:00:00", "13:59:00", "14:00:01", "15:30:00", "17:59:59"):
+
+	def test_the_noon_card_shows_from_noon_and_is_gone_after_two(self):
+		self.assertNotIn(self.noon, self.shown(FRIDAY, "11:59:00"))
+		for time in ("12:00:00", "12:30:00", "13:59:00", "14:00:00"):
+			with self.subTest(time=time):
+				self.assertIn(self.noon, self.shown(FRIDAY, time))
+		self.assertNotIn(self.noon, self.shown(FRIDAY, "14:01:00"))
+
+	def test_between_the_two_services_nothing_of_the_hours_shows(self):
+		for time in ("14:01:00", "14:30:00", "16:00:00", "17:59:00"):
 			with self.subTest(time=time):
 				shown = self.shown(FRIDAY, time)
-				self.assertIn(midday, shown)
-				self.assertNotIn(evening, shown)
-		for time in ("18:00:00", "22:00:00", "23:12:00"):
+				self.assertNotIn(self.noon, shown)
+				self.assertNotIn(self.evening, shown)
+
+	def test_the_evening_card_appears_at_six(self):
+		self.assertNotIn(self.evening, self.shown(FRIDAY, "17:59:00"))
+		for time in ("18:00:00", "20:00:00", "22:59:00"):
 			with self.subTest(time=time):
 				shown = self.shown(FRIDAY, time)
-				self.assertIn(evening, shown)
-				self.assertNotIn(midday, shown)
+				self.assertIn(self.evening, shown)
+				self.assertNotIn(self.noon, shown)
 
-	def test_the_cards_of_every_slot_that_matches_now_show_together(self):
-		first, second = self.lunch, self.saturday
-		self.set_hours(
-			self.a,
-			("Friday", "12:00:00", "14:00:00", "Midday", first),
-			("Friday", "13:00:00", "15:00:00", "Brunch", second),
-		)
-		shown = self.shown(FRIDAY, "13:30:00")
-		self.assertIn(first, shown)
-		self.assertIn(second, shown)
-		shown = self.shown(FRIDAY, "14:30:00")
-		self.assertNotIn(first, shown)
-		self.assertIn(second, shown)
-		# After both: the card of the slot that ended last
-		shown = self.shown(FRIDAY, "15:30:00")
-		self.assertNotIn(first, shown)
-		self.assertIn(second, shown)
-
-	def test_a_slot_inside_another_does_not_take_the_card_when_the_outer_one_ends(self):
-		# What is on screen in the last minute of the service is what stays: the outer slot ended last
-		outer, inner = self.lunch, self.saturday
-		self.set_hours(
-			self.a,
-			("Friday", "09:00:00", "23:00:00", "Open", outer),
-			("Friday", "12:00:00", "14:00:00", "Brunch", inner),
-		)
-		shown = self.shown(FRIDAY, "22:59:00")
-		self.assertIn(outer, shown)
-		self.assertNotIn(inner, shown)
-		shown = self.shown(FRIDAY, "23:30:00")
-		self.assertIn(outer, shown)
-		self.assertNotIn(inner, shown)
-
-	def test_a_slot_that_spans_midnight_runs_to_the_next_morning_and_its_card_stays_after(self):
-		day, night = self.lunch, self.saturday
-		self.set_hours(
-			self.a,
-			("Friday", "09:00:00", "21:00:00", "Day", day),
-			("Friday", "22:00:00", "02:00:00", "Night", night),
-		)
-		# Between the two services the day's card stays, the night begins at 22:00
-		shown = self.shown(FRIDAY, "21:30:00")
-		self.assertIn(day, shown)
-		self.assertNotIn(night, shown)
+	def test_after_the_last_service_nothing_of_the_hours_shows_either(self):
+		# The case the first version of the task kept a card on screen for: the evening is over at 23:00
 		for date, time in (
-			(FRIDAY, "22:00:00"),
-			(FRIDAY, "23:30:00"),
-			(SATURDAY, "00:30:00"),
-			(SATURDAY, "02:00:00"),
+			(FRIDAY, "23:12:00"),
+			(FRIDAY, "23:59:00"),
+			(SATURDAY, "08:00:00"),
+			(SATURDAY, "09:30:00"),
 		):
 			with self.subTest(date=date, time=time):
 				shown = self.shown(date, time)
-				self.assertIn(night, shown)
-				self.assertNotIn(day, shown)
-				self.assertFalse(self.service(date, time)["after_hours"])
-		# After 02:00 it is over, and its card stays until the next service begins
-		for time in ("02:00:01", "03:00:00", "09:00:00", "20:00:00"):
-			with self.subTest(time=time):
-				shown = self.shown(SATURDAY, time)
-				self.assertIn(night, shown)
-				self.assertNotIn(day, shown)
-				self.assertTrue(self.service(SATURDAY, time)["after_hours"])
+				self.assertNotIn(self.noon, shown)
+				self.assertNotIn(self.evening, shown)
 
-	def test_a_weekly_slot_is_found_a_week_later(self):
-		# Only a Friday slot: the next Friday morning, a full week after, the last service is still last Friday's
-		self.set_hours(self.a, ("Friday", "09:00:00", "23:00:00", "Lunch", self.lunch))
-		for date, time in (
-			(SATURDAY, "08:00:00"),
-			("2026-10-26", "12:00:00"),
-			("2026-10-29", "23:59:00"),
-			("2026-10-30", "08:00:00"),
-		):
-			with self.subTest(date=date, time=time):
-				self.assertIn(self.lunch, self.shown(date, time))
+	def test_the_cards_of_every_slot_that_matches_now_show_together(self):
+		self.set_hours(
+			self.a,
+			("Friday", "12:00:00", "14:00:00", "Noon", self.noon),
+			("Friday", "13:00:00", "15:00:00", "Brunch", self.evening),
+		)
+		shown = self.shown(FRIDAY, "13:30:00")
+		self.assertIn(self.noon, shown)
+		self.assertIn(self.evening, shown)
+		shown = self.shown(FRIDAY, "14:30:00")
+		self.assertNotIn(self.noon, shown)
+		self.assertIn(self.evening, shown)
+		shown = self.shown(FRIDAY, "15:30:00")
+		self.assertNotIn(self.noon, shown)
+		self.assertNotIn(self.evening, shown)
+
+	def test_a_slot_that_spans_midnight_is_read_on_its_own_weekday_as_the_hours_always_did(self):
+		night = self.evening
+		self.set_hours(self.a, ("Friday", "22:00:00", "02:00:00", "Night", night))
+		for time in ("22:00:00", "23:30:00", "23:59:00", "00:30:00", "02:00:00"):
+			with self.subTest(time=time):
+				self.assertIn(night, self.shown(FRIDAY, time))
+		for time in ("02:01:00", "12:00:00", "21:59:00"):
+			with self.subTest(time=time):
+				self.assertNotIn(night, self.shown(FRIDAY, time))
+		# Saturday has no slot of its own: nothing of the Friday night follows it there
+		self.assertNotIn(night, self.shown(SATURDAY, "00:30:00"))
 
 	def test_a_card_the_hours_name_nowhere_shows_at_every_hour(self):
 		for date, time in (
 			(FRIDAY, "10:00:00"),
+			(FRIDAY, "14:30:00"),
 			(FRIDAY, "23:12:00"),
 			(SATURDAY, "08:00:00"),
-			(SATURDAY, "09:30:00"),
 		):
 			with self.subTest(date=date, time=time):
 				self.assertIn(self.always, self.shown(date, time))
@@ -278,20 +242,18 @@ class TestTheLastServicesCardStays(TheHours, FrappeTestCase):
 		for date, time in ((FRIDAY, "10:00:00"), (FRIDAY, "23:12:00"), (SATURDAY, "08:00:00")):
 			with self.subTest(date=date, time=time):
 				shown = self.shown(date, time)
-				for card in (self.lunch, self.saturday, self.sunday, self.always):
+				for card in (self.noon, self.evening, self.always):
 					self.assertIn(card, shown)
-				self.assertEqual(self.service(date, time), {"key": None, "after_hours": False, "label": None})
 				self.assertEqual(self.other(date, time), [])
 
 	def test_a_restaurant_without_hours_filters_nothing(self):
 		self.set_hours(self.a)
-		shown = self.shown(FRIDAY, "23:12:00")
-		for card in (self.lunch, self.saturday, self.sunday, self.always):
+		shown = self.shown(FRIDAY, "14:30:00")
+		for card in (self.noon, self.evening, self.always):
 			self.assertIn(card, shown)
-		self.assertEqual(self.service(FRIDAY, "23:12:00"), {"key": None, "after_hours": False, "label": None})
-		self.assertEqual(self.other(FRIDAY, "23:12:00"), [])
+		self.assertEqual(self.other(FRIDAY, "14:30:00"), [])
 
-	def test_the_dates_of_a_card_still_apply_after_hours(self):
+	def test_the_dates_of_a_card_still_apply(self):
 		self.set_hours(
 			self.a,
 			("Friday", "09:00:00", "23:00:00", "Lunch", self.not_yet),
@@ -301,18 +263,21 @@ class TestTheLastServicesCardStays(TheHours, FrappeTestCase):
 		frappe.db.set_value("Restaurant Card", self.expired, "available_to", THURSDAY)
 		# Not available before its first day, even in the slot that names it
 		self.assertNotIn(self.not_yet, self.shown(FRIDAY, "12:00:00"))
-		self.assertNotIn(self.not_yet, self.shown(FRIDAY, "23:12:00"))
 		# Gone after its last day
 		self.assertNotIn(self.expired, self.shown(SATURDAY, "12:00:00"))
-		self.assertNotIn(self.expired, self.shown(SATURDAY, "23:12:00"))
-		# Inside its dates it shows, after hours as well
+		# Inside its dates it shows, in its slot
 		frappe.db.set_value("Restaurant Card", self.not_yet, "available_from", FRIDAY)
-		self.assertIn(self.not_yet, self.shown(FRIDAY, "23:12:00"))
+		self.assertIn(self.not_yet, self.shown(FRIDAY, "12:00:00"))
 		frappe.db.set_value("Restaurant Card", self.expired, "available_to", SATURDAY)
 		self.assertIn(self.expired, self.shown(SATURDAY, "12:00:00"))
 
 	def test_the_permanent_card_is_always_shown_and_last(self):
-		for date, time in ((FRIDAY, "10:00:00"), (FRIDAY, "23:12:00"), (SATURDAY, "08:00:00")):
+		for date, time in (
+			(FRIDAY, "10:00:00"),
+			(FRIDAY, "12:30:00"),
+			(FRIDAY, "14:30:00"),
+			(SATURDAY, "08:00:00"),
+		):
 			with self.subTest(date=date, time=time):
 				shown = self.shown(date, time)
 				self.assertEqual(shown[-1], self.permanent)
@@ -321,7 +286,7 @@ class TestTheLastServicesCardStays(TheHours, FrappeTestCase):
 	def test_an_inactive_card_and_another_restaurants_card_are_never_shown(self):
 		for date, time in (
 			(FRIDAY, "10:00:00"),
-			(FRIDAY, "23:12:00"),
+			(FRIDAY, "14:30:00"),
 			(SATURDAY, "08:00:00"),
 			(SUNDAY, "12:00:00"),
 		):
@@ -331,75 +296,22 @@ class TestTheLastServicesCardStays(TheHours, FrappeTestCase):
 				self.assertNotIn(self.of_b, shown)
 
 	def test_each_restaurant_follows_its_own_hours(self):
-		self.assertEqual(self.shown(FRIDAY, "23:12:00", self.b), [self.of_b])
+		self.assertEqual(self.shown(FRIDAY, "23:12:00", self.b), [])
+		self.assertEqual(self.shown(FRIDAY, "12:00:00", self.b), [self.of_b])
 		self.assertEqual(self.shown(SATURDAY, "09:30:00", self.b), [self.also_of_b])
-		self.assertNotIn(self.lunch, self.shown(FRIDAY, "23:12:00", self.b))
+		self.assertNotIn(self.noon, self.shown(FRIDAY, "12:00:00", self.b))
 
-	def test_a_slot_that_starts_at_midnight_is_a_slot(self):
-		small_hours, morning = self.saturday, self.sunday
-		self.set_hours(
-			self.a,
-			("Saturday", "00:00:00", "03:00:00", "Night", small_hours),
-			("Saturday", "09:00:00", "23:00:00", "Saturday service", morning),
-		)
-		self.assertIn(small_hours, self.shown(SATURDAY, "01:00:00"))
-		self.assertFalse(self.service(SATURDAY, "01:00:00")["after_hours"])
-		self.assertIn(small_hours, self.shown(SATURDAY, "05:00:00"))
-		self.assertTrue(self.service(SATURDAY, "05:00:00")["after_hours"])
-
-	def test_the_status_says_which_service_the_cards_are_of(self):
-		self.assertEqual(
-			self.service(FRIDAY, "22:59:00"),
-			{"key": f"{FRIDAY}T09:00:00", "after_hours": False, "label": None},
-		)
-		self.assertEqual(
-			self.service(FRIDAY, "23:12:00"),
-			{"key": f"{FRIDAY}T09:00:00", "after_hours": True, "label": "Lunch"},
-		)
-		self.assertEqual(
-			self.service(SATURDAY, "08:00:00"),
-			{"key": f"{FRIDAY}T09:00:00", "after_hours": True, "label": "Lunch"},
-		)
-		self.assertEqual(
-			self.service(SATURDAY, "09:00:00"),
-			{"key": f"{SATURDAY}T09:00:00", "after_hours": False, "label": None},
-		)
-
-	def test_the_key_of_the_service_changes_when_the_next_one_begins_and_only_then(self):
-		before = [
-			(FRIDAY, "09:00:00"),
-			(FRIDAY, "22:59:00"),
-			(FRIDAY, "23:12:00"),
-			(SATURDAY, "00:01:00"),
-			(SATURDAY, "08:59:59"),
-		]
-		after = [(SATURDAY, "09:00:00"), (SATURDAY, "23:30:00")]
-		self.assertEqual({self.service(*when)["key"] for when in before}, {f"{FRIDAY}T09:00:00"})
-		self.assertEqual({self.service(*when)["key"] for when in after}, {f"{SATURDAY}T09:00:00"})
-
-	def test_a_last_service_with_no_card_is_not_announced(self):
-		self.set_hours(
-			self.a,
-			("Friday", "11:00:00", "14:00:00", "Midday", self.lunch),
-			("Friday", "18:00:00", "23:00:00", "Bar", None),
-		)
-		# Nothing of the Bar service to show: no line claims a card of it
-		service = self.service(FRIDAY, "23:30:00")
-		self.assertFalse(service["after_hours"])
-		self.assertIsNone(service["label"])
-		self.assertNotIn(self.lunch, self.shown(FRIDAY, "23:30:00"))
-		# The Midday card is one the till can still fetch
-		self.assertIn(self.lunch, self.other(FRIDAY, "23:30:00"))
-
-	def test_what_the_status_already_said_is_unchanged(self):
-		with at(FRIDAY, "23:12:00"):
+	def test_the_status_says_nothing_about_a_service_and_what_it_said_is_unchanged(self):
+		with at(FRIDAY, "14:30:00"):
 			status = restaurant_api.get_restaurant_status(self.a)
+		self.assertEqual(set(status), {"is_open", "current_slot", "has_active_cards", "warning"})
 		self.assertFalse(status["is_open"])
 		self.assertIsNone(status["current_slot"])
 		with at(FRIDAY, "12:00:00"):
 			status = restaurant_api.get_restaurant_status(self.a)
+		self.assertEqual(set(status), {"is_open", "current_slot", "has_active_cards", "warning"})
 		self.assertTrue(status["is_open"])
-		self.assertEqual(status["current_slot"], "Lunch")
+		self.assertEqual(status["current_slot"], "Noon")
 		self.assertTrue(status["has_active_cards"])
 
 
@@ -411,15 +323,29 @@ class TestTheOtherCards(TheHours, FrappeTestCase):
 		_user(PORTAL, [CASHIER_ROLE], "Website User")
 
 	def test_it_lists_the_active_cards_the_hours_hide_right_now(self):
-		self.assertEqual(self.other(FRIDAY, "23:12:00"), [self.saturday, self.sunday])
+		everything = [self.lunch, self.saturday, self.sunday]
+		# After the last slot of the day, and before the first one of the next: all of them
+		self.assertEqual(self.other(FRIDAY, "23:12:00"), everything)
+		self.assertEqual(self.other(SATURDAY, "08:00:00"), everything)
+		# During a slot: the cards of the other slots
 		self.assertEqual(self.other(FRIDAY, "22:59:00"), [self.saturday, self.sunday])
 		self.assertEqual(self.other(SATURDAY, "09:30:00"), [self.lunch, self.sunday])
-		self.assertEqual(self.other(SATURDAY, "08:00:00"), [self.saturday, self.sunday])
+
+	def test_it_lists_the_noon_card_at_two_minutes_past_two(self):
+		noon, evening = self.lunch, self.saturday
+		self.set_hours(
+			self.a,
+			("Friday", "12:00:00", "14:00:00", "Noon", noon),
+			("Friday", "18:00:00", "23:00:00", "Evening", evening),
+		)
+		self.assertEqual(self.other(FRIDAY, "12:30:00"), [evening])
+		self.assertEqual(self.other(FRIDAY, "14:01:00"), [noon, evening])
+		self.assertEqual(self.other(FRIDAY, "18:30:00"), [noon])
 
 	def test_it_lists_names_and_labels_not_items(self):
 		with at(FRIDAY, "23:12:00"):
 			cards = restaurant_api.get_other_cards(self.a)
-		self.assertEqual([card["restaurant"] for card in cards], [self.a, self.a])
+		self.assertEqual([card["restaurant"] for card in cards], [self.a, self.a, self.a])
 		self.assertEqual(
 			sorted(cards[0]), sorted(["name", "card_name", "description", "image", "restaurant"])
 		)
@@ -442,15 +368,16 @@ class TestTheOtherCards(TheHours, FrappeTestCase):
 					self.assertNotIn(card, names)
 
 	def test_it_is_the_list_of_the_restaurant_asked(self):
-		self.assertEqual(self.other(FRIDAY, "23:12:00", self.b), [self.also_of_b])
+		# Sorted by the name the cashier reads: « Also Of Restaurant B » before « Of Restaurant B »
+		self.assertEqual(self.other(FRIDAY, "23:12:00", self.b), [self.also_of_b, self.of_b])
 		self.assertEqual(self.other(SATURDAY, "09:30:00", self.b), [self.of_b])
-		self.assertEqual(self.other(FRIDAY, "23:12:00", self.a), [self.saturday, self.sunday])
+		self.assertEqual(self.other(FRIDAY, "23:12:00", self.a), [self.lunch, self.saturday, self.sunday])
 
 	def test_it_defaults_to_the_restaurant_of_the_till(self):
 		self.make_till(TILL_A, self.a)
 		with self.at_the_till_of(TILL_A), at(FRIDAY, "23:12:00"):
 			names = [card["name"] for card in restaurant_api.get_other_cards()]
-		self.assertEqual(names, [self.saturday, self.sunday])
+		self.assertEqual(names, [self.lunch, self.saturday, self.sunday])
 
 	def test_a_portal_account_a_guest_and_a_cashier_of_another_restaurant_are_refused(self):
 		for user in (PORTAL, "Guest", self.cashier_of_b):
@@ -459,7 +386,7 @@ class TestTheOtherCards(TheHours, FrappeTestCase):
 		with as_user(self.cashier_of_a), at(FRIDAY, "23:12:00"):
 			self.assertEqual(
 				[card["name"] for card in restaurant_api.get_other_cards(self.a)],
-				[self.saturday, self.sunday],
+				[self.lunch, self.saturday, self.sunday],
 			)
 
 
@@ -671,3 +598,166 @@ class TestTheGate(OpeningACard, FrappeTestCase):
 		binding = {"pos_profile": TILL_A, "restaurant_card": self.saturday}
 		with as_user(self.cashier_of_a):
 			self.assertTrue(grants.consume(token, ACTION, binding, None))
+
+
+class TestAHiddenCardRefusesNothing(TheHours, FrappeTestCase):
+	"""At 14:30 the opening hours have taken the noon card off the till. A table opened at 13:00 on that card is still
+	edited, recalled, sent to the kitchen, paid, and a sale made offline still syncs: a line carries an item, never the
+	card it was picked from, and none of these places asks which cards are on the till."""
+
+	def setUp(self):
+		super().setUp()
+		# update_invoice sets it for the rest of the request and never resets it
+		self.addCleanup(
+			setattr, frappe.flags, "ignore_account_permission", frappe.flags.ignore_account_permission
+		)
+		self.fx = self.two_real_tills()
+		self.make_till(self.fx.profile, self.a)
+		self.today = frappe.utils.nowdate()
+		self.noon = self.make_card(
+			self.a,
+			"_Test Card Noon Dish",
+			items=[{"item_type": "Item", "item": self.fx.item, "price": 10}],
+		)
+		# The noon slot of today, whatever day it is
+		weekday = restaurant_api.WEEKDAYS[frappe.utils.getdate(self.today).weekday()]
+		self.set_hours(self.a, (weekday, "12:00:00", "14:00:00", "Noon", self.noon))
+		# The order is taken at 13:00, from the noon card, and sent to the kitchen
+		with self.clock("13:00:00"):
+			self.order = invoices.update_invoice(json.dumps(self.paper()))["name"]
+		frappe.db.set_value("Sales Invoice Item", {"parent": self.order}, "kds_status", "Pending")
+
+	def clock(self, time):
+		return at(self.today, time)
+
+	def paper(self, **changes):
+		"""The order of table A as the till sends it: one line of the noon card, paid in cash."""
+		return _sale(self.fx, restaurant_table=self.table_a, **changes)
+
+	def assert_the_noon_card_is_off_the_till(self):
+		"""At the moment of the call: the hours show nothing of the noon card, and the « ⋯ » offers it."""
+		self.assertNotIn(self.noon, [card["name"] for card in restaurant_api.get_active_cards(self.a)])
+		self.assertIn(self.noon, [card["name"] for card in restaurant_api.get_other_cards(self.a)])
+
+	def test_the_noon_card_is_on_the_till_at_13_00_and_off_it_at_14_30(self):
+		with self.clock("13:00:00"):
+			self.assertIn(self.noon, [card["name"] for card in restaurant_api.get_active_cards(self.a)])
+			self.assertNotIn(self.noon, [card["name"] for card in restaurant_api.get_other_cards(self.a)])
+		with self.clock("14:30:00"):
+			self.assert_the_noon_card_is_off_the_till()
+
+	def test_a_line_of_the_order_is_edited_at_14_30(self):
+		line = {"item_code": self.fx.item, "qty": 2, "rate": 10, "price_list_rate": 10}
+		with self.clock("14:30:00"):
+			self.assert_the_noon_card_is_off_the_till()
+			edited = invoices.update_invoice(json.dumps(self.paper(name=self.order, items=[line])))
+		self.assertEqual(edited["name"], self.order)
+		self.assertEqual(frappe.db.get_value("Sales Invoice Item", {"parent": self.order}, "qty"), 2)
+
+	def test_the_order_of_the_table_is_recalled_at_14_30(self):
+		with self.clock("14:30:00"), self.at_the_till_of(self.fx.profile):
+			self.assert_the_noon_card_is_off_the_till()
+			order = restaurant_api.get_table_order(self.table_a)
+		self.assertEqual(order["name"], self.order)
+		self.assertEqual([row["item_code"] for row in order["items"]], [self.fx.item])
+
+	def test_the_kitchen_and_the_runner_still_see_the_order_at_14_30(self):
+		with self.clock("14:30:00"):
+			self.assert_the_noon_card_is_off_the_till()
+			kitchen = {order["name"] for order in restaurant_api.get_kds_orders(restaurant=self.a)}
+			frappe.db.set_value("Sales Invoice Item", {"parent": self.order}, "kds_status", "Ready")
+			runner = {order["name"] for order in restaurant_api.get_runner_orders(restaurant=self.a)}
+		self.assertIn(self.order, kitchen)
+		self.assertIn(self.order, runner)
+
+	def test_the_order_is_paid_at_14_30(self):
+		with self.clock("14:30:00"), as_user(TILL):
+			self.assert_the_noon_card_is_off_the_till()
+			paid = invoices.submit_invoice(invoice=json.dumps(self.paper(name=self.order)), data="{}")
+		self.assertEqual((paid["name"], paid["status"]), (self.order, 1))
+		self.assertEqual(frappe.db.get_value("Sales Invoice", self.order, "docstatus"), 1)
+
+	def test_a_sale_made_offline_still_syncs_at_14_30(self):
+		replay = {"invoice": _sale(self.fx, offline_id=OFFLINE_SALE), "data": {"sales_team": []}}
+		with self.clock("14:30:00"), as_user(TILL):
+			synced = invoices.submit_invoice(data=json.dumps(replay))
+		self.assertEqual((synced["status"], synced["offline_id"]), (1, OFFLINE_SALE))
+
+	def test_a_card_that_is_not_there_is_no_reason_to_refuse_it_when_it_is_asked_for(self):
+		# What a cashier asks for by hand is served at 14:30, to the till that works at it
+		with self.clock("14:30:00"), self.at_the_till_of(self.fx.profile):
+			card = restaurant_api.open_card_outside_hours(self.noon, restaurant=self.a)
+		self.assertEqual(card["name"], self.noon)
+		self.assertEqual([row["item"] for row in card["items"]], [self.fx.item])
+
+
+class TestNothingOfTheSalePathReadsTheCardsTheHoursShow(FrappeTestCase):
+	"""The places that read which cards are on the till are few, and the sale path is not one of them: this fails the
+	day one starts to, so that it is a decision and not an accident."""
+
+	PATTERN = re.compile(
+		r"get_active_cards|get_other_cards|open_card_outside_hours|_cards_of_the_hours|_hidden_by_the_hours"
+		r"|_cards_outside_hours|_card_is_in_its_dates"
+	)
+	# What reads them, and why: the card functions, and the registry that loads the card action of the gate
+	READERS = frozenset(
+		{
+			"api/restaurant.py",
+			"authorization/actions/__init__.py",
+			"authorization/actions/card_hours.py",
+		}
+	)
+	# The functions of the card module that may: the cards, the « ⋯ », and the banner of a till with no card
+	CARD_FUNCTIONS = frozenset(
+		{
+			"_cards_of_the_hours",
+			"_hidden_by_the_hours",
+			"_card_is_in_its_dates",
+			"_card_with_items",
+			"get_active_cards",
+			"_cards_outside_hours",
+			"get_other_cards",
+			"check_card_can_be_opened",
+			"open_card_outside_hours",
+			"get_restaurant_status",
+		}
+	)
+
+	def test_no_module_of_the_app_but_the_card_functions_and_the_gate_reads_them(self):
+		import pos_next
+
+		root = os.path.dirname(pos_next.__file__)
+		readers = set()
+		for folder, _dirs, files in os.walk(root):
+			parts = folder.split(os.sep)
+			if "public" in parts or "tests" in parts:
+				continue
+			for name in files:
+				if not name.endswith(".py") or name.startswith("test_"):
+					continue
+				path = os.path.join(folder, name)
+				with open(path, encoding="utf-8") as source:
+					if self.PATTERN.search(source.read()):
+						readers.add(os.path.relpath(path, root))
+		self.assertEqual(readers, set(self.READERS))
+
+	def test_no_function_of_the_restaurant_module_but_the_card_ones_reads_them(self):
+		path = os.path.join(os.path.dirname(restaurant_api.__file__), "restaurant.py")
+		with open(path, encoding="utf-8") as handle:
+			source = handle.read()
+		offenders = [
+			node.name
+			for node in ast.parse(source).body
+			if isinstance(node, ast.FunctionDef)
+			and node.name not in self.CARD_FUNCTIONS
+			and self.PATTERN.search(ast.get_source_segment(source, node))
+		]
+		self.assertEqual(offenders, [])
+		# The pattern is not blind: it finds the functions that do
+		found = [
+			node.name
+			for node in ast.parse(source).body
+			if isinstance(node, ast.FunctionDef) and self.PATTERN.search(ast.get_source_segment(source, node))
+		]
+		self.assertIn("get_active_cards", found)
+		self.assertIn("open_card_outside_hours", found)

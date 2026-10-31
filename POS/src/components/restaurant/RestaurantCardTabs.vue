@@ -1,19 +1,12 @@
 <template>
 	<!-- //// Neoffice — added file (no upstream equivalent). The row of card buttons of the order screen (NeoRestau lot 1, -->
-	<!-- //// task 25), taken out of POSSale.vue so that it can be tested: one button per card; one short muted line above -->
-	<!-- //// them says that the opening hours are over and whose card is still on the till; a card opened by hand carries a -->
-	<!-- //// small mark and a « × » that closes it; the « ⋯ » that fetches another card ends the row. -->
+	<!-- //// task 25), taken out of POSSale.vue so that it can be tested: one button per card; a card opened by hand carries -->
+	<!-- //// a small mark and a « × » that closes it; the « ⋯ » that fetches a card the opening hours keep off the till ends -->
+	<!-- //// the row. -->
 	<div
 		data-test="card-tabs"
 		class="px-1.5 sm:px-3 pt-1.5 sm:pt-3 pb-1.5 sm:pb-2 bg-white border-b border-gray-200"
 	>
-		<p
-			v-if="afterHours"
-			data-test="after-hours-line"
-			class="mb-1 text-[11px] sm:text-xs text-gray-500"
-		>
-			{{ afterHoursLine }}
-		</p>
 		<div class="flex items-center gap-1">
 			<!-- The buttons scroll; the « ⋯ » stays out of the scroller, whose edge would cut its list off -->
 			<div
@@ -87,7 +80,7 @@
 						<!-- The permanent card is shown by its label, not by the English name it is stored under (NeoRestau lot 1, task 9) -->
 						{{ cardLabel(card) }}
 					</button>
-					<!-- Closes a card opened by hand; the hours decide again for it -->
+					<!-- Closes a card opened by hand: the hours decide again for it -->
 					<button
 						v-if="card.opened_by_hand"
 						type="button"
@@ -119,27 +112,17 @@
 </template>
 
 <script setup>
-import { computed } from "vue"
 import { cardLabel } from "@/utils/cardLabel"
 import CardPickerMenu from "./CardPickerMenu.vue"
 
 /**
- * The cards of the row, in the order they are shown ([{ name, card_name, is_permanent?, opened_by_hand? }]), the one that
- * is selected, and whether the opening hours are over (`afterHours`) with the label of the service whose card is
- * still there (`serviceLabel`, as the slot was typed). It says what was picked (`select`) and what was closed
- * (`close-card`); the screen adds its own buttons at the end of the row through the `trailing` slot.
+ * The cards of the row, in the order they are shown ([{ name, card_name, is_permanent?, opened_by_hand? }]) and the one
+ * that is selected. It says what was picked (`select`) and what was closed (`close-card`); the screen adds its own
+ * buttons at the end of the row through the `trailing` slot.
  */
-const props = defineProps({
+defineProps({
 	cards: { type: Array, default: () => [] },
 	selected: { type: String, default: null },
-	afterHours: { type: Boolean, default: false },
-	serviceLabel: { type: String, default: null },
 })
 const emit = defineEmits(["select", "close-card"])
-
-const afterHoursLine = computed(() =>
-	props.serviceLabel
-		? __("Outside opening hours · card of the {0} service", [props.serviceLabel])
-		: __("Outside opening hours · card of the last service"),
-)
 </script>

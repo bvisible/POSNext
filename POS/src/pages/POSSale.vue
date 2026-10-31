@@ -576,14 +576,11 @@
 									"
 									class="flex flex-col flex-1 min-h-0 overflow-hidden"
 								>
-									<!-- //// Neoffice — the row of card buttons is a component since NeoRestau lot 1, task 25: it says when the -->
-									<!-- //// opening hours are over and whose card is still on the till, marks the cards opened by hand and ends with -->
-									<!-- //// the « ⋯ » that fetches another card. -->
+									<!-- //// Neoffice — the row of card buttons is a component since NeoRestau lot 1, task 25: it marks the cards -->
+									<!-- //// opened by hand and ends with the « ⋯ » that fetches a card the opening hours keep off the till. -->
 									<RestaurantCardTabs
 										:cards="restaurantStore.shownCards"
 										:selected="selectedCard"
-										:after-hours="restaurantStore.cardService.afterHours"
-										:service-label="restaurantStore.cardService.label"
 										@select="
 											selectedCard = $event;
 											selectedCardCategory = null;
@@ -2496,6 +2493,14 @@ watch(
 			selectedCardCategory.value = null;
 		}
 	},
+	{ immediate: true }
+);
+
+//// Neoffice — the cards a cashier opened by hand from the « ⋯ » belong to the shift: the store drops them when it closes
+//// (NeoRestau lot 1, task 25). It is told the shift here, where the till knows it.
+watch(
+	() => shiftStore.currentShift?.name || null,
+	(name) => restaurantStore.setTillShift(name),
 	{ immediate: true }
 );
 

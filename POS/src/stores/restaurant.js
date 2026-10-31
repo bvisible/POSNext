@@ -9,7 +9,7 @@
 //// 9f4e85df, f2392119, 32f2415d, a750c5e3, 951b53f3, 823cd5d8, a1da8cc0, 34ee11a8,
 //// eabe35e7, 644ad918, 3939a848, 34751a29, 032298a3, 27a85667)
 import { defineStore } from "pinia"
-import { ref, computed, toRaw } from "vue"
+import { ref, computed, toRaw, watch } from "vue"
 import { usePOSSettingsStore } from "./posSettings"
 import { db } from "../utils/offline/db"
 import { logger } from "../utils/logger"
@@ -38,9 +38,9 @@ export const RESTAURANT_RIGHTS = [
 	"manage_restaurant_settings",
 ]
 
-// The cards a cashier opened by hand stay on THIS till, through a reload of the page, until the next service begins
-// (NeoRestau lot 1, task 25). They are kept in the browser, which may refuse it (a private window, a full quota): the
-// till then works as it did, a card opened being lost with the page.
+// The cards a cashier opened by hand stay on THIS till, through a reload of the page, until he closes them or the shift
+// closes (NeoRestau lot 1, task 25). They are kept in the browser, which may refuse it (a private window, a full
+// quota): the till then works as it did, a card opened being lost with the page.
 const OPENED_CARDS_KEY = "pos_next_opened_cards"
 
 function readOpenedCards() {
@@ -99,11 +99,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		hasActiveCards: true,
 		warning: null,
 	})
-	// Which service the cards on the till are of, as the server's status tells it (NeoRestau lot 1, task 25): `key`
-	// changes when the next service begins and only then (undefined until the first status is read, null where the
-	// hours filter no card), `afterHours` says that no slot runs and the cards are the last service's, `label` is that
-	// service's. The cards the hours hide, and the ones the cashier opened by hand, go with it (see below).
-	const cardService = ref({ key: undefined, afterHours: false, label: null })
+	// The cards the opening hours keep off the till right now (by name and description), and the ones the cashier opened
+	// by hand from the « ⋯ » (NeoRestau lot 1, task 25): see below.
 	const hiddenCards = ref([])
 	const openedCards = ref(readOpenedCards())
 	const lastOpenedCard = ref(null)
@@ -247,14 +244,21 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 	}
 
+	// The shift the till works in, by name, as the order screen tells it (setTillShift): a card opened by hand belongs
+	// to it, and goes when it closes. Null until the till has read its shift.
+	const shiftName = ref(null)
+	function setTillShift(name) {
+		shiftName.value = name || null
+	}
+
 	// What the row of cards shows: the cards of the hours, the cards opened by hand (marked as such), the permanent card
-	// last. A card opened by hand belongs to the service it was opened in and to the restaurant of the till.
+	// last. A card opened by hand belongs to the shift it was opened in and to the restaurant of the till.
 	const shownCards = computed(() => {
 		const names = new Set(activeCards.value.map((card) => card.name))
 		const byHand = openedCards.value
 			.filter(
 				(card) =>
-					card.service_key === cardService.value.key &&
+					card.shift === shiftName.value &&
 					!names.has(card.name) &&
 					(!tillRestaurant.value ||
 						!card.restaurant ||
@@ -274,10 +278,9 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		return hiddenCards.value.filter((card) => !opened.has(card.name))
 	})
 
-	// Opens a card the hours hide, on this till until the next service begins: the server hands over its items, to
-	// whoever may sell at the till and, where a rule asks for it, with a manager's grant (the authorization gate).
+	// Opens a card the hours hide, on this till until it is closed or the shift closes: the server hands over its items,
+	// to whoever may sell at the till and, where a rule asks for it, with a manager's grant (the authorization gate).
 	async function openCardByHand(card, authorizationToken) {
-		if (cardService.value.key === undefined) await fetchRestaurantStatus()
 		const opened = await call(
 			"pos_next.api.restaurant.open_card_outside_hours",
 			{
@@ -289,7 +292,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		if (!opened) return null
 		openedCards.value = [
 			...openedCards.value.filter((other) => other.name !== opened.name),
-			{ ...opened, service_key: cardService.value.key },
+			{ ...opened, shift: shiftName.value },
 		]
 		writeOpenedCards(openedCards.value)
 		// A new object each time: whoever listens hears a card opened again after it was closed
@@ -302,16 +305,18 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		writeOpenedCards(openedCards.value)
 	}
 
-	// The next service has begun: what was opened for the previous one goes, and the hours decide again
-	function dropCardsOpenedForAnotherService() {
-		if (cardService.value.key === undefined) return
-		const kept = openedCards.value.filter(
-			(card) => card.service_key === cardService.value.key,
-		)
+	// The shift the cards were opened in has closed (or another one is open): they go, and the hours decide again. Where
+	// the till has not read its shift yet (a page just reloaded) nothing is dropped: the shift is read soon after.
+	watch(shiftName, (name, previous) => {
+		const kept = name
+			? openedCards.value.filter((card) => card.shift === name)
+			: previous
+				? []
+				: openedCards.value
 		if (kept.length === openedCards.value.length) return
 		openedCards.value = kept
 		writeOpenedCards(kept)
-	}
+	})
 
 	// Writes a table to the offline copy. IndexedDB structured-clones what it is given, and a reactive proxy cannot be cloned
 	// (DataCloneError): the copy was never written, the error was swallowed, so it is given the object behind the proxy. A
@@ -663,23 +668,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 					hasActiveCards: res.has_active_cards !== false,
 					warning: res.warning || null,
 				}
-				// The service the cards are of: a card opened by hand goes when the next one begins, and the line above
-				// the cards comes up or goes with the hours (NeoRestau lot 1, task 25)
-				const service = res.service || {}
-				const previousService = cardService.value
-				cardService.value = {
-					key: service.key ?? null,
-					afterHours: Boolean(service.after_hours),
-					label: service.label || null,
-				}
-				dropCardsOpenedForAnotherService()
-				const serviceChanged =
-					previousService.key !== cardService.value.key ||
-					previousService.afterHours !== cardService.value.afterHours
 				// If time slot changed (e.g. Lunch → Dinner), refresh active cards. Closed → open counts too: a till
 				// opened before the first slot of the day never loaded that slot's cards (maintenance#1754).
 				const currentSlot = res.current_slot || null
-				if (statusSeen && (currentSlot !== previousSlot || serviceChanged)) {
+				if (statusSeen && currentSlot !== previousSlot) {
 					log.info("Time slot changed:", previousSlot, "→", currentSlot)
 					await fetchActiveCards()
 				}
@@ -855,7 +847,6 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		modifierGroups,
 		activeMenus,
 		activeCards,
-		cardService,
 		hiddenCards,
 		openedCards,
 		lastOpenedCard,
@@ -906,6 +897,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		fetchHiddenCards,
 		openCardByHand,
 		closeCardOpenedByHand,
+		setTillShift,
 		tillRestaurant,
 		ofTheRestaurant,
 		restaurantName,
