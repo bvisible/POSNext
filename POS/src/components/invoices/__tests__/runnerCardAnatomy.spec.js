@@ -107,6 +107,19 @@ describe("the header", () => {
 		)
 	})
 
+	it("draws the code the server tells for the room (the one typed on it), before the one made from the room's name (task 38b)", () => {
+		expect(
+			show({ card: card({ roomName: "Salle 1", roomCode: "RDC" }) })
+				.get('[data-test="ticket-room"]')
+				.text(),
+		).toBe("RDC")
+		expect(
+			show({ card: card({ roomName: "Salle 2", roomCode: "" }) })
+				.get('[data-test="ticket-room"]')
+				.text(),
+		).toBe("S02")
+	})
+
 	it("says « Takeaway » for a takeaway, with no room chip, and its number after a dot", () => {
 		const wrapper = show({
 			card: card({ takeaway: true, title: "", ticketNo: "EMP-0009" }),

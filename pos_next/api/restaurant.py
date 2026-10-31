@@ -2393,7 +2393,9 @@ def get_runner_orders(area=None, restaurant=None):
 	raw_orders = frappe.get_all(
 		"Sales Invoice",
 		filters={"docstatus": 0},
-		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified"]
+		# //// Neoffice — the takeaway flag and number go to the runner's card too: « Hand over » instead of « Deliver » (task 38b)
+		fields=["name", "customer", "restaurant_table", "kds_status", "creation", "modified",
+				"is_takeaway", "takeaway_number"]
 	)
 
 	orders = scope.keep_orders_of([o for o in raw_orders if o.get("restaurant_table")], restaurant)
@@ -2520,6 +2522,13 @@ def get_runner_orders(area=None, restaurant=None):
 			order["table_display_name"] = table_info.get("table_name") or order.restaurant_table
 			order["area"] = table_info.get("area") or ""
 			result.append(order)
+
+	# What the runner's card reads aloud besides the table (NeoRestau lot 1, task 38b): the ticket number and its digits, and the
+	# code of the room, never the invoice's name (which stays in the row for the calls the screen makes)
+	tickets.stamp(result, restaurant)
+	area_codes = room_code.codes_of_areas(order["area"] for order in result)
+	for order in result:
+		order["area_code"] = area_codes.get(order["area"], "")
 
 	return result
 

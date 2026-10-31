@@ -220,7 +220,7 @@ const waitTimeClass = computed(() => {
 const roomChip = computed(() =>
 	props.card.takeaway || props.viewMode === "station"
 		? ""
-		: roomCode(props.card.roomName),
+		: props.card.roomCode || roomCode(props.card.roomName),
 )
 const numberText = computed(() => {
 	if (props.viewMode === "station") return props.card.subtitle || ""

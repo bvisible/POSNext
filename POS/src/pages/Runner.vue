@@ -442,8 +442,12 @@ function groupByTable() {
 			//// Neoffice — what the header's one line shows beside the table (task 38a-2, ruling 130): the room's name (the card derives its short code), the ticket's number
 			//// when the order carries one, and whether it is a takeaway (handed over, not delivered to a table)
 			roomName: areas.value.find((area) => area.name === order.area)?.area_name || "",
-			//// Neoffice — the whole number and the digits the server tells, written (0007) by `formatTicketNo` (task 38b)
-			ticketNo: formatTicketNo(order.ticket_no, order.ticket_digits),
+			//// Neoffice — the whole number and the digits the server tells, written (0007) by `formatTicketNo` (task 38b); a takeaway with none has the number it has had until now
+			ticketNo:
+				formatTicketNo(order.ticket_no, order.ticket_digits) ||
+				(order.is_takeaway ? order.takeaway_number || "" : ""),
+			//// Neoffice — the code of the room the server tells (the one typed on the room, else made from its name), before the one the card derives (task 38b)
+			roomCode: order.area_code || "",
 			takeaway: !!order.is_takeaway,
 		}))
 		.sort((a, b) => new Date(a.modified) - new Date(b.modified))
