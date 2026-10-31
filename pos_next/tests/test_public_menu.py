@@ -11,10 +11,15 @@ Every test builds what it needs under names of its own (`_Test`) and works insid
 NeoRestau flag is set by patching the configuration the code reads; nothing writes a site_config.json.
 """
 
+import copy
 import json
+import re
 from contextlib import ExitStack, contextmanager
+from html.parser import HTMLParser
 from types import SimpleNamespace
+from typing import ClassVar
 from unittest.mock import patch
+from urllib.parse import unquote
 
 import frappe
 from babel.messages.extract import extract
@@ -513,9 +518,14 @@ class TestWhatThePublicMenuSays(PublicMenuFixtures, FrappeTestCase):
 			"https://cdn.example.test/a.jpg": "https://cdn.example.test/a.jpg",
 			"/private/files/a.jpg": "",
 			"/files/%2e%2e/private/files/a.jpg": "",
+			"https://cdn.example.test//private/files/a.jpg": "",
+			"https://cdn.example.test/%2Fprivate/files/a.jpg": "",
 			"javascript:alert(1)": "",
 			"//elsewhere.example.test/a.jpg": "",
 			"": "",
+			# Written into a template between quotes, an address must not be able to close them
+			'/files/x.png"><script>alert(1)</script>': "/files/x.png%22%3E%3Cscript%3Ealert(1)%3C/script%3E",
+			"/files/Pizza d'été 2.png": "/files/Pizza%20d%27été%202.png",
 		}
 		for index, (stored, served) in enumerate(cases.items()):
 			code = self.make_item(f"Photo {index}", f"Photo {index}", image=stored)
@@ -524,6 +534,23 @@ class TestWhatThePublicMenuSays(PublicMenuFixtures, FrappeTestCase):
 					self.make_card(self.restaurant, f"Photos {index}", [{"item_type": "Item", "item": code}])
 				)
 				self.assertEqual(self.dishes(self.menu())[0]["image"], served)
+
+	def test_the_logos_are_served_as_the_pictures_are(self):
+		self.a_card_with([{"item_type": "Item", "item": self.make_item("Soup", "Tomato soup")}])
+		breakout = 'https://cdn.example.test/logo.png" onerror="alert(1)'
+		frappe.db.set_value("Restaurant", self.restaurant, "logo", breakout)
+		self.forget_the_cards()
+
+		self.assertEqual(
+			self.menu()["restaurant"]["logo"], "https://cdn.example.test/logo.png%22%20onerror=%22alert(1)"
+		)
+
+		# The company's stands in for a restaurant that has none: through the same check
+		frappe.db.set_value("Restaurant", self.restaurant, "logo", "")
+		frappe.db.set_value("Company", self.company, "company_logo", "/files/x.png'><svg onload=alert(1)>")
+		self.forget_the_cards()
+
+		self.assertEqual(self.menu()["restaurant"]["logo"], "/files/x.png%27%3E%3Csvg%20onload=alert(1)%3E")
 
 	def test_a_badge_icon_and_colour_are_checked_before_they_are_served(self):
 		odd = self.make_badge("Odd", "Quality")
@@ -785,6 +812,60 @@ class TestThePublicMenuInProcess(PublicMenuFixtures, FrappeTestCase):
 				public_menu.get_public_menu(self.restaurant)
 		self.assertEqual(str(refused.exception), NOT_AVAILABLE)
 
+	def test_what_a_caller_does_to_the_answer_never_reaches_the_next_answer(self):
+		first = public_menu.public_menu(self.restaurant)
+		before = copy.deepcopy(first)
+		self.assertTrue(first["sections"])
+
+		# What a template might do to it: drop, fill in, empty
+		first["sections"][0]["items"].clear()
+		first["sections"][0]["label"] = "Changed"
+		first["restaurant"]["name"] = "Changed"
+		first["card"] = None
+		second = public_menu.public_menu(self.restaurant)
+		self.assertEqual(second, before)
+
+		second["sections"].clear()
+		self.assertEqual(public_menu.public_menu(self.restaurant), before)
+		self.assertEqual(public_menu.get_public_menu(self.restaurant), before)
+
+	def test_the_answer_is_a_copy_even_where_the_cache_hands_back_the_very_object_it_holds(self):
+		# Frappe's Redis cache unpickles a fresh object at each read, but a cache that keeps objects (an in-process one, a
+		# future version) hands back the same one to everybody: the rule does not rest on which cache is under it
+		kept = {}
+		real = frappe.cache
+
+		class AnObjectKeptAsItIs:
+			"""Frappe's cache for everything but the public menu's cards, which it keeps as the objects they are."""
+
+			def __call__(self):
+				return self
+
+			def __getattr__(self, name):
+				return getattr(real, name)
+
+			def get_value(self, key, *args, **kwargs):
+				if key.startswith(public_menu.CACHE_PREFIX):
+					return kept.get(key)
+				return real.get_value(key, *args, **kwargs)
+
+			def set_value(self, key, value, *args, **kwargs):
+				if key.startswith(public_menu.CACHE_PREFIX):
+					kept[key] = value
+				else:
+					real.set_value(key, value, *args, **kwargs)
+
+		with patch.object(frappe, "cache", new=AnObjectKeptAsItIs()):
+			first = public_menu.public_menu(self.restaurant)
+			before = copy.deepcopy(first)
+			first["sections"].clear()
+			first["restaurant"]["name"] = "Changed"
+			second = public_menu.public_menu(self.restaurant)
+			second["sections"].clear()
+
+			self.assertEqual(public_menu.public_menu(self.restaurant), before)
+		self.assertTrue(kept)
+
 	def test_only_the_endpoint_is_limited_per_address(self):
 		with a_request_from(GUEST_IP), patch.object(public_menu, "RATE_LIMIT", 1):
 			for _ in range(3):
@@ -795,6 +876,21 @@ class TestThePublicMenuInProcess(PublicMenuFixtures, FrappeTestCase):
 				public_menu.get_public_menu(self.restaurant)
 
 
+class ParsedMarkup(HTMLParser):
+	"""What a browser makes of a piece of markup: its tags with their attributes, and the text it holds."""
+
+	def __init__(self):
+		super().__init__()
+		self.tags = []
+		self.text = ""
+
+	def handle_starttag(self, tag, attrs):
+		self.tags.append((tag, attrs))
+
+	def handle_data(self, data):
+		self.text += data
+
+
 class TestAPictureIsServedOnlyWhereAGuestCanOpenIt(FrappeTestCase):
 	"""The address of a picture goes to a guest's browser, which reads it as a URL and not as the text the desk stored.
 
@@ -802,17 +898,44 @@ class TestAPictureIsServedOnlyWhereAGuestCanOpenIt(FrappeTestCase):
 	into a private one is looked for in the path as they read it.
 	"""
 
+	# Served as they are: nothing in them needs encoding
 	SERVED = (
 		"/files/a.jpg",
-		"/files/my photo.jpg",
+		"/files/my%20photo.jpg",
 		"/files/caf%C3%A9.jpg",
+		"/files/café.jpg",
 		# Two dots inside a name climb nowhere
 		"/files/a..b.jpg",
 		"/files/sub/dir/x.png",
 		"/files/a.jpg?v=2",
+		"/files/a%27b%22c.jpg",
+		"/files/a.jpg?v=2&w=3",
 		"/assets/pos_next/a.png",
 		"https://cdn.example.test/a.jpg",
 		"http://cdn.example.test/a.jpg",
+	)
+	# Frappe keeps a file name as it was uploaded, spaces and apostrophes included: these are served, and what is served is
+	# the same address with what could close an attribute percent-encoded (a `%` that is already there is left alone)
+	ENCODED: ClassVar[dict[str, str]] = {
+		"/files/my photo.jpg": "/files/my%20photo.jpg",
+		"/files/Pizza d'été 2.png": "/files/Pizza%20d%27été%202.png",
+		"https://cdn.example.test/my photo.jpg": "https://cdn.example.test/my%20photo.jpg",
+		'/files/say "hi".jpg': "/files/say%20%22hi%22.jpg",
+		"/files/a`b.jpg": "/files/a%60b.jpg",
+		"/files/a\u00a0b\u2028c.jpg": "/files/a%C2%A0b%E2%80%A8c.jpg",
+		"/files/50%25 off.jpg": "/files/50%25%20off.jpg",
+		"  /files/a.jpg  ": "/files/a.jpg",
+	}
+	# What breaks out of an attribute, a tag or a script block when an address is written between quotes, or none
+	BREAKOUTS = (
+		'/files/x.png"><script>alert(1)</script>',
+		'https://cdn.example.test/x.png" onerror="alert(1)',
+		"/files/x.png' onerror='alert(1)",
+		"/files/x.png` onerror=`alert(1)",
+		'/files/x.png"\u2028onerror="alert(1)',
+		'https://cdn.example.test/x.png?a="><img src=x onerror=alert(1)>',
+		"https://cdn.example.test/</script><script>alert(1)</script>.png",
+		"/files/x.png\u00a0onerror=alert(1)",
 	)
 	REFUSED = (
 		"",
@@ -829,6 +952,17 @@ class TestAPictureIsServedOnlyWhereAGuestCanOpenIt(FrappeTestCase):
 		# The site's own host does not make its private folder public
 		"https://bistro.example.test/private/files/a.jpg",
 		"https://bistro.example.test/files/./../private/files/a.jpg",
+		# The private folder under every spelling of its slash: `normpath` keeps a leading double slash, a server does not
+		"https://bistro.example.test//private/files/a.pdf",
+		"https://bistro.example.test///private/files/a.pdf",
+		"https://bistro.example.test/%2Fprivate/files/a.pdf",
+		"https://bistro.example.test/%2F%2Fprivate/files/a.pdf",
+		"https://bistro.example.test/%2fprivate/files/a.pdf",
+		"https://bistro.example.test/%252Fprivate/files/a.pdf",
+		"https://bistro.example.test/./private/files/a.pdf",
+		"https://bistro.example.test/files/..//private/files/a.pdf",
+		"https://bistro.example.test//./private/files/a.pdf",
+		"https://bistro.example.test/%2F/private/files/a.pdf",
 		# A climb, spelt every way a browser or a server reads it
 		"/files/../private/files/a.jpg",
 		"/files/%2e%2e/private/files/a.jpg",
@@ -860,6 +994,46 @@ class TestAPictureIsServedOnlyWhereAGuestCanOpenIt(FrappeTestCase):
 		for url in self.REFUSED:
 			with self.subTest(url=url):
 				self.assertEqual(public_menu._public_file(url), "")
+
+	def test_a_file_name_with_spaces_and_apostrophes_is_served_encoded_and_opens_the_same_file(self):
+		for stored, served in self.ENCODED.items():
+			with self.subTest(stored=stored):
+				self.assertEqual(public_menu._public_file(stored), served)
+				# What a browser asks for is the file the desk stored (a `%` the name already held is not encoded again)
+				self.assertEqual(unquote(served), unquote(stored.strip()))
+
+	def test_what_could_close_an_attribute_comes_out_encoded(self):
+		for stored in self.BREAKOUTS:
+			with self.subTest(stored=stored):
+				served = public_menu._public_file(stored)
+
+				# Served (a legitimate name may hold any of these), and not one character of it can close an attribute,
+				# quoted or not, open a tag or end a script block
+				self.assertTrue(served)
+				self.assertIsNone(re.search(r"[\"'`<>\s]", served), served)
+				self.assertEqual(unquote(served), stored)
+
+	def test_the_encoded_address_stays_in_the_attribute_the_template_writes_it_in(self):
+		# As the website's menu block writes it: Frappe's Jinja does not escape what it renders
+		templates = (
+			'<img src="{{ image }}" alt="">',
+			"<img src='{{ image }}' alt=''>",
+			'<img src={{ image }} alt="">',
+			'<script type="application/ld+json">{"image": "{{ image }}"}</script>',
+		)
+		for stored in (*self.BREAKOUTS, *self.ENCODED):
+			served = public_menu._public_file(stored)
+			for template in templates:
+				with self.subTest(stored=stored, template=template):
+					parsed = ParsedMarkup()
+					parsed.feed(frappe.render_template(template, {"image": served}))
+					parsed.close()
+
+					if template.startswith("<script"):
+						self.assertEqual(parsed.tags, [("script", [("type", "application/ld+json")])])
+						self.assertEqual(json.loads(parsed.text)["image"], served)
+					else:
+						self.assertEqual(parsed.tags, [("img", [("src", served), ("alt", "")])])
 
 
 class TestBadgeNamesReadInTheLanguageOfTheGuest(PublicMenuFixtures, FrappeTestCase):

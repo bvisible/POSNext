@@ -23,9 +23,10 @@ the badges (`Tree Nuts`, `Sulfites`) are English data, and an allergen must read
 translated when the card is built, in the language of the request, and a card is kept once per language.
 """
 
+import copy
 import posixpath
 import re
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import frappe
 from frappe import _
@@ -53,6 +54,9 @@ SITE_FOLDERS = ("/files/", "/assets/")
 PRIVATE_FOLDER = "/private/"
 # An address escaped more often than this is not one a restaurant typed
 MAX_DECODINGS = 3
+# What could close an attribute (quoted or not), open a tag or end a script block where an address is written: these are
+# percent-encoded in the address that is served, so that it is safe in HTML, in a JSON-LD block or anywhere else
+UNSAFE_IN_MARKUP = re.compile(r"[\"'`<>\s]")
 # The context the seeded badges' names are translated in (`i18n_anchors.py` mentions each of them, for the translators)
 BADGE_CONTEXT = "Menu Badge"
 # A badge's icon is the name of a file of the app's own icons; its colour a hex code or a colour name
@@ -76,6 +80,11 @@ def public_menu(restaurant) -> dict | None:
 	spice_level, badges: [{name, type, icon, color}]}]}]}`. A restaurant that publishes no card (none chosen, or not
 	active, not in its dates, or another restaurant's) answers `card: None` and no sections: it is public, with nothing
 	to show yet.
+
+	The answer is the caller's own: a copy, so that what a caller does to it (a template that sorts, drops or fills in a
+	dish) never reaches the kept card nor the next caller's answer. An address in it (`logo`, `image`) is safe to write
+	into an attribute as it is, but a name or a description is text as the restaurant wrote it: escape it where it is
+	written.
 	"""
 	published = _published(restaurant)
 	if not published:
@@ -87,7 +96,7 @@ def public_menu(restaurant) -> dict | None:
 	if menu is None:
 		menu = _build(published, lang)
 		frappe.cache().set_value(key, menu, expires_in_sec=CACHE_SECONDS)
-	return menu
+	return copy.deepcopy(menu)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
@@ -300,7 +309,13 @@ def _public_file(url) -> str:
 
 	A public file of the site, one of its assets, or an address on the web; never a private file, and never a path that
 	climbs out of the folder it starts in. A climb is looked for in the path as a browser and a server read it, not as it
-	was typed: `%2e` is a dot, `\\` is a slash, and an address escaped twice is read by a server that decodes twice.
+	was typed: `%2e` is a dot, `%2f` a slash, `\\` is a slash, and an address escaped twice is read by a server that decodes
+	twice.
+
+	What is served is safe to write anywhere: a quote, an apostrophe, a backtick, an angle bracket and any whitespace are
+	percent-encoded (`%` is left as it is, never encoded twice), because the desk never cleans an attached image's address
+	and a template that writes it between quotes, or none, must not be broken out of. Frappe keeps file names with spaces
+	and apostrophes, so these are not refused: the encoded address opens the same file.
 	"""
 	url = cstr(url).strip()
 	if not url.startswith(PUBLIC_FILE_PREFIXES) or any(_not_in_an_address(char) for char in url):
@@ -319,11 +334,13 @@ def _public_file(url) -> str:
 	else:
 		return ""
 	# Once what the browser reads of it is folded, an address is not in the private folder (that of the site's own host
-	# included), and a relative one stays in the folders it names
-	folded = posixpath.normpath(path)
+	# included), and a relative one stays in the folders it names. `normpath` keeps a leading `//` as it is (POSIX gives
+	# it a meaning of its own), a server does not: the slashes are taken off first, so that `//private` and `/%2Fprivate`
+	# (once decoded) are the private folder they are.
+	folded = posixpath.normpath("/" + path.lstrip("/"))
 	if folded.startswith(PRIVATE_FOLDER) or (url.startswith("/") and not folded.startswith(SITE_FOLDERS)):
 		return ""
-	return url
+	return UNSAFE_IN_MARKUP.sub(lambda unsafe: quote(unsafe.group(), safe=""), url)
 
 
 def _not_in_an_address(char: str) -> bool:
