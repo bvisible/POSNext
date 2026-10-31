@@ -39,6 +39,18 @@ export function offScreen(scroller, items, axis = "x") {
 }
 
 /**
+ * How many dishes of a ticket are out of sight at the foot of its body (`ahead`, the ones cut by it or past it) and how many have been scrolled by at its head (`behind`). The card scrolls as long as
+ * either is not nought: a cook at the END of the scroll has nothing ahead and still a card that scrolls, with the full-screen ticket one tap away (task 38a-3, ruling 107).
+ *
+ * @param {Element|null} body - The scrolling body of a ticket
+ * @returns {{ ahead: number, behind: number }}
+ */
+export function dishesOutOfSight(body) {
+	if (!body) return { ahead: 0, behind: 0 }
+	return offScreen(body, body.querySelectorAll("[data-ticket-line]"), "y")
+}
+
+/**
  * How many dishes of a ticket are cut by the foot of its body, or past it.
  *
  * A dish is any element of the body that carries `data-ticket-line`: the dishes sent, and the ones announced under

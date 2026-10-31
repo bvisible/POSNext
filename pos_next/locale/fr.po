@@ -17757,3 +17757,7 @@ msgstr "{0} lignes"
 #: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
 msgid "More →"
 msgstr "Suite →"
+
+#: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
+msgid "View all"
+msgstr "Voir tout"

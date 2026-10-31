@@ -266,10 +266,16 @@
 				</button>
 			</div>
 			<!-- //// Neoffice — the strip is the way into the full-screen ticket (task 38a-3, ruling 107 layer 3): a tap on « +N lines » opens the ticket over the board. It is a button now; a dish keeps its own tap (its status menu). -->
-			<button v-if="!fullscreen && hiddenCount > 0" type="button" data-test="ticket-more-strip"
-				class="flex h-6 w-full flex-shrink-0 touch-manipulation items-center justify-end border-t border-gray-100 px-3 active:bg-gray-100 dark:border-gray-700 dark:active:bg-gray-700"
+			<button v-if="!fullscreen && scrolls" type="button" data-test="ticket-more-strip"
+				class="flex h-6 w-full flex-shrink-0 touch-manipulation items-center justify-between gap-2 border-t border-gray-100 px-3 active:bg-gray-100 dark:border-gray-700 dark:active:bg-gray-700"
 				@click="openFull">
-				<span data-test="ticket-more"
+				<!-- //// Neoffice — « View all » is on a card that SCROLLS, whether dishes are still out of sight or the cook has come to the end of them (task 38a-3, ruling 107 layer 3): the full-screen ticket is one tap away from either -->
+				<span data-test="ticket-view-all"
+					class="pointer-events-none inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:[&&]:!text-gray-300">
+					<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+					{{ __("View all") }}
+				</span>
+				<span v-if="hiddenCount > 0" data-test="ticket-more"
 					class="pointer-events-none rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">
 					{{ hiddenCount === 1 ? __("+{0} line", [1]) : __("+{0} lines", [hiddenCount]) }}
 				</span>
@@ -307,7 +313,7 @@ import { dishesToPutBack, putBack, UNDOABLE_STATUSES } from "@/utils/kitchenUndo
 import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
 import { placeMenu } from "@/utils/menuPlacement"
-import { hiddenLines } from "@/utils/ticketScrollHints"
+import { dishesOutOfSight } from "@/utils/ticketScrollHints"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 import { DEFAULT_TEXT_SIZE, fullScreenVariables, TEXT_SIZE_KEY } from "@/utils/kitchenTextSize"
@@ -611,6 +617,9 @@ watch(
 const bodyEl = ref(null)
 const linesEl = ref(null)
 const hiddenCount = ref(0)
+//// Neoffice — how many dishes the cook has scrolled by: the card still SCROLLS at the end of its dishes, where nothing is left to count (task 38a-3, ruling 107 layer 3)
+const scrolledCount = ref(0)
+const scrolls = computed(() => hiddenCount.value > 0 || scrolledCount.value > 0)
 //// Neoffice — in the panel nothing is cut at the foot, the columns go on past the right edge: `moreRight` says whether some are out of sight there, and a tap on « More → » brings them in
 const moreRight = ref(false)
 function measureRight() {
@@ -622,7 +631,9 @@ function showMoreColumns() {
 }
 function measureHidden() {
 	if (props.fullscreen) return measureRight()
-	hiddenCount.value = hiddenLines(bodyEl.value)
+	const { ahead, behind } = dishesOutOfSight(bodyEl.value)
+	hiddenCount.value = ahead
+	scrolledCount.value = behind
 }
 function onBodyScroll() {
 	activeItemMenu.value = null
