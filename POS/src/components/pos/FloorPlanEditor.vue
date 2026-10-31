@@ -190,10 +190,6 @@
 					</button>
 				</template>
 
-				<!-- Open a tablet as the kitchen's or the runner's screen, by a QR code (its own component: an entry of the
-				     floor plan's menu) -->
-				<OpenTabletButton v-if="!isEditMode" />
-
 				<!-- The « ⋯ » menu, the last thing on the line: small and grey on purpose, so that it is not pressed by
 				     accident. It holds the plan's occasional actions (see menuItems) and is shown when one of them is. -->
 				<div v-if="!isEditMode && menuItems.length > 0" ref="menuRoot" data-test="floor-line-menu" class="relative flex-shrink-0">
@@ -595,6 +591,13 @@
 			</div>
 		</div>
 
+		<!-- « Open a tablet » of the « ⋯ » menu: pairs a tablet as the kitchen's or the runner's screen, by a QR code -->
+		<OpenTabletDialog
+			v-if="canSetUpTheRestaurant && tabletDialogOpen"
+			v-model="tabletDialogOpen"
+			:restaurant="restaurantStore.tillRestaurant"
+		/>
+
 		<!-- Add Table Dialog -->
 		<Dialog v-model="showAddTableDialog" :options="{ title: __('Add Table'), size: 'sm' }">
 			<template #body-content>
@@ -964,7 +967,7 @@ import { call } from "@/utils/apiWrapper"
 import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
-import OpenTabletButton from "@/components/restaurant/OpenTabletButton.vue"
+import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
 
 const emit = defineEmits([
 	"table-selected",
@@ -989,6 +992,10 @@ const isDirty = ref(false)
 const canManageFloor = computed(() => Boolean(restaurantStore.can?.manage_floor))
 // Setting the status of a table is the service's, not the layout's: a cashier may (the server checks it again)
 const canSetTableStatus = computed(() => Boolean(restaurantStore.can?.set_table_status))
+// Pairing a tablet as the kitchen's or the runner's screen is for whoever may set the restaurant up (NeoRestau lot 1,
+// task 16; the server checks it again)
+const canSetUpTheRestaurant = computed(() => Boolean(restaurantStore.can?.manage_settings))
+const tabletDialogOpen = ref(false)
 
 // ─── The line at the top ─────────────────────────────────────────────────────
 // The look of the line is the one of RoomStationFilterLine, the runner's and the kitchen's (Ruling 44, then 48): chips
@@ -1009,6 +1016,8 @@ const ICON_PENCIL =
 	"M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
 // The tick of Save and of a paid table
 const ICON_CHECK = "M5 13l4 4L19 7"
+// A tablet, for « Open a tablet »
+const ICON_TABLET = "M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
 
 // ─── The « ⋯ » menu, at the very end of the line ─────────────────────────────
 // Product owner, 30.10.2026: the Edit button was too easy to hit on the line, so it went to a quiet « ⋯ » that opens a
@@ -1033,6 +1042,16 @@ const menuItems = computed(() =>
 			// A cashier may set the status of a table without laying out the floor (the server checks it again)
 			visible: canSetTableStatus.value,
 			run: freeCleaningTables,
+		},
+		{
+			key: "open-a-tablet",
+			label: __("Open a tablet"),
+			icon: ICON_TABLET,
+			// Pairing a tablet is for whoever may set the restaurant up (the server checks it again)
+			visible: canSetUpTheRestaurant.value,
+			run: () => {
+				tabletDialogOpen.value = true
+			},
 		},
 	].filter((item) => item.visible),
 )

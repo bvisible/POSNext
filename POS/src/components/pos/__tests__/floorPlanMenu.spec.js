@@ -2,8 +2,9 @@
  * //// Neoffice — added file (no upstream equivalent). The way into the floor plan's editor is a small « ⋯ » at the very
  * //// end of the plan's line, which opens a menu (NeoRestau lot 1, Ruling 48): the Edit button was on the line, within
  * //// every finger's reach, and was pressed too easily. The menu is a list of items, each with its own rule of who
- * //// sees it, and the « ⋯ » is shown when at least one item is: « Edit the floor plan » (whoever may lay out the floor)
- * //// and « Free the tables being cleaned » (whoever may set the status of a table, a cashier included).
+ * //// sees it, and the « ⋯ » is shown when at least one item is: « Edit the floor plan » (whoever may lay out the floor),
+ * //// « Free the tables being cleaned » (whoever may set the status of a table, a cashier included) and « Open a tablet »
+ * //// (whoever may set the restaurant up, NeoRestau lot 1, task 16).
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"
@@ -66,6 +67,14 @@ vi.mock("@/stores/posCart", () => ({
 vi.mock("@/stores/posDrafts", () => ({ usePOSDraftsStore: () => ({}) }))
 vi.mock("@/stores/posShift", () => ({
 	usePOSShiftStore: () => ({ profileName: "Till" }),
+}))
+// The pairing dialog of « Open a tablet » has its own spec (restaurant/__tests__/openTabletDialog.spec.js): here, only
+// that the menu opens it for the till's restaurant
+vi.mock("@/components/restaurant/OpenTabletDialog.vue", () => ({
+	default: {
+		props: ["modelValue", "restaurant"],
+		template: "<div data-test='open-tablet-dialog' :data-restaurant='restaurant' />",
+	},
 }))
 
 const { default: FloorPlanEditor } = await import("../FloorPlanEditor.vue")
@@ -437,6 +446,44 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 
 			expect(menu().exists()).toBe(false)
 			expect(more().exists()).toBe(false)
+		})
+	})
+
+	describe("« Open a tablet » (NeoRestau lot 1, task 16)", () => {
+		const tabletItem = () => wrapper.find('[data-test="menu-open-a-tablet"]')
+		const dialog = () => wrapper.find('[data-test="open-tablet-dialog"]')
+
+		it("is an item of the menu for whoever may set the restaurant up, and opens the pairing dialog for the till's restaurant", async () => {
+			await floorPlan({ manage_settings: true })
+			// Not a button of its own on the line: the line keeps its width
+			expect(wrapper.find('[data-test="open-a-tablet"]').exists()).toBe(false)
+			expect(dialog().exists()).toBe(false)
+
+			await more().trigger("click")
+			expect(tabletItem().text()).toBe("Open a tablet")
+			await tabletItem().trigger("click")
+			await flushPromises()
+
+			expect(menu().exists()).toBe(false)
+			expect(dialog().attributes("data-restaurant")).toBe("The Bistro")
+		})
+
+		it("comes after the plan's own items", async () => {
+			await floorPlan({ manage_floor: true, set_table_status: true, manage_settings: true })
+
+			expect(wrapper.vm.menuItems.map((item) => item.key)).toEqual([
+				"edit-floor-plan",
+				"free-cleaning-tables",
+				"open-a-tablet",
+			])
+		})
+
+		it("is not an item for a cashier, who may not set the restaurant up", async () => {
+			await floorPlan({ manage_floor: false, set_table_status: true, manage_settings: false })
+			await more().trigger("click")
+
+			expect(tabletItem().exists()).toBe(false)
+			expect(dialog().exists()).toBe(false)
 		})
 	})
 

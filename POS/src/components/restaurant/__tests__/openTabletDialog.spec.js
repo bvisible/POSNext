@@ -33,7 +33,6 @@ vi.mock("@/utils/currency", () => ({
 vi.mock("@/stores/restaurant", () => ({ useRestaurantStore: () => restaurantStore }))
 
 const { default: OpenTabletDialog } = await import("../OpenTabletDialog.vue")
-const { default: OpenTabletButton } = await import("../OpenTabletButton.vue")
 
 const API = "pos_next.api.restaurant_devices"
 const URL_OF_THE_CODE = "https://bistro.example/pos/pair#Zx3_kQ-9aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -250,28 +249,5 @@ describe("opening a tablet at the till", () => {
 
 		expect(showError).toHaveBeenCalledWith("Could not create a code.")
 		expect(wrapper.find("[data-test=pairing-qr]").exists()).toBe(false)
-	})
-})
-
-describe("the entry « Open a tablet »", () => {
-	it("is shown to whoever may set the restaurant up, and opens the dialog", async () => {
-		restaurantStore.can = { manage_settings: true }
-		const wrapper = open(OpenTabletButton, {})
-		await flushPromises()
-
-		await wrapper.get("[data-test=open-a-tablet]").trigger("click")
-		await flushPromises()
-
-		expect(wrapper.get("[data-test=dialog] h2").text()).toBe("Open a tablet")
-		expect(asked(`${API}.get_devices`)).toEqual([{ restaurant: "The Bistro" }])
-	})
-
-	it("is not shown to a cashier", async () => {
-		restaurantStore.can = { manage_floor: true }
-		const wrapper = open(OpenTabletButton, {})
-		await flushPromises()
-
-		expect(wrapper.find("[data-test=open-a-tablet]").exists()).toBe(false)
-		expect(call).not.toHaveBeenCalled()
 	})
 })
