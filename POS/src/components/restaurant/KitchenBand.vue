@@ -44,11 +44,13 @@
 				:data-test="mode === 'lane' ? 'ticket-lane' : 'ticket-column'"
 				@scroll.passive="measure"
 			>
+				<!-- //// Neoffice — a ticket with many dishes takes two columns of the grid or of the lane (task 38a-3, ruling 107: the wide card). `data-wide` says it. -->
 				<div
 					v-for="order in orders"
 					:key="order.name"
 					data-test="ticket-cell"
-					:class="[cellClass, isDelivered(order) ? 'opacity-60' : '']"
+					:data-wide="isWide(order) ? 'true' : undefined"
+					:class="[cellClass, isWide(order) ? TICKET_CELL_WIDE : '', isDelivered(order) ? 'opacity-60' : '']"
 				>
 					<!-- //// Neoffice — the card gets a function, not an event to emit: a press that moves its ticket to the other band
 					     //// unmounts it before the server answers, and Vue drops the events of a component that is gone (fix round 1) -->
@@ -87,6 +89,7 @@ import { orderUsesRunner } from "@/utils/kitchenRunner"
 import {
 	BAND_PRODUCTION_HEIGHT,
 	BAND_WAITING_HEIGHT,
+	TICKET_CELL_WIDE,
 	TICKET_COLUMN_PRODUCTION,
 	TICKET_COLUMN_WAITING,
 	TICKET_LANE,
@@ -94,6 +97,9 @@ import {
 	TICKET_SPLIT_WAITING,
 } from "@/utils/ticketLayout"
 import { offScreen } from "@/utils/ticketScrollHints"
+//// Neoffice — the wide card of a long ticket (task 38a-3, ruling 107): how many tickets fit the area, and whether a ticket has the dishes for two columns
+import { useColumnsThatFit } from "@/composables/useColumnsThatFit"
+import { isWideTicket, kitchenLineCount } from "@/utils/wideTicket"
 
 /**
  * One band of the kitchen screen.
@@ -163,6 +169,12 @@ const cellClass = computed(() =>
 // the foot of the column and then scrolls inside itself (KDSOrderCard reads --ticket-max-h). A lane needs no cap, it
 // stretches its tickets to its own height.
 const scroller = ref(null)
+//// Neoffice — a ticket of more than `WIDE_TICKET_LINES` dishes takes two columns in the band of the tickets IN PREPARATION, where the cooks work and the room is (task 38a-3, ruling 107).
+//// The band of the tickets waiting is one ticket wide in the side-by-side layout and keeps its long tickets one wide, their dishes scrolling inside them. A band whose area holds fewer than
+//// three columns (a narrow screen, a big text size) has no wide ticket either: it would leave no room beside it. Nothing is wide until the area has been measured.
+const { columns } = useColumnsThatFit(scroller)
+const isWide = (order) =>
+	!isWaiting.value && isWideTicket(kitchenLineCount(order), columns.value)
 const ahead = ref(0)
 const behind = ref(0)
 const maxHeight = ref(0)

@@ -2,11 +2,12 @@
 //// ruling 109): the cook's pick, kept on the DEVICE (a tablet in the kitchen keeps its own, a cook who needs glasses sets it once), and
 //// shown as the CSS variables the screen's root carries. The rules and the table of sizes are in utils/kitchenTextSize and tested there;
 //// this only wires them to the browser's storage.
-import { computed, ref } from "vue"
+import { computed, getCurrentInstance, provide, ref } from "vue"
 import {
 	nextTextSize,
 	readTextSize,
 	saveTextSize,
+	TEXT_SIZE_KEY,
 	TEXT_SIZES,
 	textSizeVariables,
 } from "@/utils/kitchenTextSize"
@@ -27,6 +28,8 @@ export function useKitchenTextSize() {
 	// Read now, not on mount: the first paint must already be the right size, not a flash of the default
 	const size = ref(readTextSize())
 	const style = computed(() => textSizeVariables(size.value))
+	//// Neoffice — the size is handed down to the bands and the cards below the screen (task 38a-3, see TEXT_SIZE_KEY); only inside a component, where `provide` can be called
+	if (getCurrentInstance()) provide(TEXT_SIZE_KEY, size)
 
 	function choose(next) {
 		if (!TEXT_SIZES.includes(next)) return

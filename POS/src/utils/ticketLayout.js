@@ -133,3 +133,16 @@ export const TICKET_ROW = "flex h-full min-h-[14rem] flex-row items-stretch gap-
 
 /** A card of the runner's flow: as wide as the text size says, never taller than the flow. */
 export const TICKET_CARD = "w-[var(--kds-card-w,250px)] max-h-full flex-none"
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The WIDE card (NeoRestau lot 1, task 38a-3, ruling 107 layer 2). A ticket with more than `WIDE_TICKET_LINES` dishes (utils/wideTicket) takes two card widths where the screen holds at least
+// three columns: in a grid or a lane it spans two columns (the gap between them is part of it), in the runner's flow it is two widths and the gap wide. It never spans more than the room there is
+// (`max-w-full`), and its dishes stay in one list.
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** The cell of a kitchen band that holds a wide ticket: two columns of the grid, or of the lane. */
+export const TICKET_CELL_WIDE = "col-span-2"
+
+/** A card of the runner's flow that is wide: two ticket widths and the gap between them (`gap-2`, 0.5rem), never wider than the flow, never taller than it. */
+export const TICKET_CARD_WIDE =
+	"w-[calc(var(--kds-card-w,250px)*2+0.5rem)] max-w-full max-h-full flex-none"

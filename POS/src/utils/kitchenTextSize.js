@@ -14,6 +14,11 @@ export const DEFAULT_TEXT_SIZE = "compact"
 // Beside the other settings of this screen (pos_kds_area, pos_kds_layout, pos_kds_show_delivered)
 export const TEXT_SIZE_STORAGE_KEY = "pos_kds_text_size"
 
+//// Neoffice — the key under which the screen hands the size it shows to what stands below it (task 38a-3): a band that counts how many tickets fit a row needs it to measure
+//// again when the size, so the width of a ticket, changes; a ticket opened full screen is drawn outside the screen's root, where the size's CSS variables do not reach, and needs it to
+//// draw itself one step bigger. See useKitchenTextSize, which provides it.
+export const TEXT_SIZE_KEY = Symbol("kitchen-text-size")
+
 // What does not change with the size: the line height of a dish, and the padding of the head and of the dishes (the mockup's own: a dense ticket
 // has 8 px at its sides whatever the text; the room a dish takes between two lines is the size's, `--kds-py`)
 const COMMON = {

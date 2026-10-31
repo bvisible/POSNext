@@ -105,11 +105,13 @@
 				<p>{{ __("All items are either being prepared or have been delivered.") }}</p>
 			</div>
 
-			<div v-else :class="stackShortTickets ? TICKET_STACK : TICKET_ROW" :data-stacked="stackShortTickets ? 'true' : 'false'" data-test="ticket-flow">
+			<!-- //// Neoffice — a ticket with many dishes is TWO widths wide where the screen holds at least three columns (task 38a-3, ruling 107: the wide card). `data-wide` says it. -->
+			<div v-else ref="flowEl" :class="stackShortTickets ? TICKET_STACK : TICKET_ROW" :data-stacked="stackShortTickets ? 'true' : 'false'" data-test="ticket-flow">
 				<RunnerOrderCard
 					v-for="card in groupedCards"
 					:key="card.key"
-					:class="TICKET_CARD"
+					:class="isWideCard(card) ? TICKET_CARD_WIDE : TICKET_CARD"
+					:data-wide="isWideCard(card) ? 'true' : undefined"
 					:card="card"
 					:view-mode="viewMode"
 					:show-station="!selectedStation"
@@ -225,7 +227,10 @@ import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import { countDishes } from "@/utils/kitchenRunner"
 import { formatTicketNo } from "@/utils/ticketNumber"
-import { RUNNER_AREA, TICKET_CARD, TICKET_ROW, TICKET_STACK } from "@/utils/ticketLayout"
+import { RUNNER_AREA, TICKET_CARD, TICKET_CARD_WIDE, TICKET_ROW, TICKET_STACK } from "@/utils/ticketLayout"
+//// Neoffice — the wide card of a long ticket (task 38a-3, ruling 107): how many tickets fit the flow, and whether a card has the dishes for two widths
+import { useColumnsThatFit } from "@/composables/useColumnsThatFit"
+import { isWideTicket, runnerLineCount } from "@/utils/wideTicket"
 import { useStackShortTickets } from "@/composables/useStackShortTickets"
 import { allergyWordsOf } from "@/utils/kitchenTextKinds"
 //// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
@@ -368,6 +373,11 @@ const {
 	cycle: cycleTextSize,
 	label: textSizeLabel,
 } = useKitchenTextSize()
+//// Neoffice — a ticket of more than `WIDE_TICKET_LINES` dishes is two widths wide where the flow holds at least three columns (task 38a-3, ruling 107); nothing is wide until the flow has been
+//// measured, and it is measured again when the text size, so the width of a ticket, changes
+const flowEl = ref(null)
+const { columns: flowColumns } = useColumnsThatFit(flowEl, textSize)
+const isWideCard = (card) => isWideTicket(runnerLineCount(card), flowColumns.value)
 
 //// Neoffice — row 2 of the bar is drawn only when there is something to choose (task 38a-2, ruling 129), as on the kitchen screen: one room has no
 //// room chips, one station has no station chips, a screen bound to its station has none. The stations the restaurant HAS are asked for (the stations
