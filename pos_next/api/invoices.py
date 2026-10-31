@@ -2946,6 +2946,62 @@ def get_invoice(invoice_name):
 	return invoice.as_dict()
 
 
+# //// Neoffice — added constant (no upstream equivalent): lines of a ticket the invoice history previews.
+INVOICE_PREVIEW_LINES = 3
+
+
+# //// Neoffice — added function (no upstream equivalent). Of the invoices of one page of the history, the
+# //// names the session user may read, by Frappe's own rules (role, User Permissions, if-owner, the
+# //// permission_query_conditions hooks) and in ONE query for the whole page: the lines of a ticket go only to
+# //// who may open the ticket. A user who reads no sales invoice at all gets none and no error message (a
+# //// frappe.throw caught here would still leave its message for the browser to show).
+def _readable_invoice_names(invoice_names):
+	if not invoice_names or not frappe.has_permission("Sales Invoice", "read"):
+		return set()
+	return set(
+		frappe.get_list(
+			"Sales Invoice",
+			filters={"name": ["in", list(invoice_names)]},
+			pluck="name",
+			limit_page_length=0,
+		)
+	)
+
+
+# //// Neoffice — added function (no upstream equivalent). The lines of every invoice of the page in ONE query,
+# //// by invoice, in the order of the ticket. Upstream read them one query per row (20 for the history dialog,
+# //// 100 for the offline preload).
+def _ticket_lines(invoice_names):
+	if not invoice_names:
+		return {}
+	lines = frappe.db.sql(
+		"""
+		SELECT
+			parent,
+			item_code,
+			item_name,
+			qty,
+			rate,
+			amount,
+			uom,
+			stock_uom
+		FROM
+			`tabSales Invoice Item`
+		WHERE
+			parent IN %(invoice_names)s
+		ORDER BY
+			parent,
+			idx
+	""",
+		{"invoice_names": tuple(invoice_names)},
+		as_dict=True,
+	)
+	by_invoice = {}
+	for line in lines:
+		by_invoice.setdefault(line.parent, []).append(line)
+	return by_invoice
+
+
 @frappe.whitelist()
 def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_date=None, to_date=None, include_items=False, docstatus=None, start: int = 0) -> list:
 	"""
@@ -2963,6 +3019,11 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 
 	Returns:
 		List of invoice dicts with basic fields (no per-invoice item loading)
+		//// Neoffice — the line above was never true: each row has always carried its payments and its lines
+		(``items``). The lines now come for the whole page in one query, and each row also carries
+		``items_count`` (the number of lines of the ticket) and ``items_preview`` (its first three lines,
+		``{item_name, qty, uom}``, ``uom`` being the line's unit only when it is not the item's own), for the
+		till's invoice history. A user who may not read an invoice gets no line of it.
 	"""
 	if not pos_profile:
 		frappe.throw(_("POS Profile is required"))
@@ -3072,28 +3133,29 @@ def get_invoices(pos_profile: str, search=None, limit: int = 20, offset=0, from_
 				}
 			)
 
-	# Load items for each invoice for filtering purposes
+	# //// Neoffice — upstream read the lines of each invoice in a query of its own (one query per row: 20 for
+	# //// the history dialog, 100 for the offline preload) and handed them to whoever could list the invoice.
+	# //// The lines of the whole page now come in ONE query, only for the invoices the user may read, and each row
+	# //// also says how many lines its ticket has and shows the first three, for the invoice history dialog.
+	lines_by_invoice = _ticket_lines(_readable_invoice_names(invoice_names))
 	for invoice in invoices:
 		invoice.payments = payments_by_invoice.get(invoice.name, [])
-		items = frappe.db.sql(
-			"""
-			SELECT
-				item_code,
-				item_name,
-				qty,
-				rate,
-				amount
-			FROM
-				`tabSales Invoice Item`
-			WHERE
-				parent = %(invoice_name)s
-			ORDER BY
-				idx
-		""",
-			{"invoice_name": invoice.name},
-			as_dict=True,
-		)
-		invoice.items = items
+		# //// Neoffice — this invoice's lines, taken from the page's one query above (none when unreadable).
+		lines = lines_by_invoice.get(invoice.name, [])
+		# Load items for each invoice for filtering purposes
+		invoice.items = [
+			{key: line[key] for key in ("item_code", "item_name", "qty", "rate", "amount")} for line in lines
+		]
+		invoice.items_count = len(lines)
+		invoice.items_preview = [
+			{
+				"item_name": line.item_name or line.item_code,
+				"qty": line.qty,
+				# The unit only when it is not the item's own, as the cart says it
+				"uom": line.uom if line.uom and line.uom != line.stock_uom else None,
+			}
+			for line in lines[:INVOICE_PREVIEW_LINES]
+		]
 
 	return invoices
 
