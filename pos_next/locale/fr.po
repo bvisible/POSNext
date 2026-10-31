@@ -17623,10 +17623,6 @@ msgctxt "Restaurant screen"
 msgid "Floor plan"
 msgstr "Plan de salle"
 
-#: POS/src/pages/Runner.vue:52
-msgid "Display"
-msgstr "Affichage"
-
 #: POS/src/pages/Runner.vue:251
 msgid "On the plan"
 msgstr "Sur le plan"
