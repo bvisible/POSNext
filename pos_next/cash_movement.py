@@ -47,6 +47,21 @@ BUSINESS_DAY_CUTOFF_HOURS = 6
 # The accounts a party must come with: a till movement names none, so ERPNext would refuse the entry.
 PARTY_ACCOUNT_TYPES = ("Receivable", "Payable")
 
+# The Error Log written when neoffice_theme is installed but its journal-entry VAT logic cannot load (at most
+# 140 characters: frappe.log_error's title), and the request flag that writes it once per request.
+VAT_ENGINE_ERROR_TITLE = "Till cash movement: the desk's journal-entry VAT logic cannot load"
+VAT_ENGINE_LOGGED_FLAG = "pos_next_cash_movement_vat_engine_logged"
+
+
+class VatEngineUnavailable(frappe.ValidationError):
+	"""neoffice_theme is installed but its journal-entry VAT logic cannot run: a movement whose account
+	carries a VAT rate is refused rather than booked gross, which would drop its VAT without a word."""
+
+
+def _precision():
+	"""The precision of a journal entry row's amount: the currency's, as the entry itself rounds it."""
+	return frappe.get_precision("Journal Entry Account", "debit_in_account_currency") or 2
+
 
 def till_cash_account(pos_profile, company, required=True):
 	"""The account of the till's cash mode of payment for the company: the drawer, in the ledger. None
@@ -83,11 +98,8 @@ def till_template_names(pos_profile):
 	return list(dict.fromkeys(name for name in names if name))
 
 
-def _first_account(rows):
-	for row in rows or []:
-		if row.get("account"):
-			return row.get("account")
-	return None
+def _accounts(rows):
+	return [row.get("account") for row in rows or [] if row.get("account")]
 
 
 def template_definition(template_name):
@@ -97,13 +109,18 @@ def template_definition(template_name):
 	definition with blanks, which ``definition_problem`` refuses: a plain ERPNext template declares no
 	direction, so the till cannot book it as declared."""
 	template = frappe.get_doc("Journal Entry Template", template_name)
+	totalization = _accounts(template.get("accounting_entry_totalization"))
+	counterparty = _accounts(template.get("accounting_entry_counterparty"))
 	return frappe._dict(
 		name=template.name,
 		title=template.get("template_title") or template.name,
 		company=template.get("company"),
 		voucher_type=template.get("voucher_type") or "Journal Entry",
-		totalization=_first_account(template.get("accounting_entry_totalization")),
-		counterparty=_first_account(template.get("accounting_entry_counterparty")),
+		totalization=totalization[0] if totalization else None,
+		counterparty=counterparty[0] if counterparty else None,
+		# A desk template may name one counterparty per VAT rate (a receipt split between 8.1 % and 2.6 %);
+		# the till types one amount and cannot split it between them (see definition_problem).
+		counterparty_count=len(dict.fromkeys(counterparty)),
 		credit_or_debit=cstr(template.get("credit_or_debit")),
 		disable_calculation=cint(template.get("disable_calculation")),
 	)
@@ -142,6 +159,10 @@ def definition_problem(definition, cash_account, company):
 		return _("{0} does not say whether it is a Credit or a Debit.").format(title)
 	if not drawer_direction(definition, cash_account):
 		return _("{0} does not move the till's cash account {1}.").format(title, cash_account)
+	if cint(definition.get("counterparty_count")) > 1:
+		return _(
+			"{0} names several counterparty accounts (one per VAT rate): the till books one amount on one account. Record it at the desk."
+		).format(title)
 	company_currency = frappe.get_cached_value("Company", company, "default_currency")
 	for account in (definition.totalization, definition.counterparty):
 		row = frappe.db.get_value(
@@ -189,25 +210,62 @@ def other_account(definition, cash_account):
 	return definition.counterparty if definition.totalization == cash_account else definition.totalization
 
 
+def _theme_installed():
+	"""Whether the site has neoffice_theme, the home of the desk's journal-entry VAT logic. Without it (the
+	fleet's CI site, a site without the desk's VAT) no VAT is split: a movement books its gross amount."""
+	return bool(frappe.db.exists("DocType", "App Customization"))
+
+
 def _desk_vat_logic():
-	"""neoffice_theme's journal-entry VAT logic, or None where the theme (or the company settings it
-	reads, from neoffice_wizard) is absent: then no VAT is split, as on a site without the desk's VAT."""
-	if not frappe.db.exists("DocType", "App Customization"):
+	"""neoffice_theme's journal-entry VAT logic; None where the theme is absent.
+
+	Where the theme is installed, its logic must load: a failure (a module renamed, an import error, the
+	company settings it reads from neoffice_wizard missing) is logged once per request (VAT_ENGINE_ERROR_TITLE)
+	and raised as VatEngineUnavailable, never turned into a gross booking that drops the VAT in silence."""
+	if not _theme_installed():
 		return None
 	if not frappe.db.exists("DocType", "Neoffice Company Settings"):
+		reason = "neoffice_theme is installed but the doctype Neoffice Company Settings (neoffice_wizard), which its VAT logic reads, is missing."
+	else:
+		try:
+			from neoffice_theme.vat_utils import calculate_journal_entry_with_vat
+		except Exception:
+			reason = frappe.get_traceback()
+		else:
+			return calculate_journal_entry_with_vat
+	if not frappe.flags.get(VAT_ENGINE_LOGGED_FLAG):
+		frappe.flags[VAT_ENGINE_LOGGED_FLAG] = True
+		# Deferred (Redis, then the scheduler's frappe.deferred_insert.save_to_db): the refusal below rolls the
+		# request's transaction back, and an Error Log inserted in it would go with it.
+		frappe.log_error(VAT_ENGINE_ERROR_TITLE, reason, defer_insert=True)
+	raise VatEngineUnavailable(
+		_(
+			"The VAT of this operation cannot be worked out: the desk's VAT logic does not load on this site. Nothing was booked; the administrator has been told (Error Log)."
+		)
+	)
+
+
+def _carries_vat(account):
+	"""Whether ``account`` names a VAT rate (Account.taxable_account, neoffice_theme's field): only such a
+	counterparty needs the desk's VAT logic."""
+	return bool(account and frappe.get_cached_value("Account", account, "taxable_account"))
+
+
+def _vat_logic_for(account):
+	"""The desk's VAT logic for a counterparty on ``account``, or None when there is no VAT to split there:
+	the theme is absent, or the account names no VAT rate. Raises VatEngineUnavailable where the account
+	names a rate and the logic cannot load (see _desk_vat_logic)."""
+	if not _theme_installed() or not _carries_vat(account):
 		return None
-	try:
-		from neoffice_theme.vat_utils import calculate_journal_entry_with_vat
-	except ImportError:
-		return None
-	return calculate_journal_entry_with_vat
+	return _desk_vat_logic()
 
 
 def split_vat(company, account, amount, cost_center=None):
 	"""The counterparty's amount as the desk splits it: the net on ``account`` and the VAT on the tax
 	account of the rate ``account`` carries (Account.taxable_account), the amount being VAT included.
-	Without the desk's logic, or where it finds no rate, one line with the whole amount."""
-	calculate = _desk_vat_logic()
+	Without the theme, or where the account names no rate (or the desk's logic finds none for the company),
+	one line with the whole amount."""
+	calculate = _vat_logic_for(account)
 	if not calculate:
 		return [frappe._dict(account=account, amount=flt(amount))]
 	entries = calculate(
@@ -219,7 +277,7 @@ def split_vat(company, account, amount, cost_center=None):
 	)
 	# The helper hands the VAT back as the amount less the net, a float subtraction: rounded to the currency's
 	# precision here, the lines still add up to the amount (both parts carry that precision already).
-	precision = frappe.get_precision("Journal Entry Account", "debit_in_account_currency") or 2
+	precision = _precision()
 	return [
 		frappe._dict(account=entry.get("account"), amount=flt(entry.get("amount"), precision))
 		for entry in entries
@@ -228,13 +286,19 @@ def split_vat(company, account, amount, cost_center=None):
 
 
 def vat_applies(definition, cash_account, company):
-	"""Whether the desk's VAT logic would split this template's counterparty: the till offers the
-	« without VAT » choice only then."""
+	"""Whether the desk's VAT logic splits this template's counterparty. Raises VatEngineUnavailable where
+	the counterparty names a VAT rate and the logic cannot load."""
 	if definition.disable_calculation or definition.counterparty == cash_account:
 		return False
-	if not _desk_vat_logic():
-		return False
 	return len(split_vat(company, definition.counterparty, 100)) > 1
+
+
+def no_vat_allowed(definition, cash_account, company):
+	"""Whether the till may book this operation « without VAT » (a purchase from a supplier outside VAT): only
+	an expense paid out of the drawer (a Credit template, its counterparty debited) whose VAT the desk's logic
+	would split. Never on an income (a Debit template: its VAT is owed, the cashier cannot waive it), nor where
+	no VAT is split anyway."""
+	return definition.credit_or_debit == CREDIT and vat_applies(definition, cash_account, company)
 
 
 def business_day(period_start_date, moment=None):
@@ -246,13 +310,49 @@ def business_day(period_start_date, moment=None):
 	return max(getdate(period_start_date), moved)
 
 
+def moved_at(period_start, moment=None):
+	"""When the money moved, as the till says (an offline movement is sent later than it was made), kept
+	between the shift's start and now: a device clock that runs ahead or behind never books a movement
+	before its shift or in the future. ``moment`` is milliseconds since the epoch (the offline queue's
+	timestamp) or a datetime in the site's time zone; anything else means now."""
+	from datetime import datetime, timezone
+
+	from frappe.utils import convert_utc_to_system_timezone, get_datetime
+
+	now = now_datetime()
+	when = None
+	if isinstance(moment, datetime):
+		when = moment
+	elif moment not in (None, ""):
+		try:
+			milliseconds = float(moment)
+		except (TypeError, ValueError):
+			milliseconds = None
+		if milliseconds and milliseconds > 0:
+			try:
+				utc = datetime.fromtimestamp(milliseconds / 1000, tz=timezone.utc)
+				when = convert_utc_to_system_timezone(utc).replace(tzinfo=None)
+			except (OverflowError, OSError, ValueError):
+				when = None
+	if when is None or when > now:
+		when = now
+	if period_start and when < get_datetime(period_start):
+		when = get_datetime(period_start)
+	return when
+
+
 def _account_row(account, amount, debit, cost_center):
 	amount = flt(amount)
 	return {
 		"account": account,
 		"debit_in_account_currency": amount if debit else 0,
 		"credit_in_account_currency": 0 if debit else amount,
-		"cost_center": cost_center,
+		# As the desk books a template (neoffice_theme.mobile.create_journal_entry_from_scan): the till's cost
+		# centre goes on the profit and loss rows only; a balance sheet row (cash, VAT, bank, transit) is left
+		# empty and gets the row's default, the company's cost centre (Journal Entry Account.cost_center ":Company").
+		"cost_center": cost_center
+		if frappe.get_cached_value("Account", account, "report_type") == "Profit and Loss"
+		else None,
 	}
 
 
@@ -280,7 +380,7 @@ def book(
 		frappe.throw(
 			_("{0} does not move the till's cash account {1}.").format(definition.title, cash_account)
 		)
-	amount = flt(amount, frappe.get_precision("Journal Entry Account", "debit_in_account_currency") or 2)
+	amount = flt(amount, _precision())
 	if amount <= 0:
 		frappe.throw(_("Amount must be greater than zero"))
 
@@ -288,7 +388,7 @@ def book(
 	counterparty_lines = [frappe._dict(account=definition.counterparty, amount=amount)]
 	if not no_vat and not definition.disable_calculation and definition.counterparty != cash_account:
 		counterparty_lines = split_vat(company, definition.counterparty, amount, cost_center)
-	total = flt(sum(flt(line.amount) for line in counterparty_lines), 2)
+	total = flt(sum(flt(line.amount) for line in counterparty_lines), _precision())
 
 	note = cstr(note).strip()
 	voucher_type = definition.voucher_type if definition.voucher_type in VOUCHER_TYPES else "Journal Entry"
@@ -323,33 +423,59 @@ def book(
 	return entry
 
 
-def _movement_rows(where, values):
+def _movement_rows(where, values, lock=False):
+	"""The tagged entries ``where`` selects (on ``je``), each with ``delta``: what it did to the till's cash
+	account (debit less credit of its rows on posa_cash_movement_account), oldest first.
+
+	``lock`` makes it a locking read (LOCK IN SHARE MODE), for a caller that holds the shift's row lock (the
+	per-shift cap, the closing). Under MariaDB's REPEATABLE READ a plain read sees the snapshot the request's
+	first read fixed, before it waited for that lock: a movement another request committed meanwhile would
+	not be counted. A locking read sees every committed row. One flat query, summed here: a locking clause
+	does not reach into a derived table, which would still be read from the snapshot."""
 	# The link fields come with the fixture: a site whose migrate has not created them yet (code pulled, migrate
 	# still to run) has no movement to read, and a closing made meanwhile must not fail on it.
 	if not frappe.db.has_column("Journal Entry", "posa_cash_movement_account"):
 		return []
-	return frappe.db.sql(
+	rows = frappe.db.sql(
 		f"""
 		select
 			je.name, je.posting_date, je.creation, je.owner, je.docstatus,
 			je.posa_cash_movement_shift as shift, je.posa_cash_movement_closing as closing,
-			je.posa_cash_entry_template as template, jet.template_title,
+			je.posa_cash_entry_template as template,
 			je.posa_cash_movement_note as note, je.posa_cash_movement_no_vat as no_vat,
-			je.user_remark, cash.delta
+			je.user_remark, jea.debit_in_account_currency - jea.credit_in_account_currency as delta
 		from `tabJournal Entry` je
-		join (
-			select jea.parent, sum(jea.debit_in_account_currency - jea.credit_in_account_currency) as delta
-			from `tabJournal Entry Account` jea
-			join `tabJournal Entry` j on j.name = jea.parent
-			where jea.parenttype = 'Journal Entry' and jea.account = j.posa_cash_movement_account and {where}
-			group by jea.parent
-		) cash on cash.parent = je.name
-		left join `tabJournal Entry Template` jet on jet.name = je.posa_cash_entry_template
-		order by je.creation asc, je.name asc
+		join `tabJournal Entry Account` jea
+			on jea.parent = je.name and jea.parenttype = 'Journal Entry'
+			and jea.account = je.posa_cash_movement_account
+		where {where}
+		order by je.creation asc, je.name asc, jea.idx asc
+		{"lock in share mode" if lock else ""}
 		""",
 		values,
 		as_dict=True,
 	)
+	entries = {}
+	for row in rows:
+		entry = entries.get(row.name)
+		if entry:
+			entry.delta = flt(entry.delta) + flt(row.delta)
+		else:
+			entries[row.name] = row
+	titles = dict(
+		frappe.get_all(
+			"Journal Entry Template",
+			filters={"name": ("in", list({row.template for row in entries.values() if row.template}))},
+			fields=["name", "template_title"],
+			as_list=True,
+		)
+		if any(row.template for row in entries.values())
+		else []
+	)
+	for row in entries.values():
+		row.delta = flt(row.delta, _precision())
+		row.template_title = titles.get(row.template)
+	return list(entries.values())
 
 
 def _as_movement(row):
@@ -371,20 +497,22 @@ def _as_movement(row):
 	)
 
 
-def shift_movements(shift):
+def shift_movements(shift, lock=False):
 	"""The drawer movements recorded during a shift, oldest first: each submitted entry tagged with the
 	shift, its direction and amount read from the till's cash account rows (an entry amended at the desk
 	keeps its tags and is read as the ledger now has it). The closing's withdrawal is not among them: it
-	is tagged with its closing, not with the shift."""
+	is tagged with its closing, not with the shift. ``lock``: see _movement_rows."""
 	if not shift:
 		return []
-	rows = _movement_rows("j.posa_cash_movement_shift = %(shift)s and j.docstatus = 1", {"shift": shift})
+	rows = _movement_rows(
+		"je.posa_cash_movement_shift = %(shift)s and je.docstatus = 1", {"shift": shift}, lock=lock
+	)
 	return [_as_movement(row) for row in rows if flt(row.delta)]
 
 
 def movement(journal_entry):
 	"""One tagged entry, whatever its docstatus, as shift_movements reads it; None when it is not one."""
-	rows = _movement_rows("j.name = %(name)s", {"name": journal_entry})
+	rows = _movement_rows("je.name = %(name)s", {"name": journal_entry})
 	return _as_movement(rows[0]) if rows else None
 
 
@@ -396,7 +524,7 @@ def shift_totals(shifts):
 		return {}
 	totals = {}
 	rows = _movement_rows(
-		"j.posa_cash_movement_shift in %(shifts)s and j.docstatus = 1", {"shifts": tuple(shifts)}
+		"je.posa_cash_movement_shift in %(shifts)s and je.docstatus = 1", {"shifts": tuple(shifts)}
 	)
 	for row in rows:
 		bucket = totals.setdefault(row.shift, {"in": 0, "out": 0})
@@ -408,15 +536,39 @@ def shift_totals(shifts):
 
 
 def shift_out_total(shift):
-	"""The money the shift's movements took out of the drawer: what the per-shift cap counts."""
-	return flt(sum(row.amount for row in shift_movements(shift) if row.direction == OUT), 2)
+	"""The money the shift's movements took out of the drawer: what the per-shift cap counts. A locking read
+	(see _movement_rows): its caller holds the shift's row lock and must count what was committed while it
+	waited for it."""
+	return flt(
+		sum(row.amount for row in shift_movements(shift, lock=True) if row.direction == OUT), _precision()
+	)
 
 
-def closing_rows(shift):
-	"""The shift's movements as the closing stores them (POS Closing Shift Cash Movement)."""
+def closing_rows_under_lock(shift):
+	"""The shift's movements as its closing stores them, read once the closing holds the shift's row lock.
+
+	A movement another request committed (or cancelled) after this one began but before it got the lock is
+	in the ledger (the locking read) and not in this request's snapshot, which the closing's expected cash was
+	computed from and Frappe's own link checks read: such a closing is refused, and opened again it counts the
+	movement. Never a closing that leaves a movement booked against its shift out of its figures."""
+	rows = closing_rows(shift, lock=True)
+	seen = {row.journal_entry for row in shift_movements(shift)}
+	if {row["journal_entry"] for row in rows} != seen:
+		frappe.throw(
+			_(
+				"A cash movement was recorded or cancelled while this shift was being closed. Open the closing again: it will count it."
+			),
+			title=_("Cash Movement Recorded Meanwhile"),
+		)
+	return rows
+
+
+def closing_rows(shift, lock=False):
+	"""The shift's movements as the closing stores them (POS Closing Shift Cash Movement). The closing's own
+	save reads them with ``lock`` once it holds the shift's row lock (see _movement_rows)."""
 	cashiers = {}
 	rows = []
-	for row in shift_movements(shift):
+	for row in shift_movements(shift, lock=lock):
 		if row.owner not in cashiers:
 			cashiers[row.owner] = frappe.db.get_value("User", row.owner, "full_name") or row.owner
 		rows.append(

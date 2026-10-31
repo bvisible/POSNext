@@ -14,7 +14,10 @@ The test builds its own accounts, mode of payment, till, templates and shift, an
 neoffice_theme's template structure (totalization / counterparty rows, credit_or_debit) and its VAT logic
 exist only where the theme is installed: there the real templates are read; on a site without it (a
 fresh CI site) the template reader is given the same definitions, and the tests that need the desk's VAT
-logic are skipped.
+logic are skipped. Where the theme is installed they never skip: its VAT logic failing to load fails them.
+
+Two tests reach the database through a second connection, as a concurrent request would: what it commits
+is committed for real (the suite's commit is a no-op on the test's own connection only), and they remove it.
 """
 
 import json
@@ -22,15 +25,16 @@ import os
 import sys
 import unittest
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_field
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import flt, getdate
+from frappe.utils import add_days, flt, get_system_timezone, getdate, now_datetime
 from werkzeug.datastructures import FileStorage
 
 from pos_next import cash_movement
@@ -111,8 +115,9 @@ def _theme_templates():
 	)
 
 
-def _desk_vat():
-	return bool(cash_movement._desk_vat_logic()) and frappe.db.has_column("Account", "taxable_account")
+def _epoch_ms(moment):
+	"""A naive datetime of the site's time zone as the till sends it: milliseconds since the epoch."""
+	return int(moment.replace(tzinfo=ZoneInfo(get_system_timezone())).timestamp() * 1000)
 
 
 @contextmanager
@@ -221,16 +226,24 @@ class CashMovementFixture(FrappeTestCase):
 		return name
 
 	def _template(
-		self, label, totalization, counterparty, credit_or_debit, disable_calculation=0, voucher_type=None
+		self,
+		label,
+		totalization,
+		counterparty,
+		credit_or_debit,
+		disable_calculation=0,
+		voucher_type=None,
+		more_counterparties=(),
 	):
 		title = f"{PREFIX} {label}"
+		counterparties = [counterparty, *more_counterparties]
 		doc = {
 			"doctype": "Journal Entry Template",
 			"template_title": title,
 			"company": self.company,
 			"voucher_type": voucher_type or "Journal Entry",
 			"naming_series": "ACC-JV-.YYYY.-",
-			"accounts": [{"account": totalization}, {"account": counterparty}],
+			"accounts": [{"account": totalization}, *({"account": account} for account in counterparties)],
 		}
 		if _theme_templates():
 			doc.update(
@@ -238,7 +251,7 @@ class CashMovementFixture(FrappeTestCase):
 					"credit_or_debit": credit_or_debit,
 					"disable_calculation": disable_calculation,
 					"accounting_entry_totalization": [{"account": totalization}],
-					"accounting_entry_counterparty": [{"account": counterparty}],
+					"accounting_entry_counterparty": [{"account": account} for account in counterparties],
 				}
 			)
 		if frappe.db.exists("Journal Entry Template", title):
@@ -251,6 +264,7 @@ class CashMovementFixture(FrappeTestCase):
 			voucher_type=voucher_type or "Journal Entry",
 			totalization=totalization,
 			counterparty=counterparty,
+			counterparty_count=len(dict.fromkeys(counterparties)),
 			credit_or_debit=credit_or_debit,
 			disable_calculation=disable_calculation,
 		)
@@ -503,6 +517,57 @@ class TestTillCashMovements(CashMovementFixture):
 		with _as(CASHIER), self.assertRaises(frappe.ValidationError):
 			cash_entry.create_cash_entry(self.shift, plain, 10)
 
+	def test_a_template_with_one_counterparty_per_vat_rate_is_not_used_at_the_till(self):
+		# The desk's two-rate template (one counterparty at 8.1 %, one at 2.6 %): the till types one amount and
+		# would book it all on the first account.
+		two_rates = self._template(
+			"Two rates", self.cash, self.supplies, "Credit", more_counterparties=(self.goods,)
+		)
+		self._set_list(two_rates, self.supplier)
+		with _as(CASHIER):
+			data = cash_entry.get_cash_movement_dialog_data(self.shift)
+		self.assertEqual([row["name"] for row in data["templates"]], [self.supplier])
+		self.assertIn(two_rates, {row["name"]: row["reason"] for row in data["unusable"]})
+		with _as(CASHIER), self.assertRaises(frappe.ValidationError):
+			cash_entry.create_cash_entry(self.shift, two_rates, 10)
+
+	def test_the_tills_cost_centre_goes_on_the_profit_and_loss_rows_only(self):
+		# As the desk books a template: the till's cost centre on the expense; the cash and bank rows get the
+		# row's default, the company's cost centre.
+		till_centre = f"{PREFIX} till - {self.abbr}"
+		if not frappe.db.exists("Cost Center", till_centre):
+			frappe.get_doc(
+				{
+					"doctype": "Cost Center",
+					"cost_center_name": f"{PREFIX} till",
+					"company": self.company,
+					"is_group": 0,
+					"parent_cost_center": frappe.db.get_value(
+						"Cost Center", {"company": self.company, "is_group": 1}, "name", order_by="lft asc"
+					),
+				}
+			).insert(ignore_permissions=True)
+		frappe.db.set_value("POS Profile", PROFILE, "cost_center", till_centre)
+		company_centre = frappe.get_cached_value("Company", self.company, "cost_center")
+		self.assertNotEqual(company_centre, till_centre)
+
+		def centres(name):
+			return {
+				row.account: row.cost_center or None
+				for row in frappe.get_all(
+					"Journal Entry Account", filters={"parent": name}, fields=["account", "cost_center"]
+				)
+			}
+
+		self.assertEqual(
+			centres(self._record(self.supplier, 30)["name"]),
+			{self.supplies: till_centre, self.cash: company_centre},
+		)
+		self.assertEqual(
+			centres(self._record(self.pay_in, 200)["name"]),
+			{self.cash: company_centre, self.bank: company_centre},
+		)
+
 	def test_the_screen_gets_the_direction_from_the_server(self):
 		with _as(CASHIER):
 			data = cash_entry.get_cash_movement_dialog_data(self.shift)
@@ -556,10 +621,20 @@ class TestTillCashMovements(CashMovementFixture):
 	# --- VAT: the desk's logic, and « without VAT » -----------------------------------------------------
 
 	def _vat_company(self):
-		if not _desk_vat():
+		"""The desk's VAT logic on the test company. Skipped only where neoffice_theme is absent (a fresh CI
+		site); where it is installed, its logic must load: a failure fails the test (VatEngineUnavailable)."""
+		if _rehearsing_without_theme() or not cash_movement._theme_installed():
 			self.skipTest("neoffice_theme's journal-entry VAT logic is not installed here")
+		self.assertTrue(cash_movement._desk_vat_logic())
+		self.assertTrue(
+			frappe.db.has_column("Account", "taxable_account"),
+			"neoffice_theme is installed but Account has no taxable_account field",
+		)
 		if not frappe.db.exists("Neoffice Company Settings", self.company):
-			self.skipTest("the test company has no Neoffice Company Settings")
+			# The record neoffice_wizard keeps per company, here without its controller (rolled back).
+			settings = frappe.new_doc("Neoffice Company Settings")
+			settings.update({"name": self.company, "company": self.company, "company_name": self.company})
+			settings.db_insert()
 		frappe.db.set_value(
 			"Neoffice Company Settings", self.company, {"is_vat_company": 1, "vat_accounting_method": ""}
 		)
@@ -576,6 +651,9 @@ class TestTillCashMovements(CashMovementFixture):
 		vat = {row["name"]: row["vat_applies"] for row in data["templates"]}
 		self.assertTrue(vat[self.goods_purchase])
 		self.assertFalse(vat[self.pay_in])
+		self.assertTrue(
+			{row["name"]: row["no_vat_allowed"] for row in data["templates"]}[self.goods_purchase]
+		)
 		# The drawer moved by the whole amount, VAT included.
 		self.assertEqual(cash_movement.movement(result["name"]).amount, 108.10)
 
@@ -584,6 +662,80 @@ class TestTillCashMovements(CashMovementFixture):
 		result = self._record(self.goods_purchase, 108.10, no_vat=1)
 		self.assertEqual(self._rows(result["name"]), {self.goods: (108.10, 0), self.cash: (0, 108.10)})
 		self.assertEqual(frappe.db.get_value("Journal Entry", result["name"], "posa_cash_movement_no_vat"), 1)
+
+	def test_without_vat_is_never_offered_on_an_income_whose_vat_is_owed(self):
+		# Cash → income at 8.1 % (a Debit template): the VAT is owed to the State, the cashier cannot waive it.
+		self._vat_company()
+		taxed_income = self._account("Taxed Income", "Income")
+		frappe.db.set_value(
+			"Account",
+			taxed_income,
+			"taxable_account",
+			frappe.get_cached_value("Account", self.goods, "taxable_account"),
+		)
+		frappe.clear_document_cache("Account", taxed_income)
+		sale = self._template("Taxed income", self.cash, taxed_income, "Debit")
+		self._set_list(sale)
+		with _as(CASHIER):
+			[row] = cash_entry.get_cash_movement_dialog_data(self.shift)["templates"]
+		self.assertEqual((row["vat_applies"], row["no_vat_allowed"]), (True, False))
+		with _as(CASHIER), self.assertRaises(frappe.ValidationError):
+			cash_entry.create_cash_entry(self.shift, sale, 108.10, no_vat=1)
+		result = self._record(sale, 108.10)
+		self.assertEqual(
+			self._rows(result["name"]),
+			{self.cash: (108.10, 0), taxed_income: (0, 100.0), self.input_vat: (0, 8.1)},
+		)
+
+	def test_without_vat_is_refused_where_the_operation_has_no_vat_or_is_an_income(self):
+		# A pay-in moves no VAT; an income's VAT is owed; a supply account names no VAT rate. On every site.
+		for template in (self.pay_in, self.other_income, self.supplier):
+			with _as(CASHIER), self.assertRaises(frappe.ValidationError):
+				cash_entry.create_cash_entry(self.shift, template, 10, no_vat=1)
+		self.assertFalse(frappe.db.exists("Journal Entry", {"posa_cash_movement_shift": self.shift}))
+		with _as(CASHIER):
+			data = cash_entry.get_cash_movement_dialog_data(self.shift)
+		allowed = {row["name"]: row["no_vat_allowed"] for row in data["templates"]}
+		self.assertEqual(
+			[allowed[name] for name in (self.pay_in, self.other_income, self.supplier)], [False, False, False]
+		)
+
+	def test_when_the_desks_vat_logic_cannot_load_a_taxed_movement_is_refused_and_logged(self):
+		# The theme is installed but its VAT module does not import (renamed, broken): booking gross would drop
+		# the VAT without a word. The movement on an account that names a VAT rate is refused, the dialog says
+		# why, an Error Log is written (deferred: the refusal rolls the request back), and a movement on an
+		# account without VAT still books.
+		self._vat_company()
+		frappe.flags.pop(cash_movement.VAT_ENGINE_LOGGED_FLAG, None)
+		self.addCleanup(frappe.flags.pop, cash_movement.VAT_ENGINE_LOGGED_FLAG, None)
+		self.assertLessEqual(len(cash_movement.VAT_ENGINE_ERROR_TITLE), 140)
+		with (
+			patch.dict(sys.modules, {"neoffice_theme.vat_utils": None}),
+			patch.object(frappe, "log_error", wraps=frappe.log_error) as logged,
+		):
+			for no_vat in (0, 1):
+				with _as(CASHIER), self.assertRaises(cash_movement.VatEngineUnavailable):
+					cash_entry.create_cash_entry(self.shift, self.goods_purchase, 108.10, no_vat=no_vat)
+			with _as(CASHIER):
+				data = cash_entry.get_cash_movement_dialog_data(self.shift)
+			untaxed = self._record(self.supplier, 30)
+		self.assertNotIn(self.goods_purchase, [row["name"] for row in data["templates"]])
+		self.assertIn(self.goods_purchase, {row["name"]: row["reason"] for row in data["unusable"]})
+		self.assertFalse(
+			frappe.db.exists(
+				"Journal Entry",
+				{"posa_cash_movement_shift": self.shift, "posa_cash_entry_template": self.goods_purchase},
+			)
+		)
+		self.assertEqual(self._rows(untaxed["name"]), {self.supplies: (30, 0), self.cash: (0, 30)})
+		# Logged once for the request, title first, deferred so the refusal's rollback does not take it away.
+		from frappe.deferred_insert import save_to_db
+
+		[call] = [c for c in logged.call_args_list if c.args[:1] == (cash_movement.VAT_ENGINE_ERROR_TITLE,)]
+		self.assertIn("neoffice_theme.vat_utils", call.args[1])
+		self.assertTrue(call.kwargs.get("defer_insert"))
+		save_to_db()
+		self.assertTrue(frappe.db.exists("Error Log", {"method": cash_movement.VAT_ENGINE_ERROR_TITLE}))
 
 	def test_a_template_that_turns_the_calculation_off_books_the_whole_amount(self):
 		self._vat_company()
@@ -610,13 +762,6 @@ class TestTillCashMovements(CashMovementFixture):
 		self.assertFalse({row["name"]: row["vat_applies"] for row in data["templates"]}[self.goods_purchase])
 		self.assertEqual(self._rows(result["name"]), {self.goods: (108.10, 0), self.cash: (0, 108.10)})
 
-	def test_with_the_theme_doctypes_but_not_its_module_a_movement_books_the_whole_amount(self):
-		# The doctypes are there but `neoffice_theme.vat_utils` cannot be imported: the same, not a crash.
-		with patch.dict(sys.modules, {"neoffice_theme.vat_utils": None}):
-			self.assertIsNone(cash_movement._desk_vat_logic())
-			result = self._record(self.goods_purchase, 108.10)
-		self.assertEqual(self._rows(result["name"]), {self.goods: (108.10, 0), self.cash: (0, 108.10)})
-
 	def test_the_tests_that_need_the_theme_skip_with_a_reason_without_it(self):
 		with _without_the_theme(), self.assertRaises(unittest.SkipTest) as skipped:
 			self._vat_company()
@@ -637,6 +782,23 @@ class TestTillCashMovements(CashMovementFixture):
 			cash_movement.business_day(datetime(2026, 7, 1, 8, 0), datetime(2026, 10, 30, 10, 0)),
 			getdate("2026-10-30"),
 		)
+
+	def test_an_offline_movement_is_booked_on_the_day_the_money_moved_not_the_day_it_synced(self):
+		# Recorded offline at 23:00 two days ago, on a shift opened that morning, sent by the queue today: the
+		# day the money moved is the VAT period it belongs to.
+		opened = datetime.combine(add_days(getdate(), -2), time(8, 0))
+		frappe.db.set_value("POS Opening Shift", self.shift, "period_start_date", opened)
+		late = opened.replace(hour=23)
+		result = self._record(self.supplier, 30, offline_id="pos_cash_test-day", moved_at=_epoch_ms(late))
+		posting_date = lambda name: getdate(frappe.db.get_value("Journal Entry", name, "posting_date"))  # noqa: E731
+		self.assertEqual(posting_date(result["name"]), getdate(late))
+		# A device clock behind the shift's start books on its start; one ahead of the server, or a value
+		# that is not a time, books now.
+		early = self._record(self.supplier, 5, moved_at=_epoch_ms(opened - timedelta(days=30)))
+		self.assertEqual(posting_date(early["name"]), getdate(opened))
+		today = cash_movement.business_day(opened, now_datetime())
+		for moment in (_epoch_ms(now_datetime() + timedelta(days=30)), "soon", None):
+			self.assertEqual(posting_date(self._record(self.supplier, 1, moved_at=moment)["name"]), today)
 
 	# --- cancel at the till ------------------------------------------------------------------------------
 
@@ -710,6 +872,90 @@ class TestTillCashMovements(CashMovementFixture):
 			data = cash_entry.get_cash_movement_dialog_data(self.shift)
 		self.assertEqual((data["out_limit"], data["out_total"], data["remaining"]), (100, 100, 0))
 
+	# --- the shift's lock gives a fresh view of the ledger ------------------------------------------------
+
+	def _committed_elsewhere(self, amount):
+		"""A movement out of the shift that ANOTHER request books and commits while this one runs (after its
+		first reads fixed its REPEATABLE READ snapshot, before it takes the shift's lock): written through a
+		second connection, whose commit is real, as raw rows (the entry's tags and its row on the till's cash
+		account: what the readers read). Removed once this test's transaction is rolled back, as its locking
+		reads hold those rows until then."""
+		from frappe.database import get_db
+
+		conf = frappe.conf
+		other = get_db(
+			host=conf.db_host,
+			port=conf.db_port,
+			user=conf.db_name,
+			password=conf.db_password,
+			cur_db_name=conf.db_name,
+			socket=conf.db_socket,
+		)
+		other.connect()
+		name = f"{PREFIX} elsewhere {frappe.generate_hash(length=8)}"
+
+		def remove():
+			type(frappe.local.db).rollback(frappe.local.db)
+			other.sql("delete from `tabJournal Entry Account` where parent = %s", name)
+			other.sql("delete from `tabJournal Entry` where name = %s", name)
+			other.sql("commit")
+			other.close()
+
+		self.addCleanup(remove)
+		other.sql(
+			"""insert into `tabJournal Entry` (name, docstatus, company, posting_date, voucher_type,
+			posa_cash_movement, posa_cash_movement_shift, posa_cash_movement_account, posa_cash_entry_template,
+			owner, modified_by, creation, modified)
+			values (%s, 1, %s, curdate(), 'Journal Entry', 'Out', %s, %s, %s, 'Administrator', 'Administrator',
+			now(6), now(6))""",
+			(name, self.company, self.shift, self.cash, self.supplier),
+		)
+		other.sql(
+			"""insert into `tabJournal Entry Account` (name, parent, parenttype, parentfield, idx, account,
+			debit_in_account_currency, credit_in_account_currency, owner, modified_by, creation, modified)
+			values (%s, %s, 'Journal Entry', 'accounts', 1, %s, 0, %s, 'Administrator', 'Administrator',
+			now(6), now(6))""",
+			(f"{name}-1", name, self.cash, amount),
+		)
+		other.sql("commit")
+		return name
+
+	def test_the_cap_counts_a_movement_committed_while_this_one_waited_for_the_lock(self):
+		# Cap 100. The offline queue's 60 out is booked by another request after this one began and before it
+		# took the shift's lock: the cashier's 50 out must be refused, or 110 would leave the drawer.
+		frappe.db.set_value("POS Profile", PROFILE, "posa_cash_movement_out_limit", 100)
+		with _as(CASHIER):
+			cash_entry.get_cash_movement_dialog_data(self.shift)
+		elsewhere = self._committed_elsewhere(60)
+		with _as(CASHIER), self.assertRaises(frappe.ValidationError) as refused:
+			cash_entry.create_cash_entry(self.shift, self.supplier, 50)
+		self.assertIn("60", str(refused.exception))
+		self.assertEqual(frappe.db.count("Journal Entry", {"posa_cash_movement_shift": self.shift}), 0)
+		# Why a locking read: here a plain read still keeps the snapshot, a locking read sees the commit.
+		self.assertEqual(cash_movement.shift_movements(self.shift), [])
+		self.assertEqual(
+			[row.journal_entry for row in cash_movement.shift_movements(self.shift, lock=True)], [elsewhere]
+		)
+		# What the cap still allows is taken.
+		self.assertEqual(self._record(self.supplier, 40)["direction"], "out")
+
+	def test_a_closing_is_refused_when_a_movement_was_committed_while_it_waited_for_the_lock(self):
+		# The closing's data was read (its expected cash), then another request booked a movement and committed
+		# it before the closing took the shift's lock. Closing now would leave that movement booked against the
+		# shift and out of its figures (the old code stored an empty list): refused, opened again it counts it.
+		with _as(CASHIER):
+			shifts.get_closing_shift_data(self.shift)
+		elsewhere = self._committed_elsewhere(25)
+		with self.assertRaises(frappe.ValidationError) as refused:
+			self._close()
+		self.assertIn("while this shift was being closed", str(refused.exception))
+		self.assertEqual(frappe.db.get_value("POS Opening Shift", self.shift, "status"), "Open")
+		self.assertFalse(frappe.db.exists("POS Closing Shift", {"pos_opening_shift": self.shift}))
+		# What the closing read under the lock: the ledger as committed now.
+		self.assertEqual(
+			[row["journal_entry"] for row in cash_movement.closing_rows(self.shift, lock=True)], [elsewhere]
+		)
+
 	# --- offline: the queued id is booked once ---------------------------------------------------------
 
 	def test_a_queued_movement_is_booked_once(self):
@@ -721,6 +967,63 @@ class TestTillCashMovements(CashMovementFixture):
 			frappe.db.count("Journal Entry", {"posa_cash_movement_offline_id": "pos_cash_test-1"}), 1
 		)
 		self.assertEqual(len(cash_movement.shift_movements(self.shift)), 1)
+
+	def test_a_refused_offline_movement_is_set_aside_with_a_trace_on_its_shift(self):
+		# The tablet was offline; meanwhile the shift was closed elsewhere. The queue's movement is refused, and
+		# the till sets it aside with a reason: the money that moved stays traceable on its shift.
+		booked = self._record(self.supplier, 10, offline_id="pos_cash_test-booked")
+		self._close()
+		with _as(CASHIER), self.assertRaises(frappe.ValidationError):
+			cash_entry.create_cash_entry(self.shift, self.supplier, 30, offline_id="pos_cash_test-refused")
+		refused = {
+			"pos_opening_shift": self.shift,
+			"offline_id": "pos_cash_test-refused",
+			"template_title": self.supplier,
+			"direction": "out",
+			"amount": 30,
+			"remark": "Wine merchant",
+			"refusal": "Shift is not open",
+			"recorded_by": CASHIER,
+			"moved_at": _epoch_ms(now_datetime()),
+		}
+		with _as(CASHIER), self.assertRaises(frappe.ValidationError):
+			cash_entry.set_aside_refused_cash_movement(reason="  ", **refused)
+		for user in (OTHER_CASHIER, DESK, PORTAL, "Guest"):
+			self._refused(user, lambda: cash_entry.set_aside_refused_cash_movement(reason="Lost", **refused))
+		with _as(CASHIER):
+			first = cash_entry.set_aside_refused_cash_movement(reason="Paid back to the supplier", **refused)
+			again = cash_entry.set_aside_refused_cash_movement(reason="Paid back to the supplier", **refused)
+			# The movement the server did book under its id is never set aside.
+			self.assertEqual(
+				cash_entry.set_aside_refused_cash_movement(
+					reason="Duplicate", **{**refused, "offline_id": "pos_cash_test-booked"}
+				),
+				{"booked": booked["name"]},
+			)
+		self.assertEqual((again["comment"], again["already_recorded"]), (first["comment"], True))
+		comment = frappe.db.get_value(
+			"Comment", first["comment"], ["reference_doctype", "reference_name", "content"], as_dict=True
+		)
+		self.assertEqual(
+			(comment.reference_doctype, comment.reference_name), ("POS Opening Shift", self.shift)
+		)
+		for part in (
+			self.supplier,
+			"30",
+			"Wine merchant",
+			"Shift is not open",
+			"Paid back to the supplier",
+			"pos_cash_test-refused",
+			CASHIER,
+		):
+			self.assertIn(part, comment.content)
+		# A till manager sets aside any cashier's movement; the dialog tells the till who reads it.
+		with _as(MANAGER):
+			data = cash_entry.get_cash_movement_dialog_data(self.shift)
+			cash_entry.set_aside_refused_cash_movement(
+				reason="Checked with the cashier", **{**refused, "offline_id": "pos_cash_test-other"}
+			)
+		self.assertEqual((data["user"], data["is_till_manager"]), (MANAGER, True))
 
 	def test_a_cancelled_queued_movement_is_not_booked_again(self):
 		first = self._record(self.supplier, 30, offline_id="pos_cash_test-2")
@@ -865,6 +1168,26 @@ class TestTillCashMovements(CashMovementFixture):
 			None,
 		)
 		self.assertEqual(sorted(flt(row["paid_amount"]) for row in rows), [-30, 200])
+
+	def test_the_register_waits_for_the_migrate_that_makes_its_fields(self):
+		# Between a pull and the migrate, the Journal Entry has none of the movement's fields: the register
+		# shows the rest of the till's activity instead of failing on an unknown column.
+		self._record(self.supplier, 30)
+		real_has_column = frappe.db.has_column
+
+		def has_column(doctype, column):
+			if doctype == "Journal Entry" and column.startswith("posa_cash"):
+				return False
+			return real_has_column(doctype, column)
+
+		with patch.object(frappe.local.db, "has_column", side_effect=has_column):
+			rows = neopos_register.get_cash_in_out(
+				frappe._dict(
+					from_date="2000-01-01", to_date="2100-01-01", company=self.company, pos_profile=PROFILE
+				),
+				None,
+			)
+		self.assertEqual(rows, [])
 
 	# --- the entries written before are tagged from their remark ----------------------------------------
 
@@ -1112,3 +1435,30 @@ class TestTheTillsKeepTheirOperations(CashMovementFixture):
 		_the_patch().execute()
 		self.assertEqual(self._list(self.empty_b), self.valid_b)
 		self.assertFalse(set(self._list(self.empty_b)) & set(self.valid_a + self.refused_a))
+
+	def test_a_till_whose_company_has_no_operation_is_left_alone_and_silent(self):
+		company_c = self._new_company("C")
+		empty_c = self._till("C empty", company_c, MODE)
+		_the_patch().execute()
+		self.assertEqual((self._list(empty_c), self._notes(empty_c)), ([], []))
+
+	def test_a_till_that_fails_is_rolled_back_to_its_savepoint_and_logged_and_the_others_go_on(self):
+		# The failure comes after the till's rows were written: its savepoint takes them back, no half list
+		# is left without the Comment that explains it, the error is logged, and the next till is sorted out.
+		patch_module = _the_patch()
+		real_say = patch_module._say
+
+		def say(pos_profile, kept, left_out):
+			if pos_profile == self.empty_a:
+				raise RuntimeError("the Comment could not be written")
+			return real_say(pos_profile, kept, left_out)
+
+		with patch.object(patch_module, "_say", side_effect=say):
+			patch_module.execute()
+		self.assertEqual((self._list(self.empty_a), self._notes(self.empty_a)), ([], []))
+		self.assertEqual(self._list(self.empty_b), self.valid_b)
+		self.assertTrue(
+			frappe.db.exists(
+				"Error Log", {"method": f"Cash operations of the till {self.empty_a} not kept"[:140]}
+			)
+		)

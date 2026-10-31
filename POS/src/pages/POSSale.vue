@@ -2509,8 +2509,12 @@ import { usePOSUIStore } from "@/stores/posUI";
 import { useBootstrapStore } from "@/stores/bootstrap";
 import { logger } from "@/utils/logger";
 import { canCloseShiftWithPendingExpenses } from "@/utils/shiftGuards";
-//// Neoffice — a drawer movement still in the offline queue keeps the shift open, like an expense (task 15).
-import { canCloseShiftWithPendingCashMovements } from "@/utils/offline/cashMovements";
+//// Neoffice — a drawer movement still in the offline queue keeps the shift open, like an expense (task 15):
+//// only this shift's and this cashier's; a row the server refused, another shift's or another cashier's never.
+import {
+	canCloseShiftWithPendingCashMovements,
+	countCashMovementsKeepingTheShiftOpen,
+} from "@/utils/offline/cashMovements";
 import { shouldValidateItemStock } from "@/utils/stockValidator";
 
 // Initialize stores
@@ -5066,7 +5070,8 @@ async function handleOptionSelected(option) {
 	}
 }
 
-function handleCloseShift() {
+//// Neoffice — async: the drawer movements' queue is read before the closing opens (see below).
+async function handleCloseShift() {
 	if (!canAccessShiftActions.value) {
 		return;
 	}
@@ -5080,8 +5085,9 @@ function handleCloseShift() {
 		return;
 	}
 
-	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15).
-	if (!canCloseShiftWithPendingCashMovements(offlineStore.pendingCashMovementsCount)) {
+	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15): this shift's and
+	//// this cashier's, those the closing would not count.
+	if (!canCloseShiftWithPendingCashMovements(await cashMovementsKeepingTheShiftOpen())) {
 		showError(
 			__(
 				"Sync or delete the cash movements waiting to be sent before closing this shift: the closing would not count them.",
@@ -5091,6 +5097,11 @@ function handleCloseShift() {
 	}
 
 	uiStore.showCloseShiftDialog = true;
+}
+
+//// Neoffice — added (NeoRestau lot 1, task 15): the queued drawer movements that keep this shift open.
+function cashMovementsKeepingTheShiftOpen() {
+	return countCashMovementsKeepingTheShiftOpen(shiftStore.currentShift?.name || cartStore.posOpeningShift);
 }
 
 function navigateToShiftHistory() {
@@ -5149,7 +5160,8 @@ async function confirmLogout() {
 	session.logout.submit();
 }
 
-function logoutWithCloseShift() {
+//// Neoffice — async: the drawer movements' queue is read before the closing opens (see below).
+async function logoutWithCloseShift() {
 	if (!canCloseShiftWithPendingExpenses(offlineStore.pendingExpensesCount)) {
 		uiStore.showLogoutDialog = false;
 		showError(
@@ -5160,8 +5172,8 @@ function logoutWithCloseShift() {
 		return;
 	}
 
-	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15).
-	if (!canCloseShiftWithPendingCashMovements(offlineStore.pendingCashMovementsCount)) {
+	//// Neoffice — the same for the drawer movements queued offline (NeoRestau lot 1, task 15), as above.
+	if (!canCloseShiftWithPendingCashMovements(await cashMovementsKeepingTheShiftOpen())) {
 		uiStore.showLogoutDialog = false;
 		showError(
 			__(

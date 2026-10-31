@@ -74,10 +74,20 @@ class POSClosingShift(Document):
 		# //// as a movement locks it (cash_entry._lock_shift): one recorded meanwhile waits, then finds it closed.
 		from pos_next import cash_movement
 
-		frappe.db.sql(
-			"select name from `tabPOS Opening Shift` where name = %s for update", self.pos_opening_shift
+		# //// Neoffice — under the lock the shift and its movements are read with locking reads: a plain read
+		# //// would see the snapshot this request fixed before it waited, and miss a movement committed meanwhile.
+		locked = frappe.db.sql(
+			"select status, pos_closing_shift from `tabPOS Opening Shift` where name = %s for update",
+			self.pos_opening_shift,
+			as_dict=True,
 		)
-		self.set("cash_movements", cash_movement.closing_rows(self.pos_opening_shift))
+		# //// Neoffice — the shift as committed now: a closing that waited behind another one finds it closed.
+		if not locked or locked[0].status != "Open":
+			frappe.throw(
+				_("Selected POS Opening Shift should be open."),
+				title=_("Invalid Opening Entry"),
+			)
+		self.set("cash_movements", cash_movement.closing_rows_under_lock(self.pos_opening_shift))
 
 	def update_payment_reconciliation(self):
 		# update the difference values in Payment Reconciliation child table

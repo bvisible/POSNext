@@ -214,6 +214,18 @@ def get_cash_in_out(filters, group_by_field):
 	Each entry's amount and direction are what it did to the till's cash account (posa_cash_movement_account),
 	as the closing reads them (pos_next.cash_movement, NeoRestau lot 1 task 15); the remark the register
 	parsed before was free text, and its total_debit counted the VAT line of a split entry."""
+	# The link fields come with the fixture: between a pull and the migrate that creates them, the register
+	# shows the rest of the till's activity instead of failing on an unknown column.
+	if not all(
+		frappe.db.has_column("Journal Entry", column)
+		for column in (
+			"posa_cash_movement_shift",
+			"posa_cash_movement_account",
+			"posa_cash_entry_template",
+			"posa_cash_movement_note",
+		)
+	):
+		return []
 	conditions = ["je.docstatus = 1"]
 	conditions.append("je.posting_date >= %(from_date)s")
 	conditions.append("je.posting_date <= %(to_date)s")

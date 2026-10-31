@@ -58,22 +58,37 @@ const fetchMock = vi.fn();
 globalThis.fetch = (...args) => fetchMock(...args);
 
 const {
+	MAX_CASH_MOVEMENT_SERVER_ERRORS,
 	canCloseShiftWithPendingCashMovements,
 	cashMovementAttachmentProblem,
+	cashMovementDialogCacheKey,
+	countCashMovementsKeepingTheShiftOpen,
 	deleteOfflineCashMovement,
 	getCashMovementDialogCache,
 	cacheCashMovementDialogData,
 	getCashOutRemaining,
 	getPendingCashMovementCount,
 	getPendingCashMovements,
+	getRefusedCashMovements,
+	keepRefusedCashMovementForManager,
 	pendingCashTotals,
 	recordCashMovement,
 	saveOfflineCashMovement,
+	sessionUserId,
+	setAsideRefusedCashMovement,
 	syncOfflineCashMovements,
 } = await import("@/utils/offline/cashMovements");
 
 const SHIFT = "POS-OPEN-1";
 const PROFILE = "Till 1";
+const CREATE = "pos_next.api.cash_entry.create_cash_entry";
+const DIALOG = "pos_next.api.cash_entry.get_cash_movement_dialog_data";
+const SET_ASIDE = "pos_next.api.cash_entry.set_aside_refused_cash_movement";
+/** The calls that book a movement (a sync also reads the dialog's data again afterwards). */
+const creates = () => call.mock.calls.filter(([method]) => method === CREATE);
+const signIn = (user) => {
+	document.cookie = user ? `user_id=${encodeURIComponent(user)}; path=/` : "user_id=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+};
 
 const movement = (overrides = {}) => ({
 	pos_opening_shift: SHIFT,
@@ -97,6 +112,8 @@ beforeEach(() => {
 	offline.isOffline = false;
 	call.mockReset();
 	fetchMock.mockReset();
+	signIn(null);
+	vi.useRealTimers();
 });
 
 describe("the drawer movements' offline queue", () => {
@@ -142,15 +159,15 @@ describe("the drawer movements' offline queue", () => {
 		const result = await syncOfflineCashMovements();
 
 		expect(result.success).toBe(2);
-		expect(call.mock.calls.map(([method, args]) => [method, args.offline_id])).toEqual([
-			["pos_next.api.cash_entry.create_cash_entry", first.offline_id],
-			["pos_next.api.cash_entry.create_cash_entry", second.offline_id],
+		expect(creates().map(([method, args]) => [method, args.offline_id])).toEqual([
+			[CREATE, first.offline_id],
+			[CREATE, second.offline_id],
 		]);
 		expect(rows.get(first.id)).toMatchObject({ synced: true, server_journal_entry: "JE-10" });
 		expect(canCloseShiftWithPendingCashMovements(await getPendingCashMovementCount())).toBe(true);
 
 		await syncOfflineCashMovements();
-		expect(call).toHaveBeenCalledTimes(2);
+		expect(creates()).toHaveLength(2);
 	});
 
 	it("stops when the server cannot be reached and sends the rest later in the same order", async () => {
@@ -167,7 +184,7 @@ describe("the drawer movements' offline queue", () => {
 
 		call.mockImplementation(async (_method, args) => ({ name: `JE-${args.amount}` }));
 		await syncOfflineCashMovements();
-		expect(call.mock.calls.slice(1).map(([, args]) => args.offline_id)).toEqual([first.offline_id, second.offline_id]);
+		expect(creates().slice(1).map(([, args]) => args.offline_id)).toEqual([first.offline_id, second.offline_id]);
 	});
 
 	it("never books a resent movement twice: the entry the server already made is kept", async () => {
@@ -176,8 +193,8 @@ describe("the drawer movements' offline queue", () => {
 		call.mockResolvedValueOnce({ name: "JE-7", journal_entry: "JE-7", duplicate_prevented: true });
 		await syncOfflineCashMovements();
 		expect(rows.get(saved.id)).toMatchObject({ synced: true, server_journal_entry: "JE-7" });
-		expect(call).toHaveBeenCalledTimes(1);
-		expect(call.mock.calls[0][1].offline_id).toBe(saved.offline_id);
+		expect(creates()).toHaveLength(1);
+		expect(creates()[0][1].offline_id).toBe(saved.offline_id);
 	});
 
 	it("marks a movement the server refuses and goes on with the next one", async () => {
@@ -188,7 +205,12 @@ describe("the drawer movements' offline queue", () => {
 		const result = await syncOfflineCashMovements();
 
 		expect(result).toMatchObject({ success: 1, failed: 1 });
-		expect(rows.get(refused.id)).toMatchObject({ synced: false, sync_failed: true, error: "Cash Out Limit" });
+		expect(rows.get(refused.id)).toMatchObject({
+			synced: false,
+			sync_failed: true,
+			refused: true,
+			error: "Cash Out Limit",
+		});
 		expect(rows.get(next.id).synced).toBe(true);
 	});
 
@@ -205,7 +227,7 @@ describe("the drawer movements' offline queue", () => {
 		const receiptOnly = await saveOfflineCashMovement(movement({ server_journal_entry: "JE-2" }), receipt());
 		fetchMock.mockResolvedValueOnce(okUpload());
 		await syncOfflineCashMovements();
-		expect(call).toHaveBeenCalledTimes(1);
+		expect(creates()).toHaveLength(1);
 		expect(fetchMock.mock.calls[1][1].body.get("journal_entry")).toBe("JE-2");
 		expect(rows.get(receiptOnly.id).synced).toBe(true);
 	});
@@ -257,5 +279,134 @@ describe("recording a movement from the dialog", () => {
 		expect(row.attachment.name).toBe("receipt.jpg");
 		// Already counted by the server's list: not counted twice in the drawer.
 		expect(pendingCashTotals([row])).toEqual({ in: 0, out: 0 });
+	});
+});
+
+describe("each cashier's rows, and the rows the server refused", () => {
+	it("sends only the signed-in cashier's rows, under their own session", async () => {
+		signIn("anna@example.com");
+		const own = await saveOfflineCashMovement(movement({ amount: 10 }));
+		const others = await saveOfflineCashMovement(movement({ amount: 20, user: "ben@example.com" }));
+		expect(sessionUserId()).toBe("anna@example.com");
+		expect(rows.get(own.id).user).toBe("anna@example.com");
+		call.mockImplementation(async (method, args) => (method === CREATE ? { name: `JE-${args.amount}` } : null));
+
+		await syncOfflineCashMovements();
+
+		expect(creates().map(([, args]) => args.offline_id)).toEqual([own.offline_id]);
+		expect(rows.get(others.id)).toMatchObject({ synced: false, refused: false });
+		expect(await getPendingCashMovementCount()).toBe(0);
+		expect(await getPendingCashMovementCount({ user: "ben@example.com" })).toBe(1);
+	});
+
+	it("takes a refused row out of the sending loop, the drawer's totals and the cap", async () => {
+		const refused = await saveOfflineCashMovement(movement({ amount: 60 }));
+		call.mockRejectedValueOnce(httpError(417, "Shift is not open"));
+		const result = await syncOfflineCashMovements();
+		expect(result).toMatchObject({ failed: 1, refused: 1 });
+		expect(rows.get(refused.id)).toMatchObject({ refused: true, error: "Shift is not open" });
+
+		await syncOfflineCashMovements();
+		expect(creates()).toHaveLength(1);
+		expect(await getPendingCashMovements(SHIFT)).toEqual([]);
+		expect(pendingCashTotals([rows.get(refused.id)])).toEqual({ in: 0, out: 0 });
+		// The 60 never left the books: the cap still allows 100.
+		await expect(
+			saveOfflineCashMovement(movement({ amount: 100 }), null, { out_limit: 100, out_total: 0 }),
+		).resolves.toMatchObject({ offline_id: expect.stringMatching(/^pos_cash_/) });
+		expect((await getRefusedCashMovements()).map((row) => row.id)).toEqual([refused.id]);
+	});
+
+	it("lets a shift close with another shift's refused row or another cashier's row on the device", async () => {
+		// S1 was closed elsewhere while its out was queued offline: refused on reconnection. S2 is the
+		// cashier's new shift; a second cashier of the tablet has a row of their own on it.
+		signIn("anna@example.com");
+		const s1 = await saveOfflineCashMovement(movement({ pos_opening_shift: "POS-OPEN-S1", amount: 40 }));
+		call.mockRejectedValueOnce(httpError(417, "Shift is not open"));
+		await syncOfflineCashMovements();
+		expect(rows.get(s1.id).refused).toBe(true);
+		await saveOfflineCashMovement(movement({ pos_opening_shift: "POS-OPEN-S2", user: "ben@example.com" }));
+		expect(await countCashMovementsKeepingTheShiftOpen("POS-OPEN-S2")).toBe(0);
+
+		const own = await saveOfflineCashMovement(movement({ pos_opening_shift: "POS-OPEN-S2", amount: 5 }));
+		expect(await countCashMovementsKeepingTheShiftOpen("POS-OPEN-S2")).toBe(1);
+		call.mockImplementation(async (method) => (method === CREATE ? { name: "JE-5" } : null));
+		await syncOfflineCashMovements();
+		expect(rows.get(own.id).synced).toBe(true);
+		expect(await countCashMovementsKeepingTheShiftOpen("POS-OPEN-S2")).toBe(0);
+		expect(rows.get(s1.id)).toMatchObject({ refused: true, synced: false });
+	});
+
+	it("keeps a refused row for the manager, or sets it aside with a reason the server writes on its shift", async () => {
+		signIn("anna@example.com");
+		const kept = await saveOfflineCashMovement(movement({ amount: 40, remark: "Wine merchant" }));
+		const aside = await saveOfflineCashMovement(movement({ amount: 15 }));
+		call.mockRejectedValue(httpError(417, "Shift is not open"));
+		await syncOfflineCashMovements();
+		call.mockReset();
+
+		await expect(deleteOfflineCashMovement(kept.id)).rejects.toThrow(/set it aside/);
+		expect(await keepRefusedCashMovementForManager(kept.id)).toBe(true);
+		signIn("ben@example.com");
+		expect(await getRefusedCashMovements({ user: "ben@example.com" })).toEqual([]);
+		expect(
+			(await getRefusedCashMovements({ user: "ben@example.com", withKeptForManager: true })).map((row) => row.id),
+		).toEqual([kept.id]);
+
+		await expect(setAsideRefusedCashMovement(aside.id, "  ")).rejects.toMatchObject({ code: "reason" });
+		call.mockResolvedValueOnce({ comment: "CMT-1" });
+		await setAsideRefusedCashMovement(aside.id, "Paid back to the supplier");
+		const [method, args] = call.mock.calls[0];
+		expect(method).toBe(SET_ASIDE);
+		expect(args).toMatchObject({
+			pos_opening_shift: SHIFT,
+			offline_id: aside.offline_id,
+			reason: "Paid back to the supplier",
+			direction: "out",
+			amount: 15,
+			refusal: "Shift is not open",
+			recorded_by: "anna@example.com",
+		});
+		expect(rows.has(aside.id)).toBe(false);
+
+		// The server booked that id after all: the row is the booked entry, not set aside.
+		call.mockResolvedValueOnce({ booked: "JE-40" });
+		await setAsideRefusedCashMovement(kept.id, "Checked");
+		expect(rows.get(kept.id)).toMatchObject({ synced: true, refused: false, server_journal_entry: "JE-40" });
+	});
+
+	it("tries a server error again, then treats it as refused: never sent forever", async () => {
+		const saved = await saveOfflineCashMovement(movement());
+		call.mockRejectedValue(httpError(500, "Internal Server Error"));
+		for (let pass = 1; pass < MAX_CASH_MOVEMENT_SERVER_ERRORS; pass++) {
+			await syncOfflineCashMovements();
+			expect(rows.get(saved.id)).toMatchObject({ refused: false, retry_count: pass });
+		}
+		await syncOfflineCashMovements();
+		expect(rows.get(saved.id)).toMatchObject({ refused: true, retry_count: MAX_CASH_MOVEMENT_SERVER_ERRORS });
+		await syncOfflineCashMovements();
+		expect(creates()).toHaveLength(MAX_CASH_MOVEMENT_SERVER_ERRORS);
+	});
+
+	it("sends when the money moved, not when the network came back", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2026-03-31T21:00:00Z"));
+		const saved = await saveOfflineCashMovement(movement());
+		vi.setSystemTime(new Date("2026-04-01T05:00:00Z"));
+		call.mockImplementation(async (method) => (method === CREATE ? { name: "JE-1" } : null));
+		await syncOfflineCashMovements();
+		expect(creates()[0][1].moved_at).toBe(Date.parse("2026-03-31T21:00:00Z"));
+		expect(rows.get(saved.id).data.moved_at).toBe(Date.parse("2026-03-31T21:00:00Z"));
+	});
+
+	it("reads the dialog's offline data again after a sync, with the dialog closed", async () => {
+		await cacheCashMovementDialogData(PROFILE, SHIFT, { out_total: 0, movements: [] });
+		await saveOfflineCashMovement(movement({ amount: 30 }));
+		call.mockImplementation(async (method) =>
+			method === CREATE ? { name: "JE-30" } : { out_total: 30, movements: [{ name: "JE-30", amount: 30 }] },
+		);
+		await syncOfflineCashMovements();
+		expect(call.mock.calls.filter(([method]) => method === DIALOG)).toEqual([[DIALOG, { pos_opening_shift: SHIFT }]]);
+		expect(settings.get(cashMovementDialogCacheKey(PROFILE, SHIFT))).toMatchObject({ out_total: 30 });
 	});
 });

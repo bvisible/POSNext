@@ -23,7 +23,7 @@
 					</div>
 
 					<div v-if="loading" class="flex items-center justify-center py-8">
-						<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+						<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-pos-action"></div>
 					</div>
 
 					<div v-else-if="noCache" class="py-8 text-center text-sm text-gray-500">
@@ -88,7 +88,7 @@
 									inputmode="decimal"
 									min="0"
 									step="0.01"
-									class="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400"
+									class="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base focus:border-pos-action focus:ring-1 focus:ring-pos-action"
 									:placeholder="__('Enter amount')"
 									@keyup.enter="submitEntry"
 								/>
@@ -106,23 +106,23 @@
 									v-model="note"
 									type="text"
 									maxlength="500"
-									class="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400"
+									class="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base focus:border-pos-action focus:ring-1 focus:ring-pos-action"
 									:placeholder="__('e.g. Bank deposit ref #123')"
 									@keyup.enter="submitEntry"
 								/>
 							</div>
 
-							<!-- Without VAT: only where the desk's VAT logic would split this operation -->
+							<!-- Without VAT: only on an expense paid out whose VAT the desk's logic splits (never an income) -->
 							<label
-								v-if="selectedTemplate.vat_applies"
+								v-if="selectedTemplate.no_vat_allowed"
 								class="flex min-h-[48px] cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2"
 							>
 								<button
 									type="button"
 									role="switch"
 									:aria-checked="noVat"
-									class="relative h-[30px] w-[54px] flex-shrink-0 rounded-full border-2 border-blue-400 transition-colors"
-									:class="noVat ? 'bg-blue-400' : 'bg-gray-100'"
+									class="relative h-[30px] w-[54px] flex-shrink-0 rounded-full border-2 border-pos-action transition-colors"
+									:class="noVat ? 'bg-pos-action' : 'bg-gray-100'"
 									@click="noVat = !noVat"
 								>
 									<span
@@ -133,7 +133,7 @@
 								<span class="min-w-0">
 									<span class="block text-sm font-medium text-gray-800">{{ __("Without VAT") }}</span>
 									<span class="block text-xs text-gray-500">
-										{{ __("A purchase from someone outside VAT: the whole amount is booked, no VAT is deducted.") }}
+										{{ __("A purchase from a supplier not subject to VAT: the whole amount is booked as the expense, no input VAT is claimed.") }}
 									</span>
 								</span>
 							</label>
@@ -206,7 +206,7 @@
 								<input
 									v-model="searchQuery"
 									type="text"
-									class="h-12 w-full rounded-lg border border-gray-200 pe-3 ps-9 text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400"
+									class="h-12 w-full rounded-lg border border-gray-200 pe-3 ps-9 text-base focus:border-pos-action focus:ring-1 focus:ring-pos-action"
 									:placeholder="__('Search templates...')"
 								/>
 							</div>
@@ -261,11 +261,47 @@
 				<div class="space-y-3">
 					<h3 class="text-sm font-semibold text-gray-700">{{ __("Shift History") }}</h3>
 
-					<div v-if="!movements.length && !pending.length" class="py-8 text-center text-sm text-gray-400">
+					<!-- Refused by the server: never sent again; kept for the manager or discarded with a reason -->
+					<div v-if="refused.length" class="space-y-2">
+						<h4 class="text-xs font-semibold text-red-700">{{ __("Refused by the server: not in the books") }}</h4>
+						<div
+							v-for="row in refused"
+							:key="`refused-${row.id}`"
+							class="space-y-2 rounded-lg border border-red-300 bg-red-50 p-3"
+						>
+							<div class="flex items-center gap-3">
+								<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+									<FeatherIcon name="alert-triangle" class="h-4 w-4" />
+								</div>
+								<div class="min-w-0 flex-1">
+									<div class="truncate text-sm font-medium text-gray-900">{{ row.data.template_title }}</div>
+									<div class="text-xs text-red-700">{{ __("Refused: {0}", [row.error || ""]) }}</div>
+									<div v-if="refusedOrigin(row)" class="truncate text-xs text-gray-600">{{ refusedOrigin(row) }}</div>
+									<div v-if="row.kept_for_manager" class="text-xs text-gray-600">{{ __("Kept for the manager") }}</div>
+								</div>
+								<div class="flex-shrink-0 text-sm font-semibold" :class="row.data.direction === 'out' ? 'text-red-700' : 'text-green-700'">
+									{{ row.data.direction === "out" ? "-" : "+" }}{{ formatAmount(row.data.amount) }}
+								</div>
+							</div>
+							<div class="flex justify-end gap-2">
+								<Button v-if="!row.kept_for_manager" size="sm" @click="keepForManager(row)">
+									{{ __("Keep for the manager") }}
+								</Button>
+								<Button size="sm" theme="red" :disabled="isOffline" @click="askSetAside(row)">
+									{{ __("Discard") }}
+								</Button>
+							</div>
+						</div>
+					</div>
+
+					<div
+						v-if="!movements.length && !pending.length && !refused.length"
+						class="py-8 text-center text-sm text-gray-400"
+					>
 						{{ __("No cash entries for this shift yet.") }}
 					</div>
 
-					<div v-else class="space-y-2">
+					<div v-else-if="movements.length || pending.length" class="space-y-2">
 						<div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
 							<div v-if="totalIn > 0" class="font-medium text-green-700">{{ __("In") }}: +{{ formatAmount(totalIn) }}</div>
 							<div v-if="totalOut > 0" class="font-medium text-red-700">{{ __("Out") }}: -{{ formatAmount(totalOut) }}</div>
@@ -276,18 +312,14 @@
 						<div
 							v-for="row in pending"
 							:key="`pending-${row.id}`"
-							class="flex items-center gap-3 rounded-lg border border-dashed p-3"
-							:class="row.sync_failed ? 'border-red-300 bg-red-50' : 'border-amber-300 bg-amber-50'"
+							class="flex items-center gap-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3"
 						>
-							<div
-								class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-								:class="row.sync_failed ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700'"
-							>
-								<FeatherIcon :name="row.sync_failed ? 'alert-triangle' : 'clock'" class="h-4 w-4" />
+							<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+								<FeatherIcon name="clock" class="h-4 w-4" />
 							</div>
 							<div class="min-w-0 flex-1">
 								<div class="truncate text-sm font-medium text-gray-900">{{ row.data.template_title }}</div>
-								<div class="truncate text-xs" :class="row.sync_failed ? 'text-red-700' : 'text-amber-800'">
+								<div class="truncate text-xs text-amber-800">
 									{{ pendingLabel(row) }}
 								</div>
 							</div>
@@ -357,6 +389,43 @@
 			</div>
 		</template>
 	</Dialog>
+
+	<!-- Discarding a refused movement: a reason, which the server writes on its shift -->
+	<Dialog v-model="setAsideOpen" :options="{ title: __('Discard this refused movement?'), size: 'md' }">
+		<template #body-content>
+			<div class="space-y-3">
+				<p class="text-sm text-gray-700">{{ setAsideMessage }}</p>
+				<div>
+					<label for="cash-movement-set-aside-reason" class="mb-1 block text-sm font-medium text-gray-700">
+						{{ __("Reason") }}
+					</label>
+					<input
+						id="cash-movement-set-aside-reason"
+						v-model="setAsideReason"
+						type="text"
+						maxlength="500"
+						class="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base focus:border-pos-action focus:ring-1 focus:ring-pos-action"
+						:placeholder="__('e.g. Paid back to the supplier')"
+						@keyup.enter="setAsideConfirmed"
+					/>
+				</div>
+			</div>
+		</template>
+		<template #actions>
+			<div class="flex justify-end gap-2">
+				<Button @click="setAsideOpen = false">{{ __("Keep it") }}</Button>
+				<Button
+					variant="solid"
+					theme="red"
+					:loading="settingAside"
+					:disabled="!setAsideReason.trim() || isOffline"
+					@click="setAsideConfirmed"
+				>
+					{{ __("Discard") }}
+				</Button>
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup>
@@ -375,9 +444,13 @@ import {
 	getCashMovementDialogCache,
 	getCashOutRemaining,
 	getPendingCashMovements,
+	getRefusedCashMovements,
 	isTransientError,
+	keepRefusedCashMovementForManager,
 	pendingCashTotals,
 	recordCashMovement,
+	sessionUserId,
+	setAsideRefusedCashMovement,
 } from "@/utils/offline/cashMovements";
 
 const VOID_ACTION = "Void Cash Movement";
@@ -405,6 +478,13 @@ const open = computed({
 // State
 const data = ref(null);
 const pending = ref([]);
+// The movements the server refused on this device: the cashier's own, every cashier's for a till manager.
+const refused = ref([]);
+const setAsideOpen = ref(false);
+const setAsideReason = ref("");
+const setAsideMessage = ref("");
+const settingAside = ref(false);
+let setAsideRow = null;
 const noCache = ref(false);
 const loading = ref(false);
 const selectedTemplate = ref(null);
@@ -469,9 +549,19 @@ function formatAmount(val) {
 }
 
 function pendingLabel(row) {
-	if (row.sync_failed) return __("Refused: {0}", [row.error || ""]);
 	if (row.server_journal_entry) return __("Recorded; the photo is sent when the network is back");
+	if (row.sync_failed) return __("Not booked yet, sent again later: {0}", [row.error || ""]);
 	return __("Waiting to be sent");
+}
+
+// Where a refused movement comes from, when it is not this shift's or this cashier's.
+function refusedOrigin(row) {
+	const parts = [];
+	if (row.data?.pos_opening_shift && row.data.pos_opening_shift !== props.posOpeningShift) {
+		parts.push(__("Shift {0}", [row.data.pos_opening_shift]));
+	}
+	if (row.user && row.user !== sessionUserId()) parts.push(row.user);
+	return parts.join(" · ");
 }
 
 function resetForm() {
@@ -517,6 +607,11 @@ function onPhotoChosen(event) {
 
 async function loadPending() {
 	pending.value = await getPendingCashMovements(props.posOpeningShift);
+	const manager = Boolean(data.value?.is_till_manager);
+	refused.value = await getRefusedCashMovements({
+		user: manager ? null : sessionUserId(),
+		withKeptForManager: manager,
+	});
 }
 
 async function loadData() {
@@ -565,7 +660,7 @@ async function submitEntry() {
 				direction: template.direction,
 				amount: amount.value,
 				remark: note.value,
-				no_vat: template.vat_applies && noVat.value ? 1 : 0,
+				no_vat: template.no_vat_allowed && noVat.value ? 1 : 0,
 			},
 			attachment: photo.value,
 			limits: {
@@ -602,6 +697,44 @@ async function submitEntry() {
 		}
 	} finally {
 		submitting.value = false;
+	}
+}
+
+async function keepForManager(row) {
+	await keepRefusedCashMovementForManager(row.id);
+	await loadPending();
+}
+
+function askSetAside(row) {
+	setAsideRow = row;
+	setAsideReason.value = "";
+	setAsideMessage.value = __(
+		"{0} of {1} never reached the books. Discarded, it leaves this device; the reason is written on its shift, so the cash stays traceable.",
+		[row.data.template_title, formatAmount(row.data.amount)],
+	);
+	setAsideOpen.value = true;
+}
+
+async function setAsideConfirmed() {
+	const row = setAsideRow;
+	const reason = setAsideReason.value.trim();
+	if (!row || !reason || settingAside.value) return;
+	settingAside.value = true;
+	try {
+		const result = await setAsideRefusedCashMovement(row.id, reason);
+		setAsideOpen.value = false;
+		setAsideRow = null;
+		if (result?.booked) {
+			showSuccess(__("This movement was booked after all ({0}).", [result.booked]));
+		} else {
+			showSuccess(__("Discarded; the reason is kept on shift {0}.", [row.data.pos_opening_shift]));
+		}
+		await syncStore.updatePendingCount();
+		await loadData();
+	} catch (error) {
+		showError(error?.messages?.[0] || error?.message || __("Failed to discard the movement"));
+	} finally {
+		settingAside.value = false;
 	}
 }
 

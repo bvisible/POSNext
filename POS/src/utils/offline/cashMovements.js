@@ -5,7 +5,11 @@
 //// (posSync.syncPending on the way back online), and the same server-side guarantee: each movement carries an
 //// offline id the server books once, so a resend after a lost answer returns the entry already made. A
 //// movement made offline counts in the drawer at once (the dialog adds the queue to its totals) and the shift
-//// cannot be closed while one is still queued (canCloseShiftWithPendingCashMovements).
+//// cannot be closed while one of its cashier's is still queued (countCashMovementsKeepingTheShiftOpen).
+//// Each row is its cashier's: the sync sends only the signed-in cashier's rows, under their own session. A
+//// row the server refuses (its shift closed meanwhile, the cap, a right) leaves the sending loop: it is shown
+//// as refused with the reason, kept for the manager or set aside with a reason the server writes on its
+//// shift (set_aside_refused_cash_movement), so the money that moved stays traceable; it is never sent again.
 /**
  * @module utils/offline/cashMovements
  */
@@ -20,7 +24,48 @@ const log = logger.create("CashMovements");
 const syncMutex = new CoalescingMutex({ timeout: 60000, name: "CashMovementSync" });
 
 const CREATE_METHOD = "pos_next.api.cash_entry.create_cash_entry";
+const SET_ASIDE_METHOD = "pos_next.api.cash_entry.set_aside_refused_cash_movement";
+const DIALOG_METHOD = "pos_next.api.cash_entry.get_cash_movement_dialog_data";
 const ATTACH_URL = "/api/method/pos_next.api.cash_entry.attach_cash_entry_file";
+
+/**
+ * The answers that are the server's refusal of the movement itself (a ValidationError such as « Shift is not
+ * open » or the cap, a PermissionError, a record that no longer exists): sending it again changes nothing.
+ */
+const REFUSAL_STATUSES = new Set([403, 404, 409, 417, 422]);
+
+/**
+ * A movement the server keeps failing on with another error (neither a refusal nor an unreachable server) is
+ * treated as refused after this many tries: never sent again and again.
+ */
+export const MAX_CASH_MOVEMENT_SERVER_ERRORS = 5;
+
+/**
+ * The signed-in user, as the server sees the session (the `user_id` cookie Frappe sets), or null.
+ * @returns {string|null}
+ */
+export const sessionUserId = () => {
+	let user = null;
+	try {
+		const cookie = String(globalThis.document?.cookie || "")
+			.split("; ")
+			.find((part) => part.startsWith("user_id="));
+		user = cookie ? decodeURIComponent(cookie.slice("user_id=".length)) : null;
+	} catch {
+		user = null;
+	}
+	user = user || globalThis.window?.frappe?.session?.user || null;
+	return user && user !== "Guest" ? user : null;
+};
+
+/** A row is its cashier's; a row queued before rows carried their cashier belongs to whoever signs in. */
+const belongsTo = (row, user) => !user || !row.user || row.user === user;
+
+/** Waiting to be sent: neither booked nor refused. */
+const isWaiting = (row) => !row.synced && !row.refused;
+
+/** Refused by the server and not set aside yet. */
+const isRefused = (row) => !row.synced && Boolean(row.refused);
 
 /** The receipt files the server accepts (pos_next.api.cash_entry.ATTACHMENT_EXTENSIONS). */
 export const CASH_MOVEMENT_ATTACHMENT_EXTENSIONS = [
@@ -55,6 +100,13 @@ export const isTransientError = (error) => {
 	const status = Number(error?.status) || 0;
 	return status === 0 || status === 502 || status === 503 || status === 504;
 };
+
+/**
+ * Whether the server refused the movement itself (see REFUSAL_STATUSES).
+ * @param {Error} error
+ * @returns {boolean}
+ */
+export const isRefusal = (error) => REFUSAL_STATUSES.has(Number(error?.status) || 0);
 
 /**
  * Why a receipt cannot be queued or sent: "type", "empty" or "size", or null when it can.
@@ -108,7 +160,7 @@ export const getCashMovementDialogCache = async (posProfile, posOpeningShift) =>
 export const preloadCashMovementDialogData = async (posProfile, posOpeningShift) => {
 	if (!posProfile || !posOpeningShift || offlineState.isOffline) return false;
 	try {
-		const data = await call("pos_next.api.cash_entry.get_cash_movement_dialog_data", {
+		const data = await call(DIALOG_METHOD, {
 			pos_opening_shift: posOpeningShift,
 		});
 		return data ? await cacheCashMovementDialogData(posProfile, posOpeningShift, data) : false;
@@ -132,15 +184,18 @@ export const getCashOutRemaining = ({ outLimit = 0, outTotal = 0, pendingOut = 0
 export const canCloseShiftWithPendingCashMovements = (pendingCount) => !(Number(pendingCount) > 0);
 
 /**
- * The queue's rows not yet sent, oldest first; those of one shift when it is named.
+ * The queue's rows waiting to be sent (refused rows are not), oldest first; those of one shift when it is
+ * named, those of one cashier when `user` is given.
  * @param {string} [posOpeningShift]
+ * @param {{user?: string|null}} [options]
  * @returns {Promise<Array>}
  */
-export const getPendingCashMovements = async (posOpeningShift = null) => {
+export const getPendingCashMovements = async (posOpeningShift = null, { user = null } = {}) => {
 	try {
-		const rows = await db.cash_movement_queue.filter((row) => !row.synced).toArray();
+		const rows = await db.cash_movement_queue.filter(isWaiting).toArray();
 		return rows
 			.filter((row) => !posOpeningShift || row.data?.pos_opening_shift === posOpeningShift)
+			.filter((row) => belongsTo(row, user))
 			.sort((a, b) => a.id - b.id);
 	} catch (error) {
 		log.error("Failed to read the cash movement queue", error);
@@ -148,10 +203,14 @@ export const getPendingCashMovements = async (posOpeningShift = null) => {
 	}
 };
 
-/** @returns {Promise<number>} */
-export const getPendingCashMovementCount = async () => {
+/**
+ * The rows waiting to be sent by the signed-in cashier's session (the header badge), or by `user`.
+ * @param {{user?: string|null}} [options]
+ * @returns {Promise<number>}
+ */
+export const getPendingCashMovementCount = async ({ user = sessionUserId() } = {}) => {
 	try {
-		return await db.cash_movement_queue.filter((row) => !row.synced).count();
+		return await db.cash_movement_queue.filter((row) => isWaiting(row) && belongsTo(row, user)).count();
 	} catch (error) {
 		log.error("Failed to count the cash movement queue", error);
 		return 0;
@@ -159,15 +218,45 @@ export const getPendingCashMovementCount = async () => {
 };
 
 /**
+ * What keeps a shift from closing: its cashier's movements still waiting to be sent. Another shift's rows
+ * (refused when that shift was closed elsewhere), another cashier's rows and refused rows never do: they do
+ * not belong in this closing, and the till could not send them anyway.
+ * @param {string} posOpeningShift
+ * @param {string|null} [user]
+ * @returns {Promise<number>}
+ */
+export const countCashMovementsKeepingTheShiftOpen = async (posOpeningShift, user = sessionUserId()) =>
+	posOpeningShift ? (await getPendingCashMovements(posOpeningShift, { user })).length : 0;
+
+/**
+ * The movements the server refused, not set aside yet, oldest first: a cashier's own (`user`), or every
+ * cashier's when `user` is null (a till manager); `withKeptForManager` adds those any cashier kept for the
+ * manager (the closing lists them).
+ * @param {{user?: string|null, withKeptForManager?: boolean}} [options]
+ * @returns {Promise<Array>}
+ */
+export const getRefusedCashMovements = async ({ user = null, withKeptForManager = false } = {}) => {
+	try {
+		const rows = await db.cash_movement_queue.filter(isRefused).toArray();
+		return rows
+			.filter((row) => belongsTo(row, user) || (withKeptForManager && row.kept_for_manager))
+			.sort((a, b) => a.id - b.id);
+	} catch (error) {
+		log.error("Failed to read the refused cash movements", error);
+		return [];
+	}
+};
+
+/**
  * What the queue still has to book in the drawer, by direction: a row whose entry the server already made
- * (only its receipt is waiting) is counted by the server's list instead.
+ * (only its receipt is waiting) is counted by the server's list instead, and a refused row was never booked.
  * @param {Array} rows
  * @returns {{in: number, out: number}}
  */
 export const pendingCashTotals = (rows) =>
 	(rows || []).reduce(
 		(totals, row) => {
-			if (row.synced || row.server_journal_entry) return totals;
+			if (row.synced || row.server_journal_entry || row.refused) return totals;
 			const amount = Number(row.data?.amount) || 0;
 			if (row.data?.direction === "in") totals.in += amount;
 			else totals.out += amount;
@@ -178,8 +267,10 @@ export const pendingCashTotals = (rows) =>
 
 /**
  * Put a movement (and its receipt) in the queue. A movement the server already booked comes with its
- * `server_journal_entry`: only its receipt waits, and the cap is not checked again.
- * @param {Object} movement - pos_opening_shift, pos_profile, template_name, direction, amount, remark, no_vat, offline_id
+ * `server_journal_entry`: only its receipt waits, and the cap is not checked again. The row keeps its cashier
+ * (`user`, the signed-in one by default) and when the money moved (`moved_at`, now by default), which the
+ * server books it on.
+ * @param {Object} movement - pos_opening_shift, pos_profile, template_name, direction, amount, remark, no_vat, offline_id, user, moved_at
  * @param {{name: string, type?: string, size?: number, blob: Blob}|null} [attachment]
  * @param {{out_limit?: number, out_total?: number, max_file_size?: number}} [limits]
  * @returns {Promise<{id: number, offline_id: string}>}
@@ -217,8 +308,10 @@ export const saveOfflineCashMovement = async (movement, attachment = null, limit
 		stored = { name: file.name, type: attachment.type || blob.type || "", size: file.size, blob };
 	}
 	const offlineId = movement.offline_id || generateOfflineCashMovementId();
+	const now = Date.now();
 	const id = await db.cash_movement_queue.add({
 		offline_id: offlineId,
+		user: movement.user || sessionUserId(),
 		data: {
 			pos_opening_shift: movement.pos_opening_shift,
 			pos_profile: movement.pos_profile,
@@ -229,11 +322,13 @@ export const saveOfflineCashMovement = async (movement, attachment = null, limit
 			remark: String(movement.remark || "").trim(),
 			no_vat: movement.no_vat ? 1 : 0,
 			offline_id: offlineId,
+			moved_at: Number(movement.moved_at) > 0 ? Number(movement.moved_at) : now,
 		},
 		attachment: stored,
 		server_journal_entry: movement.server_journal_entry || null,
-		timestamp: Date.now(),
+		timestamp: now,
 		synced: false,
+		refused: false,
 		retry_count: 0,
 	});
 	log.info("Cash movement queued", { offline_id: offlineId, receipt: Boolean(stored) });
@@ -252,8 +347,62 @@ export const deleteOfflineCashMovement = async (id) => {
 	if (row.synced || row.server_journal_entry) {
 		throw new Error("This movement already reached the server: cancel it instead");
 	}
+	if (row.refused) {
+		// The money moved and the server said no: it leaves the device only with a trace on its shift.
+		throw new Error("This movement was refused by the server: set it aside with a reason instead");
+	}
 	await db.cash_movement_queue.delete(id);
 	return true;
+};
+
+/**
+ * Keep a refused movement on this device for the manager: it stays listed (in the dialog and on the closing)
+ * until someone sets it aside with a reason.
+ * @param {number} id
+ * @returns {Promise<boolean>}
+ */
+export const keepRefusedCashMovementForManager = async (id) => {
+	const row = await db.cash_movement_queue.get(id);
+	if (!row || !isRefused(row)) return false;
+	await db.cash_movement_queue.update(id, { kept_for_manager: true, kept_at: Date.now() });
+	return true;
+};
+
+/**
+ * Set a refused movement aside: the server writes what it was and why on its shift (a Comment), then the
+ * device forgets it. A reason is required. When the server answers that it booked that offline id after all,
+ * the row is marked as booked instead.
+ * @param {number} id
+ * @param {string} reason
+ * @returns {Promise<Object>} The server's answer.
+ */
+export const setAsideRefusedCashMovement = async (id, reason) => {
+	const row = await db.cash_movement_queue.get(id);
+	if (!row || !isRefused(row)) throw new Error("This movement is not a refused one");
+	const why = String(reason || "").trim();
+	if (!why) {
+		const error = new Error("A reason is required");
+		error.code = "reason";
+		throw error;
+	}
+	const response = await call(SET_ASIDE_METHOD, {
+		pos_opening_shift: row.data.pos_opening_shift,
+		offline_id: row.offline_id,
+		reason: why,
+		template_title: row.data.template_title,
+		direction: row.data.direction,
+		amount: row.data.amount,
+		remark: row.data.remark || undefined,
+		refusal: row.error || undefined,
+		recorded_by: row.user || undefined,
+		moved_at: row.data.moved_at || row.timestamp,
+	});
+	if (response?.booked) {
+		await markSynced(id, response.booked, { refused: false });
+	} else {
+		await db.cash_movement_queue.delete(id);
+	}
+	return response;
 };
 
 /**
@@ -320,6 +469,8 @@ const syncOne = async (row) => {
 			remark: row.data.remark || undefined,
 			no_vat: row.data.no_vat ? 1 : 0,
 			offline_id: row.offline_id,
+			// When the money moved: the server books the movement on that business day, not the day it syncs.
+			moved_at: row.data.moved_at || row.timestamp,
 		});
 		journalEntry = response?.journal_entry || response?.name;
 		if (!journalEntry) throw new Error("The server answered without a journal entry");
@@ -342,42 +493,60 @@ const syncOne = async (row) => {
 };
 
 /**
- * Send the queue, oldest first, one at a time. The server books each offline id once. When the server
- * cannot be reached the pass stops, so the movements left reach it later in the order they were made; a
- * movement the server refuses is marked failed with its reason and the pass goes on.
- * @returns {Promise<{success: number, failed: number, skipped: number, errors: Array}>}
+ * Send the signed-in cashier's queue (or `user`'s), oldest first, one at a time: another cashier's rows wait
+ * for their own session. The server books each offline id once. When the server cannot be reached the pass
+ * stops, so the movements left reach it later in the order they were made. A movement the server refuses
+ * leaves the loop as refused, with its reason (never sent again); another error is tried again on the next
+ * passes, then treated as refused after MAX_CASH_MOVEMENT_SERVER_ERRORS tries. The dialog's offline data of
+ * every shift that had a movement booked is read again, so its totals and the cap's allowance stay true
+ * while the dialog is closed.
+ * @param {{user?: string|null}} [options]
+ * @returns {Promise<{success: number, failed: number, refused: number, skipped: number, errors: Array}>}
  */
-export const syncOfflineCashMovements = async () => {
-	const empty = { success: 0, failed: 0, skipped: 0, errors: [] };
+export const syncOfflineCashMovements = async ({ user = sessionUserId() } = {}) => {
+	const empty = { success: 0, failed: 0, refused: 0, skipped: 0, errors: [] };
 	if (offlineState.isOffline) return empty;
 	return await syncMutex.withLock(async () => {
-		const pending = await getPendingCashMovements();
+		const pending = await getPendingCashMovements(null, { user });
 		const result = { ...empty, errors: [] };
+		const booked = new Map();
 		for (const queued of pending) {
 			const row = (await db.cash_movement_queue.get(queued.id)) || queued;
-			if (row.synced) {
+			if (!isWaiting(row)) {
 				result.skipped++;
 				continue;
 			}
 			try {
 				await syncOne(row);
 				result.success++;
+				booked.set(`${row.data.pos_profile}\u0000${row.data.pos_opening_shift}`, row.data);
 			} catch (error) {
 				if (isTransientError(error)) {
 					log.warn("Server unreachable: the cash movement queue waits", { id: row.id });
 					break;
 				}
-				log.error("Cash movement refused by the server", { id: row.id, error });
+				const tries = (row.retry_count || 0) + 1;
+				const refused = isRefusal(error) || tries >= MAX_CASH_MOVEMENT_SERVER_ERRORS;
+				log.error(refused ? "Cash movement refused by the server" : "Cash movement not booked yet", {
+					id: row.id,
+					error,
+				});
 				await db.cash_movement_queue.update(row.id, {
 					sync_failed: true,
+					refused,
+					refused_at: refused ? Date.now() : null,
 					error: messageOf(error),
-					retry_count: (row.retry_count || 0) + 1,
+					retry_count: tries,
 				});
 				result.failed++;
-				result.errors.push({ cashMovementId: row.id, offlineId: row.offline_id, error });
+				if (refused) result.refused++;
+				result.errors.push({ cashMovementId: row.id, offlineId: row.offline_id, refused, error });
 			}
 		}
-		if (result.success > 0 && typeof window !== "undefined") {
+		for (const data of booked.values()) {
+			await preloadCashMovementDialogData(data.pos_profile, data.pos_opening_shift);
+		}
+		if ((result.success > 0 || result.failed > 0) && typeof window !== "undefined") {
 			window.dispatchEvent(new CustomEvent("offlineCashMovementsSynced", { detail: result }));
 		}
 		return result;
@@ -391,7 +560,12 @@ export const syncOfflineCashMovements = async () => {
  * @returns {Promise<Object>} The server's answer, or `{queued: true, offline_id}`.
  */
 export const recordCashMovement = async ({ movement, attachment = null, limits = {}, offline = false }) => {
-	const queued = { ...movement, offline_id: movement.offline_id || generateOfflineCashMovementId() };
+	const queued = {
+		...movement,
+		offline_id: movement.offline_id || generateOfflineCashMovementId(),
+		user: movement.user || sessionUserId(),
+		moved_at: Number(movement.moved_at) > 0 ? Number(movement.moved_at) : Date.now(),
+	};
 	if (offline) {
 		const saved = await saveOfflineCashMovement(queued, attachment, limits);
 		return { queued: true, ...saved };
@@ -405,6 +579,7 @@ export const recordCashMovement = async ({ movement, attachment = null, limits =
 			remark: queued.remark || undefined,
 			no_vat: queued.no_vat ? 1 : 0,
 			offline_id: queued.offline_id,
+			moved_at: queued.moved_at,
 		});
 	} catch (error) {
 		if (!isTransientError(error)) throw error;

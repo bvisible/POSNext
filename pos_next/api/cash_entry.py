@@ -155,9 +155,11 @@ def _shift_is_open(opening):
 
 
 def _lock_shift(opening):
-	"""Lock the shift's row and read its state again. A closing being saved locks it too
-	(POSClosingShift.validate): a movement waits for it, then finds the shift closed; and two movements
-	of one shift go one after the other, so the offline id and the cap read what the previous one wrote."""
+	"""Lock the shift's row and read its state again (a locking read: the state committed now). A closing
+	being saved locks it too (POSClosingShift.validate): a movement waits for it, then finds the shift
+	closed; and two movements of one shift go one after the other. The lock alone gives no fresh view of the
+	ledger: what is read after it to decide (the offline id, the cap's total, the closing's list) is read with
+	a locking read too, or it would come from the snapshot fixed before the wait."""
 	row = frappe.db.sql(
 		"select docstatus, status, pos_closing_shift from `tabPOS Opening Shift` where name = %s for update",
 		opening.name,
@@ -195,6 +197,12 @@ def _till_operations(pos_profile, company, cash_account):
 			continue
 		definition = cash_movement.template_definition(name)
 		problem = cash_movement.definition_problem(definition, cash_account, company)
+		if not problem:
+			try:
+				vat_applies = cash_movement.vat_applies(definition, cash_account, company)
+			except cash_movement.VatEngineUnavailable as error:
+				# Its account names a VAT rate the desk's logic cannot work out here: listed with the reason.
+				problem = f"{definition.title}: {error}"
 		if problem:
 			unusable.append({"name": name, "template_title": definition.title, "reason": problem})
 			continue
@@ -205,7 +213,9 @@ def _till_operations(pos_profile, company, cash_account):
 				"voucher_type": definition.voucher_type,
 				"direction": cash_movement.drawer_direction(definition, cash_account).lower(),
 				"account": cash_movement.other_account(definition, cash_account),
-				"vat_applies": cash_movement.vat_applies(definition, cash_account, company),
+				"vat_applies": vat_applies,
+				# « Without VAT » is offered on an expense paid out whose VAT is split, never on an income.
+				"no_vat_allowed": vat_applies and definition.credit_or_debit == cash_movement.CREDIT,
 				# The two account lists a till built before the direction came from the server reads.
 				"totalization": [{"account": definition.totalization}],
 				"counterparty": [{"account": definition.counterparty}],
@@ -290,6 +300,10 @@ def get_cash_movement_dialog_data(pos_opening_shift):
 		"shift_open": _shift_is_open(opening),
 		"max_file_size": get_max_file_size(),
 		"attachment_extensions": list(ATTACHMENT_EXTENSIONS),
+		# Who reads the dialog: a till manager may set aside the refused movements of every cashier of the
+		# device, a cashier their own (the offline queue reads it).
+		"user": frappe.session.user,
+		"is_till_manager": is_till_manager(),
 	}
 
 
@@ -323,7 +337,9 @@ def _created_payload(journal_entry, offline_id=None, **extra):
 
 def _check_out_limit(opening, amount):
 	"""The till's optional cap on the money its movements take out during one shift. The shift's row is
-	locked by the caller, so two movements recorded at once cannot both pass on the same total."""
+	locked by the caller and the total is read with a locking read (cash_movement.shift_out_total), so a
+	movement committed while this one waited for the lock is counted: two movements recorded at once cannot
+	both pass on the same total."""
 	limit = _out_limit(opening.pos_profile)
 	if limit <= 0:
 		return
@@ -342,12 +358,16 @@ def _check_out_limit(opening, amount):
 
 
 @frappe.whitelist(methods=["POST"])
-def create_cash_entry(pos_opening_shift, template_name, amount, remark=None, no_vat=0, offline_id=None):
+def create_cash_entry(
+	pos_opening_shift, template_name, amount, remark=None, no_vat=0, offline_id=None, moved_at=None
+):
 	"""Record one drawer movement of an open shift, as the till's operation ``template_name`` declares it.
 
 	``remark`` is the cashier's note. ``no_vat`` books the gross amount with no VAT split (a purchase
-	from someone outside VAT). ``offline_id`` makes a resend from the till's offline queue harmless: the
-	entry it already produced is returned, never a second one."""
+	from a supplier outside VAT; refused where the operation is not such a purchase). ``offline_id`` makes a
+	resend from the till's offline queue harmless: the entry it already produced is returned, never a second
+	one. ``moved_at`` is when the money moved (milliseconds since the epoch): a movement sent by the offline
+	queue is booked on the business day it was made, not the day it reached the server."""
 	# //// Neoffice — only the shift's cashier or a till manager records (require_cash_movement_access).
 	opening = require_cash_movement_access(pos_opening_shift)
 	amount = flt(amount)
@@ -382,6 +402,13 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None, no_
 	problem = cash_movement.definition_problem(definition, cash_account, company)
 	if problem:
 		frappe.throw(problem, title=_("Operation not allowed"))
+	if cint(no_vat) and not cash_movement.no_vat_allowed(definition, cash_account, company):
+		frappe.throw(
+			_(
+				"{0} cannot be booked without VAT: that choice is for a purchase from a supplier outside VAT, on an operation whose VAT is worked out."
+			).format(definition.title),
+			title=_("Operation not allowed"),
+		)
 	if cash_movement.drawer_direction(definition, cash_account) == cash_movement.OUT:
 		_check_out_limit(opening, amount)
 
@@ -394,7 +421,7 @@ def create_cash_entry(pos_opening_shift, template_name, amount, remark=None, no_
 		cash_account,
 		company,
 		amount,
-		posting_date=cash_movement.business_day(period_start),
+		posting_date=cash_movement.business_day(period_start, cash_movement.moved_at(period_start, moved_at)),
 		cost_center=cost_center,
 		reference=opening.name,
 		note=note,
@@ -428,6 +455,11 @@ def require_movement_author_or_manager(journal_entry):
 	require_system_user()
 	values = _tagged_movement(journal_entry)
 	opening = _lock_shift(require_cash_movement_access(values.posa_cash_movement_shift))
+	# The entry's state as committed now (a locking read, see _lock_shift): a cancel that waited behind
+	# another one sees it cancelled.
+	values.docstatus = frappe.db.sql(
+		"select docstatus from `tabJournal Entry` where name = %s for update", values.name
+	)[0][0]
 	if not is_till_manager() and values.owner != frappe.session.user:
 		frappe.throw(
 			_("Only the cashier who recorded it or a till manager may change this movement."),
@@ -474,6 +506,85 @@ def cancel_cash_entry(journal_entry, authorization_token=None):
 		grants.release(authorization_token, values.name)
 		raise
 	return {"name": entry.name, "journal_entry": entry.name, "cancelled": True}
+
+
+# The subject of the Comment that keeps a refused offline movement the till set aside: the money moved, no
+# ledger took it, and this Comment on its shift is where the books find it.
+SET_ASIDE_MARK = "pos_next: refused cash movement set aside"
+
+
+@frappe.whitelist(methods=["POST"])
+def set_aside_refused_cash_movement(
+	pos_opening_shift,
+	offline_id,
+	reason,
+	template_title=None,
+	direction=None,
+	amount=None,
+	remark=None,
+	refusal=None,
+	recorded_by=None,
+	moved_at=None,
+):
+	"""Set aside a movement the till's offline queue could not book: the server refused it (its shift was
+	closed meanwhile, the cap, a right) and it must not be sent again and again. The money moved but no ledger
+	has it: a Comment on its shift says what the till recorded, why the server refused it, who set it aside and
+	why, so the books can trace it. The till then forgets it. Answered once per offline id; a movement the
+	server did book under that id is never set aside (``booked`` names its entry)."""
+	opening = require_cash_movement_access(pos_opening_shift)
+	offline_id = cstr(offline_id).strip()
+	if not offline_id or len(offline_id) > 140:
+		frappe.throw(_("Invalid offline id"))
+	reason = cstr(reason).strip()[:NOTE_MAX_LENGTH]
+	if not reason:
+		frappe.throw(_("Say why this movement is set aside: the reason stays on its shift."))
+	booked = frappe.db.get_value("Journal Entry", {"posa_cash_movement_offline_id": offline_id}, "name")
+	if booked:
+		return {"booked": booked}
+	existing = frappe.db.get_value(
+		"Comment",
+		{
+			"reference_doctype": "POS Opening Shift",
+			"reference_name": opening.name,
+			"subject": SET_ASIDE_MARK,
+			"content": ["like", f"%{offline_id}%"],
+		},
+		"name",
+	)
+	if existing:
+		return {"comment": existing, "already_recorded": True}
+
+	from frappe.utils import escape_html, format_datetime
+
+	moment = cash_movement.moved_at(None, moved_at) if moved_at else None
+	lines = [
+		_("Cash movement made at the till and never booked, set aside: {0}, {1} {2}.").format(
+			cstr(template_title).strip()[:140] or _("Unknown operation"),
+			_("into the drawer") if cstr(direction) == "in" else _("out of the drawer"),
+			_format_amount(abs(flt(amount)), opening.company),
+		),
+		_("Recorded by {0} on {1}").format(
+			cstr(recorded_by).strip()[:140] or _("an unknown cashier"),
+			format_datetime(moment) if moment else _("an unknown date"),
+		),
+	]
+	if cstr(remark).strip():
+		lines.append(_("Note: {0}").format(cstr(remark).strip()[:NOTE_MAX_LENGTH]))
+	lines.append(_("Refused by the server: {0}").format(cstr(refusal).strip()[:NOTE_MAX_LENGTH] or "-"))
+	lines.append(_("Set aside by {0}: {1}").format(frappe.session.user, reason))
+	lines.append(_("Offline id: {0}").format(offline_id))
+	comment = frappe.get_doc(
+		{
+			"doctype": "Comment",
+			"comment_type": "Comment",
+			"reference_doctype": "POS Opening Shift",
+			"reference_name": opening.name,
+			"subject": SET_ASIDE_MARK,
+			"content": "<br>".join(escape_html(line) for line in lines),
+		}
+	)
+	comment.insert(ignore_permissions=True)
+	return {"comment": comment.name}
 
 
 def _attachment_name_problem(filename):

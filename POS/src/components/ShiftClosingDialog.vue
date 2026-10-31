@@ -841,6 +841,37 @@
 						</div>
 					</div>
 
+					<!-- //// Neoffice — the drawer movements the server refused on this device (offline queue, task 15): -->
+					<!-- //// the money moved but no ledger has them; listed here until discarded with a reason. -->
+					<div
+						v-if="refusedCashMovements.length && !showSuccessReport"
+						class="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 md:px-5 md:py-3"
+					>
+						<h3 class="text-sm md:text-base font-semibold text-red-800">
+							{{ __("Cash movements refused by the server: not in the books") }}
+						</h3>
+						<p class="text-xs text-red-700 mt-0.5">
+							{{ __("Kept on this device for the manager. Discard each one with a reason from Cash In/Out.") }}
+						</p>
+						<ul class="mt-2 space-y-1">
+							<li
+								v-for="row in refusedCashMovements"
+								:key="row.id"
+								class="flex items-center justify-between gap-3 text-sm"
+							>
+								<span class="min-w-0 truncate text-gray-800">
+									{{ row.data.template_title }} · {{ row.error }}
+								</span>
+								<span
+									class="flex-shrink-0 font-semibold"
+									:class="row.data.direction === 'out' ? 'text-red-700' : 'text-green-700'"
+								>
+									{{ row.data.direction === "out" ? "-" : "+" }}{{ formatCurrency(row.data.amount) }}
+								</span>
+							</li>
+						</ul>
+					</div>
+
 					<!-- //// ▲▲▲ Neoffice — end of the sections added to the closing report. -->
 					<!-- POS Expenses Summary -->
 					<div
@@ -1648,6 +1679,8 @@ import { usePOSShiftStore } from "../stores/posShift";
 import EodPrintDialog from "./EodPrintDialog.vue";
 //// Neoffice — the session's cash drawer openings (maintenance#1935).
 import CashDrawerSummary from "./pos/CashDrawerSummary.vue";
+//// Neoffice — the drawer movements the server refused on this device (NeoRestau lot 1, task 15).
+import { getRefusedCashMovements, sessionUserId } from "../utils/offline/cashMovements";
 
 const props = defineProps({
 	modelValue: {
@@ -1699,6 +1732,8 @@ const showIdleWarning = ref(false);
 //// set in POS Settings and records what stays in the till for the next opening (5783eb27,
 //// 2026-03-28 "cash withdrawal at shift closing with suggested opening balance").
 const cashWithdrawalAmount = ref(0);
+//// Neoffice — the cashier's refused drawer movements and those kept for the manager, listed at the closing.
+const refusedCashMovements = ref([]);
 let _idleWarningTimer = null;
 
 // Watch dialog open state
@@ -1716,6 +1751,11 @@ watch(open, async (isOpen) => {
 		// Refresh POS settings to get latest hideExpectedAmount value
 		await posSettingsStore.reloadSettings();
 		loadClosingData();
+		//// Neoffice — the refused drawer movements of this device (see refusedCashMovements).
+		refusedCashMovements.value = await getRefusedCashMovements({
+			user: sessionUserId(),
+			withKeptForManager: true,
+		});
 	} else {
 		// Resume the shift duration counter
 		shiftStore.shiftTimerPaused = false;
