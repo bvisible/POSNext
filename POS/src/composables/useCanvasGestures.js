@@ -12,6 +12,9 @@
  * Transform model: translate(panX, panY) scale(zoomLevel)  with origin 0 0
  */
 import { ref, computed, onMounted, onUnmounted, toValue } from "vue"
+// A pan begins past the slop a tap is allowed (NeoRestau lot 1, task 26, fix round 1): a table opens when the finger lifts
+// and its pointer goes on to these gestures, and a tap that shook 4 px moved the plan by 4 px, and saved it
+import { SLOP_PX } from "@/utils/pointerSlop"
 
 export function useCanvasGestures(options = {}) {
 	const {
@@ -165,8 +168,13 @@ export function useCanvasGestures(options = {}) {
 			panStart &&
 			event.pointerId === panStart.pointerId
 		) {
-			panX.value = panStart.panX + (event.clientX - panStart.startX)
-			panY.value = panStart.panY + (event.clientY - panStart.startY)
+			const dx = event.clientX - panStart.startX
+			const dy = event.clientY - panStart.startY
+			// Within the slop the pointer is a tap that shakes: the plan stays where it is
+			if (!panStart.moved && Math.hypot(dx, dy) <= SLOP_PX) return
+			panStart.moved = true
+			panX.value = panStart.panX + dx
+			panY.value = panStart.panY + dy
 		}
 	}
 
@@ -194,7 +202,8 @@ export function useCanvasGestures(options = {}) {
 				gesture = "idle"
 			}
 		} else if (pointers.size === 0) {
-			if (gesture === "panning") {
+			// Only a pan that moved the plan is saved: a tap writes nothing
+			if (gesture === "panning" && panStart?.moved) {
 				onZoomChange?.(zoomLevel.value)
 				onViewChange?.(panX.value, panY.value, zoomLevel.value)
 			}

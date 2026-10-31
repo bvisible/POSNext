@@ -80,6 +80,50 @@ describe("the top of the tables on a phone", () => {
 	})
 })
 
+describe("the runner in the phone's top (fix round 1, ruling 98)", () => {
+	function top(props = {}) {
+		wrapper = mount(TablesPhoneTop, {
+			props: { view: "list", userName: "Lea Martin", time: "19:58", ...props },
+			global,
+		})
+		return wrapper
+	}
+	const runner = () => wrapper.find('[data-test="phone-runner"]')
+
+	it("is a 44 px target that says « Runner » and how many lines wait at the pass, and opens the runner", async () => {
+		top({ runner: 3 })
+
+		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 3")
+		expect(runner().classes()).toEqual(
+			expect.arrayContaining(["min-h-[44px]", "min-w-[44px]"]),
+		)
+		expect(runner().attributes("aria-label")).toBe(
+			"Runner · 3 ready at the pass",
+		)
+		await runner().trigger("click")
+		expect(wrapper.emitted("open-runner")).toHaveLength(1)
+	})
+
+	it("is clay while lines wait at the pass, as the list's « ready » badge, and quiet when none does", () => {
+		top({ runner: 2 })
+		expect(runner().find('[data-test="phone-runner-count"]').classes()).toEqual(
+			expect.arrayContaining(["bg-[#D68A59]", "text-[#141414]"]),
+		)
+		wrapper.unmount()
+
+		top({ runner: 0 })
+		expect(
+			runner().find('[data-test="phone-runner-count"]').classes(),
+		).not.toContain("bg-[#D68A59]")
+	})
+
+	it("is not there where the restaurant has no runner", () => {
+		top({ runner: null })
+
+		expect(runner().exists()).toBe(false)
+	})
+})
+
 describe("the switch of the list and the plan", () => {
 	function aSwitch(props = {}) {
 		wrapper = mount(TablesViewSwitch, {

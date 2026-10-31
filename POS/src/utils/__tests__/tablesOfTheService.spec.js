@@ -5,7 +5,7 @@
 //// find any table. Each badge says what the data says, and only that (Ruling 66: what a later lot brings is left out).
 import { describe, expect, it } from "vitest"
 
-globalThis.__ = (text, args = [], context) => {
+globalThis.__ = (text, args, context) => {
 	const out = (args || []).reduce(
 		(s, arg, at) => s.replace(`{${at}}`, arg),
 		text,
@@ -13,15 +13,30 @@ globalThis.__ = (text, args = [], context) => {
 	return context ? `${out}` : out
 }
 
-const { tablesOfTheService, serverTime, ALL_ROOMS } = await import(
-	"../tablesOfTheService.js"
-)
+const {
+	tablesOfTheService,
+	serverTime,
+	siteClock,
+	reservationDays,
+	ALL_ROOMS,
+	SOON_MINUTES,
+	LATE_MINUTES,
+} = await import("../tablesOfTheService.js")
 
 const ROOM = { name: "r00m1h4sh", area_name: "Salle 1" }
 const TERRACE = { name: "t3rr4c3h4", area_name: "Terrasse" }
-// The service's clock: 19:58 on the 31st
-const NOW = new Date(2026, 9, 31, 19, 58, 0)
+// The site's clock (System Settings' time zone), whatever the device's: 19:58 on the 31st in Zurich (UTC+1 that day).
+// WALL is that wall clock written as UTC fields (the server writes its times that way: no zone); NOW is the instant
+const SITE = "Europe/Zurich"
+const WALL = Date.UTC(2026, 9, 31, 19, 58, 0)
+const NOW = new Date(WALL - 60 * 60000)
 const TODAY = "2026-10-31"
+const pad = (n) => String(n).padStart(2, "0")
+// The server's own way of writing a time of the site's wall clock: no zone, a space, microseconds
+function serverText(wall) {
+	const at = new Date(wall)
+	return `${at.getUTCFullYear()}-${pad(at.getUTCMonth() + 1)}-${pad(at.getUTCDate())} ${pad(at.getUTCHours())}:${pad(at.getUTCMinutes())}:00.123456`
+}
 
 // A table as the floor's read gives it (get_tables), an order on it when it is occupied
 function table(name, label, status = "Empty", extra = {}) {
@@ -37,13 +52,9 @@ function table(name, label, status = "Empty", extra = {}) {
 	}
 }
 function seated(minutesAgo, total = 0) {
-	const at = new Date(NOW.getTime() - minutesAgo * 60000)
-	const pad = (n) => String(n).padStart(2, "0")
-	// The server's own way of writing a time: no zone, a space, microseconds
-	const text = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}:00.123456`
 	return {
 		item_count: 2,
-		opened_at: text,
+		opened_at: serverText(WALL - minutesAgo * 60000),
 		opened_by: "LM",
 		kds_status: "Pending",
 		grand_total: total,
@@ -63,11 +74,18 @@ function ready(tableName, ...types) {
 		items: types.map((station_type, at) => ({ name: `l${at}`, station_type })),
 	}
 }
-function booking(name, time, guests, tables = [], status = "Confirmed") {
+function booking(
+	name,
+	time,
+	guests,
+	tables = [],
+	status = "Confirmed",
+	date = TODAY,
+) {
 	return {
 		name,
 		status,
-		reservation_date: TODAY,
+		reservation_date: date,
 		reservation_time: `${time}:00`,
 		no_of_guests: guests,
 		tables: tables.map((t) => ({
@@ -84,13 +102,16 @@ function service({
 	reservations = [],
 	room = ALL_ROOMS,
 	areas = [ROOM, TERRACE],
+	now = NOW,
+	timezone = SITE,
 } = {}) {
 	return tablesOfTheService({
 		tables,
 		areas,
 		runnerOrders,
 		reservations,
-		now: NOW,
+		now,
+		timezone,
 		room,
 	})
 }
@@ -423,6 +444,81 @@ describe("« Soon »: the reservations that arrive within the hour", () => {
 	})
 })
 
+describe("« Soon »: an hour ahead and an hour late, to the minute", () => {
+	it("is 60 minutes each way", () => {
+		expect([SOON_MINUTES, LATE_MINUTES]).toEqual([60, 60])
+	})
+
+	it("keeps a booking due in 60 minutes and leaves out one due in 61", () => {
+		const list = service({
+			reservations: [booking("in", "20:58", 2), booking("out", "20:59", 2)],
+		})
+
+		expect(list.soon.map((entry) => entry.key)).toEqual(["in"])
+	})
+
+	it("keeps a booking 60 minutes late and leaves out one 61 minutes late", () => {
+		const list = service({
+			reservations: [booking("in", "18:58", 2), booking("out", "18:57", 2)],
+		})
+
+		expect(list.soon.map((entry) => entry.key)).toEqual(["in"])
+	})
+
+	it("says which bookings are late", () => {
+		const list = service({
+			reservations: [
+				booking("late", "19:40", 2),
+				booking("now", "19:58", 2),
+				booking("coming", "20:15", 2),
+			],
+		})
+
+		expect(list.soon.map((entry) => [entry.key, entry.late])).toEqual([
+			["late", true],
+			["now", false],
+			["coming", false],
+		])
+	})
+
+	it("crosses midnight: tomorrow's 00:15 at 23:30, and yesterday's 23:50 still late at 00:20", () => {
+		const evening = service({
+			now: new Date(Date.UTC(2026, 9, 31, 22, 30)),
+			reservations: [
+				booking("tomorrow", "00:15", 4, [], "Confirmed", "2026-11-01"),
+			],
+		})
+		expect(evening.soon.map((entry) => [entry.key, entry.late])).toEqual([
+			["tomorrow", false],
+		])
+
+		const night = service({
+			now: new Date(Date.UTC(2026, 9, 31, 23, 20)),
+			reservations: [
+				booking("yesterday", "23:50", 2, [], "Confirmed", "2026-10-31"),
+				booking("tonight", "00:40", 2, [], "Confirmed", "2026-11-01"),
+			],
+		})
+		expect(night.soon.map((entry) => [entry.key, entry.late])).toEqual([
+			["yesterday", true],
+			["tonight", false],
+		])
+	})
+})
+
+describe("what the server keeps from a user", () => {
+	it("says no total when the floor gives none (the user may not read the invoices)", () => {
+		const { grand_total, ...withoutTotal } = seated(25)
+		const list = service({
+			tables: [
+				table("t1", "Table 1", "Occupied", { order_summary: withoutTotal }),
+			],
+		})
+
+		expect([list.busy[0].minutes, list.busy[0].total]).toEqual([25, null])
+	})
+})
+
 describe("« All » and the rooms", () => {
 	const tables = [
 		occupied("a1", "Table 1", 10),
@@ -488,14 +584,68 @@ describe("« All » and the rooms", () => {
 })
 
 describe("the server's clock", () => {
-	it("reads the server's way of writing a time as the device's local time, Safari included (no space, no microseconds)", () => {
+	it("reads the server's way of writing a time as the site's wall clock, Safari included (no space, no microseconds)", () => {
 		expect(serverTime("2026-10-31 19:33:12.123456")).toEqual(
-			new Date(2026, 9, 31, 19, 33, 12),
+			new Date(Date.UTC(2026, 9, 31, 19, 33, 12)),
 		)
 		expect(serverTime("2026-10-31T19:33:12")).toEqual(
-			new Date(2026, 9, 31, 19, 33, 12),
+			new Date(Date.UTC(2026, 9, 31, 19, 33, 12)),
 		)
 		expect(serverTime(null)).toBeNull()
 		expect(serverTime("not a time")).toBeNull()
+	})
+
+	it("reads the clock in the site's time zone, as the server writes its times, whatever the device's", () => {
+		// The same instant: 19:58 in Zurich, 03:58 the next day in Tokyo
+		expect(siteClock(SITE, NOW)).toEqual({
+			date: TODAY,
+			minutes: 19 * 60 + 58,
+			wall: WALL,
+		})
+		expect(siteClock("Asia/Tokyo", NOW)).toMatchObject({
+			date: "2026-11-01",
+			minutes: 3 * 60 + 58,
+		})
+		// A site in Tokyo: a table seated at 03:30 of its own clock has been seated 28 minutes
+		const tokyo = service({
+			timezone: "Asia/Tokyo",
+			tables: [
+				table("t1", "Table 1", "Occupied", {
+					order_summary: {
+						...seated(0),
+						opened_at: "2026-11-01 03:30:00.000000",
+					},
+				}),
+			],
+		})
+		expect(tokyo.busy[0].minutes).toBe(28)
+		// In Zurich the same order is seen as it was: 25 minutes before the site's 19:58
+		expect(
+			service({ tables: [occupied("t1", "Table 1", 25)] }).busy[0].minutes,
+		).toBe(25)
+	})
+
+	it("falls back on the device's clock when the site's zone is not known or not a zone", () => {
+		for (const zone of [null, "", "Not/AZone"]) {
+			const clock = siteClock(zone, NOW)
+			expect(clock.minutes).toBe(NOW.getHours() * 60 + NOW.getMinutes())
+		}
+	})
+})
+
+describe("the days whose reservations « Soon » needs", () => {
+	const at = (hours, minutes) =>
+		siteClock(SITE, new Date(Date.UTC(2026, 9, 31, hours - 1, minutes)))
+
+	it("is today, and tomorrow too within the hour before midnight, and yesterday too within the hour after it", () => {
+		expect(reservationDays(at(19, 58))).toEqual(["2026-10-31"])
+		expect(reservationDays(at(22, 59))).toEqual(["2026-10-31"])
+		expect(reservationDays(at(23, 0))).toEqual(["2026-10-31", "2026-11-01"])
+		expect(
+			reservationDays(siteClock(SITE, new Date(Date.UTC(2026, 9, 31, 23, 20)))),
+		).toEqual(["2026-11-01", "2026-10-31"])
+		expect(
+			reservationDays(siteClock(SITE, new Date(Date.UTC(2026, 10, 1, 0, 0)))),
+		).toEqual(["2026-11-01"])
 	})
 })

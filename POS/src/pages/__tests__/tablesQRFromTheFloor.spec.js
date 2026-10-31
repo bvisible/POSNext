@@ -32,6 +32,14 @@ describe("a table's QR code asked for from the floor", () => {
 		expect(floor).toMatch(/:user-name="userName"/)
 	})
 
+	it("tells the floor plan the site's time zone, which the server's times are written in (fix round 1)", () => {
+		const floor = source.match(/<FloorPlanEditor[\s\S]*?\/>/)?.[0] || ""
+
+		expect(floor).toMatch(
+			/:site-timezone="bootstrapStore\.data\?\.system_timezone \|\| ''"/,
+		)
+	})
+
 	it("goes through the order view's own entry, for the table pressed: one line", () => {
 		const body = bodyOf("handleShowTableQR")
 

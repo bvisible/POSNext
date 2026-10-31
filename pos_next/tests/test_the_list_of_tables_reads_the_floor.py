@@ -26,8 +26,14 @@ from frappe.utils import flt
 
 from pos_next.api import guest_ordering, invoices
 from pos_next.api import restaurant as restaurant_api
-from pos_next.tests.test_till_writes_need_the_till import _sale
+from pos_next.tests.test_till_writes_need_the_till import CASHIER_ROLE, _sale, _user
 from pos_next.tests.test_two_restaurants_on_one_site import TwoRestaurants
+
+# The accounts of the test, each with the roles it is given (all rolled back)
+MANAGER = "list-of-tables-manager@yopmail.com"
+TILL_MANAGER = "list-of-tables-till-manager@yopmail.com"
+CASHIER = "list-of-tables-cashier@yopmail.com"
+KITCHEN = "list-of-tables-kitchen@yopmail.com"
 
 APPROVAL = "Server Approval"
 DIRECT = "Direct to Kitchen"
@@ -154,6 +160,44 @@ class TestTheListOfTablesReadsTheFloor(TwoRestaurants, FrappeTestCase):
 
 	def test_a_table_without_an_order_has_no_total_to_say(self):
 		self.assertIsNone(self.table_on_the_floor(self.table_two)["order_summary"])
+
+	# Whoever is told the total: the takings of a table are the sales invoices', as the restaurant's figures are
+	# (restaurant/neorestau.overview_figures: the day's takings only to whoever reads the invoices)
+
+	def as_user(self, email, roles):
+		_user(email, roles, "System User")
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(email)
+
+	def test_who_reads_the_floor_but_not_the_invoices_is_not_told_the_total(self):
+		self.till_order(self.table_a, lines=2, rate=12.5)
+		for email, role in ((MANAGER, "Restaurant Manager"), (TILL_MANAGER, "Nexus POS Manager")):
+			if not frappe.db.exists("Role", role):
+				continue
+			with self.subTest(role=role):
+				self.as_user(email, [role])
+				self.assertFalse(frappe.has_permission("Sales Invoice", "read"))
+
+				summary = self.table_on_the_floor(self.table_a)["order_summary"]
+
+				self.assertNotIn("grand_total", summary)
+				# The rest of what the plan reads of the order is still there
+				self.assertEqual(summary["item_count"], 2)
+				frappe.set_user("Administrator")
+
+	def test_a_cashier_and_a_kitchen_tablet_are_told_the_total(self):
+		order = self.till_order(self.table_a, lines=2, rate=12.5)
+		total = flt(frappe.db.get_value("Sales Invoice", order, "grand_total"))
+		# A kitchen tablet runs on a desk account that holds a till role too (permissions.py)
+		for email, roles in ((CASHIER, [CASHIER_ROLE]), (KITCHEN, ["Restaurant Kitchen", CASHIER_ROLE])):
+			with self.subTest(roles=roles):
+				self.as_user(email, roles)
+				self.assertTrue(frappe.has_permission("Sales Invoice", "read"))
+
+				self.assertEqual(
+					flt(self.table_on_the_floor(self.table_a)["order_summary"]["grand_total"]), total
+				)
+				frappe.set_user("Administrator")
 
 	# The QR order waiting for the waiter
 

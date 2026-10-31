@@ -64,10 +64,10 @@
 						class="w-full flex items-center justify-between gap-2 px-[14px] py-3 text-start touch-manipulation"
 						@click="$emit('open-table', booking.table)"
 					>
-						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] whitespace-nowrap">{{ booking.detail }}</span>
+						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] whitespace-nowrap">{{ booking.detail }}<template v-if="booking.late">{{ " · " }}<span data-test="late" :class="LATE_CLASS">{{ __("Late") }}</span></template></span>
 					</button>
 					<div v-else class="flex items-center justify-between gap-2 px-[14px] py-3">
-						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] whitespace-nowrap">{{ booking.detail }}</span>
+						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] whitespace-nowrap">{{ booking.detail }}<template v-if="booking.late">{{ " · " }}<span data-test="late" :class="LATE_CLASS">{{ __("Late") }}</span></template></span>
 					</div>
 				</div>
 			</template>
@@ -159,7 +159,7 @@
 							:key="table.name"
 							type="button"
 							data-test="free-table"
-							class="min-h-[48px] px-2 rounded-[10px] border border-[#A7DDB9] bg-[#E9F7EE] text-[15px] font-semibold truncate touch-manipulation"
+							class="min-h-[48px] px-2 rounded-[10px] border border-[#CBEDD7] bg-[#E9F7EE] text-[15px] font-semibold truncate touch-manipulation"
 							@click="pickFreeTable(table)"
 						>
 							{{ table.table_name || table.name }}
@@ -177,6 +177,7 @@ import { computed, onUnmounted, ref, watch } from "vue"
 import TableCard from "@/components/restaurant/TableCard.vue"
 import {
 	ICON_QR,
+	LATE_CLASS,
 	LIST_FONT,
 	ROW_STATE_CLASSES,
 } from "@/components/restaurant/tablesListLook"

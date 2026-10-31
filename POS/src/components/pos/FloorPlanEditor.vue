@@ -21,7 +21,9 @@
 			:view="shownView"
 			:user-name="userName"
 			:time="clockText"
+			:runner="restaurantStore.runnerEnabled ? totalReadyCount : null"
 			@update:view="setView"
+			@open-runner="openRunnerTab"
 		/>
 		<!-- One line (NeoRestau lot 1, Ruling 48), with the look of the line the runner and the kitchen screen share
 		     (RoomStationFilterLine, Ruling 44): the rooms on the left; on the right the stations and the Runner and
@@ -109,7 +111,8 @@
 
 			<!-- Stations and pills (view mode), Save and Cancel (edit mode), the « ⋯ » menu: kept to the right edge -->
 			<div ref="actionsRef" data-test="floor-actions" :class="[GROUP, 'justify-end ml-auto']">
-				<!-- A phone's plan has the mockup's rooms only: its takeaway is in the list's bar (task 26) -->
+				<!-- A phone's plan has the mockup's rooms only: its takeaway is in the list's bar, its runner in the phone's top
+				     (task 26, fix round 1) -->
 				<template v-if="!isEditMode && !isPhone && allStations.length > 0">
 					<!-- Preparation stations: a tap opens the kitchen screen of the station -->
 					<div v-for="station in allStations" :key="'sbar-' + station.name"
@@ -1022,14 +1025,21 @@ import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
 import TablesList from "@/components/restaurant/TablesList.vue"
 import TablesPhoneTop from "@/components/restaurant/TablesPhoneTop.vue"
 import TablesViewSwitch from "@/components/restaurant/TablesViewSwitch.vue"
-import { useTablePress } from "@/composables/useTablePress"
 import { useTablesView } from "@/composables/useTablesView"
-import { formatTime as formatClockTime } from "@/utils/currency"
-import { ALL_ROOMS, localDate, tablesOfTheService } from "@/utils/tablesOfTheService"
+import { isFinger, useTablePress } from "@/composables/useTablePress"
+import {
+	ALL_ROOMS,
+	reservationDays,
+	siteClock,
+	tablesOfTheService,
+} from "@/utils/tablesOfTheService"
 
-defineProps({
+const props = defineProps({
 	// The till user's name, as the till's header shows it: a phone's top says the first name (task 26)
 	userName: { type: String, default: "" },
+	// The site's time zone (System Settings, the bootstrap's `system_timezone`): the server writes its times on that clock,
+	// and the list reads its own clock there, whatever zone the device is set to (task 26, fix round 1)
+	siteTimezone: { type: String, default: "" },
 })
 
 const emit = defineEmits([
@@ -1078,12 +1088,17 @@ const QR_STATES = ["Occupied", "Empty"]
 const listRoom = ref(ALL_ROOMS)
 const reservations = ref([])
 const listCurrency = computed(() => shiftStore.profileCurrency || "CHF")
-// The till's clock, for the minutes since a table was seated and the phone's top. It moves only what is on the screen:
-// nothing is asked of the server at its tick
+// The till's clock, for the minutes since a table was seated, « Soon » and the phone's top, read on the site's clock. It
+// moves only what is on the screen: nothing is asked of the server at its tick, but for « Soon » when the days it needs
+// change (the hour before and after midnight, the day itself)
 const now = ref(new Date())
 const CLOCK_TICK_MS = 30 * 1000
 let clockTimer = null
-const clockText = computed(() => formatClockTime(now.value))
+const clock = computed(() => siteClock(props.siteTimezone, now.value))
+const clockText = computed(() => {
+	const pad = (n) => String(n).padStart(2, "0")
+	return `${pad(Math.floor(clock.value.minutes / 60))}:${pad(clock.value.minutes % 60)}`
+})
 
 const tablesModel = computed(() =>
 	tablesOfTheService({
@@ -1092,6 +1107,7 @@ const tablesModel = computed(() =>
 		runnerOrders: runnerOrders.value,
 		reservations: reservations.value,
 		now: now.value,
+		timezone: props.siteTimezone,
 		room: listRoom.value,
 	}),
 )
@@ -1108,24 +1124,38 @@ const tablePress = useTablePress({
 	canLongPress: (table) => qrEnabled.value && QR_STATES.includes(table.status),
 })
 
-// « Soon »: the reservations of today, of the till's restaurant, read as the reservations list reads them, and only while
-// the list is shown. One that cannot be read (a user who may not read the reservations) leaves « Soon » empty
+// « Soon »: the reservations of the till's restaurant, read as the reservations list reads them, and only while the list
+// is shown: the site's today, with tomorrow in the hour before midnight and yesterday in the hour after it
+// (reservationDays). A read that fails keeps the last list read (a blip of the network empties nothing); a user who may
+// not read the reservations has never had one, and sees no « Soon »
 async function loadReservations() {
 	if (shownView.value !== "list") return
 	try {
-		const answer = await call("pos_next.api.reservations.get_reservations", {
-			date: localDate(new Date()),
-			status: JSON.stringify(["Pending", "Confirmed"]),
-			...restaurantStore.ofTheRestaurant(),
-		})
-		reservations.value = Array.isArray(answer) ? answer : []
+		const answers = await Promise.all(
+			reservationDays(clock.value).map((date) =>
+				call("pos_next.api.reservations.get_reservations", {
+					date,
+					status: JSON.stringify(["Pending", "Confirmed"]),
+					...restaurantStore.ofTheRestaurant(),
+				}),
+			),
+		)
+		// A booking once, whichever day's read brought it
+		const byName = new Map()
+		for (const answer of answers) for (const booking of Array.isArray(answer) ? answer : []) byName.set(booking.name, booking)
+		reservations.value = [...byName.values()]
 	} catch {
-		reservations.value = []
+		// The last list stays
 	}
 }
 watch(shownView, (shown) => {
 	if (shown === "list") loadReservations()
 })
+// The days « Soon » needs change at 23:00, at midnight and at 01:00 of the site's clock: read them again then
+watch(
+	() => reservationDays(clock.value).join(),
+	() => loadReservations(),
+)
 const onReservationUpdate = () => loadReservations()
 
 // ─── The line at the top ─────────────────────────────────────────────────────
@@ -1906,7 +1936,9 @@ function onTablePointerDown(event, table) {
 	} else {
 		// The service: the table opened as soon as the pointer went down; it now opens when the finger lifts, so that a
 		// long press can show its QR code and a press that moves can pan the plan (the pointer goes on to the canvas,
-		// whose gestures pan it). The canvas hears the rest of the press (task 26, useTablePress)
+		// whose gestures pan it). The canvas hears the rest of the press (task 26, useTablePress). A mouse neither
+		// long-presses nor pans from a table, as before: its pointer stops here, and a click that slips opens the table
+		if (!isFinger(event)) event.stopPropagation()
 		tablePress.down(event, table)
 	}
 }
@@ -2513,6 +2545,9 @@ async function handleDeleteArea() {
  * Adds margin between each element until the user manually arranges them.
  */
 function autoLayoutTables() {
+	// The plan put away behind the list has no width to lay the tables out in (it fell back on 800 px, 6 columns on a
+	// phone of 390): it is laid out when it is shown (task 26, fix round 1, the watch below)
+	if (shownView.value !== "plan") return
 	const tbls = filteredTables.value
 	if (tbls.length < 2) return
 
@@ -2610,6 +2645,13 @@ onMounted(async () => {
 	clockTimer = setInterval(() => {
 		now.value = new Date()
 	}, CLOCK_TICK_MS)
+})
+
+// The plan shown after the list: laid out now that it has its width (task 26, fix round 1)
+watch(shownView, async (shown) => {
+	if (shown !== "plan") return
+	await nextTick()
+	autoLayoutTables()
 })
 
 // Re-layout when switching areas

@@ -5,6 +5,7 @@
 //// the mockup a later lot brings (the waiter's own tables, « order the next course? », the course families, « the
 //// guest is calling ») are left out, not faked (Ruling 66). This module is the list's logic, and nothing else: what
 //// goes first, what each badge says, what a filter keeps. The components draw it (TablesList, TableCard).
+import { secondsSinceMidnight } from "@/utils/offerSchedule"
 
 // The filter that keeps every room: « All »
 export const ALL_ROOMS = "all"
@@ -19,6 +20,9 @@ export const LATE_MINUTES = 60
 // The bookings whose guests are still to come
 const COMING = ["Pending", "Confirmed"]
 
+const DAY_MS = 24 * 60 * 60000
+const pad = (n) => String(n).padStart(2, "0")
+
 // Tables in their natural order: « Table 2 » before « Table 10 »
 const NATURAL = new Intl.Collator(undefined, {
 	numeric: true,
@@ -26,8 +30,9 @@ const NATURAL = new Intl.Collator(undefined, {
 })
 
 /**
- * A time as the server writes it ("2026-10-31 19:33:12.123456": no zone, a space, microseconds), as a Date of the
- * device's clock. The server's time and the till's are the restaurant's own; Safari, the phones' browser, reads no
+ * A time as the server writes it ("2026-10-31 19:33:12.123456": no zone, a space, microseconds). The server writes the
+ * site's wall clock (System Settings' time zone): the time is read as that wall clock, its fields written as UTC, so
+ * that it compares with siteClock(...).wall whatever zone the device is set to. Safari, the phones' browser, reads no
  * space in a date and would give an invalid date, so the parts are read one by one.
  *
  * @param {string|null|undefined} value
@@ -39,7 +44,65 @@ export function serverTime(value) {
 	)
 	if (!parts) return null
 	const [, year, month, day, hours, minutes, seconds] = parts.map(Number)
-	return new Date(year, month - 1, day, hours, minutes, seconds || 0)
+	return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds || 0))
+}
+
+/**
+ * The site's clock at an instant: its date, its minutes since midnight, and its wall clock written as UTC fields (as
+ * serverTime() reads the server's times). The time of day is read with the till's own helper for the site's zone
+ * (utils/offerSchedule.js, which the offers' hours use); a zone the device does not know, or none, is the device's.
+ *
+ * @param {string|null|undefined} timezone - the site's time zone (the bootstrap's `system_timezone`)
+ * @param {Date} now
+ * @returns {{date: string, minutes: number, wall: number}}
+ */
+export function siteClock(timezone, now = new Date()) {
+	// A zone the device does not know reads the device's clock, for the date as for the time
+	let zone = timezone || null
+	let date
+	try {
+		const parts = new Intl.DateTimeFormat("en-GB", {
+			timeZone: zone || undefined,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		}).formatToParts(now)
+		const get = (type) => parts.find((part) => part.type === type)?.value
+		date = `${get("year")}-${get("month")}-${get("day")}`
+	} catch {
+		date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+		zone = null
+	}
+	const seconds = secondsSinceMidnight(zone, now)
+	const [year, month, day] = date.split("-").map(Number)
+	return {
+		date,
+		minutes: Math.floor(seconds / 60),
+		wall: Date.UTC(year, month - 1, day) + seconds * 1000,
+	}
+}
+
+/** A date as the server writes it (2026-10-31), moved by a number of days */
+function shiftDate(date, days) {
+	const [year, month, day] = date.split("-").map(Number)
+	const moved = new Date(Date.UTC(year, month - 1, day) + days * DAY_MS)
+	return `${moved.getUTCFullYear()}-${pad(moved.getUTCMonth() + 1)}-${pad(moved.getUTCDate())}`
+}
+
+/**
+ * The days whose reservations « Soon » needs at a time of the site's clock: today; tomorrow too within the hour before
+ * midnight (a booking at 00:15 arrives within the hour from 23:15); yesterday too within the hour after it (a booking
+ * at 23:50 is still late at 00:20).
+ *
+ * @param {{date: string, minutes: number}} clock - siteClock()
+ * @returns {string[]}
+ */
+export function reservationDays(clock) {
+	const days = [clock.date]
+	if (clock.minutes >= 24 * 60 - SOON_MINUTES)
+		days.push(shiftDate(clock.date, 1))
+	if (clock.minutes < LATE_MINUTES) days.push(shiftDate(clock.date, -1))
+	return days
 }
 
 /** The word the floor plan writes on a table for its state: one literal msgid per state, the plan's own. */
@@ -98,8 +161,9 @@ const QUIET_TONES = {
  *   lines on hold (`waiting_items_count`) and of a QR order's lines to accept (`qr_waiting_count`)
  * @param {object[]} floor.areas - the rooms of the plan, in its order
  * @param {object[]} floor.runnerOrders - the pass's orders (get_runner_orders): the ready lines of each table
- * @param {object[]} floor.reservations - the restaurant's reservations of the day (get_reservations)
- * @param {Date} floor.now - the till's clock
+ * @param {object[]} floor.reservations - the restaurant's reservations of the days around now (get_reservations)
+ * @param {Date} floor.now - the instant
+ * @param {string} [floor.timezone] - the site's time zone: the server's times are its wall clock
  * @param {string} floor.room - the filter: a room's name, or ALL_ROOMS
  * @returns {{room: string, rooms: {name: string, label: string}[], activeCount: number, busy: object[], soon: object[],
  *   others: object[], free: object[]}} `busy` the tables with something going on, the most urgent first; `soon` the
@@ -111,8 +175,10 @@ export function tablesOfTheService({
 	runnerOrders = [],
 	reservations = [],
 	now = new Date(),
+	timezone = null,
 	room = ALL_ROOMS,
 }) {
+	const clock = siteClock(timezone, now)
 	const rooms = areas.map((area) => ({
 		name: area.name,
 		label: area.area_name || area.name,
@@ -136,7 +202,7 @@ export function tablesOfTheService({
 	}
 
 	const entries = tables.map((table) =>
-		entryOf(table, readyLines.get(table.name) || [], now),
+		entryOf(table, readyLines.get(table.name) || [], clock),
 	)
 	const busy = entries.filter((entry) => BUSY_TIERS.includes(entry.tier))
 	const inRoom = (entry) =>
@@ -148,7 +214,7 @@ export function tablesOfTheService({
 		// « Toutes · N »: every table with something going on, whatever room is shown
 		activeCount: busy.length,
 		busy: busy.filter(inRoom).sort((a, b) => urgency(a, b) || planOrder(a, b)),
-		soon: soonOf(reservations, tables, now, shownRoom),
+		soon: soonOf(reservations, tables, clock, shownRoom),
 		others: entries
 			.filter((entry) => !BUSY_TIERS.includes(entry.tier) && inRoom(entry))
 			.sort(planOrder),
@@ -170,7 +236,7 @@ function urgency(a, b) {
 	return (a.seatedAt ? 0 : 1) - (b.seatedAt ? 0 : 1)
 }
 
-function entryOf(table, readyLinesOfTable, now) {
+function entryOf(table, readyLinesOfTable, clock) {
 	const status = table.status || "Empty"
 	const order = status === "Occupied" ? table.order_summary || null : null
 	const seatedAt = order ? serverTime(order.opened_at) : null
@@ -206,8 +272,9 @@ function entryOf(table, readyLinesOfTable, now) {
 		badge,
 		seatedAt,
 		minutes: seatedAt
-			? Math.max(0, Math.floor((now - seatedAt) / 60000))
+			? Math.max(0, Math.floor((clock.wall - seatedAt.getTime()) / 60000))
 			: null,
+		// The server tells the total only to whoever may read the sales invoices: none is said otherwise
 		total:
 			order && order.grand_total != null ? Number(order.grand_total) : null,
 		// The lines on hold, as the plan's chip counts them, but for the ones the QR badge already counts
@@ -221,24 +288,33 @@ function entryOf(table, readyLinesOfTable, now) {
 	}
 }
 
-/** « Soon »: the reservations arriving within the hour, or late and not seated yet, the earliest first. */
-function soonOf(reservations, tables, now, shownRoom) {
-	const today = localDate(now)
-	const nowMinutes = now.getHours() * 60 + now.getMinutes()
+/**
+ * « Soon »: the reservations arriving within the hour, or late and not seated yet (marked), the earliest first. A
+ * booking is placed by its date and its time on the site's clock, so that midnight is no edge: tomorrow's 00:15 is
+ * 45 minutes ahead at 23:30.
+ */
+function soonOf(reservations, tables, clock, shownRoom) {
+	// The minute the site's clock is in: a booking due this minute is neither ahead nor late
+	const nowMinute = clock.wall - (clock.wall % 60000)
 	const byName = new Map(tables.map((table) => [table.name, table]))
 	const soon = []
 	for (const booking of reservations || []) {
-		if (
-			!COMING.includes(booking.status) ||
-			String(booking.reservation_date) !== today
+		if (!COMING.includes(booking.status)) continue
+		const day = /^(\d{4})-(\d{2})-(\d{2})/.exec(
+			String(booking.reservation_date || ""),
 		)
-			continue
 		const time = /^(\d{1,2}):(\d{2})/.exec(
 			String(booking.reservation_time || ""),
 		)
-		if (!time) continue
-		const minutes = Number(time[1]) * 60 + Number(time[2])
-		const ahead = minutes - nowMinutes
+		if (!day || !time) continue
+		const due = Date.UTC(
+			Number(day[1]),
+			Number(day[2]) - 1,
+			Number(day[3]),
+			Number(time[1]),
+			Number(time[2]),
+		)
+		const ahead = (due - nowMinute) / 60000
 		if (ahead > SOON_MINUTES || ahead < -LATE_MINUTES) continue
 
 		const bookedTables = (booking.tables || []).map((row) => ({
@@ -261,7 +337,9 @@ function soonOf(reservations, tables, now, shownRoom) {
 		soon.push({
 			key: booking.name,
 			kind: "reservation",
-			minutes,
+			due,
+			// Its guests are late and not seated yet
+			late: ahead < 0,
 			title: bookedTables.length
 				? bookedTables.map((row) => row.label).join(" + ")
 				: __("No table"),
@@ -273,11 +351,5 @@ function soonOf(reservations, tables, now, shownRoom) {
 			table: bookedTables.find((row) => row.table)?.table || null,
 		})
 	}
-	return soon.sort((a, b) => a.minutes - b.minutes)
-}
-
-/** The day of a Date on the device's calendar, as the server writes a date (2026-10-31) */
-export function localDate(date) {
-	const pad = (n) => String(n).padStart(2, "0")
-	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+	return soon.sort((a, b) => a.due - b.due)
 }

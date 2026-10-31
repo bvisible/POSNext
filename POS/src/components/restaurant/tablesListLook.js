@@ -1,7 +1,8 @@
 //// Neoffice — added file (no upstream equivalent). The look of the list of tables (NeoRestau lot 1, task 26), shared by
 //// its card, its rows and its top: the colours are the waiter mockup's, which takes them from the design system (ink
-//// #141414, paper #FAF3EA / #FFFDF8, clay #D68A59, the sand ramp, the status tones of its pills). One place, so that a
-//// card and a row say a state in the same colour.
+//// #141414, paper #FAF3EA / #FFFDF8, clay #D68A59, the sand ramp). One place, so that a card and a row say a state in
+//// the same colour. The status colours are the design system's tokens (tokens/colors.css, fix round 1): success
+//// --green-50 #E9F7EE, --green-100 #CBEDD7, --green-700 #11663A; warning --amber-700 #92610C.
 
 // The QR glyph of the till (the order view's own QR button draws the same)
 export const ICON_QR =
@@ -14,18 +15,21 @@ export const BADGE_CLASSES = {
 	ready: `${PILL} bg-[#D68A59] text-[#141414] font-bold`,
 	quiet: "text-[#6F665A]",
 	neutral: `${PILL} bg-[#F6F3ED] text-[#524B41] font-semibold`,
-	paid: `${PILL} bg-[#E6F4EA] text-[#15803D] font-semibold`,
-	free: "text-[#15803D]",
+	paid: `${PILL} bg-[#E9F7EE] text-[#11663A] font-semibold`,
+	free: "text-[#11663A]",
 	cleaning: "text-[#6F665A]",
-	reserved: "text-[#A16207]",
+	reserved: "text-[#92610C]",
 }
 
 // The state word of a row (a free, cleaning or reserved table): plain text in its tone
 export const ROW_STATE_CLASSES = {
-	free: "text-[#15803D]",
+	free: "text-[#11663A]",
 	cleaning: "text-[#6F665A]",
-	reserved: "text-[#A16207]",
+	reserved: "text-[#92610C]",
 }
+
+// A booking whose guests are late: the warning token's text (--amber-700)
+export const LATE_CLASS = "text-[#92610C] font-semibold"
 
 /** How long a table has been seated: « For 25 min », « For 1 h 15 » */
 export function durationOf(minutes) {
@@ -37,7 +41,9 @@ export function durationOf(minutes) {
 	])
 }
 
-// The font of the mockup's text, Karla, where the till loads it; the till's own font otherwise
+// The font of the mockup's text, Karla, where the till loads it; then the till's own stack (index.css), so that the
+// riyal sign and Arabic still find their fonts (fix round 1)
 export const LIST_FONT = {
-	fontFamily: 'Karla, Inter, "IBM Plex Sans", sans-serif',
+	fontFamily:
+		'Karla, Inter, SaudiRiyalSymbol, "IBM Plex Sans Arabic", "IBM Plex Sans", sans-serif',
 }

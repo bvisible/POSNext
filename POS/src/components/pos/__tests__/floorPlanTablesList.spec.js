@@ -46,7 +46,7 @@ vi.mock("@/socket", () => ({
 		disconnected: false,
 		connect() {},
 		on(event, handler) {
-			;(socket.handlers[event] ||= []).push(handler)
+			socket.handlers[event] = [...(socket.handlers[event] || []), handler]
 		},
 		off(event, handler) {
 			socket.handlers[event] = handler
@@ -182,13 +182,14 @@ let wrapper
 async function floorPlan({
 	width = 390,
 	userName = "Lea Martin",
+	siteTimezone = "",
 	store = {},
 } = {}) {
 	withWidth(width)
 	theStore(store)
 	wrapper = mount(FloorPlanEditor, {
 		attachTo: document.body,
-		props: { userName },
+		props: { userName, siteTimezone },
 		global: { stubs: { FloorPlanWalls: true }, mocks: { __: globalThis.__ } },
 	})
 	await flushPromises()
@@ -206,7 +207,8 @@ const cardTitles = () =>
 const planTable = (label) =>
 	wrapper.findAll('[data-test="table"]').find((el) => el.text().includes(label))
 const called = (name) => server.calls.filter((c) => c.name === name)
-const pointer = (type, target, init = {}) => {
+// A finger by default (the long press is a finger's and a pen's); { pointerType: "mouse" } for a mouse
+const pointer = (type, target, { pointerType = "touch", ...init } = {}) => {
 	const event = new MouseEvent(type, {
 		bubbles: true,
 		cancelable: true,
@@ -214,6 +216,7 @@ const pointer = (type, target, init = {}) => {
 		clientY: 50,
 		...init,
 	})
+	Object.defineProperty(event, "pointerType", { value: pointerType })
 	target.dispatchEvent(event)
 	return event
 }
@@ -623,5 +626,177 @@ describe("« Soon » and the realtime of the plan", () => {
 		wrapper = null
 
 		expect(socket.handlers.reservation_update).toEqual([])
+	})
+})
+
+describe("a mouse on the plan (fix round 1)", () => {
+	async function thePlan() {
+		await floorPlan({ width: 1366 })
+	}
+	const mouse = { pointerType: "mouse" }
+
+	it("never shows a QR code, however long it is held: it opens the table when released", async () => {
+		await thePlan()
+		const table = planTable("Table 1").element
+
+		pointer("pointerdown", table, mouse)
+		vi.advanceTimersByTime(650)
+		expect(wrapper.emitted("show-table-qr")).toBeUndefined()
+		pointer("pointerup", table, mouse)
+		await flushPromises()
+
+		expect(wrapper.emitted("table-selected")).toEqual([[T1]])
+		expect(wrapper.emitted("show-table-qr")).toBeUndefined()
+	})
+
+	it("opens the table on a click that slips 12 px: the plan does not pan from a table under a mouse", async () => {
+		await thePlan()
+		const heard = vi.fn()
+		canvas().element.addEventListener("pointerdown", heard)
+		const table = planTable("Table 1").element
+
+		pointer("pointerdown", table, mouse)
+		pointer("pointermove", table, { ...mouse, clientX: 62 })
+		pointer("pointerup", table, { ...mouse, clientX: 62 })
+		await flushPromises()
+
+		expect(heard).not.toHaveBeenCalled()
+		expect(wrapper.emitted("table-selected")).toEqual([[T1]])
+	})
+})
+
+describe("the runner on a phone (fix round 1, ruling 98)", () => {
+	let open
+	beforeEach(() => {
+		open = vi.spyOn(window, "open").mockImplementation(() => null)
+	})
+	afterEach(() => open.mockRestore())
+	const runner = () => wrapper.find('[data-test="phone-runner"]')
+
+	it("is in the phone's top, with the count of what waits at the pass, over the list and over the plan", async () => {
+		await floorPlan()
+		expect(runner().text().replace(/\s+/g, " ")).toBe("Runner 1")
+
+		await wrapper.find('[data-test="view-plan"]').trigger("click")
+		expect(runner().exists()).toBe(true)
+	})
+
+	it("opens the till's runner screen, for the till's restaurant, as the tablet's pill does", async () => {
+		await floorPlan()
+
+		await runner().trigger("click")
+
+		expect(open).toHaveBeenCalledWith(
+			"/pos/runner?restaurant=The%20Bistro",
+			"_blank",
+		)
+	})
+
+	it("is not there where the restaurant has no runner, nor on a tablet (its line has the pill)", async () => {
+		await floorPlan({ store: { runnerEnabled: false } })
+		expect(runner().exists()).toBe(false)
+		wrapper.unmount()
+
+		await floorPlan({ width: 1180 })
+		expect(runner().exists()).toBe(false)
+	})
+})
+
+describe("« Soon », the site's clock and midnight (fix round 1)", () => {
+	const ZURICH = "Europe/Zurich"
+	const booking = (name, date, time, guests = 2) => ({
+		name,
+		status: "Confirmed",
+		reservation_date: date,
+		reservation_time: `${time}:00`,
+		no_of_guests: guests,
+		tables: [],
+	})
+	const daysAsked = () => called("get_reservations").map((c) => c.args.date)
+
+	it("says the site's time in the phone's top, whatever the device's zone", async () => {
+		await floorPlan({ siteTimezone: "Asia/Tokyo" })
+
+		// 19:58 in Zurich is 03:58 the next day in Tokyo
+		expect(wrapper.find('[data-test="phone-top-user"]').text()).toBe(
+			"Lea · 03:58",
+		)
+	})
+
+	it("reads the site's today, and tomorrow too from 23:00, and again when that changes", async () => {
+		vi.setSystemTime(new Date(Date.UTC(2026, 9, 31, 21, 59, 50)))
+		await floorPlan({ siteTimezone: ZURICH })
+		expect(daysAsked()).toEqual(["2026-10-31"])
+
+		vi.advanceTimersByTime(30 * 1000)
+		await flushPromises()
+
+		expect(daysAsked()).toEqual(["2026-10-31", "2026-10-31", "2026-11-01"])
+	})
+
+	it("shows a booking of tomorrow before midnight, and marks a late one", async () => {
+		vi.setSystemTime(new Date(Date.UTC(2026, 9, 31, 22, 30)))
+		server.reservations = [
+			booking("late", "2026-10-31", "23:10"),
+			booking("tomorrow", "2026-11-01", "00:15"),
+		]
+		await floorPlan({ siteTimezone: ZURICH })
+
+		const cards = wrapper.findAll('[data-test="reservation-card"]')
+		expect(
+			cards.map((card) => card.find('[data-test="late"]').exists()),
+		).toEqual([true, false])
+		expect(cards[0].text()).toContain("Late")
+	})
+
+	it("keeps the last list it read when a refresh fails", async () => {
+		server.reservations = [booking("R1", "2026-10-31", "20:15")]
+		await floorPlan()
+		expect(wrapper.findAll('[data-test="reservation-card"]')).toHaveLength(1)
+
+		const { call } = await import("@/utils/apiWrapper")
+		call.mockImplementationOnce(async () => {
+			throw new Error("offline")
+		})
+		for (const handler of socket.handlers.reservation_update) handler()
+		await flushPromises()
+
+		expect(wrapper.findAll('[data-test="reservation-card"]')).toHaveLength(1)
+	})
+})
+
+describe("a floor never laid out, first shown as the list (fix round 1)", () => {
+	let width
+	beforeEach(() => {
+		// The plan's canvas is 390 px wide when shown, and has no width while the list puts it away
+		width = Object.getOwnPropertyDescriptor(
+			HTMLElement.prototype,
+			"offsetWidth",
+		)
+		Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+			configurable: true,
+			get() {
+				if (this.dataset?.test !== "floor-canvas") return 0
+				return this.style.display === "none" ? 0 : 390
+			},
+		})
+	})
+	afterEach(() =>
+		Object.defineProperty(HTMLElement.prototype, "offsetWidth", width),
+	)
+
+	it("is laid out for the plan's real width once the plan is shown", async () => {
+		const atOrigin = ["Table 1", "Table 2", "Table 3", "Table 4"].map(
+			(label, at) =>
+				aTable(`0r1g1n${at}`, label, "Empty", { pos_x: 0, pos_y: 0 }),
+		)
+		await floorPlan({ store: { tables: atOrigin } })
+
+		await wrapper.find('[data-test="view-plan"]').trigger("click")
+		await flushPromises()
+
+		// 390 px hold three tables of 110 px and their margins: the fourth starts the second row
+		const fourth = planTable("Table 4").element.style
+		expect([fourth.left, fourth.top]).toEqual(["20px", "150px"])
 	})
 })

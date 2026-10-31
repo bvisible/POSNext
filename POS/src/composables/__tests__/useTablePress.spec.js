@@ -2,21 +2,25 @@
  * //// Neoffice — added file (no upstream equivalent). A finger on a table of the floor plan (NeoRestau lot 1, task 26):
  * //// a tap opens the table when the finger lifts, a long press shows the table's QR code at once (where the table may
  * //// have one), and a press that moves is a pan of the plan: neither a tap nor a long press. A second finger makes
- * //// a pinch, which presses no table either.
+ * //// a pinch, which presses no table either. The long press is a finger's or a pen's, never a mouse's: a mouse held on a
+ * //// table opens it when the button is released, and a click that slips a little is still a click (fix round 1).
  * @vitest-environment jsdom
  */
 import { mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { defineComponent, h } from "vue"
 
-const { useTablePress, LONG_PRESS_MS, MOVE_TOLERANCE_PX } = await import(
-	"../useTablePress.js"
-)
+const { useTablePress, isFinger, LONG_PRESS_MS, MOVE_TOLERANCE_PX } =
+	await import("../useTablePress.js")
 
 const TABLE = { name: "t1", table_name: "Table 1", status: "Occupied" }
 
-function pointer(type, { x = 100, y = 100, id = 1, button = 0 } = {}) {
-	return { type, clientX: x, clientY: y, pointerId: id, button }
+// A finger by default: the long press is a finger's (and a pen's)
+function pointer(
+	type,
+	{ x = 100, y = 100, id = 1, button = 0, pointerType = "touch" } = {},
+) {
+	return { type, clientX: x, clientY: y, pointerId: id, button, pointerType }
 }
 
 describe("a press on a table of the plan", () => {
@@ -207,11 +211,88 @@ describe("a press on a table of the plan", () => {
 		expect(onLongPress).not.toHaveBeenCalled()
 	})
 
-	it("reads a mouse event as a finger: a mouse has no pointer id", () => {
+	it("reads a mouse event as a click: a mouse has no pointer id", () => {
 		setUp()
 		press.down({ clientX: 10, clientY: 10, button: 0 }, TABLE)
 		press.up({ clientX: 10, clientY: 10, button: 0 })
 
 		expect(onTap).toHaveBeenCalledWith(TABLE)
+	})
+
+	it("forgives a finger 8 px and no more: past them the plan is panned", () => {
+		expect(MOVE_TOLERANCE_PX).toBe(8)
+		setUp()
+		press.down(pointer("pointerdown"), TABLE)
+		press.move(pointer("pointermove", { x: 108 }))
+		vi.advanceTimersByTime(LONG_PRESS_MS)
+		expect(onLongPress).toHaveBeenCalledTimes(1)
+		press.up(pointer("pointerup", { x: 108 }))
+
+		press.down(pointer("pointerdown"), TABLE)
+		press.move(pointer("pointermove", { x: 109 }))
+		vi.advanceTimersByTime(LONG_PRESS_MS)
+		press.up(pointer("pointerup", { x: 109 }))
+		expect(onLongPress).toHaveBeenCalledTimes(1)
+		expect(onTap).not.toHaveBeenCalled()
+	})
+
+	it("long-presses with a pen as with a finger", () => {
+		setUp()
+		press.down(pointer("pointerdown", { pointerType: "pen" }), TABLE)
+		vi.advanceTimersByTime(LONG_PRESS_MS)
+
+		expect(onLongPress).toHaveBeenCalledWith(TABLE)
+	})
+})
+
+describe("a mouse on a table of the plan", () => {
+	let press
+	let onTap
+	let onLongPress
+	let wrapper
+	const mouse = (type, init = {}) =>
+		pointer(type, { pointerType: "mouse", id: 1, ...init })
+
+	beforeEach(() => {
+		vi.useFakeTimers()
+		onTap = vi.fn()
+		onLongPress = vi.fn()
+		const Probe = defineComponent({
+			setup() {
+				press = useTablePress({ onTap, onLongPress, canLongPress: () => true })
+				return () => h("div")
+			},
+		})
+		wrapper = mount(Probe, { attachTo: document.body })
+	})
+	afterEach(() => {
+		wrapper.unmount()
+		vi.useRealTimers()
+	})
+
+	it("never shows the QR code, however long the button is held: it opens the table when released", () => {
+		press.down(mouse("pointerdown"), TABLE)
+		vi.advanceTimersByTime(LONG_PRESS_MS * 3)
+		expect(onLongPress).not.toHaveBeenCalled()
+
+		press.up(mouse("pointerup"))
+
+		expect(onTap).toHaveBeenCalledWith(TABLE)
+	})
+
+	it("opens the table on a click that slips: under a mouse the plan does not pan from a table", () => {
+		press.down(mouse("pointerdown"), TABLE)
+		press.move(mouse("pointermove", { x: 112 }))
+		press.up(mouse("pointerup", { x: 112 }))
+
+		expect(onTap).toHaveBeenCalledWith(TABLE)
+	})
+
+	it("tells a finger and a pen from a mouse, and a pointer of no type is a mouse", () => {
+		expect(
+			["touch", "pen", "mouse", undefined].map((pointerType) =>
+				isFinger({ pointerType }),
+			),
+		).toEqual([true, true, false, false])
 	})
 })

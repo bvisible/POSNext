@@ -192,6 +192,43 @@ describe("the list of tables", () => {
 		expect(texts([without])).toEqual(["No table reserved 20:30 · 2 guests"])
 	})
 
+	it("marks a booking whose guests are late (fix round 1)", () => {
+		list({
+			model: model({
+				soon: [{ ...SOON, late: true }, UNSEATED],
+			}),
+		})
+
+		const [late, coming] = wrapper.findAll('[data-test="reservation-card"]')
+		expect(late.find('[data-test="late"]').text()).toBe("Late")
+		expect(late.find('[data-test="late"]').classes()).toContain(
+			"text-[#92610C]",
+		)
+		expect(coming.find('[data-test="late"]').exists()).toBe(false)
+	})
+
+	it("draws in the design system's tokens: the free tables to open in its greens (fix round 1)", async () => {
+		list({ model: model({ free: [T7] }) })
+		await wrapper
+			.find('[data-test="tables-bar"]')
+			.findAll("button")[0]
+			.trigger("click")
+
+		expect(wrapper.find('[data-test="free-table"]').classes()).toEqual(
+			expect.arrayContaining(["bg-[#E9F7EE]", "border-[#CBEDD7]"]),
+		)
+		expect(wrapper.html()).not.toMatch(/A7DDB9|15803D|E6F4EA|A16207/i)
+	})
+
+	it("keeps the till's own fonts after Karla, the riyal sign and Arabic included (fix round 1)", () => {
+		list()
+
+		const font = wrapper.find('[data-test="tables-list"]').attributes("style")
+		expect(font).toMatch(
+			/Karla, Inter, SaudiRiyalSymbol, "IBM Plex Sans Arabic", "IBM Plex Sans", sans-serif/,
+		)
+	})
+
 	it("draws the reservations dashed, as the mockup", () => {
 		list()
 

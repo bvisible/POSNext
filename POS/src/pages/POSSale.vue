@@ -511,9 +511,10 @@
 									!cartStore.isTakeaway
 								"
 							>
-								<!-- //// Neoffice — a phone's tables open on their list, whose top names the user, and a table's QR code is asked for from the floor (NeoRestau lot 1, task 26): handleShowTableQR -->
+								<!-- //// Neoffice — a phone's tables open on their list, whose top names the user and reads the site's clock, and a table's QR code is asked for from the floor (NeoRestau lot 1, task 26): handleShowTableQR -->
 								<FloorPlanEditor
 									:user-name="userName"
+									:site-timezone="bootstrapStore.data?.system_timezone || ''"
 									@table-selected="handleTableSelected"
 									@load-table-draft="handleLoadTableDraft"
 									@load-server-draft="handleLoadServerDraft"

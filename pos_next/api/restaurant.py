@@ -95,6 +95,10 @@ def get_tables(restaurant=None):
 	# Fetch active order summaries for occupied tables
 	occupied_names = [t.name for t in tables if t.status == "Occupied"]
 	order_map = {}
+	# The total of an open order is the takings of a table: told to whoever may read the sales invoices, as the day's
+	# takings of the restaurant's overview are (restaurant/neorestau.overview_figures), and to no role that reads the floor
+	# without them (a restaurant manager, a till manager). The list of tables then says the rest without it.
+	tell_totals = frappe.has_permission("Sales Invoice", "read")
 	if occupied_names:
 		orders = frappe.get_all(
 			"Sales Invoice",
@@ -116,8 +120,9 @@ def get_tables(restaurant=None):
 				"opened_at": str(order.creation),
 				"opened_by": initials,
 				"kds_status": order.kds_status or "Pending",
-				"grand_total": flt(order.grand_total),
 			}
+			if tell_totals:
+				order_map[tbl]["grand_total"] = flt(order.grand_total)
 
 	# Auto-fix orphaned "Occupied" tables with no active draft
 	orphaned = [t.name for t in tables if t.status == "Occupied" and t.name not in order_map]

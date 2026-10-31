@@ -3,12 +3,21 @@
 //// (product owner, 31.10.2026: « on phones the table's QR code must be easy to reach »), so a tap opens
 //// the table when the finger lifts, and the two are told apart by how long the finger stays. A press that moves is the
 //// start of a pan of the plan, and a second finger the start of a pinch: neither is a tap nor a long press. The editor
-//// does not come here: there a press drags the table, as before.
+//// does not come here: there a press drags the table, as before. The long press is a finger's or a pen's, never a
+//// mouse's (fix round 1): a mouse held on a table opens it when the button is released, as a click, and a click that
+//// slips is still a click, since the plan does not pan from a table under a mouse (FloorPlanEditor stops its pointer).
 import { onUnmounted } from "vue"
+import { SLOP_PX } from "@/utils/pointerSlop"
 
-// How long a finger stays on a table for its QR code, and how far it may shake meanwhile (a pan moves more than that)
+// How long a finger stays on a table for its QR code, and how far it may shake meanwhile: past the slop, the plan's own
+// pan begins (useCanvasGestures, the same slop)
 export const LONG_PRESS_MS = 500
-export const MOVE_TOLERANCE_PX = 10
+export const MOVE_TOLERANCE_PX = SLOP_PX
+
+/** A finger or a pen, which press and pan; a mouse (and a pointer that says nothing of its type) clicks */
+export function isFinger(event) {
+	return event?.pointerType === "touch" || event?.pointerType === "pen"
+}
 // The click a browser makes of a long press, once the finger is up, comes right after it; past this, none is coming
 const CLICK_AFTER_MS = 400
 
@@ -41,10 +50,12 @@ export function useTablePress({
 			x: event.clientX,
 			y: event.clientY,
 			table,
+			finger: isFinger(event),
 			fired: false,
 			timer: null,
 		}
-		if (canLongPress(table)) {
+		// A mouse never long-presses: held as long as it may be, it opens the table when its button is released
+		if (press.finger && canLongPress(table)) {
 			const pressed = press
 			pressed.timer = setTimeout(() => {
 				pressed.timer = null
@@ -55,7 +66,8 @@ export function useTablePress({
 	}
 
 	function move(event) {
-		if (!isThePress(event)) return
+		// A mouse's click that slips is still a click: the plan does not pan from a table under a mouse
+		if (!isThePress(event) || !press.finger) return
 		const moved = Math.hypot(
 			(event.clientX ?? press.x) - press.x,
 			(event.clientY ?? press.y) - press.y,
