@@ -17,7 +17,8 @@
 			:style="viewMode === 'station' ? { backgroundColor: (card.stationColor || '#22C55E') + '15' } : {}">
 			<div>
 				<h3 :class="TICKET_FRAME.title" data-test="ticket-title">{{ card.title }}</h3>
-				<span class="text-gray-500 font-medium" :class="TICKET_FRAME.number" data-test="ticket-number">{{ card.subtitle }}</span>
+				<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css), so no plain `dark:` colour reaches it; it read 3.8:1 on the green-tinted header. `[&&]` doubles the selector so that this variant outranks it. -->
+				<span class="text-gray-500 dark:[&&]:!text-gray-300 font-medium" :class="TICKET_FRAME.number" data-test="ticket-number">{{ card.subtitle }}</span>
 			</div>
 			<div class="text-right">
 				<div :class="[TICKET_FRAME.timer, waitTimeClass]" data-test="ticket-timer">{{ elapsedTime }}</div>
@@ -34,11 +35,13 @@
 				<ul class="divide-y divide-gray-100 dark:divide-gray-700">
 					<li v-for="item in card.items" :key="item.name" class="py-2 flex items-center gap-3" :class="TICKET_FRAME.line" data-test="ticket-line">
 						<!-- Station badge -->
+						<!-- //// Neoffice — dark mode (task 46): the station's name is written in the station's own colour on a tint of it, which reads on a light card and not on a dark one (a blue station 2.0:1). The colour moves from the inline style to a variable the class reads, so that in dark the class can take the same colour lightened (`onDark`). Light mode draws the same colour as before. -->
 						<span v-if="item.preparation_station"
-							class="text-[9px] font-bold uppercase px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0"
+							class="text-[9px] font-bold uppercase px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]"
 							:style="{
 								backgroundColor: (item.station_color || '#6B7280') + '20',
-								color: item.station_color || '#6B7280',
+								'--station-color': item.station_color || '#6B7280',
+								'--station-on-dark': onDark(item.station_color || '#6B7280'),
 								border: '1px solid ' + (item.station_color || '#6B7280') + '40'
 							}">
 							{{ item.station_name || item.preparation_station }}
@@ -72,9 +75,10 @@
 				<div v-for="group in card.tableGroups" :key="group.tableName" class="mb-3 last:mb-0">
 					<div class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 flex justify-between items-center">
 						<span>{{ group.tableName }}</span>
+						<!-- //// Neoffice — dark mode (task 46): this build's palette has no `emerald`, so `text-emerald-700` and `dark:text-emerald-300` compile to nothing and the button took the grey of its row (3.1:1 on the green tint the till's dark remap gives it); the pale mint of the dark ramp reads. -->
 						<button
 							@click="deliverTableGroup(group)"
-							class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors"
+							class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 dark:text-ds-success-soft hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors"
 							:disabled="loading"
 						>
 							{{ __("Deliver") }}
@@ -100,9 +104,10 @@
 
 		<!-- Action: Mark Delivered -->
 		<div class="p-3 border-t bg-gray-50 dark:bg-gray-800/80">
+			<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and `text-white` was forced on it: a blank bar. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled. Light mode is untouched. -->
 			<Button
 				variant="solid"
-				class="w-full h-14 text-lg font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-md"
+				class="w-full h-14 text-lg font-bold bg-emerald-500 hover:bg-emerald-600 text-white dark:enabled:text-ink-white shadow-md"
 				@click="markDelivered"
 				:loading="loading"
 			>
@@ -123,6 +128,8 @@ import { Button } from "frappe-ui"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
+//// Neoffice — a station's colour lightened for a dark card (task 46)
+import { onDark } from "@/utils/stationColors"
 
 const props = defineProps({
 	card: {
@@ -167,9 +174,12 @@ const elapsedTime = computed(() => {
 	return `${min}:${sec}`
 })
 
+//// Neoffice — dark mode (task 46): the same lighter red and orange, and the same pulse that never dims the text, as the kitchen ticket's timer
+//// (KDSOrderCard); the green is left.
 const waitTimeClass = computed(() => {
-	if (elapsedMinutes.value > 10) return "text-red-600 animate-pulse"
-	if (elapsedMinutes.value > 5) return "text-orange-500"
+	if (elapsedMinutes.value > 10)
+		return "text-red-600 animate-pulse dark:text-ds-danger dark:animate-late-pulse"
+	if (elapsedMinutes.value > 5) return "text-orange-500 dark:text-ds-warning"
 	return "text-green-600"
 })
 

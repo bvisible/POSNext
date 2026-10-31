@@ -57,12 +57,13 @@
 				:aria-pressed="!selectedStation"
 				@click="emit('update:selectedStation', null)"
 			>{{ allLabel }}</button>
+			<!-- //// Neoffice — dark mode (task 46): the chosen station's chip is white text on the station's own colour, 2.8:1 on a clay station; in dark the text is whichever of white and ink reads on that colour (the variable carries it: an inline colour cannot be reached by a class). Light mode keeps `text-white`. -->
 			<button
 				v-for="station in stations"
 				:key="station.name"
 				type="button"
-				:class="[CHIP, selectedStation === station.name ? 'text-white' : IDLE]"
-				:style="selectedStation === station.name ? { backgroundColor: station.color } : {}"
+				:class="[CHIP, selectedStation === station.name ? 'text-white dark:text-[color:var(--station-ink)]' : IDLE]"
+				:style="selectedStation === station.name ? { backgroundColor: station.color, '--station-ink': inkOn(station.color) } : {}"
 				:aria-pressed="selectedStation === station.name"
 				@click="emit('update:selectedStation', selectedStation === station.name ? null : station.name)"
 			>
@@ -91,6 +92,8 @@
 
 <script setup>
 import { computed } from "vue"
+//// Neoffice — what to write on a station's colour in dark mode (task 46)
+import { inkOn } from "@/utils/stationColors"
 
 /**
  * The line of filters of the two service screens.

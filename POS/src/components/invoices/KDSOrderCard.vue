@@ -110,9 +110,10 @@
 									ℹ {{ item.posa_special_instructions }}
 								</div>
 								<!-- Station badge -->
+								<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
 								<span v-if="showStationBadge && item.preparation_station"
-									class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white mt-0.5 ml-4 inline-block self-start"
-									:style="{ backgroundColor: getStationColor(item.preparation_station) }">
+									class="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white dark:text-[color:var(--station-ink)] mt-0.5 ml-4 inline-block self-start"
+									:style="{ backgroundColor: getStationColor(item.preparation_station), '--station-ink': inkOn(getStationColor(item.preparation_station)) }">
 									{{ item.station_name || item.preparation_station }}
 								</span>
 							</div>
@@ -120,6 +121,7 @@
 							<!-- //// Neoffice — was `absolute` under the dish, inside the ticket: the dishes now scroll inside the ticket, -->
 							<!-- //// and a menu inside a scrolling body is cut by its foot. It is `fixed` and placed on the screen by -->
 							<!-- //// utils/menuPlacement, and its buttons are 44 px high for a finger (task 23). -->
+							<!-- //// Neoffice — the "Ready" entry takes the dark ramp's green in dark mode (task 46): `text-green-700` on the dark menu was 3.0:1 -->
 							<!-- //// Neoffice — never for a delivered dish (task 42), even if a refresh delivers it while its menu is open -->
 							<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
 								class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
@@ -132,7 +134,7 @@
 								</button>
 								<button v-if="item.kds_status !== 'Ready'"
 									@click.stop="updateItemStatus(item, 'Ready')"
-									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
+									class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 dark:text-ds-success active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
 									<span class="w-2 h-2 rounded-full bg-green-500"></span>
 									{{ __("Ready") }}
 								</button>
@@ -146,13 +148,14 @@
 						</div>
 					</template>
 					<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
+					<!-- //// Neoffice — dark mode (task 46): the preview of dishes not sent yet is dimmed to 50 %, which on a dark card left it at 2.2:1; 75 % keeps it dimmer than a live dish and at 3:1 or more -->
 					<div v-if="waitingItems.length > 0" class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
 						<h4 class="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-2 tracking-wider flex items-center gap-1">
 							<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 							{{ __("Coming Next") }}
 						</h4>
 						<div v-for="(item, idx) in waitingItems" :key="'w-' + idx"
-							class="py-1.5 opacity-50" data-ticket-line
+							class="py-1.5 opacity-50 dark:opacity-75" data-ticket-line
 							:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0 }">
 							<div class="flex justify-between items-start gap-1 px-1 -mx-1">
 								<span class="text-sm text-gray-500 dark:text-gray-400 leading-tight">
@@ -183,11 +186,12 @@
 		<!-- //// Neoffice — the main buttons are 40 px high on every width (fix round 1): `size="lg"` is the Button's own 40 px. The card -->
 		<!-- //// used to ask for `h-10` beside the Button's default `h-7`, and the later of the two in the stylesheet won: 28 px. -->
 		<div class="flex-shrink-0 p-3 border-t border-gray-100 dark:border-gray-700" :class="{ 'pt-5': hiddenCount > 0 }" data-test="ticket-actions">
+			<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and these buttons forced `text-white` on it: white on near-white, a blank square. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled (a loading button is greyed and keeps the white). Light mode is untouched. -->
 			<Button
 				v-if="status === 'Pending'"
 				variant="solid"
 				size="lg"
-				class="w-full font-bold bg-blue-600 active:bg-blue-700 text-white"
+				class="w-full font-bold bg-blue-600 active:bg-blue-700 text-white dark:enabled:text-ink-white"
 				@click="updateStatus('Preparing')"
 				:loading="loading"
 			>
@@ -198,7 +202,7 @@
 				v-if="status === 'Preparing'"
 				variant="solid"
 				size="lg"
-				class="w-full font-bold bg-green-500 active:bg-green-600 text-white"
+				class="w-full font-bold bg-green-500 active:bg-green-600 text-white dark:enabled:text-ink-white"
 				@click="updateStatus('Ready')"
 				:loading="loading"
 			>
@@ -217,8 +221,9 @@
 			</Button>
 
 			<!-- Confirmation when Runner is active -->
+			<!-- //// Neoffice — dark mode (task 46): the till's dark remap turns the amber tint dark and left the text `amber-800`, dark on dark (1.8:1); the dark ramp's warning colour reads at 5.9:1 -->
 			<div v-if="showDeliveredConfirm" class="w-full p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-				<p class="text-xs text-amber-800 font-medium mb-2">{{ __("Runner is active. This will skip the Runner.") }}</p>
+				<p class="text-xs text-amber-800 dark:text-ds-warning font-medium mb-2">{{ __("Runner is active. This will skip the Runner.") }}</p>
 				<div class="flex gap-2">
 					<Button size="sm" variant="subtle" @click="showDeliveredConfirm = false" class="flex-1">{{ __("Cancel") }}</Button>
 					<Button size="sm" variant="solid" @click="confirmDelivered" class="flex-1">{{ __("Confirm") }}</Button>
@@ -237,6 +242,8 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusOf } from "@/utils/kitchenBands"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
+//// Neoffice — what to write on a station's colour in dark mode (task 46)
+import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
 import { placeMenu } from "@/utils/menuPlacement"
 import { hiddenLines } from "@/utils/ticketScrollHints"
@@ -506,10 +513,14 @@ const totalTime = computed(() => {
 const elapsedMinutes = lastActionMinutes
 
 // Timer color: red+pulse >15min, orange >10min, green if ready
+//// Neoffice — dark mode (task 46): `red-600` and `orange-500` are for a light card (3.1:1 and 4.1:1 on a dark one), and `animate-pulse` halves
+//// the opacity, which took the late timer to 1.6:1 at its dimmest. In dark the late timer is the dark ramp's lighter red and pulses by
+//// colour and glow (`late-pulse`, tailwind.config.js) so that no moment of the blink is dim; a slow one is the lighter orange. Green is left.
 const timeColorClass = computed(() => {
 	if (status.value === "Ready") return "text-green-600"
-	if (elapsedMinutes.value > 15) return "text-red-600 animate-pulse"
-	if (elapsedMinutes.value > 10) return "text-orange-500"
+	if (elapsedMinutes.value > 15)
+		return "text-red-600 animate-pulse dark:text-ds-danger dark:animate-late-pulse"
+	if (elapsedMinutes.value > 10) return "text-orange-500 dark:text-ds-warning"
 	return "text-gray-800 dark:text-gray-200"
 })
 
@@ -528,12 +539,14 @@ const borderColorClass = computed(() => {
 })
 
 // Status badge styling for the order header
+//// Neoffice — dark mode (task 46): the till's dark remap lightens the TEXT of `text-blue-800` (to clay-200) and leaves `bg-blue-200` as the
+//// same clay-200: the "In preparation" badge was a blank patch (1.0:1). In dark it takes the clay tint the dishes' own badge already has.
 const statusBadgeClass = computed(() => {
 	switch (status.value) {
 		case "Pending":
 			return "bg-yellow-200 text-yellow-800"
 		case "Preparing":
-			return "bg-blue-200 text-blue-800"
+			return "bg-blue-200 text-blue-800 dark:bg-blue-400/25"
 		case "Ready":
 			return "bg-green-200 text-green-800"
 		default:
@@ -549,7 +562,8 @@ function itemStatusClass(status) {
 		case "Preparing":
 			return "bg-blue-100 text-blue-800"
 		case "Ready":
-			return "bg-green-100 text-green-800"
+			//// Neoffice — dark mode (task 46): the dark remap tints `bg-green-100` dark green and `text-green-800` stayed dark green on it (1.3:1)
+			return "bg-green-100 text-green-800 dark:text-ds-success-soft"
 		case "Delivered":
 			return "bg-gray-100 text-gray-800"
 		default:

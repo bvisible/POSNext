@@ -20,7 +20,8 @@
 			</div>
 			<div class="flex items-center gap-3">
 				<label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
-					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+					<!-- //// Neoffice — dark mode (task 46): an unchecked box was a solid white disc, which reads as "on" next to the clay fill of a checked one; in dark it is empty with a ring of the system's tertiary text colour (3:1 or more on the header). A checked box keeps its fill. -->
+					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:[&:not(:checked)]:bg-transparent dark:[&:not(:checked)]:ring-1 dark:[&:not(:checked)]:ring-inset dark:[&:not(:checked)]:ring-ds-sand-400" />
 					{{ __("Show completed") }}
 				</label>
 				<Button @click="loadOrders" icon="refresh-cw">

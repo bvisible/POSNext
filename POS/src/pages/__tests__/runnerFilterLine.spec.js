@@ -239,8 +239,13 @@ describe("the counts of the runner", () => {
 		}
 		const stations = wrapper.findAll('[data-test="station-count"]')
 		expect(stations.map((count) => count.text())).toEqual(["3✓", "4✓"])
-		expect(stations[0].attributes("style")).toContain("rgb(44, 79, 168)")
-		expect(stations[1].attributes("style")).toContain("rgb(214, 138, 89)")
+		// The station's colour is the colour of its count. Since task 46 (dark mode) it reaches the text through a variable and a
+		// class instead of the inline `color`, which a `dark:` class cannot outrank: the colour drawn in light mode is the same
+		expect(stations[0].element.style.getPropertyValue("--station-color")).toBe("#2C4FA8")
+		expect(stations[1].element.style.getPropertyValue("--station-color")).toBe("#D68A59")
+		for (const count of stations)
+			expect(count.classes()).toContain("text-[color:var(--station-color)]")
+		expect(stations[0].attributes("style")).toContain("rgba(44, 79, 168")
 		for (const count of stations)
 			expect(count.classes()).not.toContain("bg-green-500")
 	})

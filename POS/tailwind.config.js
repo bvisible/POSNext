@@ -49,6 +49,22 @@ export default {
 						caution: "var(--pos-caution)",
 						danger: "var(--pos-danger)",
 					},
+					//// Neoffice — the design system's DARK tokens for the kitchen and runner screens (NeoRestau lot 1, task 46). Their
+					//// `dark:` classes used greys, or nothing at all, and the till's own dark remap (index.css) turns many light classes into
+					//// colours that no longer pair (a pill's text and its background came out the same colour). Names and values are the
+					//// system's: `tokens/colors.css` in its dark scope for paper and ink, and the dark ramp of readme 9.1 for the status colours,
+					//// the only dark ramp the system gives them.
+					ds: {
+						paper: "#FFFDF8", // --paper-bright: text on a dark ground
+						ink: "#141414", // --sand-950: text on a bright fill
+						"sand-300": "#BFB5A4", // --text-secondary on dark
+						"sand-400": "#968C7C", // --text-tertiary on dark
+						success: "#3DBE74", // success, dark ramp
+						"success-soft": "#CBEDD7", // --green-100: a pale mint, for text on a green tint
+						warning: "#E6A93B", // warning, dark ramp: the lighter orange of a slow timer
+						danger: "#FF6369", // destructive, dark ramp: the lighter red of a late timer
+						"danger-soft": "#F6D2C9", // --red-100: the pale phase of the late timer's pulse
+					},
 				};
 			})(),
 			borderRadius: {
@@ -72,6 +88,24 @@ export default {
 			},
 			minHeight: { target: "var(--pos-target)" },
 			minWidth: { target: "var(--pos-target)" },
+			//// Neoffice — two pulses for the dark mode of the kitchen and runner screens (NeoRestau lot 1, task 46). Tailwind's `animate-pulse`
+			//// halves the OPACITY, which on a dark card takes a late timer's red down to about 1.6:1 at its dimmest. These two never fade
+			//// the text: the late timer swings between two light reds and breathes a glow (it still blinks, and every phase reads at 4.5:1
+			//// or more), and a ready badge swells. Used only behind `dark:`, the light mode keeps `animate-pulse`.
+			keyframes: {
+				"late-pulse": {
+					"0%, 100%": { color: "#FF6369", textShadow: "0 0 0 rgba(255, 99, 105, 0)" },
+					"50%": { color: "#F6D2C9", textShadow: "0 0 10px rgba(255, 99, 105, 0.85)" },
+				},
+				"ready-pulse": {
+					"0%, 100%": { transform: "scale(1)" },
+					"50%": { transform: "scale(1.15)" },
+				},
+			},
+			animation: {
+				"late-pulse": "late-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+				"ready-pulse": "ready-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+			},
 		},
 	},
 	plugins: [],

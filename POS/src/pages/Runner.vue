@@ -11,7 +11,8 @@
 		<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
 		</svg>
-		<h2 class="text-xl font-medium text-gray-500">{{ __("Runner is disabled") }}</h2>
+		<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css) and reads 4.35:1 on the screen's ground, so a plain `dark:` colour never reached it; `[&&]` doubles the selector so that this variant outranks it. -->
+		<h2 class="text-xl font-medium text-gray-500 dark:[&&]:!text-gray-400">{{ __("Runner is disabled") }}</h2>
 		<p class="text-sm text-gray-400 mt-1">{{ __("Enable it in Restaurant Settings to use the Runner display.") }}</p>
 		<!-- A tablet signed in with its own account has no till to go back to -->
 		<button v-if="deskSession" @click="$router.push('/')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-300">
@@ -49,7 +50,8 @@
 					>{{ __("Plan", null, "Floor plan view") }}</button>
 				</div>
 				<label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
-					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+					<!-- //// Neoffice — dark mode (task 46): an unchecked box was a solid white disc, which reads as "on" next to the clay fill of a checked one; in dark it is empty with a ring of the system's tertiary text colour (3:1 or more on the header). A checked box keeps its fill. -->
+					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:[&:not(:checked)]:bg-transparent dark:[&:not(:checked)]:ring-1 dark:[&:not(:checked)]:ring-inset dark:[&:not(:checked)]:ring-ds-sand-400" />
 					{{ __("Show completed") }}
 				</label>
 				<Button @click="loadOrders" icon="refresh-cw">
@@ -75,15 +77,20 @@
 			     pill of the station's own colour and a tick on a station. Nothing when no dish is ready. The kitchen screen
 			     counts its open tickets, and gives its counts no such meaning -->
 			<template #room-count="{ room }">
+				<!-- //// Neoffice — dark mode (task 46): white on `green-500` is 2.6:1; in dark the count is ink on the dark ramp's success green -->
 				<span v-if="room.count > 0" data-test="room-count"
-					class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-500 rounded-full">{{ room.count }}</span>
+					class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-500 dark:bg-ds-success dark:text-ds-ink rounded-full">{{ room.count }}</span>
 			</template>
 			<template #station-count="{ station, selected }">
+				<!-- //// Neoffice — dark mode (task 46): a station's count is written in the station's own colour on a tint of it (a blue station 1.9:1 on a dark chip). The colour moves from the inline style to a variable the class reads, so that in dark it can be the same colour lightened (`onDark`). A chosen chip keeps the text colour of the chip and its white wash (now a class, `bg-[rgba(255,255,255,0.3)]`, the very value it was inline: the till's dark remap of `bg-white/30` is `!important` and would flatten that class), and on a chip whose text is white the wash is black in dark, so that the count reads (white on the white wash was 3.7:1). -->
 				<span v-if="station.count > 0" data-test="station-count"
 					class="text-xs font-bold px-1.5 py-0.5 rounded"
+					:class="selected
+						? ['bg-[rgba(255,255,255,0.3)]', inkOn(station.color) === '#FFFFFF' ? 'dark:bg-black/25' : '']
+						: 'text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]'"
 					:style="selected
-						? { backgroundColor: 'rgba(255,255,255,0.3)' }
-						: { backgroundColor: station.color + '20', color: station.color }">{{ station.count }}✓</span>
+						? {}
+						: { backgroundColor: station.color + '20', '--station-color': station.color, '--station-on-dark': onDark(station.color) }">{{ station.count }}✓</span>
 			</template>
 		</RoomStationFilterLine>
 
@@ -93,7 +100,8 @@
 				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white"></div>
 			</div>
 
-			<div v-else-if="groupedCards.length === 0" class="flex flex-col justify-center items-center h-full text-gray-500">
+			<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css) and reads 4.35:1 on the screen's ground, so a plain `dark:` colour never reached it; `[&&]` doubles the selector so that this variant outranks it. -->
+			<div v-else-if="groupedCards.length === 0" class="flex flex-col justify-center items-center h-full text-gray-500 dark:[&&]:!text-gray-400">
 				<svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
 				</svg>
@@ -113,8 +121,9 @@
 		</main>
 
 		<!-- Plan view -->
-		<main v-else class="flex-1 overflow-auto relative"
-			:style="{ backgroundColor: '#f8fafc', backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)', backgroundSize: '25px 25px' }">
+		<!-- //// Neoffice — dark mode (task 46): the floor plan's canvas was a fixed light colour and light dots in an inline style, a bright sheet on a dark screen under table names written in light text (1.2:1). The colour and the dots move to classes: the same light ones (`#f8fafc`, `#cbd5e1`), and in dark the ground the till's dark remap gives `bg-gray-50` and faint white dots. Only the size stays inline. -->
+		<main v-else class="flex-1 overflow-auto relative bg-[#f8fafc] dark:bg-[#181b21] [--plan-dot:#cbd5e1] dark:[--plan-dot:rgba(255,255,255,0.1)] bg-[radial-gradient(circle,var(--plan-dot)_1px,transparent_1px)]"
+			:style="{ backgroundSize: '25px 25px' }">
 
 			<!-- Plan area tabs (if not already filtered by area tabs above) -->
 			<div v-if="!activeArea && areas.length > 1" class="sticky top-0 z-10 bg-white/90 backdrop-blur px-4 py-2 flex gap-1 border-b">
@@ -140,7 +149,8 @@
 						backgroundColor: (station.color || '#6B7280') + '15',
 						borderColor: station.color || '#6B7280'
 					}">
-					<span class="text-xs font-bold" :style="{ color: station.color }">{{ station.station_name }}</span>
+					<!-- //// Neoffice — dark mode (task 46): the station's name in its own colour on the plan, lightened for a dark canvas (a clay name on a light canvas was 2.5:1, a blue one on a dark one 2.0:1); see the runner card. -->
+					<span class="text-xs font-bold text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]" :style="{ '--station-color': station.color, '--station-on-dark': onDark(station.color || '#6B7280') }">{{ station.station_name }}</span>
 				</div>
 
 				<!-- Tables -->
@@ -160,8 +170,9 @@
 					<span class="font-bold text-sm" :class="getTableReadyCount(table) > 0 ? 'text-gray-900' : 'text-gray-400'">
 						{{ table.table_name }}
 					</span>
+					<!-- //// Neoffice — dark mode (task 46): a pale mint badge fading to 50 % over a dark plan was 2.0:1 at its dimmest; in dark it is a green tint with pale text and swells instead of fading (`ready-pulse`, tailwind.config.js). -->
 					<span v-if="getTableReadyCount(table) > 0"
-						class="text-[10px] font-bold text-green-700 bg-green-200 px-1.5 py-0.5 rounded-full mt-0.5 animate-pulse">
+						class="text-[10px] font-bold text-green-700 bg-green-200 dark:bg-ds-success/25 dark:text-ds-success-soft px-1.5 py-0.5 rounded-full mt-0.5 animate-pulse dark:animate-ready-pulse">
 						{{ getTableReadyCount(table) }}✓
 					</span>
 				</div>
@@ -174,16 +185,18 @@
 						<button @click="selectedPlanTable = null" class="text-gray-400 hover:text-gray-600">&times;</button>
 					</div>
 					<div v-for="item in selectedPlanTableOrder.items" :key="item.name" class="flex items-center gap-2 py-1.5 border-t border-gray-100">
+						<!-- //// Neoffice — dark mode (task 46): the text on a station's colour is white or ink, whichever reads (white on clay is 2.8:1); light mode keeps `text-white`. -->
 						<span v-if="item.preparation_station"
-							class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full text-white flex-shrink-0"
-							:style="{ backgroundColor: item.station_color || '#6B7280' }">
+							class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full text-white dark:text-[color:var(--station-ink)] flex-shrink-0"
+							:style="{ backgroundColor: item.station_color || '#6B7280', '--station-ink': inkOn(item.station_color || '#6B7280') }">
 							{{ item.station_name || item.preparation_station }}
 						</span>
 						<span class="flex-1 text-sm font-medium">{{ item.item_name }}</span>
 						<span class="font-bold text-sm bg-gray-100 dark:bg-gray-700 w-7 h-7 flex items-center justify-center rounded">{{ item.qty }}</span>
 					</div>
+					<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark and `text-white` was forced on it (see RunnerOrderCard) -->
 					<Button variant="solid"
-						class="w-full mt-3 h-10 text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white"
+						class="w-full mt-3 h-10 text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white dark:enabled:text-ink-white"
 						@click="markTableDelivered(selectedPlanTableOrder)"
 						:loading="deliverLoading">
 						{{ __("Mark Delivered") }}
@@ -200,6 +213,8 @@ import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
+//// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
+import { inkOn, onDark } from "@/utils/stationColors"
 import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"

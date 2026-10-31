@@ -16,7 +16,8 @@
 		<header class="flex flex-shrink-0 items-center justify-between gap-2 px-1 pb-1">
 			<h2 :id="headerId" data-test="band-header" class="text-lg font-bold text-gray-900 dark:text-white">
 				{{ label }}
-				<span data-test="band-count" class="font-medium text-gray-500 dark:text-gray-400">({{ aliveCount }})</span>
+				<!-- //// Neoffice — dark mode (task 46): `dark:text-gray-400` never applied, the till's dark remap of `.text-gray-500` is `!important` (index.css) and wins at equal weight; the count read 4.35:1. `[&&]` doubles the selector so that this variant outranks it. -->
+				<span data-test="band-count" class="font-medium text-gray-500 dark:[&&]:!text-gray-400">({{ aliveCount }})</span>
 			</h2>
 			<!-- The tickets scrolled past are counted here, in the header, in either layout: a cook who has swiped away from the -->
 			<!-- oldest tickets must be told so. A lane scrolls sideways, so the ones still to come are counted here too, at its -->
@@ -28,10 +29,11 @@
 			</div>
 		</header>
 
+		<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css) and reads 4.35:1 on the screen's ground, so a plain `dark:` colour never reached it; `[&&]` doubles the selector so that this variant outranks it. -->
 		<p
 			v-if="!orders.length"
 			data-test="band-empty"
-			class="px-1 py-1 text-base text-gray-500 dark:text-gray-400"
+			class="px-1 py-1 text-base text-gray-500 dark:[&&]:!text-gray-400"
 		>{{ emptyText }}</p>
 
 		<template v-else>
