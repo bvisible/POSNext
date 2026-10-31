@@ -17,6 +17,8 @@ const emitEvent = vi.hoisted(() => vi.fn())
 const restaurantStore = vi.hoisted(() => ({}))
 const shiftStore = vi.hoisted(() => ({ currentProfile: {} }))
 const printing = vi.hoisted(() => ({}))
+// What the till's worker says of its stock refresh (the screen shows it)
+const stockSync = vi.hoisted(() => ({ status: { enabled: false, itemCount: 0, lastSync: null } }))
 
 vi.hoisted(() => {
 	globalThis.__ = (text, args) => (args ? text.replace(/\{(\d+)\}/g, (_m, i) => args[i]) : text)
@@ -25,7 +27,7 @@ vi.hoisted(() => {
 vi.mock("frappe-ui", () => ({ call }))
 vi.mock("@/composables/useToast", () => ({ useToast: () => ({ showSuccess, showError }) }))
 vi.mock("@/composables/usePOSEvents", () => ({
-	usePOSEvents: () => ({ detectSettingsChanges, emitStockSyncConfigured: vi.fn(), emit: emitEvent }),
+	usePOSEvents: () => ({ detectSettingsChanges, emit: emitEvent }),
 }))
 const qz = vi.hoisted(() => ({}))
 vi.mock("@/composables/useQzTray", async () => {
@@ -54,7 +56,7 @@ vi.mock("@/stores/posShift", () => ({ usePOSShiftStore: () => shiftStore }))
 vi.mock("@/stores/restaurant", () => ({ useRestaurantStore: () => restaurantStore }))
 vi.mock("@/utils/offline/workerClient", () => ({
 	offlineWorker: {
-		getStockSyncStatus: vi.fn(async () => ({ enabled: false, itemCount: 0, lastSync: null })),
+		getStockSyncStatus: vi.fn(async () => stockSync.status),
 		configureStockSync: vi.fn(),
 		startStockSync: vi.fn(),
 		stopStockSync: vi.fn(),
@@ -70,6 +72,9 @@ const { default: POSSettings } = await import("../POSSettings.vue")
 
 const READ = "pos_next.till_settings.api.get_till_settings"
 const SAVE = "pos_next.till_settings.api.save_till_settings"
+
+const STOCK_SYNC_HELP =
+	"The quantities on screen are refreshed from the server every minute, in addition to the live updates from the other tills."
 
 const RESTAURANT_TABS = [
 	{ key: "restaurant", label: "Restaurant", section: "restaurant" },
@@ -228,7 +233,15 @@ const TILL_SETTINGS = [
 		doctype: "POS Profile",
 		applies: "settings",
 	}),
-	setting("stock_sync_enabled", "stock_sync", "stock", { doctype: null, store: "device" }),
+	// Always on, every minute (ruling 84): no switch and no interval, only its state
+	setting("stock_sync_status", "stock_sync", "stock", {
+		doctype: null,
+		store: "device",
+		widget: "special",
+		kind: "info",
+		label: "Stock sync",
+		help: STOCK_SYNC_HELP,
+	}),
 	setting("receipt_printer", "network_printer", "printing", {
 		doctype: null,
 		store: "cloudprnt",
@@ -399,6 +412,7 @@ function saves() {
 }
 
 beforeEach(() => {
+	stockSync.status = { enabled: false, itemCount: 0, lastSync: null }
 	call.mockReset()
 	showSuccess.mockReset()
 	showError.mockReset()
@@ -729,6 +743,54 @@ describe("what the screen keeps on this computer", () => {
 
 		expect(qz.selectedPrinter.value).toBe("")
 		expect(saves()).toEqual([])
+	})
+})
+
+describe("the stock refresh, always on", () => {
+	it("shows its state with its help behind the lightbulb, and no switch and no interval to set", async () => {
+		stockSync.status = { enabled: true, itemCount: 42, lastSync: Date.now() - 5000 }
+		await open(screenOf())
+		await openTab("stock")
+
+		const state = row("stock_sync_status")
+		expect(state.exists()).toBe(true)
+		expect(state.text()).toContain("Running · 42 items followed")
+		expect(state.classes()).not.toContain("opacity-[0.42]")
+		expect(row("stock_sync_enabled").exists()).toBe(false)
+		expect(row("stock_sync_interval").exists()).toBe(false)
+		const group = wrapper.find("[data-group='stock_sync']")
+		expect(group.findAll("input, select, textarea")).toHaveLength(0)
+
+		const bulb = group.find("h3 button[aria-label='Help']")
+		expect(bulb.attributes("title")).toBe(STOCK_SYNC_HELP)
+		await bulb.trigger("click")
+		expect(group.text()).toContain(STOCK_SYNC_HELP)
+	})
+
+	it("says so when the till's worker is not refreshing yet", async () => {
+		await open(screenOf())
+		await openTab("stock")
+
+		expect(row("stock_sync_status").text()).toContain("Stopped")
+	})
+
+	it("saves nothing of it, and keeps no setting of it in the browser's storage", async () => {
+		localStorage.setItem("pos_stock_sync_settings", JSON.stringify({ enabled: false, intervalSeconds: 300 }))
+		await open(screenOf())
+		await openTab("stock")
+		await row("posa_block_sale_beyond_available_qty").find("input[type='checkbox']").setValue(false)
+		await saveButton().trigger("click")
+		await flushPromises()
+
+		expect(Object.keys(saves()[0][1].values)).toEqual(["posa_block_sale_beyond_available_qty"])
+		// Neither read nor written: the screen leaves what an older till kept where it is (the till forgets it)
+		expect(localStorage.getItem("pos_stock_sync_settings")).toBe(
+			JSON.stringify({ enabled: false, intervalSeconds: 300 })
+		)
+		const { offlineWorker } = await import("@/utils/offline/workerClient")
+		expect(offlineWorker.configureStockSync).not.toHaveBeenCalled()
+		expect(offlineWorker.startStockSync).not.toHaveBeenCalled()
+		expect(offlineWorker.stopStockSync).not.toHaveBeenCalled()
 	})
 })
 

@@ -4,9 +4,8 @@
  * //// sends, what the till must take again once it is saved.
  * @vitest-environment jsdom
  */
-import { beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
-	STOCK_SYNC_KEY,
 	changedValues,
 	columnsOf,
 	conditionsHold,
@@ -14,7 +13,6 @@ import {
 	isOn,
 	openingTab,
 	railSections,
-	readStockSync,
 	untickExcluded,
 	withinBounds,
 } from "../tillSettingsForm"
@@ -38,7 +36,7 @@ const screen = {
 		{ key: "customer", group: "customer", store: "document", editable: true, applies: "profile" },
 		{ key: "item_groups", group: "customer", store: "document", editable: true, applies: "catalogue" },
 		{ key: "enable_runner", group: "customer", store: "document", editable: false, applies: "restaurant" },
-		{ key: "stock_sync_enabled", group: "lock", store: "device", editable: true },
+		{ key: "qz_printer", group: "lock", store: "device", editable: true },
 	],
 }
 
@@ -65,7 +63,7 @@ describe("the rail and the columns", () => {
 		expect(columns[0][0].settings.map((setting) => setting.key)).toEqual([
 			"enable_session_lock",
 			"session_lock_timeout",
-			"stock_sync_enabled",
+			"qz_printer",
 		])
 	})
 
@@ -179,8 +177,8 @@ describe("when a setting is greyed", () => {
 
 describe("what a save sends", () => {
 	it("sends the values of the till's documents that changed, and nothing kept elsewhere", () => {
-		const read = { enable_session_lock: 0, customer: "Walk-in", item_groups: [], stock_sync_enabled: 0 }
-		const draft = { ...read, enable_session_lock: 1, item_groups: ["Drinks"], stock_sync_enabled: 1 }
+		const read = { enable_session_lock: 0, customer: "Walk-in", item_groups: [], qz_printer: "" }
+		const draft = { ...read, enable_session_lock: 1, item_groups: ["Drinks"], qz_printer: "Counter printer" }
 
 		expect(changedValues(screen.settings, read, draft)).toEqual({
 			enable_session_lock: 1,
@@ -204,15 +202,5 @@ describe("what a save sends", () => {
 		expect(withinBounds({ min: 1, max: null }, 5)).toBe(true)
 		expect(withinBounds({ min: 0, max: 100 }, 101)).toBe(false)
 		expect(withinBounds({ min: null, max: null }, "abc")).toBe(false)
-	})
-})
-
-describe("this computer's settings", () => {
-	beforeEach(() => localStorage.clear())
-
-	it("reads the stock sync this computer keeps, and its defaults without any", () => {
-		expect(readStockSync()).toEqual({ stock_sync_enabled: 0, stock_sync_interval: 60 })
-		localStorage.setItem(STOCK_SYNC_KEY, JSON.stringify({ enabled: true, intervalSeconds: 30 }))
-		expect(readStockSync()).toEqual({ stock_sync_enabled: 1, stock_sync_interval: 30 })
 	})
 })

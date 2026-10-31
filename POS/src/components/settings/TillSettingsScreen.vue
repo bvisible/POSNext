@@ -387,14 +387,12 @@ import HelpBulb from "@/components/settings/HelpBulb.vue"
 import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
 import TillSettingField from "@/components/settings/TillSettingField.vue"
 import {
-	STOCK_SYNC_KEY,
 	changedValues,
 	columnsOf,
 	conditionsHold,
 	effectsOf,
 	openingTab,
 	railSections,
-	readStockSync,
 	untickExcluded,
 	withinBounds,
 } from "@/components/settings/tillSettingsForm"
@@ -410,7 +408,7 @@ import { offlineWorker } from "@/utils/offline/workerClient"
 import { savePrinterName } from "@/utils/qzTray"
 
 const log = logger.create("POSSettings")
-const { detectSettingsChanges, emitStockSyncConfigured, emit: emitEvent } = usePOSEvents()
+const { detectSettingsChanges, emit: emitEvent } = usePOSEvents()
 const { showSuccess, showError } = useToast()
 
 const props = defineProps({
@@ -428,8 +426,9 @@ const emit = defineEmits(["update:modelValue", "open-card"])
 
 const SAVE = "pos_next.till_settings.api.save_till_settings"
 const READ = "pos_next.till_settings.api.get_till_settings"
-// The keys of the settings this computer keeps (browser storage), saved by the screen itself
-const DEVICE_KEYS = ["stock_sync_enabled", "stock_sync_interval", "qz_printer"]
+// The keys of the settings this computer keeps (browser storage), saved by the screen itself. The stock refresh is
+// not one of them: it is always on (ruling 84), and the screen only shows its state
+const DEVICE_KEYS = ["qz_printer"]
 // The column widths of a tab: three equal columns, the hours wide beside their cards
 const COLUMN_TEMPLATES = {
 	hours: "minmax(0,1fr) 300px",
@@ -626,7 +625,7 @@ async function load() {
 	loading.value = true
 	loadError.value = ""
 	try {
-		read.value = { ...readStockSync(), qz_printer: selectedPrinter.value || "" }
+		read.value = { qz_printer: selectedPrinter.value || "" }
 		const answer = await call(READ, { pos_profile: props.posProfile })
 		takeAnswer(answer)
 		activeTab.value = openingTab(answer, props.initialTab)
@@ -732,37 +731,13 @@ async function refreshTheTill(values, before) {
 	}
 }
 
-// This computer's settings: the stock sync (browser storage and the worker), the QZ Tray printer
+// This computer's settings: the QZ Tray printer
 async function saveThisComputer() {
-	const enabled = Boolean(draft.stock_sync_enabled)
-	const intervalSeconds = Number(draft.stock_sync_interval) || 60
-	try {
-		localStorage.setItem(STOCK_SYNC_KEY, JSON.stringify({ enabled, intervalSeconds }))
-	} catch (error) {
-		log.error("Failed to save stock sync settings:", error)
-	}
-	try {
-		if (enabled) {
-			await offlineWorker.configureStockSync({ intervalMs: intervalSeconds * 1000 })
-			await offlineWorker.startStockSync()
-		} else {
-			await offlineWorker.stopStockSync()
-		}
-		emitStockSyncConfigured({ enabled, intervalMs: intervalSeconds * 1000 })
-	} catch (error) {
-		log.error("Failed to apply stock sync config:", error)
-	}
 	// Cleared, the printer is forgotten, in the browser's storage too: the composable keeps only a chosen name there,
 	// and printing falls back to the stored one, so a printer cleared in memory came back at the next reload
 	selectedPrinter.value = draft.qz_printer || ""
 	savePrinterName(draft.qz_printer || "")
-	read.value = {
-		...read.value,
-		stock_sync_enabled: draft.stock_sync_enabled,
-		stock_sync_interval: draft.stock_sync_interval,
-		qz_printer: draft.qz_printer,
-	}
-	await updateStockSyncStatus()
+	read.value = { ...read.value, qz_printer: draft.qz_printer }
 }
 
 function close() {

@@ -2250,6 +2250,8 @@ import { useUserData } from "@/data/user";
 import { parseError } from "@/utils/errorHandler";
 import { cleanupUserSession } from "@/utils/sessionCleanup";
 import { offlineWorker } from "@/utils/offline/workerClient";
+//// Neoffice — the stock refresh is always on, every minute (NeoRestau lot 1, task 13, ruling 84).
+import { startAlwaysOnStockSync } from "@/utils/alwaysOnStockSync";
 //// Neoffice — getItemWithPrice: the units the till keeps of an item, for the rows of an offline invoice taken back (task 22).
 import { deductCachedBatchQty, getItemWithPrice } from "@/utils/offline/items";
 import { cacheOfflineReceiptPayload } from "@/utils/offline/offlineReceiptCache";
@@ -3320,44 +3322,21 @@ onUnmounted(() => {
  */
 async function setupPeriodicStockSync(warehouse) {
 	try {
-		// Check if user has enabled stock sync in settings
-		let syncEnabled = false;
-		let syncIntervalMs = 60000; // Default 60 seconds
-
-		try {
-			const savedSettings = localStorage.getItem("pos_stock_sync_settings");
-			if (savedSettings) {
-				const parsed = JSON.parse(savedSettings);
-				syncEnabled = parsed.enabled ?? false;
-				syncIntervalMs = (parsed.intervalSeconds ?? 60) * 1000;
-			}
-		} catch (error) {
-			log.error("Failed to load stock sync settings:", error);
-		}
-
+		//// Neoffice — always on, every minute, with no switch and no interval (NeoRestau lot 1, task 13, ruling 84).
+		//// Upstream read `pos_stock_sync_settings` from the browser's storage and started the sync only when the
+		//// till had switched it on, so the quantities on screen stayed as old as the till's last sale. The key an
+		//// older till wrote is forgotten, not read (alwaysOnStockSync).
 		// Get all currently loaded item codes from the item store
 		const itemCodes = itemStore.allItems.map((item) => item.item_code);
 
-		// Configure stock sync with warehouse and items
-		const config = await offlineWorker.configureStockSync({
-			warehouse,
-			itemCodes,
-			intervalMs: syncIntervalMs,
-		});
-
+		//// Neoffice — configured and started at the fixed interval, whatever the browser's storage says (see above).
+		const { config, result } = await startAlwaysOnStockSync(offlineWorker, { warehouse, itemCodes });
 		log.info("Periodic stock sync configured:", config);
+		log.success("Periodic stock sync started:", result.status);
+		isStockSyncActive.value = true;
 
-		// Only start sync if user has enabled it
-		if (syncEnabled) {
-			const result = await offlineWorker.startStockSync();
-			log.success("Periodic stock sync started:", result.status);
-			isStockSyncActive.value = true;
-		} else {
-			log.info("Stock sync is disabled in settings (not starting)");
-			isStockSyncActive.value = false;
-		}
-
-		// Listen for stock sync completion events (regardless of enabled state)
+		//// Neoffice — the listeners are attached whatever the refresh does (ruling 84: it is always on).
+		// Listen for stock sync completion events
 		window.addEventListener("stockSyncComplete", handleStockSyncComplete);
 		window.addEventListener("stockSyncError", handleStockSyncError);
 

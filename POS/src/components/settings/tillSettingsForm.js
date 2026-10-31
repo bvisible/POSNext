@@ -3,10 +3,6 @@
 //// out, from that list alone, the rail of tabs, the columns of a tab, which setting is greyed by another, what changed
 //// since the screen was read and what a save must refresh at the till.
 
-// Settings kept on this computer (browser storage), saved by the screen itself
-export const STOCK_SYNC_KEY = "pos_stock_sync_settings"
-export const STOCK_SYNC_DEFAULTS = { enabled: false, intervalSeconds: 60 }
-
 // The two sections of the rail: the restaurant's tabs (a restaurant till only), then the till's
 export function railSections(screen) {
 	const tabs = screen?.tabs || []
@@ -99,19 +95,6 @@ export function changedValues(settings, read, draft) {
 export function effectsOf(settings, changedKeys) {
 	const byKey = Object.fromEntries((settings || []).map((setting) => [setting.key, setting]))
 	return new Set(changedKeys.map((key) => byKey[key]?.applies).filter(Boolean))
-}
-
-// The settings of this computer, read from the browser's storage (the screen works without it)
-export function readStockSync() {
-	try {
-		const saved = JSON.parse(localStorage.getItem(STOCK_SYNC_KEY) || "null")
-		return {
-			stock_sync_enabled: (saved?.enabled ?? STOCK_SYNC_DEFAULTS.enabled) ? 1 : 0,
-			stock_sync_interval: saved?.intervalSeconds ?? STOCK_SYNC_DEFAULTS.intervalSeconds,
-		}
-	} catch {
-		return { stock_sync_enabled: 0, stock_sync_interval: STOCK_SYNC_DEFAULTS.intervalSeconds }
-	}
 }
 
 // A number kept within the bounds of its setting (a value out of them is never saved)

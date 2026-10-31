@@ -108,6 +108,17 @@ class TestTheList(FrappeTestCase):
 					# The till offers these values only (the office's form offers the doctype's own)
 					self.assertTrue(setting.options)
 
+	def test_the_stock_refresh_has_no_switch_and_no_interval_only_its_state(self):
+		# Always on, every minute (product owner, 31.10.2026): nothing to switch off or to time, the screen shows its state
+		keys = {setting.key for setting in registry.SETTINGS}
+		self.assertFalse({"stock_sync_enabled", "stock_sync_interval"} & keys)
+		status = registry.get("stock_sync_status")
+		self.assertEqual((status.kind, status.store, status.depends_on), (registry.INFO, registry.DEVICE, ()))
+		self.assertEqual(status.tab, "stock")
+		self.assertIn("every minute", status.help.msg)
+		self.assertIn("other tills", status.help.msg)
+		self.assertTrue(all(registry.shown_on(status, restaurant_till) for restaurant_till in (False, True)))
+
 	def test_a_setting_depends_only_on_a_setting_its_till_shows(self):
 		for setting in registry.SETTINGS:
 			for when in setting.depends_on:
@@ -484,6 +495,17 @@ class TestWhoOpensTheSettings(TillSettingsCase):
 					self.assertTrue(setting["help"].strip())
 					self.assertTrue(setting["label"].strip())
 
+	def test_the_till_is_served_the_state_of_the_stock_refresh_with_its_help_and_no_switch(self):
+		self.as_user(TILL_MANAGER)
+		for till in (self.shop_till, self.restaurant_till):
+			with self.subTest(till=till):
+				settings = by_key(get_till_settings(till))
+				self.assertNotIn("stock_sync_enabled", settings)
+				self.assertNotIn("stock_sync_interval", settings)
+				status = settings["stock_sync_status"]
+				self.assertEqual((status["tab"], status["group"], status["kind"]), ("stock", "stock_sync", "info"))
+				self.assertEqual(status["help"], str(registry.get("stock_sync_status").help))
+
 	def test_a_cashier_of_the_till_is_refused(self):
 		self.as_user(TILL)
 		with self.assertRaises(frappe.PermissionError):
@@ -674,7 +696,9 @@ class TestOneSave(TillSettingsCase):
 			(self.shop_till, {"company": self.fx.company}),
 			(self.shop_till, {"enable_restaurant_mode": 1}),
 			(self.shop_till, {"allow_negative_stock": 1}),
+			(self.shop_till, {"stock_sync_status": 1}),
 			(self.shop_till, {"stock_sync_enabled": 1}),
+			(self.shop_till, {"stock_sync_interval": 30}),
 			# A restaurant till's setting at a shop till, a shop till's at a restaurant till
 			(self.shop_till, {"default_restaurant_area": self.area}),
 			(self.shop_till, {"enable_runner": 0}),

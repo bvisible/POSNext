@@ -966,33 +966,18 @@ SETTINGS = (
 		applies=APPLIES_SETTINGS,
 		needs_site=SITE_ALLOWS_NEGATIVE_STOCK,
 	),
-	Setting(
-		"stock_sync_enabled",
-		"stock_sync",
-		_lt("Sync the stock automatically"),
-		_lt("The till refreshes the stock quantities in the background. Kept on this computer."),
-		"check",
-		store=DEVICE,
-	),
-	Setting(
-		"stock_sync_interval",
-		"stock_sync",
-		_lt("Sync interval (seconds)"),
-		_lt("The time between two stock updates, at least 10 seconds."),
-		"int",
-		store=DEVICE,
-		depends_on=(on("stock_sync_enabled"),),
-		min=10,
-		max=300,
-	),
+	# The background refresh of the stock quantities is always on, with no switch and no interval (product owner,
+	# 31.10.2026): the screen only shows its state, this computer's, read from the till's worker.
 	Setting(
 		"stock_sync_status",
 		"stock_sync",
 		_lt("Stock sync"),
-		None,
+		_lt(
+			"The quantities on screen are refreshed from the server every minute, in addition to the live updates"
+			" from the other tills."
+		),
 		"special",
 		store=DEVICE,
-		depends_on=(on("stock_sync_enabled"),),
 		kind=INFO,
 	),
 	Setting(
