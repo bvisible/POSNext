@@ -224,6 +224,10 @@ const TILL_SETTINGS = [
 		required: true,
 		applies: "profile",
 	}),
+	setting("posa_block_sale_beyond_available_qty", "warehouse", "stock", {
+		doctype: "POS Profile",
+		applies: "settings",
+	}),
 	setting("stock_sync_enabled", "stock_sync", "stock", { doctype: null, store: "device" }),
 	setting("receipt_printer", "network_printer", "printing", {
 		doctype: null,
@@ -278,6 +282,7 @@ const SHOP_VALUES = {
 	allow_partial_payment: 0,
 	use_exact_amount: 0,
 	warehouse: "Store - T",
+	posa_block_sale_beyond_available_qty: 1,
 	silent_print: 0,
 	eod_email_recipients: "",
 	eod_email_auto: 0,
@@ -304,7 +309,12 @@ const CHOICES = {
 	opening_hours: [{ value: "CARD-1", label: "Lunch card" }],
 }
 
-function screenOf({ restaurantTill = false, can = { till: true, restaurant: false }, values = {} } = {}) {
+function screenOf({
+	restaurantTill = false,
+	can = { till: true, restaurant: false },
+	values = {},
+	siteAllowsNegativeStock = true,
+} = {}) {
 	const tabs = [
 		...(restaurantTill && (can.till || can.restaurant) ? RESTAURANT_TABS : []),
 		...(can.till ? TILL_TABS : []),
@@ -314,6 +324,8 @@ function screenOf({ restaurantTill = false, can = { till: true, restaurant: fals
 		.filter((entry) => tabKeys.has(entry.tab))
 		.map((entry) => ({
 			...entry,
+			// The server greys the block box where the site refuses negative stock (ruling 82)
+			...(entry.key === "posa_block_sale_beyond_available_qty" ? { greyed: !siteAllowsNegativeStock } : {}),
 			// As the server says it: the restaurant's are its managers', the till's the till manager's, and those of the
 			// restaurant's tabs the restaurant's managers' too (ruling 63)
 			editable:
@@ -459,6 +471,17 @@ describe("one Save for the whole screen", () => {
 		expect(saveButton().attributes("disabled")).toBeDefined()
 	})
 
+	it("draws Save and the open tab in the till's ink with its surface's colour, readable in both themes", async () => {
+		await open(screenOf())
+		const active = wrapper.find("nav[role='tablist'] button[aria-selected='true']")
+
+		for (const element of [saveButton(), active]) {
+			expect(element.classes()).toContain("bg-pos-ink")
+			expect(element.classes()).toContain("text-pos-surface")
+			expect(element.classes()).not.toContain("text-white")
+		}
+	})
+
 	it("sends what changed in every tab in one save, and nothing else", async () => {
 		await open(screenOf())
 		await openTab("sales")
@@ -490,6 +513,20 @@ describe("one Save for the whole screen", () => {
 		expect(shiftStore.currentProfile.warehouse).toBe("Back - T")
 		// A new warehouse changes what the till offers (its stock, the unavailable items): its items come from the server
 		expect(emitEvent).toHaveBeenCalledWith("settings:catalogue-changed", { changes: ["warehouse"] })
+	})
+
+	it("tells the till's stock guard when the block box changed (ruling 82)", async () => {
+		await open(screenOf())
+		await openTab("stock")
+		await row("posa_block_sale_beyond_available_qty").find("input[type='checkbox']").setValue(false)
+
+		await saveButton().trigger("click")
+		await flushPromises()
+
+		expect(detectSettingsChanges).toHaveBeenCalledWith(
+			{ posa_block_sale_beyond_available_qty: 0 },
+			{ posa_block_sale_beyond_available_qty: 1 }
+		)
 	})
 
 	it("asks the till to read its items again when the catalogue changed", async () => {
@@ -591,6 +628,21 @@ describe("a setting that depends on another", () => {
 		expect(row("use_exact_amount").attributes("data-greyed")).toBe("false")
 		await row("allow_credit_sale").find("input[type='checkbox']").setValue(true)
 		expect(row("use_exact_amount").attributes("data-greyed")).toBe("true")
+	})
+
+	it("shows the block box greyed where the site refuses negative stock: the till blocks whatever it says", async () => {
+		await open(screenOf({ siteAllowsNegativeStock: false }))
+		await openTab("stock")
+
+		expect(row("posa_block_sale_beyond_available_qty").attributes("data-greyed")).toBe("true")
+		expect(row("posa_block_sale_beyond_available_qty").find("input").attributes("disabled")).toBeDefined()
+	})
+
+	it("lets the block box be set where the site allows negative stock", async () => {
+		await open(screenOf({ siteAllowsNegativeStock: true }))
+		await openTab("stock")
+
+		expect(row("posa_block_sale_beyond_available_qty").attributes("data-greyed")).toBe("false")
 	})
 
 	it("is unticked when a setting it cannot go with is ticked, so that the save is not refused", async () => {

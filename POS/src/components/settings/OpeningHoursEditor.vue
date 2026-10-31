@@ -55,13 +55,13 @@
 					<span
 						v-for="cardName in group.cards"
 						:key="cardName"
-						class="inline-flex max-w-[11rem] items-center gap-1 rounded-xl border border-blue-100 bg-pos-action-soft px-2 py-0.5 text-[12px] text-pos-action-hover"
+						class="inline-flex max-w-[11rem] items-center gap-1 rounded-xl border border-blue-100 bg-pos-action-soft px-2 py-0.5 text-[12px] text-blue-700"
 					>
 						<span class="truncate">{{ getCardLabel(cardName) }}</span>
 						<button
 							type="button"
 							@click="removeCardFromGroup(day, gIdx, cardName)"
-							class="text-pos-action hover:text-pos-action-hover"
+							class="text-blue-600 hover:text-blue-700"
 							:aria-label="__('Remove {0}', [getCardLabel(cardName)])"
 						>
 							×
@@ -93,7 +93,7 @@
 			<button
 				type="button"
 				@click="addSlot(day)"
-				class="whitespace-nowrap pt-[7px] text-end text-[12.5px] font-bold text-pos-action-hover hover:underline"
+				class="whitespace-nowrap pt-[7px] text-end text-[12.5px] font-bold text-blue-700 hover:underline"
 			>
 				{{ __("+ Slot") }}
 			</button>

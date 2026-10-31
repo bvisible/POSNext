@@ -2495,11 +2495,35 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 
 	//// Neoffice — the till's own settings screen can change the groups of THIS till (NeoRestau lot 1, task 13): they
 	//// are read again for the same profile, which setPosProfile skips once the items are fresh. Upstream never changed
-	//// a profile from the till. The items are left to the caller (useCatalogueRefresh fetches them from the server).
+	//// a profile from the till. Unlike setPosProfile, the profile's realtime listener is left in place and the new
+	//// groups go through its own handler: the items of a group no longer offered leave the browser's copy, and the
+	//// profile's realtime event that follows finds nothing left to do (setPosProfile detached the listener while it
+	//// read, and wrote the new groups first, so that event's delta came out empty). The rest of the items is left to
+	//// the caller (useCatalogueRefresh fetches them from the server).
 	async function reloadPosProfile(profile) {
 		if (!profile) return;
-		serverDataFresh.value = false;
-		await setPosProfile(profile, false);
+		if (profile !== posProfile.value) {
+			serverDataFresh.value = false;
+			await setPosProfile(profile, false);
+			return;
+		}
+		const data = await call("pos_next.api.pos_profile.get_pos_profile_data", {
+			pos_profile: profile,
+		});
+		itemGroups.value = data?.item_groups_hierarchy || [];
+		const groups = (data?.pos_profile?.item_groups || []).map((row) => ({ item_group: row.item_group }));
+		try {
+			sessionStorage.setItem(
+				`pos_profile_data:${profile}`,
+				JSON.stringify({ profileItemGroups: groups, itemGroups: itemGroups.value })
+			);
+		} catch (e) {
+			// sessionStorage might be full or unavailable
+		}
+		await handlePosProfileUpdateWithRecovery(
+			{ pos_profile: profile, item_groups: groups, change_type: "item_groups_updated" },
+			profile
+		);
 	}
 
 	function invalidateCache() {

@@ -118,7 +118,8 @@ def rights_at(pos_profile):
 		return {"till": False, "restaurant": False}
 	if not is_desk_account():
 		return {"till": False, "restaurant": False}
-	return _rights(frappe.get_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
+	# Asked by every bootstrap and every read of a till's settings, for every user: the documents from the cache
+	return _rights(frappe.get_cached_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
 
 
 def _open(pos_profile):
@@ -132,7 +133,7 @@ def _open(pos_profile):
 		or not frappe.db.exists("POS Profile", pos_profile)
 	):
 		frappe.throw(_("POS Profile not found"), frappe.DoesNotExistError)
-	can = _rights(frappe.get_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
+	can = _rights(frappe.get_cached_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
 	if not (can["till"] or can["restaurant"]):
 		frappe.throw(_("Only the till manager can open the settings of the till"), frappe.PermissionError)
 	return _till(pos_profile), can
@@ -205,7 +206,9 @@ def _rights(profile, restaurant):
 	till = is_till_manager() and has_user_permission(profile)
 	restaurant_right = False
 	if restaurant and is_desk_account():
-		restaurant_right = bool(frappe.has_permission(RESTAURANT, "write", doc=restaurant))
+		restaurant_right = bool(
+			frappe.has_permission(RESTAURANT, "write", doc=frappe.get_cached_doc(RESTAURANT, restaurant))
+		)
 	return {"till": bool(till), "restaurant": restaurant_right}
 
 
@@ -237,25 +240,36 @@ def _shown(till, can):
 
 def _editable(setting, can):
 	"""Whether the user may change a setting: the restaurant's are its managers'; the till's are the till manager's,
-	and those that sit in a tab of the restaurant (its default room, its takeaway) the restaurant's managers' as well
-	(ruling 63: the till is that restaurant's, `_rights`); this computer's and the printer's are the screen's own
-	business (the printer app checks its rights)."""
+	and the few the list names one by one (its default room, its takeaway: `restaurant_manager_may_edit`, ruling 63)
+	the restaurant's managers' as well, at the till of their own restaurant (`_rights`). A setting of the till drawn in
+	a restaurant tab without that flag stays the till manager's. This computer's and the printer's are the screen's
+	own business (the printer app checks its rights)."""
 	if setting.doctype == RESTAURANT:
 		return can["restaurant"]
 	if setting.doctype in (POS_SETTINGS, POS_PROFILE):
-		in_a_restaurant_tab = registry.TAB_BY_KEY[setting.tab].section == SECTION_RESTAURANT
-		return can["till"] or (in_a_restaurant_tab and can["restaurant"])
+		return can["till"] or (setting.restaurant_manager_may_edit and can["restaurant"])
 	return True
+
+
+def _site_facts():
+	"""The facts of the site some settings need (`Setting.needs_site`)."""
+	from pos_next.pos_next.doctype.pos_settings.pos_settings import _site_allows_negative_stock
+
+	return {registry.SITE_ALLOWS_NEGATIVE_STOCK: bool(_site_allows_negative_stock())}
 
 
 def _answer(till, can):
 	shown = _shown(till, can)
 	tab_keys = {setting.tab for setting in shown}
 	group_keys = {setting.group for setting in shown}
+	facts = _site_facts()
 	definitions = []
 	for setting in shown:
 		definition = registry.serialize(setting)
 		definition["editable"] = _editable(setting, can)
+		if setting.needs_site:
+			# The site does not allow what it is about: the screen shows it greyed, its help says why (ruling 82)
+			definition["greyed"] = not facts[setting.needs_site]
 		if setting.store == DOCUMENT:
 			definition["required"] = bool(frappe.get_meta(setting.doctype).get_field(setting.key).reqd)
 		if setting.widget == "table":

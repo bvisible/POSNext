@@ -183,6 +183,11 @@ def get_pos_settings(pos_profile):
 	# //// returns refunded 0.01 (neoffice-maintenance#1157). Remove if upstream returns them here.
 	profile = frappe.get_cached_doc("POS Profile", pos_profile)
 	settings["disable_rounded_total"] = cint(profile.disable_rounded_total)
+	# //// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box), which its stock
+	# //// guard reads where the site allows negative stock (NeoRestau lot 1, task 13, ruling 82); no value:
+	# //// blocks.
+	block_sale = profile.get("posa_block_sale_beyond_available_qty")
+	settings["posa_block_sale_beyond_available_qty"] = 1 if block_sale is None else cint(block_sale)
 	settings["allow_write_off_change"] = (
 		1 if (profile.write_off_account and flt(profile.write_off_limit) > 0) else 0
 	)

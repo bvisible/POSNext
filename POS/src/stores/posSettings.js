@@ -114,6 +114,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		//// Neoffice — how many tiles a row of the catalogue grids shows: "Automatic" (as the grids always were) or a
 		//// number from 3 to 8 (NeoRestau lot 1, task 13). Seeded so that no grid moves before the server says so.
 		tiles_per_row: "Automatic",
+		//// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box, sent with the settings,
+		//// ruling 82): ticked until the server says, as the field's default.
+		posa_block_sale_beyond_available_qty: 1,
 	});
 
 	const isLoading = ref(false);
@@ -421,8 +424,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			//// Neoffice — same for the closing-withdrawal template (5783eb27, 2026-03-28).
 			// Cash Management
 			closing_withdrawal_template: "",
-			//// Neoffice — the grids of the next user start automatic too (NeoRestau lot 1, task 13).
+			//// Neoffice — the grids of the next user start automatic too (NeoRestau lot 1, task 13), and the stock
+			//// guard's box ticked (ruling 82).
 			tiles_per_row: "Automatic",
+			posa_block_sale_beyond_available_qty: 1,
 		};
 		isLoaded.value = false;
 	}
@@ -453,7 +458,14 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	 * @returns {boolean} - True if stock validation should prevent negative stock
 	 */
 	function shouldEnforceStockValidation() {
-		return isEnabled.value && !Boolean(settings.value.allow_negative_stock);
+		//// Neoffice — « Block a sale beyond the stock » means what it says at the till too (NeoRestau lot 1, task
+		//// 13, ruling 82): where the site refuses negative stock the till blocks whatever the till's box says (ERPNext
+		//// would refuse to book the sale); where the site allows it, the box decides (unsaid: blocks, the field's
+		//// default). Upstream read the site's setting only.
+		if (!isEnabled.value) return false;
+		if (!settings.value.allow_negative_stock) return true;
+		const box = settings.value.posa_block_sale_beyond_available_qty;
+		return box === undefined || box === null ? true : Boolean(Number(box));
 	}
 
 	/**

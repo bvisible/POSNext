@@ -127,6 +127,23 @@ class TestTheList(FrappeTestCase):
 				with self.subTest(setting=setting.key):
 					self.assertNotIn(setting.tab, RESTAURANT_TABS)
 
+	def test_the_restaurant_managers_set_three_settings_of_the_till_named_one_by_one(self):
+		# Ruling 63 is granted by a flag on the setting, never by the tab it is drawn in: a setting of POS Settings or
+		# POS Profile moved into a restaurant tab stays the till manager's
+		flagged = {setting.key for setting in registry.SETTINGS if setting.restaurant_manager_may_edit}
+		self.assertEqual(flagged, {"default_restaurant_area", "enable_takeaway", "takeaway_card"})
+		for key in flagged:
+			with self.subTest(key=key):
+				setting = registry.get(key)
+				self.assertEqual(setting.doctype, registry.POS_SETTINGS)
+				self.assertEqual(registry.TAB_BY_KEY[setting.tab].section, registry.SECTION_RESTAURANT)
+		moved = registry.Setting(
+			"allow_credit_sale", "takeaway", "Moved", "Moved", "check", doctype=registry.POS_SETTINGS
+		)
+		self.assertEqual(registry.TAB_BY_KEY[moved.tab].section, registry.SECTION_RESTAURANT)
+		self.assertFalse(till_settings_api._editable(moved, {"till": False, "restaurant": True}))
+		self.assertTrue(till_settings_api._editable(moved, {"till": True, "restaurant": False}))
+
 	def test_the_office_keeps_what_the_product_owner_kept_there(self):
 		for key in (
 			"company",
@@ -891,6 +908,44 @@ class TestEachTillItsOwnManagers(TillSettingsCase):
 		with self.assertRaises(frappe.PermissionError):
 			save_till_settings(self.shop_till, {"allow_credit_sale": 1})
 
+	def test_a_failing_till_part_keeps_the_other_rights(self):
+		# The seam's runner logs a hook that raises and goes on: restaurant_can, written last, was lost whole
+		from pos_next.till_settings import api as api_module
+
+		frappe.set_user(RESTAURANT_MANAGER)
+		restaurant_bootstrap._LOGGED.clear()
+		with (
+			patch.object(api_module, "rights_at", side_effect=RuntimeError("broken")),
+			patch.object(frappe, "log_error") as logged,
+		):
+			told = []
+			for _attempt in range(2):
+				settings = {}
+				restaurant_bootstrap.extend_bootstrap_settings(settings, self.restaurant_till)
+				told.append(settings["restaurant_can"])
+		frappe.set_user("Administrator")
+		for can in told:
+			self.assertTrue(can["manage_floor"])
+			self.assertTrue(can["manage_cards"])
+			self.assertFalse(can["manage_till_settings"])
+			self.assertFalse(can["manage_restaurant_settings"])
+		# Once, not at every bootstrap of every till
+		self.assertEqual(logged.call_count, 1)
+
+	def test_the_rights_of_a_till_are_read_from_cached_documents(self):
+		# Every bootstrap and every read of a till's settings asks them, for every user
+		for doctype, name in (
+			("POS Profile", self.restaurant_till),
+			("Restaurant", self.restaurant),
+			("User", TILL_MANAGER),
+		):
+			frappe.get_cached_doc(doctype, name)
+		frappe.set_user(TILL_MANAGER)
+		with patch.object(frappe, "get_doc", side_effect=AssertionError("a document read again")):
+			rights = till_settings_api.rights_at(self.restaurant_till)
+		frappe.set_user("Administrator")
+		self.assertEqual(rights, {"till": True, "restaurant": True})
+
 	def test_the_till_is_told_who_opens_its_settings_there(self):
 		# The rail's Settings entry follows the same rights as the server (bootstrap's restaurant_can)
 		self.a_second_restaurant_till()
@@ -917,39 +972,78 @@ class TestEachTillItsOwnManagers(TillSettingsCase):
 
 
 class TestBlockingASaleBeyondTheStock(TillSettingsCase):
-	"""« Block a sale beyond the stock » (POS Profile.posa_block_sale_beyond_available_qty) is read as it is ticked
-	(ruling 62): upstream read it `or 1`, so an unticked box still blocked."""
+	"""« Block a sale beyond the stock » (POS Profile.posa_block_sale_beyond_available_qty) means what it says (ruling
+	82): where the site allows negative stock, the box decides, at the till as at the server's check before a sale is
+	booked; where the site refuses it, the till refuses a sale beyond the stock whatever the box says (ERPNext would
+	refuse to book it), and the screen shows the box greyed. Upstream let any sale go where the site allowed negative
+	stock, before reading the box, and read the box `or 1` (an unticked box still blocked)."""
+
+	BOX = "posa_block_sale_beyond_available_qty"
 
 	def setUp(self):
 		super().setUp()
-		# A site and a till that refuse negative stock: the box decides
-		frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 0)
-		frappe.db.set_value("POS Settings", {"pos_profile": self.shop_till}, "allow_negative_stock", 0)
+		self.site_allows_negative_stock(False)
 
-	def test_the_till_shows_it_in_its_stock_tab(self):
-		self.as_user(TILL_MANAGER)
-		setting = by_key(get_till_settings(self.shop_till))["posa_block_sale_beyond_available_qty"]
-		self.assertEqual((setting["tab"], setting["editable"]), ("stock", True))
-		# Its bulb says that a site refusing negative stock refuses the sale anyway
-		self.assertEqual(setting["help"], str(registry.get("posa_block_sale_beyond_available_qty").help))
-		self.assertIn("Stock Settings", registry.get("posa_block_sale_beyond_available_qty").help.msg)
-
-	def test_an_unticked_box_lets_the_sale_go_and_a_ticked_one_blocks_it(self):
-		self.as_user(TILL_MANAGER)
-		save_till_settings(self.shop_till, {"posa_block_sale_beyond_available_qty": 0})
-		frappe.set_user("Administrator")
-		self.assertEqual(
-			frappe.db.get_value("POS Profile", self.shop_till, "posa_block_sale_beyond_available_qty"), 0
+	def site_allows_negative_stock(self, allowed):
+		frappe.db.set_single_value("Stock Settings", "allow_negative_stock", int(allowed))
+		frappe.db.set_value(
+			"POS Settings", {"pos_profile": self.shop_till}, "allow_negative_stock", int(allowed)
 		)
+
+	def ticked(self, value):
+		self.as_user(TILL_MANAGER)
+		save_till_settings(self.shop_till, {self.BOX: value})
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("POS Profile", self.shop_till, self.BOX), value)
+
+	def shown(self):
+		self.as_user(TILL_MANAGER)
+		setting = by_key(get_till_settings(self.shop_till))[self.BOX]
+		frappe.set_user("Administrator")
+		return setting
+
+	def test_the_till_shows_it_in_its_stock_tab_with_what_it_does(self):
+		setting = self.shown()
+		self.assertEqual((setting["tab"], setting["editable"]), ("stock", True))
+		self.assertEqual(setting["help"], str(registry.get(self.BOX).help))
+		# The bulb says both cases
+		self.assertIn("allows negative stock", registry.get(self.BOX).help.msg)
+		self.assertIn("whatever this box says", registry.get(self.BOX).help.msg)
+
+	def test_where_the_site_allows_negative_stock_the_box_decides(self):
+		self.site_allows_negative_stock(True)
+		self.assertFalse(self.shown().get("greyed"))
+		self.ticked(1)
+		self.assertTrue(invoices._should_block(self.shop_till))
+		self.ticked(0)
 		self.assertFalse(invoices._should_block(self.shop_till))
 
-		self.as_user(TILL_MANAGER)
-		save_till_settings(self.shop_till, {"posa_block_sale_beyond_available_qty": 1})
-		frappe.set_user("Administrator")
-		self.assertTrue(invoices._should_block(self.shop_till))
+	def test_where_the_site_refuses_negative_stock_the_till_blocks_whatever_the_box(self):
+		self.assertTrue(self.shown()["greyed"])
+		for value in (0, 1):
+			with self.subTest(box=value):
+				self.ticked(value)
+				self.assertTrue(invoices._should_block(self.shop_till))
+
+	def test_the_till_is_told_the_box_with_its_other_settings(self):
+		from pos_next.api.bootstrap import _get_pos_settings
+
+		for value in (0, 1):
+			with self.subTest(box=value):
+				frappe.db.set_value("POS Profile", self.shop_till, self.BOX, value)
+				profile = frappe.get_doc("POS Profile", self.shop_till)
+				self.assertEqual(_get_pos_settings(profile)[self.BOX], value)
+				frappe.clear_document_cache("POS Profile", self.shop_till)
+				self.assertEqual(pos_settings_doctype.get_pos_settings(self.shop_till)[self.BOX], value)
 
 	def test_a_till_that_says_nothing_blocks(self):
-		self.assertTrue(invoices._should_block("_Test Till Settings No Such Till"))
+		for allowed in (False, True):
+			with self.subTest(site_allows=allowed):
+				self.site_allows_negative_stock(allowed)
+				self.assertTrue(invoices._should_block("_Test Till Settings No Such Till"))
+		# No till named where the site allows negative stock: the site decides, as upstream
+		self.assertFalse(invoices._should_block(None))
+		self.site_allows_negative_stock(False)
 		self.assertTrue(invoices._should_block(None))
 
 

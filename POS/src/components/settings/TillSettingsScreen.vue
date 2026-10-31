@@ -58,7 +58,7 @@
 							<button
 								type="button"
 								data-action="save"
-								class="h-[38px] rounded-[10px] bg-pos-ink px-4 text-[14px] font-bold text-white hover:opacity-90 disabled:cursor-default disabled:opacity-40"
+								class="h-[38px] rounded-[10px] bg-pos-ink px-4 text-[14px] font-bold text-pos-surface hover:opacity-90 disabled:cursor-default disabled:opacity-40"
 								:disabled="!canSave"
 								@click="save"
 							>
@@ -97,7 +97,7 @@
 									class="flex items-center justify-between gap-2 rounded-[10px] px-3 py-[9px] text-start text-[14.5px] font-semibold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-blue-400/50"
 									:class="
 										activeTab === tab.key
-											? 'bg-pos-ink text-white'
+											? 'bg-pos-ink text-pos-surface'
 											: 'text-pos-muted hover:bg-pos-line'
 									"
 									:aria-selected="activeTab === tab.key ? 'true' : 'false'"
@@ -204,7 +204,7 @@
 													<button
 														v-if="restaurantStore.can?.manage_cards"
 														type="button"
-														class="whitespace-nowrap text-[12.5px] font-bold text-pos-action-hover hover:underline"
+														class="whitespace-nowrap text-[12.5px] font-bold text-blue-700 hover:underline"
 														:data-card="card.name"
 														@click="emit('open-card', card.name)"
 													>
@@ -407,6 +407,7 @@ import { useRestaurantStore } from "@/stores/restaurant"
 import { formatTime } from "@/utils/currency"
 import { logger } from "@/utils/logger"
 import { offlineWorker } from "@/utils/offline/workerClient"
+import { savePrinterName } from "@/utils/qzTray"
 
 const log = logger.create("POSSettings")
 const { detectSettingsChanges, emitStockSyncConfigured, emit: emitEvent } = usePOSEvents()
@@ -515,8 +516,10 @@ const cardChoices = computed(() =>
 const tipsReady = computed(() => Boolean(screen.value?.status?.tip_item && screen.value?.status?.tip_account))
 
 // ---------------------------------------------------------------- what is shown
+// Greyed while a setting it depends on is off, or while the site does not allow what it is about (the server says so:
+// « Block a sale beyond the stock » where the site refuses negative stock, ruling 82)
 function greyed(setting) {
-	return !conditionsHold(setting, draft)
+	return Boolean(setting.greyed) || !conditionsHold(setting, draft)
 }
 
 // A group of one setting that is the group itself (the opening hours): its title carries the setting's bulb
@@ -529,7 +532,7 @@ function titleCarriesHelp(group) {
 function badgeOf(group) {
 	const restaurantTab = screen.value?.tabs?.some((tab) => tab.key === group.tab && tab.section === "restaurant")
 	const badges = {
-		restaurant: { label: __("Whole restaurant"), classes: "bg-pos-action-soft text-pos-action-hover" },
+		restaurant: { label: __("Whole restaurant"), classes: "bg-pos-action-soft text-blue-700" },
 		till: { label: __("This till"), classes: "bg-pos-line text-pos-muted" },
 		site: { label: __("Whole site"), classes: "bg-amber-50 text-amber-700" },
 		device: { label: __("This device"), classes: "bg-pos-line text-pos-muted" },
@@ -700,7 +703,9 @@ async function refreshTheTill(values, before) {
 	const changedNow = {}
 	const changedBefore = {}
 	for (const key of keys) {
-		if (byKey[key]?.doctype === "POS Settings" || key === "warehouse") {
+		// The till's settings store takes them again (`settings:changed`): its POS Settings, its warehouse, and what the
+		// server derives into them from its POS Profile (the block box of its stock guard)
+		if (byKey[key]?.doctype === "POS Settings" || key === "warehouse" || byKey[key]?.applies === "settings") {
 			changedNow[key] = values[key]
 			changedBefore[key] = before[key]
 		}
@@ -747,8 +752,10 @@ async function saveThisComputer() {
 	} catch (error) {
 		log.error("Failed to apply stock sync config:", error)
 	}
-	// Cleared, the printer is forgotten: the computer prints through the browser again
+	// Cleared, the printer is forgotten, in the browser's storage too: the composable keeps only a chosen name there,
+	// and printing falls back to the stored one, so a printer cleared in memory came back at the next reload
 	selectedPrinter.value = draft.qz_printer || ""
+	savePrinterName(draft.qz_printer || "")
 	read.value = {
 		...read.value,
 		stock_sync_enabled: draft.stock_sync_enabled,

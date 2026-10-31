@@ -245,7 +245,7 @@
 				<button
 					v-if="!closed"
 					type="button"
-					class="self-start text-[12.5px] font-bold text-pos-action-hover hover:underline"
+					class="self-start text-[12.5px] font-bold text-blue-700 hover:underline"
 					@click="onAddRow"
 				>
 					{{ __("Add a line") }}

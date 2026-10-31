@@ -276,6 +276,13 @@ def _get_pos_settings(pos_profile_doc):
 		settings["allow_negative_stock"] = frappe.utils.cint(
 			frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0
 		)
+		# //// Neoffice — the till's « Block a sale beyond the stock » (its POS Profile's box), which its
+		# //// stock guard reads where the site allows negative stock (NeoRestau lot 1, task 13, ruling 82);
+		# //// no value: blocks.
+		block_sale = pos_profile_doc.get("posa_block_sale_beyond_available_qty")
+		settings["posa_block_sale_beyond_available_qty"] = (
+			1 if block_sale is None else frappe.utils.cint(block_sale)
+		)
 
 		from pos_next.integrations.registry import extend_bootstrap_settings
 

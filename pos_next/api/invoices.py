@@ -871,30 +871,20 @@ def _get_item_negative_stock_allow_set(items):
 
 def _should_block(pos_profile):
 	"""Check if sale should be blocked for insufficient stock."""
-	# First check global ERPNext Stock Settings
-	allow_negative = cint(frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0)
-	if allow_negative:
+	# //// Neoffice — « Block a sale beyond the stock » means what it says (NeoRestau lot 1, task 13, ruling
+	# //// 82). Where the site refuses negative stock, the till blocks whatever its box says: ERPNext would
+	# //// refuse to book the sale. Where the site allows it, the box decides, read as it is ticked (no value:
+	# //// blocks, the field's default); no till named, the site decides, as upstream. Upstream let every sale
+	# //// go where the site allowed negative stock, before reading the box, and read the box `or 1` (an
+	# //// unticked box still blocked). The till's POS Settings.allow_negative_stock is the site's setting
+	# //// (pos_settings._site_allows_negative_stock).
+	if not cint(frappe.db.get_single_value("Stock Settings", "allow_negative_stock") or 0):
+		return True
+	if not pos_profile:
 		return False
-
-	# Check POS Settings for the specific profile
-	if pos_profile:
-		# Check if POS Settings allows negative stock
-		pos_settings_allow_negative = cint(
-			frappe.db.get_value("POS Settings", {"pos_profile": pos_profile}, "allow_negative_stock") or 0
-		)
-		if pos_settings_allow_negative:
-			return False
-
-		# Try to get custom field (may not exist in vanilla ERPNext)
-		# //// Neoffice — the box is read as it is ticked (NeoRestau lot 1, task 13, ruling 62): upstream read
-		# //// it `or 1`, so an unticked box (0) still blocked, and the till's setting « Block a sale beyond
-		# //// the stock » could not be switched off. A till that says nothing (no such till, no value) still
-		# //// blocks, as upstream's default.
-		block_sale = frappe.db.get_value("POS Profile", pos_profile, "posa_block_sale_beyond_available_qty")
-		return True if block_sale is None else bool(cint(block_sale))
-
-	# Default to blocking if no profile specified
-	return True
+	# //// Neoffice — the box as it is ticked; no value: blocks (see above).
+	block_sale = frappe.db.get_value("POS Profile", pos_profile, "posa_block_sale_beyond_available_qty")
+	return True if block_sale is None else bool(cint(block_sale))
 
 
 def _validate_stock_on_invoice(invoice_doc):

@@ -5,8 +5,8 @@
 <template>
 	<button
 		type="button"
-		class="help-bulb inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-[5px] align-[-3px] text-pos-muted transition-colors hover:bg-pos-action-soft hover:text-pos-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60"
-		:class="{ 'bg-pos-action-soft text-pos-action': open }"
+		class="help-bulb inline-flex h-[18px] w-[18px] flex-none items-center justify-center rounded-[5px] align-[-3px] text-pos-muted transition-colors hover:bg-pos-action-soft hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60"
+		:class="{ 'bg-pos-action-soft text-blue-600': open }"
 		:title="text"
 		:aria-label="__('Help')"
 		:aria-expanded="open ? 'true' : 'false'"

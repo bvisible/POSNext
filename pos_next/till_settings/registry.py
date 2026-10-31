@@ -75,6 +75,12 @@ WIDGETS = (
 APPLIES_CATALOGUE = "catalogue"  # the items are read again (price list, groups, brands...)
 APPLIES_PROFILE = "profile"  # the till's copy of its POS Profile is updated (default customer, warehouse...)
 APPLIES_RESTAURANT = "restaurant"  # the restaurant's settings are read again
+# The till's settings store takes it again: a field of POS Profile the server sends with the till's settings
+APPLIES_SETTINGS = "settings"
+
+# The facts of the site a setting can need (Setting.needs_site): where the fact does not hold, the screen shows the
+# setting greyed, and its help says why (api._site_facts reads them)
+SITE_ALLOWS_NEGATIVE_STOCK = "allows_negative_stock"
 
 
 # Compared by identity: a lazy text refuses == (frappe.types.lazytranslatedstring)
@@ -136,6 +142,11 @@ class Setting:
 	indent: bool | None = None
 	kind: str = SETTING
 	applies: str | None = None
+	# The restaurant's managers may change it too, at the till of their own restaurant (ruling 63): a setting of the
+	# till named one by one, never because of the tab it is drawn in
+	restaurant_manager_may_edit: bool = False
+	# A fact of the site it means nothing without (SITE_ALLOWS_NEGATIVE_STOCK...): greyed while it does not hold
+	needs_site: str | None = None
 
 	@property
 	def field(self) -> str | None:
@@ -281,6 +292,7 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		choices="restaurant_areas",
 		applies=APPLIES_RESTAURANT,
+		restaurant_manager_may_edit=True,
 	),
 	Setting(
 		"enable_takeaway",
@@ -291,6 +303,7 @@ SETTINGS = (
 		doctype=POS_SETTINGS,
 		till=RESTAURANT_TILL,
 		applies=APPLIES_RESTAURANT,
+		restaurant_manager_may_edit=True,
 	),
 	Setting(
 		"takeaway_card",
@@ -303,6 +316,7 @@ SETTINGS = (
 		depends_on=(on("enable_takeaway"),),
 		choices="restaurant_cards",
 		applies=APPLIES_RESTAURANT,
+		restaurant_manager_may_edit=True,
 	),
 	Setting(
 		"enable_tips",
@@ -942,12 +956,15 @@ SETTINGS = (
 		"warehouse",
 		_lt("Block a sale beyond the stock"),
 		_lt(
-			"The till refuses a sale that asks for more than the stock of its warehouse. Off, the till lets it go;"
-			" where the site refuses negative stock (Stock Settings, at the office), the sale is refused anyway"
-			" when it is booked."
+			"Where the site allows negative stock, this box decides: ticked, the till refuses an item beyond the"
+			" stock of its warehouse, when it is added and when the sale is checked before it is booked; unticked,"
+			" it sells it. Where the site refuses negative stock (Stock Settings, at the office), the till refuses"
+			" it whatever this box says."
 		),
 		"check",
 		doctype=POS_PROFILE,
+		applies=APPLIES_SETTINGS,
+		needs_site=SITE_ALLOWS_NEGATIVE_STOCK,
 	),
 	Setting(
 		"stock_sync_enabled",
