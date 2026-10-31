@@ -17500,3 +17500,13 @@ msgstr "Aucune commande en préparation"
 #: pos_next/api/restaurant.py:343
 msgid "Station {0} not found"
 msgstr "Poste {0} introuvable"
+
+# //// Neoffice — French for the invoice history's preview of the lines (lot 1, task 29): the « +n items » shown under every invoice of more than three lines, on every till.
+# //// Kept as one block at the end, like the earlier passes. Drop an entry when upstream translates its msgid.
+#: POS/src/components/sale/InvoiceTicketPreview.vue:69
+msgid "+{0} item"
+msgstr "+{0} article"
+
+#: POS/src/components/sale/InvoiceTicketPreview.vue:70
+msgid "+{0} items"
+msgstr "+{0} articles"
