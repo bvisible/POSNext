@@ -1510,10 +1510,11 @@
 										>
 											<FeatherIcon name="minus" class="w-4 h-4" />
 										</button>
+										<!-- //// Neoffice — @blur hands over its event: a sent line shows its quantity again when the field is left unreadable (NeoRestau lot 1, task 22, fix round 2) -->
 										<input
 											:value="formatQuantity(getDisplayQuantity(item))"
 											@input="updateQuantity(item, $event.target.value)"
-											@blur="handleQuantityBlur(item)"
+											@blur="handleQuantityBlur(item, $event)"
 											@keydown.enter="$event.target.blur()"
 											type="text"
 											inputmode="decimal"
@@ -2038,6 +2039,8 @@ import { useRestaurantStore } from "@/stores/restaurant";
 import { isLightColor } from "@/utils/itemColors";
 //// Neoffice — the row actions hand over the cart row behind a shown copy (utils/cartRow.js).
 import { cartRowOf } from "@/utils/cartRow";
+//// Neoffice — which lines have left for the kitchen: their typed quantity waits for the end of the typing (NeoRestau lot 1, task 22, fix round 2)
+import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
 //// Neoffice — the badge of a dish sent to the kitchen shows its status through kitchenStatusLabel (NeoRestau lot 1, task 9)
 import { kitchenStatusLabel } from "@/utils/kitchenStatus";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyUtil } from "@/utils/currency";
@@ -3128,6 +3131,25 @@ function updateQuantity(item, value) {
 	// Prevent editing resolved barcode items
 	if (item.is_resolved_barcode || isLockedFreeRow(item)) return;
 
+	//// Neoffice — the field fires on every key. On a line that has left for the kitchen the waiter's « 12 » went through « 1 »,
+	//// which lowered the line the kitchen has, and then « 12 », which put 11 units on a new line: the bill said 12, the
+	//// kitchen had made 4 and would get 11 more. Such a line takes the quantity when the waiter leaves the field or presses
+	//// Enter (handleQuantityBlur), once, as the number he typed (NeoRestau lot 1, task 22, fix round 2).
+	const row = cartRowOf(item);
+	if (hasLeftForTheKitchen(row)) {
+		if (Number.isNaN(Number.parseFloat(value))) typedOnSentLine.delete(row);
+		else typedOnSentLine.set(row, value);
+		return;
+	}
+
+	applyTypedQuantity(item, value);
+}
+
+//// Neoffice — the text typed in the quantity field of a line that has left for the kitchen, by cart row, until the field is left.
+const typedOnSentLine = new WeakMap();
+
+//// Neoffice — what updateQuantity did with each value typed, now also what a sent line does once with the whole of it (fix round 2).
+function applyTypedQuantity(item, value) {
 	const displayQty = Number.parseFloat(value);
 
 	// If the input isn't a valid number (e.g., user cleared the field), do nothing
@@ -3152,8 +3174,21 @@ function updateQuantity(item, value) {
  *
  * @param {Object} item - Cart item that lost focus
  */
-function handleQuantityBlur(item) {
+//// Neoffice — the event is handed over so a sent line can show its quantity again (NeoRestau lot 1, task 22, fix round 2).
+function handleQuantityBlur(item, event = null) {
 	if (isLockedFreeRow(item)) return;
+	//// Neoffice — a quantity typed on a sent line is applied now, once; a field left empty or unreadable shows the quantity again
+	//// (fix round 2).
+	const row = cartRowOf(item);
+	if (typedOnSentLine.has(row)) {
+		const typed = typedOnSentLine.get(row);
+		typedOnSentLine.delete(row);
+		applyTypedQuantity(item, typed);
+		return;
+	}
+	if (event?.target && hasLeftForTheKitchen(row)) {
+		event.target.value = formatQuantity(getDisplayQuantity(item));
+	}
 	// When user leaves the input field, round and validate
 	if (!item.quantity || item.quantity <= 0) {
 		// If quantity is 0 or invalid, remove the item

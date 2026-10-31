@@ -26,3 +26,18 @@ export function withCartRow(copy, row) {
 export function cartRowOf(line) {
 	return (line && line[CART_ROW]) || line
 }
+
+/**
+ * The cart line an item stands for: the row itself when the item is a line of the cart (or a shown copy of one), `null` when it
+ * is not. The price dialog of a dish with no price hands back the item it was opened on, and a fresh item of a dish that is
+ * already in the cart (a first round, maybe sent) is not the line to price: looking the line up by item code priced that line
+ * and added no unit (NeoRestau lot 1, task 22, fix round 2).
+ * @param {Array<Object>} cartItems - The cart's rows
+ * @param {Object|null|undefined} item - A cart row, a shown copy of one, a fresh item, or nothing
+ * @returns {Object|null}
+ */
+export function cartLineOf(cartItems, item) {
+	const row = cartRowOf(item)
+	const index = row ? cartItems.indexOf(row) : -1
+	return index >= 0 ? cartItems[index] : null
+}

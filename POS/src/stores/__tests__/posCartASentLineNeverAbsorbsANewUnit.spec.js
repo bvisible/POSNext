@@ -17,20 +17,24 @@ vi.mock("frappe-ui", () => ({
 	call: vi.fn(async () => ({ valid: true })),
 	createResource: () => ({ submit: vi.fn(), reload: vi.fn(), fetch: vi.fn() }),
 }))
-vi.mock("@/composables/useToast", () => ({
-	useToast: () => ({
-		showSuccess: vi.fn(),
-		showError: vi.fn(),
-		showWarning: vi.fn(),
-		showInfo: vi.fn(),
-	}),
+// The toasts the cart shows, kept so a spec can tell that none was an error
+const toast = vi.hoisted(() => ({
+	showSuccess: vi.fn(),
+	showError: vi.fn(),
+	showWarning: vi.fn(),
+	showInfo: vi.fn(),
 }))
+vi.mock("@/composables/useToast", () => ({ useToast: () => toast }))
 vi.mock("@/utils/offline", () => ({
 	isOffline: () => false,
 	getCachedItem: vi.fn(),
 }))
+// A till that enforces stock validation, for the specs that need one
+const till = vi.hoisted(() => ({ enforcesStock: false }))
 vi.mock("@/stores/posSettings", () => ({
-	usePOSSettingsStore: () => ({ shouldEnforceStockValidation: () => false }),
+	usePOSSettingsStore: () => ({
+		shouldEnforceStockValidation: () => till.enforcesStock,
+	}),
 }))
 
 const { usePOSCartStore } = await import("../posCart")
@@ -76,6 +80,8 @@ describe("a line that has left for the kitchen never absorbs a new unit", () => 
 	let cart
 	let sent
 	beforeEach(() => {
+		till.enforcesStock = false
+		toast.showError.mockClear()
 		setActivePinia(createPinia())
 		cart = usePOSCartStore()
 		cart.addItem({ ...SENT_WINE }, 4)
@@ -341,6 +347,322 @@ describe("a line that has left for the kitchen never absorbs a new unit", () => 
 			await cart.changeItemUOM("wine", "Case", "Unit")
 
 			expect(linesOf(cart)).toEqual([["Case", 3, ""]])
+		})
+	})
+
+	// ------------------------------------------------------------------------------------------------------------------
+	// Fix round 2
+	// ------------------------------------------------------------------------------------------------------------------
+
+	describe("the details dialog applied twice: once by the cart, once by its parent (fix round 2)", () => {
+		it("a quantity raised on the SENT line adds its units once, not twice", async () => {
+			const update = { ...sent, quantity: 5 }
+
+			// What InvoiceCart.handleUpdateItem does, then what POSSale.handleEditItem does with the same object
+			await cart.updateItemDetails("wine", update, "Unit", sent)
+			await cart.updateItemDetails("wine", update, null, sent)
+
+			expect(quantities(cart)).toEqual([4, 1])
+			expect(statuses(cart)).toEqual(["Pending", ""])
+		})
+
+		it("so the bill and the kitchen agree: 5 units billed, 4 sent and 1 to send", async () => {
+			const update = { ...sent, quantity: 5 }
+
+			await cart.updateItemDetails("wine", update, "Unit", sent)
+			await cart.updateItemDetails("wine", update, null, sent)
+
+			const billed = quantities(cart).reduce((a, b) => a + b, 0)
+			const notSent = cart.invoiceItems.filter((line) => !line.kds_status)
+			expect(billed).toBe(5)
+			expect(notSent.map((line) => line.quantity)).toEqual([1])
+		})
+
+		it("another raise made later, with a new update, adds its own units: 3 more on the line that waits", async () => {
+			await cart.updateItemDetails("wine", { ...sent, quantity: 5 }, "Unit", sent)
+			await cart.updateItemDetails("wine", { ...sent, quantity: 7 }, "Unit", sent)
+
+			expect(quantities(cart)).toEqual([4, 4])
+		})
+
+		it("a raise the stock check refused is not consumed: nothing was added, the next try is a try", async () => {
+			till.enforcesStock = true
+			const update = { ...sent, quantity: 5 }
+
+			await cart.updateItemDetails("wine", update, "Unit", sent)
+			expect(quantities(cart)).toEqual([4])
+
+			till.enforcesStock = false
+			await cart.updateItemDetails("wine", update, "Unit", sent)
+			expect(quantities(cart)).toEqual([4, 1])
+		})
+
+		it("the second application does not raise the stock check against the units the first one added", async () => {
+			sent.is_stock_item = 1
+			sent.actual_qty = 5
+			sent.original_stock = 5
+			till.enforcesStock = true
+			const update = { ...sent, quantity: 5 }
+
+			await cart.updateItemDetails("wine", update, "Unit", sent)
+			await cart.updateItemDetails("wine", update, null, sent)
+
+			expect(quantities(cart)).toEqual([4, 1])
+			expect(toast.showError).not.toHaveBeenCalled()
+		})
+	})
+
+	describe("an incoming line that has been sent never merges into a line that waits (fix round 2)", () => {
+		it("a sent line read back after a line that waits stays a line of its own", () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem({ ...WINE_IN_THE_GRID }, 2)
+
+			cart.addItem({ ...SENT_WINE }, 3)
+
+			expect(quantities(cart)).toEqual([2, 3])
+			expect(statuses(cart)).toEqual(["", "Pending"])
+		})
+
+		it("a line held back as Waiting is still no sent line: it merges as before", () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem({ ...WINE_IN_THE_GRID }, 2)
+
+			cart.addItem({ ...SENT_WINE, kds_status: "Waiting" }, 3)
+
+			expect(quantities(cart)).toEqual([5])
+		})
+	})
+
+	describe("the units added to a sent line carry its price and its discount (fix round 2)", () => {
+		const extraLine = () => cart.invoiceItems[cart.invoiceItems.length - 1]
+
+		it("a price set by hand: the new unit is billed at it, not at the list price", async () => {
+			await cart.updateItemDetails(
+				"wine",
+				{ ...sent, rate: 25, is_rate_manually_edited: 1, original_rate: 29 },
+				"Unit",
+				sent,
+			)
+			expect(sent).toMatchObject({ rate: 25, price_list_rate: 29 })
+
+			cart.updateItemQuantity("wine", 5, "Unit", sent)
+
+			expect(quantities(cart)).toEqual([4, 1])
+			expect(extraLine()).toMatchObject({
+				rate: 25,
+				amount: 25,
+				is_rate_manually_edited: 1,
+				original_rate: 29,
+				kds_status: "",
+			})
+		})
+
+		it("a discount in percent: the new unit has it", async () => {
+			await cart.updateItemDetails(
+				"wine",
+				{ ...sent, discount_percentage: 10 },
+				"Unit",
+				sent,
+			)
+
+			cart.updateItemQuantity("wine", 5, "Unit", sent)
+
+			expect(extraLine()).toMatchObject({ discount_percentage: 10, amount: 26.1 })
+		})
+
+		it("a discount in amount counts as the same rate of discount on the new unit", async () => {
+			// 11.6 off 4 x 29 = 10 percent
+			await cart.updateItemDetails(
+				"wine",
+				{ ...sent, discount_amount: 11.6, discount_percentage: 0 },
+				"Unit",
+				sent,
+			)
+
+			cart.updateItemQuantity("wine", 5, "Unit", sent)
+
+			expect(extraLine().amount).toBe(26.1)
+		})
+
+		it("a typed quantity and the details dialog carry them too", async () => {
+			await cart.updateItemDetails(
+				"wine",
+				{ ...sent, rate: 25, is_rate_manually_edited: 1, original_rate: 29 },
+				"Unit",
+				sent,
+			)
+
+			await cart.updateItemDetails("wine", { ...sent, quantity: 6 }, "Unit", sent)
+
+			expect(extraLine()).toMatchObject({ quantity: 2, rate: 25, amount: 50 })
+		})
+
+		it("a line that waits with other terms is not the line the units go to", async () => {
+			await cart.updateItemDetails(
+				"wine",
+				{ ...sent, rate: 25, is_rate_manually_edited: 1, original_rate: 29 },
+				"Unit",
+				sent,
+			)
+			cart.addItem({ ...WINE_IN_THE_GRID }, 1)
+
+			cart.updateItemQuantity("wine", 5, "Unit", sent)
+
+			expect(quantities(cart)).toEqual([4, 1, 1])
+			expect(cart.invoiceItems.map((line) => line.rate)).toEqual([25, 29, 25])
+		})
+
+		it("a line that waits with the same terms takes the units", async () => {
+			const byHand = { rate: 25, is_rate_manually_edited: 1, original_rate: 29 }
+			await cart.updateItemDetails("wine", { ...sent, ...byHand }, "Unit", sent)
+			cart.addItem({ ...WINE_IN_THE_GRID, ...byHand }, 1)
+			const waiting = cart.invoiceItems[1]
+			await cart.updateItemDetails("wine", { ...waiting, ...byHand }, "Unit", waiting)
+
+			cart.updateItemQuantity("wine", 5, "Unit", sent)
+
+			expect(quantities(cart)).toEqual([4, 2])
+		})
+
+		it("a plain sent line still gives a plain unit, merged into a plain line that waits", () => {
+			cart.addItem({ ...WINE_IN_THE_GRID }, 1)
+
+			cart.updateItemQuantity("wine", 5, "Unit", sent)
+
+			expect(quantities(cart)).toEqual([4, 2])
+		})
+	})
+
+	describe("a price typed for a dish that is already in the cart (fix round 2)", () => {
+		const priced = (price) => ({
+			...WINE_IN_THE_GRID,
+			rate: price,
+			price_list_rate: price,
+			is_rate_manually_edited: 1,
+			original_rate: 0,
+		})
+
+		it("a second dish at another price is a line of its own", () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(priced(30), 1)
+
+			cart.addItem(priced(100), 1)
+
+			expect(quantities(cart)).toEqual([1, 1])
+			expect(cart.invoiceItems.map((line) => line.rate)).toEqual([30, 100])
+		})
+
+		it("a second dish at the same price is a unit more on that line", () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(priced(30), 1)
+
+			cart.addItem(priced(30), 1)
+
+			expect(quantities(cart)).toEqual([2])
+		})
+
+		it("the line that was priced keeps the price set by hand", () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(priced(30), 1)
+
+			expect(cart.invoiceItems[0]).toMatchObject({
+				rate: 30,
+				is_rate_manually_edited: 1,
+			})
+		})
+	})
+
+	describe("the unit dropdown applied twice, once by the cart and once by its parent (fix round 2)", () => {
+		const by = (uom, quantity, kds_status) => ({
+			...WINE_IN_THE_GRID,
+			uom,
+			conversion_factor: uom === "Case" ? 6 : 1,
+			item_uoms: [{ uom: "Case", conversion_factor: 6 }],
+			kds_status,
+			quantity,
+		})
+		const linesOf = (cart) =>
+			wines(cart).map((line) => [line.uom, line.quantity, line.kds_status])
+
+		it("a line that waits merged into a case line leaves the sent unit line alone the second time", async () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(by("Unit", 2, "Pending"), 2)
+			cart.addItem(by("Unit", 1, ""), 1)
+			cart.addItem(by("Case", 1, ""), 1)
+			const [sentLine, waiting] = cart.invoiceItems
+
+			await cart.changeItemUOM("wine", "Case", "Unit", waiting)
+			// The parent asks again with the same row, which the first call has merged away
+			await cart.changeItemUOM("wine", "Case", "Unit", waiting)
+
+			expect(sentLine.uom).toBe("Unit")
+			expect(linesOf(cart)).toEqual([
+				["Unit", 2, "Pending"],
+				["Case", 2, ""],
+			])
+		})
+
+		it("a row that is no longer in the cart changes no other line", async () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(by("Unit", 2, "Pending"), 2)
+			const gone = { item_code: "wine", uom: "Unit" }
+
+			await cart.changeItemUOM("wine", "Case", "Unit", gone)
+
+			expect(linesOf(cart)).toEqual([["Unit", 2, "Pending"]])
+		})
+
+		it("a call with no row keeps looking the line up by its item and unit", async () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(by("Unit", 1, ""), 1)
+
+			await cart.changeItemUOM("wine", "Case", "Unit")
+
+			expect(linesOf(cart)).toEqual([["Case", 1, ""]])
+		})
+
+		it("the details dialog of a merged-away row is not applied to another line, nor reported as an error", async () => {
+			cart.invoiceItems.splice(0)
+			cart.addItem(by("Unit", 2, "Pending"), 2)
+			cart.addItem(by("Unit", 1, ""), 1)
+			cart.addItem(by("Case", 1, ""), 1)
+			const [sentLine, waiting] = cart.invoiceItems
+			const update = { ...waiting, uom: "Case" }
+
+			await cart.updateItemDetails("wine", update, "Unit", waiting)
+			const second = await cart.updateItemDetails("wine", update, null, waiting)
+
+			expect(second).toBe(false)
+			expect(toast.showError).not.toHaveBeenCalled()
+			expect(sentLine).toMatchObject({ uom: "Unit", quantity: 2 })
+			expect(linesOf(cart)).toEqual([
+				["Unit", 2, "Pending"],
+				["Case", 2, ""],
+			])
+		})
+	})
+
+	describe("the + of a line born from a restaurant card on a till that enforces stock (fix round 2)", () => {
+		it("is not refused for a dish that is not a stock item", () => {
+			till.enforcesStock = true
+			cart.invoiceItems.splice(0)
+			cart.addItem(cardItemToCartItem({ ...WINE_ENTRY, is_stock_item: 0 }), 1)
+			const line = cart.invoiceItems[0]
+
+			cart.updateItemQuantity("wine", 2, "Unit", line)
+
+			expect(line.quantity).toBe(2)
+		})
+
+		it("is still checked against the stock for a dish that is one", () => {
+			till.enforcesStock = true
+			cart.invoiceItems.splice(0)
+			cart.addItem(cardItemToCartItem({ ...WINE_ENTRY, is_stock_item: 1 }), 1)
+			const line = cart.invoiceItems[0]
+
+			cart.updateItemQuantity("wine", 2, "Unit", line)
+
+			expect(line.quantity).toBe(1)
 		})
 	})
 })

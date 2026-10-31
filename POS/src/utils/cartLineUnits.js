@@ -65,6 +65,9 @@ export function cardItemToCartItem(cardItem) {
 		rate: cardItem.price || cardItem.default_price || 0,
 		image: cardItem.image || "",
 		custom_color: cardItem.custom_color || "",
+		// Whether the dish is a stock item: the card read answers it, and a line that does not carry it is checked against a stock
+		// quantity it never had (the + of a card line was refused as out of stock on a till that enforces stock validation)
+		is_stock_item: cardItem.is_stock_item,
 		...unitsOf(cardItem),
 	}
 }

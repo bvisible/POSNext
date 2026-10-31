@@ -346,11 +346,24 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		hasUnsentChanges.value = true;
 	}
 
+	//// Neoffice — fix round 2: the changes of the details dialog whose raise of a sent line has been applied. The cart applies the
+	//// dialog's change itself and hands the same object to its parent, which applies it again: on a line that waits that is
+	//// harmless, on a sent line the second pass added the units a second time. Keyed by the change object, so a later raise
+	//// made with a new object adds its own units (NeoRestau lot 1, task 22).
+	const appliedRaises = new WeakSet();
+
 	//// Neoffice — units added to a line that has left for the kitchen: they go on a line of their own, as a plain add of the same
-	//// dish (addItem merges them into the line that waits when there is one), never on the line the kitchen has; the new line
-	//// has no status, so the kitchen dialog offers it (NeoRestau lot 1, task 22, fix round 1).
+	//// dish, never on the line the kitchen has; the new line has no status, so the kitchen dialog offers it (NeoRestau lot 1,
+	//// task 22, fix round 1). Fix round 2: the unit is billed as the line it comes from (its rate set by hand, its discount),
+	//// so it is merged only into a line that waits and bills the same way, and a new line takes those terms. The caller has
+	//// checked the stock for the raise, so this is the add without that check.
 	function addUnitsOnANewLine(line, quantity) {
-		addItem({ ...line, kds_status: "" }, Math.round(quantity * 10000) / 10000);
+		addItemToInvoice(
+			{ ...line, kds_status: "" },
+			Math.round(quantity * 10000) / 10000,
+			{ sameTermsOnly: true }
+		);
+		hasUnsentChanges.value = true;
 	}
 
 	/**
@@ -2151,7 +2164,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 	function findCartItem(itemCode, uom = null, isFreeItem = undefined, row = null) {
 		//// Neoffice — the row the caller means, when it hands it over (the dish can sit twice in a table's cart); a caller with
 		//// no row keeps the lookup by item and unit (NeoRestau lot 1, task 22, fix round 1).
-		if (row && invoiceItems.value.indexOf(row) >= 0) return row;
+		//// Neoffice — fix round 2: a row that was handed over and is no longer in the cart (the first of two applications of the
+		//// same change merged it away) finds nothing: the lookup by item and unit would land on another line, a sent one.
+		if (row) return invoiceItems.value.indexOf(row) >= 0 ? row : undefined;
 		return invoiceItems.value.find((item) => {
 			if (item.item_code !== itemCode) return false;
 			if (uom && item.uom !== uom) return false;
@@ -2317,6 +2332,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			//// Neoffice — the line of that row first, see the note on updateItemQuantity (fix round 1).
 			const cartItem = findCartItem(itemCode, currentUom, updates?.is_free_item, row);
 			if (!cartItem) {
+				//// Neoffice — a row that was handed over and is gone: the first application of this change merged it into another
+				//// line, and the second has nothing to do (fix round 2). Not an error for the cashier.
+				if (row) return false;
 				throw new Error("Item not found in cart");
 			}
 
@@ -2351,11 +2369,22 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				}
 			}
 
+			//// Neoffice — a quantity raised on a line that has left for the kitchen is not written on that line: the difference goes on
+			//// a line of its own below, and the sent line keeps what the kitchen has (NeoRestau lot 1, task 22, fix round 1). Fix round 2:
+			//// the raise of a change that was already applied (see appliedRaises) is not applied, nor checked against the stock, again.
+			const raisesSentLine =
+				updates.quantity !== undefined &&
+				hasLeftForTheKitchen(cartItem) &&
+				updates.quantity > cartItem.quantity;
+			const raiseAlreadyApplied = raisesSentLine && appliedRaises.has(toRaw(updates));
+
 			// Validate stock if quantity is being increased
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (
 				updates.quantity !== undefined &&
 				updates.quantity > cartItem.quantity &&
+				//// Neoffice — not again for a raise already applied (fix round 2).
+				!raiseAlreadyApplied &&
 				settingsStore.shouldEnforceStockValidation() &&
 				shouldValidateItemStock(cartItem)
 			) {
@@ -2369,17 +2398,12 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				}
 			}
 
-			//// Neoffice — a quantity raised on a line that has left for the kitchen is not written on that line: the difference goes on
-			//// a line of its own below, and the sent line keeps what the kitchen has (NeoRestau lot 1, task 22, fix round 1).
+			//// Neoffice — the units a raise of a sent line asks for, none for a change already applied (fix round 2).
 			const unitsAdded =
-				updates.quantity !== undefined &&
-				hasLeftForTheKitchen(cartItem) &&
-				updates.quantity > cartItem.quantity
-					? updates.quantity - cartItem.quantity
-					: 0;
+				raisesSentLine && !raiseAlreadyApplied ? updates.quantity - cartItem.quantity : 0;
 			// Apply other updates
 			//// Neoffice — a sent line keeps its quantity: the units it was asked to gain go on a new line below (fix round 1).
-			if (updates.quantity !== undefined && !unitsAdded) cartItem.quantity = updates.quantity;
+			if (updates.quantity !== undefined && !raisesSentLine) cartItem.quantity = updates.quantity;
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (updates.warehouse !== undefined) cartItem.warehouse = updates.warehouse;
 			if (updates.discount_percentage !== undefined)
@@ -2419,7 +2443,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 
 			recalculateItem(cartItem);
 			//// Neoffice — the units raised on a sent line go on a line of its own (see unitsAdded above, fix round 1).
-			if (unitsAdded) addUnitsOnANewLine(cartItem, unitsAdded);
+			if (unitsAdded) {
+				addUnitsOnANewLine(cartItem, unitsAdded);
+				appliedRaises.add(toRaw(updates));
+			}
 			rebuildIncrementalCache();
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			showSuccess(__("{0} updated", [cartItem.item_name]));

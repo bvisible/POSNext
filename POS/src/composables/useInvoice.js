@@ -20,6 +20,8 @@ import { vatMapsFor } from "@/utils/offline/vatMaps";
 import { unitsOf } from "@/utils/cartLineUnits";
 //// Neoffice — a line that has left for the kitchen takes no new unit (task 22, fix round 1).
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
+//// Neoffice — the price terms a new unit carries from the line it extends (NeoRestau lot 1, task 22, fix round 2).
+import { carriedPriceTerms, samePriceTerms } from "@/utils/linePriceTerms";
 
 const log = logger.create("Invoice");
 
@@ -291,7 +293,12 @@ export function useInvoice() {
 	});
 
 	// Actions
-	function addItem(item, quantity = 1) {
+	//// Neoffice — `options.sameTermsOnly`: the item brings the price terms of the line it extends or of the price typed for it (a
+	//// rate set by hand, a discount), so it is merged only into a line that waits and bills the same way, and a new line takes
+	//// those terms. An item with a rate set by hand always does: a second dish typed at another price was merged into the line
+	//// of the first and billed at its price (NeoRestau lot 1, task 22, fix round 2).
+	function addItem(item, quantity = 1, options = {}) {
+		const carriesPriceTerms = Boolean(options.sameTermsOnly) || item.is_rate_manually_edited === 1;
 		const itemUom = item.uom || item.stock_uom;
 		//// Neoffice — upstream addItem merges a new line into an existing one with the same item_code
 		//// + UOM. In restaurant mode the same dish ordered twice with different modifiers or a
@@ -302,7 +309,9 @@ export function useInvoice() {
 		//// linter formatting — 3e25c3b + f1e01ff
 		// In restaurant mode, items with modifiers/instructions are always separate lines
 		const hasModifiers = item.posa_item_modifiers || item.posa_special_instructions;
-		const existingItem = hasModifiers
+		//// Neoffice — a line that has been sent merges into nothing either: an incoming row read back from the server with its
+		//// status joined an earlier line that waits, and Pending 3 became an unsent 5 (fix round 2).
+		const existingItem = (hasModifiers || hasLeftForTheKitchen(item))
 			? null
 			: invoiceItems.value.find(
 					(i) =>
@@ -315,7 +324,9 @@ export function useInvoice() {
 						//// drink became « x5 » on a line already Pending, billed and never sent to the bar. The new unit is a line
 						//// of its own, which the kitchen dialog offers; a line not sent yet (no status, or Waiting) still merges
 						//// (NeoRestau lot 1, task 22, fix round 1).
-						!hasLeftForTheKitchen(i)
+						!hasLeftForTheKitchen(i) &&
+						//// Neoffice — and only into a line that bills the same way when the item brings its terms (fix round 2).
+						(!carriesPriceTerms || samePriceTerms(i, item))
 			  );
 
 		if (existingItem) {
@@ -361,6 +372,9 @@ export function useInvoice() {
 				quantity: quantity,
 				discount_amount: 0,
 				discount_percentage: 0,
+				//// Neoffice — the terms of the line this one extends: the rate set by hand and the discount in percent
+				//// (NeoRestau lot 1, task 22, fix round 2).
+				...(carriesPriceTerms ? carriedPriceTerms(item) : {}),
 				tax_amount: 0,
 				amount: quantity * (item.rate || item.price_list_rate || 0),
 				stock_qty: item.stock_qty || 0,

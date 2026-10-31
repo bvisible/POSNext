@@ -5,7 +5,7 @@
  * //// the cart row it was copied from.
  */
 import { describe, expect, it } from "vitest"
-import { cartRowOf } from "../cartRow"
+import { cartLineOf, cartRowOf } from "../cartRow"
 import { nestFreeRows } from "../gwpSameItemFreeRows"
 
 const line = (code, extra = {}) => ({ item_code: code, uom: "Nos", quantity: 1, rate: 10, ...extra })
@@ -43,5 +43,38 @@ describe("a shown line leads back to its cart row", () => {
 		const shown = nestFreeRows([line("BURGER")])[0]
 		expect(JSON.parse(JSON.stringify(shown))).toEqual(JSON.parse(JSON.stringify({ ...line("BURGER"), _bundledFreeQty: 0 })))
 		expect(cartRowOf({ ...shown })).toEqual({ ...shown })
+	})
+})
+
+// The price dialog of a dish with no price hands back the item it was opened on: the row of the cart when the dish is already
+// there (its options were chosen first), a fresh item when it is not. A dish that is in the cart under another row is not it
+// (NeoRestau lot 1, task 22, fix round 2).
+describe("the cart line an item stands for", () => {
+	it("a row of the cart is its own line", () => {
+		const first = line("GIFT-CARD")
+		const second = line("GIFT-CARD")
+		const cart = [first, second]
+
+		expect(cartLineOf(cart, first)).toBe(first)
+		expect(cartLineOf(cart, second)).toBe(second)
+	})
+
+	it("a shown copy leads back to its row", () => {
+		const row = line("GIFT-CARD")
+		const [copy] = nestFreeRows([row])
+
+		expect(cartLineOf([row], copy)).toBe(row)
+	})
+
+	it("a fresh item of a dish that is already in the cart is no line of the cart", () => {
+		const sent = line("GIFT-CARD", { kds_status: "Pending" })
+		const fresh = line("GIFT-CARD")
+
+		expect(cartLineOf([sent], fresh)).toBe(null)
+	})
+
+	it("nothing is no line", () => {
+		expect(cartLineOf([line("GIFT-CARD")], null)).toBe(null)
+		expect(cartLineOf([], line("GIFT-CARD"))).toBe(null)
 	})
 })

@@ -2411,6 +2411,8 @@ import { cardLabel } from "@/utils/cardLabel";
 //// Neoffice — the cart line of a card entry or of a menu course item, and the units it carries, are built in one place that a
 //// test can reach (NeoRestau lot 1, task 22).
 import { cardItemToCartItem, menuItemToCartItem, withKnownUnits } from "@/utils/cartLineUnits";
+//// Neoffice — the cart line an item stands for, for the price dialog (NeoRestau lot 1, task 22, fix round 2).
+import { cartLineOf } from "@/utils/cartRow";
 import OffersDialog from "@/components/sale/OffersDialog.vue";
 import OfflineInvoicesDialog from "@/components/sale/OfflineInvoicesDialog.vue";
 import PaymentDialog from "@/components/sale/PaymentDialog.vue";
@@ -4241,13 +4243,15 @@ async function handleEditItem(updatedItem, row = null) {
 //// 2026-03-27).
 function handlePriceConfirmed({ item, price }) {
 	// Check if item is already in cart (restaurant flow: modifiers were shown first)
-	//// Neoffice — findLast, not find. In the restaurant flow the line waiting for its price is
+	//// Neoffice — findLast, not find (7e1376a3). In the restaurant flow the line waiting for its price is
 	//// the one just appended at rate 0; find() wrote the amount the cashier typed onto the
 	//// FIRST line with that item_code instead — a second gift card at 100 rewrote the first
-	//// one, which was already priced at 30, and the till was short. Same rule as 7e1376a3.
-	const existingCartItem = cartStore.invoiceItems.findLast(
-		(i) => i.item_code === item.item_code
-	);
+	//// one, which was already priced at 30, and the till was short.
+	//// Neoffice — and not findLast either (NeoRestau lot 1, task 22, fix round 2): the line to price is the item itself when the
+	//// dialog was opened on a line of the cart (modifiers first). A dish tapped again with an earlier line of it in the cart
+	//// (maybe one already sent) had THAT line's rate rewritten and got no unit. A fresh item is added with the price, and
+	//// addItem merges it only into a line that waits at that very price.
+	const existingCartItem = cartLineOf(cartStore.invoiceItems, item);
 	if (existingCartItem) {
 		// Update existing cart item's rate
 		existingCartItem.rate = price;
