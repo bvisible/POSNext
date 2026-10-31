@@ -69,7 +69,11 @@ const serve = ({ orders = ORDERS, stations = [] } = {}) => {
 	call.mockImplementation(async (method) => {
 		if (method.endsWith("get_tables"))
 			return {
-				areas: [{ name: "r1", area_name: "Room 1" }],
+				// Two rooms: with ONE the screen draws no room chip at all (task 38a-2, ruling 129: nothing to choose)
+				areas: [
+					{ name: "r1", area_name: "Room 1" },
+					{ name: "r2", area_name: "Room 2" },
+				],
 				tables: [
 					{
 						name: "table-T1",

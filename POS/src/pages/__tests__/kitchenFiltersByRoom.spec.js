@@ -15,7 +15,8 @@ const restaurantStore = vi.hoisted(() => ({
 }))
 
 vi.hoisted(() => {
-	globalThis.__ = (s) => s
+	globalThis.__ = (text, replace) =>
+		replace ? text.replace(/{(\d+)}/g, (_, n) => replace[n] ?? "") : text
 })
 
 vi.mock("frappe-ui", () => ({
@@ -366,7 +367,8 @@ describe("choosing a room on the kitchen screen", () => {
 			"Bar (1)",
 			"Kitchen (2)",
 		])
-		expect(wrapper.find("header").text()).toContain("Active Orders: 2")
+		// The count moved from « Active Orders: 2 » to the title's line (task 38a-2, ruling 128): « 2 orders »
+		expect(wrapper.find("header").text()).toContain("2 orders")
 		// The counts of the rooms stay those of every room: the line still says where the tickets are
 		expect(chipTexts(wrapper, "rooms")).toEqual([
 			"All Areas",

@@ -17,9 +17,11 @@ import {
  *   style: import("vue").ComputedRef<Record<string, string>>,
  *   cycle: () => void,
  *   choose: (size: string) => void,
+ *   label: import("vue").ComputedRef<string>,
  * }}
  *   size: Compact, Normal, Large or Extra large. style: the CSS variables to bind on the screen's root. cycle: the next size (the button
  *   of the header). choose: one size; it holds for as long as the screen is open and is kept on the device when it can be.
+ *   label: the size's name for the button (« Compact », « Large »...), translated.
  */
 export function useKitchenTextSize() {
 	// Read now, not on mount: the first paint must already be the right size, not a flash of the default
@@ -35,5 +37,19 @@ export function useKitchenTextSize() {
 		choose(nextTextSize(size.value))
 	}
 
-	return { size, style, cycle, choose }
+	// One literal `__()` per word: the catalogue extraction reads it from the source. Shared by the two screens that carry the button.
+	const label = computed(() => {
+		switch (size.value) {
+			case "normal":
+				return __("Normal", null, "Kitchen text size")
+			case "large":
+				return __("Large", null, "Kitchen text size")
+			case "xl":
+				return __("Extra large", null, "Kitchen text size")
+			default:
+				return __("Compact", null, "Kitchen text size")
+		}
+	})
+
+	return { size, style, cycle, choose, label }
 }

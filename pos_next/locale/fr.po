@@ -17580,3 +17580,25 @@ msgstr "Très grand"
 #: POS/src/pages/KDS.vue:54
 msgid "Text size: {0}"
 msgstr "Taille du texte : {0}"
+
+# //// Neoffice — French for the one top bar of the kitchen and runner screens (lot 1, task 38a-2, rulings 128 and 129): the title names the station, the count shares its line.
+# //// Kept as one block at the end, like the earlier passes. Drop an entry when upstream translates its msgid.
+#: POS/src/pages/KDS.vue:155
+msgid "All preparations"
+msgstr "Toutes les préparations"
+
+#: POS/src/pages/KDS.vue:165
+msgid "{0} order"
+msgstr "{0} commande"
+
+#: POS/src/pages/KDS.vue:166
+msgid "{0} orders"
+msgstr "{0} commandes"
+
+#: POS/src/pages/Runner.vue:358
+msgid "{0} item ready"
+msgstr "{0} article prêt"
+
+#: POS/src/pages/Runner.vue:359
+msgid "{0} items ready"
+msgstr "{0} articles prêts"

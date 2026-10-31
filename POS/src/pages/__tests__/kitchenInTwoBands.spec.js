@@ -436,7 +436,8 @@ describe("the filters on the two bands", () => {
 		const wrapper = await open()
 		await choose(wrapper, "rooms", "Room 1")
 
-		expect(wrapper.get("header").text()).toContain("Active Orders: 2")
+		// The count moved from « Active Orders: 2 » to the title's line (task 38a-2, ruling 128): « 2 orders »
+		expect(wrapper.get("header").text()).toContain("2 orders")
 	})
 })
 

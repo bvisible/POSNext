@@ -20,18 +20,27 @@
 		</button>
 	</div>
 
-	<div v-else class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
-		<!-- Header -->
-		<header class="bg-white dark:bg-gray-800 shadow-sm z-10 p-4 flex justify-between items-center">
-			<div>
-				<h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __("Runner Display") }}</h1>
-				<p class="text-sm text-gray-500 dark:text-gray-400">
-					{{ __("Ready Items") }}: {{ totalReadyItems }}
-				</p>
-			</div>
-			<div class="flex gap-2 items-center">
+	<!-- //// Neoffice — the text size is a set of CSS variables on the root, as on the kitchen screen (task 38a-2): the cards read them. And the dynamic viewport height, as the kitchen's root has it (ruling 72): a tablet browser's toolbar must not cut the foot of the screen. -->
+	<div v-else class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900" :style="textSizeStyle" :data-text-size="textSize" data-test="runner-screen">
+		<!-- //// Neoffice — ONE top bar instead of a header of two lines and a line of chips, the same as the kitchen's (task 38a-2, rulings 129 and 130). Row 1: « Runner » -->
+		<!-- //// (and the room when one is chosen) with the count of what is ready on the same line, the display modes of the screen, and at the right the actions. -->
+		<!-- //// Row 2, the rooms and the stations, is drawn only when there is something to choose. -->
+		<ServiceTopBar
+			:title="pageTitle"
+			:count="readyCountLabel"
+			:dot-color="READY_GREEN"
+			:dot-color-on-dark="READY_GREEN_ON_DARK"
+			v-model:completed="showDelivered"
+			:text-size="textSize"
+			:text-size-label="textSizeLabel"
+			:desk-session="deskSession"
+			@cycle-size="cycleTextSize"
+			@refresh="loadOrders"
+			@back="$router.push('/')"
+		>
+			<template #view>
 				<!-- View mode toggle (3 modes) -->
-				<div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+				<div class="flex flex-none rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
 					<button
 						@click="viewMode = 'table'"
 						class="px-3 py-1.5 text-sm font-medium transition-colors"
@@ -49,50 +58,40 @@
 						:class="viewMode === 'plan' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
 					>{{ __("Plan", null, "Floor plan view") }}</button>
 				</div>
-				<label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
-					<!-- //// Neoffice — dark mode (task 46): an unchecked box was a solid white disc, which reads as "on" next to the clay fill of a checked one; in dark it is empty with a ring of the system's tertiary text colour (3:1 or more on the header). A checked box keeps its fill. -->
-					<input type="checkbox" v-model="showDelivered" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:[&:not(:checked)]:bg-transparent dark:[&:not(:checked)]:ring-1 dark:[&:not(:checked)]:ring-inset dark:[&:not(:checked)]:ring-ds-sand-400" />
-					{{ __("Show completed") }}
-				</label>
-				<Button @click="loadOrders" icon="refresh-cw">
-					{{ __("Refresh") }}
-				</Button>
-				<Button v-if="deskSession" @click="$router.push('/')" variant="subtle">
-					{{ __("Back to POS") }}
-				</Button>
-			</div>
-		</header>
-
-		<!-- The rooms and the stations are ONE line, the same on the kitchen screen. The plan view has no station to choose -->
-		<RoomStationFilterLine
-			:rooms="filterRooms"
-			:selected-room="activeArea"
-			:stations="filterStations"
-			:selected-station="selectedStation"
-			:all-count="filteredByAreaOrders.length"
-			@update:selected-room="selectArea"
-			@update:selected-station="selectedStation = $event"
-		>
-			<!-- The runner counts what is READY, and says it in green (the colour of its Ready badges) on a room, and with a
-			     pill of the station's own colour and a tick on a station. Nothing when no dish is ready. The kitchen screen
-			     counts its open tickets, and gives its counts no such meaning -->
-			<template #room-count="{ room }">
-				<!-- //// Neoffice — dark mode (task 46): white on `green-500` is 2.6:1; in dark the count is ink on the dark ramp's success green -->
-				<span v-if="room.count > 0" data-test="room-count"
-					class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-500 dark:bg-ds-success dark:text-ds-ink rounded-full">{{ room.count }}</span>
 			</template>
-			<template #station-count="{ station, selected }">
-				<!-- //// Neoffice — dark mode (task 46): a station's count is written in the station's own colour on a tint of it (a blue station 1.9:1 on a dark chip). The colour moves from the inline style to a variable the class reads, so that in dark it can be the same colour lightened (`onDark`). A chosen chip keeps the text colour of the chip and its white wash (now a class, `bg-[rgba(255,255,255,0.3)]`, the very value it was inline: the till's dark remap of `bg-white/30` is `!important` and would flatten that class), and on a chip whose text is white the wash is black in dark, so that the count reads (white on the white wash was 3.7:1). -->
-				<span v-if="station.count > 0" data-test="station-count"
-					class="text-xs font-bold px-1.5 py-0.5 rounded"
-					:class="selected
-						? ['bg-[rgba(255,255,255,0.3)]', inkOn(station.color) === '#FFFFFF' ? 'dark:bg-black/25' : '']
-						: 'text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]'"
-					:style="selected
-						? {}
-						: { backgroundColor: station.color + '20', '--station-color': station.color, '--station-on-dark': onDark(station.color) }">{{ station.count }}✓</span>
+			<template #filters>
+				<!-- The rooms and the stations are ONE line, the same on the kitchen screen. The plan view has no station to choose -->
+				<RoomStationFilterLine
+					:rooms="chipRooms"
+					:selected-room="activeArea"
+					:stations="chipStations"
+					:selected-station="selectedStation"
+					:all-count="filteredByAreaOrders.length"
+					@update:selected-room="selectArea"
+					@update:selected-station="selectedStation = $event"
+				>
+					<!-- The runner counts what is READY, and says it in green (the colour of its Ready badges) on a room, and with a
+					     pill of the station's own colour and a tick on a station. Nothing when no dish is ready. The kitchen screen
+					     counts its open tickets, and gives its counts no such meaning -->
+					<template #room-count="{ room }">
+						<!-- //// Neoffice — dark mode (task 46): white on `green-500` is 2.6:1; in dark the count is ink on the dark ramp's success green -->
+						<span v-if="room.count > 0" data-test="room-count"
+							class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-green-500 dark:bg-ds-success dark:text-ds-ink rounded-full">{{ room.count }}</span>
+					</template>
+					<template #station-count="{ station, selected }">
+						<!-- //// Neoffice — dark mode (task 46): a station's count is written in the station's own colour on a tint of it (a blue station 1.9:1 on a dark chip). The colour moves from the inline style to a variable the class reads, so that in dark it can be the same colour lightened (`onDark`). A chosen chip keeps the text colour of the chip and its white wash (now a class, `bg-[rgba(255,255,255,0.3)]`, the very value it was inline: the till's dark remap of `bg-white/30` is `!important` and would flatten that class), and on a chip whose text is white the wash is black in dark, so that the count reads (white on the white wash was 3.7:1). -->
+						<span v-if="station.count > 0" data-test="station-count"
+							class="text-xs font-bold px-1.5 py-0.5 rounded"
+							:class="selected
+								? ['bg-[rgba(255,255,255,0.3)]', inkOn(station.color) === '#FFFFFF' ? 'dark:bg-black/25' : '']
+								: 'text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]'"
+							:style="selected
+								? {}
+								: { backgroundColor: station.color + '20', '--station-color': station.color, '--station-on-dark': onDark(station.color) }">{{ station.count }}✓</span>
+					</template>
+				</RoomStationFilterLine>
 			</template>
-		</RoomStationFilterLine>
+		</ServiceTopBar>
 
 		<!-- Main content: Cards view -->
 		<main v-if="viewMode !== 'plan'" :class="TICKET_AREA" data-test="ticket-area">
@@ -212,6 +211,11 @@ import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import { Button } from "frappe-ui"
 import RunnerOrderCard from "@/components/invoices/RunnerOrderCard.vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
+//// Neoffice — the one top bar of the service screens, the tab's title and the size of the text (task 38a-2, rulings 109, 128, 129)
+import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
+import { useDocumentTitle } from "@/composables/useDocumentTitle"
+import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
+import { countDishes } from "@/utils/kitchenRunner"
 import { TICKET_AREA, TICKET_GRID } from "@/utils/ticketLayout"
 //// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
 import { inkOn, onDark } from "@/utils/stationColors"
@@ -227,7 +231,10 @@ const runnerEnabled = computed(() => restaurantStore.runnerEnabled)
 const deskSession = isDeskSession()
 // The restaurant whose orders this screen shows: the one in the address (a pass tablet has no till of its own), else
 // the till's restaurant, else the server picks the user's open till, else the default restaurant.
-const urlRestaurant = new URLSearchParams(window.location.search).get("restaurant")
+const urlParams = new URLSearchParams(window.location.search)
+const urlRestaurant = urlParams.get("restaurant")
+//// Neoffice — the station in the address filters the runner as it filters the kitchen (task 38a-2, ruling 132): going from « Bar » to « Runner » shows the runner of the bar
+const urlStation = urlParams.get("station")
 const ofTheRestaurant = () => ({
 	restaurant: urlRestaurant || restaurantStore.tillRestaurant,
 })
@@ -244,7 +251,7 @@ const loading = ref(true)
 const deliverLoading = ref(false)
 const viewMode = ref("table")
 const selectedArea = ref(localStorage.getItem("pos_runner_area") || "")
-const selectedStation = ref(null)
+const selectedStation = ref(urlStation || null)
 const planArea = ref("")
 const selectedPlanTable = ref(null)
 let socket = null
@@ -313,6 +320,44 @@ const filterRooms = computed(() =>
 )
 const filterStations = computed(() =>
 	viewMode.value === "plan" ? [] : orderStations.value,
+)
+
+//// Neoffice — the page's one line (task 38a-2, rulings 128, 129, 130): « Runner », and the room when one is chosen, with the dishes that are ready on
+//// the same line, by quantity (two plates on one line are two plates to carry), as the kitchen's chip counts them. The count of the beep stays the
+//// lines' (a dish added to a line is no new ticket). The tab's title is the page's.
+const READY_GREEN = "#22C55E"
+const READY_GREEN_ON_DARK = "#3DBE74"
+const pageTitle = computed(() => {
+	const room = areas.value.find((area) => area.name === activeArea.value)
+	return room ? `${__("Runner")} · ${room.area_name}` : __("Runner")
+})
+const readyDishCount = computed(() => countDishes(filteredOrders.value))
+const readyCountLabel = computed(() =>
+	readyDishCount.value === 1
+		? __("{0} item ready", [readyDishCount.value])
+		: __("{0} items ready", [readyDishCount.value]),
+)
+useDocumentTitle(pageTitle)
+
+//// Neoffice — the size of the text, the same pick as the kitchen's, kept on the device (task 38a-2, ruling 109)
+const {
+	size: textSize,
+	style: textSizeStyle,
+	cycle: cycleTextSize,
+	label: textSizeLabel,
+} = useKitchenTextSize()
+
+//// Neoffice — row 2 of the bar is drawn only when there is something to choose (task 38a-2, ruling 129), as on the kitchen screen: one room has no
+//// room chips, one station has no station chips, a screen bound to its station has none. The stations the restaurant HAS are asked for (the stations
+//// with a dish ready are only those on the screen: a second station with nothing ready yet would make the row come and go).
+const stations = ref([])
+const boundToItsStation = !deskSession && !!urlStation
+const chipRooms = computed(() => (filterRooms.value.length > 1 ? filterRooms.value : []))
+const chipStations = computed(() =>
+	Math.max(stations.value.length, filterStations.value.length) > 1 &&
+	!boundToItsStation
+		? filterStations.value
+		: [],
 )
 
 watch(showDelivered, (val) => {
@@ -506,6 +551,17 @@ async function loadAreas() {
 	}
 }
 
+async function loadStations() {
+	try {
+		const res = await call("pos_next.api.restaurant.get_preparation_stations", {
+			...ofTheRestaurant(),
+		})
+		if (Array.isArray(res)) stations.value = res
+	} catch (error) {
+		console.error("Failed to load stations:", error)
+	}
+}
+
 async function loadOrders() {
 	try {
 		// Every ready order of the restaurant, not just the room chosen: the screen cuts the list to the room itself
@@ -556,6 +612,7 @@ onMounted(async () => {
 	await restaurantStore.fetchRestaurantSettings(urlRestaurant)
 	if (!runnerEnabled.value) return // Don't load data if runner is disabled
 	loadAreas()
+	loadStations()
 	loadOrders()
 	// Use frappe.realtime (receives frappe.publish_realtime events) with fallback to custom socket
 	socket = window.frappe?.realtime || initSocket()
