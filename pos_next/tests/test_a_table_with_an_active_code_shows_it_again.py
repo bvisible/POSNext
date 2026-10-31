@@ -9,9 +9,12 @@ out, its POS opening closed, or the table was freed) is expired, as it always wa
 
 Because a press now reuses the table's live code, whoever presses is checked first, and by the rule of the floor read
 (`get_tables`, through `permissions.require_floor_access`): whoever the till shows the floor to may press QR for a table of
-that till's restaurant, no wider and no narrower. That is a desk account, whatever its roles and its till (a portal account
-and a visitor are refused), a table that is on the floor of the till it names, and a site that runs NeoRestau. A cashier of
-another restaurant, pressing at his own till, reads no code of this one.
+that till's restaurant, no wider and no narrower. That is a desk account that may read the restaurant of the till named
+(Ruling 80): the roles that read a `Restaurant` (the cashier, the managers), and the per-restaurant User Permissions cut in,
+so that a user kept to restaurant B who names a till of restaurant A reads neither A's floor nor A's live code. Nothing
+more is asked: not an assignment to the till (a kitchen screen's account and a manager read the floor without being users
+of the POS Profile), not a right on the table, not the right to make a token. A portal account and a visitor are refused,
+a table must be on the floor of the till it names, and the site must run NeoRestau.
 
 The suite relies on no patch, no after_migrate and no data of the site: it makes the restaurants, the tills, the rooms and
 the tables it needs (the `Tills` fixture of the mode suite), and each test rolls back to the savepoint it started from.
@@ -45,7 +48,7 @@ CODE_ROLE = "POS User"
 # The roles that read a Restaurant Table (restaurant_table.json)
 TABLE_READERS = {"POSNext Cashier", "Restaurant Manager", "Admin", "Nexus POS Manager", "Sales Manager", "System Manager"}
 # The accounts that tell the floor read's rule from the gates a press used to have. Each is a desk account, none is Administrator
-POS_USER_ONLY = "qr-scope-pos-user@yopmail.com"  # POS User and no role that reads a table: the read gate refused it
+POS_USER_ONLY = "qr-scope-pos-user@yopmail.com"  # POS User and no role that reads a restaurant
 CASHIER_ROLE_ONLY = "qr-scope-cashier-role@yopmail.com"  # the cashier role and no POS User: the create right refused it
 TILL_MANAGER = "qr-scope-till-manager@yopmail.com"  # Nexus POS Manager, on no POS Profile
 ADMIN = "qr-scope-admin@yopmail.com"  # the customer's Admin role, on no POS Profile
@@ -54,6 +57,9 @@ RESTAURANT_MANAGER = "qr-scope-restaurant-manager@yopmail.com"
 SALES_MANAGER = "qr-scope-sales-manager@yopmail.com"
 BYSTANDER = "qr-scope-bystander@yopmail.com"  # a desk account whose only role has nothing to do with a restaurant
 RESTRICTED = "qr-scope-restricted@yopmail.com"  # a cashier kept to the other restaurant by a User Permission
+KITCHEN_STAFF = "qr-scope-kitchen@yopmail.com"  # a kitchen screen's account: the kitchen role on a desk account with a till role
+RESTRICTED_MANAGER = "qr-scope-restricted-manager@yopmail.com"  # a Restaurant Manager kept to the other restaurant
+OWN_MANAGER = "qr-scope-own-manager@yopmail.com"  # a Restaurant Manager kept to THIS restaurant by a User Permission
 
 
 def make_a_till_of(profile, restaurant):
@@ -347,6 +353,9 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 			(SALES_MANAGER, ["Sales Manager"], "System User"),
 			(BYSTANDER, ["Accounts User"], "System User"),
 			(RESTRICTED, [CASHIER_ROLE, CODE_ROLE], "System User"),
+			(KITCHEN_STAFF, [permissions.KITCHEN_ROLE, CASHIER_ROLE], "System User"),
+			(RESTRICTED_MANAGER, ["Restaurant Manager"], "System User"),
+			(OWN_MANAGER, ["Restaurant Manager"], "System User"),
 		):
 			_user(email, roles, user_type)
 		# Each cashier works at the till of his restaurant; the portal account was given the first, by mistake. The two
@@ -465,7 +474,13 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 
 		self.assertEqual(self.tokens_of(self.table_a), 0)
 
-	# --- the rule is the floor read's (`get_tables`): whoever the till shows the floor to may press ---
+	# --- the rule is the floor read's (`get_tables`): whoever the till shows the floor to may press (Ruling 80) ---
+
+	def keep_to(self, user, restaurant):
+		"""A User Permission that confines `user` to one restaurant, as a site that runs several of them sets it up."""
+		self.insert("User Permission", user=user, allow="Restaurant", for_value=restaurant)
+		frappe.clear_cache(user=user)
+		self.addCleanup(frappe.clear_cache, user=user)
 
 	def the_account_is_on_no_till_and_has_no_pos_user_role(self, user):
 		"""The premise of the tests below: a desk account that is neither Administrator nor assigned to any till, and that
@@ -494,7 +509,7 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 		self.assertEqual(self.press_as(ADMIN, self.table_a, self.fx.profile), code)
 
 	def test_a_manager_is_served_at_a_till_of_the_restaurant_of_the_table_and_no_other(self):
-		# The restaurant check is the same for him as for a cashier: a table of the other restaurant is not on this floor
+		# The restaurant check is the same for him as for a cashier: a table of the other restaurant at this till is refused
 		with self.assertRaises(frappe.PermissionError):
 			self.press_as(TILL_MANAGER, self.table_b, self.fx.profile)
 		code = self.press_as(TILL_MANAGER, self.table_b, self.fx.other_profile)
@@ -502,14 +517,19 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("Guest Order Token", code["name"], "table"), self.table_b)
 		self.assertEqual(self.tokens_of(self.table_a), 0)
 
-	def test_a_cashier_with_pos_user_and_no_role_that_reads_a_table_is_served(self):
-		# A user of the till the floor is shown to: the floor read serves him, so does the press
+	def test_a_user_of_the_till_who_holds_pos_user_and_no_role_that_reads_a_restaurant_gets_neither_floor_nor_code(self):
+		# The doctype's rule: the restaurant is read by the cashier, the managers and the manager of the till, not by POS User.
+		# The floor is not shown to him, so the QR button is not either: the two agree (the count of such users on the
+		# restaurant tills of prodclone is 0 of 7)
 		self.assertEqual(TABLE_READERS & set(frappe.get_roles(POS_USER_ONLY)), set())
 		self.assertTrue(frappe.db.exists("POS Profile User", {"parent": self.fx.profile, "user": POS_USER_ONLY}))
 
-		code = self.press_as(POS_USER_ONLY, self.table_a, self.fx.profile)
+		with self.assertRaises(frappe.PermissionError):
+			self.served_or_raise(POS_USER_ONLY, lambda: restaurant_api.get_tables(self.restaurant))
+		with self.assertRaises(frappe.PermissionError):
+			self.press_as(POS_USER_ONLY, self.table_a, self.fx.profile)
 
-		self.assertEqual(self.status_of(code["name"]), "Active")
+		self.assertEqual(self.tokens_of(self.table_a), 0)
 
 	def test_a_cashier_with_the_cashier_role_and_no_pos_user_is_served(self):
 		# The doctype's create right names POS User, which the cashier role does not carry: the press is the gate's, and
@@ -530,26 +550,103 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 		self.assertNotEqual(code["name"], stale)
 		self.assertEqual((self.status_of(stale), self.status_of(code["name"])), ("Expired", "Active"))
 
+	def served_or_raise(self, user, call):
+		"""`call` as `user`, its answer returned and its refusal raised."""
+		frappe.set_user(user)
+		try:
+			return call()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_a_user_kept_to_the_other_restaurant_gets_neither_the_floor_nor_the_live_code_of_this_one(self):
+		# Ruling 80: a desk user confined to restaurant B who names a till of restaurant A (here the cashier, who is not even
+		# a user of A's till, and the manager) gets neither A's floor nor A's live code
+		live = guest_ordering.create_table_token(self.table_a, self.fx.profile)
+		self.keep_to(RESTRICTED, self.restaurant_b)
+		self.keep_to(RESTRICTED_MANAGER, self.restaurant_b)
+
+		for user in (RESTRICTED, RESTRICTED_MANAGER):
+			with self.subTest(user=user):
+				with self.assertRaises(frappe.PermissionError):
+					self.served_or_raise(user, lambda: restaurant_api.get_tables(self.restaurant))
+				with self.assertRaises(frappe.PermissionError):
+					self.press_as(user, self.table_a, self.fx.profile)
+
+		# The live code of the table was shown to nobody, and is as it was
+		self.assertEqual(self.tokens_of(self.table_a), 1)
+		self.assertEqual(self.status_of(live["name"]), "Active")
+
+	def test_a_user_kept_to_a_restaurant_reads_the_floor_and_the_code_of_that_one(self):
+		self.keep_to(RESTRICTED, self.restaurant_b)
+		self.keep_to(OWN_MANAGER, self.restaurant)
+
+		# The cashier kept to B, at B's till, for B's floor and B's table
+		floor = self.served_or_raise(RESTRICTED, lambda: restaurant_api.get_tables(self.restaurant_b))
+		code = self.press_as(RESTRICTED, self.table_b, self.fx.other_profile)
+		self.assertIn(self.table_b, [table["name"] for table in floor["tables"]])
+		self.assertNotIn(self.table_a, [table["name"] for table in floor["tables"]])
+		self.assertEqual(frappe.db.get_value("Guest Order Token", code["name"], "table"), self.table_b)
+		# The manager kept to THIS restaurant, for its floor and its table: the permission cuts only the other restaurant's
+		floor = self.served_or_raise(OWN_MANAGER, lambda: restaurant_api.get_tables(self.restaurant))
+		code = self.press_as(OWN_MANAGER, self.table_a, self.fx.profile)
+		self.assertIn(self.table_a, [table["name"] for table in floor["tables"]])
+		self.assertNotIn(self.table_b, [table["name"] for table in floor["tables"]])
+		self.assertEqual(frappe.db.get_value("Guest Order Token", code["name"], "table"), self.table_a)
+
+	def test_an_unconfined_manager_reads_both_floors_and_may_press_in_both(self):
+		# No User Permission, no assignment to a till: the rule is the right to read the restaurant, nothing more
+		self.assertFalse(frappe.db.exists("User Permission", {"user": RESTAURANT_MANAGER}))
+
+		for restaurant, table, till in (
+			(self.restaurant, self.table_a, self.fx.profile),
+			(self.restaurant_b, self.table_b, self.fx.other_profile),
+		):
+			with self.subTest(restaurant=restaurant):
+				floor = self.served_or_raise(RESTAURANT_MANAGER, lambda: restaurant_api.get_tables(restaurant))
+				code = self.press_as(RESTAURANT_MANAGER, table, till)
+				self.assertIn(table, [row["name"] for row in floor["tables"]])
+				self.assertEqual(frappe.db.get_value("Guest Order Token", code["name"], "table"), table)
+
+	def test_a_kitchen_screens_account_reads_the_rooms_without_being_a_user_of_the_till(self):
+		# The kitchen and the runner read their rooms from `get_tables` (NeoRestau lot 1, task 9c). A kitchen tablet runs on a
+		# desk account that holds a till role besides the kitchen's: it reads the restaurant, and is no user of the POS Profile
+		self.assertIn(permissions.KITCHEN_ROLE, frappe.get_roles(KITCHEN_STAFF))
+		self.assertFalse(frappe.db.exists("POS Profile User", {"user": KITCHEN_STAFF}))
+
+		floor = self.served_or_raise(KITCHEN_STAFF, lambda: restaurant_api.get_tables(self.restaurant))
+
+		self.assertIn("_Test Press Room A", [area["area_name"] for area in floor["areas"]])
+		self.assertIn(self.table_a, [table["name"] for table in floor["tables"]])
+		self.assertNotIn(self.table_b, [table["name"] for table in floor["tables"]])
+		# And what it reads of the other restaurant is that restaurant's, as ever
+		other = self.served_or_raise(KITCHEN_STAFF, lambda: restaurant_api.get_tables(self.restaurant_b))
+		self.assertIn(self.table_b, [table["name"] for table in other["tables"]])
+		self.assertNotIn(self.table_a, [table["name"] for table in other["tables"]])
+
 	def test_the_press_is_served_to_exactly_the_accounts_the_floor_read_is_served_to(self):
-		# The floor read ignores the roles, the till a user is assigned to and the User Permissions of a user: it asks for a
-		# desk account (`require_floor_access`). The press asks the same, and then that the table is of the till's restaurant.
-		# That is the whole of the floor's openness, and the press is exactly as open: no wider, no narrower.
-		self.insert("User Permission", user=RESTRICTED, allow="Restaurant", for_value=self.restaurant_b)
-		frappe.clear_cache(user=RESTRICTED)
-		self.addCleanup(frappe.clear_cache, user=RESTRICTED)
+		# The rule of the floor (`require_floor_access`) is a desk account that may read the restaurant: the roles that read a
+		# `Restaurant`, and the User Permissions that keep a user to another. It asks no assignment to the till, no right on
+		# the table and no right to make a token. The press asks that and then that the table is of the till's restaurant: it
+		# is exactly as open as the floor read, no wider and no narrower.
+		self.keep_to(RESTRICTED, self.restaurant_b)
+		self.keep_to(RESTRICTED_MANAGER, self.restaurant_b)
+		self.keep_to(OWN_MANAGER, self.restaurant)
 		accounts = [
 			("Administrator", "Administrator", True),
 			("a cashier assigned to the till", CASHIER_A, True),
-			("a cashier of the other restaurant, naming this restaurant's till", CASHIER_B, True),
-			("POS User and no role that reads a table", POS_USER_ONLY, True),
+			("a cashier of the other restaurant, with no User Permission, naming this restaurant's till", CASHIER_B, True),
 			("the cashier role and no POS User", CASHIER_ROLE_ONLY, True),
 			("Nexus POS Manager, on no till", TILL_MANAGER, True),
 			("Admin, on no till", ADMIN, True),
 			("System Manager without being Administrator", SYSTEM_MANAGER, True),
-			("Restaurant Manager", RESTAURANT_MANAGER, True),
+			("an unconfined Restaurant Manager, on no till", RESTAURANT_MANAGER, True),
+			("a Restaurant Manager kept to this restaurant by a User Permission", OWN_MANAGER, True),
 			("Sales Manager", SALES_MANAGER, True),
-			("a desk account whose only role is not the restaurant's", BYSTANDER, True),
-			("a cashier kept to the other restaurant by a User Permission", RESTRICTED, True),
+			("a kitchen screen's account: the kitchen role and the cashier role, on no till", KITCHEN_STAFF, True),
+			("POS User and no role that reads a restaurant", POS_USER_ONLY, False),
+			("a desk account whose only role is not the restaurant's", BYSTANDER, False),
+			("a cashier kept to the other restaurant by a User Permission", RESTRICTED, False),
+			("a Restaurant Manager kept to the other restaurant by a User Permission", RESTRICTED_MANAGER, False),
 			("a portal account given every role", PORTAL, False),
 			("a visitor", "Guest", False),
 		]
@@ -578,3 +675,11 @@ class TestWhoMayPressTheQrButton(TheQrButton, Tills, FrappeTestCase):
 
 		self.assertEqual(rule.call_count, 2)
 		self.assertEqual(self.tokens_of(self.table_a), 0)
+
+	def test_both_ask_it_for_the_restaurant_of_the_till_that_is_named(self):
+		# The restaurant the rule is asked for: the one `get_tables` is asked about, and the one of the till the press names
+		with patch.object(permissions, "require_floor_access", wraps=permissions.require_floor_access) as rule:
+			restaurant_api.get_tables(self.restaurant_b)
+			guest_ordering.create_table_token(self.table_b, self.fx.other_profile)
+
+		self.assertEqual([call.args for call in rule.call_args_list], [(self.restaurant_b,), (self.restaurant_b,)])

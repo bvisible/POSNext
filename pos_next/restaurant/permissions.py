@@ -93,21 +93,25 @@ def require(doctype: str, ptype: str = "write", name: str | None = None) -> None
 		frappe.has_permission(doctype, ptype, doc=name, throw=True)
 
 
-def require_floor_access() -> None:
-	"""Refuse whoever the floor is not shown to: the one rule of the floor, asked by the read of it (`get_tables`) and by the
-	QR button of a table (`create_table_token`), so that whoever sees the floor may press QR for a table of it, no wider and
-	no narrower.
+def require_floor_access(restaurant: str | None) -> None:
+	"""Refuse whoever the floor of a restaurant is not shown to: the one rule of the floor, asked by the read of it (`get_tables`)
+	and by the QR button of a table (`create_table_token`), so that whoever sees the floor may press QR for a table of it, no
+	wider and no narrower (Ruling 80).
 
-	The floor is shown to a desk account (a visitor and a portal account never are, whatever roles they were given), and to
-	it whatever its roles, the till it is assigned to and its User Permissions: the cashiers, the managers and the devices
-	that run a till are not told apart by a role of the restaurant's. Which restaurant's floor it is, is the endpoint's own
-	question (the till's, else the one named): `get_tables` answers that restaurant's rows, the press refuses a table that is
-	not of the restaurant of the till it names. A tighter rule for the floor (a role, an assignment to the till) is one
+	`restaurant` is the one whose floor is asked: the one named, else the till's own (the restaurant of the till the press names).
+	The floor is shown to a desk account (a visitor and a portal account never are, whatever roles they were given) that may
+	read a `Restaurant`, as the doctype's rules say: the cashier, the managers (a kitchen tablet runs on a desk account that holds
+	a till role, so it reads it), not a desk account whose roles have nothing to do with a restaurant. And it may read THAT
+	restaurant: the per-restaurant User Permissions cut in, so that a user kept to restaurant B who names a till of restaurant A
+	reads neither A's floor nor A's live code. It is the rule of the other reads of a restaurant's records (`require_restaurant`:
+	the preparation stations, the tips, the settings, the workflows), plus the doctype-level right when no restaurant is named
+	(a till that is none's).
+
+	Nothing more is asked: not an assignment to the till (the kitchen screen's account and the managers read the floor without
+	being users of the POS Profile), not a right on the table, not the right to make a token. A tighter rule for the floor is one
 	change, here, for both.
 	"""
-	from pos_next.api.cash_entry import require_system_user
-
-	require_system_user()
+	require("Restaurant", "read", restaurant or None)
 
 
 def require_right(right: str) -> None:

@@ -114,15 +114,15 @@ def get_tables(restaurant=None):
 	table the label of its room (`area_name`) beside the room's name.
 	"""
 	# //// Neoffice — it is called from the till, tips panel and runner screen, run by desk accounts, so a
-	# //// desk account is required: the one rule of the floor, which the QR button of a table asks as well
-	# //// (permissions.require_floor_access).
+	# //// desk account is required, that may read the restaurant whose floor it is: the one rule of the floor, which
+	# //// the QR button of a table asks as well (permissions.require_floor_access).
 	# Or the kitchen's or the runner's tablet, its own restaurant only (pos_next.restaurant.devices)
 	device = devices.screen_device(devices.KITCHEN, devices.RUNNER)
 	if device:
 		restaurant, _station = devices.cut_to_device(device, restaurant)
-	else:
-		permissions.require_floor_access()
 	restaurant = restaurant or scope.current_restaurant()
+	if not device:
+		permissions.require_floor_access(restaurant)
 	of_the_restaurant = scope.restaurant_or_filters(restaurant)
 	areas = scope.stamp(
 		frappe.get_all(

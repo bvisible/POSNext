@@ -1151,25 +1151,29 @@ def create_table_token(table, pos_profile):
 	that scanned it would be told that its session is over.
 	A press shows the table's live code, so whoever presses is checked first, by the rule of the floor read (`get_tables`):
 	whoever the till shows the floor to may press QR for a table of that till's restaurant, no wider and no narrower. That is
-	a desk account (`permissions.require_floor_access`), whatever its roles and the till it is assigned to, on a site that
-	runs NeoRestau, for a table that is on the floor of the till the call names. The code is made with the authority of that
-	check: the right to create a Guest Order Token is not asked on top, nor the right to read the table.
+	a desk account that may read the restaurant of the till the call names (`permissions.require_floor_access`: the roles that
+	read a Restaurant, and the per-restaurant User Permissions, which keep a user of restaurant B from the live code of
+	restaurant A whatever till he names), on a site that runs NeoRestau, for a table that is on the floor of that till. Not
+	asked on top: an assignment to the till, a right on the table, the right to create a Guest Order Token (the code is made
+	with the authority of that check).
 	Returns the token value and the guest URL.
 	"""
 	# Where the site does not run NeoRestau nothing of the restaurant shows: no code is made for a guest to use
 	require_neorestau()
-	# The rule of the floor read, the one function both ask: a visitor and a portal account are refused before anything is
-	# looked up
-	permissions.require_floor_access()
 	# A name is a string: a dict from a JSON body would be read as filters by the lookups below
 	if not (isinstance(table, str) and table and isinstance(pos_profile, str) and pos_profile):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	# The rule of the floor read, the one function both ask, for the restaurant of the till named: a visitor and a portal
+	# account are refused, and so is a desk user kept to another restaurant
+	restaurant = scope.current_restaurant(pos_profile)
+	permissions.require_floor_access(restaurant)
 
 	if not frappe.db.exists("Restaurant Table", table):
 		frappe.throw(_("Table {0} not found.").format(table))
 
 	# The table is on the floor of the restaurant the till belongs to, never another's
-	if scope.restaurant_of_record("Restaurant Table", table) != scope.current_restaurant(pos_profile):
+	if scope.restaurant_of_record("Restaurant Table", table) != restaurant:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	# The code the table already has: its newest active token that can still be used (is_valid: not past
