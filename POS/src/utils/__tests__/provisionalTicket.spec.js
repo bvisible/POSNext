@@ -354,6 +354,22 @@ describe("the provisional ticket prints where the till prints its receipts, and 
 		expect(window.open).not.toHaveBeenCalled();
 	});
 
+	it("too many tickets in a minute is a refusal that is shown, not a reason to print from the browser", async () => {
+		server.fail.print_provisional_ticket = refusal(
+			"RateLimitExceededError",
+			"Too many tickets in a minute: wait a moment before printing another",
+		);
+
+		const how = await print();
+
+		expect(how).toBe("refused");
+		expect(window.open).not.toHaveBeenCalled();
+		expect(ticketState).toMatchObject({
+			phase: "failed",
+			text: "Not printed: Too many tickets in a minute: wait a moment before printing another",
+		});
+	});
+
 	it("when the server cannot be reached, the browser prints it, and says why", async () => {
 		server.fail.print_provisional_ticket = new TypeError("Failed to fetch");
 

@@ -20,11 +20,16 @@ export const POLL_TRIES = 40;
 /** How long a final state stays on the button before it goes back to the printer icon. */
 export const SHOWN_MS = 6000;
 
-/** The server's refusals (the order is paid, the user may not, another restaurant's table): shown, not printed. */
+/**
+ * The server's refusals (the order is paid, the user may not, another restaurant's table, too many tickets in a minute):
+ * shown, not printed. Any other kind of ValidationError (LinkValidationError...) reaches the till as a plain one: the
+ * server says it so (provisional_ticket.print_provisional_ticket).
+ */
 const REFUSALS = new Set([
 	"PermissionError",
 	"ValidationError",
 	"DoesNotExistError",
+	"RateLimitExceededError",
 ]);
 /** The server says the till has no ticket printer after all: the browser prints it, as without one. */
 const NO_PRINTER = "NoTicketPrinter";
