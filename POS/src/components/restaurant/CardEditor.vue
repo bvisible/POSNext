@@ -413,7 +413,8 @@ import ItemEditPanel from "@/components/restaurant/ItemEditPanel.vue"
 import MenuDesignerDialog from "@/components/restaurant/MenuDesignerDialog.vue"
 import { cardLabel } from "@/utils/cardLabel"
 
-const props = defineProps({ modelValue: Boolean })
+// initialCard: the card the editor opens on (the till's settings' « Edit » of a card, NeoRestau lot 1, task 13)
+const props = defineProps({ modelValue: Boolean, initialCard: { type: String, default: "" } })
 const emit = defineEmits([
 	"update:modelValue",
 	"cards-updated",
@@ -537,8 +538,10 @@ async function loadCards() {
 			restaurantStore.ofTheRestaurant(),
 		)
 		if (res) cards.value = res
-		// Auto-select first card if none selected
-		if (cards.value.length > 0 && !selectedCard.value) {
+		// The card asked for, when it is one of the restaurant's; else the first one, if none is selected
+		if (props.initialCard && !selectedCard.value && cards.value.some((card) => card.name === props.initialCard)) {
+			selectCard(props.initialCard)
+		} else if (cards.value.length > 0 && !selectedCard.value) {
 			selectCard(cards.value[0].name)
 		}
 	} catch (error) {

@@ -335,7 +335,10 @@ def get_default_customer(pos_profile):
 		return {"customer": None}
 
 
-@frappe.whitelist()
+# //// Neoffice — no longer a web endpoint (NeoRestau lot 1, task 13, fix round 1): the till's warehouse is
+# //// saved with its other settings through pos_next.till_settings.api.save_till_settings (the warehouses of
+# //// the till's company, one transaction with the rest). Upstream's settings dialog was the only caller of
+# //// this door. Kept for in-process callers (tests).
 def update_warehouse(pos_profile, warehouse):
 	"""Update warehouse in POS Profile"""
 	# //// Neoffice — the till's warehouse is one of its settings, which are its managers' (product owner, 30.10.2026):

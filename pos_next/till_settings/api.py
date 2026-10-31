@@ -5,21 +5,24 @@
 # //// whoever manages the restaurant its restaurant's.
 """Read and save the settings of a till, as its settings screen shows them.
 
-Who:
-- a till manager (`cash_entry.TILL_MANAGER_ROLES`) opens every tab of a till and saves its POS Settings and the
-  fields of its POS Profile the list shows. He needs no right on POS Profile or POS Settings themselves: the check
-  is his role, and both documents are written with `ignore_permissions` once it passed;
-- whoever may write the till's restaurant (the restaurant manager, `Restaurant Manager`) opens the restaurant's
-  tabs of a restaurant till and saves the restaurant's settings, as himself (the restaurant's own rules decide).
-  The settings of the till that sit in those tabs (its default room, its takeaway) stay the till manager's;
-- anybody else is refused (`frappe.PermissionError`).
+Who, for THIS till (both doors ask it first, `_open`, before anything of the till is read or made):
+- a till manager (`cash_entry.TILL_MANAGER_ROLES`) whose User Permissions leave him the till opens every tab of it and
+  saves its POS Settings and the fields of its POS Profile the list shows. He needs no right on POS Profile or POS
+  Settings themselves: the check is his role and his User Permissions, and both documents are written with
+  `ignore_permissions` once it passed;
+- whoever may write the till's own restaurant (the restaurant manager, `Restaurant Manager`) opens the restaurant's
+  tabs of that restaurant's till and saves what they show: the restaurant's settings, as himself (the restaurant's
+  own rules decide), and the till's settings that sit in those tabs (its default room, its takeaway);
+- anybody else is refused (`frappe.PermissionError`), a right on another till or another restaurant included.
 
 A save names only what changed. It is refused whole when one value is unknown, set at the office only, not shown on
-that type of till, or out of what the screen offers; otherwise the POS Profile, the POS Settings and the Restaurant
-are saved through their documents (their own checks run), and when one of them fails nothing is kept.
+that type of till, not the user's to change, or out of what the screen offers; otherwise the POS Profile, the POS
+Settings and the Restaurant are saved through their documents (their own checks run), and when one of them fails
+nothing is kept.
 """
 
 import json
+import math
 
 import frappe
 from frappe import _
@@ -42,40 +45,45 @@ SAVEPOINT = "till_settings_save"
 WRITE_ORDER = (POS_PROFILE, POS_SETTINGS, RESTAURANT)
 # The fields of a row of opening hours, as the screen sends them
 OPENING_HOURS_FIELDS = ("day_of_week", "from_time", "to_time", "label", "restaurant_card")
+# What the item endpoints keep of a till's groups and brands for five minutes (pos_next.api.items: get_item_groups,
+# get_brands, _get_pos_profile_configured_brands, _get_allowed_profile_item_groups): forgotten when the till's POS
+# Profile is saved here, so that the till that asks for its items right after its save is not answered from them
+TILL_CACHE_KEYS = (
+	"pos_item_groups:{0}",
+	"pos_brands:{0}",
+	"pos_profile_brands_raw:{0}",
+	"pos_profile_allowed_item_groups:{0}",
+)
 
 
 @frappe.whitelist()
 def get_till_settings(pos_profile):
 	"""The settings of a till its user may see: the tabs, the groups, the settings of the list with their help, the
 	values, the choices of the short links, and what the user may change."""
-	_require_a_manager()
-	till = _till(pos_profile)
-	can = _rights(till)
-	if not (can["till"] or can["restaurant"]):
-		frappe.throw(_("Only the till manager can open the settings of the till"), frappe.PermissionError)
+	till, can = _open(pos_profile)
 	return _answer(till, can)
 
 
 @frappe.whitelist(methods=["POST"])
 def save_till_settings(pos_profile, values):
 	"""Save what changed (`values`: {key of the list: value}) and answer the settings as `get_till_settings` does."""
-	from pos_next.api.cash_entry import require_till_manager
 	from pos_next.restaurant import permissions
 
-	_require_a_manager()
+	till, can = _open(pos_profile)
 	if isinstance(values, str):
 		values = json.loads(values or "{}")
 	if not isinstance(values, dict):
 		frappe.throw(_("The settings to save are not readable"))
-	till = _till(pos_profile)
 
 	settings = {key: _savable(key, till) for key in values}
-	doctypes = {setting.doctype for setting in settings.values()}
-	if doctypes & {POS_SETTINGS, POS_PROFILE}:
-		# The till's own settings are its managers' (product owner, 30.10.2026), whatever the user's rights on the
-		# two documents, which are written below with ignore_permissions
-		require_till_manager()
-	if RESTAURANT in doctypes:
+	for setting in settings.values():
+		if not _editable(setting, can):
+			frappe.throw(
+				_("{0} is not yours to change at this till").format(str(setting.label)),
+				frappe.PermissionError,
+			)
+	if any(setting.doctype == RESTAURANT for setting in settings.values()):
+		# The restaurant is saved as the user: its own rules decide too
 		permissions.require("Restaurant", "write", till.restaurant)
 
 	choices = _choices(till, settings.values())
@@ -92,7 +100,42 @@ def save_till_settings(pos_profile, values):
 		# a caller inside a longer transaction too
 		frappe.db.rollback(save_point=SAVEPOINT)
 		raise
-	return _answer(_till(pos_profile), _rights(till))
+	if any(setting.doctype == POS_PROFILE for setting in settings.values()):
+		_forget_what_the_item_endpoints_keep(pos_profile)
+	return _answer(_till(pos_profile), can)
+
+
+def rights_at(pos_profile):
+	"""What the session user may do with the settings of this till, as the till is told it (bootstrap's
+	`restaurant_can`): open and save its own (`till`), its restaurant's (`restaurant`). Nothing is made."""
+	from pos_next.api.cash_entry import is_desk_account
+
+	if (
+		not pos_profile
+		or not isinstance(pos_profile, str)
+		or not frappe.db.exists("POS Profile", pos_profile)
+	):
+		return {"till": False, "restaurant": False}
+	if not is_desk_account():
+		return {"till": False, "restaurant": False}
+	return _rights(frappe.get_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
+
+
+def _open(pos_profile):
+	"""The till, and what the session user may do with its settings; refused (`frappe.PermissionError`) to whoever
+	manages neither THIS till nor ITS restaurant, before anything of the till is read or made (its POS Settings row is
+	made with the defaults for an allowed user only)."""
+	_require_a_manager()
+	if (
+		not pos_profile
+		or not isinstance(pos_profile, str)
+		or not frappe.db.exists("POS Profile", pos_profile)
+	):
+		frappe.throw(_("POS Profile not found"), frappe.DoesNotExistError)
+	can = _rights(frappe.get_doc(POS_PROFILE, pos_profile), _restaurant_of(pos_profile))
+	if not (can["till"] or can["restaurant"]):
+		frappe.throw(_("Only the till manager can open the settings of the till"), frappe.PermissionError)
+	return _till(pos_profile), can
 
 
 def _require_a_manager():
@@ -115,42 +158,55 @@ def _require_a_manager():
 
 def _till(pos_profile):
 	"""A till as the screen needs it: its POS Profile, its POS Settings (made with the defaults when it has none,
-	as the till does at its first opening), and its restaurant when it is a restaurant till."""
+	as the till does at its first opening), and its restaurant when it is a restaurant till. Only once `_open` let
+	the user in."""
 	from pos_next.pos_next.doctype.pos_settings.pos_settings import create_default_settings
-	from pos_next.restaurant.mode import effective_restaurant_mode
 
-	if not pos_profile or not isinstance(pos_profile, str) or not frappe.db.exists("POS Profile", pos_profile):
-		frappe.throw(_("POS Profile not found"), frappe.DoesNotExistError)
 	name = frappe.db.get_value("POS Settings", {"pos_profile": pos_profile})
 	if not name:
 		name = create_default_settings(pos_profile)["name"]
-	settings = frappe.get_doc(POS_SETTINGS, name)
-	restaurant = settings.get("restaurant")
-	restaurant_till = bool(
-		effective_restaurant_mode(
-			{"enable_restaurant_mode": settings.enable_restaurant_mode, "restaurant": restaurant}
-		)
-		and frappe.db.exists(RESTAURANT, restaurant)
-	)
-	restaurant = restaurant if restaurant_till else None
+	restaurant = _restaurant_of(pos_profile)
 	return frappe._dict(
 		pos_profile=pos_profile,
 		profile=frappe.get_doc(POS_PROFILE, pos_profile),
-		settings=settings,
-		restaurant_till=restaurant_till,
+		settings=frappe.get_doc(POS_SETTINGS, name),
+		restaurant_till=bool(restaurant),
 		restaurant=restaurant,
 		restaurant_doc=frappe.get_doc(RESTAURANT, restaurant) if restaurant else None,
 	)
 
 
-def _rights(till):
-	"""What the session user may do with the till's settings: its own (`till`), its restaurant's (`restaurant`)."""
+def _restaurant_of(pos_profile):
+	"""The restaurant a till works for when it is effectively a restaurant till, read without making anything (the
+	till may have no POS Settings row yet: it is then no restaurant till)."""
+	from pos_next.restaurant.mode import effective_restaurant_mode
+
+	row = frappe.db.get_value(
+		POS_SETTINGS, {"pos_profile": pos_profile}, ["enable_restaurant_mode", "restaurant"], as_dict=True
+	)
+	if not row or not row.restaurant:
+		return None
+	if effective_restaurant_mode(row) and frappe.db.exists(RESTAURANT, row.restaurant):
+		return row.restaurant
+	return None
+
+
+def _rights(profile, restaurant):
+	"""What the session user may do with the settings of the till of `profile` (its POS Profile document), whose
+	restaurant is `restaurant`: its own (`till`), its restaurant's (`restaurant`).
+
+	The till's own are its managers' (product owner, 30.10.2026) within their User Permissions (ruling 67): a till
+	manager kept to some tills, or to a company, saves those only; no right on POS Profile itself is asked. The
+	restaurant's are whoever may write that restaurant (its own User Permissions apply)."""
+	from frappe.permissions import has_user_permission
+
 	from pos_next.api.cash_entry import is_desk_account, is_till_manager
 
-	restaurant = False
-	if till.restaurant and is_desk_account():
-		restaurant = bool(frappe.has_permission(RESTAURANT, "write", doc=till.restaurant))
-	return {"till": is_till_manager(), "restaurant": restaurant}
+	till = is_till_manager() and has_user_permission(profile)
+	restaurant_right = False
+	if restaurant and is_desk_account():
+		restaurant_right = bool(frappe.has_permission(RESTAURANT, "write", doc=restaurant))
+	return {"till": bool(till), "restaurant": restaurant_right}
 
 
 def _tab_is_open(tab, till, can):
@@ -180,12 +236,15 @@ def _shown(till, can):
 
 
 def _editable(setting, can):
-	"""Whether the user may change a setting: the till's documents are the till manager's, the restaurant's its
-	managers'; this computer's and the printer's are the screen's own business (the printer app checks its rights)."""
-	if setting.doctype in (POS_SETTINGS, POS_PROFILE):
-		return can["till"]
+	"""Whether the user may change a setting: the restaurant's are its managers'; the till's are the till manager's,
+	and those that sit in a tab of the restaurant (its default room, its takeaway) the restaurant's managers' as well
+	(ruling 63: the till is that restaurant's, `_rights`); this computer's and the printer's are the screen's own
+	business (the printer app checks its rights)."""
 	if setting.doctype == RESTAURANT:
 		return can["restaurant"]
+	if setting.doctype in (POS_SETTINGS, POS_PROFILE):
+		in_a_restaurant_tab = registry.TAB_BY_KEY[setting.tab].section == SECTION_RESTAURANT
+		return can["till"] or (in_a_restaurant_tab and can["restaurant"])
 	return True
 
 
@@ -209,7 +268,9 @@ def _answer(till, can):
 		"restaurant_name": (till.restaurant_doc.restaurant_name if till.restaurant_doc else "") or "",
 		"can": can,
 		"tabs": [registry.serialize_tab(tab) for tab in registry.TABS if tab.key in tab_keys],
-		"groups": [registry.serialize_group(group) for group in registry.GROUPS.values() if group.key in group_keys],
+		"groups": [
+			registry.serialize_group(group) for group in registry.GROUPS.values() if group.key in group_keys
+		],
 		"settings": definitions,
 		"values": {setting.key: _read(setting, till) for setting in shown if setting.store == DOCUMENT},
 		"choices": _choices(till, shown),
@@ -288,7 +349,10 @@ def _status(till):
 	"""What the screen shows as a state, not as a setting: whether the tip item and account are ready."""
 	if not till.restaurant_doc:
 		return {}
-	return {"tip_item": till.restaurant_doc.tip_item or "", "tip_account": till.restaurant_doc.tip_account or ""}
+	return {
+		"tip_item": till.restaurant_doc.tip_item or "",
+		"tip_account": till.restaurant_doc.tip_account or "",
+	}
 
 
 def _savable(key, till):
@@ -360,6 +424,9 @@ def _number(label, value, whole):
 		number = float(value)
 	except (TypeError, ValueError):
 		frappe.throw(_("{0} is a number").format(label))
+	if not math.isfinite(number):
+		# float() reads "nan" and "inf" as numbers: no setting of the till is either
+		frappe.throw(_("{0} is a number").format(label))
 	if whole and number != int(number):
 		frappe.throw(_("{0} is a whole number").format(label))
 	return number
@@ -385,10 +452,14 @@ def _rows(setting, label, value):
 
 
 def _opening_hours(label, value, till):
-	"""The rows of the opening hours: a day, two hours, a label and a card of the till's restaurant."""
+	"""The rows of the opening hours: a day, two hours, a label and a card of the till's restaurant: one the screen
+	offers (active, not the permanent one), or one a line of the hours already has (a card deactivated since)."""
 	if not isinstance(value, list) or not all(isinstance(row, dict) for row in value):
 		frappe.throw(_("{0} is a list of lines").format(label))
-	cards = set(_restaurant_cards(till, selectable_only=False, current=None, as_values=True))
+	cards = set(_restaurant_cards(till, None, as_values=True))
+	cards |= {
+		row.restaurant_card for row in till.restaurant_doc.get("opening_hours") or [] if row.restaurant_card
+	}
 	rows = []
 	for row in value:
 		card = row.get("restaurant_card") or None
@@ -396,6 +467,18 @@ def _opening_hours(label, value, till):
 			frappe.throw(_("{0}: {1} cannot be chosen at this till").format(label, card))
 		rows.append({field: row.get(field) for field in OPENING_HOURS_FIELDS} | {"restaurant_card": card})
 	return rows
+
+
+def _forget_what_the_item_endpoints_keep(pos_profile):
+	"""Forget the till's groups and brands the item endpoints keep (TILL_CACHE_KEYS): now, and once more after the
+	commit, so that no request served between the two answers from the old ones for five minutes."""
+
+	def forget():
+		for key in TILL_CACHE_KEYS:
+			frappe.cache().delete_value(key.format(pos_profile))
+
+	forget()
+	frappe.db.after_commit.add(forget)
 
 
 def _write(doctype, till, changes):
@@ -409,7 +492,8 @@ def _write(doctype, till, changes):
 		else:
 			doc.set(key, value)
 	if doctype in (POS_PROFILE, POS_SETTINGS):
-		# The till manager was checked: he sets up his till whatever his rights on the two documents
+		# Who saves was checked (`_open`, `_editable`): the till manager sets up his till, the restaurant's manager its
+		# keys of the restaurant's tabs, whatever their rights on the two documents
 		doc.flags.ignore_permissions = True
 	doc.save()
 
@@ -446,7 +530,10 @@ def _with_current(choices, doctype, current, label_field=None):
 
 
 def _named(rows, label_field=None):
-	return [{"value": row.name, "label": (row.get(label_field) if label_field else None) or row.name} for row in rows]
+	return [
+		{"value": row.name, "label": (row.get(label_field) if label_field else None) or row.name}
+		for row in rows
+	]
 
 
 def _warehouses(till, current):
@@ -470,7 +557,10 @@ def _price_lists(till, current):
 def _print_formats(till, current):
 	# The till prints its Sales Invoices with the format of its POS Profile (utils/printInvoice.js)
 	rows = frappe.get_all(
-		"Print Format", filters={"doc_type": "Sales Invoice", "disabled": 0}, fields=["name"], order_by="name asc"
+		"Print Format",
+		filters={"doc_type": "Sales Invoice", "disabled": 0},
+		fields=["name"],
+		order_by="name asc",
 	)
 	return _with_current(_named(rows), "Print Format", current)
 
@@ -519,7 +609,10 @@ def _restaurant_card_choices(till, current):
 	if current and current not in {choice["value"] for choice in choices}:
 		if current in _restaurant_cards(till, None, selectable_only=False, as_values=True):
 			choices.append(
-				{"value": current, "label": frappe.db.get_value("Restaurant Card", current, "card_name") or current}
+				{
+					"value": current,
+					"label": frappe.db.get_value("Restaurant Card", current, "card_name") or current,
+				}
 			)
 	return choices
 
@@ -541,11 +634,6 @@ def _item_groups(till, current):
 
 def _brands(till, current):
 	rows = frappe.get_all("Brand", fields=["name"], order_by="name asc")
-	return _named(rows)
-
-
-def _customer_groups(till, current):
-	rows = frappe.get_all("Customer Group", fields=["name"], order_by="lft asc")
 	return _named(rows)
 
 
@@ -581,7 +669,6 @@ CHOICES = {
 	"languages": _languages,
 	"item_groups": _item_groups,
 	"brands": _brands,
-	"customer_groups": _customer_groups,
 	"journal_entry_templates": _journal_entry_templates,
 	"gift_card_notifications": _gift_card_notifications,
 }

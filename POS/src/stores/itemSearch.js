@@ -2493,6 +2493,15 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		}
 	}
 
+	//// Neoffice — the till's own settings screen can change the groups of THIS till (NeoRestau lot 1, task 13): they
+	//// are read again for the same profile, which setPosProfile skips once the items are fresh. Upstream never changed
+	//// a profile from the till. The items are left to the caller (useCatalogueRefresh fetches them from the server).
+	async function reloadPosProfile(profile) {
+		if (!profile) return;
+		serverDataFresh.value = false;
+		await setPosProfile(profile, false);
+	}
+
 	function invalidateCache() {
 		// Clear caches to force UI refresh with updated stock
 		clearBaseCache();
@@ -2556,6 +2565,8 @@ export const useItemSearchStore = defineStore("itemSearch", () => {
 		setSelectedBrand,
 		setCartItems, // Delegates to stock store for reservations
 		setPosProfile,
+		//// Neoffice — see reloadPosProfile above.
+		reloadPosProfile,
 		startBackgroundCacheSync,
 		stopBackgroundCacheSync,
 		cleanup,

@@ -33,8 +33,9 @@ export const RESTAURANT_RIGHTS = [
 	"edit_items",
 	"edit_prices",
 	"create_items",
-	// The till's own settings, its managers' (product owner, 30.10.2026)
+	// Who opens the till's settings, for THIS till: its own (its managers', product owner, 30.10.2026), its restaurant's
 	"manage_till_settings",
+	"manage_restaurant_settings",
 ]
 
 export const useRestaurantStore = defineStore("restaurant", () => {

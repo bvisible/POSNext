@@ -19,10 +19,10 @@ vi.mock("@/composables/useStock", () => ({
 const { default: RestaurantCardGrid } = await import("../RestaurantCardGrid.vue")
 
 const AUTOMATIC = ["grid-cols-2", "sm:grid-cols-2", "md:grid-cols-3", "lg:grid-cols-4", "xl:grid-cols-5"]
-const DISH = { item: "DISH-1", item_type: "Item", item_name: "Croissant au beurre", price: 3.5 }
-const PICTURED = { ...DISH, item: "DISH-2", item_name: "Tarte", image: "/files/tarte.jpg" }
-const MENU = { item_type: "Menu", menu_name: "Menu du jour", label: "Menu du jour", price: 24 }
-const GROUPS = [{ category: "Viennoiseries", items: [DISH, PICTURED, MENU] }]
+const DISH = { item: "DISH-1", item_type: "Item", item_name: "Butter croissant", price: 3.5 }
+const PICTURED = { ...DISH, item: "DISH-2", item_name: "Tart", image: "/files/tart.jpg" }
+const MENU = { item_type: "Menu", menu_name: "Set menu", label: "Set menu", price: 24 }
+const GROUPS = [{ category: "Pastries", items: [DISH, PICTURED, MENU] }]
 
 let wrapper
 
@@ -67,7 +67,7 @@ describe("the restaurant's card grid", () => {
 		const [dish, pictured, menu] = wrapper.findAll("[data-card-tile]")
 
 		expect(dish.classes()).toContain("tile--text")
-		expect(dish.find("[data-well-name]").text()).toBe("Croissant au beurre")
+		expect(dish.find("[data-well-name]").text()).toBe("Butter croissant")
 		expect(pictured.classes()).not.toContain("tile--text")
 		expect(menu.classes()).not.toContain("tile--text")
 		for (const tile of [dish, pictured, menu]) expect(tile.find("[data-tile-price]").exists()).toBe(true)

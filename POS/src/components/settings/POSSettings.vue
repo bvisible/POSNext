@@ -16,6 +16,7 @@
 		:current-warehouse="currentWarehouse"
 		:initial-tab="initialTab"
 		@update:model-value="emit('update:modelValue', $event)"
+		@open-card="emit('open-card', $event)"
 	/>
 </template>
 
@@ -31,6 +32,6 @@ defineProps({
 	initialTab: { type: String, default: "" },
 })
 
-//// Neoffice — upstream's v-model, passed through.
-const emit = defineEmits(["update:modelValue"])
+//// Neoffice — upstream's v-model, passed through, and the card the screen asks the till to open in its card editor.
+const emit = defineEmits(["update:modelValue", "open-card"])
 </script>

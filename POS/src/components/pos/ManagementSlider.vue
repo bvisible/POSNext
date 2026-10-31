@@ -285,12 +285,13 @@ const isTipsEnabled = computed(() => restaurantStore.tipsEnabled);
 //// Neoffice — what the user may manage of the restaurant, as the server told the till (NeoRestau lot 1, task 3): an
 //// entry he may not use is not shown, and the server refuses its writes whatever the till shows.
 const restaurantCan = computed(() => restaurantStore.can || {});
-//// Neoffice — who opens the till's settings: its manager, and on a restaurant till whoever manages the restaurant
-//// (the server shows him the restaurant's tabs only, NeoRestau lot 1, task 13).
+//// Neoffice — who opens the till's settings: its manager, and on a restaurant till whoever may write ITS restaurant
+//// (the server shows him the restaurant's tabs only, NeoRestau lot 1, task 13). Both are the server's rights for
+//// this till (manage_till_settings, manage_restaurant_settings): a right on some restaurant is not this one's.
 const canOpenSettings = computed(
 	() =>
 		Boolean(restaurantCan.value.manage_till_settings) ||
-		Boolean(isRestaurantMode.value && restaurantCan.value.manage_settings)
+		Boolean(isRestaurantMode.value && restaurantCan.value.manage_restaurant_settings)
 );
 
 function handleMenuClick(menuItem) {

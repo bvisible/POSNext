@@ -6,17 +6,17 @@
 <!-- //// change before). Upstream prints through QZ Tray or the browser only (maintenance#1935). -->
 <template>
 	<div class="flex flex-col gap-[7px]">
-		<p v-if="!config" class="text-[12.5px] leading-[1.45] text-[#6F665A]">
+		<p v-if="!config" class="text-[12.5px] leading-[1.45] text-pos-muted">
 			{{ __("No network printer: the cloudprnt app is not installed on this site.") }}
 		</p>
 		<template v-else>
-			<p v-if="!config.can_configure" class="text-[12.5px] text-[#92610C]">
+			<p v-if="!config.can_configure" class="text-[12.5px] text-amber-700">
 				{{ __("Only a manager can change these settings.") }}
 			</p>
 
 			<template v-if="part === 'receipt'">
 				<div data-setting="receipt_printer">
-					<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-[#524B41]">
+					<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-pos-muted">
 						<label for="cloudprnt-receipt-printer">{{ textOf("receipt_printer").label }}</label>
 						<HelpBulb
 							v-model:open="openHelp.receipt_printer"
@@ -25,7 +25,7 @@
 					</div>
 					<select
 						id="cloudprnt-receipt-printer"
-						class="h-9 w-full min-w-0 rounded-[10px] border border-[#DCD4C7] bg-white px-3 py-0 text-[14px] text-[#141414]"
+						class="h-9 w-full min-w-0 rounded-[10px] border border-pos-line bg-white px-3 py-0 text-[14px] text-pos-ink"
 						:value="draft.receipt_printer || ''"
 						:disabled="!config.can_configure"
 						@change="change({ receipt_printer: $event.target.value || null })"
@@ -43,12 +43,12 @@
 						<input
 							id="cloudprnt-auto-print"
 							type="checkbox"
-							class="h-[18px] w-[18px] flex-none rounded-[5px] accent-[#141414] text-[#141414]"
+							class="h-[18px] w-[18px] flex-none rounded-[5px] accent-pos-ink text-pos-ink"
 							:checked="Boolean(draft.auto_print)"
 							:disabled="!config.can_configure || !draft.receipt_printer"
 							@change="change({ auto_print: $event.target.checked ? 1 : 0 })"
 						/>
-						<label for="cloudprnt-auto-print" class="text-[13.5px] text-[#141414]">{{
+						<label for="cloudprnt-auto-print" class="text-[13.5px] text-pos-ink">{{
 							textOf("auto_print").label
 						}}</label>
 						<HelpBulb v-model:open="openHelp.auto_print" :text="textOf('auto_print').help" />
@@ -57,7 +57,7 @@
 				</div>
 
 				<div :class="[SUB_CLASS, draft.receipt_printer ? '' : GREYED_CLASS]" data-setting="open_drawer">
-					<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-[#524B41]">
+					<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-pos-muted">
 						<span>{{ textOf("open_drawer").label }}</span>
 						<HelpBulb v-model:open="openHelp.open_drawer" :text="textOf('open_drawer').help" />
 					</div>
@@ -70,8 +70,8 @@
 							class="h-9 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap rounded-[10px] bg-white px-1.5 text-[13px]"
 							:class="
 								draft.open_drawer === rule.value
-									? 'border-2 border-[#141414] font-bold text-[#141414]'
-									: 'border border-[#DCD4C7] text-[#524B41]'
+									? 'border-2 border-pos-ink font-bold text-pos-ink'
+									: 'border border-pos-line text-pos-muted'
 							"
 							:aria-checked="draft.open_drawer === rule.value ? 'true' : 'false'"
 							:disabled="!config.can_configure || !draft.receipt_printer"
@@ -80,7 +80,7 @@
 							{{ rule.label }}
 						</button>
 					</div>
-					<p v-if="receiptPrinter && receiptPrinter.drawer_connected" class="mt-1 text-[12px] text-[#11663A]">
+					<p v-if="receiptPrinter && receiptPrinter.drawer_connected" class="mt-1 text-[12px] text-green-700">
 						{{ __("A cash drawer is plugged into {0}", [receiptPrinter.label]) }}
 					</p>
 					<p v-if="openHelp.open_drawer" :class="HELP_CLASS">{{ textOf("open_drawer").help }}</p>
@@ -89,7 +89,7 @@
 				<div :class="[SUB_CLASS, draft.receipt_printer ? '' : GREYED_CLASS]" data-setting="test_print">
 					<button
 						type="button"
-						class="h-8 rounded-[10px] border border-[#DCD4C7] bg-white px-3 text-[12.5px] font-semibold text-[#141414]"
+						class="h-8 rounded-[10px] border border-pos-line bg-white px-3 text-[12.5px] font-semibold text-pos-ink"
 						:disabled="!draft.receipt_printer || testing"
 						@click="testPrint"
 					>
@@ -99,25 +99,26 @@
 			</template>
 
 			<template v-else>
-				<p v-if="!config.stations || !config.stations.length" class="text-[12.5px] text-[#6F665A]">
+				<p v-if="!config.stations || !config.stations.length" class="text-[12.5px] text-pos-muted">
 					{{ __("No preparation station yet.") }}
 				</p>
+				<!-- A station's name over its printer: the printer's whole name shows, however narrow the column -->
 				<div
 					v-for="station in config.stations || []"
 					:key="station.station"
-					class="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2.5"
+					class="flex flex-col gap-1"
 					data-setting="station_printers"
 				>
 					<label
 						:for="`cloudprnt-station-${station.station}`"
-						class="truncate text-[13.5px] font-bold text-[#141414]"
+						class="truncate text-[13px] font-bold text-pos-ink"
 					>
 						{{ station.station_name || station.station }}
 					</label>
 					<div class="flex min-w-0 items-center gap-1.5">
 						<select
 							:id="`cloudprnt-station-${station.station}`"
-							class="h-9 w-full min-w-0 rounded-[10px] border border-[#DCD4C7] bg-white px-3 py-0 text-[14px] text-[#141414]"
+							class="h-9 w-full min-w-0 rounded-[10px] border border-pos-line bg-white px-3 py-0 text-[14px] text-pos-ink"
 							:value="stationPrinter(station) || ''"
 							:disabled="!config.can_configure"
 							@change="changeStation(station.station, $event.target.value || null)"
@@ -132,7 +133,7 @@
 							:text="textOf('station_printers').help"
 						/>
 					</div>
-					<p v-if="openHelp[`station:${station.station}`]" :class="[HELP_CLASS, 'col-span-2']">
+					<p v-if="openHelp[`station:${station.station}`]" :class="HELP_CLASS">
 						{{ textOf("station_printers").help }}
 					</p>
 				</div>
@@ -160,8 +161,8 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"])
 
 const HELP_CLASS =
-	"mb-1 mt-1.5 rounded-lg border-l-[3px] border-[#D68A59] bg-[#FAEFE6] px-2.5 py-2 text-[12.5px] leading-[1.45] text-[#3A342C]"
-const SUB_CLASS = "ml-[9px] border-l-2 border-[#ECE7DE] pl-[19px]"
+	"mb-1 mt-1.5 rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
+const SUB_CLASS = "ml-[9px] border-l-2 border-pos-line pl-[19px]"
 const GREYED_CLASS = "opacity-[0.42]"
 
 const store = useCloudPrntStore()

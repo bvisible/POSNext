@@ -12,13 +12,13 @@
 		<div
 			v-for="day in DAYS"
 			:key="day"
-			class="grid grid-cols-[88px_minmax(0,1fr)_auto] items-start gap-2.5 border-b border-[#ECE7DE] py-[5px]"
+			class="grid grid-cols-[88px_minmax(0,1fr)_auto] items-start gap-2.5 border-b border-pos-line py-[5px]"
 			:data-day="day"
 		>
-			<span class="pt-1.5 text-[13.5px] font-bold text-[#141414]">{{ __(day) }}</span>
+			<span class="pt-1.5 text-[13.5px] font-bold text-pos-ink">{{ __(day) }}</span>
 
 			<div class="flex min-w-0 flex-col gap-[5px]">
-				<div v-if="getGroupedSlotsForDay(day).length === 0" class="pt-1.5 text-[13px] italic text-[#968C7C]">
+				<div v-if="getGroupedSlotsForDay(day).length === 0" class="pt-1.5 text-[13px] italic text-pos-muted">
 					{{ __("Closed") }}
 				</div>
 
@@ -33,15 +33,15 @@
 						:value="group.from_time"
 						@input="updateGroupField(day, gIdx, 'from_time', $event.target.value)"
 						:aria-label="__('From')"
-						class="h-[30px] w-[88px] rounded-lg border border-[#DCD4C7] bg-white px-1.5 text-[13px] tabular-nums focus:border-[#D68A59] focus:outline-none focus:ring-1 focus:ring-[#D68A59]"
+						class="h-[30px] w-[88px] rounded-lg border border-pos-line bg-white px-1.5 text-[13px] tabular-nums focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
 					/>
-					<span class="text-[12px] text-[#968C7C]" aria-hidden="true">→</span>
+					<span class="text-[12px] text-pos-muted" aria-hidden="true">→</span>
 					<input
 						type="time"
 						:value="group.to_time"
 						@input="updateGroupField(day, gIdx, 'to_time', $event.target.value)"
 						:aria-label="__('To')"
-						class="h-[30px] w-[88px] rounded-lg border border-[#DCD4C7] bg-white px-1.5 text-[13px] tabular-nums focus:border-[#D68A59] focus:outline-none focus:ring-1 focus:ring-[#D68A59]"
+						class="h-[30px] w-[88px] rounded-lg border border-pos-line bg-white px-1.5 text-[13px] tabular-nums focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
 					/>
 					<!-- Label -->
 					<input
@@ -49,19 +49,19 @@
 						:value="group.label"
 						@input="updateGroupField(day, gIdx, 'label', $event.target.value)"
 						:placeholder="__('Label')"
-						class="h-[30px] w-[72px] rounded-lg border border-[#DCD4C7] bg-white px-2 text-[13px] focus:border-[#D68A59] focus:outline-none focus:ring-1 focus:ring-[#D68A59]"
+						class="h-[30px] w-[72px] rounded-lg border border-pos-line bg-white px-2 text-[13px] focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
 					/>
 					<!-- Cards of the slot -->
 					<span
 						v-for="cardName in group.cards"
 						:key="cardName"
-						class="inline-flex max-w-[11rem] items-center gap-1 rounded-xl border border-[#F3DECC] bg-[#FAEFE6] px-2 py-0.5 text-[12px] text-[#7E4523]"
+						class="inline-flex max-w-[11rem] items-center gap-1 rounded-xl border border-blue-100 bg-pos-action-soft px-2 py-0.5 text-[12px] text-pos-action-hover"
 					>
 						<span class="truncate">{{ getCardLabel(cardName) }}</span>
 						<button
 							type="button"
 							@click="removeCardFromGroup(day, gIdx, cardName)"
-							class="text-[#A15A2E] hover:text-[#7E4523]"
+							class="text-pos-action hover:text-pos-action-hover"
 							:aria-label="__('Remove {0}', [getCardLabel(cardName)])"
 						>
 							×
@@ -70,7 +70,7 @@
 					<select
 						v-if="availableCardsForGroup(group).length"
 						@change="addCardToGroup(day, gIdx, $event.target.value); $event.target.value = ''"
-						class="h-[26px] max-w-[9rem] cursor-pointer rounded-xl border border-dashed border-[#DCD4C7] bg-transparent py-0 pl-2 pr-6 text-[12px] text-[#6F665A]"
+						class="h-[26px] max-w-[9rem] cursor-pointer rounded-xl border border-dashed border-pos-line bg-transparent py-0 pl-2 pr-6 text-[12px] text-pos-muted"
 						:aria-label="__('Add a card')"
 					>
 						<option value="">{{ group.cards.length === 0 ? __("Select cards...") : __("+ card") }}</option>
@@ -82,7 +82,7 @@
 					<button
 						type="button"
 						@click="removeGroup(day, gIdx)"
-						class="ms-auto px-1 text-[16px] text-[#968C7C] transition-colors hover:text-[#C1372C]"
+						class="ms-auto px-1 text-[16px] text-pos-muted transition-colors hover:text-pos-danger"
 						:aria-label="__('Remove the slot')"
 					>
 						×
@@ -93,7 +93,7 @@
 			<button
 				type="button"
 				@click="addSlot(day)"
-				class="whitespace-nowrap pt-[7px] text-end text-[12.5px] font-bold text-[#7E4523] hover:underline"
+				class="whitespace-nowrap pt-[7px] text-end text-[12.5px] font-bold text-pos-action-hover hover:underline"
 			>
 				{{ __("+ Slot") }}
 			</button>

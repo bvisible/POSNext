@@ -111,8 +111,9 @@ ADMIN = "restaurant-rights-admin@yopmail.com"
 CASHIER_ROLE = "POSNext Cashier"
 RESTAURANT = "_Test Rights Restaurant"
 IMAGE = (b"\xff\xd8\xff", "jpg")
-# What the till is told: the restaurant's rights, the ERP's on items and prices, the till's own settings
-EVERY_RIGHT = {*permissions.RIGHTS, "manage_till_settings"}
+# What the till is told: the restaurant's rights, the ERP's on items and prices, who opens the till's settings (its
+# own, its restaurant's: NeoRestau lot 1, task 13; per till when the till is named, see test_till_settings)
+EVERY_RIGHT = {*permissions.RIGHTS, "manage_till_settings", "manage_restaurant_settings"}
 # A restaurant's manager without the ERP's item rights, at a till he does not manage
 MANAGER_IS_TOLD = {
 	**dict.fromkeys(EVERY_RIGHT, True),

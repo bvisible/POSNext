@@ -1434,11 +1434,13 @@
 			<!-- //// straight on one tab, so "edit the schedule" in the card editor lands on -->
 			<!-- //// the schedule rather than on the first tab (6b38498b, 2026-03-27 "hide -->
 			<!-- //// permanent card from schedule settings, add edit schedule link"). -->
+			<!-- //// Neoffice — open-card: the settings' « Edit » of a card opens it in the till's card editor, above them. -->
 			<POSSettings
 				v-model="showPOSSettings"
 				:pos-profile="shiftStore.profileName"
 				:current-warehouse="shiftStore.profileWarehouse"
 				:initial-tab="settingsInitialTab"
+				@open-card="openCardEditor"
 			/>
 
 			<!-- Stock Lookup Dialog (Products Menu) -->
@@ -1464,9 +1466,11 @@
 				v-if="showProductOptionsEditor"
 				v-model="showProductOptionsEditor"
 			/>
+			<!-- //// Neoffice — initial-card: the card the till's settings asked for (NeoRestau lot 1, task 13). -->
 			<CardEditor
 				v-if="showCardEditor"
 				v-model="showCardEditor"
+				:initial-card="cardEditorCard"
 				@cards-updated="restaurantStore.fetchActiveCards()"
 				@open-settings="openSettingsTab"
 			/>
@@ -2230,6 +2234,8 @@ import ShortcutsDialog from "@/components/pos/ShortcutsDialog.vue";
 import { useDialog } from "@/composables/useDialogState";
 import { getDistinctUoms } from "@/utils/itemUoms";
 import { usePOSEvents } from "@/composables/usePOSEvents";
+//// Neoffice — see useCatalogueRefresh() below.
+import { useCatalogueRefresh } from "@/composables/useCatalogueRefresh";
 //// Neoffice — gift cards live on ERPNext-native Coupon Code / Promotional Scheme in our
 //// fork, so the till needs this composable to read back the codes an invoice created
 //// (703f2046, 2026-01-14 "add GiftCardCreatedDialog and debug logging").
@@ -2366,9 +2372,13 @@ const {
 	onStockPolicyChanged,
 	onSettingsChanged,
 	onSalesOperationsChanged,
-	//// Neoffice — `on`: the till's items are read again when its settings change what it sells (task 13).
-	on: onPOSEvent,
 } = usePOSEvents();
+
+//// Neoffice — the till's settings screen changed what it sells (its price list, item groups, brands, the unavailable
+//// items, the variants, the pricing rules, its warehouse: NeoRestau lot 1, task 13): its items are fetched from the
+//// server, as its refresh button does (handleRefresh; see useCatalogueRefresh). Upstream changed none of these from
+//// the till.
+useCatalogueRefresh();
 
 // Initialize toast
 const { showSuccess, showError, showWarning, showInfo } = useToast(); //// Neoffice — showInfo: the way to install the app by hand (kitchen test, 01.11)
@@ -2625,6 +2635,15 @@ function openSettingsTab(tab) {
 	showPOSSettings.value = true;
 }
 
+//// Neoffice — the card editor opened on one card by the till's settings (their « Edit », NeoRestau lot 1, task 13);
+//// opened from the rail, it opens on its first card as before.
+const cardEditorCard = ref("");
+
+function openCardEditor(card) {
+	cardEditorCard.value = card || "";
+	showCardEditor.value = true;
+}
+
 // Stock Lookup dialog (Products menu)
 const showStockLookup = ref(false);
 
@@ -2872,18 +2891,6 @@ onMounted(async () => {
 	onWarehouseChanged(async ({ newWarehouse, oldWarehouse }) => {
 		log.info(`Event: Warehouse changed from ${oldWarehouse} to ${newWarehouse}`);
 		await handleWarehouseChanged(newWarehouse);
-	});
-
-	//// Neoffice — the till's settings changed what it sells (its price list, item groups, brands, the unavailable
-	//// items, the variants, the pricing rules: NeoRestau lot 1, task 13): its items are read again, as for a new
-	//// warehouse. Upstream changed none of these from the till.
-	onPOSEvent("settings:catalogue-changed", async () => {
-		try {
-			itemStore.invalidateCache();
-			if (itemsSelectorRef.value) await itemsSelectorRef.value.loadItems();
-		} catch (error) {
-			log.error("Error reloading the items after a settings change:", error);
-		}
 	});
 
 	// Listen to pricing changes from settings
@@ -5497,7 +5504,8 @@ function handleManagementMenuClick(menuItem) {
 		//// f23daabe + d59036f1 2026-03-23/27; 6c598630 2026-03-28; c4460c61 + d08c57e7
 		//// 2026-03-23/29; ebc3ecc5 2026-03-29).
 	} else if (menuItem === "cards") {
-		showCardEditor.value = true;
+		//// Neoffice — from the rail: no card asked for (see openCardEditor).
+		openCardEditor("");
 	} else if (menuItem === "options") {
 		showProductOptionsEditor.value = true;
 	} else if (menuItem === "workflows") {

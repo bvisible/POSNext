@@ -31,6 +31,7 @@ const NO_RIGHT = {
 	edit_items: false,
 	edit_prices: false,
 	manage_till_settings: false,
+	manage_restaurant_settings: false,
 }
 
 describe("the management rail shows the till's settings to whoever may save them", () => {
@@ -58,13 +59,15 @@ describe("the management rail shows the till's settings to whoever may save them
 		expect(settingsEntry(undefined)).toBe(false)
 	})
 
-	// //// Neoffice — NeoRestau lot 1, task 13: the restaurant's tabs of the settings are the restaurant manager's too
-	it("shows it to the restaurant's manager at a restaurant till, for the restaurant's tabs", () => {
-		expect(settingsEntry({ ...NO_RIGHT, manage_settings: true }, true)).toBe(true)
+	// //// Neoffice — NeoRestau lot 1, task 13: the restaurant's tabs of the settings are the restaurant manager's too,
+	// //// at the till of HIS restaurant: the server tells the till (manage_restaurant_settings, per till)
+	it("shows it to the manager of the till's own restaurant, for the restaurant's tabs", () => {
+		expect(settingsEntry({ ...NO_RIGHT, manage_restaurant_settings: true }, true)).toBe(true)
 	})
 
-	it("hides it from the restaurant's manager at a till that is not a restaurant till", () => {
-		expect(settingsEntry({ ...NO_RIGHT, manage_settings: true }, false)).toBe(false)
+	it("hides it from a manager of some restaurant who may not write this till's", () => {
+		// A right on the Restaurant doctype (another restaurant's manager) is not this till's restaurant
+		expect(settingsEntry({ ...NO_RIGHT, manage_settings: true }, true)).toBe(false)
 	})
 })
 

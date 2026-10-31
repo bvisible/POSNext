@@ -28,7 +28,7 @@ class POSSettings(Document):
 	def validate(self):
 		"""Validate POS Settings"""
 		# //// Neoffice — a till's settings are its managers' (product owner, 30.10.2026) whatever the route: the till's
-		# //// save (update_pos_settings), the desk form, frappe.client, the REST API. A cashier holds write on POS Settings,
+		# //// save (till_settings.api), the desk form, frappe.client, the REST API. A cashier holds write on POS Settings,
 		# //// so the rule is checked on the document: lot 0's till managers only. A write our own code makes with
 		# //// ignore_permissions (a patch, after_migrate, a test's set-up) is let through (#1967).
 		if not self.flags.ignore_permissions:
@@ -208,7 +208,11 @@ def create_default_settings(pos_profile):
 	return doc.as_dict()
 
 
-@frappe.whitelist()
+# //// Neoffice — no longer a web endpoint (NeoRestau lot 1, task 13, fix round 1): the till's settings screen
+# //// saves through pos_next.till_settings.api.save_till_settings, which checks each setting against the list
+# //// (shown at this till, the user's to change, within what the screen offers). Upstream's dialog was the
+# //// only caller of this door, which wrote any field of POS Settings, the office's included, with none of
+# //// those checks. Kept for in-process callers (tests).
 def update_pos_settings(pos_profile, settings):
 	"""Update POS Settings for a POS Profile"""
 	import json

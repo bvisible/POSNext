@@ -15,6 +15,7 @@ import {
 	openingTab,
 	railSections,
 	readStockSync,
+	untickExcluded,
 	withinBounds,
 } from "../tillSettingsForm"
 
@@ -66,6 +67,82 @@ describe("the rail and the columns", () => {
 			"session_lock_timeout",
 			"stock_sync_enabled",
 		])
+	})
+
+	it("puts the third column's groups under the shorter of two columns on a narrow screen (a tablet)", () => {
+		// The lock and the customer have three settings each: the display goes under the first
+		expect(columnsOf(screen, "general", 2).map((column) => column.map((group) => group.key))).toEqual([
+			["lock", "display"],
+			["customer"],
+		])
+		// The lock with one setting less is the shorter: the display goes under it, the customer keeps its column
+		const shorter = { ...screen, settings: screen.settings.filter((setting) => setting.key !== "session_lock_timeout") }
+		const customerFirst = {
+			...shorter,
+			settings: shorter.settings.concat({ key: "customer_extra", group: "customer", store: "document" }),
+		}
+		expect(columnsOf(customerFirst, "general", 2).map((column) => column.map((group) => group.key))).toEqual([
+			["lock", "display"],
+			["customer"],
+		])
+		const lockFirst = {
+			...screen,
+			settings: screen.settings.concat({ key: "lock_extra", group: "lock", store: "document" }),
+		}
+		expect(columnsOf(lockFirst, "general", 2).map((column) => column.map((group) => group.key))).toEqual([
+			["lock"],
+			["customer", "display"],
+		])
+	})
+
+	it("lays every group of a tab in one column, in order, when there is room for one", () => {
+		const columns = columnsOf(screen, "general", 1)
+
+		expect(columns.map((column) => column.map((group) => group.key))).toEqual([["lock", "customer", "display"]])
+	})
+})
+
+describe("a box that another one excludes", () => {
+	const settings = [
+		{ key: "allow_credit_sale", widget: "check", editable: true, depends_on: [] },
+		{ key: "allow_partial_payment", widget: "check", editable: true, depends_on: [] },
+		{
+			key: "use_exact_amount",
+			widget: "check",
+			editable: true,
+			depends_on: [
+				{ key: "allow_credit_sale", equals: null, off: true },
+				{ key: "allow_partial_payment", equals: null, off: true },
+			],
+		},
+		{
+			key: "session_lock_timeout",
+			widget: "int",
+			editable: true,
+			depends_on: [{ key: "enable_session_lock", equals: null, off: false }],
+		},
+	]
+
+	it("is unticked when the other is ticked, and says which", () => {
+		const values = { allow_credit_sale: 0, allow_partial_payment: 1, use_exact_amount: 1 }
+
+		expect(untickExcluded(settings, values)).toEqual(["use_exact_amount"])
+		expect(values.use_exact_amount).toBe(0)
+	})
+
+	it("is left as it is while the other is off, and so is what merely depends on a box", () => {
+		const values = { allow_credit_sale: 0, allow_partial_payment: 0, use_exact_amount: 1, enable_session_lock: 0, session_lock_timeout: 5 }
+
+		expect(untickExcluded(settings, values)).toEqual([])
+		expect(values).toMatchObject({ use_exact_amount: 1, session_lock_timeout: 5 })
+	})
+
+	it("is never changed when the user may not change it", () => {
+		const locked = settings.map((setting) => ({ ...setting, editable: false }))
+		const values = { allow_credit_sale: 1, use_exact_amount: 1 }
+
+		expect(untickExcluded(locked, values)).toEqual([])
+		expect(values.use_exact_amount).toBe(1)
 	})
 })
 

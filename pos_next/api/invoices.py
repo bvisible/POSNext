@@ -886,10 +886,12 @@ def _should_block(pos_profile):
 			return False
 
 		# Try to get custom field (may not exist in vanilla ERPNext)
-		block_sale = cint(
-			frappe.db.get_value("POS Profile", pos_profile, "posa_block_sale_beyond_available_qty") or 1
-		)
-		return bool(block_sale)
+		# //// Neoffice — the box is read as it is ticked (NeoRestau lot 1, task 13, ruling 62): upstream read
+		# //// it `or 1`, so an unticked box (0) still blocked, and the till's setting « Block a sale beyond
+		# //// the stock » could not be switched off. A till that says nothing (no such till, no value) still
+		# //// blocks, as upstream's default.
+		block_sale = frappe.db.get_value("POS Profile", pos_profile, "posa_block_sale_beyond_available_qty")
+		return True if block_sale is None else bool(cint(block_sale))
 
 	# Default to blocking if no profile specified
 	return True

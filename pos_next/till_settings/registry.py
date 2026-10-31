@@ -182,6 +182,7 @@ TABS = (
 	Tab("loyalty", _lt("Loyalty"), SECTION_DESK),
 	Tab("accounting", _lt("Accounting"), SECTION_DESK),
 )
+TAB_BY_KEY = {tab.key: tab for tab in TABS}
 
 _GROUPS = (
 	# Restaurant
@@ -210,7 +211,6 @@ _GROUPS = (
 	# Sale screen
 	Group("items", "sale_screen", _lt("Items"), 1),
 	Group("items_offered", "sale_screen", _lt("Items offered"), 2),
-	Group("customers_offered", "sale_screen", _lt("Customers offered"), 3),
 	# Prices and discounts
 	Group("prices", "prices", _lt("Prices"), 1),
 	Group("discounts", "prices", _lt("Discounts"), 2),
@@ -739,16 +739,6 @@ SETTINGS = (
 		choices="brands",
 		applies=APPLIES_CATALOGUE,
 	),
-	Setting(
-		"customer_groups",
-		"customers_offered",
-		_lt("Customer groups"),
-		_lt("Only the customers of these groups are offered. Empty: every customer."),
-		"multiselect",
-		doctype=POS_PROFILE,
-		choices="customer_groups",
-		applies=APPLIES_PROFILE,
-	),
 	# ---------------------------------------------------------------- Prices and discounts
 	Setting(
 		"tax_inclusive",
@@ -863,9 +853,8 @@ SETTINGS = (
 		"payment",
 		_lt("Exact amount for card and transfer"),
 		_lt(
-			"Card and transfer pay the exact amount; only cash gives change. Not with credit sales nor"
-			" partial"
-			" payment."
+			"Card and transfer pay the exact amount; only cash gives change. Not with credit sales nor partial"
+			" payment: ticking one of them unticks this one."
 		),
 		"check",
 		doctype=POS_SETTINGS,
@@ -947,6 +936,18 @@ SETTINGS = (
 		doctype=POS_PROFILE,
 		choices="warehouses",
 		applies=APPLIES_PROFILE,
+	),
+	Setting(
+		"posa_block_sale_beyond_available_qty",
+		"warehouse",
+		_lt("Block a sale beyond the stock"),
+		_lt(
+			"The till refuses a sale that asks for more than the stock of its warehouse. Off, the till lets it go;"
+			" where the site refuses negative stock (Stock Settings, at the office), the sale is refused anyway"
+			" when it is booked."
+		),
+		"check",
+		doctype=POS_PROFILE,
 	),
 	Setting(
 		"stock_sync_enabled",
@@ -1579,10 +1580,9 @@ NOT_LISTED = {
 		"project": "not copied onto the sales of the till",
 		"allow_partial_payment": "a duplicate: the till reads POS Settings.allow_partial_payment",
 		"update_stock": "the till books the stock of every sale whatever it says (invoices set update_stock)",
-		"posa_block_sale_beyond_available_qty": (
-			"cannot be switched off: invoices._should_block reads it `or 1`, and where the site refuses"
-			" negative"
-			" stock ERPNext refuses the sale anyway"
+		"customer_groups": (
+			"not read by this till: api.customers.get_customers filters by a `customer_group` field POS Profile does"
+			" not have, so every customer is offered whatever the table says; only ERPNext's own POS page reads it"
 		),
 		"posa_allow_pos_expense": (
 			"switched off on purpose by the merge of 28.10.2026: the till's cash in / out is the one system"
@@ -1616,12 +1616,10 @@ NOT_LISTED = {
 		"logo": _RESTAURANT_FORM,
 		"address": _RESTAURANT_FORM,
 		"tip_item": (
-			_RESTAURANT_FORM
-			+ " (made when tips are switched on; the till shows whether it is ready)"
+			_RESTAURANT_FORM + " (made when tips are switched on; the till shows whether it is ready)"
 		),
 		"tip_account": (
-			_RESTAURANT_FORM
-			+ " (made when tips are switched on; the till shows whether it is ready)"
+			_RESTAURANT_FORM + " (made when tips are switched on; the till shows whether it is ready)"
 		),
 		# Task 10's field: where a site already has it, it is classified like the restaurant's other own fields
 		"takeaway_tax_category": _RESTAURANT_FORM + " (the VAT of the takeaway sales, set at the office)",

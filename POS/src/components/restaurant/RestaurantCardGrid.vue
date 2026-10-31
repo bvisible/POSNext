@@ -145,7 +145,7 @@ function isText(item) {
 function wellStyle(item) {
 	if (item.image) return {}
 	if (item.custom_color) return { backgroundColor: item.custom_color }
-	return { backgroundColor: "#F3F4F6" }
+	return { backgroundColor: "var(--pos-panel)" }
 }
 
 function nameClasses(item) {

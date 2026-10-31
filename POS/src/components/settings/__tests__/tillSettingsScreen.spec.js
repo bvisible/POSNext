@@ -3,7 +3,7 @@
  * //// owner, 30.10.2026) is drawn from the list the server sends: the tabs of the till (the restaurant's four first,
  * //// on a restaurant till only), every setting with its help behind the lightbulb, a setting greyed while its
  * //// condition is off, and ONE Save that sends what changed and nothing else. A restaurant manager gets the
- * //// restaurant's tabs only, where the till's own settings stay closed to him.
+ * //// restaurant's tabs only, the till's own settings of those tabs included (ruling 63).
  * @vitest-environment jsdom
  */
 import { flushPromises, mount } from "@vue/test-utils"
@@ -27,16 +27,19 @@ vi.mock("@/composables/useToast", () => ({ useToast: () => ({ showSuccess, showE
 vi.mock("@/composables/usePOSEvents", () => ({
 	usePOSEvents: () => ({ detectSettingsChanges, emitStockSyncConfigured: vi.fn(), emit: emitEvent }),
 }))
+const qz = vi.hoisted(() => ({}))
 vi.mock("@/composables/useQzTray", async () => {
 	const { ref } = await import("vue")
+	// This computer's QZ Tray printer, kept by the composable (browser storage)
+	qz.selectedPrinter = ref("")
 	return {
 		useQzTray: () => ({
-			qzConnected: ref(false),
+			qzConnected: ref(true),
 			qzConnecting: ref(false),
 			qzCertStatus: ref("unknown"),
-			selectedPrinter: ref(""),
+			selectedPrinter: qz.selectedPrinter,
 			loadingPrinters: ref(false),
-			printerOptions: ref([]),
+			printerOptions: ref([{ value: "Counter printer", label: "Counter printer" }]),
 			certLoading: ref(false),
 			certReady: ref(false),
 			handleConnect: vi.fn(),
@@ -87,6 +90,7 @@ const GROUPS = [
 	{ key: "service", tab: "restaurant", label: "Service", column: 1, scope: "restaurant" },
 	{ key: "room", tab: "restaurant", label: "Room", column: 1, scope: "till" },
 	{ key: "opening_hours", tab: "hours", label: "Opening hours", column: 1, scope: "restaurant" },
+	{ key: "cards", tab: "hours", label: "Restaurant cards", column: 2, scope: "restaurant" },
 	{ key: "qr_ordering", tab: "online", label: "Table ordering by QR code", column: 1, scope: "restaurant" },
 	{ key: "reservations", tab: "reservations", label: "Reservations", column: 1, scope: "restaurant" },
 	{ key: "session_lock", tab: "general", label: "Lock", column: 1, scope: "till" },
@@ -144,6 +148,14 @@ const RESTAURANT_SETTINGS = [
 		label: "Opening hours",
 		till: "restaurant",
 	}),
+	setting("restaurant_cards", "cards", "hours", {
+		doctype: null,
+		store: "device",
+		widget: "special",
+		kind: "info",
+		help: null,
+		till: "restaurant",
+	}),
 	setting("enable_qr_ordering", "qr_ordering", "online", { doctype: "Restaurant", till: "restaurant" }),
 	setting("token_expiry_mode", "qr_ordering", "online", {
 		doctype: "Restaurant",
@@ -199,8 +211,12 @@ const TILL_SETTINGS = [
 		],
 	}),
 	setting("allow_credit_sale", "payment", "sales"),
+	setting("allow_partial_payment", "payment", "sales"),
 	setting("use_exact_amount", "payment", "sales", {
-		depends_on: [{ key: "allow_credit_sale", equals: null, off: true }],
+		depends_on: [
+			{ key: "allow_credit_sale", equals: null, off: true },
+			{ key: "allow_partial_payment", equals: null, off: true },
+		],
 	}),
 	setting("warehouse", "warehouse", "stock", {
 		doctype: "POS Profile",
@@ -259,6 +275,7 @@ const SHOP_VALUES = {
 	item_groups: [],
 	barcode_rules: [],
 	allow_credit_sale: 0,
+	allow_partial_payment: 0,
 	use_exact_amount: 0,
 	warehouse: "Store - T",
 	silent_print: 0,
@@ -297,11 +314,13 @@ function screenOf({ restaurantTill = false, can = { till: true, restaurant: fals
 		.filter((entry) => tabKeys.has(entry.tab))
 		.map((entry) => ({
 			...entry,
+			// As the server says it: the restaurant's are its managers', the till's the till manager's, and those of the
+			// restaurant's tabs the restaurant's managers' too (ruling 63)
 			editable:
 				entry.doctype === "Restaurant"
 					? can.restaurant
 					: entry.doctype
-					? can.till
+					? can.till || (RESTAURANT_TABS.some((tab) => tab.key === entry.tab) && can.restaurant)
 					: true,
 		}))
 	const groupKeys = new Set(settings.map((entry) => entry.group))
@@ -374,11 +393,13 @@ beforeEach(() => {
 	detectSettingsChanges.mockReset()
 	emitEvent.mockReset()
 	Object.assign(restaurantStore, {
+		can: undefined,
 		fetchRestaurantSettings: vi.fn(),
 		fetchActiveCards: vi.fn(),
 		fetchRestaurantStatus: vi.fn(),
 	})
 	shiftStore.currentProfile = { warehouse: "Store - T" }
+	qz.selectedPrinter.value = ""
 	Object.assign(printing, {
 		config: ref({
 			printers: [{ name: "PRN-1", label: "Counter printer", online: true }],
@@ -467,6 +488,8 @@ describe("one Save for the whole screen", () => {
 
 		expect(detectSettingsChanges).toHaveBeenCalledWith({ warehouse: "Back - T" }, { warehouse: "Store - T" })
 		expect(shiftStore.currentProfile.warehouse).toBe("Back - T")
+		// A new warehouse changes what the till offers (its stock, the unavailable items): its items come from the server
+		expect(emitEvent).toHaveBeenCalledWith("settings:catalogue-changed", { changes: ["warehouse"] })
 	})
 
 	it("asks the till to read its items again when the catalogue changed", async () => {
@@ -504,6 +527,20 @@ describe("one Save for the whole screen", () => {
 
 		expect(saveButton().attributes("disabled")).toBeDefined()
 		await row("session_lock_timeout").find("input").setValue("3")
+		expect(saveButton().attributes("disabled")).toBeUndefined()
+	})
+
+	it("never keeps Save closed for a number the user may not change", async () => {
+		// The restaurant's link of the QR menu is out of its bounds; the till manager cannot change it, nor be stuck by it
+		await open(
+			screenOf({
+				restaurantTill: true,
+				values: { enable_qr_ordering: 1, token_expiry_mode: "Timed", token_expiry_days: 0 },
+			})
+		)
+		await openTab("sales")
+		await row("allow_credit_sale").find("input[type='checkbox']").setValue(true)
+
 		expect(saveButton().attributes("disabled")).toBeUndefined()
 	})
 
@@ -555,6 +592,20 @@ describe("a setting that depends on another", () => {
 		await row("allow_credit_sale").find("input[type='checkbox']").setValue(true)
 		expect(row("use_exact_amount").attributes("data-greyed")).toBe("true")
 	})
+
+	it("is unticked when a setting it cannot go with is ticked, so that the save is not refused", async () => {
+		await open(screenOf({ values: { use_exact_amount: 1 } }))
+		await openTab("sales")
+
+		expect(row("use_exact_amount").find("input[type='checkbox']").element.checked).toBe(true)
+		await row("allow_partial_payment").find("input[type='checkbox']").setValue(true)
+		await flushPromises()
+		expect(row("use_exact_amount").find("input[type='checkbox']").element.checked).toBe(false)
+
+		await saveButton().trigger("click")
+		await flushPromises()
+		expect(saves()[0][1].values).toEqual({ allow_partial_payment: 1, use_exact_amount: 0 })
+	})
 })
 
 describe("the help of every setting, behind its lightbulb", () => {
@@ -597,11 +648,12 @@ describe("a restaurant manager who does not manage the till", () => {
 		expect(railTabs()).toEqual(RESTAURANT_TABS.map((tab) => tab.key))
 	})
 
-	it("sets the restaurant's settings, and sees the till's own ones closed", async () => {
+	it("sets the restaurant's settings and the till's own ones of his tabs", async () => {
 		await open(screenOf({ restaurantTill: true, can }))
 
-		expect(row("default_restaurant_area").attributes("data-locked")).toBe("true")
-		expect(row("default_restaurant_area").find("select").attributes("disabled")).toBeDefined()
+		// The till's default room sits in his tab: his to set (ruling 63)
+		expect(row("default_restaurant_area").attributes("data-locked")).toBe("false")
+		expect(row("default_restaurant_area").find("select").attributes("disabled")).toBeUndefined()
 		await row("enable_runner").find("input[type='checkbox']").setValue(false)
 
 		await saveButton().trigger("click")
@@ -610,6 +662,41 @@ describe("a restaurant manager who does not manage the till", () => {
 		expect(saves()).toEqual([[SAVE, { pos_profile: "Restaurant till", values: { enable_runner: 0 } }]])
 		// The till takes the restaurant's settings again
 		expect(restaurantStore.fetchRestaurantSettings).toHaveBeenCalled()
+	})
+})
+
+describe("what the screen keeps on this computer", () => {
+	it("forgets this computer's QZ Tray printer when it is cleared", async () => {
+		qz.selectedPrinter.value = "Counter printer"
+		await open(screenOf({ values: { silent_print: 1 } }))
+		await openTab("printing")
+
+		await row("qz_printer").find("select").setValue("")
+		await saveButton().trigger("click")
+		await flushPromises()
+
+		expect(qz.selectedPrinter.value).toBe("")
+		expect(saves()).toEqual([])
+	})
+})
+
+describe("the cards of the restaurant", () => {
+	it("opens a card in the till's own card editor, not on the desk", async () => {
+		restaurantStore.can = { manage_cards: true }
+		await open(screenOf({ restaurantTill: true, can: { till: true, restaurant: true } }), { initialTab: "hours" })
+
+		expect(wrapper.find("[data-setting='restaurant_cards'] a[href*='/app/']").exists()).toBe(false)
+		await row("restaurant_cards").find("button[data-card='CARD-1']").trigger("click")
+
+		expect(wrapper.emitted("open-card")).toEqual([["CARD-1"]])
+	})
+
+	it("offers to edit a card only to whoever may edit the cards at the till", async () => {
+		restaurantStore.can = { manage_cards: false }
+		await open(screenOf({ restaurantTill: true, can: { till: true, restaurant: true } }), { initialTab: "hours" })
+
+		expect(row("restaurant_cards").text()).toContain("Lunch card")
+		expect(row("restaurant_cards").find("button[data-card]").exists()).toBe(false)
 	})
 })
 

@@ -31,8 +31,8 @@ vi.mock("@/stores/posSettings", async () => {
 vi.mock("@/stores/itemSearch", async () => {
 	const { ref } = await import("vue")
 	const items = ref([
-		{ item_code: "CAFE", item_name: "Café crème", rate: 4.5, uom: "Nos", stock_uom: "Nos" },
-		{ item_code: "TARTE", item_name: "Tarte", rate: 6, image: "/files/tarte.jpg", uom: "Nos", stock_uom: "Nos" },
+		{ item_code: "COFFEE", item_name: "Coffee with cream", rate: 4.5, uom: "Nos", stock_uom: "Nos" },
+		{ item_code: "TART", item_name: "Tart", rate: 6, image: "/files/tart.jpg", uom: "Nos", stock_uom: "Nos" },
 	])
 	const store = {
 		filteredItems: items,

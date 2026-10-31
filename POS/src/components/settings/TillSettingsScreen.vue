@@ -12,26 +12,27 @@
 	<Transition name="fade">
 		<div
 			v-if="show"
-			class="fixed inset-0 z-[300] bg-[rgba(24,20,16,0.55)]"
+			class="fixed inset-0 z-[300] bg-black/50"
 			data-testid="till-settings"
 			@click.self="close"
 		>
-			<div class="fixed inset-0 flex items-center justify-center p-3 md:p-4">
+			<!-- A tablet (narrower than 1280 px) gives the screen all its height and width but a margin of 8 px -->
+			<div class="fixed inset-0 flex items-center justify-center p-2 min-[1280px]:p-4">
 				<div
 					role="dialog"
 					aria-modal="true"
 					:aria-label="__('Till settings')"
-					class="flex h-[min(724px,calc(100vh-24px))] w-[min(1300px,calc(100vw-24px))] flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl"
+					class="flex h-[min(724px,calc(100vh-24px))] w-[min(1300px,calc(100vw-24px))] flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl max-[1279px]:h-[calc(100vh-16px)] max-[1279px]:w-[calc(100vw-16px)]"
 				>
 					<!-- //// Neoffice — the head: the till (and its restaurant), who the screen is for, Cancel and Save. -->
 					<header
-						class="flex h-[70px] flex-none items-center justify-between gap-4 border-b border-[#ECE7DE] px-6"
+						class="flex h-[70px] flex-none items-center justify-between gap-4 border-b border-pos-line px-6 max-[1279px]:h-[60px]"
 					>
 						<div class="relative min-w-0">
-							<h2 class="font-display text-[30px] leading-none text-[#141414]">
+							<h2 class="font-display text-[30px] leading-none text-pos-ink">
 								{{ __("Till settings") }}
 							</h2>
-							<div class="mt-[5px] flex min-w-0 items-center gap-2 text-[13px] text-[#6F665A]">
+							<div class="mt-[5px] flex min-w-0 items-center gap-2 text-[13px] text-pos-muted">
 								<span class="truncate">{{ subtitle }}</span>
 								<span v-if="screen" class="flex flex-none items-center gap-1.5 italic">
 									<span aria-hidden="true">·</span>
@@ -41,7 +42,7 @@
 							</div>
 							<p
 								v-if="roleHelpOpen"
-								class="absolute left-0 top-full z-10 mt-1.5 w-[330px] rounded-lg border-l-[3px] border-[#D68A59] bg-[#FAEFE6] px-2.5 py-2 text-[12.5px] leading-[1.45] text-[#3A342C] shadow-lg"
+								class="absolute left-0 top-full z-10 mt-1.5 w-[330px] rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink shadow-lg"
 							>
 								{{ roleHelp }}
 							</p>
@@ -49,7 +50,7 @@
 						<div class="flex flex-none items-center gap-2">
 							<button
 								type="button"
-								class="h-[38px] rounded-[10px] border border-[#DCD4C7] bg-white px-4 text-[14px] font-semibold text-[#141414] hover:bg-[#F6F3ED]"
+								class="h-[38px] rounded-[10px] border border-pos-line bg-white px-4 text-[14px] font-semibold text-pos-ink hover:bg-pos-panel"
 								@click="close"
 							>
 								{{ __("Cancel") }}
@@ -57,7 +58,7 @@
 							<button
 								type="button"
 								data-action="save"
-								class="h-[38px] rounded-[10px] bg-[#141414] px-4 text-[14px] font-bold text-white hover:bg-[#232020] disabled:cursor-default disabled:opacity-40"
+								class="h-[38px] rounded-[10px] bg-pos-ink px-4 text-[14px] font-bold text-white hover:opacity-90 disabled:cursor-default disabled:opacity-40"
 								:disabled="!canSave"
 								@click="save"
 							>
@@ -65,7 +66,7 @@
 							</button>
 							<button
 								type="button"
-								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-[10px] text-[20px] text-[#6F665A] hover:bg-[#F6F3ED]"
+								class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-[10px] text-[20px] text-pos-muted hover:bg-pos-panel"
 								:aria-label="__('Close')"
 								@click="close"
 							>
@@ -77,13 +78,13 @@
 					<div class="flex min-h-0 flex-1">
 						<!-- //// Neoffice — the rail: the restaurant's tabs first on a restaurant till, then the till's. -->
 						<nav
-							class="flex w-[214px] flex-none flex-col gap-[3px] overflow-hidden border-e border-[#ECE7DE] bg-[#FBFAF7] px-2.5 py-3"
+							class="flex w-[214px] flex-none flex-col gap-[3px] overflow-y-auto border-e border-pos-line bg-pos-panel px-2.5 py-3"
 							role="tablist"
 							:aria-label="__('Tabs of the settings')"
 						>
 							<template v-for="(section, index) in sections" :key="section.key">
 								<div
-									class="px-2.5 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-[#6F665A]"
+									class="px-2.5 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-pos-muted"
 									:class="index ? 'mt-2' : ''"
 								>
 									{{ section.key === "restaurant" ? __("Restaurant") : __("Till") }}
@@ -93,11 +94,11 @@
 									:key="tab.key"
 									type="button"
 									role="tab"
-									class="flex items-center justify-between gap-2 rounded-[10px] px-3 py-[9px] text-start text-[14.5px] font-semibold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#D68A59]/50"
+									class="flex items-center justify-between gap-2 rounded-[10px] px-3 py-[9px] text-start text-[14.5px] font-semibold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-blue-400/50"
 									:class="
 										activeTab === tab.key
-											? 'bg-[#141414] text-white'
-											: 'text-[#524B41] hover:bg-[#ECE7DE]'
+											? 'bg-pos-ink text-white'
+											: 'text-pos-muted hover:bg-pos-line'
 									"
 									:aria-selected="activeTab === tab.key ? 'true' : 'false'"
 									:data-tab="tab.key"
@@ -108,19 +109,22 @@
 							</template>
 						</nav>
 
-						<!-- //// Neoffice — the body: the groups of the open tab, in columns. -->
-						<div class="min-w-0 flex-1 overflow-auto px-[22px] pb-2.5 pt-[18px]">
-							<div v-if="loading" class="flex h-full items-center justify-center text-[14px] text-[#6F665A]">
+						<!-- //// Neoffice — the body: the groups of the open tab, in columns (two on a tablet). -->
+						<div
+							ref="body"
+							class="min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-[22px] pb-2.5 pt-[18px] max-[1279px]:pt-3.5"
+						>
+							<div v-if="loading" class="flex h-full items-center justify-center text-[14px] text-pos-muted">
 								{{ __("Loading settings...") }}
 							</div>
 							<div
 								v-else-if="loadError"
-								class="flex h-full flex-col items-center justify-center gap-3 text-center text-[14px] text-[#6F665A]"
+								class="flex h-full flex-col items-center justify-center gap-3 text-center text-[14px] text-pos-muted"
 							>
 								<p>{{ loadError }}</p>
 								<button
 									type="button"
-									class="h-[38px] rounded-[10px] border border-[#DCD4C7] bg-white px-4 font-semibold text-[#141414]"
+									class="h-[38px] rounded-[10px] border border-pos-line bg-white px-4 font-semibold text-pos-ink"
 									@click="load"
 								>
 									{{ __("Try again") }}
@@ -140,7 +144,7 @@
 										:data-group="group.key"
 									>
 										<h3
-											class="mb-[3px] flex flex-wrap items-center gap-2 border-b border-[#ECE7DE] pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6F665A]"
+											class="mb-[3px] flex flex-wrap items-center gap-2 border-b border-pos-line pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-pos-muted"
 										>
 											{{ group.label }}
 											<HelpBulb
@@ -158,7 +162,7 @@
 										</h3>
 										<p
 											v-if="titleCarriesHelp(group) && groupHelp[group.key]"
-											class="rounded-lg border-l-[3px] border-[#D68A59] bg-[#FAEFE6] px-2.5 py-2 text-[12.5px] leading-[1.45] text-[#3A342C]"
+											class="rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
 										>
 											{{ group.settings[0].help }}
 										</p>
@@ -182,25 +186,32 @@
 											</div>
 
 											<!-- The cards of the restaurant and their slots -->
-											<div v-else-if="block.setting.key === 'restaurant_cards'" class="flex flex-col">
+											<!-- A card opens in the till's own card editor (emitted to the till), for whoever may edit the cards there -->
+											<div
+												v-else-if="block.setting.key === 'restaurant_cards'"
+												class="flex flex-col"
+												data-setting="restaurant_cards"
+											>
 												<div
 													v-for="card in cardChoices"
 													:key="card.name"
-													class="flex items-center justify-between gap-2.5 border-b border-[#ECE7DE] py-[7px]"
+													class="flex items-center justify-between gap-2.5 border-b border-pos-line py-[7px]"
 												>
 													<div class="min-w-0">
-														<b class="block truncate text-[13.5px] text-[#141414]">{{ card.card_name }}</b>
-														<small class="block text-[12px] text-[#6F665A]">{{ slotsOf(card.name) }}</small>
+														<b class="block truncate text-[13.5px] text-pos-ink">{{ card.card_name }}</b>
+														<small class="block text-[12px] text-pos-muted">{{ slotsOf(card.name) }}</small>
 													</div>
-													<a
-														:href="`/app/restaurant-card/${encodeURIComponent(card.name)}`"
-														target="_blank"
-														class="whitespace-nowrap text-[12.5px] font-bold text-[#7E4523] hover:underline"
+													<button
+														v-if="restaurantStore.can?.manage_cards"
+														type="button"
+														class="whitespace-nowrap text-[12.5px] font-bold text-pos-action-hover hover:underline"
+														:data-card="card.name"
+														@click="emit('open-card', card.name)"
 													>
 														{{ __("Edit") }}
-													</a>
+													</button>
 												</div>
-												<p class="pt-2 text-[12.5px] leading-[1.45] text-[#6F665A]">
+												<p class="pt-2 text-[12.5px] leading-[1.45] text-pos-muted">
 													{{ __("The permanent card is served at all hours: it takes no time slot.") }}
 												</p>
 											</div>
@@ -208,12 +219,12 @@
 											<!-- Whether the tip item and account are ready -->
 											<div
 												v-else-if="block.setting.key === 'tip_status'"
-												:class="['ml-[9px] border-l-2 border-[#ECE7DE] pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
+												:class="['ml-[9px] border-l-2 border-pos-line pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
 												data-setting="tip_status"
 											>
 												<span
 													class="inline-flex items-center gap-[7px] rounded-[9px] px-2.5 py-[5px] text-[12.5px] font-semibold"
-													:class="tipsReady ? 'bg-[#E9F7EE] text-[#11663A]' : 'bg-[#FCF2DD] text-[#92610C]'"
+													:class="tipsReady ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
 												>
 													<span class="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true"></span>
 													{{
@@ -227,12 +238,12 @@
 											<!-- The state of the stock sync of this computer -->
 											<div
 												v-else-if="block.setting.key === 'stock_sync_status'"
-												:class="['ml-[9px] border-l-2 border-[#ECE7DE] pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
+												:class="['ml-[9px] border-l-2 border-pos-line pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
 												data-setting="stock_sync_status"
 											>
 												<span
 													class="inline-flex items-center gap-[7px] rounded-[9px] px-2.5 py-[5px] text-[12.5px] font-semibold"
-													:class="stockSyncStatus.enabled ? 'bg-[#E9F7EE] text-[#11663A]' : 'bg-[#F6F3ED] text-[#6F665A]'"
+													:class="stockSyncStatus.enabled ? 'bg-green-50 text-green-700' : 'bg-pos-panel text-pos-muted'"
 												>
 													<span class="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true"></span>
 													{{
@@ -249,23 +260,23 @@
 											<!-- A pointer to a setting kept at the office -->
 											<p
 												v-else-if="block.setting.kind === 'info' && block.setting.help"
-												class="flex gap-2 py-1 text-[13px] leading-[1.45] text-[#524B41]"
+												class="flex gap-2 py-1 text-[13px] leading-[1.45] text-pos-muted"
 												:data-setting="block.setting.key"
 											>
-												<span class="font-bold text-[#D68A59]" aria-hidden="true">→</span>
+												<span class="font-bold text-blue-400" aria-hidden="true">→</span>
 												{{ block.setting.help }}
 											</p>
 
 											<!-- The QZ Tray printer of this computer -->
 											<div
 												v-else-if="block.setting.key === 'qz_printer'"
-												:class="['ml-[9px] border-l-2 border-[#ECE7DE] pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
+												:class="['ml-[9px] border-l-2 border-pos-line pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
 												data-setting="qz_printer"
 											>
-												<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-[#524B41]">
+												<div class="mb-[5px] flex flex-wrap items-center gap-1.5 text-[12.5px] text-pos-muted">
 													<label for="till-setting-qz_printer">{{ block.setting.label }}</label>
 													<HelpBulb v-model:open="groupHelp.qz_printer" :text="block.setting.help" />
-													<span class="ms-auto text-[12px]" :class="qzConnected ? 'text-[#11663A]' : 'text-[#92610C]'">
+													<span class="ms-auto text-[12px]" :class="qzConnected ? 'text-green-700' : 'text-amber-700'">
 														{{
 															qzConnecting
 																? __("Connecting to QZ Tray...")
@@ -278,7 +289,7 @@
 												<div class="flex items-center gap-1.5">
 													<select
 														id="till-setting-qz_printer"
-														class="h-9 w-full min-w-0 rounded-[10px] border border-[#DCD4C7] bg-white px-3 py-0 text-[14px] text-[#141414]"
+														class="h-9 w-full min-w-0 rounded-[10px] border border-pos-line bg-white px-3 py-0 text-[14px] text-pos-ink"
 														:value="draft.qz_printer || ''"
 														:disabled="greyed(block.setting)"
 														@change="draft.qz_printer = $event.target.value"
@@ -290,7 +301,7 @@
 													</select>
 													<button
 														type="button"
-														class="h-9 flex-none rounded-[10px] border border-[#DCD4C7] bg-white px-2.5 text-[12.5px] font-semibold text-[#141414]"
+														class="h-9 flex-none rounded-[10px] border border-pos-line bg-white px-2.5 text-[12.5px] font-semibold text-pos-ink"
 														:disabled="greyed(block.setting) || loadingPrinters"
 														@click="qzConnected ? handleRefreshPrinters() : handleQzConnect()"
 													>
@@ -299,7 +310,7 @@
 												</div>
 												<p
 													v-if="groupHelp.qz_printer"
-													class="mb-1 mt-1.5 rounded-lg border-l-[3px] border-[#D68A59] bg-[#FAEFE6] px-2.5 py-2 text-[12.5px] leading-[1.45] text-[#3A342C]"
+													class="mb-1 mt-1.5 rounded-lg border-l-[3px] border-blue-400 bg-pos-action-soft px-2.5 py-2 text-[12.5px] leading-[1.45] text-pos-ink"
 												>
 													{{ block.setting.help }}
 												</p>
@@ -308,10 +319,10 @@
 											<!-- The signing certificate of QZ Tray on this computer -->
 											<div
 												v-else-if="block.setting.key === 'qz_certificate'"
-												:class="['ml-[9px] border-l-2 border-[#ECE7DE] pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
+												:class="['ml-[9px] border-l-2 border-pos-line pl-[19px]', greyed(block.setting) ? 'opacity-[0.42]' : '']"
 												data-setting="qz_certificate"
 											>
-												<p class="mb-1.5 text-[12.5px] text-[#524B41]">
+												<p class="mb-1.5 text-[12.5px] text-pos-muted">
 													{{ block.setting.label }} ·
 													{{
 														qzCertStatus === "trusted"
@@ -325,7 +336,7 @@
 													<button
 														v-if="qzCertStatus !== 'trusted'"
 														type="button"
-														class="h-8 rounded-[10px] border border-[#DCD4C7] bg-white px-3 text-[12.5px] font-semibold text-[#141414]"
+														class="h-8 rounded-[10px] border border-pos-line bg-white px-3 text-[12.5px] font-semibold text-pos-ink"
 														:disabled="greyed(block.setting) || qzCertLoading"
 														@click="handleSetupQzCertificate"
 													>
@@ -334,7 +345,7 @@
 													<button
 														v-if="qzCertReady"
 														type="button"
-														class="h-8 rounded-[10px] border border-[#DCD4C7] bg-white px-3 text-[12.5px] font-semibold text-[#141414]"
+														class="h-8 rounded-[10px] border border-pos-line bg-white px-3 text-[12.5px] font-semibold text-pos-ink"
 														:disabled="greyed(block.setting)"
 														@click="handleDownloadQzCertificate"
 													>
@@ -384,6 +395,7 @@ import {
 	openingTab,
 	railSections,
 	readStockSync,
+	untickExcluded,
 	withinBounds,
 } from "@/components/settings/tillSettingsForm"
 import { usePOSEvents } from "@/composables/usePOSEvents"
@@ -410,7 +422,8 @@ const props = defineProps({
 	initialTab: { type: String, default: "" },
 })
 
-const emit = defineEmits(["update:modelValue"])
+// open-card: the till opens that card in its own card editor, above this screen (which keeps its changes)
+const emit = defineEmits(["update:modelValue", "open-card"])
 
 const SAVE = "pos_next.till_settings.api.save_till_settings"
 const READ = "pos_next.till_settings.api.get_till_settings"
@@ -421,6 +434,10 @@ const COLUMN_TEMPLATES = {
 	hours: "minmax(0,1fr) 300px",
 	online: "minmax(0,1.2fr) minmax(0,1fr)",
 }
+// The width of the body (px) under which a tab takes two columns: three of them need about 330 px each (the tiles
+// per row, the drawer's three choices, a printer's name beside its Retry): 1366 px screens keep three, 1280 px and
+// tablets (1180, 1024) take two
+const NARROW_BODY = 1020
 
 const show = ref(props.modelValue)
 const screen = ref(null)
@@ -456,8 +473,28 @@ const {
 } = useQzTray()
 
 const sections = computed(() => railSections(screen.value))
-const columns = computed(() => columnsOf(screen.value, activeTab.value))
-const columnTemplate = computed(() => COLUMN_TEMPLATES[activeTab.value] || "repeat(3,minmax(0,1fr))")
+// The width of the body, followed: below NARROW_BODY (a tablet in landscape, 1180 or 1024 px wide) a tab takes two
+// columns (the third column's groups go under the shorter one) and the hours one, so that nothing is cut or scrolls
+// sideways
+const body = ref(null)
+const bodyWidth = ref(Infinity)
+const narrow = computed(() => bodyWidth.value < NARROW_BODY)
+const columnCount = computed(() => (narrow.value ? (activeTab.value === "hours" ? 1 : 2) : 3))
+const columns = computed(() => columnsOf(screen.value, activeTab.value, columnCount.value))
+const columnTemplate = computed(() => {
+	if (narrow.value) return `repeat(${Math.min(columnCount.value, columns.value.length) || 1},minmax(0,1fr))`
+	return COLUMN_TEMPLATES[activeTab.value] || "repeat(3,minmax(0,1fr))"
+})
+let bodyObserver = null
+watch(body, (element) => {
+	bodyObserver?.disconnect()
+	bodyObserver = null
+	if (!element || typeof ResizeObserver === "undefined") return
+	bodyObserver = new ResizeObserver(([entry]) => {
+		bodyWidth.value = entry.contentRect.width
+	})
+	bodyObserver.observe(element)
+})
 const settingsByKey = computed(() =>
 	Object.fromEntries((screen.value?.settings || []).map((setting) => [setting.key, setting]))
 )
@@ -492,11 +529,11 @@ function titleCarriesHelp(group) {
 function badgeOf(group) {
 	const restaurantTab = screen.value?.tabs?.some((tab) => tab.key === group.tab && tab.section === "restaurant")
 	const badges = {
-		restaurant: { label: __("Whole restaurant"), classes: "bg-[#FAEFE6] text-[#7E4523]" },
-		till: { label: __("This till"), classes: "bg-[#ECE7DE] text-[#524B41]" },
-		site: { label: __("Whole site"), classes: "bg-[#FCF2DD] text-[#92610C]" },
-		device: { label: __("This device"), classes: "bg-[#ECE7DE] text-[#524B41]" },
-		computer: { label: __("This computer"), classes: "bg-[#ECE7DE] text-[#524B41]" },
+		restaurant: { label: __("Whole restaurant"), classes: "bg-pos-action-soft text-pos-action-hover" },
+		till: { label: __("This till"), classes: "bg-pos-line text-pos-muted" },
+		site: { label: __("Whole site"), classes: "bg-amber-50 text-amber-700" },
+		device: { label: __("This device"), classes: "bg-pos-line text-pos-muted" },
+		computer: { label: __("This computer"), classes: "bg-pos-line text-pos-muted" },
 	}
 	if (group.scope === "till" && !restaurantTab) return null
 	return badges[group.scope] || null
@@ -554,10 +591,12 @@ const printingChanges = computed(() => {
 const dirty = computed(
 	() => Object.keys(documentChanges.value).length > 0 || deviceChanged.value || Boolean(printingChanges.value)
 )
-// A number out of its bounds is never sent: the field says so in red, and Save waits
+// A number out of its bounds is never sent: the field says so in red, and Save waits. Only a number the user may
+// change: one he may not is not sent, and must never keep his own changes from being saved
 const invalid = computed(() =>
 	(screen.value?.settings || []).some(
 		(setting) =>
+			setting.editable &&
 			["int", "float", "percent"].includes(setting.widget) &&
 			setting.key in draft &&
 			!greyed(setting) &&
@@ -675,8 +714,10 @@ async function refreshTheTill(values, before) {
 		}
 	}
 	const effects = effectsOf(screen.value?.settings, keys)
-	// A new warehouse reloads the items already (its own event): no second reload
-	if (effects.has("catalogue") && !("warehouse" in values)) {
+	// What the till sells came from the server again (useCatalogueRefresh). A new warehouse changes it too (its stock,
+	// the unavailable items): its own event reloads the items from the browser's copy, and the refresh waits for that
+	// load before it fetches them from the server
+	if (effects.has("catalogue") || "warehouse" in values) {
 		emitEvent("settings:catalogue-changed", { changes: keys })
 	}
 	if (effects.has("restaurant")) {
@@ -706,7 +747,8 @@ async function saveThisComputer() {
 	} catch (error) {
 		log.error("Failed to apply stock sync config:", error)
 	}
-	if (draft.qz_printer) selectedPrinter.value = draft.qz_printer
+	// Cleared, the printer is forgotten: the computer prints through the browser again
+	selectedPrinter.value = draft.qz_printer || ""
 	read.value = {
 		...read.value,
 		stock_sync_enabled: draft.stock_sync_enabled,
@@ -767,6 +809,13 @@ onMounted(() => {
 	if (show.value) opened()
 })
 
+// A box ticked that another cannot go with (credit sales, partial payment against the exact amount) unticks that one:
+// the documents would refuse the pair, and the greyed box could not be unticked by hand. Its bulb says why.
+watch(
+	() => JSON.stringify(draft),
+	() => untickExcluded(screen.value?.settings, draft)
+)
+
 // QZ Tray is looked for as soon as silent printing is ticked, so that its printers can be chosen
 watch(
 	() => draft.silent_print,
@@ -775,7 +824,10 @@ watch(
 	}
 )
 
-onUnmounted(() => clearInterval(statusTimer))
+onUnmounted(() => {
+	clearInterval(statusTimer)
+	bodyObserver?.disconnect()
+})
 </script>
 
 <style scoped>

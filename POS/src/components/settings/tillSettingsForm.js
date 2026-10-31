@@ -23,8 +23,10 @@ export function openingTab(screen, asked) {
 	return tabs[0]?.key || ""
 }
 
-// The groups of a tab in their columns, each with its settings in the order of the list
-export function columnsOf(screen, tabKey) {
+// The groups of a tab in their columns, each with its settings in the order of the list. With room for fewer columns
+// than the tab has (a tablet: `maxColumns`), the groups of the columns left over go, in order, under the shortest
+// column so far
+export function columnsOf(screen, tabKey, maxColumns = 3) {
 	if (!screen) return []
 	const groups = (screen.groups || []).filter((group) => group.tab === tabKey)
 	const columns = new Map()
@@ -34,7 +36,14 @@ export function columnsOf(screen, tabKey) {
 		if (!columns.has(group.column)) columns.set(group.column, [])
 		columns.get(group.column).push({ ...group, settings })
 	}
-	return [...columns.keys()].sort((a, b) => a - b).map((column) => columns.get(column))
+	const ordered = [...columns.keys()].sort((a, b) => a - b).map((column) => columns.get(column))
+	if (ordered.length <= maxColumns) return ordered
+	const kept = ordered.slice(0, Math.max(1, maxColumns)).map((column) => [...column])
+	const height = (column) => column.reduce((sum, group) => sum + 1 + group.settings.length, 0)
+	for (const group of ordered.slice(kept.length).flat()) {
+		kept.reduce((shortest, column) => (height(column) < height(shortest) ? column : shortest)).push(group)
+	}
+	return kept
 }
 
 // Whether a value counts as "on" for a condition: a ticked box, a chosen link, a filled text, a non-empty list
@@ -52,6 +61,22 @@ export function conditionsHold(setting, values) {
 		if (when.equals !== null && when.equals !== undefined) return String(value ?? "") === when.equals
 		return isOn(value)
 	})
+}
+
+// A ticked box whose setting cannot go with another one now on (a condition `off`: the exact amount against credit
+// sales and partial payment) is unticked, in place: the documents refuse the pair, and a greyed box cannot be unticked
+// by hand. Only what the user may change. Answers the keys unticked.
+export function untickExcluded(settings, values) {
+	const unticked = []
+	for (const setting of settings || []) {
+		if (setting.widget !== "check" || !setting.editable || !isOn(values?.[setting.key])) continue
+		const excluded = (setting.depends_on || []).some((when) => when.off && isOn(values?.[when.key]))
+		if (excluded) {
+			values[setting.key] = 0
+			unticked.push(setting.key)
+		}
+	}
+	return unticked
 }
 
 function sameValue(a, b) {
