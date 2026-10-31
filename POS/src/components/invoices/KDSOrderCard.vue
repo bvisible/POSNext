@@ -163,15 +163,26 @@
 											{{ kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway }) }}
 										</span>
 									</div>
-									<!-- Modifiers -->
-									<div v-if="item.posa_item_modifiers && parseModifiers(item.posa_item_modifiers).length"
-										class="text-xs text-gray-400 mt-0.5 pl-4">
-										→ {{ parseModifiers(item.posa_item_modifiers).join(', ') }}
+									<!-- //// Neoffice — THREE KINDS of text, one look each, all the size of the dish's own text (task 38a-1, ruling 123: the information is as important -->
+									<!-- //// as the dish, and it was pale grey and small). The OPTIONS are ink with an arrow; a REMARK or instruction is the accent, medium, with the "i"; -->
+									<!-- //// an ALLERGY is the one red, bold, in a tinted strip of its own with a warning mark, so that it cannot be taken for a remark. Red is kept for -->
+									<!-- //// allergies (it was any annotation). A remark is an allergy when it holds a word of the list (utils/kitchenTextKinds). Options and a plain remark -->
+									<!-- //// share a line while they fit. -->
+									<div v-if="optionsOf(item).length || (remarkOf(item) && !isAllergyRemark(item))" data-test="ticket-sub"
+										class="mt-0.5 pl-4 leading-snug text-[length:var(--kds-fs-sub,12px)]">
+										<span v-if="optionsOf(item).length" data-test="ticket-options" class="font-normal text-gray-900 dark:text-gray-100">
+											<span aria-hidden="true">→</span> {{ optionsOf(item).join(', ') }}
+										</span>
+										<span v-if="remarkOf(item) && !isAllergyRemark(item)" data-test="ticket-remark" class="font-medium text-blue-700"
+											:class="{ 'ml-2': optionsOf(item).length }">
+											<svg data-icon="info" class="inline-block h-[1em] w-[1em] align-[-0.14em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+											{{ remarkOf(item) }}
+										</span>
 									</div>
-									<!-- Special instructions -->
-									<div v-if="item.posa_special_instructions"
-										class="text-xs text-blue-500 mt-0.5 pl-4">
-										ℹ {{ item.posa_special_instructions }}
+									<div v-if="remarkOf(item) && isAllergyRemark(item)" data-test="ticket-allergy"
+										class="mt-0.5 ml-4 flex items-start gap-1 rounded-md border-l-4 border-red-500 bg-red-50 px-1.5 py-0.5 font-bold leading-snug text-red-700 text-[length:var(--kds-fs-sub,12px)] dark:text-ds-danger-soft">
+										<svg data-icon="warning" class="mt-[0.15em] h-[1em] w-[1em] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4M12 17h.01" /></svg>
+										<span>{{ remarkOf(item) }}</span>
 									</div>
 									<!-- Station badge -->
 									<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
@@ -267,6 +278,8 @@ import { kitchenStatusOf } from "@/utils/kitchenBands"
 import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — the room's short code on the header's line (task 38a-1)
 import { roomCode } from "@/utils/kitchenRoomCode"
+//// Neoffice — the three kinds of text of a dish: options, remark, allergy (task 38a-1, ruling 123)
+import { allergyWordsOf, isAllergy } from "@/utils/kitchenTextKinds"
 import { TICKET_FRAME } from "@/utils/ticketLayout"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
@@ -693,6 +706,16 @@ function getStationColor(stationName) {
 	const station = props.stations.find((s) => s.name === stationName)
 	return station?.color || "#6B7280"
 }
+
+//// Neoffice — the remark of a dish, trimmed, and whether it is an allergy: the restaurant's own list of words when its settings carry one
+//// (`allergy_words`), else the default (task 38a-1, ruling 123)
+const allergyWords = computed(() =>
+	allergyWordsOf(restaurantStore.restaurantSettings),
+)
+const remarkOf = (item) => String(item.posa_special_instructions || "").trim()
+const isAllergyRemark = (item) => isAllergy(remarkOf(item), allergyWords.value)
+const optionsOf = (item) =>
+	item.posa_item_modifiers ? parseModifiers(item.posa_item_modifiers) : []
 
 // Parse modifier JSON into a flat list of modifier option names
 function parseModifiers(json) {
