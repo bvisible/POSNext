@@ -4,6 +4,8 @@
 //// colour (the Item's custom_color, set on the item sheet), the quantities the order already holds, and the price of a
 //// dish with its options. Pure functions: the phone's order screen and its options sheet read the card through here.
 
+import { cardItemToCartItem } from "@/utils/cartLineUnits"
+
 // Below this width the till lays out for a phone; a tablet and a computer keep their screen
 export const PHONE_MAX_WIDTH = 768
 
@@ -259,22 +261,18 @@ function round(amount) {
 }
 
 /**
- * The line a card item makes in the order: the fields the card grid's touch gives it (POSSale.vue,
- * handleCardItemClick), the station that prepares it included. Kept field for field with that function.
+ * The line a card item makes in the order: the very line the card grid's touch gives it (cardItemToCartItem, the one
+ * builder of POSSale.vue's handleCardItemClick), the station that prepares it included.
+ *
+ * //// Neoffice — was a copy of the touch's field list, which carried no unit; it now takes the touch's own builder, so that a
+ * //// field the touch gains (a unit, a course) reaches the long press too (task 27 meeting task 22).
  *
  * @param {Object} cardItem - An Item row of a card
  * @param {Function} stationOf - (item_code, item_group) → { station } or null (the restaurant store's getStationForItem)
  * @returns {Object}
  */
 export function cardItemLine(cardItem, stationOf) {
-	const line = {
-		item_code: cardItem.item,
-		item_name: cardItem.item_name || cardItem.label,
-		item_group: cardItem.item_group || "",
-		rate: cardItem.price || cardItem.default_price || 0,
-		image: cardItem.image || "",
-		custom_color: cardItem.custom_color || "",
-	}
+	const line = cardItemToCartItem(cardItem)
 	const station = stationOf?.(line.item_code, line.item_group)
 	if (station) line.preparation_station = station.station
 	return line

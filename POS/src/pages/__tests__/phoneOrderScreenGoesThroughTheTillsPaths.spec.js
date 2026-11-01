@@ -9,6 +9,7 @@
 import { readFileSync } from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
+import { cardItemToCartItem } from "@/utils/cartLineUnits"
 import { cardItemLine } from "@/utils/phoneCard"
 
 const SOURCE = readFileSync(path.resolve(__dirname, "../POSSale.vue"), "utf8")
@@ -45,7 +46,8 @@ describe("the phone's order screen in the till", () => {
 	it("judges « sold out » with the card grid's stock rule, on the card the till has chosen", () => {
 		expect(attribute(screen, ":stock-of")).toBe(attribute(grid, ":stock-of"))
 		expect(attribute(screen, "v-model:selected-card")).toBe("selectedCard")
-		expect(attribute(screen, ":cards")).toBe("restaurantStore.activeCards")
+		// The cards of the hours and those opened by hand, like the card row of a tablet (task 25)
+		expect(attribute(screen, ":cards")).toBe("restaurantStore.shownCards")
 	})
 
 	it("opens the options in the sheet, a menu in the menu's own dialog", () => {
@@ -65,32 +67,31 @@ describe("the phone's order screen in the till", () => {
 })
 
 describe("a long press adds the line a touch would add", () => {
-	it("with every field the card grid's touch gives the line (handleCardItemClick)", () => {
-		// The touch builds its line in POSSale.vue; the long press in utils/phoneCard.js (cardItemLine). A field the
-		// touch gains (a unit, a course) must reach the long press too, or the two lines differ in the kitchen
+	it("through the very builder of the card grid's touch (cardItemToCartItem), the station added after it", () => {
+		// The touch builds its line with cardItemToCartItem in POSSale.vue; the long press takes the same builder in
+		// utils/phoneCard.js (cardItemLine), so a field the touch gains (a unit, a course) reaches the long press too
 		const start = SOURCE.indexOf("function handleCardItemClick(cardItem)")
 		expect(start, "handleCardItemClick in POSSale.vue").toBeGreaterThan(-1)
 		const body = SOURCE.slice(start, SOURCE.indexOf("cartStore.addItem(", start))
-		const literal = body.slice(body.indexOf("const item = {"), body.indexOf("};"))
-		const touch = new Set([
-			...[...literal.matchAll(/^\s*(\w+):/gm)].map((found) => found[1]),
-			...[...body.matchAll(/\bitem\.(\w+)\s*=[^=]/g)].map((found) => found[1]),
-		])
-		const longPress = cardItemLine(
-			{
-				item_type: "Item",
-				item: "STEAK",
-				item_name: "Rib steak",
-				item_group: "Meat",
-				price: 42,
-				image: "/files/steak.jpg",
-				custom_color: "#C2723F",
-			},
-			() => ({ station: "Grill" }),
-		)
+		expect(body).toContain("const item = cardItemToCartItem(cardItem)")
+		expect(body).toContain("item.preparation_station = stationInfo.station")
 
-		expect(touch.size).toBeGreaterThan(5)
-		expect(Object.keys(longPress).sort()).toEqual([...touch].sort())
+		const entry = {
+			item_type: "Item",
+			item: "STEAK",
+			item_name: "Rib steak",
+			item_group: "Meat",
+			price: 42,
+			image: "/files/steak.jpg",
+			custom_color: "#C2723F",
+			stock_uom: "Portion",
+			item_uoms: [{ uom: "Half", conversion_factor: 0.5 }],
+		}
+		const longPress = cardItemLine(entry, () => ({ station: "Grill" }))
+
+		expect(longPress).toEqual({ ...cardItemToCartItem(entry), preparation_station: "Grill" })
+		expect(longPress.stock_uom).toBe("Portion")
+		expect(longPress.item_uoms).toEqual([{ uom: "Half", conversion_factor: 0.5 }])
 	})
 })
 

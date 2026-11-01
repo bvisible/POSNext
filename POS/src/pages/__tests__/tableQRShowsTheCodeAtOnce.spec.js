@@ -411,8 +411,10 @@ describe("the till page", () => {
 	})
 
 	it("has exactly one QR button, in the bar, and the page keeps no copy of its markup", () => {
-		// The click path is bound once in the template (the other mentions are its taking and the notes about it)
-		expect(page.match(/="handleQRButtonClick"/g)).toHaveLength(1)
+		// The click path is bound in two places of the template: the table's bar, and the header of the phone's order screen
+		// (task 27), which covers that bar below 768 px, so that never two QR buttons show together. The other mentions are
+		// its taking and the notes about it
+		expect(page.match(/="handleQRButtonClick"/g)).toHaveLength(2)
 		expect(page).not.toContain("Generate QR code for guest ordering")
 		expect(page).not.toContain("QR Self-Ordering button")
 	})

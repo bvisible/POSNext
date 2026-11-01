@@ -278,6 +278,9 @@ describe("the line a card item makes in the order", () => {
 			image: "/files/steak.jpg",
 			custom_color: "#9C2920",
 			preparation_station: "Kitchen",
+			// The units the card grid's touch gives every line (task 22): none known here, so the factor of one stock unit
+			conversion_factor: 1,
+			item_uoms: [],
 		})
 	})
 

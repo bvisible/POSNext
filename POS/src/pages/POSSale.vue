@@ -1102,10 +1102,12 @@
 					<!-- //// own, as the waiter mockup draws it: the card as coloured buttons, a touch adding through the -->
 					<!-- //// card grid's own path, a long press opening the options sheet, the order one tap away (NeoRestau -->
 					<!-- //// lot 1, task 27). Teleported over the till; a tablet and a computer keep the screen above. -->
+					<!-- //// Neoffice — it lists the store's shownCards, like the row of cards above: the cards of the hours and those -->
+					<!-- //// a cashier opened by hand from the floor plan's « ⋯ » (task 25 with task 27). -->
 					<PhoneOrderScreen
 						v-if="phoneOrderShown"
 						v-model:selected-card="selectedCard"
-						:cards="restaurantStore.activeCards"
+						:cards="restaurantStore.shownCards"
 						:stock-of="getCardItemStock"
 						@pick="
 							(item) =>
@@ -2844,7 +2846,8 @@ const phoneOrderShown = computed(() =>
 		width: uiStore.windowWidth,
 		hasOpenShift: shiftStore.hasOpenShift,
 		restaurant: Boolean(restaurantStore.isEnabled),
-		cards: restaurantStore.activeCards.length,
+		//// Neoffice — shownCards, like the card row of a tablet (task 25 with task 27).
+		cards: restaurantStore.shownCards.length,
 		table: cartStore.restaurantTable,
 		takeaway: cartStore.isTakeaway,
 		tab: uiStore.mobileActiveTab,
