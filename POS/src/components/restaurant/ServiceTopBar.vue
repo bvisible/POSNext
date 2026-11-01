@@ -71,6 +71,9 @@
 					</span>
 				</button>
 
+				<!-- //// Neoffice — the control of the awake settings (keep the screen on, rest, wake on a new ticket), beside the size of the text (task 47): a button of the row, not a new bar -->
+				<slot name="screen" />
+
 				<slot name="theme" />
 
 				<button type="button" data-test="refresh" :class="ICON_BUTTON" :title="__('Refresh')" @click="emit('refresh')">
@@ -107,8 +110,8 @@ import { TEXT_SIZES } from "@/utils/kitchenTextSize"
  * textSize:        one of the kitchen text sizes; textSizeLabel: its name, for the button's label
  * deskSession:     the session is a desk user's, who has a till to go back to (a tablet signed in with its own account has none)
  *
- * Slots: `switch` and `view` (after the title), `chip` (before « show completed »), `theme` (after the size of the text), and `filters`
- * (row 2).
+ * Slots: `switch` and `view` (after the title), `chip` (before « show completed »), `screen` (the awake settings, after the size of the text), `theme` (after it),
+ * and `filters` (row 2).
  */
 defineProps({
 	title: { type: String, required: true },
