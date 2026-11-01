@@ -18648,3 +18648,11 @@ msgstr "Dessert"
 msgctxt "Item Group"
 msgid "The family of the articles of this group in a restaurant: Drink, Starter, Main or Dessert. A sub-group with none takes its parent's. A group with no family anywhere up its tree is never held back in the kitchen."
 msgstr "La famille des articles de ce groupe dans un restaurant : Boisson, Entrée, Plat ou Dessert. Un sous-groupe sans famille prend celle de son parent. Un groupe sans famille, ni lui ni ses parents, n'est jamais retenu en cuisine."
+
+#: POS/src/pages/POSSale.vue
+msgid "Install the app"
+msgstr "Installer l'application"
+
+#: POS/src/pages/POSSale.vue
+msgid "In your browser's menu, choose « Install app » or « Add to home screen »."
+msgstr "Dans le menu de votre navigateur, choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil »."

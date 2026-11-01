@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue"; //// Neoffice — `computed` joins the imports for the install entry of the user's menu (kitchen test, 01.11)
 
 const DISMISS_KEY = "pwa-install-dismissed";
 const DISMISS_WINDOW_DAYS = 7;
@@ -37,9 +37,26 @@ const hasActiveDismissal = () => {
 	}
 };
 
+//// Neoffice — the browser's install invitation is kept at MODULE level (kitchen test, 01.11): it is sent ONCE, when the page loads, and the install badge is only drawn in
+//// the items view, so a waiter who looked at the tables, or opened the user's menu later, never saw the offer. Whoever asks later finds it here.
+const sharedPrompt = ref(null);
+const sharedInstallable = ref(false);
+if (isClient()) {
+	window.addEventListener("beforeinstallprompt", (event) => {
+		event.preventDefault();
+		sharedPrompt.value = event;
+		sharedInstallable.value = true;
+	});
+	window.addEventListener("appinstalled", () => {
+		sharedPrompt.value = null;
+		sharedInstallable.value = false;
+	});
+}
+
 export function usePWAInstall() {
-	const deferredPrompt = ref(null);
-	const isInstallable = ref(false);
+	//// Neoffice — the invitation and the flag are the module's, shared by every user of the composable (see sharedPrompt above)
+	const deferredPrompt = sharedPrompt;
+	const isInstallable = sharedInstallable;
 	const isInstalled = ref(false);
 	const showInstallBadge = ref(false);
 
@@ -141,4 +158,27 @@ export function usePWAInstall() {
 		dismissBadge,
 		snoozeBadge,
 	};
+}
+
+//// Neoffice — the « Install the app » entry of the user's menu (kitchen test, 01.11): offered whenever the app is not installed and the browser sent its invitation, or the
+//// device is a phone or a tablet (whose browser installs from its own menu: the entry then says where).
+const MOBILE_BROWSER = /Android|iPhone|iPad|iPod|Mobile/i;
+
+export function useInstallEntry() {
+	const { isInstallable, promptInstall } = usePWAInstall();
+	const installed = ref(isStandaloneDisplay());
+	const canInstall = computed(
+		() =>
+			!installed.value &&
+			(isInstallable.value ||
+				(isClient() && MOBILE_BROWSER.test(window.navigator.userAgent || "")))
+	);
+
+	/** @returns {Promise<{done: boolean}|{manual: true}>} `manual`: the browser sent no invitation, the way by hand is to be shown */
+	const install = async () => {
+		if (!isInstallable.value) return { manual: true };
+		return { done: await promptInstall() };
+	};
+
+	return { canInstall, install };
 }

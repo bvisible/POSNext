@@ -366,6 +366,30 @@
 						</svg>
 						<span>{{ __("Lock Screen") }}</span>
 					</button>
+					<!-- //// Neoffice — « Install the app » in the user's menu (kitchen test, 01.11): the install badge stands in the items view only, so a waiter on the tables never saw the offer. Shown on a phone or a tablet, or wherever the browser sent its invitation, and not once the app is installed. -->
+					<button
+						v-if="canInstallTheApp"
+						type="button"
+						data-test="install-the-app"
+						@click="installTheApp()"
+						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+					>
+						<svg
+							class="w-5 h-5 text-gray-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							aria-hidden="true"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4"
+							/>
+						</svg>
+						<span>{{ __("Install the app") }}</span>
+					</button>
 				</template>
 				<template #additional-actions>
 					<button
@@ -2483,6 +2507,8 @@ import {
 } from "@/utils/printInvoice";
 //// Neoffice — what a restaurant's phone does once a sale is paid (kitchen test, 01.11): back to the tables, and the receipt window closes by itself after Print
 import { closeAfterPrintMs, tabAfterPayment } from "@/utils/afterPayment";
+//// Neoffice — the user's menu offers to install the app (kitchen test, 01.11)
+import { useInstallEntry } from "@/composables/usePWAInstall";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
 //// Neoffice — the provisional ticket prints on the till's CloudPRNT printer, through the server (task 28a).
 import { printProvisionalTicketFromTill } from "@/utils/provisionalTicket";
@@ -2589,7 +2615,7 @@ const {
 } = usePOSEvents();
 
 // Initialize toast
-const { showSuccess, showError, showWarning } = useToast();
+const { showSuccess, showError, showWarning, showInfo } = useToast(); //// Neoffice — showInfo: the way to install the app by hand (kitchen test, 01.11)
 
 // Initialize logger
 const log = logger.create("POSSale");
@@ -5823,6 +5849,17 @@ async function loadInvoiceHistoryData() {
 function handleViewInvoice(invoice) {
 	selectedInvoiceForView.value = invoice.name || invoice;
 	showInvoiceDetail.value = true;
+}
+
+//// Neoffice — « Install the app » of the user's menu (kitchen test, 01.11): the browser's invitation when it sent one, else the way to do it by hand
+const { canInstall: canInstallTheApp, install: askToInstall } = useInstallEntry();
+async function installTheApp() {
+	const answer = await askToInstall();
+	if (answer?.manual) {
+		showInfo(
+			__("In your browser's menu, choose « Install app » or « Add to home screen ».")
+		);
+	}
 }
 
 //// Neoffice — once a sale is paid a restaurant's phone goes back to the tables: it stayed on the empty cart tab, and the waiter was stuck on the right-hand
