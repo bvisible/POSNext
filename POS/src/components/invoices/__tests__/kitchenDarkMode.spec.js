@@ -196,7 +196,7 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 		const byLabel = Object.fromEntries(
 			pills.map((p) => [p.text(), classesOf(p)]),
 		)
-		expect(Object.keys(byLabel).sort()).toEqual(["Pending", "Ready"])
+		expect(Object.keys(byLabel).sort()).toEqual(["Ready", "To do"])
 		expect(byLabel.Ready).toEqual(
 			expect.arrayContaining([
 				"bg-green-100",
@@ -205,11 +205,11 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 			]),
 		)
 		// The one that reads in dark already stays what it was
-		expect(byLabel.Pending).toEqual(
+		expect(byLabel["To do"]).toEqual(
 			expect.arrayContaining(["bg-yellow-100", "text-yellow-800"]),
 		)
 		expect(
-			byLabel.Pending.filter((name) => name.startsWith("dark:")),
+			byLabel["To do"].filter((name) => name.startsWith("dark:")),
 		).toEqual([])
 		expect(wrapper.findAll('[data-test="ticket-line-done"]')).toHaveLength(1)
 	})

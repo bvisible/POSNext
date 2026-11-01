@@ -1201,7 +1201,8 @@ function stateWord(item) {
 	//// Neoffice — a dish finished before its course is called is « ready ahead »: a state of its own on the ticket, whatever the ticket's state is, and not a dish at the pass (the service rhythm)
 	if (isUncalled(item) && item.kds_status === "Ready") return __("Ready ahead", null, "Kitchen order status")
 	if (item.kds_status === status.value) return ""
-	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value })
+	//// Neoffice — a dish still to start says « To do » like its ticket and the band (Daniel, 01.11: « tu as mis à faire avec le ticket qui n'a pas été commencé ? »): « waiting » is what the waiter holds back, and the dish says « Held »
+	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value, board: true })
 }
 
 //// Neoffice — the restaurant's own list of allergy words when its settings carry one (`allergy_words`), else the default (task 38a-1, ruling 123);

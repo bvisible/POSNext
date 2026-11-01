@@ -317,7 +317,8 @@ describe("a kitchen status", () => {
 		// The state of the ready dish is « À livrer »; « Prêt » is the wording of the button now, « C'est prêt »
 		expect(text).toContain("À livrer")
 		expect(text).toContain("C'est prêt")
-		expect(text).toContain("En attente")
+		// a dish still to start says « À faire » on the board like its ticket and band (Daniel, 01.11); « En attente » is the till's word, for a service held back
+		expect(text).toContain("À faire")
 		expect(text).not.toMatch(/Preparing|Pending/)
 	})
 })

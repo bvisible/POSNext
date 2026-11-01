@@ -155,7 +155,7 @@ describe("the state of a dish", () => {
 			wrapper
 				.findAll('[data-test="ticket-line-state"]')
 				.map((pill) => pill.text()),
-		).toEqual(["Pending", "Ready"])
+		).toEqual(["To do", "Ready"])
 	})
 
 	it("is never a wide pill beside the name that makes a long dish wrap: it is inline before the name, with the tag", () => {

@@ -3,7 +3,7 @@
 //// The server tells the screens the moment an order changes (`kds_update`, `table_update`) and the screen reads again. Measured on osiris: the save takes about 1.6 s, the signal reaches a connected page in under a second, the
 //// kitchen's reading takes 0.2 s. What made it ten seconds is a signal that arrives while the tablet's connection is down (a restart of the server, a page that sleeps, the Wi-Fi): it is lost, and the screen only found the order
 //// at its next TIMED reading, up to 15 seconds later (30 on the runner). So the screen also reads again when the connection comes back and when the page is looked at again, and it reads every few seconds while the connection
-//// is down, instead of waiting for the long pace.
+//// is down (the connection says so by its `disconnect` event), instead of waiting for the long pace.
 
 /**
  * @param {{
@@ -19,31 +19,34 @@
 export function followLiveReading({ socket = null, events = ["kds_update"], read, everyMs = 15000, whileCutMs = 4000 }) {
 	// Every reading, whatever asked for it, restarts the count of the timed one
 	let last = Date.now()
-	const readNow = () => {
+	let timer = null
+	// A connection that says it is not connected is down; no connection object at all keeps the usual pace
+	const paceNow = () => (socket?.connected === false ? whileCutMs : everyMs)
+	const arm = () => {
+		clearTimeout(timer)
+		timer = setTimeout(readNow, Math.max(0, paceNow() - (Date.now() - last)))
+	}
+	function readNow() {
 		last = Date.now()
 		read()
+		arm()
 	}
-	const onSignal = []
-	for (const event of [...events, "connect"]) {
-		socket?.on?.(event, readNow)
-		onSignal.push(event)
-	}
+
+	const onSignal = [...events, "connect"]
+	for (const event of onSignal) socket?.on?.(event, readNow)
+	// A connection that is cut is noticed at once: the quick pace counts from the last reading, so a reading that is already late is made now
+	socket?.on?.("disconnect", arm)
 
 	const onVisible = () => {
 		if (!document.hidden) readNow()
 	}
 	document.addEventListener("visibilitychange", onVisible)
-
-	// The timer beats every second and compares with the last reading, so that a connection that is cut is noticed within a second and not at the next long reading.
-	// A connection that says it is not connected is down; no connection object at all keeps the usual pace.
-	const timer = setInterval(() => {
-		const down = socket?.connected === false
-		if (Date.now() - last >= (down ? whileCutMs : everyMs)) readNow()
-	}, 1000)
+	arm()
 
 	return () => {
-		clearInterval(timer)
+		clearTimeout(timer)
 		for (const event of onSignal) socket?.off?.(event, readNow)
+		socket?.off?.("disconnect", arm)
 		document.removeEventListener("visibilitychange", onVisible)
 	}
 }

@@ -150,10 +150,10 @@ describe("the main button of a kitchen card says the action", () => {
 })
 
 describe("the badges of a kitchen card say the state", () => {
-	it("read En attente and À livrer on the dishes that are not at the ticket's own state, and À remettre on a takeaway's", () => {
+	it("read À faire and À livrer on the dishes that are not at the ticket's own state, and À remettre on a takeaway's", () => {
 		// The ticket is in preparation: a dish being prepared says nothing, the others say where they are (task 38a-1)
 		expect(pills(show(ticket(["Pending", "Preparing", "Ready"])))).toEqual([
-			"En attente",
+			"À faire",
 			"À livrer",
 		])
 		// A takeaway that is ready says so where the states mix (placement A), and a dish at the pass of a takeaway in preparation reads À remettre

@@ -18,19 +18,27 @@ function fakeSocket(connected = true) {
 	}
 }
 
+// Every screen a test follows is let go of at the end: the listeners on `document` are shared by all of them
+const stops = []
+const follow = (options) => {
+	const stop = followLiveReading(options)
+	stops.push(stop)
+	return stop
+}
 let read
 beforeEach(() => {
 	vi.useFakeTimers()
 	read = vi.fn()
 })
 afterEach(() => {
+	stops.splice(0).forEach((stop) => stop())
 	vi.useRealTimers()
 })
 
 describe("a screen that follows the server's signals", () => {
 	it("reads again on each signal it listens to", () => {
 		const socket = fakeSocket()
-		followLiveReading({ socket, events: ["kds_update", "table_update"], read })
+		follow({ socket, events: ["kds_update", "table_update"], read })
 
 		socket.fire("kds_update")
 		socket.fire("table_update")
@@ -40,7 +48,7 @@ describe("a screen that follows the server's signals", () => {
 
 	it("reads again when the connection comes back: a signal sent while it was down is lost, the order is not", () => {
 		const socket = fakeSocket()
-		followLiveReading({ socket, read })
+		follow({ socket, read })
 
 		socket.fire("connect")
 
@@ -48,7 +56,7 @@ describe("a screen that follows the server's signals", () => {
 	})
 
 	it("reads on its own every 15 seconds while the connection is up (a signal can still be lost)", () => {
-		followLiveReading({ socket: fakeSocket(true), read })
+		follow({ socket: fakeSocket(true), read })
 
 		vi.advanceTimersByTime(14_999)
 		expect(read).not.toHaveBeenCalled()
@@ -60,33 +68,40 @@ describe("a screen that follows the server's signals", () => {
 
 	it("reads every 4 seconds while the connection is down, and goes back to 15 once it is up, counted from the last reading", () => {
 		const socket = fakeSocket(false)
-		followLiveReading({ socket, read })
+		follow({ socket, read })
 
 		vi.advanceTimersByTime(12_000)
 		expect(read).toHaveBeenCalledTimes(3)
 
+		// the connection comes back: a reading at once (what was sent while it was down), then the long pace
 		socket.connected = true
-		vi.advanceTimersByTime(14_999)
-		expect(read).toHaveBeenCalledTimes(3)
-		vi.advanceTimersByTime(1)
+		socket.fire("connect")
 		expect(read).toHaveBeenCalledTimes(4)
+		vi.advanceTimersByTime(14_999)
+		expect(read).toHaveBeenCalledTimes(4)
+		vi.advanceTimersByTime(1)
+		expect(read).toHaveBeenCalledTimes(5)
 	})
 
-	it("goes to the quick pace within a second of the connection being cut, not at the next long reading", () => {
+	it("goes to the quick pace the moment the connection is cut, not at the next long reading", () => {
 		const socket = fakeSocket(true)
-		followLiveReading({ socket, read })
+		follow({ socket, read })
 
 		vi.advanceTimersByTime(5_000)
 		expect(read).not.toHaveBeenCalled()
 		socket.connected = false
-		vi.advanceTimersByTime(1_000)
+		socket.fire("disconnect")
+		// the last reading is older than the quick pace: it is made now
+		vi.advanceTimersByTime(1)
 
 		expect(read).toHaveBeenCalledTimes(1)
+		vi.advanceTimersByTime(4_000)
+		expect(read).toHaveBeenCalledTimes(2)
 	})
 
 	it("counts a reading made for a signal: the timed one is 15 seconds after it, not after the one before", () => {
 		const socket = fakeSocket(true)
-		followLiveReading({ socket, read })
+		follow({ socket, read })
 
 		vi.advanceTimersByTime(10_000)
 		socket.fire("kds_update")
@@ -98,7 +113,7 @@ describe("a screen that follows the server's signals", () => {
 	})
 
 	it("takes the pace it is told (the runner reads every 30 seconds)", () => {
-		followLiveReading({ socket: fakeSocket(true), read, everyMs: 30_000 })
+		follow({ socket: fakeSocket(true), read, everyMs: 30_000 })
 
 		vi.advanceTimersByTime(29_999)
 		expect(read).not.toHaveBeenCalled()
@@ -107,7 +122,7 @@ describe("a screen that follows the server's signals", () => {
 	})
 
 	it("reads every 15 seconds all the same where there is no connection object at all", () => {
-		followLiveReading({ socket: null, read })
+		follow({ socket: null, read })
 
 		vi.advanceTimersByTime(15_000)
 
@@ -115,7 +130,7 @@ describe("a screen that follows the server's signals", () => {
 	})
 
 	it("reads again when the page is looked at again, not when it is put away", () => {
-		followLiveReading({ socket: fakeSocket(), read })
+		follow({ socket: fakeSocket(), read })
 		const hide = (hidden) => {
 			Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden })
 			document.dispatchEvent(new Event("visibilitychange"))
@@ -131,12 +146,13 @@ describe("a screen that follows the server's signals", () => {
 		const socket = fakeSocket()
 		const other = vi.fn()
 		socket.on("kds_update", other)
-		const stop = followLiveReading({ socket, events: ["kds_update", "table_update"], read })
+		const stop = follow({ socket, events: ["kds_update", "table_update"], read })
 
 		stop()
 		socket.fire("kds_update")
 		socket.fire("table_update")
 		socket.fire("connect")
+		socket.fire("disconnect")
 		vi.advanceTimersByTime(60_000)
 		document.dispatchEvent(new Event("visibilitychange"))
 
