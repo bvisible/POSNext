@@ -3893,6 +3893,7 @@ async function handleOrderHeldLines(which) {
 			cartStore,
 			call,
 			send: handleSendToKitchen,
+			//// Neoffice — what the page does once a course sent ahead is called (the service rhythm, NeoRestau lot 1)
 			finish: afterCallingTheNextCourse,
 			// A held line was given its station when it was added; one that has none yet gets it as the dialog gives it
 			prepare: (row) => {
