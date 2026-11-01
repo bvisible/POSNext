@@ -1978,7 +1978,17 @@
 				:options="{ title: __('Invoice Created Successfully'), size: 'md' }"
 			>
 				<template #body-content>
-					<div class="text-center py-6">
+					<div class="relative text-center py-6">
+						<!-- //// Neoffice — a close cross a finger can hit (kitchen test, 01.11): the dialog's own is a few pixels wide. 44 px, at the top right of the receipt window. -->
+						<button
+							type="button"
+							data-test="success-close"
+							class="absolute -top-2 end-0 flex h-11 w-11 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 active:bg-gray-200"
+							:aria-label="__('Close')"
+							@click="uiStore.showSuccessDialog = false"
+						>
+							<FeatherIcon name="x" class="h-6 w-6" />
+						</button>
 						<!-- //// Neoffice — bigger success tick (h-12 -> h-14) and the whole icon collapsed -->
 						<!-- //// from six lines to three. Cosmetic half of the success-dialog rework -->
 						<!-- //// (548757f7, 2026-03-24 "improve payment UX ... better success dialog with -->
@@ -2041,7 +2051,7 @@
 						<Button
 							variant="solid"
 							theme="blue"
-							@click="handlePrintInvoice({ name: uiStore.lastInvoiceName })"
+							@click="printFromTheSuccessDialog"
 						>
 							<!-- //// Neoffice — printer icon on the Print button, added with the Email peer -->
 							<!-- //// (548757f7 + 4239ea8d, 2026-03-24). -->
@@ -2471,6 +2481,8 @@ import {
 	//// c87d0e93 (2026-05-14) because that merge re-resolved this import list.
 	printProvisionalTicket,
 } from "@/utils/printInvoice";
+//// Neoffice — what a restaurant's phone does once a sale is paid (kitchen test, 01.11): back to the tables, and the receipt window closes by itself after Print
+import { closeAfterPrintMs, tabAfterPayment } from "@/utils/afterPayment";
 import { qzConnected, connect as qzConnect, disconnect as qzDisconnect } from "@/utils/qzTray";
 //// Neoffice — the provisional ticket prints on the till's CloudPRNT printer, through the server (task 28a).
 import { printProvisionalTicketFromTill } from "@/utils/provisionalTicket";
@@ -4691,6 +4703,8 @@ async function handlePaymentCompleted(paymentData) {
 			cartStore.clearCart({ returnSerials: false });
 			// Reset cart hash after successful payment
 			previousCartHash = "";
+			//// Neoffice — the sale is booked offline: a restaurant's phone goes back to the tables (kitchen test, 01.11)
+			backToTheTablesOnAPhone();
 
 			// Delete draft after successful save
 			if (draftIdToDelete) {
@@ -4906,6 +4920,7 @@ async function handlePaymentCompleted(paymentData) {
 			}
 			//// Neoffice — drop the processing overlay on the success path (2584aa58, 2026-03-24).
 			isProcessingPayment.value = false;
+			backToTheTablesOnAPhone();
 		}
 	} catch (error) {
 		//// Neoffice — and on the failure path too: without this the till stays frozen behind the
@@ -5809,6 +5824,36 @@ function handleViewInvoice(invoice) {
 	selectedInvoiceForView.value = invoice.name || invoice;
 	showInvoiceDetail.value = true;
 }
+
+//// Neoffice — once a sale is paid a restaurant's phone goes back to the tables: it stayed on the empty cart tab, and the waiter was stuck on the right-hand
+//// screen of the till (kitchen test, 01.11). The items tab shows the floor plan while no table is open (utils/afterPayment).
+function backToTheTablesOnAPhone() {
+	const tab = tabAfterPayment({
+		restaurant: restaurantStore.isEnabled,
+		desktop: uiStore.isDesktop,
+	});
+	if (tab) uiStore.setMobileTab(tab);
+}
+
+//// Neoffice — Print in the receipt window of a restaurant closes the window a few seconds later (kitchen test, 01.11): the waiter printed, nothing more to do there.
+//// A retail till keeps it open so that the same receipt can also be e-mailed.
+let successCloseTimer = null;
+async function printFromTheSuccessDialog() {
+	await handlePrintInvoice({ name: uiStore.lastInvoiceName });
+	const wait = closeAfterPrintMs({ restaurant: restaurantStore.isEnabled });
+	if (!wait) return;
+	clearTimeout(successCloseTimer);
+	successCloseTimer = setTimeout(() => {
+		uiStore.showSuccessDialog = false;
+	}, wait);
+}
+watch(
+	() => uiStore.showSuccessDialog,
+	(open) => {
+		// A new receipt window must not be closed by the timer of the one before
+		if (open) clearTimeout(successCloseTimer);
+	}
+);
 
 // Centralized print handler - uses printInvoice.js utilities
 
