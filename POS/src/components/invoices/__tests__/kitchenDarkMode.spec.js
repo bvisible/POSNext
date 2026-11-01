@@ -223,7 +223,7 @@ describe("the kitchen ticket's badges in dark mode (task 46)", () => {
 			.findAll('[data-test="ticket-line-menu"] button')
 			.find((b) => b.text() === "Mark ready")
 		expect(classesOf(ready)).toEqual(
-			expect.arrayContaining(["text-green-700", "dark:text-ds-success"]),
+			expect.arrayContaining(["text-green-900", "dark:text-ds-success"]),
 		)
 	})
 

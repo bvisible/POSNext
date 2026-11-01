@@ -424,6 +424,35 @@ describe("the status menu of a dish", () => {
 		await wrapper.findAll('[data-test="ticket-line"]')[index].trigger("click")
 	}
 
+	it("marks the dish it is for: the tapped line is highlighted while its menu is open, and only that one", async () => {
+		layout({ viewport: 150 })
+		const wrapper = show(longOrder(25))
+		await nextTick()
+		const lines = () => wrapper.findAll('[data-test="ticket-line"]')
+		expect(lines().some((line) => line.attributes("data-selected"))).toBe(false)
+
+		await openMenu(wrapper, 2)
+
+		expect(lines().map((line) => line.attributes("data-selected") === "true")).toEqual(
+			lines().map((_, index) => index === 2),
+		)
+		expect(lines()[2].classes()).toContain("ring-2")
+
+		await openMenu(wrapper, 2)
+		expect(lines().some((line) => line.attributes("data-selected"))).toBe(false)
+		expect(lines()[2].classes()).not.toContain("ring-2")
+	})
+
+	it("says in its head which dish it is for, so that it cannot be read as the line under it", async () => {
+		layout({ viewport: 150 })
+		const wrapper = show(longOrder(25))
+		await nextTick()
+
+		await openMenu(wrapper, 0)
+
+		expect(wrapper.get('[data-test="ticket-line-menu-dish"]').text()).toBe("1× Dish 1")
+	})
+
 	it("opens on the screen, not inside the scrolling body that would cut it", async () => {
 		layout({ viewport: 150 })
 		const wrapper = show(longOrder(25))
@@ -435,7 +464,7 @@ describe("the status menu of a dish", () => {
 		expect(menu.classes()).toContain("fixed")
 		// Under the dish: the dish box is 300 x 48 at (100, 500), so the menu starts at 548 + 4 and ends at the dish's right edge
 		expect(menu.element.style.top).toBe("552px")
-		expect(menu.element.style.left).toBe(`${400 - 160}px`)
+		expect(menu.element.style.left).toBe(`${400 - 192}px`)
 	})
 
 	it("opens above the dish when the foot of the screen leaves no room under it, held by its LOWER edge", async () => {
@@ -470,9 +499,9 @@ describe("the status menu of a dish", () => {
 	})
 
 	it("counts the room the menu really needs: where one button fits under the dish and two do not", async () => {
-		// The dish ends at 548: with a window 640 px high there are 80 px under it, 54 of them are needed for one button
+		// The dish ends at 548: with a window 660 px high there are 100 px under it, 94 of them are needed for one button (its head 42, the button 52)
 		layout({ viewport: 150 })
-		window.innerHeight = 640
+		window.innerHeight = 660
 		const wrapper = show(longOrder(25))
 		await nextTick()
 
@@ -484,7 +513,7 @@ describe("the status menu of a dish", () => {
 
 		await openMenu(wrapper, 0)
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
-		expect(menu.element.style.bottom).toBe("144px")
+		expect(menu.element.style.bottom).toBe("164px")
 		expect(menu.element.style.top).toBe("")
 	})
 
@@ -502,7 +531,7 @@ describe("the status menu of a dish", () => {
 			"Mark ready",
 		])
 		for (const button of buttons) {
-			expect(button.classes()).toContain("min-h-[44px]")
+			expect(button.classes()).toContain("min-h-[48px]")
 		}
 	})
 
@@ -519,7 +548,7 @@ describe("the status menu of a dish", () => {
 			"Deliver",
 		])
 		for (const button of buttons) {
-			expect(button.classes()).toContain("min-h-[44px]")
+			expect(button.classes()).toContain("min-h-[48px]")
 		}
 	})
 

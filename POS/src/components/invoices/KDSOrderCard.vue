@@ -171,7 +171,9 @@
 										isDelivered(item)
 											? 'cursor-default opacity-40 line-through'
 											: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
+										isMenuOf(item) ? 'bg-[#FCF3EA] ring-2 ring-inset ring-[#D68A59] dark:bg-[#3A2C22]' : '',
 									]"
+									:data-selected="isMenuOf(item) ? 'true' : undefined"
 									data-test="ticket-line"
 									@click="onLineTap(item, $event)">
 									<!-- //// Neoffice — ONE row for the dish, nothing under it but its options, remark and allergy (task 38a-1, ruling 110 and the mockup): the quantity in its own -->
@@ -206,26 +208,30 @@
 							<!-- //// "ready" and has no "deliver"; with none "ready" and "deliver" are one gesture, so the menu has "deliver" and no "ready"; from the list of -->
 							<!-- //// what waits at the pass a dish can only be called back to preparation. -->
 								<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
-									class="fixed z-30 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1"
+									class="fixed z-30 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 p-1.5"
 									:style="menuStyle">
-									<button v-if="offers(item, 'Preparing')"
-										@click.stop="updateItemStatus(item, 'Preparing')"
-										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-blue-700 active:bg-blue-50 dark:active:bg-blue-900/30 flex items-center gap-2">
-										<span class="w-2 h-2 rounded-full bg-blue-400"></span>
-										{{ kitchenStatusLabel("Preparing") }}
-									</button>
-									<button v-if="offers(item, 'Ready')"
-										@click.stop="updateItemStatus(item, 'Ready')"
-										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-green-700 dark:text-ds-success active:bg-green-50 dark:active:bg-green-900/30 flex items-center gap-2">
-										<span class="w-2 h-2 rounded-full bg-green-500"></span>
-										{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
-									</button>
-									<button v-if="offers(item, 'Delivered')"
-										@click.stop="updateItemStatus(item, 'Delivered')"
-										class="w-full min-h-[44px] text-left px-3 text-sm font-medium text-gray-600 active:bg-gray-50 dark:active:bg-gray-700 flex items-center gap-2">
-										<span class="w-2 h-2 rounded-full bg-gray-400"></span>
-										{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
-									</button>
+									<!-- //// Neoffice — the menu names the dish it is for and the line is highlighted (kitchen test, 01.11): the menu opens under the dish and covers the one after it, so a cook could not tell which dish a button would act on. The buttons are a size and a weight up, with a border in the colour of the state, so that « ready » is read from across the pass. -->
+									<p data-test="ticket-line-menu-dish" class="truncate px-1.5 pb-1.5 text-[length:var(--kds-fs-sub,12px)] font-semibold text-gray-500 dark:text-gray-400">{{ item.qty }}× {{ item.item_name }}</p>
+									<div class="flex flex-col gap-1">
+										<button v-if="offers(item, 'Preparing')"
+											@click.stop="updateItemStatus(item, 'Preparing')"
+											class="w-full min-h-[48px] rounded-lg border-2 border-blue-300 bg-blue-50 px-3 text-left text-base font-bold text-blue-900 active:bg-blue-100 dark:border-blue-300/60 dark:bg-blue-400/20 dark:text-blue-100 flex items-center gap-2.5">
+											<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+											{{ kitchenStatusLabel("Preparing") }}
+										</button>
+										<button v-if="offers(item, 'Ready')"
+											@click.stop="updateItemStatus(item, 'Ready')"
+											class="w-full min-h-[48px] rounded-lg border-2 border-green-600 bg-green-50 px-3 text-left text-base font-bold text-green-900 active:bg-green-100 dark:border-ds-success dark:bg-green-400/20 dark:text-ds-success flex items-center gap-2.5">
+											<span class="w-2.5 h-2.5 rounded-full bg-green-600 dark:bg-ds-success"></span>
+											{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
+										</button>
+										<button v-if="offers(item, 'Delivered')"
+											@click.stop="updateItemStatus(item, 'Delivered')"
+											class="w-full min-h-[48px] rounded-lg border-2 border-gray-300 bg-gray-100 px-3 text-left text-base font-bold text-gray-800 active:bg-gray-200 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100 flex items-center gap-2.5">
+											<span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span>
+											{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
+										</button>
+									</div>
 								</div>
 							</div>
 						</template>
@@ -524,12 +530,13 @@ function changed() {
 
 //// Neoffice — the status menu of a dish opens ON THE SCREEN, not inside the ticket (task 23). Upstream of this file's
 //// first version it hung under the dish (`absolute`); the dishes now scroll inside the ticket and the foot of the
-//// scrolling body would cut it. It is 160 px wide (w-40); each button is 44 px high, and the menu has a button for every
-//// status the dish is not at (a dish being prepared has two, a dish waiting three), 10 px of padding and borders besides:
-//// the room it needs, and where it hangs from when it opens upward, are those of the menu it really is (fix round 1).
-const MENU_WIDTH = 160
-const MENU_BUTTON_HEIGHT = 44
-const MENU_FRAME_HEIGHT = 10
+//// scrolling body would cut it. It is 192 px wide (w-48); each button is 48 px high with 4 px between, and the menu has a button for every
+//// status the dish is not at (a dish being prepared has one, a dish waiting two or three), under a head that names the dish, with its
+//// padding and borders besides: the room it needs, and where it hangs from when it opens upward, are those of the menu it really is
+//// (fix round 1; bigger and headed by the dish after the kitchen test of 01.11).
+const MENU_WIDTH = 192
+const MENU_BUTTON_HEIGHT = 52
+const MENU_FRAME_HEIGHT = 42
 const MENU_STATUSES = ["Preparing", "Ready", "Delivered"]
 const menuPosition = ref({ left: 0, top: 0 })
 const menuStyle = computed(() => {
@@ -555,6 +562,11 @@ function offers(item, status) {
 //// (coming back is a separate, deliberate act, not a tap on a struck-through line)
 function isDelivered(item) {
 	return item.kds_status === "Delivered"
+}
+
+//// Neoffice — the dish whose status menu is open (kitchen test, 01.11): its line is highlighted, so that the menu cannot be read as the one of the dish under it
+function isMenuOf(item) {
+	return activeItemMenu.value === item._globalIdx && !isDelivered(item)
 }
 
 //// Neoffice — the tap on a dish (task 42). The tap of a dish that has a menu stops here (the click on the page would close the
