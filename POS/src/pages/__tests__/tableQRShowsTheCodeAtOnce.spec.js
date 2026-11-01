@@ -32,6 +32,10 @@ vi.mock("@/utils/apiWrapper", () => ({ call }))
 vi.mock("@/composables/useToast", () => ({ useToast: () => ({ showError }) }))
 // jsdom has no canvas: the library that draws the code is replaced by a spy
 vi.mock("qrcode", () => ({ default: { toCanvas } }))
+// The Print button of the QR dialog reads the till's profile from this store (task 53): not what these specs are about
+vi.mock("@/stores/posSettings", () => ({
+	usePOSSettingsStore: () => ({ settings: { pos_profile: "Restaurant till" } }),
+}))
 
 const { useTableQR } = await import("@/composables/useTableQR")
 const { default: TableQRCode } = await import(

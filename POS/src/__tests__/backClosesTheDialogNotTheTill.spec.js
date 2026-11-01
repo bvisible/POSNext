@@ -18,6 +18,15 @@ vi.hoisted(() => {
 
 const toCanvas = vi.hoisted(() => vi.fn(async () => {}))
 vi.mock("qrcode", () => ({ default: { toCanvas } }))
+// The Print button of the QR dialog reads the till's profile from this store (task 53): not what these specs are about
+vi.mock("@/stores/posSettings", () => ({
+	usePOSSettingsStore: () => ({ settings: { pos_profile: "Restaurant till" } }),
+}))
+vi.mock("@/utils/apiWrapper", () => ({ call: vi.fn(async () => ({})) }))
+vi.mock("@/composables/useToast", () => ({
+	useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showInfo: vi.fn(), showWarning: vi.fn() }),
+}))
+vi.mock("@/utils/logger", () => ({ logger: { create: () => new Proxy({}, { get: () => vi.fn() }) } }))
 // The pages are lazy routes: the till itself is not under test, a navigation to it must not load it
 vi.mock("@/pages/POSSale.vue", () => ({ default: { template: "<div />" } }))
 vi.mock("@/pages/CustomerDisplay.vue", () => ({
