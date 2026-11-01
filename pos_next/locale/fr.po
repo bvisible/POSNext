@@ -18964,3 +18964,1418 @@ msgstr "Cette caisse ne dessert pas cette table"
 #: pos_next/api/table_qr_ticket.py:120
 msgid "Too many tickets in a minute: wait a moment before printing another"
 msgstr "Trop de tickets en une minute : patientez un moment avant d'en imprimer un autre"
+
+#: POS/src/components/restaurant/CardPickerDialog.vue:11
+#: POS/src/components/restaurant/CardPickerDialog.vue:22
+msgid "Open another card"
+msgstr "Ouvrir une autre carte"
+
+#: POS/src/components/restaurant/CardPickerDialog.vue:25
+msgid "A card opened here stays on this till until you close it or the shift ends."
+msgstr "Une carte ouverte ici reste sur cette caisse jusqu'à ce que vous la fermiez ou que le service prenne fin."
+
+#: POS/src/components/restaurant/RestaurantCardTabs.vue:58
+#: POS/src/components/restaurant/RestaurantCardTabs.vue:59
+msgid "Opened by hand"
+msgstr "Ouverte manuellement"
+
+#: POS/src/components/restaurant/RestaurantCardTabs.vue:88
+#: POS/src/components/restaurant/RestaurantCardTabs.vue:89
+msgid "Close this card"
+msgstr "Fermer cette carte"
+
+#: POS/src/components/restaurant/phone/CardButtonGrid.vue:43
+msgid "Sold out"
+msgstr "Épuisé"
+
+#: POS/src/components/restaurant/phone/CardButtonGrid.vue:52
+msgid "{0} in this order"
+msgstr "{0} dans cette commande"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:120
+msgid "The microphone is not allowed on this device"
+msgstr "Le microphone n'est pas autorisé sur cet appareil"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:222
+msgid "Add · {0}"
+msgstr "Ajouter · {0}"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:222
+msgid "Save · {0}"
+msgstr "Enregistrer · {0}"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:226
+msgctxt "Option group"
+msgid "choose one"
+msgstr "choix unique"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:226
+msgctxt "Option group"
+msgid "optional"
+msgstr "optionnel"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:28
+msgid "Options of {0}"
+msgstr "Options de {0}"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:56
+msgctxt "Option group"
+msgid "required"
+msgstr "obligatoire"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:79
+msgid "Remark for the kitchen"
+msgstr "Remarque pour la cuisine"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:94
+msgid "Dictate the remark"
+msgstr "Dicter la remarque"
+
+#: POS/src/components/restaurant/phone/PhoneOptionsSheet.vue:94
+msgid "Stop dictating"
+msgstr "Arrêter la dictée"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:150
+msgid "Tap: +1 · long press: options and remark"
+msgstr "Appui court : +1 · appui long : options et remarque"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:184
+msgid "Stay"
+msgstr "Rester"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:243
+msgctxt "Menu courses"
+msgid "{0} courses"
+msgstr "{0} plats"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:282
+msgid "Order · no items"
+msgstr "Commande · aucun article"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:283
+msgid "Order · 1 item"
+msgstr "Commande · 1 article"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:284
+msgid "Order · {0} items"
+msgstr "Commande · {0} articles"
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:299
+msgid "Leave this order? 1 line not sent will be lost."
+msgstr "Quitter cette commande ? 1 ligne non envoyée sera perdue."
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:300
+msgid "Leave this order? {0} lines not sent will be lost."
+msgstr "Quitter cette commande ? {0} lignes non envoyées seront perdues."
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:303
+msgid "Leave this table? 1 line not sent will be lost."
+msgstr "Quitter cette table ? 1 ligne non envoyée sera perdue."
+
+#: POS/src/components/restaurant/phone/PhoneOrderScreen.vue:304
+msgid "Leave this table? {0} lines not sent will be lost."
+msgstr "Quitter cette table ? {0} lignes non envoyées seront perdues."
+
+#: POS/src/components/sale/EditItemDialog.vue:533
+msgid "Quantity offered"
+msgstr "Quantité offerte"
+
+#: POS/src/components/sale/EditItemDialog.vue:592
+msgid "Value offered"
+msgstr "Valeur offerte"
+
+#: POS/src/components/sale/InvoiceCart.vue:1307
+#: POS/src/utils/printInvoice.js:216
+msgctxt "Given for free"
+msgid "Offered"
+msgstr "Offert"
+
+#: POS/src/components/sale/EditItemDialog.vue:527
+msgctxt "Given for free"
+msgid "Offer"
+msgstr "Offrir"
+
+#: POS/src/components/sale/InvoiceCart.vue:1326
+msgid "Cancel the offer of {0}"
+msgstr "Annuler l'offre de {0}"
+
+#: POS/src/components/sale/InvoiceCart.vue:1329
+msgid "Cancel the offer"
+msgstr "Annuler l'offre"
+
+#: POS/src/components/settings/CloudPrntTillSettings.vue:103
+msgid "No preparation station yet."
+msgstr "Aucun poste de préparation pour l'instant."
+
+#: POS/src/components/settings/HelpBulb.vue:11
+msgid "Help"
+msgstr "Aide"
+
+#: POS/src/components/settings/OpeningHoursEditor.vue:74
+msgid "Add a card"
+msgstr "Ajouter une carte"
+
+#: POS/src/components/settings/OpeningHoursEditor.vue:76
+msgid "+ card"
+msgstr "+ carte"
+
+#: POS/src/components/settings/OpeningHoursEditor.vue:86
+msgid "Remove the slot"
+msgstr "Supprimer le créneau"
+
+#: POS/src/components/settings/OpeningHoursEditor.vue:98
+msgid "+ Slot"
+msgstr "+ Créneau"
+
+#: POS/src/components/settings/TillSettingField.vue:238
+msgid "Remove the line"
+msgstr "Supprimer la ligne"
+
+#: POS/src/components/settings/TillSettingField.vue:244
+msgid "No line"
+msgstr "Aucune ligne"
+
+#: POS/src/components/settings/TillSettingField.vue:251
+msgid "Add a line"
+msgstr "Ajouter une ligne"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:215
+msgid "The permanent card is served at all hours: it takes no time slot."
+msgstr "La carte permanente est servie à toute heure : elle n'occupe aucun créneau."
+
+#: POS/src/components/settings/TillSettingsScreen.vue:232
+msgid "Tip item and transit account ready"
+msgstr "Article pourboire et compte de transit prêts"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:24
+#: POS/src/components/settings/TillSettingsScreen.vue:33
+msgid "Till settings"
+msgstr "Paramètres de la caisse"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:251
+msgid "Running · {0} items followed · {1}"
+msgstr "En cours · {0} articles suivis · {1}"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:255
+msgid "Stopped"
+msgstr "Arrêtée"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:297
+msgid "Choose a printer"
+msgstr "Choisir une imprimante"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:39
+msgid "Restaurant manager"
+msgstr "Responsable de salle"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:39
+msgid "Till manager"
+msgstr "Responsable de caisse"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:506
+msgid "These settings are for the managers: the till manager (roles Admin or Nexus POS Manager) sets every tab, the restaurant manager the tabs of the restaurant."
+msgstr "Ces paramètres sont réservés aux responsables : le responsable de caisse (rôles Admin ou Nexus POS Manager) règle tous les onglets, le responsable de salle seulement ceux du restaurant."
+
+#: POS/src/components/settings/TillSettingsScreen.vue:534
+msgid "Whole restaurant"
+msgstr "Tout le restaurant"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:535
+#: pos_next/till_settings/registry.py:250
+msgid "This till"
+msgstr "Cette caisse"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:536
+msgid "Whole site"
+msgstr "Tout le site"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:537
+msgid "This device"
+msgstr "Cet appareil"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:538
+msgid "This computer"
+msgstr "Cet ordinateur"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:83
+msgid "Tabs of the settings"
+msgstr "Onglets des paramètres"
+
+#: POS/src/components/settings/TillSettingsScreen.vue:90
+#: pos_next/till_settings/registry.py:1332
+msgid "Till"
+msgstr "Caisse"
+
+#: POS/src/composables/useCardPicker.js:79
+msgid "Failed to open the card"
+msgstr "Échec de l'ouverture de la carte"
+
+#: POS/src/composables/useCatalogueRefresh.js:80
+msgid "Items already in the cart keep their price"
+msgstr "Les articles déjà dans le panier gardent leur prix"
+
+#: POS/src/stores/offeredItems.js:102
+msgid "This till does not let its cashiers change a discount: nothing can be offered."
+msgstr "Cette caisse ne permet pas à ses caissiers de modifier une remise : aucun article ne peut être offert."
+
+#: POS/src/stores/offeredItems.js:132
+msgid "Offered: {0} × {1}"
+msgstr "Offert : {0} × {1}"
+
+#: POS/src/stores/offeredItems.js:186
+msgid "This till does not let its cashiers change a discount: cancel the offer to take the payment."
+msgstr "Cette caisse ne permet pas à ses caissiers de modifier une remise : annulez l'offre pour encaisser."
+
+#: POS/src/stores/offeredItems.js:194
+msgid "Offered items are sold on an invoice only: cancel the offer to make an order."
+msgstr "Les articles offerts ne se vendent que sur une facture : annulez l'offre pour passer une commande."
+
+#: POS/src/stores/offeredItems.js:75
+msgid "A manager must approve the offered items, and the network is needed for it."
+msgstr "Un responsable doit approuver les articles offerts, ce qui nécessite le réseau."
+
+#: POS/src/stores/offeredItems.js:86
+msgid "Offer an item"
+msgstr "Offrir un article"
+
+#: POS/src/utils/offeredRows.js:197
+#: pos_next/offered.py:192
+msgid "Offered: {0} item, value {1}"
+msgstr "Offert : {0} article, valeur {1}"
+
+#: POS/src/utils/offeredRows.js:198
+#: pos_next/offered.py:193
+msgid "Offered: {0} items, value {1}"
+msgstr "Offert : {0} articles, valeur {1}"
+
+#: pos_next/api/restaurant.py:2237
+msgid "{0} {1} not found"
+msgstr "{0} {1} introuvable"
+
+#: pos_next/api/restaurant.py:2241
+msgid "This card is not available"
+msgstr "Cette carte n'est pas disponible"
+
+#: pos_next/offered.py:103
+msgid "Row {0}: a free item of a promotion cannot be offered."
+msgstr "Ligne {0} : un article gratuit d'une promotion ne peut pas être offert."
+
+#: pos_next/offered.py:97
+msgid "This till does not let its cashiers change a discount: a line cannot be offered there."
+msgstr "Cette caisse ne permet pas à ses caissiers de modifier une remise : une ligne ne peut pas y être offerte."
+
+#: pos_next/till_settings/api.py:138
+#: pos_next/till_settings/api.py:157
+msgid "Only the till manager can open the settings of the till"
+msgstr "Seul le responsable de caisse peut ouvrir les paramètres de la caisse"
+
+#: pos_next/till_settings/api.py:377
+msgid "Unknown setting of the till: {0}"
+msgstr "Paramètre inconnu de la caisse : {0}"
+
+#: pos_next/till_settings/api.py:379
+msgid "{0} is set at the office, not at the till"
+msgstr "{0} se règle au Back Office, et non à la caisse"
+
+#: pos_next/till_settings/api.py:385
+msgid "{0} is not a setting of this till"
+msgstr "{0} n'est pas un paramètre de cette caisse"
+
+#: pos_next/till_settings/api.py:395
+msgid "{0} is either on or off"
+msgstr "{0} ne peut être que activé ou désactivé"
+
+#: pos_next/till_settings/api.py:408
+msgid "empty"
+msgstr "vide"
+
+#: pos_next/till_settings/api.py:408
+msgid "{0} cannot be {1}"
+msgstr "{0} ne peut pas être {1}"
+
+#: pos_next/till_settings/api.py:415
+#: pos_next/till_settings/api.py:423
+msgid "{0}: {1} cannot be chosen at this till"
+msgstr "{0} : {1} ne peut pas être choisi à cette caisse"
+
+#: pos_next/till_settings/api.py:419
+msgid "{0} is a list"
+msgstr "{0} est une liste"
+
+#: pos_next/till_settings/api.py:430
+msgid "{0} is a text"
+msgstr "{0} est un texte"
+
+#: pos_next/till_settings/api.py:443
+#: pos_next/till_settings/api.py:440
+msgid "{0} is a number"
+msgstr "{0} est un nombre"
+
+#: pos_next/till_settings/api.py:445
+msgid "{0} is a whole number"
+msgstr "{0} est un nombre entier"
+
+#: pos_next/till_settings/api.py:451
+msgid "{0} cannot be less than {1}"
+msgstr "{0} ne peut pas être inférieur à {1}"
+
+#: pos_next/till_settings/api.py:453
+msgid "{0} cannot be more than {1}"
+msgstr "{0} ne peut pas être supérieur à {1}"
+
+#: pos_next/till_settings/api.py:463
+#: pos_next/till_settings/api.py:472
+msgid "{0} is a list of lines"
+msgstr "{0} est une liste de lignes"
+
+#: pos_next/till_settings/api.py:76
+msgid "The settings to save are not readable"
+msgstr "Les paramètres à enregistrer ne sont pas lisibles"
+
+#: pos_next/till_settings/api.py:82
+msgid "{0} is not yours to change at this till"
+msgstr "{0} ne peut pas être modifié par vous à cette caisse"
+
+#: pos_next/till_settings/registry.py:1003
+msgid "Gift card validity (months)"
+msgstr "Validité de la carte cadeau (mois)"
+
+#: pos_next/till_settings/registry.py:1004
+msgid "How long a gift card is valid, in months. 0: no end date."
+msgstr "Durée de validité d'une carte cadeau, en mois. 0 : pas de date de fin."
+
+#: pos_next/till_settings/registry.py:1013
+msgid "Gift card notification"
+msgstr "Notification de carte cadeau"
+
+#: pos_next/till_settings/registry.py:1014
+msgid "The e-mail template sent when a gift card is created, with its code."
+msgstr "Le modèle d'e-mail envoyé à la création d'une carte cadeau, avec son code."
+
+#: pos_next/till_settings/registry.py:1024
+msgid "Warehouse of this till"
+msgstr "Entrepôt de cette caisse"
+
+#: pos_next/till_settings/registry.py:1025
+msgid "Every sale of this till takes its stock from this warehouse."
+msgstr "Chaque vente de cette caisse prend son stock dans cet entrepôt."
+
+#: pos_next/till_settings/registry.py:1034
+msgid "Block a sale beyond the stock"
+msgstr "Bloquer une vente au-delà du stock"
+
+#: pos_next/till_settings/registry.py:1035
+msgid "Where the site allows negative stock, this box decides: ticked, the till refuses an item beyond the stock of its warehouse, when it is added and when the sale is checked before it is booked; unticked, it sells it. Where the site refuses negative stock (Stock Settings, at the office), the till refuses it whatever this box says."
+msgstr "Là où le site autorise le stock négatif, cette case décide : cochée, la caisse refuse un article au-delà du stock de son entrepôt, lors de l'ajout et lors de la vérification de la vente avant son enregistrement ; décochée, elle le vend. Là où le site refuse le stock négatif (Paramètres du stock, au Back Office), la caisse le refuse quelle que soit cette case."
+
+#: pos_next/till_settings/registry.py:1052
+msgid "The quantities on screen are refreshed from the server every minute, in addition to the live updates from the other tills."
+msgstr "Les quantités affichées sont actualisées depuis le serveur chaque minute, en plus des mises à jour en direct des autres caisses."
+
+#: pos_next/till_settings/registry.py:1064
+msgid "Selling below zero is a setting of the whole site, every till included: it is set at the office, in the Stock Settings."
+msgstr "Vendre en dessous de zéro est un paramètre de tout le site, toutes caisses comprises : il se règle au Back Office, dans les Paramètres du stock."
+
+#: pos_next/till_settings/registry.py:1077
+msgid "Print format"
+msgstr "Format d'impression"
+
+#: pos_next/till_settings/registry.py:1078
+msgid "The layout of the printed receipt."
+msgstr "La mise en page du reçu imprimé."
+
+#: pos_next/till_settings/registry.py:1086
+msgid "Letter head"
+msgstr "En-tête"
+
+#: pos_next/till_settings/registry.py:1087
+msgid "The heading printed at the top of the receipt (logo, address)."
+msgstr "L'en-tête imprimé en haut du reçu (logo, adresse)."
+
+#: pos_next/till_settings/registry.py:1095
+msgid "Vertical margin of the receipt (mm)"
+msgstr "Marge verticale du reçu (mm)"
+
+#: pos_next/till_settings/registry.py:1096
+msgid "The margin at the top and at the bottom of the 80 mm receipt. Empty: the one of the print theme."
+msgstr "La marge en haut et en bas du reçu de 80 mm. Vide : celle du thème d'impression."
+
+#: pos_next/till_settings/registry.py:1103
+#: pos_next/till_settings/registry.py:1114
+msgid "As the theme"
+msgstr "Comme le thème"
+
+#: pos_next/till_settings/registry.py:1108
+msgid "Horizontal margin of the receipt (mm)"
+msgstr "Marge horizontale du reçu (mm)"
+
+#: pos_next/till_settings/registry.py:1109
+msgid "The margin on the left and on the right of the receipt. Empty: the one of the print theme."
+msgstr "La marge à gauche et à droite du reçu. Vide : celle du thème d'impression."
+
+#: pos_next/till_settings/registry.py:1119
+msgid "Logo on the receipt"
+msgstr "Logo sur le reçu"
+
+#: pos_next/till_settings/registry.py:1120
+msgid "Forces the logo on the receipt of this till, or takes it away. « As the theme »: as the print theme says."
+msgstr "Impose ou retire le logo sur le reçu de cette caisse. « Comme le thème » : selon le thème d'impression."
+
+#: pos_next/till_settings/registry.py:1127
+msgid "Hide"
+msgstr "Masquer"
+
+#: pos_next/till_settings/registry.py:1127
+msgid "Show"
+msgstr "Afficher"
+
+#: pos_next/till_settings/registry.py:1133
+msgid "Print drafts"
+msgstr "Imprimer les brouillons"
+
+#: pos_next/till_settings/registry.py:1134
+msgid "The cashier can print a sale on hold before taking the payment, e.g. a bill."
+msgstr "Le caissier peut imprimer une vente en attente avant l'encaissement, par exemple une addition."
+
+#: pos_next/till_settings/registry.py:1142
+msgid "A Star printer on the network prints the receipts without a computer. « None »: the browser or QZ Tray prints."
+msgstr "Une imprimante Star sur le réseau imprime les reçus sans ordinateur. « Aucune » : le navigateur ou QZ Tray imprime."
+
+#: pos_next/till_settings/registry.py:1154
+msgid "The receipt comes out by itself when the sale is validated."
+msgstr "Le reçu sort tout seul à la validation de la vente."
+
+#: pos_next/till_settings/registry.py:1163
+msgid "When the cash drawer plugged into the printer opens: at the cash sales, at every sale, or never."
+msgstr "Quand le tiroir-caisse branché sur l'imprimante s'ouvre : lors des ventes en espèces, à chaque vente, ou jamais."
+
+#: pos_next/till_settings/registry.py:1183
+msgid "Print at the end of the sale"
+msgstr "Imprimer à la fin de la vente"
+
+#: pos_next/till_settings/registry.py:1184
+msgid "Without a network printer: the receipt prints through the browser or QZ Tray at the end of each sale."
+msgstr "Sans imprimante réseau : le reçu s'imprime via le navigateur ou QZ Tray à la fin de chaque vente."
+
+#: pos_next/till_settings/registry.py:1195
+msgid "Silent printing (QZ Tray)"
+msgstr "Impression silencieuse (QZ Tray)"
+
+#: pos_next/till_settings/registry.py:1196
+msgid "The receipt goes straight to a thermal printer plugged into this computer, without a print window. Needs the QZ Tray software."
+msgstr "Le reçu part directement sur une imprimante thermique branchée à cet ordinateur, sans fenêtre d'impression. Nécessite le logiciel QZ Tray."
+
+#: pos_next/till_settings/registry.py:1208
+msgid "The thermal printer QZ Tray uses on this computer."
+msgstr "L'imprimante thermique qu'utilise QZ Tray sur cet ordinateur."
+
+#: pos_next/till_settings/registry.py:1216
+msgid "Signing certificate"
+msgstr "Certificat de signature"
+
+#: pos_next/till_settings/registry.py:1226
+msgid "Printer of each station"
+msgstr "Imprimante de chaque poste"
+
+#: pos_next/till_settings/registry.py:1227
+msgid "The printer that prints the tickets of the station. « Screen only »: the station reads its orders on screen."
+msgstr "L'imprimante qui imprime les tickets du poste. « Écran seul » : le poste lit ses commandes à l'écran."
+
+#: pos_next/till_settings/registry.py:1239
+msgid "Withdrawal template at closing"
+msgstr "Modèle de retrait à la clôture"
+
+#: pos_next/till_settings/registry.py:1240
+msgid "The journal entry template of a cash withdrawal at closing. The balance left becomes the float offered at the next opening."
+msgstr "Le modèle d'écriture comptable d'un retrait d'espèces à la clôture. Le solde restant devient le fond de caisse proposé à l'ouverture suivante."
+
+#: pos_next/till_settings/registry.py:1251
+msgid "Hide the expected amount"
+msgstr "Masquer le montant attendu"
+
+#: pos_next/till_settings/registry.py:1252
+msgid "The cashier counts the cash without seeing the expected amount; the difference shows after the count."
+msgstr "Le caissier compte les espèces sans voir le montant attendu ; l'écart s'affiche après le comptage."
+
+#: pos_next/till_settings/registry.py:1262
+msgid "Cash movements offered"
+msgstr "Mouvements de caisse proposés"
+
+#: pos_next/till_settings/registry.py:1263
+msgid "The movements offered in « Cash in / out », e.g. adding change or a withdrawal for the bank. Empty: every template."
+msgstr "Les mouvements proposés dans « Entrées/Sorties de caisse », par exemple l'ajout de monnaie ou un retrait pour la banque. Vide : tous les modèles."
+
+#: pos_next/till_settings/registry.py:1277
+msgid "Cash out limit per shift"
+msgstr "Plafond de sortie d'espèces par service"
+
+#: pos_next/till_settings/registry.py:1278
+msgid "The most the cash movements of this till may take out of the drawer during one shift. Empty: no limit."
+msgstr "Le montant maximum que les mouvements de cette caisse peuvent prélever du tiroir pendant un service. Vide : pas de limite."
+
+#: pos_next/till_settings/registry.py:1286
+msgid "Offline cash movement window (hours)"
+msgstr "Fenêtre hors ligne des mouvements de caisse (heures)"
+
+#: pos_next/till_settings/registry.py:1287
+msgid "A cash movement recorded while the till was offline is booked on the day the till recorded it when it reaches the server within this many hours; later, it is booked on the day it arrives, with a note. 0: always on the day it arrives."
+msgstr "Un mouvement de caisse enregistré hors ligne est comptabilisé le jour où la caisse l'a enregistré s'il arrive au serveur dans ce nombre d'heures ; plus tard, il est comptabilisé le jour de son arrivée, avec une note. 0 : toujours le jour de son arrivée."
+
+#: pos_next/till_settings/registry.py:1299
+msgid "Delete drafts at closing"
+msgstr "Supprimer les brouillons à la clôture"
+
+#: pos_next/till_settings/registry.py:1300
+msgid "At closing, the sales left as drafts can be deleted instead of being carried over."
+msgstr "À la clôture, les ventes restées en brouillon peuvent être supprimées au lieu d'être reportées."
+
+#: pos_next/till_settings/registry.py:1307
+msgid "End-of-day report recipients"
+msgstr "Destinataires du rapport de fin de journée"
+
+#: pos_next/till_settings/registry.py:1308
+msgid "The addresses that receive the end-of-day report as a PDF, separated by commas. Empty: the address of the cashier."
+msgstr "Les adresses qui reçoivent le rapport de fin de journée en PDF, séparées par des virgules. Vide : l'adresse du caissier."
+
+#: pos_next/till_settings/registry.py:1320
+msgid "The report goes to these addresses as soon as the shift is closed, without the cashier doing anything."
+msgstr "Le rapport part à ces adresses dès la fermeture du service, sans que le caissier ait rien à faire."
+
+#: pos_next/till_settings/registry.py:1333
+msgid "The till these settings belong to: one record per till."
+msgstr "La caisse à laquelle appartiennent ces paramètres : un enregistrement par caisse."
+
+#: pos_next/till_settings/registry.py:1342
+msgid "Switched off, the record is ignored and the till runs on the default settings."
+msgstr "Désactivé, l'enregistrement est ignoré et la caisse fonctionne avec les paramètres par défaut."
+
+#: pos_next/till_settings/registry.py:1351
+msgid "A disabled till can no longer be opened; its past sales remain."
+msgstr "Une caisse désactivée ne peut plus être ouverte ; ses ventes passées restent."
+
+#: pos_next/till_settings/registry.py:1360
+msgid "The company the till belongs to; it decides the accounts and the currency."
+msgstr "La société à laquelle appartient la caisse ; elle détermine les comptes et la devise."
+
+#: pos_next/till_settings/registry.py:1368
+msgid "Company address"
+msgstr "Adresse de la société"
+
+#: pos_next/till_settings/registry.py:1369
+msgid "The address of the company printed on the receipts and on the end-of-day report."
+msgstr "L'adresse de la société imprimée sur les reçus et sur le rapport de fin de journée."
+
+#: pos_next/till_settings/registry.py:1377
+msgid "Users of this till"
+msgstr "Utilisateurs de cette caisse"
+
+#: pos_next/till_settings/registry.py:1378
+msgid "The people who can open this till; the one marked « Default » opens it straight away."
+msgstr "Les personnes qui peuvent ouvrir cette caisse ; celle marquée « Par défaut » l'ouvre tout de suite."
+
+#: pos_next/till_settings/registry.py:1387
+msgid "Makes this till a restaurant till: floor plan, tables, kitchen and the Restaurant tabs. Decided at the office."
+msgstr "Fait de cette caisse une caisse restaurant : plan de salle, tables, cuisine et onglets Restaurant. Décidé au Back Office."
+
+#: pos_next/till_settings/registry.py:1400
+msgid "The restaurant of this till: its hours, its cards and its settings apply."
+msgstr "Le restaurant de cette caisse : ses horaires, ses cartes et ses paramètres s'appliquent."
+
+#: pos_next/till_settings/registry.py:1410
+msgid "The payment methods offered at checkout; the one marked « Default » is selected first. Each is tied to an account."
+msgstr "Les modes de paiement proposés à l'encaissement ; celui marqué « Par défaut » est sélectionné en premier. Chacun est rattaché à un compte."
+
+#: pos_next/till_settings/registry.py:1422
+msgid "Cash payment method"
+msgstr "Mode de paiement en espèces"
+
+#: pos_next/till_settings/registry.py:1423
+msgid "The payment method that counts as cash: it gives change and enters the count at closing."
+msgstr "Le mode de paiement qui compte comme espèces : il rend la monnaie et entre dans le comptage à la clôture."
+
+#: pos_next/till_settings/registry.py:1431
+msgid "Payment terminals"
+msgstr "Terminaux de paiement"
+
+#: pos_next/till_settings/registry.py:1432
+msgid "For each payment method that goes through a terminal, the terminal or terminals of this till; the one marked « Default » is offered first."
+msgstr "Pour chaque mode de paiement passant par un terminal, le ou les terminaux de cette caisse ; celui marqué « Par défaut » est proposé en premier."
+
+#: pos_next/till_settings/registry.py:1444
+msgid "Enable the loyalty program"
+msgstr "Activer le programme de fidélité"
+
+#: pos_next/till_settings/registry.py:1445
+msgid "The customers earn points with every purchase."
+msgstr "Les clients gagnent des points à chaque achat."
+
+#: pos_next/till_settings/registry.py:1454
+msgid "The loyalty program of the till, defined at the office."
+msgstr "Le programme de fidélité de la caisse, défini au Back Office."
+
+#: pos_next/till_settings/registry.py:1463
+msgid "Wallet account"
+msgstr "Compte du portefeuille"
+
+#: pos_next/till_settings/registry.py:1464
+msgid "The receivable account where the wallets of the customers are kept."
+msgstr "Le compte de créances où sont tenus les portefeuilles des clients."
+
+#: pos_next/till_settings/registry.py:1473
+msgid "Create the wallet automatically"
+msgstr "Créer le portefeuille automatiquement"
+
+#: pos_next/till_settings/registry.py:1474
+msgid "Each new customer gets a wallet. Always on with the loyalty program."
+msgstr "Chaque nouveau client reçoit un portefeuille. Toujours activé avec le programme de fidélité."
+
+#: pos_next/till_settings/registry.py:1483
+msgid "Convert loyalty points into the wallet"
+msgstr "Convertir les points de fidélité en portefeuille"
+
+#: pos_next/till_settings/registry.py:1484
+msgid "The points earned become a wallet balance, at the rate of the program. Always on with the loyalty program."
+msgstr "Les points gagnés deviennent un solde de portefeuille, au taux du programme. Toujours activé avec le programme de fidélité."
+
+#: pos_next/till_settings/registry.py:1496
+msgid "Currency"
+msgstr "Devise"
+
+#: pos_next/till_settings/registry.py:1497
+msgid "The currency of the till, the one of its price list."
+msgstr "La devise de la caisse, celle de sa liste de prix."
+
+#: pos_next/till_settings/registry.py:1505
+msgid "Write-off account"
+msgstr "Compte de passage en pertes"
+
+#: pos_next/till_settings/registry.py:1506
+msgid "The account that receives the small differences written off, e.g. the rounding cents."
+msgstr "Le compte qui reçoit les petits écarts passés en pertes, par exemple les centimes d'arrondi."
+
+#: pos_next/till_settings/registry.py:1514
+msgid "Write-off cost center"
+msgstr "Centre de coûts des passages en pertes"
+
+#: pos_next/till_settings/registry.py:1515
+msgid "The cost center of those write-offs."
+msgstr "Le centre de coûts de ces passages en pertes."
+
+#: pos_next/till_settings/registry.py:1523
+msgid "Change account"
+msgstr "Compte de la monnaie"
+
+#: pos_next/till_settings/registry.py:1524
+msgid "The account the change given back comes from, usually the cash of the till."
+msgstr "Le compte d'où provient la monnaie rendue, en général les espèces de la caisse."
+
+#: pos_next/till_settings/registry.py:1532
+msgid "Income account"
+msgstr "Compte de produits"
+
+#: pos_next/till_settings/registry.py:1533
+msgid "The income account of the sales, when the item names none."
+msgstr "Le compte de produits des ventes, lorsque l'article n'en indique aucun."
+
+#: pos_next/till_settings/registry.py:1541
+msgid "Expense account"
+msgstr "Compte de charges"
+
+#: pos_next/till_settings/registry.py:1542
+msgid "The expense account of the items sold. Shown only with perpetual inventory."
+msgstr "Le compte de charges des articles vendus. Affiché seulement avec l'inventaire permanent."
+
+#: pos_next/till_settings/registry.py:1550
+msgid "Cost center"
+msgstr "Centre de coûts"
+
+#: pos_next/till_settings/registry.py:1551
+msgid "The cost center of the sales of the till."
+msgstr "Le centre de coûts des ventes de la caisse."
+
+#: pos_next/till_settings/registry.py:1559
+msgid "Taxes and charges"
+msgstr "Modèle de taxes et frais"
+
+#: pos_next/till_settings/registry.py:1560
+msgid "The VAT template applied to the sales of the till."
+msgstr "Le modèle de TVA appliqué aux ventes de la caisse."
+
+#: pos_next/till_settings/registry.py:1568
+msgid "Apply discount on"
+msgstr "Appliquer la remise sur"
+
+#: pos_next/till_settings/registry.py:1569
+msgid "A discount on the receipt is worked out on the total with or without VAT: it changes the VAT due."
+msgstr "Une remise sur le reçu se calcule sur le total avec ou sans TVA : elle modifie la TVA due."
+
+#: pos_next/till_settings/registry.py:1580
+msgid "Tax category"
+msgstr "Catégorie fiscale"
+
+#: pos_next/till_settings/registry.py:1581
+msgid "The tax category of the sales; it chooses the VAT rate of each item."
+msgstr "La catégorie fiscale des ventes ; elle détermine le taux de TVA de chaque article."
+
+#: pos_next/till_settings/registry.py:1589
+msgid "Write-off limit"
+msgstr "Limite de passage en pertes"
+
+#: pos_next/till_settings/registry.py:1590
+msgid "The differences below this amount are written off when the sales are consolidated."
+msgstr "Les écarts inférieurs à ce montant sont passés en pertes lors de la consolidation des ventes."
+
+#: pos_next/till_settings/registry.py:1598
+msgid "Disable rounded total"
+msgstr "Désactiver le total arrondi"
+
+#: pos_next/till_settings/registry.py:1599
+msgid "The total is not rounded (to 5 centimes in Swiss francs)."
+msgstr "Le total n'est pas arrondi (à 5 centimes près, en francs suisses)."
+
+#: pos_next/till_settings/registry.py:1607
+msgid "Terms and conditions"
+msgstr "Conditions générales"
+
+#: pos_next/till_settings/registry.py:1608
+msgid "The terms and conditions printed on the invoices of the till."
+msgstr "Les conditions générales imprimées sur les factures de la caisse."
+
+#: pos_next/till_settings/registry.py:1616
+msgid "Print heading"
+msgstr "Titre d'impression"
+
+#: pos_next/till_settings/registry.py:1617
+msgid "The title printed at the top of the document, instead of « Invoice »."
+msgstr "Le titre imprimé en haut du document, à la place de « Facture »."
+
+#: pos_next/till_settings/registry.py:1625
+msgid "Allow negative stock"
+msgstr "Autoriser le stock négatif"
+
+#: pos_next/till_settings/registry.py:1626
+msgid "Sell even when the stock is at zero. This changes the Stock Settings of the whole site, every till included."
+msgstr "Vendre même quand le stock est à zéro. Cela modifie les Paramètres du stock de tout le site, toutes caisses comprises."
+
+#: pos_next/till_settings/registry.py:180
+msgid "Hours and cards"
+msgstr "Horaires et cartes"
+
+#: pos_next/till_settings/registry.py:181
+msgid "Online ordering"
+msgstr "Commande en ligne"
+
+#: pos_next/till_settings/registry.py:185
+msgid "Sale screen"
+msgstr "Écran de vente"
+
+#: pos_next/till_settings/registry.py:186
+msgid "Prices and discounts"
+msgstr "Prix et remises"
+
+#: pos_next/till_settings/registry.py:193
+msgid "Loyalty"
+msgstr "Fidélité"
+
+#: pos_next/till_settings/registry.py:201
+msgid "Room"
+msgstr "Salle"
+
+#: pos_next/till_settings/registry.py:202
+msgid "Takeaway at the till"
+msgstr "À emporter à la caisse"
+
+#: pos_next/till_settings/registry.py:205
+#: pos_next/till_settings/registry.py:392
+msgid "Opening hours"
+msgstr "Horaires d'ouverture"
+
+#: pos_next/till_settings/registry.py:206
+#: pos_next/till_settings/registry.py:408
+msgid "Restaurant cards"
+msgstr "Cartes restaurant"
+
+#: pos_next/till_settings/registry.py:208
+msgid "Table ordering by QR code"
+msgstr "Commande aux tables par QR code"
+
+#: pos_next/till_settings/registry.py:209
+msgid "Online takeaway"
+msgstr "À emporter en ligne"
+
+#: pos_next/till_settings/registry.py:212
+msgid "Online booking"
+msgstr "Réservation en ligne"
+
+#: pos_next/till_settings/registry.py:213
+msgid "Notices and channels"
+msgstr "Notifications et canaux"
+
+#: pos_next/till_settings/registry.py:215
+msgid "Languages"
+msgstr "Langues"
+
+#: pos_next/till_settings/registry.py:221
+msgid "Customer display"
+msgstr "Affichage client"
+
+#: pos_next/till_settings/registry.py:224
+msgid "Items offered"
+msgstr "Articles offerts"
+
+#: pos_next/till_settings/registry.py:226
+msgid "Prices"
+msgstr "Prix"
+
+#: pos_next/till_settings/registry.py:228
+msgid "Scale barcodes"
+msgstr "Codes-barres à peser"
+
+#: pos_next/till_settings/registry.py:232
+msgid "Sales orders"
+msgstr "Commandes client"
+
+#: pos_next/till_settings/registry.py:233
+msgid "Gift cards"
+msgstr "Cartes cadeaux"
+
+#: pos_next/till_settings/registry.py:236
+#: pos_next/till_settings/registry.py:1051
+msgid "Stock sync"
+msgstr "Synchronisation du stock"
+
+#: pos_next/till_settings/registry.py:237
+#: pos_next/till_settings/registry.py:1063
+msgid "Negative stock"
+msgstr "Stock négatif"
+
+#: pos_next/till_settings/registry.py:240
+msgid "Network printer (Star)"
+msgstr "Imprimante réseau (Star)"
+
+#: pos_next/till_settings/registry.py:241
+msgid "Without a network printer"
+msgstr "Sans imprimante réseau"
+
+#: pos_next/till_settings/registry.py:242
+msgid "Printing through QZ Tray"
+msgstr "Impression par QZ Tray"
+
+#: pos_next/till_settings/registry.py:244
+msgid "Invoices of this till"
+msgstr "Factures de cette caisse"
+
+#: pos_next/till_settings/registry.py:246
+msgid "Counting"
+msgstr "Comptage"
+
+#: pos_next/till_settings/registry.py:247
+msgid "Cash movements"
+msgstr "Mouvements de caisse"
+
+#: pos_next/till_settings/registry.py:248
+msgid "End-of-day report"
+msgstr "Rapport de fin de journée"
+
+#: pos_next/till_settings/registry.py:251
+msgid "Users"
+msgstr "Utilisateurs"
+
+#: pos_next/till_settings/registry.py:253
+#: pos_next/till_settings/registry.py:1409
+msgid "Payment methods"
+msgstr "Modes de paiement"
+
+#: pos_next/till_settings/registry.py:254
+#: pos_next/till_settings/registry.py:1453
+msgid "Loyalty program"
+msgstr "Programme de fidélité"
+
+#: pos_next/till_settings/registry.py:255
+msgid "Accounts"
+msgstr "Comptes"
+
+#: pos_next/till_settings/registry.py:257
+msgid "Rounding and write-off"
+msgstr "Arrondi et passages en pertes"
+
+#: pos_next/till_settings/registry.py:266
+msgid "Automatic"
+msgstr "Automatique"
+
+#: pos_next/till_settings/registry.py:275
+msgid "Pass screen (Runner)"
+msgstr "Écran de passe (Runner)"
+
+#: pos_next/till_settings/registry.py:276
+msgid "The dishes that are ready show on the pass screen; whoever takes them to the tables marks them served."
+msgstr "Les plats prêts s'affichent sur l'écran de passe ; celui qui les porte aux tables les marque comme servis."
+
+#: pos_next/till_settings/registry.py:290
+msgid "Digits of the ticket number"
+msgstr "Chiffres du numéro de ticket"
+
+#: pos_next/till_settings/registry.py:291
+msgid "How many digits a ticket number is written with (0007 has four)."
+msgstr "Nombre de chiffres d'un numéro de ticket (0007 en compte quatre)."
+
+#: pos_next/till_settings/registry.py:302
+msgid "Ticket numbers start again"
+msgstr "Remise à zéro des numéros de ticket"
+
+#: pos_next/till_settings/registry.py:303
+msgid "When the numbers of the tickets start again at 1: every business day, never, or at each shift of the till."
+msgstr "Quand les numéros de tickets repartent de 1 : chaque jour, jamais, ou à chaque service de la caisse."
+
+#: pos_next/till_settings/registry.py:311
+msgid "Every business day"
+msgstr "Chaque jour"
+
+#: pos_next/till_settings/registry.py:313
+msgid "At each shift"
+msgstr "À chaque service"
+
+#: pos_next/till_settings/registry.py:320
+msgid "Default restaurant area"
+msgstr "Salle par défaut du restaurant"
+
+#: pos_next/till_settings/registry.py:321
+msgid "The room this till opens first, e.g. « Terrace » for the till of the bar."
+msgstr "La salle que cette caisse ouvre en premier, par exemple « Terrasse » pour la caisse du bar."
+
+#: pos_next/till_settings/registry.py:332
+msgid "Enable takeaway"
+msgstr "Activer la vente à emporter"
+
+#: pos_next/till_settings/registry.py:333
+msgid "Adds the « Takeaway » button to this restaurant till."
+msgstr "Ajoute le bouton « À emporter » à cette caisse restaurant."
+
+#: pos_next/till_settings/registry.py:343
+msgid "Takeaway card"
+msgstr "Carte à emporter"
+
+#: pos_next/till_settings/registry.py:344
+msgid "Optional: the card, and its prices, of a takeaway sale. Empty: the card served at that time."
+msgstr "Facultatif : la carte, et ses prix, d'une vente à emporter. Vide : la carte servie à ce moment-là."
+
+#: pos_next/till_settings/registry.py:357
+msgid "When the customer pays more than the total, the difference can become a tip."
+msgstr "Quand le client paie plus que le total, la différence peut devenir un pourboire."
+
+#: pos_next/till_settings/registry.py:366
+msgid "The overpayment becomes the tip"
+msgstr "Le trop-perçu devient le pourboire"
+
+#: pos_next/till_settings/registry.py:367
+msgid "The overpayment is entered as the tip straight away; the waiter can correct or cancel it before validating."
+msgstr "Le trop-perçu est saisi d'emblée comme pourboire ; le serveur peut le corriger ou l'annuler avant de valider."
+
+#: pos_next/till_settings/registry.py:380
+msgid "Tip item and account"
+msgstr "Article et compte pourboire"
+
+#: pos_next/till_settings/registry.py:393
+msgid "For each day, the opening slots and the card served in each: the till offers the right card for the time of day."
+msgstr "Pour chaque jour, les créneaux d'ouverture et la carte servie dans chacun : la caisse propose la bonne carte selon l'heure."
+
+#: pos_next/till_settings/registry.py:421
+msgid "Public menu (QR)"
+msgstr "Carte publique (QR)"
+
+#: pos_next/till_settings/registry.py:422
+msgid "The card offered shows, to read only, on the page that the QR code of the tables opens. Guests cannot order from it. Off: nothing is public."
+msgstr "La carte proposée s'affiche, en lecture seule, sur la page qu'ouvre le QR code des tables. Les convives ne peuvent pas y commander. Désactivé : rien n'est public."
+
+#: pos_next/till_settings/registry.py:434
+msgid "Enable QR ordering"
+msgstr "Activer la commande par QR code"
+
+#: pos_next/till_settings/registry.py:435
+msgid "The customer scans the QR code of the table, orders and pays from the phone."
+msgstr "Le client scanne le QR code de la table, commande et paie depuis son téléphone."
+
+#: pos_next/till_settings/registry.py:444
+#: pos_next/till_settings/registry.py:535
+msgid "Card offered"
+msgstr "Carte proposée"
+
+#: pos_next/till_settings/registry.py:445
+msgid "The card the customer sees after scanning the QR code."
+msgstr "La carte que le client voit après avoir scanné le QR code."
+
+#: pos_next/till_settings/registry.py:456
+msgid "Order validation"
+msgstr "Validation de commande"
+
+#: pos_next/till_settings/registry.py:457
+msgid "« Straight to the kitchen »: the order leaves at once. « Waiter approval »: a waiter confirms it first."
+msgstr "« Directement en cuisine » : la commande part tout de suite. « Validation par le serveur » : un serveur la confirme d'abord."
+
+#: pos_next/till_settings/registry.py:466
+msgid "Straight to the kitchen"
+msgstr "Directement en cuisine"
+
+#: pos_next/till_settings/registry.py:467
+msgid "Waiter approval"
+msgstr "Validation par le serveur"
+
+#: pos_next/till_settings/registry.py:474
+msgid "Customer account"
+msgstr "Compte client"
+
+#: pos_next/till_settings/registry.py:475
+msgid "Whether the customer may, or must, create an account to order: not offered, optional or required."
+msgstr "Indique si le client peut, ou doit, créer un compte pour commander : non proposé, optionnel ou obligatoire."
+
+#: pos_next/till_settings/registry.py:484
+msgid "Not offered"
+msgstr "Non proposé"
+
+#: pos_next/till_settings/registry.py:493
+msgid "The QR link expires"
+msgstr "Expiration du lien QR"
+
+#: pos_next/till_settings/registry.py:494
+msgid "When the QR code of a table stops working: when the table closes, on payment, or after a number of days."
+msgstr "Quand le QR code d'une table cesse de fonctionner : à la fermeture de la table, au paiement, ou après un nombre de jours."
+
+#: pos_next/till_settings/registry.py:504
+msgid "When the table closes"
+msgstr "À la fermeture de la table"
+
+#: pos_next/till_settings/registry.py:505
+msgid "On payment"
+msgstr "Au paiement"
+
+#: pos_next/till_settings/registry.py:506
+msgid "After a delay"
+msgstr "Après un délai"
+
+#: pos_next/till_settings/registry.py:513
+msgid "Delay (days)"
+msgstr "Délai (jours)"
+
+#: pos_next/till_settings/registry.py:514
+msgid "Only with « After a delay »: the number of days the link works."
+msgstr "Seulement avec « Après un délai » : le nombre de jours pendant lesquels le lien reste valable."
+
+#: pos_next/till_settings/registry.py:525
+msgid "Online takeaway ordering"
+msgstr "Commande à emporter en ligne"
+
+#: pos_next/till_settings/registry.py:526
+msgid "Customers order online on the /pos/order page and come to collect their order."
+msgstr "Les clients commandent en ligne sur la page /pos/order et viennent retirer leur commande."
+
+#: pos_next/till_settings/registry.py:536
+msgid "The card offered on the online ordering page."
+msgstr "La carte proposée sur la page de commande en ligne."
+
+#: pos_next/till_settings/registry.py:548
+msgid "Enable reservations"
+msgstr "Activer les réservations"
+
+#: pos_next/till_settings/registry.py:549
+msgid "Turns on taking reservations: the list of the day, reminders to the customers, no-shows."
+msgstr "Active la prise de réservations : la liste du jour, les rappels aux clients, les absences."
+
+#: pos_next/till_settings/registry.py:558
+msgid "Reservation length"
+msgstr "Durée de réservation"
+
+#: pos_next/till_settings/registry.py:559
+msgid "How long a reserved table is held when nothing else is said (e.g. 1 h 30)."
+msgstr "Durée pendant laquelle une table réservée est retenue si rien d'autre n'est précisé (par ex. 1 h 30)."
+
+#: pos_next/till_settings/registry.py:570
+msgid "No-show after (minutes)"
+msgstr "Marquer absent après (minutes)"
+
+#: pos_next/till_settings/registry.py:571
+msgid "This long after the time booked, a reservation whose customer has not come is marked « no-show » and the table is freed."
+msgstr "Passé ce délai après l'heure réservée, une réservation dont le client n'est pas venu est marquée « absent » et la table est libérée."
+
+#: pos_next/till_settings/registry.py:586
+msgid "Reminder to the customer (hours before)"
+msgstr "Rappel au client (heures avant)"
+
+#: pos_next/till_settings/registry.py:587
+msgid "A reminder e-mail goes to the customer this many hours before the reservation."
+msgstr "Un e-mail de rappel est envoyé au client ce nombre d'heures avant la réservation."
+
+#: pos_next/till_settings/registry.py:598
+msgid "Customers book online"
+msgstr "Les clients réservent en ligne"
+
+#: pos_next/till_settings/registry.py:599
+msgid "Customers can book by themselves online."
+msgstr "Les clients peuvent réserver eux-mêmes en ligne."
+
+#: pos_next/till_settings/registry.py:610
+msgid "Confirm each reservation"
+msgstr "Confirmer chaque réservation"
+
+#: pos_next/till_settings/registry.py:611
+msgid "Each reservation made online waits for your confirmation before it is accepted."
+msgstr "Chaque réservation faite en ligne attend votre confirmation avant d'être acceptée."
+
+#: pos_next/till_settings/registry.py:623
+msgid "Unconfirmed booking expires after (minutes)"
+msgstr "Expiration d'une réservation non confirmée (minutes)"
+
+#: pos_next/till_settings/registry.py:624
+msgid "An online booking that the guest has not confirmed from the e-mail within this time expires: its tables are free again and it never counts as a no-show."
+msgstr "Une réservation en ligne que le client n'a pas confirmée par e-mail dans ce délai expire : ses tables sont à nouveau libres et elle ne compte jamais comme absence."
+
+#: pos_next/till_settings/registry.py:638
+msgid "E-mail for reservation notices"
+msgstr "E-mail des notifications de réservation"
+
+#: pos_next/till_settings/registry.py:639
+msgid "The address that receives the notice of each new reservation."
+msgstr "L'adresse qui reçoit la notification de chaque nouvelle réservation."
+
+#: pos_next/till_settings/registry.py:650
+msgid "Reservation channels"
+msgstr "Canaux de réservation"
+
+#: pos_next/till_settings/registry.py:651
+msgid "The channels offered when a reservation is taken down (e.g. phone, walk-in, internet). One per line."
+msgstr "Les canaux proposés lorsqu'une réservation est enregistrée (par ex. téléphone, sur place, internet). Un par ligne."
+
+#: pos_next/till_settings/registry.py:666
+msgid "Allowed languages"
+msgstr "Langues autorisées"
+
+#: pos_next/till_settings/registry.py:667
+msgid "The languages offered in the language picker of the till. Empty: every language available."
+msgstr "Les langues proposées dans le sélecteur de langue de la caisse. Vide : toutes les langues disponibles."
+
+#: pos_next/till_settings/registry.py:719
+msgid "Default customer"
+msgstr "Client par défaut"
+
+#: pos_next/till_settings/registry.py:720
+msgid "The customer offered for each new sale, e.g. « Walk-in ». The cashier can always choose another one."
+msgstr "Le client proposé pour chaque nouvelle vente, par ex. « Walk-in ». Le caissier peut toujours en choisir un autre."
+
+#: pos_next/till_settings/registry.py:732
+msgid "Enable customer display"
+msgstr "Activer l'écran client"
+
+#: pos_next/till_settings/registry.py:733
+msgid "A second screen, turned to the customer, shows the cart and the total."
+msgstr "Un second écran, tourné vers le client, affiche le panier et le total."
+
+#: pos_next/till_settings/registry.py:740
+msgid "Allow account creation"
+msgstr "Autoriser la création de compte"
+
+#: pos_next/till_settings/registry.py:741
+msgid "The customer can create an account by themselves on the customer display."
+msgstr "Le client peut créer lui-même un compte sur l'écran client."
+
+#: pos_next/till_settings/registry.py:749
+msgid "Show address fields"
+msgstr "Afficher les champs d'adresse"
+
+#: pos_next/till_settings/registry.py:750
+msgid "Creating an account also asks for the address, on the customer display as in the till."
+msgstr "La création d'un compte demande aussi l'adresse, sur l'écran client comme à la caisse."
+
+#: pos_next/till_settings/registry.py:759
+msgid "Tiles per row"
+msgstr "Tuiles par ligne"
+
+#: pos_next/till_settings/registry.py:760
+msgid "How many items each row of the grid shows. « Automatic »: as many as the width of the screen allows. A number: always that many, from 3 to 8; an item without a picture shows its name instead."
+msgstr "Nombre d'articles affichés sur chaque ligne de la grille. « Automatique » : autant que la largeur de l'écran le permet. Un nombre : toujours ce nombre, de 3 à 8 ; un article sans image affiche son nom à la place."
+
+#: pos_next/till_settings/registry.py:774
+msgid "Pictures on a phone"
+msgstr "Images sur téléphone"
+
+#: pos_next/till_settings/registry.py:775
+msgid "On a phone, each button of the restaurant's card shows the item's picture above its name. Off: the name and the price only, so that more buttons fit on the screen."
+msgstr "Sur un téléphone, chaque bouton de la carte du restaurant affiche l'image de l'article au-dessus de son nom. Désactivé : seulement le nom et le prix, pour que davantage de boutons tiennent à l'écran."
+
+#: pos_next/till_settings/registry.py:786
+msgid "Show the item code"
+msgstr "Afficher le code article"
+
+#: pos_next/till_settings/registry.py:787
+msgid "Shows the code of each item under its name in the grid."
+msgstr "Affiche le code de chaque article sous son nom dans la grille."
+
+#: pos_next/till_settings/registry.py:794
+msgid "Show variants as items"
+msgstr "Afficher les variantes comme articles"
+
+#: pos_next/till_settings/registry.py:795
+msgid "Each variant (size, colour…) appears as an item of the grid, instead of the template item followed by a choice."
+msgstr "Chaque variante (taille, couleur…) apparaît comme un article de la grille, au lieu de l'article modèle suivi d'un choix."
+
+#: pos_next/till_settings/registry.py:807
+msgid "Hide unavailable items"
+msgstr "Masquer les articles indisponibles"
+
+#: pos_next/till_settings/registry.py:808
+msgid "The items with no stock in the warehouse of the till are no longer offered."
+msgstr "Les articles sans stock dans l'entrepôt de la caisse ne sont plus proposés."
+
+#: pos_next/till_settings/registry.py:816
+msgid "Item groups"
+msgstr "Groupes d'articles"
+
+#: pos_next/till_settings/registry.py:817
+msgid "Only the items of these groups show in the till. Empty: every item."
+msgstr "Seuls les articles de ces groupes s'affichent à la caisse. Vide : tous les articles."
+
+#: pos_next/till_settings/registry.py:827
+msgid "Only the items of these brands show. Empty: every brand."
+msgstr "Seuls les articles de ces marques s'affichent. Vide : toutes les marques."
+
+#: pos_next/till_settings/registry.py:837
+msgid "Prices include VAT"
+msgstr "Les prix incluent la TVA"
+
+#: pos_next/till_settings/registry.py:838
+msgid "The prices shown and entered include VAT."
+msgstr "Les prix affichés et saisis incluent la TVA."
+
+#: pos_next/till_settings/registry.py:845
+msgid "Price list"
+msgstr "Liste de prix"
+
+#: pos_next/till_settings/registry.py:846
+msgid "The list the till reads its prices from; it must be in the currency of the till."
+msgstr "La liste dont la caisse lit ses prix ; elle doit être dans la devise de la caisse."
+
+#: pos_next/till_settings/registry.py:855
+msgid "Ignore pricing rules"
+msgstr "Ignorer les règles de prix"
+
+#: pos_next/till_settings/registry.py:856
+msgid "Pricing rules (promotions, prices by quantity) do not apply at this till."
+msgstr "Les règles de prix (promotions, prix par quantité) ne s'appliquent pas à cette caisse."
+
+#: pos_next/till_settings/registry.py:864
+msgid "Allow an additional discount"
+msgstr "Autoriser une remise supplémentaire"
+
+#: pos_next/till_settings/registry.py:865
+msgid "The cashier can give a discount on the whole receipt."
+msgstr "Le caissier peut accorder une remise sur tout le reçu."
+
+#: pos_next/till_settings/registry.py:872
+msgid "Allow an item discount"
+msgstr "Autoriser une remise sur article"
+
+#: pos_next/till_settings/registry.py:873
+msgid "The cashier can give a discount on an item of the cart."
+msgstr "Le caissier peut accorder une remise sur un article du panier."
+
+#: pos_next/till_settings/registry.py:880
+msgid "Allow price changes"
+msgstr "Autoriser la modification des prix"
+
+#: pos_next/till_settings/registry.py:881
+msgid "The cashier can change the price of an item in the cart, except when an offer applies to it."
+msgstr "Le caissier peut modifier le prix d'un article du panier, sauf lorsqu'une offre s'y applique."
+
+#: pos_next/till_settings/registry.py:888
+msgid "Discounts in percent"
+msgstr "Remises en pourcentage"
+
+#: pos_next/till_settings/registry.py:889
+msgid "Discounts are entered as a percentage rather than as an amount."
+msgstr "Les remises se saisissent en pourcentage plutôt qu'en montant."
+
+#: pos_next/till_settings/registry.py:896
+msgid "Maximum discount (%)"
+msgstr "Remise maximale (%)"
+
+#: pos_next/till_settings/registry.py:897
+msgid "The largest discount a cashier can give, in percent. 0: no limit."
+msgstr "La plus forte remise qu'un caissier peut accorder, en pourcentage. 0 : pas de limite."
+
+#: pos_next/till_settings/registry.py:906
+msgid "Barcode rules"
+msgstr "Règles de codes-barres"
+
+#: pos_next/till_settings/registry.py:907
+msgid "The rules that read scale barcodes, where the code holds the item and the weight or the price. One line per rule."
+msgstr "Les règles qui lisent les codes-barres à peser, où le code contient l'article et le poids ou le prix. Une ligne par règle."
+
+#: pos_next/till_settings/registry.py:919
+msgid "Allow credit sales"
+msgstr "Autoriser la vente à crédit"
+
+#: pos_next/till_settings/registry.py:920
+msgid "The customer takes the goods and pays later: the sale stays due on the account of the customer."
+msgstr "Le client emporte les marchandises et paie plus tard : la vente reste due sur son compte."
+
+#: pos_next/till_settings/registry.py:929
+msgid "Pay with the credit of the customer"
+msgstr "Payer avec le crédit du client"
+
+#: pos_next/till_settings/registry.py:930
+msgid "The customer pays with the credit on the account (returns, overpayments)."
+msgstr "Le client paie avec le crédit de son compte (retours, trop-perçus)."
+
+#: pos_next/till_settings/registry.py:937
+msgid "Allow partial payment"
+msgstr "Autoriser le paiement partiel"
+
+#: pos_next/till_settings/registry.py:938
+msgid "The customer pays a part now and the rest later."
+msgstr "Le client paie une partie maintenant et le reste plus tard."
+
+#: pos_next/till_settings/registry.py:945
+msgid "Exact amount for card and transfer"
+msgstr "Montant exact pour carte et virement"
+
+#: pos_next/till_settings/registry.py:946
+msgid "Card and transfer pay the exact amount; only cash gives change. Not with credit sales nor partial payment: ticking one of them unticks this one."
+msgstr "La carte et le virement paient le montant exact ; seules les espèces rendent la monnaie. Ni avec la vente à crédit ni avec le paiement partiel : cocher l'une de ces options décoche celle-ci."
+
+#: pos_next/till_settings/registry.py:958
+msgid "Return validity (days)"
+msgstr "Durée de validité des retours (jours)"
+
+#: pos_next/till_settings/registry.py:959
+msgid "The number of days during which a sale can be returned. 0: no limit."
+msgstr "Le nombre de jours pendant lesquels une vente peut être retournée. 0 : pas de limite."
+
+#: pos_next/till_settings/registry.py:967
+msgid "Create sales orders"
+msgstr "Créer des commandes client"
+
+#: pos_next/till_settings/registry.py:968
+msgid "The cashier can turn the cart into a sales order. Shop till only."
+msgstr "Le caissier peut transformer le panier en commande client. Caisse boutique uniquement."
+
+#: pos_next/till_settings/registry.py:976
+msgid "Enable gift cards"
+msgstr "Activer les cartes cadeaux"
+
+#: pos_next/till_settings/registry.py:977
+msgid "The till sells gift cards and takes them as payment."
+msgstr "La caisse vend des cartes cadeaux et les accepte comme moyen de paiement."
+
+#: pos_next/till_settings/registry.py:984
+msgid "Gift card item"
+msgstr "Article carte cadeau"
+
+#: pos_next/till_settings/registry.py:985
+msgid "The item sold when a gift card is sold; its price becomes the value of the card."
+msgstr "L'article vendu lors de la vente d'une carte cadeau ; son prix devient la valeur de la carte."
+
+#: pos_next/till_settings/registry.py:994
+msgid "Keep the rest on the card"
+msgstr "Garder le solde sur la carte"
+
+#: pos_next/till_settings/registry.py:995
+msgid "When the card is worth more than the receipt, the rest stays on the card for next time."
+msgstr "Lorsque la carte vaut plus que le reçu, le reste demeure sur la carte pour une prochaine fois."
