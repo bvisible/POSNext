@@ -131,6 +131,13 @@ product language for Neoffice clients (Suisse romande, vouvoiement). Compiled `f
 so instances do not need `compile-po-to-mo` to serve a translated POS.
 See `docs/Translation-Migration-Guide.md`.
 
+NeoRestau lot 1, task 44 (the printer button of the kitchen's and the runner's cards) appends 15 entries to the end of
+`main.pot` and `fr.po` (the settings of the print button and its words, the two refusals of
+`pos_next/api/kitchen_events.py`); the French is Haiku's. A `.po` cannot carry a comment, so they are recorded here.
+The same task lists three calls in `TABLET_METHODS` (`pos_next/restaurant/devices.py`, marked in place) and names three hooks
+in `pos_next/api/kitchen_events.py` (`pos_next_kitchen_reprint`, `pos_next_kitchen_reprint_status`,
+`pos_next_kitchen_printers`), listened to by the `cloudprnt` app.
+
 ### Images
 
 `pos_next/public/icons/badges/*.svg` (23) and `pos_next/public/icons/badges/png/*.png` (23) — the

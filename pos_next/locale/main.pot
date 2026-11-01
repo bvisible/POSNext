@@ -18219,3 +18219,63 @@ msgstr ""
 
 msgid "Function keys (PC keyboards)"
 msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:80
+msgid "Printing a copy of a ticket"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:83
+msgid "Print button on the kitchen screen"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:83
+msgid "Print button on the runner screen"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:34
+msgid "A printer button beside the ticket's main button prints a copy of it, where its station has a printer."
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:42
+msgid "What prints"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:43
+msgid "The lines of the station on the ticket, or the whole order."
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:45
+msgid "This station's lines"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:46
+msgid "The whole order"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:52
+msgid "Mark it as a copy"
+msgstr ""
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:53
+msgid "COPY and the time at the head of the paper, so that nobody cooks twice."
+msgstr ""
+
+#: POS/src/utils/kitchenCopy.js:122
+msgid "No printer prints for this station"
+msgstr ""
+
+#: POS/src/utils/kitchenCopy.js:125
+msgid "Nothing to print on this ticket"
+msgstr ""
+
+#: POS/src/utils/kitchenCopy.js:111
+msgid "The printer could not be reached"
+msgstr ""
+
+#: pos_next/api/kitchen_events.py:62
+msgid "This is not a screen of the restaurant."
+msgstr ""
+
+#: pos_next/api/kitchen_events.py:131
+msgid "Print job not found"
+msgstr ""

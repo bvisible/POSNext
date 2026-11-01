@@ -18714,3 +18714,63 @@ msgstr "Session du personnel"
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.py
 msgid "Keep staff signed in (days) must be between 0 and {0}"
 msgstr "Garder le personnel connecté (jours) doit être compris entre 0 et {0}"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:80
+msgid "Printing a copy of a ticket"
+msgstr "Impression d'une copie du ticket"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:83
+msgid "Print button on the kitchen screen"
+msgstr "Bouton d'impression sur l'écran cuisine"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:83
+msgid "Print button on the runner screen"
+msgstr "Bouton d'impression sur l'écran du runner"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:34
+msgid "A printer button beside the ticket's main button prints a copy of it, where its station has a printer."
+msgstr "Le bouton imprimante à côté du bouton principal du ticket en imprime une copie, si son poste est équipé d'une imprimante."
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:42
+msgid "What prints"
+msgstr "Ce qui s'imprime"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:43
+msgid "The lines of the station on the ticket, or the whole order."
+msgstr "Les lignes du poste sur ce ticket, ou la commande entière."
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:45
+msgid "This station's lines"
+msgstr "Les lignes de ce poste"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:46
+msgid "The whole order"
+msgstr "Toute la commande"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:52
+msgid "Mark it as a copy"
+msgstr "Le signaler comme copie"
+
+#: POS/src/components/restaurant/PrintCopySettings.vue:53
+msgid "COPY and the time at the head of the paper, so that nobody cooks twice."
+msgstr "COPIE et l'heure en haut du papier, pour que personne ne cuisine deux fois."
+
+#: POS/src/utils/kitchenCopy.js:122
+msgid "No printer prints for this station"
+msgstr "Aucune imprimante n'est associée à ce poste"
+
+#: POS/src/utils/kitchenCopy.js:125
+msgid "Nothing to print on this ticket"
+msgstr "Rien à imprimer sur ce ticket"
+
+#: POS/src/utils/kitchenCopy.js:111
+msgid "The printer could not be reached"
+msgstr "Impossible de joindre l'imprimante"
+
+#: pos_next/api/kitchen_events.py:62
+msgid "This is not a screen of the restaurant."
+msgstr "Cet écran ne fait pas partie des écrans du restaurant."
+
+#: pos_next/api/kitchen_events.py:131
+msgid "Print job not found"
+msgstr "Impression introuvable"

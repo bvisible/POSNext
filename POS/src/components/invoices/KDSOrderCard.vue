@@ -72,10 +72,10 @@
 
 		<!-- Actions -->
 		<!-- //// Neoffice — the main button sits DIRECTLY UNDER the header and never scrolls (task 38a-1, ruling 107): it was at the foot of the card, below the -->
-		<!-- //// dishes, and a long ticket pushed it out of sight. It takes the width, and the 44 px icon of the print button stands at its right when the screen can -->
-		<!-- //// print (task 44 fills it in; `canPrint` is false until then). The buttons are as high as the size chosen says (`--kds-btn-h`), never less than 44 px. -->
+		<!-- //// dishes, and a long ticket pushed it out of sight. It takes the width, and the print button (task 44) stands at its right when the screen can -->
+		<!-- //// print (`canPrint`). The buttons are as high as the size chosen says (`--kds-btn-h`), never less than 44 px. -->
 		<!-- //// Neoffice — dark mode (task 46): the Button's own ink fill turns to bright paper in dark (frappe-ui's `surface-gray-7`) and these buttons forced `text-white` on it: white on near-white, a blank square. `dark:enabled:text-ink-white` gives the Button's own text colour back in dark while it is enabled (a loading button is greyed and keeps the white). Light mode is untouched. -->
-		<div class="flex flex-shrink-0 items-stretch border-b border-gray-100 dark:border-gray-700" :class="fullscreen ? FULLSCREEN_FRAME.actions : 'gap-1.5 px-2 pb-2 pt-0.5'" data-test="ticket-actions">
+		<div class="relative flex flex-shrink-0 items-stretch border-b border-gray-100 dark:border-gray-700" :class="fullscreen ? FULLSCREEN_FRAME.actions : 'gap-1.5 px-2 pb-2 pt-0.5'" data-test="ticket-actions">
 			<!-- //// Neoffice — ONE main button, whose action follows the ticket and its station (task 38a-1, ruling 112): Start on a ticket to start; on a ticket being -->
 			<!-- //// cooked, "Ready" when a runner carries the dishes on and "Deliver" when the cook does (one gesture, no "Ready" between); "Deliver" on a ticket that is -->
 			<!-- //// ready; from the list of what waits at the pass, a call-back to preparation. The first three are the ink button, the others its outline. -->
@@ -115,15 +115,15 @@
 				</div>
 			</div>
 
-			<!-- //// Neoffice — the slot of the print button (task 38a-1, ruling 127): a 44 px square that stands at the right of the main button, drawn only when the screen can print a copy of the ticket (task 44 will wire it; no printing happens here) -->
+			<!-- //// Neoffice — the PRINT BUTTON (task 44, ruling 127): a square on the button height (`--kds-btn-h`) that stands at the right of the main button when the screen can print a copy of the ticket (`canPrint`: the setting is on and the station has a printer). One tap asks the SERVER to print; the button then says where the paper stands as the bill's printer button does (`printState`): a spinner while it is sent and printed, a tick once printed, a warning when the printer is off or it did not come out, and the words in a bubble under it. Not pressable while a copy is on its way. -->
 			<button v-if="canPrint && !showDeliveredConfirm" type="button" data-test="ticket-print"
-				class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"
+				class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 disabled:opacity-70 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"
+				:data-print-state="printState.phase" :disabled="printBusy"
 				:aria-label="__('Print a copy of this ticket')" :title="__('Print a copy of this ticket')"
 				@click.stop="emit('print', order)">
-				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 9V3h12v6M6 14h12v8H6z" />
-				</svg>
+				<PrintCopyIcon :phase="printState.phase" />
 			</button>
+			<PrintCopyBubble v-if="canPrint && !showDeliveredConfirm" :state="printState" />
 
 			<!-- //// Neoffice — the way out of the panel, at the right of the buttons, 56 px square (task 38a-3, ruling 107): a tap outside the panel and Escape close it too (TicketFullScreen) -->
 			<button v-if="fullscreen" type="button" data-test="ticket-close"
@@ -352,6 +352,10 @@ import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
 import { TINT_CLASS, inSections, tintStyle } from "@/utils/ticketFamilies"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
+//// Neoffice — the print button's icon and the words under it (task 44), written once for the kitchen's card and the runner's
+import PrintCopyIcon from "@/components/invoices/PrintCopyIcon.vue"
+import PrintCopyBubble from "@/components/invoices/PrintCopyBubble.vue"
+import { BUSY_PHASES } from "@/utils/kitchenCopy"
 import { DEFAULT_TEXT_SIZE, fullScreenVariables, TEXT_SIZE_KEY } from "@/utils/kitchenTextSize"
 import { kitchenLineCount } from "@/utils/wideTicket"
 
@@ -413,11 +417,15 @@ const props = defineProps({
 		type: String,
 		default: "kitchen",
 	},
-	//// Neoffice — the screen can print a copy of the ticket (task 44, ruling 127): the 44 px print button stands at the right of the
-	//// main button. False until that task wires it, so nothing is drawn.
+	//// Neoffice — the screen can print a copy of the ticket (task 44, ruling 127): the print button stands at the right of the main button. The screen says it
+	//// (the setting is on and the ticket's station has a printer); false, nothing is drawn. `printState` is where the copy stands (utils/kitchenCopy).
 	canPrint: {
 		type: Boolean,
 		default: false,
+	},
+	printState: {
+		type: Object,
+		default: () => ({ phase: "idle", text: "" }),
 	},
 	//// Neoffice — THIS card is the ticket opened full screen over the board, not a card of the board (task 38a-3, ruling 107 layer 3): the board's card renders itself, with this set, inside the
 	//// shell that takes the screen. It is bigger, has an × and lays its dishes out in columns; it has no « +N lines » strip, since nothing is cut.
@@ -428,6 +436,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(["status-updated", "print", "close"])
+//// Neoffice — a copy on its way is not asked for again (task 44)
+const printBusy = computed(() => BUSY_PHASES.includes(props.printState.phase))
 const { showError } = useToast()
 const restaurantStore = useRestaurantStore()
 const loading = ref(false)

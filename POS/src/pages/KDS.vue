@@ -47,6 +47,8 @@
 			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
 			<template #screen>
 				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" @change="setAwakeSetting" />
+				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button, what prints, the COPY mark. Drawn where a station has a printer; with none the choices would change nothing -->
+				<PrintCopySettings v-if="hasCopyPrinters" screen="Kitchen" :settings="copySettings" @change="setCopySetting" />
 			</template>
 			<template #chip>
 				<!-- The switch of the layout moves up to row 1 when row 2 has no chip left to hold it: a screen bound to its station must not pay a row for it -->
@@ -120,6 +122,7 @@
 			<div v-else :class="bandsClass" :data-layout="layout" data-test="bands">
 				<KitchenBand
 					band="waiting"
+					:copy="printCopy"
 					:mode="bandMode"
 					:label="kitchenStatusLabel('Pending')"
 					:empty-text="__('No pending orders')"
@@ -133,6 +136,7 @@
 				/>
 				<KitchenBand
 					band="production"
+					:copy="printCopy"
 					:mode="bandMode"
 					:label="kitchenStatusLabel('Preparing')"
 					:empty-text="__('No orders in preparation')"
@@ -176,6 +180,9 @@ import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
 import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
 import { useScreenAwake } from "@/composables/useScreenAwake"
+//// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoRestau lot 1, task 44)
+import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
+import { usePrintCopy } from "@/composables/usePrintCopy"
 import { ticketCounts } from "@/utils/screenAwake"
 import { splitIntoBands } from "@/utils/kitchenBands"
 //// Neoffice — the kitchen's last action follows the station's runner setting (task 38a-1, ruling 112)
@@ -337,6 +344,9 @@ const {
 	setSetting: setAwakeSetting,
 	noteTickets,
 } = useScreenAwake("kitchen")
+//// Neoffice — the printer button of the tickets (task 44): it prints on the printer of the station the screen is opened on, and is drawn where the setting is on and that station has a printer (the server says which have one)
+const printCopy = usePrintCopy("Kitchen", { station: selectedStation, restaurant: ofTheRestaurant })
+const { settings: copySettings, hasPrinters: hasCopyPrinters, setSetting: setCopySetting } = printCopy
 // The tickets waiting, as the layer says it: the ones in which nothing has begun
 const restLabel = computed(() => {
 	const waiting = bands.value.waiting.length
@@ -466,6 +476,8 @@ onMounted(async () => {
 	// After the stations: a bookmark that names a station alone only knows its restaurant once they have answered
 	loadAreas()
 	loadOrders()
+	//// Neoffice — which stations have a printer, for the printer button of the tickets (task 44)
+	printCopy.refreshPrinters({ force: true })
 
 	// Use the existing frappe.realtime socket (already initialized by main app)
 	socket = window.frappe?.realtime || initSocket()
@@ -482,6 +494,8 @@ onMounted(async () => {
 	// Fallback auto-refresh every 15s in case socket is not connected
 	autoRefreshInterval = setInterval(() => {
 		loadOrders()
+		// Asked again once a minute at most (a printer is plugged in or out while the screen is open)
+		printCopy.refreshPrinters()
 	}, 15000)
 })
 

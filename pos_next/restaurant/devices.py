@@ -87,6 +87,11 @@ TABLET_METHODS = frozenset(
 		"pos_next.api.restaurant.get_runner_orders",
 		"pos_next.api.restaurant.mark_items_delivered",
 		"pos_next.api.restaurant.get_restaurant_settings",
+		# //// Neoffice — the printer button of the kitchen's and the runner's cards (task 44): print a copy, follow it, and
+		# //// which stations have a printer. Each checks the tablet's screen, restaurant and station itself (kitchen_events).
+		"pos_next.api.kitchen_events.print_kitchen_copy",
+		"pos_next.api.kitchen_events.kitchen_copy_status",
+		"pos_next.api.kitchen_events.kitchen_copy_stations",
 		"pos_next.api.restaurant_devices.redeem_pairing_code",
 		# Where its own screen is: asked by a tablet started from its home-screen icon (task 48)
 		"pos_next.api.restaurant_devices.my_screen",

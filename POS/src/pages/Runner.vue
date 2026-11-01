@@ -54,6 +54,8 @@
 			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
 			<template #screen>
 				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" @change="setAwakeSetting" />
+				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button (off on the runner screen unless chosen), what prints, the COPY mark. Drawn where a station has a printer -->
+				<PrintCopySettings v-if="hasCopyPrinters" screen="Runner" :settings="copySettings" @change="setCopySetting" />
 			</template>
 			<template #view>
 				<!-- //// Neoffice — the display modes of THIS screen, named as such (task 38a-2, ruling 132): « By table », « By station », « On the plan ». The last one was « Plan de salle »,
@@ -121,6 +123,9 @@
 					:view-mode="viewMode"
 					:show-station="!selectedStation"
 					:allergy-words="allergyWords"
+					:can-print="printCopy.canPrint(card)"
+					:print-state="printCopy.stateOf(card)"
+					@print="printCopy.print($event)"
 					@delivered="loadOrders"
 				/>
 			</div>
@@ -237,6 +242,9 @@ import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
 import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
 import { useScreenAwake } from "@/composables/useScreenAwake"
+//// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoRestau lot 1, task 44)
+import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
+import { usePrintCopy } from "@/composables/usePrintCopy"
 import { ticketCounts } from "@/utils/screenAwake"
 import { countDishes, countDishesByStation, countDishesOfRoom } from "@/utils/kitchenRunner"
 import { formatTicketNo } from "@/utils/ticketNumber"
@@ -389,6 +397,9 @@ const {
 	setSetting: setAwakeSetting,
 	noteTickets,
 } = useScreenAwake("runner")
+//// Neoffice — the printer button of the tickets (task 44): off on this screen until it is chosen (the carrier has a hand free less than the cook), it prints on the printer of the station the screen is opened on, and is drawn where the setting is on and that station has a printer (the server says which have one). A card of the view by station holds many tables, not one order: it has no button.
+const printCopy = usePrintCopy("Runner", { station: selectedStation, restaurant: ofTheRestaurant })
+const { settings: copySettings, hasPrinters: hasCopyPrinters, setSetting: setCopySetting } = printCopy
 //// Neoffice — the size of the text, the same pick as the kitchen's, kept on the device (task 38a-2, ruling 109)
 const {
 	size: textSize,
@@ -684,6 +695,8 @@ onMounted(async () => {
 	loadAreas()
 	loadStations()
 	loadOrders()
+	//// Neoffice — which stations have a printer, for the printer button of the tickets (task 44)
+	printCopy.refreshPrinters({ force: true })
 	// Use frappe.realtime (receives frappe.publish_realtime events) with fallback to custom socket
 	socket = window.frappe?.realtime || initSocket()
 	if (socket) {
@@ -691,7 +704,11 @@ onMounted(async () => {
 		socket.on("kds_update", () => loadOrders())
 	}
 	// Fallback polling every 30s in case socket is unreliable
-	pollInterval = setInterval(loadOrders, 30000)
+	pollInterval = setInterval(() => {
+		loadOrders()
+		// Asked again once a minute at most (a printer is plugged in or out while the screen is open)
+		printCopy.refreshPrinters()
+	}, 30000)
 })
 
 onUnmounted(() => {

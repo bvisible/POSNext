@@ -62,6 +62,9 @@
 						:refresh="refresh"
 						:room-name="roomNameOf(order)"
 						:use-runner="orderUsesRunner(order, stations, runnerEnabled)"
+						:can-print="!!copy?.canPrint(order)"
+						:print-state="copy?.stateOf(order)"
+						@print="copy?.print($event)"
 					/>
 				</div>
 			</div>
@@ -112,6 +115,8 @@ import { isWideTicket, kitchenLiveLineCount } from "@/utils/wideTicket"
  */
 const props = defineProps({
 	band: { type: String, required: true },
+	//// Neoffice — the printer button of the cards (task 44): what the screen hands (composables/usePrintCopy: `canPrint(order)`, `stateOf(order)`, `print(order)`); none, no card draws a button
+	copy: { type: Object, default: null },
 	mode: { type: String, default: "lane" },
 	label: { type: String, required: true },
 	emptyText: { type: String, required: true },
