@@ -1763,6 +1763,12 @@ def update_invoice(data):
 								already_sent = before and (before.get("kds_status") or "") not in ("", "Waiting")
 								if already_sent:
 									batch = cint(before.get("kds_batch"))
+								elif cint(item_data.get("posa_is_offered")) and (
+									sibling := _sent_row_of_the_dish(stored_lines, item_data)
+								):
+									# //// Neoffice — an offered row split off a line the kitchen already has (« Offert », task 24) is that dish,
+									# //// not a new send: it keeps the send of the line it comes from, so that no ticket of its own is drawn.
+									batch = cint(sibling.get("kds_batch"))
 								else:
 									batch = next_batch if any_sent_before else 0
 								if batch:
@@ -1795,6 +1801,19 @@ def update_invoice(data):
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Update Invoice Error")
 		raise
+
+
+# //// Neoffice — added function (no upstream equivalent). The stored row of the same dish and unit that has already left for the
+# //// kitchen, the first one: where an offered row split off a sent line finds the send it belongs to (task 24).
+def _sent_row_of_the_dish(stored_lines, line):
+	for row in stored_lines:
+		if (
+			row.get("item_code") == line.get("item_code")
+			and (row.get("uom") or "") == (line.get("uom") or "")
+			and (row.get("kds_status") or "") not in ("", "Waiting")
+		):
+			return row
+	return None
 
 
 # //// Neoffice — the helpers of the units cooked and delivered of a restaurant line (kitchen test of 01.11): see cooked_before in update_invoice.
