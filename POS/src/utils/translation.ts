@@ -149,8 +149,17 @@ const getLocale = (): string => {
 	return (
 		(window as any)?.frappe?.boot?.lang?.toLowerCase() ||
 		window.localStorage?.getItem("pos_next_language")?.toLowerCase() ||
+		browserLocale() ||
 		FALLBACK_LOCALE
 	)
+}
+
+//// Neoffice — a guest has neither a boot language nor a choice kept by the device: the page a phone opens from the QR code of a table stayed in English
+//// (« Order Summary », « Send Order ») for a French-speaking guest (Daniel's test, 01.11). The language of the browser stands in, its main part only
+//// (« fr-CH » is « fr »); the server answers the dictionary in the language the request asks for, so a language the app has no words in stays English.
+function browserLocale(): string {
+	const language = typeof navigator === "undefined" ? "" : navigator.language || ""
+	return language.toLowerCase().split(/[-_]/)[0]
 }
 
 /**
@@ -194,8 +203,9 @@ const STAMP_RECHECK_AFTER_MS = 10 * 60 * 1000
 
 let lastCatalogueCheck = 0
 
-async function requestStamp(): Promise<string | null> {
-	const stamp = await call(STAMP_METHOD, {})
+async function requestStamp(locale?: string): Promise<string | null> {
+	//// Neoffice — the dictionary is asked in the language the page decided on (`_lang`, the first thing Frappe reads): a guest has no user whose language the server could read.
+	const stamp = await call(STAMP_METHOD, locale ? { _lang: locale } : {})
 	return typeof stamp === "string" && stamp ? stamp : null
 }
 
@@ -207,13 +217,13 @@ async function requestStamp(): Promise<string | null> {
 async function checkCatalogue(locale: string) {
 	lastCatalogueCheck = Date.now()
 	try {
-		const stamp = await requestStamp()
+		const stamp = await requestStamp(locale)
 		if (!stamp) return
 		const cached = await translationCache.get(locale)
 		if (cached?.stamp === stamp) return
 		const entry = await translationCache.getFresh(
 			locale,
-			() => requestTranslations(),
+			() => requestTranslations(locale),
 			{ force: true, stampOf: () => stamp },
 		)
 		if (entry?.messages) applyMessages(entry.messages)
@@ -236,11 +246,11 @@ function watchCatalogue(locale: () => string) {
  * Fetches translations from Frappe API.
  * @returns Translation dictionary or null on failure
  */
-async function requestTranslations() {
+async function requestTranslations(locale?: string) {
 	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	const messages = await call(
 		"pos_next.api.localization.get_app_translations",
-		{},
+		locale ? { _lang: locale } : {},
 	)
 	return (messages as Messages) || null
 }
@@ -286,8 +296,8 @@ async function loadLocale(locale: string, options: LoadOptions = {}) {
 		target,
 		//// Neoffice — the stamp is asked just before the dictionary, so the two are stored together.
 		async () => {
-			fetchedStamp = await requestStamp().catch(() => null)
-			return requestTranslations()
+			fetchedStamp = await requestStamp(target).catch(() => null)
+			return requestTranslations(target)
 		},
 		{
 			force: forceNetwork,
