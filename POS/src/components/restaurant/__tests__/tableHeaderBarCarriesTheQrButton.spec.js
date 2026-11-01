@@ -187,6 +187,22 @@ describe("the header bar of an open table", () => {
 		expect(backButton().text()).toBe("Back")
 	})
 
+	it("makes Back a button that is seen at a glance: solid ink with white words, an arrow, and a 44 px touch target (Daniel, 01.11)", () => {
+		bar()
+
+		const back = backButton()
+		const classes = back.classes()
+		// the ink of the design system, filled: it must not melt into the bar the way the grey "subtle" button did
+		expect(classes).toEqual(expect.arrayContaining(["bg-[#141414]", "text-white"]))
+		// a finger's size, never smaller than the QR button beside it
+		expect(classes).toEqual(expect.arrayContaining(["min-h-[44px]", "min-w-[44px]", "touch-manipulation"]))
+		expect(classes).toContain("font-semibold")
+		// an arrow says it goes back
+		expect(back.find("svg").exists()).toBe(true)
+		expect(back.attributes("aria-label")).toBe("Back")
+		expect(back.attributes("type")).toBe("button")
+	})
+
 	it("has no QR button when the table cannot show one, and keeps Back", () => {
 		// QR ordering off for the restaurant, or a takeaway ticket (it has no table to scan)
 		bar({ showQr: false })

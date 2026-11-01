@@ -68,15 +68,25 @@
 				</svg>
 				<span>QR</span>
 			</button>
-			<Button variant="subtle" size="sm" @click="emit('back')">
-				{{ __("Back") }}
-			</Button>
+			<!-- //// Neoffice — Back is the way out of the table, and it was frappe-ui's grey "subtle" button on a tinted bar: it melted into it (Daniel, 01.11: « faire le bouton retour plus visible »). It is now the solid ink button of the design system (the one the dialogs' primary action wears), with an arrow, as high as the QR button. -->
+			<button
+				type="button"
+				data-test="table-back-button"
+				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1.5 rounded-[10px] bg-[#141414] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#2B2B2B] active:bg-black"
+				:aria-label="__('Back')"
+				@click="emit('back')"
+			>
+				<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+				</svg>
+				<span>{{ __("Back") }}</span>
+			</button>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { Button, FeatherIcon } from "frappe-ui"
+import { FeatherIcon } from "frappe-ui"
 
 defineProps({
 	// The table's label, or the takeaway ticket's number
