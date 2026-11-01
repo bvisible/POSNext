@@ -63,15 +63,6 @@
 				>
 					{{ mainLabel }}
 				</Button>
-				<!-- //// Neoffice — « Open full screen » on EVERY ticket (kitchen test, 01.11), as on the kitchen's card: the pass reads the ticket it carries in larger text, whether it scrolls or not. -->
-				<button v-if="!fullscreen" type="button" data-test="ticket-expand"
-					class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"
-					:aria-label="__('Open the ticket full screen')" :title="__('Open the ticket full screen')"
-					@click.stop="openFull">
-					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-				</svg>
-				</button>
 				<!-- //// Neoffice — the slot of the print button (task 38a-2, ruling 130): a 44 px square at the right of the main button, drawn only when the screen can print a copy of the ticket (task 44 wires it; no printing happens here) -->
 				<button v-if="canPrint" type="button" data-test="ticket-print"
 					class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"
@@ -169,7 +160,8 @@
 				</button>
 			</div>
 			<!-- //// Neoffice — the strip is the way into the full-screen ticket (task 38a-3, ruling 107 layer 3): a tap on « +N lines » opens the ticket over the board. It is a button now; a dish has no tap of its own here. -->
-			<button v-if="!fullscreen && scrolls" type="button" data-test="ticket-more-strip"
+			<!-- //// Neoffice — the strip stands at the FOOT of EVERY ticket, long or short (kitchen test, 01.11): « View all » opens the ticket full screen in larger text, and « +N lines » says how many dishes are out of sight when there are some. The same on the kitchen, the bar and the pass; the TOP of the card keeps its place for the print button. -->
+			<button v-if="!fullscreen" type="button" data-test="ticket-more-strip"
 				class="flex h-6 w-full flex-shrink-0 touch-manipulation items-center justify-between gap-2 border-t border-gray-100 px-3 active:bg-gray-100 dark:border-gray-700 dark:active:bg-gray-700"
 				@click="openFull">
 				<!-- //// Neoffice — « View all » is on a card that SCROLLS, as on the kitchen's (task 38a-3, ruling 107 layer 3) -->

@@ -255,36 +255,38 @@ describe("« View all » on a card that scrolls", () => {
 		expect(panel()).not.toBeNull()
 	})
 
-	it("is not on a card whose dishes all fit: no strip, no fade, nothing to open", async () => {
+	it("on a card whose dishes all fit: the strip says « View all » with no count, and there is no fade (kitchen test, 01.11)", async () => {
 		layout(400)
 		const kitchenCard = kitchen(5)
 		const runnerCardWrapper = runner(5)
 		await nextTick()
 
 		for (const wrapper of [kitchenCard, runnerCardWrapper]) {
-			expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(
-				false,
-			)
-			expect(wrapper.find('[data-test="ticket-view-all"]').exists()).toBe(false)
+			expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(true)
+			expect(wrapper.find('[data-test="ticket-view-all"]').exists()).toBe(true)
+			expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
 			expect(wrapper.find('[data-test="ticket-more-fade"]').exists()).toBe(
 				false,
 			)
 		}
 	})
 
-	it("comes with the scroll: a card that gains dishes in a refresh gets the strip, one that loses them loses it", async () => {
+	it("the count comes with the scroll: a card that gains dishes in a refresh gets « +N lines », one that loses them loses it; the strip stays (kitchen test, 01.11)", async () => {
 		layout(200)
 		const wrapper = kitchen(3)
 		await nextTick()
-		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
 
 		await wrapper.setProps({ order: kitchenOrder(9) })
 		await nextTick()
 		expect(wrapper.find('[data-test="ticket-view-all"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(true)
 
 		await wrapper.setProps({ order: kitchenOrder(2) })
 		await nextTick()
-		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
 	})
 
 	it("is not on the panel's own body: nothing is cut there, so nothing to view", async () => {

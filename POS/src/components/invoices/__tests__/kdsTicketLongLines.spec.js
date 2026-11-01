@@ -279,13 +279,13 @@ describe("the hint that more dishes follow", () => {
 		expect(fade.classes()).not.toContain("h-14")
 	})
 
-	it("has no strip when nothing follows: the card ends with its dishes", async () => {
+	it("has the strip at its foot even when nothing follows, with « View all » and no count (kitchen test, 01.11)", async () => {
 		layout({ viewport: 400 })
 		const wrapper = show(longOrder(3))
 		await nextTick()
 
 		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
-		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(false)
+		expect(wrapper.get('[data-test="ticket-more-strip"]').text()).toBe("View all")
 	})
 
 	it("sits over the dishes without taking a touch from them: the dish under the fade can still be pressed", async () => {
@@ -697,9 +697,10 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 		)
 
 		expect(badge(wrapper)).toBe("Delivered")
-		// No main button; the « full screen » button stands on every ticket, a delivered one too (kitchen test, 01.11)
+		// No main button, and nothing in the action row: its place is the print button's. The « View all » strip stands at the foot of a delivered ticket too (kitchen test, 01.11)
 		expect(wrapper.find('[data-test="ticket-main"]').exists()).toBe(false)
-		expect(wrapper.find('[data-test="ticket-actions"] button[data-test="ticket-expand"]').exists()).toBe(true)
+		expect(wrapper.find('[data-test="ticket-actions"] button').exists()).toBe(false)
+		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(true)
 	})
 
 	it("moves its look with the press at once, before the server answers: Start turns into Ready and the dishes into Preparing", async () => {

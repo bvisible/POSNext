@@ -121,18 +121,17 @@ afterEach(() => {
 })
 
 describe("opening the runner's ticket full screen", () => {
-	it("is also a button on every ticket, short or long (kitchen test, 01.11)", async () => {
+	it("is also a tap on the foot strip of a SHORT ticket (kitchen test, 01.11)", async () => {
 		const wrapper = show({ card: card(3) })
 		await nextTick()
-		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="ticket-expand"]').exists()).toBe(false)
 
-		const button = wrapper.get('[data-test="ticket-expand"]')
-		expect(button.attributes("aria-label")).toBe("Open the ticket full screen")
-		await button.trigger("click")
+		await wrapper.get('[data-test="ticket-more-strip"]').trigger("click")
 		await nextTick()
 
 		expect(panel()).not.toBeNull()
-		expect(part("ticket-expand")).toBeNull()
+		expect(part("ticket-more-strip")).toBeNull()
 		expect(part("ticket-close")).not.toBeNull()
 	})
 

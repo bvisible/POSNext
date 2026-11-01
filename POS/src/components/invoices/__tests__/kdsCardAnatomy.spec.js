@@ -315,13 +315,14 @@ describe("the print button's slot", () => {
 })
 
 describe("the bottom of the card", () => {
-	it("holds nothing but the dishes: no button, no footer", () => {
+	it("holds the dishes and, at its foot, the « View all » strip and nothing else (kitchen test, 01.11)", () => {
 		const wrapper = show()
 		const root = part(wrapper, "ticket").element
 
 		const last = root.lastElementChild
 		expect(last.getAttribute("data-test")).toBe("ticket-scroll-area")
-		expect(last.querySelector("button")).toBeNull()
+		const buttons = [...last.querySelectorAll("button")]
+		expect(buttons.map((button) => button.getAttribute("data-test"))).toEqual(["ticket-more-strip"])
 	})
 })
 
