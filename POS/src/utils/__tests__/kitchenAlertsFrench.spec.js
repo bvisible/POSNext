@@ -119,28 +119,23 @@ describe("the screens, read in French", () => {
 		window.translatedMessages = { ...catalogue }
 	})
 
-	it("says the section of the till's settings in French, the sounds and the volumes by their French names", async () => {
-		const { default: KitchenAlertsSettings } = await import("@/components/settings/KitchenAlertsSettings.vue")
-		const wrapper = mount(KitchenAlertsSettings, { props: {}, global: { mocks: { __: globalThis.__ } } })
+	it("says the Listen buttons and the settings' labels in French, the sounds and the volumes by their French names", async () => {
+		const { default: KitchenAlertListen } = await import("@/components/settings/KitchenAlertListen.vue")
+		const wrapper = mount(KitchenAlertListen, { props: {}, global: { mocks: { __: globalThis.__ } } })
 		const text = wrapper.text()
 
-		expect(text).toContain("Alertes de la cuisine")
-		expect(text).toContain("Écouter")
-		expect(text).toContain("Son de la suite")
-		expect(text).toContain("Volume des alertes")
-		const sounds = wrapper.findAll("[data-test='sound-next-course'] option").map((option) => option.text())
-		expect(sounds).toEqual(["Aucun", "Cloche", "Double bip", "Carillon", "Gong", "Bip"])
-		const volumes = wrapper.findAll("[data-test='volume'] option").map((option) => option.text())
-		expect(volumes).toEqual(["Faible", "Moyen", "Fort"])
-		// What is stored is the doctype's English word, whatever the language of the screen
-		expect(wrapper.findAll("[data-test='sound-next-course'] option").map((option) => option.element.value)).toEqual([
-			"None",
-			"Bell",
-			"Double beep",
-			"Chime",
-			"Gong",
-			"Beep",
-		])
+		expect(text).toContain("Écouter · Son de la suite")
+		expect(text).toContain("Écouter · Son des plats prêts")
+		// the lines of the settings list carry the English words of the registry (pos_next/till_settings/registry.py) in the user's language
+		for (const key of ["Kitchen alerts", "Popup when the next course is ordered", "Popup stays (seconds)", "Next course sound", "Dishes ready sound", "Alert volume", "Listen to the sounds"]) {
+			expect(catalogue[key], key).toBeTruthy()
+		}
+		for (const [word, french] of [["None", "Aucun"], ["Bell", "Cloche"], ["Double beep", "Double bip"], ["Chime", "Carillon"], ["Gong", "Gong"], ["Beep", "Bip"]]) {
+			expect(catalogue[`${word}:Alert sound`], word).toBe(french)
+		}
+		for (const [word, french] of [["Low", "Faible"], ["Medium", "Moyen"], ["High", "Fort"]]) {
+			expect(catalogue[`${word}:Alert volume`], word).toBe(french)
+		}
 	})
 
 	it("says the notice in the kitchen in French", async () => {

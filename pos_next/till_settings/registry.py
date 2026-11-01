@@ -218,6 +218,8 @@ _GROUPS = (
 	# //// 01.11.2026): added to the list when this task's registry met the setting, which the old settings page had got meanwhile.
 	Group("staff_session", "general", _lt("Staff session"), 1),
 	Group("default_customer", "general", _lt("Customer"), 2),
+	# //// Neoffice — the popup and the sounds of the kitchen and runner screens (NeoRestau lot 1, Daniel, 01.11: « le son doit être dans les réglages de la caisse »)
+	Group("kitchen_alerts", "general", _lt("Kitchen alerts"), 2),
 	Group("customer_display", "general", _lt("Customer display"), 3),
 	# Sale screen
 	Group("items", "sale_screen", _lt("Items"), 1),
@@ -259,6 +261,16 @@ _GROUPS = (
 GROUPS = {group.key: group for group in _GROUPS}
 
 # The labels of the choices of a select or a segmented control; the values are what the document stores
+# The sounds the kitchen and runner screens can play (utils/alertSounds.js is the same list on the screen's side)
+SOUND_OPTIONS = (
+	("None", _lt("None", context="Alert sound")),
+	("Bell", _lt("Bell", context="Alert sound")),
+	("Double beep", _lt("Double beep", context="Alert sound")),
+	("Chime", _lt("Chime", context="Alert sound")),
+	("Gong", _lt("Gong", context="Alert sound")),
+	("Beep", _lt("Beep", context="Alert sound")),
+)
+
 TILES_PER_ROW_AUTOMATIC = "Automatic"
 TILES_PER_ROW_MIN = 3
 TILES_PER_ROW_MAX = 8
@@ -751,6 +763,76 @@ SETTINGS = (
 		"check",
 		doctype=POS_SETTINGS,
 		depends_on=(on("enable_customer_display"), on("enable_customer_display_account_creation")),
+	),
+	# //// Neoffice — the kitchen alerts (NeoRestau lot 1, Daniel, 01.11): a notice on the kitchen screen when the next course of a table is ordered,
+	# //// the sound of that notice and of the runner's dishes ready, and their volume. The tablets read them through `get_restaurant_settings`
+	# //// (pos_next.restaurant.kitchen_alerts); the screen of the till only edits them, with a Listen button for each sound. They are settings of the TILL (the General tab), so a restaurant manager,
+	# //// who sets three till settings only (ruling 63), does not see them: the till's manager does.
+	Setting(
+		"kitchen_next_course_popup",
+		"kitchen_alerts",
+		_lt("Popup when the next course is ordered"),
+		_lt("Show a notice at the top of the kitchen screen when the next course of a table is ordered"),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
+	Setting(
+		"kitchen_popup_seconds",
+		"kitchen_alerts",
+		_lt("Popup stays (seconds)"),
+		_lt("Seconds the notice stays on the kitchen screen. 0 = until somebody dismisses it"),
+		"int",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		depends_on=(on("kitchen_next_course_popup"),),
+		min=0,
+		max=600,
+	),
+	Setting(
+		"kitchen_next_course_sound",
+		"kitchen_alerts",
+		_lt("Next course sound"),
+		_lt("Sound of the kitchen screen when the next course is ordered"),
+		"select",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		options=SOUND_OPTIONS,
+	),
+	Setting(
+		"runner_ready_sound",
+		"kitchen_alerts",
+		_lt("Dishes ready sound"),
+		_lt("Sound of the runner screen when dishes come up ready"),
+		"select",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		options=SOUND_OPTIONS,
+	),
+	Setting(
+		"kitchen_alert_volume",
+		"kitchen_alerts",
+		_lt("Alert volume"),
+		_lt("A tablet plays the sounds once somebody has touched its screen."),
+		"select",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		options=(
+			("Low", _lt("Low", context="Alert volume")),
+			("Medium", _lt("Medium", context="Alert volume")),
+			("High", _lt("High", context="Alert volume")),
+		),
+	),
+	# The Listen buttons of the two sounds, drawn by a component of their own (they play the sound chosen above, at the volume chosen above)
+	Setting(
+		"kitchen_alert_listen",
+		"kitchen_alerts",
+		_lt("Listen to the sounds"),
+		None,
+		"special",
+		store=DEVICE,
+		till=RESTAURANT_TILL,
+		kind=INFO,
 	),
 	# ---------------------------------------------------------------- Sale screen
 	Setting(

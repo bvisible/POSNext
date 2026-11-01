@@ -18473,3 +18473,7 @@ msgstr ""
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 msgid "Beep"
 msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgid "Listen to the sounds"
+msgstr ""

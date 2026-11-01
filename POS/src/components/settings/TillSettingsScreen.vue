@@ -216,6 +216,19 @@
 												</p>
 											</div>
 
+											<!-- //// Neoffice — the Listen buttons of the kitchen alerts: they play the sound and the volume chosen in the lines above (NeoRestau lot 1, Daniel, 01.11) -->
+											<div
+												v-else-if="block.setting.key === 'kitchen_alert_listen'"
+												:class="greyed(block.setting) ? 'opacity-[0.42]' : ''"
+												data-setting="kitchen_alert_listen"
+											>
+												<KitchenAlertListen
+													:next-course-sound="draft.kitchen_next_course_sound"
+													:runner-sound="draft.runner_ready_sound"
+													:volume="draft.kitchen_alert_volume"
+												/>
+											</div>
+
 											<!-- Whether the tip item and account are ready -->
 											<div
 												v-else-if="block.setting.key === 'tip_status'"
@@ -384,6 +397,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { call } from "frappe-ui"
 import CloudPrntTillSettings from "@/components/settings/CloudPrntTillSettings.vue"
 import HelpBulb from "@/components/settings/HelpBulb.vue"
+import KitchenAlertListen from "@/components/settings/KitchenAlertListen.vue"
 import OpeningHoursEditor from "@/components/settings/OpeningHoursEditor.vue"
 import TillSettingField from "@/components/settings/TillSettingField.vue"
 import {
