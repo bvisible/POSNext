@@ -1565,12 +1565,19 @@ def open_table(table_name, pos_profile, customer=None):
 	if existing:
 		# Draft already exists — return it
 		order = existing[0]
+		draft_fields = ["item_code", "item_name", "qty", "rate", "uom", "stock_uom", "conversion_factor",
+			"posa_special_instructions", "preparation_station",
+			"posa_item_modifiers", "kds_status"]
+		# //// Neoffice — the family each line was ordered under (NeoRestau lot 1, service families): the till names the next course
+		# //// from it (« Commander la suite · Desserts »). The draft came back without it, so a table opened on another till, or on a
+		# //// pad, or after a reload, had lines with no course and never offered the next one (Daniel, 01.11). `get_table_order` has
+		# //// always sent it. A site not migrated yet has no column and no family.
+		if frappe.db.has_column("Sales Invoice Item", "service_family"):
+			draft_fields.append("service_family")
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
-			fields=["item_code", "item_name", "qty", "rate", "uom", "stock_uom", "conversion_factor",
-				"posa_special_instructions", "preparation_station",
-				"posa_item_modifiers", "kds_status"]
+			fields=draft_fields,
 		)
 
 		# Exclude TIP items (same filter as get_table_order), the tip item being the profile's restaurant's
