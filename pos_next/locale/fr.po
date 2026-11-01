@@ -20743,3 +20743,6 @@ msgstr "Le ticket d'une table dont la suite est commandée clignote sur l'écran
 
 msgid "{0} to take"
 msgstr "{0} à traiter"
+
+msgid "Guests scan this code to order from their phone."
+msgstr "Les convives scannent ce code pour commander depuis leur téléphone."

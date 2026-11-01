@@ -213,6 +213,8 @@
 import { ref, reactive, computed, watch, onMounted } from "vue"
 import { useReservations } from "@/composables/useReservations"
 import { useToast } from "@/composables/useToast"
+//// Neoffice — reads the server's message out of a refused call
+import { parseError } from "@/utils/errorHandler"
 import ReservationFloorPlan from "./ReservationFloorPlan.vue"
 
 const props = defineProps({
@@ -410,7 +412,9 @@ async function save(force = false) {
 		showSuccess(__("Reservation created"))
 		emit("saved", result)
 	} catch (error) {
-		showError(__("Failed to create reservation"))
+		//// Neoffice — the reason the server gives (« Reservation time 23:00 is outside opening hours for Sunday ») is the message, the generic words only when it said nothing: the person at the till could not tell why a booking was refused
+		const told = error?._server_messages || error?.messages?.length
+		showError((told && parseError(error).message) || __("Failed to create reservation"))
 	} finally {
 		saving.value = false
 	}
