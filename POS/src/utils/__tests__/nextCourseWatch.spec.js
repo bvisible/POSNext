@@ -73,8 +73,30 @@ describe("the next course ordered at a table", () => {
 		expect(memory).not.toBeNull()
 	})
 
-	it("never alerts for a brand-new ticket: an order the last reading did not hold", () => {
-		const { alerts } = reads([starterOnly("A")], [starterOnly("A"), withDesserts("B")])
+	it("never alerts for a brand-new ticket: an order the last reading did not hold, every send of which is newer than anything the screen had seen", () => {
+		// a table that sat down and ordered twice between two readings: both its sends are newer than what the screen knew
+		const fresh = order("B", [
+			dish("Preparing", "2026-11-01 13:00:00.000000", { service_family: "Starter" }),
+			dish("Pending", "2026-11-01 13:05:00.000000", { service_family: "Main" }),
+		])
+		const { alerts } = reads([starterOnly("A")], [starterOnly("A"), fresh])
+
+		expect(alerts).toEqual([])
+	})
+
+	it("is noticed for a ticket the screen did not hold because everything sent was delivered and the next course was held: it comes back with a newer send (Daniel, 01.11)", () => {
+		// The server leaves an order out of the kitchen's list while none of its dishes is still to cook (all delivered, the rest held back): the order
+		// reappears when the waiter orders the next course, with its earlier sends in the past and a send newer than anything the screen knew
+		const other = order("X", [dish("Preparing", MAINS, { service_family: "Main" })])
+		const { alerts } = reads([other], [other, withDesserts("A")])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0]).toMatchObject({ order: "A", table: "Table A", families: ["Dessert"] })
+	})
+
+	it("says nothing of a ticket that comes back with no send newer than what the screen had seen", () => {
+		const recent = order("X", [dish("Preparing", DESSERTS, { service_family: "Dessert" })])
+		const { alerts } = reads([recent], [recent, withDesserts("A", MAINS)])
 
 		expect(alerts).toEqual([])
 	})
@@ -121,8 +143,15 @@ describe("the next course ordered at a table", () => {
 		expect(JSON.stringify([...memory.orders])).toBe(before)
 	})
 
-	it("forgets an order that left the screen: when it comes back it is a new ticket", () => {
+	it("remembers what the screen saw when an order leaves it: the order that comes back with a newer send is the next course", () => {
 		const { alerts } = reads([starterOnly()], [], [withDesserts()])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0].order).toBe("A")
+	})
+
+	it("does not alert for an order that comes back with the same send it left with", () => {
+		const { alerts } = reads([withDesserts()], [], [withDesserts()])
 
 		expect(alerts).toEqual([])
 	})

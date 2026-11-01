@@ -51,6 +51,23 @@ export function latestSendAt(lines) {
 }
 
 /**
+ * The moment the first of the dishes that left for the kitchen was sent, in milliseconds, or NaN when no dish says it: a ticket with an earlier send than its latest one has had a course
+ * before (utils/nextCourseWatch).
+ *
+ * @param {Array<Object>} lines - The dishes of the ticket (`kds_status`, `kds_sent_at`)
+ * @returns {number}
+ */
+export function earliestSendAt(lines) {
+	let earliest = Number.POSITIVE_INFINITY
+	for (const line of lines || []) {
+		if (HELD.has(line?.kds_status || "")) continue
+		const sent = timeOf(line?.kds_sent_at)
+		if (!Number.isNaN(sent) && sent < earliest) earliest = sent
+	}
+	return Number.isFinite(earliest) ? earliest : Number.NaN
+}
+
+/**
  * The dishes that left in the most recent send: the ones stamped with that very instant (every dish that leaves in one save takes the time of the save).
  *
  * @param {Array<Object>} lines - The dishes of the ticket (`kds_status`, `kds_sent_at`)
