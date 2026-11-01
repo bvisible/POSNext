@@ -20626,3 +20626,88 @@ msgstr "Suite commandée"
 #: POS/src/components/sale/InvoiceCart.vue
 msgid "Fold delivered courses"
 msgstr "Replier les services livrés"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} — the guest is ordering"
+msgstr "{0} — le client commande"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} — order to validate"
+msgstr "{0} — commande à valider"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} — {1} orders to validate"
+msgstr "{0} — {1} commandes à valider"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} — the guest has paid"
+msgstr "{0} — le client a payé"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} — the guest has paid part of the bill"
+msgstr "{0} — le client a payé une partie de l'addition"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "{0} × {1}"
+msgstr "{0} × {1}"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "Table {0}"
+msgstr "Table {0}"
+
+#: POS/src/components/restaurant/FloorNotices.vue
+msgid "View table"
+msgstr "Voir la table"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertListen.vue
+#: pos_next/till_settings/registry.py
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Guest order sound"
+msgstr "Son de la commande du client"
+
+#: POS/src/composables/useSeeFloorNotice.js
+msgid "Send or finish the order in progress before opening another table"
+msgstr "Envoyez ou terminez la commande en cours avant d'ouvrir une autre table"
+
+#: POS/src/composables/useSeeFloorNotice.js
+msgid "This table could not be found"
+msgstr "Cette table est introuvable"
+
+#: POS/src/composables/useSeeFloorNotice.js
+msgid "This table could not be opened"
+msgstr "Impossible d'ouvrir cette table"
+
+#. Label of a Section Break field in DocType 'POS Settings'
+#: pos_next/till_settings/registry.py
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Floor alerts"
+msgstr "Alertes de la salle"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: pos_next/till_settings/registry.py
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Popup when a guest orders"
+msgstr "Notification quand un client commande"
+
+#. Description of a Check field in DocType 'POS Settings'
+#: pos_next/till_settings/registry.py
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Show a notice at the top of the till when a guest orders or pays from the QR code of a table"
+msgstr "Afficher un message en haut de l'écran de la caisse quand un client commande ou paie depuis le code QR d'une table"
+
+#. Description of a Int field in DocType 'POS Settings'
+#: pos_next/till_settings/registry.py
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Seconds the notice stays on the till. 0 = until somebody dismisses it. An order waiting for the waiter to validate it always stays until it is handled or dismissed"
+msgstr "Nombre de secondes pendant lesquelles le message reste à l'écran de la caisse. 0 = jusqu'à ce qu'on le ferme. Une commande en attente de validation par le personnel reste toujours affichée jusqu'à ce qu'elle soit traitée ou fermée"
+
+#. Description of a Select field in DocType 'POS Settings'
+#: pos_next/till_settings/registry.py
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Sound of the till when a guest orders or pays from the QR code of a table. It plays at the alert volume set above"
+msgstr "Son de la caisse quand un client commande ou paie depuis le code QR d'une table. Il se joue au volume des alertes réglé ci-dessus"
+
+#: pos_next/till_settings/registry.py
+msgid "Listen to the sound"
+msgstr "Écouter le son"
