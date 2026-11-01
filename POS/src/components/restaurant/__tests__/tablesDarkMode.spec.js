@@ -242,10 +242,10 @@ describe("the list of tables in dark mode (smoke-test fix)", () => {
 		)
 		// The state word of a free row, a cleaning row
 		expect(
-			split(rows[0].get('[data-test="open-table"] span:nth-child(2)')).dark,
+			split(rows[0].get('[data-test="open-table"] > span:nth-child(2)')).dark,
 		).toEqual(["dark:text-ds-success"])
 		expect(
-			split(rows[1].get('[data-test="open-table"] span:nth-child(2)')).dark,
+			split(rows[1].get('[data-test="open-table"] > span:nth-child(2)')).dark,
 		).toEqual(["dark:text-ds-sand-300"])
 
 		const bar = wrapper.get('[data-test="tables-bar"]')

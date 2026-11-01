@@ -17,8 +17,11 @@
 			@click="$emit('open', entry.table)"
 		>
 			<span class="flex items-center justify-between gap-2 w-full">
-				<span data-test="card-title" class="text-[18px] font-bold leading-tight text-[#141414] dark:text-ds-paper truncate">
-					{{ entry.title }}
+				<span class="flex min-w-0 items-baseline gap-1.5">
+					<span v-if="roomCode" data-test="table-room" :class="ROOM_CHIP">{{ roomCode }}</span>
+					<span data-test="card-title" class="text-[18px] font-bold leading-tight text-[#141414] dark:text-ds-paper truncate">
+						{{ entry.title }}
+					</span>
 				</span>{{ " " }}<span data-test="badge" class="shrink-0 text-[13px] leading-[18px] whitespace-nowrap" :class="badgeClass">
 					{{ entry.badge.text }}
 				</span>
@@ -48,6 +51,7 @@ import { formatCurrency } from "@/utils/currency"
 import {
 	ICON_QR,
 	BADGE_CLASSES,
+	ROOM_CHIP,
 	durationOf,
 } from "@/components/restaurant/tablesListLook"
 
@@ -58,6 +62,8 @@ const props = defineProps({
 	// The restaurant takes QR orders (the button is shown only then)
 	qrEnabled: { type: Boolean, default: false },
 	currency: { type: String, default: "CHF" },
+	// The short code of the table's room (« S01 »): none, no chip
+	roomCode: { type: String, default: "" },
 })
 defineEmits(["open", "qr"])
 

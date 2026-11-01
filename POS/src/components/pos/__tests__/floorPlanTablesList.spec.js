@@ -306,7 +306,8 @@ describe("on a phone the tables open on the list", () => {
 			wrapper
 				.findAll('[data-test="table-row"]')
 				.map((row) => row.text().replace(/\s+/g, " ")),
-		).toEqual(["Table 3 Empty", "Table 4 Cleaning"])
+		// Each row opens with the code of its room (kitchen test, 01.11)
+		).toEqual(["R01Table 3 Empty", "R01Table 4 Cleaning"])
 	})
 
 	it("shows a room's tables under its chip, and every table under « All »", async () => {

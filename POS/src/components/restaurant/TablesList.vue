@@ -47,6 +47,7 @@
 				:entry="entry"
 				:qr-enabled="qrEnabled"
 				:currency="currency"
+				:room-code="roomCodeOf(entry)"
 				@open="(table) => $emit('open-table', table)"
 				@qr="(table) => $emit('show-qr', table)"
 			/>
@@ -90,7 +91,10 @@
 						:class="qrEnabled && entry.qr ? 'pe-1' : 'pe-[14px]'"
 						@click="$emit('open-table', entry.table)"
 					>
-						<span class="text-[16px] font-semibold truncate">{{ entry.title }}</span>{{ " " }}<span class="shrink-0 text-[13px]" :class="ROW_STATE_CLASSES[entry.tier] || 'text-[#6F665A] dark:text-ds-sand-300'">
+						<span class="flex min-w-0 items-baseline gap-1.5">
+							<span v-if="roomCodeOf(entry)" data-test="table-room" :class="ROOM_CHIP">{{ roomCodeOf(entry) }}</span>
+							<span class="text-[16px] font-semibold truncate">{{ entry.title }}</span>
+						</span>{{ " " }}<span class="shrink-0 text-[13px]" :class="ROW_STATE_CLASSES[entry.tier] || 'text-[#6F665A] dark:text-ds-sand-300'">
 							{{ entry.badge.text }}
 						</span>
 					</button>
@@ -182,8 +186,10 @@ import {
 	LATE_CLASS,
 	LIST_FONT,
 	ROW_STATE_CLASSES,
+	ROOM_CHIP,
 } from "@/components/restaurant/tablesListLook"
 import { ALL_ROOMS } from "@/utils/tablesOfTheService"
+import { roomCode } from "@/utils/kitchenRoomCode"
 
 const props = defineProps({
 	// What tablesOfTheService() answers: the room shown, the rooms, the count of « All », the busy tables, the
@@ -211,6 +217,15 @@ const CHIP_ON =
 	"bg-[#141414] text-[#FFFDF8] border border-[#141414] dark:bg-ds-paper dark:text-ds-ink dark:border-ds-paper"
 const CHIP_OFF =
 	"border border-[#DCD4C7] text-[#524B41] bg-transparent dark:border-[rgba(255,251,245,0.24)] dark:text-ds-sand-300"
+//// Neoffice — the room of a table, as a short code (kitchen test, 01.11): the code the server tells (the one typed on the room, else made from its name), else the one the room's
+//// name gives; none when the room is not known. The same code as the kitchen's tickets (utils/kitchenRoomCode).
+const roomNames = computed(() => new Map((props.model.rooms || []).map((room) => [room.name, room.label])))
+function roomCodeOf(entry) {
+	const table = entry?.table
+	if (!table) return ""
+	return table.area_code || roomCode(roomNames.value.get(table.area))
+}
+
 const SECTION =
 	"col-span-full mt-1.5 text-[12px] uppercase tracking-[0.06em] text-[#6F665A] dark:text-ds-sand-300"
 // The mockup's bar: 48 px, ink outline, Karla 600 15 px

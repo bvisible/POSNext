@@ -286,6 +286,37 @@ describe("the list of tables", () => {
 	})
 })
 
+describe("the room of each table (kitchen test, 01.11)", () => {
+	const ROOMS = [
+		{ name: "r1", label: "Salle 1" },
+		{ name: "r2", label: "Terrasse" },
+	]
+
+	it("is a small chip before the name of each card and each row: the code of the room, so that a list of every room says where a table is", () => {
+		list({ model: model({ rooms: ROOMS }) })
+
+		const chips = wrapper.findAll('[data-test="table-room"]').map((chip) => chip.text())
+		// The two cards and the two rows are all of the first room (« Salle 1 » is S01)
+		expect(chips).toEqual(["S01", "S01", "S01", "S01"])
+		const first = wrapper.get('[data-test="table-card"]').html()
+		expect(first.indexOf('data-test="table-room"')).toBeLessThan(first.indexOf('data-test="card-title"'))
+	})
+
+	it("is the code the server tells when it tells one, else the one the name of the room gives", () => {
+		const told = card({ ...T5, area: "r2", area_code: "VER" }, "occupied", { text: "Occupied", tone: "neutral" })
+		const derived = card({ ...T2, area: "r2" }, "occupied", { text: "Occupied", tone: "neutral" })
+		list({ model: model({ rooms: ROOMS, busy: [told, derived], others: [] }) })
+
+		expect(wrapper.findAll('[data-test="table-room"]').map((chip) => chip.text())).toEqual(["VER", "TER"])
+	})
+
+	it("draws nothing for a table whose room nobody knows", () => {
+		list({ model: model({ rooms: [] }) })
+
+		expect(wrapper.find('[data-test="table-room"]').exists()).toBe(false)
+	})
+})
+
 describe("the bar at the bottom of a phone's list", () => {
 	const bar = () => wrapper.find('[data-test="tables-bar"]')
 

@@ -32,6 +32,11 @@ export const ROW_STATE_CLASSES = {
 	reserved: "text-[#92610C] dark:text-ds-warning",
 }
 
+//// Neoffice — the room's chip before the name of a table (kitchen test, 01.11): « S01 », as the kitchen's tickets draw it, so that a list of every room
+//// says where a table is. The paper ramp of the list, with its dark counterpart.
+export const ROOM_CHIP =
+	"shrink-0 rounded-md bg-[#F6F3ED] px-1.5 text-[11px] font-semibold leading-[18px] tracking-wide text-[#6F665A] dark:bg-[rgba(255,251,245,0.10)] dark:text-ds-sand-300"
+
 // A booking whose guests are late: the warning token's text (--amber-700)
 export const LATE_CLASS = "text-[#92610C] font-semibold dark:text-ds-warning"
 
