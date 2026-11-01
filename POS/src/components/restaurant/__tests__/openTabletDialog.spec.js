@@ -69,7 +69,8 @@ let opened = []
 
 function answer(method, params) {
 	if (method === "pos_next.api.restaurant.get_preparation_stations") return STATIONS
-	if (method === `${API}.get_devices`) return tablets
+	// A real answer is a new list every time
+	if (method === `${API}.get_devices`) return tablets.map((tablet) => ({ ...tablet }))
 	if (method === `${API}.create_pairing_code`) {
 		return { url: URL_OF_THE_CODE, expires_in: 300, screen: params.screen, station: params.station }
 	}
@@ -234,6 +235,89 @@ describe("opening a tablet at the till", () => {
 
 		expect(asked(`${API}.disconnect_device`)).toEqual([{ device: "dev-1" }])
 		expect(wrapper.get("[data-test=tablet-dev-1]").text()).toContain("Disconnected")
+	})
+
+	it("keeps the list of tablets current while it is open, with no code on screen", async () => {
+		vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] })
+		const wrapper = open()
+		await flushPromises()
+		expect(wrapper.get("[data-test=tablet-dev-2]").text()).toContain("Disconnected")
+
+		// The runner's tablet scans a code made by another till, and the grill's one is disconnected there
+		tablets[0] = { ...tablets[0], disconnected: true, sessions: 0 }
+		tablets[1] = { ...tablets[1], disconnected: false, sessions: 1, last_seen: "2026-10-30 21:50:00" }
+		await vi.advanceTimersByTimeAsync(3_000)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test=tablet-dev-1]").text()).toContain("Disconnected")
+		expect(wrapper.find("[data-test=disconnect-dev-1]").exists()).toBe(false)
+		const runner = wrapper.get("[data-test=tablet-dev-2]").text()
+		expect(runner).not.toContain("Disconnected")
+		expect(wrapper.get("[data-test=open-on-dev-2]").text()).toBe("Open on 1 tablet")
+		expect(runner).toContain("Last seen: date of 2026-10-30 21:50:00")
+	})
+
+	it("goes on following the tablets once the one it waited for has opened", async () => {
+		vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] })
+		const wrapper = open()
+		await flushPromises()
+		await wrapper.get("[data-test=screen-kitchen-st-grill]").trigger("click")
+		await flushPromises()
+		tablets[0] = { ...tablets[0], paired_at: "2026-10-30 21:40:00" }
+		await vi.advanceTimersByTimeAsync(3_000)
+		await flushPromises()
+		expect(wrapper.get("[data-test=pairing-done]").exists()).toBe(true)
+
+		// The tablet opened with a session, then a second tablet opens the same screen
+		tablets[0] = { ...tablets[0], sessions: 3 }
+		await vi.advanceTimersByTimeAsync(3_000)
+		await flushPromises()
+
+		expect(wrapper.get("[data-test=open-on-dev-1]").text()).toBe("Open on 3 tablets")
+	})
+
+	it("stops looking at the tablets when it closes, and looks at once when it opens again", async () => {
+		vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] })
+		const wrapper = open()
+		await flushPromises()
+
+		await wrapper.setProps({ modelValue: false })
+		await flushPromises()
+		const whileClosed = asked(`${API}.get_devices`).length
+		await vi.advanceTimersByTimeAsync(30_000)
+		expect(asked(`${API}.get_devices`)).toHaveLength(whileClosed)
+
+		tablets[1] = { ...tablets[1], disconnected: false, sessions: 1 }
+		await wrapper.setProps({ modelValue: true })
+		await flushPromises()
+		expect(asked(`${API}.get_devices`)).toHaveLength(whileClosed + 1)
+		expect(wrapper.get("[data-test=open-on-dev-2]").text()).toBe("Open on 1 tablet")
+
+		wrapper.unmount()
+		opened = opened.filter((one) => one !== wrapper)
+		const afterUnmount = asked(`${API}.get_devices`).length
+		await vi.advanceTimersByTimeAsync(30_000)
+		expect(asked(`${API}.get_devices`)).toHaveLength(afterUnmount)
+	})
+
+	it("does not ask again while the last answer is still on its way", async () => {
+		vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] })
+		let release
+		const wrapper = open()
+		await flushPromises()
+		const before = asked(`${API}.get_devices`).length
+		call.mockImplementation(async (method, params) => {
+			if (method === `${API}.get_devices`) await new Promise((resolve) => (release = resolve))
+			return answer(method, params)
+		})
+
+		await vi.advanceTimersByTimeAsync(3_000)
+		await vi.advanceTimersByTimeAsync(3_000)
+		await vi.advanceTimersByTimeAsync(3_000)
+		expect(asked(`${API}.get_devices`)).toHaveLength(before + 1)
+		release()
+		await flushPromises()
+		expect(wrapper.exists()).toBe(true)
 	})
 
 	it("says so when the server refuses a code", async () => {

@@ -3,7 +3,9 @@
 	<!-- //// (NeoRestau lot 1, task 16): the manager chooses the screen, the till shows a one-time QR code with the -->
 	<!-- //// time it stays valid, the tablet scans it and opens with an account of its own, no password typed. Beside -->
 	<!-- //// it, the restaurant's tablets, each with who paired it, when it was last seen, on how many tablets it is -->
-	<!-- //// open, and « Disconnect ». Closing it retires the tokens it made that no tablet used. The server decides -->
+	<!-- //// open, and « Disconnect ». The list follows the tablets for as long as the dialog is open (every few seconds, a -->
+	<!-- //// code on screen or not): nothing tells the till that a tablet opened or was disconnected from another till. -->
+	<!-- //// Closing it retires the tokens it made that no tablet used. The server decides -->
 	<!-- //// who may do any of it (pos_next.api.restaurant_devices). -->
 	<Dialog v-model="show" :options="{ title: __('Open a tablet'), size: '3xl' }">
 		<template #body-content>
@@ -140,8 +142,9 @@ import { useToast } from "@/composables/useToast"
 import { formatDateTime, formatTime } from "@/utils/currency"
 
 const API = "pos_next.api.restaurant_devices"
-// While a code is shown, the till looks every few seconds whether its tablet has opened
-const WATCH_EVERY = 4000
+// While the dialog is open, the till looks every few seconds at its tablets: one that opens, one that is disconnected
+// from another till, the time it was last seen. Nothing tells the dialog, so it has to ask.
+const REFRESH_EVERY = 3000
 
 const props = defineProps({
 	modelValue: { type: Boolean, default: false },
@@ -164,7 +167,9 @@ const secondsLeft = ref(0)
 const opened = ref(false)
 const confirming = ref(null)
 let countdown = null
-let watcher = null
+let refresher = null
+// The list asked for and not answered yet: the next look waits for it
+let looking = false
 // Whether this dialog made a token since it opened (retired when it closes)
 let madeOne = false
 // When each tablet of the chosen screen was paired, as the list said when the code was made
@@ -213,11 +218,14 @@ function sameScreen(tablet, choice) {
 	return tablet.screen === choice.screen && (tablet.station || null) === (choice.station || null)
 }
 
-function stopTimers() {
+function stopCountdown() {
 	clearInterval(countdown)
-	clearInterval(watcher)
 	countdown = null
-	watcher = null
+}
+
+function stopRefreshing() {
+	clearInterval(refresher)
+	refresher = null
 }
 
 async function loadTablets() {
@@ -239,7 +247,7 @@ async function loadStations() {
 
 /** A new code for the screen chosen, shown as a QR code with the time it stays valid. */
 async function choose(choice) {
-	stopTimers()
+	stopCountdown()
 	chosen.value = choice
 	code.value = null
 	opened.value = false
@@ -263,9 +271,8 @@ async function choose(choice) {
 		secondsLeft.value = made.expires_in
 		countdown = setInterval(() => {
 			secondsLeft.value -= 1
-			if (secondsLeft.value <= 0) stopTimers()
+			if (secondsLeft.value <= 0) stopCountdown()
 		}, 1000)
-		watcher = setInterval(watchTheTablet, WATCH_EVERY)
 	} catch (error) {
 		console.error("Failed to create a pairing code:", error)
 		showError(__("Could not create a code."))
@@ -273,18 +280,35 @@ async function choose(choice) {
 }
 
 /** The tablet of the chosen screen has opened when the list shows it paired since the code was made. */
-async function watchTheTablet() {
-	await loadTablets()
+function noticeThePairing() {
 	const choice = chosen.value
 	if (!choice || !code.value) return
 	const paired = tablets.value.some(
 		(tablet) => sameScreen(tablet, choice) && !tablet.disconnected && tablet.paired_at !== pairedBefore?.[tablet.name],
 	)
 	if (paired) {
-		stopTimers()
+		stopCountdown()
 		code.value = null
 		opened.value = true
 	}
+}
+
+/** One look at the tablets, then at whether the one waited for has opened. A look is not made on top of one still running. */
+async function look() {
+	if (looking) return
+	looking = true
+	try {
+		await loadTablets()
+		noticeThePairing()
+	} finally {
+		looking = false
+	}
+}
+
+/** The list follows the tablets for as long as the dialog is open, with a code on screen or not. */
+function startRefreshing() {
+	look()
+	if (!refresher) refresher = setInterval(look, REFRESH_EVERY)
 }
 
 async function disconnect(tablet) {
@@ -303,7 +327,7 @@ async function disconnect(tablet) {
  * on a screen must not open a tablet later. The server retires its maker's unused tokens of the restaurant.
  */
 function retireTheTokens() {
-	stopTimers()
+	stopCountdown()
 	if (!madeOne) return
 	madeOne = false
 	call(`${API}.retire_pairing_codes`, ofTheRestaurant()).catch((error) => {
@@ -312,12 +336,18 @@ function retireTheTokens() {
 }
 
 watch(show, (open) => {
-	if (!open) retireTheTokens()
+	if (open) return startRefreshing()
+	stopRefreshing()
+	retireTheTokens()
 })
 
 onMounted(() => {
 	loadStations()
-	loadTablets()
+	if (show.value) startRefreshing()
+	else loadTablets()
 })
-onUnmounted(retireTheTokens)
+onUnmounted(() => {
+	stopRefreshing()
+	retireTheTokens()
+})
 </script>
