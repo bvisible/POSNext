@@ -18307,3 +18307,169 @@ msgstr ""
 #: pos_next/api/table_qr_ticket.py:120
 msgid "Too many tickets in a minute: wait a moment before printing another"
 msgstr ""
+
+#. Label of a Section Break field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Kitchen alerts"
+msgstr ""
+
+#. Label of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Popup when the next course is ordered"
+msgstr ""
+
+#. Description of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Show a notice at the top of the kitchen screen when the next course of a table is ordered"
+msgstr ""
+
+#. Label of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Popup stays (seconds)"
+msgstr ""
+
+#. Description of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Seconds the notice stays on the kitchen screen. 0 = until somebody dismisses it"
+msgstr ""
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Next course sound"
+msgstr ""
+
+#. Description of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Sound of the kitchen screen when the next course is ordered"
+msgstr ""
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Dishes ready sound"
+msgstr ""
+
+#. Description of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Sound of the runner screen when dishes come up ready"
+msgstr ""
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Alert volume"
+msgstr ""
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "Listen"
+msgstr ""
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "Listen to the sound: {0}"
+msgstr ""
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "A tablet plays the sounds once somebody has touched its screen."
+msgstr ""
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "This browser cannot play the sound."
+msgstr ""
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "{0} — the next course is ordered: {1}"
+msgstr ""
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "{0} — the next course is ordered"
+msgstr ""
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "Dismiss: {0}"
+msgstr ""
+
+#: POS/src/components/restaurant/SoundUnlockChip.vue
+msgid "Touch the screen to enable the sound"
+msgstr ""
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py
+msgid "Popup stays (seconds) must be between 0 and {0}"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "None"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Bell"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Double beep"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Chime"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Gong"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Beep"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert volume"
+msgid "Low"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert volume"
+msgid "Medium"
+msgstr ""
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert volume"
+msgid "High"
+msgstr ""
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Bell"
+msgstr ""
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Double beep"
+msgstr ""
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Chime"
+msgstr ""
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Gong"
+msgstr ""
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Beep"
+msgstr ""

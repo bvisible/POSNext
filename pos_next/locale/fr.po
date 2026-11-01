@@ -20379,3 +20379,170 @@ msgstr "Garder le solde sur la carte"
 #: pos_next/till_settings/registry.py:995
 msgid "When the card is worth more than the receipt, the rest stays on the card for next time."
 msgstr "Lorsque la carte vaut plus que le reçu, le reste demeure sur la carte pour une prochaine fois."
+
+# //// Neoffice — the kitchen alerts of the till's settings (popup and sound when the next course is ordered, the runner's sound; NeoRestau lot 1, Daniel, 01.11.2026)
+#. Label of a Section Break field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Kitchen alerts"
+msgstr "Alertes de la cuisine"
+
+#. Label of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Popup when the next course is ordered"
+msgstr "Notification quand la suite est commandée"
+
+#. Description of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Show a notice at the top of the kitchen screen when the next course of a table is ordered"
+msgstr "Afficher un message en haut de l'écran de la cuisine quand la suite d'une table est commandée"
+
+#. Label of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Popup stays (seconds)"
+msgstr "Durée d'affichage (secondes)"
+
+#. Description of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Seconds the notice stays on the kitchen screen. 0 = until somebody dismisses it"
+msgstr "Nombre de secondes pendant lesquelles le message reste à l'écran de la cuisine. 0 = jusqu'à ce qu'on le ferme"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Next course sound"
+msgstr "Son de la suite"
+
+#. Description of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Sound of the kitchen screen when the next course is ordered"
+msgstr "Son de l'écran de la cuisine quand la suite est commandée"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Dishes ready sound"
+msgstr "Son des plats prêts"
+
+#. Description of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Sound of the runner screen when dishes come up ready"
+msgstr "Son de l'écran du runner quand des plats sont prêts"
+
+#. Label of a Select field in DocType 'POS Settings'
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Alert volume"
+msgstr "Volume des alertes"
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "Listen"
+msgstr "Écouter"
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "Listen to the sound: {0}"
+msgstr "Écouter le son : {0}"
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "A tablet plays the sounds once somebody has touched its screen."
+msgstr "Une tablette ne joue les sons qu'une fois son écran touché."
+
+#: POS/src/components/settings/KitchenAlertsSettings.vue
+msgid "This browser cannot play the sound."
+msgstr "Ce navigateur ne peut pas lire le son."
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "{0} — the next course is ordered: {1}"
+msgstr "{0} — la suite est commandée : {1}"
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "{0} — the next course is ordered"
+msgstr "{0} — la suite est commandée"
+
+#: POS/src/components/restaurant/NextCourseNotices.vue
+msgid "Dismiss: {0}"
+msgstr "Fermer : {0}"
+
+#: POS/src/components/restaurant/SoundUnlockChip.vue
+msgid "Touch the screen to enable the sound"
+msgstr "Touchez l'écran pour activer le son"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py
+msgid "Popup stays (seconds) must be between 0 and {0}"
+msgstr "La durée d'affichage (secondes) doit être comprise entre 0 et {0}"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "None"
+msgstr "Aucun"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Bell"
+msgstr "Cloche"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Double beep"
+msgstr "Double bip"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Chime"
+msgstr "Carillon"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Gong"
+msgstr "Gong"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert sound"
+msgid "Beep"
+msgstr "Bip"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert volume"
+msgid "Low"
+msgstr "Faible"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert volume"
+msgid "Medium"
+msgstr "Moyen"
+
+#: POS/src/utils/alertSounds.js
+msgctxt "Alert volume"
+msgid "High"
+msgstr "Fort"
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Bell"
+msgstr "Cloche"
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Double beep"
+msgstr "Double bip"
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Chime"
+msgstr "Carillon"
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Gong"
+msgstr "Gong"
+
+#. Option for a Select field in DocType 'POS Settings'
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Beep"
+msgstr "Bip"
