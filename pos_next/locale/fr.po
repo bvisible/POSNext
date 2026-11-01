@@ -18693,3 +18693,24 @@ msgstr "La couleur des plats de cette catégorie sur les tickets de la cuisine e
 msgctxt "Kitchen send number"
 msgid "Send"
 msgstr "Envoi"
+
+# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoRestau lot 1, product owner, 01.11.2026)
+#. Label of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/POSSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Keep staff signed in (days)"
+msgstr "Garder le personnel connecté (jours)"
+
+#. Description of a Int field in DocType 'POS Settings'
+#: POS/src/components/settings/POSSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "0 = the site's session length. The session stays open while the device is used within this time."
+msgstr "0 = durée de session du site. La session reste ouverte tant que l'appareil sert dans ce délai."
+
+#: POS/src/components/settings/POSSettings.vue
+msgid "Staff session"
+msgstr "Session du personnel"
+
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.py
+msgid "Keep staff signed in (days) must be between 0 and {0}"
+msgstr "Garder le personnel connecté (jours) doit être compris entre 0 et {0}"

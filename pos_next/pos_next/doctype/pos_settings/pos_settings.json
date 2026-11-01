@@ -96,6 +96,7 @@
   "section_break_security",
   "enable_session_lock",
   "session_lock_timeout",
+  "keep_signed_in_days",
   "barcode_tab",
   "barcode_rules"
  ],
@@ -727,6 +728,13 @@
    "label": "Session Lock Timeout (minutes)"
   },
   {
+   "default": "0",
+   "description": "0 = the site's session length. The session stays open while the device is used within this time.",
+   "fieldname": "keep_signed_in_days",
+   "fieldtype": "Int",
+   "label": "Keep staff signed in (days)"
+  },
+  {
    "fieldname": "barcode_tab",
    "fieldtype": "Tab Break",
    "label": "Barcode"
@@ -740,7 +748,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-01 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

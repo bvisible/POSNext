@@ -6,6 +6,8 @@ import { ensureCSRFToken } from "@/utils/csrf";
 import { cleanupUserSession } from "@/utils/sessionCleanup";
 //// Neoffice — the bootstrap is reloaded at sign-in, below.
 import { useBootstrapStore } from "@/stores/bootstrap";
+//// Neoffice — a sign-in is a session of its own: the till asks again to keep its staff signed in (utils/keepSignedIn.js).
+import { forgetKeepSignedIn } from "@/utils/keepSignedIn";
 import { userResource, userData } from "./user";
 
 export function sessionUser() {
@@ -29,6 +31,9 @@ export const session = reactive({
 		async onSuccess(data) {
 			// Initialize CSRF token immediately after successful login
 			await ensureCSRFToken();
+
+			//// Neoffice — the session just opened has not been stamped: the till's profile load asks for its days (NeoRestau lot 1, 01.11.2026).
+			forgetKeepSignedIn();
 
 			await userResource.reload();
 

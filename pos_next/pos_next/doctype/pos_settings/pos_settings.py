@@ -74,6 +74,33 @@ class POSSettings(Document):
 					)
 				)
 
+		# //// Neoffice — how long the till keeps its staff signed in (pos_next.api.session, NeoRestau lot 1, product
+		# //// owner, 01.11.2026): 0 to 90 days, and 30 for a till that becomes a restaurant till. Upstream has no such
+		# //// setting.
+		self.validate_keep_signed_in_days()
+
+	# //// Neoffice — added method (no upstream equivalent). `keep_signed_in_days` is 0 (the site's session length) to 90.
+	# //// A till that BECOMES a restaurant till in this save (a new one, or the tick turned on) and whose days were left
+	# //// at 0 takes 30, the product owner's choice for the waiters' phones; any other save leaves the days as the manager
+	# //// set them, 0 included (a stored 0 cannot be told from "never chosen", so the default is applied at that one
+	# //// moment, and by the patch for the tills that already were). A counter till stays at 0: it follows the site.
+	def validate_keep_signed_in_days(self):
+		from pos_next.api.session import MAX_KEEP_SIGNED_IN_DAYS, RESTAURANT_KEEP_SIGNED_IN_DAYS
+
+		days = cint(self.keep_signed_in_days)
+		if days < 0 or days > MAX_KEEP_SIGNED_IN_DAYS:
+			frappe.throw(
+				_("Keep staff signed in (days) must be between 0 and {0}").format(MAX_KEEP_SIGNED_IN_DAYS)
+			)
+		becomes_a_restaurant_till = cint(self.enable_restaurant_mode) and (
+			self.is_new() or self.has_value_changed("enable_restaurant_mode")
+		)
+		days_left_alone = self.is_new() or not self.has_value_changed("keep_signed_in_days")
+		if becomes_a_restaurant_till and not days and days_left_alone:
+			self.keep_signed_in_days = RESTAURANT_KEEP_SIGNED_IN_DAYS
+		else:
+			self.keep_signed_in_days = days
+
 	def on_update(self):
 		"""Sync allow_negative_stock with Stock Settings"""
 		self.sync_negative_stock_setting()

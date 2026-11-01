@@ -44,3 +44,7 @@ pos_next.patches.neorestau.tag_the_tills_cash_movements
 # //// Neoffice — no till loses its cash operations: an empty list offered every operation of the till's company before
 # //// task 15 made the list a control; each empty list is filled once with what the till offered, less what the new rule refuses.
 pos_next.patches.neorestau.keep_the_tills_cash_operations
+# //// Neoffice — NeoRestau: a till's staff stay signed in for the days its POS Settings say (`keep_signed_in_days`, product
+# //// owner, 01.11.2026); the restaurant tills that already exist take the 30 days a new restaurant till takes. It runs
+# //// after the doctype sync, which is what makes the column.
+pos_next.patches.neorestau.keep_restaurant_staff_signed_in

@@ -4,6 +4,8 @@ import { computed, ref } from "vue";
 import { useBootstrapStore } from "./bootstrap";
 //// Neoffice — no `call` import (apiWrapper) here any more: it was added for the restaurant-mode toggle
 //// (8aa35c29, 2026-03-20), left unused by 82fcc1bf, and went with the toggle (NeoRestau lot 1, task 4).
+//// Neoffice — the staff of a till stay signed in for the days its settings say, asked once the profile is known (loadSettings).
+import { keepStaffSignedIn } from "@/utils/keepSignedIn";
 
 export const usePOSSettingsStore = defineStore("posSettings", () => {
 	// State
@@ -293,6 +295,10 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 
 		isLoading.value = true;
 		settings.value.pos_profile = posProfile;
+
+		//// Neoffice — the till's profile is known: its staff are kept signed in for the days its POS Settings say, once per page
+		//// load (utils/keepSignedIn.js; NeoRestau lot 1, product owner, 01.11.2026). Fire-and-forget, a failure never blocks the till.
+		keepStaffSignedIn(posProfile);
 
 		// OPTIMIZATION: Check if bootstrap has preloaded the settings
 		try {

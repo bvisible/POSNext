@@ -1799,6 +1799,37 @@
 											</div>
 										</div>
 									</div>
+
+									<!-- //// Neoffice — how long the till keeps its staff signed in (NeoRestau lot 1, product owner, 01.11.2026): a setting of
+									//// THIS till's POS Settings, saved with the others (update_pos_settings), not of the ERP's System Settings. 0 follows the site. -->
+									<div :class="restaurantSubsectionClasses.container">
+										<div class="flex items-center gap-2 mb-4">
+											<svg
+												:class="restaurantSubsectionClasses.icon"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+												/>
+											</svg>
+											<h4 class="text-sm font-bold text-gray-900">
+												{{ __("Staff session") }}
+											</h4>
+										</div>
+										<NumberField
+											v-model="keepSignedInDays"
+											:label="__('Keep staff signed in (days)')"
+											:description="keepSignedInHelp"
+											:min="0"
+											:max="MAX_KEEP_SIGNED_IN_DAYS"
+											:step="1"
+										/>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -1920,7 +1951,26 @@ const settings = ref({
 	eod_email_recipients: "",
 	eod_email_auto: 0,
 	cart_lifo: 0,
+	//// Neoffice — how long the till keeps its staff signed in, in days; 0 = the site's session length (pos_next.api.session).
+	keep_signed_in_days: 0,
 });
+
+//// Neoffice — the "Keep staff signed in (days)" field of the Restaurant tab (NeoRestau lot 1, product owner, 01.11.2026): a
+//// whole number of days from 0 to 90 (the server holds the same range), kept in the dialog's settings and saved with them.
+const MAX_KEEP_SIGNED_IN_DAYS = 90;
+const keepSignedInDays = computed({
+	get: () => Number(settings.value.keep_signed_in_days) || 0,
+	set: (value) => {
+		settings.value.keep_signed_in_days = Math.min(
+			MAX_KEEP_SIGNED_IN_DAYS,
+			Math.max(0, Math.round(Number(value) || 0))
+		);
+	},
+});
+//// Neoffice — a computed, so that the text is translated when the dialog is drawn (the catalogue may not be loaded when the script runs)
+const keepSignedInHelp = computed(() =>
+	__("0 = the site's session length. The session stays open while the device is used within this time.")
+);
 
 // Stock Sync Settings (localStorage persisted)
 const stockSyncEnabled = ref(false);
