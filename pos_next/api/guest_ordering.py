@@ -11,6 +11,8 @@
 # For license information, please see license.txt
 
 import json
+from contextlib import contextmanager
+
 import frappe
 from frappe import _
 from frappe.utils import now_datetime, flt
@@ -24,6 +26,22 @@ from pos_next.restaurant.text import plain_text
 # ==========================================
 # Internal helpers
 # ==========================================
+
+
+@contextmanager
+def _as_the_system():
+	"""What a guest's order writes, written as the system, and the caller given back afterwards."""
+	# A guest is the `Guest` user (or any browser session that opened the QR link): no role, no right on any account. Saving a Sales Invoice reads the
+	# customer's receivable account, and ERPNext refuses that read (`account_perm_check`) to a user who may not read accounts, whatever
+	# `ignore_permissions` says on the document: « User don't have permissions to select/read this account », a red PermissionError under « Send Order »
+	# (Daniel's test, 01.11). The guest endpoints are public and the token is their only gate, so the writes the order needs are made as the system,
+	# exactly as far as they go, and the user is given back even when they fail.
+	user = frappe.session.user
+	frappe.set_user("Administrator")
+	try:
+		yield
+	finally:
+		frappe.set_user(user)
 
 
 def _get_token_doc(token):
@@ -642,18 +660,19 @@ def submit_guest_order(token, items):
 		existing_item_keys.add(item_key)
 
 	invoice_doc.flags.ignore_permissions = True
-	if is_new_invoice:
-		invoice_doc.insert()
-		# A guest's order of a table is an order like the waiter's: it takes its ticket number at its first save
-		# (NeoRestau lot 1, task 38b), so that the kitchen reads a number and never the draft's invoice number
-		tickets.give_ticket_number(invoice_doc.name)
-		# Link invoice to token
-		token_doc.invoice = invoice_doc.name
-		token_doc.flags.ignore_version = True
-		token_doc.save(ignore_permissions=True)
-	else:
-		invoice_doc.flags.ignore_version = True
-		invoice_doc.save()
+	with _as_the_system():
+		if is_new_invoice:
+			invoice_doc.insert()
+			# A guest's order of a table is an order like the waiter's: it takes its ticket number at its first save
+			# (NeoRestau lot 1, task 38b), so that the kitchen reads a number and never the draft's invoice number
+			tickets.give_ticket_number(invoice_doc.name)
+			# Link invoice to token
+			token_doc.invoice = invoice_doc.name
+			token_doc.flags.ignore_version = True
+			token_doc.save(ignore_permissions=True)
+		else:
+			invoice_doc.flags.ignore_version = True
+			invoice_doc.save()
 
 	# //// Neoffice — a guest order that goes straight to the kitchen is a send like the till's: tell the
 	# //// kitchen-send listeners (cloudprnt prints each station's ticket; maintenance#1935).
@@ -1092,8 +1111,9 @@ def confirm_guest_payment(token, amount, tip=0):
 			invoice_doc.flags.ignore_permissions = True
 			invoice_doc.flags.ignore_version = True
 			frappe.flags.ignore_account_permission = True
-			invoice_doc.save()
-			invoice_doc.submit()
+			with _as_the_system():
+				invoice_doc.save()
+				invoice_doc.submit()
 
 			# Table → Paid (guest payment — cashier sees it and decides next step)
 			if token_doc.table and frappe.db.exists("Restaurant Table", token_doc.table):
@@ -1103,7 +1123,8 @@ def confirm_guest_payment(token, amount, tip=0):
 			# Partial payment — just save the draft
 			invoice_doc.flags.ignore_permissions = True
 			invoice_doc.flags.ignore_version = True
-			invoice_doc.save()
+			with _as_the_system():
+				invoice_doc.save()
 
 		frappe.db.commit()
 
@@ -1399,13 +1420,14 @@ def submit_takeaway_order(token, items, customer=None):
 			row.kds_status = "Pending"
 
 	invoice_doc.flags.ignore_permissions = True
-	invoice_doc.insert()
-	# A web takeaway order takes its ticket number like the till's (NeoRestau lot 1, task 38b)
-	tickets.give_ticket_number(invoice_doc.name)
+	with _as_the_system():
+		invoice_doc.insert()
+		# A web takeaway order takes its ticket number like the till's (NeoRestau lot 1, task 38b)
+		tickets.give_ticket_number(invoice_doc.name)
 
-	token_doc.invoice = invoice_doc.name
-	token_doc.flags.ignore_version = True
-	token_doc.save(ignore_permissions=True)
+		token_doc.invoice = invoice_doc.name
+		token_doc.flags.ignore_version = True
+		token_doc.save(ignore_permissions=True)
 
 	# Notify POS of new takeaway web order, in the restaurant whose settings priced it
 	frappe.publish_realtime("takeaway_web_order", {
