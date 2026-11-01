@@ -47,7 +47,7 @@
 				v-if="showQr"
 				type="button"
 				data-test="table-qr-button"
-				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1.5 rounded-[10px] border border-[#DCD4C7] bg-white px-3 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F6F3ED] active:bg-[#ECE7DE]"
+				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1.5 rounded-[10px] border border-[#DCD4C7] bg-white px-3 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F6F3ED] active:bg-[#ECE7DE] sm:h-[34px] sm:min-h-[34px]"
 				:title="__('Generate QR code for guest ordering')"
 				:aria-label="__('Generate QR code for guest ordering')"
 				@click="emit('qr')"
@@ -68,11 +68,12 @@
 				</svg>
 				<span>QR</span>
 			</button>
+			<!-- //// Neoffice — QR and Back are as high as the « Permanent items » card button under the bar from a tablet up (34 px: py-2 around a 12 px line and a 2 px border), the 44 px finger staying on a phone (Daniel, 01.11). -->
 			<!-- //// Neoffice — Back is the way out of the table, and it was frappe-ui's grey "subtle" button on a tinted bar: it melted into it (Daniel, 01.11: « faire le bouton retour plus visible »). It is now the solid ink button of the design system (the one the dialogs' primary action wears), with an arrow, as high as the QR button. -->
 			<button
 				type="button"
 				data-test="table-back-button"
-				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1.5 rounded-[10px] bg-[#141414] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#2B2B2B] active:bg-black"
+				class="inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1.5 rounded-[10px] bg-[#141414] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#2B2B2B] active:bg-black sm:h-[34px] sm:min-h-[34px]"
 				:aria-label="__('Back')"
 				@click="emit('back')"
 			>

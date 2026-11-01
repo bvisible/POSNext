@@ -15,6 +15,8 @@
  * //// pages/__tests__/tableQRShowsTheCodeAtOnce.spec.js.
  * @vitest-environment jsdom
  */
+import { readFileSync } from "node:fs"
+import path from "node:path"
 import { mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -201,6 +203,23 @@ describe("the header bar of an open table", () => {
 		expect(back.find("svg").exists()).toBe(true)
 		expect(back.attributes("aria-label")).toBe("Back")
 		expect(back.attributes("type")).toBe("button")
+	})
+
+	it("gives QR and Back the height of the « Permanent items » card button from a tablet up, and keeps the 44 px finger on a phone (Daniel, 01.11: « aligne la hauteur du bouton sur le bouton articles permanents »)", () => {
+		bar()
+
+		for (const button of [backButton(), qrButton()]) {
+			const classes = button.classes()
+			// the phone keeps the touch target; from the `sm` breakpoint the two buttons are as high as the card button below the bar
+			expect(classes).toContain("min-h-[44px]")
+			expect(classes).toEqual(expect.arrayContaining(["sm:h-[34px]", "sm:min-h-[34px]"]))
+		}
+		// the card button is `py-2` around a 12 px line with a 2 px border from `sm` up: 33.8 px, which 34 px stands for
+		const sale = readFileSync(
+			path.resolve(__dirname, "../../../pages/POSSale.vue"),
+			"utf8",
+		)
+		expect(sale).toMatch(/py-1\.5 sm:py-2 rounded-neo-sm text-\[10px\] sm:text-xs/)
 	})
 
 	it("has no QR button when the table cannot show one, and keeps Back", () => {
