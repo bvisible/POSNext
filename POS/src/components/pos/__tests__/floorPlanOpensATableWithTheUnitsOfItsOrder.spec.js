@@ -211,6 +211,22 @@ describe("opening a table puts the lines of its order in the cart with their uni
 		])
 	})
 
+	it("gives each line the family the server stored, so that a held course can be named and ordered from any till (Daniel, 01.11)", async () => {
+		order.value = structuredClone(ORDER)
+		order.value.items[0].service_family = "Main"
+		order.value.items[1].service_family = "Main"
+		order.value.items[2].service_family = "Dessert"
+		order.value.items[2].kds_status = "Waiting"
+
+		await openTheTable()
+
+		expect(cart.invoiceItems.map((line) => [line.service_family, line.kds_status])).toEqual([
+			["Main", "Pending"],
+			["Main", "Pending"],
+			["Dessert", "Waiting"],
+		])
+	})
+
 	it("a line read back from the server takes no new unit: the next card tap is a line of its own", async () => {
 		await openTheTable()
 
