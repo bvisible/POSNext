@@ -302,7 +302,9 @@ describe("calling the next course where the kitchen prepares ahead", () => {
 		cart.addItem(dish("PENNE", "Pasta", { kds_status: "Pending", kds_ahead: 1 }))
 		cart.addItem(dish("STEAK", "Pasta", { kds_status: "Pending", kds_ahead: 1 }))
 		cart.addItem(dish("TART", "Cakes", { kds_status: "Pending", kds_ahead: 1 }))
+		// A table reopened from the server: nothing in the cart is unsent
 		cart.$patch({ currentDraftId: "SINV-0001" })
+		cart.markChangesSent()
 	})
 	afterEach(() => setGroupFamilies({}))
 
@@ -426,6 +428,29 @@ describe("calling the next course where the kitchen prepares ahead", () => {
 		expect(call).toHaveBeenCalledWith(CALL, { invoice: "SINV-0001", family: "Main" })
 		expect(seen).toEqual([["Pending", "Pending", "Pending", "Pending", "Pending"]])
 		expect(result).toEqual({ sent: 1, called: 1, family: "Main" })
+	})
+
+	it("saves and sends the lines the waiter added before calling, so that nothing of the cart is lost to the call", async () => {
+		cart.addItem(dish("COFFEE", "Wine"))
+		const call = server({ next: { family: "Main", indexes: [2, 3] }, held: [2, 3, 4] })
+		const send = vi.fn(async () => true)
+		const finish = vi.fn()
+
+		const result = await orderHeldLines({ which: "next", cartStore: cart, call, send, finish })
+
+		expect(call.mock.calls.filter(([method]) => method === CALL)).toHaveLength(1)
+		expect(send).toHaveBeenCalledTimes(1)
+		expect(finish).not.toHaveBeenCalled()
+		expect(result).toEqual({ sent: 0, called: 2, family: "Main" })
+	})
+
+	it("says it failed, the call being made, when the added lines could not be sent", async () => {
+		cart.addItem(dish("COFFEE", "Wine"))
+		const call = server({ next: { family: "Main", indexes: [2, 3] }, held: [2, 3, 4] })
+
+		const result = await orderHeldLines({ which: "next", cartStore: cart, call, send: vi.fn(async () => false) })
+
+		expect(result).toEqual({ sent: 0, called: 2, failed: true })
 	})
 })
 

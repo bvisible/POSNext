@@ -79,6 +79,9 @@ export async function orderHeldLines({
 		}
 	}
 	if (!called) return { sent: 0 }
-	if (finish) await finish()
+	// The waiter may have added lines to the table before calling its next course: they are saved and sent too, and that send ends on the floor plan as the call does. Nothing of the cart is lost.
+	if (cartStore.hasUnsentChanges) {
+		if (!(await send())) return { sent: 0, called, failed: true }
+	} else if (finish) await finish()
 	return { sent: 0, called, family: answer?.next?.family || "" }
 }
