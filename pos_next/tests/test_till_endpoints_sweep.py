@@ -737,6 +737,17 @@ class TestTillEndpointsSweep(FrappeTestCase):
 			patch.object(Restaurant, "_ensure_tip_account"),
 			patch.object(Restaurant, "_ensure_tip_item"),
 		):
+			# A made-up station answers the DEFAULT restaurant (scope.restaurant_of_record), which is the only restaurant
+			# of a site that has one, else its oldest enabled one. On a fresh site the tablet's restaurant would be the
+			# default and the made-up station its own: served. An older restaurant is the default, as on a site that
+			# runs several, and the made-up station is then no station of the tablet's.
+			frappe.get_doc(
+				{
+					"doctype": "Restaurant",
+					"restaurant_name": "_Test Tillsweep Older Restaurant",
+					"company": self.fx.company,
+				}
+			).insert(ignore_permissions=True)
 			restaurant_name = (
 				frappe.get_doc(
 					{

@@ -17,7 +17,7 @@ import os
 from unittest.mock import patch
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests.utils import FrappeTestCase, change_settings
 from frappe.utils import flt
 
 from pos_next.api import invoices
@@ -95,6 +95,11 @@ class TestTillTotalsMatchTheInvoice(TakeawayTill, FrappeTestCase):
 			frappe.set_user("Administrator")
 		return frappe.get_doc("Sales Invoice", draft["name"])
 
+	# The till's figures (fixtures/till_invoice_parity.json) are computed under the rounding the fleet's sites hold: none, which
+	# frappe reads as "Banker's Rounding (legacy)" and which takes half a cent up (0.325 of VAT is 0.33). A site that ran
+	# frappe's setup wizard holds "Banker's Rounding" (half a cent to the even cent: 0.32), as the fresh site of the CI
+	# does, and the till is then told that one. The parity is proved under the first.
+	@change_settings("System Settings", {"rounding_method": "Banker's Rounding (legacy)"})
 	def test_every_cart_the_till_rings_is_invoiced_as_the_till_shows_it(self):
 		self.assertEqual(len(self.carts), 10)
 		for cart in self.carts:

@@ -158,6 +158,9 @@ class TestInvoiceHistoryPreview(FrappeTestCase):
 		self.assertEqual(row.items_count, 3)
 
 	def test_a_weighed_quantity_stays_as_the_invoice_holds_it(self):
+		# ERPNext installs `Nos`, the unit of a piece, as a whole number: it refuses 0.35 of one. A weighed line is
+		# of a unit that takes a fraction, so the fixture's unit is made one (rolled back with the test).
+		frappe.db.set_value("UOM", self.stock_uom, "must_be_whole_number", 0)
 		name = self._order([("Salmon fillet", 0.35)])
 		row = self._history()[name]
 		self.assertEqual(row.items_preview[0]["qty"], 0.35)
