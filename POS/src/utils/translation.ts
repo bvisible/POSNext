@@ -149,6 +149,7 @@ const getLocale = (): string => {
 	return (
 		(window as any)?.frappe?.boot?.lang?.toLowerCase() ||
 		window.localStorage?.getItem("pos_next_language")?.toLowerCase() ||
+		//// Neoffice — the browser's language for a page with no user (browserLocale below)
 		browserLocale() ||
 		FALLBACK_LOCALE
 	)
@@ -217,12 +218,14 @@ async function requestStamp(locale?: string): Promise<string | null> {
 async function checkCatalogue(locale: string) {
 	lastCatalogueCheck = Date.now()
 	try {
+		//// Neoffice — the stamp and the dictionary are asked in the language the page decided on (_lang)
 		const stamp = await requestStamp(locale)
 		if (!stamp) return
 		const cached = await translationCache.get(locale)
 		if (cached?.stamp === stamp) return
 		const entry = await translationCache.getFresh(
 			locale,
+			//// Neoffice — in the language the page decided on (_lang)
 			() => requestTranslations(locale),
 			{ force: true, stampOf: () => stamp },
 		)
@@ -246,6 +249,7 @@ function watchCatalogue(locale: () => string) {
  * Fetches translations from Frappe API.
  * @returns Translation dictionary or null on failure
  */
+//// Neoffice — takes the language the page decided on and asks the dictionary in it (_lang), as requestStamp does
 async function requestTranslations(locale?: string) {
 	//// Neoffice — same Biome re-indent/reflow pass (458d81a9): layout only.
 	const messages = await call(
