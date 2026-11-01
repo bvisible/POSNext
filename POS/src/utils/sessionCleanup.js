@@ -19,6 +19,10 @@ const USER_KEYS = [
 	"pos_session_lock",
 	"pos_session_pwd_hash",
 	"pos_lock_attempts",
+	//// Neoffice — the personal till code: what the device knew of it, the hash made for offline use, and the moment of the last use.
+	"pos_till_code_state",
+	"pos_till_code_hash",
+	"pos_last_active",
 	"pos_shift_data",
 	"pos_recent_customers",
 	"pos_frequent_customers",

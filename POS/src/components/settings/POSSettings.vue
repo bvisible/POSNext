@@ -1829,6 +1829,37 @@
 											:max="MAX_KEEP_SIGNED_IN_DAYS"
 											:step="1"
 										/>
+										<!-- //// Neoffice — the lock of the till (NeoRestau lot 1, product owner, 01.11.2026): off by default, nobody is forced to
+										//// type a code; the delay and the choice of locking on leaving the screen show once it is on. They are the till's POS Settings
+										//// (enable_session_lock, session_lock_timeout, session_lock_on_leave), saved with the others. -->
+										<CheckboxField
+											v-model="settings.enable_session_lock"
+											:label="__('Lock the till')"
+											:description="
+												__(
+													'Each person unlocks it with their personal till code, or with their password if they have none.'
+												)
+											"
+										/>
+										<NumberField
+											v-if="settings.enable_session_lock"
+											v-model="sessionLockMinutes"
+											:label="__('Lock after (minutes)')"
+											:description="__('Minutes without use before the till locks.')"
+											:min="1"
+											:max="MAX_SESSION_LOCK_MINUTES"
+											:step="1"
+										/>
+										<CheckboxField
+											v-if="settings.enable_session_lock"
+											v-model="settings.session_lock_on_leave"
+											:label="__('Lock as soon as the screen is left')"
+											:description="
+												__(
+													'Lock at once when the browser tab or the phone\'s screen is left. Unticked, the lock waits for the delay above without use'
+												)
+											"
+										/>
 									</div>
 								</div>
 							</div>
@@ -1953,6 +1984,10 @@ const settings = ref({
 	cart_lifo: 0,
 	//// Neoffice — how long the till keeps its staff signed in, in days; 0 = the site's session length (pos_next.api.session).
 	keep_signed_in_days: 0,
+	//// Neoffice — the lock of the till: off, five minutes, and waiting for the delay rather than locking on leaving the screen.
+	enable_session_lock: 0,
+	session_lock_timeout: 5,
+	session_lock_on_leave: 0,
 });
 
 //// Neoffice — the "Keep staff signed in (days)" field of the Restaurant tab (NeoRestau lot 1, product owner, 01.11.2026): a
@@ -1964,6 +1999,18 @@ const keepSignedInDays = computed({
 		settings.value.keep_signed_in_days = Math.min(
 			MAX_KEEP_SIGNED_IN_DAYS,
 			Math.max(0, Math.round(Number(value) || 0))
+		);
+	},
+});
+//// Neoffice — the delay of the lock of the till, a whole number of minutes from 1 to a day (NeoRestau lot 1, 01.11.2026), kept in the
+//// dialog's settings and saved with them; 0 or nothing would read as "no delay" and the till would lock at the first idle second.
+const MAX_SESSION_LOCK_MINUTES = 1440;
+const sessionLockMinutes = computed({
+	get: () => Number(settings.value.session_lock_timeout) || 5,
+	set: (value) => {
+		settings.value.session_lock_timeout = Math.min(
+			MAX_SESSION_LOCK_MINUTES,
+			Math.max(1, Math.round(Number(value) || 0))
 		);
 	},
 });

@@ -48,3 +48,6 @@ pos_next.patches.neorestau.keep_the_tills_cash_operations
 # //// owner, 01.11.2026); the restaurant tills that already exist take the 30 days a new restaurant till takes. It runs
 # //// after the doctype sync, which is what makes the column.
 pos_next.patches.neorestau.keep_restaurant_staff_signed_in
+# //// Neoffice — NeoRestau: a lock now locks at once on leaving the screen only if the till says so (`session_lock_on_leave`,
+# //// default off, product owner, 01.11.2026); the tills that already lock keep locking at once. Runs after the doctype sync.
+pos_next.patches.neorestau.keep_the_screen_lock_of_the_tills_that_lock

@@ -100,6 +100,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Security
 		enable_session_lock: 0,
 		session_lock_timeout: 5,
+		//// Neoffice — 0: the lock waits for its delay without use instead of locking the moment the screen is left (NeoRestau lot 1).
+		session_lock_on_leave: 0,
 		//// Neoffice — the Journal Entry Template used to book the cash the cashier takes out of the
 		//// drawer at shift close, and to suggest the next opening balance. Upstream closes a shift
 		//// without moving any money, which does not match Swiss cash practice (5783eb27, 2026-03-28
@@ -258,6 +260,9 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 	const sessionLockTimeout = computed(
 		() => Number.parseInt(settings.value.session_lock_timeout) || 5
 	);
+	//// Neoffice — lock at once on leaving the screen (the tab hidden, the phone asleep), or only after the delay without use
+	//// (POS Settings.session_lock_on_leave, NeoRestau lot 1, product owner, 01.11.2026). Off by default: a waiter's phone sleeps all day.
+	const sessionLockOnLeave = computed(() => Boolean(Number(settings.value.session_lock_on_leave)));
 
 	//// Neoffice — Journal Entry Template used to book the cash the cashier takes out of the
 	//// drawer when closing the shift; upstream closes a shift without moving money, which does
@@ -404,6 +409,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 			// Security
 			enable_session_lock: 0,
 			session_lock_timeout: 5,
+			//// Neoffice — same for the lock's "at once on leaving the screen" choice (NeoRestau lot 1).
+			session_lock_on_leave: 0,
 			//// Neoffice — same for the closing-withdrawal template (5783eb27, 2026-03-28).
 			// Cash Management
 			closing_withdrawal_template: "",
@@ -572,6 +579,8 @@ export const usePOSSettingsStore = defineStore("posSettings", () => {
 		// Computed - Security
 		enableSessionLock,
 		sessionLockTimeout,
+		//// Neoffice — lock at once on leaving the screen, or only after the delay (NeoRestau lot 1, 01.11.2026).
+		sessionLockOnLeave,
 
 		//// Neoffice — export for the closing-withdrawal template (5783eb27, 2026-03-28).
 		// Computed - Cash Management

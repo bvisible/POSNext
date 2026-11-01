@@ -5942,11 +5942,11 @@ msgstr "Écran de verrouillage"
 #. Settings'
 #: pos_next/pos_next/doctype/pos_settings/pos_settings.json
 msgid ""
-"Lock the POS screen after a period of inactivity or when the browser tab "
-"loses focus"
+"Lock the POS screen after a period of inactivity. Each person opens it with "
+"the personal till code they set, or with their password"
 msgstr ""
-"Verrouiller l'écran POS après une période d'inactivité ou lorsque l'onglet "
-"du navigateur perd le focus"
+"Verrouiller l'écran de la caisse après une période d'inactivité. Chacun "
+"l'ouvre avec le code de caisse qu'il a défini, ou avec son mot de passe"
 
 #: POS/src/components/sale/EditItemDialog.vue:82
 #: POS/src/components/sale/EditItemDialog.vue:157
@@ -18807,3 +18807,124 @@ msgstr "Afficher ou masquer les plats terminés"
 msgctxt "Kitchen order status"
 msgid "Waits until the course before it is done"
 msgstr "Attend la fin du service précédent"
+
+# //// Neoffice — the personal code of the till: a short code of the user's own opens the lock screen instead of the account password (pos_next.api.till_code, NeoRestau lot 1, product owner, 01.11.2026)
+#. Label of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/POSSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Lock as soon as the screen is left"
+msgstr "Verrouiller dès que l'écran est quitté"
+
+#. Description of a Check field in DocType 'POS Settings'
+#: POS/src/components/settings/POSSettings.vue
+#: pos_next/pos_next/doctype/pos_settings/pos_settings.json
+msgid "Lock at once when the browser tab or the phone's screen is left. Unticked, the lock waits for the delay above without use"
+msgstr "Verrouiller aussitôt que l'onglet du navigateur ou l'écran du téléphone est quitté. Décoché, le verrou attend le délai ci-dessus sans utilisation"
+
+#: POS/src/components/settings/POSSettings.vue
+msgid "Lock the till"
+msgstr "Verrouiller la caisse"
+
+#: POS/src/components/settings/POSSettings.vue
+msgid "Each person unlocks it with their personal till code, or with their password if they have none."
+msgstr "Chacun la déverrouille avec le code de caisse qui lui est propre, ou avec son mot de passe s'il n'en a pas."
+
+#: POS/src/components/settings/POSSettings.vue
+msgid "Lock after (minutes)"
+msgstr "Verrouiller après (minutes)"
+
+#: POS/src/components/settings/POSSettings.vue
+msgid "Minutes without use before the till locks."
+msgstr "Minutes sans utilisation avant que la caisse ne se verrouille."
+
+#: POS/src/components/common/TillLockMenuItems.vue
+msgid "Lock"
+msgstr "Verrouiller"
+
+#: POS/src/components/common/TillLockMenuItems.vue
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Set my till code"
+msgstr "Définir mon code de caisse"
+
+#: POS/src/components/common/TillLockMenuItems.vue
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Remove my code"
+msgstr "Retirer mon code"
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "The lock screen will ask for your password again."
+msgstr "L'écran de verrouillage redemandera votre mot de passe."
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Four to six digits. The lock screen asks for it instead of your password."
+msgstr "Quatre à six chiffres. L'écran de verrouillage le demande à la place de votre mot de passe."
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Current password"
+msgstr "Mot de passe actuel"
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Repeat the code"
+msgstr "Répétez le code"
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "The two codes are different."
+msgstr "Les deux codes sont différents."
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Till code saved"
+msgstr "Code de caisse enregistré"
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "Till code removed"
+msgstr "Code de caisse retiré"
+
+#: POS/src/components/common/TillCodeDialog.vue
+msgid "A code can only be set or removed online."
+msgstr "Un code ne peut être défini ou retiré qu'en ligne."
+
+#: POS/src/composables/useTillCode.js
+msgid "Something went wrong. Please try again."
+msgstr "Une erreur est survenue. Veuillez réessayer."
+
+#: POS/src/components/common/SessionLockScreen.vue
+msgid "Enter your till code"
+msgstr "Saisissez votre code de caisse"
+
+#: POS/src/components/common/SessionLockScreen.vue
+msgid "Use my password"
+msgstr "Utiliser mon mot de passe"
+
+#: POS/src/components/common/SessionLockScreen.vue
+msgid "Use my code"
+msgstr "Utiliser mon code"
+
+#: POS/src/components/common/SessionLockScreen.vue
+msgid "Erase"
+msgstr "Effacer"
+
+#: POS/src/composables/useSessionLock.js
+#: pos_next/api/till_code.py
+msgid "Incorrect code"
+msgstr "Code incorrect"
+
+#: POS/src/composables/useSessionLock.js
+#: pos_next/api/till_code.py
+msgid "Too many wrong codes. Try again in {0} seconds."
+msgstr "Trop de codes erronés. Réessayez dans {0} secondes."
+
+#: POS/src/composables/useSessionLock.js
+msgid "Cannot verify the code offline. Use your password."
+msgstr "Impossible de vérifier le code hors ligne. Utilisez votre mot de passe."
+
+#: pos_next/api/till_code.py
+msgid "The code must be {0} to {1} digits."
+msgstr "Le code doit comporter de {0} à {1} chiffres."
+
+#: pos_next/api/till_code.py
+msgid "This code is too easy to guess. Choose another one."
+msgstr "Ce code est trop facile à deviner. Choisissez-en un autre."
+
+#: pos_next/api/till_code.py
+msgid "Too many wrong passwords. Try again in {0} seconds."
+msgstr "Trop de mots de passe erronés. Réessayez dans {0} secondes."

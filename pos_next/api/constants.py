@@ -51,6 +51,9 @@ POS_SETTINGS_FIELDS = [
 	# //// Neoffice — same whitelist: how long the till keeps its staff signed in (pos_next.api.session, NeoRestau
 	# //// lot 1, 01.11.2026). The till does not read it, the settings dialog edits it.
 	"keep_signed_in_days",
+	# //// Neoffice — same whitelist: whether leaving the screen locks the till at once, or only the delay without use does
+	# //// (the personal till code, NeoRestau lot 1, 01.11.2026).
+	"session_lock_on_leave",
 	# //// Neoffice — same whitelist, for two features with no upstream equivalent: restaurant mode
 	# //// (458d81a9, 2026-03-20 "remove BrainWise branding, add restaurant mode") and the cash
 	# //// withdrawal at shift closing, whose Journal Entry Template is named by
@@ -116,6 +119,8 @@ DEFAULT_POS_SETTINGS = {
 	"show_variants_as_items": 0,
 	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: 0 = the site's session length (pos_next.api.session).
 	"keep_signed_in_days": 0,
+	# //// Neoffice — mirrors POS_SETTINGS_FIELDS: 0 = the lock waits for its delay (pos_next.api.till_code).
+	"session_lock_on_leave": 0,
 	# //// Neoffice — same mirror, for two things upstream does not have: restaurant mode (table
 	# //// service) and the Journal Entry Template used for the cash withdrawal at shift closing
 	# //// (458d81a9 2026-03-20 "remove BrainWise branding, add restaurant mode";

@@ -96,6 +96,7 @@
   "section_break_security",
   "enable_session_lock",
   "session_lock_timeout",
+  "session_lock_on_leave",
   "keep_signed_in_days",
   "barcode_tab",
   "barcode_rules"
@@ -714,7 +715,7 @@
   },
   {
    "default": "0",
-   "description": "Lock the POS screen after a period of inactivity or when the browser tab loses focus",
+   "description": "Lock the POS screen after a period of inactivity. Each person opens it with the personal till code they set, or with their password",
    "fieldname": "enable_session_lock",
    "fieldtype": "Check",
    "label": "Enable Session Lock"
@@ -726,6 +727,14 @@
    "fieldname": "session_lock_timeout",
    "fieldtype": "Int",
    "label": "Session Lock Timeout (minutes)"
+  },
+  {
+   "default": "0",
+   "depends_on": "enable_session_lock",
+   "description": "Lock at once when the browser tab or the phone's screen is left. Unticked, the lock waits for the delay above without use",
+   "fieldname": "session_lock_on_leave",
+   "fieldtype": "Check",
+   "label": "Lock as soon as the screen is left"
   },
   {
    "default": "0",
@@ -748,7 +757,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-01 14:00:00.000000",
+ "modified": "2026-11-01 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

@@ -347,25 +347,10 @@
 						<span>{{ __("Keyboard shortcuts") }}</span>
 					</button>
 					<hr class="my-1 border-gray-100" />
-					<button
-						@click="lockSession()"
-						class="w-full text-start px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 flex items-center gap-3 transition-colors"
-					>
-						<svg
-							class="w-5 h-5 text-amber-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-							/>
-						</svg>
-						<span>{{ __("Lock Screen") }}</span>
-					</button>
+					<!-- //// Neoffice — the entries of the lock (NeoRestau lot 1, product owner, 01.11.2026): "Lock" (at once, whatever the auto-lock -->
+					<!-- //// setting says; it replaces upstream's "Lock Screen" button, which called lock() directly), "Set my till code" and -->
+					<!-- //// "Remove my code". The dialog they open is mounted below, outside this menu, which closes on every click. -->
+					<TillLockMenuItems />
 					<!-- //// Neoffice — « Install the app » in the user's menu (kitchen test, 01.11): the install badge stands in the items view only, so a waiter on the tables never saw the offer. Shown on a phone or a tablet, or wherever the browser sent its invitation, and not once the app is installed. -->
 					<button
 						v-if="canInstallTheApp"
@@ -2174,6 +2159,8 @@
 
 		<!-- Session Lock Screen (outside v-if/v-else so it renders even during loading) -->
 		<SessionLockScreen />
+		<!-- //// Neoffice — the dialog of the personal till code, opened from the user's menu (it cannot live inside the menu). -->
+		<TillCodeDialog />
 
 		<!-- //// Neoffice — ▼▼▼ ~95 lines of QR self-ordering and table-lifecycle dialogs, -->
 		<!-- //// none of them upstream: confirm before opening a table to guest ordering -->
@@ -2392,6 +2379,9 @@ import ShiftClosingDialog from "@/components/ShiftClosingDialog.vue";
 import ShiftOpeningDialog from "@/components/ShiftOpeningDialog.vue";
 import ClearCacheOverlay from "@/components/common/ClearCacheOverlay.vue";
 import SessionLockScreen from "@/components/common/SessionLockScreen.vue";
+//// Neoffice — the entries of the user's menu for the lock, and the dialog of the personal till code (NeoRestau lot 1, 01.11.2026).
+import TillCodeDialog from "@/components/common/TillCodeDialog.vue";
+import TillLockMenuItems from "@/components/common/TillLockMenuItems.vue";
 //// Neoffice — `import POSFooter from "@/components/common/POSFooter.vue";` was
 //// REMOVED here with the BrainWise branding footer it imported (458d81a9 2026-03-20;
 //// db22e2ae 2026-03-20 "remove POSFooter branding component to reclaim screen space").
@@ -2600,9 +2590,9 @@ const {
 } = useCustomerDisplaySync();
 
 // Session lock (inactivity + tab-refocus)
+//// Neoffice — `lock: lockSession` was removed with the "Lock Screen" button that called it (TillLockMenuItems locks now).
 const {
 	isLocked,
-	lock: lockSession,
 	configure: configureSessionLock,
 	startActivityTracking,
 	stopActivityTracking,
@@ -3227,6 +3217,8 @@ onMounted(async () => {
 		configureSessionLock({
 			enabled: posSettingsStore.enableSessionLock,
 			timeoutMinutes: posSettingsStore.sessionLockTimeout,
+			//// Neoffice — lock at once on leaving the screen, or only after the delay (POS Settings.session_lock_on_leave).
+			lockOnLeave: posSettingsStore.sessionLockOnLeave,
 		});
 	});
 
@@ -3351,6 +3343,8 @@ onMounted(async () => {
 		configureSessionLock({
 			enabled: posSettingsStore.enableSessionLock,
 			timeoutMinutes: posSettingsStore.sessionLockTimeout,
+			//// Neoffice — lock at once on leaving the screen, or only after the delay (POS Settings.session_lock_on_leave).
+			lockOnLeave: posSettingsStore.sessionLockOnLeave,
 		});
 
 		// Load tax rules (depends on settings being loaded)
@@ -3730,6 +3724,8 @@ async function handleShiftOpened() {
 	configureSessionLock({
 		enabled: posSettingsStore.enableSessionLock,
 		timeoutMinutes: posSettingsStore.sessionLockTimeout,
+		//// Neoffice — lock at once on leaving the screen, or only after the delay (POS Settings.session_lock_on_leave).
+		lockOnLeave: posSettingsStore.sessionLockOnLeave,
 	});
 
 	// Load tax rules (depends on settings being loaded)
