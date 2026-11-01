@@ -33,11 +33,15 @@ vi.mock("@/utils/offline/db", () => {
 vi.mock("@/utils/logger", () => ({
 	logger: { create: () => new Proxy({}, { get: () => vi.fn() }) },
 }))
+//// Neoffice — the sound of a guest's alert (the floor notices ring through the shared player; Daniel, 01.11)
+const player = vi.hoisted(() => ({ play: vi.fn(() => true) }))
+vi.mock("@/utils/alertSoundPlayer", () => ({ playAlertSound: player.play }))
 
 globalThis.__ = (s) => s
 
 const { tillSettings } = await import("@/stores/posSettings")
 const { useRestaurantStore } = await import("../restaurant")
+const { useFloorNoticesStore } = await import("../floorNotices")
 
 const A_HASH = "k3x9q2m7ab"
 const ANOTHER_HASH = "p0z8c1v5de"
@@ -221,18 +225,16 @@ describe("a room, a table and a station are shown by their label", () => {
 		expect(store.stationLabel("st-b")).toBe("Bar")
 	})
 
-	it("names the table of a new guest order by its label in the alert", async () => {
+	it("tells the floor notices of a new guest order, by the name of the table (the notice shows its label)", async () => {
 		const handlers = {}
-		const showAlert = vi.fn()
-		window.frappe = {
-			realtime: { on: (event, handler) => (handlers[event] = handler) },
-			show_alert: showAlert,
-		}
+		window.frappe = { realtime: { on: (event, handler) => (handlers[event] = handler) } }
 		try {
 			store.startStatusPolling()
-			handlers.guest_order_submitted({ table: ANOTHER_HASH })
+			handlers.guest_order_submitted({ table: ANOTHER_HASH, items: [{ item_name: "Wine", qty: 2 }], count: 1 })
 
-			expect(showAlert.mock.calls[0][0].message).toBe("New guest order for table T1")
+			const [notice] = useFloorNoticesStore().notices
+			expect(notice).toMatchObject({ kind: "order", table: ANOTHER_HASH, items: [{ item_name: "Wine", qty: 2 }] })
+			expect(store.tableLabel(notice.table)).toBe("T1")
 		} finally {
 			store.stopStatusPolling()
 			delete window.frappe
@@ -254,14 +256,17 @@ describe("a till answers the guest alerts of its own restaurant only", () => {
 	let handlers
 	let showAlert
 	let updates
+	let notices
 	const onUpdate = (event) => updates.push(event.detail)
 
 	beforeEach(async () => {
 		setActivePinia(createPinia())
 		call.mockReset()
+		player.play.mockClear()
 		answerWith()
 		tillSettings.restaurant = "The Bistro"
 		store = useRestaurantStore()
+		notices = useFloorNoticesStore()
 		await store.fetchFromNetwork()
 		handlers = {}
 		updates = []
@@ -279,42 +284,80 @@ describe("a till answers the guest alerts of its own restaurant only", () => {
 		window.removeEventListener("pos:guest-order-update", onUpdate)
 		delete window.frappe
 		tillSettings.restaurant = undefined
+		notices.clear()
 	})
 
-	it("shows the alert of a guest order at a table of its restaurant, by the label of the table", () => {
-		handlers.guest_order_submitted({ restaurant: "The Bistro", table: ANOTHER_HASH })
+	const aGuestOrder = (over = {}) => ({ restaurant: "The Bistro", table: ANOTHER_HASH, items: [{ item_name: "Wine", qty: 1 }], count: 1, ...over })
 
-		expect(showAlert).toHaveBeenCalledTimes(1)
-		expect(showAlert.mock.calls[0][0].message).toBe("New guest order for table T1")
+	it("tells the floor notices of a guest order at a table of its restaurant, and rings", () => {
+		handlers.guest_order_submitted(aGuestOrder())
+
+		expect(notices.notices.map((notice) => notice.table)).toEqual([ANOTHER_HASH])
+		expect(player.play).toHaveBeenCalledTimes(1)
 		expect(updates).toHaveLength(1)
 	})
 
-	it("ignores the alert of a guest order at a table of another restaurant", () => {
-		handlers.guest_order_submitted({ restaurant: "The Bar", table: "x0y1z2w3vu" })
+	it("no longer calls window.frappe.show_alert, which this single-page app does not have", () => {
+		handlers.guest_order_submitted(aGuestOrder())
+		handlers.guest_payment_received({ restaurant: "The Bistro", table: ANOTHER_HASH, submitted: true })
 
 		expect(showAlert).not.toHaveBeenCalled()
+	})
+
+	it("has no listener of its own for the alert of an order to validate: the order alert already tells it", () => {
+		expect(handlers.guest_order_pending).toBeUndefined()
+		expect(typeof handlers.guest_order_submitted).toBe("function")
+	})
+
+	it("tells the floor notices of an order the waiter has to validate as one to validate", () => {
+		handlers.guest_order_submitted(aGuestOrder({ validation_mode: "Server Approval" }))
+
+		expect(notices.notices[0].kind).toBe("pending")
+	})
+
+	it("ignores the alert of a guest order at a table of another restaurant", () => {
+		handlers.guest_order_submitted(aGuestOrder({ restaurant: "The Bar", table: "x0y1z2w3vu" }))
+
+		expect(notices.notices).toEqual([])
+		expect(player.play).not.toHaveBeenCalled()
 		expect(updates).toEqual([])
 	})
 
-	it("ignores a payment received at a table of another restaurant, and passes on the one of its own", () => {
+	it("ignores a payment received at a table of another restaurant, and tells the one of its own", () => {
 		handlers.guest_payment_received({ restaurant: "The Bar", table: "x0y1z2w3vu" })
 		expect(updates).toEqual([])
+		expect(notices.notices).toEqual([])
 
-		handlers.guest_payment_received({ restaurant: "The Bistro", table: ANOTHER_HASH })
-		expect(updates).toEqual([{ restaurant: "The Bistro", table: ANOTHER_HASH }])
+		handlers.guest_payment_received({ restaurant: "The Bistro", table: ANOTHER_HASH, submitted: true })
+		expect(updates).toEqual([{ restaurant: "The Bistro", table: ANOTHER_HASH, submitted: true }])
+		expect(notices.notices.map((notice) => [notice.kind, notice.table])).toEqual([["payment", ANOTHER_HASH]])
+		expect(player.play).toHaveBeenCalledTimes(1)
 	})
 
 	it("answers as it always did to an alert that names no restaurant", () => {
-		handlers.guest_order_submitted({ table: ANOTHER_HASH })
+		handlers.guest_order_submitted(aGuestOrder({ restaurant: undefined }))
 
-		expect(showAlert).toHaveBeenCalledTimes(1)
+		expect(notices.notices).toHaveLength(1)
 	})
 
 	it("answers every alert while its settings do not name its restaurant yet", () => {
 		tillSettings.restaurant = undefined
 
-		handlers.guest_order_submitted({ restaurant: "The Bar", table: "x0y1z2w3vu" })
+		handlers.guest_order_submitted(aGuestOrder({ restaurant: "The Bar", table: "x0y1z2w3vu" }))
 
-		expect(showAlert).toHaveBeenCalledTimes(1)
+		expect(notices.notices).toHaveLength(1)
+	})
+
+	it("takes an order to validate off the floor notices once the table it is at has no line to accept", async () => {
+		const floor = (waiting) => ({ ...THE_FLOOR, tables: [{ ...THE_FLOOR.tables[0], qr_waiting_count: waiting }] })
+		handlers.guest_order_submitted(aGuestOrder({ validation_mode: "Server Approval" }))
+
+		answerWith({ "pos_next.api.restaurant.get_tables": floor(1) })
+		await store.fetchFromNetwork()
+		expect(notices.notices).toHaveLength(1)
+
+		answerWith({ "pos_next.api.restaurant.get_tables": floor(0) })
+		await store.fetchFromNetwork()
+		expect(notices.notices).toEqual([])
 	})
 })

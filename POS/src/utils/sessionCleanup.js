@@ -6,6 +6,8 @@ import { usePOSUIStore } from "@/stores/posUI";
 //// task 3): both are reset at logout, below.
 import { useBootstrapStore } from "@/stores/bootstrap";
 import { usePOSSettingsStore } from "@/stores/posSettings";
+//// Neoffice — the notices of a guest's order are meant for the user who leaves, not for whoever signs in next (the floor alerts, Daniel, 01.11).
+import { useFloorNoticesStore } from "@/stores/floorNotices";
 //// Neoffice — the next sign-in is a session of its own: the till asks again to keep its staff signed in (utils/keepSignedIn.js).
 import { forgetKeepSignedIn } from "@/utils/keepSignedIn";
 import { useSessionLock } from "@/composables/useSessionLock";
@@ -61,6 +63,8 @@ export async function cleanupUserSession() {
 	//// task 3).
 	useBootstrapStore().reset();
 	usePOSSettingsStore().resetSettings();
+	//// Neoffice — and so are the notices of the floor alerts still on the screen, with their timers.
+	useFloorNoticesStore().clear();
 	//// Neoffice — and the next sign-in asks to keep its staff signed in again (NeoRestau lot 1, 01.11.2026).
 	forgetKeepSignedIn();
 

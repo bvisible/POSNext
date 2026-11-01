@@ -101,7 +101,7 @@
 			<!-- //// NeoRestau: the mode the server sends is the effective one), a device switch is not wanted. -->
 			<!-- //// The header only labels a restaurant till, from that mode (NeoRestau lot 1, task 4). -->
 			<!-- //// Neoffice — the till's CloudPRNT printer (its state on the printer button) and its cash -->
-			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). -->
+			<!-- //// drawer button reach the header through cloudPrntStore (maintenance#1935). The chip that asks for a touch to enable the floor alerts' sound is drawn by the header while the till has such a sound (Daniel, 01.11). -->
 			<POSHeader
 				:current-time="shiftStore.currentTime"
 				:shift-duration="shiftStore.shiftDuration"
@@ -120,6 +120,7 @@
 				:silent-print-enabled="posSettingsStore.silentPrint"
 				:qz-connected="qzConnected"
 				:is-restaurant-mode="Boolean(restaurantStore.isEnabled)"
+				:floor-sound-on="Boolean(restaurantStore.isEnabled) && floorNotices.soundOn"
 				:cloud-printer-label="cloudPrntStore.receiptPrinter?.label || ''"
 				:cloud-printer-status="cloudPrntStore.printerStatus || ''"
 				:drawer-available="cloudPrntStore.drawerAvailable"
@@ -400,6 +401,17 @@
 					</button>
 				</template>
 			</POSHeader>
+
+			<!-- //// Neoffice — the notices of a guest who orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info (popup et autre) »). They stand in the page's -->
+			<!-- //// column between the header and the work, never over the cart or the floor, and draw nothing when there is none. « View table » opens the table the way a tap in the list does (composables/useSeeFloorNotice). -->
+			<FloorNotices
+				v-if="restaurantStore.isEnabled"
+				:notices="floorNotices.notices"
+				:label-of="restaurantStore.tableLabel"
+				:open-table="cartStore.restaurantTable?.name || ''"
+				@see="seeFloorNotice"
+				@dismiss="floorNotices.dismiss"
+			/>
 
 			<!-- Main Content: Responsive Layout -->
 			<div
@@ -2197,6 +2209,10 @@ import ItemsSelector from "@/components/sale/ItemsSelector.vue";
 //// (TableSelector.vue) was never rendered: the floor plan selects the table. It is gone, with
 //// its import (NeoRestau lot 1, task 9; see NEOFFICE_FORK_MARKERS.md).
 import FloorPlanEditor from "@/components/pos/FloorPlanEditor.vue";
+//// Neoffice — the notices of a guest's order or payment, and what « View table » does (Daniel, 01.11).
+import FloorNotices from "@/components/restaurant/FloorNotices.vue";
+import { useFloorNoticesStore } from "@/stores/floorNotices";
+import { useSeeFloorNotice } from "@/composables/useSeeFloorNotice";
 //// Neoffice — the row of card buttons, and the dialog the floor plan's « ⋯ » menu opens to fetch another card (NeoRestau lot 1, task 25).
 import RestaurantCardTabs from "@/components/restaurant/RestaurantCardTabs.vue";
 import CardPickerDialog from "@/components/restaurant/CardPickerDialog.vue";
@@ -2359,6 +2375,20 @@ const { getStockStatus } = useStock();
 const customerSearchStore = useCustomerSearchStore();
 //// Neoffice — restaurant store instance for this page (87f168fe, 2026-03-20).
 const restaurantStore = useRestaurantStore();
+//// Neoffice — the floor alerts (NeoRestau lot 1, Daniel, 01.11): the notices of a guest's order or payment, and « View table ». A paid table goes where tapping a paid table goes (the payment summary).
+const floorNotices = useFloorNoticesStore();
+const { see: seeFloorNotice } = useSeeFloorNotice({
+	onPaid: handleCleaningTableClicked,
+	onOpened: handleTableSelected,
+});
+//// Neoffice — the guest alerts must reach the till wherever the waiter is: a table open, the page reloaded on it. The listeners were only started by the floor plan, which is not on the screen then.
+watch(
+	() => restaurantStore.isEnabled,
+	(enabled) => {
+		if (enabled) restaurantStore.startStatusPolling();
+	},
+	{ immediate: true }
+);
 const bootstrapStore = useBootstrapStore();
 //// Neoffice — the ticket's offered rows (« Offert », task 24).
 const offeredItems = useOfferedItemsStore();

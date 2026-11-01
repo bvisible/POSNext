@@ -133,6 +133,10 @@
 
 				<!-- Right Side: Controls -->
 				<div class="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+					<!-- //// Neoffice — the chip « Touch the screen to enable the sound » of the floor alerts (NeoRestau lot 1, Daniel, 01.11): a browser lets no page make a sound before somebody has touched it, and the -->
+					<!-- //// till rings when a guest orders. It is there while the till has a sound to play and the page has not been touched, and only from 640 px: it is 44 px wide (its icon only, below 1024 px) and a phone's -->
+					<!-- //// header (the logo, the label, the sync and the cache buttons, the user menu) has no room to give. A phone's first touch of the page unlocks the audio all the same; the chip is only the reminder. -->
+					<SoundUnlockChip :enabled="floorSoundOn" class="max-sm:!hidden" />
 					<!-- //// Neoffice — no restaurant-mode switch in the header: a till is a restaurant till or a -->
 					<!-- //// counter till by its own POS Settings (the tick on the desk's POS Settings form), a -->
 					<!-- //// device switch is not wanted. The switch (8aa35c29, 2026-03-20 "Phase 1 restaurant -->
@@ -532,6 +536,8 @@
 import ActionButton from "@/components/common/ActionButton.vue";
 import StatusBadge from "@/components/common/StatusBadge.vue";
 import UserMenu from "@/components/common/UserMenu.vue";
+//// Neoffice — the chip of the floor alerts' sound (the kitchen and runner screens draw the same one).
+import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher.vue";
 import { DEFAULT_LOCALE } from "@/utils/currency";
 //// Neoffice — computed added for the CloudPRNT printer state (maintenance#1935).
@@ -687,6 +693,11 @@ const props = defineProps({
 	//// (NeoRestau lot 1, task 4). POSSale hands it the restaurant store's mode, which is the effective one the
 	//// server sent; the header neither decides it nor lets anyone flip it, and has no canToggleRestaurant prop.
 	isRestaurantMode: {
+		type: Boolean,
+		default: false,
+	},
+	//// Neoffice — whether the till has a sound to ring when a guest orders (the floor alerts, stores/floorNotices): the chip that asks for a touch is drawn while it has (NeoRestau lot 1, Daniel, 01.11).
+	floorSoundOn: {
 		type: Boolean,
 		default: false,
 	},

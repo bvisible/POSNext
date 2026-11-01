@@ -123,6 +123,7 @@ Multi-device ordering uses Frappe realtime with room-scoped events:
 - **Room**: `guest_table_{table_name}` (server publishes, clients subscribe)
 - **Events**: `guest_order_update` (order submitted, payment initiated), `guest_order_pending` (server approval needed), `takeaway_web_order` (new web takeaway)
 - Server POS listens for `guest_order_submitted` and `guest_payment_received` in `restaurant.js` store
+- Both alerts reach every till of the site and name the restaurant of the table. `guest_order_submitted` is published in both modes and carries the lines of THIS order (`items`: `item_name`, `qty`, five at most, and `count`) and the restaurant's mode (`validation_mode`); `guest_order_pending` (Server Approval only) carries the same. The till answers `guest_order_submitted` and `guest_payment_received` with a notice at the top of the screen and a sound (`stores/floorNotices.js`, `components/restaurant/FloorNotices.vue`), set in the till's settings, group « Floor alerts » (`floor_guest_popup`, `floor_popup_seconds`, `floor_guest_sound`; the volume is the kitchen alerts')
 
 ### Payment Flow
 

@@ -18,6 +18,8 @@ import { call } from "../utils/apiWrapper"
 import { setGroupFamilies } from "../utils/serviceFamilies"
 //// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): the room calls each course, or the kitchen prepares ahead
 import { rhythmOf } from "../utils/serviceRhythm"
+//// Neoffice — a guest who orders or pays from the QR code of a table is told to the waiter's till here (Daniel, 01.11): a notice and a sound, see stores/floorNotices.
+import { useFloorNoticesStore } from "./floorNotices"
 
 const log = logger.create("RestaurantStore")
 
@@ -188,6 +190,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 				areas.value = fetchedAreas || []
 				tables.value = fetchedTables || []
 				floorStations.value = fetchedStations || []
+				//// Neoffice — a guest's order the waiter had to validate is handled once its table has no line left to accept (`qr_waiting_count`): its notice goes with it (Daniel, 01.11).
+				useFloorNoticesStore().settle(tables.value)
 
 				await db.transaction(
 					"rw",
@@ -730,23 +734,18 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		rt.on("guest_order_submitted", (data) => {
 			if (!isOfThisRestaurant(data)) return
 			log.info("Guest order submitted for table:", data?.table)
-			if (window.frappe?.show_alert) {
-				window.frappe.show_alert(
-					{
-						message: data?.table
-							? `${__("New guest order for table")} ${tableLabel(data.table)}`
-							: __("New guest order received"),
-						indicator: "orange",
-					},
-					5,
-				)
-			}
+			//// Neoffice — the till is TOLD: a notice that names the lines and a sound, from the till's own settings (stores/floorNotices; Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »). This called
+			//// window.frappe.show_alert, which this single-page app does not have (main.js only sets window.frappe.realtime): nothing was shown and nothing rang, the waiter learnt of an order by looking at the list.
+			//// `guest_order_pending` has no listener of its own: the server publishes `guest_order_submitted` in BOTH modes, and says in it whether the lines must be validated, so acting on both would tell twice.
+			useFloorNoticesStore().tell("order", data)
 			// Emit custom event for POSSale to reload cart if this table is open
 			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
 		rt.on("guest_payment_received", (data) => {
 			if (!isOfThisRestaurant(data)) return
 			log.info("Guest payment received for table:", data?.table)
+			//// Neoffice — and the cashier is told that the guest paid: what happens to the table is his decision (Daniel, 01.11).
+			useFloorNoticesStore().tell("payment", data)
 			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
 		_cardRealtimeStarted = true
