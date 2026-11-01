@@ -20,12 +20,22 @@
   server gives a family only to the lines the till did not decide, so a guest never decides the pace of the table.
 
 A line is a mapping with `service_family` and `kds_status` (empty: not sent yet, `Waiting`: held, anything else: left).
+
+Beside its family, an Item Group may carry a COLOR (Custom Field `service_color`, optional): the kitchen's and the runner's
+tickets tint the dishes of a category with a very pale shade of it. A sub-group with no color takes the nearest one up the tree,
+like the family. The value is user data and ends up in a style on the screens, so only a strict `#RRGGBB` counts as a color:
+anything else is no color at all, and the walk up the tree goes on to the parent's.
 """
+
+import re
 
 import frappe
 from frappe.utils import cint
 
 FIELD = "service_family"
+# //// Neoffice — the category color of the tickets (NeoRestau lot 1, Daniel's request of 01.11)
+COLOR_FIELD = "service_color"
+_COLOR = re.compile(r"#[0-9A-Fa-f]{6}")
 DRINK = "Drink"
 # The food families, in the order a meal serves them
 COURSES = ("Starter", "Main", "Dessert")
@@ -41,6 +51,12 @@ def _family(line) -> str:
 	"""The family of a line, `""` for a line with none or one nobody knows."""
 	value = (line.get(FIELD) or "").strip() if line else ""
 	return value if value in FAMILIES else ""
+
+
+def _color(value) -> str:
+	"""A color as the screens may put it in a style: a strict `#RRGGBB` (`fullmatch`, so that no trailing newline slips through),
+	`""` for anything else."""
+	return value if isinstance(value, str) and _COLOR.fullmatch(value) else ""
 
 
 def _rank(family) -> int:
@@ -136,35 +152,58 @@ def has_family_fields() -> bool:
 	)
 
 
-def group_families() -> dict[str, str]:
-	"""The family of every Item Group that has one, its own or the nearest one up its tree: what the till loads once, so
-	that it never walks the tree itself. A group with no family anywhere up its tree is not in the map."""
-	if not frappe.db.has_column("Item Group", FIELD):
-		return {}
-	rows = frappe.get_all("Item Group", fields=["name", "parent_item_group", FIELD])
+def _inherited(rows, value_of) -> dict[str, str]:
+	"""For each Item Group row, the value of its own, else the nearest one up the tree; a group with none anywhere is left out.
+
+	`value_of` reads a row's own value and answers `""` for none (or for a value that counts for nothing). The tree is walked
+	once, each group remembered: a parent that loops back on itself ends the walk instead of running for ever."""
 	by_name = {row.name: row for row in rows}
 	resolved: dict[str, str] = {}
 
 	def resolve(name):
 		seen = set()
 		path = []
-		family = ""
+		value = ""
 		while name and name in by_name and name not in seen:
 			if name in resolved:
-				family = resolved[name]
+				value = resolved[name]
 				break
 			seen.add(name)
 			path.append(name)
-			own = _family(by_name[name])
+			own = value_of(by_name[name])
 			if own:
-				family = own
+				value = own
 				break
 			name = by_name[name].parent_item_group
 		for step in path:
-			resolved[step] = family
-		return family
+			resolved[step] = value
+		return value
 
-	return {row.name: family for row in rows if (family := resolve(row.name))}
+	return {row.name: value for row in rows if (value := resolve(row.name))}
+
+
+def _group_maps() -> tuple[dict[str, str], dict[str, str]]:
+	"""The family and the color of every Item Group that has one, its own or the nearest up its tree: `(families, colors)`, from
+	ONE read of the groups. A column the site does not have yet (the code is updated before the site is migrated) gives an empty map."""
+	columns = [column for column in (FIELD, COLOR_FIELD) if frappe.db.has_column("Item Group", column)]
+	if not columns:
+		return {}, {}
+	rows = frappe.get_all("Item Group", fields=["name", "parent_item_group", *columns])
+	families = _inherited(rows, _family) if FIELD in columns else {}
+	colors = _inherited(rows, lambda row: _color(row.get(COLOR_FIELD))) if COLOR_FIELD in columns else {}
+	return families, colors
+
+
+def group_families() -> dict[str, str]:
+	"""The family of every Item Group that has one, its own or the nearest one up its tree: what the till loads once, so
+	that it never walks the tree itself. A group with no family anywhere up its tree is not in the map."""
+	return _group_maps()[0]
+
+
+def group_colors() -> dict[str, str]:
+	"""The color (`#RRGGBB`) of every Item Group that has one, its own or the nearest one up its tree. A group with no color
+	anywhere up its tree is not in the map; a value that is no `#RRGGBB` is no color and is walked past."""
+	return _group_maps()[1]
 
 
 def family_of_group(group) -> str:
@@ -190,6 +229,36 @@ def families_of_items(item_codes) -> dict[str, str]:
 def family_of_item(item_code) -> str:
 	"""The family of an item: that of its Item Group."""
 	return families_of_items([item_code]).get(item_code, "")
+
+
+def color_of_group(group) -> str:
+	"""The color of an Item Group (its own, else the nearest up the tree), `""` for none."""
+	if not group:
+		return ""
+	return group_colors().get(group, "")
+
+
+def stamp_lines(lines) -> None:
+	"""Give each line of a kitchen or runner list its `service_family` and its `service_color`, in the line itself.
+
+	The family is the one the line was stored with (the waiter may have given one line another), else that of its item's group.
+	The color is that of its item's group, or of the nearest ancestor that has one (`""` for none). The items and the groups are
+	each read ONCE for all the lines given, whatever their number: a list of forty tickets must not ask the database forty times.
+	"""
+	lines = [line for line in lines or [] if line]
+	if not lines:
+		return
+	families, colors = _group_maps()
+	groups: dict[str, str] = {}
+	if families or colors:
+		codes = {line.get("item_code") for line in lines if line.get("item_code")}
+		if codes:
+			rows = frappe.get_all("Item", filters={"name": ["in", list(codes)]}, fields=["name", "item_group"])
+			groups = {row.name: row.item_group for row in rows}
+	for line in lines:
+		group = groups.get(line.get("item_code"))
+		line[FIELD] = _family(line) or families.get(group, "")
+		line[COLOR_FIELD] = colors.get(group, "")
 
 
 # ---------------------------------------------------------------------------------------------------- the send path

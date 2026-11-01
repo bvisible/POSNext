@@ -55,3 +55,10 @@ def _i18n_anchors():
 		"The family of the articles of this group in a restaurant: Drink, Starter, Main or Dessert. A sub-group with none takes its parent's. A group with no family anywhere up its tree is never held back in the kitchen.",
 		context="Item Group",
 	)
+	# The category colour of the kitchen and runner tickets (NeoRestau lot 1, Daniel's request of 01.11): the label and the description of
+	# the Custom Field `service_color` on the Item Group, read by the desk under the same context as the family's.
+	_("Service Colour", context="Item Group")
+	_(
+		"The colour of the dishes of this category on the kitchen and runner tickets: a very pale tint behind each dish. Optional. A sub-group with none takes its parent's.",
+		context="Item Group",
+	)

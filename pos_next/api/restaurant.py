@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import devices, item_units, permissions, room_code, scope, tickets
+from pos_next.restaurant import devices, item_units, permissions, room_code, scope, service_families, tickets
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -879,6 +879,10 @@ def get_kds_orders(station=None, restaurant=None):
 	if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
 		item_fields.append("kds_batch")
 
+	# //// Neoffice — the family each line was stored with: the ticket draws its dishes in sections by family (Daniel, 01.11)
+	if frappe.db.has_column("Sales Invoice Item", "service_family"):
+		item_fields.append("service_family")
+
 	# //// Neoffice — the units cooked and delivered of each line (kitchen test of 01.11, a line marked ready in part)
 	has_unit_counters = _has_unit_counters()
 	if has_unit_counters:
@@ -962,6 +966,10 @@ def get_kds_orders(station=None, restaurant=None):
 			if all_ready and items:
 				order["order_complete"] = True
 		orders = filtered
+
+	# //// Neoffice — every line says its family and the color of its category (Daniel, 01.11: « séparer entrée, plat, dessert » and a
+	# //// pastel background for the categories). One read of the items and of the group tree for ALL the lines of the call.
+	service_families.stamp_lines(item for order in orders for item in order.get("items", []))
 
 	return orders
 
@@ -2640,6 +2648,9 @@ def get_runner_orders(area=None, restaurant=None):
 		item_fields.append("preparation_station")
 	if has_modifiers:
 		item_fields.append("posa_item_modifiers")
+	# //// Neoffice — the family each line was stored with: the runner's card draws its dishes in sections by family (Daniel, 01.11)
+	if frappe.db.has_column("Sales Invoice Item", "service_family"):
+		item_fields.append("service_family")
 	# //// Neoffice — the units cooked and delivered of each line: the runner carries the units at the pass, not always the whole line
 	has_unit_counters = _has_unit_counters()
 	if has_unit_counters:
@@ -2774,6 +2785,9 @@ def get_runner_orders(area=None, restaurant=None):
 			order["table_display_name"] = table_info.get("table_name") or order.restaurant_table
 			order["area"] = table_info.get("area") or ""
 			result.append(order)
+
+	# //// Neoffice — every line says its family and the color of its category, as the kitchen's list does: ONE read for all the lines (Daniel, 01.11)
+	service_families.stamp_lines(item for order in result for item in order["items"])
 
 	# What the runner's card reads aloud besides the table (NeoRestau lot 1, task 38b): the ticket number and its digits, and the
 	# code of the room, never the invoice's name (which stays in the row for the calls the screen makes)

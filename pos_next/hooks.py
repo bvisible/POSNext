@@ -178,6 +178,8 @@ _custom_field_names = [
 	# //// export of the fixtures does not drop them.
 	"Item Group-service_family",
 	"Sales Invoice Item-service_family",
+	# //// Neoffice — the color of an Item Group on the kitchen and runner tickets (NeoRestau lot 1, Daniel's request of 01.11)
+	"Item Group-service_color",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")
