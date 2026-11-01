@@ -49,7 +49,7 @@
 			data-test="stations"
 			role="group"
 			:aria-label="__('Filter by station')"
-			class="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 ml-auto"
+			class="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 ml-auto max-md:ml-0 max-md:w-full max-md:justify-start"
 		>
 			<button
 				type="button"
@@ -137,8 +137,9 @@ const allLabel = computed(() =>
 // with its border and the tickets get the rest of the screen. The product owner prefers ticket space to the 44 px touch
 // guideline of the design system (NeoPOS, section 7) for THESE chips: the guideline stays for the rest of the till. The
 // chips keep their width (px-4) and the room between them, so they stay easy to hit. The colours are the screens' own.
+//// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px there is no ticket space to save (the line wraps onto as many rows as it needs and a phone is a tall screen), and a finger is not a stylus: the chips are 40 px high, the touch minimum, and a little narrower (px-3), and the stations take a row of their own, from the left (the right edge of a phone is no corner to keep them in). From 768 px they are the 32 px, px-4 chips and the right-hand group they were.
 const CHIP =
-	"inline-flex items-center gap-1.5 h-8 px-4 text-sm font-medium rounded-lg transition-colors whitespace-nowrap touch-manipulation"
+	"inline-flex items-center gap-1.5 h-8 max-md:h-10 px-4 max-md:px-3 text-sm font-medium rounded-lg transition-colors whitespace-nowrap touch-manipulation"
 const ACTIVE = "bg-gray-800 text-white dark:bg-white dark:text-gray-800"
 const IDLE =
 	"bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"

@@ -1,4 +1,5 @@
 <template>
+	<!-- //// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px the buttons are 40 px high, the touch minimum (38 px and 32 px from 768 px, as they were). -->
 	<!-- //// Neoffice — added file (no upstream equivalent). The segmented control of the restaurant's service screens (NeoRestau lot 1, task 38a-2, rulings 129 and 132): a row -->
 	<!-- //// of buttons in one outline, the chosen one lit in the clay of the design system. The same piece draws the SWITCH BETWEEN THE SCREENS (Preparation, Runner, -->
 	<!-- //// Floor plan: where the user goes, `navigation`, the current one marked `aria-current`) and the DISPLAY MODES of a screen (by table, by station, on the plan: -->
@@ -19,8 +20,8 @@
 			class="inline-flex touch-manipulation items-center gap-1.5 whitespace-nowrap rounded-lg border font-medium transition-colors"
 			:class="[
 				small
-					? 'h-8 px-2.5 text-[13px] max-[1024px]:px-2'
-					: 'h-[38px] px-3.5 text-[13.5px] max-[1024px]:px-2.5 max-[1024px]:text-[13px]',
+					? 'h-8 px-2.5 text-[13px] max-[1024px]:px-2 max-md:h-10'
+					: 'h-[38px] px-3.5 text-[13.5px] max-[1024px]:px-2.5 max-[1024px]:text-[13px] max-md:h-10',
 				option.id === modelValue ? ON : OFF,
 			]"
 			@click="emit('update:modelValue', option.id)"

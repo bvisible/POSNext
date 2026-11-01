@@ -12,7 +12,8 @@
 	<!-- //// know the unit. Not a bare `h-dvh` beside it: Tailwind writes `.h-dvh` BEFORE `.h-screen` in the stylesheet (measured -->
 	<!-- //// in a browser), so `h-screen` would win everywhere; a `supports-` variant is written after the plain utilities. -->
 	<!-- //// Neoffice — the text size is a set of CSS variables on the root (task 38a-1, ruling 109): the cards read them, whatever the band they are in -->
-	<div class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900" :style="textSizeStyle" :data-text-size="textSize" data-test="kitchen-screen">
+	<!-- //// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px the root never widens the page (`max-md:overflow-x-hidden`). The bar's controls used to push the page to 657 px at 390 px, and a page wider than the phone widens the layout viewport of a mobile browser, which stretched the full-screen ticket (a fixed panel) past the screen with its × and its main button. The bar wraps now (ServiceTopBar), so nothing sticks out; this keeps it so whatever a screen adds later. -->
+	<div class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900 max-md:overflow-x-hidden" :style="textSizeStyle" :data-text-size="textSize" data-test="kitchen-screen">
 		<!-- //// Neoffice — ONE top bar instead of a header of two lines and a line of chips (task 38a-2, rulings 128 and 129). Row 1: the title names the -->
 		<!-- //// station the screen is opened on (« Bar », « Cuisine », « Toutes les préparations »), the count on the same line, and at the right the chip of what -->
 		<!-- //// waits at the pass (ruling 112), « show completed », the size of the text, the refresh and the exit. Row 2, the rooms and the stations, is drawn only -->

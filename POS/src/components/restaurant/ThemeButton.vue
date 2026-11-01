@@ -8,7 +8,7 @@
 			type="button"
 			data-test="theme-button"
 			:data-mode="mode"
-			class="relative inline-flex h-11 w-11 touch-manipulation select-none items-center justify-center rounded-[10px] border border-gray-300 bg-white text-gray-900 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:active:bg-gray-700"
+			class="relative inline-flex h-11 w-11 max-md:h-10 max-md:w-10 touch-manipulation select-none items-center justify-center rounded-[10px] border border-gray-300 bg-white text-gray-900 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:active:bg-gray-700"
 			:aria-label="label"
 			:title="label"
 			aria-haspopup="menu"

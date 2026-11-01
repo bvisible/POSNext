@@ -21,7 +21,8 @@
 	</div>
 
 	<!-- //// Neoffice — the text size is a set of CSS variables on the root, as on the kitchen screen (task 38a-2): the cards read them. And the dynamic viewport height, as the kitchen's root has it (ruling 72): a tablet browser's toolbar must not cut the foot of the screen. -->
-	<div v-else class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900" :style="textSizeStyle" :data-text-size="textSize" data-test="runner-screen">
+	<!-- //// Neoffice — the phone (NeoRestau lot 1, smoke-test fix): below 768 px the root never widens the page (`max-md:overflow-x-hidden`): the bar's controls used to push it to 797 px at 390 px, and a page wider than the phone widens the layout viewport of a mobile browser, which stretched the full-screen ticket past the screen. The bar wraps now (ServiceTopBar); this keeps it so whatever a screen adds later. -->
+	<div v-else class="flex flex-col h-screen supports-[height:100dvh]:h-dvh bg-gray-100 dark:bg-gray-900 max-md:overflow-x-hidden" :style="textSizeStyle" :data-text-size="textSize" data-test="runner-screen">
 		<!-- //// Neoffice — ONE top bar instead of a header of two lines and a line of chips, the same as the kitchen's (task 38a-2, rulings 129 and 130). Row 1: « Runner » -->
 		<!-- //// (and the room when one is chosen) with the count of what is ready on the same line, the display modes of the screen, and at the right the actions. -->
 		<!-- //// Row 2, the rooms and the stations, is drawn only when there is something to choose. -->

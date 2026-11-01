@@ -242,10 +242,13 @@ describe("the top of the floor plan is one line", () => {
 			global: { mocks: { __: globalThis.__ } },
 		})
 		// What makes a chip a chip (its height, its text, its shape), not what colours it, nor the padding at its sides: the plan
-		// keeps 12 px where the shared line has 16, so that its three rooms, two stations and both pills fit one row at 1366
+		// keeps 12 px where the shared line has 16, so that its three rooms, two stations and both pills fit one row at 1366.
+		// Nor the phone's own classes (`max-md:`, smoke-test fix): the shared line's chips are 40 px high below 768 px, the touch minimum, on the kitchen
+		// and runner screens; the geometry compared here is the one from 768 px, which the plan's line shares with them
 		const geometry = (classes) =>
 			classes.filter(
-				(token) => !/^(bg-|text-(white|gray)|hover:|dark:|px-)/.test(token),
+				(token) =>
+					!/^(bg-|text-(white|gray)|hover:|dark:|px-|max-md:)/.test(token),
 			)
 		const sharedChip = geometry(
 			shared.find('[data-test="rooms"] button').classes(),
