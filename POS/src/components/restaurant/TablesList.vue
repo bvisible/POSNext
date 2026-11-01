@@ -38,8 +38,8 @@
 			</button>
 		</div>
 
-		<!-- //// Neoffice — the rows go in as many columns as the width holds (kitchen test, 01.11): a row stretched over a wide screen left a gap of a thousand pixels between the table and its state. A column is at least 26 rem, and no more than the width itself, so a phone keeps one column and a till two or more. The titles of the sections take the whole width. -->
-		<div data-test="tables-scroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-1 pb-3 grid content-start gap-2 grid-cols-[repeat(auto-fill,minmax(min(100%,26rem),1fr))]">
+		<!-- //// Neoffice — the rows go in as many columns as the width holds (kitchen test, 01.11): a row stretched over a wide screen left a gap of a thousand pixels between the table and its state. A column is at least 22 rem, and no more than the width itself, so a phone keeps one column and a till two or more. The titles of the sections take the whole width. -->
+		<div data-test="tables-scroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-1 pb-3 grid content-start gap-2 grid-cols-[repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
 			<!-- The tables with something going on, the most urgent first -->
 			<TableCard
 				v-for="entry in model.busy"
