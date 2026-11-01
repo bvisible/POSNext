@@ -63,6 +63,15 @@
 				>
 					{{ mainLabel }}
 				</Button>
+				<!-- //// Neoffice — « Open full screen » on EVERY ticket (kitchen test, 01.11), as on the kitchen's card: the pass reads the ticket it carries in larger text, whether it scrolls or not. -->
+				<button v-if="!fullscreen" type="button" data-test="ticket-expand"
+					class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"
+					:aria-label="__('Open the ticket full screen')" :title="__('Open the ticket full screen')"
+					@click.stop="openFull">
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+				</svg>
+				</button>
 				<!-- //// Neoffice — the slot of the print button (task 38a-2, ruling 130): a 44 px square at the right of the main button, drawn only when the screen can print a copy of the ticket (task 44 wires it; no printing happens here) -->
 				<button v-if="canPrint" type="button" data-test="ticket-print"
 					class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:active:bg-gray-700"

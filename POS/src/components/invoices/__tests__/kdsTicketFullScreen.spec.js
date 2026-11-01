@@ -133,6 +133,34 @@ afterEach(() => {
 })
 
 describe("opening the ticket full screen", () => {
+	it("is also a button on every ticket, short or long: « Full screen » opens it without a strip to tap (kitchen test, 01.11)", async () => {
+		// Three dishes of 48 px fit the 150 px of the card: nothing scrolls, so there is no « +N lines » strip
+		const wrapper = show(longOrder(3))
+		await nextTick()
+		expect(wrapper.find('[data-test="ticket-more-strip"]').exists()).toBe(false)
+
+		const button = wrapper.get('[data-test="ticket-expand"]')
+		expect(button.attributes("aria-label")).toBe("Open the ticket full screen")
+		expect(button.classes()).toContain("w-[var(--kds-btn-h,44px)]")
+		await button.trigger("click")
+		await nextTick()
+
+		expect(panel()).not.toBeNull()
+		// Inside the panel there is the way out, not a second way in
+		expect(part("ticket-expand")).toBeNull()
+		expect(part("ticket-close")).not.toBeNull()
+	})
+
+	it("is the same button on a ticket that scrolls", async () => {
+		const wrapper = show(longOrder(24))
+		await nextTick()
+
+		await wrapper.get('[data-test="ticket-expand"]').trigger("click")
+		await nextTick()
+
+		expect(panel()).not.toBeNull()
+	})
+
 	it("is a tap on the « +N lines » strip: the ticket opens over the board, and not before", async () => {
 		const wrapper = show(longOrder(24))
 		await nextTick()

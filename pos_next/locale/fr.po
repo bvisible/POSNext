@@ -18552,3 +18552,7 @@ msgstr "La quantité doit être un nombre supérieur à zéro"
 #: pos_next/api/restaurant.py
 msgid "The counters to restore are not understood"
 msgstr "Les compteurs à restaurer ne sont pas compris"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgid "Open the ticket full screen"
+msgstr "Ouvrir le ticket en plein écran"

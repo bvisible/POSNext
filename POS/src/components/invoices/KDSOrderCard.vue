@@ -115,6 +115,15 @@
 				</div>
 			</div>
 
+			<!-- //// Neoffice — « Open full screen » on EVERY ticket (kitchen test, 01.11): the cook opens the ticket he works on, in larger text, whether it scrolls or not (the « View all » strip only stands on a ticket that scrolls). Not inside the panel itself, which has its way out. -->
+			<button v-if="!fullscreen && !showDeliveredConfirm" type="button" data-test="ticket-expand"
+				class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"
+				:aria-label="__('Open the ticket full screen')" :title="__('Open the ticket full screen')"
+				@click.stop="openFull">
+				<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+				</svg>
+			</button>
 			<!-- //// Neoffice — the slot of the print button (task 38a-1, ruling 127): a 44 px square that stands at the right of the main button, drawn only when the screen can print a copy of the ticket (task 44 will wire it; no printing happens here) -->
 			<button v-if="canPrint && !showDeliveredConfirm" type="button" data-test="ticket-print"
 				class="flex h-[var(--kds-btn-h,44px)] w-[var(--kds-btn-h,44px)] flex-none items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700"

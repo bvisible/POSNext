@@ -697,9 +697,9 @@ describe("a ticket looks like the dishes it shows (fix round 1, ruling 78)", () 
 		)
 
 		expect(badge(wrapper)).toBe("Delivered")
-		expect(wrapper.find('[data-test="ticket-actions"] button').exists()).toBe(
-			false,
-		)
+		// No main button; the « full screen » button stands on every ticket, a delivered one too (kitchen test, 01.11)
+		expect(wrapper.find('[data-test="ticket-main"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="ticket-actions"] button[data-test="ticket-expand"]').exists()).toBe(true)
 	})
 
 	it("moves its look with the press at once, before the server answers: Start turns into Ready and the dishes into Preparing", async () => {
