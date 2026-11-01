@@ -58,7 +58,7 @@ describe("a screen that follows the server's signals", () => {
 		expect(read).toHaveBeenCalledTimes(2)
 	})
 
-	it("reads every 4 seconds while the connection is down, and goes back to 15 once it is up", () => {
+	it("reads every 4 seconds while the connection is down, and goes back to 15 once it is up, counted from the last reading", () => {
 		const socket = fakeSocket(false)
 		followLiveReading({ socket, read })
 
@@ -66,12 +66,35 @@ describe("a screen that follows the server's signals", () => {
 		expect(read).toHaveBeenCalledTimes(3)
 
 		socket.connected = true
-		vi.advanceTimersByTime(4_000)
-		expect(read).toHaveBeenCalledTimes(4)
 		vi.advanceTimersByTime(14_999)
-		expect(read).toHaveBeenCalledTimes(4)
+		expect(read).toHaveBeenCalledTimes(3)
 		vi.advanceTimersByTime(1)
-		expect(read).toHaveBeenCalledTimes(5)
+		expect(read).toHaveBeenCalledTimes(4)
+	})
+
+	it("goes to the quick pace within a second of the connection being cut, not at the next long reading", () => {
+		const socket = fakeSocket(true)
+		followLiveReading({ socket, read })
+
+		vi.advanceTimersByTime(5_000)
+		expect(read).not.toHaveBeenCalled()
+		socket.connected = false
+		vi.advanceTimersByTime(1_000)
+
+		expect(read).toHaveBeenCalledTimes(1)
+	})
+
+	it("counts a reading made for a signal: the timed one is 15 seconds after it, not after the one before", () => {
+		const socket = fakeSocket(true)
+		followLiveReading({ socket, read })
+
+		vi.advanceTimersByTime(10_000)
+		socket.fire("kds_update")
+		expect(read).toHaveBeenCalledTimes(1)
+		vi.advanceTimersByTime(14_999)
+		expect(read).toHaveBeenCalledTimes(1)
+		vi.advanceTimersByTime(1)
+		expect(read).toHaveBeenCalledTimes(2)
 	})
 
 	it("takes the pace it is told (the runner reads every 30 seconds)", () => {

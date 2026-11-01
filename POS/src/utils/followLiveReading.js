@@ -17,35 +17,33 @@
  * @returns {() => void} Lets go of every listener and timer the call took
  */
 export function followLiveReading({ socket = null, events = ["kds_update"], read, everyMs = 15000, whileCutMs = 4000 }) {
-	const readAgain = () => read()
+	// Every reading, whatever asked for it, restarts the count of the timed one
+	let last = Date.now()
+	const readNow = () => {
+		last = Date.now()
+		read()
+	}
 	const onSignal = []
 	for (const event of [...events, "connect"]) {
-		socket?.on?.(event, readAgain)
+		socket?.on?.(event, readNow)
 		onSignal.push(event)
 	}
 
 	const onVisible = () => {
-		if (!document.hidden) read()
+		if (!document.hidden) readNow()
 	}
 	document.addEventListener("visibilitychange", onVisible)
 
-	let timer = null
-	let stopped = false
-	const next = () => {
-		// A connection that says it is not connected is down; no connection object at all keeps the usual pace
+	// The timer beats every second and compares with the last reading, so that a connection that is cut is noticed within a second and not at the next long reading.
+	// A connection that says it is not connected is down; no connection object at all keeps the usual pace.
+	const timer = setInterval(() => {
 		const down = socket?.connected === false
-		timer = setTimeout(() => {
-			if (stopped) return
-			read()
-			next()
-		}, down ? whileCutMs : everyMs)
-	}
-	next()
+		if (Date.now() - last >= (down ? whileCutMs : everyMs)) readNow()
+	}, 1000)
 
 	return () => {
-		stopped = true
-		clearTimeout(timer)
-		for (const event of onSignal) socket?.off?.(event, readAgain)
+		clearInterval(timer)
+		for (const event of onSignal) socket?.off?.(event, readNow)
 		document.removeEventListener("visibilitychange", onVisible)
 	}
 }
