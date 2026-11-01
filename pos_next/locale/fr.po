@@ -20740,3 +20740,6 @@ msgstr "Faire clignoter le ticket quand la suite est commandée"
 
 msgid "The ticket of a table whose next course is ordered flashes on the kitchen screen until the kitchen starts it or leaves it to do"
 msgstr "Le ticket d'une table dont la suite est commandée clignote sur l'écran de la cuisine jusqu'à ce que la cuisine le lance avec « Commencer » ou le laisse dans la bande « À faire »."
+
+msgid "{0} to take"
+msgstr "{0} à traiter"

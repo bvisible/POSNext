@@ -158,3 +158,19 @@ export function splitIntoBands(orders, { includeDelivered = false } = {}) {
 		production: [...production.sort(byArrival), ...delivered.sort(byArrival)],
 	}
 }
+
+//// Neoffice — the tickets that BLINK stand first in their band, in the order they were called (Daniel, 01.11: the second ticket that blinked was out of sight in a long column, and they are hard to find when the cook
+//// walks around): the cook finds them at the head of the band and takes them one after the other. A ticket left « to do » stops blinking and goes back to its place of arrival.
+/**
+ * @param {object[]} list - The tickets of a band, in order of arrival
+ * @param {string[]} [flashing] - The names of the tickets that blink, in the order they were called
+ * @returns {object[]} The same list when nothing of it blinks, else a new one with the blinking tickets first
+ */
+export function pinFlashing(list, flashing) {
+	if (!flashing?.length) return list
+	const byName = new Map(list.map((order) => [order.name, order]))
+	const pinned = flashing.map((name) => byName.get(name)).filter(Boolean)
+	if (!pinned.length) return list
+	const names = new Set(pinned.map((order) => order.name))
+	return [...pinned, ...list.filter((order) => !names.has(order.name))]
+}

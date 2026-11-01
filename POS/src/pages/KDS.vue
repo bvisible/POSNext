@@ -200,7 +200,7 @@ import { useTicketSide } from "@/composables/useTicketSide"
 import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
 import { usePrintCopy } from "@/composables/usePrintCopy"
 import { ticketCounts } from "@/utils/screenAwake"
-import { splitIntoBands } from "@/utils/kitchenBands"
+import { pinFlashing, splitIntoBands } from "@/utils/kitchenBands"
 //// Neoffice — the kitchen's last action follows the station's runner setting (task 38a-1, ruling 112)
 import {
 	countDishes,
@@ -322,9 +322,14 @@ const readyListShown = computed(() => showReady.value && hasRunnerStation.value)
 const roomNameOf = (order) =>
 	areas.value.find((area) => area.name === order.area)?.area_name || ""
 
-const bands = computed(() =>
-	splitIntoBands(kitchenOrders.value, { includeDelivered: showDelivered.value }),
-)
+//// Neoffice — the tickets that blink stand first in their band, in the order they were called (Daniel, 01.11: the second one was out of sight in a long column): the cook takes them one after the other from the head
+const bands = computed(() => {
+	const split = splitIntoBands(kitchenOrders.value, { includeDelivered: showDelivered.value })
+	return {
+		waiting: pinFlashing(split.waiting, flashingOrders.value),
+		production: pinFlashing(split.production, flashingOrders.value),
+	}
+})
 
 //// Neoffice — the page's one line (task 38a-2, ruling 128): its title names the STATION the screen is opened on (the one in the address or the
 //// one chosen on the chips), with its colour as a dot; « all the preparations » when none is. The word « preparation » stays the name of a state

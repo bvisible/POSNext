@@ -79,14 +79,26 @@ describe("the next course ordered", () => {
 		expect(player.play).not.toHaveBeenCalled()
 	})
 
-	it("rings once for several tables that order together, and every one of them flashes, the newest being the one it scrolls to", () => {
+	it("rings once for several tables that order together, and every one of them flashes, the oldest call first, the screen going to that one", () => {
 		start()
 		alert.read([before("A"), before("B")])
 		alert.read([after("A"), after("B", LATER)])
 
-		expect(alert.flashing.value.sort()).toEqual(["A", "B"])
+		expect(alert.flashing.value).toEqual(["A", "B"])
 		expect(player.play).toHaveBeenCalledTimes(1)
-		expect(scrolled).toEqual(["B"])
+		expect(scrolled).toEqual(["A"])
+	})
+
+	it("goes to the first ticket that blinks, not to the newest, when another is called while one is still to be taken", () => {
+		start()
+		alert.read([before("A"), before("B")])
+		alert.read([after("A"), before("B")])
+		scrolled.length = 0
+
+		alert.read([after("A"), after("B", LATER)])
+
+		expect(alert.flashing.value).toEqual(["A", "B"])
+		expect(scrolled).toEqual(["A"])
 	})
 
 	it("is cut to the room the screen shows: a table of another room makes no flash and no sound", () => {

@@ -48,14 +48,14 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 	}
 
 	/** Which of the watched tickets still flash after a reading: the ones still on the screen with dishes still to start. */
-	function updateFlashing(orders, station) {
+	function updateFlashing(orders, station, { quiet = false } = {}) {
 		const byName = new Map((orders || []).map((order) => [order?.name, order]))
 		for (const name of [...watched.keys()]) if (!stillToStart(byName.get(name), station)) watched.delete(name)
 		const next = [...watched.keys()]
 		const dealtWith = next.length < flashing.value.length
 		if (next.length !== flashing.value.length || next.some((name, at) => name !== flashing.value[at])) flashing.value = next
 		// A ticket was dealt with (started, here or at another screen): the cook is brought to the next one that blinks
-		if (dealtWith && next.length) scrollTo(next[0])
+		if (dealtWith && next.length && !quiet) scrollTo(next[0])
 	}
 
 	/**
@@ -70,16 +70,15 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 		memory = next
 		const byName = new Map((orders || []).map((order) => [order?.name, order]))
 		const told = alerts.filter((alert) => accept(byName.get(alert.order))).sort((a, b) => b.sentAt - a.sentAt)
+		const chosen = unref(settings)
 		if (told.length) {
-			const chosen = unref(settings)
 			if (chosen.nextCourseSound && chosen.nextCourseSound !== "none") playAlertSound(chosen.nextCourseSound, chosen.volume)
-			if (chosen.popup) {
-				for (const alert of told) watched.set(alert.order, alert.key)
-				// The newest table is the one the cook is brought to; the others flash where they stand
-				scrollTo(told[0].order)
-			}
+			// The oldest call goes in first: the tickets that blink stand in the order they were called
+			if (chosen.popup) for (const alert of [...told].reverse()) watched.set(alert.order, alert.key)
 		}
-		updateFlashing(orders, scope.station || "")
+		updateFlashing(orders, scope.station || "", { quiet: told.length > 0 })
+		// The cook is brought to the FIRST ticket that blinks (the oldest call), where the tickets that blink stand first in their band: not to the newest
+		if (told.length && chosen.popup && flashing.value.length) scrollTo(flashing.value[0])
 		return told
 	}
 

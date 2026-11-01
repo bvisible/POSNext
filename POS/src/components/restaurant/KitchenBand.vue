@@ -24,6 +24,8 @@
 			<!-- right edge; a column's are counted under it (below). Nothing is drawn over a ticket: a count over a ticket hides -->
 			<!-- the ticket's button. -->
 			<div class="flex items-center gap-1.5">
+				<!-- //// Neoffice — the tickets that blink stand FIRST in the band (the screen puts them there): the chip counts them and brings the band back to its head, where the cook finds them when it has scrolled away (Daniel, 01.11) -->
+				<button v-if="blinking > 0" type="button" data-test="band-blinking" class="touch-manipulation rounded-full bg-[#F55D1A] px-2.5 text-xs font-bold leading-6 text-[#141414] motion-safe:animate-pulse" @click="backToHead">{{ __("{0} to take", [blinking]) }}</button>
 				<span v-if="behind > 0" data-test="band-before" :class="CHIP">{{ mode === "lane" ? (oldestRight ? "›" : "‹") : "↑" }} {{ __("+{0}", [behind]) }}</span>
 				<span v-if="mode === 'lane' && ahead > 0" data-test="band-more" :class="CHIP">{{ __("+{0}", [ahead]) }}</span>
 			</div>
@@ -149,6 +151,13 @@ const isDelivered = (order) => kitchenStatusOf(order) === "Delivered"
 const aliveCount = computed(
 	() => props.orders.filter((order) => !isDelivered(order)).length,
 )
+
+//// Neoffice — how many tickets of this band blink, and the way back to the head of the band, where they stand
+const blinking = computed(() => props.orders.filter((order) => props.flashOrders.includes(order.name)).length)
+function backToHead() {
+	const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+	scroller.value?.scrollTo?.({ left: 0, top: 0, behavior: calm ? "auto" : "smooth" })
+}
 
 const headerId = computed(() => `band-${props.band}-title`)
 const isWaiting = computed(() => props.band === "waiting")

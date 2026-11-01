@@ -12,6 +12,7 @@ import {
 	bandOf,
 	byArrival,
 	kitchenStatusOf,
+	pinFlashing,
 	splitIntoBands,
 } from "../kitchenBands"
 
@@ -532,3 +533,27 @@ describe("the dishes sent ahead of their course (the service rhythm)", () => {
 	})
 })
 
+//// Neoffice — the tickets that blink stand FIRST in their band, in the order they were called (Daniel, 01.11: « il faut plutôt faire des popups qui se suivent » — the second ticket was out of sight in a long
+//// column, and they are hard to find when the cook walks around): the cook finds them at the head of the band, takes them one after the other, and a ticket left « to do » goes back to its place of arrival
+describe("the tickets that blink, first in their band", () => {
+	const names = (list) => list.map((one) => one.name)
+	const tickets = () => ["A", "B", "C", "D"].map((name, index) => order(["Pending"], { name, modified: `2026-10-30 12:0${index}:00` }))
+
+	it("puts the blinking ones first, in the order they blink, the others keeping their order of arrival", () => {
+		expect(names(pinFlashing(tickets(), ["C", "B"]))).toEqual(["C", "B", "A", "D"])
+	})
+
+	it("changes nothing, and hands back the same list, when no ticket blinks", () => {
+		const list = tickets()
+
+		expect(pinFlashing(list, [])).toBe(list)
+		expect(pinFlashing(list, undefined)).toBe(list)
+	})
+
+	it("ignores a blinking name the band does not hold, and does not change the list it was given", () => {
+		const list = tickets()
+
+		expect(names(pinFlashing(list, ["Z", "D"]))).toEqual(["D", "A", "B", "C"])
+		expect(names(list)).toEqual(["A", "B", "C", "D"])
+	})
+})

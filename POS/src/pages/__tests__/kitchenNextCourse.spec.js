@@ -211,6 +211,26 @@ describe("the kitchen when the next course of a table is ordered", () => {
 		expect(highlighted(wrapper)).toEqual([])
 	})
 
+	it("stands the tickets that blink FIRST in their band, in the order they were called, and counts them in the band's header (Daniel, 01.11)", async () => {
+		ORDERS = [starters("A"), starters("B"), starters("C"), starters("D")]
+		const wrapper = await open()
+		const inBand = () => wrapper.findAll('[data-test="band-production"] .ticket').map((el) => el.attributes("data-name"))
+		expect(inBand()).toEqual(["A", "B", "C", "D"])
+
+		ORDERS = [starters("A"), starters("B"), withDesserts("C"), starters("D")]
+		await readAgain(wrapper)
+		expect(inBand()).toEqual(["C", "A", "B", "D"])
+
+		ORDERS = [starters("A"), withDesserts("B", {}), withDesserts("C"), starters("D")]
+		await readAgain(wrapper)
+		expect(inBand()).toEqual(["C", "B", "A", "D"])
+		expect(wrapper.get('[data-test="band-production"] [data-test="band-blinking"]').text()).toBe("2 to take")
+
+		// one left to do goes back to its place of arrival
+		await wrapper.get('.ticket[data-name="C"] [data-test="ticket-todo"]').trigger("click")
+		expect(inBand()).toEqual(["B", "A", "C", "D"])
+	})
+
 	it("flashes every table that has ordered and been left, not only the newest", async () => {
 		ORDERS = [starters("A"), starters("B")]
 		const wrapper = await open()

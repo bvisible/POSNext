@@ -635,3 +635,34 @@ describe("the flashing tickets", () => {
 		wrapper.unmount()
 	})
 })
+
+//// Neoffice — the chip of the tickets that blink (Daniel, 01.11): they stand first in the band, and the chip counts them and brings the cook back to the head of the band when it has scrolled away
+describe("the chip of the tickets to handle", () => {
+	const chip = (wrapper) => wrapper.find('[data-test="band-blinking"]')
+
+	it("counts the tickets of the band that blink, in the words of the page", () => {
+		const wrapper = show({ orders: orders(4), flashOrders: ["SINV-2", "SINV-4", "SINV-99"] })
+
+		expect(chip(wrapper).text()).toBe("2 to take")
+		wrapper.unmount()
+	})
+
+	it("is not there when no ticket of the band blinks", () => {
+		const wrapper = show({ orders: orders(4), flashOrders: ["SINV-99"] })
+
+		expect(chip(wrapper).exists()).toBe(false)
+		wrapper.unmount()
+	})
+
+	it("brings the band back to its head when it is pressed", async () => {
+		const scrollTo = vi.fn()
+		const wrapper = show({ orders: orders(4), flashOrders: ["SINV-1"] }, { attachTo: document.body })
+		wrapper.get('[data-test="ticket-lane"]').element.scrollTo = scrollTo
+
+		await chip(wrapper).trigger("click")
+
+		expect(scrollTo).toHaveBeenCalledTimes(1)
+		expect(scrollTo.mock.calls[0][0]).toMatchObject({ left: 0, top: 0 })
+		wrapper.unmount()
+	})
+})
