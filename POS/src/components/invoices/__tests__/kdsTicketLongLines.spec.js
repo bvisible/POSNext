@@ -420,6 +420,12 @@ describe("the hint that more dishes follow", () => {
 })
 
 describe("the status menu of a dish", () => {
+	/** The same order with the dish at `index` ordered once: no quantity to pick in its menu. */
+	function oneUnitAt(order, index) {
+		order.items[index].qty = 1
+		return order
+	}
+
 	async function openMenu(wrapper, index = 0) {
 		await wrapper.findAll('[data-test="ticket-line"]')[index].trigger("click")
 	}
@@ -486,7 +492,8 @@ describe("the status menu of a dish", () => {
 		// waiting dish's offers two, 98 px. The menu was placed with the height of the larger one and floated 44 px over the smaller
 		layout({ viewport: 150 })
 		window.innerHeight = 600
-		const wrapper = show(longOrder(25))
+		// A dish of one unit: a dish of several has a quantity to pick, with a row of its own (kdsPartialReady.spec.js)
+		const wrapper = show(oneUnitAt(longOrder(25), 1))
 		await nextTick()
 
 		await openMenu(wrapper, 1)
@@ -502,7 +509,7 @@ describe("the status menu of a dish", () => {
 		// The dish ends at 548: with a window 660 px high there are 100 px under it, 94 of them are needed for one button (its head 42, the button 52)
 		layout({ viewport: 150 })
 		window.innerHeight = 660
-		const wrapper = show(longOrder(25))
+		const wrapper = show(oneUnitAt(longOrder(25), 1))
 		await nextTick()
 
 		await openMenu(wrapper, 1)

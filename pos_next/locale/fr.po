@@ -18516,3 +18516,39 @@ msgstr "Impossible de copier le lien."
 #: POS/src/components/restaurant/OpenPhoneDialog.vue
 msgid "To open it like an app, add it to the phone's home screen from the browser's menu."
 msgstr "Pour l'ouvrir comme une application, ajoutez-la à l'écran d'accueil depuis le menu du navigateur."
+
+#: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
+msgid "{0} of {1}"
+msgstr "{0} sur {1}"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgid "{0} of {1} sent"
+msgstr "{0} sur {1} envoyés"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgid "Units ready"
+msgstr "Unités prêtes"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgid "One less"
+msgstr "Une de moins"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgid "One more"
+msgstr "Une de plus"
+
+#: pos_next/api/restaurant.py
+msgid "A quantity can be given only when marking a dish ready"
+msgstr "Une quantité ne peut être donnée que pour marquer un plat prêt"
+
+#: pos_next/api/restaurant.py
+msgid "A quantity and a restore cannot be given together"
+msgstr "Une quantité et une restauration ne peuvent pas être données ensemble"
+
+#: pos_next/api/restaurant.py
+msgid "The quantity must be a number above zero"
+msgstr "La quantité doit être un nombre supérieur à zéro"
+
+#: pos_next/api/restaurant.py
+msgid "The counters to restore are not understood"
+msgstr "Les compteurs à restaurer ne sont pas compris"

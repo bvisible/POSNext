@@ -101,6 +101,9 @@
 									<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
 										:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
 									<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name">
+										<!-- //// Neoffice — the line is bigger than what waits at the pass: « (4 of 6) » beside the quantity (kitchen test of 01.11) -->
+										<span v-if="ofTheLine(item)" data-test="ticket-qty-of"
+											class="mr-1 whitespace-nowrap font-semibold text-gray-500 text-[length:var(--kds-fs-ref,11px)] dark:[&&]:!text-gray-400">{{ ofTheLine(item) }}</span>
 										<!-- //// Neoffice — the station is a small dot of its colour before the dish (the chips at the top carry the same dots), and its three letters too in the large sizes (`--kds-tt-d`). Not drawn in a view filtered on one station: the station is then known. -->
 										<template v-if="showStation && item.preparation_station">
 											<span data-test="ticket-station-dot" :title="item.station_name || item.preparation_station"
@@ -137,7 +140,9 @@
 										:class="[TICKET_FRAME.line, KITCHEN_FRAME.line]" data-test="ticket-line">
 										<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
 											:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
-										<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name">{{ item.item_name }}</span>
+										<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name"><!-- //// Neoffice — the line is bigger than what waits at the pass: « (4 of 6) » beside the quantity (kitchen test of 01.11) -->
+											<span v-if="ofTheLine(item)" data-test="ticket-qty-of"
+												class="mr-1 whitespace-nowrap font-semibold text-gray-500 text-[length:var(--kds-fs-ref,11px)] dark:[&&]:!text-gray-400">{{ ofTheLine(item) }}</span>{{ item.item_name }}</span>
 										<TicketDishNotes :item="item" :allergy-words="allergyWords" />
 									</div>
 								</div>
@@ -191,7 +196,9 @@ import { roomCode } from "@/utils/kitchenRoomCode"
 import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — five seconds to take back a « Deliver » (task 38a-2, ruling 112)
 import { offerUndo } from "@/composables/useUndoToast"
-import { dishesToPutBack, putBack } from "@/utils/kitchenUndo"
+import { dishesToPutBack, dishState, putBack } from "@/utils/kitchenUndo"
+//// Neoffice — the units a line holds at the pass, and the state a delivery leaves it in (kitchen test of 01.11, a line marked ready in part)
+import { orderedQty, stateAfterDelivery } from "@/utils/kitchenRunner"
 import { DEFAULT_ALLERGY_WORDS } from "@/utils/kitchenTextKinds"
 import { dishesOutOfSight } from "@/utils/ticketScrollHints"
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
@@ -293,6 +300,10 @@ const mainLabel = computed(() =>
 	kitchenActionLabel("deliver", { takeaway: !!props.card.takeaway }),
 )
 
+//// Neoffice — « (4 of 6) » for a line bigger than what waits at the pass: the server gives `qty` the units to carry and `ordered_qty` the line's own quantity (kitchen test of 01.11)
+const ofTheLine = (item) =>
+	orderedQty(item) > Number(item.qty) ? `(${__("{0} of {1}", [item.qty, orderedQty(item)])})` : ""
+
 //// Neoffice — the colour of a dish's station, and its three letters (task 38a-2, ruling 130): the same tag the kitchen ticket writes in the view of all the stations
 const dotColor = (item) => item.station_color || "#6B7280"
 const stationCode = (item) => roomCode(item.station_name || item.preparation_station)
@@ -347,8 +358,9 @@ function offerBack(message, items) {
 			const ofTheInvoice = items.filter((item) => item._invoiceName === invoice)
 			return {
 				invoice,
-				dishes: ofTheInvoice.map((item) => ({ item_code: item.item_code, kds_status: "Delivered" })),
-				before: ofTheInvoice.map((item) => item.kds_status),
+				//// Neoffice — what a delivery leaves each line in, and the whole state it had (status AND counters): a line cooked in part keeps its status when the runner delivers its cooked units
+				dishes: ofTheInvoice.map((item) => ({ item_code: item.item_code, ...stateAfterDelivery(item) })),
+				before: ofTheInvoice.map((item) => dishState(item)),
 			}
 		}),
 	)

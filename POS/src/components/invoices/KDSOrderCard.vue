@@ -180,8 +180,9 @@
 									<!-- //// column (a tint when there are several, so that « 3x » is seen from across the pass), then the name, preceded by the station's tag (in the view of ALL -->
 									<!-- //// the stations only: the page hands `showStationBadge`) and by the dish's state WHEN IT IS NOT THE TICKET'S. The tag and the state used to take a line -->
 									<!-- //// each under the dish, and a wide state pill beside the name made a long dish wrap onto a second line. A delivered dish carries a check mark. -->
+									<!-- //// Neoffice — a line cooked in part shows the units STILL TO COOK as its quantity (kitchen test of 01.11: six ordered, four sent, « 2× » left to cook); the units that left are told by the pill after the name -->
 									<span class="font-bold whitespace-nowrap self-start text-gray-900 dark:text-gray-100" data-test="ticket-qty"
-										:class="Number(item.qty) > 1 && !isDelivered(item) ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
+										:class="Number(shownQty(item)) > 1 && !isDelivered(item) ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ shownQty(item) }}×</span>
 									<span class="font-medium text-gray-900 dark:text-gray-100 [overflow-wrap:anywhere]" data-test="ticket-dish-name">
 										<!-- Station tag -->
 										<!-- //// Neoffice — dark mode (task 46): white on a station's colour suits a light station in light mode only (white on clay is 2.8:1). In dark the text is whichever of white and ink reads on THAT colour, handed to the class as a variable (a colour in an inline style cannot be reached by a class). Light mode keeps `text-white`. -->
@@ -193,6 +194,10 @@
 										<span v-if="stateWord(item)" data-test="ticket-line-state"
 											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap"
 											:class="itemStatusClass(item.kds_status)">{{ stateWord(item) }}</span>
+										<!-- //// Neoffice — what already left of a line cooked in part, told by a small pill in the look of a delivered dish (struck through, faded): « 4 of 6 sent » (kitchen test of 01.11) -->
+										<span v-if="isCookedInPart(item)" data-test="ticket-line-sent"
+											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap line-through opacity-60 dark:opacity-75"
+											:class="itemStatusClass('Delivered')">{{ __("{0} of {1} sent", [unitsSentOf(item), orderedQty(item)]) }}</span>
 										<svg v-if="isDelivered(item)" data-test="ticket-line-done" data-icon="check" class="mr-1 inline-block h-[1em] w-[1em] align-[-0.14em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>{{ item.item_name }}
 									</span>
 									<!-- //// Neoffice — THREE KINDS of text, one look each, all the size of the dish's own text (task 38a-1, ruling 123): the options, a remark, an allergy. They are drawn by TicketDishNotes since the runner's card draws the same three (task 38a-2, ruling 130). -->
@@ -208,10 +213,11 @@
 							<!-- //// "ready" and has no "deliver"; with none "ready" and "deliver" are one gesture, so the menu has "deliver" and no "ready"; from the list of -->
 							<!-- //// what waits at the pass a dish can only be called back to preparation. -->
 								<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
-									class="fixed z-30 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 p-1.5"
+									class="fixed z-30 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 p-1.5"
+									:class="pickerShown(item) ? 'w-60' : 'w-48'"
 									:style="menuStyle">
 									<!-- //// Neoffice — the menu names the dish it is for and the line is highlighted (kitchen test, 01.11): the menu opens under the dish and covers the one after it, so a cook could not tell which dish a button would act on. The buttons are a size and a weight up, with a border in the colour of the state, so that « ready » is read from across the pass. -->
-									<p data-test="ticket-line-menu-dish" class="truncate px-1.5 pb-1.5 text-[length:var(--kds-fs-sub,12px)] font-semibold text-gray-500 dark:text-gray-400">{{ item.qty }}× {{ item.item_name }}</p>
+									<p data-test="ticket-line-menu-dish" class="truncate px-1.5 pb-1.5 text-[length:var(--kds-fs-sub,12px)] font-semibold text-gray-500 dark:text-gray-400">{{ shownQty(item) }}× {{ item.item_name }}</p>
 									<div class="flex flex-col gap-1">
 										<button v-if="offers(item, 'Preparing')"
 											@click.stop="updateItemStatus(item, 'Preparing')"
@@ -219,11 +225,23 @@
 											<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
 											{{ kitchenStatusLabel("Preparing") }}
 										</button>
+										<!-- //// Neoffice — a line of several units left to cook gets a quantity beside « ready » (kitchen test of 01.11: six of the same dish, four are done): a stepper - n + that starts on ALL that is left, so that one tap on the button is what it always was. The button says how many it marks. -->
+										<div v-if="pickerShown(item)" data-test="ticket-line-picker" class="flex items-center gap-1" role="group" :aria-label="__('Units ready')">
+											<button type="button" data-test="picker-less" :disabled="pickedUnits <= 1" :aria-label="__('One less')"
+												@click.stop="stepUnits(item, -1)"
+												class="h-12 w-12 flex-none touch-manipulation rounded-lg border-2 border-gray-300 bg-gray-100 text-2xl font-bold leading-none text-gray-800 active:bg-gray-200 disabled:opacity-40 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">−</button>
+											<span data-test="picker-count" aria-live="polite"
+												class="min-w-0 flex-1 text-center text-xl font-bold tabular-nums text-gray-900 dark:text-gray-100">{{ pickedUnits }}</span>
+											<button type="button" data-test="picker-more" :disabled="pickedUnits >= unitsLeftOf(item)" :aria-label="__('One more')"
+												@click.stop="stepUnits(item, 1)"
+												class="h-12 w-12 flex-none touch-manipulation rounded-lg border-2 border-gray-300 bg-gray-100 text-2xl font-bold leading-none text-gray-800 active:bg-gray-200 disabled:opacity-40 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">+</button>
+										</div>
 										<button v-if="offers(item, 'Ready')"
-											@click.stop="updateItemStatus(item, 'Ready')"
+											@click.stop="pressReady(item)"
+											data-test="menu-ready"
 											class="w-full min-h-[48px] rounded-lg border-2 border-green-600 bg-green-50 px-3 text-left text-base font-bold text-green-900 active:bg-green-100 dark:border-ds-success dark:bg-green-400/20 dark:text-ds-success flex items-center gap-2.5">
-											<span class="w-2.5 h-2.5 rounded-full bg-green-600 dark:bg-ds-success"></span>
-											{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
+											<span class="w-2.5 h-2.5 flex-none rounded-full bg-green-600 dark:bg-ds-success"></span>
+											{{ readyLabel(item) }}
 										</button>
 										<button v-if="offers(item, 'Delivered')"
 											@click.stop="updateItemStatus(item, 'Delivered')"
@@ -315,7 +333,9 @@ import { FULLSCREEN_FRAME, KITCHEN_FRAME, TICKET_FRAME } from "@/utils/ticketLay
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
 //// Neoffice — five seconds to take back a « Ready » or a « Deliver » (task 38a-2, ruling 112)
 import { offerUndo } from "@/composables/useUndoToast"
-import { dishesToPutBack, putBack, UNDOABLE_STATUSES } from "@/utils/kitchenUndo"
+import { dishesToPutBack, dishState, putBack, UNDOABLE_STATUSES } from "@/utils/kitchenUndo"
+//// Neoffice — a line of several units can be marked ready for some of them: the units still to cook, and what already left (kitchen test of 01.11)
+import { isCookedInPart, orderedQty, unitsLeftToCookOfItem, unitsToCook } from "@/utils/kitchenRunner"
 //// Neoffice — what to write on a station's colour in dark mode (task 46)
 import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
@@ -541,6 +561,8 @@ function changed() {
 //// padding and borders besides: the room it needs, and where it hangs from when it opens upward, are those of the menu it really is
 //// (fix round 1; bigger and headed by the dish after the kitchen test of 01.11).
 const MENU_WIDTH = 192
+//// Neoffice — the menu of a dish with a quantity to pick (w-60), for « Mark ready · 4 of 6 » to stay on one line
+const MENU_WIDE_WIDTH = 240
 const MENU_BUTTON_HEIGHT = 52
 const MENU_FRAME_HEIGHT = 42
 const MENU_STATUSES = ["Preparing", "Ready", "Delivered"]
@@ -562,6 +584,34 @@ function offers(item, status) {
 	// With a runner the cook has no "deliver": the runner delivers
 	if (status === "Delivered") return !props.useRunner
 	return true
+}
+
+//// Neoffice — a line of several units can be marked ready for SOME of them (kitchen test of 01.11: six of the same dish, four are done). The picker appears on a dish
+//// with more than one unit left to cook (all its lines of the order together: the server fills them in the order of the lines), starts on ALL that is left, and a tap on
+//// « ready » with that number is what it always was. The units still to cook are what a line shows as its quantity; `shownQty` is that, for a card handed the order itself
+//// or a view of it.
+const pickedUnits = ref(1)
+const unitsLeftOf = (item) => unitsLeftToCookOfItem(props.order.items || [], item.item_code)
+const pickerShown = (item) => offers(item, "Ready") && unitsLeftOf(item) > 1
+const shownQty = (item) => (isCookedInPart(item) ? unitsToCook(item) : item.qty)
+const unitsSentOf = (item) => Math.min(Number(item.kds_ready_qty) || 0, orderedQty(item))
+// The number picked, within what is left to cook (a refresh can lower what is left under an open menu)
+const pickedOf = (item) => Math.min(Math.max(1, pickedUnits.value), Math.max(1, unitsLeftOf(item)))
+function stepUnits(item, delta) {
+	pickedUnits.value = Math.min(Math.max(1, pickedOf(item) + delta), unitsLeftOf(item))
+}
+function readyLabel(item) {
+	const base = kitchenActionLabel("ready", { takeaway: isTakeaway.value })
+	if (!pickerShown(item)) return base
+	const left = unitsLeftOf(item)
+	const picked = pickedOf(item)
+	return picked >= left ? base : `${base} · ${__("{0} of {1}", [picked, left])}`
+}
+function pressReady(item) {
+	const left = unitsLeftOf(item)
+	const picked = pickerShown(item) ? pickedOf(item) : left
+	// All that is left, or no picker: the whole line, as it always was
+	return updateItemStatus(item, "Ready", picked < left ? picked : undefined)
 }
 
 //// Neoffice — a delivered dish is done (task 42): its tap does nothing, no menu, no call, and nothing to put it back
@@ -593,16 +643,20 @@ function toggleItemMenu(item, event) {
 	const anchor = event?.currentTarget?.getBoundingClientRect?.()
 	if (anchor) {
 		const buttons = MENU_STATUSES.filter((s) => offers(item, s)).length
+		//// Neoffice — the picker is a row of its own, and the menu is wider with it (kitchen test of 01.11)
+		const picker = pickerShown(item)
 		menuPosition.value = placeMenu(
 			anchor,
 			{
-				width: MENU_WIDTH,
-				height: buttons * MENU_BUTTON_HEIGHT + MENU_FRAME_HEIGHT,
+				width: picker ? MENU_WIDE_WIDTH : MENU_WIDTH,
+				height: buttons * MENU_BUTTON_HEIGHT + MENU_FRAME_HEIGHT + (picker ? MENU_BUTTON_HEIGHT : 0),
 			},
 			{ width: window.innerWidth, height: window.innerHeight },
 		)
 	}
 	activeItemMenu.value = idx
+	//// Neoffice — the picker starts on ALL that is left to cook
+	pickedUnits.value = Math.max(1, unitsLeftOf(item))
 }
 
 // A menu on the screen does not follow its dish: when anything scrolls (the ticket's dishes, the lane of tickets) it closes.
@@ -680,36 +734,48 @@ let sizeObserver = null
 watch(() => props.order, measureHidden, { deep: true, flush: "post" })
 
 // Update individual item KDS status (optimistic UI)
-async function updateItemStatus(item, newStatus) {
+//// Neoffice — `units`: mark that many units ready, not the whole line (kitchen test of 01.11). The move is then not shown before the server answers (the units a line
+//// shows are worked out from its counters, which only the server knows), and the screen reads the orders again at once.
+async function updateItemStatus(item, newStatus, units) {
 	activeItemMenu.value = null
+	const partial = units !== undefined
 	// Optimistic: update all items with same item_code instantly
-	const oldStatuses = []
-	props.order.items.forEach((i) => {
-		if (i.item_code === item.item_code) {
-			oldStatuses.push(i.kds_status)
+	const rows = props.order.items.filter((i) => i.item_code === item.item_code)
+	const oldStatuses = rows.map((i) => i.kds_status)
+	//// Neoffice — the state the dish had, counters included: what an undo puts back
+	const before = dishState(rows[0] || item)
+	if (!partial)
+		rows.forEach((i) => {
 			i.kds_status = newStatus
-		}
-	})
+		})
 	try {
 		await call("pos_next.api.restaurant.update_item_kds_status", {
 			invoice_name: props.order.name,
 			item_code: item.item_code,
 			status: newStatus,
+			...(partial ? { qty: units } : {}),
 		})
-		//// Neoffice — a dish made ready or delivered by a tap can be taken back for five seconds (task 38a-2, ruling 112)
-		if (UNDOABLE_STATUSES.includes(newStatus) && oldStatuses[0] && oldStatuses[0] !== newStatus)
+		//// Neoffice — a dish made ready or delivered by a tap can be taken back for five seconds (task 38a-2, ruling 112); a line made ready in part goes back to the counters it had
+		const after = partial
+			? {
+					item_code: item.item_code,
+					kds_status: "Preparing",
+					kds_ready_qty: (Number(before.kds_ready_qty) || 0) + units,
+				}
+			: { item_code: item.item_code, kds_status: newStatus }
+		const entries = dishesToPutBack([
+			{ invoice: props.order.name, dishes: [after], before: [before] },
+		])
+		if (UNDOABLE_STATUSES.includes(newStatus) && entries.length)
 			offerBack(
-				`${tableLabel.value} · ${item.item_name} · ${kitchenStatusLabel(newStatus, { takeaway: isTakeaway.value })}`,
-				[{ invoice: props.order.name, item_code: item.item_code, status: oldStatuses[0] }],
+				`${tableLabel.value} · ${item.item_name} · ${kitchenStatusLabel(newStatus, { takeaway: isTakeaway.value })}${partial ? ` · ${__("{0} of {1}", [units, unitsLeftOf(item)])}` : ""}`,
+				entries,
 			)
 		changed()
 	} catch (error) {
 		// Rollback on error
-		let idx = 0
-		props.order.items.forEach((i) => {
-			if (i.item_code === item.item_code) {
-				i.kds_status = oldStatuses[idx++]
-			}
+		rows.forEach((i, index) => {
+			i.kds_status = oldStatuses[index]
 		})
 		showError(__("Failed to update item status"))
 	}
@@ -958,11 +1024,13 @@ async function doUpdateStatus(newStatus) {
 	const before = {
 		order: props.order.kds_status,
 		dishes: (props.order.items || []).map((dish) => dish.kds_status),
+		//// Neoffice — the whole state of each dish, counters included: what an undo puts back (kitchen test of 01.11)
+		states: (props.order.items || []).map((dish) => dishState(dish)),
 	}
 	advanceDishes(newStatus)
 	//// Neoffice — what to put back if the cook takes the move back (task 38a-2, ruling 112): each dish that moved, in the state it had
 	const toPutBack = dishesToPutBack([
-		{ invoice: props.order.name, dishes: props.order.items || [], before: before.dishes },
+		{ invoice: props.order.name, dishes: props.order.items || [], before: before.states },
 	])
 	// With every station the server gives the order the status asked. With a station it makes the order follow its dishes,
 	// those of every station, which this screen does not see: the order is left to the server, the look follows the dishes
