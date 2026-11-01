@@ -1037,8 +1037,9 @@ import { roomCode } from "@/utils/kitchenRoomCode"
 //// Neoffice — a station's colour lightened for a dark canvas (smoke-test fix; task 46's helper, as the runner's plan uses it)
 import { onDark } from "@/utils/stationColors"
 import { initSocket } from "@/socket"
-// « Offert » (NeoRestau lot 1, task 24): what an offered row of a table's draft keeps when the table is opened
-import { offeredSourceFields } from "@/utils/offeredRows"
+//// Neoffice — opening a table (and the Paid/Cleaning rule that goes with it) is one function now, shared with the notices of a guest's order (composables/useOpenTable.js; Daniel, 01.11). It carried « Offert » (NeoRestau lot 1, task 24): what an offered row of a table's draft keeps when the table is opened.
+import { useOpenTable } from "@/composables/useOpenTable"
+import { tableNeedsCleaning } from "@/utils/tableStatus"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
@@ -1056,8 +1057,7 @@ import {
 	tablesOfTheService,
 } from "@/utils/tablesOfTheService"
 
-//// Neoffice — what the options of a line loaded from the table's draft add to its price (NeoRestau lot 1, task 27).
-import { modifiersPriceAdjustment } from "@/utils/modifiersPrice"
+//// Neoffice — what the options of a line loaded from the table's draft add to its price moved with the opening of a table (composables/useOpenTable.js).
 
 const props = defineProps({
 	// The till user's name, as the till's header shows it: a phone's top says the first name (task 26)
@@ -1082,6 +1082,7 @@ const restaurantStore = useRestaurantStore()
 const cartStore = usePOSCartStore()
 const draftsStore = usePOSDraftsStore()
 const shiftStore = usePOSShiftStore()
+const { openTable } = useOpenTable()
 let floorSocket = null
 const { showSuccess, showError, showInfo, handleError } = useToast()
 
@@ -2079,74 +2080,14 @@ function startNewTakeaway() {
 
 async function selectTable(table) {
 	// Paid/Cleaning tables get special handling — no draft loading
-	if (table.status === "Paid" || table.status === "Cleaning") {
+	if (tableNeedsCleaning(table)) {
 		emit("cleaning-table-clicked", table)
 		return
 	}
 
-	try {
-		// Fetch table data FIRST (while keeping old cart visible to avoid jolt)
-		const res = await call("pos_next.api.restaurant.open_table", {
-			table_name: table.name,
-			pos_profile: shiftStore.profileName,
-		})
-
-		// Now clear and rebuild in one batch — no visual gap
-		await cartStore.clearCart()
-		cartStore.setRestaurantTable(table)
-
-		if (res && res.name) {
-			// Existing draft found — load items into cart
-			if (res.items && res.items.length > 0) {
-				for (const item of res.items) {
-					// Calculate modifier price adjustment from saved JSON
-					//// Neoffice — read by the one helper every path that loads a line uses (utils/modifiersPrice.js;
-					//// NeoRestau lot 1, task 27, fix round 1): same sum as the loop it replaces.
-					const modifierPriceAdjustment = modifiersPriceAdjustment(item.posa_item_modifiers)
-
-					cartStore.addItem(
-						{
-							item_code: item.item_code,
-							item_name: item.item_name,
-							rate: item.rate,
-							uom: item.uom,
-							//// Neoffice — the order row names the item's stock unit, the factor of the line and the item's other units
-							//// (open_table): the line carries them, or its unit select could not list them (NeoRestau lot 1, task 22).
-							stock_uom: item.stock_uom,
-							conversion_factor: item.conversion_factor,
-							item_uoms: item.item_uoms,
-							image: item.image,
-							preparation_station: item.preparation_station,
-							posa_special_instructions: item.posa_special_instructions,
-							posa_item_modifiers: item.posa_item_modifiers,
-							kds_status: item.kds_status || "Pending",
-							//// Neoffice — the stored family: a table opened again had no held course, so « Order the next course » never showed (Daniel, 01.11)
-							service_family: item.service_family || "",
-							_modifiers_applied: modifierPriceAdjustment || 0,
-							// An offered row of the table (« Offert », NeoRestau lot 1, task 24) comes back offered:
-							// its flag and its list price
-							...offeredSourceFields(item),
-							//// Neoffice — whether the line left ahead of its course and when the room called it (the service rhythm, NeoRestau lot 1): the next course to call is named from them, and a table reopened must hand them back as it hands the family
-							kds_ahead: item.kds_ahead || 0,
-							kds_called_at: item.kds_called_at || null,
-						},
-						item.qty || 1,
-					)
-				}
-			}
-
-			cartStore.$patch({
-				currentDraftId: res.name,
-				kdsStatus: res.kds_status || "Pending",
-				hasUnsentChanges: false,
-				guestPaidAmount: res.paid_amount || 0,
-				guestTipAmount: res.tip_total || 0,
-			})
-			if (res.customer) cartStore.setCustomer(res.customer)
-		}
-	} catch (e) {
-		console.error("[FloorPlan] Failed to open table:", e)
-	}
+	//// Neoffice — the body of this function moved to composables/useOpenTable.js, so that the notice of a guest's order (« View table ») opens a table the way a tap in the list does, through the same function
+	//// (NeoRestau lot 1, Daniel, 01.11). Nothing changed in what it does: the order is read first, then the cart is cleared and rebuilt.
+	await openTable(table)
 
 	emit("table-selected", table)
 }

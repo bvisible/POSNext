@@ -173,10 +173,12 @@ describe("an offered row reaches the server flagged", () => {
 describe("the loaders of a table's draft hand over the row's offer", () => {
 	const source = (rel) => readFileSync(path.resolve(__dirname, rel), "utf8")
 
-	it("the floor plan and the server drafts add offeredSourceFields(item) to the line they add", () => {
-		expect(source("../../components/pos/FloorPlanEditor.vue")).toMatch(
+	it("the opening of a table (the floor plan's list and the notices of a guest's order go through it) and the server drafts add offeredSourceFields(item) to the line they add", () => {
+		//// Neoffice — the floor plan's loader moved to composables/useOpenTable.js, which the floor plan calls (Daniel, 01.11)
+		expect(source("../../composables/useOpenTable.js")).toMatch(
 			/cartStore\.addItem\(\s*\{[\s\S]{0,1200}\.\.\.offeredSourceFields\(item\)/,
 		)
+		expect(source("../../components/pos/FloorPlanEditor.vue")).toMatch(/await openTable\(table\)/)
 		expect(source("../../pages/POSSale.vue")).toMatch(
 			/function handleLoadServerDraft[\s\S]{0,1600}\.\.\.offeredSourceFields\(item\)/,
 		)
