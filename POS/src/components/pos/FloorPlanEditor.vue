@@ -306,6 +306,7 @@
 			</label>
 		</div>
 
+		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the canvas was a fixed light sheet in an inline style, which no dark class can reach, under table names written in light text (1.1:1). The colour and the dots are classes now (`canvasClass`): the same light ones, and in dark the ground the till's dark remap gives `bg-gray-50` with faint white dots, as the runner's plan has them. Only the size stays inline. -->
 		<!-- Canvas. Put away, not removed, while the list is shown: its gestures are bound to it once, when it mounts.
 		     It hears the pointer of a pressed table to its end (task 26): a tap opens the table when the finger lifts, a
 		     long press shows its QR code, a press that moves pans the plan, a second finger pinches it (useTablePress) -->
@@ -314,6 +315,7 @@
 			ref="canvasRef"
 			data-test="floor-canvas"
 			class="flex-1 relative overflow-hidden"
+			:class="canvasClass"
 			style="touch-action: none;"
 			:style="canvasBackgroundStyle"
 			@pointerdown="tablePress.otherPointer"
@@ -438,7 +440,7 @@
 					v-for="(seat, si) in getSeatPositions(table)"
 					:key="'seat-' + si"
 					class="absolute w-3.5 h-3.5 rounded-sm border-2 pointer-events-none"
-					:class="table.status === 'Occupied' ? 'bg-gray-400 border-gray-500' : 'bg-white border-gray-300'"
+					:class="table.status === 'Occupied' ? 'bg-gray-400 border-gray-500 dark:bg-ds-sand-400 dark:border-ds-sand-300' : 'bg-white border-gray-300'"
 					:style="seat"
 				/>
 
@@ -469,12 +471,13 @@
 				</button>
 
 				<!-- Table info -->
+				<!-- //// Neoffice — dark mode (smoke-test fix): the words on a tile were written for a light tile. On the dark tile, in the system's dark ramp: the free, in-service and reserved words in the dark ramp's success, danger and warning colours (the light ones read 3.5:1 or less), the order's count in the pale red on its red wash, the waiting count in ink on its orange (white on it was 3.2:1), and the time in the system's secondary text colour (the till's remap of `text-gray-500` is `!important`, so `[&&]` doubles the selector for this variant to outrank it). The Paid words and the opened-by initials keep the clay the till's remap gives `text-blue-600`, which reads on the dark tile; the Cleaning words (no emerald in this build) are the neutral's secondary colour. Light mode keeps every class it had. -->
 				<span class="font-bold text-sm text-gray-900 dark:text-white leading-tight text-center">{{ table.table_name }}</span>
 				<template v-if="table.order_summary && !isEditMode">
 					<div class="flex items-center gap-1 mt-0.5">
-						<span class="text-[9px] font-semibold bg-red-100 text-red-700 px-1 rounded">{{ table.order_summary.item_count }}</span>
-						<span v-if="table.waiting_items_count > 0" class="bg-orange-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 animate-pulse" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
-						<span class="text-[9px] text-gray-500">{{ formatTime(table.order_summary.opened_at) }}</span>
+						<span class="text-[9px] font-semibold bg-red-100 text-red-700 dark:text-ds-danger-soft px-1 rounded">{{ table.order_summary.item_count }}</span>
+						<span v-if="table.waiting_items_count > 0" class="bg-orange-500 text-white dark:text-ds-ink text-[9px] font-bold rounded-full px-1.5 py-0.5 animate-pulse" :title="__('Waiting')">{{ table.waiting_items_count }}</span>
+						<span class="text-[9px] text-gray-500 dark:[&&]:!text-ds-sand-300">{{ formatTime(table.order_summary.opened_at) }}</span>
 						<span class="text-[9px] font-bold text-blue-600">{{ table.order_summary.opened_by }}</span>
 					</div>
 				</template>
@@ -482,15 +485,15 @@
 					<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
 					{{ __('Paid') }}
 				</span>
-				<span v-else-if="table.status === 'Cleaning' && !isEditMode" class="text-[10px] font-semibold text-emerald-600 mt-0.5">
+				<span v-else-if="table.status === 'Cleaning' && !isEditMode" class="text-[10px] font-semibold text-emerald-600 dark:text-ds-sand-300 mt-0.5">
 					{{ __('Cleaning') }}
 				</span>
 				<span v-else class="text-[10px] font-medium mt-0.5" :class="{
-					'text-green-600': table.status === 'Empty',
-					'text-red-600': table.status === 'Occupied',
-					'text-yellow-600': table.status === 'Reserved',
+					'text-green-600 dark:text-ds-success': table.status === 'Empty',
+					'text-red-600 dark:text-ds-danger': table.status === 'Occupied',
+					'text-yellow-600 dark:text-ds-warning': table.status === 'Reserved',
 					'text-blue-600': table.status === 'Paid',
-					'text-emerald-600': table.status === 'Cleaning',
+					'text-emerald-600 dark:text-ds-sand-300': table.status === 'Cleaning',
 				}">{{ __(table.status) }}</span>
 
 				<!-- Resize handles (edit mode only) -->
@@ -523,18 +526,21 @@
 					height: (station.height || 60) + 'px',
 					backgroundColor: (station.color || '#6B7280') + '20',
 					borderColor: station.color || '#6B7280',
+					'--station-color': station.color,
+					'--station-on-dark': onDark(station.color || '#6B7280'),
 				}"
 				@pointerdown="isEditMode && !$event.target.closest('.edit-btn') ? handleDragStart($event, station) : null"
 				@click="!isEditMode ? openStationKDS(station) : null"
 			>
 				<!-- Station icon -->
-				<svg v-if="station.station_type === 'Kitchen'" class="w-5 h-5 mb-0.5" :style="{color: station.color}" fill="currentColor" viewBox="0 0 24 24">
+				<!-- //// Neoffice — dark mode (smoke-test fix): the station's name and icon are written in its own colour, which a dark canvas does not read (a blue station 2.1:1). The colour moves from the inline style to a variable the box carries, so that in dark it can be the same colour lightened (`onDark`, as on the runner's plan); in light it is the very colour it was. -->
+				<svg v-if="station.station_type === 'Kitchen'" class="w-5 h-5 mb-0.5 text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]" fill="currentColor" viewBox="0 0 24 24">
 					<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
 				</svg>
-				<svg v-else class="w-5 h-5 mb-0.5" :style="{color: station.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg v-else class="w-5 h-5 mb-0.5 text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
 				</svg>
-				<span class="text-xs font-bold" :style="{color: station.color}">{{ station.station_name }}</span>
+				<span class="text-xs font-bold text-[color:var(--station-color)] dark:text-[color:var(--station-on-dark)]">{{ station.station_name }}</span>
 
 				<!-- Edit button (edit mode only) -->
 				<button
@@ -589,7 +595,7 @@
 				@click="toggleDeliveryArrows"
 				class="absolute bottom-3 left-3 w-8 h-8 flex items-center justify-center rounded-lg shadow-sm transition-colors z-20"
 				:class="showDeliveryArrows
-					? 'bg-green-500 text-white hover:bg-green-600'
+					? 'bg-green-500 text-white hover:bg-green-600 dark:bg-ds-success dark:text-ds-ink dark:hover:bg-ds-success'
 					: 'bg-white/90 border border-gray-200 text-gray-500 hover:bg-gray-50'"
 				:title="showDeliveryArrows ? __('Hide delivery arrows') : __('Show delivery arrows')"
 			>
@@ -632,7 +638,7 @@
 		<p
 			v-if="isPhone && shownView === 'plan' && !isEditMode"
 			data-test="plan-hint"
-			class="px-4 pt-2.5 pb-[max(14px,env(safe-area-inset-bottom))] text-center text-[13px] text-[#6F665A] bg-[#FAF3EA] flex-shrink-0"
+			class="px-4 pt-2.5 pb-[max(14px,env(safe-area-inset-bottom))] text-center text-[13px] text-[#6F665A] bg-[#FAF3EA] dark:text-ds-sand-300 dark:bg-[#181b21] flex-shrink-0"
 		>
 			{{ qrEnabled ? __("Tap a table to open its order · long press: its QR code") : __("Tap a table to open its order") }}
 		</p>
@@ -1025,6 +1031,8 @@ import { useCanvasGestures } from "@/composables/useCanvasGestures"
 import { useToast } from "@/composables/useToast"
 import { call } from "@/utils/apiWrapper"
 import { roomCode } from "@/utils/kitchenRoomCode"
+//// Neoffice — a station's colour lightened for a dark canvas (smoke-test fix; task 46's helper, as the runner's plan uses it)
+import { onDark } from "@/utils/stationColors"
 import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
@@ -1361,16 +1369,17 @@ const {
 	},
 })
 
+//// Neoffice — dark mode (smoke-test fix): the canvas colour and its dots are classes, whole literals for Tailwind's scan, with the light values the inline style had (`#f8fafc` and `#cbd5e1` in service, `#f9fafb` and `#d1d5db` while the plan is edited) and, in dark, the ground the till's dark remap gives `bg-gray-50` and faint white dots. Only the size of the grid stays in the style.
+const CANVAS_VIEW =
+	"bg-[#f8fafc] dark:bg-[#181b21] [--plan-dot:#cbd5e1] dark:[--plan-dot:rgba(255,255,255,0.1)] bg-[radial-gradient(circle,var(--plan-dot)_1px,transparent_1px)]"
+const CANVAS_EDIT =
+	"bg-[#f9fafb] dark:bg-[#181b21] [--plan-dot:#d1d5db] dark:[--plan-dot:rgba(255,255,255,0.1)] bg-[radial-gradient(circle,var(--plan-dot)_1px,transparent_1px)]"
+const canvasClass = computed(() =>
+	isEditMode.value ? CANVAS_EDIT : CANVAS_VIEW,
+)
 const canvasBackgroundStyle = computed(() => {
 	const gridSize = isEditMode.value ? 20 : 25
-	const dotColor = isEditMode.value ? "#d1d5db" : "#cbd5e1"
-	const dotSize = isEditMode.value ? "1px" : "1px"
-	const bg = isEditMode.value ? "#f9fafb" : "#f8fafc"
-	return {
-		backgroundColor: bg,
-		backgroundImage: `radial-gradient(circle, ${dotColor} ${dotSize}, transparent ${dotSize})`,
-		backgroundSize: `${gridSize}px ${gridSize}px`,
-	}
+	return { backgroundSize: `${gridSize}px ${gridSize}px` }
 })
 const selectedArea = ref(null)
 const showAddTableDialog = ref(false)
@@ -1923,6 +1932,7 @@ function getTableClasses(table) {
 	if (isEditMode.value) {
 		return "border-2 border-dashed border-blue-400 bg-white/90 dark:bg-gray-800/90 shadow-md"
 	}
+	//// Neoffice — dark mode (smoke-test fix): the fill of a tile in dark is the till's own remap of `bg-green-50`, `bg-red-50`... (index.css, `!important`: a tint of the state's colour over the dark canvas), which the `dark:bg-*-900/20` beside it never outranked, so those are left as they were. A table being cleaned has no emerald in this build (`emerald` is not one of its colours: the light mode draws it as a plain bordered tile, and in dark the remap tinted it green like a free table inside a near-black edge that vanished on the dark canvas): in dark it is the system's neutral, a wash of the paper colour (`--color-primary-soft`) edged with the tertiary text colour; `[&&]` doubles the selector so that this outranks the remap.
 	const statusClasses = {
 		Empty:
 			"border-2 border-green-200 bg-green-50 hover:border-green-400 dark:bg-green-900/20 dark:border-green-800",
@@ -1933,7 +1943,7 @@ function getTableClasses(table) {
 		Paid:
 			"border-2 border-blue-300 bg-blue-50 hover:border-blue-400 dark:bg-blue-900/20 dark:border-blue-800",
 		Cleaning:
-			"border-2 border-emerald-300 bg-emerald-50 hover:border-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-800",
+			"border-2 border-emerald-300 bg-emerald-50 hover:border-emerald-400 dark:border-ds-sand-400 dark:hover:border-ds-sand-300 dark:[&&]:!bg-[rgba(255,251,245,0.10)]",
 	}
 	return statusClasses[table.status] || statusClasses.Empty
 }

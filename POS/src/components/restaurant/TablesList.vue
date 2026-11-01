@@ -1,5 +1,6 @@
 <template>
-	<div data-test="tables-list" class="relative flex flex-col flex-1 min-h-0 bg-[#FAF3EA] text-[#141414]" :style="LIST_FONT">
+	<div data-test="tables-list" class="relative flex flex-col flex-1 min-h-0 bg-[#FAF3EA] text-[#141414] dark:bg-[#181b21] dark:text-ds-paper" :style="LIST_FONT">
+		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the list stayed cream and white in the dark mode of the till, beside a dark cart. Every surface, line and text colour of the list has its dark counterpart from the design system's dark scope (the classes are `dark:` ones beside the light ones, or tablesListLook.js's constants); the plan's canvas beside it is the same ground. The light mode draws what it drew. -->
 		<!-- //// Neoffice — added file (no upstream equivalent). The list of tables of the restaurant till, as the waiter
 		     //// mockup draws it (NeoRestau lot 1, task 26; product owner, 31.10.2026: « on the phone, show the list of
 		     //// the tables by default rather than the plan »). The filters (« All · N », then the rooms of the plan),
@@ -56,7 +57,7 @@
 					v-for="booking in model.soon"
 					:key="booking.key"
 					data-test="reservation-card"
-					class="rounded-[12px] border border-dashed border-[#BFB5A4] bg-[#FFFDF8]"
+					class="rounded-[12px] border border-dashed border-[#BFB5A4] bg-[#FFFDF8] dark:border-ds-sand-400 dark:bg-[#1c1f26]"
 				>
 					<button
 						v-if="booking.table"
@@ -64,10 +65,10 @@
 						class="w-full flex items-center justify-between gap-2 px-[14px] py-3 text-start touch-manipulation"
 						@click="$emit('open-table', booking.table)"
 					>
-						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] whitespace-nowrap">{{ booking.detail }}<template v-if="booking.late">{{ " · " }}<span data-test="late" :class="LATE_CLASS">{{ __("Late") }}</span></template></span>
+						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] dark:text-ds-sand-300 whitespace-nowrap">{{ booking.detail }}<template v-if="booking.late">{{ " · " }}<span data-test="late" :class="LATE_CLASS">{{ __("Late") }}</span></template></span>
 					</button>
 					<div v-else class="flex items-center justify-between gap-2 px-[14px] py-3">
-						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] whitespace-nowrap">{{ booking.detail }}<template v-if="booking.late">{{ " · " }}<span data-test="late" :class="LATE_CLASS">{{ __("Late") }}</span></template></span>
+						<span class="text-[18px] font-bold leading-tight truncate">{{ booking.title }}</span>{{ " " }}<span class="shrink-0 text-[13px] text-[#6F665A] dark:text-ds-sand-300 whitespace-nowrap">{{ booking.detail }}<template v-if="booking.late">{{ " · " }}<span data-test="late" :class="LATE_CLASS">{{ __("Late") }}</span></template></span>
 					</div>
 				</div>
 			</template>
@@ -79,7 +80,7 @@
 					v-for="entry in model.others"
 					:key="entry.key"
 					data-test="table-row"
-					class="flex items-center gap-1 rounded-[12px] border border-[#ECE7DE] bg-[#FFFDF8]"
+					class="flex items-center gap-1 rounded-[12px] border border-[#ECE7DE] bg-[#FFFDF8] dark:border-[rgba(255,251,245,0.14)] dark:bg-[#1c1f26]"
 				>
 					<button
 						type="button"
@@ -88,7 +89,7 @@
 						:class="qrEnabled && entry.qr ? 'pe-1' : 'pe-[14px]'"
 						@click="$emit('open-table', entry.table)"
 					>
-						<span class="text-[16px] font-semibold truncate">{{ entry.title }}</span>{{ " " }}<span class="shrink-0 text-[13px]" :class="ROW_STATE_CLASSES[entry.tier] || 'text-[#6F665A]'">
+						<span class="text-[16px] font-semibold truncate">{{ entry.title }}</span>{{ " " }}<span class="shrink-0 text-[13px]" :class="ROW_STATE_CLASSES[entry.tier] || 'text-[#6F665A] dark:text-ds-sand-300'">
 							{{ entry.badge.text }}
 						</span>
 					</button>
@@ -96,7 +97,7 @@
 						v-if="qrEnabled && entry.qr"
 						type="button"
 						data-test="table-qr"
-						class="w-11 h-11 me-0.5 shrink-0 flex items-center justify-center rounded-[10px] text-[#141414] hover:bg-[#F6F3ED] active:bg-[#ECE7DE] touch-manipulation"
+						class="w-11 h-11 me-0.5 shrink-0 flex items-center justify-center rounded-[10px] text-[#141414] hover:bg-[#F6F3ED] active:bg-[#ECE7DE] dark:text-ds-paper dark:hover:bg-[rgba(255,251,245,0.10)] dark:active:bg-[rgba(255,251,245,0.14)] touch-manipulation"
 						:aria-label="__('QR code of {0}', [entry.title])"
 						:title="__('QR code of {0}', [entry.title])"
 						@click="$emit('show-qr', entry.table)"
@@ -108,7 +109,7 @@
 				</div>
 			</template>
 
-			<p v-if="isEmpty" data-test="tables-empty" class="py-10 text-center text-[15px] text-[#6F665A]">
+			<p v-if="isEmpty" data-test="tables-empty" class="py-10 text-center text-[15px] text-[#6F665A] dark:text-ds-sand-300">
 				{{ __("No table to show") }}
 			</p>
 		</div>
@@ -117,7 +118,7 @@
 		<div
 			v-if="phone"
 			data-test="tables-bar"
-			class="grid grid-cols-2 gap-2 px-4 pt-2.5 pb-[max(18px,env(safe-area-inset-bottom))] bg-[#FFFDF8] border-t border-[#ECE7DE] flex-shrink-0"
+			class="grid grid-cols-2 gap-2 px-4 pt-2.5 pb-[max(18px,env(safe-area-inset-bottom))] bg-[#FFFDF8] border-t border-[#ECE7DE] dark:bg-[#1c1f26] dark:border-[rgba(255,251,245,0.14)] flex-shrink-0"
 		>
 			<button type="button" :class="[BAR_BUTTON, takeawayEnabled ? '' : 'col-span-2']" @click="openFreeTables">
 				{{ __("Open a table") }}
@@ -134,16 +135,16 @@
 			role="dialog"
 			aria-modal="true"
 			:aria-label="__('Open a table')"
-			class="absolute inset-0 z-30 flex items-end bg-[#141414]/40"
+			class="absolute inset-0 z-30 flex items-end bg-[#141414]/40 dark:bg-black/60"
 			@click.self="closeFreeTables"
 		>
-			<div class="w-full max-h-[75%] flex flex-col rounded-t-[20px] bg-[#FFFDF8] shadow-lg">
-				<div class="flex items-center justify-between gap-2 ps-4 pe-1.5 pt-1.5 border-b border-[#ECE7DE] flex-shrink-0">
+			<div class="w-full max-h-[75%] flex flex-col rounded-t-[20px] bg-[#FFFDF8] dark:bg-[#1c1f26] shadow-lg">
+				<div class="flex items-center justify-between gap-2 ps-4 pe-1.5 pt-1.5 border-b border-[#ECE7DE] dark:border-[rgba(255,251,245,0.14)] flex-shrink-0">
 					<span class="font-display text-[22px] leading-none">{{ __("Open a table") }}</span>
 					<button
 						type="button"
 						data-test="free-tables-close"
-						class="w-11 h-11 flex items-center justify-center rounded-[10px] text-[#524B41] hover:bg-[#F6F3ED]"
+						class="w-11 h-11 flex items-center justify-center rounded-[10px] text-[#524B41] hover:bg-[#F6F3ED] dark:text-ds-sand-300 dark:hover:bg-[rgba(255,251,245,0.10)]"
 						:aria-label="__('Close')"
 						@click="closeFreeTables"
 					>
@@ -159,13 +160,13 @@
 							:key="table.name"
 							type="button"
 							data-test="free-table"
-							class="min-h-[48px] px-2 rounded-[10px] border border-[#CBEDD7] bg-[#E9F7EE] text-[15px] font-semibold truncate touch-manipulation"
+							class="min-h-[48px] px-2 rounded-[10px] border border-[#CBEDD7] bg-[#E9F7EE] text-[15px] font-semibold truncate touch-manipulation dark:border-ds-success/40 dark:bg-ds-success/20 dark:text-ds-success-soft"
 							@click="pickFreeTable(table)"
 						>
 							{{ table.table_name || table.name }}
 						</button>
 					</div>
-					<p v-else class="py-6 text-center text-[15px] text-[#6F665A]">{{ __("No free table") }}</p>
+					<p v-else class="py-6 text-center text-[15px] text-[#6F665A] dark:text-ds-sand-300">{{ __("No free table") }}</p>
 				</div>
 			</div>
 		</div>
@@ -204,12 +205,16 @@ const emit = defineEmits([
 // The mockup's chips (13 px, 12 px corners, ink when chosen), 32 px high like the chips of the floor plan's line
 const CHIP =
 	"inline-flex items-center h-8 px-3 rounded-xl text-[13px] whitespace-nowrap flex-shrink-0 touch-manipulation"
-const CHIP_ON = "bg-[#141414] text-[#FFFDF8] border border-[#141414]"
-const CHIP_OFF = "border border-[#DCD4C7] text-[#524B41] bg-transparent"
-const SECTION = "mt-1.5 text-[12px] uppercase tracking-[0.06em] text-[#6F665A]"
+// In dark the chosen chip is the bright paper one (« on dark, primary becomes a bright paper button », the design system's dark scope), as the kitchen's chips are
+const CHIP_ON =
+	"bg-[#141414] text-[#FFFDF8] border border-[#141414] dark:bg-ds-paper dark:text-ds-ink dark:border-ds-paper"
+const CHIP_OFF =
+	"border border-[#DCD4C7] text-[#524B41] bg-transparent dark:border-[rgba(255,251,245,0.24)] dark:text-ds-sand-300"
+const SECTION =
+	"mt-1.5 text-[12px] uppercase tracking-[0.06em] text-[#6F665A] dark:text-ds-sand-300"
 // The mockup's bar: 48 px, ink outline, Karla 600 15 px
 const BAR_BUTTON =
-	"min-h-[48px] rounded-[10px] border border-[#141414] bg-[#FFFDF8] text-[15px] font-semibold text-[#141414] active:bg-[#F6F3ED] touch-manipulation"
+	"min-h-[48px] rounded-[10px] border border-[#141414] bg-[#FFFDF8] text-[15px] font-semibold text-[#141414] active:bg-[#F6F3ED] touch-manipulation dark:border-ds-paper dark:bg-transparent dark:text-ds-paper dark:active:bg-[rgba(255,251,245,0.10)]"
 
 const isEmpty = computed(
 	() =>

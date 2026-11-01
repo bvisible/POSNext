@@ -55,10 +55,11 @@ const LINE =
 	"inline-flex items-center h-8 px-3 border text-sm font-medium whitespace-nowrap touch-manipulation"
 const FIRST = { phone: "rounded-s-[10px]", line: "rounded-s-lg" }
 const LAST = { phone: "rounded-e-[10px] -ms-px", line: "rounded-e-lg -ms-px" }
+//// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the half in use is the bright paper one in dark (« on dark, primary becomes a bright paper button », the design system's dark scope), the other a quiet card with the secondary text colour; the line's small switch already had its dark classes for the half not in use.
 const ON =
-	"relative z-[1] bg-[#141414] border-[#141414] text-[#FFFDF8] font-bold"
+	"relative z-[1] bg-[#141414] border-[#141414] text-[#FFFDF8] font-bold dark:bg-ds-paper dark:border-ds-paper dark:text-ds-ink"
 const OFF = {
-	phone: "bg-[#FFFDF8] border-[#DCD4C7] text-[#524B41]",
+	phone: "bg-[#FFFDF8] border-[#DCD4C7] text-[#524B41] dark:bg-[#1c1f26] dark:border-[rgba(255,251,245,0.24)] dark:text-ds-sand-300",
 	line: "bg-white border-gray-300 text-gray-600 hover:text-gray-800 dark:bg-gray-900 dark:border-gray-600 dark:text-gray-300",
 }
 

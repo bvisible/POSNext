@@ -10,26 +10,30 @@ export const ICON_QR =
 
 // The badge of a card, by its tone (tablesOfTheService says the tone): ready at the pass in clay, as the mockup; a QR
 // order to accept as quiet text, as the mockup; the other states in a soft pill of the design system's tones
+//// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the list was cream whatever the colour mode. Each colour below has its dark counterpart from the design system's dark scope
+//// (tokens/colors.css, and the dark ramp of readme 9.1 for the status colours; the names are tailwind.config.js's `ds-*`): the text on paper, the secondary text, the success, warning
+//// and danger of the dark ramp, and the soft wash of the paper colour (`--color-primary-soft`, `rgba(255, 251, 245, 0.10)`) where the light mode has a pale pill. The clay "ready"
+//// pill is ink on clay in both modes (6.9:1), so it keeps its classes. Every pair reads at 4.5:1 or more on the dark card (this fix's spec computes them).
 const PILL = "px-2.5 py-[3px] rounded-xl"
 export const BADGE_CLASSES = {
 	ready: `${PILL} bg-[#D68A59] text-[#141414] font-bold`,
-	quiet: "text-[#6F665A]",
-	neutral: `${PILL} bg-[#F6F3ED] text-[#524B41] font-semibold`,
-	paid: `${PILL} bg-[#E9F7EE] text-[#11663A] font-semibold`,
-	free: "text-[#11663A]",
-	cleaning: "text-[#6F665A]",
-	reserved: "text-[#92610C]",
+	quiet: "text-[#6F665A] dark:text-ds-sand-300",
+	neutral: `${PILL} bg-[#F6F3ED] text-[#524B41] font-semibold dark:bg-[rgba(255,251,245,0.10)] dark:text-ds-paper`,
+	paid: `${PILL} bg-[#E9F7EE] text-[#11663A] font-semibold dark:bg-ds-success/20 dark:text-ds-success-soft`,
+	free: "text-[#11663A] dark:text-ds-success",
+	cleaning: "text-[#6F665A] dark:text-ds-sand-300",
+	reserved: "text-[#92610C] dark:text-ds-warning",
 }
 
 // The state word of a row (a free, cleaning or reserved table): plain text in its tone
 export const ROW_STATE_CLASSES = {
-	free: "text-[#11663A]",
-	cleaning: "text-[#6F665A]",
-	reserved: "text-[#92610C]",
+	free: "text-[#11663A] dark:text-ds-success",
+	cleaning: "text-[#6F665A] dark:text-ds-sand-300",
+	reserved: "text-[#92610C] dark:text-ds-warning",
 }
 
 // A booking whose guests are late: the warning token's text (--amber-700)
-export const LATE_CLASS = "text-[#92610C] font-semibold"
+export const LATE_CLASS = "text-[#92610C] font-semibold dark:text-ds-warning"
 
 /** How long a table has been seated: « For 25 min », « For 1 h 15 » */
 export function durationOf(minutes) {

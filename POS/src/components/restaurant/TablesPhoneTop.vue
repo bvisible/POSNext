@@ -1,5 +1,6 @@
 <template>
-	<div class="flex-shrink-0 bg-[#FAF3EA]" :style="LIST_FONT">
+	<div class="flex-shrink-0 bg-[#FAF3EA] dark:bg-[#181b21]" :style="LIST_FONT">
+		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the strip under the ink bar, which holds the switch, was cream in the dark mode of the till; it is the ground of the list and of the plan beside it. The ink bar itself is dark in both modes. -->
 		<!-- //// Neoffice — added file (no upstream equivalent). The top of the till's tables on a phone, as the waiter mockup
 		     //// draws it (NeoRestau lot 1, task 26): « Tables » in Forum on the ink bar, the till user's first name and the
 		     //// time on the right, then the switch « List | Floor plan ». What comes under it (the filters and the list, or

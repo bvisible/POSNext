@@ -27,9 +27,11 @@
 		<template v-for="wall in walls" :key="wall.id">
 			<!-- Wall segments (split around doors/windows) -->
 			<template v-for="(seg, si) in getWallSegments(wall)" :key="wall.id + '-seg-' + si">
+				<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): a wall was a fixed dark slate (`#374151`), which a dark canvas swallows (1.7:1). The colour is the text colour of the line now, the same slate in light and, in dark, the design system's tertiary text colour (5:1 on the canvas); a selected wall keeps its clay. -->
 				<line
 					:x1="seg.x1" :y1="seg.y1" :x2="seg.x2" :y2="seg.y2"
-					:stroke="selectedId === wall.id ? '#d68a59' : '#374151'"
+					class="text-[#374151] dark:text-ds-sand-400"
+					:stroke="selectedId === wall.id ? '#d68a59' : 'currentColor'"
 					stroke-width="4" stroke-linecap="round"
 				/>
 			</template>

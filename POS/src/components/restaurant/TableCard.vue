@@ -1,9 +1,10 @@
 <template>
 	<div
 		data-test="table-card"
-		class="flex items-stretch gap-1 rounded-[12px] bg-[#FFFDF8]"
-		:class="entry.tier === 'ready' ? 'border-2 border-[#D68A59]' : 'border border-[#ECE7DE]'"
+		class="flex items-stretch gap-1 rounded-[12px] bg-[#FFFDF8] dark:bg-[#1c1f26]"
+		:class="entry.tier === 'ready' ? 'border-2 border-[#D68A59]' : 'border border-[#ECE7DE] dark:border-[rgba(255,251,245,0.14)]'"
 	>
+		<!-- //// Neoffice — dark mode (NeoRestau lot 1, smoke-test fix): the card, its title, its details and its QR button have dark classes beside the light ones (the card's ground, its line, the paper and the secondary text of the design system's dark scope; the badge's are in tablesListLook.js); the clay edge of a table whose dishes are ready is the same in both modes. -->
 		<!-- //// Neoffice — added file (no upstream equivalent). One table of the list of tables, as the waiter mockup draws
 		     //// it (NeoRestau lot 1, task 26): a white card, the table's name in 18 px bold, a badge on the right that says
 		     //// what needs the waiter, one muted line under it (how long the table has been seated, the total of its order,
@@ -16,12 +17,12 @@
 			@click="$emit('open', entry.table)"
 		>
 			<span class="flex items-center justify-between gap-2 w-full">
-				<span data-test="card-title" class="text-[18px] font-bold leading-tight text-[#141414] truncate">
+				<span data-test="card-title" class="text-[18px] font-bold leading-tight text-[#141414] dark:text-ds-paper truncate">
 					{{ entry.title }}
 				</span>{{ " " }}<span data-test="badge" class="shrink-0 text-[13px] leading-[18px] whitespace-nowrap" :class="badgeClass">
 					{{ entry.badge.text }}
 				</span>
-			</span>{{ details ? " " : "" }}<span v-if="details" data-test="card-details" class="block text-[13px] leading-[18px] text-[#6F665A] truncate">
+			</span>{{ details ? " " : "" }}<span v-if="details" data-test="card-details" class="block text-[13px] leading-[18px] text-[#6F665A] dark:text-ds-sand-300 truncate">
 				{{ details }}
 			</span>
 		</button>
@@ -29,7 +30,7 @@
 			v-if="canShowQR"
 			type="button"
 			data-test="table-qr"
-			class="w-11 h-11 self-center me-1.5 shrink-0 flex items-center justify-center rounded-[10px] text-[#141414] hover:bg-[#F6F3ED] active:bg-[#ECE7DE] touch-manipulation"
+			class="w-11 h-11 self-center me-1.5 shrink-0 flex items-center justify-center rounded-[10px] text-[#141414] hover:bg-[#F6F3ED] active:bg-[#ECE7DE] dark:text-ds-paper dark:hover:bg-[rgba(255,251,245,0.10)] dark:active:bg-[rgba(255,251,245,0.14)] touch-manipulation"
 			:aria-label="__('QR code of {0}', [entry.title])"
 			:title="__('QR code of {0}', [entry.title])"
 			@click="$emit('qr', entry.table)"
