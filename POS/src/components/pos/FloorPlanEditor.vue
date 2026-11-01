@@ -1042,6 +1042,7 @@ import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
 import OpenPhoneDialog from "@/components/restaurant/OpenPhoneDialog.vue"
 import TablesList from "@/components/restaurant/TablesList.vue"
+import { openScreen } from "@/utils/openScreen"
 import TablesPhoneTop from "@/components/restaurant/TablesPhoneTop.vue"
 import TablesViewSwitch from "@/components/restaurant/TablesViewSwitch.vue"
 import { useTablesView } from "@/composables/useTablesView"
@@ -2043,7 +2044,9 @@ function restaurantQuery() {
 // Every page opened in a tab of its own (the kitchen screen, the pass, the takeaway counter) is told the restaurant
 function openRestaurantTab(path, ...query) {
 	const parts = [...query, restaurantQuery()].filter(Boolean)
-	window.open(parts.length ? `${path}?${parts.join("&")}` : path, "_blank")
+	//// Neoffice — on a phone the screen opens in THIS tab (kitchen test, 01.11): a second tab left the waiter stuck on the runner, its back arrow leading to
+	//// another till in that tab (utils/openScreen)
+	openScreen(parts.length ? `${path}?${parts.join("&")}` : path, { samePage: isPhone.value })
 }
 
 function openStationKDS(station) {

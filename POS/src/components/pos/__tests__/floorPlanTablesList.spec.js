@@ -681,10 +681,14 @@ describe("a mouse on the plan (fix round 1)", () => {
 	})
 })
 
+vi.mock("@/utils/openScreen", () => ({ openScreen: vi.fn() }))
+const { openScreen } = await import("@/utils/openScreen")
+
 describe("the runner on a phone (fix round 1, ruling 98)", () => {
 	let open
 	beforeEach(() => {
 		open = vi.spyOn(window, "open").mockImplementation(() => null)
+		openScreen.mockClear()
 	})
 	afterEach(() => open.mockRestore())
 	const runner = () => wrapper.find('[data-test="phone-runner"]')
@@ -731,10 +735,8 @@ describe("the runner on a phone (fix round 1, ruling 98)", () => {
 
 		await runner().trigger("click")
 
-		expect(open).toHaveBeenCalledWith(
-			"/pos/runner?restaurant=The%20Bistro",
-			"_blank",
-		)
+		// On a phone it opens in THIS tab: a second tab left the waiter with no way back (kitchen test, 01.11)
+		expect(openScreen).toHaveBeenCalledWith("/pos/runner?restaurant=The%20Bistro", { samePage: true })
 	})
 
 	it("is not there where the restaurant has no runner, nor on a tablet (its line has the pill)", async () => {
