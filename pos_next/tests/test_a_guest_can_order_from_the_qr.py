@@ -56,6 +56,19 @@ class AGuestCanOrderFromTheQr(ServiceCase):
 		self.assertEqual(answer["invoice"], existing)
 		self.assertEqual([r.item_code for r in self.lines_of(existing)], [self.soup, self.cola])
 
+	def test_a_guest_orders_the_same_drink_again_in_a_second_round(self):
+		"""The page sends the new lines only and empties its cart after each send: a drink ordered again is a new line, never one the server skips."""
+		first = self.order(self.cola)
+		second = self.order(self.cola)
+
+		self.assertEqual(first["invoice"], second["invoice"])
+		self.assertEqual([r.item_code for r in self.lines_of(first["invoice"])], [self.cola, self.cola])
+
+	def test_two_lines_of_the_same_dish_in_one_send_are_two_lines(self):
+		answer = self.order(self.cola, self.cola)
+
+		self.assertEqual([r.item_code for r in self.lines_of(answer["invoice"])], [self.cola, self.cola])
+
 	def test_the_guest_is_the_guest_again_when_the_order_is_taken(self):
 		self.order(self.cola)
 

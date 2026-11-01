@@ -639,14 +639,7 @@ def submit_guest_order(token, items):
 		existing_batches = [flt(row.get("kds_batch") or 0) for row in invoice_doc.items]
 		next_batch = int(max(existing_batches, default=0)) + 1
 
-	# Build map of existing items to prevent re-adding items already on the invoice
 	import json as _json
-	existing_item_keys = set()
-	for row in invoice_doc.items:
-		key = row.item_code
-		if hasattr(row, "posa_item_modifiers") and row.posa_item_modifiers:
-			key += "|" + str(row.posa_item_modifiers)
-		existing_item_keys.add(key)
 
 	# //// Neoffice — the lines THIS order adds (the ones above, already on the invoice, are not news to the tills): see _lines_of_this_order.
 	added_rows = []
@@ -656,14 +649,12 @@ def submit_guest_order(token, items):
 		if not item_code:
 			continue
 
-		# Build dedup key: item_code + modifiers
 		modifiers = item.get("modifiers")
 		mod_str = _json.dumps(modifiers) if modifiers and not isinstance(modifiers, str) else (modifiers or "")
-		item_key = item_code + ("|" + mod_str if mod_str else "")
-
-		# Skip if this exact item (same code + modifiers) already exists in the invoice
-		if item_key in existing_item_keys:
-			continue
+		# //// Neoffice — every line of a send is a line of the order: the page sends the NEW lines only and empties its cart after each send, so
+		# //// a drink ordered again in a second round (or twice in one send) is a new line. The first version skipped a line whose item and
+		# //// modifiers were already on the invoice, which dropped a second round without a word and answered success (found by the floor-alerts
+		# //// agent, 01.11).
 
 		qty = flt(item.get("qty", 1))
 		rate = flt(item.get("rate") or item.get("price") or 0)
@@ -693,9 +684,6 @@ def submit_guest_order(token, items):
 		if frappe.db.has_column("Sales Invoice Item", "posa_item_modifiers"):
 			if mod_str:
 				row.posa_item_modifiers = mod_str
-
-		# Track so subsequent duplicates in same submission are also caught
-		existing_item_keys.add(item_key)
 
 	invoice_doc.flags.ignore_permissions = True
 	with _as_the_system():
