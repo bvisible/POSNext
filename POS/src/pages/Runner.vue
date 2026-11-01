@@ -254,6 +254,8 @@ import { useColumnsThatFit } from "@/composables/useColumnsThatFit"
 import { isWideTicket, runnerLineCount } from "@/utils/wideTicket"
 import { useStackShortTickets } from "@/composables/useStackShortTickets"
 import { allergyWordsOf } from "@/utils/kitchenTextKinds"
+//// Neoffice — the order of the runner's tickets (see groupByTable)
+import { byArrival } from "@/utils/kitchenBands"
 //// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
 import { inkOn, onDark } from "@/utils/stationColors"
 import { call } from "@/utils/apiWrapper"
@@ -499,7 +501,8 @@ function groupByTable() {
 			roomCode: order.area_code || "",
 			takeaway: !!order.is_takeaway,
 		}))
-		.sort((a, b) => new Date(a.modified) - new Date(b.modified))
+		//// Neoffice — the oldest first by the SAME time the card's timer counts from (utils/kitchenBands: the course at the kitchen), so the biggest timer is at the left on the runner too
+		.sort(byArrival)
 }
 
 function groupByStation() {

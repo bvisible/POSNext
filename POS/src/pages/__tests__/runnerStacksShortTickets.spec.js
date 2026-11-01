@@ -141,6 +141,36 @@ describe("the runner's flow of tickets", () => {
 		).toEqual(["T-A", "T-B", "T-C", "T-D"])
 	})
 
+	it("orders the tickets by the time the course LEFT, the time the card's timer counts from, not by the last change of the order (Daniel, 01.11: oldest at the left, on the runner too)", async () => {
+		const base = call.getMockImplementation()
+		const sent = (at) => [
+			{
+				name: `L-${at}`,
+				item_name: "Dish",
+				qty: 1,
+				kds_status: "Ready",
+				kds_sent_at: at,
+				preparation_station: "kit",
+				station_name: "Cuisine",
+				station_color: "#4A6B8F",
+			},
+		]
+		call.mockImplementation(async (method, ...rest) =>
+			method.endsWith("get_runner_orders")
+				? [
+						// a drink added at 12:00:50 moved its last change, but its dish left at 11:00
+						order("X", 50, "kit", { items: sent("2026-10-30 11:00:00") }),
+						order("Y", 10, "kit", { items: sent("2026-10-30 11:30:00") }),
+					]
+				: base(method, ...rest),
+		)
+		const wrapper = await open()
+
+		expect(
+			wrapper.findAll('[data-test="card"]').map((card) => card.text()),
+		).toEqual(["T-X", "T-Y"])
+	})
+
 	it("gives every card the width of the text size and never more height than the flow: a long ticket keeps a column and its dishes scroll inside it", async () => {
 		const wrapper = await open()
 

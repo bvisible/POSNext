@@ -247,13 +247,68 @@ describe("the time of arrival of a ticket", () => {
 		expect(arrivalOf({ modified: "2026-10-30T12:00:01" })).toBe(without)
 	})
 
-	it("is the end of time when nothing can be read, so that an unreadable ticket sinks instead of passing for the oldest", () => {
-		expect(arrivalOf({})).toBe(Number.POSITIVE_INFINITY)
-		expect(arrivalOf({ modified: "not a date" })).toBe(Number.POSITIVE_INFINITY)
+	it("is the time the course at the kitchen LEFT when the dishes carry it, whatever moved `modified` since (the timer counts from that time too)", () => {
+		const lateChange = order(["Pending"], {
+			creation: "2026-10-30 11:00:00.000000",
+			// a drink added at 15:00 moved the order's last change; the dish itself left at 14:00
+			modified: "2026-10-30 15:00:00.000000",
+			items: [
+				{ name: "L-0", item_name: "Dish", qty: 1, kds_status: "Pending", kds_sent_at: "2026-10-30 14:00:00.123456" },
+			],
+		})
+		const date = new Date(arrivalOf(lateChange))
+		expect(date.getHours()).toBe(14)
+		expect(date.getMinutes()).toBe(0)
+		expect(date.getMilliseconds()).toBe(123)
+	})
+
+	it("counts from the oldest send still to cook, as the timer does, and from the last send when nothing is left to cook", () => {
+		const open = order(["Delivered"], {
+			modified: "2026-10-30 15:00:00",
+			items: [
+				{ name: "O-0", qty: 1, kds_status: "Delivered", kds_sent_at: "2026-10-30 12:00:00" },
+				{ name: "O-1", qty: 1, kds_status: "Preparing", kds_sent_at: "2026-10-30 12:40:00" },
+				{ name: "O-2", qty: 1, kds_status: "Pending", kds_sent_at: "2026-10-30 14:55:00" },
+			],
+		})
+		expect(new Date(arrivalOf(open)).getMinutes()).toBe(40)
+		const atThePass = order(["Ready"], {
+			modified: "2026-10-30 15:00:00",
+			items: [
+				{ name: "P-0", qty: 1, kds_status: "Delivered", kds_sent_at: "2026-10-30 12:00:00" },
+				{ name: "P-1", qty: 1, kds_status: "Ready", kds_sent_at: "2026-10-30 12:40:00" },
+			],
+		})
+		expect(new Date(arrivalOf(atThePass)).getMinutes()).toBe(40)
+	})
+
+	it("keeps the last change for a ticket whose dishes carry no time (sent before the field existed)", () => {
+		const old = order(["Pending"], {
+			modified: "2026-10-30 12:20:00",
+			items: [{ name: "N-0", qty: 1, kds_status: "Pending", kds_sent_at: null }],
+		})
+		expect(new Date(arrivalOf(old)).getMinutes()).toBe(20)
 	})
 })
 
 describe("splitting the tickets into the two bands", () => {
+	it("puts the ticket with the biggest timer first even when a later change (a drink added) moved its last change", () => {
+		const changedLater = order(["Pending"], {
+			name: "OLDER-COURSE",
+			modified: "2026-10-30 15:00:00",
+			items: [{ name: "A-0", qty: 1, kds_status: "Pending", kds_sent_at: "2026-10-30 14:00:00" }],
+		})
+		const sentLater = order(["Pending"], {
+			name: "NEWER-COURSE",
+			modified: "2026-10-30 14:30:00",
+			items: [{ name: "B-0", qty: 1, kds_status: "Pending", kds_sent_at: "2026-10-30 14:30:00" }],
+		})
+
+		const { waiting } = splitIntoBands([sentLater, changedLater])
+
+		expect(waiting.map((o) => o.name)).toEqual(["OLDER-COURSE", "NEWER-COURSE"])
+	})
+
 	it("puts each ticket in its band, oldest first, the waiting ones apart from the ones in preparation", () => {
 		const wOld = order(["Pending"], {
 			name: "W-OLD",

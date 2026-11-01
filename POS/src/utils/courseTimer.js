@@ -5,15 +5,11 @@
 //// working on now: the oldest send among the dishes still to cook (Pending, Preparing); when none is left to cook, from the latest send (the dishes wait at the pass since then). A dish held
 //// back by the waiter (Waiting) has not left and counts for nothing; a ticket whose dishes carry no time (sent before the field existed) falls back to the order's last change, as before.
 
+//// Neoffice — the server's datetime read by hand, as the order of the tickets reads it (a browser that refuses « 2026-11-01 14:30:12.123456 » must not make the two disagree)
+import { timeOf } from "@/utils/serverDateTime"
+
 const TO_COOK = new Set(["Pending", "Preparing"])
 const HELD = new Set(["", "Waiting"])
-
-const timeOf = (value) => {
-	if (!value) return Number.NaN
-	// the server writes « 2026-11-01 14:30:12.123456 »: the space is the one a date-time string of the server has everywhere else on the ticket
-	const time = new Date(value).getTime()
-	return Number.isNaN(time) ? Number.NaN : time
-}
 
 /**
  * The moment the course the kitchen is working on left, in milliseconds, or NaN when no dish says it.
@@ -46,5 +42,5 @@ export function courseSentAt(lines) {
 export function timerStart(order) {
 	const sent = courseSentAt(order?.items)
 	if (Number.isFinite(sent)) return new Date(sent)
-	return new Date(order?.modified || order?.creation)
+	return new Date(timeOf(order?.modified || order?.creation))
 }

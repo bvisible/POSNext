@@ -3,6 +3,10 @@
 //// lot 1, task 23). The split and the order are written ONCE, here, and only read by the screen, so that a rule is
 //// changed in one place and tested without a screen.
 
+//// Neoffice — the parser of the server's datetimes and the time the course at the kitchen left are shared with the ticket's timer (utils/courseTimer)
+import { courseSentAt } from "@/utils/courseTimer"
+import { timeOf } from "@/utils/serverDateTime"
+
 export const BAND_WAITING = "waiting"
 export const BAND_PRODUCTION = "production"
 
@@ -11,43 +15,12 @@ const BEGUN = new Set(["Preparing", "Ready"])
 // A dish sent to the kitchen and not yet delivered: the dishes the ticket is about
 const LIVE = new Set(["Pending", "Preparing", "Ready"])
 
-const DATETIME =
-	/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/
-
-/**
- * A datetime as a number of milliseconds, NaN when it cannot be read.
- *
- * Frappe writes "2026-10-30 12:00:01.123456" (a space, up to six digits of fraction). Not every browser reads that with
- * `new Date(string)` (Safari has refused the space), and a tablet in a kitchen is as likely to be one as any other, so
- * the parts are read by hand and the date is built from them, in the local time zone like the ticket's own timer.
- */
-function timeOf(value) {
-	if (value == null || value === "") return Number.NaN
-	if (value instanceof Date) return value.getTime()
-	if (typeof value === "number") return value
-	const text = String(value).trim()
-	const match = DATETIME.exec(text)
-	if (match) {
-		const [, year, month, day, hour, minute, second, fraction = ""] = match
-		const milliseconds = Number(fraction.slice(0, 3).padEnd(3, "0"))
-		return new Date(
-			Number(year),
-			Number(month) - 1,
-			Number(day),
-			Number(hour),
-			Number(minute),
-			Number(second),
-			milliseconds,
-		).getTime()
-	}
-	return Date.parse(text)
-}
-
 const orLast = (time) =>
 	Number.isFinite(time) ? time : Number.POSITIVE_INFINITY
 
 /**
- * The time an order reached the kitchen, as milliseconds: the time it was LAST SENT, which is the order's `modified`.
+ * The time an order reached the kitchen, as milliseconds: the time the course at the kitchen LEFT (the dishes carry it, `kds_sent_at`),
+ * else the time it was LAST SENT, which is the order's `modified`.
  *
  * Why not `creation`: the Sales Invoice behind a table is the table's tab. It is created by the first "Valider" and then
  * lives for the whole meal, so a table that sends its mains an hour later carries the `creation` of its starters: sorted
@@ -64,6 +37,10 @@ const orLast = (time) =>
  * @returns {number} Milliseconds, Infinity when unreadable
  */
 export function arrivalOf(order) {
+	//// Neoffice — the ticket's timer counts from the course at the kitchen (utils/courseTimer), so the order of the tickets counts from it too: a change that moves the
+	//// order's `modified` for another reason (a drink added to the table) must not send a ticket whose dishes have waited for half an hour to the end of the queue.
+	const course = courseSentAt(order?.items)
+	if (Number.isFinite(course)) return course
 	const modified = timeOf(order?.modified)
 	if (Number.isFinite(modified)) return modified
 	return orLast(timeOf(order?.creation))
@@ -136,7 +113,7 @@ export function bandOf(order) {
 	}
 }
 
-function byArrival(a, b) {
+export function byArrival(a, b) {
 	const first = arrivalOf(a)
 	const second = arrivalOf(b)
 	if (first !== second) return first < second ? -1 : 1
