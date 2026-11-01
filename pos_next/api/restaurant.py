@@ -441,6 +441,95 @@ def _follow_the_dishes(invoice_name):
 		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status, update_modified=False)
 
 
+# A quantity of a dish counts to this many decimals: a line can be 1.5 kg
+_QTY_PRECISION = 3
+
+
+def _units_at_the_pass(status, qty, ready_qty, delivered_qty):
+	"""How many units of a line wait AT THE PASS: the units the runner carries (kitchen test of 01.11, a line marked ready in part).
+
+	A line of six dishes can be marked ready for four. It carries two cumulative counters, `kds_ready_qty` (units cooked so far)
+	and `kds_delivered_qty` (units delivered so far), and this rule says how many units wait at the pass. It is the rule of
+	`unitsAtThePass` (POS/src/utils/kitchenRunner.js), written once more on the server so that what the runner is told to carry
+	and what the kitchen's screen counts as sent can never disagree; both are tested against one table of examples
+	(pos_next/tests/kitchen_pass_cases.json).
+
+	- Delivered: none
+	- Ready: the quantity, less what was delivered (a line saved before the counters existed has them at 0: all of it waits)
+	- Pending or Preparing, a line cooked in part: what was cooked, less what was delivered
+	- no status, Waiting, a status the kitchen does not know: none
+	Never below 0, never above the line's quantity.
+	"""
+	qty = flt(qty, _QTY_PRECISION)
+	delivered = min(flt(delivered_qty, _QTY_PRECISION), qty)
+	if status == "Ready":
+		units = qty - delivered
+	elif status in ("Pending", "Preparing"):
+		units = min(flt(ready_qty, _QTY_PRECISION), qty) - delivered
+	else:
+		units = 0
+	return max(0.0, flt(units, _QTY_PRECISION))
+
+
+def _units_left_to_cook(status, qty, ready_qty):
+	"""How many units of a line the kitchen still has to cook: what was not cooked, for a line that is at the stove."""
+	if status not in ("Pending", "Preparing"):
+		return 0.0
+	qty = flt(qty, _QTY_PRECISION)
+	return max(0.0, flt(qty - min(flt(ready_qty, _QTY_PRECISION), qty), _QTY_PRECISION))
+
+
+def _has_unit_counters():
+	"""Whether the site has the two counters of a line (a site that did not run `bench migrate` since they came has not)."""
+	return frappe.db.has_column("Sales Invoice Item", "kds_ready_qty") and frappe.db.has_column(
+		"Sales Invoice Item", "kds_delivered_qty"
+	)
+
+
+def _counters_after(dish, status):
+	"""The counters (cooked, delivered) a line carries once its status is written whole, as `(ready_qty, delivered_qty)`.
+
+	`dish` is the line as it is now (`kds_status`, `qty`, `kds_ready_qty`, `kds_delivered_qty`). A move up takes every unit with
+	it (Ready: all cooked; Delivered: all cooked and delivered). A move back takes the units at the pass with it: a line
+	called back to preparation is cooked again for the units not delivered, a delivered line taken back to Ready waits whole at
+	the pass again, and one taken back to preparation is cooked again from the start. The units already delivered stay delivered
+	when a line only goes back to being cooked. A status the kitchen does not set leaves the counters alone.
+	"""
+	was = dish.get("kds_status") or ""
+	qty = flt(dish.get("qty"), _QTY_PRECISION)
+	ready = min(flt(dish.get("kds_ready_qty"), _QTY_PRECISION), qty)
+	delivered = min(flt(dish.get("kds_delivered_qty"), _QTY_PRECISION), qty)
+	if status == "Delivered":
+		return qty, qty
+	if status == "Ready":
+		return qty, (0.0 if was == "Delivered" else delivered)
+	if status in ("Pending", "Preparing"):
+		if was == "Delivered":
+			return 0.0, 0.0
+		if _units_at_the_pass(was, qty, ready, delivered) > 0:
+			return delivered, delivered
+		return ready, delivered
+	return ready, delivered
+
+
+def _write_dish(dish, status, ready_qty=None, delivered_qty=None, update_modified=True):
+	"""Write the status of a line and, where the site has them, its counters (those given, else the ones the status gives)."""
+	values = {"kds_status": status}
+	if _has_unit_counters():
+		ready, delivered = _counters_after(dish, status)
+		values["kds_ready_qty"] = ready if ready_qty is None else ready_qty
+		values["kds_delivered_qty"] = delivered if delivered_qty is None else delivered_qty
+	frappe.db.set_value("Sales Invoice Item", dish["name"], values, update_modified=update_modified)
+
+
+def _dish_fields():
+	"""The fields of a line the kitchen's moves read."""
+	fields = ["name", "qty", "kds_status"]
+	if _has_unit_counters():
+		fields += ["kds_ready_qty", "kds_delivered_qty"]
+	return fields
+
+
 def _advance_dishes(invoice_name, status, station=None):
 	"""Move the dishes of an invoice (those of one station, when it is named) up to a status, never backward.
 
@@ -450,11 +539,12 @@ def _advance_dishes(invoice_name, status, station=None):
 	filters = {"parent": invoice_name}
 	if station:
 		filters["preparation_station"] = station
-	for dish in frappe.get_all("Sales Invoice Item", filters=filters, fields=["name", "kds_status"]):
+	for dish in frappe.get_all("Sales Invoice Item", filters=filters, fields=_dish_fields()):
 		current_rank = _KDS_RANK.get(dish.kds_status, 0)
 		# Skip Waiting items, only advance items forward, never backward
 		if dish.kds_status not in ["", "Waiting"] and current_rank < new_rank:
-			frappe.db.set_value("Sales Invoice Item", dish.name, "kds_status", status, update_modified=False)
+			# The counters follow: a line cooked in part that the whole order makes ready is cooked in full
+			_write_dish(dish, status, update_modified=False)
 
 
 # //// Neoffice — POST only, a write of the kitchen's screen (NeoRestau lot 1, task 16, at its merge with task 23):
@@ -785,6 +875,11 @@ def get_kds_orders(station=None, restaurant=None):
 	if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
 		item_fields.append("kds_batch")
 
+	# //// Neoffice — the units cooked and delivered of each line (kitchen test of 01.11, a line marked ready in part)
+	has_unit_counters = _has_unit_counters()
+	if has_unit_counters:
+		item_fields += ["kds_ready_qty", "kds_delivered_qty"]
+
 	# Build station maps for resolving items without explicit preparation_station
 	_station_map = {}
 	_group_station_map = {}
@@ -836,6 +931,12 @@ def get_kds_orders(station=None, restaurant=None):
 		# Filter by station if specified
 		if station:
 			items = [i for i in items if i.get("preparation_station") == station]
+
+		# A line saved before the counters existed has none: it counts as 0 (nothing cooked, nothing delivered)
+		if has_unit_counters:
+			for item in items:
+				item["kds_ready_qty"] = flt(item.get("kds_ready_qty"), _QTY_PRECISION)
+				item["kds_delivered_qty"] = flt(item.get("kds_delivered_qty"), _QTY_PRECISION)
 
 		order["items"] = items
 
@@ -913,11 +1014,19 @@ def get_tips(from_date=None, to_date=None, server=None, table=None, restaurant=N
 # //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
 @frappe.whitelist(methods=["POST"])
-def update_item_kds_status(invoice_name, item_code, status):
+def update_item_kds_status(invoice_name, item_code, status, qty=None, restore=None):
 	"""Update the KDS status of a specific item in a sales invoice.
 
 	The kitchen's tablet sets one of the kitchen's states (devices.KDS_STATES) on an open order of its restaurant, and a
 	tablet of one station on the lines of its station only (pos_next.restaurant.devices).
+
+	`qty` (only with the status Ready) marks that many units of the dish ready, not the whole line: a line of six can be ready for
+	four. The units are added to what was cooked, line by line in the order of the order's lines when the dish is on several, and a
+	line is Ready only once every unit is cooked; until then it is Preparing, and the kitchen keeps what is left to cook. A quantity
+	that covers what is left to cook (or none at all) is the whole line, as it always was.
+
+	`restore` is the way a move is taken back exactly (the toast of the screens, five seconds after): the counters the line had,
+	`{"ready_qty": 4, "delivered_qty": 0}`, written beside the status, within the line's quantity.
 	"""
 	device = devices.screen_device(devices.KITCHEN)
 	if device:
@@ -926,19 +1035,42 @@ def update_item_kds_status(invoice_name, item_code, status):
 	elif not frappe.has_permission("Sales Invoice", "write"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+	if qty is not None:
+		if status != "Ready":
+			frappe.throw(_("A quantity can be given only when marking a dish ready"))
+		if restore is not None:
+			frappe.throw(_("A quantity and a restore cannot be given together"))
+		qty = _positive_quantity(qty)
+	if restore is not None:
+		restore = _counters_to_restore(restore)
+
 	filters = {"parent": invoice_name, "item_code": item_code}
 	if device and device.station:
 		filters["preparation_station"] = device.station
 	items = frappe.get_all(
 		"Sales Invoice Item",
 		filters=filters,
-		fields=["name"]
+		fields=_dish_fields(),
+		order_by="idx asc",
 	)
 	if device and not items:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	for item in items:
-		frappe.db.set_value("Sales Invoice Item", item.name, "kds_status", status)
+	if restore is not None:
+		ready, delivered = restore["ready_qty"], restore["delivered_qty"]
+		for item in items:
+			room = flt(item.qty, _QTY_PRECISION)
+			_write_dish(
+				item,
+				status,
+				ready_qty=None if ready is None else min(ready, room),
+				delivered_qty=None if delivered is None else min(delivered, room),
+			)
+	elif qty is not None and _has_unit_counters():
+		_mark_units_ready(items, qty)
+	else:
+		for item in items:
+			_write_dish(item, status)
 
 	# //// Neoffice — the order follows ALL its dishes, forward and back: it was only raised to Ready when every dish was, so a
 	# //// delivery taken back left it Delivered and the ticket off the kitchen screen (NeoRestau lot 1, task 38b, rulings 78, 79).
@@ -946,6 +1078,71 @@ def update_item_kds_status(invoice_name, item_code, status):
 
 	frappe.publish_realtime("kds_update")
 	return {"status": "success"}
+
+
+def _positive_quantity(qty):
+	"""A quantity asked for, as a number above zero: anything else is refused before a line is touched."""
+	try:
+		number = flt(float(qty), _QTY_PRECISION)
+	except (TypeError, ValueError):
+		number = 0
+	if number <= 0:
+		frappe.throw(_("The quantity must be a number above zero"))
+	return number
+
+
+def _counters_to_restore(restore):
+	"""The counters an undo writes back, from the JSON (or the dict) the screen sends: each a number, none below zero."""
+	import json
+
+	if isinstance(restore, str):
+		try:
+			restore = json.loads(restore)
+		except ValueError:
+			restore = None
+	if not isinstance(restore, dict):
+		frappe.throw(_("The counters to restore are not understood"))
+	counters = {}
+	for key in ("ready_qty", "delivered_qty"):
+		if restore.get(key) is None:
+			counters[key] = None
+			continue
+		try:
+			counters[key] = max(0.0, flt(float(restore[key]), _QTY_PRECISION))
+		except (TypeError, ValueError):
+			frappe.throw(_("The counters to restore are not understood"))
+	return counters
+
+
+def _mark_units_ready(dishes, qty):
+	"""Mark `qty` units of the lines of one dish ready, in the order of the lines; the whole lines when `qty` covers what is left.
+
+	A line already Ready, delivered or held back has nothing left to cook and is passed over. The line the units end in is
+	Preparing (cooked in part), the lines they fill are Ready.
+	"""
+	to_cook = [(dish, _units_left_to_cook(dish.kds_status, dish.qty, dish.get("kds_ready_qty"))) for dish in dishes]
+	if qty >= flt(sum(left for _dish, left in to_cook), _QTY_PRECISION):
+		# What is left to cook is covered: the whole lines are ready, as when no quantity is given
+		for dish in dishes:
+			_write_dish(dish, "Ready")
+		return
+	remaining = qty
+	for dish, left in to_cook:
+		if remaining <= 0:
+			break
+		if left <= 0:
+			continue
+		units = min(remaining, left)
+		remaining = flt(remaining - units, _QTY_PRECISION)
+		cooked = flt(min(flt(dish.get("kds_ready_qty"), _QTY_PRECISION), flt(dish.qty, _QTY_PRECISION)) + units, _QTY_PRECISION)
+		whole = cooked >= flt(dish.qty, _QTY_PRECISION)
+		_write_dish(
+			dish,
+			"Ready" if whole else "Preparing",
+			ready_qty=flt(dish.qty, _QTY_PRECISION) if whole else cooked,
+			delivered_qty=min(flt(dish.get("kds_delivered_qty"), _QTY_PRECISION), flt(dish.qty, _QTY_PRECISION)),
+		)
+
 
 @frappe.whitelist()
 def save_table_positions(positions):
@@ -2439,6 +2636,10 @@ def get_runner_orders(area=None, restaurant=None):
 		item_fields.append("preparation_station")
 	if has_modifiers:
 		item_fields.append("posa_item_modifiers")
+	# //// Neoffice — the units cooked and delivered of each line: the runner carries the units at the pass, not always the whole line
+	has_unit_counters = _has_unit_counters()
+	if has_unit_counters:
+		item_fields += ["kds_ready_qty", "kds_delivered_qty"]
 
 	# Build station map for enrichment (individual items + item groups)
 	station_map = {}
@@ -2498,7 +2699,35 @@ def get_runner_orders(area=None, restaurant=None):
 			steps = workflow_cache[cache_key]
 			last_step = steps[-1]["step_name"] if steps else "Ready"
 
-			if item_status == last_step or item_status == "Ready":
+			# //// Neoffice — what the runner carries of the line (kitchen test of 01.11, a line marked ready in part): the units at the
+			# //// pass. A line cooked in part (Pending or Preparing with units cooked) is the runner's for those units only; a line with
+			# //// nothing at the pass is not listed. Its `qty` is the units to carry and `ordered_qty` the quantity of the line, so that
+			# //// every count by quantity stays right and the card can say « 4 of 6 ».
+			ordered_qty = flt(item.qty, _QTY_PRECISION)
+			cooked_in_part = (
+				has_unit_counters and item_status in ("Pending", "Preparing") and flt(item.get("kds_ready_qty")) > 0
+			)
+			if cooked_in_part:
+				at_the_pass = _units_at_the_pass(
+					item_status, ordered_qty, item.get("kds_ready_qty"), item.get("kds_delivered_qty")
+				)
+				listed = at_the_pass > 0
+			elif item_status == "Ready":
+				at_the_pass = _units_at_the_pass(
+					item_status, ordered_qty, item.get("kds_ready_qty"), item.get("kds_delivered_qty")
+				)
+				listed = at_the_pass > 0
+			else:
+				# The last step of a workflow that does not end on Ready: the whole line, as it always was
+				at_the_pass = ordered_qty
+				listed = item_status == last_step
+
+			if listed:
+				item["qty"] = at_the_pass
+				item["ordered_qty"] = ordered_qty
+				if has_unit_counters:
+					item["kds_ready_qty"] = flt(item.get("kds_ready_qty"), _QTY_PRECISION)
+					item["kds_delivered_qty"] = flt(item.get("kds_delivered_qty"), _QTY_PRECISION)
 				# Enrich with station info
 				if item.item_code in station_map:
 					item["station_color"] = station_map[item.item_code]["station_color"]
@@ -2552,6 +2781,24 @@ def get_runner_orders(area=None, restaurant=None):
 	return result
 
 
+def _deliver_dish(dish):
+	"""Deliver a line: all of it, or only the units at the pass when it was cooked in part.
+
+	A line that is Ready is Delivered, with every unit counted delivered. A line cooked in part (Pending or Preparing with
+	units cooked, not all of them) keeps its status: the runner carries the units that were cooked, the kitchen keeps cooking the
+	rest, and the delivered counter catches up with the cooked one. A line cooked in part with nothing at the pass (the cook
+	called the units back since the runner's screen was drawn) is left as it is.
+	"""
+	if _has_unit_counters() and dish.kds_status in ("Pending", "Preparing"):
+		qty = flt(dish.qty, _QTY_PRECISION)
+		cooked = min(flt(dish.get("kds_ready_qty"), _QTY_PRECISION), qty)
+		if 0 < cooked < qty:
+			if _units_at_the_pass(dish.kds_status, qty, cooked, dish.get("kds_delivered_qty")) > 0:
+				frappe.db.set_value("Sales Invoice Item", dish.name, "kds_delivered_qty", cooked)
+			return
+	_write_dish(dish, "Delivered")
+
+
 # //// Neoffice — POST only, a write of the kitchen's and the runner's screens (NeoRestau lot 1, task 16,
 # //// fix round 2): a tablet's session holds no CSRF token, and a top-level GET (a link opened on it)
 # //// carries its cookie; the screens and the till call it by POST (frappe-ui `call`).
@@ -2588,14 +2835,19 @@ def mark_items_delivered(invoice_name, item_names=None):
 		)
 		if set(item_names) - of_the_invoice:
 			frappe.throw(_("Some lines are not lines of invoice {0}").format(invoice_name))
-		for row_name in item_names:
-			frappe.db.set_value("Sales Invoice Item", row_name, "kds_status", "Delivered")
+		dishes = frappe.get_all(
+			"Sales Invoice Item", filters={"name": ["in", list(item_names)]}, fields=_dish_fields()
+		)
 	else:
-		frappe.db.sql("""
-			UPDATE `tabSales Invoice Item`
-			SET kds_status = 'Delivered'
-			WHERE parent = %s AND IFNULL(kds_status, '') != 'Delivered'
-		""", invoice_name)
+		# Every line that is not delivered yet
+		dishes = [
+			dish
+			for dish in frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, fields=_dish_fields())
+			if (dish.kds_status or "") != "Delivered"
+		]
+	# //// Neoffice — a line cooked in part is delivered for the units at the pass only (kitchen test of 01.11): the rest is still to cook
+	for dish in dishes:
+		_deliver_dish(dish)
 
 	# //// Neoffice — the order follows ALL its dishes, as when a dish is moved by the kitchen (task 38b): delivered when none is left to deliver
 	_follow_the_dishes(invoice_name)

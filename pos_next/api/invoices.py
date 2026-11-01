@@ -1222,6 +1222,13 @@ def update_invoice(data):
 				if existing_draft:
 					data["name"] = existing_draft
 
+		# //// Neoffice — restaurant mode: the units of each line the kitchen has cooked and the runner has delivered (kitchen test of
+		# //// 01.11, a line of six marked ready for four) are Custom Fields of the fork, like kds_status. The table's draft is rebuilt from
+		# //// the cart at each save, so they are read back from the stored lines before the update and given to the new lines after it,
+		# //// in the order of the lines and within each line's quantity (see the restore below). Without it, the waiter adding a drink
+		# //// to a table would forget the four dishes the kitchen has already sent.
+		cooked_before = _kds_unit_counters_of(data.get("name")) if has_kds_field else {}
+
 		# Create or update invoice
 		if data.get("name"):
 			invoice_doc = frappe.get_doc(doctype, data.get("name"))
@@ -1680,6 +1687,8 @@ def update_invoice(data):
 				frappe.db.set_value(
 					"Sales Invoice Item", item.name, "kds_status", status, update_modified=False
 				)
+			# //// Neoffice — the units cooked and delivered of each line are given back to the rebuilt lines (see cooked_before above)
+			_restore_kds_unit_counters(invoice_doc.items, cooked_before)
 
 		# Persist NEW item-level kds_status from frontend (e.g. Waiting/Pending from SendToKitchenDialog)
 		has_kds_batch = frappe.db.has_column("Sales Invoice Item", "kds_batch")
@@ -1749,6 +1758,56 @@ def update_invoice(data):
 	except Exception:
 		frappe.log_error(frappe.get_traceback(), "Update Invoice Error")
 		raise
+
+
+# //// Neoffice — the helpers of the units cooked and delivered of a restaurant line (kitchen test of 01.11): see cooked_before in update_invoice.
+def _kds_unit_counters_of(invoice_name):
+	"""The units cooked and delivered of the lines of a stored invoice, summed by item: `{item_code: [cooked, delivered]}`.
+
+	Only the items that have some. Nothing for a new invoice, or a site that has not the two counters yet (no `bench migrate` since).
+	"""
+	if (
+		not invoice_name
+		or not frappe.db.has_column("Sales Invoice Item", "kds_ready_qty")
+		or not frappe.db.has_column("Sales Invoice Item", "kds_delivered_qty")
+	):
+		return {}
+	kept = {}
+	for row in frappe.get_all(
+		"Sales Invoice Item",
+		filters={"parent": invoice_name},
+		fields=["item_code", "kds_ready_qty", "kds_delivered_qty"],
+		order_by="idx asc",
+	):
+		if flt(row.kds_ready_qty) or flt(row.kds_delivered_qty):
+			pool = kept.setdefault(row.item_code, [0.0, 0.0])
+			pool[0] += flt(row.kds_ready_qty)
+			pool[1] += flt(row.kds_delivered_qty)
+	return kept
+
+
+def _restore_kds_unit_counters(lines, kept):
+	"""Give the units cooked and delivered back to the lines of a saved invoice, item by item, in the order of the lines.
+
+	A line takes what was cooked up to its own quantity, and what was delivered up to what it took (a unit is delivered only once
+	it is cooked). A line whose quantity was lowered keeps no more than it has; one that is new keeps nothing.
+	"""
+	for line in lines:
+		pool = kept.get(line.item_code)
+		if not pool:
+			continue
+		qty = flt(line.qty)
+		cooked = min(pool[0], qty)
+		delivered = min(pool[1], cooked)
+		pool[0] -= cooked
+		pool[1] -= delivered
+		if cooked or delivered:
+			frappe.db.set_value(
+				"Sales Invoice Item",
+				line.name,
+				{"kds_ready_qty": cooked, "kds_delivered_qty": delivered},
+				update_modified=False,
+			)
 
 
 PENDING_TIMEOUT_MINUTES = 5  # Pending records older than this are considered stale

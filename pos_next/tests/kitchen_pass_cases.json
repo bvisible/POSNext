@@ -1,0 +1,28 @@
+{
+ "about": "The table of examples of how many units of a line wait AT THE PASS, the units the runner carries. The client (POS/src/utils/kitchenRunner.js, unitsAtThePass) and the server (pos_next/api/restaurant.py, _units_at_the_pass) are each tested against THIS file, so that what the runner is told to carry and what the kitchen's screen counts as sent cannot drift apart. A line has a `status`, a quantity `qty`, and two cumulative counters: `ready_qty` (units cooked so far) and `delivered_qty` (units delivered so far); a counter of 0 or null on a line saved before the counters existed means nothing was counted, and a Ready line then waits whole. The rule: Delivered -> 0; Ready -> qty - delivered; Pending or Preparing (a line cooked in part) -> ready - delivered; no status, Waiting or a status the kitchen does not know -> 0. Never below 0, never above qty.",
+ "cases": [
+  {"status": "Delivered", "qty": 6, "ready_qty": 6, "delivered_qty": 6, "at_the_pass": 0},
+  {"status": "Delivered", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": "Ready", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 6},
+  {"status": "Ready", "qty": 6, "ready_qty": null, "delivered_qty": null, "at_the_pass": 6},
+  {"status": "Ready", "qty": 6, "ready_qty": 6, "delivered_qty": 0, "at_the_pass": 6},
+  {"status": "Ready", "qty": 6, "ready_qty": 6, "delivered_qty": 4, "at_the_pass": 2},
+  {"status": "Ready", "qty": 6, "ready_qty": 6, "delivered_qty": 6, "at_the_pass": 0},
+  {"status": "Ready", "qty": 6, "ready_qty": 6, "delivered_qty": 8, "at_the_pass": 0},
+  {"status": "Ready", "qty": 1.5, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 1.5},
+  {"status": "Preparing", "qty": 6, "ready_qty": 4, "delivered_qty": 0, "at_the_pass": 4},
+  {"status": "Preparing", "qty": 6, "ready_qty": 4, "delivered_qty": 4, "at_the_pass": 0},
+  {"status": "Preparing", "qty": 6, "ready_qty": 4, "delivered_qty": 1, "at_the_pass": 3},
+  {"status": "Preparing", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": "Preparing", "qty": 6, "ready_qty": null, "delivered_qty": null, "at_the_pass": 0},
+  {"status": "Preparing", "qty": 6, "ready_qty": 9, "delivered_qty": 0, "at_the_pass": 6},
+  {"status": "Preparing", "qty": 2.5, "ready_qty": 1.5, "delivered_qty": 0.5, "at_the_pass": 1},
+  {"status": "Pending", "qty": 6, "ready_qty": 4, "delivered_qty": 0, "at_the_pass": 4},
+  {"status": "Pending", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": "Waiting", "qty": 6, "ready_qty": 4, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": "Waiting", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": "", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": null, "qty": 6, "ready_qty": 4, "delivered_qty": 0, "at_the_pass": 0},
+  {"status": "Plating", "qty": 6, "ready_qty": 0, "delivered_qty": 0, "at_the_pass": 0}
+ ]
+}
