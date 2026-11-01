@@ -1,9 +1,10 @@
 //// Neoffice — added file (no upstream equivalent). The kitchen's last action follows the station's runner setting (NeoRestau lot 1,
 //// task 38a-1, ruling 112). A preparation station says whether its dishes go through a runner (`use_runner`, on by default).
 ////
-//// - WITH a runner, the cook stops at "Ready": the dish LEAVES the kitchen screen (it was taking room on every ticket) and waits
-////   for the runner, who delivers it from the runner screen. The kitchen keeps the information in a count of what waits at the
-////   pass, and a dish can be called back to preparation from the list behind it.
+//// - WITH a runner, the cook stops at "Ready": the dish waits for the runner, who delivers it from the runner screen. It stays on the
+////   kitchen's ticket, STRUCK THROUGH like a delivered dish (kitchen test, 01.11: the cook wants to see what was sent; it first left the
+////   ticket, which was taking room), and a ticket whose dishes are all at the pass leaves the screen. The kitchen keeps the information
+////   in a count of what waits at the pass, and a dish can be called back to preparation from the list behind it.
 //// - WITHOUT a runner (a small bistro: the cook walks the plate to the table), the cook delivers: "Ready" and "Delivered" are one
 ////   gesture, the dish and its ticket leave the screen at once.
 ////
@@ -68,11 +69,16 @@ export function orderUsesRunner(order, stations, runnerEnabled = true) {
 }
 
 /**
- * The orders as the KITCHEN screen draws them: the dishes a runner now carries are left off the tickets.
+ * The orders as the KITCHEN screen draws them: the dishes a runner now carries stay on the ticket, struck through.
  *
- * An order that loses none is the order itself (a ticket updates it optimistically and the screen has to see it). An order that loses
- * some is a copy that holds the dishes left, which are the SAME objects. An order with nothing live left for the kitchen is dropped:
- * its dishes are at the pass or delivered. (A fully delivered order loses nothing and stays, for the screen to show or hide.)
+ * A dish that has left for the runner is drawn as finished business (a delivered dish is struck through and inert, and the tickets keep
+ * those for the whole meal): the cook still sees what was sent, and what is left to cook. It is a COPY of the dish that says
+ * "Delivered" and `at_the_pass`; the dish itself, and the order's own data, keep saying "Ready". A ticket therefore falls in the band its
+ * dishes still to cook give it, as when the dishes at the pass were left off (the delivered ones count for nothing in a band).
+ *
+ * An order with no dish at the pass is the order itself (a ticket updates it optimistically and the screen has to see it); the dishes of
+ * one that has some are the SAME objects, but for the copies. An order with nothing live left for the kitchen is dropped: its dishes
+ * are at the pass or delivered. (A fully delivered order has none at the pass and stays, for the screen to show or hide.)
  *
  * @param {object[]} orders
  * @param {{ stations?: object[], runnerEnabled?: boolean }} [context]
@@ -85,13 +91,20 @@ export function kitchenView(
 	const view = []
 	for (const order of orders || []) {
 		const lines = order?.items || []
-		const kept = lines.filter(
-			(line) => !carriedByRunner(line, stations, runnerEnabled),
-		)
-		if (kept.length === lines.length) {
+		const atThePass = (line) => carriedByRunner(line, stations, runnerEnabled)
+		if (!lines.some(atThePass)) {
 			view.push(order)
-		} else if (kept.some((line) => LIVE.has(line?.kds_status))) {
-			view.push({ ...order, items: kept })
+		} else if (
+			lines.some((line) => !atThePass(line) && LIVE.has(line?.kds_status))
+		) {
+			view.push({
+				...order,
+				items: lines.map((line) =>
+					atThePass(line)
+						? { ...line, kds_status: "Delivered", at_the_pass: true }
+						: line,
+				),
+			})
 		}
 	}
 	return view

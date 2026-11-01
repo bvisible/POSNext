@@ -6,6 +6,7 @@
  * //// "Delivered" are one gesture. These are the rules, read without a screen.
  */
 import { describe, expect, it } from "vitest"
+import { splitIntoBands } from "../kitchenBands"
 import {
 	carriedByRunner,
 	countDishes,
@@ -115,19 +116,32 @@ describe("an order that goes through a runner", () => {
 })
 
 describe("the kitchen screen's view of the orders", () => {
-	it("takes the Ready dishes of a runner station off the ticket: the dishes left are the cook's", () => {
+	it("keeps the Ready dishes of a runner station on the ticket, struck through like the delivered ones: the cook still sees what was sent", () => {
+		const source = order("A", [
+			dish("Ready", "kit"),
+			dish("Preparing", "kit", { item_code: "S" }),
+		])
+		const view = kitchenView([source], { stations: STATIONS, runnerEnabled: true })
+
+		expect(view).toHaveLength(1)
+		// The dish that left for the runner is drawn as finished business (a delivered dish is struck through and inert),
+		// marked as being at the pass; the one still to cook is the cook's
+		expect(view[0].items.map((line) => line.kds_status)).toEqual(["Delivered", "Preparing"])
+		expect(view[0].items.map((line) => Boolean(line.at_the_pass))).toEqual([true, false])
+		// What the server says is left alone: the ready dish is still Ready, and the one still to cook is the same object
+		expect(source.items[0].kds_status).toBe("Ready")
+		expect(view[0].items[1]).toBe(source.items[1])
+	})
+
+	it("puts a ticket in the band its dishes still to cook give it, as when the dishes at the pass were left off", () => {
+		// Starters at the pass, mains only sent: the table is waiting for the cook, not in preparation
 		const view = kitchenView(
-			[
-				order("A", [
-					dish("Ready", "kit"),
-					dish("Preparing", "kit", { item_code: "S" }),
-				]),
-			],
+			[order("A", [dish("Ready", "kit"), dish("Pending", "kit", { item_code: "M" })])],
 			{ stations: STATIONS, runnerEnabled: true },
 		)
 
-		expect(view).toHaveLength(1)
-		expect(view[0].items.map((line) => line.kds_status)).toEqual(["Preparing"])
+		expect(splitIntoBands(view).waiting.map((one) => one.name)).toEqual(["A"])
+		expect(splitIntoBands(view).production).toEqual([])
 	})
 
 	it("does not copy an order it takes nothing from: the ticket on screen is the order itself", () => {
@@ -153,6 +167,7 @@ describe("the kitchen screen's view of the orders", () => {
 		)
 
 		expect(view[0].items.map((line) => line.kds_status)).toEqual([
+			"Delivered",
 			"Delivered",
 			"Preparing",
 		])

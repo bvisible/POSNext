@@ -120,7 +120,7 @@ const mainButtons = (wrapper) =>
 		.map((card) => card.find('[data-test="ticket-main"]').text())
 
 describe("with a runner", () => {
-	it("a Ready dish leaves the ticket: the dishes left are the cook's", async () => {
+	it("a Ready dish stays on the ticket, struck through: the cook still sees what was sent, and what is left to cook is the cook's", async () => {
 		ORDERS = [
 			ticket("A", [
 				["Ready", "kit", "SOUP"],
@@ -130,8 +130,14 @@ describe("with a runner", () => {
 		const wrapper = await open()
 
 		expect(titlesIn(wrapper, "production")).toEqual(["T-A"])
+		expect(linesOf(wrapper).join(" ")).toContain("A dish 1")
 		expect(linesOf(wrapper).join(" ")).toContain("A dish 2")
-		expect(linesOf(wrapper).join(" ")).not.toContain("A dish 1")
+		const [sent, toCook] = wrapper.findAll('[data-test="ticket-line"]')
+		// The dish at the pass is struck through and inert, as a delivered one is; the other is a touch target
+		expect(sent.classes()).toContain("line-through")
+		expect(toCook.classes()).not.toContain("line-through")
+		await sent.trigger("click")
+		expect(wrapper.find('[data-test="ticket-line-menu"]').exists()).toBe(false)
 	})
 
 	it("a ticket whose dishes are all Ready leaves the screen altogether, and is not read as delivered", async () => {
