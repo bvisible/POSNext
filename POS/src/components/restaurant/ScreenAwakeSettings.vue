@@ -64,6 +64,17 @@
 					<option v-for="minutes in releaseChoices" :key="minutes" :value="minutes" :selected="minutes === settings.release_wake_lock_after_minutes">{{ minutesLabel(minutes) }}</option>
 				</select>
 			</div>
+
+			<!-- //// Neoffice — the kitchen's choice to follow the order of the meal, in the same panel (Daniel, 01.11): a course waits, greyed, until the one before it is done. Drawn only where the page hands the value (the kitchen's screen) -->
+			<div v-if="courseOrder !== undefined" class="flex items-start gap-3 border-t border-gray-200 px-2 py-1.5 dark:border-gray-600">
+				<div class="min-w-0 flex-1">
+					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ __("Follow the order of the meal") }}</div>
+					<p data-test="course-order-help" class="text-xs text-gray-700">{{ __("A course waits, greyed, until the one before it is done.") }}</p>
+				</div>
+				<button type="button" role="switch" data-test="course-order" :class="SWITCH" :aria-checked="courseOrder ? 'true' : 'false'" :aria-label="__('Follow the order of the meal')" @click.stop="emit('course-order', !courseOrder)">
+					<span :class="[THUMB, courseOrder ? 'translate-x-5' : 'translate-x-0']"></span>
+				</button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -82,8 +93,10 @@ import { RELEASE_AFTER_CHOICES, REST_AFTER_CHOICES } from "@/utils/screenAwake"
 const props = defineProps({
 	settings: { type: Object, required: true },
 	wakeLockSupported: { type: Boolean, default: true },
+	//// Neoffice — the kitchen's choice to follow the order of the meal (useCourseOrder); left out, the panel does not draw it (the runner's screen has no such rule)
+	courseOrder: { type: Boolean, default: undefined },
 })
-const emit = defineEmits(["change"])
+const emit = defineEmits(["change", "course-order"])
 
 const title = computed(() => __("Screen: keep on and rest"))
 

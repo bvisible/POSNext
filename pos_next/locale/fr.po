@@ -18790,3 +18790,20 @@ msgstr "Chez le runner"
 msgctxt "Kitchen order status"
 msgid "Next course to come"
 msgstr "La suite à venir"
+
+#: POS/src/components/restaurant/ScreenAwakeSettings.vue
+msgid "Follow the order of the meal"
+msgstr "Suivre l'ordre du repas"
+
+#: POS/src/components/restaurant/ScreenAwakeSettings.vue
+msgid "A course waits, greyed, until the one before it is done."
+msgstr "Un service reste grisé tant que le précédent n'est pas terminé."
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgid "Show or hide the finished dishes"
+msgstr "Afficher ou masquer les plats terminés"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Waits until the course before it is done"
+msgstr "Attend la fin du service précédent"

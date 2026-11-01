@@ -164,7 +164,50 @@
 							<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
 								class="relative" data-ticket-line
 								:class="{ 'border-t border-gray-50 dark:border-gray-700': item._rule, 'break-inside-avoid': fullscreen }">
-								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" />
+								<!-- //// Neoffice — a course all done folds into ONE line with a chevron (Daniel, 01.11: « on ne voit plus que le ticket avec les choses à suivre »): a press shows its dishes again, struck through, and folds them back -->
+								<template v-if="item._groupOnly">
+									<button type="button" data-test="ticket-finished-group" :data-family="item._fold.family" :aria-expanded="item._fold.open ? 'true' : 'false'"
+										class="flex min-h-[40px] w-full touch-manipulation items-center gap-2 rounded px-1 text-left text-gray-700 active:bg-gray-100 dark:text-gray-300 dark:active:bg-gray-700"
+										:title="__('Show or hide the finished dishes')" @click.stop="toggleFold(item._fold.key)">
+										<svg class="h-4 w-4 flex-none transition-transform" :class="item._fold.open ? 'rotate-90' : ''" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+										<span class="whitespace-nowrap text-[length:var(--kds-fs-ref,10px)] font-bold uppercase leading-none tracking-wider">{{ item._fold.label }}</span>
+										<svg class="h-4 w-4 flex-none text-green-700 dark:text-ds-success" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+										<span class="flex-1 border-t border-dashed border-gray-400 dark:border-gray-600" aria-hidden="true"></span>
+										<span class="text-xs font-bold leading-none">{{ item._fold.count }}</span>
+									</button>
+								</template>
+								<template v-else>
+								<!-- //// Neoffice — a press on a section's label takes ALL its dishes (Daniel, 01.11: « prendre un objet ou tous les objets concernant le groupe »); a section that waits for the course before it is muted and cannot be pressed -->
+								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family"
+									:selectable="Boolean(item._section) && mode !== 'ready-list' && !isHeld(item)" :count="item._section?.idxs.length || 0" :held="isHeld(item)"
+									@click="openSection(item, $event)" />
+								<div v-if="item._section && activeSection === item._section.key" data-test="section-menu"
+									class="fixed z-30 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-600 dark:bg-gray-800" :style="menuStyle">
+									<div class="flex items-start gap-2 pb-2">
+										<p data-test="section-menu-title" class="min-w-0 flex-1 px-1.5 pt-1 text-base font-bold leading-snug text-gray-800 line-clamp-2 dark:text-gray-100">{{ item._section.label }} · {{ sectionDishes(item._section).length }}</p>
+										<button type="button" data-test="menu-close" :aria-label="__('Close')" :title="__('Close')" @click.stop="closeMenu"
+											class="flex h-11 w-11 flex-none touch-manipulation items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700">
+											<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" /></svg>
+										</button>
+									</div>
+									<div class="flex flex-col gap-1">
+										<button v-if="sectionOffers(item._section, 'Preparing')" type="button" data-test="section-preparing" @click.stop="updateSectionStatus(item, 'Preparing')"
+											class="w-full min-h-[64px] rounded-xl border-2 border-blue-300 bg-blue-50 px-4 text-left text-xl font-bold text-blue-900 active:bg-blue-100 dark:border-blue-300/60 dark:bg-blue-400/20 dark:text-blue-100 flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full bg-blue-500"></span>
+											{{ kitchenStatusLabel("Preparing") }}
+										</button>
+										<button v-if="sectionOffers(item._section, 'Ready')" type="button" data-test="section-ready" @click.stop="updateSectionStatus(item, 'Ready')"
+											class="w-full min-h-[64px] rounded-xl border-2 border-green-600 bg-green-50 px-4 text-left text-xl font-bold text-green-900 active:bg-green-100 dark:border-ds-success dark:bg-green-400/20 dark:text-ds-success flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full bg-green-600 dark:bg-ds-success"></span>
+											{{ kitchenActionLabel("ready", { takeaway: isTakeaway }) }}
+										</button>
+										<button v-if="sectionOffers(item._section, 'Delivered')" type="button" data-test="section-delivered" @click.stop="updateSectionStatus(item, 'Delivered')"
+											class="w-full min-h-[64px] rounded-xl border-2 border-gray-300 bg-gray-100 px-4 text-left text-xl font-bold text-gray-800 active:bg-gray-200 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100 flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full bg-gray-500"></span>
+											{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
+										</button>
+									</div>
+								</div>
 								<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
 								<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
 								<!-- //// Neoffice — a DELIVERED dish is inert (task 42): what is done is done, so it is no touch target (no pointer, no pressed -->
@@ -177,7 +220,10 @@
 										fullscreen ? FULLSCREEN_FRAME.line : KITCHEN_FRAME.line,
 										isDelivered(item)
 											? 'cursor-default opacity-40 line-through'
-											: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
+											//// Neoffice — a dish that waits for the course before it is greyed and inert (Daniel, 01.11)
+											: isHeld(item)
+												? 'cursor-default opacity-50'
+												: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
 										//// Neoffice — the selected dish is read from across the pass (Daniel, 01.11: « un tout petit peu plus lisible »): the card's own white under it, a heavy ink outline and a shadow, where a clay outline on a clay-tinted card was hard to see
 										isMenuOf(item) ? 'bg-white shadow-md ring-[3px] ring-inset ring-[#141414] dark:bg-gray-900 dark:ring-white' : '',
 										//// Neoffice — the pale tint of the dish's category (Daniel, 01.11): a variable on the row and the class that reads it, so that the pressed state above still wins over it. It steps aside for the highlight of the dish whose status menu is open.
@@ -185,6 +231,8 @@
 									]"
 									:style="lineTint(item)"
 									:data-selected="isMenuOf(item) ? 'true' : undefined"
+									:data-held="isHeld(item) ? 'true' : undefined"
+									:title="isHeld(item) ? __('Waits until the course before it is done', null, 'Kitchen order status') : undefined"
 									data-test="ticket-line"
 									@click="onLineTap(item, $event)">
 									<!-- //// Neoffice — ONE row for the dish, nothing under it but its options, remark and allergy (task 38a-1, ruling 110 and the mockup): the quantity in its own -->
@@ -279,6 +327,7 @@
 										</button>
 									</div>
 								</div>
+								</template>
 							</div>
 						</template>
 						<!-- Waiting Items (ordered but not yet sent — preview for the cook) -->
@@ -373,7 +422,11 @@ import { placeMenu } from "@/utils/menuPlacement"
 import { dishesOutOfSight } from "@/utils/ticketScrollHints"
 //// Neoffice — the dishes of a send in sections by family, and the pale tint of a category (Daniel, 01.11)
 import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
-import { TINT_CLASS, inSections, tintStyle } from "@/utils/ticketFamilies"
+import { TINT_CLASS, inSections, sectionLabel, tintStyle } from "@/utils/ticketFamilies"
+//// Neoffice — the order of the meal (Daniel, 01.11): a course waits, greyed, for the one before it; a course all done folds into one line; the choice is the device's
+import { useCourseOrder } from "@/composables/useCourseOrder"
+import { isHeldByCourse } from "@/utils/courseOrder"
+import { familyOf } from "@/utils/serviceFamilies"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 //// Neoffice — the print button's icon and the words under it (task 44), written once for the kitchen's card and the runner's
@@ -435,6 +488,11 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 	},
+	//// Neoffice — follow the order of the meal on this card (a course waits for the one before it): left out, the choice of the device (useCourseOrder)
+	courseOrder: {
+		type: Boolean,
+		default: undefined,
+	},
 	//// Neoffice — "kitchen" (the default), or "ready-list" for the list of what waits at the pass: the card then holds the ready dishes only, its
 	//// main button calls them back to preparation, and a dish's menu offers nothing else (task 38a-1, ruling 112)
 	mode: {
@@ -467,6 +525,8 @@ const restaurantStore = useRestaurantStore()
 const loading = ref(false)
 const showDeliveredConfirm = ref(false)
 const activeItemMenu = ref(null)
+//// Neoffice — the section whose menu is open (its key, `${send}:${family}`): a press on a section's label takes ALL its dishes (Daniel, 01.11)
+const activeSection = ref(null)
 //// Neoffice — the ticket opened full screen (task 38a-3, ruling 107 layer 3). It is open for as long as this card is on the board: the card is fed the order the screen refreshes, so the panel
 //// follows every change; when the ticket leaves the board (it was made ready, it was delivered) this card goes, and the panel with it. The size of the text is the screen's, handed down
 //// (TEXT_SIZE_KEY): the panel is teleported out of the screen's root, where the size's CSS variables do not reach, so it carries its own, one step bigger (utils/kitchenTextSize).
@@ -588,14 +648,56 @@ const groupedActiveItems = computed(() => {
 	//// starters have left kept them at the top, between the dishes to cook. `_globalIdx` stays the dish's place in `activeItems`, which the menu reads.
 	const isDone = (item) => item.kds_status === "Delivered"
 	//// Neoffice — and the dishes still to cook of a send are drawn in SECTIONS by family, in the order of the meal (Daniel, 01.11); the finished ones follow under no label. A ticket with no family is one section without a label: drawn as it was.
-	return sorted.map(([batch, batchItems]) => ({
-		batch,
-		items: inSections(
-			batchItems.filter((item) => !isDone(item)),
-			batchItems.filter(isDone),
-		),
-	}))
+	return sorted.map(([batch, batchItems]) => {
+		//// Neoffice — a course whose dishes are ALL done folds into one line with a chevron (Daniel, 01.11: « on ne voit plus que le ticket avec les choses à suivre »): a press on it shows them again, struck through, and folds them back. A family with a dish still to cook, or a dish with no family, keeps its finished dishes struck at the end of the send, as before.
+		const liveFamilies = new Set(batchItems.filter((item) => !isDone(item)).map((item) => familyOf(item)))
+		const folds = (item) => isDone(item) && familyOf(item) && !liveFamilies.has(familyOf(item))
+		const foldedDishes = batchItems.filter(folds)
+		const looseDone = batchItems.filter((item) => isDone(item) && !folds(item))
+		const live = inSections(batchItems.filter((item) => !isDone(item)), looseDone)
+		//// Neoffice — each section knows its dishes (their places in `activeItems`), so that a press on its label can take them all
+		live.forEach((entry, index) => {
+			if (!entry._head) return
+			const idxs = []
+			for (let next = index; next < live.length && (next === index || !live[next]._head) && !isDone(live[next]); next += 1)
+				idxs.push(live[next]._globalIdx)
+			entry._section = { key: `${batch}:${entry._head.family}`, family: entry._head.family, label: entry._head.label, idxs }
+		})
+		const folded = []
+		for (const family of ["Drink", "Starter", "Main", "Dessert"]) {
+			const dishes = foldedDishes.filter((item) => familyOf(item) === family)
+			if (!dishes.length) continue
+			const key = `${batch}:${family}:done`
+			const open = expandedFolds.value.has(key)
+			folded.push({ _groupOnly: true, _globalIdx: -1, _fold: { key, family, label: sectionLabel(family), count: dishes.length, open } })
+			if (open) dishes.forEach((dish) => folded.push({ ...dish, _head: null, _rule: false }))
+		}
+		return { batch, items: [...folded, ...live] }
+	})
 })
+//// Neoffice — the folded courses a cook has opened again (keys of `${send}:${family}:done`)
+const expandedFolds = ref(new Set())
+function toggleFold(key) {
+	const next = new Set(expandedFolds.value)
+	if (next.has(key)) next.delete(key)
+	else next.add(key)
+	expandedFolds.value = next
+}
+
+//// Neoffice — the order of the meal (Daniel, 01.11): a dish waits, greyed and not to be touched, while a course before it still has a dish to cook. The card's own prop wins, else the choice of the device; a list of
+//// what waits at the pass never holds anything. `heldIdx` is the places, in `activeItems`, of the dishes that wait.
+const { courseOrder: deviceCourseOrder } = useCourseOrder()
+const followsTheMeal = computed(() => props.mode !== "ready-list" && (props.courseOrder ?? deviceCourseOrder.value))
+const heldIdx = computed(() => {
+	const lines = activeItems.value
+	const held = new Set()
+	if (!followsTheMeal.value) return held
+	lines.forEach((line, index) => {
+		if (isHeldByCourse(line, lines, true)) held.add(index)
+	})
+	return held
+})
+const isHeld = (item) => heldIdx.value.has(item._globalIdx)
 const waitingItems = computed(() =>
 	(props.order.items || []).filter((i) => i.kds_status === "Waiting"),
 )
@@ -695,8 +797,46 @@ const lineTint = (item) => (isMenuOf(item) ? undefined : tintStyle(item.service_
 //// menu it has just opened). The tap of a delivered dish is not taken: it goes on to the page, which closes a menu left open.
 function onLineTap(item, event) {
 	if (isDelivered(item)) return
+	//// Neoffice — a dish that waits for the course before it is not the cook's to touch yet (Daniel, 01.11): no menu, and the tap goes on to the page, which closes a menu left open
+	if (isHeld(item)) return
 	event.stopPropagation()
+	activeSection.value = null
 	toggleItemMenu(item, event)
+}
+
+//// Neoffice — the statuses a section's menu offers (Daniel, 01.11: « un objet ou tous les objets concernant le groupe »): taken from the dishes of the section that are not done, by the same rule as a dish's menu — « preparing » while one is still to start,
+//// « ready » with a runner and « deliver » without, while one is still to finish
+function sectionDishes(section) {
+	return (section?.idxs || []).map((index) => activeItems.value[index]).filter((dish) => dish && dish.kds_status !== "Delivered")
+}
+function sectionOffers(section, status) {
+	if (props.mode === "ready-list") return false
+	const dishes = sectionDishes(section)
+	if (status === "Preparing") return dishes.some((dish) => dish.kds_status === "Pending")
+	if (status === "Ready")
+		return props.useRunner && dishes.some((dish) => dish.kds_status === "Pending" || dish.kds_status === "Preparing")
+	if (status === "Delivered") return !props.useRunner && dishes.some((dish) => dish.kds_status !== "Delivered")
+	return false
+}
+function openSection(entry, event) {
+	const section = entry._section
+	if (!section || props.mode === "ready-list" || isHeld(entry)) return
+	event.stopPropagation()
+	activeItemMenu.value = null
+	if (activeSection.value === section.key) {
+		activeSection.value = null
+		return
+	}
+	const anchor = event?.currentTarget?.getBoundingClientRect?.()
+	if (anchor) {
+		const buttons = ["Preparing", "Ready", "Delivered"].filter((status) => sectionOffers(section, status)).length
+		menuPosition.value = placeMenu(
+			anchor,
+			{ width: MENU_WIDTH, height: buttons * MENU_BUTTON_HEIGHT + MENU_FRAME_HEIGHT },
+			{ width: window.innerWidth, height: window.innerHeight },
+		)
+	}
+	activeSection.value = section.key
 }
 
 function toggleItemMenu(item, event) {
@@ -730,12 +870,16 @@ function toggleItemMenu(item, event) {
 // open: forty-five tickets must not all listen to every scroll of the page.
 const closeMenu = () => {
 	activeItemMenu.value = null
+	activeSection.value = null
 }
-watch(activeItemMenu, (open) => {
-	if (open !== null)
-		window.addEventListener("scroll", closeMenu, { capture: true, passive: true })
-	else window.removeEventListener("scroll", closeMenu, { capture: true })
-})
+//// Neoffice — a dish's menu or a section's: one listener for both
+watch(
+	() => activeItemMenu.value !== null || activeSection.value !== null,
+	(open) => {
+		if (open) window.addEventListener("scroll", closeMenu, { capture: true, passive: true })
+		else window.removeEventListener("scroll", closeMenu, { capture: true })
+	},
+)
 
 //// Neoffice — a refresh that delivers the dish whose menu is open closes that menu for good (task 42). The template already
 //// hides the menu of a delivered dish, but `activeItemMenu` kept the dish's index: if a later refresh brought the dish back
@@ -1084,7 +1228,59 @@ function advanceDishes(newStatus) {
 	}
 }
 
+//// Neoffice — several dishes of the ticket moved to a status, one call for each distinct item (the server moves the lines of one item at a time), at once on screen, put back if the server refuses, and offered back for five
+//// seconds like a dish's own move. It is what a press on a SECTION does (all the dishes of the course) and what the main button does while a course waits (only the dishes that do not wait: Daniel, 01.11)
+async function moveDishes(dishes, newStatus, message, { closeAfter = false } = {}) {
+	const rank = RANK[newStatus] ?? 0
+	const targets = (dishes || []).filter((dish) => dish && (RANK[dish.kds_status] ?? 0) < rank)
+	if (!targets.length) return
+	loading.value = true
+	closeMenu()
+	const before = targets.map((dish) => dishState(dish))
+	for (const dish of targets) dish.kds_status = newStatus
+	try {
+		for (const code of new Set(targets.map((dish) => dish.item_code))) {
+			await call("pos_next.api.restaurant.update_item_kds_status", {
+				invoice_name: props.order.name,
+				item_code: code,
+				status: newStatus,
+			})
+		}
+		const entries = dishesToPutBack([{ invoice: props.order.name, dishes: targets, before }])
+		if (UNDOABLE_STATUSES.includes(newStatus) && entries.length) offerBack(message, entries)
+		changed()
+		if (closeAfter && props.fullscreen) emit("close")
+	} catch (error) {
+		targets.forEach((dish, index) => {
+			dish.kds_status = before[index].kds_status
+		})
+		showError(__("Failed to update item status"))
+	} finally {
+		loading.value = false
+	}
+}
+
+//// Neoffice — a press on a section's menu: all the dishes of the course (Daniel, 01.11)
+function updateSectionStatus(entry, newStatus) {
+	const section = entry._section
+	return moveDishes(
+		sectionDishes(section),
+		newStatus,
+		`${tableLabel.value} · ${section.label} · ${kitchenStatusLabel(newStatus, { takeaway: isTakeaway.value })}`,
+	)
+}
+
 async function doUpdateStatus(newStatus) {
+	//// Neoffice — while a course waits for the one before it, the main button moves the dishes that do NOT wait, one call each, and leaves the course that waits where it is (Daniel, 01.11: « on ne peut pas lancer les plats si on n'a pas fait les entrées »); with nothing waiting it is the order-level call it always was
+	if (heldIdx.value.size) {
+		const free = activeItems.value.filter((_, index) => !heldIdx.value.has(index))
+		return moveDishes(
+			free,
+			newStatus,
+			`${tableLabel.value} · ${kitchenStatusLabel(newStatus, { takeaway: isTakeaway.value })}`,
+			{ closeAfter: true },
+		)
+	}
 	loading.value = true
 	// Optimistic: update instantly, and put back what was there if the server refuses
 	const before = {

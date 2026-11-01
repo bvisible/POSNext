@@ -75,6 +75,8 @@ function show(items, props = {}, order = {}) {
 				...order,
 			},
 			stations: [{ name: "kit", station_name: "Kitchen", color: "#D68A59" }],
+			// the sections are read here apart from the order of the meal (kdsCourseOrder.spec.js reads that)
+			courseOrder: false,
 			...props,
 		},
 		attachTo: document.body,
@@ -85,8 +87,9 @@ function show(items, props = {}, order = {}) {
 }
 
 const sections = (wrapper) => wrapper.findAll('[data-test="ticket-section"]')
+// the label alone: a section that can be pressed also says how many dishes it takes
 const sectionNames = (wrapper) =>
-	sections(wrapper).map((section) => section.text())
+	sections(wrapper).map((section) => section.get("span").text())
 // The dish's own name: without the pills the card writes before it (station, state, units sent)
 const nameOf = (element) => {
 	const copy = element.cloneNode(true)
@@ -209,17 +212,18 @@ describe("the sections of a send", () => {
 		expect(text.indexOf("Send 2")).toBeLessThan(text.indexOf("Drinks"))
 	})
 
-	it("keep the finished dishes at the end of their send, struck through, under no label", () => {
+	it("keep the finished dishes of a course that has a dish to cook, or of no course, at the end of their send, struck through, under no label", () => {
+		// (a course all done folds into one line instead: kdsCourseOrder.spec.js)
 		const wrapper = show([
 			dish("Soup", "Starter", { kds_status: "Delivered" }),
+			dish("Salad", "Starter"),
 			dish("Steak", "Main"),
-			dish("Cola", "Drink", { kds_status: "Delivered" }),
-			dish("Tart", "Dessert"),
+			dish("Gum", "", { kds_status: "Delivered" }),
 		])
 
-		expect(sectionNames(wrapper)).toEqual(["Mains", "Desserts"])
-		expect(dishNames(wrapper).slice(-2)).toEqual(["Soup", "Cola"])
-		for (const name of ["Soup", "Cola"]) {
+		expect(sectionNames(wrapper)).toEqual(["Starters", "Mains"])
+		expect(dishNames(wrapper).slice(-2)).toEqual(["Soup", "Gum"])
+		for (const name of ["Soup", "Gum"]) {
 			const row = rowOf(wrapper, name)
 			expect(row.classes()).toContain("line-through")
 			expect(
@@ -394,7 +398,10 @@ describe("the tint of a category", () => {
 
 	it("is on the row of a finished dish too, which fades with its row", () => {
 		const row = rowOf(
-			show([painted("Soup", "Starter", { kds_status: "Delivered" })]),
+			show([
+				painted("Soup", "Starter", { kds_status: "Delivered" }),
+				painted("Salad", "Starter"),
+			]),
 			"Soup",
 		)
 

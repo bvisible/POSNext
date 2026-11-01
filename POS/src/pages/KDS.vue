@@ -46,7 +46,7 @@
 			</template>
 			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
 			<template #screen>
-				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" @change="setAwakeSetting" />
+				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" :course-order="courseOrder" @change="setAwakeSetting" @course-order="setCourseOrder" />
 				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button, what prints, the COPY mark. Drawn where a station has a printer; with none the choices would change nothing -->
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Kitchen" :settings="copySettings" @change="setCopySetting" />
 			</template>
@@ -180,6 +180,8 @@ import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
 import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
 import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
 import { useScreenAwake } from "@/composables/useScreenAwake"
+//// Neoffice — the kitchen follows the order of the meal unless this device says otherwise (Daniel, 01.11); the cards read the same choice
+import { useCourseOrder } from "@/composables/useCourseOrder"
 //// Neoffice — the printer button of the tickets: a copy of the ticket for the pass, printed by the server (NeoRestau lot 1, task 44)
 import PrintCopySettings from "@/components/restaurant/PrintCopySettings.vue"
 import { usePrintCopy } from "@/composables/usePrintCopy"
@@ -344,6 +346,7 @@ const {
 	setSetting: setAwakeSetting,
 	noteTickets,
 } = useScreenAwake("kitchen")
+const { courseOrder, setCourseOrder } = useCourseOrder()
 //// Neoffice — the printer button of the tickets (task 44): it prints on the printer of the station the screen is opened on, and is drawn where the setting is on and that station has a printer (the server says which have one)
 const printCopy = usePrintCopy("Kitchen", { station: selectedStation, restaurant: ofTheRestaurant })
 const { settings: copySettings, hasPrinters: hasCopyPrinters, setSetting: setCopySetting } = printCopy
