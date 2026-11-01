@@ -18618,6 +18618,27 @@ msgctxt "Service family"
 msgid "Service"
 msgstr "Service"
 
+# //// Neoffice — the sections of the kitchen and runner tickets (NeoRestau lot 1, Daniel's request of 01.11): the label above the dishes of each course, written in capitals by the card.
+#: POS/src/utils/ticketFamilies.js
+msgctxt "Service family"
+msgid "Drinks"
+msgstr "Boissons"
+
+#: POS/src/utils/ticketFamilies.js
+msgctxt "Service family"
+msgid "Starters"
+msgstr "Entrées"
+
+#: POS/src/utils/ticketFamilies.js
+msgctxt "Service family"
+msgid "Mains"
+msgstr "Plats"
+
+#: POS/src/utils/ticketFamilies.js
+msgctxt "Service family"
+msgid "Desserts"
+msgstr "Desserts"
+
 # //// Neoffice — the Item Group form of the desk (Custom Field `service_family`): the desk reads the options and the label under the context « Item Group ».
 #: pos_next/i18n_anchors.py
 msgctxt "Item Group"
@@ -18656,3 +18677,14 @@ msgstr "Installer l'application"
 #: POS/src/pages/POSSale.vue
 msgid "In your browser's menu, choose « Install app » or « Add to home screen »."
 msgstr "Dans le menu de votre navigateur, choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil »."
+
+# //// Neoffice — the Item Group form of the desk (Custom Field `service_color`): the colour of a category on the kitchen and runner tickets.
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "Service Colour"
+msgstr "Couleur du service"
+
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "The colour of the dishes of this category on the kitchen and runner tickets: a very pale tint behind each dish. Optional. A sub-group with none takes its parent's."
+msgstr "La couleur des plats de cette catégorie sur les tickets de la cuisine et du runner : une teinte très pâle derrière chaque plat. Facultative. Un sous-groupe sans couleur prend celle de son parent."
