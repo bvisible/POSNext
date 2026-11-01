@@ -6,6 +6,8 @@
 	<!-- //// back stay "Waiting" instead of being sent. (c7f6932c 2026-03-23, which also -->
 	<!-- //// stopped marking a table Occupied before any draft invoice existed; b86559db -->
 	<!-- //// dynamic title; 78a6fda7 colour thumbnail; 34ee11a8 item-group fallback.) -->
+	<!-- //// The boxes are ticked by the rhythm of the meal (service families, NeoRestau lot 1): at a table the drinks and -->
+	<!-- //// the first food family present, the rest held back. The rule is the server's; this is its copy for the boxes. -->
 	<Dialog
 		v-model="show"
 		:options="{
@@ -71,6 +73,13 @@
 							<div class="flex items-center gap-2">
 								<span class="font-medium text-sm text-gray-900 truncate">{{ item.item_name }}</span>
 								<span class="text-xs text-gray-500">x{{ item.quantity || item.qty }}</span>
+								<span
+									v-if="hasServiceFamilies && item.service_family"
+									data-service-family-label
+									class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 flex-shrink-0"
+								>
+									{{ familyLabel(item.service_family) }}
+								</span>
 							</div>
 							<div v-if="item.posa_special_instructions" class="text-xs text-blue-600 mt-0.5 truncate">
 								{{ item.posa_special_instructions }}
@@ -124,6 +133,12 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { isLightColor } from "@/utils/itemColors"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
+import {
+	familyLabel,
+	hasServiceFamilies,
+	isTableService,
+	planKitchenSend,
+} from "@/utils/serviceFamilies"
 
 const emit = defineEmits(["items-sent"])
 
@@ -185,14 +200,22 @@ function shouldDefaultCheck(item) {
 }
 
 function open() {
-	dialogItems.value = cartStore.invoiceItems
-		.filter((item) => !item.is_free_item)
-		.map((item) => ({
-			...item,
-			// The cart row this line is a copy of: the dish can sit twice (the line the kitchen has, the line that waits)
-			_row: item,
-			selected: isSendable(item) ? shouldDefaultCheck(item) : false,
-		}))
+	const lines = cartStore.invoiceItems.filter((item) => !item.is_free_item)
+	// The boxes of the lines not sent yet are ticked by the rhythm of the meal: at a table the drinks and the first food family
+	// present go, the rest is held back; at the counter and on a takeaway everything goes (service families, NeoRestau lot 1)
+	const plan = planKitchenSend(
+		lines,
+		isTableService({
+			restaurantTable: cartStore.restaurantTable,
+			isTakeaway: cartStore.isTakeaway,
+		}),
+	)
+	dialogItems.value = lines.map((item, index) => ({
+		...item,
+		// The cart row this line is a copy of: the dish can sit twice (the line the kitchen has, the line that waits)
+		_row: item,
+		selected: isSendable(item) ? shouldDefaultCheck(item) && plan[index] === "send" : false,
+	}))
 	show.value = true
 }
 

@@ -18556,3 +18556,95 @@ msgstr "Les compteurs à restaurer ne sont pas compris"
 #: POS/src/components/invoices/KDSOrderCard.vue
 msgid "Open the ticket full screen"
 msgstr "Ouvrir le ticket en plein écran"
+
+# //// Neoffice — the service families (NeoRestau lot 1): the words of the course a line belongs to, under a context of their own. "Main" and "Drink" are common words that another app of the site translates for its own sense (ERPNext reads "Main" as « Principal »), and the app loaded last wins Frappe's merged dictionary.
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Drink"
+msgstr "Boisson"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Starter"
+msgstr "Entrée"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Main"
+msgstr "Plat"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Dessert"
+msgstr "Dessert"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "the starters"
+msgstr "les entrées"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "the mains"
+msgstr "les plats"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "the desserts"
+msgstr "les desserts"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Order the next course · {0}"
+msgstr "Commander la suite · {0}"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Order the next course"
+msgstr "Commander la suite"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Order everything"
+msgstr "Tout commander"
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "To serve a starter with the mains, choose Main."
+msgstr "Pour servir une entrée avec les plats, choisissez Plat."
+
+#: POS/src/utils/serviceFamilies.js
+msgctxt "Service family"
+msgid "Service"
+msgstr "Service"
+
+# //// Neoffice — the Item Group form of the desk (Custom Field `service_family`): the desk reads the options and the label under the context « Item Group ».
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "Service Family"
+msgstr "Famille de service"
+
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "Drink"
+msgstr "Boisson"
+
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "Starter"
+msgstr "Entrée"
+
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "Main"
+msgstr "Plat"
+
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "Dessert"
+msgstr "Dessert"
+
+#: pos_next/i18n_anchors.py
+msgctxt "Item Group"
+msgid "The family of the articles of this group in a restaurant: Drink, Starter, Main or Dessert. A sub-group with none takes its parent's. A group with no family anywhere up its tree is never held back in the kitchen."
+msgstr "La famille des articles de ce groupe dans un restaurant : Boisson, Entrée, Plat ou Dessert. Un sous-groupe sans famille prend celle de son parent. Un groupe sans famille, ni lui ni ses parents, n'est jamais retenu en cuisine."

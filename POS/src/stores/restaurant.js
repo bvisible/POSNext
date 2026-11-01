@@ -14,6 +14,8 @@ import { usePOSSettingsStore } from "./posSettings"
 import { db } from "../utils/offline/db"
 import { logger } from "../utils/logger"
 import { call } from "../utils/apiWrapper"
+//// Neoffice — the service families (NeoRestau lot 1): the map of Item Groups to families is kept where the cart can read it.
+import { setGroupFamilies } from "../utils/serviceFamilies"
 
 const log = logger.create("RestaurantStore")
 
@@ -175,6 +177,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		}
 
 		await fetchStationItemsMap()
+		await fetchGroupFamilies()
 		await fetchModifierGroups()
 		await fetchActiveMenus()
 		await fetchActiveCards()
@@ -316,6 +319,17 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			}
 		} catch (error) {
 			log.error("Failed to fetch station items map:", error)
+		}
+	}
+
+	// The family of every Item Group that has one (its own, else the nearest up its tree), resolved by the server so that the till
+	// never walks the group tree: a line takes it when it is added to the cart. A call that fails leaves the map as it was.
+	async function fetchGroupFamilies() {
+		try {
+			const res = await call("pos_next.api.service_families.get_group_families")
+			if (res && typeof res === "object") setGroupFamilies(res)
+		} catch (error) {
+			log.error("Failed to fetch the service families of the item groups:", error)
 		}
 	}
 
@@ -748,6 +762,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		renameArea,
 		deleteArea,
 		fetchStationItemsMap,
+		fetchGroupFamilies,
 		getStationForItem,
 		fetchModifierGroups,
 		getModifiersForItem,

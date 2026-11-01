@@ -1425,7 +1425,8 @@
 									v-if="
 										item.posa_special_instructions ||
 										(item.preparation_station && restaurantStore.isEnabled) ||
-										(cartStore.restaurantTable && item.kds_status)
+										(cartStore.restaurantTable && item.kds_status) ||
+										showFamilyChip(item)
 									"
 									class="flex flex-wrap items-center gap-1 mt-0.5"
 								>
@@ -1438,6 +1439,14 @@
 										<FeatherIcon name="edit-3" class="w-2.5 h-2.5 me-0.5" />
 										{{ __("Note") }}
 									</span>
+									<!-- //// Neoffice — the course of the line (service families, NeoRestau lot 1): a tap on the chip gives the line another -->
+									<!-- //// course ("une entrée prise en plat"), until the kitchen has the line. -->
+									<ServiceFamilyChip
+										v-if="showFamilyChip(item)"
+										:family="item.service_family"
+										:editable="canChangeFamily(item)"
+										@change="changeFamily(item, $event)"
+									/>
 									<!-- Preparation Station Badge (Restaurant mode) -->
 									<span
 										v-if="item.preparation_station && restaurantStore.isEnabled"
@@ -1833,6 +1842,27 @@
 			<!-- //// the table IS the hold, and saving a local draft raised "Draft not found". -->
 			<!-- //// (8aa35c29, 7269b953, 7fdaa8cf, c7f6932c, 71050faf, d3ca6959, 884f8ebd, -->
 			<!-- //// a268f4e9, 48b2e6c0, 2026-03-20 to 04-01.) -->
+			<!-- //// Neoffice — « Commander la suite » (service families, NeoRestau lot 1): when courses are held back at a table, the waiter -->
+			<!-- //// orders the next one (named on the button), or everything held for a table in a hurry. Only the waiter's gesture releases a -->
+			<!-- //// held course; the kitchen touches nothing. -->
+			<div v-if="showNextCourse" class="flex gap-1.5 mb-1.5">
+				<button
+					type="button"
+					data-order-next-course
+					@click="orderNextCourse"
+					class="flex-1 min-h-[44px] py-2.5 px-3 rounded-neo-md border border-gray-300 bg-white font-bold text-xs text-gray-800 hover:bg-gray-50 active:bg-gray-100 transition-all flex items-center justify-center touch-manipulation"
+				>
+					{{ nextCourseLabel(nextCourse.family) }}
+				</button>
+				<button
+					type="button"
+					data-order-everything
+					@click="orderEverything"
+					class="min-h-[44px] py-2.5 px-3 rounded-neo-md border border-gray-300 bg-white font-medium text-xs text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all flex items-center justify-center touch-manipulation"
+				>
+					{{ orderEverythingLabel() }}
+				</button>
+			</div>
 			<!-- Restaurant Mode Buttons -->
 			<div
 				v-if="
@@ -2117,6 +2147,15 @@ const log = logger.create("InvoiceCart");
 import { createResource } from "frappe-ui";
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import EditItemDialog from "./EditItemDialog.vue";
+//// Neoffice — the course chip of a line and the words of « Commander la suite » (service families, NeoRestau lot 1).
+import ServiceFamilyChip from "./ServiceFamilyChip.vue";
+import {
+	canChangeFamily,
+	hasServiceFamilies,
+	nextCourseLabel,
+	nextRelease,
+	orderEverythingLabel,
+} from "@/utils/serviceFamilies";
 import {
 	getDisplayQuantity as getDisplayQuantityForLine,
 	resolvePaidQuantityFromDisplay as resolvePaidQtyForLine,
@@ -2263,6 +2302,9 @@ const emit = defineEmits([
 	"send-to-kitchen", // () - Send order to kitchen (restaurant mode)
 	"open-kitchen-dialog", // () - Open kitchen dialog (restaurant mode)
 	"send-item-to-kitchen", // (item) - Send individual item to kitchen (restaurant mode)
+	//// Neoffice — the waiter orders the next course held back, or everything held (service families, NeoRestau lot 1).
+	"order-next-course", // () - Order the next held course (restaurant mode, table service)
+	"order-everything", // () - Order every held line (restaurant mode, table service)
 	"show-coupons", // () - Show available coupons
 	"show-offers", // () - Show available offers dialog
 	"remove-offer", // (offerId) - Remove applied offer
@@ -2726,6 +2768,35 @@ const hasSendableItems = computed(() => {
 		(item) => !item.is_free_item && (!item.kds_status || item.kds_status === "Waiting")
 	);
 });
+
+//// Neoffice — the service families (NeoRestau lot 1). The chip and « Commander la suite » belong to a table's order of a
+//// restaurant that has set a family; a takeaway, a counter order and a site with no family show none of it.
+const isTableOrder = computed(
+	() => restaurantStore.isEnabled && Boolean(cartStore.restaurantTable) && !cartStore.isTakeaway
+);
+
+function showFamilyChip(item) {
+	return isTableOrder.value && hasServiceFamilies.value && Boolean(item.service_family);
+}
+
+// The line shown is a copy: the family is written on the cart row behind it
+function changeFamily(item, family) {
+	cartStore.setServiceFamily(cartRowOf(item), family);
+}
+
+// The next course among the held lines (a held drink is no course)
+const nextCourse = computed(() => nextRelease(cartStore.invoiceItems));
+const showNextCourse = computed(() => isTableOrder.value && nextCourse.value.indexes.length > 0);
+
+function orderNextCourse() {
+	commitTypedQuantity();
+	emit("order-next-course");
+}
+
+function orderEverything() {
+	commitTypedQuantity();
+	emit("order-everything");
+}
 
 /**
  * Get CSS classes for KDS status badge based on status value.

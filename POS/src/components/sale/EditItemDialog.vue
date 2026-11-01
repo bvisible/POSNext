@@ -330,6 +330,26 @@
 												/>
 											</div>
 
+											<!-- //// Neoffice — the « Service » choice (service families, NeoRestau lot 1): the course the line belongs to, which -->
+											<!-- //// decides when the kitchen is sent it. A starter served with the mains is simply Plat chosen for it. Only a table's order -->
+											<!-- //// of a restaurant that has set a family; a line the kitchen has keeps the course it was sent under. -->
+											<div
+												v-if="showServiceChoice"
+												data-service-choice
+												class="border-t border-gray-200 pt-4"
+											>
+												<label
+													class="block text-sm font-medium text-gray-700 mb-2 text-start"
+												>
+													{{ serviceLabel() }}
+												</label>
+												<ServiceFamilyChoice
+													v-model="localServiceFamily"
+													:disabled="!canChangeServiceFamily"
+													:hint="canChangeServiceFamily"
+												/>
+											</div>
+
 											<!-- Serial Numbers Section (only for serial items) -->
 											<div
 												v-if="
@@ -595,6 +615,10 @@ import {
 import { Button, FeatherIcon, createResource } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import SelectInput from "@/components/common/SelectInput.vue";
+//// Neoffice — the « Service » choice of the line (service families, NeoRestau lot 1).
+import { usePOSCartStore } from "@/stores/posCart";
+import { canChangeFamily, hasServiceFamilies, serviceLabel } from "@/utils/serviceFamilies";
+import ServiceFamilyChoice from "./ServiceFamilyChoice.vue";
 
 const { showSuccess, showError, showWarning } = useToast();
 const settingsStore = usePOSSettingsStore();
@@ -665,6 +689,19 @@ const localUom = ref("");
 const localRate = ref(0);
 const localWarehouse = ref("");
 const localSalesPerson = ref("");
+//// Neoffice — the course of the line while the dialog is open (service families, NeoRestau lot 1).
+const cartStore = usePOSCartStore();
+const localServiceFamily = ref("");
+const showServiceChoice = computed(
+	() =>
+		Boolean(cartStore.restaurantTable) &&
+		!cartStore.isTakeaway &&
+		hasServiceFamilies.value &&
+		Boolean(localItem.value) &&
+		!localItem.value.is_free_item
+);
+// A line the kitchen has keeps the course it was sent under
+const canChangeServiceFamily = computed(() => canChangeFamily(localItem.value));
 const discountType = ref("percentage");
 const discountValue = ref(0);
 const calculatedSubtotal = ref(0);
@@ -874,6 +911,8 @@ watch(
 			originalPriceListRate.value = newItem.price_list_rate || newItem.rate || 0;
 			localWarehouse.value = newItem.warehouse || props.warehouses[0]?.name || "";
 			localSalesPerson.value = newItem.sales_person || "";
+			//// Neoffice — the course of the line given (service families, NeoRestau lot 1).
+			localServiceFamily.value = newItem.service_family || "";
 
 			// Initialize serial numbers
 			if (newItem.has_serial_no && newItem.serial_no) {
@@ -1350,6 +1389,10 @@ function updateItem() {
 		sales_person_name: selectedSp
 			? selectedSpMeta?.sales_person_name || selectedSp
 			: null,
+		//// Neoffice — the course chosen, when the line can still change it (service families, NeoRestau lot 1).
+		service_family: canChangeServiceFamily.value
+			? localServiceFamily.value
+			: localItem.value.service_family || "",
 	};
 
 	// Update serial numbers if item has serials

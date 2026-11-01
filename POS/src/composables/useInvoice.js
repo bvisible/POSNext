@@ -423,6 +423,9 @@ export function useInvoice() {
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				preparation_station: item.preparation_station || "",
 				kds_status: item.kds_status || "",
+				//// Neoffice — the course the line belongs to (NeoRestau lot 1, service families): from the article's group, or the
+				//// waiter's choice for this line, or the order read back from the server.
+				service_family: item.service_family || "",
 				_modifiers_applied: item._modifiers_applied || 0,
 				// Optional item-level Sales Person (commission attribution)
 				sales_person: item.sales_person || null,
@@ -1727,6 +1730,8 @@ export function useInvoice() {
 				posa_item_modifiers: item.posa_item_modifiers || "",
 				posa_special_instructions: item.posa_special_instructions || "",
 				preparation_station: item.preparation_station || "",
+				//// Neoffice — the course the line was ordered under, as the server holds it (NeoRestau lot 1, service families).
+				service_family: item.service_family || "",
 				_modifiers_applied: 0,
 				tax_rate: 0,
 				tax_amount: 0,

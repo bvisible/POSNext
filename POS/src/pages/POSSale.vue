@@ -1219,6 +1219,8 @@
 								@open-kitchen-dialog="kitchenDialogRef?.open()"
 								@print-provisional-ticket="handlePrintProvisionalTicket"
 								@send-item-to-kitchen="handleSendSingleItem"
+								@order-next-course="handleOrderHeldLines('next')"
+								@order-everything="handleOrderHeldLines('all')"
 								@open-modifiers="handleOpenModifiers"
 								@update-quantity="cartStore.updateItemQuantity"
 								@remove-item="
@@ -2411,6 +2413,8 @@ import { cardLabel } from "@/utils/cardLabel";
 //// Neoffice — the cart line of a card entry or of a menu course item, and the units it carries, are built in one place that a
 //// test can reach (NeoRestau lot 1, task 22).
 import { cardItemToCartItem, menuItemToCartItem, withKnownUnits } from "@/utils/cartLineUnits";
+//// Neoffice — « Commander la suite » / « Tout commander » release the courses a table holds back (service families, NeoRestau lot 1).
+import { orderHeldLines } from "@/composables/useHeldCourses";
 import { storedRowTerms } from "@/utils/linePriceTerms";
 //// Neoffice — the cart line an item stands for, for the price dialog (NeoRestau lot 1, task 22, fix round 2).
 import { cartLineOf } from "@/utils/cartRow";
@@ -4015,15 +4019,18 @@ async function handleSendSingleItem(item) {
 
 let isSendingToKitchen = false;
 const isProcessingPayment = ref(false);
+//// Neoffice — answers whether the order went (a release of held courses holds them again when it did not), and sends a line the
+//// waiter has not decided as it is, so that the server decides it by the rhythm of the meal (service families, NeoRestau lot 1).
 async function handleSendToKitchen() {
-	if (cartStore.invoiceItems.length === 0) return;
-	if (isSendingToKitchen) return;
+	if (cartStore.invoiceItems.length === 0) return false;
+	if (isSendingToKitchen) return false;
 	isSendingToKitchen = true;
 
 	try {
 		// Build invoice data for server-side draft creation
 		const currentProfile = shiftStore.currentProfile;
-		const invoiceData = cartStore.buildOfferEvaluationPayload(currentProfile);
+		//// Neoffice — a line the waiter has not decided goes as it is, for the server to decide (service families, NeoRestau lot 1).
+		const invoiceData = cartStore.buildOfferEvaluationPayload(currentProfile, { keepUndecided: true });
 		invoiceData.kds_status = "Pending";
 		invoiceData.is_pos = 1;
 		invoiceData.docstatus = 0;
@@ -4053,11 +4060,38 @@ async function handleSendToKitchen() {
 		// Return to floor plan and refresh table data for badges
 		cartStore.clearCart();
 		restaurantStore.fetchFromNetwork();
+		//// Neoffice — the order went (service families, NeoRestau lot 1: see the note above the function).
+		return true;
 	} catch (error) {
 		console.error("Failed to send to kitchen:", error);
 		showError(__("Failed to send order to kitchen"));
+		//// Neoffice — the order did not go.
+		return false;
 	} finally {
 		isSendingToKitchen = false;
+	}
+}
+
+//// Neoffice — « Commander la suite » (`next`) and « Tout commander » (`all`): the waiter releases the courses the table holds
+//// back. The server names the lines, by the rule that held them; each release is a send of its own (NeoRestau lot 1, service families).
+async function handleOrderHeldLines(which) {
+	commitTypedQuantity();
+	try {
+		await orderHeldLines({
+			which,
+			cartStore,
+			call,
+			send: handleSendToKitchen,
+			// A held line was given its station when it was added; one that has none yet gets it as the dialog gives it
+			prepare: (row) => {
+				if (row.preparation_station) return;
+				const stationInfo = restaurantStore.getStationForItem(row.item_code, row.item_group);
+				if (stationInfo) row.preparation_station = stationInfo.station;
+			},
+		});
+	} catch (error) {
+		console.error("Failed to order the held courses:", error);
+		showError(__("Failed to send order to kitchen"));
 	}
 }
 

@@ -60,6 +60,17 @@
 					<p class="text-sm">{{ __("No modifiers available for this item") }}</p>
 				</div>
 
+				<!-- //// The « Service » choice (service families, NeoRestau lot 1): the course the line belongs to, the field the chip on the -->
+				<!-- //// line and « Edit Item Details » change too. Only a table's order of a restaurant that has set a family. -->
+				<div v-if="showServiceChoice" data-service-choice class="pt-4 border-t">
+					<label class="block text-sm font-medium text-gray-700 mb-2">{{ serviceLabel() }}</label>
+					<ServiceFamilyChoice
+						v-model="serviceFamily"
+						:disabled="!canChangeServiceFamily"
+						:hint="canChangeServiceFamily"
+					/>
+				</div>
+
 				<!-- Free text instructions -->
 				<div class="pt-4 border-t">
 					<label class="block text-sm font-medium text-gray-700 mb-2">{{ __("Special Instructions") }}</label>
@@ -95,6 +106,8 @@ import { usePOSCartStore } from "@/stores/posCart"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { usePOSShiftStore } from "@/stores/posShift"
 import { formatCurrency as formatCurrencyUtil } from "@/utils/currency"
+import { canChangeFamily, hasServiceFamilies, serviceLabel } from "@/utils/serviceFamilies"
+import ServiceFamilyChoice from "./ServiceFamilyChoice.vue"
 
 const emit = defineEmits(["saved"])
 
@@ -102,10 +115,21 @@ const show = ref(false)
 const item = ref(null)
 const instructions = ref("")
 const selections = ref({}) // { groupName: [optionName, ...] }
+const serviceFamily = ref("") // the course of the line while the dialog is open
 
 const cartStore = usePOSCartStore()
 const restaurantStore = useRestaurantStore()
 const shiftStore = usePOSShiftStore()
+
+// The Service choice belongs to a table's order of a restaurant that has set a family; a line the kitchen has keeps its course
+const showServiceChoice = computed(
+	() =>
+		Boolean(item.value) &&
+		Boolean(cartStore.restaurantTable) &&
+		!cartStore.isTakeaway &&
+		hasServiceFamilies.value,
+)
+const canChangeServiceFamily = computed(() => canChangeFamily(item.value))
 
 const applicableGroups = computed(() => {
 	if (!item.value) return []
@@ -189,6 +213,7 @@ function formatPrice(amount) {
 
 function open(cartItem) {
 	item.value = cartItem
+	serviceFamily.value = cartItem.service_family || ""
 
 	// Parse existing modifiers if any
 	const existingModNames = []
@@ -297,6 +322,10 @@ function saveModifiers() {
 
 	// Use direct reference (already the cart item)
 	const cartItem = itemIdx >= 0 ? cartStore.invoiceItems[itemIdx] : item.value
+	// The course chosen, when the line can still change it (service families, NeoRestau lot 1)
+	if (cartItem && showServiceChoice.value && serviceFamily.value !== (cartItem.service_family || "")) {
+		cartStore.setServiceFamily(cartItem, serviceFamily.value)
+	}
 	if (cartItem) {
 		emit("saved", cartItem)
 	}

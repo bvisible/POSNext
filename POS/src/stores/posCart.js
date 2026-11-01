@@ -46,6 +46,8 @@ import {
 } from "@/utils/uomPricingLock";
 //// Neoffice — a line that has left for the kitchen takes no new unit and is no line to merge into (task 22, fix round 1).
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState";
+//// Neoffice — the service family of a cart line (NeoRestau lot 1): the group's family given to a line when it is added, and the waiter's own choice for one line.
+import { SERVICE_FAMILIES, canChangeFamily, familyOfGroup } from "@/utils/serviceFamilies";
 import { useToast } from "@/composables/useToast";
 import { call } from "frappe-ui";
 import { defineStore } from "pinia";
@@ -334,6 +336,13 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			}
 		}
 
+		//// Neoffice — a line takes the service family of its article's group when it is added, whichever way it is added (the item
+		//// grid, a card, a menu, a scan): the till is handed the resolved family of every group once and never walks the group tree.
+		//// A family the item already carries (an order read back, the waiter's choice) is kept (NeoRestau lot 1, service families).
+		if (!item.service_family) {
+			const family = familyOfGroup(item.item_group);
+			if (family) item = { ...item, service_family: family };
+		}
 		addItemToInvoice(item, qty);
 		//// Neoffice — restaurant editing of a cart line, none of which upstream has. hasUnsentChanges
 		//// tracks what has not yet been fired to the kitchen (8aa35c29, 2026-03-20), and the two
@@ -387,6 +396,21 @@ export const usePOSCartStore = defineStore("posCart", () => {
 			item.posa_special_instructions = instructions;
 			hasUnsentChanges.value = true;
 		}
+	}
+
+	//// Neoffice — the waiter gives one line another service family (« une entrée prise en plat »), until the line has left for the
+	//// kitchen: the family a line was sent under is the one the kitchen has. By row, like every change of a restaurant line.
+	/**
+	 * @param {Object} row - The cart row of the line
+	 * @param {string} family - One of SERVICE_FAMILIES
+	 * @returns {boolean} Whether the line was changed
+	 */
+	function setServiceFamily(row, family) {
+		const line = invoiceItems.value.find((l) => l === row || toRaw(l) === toRaw(row));
+		if (!line || !SERVICE_FAMILIES.includes(family) || !canChangeFamily(line)) return false;
+		line.service_family = family;
+		hasUnsentChanges.value = true;
+		return true;
 	}
 
 	/**
@@ -1005,7 +1029,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		{ immediate: true, flush: "post" }
 	);
 
-	function buildOfferEvaluationPayload(currentProfile) {
+	//// Neoffice — `keepUndecided`: a line the waiter has not decided (no kitchen status) goes to the server as it is, so that the
+	//// server decides it by the rule of the service families; otherwise it goes as Pending, as it always did (NeoRestau lot 1).
+	function buildOfferEvaluationPayload(currentProfile, { keepUndecided = false } = {}) {
 		// Use toRaw() to ensure we get current, non-reactive values (prevents stale cached quantities)
 		// Carved same-SKU free units count as paid demand (see withCarvedQtyRestored)
 		const rawItems = withCarvedQtyRestored(toRaw(invoiceItems.value));
@@ -1046,7 +1072,9 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					posa_special_instructions: item.posa_special_instructions || "",
 					posa_item_modifiers: item.posa_item_modifiers || "",
 					preparation_station: item.preparation_station || "",
-					kds_status: item.kds_status || "Pending",
+					kds_status: item.kds_status || (keepUndecided ? "" : "Pending"),
+					//// Neoffice — the course the line belongs to rides with it (NeoRestau lot 1, service families).
+					service_family: item.service_family || "",
 					price_list_rate: item.price_list_rate || item.rate,
 					discount_percentage: pre.discount_percentage || 0,
 					discount_amount: pre.discount_amount || 0,
@@ -2451,6 +2479,10 @@ export const usePOSCartStore = defineStore("posCart", () => {
 				}
 			}
 			if (updates.serial_no !== undefined) cartItem.serial_no = updates.serial_no;
+			//// Neoffice — the course of the line, chosen in the details dialog: the same field the chip on the line changes, and a line the
+			//// kitchen has keeps the one it was sent under (service families, NeoRestau lot 1).
+			if (updates.service_family !== undefined && updates.service_family !== cartItem.service_family)
+				setServiceFamily(cartItem, updates.service_family);
 			// Track manual rate edits for audit purposes
 			//// Neoffice — Biome reformat only, no behaviour change (458d81a9, 2026-03-20).
 			if (updates.is_rate_manually_edited !== undefined)
@@ -3153,6 +3185,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 		guestTipAmount,
 		updateItemInstructions,
 		updateItemModifiers,
+		//// Neoffice — the waiter's own course for one line (service families, NeoRestau lot 1).
+		setServiceFamily,
 		setRestaurantTable,
 		setKdsStatus,
 		markChangesSent,
