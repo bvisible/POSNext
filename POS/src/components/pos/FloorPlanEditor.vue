@@ -634,6 +634,9 @@
 			:restaurant="restaurantStore.tillRestaurant"
 		/>
 
+		<!-- //// Neoffice — « Open a smartphone » of the « ⋯ » menu (kitchen test, 01.11): gives the till's address as a QR code and a link, so that a waiter's phone opens it without typing it -->
+		<OpenPhoneDialog v-if="canSetUpTheRestaurant && phoneDialogOpen" v-model="phoneDialogOpen" />
+
 		<!-- A phone's plan ends with the mockup's line: what a tap does, and a long press (task 26) -->
 		<p
 			v-if="isPhone && shownView === 'plan' && !isEditMode"
@@ -1037,6 +1040,7 @@ import { initSocket } from "@/socket"
 import { Button, Dialog } from "frappe-ui"
 import FloorPlanWalls from "@/components/pos/FloorPlanWalls.vue"
 import OpenTabletDialog from "@/components/restaurant/OpenTabletDialog.vue"
+import OpenPhoneDialog from "@/components/restaurant/OpenPhoneDialog.vue"
 import TablesList from "@/components/restaurant/TablesList.vue"
 import TablesPhoneTop from "@/components/restaurant/TablesPhoneTop.vue"
 import TablesViewSwitch from "@/components/restaurant/TablesViewSwitch.vue"
@@ -1087,6 +1091,7 @@ const canSetTableStatus = computed(() => Boolean(restaurantStore.can?.set_table_
 // task 16; the server checks it again)
 const canSetUpTheRestaurant = computed(() => Boolean(restaurantStore.can?.manage_settings))
 const tabletDialogOpen = ref(false)
+const phoneDialogOpen = ref(false)
 
 // ─── The tables as the plan or as their list (NeoRestau lot 1, task 26) ──────
 // Product owner, 31.10.2026: « on the phone, show the list of the tables by default rather than the plan »,
@@ -1194,6 +1199,8 @@ const ICON_PENCIL =
 const ICON_CHECK = "M5 13l4 4L19 7"
 // A tablet, for « Open a tablet »
 const ICON_TABLET = "M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+// A phone, for « Open a smartphone »
+const ICON_PHONE = "M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z"
 
 // ─── The « ⋯ » menu, at the very end of the line ─────────────────────────────
 // Product owner, 30.10.2026: the Edit button was too easy to hit on the line, so it went to a quiet « ⋯ » that opens a
@@ -1228,6 +1235,16 @@ const menuItems = computed(() =>
 			visible: canSetUpTheRestaurant.value,
 			run: () => {
 				tabletDialogOpen.value = true
+			},
+		},
+		{
+			key: "open-a-smartphone",
+			label: __("Open a smartphone"),
+			icon: ICON_PHONE,
+			// The link to the till is given by whoever may set the restaurant up, as the tablets are
+			visible: canSetUpTheRestaurant.value,
+			run: () => {
+				phoneDialogOpen.value = true
 			},
 		},
 	].filter((item) => item.visible),

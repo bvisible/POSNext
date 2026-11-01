@@ -77,6 +77,14 @@ vi.mock("@/components/restaurant/OpenTabletDialog.vue", () => ({
 	},
 }))
 
+// « Open a smartphone » has its own spec too (restaurant/__tests__/openPhoneDialog.spec.js): here, only that the menu opens it
+vi.mock("@/components/restaurant/OpenPhoneDialog.vue", () => ({
+	default: {
+		props: ["modelValue"],
+		template: "<div data-test='open-phone-dialog' />",
+	},
+}))
+
 const { default: FloorPlanEditor } = await import("../FloorPlanEditor.vue")
 
 const ROOM = { name: "r0o1m2h3a4", area_name: "Room 1" }
@@ -475,6 +483,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 				"edit-floor-plan",
 				"free-cleaning-tables",
 				"open-a-tablet",
+				"open-a-smartphone",
 			])
 		})
 
@@ -483,6 +492,32 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			await more().trigger("click")
 
 			expect(tabletItem().exists()).toBe(false)
+			expect(dialog().exists()).toBe(false)
+		})
+	})
+
+	describe("« Open a smartphone » (kitchen test, 01.11)", () => {
+		const phoneItem = () => wrapper.find('[data-test="menu-open-a-smartphone"]')
+		const dialog = () => wrapper.find('[data-test="open-phone-dialog"]')
+
+		it("is an item of the menu for whoever may set the restaurant up, and opens the dialog that gives the till's address", async () => {
+			await floorPlan({ manage_settings: true })
+			expect(dialog().exists()).toBe(false)
+
+			await more().trigger("click")
+			expect(phoneItem().text()).toBe("Open a smartphone")
+			await phoneItem().trigger("click")
+			await flushPromises()
+
+			expect(menu().exists()).toBe(false)
+			expect(dialog().exists()).toBe(true)
+		})
+
+		it("is not an item for a cashier, who may not set the restaurant up", async () => {
+			await floorPlan({ manage_floor: false, set_table_status: true, manage_settings: false })
+			await more().trigger("click")
+
+			expect(phoneItem().exists()).toBe(false)
 			expect(dialog().exists()).toBe(false)
 		})
 	})
