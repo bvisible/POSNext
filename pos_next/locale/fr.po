@@ -17761,3 +17761,675 @@ msgstr "Suite →"
 #: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
 msgid "View all"
 msgstr "Voir tout"
+
+msgid "A cash movement was recorded or cancelled while this shift was being closed. Open the closing again: it will count it."
+msgstr "Un mouvement de caisse a été enregistré ou annulé pendant la clôture de cette session. Rouvrez la clôture : elle le comptera."
+
+msgid "A manager chooses them on the till's POS Profile (Cash In/Out Operations)."
+msgstr "Un responsable les choisit dans le profil POS de la caisse (opérations Entrées/Sorties de caisse)."
+
+msgid "A manager chooses “{0}” at the till and shows a QR code. Scan it with this tablet's camera: the kitchen or runner screen opens, with no password."
+msgstr "Un responsable choisit « {0} » à la caisse et affiche un QR code. Scannez-le avec la caméra de cette tablette : l'écran cuisine ou l'écran runner s'ouvre, sans mot de passe."
+
+msgid "A purchase from a supplier not subject to VAT: the whole amount is booked as the expense, no input VAT is claimed."
+msgstr "Un achat auprès d'un fournisseur non assujetti à la TVA : le montant total est comptabilisé en charge, aucune TVA déductible n'est réclamée."
+
+msgid "A tablet opens the kitchen screen or the runner screen."
+msgstr "Une tablette ouvre l'écran cuisine ou l'écran runner."
+
+msgid "A tablet signs in by scanning a code shown at the till."
+msgstr "Une tablette se connecte en scannant un code affiché à la caisse."
+
+msgid "A tablet's account cannot be renamed."
+msgstr "Le compte d'une tablette ne peut pas être renommé."
+
+msgid "A tablet's account has no API key."
+msgstr "Le compte d'une tablette n'a pas de clé API."
+
+msgid "A tablet's account has no password: it signs in with a code shown at the till."
+msgstr "Le compte d'une tablette n'a pas de mot de passe : elle se connecte avec un code affiché à la caisse."
+
+msgid "A tablet's account holds no role and stays a portal account. Disconnect or remove the tablet instead."
+msgstr "Le compte d'une tablette ne porte aucun rôle et reste un compte portail. Déconnectez ou supprimez plutôt la tablette."
+
+msgid "A tablet's account holds no token."
+msgstr "Le compte d'une tablette n'a pas de jeton."
+
+msgid "All · {0}"
+msgstr "Tous · {0}"
+
+msgid "Allowed file types: {0} — up to {1}."
+msgstr "Types de fichiers autorisés : {0} — jusqu'à {1}."
+
+msgid "Arrived"
+msgstr "Arrivé"
+
+msgid "As reported by the till: {0}"
+msgstr "Tel que transmis par la caisse : {0}"
+
+msgid "Booked on the day it reached the server: the till's clock said {0}."
+msgstr "Comptabilisé le jour de sa réception par le serveur : l'horloge de la caisse indiquait {0}."
+
+msgid "Cancel the movement"
+msgstr "Annuler le mouvement"
+
+msgid "Cancel this cash movement?"
+msgstr "Annuler ce mouvement de caisse ?"
+
+msgid "Cash In/Out: this till's list of operations was empty, which offered every operation of its company. It now lists those the till can book: {0}."
+msgstr "Entrées/Sorties de caisse : la liste des opérations de cette caisse était vide, ce qui proposait toutes les opérations de sa société. Elle ne liste désormais que celles que la caisse peut comptabiliser : {0}."
+
+msgid "Cash In/Out: this till's list of operations was empty, which offered every operation of its company. None of them can be booked at this till: the list stays empty."
+msgstr "Entrées/Sorties de caisse : la liste des opérations de cette caisse était vide, ce qui proposait toutes les opérations de sa société. Aucune ne peut être comptabilisée sur cette caisse : la liste reste vide."
+
+msgid "Cash Movement Recorded Meanwhile"
+msgstr "Mouvement de caisse enregistré entre-temps"
+
+msgid "Cash Out Limit"
+msgstr "Plafond de sortie de caisse"
+
+msgid "Cash movement made at the till and never booked, set aside by {0}: {1}"
+msgstr "Mouvement de caisse saisi à la caisse et jamais comptabilisé, mis de côté par {0} : {1}"
+
+msgid "Cash movement {0} cancelled"
+msgstr "Mouvement de caisse {0} annulé"
+
+msgid "Cash movements refused by the server: not in the books"
+msgstr "Mouvements de caisse refusés par le serveur : non comptabilisés"
+
+msgid "Celery"
+msgstr "Céleri"
+
+msgid "Check the tablet's connection, then scan the code again."
+msgstr "Vérifiez la connexion de la tablette, puis scannez à nouveau le code."
+
+msgid "Choose the screen this tablet opens."
+msgstr "Choisissez l'écran qu'ouvre cette tablette."
+
+msgid "Confirm your reservation at {0}"
+msgstr "Confirmez votre réservation chez {0}"
+
+msgid "Confirmed by phone"
+msgstr "Confirmé par téléphone"
+
+msgid "Could not create a code."
+msgstr "Impossible de créer un code."
+
+msgid "Could not disconnect the tablet."
+msgstr "Impossible de déconnecter la tablette."
+
+msgid "Could not load the tablets."
+msgstr "Impossible de charger les tablettes."
+
+msgid "Crustaceans"
+msgstr "Crustacés"
+
+msgid "Discard this refused movement?"
+msgstr "Abandonner ce mouvement refusé ?"
+
+msgid "Discarded; the reason is kept on shift {0}."
+msgstr "Abandonné ; le motif est conservé sur la session {0}."
+
+msgid "Disconnect this tablet? It must scan a new code to open again."
+msgstr "Déconnecter cette tablette ? Elle devra scanner un nouveau code pour s'ouvrir de nouveau."
+
+msgid "Disconnected by {0}"
+msgstr "Déconnectée par {0}"
+
+msgid "Dishes ready at the pass"
+msgstr "Plats prêts au passe"
+
+msgid "Eggs"
+msgstr "Œufs"
+
+msgid "Expense {0} was recorded, but attachments failed."
+msgstr "La dépense {0} a été enregistrée, mais les pièces jointes ont échoué."
+
+msgid "Failed to cancel the cash movement"
+msgstr "Échec de l'annulation du mouvement de caisse"
+
+msgid "Failed to discard the movement"
+msgstr "Échec de l'abandon du mouvement"
+
+msgid "Fish"
+msgstr "Poisson"
+
+msgid "For {0} h {1}"
+msgstr "Depuis {0} h {1}"
+
+msgid "For {0} min"
+msgstr "Depuis {0} min"
+
+msgid "Gluten"
+msgstr "Gluten"
+
+msgid "Halal"
+msgstr "Halal"
+
+msgid "Homemade"
+msgstr "Fait maison"
+
+msgid "If you did not ask for this reservation, ignore this email: it expires by itself."
+msgstr "Si vous n'avez pas demandé cette réservation, ignorez cet e-mail : il expire automatiquement."
+
+msgid "Into the drawer"
+msgstr "Dans le tiroir"
+
+msgid "Invalid offline id"
+msgstr "ID hors ligne invalide"
+
+msgid "Keep for the manager"
+msgstr "Garder pour le responsable"
+
+msgid "Keep it"
+msgstr "Conserver"
+
+msgid "Kept for the manager"
+msgstr "Gardé pour le responsable"
+
+msgid "Kept on this device for the manager. Discard each one with a reason from Cash In/Out."
+msgstr "Conservé sur cet appareil pour le responsable. Abandonnez chaque mouvement en indiquant un motif depuis Entrées/Sorties de caisse."
+
+msgid "Kitchen — {0}"
+msgstr "Cuisine — {0}"
+
+msgid "Kitchen, all stations"
+msgstr "Cuisine, tous les postes"
+
+msgid "Kosher"
+msgstr "Casher"
+
+msgid "Lactose Free"
+msgstr "Sans lactose"
+
+msgid "Last seen: {0}"
+msgstr "Dernière activité : {0}"
+
+msgid "Late"
+msgstr "En retard"
+
+msgid "Left out: {0}"
+msgstr "Non retenu : {0}"
+
+msgid "Lupin"
+msgstr "Lupin"
+
+msgid "Milk"
+msgstr "Lait"
+
+msgid "Mollusks"
+msgstr "Mollusques"
+
+msgid "Mustard"
+msgstr "Moutarde"
+
+msgid "New code"
+msgstr "Nouveau code"
+
+msgid "No account takes the address of a tablet."
+msgstr "Aucun compte n'est associé à l'adresse d'une tablette."
+
+msgid "No cash operation is set up for this till."
+msgstr "Aucune entrée ou sortie de caisse n'est configurée pour cette caisse."
+
+msgid "No cash withdrawal at this closing: {0}"
+msgstr "Aucun retrait d'espèces à cette clôture : {0}"
+
+msgid "No free table"
+msgstr "Aucune table libre"
+
+msgid "No table to show"
+msgstr "Aucune table à afficher"
+
+msgid "No tablet is paired yet."
+msgstr "Aucune tablette n'est encore appairée."
+
+msgid "Not booked yet, sent again later: {0}"
+msgstr "Pas encore comptabilisé, réenvoyé plus tard : {0}"
+
+msgid "Not printed: {0}"
+msgstr "Non imprimé : {0}"
+
+msgid "Not seen yet"
+msgstr "Pas encore vue"
+
+msgid "Offline id: {0}"
+msgstr "ID hors ligne : {0}"
+
+msgid "Offline: the movements are kept on this device and sent when the network is back."
+msgstr "Hors ligne : les mouvements sont conservés sur cet appareil et envoyés dès que le réseau est rétabli."
+
+msgid "Only the cashier who recorded it or a till manager may change this movement."
+msgstr "Seul le caissier qui l'a enregistré ou un responsable de caisse peut modifier ce mouvement."
+
+msgid "Open a table"
+msgstr "Ouvrir une table"
+
+msgid "Open a tablet"
+msgstr "Ouvrir une tablette"
+
+msgid "Open on 1 tablet"
+msgstr "Ouvert sur 1 tablette"
+
+msgid "Open on no tablet"
+msgstr "Ouvert sur aucune tablette"
+
+msgid "Open on {0} tablets"
+msgstr "Ouvert sur {0} tablettes"
+
+msgid "Open this window once with the network to record movements offline."
+msgstr "Ouvrez cette fenêtre une fois connecté au réseau pour enregistrer des mouvements hors ligne."
+
+msgid "Opening the screen…"
+msgstr "Ouverture de l'écran…"
+
+msgid "Operation not allowed"
+msgstr "Opération non autorisée"
+
+msgid "Organic"
+msgstr "Bio"
+
+msgid "Other tables"
+msgstr "Autres tables"
+
+msgid "Out of the drawer"
+msgstr "Hors du tiroir"
+
+msgid "Over limit by {0}"
+msgstr "Dépasse la limite de {0}"
+
+msgid "Paired by {0}"
+msgstr "Appairée par {0}"
+
+msgid "Paired tablets"
+msgstr "Tablettes appairées"
+
+msgid "Peanuts"
+msgstr "Arachides"
+
+msgid "Photo of the receipt"
+msgstr "Photo du reçu"
+
+msgid "Please ask a member of our team."
+msgstr "Veuillez demander à un membre de notre équipe."
+
+msgid "Please choose one of the times offered for this day"
+msgstr "Veuillez choisir l'une des heures proposées pour ce jour"
+
+msgid "Please choose your tables among those offered"
+msgstr "Veuillez choisir vos tables parmi celles proposées"
+
+msgid "Please confirm your reservation at {0} on {1} at {2} for {3} guests."
+msgstr "Veuillez confirmer votre réservation chez {0} le {1} à {2} pour {3} convives."
+
+msgid "Please enter the number of guests"
+msgstr "Veuillez indiquer le nombre de convives"
+
+msgid "Please enter your name only (at most {0} characters, no link)"
+msgstr "Veuillez indiquer uniquement votre nom (maximum {0} caractères, sans lien)"
+
+msgid "Price ±"
+msgstr "Prix ±"
+
+msgid "Print the menu QR"
+msgstr "Imprimer le QR code du menu"
+
+msgid "Printer offline: the ticket will come out when it is back ({0} min)"
+msgstr "Imprimante hors ligne : le ticket sortira dès son retour ({0} min)"
+
+msgid "Printing…"
+msgstr "Impression en cours…"
+
+msgid "Promotion \"{0}\" already exists. Please use a different name."
+msgstr "La promotion « {0} » existe déjà. Veuillez utiliser un autre nom."
+
+msgid "QR code of {0}"
+msgstr "QR code de {0}"
+
+msgid "QR · {0} item to accept"
+msgstr "QR · {0} article à accepter"
+
+msgid "QR · {0} items to accept"
+msgstr "QR · {0} articles à accepter"
+
+msgid "Ready at the pass"
+msgstr "Prêt au passe"
+
+msgid "Reason"
+msgstr "Motif"
+
+msgid "Recorded; the photo is sent when the network is back"
+msgstr "Enregistré ; la photo sera envoyée dès que le réseau est rétabli"
+
+msgid "Refused by the server: not in the books"
+msgstr "Refusé par le serveur : non comptabilisé"
+
+msgid "Refused: {0}"
+msgstr "Refusé : {0}"
+
+msgid "Remove the receipt"
+msgstr "Retirer le reçu"
+
+msgid "Rooms"
+msgstr "Salles"
+
+msgid "Runner · {0} ready at the pass"
+msgstr "Runner · {0} prêt(s) au passe"
+
+msgid "Say why this movement is set aside: the reason stays on its shift."
+msgstr "Indiquez pourquoi ce mouvement est mis de côté : le motif reste sur sa session."
+
+msgid "Scan the code shown at the till"
+msgstr "Scannez le code affiché à la caisse"
+
+msgid "Scan this code with the tablet's camera: its screen opens, with no password."
+msgstr "Scannez ce code avec la caméra de la tablette : son écran s'ouvre, sans mot de passe."
+
+msgid "Scan to see the menu"
+msgstr "Scannez pour voir le menu"
+
+msgid "Send again"
+msgstr "Renvoyer"
+
+msgid "Sending…"
+msgstr "Envoi en cours…"
+
+msgid "Sesame"
+msgstr "Sésame"
+
+msgid "Show the tables as"
+msgstr "Afficher les tables sous forme de"
+
+msgid "Showing {0}–{1} of {2} shifts"
+msgstr "Affichage de {0}–{1} sur {2} sessions"
+
+msgid "Sign in with a password"
+msgstr "Se connecter avec un mot de passe"
+
+msgid "Soon"
+msgstr "Bientôt"
+
+msgid "Soy"
+msgstr "Soja"
+
+msgid "Still allowed out during this shift: {0}"
+msgstr "Sortie encore autorisée pendant cette session : {0}"
+
+msgid "Sulfites"
+msgstr "Sulfites"
+
+msgid "Sync or delete the cash movements waiting to be sent before closing this shift: the closing would not count them."
+msgstr "Synchronisez ou supprimez les mouvements de caisse en attente d'envoi avant de clôturer cette session : la clôture ne les comptabiliserait pas."
+
+msgid "Tablet account changed"
+msgstr "Compte de la tablette modifié"
+
+msgid "Tablet disconnected"
+msgstr "Tablette déconnectée"
+
+msgid "Tablet paired again"
+msgstr "Tablette de nouveau appairée"
+
+msgid "Tablet removed"
+msgstr "Tablette supprimée"
+
+msgid "Tablet sign-in refused"
+msgstr "Connexion de la tablette refusée"
+
+msgid "Tap a table to open its order"
+msgstr "Appuyez sur une table pour ouvrir sa commande"
+
+msgid "Tap a table to open its order · long press: its QR code"
+msgstr "Appuyez sur une table pour ouvrir sa commande · appui long : son QR code"
+
+msgid "The VAT of this operation cannot be worked out: the desk's VAT logic does not load on this site. Nothing was booked; the administrator has been told (Error Log)."
+msgstr "La TVA de cette opération ne peut pas être calculée : la logique TVA du Bureau ne se charge pas sur ce site. Rien n'a été comptabilisé ; l'administrateur a été prévenu (Journal des erreurs)."
+
+msgid "The account of a tablet cannot be changed"
+msgstr "Le compte d'une tablette ne peut pas être modifié."
+
+msgid "The guest has not confirmed this online reservation: it cannot be marked as a no-show"
+msgstr "Le client n'a pas confirmé cette réservation en ligne : elle ne peut pas être marquée comme absente"
+
+msgid "The menu QR could not be printed."
+msgstr "Le QR code du menu n'a pas pu être imprimé."
+
+msgid "The photo of the receipt is sent when the network is back."
+msgstr "La photo du reçu est envoyée dès que le réseau est rétabli."
+
+msgid "The photo of the receipt was not attached: {0}"
+msgstr "La photo du reçu n'a pas été jointe : {0}"
+
+msgid "The screen could not be opened"
+msgstr "L'écran n'a pas pu être ouvert"
+
+msgid "The shift is closed: this movement can only be changed at the desk."
+msgstr "La session est clôturée : ce mouvement ne peut être modifié qu'au Bureau."
+
+msgid "The tablet is open."
+msgstr "La tablette est ouverte."
+
+msgid "The ticket printer could not be reached: the provisional ticket prints from the browser"
+msgstr "L'imprimante à tickets est injoignable : le ticket provisoire s'imprime depuis le navigateur"
+
+msgid "The till's cash mode of payment has no account for {0}."
+msgstr "Le mode de paiement en espèces de la caisse n'a pas de compte pour {0}."
+
+msgid "The till's cash mode of payment {0} has no account for {1}."
+msgstr "Le mode de paiement en espèces {0} de la caisse n'a pas de compte pour {1}."
+
+msgid "This cash out exceeds what the till may still take out during this shift ({0})."
+msgstr "Cette sortie de caisse dépasse ce que la caisse peut encore prélever pendant cette session ({0})."
+
+msgid "This cash out would exceed the till's limit of {0} per shift. Already taken out: {1}. Still allowed: {2}."
+msgstr "Cette sortie de caisse dépasserait le plafond de la caisse, fixé à {0} par session. Déjà prélevé : {1}. Encore autorisé : {2}."
+
+msgid "This code has expired or was already used. Ask for a new one at the till."
+msgstr "Ce code a expiré ou a déjà été utilisé. Demandez-en un nouveau à la caisse."
+
+msgid "This code has expired."
+msgstr "Ce code a expiré."
+
+msgid "This code has expired: a code is valid for five minutes. Ask for a new one at the till."
+msgstr "Ce code a expiré : un code est valable cinq minutes. Demandez-en un nouveau à la caisse."
+
+msgid "This code no longer opens a screen"
+msgstr "Ce code n'ouvre plus d'écran"
+
+msgid "This code opens no screen. Ask for a new one at the till."
+msgstr "Ce code n'ouvre aucun écran. Demandez-en un nouveau à la caisse."
+
+msgid "This code was already used: a code opens one screen, once. Ask for a new one at the till."
+msgstr "Ce code a déjà été utilisé : un code ouvre un seul écran, une seule fois. Demandez-en un nouveau à la caisse."
+
+msgid "This file is empty."
+msgstr "Ce fichier est vide."
+
+msgid "This file is too large (maximum {0} MB)."
+msgstr "Ce fichier est trop volumineux (maximum {0} Mo)."
+
+msgid "This file type is not accepted: take a photo or choose a PDF."
+msgstr "Ce type de fichier n'est pas accepté : prenez une photo ou choisissez un PDF."
+
+msgid "This is not a state of the kitchen."
+msgstr "Ce n'est pas un état de la cuisine."
+
+msgid "This line is no longer in the cart (the cart was refreshed). Please try again."
+msgstr "Cette ligne n'est plus dans le panier (le panier a été actualisé). Veuillez réessayer."
+
+msgid "This menu is not available"
+msgstr "Ce menu n'est pas disponible"
+
+msgid "This movement was booked after all ({0})."
+msgstr "Ce mouvement a finalement été comptabilisé ({0})."
+
+msgid "This offline id belongs to another movement."
+msgstr "Cet ID hors ligne appartient à un autre mouvement."
+
+msgid "This online reservation expired before the guest confirmed it"
+msgstr "Cette réservation en ligne a expiré avant que le client ne la confirme"
+
+msgid "This restaurant has not published its menu yet."
+msgstr "Ce restaurant n'a pas encore publié son menu."
+
+msgid "This shift is closed: no more cash movements."
+msgstr "Cette session est clôturée : plus aucun mouvement de caisse."
+
+msgid "This station is not a station of the restaurant."
+msgstr "Ce poste n'appartient pas au restaurant."
+
+msgid "This tablet cannot be opened. Ask for a new code at the till."
+msgstr "Cette tablette ne peut pas être ouverte. Demandez un nouveau code à la caisse."
+
+msgid "This tablet no longer exists."
+msgstr "Cette tablette n'existe plus."
+
+msgid "This till belongs to no restaurant."
+msgstr "Cette caisse n'appartient à aucun restaurant."
+
+msgid "This till has no ticket printer: the provisional ticket prints from the browser"
+msgstr "Cette caisse n'a pas d'imprimante à tickets : le ticket provisoire s'imprime depuis le navigateur"
+
+msgid "Too many reservation requests. Please try again later or call the restaurant."
+msgstr "Trop de demandes de réservation. Veuillez réessayer plus tard ou appeler le restaurant."
+
+msgid "Tree Nuts"
+msgstr "Fruits à coque"
+
+msgid "Unknown operation"
+msgstr "Opération inconnue"
+
+msgid "Unpaid: {0}"
+msgstr "Impayé : {0}"
+
+msgid "Valid for {0}"
+msgstr "Valable pendant {0}"
+
+msgid "Vegan"
+msgstr "Végan"
+
+msgid "Vegetarian"
+msgstr "Végétarien"
+
+msgid "Wait a few minutes, then scan a new code shown at the till."
+msgstr "Attendez quelques minutes, puis scannez un nouveau code affiché à la caisse."
+
+msgid "Waiting to be sent"
+msgstr "En attente d'envoi"
+
+msgid "Without VAT"
+msgstr "Sans TVA"
+
+msgid "You hit the rate limit because of too many requests. Please try after sometime."
+msgstr "Vous avez atteint la limite de requêtes : trop de requêtes ont été envoyées. Veuillez réessayer dans quelque temps."
+
+msgid "an unknown cashier"
+msgstr "un caissier inconnu"
+
+msgid "an unknown date"
+msgstr "une date inconnue"
+
+msgid "e.g. Paid back to the supplier"
+msgstr "ex. Remboursé au fournisseur"
+
+msgid "into the drawer"
+msgstr "dans le tiroir"
+
+msgid "note: {0}"
+msgstr "note : {0}"
+
+msgid "out of the drawer"
+msgstr "hors du tiroir"
+
+msgid "recorded by {0} on {1}"
+msgstr "enregistré par {0} le {1}"
+
+msgid "refused by the server: {0}"
+msgstr "refusé par le serveur : {0}"
+
+msgid "reserved {0} · {1} guest"
+msgstr "réservé {0} · {1} convive"
+
+msgid "reserved {0} · {1} guests"
+msgstr "réservé {0} · {1} convives"
+
+msgid "{0} = {1} + {2} gift"
+msgstr "{0} = {1} + {2} offert(s)"
+
+msgid "{0} belongs to another company."
+msgstr "{0} appartient à une autre société."
+
+msgid "{0} cannot be booked without VAT: that choice is for a purchase from a supplier outside VAT, on an operation whose VAT is worked out."
+msgstr "{0} ne peut pas être comptabilisé sans TVA : ce choix s'applique à un achat auprès d'un fournisseur non assujetti, sur une opération dont la TVA est calculée."
+
+msgid "{0} does not move the till's cash account {1}."
+msgstr "{0} n'affecte pas le compte de caisse {1}."
+
+msgid "{0} does not name the two accounts it moves."
+msgstr "{0} ne désigne pas les deux comptes qu'il concerne."
+
+msgid "{0} does not say whether it is a Credit or a Debit."
+msgstr "{0} n'indique pas s'il s'agit d'un crédit ou d'un débit."
+
+msgid "{0} expenses totaling {1}"
+msgstr "{0} dépenses pour un total de {1}"
+
+msgid "{0} is not a cash movement of a till."
+msgstr "{0} n'est pas un mouvement de caisse."
+
+msgid "{0} is not an operation of this till."
+msgstr "{0} n'est pas une opération de cette caisse."
+
+msgid "{0} is not submitted."
+msgstr "{0} n'est pas validé."
+
+msgid "{0} kept on this device: it is sent when the network is back."
+msgstr "{0} conservé sur cet appareil : il est envoyé dès que le réseau est rétabli."
+
+msgid "{0} left"
+msgstr "{0} restant(s)"
+
+msgid "{0} names several counterparty accounts (one per VAT rate): the till books one amount on one account. Record it at the desk."
+msgstr "{0} désigne plusieurs comptes de contrepartie (un par taux de TVA) : la caisse comptabilise un montant sur un seul compte. Enregistrez-le depuis le Bureau."
+
+msgid "{0} no longer exists."
+msgstr "{0} n'existe plus."
+
+msgid "{0} of {1} is cancelled in the books: the drawer counts it no more. This cannot be undone at the till."
+msgstr "L'opération {0} de {1} est annulée dans la comptabilité : le tiroir ne la compte plus. Cela ne peut pas être annulé à la caisse."
+
+msgid "{0} of {1} never reached the books. Discarded, it leaves this device; the reason is written on its shift, so the cash stays traceable."
+msgstr "L'opération {0} de {1} n'est jamais parvenue à la comptabilité. Abandonnée, elle quitte cet appareil ; le motif est inscrit sur sa session, pour que l'argent reste traçable."
+
+msgid "{0} operation(s) of this till cannot be used"
+msgstr "{0} opération(s) de cette caisse ne peuvent pas être utilisées"
+
+msgid "{0} puts money into the drawer: a withdrawal takes it out."
+msgstr "{0} apporte de l'argent dans le tiroir : un retrait l'en sort."
+
+msgid "{0} waiting"
+msgstr "{0} en attente"
+
+msgid "{0} was opened on a tablet, paired by {1}"
+msgstr "{0} a été ouvert sur une tablette, appairée par {1}"
+
+msgid "{0}: the account {1} belongs to another company."
+msgstr "{0} : le compte {1} appartient à une autre société."
+
+msgid "{0}: the account {1} does not exist."
+msgstr "{0} : le compte {1} n'existe pas."
+
+msgid "{0}: the account {1} is a group, not a ledger."
+msgstr "{0} : le compte {1} est un groupe, et non un compte comptable."
+
+msgid "{0}: the account {1} is disabled."
+msgstr "{0} : le compte {1} est désactivé."
+
+msgid "{0}: the account {1} is kept in another currency."
+msgstr "{0} : le compte {1} est tenu dans une autre devise."
+
+msgid "{0}: the account {1} needs a customer or a supplier, which the till does not name."
+msgstr "{0} : le compte {1} exige un client ou un fournisseur, que la caisse ne désigne pas."
+
+msgid "{0}: the till's cash mode of payment has no account for {1}."
+msgstr "{0} : le mode de paiement en espèces de la caisse n'a pas de compte pour {1}."
