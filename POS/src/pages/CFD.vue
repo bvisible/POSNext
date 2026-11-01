@@ -89,8 +89,13 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { initSocket } from "@/socket"
+//// Neoffice — the customer display keeps its screen on (NeoRestau lot 1, task 47): nobody touches it, so it never rests
+import { useScreenAwake } from "@/composables/useScreenAwake"
 //// Neoffice — the customer display shows amounts like the till (formatCFDCurrency below).
 import { formatCurrency } from "@/utils/currency"
+
+//// Neoffice — the Screen Wake Lock keeps the tablet from falling asleep (this device's setting, on by default); `rest: false`: nobody touches this screen, so it is never drawn dark
+useScreenAwake("display", { rest: false })
 
 const items = ref([])
 const grandTotal = ref(0)

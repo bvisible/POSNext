@@ -207,6 +207,8 @@ import DisplayAuth from "@/components/customer-display/DisplayAuth.vue"
 import DisplayHeader from "@/components/customer-display/DisplayHeader.vue"
 import DisplayCart from "@/components/customer-display/DisplayCart.vue"
 import CreateCustomerModal from "@/components/customer-display/CreateCustomerModal.vue"
+//// Neoffice — the Screen Wake Lock of the restaurant screens (NeoRestau lot 1, task 47)
+import { useScreenAwake } from "@/composables/useScreenAwake"
 
 const displayStore = useCustomerDisplayStore()
 
@@ -312,44 +314,13 @@ function handleFullscreenChange() {
 	isFullscreen.value = !!document.fullscreenElement
 }
 
-//// keep the customer display (2nd screen) awake via the Wake Lock API
-// Keeps the tablet screen on while the display page is visible, regardless of
-// the tablet's sleep settings. The lock is auto-released when the page is
-// hidden/backgrounded, so we re-acquire it on visibilitychange.
-let wakeLock = null
-
-async function requestWakeLock() {
-	try {
-		if ("wakeLock" in navigator && document.visibilityState === "visible") {
-			wakeLock = await navigator.wakeLock.request("screen")
-			wakeLock.addEventListener?.("release", () => {
-				wakeLock = null
-			})
-		}
-	} catch {
-		// Unsupported / denied (e.g. low battery) — tablet sleep settings apply.
-	}
-}
-
-async function releaseWakeLock() {
-	try {
-		await wakeLock?.release()
-	} catch {
-		// ignore
-	}
-	wakeLock = null
-}
-
-function handleWakeVisibility() {
-	if (document.visibilityState === "visible" && !wakeLock) {
-		requestWakeLock()
-	}
-}
+//// Neoffice — the screen is kept awake by the Screen Wake Lock composable of the restaurant screens (NeoRestau lot 1, task 47), in place of the lock this page asked for by itself:
+//// it asks again after a release and after a rejection (a low battery), not only when the page becomes visible, and it follows the device's setting « keep the screen on ».
+//// `rest: false`: nobody touches this screen, so it is never drawn dark.
+useScreenAwake("display", { rest: false })
 
 // Try to restore session on mount
 onMounted(async () => {
-	requestWakeLock()
-	document.addEventListener("visibilitychange", handleWakeVisibility)
 	document.addEventListener("fullscreenchange", handleFullscreenChange)
 
 	await displayStore.tryRestoreSession()
@@ -363,9 +334,7 @@ onMounted(async () => {
 // Cleanup on unmount
 onUnmounted(() => {
 	displayStore.stopCartSync()
-	document.removeEventListener("visibilitychange", handleWakeVisibility)
 	document.removeEventListener("fullscreenchange", handleFullscreenChange)
-	releaseWakeLock()
 })
 </script>
 

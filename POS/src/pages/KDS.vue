@@ -44,6 +44,10 @@
 			<template #theme>
 				<ThemeButton :persist-desk-theme="deskSession" />
 			</template>
+			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
+			<template #screen>
+				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" @change="setAwakeSetting" />
+			</template>
 			<template #chip>
 				<!-- The switch of the layout moves up to row 1 when row 2 has no chip left to hold it: a screen bound to its station must not pay a row for it -->
 				<KitchenLayoutSwitch v-if="canSplit && !filtersShown" :layout="layout" @update:layout="chooseLayout" />
@@ -145,6 +149,9 @@
 
 		<!-- //// Neoffice — five seconds to take back a « Ready » or a « Deliver » (task 38a-2, ruling 112): the toast is the page's, the ticket's card is gone when it is pressed. Undone, the page reads its tickets again. -->
 		<UndoToast @undone="loadOrders" />
+
+		<!-- //// Neoffice — the layer of a screen at REST (task 47): near-black, a small clock and how many orders are waiting. A web page cannot switch the screen off nor dim it, so it is drawn; the wake lock and the live updates run on under it. -->
+		<ScreenRestLayer :resting="resting" :label="restLabel" />
 	</div>
 </template>
 
@@ -165,6 +172,11 @@ import KDSOrderCard from "@/components/invoices/KDSOrderCard.vue"
 import KitchenLayoutSwitch from "@/components/restaurant/KitchenLayoutSwitch.vue"
 import { useKitchenLayout } from "@/composables/useKitchenLayout"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
+//// Neoffice — keep the screen on, and let it rest on purpose (NeoRestau lot 1, task 47)
+import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
+import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
+import { useScreenAwake } from "@/composables/useScreenAwake"
+import { ticketCounts } from "@/utils/screenAwake"
 import { splitIntoBands } from "@/utils/kitchenBands"
 //// Neoffice — the kitchen's last action follows the station's runner setting (task 38a-1, ruling 112)
 import {
@@ -316,6 +328,26 @@ const {
 	cycle: cycleTextSize,
 	label: textSizeLabel,
 } = useKitchenTextSize()
+
+//// Neoffice — keep the screen on, and let it rest on purpose (task 47). TWO different things: the browser's Screen Wake Lock keeps the tablet from falling asleep; and, because a web page cannot switch the screen off nor dim it, after N minutes without a touch the page DRAWS a near-black layer (resting) while the lock and the 15-second refresh run on. A touch wakes it, and a NEW ticket wakes it too: a kitchen must never miss one. The settings are this device's (useScreenAwake).
+const {
+	resting,
+	settings: awakeSettings,
+	wakeLockSupported,
+	setSetting: setAwakeSetting,
+	noteTickets,
+} = useScreenAwake("kitchen")
+// The tickets waiting, as the layer says it: the ones in which nothing has begun
+const restLabel = computed(() => {
+	const waiting = bands.value.waiting.length
+	return waiting === 1
+		? __("{0} order waiting", [waiting])
+		: __("{0} orders waiting", [waiting])
+})
+// The first reading after the orders are loaded is only what the next ones are compared with; none of it is read while the page is still loading
+watch(kitchenOrders, (held) => {
+	if (!loading.value) noteTickets(ticketCounts(held))
+})
 
 //// Neoffice — how the bands are laid out: the cook's pick, or by the way the tablet is held (task 23)
 const { layout, canSplit, choose: chooseLayout } = useKitchenLayout()

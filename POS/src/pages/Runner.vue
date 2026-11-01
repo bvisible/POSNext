@@ -51,6 +51,10 @@
 			<template #theme>
 				<ThemeButton :persist-desk-theme="deskSession" />
 			</template>
+			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
+			<template #screen>
+				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" @change="setAwakeSetting" />
+			</template>
 			<template #view>
 				<!-- //// Neoffice — the display modes of THIS screen, named as such (task 38a-2, ruling 132): « By table », « By station », « On the plan ». The last one was « Plan de salle »,
 				     the very word of a destination, next to a switch that now has a real « Plan de salle ». -->
@@ -209,6 +213,9 @@
 
 		<!-- //// Neoffice — five seconds to take back a « Deliver » (task 38a-2, ruling 112): the toast is the page's, the ticket's card is gone when it is pressed. Undone, the page reads its tickets again. -->
 		<UndoToast @undone="loadOrders" />
+
+		<!-- //// Neoffice — the layer of a screen at REST (task 47): near-black, a small clock and how many dishes are ready. A web page cannot switch the screen off nor dim it, so it is drawn; the wake lock and the live updates run on under it. -->
+		<ScreenRestLayer :resting="resting" :label="readyCountLabel" />
 	</div>
 </template>
 
@@ -226,6 +233,11 @@ import SegmentedControl from "@/components/restaurant/SegmentedControl.vue"
 import { SCREEN_RUNNER } from "@/utils/restaurantScreens"
 import { useDocumentTitle } from "@/composables/useDocumentTitle"
 import { useKitchenTextSize } from "@/composables/useKitchenTextSize"
+//// Neoffice — keep the screen on, and let it rest on purpose (NeoRestau lot 1, task 47)
+import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue"
+import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
+import { useScreenAwake } from "@/composables/useScreenAwake"
+import { ticketCounts } from "@/utils/screenAwake"
 import { countDishes } from "@/utils/kitchenRunner"
 import { formatTicketNo } from "@/utils/ticketNumber"
 import { RUNNER_AREA, TICKET_CARD, TICKET_CARD_WIDE, TICKET_ROW, TICKET_STACK } from "@/utils/ticketLayout"
@@ -367,6 +379,14 @@ const readyCountLabel = computed(() =>
 )
 useDocumentTitle(pageTitle)
 
+//// Neoffice — keep the screen on, and let it rest on purpose (task 47), as the kitchen's screen does: the Screen Wake Lock keeps the tablet from falling asleep, and after N minutes without a touch the page DRAWS a near-black layer (a web page cannot switch the screen off nor dim it) while the lock and the refresh run on. A touch wakes it, and so does a dish that comes up ready: a pass must never miss one. The runner's orders hold only the dishes that are ready, so every line counts.
+const {
+	resting,
+	settings: awakeSettings,
+	wakeLockSupported,
+	setSetting: setAwakeSetting,
+	noteTickets,
+} = useScreenAwake("runner")
 //// Neoffice — the size of the text, the same pick as the kitchen's, kept on the device (task 38a-2, ruling 109)
 const {
 	size: textSize,
@@ -424,6 +444,11 @@ const filteredOrders = computed(() => {
 			.filter((o) => o.items.length > 0)
 	}
 	return result
+})
+
+//// Neoffice — a dish that comes up ready wakes the screen at rest (task 47); the first reading after the orders are loaded is only what the next ones are compared with
+watch(filteredOrders, (held) => {
+	if (!loading.value) noteTickets(ticketCounts(held, { live: () => true }))
 })
 
 // The "new ready dishes" beep compares the dishes on the screen with the number the last read left there: the same scope.
