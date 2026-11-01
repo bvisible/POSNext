@@ -94,10 +94,13 @@
 					<div ref="linesEl" :class="fullscreen ? 'contents' : undefined">
 						<!-- Table mode: one flat list of dishes, each with the dot of its station -->
 						<template v-if="viewMode === 'table'">
-							<div v-for="(item, idx) in card.items" :key="item.name" data-ticket-line class="relative"
-								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0, 'break-inside-avoid': fullscreen }">
+							<!-- //// Neoffice — the dishes come in SECTIONS by family, as on the kitchen's ticket (Daniel, 01.11): `inSections` (utils/ticketFamilies) puts them in the order of the meal and tells the first dish of a labelled section (`_head`) and whether a faint rule goes above a dish (`_rule`). The label stands inside the wrapper of that first dish; the dish's row takes the pale tint of its category. A card with no family at all has no label and the rules it always had. -->
+							<div v-for="item in tableItems" :key="item.name" data-ticket-line class="relative"
+								:class="{ 'border-t border-gray-50 dark:border-gray-700': item._rule, 'break-inside-avoid': fullscreen }">
+								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" />
 								<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
-									:class="[TICKET_FRAME.line, fullscreen ? FULLSCREEN_FRAME.line : KITCHEN_FRAME.line]" data-test="ticket-line">
+									:class="[TICKET_FRAME.line, fullscreen ? FULLSCREEN_FRAME.line : KITCHEN_FRAME.line, lineTint(item) ? TINT_CLASS : '']"
+									:style="lineTint(item)" data-test="ticket-line">
 									<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
 										:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
 									<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name">
@@ -134,10 +137,12 @@
 									</button>
 								</div>
 								<!-- A dish is the same line here as under "By Table" and on the kitchen ticket: the frame's line -->
-								<div v-for="(item, idx) in group.items" :key="item.name" data-ticket-line class="relative"
-									:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0, 'break-inside-avoid': fullscreen }">
+								<div v-for="item in groupItems.get(group)" :key="item.name" data-ticket-line class="relative"
+									:class="{ 'border-t border-gray-50 dark:border-gray-700': item._rule, 'break-inside-avoid': fullscreen }">
+									<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" />
 									<div class="grid grid-cols-[2.1em_minmax(0,1fr)] content-center gap-x-1.5 py-[var(--kds-py,3px)] rounded px-1 -mx-1"
-										:class="[TICKET_FRAME.line, KITCHEN_FRAME.line]" data-test="ticket-line">
+										:class="[TICKET_FRAME.line, KITCHEN_FRAME.line, lineTint(item) ? TINT_CLASS : '']"
+										:style="lineTint(item)" data-test="ticket-line">
 										<span class="self-start whitespace-nowrap font-bold text-gray-900 dark:text-gray-100" data-test="ticket-qty"
 											:class="Number(item.qty) > 1 ? 'rounded bg-blue-100 px-1 -ml-1' : ''">{{ item.qty }}×</span>
 										<span class="font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100" data-test="ticket-dish-name"><!-- //// Neoffice — the line is bigger than what waits at the pass: « (4 of 6) » beside the quantity (kitchen test of 01.11) -->
@@ -203,6 +208,9 @@ import { orderedQty, stateAfterDelivery } from "@/utils/kitchenRunner"
 import { DEFAULT_ALLERGY_WORDS } from "@/utils/kitchenTextKinds"
 import { dishesOutOfSight } from "@/utils/ticketScrollHints"
 import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
+//// Neoffice — the dishes in sections by family, and the pale tint of a category, as on the kitchen's ticket (Daniel, 01.11)
+import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
+import { TINT_CLASS, inSections, tintStyle } from "@/utils/ticketFamilies"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 import { DEFAULT_TEXT_SIZE, fullScreenVariables, TEXT_SIZE_KEY } from "@/utils/kitchenTextSize"
@@ -256,6 +264,13 @@ const closeFull = () => {
 }
 const textSize = inject(TEXT_SIZE_KEY, ref(DEFAULT_TEXT_SIZE))
 const fullVariables = computed(() => fullScreenVariables(textSize.value))
+//// Neoffice — the dishes of the card drawn in sections by family (Daniel, 01.11), by table (the card's own list) and by station (each table's group of dishes); copies, the card's dishes are not changed
+const tableItems = computed(() => inSections(props.card.items))
+const groupItems = computed(
+	() => new Map((props.card.tableGroups || []).map((group) => [group, inSections(group.items)])),
+)
+//// Neoffice — the pale tint of a dish's category: the inline style that carries it, `undefined` for a dish whose category has no colour (or one that is no strict #RRGGBB: it comes from user data)
+const lineTint = (item) => tintStyle(item.service_color)
 const lineCount = computed(() => runnerLineCount(props.card))
 const lineCountLabel = computed(() =>
 	lineCount.value === 1 ? __("{0} line", [1]) : __("{0} lines", [lineCount.value]),
