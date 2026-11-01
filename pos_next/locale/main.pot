@@ -18279,3 +18279,31 @@ msgstr ""
 #: pos_next/api/kitchen_events.py:131
 msgid "Print job not found"
 msgstr ""
+
+#: POS/src/composables/usePrintTableQr.js:75
+msgid "Printer offline"
+msgstr ""
+
+#: POS/src/composables/usePrintTableQr.js:117
+msgid "Failed to print the QR code"
+msgstr ""
+
+#: POS/src/composables/usePrintTableQr.js:147
+msgid "This till has no ticket printer: the QR code prints from the browser"
+msgstr ""
+
+#: POS/src/composables/usePrintTableQr.js:150
+msgid "Nothing was printed"
+msgstr ""
+
+#: pos_next/api/table_qr_ticket.py:98
+msgid "This QR code is no longer valid: make a new one"
+msgstr ""
+
+#: pos_next/api/table_qr_ticket.py:106
+msgid "This till does not serve this table"
+msgstr ""
+
+#: pos_next/api/table_qr_ticket.py:120
+msgid "Too many tickets in a minute: wait a moment before printing another"
+msgstr ""

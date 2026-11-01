@@ -138,6 +138,13 @@ The same task lists three calls in `TABLET_METHODS` (`pos_next/restaurant/device
 in `pos_next/api/kitchen_events.py` (`pos_next_kitchen_reprint`, `pos_next_kitchen_reprint_status`,
 `pos_next_kitchen_printers`), listened to by the `cloudprnt` app.
 
+NeoRestau lot 1, task 53 (the Print button of a table's QR dialog puts a ticket on the till's receipt printer instead of opening the
+browser's print window) appends 7 entries to the end of `main.pot` and `fr.po` (the button's states, the browser fallback, the three
+refusals of `pos_next/api/table_qr_ticket.py`); the French is Haiku's. A `.po` cannot carry a comment, so they are recorded here.
+The same task names one hook in `pos_next/api/table_qr_ticket.py` (`pos_next_table_qr_print`), listened to by the `cloudprnt` app,
+and moves the address a table's code opens into `guest_ordering.guest_link`, so that the dialog's link and the printed link are one
+function. The endpoint is not in `TABLET_METHODS` on purpose: a paired tablet cannot call it.
+
 ### Images
 
 `pos_next/public/icons/badges/*.svg` (23) and `pos_next/public/icons/badges/png/*.png` (23) — the

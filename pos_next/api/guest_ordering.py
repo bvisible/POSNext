@@ -1141,6 +1141,12 @@ def confirm_guest_payment(token, amount, tip=0):
 # ==========================================
 
 
+def guest_link(token):
+	"""The address a table's QR code opens: the site's address and the guest page of `token`. The one place that writes it: the
+	QR dialog shows it (`create_table_token`) and the QR ticket prints it (`table_qr_ticket`), and the two must be the same."""
+	return f"{frappe.utils.get_url()}/pos/guest/{token}"
+
+
 @frappe.whitelist()
 def create_table_token(table, pos_profile):
 	"""
@@ -1231,8 +1237,7 @@ def create_table_token(table, pos_profile):
 		frappe.db.set_value("Restaurant Table", table, "status", "Occupied")
 		frappe.publish_realtime("table_update")
 
-	site_url = frappe.utils.get_url()
-	guest_url = f"{site_url}/pos/guest/{token_doc.token}"
+	guest_url = guest_link(token_doc.token)
 
 	return {
 		"token": token_doc.token,

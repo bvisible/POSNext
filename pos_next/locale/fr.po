@@ -18936,3 +18936,31 @@ msgstr "Le plus ancien ticket à droite"
 #: POS/src/components/restaurant/ScreenAwakeSettings.vue
 msgid "The tickets start from the right edge: the oldest is the first one on that side."
 msgstr "Les tickets partent du bord droit : le plus ancien est le premier de ce côté."
+
+#: POS/src/composables/usePrintTableQr.js:75
+msgid "Printer offline"
+msgstr "Imprimante hors ligne"
+
+#: POS/src/composables/usePrintTableQr.js:117
+msgid "Failed to print the QR code"
+msgstr "Impossible d'imprimer le code QR"
+
+#: POS/src/composables/usePrintTableQr.js:147
+msgid "This till has no ticket printer: the QR code prints from the browser"
+msgstr "Cette caisse n'a pas d'imprimante à tickets : le code QR s'imprime depuis le navigateur"
+
+#: POS/src/composables/usePrintTableQr.js:150
+msgid "Nothing was printed"
+msgstr "Rien n'a été imprimé"
+
+#: pos_next/api/table_qr_ticket.py:98
+msgid "This QR code is no longer valid: make a new one"
+msgstr "Ce code QR n'est plus valide : créez-en un nouveau"
+
+#: pos_next/api/table_qr_ticket.py:106
+msgid "This till does not serve this table"
+msgstr "Cette caisse ne dessert pas cette table"
+
+#: pos_next/api/table_qr_ticket.py:120
+msgid "Too many tickets in a minute: wait a moment before printing another"
+msgstr "Trop de tickets en une minute : patientez un moment avant d'en imprimer un autre"

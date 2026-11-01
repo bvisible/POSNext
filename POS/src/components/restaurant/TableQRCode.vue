@@ -92,16 +92,18 @@
 				:class="isPhone ? 'px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]' : 'px-5 pb-5'"
 				data-test="table-qr-actions"
 			>
+				<!-- //// Neoffice — Print puts a ticket on the till's receipt printer (task 53); the button says where the paper stands -->
 				<button
 					v-if="!isPhone"
 					@click="handlePrint"
+					:disabled="printBusy"
 					data-test="table-qr-print"
-					class="flex-1 flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+					class="flex-1 flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-60"
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
 					</svg>
-					{{ __('Print') }}
+					{{ printLabel }}
 				</button>
 				<button
 					@click="emit('close')"
@@ -112,6 +114,7 @@
 					{{ __('Close') }}
 				</button>
 			</div>
+			<p v-if="printState.text" data-test="table-qr-print-state" class="px-5 pb-4 -mt-2 text-xs text-center text-gray-500">{{ printState.text }}</p>
 		</div>
 	</div>
 </template>
@@ -120,11 +123,15 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import QRCode from "qrcode"
 import { useBackClosesDialog } from "@/composables/useBackClosesDialog"
+import { usePrintTableQr } from "@/composables/usePrintTableQr"
+import { usePOSSettingsStore } from "@/stores/posSettings"
 
 const props = defineProps({
 	token: { type: String, required: true },
 	tableName: { type: String, required: true },
 	url: { type: String, required: true },
+	// //// Neoffice — the till the ticket prints for (task 53); none given, the till the page works at
+	posProfile: { type: String, default: "" },
 })
 
 const emit = defineEmits(["close"])
@@ -235,7 +242,8 @@ onBeforeUnmount(() => {
 
 watch([() => props.url, qrSize], generateQR)
 
-function handlePrint() {
+// //// Neoffice — the browser's print window, kept as it was but used only when the till has no CloudPRNT printer (task 53)
+function printInBrowser() {
 	if (!qrCanvas.value) return
 	const dataUrl = qrCanvas.value.toDataURL("image/png")
 	const win = window.open("", "_blank")
@@ -262,4 +270,18 @@ function handlePrint() {
 	`)
 	win.document.close()
 }
+
+// //// Neoffice — Print asks the server for a ticket on the till's receipt printer (usePrintTableQr); the browser prints only when the
+// //// server says the till has no printer. The server works the link out from the token: the browser sends none.
+const settingsStore = usePOSSettingsStore()
+const {
+	state: printState,
+	label: printLabel,
+	busy: printBusy,
+	print: handlePrint,
+} = usePrintTableQr({
+	token: () => props.token,
+	posProfile: () => props.posProfile || settingsStore.settings?.pos_profile || "",
+	printInBrowser,
+})
 </script>

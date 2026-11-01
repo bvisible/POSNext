@@ -31,6 +31,15 @@ vi.hoisted(() => {
 const toCanvas = vi.hoisted(() => vi.fn(async () => {}))
 // jsdom has no canvas: the library that draws the code is replaced by a spy
 vi.mock("qrcode", () => ({ default: { toCanvas } }))
+// The Print button reaches the server through these (task 53); the phone never shows it, and the tablet cases never tap it
+vi.mock("@/stores/posSettings", () => ({
+	usePOSSettingsStore: () => ({ settings: { pos_profile: "Restaurant till" } }),
+}))
+vi.mock("@/utils/apiWrapper", () => ({ call: vi.fn(async () => ({})) }))
+vi.mock("@/composables/useToast", () => ({
+	useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showInfo: vi.fn(), showWarning: vi.fn() }),
+}))
+vi.mock("@/utils/logger", () => ({ logger: { create: () => new Proxy({}, { get: () => vi.fn() }) } }))
 
 const { default: TableQRCode } = await import("../TableQRCode.vue")
 const { ENTRY_KEY } = await import("@/composables/useBackClosesDialog")
