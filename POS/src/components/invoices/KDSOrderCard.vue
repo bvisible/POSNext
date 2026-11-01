@@ -254,6 +254,9 @@
 										<span v-if="stateWord(item)" data-test="ticket-line-state"
 											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap"
 											:class="itemStatusClass(item.kds_status)">{{ stateWord(item) }}</span>
+										<!-- //// Neoffice — a dish sent AHEAD of its course and not called yet wears a small dashed « À l'avance » tag (the service rhythm, NeoRestau lot 1, Daniel, 01.11); one already finished says « Prêt d'avance » in the pill above instead -->
+										<span v-if="isUncalled(item) && item.kds_status !== 'Ready'" data-test="ticket-line-ahead"
+											class="mr-1.5 inline-block rounded-full border border-dashed border-gray-400 px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap text-gray-700 dark:border-gray-500 dark:text-gray-200">{{ __("Ahead", null, "Kitchen order status") }}</span>
 										<!-- //// Neoffice — what already left of a line cooked in part, told by a small pill in the look of a delivered dish (struck through, faded): « 4 of 6 sent » (kitchen test of 01.11) -->
 										<span v-if="isCookedInPart(item)" data-test="ticket-line-sent"
 											class="mr-1.5 inline-block rounded-full px-1.5 align-[0.1em] text-[length:var(--kds-fs-ref,11px)] font-bold leading-[1.4] whitespace-nowrap line-through opacity-60 dark:opacity-75"
@@ -428,8 +431,11 @@ import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
 import { TINT_CLASS, inSections, sectionLabel, tintStyle } from "@/utils/ticketFamilies"
 //// Neoffice — the order of the meal (Daniel, 01.11): a course waits, greyed, for the one before it; a course all done folds into one line; the choice is the device's
 import { useCourseOrder } from "@/composables/useCourseOrder"
-import { isHeldByCourse } from "@/utils/courseOrder"
+import { followsTheOrderOfTheMeal, isHeldByCourse } from "@/utils/courseOrder"
 import { familyOf } from "@/utils/serviceFamilies"
+//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a dish sent ahead of its course and not called yet is told « à l'avance », can be started and finished, and counts for nothing until the room calls it
+import { isUncalled } from "@/utils/courseCall"
+import { CALLED_BY_THE_ROOM, SERVICE_RHYTHM_KEY } from "@/utils/serviceRhythm"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 //// Neoffice — the print button's icon and the words under it (task 44), written once for the kitchen's card and the runner's
@@ -552,6 +558,16 @@ const fullVariables = computed(() => fullScreenVariables(textSize.value))
 //// Neoffice — a takeaway is handed over, not delivered to a table (task 38a-1)
 const isTakeaway = computed(() => !!props.order.is_takeaway)
 
+//// Neoffice — the service rhythm (NeoRestau lot 1, Daniel, 01.11): the restaurant's kitchen prepares ahead, or the room calls each course. The screen hands it down; the card only needs it to know that the order of the meal is off
+const serviceRhythm = inject(SERVICE_RHYTHM_KEY, ref(CALLED_BY_THE_ROOM))
+//// Neoffice — the dishes still to cook or at the pass, none of them delivered: what a ticket is about
+const LIVE_STATUSES = new Set(["Pending", "Preparing", "Ready"])
+//// Neoffice — true when every live dish of the ticket was sent ahead and is not called: the ticket then counts for nothing (no timer, no late colour, no main button), and its dishes are told « à l'avance »
+const aheadOnly = computed(() => {
+	const live = (props.order.items || []).filter((item) => LIVE_STATUSES.has(item.kds_status))
+	return live.length > 0 && live.every(isUncalled)
+})
+
 //// Neoffice — the toast that offers to take a move back for five seconds (task 38a-2, ruling 112). What it says is the table (or the takeaway) and the
 //// state the ticket came to; what it does is put each dish back in the state it had, one call per item, and tell the user when the server refuses.
 const tableLabel = computed(() =>
@@ -581,6 +597,8 @@ const mainAction = computed(() => {
 	if (props.mode === "ready-list") return "recall"
 	//// Neoffice — a ticket the kitchen view keeps with no dish left to cook (utils/kitchenRunner, `view_state`) has no button: there is nothing to press (the pill below says where it stands)
 	if (props.order.view_state) return null
+	//// Neoffice — a ticket whose only live dishes were sent ahead and not called has no main button either: it waits for the room's call, and the cook starts or finishes a dish by its own menu (the service rhythm)
+	if (aheadOnly.value) return null
 	switch (status.value) {
 		case "Pending":
 			return "start"
@@ -616,6 +634,8 @@ const noDishLabel = computed(() => {
 			: __("With the runner", null, "Kitchen order status")
 	if (props.order.view_state === "next-course")
 		return __("Next course to come", null, "Kitchen order status")
+	//// Neoffice — only dishes sent ahead are left, and the room has not called them: the pill says so in the place of the button
+	if (aheadOnly.value) return __("Ahead, waiting for the call", null, "Kitchen order status")
 	return ""
 })
 
@@ -697,7 +717,10 @@ function toggleFold(key) {
 //// Neoffice — the order of the meal (Daniel, 01.11): a dish waits, greyed and not to be touched, while a course before it still has a dish to cook. The card's own prop wins, else the choice of the device; a list of
 //// what waits at the pass never holds anything. `heldIdx` is the places, in `activeItems`, of the dishes that wait.
 const { courseOrder: deviceCourseOrder } = useCourseOrder()
-const followsTheMeal = computed(() => props.mode !== "ready-list" && (props.courseOrder ?? deviceCourseOrder.value))
+//// Neoffice — and never where the kitchen prepares ahead: the later courses are on the ticket from « Valider » and the cooks may start them whenever they like (utils/courseOrder.followsTheOrderOfTheMeal)
+const followsTheMeal = computed(
+	() => props.mode !== "ready-list" && followsTheOrderOfTheMeal(props.courseOrder ?? deviceCourseOrder.value, serviceRhythm.value),
+)
 const heldIdx = computed(() => {
 	const lines = activeItems.value
 	const held = new Set()
@@ -708,6 +731,14 @@ const heldIdx = computed(() => {
 	return held
 })
 const isHeld = (item) => heldIdx.value.has(item._globalIdx)
+//// Neoffice — the dishes the main button leaves alone: the ones that wait for the course before them, and the ones sent ahead and not called. The cook starts or finishes those by their own menu, or by a section's
+const deferredIdx = computed(() => {
+	const deferred = new Set(heldIdx.value)
+	activeItems.value.forEach((item, index) => {
+		if (isUncalled(item)) deferred.add(index)
+	})
+	return deferred
+})
 const waitingItems = computed(() =>
 	(props.order.items || []).filter((i) => i.kds_status === "Waiting"),
 )
@@ -755,9 +786,10 @@ function offers(item, status) {
 	//// Neoffice — only a dish being prepared can be put back to « to start » (a Ready one has the toast, a Pending one has nothing to take back)
 	if (status === "Pending") return item.kds_status === "Preparing"
 	// A dish that is Ready already, or one the cook delivers himself, has no "ready" to press for a station without a runner
-	if (status === "Ready") return props.useRunner
+	//// Neoffice — a dish sent ahead and not called is finished with "ready" at any station, even one without a runner: it cannot be delivered before the room calls it (the service rhythm)
+	if (status === "Ready") return props.useRunner || isUncalled(item)
 	// With a runner the cook has no "deliver": the runner delivers
-	if (status === "Delivered") return !props.useRunner
+	if (status === "Delivered") return !props.useRunner && !isUncalled(item)
 	return true
 }
 
@@ -823,9 +855,10 @@ function sectionOffers(section, status) {
 	if (props.mode === "ready-list") return false
 	const dishes = sectionDishes(section)
 	if (status === "Preparing") return dishes.some((dish) => dish.kds_status === "Pending")
+	//// Neoffice — as a dish's menu: a dish sent ahead and not called is finished with "ready" and never delivered (the service rhythm)
 	if (status === "Ready")
-		return props.useRunner && dishes.some((dish) => dish.kds_status === "Pending" || dish.kds_status === "Preparing")
-	if (status === "Delivered") return !props.useRunner && dishes.some((dish) => dish.kds_status !== "Delivered")
+		return dishes.some((dish) => (dish.kds_status === "Pending" || dish.kds_status === "Preparing") && (props.useRunner || isUncalled(dish)))
+	if (status === "Delivered") return !props.useRunner && dishes.some((dish) => dish.kds_status !== "Delivered" && !isUncalled(dish))
 	return false
 }
 function openSection(entry, event) {
@@ -1052,7 +1085,8 @@ const lastActionMinutes = computed(() =>
 	Math.floor((now.value - lastActionTime.value) / 60000),
 )
 //// Neoffice — hours and minutes from the hour on (utils/elapsedLabel): a ticket left open since the day before read « 1107:52 »
-const elapsedTime = computed(() => elapsedLabel(now.value - lastActionTime.value))
+//// Neoffice — a ticket whose only live dishes were sent ahead and not called runs no timer: it counts from the room's call (utils/courseCall)
+const elapsedTime = computed(() => (aheadOnly.value ? "" : elapsedLabel(now.value - lastActionTime.value)))
 
 // Total time since table was opened (creation)
 const totalTime = computed(() => elapsedLabel(now.value - new Date(props.order.creation)))
@@ -1063,6 +1097,8 @@ const elapsedMinutes = lastActionMinutes
 //// the opacity, which took the late timer to 1.6:1 at its dimmest. In dark the late timer is the dark ramp's lighter red and pulses by
 //// colour and glow (`late-pulse`, tailwind.config.js) so that no moment of the blink is dim; a slow one is the lighter orange. Green is left.
 const timeColorClass = computed(() => {
+	//// Neoffice — no late colour for dishes nobody has called
+	if (aheadOnly.value) return "text-gray-500 dark:text-gray-400"
 	if (status.value === "Ready") return "text-green-600"
 	if (elapsedMinutes.value > 15)
 		return "text-red-600 animate-pulse dark:text-ds-danger dark:animate-late-pulse"
@@ -1148,8 +1184,10 @@ const stationCode = (item) => roomCode(item.station_name || item.preparation_sta
 //// Neoffice — a dish's own state is written on its line only when it is NOT the ticket's: a dish being prepared on a ticket in preparation says
 //// nothing, one still to start, or already at the pass, says so. A delivered dish says it with a check mark and its strike-through instead.
 function stateWord(item) {
-	if (!item.kds_status || isDelivered(item) || item.kds_status === status.value)
-		return ""
+	if (!item.kds_status || isDelivered(item)) return ""
+	//// Neoffice — a dish finished before its course is called is « ready ahead »: a state of its own on the ticket, whatever the ticket's state is, and not a dish at the pass (the service rhythm)
+	if (isUncalled(item) && item.kds_status === "Ready") return __("Ready ahead", null, "Kitchen order status")
+	if (item.kds_status === status.value) return ""
 	return kitchenStatusLabel(item.kds_status, { takeaway: isTakeaway.value })
 }
 
@@ -1282,8 +1320,8 @@ function updateSectionStatus(entry, newStatus) {
 
 async function doUpdateStatus(newStatus) {
 	//// Neoffice — while a course waits for the one before it, the main button moves the dishes that do NOT wait, one call each, and leaves the course that waits where it is (Daniel, 01.11: « on ne peut pas lancer les plats si on n'a pas fait les entrées »); with nothing waiting it is the order-level call it always was
-	if (heldIdx.value.size) {
-		const free = activeItems.value.filter((_, index) => !heldIdx.value.has(index))
+	if (deferredIdx.value.size) {
+		const free = activeItems.value.filter((_, index) => !deferredIdx.value.has(index))
 		return moveDishes(
 			free,
 			newStatus,

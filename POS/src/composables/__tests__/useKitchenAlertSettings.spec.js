@@ -115,3 +115,54 @@ describe("the alerts of a screen", () => {
 		expect(server.calls).toHaveLength(1)
 	})
 })
+
+//// Neoffice — the service rhythm of the restaurant rides in the same answer (NeoRestau lot 1, Daniel, 01.11): the kitchen greys the later courses only where the room calls them
+describe("the service rhythm of a screen's restaurant", () => {
+	it("is the room's call until the server has answered", () => {
+		const { rhythm } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })
+
+		expect(rhythm.value).toBe("Called by the room")
+	})
+
+	it("is read in the same call as the alerts", async () => {
+		server.answer = { ...server.answer, service_rhythm: "Prepared ahead" }
+		const { rhythm, settings } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })
+		await flushPromises()
+
+		expect(server.calls).toHaveLength(1)
+		expect(rhythm.value).toBe("Prepared ahead")
+		expect(settings.value.volume).toBe("low")
+	})
+
+	it("follows a change made at the till, at the next reading", async () => {
+		server.answer = { ...server.answer, service_rhythm: "Prepared ahead" }
+		const { rhythm } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })
+		await flushPromises()
+		server.answer = { ...server.answer, service_rhythm: "Called by the room" }
+
+		vi.advanceTimersByTime(REFRESH_MS)
+		await flushPromises()
+
+		expect(rhythm.value).toBe("Called by the room")
+	})
+
+	it("reads an answer that says nothing, or something odd, as the room's call", async () => {
+		server.answer = { kitchen_alerts: server.answer.kitchen_alerts, service_rhythm: "whenever" }
+		const { rhythm } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })
+		await flushPromises()
+
+		expect(rhythm.value).toBe("Called by the room")
+	})
+
+	it("keeps what the last good reading said when a later one fails", async () => {
+		server.answer = { ...server.answer, service_rhythm: "Prepared ahead" }
+		const { rhythm } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })
+		await flushPromises()
+		server.fail = true
+
+		vi.advanceTimersByTime(REFRESH_MS)
+		await flushPromises()
+
+		expect(rhythm.value).toBe("Prepared ahead")
+	})
+})

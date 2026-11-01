@@ -46,7 +46,7 @@
 			</template>
 			<!-- //// Neoffice — the awake settings of THIS device, beside the size of the text (task 47): keep the screen on, rest after N minutes, wake on a new ticket, let the tablet sleep -->
 			<template #screen>
-				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" :course-order="courseOrder" :oldest-right="oldestRight" @change="setAwakeSetting" @course-order="setCourseOrder" @oldest-right="setOldestRight" />
+				<ScreenAwakeSettings :settings="awakeSettings" :wake-lock-supported="wakeLockSupported" :course-order="preparesAhead ? undefined : courseOrder" :oldest-right="oldestRight" @change="setAwakeSetting" @course-order="setCourseOrder" @oldest-right="setOldestRight" />
 				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button, what prints, the COPY mark. Drawn where a station has a printer; with none the choices would change nothing -->
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Kitchen" :settings="copySettings" @change="setCopySetting" />
 			</template>
@@ -167,7 +167,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from "vue"
+import { ref, onMounted, onUnmounted, computed, watch, provide } from "vue"
 import RoomStationFilterLine from "@/components/restaurant/RoomStationFilterLine.vue"
 //// Neoffice — the one top bar of the service screens, and the tab's title (task 38a-2, rulings 128 and 129)
 import ServiceTopBar from "@/components/restaurant/ServiceTopBar.vue"
@@ -207,6 +207,8 @@ import {
 import NextCourseNotices from "@/components/restaurant/NextCourseNotices.vue"
 import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
 import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
+//// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): where the kitchen prepares ahead the order of the meal is off, and the tickets say so
+import { SERVICE_RHYTHM_KEY, isPreparedAhead } from "@/utils/serviceRhythm"
 import { useNextCourseNotices } from "@/composables/useNextCourseNotices"
 import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
@@ -273,7 +275,10 @@ const allOrdersOfTheRoom = computed(() => allOrders.value.filter(inTheRoom))
 //// Neoffice — the next course of a table is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son »). Each reading of the orders below goes through the rule
 //// (utils/nextCourseWatch): a ticket already on the screen with a newer send. What is done about it is the till's setting (POS Settings, "Kitchen alerts"), read for the restaurant of the screen: a notice per table, a sound, the ticket
 //// highlighted. A table of a room the screen does not show is neither announced nor rung for.
-const { settings: alertSettings } = useKitchenAlertSettings({ restaurant: ofTheRestaurant })
+const { settings: alertSettings, rhythm: serviceRhythm } = useKitchenAlertSettings({ restaurant: ofTheRestaurant })
+//// Neoffice — the tickets read the rhythm from here (KDSOrderCard); the screen's switch « follow the order of the meal » is without effect where the kitchen prepares ahead, so it is not offered there
+provide(SERVICE_RHYTHM_KEY, serviceRhythm)
+const preparesAhead = computed(() => isPreparedAhead(serviceRhythm.value))
 const nextCourses = useNextCourseNotices({ settings: alertSettings, accept: (order) => !order || inTheRoom(order) })
 const { notices: nextCourseNotices, highlighted: highlightedOrder, dismiss: dismissNextCourse, show: showNextCourse } = nextCourses
 const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
