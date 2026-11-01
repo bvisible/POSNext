@@ -20,6 +20,13 @@
   "column_break_takeaway",
   "enable_takeaway",
   "takeaway_card",
+  "section_break_kitchen_alerts",
+  "kitchen_next_course_popup",
+  "kitchen_popup_seconds",
+  "column_break_kitchen_alerts",
+  "kitchen_next_course_sound",
+  "runner_ready_sound",
+  "kitchen_alert_volume",
   "section_break_wallet",
   "enable_loyalty_program",
   "default_loyalty_program",
@@ -213,6 +220,55 @@
    "options": "Restaurant Card",
    "depends_on": "enable_takeaway",
    "description": "Optional: use a specific card with takeaway prices"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:frappe.boot.neorestau_active",
+   "fieldname": "section_break_kitchen_alerts",
+   "fieldtype": "Section Break",
+   "label": "Kitchen alerts"
+  },
+  {
+   "default": "1",
+   "description": "Show a notice at the top of the kitchen screen when the next course of a table is ordered",
+   "fieldname": "kitchen_next_course_popup",
+   "fieldtype": "Check",
+   "label": "Popup when the next course is ordered"
+  },
+  {
+   "default": "30",
+   "depends_on": "kitchen_next_course_popup",
+   "description": "Seconds the notice stays on the kitchen screen. 0 = until somebody dismisses it",
+   "fieldname": "kitchen_popup_seconds",
+   "fieldtype": "Int",
+   "label": "Popup stays (seconds)"
+  },
+  {
+   "fieldname": "column_break_kitchen_alerts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Bell",
+   "description": "Sound of the kitchen screen when the next course is ordered",
+   "fieldname": "kitchen_next_course_sound",
+   "fieldtype": "Select",
+   "label": "Next course sound",
+   "options": "None\nBell\nDouble beep\nChime\nGong\nBeep"
+  },
+  {
+   "default": "Beep",
+   "description": "Sound of the runner screen when dishes come up ready",
+   "fieldname": "runner_ready_sound",
+   "fieldtype": "Select",
+   "label": "Dishes ready sound",
+   "options": "None\nBell\nDouble beep\nChime\nGong\nBeep"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "kitchen_alert_volume",
+   "fieldtype": "Select",
+   "label": "Alert volume",
+   "options": "Low\nMedium\nHigh"
   },
   {
    "fieldname": "section_break_wallet",
@@ -775,7 +831,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-01 16:10:00.000000",
+ "modified": "2026-11-01 17:30:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",

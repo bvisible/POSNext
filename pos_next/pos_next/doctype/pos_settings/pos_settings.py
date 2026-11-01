@@ -78,6 +78,8 @@ class POSSettings(Document):
 		# //// owner, 01.11.2026): 0 to 90 days, and 30 for a till that becomes a restaurant till. Upstream has no such
 		# //// setting.
 		self.validate_keep_signed_in_days()
+		# //// Neoffice — how long the kitchen's popup stays (NeoRestau lot 1, Daniel, 01.11.2026): 0 to ten minutes. Upstream has no such setting.
+		self.validate_kitchen_popup_seconds()
 
 	# //// Neoffice — added method (no upstream equivalent). `keep_signed_in_days` is 0 (the site's session length) to 90.
 	# //// A till that BECOMES a restaurant till in this save (a new one, or the tick turned on) and whose days were left
@@ -100,6 +102,15 @@ class POSSettings(Document):
 			self.keep_signed_in_days = RESTAURANT_KEEP_SIGNED_IN_DAYS
 		else:
 			self.keep_signed_in_days = days
+
+	# //// Neoffice — added method (no upstream equivalent). `kitchen_popup_seconds` is how long the notice "the next course is ordered" stays on the
+	# //// kitchen screen: 0 (until somebody dismisses it) to ten minutes (pos_next.restaurant.kitchen_alerts holds the same range when it reads it).
+	def validate_kitchen_popup_seconds(self):
+		from pos_next.restaurant.kitchen_alerts import MAX_POPUP_SECONDS
+
+		seconds = cint(self.kitchen_popup_seconds)
+		if seconds < 0 or seconds > MAX_POPUP_SECONDS:
+			frappe.throw(_("Popup stays (seconds) must be between 0 and {0}").format(MAX_POPUP_SECONDS))
 
 	def on_update(self):
 		"""Sync allow_negative_stock with Stock Settings"""

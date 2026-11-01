@@ -950,7 +950,8 @@ class TestWhatATabletReaches(Tablets):
 			("get_tables", restaurant.get_tables, {"restaurant": self.bar}),
 			# The runner's screen is not the kitchen's
 			("get_runner_orders", restaurant.get_runner_orders, {}),
-			("get_restaurant_settings", restaurant.get_restaurant_settings, {}),
+			# //// Neoffice — the kitchen's tablet reads its OWN restaurant's settings since the kitchen is told of the next course by a setting of the till (NeoRestau lot 1, 01.11): another restaurant's stay refused
+			("get_restaurant_settings", restaurant.get_restaurant_settings, {"restaurant": self.bar}),
 			("mark_items_delivered", restaurant.mark_items_delivered, {"invoice_name": self.order}),
 		):
 			with self.subTest(label=label, kwargs=kwargs):

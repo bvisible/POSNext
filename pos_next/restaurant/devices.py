@@ -578,14 +578,19 @@ def require_kds_state(status) -> None:
 
 
 def screen_settings(restaurant: str) -> dict:
-	"""What a tablet's screen reads of its restaurant's settings: whether the runner step is on.
+	"""What a tablet's screen reads of its restaurant's settings: whether the runner step is on and, since the kitchen is told
+	of the next course and the runner of the dishes ready, the popup and the sound of those alerts.
 
 	The opening hours, the tips, the guest ordering and the reservations are no tablet's business: the answer keeps
 	only the shape the screens read (`get_restaurant_settings`).
 	"""
+	# //// Neoffice — the alerts are the settings of the restaurant's till, resolved here for a screen that has no till (pos_next.restaurant.kitchen_alerts)
+	from pos_next.restaurant import kitchen_alerts
+
 	return {
 		"restaurant": restaurant,
 		"enable_runner": bool(frappe.db.get_value("Restaurant", restaurant, "enable_runner")),
+		"kitchen_alerts": kitchen_alerts.kitchen_alert_settings(restaurant),
 		"opening_hours": [],
 		"is_open": True,
 		"current_slot": None,

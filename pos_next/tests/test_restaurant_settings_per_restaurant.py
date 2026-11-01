@@ -55,6 +55,8 @@ READ_BY_THE_TILL = {
 	"takeaway_menu",
 	"default_reservation_duration",
 	"reservation_channels",
+	# //// Neoffice — the popup and the sound of the kitchen alerts, resolved from the till's POS Settings (NeoRestau lot 1, 01.11)
+	"kitchen_alerts",
 }
 # What only the server uses: the call answers any signed-in user, so none of it may leave
 ONLY_THE_SERVER_USES = (

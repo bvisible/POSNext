@@ -14,6 +14,8 @@ from frappe import _
 from frappe.utils import flt
 
 from pos_next.restaurant import devices, item_units, permissions, room_code, scope, service_families, tickets
+# //// Neoffice — the kitchen alerts a till sets, as the screens read them (NeoRestau lot 1, Daniel, 01.11)
+from pos_next.restaurant import kitchen_alerts
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
@@ -2354,9 +2356,11 @@ def get_restaurant_settings(restaurant=None):
 	duration and channels). Whatever only the server uses — the reminder and no-show rules, online booking, the
 	restaurant's e-mail — stays out. It answers whoever reads the restaurant from a desk account (a cashier, a manager),
 	and only for a restaurant he may read: a portal account is refused, and per-restaurant user permissions apply. The
-	runner's tablet reads whether its restaurant's runner step is on, and nothing else (pos_next.restaurant.devices).
+	runner's tablet and the kitchen's read whether their restaurant's runner step is on and the popup and the sound of
+	the kitchen alerts, and nothing else (pos_next.restaurant.devices).
 	"""
-	device = devices.screen_device(devices.RUNNER)
+	# //// Neoffice — the kitchen's tablet reads its restaurant's alerts the way the runner's reads its runner switch (NeoRestau lot 1, Daniel, 01.11): this call, cut to its own restaurant, and only the shape `screen_settings` gives
+	device = devices.screen_device(devices.KITCHEN, devices.RUNNER)
 	if device:
 		restaurant, _station = devices.cut_to_device(device, restaurant)
 		return devices.screen_settings(restaurant)
@@ -2409,6 +2413,8 @@ def get_restaurant_settings(restaurant=None):
 		# The reservation dialog reads these two
 		"default_reservation_duration": settings.default_reservation_duration,
 		"reservation_channels": settings.reservation_channels,
+		# //// Neoffice — the popup and the sound of the kitchen alerts: the settings of the till this user works at, else of the restaurant's oldest (NeoRestau lot 1, Daniel, 01.11)
+		"kitchen_alerts": kitchen_alerts.kitchen_alert_settings(settings.name, scope.current_profile()),
 	}
 
 
