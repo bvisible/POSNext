@@ -173,6 +173,11 @@ _custom_field_names = [
 	"Sales Invoice Item-preparation_station",
 	"Sales Invoice Item-kds_status",
 	"Sales Invoice Item-posa_item_modifiers",
+	# //// Neoffice — the service families (NeoRestau lot 1): the family of an Item Group, and the family each line of an order
+	# //// carries. The fixture file ships them at every migrate whatever this list says; the names are listed here so that an
+	# //// export of the fixtures does not drop them.
+	"Item Group-service_family",
+	"Sales Invoice Item-service_family",
 ]
 if not _has_native_coupon_code_field():
 	_custom_field_names.insert(3, "Sales Invoice-coupon_code")

@@ -1229,6 +1229,18 @@ def update_invoice(data):
 		# //// to a table would forget the four dishes the kitchen has already sent.
 		cooked_before = _kds_unit_counters_of(data.get("name")) if has_kds_field else {}
 
+		# //// Neoffice — the service families (NeoRestau lot 1): a line the till sent with no decision is decided here, by the
+		# //// one rule of pos_next.restaurant.service_families, against what the stored order already sent. A table's order goes
+		# //// in the rhythm of the meal (drinks and the first food family now, the rest held); a takeaway, a counter order and
+		# //// a site that sets no family send every line, as before. A line the till decided (the kitchen dialog's choice) is
+		# //// kept. Each line leaves here with its family, which the document writes with the row. After the draft is found
+		# //// (the stored order is read by its name) and before the document is built from the payload.
+		from pos_next.restaurant import service_families
+
+		# The lines of the stored draft as they are before this save rewrites them: what already left, and in which send
+		stored_lines = service_families.stored_lines(data.get("name")) if doctype == "Sales Invoice" else []
+		service_families.decide_new_lines(data, stored_lines)
+
 		# Create or update invoice
 		if data.get("name"):
 			invoice_doc = frappe.get_doc(doctype, data.get("name"))
@@ -1697,9 +1709,10 @@ def update_invoice(data):
 				# Determine next batch number for items transitioning to Pending
 				next_batch = 1
 				if has_kds_batch:
-					existing_batches = [
-						frappe.utils.cint(row.get("kds_batch") or 0) for row in invoice_doc.items
-					]
+					# //// Neoffice — the number of the next send is read from the lines as they were stored: the document is rewritten
+					# //// from the payload, which carries no batch, so the rows read back here had none and every send was number 1
+					# //// (service families, NeoRestau lot 1: the next course must be a send of its own on the kitchen's screen).
+					existing_batches = [frappe.utils.cint(row.get("kds_batch") or 0) for row in stored_lines]
 					next_batch = max(existing_batches, default=0) + 1
 
 				# //// Neoffice — whether this save has lines at the kitchen, read from what the till sent: the
@@ -1708,35 +1721,52 @@ def update_invoice(data):
 				sent_to_kitchen = any(
 					(item_data.get("kds_status") or "") not in ("", "Waiting") for item_data in data.get("items", [])
 				)
-				for item_data in data.get("items", []):
+				# //// Neoffice — each line of the payload is matched to ITS row (service families, NeoRestau lot 1): the first
+				# //// row with the same dish and unit took every line of that dish, so a dish ordered twice (the round the
+				# //// kitchen has and the round that waits, or one starter and one main) kept one status for both. Rows are taken
+				# //// once each, the row at the line's own position first (the document keeps the payload's order).
+				taken_rows = set()
+				taken_stored = set()
+				any_sent_before = any((row.get("kds_status") or "") not in ("", "Waiting") for row in stored_lines)
+				for position, item_data in enumerate(data.get("items", [])):
 					item_kds = item_data.get("kds_status")
+					# //// Neoffice — the stored line this one stands for, found whatever its status: it tells whether the line was already
+					# //// at the kitchen (service families, NeoRestau lot 1).
+					before = service_families.row_of_the_line(stored_lines, position, item_data, taken_stored)
+					if before:
+						taken_stored.add(before.name)
 					if item_kds:
-						for doc_item in invoice_doc.items:
-							if doc_item.item_code == item_data.get("item_code") and (doc_item.uom or "") == (
-								item_data.get("uom") or ""
-							):
-								frappe.db.set_value(
-									"Sales Invoice Item",
-									doc_item.name,
-									"kds_status",
-									item_kds,
-									update_modified=False,
-								)
-								# //// Neoffice — the kitchen flag is read before this loop, from the till's lines (maintenance#1935).
-								# Assign batch when item is sent to kitchen (Waiting→Pending)
-								if (
-									has_kds_batch
-									and item_kds == "Pending"
-									and (doc_item.kds_status in ("Waiting", "", None))
-								):
+						doc_item = service_families.row_of_the_line(invoice_doc.items, position, item_data, taken_rows)
+						if doc_item:
+							taken_rows.add(doc_item.name)
+							frappe.db.set_value(
+								"Sales Invoice Item",
+								doc_item.name,
+								"kds_status",
+								item_kds,
+								update_modified=False,
+							)
+							# //// Neoffice — the batch of a line at the kitchen (NeoRestau lot 1, service families). A line that left in an earlier
+							# //// send keeps its batch; a line that leaves in this save, after others have left, takes the number of this send (the
+							# //// kitchen draws each send apart); the first send stays without one, as it always was; a line held back has none (a
+							# //// held line with a batch is a guest's, which the waiter has to accept). Upstream gave a batch to a line whose stored
+							# //// status was Waiting, read AFTER the save had written the payload's status over it: never.
+							# Assign batch when item is sent to kitchen (Waiting→Pending)
+							if has_kds_batch and item_kds not in ("", "Waiting"):
+								already_sent = before and (before.get("kds_status") or "") not in ("", "Waiting")
+								if already_sent:
+									batch = cint(before.get("kds_batch"))
+								else:
+									batch = next_batch if any_sent_before else 0
+								if batch:
 									frappe.db.set_value(
 										"Sales Invoice Item",
 										doc_item.name,
 										"kds_batch",
-										next_batch,
+										# //// Neoffice — the batch worked out above for THIS line, not the send's number for every line.
+										batch,
 										update_modified=False,
 									)
-								break
 				# //// Neoffice — lines are at the kitchen: tell the kitchen-send listeners, which act once per line.
 				if sent_to_kitchen:
 					from pos_next.api.kitchen_events import kitchen_send

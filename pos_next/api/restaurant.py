@@ -752,6 +752,10 @@ def get_table_order(table_name):
 		item_fields.append("posa_item_modifiers")
 	if frappe.db.has_column("Sales Invoice Item", "kds_status"):
 		item_fields.append("kds_status")
+	# //// Neoffice — the family each line was ordered under (NeoRestau lot 1, service families): the till shows it on the line
+	# //// and sends the next course by it. A site not migrated yet has no column and no family.
+	if frappe.db.has_column("Sales Invoice Item", "service_family"):
+		item_fields.append("service_family")
 
 	all_items = frappe.get_all(
 		"Sales Invoice Item",
