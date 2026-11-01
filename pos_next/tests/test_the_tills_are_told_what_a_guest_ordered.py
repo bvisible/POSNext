@@ -124,15 +124,16 @@ class TheTillsAreToldWhatAGuestOrdered(ServiceCase):
 		self.assertEqual(told["items"], [{"item_name": SOUP, "qty": 2}])
 		self.assertEqual(told["count"], 1)
 
-	def test_an_order_that_adds_nothing_says_so(self):
-		# The same dish sent again is not added a second time (a double tap on « Send »): nothing new, nothing to name
+	def test_the_same_dish_ordered_again_is_a_new_line_and_is_named(self):
+		# A second round (NeoRestau lot 1, 01.11): the guest's page sends the NEW lines only and empties its cart after each send, so the same drink
+		# ordered again is a new line of the order, not a line already there. The tills are told of what that send added, as for any other.
 		self.validation("Direct to Kitchen")
 		self.order((self.cola, 1))
 
 		told = self.order((self.cola, 1))["guest_order_submitted"]
 
-		self.assertEqual(told["items"], [])
-		self.assertEqual(told["count"], 0)
+		self.assertEqual(told["items"], [{"item_name": WINE, "qty": 1}])
+		self.assertEqual(told["count"], 1)
 
 	def test_a_whole_quantity_is_a_whole_number(self):
 		self.validation("Direct to Kitchen")
