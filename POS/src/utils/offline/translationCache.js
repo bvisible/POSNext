@@ -54,9 +54,12 @@ const normalizeLocale = (locale) => (locale || "en").toLowerCase();
  * @returns {Promise<TranslationEntry|null>} Stored entry or null on failure
  * @private
  */
-async function persist(locale, messages, timestamp) {
+//// Neoffice — `stamp` joins the signature (see the entry below).
+async function persist(locale, messages, timestamp, stamp) {
 	try {
-		const entry = { locale, messages, timestamp, version: CACHE_VERSION };
+		//// Neoffice — the entry keeps the server's stamp of the dictionary it holds (NeoRestau lot 1, 01.11): the till compares it with the server's to know
+		//// whether a word was added or corrected since, whatever the build and the clock say. An entry stored without one reads back with no stamp.
+		const entry = { locale, messages, timestamp, version: CACHE_VERSION, ...(stamp ? { stamp } : {}) };
 		memoryCache.set(locale, entry);
 		await db.translations.put(entry);
 		return entry;
@@ -103,8 +106,9 @@ export const translationCache = {
 	 * @param {number} [timestamp=Date.now()] - Cache timestamp
 	 * @returns {Promise<TranslationEntry|null>} Stored entry or null on failure
 	 */
-	async set(locale, messages, timestamp = Date.now()) {
-		return persist(normalizeLocale(locale), messages, timestamp);
+	//// Neoffice — `stamp`: see persist().
+	async set(locale, messages, timestamp = Date.now(), stamp) {
+		return persist(normalizeLocale(locale), messages, timestamp, stamp);
 	},
 
 	/**
@@ -141,7 +145,8 @@ export const translationCache = {
 	 * const entry = await translationCache.getFresh('ar', () => fetchFromAPI())
 	 */
 	async getFresh(locale, fetcher, options = {}) {
-		const { force = false, ttl = CACHE_TTL } = options;
+		//// Neoffice — `stampOf`: read AFTER the fetch, it gives the stamp the fetched dictionary is stored with (see persist()).
+		const { force = false, ttl = CACHE_TTL, stampOf } = options;
 		const normalized = normalizeLocale(locale);
 		const cached = await read(normalized);
 
@@ -158,7 +163,8 @@ export const translationCache = {
 		const promise = (async () => {
 			try {
 				const messages = await fetcher();
-				if (messages) return await persist(normalized, messages, Date.now());
+				//// Neoffice — the stamp rides along with the dictionary (see persist()).
+				if (messages) return await persist(normalized, messages, Date.now(), stampOf?.());
 			} catch (error) {
 				log.error(`Failed to refresh translations for ${normalized}:`, error);
 			}

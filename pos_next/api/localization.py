@@ -6,6 +6,8 @@
 # //// which is wrong for a fork whose translations are PO files (RULE: PO only, never CSV): an
 # //// empty allowed_locales now means "every language actually shipped" (c081f418, 2026-01-12).
 # //// show all languages when allowed_locales is empty — c081f41
+import hashlib
+import json
 import os
 import frappe
 
@@ -49,6 +51,11 @@ def get_app_translations():
 	Returns:
 		dict: Translation dictionary {source: translated}
 	"""
+	# //// Neoffice — the dictionary is built in _dictionary() so the stamp below fingerprints exactly what is handed out here.
+	return _dictionary()
+
+
+def _dictionary():
 	lang = frappe.local.lang or "en"
 	# //// Neoffice — the till's own senses go back on top of upstream's dictionary (see
 	# //// _keep_till_senses()); upstream returns the merged dictionary as is.
@@ -59,6 +66,21 @@ def get_app_translations():
 			**translate.get_user_translations(lang),
 		}
 	)
+
+
+# //// Neoffice — added (NeoRestau lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed that word in
+# //// English for up to 24 hours: a release that only carries new words does not change the front build the cache is keyed by. The till now asks for this
+# //// short stamp of the dictionary (cheap: Frappe caches the merged dictionary) and fetches the dictionary itself only when the stamp is not the one it holds.
+@frappe.whitelist()
+def get_translations_stamp():
+	"""A 16-character fingerprint of the dictionary get_app_translations() hands out, in the user's language."""
+	return _stamp_of(_dictionary())
+
+
+def _stamp_of(messages):
+	"""The fingerprint of a dictionary: the same words give the same stamp, whatever the order they were added in."""
+	payload = json.dumps(messages, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+	return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 @frappe.whitelist()

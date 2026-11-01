@@ -123,3 +123,59 @@ class TestAppTranslationsPrecedence(unittest.TestCase):
 		own_apps.assert_called_once_with("ar", ["pos_next"])
 		self.assertEqual(result, {"Clear": "مسح", "Apply": "تطبيق", "Save": "احفظ"})
 		self.assertEqual(merged["Clear"], "واضح")
+
+
+# //// Neoffice — added (NeoRestau lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed it in
+# //// English for up to 24 hours, because a release that only carries new words does not change the front build the cache is keyed by. The till asks
+# //// for a short stamp of the dictionary first and fetches the dictionary only when the stamp is not the one it holds.
+class TestTranslationsStamp(unittest.TestCase):
+	def _stamp(self, merged=None, own=None, user=None):
+		with (
+			patch.object(localization.translate, "get_all_translations", return_value=merged or {"Save": "Enregistrer"}),
+			patch.object(localization.translate, "get_translations_from_apps", return_value=own or {}),
+			patch.object(localization.translate, "get_user_translations", return_value=user or {}),
+			patch.object(localization.frappe.local, "lang", "fr", create=True),
+			patch.object(localization, "_keep_till_senses", side_effect=lambda messages: messages),
+		):
+			return localization.get_translations_stamp()
+
+	def test_the_stamp_is_a_short_hex_word(self):
+		stamp = self._stamp()
+		self.assertEqual(len(stamp), 16)
+		int(stamp, 16)
+
+	def test_the_same_dictionary_gives_the_same_stamp(self):
+		self.assertEqual(self._stamp(), self._stamp())
+
+	def test_the_order_of_the_words_does_not_change_it(self):
+		one = self._stamp(merged={"Save": "Enregistrer", "Validate": "Valider"})
+		other = self._stamp(merged={"Validate": "Valider", "Save": "Enregistrer"})
+		self.assertEqual(one, other)
+
+	def test_a_word_added_changes_it(self):
+		before = self._stamp(merged={"Save": "Enregistrer"})
+		after = self._stamp(merged={"Save": "Enregistrer", "Validate": "Valider"})
+		self.assertNotEqual(before, after)
+
+	def test_a_word_corrected_changes_it(self):
+		before = self._stamp(merged={"Preparing": "Preparing"})
+		after = self._stamp(merged={"Preparing": "En préparation"})
+		self.assertNotEqual(before, after)
+
+	def test_a_translation_the_site_overrides_changes_it(self):
+		before = self._stamp(merged={"Save": "Enregistrer"})
+		after = self._stamp(merged={"Save": "Enregistrer"}, user={"Save": "Sauvegarder"})
+		self.assertNotEqual(before, after)
+
+	def test_the_stamp_covers_what_get_app_translations_hands_out(self):
+		"""One builder behind both, so the stamp can never describe another dictionary than the one fetched."""
+		with (
+			patch.object(localization.translate, "get_all_translations", return_value={"A": "a"}),
+			patch.object(localization.translate, "get_translations_from_apps", return_value={"B": "b"}),
+			patch.object(localization.translate, "get_user_translations", return_value={"C": "c"}),
+			patch.object(localization.frappe.local, "lang", "fr", create=True),
+			patch.object(localization, "_keep_till_senses", side_effect=lambda messages: messages),
+		):
+			messages = localization.get_app_translations()
+			stamp = localization.get_translations_stamp()
+		self.assertEqual(stamp, localization._stamp_of(messages))

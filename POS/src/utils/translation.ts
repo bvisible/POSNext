@@ -162,6 +162,9 @@ async function init() {
 	const locale = getLocale()
 	const loaded = await loadLocale(locale, { preferCache: true })
 	if (!loaded) fallbackFetch(locale)
+	//// Neoffice — what start-up has just loaded is as fresh as a check; then again whenever the till comes back to the screen after a while (checkCatalogue).
+	lastCatalogueCheck = Date.now()
+	watchCatalogue(getLocale)
 }
 
 /**
@@ -178,6 +181,55 @@ function applyMessages(messages: Messages) {
 		translationVersion.value++
 		_versionDebounce = null
 	}, 100)
+}
+
+//// Neoffice — added (NeoRestau lot 1, kitchen test of 01.11). A phone that kept a dictionary fetched before a French word was added showed it in English for
+//// up to 24 hours: a release that only carries new words does not change the build the cache is keyed by, and the clock alone says "fresh". The till asks the
+//// server for a short stamp of its dictionary at start-up and when it comes back to the screen after a while, and fetches the dictionary only when the stamp
+//// is not the one it holds. Offline, or on any failure, it keeps what it holds.
+const STAMP_METHOD = "pos_next.api.localization.get_translations_stamp"
+
+/** How long the till must have been away before coming back to the screen asks for the stamp again */
+const STAMP_RECHECK_AFTER_MS = 10 * 60 * 1000
+
+let lastCatalogueCheck = 0
+
+async function requestStamp(): Promise<string | null> {
+	const stamp = await call(STAMP_METHOD, {})
+	return typeof stamp === "string" && stamp ? stamp : null
+}
+
+/**
+ * Compares the server's stamp with the one the cached dictionary carries and, when they differ, fetches the dictionary again and applies it.
+ * Never throws: a till that cannot ask keeps the dictionary it has.
+ * @param locale - Target locale code
+ */
+async function checkCatalogue(locale: string) {
+	lastCatalogueCheck = Date.now()
+	try {
+		const stamp = await requestStamp()
+		if (!stamp) return
+		const cached = await translationCache.get(locale)
+		if (cached?.stamp === stamp) return
+		const entry = await translationCache.getFresh(
+			locale,
+			() => requestTranslations(),
+			{ force: true, stampOf: () => stamp },
+		)
+		if (entry?.messages) applyMessages(entry.messages)
+	} catch (error) {
+		log.warn("Could not check the dictionary stamp, keeping the cached one", error)
+	}
+}
+
+/** Asks again for the stamp when the till comes back to the screen after a while (a till can stay open for days). */
+function watchCatalogue(locale: () => string) {
+	if (typeof document === "undefined") return
+	document.addEventListener("visibilitychange", () => {
+		if (document.visibilityState === "hidden") return
+		if (Date.now() - lastCatalogueCheck < STAMP_RECHECK_AFTER_MS) return
+		void checkCatalogue(locale())
+	})
 }
 
 /**
@@ -221,16 +273,26 @@ async function loadLocale(locale: string, options: LoadOptions = {}) {
 			//// (CACHE_VERSION) and read back as expired when it differs, which is what the build stamp we used to pass
 			//// here as a third argument did (91864420 and 35e5b084, 2026-08-19). That argument went with our stamp.
 			if (!translationCache.isStale(cached.timestamp) && !forceNetwork) {
+				//// Neoffice — fresh by the clock is not fresh by content: ask the server whether a word was added or corrected since (checkCatalogue).
+				void checkCatalogue(target)
 				return true
 			}
 		}
 	}
 
+	//// Neoffice — the dictionary is stored with the stamp asked just before it (checkCatalogue); a stamp that cannot be had stores none and the next check refetches once.
+	let fetchedStamp: string | null = null
 	const entry = await translationCache.getFresh(
 		target,
-		() => requestTranslations(),
+		//// Neoffice — the stamp is asked just before the dictionary, so the two are stored together.
+		async () => {
+			fetchedStamp = await requestStamp().catch(() => null)
+			return requestTranslations()
+		},
 		{
 			force: forceNetwork,
+			//// Neoffice — read after the fetch: the stamp the dictionary is stored with.
+			stampOf: () => fetchedStamp || undefined,
 		},
 	)
 
