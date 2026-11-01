@@ -11,7 +11,7 @@ import math
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 # //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoRestau lot 1, Daniel, 01.11)
 from pos_next.restaurant import (
@@ -485,7 +485,7 @@ _KDS_RANK = {"Pending": 0, "Preparing": 1, "Ready": 2, "Delivered": 3}
 _KDS_LIVE = ("Pending", "Preparing", "Ready")
 
 
-def _order_status_of(dish_statuses):
+def _order_status_of(dish_statuses, uncalled=None):
 	"""The status an order shows when its dishes are at these statuses: the rule of the kitchen screen.
 
 	It is the rule of `kitchenStatusOf` (POS/src/utils/kitchenBands.js), written once more on the server so that the status the
@@ -500,9 +500,22 @@ def _order_status_of(dish_statuses):
 	- Ready: every one of them is Ready
 	- Delivered: none is left and one was delivered (a dish with no status says nothing)
 	- Pending for what says nothing at all: no dish, or dishes with no status
+
+	`uncalled` (one flag per dish, in the same order) marks the dishes that left AHEAD of their course and are not called yet (the service
+	rhythm, NeoRestau lot 1): they are at the kitchen, which may start and finish them, but they are not what the order is waiting for. While
+	some other dish is live the order follows the others alone; when only such dishes are live it is Pending until one is begun and Preparing
+	after that, never Ready: nothing waits at the pass for a course nobody called.
 	"""
 	statuses = [status or "" for status in dish_statuses]
 	live = [status for status in statuses if status in _KDS_LIVE]
+	if uncalled and any(uncalled):
+		called = [
+			status for status, ahead in zip(statuses, uncalled, strict=False) if status in _KDS_LIVE and not ahead
+		]
+		if called:
+			live = called
+		elif live:
+			return "Preparing" if any(status in ("Preparing", "Ready") for status in live) else "Pending"
 	if not live:
 		return "Delivered" if "Delivered" in statuses else "Pending"
 	if not any(status in ("Preparing", "Ready") for status in live):
@@ -517,8 +530,12 @@ def _follow_the_dishes(invoice_name):
 	Delivered, which the kitchen screen reads first, so the ticket stayed gone. The write keeps the order's `modified`, the
 	time its ticket counts from: a dish that moves is no new action on the whole ticket, as it was not before.
 	"""
-	statuses = frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, pluck="kds_status")
-	status = _order_status_of(statuses)
+	# //// Neoffice — the dishes sent ahead and not called yet do not make the order Ready (see `_order_status_of`)
+	ahead_fields = _ahead_fields()
+	dishes = frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, fields=["kds_status", *ahead_fields])
+	status = _order_status_of(
+		[dish.kds_status for dish in dishes], [_is_uncalled(dish) for dish in dishes] if ahead_fields else None
+	)
 	if frappe.db.get_value("Sales Invoice", invoice_name, "kds_status") != status:
 		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status, update_modified=False)
 
@@ -559,6 +576,18 @@ def _units_left_to_cook(status, qty, ready_qty):
 		return 0.0
 	qty = flt(qty, _QTY_PRECISION)
 	return max(0.0, flt(qty - min(flt(ready_qty, _QTY_PRECISION), qty), _QTY_PRECISION))
+
+
+# //// Neoffice — the two fields of the service rhythm a line carries, where the site has them (a site not migrated yet has not)
+def _ahead_fields():
+	return [
+		column for column in ("kds_ahead", "kds_called_at") if frappe.db.has_column("Sales Invoice Item", column)
+	]
+
+
+def _is_uncalled(dish):
+	"""Whether a line left ahead of its course and the room has not called it (see `service_families.is_uncalled`)."""
+	return bool(cint(dish.get("kds_ahead"))) and not dish.get("kds_called_at")
 
 
 def _has_unit_counters():
@@ -609,6 +638,8 @@ def _dish_fields():
 	fields = ["name", "qty", "kds_status"]
 	if _has_unit_counters():
 		fields += ["kds_ready_qty", "kds_delivered_qty"]
+	# //// Neoffice — whether a line left ahead and was called: the pass delivers no line the room has not called
+	fields += _ahead_fields()
 	return fields
 
 
@@ -848,6 +879,9 @@ def get_table_order(table_name):
 	# //// and sends the next course by it. A site not migrated yet has no column and no family.
 	if frappe.db.has_column("Sales Invoice Item", "service_family"):
 		item_fields.append("service_family")
+	# //// Neoffice — whether each line left ahead of its course and when the room called it (the service rhythm, NeoRestau lot 1, Daniel, 01.11):
+	# //// the till names the next course to call from them
+	item_fields += _ahead_fields()
 
 	all_items = frappe.get_all(
 		"Sales Invoice Item",
@@ -974,6 +1008,10 @@ def get_kds_orders(station=None, restaurant=None):
 	# //// Neoffice — when each line left for the kitchen: the ticket's timer counts from the course that is at the kitchen (Daniel, 01.11)
 	if frappe.db.has_column("Sales Invoice Item", "kds_sent_at"):
 		item_fields.append("kds_sent_at")
+
+	# //// Neoffice — whether each line left ahead of its course and when the room called it: the kitchen counts a line from its call and shows
+	# //// the lines not called as « ahead » (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+	item_fields += _ahead_fields()
 
 	# //// Neoffice — the family each line was stored with: the ticket draws its dishes in sections by family (Daniel, 01.11)
 	if frappe.db.has_column("Sales Invoice Item", "service_family"):
@@ -1594,6 +1632,9 @@ def open_table(table_name, pos_profile, customer=None):
 		# //// always sent it. A site not migrated yet has no column and no family.
 		if frappe.db.has_column("Sales Invoice Item", "service_family"):
 			draft_fields.append("service_family")
+		# //// Neoffice — whether each line left ahead of its course and when the room called it (the service rhythm): the till names the next course
+		# //// to call from them, and a table reopened must give them back as it gives the family
+		draft_fields += _ahead_fields()
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": order.name},
@@ -2915,6 +2956,8 @@ def get_runner_orders(area=None, restaurant=None):
 	# //// Neoffice — when each line left for the kitchen (see get_kds_orders)
 	if frappe.db.has_column("Sales Invoice Item", "kds_sent_at"):
 		item_fields.append("kds_sent_at")
+	# //// Neoffice — whether each line left ahead of its course and when it was called (see get_kds_orders): the runner counts from the call
+	item_fields += _ahead_fields()
 
 	# Build station map for enrichment (individual items + item groups)
 	station_map = {}
@@ -2953,6 +2996,10 @@ def get_runner_orders(area=None, restaurant=None):
 		for item in items:
 			item_status = item.get("kds_status", "")
 			if not item_status or item_status == "Delivered":
+				continue
+			# //// Neoffice — a line sent AHEAD of its course whose call has not come is not the runner's: the kitchen may have finished it, and it waits
+			# //// for the room (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Prêt d'avance », not offered to the runner until it is called)
+			if _is_uncalled(item):
 				continue
 
 			# Resolve station (individual item > item group fallback)
@@ -3123,6 +3170,9 @@ def mark_items_delivered(invoice_name, item_names=None):
 			for dish in frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, fields=_dish_fields())
 			if (dish.kds_status or "") != "Delivered"
 		]
+	# //// Neoffice — the pass delivers no line the room has not called: a line sent ahead is not at the pass until its course is called, whatever
+	# //// state the kitchen put it in (NeoRestau lot 1, the service rhythm, Daniel, 01.11)
+	dishes = [dish for dish in dishes if not _is_uncalled(dish)]
 	# //// Neoffice — a line cooked in part is delivered for the units at the pass only (kitchen test of 01.11): the rest is still to cook
 	for dish in dishes:
 		_deliver_dish(dish)
@@ -3132,6 +3182,78 @@ def mark_items_delivered(invoice_name, item_names=None):
 
 	frappe.publish_realtime("kds_update")
 	return {"status": "success"}
+
+
+# //// Neoffice — the room's call of a course, where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11: « Oui, les deux modes »):
+# //// « Commander la suite » does not release anything in that rhythm, the course is already at the kitchen, marked ahead; it SIGNALS that the room wants it now.
+# //// POST only, a write of the waiter's till.
+@frappe.whitelist(methods=["POST"])
+def call_next_course(invoice, family=None, everything=0):
+	"""The room calls the next course of a table: the kitchen is told to serve it now.
+
+	Where the restaurant prepares ahead, a food line that the room's rhythm would have held back left with the rest at « Valider », marked
+	`kds_ahead`. The kitchen may have started and finished it; it counts for nothing, no timer and no late colour, and the runner is not
+	offered it, until the room calls its course. This stamps `kds_called_at` (the time of the call) on the lines of the NEXT course that is
+	not called yet (the lowest in the order of the meal: starters, mains, desserts), or of `family` when the waiter names one, or of every
+	such course when `everything` is set (« Tout commander »), and tells the screens. The kitchen's popup and sound go off from that moment,
+	its timer starts from it, and a dish already finished waits for the runner at once.
+
+	It is ONE transaction: the lines are locked, read and stamped together, so two waiters pressing at once call the course once (the second
+	finds nothing left to call and answers `called` 0) and a save of the till, which locks the same lines, never loses a call.
+
+	Refused: whoever may not work at the order's till, a restaurant that is not the caller's (a till of another restaurant, a user kept to
+	another restaurant), a takeaway or a counter order (they have no courses), an order that is not a table's draft, and a restaurant whose
+	rhythm is not `Prepared ahead` (the room releases a held course by its send instead).
+	"""
+	from pos_next.api.cash_entry import require_document_till
+
+	require_document_till("Sales Invoice", invoice)
+	order = isinstance(invoice, str) and frappe.db.get_value(
+		"Sales Invoice", invoice, ["name", "docstatus", "restaurant_table", "is_takeaway", "pos_profile"], as_dict=True
+	)
+	if not order:
+		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)
+	if order.docstatus != 0 or not order.restaurant_table or cint(order.is_takeaway):
+		frappe.throw(_("Only an order at a table has courses to call"))
+
+	restaurant = scope.restaurant_of_record("Restaurant Table", order.restaurant_table)
+	permissions.require_restaurant(restaurant)
+	# The caller's own till, when he has one open, is that of this restaurant
+	profile = scope.current_profile()
+	if profile and scope.current_restaurant(profile) != restaurant:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	if service_families.rhythm_of_restaurant(restaurant) != service_families.PREPARED_AHEAD:
+		frappe.throw(_("The courses of this restaurant are not prepared ahead: there is no course to call"))
+	if family and family not in service_families.COURSES:
+		frappe.throw(_("{0} is not a course").format(family))
+	if not _ahead_fields():
+		return {"status": "success", "called": 0, "family": "", "called_at": None}
+
+	# The lines are locked, read and stamped in ONE transaction. A save of the till reads them FOR UPDATE too (service_families.stored_lines)
+	# before it rewrites them, so the two never interleave
+	lines = service_families.stored_lines(order.name, lock=True)
+	waiting = [line for line in lines if service_families.is_uncalled(line)]
+	if cint(everything):
+		called = waiting
+		course = ""
+	elif family:
+		called = [line for line in waiting if line.get("service_family") == family]
+		course = family
+	else:
+		released = service_families.next_release(waiting, service_families.PREPARED_AHEAD)
+		called = [waiting[index] for index in released["indexes"]]
+		course = released["family"]
+	if not called:
+		return {"status": "success", "called": 0, "family": "", "called_at": None}
+
+	now = frappe.utils.now_datetime()
+	for line in called:
+		frappe.db.set_value("Sales Invoice Item", line.name, "kds_called_at", now, update_modified=False)
+	frappe.db.commit()
+	frappe.publish_realtime("kds_update")
+	frappe.publish_realtime("table_update")
+	return {"status": "success", "called": len(called), "family": course, "called_at": str(now)}
 
 
 @frappe.whitelist()

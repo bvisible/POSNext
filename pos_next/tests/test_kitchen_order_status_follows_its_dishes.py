@@ -46,6 +46,28 @@ class TestTheRuleOfTheStatus(FrappeTestCase):
 				self.assertEqual(restaurant_api._order_status_of(case["dishes"]), case["status"])
 
 
+	def test_every_example_of_the_shared_table_of_dishes_sent_ahead_gives_its_status(self):
+		# //// Neoffice — the dishes that left AHEAD of their course and are not called (the service rhythm, NeoRestau lot 1)
+		with open(CASES, encoding="utf-8") as table:
+			cases = json.load(table)["ahead_cases"]
+
+		self.assertGreaterEqual(len(cases), 10)
+		for case in cases:
+			with self.subTest(about=case["about"]):
+				dishes = [dish["status"] for dish in case["dishes"]]
+				uncalled = [dish["uncalled"] for dish in case["dishes"]]
+				self.assertEqual(restaurant_api._order_status_of(dishes, uncalled), case["status"])
+
+	def test_a_rule_given_no_dish_sent_ahead_is_the_rule_it_always_was(self):
+		for dishes in (["Ready", "Ready"], ["Ready", "Pending"], ["Delivered", "Pending"], []):
+			with self.subTest(dishes=dishes):
+				self.assertEqual(
+					restaurant_api._order_status_of(dishes, [False] * len(dishes)),
+					restaurant_api._order_status_of(dishes),
+				)
+				self.assertEqual(restaurant_api._order_status_of(dishes, None), restaurant_api._order_status_of(dishes))
+
+
 class TestAnOrderFollowsItsDishes(TicketCase):
 	"""A table's order with two dishes (the Kitchen's and the Bar's), as the till saves it."""
 

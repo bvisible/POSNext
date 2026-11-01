@@ -77,7 +77,7 @@ NONE = "tillsweep-no-such-name"
 # `my_screen` answers a tablet whichever screen it was paired for (task 48: a tablet started from its home-screen icon asks
 # where its screen is) and nobody else.
 TABLET_SCREENS = {
-	# //// the kitchen's tablet reads its restaurant's settings too, cut to its own restaurant (the kitchen alerts: the popup and the sounds are the till's settings)
+	# //// Neoffice — the kitchen's tablet reads its restaurant's alerts and service rhythm the way the runner's reads its runner switch (NeoRestau lot 1, Daniel, 01.11)
 	"Kitchen": {"get_tables", "get_kds_orders", "get_restaurant_settings", "my_screen"},
 	"Runner": {"get_tables", "get_runner_orders", "get_restaurant_settings", "my_screen"},
 }
@@ -430,6 +430,9 @@ class TestTillEndpointsSweep(FrappeTestCase):
 				"open_table",
 				_past_the_gate(lambda: restaurant.open_table(NONE, PROFILE), frappe.ValidationError),
 			),
+			# //// Neoffice — the room's call of a course (the service rhythm, NeoRestau lot 1): the waiter's gesture on an order of the till
+			# //// the caller works at; a made-up order is past the gate when it is reported missing
+			("call_next_course", _past_the_gate(lambda: restaurant.call_next_course(NONE))),
 		]
 
 	def _floor_calls(self):
