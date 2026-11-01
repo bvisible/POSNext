@@ -3,6 +3,8 @@
  * //// et peut-être même choisir le son avec des choix »). A sound is a SCHEDULE of notes (a pure table, tested here without any audio); a thin player turns it into oscillators (alertSoundPlayer).
  * @vitest-environment jsdom
  */
+import { readFileSync } from "node:fs"
+import path from "node:path"
 import { beforeAll, describe, expect, it } from "vitest"
 import {
 	DEFAULT_NEXT_COURSE_SOUND,
@@ -15,12 +17,18 @@ import {
 	soundLabel,
 	soundLength,
 	soundSchedule,
+	soundWord,
 	volumeLabel,
+	volumeWord,
 } from "../alertSounds"
 
 beforeAll(() => {
 	globalThis.__ = (text) => text
 })
+
+const ROOT = path.resolve(__dirname, "../../../../pos_next")
+const doctype = JSON.parse(readFileSync(path.join(ROOT, "pos_next/doctype/pos_settings/pos_settings.json"), "utf8"))
+const optionsOf = (fieldname) => doctype.fields.find((field) => field.fieldname === fieldname).options.split("\n")
 
 describe("the table of sounds", () => {
 	it("names the sounds the product owner asked for, none first", () => {
@@ -134,5 +142,23 @@ describe("the words of the settings", () => {
 		expect(SOUND_IDS.map(soundLabel)).toEqual(["None", "Bell", "Double beep", "Chime", "Gong", "Beep"])
 		expect(VOLUME_IDS.map(volumeLabel)).toEqual(["Low", "Medium", "High"])
 		expect(soundLabel("whistle")).toBe("")
+	})
+
+	it("is the very list of choices the POS Settings doctype offers, so a choice saved on the desk always plays and one saved by the till is one the desk accepts", () => {
+		for (const name of ["kitchen_next_course_sound", "runner_ready_sound"]) {
+			const options = optionsOf(name)
+			expect(options.map((option) => normaliseSound(option, "?"))).toEqual(SOUND_IDS)
+			expect(SOUND_IDS.map(soundWord)).toEqual(options)
+		}
+		const volumes = optionsOf("kitchen_alert_volume")
+		expect(volumes.map(normaliseVolume)).toEqual(VOLUME_IDS)
+		expect(VOLUME_IDS.map(volumeWord)).toEqual(volumes)
+	})
+
+	it("also defaults, in the doctype, to the sounds the engine defaults to", () => {
+		const defaultOf = (name) => doctype.fields.find((field) => field.fieldname === name).default
+		expect(normaliseSound(defaultOf("kitchen_next_course_sound"), "?")).toBe(DEFAULT_NEXT_COURSE_SOUND)
+		expect(normaliseSound(defaultOf("runner_ready_sound"), "?")).toBe(DEFAULT_RUNNER_SOUND)
+		expect(normaliseVolume(defaultOf("kitchen_alert_volume"))).toBe(DEFAULT_VOLUME)
 	})
 })

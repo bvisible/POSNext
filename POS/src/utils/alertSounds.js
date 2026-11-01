@@ -94,6 +94,20 @@ export function soundLength(notes) {
 	return (notes || []).reduce((end, note) => Math.max(end, note.start + note.duration), 0)
 }
 
+// The words the POS Settings doctype stores for each choice (its Select options): English, whatever the user's language, the way the other Select fields of the doctype are
+const SOUND_WORDS = { none: "None", bell: "Bell", double_beep: "Double beep", chime: "Chime", gong: "Gong", beep: "Beep" }
+const VOLUME_WORDS = { low: "Low", medium: "Medium", high: "High" }
+
+/** The word the doctype stores for a sound id ("double_beep" is "Double beep"), "" for an unknown id. What the settings screen saves. */
+export function soundWord(sound) {
+	return SOUND_WORDS[sound] || ""
+}
+
+/** The word the doctype stores for a volume id, "" for an unknown id. */
+export function volumeWord(volume) {
+	return VOLUME_WORDS[volume] || ""
+}
+
 /** The label of a sound, in the user's language ("" for an unknown id). One literal `__()` per word: the catalogue extraction reads the msgid from the source, it cannot follow a variable. */
 export function soundLabel(sound) {
 	switch (sound) {
