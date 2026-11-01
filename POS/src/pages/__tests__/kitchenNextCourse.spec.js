@@ -285,6 +285,25 @@ describe("the stations and the rooms the screen shows", () => {
 		expect(notices(kitchen)).toHaveLength(1)
 	})
 
+	it("takes the first reading of a newly chosen station as a baseline: what was ordered while the cook looked at the bar is not announced when he comes back to all stations", async () => {
+		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar")])]
+		const wrapper = await open()
+		const choose = async (label) => {
+			const chip = wrapper.findAll('[data-test="stations"] button').find((button) => button.text().replace(/\s+/g, " ").startsWith(label))
+			await chip.trigger("click")
+			await flushPromises()
+		}
+
+		await choose("Bar")
+		// The kitchen's dessert is ordered while the screen shows the bar: the bar's reading sees nothing of it
+		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar"), dish("Pending", DESSERTS, "Dessert", "kit")])]
+		await readAgain(wrapper)
+		await choose("Bar")
+
+		expect(notices(wrapper)).toHaveLength(0)
+		expect(player.play).not.toHaveBeenCalled()
+	})
+
 	it("does not announce a table of a room the screen does not show", async () => {
 		localStorage.setItem("pos_kds_area", "r1")
 		ORDERS = [starters("A", { area: "r2" })]

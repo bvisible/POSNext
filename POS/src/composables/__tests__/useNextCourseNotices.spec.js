@@ -264,9 +264,11 @@ describe("when the screen is left", () => {
 		watch.read([before("A")])
 		watch.read([after("A")])
 
+		expect(vi.getTimerCount()).toBeGreaterThan(0)
 		watch.stop()
-		vi.advanceTimersByTime(60_000)
 
 		expect(vi.getTimerCount()).toBe(0)
+		vi.advanceTimersByTime(60_000)
+		expect(watch.notices.value).toHaveLength(1)
 	})
 })

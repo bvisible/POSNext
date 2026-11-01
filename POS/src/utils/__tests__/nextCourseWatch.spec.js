@@ -128,7 +128,8 @@ describe("the next course ordered at a table", () => {
 	})
 
 	it("never alerts for a takeaway, which has no next course", () => {
-		const takeaway = (items) => order("A", items, { is_takeaway: 1, restaurant_table: null, table_display_name: "" })
+		// A takeaway may carry a label (its number), so that only the takeaway flag keeps it out
+		const takeaway = (items) => order("A", items, { is_takeaway: 1, restaurant_table: null, table_display_name: "Takeaway 7" })
 
 		const { alerts } = reads(
 			[takeaway([dish("Preparing", STARTERS, { service_family: "Starter" })])],
