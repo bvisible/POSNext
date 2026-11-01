@@ -1704,6 +1704,9 @@ def update_invoice(data):
 
 		# Persist NEW item-level kds_status from frontend (e.g. Waiting/Pending from SendToKitchenDialog)
 		has_kds_batch = frappe.db.has_column("Sales Invoice Item", "kds_batch")
+		has_sent_at = frappe.db.has_column("Sales Invoice Item", "kds_sent_at")
+		# //// Neoffice — ONE time for every line that leaves in this save (see `kds_sent_at` below)
+		sent_stamp = frappe.utils.now_datetime()
 		if has_kds_field and data.get("items"):
 			try:
 				# Determine next batch number for items transitioning to Pending
@@ -1751,6 +1754,18 @@ def update_invoice(data):
 							# //// kitchen draws each send apart); the first send stays without one, as it always was; a line held back has none (a
 							# //// held line with a batch is a guest's, which the waiter has to accept). Upstream gave a batch to a line whose stored
 							# //// status was Waiting, read AFTER the save had written the payload's status over it: never.
+							# //// Neoffice — the time a line LEFT for the kitchen (NeoRestau lot 1, Daniel's test of 01.11: the timer of a ticket
+							# //// counted from the order's last change, so a table that had eaten for three hours read « 3 h 03 » when its desserts were
+							# //// sent). A line leaving in this save takes the time of the save; one that already left keeps its own, which the rebuilt row
+							# //// lost with the rest of the payload; one that left before the field existed stays without (the ticket then falls back to
+							# //// the order's last change); a line held back has none.
+							if has_sent_at and item_kds not in ("", "Waiting"):
+								left_before = before and (before.get("kds_status") or "") not in ("", "Waiting")
+								sent_at = before.get("kds_sent_at") if left_before else sent_stamp
+								if sent_at:
+									frappe.db.set_value(
+										"Sales Invoice Item", doc_item.name, "kds_sent_at", sent_at, update_modified=False
+									)
 							# Assign batch when item is sent to kitchen (Waiting→Pending)
 							if has_kds_batch and item_kds not in ("", "Waiting"):
 								already_sent = before and (before.get("kds_status") or "") not in ("", "Waiting")

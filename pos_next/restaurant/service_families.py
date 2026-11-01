@@ -270,12 +270,16 @@ def is_table_service(data) -> bool:
 
 
 def stored_lines(invoice_name) -> list:
-	"""The lines of the stored draft, in order, as they were before this save rewrites them: name, item, unit, status, batch and
-	family (the columns a site not migrated yet does not have are left out)."""
+	"""The lines of the stored draft, in order, as they were before this save rewrites them: name, item, unit, status, batch,
+	the time it left for the kitchen and family (the columns a site not migrated yet does not have are left out)."""
 	if not invoice_name:
 		return []
 	fields = ["name", "item_code", "uom"]
-	fields += [column for column in ("kds_status", "kds_batch", FIELD) if frappe.db.has_column("Sales Invoice Item", column)]
+	fields += [
+		column
+		for column in ("kds_status", "kds_batch", "kds_sent_at", FIELD)
+		if frappe.db.has_column("Sales Invoice Item", column)
+	]
 	return frappe.get_all(
 		"Sales Invoice Item",
 		filters={"parent": invoice_name, "parenttype": "Sales Invoice"},

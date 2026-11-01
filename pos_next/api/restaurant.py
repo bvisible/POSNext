@@ -951,6 +951,10 @@ def get_kds_orders(station=None, restaurant=None):
 	if frappe.db.has_column("Sales Invoice Item", "kds_batch"):
 		item_fields.append("kds_batch")
 
+	# //// Neoffice — when each line left for the kitchen: the ticket's timer counts from the course that is at the kitchen (Daniel, 01.11)
+	if frappe.db.has_column("Sales Invoice Item", "kds_sent_at"):
+		item_fields.append("kds_sent_at")
+
 	# //// Neoffice — the family each line was stored with: the ticket draws its dishes in sections by family (Daniel, 01.11)
 	if frappe.db.has_column("Sales Invoice Item", "service_family"):
 		item_fields.append("service_family")
@@ -2727,6 +2731,9 @@ def get_runner_orders(area=None, restaurant=None):
 	has_unit_counters = _has_unit_counters()
 	if has_unit_counters:
 		item_fields += ["kds_ready_qty", "kds_delivered_qty"]
+	# //// Neoffice — when each line left for the kitchen (see get_kds_orders)
+	if frappe.db.has_column("Sales Invoice Item", "kds_sent_at"):
+		item_fields.append("kds_sent_at")
 
 	# Build station map for enrichment (individual items + item groups)
 	station_map = {}

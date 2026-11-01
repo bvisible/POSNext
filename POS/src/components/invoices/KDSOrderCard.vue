@@ -400,6 +400,8 @@ import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusOf } from "@/utils/kitchenBands"
 import { elapsedLabel } from "@/utils/elapsedLabel"
+//// Neoffice — see lastActionTime below
+import { timerStart } from "@/utils/courseTimer"
 //// Neoffice — a badge says the state, a button says the action (task 38a-1, ruling 113)
 import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — the room's short code on the header's line (task 38a-1)
@@ -1035,9 +1037,9 @@ onUnmounted(() => {
 })
 
 // Time since last action (modified)
-const lastActionTime = computed(
-	() => new Date(props.order.modified || props.order.creation),
-)
+//// Neoffice — the timer counts from the course the kitchen is working on, not from the order's last change (utils/courseTimer; Daniel, 01.11: a table
+//// that had eaten for three hours still read « 3 h 03 » when its desserts were sent). A ticket whose dishes carry no send time keeps the last change.
+const lastActionTime = computed(() => timerStart(props.order))
 const lastActionMinutes = computed(() =>
 	Math.floor((now.value - lastActionTime.value) / 60000),
 )
