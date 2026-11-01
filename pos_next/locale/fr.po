@@ -20550,3 +20550,74 @@ msgstr "Bip"
 #: pos_next/till_settings/registry.py
 msgid "Listen to the sounds"
 msgstr "Écouter les sons"
+
+# //// Neoffice — French for the service rhythm (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »): the restaurant's setting and its two choices, the tags of the dishes sent ahead on the kitchen's tickets, the toast of the call and the refusals of the server.
+#. Label of a Section Break field in DocType 'Restaurant'
+#. Label of a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Service Rhythm"
+msgstr "Rythme du service"
+
+#. Description of the 'Service Rhythm' (Select) field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Called by the room: at Validate the drinks and the first course leave, the later courses are held until the waiter orders them. Prepared ahead: everything leaves at Validate, the later courses reach the kitchen marked as ahead, and the waiter's call only tells the kitchen to serve them now."
+msgstr "« La salle appelle » : à « Valider », les boissons et la première suite partent ; les suivantes attendent que le serveur les commande. « La cuisine prépare à l'avance » : tout part à « Valider », les suivantes arrivent en cuisine marquées « à l'avance », et l'appel du serveur demande seulement à la cuisine de les servir maintenant."
+
+#. Option for a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Called by the room"
+msgstr "La salle appelle"
+
+#. Option for a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Prepared ahead"
+msgstr "La cuisine prépare à l'avance"
+
+#: pos_next/till_settings/registry.py
+msgid "Service rhythm"
+msgstr "Rythme du service"
+
+#: pos_next/till_settings/registry.py
+msgid "The room calls: at Validate the drinks and the first course leave, the next courses wait until the waiter orders them. The kitchen prepares ahead: everything leaves at Validate, the later courses reach the kitchen marked as ahead so that it can start them, and the waiter's call only tells it to serve them now."
+msgstr "« La salle appelle » : à « Valider », les boissons et la première suite partent ; les suivantes attendent que le serveur les commande. « La cuisine prépare à l'avance » : tout part à « Valider », les suivantes arrivent en cuisine marquées « à l'avance » pour qu'elle puisse les démarrer, et l'appel du serveur lui demande seulement de les servir maintenant."
+
+#: pos_next/till_settings/registry.py
+msgctxt "Service rhythm"
+msgid "The room calls"
+msgstr "La salle appelle"
+
+#: pos_next/till_settings/registry.py
+msgctxt "Service rhythm"
+msgid "The kitchen prepares ahead"
+msgstr "La cuisine prépare à l'avance"
+
+#: pos_next/api/restaurant.py
+msgid "Only an order at a table has courses to call"
+msgstr "Seule une commande à table a des suites à appeler."
+
+#: pos_next/api/restaurant.py
+msgid "The courses of this restaurant are not prepared ahead: there is no course to call"
+msgstr "Les suites de ce restaurant ne sont pas préparées à l'avance : il n'y a aucune suite à appeler."
+
+#: pos_next/api/restaurant.py
+msgid "{0} is not a course"
+msgstr "« {0} » n'est pas un service."
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Ahead"
+msgstr "À l'avance"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Ready ahead"
+msgstr "Prêt d'avance"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Ahead, waiting for the call"
+msgstr "À l'avance, en attente de l'appel"
+
+#: POS/src/pages/POSSale.vue
+msgid "Next course ordered"
+msgstr "Suite commandée"

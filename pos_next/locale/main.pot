@@ -18477,3 +18477,73 @@ msgstr ""
 #: pos_next/till_settings/registry.py
 msgid "Listen to the sounds"
 msgstr ""
+
+#. Label of a Section Break field in DocType 'Restaurant'
+#. Label of a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Service Rhythm"
+msgstr ""
+
+#. Description of the 'Service Rhythm' (Select) field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Called by the room: at Validate the drinks and the first course leave, the later courses are held until the waiter orders them. Prepared ahead: everything leaves at Validate, the later courses reach the kitchen marked as ahead, and the waiter's call only tells the kitchen to serve them now."
+msgstr ""
+
+#. Option for a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Called by the room"
+msgstr ""
+
+#. Option for a Select field in DocType 'Restaurant'
+#: pos_next/pos_next/doctype/restaurant/restaurant.json
+msgid "Prepared ahead"
+msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgid "Service rhythm"
+msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgid "The room calls: at Validate the drinks and the first course leave, the next courses wait until the waiter orders them. The kitchen prepares ahead: everything leaves at Validate, the later courses reach the kitchen marked as ahead so that it can start them, and the waiter's call only tells it to serve them now."
+msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgctxt "Service rhythm"
+msgid "The room calls"
+msgstr ""
+
+#: pos_next/till_settings/registry.py
+msgctxt "Service rhythm"
+msgid "The kitchen prepares ahead"
+msgstr ""
+
+#: pos_next/api/restaurant.py
+msgid "Only an order at a table has courses to call"
+msgstr ""
+
+#: pos_next/api/restaurant.py
+msgid "The courses of this restaurant are not prepared ahead: there is no course to call"
+msgstr ""
+
+#: pos_next/api/restaurant.py
+msgid "{0} is not a course"
+msgstr ""
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Ahead"
+msgstr ""
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Ready ahead"
+msgstr ""
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Ahead, waiting for the call"
+msgstr ""
+
+#: POS/src/pages/POSSale.vue
+msgid "Next course ordered"
+msgstr ""
