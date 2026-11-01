@@ -229,6 +229,19 @@
 												/>
 											</div>
 
+											<!-- //// Neoffice — the Listen button of the floor alerts: it plays the till's own sound (a guest orders or pays from the QR code of a table) at the volume of the kitchen alerts (NeoRestau lot 1, Daniel, 01.11) -->
+											<div
+												v-else-if="block.setting.key === 'floor_alert_listen'"
+												:class="greyed(block.setting) ? 'opacity-[0.42]' : ''"
+												data-setting="floor_alert_listen"
+											>
+												<KitchenAlertListen
+													which="floor"
+													:guest-sound="draft.floor_guest_sound"
+													:volume="draft.kitchen_alert_volume"
+												/>
+											</div>
+
 											<!-- Whether the tip item and account are ready -->
 											<div
 												v-else-if="block.setting.key === 'tip_status'"

@@ -13,6 +13,8 @@ export const VOLUME_IDS = ["low", "medium", "high"]
 /** What the settings default to: the bell when the next course is ordered, the runner's beep (the sound it always had) when dishes come up ready. */
 export const DEFAULT_NEXT_COURSE_SOUND = "bell"
 export const DEFAULT_RUNNER_SOUND = "beep"
+/** And the chime when a guest orders or pays from the QR code of a table: the till's own sound (utils/floorAlerts). */
+export const DEFAULT_GUEST_SOUND = "chime"
 export const DEFAULT_VOLUME = "medium"
 
 /**

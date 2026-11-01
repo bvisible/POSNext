@@ -220,6 +220,9 @@ _GROUPS = (
 	Group("default_customer", "general", _lt("Customer"), 2),
 	# //// Neoffice — the popup and the sounds of the kitchen and runner screens (NeoRestau lot 1, Daniel, 01.11: « le son doit être dans les réglages de la caisse »)
 	Group("kitchen_alerts", "general", _lt("Kitchen alerts"), 2),
+	# //// Neoffice — the notice and the sound of the till itself when a guest orders or pays from the QR code of a table (NeoRestau lot 1, Daniel, 01.11: « regarde comment la
+	# //// caisse sommelier reçoit l'info (popup et autre) »), beside the kitchen's.
+	Group("floor_alerts", "general", _lt("Floor alerts"), 2),
 	Group("customer_display", "general", _lt("Customer display"), 3),
 	# Sale screen
 	Group("items", "sale_screen", _lt("Items"), 1),
@@ -848,6 +851,57 @@ SETTINGS = (
 		"kitchen_alert_listen",
 		"kitchen_alerts",
 		_lt("Listen to the sounds"),
+		None,
+		"special",
+		store=DEVICE,
+		till=RESTAURANT_TILL,
+		kind=INFO,
+	),
+	# //// Neoffice — the floor alerts (NeoRestau lot 1, Daniel, 01.11): when a guest orders or pays from the QR code of a table, the waiter's and the sommelier's till shows a notice
+	# //// (« Table 2 — le client commande : 3 x Verre de vin ») and rings. The till reads them with its own settings (`get_pos_settings`); they are settings of the TILL (the General tab),
+	# //// so a restaurant manager, who sets three till settings only (ruling 63), does not see them: the till's manager does. The sound plays at the alert volume set above.
+	Setting(
+		"floor_guest_popup",
+		"floor_alerts",
+		_lt("Popup when a guest orders"),
+		_lt("Show a notice at the top of the till when a guest orders or pays from the QR code of a table"),
+		"check",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+	),
+	Setting(
+		"floor_popup_seconds",
+		"floor_alerts",
+		_lt("Popup stays (seconds)"),
+		_lt(
+			"Seconds the notice stays on the till. 0 = until somebody dismisses it."
+			" An order waiting for the waiter to validate it always stays until it is handled or dismissed"
+		),
+		"int",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		depends_on=(on("floor_guest_popup"),),
+		min=0,
+		max=600,
+	),
+	Setting(
+		"floor_guest_sound",
+		"floor_alerts",
+		_lt("Guest order sound"),
+		_lt(
+			"Sound of the till when a guest orders or pays from the QR code of a table."
+			" It plays at the alert volume set above"
+		),
+		"select",
+		doctype=POS_SETTINGS,
+		till=RESTAURANT_TILL,
+		options=SOUND_OPTIONS,
+	),
+	# The Listen button of that sound, drawn by the component of the kitchen's buttons (it plays the sound chosen above, at the volume chosen above)
+	Setting(
+		"floor_alert_listen",
+		"floor_alerts",
+		_lt("Listen to the sound"),
 		None,
 		"special",
 		store=DEVICE,

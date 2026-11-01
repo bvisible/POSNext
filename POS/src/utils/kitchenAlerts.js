@@ -16,7 +16,8 @@ export const DEFAULT_KITCHEN_ALERTS = Object.freeze({
 	volume: DEFAULT_VOLUME,
 })
 
-function secondsOf(value) {
+/** How long a popup stays, in seconds: a whole number from 0 to 600, the default for no value or one that is no number. The floor alerts of the till read their seconds the same way. */
+export function secondsOf(value) {
 	if (value == null || value === "") return DEFAULT_POPUP_SECONDS
 	const seconds = Number(value)
 	if (Number.isNaN(seconds)) return DEFAULT_POPUP_SECONDS

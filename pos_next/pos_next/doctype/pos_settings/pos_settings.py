@@ -80,6 +80,8 @@ class POSSettings(Document):
 		self.validate_keep_signed_in_days()
 		# //// Neoffice — how long the kitchen's popup stays (NeoRestau lot 1, Daniel, 01.11.2026): 0 to ten minutes. Upstream has no such setting.
 		self.validate_kitchen_popup_seconds()
+		# //// Neoffice — and how long the till's own popup stays when a guest orders (NeoRestau lot 1, Daniel, 01.11.2026): the same range.
+		self.validate_floor_popup_seconds()
 
 	# //// Neoffice — added method (no upstream equivalent). `keep_signed_in_days` is 0 (the site's session length) to 90.
 	# //// A till that BECOMES a restaurant till in this save (a new one, or the tick turned on) and whose days were left
@@ -109,6 +111,14 @@ class POSSettings(Document):
 		from pos_next.restaurant.kitchen_alerts import MAX_POPUP_SECONDS
 
 		seconds = cint(self.kitchen_popup_seconds)
+		if seconds < 0 or seconds > MAX_POPUP_SECONDS:
+			frappe.throw(_("Popup stays (seconds) must be between 0 and {0}").format(MAX_POPUP_SECONDS))
+
+	# //// Neoffice — added method (no upstream equivalent). `floor_popup_seconds` is how long the till's notice "a guest orders" stays: the kitchen's range, 0 (until dismissed) to ten minutes.
+	def validate_floor_popup_seconds(self):
+		from pos_next.restaurant.kitchen_alerts import MAX_POPUP_SECONDS
+
+		seconds = cint(self.floor_popup_seconds)
 		if seconds < 0 or seconds > MAX_POPUP_SECONDS:
 			frappe.throw(_("Popup stays (seconds) must be between 0 and {0}").format(MAX_POPUP_SECONDS))
 

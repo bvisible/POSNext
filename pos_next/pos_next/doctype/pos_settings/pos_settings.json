@@ -27,6 +27,11 @@
   "kitchen_next_course_sound",
   "runner_ready_sound",
   "kitchen_alert_volume",
+  "section_break_floor_alerts",
+  "floor_guest_popup",
+  "floor_popup_seconds",
+  "column_break_floor_alerts",
+  "floor_guest_sound",
   "section_break_wallet",
   "enable_loyalty_program",
   "default_loyalty_program",
@@ -269,6 +274,40 @@
    "fieldtype": "Select",
    "label": "Alert volume",
    "options": "Low\nMedium\nHigh"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:frappe.boot.neorestau_active",
+   "fieldname": "section_break_floor_alerts",
+   "fieldtype": "Section Break",
+   "label": "Floor alerts"
+  },
+  {
+   "default": "1",
+   "description": "Show a notice at the top of the till when a guest orders or pays from the QR code of a table",
+   "fieldname": "floor_guest_popup",
+   "fieldtype": "Check",
+   "label": "Popup when a guest orders"
+  },
+  {
+   "default": "30",
+   "depends_on": "floor_guest_popup",
+   "description": "Seconds the notice stays on the till. 0 = until somebody dismisses it. An order waiting for the waiter to validate it always stays until it is handled or dismissed",
+   "fieldname": "floor_popup_seconds",
+   "fieldtype": "Int",
+   "label": "Popup stays (seconds)"
+  },
+  {
+   "fieldname": "column_break_floor_alerts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Chime",
+   "description": "Sound of the till when a guest orders or pays from the QR code of a table. It plays at the alert volume set above",
+   "fieldname": "floor_guest_sound",
+   "fieldtype": "Select",
+   "label": "Guest order sound",
+   "options": "None\nBell\nDouble beep\nChime\nGong\nBeep"
   },
   {
    "fieldname": "section_break_wallet",
@@ -831,7 +870,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-01 17:30:00.000000",
+ "modified": "2026-11-01 18:20:00.000000",
  "modified_by": "Administrator",
  "module": "POS Next",
  "name": "POS Settings",
