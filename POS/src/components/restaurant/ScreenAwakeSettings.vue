@@ -31,8 +31,8 @@
 			<div class="flex items-start gap-3 px-2 py-1.5">
 				<div class="min-w-0 flex-1">
 					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ __("Keep the screen on") }}</div>
-					<p data-test="awake-help" class="text-xs text-gray-500 dark:[&&]:!text-gray-400">{{ __("The tablet does not go to sleep while this screen is open.") }}</p>
-					<p v-if="!wakeLockSupported" data-test="awake-unsupported" class="text-xs font-medium text-gray-500 dark:[&&]:!text-gray-400">{{ __("Not available on this browser.") }}</p>
+					<p data-test="awake-help" class="text-xs text-gray-700">{{ __("The tablet does not go to sleep while this screen is open.") }}</p>
+					<p v-if="!wakeLockSupported" data-test="awake-unsupported" class="text-xs font-medium text-gray-700">{{ __("Not available on this browser.") }}</p>
 				</div>
 				<button type="button" role="switch" data-test="awake-keep-on" :class="SWITCH" :aria-checked="settings.keep_screen_on ? 'true' : 'false'" :aria-label="__('Keep the screen on')" @click.stop="emit('change', 'keep_screen_on', !settings.keep_screen_on)">
 					<span :class="[THUMB, settings.keep_screen_on ? 'translate-x-5' : 'translate-x-0']"></span>
@@ -41,7 +41,7 @@
 
 			<div class="px-2 py-1.5">
 				<label class="text-sm font-medium text-gray-900 dark:text-gray-100" for="awake-rest-after">{{ __("Rest the screen after") }}</label>
-				<p data-test="awake-help" class="text-xs text-gray-500 dark:[&&]:!text-gray-400">{{ __("After this long without a touch the screen goes dark. A touch wakes it.") }}</p>
+				<p data-test="awake-help" class="text-xs text-gray-700">{{ __("After this long without a touch the screen goes dark. A touch wakes it.") }}</p>
 				<select id="awake-rest-after" data-test="awake-rest-after" :class="SELECT" :value="settings.rest_after_minutes" @change="emit('change', 'rest_after_minutes', Number($event.target.value))">
 					<option v-for="minutes in restChoices" :key="minutes" :value="minutes" :selected="minutes === settings.rest_after_minutes">{{ minutesLabel(minutes) }}</option>
 				</select>
@@ -50,7 +50,7 @@
 			<div class="flex items-start gap-3 px-2 py-1.5">
 				<div class="min-w-0 flex-1">
 					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ __("Wake on a new ticket") }}</div>
-					<p data-test="awake-help" class="text-xs text-gray-500 dark:[&&]:!text-gray-400">{{ __("A new ticket lights the screen again.") }}</p>
+					<p data-test="awake-help" class="text-xs text-gray-700">{{ __("A new ticket lights the screen again.") }}</p>
 				</div>
 				<button type="button" role="switch" data-test="awake-wake-on-ticket" :class="SWITCH" :aria-checked="settings.wake_on_new_ticket ? 'true' : 'false'" :aria-label="__('Wake on a new ticket')" @click.stop="emit('change', 'wake_on_new_ticket', !settings.wake_on_new_ticket)">
 					<span :class="[THUMB, settings.wake_on_new_ticket ? 'translate-x-5' : 'translate-x-0']"></span>
@@ -59,7 +59,7 @@
 
 			<div class="px-2 py-1.5" :class="settings.rest_after_minutes === 0 ? 'opacity-50' : ''">
 				<label class="text-sm font-medium text-gray-900 dark:text-gray-100" for="awake-release-after">{{ __("Let the tablet sleep after") }}</label>
-				<p data-test="awake-help" class="text-xs text-gray-500 dark:[&&]:!text-gray-400">{{ __("After this long at rest, the tablet's own auto-lock takes over.") }}</p>
+				<p data-test="awake-help" class="text-xs text-gray-700">{{ __("After this long at rest, the tablet's own auto-lock takes over.") }}</p>
 				<select id="awake-release-after" data-test="awake-release-after" :class="SELECT" :disabled="settings.rest_after_minutes === 0" :value="settings.release_wake_lock_after_minutes" @change="emit('change', 'release_wake_lock_after_minutes', Number($event.target.value))">
 					<option v-for="minutes in releaseChoices" :key="minutes" :value="minutes" :selected="minutes === settings.release_wake_lock_after_minutes">{{ minutesLabel(minutes) }}</option>
 				</select>
@@ -87,10 +87,12 @@ const emit = defineEmits(["change"])
 
 const title = computed(() => __("Screen: keep on and rest"))
 
-// A track of 44 x 24 and a thumb of 20: the ink fills it when on (every action of the system is ink), the sand ramp when off
+// The help text is `text-gray-700`: the preset's gray-500 is #999999, 2.85:1 on white (measured in a browser), and the till's dark remap lightens gray-700 by itself. A track of 44 x 24 and a thumb of 20. ON is the ink (every action of the system is ink; paper in dark), OFF is a neutral track. The till's dark remap (index.css) forces
+// `!important` colours on the classes `bg-white` and `bg-gray-50/100/200/300` wherever they stand, so none of them is used here: they would flatten the track and the thumb
+// to the same dark, and a switch that is on could not be told from one that is off. The thumb is the system's paper (`ds-paper`), and ink on a paper track in dark.
 const SWITCH =
-	"relative inline-flex h-6 w-11 flex-none touch-manipulation items-center rounded-full border border-gray-300 bg-gray-200 p-0.5 transition-colors aria-checked:border-gray-800 aria-checked:bg-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:aria-checked:border-white dark:aria-checked:bg-white"
-const THUMB = "block h-5 w-5 rounded-full bg-white shadow transition-transform dark:bg-gray-300 dark:[[aria-checked=true]>&]:bg-gray-800"
+	"relative inline-flex h-6 w-11 flex-none touch-manipulation items-center rounded-full border border-transparent bg-gray-600 p-0.5 transition-colors aria-checked:bg-gray-800 dark:aria-checked:bg-ds-paper"
+const THUMB = "block h-5 w-5 rounded-full bg-ds-paper shadow transition-transform dark:[[aria-checked=true]>&]:bg-ds-ink"
 const SELECT =
 	"mt-1 h-11 w-full rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-900 max-md:h-10 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
 

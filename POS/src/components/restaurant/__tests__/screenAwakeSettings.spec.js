@@ -131,6 +131,21 @@ describe("the four settings", () => {
 		).toBe("true")
 	})
 
+	it("draw a switch with no class the till's dark remap flattens: `bg-white` and `bg-gray-50/100/200/300` get an `!important` colour in dark mode, which made a switch that is on look like one that is off (measured in a browser)", async () => {
+		const wrapper = await openMenu()
+
+		for (const name of ["awake-keep-on", "awake-wake-on-ticket"]) {
+			const track = wrapper.get(`[data-test="${name}"]`)
+			const thumb = track.get("span")
+			for (const classes of [track.classes(), thumb.classes()])
+				expect(
+					classes.filter((c) =>
+						/^bg-(?:white|gray-(?:50|100|200|300))$/.test(c),
+					),
+				).toEqual([])
+		}
+	})
+
 	it("say what a switch was turned to", async () => {
 		const wrapper = await openMenu()
 
