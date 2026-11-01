@@ -257,6 +257,24 @@ def decide_new_lines(data, stored=None) -> None:
 	for line in items:
 		if FIELD in line:
 			line[FIELD] = _family(line)
+	# A line the till sent with no status that the stored draft already holds with one (a cart that does not carry the kitchen's state: the
+	# line was cooked in part, or is being prepared) is no new line: it keeps what the stored row says, and its family. The lines the till
+	# decided claim their rows first, so that one row is never given to two lines.
+	taken = set()
+	for position, line in enumerate(items):
+		if line.get("kds_status") or "":
+			row = row_of_the_line(stored or [], position, line, taken)
+			if row:
+				taken.add(row.name)
+	for position, line in enumerate(items):
+		if line.get("kds_status") or "":
+			continue
+		row = row_of_the_line(stored or [], position, line, taken)
+		if row and (row.get("kds_status") or ""):
+			taken.add(row.name)
+			line["kds_status"] = row.get("kds_status")
+			if not _family(line):
+				line[FIELD] = row.get(FIELD) or ""
 	undecided = [line for line in items if not (line.get("kds_status") or "")]
 	if not undecided:
 		return

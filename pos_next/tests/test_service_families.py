@@ -412,6 +412,28 @@ class TestTheSendPath(ServiceCase):
 		)
 
 
+class TestALineTheKitchenAlreadyHas(ServiceCase):
+	"""A cart that does not carry the kitchen's state of a line (it sends no status for it) must not make it a new line."""
+
+	def test_a_line_sent_with_no_status_keeps_what_the_stored_row_says(self):
+		order = self.save([self.line(self.cola), self.line(self.soup), self.line(self.penne)])
+		self.assertEqual(self.statuses(order), [("Cola", "Pending"), ("Soup", "Pending"), ("Penne", "Waiting")])
+		soup_row = frappe.db.get_value("Sales Invoice Item", {"parent": order, "item_code": self.soup}, "name")
+		frappe.db.set_value("Sales Invoice Item", soup_row, "kds_status", "Preparing", update_modified=False)
+
+		# the till saves the table again, its lines with no status, and one more starter
+		self.save(
+			[self.line(self.cola), self.line(self.soup), self.line(self.penne), self.line(self.salad)], name=order
+		)
+
+		self.assertEqual(
+			self.statuses(order),
+			[("Cola", "Pending"), ("Soup", "Preparing"), ("Penne", "Waiting"), ("Salad", "Pending")],
+		)
+		# the family of each stored line stays
+		self.assertEqual([family for _item, _status, family in self.rows(order)], ["Drink", "Starter", "Main", "Starter"])
+
+
 class TestTheRhythmOfTheMeal(ServiceCase):
 	def first_round(self):
 		return self.save(
