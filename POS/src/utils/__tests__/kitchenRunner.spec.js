@@ -139,15 +139,15 @@ describe("the kitchen screen's view of the orders", () => {
 		expect(view[0].items[1]).toBe(source.items[1])
 	})
 
-	it("puts a ticket in the band its dishes still to cook give it, as when the dishes at the pass were left off", () => {
-		// Starters at the pass, mains only sent: the table is waiting for the cook, not in preparation
+	it("puts a ticket in the band its dishes give it once the dishes at the pass are shown struck through: a course delivered makes the meal in progress", () => {
+		// Starters at the pass, mains only sent: the dishes are still to start (Pending), and the meal is in progress, so the ticket sits in preparation (Daniel, 01.11)
 		const view = kitchenView(
 			[order("A", [dish("Ready", "kit"), dish("Pending", "kit", { item_code: "M" })])],
 			{ stations: STATIONS, runnerEnabled: true },
 		)
 
-		expect(splitIntoBands(view).waiting.map((one) => one.name)).toEqual(["A"])
-		expect(splitIntoBands(view).production).toEqual([])
+		expect(splitIntoBands(view).production.map((one) => one.name)).toEqual(["A"])
+		expect(splitIntoBands(view).waiting).toEqual([])
 	})
 
 	it("does not copy an order it takes nothing from: the ticket on screen is the order itself", () => {

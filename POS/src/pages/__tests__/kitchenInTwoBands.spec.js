@@ -247,7 +247,7 @@ describe("the two bands of the kitchen screen", () => {
 		expect(wrapper.find(".animate-spin").exists()).toBe(false)
 	})
 
-	it("sort the tickets by what is begun on them: nothing begun waits, one dish begun is in preparation", async () => {
+	it("sort the tickets by what is begun on them: nothing begun waits, one dish begun or a course delivered is in preparation", async () => {
 		ORDERS = [
 			order("NONE", { lines: ["Pending", "Pending"], at: 1 }),
 			order("ONE", { lines: ["Pending", "Preparing"], at: 2 }),
@@ -257,8 +257,9 @@ describe("the two bands of the kitchen screen", () => {
 		]
 		const wrapper = await open()
 
-		expect(namesIn(wrapper, "waiting")).toEqual(["NONE", "ROUND2"])
-		expect(namesIn(wrapper, "production")).toEqual(["ONE", "READY"])
+		// ROUND2: a course delivered and the next one only sent, the meal is in progress: it sits in preparation (Daniel, 01.11, table 113)
+		expect(namesIn(wrapper, "waiting")).toEqual(["NONE"])
+		expect(namesIn(wrapper, "production")).toEqual(["ONE", "READY", "ROUND2"])
 		// Delivered: gone from both
 		expect(wrapper.text()).not.toContain("DONE")
 	})
