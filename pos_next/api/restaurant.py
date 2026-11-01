@@ -13,9 +13,17 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from pos_next.restaurant import devices, item_units, permissions, room_code, scope, service_families, tickets
-# //// Neoffice — the kitchen alerts a till sets, as the screens read them (NeoRestau lot 1, Daniel, 01.11)
-from pos_next.restaurant import kitchen_alerts
+# //// Neoffice — `kitchen_alerts` joined the import: the popup and the sound a till sets for the kitchen and the runner (NeoRestau lot 1, Daniel, 01.11)
+from pos_next.restaurant import (
+	devices,
+	item_units,
+	kitchen_alerts,
+	permissions,
+	room_code,
+	scope,
+	service_families,
+	tickets,
+)
 from pos_next.restaurant import settings as restaurant_config
 from pos_next.restaurant.text import plain_text
 
