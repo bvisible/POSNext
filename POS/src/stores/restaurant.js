@@ -731,13 +731,19 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			!data?.restaurant ||
 			!tillRestaurant.value ||
 			data.restaurant === tillRestaurant.value
+		//// Neoffice — tells the till's notices, and reads the floor when the table of the alert is one the page does not know yet: the page was reloaded at an open table and the floor plan that reads the tables was never
+		//// shown, and a notice names a table by its label, never by its hash (Daniel, 01.11).
+		const tellTheFloor = (event, data) => {
+			useFloorNoticesStore().tell(event, data)
+			if (data?.table && !tables.value.some((table) => table.name === data.table)) fetchFromNetwork()
+		}
 		rt.on("guest_order_submitted", (data) => {
 			if (!isOfThisRestaurant(data)) return
 			log.info("Guest order submitted for table:", data?.table)
 			//// Neoffice — the till is TOLD: a notice that names the lines and a sound, from the till's own settings (stores/floorNotices; Daniel, 01.11: « regarde comment la caisse sommelier reçoit l'info »). This called
 			//// window.frappe.show_alert, which this single-page app does not have (main.js only sets window.frappe.realtime): nothing was shown and nothing rang, the waiter learnt of an order by looking at the list.
 			//// `guest_order_pending` has no listener of its own: the server publishes `guest_order_submitted` in BOTH modes, and says in it whether the lines must be validated, so acting on both would tell twice.
-			useFloorNoticesStore().tell("order", data)
+			tellTheFloor("order", data)
 			// Emit custom event for POSSale to reload cart if this table is open
 			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
@@ -745,7 +751,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			if (!isOfThisRestaurant(data)) return
 			log.info("Guest payment received for table:", data?.table)
 			//// Neoffice — and the cashier is told that the guest paid: what happens to the table is his decision (Daniel, 01.11).
-			useFloorNoticesStore().tell("payment", data)
+			tellTheFloor("payment", data)
 			window.dispatchEvent(new CustomEvent("pos:guest-order-update", { detail: data }))
 		})
 		_cardRealtimeStarted = true

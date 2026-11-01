@@ -348,6 +348,25 @@ describe("a till answers the guest alerts of its own restaurant only", () => {
 		expect(notices.notices).toHaveLength(1)
 	})
 
+	it("reads the floor when the table of an alert is one it does not know: the notice names a table by its label (a page reloaded at an open table)", async () => {
+		store.tables = []
+		call.mockClear()
+
+		handlers.guest_order_submitted(aGuestOrder())
+		await vi.waitFor(() => expect(call.mock.calls.map(([method]) => method)).toContain("pos_next.api.restaurant.get_tables"))
+
+		expect(store.tableLabel(ANOTHER_HASH)).toBe("T1")
+	})
+
+	it("does not read the floor again for a table it knows", () => {
+		call.mockClear()
+
+		handlers.guest_order_submitted(aGuestOrder())
+		handlers.guest_payment_received({ restaurant: "The Bistro", table: ANOTHER_HASH, submitted: true })
+
+		expect(call.mock.calls.map(([method]) => method)).not.toContain("pos_next.api.restaurant.get_tables")
+	})
+
 	it("takes an order to validate off the floor notices once the table it is at has no line to accept", async () => {
 		const floor = (waiting) => ({ ...THE_FLOOR, tables: [{ ...THE_FLOOR.tables[0], qr_waiting_count: waiting }] })
 		handlers.guest_order_submitted(aGuestOrder({ validation_mode: "Server Approval" }))
