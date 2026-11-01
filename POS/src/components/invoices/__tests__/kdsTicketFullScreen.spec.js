@@ -189,7 +189,8 @@ describe("opening the ticket full screen", () => {
 		expect(part("ticket-room").textContent.trim()).toBe("S01")
 		expect(part("ticket-title").textContent.trim()).toBe("Table 12")
 		expect(part("ticket-number").textContent.trim()).toBe("0013")
-		expect(part("ticket-timer").textContent).toMatch(/^\d+:\d\d$/)
+		// The fixture is dated: it ages from « mm:ss » into « 46 h 08 » (utils/elapsedLabel)
+		expect(part("ticket-timer").textContent).toMatch(/^(\d+:\d\d|\d+ h \d\d)$/)
 		expect(
 			part("ticket-fs-state").textContent.replace(/\s+/g, " ").trim(),
 		).toBe("Pending · 24 lines")

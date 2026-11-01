@@ -82,8 +82,9 @@ describe("the header", () => {
 		expect(header.get('[data-test="ticket-room"]').text()).toBe("S01")
 		expect(header.get('[data-test="ticket-title"]').text()).toBe("Table 22")
 		expect(header.get('[data-test="ticket-number"]').text()).toBe("0014")
+		// The fixture is dated: it ages from « mm:ss » into « 46 h 13 » (utils/elapsedLabel)
 		expect(header.get('[data-test="ticket-timer"]').text()).toMatch(
-			/^\d{2,}:\d{2}$/,
+			/^(\d{2,}:\d{2}|\d+ h \d{2})$/,
 		)
 		// One flex row, not a block of two lines
 		expect(header.get(":scope > div").classes()).toEqual(

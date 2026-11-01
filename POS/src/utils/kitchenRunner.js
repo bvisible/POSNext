@@ -131,3 +131,31 @@ export function countDishes(orders) {
 		for (const line of order?.items || []) total += Number(line?.qty) || 0
 	return total
 }
+
+/**
+ * How many dishes wait in one room, by quantity: the chip of a room counts what the page counts, two plates on one line being two plates.
+ *
+ * @param {object[]} orders - The orders of `get_runner_orders`, each with its `area`
+ * @param {string} area - The room
+ * @returns {number}
+ */
+export function countDishesOfRoom(orders, area) {
+	return countDishes((orders || []).filter((order) => order?.area === area))
+}
+
+/**
+ * How many dishes wait at each station, by quantity: `{ station: dishes }`. A dish that names no station is at none.
+ *
+ * @param {object[]} orders
+ * @returns {Record<string, number>}
+ */
+export function countDishesByStation(orders) {
+	const counts = {}
+	for (const order of orders || [])
+		for (const line of order?.items || []) {
+			const station = line?.preparation_station
+			if (!station) continue
+			counts[station] = (counts[station] || 0) + (Number(line?.qty) || 0)
+		}
+	return counts
+}

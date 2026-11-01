@@ -238,7 +238,7 @@ import ScreenAwakeSettings from "@/components/restaurant/ScreenAwakeSettings.vue
 import ScreenRestLayer from "@/components/restaurant/ScreenRestLayer.vue"
 import { useScreenAwake } from "@/composables/useScreenAwake"
 import { ticketCounts } from "@/utils/screenAwake"
-import { countDishes } from "@/utils/kitchenRunner"
+import { countDishes, countDishesByStation, countDishesOfRoom } from "@/utils/kitchenRunner"
 import { formatTicketNo } from "@/utils/ticketNumber"
 import { RUNNER_AREA, TICKET_CARD, TICKET_CARD_WIDE, TICKET_ROW, TICKET_STACK } from "@/utils/ticketLayout"
 //// Neoffice — the wide card of a long ticket (task 38a-3, ruling 107): how many tickets fit the flow, and whether a card has the dishes for two widths
@@ -322,10 +322,10 @@ function selectArea(area) {
 	if (area) planArea.value = area
 }
 
+//// Neoffice — a chip counts dishes by quantity, as the page's own count does (« 23 items ready »): it counted lines, so a room said 21 beside a
+//// page that said 23, two plates on one line being one for the chip and two for the page.
 function getAreaReadyCount(areaName) {
-	return orders.value
-		.filter((o) => o.area === areaName)
-		.reduce((sum, o) => sum + (o.items?.length || 0), 0)
+	return countDishesOfRoom(orders.value, areaName)
 }
 
 // Stations extracted from loaded orders with ready counts
@@ -343,9 +343,11 @@ const orderStations = computed(() => {
 					color: item.station_color || "#6B7280",
 					count: 0,
 				}
-			map[sid].count++
 		}
 	}
+	//// Neoffice — by quantity, as the room's chip and the page's count (see getAreaReadyCount)
+	const quantities = countDishesByStation(filteredByAreaOrders.value)
+	for (const sid of Object.keys(map)) map[sid].count = quantities[sid] || 0
 	return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
 })
 

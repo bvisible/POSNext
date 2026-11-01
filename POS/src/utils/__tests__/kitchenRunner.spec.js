@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest"
 import {
 	carriedByRunner,
 	countDishes,
+	countDishesByStation,
+	countDishesOfRoom,
 	kitchenView,
 	orderUsesRunner,
 	readyForTheRunner,
@@ -262,5 +264,30 @@ describe("what waits at the pass", () => {
 
 		expect(countDishes(ready)).toBe(6)
 		expect(countDishes([])).toBe(0)
+	})
+})
+
+describe("what the pass chips count", () => {
+	// Two rooms: Hall holds 2 + 3 plates of the kitchen and 2 drinks of the bar, Patio 4 plates of the kitchen
+	const ORDERS = [
+		order("A", [dish("Ready", "kit", { qty: 2 }), dish("Ready", "bar", { item_code: "D", qty: 2 })], { area: "Hall" }),
+		order("B", [dish("Ready", "kit", { item_code: "B", qty: 3 })], { area: "Hall" }),
+		order("C", [dish("Ready", "kit", { item_code: "C", qty: 4 })], { area: "Patio" }),
+	]
+
+	it("counts a room's dishes by quantity, as the page's own count does, not by line", () => {
+		expect(countDishesOfRoom(ORDERS, "Hall")).toBe(7)
+		expect(countDishesOfRoom(ORDERS, "Patio")).toBe(4)
+		expect(countDishesOfRoom(ORDERS, "Nowhere")).toBe(0)
+	})
+
+	it("counts a station's dishes by quantity, whatever the room", () => {
+		expect(countDishesByStation(ORDERS)).toEqual({ kit: 9, bar: 2 })
+	})
+
+	it("leaves out a dish that says no station, and a line with no quantity counts for nothing", () => {
+		const loose = [order("X", [dish("Ready", null, { qty: 2 }), dish("Ready", "kit", { item_code: "Y", qty: undefined })])]
+		expect(countDishesByStation(loose)).toEqual({ kit: 0 })
+		expect(countDishesByStation([])).toEqual({})
 	})
 })

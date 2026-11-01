@@ -18479,3 +18479,8 @@ msgstr "{0} commande en attente"
 
 msgid "{0} orders waiting"
 msgstr "{0} commandes en attente"
+
+#: POS/src/utils/elapsedLabel.js:17
+msgctxt "Elapsed time"
+msgid "{0} h {1}"
+msgstr "{0} h {1}"

@@ -296,6 +296,7 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { kitchenStatusOf } from "@/utils/kitchenBands"
+import { elapsedLabel } from "@/utils/elapsedLabel"
 //// Neoffice — a badge says the state, a button says the action (task 38a-1, ruling 113)
 import { kitchenActionLabel, kitchenStatusLabel } from "@/utils/kitchenStatus"
 //// Neoffice — the room's short code on the header's line (task 38a-1)
@@ -746,26 +747,11 @@ const lastActionTime = computed(
 const lastActionMinutes = computed(() =>
 	Math.floor((now.value - lastActionTime.value) / 60000),
 )
-const lastActionSeconds = computed(() =>
-	Math.floor(((now.value - lastActionTime.value) % 60000) / 1000),
-)
-const elapsedTime = computed(() => {
-	const min = lastActionMinutes.value.toString().padStart(2, "0")
-	const sec = lastActionSeconds.value.toString().padStart(2, "0")
-	return `${min}:${sec}`
-})
+//// Neoffice — hours and minutes from the hour on (utils/elapsedLabel): a ticket left open since the day before read « 1107:52 »
+const elapsedTime = computed(() => elapsedLabel(now.value - lastActionTime.value))
 
 // Total time since table was opened (creation)
-const totalTime = computed(() => {
-	const total = now.value - new Date(props.order.creation)
-	const min = Math.floor(total / 60000)
-		.toString()
-		.padStart(2, "0")
-	const sec = Math.floor((total % 60000) / 1000)
-		.toString()
-		.padStart(2, "0")
-	return `${min}:${sec}`
-})
+const totalTime = computed(() => elapsedLabel(now.value - new Date(props.order.creation)))
 const elapsedMinutes = lastActionMinutes
 
 // Timer color: red+pulse >15min, orange >10min, green if ready

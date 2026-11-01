@@ -199,6 +199,7 @@ import TicketDishNotes from "@/components/invoices/TicketDishNotes.vue"
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 import { DEFAULT_TEXT_SIZE, fullScreenVariables, TEXT_SIZE_KEY } from "@/utils/kitchenTextSize"
 import { runnerLineCount } from "@/utils/wideTicket"
+import { elapsedLabel } from "@/utils/elapsedLabel"
 
 const props = defineProps({
 	card: {
@@ -262,13 +263,8 @@ const elapsedMinutes = computed(() =>
 	Math.floor((now.value - cardTime.value) / 60000),
 )
 
-const elapsedTime = computed(() => {
-	const min = elapsedMinutes.value.toString().padStart(2, "0")
-	const sec = Math.floor(((now.value - cardTime.value) % 60000) / 1000)
-		.toString()
-		.padStart(2, "0")
-	return `${min}:${sec}`
-})
+//// Neoffice — hours and minutes from the hour on (utils/elapsedLabel): a ticket left open since the day before read « 1107:52 »
+const elapsedTime = computed(() => elapsedLabel(now.value - cardTime.value))
 
 //// Neoffice — dark mode (task 46): the same lighter red and orange, and the same pulse that never dims the text, as the kitchen ticket's timer
 //// (KDSOrderCard); the green is left.
