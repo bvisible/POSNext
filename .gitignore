@@ -79,6 +79,9 @@ dev-dist/
 .vite/
 *.png
 !docs/screenshots/*.png
+# //// Neoffice — the till's app icons are PNGs and must be tracked, in the sources (POS/public) and in the built folder the site serves (pos_next/public/pos): the blanket `*.png` above kept them out of the CI's artifacts commit, so the manifest named icons the site did not serve (404) and Chrome could not install the app.
+!POS/public/*.png
+!pos_next/public/pos/*.png
 !docs/screenshots/*.gif
 .playwright-mcp/*
 TODO.md
