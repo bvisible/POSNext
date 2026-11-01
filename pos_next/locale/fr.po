@@ -18433,3 +18433,49 @@ msgstr "{0} : le compte {1} exige un client ou un fournisseur, que la caisse ne 
 
 msgid "{0}: the till's cash mode of payment has no account for {1}."
 msgstr "{0} : le mode de paiement en espèces de la caisse n'a pas de compte pour {1}."
+
+# //// Neoffice — French for "keep the screen on" and "rest the screen" on the kitchen and runner screens (lot 1, task 47). The tablet is « la tablette », the screen at rest is « en veille » (the product owner's own word), vouvoiement.
+msgid "Screen at rest"
+msgstr "Écran en veille"
+
+msgid "Touch the screen to wake it"
+msgstr "Touchez l'écran pour le réveiller"
+
+msgid "Screen: keep on and rest"
+msgstr "Écran : allumé et veille"
+
+msgid "Keep the screen on"
+msgstr "Garder l'écran allumé"
+
+msgid "The tablet does not go to sleep while this screen is open."
+msgstr "La tablette ne s'endort pas tant que cet écran est ouvert."
+
+msgid "Not available on this browser."
+msgstr "Indisponible sur ce navigateur."
+
+msgid "Rest the screen after"
+msgstr "Mettre l'écran en veille après"
+
+msgid "After this long without a touch the screen goes dark. A touch wakes it."
+msgstr "Après ce délai sans toucher l'écran, il s'assombrit. Touchez-le pour le réveiller."
+
+msgid "Wake on a new ticket"
+msgstr "Réveiller à chaque nouveau ticket"
+
+msgid "A new ticket lights the screen again."
+msgstr "Un nouveau ticket rallume l'écran."
+
+msgid "Let the tablet sleep after"
+msgstr "Laisser la tablette s'endormir après"
+
+msgid "After this long at rest, the tablet's own auto-lock takes over."
+msgstr "Après ce délai en veille, le verrouillage automatique de la tablette reprend la main."
+
+msgid "{0} min"
+msgstr "{0} min"
+
+msgid "{0} order waiting"
+msgstr "{0} commande en attente"
+
+msgid "{0} orders waiting"
+msgstr "{0} commandes en attente"
