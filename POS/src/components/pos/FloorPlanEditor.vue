@@ -2120,8 +2120,7 @@ async function selectTable(table) {
 							posa_special_instructions: item.posa_special_instructions,
 							posa_item_modifiers: item.posa_item_modifiers,
 							kds_status: item.kds_status || "Pending",
-							//// Neoffice — the family the server stored for the line (open_table): without it a table opened again, on another till or after a reload,
-							//// had lines with no course, no course was held, and « Order the next course » never showed (Daniel, 01.11; NeoRestau lot 1, service families).
+							//// Neoffice — the stored family: a table opened again had no held course, so « Order the next course » never showed (Daniel, 01.11)
 							service_family: item.service_family || "",
 							_modifiers_applied: modifierPriceAdjustment || 0,
 							// An offered row of the table (« Offert », NeoRestau lot 1, task 24) comes back offered:
