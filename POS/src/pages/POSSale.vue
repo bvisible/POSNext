@@ -1205,6 +1205,9 @@
 					<!-- //// no longer fits in upstream's width (7e3f9458, 2026-03-31 "right panel -->
 					<!-- //// minimum width 450px (was 360/300)"). Marker sits above keep-alive, not -->
 					<!-- //// inside it: a comment child would make KeepAlive see two children. -->
+					<!-- //// Neoffice — the 450px minimum becomes `min(450px, 100%)` (kitchen test, 01.11): on a 375px phone the cart tab was -->
+					<!-- //// forced 75px wider than the screen, so the prices, the coupon button and the bin were cut off at the right. A -->
+					<!-- //// desktop panel still gets its 450px (its container is wider), a phone gets the width it has. -->
 					<keep-alive>
 						<div
 							v-if="uiStore.isDesktop || uiStore.mobileActiveTab === 'cart'"
@@ -1212,7 +1215,7 @@
 								'flex flex-col bg-gray-50 overflow-hidden',
 								uiStore.isDesktop ? 'flex-1' : 'flex-1',
 							]"
-							style="min-width: 450px; contain: layout style paint"
+							style="min-width: min(450px, 100%); contain: layout style paint"
 						>
 							<!-- //// Neoffice — two divergences inside this opening tag (no HTML comment can -->
 							<!-- //// sit between attributes, so they are listed here): -->

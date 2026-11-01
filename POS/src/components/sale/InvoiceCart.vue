@@ -680,14 +680,16 @@
 		</div>
 
 		<!-- Action Buttons Section -->
-		<div v-if="items.length > 0" class="px-2 py-2 border-b border-gray-200 bg-white">
-			<div class="flex items-center justify-between mb-1.5">
+		<!-- //// Neoffice — the header zone of the cart is tighter on a phone (kitchen test, 01.11): every pixel it takes is a pixel less for the lines. -->
+		<div v-if="items.length > 0" class="px-2 py-2 max-sm:py-1 border-b border-gray-200 bg-white">
+			<div class="flex items-center justify-between mb-1.5 max-sm:mb-0.5">
 				<h2 class="text-xs font-bold text-gray-900">{{ __("Cart Items") }}</h2>
 				<div class="flex items-center gap-1">
 					<!-- Clear Cart Button -->
+					<!-- //// Neoffice — tighter on a phone, as the rest of the header zone -->
 					<button
 						@click="$emit('clear-cart')"
-						class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors touch-manipulation"
+						class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 max-sm:py-1 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors touch-manipulation"
 						type="button"
 						:title="__('Clear all items')"
 					>
@@ -853,7 +855,7 @@
 				<button
 					type="button"
 					@click="$emit('show-offers')"
-					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-neo-md bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:border-green-400 hover:from-green-100 hover:to-emerald-100 hover:shadow-neo transition-all min-w-0 touch-manipulation active:scale-[0.98]"
+					class="relative flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 max-sm:py-1.5 rounded-neo-md bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 hover:border-green-400 hover:from-green-100 hover:to-emerald-100 hover:shadow-neo transition-all min-w-0 touch-manipulation active:scale-[0.98]"
 					:aria-label="__('View all available offers')"
 				>
 					<svg
@@ -1297,8 +1299,11 @@
 							<!-- //// has no photo; upstream drew a placeholder icon, which made a restaurant cart -->
 							<!-- //// of colour-coded Items unreadable (983130d3, 2026-03-25). The :style below is -->
 							<!-- //// that change; the marker sits above the opening tag because it is an attribute. -->
+							<!-- //// Neoffice — on a phone a dish with no photo draws no thumbnail at all (kitchen test, 01.11): the grey square with the first eight -->
+							<!-- //// letters of the name took 52px of a 340px line and said nothing the name beside it did not say. A photo still shows. -->
 							<div
 								class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200"
+								:class="item.image ? '' : 'max-sm:hidden'"
 								:style="
 									item.image
 										? {}
@@ -1341,14 +1346,16 @@
 
 							<div class="flex-1 min-w-0">
 								<!-- Name and line total; the total wraps under the name below 1100px -->
-								<div class="flex flex-col min-[1100px]:flex-row min-[1100px]:items-start gap-x-2">
+								<!-- //// Neoffice — except on a phone (under 640px), where the cart is the whole screen: the total stays at the right of the name, on one row (kitchen test, 01.11). -->
+								<div class="flex flex-row sm:flex-col min-[1100px]:flex-row min-[1100px]:items-start gap-x-2">
 									<h4
 										dir="auto"
 										class="flex-1 min-w-0 text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
 									>
 										{{ item.item_name }}
 									</h4>
-									<div class="flex-shrink-0 tabular-nums min-[1100px]:text-end">
+									<!-- //// Neoffice — the total is right-aligned on a phone, where it stands beside the name -->
+									<div class="flex-shrink-0 tabular-nums max-sm:text-end min-[1100px]:text-end">
 										<div class="text-base font-bold text-[#1d2433]">
 											{{ formatCurrency(getLineAmount(item)) }}
 										</div>
@@ -1363,7 +1370,11 @@
 									class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-600 mt-0.5"
 								>
 									<!-- Quantity × price as separate boxes, so they order with the page direction -->
-									<span class="inline-flex items-center gap-1 tabular-nums">
+									<!-- //// Neoffice — « 1 × CHF 21.50 » repeats the line's total, so on a phone it only shows when the quantity is not one or a price is struck out (kitchen test, 01.11). -->
+									<span
+										class="inline-flex items-center gap-1 tabular-nums"
+										:class="Number(item.quantity) === 1 && !getLineStrikePrice(item) ? 'max-sm:hidden' : ''"
+									>
 										<bdi>{{ formatQuantity(item.quantity) }}</bdi>
 										<span aria-hidden="true">×</span>
 										<s v-if="getLineStrikePrice(item)" class="text-gray-500"
@@ -1691,16 +1702,22 @@
 		</div>
 
 		<!-- Totals Summary -->
-		<div class="p-1.5 sm:p-2 bg-white border-t border-gray-200">
+		<!-- //// Neoffice — the totals zone is marked off from the list by a soft shadow on a phone, and its figures stand side by side (kitchen test, 01.11): the quantity, -->
+		<!-- //// the subtotal and the tax were three rows of a 600px-high screen; as three cells of one row (the discount, when there is one, keeps a row of its own) they leave -->
+		<!-- //// the lines room to show. The two `contents` wrappers are invisible from 640px up: nothing changes on a desktop. -->
+		<div class="p-1.5 sm:p-2 bg-white border-t border-gray-200 max-sm:shadow-[0_-6px_10px_-8px_rgba(0,0,0,0.18)]">
+			<div class="max-sm:grid max-sm:grid-cols-3 max-sm:gap-x-2 max-sm:mb-1 sm:contents">
 			<!-- Summary Details -->
-			<div v-if="items.length > 0" class="mb-1.5">
-				<div class="flex items-center justify-between text-xs text-gray-600 mb-0.5">
+			<!-- //// Neoffice — `contents`: the quantity and subtotal rows become cells on a phone -->
+			<div v-if="items.length > 0" class="mb-1.5 max-sm:contents">
+				<div class="flex items-center justify-between text-xs text-gray-600 mb-0.5 max-sm:flex-col max-sm:items-start max-sm:mb-0">
 					<span class="font-medium">{{ __("Total Quantity") }}</span>
 					<span class="font-bold text-gray-900 text-center min-w-[60px]">{{
 						formatQuantity(totalQuantity)
 					}}</span>
 				</div>
-				<div class="flex items-center justify-between text-xs text-gray-600">
+				<!-- //// Neoffice — the subtotal is the second cell on a phone -->
+				<div class="flex items-center justify-between text-xs text-gray-600 max-sm:flex-col max-sm:items-start">
 					<span class="font-medium">{{ __("Subtotal") }}</span>
 					<span class="font-bold text-gray-900 text-center min-w-[60px]">{{
 						formatCurrency(displaySubtotal)
@@ -1709,11 +1726,13 @@
 			</div>
 
 			<!-- Summary Details (continued) -->
-			<div v-if="items.length > 0" class="mb-1.5">
+			<!-- //// Neoffice — `contents`: this block's rows join the cells of the row above on a phone -->
+			<div v-if="items.length > 0" class="mb-1.5 max-sm:contents">
+				<!-- //// Neoffice — the discount keeps a row of its own, last, on a phone -->
 				<!-- Discount Display: savings in green, with the applied coupon -->
 				<div
 					v-if="displayDiscountAmount > 0"
-					class="flex items-center justify-between gap-2 mb-0.5 bg-emerald-50 rounded px-1.5 py-1 -mx-0.5"
+					class="flex items-center justify-between gap-2 mb-0.5 bg-emerald-50 rounded px-1.5 py-1 -mx-0.5 max-sm:col-span-3 max-sm:order-last"
 				>
 					<div class="flex items-center gap-1.5 min-w-0">
 						<FeatherIcon name="tag" class="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
@@ -1738,7 +1757,8 @@
 					</span>
 				</div>
 
-				<div class="flex items-center justify-between text-xs text-gray-600">
+				<!-- //// Neoffice — the tax is the third cell of that row on a phone -->
+				<div class="flex items-center justify-between text-xs text-gray-600 max-sm:flex-col max-sm:items-start">
 					<div class="flex items-center gap-1">
 						<svg
 							class="w-3.5 h-3.5 text-gray-500"
@@ -1760,6 +1780,8 @@
 					}}</span>
 				</div>
 			</div>
+				<!-- //// Neoffice — closes the row of three cells opened above (phone) -->
+				</div>
 
 			<!-- //// Neoffice — [CHF] added: Swiss cash has no coin under 0.05, so the total is -->
 			<!-- //// rounded to the currency's smallest fraction and the adjustment is shown as -->
