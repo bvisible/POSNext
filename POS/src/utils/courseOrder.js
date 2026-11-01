@@ -7,6 +7,8 @@
 //// at once turns it off), kept on the device like the size of the text, and ON by default: it is what the product owner asked.
 
 import { COURSES, familyOf } from "@/utils/serviceFamilies"
+//// Neoffice — the rule is without effect where the kitchen prepares ahead (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+import { isPreparedAhead } from "@/utils/serviceRhythm"
 
 /** The rule is on unless a device says otherwise. */
 export const DEFAULT_COURSE_ORDER = true
@@ -48,6 +50,18 @@ export function isHeldByCourse(line, lines, enabled = DEFAULT_COURSE_ORDER) {
 	if (!enabled) return false
 	const rank = rankOf(line)
 	return rank > 0 && rank > lockedCourseRank(lines)
+}
+
+/**
+ * Whether the kitchen follows the order of the meal on a screen: the device's choice, and never where the restaurant's kitchen prepares ahead. There the later courses are on the ticket from
+ * « Valider », marked « à l'avance », and the cooks may start and finish them whenever they like: greying them would forbid what the rhythm is for (Daniel, 01.11: the rule is off in that mode).
+ *
+ * @param {boolean} deviceChoice - What the device chose (the default is on)
+ * @param {string} [rhythm] - The restaurant's service rhythm
+ * @returns {boolean}
+ */
+export function followsTheOrderOfTheMeal(deviceChoice, rhythm) {
+	return Boolean(deviceChoice) && !isPreparedAhead(rhythm)
 }
 
 /** The choice a device stored ("1" / "0"); anything else is the default. */

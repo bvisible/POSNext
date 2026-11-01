@@ -9,6 +9,9 @@
 //// - the dishes counted are those of the stations the screen shows (the station chip, or all of them), and the courses named are their families (Starter, Main, Dessert).
 //// - a send of drinks alone is no next course (a beer ordered late), nor is a dish of no family where the restaurant has families; a restaurant that has none at all is told of every later send, without a course.
 //// - never twice for the same send (the key is the order and the time of the send), and a stale answer that arrives after a newer one changes nothing: what was seen of an order never goes back.
+//// - where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11), the next course is not SENT, it is CALLED: its dishes are on the ticket from « Valider », marked ahead, and the room's call stamps
+////   `kds_called_at` on them. A dish counts from its call (utils/courseCall.goAt, read by utils/courseTimer), so the notice goes off on the call, names the families of the dishes called, and stays quiet when a course merely
+////   arrives ahead or when the kitchen starts or finishes one that is not called.
 
 import { earliestSendAt, latestSendAt, linesOfLatestSend } from "@/utils/courseTimer"
 import { hasLeftForTheKitchen } from "@/utils/lineKitchenState"

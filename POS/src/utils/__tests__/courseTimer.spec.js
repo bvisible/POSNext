@@ -3,7 +3,7 @@
  * //// maintenant du départ du dessert »): the oldest send among the dishes still to cook, else the latest send, else the order's last change. Read without a screen.
  */
 import { describe, expect, it } from "vitest"
-import { courseSentAt, latestSendAt, linesOfLatestSend, timerStart } from "../courseTimer"
+import { courseSentAt, earliestSendAt, latestSendAt, linesOfLatestSend, timerStart } from "../courseTimer"
 
 const at = (text) => new Date(text).getTime()
 const line = (status, sentAt) => ({ item_code: `${status}-${sentAt}`, kds_status: status, kds_sent_at: sentAt })
@@ -110,5 +110,63 @@ describe("the most recent send of a ticket", () => {
 	it("gives back nothing when there is no send to speak of", () => {
 		expect(linesOfLatestSend([line("Waiting", DESSERTS), line("Pending", null)])).toEqual([])
 		expect(linesOfLatestSend(undefined)).toEqual([])
+	})
+})
+
+//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a dish sent ahead counts from the room's CALL, and counts for nothing until it comes
+describe("the dishes sent ahead of their course", () => {
+	const CALLED = "2026-11-01 13:10:00.000000"
+	const ahead = (status, sentAt, calledAt = null) => ({
+		item_code: `${status}-ahead-${sentAt}`,
+		kds_status: status,
+		kds_sent_at: sentAt,
+		kds_ahead: 1,
+		kds_called_at: calledAt,
+	})
+
+	it("count for nothing while their course is not called: no timer starts from them", () => {
+		const lines = [line("Delivered", STARTERS), ahead("Pending", STARTERS), ahead("Preparing", STARTERS)]
+
+		expect(courseSentAt(lines)).toBe(at(STARTERS))
+		expect(courseSentAt([ahead("Pending", STARTERS)])).toBeNaN()
+		expect(latestSendAt([ahead("Ready", STARTERS)])).toBeNaN()
+		expect(linesOfLatestSend([ahead("Pending", STARTERS)])).toEqual([])
+	})
+
+	it("do not pull the timer back to the start of the meal when the first course is long gone", () => {
+		const lines = [line("Preparing", MAINS), ahead("Pending", STARTERS), ahead("Ready", STARTERS)]
+
+		expect(courseSentAt(lines)).toBe(at(MAINS))
+	})
+
+	it("count from the call once it comes, not from the moment they left", () => {
+		const called = ahead("Pending", STARTERS, CALLED)
+
+		expect(courseSentAt([line("Delivered", STARTERS), called])).toBe(at(CALLED))
+		expect(latestSendAt([line("Delivered", STARTERS), called])).toBe(at(CALLED))
+		expect(linesOfLatestSend([line("Delivered", STARTERS), called])).toEqual([called])
+	})
+
+	it("count from the call even when the kitchen finished them long before: they are waiting at the pass since the call", () => {
+		const done = ahead("Ready", STARTERS, CALLED)
+
+		expect(courseSentAt([line("Delivered", STARTERS), done])).toBe(at(CALLED))
+	})
+
+	it("make the timer of a ticket start at the call of the course the room wants now", () => {
+		const items = [line("Delivered", STARTERS), ahead("Preparing", STARTERS, CALLED), ahead("Pending", STARTERS)]
+		const started = timerStart({ creation: "2026-11-01 11:55:00", modified: "2026-11-01 15:02:00", items })
+
+		expect(started.getTime()).toBe(at(CALLED))
+	})
+
+	it("leave a line sent in the ordinary way as it always was, whatever its call field says", () => {
+		const plain = { ...line("Pending", MAINS), kds_ahead: 0, kds_called_at: CALLED }
+
+		expect(courseSentAt([plain])).toBe(at(MAINS))
+	})
+
+	it("tell the earliest send of the dishes that count, the uncalled ones not among them", () => {
+		expect(earliestSendAt([line("Delivered", STARTERS), ahead("Pending", "2026-11-01 11:00:00.000000"), line("Pending", MAINS)])).toBe(at(STARTERS))
 	})
 })

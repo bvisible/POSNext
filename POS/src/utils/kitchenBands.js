@@ -6,6 +6,8 @@
 //// Neoffice — the parser of the server's datetimes and the time the course at the kitchen left are shared with the ticket's timer (utils/courseTimer)
 import { courseSentAt } from "@/utils/courseTimer"
 import { timeOf } from "@/utils/serverDateTime"
+//// Neoffice — a dish sent ahead of its course and not called yet is not what a ticket waits for (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+import { isUncalled } from "@/utils/courseCall"
 
 export const BAND_WAITING = "waiting"
 export const BAND_PRODUCTION = "production"
@@ -84,8 +86,14 @@ export function kitchenStatusOf(order) {
 		return lines.some((line) => line?.kds_status === "Delivered")
 			? "Delivered"
 			: "Pending"
-	if (!live.some((line) => BEGUN.has(line.kds_status))) return "Pending"
-	return live.every((line) => line.kds_status === "Ready")
+	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11), a dish that left ahead of its course and is not called yet is at the kitchen, which may start and finish it, but it is not
+	//// what the ticket waits for: while some other dish is live the ticket follows the others alone (the server's `_order_status_of`, the same table of examples, `ahead_cases`). When only such dishes are live the ticket is Pending
+	//// until one is begun and Preparing after that, never Ready: nothing waits at the pass for a course nobody called.
+	const called = live.filter((line) => !isUncalled(line))
+	if (!called.length)
+		return live.some((line) => BEGUN.has(line.kds_status)) ? "Preparing" : "Pending"
+	if (!called.some((line) => BEGUN.has(line.kds_status))) return "Pending"
+	return called.every((line) => line.kds_status === "Ready")
 		? "Ready"
 		: "Preparing"
 }

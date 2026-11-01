@@ -17,6 +17,8 @@
 //// one table pos_next/tests/kitchen_pass_cases.json. A line cooked in part stays on the kitchen's ticket with the units still to cook as its quantity
 //// (`qty`, the line's own quantity being kept in `ordered_qty`), and the cooked ones wait at the pass.
 import { splitIntoBands } from "@/utils/kitchenBands"
+//// Neoffice — a dish sent ahead of its course is not at the pass until the room calls it (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+import { isUncalled } from "@/utils/courseCall"
 
 // A dish the cook still works on, or has finished: what a ticket is about
 const LIVE = new Set(["Pending", "Preparing", "Ready"])
@@ -119,6 +121,8 @@ export function stateAfterDelivery(line) {
  */
 export function isCookedInPart(line) {
 	if (!AT_THE_STOVE.has(line?.kds_status)) return false
+	//// Neoffice — units cooked of a dish whose course is not called are not "sent": nothing leaves for the pass before the call, so the line is shown whole (the service rhythm)
+	if (isUncalled(line)) return false
 	const cooked = rounded(count(line?.kds_ready_qty))
 	return cooked > 0 && cooked < orderedQty(line)
 }
@@ -152,8 +156,10 @@ function dishUsesRunner(line, stations, runnerEnabled) {
  * @returns {boolean}
  */
 export function carriedByRunner(line, stations, runnerEnabled = true) {
+	//// Neoffice — « Prêt d'avance » (the kitchen prepares ahead): a dish finished before its course is called waits for the call, not for the runner; it stays on the ticket as it is, and goes to the pass when the room calls it
 	return (
 		line?.kds_status === "Ready" &&
+		!isUncalled(line) &&
 		dishUsesRunner(line, stations, runnerEnabled)
 	)
 }
@@ -244,6 +250,8 @@ export function readyForTheRunner(
 		const ready = []
 		for (const line of order?.items || []) {
 			if (!dishUsesRunner(line, stations, runnerEnabled)) continue
+			//// Neoffice — the runner is offered a dish only once its course is called (the service rhythm, NeoRestau lot 1)
+			if (isUncalled(line)) continue
 			const units = unitsAtThePass(line)
 			if (units <= 0) continue
 			//// Neoffice — a Ready line that waits whole is the line itself (a recall is optimistic on it); a line cooked in part, or with units delivered, is a

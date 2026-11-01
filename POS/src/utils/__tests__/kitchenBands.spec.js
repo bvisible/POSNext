@@ -435,3 +435,88 @@ describe("splitting the tickets into the two bands", () => {
 		expect(after.production.map((o) => o.name)).toEqual(["T"])
 	})
 })
+
+//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): the dishes sent ahead of their course and not called are not what the ticket waits for
+describe("the dishes sent ahead of their course (the service rhythm)", () => {
+	const { ahead_cases: aheadCases } = JSON.parse(
+		readFileSync(new URL("../../../../pos_next/tests/kitchen_status_cases.json", import.meta.url), "utf8"),
+	)
+	const CALLED = "2026-10-30 13:00:00.000000"
+	const SENT = "2026-10-30 12:00:00.000000"
+
+	/** An order whose dishes are `{ status, uncalled }`: an uncalled dish left ahead and was not called, a called one is a plain dish. */
+	function aheadOrder(dishes, extra = {}) {
+		const base = order(dishes.map((dish) => dish.status), extra)
+		base.items.forEach((item, index) => {
+			item.kds_sent_at = SENT
+			if (dishes[index].uncalled) item.kds_ahead = 1
+		})
+		return base
+	}
+
+	it("gives each example of the shared table its status, as the server does", () => {
+		expect(aheadCases.length).toBeGreaterThanOrEqual(10)
+		for (const { about, dishes, status } of aheadCases) {
+			expect(kitchenStatusOf(aheadOrder(dishes)), about).toBe(status)
+		}
+	})
+
+	it("is the status of the dishes called alone while any is live: a dish finished ahead does not make the ticket ready", () => {
+		const ticket = aheadOrder([
+			{ status: "Preparing", uncalled: false },
+			{ status: "Ready", uncalled: true },
+		])
+
+		expect(kitchenStatusOf(ticket)).toBe("Preparing")
+		expect(bandOf(ticket)).toBe(BAND_PRODUCTION)
+	})
+
+	it("is Pending, in the waiting band, when the only dishes left are sent ahead and none is begun", () => {
+		const ticket = aheadOrder([
+			{ status: "Delivered", uncalled: false },
+			{ status: "Pending", uncalled: true },
+		])
+
+		expect(kitchenStatusOf(ticket)).toBe("Pending")
+		expect(bandOf(ticket)).toBe(BAND_WAITING)
+	})
+
+	it("is Preparing, never Ready, when the only dishes left are finished ahead: the ticket stays in preparation", () => {
+		const ticket = aheadOrder([
+			{ status: "Delivered", uncalled: false },
+			{ status: "Ready", uncalled: true },
+		])
+
+		expect(kitchenStatusOf(ticket)).toBe("Preparing")
+		expect(bandOf(ticket)).toBe(BAND_PRODUCTION)
+	})
+
+	it("is the ordinary status once the course is called: the dish finished ahead is ready, at the pass", () => {
+		const ticket = aheadOrder([
+			{ status: "Delivered", uncalled: false },
+			{ status: "Ready", uncalled: true },
+		])
+		ticket.items[1].kds_called_at = CALLED
+
+		expect(kitchenStatusOf(ticket)).toBe("Ready")
+	})
+
+	it("leaves a plain ticket as it was", () => {
+		expect(kitchenStatusOf(order(["Ready", "Pending"]))).toBe("Preparing")
+		expect(kitchenStatusOf(order(["Delivered", "Ready"]))).toBe("Ready")
+	})
+
+	it("sorts a ticket by the call of its course, the dishes still uncalled counting for nothing", () => {
+		const waited = aheadOrder([
+			{ status: "Delivered", uncalled: false },
+			{ status: "Pending", uncalled: true },
+		])
+		waited.items[0].kds_sent_at = "2026-10-30 12:30:00.000000"
+		const called = aheadOrder([{ status: "Pending", uncalled: true }])
+		called.items[0].kds_called_at = "2026-10-30 12:45:00.000000"
+
+		expect(arrivalOf(waited)).toBe(new Date(2026, 9, 30, 12, 30, 0).getTime())
+		expect(arrivalOf(called)).toBe(new Date(2026, 9, 30, 12, 45, 0).getTime())
+		expect(splitIntoBands([called, waited]).waiting.map((t) => t.name)).toEqual([waited.name, called.name])
+	})
+})

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest"
 import {
 	DEFAULT_COURSE_ORDER,
 	courseOrderFromStorage,
+	followsTheOrderOfTheMeal,
 	isHeldByCourse,
 	lockedCourseRank,
 } from "../courseOrder"
@@ -123,5 +124,34 @@ describe("the choice a device keeps", () => {
 	it("reads what the device stored", () => {
 		expect(courseOrderFromStorage("1")).toBe(true)
 		expect(courseOrderFromStorage("0")).toBe(false)
+	})
+})
+
+//// Neoffice — where the kitchen prepares ahead the rule is off (NeoRestau lot 1, the service rhythm, Daniel, 01.11)
+describe("the order of the meal where the kitchen prepares ahead", () => {
+	it("is followed on a device that chose it, in the room's rhythm", () => {
+		expect(followsTheOrderOfTheMeal(true, "Called by the room")).toBe(true)
+		expect(followsTheOrderOfTheMeal(true, undefined)).toBe(true)
+		expect(followsTheOrderOfTheMeal(true)).toBe(true)
+	})
+
+	it("is never followed where the restaurant prepares ahead, whatever the device chose", () => {
+		expect(followsTheOrderOfTheMeal(true, "Prepared ahead")).toBe(false)
+		expect(followsTheOrderOfTheMeal(false, "Prepared ahead")).toBe(false)
+	})
+
+	it("is not followed on a device that turned it off", () => {
+		expect(followsTheOrderOfTheMeal(false, "Called by the room")).toBe(false)
+		expect(followsTheOrderOfTheMeal(undefined, undefined)).toBe(false)
+	})
+
+	it("holds nothing back when the card is told it is off, whatever the lines", () => {
+		const lines = [
+			{ service_family: "Starter", kds_status: "Pending" },
+			{ service_family: "Main", kds_status: "Pending" },
+		]
+
+		expect(isHeldByCourse(lines[1], lines, followsTheOrderOfTheMeal(true, "Called by the room"))).toBe(true)
+		expect(isHeldByCourse(lines[1], lines, followsTheOrderOfTheMeal(true, "Prepared ahead"))).toBe(false)
 	})
 })

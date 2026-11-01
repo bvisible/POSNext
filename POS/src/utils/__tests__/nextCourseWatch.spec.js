@@ -287,3 +287,80 @@ describe("the stations this screen shows", () => {
 		expect(alerts[0].count).toBe(2)
 	})
 })
+
+//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): the next course does not arrive, it is CALLED, and the notice goes off on the call
+describe("the call of a course sent ahead", () => {
+	const CALL = "2026-11-01 12:50:00.000000"
+	const aheadDish = (family, status, calledAt = null, extra = {}) =>
+		dish(status, STARTERS, { service_family: family, kds_ahead: 1, kds_called_at: calledAt, ...extra })
+	const meal = (mainsCalledAt = null, dessertsCalledAt = null) =>
+		order("A", [
+			dish("Preparing", STARTERS, { service_family: "Starter" }),
+			aheadDish("Main", "Pending", mainsCalledAt, { item_name: "Entrecôte" }),
+			aheadDish("Dessert", "Pending", dessertsCalledAt, { item_name: "Tarte" }),
+		])
+
+	it("is noticed when the room calls the course, naming the course that was called", () => {
+		const { alerts } = reads([meal()], [meal(CALL)])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0]).toMatchObject({ order: "A", table: "Table A", families: ["Main"], count: 1 })
+		expect(alerts[0].sentAt).toBe(new Date(2026, 10, 1, 12, 50, 0).getTime())
+	})
+
+	it("is not noticed when the course arrives ahead: a line not called counts for nothing", () => {
+		const first = order("A", [dish("Preparing", STARTERS, { service_family: "Starter" })])
+		const withAhead = order("A", [
+			dish("Preparing", STARTERS, { service_family: "Starter" }),
+			aheadDish("Main", "Pending", null, { kds_sent_at: "2026-11-01 12:30:00.000000" }),
+		])
+
+		expect(reads([first], [withAhead]).alerts).toEqual([])
+	})
+
+	it("is not noticed when the kitchen starts or finishes a course that is not called", () => {
+		const finished = order("A", [
+			dish("Preparing", STARTERS, { service_family: "Starter" }),
+			aheadDish("Main", "Ready"),
+			aheadDish("Dessert", "Preparing"),
+		])
+
+		expect(reads([meal()], [finished]).alerts).toEqual([])
+	})
+
+	it("names the families called together when the whole table is called at once", () => {
+		const { alerts } = reads([meal()], [meal(CALL, CALL)])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0].families).toEqual(["Main", "Dessert"])
+		expect(alerts[0].count).toBe(2)
+	})
+
+	it("is noticed once for the same call, and again for the next course", () => {
+		const { alerts: first, memory } = readNextCourses([meal()], null)
+		expect(first).toEqual([])
+
+		const second = readNextCourses([meal(CALL)], memory)
+		expect(second.alerts).toHaveLength(1)
+
+		const again = readNextCourses([meal(CALL)], second.memory)
+		expect(again.alerts).toEqual([])
+
+		const dessertsCalled = readNextCourses([meal(CALL, "2026-11-01 13:30:00.000000")], again.memory)
+		expect(dessertsCalled.alerts).toHaveLength(1)
+		expect(dessertsCalled.alerts[0].families).toEqual(["Dessert"])
+	})
+
+	it("is noticed on a course the kitchen finished ahead, as soon as it is called", () => {
+		const done = (calledAt) =>
+			order("A", [
+				dish("Delivered", STARTERS, { service_family: "Starter" }),
+				aheadDish("Main", "Ready", calledAt),
+			])
+
+		const { alerts } = reads([done(null)], [done(CALL)])
+
+		expect(alerts).toHaveLength(1)
+		expect(alerts[0].families).toEqual(["Main"])
+	})
+})

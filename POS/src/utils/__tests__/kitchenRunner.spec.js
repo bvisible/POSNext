@@ -567,3 +567,80 @@ describe("what waits at the pass, with lines cooked in part", () => {
 		expect(countDishes(readyForTheRunner([source], context))).toBe(4)
 	})
 })
+
+//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): « Prêt d'avance » is a state of its own on the ticket, not the pass, and the runner is offered a dish only once it is called
+describe("a dish finished ahead of its course", () => {
+	const CALL = "2026-10-30 12:30:00.000000"
+	const SENT = "2026-10-30 12:00:00.000000"
+	const finished = (extra = {}) => dish("Ready", "kit", { item_code: "MAIN", kds_ahead: 1, kds_sent_at: SENT, ...extra })
+
+	it("is not carried by the runner until its course is called, whatever its station", () => {
+		expect(carriedByRunner(finished(), STATIONS, true)).toBe(false)
+		expect(carriedByRunner(finished({ kds_called_at: CALL }), STATIONS, true)).toBe(true)
+		expect(carriedByRunner(finished({ item_code: "OTHER", preparation_station: "bar" }), STATIONS, true)).toBe(false)
+	})
+
+	it("stays on the kitchen ticket as it is, not struck through as a dish at the pass", () => {
+		const source = order("A", [dish("Preparing", "kit", { item_code: "S" }), finished()])
+
+		const view = kitchenView([source], { stations: STATIONS, runnerEnabled: true })
+
+		expect(view).toHaveLength(1)
+		expect(view[0].items.map((line) => line.kds_status)).toEqual(["Preparing", "Ready"])
+		expect(view[0].items.some((line) => line.at_the_pass)).toBe(false)
+		expect(view[0]).toBe(source)
+	})
+
+	it("goes to the pass, struck through on the ticket, once its course is called", () => {
+		const source = order("A", [dish("Preparing", "kit", { item_code: "S" }), finished({ kds_called_at: CALL })])
+
+		const view = kitchenView([source], { stations: STATIONS, runnerEnabled: true })
+
+		expect(view[0].items.map((line) => line.kds_status)).toEqual(["Preparing", "Delivered"])
+		expect(view[0].items[1].at_the_pass).toBe(true)
+	})
+
+	it("keeps a ticket whose only dish left is finished ahead as it is: nothing is at the pass, so it has no view state", () => {
+		const view = kitchenView([order("A", [dish("Delivered", "kit", { item_code: "D" }), finished()])], {
+			stations: STATIONS,
+			runnerEnabled: true,
+		})
+
+		expect(view[0].view_state).toBeUndefined()
+	})
+
+	it("is not offered to the runner until it is called", () => {
+		const waiting = order("A", [finished(), dish("Ready", "kit", { item_code: "R" })])
+		const called = order("B", [finished({ kds_called_at: CALL })])
+
+		const ready = readyForTheRunner([waiting, called], { stations: STATIONS, runnerEnabled: true })
+
+		expect(ready.map((o) => o.name)).toEqual(["A", "B"])
+		expect(ready[0].items.map((line) => line.item_code)).toEqual(["R"])
+		expect(ready[1].items.map((line) => line.item_code)).toEqual(["MAIN"])
+	})
+
+	it("leaves a ticket with nothing but dishes finished ahead out of what waits at the pass", () => {
+		expect(readyForTheRunner([order("A", [finished()])], { stations: STATIONS, runnerEnabled: true })).toEqual([])
+	})
+
+	it("is not 'cooked in part' while its course is not called: it is shown whole, with nothing sent", () => {
+		const partly = dish("Preparing", "kit", { item_code: "P", qty: 6, kds_ready_qty: 4, kds_ahead: 1 })
+
+		expect(isCookedInPart(partly)).toBe(false)
+		expect(isCookedInPart({ ...partly, kds_called_at: CALL })).toBe(true)
+		expect(kitchenView([order("A", [partly])], { stations: STATIONS })[0].items[0].qty).toBe(6)
+	})
+
+	it("is waited for by a ticket that is both live and called: a dish called and finished is carried, one not called stays", () => {
+		const items = [finished({ item_code: "A", kds_called_at: CALL }), finished({ item_code: "B" })]
+
+		const view = kitchenView([order("A", items)], { stations: STATIONS, runnerEnabled: true })
+
+		expect(view[0].items.map((line) => line.kds_status)).toEqual(["Delivered", "Ready"])
+	})
+
+	it("leaves the lines of the table of examples at the pass as the shared table says (no line there was sent ahead)", () => {
+		expect(unitsAtThePass(finished())).toBe(1)
+	})
+})
