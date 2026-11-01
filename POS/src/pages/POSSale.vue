@@ -3875,6 +3875,14 @@ async function handleSendToKitchen() {
 	}
 }
 
+//// Neoffice — where the kitchen prepares ahead, the course is already at the kitchen: the gesture CALLS it (the server stamps the call, the kitchen's popup and sound go off) and the order is not sent a second time, so the
+//// page does what a send does at its end: it says so and goes back to the floor plan (NeoRestau lot 1, the service rhythm, Daniel, 01.11).
+async function afterCallingTheNextCourse() {
+	showSuccess(__("Next course ordered"));
+	cartStore.clearCart();
+	restaurantStore.fetchFromNetwork();
+}
+
 //// Neoffice — « Commander la suite » (`next`) and « Tout commander » (`all`): the waiter releases the courses the table holds
 //// back. The server names the lines, by the rule that held them; each release is a send of its own (NeoRestau lot 1, service families).
 async function handleOrderHeldLines(which) {
@@ -3885,6 +3893,7 @@ async function handleOrderHeldLines(which) {
 			cartStore,
 			call,
 			send: handleSendToKitchen,
+			finish: afterCallingTheNextCourse,
 			// A held line was given its station when it was added; one that has none yet gets it as the dialog gives it
 			prepare: (row) => {
 				if (row.preparation_station) return;

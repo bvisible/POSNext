@@ -37,11 +37,14 @@ vi.mock("@/utils/offline", () => ({
 vi.mock("@/stores/posSettings", () => ({
 	usePOSSettingsStore: () => ({ shouldEnforceStockValidation: () => false }),
 }))
+//// Neoffice — the restaurant's service rhythm is the store's (NeoRestau lot 1, Daniel, 01.11); a test changes it
+const restaurantStore = vi.hoisted(() => ({
+	stationLabel: (station) => station,
+	getStationForItem: () => null,
+	serviceRhythm: "Called by the room",
+}))
 vi.mock("@/stores/restaurant", () => ({
-	useRestaurantStore: () => ({
-		stationLabel: (station) => station,
-		getStationForItem: () => null,
-	}),
+	useRestaurantStore: () => restaurantStore,
 }))
 
 const { usePOSCartStore } = await import("@/stores/posCart")
@@ -66,6 +69,7 @@ describe("the kitchen dialog, for the rhythm of a meal", () => {
 	let cart
 	let dialog
 	beforeEach(() => {
+		restaurantStore.serviceRhythm = "Called by the room"
 		setActivePinia(createPinia())
 		setGroupFamilies({
 			Wine: "Drink",
@@ -238,4 +242,83 @@ describe("the kitchen dialog, for the rhythm of a meal", () => {
 			expect(dialog.findAll("[data-service-family-label]")).toHaveLength(0)
 		})
 	})
+
+	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): everything is ticked, and what would have been held is sent marked ahead
+	describe("where the kitchen prepares ahead", () => {
+		beforeEach(() => {
+			restaurantStore.serviceRhythm = "Prepared ahead"
+		})
+
+		it("ticks every line of a table: the later courses leave too", () => {
+			cart.setRestaurantTable({ name: "T1" })
+			fullOrder()
+
+			dialog.vm.open()
+
+			expect(ticks()).toEqual([true, true, true, true])
+		})
+
+		it("sends the lines the room would have held marked ahead, and the others as they always were", () => {
+			cart.setRestaurantTable({ name: "T1" })
+			fullOrder()
+			dialog.vm.open()
+
+			dialog.vm.sendSelected()
+
+			expect(
+				cart.invoiceItems.map((line) => [line.kds_status, Boolean(line.kds_ahead)]),
+			).toEqual([
+				["Pending", false],
+				["Pending", false],
+				["Pending", true],
+				["Pending", true],
+			])
+		})
+
+		it("holds back a line the waiter unticked, as ever: that is the waiter's own word, not a line ahead", () => {
+			cart.setRestaurantTable({ name: "T1" })
+			fullOrder()
+			dialog.vm.open()
+			dialog.vm.dialogItems[3].selected = false
+
+			dialog.vm.sendSelected()
+
+			expect(
+				cart.invoiceItems.map((line) => [line.kds_status, Boolean(line.kds_ahead)]),
+			).toEqual([
+				["Pending", false],
+				["Pending", false],
+				["Pending", true],
+				["Waiting", false],
+			])
+		})
+
+		it("sends a main added once the mains left ahead ahead too, and a starter added late at once", () => {
+			cart.setRestaurantTable({ name: "T1" })
+			cart.addItem(dish("SOUP", "Soups", { kds_status: "Pending" }))
+			cart.addItem(dish("PENNE", "Pasta", { kds_status: "Pending", kds_ahead: 1 }))
+			cart.addItem(dish("STEAK", "Pasta"))
+			cart.addItem(dish("SALAD", "Soups"))
+			dialog.vm.open()
+
+			dialog.vm.sendSelected()
+
+			expect(
+				cart.invoiceItems.map((line) => [line.item_code, Boolean(line.kds_ahead)]),
+			).toEqual([
+				["SOUP", false],
+				["PENNE", true],
+				["STEAK", true],
+				["SALAD", false],
+			])
+		})
+
+		it("marks nothing ahead on a takeaway order or at the counter", () => {
+			fullOrder()
+			dialog.vm.open()
+			dialog.vm.sendSelected()
+			expect(cart.invoiceItems.map((line) => Boolean(line.kds_ahead))).toEqual([false, false, false, false])
+		})
+	})
 })
+

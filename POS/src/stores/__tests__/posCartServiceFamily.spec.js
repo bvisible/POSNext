@@ -231,4 +231,48 @@ describe("the service family of a cart line", () => {
 			)
 		})
 	})
+
+	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a line carries whether it left ahead of its course and when the room called it
+	describe("the lines sent ahead of their course", () => {
+		it("are read back from the order of a table, with the call the room made", () => {
+			cart.replaceAllItems([
+				{ item_code: "SOUP", item_name: "Soup", qty: 1, rate: 10, kds_status: "Pending", service_family: "Starter" },
+				{
+					item_code: "PENNE",
+					item_name: "Penne",
+					qty: 1,
+					rate: 10,
+					kds_status: "Pending",
+					service_family: "Main",
+					kds_ahead: 1,
+					kds_called_at: "2026-11-01 19:00:00.000000",
+				},
+				{ item_code: "TART", item_name: "Tart", qty: 1, rate: 10, kds_status: "Pending", service_family: "Dessert", kds_ahead: 1, kds_called_at: null },
+			])
+
+			expect(cart.invoiceItems.map((line) => Boolean(line.kds_ahead))).toEqual([false, true, true])
+			expect(cart.invoiceItems.map((line) => line.kds_called_at || null)).toEqual([null, "2026-11-01 19:00:00.000000", null])
+		})
+
+		it("are kept by a line added with them, whichever way it is added", () => {
+			cart.addItem(dish("PENNE", "Pasta", { kds_status: "Pending", kds_ahead: 1, kds_called_at: "2026-11-01 19:00:00.000000" }))
+			cart.addItem(dish("TART", "Cakes", { kds_status: "Pending", kds_ahead: 1 }))
+			cart.addItem(dish("SOUP", "Soups"))
+
+			expect(cart.invoiceItems.map((line) => Boolean(line.kds_ahead))).toEqual([true, true, false])
+			expect(cart.invoiceItems[0].kds_called_at).toBe("2026-11-01 19:00:00.000000")
+			expect(cart.invoiceItems[1].kds_called_at || null).toBeNull()
+		})
+
+		it("go to the server only as a mark, never as a call: the server alone stamps the call", () => {
+			cart.addItem(dish("PENNE", "Pasta", { kds_status: "Pending", kds_ahead: 1, kds_called_at: "2026-11-01 19:00:00.000000" }))
+			cart.addItem(dish("SOUP", "Soups", { kds_status: "Pending" }))
+
+			const lines = cart.buildOfferEvaluationPayload({}, { keepUndecided: true }).items
+
+			expect(lines.map((line) => line.kds_ahead)).toEqual([1, 0])
+			expect(lines.every((line) => !("kds_called_at" in line))).toBe(true)
+		})
+	})
 })
+

@@ -2869,7 +2869,8 @@ function changeFamily(item, family) {
 }
 
 // The next course among the held lines (a held drink is no course)
-const nextCourse = computed(() => nextRelease(cartStore.invoiceItems));
+//// Neoffice — and, where the kitchen prepares ahead, the next course SENT AHEAD and not called yet (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
+const nextCourse = computed(() => nextRelease(cartStore.invoiceItems, restaurantStore.serviceRhythm));
 const showNextCourse = computed(() => isTableOrder.value && nextCourse.value.indexes.length > 0);
 
 function orderNextCourse() {

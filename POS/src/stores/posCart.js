@@ -1084,6 +1084,8 @@ export const usePOSCartStore = defineStore("posCart", () => {
 					kds_status: item.kds_status || (keepUndecided ? "" : "Pending"),
 					//// Neoffice — the course the line belongs to rides with it (NeoRestau lot 1, service families).
 					service_family: item.service_family || "",
+					//// Neoffice — the mark of a line sent ahead of its course (the kitchen prepares ahead) goes with it; the server keeps it only for a food line it would have sent ahead itself, and stamps the call alone (NeoRestau lot 1, the service rhythm)
+					kds_ahead: item.kds_ahead ? 1 : 0,
 					price_list_rate: item.price_list_rate || item.rate,
 					discount_percentage: pre.discount_percentage || 0,
 					discount_amount: pre.discount_amount || 0,

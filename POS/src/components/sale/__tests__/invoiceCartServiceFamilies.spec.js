@@ -49,6 +49,7 @@ vi.mock("@/stores/posSettings", () => ({
 
 const { usePOSCartStore } = await import("@/stores/posCart")
 const { setGroupFamilies } = await import("@/utils/serviceFamilies")
+const { useRestaurantStore } = await import("@/stores/restaurant")
 const { default: InvoiceCart } = await import("../InvoiceCart.vue")
 
 const dish = (code, group, more = {}) => ({
@@ -255,4 +256,72 @@ describe("the cart of a table's order, for the rhythm of the meal", () => {
 			expect(everythingButton().classes()).toContain("min-h-[44px]")
 		})
 	})
+
+	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): the later courses are not held, they left ahead; the same button calls the next one
+	describe("the button where the kitchen prepares ahead", () => {
+		const aheadTable = (extra = {}) => {
+			cart.setRestaurantTable({ name: "T1" })
+			cart.addItem(dish("SOUP", "Soups", { kds_status: "Pending" }))
+			cart.addItem(dish("PENNE", "Pasta", { kds_status: "Pending", kds_ahead: 1, ...extra }))
+			cart.addItem(dish("TART", "Cakes", { kds_status: "Pending", kds_ahead: 1 }))
+		}
+		const prepareAhead = (rhythm = "Prepared ahead") => {
+			const store = useRestaurantStore()
+			store.restaurantSettings = { ...store.restaurantSettings, service_rhythm: rhythm }
+		}
+
+		it("names the next course sent ahead and not called: the mains first", () => {
+			prepareAhead()
+			aheadTable()
+			mountCart()
+
+			expect(nextCourseButton().text()).toBe("Order the next course · the mains")
+			expect(everythingButton().exists()).toBe(true)
+		})
+
+		it("names the desserts once the mains are called", () => {
+			prepareAhead()
+			aheadTable({ kds_called_at: "2026-11-01 19:00:00.000000" })
+			mountCart()
+
+			expect(nextCourseButton().text()).toBe("Order the next course · the desserts")
+		})
+
+		it("is not there once every course is called", () => {
+			prepareAhead()
+			aheadTable({ kds_called_at: "2026-11-01 19:00:00.000000" })
+			cart.invoiceItems[2].kds_called_at = "2026-11-01 19:10:00.000000"
+			mountCart()
+
+			expect(nextCourseButton().exists()).toBe(false)
+		})
+
+		it("is not there in the room's rhythm for lines sent ahead: the room cannot call a line it never held", () => {
+			prepareAhead("Called by the room")
+			aheadTable()
+			mountCart()
+
+			expect(nextCourseButton().exists()).toBe(false)
+		})
+
+		it("is not there on a takeaway order", () => {
+			prepareAhead()
+			aheadTable()
+			cart.isTakeaway = true
+			mountCart()
+
+			expect(nextCourseButton().exists()).toBe(false)
+		})
+
+		it("tells the page to order the next course, as it always did", async () => {
+			prepareAhead()
+			aheadTable()
+			mountCart()
+
+			await nextCourseButton().trigger("click")
+
+			expect(wrapper.emitted("order-next-course")).toHaveLength(1)
+		})
+	})
 })
+

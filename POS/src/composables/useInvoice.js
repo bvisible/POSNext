@@ -438,6 +438,10 @@ export function useInvoice() {
 				//// Neoffice — the course the line belongs to (NeoRestau lot 1, service families): from the article's group, or the
 				//// waiter's choice for this line, or the order read back from the server.
 				service_family: item.service_family || "",
+				//// Neoffice — whether the line left ahead of its course (the kitchen prepares ahead) and when the room called it (NeoRestau lot 1, the service rhythm, Daniel, 01.11):
+				//// the cart names the next course to call from them. The server stamps the call; the cart only reads it.
+				kds_ahead: item.kds_ahead ? 1 : 0,
+				kds_called_at: item.kds_called_at || null,
 				_modifiers_applied: item._modifiers_applied || 0,
 				// Optional item-level Sales Person (commission attribution)
 				sales_person: item.sales_person || null,
@@ -1755,6 +1759,9 @@ export function useInvoice() {
 				preparation_station: item.preparation_station || "",
 				//// Neoffice — the course the line was ordered under, as the server holds it (NeoRestau lot 1, service families).
 				service_family: item.service_family || "",
+				//// Neoffice — whether the line left ahead of its course and when the room called it, as the server holds them (the service rhythm, NeoRestau lot 1)
+				kds_ahead: item.kds_ahead ? 1 : 0,
+				kds_called_at: item.kds_called_at || null,
 				//// Neoffice — the server's rate already holds the options: the line knows how much of it they make, so
 				//// saving them again moves the price by the change only (was 0: a « no side −1.50 » re-saved with a remark
 				//// took the 1.50 off a second time; NeoRestau lot 1, task 27, fix round 1).

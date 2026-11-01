@@ -208,18 +208,25 @@ function open() {
 	const lines = rows.filter((item) => !item.is_free_item && !followsItsPaidLine(rows, item))
 	// The boxes of the lines not sent yet are ticked by the rhythm of the meal: at a table the drinks and the first food family
 	// present go, the rest is held back; at the counter and on a takeaway everything goes (service families, NeoRestau lot 1)
+	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11), a line the room would have held is ticked too and leaves marked ahead ("ahead" in the plan)
 	const plan = planKitchenSend(
 		lines,
 		isTableService({
 			restaurantTable: cartStore.restaurantTable,
 			isTakeaway: cartStore.isTakeaway,
 		}),
+		[],
+		restaurantStore.serviceRhythm,
 	)
 	dialogItems.value = lines.map((item, index) => ({
 		...item,
 		// The cart row this line is a copy of: the dish can sit twice (the line the kitchen has, the line that waits)
 		_row: item,
-		selected: isSendable(item) ? shouldDefaultCheck(item) && plan[index] === "send" : false,
+		//// Neoffice — whether the plan sends this line ahead; kept with the line so that sending it marks the cart row
+		_ahead: plan[index] === "ahead",
+		selected: isSendable(item)
+			? shouldDefaultCheck(item) && (plan[index] === "send" || plan[index] === "ahead")
+			: false,
 	}))
 	show.value = true
 }
@@ -263,9 +270,12 @@ function sendSelected() {
 		const cartItem = cartLineOf(di)
 		if (cartItem) {
 			cartItem.kds_status = "Pending"
+			//// Neoffice — a line the plan sent ahead is marked so on the cart row; the server keeps the mark only where it would have sent the line ahead itself
+			if (di._ahead) cartItem.kds_ahead = 1
 			// Its offered rows not sent yet go in the same send: never a ticket of their own
 			for (const follower of kitchenFollowers(cartStore.invoiceItems, cartItem)) {
 				follower.kds_status = "Pending"
+				if (di._ahead) follower.kds_ahead = 1
 			}
 			// Ensure preparation_station is set (individual item > item group fallback)
 			if (!cartItem.preparation_station) {

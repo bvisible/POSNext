@@ -2126,6 +2126,9 @@ async function selectTable(table) {
 							// An offered row of the table (« Offert », NeoRestau lot 1, task 24) comes back offered:
 							// its flag and its list price
 							...offeredSourceFields(item),
+							//// Neoffice — whether the line left ahead of its course and when the room called it (the service rhythm, NeoRestau lot 1): the next course to call is named from them, and a table reopened must hand them back as it hands the family
+							kds_ahead: item.kds_ahead || 0,
+							kds_called_at: item.kds_called_at || null,
 						},
 						item.qty || 1,
 					)

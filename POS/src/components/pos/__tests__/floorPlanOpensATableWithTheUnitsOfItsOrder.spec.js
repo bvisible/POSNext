@@ -248,4 +248,32 @@ describe("opening a table puts the lines of its order in the cart with their uni
 			[1, ""],
 		])
 	})
+
+	//// Neoffice — where the kitchen prepares ahead (NeoRestau lot 1, the service rhythm, Daniel, 01.11): a table reopened must hand its lines their mark and their call back, as it hands the family. The omission
+	//// of the family already cost a release (a reopened table lost its courses); the same omission here would leave the next course to call unnamed.
+	it("gives each line whether it left ahead of its course and when the room called it, so that the next course to call can be named from any till", async () => {
+		order.value = structuredClone(ORDER)
+		order.value.items[0].service_family = "Starter"
+		order.value.items[1].service_family = "Main"
+		order.value.items[1].kds_ahead = 1
+		order.value.items[1].kds_called_at = null
+		order.value.items[2].service_family = "Dessert"
+		order.value.items[2].kds_ahead = 1
+		order.value.items[2].kds_called_at = "2026-11-01 19:00:00.000000"
+
+		await openTheTable()
+
+		const lines = cart.invoiceItems
+		expect(lines.map((line) => Boolean(line.kds_ahead))).toEqual([false, true, true])
+		expect(lines.map((line) => line.kds_called_at || null)).toEqual([null, null, "2026-11-01 19:00:00.000000"])
+	})
+
+	it("gives a line of an order that came without the two fields neither a mark nor a call: nothing was sent ahead", async () => {
+		await openTheTable()
+
+		for (const line of cart.invoiceItems) {
+			expect(Boolean(line.kds_ahead)).toBe(false)
+			expect(line.kds_called_at || null).toBeNull()
+		}
+	})
 })
