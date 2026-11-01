@@ -18546,9 +18546,11 @@ msgstr ""
 
 #: POS/src/pages/POSSale.vue
 msgid "Next course ordered"
+msgstr ""
 
 #: POS/src/components/sale/InvoiceCart.vue
 msgid "Fold delivered courses"
+msgstr ""
 
 #: POS/src/components/restaurant/FloorNotices.vue
 msgid "{0} — the guest is ordering"
