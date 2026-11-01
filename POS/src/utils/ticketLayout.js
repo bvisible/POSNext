@@ -159,7 +159,10 @@ export const TICKET_CARD_WIDE =
  * `actions`: the row under the head, with the room of a panel.
  */
 export const FULLSCREEN_FRAME = {
-	body: "overflow-x-auto overflow-y-hidden overscroll-contain [column-fill:auto] [column-gap:24px] [columns:calc(var(--kds-card-w,330px)_-_30px)]",
+	//// Neoffice — ONE column that scrolls up and down (Daniel, 01.11: « si vraiment il est très très long, on scrolle en haut en bas »), where the dishes flowed into as many columns side by side as the full-screen panel needed and the panel scrolled sideways: a panel as wide as the screen with one narrow column in it and empty space beside it
+	body: "overflow-y-auto overflow-x-hidden overscroll-contain",
+	//// Neoffice — the width of the panel: one column of dishes (1.7 times the card of the board, 561 px in the plain size), never wider than the screen; the card sets it on its root, where the size's variables are
+	card: "w-full max-w-[calc(var(--kds-card-w,330px)*1.7)]",
 	line: "!min-h-[44px] !text-[length:var(--kds-fs,13px)]",
 	actions: "gap-2 px-[var(--kds-pad-x,16px)] pb-3 pt-1",
 }

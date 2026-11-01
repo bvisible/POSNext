@@ -17759,8 +17759,9 @@ msgid "More →"
 msgstr "Suite →"
 
 #: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
-msgid "View all"
-msgstr "Voir tout"
+msgctxt "Kitchen ticket strip"
+msgid "View"
+msgstr "Voir"
 
 msgid "A cash movement was recorded or cancelled while this shift was being closed. Open the closing again: it will count it."
 msgstr "Un mouvement de caisse a été enregistré ou annulé pendant la clôture de cette session. Rouvrez la clôture : elle le comptera."

@@ -279,13 +279,13 @@ describe("the hint that more dishes follow", () => {
 		expect(fade.classes()).not.toContain("h-14")
 	})
 
-	it("has the strip at its foot even when nothing follows, with « View all » and no count (kitchen test, 01.11)", async () => {
+	it("has the strip at its foot even when nothing follows, with « View » and no count (kitchen test, 01.11)", async () => {
 		layout({ viewport: 400 })
 		const wrapper = show(longOrder(3))
 		await nextTick()
 
 		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
-		expect(wrapper.get('[data-test="ticket-more-strip"]').text()).toBe("View all")
+		expect(wrapper.get('[data-test="ticket-more-strip"]').text()).toBe("View")
 	})
 
 	it("sits over the dishes without taking a touch from them: the dish under the fade can still be pressed", async () => {

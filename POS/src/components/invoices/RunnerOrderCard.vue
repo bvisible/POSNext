@@ -16,7 +16,7 @@
 	<!-- //// Neoffice — the card has TWO forms, as the kitchen's (task 38a-3, ruling 107 layer 3): the card of the board, and the same ticket opened FULL SCREEN over it (`fullscreen`), which the board's card draws by rendering itself -->
 	<!-- //// inside TicketFullScreen: the dishes, the buttons and the calls are written once. The panel is bigger (its own CSS variables, `fullScreenVariables`), has an × beside its buttons and lays its dishes out in columns side by side. -->
 	<div class="flex min-h-0 flex-col border-green-500 bg-white dark:bg-gray-800"
-		:class="fullscreen ? 'flex-1 overflow-hidden rounded-2xl border-l-[6px] shadow-xl' : 'rounded-xl border-l-4 shadow-sm'"
+		:class="fullscreen ? ['flex-1 overflow-hidden rounded-2xl border-l-[6px] shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl border-l-4 shadow-sm'"
 		:style="fullscreen ? fullVariables : undefined"
 		:data-test="fullscreen ? 'ticket-panel' : 'runner-ticket'">
 		<!-- Header and action row: the top of the card, tinted -->
@@ -173,7 +173,8 @@
 				<span data-test="ticket-view-all"
 					class="pointer-events-none inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:[&&]:!text-gray-300">
 					<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
-					{{ __("View all") }}
+					<!-- //// Neoffice — « View », not « View all » (Daniel, 01.11) -->
+					{{ __("View", null, "Kitchen ticket strip") }}
 				</span>
 				<span v-if="hiddenCount > 0" data-test="ticket-more"
 					class="pointer-events-none rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">

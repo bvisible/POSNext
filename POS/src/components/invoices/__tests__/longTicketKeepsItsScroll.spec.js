@@ -198,14 +198,14 @@ describe("a wide ticket that is still too long", () => {
 	})
 })
 
-describe("« View all » on a card that scrolls", () => {
+describe("« View » on a card that scrolls", () => {
 	it("is on the strip, beside the count, while dishes are out of sight", async () => {
 		layout(200)
 		const wrapper = kitchen(20)
 		await nextTick()
 
 		const strip = wrapper.get('[data-test="ticket-more-strip"]')
-		expect(strip.get('[data-test="ticket-view-all"]').text()).toBe("View all")
+		expect(strip.get('[data-test="ticket-view-all"]').text()).toBe("View")
 		expect(strip.find('[data-test="ticket-more"]').exists()).toBe(true)
 	})
 
@@ -221,7 +221,7 @@ describe("« View all » on a card that scrolls", () => {
 		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
 		expect(wrapper.find('[data-test="ticket-more-fade"]').exists()).toBe(false)
 		const strip = wrapper.get('[data-test="ticket-more-strip"]')
-		expect(strip.get('[data-test="ticket-view-all"]').text()).toBe("View all")
+		expect(strip.get('[data-test="ticket-view-all"]').text()).toBe("View")
 
 		await strip.trigger("click")
 		await nextTick()
@@ -243,19 +243,19 @@ describe("« View all » on a card that scrolls", () => {
 		const state = layout(200)
 		const wrapper = runner(20)
 		await nextTick()
-		expect(wrapper.get('[data-test="ticket-view-all"]').text()).toBe("View all")
+		expect(wrapper.get('[data-test="ticket-view-all"]').text()).toBe("View")
 
 		state.scrolled = 20 * 48 - 200
 		await wrapper.get('[data-test="ticket-body"]').trigger("scroll")
 
 		expect(wrapper.find('[data-test="ticket-more"]').exists()).toBe(false)
-		expect(wrapper.get('[data-test="ticket-view-all"]').text()).toBe("View all")
+		expect(wrapper.get('[data-test="ticket-view-all"]').text()).toBe("View")
 		await wrapper.get('[data-test="ticket-more-strip"]').trigger("click")
 		await nextTick()
 		expect(panel()).not.toBeNull()
 	})
 
-	it("on a card whose dishes all fit: the strip says « View all » with no count, and there is no fade (kitchen test, 01.11)", async () => {
+	it("on a card whose dishes all fit: the strip says « View » with no count, and there is no fade (kitchen test, 01.11)", async () => {
 		layout(400)
 		const kitchenCard = kitchen(5)
 		const runnerCardWrapper = runner(5)

@@ -244,18 +244,13 @@ describe("the dishes of the runner's panel", () => {
 		expect(panel().style.getPropertyValue("--kds-fs")).toBe("22px")
 	})
 
-	it("flow in columns side by side, each dish whole, and none is cut: 24 of 24, with no strip", async () => {
+	it("stand in one column that scrolls up and down, none is cut: 24 of 24, with no strip (Daniel, 01.11)", async () => {
 		await openIt(show())
 
 		const body = part("ticket-body")
-		expect(body.className).toContain("overflow-x-auto")
-		expect(body.className).toContain("[column-fill:auto]")
+		expect(body.className).toContain("overflow-y-auto")
+		expect(body.className).not.toContain("[column-fill:auto]")
 		expect(panel().querySelectorAll("[data-ticket-line]")).toHaveLength(24)
-		expect(
-			[...panel().querySelectorAll("[data-ticket-line]")].every((line) =>
-				line.className.includes("break-inside-avoid"),
-			),
-		).toBe(true)
 		expect(part("ticket-more-strip")).toBeNull()
 		expect(part("ticket-line").className).toContain("!min-h-[44px]")
 	})

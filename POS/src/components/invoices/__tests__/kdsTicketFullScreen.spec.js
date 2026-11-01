@@ -374,23 +374,38 @@ describe("the dishes of the panel", () => {
 		expect(panel().style.getPropertyValue("--kds-btn-h")).toBe("48px")
 	})
 
-	it("flow in columns side by side, each dish whole: the body scrolls sideways and a dish is never cut between two columns", async () => {
+	it("stand in ONE column that scrolls up and down, not in columns side by side (Daniel, 01.11: a very long ticket scrolls)", async () => {
 		await openIt(show(longOrder(24)))
 
 		const body = part("ticket-body")
-		expect(body.className).toContain("overflow-x-auto")
-		expect(body.className).toContain("overflow-y-hidden")
-		expect(body.className).not.toContain("overflow-y-auto")
+		expect(body.className).toContain("overflow-y-auto")
+		expect(body.className).toContain("overflow-x-hidden")
+		expect(body.className).not.toContain("overflow-x-auto")
+		expect(body.className).not.toContain("columns:")
 		expect(
 			tokens(FULLSCREEN_FRAME.body).every((token) =>
 				body.className.includes(token),
 			),
 		).toBe(true)
-		const lines = [...panel().querySelectorAll("[data-ticket-line]")]
-		expect(lines).toHaveLength(24)
+		expect(panel().querySelectorAll("[data-ticket-line]")).toHaveLength(24)
+	})
+
+	it("is a panel of one column's width, centred over the board, and not the whole screen (Daniel, 01.11)", async () => {
+		await openIt(show(longOrder(24)))
+
+		// the card sets its own width: 1.7 times the card of the board, never wider than the screen
 		expect(
-			lines.every((line) => line.className.includes("break-inside-avoid")),
+			tokens(FULLSCREEN_FRAME.card).every((token) =>
+				panel().className.includes(token),
+			),
 		).toBe(true)
+		expect(panel().className).toContain("max-w-[calc(var(--kds-card-w,330px)*1.7)]")
+		const scrim = document.querySelector('[data-test="fullscreen-scrim"]')
+		expect(scrim.className).toContain("items-center")
+		expect(scrim.className).toContain("justify-center")
+		expect(
+			document.querySelector('[data-test="ticket-fullscreen"]').className,
+		).toContain("justify-center")
 	})
 
 	it("show every dish, in the same lines as the card (24 of 24: nothing is cut)", async () => {

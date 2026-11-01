@@ -22,7 +22,7 @@
 	<!-- //// inside TicketFullScreen. One component, so the dishes, the buttons, the menus and the calls are written once and the two can never disagree. The panel is bigger (its own CSS variables, `fullScreenVariables`), -->
 	<!-- //// has an × beside its buttons, and lays its dishes out in columns side by side. -->
 	<div class="bg-white dark:bg-gray-800 flex flex-1 flex-col min-h-0"
-		:class="[borderColorClass, fullscreen ? 'rounded-2xl border-l-[6px] overflow-hidden shadow-xl' : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]']"
+		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]']"
 		:style="fullscreen ? fullVariables : undefined"
 		:data-test="fullscreen ? 'ticket-panel' : 'ticket'" :data-state="status">
 
@@ -326,7 +326,8 @@
 				<span data-test="ticket-view-all"
 					class="pointer-events-none inline-flex items-center gap-1 text-xs font-semibold text-gray-600 dark:[&&]:!text-gray-300">
 					<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
-					{{ __("View all") }}
+					<!-- //// Neoffice — « View », not « View all » (Daniel, 01.11: « tout, de toute façon c'est pour voir, le mot tout ne sert à rien ») -->
+					{{ __("View", null, "Kitchen ticket strip") }}
 				</span>
 				<span v-if="hiddenCount > 0" data-test="ticket-more"
 					class="pointer-events-none rounded-full bg-gray-800 px-2.5 py-[3px] text-xs font-bold leading-none text-white dark:bg-white dark:text-gray-800">

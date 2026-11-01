@@ -1,4 +1,5 @@
 <template>
+	<!-- //// Neoffice — the panel is no longer the whole screen (Daniel, 01.11: « un pop-up un tout petit peu plus petit […] la hauteur, il faut l'avoir, mais la largeur, on peut faire quelque chose de plus sympa »): it is as high as the ticket needs, up to the screen, and as wide as one column of dishes (the card sets its width), centred over the board; a very long ticket scrolls up and down inside it. -->
 	<!-- //// Neoffice — added file (no upstream equivalent). A ticket opened FULL SCREEN over the board (NeoRestau lot 1, task 38a-3, ruling 107 layer 3: « on force par-dessus »). -->
 	<!-- //// The long ticket of a busy service does not fit its card, even wide, so the cook opens it: the same ticket, the same buttons, in a panel that takes the screen, over the board that keeps -->
 	<!-- //// updating behind it. This is only the SHELL (the scrim, the dialog, the way out); what is inside is the card itself, drawn in its full-screen form by the card that opened it. It is -->
@@ -8,7 +9,7 @@
 	<Teleport to="body">
 		<div
 			data-test="fullscreen-scrim"
-			class="fixed inset-x-0 top-0 z-40 flex h-screen bg-[rgba(24,20,16,0.55)] p-3.5 supports-[height:100dvh]:h-dvh dark:bg-[rgba(0,0,0,0.66)]"
+			class="fixed inset-x-0 top-0 z-40 flex h-screen items-center justify-center bg-[rgba(24,20,16,0.55)] p-3.5 supports-[height:100dvh]:h-dvh dark:bg-[rgba(0,0,0,0.66)]"
 			@click.self="emit('close')"
 		>
 			<div
@@ -18,7 +19,7 @@
 				aria-modal="true"
 				:aria-label="label || undefined"
 				tabindex="-1"
-				class="flex min-w-0 flex-1 outline-none"
+				class="flex max-h-full min-h-0 min-w-0 flex-1 justify-center outline-none"
 				@keydown="onKeydown"
 			>
 				<slot />
