@@ -294,6 +294,26 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — the service rhythm (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »): the restaurant says whether the room calls each course
+	# //// (the default) or the kitchen prepares them ahead. A field of the Restaurant, the restaurant managers' by its place (it is no setting of the till).
+	Setting(
+		"service_rhythm",
+		"service",
+		_lt("Service rhythm"),
+		_lt(
+			"The room calls: at Validate the drinks and the first course leave, the next courses wait until the waiter"
+			" orders them. The kitchen prepares ahead: everything leaves at Validate, the later courses reach the kitchen"
+			" marked as ahead so that it can start them, and the waiter's call only tells it to serve them now."
+		),
+		"select",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		options=(
+			("Called by the room", _lt("The room calls", context="Service rhythm")),
+			("Prepared ahead", _lt("The kitchen prepares ahead", context="Service rhythm")),
+		),
+		applies=APPLIES_RESTAURANT,
+	),
 	# //// Neoffice — the digits of the ticket number (NeoRestau lot 1, task 38b), added to the list when this task's registry
 	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
 	Setting(

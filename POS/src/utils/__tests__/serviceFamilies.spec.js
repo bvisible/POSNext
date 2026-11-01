@@ -78,13 +78,15 @@ beforeEach(() => {
 
 describe("the rule of a send, against the table the server is tested against", () => {
 	it("gives the plan of every example of the shared table", () => {
-		expect(CASES.send_cases.length).toBeGreaterThanOrEqual(20)
+		expect(CASES.send_cases.length).toBeGreaterThanOrEqual(35)
 		for (const example of CASES.send_cases) {
 			expect(
 				rule.planKitchenSend(
 					example.lines,
 					example.table_service,
 					example.sent_families,
+					//// Neoffice — an example may name the service rhythm of its restaurant (the room's call when it says none)
+					example.rhythm,
 				),
 				example.name,
 			).toEqual(example.plan)
@@ -92,13 +94,39 @@ describe("the rule of a send, against the table the server is tested against", (
 	})
 
 	it("gives the next course and every held line of every example of the shared table", () => {
-		expect(CASES.next_cases.length).toBeGreaterThanOrEqual(8)
+		expect(CASES.next_cases.length).toBeGreaterThanOrEqual(15)
 		for (const example of CASES.next_cases) {
-			expect(rule.nextRelease(example.lines), example.name).toEqual(
+			expect(rule.nextRelease(example.lines, example.rhythm), example.name).toEqual(
 				example.next,
 			)
-			expect(rule.heldLines(example.lines), example.name).toEqual(example.all)
+			expect(rule.heldLines(example.lines, example.rhythm), example.name).toEqual(
+				example.all,
+			)
 		}
+	})
+
+	it("names the rhythm of the example it is given, and the room's call for an unknown one", () => {
+		const lines = [
+			{ service_family: "Starter", kds_status: "" },
+			{ service_family: "Main", kds_status: "" },
+		]
+
+		expect(rule.planKitchenSend(lines, true)).toEqual(["send", "hold"])
+		expect(rule.planKitchenSend(lines, true, [], undefined)).toEqual(["send", "hold"])
+		expect(rule.planKitchenSend(lines, true, [], "Whenever")).toEqual(["send", "hold"])
+		expect(rule.planKitchenSend(lines, true, [], "Prepared ahead")).toEqual(["send", "ahead"])
+	})
+
+	it("reads a Check in any spelling, and the cart's own rows", () => {
+		const cart = [
+			{ service_family: "Starter", kds_status: "Pending" },
+			{ service_family: "Main", kds_status: "Pending", kds_ahead: true },
+			{ service_family: "Dessert", kds_status: "Pending", kds_ahead: "1" },
+		]
+
+		expect(rule.nextRelease(cart, "Prepared ahead")).toEqual({ family: "Main", indexes: [1] })
+		expect(rule.heldLines(cart, "Prepared ahead")).toEqual([1, 2])
+		expect(rule.nextRelease(cart)).toEqual({ family: "", indexes: [] })
 	})
 
 	it("does not change the lines it is given", () => {

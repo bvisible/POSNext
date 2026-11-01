@@ -585,11 +585,13 @@ def screen_settings(restaurant: str) -> dict:
 	only the shape the screens read (`get_restaurant_settings`).
 	"""
 	# //// Neoffice — the alerts are the settings of the restaurant's till, resolved here for a screen that has no till (pos_next.restaurant.kitchen_alerts)
-	from pos_next.restaurant import kitchen_alerts
+	from pos_next.restaurant import kitchen_alerts, service_families
 
 	return {
 		"restaurant": restaurant,
 		"enable_runner": bool(frappe.db.get_value("Restaurant", restaurant, "enable_runner")),
+		# //// Neoffice — the kitchen greys the later courses by the order of the meal only where the room calls them; where the kitchen prepares ahead it does not (NeoRestau lot 1, Daniel, 01.11)
+		"service_rhythm": service_families.rhythm_of_restaurant(restaurant),
 		"kitchen_alerts": kitchen_alerts.kitchen_alert_settings(restaurant),
 		"opening_hours": [],
 		"is_open": True,

@@ -2402,6 +2402,8 @@ def get_restaurant_settings(restaurant=None):
 		"is_open": is_open,
 		"current_slot": current_slot,
 		"enable_runner": bool(settings.enable_runner),
+		# //// Neoffice — how the courses reach the kitchen, the restaurant's choice (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »)
+		"service_rhythm": service_families.normalise_rhythm(settings.get("service_rhythm")),
 		"enable_takeaway": bool(till.enable_takeaway),
 		"takeaway_card": till.takeaway_card or None,
 		"enable_tips": bool(settings.enable_tips),

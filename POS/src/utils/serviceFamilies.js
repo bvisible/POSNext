@@ -13,7 +13,10 @@
 //// anything else for a line that has left for the kitchen.
 
 import { computed, shallowRef } from "vue"
+//// Neoffice — the call of a course where the kitchen prepares ahead, and the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »)
+import { isUncalled } from "./courseCall"
 import { hasLeftForTheKitchen } from "./lineKitchenState"
+import { PREPARED_AHEAD, rhythmOf } from "./serviceRhythm"
 
 export const SERVICE_FAMILIES = ["Drink", "Starter", "Main", "Dessert"]
 // The food families, in the order a meal serves them
@@ -76,18 +79,29 @@ export function isTableService({ restaurantTable, isTakeaway } = {}) {
  *   among the new lines, unless a line of that family or an earlier one is held back already. Any other new food line is held:
  *   the meal has begun, and only the waiter's gesture orders the next course.
  * - A held line stays held: a plain send never releases one.
+ * - //// Neoffice — where the kitchen prepares ahead (`rhythm`), a new food line that would be held leaves instead, "ahead". A line that left ahead and is not
+ *   called yet is no course that left: its family is not "sent", so a later line of that family joins it, ahead.
  *
  * @param {Array<Object>} lines - The order's lines, in order
  * @param {boolean} tableService
  * @param {string[]} [sentFamilies] - The families the stored order already sent
- * @returns {Array<"send"|"hold"|"left">} One decision per line
+ * @param {string} [rhythm] - The restaurant's service rhythm: "Prepared ahead", else the room's call
+ * @returns {Array<"send"|"hold"|"ahead"|"left">} One decision per line
  */
-export function planKitchenSend(lines, tableService, sentFamilies = []) {
+export function planKitchenSend(
+	lines,
+	tableService,
+	sentFamilies = [],
+	rhythm = undefined,
+) {
 	const all = lines || []
+	const later = rhythmOf(rhythm) === PREPARED_AHEAD ? "ahead" : "hold"
 	const leftRank = Math.max(
 		0,
 		...sentFamilies.map((family) => rankOf(family)),
-		...all.filter(hasLeftForTheKitchen).map((line) => rankOf(familyOf(line))),
+		...all
+			.filter((line) => hasLeftForTheKitchen(line) && !isUncalled(line))
+			.map((line) => rankOf(familyOf(line))),
 	)
 	const rankOfNew = all
 		.filter((line) => isNew(line) && rankOf(familyOf(line)))
@@ -104,37 +118,43 @@ export function planKitchenSend(lines, tableService, sentFamilies = []) {
 		if (!tableService) return "send"
 		const rank = rankOf(familyOf(line))
 		if (!rank) return "send"
-		if (leftRank) return rank <= leftRank ? "send" : "hold"
-		return rank === lead && leadIsFree ? "send" : "hold"
+		if (leftRank) return rank <= leftRank ? "send" : later
+		return rank === lead && leadIsFree ? "send" : later
 	})
 }
 
+//// Neoffice — a line waits for the waiter's word when it is held back or, where the kitchen prepares ahead, when it left ahead and is not called yet
+const waitsForTheRoom = (line, rhythm) =>
+	isHeld(line) || (rhythmOf(rhythm) === PREPARED_AHEAD && isUncalled(line))
+
 /**
- * The indexes of every line on hold: what « order everything » sends.
+ * The indexes of every line that waits for the room: the lines on hold and, where the kitchen prepares ahead, the lines sent ahead and not called yet. What « order everything » sends.
  *
  * @param {Array<Object>} lines
+ * @param {string} [rhythm] - The restaurant's service rhythm
  * @returns {number[]}
  */
-export function heldLines(lines) {
+export function heldLines(lines, rhythm = undefined) {
 	const held = []
 	;(lines || []).forEach((line, index) => {
-		if (isHeld(line)) held.push(index)
+		if (waitsForTheRoom(line, rhythm)) held.push(index)
 	})
 	return held
 }
 
 /**
- * The next course among the held lines: its family and the indexes of its held lines. Only the food families are courses:
- * a held drink, or a held line of no family, is released by « order everything », by the kitchen dialog or by the quick send
- * of its own line. No course held: no family and no index.
+ * The next course among the lines that wait for the room: its family and the indexes of its lines. Those lines are the held ones and, where the kitchen prepares ahead, the ones that
+ * left ahead and are not called yet (a restaurant that changed its rhythm while a table was open may have both). Only the food families are courses: a held drink, or a held line of no family, is
+ * released by « order everything », by the kitchen dialog or by the quick send of its own line. No course waiting: no family and no index.
  *
  * @param {Array<Object>} lines
+ * @param {string} [rhythm] - The restaurant's service rhythm
  * @returns {{ family: string, indexes: number[] }}
  */
-export function nextRelease(lines) {
+export function nextRelease(lines, rhythm = undefined) {
 	const courses = []
 	;(lines || []).forEach((line, index) => {
-		if (isHeld(line) && rankOf(familyOf(line))) {
+		if (waitsForTheRoom(line, rhythm) && rankOf(familyOf(line))) {
 			courses.push({ index, rank: rankOf(familyOf(line)) })
 		}
 	})

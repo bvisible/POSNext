@@ -16,6 +16,8 @@
   "takeaway_tax_category",
   "section_runner",
   "enable_runner",
+  "section_service_rhythm",
+  "service_rhythm",
   "section_tickets",
   "ticket_number_digits",
   "ticket_number_reset",
@@ -116,6 +118,19 @@
    "fieldname": "enable_runner",
    "fieldtype": "Check",
    "label": "Enable Runner"
+  },
+  {
+   "fieldname": "section_service_rhythm",
+   "fieldtype": "Section Break",
+   "label": "Service Rhythm"
+  },
+  {
+   "default": "Called by the room",
+   "description": "Called by the room: at Validate the drinks and the first course leave, the later courses are held until the waiter orders them. Prepared ahead: everything leaves at Validate, the later courses reach the kitchen marked as ahead, and the waiter's call only tells the kitchen to serve them now.",
+   "fieldname": "service_rhythm",
+   "fieldtype": "Select",
+   "label": "Service Rhythm",
+   "options": "Called by the room\nPrepared ahead"
   },
   {
    "fieldname": "section_tickets",

@@ -57,6 +57,8 @@ READ_BY_THE_TILL = {
 	"reservation_channels",
 	# //// Neoffice — the popup and the sound of the kitchen alerts, resolved from the till's POS Settings (NeoRestau lot 1, 01.11)
 	"kitchen_alerts",
+	# //// Neoffice — how the courses reach the kitchen (the restaurant's service rhythm, NeoRestau lot 1, Daniel, 01.11): the till plans a send and orders the next course by it
+	"service_rhythm",
 }
 # What only the server uses: the call answers any signed-in user, so none of it may leave
 ONLY_THE_SERVER_USES = (

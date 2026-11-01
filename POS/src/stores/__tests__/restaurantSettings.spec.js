@@ -187,3 +187,35 @@ describe("restaurant settings are read and saved per restaurant", () => {
 		expect(store.restaurantStatus.isOpen).toBe(true)
 	})
 })
+
+describe("the service rhythm is the restaurant's choice (NeoRestau lot 1, Daniel, 01.11)", () => {
+	let store
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		call.mockReset()
+		tillSettings.restaurant = undefined
+		store = useRestaurantStore()
+	})
+
+	it("is the room's call until the server says otherwise", () => {
+		expect(store.serviceRhythm).toBe("Called by the room")
+	})
+
+	it("is the rhythm the server answers", async () => {
+		call.mockResolvedValue({ opening_hours: [], service_rhythm: "Prepared ahead" })
+
+		await store.fetchRestaurantSettings()
+
+		expect(store.serviceRhythm).toBe("Prepared ahead")
+	})
+
+	it("reads an answer from a server that does not know the setting, or an odd one, as the room's call", async () => {
+		call.mockResolvedValue({ opening_hours: [] })
+		await store.fetchRestaurantSettings()
+		expect(store.serviceRhythm).toBe("Called by the room")
+
+		call.mockResolvedValue({ opening_hours: [], service_rhythm: "whenever" })
+		await store.fetchRestaurantSettings()
+		expect(store.serviceRhythm).toBe("Called by the room")
+	})
+})

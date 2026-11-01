@@ -37,6 +37,8 @@ SETTINGS_FIELDS = (
 RESTAURANT_ONLY_SETTINGS = (
 	# The public menu: the guest card on a page that one QR code on the tables opens (pos_next.api.public_menu)
 	"enable_public_menu",
+	# How the courses of a meal reach the kitchen: called by the room, or prepared ahead (pos_next.restaurant.service_families)
+	"service_rhythm",
 )
 
 

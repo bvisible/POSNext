@@ -21,6 +21,15 @@
 
 A line is a mapping with `service_family` and `kds_status` (empty: not sent yet, `Waiting`: held, anything else: left).
 
+The SERVICE RHYTHM of the restaurant (`Restaurant.service_rhythm`) changes what a send does with the lines it would hold back
+(NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »):
+
+- `Called by the room` (the default): the line is held (`Waiting`) until the waiter orders its course, as above;
+- `Prepared ahead`: the line LEAVES with the rest, marked `kds_ahead`, so that the kitchen may start and finish it; the waiter's call
+  (`kds_called_at`, stamped by `restaurant.call_next_course`) then only tells the kitchen to serve it now. A line that left ahead and is not called
+  yet counts as nothing sent: it is not a course that left (a later line of its family joins it, ahead), it is the next course to call, and the
+  kitchen counts no time from it. The time a line counts from is its call for a line sent ahead, its departure (`kds_sent_at`) for any other.
+
 Beside its family, an Item Group may carry a COLOR (Custom Field `service_color`, optional): the kitchen's and the runner's
 tickets tint the dishes of a category with a very pale shade of it. A sub-group with no color takes the nearest one up the tree,
 like the family. The value is user data and ends up in a style on the screens, so only a strict `#RRGGBB` counts as a color:
@@ -45,6 +54,15 @@ HELD = "Waiting"
 SEND = "send"
 HOLD = "hold"
 LEFT = "left"
+# //// Neoffice — a line that would be held, in a restaurant that prepares ahead: it leaves marked ahead instead
+AHEAD = "ahead"
+
+# //// Neoffice — the service rhythm of a restaurant (NeoRestau lot 1, Daniel, 01.11: « Oui, les deux modes »), the Select `service_rhythm` of the Restaurant:
+# //// the room calls each course (the default: the later courses are held back until the waiter orders them), or the kitchen prepares ahead (everything leaves at
+# //// « Valider », the later courses arrive marked as ahead, and the waiter's call only tells the kitchen to serve them now)
+CALLED_BY_THE_ROOM = "Called by the room"
+PREPARED_AHEAD = "Prepared ahead"
+RHYTHMS = (CALLED_BY_THE_ROOM, PREPARED_AHEAD)
 
 
 def _family(line) -> str:
@@ -77,11 +95,57 @@ def _is_new(line) -> bool:
 	return not (line.get("kds_status") or "") if line else False
 
 
+# //// Neoffice — the lines that left AHEAD of their course (NeoRestau lot 1, the service rhythm, Daniel, 01.11)
+def is_ahead(line) -> bool:
+	"""Whether a line left for the kitchen before its course was called (`kds_ahead`)."""
+	return bool(cint(line.get("kds_ahead"))) if line else False
+
+
+def is_uncalled(line) -> bool:
+	"""Whether a line left ahead and the room has not called its course yet: it is at the kitchen, which may start and finish it, and it
+	counts for nothing (no time, not offered to the runner) until `kds_called_at` says the room wants it now."""
+	return is_ahead(line) and _has_left(line) and not line.get("kds_called_at")
+
+
+def go_time(line):
+	"""The time a line counts from: the room's call for a line sent ahead (nothing while it is not called), the time it left for any other."""
+	if not line:
+		return None
+	return line.get("kds_called_at") if is_ahead(line) else line.get("kds_sent_at")
+
+
+# ------------------------------------------------------------------------------------------------------ the rhythm
+
+
+def normalise_rhythm(value) -> str:
+	"""The rhythm a stored value means: `Prepared ahead` only when it says so exactly, the room's call for anything else (no value, a
+	site not migrated yet, a word nobody knows). The default is the safe one: it is how a restaurant served until it chose."""
+	return PREPARED_AHEAD if value == PREPARED_AHEAD else CALLED_BY_THE_ROOM
+
+
+def rhythm_of_restaurant(restaurant) -> str:
+	"""The rhythm of a restaurant (`""` and a restaurant nobody knows: the room's call)."""
+	if not restaurant or not frappe.db.has_column("Restaurant", "service_rhythm"):
+		return CALLED_BY_THE_ROOM
+	return normalise_rhythm(frappe.db.get_value("Restaurant", restaurant, "service_rhythm"))
+
+
+def rhythm_of_table(table) -> str:
+	"""The rhythm a table follows: that of the restaurant it belongs to (a table that names none, the default restaurant), never the
+	till's or the site's. No table, or a table nobody knows, is the room's call: a takeaway and a counter order hold nothing anyway."""
+	if not table or not frappe.db.exists("Restaurant Table", table):
+		return CALLED_BY_THE_ROOM
+	from pos_next.restaurant import scope
+
+	return rhythm_of_restaurant(scope.restaurant_of_record("Restaurant Table", table))
+
+
 # ------------------------------------------------------------------------------------------------------ the rule
 
 
-def plan_send(lines, table_service, sent_families=()) -> list[str]:
-	"""What a send does with each line: `send`, `hold` (the line is, or goes, on hold) or `left` (it already left).
+def plan_send(lines, table_service, sent_families=(), rhythm=CALLED_BY_THE_ROOM) -> list[str]:
+	"""What a send does with each line: `send`, `hold` (the line is, or goes, on hold), `left` (it already left) or, where the kitchen
+	prepares ahead, `ahead` (the line leaves, marked ahead, instead of being held).
 
 	- Outside a table's service every new line is sent.
 	- At a table, a new drink or a new line of no family is sent. A new food line is sent when its family has already left
@@ -89,13 +153,17 @@ def plan_send(lines, table_service, sent_families=()) -> list[str]:
 	  present among the new lines, unless a line of that family or an earlier one is held back already. Any other new food
 	  line is held: the meal has begun, and only the waiter's gesture orders the next course.
 	- A held line stays held: a plain send never releases one.
+	- Where the kitchen prepares ahead (`rhythm`), a new food line that would be held leaves instead, `ahead`. A line that left ahead and is
+	  not called yet is no course that left: its family is not "sent", so a later line of that family joins it, ahead, and the family of a
+	  course the room has called is.
 
 	`sent_families` are the families the stored order already sent (the lines of the till's cart may not tell it all).
 	"""
 	lines = list(lines or [])
+	later = AHEAD if normalise_rhythm(rhythm) == PREPARED_AHEAD else HOLD
 	left_rank = max(
 		[_rank(family) for family in sent_families]
-		+ [_rank(_family(line)) for line in lines if _has_left(line)],
+		+ [_rank(_family(line)) for line in lines if _has_left(line) and not is_uncalled(line)],
 		default=0,
 	)
 	new_ranks = [_rank(_family(line)) for line in lines if _is_new(line) and _rank(_family(line))]
@@ -116,25 +184,32 @@ def plan_send(lines, table_service, sent_families=()) -> list[str]:
 			if not rank:
 				plan.append(SEND)
 			elif left_rank:
-				plan.append(SEND if rank <= left_rank else HOLD)
+				plan.append(SEND if rank <= left_rank else later)
 			else:
-				plan.append(SEND if rank == lead and lead_is_free else HOLD)
+				plan.append(SEND if rank == lead and lead_is_free else later)
 	return plan
 
 
-def held_lines(lines) -> list[int]:
-	"""The indexes of every line on hold: what « order everything » sends."""
-	return [index for index, line in enumerate(lines or []) if _is_held(line)]
+def _waits_for_the_room(line, rhythm) -> bool:
+	"""Whether a line waits for the waiter's word: it is held back, or (where the kitchen prepares ahead) it left ahead and is not called yet."""
+	return _is_held(line) or (normalise_rhythm(rhythm) == PREPARED_AHEAD and is_uncalled(line))
 
 
-def next_release(lines) -> dict:
-	"""The next course among the held lines: the family and the indexes of its held lines (« order the next course »).
+def held_lines(lines, rhythm=CALLED_BY_THE_ROOM) -> list[int]:
+	"""The indexes of every line on hold, and (where the kitchen prepares ahead) of every line sent ahead and not called yet: what « order everything » sends."""
+	return [index for index, line in enumerate(lines or []) if _waits_for_the_room(line, rhythm)]
 
-	Only the food families are courses: a held drink, or a held line of no family, is released by « order everything », by the
-	kitchen dialog or by the quick send of its own line. No course held: no family and no index.
+
+def next_release(lines, rhythm=CALLED_BY_THE_ROOM) -> dict:
+	"""The next course among the lines that wait for the room: the family and the indexes of its lines (« order the next course »).
+
+	The lines that wait are the held ones and, where the kitchen prepares ahead, the ones that left ahead and are not called yet (a
+	restaurant that changed its rhythm while a table was open may have both). Only the food families are courses: a held drink, or a held
+	line of no family, is released by « order everything », by the kitchen dialog or by the quick send of its own line. No course waiting:
+	no family and no index.
 	"""
 	lines = list(lines or [])
-	held = [(index, _rank(_family(line))) for index, line in enumerate(lines) if _is_held(line)]
+	held = [(index, _rank(_family(line))) for index, line in enumerate(lines) if _waits_for_the_room(line, rhythm)]
 	courses = [(index, rank) for index, rank in held if rank]
 	if not courses:
 		return {"family": "", "indexes": []}
@@ -269,28 +344,43 @@ def is_table_service(data) -> bool:
 	return bool(data.get("restaurant_table")) and not cint(data.get("is_takeaway"))
 
 
-def stored_lines(invoice_name) -> list:
+def stored_lines(invoice_name, lock=False) -> list:
 	"""The lines of the stored draft, in order, as they were before this save rewrites them: name, item, unit, status, batch,
-	the time it left for the kitchen and family (the columns a site not migrated yet does not have are left out)."""
+	the time it left for the kitchen, whether it left ahead and when the room called it, and family (the columns a site not migrated yet
+	does not have are left out).
+
+	`lock` reads them FOR UPDATE: a save of the till rebuilds the lines from its payload, which carries no call, so the call of a course that
+	the room makes at that very moment must be seen, not lost (a call locks the same rows, `restaurant.call_next_course`)."""
 	if not invoice_name:
 		return []
 	fields = ["name", "item_code", "uom"]
 	fields += [
 		column
-		for column in ("kds_status", "kds_batch", "kds_sent_at", FIELD)
+		for column in ("kds_status", "kds_batch", "kds_sent_at", "kds_ahead", "kds_called_at", FIELD)
 		if frappe.db.has_column("Sales Invoice Item", column)
 	]
-	return frappe.get_all(
-		"Sales Invoice Item",
-		filters={"parent": invoice_name, "parenttype": "Sales Invoice"},
-		fields=fields,
-		order_by="idx asc",
+	if not lock:
+		return frappe.get_all(
+			"Sales Invoice Item",
+			filters={"parent": invoice_name, "parenttype": "Sales Invoice"},
+			fields=fields,
+			order_by="idx asc",
+		)
+	item = frappe.qb.DocType("Sales Invoice Item")
+	return (
+		frappe.qb.from_(item)
+		.select(*[item[column] for column in fields])
+		.where((item.parent == invoice_name) & (item.parenttype == "Sales Invoice"))
+		.orderby(item.idx)
+		.for_update()
+		.run(as_dict=True)
 	)
 
 
 def sent_families_of(lines) -> list[str]:
-	"""The families of the lines that already left (a cart that lost them cannot tell)."""
-	return [_family(line) for line in lines or [] if _has_left(line) and _family(line)]
+	"""The families of the lines that already left and that the room has called (a cart that lost them cannot tell): a line sent ahead and not
+	called yet is no course that left."""
+	return [_family(line) for line in lines or [] if _has_left(line) and not is_uncalled(line) and _family(line)]
 
 
 def row_of_the_line(rows, position, line, taken):
@@ -334,11 +424,14 @@ def decide_new_lines(data, stored=None) -> None:
 	# line was cooked in part, or is being prepared) is no new line: it keeps what the stored row says, and its family. The lines the till
 	# decided claim their rows first, so that one row is never given to two lines.
 	taken = set()
+	left_before = {}
 	for position, line in enumerate(items):
 		if line.get("kds_status") or "":
 			row = row_of_the_line(stored or [], position, line, taken)
 			if row:
 				taken.add(row.name)
+				if (row.get("kds_status") or "") not in ("", HELD):
+					left_before[id(line)] = row
 	for position, line in enumerate(items):
 		if line.get("kds_status") or "":
 			continue
@@ -346,8 +439,32 @@ def decide_new_lines(data, stored=None) -> None:
 		if row and (row.get("kds_status") or ""):
 			taken.add(row.name)
 			line["kds_status"] = row.get("kds_status")
+			if (row.get("kds_status") or "") != HELD:
+				left_before[id(line)] = row
 			if not _family(line):
 				line[FIELD] = row.get(FIELD) or ""
+
+	table_service = is_table_service(data)
+	rhythm = rhythm_of_table(data.get("restaurant_table")) if table_service else CALLED_BY_THE_ROOM
+	# //// Neoffice — whether a line left ahead, and when the room called it, is the stored row's word for a line that already left (the cart's rows
+	# //// do not carry the call, and the rebuilt document must not lose it); for a line leaving in this save, the till's mark is kept only where it means
+	# //// something: a food line of a table whose restaurant prepares ahead. Any other mark is dropped, so that no till can send a line ahead by itself.
+	for line in items:
+		row = left_before.get(id(line))
+		if row is not None:
+			line["kds_ahead"] = 1 if is_ahead(row) else 0
+			line["kds_called_at"] = row.get("kds_called_at")
+			continue
+		goes_ahead = (
+			is_ahead(line)
+			and table_service
+			and rhythm == PREPARED_AHEAD
+			and bool(_rank(_family(line)))
+			and (line.get("kds_status") or "") not in ("", HELD)
+		)
+		line["kds_ahead"] = 1 if goes_ahead else 0
+		line.pop("kds_called_at", None)
+
 	undecided = [line for line in items if not (line.get("kds_status") or "")]
 	if not undecided:
 		return
@@ -359,9 +476,11 @@ def decide_new_lines(data, stored=None) -> None:
 		if not _family(line):
 			line[FIELD] = from_group.get(line.get("item_code"), "")
 
-	table_service = is_table_service(data)
 	sent = sent_families_of(stored) if table_service else []
-	plan = plan_send(items, table_service, sent_families=sent)
+	plan = plan_send(items, table_service, sent_families=sent, rhythm=rhythm)
 	for line, decision in zip(items, plan):
 		if id(line) in undecided_ids:
-			line["kds_status"] = "Pending" if decision == SEND else HELD
+			line["kds_status"] = "Pending" if decision in (SEND, AHEAD) else HELD
+			# //// Neoffice — a line that would be held leaves instead, marked ahead, where the kitchen prepares ahead
+			if decision == AHEAD:
+				line["kds_ahead"] = 1

@@ -16,6 +16,8 @@ import { logger } from "../utils/logger"
 import { call } from "../utils/apiWrapper"
 //// Neoffice — the service families (NeoRestau lot 1): the map of Item Groups to families is kept where the cart can read it.
 import { setGroupFamilies } from "../utils/serviceFamilies"
+//// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): the room calls each course, or the kitchen prepares ahead
+import { rhythmOf } from "../utils/serviceRhythm"
 
 const log = logger.create("RestaurantStore")
 
@@ -82,6 +84,8 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		auto_detect_tip: true,
 		tip_item: null,
 		enable_runner: true,
+		//// Neoffice — how the courses reach the kitchen (NeoRestau lot 1, Daniel, 01.11): the room calls them unless the restaurant says its kitchen prepares ahead
+		service_rhythm: "Called by the room",
 		enable_takeaway: false,
 		takeaway_card: null,
 		enable_qr_ordering: false,
@@ -820,6 +824,10 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 			restaurantSettings.value.enable_runner !== false &&
 			restaurantSettings.value.enable_runner !== 0,
 	)
+	//// Neoffice — the restaurant's service rhythm (utils/serviceRhythm): the till plans a send and orders the next course by it
+	const serviceRhythm = computed(() =>
+		rhythmOf(restaurantSettings.value.service_rhythm),
+	)
 	const takeawayEnabled = computed(
 		() => !!restaurantSettings.value.enable_takeaway,
 	)
@@ -856,6 +864,7 @@ export const useRestaurantStore = defineStore("restaurant", () => {
 		restaurantStatus,
 		hasCardWarning,
 		runnerEnabled,
+		serviceRhythm,
 		takeawayEnabled,
 		takeawayCard,
 		takeawayOrders,
