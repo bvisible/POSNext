@@ -3871,9 +3871,9 @@ async function handleQRButtonClick(pressed = null) {
 		return;
 	}
 
-	// Show confirmation dialog
+	//// Neoffice — the code is generated AT ONCE (Daniel, 01.11: « il faut que ça génère directement le QR »): the dialog that asked « Open this table for QR self-ordering? » first, with a button to press, is no longer opened (it stays in the template, unreachable, to keep the divergence from upstream small).
 	currentQR.value = { token: "", url: "", tableName: table.table_name || tableName };
-	showQRConfirmDialog.value = true;
+	await confirmQRGeneration();
 }
 
 async function confirmQRGeneration() {

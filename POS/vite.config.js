@@ -92,34 +92,45 @@ export default defineConfig({
 				short_name: "Neopos",
 				description:
 					"Point of Sale system with real-time billing, stock management, and offline support",
-				theme_color: "#4F46E5",
-				background_color: "#ffffff",
+				//// Neoffice — the till can be INSTALLED on a phone (Daniel, 01.11: « j'ai créé le raccourci et quand je le relance, il me relance en mode web normal, pas en web app »). Chrome mints a real
+				//// app only for a manifest it finds installable: PNG icons of 192 and 512 px (the manifest listed SVG icons alone, which Chrome on Android does not take, so it offered a mere shortcut that
+				//// opens a browser tab), and a stable `id`. The icons are the design system's Neoffice icon (assets/logo, never redrawn), the colours the page's own (clay bar, paper ground) instead of
+				//// upstream's indigo.
+				theme_color: "#D68A59",
+				background_color: "#FAF3EA",
 				display: "standalone",
+				//// Neoffice — a stable identity for the installed app, and the scope and start URL as they were
+				id: "/pos",
 				scope: "/pos",
 				start_url: "/pos",
+				//// Neoffice — PNG icons from the design system (public/icon-*.png), see the note above
 				icons: [
+					//// Neoffice — icon-192.png
 					{
-						src: "/assets/pos_next/pos/icon.svg",
+						src: "/assets/pos_next/pos/icon-192.png",
 						sizes: "192x192",
-						type: "image/svg+xml",
+						type: "image/png", //// Neoffice — was image/svg+xml: Chrome on Android installs from PNG icons only
 						purpose: "any",
 					},
+					//// Neoffice — icon-512.png
 					{
-						src: "/assets/pos_next/pos/icon.svg",
+						src: "/assets/pos_next/pos/icon-512.png",
 						sizes: "512x512",
-						type: "image/svg+xml",
+						type: "image/png", //// Neoffice — was image/svg+xml: Chrome on Android installs from PNG icons only
 						purpose: "any",
 					},
+					//// Neoffice — icon-maskable-192.png
 					{
-						src: "/assets/pos_next/pos/icon-maskable.svg",
+						src: "/assets/pos_next/pos/icon-maskable-192.png",
 						sizes: "192x192",
-						type: "image/svg+xml",
+						type: "image/png", //// Neoffice — was image/svg+xml: Chrome on Android installs from PNG icons only
 						purpose: "maskable",
 					},
+					//// Neoffice — icon-maskable-512.png
 					{
-						src: "/assets/pos_next/pos/icon-maskable.svg",
+						src: "/assets/pos_next/pos/icon-maskable-512.png",
 						sizes: "512x512",
-						type: "image/svg+xml",
+						type: "image/png", //// Neoffice — was image/svg+xml: Chrome on Android installs from PNG icons only
 						purpose: "maskable",
 					},
 				],

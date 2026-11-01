@@ -27,7 +27,8 @@
   <!-- //// 2026-04-02). c35b9bcf, 2026-05-07 only reverted a throwaway title used to prove -->
   <!-- //// the GitHub build Action really rebuilt the SPA — it left the file at "Neopos". -->
   <meta name="apple-mobile-web-app-title" content="Neopos" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23D68A59' d='M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4zm10 16H4V9h16v11z'/></svg>" />
+  <!-- //// Neoffice — the iOS home-screen icon is the design system's Neoffice icon as a PNG (an SVG in a data URL is not taken by iOS, and the till is installed as an app from Chrome too): see the manifest in vite.config.js -->
+  <link rel="apple-touch-icon" href="/assets/pos_next/pos/apple-touch-icon.png" />
   <!-- //// revert window title back to original (auto-built test cleanup) — c35b9bc -->
   <title>Neopos</title>
   <!-- //// Neoffice — upstream v2.0.0 loaded here, unconditionally, the countdown banner of its -->

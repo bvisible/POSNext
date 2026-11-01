@@ -149,6 +149,8 @@ inline SVG. The SVGs carry an inline `<!-- //// Neoffice -->` header; the PNGs c
 | Binary | Why |
 |---|---|
 | `pos_next/public/icons/badges/png/*.png` | PNG twins of the badge SVGs, for wkhtmltopdf (see above). |
+| `POS/public/icon-*.png` | The till's app icons as PNG, resized from the design system's Neoffice icon (`assets/logo/app-icon.png`, `adaptive-icon.png`, `apple-touch-icon.png`): Chrome on Android installs a web app only from PNG icons, and offered a mere shortcut from the SVG ones (the manifest in `vite.config.js`). |
+| `POS/public/apple-touch-icon.png` | The iOS home-screen icon, copied from the design system (`assets/logo/apple-touch-icon.png`): iOS does not take an SVG in a data URL. |
 
 ### Committed SPA build — `pos_next/public/pos/**`
 
