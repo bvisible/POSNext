@@ -155,9 +155,11 @@
 								</span>
 								<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
 							</div>
+							<!-- //// Neoffice — the dishes of a send come in SECTIONS by family (Daniel, 01.11: « séparer entrée, plat, dessert »): `inSections` (utils/ticketFamilies) puts them in the order of the meal and tells the first dish of a labelled section (`_head`) and whether a faint rule goes above a dish (`_rule`: every dish but the first, and but the first under a label, whose label is the divider). The label stands INSIDE the wrapper of that first dish, so that in the full-screen columns it is never left alone at the foot of a column. A ticket with no family at all has no label and the rules it always had. -->
 							<div v-for="(item, idx) in batch.items" :key="'b' + batchIdx + '-' + idx"
 								class="relative" data-ticket-line
-								:class="{ 'border-t border-gray-50 dark:border-gray-700': idx > 0, 'break-inside-avoid': fullscreen }">
+								:class="{ 'border-t border-gray-50 dark:border-gray-700': item._rule, 'break-inside-avoid': fullscreen }">
+								<TicketSectionHeader v-if="item._head" :label="item._head.label" :family="item._head.family" />
 								<!-- The whole dish is one touch target (a tap opens its status menu), at least 48 px high like the runner's lines -->
 								<!-- //// Neoffice — a press state instead of a mouse-over one: the kitchen screen is a tablet (task 23) -->
 								<!-- //// Neoffice — a DELIVERED dish is inert (task 42): what is done is done, so it is no touch target (no pointer, no pressed -->
@@ -172,7 +174,10 @@
 											? 'cursor-default opacity-40 line-through'
 											: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
 										isMenuOf(item) ? 'bg-[#FCF3EA] ring-2 ring-inset ring-[#D68A59] dark:bg-[#3A2C22]' : '',
+										//// Neoffice — the pale tint of the dish's category (Daniel, 01.11): a variable on the row and the class that reads it, so that the pressed state above still wins over it. It steps aside for the highlight of the dish whose status menu is open.
+										lineTint(item) ? TINT_CLASS : '',
 									]"
+									:style="lineTint(item)"
 									:data-selected="isMenuOf(item) ? 'true' : undefined"
 									data-test="ticket-line"
 									@click="onLineTap(item, $event)">
@@ -342,6 +347,9 @@ import { inkOn } from "@/utils/stationColors"
 //// Neoffice — the long ticket's hint and the status menu's place (task 23)
 import { placeMenu } from "@/utils/menuPlacement"
 import { dishesOutOfSight } from "@/utils/ticketScrollHints"
+//// Neoffice — the dishes of a send in sections by family, and the pale tint of a category (Daniel, 01.11)
+import TicketSectionHeader from "@/components/invoices/TicketSectionHeader.vue"
+import { TINT_CLASS, inSections, tintStyle } from "@/utils/ticketFamilies"
 //// Neoffice — the ticket opened full screen over the board (task 38a-3, ruling 107 layer 3): its shell, the size it is drawn in, and the length it says
 import TicketFullScreen from "@/components/invoices/TicketFullScreen.vue"
 import { DEFAULT_TEXT_SIZE, fullScreenVariables, TEXT_SIZE_KEY } from "@/utils/kitchenTextSize"
@@ -532,9 +540,13 @@ const groupedActiveItems = computed(() => {
 	//// Neoffice — in a send, the dishes still to cook come first and the finished ones (struck through) after them, each group in its own order (kitchen test, 01.11): a ticket whose
 	//// starters have left kept them at the top, between the dishes to cook. `_globalIdx` stays the dish's place in `activeItems`, which the menu reads.
 	const isDone = (item) => item.kds_status === "Delivered"
+	//// Neoffice — and the dishes still to cook of a send are drawn in SECTIONS by family, in the order of the meal (Daniel, 01.11); the finished ones follow under no label. A ticket with no family is one section without a label: drawn as it was.
 	return sorted.map(([batch, batchItems]) => ({
 		batch,
-		items: [...batchItems.filter((item) => !isDone(item)), ...batchItems.filter(isDone)],
+		items: inSections(
+			batchItems.filter((item) => !isDone(item)),
+			batchItems.filter(isDone),
+		),
 	}))
 })
 const waitingItems = computed(() =>
@@ -625,6 +637,9 @@ function isDelivered(item) {
 function isMenuOf(item) {
 	return activeItemMenu.value === item._globalIdx && !isDelivered(item)
 }
+
+//// Neoffice — the pale tint of a dish's category (Daniel, 01.11): the inline style that carries it, `undefined` for a dish whose category has no colour (or one that is no strict #RRGGBB: it comes from user data) and for the dish whose status menu is open, whose highlight the tint must never hide
+const lineTint = (item) => (isMenuOf(item) ? undefined : tintStyle(item.service_color))
 
 //// Neoffice — the tap on a dish (task 42). The tap of a dish that has a menu stops here (the click on the page would close the
 //// menu it has just opened). The tap of a delivered dish is not taken: it goes on to the page, which closes a menu left open.
