@@ -18928,3 +18928,11 @@ msgstr "Trop de mots de passe erronés. Réessayez dans {0} secondes."
 #: POS/src/components/restaurant/MenuPreview.vue
 msgid "Failed to load preview"
 msgstr "L'aperçu n'a pas pu être chargé"
+
+#: POS/src/components/restaurant/ScreenAwakeSettings.vue
+msgid "Oldest ticket on the right"
+msgstr "Le plus ancien ticket à droite"
+
+#: POS/src/components/restaurant/ScreenAwakeSettings.vue
+msgid "The tickets start from the right edge: the oldest is the first one on that side."
+msgstr "Les tickets partent du bord droit : le plus ancien est le premier de ce côté."

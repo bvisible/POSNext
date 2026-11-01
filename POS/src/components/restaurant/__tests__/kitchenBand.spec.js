@@ -533,6 +533,60 @@ describe("a band as a column (bands side by side)", () => {
 	})
 })
 
+const { useTicketSide } = await import("@/composables/useTicketSide")
+
+describe("the oldest ticket on the right (Daniel, 01.11)", () => {
+	const { oldestRight, setOldestRight } = useTicketSide()
+	beforeEach(() => {
+		window.localStorage.clear()
+		setOldestRight(false)
+	})
+	afterEach(() => setOldestRight(false))
+
+	it("draws the tickets from the left unless the device says otherwise, the oldest first", () => {
+		const wrapper = show({ orders: orders(3) })
+
+		const lane = wrapper.get('[data-test="ticket-lane"]')
+		expect(lane.attributes("dir")).toBeUndefined()
+		expect(lane.attributes("data-oldest-side")).toBe("left")
+		expect(shown(wrapper)).toEqual(["SINV-1", "SINV-2", "SINV-3"])
+	})
+
+	it("draws them from the right when the device says so: the lane runs right to left, the order of the tickets is the same, and each card keeps its own direction", async () => {
+		setOldestRight(true)
+		const wrapper = show({ orders: orders(3) })
+		await nextTick()
+
+		const lane = wrapper.get('[data-test="ticket-lane"]')
+		expect(lane.attributes("dir")).toBe("rtl")
+		expect(lane.attributes("data-oldest-side")).toBe("right")
+		expect(shown(wrapper)).toEqual(["SINV-1", "SINV-2", "SINV-3"])
+		for (const cell of wrapper.findAll('[data-test="ticket-cell"]')) expect(cell.attributes("dir")).toBe("ltr")
+		expect(oldestRight.value).toBe(true)
+	})
+
+	it("does the same for a band drawn as a column", () => {
+		setOldestRight(true)
+		const wrapper = show({ mode: "column", orders: orders(3) })
+
+		expect(wrapper.get('[data-test="ticket-column"]').attributes("dir")).toBe("rtl")
+	})
+
+	it("counts the tickets scrolled past the other way round: the oldest are cut by the right edge", async () => {
+		setOldestRight(true)
+		const state = stubLane()
+		state.scrolled = 0
+		const wrapper = show({ orders: orders(6) })
+		await nextTick()
+
+		// the geometry says 2 cells are cut by the far edge (right) and none by the near one (left): drawn from the right, those are the ones scrolled PAST
+		expect(wrapper.find('[data-test="band-before"]').exists()).toBe(true)
+		expect(text(wrapper, '[data-test="band-before"]')).toContain("›")
+		expect(text(wrapper, '[data-test="band-before"]')).toContain("+2")
+		expect(wrapper.find('[data-test="band-more"]').exists()).toBe(false)
+	})
+})
+
 describe("45 tickets in two bands", () => {
 	it("keeps every one of them, none dropped to make the page lighter", () => {
 		const waiting = show({ band: "waiting", orders: orders(30, "W") })

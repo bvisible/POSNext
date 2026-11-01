@@ -24,7 +24,7 @@
 			<!-- right edge; a column's are counted under it (below). Nothing is drawn over a ticket: a count over a ticket hides -->
 			<!-- the ticket's button. -->
 			<div class="flex items-center gap-1.5">
-				<span v-if="behind > 0" data-test="band-before" :class="CHIP">{{ mode === "lane" ? "‹" : "↑" }} {{ __("+{0}", [behind]) }}</span>
+				<span v-if="behind > 0" data-test="band-before" :class="CHIP">{{ mode === "lane" ? (oldestRight ? "›" : "‹") : "↑" }} {{ __("+{0}", [behind]) }}</span>
 				<span v-if="mode === 'lane' && ahead > 0" data-test="band-more" :class="CHIP">{{ __("+{0}", [ahead]) }}</span>
 			</div>
 		</header>
@@ -42,6 +42,8 @@
 				:class="scrollerClass"
 				:style="scrollerStyle"
 				:data-test="mode === 'lane' ? 'ticket-lane' : 'ticket-column'"
+				:dir="oldestRight ? 'rtl' : undefined"
+				:data-oldest-side="oldestRight ? 'right' : 'left'"
 				@scroll.passive="measure"
 			>
 				<!-- //// Neoffice — a ticket with many dishes takes two columns of the grid or of the lane (task 38a-3, ruling 107: the wide card). `data-wide` says it. -->
@@ -50,6 +52,7 @@
 					:key="order.name"
 					data-test="ticket-cell"
 					:data-wide="isWide(order) ? 'true' : undefined"
+					:dir="oldestRight ? 'ltr' : undefined"
 					:class="[cellClass, isWide(order) ? TICKET_CELL_WIDE : '', isDelivered(order) ? 'opacity-60' : '']"
 				>
 					<!-- //// Neoffice — the card gets a function, not an event to emit: a press that moves its ticket to the other band
@@ -103,6 +106,8 @@ import { offScreen } from "@/utils/ticketScrollHints"
 //// Neoffice — the wide card of a long ticket (task 38a-3, ruling 107): how many tickets fit the area, and whether a ticket has the dishes for two columns
 import { useColumnsThatFit } from "@/composables/useColumnsThatFit"
 import { isWideTicket, kitchenLiveLineCount } from "@/utils/wideTicket"
+//// Neoffice — the side where the oldest ticket stands, the device's choice (Daniel, 01.11): the tickets are drawn from the right when it is the right
+import { useTicketSide } from "@/composables/useTicketSide"
 
 /**
  * One band of the kitchen screen.
@@ -183,6 +188,8 @@ const isWide = (order) =>
 	!isWaiting.value && isWideTicket(kitchenLiveLineCount(order), columns.value)
 const ahead = ref(0)
 const behind = ref(0)
+const { oldestRight } = useTicketSide()
+watch(oldestRight, () => nextTick(measure), { flush: "post" })
 const maxHeight = ref(0)
 const scrollerStyle = computed(() =>
 	props.mode === "column" && maxHeight.value > 0
@@ -200,8 +207,9 @@ function measure() {
 	}
 	const cells = element.querySelectorAll('[data-test="ticket-cell"]')
 	const counts = offScreen(element, cells, props.mode === "lane" ? "x" : "y")
-	ahead.value = counts.ahead
-	behind.value = counts.behind
+	//// Neoffice — drawn from the right, the tickets already scrolled past (the oldest) are those cut by the right edge: what the geometry calls ahead and behind is the other way round
+	ahead.value = oldestRight.value ? counts.behind : counts.ahead
+	behind.value = oldestRight.value ? counts.ahead : counts.behind
 	maxHeight.value = props.mode === "column" ? element.clientHeight : 0
 }
 

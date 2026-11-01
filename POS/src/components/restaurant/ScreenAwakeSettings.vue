@@ -65,6 +65,17 @@
 				</select>
 			</div>
 
+			<!-- //// Neoffice — the side where the oldest ticket stands, in the same panel (Daniel, 01.11): the left by default, the right when the screen is set so -->
+			<div v-if="oldestRight !== undefined" class="flex items-start gap-3 border-t border-gray-200 px-2 py-1.5 dark:border-gray-600">
+				<div class="min-w-0 flex-1">
+					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ __("Oldest ticket on the right") }}</div>
+					<p data-test="oldest-right-help" class="text-xs text-gray-700">{{ __("The tickets start from the right edge: the oldest is the first one on that side.") }}</p>
+				</div>
+				<button type="button" role="switch" data-test="oldest-right" :class="SWITCH" :aria-checked="oldestRight ? 'true' : 'false'" :aria-label="__('Oldest ticket on the right')" @click.stop="emit('oldest-right', !oldestRight)">
+					<span :class="[THUMB, oldestRight ? 'translate-x-5' : 'translate-x-0']"></span>
+				</button>
+			</div>
+
 			<!-- //// Neoffice — the kitchen's choice to follow the order of the meal, in the same panel (Daniel, 01.11): a course waits, greyed, until the one before it is done. Drawn only where the page hands the value (the kitchen's screen) -->
 			<div v-if="courseOrder !== undefined" class="flex items-start gap-3 border-t border-gray-200 px-2 py-1.5 dark:border-gray-600">
 				<div class="min-w-0 flex-1">
@@ -95,8 +106,10 @@ const props = defineProps({
 	wakeLockSupported: { type: Boolean, default: true },
 	//// Neoffice — the kitchen's choice to follow the order of the meal (useCourseOrder); left out, the panel does not draw it (the runner's screen has no such rule)
 	courseOrder: { type: Boolean, default: undefined },
+	//// Neoffice — the side where the oldest ticket stands (useTicketSide); left out, the panel does not draw it
+	oldestRight: { type: Boolean, default: undefined },
 })
-const emit = defineEmits(["change", "course-order"])
+const emit = defineEmits(["change", "course-order", "oldest-right"])
 
 const title = computed(() => __("Screen: keep on and rest"))
 

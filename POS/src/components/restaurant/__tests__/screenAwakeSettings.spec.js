@@ -97,6 +97,35 @@ describe("the button of the awake settings", () => {
 	})
 })
 
+describe("the two choices of the kitchen's screen, in the same panel (Daniel, 01.11)", () => {
+	it("draws neither where the page hands neither: the runner's screen has no such choice", async () => {
+		const wrapper = await openMenu()
+
+		expect(wrapper.find('[data-test="course-order"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="oldest-right"]').exists()).toBe(false)
+	})
+
+	it("shows the order of the meal and the side of the oldest ticket as switches, as they are", async () => {
+		const wrapper = await openMenu({ courseOrder: true, oldestRight: false })
+
+		expect(wrapper.get('[data-test="course-order"]').attributes("aria-checked")).toBe("true")
+		expect(wrapper.get('[data-test="oldest-right"]').attributes("aria-checked")).toBe("false")
+		expect(wrapper.text()).toContain("Follow the order of the meal")
+		expect(wrapper.text()).toContain("Oldest ticket on the right")
+	})
+
+	it("says what a switch was turned to, and keeps the panel open", async () => {
+		const wrapper = await openMenu({ courseOrder: true, oldestRight: false })
+
+		await wrapper.get('[data-test="course-order"]').trigger("click")
+		await wrapper.get('[data-test="oldest-right"]').trigger("click")
+
+		expect(wrapper.emitted("course-order")).toEqual([[false]])
+		expect(wrapper.emitted("oldest-right")).toEqual([[true]])
+		expect(menu(wrapper).exists()).toBe(true)
+	})
+})
+
 describe("the four settings", () => {
 	it("are listed with their name and a line of help each", async () => {
 		const wrapper = await openMenu()
