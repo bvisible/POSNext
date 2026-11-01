@@ -77,7 +77,8 @@ NONE = "tillsweep-no-such-name"
 # `my_screen` answers a tablet whichever screen it was paired for (task 48: a tablet started from its home-screen icon asks
 # where its screen is) and nobody else.
 TABLET_SCREENS = {
-	"Kitchen": {"get_tables", "get_kds_orders", "my_screen"},
+	# //// the kitchen's tablet reads its restaurant's settings too, cut to its own restaurant (the kitchen alerts: the popup and the sounds are the till's settings)
+	"Kitchen": {"get_tables", "get_kds_orders", "get_restaurant_settings", "my_screen"},
 	"Runner": {"get_tables", "get_runner_orders", "get_restaurant_settings", "my_screen"},
 }
 
