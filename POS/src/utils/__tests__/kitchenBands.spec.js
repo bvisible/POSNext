@@ -557,3 +557,40 @@ describe("the tickets that blink, first in their band", () => {
 		expect(names(list)).toEqual(["A", "B", "C", "D"])
 	})
 })
+
+//// Neoffice — a ticket whose dishes are ALL with the runner has nothing left for the kitchen: it stays on the screen (Daniel, 01.11: it must not disappear) but it goes to the END of the band in preparation, after the tickets
+//// still being cooked, and no longer stands between two of them (Daniel: « la table quinze chez le runner reste affichée entre deux plats en préparation »)
+describe("the tickets that are with the runner, last in the band in preparation", () => {
+	const names = (list) => list.map((one) => one.name)
+	const cooking = (name, minute) => order(["Preparing"], { name, modified: `2026-10-30 12:${minute}:00` })
+	const withTheRunner = (name, minute) =>
+		order(["Delivered"], { name, kds_status: "Ready", view_state: "at-the-pass", modified: `2026-10-30 12:${minute}:00` })
+
+	it("puts them after the tickets still cooking, whatever their arrival", () => {
+		const { production } = splitIntoBands([cooking("A", "10"), withTheRunner("RUNNER", "15"), cooking("C", "20")])
+
+		expect(names(production)).toEqual(["A", "C", "RUNNER"])
+	})
+
+	it("keeps them in order of arrival among themselves", () => {
+		const { production } = splitIntoBands([withTheRunner("R2", "30"), cooking("A", "10"), withTheRunner("R1", "15")])
+
+		expect(names(production)).toEqual(["A", "R1", "R2"])
+	})
+
+	it("leaves the delivered tickets, when shown, after them", () => {
+		const delivered = order(["Delivered"], { name: "DONE", kds_status: "Delivered", modified: "2026-10-30 12:05:00" })
+
+		const { production } = splitIntoBands([delivered, withTheRunner("R1", "15"), cooking("A", "10")], { includeDelivered: true })
+
+		expect(names(production)).toEqual(["A", "R1", "DONE"])
+	})
+
+	it("changes nothing for the tickets without a runner: a ticket ready for the cook to deliver keeps its place", () => {
+		const ready = order(["Ready"], { name: "READY", kds_status: "Ready", modified: "2026-10-30 12:15:00" })
+
+		const { production } = splitIntoBands([cooking("A", "10"), ready, cooking("C", "20")])
+
+		expect(names(production)).toEqual(["A", "READY", "C"])
+	})
+})

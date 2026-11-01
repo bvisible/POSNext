@@ -153,9 +153,13 @@ export function splitIntoBands(orders, { includeDelivered = false } = {}) {
 		else if (band === BAND_PRODUCTION) production.push(order)
 		else if (includeDelivered) delivered.push(order)
 	}
+	//// Neoffice — a ticket whose dishes are ALL with the runner has nothing left for the kitchen: it stays on the screen but goes to the END of the band, after the tickets still being cooked (Daniel, 01.11: « la table quinze
+	//// chez le runner reste affichée entre deux plats en préparation »). The tickets stay in order of arrival among themselves.
+	const sorted = production.sort(byArrival)
+	const withTheRunner = sorted.filter((order) => order?.view_state === "at-the-pass")
 	return {
 		waiting: waiting.sort(byArrival),
-		production: [...production.sort(byArrival), ...delivered.sort(byArrival)],
+		production: [...sorted.filter((order) => order?.view_state !== "at-the-pass"), ...withTheRunner, ...delivered.sort(byArrival)],
 	}
 }
 
