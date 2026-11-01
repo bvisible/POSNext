@@ -258,6 +258,25 @@ describe("the list of tables", () => {
 		expect(wrapper.find('[data-test="others-title"]').exists()).toBe(false)
 	})
 
+	it("lays its rows in as many columns as the width holds: one on a phone, two or more on a wide screen", () => {
+		list()
+
+		// A grid whose columns are at least 26 rem, capped by the width itself: under that width there is one column
+		const scroll = wrapper.get('[data-test="tables-scroll"]')
+		expect(scroll.classes()).toContain("grid")
+		expect(scroll.classes().join(" ")).toContain("grid-cols-[repeat(auto-fill,minmax(min(100%,26rem),1fr))]")
+		// The titles of the sections, and the empty word, are not a card: they take the whole width
+		for (const title of ["soon-title", "others-title"]) {
+			expect(wrapper.get(`[data-test="${title}"]`).classes()).toContain("col-span-full")
+		}
+	})
+
+	it("says the empty word across the whole width", () => {
+		list({ model: model({ busy: [], soon: [], others: [], free: [] }) })
+
+		expect(wrapper.get('[data-test="tables-empty"]').classes()).toContain("col-span-full")
+	})
+
 	it("says so when there is no table to show", () => {
 		list({ model: model({ busy: [], soon: [], others: [], free: [] }) })
 

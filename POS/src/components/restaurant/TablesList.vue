@@ -38,7 +38,8 @@
 			</button>
 		</div>
 
-		<div data-test="tables-scroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-1 pb-3 flex flex-col gap-2">
+		<!-- //// Neoffice — the rows go in as many columns as the width holds (kitchen test, 01.11): a row stretched over a wide screen left a gap of a thousand pixels between the table and its state. A column is at least 26 rem, and no more than the width itself, so a phone keeps one column and a till two or more. The titles of the sections take the whole width. -->
+		<div data-test="tables-scroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-1 pb-3 grid content-start gap-2 grid-cols-[repeat(auto-fill,minmax(min(100%,26rem),1fr))]">
 			<!-- The tables with something going on, the most urgent first -->
 			<TableCard
 				v-for="entry in model.busy"
@@ -109,7 +110,7 @@
 				</div>
 			</template>
 
-			<p v-if="isEmpty" data-test="tables-empty" class="py-10 text-center text-[15px] text-[#6F665A] dark:text-ds-sand-300">
+			<p v-if="isEmpty" data-test="tables-empty" class="col-span-full py-10 text-center text-[15px] text-[#6F665A] dark:text-ds-sand-300">
 				{{ __("No table to show") }}
 			</p>
 		</div>
@@ -211,7 +212,7 @@ const CHIP_ON =
 const CHIP_OFF =
 	"border border-[#DCD4C7] text-[#524B41] bg-transparent dark:border-[rgba(255,251,245,0.24)] dark:text-ds-sand-300"
 const SECTION =
-	"mt-1.5 text-[12px] uppercase tracking-[0.06em] text-[#6F665A] dark:text-ds-sand-300"
+	"col-span-full mt-1.5 text-[12px] uppercase tracking-[0.06em] text-[#6F665A] dark:text-ds-sand-300"
 // The mockup's bar: 48 px, ink outline, Karla 600 15 px
 const BAR_BUTTON =
 	"min-h-[48px] rounded-[10px] border border-[#141414] bg-[#FFFDF8] text-[15px] font-semibold text-[#141414] active:bg-[#F6F3ED] touch-manipulation dark:border-ds-paper dark:bg-transparent dark:text-ds-paper dark:active:bg-[rgba(255,251,245,0.10)]"
