@@ -10,6 +10,7 @@ import {
 	BAND_WAITING,
 	arrivalOf,
 	bandOf,
+	byArrival,
 	kitchenStatusOf,
 	splitIntoBands,
 } from "../kitchenBands"
@@ -519,4 +520,15 @@ describe("the dishes sent ahead of their course (the service rhythm)", () => {
 		expect(arrivalOf(called)).toBe(new Date(2026, 9, 30, 12, 45, 0).getTime())
 		expect(splitIntoBands([called, waited]).waiting.map((t) => t.name)).toEqual([waited.name, called.name])
 	})
+
+	it("orders the runner's tickets by the call too: a course sent ahead long ago and called just now comes after a course sent in between", () => {
+		// The runner's list (`get_runner_orders`) holds the lines at the pass only: a line sent ahead is there once it is called
+		const calledJustNow = aheadOrder([{ status: "Ready", uncalled: true }])
+		calledJustNow.items[0].kds_called_at = "2026-10-30 12:45:00.000000"
+		const sentInBetween = aheadOrder([{ status: "Ready", uncalled: false }])
+		sentInBetween.items[0].kds_sent_at = "2026-10-30 12:30:00.000000"
+
+		expect([calledJustNow, sentInBetween].sort(byArrival).map((t) => t.name)).toEqual([sentInBetween.name, calledJustNow.name])
+	})
 })
+
