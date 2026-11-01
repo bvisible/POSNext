@@ -70,6 +70,24 @@ describe("the status a ticket shows, from the dishes it shows (fix round 1, ruli
 		expect(kitchenStatusOf(order(["Delivered", "Ready"]))).toBe("Ready")
 	})
 
+	it("is Ready for a ticket the kitchen view says is at the pass, whatever the order says (Daniel, 01.11: it stays, struck through)", () => {
+		const atThePass = order(["Delivered", "Delivered"], {
+			kds_status: "Delivered",
+			view_state: "at-the-pass",
+		})
+		expect(kitchenStatusOf(atThePass)).toBe("Ready")
+		expect(bandOf(atThePass)).toBe(BAND_PRODUCTION)
+	})
+
+	it("is Preparing for a ticket the kitchen view says waits for its next course: starters done, mains held back", () => {
+		const nextCourse = order(["Delivered", "Waiting"], {
+			kds_status: "Delivered",
+			view_state: "next-course",
+		})
+		expect(kitchenStatusOf(nextCourse)).toBe("Preparing")
+		expect(bandOf(nextCourse)).toBe(BAND_PRODUCTION)
+	})
+
 	it("is Delivered when the order says so or every dish does", () => {
 		expect(
 			kitchenStatusOf(order(["Pending"], { kds_status: "Delivered" })),

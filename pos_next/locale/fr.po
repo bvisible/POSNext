@@ -18774,3 +18774,18 @@ msgstr "Cet écran ne fait pas partie des écrans du restaurant."
 #: pos_next/api/kitchen_events.py:131
 msgid "Print job not found"
 msgstr "Impression introuvable"
+
+#: POS/src/utils/kitchenStatus.js
+msgctxt "Kitchen action"
+msgid "Undo start"
+msgstr "Annuler le démarrage"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "With the runner"
+msgstr "Chez le runner"
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen order status"
+msgid "Next course to come"
+msgstr "La suite à venir"

@@ -410,7 +410,7 @@ describe("the tint of a category", () => {
 		)
 	})
 
-	it("never replaces the highlight of the dish whose status menu is open: the ring and the cream stay, the tint steps aside, and comes back when the menu closes", async () => {
+	it("never replaces the highlight of the dish whose status menu is open: the heavy ink ring and the white stay, the tint steps aside, and comes back when the menu closes", async () => {
 		const wrapper = show([painted("Soup", "Starter"), painted("Steak", "Main")])
 		const soup = () => rowOf(wrapper, "Soup")
 
@@ -419,11 +419,11 @@ describe("the tint of a category", () => {
 		expect(soup().attributes("data-selected")).toBe("true")
 		expect(soup().classes()).toEqual(
 			expect.arrayContaining([
-				"bg-[#FCF3EA]",
-				"ring-2",
+				"bg-white",
+				"ring-[3px]",
 				"ring-inset",
-				"ring-[#D68A59]",
-				"dark:bg-[#3A2C22]",
+				"ring-[#141414]",
+				"dark:ring-white",
 			]),
 		)
 		expect(soup().classes()).not.toContain("bg-[color:var(--service-tint)]")

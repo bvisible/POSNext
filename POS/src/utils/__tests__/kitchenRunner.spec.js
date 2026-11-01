@@ -179,7 +179,7 @@ describe("the kitchen screen's view of the orders", () => {
 		])
 	})
 
-	it("drops a ticket that has nothing left for the kitchen: its dishes are at the pass, or delivered", () => {
+	it("keeps a ticket whose dishes are all at the pass or delivered, every dish struck through, until the runner delivers them (Daniel, 01.11: it must not disappear)", () => {
 		const view = kitchenView(
 			[
 				order("ALL-READY", [
@@ -194,7 +194,72 @@ describe("the kitchen screen's view of the orders", () => {
 			{ stations: STATIONS, runnerEnabled: true },
 		)
 
-		expect(view).toEqual([])
+		expect(view.map((o) => o.name)).toEqual(["ALL-READY", "MIXED"])
+		for (const ticket of view) {
+			expect(ticket.items.every((line) => line.kds_status === "Delivered")).toBe(
+				true,
+			)
+			expect(ticket.view_state).toBe("at-the-pass")
+		}
+		// the dishes themselves keep saying Ready: the copies are what the ticket draws
+		expect(view[0].items.every((line) => line.at_the_pass)).toBe(true)
+	})
+
+	it("puts such a ticket in the band of tickets in preparation, with the look of a ticket that is ready", () => {
+		const view = kitchenView(
+			[order("ALL-READY", [dish("Ready", "kit")])],
+			{ stations: STATIONS, runnerEnabled: true },
+		)
+
+		expect(splitIntoBands(view).production.map((o) => o.name)).toEqual([
+			"ALL-READY",
+		])
+		expect(splitIntoBands(view).waiting).toEqual([])
+	})
+
+	it("keeps a ticket whose starters are done and whose mains are held back: the starters struck, the mains to come (Daniel, 01.11)", () => {
+		const held = order("HELD", [
+			dish("Delivered", "kit", { item_code: "S" }),
+			dish("Waiting", "kit", { item_code: "M" }),
+		])
+		const view = kitchenView([held], { stations: STATIONS, runnerEnabled: true })
+
+		expect(view.map((o) => o.name)).toEqual(["HELD"])
+		expect(view[0].view_state).toBe("next-course")
+		expect(view[0].items.map((line) => line.kds_status)).toEqual([
+			"Delivered",
+			"Waiting",
+		])
+		expect(splitIntoBands(view).production.map((o) => o.name)).toEqual(["HELD"])
+	})
+
+	it("keeps a ticket whose starters are at the pass while its mains are held back", () => {
+		const held = order("HELD", [
+			dish("Ready", "kit", { item_code: "S" }),
+			dish("Waiting", "kit", { item_code: "M" }),
+		])
+		const view = kitchenView([held], { stations: STATIONS, runnerEnabled: true })
+
+		expect(view.map((o) => o.name)).toEqual(["HELD"])
+		expect(view[0].items.map((line) => line.kds_status)).toEqual([
+			"Delivered",
+			"Waiting",
+		])
+		expect(view[0].view_state).toBe("at-the-pass")
+	})
+
+	it("gives no view state to a ticket that still has a dish to cook", () => {
+		const view = kitchenView(
+			[
+				order("LIVE", [
+					dish("Ready", "kit", { item_code: "S" }),
+					dish("Pending", "kit", { item_code: "M" }),
+				]),
+			],
+			{ stations: STATIONS, runnerEnabled: true },
+		)
+
+		expect(view[0].view_state).toBeUndefined()
 	})
 
 	it("leaves the Ready dishes of a station with no runner where they are: the cook delivers them", () => {

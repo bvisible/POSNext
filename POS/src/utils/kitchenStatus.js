@@ -67,6 +67,9 @@ export function kitchenActionLabel(action, { takeaway = false } = {}) {
 				: __("Deliver", null, "Kitchen action")
 		case "recall":
 			return __("Recall to preparation", null, "Kitchen action")
+		//// Neoffice — a dish being prepared put back to « to start » (the way back of its menu, Daniel 01.11)
+		case "undo-start":
+			return __("Undo start", null, "Kitchen action")
 		default:
 			return ""
 	}

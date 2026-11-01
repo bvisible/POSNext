@@ -199,13 +199,21 @@ export function kitchenView(
 	for (const order of orders || []) {
 		const lines = order?.items || []
 		const atThePass = (line) => carriedByRunner(line, stations, runnerEnabled)
+		//// Neoffice — a ticket is never dropped for having nothing left to cook (Daniel, 01.11: « ça ne doit pas disparaître, ça doit venir barrer »). It used to leave the screen with its
+		//// last dish, for the list « to deliver »; it now stays, every dish struck through, until the runner delivers them, and a table whose starters are done while its mains are held
+		//// back stays too, the starters struck and the mains to come. `view_state` tells the screen why the ticket has no dish to cook (read by kitchenStatusOf and the card).
+		const live = lines.some(
+			(line) => !atThePass(line) && LIVE.has(line?.kds_status),
+		)
+		const held = lines.some((line) => line?.kds_status === "Waiting")
+		const done = lines.some((line) => line?.kds_status === "Delivered")
 		if (!lines.some((line) => atThePass(line) || isCookedInPart(line))) {
-			view.push(order)
-		} else if (
-			lines.some((line) => !atThePass(line) && LIVE.has(line?.kds_status))
-		) {
+			if (!live && held && done) view.push({ ...order, view_state: "next-course" })
+			else view.push(order)
+		} else {
 			view.push({
 				...order,
+				...(live ? {} : { view_state: "at-the-pass" }),
 				items: lines.map((line) => {
 					if (atThePass(line))
 						return { ...line, kds_status: "Delivered", at_the_pass: true }

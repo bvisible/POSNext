@@ -105,6 +105,11 @@
 				{{ mainLabel }}
 			</Button>
 
+			<!-- //// Neoffice — a ticket the kitchen view keeps with no dish left to cook (Daniel, 01.11: it stays, struck through) has no button: a quiet pill, the height of the button it replaces, says where it stands -->
+			<div v-if="noDishLabel" data-test="ticket-no-dish"
+				class="flex min-w-0 flex-1 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-3 text-center font-semibold text-gray-600 dark:border-gray-600 dark:text-gray-300 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)]"
+				:class="fullscreen ? 'max-w-[520px]' : ''">{{ noDishLabel }}</div>
+
 			<!-- Confirmation when Runner is active -->
 			<!-- //// Neoffice — dark mode (task 46): the till's dark remap turns the amber tint dark and left the text `amber-800`, dark on dark (1.8:1); the dark ramp's warning colour reads at 5.9:1 -->
 			<div v-if="showDeliveredConfirm" class="w-full p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
@@ -173,7 +178,8 @@
 										isDelivered(item)
 											? 'cursor-default opacity-40 line-through'
 											: 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700 transition-colors',
-										isMenuOf(item) ? 'bg-[#FCF3EA] ring-2 ring-inset ring-[#D68A59] dark:bg-[#3A2C22]' : '',
+										//// Neoffice — the selected dish is read from across the pass (Daniel, 01.11: « un tout petit peu plus lisible »): the card's own white under it, a heavy ink outline and a shadow, where a clay outline on a clay-tinted card was hard to see
+										isMenuOf(item) ? 'bg-white shadow-md ring-[3px] ring-inset ring-[#141414] dark:bg-gray-900 dark:ring-white' : '',
 										//// Neoffice — the pale tint of the dish's category (Daniel, 01.11): a variable on the row and the class that reads it, so that the pressed state above still wins over it. It steps aside for the highlight of the dish whose status menu is open.
 										lineTint(item) ? TINT_CLASS : '',
 									]"
@@ -218,41 +224,58 @@
 							<!-- //// "ready" and has no "deliver"; with none "ready" and "deliver" are one gesture, so the menu has "deliver" and no "ready"; from the list of -->
 							<!-- //// what waits at the pass a dish can only be called back to preparation. -->
 								<div v-if="activeItemMenu === item._globalIdx && !isDelivered(item)" data-test="ticket-line-menu"
-									class="fixed z-30 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 p-1.5"
-									:class="pickerShown(item) ? 'w-60' : 'w-48'"
+									class="fixed z-30 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 p-2"
+									:class="pickerShown(item) ? 'w-80' : 'w-72'"
 									:style="menuStyle">
 									<!-- //// Neoffice — the menu names the dish it is for and the line is highlighted (kitchen test, 01.11): the menu opens under the dish and covers the one after it, so a cook could not tell which dish a button would act on. The buttons are a size and a weight up, with a border in the colour of the state, so that « ready » is read from across the pass. -->
-									<p data-test="ticket-line-menu-dish" class="truncate px-1.5 pb-1.5 text-[length:var(--kds-fs-sub,12px)] font-semibold text-gray-500 dark:text-gray-400">{{ shownQty(item) }}× {{ item.item_name }}</p>
+									<!-- //// Neoffice — the menu is much bigger (Daniel, 01.11: « même s'il déborde, ce n'est pas grave »): the dish named on up to two lines in a readable size, a way to close the menu without acting (a cross at its head), buttons of 64 px with 20 px words -->
+									<div class="flex items-start gap-2 pb-2">
+										<p data-test="ticket-line-menu-dish" class="min-w-0 flex-1 px-1.5 pt-1 text-base font-bold leading-snug text-gray-800 line-clamp-2 dark:text-gray-100">{{ shownQty(item) }}× {{ item.item_name }}</p>
+										<button type="button" data-test="menu-close" :aria-label="__('Close')" :title="__('Close')" @click.stop="closeMenu"
+											class="flex h-11 w-11 flex-none touch-manipulation items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:active:bg-gray-700">
+											<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6 6 18M6 6l12 12" /></svg>
+										</button>
+									</div>
 									<div class="flex flex-col gap-1">
+										<!-- //// Neoffice — the buttons of the menu: 64 px high, 20 px words (Daniel, 01.11) -->
 										<button v-if="offers(item, 'Preparing')"
 											@click.stop="updateItemStatus(item, 'Preparing')"
-											class="w-full min-h-[48px] rounded-lg border-2 border-blue-300 bg-blue-50 px-3 text-left text-base font-bold text-blue-900 active:bg-blue-100 dark:border-blue-300/60 dark:bg-blue-400/20 dark:text-blue-100 flex items-center gap-2.5">
-											<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+											class="w-full min-h-[64px] rounded-xl border-2 border-blue-300 bg-blue-50 px-4 text-left text-xl font-bold text-blue-900 active:bg-blue-100 dark:border-blue-300/60 dark:bg-blue-400/20 dark:text-blue-100 flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full bg-blue-500"></span>
 											{{ kitchenStatusLabel("Preparing") }}
 										</button>
 										<!-- //// Neoffice — a line of several units left to cook gets a quantity beside « ready » (kitchen test of 01.11: six of the same dish, four are done): a stepper - n + that starts on ALL that is left, so that one tap on the button is what it always was. The button says how many it marks. -->
 										<div v-if="pickerShown(item)" data-test="ticket-line-picker" class="flex items-center gap-1" role="group" :aria-label="__('Units ready')">
 											<button type="button" data-test="picker-less" :disabled="pickedUnits <= 1" :aria-label="__('One less')"
 												@click.stop="stepUnits(item, -1)"
-												class="h-12 w-12 flex-none touch-manipulation rounded-lg border-2 border-gray-300 bg-gray-100 text-2xl font-bold leading-none text-gray-800 active:bg-gray-200 disabled:opacity-40 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">−</button>
+												class="h-16 w-16 flex-none touch-manipulation rounded-xl border-2 border-gray-300 bg-gray-100 text-3xl font-bold leading-none text-gray-800 active:bg-gray-200 disabled:opacity-40 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">−</button>
 											<span data-test="picker-count" aria-live="polite"
-												class="min-w-0 flex-1 text-center text-xl font-bold tabular-nums text-gray-900 dark:text-gray-100">{{ pickedUnits }}</span>
+												class="min-w-0 flex-1 text-center text-3xl font-bold tabular-nums text-gray-900 dark:text-gray-100">{{ pickedUnits }}</span>
 											<button type="button" data-test="picker-more" :disabled="pickedUnits >= unitsLeftOf(item)" :aria-label="__('One more')"
 												@click.stop="stepUnits(item, 1)"
-												class="h-12 w-12 flex-none touch-manipulation rounded-lg border-2 border-gray-300 bg-gray-100 text-2xl font-bold leading-none text-gray-800 active:bg-gray-200 disabled:opacity-40 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">+</button>
+												class="h-16 w-16 flex-none touch-manipulation rounded-xl border-2 border-gray-300 bg-gray-100 text-3xl font-bold leading-none text-gray-800 active:bg-gray-200 disabled:opacity-40 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">+</button>
 										</div>
+										<!-- //// Neoffice — the buttons of the menu: 64 px high, 20 px words (Daniel, 01.11) -->
 										<button v-if="offers(item, 'Ready')"
 											@click.stop="pressReady(item)"
 											data-test="menu-ready"
-											class="w-full min-h-[48px] rounded-lg border-2 border-green-600 bg-green-50 px-3 text-left text-base font-bold text-green-900 active:bg-green-100 dark:border-ds-success dark:bg-green-400/20 dark:text-ds-success flex items-center gap-2.5">
-											<span class="w-2.5 h-2.5 flex-none rounded-full bg-green-600 dark:bg-ds-success"></span>
+											class="w-full min-h-[64px] rounded-xl border-2 border-green-600 bg-green-50 px-4 text-left text-xl font-bold text-green-900 active:bg-green-100 dark:border-ds-success dark:bg-green-400/20 dark:text-ds-success flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full bg-green-600 dark:bg-ds-success"></span>
 											{{ readyLabel(item) }}
 										</button>
+										<!-- //// Neoffice — the buttons of the menu: 64 px high, 20 px words (Daniel, 01.11) -->
 										<button v-if="offers(item, 'Delivered')"
 											@click.stop="updateItemStatus(item, 'Delivered')"
-											class="w-full min-h-[48px] rounded-lg border-2 border-gray-300 bg-gray-100 px-3 text-left text-base font-bold text-gray-800 active:bg-gray-200 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100 flex items-center gap-2.5">
-											<span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span>
+											class="w-full min-h-[64px] rounded-xl border-2 border-gray-300 bg-gray-100 px-4 text-left text-xl font-bold text-gray-800 active:bg-gray-200 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100 flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full bg-gray-500"></span>
 											{{ kitchenActionLabel("deliver", { takeaway: isTakeaway }) }}
+										</button>
+										<!-- //// Neoffice — a way back (Daniel, 01.11: « si on veut annuler, on fait comment ? »): a dish being prepared can be put back to « to start », the cross at the head of the menu closes it without acting, and a dish made ready or delivered can still be taken back for five seconds by the toast -->
+										<button v-if="offers(item, 'Pending')" type="button" data-test="menu-undo-start"
+											@click.stop="updateItemStatus(item, 'Pending')"
+											class="w-full min-h-[56px] rounded-xl border-2 border-dashed border-gray-400 bg-white px-4 text-left text-lg font-semibold text-gray-700 active:bg-gray-100 dark:border-gray-500 dark:bg-transparent dark:text-gray-200 flex items-center gap-3">
+											<span class="w-3.5 h-3.5 flex-none rounded-full border-2 border-gray-500"></span>
+											{{ kitchenActionLabel("undo-start") }}
 										</button>
 									</div>
 								</div>
@@ -485,6 +508,8 @@ function offerBack(message, entries) {
 //// the list of what waits at the pass, a call-back to preparation. A delivered ticket has no button.
 const mainAction = computed(() => {
 	if (props.mode === "ready-list") return "recall"
+	//// Neoffice — a ticket the kitchen view keeps with no dish left to cook (utils/kitchenRunner, `view_state`) has no button: there is nothing to press (the pill below says where it stands)
+	if (props.order.view_state) return null
 	switch (status.value) {
 		case "Pending":
 			return "start"
@@ -511,6 +536,17 @@ const outlineAction = computed(
 const mainLabel = computed(() =>
 	kitchenActionLabel(mainAction.value, { takeaway: isTakeaway.value }),
 )
+//// Neoffice — what the pill of a ticket with no dish to cook says (Daniel, 01.11: « ça part chez le runner », « il reste la suite »): its dishes are with the runner (« to hand over » for a takeaway), or its next course is held back
+const noDishLabel = computed(() => {
+	if (props.mode === "ready-list") return ""
+	if (props.order.view_state === "at-the-pass")
+		return isTakeaway.value
+			? kitchenStatusLabel("Ready", { takeaway: true })
+			: __("With the runner", null, "Kitchen order status")
+	if (props.order.view_state === "next-course")
+		return __("Next course to come", null, "Kitchen order status")
+	return ""
+})
 
 //// Neoffice — what the header's line shows besides the table (task 38a-1, rulings 122, 125, 126). The room's code is derived here for now
 //// (utils/kitchenRoomCode; the server will send its own, task 38b); a takeaway has no room, its label says it. The number is the ticket's
@@ -583,12 +619,13 @@ function changed() {
 //// status the dish is not at (a dish being prepared has one, a dish waiting two or three), under a head that names the dish, with its
 //// padding and borders besides: the room it needs, and where it hangs from when it opens upward, are those of the menu it really is
 //// (fix round 1; bigger and headed by the dish after the kitchen test of 01.11).
-const MENU_WIDTH = 192
-//// Neoffice — the menu of a dish with a quantity to pick (w-60), for « Mark ready · 4 of 6 » to stay on one line
-const MENU_WIDE_WIDTH = 240
-const MENU_BUTTON_HEIGHT = 52
-const MENU_FRAME_HEIGHT = 42
-const MENU_STATUSES = ["Preparing", "Ready", "Delivered"]
+//// Neoffice — the menu is much bigger (Daniel, 01.11): 288 px wide (w-72), 320 (w-80) with a quantity to pick, for « Mark ready · 4 of 6 » to stay on one line; its buttons are 64 px high with 4 px between, and the head names the dish on up to two lines beside a cross
+const MENU_WIDTH = 288
+const MENU_WIDE_WIDTH = 320
+const MENU_BUTTON_HEIGHT = 68
+const MENU_FRAME_HEIGHT = 88
+//// Neoffice — « Pending » joins the statuses a menu may offer: the way back of a dish being prepared (offers() below)
+const MENU_STATUSES = ["Preparing", "Ready", "Delivered", "Pending"]
 const menuPosition = ref({ left: 0, top: 0 })
 const menuStyle = computed(() => {
 	const { left, top, bottom } = menuPosition.value
@@ -602,6 +639,8 @@ const menuStyle = computed(() => {
 function offers(item, status) {
 	if (item.kds_status === status) return false
 	if (props.mode === "ready-list") return status === "Preparing"
+	//// Neoffice — only a dish being prepared can be put back to « to start » (a Ready one has the toast, a Pending one has nothing to take back)
+	if (status === "Pending") return item.kds_status === "Preparing"
 	// A dish that is Ready already, or one the cook delivers himself, has no "ready" to press for a station without a runner
 	if (status === "Ready") return props.useRunner
 	// With a runner the cook has no "deliver": the runner delivers

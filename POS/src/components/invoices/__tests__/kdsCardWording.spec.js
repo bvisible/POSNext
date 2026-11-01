@@ -181,7 +181,7 @@ describe("the menu of a dish says where the dish goes", () => {
 		await wrapper.get('[data-test="ticket-line"]').trigger("click")
 		return wrapper
 			.get('[data-test="ticket-line-menu"]')
-			.findAll("button")
+			.findAll('button:not([data-test="menu-close"])')
 			.map((button) => button.text())
 	}
 

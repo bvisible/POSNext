@@ -234,7 +234,7 @@ describe("the quantity picker of a dish's menu", () => {
 		expect(picker(list).exists()).toBe(false)
 		expect(
 			list
-				.findAll('[data-test="ticket-line-menu"] button')
+				.findAll('[data-test="ticket-line-menu"] button:not([data-test="menu-close"])')
 				.map((button) => label(button)),
 		).toEqual(["Preparing"])
 	})
@@ -249,14 +249,14 @@ describe("the quantity picker of a dish's menu", () => {
 		expect(picker(wrapper).exists()).toBe(false)
 	})
 
-	it("has buttons a finger can hit (48 px square, 44 at least) and the dark mode's classes of the menu's other buttons", async () => {
+	it("has buttons a finger can hit (64 px square, far over the 44 a finger needs) and the dark mode's classes of the menu's other buttons", async () => {
 		const wrapper = show(ticket([line("A", 6, "Preparing")]))
 		await open(wrapper)
 
 		for (const test of ["picker-less", "picker-more"]) {
 			const classes = wrapper.get(`[data-test="${test}"]`).classes()
-			expect(classes, test).toContain("h-12")
-			expect(classes, test).toContain("w-12")
+			expect(classes, test).toContain("h-16")
+			expect(classes, test).toContain("w-16")
 			expect(
 				classes.some((name) => name.startsWith("dark:bg-")),
 				test,
@@ -276,7 +276,7 @@ describe("the quantity picker of a dish's menu", () => {
 				.classes()
 				.some((n) => n.startsWith("dark:text-")),
 		).toBe(true)
-		expect(readyButton(wrapper).classes()).toContain("min-h-[48px]")
+		expect(readyButton(wrapper).classes()).toContain("min-h-[64px]")
 	})
 
 	it("widens the menu so that the button's words stay on one line, and places it with that width", async () => {
@@ -285,18 +285,18 @@ describe("the quantity picker of a dish's menu", () => {
 		await open(wrapper)
 
 		const menu = menuOf(wrapper)
-		expect(menu.classes()).toContain("w-60")
-		// The dish ends at x = 400: the menu hangs from its right edge, 240 wide
-		expect(menu.element.style.left).toBe(`${400 - 240}px`)
+		expect(menu.classes()).toContain("w-80")
+		// The dish ends at x = 400: the menu hangs from its right edge, 320 wide (Daniel, 01.11: much bigger)
+		expect(menu.element.style.left).toBe(`${400 - 320}px`)
 	})
 
-	it("leaves the plain menu 192 px wide", async () => {
+	it("leaves the plain menu 288 px wide", async () => {
 		const wrapper = show(ticket([line("A", 1, "Preparing")]))
 
 		await open(wrapper)
 
-		expect(menuOf(wrapper).classes()).toContain("w-48")
-		expect(menuOf(wrapper).element.style.left).toBe(`${400 - 192}px`)
+		expect(menuOf(wrapper).classes()).toContain("w-72")
+		expect(menuOf(wrapper).element.style.left).toBe(`${400 - 288}px`)
 	})
 
 	it("names the dish in its head with the units still to cook", async () => {
@@ -662,7 +662,7 @@ describe("the list of what waits at the pass, with a line cooked in part", () =>
 
 		expect(
 			wrapper
-				.findAll('[data-test="ticket-line-menu"] button')
+				.findAll('[data-test="ticket-line-menu"] button:not([data-test="menu-close"])')
 				.map((button) => label(button)),
 		).toEqual(["Preparing"])
 		expect(picker(wrapper).exists()).toBe(false)

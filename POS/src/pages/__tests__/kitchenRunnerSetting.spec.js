@@ -143,15 +143,21 @@ describe("with a runner", () => {
 		expect(wrapper.find('[data-test="ticket-line-menu"]').exists()).toBe(false)
 	})
 
-	it("a ticket whose dishes are all Ready leaves the screen altogether, and is not read as delivered", async () => {
+	it("a ticket whose dishes are all Ready STAYS on the screen, every dish struck through, with no button and a pill that says the runner has them (Daniel, 01.11: it must not disappear)", async () => {
 		ORDERS = [
 			ticket("A", [["Ready"], ["Ready", "kit", "B"]], { kds_status: "Ready" }),
 		]
 		const wrapper = await open()
 
 		expect(titlesIn(wrapper, "waiting")).toEqual([])
-		expect(titlesIn(wrapper, "production")).toEqual([])
-		expect(wrapper.find('[data-test="ticket"]').exists()).toBe(false)
+		expect(titlesIn(wrapper, "production")).toEqual(["T-A"])
+		expect(wrapper.find('[data-test="ticket"]').exists()).toBe(true)
+		// every dish is struck through (a check mark), nothing is left to press
+		expect(wrapper.findAll('[data-test="ticket-line-done"]')).toHaveLength(2)
+		expect(wrapper.find('[data-test="ticket-main"]').exists()).toBe(false)
+		expect(wrapper.get('[data-test="ticket-no-dish"]').text()).toBe(
+			"With the runner",
+		)
 	})
 
 	it("the last button of a ticket being cooked is « Mark ready », and it moves the dishes to Ready, not to Delivered", async () => {
@@ -240,7 +246,7 @@ describe("with a runner", () => {
 
 		const entries = wrapper
 			.get('[data-test="ticket-line-menu"]')
-			.findAll("button")
+			.findAll('button:not([data-test="menu-close"])')
 			.map((button) => button.text())
 		expect(entries).toEqual(["Preparing"])
 	})

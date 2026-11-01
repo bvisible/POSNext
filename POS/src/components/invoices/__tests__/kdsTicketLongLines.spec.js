@@ -442,11 +442,13 @@ describe("the status menu of a dish", () => {
 		expect(lines().map((line) => line.attributes("data-selected") === "true")).toEqual(
 			lines().map((_, index) => index === 2),
 		)
-		expect(lines()[2].classes()).toContain("ring-2")
+		// a heavy ink outline on the card's own white (Daniel, 01.11: more legible)
+		expect(lines()[2].classes()).toContain("ring-[3px]")
+		expect(lines()[2].classes()).toContain("bg-white")
 
 		await openMenu(wrapper, 2)
 		expect(lines().some((line) => line.attributes("data-selected"))).toBe(false)
-		expect(lines()[2].classes()).not.toContain("ring-2")
+		expect(lines()[2].classes()).not.toContain("ring-[3px]")
 	})
 
 	it("says in its head which dish it is for, so that it cannot be read as the line under it", async () => {
@@ -470,7 +472,7 @@ describe("the status menu of a dish", () => {
 		expect(menu.classes()).toContain("fixed")
 		// Under the dish: the dish box is 300 x 48 at (100, 500), so the menu starts at 548 + 4 and ends at the dish's right edge
 		expect(menu.element.style.top).toBe("552px")
-		expect(menu.element.style.left).toBe(`${400 - 192}px`)
+		expect(menu.element.style.left).toBe(`${400 - 288}px`)
 	})
 
 	it("opens above the dish when the foot of the screen leaves no room under it, held by its LOWER edge", async () => {
@@ -488,8 +490,9 @@ describe("the status menu of a dish", () => {
 	})
 
 	it("touches the dish when it opens upward from a dish being prepared: one button, not a gap of 44 px", async () => {
-		// Dish 2 is Preparing: with a runner its menu offers "Mark ready" alone (the runner delivers, task 38a-1), 54 px, where a
-		// waiting dish's offers two, 98 px. The menu was placed with the height of the larger one and floated 44 px over the smaller
+		// Dish 2 is Preparing: with a runner its menu offers "Mark ready" (the runner delivers, task 38a-1) and the way back, « Undo start »
+		// (Daniel, 01.11), where a waiting dish's offers "Preparing" and "Mark ready". The menu was placed with the height of the larger
+		// one and floated over the smaller: the lower edge of an upward menu is held, so it touches the dish whatever its height
 		layout({ viewport: 150 })
 		window.innerHeight = 600
 		// A dish of one unit: a dish of several has a quantity to pick, with a row of its own (kdsPartialReady.spec.js)
@@ -500,15 +503,17 @@ describe("the status menu of a dish", () => {
 
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
 		expect(
-			menu.findAll("button").map((b) => b.text().replace(/\s+/g, " ").trim()),
-		).toEqual(["Mark ready"])
+			menu
+				.findAll('button:not([data-test="menu-close"])')
+				.map((b) => b.text().replace(/\s+/g, " ").trim()),
+		).toEqual(["Mark ready", "Undo start"])
 		expect(menu.element.style.bottom).toBe("104px")
 	})
 
-	it("counts the room the menu really needs: where one button fits under the dish and two do not", async () => {
-		// The dish ends at 548: with a window 660 px high there are 100 px under it, 94 of them are needed for one button (its head 42, the button 52)
+	it("counts the room the menu really needs: a menu of two buttons fits under the dish where one with a quantity to pick, a row more, does not", async () => {
+		// The dish ends at 548: with a window 784 px high there are 224 px under it, which is what two buttons need (the head 88, two buttons of 68)
 		layout({ viewport: 150 })
-		window.innerHeight = 660
+		window.innerHeight = 784
 		const wrapper = show(oneUnitAt(longOrder(25), 1))
 		await nextTick()
 
@@ -518,9 +523,10 @@ describe("the status menu of a dish", () => {
 		).toBe("552px")
 		await openMenu(wrapper, 1)
 
-		await openMenu(wrapper, 0)
+		// Dish 2 has three units to cook: its menu has a quantity to pick, 68 px more, which the window does not leave under the dish
+		await openMenu(wrapper, 2)
 		const menu = wrapper.get('[data-test="ticket-line-menu"]')
-		expect(menu.element.style.bottom).toBe("164px")
+		expect(menu.element.style.bottom).toBe("288px")
 		expect(menu.element.style.top).toBe("")
 	})
 
@@ -532,13 +538,15 @@ describe("the status menu of a dish", () => {
 
 		const buttons = wrapper
 			.get('[data-test="ticket-line-menu"]')
-			.findAll("button")
+			.findAll('button:not([data-test="menu-close"])')
 		expect(buttons.map((b) => b.text().replace(/\s+/g, " ").trim())).toEqual([
 			"Preparing",
 			"Mark ready",
 		])
+		// 64 px high with 20 px words (Daniel, 01.11), far over the 44 px a finger needs
 		for (const button of buttons) {
-			expect(button.classes()).toContain("min-h-[48px]")
+			expect(button.classes()).toContain("min-h-[64px]")
+			expect(button.classes()).toContain("text-xl")
 		}
 	})
 
@@ -549,13 +557,13 @@ describe("the status menu of a dish", () => {
 
 		const buttons = wrapper
 			.get('[data-test="ticket-line-menu"]')
-			.findAll("button")
+			.findAll('button:not([data-test="menu-close"])')
 		expect(buttons.map((b) => b.text().replace(/\s+/g, " ").trim())).toEqual([
 			"Preparing",
 			"Deliver",
 		])
 		for (const button of buttons) {
-			expect(button.classes()).toContain("min-h-[48px]")
+			expect(button.classes()).toContain("min-h-[64px]")
 		}
 	})
 
@@ -626,7 +634,7 @@ describe("the status menu of a dish", () => {
 
 		await wrapper
 			.get('[data-test="ticket-line-menu"]')
-			.findAll("button")[1]
+			.findAll('button:not([data-test="menu-close"])')[1]
 			.trigger("click")
 
 		expect(call).toHaveBeenCalledWith(
@@ -860,7 +868,7 @@ describe("telling the screen to read again (fix round 1)", () => {
 
 		await wrapper
 			.get('[data-test="ticket-line-menu"]')
-			.findAll("button")[0]
+			.findAll('button:not([data-test="menu-close"])')[0]
 			.trigger("click")
 		await flushPromises()
 

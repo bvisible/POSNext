@@ -95,6 +95,11 @@ export function arrivalOf(order) {
  * @returns {"Pending"|"Preparing"|"Ready"|"Delivered"}
  */
 export function kitchenStatusOf(order) {
+	//// Neoffice — a ticket the kitchen view keeps with no dish left to cook (utils/kitchenRunner, `view_state`; Daniel, 01.11: it stays, struck through): all its dishes are at
+	//// the pass, so it is Ready and waits in the band in preparation until the runner delivers; or its starters are done and its mains held back, so it is in preparation. A view-only
+	//// word: the order's own status (and the shared table of examples with the server) says Delivered for both and is left as it is.
+	if (order?.view_state === "at-the-pass") return "Ready"
+	if (order?.view_state === "next-course") return "Preparing"
 	if (order?.kds_status === "Delivered") return "Delivered"
 	const lines = order?.items || []
 	const live = lines.filter((line) => LIVE.has(line?.kds_status))
