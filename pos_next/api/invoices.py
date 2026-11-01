@@ -1230,8 +1230,9 @@ def update_invoice(data):
 		from pos_next.restaurant import service_families
 
 		# The lines of the stored draft as they are before this save rewrites them: what already left, and in which send
-		# //// Neoffice — read FOR UPDATE: the room's call of a course (`restaurant.call_next_course`, the service rhythm) is not in the payload,
-		# //// so this save gives it back to the rebuilt lines, and a call made while it runs must be seen, not lost (NeoRestau lot 1, Daniel, 01.11)
+		# //// Neoffice — read FOR UPDATE: the room's call of a course (`restaurant.call_next_course`, the service rhythm) is not in the payload.
+		# //// `decide_new_lines` gives it, and the mark of a line sent ahead, back to the lines the document is rebuilt from, so a call made
+		# //// while this save runs must be seen, not lost (NeoRestau lot 1, Daniel, 01.11)
 		stored_lines = (
 			service_families.stored_lines(data.get("name"), lock=True) if doctype == "Sales Invoice" else []
 		)
@@ -1701,10 +1702,6 @@ def update_invoice(data):
 		# Persist NEW item-level kds_status from frontend (e.g. Waiting/Pending from SendToKitchenDialog)
 		has_kds_batch = frappe.db.has_column("Sales Invoice Item", "kds_batch")
 		has_sent_at = frappe.db.has_column("Sales Invoice Item", "kds_sent_at")
-		# //// Neoffice — whether the site has the two fields of the service rhythm (a site not migrated yet has not)
-		has_ahead = frappe.db.has_column("Sales Invoice Item", "kds_ahead") and frappe.db.has_column(
-			"Sales Invoice Item", "kds_called_at"
-		)
 		# //// Neoffice — ONE time for every line that leaves in this save (see `kds_sent_at` below)
 		sent_stamp = frappe.utils.now_datetime()
 		if has_kds_field and data.get("items"):
@@ -1765,21 +1762,6 @@ def update_invoice(data):
 								if sent_at:
 									frappe.db.set_value(
 										"Sales Invoice Item", doc_item.name, "kds_sent_at", sent_at, update_modified=False
-									)
-							# //// Neoffice — a line sent AHEAD of its course (the restaurant prepares ahead) keeps the mark, and the room's call of its course, through every
-							# //// later save: the rule (`service_families.decide_new_lines`) put both in the payload line, from the stored row for a line that already left and from
-							# //// the plan for a line leaving now, and the rebuilt document had neither (NeoRestau lot 1, the service rhythm, Daniel, 01.11).
-							if has_ahead and item_kds not in ("", "Waiting"):
-								called_at = item_data.get("kds_called_at")
-								if cint(item_data.get("kds_ahead")) or called_at:
-									frappe.db.set_value(
-										"Sales Invoice Item",
-										doc_item.name,
-										{
-											"kds_ahead": 1 if cint(item_data.get("kds_ahead")) else 0,
-											"kds_called_at": called_at or None,
-										},
-										update_modified=False,
 									)
 							# Assign batch when item is sent to kitchen (Waiting→Pending)
 							if has_kds_batch and item_kds not in ("", "Waiting"):

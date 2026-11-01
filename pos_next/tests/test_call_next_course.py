@@ -166,7 +166,7 @@ class TestAtomicity(CallCase):
 		self.assertEqual(self.called()[:5], called)
 
 	def locked_reads_of(self, action):
-		"""The queries `action` runs that read the lines of the order FOR UPDATE."""
+		"""The queries `action` runs that read the stored lines of the order FOR UPDATE, with the call among the columns: what the call and the save of the till both do."""
 		queries = []
 		real = frappe.db.sql
 
@@ -176,7 +176,11 @@ class TestAtomicity(CallCase):
 
 		with patch.object(frappe.db, "sql", side_effect=spy):
 			action()
-		return [q for q in queries if "FOR UPDATE" in q and "tabSales Invoice Item" in q]
+		return [
+			query
+			for query in queries
+			if "FOR UPDATE" in query and "tabSales Invoice Item" in query and "kds_called_at" in query
+		]
 
 	def test_the_call_and_the_save_lock_the_same_lines_before_they_write(self):
 		"""That is what keeps a call from being lost to a save made at the same moment: one waits for the other, in the same order."""
