@@ -791,26 +791,16 @@ SETTINGS = (
 	# //// the sound of that notice and of the runner's dishes ready, and their volume. The tablets read them through `get_restaurant_settings`
 	# //// (pos_next.restaurant.kitchen_alerts); the screen of the till only edits them, with a Listen button for each sound. They are settings of the TILL (the General tab), so a restaurant manager,
 	# //// who sets three till settings only (ruling 63), does not see them: the till's manager does.
+	# //// Neoffice — no banner any more (Daniel, 01.11: « enlever le bandeau »): the ticket of a table whose next course is ordered flashes in the band « To do » until the kitchen starts it or says it has been seen. The setting that
+	# //// switched the banner on now switches the flash, and its seconds are gone from the screen of the settings (the doctype keeps the field, hidden, for the rows already stored).
 	Setting(
 		"kitchen_next_course_popup",
 		"kitchen_alerts",
-		_lt("Popup when the next course is ordered"),
-		_lt("Show a notice at the top of the kitchen screen when the next course of a table is ordered"),
+		_lt("Flash the ticket when the next course is ordered"),
+		_lt("The ticket of a table whose next course is ordered flashes on the kitchen screen until the kitchen starts it or leaves it to do"),
 		"check",
 		doctype=POS_SETTINGS,
 		till=RESTAURANT_TILL,
-	),
-	Setting(
-		"kitchen_popup_seconds",
-		"kitchen_alerts",
-		_lt("Popup stays (seconds)"),
-		_lt("Seconds the notice stays on the kitchen screen. 0 = until somebody dismisses it"),
-		"int",
-		doctype=POS_SETTINGS,
-		till=RESTAURANT_TILL,
-		depends_on=(on("kitchen_next_course_popup"),),
-		min=0,
-		max=600,
 	),
 	Setting(
 		"kitchen_next_course_sound",
@@ -1824,6 +1814,8 @@ NOT_LISTED = {
 			"switched off on purpose by the merge of 28.10.2026, until a till's use is decided"
 		),
 		"cart_lifo": "switched off on purpose by the merge of 28.10.2026: the newest line always comes first",
+		# //// Neoffice — the banner is gone (Daniel, 01.11), so are its seconds: the ticket flashes until the kitchen starts it. The field stays in the doctype, hidden, for the rows already stored.
+		"kitchen_popup_seconds": "no longer used: the banner of the kitchen screen is gone, the ticket flashes until the kitchen starts it",
 	},
 	POS_PROFILE: {
 		"country": "information only, fetched from the company",
