@@ -566,9 +566,13 @@ describe("the ticket with a line cooked in part", () => {
 		)
 
 		expect(wrapper.findAll('[data-test="ticket-line-sent"]')).toHaveLength(0)
+		// (The ticket may order its dishes, the ones still to cook before the ones already sent: the quantities are compared whatever the order)
 		expect(
-			wrapper.findAll('[data-test="ticket-qty"]').map((one) => one.text()),
-		).toEqual(["6×", "2×", "1×"])
+			wrapper
+				.findAll('[data-test="ticket-qty"]')
+				.map((one) => one.text())
+				.sort(),
+		).toEqual(["1×", "2×", "6×"])
 	})
 
 	it("keeps the line a live one: it is tapped, it has a menu, and the strike-through is the pill's alone", async () => {
