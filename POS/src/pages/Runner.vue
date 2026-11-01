@@ -57,6 +57,10 @@
 				<!-- //// Neoffice — the choices of the printer button of the tickets (task 44): the button (off on the runner screen unless chosen), what prints, the COPY mark. Drawn where a station has a printer -->
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Runner" :settings="copySettings" @change="setCopySetting" />
 			</template>
+			<!-- //// Neoffice — a sound is on but the browser has not been touched yet: it can make none before (NeoRestau lot 1, Daniel, 01.11) -->
+			<template #chip>
+				<SoundUnlockChip :enabled="runnerSoundOn" />
+			</template>
 			<template #view>
 				<!-- //// Neoffice — the display modes of THIS screen, named as such (task 38a-2, ruling 132): « By table », « By station », « On the plan ». The last one was « Plan de salle »,
 				     the very word of a destination, next to a switch that now has a real « Plan de salle ». -->
@@ -259,6 +263,10 @@ import { byArrival } from "@/utils/kitchenBands"
 //// Neoffice — what to write on a station's colour, and the colour lightened for a dark screen (task 46)
 import { inkOn, onDark } from "@/utils/stationColors"
 import { call } from "@/utils/apiWrapper"
+//// Neoffice — the runner's sound when dishes come up ready is the till's setting (POS Settings, "Kitchen alerts"), played by the shared alert-sound player (NeoRestau lot 1, Daniel, 01.11)
+import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
+import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
+import { playAlertSound } from "@/utils/alertSoundPlayer"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
@@ -277,6 +285,9 @@ const urlStation = urlParams.get("station")
 const ofTheRestaurant = () => ({
 	restaurant: urlRestaurant || restaurantStore.tillRestaurant,
 })
+//// Neoffice — the sound of the dishes that come up ready and its volume, as the till set them for this restaurant (default: the beep this screen has always made, at the volume it always had)
+const { settings: alertSettings } = useKitchenAlertSettings({ restaurant: ofTheRestaurant })
+const runnerSoundOn = computed(() => alertSettings.value.runnerSound !== "none")
 const { showError } = useToast()
 const orders = ref([])
 const showDelivered = ref(
@@ -668,25 +679,9 @@ async function loadOrders() {
 	}
 }
 
+//// Neoffice — was a beep of 880 Hz on an AudioContext opened for each beep. It is now the sound the till chose for the runner, at the volume it chose, on the one shared context (utils/alertSoundPlayer): the default is that same beep at that same volume. A page nobody has touched plays nothing (a browser's rule); the chip in the bar says so.
 function playNotificationSound() {
-	try {
-		const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-		const oscillator = audioCtx.createOscillator()
-		const gainNode = audioCtx.createGain()
-		oscillator.connect(gainNode)
-		gainNode.connect(audioCtx.destination)
-		oscillator.frequency.value = 880
-		oscillator.type = "sine"
-		gainNode.gain.value = 0.3
-		oscillator.start()
-		gainNode.gain.exponentialRampToValueAtTime(
-			0.001,
-			audioCtx.currentTime + 0.3,
-		)
-		oscillator.stop(audioCtx.currentTime + 0.3)
-	} catch {
-		/* Audio not available */
-	}
+	playAlertSound(alertSettings.value.runnerSound, alertSettings.value.volume)
 }
 
 let pollInterval = null

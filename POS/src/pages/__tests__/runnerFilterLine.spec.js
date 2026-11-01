@@ -9,8 +9,9 @@ import { flushPromises, mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const call = vi.hoisted(() => vi.fn())
-// What the runner's "new ready dishes" beep opens: one AudioContext per beep, so a count of them is a count of beeps
-const beeps = vi.hoisted(() => ({ count: 0 }))
+// The runner's "new ready dishes" beep goes through the shared alert-sound player (utils/alertSoundPlayer, NeoRestau lot 1, Daniel, 01.11):
+// one call per beep, so a count of the calls is a count of beeps. It used to open an AudioContext of its own for each beep.
+const beeps = vi.hoisted(() => ({ count: 0, last: null }))
 const restaurantStore = vi.hoisted(() => ({
 	runnerEnabled: true,
 	tillRestaurant: "The Bistro",
@@ -32,6 +33,20 @@ vi.mock("@/stores/restaurant", () => ({
 	useRestaurantStore: () => restaurantStore,
 }))
 vi.mock("@/socket", () => ({ initSocket: () => null }))
+vi.mock("@/utils/alertSoundPlayer", async () => {
+	const { ref } = await import("vue")
+	return {
+		playAlertSound: (sound, volume) => {
+			beeps.count += 1
+			beeps.last = [sound, volume]
+			return true
+		},
+		alertSoundsLocked: ref(false),
+		alertSoundsSupported: () => true,
+		listenForFirstTouch: () => {},
+		unlockAlertSounds: async () => true,
+	}
+})
 
 const { default: Runner } = await import("../Runner.vue")
 
@@ -103,24 +118,6 @@ function serve({ rooms = "ok", gate = null } = {}) {
 	})
 }
 
-class FakeAudioContext {
-	constructor() {
-		beeps.count += 1
-	}
-	createOscillator() {
-		return { connect() {}, start() {}, stop() {}, frequency: {} }
-	}
-	createGain() {
-		return { connect() {}, gain: { exponentialRampToValueAtTime() {} } }
-	}
-	get destination() {
-		return {}
-	}
-	get currentTime() {
-		return 0
-	}
-}
-
 const Card = {
 	props: ["card", "viewMode"],
 	template: '<div class="card" :data-key="card.key">{{ card.title }}</div>',
@@ -178,13 +175,12 @@ beforeEach(() => {
 	localStorage.clear()
 	opened = []
 	beeps.count = 0
-	window.AudioContext = FakeAudioContext
+	beeps.last = null
 	resetOrders()
 	serve()
 })
 afterEach(() => {
 	opened.forEach((wrapper) => wrapper.unmount())
-	window.AudioContext = undefined
 })
 
 describe("the runner's filters", () => {
@@ -415,6 +411,17 @@ describe("the beep for new ready dishes", () => {
 		ORDERS = [...ORDERS, orderReadyIn("R6", "r3", "T11")]
 		await refresh(wrapper)
 		expect(beeps.count).toBe(1)
+	})
+
+	it("is the beep at the medium volume unless the till chose another sound for the runner", async () => {
+		const wrapper = await open()
+		await choose(wrapper, "rooms", "Room 1")
+		await refresh(wrapper)
+
+		ORDERS = [...ORDERS, orderReadyIn("R5", "r1", "T3")]
+		await refresh(wrapper)
+
+		expect(beeps.last).toEqual(["beep", "medium"])
 	})
 })
 
