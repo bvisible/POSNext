@@ -79,10 +79,10 @@ describe("the variables a size sets on the screen", () => {
 			"9px",
 		])
 		expect([compact, normal, large, xl].map((v) => v["--kds-btn-h"])).toEqual([
-			"44px",
-			"44px",
-			"44px",
-			"52px",
+			"36px",
+			"38px",
+			"40px",
+			"46px",
 		])
 	})
 
@@ -112,12 +112,12 @@ describe("the variables a size sets on the screen", () => {
 		}
 	})
 
-	it("keep the buttons at least 44 px high, whatever the size: a finger must hit them", () => {
+	it("keep the buttons at least 36 px high, whatever the size: a thumb still hits them (kitchen test, 01.11: they were 44 px and too tall)", () => {
 		for (const size of TEXT_SIZES)
 			expect(
 				px(textSizeVariables(size)["--kds-btn-h"]),
 				size,
-			).toBeGreaterThanOrEqual(44)
+			).toBeGreaterThanOrEqual(36)
 	})
 
 	it("write the options and remarks at most one step under the dish in Compact, and the same size as the dish from Normal on", () => {

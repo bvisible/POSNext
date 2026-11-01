@@ -63,13 +63,13 @@ describe("the variables of the panel", () => {
 		expect(variables["--kds-fs-tt"]).toBe("15px")
 	})
 
-	it("have buttons 56 px high with 20 px words: more than the 44 px of a touch target", () => {
+	it("have buttons 48 px high with 20 px words: higher than the screen's own, a panel is read from further away", () => {
 		const variables = fullScreenVariables("compact")
 
-		expect(variables["--kds-btn-h"]).toBe("56px")
+		expect(variables["--kds-btn-h"]).toBe("48px")
 		expect(variables["--kds-fs-btn"]).toBe("20px")
-		expect(Number.parseFloat(variables["--kds-btn-h"])).toBeGreaterThanOrEqual(
-			44,
+		expect(Number.parseFloat(variables["--kds-btn-h"])).toBeGreaterThan(
+			Number.parseFloat(textSizeVariables("compact")["--kds-btn-h"]),
 		)
 	})
 
@@ -94,6 +94,6 @@ describe("the variables of the panel", () => {
 		const before = JSON.stringify(textSizeVariables("compact"))
 		fullScreenVariables("compact")
 		expect(JSON.stringify(textSizeVariables("compact"))).toBe(before)
-		expect(textSizeVariables("compact")["--kds-btn-h"]).toBe("44px")
+		expect(textSizeVariables("compact")["--kds-btn-h"]).toBe("36px")
 	})
 })

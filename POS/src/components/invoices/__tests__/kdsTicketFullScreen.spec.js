@@ -371,7 +371,7 @@ describe("the dishes of the panel", () => {
 
 		expect(panel().style.getPropertyValue("--kds-fs-table")).toBe("34px")
 		expect(panel().style.getPropertyValue("--kds-fs-timer")).toBe("26px")
-		expect(panel().style.getPropertyValue("--kds-btn-h")).toBe("56px")
+		expect(panel().style.getPropertyValue("--kds-btn-h")).toBe("48px")
 	})
 
 	it("flow in columns side by side, each dish whole: the body scrolls sideways and a dish is never cut between two columns", async () => {
@@ -413,7 +413,7 @@ describe("the dishes of the panel", () => {
 		expect(part("ticket-line").className).toContain("!min-h-[44px]")
 		for (const name of ["ticket-main", "ticket-print", "ticket-close"]) {
 			const target = part(name)
-			// Each is as high as the panel's button height variable, 56 px, which is more than 44
+			// Each is as high as the panel's button height variable, 48 px, higher than the screen's own
 			expect(target.className + target.parentElement.className, name).toMatch(
 				/kds-btn-h/,
 			)

@@ -35,7 +35,7 @@ describe("the text size of the kitchen screen", () => {
 		cycle()
 		cycle()
 		expect(size.value).toBe("xl")
-		expect(style.value["--kds-btn-h"]).toBe("52px")
+		expect(style.value["--kds-btn-h"]).toBe("46px")
 		cycle()
 		expect(size.value).toBe("compact")
 		expect(localStorage.getItem(KEY)).toBe("compact")

@@ -94,7 +94,7 @@ describe("the text size of the kitchen screen", () => {
 
 		expect(root(wrapper).attributes("data-text-size")).toBe("compact")
 		expect(variable(wrapper, "--kds-fs")).toBe("13px")
-		expect(variable(wrapper, "--kds-btn-h")).toBe("44px")
+		expect(variable(wrapper, "--kds-btn-h")).toBe("36px")
 	})
 
 	it("has a small Aa button in its header that names the size it is at", async () => {

@@ -28,6 +28,7 @@ const COMMON = {
 	"--kds-body-py": "0px",
 }
 
+//// Neoffice — the buttons are lower (kitchen test, 01.11): 36 / 38 / 40 / 46 px by size instead of 44 / 44 / 44 / 52, and 48 px in the panel instead of 56. The width is the card's; only the height was too much.
 const TABLE = {
 	compact: {
 		"--kds-card-w": "250px",
@@ -39,7 +40,7 @@ const TABLE = {
 		"--kds-fs-num": "12px",
 		"--kds-fs-timer": "13px",
 		"--kds-fs-btn": "14px",
-		"--kds-btn-h": "44px",
+		"--kds-btn-h": "36px",
 		"--kds-fs-tt": "10px",
 		"--kds-tt-d": "none",
 	},
@@ -53,7 +54,7 @@ const TABLE = {
 		"--kds-fs-num": "13px",
 		"--kds-fs-timer": "15px",
 		"--kds-fs-btn": "15px",
-		"--kds-btn-h": "44px",
+		"--kds-btn-h": "38px",
 		"--kds-fs-tt": "10px",
 		"--kds-tt-d": "none",
 	},
@@ -67,7 +68,7 @@ const TABLE = {
 		"--kds-fs-num": "15px",
 		"--kds-fs-timer": "18px",
 		"--kds-fs-btn": "17px",
-		"--kds-btn-h": "44px",
+		"--kds-btn-h": "40px",
 		"--kds-fs-tt": "12px",
 		"--kds-tt-d": "inline",
 	},
@@ -81,7 +82,7 @@ const TABLE = {
 		"--kds-fs-num": "17px",
 		"--kds-fs-timer": "22px",
 		"--kds-fs-btn": "19px",
-		"--kds-btn-h": "52px",
+		"--kds-btn-h": "46px",
 		"--kds-fs-tt": "14px",
 		"--kds-tt-d": "inline",
 	},
@@ -102,14 +103,14 @@ export function fullScreenTextSize(size) {
 }
 
 // A head that is read from further away than a card's: the mockup's (task 38): the table at 34 px, the timer at 26 px, the number and the room's chip a little bigger,
-// a main button 56 px high with 20 px words, and the paddings of a panel rather than a card. Each is a FLOOR: a size that is already bigger keeps its own.
+// a main button 48 px high with 20 px words, and the paddings of a panel rather than a card. Each is a FLOOR: a size that is already bigger keeps its own.
 const FULL_SCREEN_FLOORS = {
 	"--kds-fs-table": 34,
 	"--kds-fs-ref": 15,
 	"--kds-fs-num": 17,
 	"--kds-fs-timer": 26,
 	"--kds-fs-tt": 15,
-	"--kds-btn-h": 56,
+	"--kds-btn-h": 48,
 	"--kds-fs-btn": 20,
 }
 
