@@ -399,12 +399,12 @@ describe("the empty states in dark mode (task 46)", () => {
 		)
 	})
 
-	it("the kitchen band's count and its empty line do the same", () => {
+	// The band's empty line is gone (a band with no ticket is not drawn, Daniel, 01.11); the screen's one line for « no orders » carries the same classes (kitchenInTwoBands.spec)
+	it("the kitchen band's count does the same", () => {
 		const wrapper = mount(KitchenBand, {
 			props: {
 				band: "waiting",
 				label: "Waiting",
-				emptyText: "No pending orders",
 				orders: [],
 			},
 			global: {
@@ -414,9 +414,6 @@ describe("the empty states in dark mode (task 46)", () => {
 		})
 
 		expect(names(wrapper.get('[data-test="band-count"]'))).toEqual(
-			expect.arrayContaining(["text-gray-500", "dark:[&&]:!text-gray-400"]),
-		)
-		expect(names(wrapper.get('[data-test="band-empty"]'))).toEqual(
 			expect.arrayContaining(["text-gray-500", "dark:[&&]:!text-gray-400"]),
 		)
 	})

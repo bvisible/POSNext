@@ -124,12 +124,9 @@ describe("the status a ticket shows, from the dishes it shows (fix round 1, ruli
 				for (const c of [...STATUSES, undefined]) {
 					const lines = c === undefined ? [a, b] : [a, b, c]
 					const ticket = order(lines)
-					// A Pending ticket with a delivered dish is a meal in progress: it sits in preparation (Daniel, 01.11); the dishes of this table carry no family, so any delivered dish counts
-					const expected =
-						kitchenStatusOf(ticket) === "Pending" && lines.includes("Delivered")
-							? BAND_PRODUCTION
-							: bandOfStatus[kitchenStatusOf(ticket)]
-					expect(bandOf(ticket), lines.join("/")).toBe(expected)
+					expect(bandOf(ticket), lines.join("/")).toBe(
+						bandOfStatus[kitchenStatusOf(ticket)],
+					)
 					checked += 1
 				}
 			}
@@ -189,33 +186,13 @@ describe("the band of a ticket", () => {
 		expect(bandOf(order(["Pending"], { kds_status: "Delivered" }))).toBe(null)
 	})
 
-	// Daniel, 01.11 (table 113: its starters delivered, its dessert just called, and it sat among the orders WAITING): « Un ticket dont des plats sont déjà livrés doit-il rester dans En préparation ? » — « Oui ».
-	// A table's order lives for the whole meal: once a course of it has been delivered the meal is IN PROGRESS, and the next course arrives into the band in preparation. The ticket's own look (its badge,
-	// its button) still says Pending, the dishes are still to start: only the band follows the meal.
-	it("is PRODUCTION for a second round: an earlier course is delivered, the new dishes are only sent (the meal is in progress)", () => {
-		expect(bandOf(order(["Delivered", "Delivered", "Pending", "Pending"]))).toBe(BAND_PRODUCTION)
-		expect(bandOf(order(["Delivered", "Pending"]))).toBe(BAND_PRODUCTION)
-	})
-
-	it("keeps the look of a ticket whose dishes are still to start: Pending, with its button to begin them", () => {
-		expect(kitchenStatusOf(order(["Delivered", "Pending"]))).toBe("Pending")
-	})
-
-	it("counts a delivered COURSE, not a delivered drink, where the restaurant has courses: a beer served does not make the food begun", () => {
-		const withFamilies = (rows) =>
-			order(rows.map(([status]) => status), {
-				items: rows.map(([status, family], index) => ({
-					name: `F-${index}`,
-					item_name: "Dish",
-					qty: 1,
-					kds_status: status,
-					service_family: family,
-				})),
-			})
-
-		expect(bandOf(withFamilies([["Delivered", "Drink"], ["Pending", "Starter"]]))).toBe(BAND_WAITING)
-		expect(bandOf(withFamilies([["Delivered", "Starter"], ["Pending", "Main"]]))).toBe(BAND_PRODUCTION)
-		expect(bandOf(withFamilies([["Delivered", "Drink"], ["Delivered", "Main"], ["Pending", "Dessert"]]))).toBe(BAND_PRODUCTION)
+	it("is WAITING for a second round: the first one is delivered, the new dishes are only sent", () => {
+		// A table's order stays open for the whole meal. The starters are delivered and struck through on the ticket, the
+		// mains arrive as a new send. Nothing is being made: counting the delivered starters as "started" would put the
+		// mains in production the moment they arrive.
+		expect(
+			bandOf(order(["Delivered", "Delivered", "Pending", "Pending"])),
+		).toBe(BAND_WAITING)
 	})
 
 	it("is PRODUCTION for a later round that has been started, or is ready", () => {
@@ -372,8 +349,10 @@ describe("splitting the tickets into the two bands", () => {
 			modified: "2026-10-30 12:12:00",
 		})
 
-		// (A holds a delivered course, so it sits in the band in preparation: the order is the one the two bands share, `byArrival`)
-		expect([a, b].sort(byArrival).map((o) => o.name)).toEqual(["B", "A"])
+		expect(splitIntoBands([a, b]).waiting.map((o) => o.name)).toEqual([
+			"B",
+			"A",
+		])
 	})
 
 	it("breaks a tie by the time the table's order was opened, then by name, so that the order never flickers", () => {
@@ -493,17 +472,14 @@ describe("the dishes sent ahead of their course (the service rhythm)", () => {
 		expect(bandOf(ticket)).toBe(BAND_PRODUCTION)
 	})
 
-	it("is Pending when the only dishes left are sent ahead and none is begun: in the band in preparation once a course was delivered, waiting for a new table", () => {
-		const meal = aheadOrder([
+	it("is Pending, in the waiting band, when the only dishes left are sent ahead and none is begun", () => {
+		const ticket = aheadOrder([
 			{ status: "Delivered", uncalled: false },
 			{ status: "Pending", uncalled: true },
 		])
-		const newTable = aheadOrder([{ status: "Pending", uncalled: true }])
 
-		expect(kitchenStatusOf(meal)).toBe("Pending")
-		expect(bandOf(meal)).toBe(BAND_PRODUCTION)
-		expect(kitchenStatusOf(newTable)).toBe("Pending")
-		expect(bandOf(newTable)).toBe(BAND_WAITING)
+		expect(kitchenStatusOf(ticket)).toBe("Pending")
+		expect(bandOf(ticket)).toBe(BAND_WAITING)
 	})
 
 	it("is Preparing, never Ready, when the only dishes left are finished ahead: the ticket stays in preparation", () => {
@@ -542,7 +518,7 @@ describe("the dishes sent ahead of their course (the service rhythm)", () => {
 
 		expect(arrivalOf(waited)).toBe(new Date(2026, 9, 30, 12, 30, 0).getTime())
 		expect(arrivalOf(called)).toBe(new Date(2026, 9, 30, 12, 45, 0).getTime())
-		expect([called, waited].sort(byArrival).map((t) => t.name)).toEqual([waited.name, called.name])
+		expect(splitIntoBands([called, waited]).waiting.map((t) => t.name)).toEqual([waited.name, called.name])
 	})
 
 	it("orders the runner's tickets by the call too: a course sent ahead long ago and called just now comes after a course sent in between", () => {

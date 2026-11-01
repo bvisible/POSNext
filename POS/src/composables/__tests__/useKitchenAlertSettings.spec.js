@@ -39,7 +39,7 @@ beforeEach(() => {
 	vi.useFakeTimers()
 	server.calls = []
 	server.fail = false
-	server.answer = { kitchen_alerts: { popup: true, popup_seconds: 12, next_course_sound: "chime", runner_sound: "beep", volume: "low" } }
+	server.answer = { kitchen_alerts: { popup: true, next_course_sound: "chime", runner_sound: "beep", volume: "low" } }
 })
 afterEach(() => {
 	wrapper?.unmount()
@@ -50,7 +50,7 @@ describe("the alerts of a screen", () => {
 	it("are the defaults until the server has answered", () => {
 		const { settings } = mountWith({ restaurant: () => ({ restaurant: "Bistro" }) })
 
-		expect(settings.value).toEqual({ popup: true, popupSeconds: 30, nextCourseSound: "bell", runnerSound: "beep", volume: "medium" })
+		expect(settings.value).toEqual({ popup: true, nextCourseSound: "bell", runnerSound: "beep", volume: "medium" })
 	})
 
 	it("are read on mount from get_restaurant_settings, for the restaurant the screen is opened on", async () => {
@@ -60,7 +60,7 @@ describe("the alerts of a screen", () => {
 		expect(server.calls).toHaveLength(1)
 		expect(server.calls[0].method).toBe("pos_next.api.restaurant.get_restaurant_settings")
 		expect(server.calls[0].args.restaurant).toBe("Bistro")
-		expect(settings.value).toEqual({ popup: true, popupSeconds: 12, nextCourseSound: "chime", runnerSound: "beep", volume: "low" })
+		expect(settings.value).toEqual({ popup: true, nextCourseSound: "chime", runnerSound: "beep", volume: "low" })
 	})
 
 	it("ask for no restaurant of their own when the screen names none: the server picks the tablet's or the till's", async () => {

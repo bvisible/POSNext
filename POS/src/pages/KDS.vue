@@ -90,7 +90,6 @@
 		</ServiceTopBar>
 
 		<!-- //// Neoffice — the table that has just ordered its next course (NeoRestau lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine »): a notice per table under the bar, in the page's column, never over a ticket -->
-		<NextCourseNotices :notices="nextCourseNotices" @dismiss="dismissNextCourse" @show="showNextCourse" />
 
 		<!-- //// Neoffice — was ONE grid of tickets, oldest first, with "No Active Orders" in place of it when there was none. -->
 		<!-- //// The product owner asked for what is waiting apart from what is in preparation (task 23): two bands, always on -->
@@ -124,13 +123,16 @@
 				</div>
 			</section>
 
+			<!-- //// Neoffice — a band is drawn only when it holds a ticket (Daniel, 01.11: « la colonne est affichée uniquement s'il y a quelque chose dedans »): the other takes its room, and a screen with nothing at all says so once. -->
+			<p v-else-if="!bands.waiting.length && !bands.production.length" data-test="bands-empty" class="px-1 py-1 text-base text-gray-500 dark:[&&]:!text-gray-400">{{ __("No orders") }}</p>
 			<div v-else :class="bandsClass" :data-layout="layout" data-test="bands">
+				<!-- //// Neoffice — the first band says « To do » (it was « Pending »): it holds the new tickets and the tables whose next course is ordered, which blink until the kitchen starts them (Daniel, 01.11) -->
 				<KitchenBand
+					v-if="bands.waiting.length"
 					band="waiting"
 					:copy="printCopy"
 					:mode="bandMode"
-					:label="kitchenStatusLabel('Pending')"
-					:empty-text="__('No pending orders')"
+					:label="kitchenStatusLabel('Pending', { board: true })"
 					:orders="bands.waiting"
 					:stations="stations"
 					:show-station-badge="!selectedStation"
@@ -138,14 +140,16 @@
 					:rooms="areas"
 					:runner-enabled="runnerOn"
 					:flash-orders="flashingOrders"
-					@status-updated="loadOrders"
+					@acknowledge="acknowledgeNextCourse"
+					:alone="!bands.production.length"
+					:reload="loadOrders"
 				/>
 				<KitchenBand
+					v-if="bands.production.length"
 					band="production"
 					:copy="printCopy"
 					:mode="bandMode"
 					:label="kitchenStatusLabel('Preparing')"
-					:empty-text="__('No orders in preparation')"
 					:orders="bands.production"
 					:stations="stations"
 					:show-station-badge="!selectedStation"
@@ -153,7 +157,8 @@
 					:rooms="areas"
 					:runner-enabled="runnerOn"
 					:flash-orders="flashingOrders"
-					@status-updated="loadOrders"
+					@acknowledge="acknowledgeNextCourse"
+					:reload="loadOrders"
 				/>
 			</div>
 		</main>
@@ -204,12 +209,11 @@ import {
 	stationUsesRunner,
 } from "@/utils/kitchenRunner"
 //// Neoffice — the popup and the sound when the next course of a table is ordered, set in the till's settings (NeoRestau lot 1, Daniel, 01.11)
-import NextCourseNotices from "@/components/restaurant/NextCourseNotices.vue"
 import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
 import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
 //// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): where the kitchen prepares ahead the order of the meal is off, and the tickets say so
 import { SERVICE_RHYTHM_KEY, isPreparedAhead } from "@/utils/serviceRhythm"
-import { useNextCourseNotices } from "@/composables/useNextCourseNotices"
+import { useNextCourseAlert } from "@/composables/useNextCourseAlert"
 import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_AREA, TICKET_COLUMNS, TICKET_GRID } from "@/utils/ticketLayout"
@@ -275,14 +279,14 @@ const ordersOfTheRoom = computed(() => orders.value.filter(inTheRoom))
 const allOrdersOfTheRoom = computed(() => allOrders.value.filter(inTheRoom))
 
 //// Neoffice — the next course of a table is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son »). Each reading of the orders below goes through the rule
-//// (utils/nextCourseWatch): a ticket already on the screen with a newer send. What is done about it is the till's setting (POS Settings, "Kitchen alerts"), read for the restaurant of the screen: a notice per table, a sound, the ticket
-//// highlighted. A table of a room the screen does not show is neither announced nor rung for.
+//// (utils/nextCourseWatch): a ticket already on the screen with a newer send. What is done about it is the till's setting (POS Settings, "Kitchen alerts"), read for the restaurant of the screen: a sound, and the ticket flashing in the « To do » band
+//// until the kitchen starts it (no banner: the ticket is the alert). A table of a room the screen does not show is neither flashed nor rung for.
 const { settings: alertSettings, rhythm: serviceRhythm } = useKitchenAlertSettings({ restaurant: ofTheRestaurant })
 //// Neoffice — the tickets read the rhythm from here (KDSOrderCard); the screen's switch « follow the order of the meal » is without effect where the kitchen prepares ahead, so it is not offered there
 provide(SERVICE_RHYTHM_KEY, serviceRhythm)
 const preparesAhead = computed(() => isPreparedAhead(serviceRhythm.value))
-const nextCourses = useNextCourseNotices({ settings: alertSettings, accept: (order) => !order || inTheRoom(order) })
-const { notices: nextCourseNotices, flashing: flashingOrders, dismiss: dismissNextCourse, show: showNextCourse } = nextCourses
+const nextCourses = useNextCourseAlert({ settings: alertSettings, accept: (order) => !order || inTheRoom(order) })
+const { flashing: flashingOrders, acknowledge: acknowledgeNextCourse } = nextCourses
 const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
 
 //// Neoffice — was `sortedOrders`: one list, the delivered orders hidden unless asked for, oldest `creation` first. The split

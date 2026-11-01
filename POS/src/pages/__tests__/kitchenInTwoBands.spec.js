@@ -176,11 +176,12 @@ async function open(search = "", { realCards = false } = {}) {
 	await flushPromises()
 	return wrapper
 }
+// A band with no ticket is not drawn (Daniel, 01.11: « la colonne est affichée uniquement s'il y a quelque chose dedans »): what it holds is nothing
 const namesIn = (wrapper, band) =>
 	wrapper
-		.get(`[data-test="band-${band}"]`)
-		.findAll(".ticket")
+		.findAll(`[data-test="band-${band}"] .ticket`)
 		.map((el) => el.attributes("data-name"))
+const bandDrawn = (wrapper, band) => wrapper.find(`[data-test="band-${band}"]`).exists()
 const headerOf = (wrapper, band) =>
 	wrapper
 		.get(`[data-test="band-${band}"] [data-test="band-header"]`)
@@ -231,23 +232,18 @@ describe("the two bands of the kitchen screen", () => {
 		])
 	})
 
-	it("are there with nothing to cook either: two headers at zero and a line each, never a blank screen", async () => {
+	it("are not there with nothing to cook: no band, no header, one line saying so, never a blank screen", async () => {
 		const wrapper = await open()
 
-		expect(headerOf(wrapper, "waiting")).toBe("Pending (0)")
-		expect(headerOf(wrapper, "production")).toBe("Preparing (0)")
-		expect(
-			wrapper.get('[data-test="band-waiting"] [data-test="band-empty"]').text(),
-		).toBe("No pending orders")
-		expect(
-			wrapper
-				.get('[data-test="band-production"] [data-test="band-empty"]')
-				.text(),
-		).toBe("No orders in preparation")
+		expect(bandDrawn(wrapper, "waiting")).toBe(false)
+		expect(bandDrawn(wrapper, "production")).toBe(false)
+		expect(wrapper.get('[data-test="bands-empty"]').text()).toBe("No orders")
+		// in dark mode the line reads like the band's count (the till's dark remap of `.text-gray-500` is `!important`)
+		expect(wrapper.get('[data-test="bands-empty"]').classes()).toEqual(expect.arrayContaining(["text-gray-500", "dark:[&&]:!text-gray-400"]))
 		expect(wrapper.find(".animate-spin").exists()).toBe(false)
 	})
 
-	it("sort the tickets by what is begun on them: nothing begun waits, one dish begun or a course delivered is in preparation", async () => {
+	it("sort the tickets by what is begun on them: nothing begun waits, one dish begun is in preparation", async () => {
 		ORDERS = [
 			order("NONE", { lines: ["Pending", "Pending"], at: 1 }),
 			order("ONE", { lines: ["Pending", "Preparing"], at: 2 }),
@@ -257,9 +253,8 @@ describe("the two bands of the kitchen screen", () => {
 		]
 		const wrapper = await open()
 
-		// ROUND2: a course delivered and the next one only sent, the meal is in progress: it sits in preparation (Daniel, 01.11, table 113)
-		expect(namesIn(wrapper, "waiting")).toEqual(["NONE"])
-		expect(namesIn(wrapper, "production")).toEqual(["ONE", "READY", "ROUND2"])
+		expect(namesIn(wrapper, "waiting")).toEqual(["NONE", "ROUND2"])
+		expect(namesIn(wrapper, "production")).toEqual(["ONE", "READY"])
 		// Delivered: gone from both
 		expect(wrapper.text()).not.toContain("DONE")
 	})
@@ -287,32 +282,32 @@ describe("the two bands of the kitchen screen", () => {
 		]
 		const wrapper = await open()
 
-		expect(headerOf(wrapper, "waiting")).toBe("Pending (3)")
+		expect(headerOf(wrapper, "waiting")).toBe("To do (3)")
 		expect(headerOf(wrapper, "production")).toBe("Preparing (1)")
 	})
 
-	it("keep a band's header and one short line when it holds nothing, the other band as it was", async () => {
+	it("leave a band out when it holds nothing, the other band taking the room (Daniel, 01.11)", async () => {
 		ORDERS = [order("P1", { lines: ["Preparing"] })]
 		const wrapper = await open()
 
-		expect(headerOf(wrapper, "waiting")).toBe("Pending (0)")
-		expect(
-			wrapper.get('[data-test="band-waiting"] [data-test="band-empty"]').text(),
-		).toBe("No pending orders")
+		expect(bandDrawn(wrapper, "waiting")).toBe(false)
 		expect(namesIn(wrapper, "production")).toEqual(["P1"])
-		expect(
-			wrapper
-				.find('[data-test="band-production"] [data-test="band-empty"]')
-				.exists(),
-		).toBe(false)
+		expect(wrapper.find('[data-test="bands-empty"]').exists()).toBe(false)
+
+		ORDERS = [order("W1")]
+		await wrapper.get('[data-test="refresh"]').trigger("click")
+		await flushPromises()
+
+		expect(bandDrawn(wrapper, "production")).toBe(false)
+		expect(namesIn(wrapper, "waiting")).toEqual(["W1"])
 	})
 
-	it("use the kitchen's own words for the ticket's two steps, the ones its badges already say", async () => {
+	it("use the kitchen's own words for the ticket's two steps: « To do » for what is not begun, « Preparing » for what is", async () => {
+		ORDERS = [order("W1"), order("P1", { lines: ["Preparing"] })]
 		const wrapper = await open()
 
-		// "Pending" and "Preparing" are what kitchenStatusLabel() gives the badges, and what the French catalogue turns into
-		// "En attente" and "En préparation": the band and its tickets speak the same language
-		expect(headerOf(wrapper, "waiting")).toMatch(/^Pending/)
+		// « To do » is what kitchenStatusLabel() gives the board's first band and the badge of its tickets (Daniel, 01.11, « À faire »); « Preparing » is the second band's, « En préparation »
+		expect(headerOf(wrapper, "waiting")).toMatch(/^To do/)
 		expect(headerOf(wrapper, "production")).toMatch(/^Preparing/)
 	})
 
@@ -385,7 +380,7 @@ describe("the filters on the two bands", () => {
 
 		expect(namesIn(wrapper, "waiting")).toEqual(["W-R1"])
 		expect(namesIn(wrapper, "production")).toEqual(["P-R1"])
-		expect(headerOf(wrapper, "waiting")).toBe("Pending (1)")
+		expect(headerOf(wrapper, "waiting")).toBe("To do (1)")
 		expect(headerOf(wrapper, "production")).toBe("Preparing (1)")
 	})
 
@@ -401,7 +396,7 @@ describe("the filters on the two bands", () => {
 		expect(namesIn(wrapper, "production")).toEqual(["P-R2"])
 	})
 
-	it("combine the room and the station in both bands, and keep the empty one's header and line", async () => {
+	it("combine the room and the station in both bands, and leave out the one that holds nothing", async () => {
 		const wrapper = await open()
 
 		await choose(wrapper, "rooms", "Room 2")
@@ -409,12 +404,7 @@ describe("the filters on the two bands", () => {
 
 		expect(namesIn(wrapper, "waiting")).toEqual(["W-R2"])
 		expect(namesIn(wrapper, "production")).toEqual([])
-		expect(headerOf(wrapper, "production")).toBe("Preparing (0)")
-		expect(
-			wrapper
-				.get('[data-test="band-production"] [data-test="band-empty"]')
-				.text(),
-		).toBe("No orders in preparation")
+		expect(bandDrawn(wrapper, "production")).toBe(false)
 	})
 
 	it("hand the station chosen to every ticket, none with every station: the main button then acts on that station's dishes", async () => {
@@ -464,7 +454,7 @@ describe("a ticket on its way from one band to the other", () => {
 
 		expect(namesIn(wrapper, "waiting")).toEqual(["T2"])
 		expect(namesIn(wrapper, "production")).toEqual(["T1"])
-		expect(headerOf(wrapper, "waiting")).toBe("Pending (1)")
+		expect(headerOf(wrapper, "waiting")).toBe("To do (1)")
 		expect(headerOf(wrapper, "production")).toBe("Preparing (1)")
 	})
 
@@ -562,6 +552,11 @@ describe("a ticket on its way from one band to the other, with the real cards (f
 })
 
 describe("the layout of the bands", () => {
+	// Both bands hold a ticket: a band with none is not drawn (Daniel, 01.11), and the layout is the bands'
+	beforeEach(() => {
+		ORDERS = [order("W1"), order("P1", { lines: ["Preparing"] })]
+	})
+
 	it("opens on the columns, held flat or upright, when nothing has been chosen", async () => {
 		installScreen({ portrait: false })
 		const flat = await open()
@@ -681,7 +676,7 @@ describe("the layout of the bands", () => {
 			namesIn(wrapper, "waiting"),
 			namesIn(wrapper, "production"),
 		]).toEqual(inBands)
-		expect(headerOf(wrapper, "waiting")).toBe("Pending (2)")
+		expect(headerOf(wrapper, "waiting")).toBe("To do (2)")
 	})
 
 	it("keeps the choice on this device, and opens on it next time, wherever the tablet is held", async () => {
@@ -822,7 +817,7 @@ describe("a kitchen with a lot to cook", () => {
 			localStorage.setItem(LAYOUT_STORAGE_KEY, layout)
 			const wrapper = await open()
 
-			expect(headerOf(wrapper, "waiting"), layout).toBe("Pending (30)")
+			expect(headerOf(wrapper, "waiting"), layout).toBe("To do (30)")
 			expect(headerOf(wrapper, "production"), layout).toBe("Preparing (15)")
 			expect(namesIn(wrapper, "waiting"), layout).toHaveLength(30)
 			expect(namesIn(wrapper, "production"), layout).toHaveLength(15)

@@ -111,7 +111,7 @@ const readAgain = async (wrapper) => {
 	await wrapper.get('[data-test="refresh"]').trigger("click")
 	await flushPromises()
 }
-const notices = (wrapper) => wrapper.findAll('[data-test="next-course-notice"]')
+const flashing = (wrapper) => wrapper.findAll(".ticket").filter((el) => el.attributes("data-highlighted") === "yes").map((el) => el.attributes("data-name"))
 
 beforeEach(() => {
 	localStorage.clear()
@@ -146,29 +146,27 @@ describe("the kitchen of a restaurant that prepares ahead", () => {
 		expect(wrapper.get(".ticket").attributes("data-rhythm")).toBe("Called by the room")
 	})
 
-	it("tells nothing when a course merely arrives ahead or is started: the notice goes off on the CALL", async () => {
+	it("tells nothing when a course merely arrives ahead or is started: the alert goes off on the CALL", async () => {
 		ORDERS = [meal("A")]
 		const wrapper = await open()
 
 		ORDERS = [{ ...meal("A"), items: [...meal("A").items, dish("Pending", "Dessert", { name: "late", kds_ahead: 1, kds_called_at: null, kds_sent_at: "2026-11-01 12:30:00.000000" })] }]
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(flashing(wrapper)).toEqual([])
 		expect(player.play).not.toHaveBeenCalled()
 	})
 
-	it("rings, and names the course, when the room calls it", async () => {
+	it("rings, and makes the ticket flash, when the room calls the course", async () => {
 		ORDERS = [meal("A"), meal("B")]
 		const wrapper = await open()
 
 		ORDERS = [meal("A", CALL), meal("B")]
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(1)
-		expect(notices(wrapper)[0].text()).toContain("T-A — the next course is ordered: Mains")
 		expect(player.play).toHaveBeenCalledTimes(1)
 		expect(player.play).toHaveBeenCalledWith("bell", "medium")
-		expect(wrapper.findAll(".ticket").filter((el) => el.attributes("data-highlighted") === "yes").map((el) => el.attributes("data-name"))).toEqual(["A"])
+		expect(flashing(wrapper)).toEqual(["A"])
 	})
 
 	it("offers the device's « follow the order of the meal » only where the room calls the courses", async () => {

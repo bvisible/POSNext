@@ -408,20 +408,16 @@ describe("choosing a room on the kitchen screen", () => {
 		expect(shown(wrapper)).toEqual(["A1", "A2", "B1", "T1", "TAKE"])
 	})
 
-	it("says there is nothing to cook when the room has no ticket: both bands stay, empty, and the line is kept to leave it", async () => {
+	it("says there is nothing to cook when the room has no ticket: no band is drawn, one line says so, and the filter line is kept to leave it", async () => {
 		const wrapper = await open()
 
 		await choose(wrapper, "rooms", "Garden")
 
 		expect(shown(wrapper)).toEqual([])
-		// The screen used to swap its grid for "No Active Orders". Its two bands are always on it now (task 23), each with
-		// its header at zero and one short line, so that nothing moves when a ticket arrives
-		expect(wrapper.find('[data-test="band-waiting"]').text()).toContain(
-			"No pending orders",
-		)
-		expect(wrapper.find('[data-test="band-production"]').text()).toContain(
-			"No orders in preparation",
-		)
+		// The screen used to swap its grid for "No Active Orders", then kept two empty bands; a band is drawn only when it holds a ticket (Daniel, 01.11)
+		expect(wrapper.find('[data-test="band-waiting"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="band-production"]').exists()).toBe(false)
+		expect(wrapper.get('[data-test="bands-empty"]').text()).toBe("No orders")
 		expect(wrapper.find('[data-test="filter-line"]').exists()).toBe(true)
 		await choose(wrapper, "rooms", "All Areas")
 		expect(shown(wrapper)).toHaveLength(5)

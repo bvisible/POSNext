@@ -210,7 +210,7 @@ describe("opening the ticket full screen", () => {
 		expect(part("ticket-timer").textContent).toMatch(/^(\d+:\d\d|\d+ h \d\d)$/)
 		expect(
 			part("ticket-fs-state").textContent.replace(/\s+/g, " ").trim(),
-		).toBe("Pending · 24 lines")
+		).toBe("To do · 24 lines")
 	})
 
 	it("says « 1 line » in the singular", async () => {
@@ -223,7 +223,7 @@ describe("opening the ticket full screen", () => {
 
 		expect(
 			part("ticket-fs-state").textContent.replace(/\s+/g, " ").trim(),
-		).toBe("Pending · 1 line")
+		).toBe("To do · 1 line")
 	})
 })
 
@@ -603,7 +603,7 @@ describe("the board behind keeps updating", () => {
 		await nextTick()
 
 		expect(part("ticket-main").textContent.trim()).toBe("Start cooking")
-		expect(part("ticket-fs-state").textContent).toContain("Pending")
+		expect(part("ticket-fs-state").textContent).toContain("To do")
 	})
 
 	it("closes with its ticket: when the ticket leaves the board the card goes, and the panel with it", async () => {

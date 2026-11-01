@@ -1,5 +1,5 @@
 //// Neoffice — added file (no upstream equivalent). The kitchen screen splits its tickets into two bands, the ones WAITING
-//// (nothing begun on them, and no course of the meal delivered yet) and the ones IN PREPARATION (at least one dish begun, or a meal in progress), each in order of arrival (NeoRestau
+//// (nothing begun on them) and the ones IN PREPARATION (at least one dish begun), each in order of arrival (NeoRestau
 //// lot 1, task 23). The split and the order are written ONCE, here, and only read by the screen, so that a rule is
 //// changed in one place and tested without a screen.
 
@@ -8,8 +8,6 @@ import { courseSentAt } from "@/utils/courseTimer"
 import { timeOf } from "@/utils/serverDateTime"
 //// Neoffice — a dish sent ahead of its course and not called yet is not what a ticket waits for (the service rhythm, NeoRestau lot 1, Daniel, 01.11)
 import { isUncalled } from "@/utils/courseCall"
-//// Neoffice — the courses of a meal: a delivered course (not a delivered drink) makes the meal in progress (Daniel, 01.11)
-import { COURSES, familyOf } from "@/utils/serviceFamilies"
 
 export const BAND_WAITING = "waiting"
 export const BAND_PRODUCTION = "production"
@@ -100,22 +98,12 @@ export function kitchenStatusOf(order) {
 		: "Preparing"
 }
 
-//// Neoffice — whether a meal is IN PROGRESS on the ticket: a dish of an earlier course has been delivered (Daniel, 01.11, table 113: its starters delivered and its dessert just called, it sat among the orders
-//// WAITING; « Un ticket dont des plats sont déjà livrés doit-il rester dans En préparation ? » — « Oui »). A table's order lives for the whole meal, so the next course arrives into the band in preparation.
-//// Where the restaurant has courses only a delivered COURSE counts: a beer served at the start does not make the food begun. Where it has none, any delivered dish does.
-function mealInProgress(lines) {
-	const delivered = lines.filter((line) => line?.kds_status === "Delivered")
-	if (!delivered.length) return false
-	if (!lines.some((line) => familyOf(line))) return true
-	return delivered.some((line) => COURSES.includes(familyOf(line)))
-}
-
 /**
  * The band an order belongs to, null when it is gone from the screen (delivered): the band of the status it shows.
  *
- * - WAITING: Pending, no dish has begun and no course has been delivered before them (a new table).
- * - PRODUCTION: Preparing or Ready, or a meal in progress (an earlier course delivered, the next one only sent).
- *   An order whose dishes are all Ready stays here, with its ready look, until it is delivered.
+ * - WAITING: Pending, no dish has begun.
+ * - PRODUCTION: Preparing or Ready. An order whose dishes are all Ready stays here, with its ready look, until it is
+ *   delivered.
  * - null: Delivered.
  *
  * @param {object} order - An order of `get_kds_orders`
@@ -124,7 +112,7 @@ function mealInProgress(lines) {
 export function bandOf(order) {
 	switch (kitchenStatusOf(order)) {
 		case "Pending":
-			return mealInProgress(order?.items || []) ? BAND_PRODUCTION : BAND_WAITING
+			return BAND_WAITING
 		case "Preparing":
 		case "Ready":
 			return BAND_PRODUCTION

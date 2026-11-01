@@ -8,9 +8,9 @@ export const DEFAULT_POPUP_SECONDS = 30
 // The longest a popup may stay, ten minutes: the same range the server holds
 export const MAX_POPUP_SECONDS = 600
 
+//// Neoffice — no `popupSeconds` any more: the banner is gone (Daniel, 01.11), the ticket flashes until the kitchen starts it
 export const DEFAULT_KITCHEN_ALERTS = Object.freeze({
 	popup: true,
-	popupSeconds: DEFAULT_POPUP_SECONDS,
 	nextCourseSound: DEFAULT_NEXT_COURSE_SOUND,
 	runnerSound: DEFAULT_RUNNER_SOUND,
 	volume: DEFAULT_VOLUME,
@@ -27,14 +27,13 @@ export function secondsOf(value) {
 /**
  * The kitchen alerts out of the `kitchen_alerts` of a settings answer.
  *
- * @param {Object|null|undefined} answer - `{ popup, popup_seconds, next_course_sound, runner_sound, volume }`, any of them missing
- * @returns {{ popup: boolean, popupSeconds: number, nextCourseSound: string, runnerSound: string, volume: string }}
+ * @param {Object|null|undefined} answer - `{ popup, next_course_sound, runner_sound, volume }`, any of them missing
+ * @returns {{ popup: boolean, nextCourseSound: string, runnerSound: string, volume: string }}
  */
 export function readKitchenAlerts(answer) {
 	if (!answer || typeof answer !== "object") return { ...DEFAULT_KITCHEN_ALERTS }
 	return {
 		popup: answer.popup == null || answer.popup === "" ? DEFAULT_KITCHEN_ALERTS.popup : Boolean(Number(answer.popup)),
-		popupSeconds: secondsOf(answer.popup_seconds),
 		nextCourseSound: normaliseSound(answer.next_course_sound, DEFAULT_NEXT_COURSE_SOUND),
 		runnerSound: normaliseSound(answer.runner_sound, DEFAULT_RUNNER_SOUND),
 		volume: answer.volume == null || answer.volume === "" ? DEFAULT_VOLUME : normaliseVolume(answer.volume),

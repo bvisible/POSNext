@@ -51,14 +51,14 @@
 					</span>
 					<!-- //// Neoffice — the panel says in words where the ticket stands and how long it is (the mockup's « En préparation · 21 lignes »): the card has its border and its band for the state -->
 					<span v-if="fullscreen" data-test="ticket-fs-state" class="font-semibold text-[length:var(--kds-fs-ref,11px)]" :class="stateTextClass">
-						{{ kitchenStatusLabel(status, { takeaway: isTakeaway }) }} · {{ lineCountLabel }}
+						{{ kitchenStatusLabel(status, { takeaway: isTakeaway, board: true }) }} · {{ lineCountLabel }}
 					</span>
 				</div>
 				<div class="flex flex-none items-baseline gap-1.5">
 					<!-- //// Neoffice — the badge keeps the classes the dark mode gave it (task 46); it is drawn only where states mix -->
 					<span v-if="showState" class="text-[10px] uppercase font-bold tracking-wider rounded-full px-2 py-0.5 self-center"
 						data-test="ticket-status" :class="statusBadgeClass">
-						{{ kitchenStatusLabel(status, { takeaway: isTakeaway }) }}
+						{{ kitchenStatusLabel(status, { takeaway: isTakeaway, board: true }) }}
 					</span>
 					<span v-show="!totalGivesWay" class="font-mono tabular-nums text-gray-400 whitespace-nowrap [display:var(--kds-tt-d,none)] text-[length:var(--kds-fs-tt,10px)]"
 						data-test="ticket-total-time" :title="__('Total time')">
@@ -91,6 +91,19 @@
 				:loading="loading"
 			>
 				{{ mainLabel }}
+			</Button>
+
+			<!-- //// Neoffice — a ticket that blinks (the table has ordered its next course) carries its TWO choices directly (Daniel, 01.11: « quand il clignote on a les 2 choix directement »): « Start cooking » above, and « To do »,
+			     //// which says it has been seen: the ticket stops blinking and stays in the band « To do » until somebody starts it. The screen keeps what was seen, the card only says which ticket. -->
+			<Button
+				v-if="ringed && mainAction === 'start'"
+				variant="outline"
+				size="lg"
+				data-test="ticket-todo"
+				class="min-w-0 flex-1 !h-[var(--kds-btn-h,44px)] !text-[length:var(--kds-fs-btn,14px)] font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-700"
+				@click="emit('acknowledge', order.name)"
+			>
+				{{ kitchenActionLabel("to-do") }}
 			</Button>
 
 			<Button
@@ -531,7 +544,7 @@ const props = defineProps({
 	},
 })
 
-const emit = defineEmits(["status-updated", "print", "close"])
+const emit = defineEmits(["status-updated", "print", "close", "acknowledge"])
 //// Neoffice — the ring is the board card's: the panel opened full screen is not highlighted. It is drawn INSIDE the card (`ring-inset`): a lane clips what passes its edge, and the ring must never be cut
 const ringed = computed(() => props.highlighted && !props.fullscreen)
 //// Neoffice — a copy on its way is not asked for again (task 44)

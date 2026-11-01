@@ -5,7 +5,7 @@
 	<!-- //// screen that does not move when tickets come and go), its tickets scroll inside it by touch, and it says how many -->
 	<!-- //// are out of sight. As a LANE (bands one above the other) the tickets stand in one row that scrolls sideways, oldest -->
 	<!-- //// on the left; as a COLUMN (bands side by side) they stand in a grid that scrolls up and down, oldest at the top. -->
-	<!-- //// An empty band keeps its place with one short line, so the other band never jumps. -->
+	<!-- //// A band is drawn only when it holds a ticket (Daniel, 01.11: « la colonne est affichée uniquement s'il y a quelque chose dedans »): the screen leaves an empty one out, and the other takes the room. -->
 	<section
 		:aria-labelledby="headerId"
 		:data-test="`band-${band}`"
@@ -29,14 +29,6 @@
 			</div>
 		</header>
 
-		<!-- //// Neoffice — dark mode (task 46): the till's dark remap of `.text-gray-500` is `!important` (index.css) and reads 4.35:1 on the screen's ground, so a plain `dark:` colour never reached it; `[&&]` doubles the selector so that this variant outranks it. -->
-		<p
-			v-if="!orders.length"
-			data-test="band-empty"
-			class="px-1 py-1 text-base text-gray-500 dark:[&&]:!text-gray-400"
-		>{{ emptyText }}</p>
-
-		<template v-else>
 			<div
 				ref="scroller"
 				:class="scrollerClass"
@@ -69,6 +61,7 @@
 						:can-print="!!copy?.canPrint(order)"
 						:print-state="copy?.stateOf(order)"
 						@print="copy?.print($event)"
+						@acknowledge="emit('acknowledge', $event)"
 					/>
 				</div>
 			</div>
@@ -83,7 +76,6 @@
 			>
 				<span v-if="ahead > 0" data-test="band-more" :class="CHIP">{{ __("+{0}", [ahead]) }}</span>
 			</footer>
-		</template>
 	</section>
 </template>
 
@@ -125,7 +117,6 @@ const props = defineProps({
 	copy: { type: Object, default: null },
 	mode: { type: String, default: "lane" },
 	label: { type: String, required: true },
-	emptyText: { type: String, required: true },
 	orders: { type: Array, default: () => [] },
 	stations: { type: Array, default: () => [] },
 	showStationBadge: { type: Boolean, default: true },
@@ -138,15 +129,20 @@ const props = defineProps({
 	runnerEnabled: { type: Boolean, default: true },
 	//// Neoffice — the orders whose tickets FLASH: the tables that have ordered their next course and not been taken up yet (NeoRestau lot 1, Daniel, 01.11); none, no ticket does
 	flashOrders: { type: Array, default: () => [] },
+	//// Neoffice — what the screen does to read its orders again, called by a card once the server has answered a press
+	reload: { type: Function, default: () => {} },
+	//// Neoffice — the band of the tickets to do standing ALONE (the other is empty and left out, Daniel, 01.11): side by side it then takes the width and the columns of the band in preparation
+	alone: { type: Boolean, default: false },
 })
-const emit = defineEmits(["status-updated"])
+const emit = defineEmits(["acknowledge"])
 
 //// Neoffice — the name of the room an order sits in, "" for a takeaway or a room the screen does not know (the card then draws no chip)
 const roomNameOf = (order) =>
 	props.rooms.find((room) => room.name === order.area)?.area_name || ""
 
-// What each card calls once the server has answered (a function of the band, which is still there when the card is not)
-const refresh = () => emit("status-updated")
+//// Neoffice — what each card calls once the server has answered: the function the SCREEN hands the band (`reload`), not an event of the band. A band is left out of the screen when it holds no ticket (Daniel, 01.11), so
+//// the press that moves a band's last ticket to the other band unmounts the band with it before the server answers, and Vue drops the events of a component that is gone
+const refresh = () => props.reload()
 
 // The delivered tickets "Show completed" brings in come after the ones in hand: they are shown dimmed and are not counted
 const isDelivered = (order) => kitchenStatusOf(order) === "Delivered"
@@ -156,18 +152,20 @@ const aliveCount = computed(
 
 const headerId = computed(() => `band-${props.band}-title`)
 const isWaiting = computed(() => props.band === "waiting")
+//// Neoffice — the band takes the room of the band in preparation when it is the one in preparation, or the only one on the screen
+const isRoomy = computed(() => !isWaiting.value || props.alone)
 
 // The size of the band on the screen: a fixed share of the height when the bands are one above the other, the columns of
 // the shared grid its side spans when they are side by side (utils/ticketLayout)
 const sectionClass = computed(() => {
 	if (props.mode === "column")
-		return isWaiting.value ? TICKET_SPLIT_WAITING : TICKET_SPLIT_PRODUCTION
+		return isRoomy.value ? TICKET_SPLIT_PRODUCTION : TICKET_SPLIT_WAITING
 	return isWaiting.value ? BAND_WAITING_HEIGHT : BAND_PRODUCTION_HEIGHT
 })
 const scrollerClass = computed(() => {
 	if (props.mode === "lane") return `${TICKET_LANE} flex-1 min-h-0`
 	return [
-		isWaiting.value ? TICKET_COLUMN_WAITING : TICKET_COLUMN_PRODUCTION,
+		isRoomy.value ? TICKET_COLUMN_PRODUCTION : TICKET_COLUMN_WAITING,
 		// The rows keep the height of their tickets instead of stretching to fill the column
 		"flex-1 min-h-0 content-start overflow-y-auto overscroll-y-contain",
 	].join(" ")
@@ -188,7 +186,7 @@ const scroller = ref(null)
 const { columns } = useColumnsThatFit(scroller)
 //// Neoffice — by the dishes still to cook only (kitchen test, 01.11): the dishes already sent to the runner stay on the ticket, struck through, and widened the card
 const isWide = (order) =>
-	!isWaiting.value && isWideTicket(kitchenLiveLineCount(order), columns.value)
+	isRoomy.value && isWideTicket(kitchenLiveLineCount(order), columns.value)
 const ahead = ref(0)
 const behind = ref(0)
 const { oldestRight } = useTicketSide()

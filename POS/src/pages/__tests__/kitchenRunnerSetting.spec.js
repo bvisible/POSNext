@@ -106,10 +106,10 @@ afterEach(() => {
 	opened.forEach((wrapper) => wrapper.unmount())
 })
 
+// A band with no ticket is not drawn (Daniel, 01.11): what it holds is nothing
 const titlesIn = (wrapper, band) =>
 	wrapper
-		.get(`[data-test="band-${band}"]`)
-		.findAll('[data-test="ticket-title"]')
+		.findAll(`[data-test="band-${band}"] [data-test="ticket-title"]`)
 		.map((el) => el.text())
 const linesOf = (wrapper) =>
 	wrapper.findAll('[data-test="ticket-line"]').map((el) => el.text())

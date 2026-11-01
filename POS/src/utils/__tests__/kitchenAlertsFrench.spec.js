@@ -138,14 +138,11 @@ describe("the screens, read in French", () => {
 		}
 	})
 
-	it("says the notice in the kitchen in French", async () => {
-		const { default: NextCourseNotices } = await import("@/components/restaurant/NextCourseNotices.vue")
-		const wrapper = mount(NextCourseNotices, {
-			props: { notices: [{ key: "A|1", order: "A", table: "Table 12", families: ["Dessert"], count: 1 }] },
-			global: { mocks: { __: globalThis.__ } },
-		})
-
-		expect(wrapper.text()).toContain("Table 12 — la suite est commandée : Desserts")
-		expect(wrapper.text()).toContain("Fermer")
+	it("says the kitchen board's words in French: « À faire » for the band and the ticket, and for the button that leaves a blinking ticket to do", () => {
+		expect(catalogue["To do:Kitchen order status"]).toBe("À faire")
+		expect(catalogue["To do:Kitchen action"]).toBe("À faire")
+		// the button that starts the dishes keeps its word
+		expect(catalogue["Start cooking:Kitchen action"]).toBe("Commencer")
+		expect(catalogue["No orders"]).toBe("Aucune commande")
 	})
 })

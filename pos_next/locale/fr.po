@@ -8079,6 +8079,10 @@ msgctxt "Kitchen order status"
 msgid "Pending"
 msgstr "En attente"
 
+msgctxt "Kitchen order status"
+msgid "To do"
+msgstr "À faire"
+
 #. Option for the 'Discount Type' (Select) field in DocType 'POS Coupon'
 #. Option for the 'Discount Type' (Select) field in DocType 'Referral Code'
 #: POS/src/components/sale/CouponManagement.vue:350
@@ -17529,6 +17533,10 @@ msgctxt "Kitchen action"
 msgid "Start cooking"
 msgstr "Commencer"
 
+msgctxt "Kitchen action"
+msgid "To do"
+msgstr "À faire"
+
 #: POS/src/utils/kitchenStatus.js:70
 msgctxt "Kitchen action"
 msgid "Mark ready"
@@ -20723,3 +20731,6 @@ msgstr "Son de la caisse quand un client commande ou paie depuis le code QR d'un
 #: pos_next/till_settings/registry.py
 msgid "Listen to the sound"
 msgstr "Écouter le son"
+
+msgid "No orders"
+msgstr "Aucune commande"

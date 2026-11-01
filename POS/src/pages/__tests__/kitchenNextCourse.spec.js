@@ -75,7 +75,7 @@ const withDesserts = (name, extra) =>
 	order(name, [dish("Preparing", STARTERS, "Starter"), dish("Pending", DESSERTS, "Dessert")], extra)
 
 let ORDERS = []
-let ALERTS = { popup: true, popup_seconds: 30, next_course_sound: "bell", runner_sound: "beep", volume: "medium" }
+let ALERTS = { popup: true, next_course_sound: "bell", runner_sound: "beep", volume: "medium" }
 function serve() {
 	call.mockReset()
 	call.mockImplementation(async (method, params = {}) => {
@@ -92,9 +92,12 @@ function serve() {
 	})
 }
 
+// The card's two choices while it blinks (KDSOrderCard): « To do » says which ticket was seen
 const Ticket = {
 	props: ["order", "highlighted"],
-	template: '<div class="ticket" :data-name="order.name" :data-highlighted="highlighted ? \'yes\' : \'no\'">{{ order.name }}</div>',
+	emits: ["acknowledge"],
+	template:
+		'<div class="ticket" :data-name="order.name" :data-highlighted="highlighted ? \'yes\' : \'no\'">{{ order.name }}<button v-if="highlighted" data-test="ticket-todo" @click="$emit(\'acknowledge\', order.name)">To do</button></div>',
 }
 let opened = []
 async function open(search = "") {
@@ -108,14 +111,13 @@ const readAgain = async (wrapper) => {
 	await wrapper.get('[data-test="refresh"]').trigger("click")
 	await flushPromises()
 }
-const notices = (wrapper) => wrapper.findAll('[data-test="next-course-notice"]')
 const highlighted = (wrapper) => wrapper.findAll(".ticket").filter((el) => el.attributes("data-highlighted") === "yes").map((el) => el.attributes("data-name"))
 
 beforeEach(() => {
 	localStorage.clear()
 	opened = []
 	ORDERS = []
-	ALERTS = { popup: true, popup_seconds: 30, next_course_sound: "bell", runner_sound: "beep", volume: "medium" }
+	ALERTS = { popup: true, next_course_sound: "bell", runner_sound: "beep", volume: "medium" }
 	serve()
 	player.play.mockClear()
 	player.locked.value = true
@@ -129,43 +131,38 @@ afterEach(() => {
 })
 
 describe("the kitchen when the next course of a table is ordered", () => {
-	it("tells it under the bar, with a sound, and highlights the ticket", async () => {
+	it("rings, and makes the ticket flash, when a ticket already on the screen gets the next course", async () => {
 		ORDERS = [starters("A"), starters("B")]
 		const wrapper = await open()
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual([])
 
 		ORDERS = [withDesserts("A"), starters("B")]
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(1)
-		expect(notices(wrapper)[0].text()).toContain("T-A — the next course is ordered: Desserts")
 		expect(player.play).toHaveBeenCalledTimes(1)
 		expect(player.play).toHaveBeenCalledWith("bell", "medium")
 		expect(highlighted(wrapper)).toEqual(["A"])
 	})
 
-	it("stands in the page's column between the bar and the tickets, never over a ticket", async () => {
+	it("draws no banner at all (Daniel, 01.11: the ticket is the alert)", async () => {
 		ORDERS = [starters("A")]
 		const wrapper = await open()
 		ORDERS = [withDesserts("A")]
 		await readAgain(wrapper)
 
-		const column = [...wrapper.get('[data-test="kitchen-screen"]').element.children].map((el) => el.dataset.test)
-		expect(column.indexOf("top-bar")).toBeLessThan(column.indexOf("next-course-notices"))
-		expect(column.indexOf("next-course-notices")).toBeLessThan(column.indexOf("ticket-area"))
-		expect(wrapper.get('[data-test="next-course-notices"]').classes()).not.toContain("fixed")
-		expect(wrapper.get('[data-test="next-course-notices"]').classes()).not.toContain("absolute")
+		expect(wrapper.find('[data-test="next-course-notices"]').exists()).toBe(false)
+		expect(wrapper.find('[data-test="next-course-notice"]').exists()).toBe(false)
 	})
 
 	it("says nothing on the first reading of the screen, nor for a ticket that was not there", async () => {
 		ORDERS = [withDesserts("A")]
 		const wrapper = await open()
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual([])
 
 		ORDERS = [withDesserts("A"), withDesserts("NEW")]
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual([])
 		expect(player.play).not.toHaveBeenCalled()
 	})
 
@@ -177,46 +174,35 @@ describe("the kitchen when the next course of a table is ordered", () => {
 		await readAgain(wrapper)
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(1)
+		expect(highlighted(wrapper)).toEqual(["A"])
 		expect(player.play).toHaveBeenCalledTimes(1)
 	})
 
-	it("is dismissed by its button, and the ticket stays", async () => {
+	it("stops the flash when the ticket's « To do » is pressed, and the ticket stays", async () => {
 		ORDERS = [starters("A")]
 		const wrapper = await open()
 		ORDERS = [withDesserts("A")]
 		await readAgain(wrapper)
+		expect(highlighted(wrapper)).toEqual(["A"])
 
-		await wrapper.get('[data-test="notice-dismiss"]').trigger("click")
+		await wrapper.get('[data-test="ticket-todo"]').trigger("click")
 
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual([])
 		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-name"))).toContain("A")
+		// read again, the same send is not told again
+		await readAgain(wrapper)
+		expect(highlighted(wrapper)).toEqual([])
+		expect(player.play).toHaveBeenCalledTimes(1)
 	})
 
-	it("goes by itself after the seconds the till set", async () => {
-		ALERTS = { ...ALERTS, popup_seconds: 5 }
+	it("flashes until the cook takes the dishes up, however long it takes (Daniel, 01.11)", async () => {
 		ORDERS = [starters("A")]
 		const wrapper = await open()
 		vi.useFakeTimers()
 		ORDERS = [withDesserts("A")]
 		await readAgain(wrapper)
-		expect(notices(wrapper)).toHaveLength(1)
+		await vi.advanceTimersByTimeAsync(10 * 60_000)
 
-		await vi.advanceTimersByTimeAsync(5000)
-
-		expect(notices(wrapper)).toHaveLength(0)
-	})
-
-	it("keeps the ticket flashing after the banner has gone, until the cook takes the dishes up (Daniel, 01.11)", async () => {
-		ALERTS = { ...ALERTS, popup_seconds: 5 }
-		ORDERS = [starters("A")]
-		const wrapper = await open()
-		vi.useFakeTimers()
-		ORDERS = [withDesserts("A")]
-		await readAgain(wrapper)
-		await vi.advanceTimersByTimeAsync(60_000)
-
-		expect(notices(wrapper)).toHaveLength(0)
 		expect(highlighted(wrapper)).toEqual(["A"])
 
 		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter"), dish("Preparing", DESSERTS, "Dessert")])]
@@ -225,16 +211,19 @@ describe("the kitchen when the next course of a table is ordered", () => {
 		expect(highlighted(wrapper)).toEqual([])
 	})
 
-	it("stops the flash when the notice is closed with its button", async () => {
-		ORDERS = [starters("A")]
+	it("flashes every table that has ordered and been left, not only the newest", async () => {
+		ORDERS = [starters("A"), starters("B")]
 		const wrapper = await open()
-		ORDERS = [withDesserts("A")]
+		ORDERS = [withDesserts("A"), starters("B")]
 		await readAgain(wrapper)
-		expect(highlighted(wrapper)).toEqual(["A"])
+		ORDERS = [withDesserts("A"), withDesserts("B")]
+		await readAgain(wrapper)
 
-		await wrapper.get('[data-test="notice-dismiss"]').trigger("click")
+		expect(highlighted(wrapper).sort()).toEqual(["A", "B"])
+		expect(player.play).toHaveBeenCalledTimes(2)
 
-		expect(highlighted(wrapper)).toEqual([])
+		await wrapper.get('.ticket[data-name="A"] [data-test="ticket-todo"]').trigger("click")
+		expect(highlighted(wrapper)).toEqual(["B"])
 	})
 })
 
@@ -249,19 +238,18 @@ describe("what the till's settings change", () => {
 		expect(player.play).toHaveBeenCalledWith("gong", "high")
 	})
 
-	it("shows no notice and highlights nothing with the popup off, and still rings", async () => {
+	it("flashes nothing with the popup off, and still rings", async () => {
 		ALERTS = { ...ALERTS, popup: false }
 		ORDERS = [starters("A")]
 		const wrapper = await open()
 		ORDERS = [withDesserts("A")]
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(0)
 		expect(highlighted(wrapper)).toEqual([])
 		expect(player.play).toHaveBeenCalledTimes(1)
 	})
 
-	it("rings nothing for the sound none, and shows the notice", async () => {
+	it("rings nothing for the sound none, and flashes the ticket", async () => {
 		ALERTS = { ...ALERTS, next_course_sound: "none" }
 		ORDERS = [starters("A")]
 		const wrapper = await open()
@@ -269,7 +257,7 @@ describe("what the till's settings change", () => {
 		await readAgain(wrapper)
 
 		expect(player.play).not.toHaveBeenCalled()
-		expect(notices(wrapper)).toHaveLength(1)
+		expect(highlighted(wrapper)).toEqual(["A"])
 	})
 
 	it("works with the defaults when the server knows nothing of the settings", async () => {
@@ -285,7 +273,7 @@ describe("what the till's settings change", () => {
 		await readAgain(wrapper)
 
 		expect(player.play).toHaveBeenCalledWith("bell", "medium")
-		expect(notices(wrapper)).toHaveLength(1)
+		expect(highlighted(wrapper)).toEqual(["A"])
 	})
 
 	it("asks for the settings of the restaurant of the screen", async () => {
@@ -302,7 +290,7 @@ describe("the stations and the rooms the screen shows", () => {
 		const bar = await open("?station=bar")
 		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar"), dish("Pending", DESSERTS, "Dessert", "kit")])]
 		await readAgain(bar)
-		expect(notices(bar)).toHaveLength(0)
+		expect(highlighted(bar)).toEqual([])
 		expect(player.play).not.toHaveBeenCalled()
 	})
 
@@ -312,7 +300,7 @@ describe("the stations and the rooms the screen shows", () => {
 		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Pending", DESSERTS, "Dessert", "kit")])]
 		await readAgain(kitchen)
 
-		expect(notices(kitchen)).toHaveLength(1)
+		expect(highlighted(kitchen)).toEqual(["A"])
 	})
 
 	it("takes the first reading of a newly chosen station as a baseline: what was ordered while the cook looked at the bar is not announced when he comes back to all stations", async () => {
@@ -330,7 +318,7 @@ describe("the stations and the rooms the screen shows", () => {
 		await readAgain(wrapper)
 		await choose("Bar")
 
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual([])
 		expect(player.play).not.toHaveBeenCalled()
 	})
 
@@ -341,7 +329,7 @@ describe("the stations and the rooms the screen shows", () => {
 		ORDERS = [withDesserts("A", { area: "r2" })]
 		await readAgain(wrapper)
 
-		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual([])
 		expect(player.play).not.toHaveBeenCalled()
 	})
 })

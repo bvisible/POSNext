@@ -20,13 +20,17 @@
  * follow a variable. Another status (Cleaning, say) keeps the plain word the till already translates.
  *
  * @param {string} status - A `kds_status` value
- * @param {{ takeaway?: boolean }} [options] - A takeaway order that is ready is « to hand over », not « to deliver »
- * @returns {string} The label to show ("" for no status)
+ * @param {{ takeaway?: boolean, board?: boolean }} [options] - A takeaway order that is ready is « to hand over », not « to deliver »
+ * @returns {string} The label to show ("" for no status). `board`: the kitchen board's word for a dish not started, « To do »
  */
-export function kitchenStatusLabel(status, { takeaway = false } = {}) {
+export function kitchenStatusLabel(status, { takeaway = false, board = false } = {}) {
 	// A takeaway is handed over across a counter, it is not carried to a table
 	if (takeaway && status === "Ready")
 		return __("To hand over", null, "Kitchen order status")
+	//// Neoffice — on the kitchen's board the first band and the badge of its tickets say « To do » (Daniel, 01.11: « À faire »): « Pending » stays what the till and the takeaway list call a dish not started, and
+	//// « waiting » is what the waiter holds back (« en attente » on the table list), a word the kitchen must not share
+	if (board && status === "Pending")
+		return __("To do", null, "Kitchen order status")
 	switch (status) {
 		case "Waiting":
 			return __("Waiting", null, "Kitchen order status")
@@ -50,9 +54,10 @@ export function kitchenStatusLabel(status, { takeaway = false } = {}) {
  * - `ready`: the dish is done and goes to the pass (the last action of a kitchen with a runner)
  * - `deliver`: the plate leaves for the table (the last action of a kitchen with no runner; « Remettre » for a takeaway)
  * - `recall`: a dish that waits at the pass goes back to preparation (the list of what waits for the runner)
+ * - `to-do`: a ticket that blinks is seen and left to do
  *
  * @param {"start"|"ready"|"deliver"|"recall"} action
- * @param {{ takeaway?: boolean }} [options]
+ * @param {{ takeaway?: boolean, board?: boolean }} [options]
  * @returns {string} The label to show ("" for an action this file does not know)
  */
 export function kitchenActionLabel(action, { takeaway = false } = {}) {
@@ -67,6 +72,9 @@ export function kitchenActionLabel(action, { takeaway = false } = {}) {
 				: __("Deliver", null, "Kitchen action")
 		case "recall":
 			return __("Recall to preparation", null, "Kitchen action")
+		//// Neoffice — the cook has seen the ticket of a table that ordered its next course and leaves it to do (Daniel, 01.11: « quand il clignote on a les 2 choix directement »): it stops blinking and stays in the band « To do »
+		case "to-do":
+			return __("To do", null, "Kitchen action")
 		//// Neoffice — a dish being prepared put back to « to start » (the way back of its menu, Daniel 01.11)
 		case "undo-start":
 			return __("Undo start", null, "Kitchen action")

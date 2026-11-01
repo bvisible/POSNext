@@ -79,6 +79,41 @@ describe("the ticket of a table that ordered its next course", () => {
 		expect(card(wrapper).classes()).not.toContain("kds-ticket-flash")
 	})
 
+	// Daniel, 01.11: « quand il clignote on a les 2 choix directement » — to do (seen, it stays in the band without blinking) or start cooking (it goes to preparation)
+	describe("the two choices it carries while it blinks", () => {
+		const todo = (wrapper) => wrapper.find('[data-test="ticket-todo"]')
+
+		it("offers « To do » beside « Start cooking » while it blinks, and nothing more otherwise", async () => {
+			const wrapper = show()
+			expect(todo(wrapper).exists()).toBe(false)
+
+			await wrapper.setProps({ highlighted: true })
+
+			expect(todo(wrapper).exists()).toBe(true)
+			expect(todo(wrapper).text()).toBe("To do")
+			expect(wrapper.findAll('[data-test="ticket-main"]')).toHaveLength(1)
+			expect(wrapper.get('[data-test="ticket-main"]').text()).toBe("Start cooking")
+		})
+
+		it("says which ticket was seen when « To do » is pressed", async () => {
+			const wrapper = show({ highlighted: true })
+
+			await todo(wrapper).trigger("click")
+
+			expect(wrapper.emitted("acknowledge")).toEqual([["SINV-NEXT-1"]])
+		})
+
+		it("is not offered on a ticket that is not to start: a ticket being cooked has no « To do » to choose", () => {
+			const cooking = { ...order, items: [{ ...order.items[0], kds_status: "Preparing" }] }
+
+			expect(todo(show({ order: cooking, highlighted: true })).exists()).toBe(false)
+		})
+
+		it("is not offered in the panel opened full screen", () => {
+			expect(todo(show({ fullscreen: true, highlighted: true })).exists()).toBe(false)
+		})
+	})
+
 	it("keeps its look otherwise: the ring is added, nothing is taken away", async () => {
 		const wrapper = show()
 		const plain = card(wrapper).classes().filter((name) => !name.startsWith("ring"))

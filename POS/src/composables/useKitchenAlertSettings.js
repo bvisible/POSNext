@@ -13,7 +13,7 @@ export const REFRESH_MS = 5 * 60 * 1000
 /**
  * @param {{ restaurant?: () => { restaurant?: string } }} [options] - `restaurant` hands the parameters that name the restaurant the screen is opened on (the screens' `ofTheRestaurant`)
  * @returns {{ settings: import("vue").Ref<Object>, rhythm: import("vue").Ref<string>, refresh: () => Promise<void> }}
- *   settings: `{ popup, popupSeconds, nextCourseSound, runnerSound, volume }` (utils/kitchenAlerts), the defaults until the server has answered and after an answer that failed
+ *   settings: `{ popup, nextCourseSound, runnerSound, volume }` (utils/kitchenAlerts), the defaults until the server has answered and after an answer that failed
  *   rhythm: the restaurant's service rhythm ("Called by the room" or "Prepared ahead", utils/serviceRhythm), the room's call until the server has answered
  */
 export function useKitchenAlertSettings({ restaurant } = {}) {

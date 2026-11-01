@@ -115,7 +115,6 @@ function show(props = {}, options = {}) {
 			band: "waiting",
 			mode: "lane",
 			label: "Pending",
-			emptyText: "No pending orders",
 			orders: orders(3),
 			stations: [],
 			showStationBadge: true,
@@ -166,26 +165,27 @@ describe("the header of a band", () => {
 	})
 })
 
-describe("an empty band", () => {
-	it("keeps its header, with a zero, and says in one short line that it holds nothing", () => {
-		const wrapper = show({ orders: [] })
+//// Neoffice — a band is drawn only when it holds a ticket (Daniel, 01.11: « la colonne est affichée uniquement s'il y a quelque chose dedans »): the screen leaves an empty one out (kitchenInTwoBands.spec),
+//// so the band no longer knows an empty state, and the band of the tickets to do takes the room of the other when it is alone
+describe("a band standing alone", () => {
+	it("keeps its width and its column of one ticket when the other band is there (side by side)", () => {
+		const wrapper = show({ band: "waiting", mode: "column" })
 
-		expect(text(wrapper, '[data-test="band-header"]')).toBe("Pending (0)")
-		expect(text(wrapper, '[data-test="band-empty"]')).toBe("No pending orders")
-		expect(wrapper.find(".ticket").exists()).toBe(false)
+		expect(wrapper.get('[data-test="band-waiting"]').classes()).toEqual(expect.arrayContaining(tokens(TICKET_SPLIT_WAITING)))
+		expect(wrapper.get('[data-test="ticket-column"]').classes()).toEqual(expect.arrayContaining(tokens(TICKET_COLUMN_WAITING)))
 	})
 
-	it("takes the same room as a band with tickets in it: its height is its share of the screen, not its content", () => {
-		const empty = show({ orders: [], band: "waiting" })
-		const full = show({ orders: orders(5), band: "waiting" })
+	it("takes the width and the columns of the band in preparation when it is the only one (side by side)", () => {
+		const wrapper = show({ band: "waiting", mode: "column", alone: true })
 
-		const shares = (wrapper) =>
-			wrapper
-				.get('[data-test="band-waiting"]')
-				.classes()
-				.filter((c) => /^(flex-\[|min-h-)/.test(c))
-		expect(shares(empty)).toEqual(shares(full))
-		expect(shares(empty).length).toBeGreaterThan(0)
+		expect(wrapper.get('[data-test="band-waiting"]').classes()).toEqual(expect.arrayContaining(tokens(TICKET_SPLIT_PRODUCTION)))
+		expect(wrapper.get('[data-test="ticket-column"]').classes()).toEqual(expect.arrayContaining(tokens(TICKET_COLUMN_PRODUCTION)))
+	})
+
+	it("fills the screen on its own when the bands are one above the other: its share is a share of what is left", () => {
+		const wrapper = show({ band: "waiting", mode: "lane", alone: true })
+
+		expect(wrapper.get('[data-test="band-waiting"]').classes()).toEqual(expect.arrayContaining(tokens(BAND_WAITING_HEIGHT)))
 	})
 })
 
@@ -227,11 +227,13 @@ describe("a band as a lane (bands one above the other)", () => {
 	})
 
 	it("hands its tickets, its stations and the badge choice to each card, and tells the screen when one of them changed", async () => {
+		const reload = vi.fn()
 		const wrapper = show({
 			mode: "lane",
 			orders: orders(2),
 			stations: [{ name: "kit" }],
 			showStationBadge: false,
+			reload,
 		})
 		const cards = wrapper.findAllComponents(Ticket)
 
@@ -240,21 +242,22 @@ describe("a band as a lane (bands one above the other)", () => {
 		expect(cards[0].props("showStationBadge")).toBe(false)
 
 		await cards[1].trigger("click")
-		expect(wrapper.emitted("status-updated")).toHaveLength(1)
+		expect(reload).toHaveBeenCalledTimes(1)
 	})
 
-	it("hands each card a function to call once the server has answered, one that still works when the card is gone", async () => {
-		// A press that moves a ticket to the other band unmounts its card before the answer comes; the band stays. The
-		// card cannot emit then (Vue drops the events of a component that is gone): it calls what the band gave it
-		const wrapper = show({ mode: "lane", orders: orders(2) })
+	it("hands each card a function to call once the server has answered, one that still works when the card is gone, and the band with it", async () => {
+		// A press that moves a band's last ticket to the other band unmounts its card, and the band itself (a band with no ticket is left out of the screen), before the answer comes. Neither can emit then (Vue
+		// drops the events of a component that is gone): the card calls what the SCREEN gave the band
+		const reload = vi.fn()
+		const wrapper = show({ mode: "lane", orders: orders(1), reload })
 		const [first] = wrapper.findAllComponents(Ticket)
 		const refresh = first.props("refresh")
 		expect(typeof refresh).toBe("function")
 
-		await wrapper.setProps({ orders: orders(2).slice(1) })
+		wrapper.unmount()
 		refresh()
 
-		expect(wrapper.emitted("status-updated")).toHaveLength(1)
+		expect(reload).toHaveBeenCalledTimes(1)
 	})
 
 	it("hands each card the station chosen, none with every station", () => {
@@ -607,7 +610,7 @@ describe("the flashing tickets", () => {
 	}
 	const showWith = (props) =>
 		mount(KitchenBand, {
-			props: { band: "waiting", mode: "lane", label: "Pending", emptyText: "none", orders: orders(3), ...props },
+			props: { band: "waiting", mode: "lane", label: "Pending", orders: orders(3), ...props },
 			global: { stubs: { KDSOrderCard: HighlightingTicket }, mocks: { __: globalThis.__ } },
 		})
 
