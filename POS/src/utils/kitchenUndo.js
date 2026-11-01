@@ -4,41 +4,74 @@
 //// the state it was in, one call per item (the server moves the lines of one item at a time, and back as well as forward, as the call-back to preparation does).
 //// The rules of WHAT to put back are here, written once for the kitchen's card and the runner's, and read without a screen.
 
+//// Neoffice — a line cooked in part is put back EXACTLY (kitchen test of 01.11, a line of six marked ready for four): its state is its status AND its two counters
+//// (`kds_ready_qty`, units cooked; `kds_delivered_qty`, units delivered). The state before a move can be given whole (`dishState`), and the call that puts it back
+//// carries the counters (`restore`), so that « four of six ready » comes back to what was cooked before, and a delivery of the cooked units to what was delivered before.
+
+const COUNTERS = ["kds_ready_qty", "kds_delivered_qty"]
+
+/**
+ * The state of a line, to keep before a move: its status and, when the server tells them, its two counters.
+ *
+ * @param {{ kds_status?: string, kds_ready_qty?: number, kds_delivered_qty?: number }|null|undefined} line
+ * @returns {{ kds_status?: string, kds_ready_qty?: number, kds_delivered_qty?: number }}
+ */
+export function dishState(line) {
+	const state = {}
+	if (!line) return state
+	if (line.kds_status !== undefined) state.kds_status = line.kds_status
+	for (const key of COUNTERS) if (line[key] !== undefined && line[key] !== null) state[key] = line[key]
+	return state
+}
+
+const sameCounters = (before, after) =>
+	COUNTERS.every(
+		(key) => before[key] === undefined || after?.[key] === undefined || Number(before[key]) === Number(after[key]),
+	)
+
 /**
  * The dishes to put back after a move: one entry per invoice and item that changed, with the state it had before. Several lines of one item are put back
  * together (the server moves them together), to the state of the first of them.
  *
- * @param {{ invoice: string, dishes: { item_code?: string, kds_status?: string }[], before: (string|undefined)[] }[]} moves
- *   For each invoice, its dishes as they are AFTER the move and, at the same index, the state each had BEFORE it
- * @returns {{ invoice: string, item_code: string, status: string }[]} Nothing for a dish that did not change, one with no item code, or one that had no state
+ * @param {{ invoice: string, dishes: { item_code?: string, kds_status?: string, kds_ready_qty?: number, kds_delivered_qty?: number }[], before: (string|object|undefined)[] }[]} moves
+ *   For each invoice, its dishes as they are AFTER the move and, at the same index, the state each had BEFORE it: its status, or its whole state (`dishState`)
+ * @returns {{ invoice: string, item_code: string, status: string, ready_qty?: number, delivered_qty?: number }[]} Nothing for a dish that did not change, one with no item code, or one that had no state
  */
 export function dishesToPutBack(moves) {
 	const entries = []
 	const seen = new Set()
 	for (const { invoice, dishes, before } of moves || []) {
 		;(dishes || []).forEach((dish, index) => {
-			const from = before?.[index]
-			if (!dish?.item_code || !from || from === dish.kds_status) return
+			const state = typeof before?.[index] === "string" ? { kds_status: before[index] } : before?.[index]
+			const from = state?.kds_status
+			if (!dish?.item_code || !from) return
+			// A line cooked in part keeps its status when the kitchen or the runner moves units: it changed when its counters did
+			if (from === dish.kds_status && sameCounters(state, dish)) return
 			const key = `${invoice}\u0000${dish.item_code}`
 			if (seen.has(key)) return
 			seen.add(key)
-			entries.push({ invoice, item_code: dish.item_code, status: from })
+			const entry = { invoice, item_code: dish.item_code, status: from }
+			if (state.kds_ready_qty !== undefined) entry.ready_qty = state.kds_ready_qty
+			if (state.kds_delivered_qty !== undefined) entry.delivered_qty = state.kds_delivered_qty
+			entries.push(entry)
 		})
 	}
 	return entries
 }
 
 /**
- * The calls that put the entries back, as [method, params].
+ * The calls that put the entries back, as [method, params]. An entry that names counters restores them with the status.
  *
- * @param {{ invoice: string, item_code: string, status: string }[]} entries
+ * @param {{ invoice: string, item_code: string, status: string, ready_qty?: number, delivered_qty?: number }[]} entries
  * @returns {[string, object][]}
  */
 export function putBackCalls(entries) {
-	return (entries || []).map(({ invoice, item_code, status }) => [
-		"pos_next.api.restaurant.update_item_kds_status",
-		{ invoice_name: invoice, item_code, status },
-	])
+	return (entries || []).map(({ invoice, item_code, status, ready_qty, delivered_qty }) => {
+		const params = { invoice_name: invoice, item_code, status }
+		if (ready_qty !== undefined || delivered_qty !== undefined)
+			params.restore = JSON.stringify({ ready_qty, delivered_qty })
+		return ["pos_next.api.restaurant.update_item_kds_status", params]
+	})
 }
 
 /** The moves worth offering to undo: a dish that has become ready, or delivered. Starting a dish is no mis-tap that costs a ticket. */
