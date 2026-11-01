@@ -1232,7 +1232,9 @@ def update_invoice(data):
 		# The lines of the stored draft as they are before this save rewrites them: what already left, and in which send
 		# //// Neoffice — read FOR UPDATE: the room's call of a course (`restaurant.call_next_course`, the service rhythm) is not in the payload,
 		# //// so this save gives it back to the rebuilt lines, and a call made while it runs must be seen, not lost (NeoRestau lot 1, Daniel, 01.11)
-		stored_lines = service_families.stored_lines(data.get("name"), lock=True) if doctype == "Sales Invoice" else []
+		stored_lines = (
+			service_families.stored_lines(data.get("name"), lock=True) if doctype == "Sales Invoice" else []
+		)
 		service_families.decide_new_lines(data, stored_lines)
 
 		# Create or update invoice
@@ -1773,7 +1775,10 @@ def update_invoice(data):
 									frappe.db.set_value(
 										"Sales Invoice Item",
 										doc_item.name,
-										{"kds_ahead": 1 if cint(item_data.get("kds_ahead")) else 0, "kds_called_at": called_at or None},
+										{
+											"kds_ahead": 1 if cint(item_data.get("kds_ahead")) else 0,
+											"kds_called_at": called_at or None,
+										},
 										update_modified=False,
 									)
 							# Assign batch when item is sent to kitchen (Waiting→Pending)

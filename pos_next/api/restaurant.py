@@ -510,7 +510,9 @@ def _order_status_of(dish_statuses, uncalled=None):
 	live = [status for status in statuses if status in _KDS_LIVE]
 	if uncalled and any(uncalled):
 		called = [
-			status for status, ahead in zip(statuses, uncalled, strict=False) if status in _KDS_LIVE and not ahead
+			status
+			for status, ahead in zip(statuses, uncalled, strict=False)
+			if status in _KDS_LIVE and not ahead
 		]
 		if called:
 			live = called
@@ -532,9 +534,12 @@ def _follow_the_dishes(invoice_name):
 	"""
 	# //// Neoffice — the dishes sent ahead and not called yet do not make the order Ready (see `_order_status_of`)
 	ahead_fields = _ahead_fields()
-	dishes = frappe.get_all("Sales Invoice Item", filters={"parent": invoice_name}, fields=["kds_status", *ahead_fields])
+	dishes = frappe.get_all(
+		"Sales Invoice Item", filters={"parent": invoice_name}, fields=["kds_status", *ahead_fields]
+	)
 	status = _order_status_of(
-		[dish.kds_status for dish in dishes], [_is_uncalled(dish) for dish in dishes] if ahead_fields else None
+		[dish.kds_status for dish in dishes],
+		[_is_uncalled(dish) for dish in dishes] if ahead_fields else None,
 	)
 	if frappe.db.get_value("Sales Invoice", invoice_name, "kds_status") != status:
 		frappe.db.set_value("Sales Invoice", invoice_name, "kds_status", status, update_modified=False)
@@ -581,7 +586,9 @@ def _units_left_to_cook(status, qty, ready_qty):
 # //// Neoffice — the two fields of the service rhythm a line carries, where the site has them (a site not migrated yet has not)
 def _ahead_fields():
 	return [
-		column for column in ("kds_ahead", "kds_called_at") if frappe.db.has_column("Sales Invoice Item", column)
+		column
+		for column in ("kds_ahead", "kds_called_at")
+		if frappe.db.has_column("Sales Invoice Item", column)
 	]
 
 
@@ -3209,7 +3216,10 @@ def call_next_course(invoice, family=None, everything=0):
 
 	require_document_till("Sales Invoice", invoice)
 	order = isinstance(invoice, str) and frappe.db.get_value(
-		"Sales Invoice", invoice, ["name", "docstatus", "restaurant_table", "is_takeaway", "pos_profile"], as_dict=True
+		"Sales Invoice",
+		invoice,
+		["name", "docstatus", "restaurant_table", "is_takeaway", "pos_profile"],
+		as_dict=True,
 	)
 	if not order:
 		frappe.throw(_("Sales Invoice {0} not found").format(invoice), frappe.DoesNotExistError)

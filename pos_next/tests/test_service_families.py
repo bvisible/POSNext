@@ -132,7 +132,10 @@ class TestTheRuleOfTheSharedTable(FrappeTestCase):
 		self.assertEqual(service_families.plan_send(lines, True), ["send", "send"])
 
 	def test_the_room_is_the_rhythm_when_none_is_given(self):
-		lines = [{"service_family": "Starter", "kds_status": ""}, {"service_family": "Main", "kds_status": ""}]
+		lines = [
+			{"service_family": "Starter", "kds_status": ""},
+			{"service_family": "Main", "kds_status": ""},
+		]
 
 		self.assertEqual(service_families.plan_send(lines, True), ["send", "hold"])
 		self.assertEqual(service_families.plan_send(lines, True, rhythm="Whenever"), ["send", "hold"])
@@ -140,7 +143,12 @@ class TestTheRuleOfTheSharedTable(FrappeTestCase):
 
 	def test_a_line_sent_ahead_is_uncalled_until_the_room_calls_it_and_counts_from_its_call(self):
 		called_at = "2026-11-01 19:00:00"
-		ahead = {"service_family": "Main", "kds_status": "Pending", "kds_ahead": 1, "kds_sent_at": "2026-11-01 18:00:00"}
+		ahead = {
+			"service_family": "Main",
+			"kds_status": "Pending",
+			"kds_ahead": 1,
+			"kds_sent_at": "2026-11-01 18:00:00",
+		}
 		called = {**ahead, "kds_called_at": called_at}
 		plain = {"service_family": "Main", "kds_status": "Pending", "kds_sent_at": "2026-11-01 18:00:00"}
 		held = {"service_family": "Main", "kds_status": "Waiting", "kds_ahead": 1}
@@ -148,7 +156,9 @@ class TestTheRuleOfTheSharedTable(FrappeTestCase):
 		self.assertTrue(service_families.is_uncalled(ahead))
 		self.assertFalse(service_families.is_uncalled(called))
 		self.assertFalse(service_families.is_uncalled(plain))
-		self.assertFalse(service_families.is_uncalled(held), "a line held back has not left, so it was not sent ahead")
+		self.assertFalse(
+			service_families.is_uncalled(held), "a line held back has not left, so it was not sent ahead"
+		)
 		self.assertIsNone(service_families.go_time(ahead), "a line not called counts from nothing")
 		self.assertEqual(service_families.go_time(called), called_at)
 		self.assertEqual(service_families.go_time(plain), "2026-11-01 18:00:00")
@@ -664,9 +674,14 @@ class TestWhatTheTillReads(ServiceCase):
 
 	def test_a_takeaway_is_never_planned_ahead(self):
 		frappe.db.set_value("Restaurant", self.a, "service_rhythm", "Prepared ahead")
-		lines = [{"service_family": "Starter", "kds_status": ""}, {"service_family": "Main", "kds_status": ""}]
+		lines = [
+			{"service_family": "Starter", "kds_status": ""},
+			{"service_family": "Main", "kds_status": ""},
+		]
 
-		answer = service_families_api.plan_kitchen_send(json.dumps(lines), restaurant_table=self.table_a, is_takeaway=1)
+		answer = service_families_api.plan_kitchen_send(
+			json.dumps(lines), restaurant_table=self.table_a, is_takeaway=1
+		)
 
 		self.assertEqual(answer["plan"], ["send", "send"])
 
@@ -683,7 +698,9 @@ class TestWhatTheTillReads(ServiceCase):
 
 		self.assertEqual(ahead["next"], {"family": "Main", "indexes": [1]})
 		self.assertEqual(ahead["held"], [1, 2])
-		self.assertEqual(room["next"], {"family": "", "indexes": []}, "the room cannot call a line it never held")
+		self.assertEqual(
+			room["next"], {"family": "", "indexes": []}, "the room cannot call a line it never held"
+		)
 		self.assertEqual(room["held"], [])
 
 	def test_a_portal_account_is_refused_both_calls(self):

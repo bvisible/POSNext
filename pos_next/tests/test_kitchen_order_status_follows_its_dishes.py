@@ -65,7 +65,9 @@ class TestTheRuleOfTheStatus(FrappeTestCase):
 					restaurant_api._order_status_of(dishes, [False] * len(dishes)),
 					restaurant_api._order_status_of(dishes),
 				)
-				self.assertEqual(restaurant_api._order_status_of(dishes, None), restaurant_api._order_status_of(dishes))
+				self.assertEqual(
+					restaurant_api._order_status_of(dishes, None), restaurant_api._order_status_of(dishes)
+				)
 
 
 class TestAnOrderFollowsItsDishes(TicketCase):

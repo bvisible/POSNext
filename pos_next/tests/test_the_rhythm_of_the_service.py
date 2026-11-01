@@ -52,7 +52,12 @@ class RhythmCase(ServiceCase):
 	def stored(self, order):
 		"""(item, status, ahead, called_at) of each line, in the order of the lines."""
 		return [
-			(row.item_code.replace("_Test SF ", ""), row.kds_status, int(row.kds_ahead or 0), row.kds_called_at)
+			(
+				row.item_code.replace("_Test SF ", ""),
+				row.kds_status,
+				int(row.kds_ahead or 0),
+				row.kds_called_at,
+			)
 			for row in frappe.get_all(
 				"Sales Invoice Item",
 				filters={"parent": order},
@@ -177,9 +182,7 @@ class TestALineKeepsItsMarkAndItsCall(RhythmCase):
 
 		self.save(self.the_cart(), name=order)
 
-		self.assertEqual(
-			[ahead for _item, _status, ahead, _called in self.stored(order)], [0, 0, 1, 1]
-		)
+		self.assertEqual([ahead for _item, _status, ahead, _called in self.stored(order)], [0, 0, 1, 1])
 
 	def test_a_later_save_keeps_the_call_the_cart_does_not_carry(self):
 		order = self.first_round()
@@ -320,9 +323,7 @@ class TestTheTillsWordAlone(RhythmCase):
 
 		self.save(cart, name=order)
 
-		self.assertEqual(
-			[ahead for _item, _status, ahead, _called in self.stored(order)], [0, 0, 1, 1]
-		)
+		self.assertEqual([ahead for _item, _status, ahead, _called in self.stored(order)], [0, 0, 1, 1])
 
 
 class TestWhatTheScreensRead(RhythmCase):
@@ -336,7 +337,9 @@ class TestWhatTheScreensRead(RhythmCase):
 
 		lines = self.lines_of_the_kitchen(order)
 
-		self.assertEqual([lines[item]["kds_ahead"] for item in ("Cola", "Soup", "Penne", "Tart")], [0, 0, 1, 1])
+		self.assertEqual(
+			[lines[item]["kds_ahead"] for item in ("Cola", "Soup", "Penne", "Tart")], [0, 0, 1, 1]
+		)
 		self.assertIsNone(lines["Tart"]["kds_called_at"])
 		self.assertEqual(lines["Penne"]["kds_called_at"], frappe.utils.get_datetime(CALL))
 
@@ -357,7 +360,9 @@ class TestWhatTheScreensRead(RhythmCase):
 
 		for lines in (opened, read):
 			by_item = {line["item_code"].replace("_Test SF ", ""): line for line in lines}
-			self.assertEqual([int(by_item[item]["kds_ahead"] or 0) for item in ("Cola", "Penne", "Tart")], [0, 1, 1])
+			self.assertEqual(
+				[int(by_item[item]["kds_ahead"] or 0) for item in ("Cola", "Penne", "Tart")], [0, 1, 1]
+			)
 			self.assertEqual(by_item["Penne"]["kds_called_at"], frappe.utils.get_datetime(CALL))
 			self.assertIsNone(by_item["Tart"]["kds_called_at"])
 
@@ -367,12 +372,20 @@ class TestTheDishesFinishedAhead(RhythmCase):
 
 	def set_status(self, order, item, status):
 		frappe.db.set_value(
-			"Sales Invoice Item", {"parent": order, "item_code": item}, "kds_status", status, update_modified=False
+			"Sales Invoice Item",
+			{"parent": order, "item_code": item},
+			"kds_status",
+			status,
+			update_modified=False,
 		)
 
 	def runner_items(self, order):
 		runner = {o["name"]: o for o in restaurant_api.get_runner_orders(restaurant=self.a)}
-		return sorted(line["item_code"].replace("_Test SF ", "") for line in runner[order]["items"]) if order in runner else []
+		return (
+			sorted(line["item_code"].replace("_Test SF ", "") for line in runner[order]["items"])
+			if order in runner
+			else []
+		)
 
 	def test_a_dish_finished_ahead_is_not_offered_to_the_runner_until_it_is_called(self):
 		order = self.first_round()
@@ -401,7 +414,9 @@ class TestTheDishesFinishedAhead(RhythmCase):
 	def test_the_pass_delivers_a_dish_by_its_name_only_when_it_is_called(self):
 		order = self.first_round()
 		self.set_status(order, "_Test SF Penne", "Ready")
-		penne = frappe.db.get_value("Sales Invoice Item", {"parent": order, "item_code": "_Test SF Penne"}, "name")
+		penne = frappe.db.get_value(
+			"Sales Invoice Item", {"parent": order, "item_code": "_Test SF Penne"}, "name"
+		)
 
 		restaurant_api.mark_items_delivered(order, json.dumps([penne]))
 		self.assertEqual(self.stored(order)[2][1], "Ready")
@@ -423,4 +438,3 @@ class TestTheDishesFinishedAhead(RhythmCase):
 		self.call(order, "_Test SF Penne", "_Test SF Tart")
 		restaurant_api._follow_the_dishes(order)
 		self.assertEqual(frappe.db.get_value("Sales Invoice", order, "kds_status"), "Ready")
-

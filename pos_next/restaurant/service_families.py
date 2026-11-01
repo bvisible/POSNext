@@ -209,7 +209,9 @@ def next_release(lines, rhythm=CALLED_BY_THE_ROOM) -> dict:
 	no family and no index.
 	"""
 	lines = list(lines or [])
-	held = [(index, _rank(_family(line))) for index, line in enumerate(lines) if _waits_for_the_room(line, rhythm)]
+	held = [
+		(index, _rank(_family(line))) for index, line in enumerate(lines) if _waits_for_the_room(line, rhythm)
+	]
 	courses = [(index, rank) for index, rank in held if rank]
 	if not courses:
 		return {"family": "", "indexes": []}
@@ -380,7 +382,9 @@ def stored_lines(invoice_name, lock=False) -> list:
 def sent_families_of(lines) -> list[str]:
 	"""The families of the lines that already left and that the room has called (a cart that lost them cannot tell): a line sent ahead and not
 	called yet is no course that left."""
-	return [_family(line) for line in lines or [] if _has_left(line) and not is_uncalled(line) and _family(line)]
+	return [
+		_family(line) for line in lines or [] if _has_left(line) and not is_uncalled(line) and _family(line)
+	]
 
 
 def row_of_the_line(rows, position, line, taken):

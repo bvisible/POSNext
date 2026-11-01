@@ -42,7 +42,11 @@ def plan_kitchen_send(lines, restaurant_table=None, is_takeaway=0):
 		lines = json.loads(lines or "[]")
 	lines = [line for line in (lines or []) if isinstance(line, dict)]
 	table_service = bool(restaurant_table) and not cint(is_takeaway)
-	rhythm = service_families.rhythm_of_table(restaurant_table) if table_service else service_families.CALLED_BY_THE_ROOM
+	rhythm = (
+		service_families.rhythm_of_table(restaurant_table)
+		if table_service
+		else service_families.CALLED_BY_THE_ROOM
+	)
 	return {
 		"rhythm": rhythm,
 		"plan": service_families.plan_send(lines, table_service, rhythm=rhythm),

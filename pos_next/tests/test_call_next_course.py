@@ -39,7 +39,13 @@ class CallCase(ServiceCase):
 		at_the_till.start()
 		self.addCleanup(at_the_till.stop)
 		self.order = self.save(
-			[self.line(self.cola), self.line(self.soup), self.line(self.penne), self.line(self.steak), self.line(self.tart)]
+			[
+				self.line(self.cola),
+				self.line(self.soup),
+				self.line(self.penne),
+				self.line(self.steak),
+				self.line(self.tart),
+			]
 		)
 
 	def called(self, order=None):
@@ -106,19 +112,30 @@ class TestWhatItCalls(CallCase):
 		again = restaurant_api.call_next_course(self.order, family="Main")
 
 		self.assertEqual(again["called"], 0)
-		self.assertEqual({str(called_at) for item, called_at in self.called() if item in ("Penne", "Steak")}, {first["called_at"]})
+		self.assertEqual(
+			{str(called_at) for item, called_at in self.called() if item in ("Penne", "Steak")},
+			{first["called_at"]},
+		)
 
 	def test_a_line_held_by_hand_is_not_a_line_to_call(self):
-		frappe.db.set_value("Sales Invoice Item", {"parent": self.order, "item_code": self.penne}, "kds_status", "Waiting")
+		frappe.db.set_value(
+			"Sales Invoice Item", {"parent": self.order, "item_code": self.penne}, "kds_status", "Waiting"
+		)
 
 		answer = restaurant_api.call_next_course(self.order)
 
-		self.assertEqual((answer["called"], answer["family"]), (1, "Main"), "only the main left ahead, not the one held back")
+		self.assertEqual(
+			(answer["called"], answer["family"]),
+			(1, "Main"),
+			"only the main left ahead, not the one held back",
+		)
 		self.assertEqual(self.names_called(), ["Steak"])
 
 	def test_the_kitchens_list_and_the_runners_give_the_call_back(self):
 		restaurant_api.call_next_course(self.order)
-		frappe.db.set_value("Sales Invoice Item", {"parent": self.order, "item_code": self.penne}, "kds_status", "Ready")
+		frappe.db.set_value(
+			"Sales Invoice Item", {"parent": self.order, "item_code": self.penne}, "kds_status", "Ready"
+		)
 
 		orders = {o["name"]: o for o in restaurant_api.get_kds_orders(restaurant=self.a)}
 		lines = {line["item_code"].replace("_Test SF ", ""): line for line in orders[self.order]["items"]}
@@ -285,7 +302,9 @@ class TestWhatItRefuses(CallCase):
 
 	def test_it_is_a_post_only_endpoint_that_the_web_serves(self):
 		self.assertIn(restaurant_api.call_next_course, frappe.whitelisted)
-		self.assertEqual(list(frappe.allowed_http_methods_for_whitelisted_func[restaurant_api.call_next_course]), ["POST"])
+		self.assertEqual(
+			list(frappe.allowed_http_methods_for_whitelisted_func[restaurant_api.call_next_course]), ["POST"]
+		)
 
 	def test_the_payload_of_a_web_call_is_read_as_text(self):
 		"""The web sends every argument as text: « 0 » is not « everything »."""
