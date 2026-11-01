@@ -24,10 +24,11 @@
 			<!-- //// app inside Neoffice, not a standalone product. (87f168fe, 2026-03-20 "align POS -->
 			<!-- //// design with Neoffice theme and improve customer display") -->
 			<div class="w-16 flex-shrink-0 flex items-center justify-center px-2">
+				<!-- //// Neoffice — the logo keeps its proportions (NeoRestau lot 1, smoke-test fix): `h-8 w-auto` in a column of 48 px made the browser shrink the box to 48 x 32 for a 300 x 71 picture, and a picture drawn into a box of another shape is stretched (a logo without a `viewBox` is; one with it is merely letter-boxed). The box keeps the 48 x 32 hit area of the exit button, and the picture is fitted inside it (`object-contain`), never stretched. -->
 				<img
 					:src="neofficeLogo"
 					alt="Neoffice"
-					class="h-8 w-auto cursor-pointer hover:opacity-80 active:scale-95 transition-all"
+					class="h-8 w-full object-contain cursor-pointer hover:opacity-80 active:scale-95 transition-all"
 					:title="__('Back to Neoffice')"
 					@click="showExitDialog = true"
 				/>
