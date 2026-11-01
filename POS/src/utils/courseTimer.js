@@ -34,6 +34,37 @@ export function courseSentAt(lines) {
 }
 
 /**
+ * The moment the most recent send left, in milliseconds, or NaN when no dish that left says it: the latest `kds_sent_at` among the dishes sent, whatever their state now. The kitchen's notice that the next
+ * course is ordered compares it from one reading to the next (utils/nextCourseWatch).
+ *
+ * @param {Array<Object>} lines - The dishes of the ticket (`kds_status`, `kds_sent_at`)
+ * @returns {number}
+ */
+export function latestSendAt(lines) {
+	let latest = Number.NEGATIVE_INFINITY
+	for (const line of lines || []) {
+		if (HELD.has(line?.kds_status || "")) continue
+		const sent = timeOf(line?.kds_sent_at)
+		if (!Number.isNaN(sent) && sent > latest) latest = sent
+	}
+	return Number.isFinite(latest) ? latest : Number.NaN
+}
+
+/**
+ * The dishes that left in the most recent send: the ones stamped with that very instant (every dish that leaves in one save takes the time of the save).
+ *
+ * @param {Array<Object>} lines - The dishes of the ticket (`kds_status`, `kds_sent_at`)
+ * @returns {Array<Object>}
+ */
+export function linesOfLatestSend(lines) {
+	const latest = latestSendAt(lines)
+	if (Number.isNaN(latest)) return []
+	return (lines || []).filter(
+		(line) => !HELD.has(line?.kds_status || "") && timeOf(line?.kds_sent_at) === latest,
+	)
+}
+
+/**
  * Where the ticket's timer starts: the course at the kitchen, else the order's last change, else its creation.
  *
  * @param {Object} order - The ticket (`items`, `modified`, `creation`)

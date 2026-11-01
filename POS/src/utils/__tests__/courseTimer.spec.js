@@ -3,7 +3,7 @@
  * //// maintenant du départ du dessert »): the oldest send among the dishes still to cook, else the latest send, else the order's last change. Read without a screen.
  */
 import { describe, expect, it } from "vitest"
-import { courseSentAt, timerStart } from "../courseTimer"
+import { courseSentAt, latestSendAt, linesOfLatestSend, timerStart } from "../courseTimer"
 
 const at = (text) => new Date(text).getTime()
 const line = (status, sentAt) => ({ item_code: `${status}-${sentAt}`, kds_status: status, kds_sent_at: sentAt })
@@ -77,5 +77,38 @@ describe("where the ticket's timer starts", () => {
 		const started = timerStart(order([], { modified: null }))
 
 		expect(started.getTime()).toBe(at("2026-11-01 11:55:00"))
+	})
+})
+
+//// Neoffice — the most recent send of a ticket, for the kitchen's notice that the next course is ordered (Daniel, 01.11)
+describe("the most recent send of a ticket", () => {
+	it("is the latest time among the dishes that left, whatever their state", () => {
+		const lines = [line("Delivered", STARTERS), line("Ready", MAINS), line("Pending", DESSERTS)]
+
+		expect(latestSendAt(lines)).toBe(at(DESSERTS))
+		expect(latestSendAt([line("Delivered", STARTERS), line("Delivered", MAINS)])).toBe(at(MAINS))
+	})
+
+	it("ignores a dish held back by the waiter, which has not left", () => {
+		expect(latestSendAt([line("Pending", STARTERS), line("Waiting", DESSERTS), line("", DESSERTS)])).toBe(at(STARTERS))
+	})
+
+	it("says nothing when no dish that left carries a time", () => {
+		expect(latestSendAt([line("Pending", null), line("Delivered", "")])).toBeNaN()
+		expect(latestSendAt([])).toBeNaN()
+		expect(latestSendAt(undefined)).toBeNaN()
+	})
+
+	it("gives back the dishes that left together in it, the very same instant", () => {
+		const dessert = line("Pending", DESSERTS)
+		const coffee = line("Pending", "2026-11-01 15:00:00.000000")
+		const lines = [line("Delivered", STARTERS), dessert, line("Ready", MAINS), coffee, line("Waiting", DESSERTS)]
+
+		expect(linesOfLatestSend(lines)).toEqual([dessert, coffee])
+	})
+
+	it("gives back nothing when there is no send to speak of", () => {
+		expect(linesOfLatestSend([line("Waiting", DESSERTS), line("Pending", null)])).toEqual([])
+		expect(linesOfLatestSend(undefined)).toEqual([])
 	})
 })
