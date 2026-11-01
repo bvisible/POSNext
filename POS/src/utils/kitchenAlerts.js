@@ -1,0 +1,41 @@
+//// Neoffice — added file (no upstream equivalent). The kitchen alerts as a screen reads them (NeoRestau lot 1, Daniel, 01.11: a popup and a sound when the next course is ordered, a sound when dishes
+//// come up ready). They are settings of the till (POS Settings, "Kitchen alerts"); the server resolves them for the restaurant a screen is opened on and answers `kitchen_alerts` in
+//// `get_restaurant_settings` (pos_next.restaurant.kitchen_alerts). This reads that answer, and reads anything it does not understand as the default: a screen never breaks on an answer that is missing, old or odd.
+
+import { DEFAULT_NEXT_COURSE_SOUND, DEFAULT_RUNNER_SOUND, DEFAULT_VOLUME, normaliseSound, normaliseVolume } from "@/utils/alertSounds"
+
+export const DEFAULT_POPUP_SECONDS = 30
+// The longest a popup may stay, ten minutes: the same range the server holds
+export const MAX_POPUP_SECONDS = 600
+
+export const DEFAULT_KITCHEN_ALERTS = Object.freeze({
+	popup: true,
+	popupSeconds: DEFAULT_POPUP_SECONDS,
+	nextCourseSound: DEFAULT_NEXT_COURSE_SOUND,
+	runnerSound: DEFAULT_RUNNER_SOUND,
+	volume: DEFAULT_VOLUME,
+})
+
+function secondsOf(value) {
+	if (value == null || value === "") return DEFAULT_POPUP_SECONDS
+	const seconds = Number(value)
+	if (Number.isNaN(seconds)) return DEFAULT_POPUP_SECONDS
+	return Math.min(MAX_POPUP_SECONDS, Math.max(0, Math.round(seconds)))
+}
+
+/**
+ * The kitchen alerts out of the `kitchen_alerts` of a settings answer.
+ *
+ * @param {Object|null|undefined} answer - `{ popup, popup_seconds, next_course_sound, runner_sound, volume }`, any of them missing
+ * @returns {{ popup: boolean, popupSeconds: number, nextCourseSound: string, runnerSound: string, volume: string }}
+ */
+export function readKitchenAlerts(answer) {
+	if (!answer || typeof answer !== "object") return { ...DEFAULT_KITCHEN_ALERTS }
+	return {
+		popup: answer.popup == null || answer.popup === "" ? DEFAULT_KITCHEN_ALERTS.popup : Boolean(Number(answer.popup)),
+		popupSeconds: secondsOf(answer.popup_seconds),
+		nextCourseSound: normaliseSound(answer.next_course_sound, DEFAULT_NEXT_COURSE_SOUND),
+		runnerSound: normaliseSound(answer.runner_sound, DEFAULT_RUNNER_SOUND),
+		volume: answer.volume == null || answer.volume === "" ? DEFAULT_VOLUME : normaliseVolume(answer.volume),
+	}
+}

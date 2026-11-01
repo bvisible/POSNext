@@ -598,3 +598,30 @@ describe("45 tickets in two bands", () => {
 		expect(text(production, '[data-test="band-count"]')).toBe("(15)")
 	})
 })
+
+//// Neoffice — the ticket of the table that has just ordered its next course is highlighted for a few seconds (NeoRestau lot 1, Daniel, 01.11): the band hands the card the one question it asks, « is this the highlighted order »
+describe("the highlighted ticket", () => {
+	const HighlightingTicket = {
+		props: ["order", "highlighted"],
+		template: '<div class="ticket" :data-name="order.name" :data-highlighted="highlighted ? \'yes\' : \'no\'"></div>',
+	}
+	const showWith = (props) =>
+		mount(KitchenBand, {
+			props: { band: "waiting", mode: "lane", label: "Pending", emptyText: "none", orders: orders(3), ...props },
+			global: { stubs: { KDSOrderCard: HighlightingTicket }, mocks: { __: globalThis.__ } },
+		})
+
+	it("is the card of that order only", () => {
+		const wrapper = showWith({ highlightOrder: "SINV-2" })
+
+		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-highlighted"))).toEqual(["no", "yes", "no"])
+		wrapper.unmount()
+	})
+
+	it("is no card when no order is highlighted", () => {
+		const wrapper = showWith({})
+
+		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-highlighted"))).toEqual(["no", "no", "no"])
+		wrapper.unmount()
+	})
+})

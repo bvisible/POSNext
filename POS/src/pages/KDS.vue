@@ -51,6 +51,8 @@
 				<PrintCopySettings v-if="hasCopyPrinters" screen="Kitchen" :settings="copySettings" @change="setCopySetting" />
 			</template>
 			<template #chip>
+				<!-- //// Neoffice — a sound is on but the browser has not been touched yet: it can make none before (NeoRestau lot 1, Daniel, 01.11) -->
+				<SoundUnlockChip :enabled="nextCourseSoundOn" />
 				<!-- The switch of the layout moves up to row 1 when row 2 has no chip left to hold it: a screen bound to its station must not pay a row for it -->
 				<KitchenLayoutSwitch v-if="canSplit && !filtersShown" :layout="layout" @update:layout="chooseLayout" />
 				<!-- //// Neoffice — the chip "to deliver (N)" of what waits at the pass (task 38a-1, ruling 112): a dish that is ready leaves the kitchen screen when its station has a runner, and the chip keeps its count in view. It opens the list of those dishes. It moved from the filter line to row 1 (task 38a-2, ruling 129). -->
@@ -86,6 +88,9 @@
 				</RoomStationFilterLine>
 			</template>
 		</ServiceTopBar>
+
+		<!-- //// Neoffice — the table that has just ordered its next course (NeoRestau lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine »): a notice per table under the bar, in the page's column, never over a ticket -->
+		<NextCourseNotices :notices="nextCourseNotices" @dismiss="dismissNextCourse" @show="showNextCourse" />
 
 		<!-- //// Neoffice — was ONE grid of tickets, oldest first, with "No Active Orders" in place of it when there was none. -->
 		<!-- //// The product owner asked for what is waiting apart from what is in preparation (task 23): two bands, always on -->
@@ -132,6 +137,7 @@
 					:station="selectedStation"
 					:rooms="areas"
 					:runner-enabled="runnerOn"
+					:highlight-order="highlightedOrder"
 					@status-updated="loadOrders"
 				/>
 				<KitchenBand
@@ -146,6 +152,7 @@
 					:station="selectedStation"
 					:rooms="areas"
 					:runner-enabled="runnerOn"
+					:highlight-order="highlightedOrder"
 					@status-updated="loadOrders"
 				/>
 			</div>
@@ -196,6 +203,11 @@ import {
 	readyForTheRunner,
 	stationUsesRunner,
 } from "@/utils/kitchenRunner"
+//// Neoffice — the popup and the sound when the next course of a table is ordered, set in the till's settings (NeoRestau lot 1, Daniel, 01.11)
+import NextCourseNotices from "@/components/restaurant/NextCourseNotices.vue"
+import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
+import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
+import { useNextCourseNotices } from "@/composables/useNextCourseNotices"
 import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
 import { TICKET_AREA, TICKET_COLUMNS, TICKET_GRID } from "@/utils/ticketLayout"
@@ -257,6 +269,14 @@ const inTheRoom = (order) =>
 	!activeArea.value || order.area === activeArea.value
 const ordersOfTheRoom = computed(() => orders.value.filter(inTheRoom))
 const allOrdersOfTheRoom = computed(() => allOrders.value.filter(inTheRoom))
+
+//// Neoffice — the next course of a table is ordered (NeoRestau lot 1, Daniel, 01.11: « quand on commande la suite il doit y avoir un popup à la cuisine, et aussi un son »). Each reading of the orders below goes through the rule
+//// (utils/nextCourseWatch): a ticket already on the screen with a newer send. What is done about it is the till's setting (POS Settings, "Kitchen alerts"), read for the restaurant of the screen: a notice per table, a sound, the ticket
+//// highlighted. A table of a room the screen does not show is neither announced nor rung for.
+const { settings: alertSettings } = useKitchenAlertSettings({ restaurant: ofTheRestaurant })
+const nextCourses = useNextCourseNotices({ settings: alertSettings, accept: (order) => !order || inTheRoom(order) })
+const { notices: nextCourseNotices, highlighted: highlightedOrder, dismiss: dismissNextCourse, show: showNextCourse } = nextCourses
+const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
 
 //// Neoffice — was `sortedOrders`: one list, the delivered orders hidden unless asked for, oldest `creation` first. The split
 //// into the two bands, and the order in each, are utils/kitchenBands: a ticket is waiting while no dish has begun, and
@@ -428,6 +448,8 @@ async function loadAreas() {
 }
 
 async function loadOrders() {
+	//// Neoffice — what this reading is of: the station chosen when it began. A reading that comes back after the cook chose another station is of the old one, and is no baseline for the new
+	const readOf = selectedStation.value
 	try {
 		// Always load all orders for counting
 		const allRes = await call("pos_next.api.restaurant.get_kds_orders", {
@@ -447,6 +469,8 @@ async function loadOrders() {
 		} else {
 			orders.value = allOrders.value
 		}
+		//// Neoffice — a next course ordered at a table already on the screen (NeoRestau lot 1, Daniel, 01.11)
+		if (readOf === selectedStation.value) nextCourses.read(orders.value, { station: readOf || "" })
 	} catch (error) {
 		// A tablet disconnected at the till, or whose session ended: it is shown how to pair it again
 		if (leaveWhenSignedOut()) return
@@ -507,6 +531,8 @@ onMounted(async () => {
 })
 
 watch(selectedStation, () => {
+	//// Neoffice — another station is another set of dishes: its first reading is a baseline, not a comparison with the last station's (NeoRestau lot 1, Daniel, 01.11)
+	nextCourses.reset()
 	loadOrders()
 })
 

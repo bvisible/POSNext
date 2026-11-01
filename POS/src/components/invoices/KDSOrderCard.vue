@@ -21,10 +21,11 @@
 	<!-- //// Neoffice — the card has TWO forms (task 38a-3, ruling 107 layer 3): the card of the board, and the same ticket opened FULL SCREEN over it (`fullscreen`), which the board's card draws by rendering itself -->
 	<!-- //// inside TicketFullScreen. One component, so the dishes, the buttons, the menus and the calls are written once and the two can never disagree. The panel is bigger (its own CSS variables, `fullScreenVariables`), -->
 	<!-- //// has an × beside its buttons, and lays its dishes out in columns side by side. -->
+	<!-- //// Neoffice — the card carries the name of its order (`data-order`: the screen finds the ticket of a table that ordered its next course by it, to scroll to it), and wears the signal's ring while that ticket is highlighted (NeoRestau lot 1, Daniel, 01.11). The panel opened full screen is the same ticket drawn bigger and is not highlighted. -->
 	<div class="bg-white dark:bg-gray-800 flex flex-1 flex-col min-h-0"
-		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]']"
+		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]', ringed ? 'ring-4 ring-inset ring-[#F55D1A]' : '']"
 		:style="fullscreen ? fullVariables : undefined"
-		:data-test="fullscreen ? 'ticket-panel' : 'ticket'" :data-state="status">
+		:data-test="fullscreen ? 'ticket-panel' : 'ticket'" :data-state="status" :data-order="order.name" :data-highlighted="ringed ? 'true' : undefined">
 
 		<!-- Header -->
 		<!-- The frame (padding, title, order number, timer, dish lines) is the one the runner ticket has: utils/ticketLayout -->
@@ -517,9 +518,16 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
+	//// Neoffice — the table of this ticket has just ordered its next course (NeoRestau lot 1, Daniel, 01.11): the kitchen screen highlights the ticket for a few seconds, with the signal's ring
+	highlighted: {
+		type: Boolean,
+		default: false,
+	},
 })
 
 const emit = defineEmits(["status-updated", "print", "close"])
+//// Neoffice — the ring is the board card's: the panel opened full screen is not highlighted. It is drawn INSIDE the card (`ring-inset`): a lane clips what passes its edge, and the ring must never be cut
+const ringed = computed(() => props.highlighted && !props.fullscreen)
 //// Neoffice — a copy on its way is not asked for again (task 44)
 const printBusy = computed(() => BUSY_PHASES.includes(props.printState.phase))
 const { showError } = useToast()
