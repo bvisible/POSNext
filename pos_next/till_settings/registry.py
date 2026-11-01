@@ -282,6 +282,38 @@ SETTINGS = (
 		till=RESTAURANT_TILL,
 		applies=APPLIES_RESTAURANT,
 	),
+	# //// Neoffice — the digits of the ticket number (NeoRestau lot 1, task 38b), added to the list when this task's registry
+	# //// met the field; the server holds the same 1..9 range (Restaurant._check_ticket_number_digits).
+	Setting(
+		"ticket_number_digits",
+		"service",
+		_lt("Digits of the ticket number"),
+		_lt("How many digits a ticket number is written with (0007 has four)."),
+		"int",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		min=1,
+		max=9,
+		applies=APPLIES_RESTAURANT,
+	),
+	Setting(
+		"ticket_number_reset",
+		"service",
+		_lt("Ticket numbers start again"),
+		_lt(
+			"When the numbers of the tickets start again at 1: every business day, never, or at each shift of"
+			" the till."
+		),
+		"select",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		options=(
+			("Business day", _lt("Every business day")),
+			("Never", _lt("Never")),
+			("Each shift", _lt("At each shift")),
+		),
+		applies=APPLIES_RESTAURANT,
+	),
 	Setting(
 		"default_restaurant_area",
 		"room",
@@ -382,6 +414,20 @@ SETTINGS = (
 		kind=INFO,
 	),
 	# ---------------------------------------------------------------- Online ordering
+	# //// Neoffice — the public menu of the QR code (NeoRestau lot 1), added to the list when this task's registry met the field.
+	Setting(
+		"enable_public_menu",
+		"qr_ordering",
+		_lt("Public menu (QR)"),
+		_lt(
+			"The card offered shows, to read only, on the page that the QR code of the tables opens. Guests"
+			" cannot order from it. Off: nothing is public."
+		),
+		"check",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		applies=APPLIES_RESTAURANT,
+	),
 	Setting(
 		"enable_qr_ordering",
 		"qr_ordering",
@@ -567,6 +613,23 @@ SETTINGS = (
 		doctype=RESTAURANT,
 		till=RESTAURANT_TILL,
 		depends_on=(on("enable_reservations"), on("enable_online_reservations")),
+		applies=APPLIES_RESTAURANT,
+	),
+	# //// Neoffice — the expiry of an unconfirmed online booking (NeoRestau lot 1, task 18), added to the list when this task's
+	# //// registry met the field.
+	Setting(
+		"unconfirmed_reservation_expiry",
+		"online_reservations",
+		_lt("Unconfirmed booking expires after (minutes)"),
+		_lt(
+			"An online booking that the guest has not confirmed from the e-mail within this time expires: its"
+			" tables are free again and it never counts as a no-show."
+		),
+		"int",
+		doctype=RESTAURANT,
+		till=RESTAURANT_TILL,
+		depends_on=(on("enable_reservations"), on("enable_online_reservations")),
+		min=1,
 		applies=APPLIES_RESTAURANT,
 	),
 	Setting(
@@ -1192,6 +1255,30 @@ SETTINGS = (
 		doctype=POS_PROFILE,
 		choices="journal_entry_templates",
 	),
+	# //// Neoffice — the two limits of the cash movements (NeoRestau lot 1, task 15), added to the list when this task's
+	# //// registry met them: the most a shift may take out of the drawer, and how long an offline movement keeps its day.
+	Setting(
+		"posa_cash_movement_out_limit",
+		"cash_movements",
+		_lt("Cash out limit per shift"),
+		_lt("The most the cash movements of this till may take out of the drawer during one shift. Empty: no limit."),
+		"float",
+		doctype=POS_PROFILE,
+		min=0,
+	),
+	Setting(
+		"posa_cash_movement_offline_hours",
+		"cash_movements",
+		_lt("Offline cash movement window (hours)"),
+		_lt(
+			"A cash movement recorded while the till was offline is booked on the day the till recorded it when it"
+			" reaches the server within this many hours; later, it is booked on the day it arrives, with a note."
+			" 0: always on the day it arrives."
+		),
+		"int",
+		doctype=POS_PROFILE,
+		min=0,
+	),
 	Setting(
 		"posa_allow_delete",
 		"cash_movements",
@@ -1613,6 +1700,10 @@ NOT_LISTED = {
 	},
 	RESTAURANT: {
 		"restaurant_name": _RESTAURANT_FORM,
+		"business_day_start": (
+			_RESTAURANT_FORM + " (a time of day, which the screen has no widget for yet; the default 05:00 suits"
+			" a restaurant that closes after midnight)"
+		),
 		"company": _RESTAURANT_FORM,
 		"enabled": _RESTAURANT_FORM,
 		"logo": _RESTAURANT_FORM,

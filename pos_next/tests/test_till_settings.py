@@ -815,6 +815,57 @@ class TestTilesPerRow(TillSettingsCase):
 		self.assertEqual(_get_pos_settings(profile)["tiles_per_row"], "8")
 
 
+class TestTheLockAndTheStaffSession(TillSettingsCase):
+	"""The lock of the till and the days it keeps its staff signed in were fields of the old settings dialog before they were
+	settings of the list (NeoRestau lot 1, 01.11.2026): the list holds the same ranges as the document and the session."""
+
+	def test_the_list_describes_the_four_settings_with_the_ranges_the_server_holds(self):
+		from pos_next.api.session import MAX_KEEP_SIGNED_IN_DAYS
+
+		self.as_user(TILL_MANAGER)
+		listed = by_key(get_till_settings(self.shop_till))
+
+		self.assertEqual(listed["keep_signed_in_days"]["widget"], "int")
+		self.assertEqual((listed["keep_signed_in_days"]["min"], listed["keep_signed_in_days"]["max"]), (0, MAX_KEEP_SIGNED_IN_DAYS))
+		self.assertEqual((listed["session_lock_timeout"]["min"], listed["session_lock_timeout"]["max"]), (1, 1440))
+		for key in ("session_lock_timeout", "session_lock_on_leave"):
+			self.assertEqual(
+				[(when["key"], when["off"]) for when in listed[key]["depends_on"]], [("enable_session_lock", False)]
+			)
+
+	def test_a_save_keeps_the_days_and_the_lock_choices(self):
+		self.as_user(TILL_MANAGER)
+
+		save_till_settings(
+			self.shop_till,
+			{
+				"enable_session_lock": 1,
+				"session_lock_timeout": 12,
+				"session_lock_on_leave": 1,
+				"keep_signed_in_days": 14,
+			},
+		)
+
+		stored = self.stored_settings(
+			self.shop_till, "enable_session_lock", "session_lock_timeout", "session_lock_on_leave", "keep_signed_in_days"
+		)
+		self.assertEqual(
+			(stored.enable_session_lock, stored.session_lock_timeout, stored.session_lock_on_leave, stored.keep_signed_in_days),
+			(1, 12, 1, 14),
+		)
+
+	def test_the_days_and_the_delay_outside_their_range_are_refused(self):
+		self.as_user(TILL_MANAGER)
+		for values in (
+			{"keep_signed_in_days": 91},
+			{"keep_signed_in_days": -1},
+			{"session_lock_timeout": 0},
+			{"session_lock_timeout": 1441},
+		):
+			with self.subTest(values=values), self.assertRaises(frappe.ValidationError):
+				save_till_settings(self.shop_till, values)
+
+
 def _card(restaurant, name, **values):
 	return (
 		frappe.get_doc({"doctype": "Restaurant Card", "card_name": name, "restaurant": restaurant, **values})
