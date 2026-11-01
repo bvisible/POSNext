@@ -151,7 +151,7 @@
 							<div v-if="batchIdx > 0" class="flex items-center gap-2 my-2 px-1" :class="fullscreen ? 'break-inside-avoid' : ''">
 								<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
 								<span class="text-[9px] font-bold text-orange-500 uppercase tracking-wider whitespace-nowrap">
-									{{ __('Send') }} {{ batchIdx + 1 }}
+									<!-- //// Neoffice — the number of a send reads « Envoi 2 », not the button's « Envoyer 2 » (kitchen test, 01.11): its own context -->{{ __('Send', null, 'Kitchen send number') }} {{ batchIdx + 1 }}
 								</span>
 								<div class="flex-1 border-t border-dashed border-orange-300 dark:border-orange-700"></div>
 							</div>

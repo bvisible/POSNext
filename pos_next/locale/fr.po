@@ -18688,3 +18688,8 @@ msgstr "Couleur du service"
 msgctxt "Item Group"
 msgid "The colour of the dishes of this category on the kitchen and runner tickets: a very pale tint behind each dish. Optional. A sub-group with none takes its parent's."
 msgstr "La couleur des plats de cette catégorie sur les tickets de la cuisine et du runner : une teinte très pâle derrière chaque plat. Facultative. Un sous-groupe sans couleur prend celle de son parent."
+
+#: POS/src/components/invoices/KDSOrderCard.vue
+msgctxt "Kitchen send number"
+msgid "Send"
+msgstr "Envoi"
