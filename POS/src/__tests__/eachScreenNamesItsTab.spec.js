@@ -243,7 +243,16 @@ describe("the rule, in one place", () => {
 			)
 			.map((file) => path.relative(SRC, file))
 
-		expect(writers).toEqual([path.join("utils", "tabTitle.js")])
+		// Two screens of the restaurant name their tab after their own page, which is the kitchen's and the runner's station (useDocumentTitle, which
+		// gives the old title back when the screen goes), and the public menu names it after the restaurant: the three are written down here, so that
+		// a fourth cannot come in unseen
+		expect(writers.sort()).toEqual(
+			[
+				path.join("composables", "useDocumentTitle.js"),
+				path.join("pages", "PublicMenu.vue"),
+				path.join("utils", "tabTitle.js"),
+			].sort(),
+		)
 	})
 
 	it("is not written by frappe-ui's page meta either: no component takes its title from it", () => {
@@ -277,7 +286,8 @@ describe("the rule, in one place", () => {
 
 	it("is handed a name by the screens that learn one", () => {
 		expect(read("pages", "POSSale.vue")).toMatch(/\buseTillTabTitle\(\)/)
-		expect(read("pages", "KDS.vue")).toMatch(/\buseTabTitle\(/)
+		// the kitchen's and the runner's tab is named by their own page (useDocumentTitle: the station's name), not by this rule
+		expect(read("pages", "KDS.vue")).toMatch(/\buseDocumentTitle\(/)
 		// The restaurant's name, which the session's first call answers: not the company of an order, which exists
 		// only once there is an invoice, and tells restaurants of one company apart no better
 		const guestName =

@@ -18487,16 +18487,12 @@ msgid "{0} h {1}"
 msgstr "{0} h {1}"
 
 #: POS/src/components/pos/FloorPlanEditor.vue
-msgid "Open a smartphone"
-msgstr "Ouvrir un smartphone"
+msgid "Open the till on a device"
+msgstr "Ouvrir la caisse sur un appareil"
 
 #: POS/src/components/restaurant/OpenPhoneDialog.vue
-msgid "Open on a smartphone"
-msgstr "Ouvrir sur un smartphone"
-
-#: POS/src/components/restaurant/OpenPhoneDialog.vue
-msgid "Scan this code with the smartphone's camera: the till opens, with no address to type. The waiter then signs in with their own account."
-msgstr "Scannez ce code avec l'appareil photo du smartphone : la caisse s'ouvre, sans adresse à taper. Le serveur se connecte ensuite avec son propre identifiant."
+msgid "Scan this code with the camera of the phone or tablet: the till opens, with no address to type. The staff member then signs in with their own account."
+msgstr "Scannez ce code avec l'appareil photo du téléphone ou de la tablette : la caisse s'ouvre, sans adresse à taper. La personne se connecte ensuite avec son propre identifiant."
 
 #: POS/src/components/restaurant/OpenPhoneDialog.vue
 msgid "Or send this link"
@@ -18515,8 +18511,8 @@ msgid "Could not copy the link."
 msgstr "Impossible de copier le lien."
 
 #: POS/src/components/restaurant/OpenPhoneDialog.vue
-msgid "To open it like an app, add it to the phone's home screen from the browser's menu."
-msgstr "Pour l'ouvrir comme une application, ajoutez-la à l'écran d'accueil depuis le menu du navigateur."
+msgid "To open it like an app, install it from the browser's menu (Install the app)."
+msgstr "Pour l'ouvrir comme une application, installez-la depuis le menu du navigateur (Installer l'application)."
 
 #: POS/src/components/invoices/KDSOrderCard.vue POS/src/components/invoices/RunnerOrderCard.vue
 msgid "{0} of {1}"

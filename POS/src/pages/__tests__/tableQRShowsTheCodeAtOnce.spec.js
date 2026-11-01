@@ -247,6 +247,35 @@ describe("the QR button of a table", () => {
 		expect(call).not.toHaveBeenCalled()
 		expect(qr.showQRDialog.value).toBe(false)
 	})
+
+	it("asks for the table it is HANDED, where no table is open: the list's QR button and a long press on the plan (task 26)", async () => {
+		const { qr } = theTill({ table: null })
+		call.mockResolvedValueOnce({ ...ANSWER, token: "tok-9", url: "https://shop.example/pos/guest/tok-9" })
+
+		await qr.handleQRButtonClick({ name: "TBL-0009", table_name: "Table 9" })
+
+		expect(call).toHaveBeenCalledWith(CREATE, { table: "TBL-0009", pos_profile: "Restaurant till" })
+		expect(qr.currentQR.value).toMatchObject({ token: "tok-9", tableName: "Table 9" })
+		expect(qr.showQRDialog.value).toBe(true)
+	})
+
+	it("prefers the table it is handed to the cart's open table", async () => {
+		const { qr } = theTill()
+		call.mockResolvedValueOnce(ANSWER)
+
+		await qr.handleQRButtonClick({ name: "TBL-0009", table_name: "Table 9" })
+
+		expect(call).toHaveBeenCalledWith(CREATE, { table: "TBL-0009", pos_profile: "Restaurant till" })
+	})
+
+	it("takes a click event for no table: the header bar's button hands its event, and gets the cart's table", async () => {
+		const { qr } = theTill()
+		call.mockResolvedValueOnce(ANSWER)
+
+		await qr.handleQRButtonClick(new Event("click"))
+
+		expect(call).toHaveBeenCalledWith(CREATE, { table: "TBL-0001", pos_profile: "Restaurant till" })
+	})
 })
 
 describe("the dialog that shows the code", () => {

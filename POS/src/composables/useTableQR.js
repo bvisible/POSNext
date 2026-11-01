@@ -23,8 +23,11 @@ export function useTableQR({ table, posProfile }) {
 	// A second press while the answer is on its way asks nothing
 	let asking = false
 
-	async function handleQRButtonClick() {
-		const openTable = table()
+	//// Neoffice — the press can name its table (NeoRestau lot 1, task 26): the list's QR button and a long press on the plan ask for the code of a table pressed on the FLOOR, where no table is open on the cart; the header bar's
+	//// button hands its click event, which is no table, and gets the cart's open table as before.
+	const isATable = (value) => Boolean(value && typeof value === "object" && (value.name || value.table_name) && !("target" in value))
+	async function handleQRButtonClick(pressed = null) {
+		const openTable = isATable(pressed) ? pressed : table()
 		if (!openTable || asking) return
 
 		const tableName = openTable.name || openTable.table_name

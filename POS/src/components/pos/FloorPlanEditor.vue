@@ -1240,7 +1240,7 @@ const menuItems = computed(() =>
 		},
 		{
 			key: "open-a-smartphone",
-			label: __("Open a smartphone"),
+			label: __("Open the till on a device"),
 			icon: ICON_PHONE,
 			// The link to the till is given by whoever may set the restaurant up, as the tablets are
 			visible: canSetUpTheRestaurant.value,

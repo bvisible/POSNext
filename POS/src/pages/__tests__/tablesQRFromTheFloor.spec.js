@@ -10,6 +10,7 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 
 const source = readFileSync(path.resolve(__dirname, "../POSSale.vue"), "utf8")
+const composable = readFileSync(path.resolve(__dirname, "../../composables/useTableQR.js"), "utf8")
 
 /** The body of a function of the page's script, by its name */
 function bodyOf(name) {
@@ -51,26 +52,14 @@ describe("a table's QR code asked for from the floor", () => {
 		).toHaveLength(3)
 	})
 
-	it("takes the table it is handed, else the cart's open table", () => {
-		const body = bodyOf("handleQRButtonClick")
-
-		expect(body).toMatch(/async function handleQRButtonClick\(pressed = null\)/)
-		expect(body).toMatch(
-			/const table = pressed \|\| cartStore\.restaurantTable;/,
-		)
+	it("takes the table it is handed, else the cart's open table: the click path is the composable's, which the page and the header bar share", () => {
+		expect(composable).toMatch(/async function handleQRButtonClick\(pressed = null\)/)
+		expect(composable).toMatch(/const openTable = isATable\(pressed\) \? pressed : table\(\)/)
 	})
 
-	it("generates the code of the table asked for, not of the cart's alone", () => {
-		const body = bodyOf("confirmQRGeneration")
-
-		expect(body).toMatch(
-			/const table = qrTable\.value \|\| cartStore\.restaurantTable;/,
-		)
-		expect(bodyOf("handleQRButtonClick")).toMatch(/qrTable\.value = table;/)
-	})
-
-	it("is asked by the order view's QR button for the cart's table: the click is no table", () => {
-		expect(source).toMatch(/@click="handleQRButtonClick\(\)"/)
-		expect(source).not.toMatch(/@click="handleQRButtonClick"/)
+	it("is reached by the header bar's button for the cart's table: its click event is no table", () => {
+		expect(source).toMatch(/@qr="handleQRButtonClick"/)
+		// an event carries a `target`: the composable takes it for no table
+		expect(composable).toMatch(/!\("target" in value\)/)
 	})
 })

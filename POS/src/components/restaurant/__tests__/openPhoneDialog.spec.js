@@ -51,7 +51,7 @@ describe("opening a smartphone at the till", () => {
 		const wrapper = open()
 		await flushPromises()
 
-		expect(wrapper.get("h2").text()).toBe("Open on a smartphone")
+		expect(wrapper.get("h2").text()).toBe("Open the till on a device")
 		expect(toString).toHaveBeenCalledWith(TILL, expect.objectContaining({ type: "svg" }))
 		expect(wrapper.get("[data-test=phone-qr]").html()).toContain(`data-url="${TILL}"`)
 		expect(wrapper.text()).toContain("signs in with their own account")

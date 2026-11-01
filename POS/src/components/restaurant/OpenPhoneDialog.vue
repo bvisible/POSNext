@@ -1,9 +1,9 @@
 <template>
-	<!-- //// Neoffice — added file (no upstream equivalent). « Open a smartphone » (NeoRestau lot 1, kitchen test 01.11): a waiter's phone is -->
+	<!-- //// Neoffice — added file (no upstream equivalent). « Open the till on a device » (it was « Open a smartphone »: a tablet opens the till by its code too, Daniel 01.11; NeoRestau lot 1, kitchen test 01.11): a waiter's phone is -->
 	<!-- //// not paired like a kitchen's tablet, it signs in with its owner's own account. What the manager needs is somewhere to GIVE the -->
 	<!-- //// till's address, so that nobody types it for the first time: a QR code to scan with the phone's camera, and the same link to copy -->
 	<!-- //// and send. Nothing secret in it, so it makes no token and has no time limit. -->
-	<Dialog v-model="show" :options="{ title: __('Open on a smartphone'), size: 'lg' }">
+	<Dialog v-model="show" :options="{ title: __('Open the till on a device'), size: 'lg' }">
 		<template #body-content>
 			<div class="flex flex-col items-center gap-4 text-center" data-test="open-phone">
 				<div
@@ -12,7 +12,7 @@
 					v-html="qr"
 				></div>
 				<p class="max-w-[36ch] text-sm text-gray-700">
-					{{ __("Scan this code with the smartphone's camera: the till opens, with no address to type. The waiter then signs in with their own account.") }}
+					{{ __("Scan this code with the camera of the phone or tablet: the till opens, with no address to type. The staff member then signs in with their own account.") }}
 				</p>
 				<div class="w-full text-left">
 					<p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{{ __("Or send this link") }}</p>
@@ -36,7 +36,7 @@
 					</div>
 				</div>
 				<p class="text-xs text-gray-500">
-					{{ __("To open it like an app, add it to the phone's home screen from the browser's menu.") }}
+					{{ __("To open it like an app, install it from the browser's menu (Install the app).") }}
 				</p>
 			</div>
 		</template>

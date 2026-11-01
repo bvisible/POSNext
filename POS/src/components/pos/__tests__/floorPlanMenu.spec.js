@@ -505,7 +505,7 @@ describe("the « ⋯ » menu of the floor plan's line", () => {
 			expect(dialog().exists()).toBe(false)
 
 			await more().trigger("click")
-			expect(phoneItem().text()).toBe("Open a smartphone")
+			expect(phoneItem().text()).toBe("Open the till on a device")
 			await phoneItem().trigger("click")
 			await flushPromises()
 
