@@ -440,6 +440,39 @@ def _publish_to_the_tills(event, table_name, payload):
 	frappe.publish_realtime(event, {"restaurant": restaurant, **payload})
 
 
+# //// Neoffice — added (no upstream equivalent): the lines of a guest's order in the alert the tills get (NeoRestau lot 1, Daniel, 01.11: « regarde comment la caisse
+# //// sommelier reçoit l'info »). The waiter's till shows « Table 2 — le client commande : 3 x Verre de vin » and never reads the table to name the lines, so the alert carries
+# //// them. The till names three lines and counts the rest; five are sent so that the count and the names are never out of step, and `count` is how many there really are.
+MAX_ALERT_LINES = 5
+
+
+def _lines_of_this_order(rows):
+	"""The lines a guest's order added, as the tills name them: `([{item_name, qty}], count)`, `count` all of the lines and the names the first `MAX_ALERT_LINES`.
+
+	The names are read from the items in one query. An item that is gone is named by its code. A whole quantity is a whole number.
+	"""
+	if not rows:
+		return [], 0
+	names = {
+		item.name: item.item_name
+		for item in frappe.get_all(
+			"Item",
+			filters={"name": ["in", list({row.item_code for row in rows})]},
+			fields=["name", "item_name"],
+		)
+	}
+	lines = []
+	for row in rows[:MAX_ALERT_LINES]:
+		qty = flt(row.qty)
+		lines.append(
+			{
+				"item_name": names.get(row.item_code) or row.item_code,
+				"qty": int(qty) if qty == int(qty) else qty,
+			}
+		)
+	return lines, len(rows)
+
+
 # ==========================================
 # Public guest API endpoints
 # ==========================================
@@ -615,6 +648,9 @@ def submit_guest_order(token, items):
 			key += "|" + str(row.posa_item_modifiers)
 		existing_item_keys.add(key)
 
+	# //// Neoffice — the lines THIS order adds (the ones above, already on the invoice, are not news to the tills): see _lines_of_this_order.
+	added_rows = []
+
 	for item in items:
 		item_code = item.get("item_code")
 		if not item_code:
@@ -639,6 +675,8 @@ def submit_guest_order(token, items):
 			"qty": qty,
 			"rate": rate,
 		})
+		# //// Neoffice — kept for the alert to the tills (added_rows above).
+		added_rows.append(row)
 
 		if has_kds:
 			if validation_mode == "Direct to Kitchen":
@@ -690,10 +728,17 @@ def submit_guest_order(token, items):
 		})
 
 		# Notify all POS clients (global, not room-scoped); they ignore the tables of another restaurant
+		# //// Neoffice — the alerts name the lines of this order (`items`, `count`) and say whether the waiter must validate them (`validation_mode`), so that the
+		# //// till tells the waiter with the words of the order without reading the table (NeoRestau lot 1, Daniel, 01.11). Keys are only added: the keys the alerts
+		# //// always had are unchanged for the submitted one; the pending one carried the guest's raw lines as `items` (no listener has ever read them), which are now the named lines.
+		lines, count = _lines_of_this_order(added_rows)
 		_publish_to_the_tills("guest_order_submitted", token_doc.table, {
 			"table": token_doc.table,
 			"invoice": invoice_doc.name,
 			"items_count": len(items),
+			"items": lines,
+			"count": count,
+			"validation_mode": validation_mode,
 		})
 		frappe.publish_realtime("table_update")
 
@@ -701,7 +746,9 @@ def submit_guest_order(token, items):
 			_publish_to_the_tills("guest_order_pending", token_doc.table, {
 				"table": token_doc.table,
 				"invoice": invoice_doc.name,
-				"items": items,
+				"items": lines,
+				"count": count,
+				"validation_mode": validation_mode,
 			})
 
 	return {
