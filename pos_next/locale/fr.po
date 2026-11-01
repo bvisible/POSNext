@@ -20621,3 +20621,8 @@ msgstr "À l'avance, en attente de l'appel"
 #: POS/src/pages/POSSale.vue
 msgid "Next course ordered"
 msgstr "Suite commandée"
+
+# //// Neoffice — the device's choice to fold the courses that are all delivered in the cart of a table's order (NeoRestau lot 1, Daniel's request of 01.11).
+#: POS/src/components/sale/InvoiceCart.vue
+msgid "Fold delivered courses"
+msgstr "Replier les services livrés"

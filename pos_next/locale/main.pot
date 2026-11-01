@@ -18546,4 +18546,7 @@ msgstr ""
 
 #: POS/src/pages/POSSale.vue
 msgid "Next course ordered"
+
+#: POS/src/components/sale/InvoiceCart.vue
+msgid "Fold delivered courses"
 msgstr ""

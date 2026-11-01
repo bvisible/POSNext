@@ -708,6 +708,32 @@
 						</svg>
 						<span>{{ __("Clear") }}</span>
 					</button>
+					<!-- //// Neoffice — « Replier les services livrés » (NeoRestau lot 1, Daniel, 01.11): the device's choice to draw a table's order by course and fold the courses that are all delivered. A small switch -->
+					<!-- //// next to « Trier », only where it does something (a table's order of a restaurant that uses courses). The button is 44px for a finger and takes no height from the row (-my-1.5). ON is -->
+					<!-- //// the ink (paper in dark), OFF a neutral track: no colour of the till's dark remap is used, so the two states stay apart there. -->
+					<button
+						v-if="showFoldSwitch"
+						type="button"
+						role="switch"
+						data-test="fold-delivered-switch"
+						:aria-checked="foldDelivered ? 'true' : 'false'"
+						:aria-label="__('Fold delivered courses')"
+						:title="__('Fold delivered courses')"
+						class="-my-1.5 inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center gap-1 rounded-lg px-1 text-gray-600 hover:bg-gray-50"
+						@click="setFoldDelivered(!foldDelivered)"
+					>
+						<LucideChevronsDownUp class="h-4 w-4 flex-none" aria-hidden="true" />
+						<span
+							class="relative inline-flex h-5 w-9 flex-none items-center rounded-full p-0.5 transition-colors"
+							:class="foldDelivered ? 'bg-gray-800 dark:bg-ds-paper' : 'bg-gray-600'"
+							aria-hidden="true"
+						>
+							<span
+								class="block h-4 w-4 rounded-full bg-ds-paper shadow transition-transform"
+								:class="foldDelivered ? 'translate-x-4 dark:bg-ds-ink' : 'translate-x-0'"
+							></span>
+						</span>
+					</button>
 					<!-- Sort Dropdown -->
 					<div class="relative" ref="cartSortContainer">
 						<button
@@ -1224,8 +1250,23 @@
 				<!-- //// one that waits), and a key they shared let a field's focus and the quantity typed into it land on the other -->
 				<!-- //// row (NeoRestau lot 1, task 22, fix round 3). -->
 				<!-- //// Neoffice — an offered row (task 24) shares its paid line's code and unit: it is a row of its own, so its row key tells it from the paid line. -->
+				<!-- //// Neoffice — the lines come under a header per course (NeoRestau lot 1, Daniel, 01.11): this outer loop walks the groups (cartEntries), the loop inside it is the cart's own, over the lines a group -->
+				<!-- //// shows (a course that is all delivered shows none while it is folded). Outside a table's order of a restaurant that uses courses, or with the device's switch off, there is ONE group with no header: the flat list. -->
+				<template v-for="entry in cartEntries" :key="entry.key">
+				<CartCourseHeader
+					v-if="entry.group && entry.group.kind !== 'loose'"
+					:group-key="entry.group.key"
+					:kind="entry.group.kind"
+					:label="courseGroupLabel(entry.group)"
+					:foldable="entry.group.delivered"
+					:folded="entry.group.folded"
+					:count="entry.group.count"
+					:subtotal="formatCurrency(entry.group.subtotal)"
+					@toggle="toggleCourse(entry.group.key)"
+				/>
+				<!-- //// Neoffice — the cart's own loop, now over the lines a group shows (it walked `displayCartItems` before) -->
 				<template
-					v-for="(item, lineIndex) in displayCartItems"
+					v-for="(item, lineIndex) in entry.rows"
 					:key="
 						item.item_code +
 						'-' +
@@ -1306,7 +1347,8 @@
 							>
 								<FeatherIcon name="gift" class="w-3 h-3" />{{ __("Offered", null, OFFER_CONTEXT) }}
 							</span>
-							<div dir="auto" class="mt-0.5 text-sm font-semibold text-[#1d2433] leading-snug line-clamp-2">
+							<!-- //// Neoffice — an offered row of a delivered dish is struck through too, with its paid line (isStruck) -->
+							<div dir="auto" class="mt-0.5 text-sm font-semibold text-[#1d2433] leading-snug line-clamp-2" :class="isStruck(item) ? 'line-through' : ''">
 								{{ item.item_name }}
 							</div>
 						</div>
@@ -1403,15 +1445,17 @@
 								<!-- Name and line total; the total wraps under the name below 1100px -->
 								<!-- //// Neoffice — except on a phone (under 640px), where the cart is the whole screen: the total stays at the right of the name, on one row (kitchen test, 01.11). -->
 								<div class="flex flex-row sm:flex-col min-[1100px]:flex-row min-[1100px]:items-start gap-x-2">
+									<!-- //// Neoffice — a delivered line is struck through where the cart is drawn by course (isStruck), its name and its total: what is done is crossed out, as on the kitchen's ticket -->
 									<h4
 										dir="auto"
 										class="flex-1 min-w-0 text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
+										:class="isStruck(item) ? 'line-through' : ''"
 									>
 										{{ item.item_name }}
 									</h4>
 									<!-- //// Neoffice — the total is right-aligned on a phone, where it stands beside the name -->
 									<div class="flex-shrink-0 tabular-nums max-sm:text-end min-[1100px]:text-end">
-										<div class="text-base font-bold text-[#1d2433]">
+										<div class="text-base font-bold text-[#1d2433]" :class="isStruck(item) ? 'line-through' : ''">
 											{{ formatCurrency(getLineAmount(item)) }}
 										</div>
 										<div v-if="lineSaving(item) > 0" class="text-xs text-gray-500 line-through">
@@ -1752,6 +1796,8 @@
 							</div>
 						</div>
 					</div>
+				</template>
+				<!-- //// Neoffice — closes the loop over the groups opened above -->
 				</template>
 			</div>
 		</div>
@@ -2247,6 +2293,11 @@ import {
 	getDisplayQuantity as getDisplayQuantityForLine,
 	resolvePaidQuantityFromDisplay as resolvePaidQtyForLine,
 } from "@/utils/gwpSameItemFreeRows";
+//// Neoffice — the lines of a table's order come under a header per course, the courses that are all delivered folded (NeoRestau lot 1, Daniel, 01.11); the device chooses whether they do.
+import CartCourseHeader from "./CartCourseHeader.vue";
+import LucideChevronsDownUp from "~icons/lucide/chevrons-down-up";
+import { useFoldDelivered } from "@/composables/useFoldDelivered";
+import { courseGroupLabel, groupCartByCourse, isDeliveredLine, toggleKey } from "@/utils/cartCourses";
 
 /**
  * ============================================================================
@@ -2885,6 +2936,35 @@ function orderNextCourse() {
 function orderEverything() {
 	commitTypedQuantity();
 	emit("order-everything");
+}
+
+//// Neoffice — the cart of a table's order by course, like the kitchen's ticket (NeoRestau lot 1, Daniel, 01.11: « il faut barrer et réduire pour laisser que ce qu'il reste visible »): a header per course in
+//// the order of the meal, the courses that are all delivered folded into one row, the lines held back in a last group (utils/cartCourses holds the rule). The device chooses whether the cart does it
+//// (« Replier les services livrés », on by default); off, or outside a table's order of a restaurant that uses courses, the list is the flat one it always was. Only the drawing changes: the lines,
+//// the totals and the tax are the cart's, and a delivered line is still billed.
+const { foldDelivered, setFoldDelivered } = useFoldDelivered();
+const showFoldSwitch = computed(() => isTableOrder.value && hasServiceFamilies.value);
+const courseView = computed(() => showFoldSwitch.value && foldDelivered.value);
+// The folded courses a waiter opened again: they last for the table shown and are dropped when another table opens
+const openedCourses = ref(new Set());
+watch(
+	() => cartStore.restaurantTable?.name,
+	() => {
+		openedCourses.value = new Set();
+	}
+);
+const cartEntries = computed(() => {
+	if (!courseView.value) return [{ key: "all", group: null, rows: displayCartItems.value }];
+	return groupCartByCourse(displayCartItems.value, { amountOf: getLineAmount, expanded: openedCourses.value }).map(
+		(group) => ({ key: group.key, group, rows: group.visibleRows })
+	);
+});
+function toggleCourse(key) {
+	openedCourses.value = toggleKey(openedCourses.value, key);
+}
+// A delivered line is struck through where the cart is drawn by course; the flat list greys it, as it always did
+function isStruck(item) {
+	return courseView.value && isDeliveredLine(item);
 }
 
 /**
