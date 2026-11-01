@@ -248,12 +248,13 @@ describe("the cart of a table's order, for the rhythm of the meal", () => {
 			expect(wrapper.emitted("order-next-course")).toBeUndefined()
 		})
 
-		it("gives both a touch target of 44 px", () => {
+		// 44 px became 48 px when Daniel asked for the two buttons to be easier to see (01.11); invoiceCartByCourse.spec.js holds the look
+		it("gives both a touch target of 48 px", () => {
 			heldTable()
 			mountCart()
 
-			expect(nextCourseButton().classes()).toContain("min-h-[44px]")
-			expect(everythingButton().classes()).toContain("min-h-[44px]")
+			expect(nextCourseButton().classes()).toContain("min-h-[48px]")
+			expect(everythingButton().classes()).toContain("min-h-[48px]")
 		})
 	})
 

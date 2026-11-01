@@ -1922,20 +1922,24 @@
 			<!-- //// Neoffice — « Commander la suite » (service families, NeoRestau lot 1): when courses are held back at a table, the waiter -->
 			<!-- //// orders the next one (named on the button), or everything held for a table in a hurry. Only the waiter's gesture releases a -->
 			<!-- //// held course; the kitchen touches nothing. -->
-			<div v-if="showNextCourse" class="flex gap-1.5 mb-1.5">
+			<!-- //// Neoffice — the two buttons that order are easy to see (Daniel, 01.11: « il faut mettre les 2 boutons de commande plus visibles »): « Commander la suite » is a SOLID ink button, « Tout commander » keeps -->
+			<!-- //// a white face under a thick ink outline, both 48px high with bold words. On a phone (under 640px) they stack at full width, the ink one first; from 640px they sit side by side, the ink one taking the -->
+			<!-- //// width and the outlined one fitting its words. Every action is ink (the design system); in dark the ink turns to paper (ds-paper) and its words to ink, the outline to paper. -->
+			<div v-if="showNextCourse" class="flex flex-col sm:flex-row gap-1.5 mb-1.5">
 				<button
 					type="button"
 					data-order-next-course
 					@click="orderNextCourse"
-					class="flex-1 min-h-[44px] py-2.5 px-3 rounded-neo-md border border-gray-300 bg-white font-bold text-xs text-gray-800 hover:bg-gray-50 active:bg-gray-100 transition-all flex items-center justify-center touch-manipulation"
+					class="w-full sm:flex-1 min-h-[48px] py-2.5 px-3 rounded-neo-md bg-[#141414] text-white hover:bg-[#2B2B2B] active:bg-black dark:bg-ds-paper dark:text-ds-ink dark:hover:bg-ds-sand-300 dark:active:bg-ds-sand-400 font-bold text-xs transition-all flex items-center justify-center touch-manipulation"
 				>
 					{{ nextCourseLabel(nextCourse.family) }}
 				</button>
+				<!-- //// Neoffice — « Tout commander »: a white face under a thick ink outline (2px), bold words, 48px; paper outline and words in dark. `class` comes first so that this marker stands next to it. -->
 				<button
+					class="w-full sm:w-auto min-h-[48px] py-2.5 px-3 rounded-neo-md border-2 border-[#141414] bg-white text-[#141414] hover:bg-gray-50 active:bg-gray-100 dark:border-ds-paper dark:text-ds-paper font-bold text-xs transition-all flex items-center justify-center touch-manipulation"
 					type="button"
 					data-order-everything
 					@click="orderEverything"
-					class="min-h-[44px] py-2.5 px-3 rounded-neo-md border border-gray-300 bg-white font-medium text-xs text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all flex items-center justify-center touch-manipulation"
 				>
 					{{ orderEverythingLabel() }}
 				</button>
