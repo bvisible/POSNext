@@ -23,7 +23,7 @@
 	<!-- //// has an × beside its buttons, and lays its dishes out in columns side by side. -->
 	<!-- //// Neoffice — the card carries the name of its order (`data-order`: the screen finds the ticket of a table that ordered its next course by it, to scroll to it), and wears the signal's ring while that ticket is highlighted (NeoRestau lot 1, Daniel, 01.11). The panel opened full screen is the same ticket drawn bigger and is not highlighted. -->
 	<div class="bg-white dark:bg-gray-800 flex flex-1 flex-col min-h-0"
-		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]', ringed ? 'ring-4 ring-inset ring-[#F55D1A]' : '']"
+		:class="[borderColorClass, fullscreen ? ['rounded-2xl border-l-[6px] overflow-hidden shadow-xl', FULLSCREEN_FRAME.card] : 'rounded-xl shadow-sm border-l-4 max-h-[var(--ticket-max-h,none)]', ringed ? 'ring-4 ring-inset ring-[#F55D1A] kds-ticket-flash' : '']"
 		:style="fullscreen ? fullVariables : undefined"
 		:data-test="fullscreen ? 'ticket-panel' : 'ticket'" :data-state="status" :data-order="order.name" :data-highlighted="ringed ? 'true' : undefined">
 
@@ -524,7 +524,7 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 	},
-	//// Neoffice — the table of this ticket has just ordered its next course (NeoRestau lot 1, Daniel, 01.11): the kitchen screen highlights the ticket for a few seconds, with the signal's ring
+	//// Neoffice — the table of this ticket has ordered its next course and the kitchen has not taken it up yet (NeoRestau lot 1, Daniel, 01.11): the kitchen screen makes the ticket FLASH, with the signal's ring
 	highlighted: {
 		type: Boolean,
 		default: false,
@@ -1371,3 +1371,24 @@ async function doUpdateStatus(newStatus) {
 	}
 }
 </script>
+
+<!-- //// Neoffice — the ticket that has to be taken up BLINKS (NeoRestau lot 1, Daniel, 01.11: « faut la laisser clignoter jusqu'à ce qu'on ait validé »): the signal's ring comes and goes, inside the card like the still ring, until the cook starts the dishes or closes the notice. A screen asked to keep still keeps the still ring. -->
+<style scoped>
+@keyframes kds-ticket-flash {
+	0%,
+	100% {
+		box-shadow: inset 0 0 0 4px #f55d1a;
+	}
+	50% {
+		box-shadow: inset 0 0 0 4px rgba(245, 93, 26, 0.12);
+	}
+}
+.kds-ticket-flash {
+	animation: kds-ticket-flash 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+	.kds-ticket-flash {
+		animation: none;
+	}
+}
+</style>

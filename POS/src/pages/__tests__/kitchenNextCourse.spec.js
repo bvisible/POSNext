@@ -206,6 +206,36 @@ describe("the kitchen when the next course of a table is ordered", () => {
 
 		expect(notices(wrapper)).toHaveLength(0)
 	})
+
+	it("keeps the ticket flashing after the banner has gone, until the cook takes the dishes up (Daniel, 01.11)", async () => {
+		ALERTS = { ...ALERTS, popup_seconds: 5 }
+		ORDERS = [starters("A")]
+		const wrapper = await open()
+		vi.useFakeTimers()
+		ORDERS = [withDesserts("A")]
+		await readAgain(wrapper)
+		await vi.advanceTimersByTimeAsync(60_000)
+
+		expect(notices(wrapper)).toHaveLength(0)
+		expect(highlighted(wrapper)).toEqual(["A"])
+
+		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter"), dish("Preparing", DESSERTS, "Dessert")])]
+		await readAgain(wrapper)
+
+		expect(highlighted(wrapper)).toEqual([])
+	})
+
+	it("stops the flash when the notice is closed with its button", async () => {
+		ORDERS = [starters("A")]
+		const wrapper = await open()
+		ORDERS = [withDesserts("A")]
+		await readAgain(wrapper)
+		expect(highlighted(wrapper)).toEqual(["A"])
+
+		await wrapper.get('[data-test="notice-dismiss"]').trigger("click")
+
+		expect(highlighted(wrapper)).toEqual([])
+	})
 })
 
 describe("what the till's settings change", () => {

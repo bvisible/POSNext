@@ -684,6 +684,7 @@ describe("the settings of this device", () => {
 			rest_after_minutes: 30,
 			wake_on_new_ticket: true,
 			release_wake_lock_after_minutes: 0,
+			rest_style: "clock",
 		})
 	})
 

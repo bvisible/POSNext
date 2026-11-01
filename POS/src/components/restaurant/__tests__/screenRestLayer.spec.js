@@ -72,6 +72,28 @@ describe("the layer of a screen at rest", () => {
 		expect(wrapper.find('[data-test="rest-moon"]').exists()).toBe(true)
 	})
 
+	it("draws the clock BIG, as much of the screen as it can take, with the rest of the words small under it (Daniel, 01.11: « le temps affiché en grand est intéressant »)", () => {
+		const wrapper = open()
+		const clock = wrapper.get('[data-test="rest-clock"]').classes().join(" ")
+
+		// the size follows the screen (a tablet in either position, a phone), never a fixed number of pixels
+		expect(clock).toContain("text-[length:min(30vw,44vh)]")
+		expect(clock).not.toMatch(/text-\[\d+px\]/)
+		expect(wrapper.get('[data-test="rest-count"]').classes()).not.toContain("text-lg")
+		expect(wrapper.get('[data-test="rest-hint"]').classes()).toContain("text-sm")
+	})
+
+	it("goes plain BLACK when the device is set so: the same layer over the whole screen, with no clock, no moon and no words (Daniel, 01.11: « éteindre l'écran au lieu de la veille avec l'heure »)", () => {
+		const wrapper = open({ blank: true })
+		const layer = wrapper.get('[data-test="screen-rest"]')
+
+		expect(layer.classes()).toEqual(expect.arrayContaining(["fixed", "inset-0", "z-[9999]", "bg-black"]))
+		for (const part of ["rest-clock", "rest-moon", "rest-count", "rest-hint"]) {
+			expect(wrapper.find(`[data-test="${part}"]`).exists()).toBe(false)
+		}
+		expect(layer.text()).toBe("")
+	})
+
 	it("shows the time of day, and the minute after it when the minute turns", async () => {
 		const wrapper = open()
 		expect(wrapper.get('[data-test="rest-clock"]').text()).toBe("14:05")

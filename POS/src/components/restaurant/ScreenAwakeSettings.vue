@@ -47,6 +47,16 @@
 				</select>
 			</div>
 
+			<!-- //// Neoffice — how the screen rests (Daniel, 01.11): the big clock, or plain black. A web page cannot switch the display off: black is as dark as it gets, and a touch (or a new ticket) wakes it. -->
+			<div class="px-2 py-1.5" :class="settings.rest_after_minutes === 0 ? 'opacity-50' : ''">
+				<label class="text-sm font-medium text-gray-900 dark:text-gray-100" for="awake-rest-style">{{ __("The screen at rest shows") }}</label>
+				<p data-test="awake-help" class="text-xs text-gray-700">{{ __("The big clock tells the time. The black screen shows nothing at all.") }}</p>
+				<select id="awake-rest-style" data-test="awake-rest-style" :class="SELECT" :disabled="settings.rest_after_minutes === 0" :value="settings.rest_style || 'clock'" @change="emit('change', 'rest_style', $event.target.value)">
+					<option value="clock" :selected="(settings.rest_style || 'clock') === 'clock'">{{ __("Big clock") }}</option>
+					<option value="black" :selected="settings.rest_style === 'black'">{{ __("Black screen") }}</option>
+				</select>
+			</div>
+
 			<div class="flex items-start gap-3 px-2 py-1.5">
 				<div class="min-w-0 flex-1">
 					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ __("Wake on a new ticket") }}</div>

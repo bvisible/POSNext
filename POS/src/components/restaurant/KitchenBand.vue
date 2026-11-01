@@ -65,7 +65,7 @@
 						:refresh="refresh"
 						:room-name="roomNameOf(order)"
 						:use-runner="orderUsesRunner(order, stations, runnerEnabled)"
-						:highlighted="order.name === highlightOrder"
+						:highlighted="flashOrders.includes(order.name)"
 						:can-print="!!copy?.canPrint(order)"
 						:print-state="copy?.stateOf(order)"
 						@print="copy?.print($event)"
@@ -136,8 +136,8 @@ const props = defineProps({
 	rooms: { type: Array, default: () => [] },
 	//// Neoffice — the restaurant's own runner switch: with no runner at all the kitchen delivers whatever a station says (task 38a-1)
 	runnerEnabled: { type: Boolean, default: true },
-	//// Neoffice — the order whose ticket is highlighted for a few seconds, the table that has just ordered its next course (NeoRestau lot 1, Daniel, 01.11); none, no ticket is
-	highlightOrder: { type: String, default: "" },
+	//// Neoffice — the orders whose tickets FLASH: the tables that have ordered their next course and not been taken up yet (NeoRestau lot 1, Daniel, 01.11); none, no ticket does
+	flashOrders: { type: Array, default: () => [] },
 })
 const emit = defineEmits(["status-updated"])
 

@@ -1,7 +1,7 @@
 /**
  * //// Neoffice — added file (no upstream equivalent). What the kitchen screen does when the next course is ordered (NeoRestau lot 1, Daniel, 01.11: « il doit y avoir un popup à la cuisine, et aussi un son
  * //// pour aviser »): it reads each reading of its orders through the rule (utils/nextCourseWatch), keeps ONE notice per table in a stack until it is dismissed or its seconds run out, rings the sound the
- * //// till chose once per reading, and highlights the ticket for a few seconds. All of it follows the till's settings.
+ * //// till chose once per reading, and makes the ticket FLASH until the cook has taken its dishes up or closed the notice (Daniel, 01.11: « il faut la laisser clignoter jusqu'à ce qu'on ait validé »). All of it follows the till's settings.
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -13,7 +13,7 @@ const player = vi.hoisted(() => {
 })
 vi.mock("@/utils/alertSoundPlayer", () => ({ playAlertSound: player.play }))
 
-const { HIGHLIGHT_MS, useNextCourseNotices } = await import("../useNextCourseNotices")
+const { useNextCourseNotices } = await import("../useNextCourseNotices")
 
 const STARTERS = "2026-11-01 12:00:00.000000"
 const DESSERTS = "2026-11-01 13:30:00.000000"
@@ -154,6 +154,7 @@ describe("the settings of the till", () => {
 
 		expect(watch.notices.value).toEqual([])
 		expect(watch.highlighted.value).toBe("")
+		expect(watch.flashing.value).toEqual([])
 		expect(scrolled).toEqual([])
 		expect(player.play).toHaveBeenCalledTimes(1)
 	})
@@ -225,22 +226,79 @@ describe("how long a notice stays", () => {
 	})
 })
 
-describe("the highlighted ticket", () => {
-	it("is highlighted for a few seconds, then not", () => {
+describe("the flashing ticket", () => {
+	const taken = (name) => ({ ...before(name), items: [dish("Preparing", STARTERS, "Starter"), dish("Preparing", DESSERTS, "Dessert")] })
+
+	it("flashes until the cook has taken the dishes up, however long it takes", () => {
 		start()
 		watch.read([before("A")])
 		watch.read([after("A")])
-		expect(watch.highlighted.value).toBe("A")
+		expect(watch.flashing.value).toEqual(["A"])
 
-		vi.advanceTimersByTime(HIGHLIGHT_MS)
-		expect(watch.highlighted.value).toBe("")
+		vi.advanceTimersByTime(30 * 60 * 1000)
+		watch.read([after("A")])
+		expect(watch.flashing.value).toEqual(["A"])
+
+		watch.read([taken("A")])
+		expect(watch.flashing.value).toEqual([])
+	})
+
+	it("keeps flashing when the banner has gone by itself: the seconds are the banner's, not the ticket's", () => {
+		start({ popupSeconds: 30 })
+		watch.read([before("A")])
+		watch.read([after("A")])
+
+		vi.advanceTimersByTime(31 * 1000)
+
+		expect(watch.notices.value).toEqual([])
+		expect(watch.flashing.value).toEqual(["A"])
+	})
+
+	it("stops flashing when somebody closes the notice: that is the cook saying it has been seen", () => {
+		start()
+		watch.read([before("A"), before("B")])
+		watch.read([after("A"), after("B")])
+		expect(watch.flashing.value.sort()).toEqual(["A", "B"])
+
+		watch.dismiss(watch.notices.value.find((notice) => notice.order === "A").key)
+		expect(watch.flashing.value).toEqual(["B"])
+
+		watch.dismissAll()
+		expect(watch.flashing.value).toEqual([])
+	})
+
+	it("flashes every table that has ordered its next course and not been taken up, not only the newest", () => {
+		start()
+		watch.read([before("A"), before("B")])
+		watch.read([after("A")])
+		watch.read([after("A"), after("B", LATER)])
+
+		expect(watch.flashing.value.sort()).toEqual(["A", "B"])
+		expect(watch.highlighted.value).toBe("B")
+	})
+
+	it("stops flashing a ticket that has left the screen", () => {
+		start()
+		watch.read([before("A")])
+		watch.read([after("A")])
+
+		watch.read([])
+
+		expect(watch.flashing.value).toEqual([])
+	})
+
+	it("does not flash dishes that have nothing left to cook (they were finished ahead)", () => {
+		start()
+		watch.read([before("A")])
+		watch.read([{ ...before("A"), items: [dish("Preparing", STARTERS, "Starter"), dish("Ready", DESSERTS, "Dessert")] }])
+
+		expect(watch.flashing.value).toEqual([])
 	})
 
 	it("is shown again, scrolled to, when somebody presses the notice", () => {
 		start({ popupSeconds: 0 })
 		watch.read([before("A")])
 		watch.read([after("A")])
-		vi.advanceTimersByTime(HIGHLIGHT_MS)
 		scrolled.length = 0
 
 		watch.show("A")

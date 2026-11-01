@@ -137,7 +137,7 @@
 					:station="selectedStation"
 					:rooms="areas"
 					:runner-enabled="runnerOn"
-					:highlight-order="highlightedOrder"
+					:flash-orders="flashingOrders"
 					@status-updated="loadOrders"
 				/>
 				<KitchenBand
@@ -152,7 +152,7 @@
 					:station="selectedStation"
 					:rooms="areas"
 					:runner-enabled="runnerOn"
-					:highlight-order="highlightedOrder"
+					:flash-orders="flashingOrders"
 					@status-updated="loadOrders"
 				/>
 			</div>
@@ -162,7 +162,7 @@
 		<UndoToast @undone="loadOrders" />
 
 		<!-- //// Neoffice — the layer of a screen at REST (task 47): near-black, a small clock and how many orders are waiting. A web page cannot switch the screen off nor dim it, so it is drawn; the wake lock and the live updates run on under it. -->
-		<ScreenRestLayer :resting="resting" :label="restLabel" />
+		<ScreenRestLayer :resting="resting" :label="restLabel" :blank="awakeSettings.rest_style === 'black'" />
 	</div>
 </template>
 
@@ -217,6 +217,8 @@ import { call } from "@/utils/apiWrapper"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
+//// Neoffice — the screen reads again when its connection comes back and when it is looked at again, and often while the connection is down (Daniel, 01.11: ten seconds between ordering the next course and the kitchen)
+import { followLiveReading } from "@/utils/followLiveReading"
 import { isDeskSession, leaveWhenSignedOut } from "@/utils/tabletSession"
 
 const { showError } = useToast()
@@ -252,7 +254,7 @@ const areasRead = ref(false)
 const urlRoom = urlParams.get("room")
 const selectedArea = ref(urlRoom || localStorage.getItem("pos_kds_area") || "")
 let socket = null
-let autoRefreshInterval = null
+let stopFollowing = null
 
 watch(showDelivered, (val) => {
 	localStorage.setItem("pos_kds_show_delivered", val ? "true" : "false")
@@ -280,7 +282,7 @@ const { settings: alertSettings, rhythm: serviceRhythm } = useKitchenAlertSettin
 provide(SERVICE_RHYTHM_KEY, serviceRhythm)
 const preparesAhead = computed(() => isPreparedAhead(serviceRhythm.value))
 const nextCourses = useNextCourseNotices({ settings: alertSettings, accept: (order) => !order || inTheRoom(order) })
-const { notices: nextCourseNotices, highlighted: highlightedOrder, dismiss: dismissNextCourse, show: showNextCourse } = nextCourses
+const { notices: nextCourseNotices, flashing: flashingOrders, dismiss: dismissNextCourse, show: showNextCourse } = nextCourses
 const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
 
 //// Neoffice — was `sortedOrders`: one list, the delivered orders hidden unless asked for, oldest `creation` first. The split
@@ -456,20 +458,25 @@ async function loadOrders() {
 	//// Neoffice — what this reading is of: the station chosen when it began. A reading that comes back after the cook chose another station is of the old one, and is no baseline for the new
 	const readOf = selectedStation.value
 	try {
-		// Always load all orders for counting
-		const allRes = await call("pos_next.api.restaurant.get_kds_orders", {
-			_: Date.now(),
-			...ofTheRestaurant(),
-		})
-		if (allRes) allOrders.value = allRes
-
-		// Load filtered orders for display
-		if (selectedStation.value) {
-			const filteredRes = await call("pos_next.api.restaurant.get_kds_orders", {
-				station: selectedStation.value,
+		//// Neoffice — the two readings (all the orders for counting, the station's for display) are asked TOGETHER, not one after the other: a station's screen waited for twice the server's time (Daniel, 01.11: ten seconds between ordering the next course and the kitchen)
+		const [allRes, filteredRes] = await Promise.all([
+			// Always load all orders for counting
+			call("pos_next.api.restaurant.get_kds_orders", {
 				_: Date.now(),
 				...ofTheRestaurant(),
-			})
+			}),
+			// Load filtered orders for display
+			readOf
+				? call("pos_next.api.restaurant.get_kds_orders", {
+						station: readOf,
+						_: Date.now(),
+						...ofTheRestaurant(),
+					})
+				: null,
+		])
+		if (allRes) allOrders.value = allRes
+
+		if (readOf) {
 			if (filteredRes) orders.value = filteredRes
 		} else {
 			orders.value = allOrders.value
@@ -517,22 +524,19 @@ onMounted(async () => {
 
 	// Use the existing frappe.realtime socket (already initialized by main app)
 	socket = window.frappe?.realtime || initSocket()
-	if (socket) {
-		if (socket.disconnected) socket.connect()
-		socket.on("kds_update", () => {
+	if (socket?.disconnected) socket.connect()
+	//// Neoffice — was: two listeners and a timer of 15 seconds in case the socket is not connected. A signal sent while the tablet's connection is down is lost and the order was found at the next timed reading, up to 15 s later
+	//// (measured on osiris: save 1.6 s, signal under 1 s, reading 0.2 s): the reading also follows the connection coming back and the page being looked at again, and goes to 4 s while the connection is down (utils/followLiveReading)
+	stopFollowing = followLiveReading({
+		socket,
+		events: ["kds_update", "table_update"],
+		read: () => {
 			loadOrders()
-		})
-		socket.on("table_update", () => {
-			loadOrders()
-		})
-	}
-
-	// Fallback auto-refresh every 15s in case socket is not connected
-	autoRefreshInterval = setInterval(() => {
-		loadOrders()
-		// Asked again once a minute at most (a printer is plugged in or out while the screen is open)
-		printCopy.refreshPrinters()
-	}, 15000)
+			// Asked again once a minute at most (a printer is plugged in or out while the screen is open)
+			printCopy.refreshPrinters()
+		},
+		everyMs: 15000,
+	})
 })
 
 watch(selectedStation, () => {
@@ -542,11 +546,6 @@ watch(selectedStation, () => {
 })
 
 onUnmounted(() => {
-	if (socket) {
-		socket.off("kds_update")
-	}
-	if (autoRefreshInterval) {
-		clearInterval(autoRefreshInterval)
-	}
+	if (stopFollowing) stopFollowing()
 })
 </script>

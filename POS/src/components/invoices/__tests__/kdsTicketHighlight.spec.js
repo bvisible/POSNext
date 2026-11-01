@@ -68,6 +68,17 @@ describe("the ticket of a table that ordered its next course", () => {
 		expect(card(wrapper).attributes("data-highlighted")).toBeUndefined()
 	})
 
+	it("BLINKS while it is highlighted: the ring is not a still frame, the cook sees it from across the pass (Daniel, 01.11)", async () => {
+		const wrapper = show()
+		expect(card(wrapper).classes()).not.toContain("kds-ticket-flash")
+
+		await wrapper.setProps({ highlighted: true })
+		expect(card(wrapper).classes()).toContain("kds-ticket-flash")
+
+		await wrapper.setProps({ highlighted: false })
+		expect(card(wrapper).classes()).not.toContain("kds-ticket-flash")
+	})
+
 	it("keeps its look otherwise: the ring is added, nothing is taken away", async () => {
 		const wrapper = show()
 		const plain = card(wrapper).classes().filter((name) => !name.startsWith("ring"))

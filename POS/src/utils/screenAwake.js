@@ -8,13 +8,18 @@
 //// yet) can take them over: a setting is the built-in default, replaced by the restaurant's value when it has one (`restaurant`), replaced in turn by
 //// what this DEVICE chose (`device`, kept in localStorage like the kitchen's text size). Nothing else in the front end holds a number of minutes.
 
-// The four keys, as the registry will name them
+// The five keys, as the registry will name them
 export const SCREEN_AWAKE_KEYS = [
 	"keep_screen_on",
 	"rest_after_minutes",
 	"wake_on_new_ticket",
 	"release_wake_lock_after_minutes",
+	//// Neoffice — how a screen at rest is drawn (Daniel, 01.11: the clock BIG, or the screen dark and a touch wakes it): the one setting here that is a word, not a switch or minutes
+	"rest_style",
 ]
+
+//// Neoffice — the two ways to draw a screen at rest: the big clock, or plain black (a web page cannot switch the display off; black is as dark as it gets, and nothing at all on an OLED panel)
+export const REST_STYLES = ["clock", "black"]
 
 // The built-in defaults. `keep_screen_on` is the default of an UNKNOWN screen; the screens that need the lock are in KEEP_SCREEN_ON_SCREENS.
 export const SCREEN_AWAKE_DEFAULTS = Object.freeze({
@@ -25,6 +30,7 @@ export const SCREEN_AWAKE_DEFAULTS = Object.freeze({
 	wake_on_new_ticket: true,
 	// 0 = never: the lock is kept for as long as the page is open. N: that many minutes into a rest the lock is RELEASED, so that the tablet's own auto-lock takes over.
 	release_wake_lock_after_minutes: 0,
+	rest_style: "clock",
 })
 
 // The pages whose screen is kept on by default: the kitchen's, the runner's (the pass) and the customer display. Anywhere else the default is off.
@@ -41,12 +47,15 @@ export const RELEASE_AFTER_CHOICES = [0, 15, 30, 60, 120, 240]
 export const SCREEN_AWAKE_STORAGE_PREFIX = "pos_screen_awake_"
 
 const SWITCHES = new Set(["keep_screen_on", "wake_on_new_ticket"])
+//// Neoffice — the settings that are one word of a short list
+const WORDS = { rest_style: REST_STYLES }
 
 /**
  * One value of one setting as the setting wants it, or undefined when it is not a value of it (so that the layer below stands).
  * A switch is true or false (a registry may spell it 1, 0, "1", "0", "true", "false"); a number of minutes is a whole number from 0 (never) to a day.
  */
 function clean(key, value) {
+	if (WORDS[key]) return WORDS[key].includes(value) ? value : undefined
 	if (SWITCHES.has(key)) {
 		if (value === true || value === 1 || value === "1" || value === "true")
 			return true
@@ -93,7 +102,7 @@ export function defaultSettings(screen) {
  * The settings a screen runs on: the built-in defaults, then the restaurant's values, then this device's.
  *
  * @param {{ screen?: string, restaurant?: object, device?: object }} layers
- * @returns {{ keep_screen_on: boolean, rest_after_minutes: number, wake_on_new_ticket: boolean, release_wake_lock_after_minutes: number }}
+ * @returns {{ keep_screen_on: boolean, rest_after_minutes: number, wake_on_new_ticket: boolean, release_wake_lock_after_minutes: number, rest_style: string }}
  */
 export function resolveSettings({ screen, restaurant, device } = {}) {
 	return {

@@ -248,13 +248,16 @@ describe("the cart of a table's order, for the rhythm of the meal", () => {
 			expect(wrapper.emitted("order-next-course")).toBeUndefined()
 		})
 
-		// 44 px became 48 px when Daniel asked for the two buttons to be easier to see (01.11); invoiceCartByCourse.spec.js holds the look
-		it("gives both a touch target of 48 px", () => {
+		// The two buttons were 48 px for a day (Daniel, 01.11, « plus visibles »), then took the height of « Validate » and « Pay » under them (« aligne les boutons sur la taille Valider / Payer »);
+		// invoiceCartOrderButtons.spec.js holds the look and the height
+		it("gives both the padding and the text of the buttons under them, so that the rows are one height", () => {
 			heldTable()
 			mountCart()
 
-			expect(nextCourseButton().classes()).toContain("min-h-[48px]")
-			expect(everythingButton().classes()).toContain("min-h-[48px]")
+			expect(nextCourseButton().classes()).toEqual(expect.arrayContaining(["py-2.5", "text-xs"]))
+			expect(everythingButton().classes()).toEqual(expect.arrayContaining(["py-2", "border-2", "text-xs"]))
+			expect(nextCourseButton().classes()).not.toContain("min-h-[48px]")
+			expect(everythingButton().classes()).not.toContain("min-h-[48px]")
 		})
 	})
 

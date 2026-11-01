@@ -18457,6 +18457,18 @@ msgstr "Indisponible sur ce navigateur."
 msgid "Rest the screen after"
 msgstr "Mettre l'écran en veille après"
 
+msgid "The screen at rest shows"
+msgstr "L'écran en veille affiche"
+
+msgid "The big clock tells the time. The black screen shows nothing at all."
+msgstr "La grande horloge affiche l'heure. L'écran noir n'affiche rien du tout."
+
+msgid "Big clock"
+msgstr "Grande horloge"
+
+msgid "Black screen"
+msgstr "Écran noir"
+
 msgid "After this long without a touch the screen goes dark. A touch wakes it."
 msgstr "Après ce délai sans toucher l'écran, il s'assombrit. Touchez-le pour le réveiller."
 

@@ -1969,20 +1969,20 @@
 			<!-- //// orders the next one (named on the button), or everything held for a table in a hurry. Only the waiter's gesture releases a -->
 			<!-- //// held course; the kitchen touches nothing. -->
 			<!-- //// Neoffice — the two buttons that order are easy to see (Daniel, 01.11: « il faut mettre les 2 boutons de commande plus visibles »): « Commander la suite » is a SOLID ink button, « Tout commander » keeps -->
-			<!-- //// a white face under a thick ink outline, both 48px high with bold words. On a phone (under 640px) they stack at full width, the ink one first; from 640px they sit side by side, the ink one taking the -->
+			<!-- //// a white face under a thick ink outline, with bold words, both as tall as « Valider » and « Payer » under them (Daniel, 01.11: « aligne les boutons sur la taille Valider / Payer »: 36px, the outlined one gives its 2px borders back in its padding). On a phone (under 640px) they stack at full width, the ink one first; from 640px they sit side by side, the ink one taking the -->
 			<!-- //// width and the outlined one fitting its words. Every action is ink (the design system); in dark the ink turns to paper (ds-paper) and its words to ink, the outline to paper. -->
 			<div v-if="showNextCourse" class="flex flex-col sm:flex-row gap-1.5 mb-1.5">
 				<button
 					type="button"
 					data-order-next-course
 					@click="orderNextCourse"
-					class="w-full sm:flex-1 min-h-[48px] py-2.5 px-3 rounded-neo-md bg-[#141414] text-white hover:bg-[#2B2B2B] active:bg-black dark:bg-ds-paper dark:text-ds-ink dark:hover:bg-ds-sand-300 dark:active:bg-ds-sand-400 font-bold text-xs transition-all flex items-center justify-center touch-manipulation"
+					class="w-full sm:flex-1 py-2.5 px-3 rounded-neo-md bg-[#141414] text-white hover:bg-[#2B2B2B] active:bg-black dark:bg-ds-paper dark:text-ds-ink dark:hover:bg-ds-sand-300 dark:active:bg-ds-sand-400 font-bold text-xs transition-all flex items-center justify-center touch-manipulation"
 				>
 					{{ nextCourseLabel(nextCourse.family) }}
 				</button>
-				<!-- //// Neoffice — « Tout commander »: a white face under a thick ink outline (2px), bold words, 48px; paper outline and words in dark. `class` comes first so that this marker stands next to it. -->
+				<!-- //// Neoffice — « Tout commander »: a white face under a thick ink outline (2px), bold words, the height of « Valider » (py-2 + 2px border = py-2.5); paper outline and words in dark. `class` comes first so that this marker stands next to it. -->
 				<button
-					class="w-full sm:w-auto min-h-[48px] py-2.5 px-3 rounded-neo-md border-2 border-[#141414] bg-white text-[#141414] hover:bg-gray-50 active:bg-gray-100 dark:border-ds-paper dark:text-ds-paper font-bold text-xs transition-all flex items-center justify-center touch-manipulation"
+					class="w-full sm:w-auto py-2 px-3 rounded-neo-md border-2 border-[#141414] bg-white text-[#141414] hover:bg-gray-50 active:bg-gray-100 dark:border-ds-paper dark:text-ds-paper font-bold text-xs transition-all flex items-center justify-center touch-manipulation"
 					type="button"
 					data-order-everything
 					@click="orderEverything"

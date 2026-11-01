@@ -9,6 +9,7 @@ import {
 	hasNewTicket,
 	KEEP_SCREEN_ON_SCREENS,
 	readDeviceSettings,
+	REST_STYLES,
 	resolveSettings,
 	SCREEN_AWAKE_DEFAULTS,
 	SCREEN_AWAKE_KEYS,
@@ -25,12 +26,13 @@ afterEach(() => {
 })
 
 describe("the defaults of the awake settings", () => {
-	it("are named by the four keys the restaurant's registry will take over, and nothing else", () => {
+	it("are named by the five keys the restaurant's registry will take over, and nothing else", () => {
 		expect(SCREEN_AWAKE_KEYS).toEqual([
 			"keep_screen_on",
 			"rest_after_minutes",
 			"wake_on_new_ticket",
 			"release_wake_lock_after_minutes",
+			"rest_style",
 		])
 		expect(Object.keys(SCREEN_AWAKE_DEFAULTS).sort()).toEqual(
 			[...SCREEN_AWAKE_KEYS].sort(),
@@ -41,6 +43,23 @@ describe("the defaults of the awake settings", () => {
 		expect(SCREEN_AWAKE_DEFAULTS.rest_after_minutes).toBe(30)
 		expect(SCREEN_AWAKE_DEFAULTS.wake_on_new_ticket).toBe(true)
 		expect(SCREEN_AWAKE_DEFAULTS.release_wake_lock_after_minutes).toBe(0)
+	})
+
+	it("rest as a clock, unless the device is set to go black (Daniel, 01.11: the clock BIG, or the screen dark)", () => {
+		expect(SCREEN_AWAKE_DEFAULTS.rest_style).toBe("clock")
+		expect(REST_STYLES).toEqual(["clock", "black"])
+		expect(resolveSettings({ device: { rest_style: "black" } }).rest_style).toBe("black")
+		expect(resolveSettings({ restaurant: { rest_style: "black" }, device: { rest_style: "clock" } }).rest_style).toBe("clock")
+		// a word that is no style is no choice: the layer below stands
+		expect(resolveSettings({ restaurant: { rest_style: "black" }, device: { rest_style: "disco" } }).rest_style).toBe("black")
+		expect(resolveSettings({ device: { rest_style: 3 } }).rest_style).toBe("clock")
+	})
+
+	it("keeps the style on the device as the word it is", () => {
+		expect(saveDeviceSetting("rest_style", "black")).toBe(true)
+		expect(localStorage.getItem(`${SCREEN_AWAKE_STORAGE_PREFIX}rest_style`)).toBe("black")
+		expect(readDeviceSettings()).toMatchObject({ rest_style: "black" })
+		expect(saveDeviceSetting("rest_style", "disco")).toBe(false)
 	})
 
 	it("keep the screen on is ON on the kitchen, the runner and the customer display, and OFF anywhere else", () => {
@@ -65,6 +84,7 @@ describe("the layers of the settings", () => {
 			rest_after_minutes: 5,
 			wake_on_new_ticket: false,
 			release_wake_lock_after_minutes: 0,
+			rest_style: "clock",
 		})
 	})
 
@@ -114,6 +134,7 @@ describe("the layers of the settings", () => {
 			wake_on_new_ticket: false,
 			rest_after_minutes: 12,
 			release_wake_lock_after_minutes: 7,
+			rest_style: "clock",
 		})
 		expect(
 			resolveSettings({

@@ -224,7 +224,7 @@
 		<UndoToast @undone="loadOrders" />
 
 		<!-- //// Neoffice — the layer of a screen at REST (task 47): near-black, a small clock and how many dishes are ready. A web page cannot switch the screen off nor dim it, so it is drawn; the wake lock and the live updates run on under it. -->
-		<ScreenRestLayer :resting="resting" :label="readyCountLabel" />
+		<ScreenRestLayer :resting="resting" :label="readyCountLabel" :blank="awakeSettings.rest_style === 'black'" />
 	</div>
 </template>
 
@@ -270,6 +270,8 @@ import { playAlertSound } from "@/utils/alertSoundPlayer"
 import { useToast } from "@/composables/useToast"
 import { useRestaurantStore } from "@/stores/restaurant"
 import { initSocket } from "@/socket"
+//// Neoffice — the screen reads again when its connection comes back and when it is looked at again, and often while the connection is down (Daniel, 01.11: ten seconds between ordering the next course and the kitchen)
+import { followLiveReading } from "@/utils/followLiveReading"
 import { isDeskSession, leaveWhenSignedOut } from "@/utils/tabletSession"
 
 const restaurantStore = useRestaurantStore()
@@ -684,7 +686,7 @@ function playNotificationSound() {
 	playAlertSound(alertSettings.value.runnerSound, alertSettings.value.volume)
 }
 
-let pollInterval = null
+let stopFollowing = null
 
 onMounted(async () => {
 	// Load restaurant settings to check if runner is enabled
@@ -697,20 +699,21 @@ onMounted(async () => {
 	printCopy.refreshPrinters({ force: true })
 	// Use frappe.realtime (receives frappe.publish_realtime events) with fallback to custom socket
 	socket = window.frappe?.realtime || initSocket()
-	if (socket) {
-		if (socket.disconnected) socket.connect()
-		socket.on("kds_update", () => loadOrders())
-	}
-	// Fallback polling every 30s in case socket is unreliable
-	pollInterval = setInterval(() => {
-		loadOrders()
-		// Asked again once a minute at most (a printer is plugged in or out while the screen is open)
-		printCopy.refreshPrinters()
-	}, 30000)
+	if (socket?.disconnected) socket.connect()
+	//// Neoffice — was: one listener and a timer of 30 seconds in case the socket is unreliable; a signal sent while the connection is down was only found at the next timed reading (utils/followLiveReading)
+	stopFollowing = followLiveReading({
+		socket,
+		events: ["kds_update"],
+		read: () => {
+			loadOrders()
+			// Asked again once a minute at most (a printer is plugged in or out while the screen is open)
+			printCopy.refreshPrinters()
+		},
+		everyMs: 30000,
+	})
 })
 
 onUnmounted(() => {
-	if (socket) socket.off("kds_update")
-	if (pollInterval) clearInterval(pollInterval)
+	if (stopFollowing) stopFollowing()
 })
 </script>

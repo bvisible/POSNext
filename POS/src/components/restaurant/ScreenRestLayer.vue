@@ -12,10 +12,12 @@
 		:aria-label="__('Screen at rest')"
 		class="fixed inset-0 z-[9999] flex touch-none select-none flex-col items-center justify-center gap-3 bg-black text-center text-ds-sand-400"
 	>
-		<LucideMoon data-test="rest-moon" class="h-5 w-5" aria-hidden="true" />
-		<time data-test="rest-clock" class="font-display text-[44px] leading-none tabular-nums">{{ clock }}</time>
-		<p data-test="rest-count" class="text-lg font-medium">{{ label }}</p>
-		<p data-test="rest-hint" class="text-sm">{{ __("Touch the screen to wake it") }}</p>
+		<!-- //// Neoffice — a device set to go BLACK draws the layer and nothing on it (Daniel, 01.11: « éteindre l'écran au lieu de la veille avec l'heure ») -->
+		<LucideMoon v-if="!blank" data-test="rest-moon" class="h-5 w-5" aria-hidden="true" />
+		<!-- //// Neoffice — the clock is the page's big word (Daniel, 01.11: « le temps affiché en grand est intéressant »): its size follows the screen, whichever way the tablet is held, and the rest is small under it -->
+		<time v-if="!blank" data-test="rest-clock" class="font-display text-[length:min(30vw,44vh)] leading-none tabular-nums">{{ clock }}</time>
+		<p v-if="!blank" data-test="rest-count" class="text-base font-medium">{{ label }}</p>
+		<p v-if="!blank" data-test="rest-hint" class="text-sm">{{ __("Touch the screen to wake it") }}</p>
 	</div>
 </template>
 
@@ -26,10 +28,12 @@ import LucideMoon from "~icons/lucide/moon"
 /**
  * resting: the layer is drawn (the page binds the composable's `resting`)
  * label:   how many orders are waiting, in the words of the page (« 3 commandes en attente »), already translated
+ * blank:   the device rests as plain black: the layer holds no clock and no word (the setting `rest_style`)
  */
 const props = defineProps({
 	resting: { type: Boolean, default: false },
 	label: { type: String, default: "" },
+	blank: { type: Boolean, default: false },
 })
 
 // The time of day, 24 hours, the browser's own language. Read again every ten seconds: the minute turns within ten seconds of the clock's.

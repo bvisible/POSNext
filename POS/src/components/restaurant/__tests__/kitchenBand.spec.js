@@ -599,8 +599,8 @@ describe("45 tickets in two bands", () => {
 	})
 })
 
-//// Neoffice — the ticket of the table that has just ordered its next course is highlighted for a few seconds (NeoRestau lot 1, Daniel, 01.11): the band hands the card the one question it asks, « is this the highlighted order »
-describe("the highlighted ticket", () => {
+//// Neoffice — the tickets of the tables that have ordered their next course FLASH until the cook has taken them up (NeoRestau lot 1, Daniel, 01.11): the band hands the card the one question it asks, « is this one of the flashing orders »
+describe("the flashing tickets", () => {
 	const HighlightingTicket = {
 		props: ["order", "highlighted"],
 		template: '<div class="ticket" :data-name="order.name" :data-highlighted="highlighted ? \'yes\' : \'no\'"></div>',
@@ -611,14 +611,21 @@ describe("the highlighted ticket", () => {
 			global: { stubs: { KDSOrderCard: HighlightingTicket }, mocks: { __: globalThis.__ } },
 		})
 
-	it("is the card of that order only", () => {
-		const wrapper = showWith({ highlightOrder: "SINV-2" })
+	it("are the cards of those orders only", () => {
+		const wrapper = showWith({ flashOrders: ["SINV-2"] })
 
 		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-highlighted"))).toEqual(["no", "yes", "no"])
 		wrapper.unmount()
 	})
 
-	it("is no card when no order is highlighted", () => {
+	it("are as many as there are tables waiting to be taken up, not only the newest", () => {
+		const wrapper = showWith({ flashOrders: ["SINV-1", "SINV-3"] })
+
+		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-highlighted"))).toEqual(["yes", "no", "yes"])
+		wrapper.unmount()
+	})
+
+	it("are no card when no order flashes", () => {
 		const wrapper = showWith({})
 
 		expect(wrapper.findAll(".ticket").map((el) => el.attributes("data-highlighted"))).toEqual(["no", "no", "no"])

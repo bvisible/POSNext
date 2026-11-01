@@ -23,6 +23,7 @@ const SETTINGS = {
 	rest_after_minutes: 30,
 	wake_on_new_ticket: true,
 	release_wake_lock_after_minutes: 0,
+	rest_style: "clock",
 }
 
 let opened = []
@@ -136,13 +137,15 @@ describe("the four settings", () => {
 			"The tablet does not go to sleep while this screen is open.",
 			"Rest the screen after",
 			"After this long without a touch the screen goes dark. A touch wakes it.",
+			"The screen at rest shows",
+			"The big clock tells the time. The black screen shows nothing at all.",
 			"Wake on a new ticket",
 			"A new ticket lights the screen again.",
 			"Let the tablet sleep after",
 			"After this long at rest, the tablet's own auto-lock takes over.",
 		])
 			expect(text).toContain(words)
-		expect(wrapper.findAll('[data-test="awake-help"]')).toHaveLength(4)
+		expect(wrapper.findAll('[data-test="awake-help"]')).toHaveLength(5)
 	})
 
 	it("show the switches as they are", async () => {
@@ -214,6 +217,27 @@ describe("the four settings", () => {
 			["rest_after_minutes", 10],
 			["rest_after_minutes", 0],
 		])
+	})
+
+	it("offer to rest as the big clock or as plain black, the clock to begin with, and say the word chosen (Daniel, 01.11)", async () => {
+		const wrapper = await openMenu()
+		const select = wrapper.get('[data-test="awake-rest-style"]')
+
+		expect(select.findAll("option").map((option) => option.text())).toEqual(["Big clock", "Black screen"])
+		expect(select.element.value).toBe("clock")
+
+		await select.setValue("black")
+
+		expect(wrapper.emitted("change")).toEqual([["rest_style", "black"]])
+	})
+
+	it("show the style in force chosen, and the choice is not offered while the screen never rests", async () => {
+		const wrapper = await openMenu({ settings: { ...SETTINGS, rest_style: "black" } })
+		expect(wrapper.get('[data-test="awake-rest-style"]').element.value).toBe("black")
+
+		await wrapper.unmount()
+		const never = await openMenu({ settings: { ...SETTINGS, rest_after_minutes: 0 } })
+		expect(never.get('[data-test="awake-rest-style"]').attributes("disabled")).toBeDefined()
 	})
 
 	it("add a value the restaurant brought to the choices, and show it chosen", async () => {
