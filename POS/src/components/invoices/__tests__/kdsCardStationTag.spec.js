@@ -179,7 +179,8 @@ describe("the state of a dish", () => {
 			{ showStationBadge: false },
 		)
 
-		const delivered = lines(wrapper)[0]
+		// The finished dish comes after the dish to cook (kitchen test, 01.11)
+		const delivered = lines(wrapper)[1]
 		expect(delivered.find('[data-test="ticket-line-done"]').exists()).toBe(true)
 		expect(delivered.find('[data-test="ticket-line-state"]').exists()).toBe(
 			false,

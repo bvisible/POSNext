@@ -508,7 +508,13 @@ const groupedActiveItems = computed(() => {
 	}
 	// Sort by batch number ascending
 	const sorted = [...batchMap.entries()].sort((a, b) => a[0] - b[0])
-	return sorted.map(([batch, batchItems]) => ({ batch, items: batchItems }))
+	//// Neoffice — in a send, the dishes still to cook come first and the finished ones (struck through) after them, each group in its own order (kitchen test, 01.11): a ticket whose
+	//// starters have left kept them at the top, between the dishes to cook. `_globalIdx` stays the dish's place in `activeItems`, which the menu reads.
+	const isDone = (item) => item.kds_status === "Delivered"
+	return sorted.map(([batch, batchItems]) => ({
+		batch,
+		items: [...batchItems.filter((item) => !isDone(item)), ...batchItems.filter(isDone)],
+	}))
 })
 const waitingItems = computed(() =>
 	(props.order.items || []).filter((i) => i.kds_status === "Waiting"),

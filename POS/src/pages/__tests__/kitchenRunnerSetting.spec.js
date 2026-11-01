@@ -132,7 +132,10 @@ describe("with a runner", () => {
 		expect(titlesIn(wrapper, "production")).toEqual(["T-A"])
 		expect(linesOf(wrapper).join(" ")).toContain("A dish 1")
 		expect(linesOf(wrapper).join(" ")).toContain("A dish 2")
-		const [sent, toCook] = wrapper.findAll('[data-test="ticket-line"]')
+		const lineOf = (name) =>
+			wrapper.findAll('[data-test="ticket-line"]').find((line) => line.text().includes(name))
+		const sent = lineOf("A dish 1")
+		const toCook = lineOf("A dish 2")
 		// The dish at the pass is struck through and inert, as a delivered one is; the other is a touch target
 		expect(sent.classes()).toContain("line-through")
 		expect(toCook.classes()).not.toContain("line-through")

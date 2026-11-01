@@ -10,6 +10,7 @@ import {
 	columnsThatFit,
 	isWideTicket,
 	kitchenLineCount,
+	kitchenLiveLineCount,
 	runnerLineCount,
 	WIDE_MIN_COLUMNS,
 	WIDE_TICKET_LINES,
@@ -77,6 +78,33 @@ describe("the dishes a ticket counts", () => {
 		expect(runnerLineCount({ items: dishes(13, "Ready") })).toBe(13)
 		expect(runnerLineCount({})).toBe(0)
 		expect(runnerLineCount(undefined)).toBe(0)
+	})
+})
+
+describe("the dishes that still need room on a ticket", () => {
+	it("leaves out the dishes that are done: struck through, they need no room to be read, and must not widen the card", () => {
+		const order = { items: [...dishes(5, "Preparing"), ...dishes(9, "Delivered")] }
+
+		expect(kitchenLineCount(order)).toBe(14)
+		expect(kitchenLiveLineCount(order)).toBe(5)
+		expect(isWideTicket(kitchenLineCount(order), 4)).toBe(true)
+		expect(isWideTicket(kitchenLiveLineCount(order), 4)).toBe(false)
+	})
+
+	it("counts a dish to start, one begun and one ready, never a held one", () => {
+		const order = {
+			items: [
+				...dishes(2, "Pending"),
+				...dishes(3, "Preparing"),
+				...dishes(1, "Ready"),
+				...dishes(4, "Waiting"),
+				{ item_code: "NO-STATUS" },
+			],
+		}
+
+		expect(kitchenLiveLineCount(order)).toBe(6)
+		expect(kitchenLiveLineCount({})).toBe(0)
+		expect(kitchenLiveLineCount(null)).toBe(0)
 	})
 })
 

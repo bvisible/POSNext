@@ -98,6 +98,16 @@ function show(order, props = {}) {
 	return wrapper
 }
 
+/**
+ * A delivered dish sorts after the dishes to cook of its own send (kitchen test, 01.11), so it can only sit in the MIDDLE of a ticket between two sends:
+ * the dishes from the third on are a second send.
+ */
+function inTwoSends(order) {
+	order.items.forEach((item, index) => {
+		if (index >= 2) item.kds_batch = 2
+	})
+	return order
+}
 const lines = (wrapper) => wrapper.findAll('[data-test="ticket-line"]')
 const menuOf = (wrapper) => wrapper.find('[data-test="ticket-line-menu"]')
 /** Every element from `element` (included) up to the ticket (excluded). */
@@ -130,9 +140,28 @@ afterEach(() => {
 	vi.restoreAllMocks()
 })
 
+describe("the dishes still to cook come before the finished ones (kitchen test, 01.11)", () => {
+	const dishNames = (wrapper) =>
+		wrapper
+			.findAll('[data-test="ticket-dish-name"]')
+			.map((name) => /Dish \d+/.exec(name.text())?.[0])
+
+	it("lists them first in a send, the finished ones, struck through, after them, each group in its own order", () => {
+		const wrapper = show(ticket(["Delivered", "Preparing", "Delivered", "Pending"]))
+
+		expect(dishNames(wrapper)).toEqual(["Dish 2", "Dish 4", "Dish 1", "Dish 3"])
+	})
+
+	it("keeps the order of a ticket where nothing is finished", () => {
+		const wrapper = show(ticket(["Preparing", "Pending", "Ready"]))
+
+		expect(dishNames(wrapper)).toEqual(["Dish 1", "Dish 2", "Dish 3"])
+	})
+})
+
 describe("a delivered dish is inert (task 42)", () => {
 	// Dish 1 is being prepared, dish 2 is delivered and sits in the MIDDLE, dish 3 is waiting, dish 4 is ready
-	const middle = () => ticket(["Preparing", "Delivered", "Pending", "Ready"])
+	const middle = () => inTwoSends(ticket(["Preparing", "Delivered", "Pending", "Ready"]))
 
 	it("opens no menu when it is tapped: what is done is done", async () => {
 		const wrapper = show(middle())
@@ -245,7 +274,7 @@ describe("a delivered dish is inert (task 42)", () => {
 })
 
 describe("what is faded holds nothing that can be touched (task 42)", () => {
-	const middle = () => ticket(["Preparing", "Delivered", "Pending", "Ready"])
+	const middle = () => inTwoSends(ticket(["Preparing", "Delivered", "Pending", "Ready"]))
 
 	it("fades and strikes through the content of a delivered dish, on the dish itself, and on nothing around it", () => {
 		const wrapper = show(middle())
@@ -300,7 +329,7 @@ describe("what is faded holds nothing that can be touched (task 42)", () => {
 
 describe("the menu of a dish is above the ticket (task 42)", () => {
 	// The dish above a delivered one: its menu hangs over the delivered dish and the ones after it
-	const middle = () => ticket(["Preparing", "Delivered", "Pending", "Ready"])
+	const middle = () => inTwoSends(ticket(["Preparing", "Delivered", "Pending", "Ready"]))
 
 	it("is fully opaque: neither the menu nor any element around it fades", async () => {
 		const wrapper = show(middle())

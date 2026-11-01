@@ -33,6 +33,20 @@ export function kitchenLineCount(order) {
 }
 
 /**
+ * The dishes of a kitchen ticket that still need room: the ones to cook or at the cook's hand, not the finished ones (kitchen test, 01.11). A dish that has
+ * left (delivered, or at the pass) stays on the ticket struck through so that the cook sees what was sent; it takes a line to be read, not a card width to be
+ * worked on, so it must not make a ticket wide. The held dishes are a preview and never count.
+ *
+ * @param {{ items?: Array<{ kds_status?: string }> }} order
+ * @returns {number}
+ */
+export function kitchenLiveLineCount(order) {
+	return (order?.items || []).filter(
+		(item) => item.kds_status && item.kds_status !== "Waiting" && item.kds_status !== "Delivered",
+	).length
+}
+
+/**
  * The dishes of a runner card, in either of its views (by table, by station): `items` holds them all.
  *
  * @param {{ items?: Array }} card

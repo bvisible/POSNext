@@ -99,7 +99,7 @@ import {
 import { offScreen } from "@/utils/ticketScrollHints"
 //// Neoffice — the wide card of a long ticket (task 38a-3, ruling 107): how many tickets fit the area, and whether a ticket has the dishes for two columns
 import { useColumnsThatFit } from "@/composables/useColumnsThatFit"
-import { isWideTicket, kitchenLineCount } from "@/utils/wideTicket"
+import { isWideTicket, kitchenLiveLineCount } from "@/utils/wideTicket"
 
 /**
  * One band of the kitchen screen.
@@ -173,8 +173,9 @@ const scroller = ref(null)
 //// The band of the tickets waiting is one ticket wide in the side-by-side layout and keeps its long tickets one wide, their dishes scrolling inside them. A band whose area holds fewer than
 //// three columns (a narrow screen, a big text size) has no wide ticket either: it would leave no room beside it. Nothing is wide until the area has been measured.
 const { columns } = useColumnsThatFit(scroller)
+//// Neoffice — by the dishes still to cook only (kitchen test, 01.11): the dishes already sent to the runner stay on the ticket, struck through, and widened the card
 const isWide = (order) =>
-	!isWaiting.value && isWideTicket(kitchenLineCount(order), columns.value)
+	!isWaiting.value && isWideTicket(kitchenLiveLineCount(order), columns.value)
 const ahead = ref(0)
 const behind = ref(0)
 const maxHeight = ref(0)
