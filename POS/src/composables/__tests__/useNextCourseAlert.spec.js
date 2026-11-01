@@ -231,3 +231,61 @@ describe("a ticket seen and left to do (« To do »)", () => {
 		expect(() => alert.acknowledge("nothing")).not.toThrow()
 	})
 })
+
+//// Neoffice — the tickets that blink are dealt with one after another (Daniel, 01.11: « il faut pouvoir traiter les tickets qui clignotent l'un après l'autre de manière séparée »): each one has its own two
+//// choices, and once one is dealt with the screen brings the next one that blinks into view, oldest call first
+describe("the blinking tickets, one after the other", () => {
+	const three = () => {
+		start()
+		alert.read([before("A"), before("B"), before("C")])
+		alert.read([after("A")])
+		alert.read([after("A"), after("B", LATER)])
+		alert.read([after("A"), after("B", LATER), after("C", "2026-11-01 13:55:00.000000")])
+		scrolled.length = 0
+	}
+
+	it("keeps them in the order they were called: the oldest call first", () => {
+		three()
+
+		expect(alert.flashing.value).toEqual(["A", "B", "C"])
+	})
+
+	it("brings the next one into view when one is left to do", () => {
+		three()
+
+		alert.acknowledge("A")
+
+		expect(scrolled).toEqual(["B"])
+		alert.acknowledge("B")
+		expect(scrolled).toEqual(["B", "C"])
+	})
+
+	it("brings the next one into view when the cook starts the dishes of one", () => {
+		three()
+
+		alert.read([taken("A"), after("B", LATER), after("C", "2026-11-01 13:55:00.000000")])
+
+		expect(alert.flashing.value).toEqual(["B", "C"])
+		expect(scrolled).toEqual(["B"])
+	})
+
+	it("goes nowhere when the one dealt with was the last that blinked", () => {
+		start()
+		alert.read([before("A")])
+		alert.read([after("A")])
+		scrolled.length = 0
+
+		alert.acknowledge("A")
+
+		expect(scrolled).toEqual([])
+	})
+
+	it("stays where it is when a reading changes nothing", () => {
+		three()
+
+		alert.read([after("A"), after("B", LATER), after("C", "2026-11-01 13:55:00.000000")])
+		alert.read([after("A"), after("B", LATER), after("C", "2026-11-01 13:55:00.000000")])
+
+		expect(scrolled).toEqual([])
+	})
+})

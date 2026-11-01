@@ -52,7 +52,10 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 		const byName = new Map((orders || []).map((order) => [order?.name, order]))
 		for (const name of [...watched.keys()]) if (!stillToStart(byName.get(name), station)) watched.delete(name)
 		const next = [...watched.keys()]
+		const dealtWith = next.length < flashing.value.length
 		if (next.length !== flashing.value.length || next.some((name, at) => name !== flashing.value[at])) flashing.value = next
+		// A ticket was dealt with (started, here or at another screen): the cook is brought to the next one that blinks
+		if (dealtWith && next.length) scrollTo(next[0])
 	}
 
 	/**
@@ -81,12 +84,14 @@ export function useNextCourseAlert({ settings, accept = () => true, scrollTo = s
 	}
 
 	/**
-	 * The cook has seen the ticket and leaves it to do (« To do », Daniel, 01.11): it stops flashing and stays where it is. What was told is never told again (the memory of the readings holds the send),
+	 * The cook has seen the ticket and leaves it to do (« To do », Daniel, 01.11): it stops flashing and stays where it is, and the next ticket that blinks is brought into view. What was told is never told again (the memory of the readings holds the send),
 	 * a later send of the same table flashes again.
 	 */
 	function acknowledge(order) {
 		watched.delete(order)
 		flashing.value = flashing.value.filter((name) => name !== order)
+		// The tickets that blink are dealt with one after the other (Daniel, 01.11): the screen brings the next one into view, the oldest call first
+		if (flashing.value.length) scrollTo(flashing.value[0])
 	}
 
 	/** Begins again: the next reading is only what the following ones are compared with (the screen changed what it shows). */
