@@ -103,10 +103,12 @@ describe("the ticket of a table that ordered its next course", () => {
 			expect(wrapper.emitted("acknowledge")).toEqual([["SINV-NEXT-1"]])
 		})
 
-		it("is not offered on a ticket that is not to start: a ticket being cooked has no « To do » to choose", () => {
-			const cooking = { ...order, items: [{ ...order.items[0], kds_status: "Preparing" }] }
+		it("is offered on a blinking ticket whatever its main button says: a ticket being cooked that blinks can be left to do too (Daniel, 01.11: nothing else stopped it)", () => {
+			const cooking = { ...order, items: [{ ...order.items[0], kds_status: "Preparing" }, { ...order.items[0], item_code: "ITEM-2", kds_status: "Pending", kds_batch: 2 }] }
+			const wrapper = show({ order: cooking, highlighted: true })
 
-			expect(todo(show({ order: cooking, highlighted: true })).exists()).toBe(false)
+			expect(todo(wrapper).exists()).toBe(true)
+			expect(wrapper.get('[data-test="ticket-main"]').text()).not.toBe("Start cooking")
 		})
 
 		it("is not offered in the panel opened full screen", () => {

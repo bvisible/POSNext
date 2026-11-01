@@ -213,6 +213,8 @@ import SoundUnlockChip from "@/components/restaurant/SoundUnlockChip.vue"
 import { useKitchenAlertSettings } from "@/composables/useKitchenAlertSettings"
 //// Neoffice — the restaurant's service rhythm (NeoRestau lot 1, Daniel, 01.11): where the kitchen prepares ahead the order of the meal is off, and the tickets say so
 import { SERVICE_RHYTHM_KEY, isPreparedAhead } from "@/utils/serviceRhythm"
+//// Neoffice — whether a dish waits behind the course before it, the way the cards grey it (utils/courseOrder)
+import { followsTheOrderOfTheMeal, isHeldByCourse } from "@/utils/courseOrder"
 import { useNextCourseAlert } from "@/composables/useNextCourseAlert"
 import { LAYOUT_COLUMNS } from "@/utils/kitchenLayout"
 import { kitchenStatusLabel } from "@/utils/kitchenStatus"
@@ -285,7 +287,12 @@ const { settings: alertSettings, rhythm: serviceRhythm } = useKitchenAlertSettin
 //// Neoffice — the tickets read the rhythm from here (KDSOrderCard); the screen's switch « follow the order of the meal » is without effect where the kitchen prepares ahead, so it is not offered there
 provide(SERVICE_RHYTHM_KEY, serviceRhythm)
 const preparesAhead = computed(() => isPreparedAhead(serviceRhythm.value))
-const nextCourses = useNextCourseAlert({ settings: alertSettings, accept: (order) => !order || inTheRoom(order) })
+//// Neoffice — a dish that waits behind the course before it (the order of the meal, the device's choice, never where the kitchen prepares ahead) cannot be started: it does not make its ticket blink (Daniel, 01.11)
+const nextCourses = useNextCourseAlert({
+	settings: alertSettings,
+	accept: (order) => !order || inTheRoom(order),
+	holds: (line, lines) => followsTheOrderOfTheMeal(courseOrder.value, serviceRhythm.value) && isHeldByCourse(line, lines, true),
+})
 const { flashing: flashingOrders, acknowledge: acknowledgeNextCourse } = nextCourses
 const nextCourseSoundOn = computed(() => alertSettings.value.nextCourseSound !== "none")
 

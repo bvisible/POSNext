@@ -94,9 +94,9 @@
 			</Button>
 
 			<!-- //// Neoffice — a ticket that blinks (the table has ordered its next course) carries its TWO choices directly (Daniel, 01.11: « quand il clignote on a les 2 choix directement »): « Start cooking » above, and « To do »,
-			     //// which says it has been seen: the ticket stops blinking and stays in the band « To do » until somebody starts it. The screen keeps what was seen, the card only says which ticket. -->
+			     //// which says it has been seen: the ticket stops blinking and stays where it is until somebody starts it. On ANY blinking ticket, whatever its main button says: a ticket being cooked can blink too, and nothing else would stop it. The screen keeps what was seen, the card only says which ticket. -->
 			<Button
-				v-if="ringed && mainAction === 'start'"
+				v-if="ringed"
 				variant="outline"
 				size="lg"
 				data-test="ticket-todo"

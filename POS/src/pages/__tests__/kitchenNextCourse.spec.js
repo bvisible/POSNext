@@ -70,9 +70,10 @@ function order(name, items, extra = {}) {
 		...extra,
 	}
 }
-const starters = (name, extra) => order(name, [dish("Preparing", STARTERS, "Starter")], extra)
+// the course before is done (at the pass): the dessert called can be started. A starter still being cooked would hold it, greyed, and the ticket would not blink (the order of the meal)
+const starters = (name, extra) => order(name, [dish("Ready", STARTERS, "Starter")], extra)
 const withDesserts = (name, extra) =>
-	order(name, [dish("Preparing", STARTERS, "Starter"), dish("Pending", DESSERTS, "Dessert")], extra)
+	order(name, [dish("Ready", STARTERS, "Starter"), dish("Pending", DESSERTS, "Dessert")], extra)
 
 let ORDERS = []
 let ALERTS = { popup: true, next_course_sound: "bell", runner_sound: "beep", volume: "medium" }
@@ -226,9 +227,9 @@ describe("the kitchen when the next course of a table is ordered", () => {
 		expect(inBand()).toEqual(["C", "B", "A", "D"])
 		expect(wrapper.get('[data-test="band-production"] [data-test="band-blinking"]').text()).toBe("2 to take")
 
-		// one left to do goes back to its place of arrival
+		// one left to do goes back to its place of arrival: by the time its course left (C's dessert came after the starters of A and D)
 		await wrapper.get('.ticket[data-name="C"] [data-test="ticket-todo"]').trigger("click")
-		expect(inBand()).toEqual(["B", "A", "C", "D"])
+		expect(inBand()).toEqual(["B", "A", "D", "C"])
 	})
 
 	it("flashes every table that has ordered and been left, not only the newest", async () => {
@@ -306,25 +307,25 @@ describe("what the till's settings change", () => {
 
 describe("the stations and the rooms the screen shows", () => {
 	it("tells the kitchen's screen of the kitchen's dessert, and the bar's of nothing it was not sent", async () => {
-		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar")])]
+		ORDERS = [order("A", [dish("Ready", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar")])]
 		const bar = await open("?station=bar")
-		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar"), dish("Pending", DESSERTS, "Dessert", "kit")])]
+		ORDERS = [order("A", [dish("Ready", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar"), dish("Pending", DESSERTS, "Dessert", "kit")])]
 		await readAgain(bar)
 		expect(highlighted(bar)).toEqual([])
 		expect(player.play).not.toHaveBeenCalled()
 	})
 
 	it("tells the screen of the station that was sent the dessert", async () => {
-		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit")])]
+		ORDERS = [order("A", [dish("Ready", STARTERS, "Starter", "kit")])]
 		const kitchen = await open("?station=kit")
-		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Pending", DESSERTS, "Dessert", "kit")])]
+		ORDERS = [order("A", [dish("Ready", STARTERS, "Starter", "kit"), dish("Pending", DESSERTS, "Dessert", "kit")])]
 		await readAgain(kitchen)
 
 		expect(highlighted(kitchen)).toEqual(["A"])
 	})
 
 	it("takes the first reading of a newly chosen station as a baseline: what was ordered while the cook looked at the bar is not announced when he comes back to all stations", async () => {
-		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar")])]
+		ORDERS = [order("A", [dish("Ready", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar")])]
 		const wrapper = await open()
 		const choose = async (label) => {
 			const chip = wrapper.findAll('[data-test="stations"] button').find((button) => button.text().replace(/\s+/g, " ").startsWith(label))
@@ -334,7 +335,7 @@ describe("the stations and the rooms the screen shows", () => {
 
 		await choose("Bar")
 		// The kitchen's dessert is ordered while the screen shows the bar: the bar's reading sees nothing of it
-		ORDERS = [order("A", [dish("Preparing", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar"), dish("Pending", DESSERTS, "Dessert", "kit")])]
+		ORDERS = [order("A", [dish("Ready", STARTERS, "Starter", "kit"), dish("Preparing", STARTERS, "Drink", "bar"), dish("Pending", DESSERTS, "Dessert", "kit")])]
 		await readAgain(wrapper)
 		await choose("Bar")
 

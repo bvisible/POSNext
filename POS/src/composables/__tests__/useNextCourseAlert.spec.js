@@ -301,3 +301,57 @@ describe("the blinking tickets, one after the other", () => {
 		expect(scrolled).toEqual([])
 	})
 })
+
+//// Neoffice — a course held behind the one before it is not to be taken yet (Daniel, 01.11: table 10 went on blinking after the cook had started it, because its dessert, greyed behind the mains, could not be started):
+//// a ticket blinks while a dish of the course called can be STARTED, not while it merely waits its turn
+describe("a course held behind another", () => {
+	const holdsDesserts = (line) => line.service_family === "Dessert"
+	// the mains are still to cook, the dessert is called and waits behind them
+	const behind = (name, mains = "Preparing") => ({
+		...before(name),
+		items: [dish("Preparing", STARTERS, "Starter"), dish(mains, STARTERS, "Main"), dish("Pending", DESSERTS, "Dessert")],
+	})
+
+	it("does not blink while every dish of the course called waits behind another, though the sound rings", () => {
+		start({ options: { holds: holdsDesserts } })
+		alert.read([before("A")])
+
+		alert.read([behind("A")])
+
+		expect(player.play).toHaveBeenCalledTimes(1)
+		expect(alert.flashing.value).toEqual([])
+	})
+
+	it("blinks when the course before is done and the dish can be started: the call was kept", () => {
+		let held = true
+		start({ options: { holds: () => held } })
+		alert.read([before("A")])
+		alert.read([behind("A")])
+		expect(alert.flashing.value).toEqual([])
+
+		held = false
+		alert.read([behind("A", "Ready")])
+
+		expect(alert.flashing.value).toEqual(["A"])
+		expect(player.play).toHaveBeenCalledTimes(1)
+	})
+
+	it("stops blinking when the dish is started, and does not come back when it is held again by nothing", () => {
+		start({ options: { holds: () => false } })
+		alert.read([before("A")])
+		alert.read([after("A")])
+		expect(alert.flashing.value).toEqual(["A"])
+
+		alert.read([taken("A")])
+
+		expect(alert.flashing.value).toEqual([])
+	})
+
+	it("leaves nothing held by default: every dish of the course called blinks, as before", () => {
+		start()
+		alert.read([before("A")])
+		alert.read([behind("A")])
+
+		expect(alert.flashing.value).toEqual(["A"])
+	})
+})

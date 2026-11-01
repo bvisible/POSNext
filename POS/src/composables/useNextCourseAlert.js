@@ -31,27 +31,38 @@ export function scrollToTicket(order) {
  *   settings: import("vue").Ref<{ popup: boolean, nextCourseSound: string, volume: string }>,
  *   accept?: (order: Object) => boolean,
  *   scrollTo?: (order: string) => void,
- * }} options - `settings`: the till's kitchen alerts; `accept`: whether the screen shows an order (its room), a table it does not show is neither flashed nor rung for; `scrollTo`: brings a ticket into view
+ *   holds?: (line: Object, lines: Object[]) => boolean,
+ * }} options - `settings`: the till's kitchen alerts; `accept`: whether the screen shows an order (its room), a table it does not show is neither flashed nor rung for; `scrollTo`: brings a ticket into view;
+ *   `holds`: whether a dish waits behind the course before it (the order of the meal, utils/courseOrder) and cannot be started yet: such a dish does not make its ticket blink
  * @returns {{ flashing: import("vue").Ref<string[]>, read: Function, reset: Function, acknowledge: Function }}
  */
-export function useNextCourseAlert({ settings, accept = () => true, scrollTo = scrollToTicket }) {
+export function useNextCourseAlert({ settings, accept = () => true, scrollTo = scrollToTicket, holds = () => false }) {
 	// The orders whose tickets FLASH: a table that has ordered its next course, until the cook takes its dishes up
 	const flashing = ref([])
 	// order name -> the key of the send that was told
 	const watched = new Map()
 	let memory = null
 
-	/** Whether the dishes of the send that was told are still to start: the ones of the stations the screen shows, Pending. */
-	function stillToStart(order, station) {
-		const lines = (order?.items || []).filter((line) => !station || line?.preparation_station === station)
-		return linesOfLatestSend(lines).some((line) => line?.kds_status === "Pending")
+	/** The lines of an order the screen shows: the ones of its station. */
+	const shownLines = (order, station) => (order?.items || []).filter((line) => !station || line?.preparation_station === station)
+
+	/** Whether the call is still at the kitchen: a dish of its latest send has not been started yet (a started or delivered one is the cook's answer). */
+	const stillToStart = (order, station) => linesOfLatestSend(shownLines(order, station)).some((line) => line?.kds_status === "Pending")
+
+	/**
+	 * Whether a dish of the call can be started NOW: a dish that waits behind the course before it (greyed on the ticket) cannot, and does not make the ticket blink (Daniel, 01.11: table 10 went on blinking after the cook
+	 * had started it, because its dessert was held behind the mains). The call is kept: the ticket blinks once the course before is done.
+	 */
+	function canStart(order, station) {
+		const lines = shownLines(order, station)
+		return linesOfLatestSend(lines).some((line) => line?.kds_status === "Pending" && !holds(line, lines))
 	}
 
-	/** Which of the watched tickets still flash after a reading: the ones still on the screen with dishes still to start. */
+	/** Which of the watched tickets blink after a reading: the ones still on the screen with a dish that can be started. */
 	function updateFlashing(orders, station, { quiet = false } = {}) {
 		const byName = new Map((orders || []).map((order) => [order?.name, order]))
 		for (const name of [...watched.keys()]) if (!stillToStart(byName.get(name), station)) watched.delete(name)
-		const next = [...watched.keys()]
+		const next = [...watched.keys()].filter((name) => canStart(byName.get(name), station))
 		const dealtWith = next.length < flashing.value.length
 		if (next.length !== flashing.value.length || next.some((name, at) => name !== flashing.value[at])) flashing.value = next
 		// A ticket was dealt with (started, here or at another screen): the cook is brought to the next one that blinks
