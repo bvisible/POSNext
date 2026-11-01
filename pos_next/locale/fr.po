@@ -18924,3 +18924,7 @@ msgstr "Ce code est trop facile à deviner. Choisissez-en un autre."
 #: pos_next/api/till_code.py
 msgid "Too many wrong passwords. Try again in {0} seconds."
 msgstr "Trop de mots de passe erronés. Réessayez dans {0} secondes."
+
+#: POS/src/components/restaurant/MenuPreview.vue
+msgid "Failed to load preview"
+msgstr "L'aperçu n'a pas pu être chargé"

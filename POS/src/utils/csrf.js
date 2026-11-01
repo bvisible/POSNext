@@ -59,6 +59,14 @@ function setGlobalToken(token, source) {
 	return token;
 }
 
+//// Neoffice — the token for a RAW fetch (NeoRestau lot 1, Daniel 01.11: the menu designer's preview was blank, « ça a marché, et là ça ne marche plus »). The menu designer posts with `fetch`, to get an HTML page and a PDF
+//// that `call` cannot return, and read the token from a `csrf_token` COOKIE: Frappe sets none (the token lives in `window.csrf_token`, from the page's boot), so the header was empty and the server answered 400, the
+//// preview got no HTML and stayed white. This is the one place that says where the token comes from: the page's own, else the cookie, else the server's.
+export async function currentCSRFToken() {
+	await ensureCSRFToken({ silent: true });
+	return normalizeToken(window.csrf_token) || getCSRFTokenFromCookie() || "";
+}
+
 export function onCSRFTokenRefresh(callback) {
 	//// Neoffice — same Biome formatter pass (458d81a9): single quotes rewritten to double.
 	if (typeof callback === "function") {

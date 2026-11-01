@@ -72,6 +72,8 @@ import { ref, computed, onMounted } from "vue"
 import MenuPreview from "./MenuPreview.vue"
 import MenuSettings from "./MenuSettings.vue"
 import { call } from "@/utils/apiWrapper"
+//// Neoffice — the CSRF token of the page for the raw fetches below (the cookie they read does not exist): utils/csrf.js
+import { currentCSRFToken } from "@/utils/csrf"
 
 const props = defineProps({
 	show: { type: Boolean, default: false },
@@ -199,7 +201,7 @@ async function loadExtraCards(cardNames) {
 async function onSaveDesign() {
 	saveStatus.value = "saving"
 	try {
-		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const csrfToken = await currentCSRFToken()
 		const response = await fetch(
 			"/api/method/pos_next.api.menu_pdf.save_card_design",
 			{
@@ -264,7 +266,7 @@ async function onGeneratePdf({
 				}
 
 		// Use POST + blob download (GET returns 404 on Frappe whitelisted methods)
-		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const csrfToken = await currentCSRFToken()
 		const response = await fetch(`/api/method/${method}`, {
 			method: "POST",
 			headers: {

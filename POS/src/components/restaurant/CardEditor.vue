@@ -1,4 +1,5 @@
 <template>
+	<!-- //// Neoffice — the type of this screen is one step bigger (Daniel, 01.11: « la police est relativement petite […] il faut aligner sur le standard de l'ERP »): the 8, 9 and 10 px texts are 12 px (the least the till writes anywhere), the 12 px ones 14, the 14 px ones 16, the titles a size up. -->
 	<!-- //// Neoffice — added file (no upstream equivalent). Editor for the restaurant's cards -->
 	<!-- //// (menus): categories, items, per-card price, drag-and-drop ordering, rename and -->
 	<!-- //// duplicate, item search and item creation. A retail till like upstream POSNext sells -->
@@ -13,7 +14,7 @@
 			<div class="fixed inset-0 flex items-center justify-center p-4">
 				<div class="w-full h-full max-w-[95vw] max-h-[95vh] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
 					<div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-amber-50 to-orange-50">
-						<h2 class="text-xl font-bold text-gray-800">{{ __('Restaurant Cards') }}</h2>
+						<h2 class="text-2xl font-bold text-gray-800">{{ __('Restaurant Cards') }}</h2>
 						<button @click="handleClose" class="text-gray-400 hover:text-gray-600">
 							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -33,7 +34,7 @@
 						<!-- Normal cards -->
 						<div v-for="card in normalCards" :key="card.name"
 							@click="selectCard(card.name)"
-							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-sm"
+							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-base"
 							:class="selectedCard === card.name
 								? 'bg-amber-100 text-amber-800 font-bold border border-amber-300'
 								: 'hover:bg-gray-100 text-gray-700'">
@@ -45,7 +46,7 @@
 
 						<!-- New card button -->
 						<div v-if="!showNewCard" class="border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-gray-400 transition-colors">
-							<button @click="showNewCard = true" class="text-xs font-medium text-gray-500 hover:text-gray-700 flex items-center gap-1 w-full justify-center">
+							<button @click="showNewCard = true" class="text-sm font-medium text-gray-500 hover:text-gray-700 flex items-center gap-1 w-full justify-center">
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 								</svg>
@@ -53,7 +54,7 @@
 							</button>
 						</div>
 						<div v-else class="space-y-2">
-							<input v-model="newCardName" class="w-full px-2 py-1 border rounded text-sm" :placeholder="__('Card name')" />
+							<input v-model="newCardName" class="w-full px-2 py-1 border rounded text-base" :placeholder="__('Card name')" />
 							<div class="flex gap-1">
 								<Button variant="subtle" size="sm" class="flex-1" @click="showNewCard = false">{{ __("Cancel") }}</Button>
 								<Button variant="solid" size="sm" class="flex-1" @click="createCard" :disabled="!newCardName">{{ __("Create") }}</Button>
@@ -62,13 +63,13 @@
 
 						<!-- Separator -->
 						<div class="border-t border-gray-200 pt-2 mt-2">
-							<span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">{{ __("Always available") }}</span>
+							<span class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">{{ __("Always available") }}</span>
 						</div>
 
 						<!-- Permanent card -->
 						<div
 							@click="selectOrCreatePermanentCard"
-							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-sm"
+							class="px-3 py-2 rounded-lg cursor-pointer transition-all text-base"
 							:class="selectedCard === permanentCardName
 								? 'bg-indigo-100 text-indigo-800 font-bold border border-indigo-300'
 								: 'hover:bg-indigo-50 text-indigo-600 border border-dashed border-indigo-200'">
@@ -87,7 +88,7 @@
 							<svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
 							</svg>
-							<p class="text-sm">{{ __("Select a card to edit") }}</p>
+							<p class="text-base">{{ __("Select a card to edit") }}</p>
 						</div>
 
 						<div v-else-if="cardDetail">
@@ -97,12 +98,12 @@
 									<div class="flex items-center gap-2">
 										<input v-if="editingName" v-model="cardDetail.card_name" ref="nameInput"
 											@blur="finishRename" @keyup.enter="finishRename"
-											class="font-bold text-lg border-b-2 border-amber-400 outline-none bg-transparent w-48" />
-										<h3 v-else class="font-bold text-lg cursor-pointer hover:text-amber-700" @click="startRename">
+											class="font-bold text-xl border-b-2 border-amber-400 outline-none bg-transparent w-48" />
+										<h3 v-else class="font-bold text-xl cursor-pointer hover:text-amber-700" @click="startRename">
 											{{ cardLabel(cardDetail) }}
 										</h3>
 										<template v-if="isPermanentCard">
-										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">
+										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">
 											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
 											</svg>
@@ -111,12 +112,12 @@
 									</template>
 									<template v-else>
 										<span v-if="cardDetail.is_active"
-											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
 											<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
 											{{ __("Active") }}
 										</span>
 										<span v-else
-											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
+											class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500">
 											{{ __("Inactive") }}
 										</span>
 									</template>
@@ -124,15 +125,15 @@
 									<div class="flex items-center gap-2">
 										<Button variant="solid" size="sm" @click="saveCard" :loading="saving">{{ __("Save") }}</Button>
 										<button v-if="!isPermanentCard" @click="openDesigner"
-											class="text-xs px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium transition-colors">
+											class="text-sm px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium transition-colors">
 											{{ __("Designer & PDF") }}
 										</button>
 										<button v-if="!isPermanentCard" @click="duplicateCard"
-											class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
+											class="text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
 											{{ __("Duplicate") }}
 										</button>
 										<button v-if="!isPermanentCard" @click="deleteCard"
-											class="text-xs px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors">
+											class="text-sm px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors">
 											{{ __("Delete") }}
 										</button>
 									</div>
@@ -141,12 +142,12 @@
 								<div v-if="!isPermanentCard" class="flex flex-wrap items-center gap-1 mt-2">
 									<template v-if="cardSlots.length > 0">
 										<span v-for="(slot, i) in cardSlots" :key="i"
-											class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-600">
+											class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
 											{{ slot }}
 										</span>
 										<!-- The schedule lives in the till's settings: the link is for whoever may save them -->
 										<button v-if="restaurantStore.can?.manage_till_settings" @click="openScheduleSettings"
-											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 transition-colors">
+											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs text-blue-600 hover:bg-blue-50 transition-colors">
 											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
 											</svg>
@@ -156,18 +157,18 @@
 									<template v-else>
 										<!-- //// Neoffice — a card in no time slot is shown at every hour since maintenance#1754 (it was -->
 										<!-- //// hidden from the till as soon as another card had a slot): say so, as information. -->
-										<span class="text-[10px] text-gray-500">
+										<span class="text-xs text-gray-500">
 											{{ __("No time slot: this card is shown at all hours.") }}
 										</span>
 										<button v-if="restaurantStore.can?.manage_till_settings" @click="openScheduleSettings"
-											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] text-blue-600 hover:bg-blue-50 font-medium transition-colors">
+											class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs text-blue-600 hover:bg-blue-50 font-medium transition-colors">
 											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
 											</svg>
 											{{ __("Configure schedule in Settings") }}
 										</button>
 									</template>
-									<label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] cursor-pointer ml-auto"
+									<label class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs cursor-pointer ml-auto"
 										:class="cardDetail.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'">
 										<input type="checkbox" v-model="cardDetail.is_active"
 											:true-value="true" :false-value="false"
@@ -177,7 +178,7 @@
 								</div>
 								<!-- Permanent card notice -->
 								<div v-else class="mt-2">
-									<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-indigo-100 text-indigo-700 font-medium">
+									<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-medium">
 										<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
 										</svg>
@@ -209,7 +210,7 @@
 									<span class="text-gray-300 cursor-grab active:cursor-grabbing select-none">&#x2807;</span>
 
 									<!-- Category or Item content -->
-									<span v-if="item.item_type === 'Category'" class="text-amber-500 text-xs font-bold uppercase tracking-wider flex-1">
+									<span v-if="item.item_type === 'Category'" class="text-amber-500 text-sm font-bold uppercase tracking-wider flex-1">
 										{{ item.label || __("Category") }}
 									</span>
 									<template v-else>
@@ -219,10 +220,10 @@
 											:title="item.disabled ? __('Disabled') : __('Active')"></span>
 										<div class="flex-1 min-w-0">
 											<div class="flex items-center gap-1.5">
-												<span class="text-sm" :class="item.disabled ? 'text-gray-400 line-through' : ''">{{ item.label || item.item_name || item.item }}</span>
+												<span class="text-base" :class="item.disabled ? 'text-gray-400 line-through' : ''">{{ item.label || item.item_name || item.item }}</span>
 												<!-- Spice level -->
 												<span v-if="itemExtraData[item.item]?.spice_level" class="flex gap-0 flex-shrink-0" :title="__('Spice level {0}', [itemExtraData[item.item].spice_level])">
-													<span v-for="s in itemExtraData[item.item].spice_level" :key="s" class="text-[10px] leading-none">🌶</span>
+													<span v-for="s in itemExtraData[item.item].spice_level" :key="s" class="text-xs leading-none">🌶</span>
 												</span>
 												<!-- Badges inline -->
 												<div v-if="itemExtraData[item.item]?.badges?.length" class="flex gap-0.5 flex-shrink-0">
@@ -241,17 +242,17 @@
 														/>
 													</span>
 													<span v-if="itemExtraData[item.item].badges.length > 4"
-														class="text-[8px] text-gray-400 flex items-center">
+														class="text-xs text-gray-400 flex items-center">
 														+{{ itemExtraData[item.item].badges.length - 4 }}
 													</span>
 												</div>
 											</div>
 											<!-- Description (1 line, truncated) -->
-											<div v-if="itemExtraData[item.item]?.description" class="text-[10px] text-gray-400 mt-0.5 truncate max-w-[300px]">
+											<div v-if="itemExtraData[item.item]?.description" class="text-xs text-gray-400 mt-0.5 truncate max-w-[300px]">
 												{{ itemExtraData[item.item].description }}
 											</div>
 											<!-- Stock display -->
-											<div v-if="stockData[item.item]" class="text-[10px] text-gray-400 mt-0.5">
+											<div v-if="stockData[item.item]" class="text-xs text-gray-400 mt-0.5">
 												<span v-for="(bin, bi) in stockData[item.item]" :key="bi"
 													:class="bin.qty <= 0 ? 'text-red-500' : ''">
 													{{ bin.warehouse.split(' - ')[0] }}: {{ bin.qty }}<span v-if="bi < stockData[item.item].length - 1"> | </span>
@@ -260,7 +261,7 @@
 											</div>
 										</div>
 										<!-- Price as text -->
-										<span class="text-sm font-medium text-gray-700 flex-shrink-0 tabular-nums">
+										<span class="text-base font-medium text-gray-700 flex-shrink-0 tabular-nums">
 											{{ item.price || 0 }}
 										</span>
 									</template>
@@ -277,14 +278,14 @@
 							<!-- Add buttons -->
 							<div class="flex gap-2 mt-4">
 								<button @click="showCategoryDialog = true"
-									class="flex-1 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
+									class="flex-1 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg border border-dashed border-amber-300 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1">
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 									</svg>
 									{{ __("Category") }}
 								</button>
 								<button @click="showItemSearchDialog = true"
-									class="flex-1 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg border border-dashed border-blue-300 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
+									class="flex-1 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg border border-dashed border-blue-300 hover:bg-blue-100 transition-colors flex items-center justify-center gap-1">
 									<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 									</svg>
@@ -328,7 +329,7 @@
 	<Dialog v-model="showCategoryDialog" :options="{ title: __('Add Category'), size: 'sm' }">
 		<template #body-content>
 			<div>
-				<label class="block text-start text-sm font-medium text-gray-700 mb-1">
+				<label class="block text-start text-base font-medium text-gray-700 mb-1">
 					{{ __("Category Name") }} <span class="text-red-500">*</span>
 				</label>
 				<Input
@@ -354,17 +355,17 @@
 					v-model="itemSearchQuery"
 					type="text"
 					:placeholder="__('Search items by name...')"
-					class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
 				/>
 				<div class="max-h-48 overflow-y-auto space-y-1">
 					<div v-for="item in searchResults" :key="item.name"
 						@click="addItem(item)"
-						class="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer text-sm flex justify-between items-center border border-gray-100">
+						class="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer text-base flex justify-between items-center border border-gray-100">
 						<span class="font-medium">{{ item.item_name }}</span>
-						<span class="text-xs text-gray-400">{{ item.standard_rate || 0 }}</span>
+						<span class="text-sm text-gray-400">{{ item.standard_rate || 0 }}</span>
 					</div>
 					<div v-if="searchResults.length === 0 && itemSearchQuery && itemSearchQuery.length >= 2" class="text-center py-4">
-						<p class="text-sm text-gray-400 mb-3">{{ __("No items found for '{0}'", [itemSearchQuery]) }}</p>
+						<p class="text-base text-gray-400 mb-3">{{ __("No items found for '{0}'", [itemSearchQuery]) }}</p>
 						<!-- Creating an item takes the ERP's right to create items (restaurant_can.create_items) -->
 						<Button v-if="restaurantStore.can?.create_items" variant="solid" theme="green" size="sm" @click="openCreateItemFromSearch">
 							<template #prefix>

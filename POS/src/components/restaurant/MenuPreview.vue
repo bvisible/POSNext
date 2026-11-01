@@ -25,6 +25,8 @@
 
 <script setup>
 import { ref, watch } from "vue"
+//// Neoffice — the CSRF token of the page, not a cookie Frappe does not set (the preview was blank): utils/csrf.js
+import { currentCSRFToken } from "@/utils/csrf"
 
 const props = defineProps({
 	cardName: { type: String, default: "" },
@@ -43,7 +45,7 @@ async function loadPreview() {
 	if (!props.cardName && (!props.cardNames || !props.cardNames.length)) return
 	loading.value = true
 	try {
-		const csrfToken = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || ""
+		const csrfToken = await currentCSRFToken()
 		const isMulti = props.cardNames && props.cardNames.length > 1
 
 		const body = isMulti
@@ -70,11 +72,12 @@ async function loadPreview() {
 			},
 		)
 		const data = await response.json()
-		htmlContent.value = data?.message || ""
+		//// Neoffice — a refusal or an empty answer says so on the page instead of leaving it blank
+		htmlContent.value =
+			data?.message || `<p style='padding:20px;color:red'>${__("Failed to load preview")}</p>`
 	} catch (e) {
 		console.error("[MenuPreview] Failed to load:", e)
-		htmlContent.value =
-			"<p style='padding:20px;color:red'>Failed to load preview</p>"
+		htmlContent.value = `<p style='padding:20px;color:red'>${__("Failed to load preview")}</p>`
 	}
 	loading.value = false
 }
