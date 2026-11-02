@@ -122,6 +122,7 @@ Whole new doctypes; every field in them is ours. At a merge they can only confli
 |---|---|
 | `pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json` | Upstream's v2.0.0 end-of-day report, printed at every shift close. It read `POS Profile.address`, a field ERPNext v15 does not have, so every print failed with "Unknown column 'address'" and the closing ended on "EOD report did not print": it now reads the profile's `company_address`. Its 33 labels were bare English on a ticket handed over at a Swiss till: they go through `_()`. Dates print through `format_datetime` instead of raw timestamps with microseconds, a tax rate of 0 (the closing shift does not store it) is no longer printed as "(0.00%)", and the brand fallback reads Neopos like the receipt. 2026-10-04, found by closing a real shift on osiris after the merge.  NeoResto lot 1 (task 15) adds a *Cash Movements* section before the final summary: the closing's `cash_movements` rows (operation, note, signed amount) and their in / out totals, shown only when the shift had any. NeoResto lot 1 (task 24) adds, under the Grand Total, one line « Offerts : n articles, valeur CHF x » when the shift offered something, from the Jinja method `get_offered_line` (`pos_next.offered`, registered in `hooks.py`, guarded by `is defined`); `modified` moved to 2026-11-01 16:00 so the print format is imported again. |
 | `pos_next/pos_next/custom/customer.json` | Upstream's v2.0.0 adds `custom_governorate` and `custom_district` to **Customer** (Link fields to its `Governorate` / `District` doctypes): a Middle-East address model, shown in the desk form, the list view and the preview. Our customers carry a structured Swiss address (ADR-002), so both fields are set `hidden: 1`, `in_list_view: 0`, `in_preview: 0` here; the till never shows them (`CustomerFormDialog.vue`). The doctypes and upstream's code that fills the fields stay as they are. Decision of 2026-10-04. |
+| `pos_next/pos_next/custom/sales_invoice_item.json` | Upstream (`0ca15cae`, 2026-09-22) adds a `sales_person` Link to every line of a sales invoice and shows it as a **column of the items grid**. The till's sales-person feature is off on our tills (`enable_sales_persons` is `Disabled`; no line of 2 933 has one) and the field is **not required** (`reqd: 0`; only `validate_sales_person_coverage` asks for one, and only on a till that turned the feature on), so the column is `in_list_view: 0` here. The field itself stays: the till's code reads and writes it. Decision of 2026-11-02 (product owner: « un vendeur affiché dans la table des articles, qu'on ne remplit jamais »). |
 
 ### Translations — `pos_next/locale/`
 
@@ -340,6 +341,7 @@ detail is in the sections above.
 | `pos_next/tests/service_family_cases.json` |
 | `pos_next/pos_next/custom/customer.json` |
 | `pos_next/pos_next/custom/pos_profile.json` |
+| `pos_next/pos_next/custom/sales_invoice_item.json` |
 | `pos_next/pos_next/print_format/pos_next_eod_report/pos_next_eod_report.json` |
 | `pos_next/pos_next/doctype/pos_closing_shift/pos_closing_shift.json` |
 | `pos_next/pos_next/doctype/pos_coupon/pos_coupon.json` |
