@@ -22,6 +22,8 @@ pos_next.patches.v2_0_0.remove_custom_company_fields
 pos_next.patches.v2_4_0.rehome_auth_gate_to_pos_next
 pos_next.patches.v2_3_0.enable_posa_allow_cancel_pos_expense
 pos_next.patches.v2_4_0.rename_locations_doctypes
+# //// Neoffice — the patches of NeoResto below live in the folder `patches/neorestau`, the product's former name (NeoResto since 02.11.2026): the Patch Log of a site that
+# //// ran them records those dotted paths, so the folder keeps its name (a new name would make them run again).
 # //// Neoffice — NeoResto: the site-wide Restaurant Settings single becomes the settings of a
 # //// default restaurant, named after the default company (lot 1, task 1). It runs after the doctype sync,
 # //// which is what creates the Restaurant table, and does nothing on a site that never used the module.
@@ -51,7 +53,3 @@ pos_next.patches.neorestau.keep_restaurant_staff_signed_in
 # //// Neoffice — NeoResto: a lock now locks at once on leaving the screen only if the till says so (`session_lock_on_leave`,
 # //// default off, product owner, 01.11.2026); the tills that already lock keep locking at once. Runs after the doctype sync.
 pos_next.patches.neorestau.keep_the_screen_lock_of_the_tills_that_lock
-# //// Neoffice — NeoRestau became NeoResto (02.11.2026): the page and the menu entry that were made under the old name are renamed once, and the site's flag
-# //// `neorestau_active` is carried to `neoresto_active`. It runs after the doctype sync and before the migrate's after_migrate, whose `setup()` would otherwise
-# //// make a second page and a second entry under the new name.
-pos_next.patches.neoresto.rename_what_neorestau_made

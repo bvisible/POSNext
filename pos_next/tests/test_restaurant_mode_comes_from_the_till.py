@@ -111,8 +111,6 @@ def a_site_where_neoresto_is(value):
 	with patch.dict(frappe.conf):
 		if value is ABSENT:
 			frappe.conf.pop(SITE_FLAG, None)
-			# The site's configuration may still carry the flag under its old name (see mode.LEGACY_SITE_FLAG): absent means under neither
-			frappe.conf.pop("neorestau_active", None)
 		else:
 			frappe.conf[SITE_FLAG] = value
 		yield

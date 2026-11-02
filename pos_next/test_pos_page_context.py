@@ -61,10 +61,9 @@ class TestPosPageContext(FrappeTestCase):
 	def test_exposes_whether_neoresto_runs(self):
 		for value, told in ((1, True), ("1", True), (0, False), (None, False), (ABSENT, False)):
 			with self.subTest(value=value), patch.dict(frappe.conf):
-				# //// Neoffice — the flag is `neoresto_active` since NeoRestau became NeoResto (02.11.2026); the old name is read too, so an absent flag means neither
+				# //// Neoffice — the flag is `neoresto_active` since NeoRestau became NeoResto (02.11.2026)
 				if value is ABSENT:
 					frappe.conf.pop("neoresto_active", None)
-					frappe.conf.pop("neorestau_active", None)
 				else:
 					# //// Neoffice — the new name of the flag
 					frappe.conf["neoresto_active"] = value

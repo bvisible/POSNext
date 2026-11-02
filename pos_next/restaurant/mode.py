@@ -11,10 +11,6 @@ from frappe.utils import cint
 
 # The site flag that lets restaurant mode show at a till: in site_config.json, off unless the site switches it on
 SITE_FLAG = "neoresto_active"
-# //// Neoffice — the flag was called `neorestau_active` before the product took the name NeoResto (02.11.2026). A site whose configuration still carries the old name
-# //// is read as before until the patch that carries it over (patches/neoresto/rename_what_neorestau_made) has run on it; the new name wins when a site has both.
-# //// To remove once no site configuration holds the old name.
-LEGACY_SITE_FLAG = "neorestau_active"
 
 # What makes a till a restaurant till: the tick and the restaurant it works for. They are ticked and chosen on the
 # desk's POS Settings form and nowhere else (product owner, 30.10.2026): the till reads them, it never writes them.
@@ -23,10 +19,7 @@ DESK_ONLY_FIELDS = ("enable_restaurant_mode", "restaurant")
 
 def neoresto_active() -> bool:
 	"""Whether the site runs NeoResto: its `neoresto_active` flag says 1 (a site without the flag does not)."""
-	flag = frappe.conf.get(SITE_FLAG)
-	if flag is None:
-		flag = frappe.conf.get(LEGACY_SITE_FLAG, 0)
-	return cint(flag) == 1
+	return cint(frappe.conf.get(SITE_FLAG, 0)) == 1
 
 
 def require_neoresto() -> None:
