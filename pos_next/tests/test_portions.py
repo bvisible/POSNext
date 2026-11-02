@@ -260,3 +260,51 @@ class TestWhatTheGuestReads(PortionsCase):
 
 		self.assertEqual(dishes[self.soup]["portions_left"], 0)
 		self.assertNotIn("portions_left", dishes[self.cola])
+
+
+class TestAGuestOrdersWhatIsLeft(PortionsCase):
+	"""A page left open on a phone shows a dish the kitchen has no portion of left: the order is refused, whatever the page shows."""
+
+	def setUp(self):
+		super().setUp()
+		frappe.db.set_value("Restaurant", self.a, {"enable_qr_ordering": 1, "qr_order_validation": "Direct to Kitchen"})
+		frappe.clear_document_cache("Restaurant")
+		self.token = frappe.get_doc(
+			{"doctype": "Guest Order Token", "mode": "restaurant", "table": self.table_a, "pos_profile": self.fx.profile}
+		).insert(ignore_permissions=True)
+
+	def order(self, *lines):
+		from pos_next.api import guest_ordering
+
+		items = [{"item_code": code, "qty": qty, "rate": 5} for code, qty in lines]
+		frappe.set_user("Guest")
+		try:
+			return guest_ordering.submit_guest_order(self.token.token, frappe.as_json(items))
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_a_guest_orders_up_to_what_is_left_and_no_more(self):
+		portions.set_made(self.soup, counted=True, made=2)
+
+		self.order((self.soup, 2))
+		self.assertEqual(self.left(self.soup), 0)
+		with self.assertRaises(frappe.ValidationError):
+			self.order((self.soup, 1))
+
+		self.assertEqual(self.left(self.soup), 0)
+
+	def test_an_order_that_asks_for_more_than_is_left_adds_nothing(self):
+		portions.set_made(self.soup, counted=True, made=2)
+
+		with self.assertRaises(frappe.ValidationError):
+			self.order((self.cola, 1), (self.soup, 3))
+
+		self.assertEqual(self.left(self.soup), 2)
+		self.assertEqual(
+			frappe.db.count("Sales Invoice Item", {"item_code": ["in", [self.cola, self.soup]]}), 0
+		)
+
+	def test_a_product_nobody_counts_is_never_refused(self):
+		self.order((self.cola, 7))
+
+		self.assertEqual(frappe.db.count("Sales Invoice Item", {"item_code": self.cola}), 1)

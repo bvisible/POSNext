@@ -239,6 +239,19 @@ def _build_menu_from_card(card_name, warehouse=None):
 	}
 
 
+# //// Neoffice — the portions the kitchen made of a product (NeoResto lot 1, Daniel, 02.11.2026): the table's order, which the guest sends from a page that may be minutes old.
+def _refuse_what_is_sold_out(items):
+	"""Refuse an order that asks for more of a counted dish than the kitchen has portions left (the whole order, so that nothing is half taken)."""
+	asked = {}
+	for item in items:
+		code = item.get("item_code")
+		if code:
+			asked[code] = asked.get(code, 0) + flt(item.get("qty", 1))
+	for code, state in portions.state(list(asked)).items():
+		if state["left"] is not None and asked[code] > state["left"]:
+			frappe.throw(_("{0} is sold out").format(frappe.db.get_value("Item", code, "item_name") or code))
+
+
 def _get_item_product_options(item_code):
 	"""Return product option groups applicable to an item."""
 	item_group = frappe.db.get_value("Item", item_code, "item_group")
@@ -613,6 +626,9 @@ def submit_guest_order(token, items):
 
 	settings = _get_restaurant_settings(token_doc.pos_profile)
 	validation_mode = settings.qr_order_validation or "Direct to Kitchen"
+
+	# //// Neoffice — a dish the kitchen has no portion of left is refused, whatever the guest's page still shows (NeoResto lot 1, Daniel, 02.11.2026); before anything is created
+	_refuse_what_is_sold_out(items)
 
 	invoice_doc = _get_or_create_invoice(token_doc)
 	is_new_invoice = not invoice_doc
