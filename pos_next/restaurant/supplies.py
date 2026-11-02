@@ -131,6 +131,8 @@ def add_supply_pack(
 
 	if pack_is_new:
 		frappe.get_doc({"doctype": "UOM", "uom_name": pack_name, "must_be_whole_number": 1}).insert()
+		# A site's hooks may touch items when a unit is made: read the item again, so that its save sees what is there now
+		doc.reload()
 	if not existing:
 		doc.append("uoms", {"uom": pack_name, "conversion_factor": content})
 
@@ -162,7 +164,18 @@ def add_supply_pack(
 		if row:
 			row.default_supplier = supplier
 		else:
-			doc.append("item_defaults", {"company": company, "default_supplier": supplier})
+			# The row names a warehouse of ITS company: left blank, a new row takes the user's default warehouse, which may
+			# belong to another company of the site, and the item refuses it. No stock is kept: the warehouse is only valid.
+			doc.append(
+				"item_defaults",
+				{
+					"company": company,
+					"default_supplier": supplier,
+					"default_warehouse": frappe.db.get_value(
+						"Warehouse", {"company": company, "is_group": 0, "disabled": 0}, "name"
+					),
+				},
+			)
 
 	doc.save()
 

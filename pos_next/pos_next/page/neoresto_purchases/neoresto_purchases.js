@@ -227,8 +227,26 @@
 	};
 
 	NeorestoPurchases.prototype.row_html = function (row) {
-		var packs = row.packs.length
-			? row.packs.map(this.pack_html, this).join("")
+		// A supplier's packagings sit together, its name and its « usual » mark said once
+		var order = [];
+		row.packs.forEach(function (pack) {
+			if (order.indexOf(pack.supplier) < 0) order.push(pack.supplier);
+		});
+		var grouped = [];
+		order.forEach(function (supplier) {
+			row.packs.forEach(function (pack) {
+				if (pack.supplier === supplier) grouped.push(pack);
+			});
+		});
+		var previous = null;
+		var packs = grouped.length
+			? grouped
+					.map(function (pack) {
+						var first = pack.supplier !== previous;
+						previous = pack.supplier;
+						return this.pack_html(pack, first);
+					}, this)
+					.join("")
 			: '<span class="npp-none">' +
 			  esc(__("Nobody yet: add a packaging and its supplier.")) +
 			  "</span>";
@@ -254,7 +272,7 @@
 		);
 	};
 
-	NeorestoPurchases.prototype.pack_html = function (pack) {
+	NeorestoPurchases.prototype.pack_html = function (pack, first) {
 		var price = "—";
 		var sub = "";
 		if (pack.price !== null && pack.price !== undefined) {
@@ -268,8 +286,10 @@
 		}
 		return (
 			'<div class="npp-pack"><span>' +
-			esc(pack.supplier) +
-			(pack.usual ? '<span class="npp-usual">' + esc(__("Usual")) + "</span>" : "") +
+			(first
+				? esc(pack.supplier) +
+				  (pack.usual ? '<span class="npp-usual">' + esc(__("Usual")) + "</span>" : "")
+				: "") +
 			"</span>" +
 			"<span>" +
 			esc(pack.uom || "—") +
@@ -317,6 +337,8 @@
 					.call({ method: API + "create_supply_item", args: values, freeze: true })
 					.then(function (r) {
 						d.hide();
+						// Whatever was searched or filtered, the new article is shown: its packaging is the next thing to say
+						self.state = { search: "", supplier: "", family: "", scope: "" };
 						return self.refresh().then(function () {
 							var row = self.find(r.message);
 							if (row) self.add_pack(row);
