@@ -69,11 +69,21 @@ def customer_of(token_doc, invoice_doc=None):
 
 
 def _points_of(customer, pos_profile):
-	"""ERPNext's answer for the loyalty points of a customer ({"loyalty_points", "conversion_factor", "loyalty_program", ...}), or None."""
-	from erpnext.accounts.doctype.loyalty_program.loyalty_program import get_loyalty_program_details_with_points
+	"""The loyalty points of a customer as ERPNext counts them ({"loyalty_points", "conversion_factor", "loyalty_program"}), or None when the
+	customer is in no programme. Read with `get_loyalty_details`, the count itself: the whitelisted wrapper above it checks the permissions of the
+	caller (a guest has none) and, given no programme, reads one named None."""
+	from erpnext.accounts.doctype.loyalty_program.loyalty_program import get_loyalty_details
 
+	program = frappe.db.get_value("Customer", customer, "loyalty_program")
+	if not program:
+		return None
 	company = frappe.db.get_value("POS Profile", pos_profile, "company") if pos_profile else None
-	return get_loyalty_program_details_with_points(customer, company=company, silent=True)
+	details = get_loyalty_details(customer, program, company=company) or {}
+	return {
+		"loyalty_points": details.get("loyalty_points") or 0,
+		"conversion_factor": frappe.db.get_value("Loyalty Program", program, "conversion_factor") or 0,
+		"loyalty_program": program,
+	}
 
 
 def _loyalty_is_on(pos_profile):

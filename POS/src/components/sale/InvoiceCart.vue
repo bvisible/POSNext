@@ -136,8 +136,9 @@
 								<div
 									class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0"
 								>
+									<!-- //// Neoffice — customerLabel (see the script): the name of a customer that comes back from the server as a string -->
 									<FeatherIcon
-										v-if="isPhoneName(customer.customer_name || customer.name)"
+										v-if="isPhoneName(customerLabel)"
 										name="phone"
 										class="w-4 h-4 text-white"
 									/>
@@ -161,7 +162,8 @@
 										dir="auto"
 										class="text-xs font-semibold text-gray-900 truncate leading-tight"
 									>
-										{{ customer.customer_name || customer.name }}
+										<!-- //// Neoffice — customerLabel (see the script) -->
+										{{ customerLabel }}
 									</p>
 									<!-- //// Neoffice — [CU] e-mail shown next to the phone: it was already cached and -->
 									<!-- //// never displayed, and business customers are identified by mail (4a0dd461). -->
@@ -207,8 +209,9 @@
 							<div
 								class="pointer-events-none absolute top-full start-0 z-50 mt-1 hidden w-64 rounded-neo-md border border-gray-200 bg-white p-2.5 text-left shadow-neo-md group-hover:block"
 							>
+								<!-- //// Neoffice — customerLabel (see the script) -->
 								<p class="text-xs font-bold text-gray-900 truncate">
-									{{ customer.customer_name || customer.name }}
+									{{ customerLabel }}
 								</p>
 								<div class="mt-1.5 space-y-1">
 									<div
@@ -3551,6 +3554,15 @@ function printProvisionalTicket() {
 	commitTypedQuantity();
 	emit("print-provisional-ticket");
 }
+
+//// Neoffice — the customer of an order that comes back from the server is its name, a string: the header read `customer.customer_name || customer.name`,
+//// which is nothing for a string, so a table whose customer the till did not pick itself (a guest who signed in from the QR page, NeoResto lot 1, Daniel,
+//// 02.11.2026) showed a customer with no name.
+const customerLabel = computed(() =>
+	typeof props.customer === "string"
+		? props.customer
+		: props.customer?.customer_name || props.customer?.name || ""
+);
 
 //// Neoffice — the kitchen ticket of the table, printed again (NeoResto lot 1, Daniel, 02.11.2026)
 const kitchenTicketStateClass = computed(

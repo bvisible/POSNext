@@ -20,6 +20,7 @@ import re
 from unittest.mock import patch
 
 import frappe
+from frappe.utils import add_days, nowdate
 
 from pos_next.api import guest_ordering
 from pos_next.restaurant import guest_account
@@ -408,8 +409,47 @@ class TestWhatTheCustomerHas(GuestAccountCase):
 		self.assertEqual((account["loyalty_points"], account["loyalty_value"]), (120, 12.0))
 		self.assertEqual(account["loyalty_program"], "_Test Program")
 
+	def test_the_points_are_counted_for_a_guest_who_has_no_right_on_the_customer(self):
+		# The count is ERPNext's own, read as the page reads it: with no session, no right, and nothing patched
+		customer = self.a_customer(an_address())
+		program = frappe.get_doc(
+			{
+				"doctype": "Loyalty Program",
+				"loyalty_program_name": "_Test Guest Program",
+				"loyalty_program_type": "Single Tier Program",
+				"conversion_factor": 0.5,
+				"company": self.company,
+				"collection_rules": [{"tier_name": "Base", "collection_factor": 100, "min_spent": 0}],
+			}
+		).insert(ignore_permissions=True, ignore_mandatory=True)
+		frappe.db.set_value("Customer", customer, "loyalty_program", program.name)
+		frappe.get_doc(
+			{
+				"doctype": "Loyalty Point Entry",
+				"customer": customer,
+				"loyalty_program": program.name,
+				"loyalty_points": 40,
+				"purchase_amount": 400,
+				"posting_date": nowdate(),
+				"expiry_date": add_days(nowdate(), 365),
+				"company": frappe.db.get_value("POS Profile", self.fx.profile, "company"),
+				"invoice_type": "Sales Invoice",
+			}
+		).insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
+		frappe.db.set_value("POS Settings", {"pos_profile": self.fx.profile}, "enable_loyalty_program", 1)
+		self.save([self.line(self.cola)], customer=customer)
+
+		account = self.as_guest(guest_ordering.validate_token, self.token.token)["account"]
+
+		self.assertEqual(
+			(account["loyalty_points"], account["loyalty_value"], account["loyalty_program"]), (40, 20.0, program.name)
+		)
+
 	def test_a_customer_with_no_programme_has_no_points(self):
 		customer = self.a_customer(an_address())
+		# A new customer is enrolled in the default programme by a hook of the till: this one is taken out of it
+		frappe.db.set_value("Customer", customer, "loyalty_program", None)
+		frappe.db.set_value("POS Settings", {"pos_profile": self.fx.profile}, "enable_loyalty_program", 1)
 		self.save([self.line(self.cola)], customer=customer)
 
 		account = self.as_guest(guest_ordering.validate_token, self.token.token)["account"]
