@@ -21267,3 +21267,161 @@ msgstr "{0} : il n'en reste plus"
 #: POS/src/pages/POSSale.vue
 msgid "Change given: {0}"
 msgstr "Rendu : {0}"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:329
+msgid "A bottle, a kilogram, a piece: the packagings are counted in it."
+msgstr "Une bouteille, un kilogramme, une pièce : les emballages se comptent dans cette unité."
+
+#: pos_next/restaurant/supplies.py:115
+msgid "A packaging holds at least one unit of the article."
+msgstr "Un emballage contient au moins une unité de l'article."
+
+#: pos_next/restaurant/supplies.py:117
+msgid "A price cannot be negative."
+msgstr "Un prix ne peut pas être négatif."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:270
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:355
+msgid "Add a packaging"
+msgstr "Ajouter un emballage"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:63
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:310
+msgid "Add an article to buy"
+msgstr "Ajouter un article à acheter"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:334
+msgid "Add the article"
+msgstr "Ajouter l'article"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:403
+msgid "Add the packaging"
+msgstr "Ajouter l'emballage"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:141
+msgid "All families"
+msgstr "Toutes les familles"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:188
+msgid "An article, a supplier, a packaging…"
+msgstr "Un article, un fournisseur, un emballage…"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:381
+#, python-brace-format
+msgid "Content, in {0}"
+msgstr "Contenance, en {0}"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:376
+msgid "For example: Carton of 6, Net of 5 kg"
+msgstr "Par exemple : carton de 6, filet de 5 kg"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:260
+msgid "Ingredient"
+msgstr "Ingrédient"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:126
+msgid "Ingredients and supplies"
+msgstr "Ingrédients et fournitures"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:400
+msgid "Make this supplier the usual one for this article"
+msgstr "Faire de ce fournisseur le fournisseur habituel de cet article"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:374
+msgid "Name of the packaging"
+msgstr "Nom de l'emballage"
+
+#: pos_next/restaurant/supplies.py:51
+msgid "Name the article."
+msgstr "Indiquez le nom de l'article."
+
+#: pos_next/restaurant/supplies.py:113
+msgid "Name the packaging."
+msgstr "Indiquez le nom de l'emballage."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:182
+msgid "No article yet. Add the first one you buy."
+msgstr "Aucun article pour l'instant. Ajoutez le premier que vous achetez."
+
+#: pos_next/restaurant/supplies.py:39
+msgid "No buying price list is enabled, so the price of a packaging cannot be written."
+msgstr "Aucune liste de prix d'achat n'est activée : le prix de l'emballage ne peut donc pas être saisi."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:251
+msgid "Nobody yet: add a packaging and its supplier."
+msgstr "Aucun fournisseur pour l'instant : ajoutez un emballage et son fournisseur."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:125
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:260
+msgid "On the menu"
+msgstr "À la carte"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:389
+msgid "Optional: the last price paid replaces it."
+msgstr "Facultatif : le dernier prix payé le remplace."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:282
+#, python-brace-format
+msgid "paid on {0}"
+msgstr "payé le {0}"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:212
+msgid "Prices in the company currency; the last price paid, else the catalogue price"
+msgstr "Prix dans la devise de l'entreprise ; le dernier prix payé, à défaut le prix du catalogue"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:388
+msgid "Purchase price of the packaging"
+msgstr "Prix d'achat de l'emballage"
+
+#: pos_next/restaurant/supply_catalogue.py:34
+msgid "Purchases are not available"
+msgstr "Les achats ne sont pas disponibles."
+
+#: pos_next/restaurant/supplies.py:162
+msgid "Say which company the usual supplier is for."
+msgstr "Indiquez la société pour laquelle ce fournisseur est habituel."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:394
+msgid "Supplier's reference"
+msgstr "Référence du fournisseur"
+
+#: pos_next/restaurant/supplies.py:53
+#, python-brace-format
+msgid "The article {0} already exists."
+msgstr "L'article {0} existe déjà."
+
+#: pos_next/restaurant/supplies.py:109
+#, python-brace-format
+msgid "The article {0} does not exist."
+msgstr "L'article {0} n'existe pas."
+
+#: pos_next/restaurant/supplies.py:111
+#, python-brace-format
+msgid "The supplier {0} does not exist."
+msgstr "Le fournisseur {0} n'existe pas."
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:327
+msgid "Unit you use it in"
+msgstr "Unité d'usage"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:291
+msgid "Usual"
+msgstr "Habituel"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:196
+msgid "What we buy"
+msgstr "Ce que nous achetons"
+
+#: pos_next/pos_next/page/neoresto_purchases/neoresto_purchases.js:205
+msgid "Who sells it, in which packaging"
+msgstr "Qui le vend, et dans quel emballage"
+
+#: pos_next/restaurant/supplies.py:127
+#, python-brace-format
+msgid "{0} already means {1} {2} on the article {3}: give this packaging another name."
+msgstr "{0} désigne déjà {1} {2} sur l'article {3} : donnez un autre nom à cet emballage."
+
+#: pos_next/restaurant/supplies.py:122
+#, python-brace-format
+msgid "{0} is the unit the article is counted in: name the packaging differently."
+msgstr "{0} est l'unité dans laquelle l'article se compte : donnez un autre nom à l'emballage."
