@@ -21717,4 +21717,4 @@ msgstr "{0} n'est pas une unité de l'article {1}."
 #: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:254
 #, python-brace-format
 msgid "{0} of {1} lines priced"
-msgstr "{0} lignes sur {1} avec un prix"
+msgstr "{0} sur {1} avec un prix"
