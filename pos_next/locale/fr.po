@@ -21718,3 +21718,96 @@ msgstr "{0} n'est pas une unité de l'article {1}."
 #, python-brace-format
 msgid "{0} of {1} lines priced"
 msgstr "{0} sur {1} avec un prix"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:658
+msgid "1 packaging, to complete"
+msgstr "1 emballage à compléter"
+
+#: pos_next/restaurant/dishes.py:62
+msgid "A dish cannot be its own ingredient."
+msgstr "Un plat ne peut pas être son propre ingrédient."
+
+#: pos_next/restaurant/dishes.py:75
+msgid "A dish is made for at least one portion."
+msgstr "Un plat doit être prévu pour au moins une portion."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:92
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:550
+msgid "Add a dish"
+msgstr "Ajouter un plat"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:618
+msgid "Add the ingredients to the list"
+msgstr "Ajouter les ingrédients à la liste"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:664
+msgid "Added to the list"
+msgstr "Ajouté à la liste"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:688
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:758
+msgid "All places"
+msgstr "Tous les emplacements"
+
+#. Description of the 'Ingredient' (Link) field in DocType 'Restaurant Dish
+#. Ingredient'
+#: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:30
+msgid "An article the restaurant buys: what the dish needs."
+msgstr "Un article que le restaurant achète : ce dont le plat a besoin."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:735
+msgid "I have enough"
+msgstr "J'en ai assez"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:592
+msgid "Ingredients"
+msgstr "Ingrédients"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:742
+msgid "No article yet."
+msgstr "Aucun article pour l'instant."
+
+#. Description of the 'Quantity per Portion' (Float) field in DocType
+#. 'Restaurant Dish Ingredient'
+#: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:38
+msgid "Optional, in the unit the article is counted in (kg, litre, piece). Without it, adding the dish puts the ingredient on the list without a calculation."
+msgstr "Facultative, exprimée dans l'unité de comptage de l'article (kg, litre, pièce). Sans quantité, l'ajout du plat place l'ingrédient sur la liste sans calcul."
+
+#. Label of a Float field in DocType 'Restaurant Dish Ingredient'
+#: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:35
+msgid "Quantity per Portion"
+msgstr "Quantité par portion"
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:612
+msgid "Quantity per portion"
+msgstr "Quantité par portion"
+
+#. Name of a DocType
+#: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:11
+msgid "Restaurant Dish Ingredient"
+msgstr "Ingrédient de plat du restaurant"
+
+#. Description of the 'Unit' (Data) field in DocType 'Restaurant Dish
+#. Ingredient'
+#: pos_next/pos_next/doctype/restaurant_dish_ingredient/restaurant_dish_ingredient.json:47
+msgid "The unit of the quantity: the one the article is counted in."
+msgstr "L'unité de la quantité : celle dans laquelle l'article est compté."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:593
+msgid "What the dish needs, from what you buy. The quantity per portion is optional."
+msgstr "Ce dont le plat a besoin, parmi les articles que vous achetez. La quantité par portion est facultative."
+
+#: pos_next/restaurant/dishes.py:78
+#, python-brace-format
+msgid "{0} has no ingredients yet."
+msgstr "{0} n'a pas encore d'ingrédients."
+
+#: pos_next/restaurant/shopping.py:244
+#, python-brace-format
+msgid "{0} is not an answer of the stores round."
+msgstr "{0} n'est pas une réponse du tour des réserves."
+
+#: pos_next/pos_next/page/neoresto_shopping/neoresto_shopping.js:653
+#, python-brace-format
+msgid "{0} {1} needed"
+msgstr "Besoin : {0} {1}"
