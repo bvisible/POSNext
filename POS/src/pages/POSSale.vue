@@ -1374,7 +1374,7 @@
 			<!-- //// Neoffice — a dish the kitchen has no portion left of shows sold out in the menu's courses (NeoResto lot 1, Daniel, 02.11.2026). -->
 			<MenuSelectionDialog
 				ref="menuSelectionRef"
-				:left-of="(code) => portionsStore.leftOf(code, stockStore.reserved.get(code) || 0)"
+				:left-of="(code) => portionsStore.leftOf(code, cartQuantityOf(code))"
 				:grey-out="greyOutSoldOut"
 				@menu-confirmed="handleMenuConfirmed"
 			/>
@@ -2605,7 +2605,7 @@ function getCardItemStock(cardItem) {
 	if (!cardItem.item || cardItem.item_type !== "Item") return null;
 	//// Neoffice — a product the kitchen counts by portions (NeoResto lot 1, Daniel, 02.11.2026) shows what is left of them, the cart's quantity taken off;
 	//// a product whose stock is managed keeps the stock's count, and the server never counts the two together.
-	const portionsLeft = portionsStore.leftOf(cardItem.item, stockStore.reserved.get(cardItem.item) || 0);
+	const portionsLeft = portionsStore.leftOf(cardItem.item, cartQuantityOf(cardItem.item));
 	if (portionsLeft !== null) return portionsLeft;
 	if (!cardItem.is_stock_item) return null;
 	return stockStore.getDisplayStock(cardItem.item);
@@ -2623,6 +2623,12 @@ const portionsStore = usePortionsStore();
 const greyOutSoldOut = computed(() => restaurantStore.restaurantSettings.grey_out_sold_out !== false);
 function isCountedByPortions(cardItem) {
 	return !!cardItem.item && cardItem.item_type === "Item" && portionsStore.isCounted(cardItem.item);
+}
+//// Neoffice — what the order on screen holds of a product, in its stock unit: the lines of the cart (the stock store's reservation does not follow a restaurant order; NeoResto lot 1, 02.11.2026)
+function cartQuantityOf(code) {
+	return cartStore.invoiceItems
+		.filter((line) => line.item_code === code)
+		.reduce((sum, line) => sum + (Number(line.quantity) || 0) * (Number(line.conversion_factor) || 1), 0);
 }
 const portionsToAdd = ref(null);
 function openAddPortions(cardItem) {
